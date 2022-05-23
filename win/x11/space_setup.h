@@ -76,7 +76,7 @@ void init_space(Space& space)
     space.m_nullFocus->map();
 
     auto rootInfo = win::x11::root_info::create();
-    auto const vds = virtual_desktop_manager::self();
+    auto& vds = space.virtual_desktop_manager;
     vds->setRootInfo(rootInfo);
     rootInfo->activate();
 
@@ -141,8 +141,8 @@ void init_space(Space& space)
         space.updateClientArea();
 
         // NETWM spec says we have to set it to (0,0) if we don't support it
-        NETPoint* viewports = new NETPoint[virtual_desktop_manager::self()->count()];
-        rootInfo->setDesktopViewport(virtual_desktop_manager::self()->count(), *viewports);
+        NETPoint* viewports = new NETPoint[vds->count()];
+        rootInfo->setDesktopViewport(vds->count(), *viewports);
         delete[] viewports;
         QRect geom;
 
@@ -169,11 +169,9 @@ void init_space(Space& space)
         && space.should_get_focus.size() == 0) {
         // No client activated in manage()
         if (new_active_client == nullptr)
-            new_active_client = win::top_client_on_desktop(
-                &space, virtual_desktop_manager::self()->current(), nullptr);
+            new_active_client = win::top_client_on_desktop(&space, vds->current(), nullptr);
         if (new_active_client == nullptr) {
-            new_active_client
-                = win::find_desktop(&space, true, virtual_desktop_manager::self()->current());
+            new_active_client = win::find_desktop(&space, true, vds->current());
         }
     }
     if (new_active_client != nullptr)

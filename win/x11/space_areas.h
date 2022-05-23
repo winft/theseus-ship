@@ -24,7 +24,7 @@ void update_space_areas(Window* win,
     }
 
     auto const& outputs = kwinApp()->get_base().get_outputs();
-    auto const desktops_count = static_cast<int>(virtual_desktop_manager::self()->count());
+    auto const desktops_count = static_cast<int>(win->space.virtual_desktop_manager->count());
 
     auto client_area = adjusted_client_area(win, desktop_area, desktop_area);
 

@@ -179,12 +179,12 @@ root_info::root_info(xcb_window_t w,
 
 void root_info::changeNumberOfDesktops(int n)
 {
-    virtual_desktop_manager::self()->setCount(n);
+    workspace()->virtual_desktop_manager->setCount(n);
 }
 
 void root_info::changeCurrentDesktop(int d)
 {
-    virtual_desktop_manager::self()->setCurrent(d);
+    workspace()->virtual_desktop_manager->setCurrent(d);
 }
 
 void root_info::changeActiveWindow(xcb_window_t w,

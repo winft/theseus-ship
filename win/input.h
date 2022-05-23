@@ -31,7 +31,7 @@ bool is_most_recently_raised(Win* win)
 {
     // The last toplevel in the unconstrained stacking order is the most recently raised one.
     auto last = top_client_on_desktop(
-        &win->space, virtual_desktop_manager::self()->current(), nullptr, true, false);
+        &win->space, win->space.virtual_desktop_manager->current(), nullptr, true, false);
     return last == win;
 }
 
@@ -304,7 +304,7 @@ void enter_event(Win* win, const QPoint& globalPos)
     if (kwinApp()->options->isAutoRaise() && !win::is_desktop(win) && !win::is_dock(win)
         && space->focusChangeEnabled() && globalPos != space->focusMousePosition()
         && top_client_on_desktop(space,
-                                 virtual_desktop_manager::self()->current(),
+                                 win->space.virtual_desktop_manager->current(),
                                  kwinApp()->options->isSeparateScreenFocus() ? win->central_output
                                                                              : nullptr)
             != win) {

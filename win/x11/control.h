@@ -857,7 +857,7 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
             if (on_all) {
                 desk = NET::OnAllDesktops;
             } else if (on_current) {
-                desk = virtual_desktop_manager::self()->current();
+                desk = space.virtual_desktop_manager->current();
             } else if (maincl != nullptr) {
                 desk = maincl->desktop();
             }
@@ -876,13 +876,13 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
     if (desk == 0) {
         // Assume window wants to be visible on the current desktop
         desk = is_desktop(win) ? static_cast<int>(NET::OnAllDesktops)
-                               : virtual_desktop_manager::self()->current();
+                               : space.virtual_desktop_manager->current();
     }
     desk = win->control->rules().checkDesktop(desk, !isMapped);
 
     if (desk != NET::OnAllDesktops) {
         // Do range check
-        desk = qBound(1, desk, static_cast<int>(virtual_desktop_manager::self()->count()));
+        desk = qBound(1, desk, static_cast<int>(space.virtual_desktop_manager->count()));
     }
 
     set_desktop(win, desk);
@@ -1063,7 +1063,7 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
         // If session saving, force showing new windows (i.e. "save file?" dialogs etc.)
         // also force if activation is allowed
         if (!win->isOnCurrentDesktop() && !isMapped && !session && (allow || isSessionSaving)) {
-            virtual_desktop_manager::self()->setCurrent(win->desktop());
+            space.virtual_desktop_manager->setCurrent(win->desktop());
         }
 
         if (win->isOnCurrentDesktop() && !isMapped && !allow
@@ -1546,7 +1546,7 @@ void startup_id_changed(Win* win)
     // If the ASN contains desktop, move it to the desktop, otherwise move it to the current
     // desktop (since the new ASN should make the window act like if it's a new application
     // launched). However don't affect the window's desktop if it's set to be on all desktops.
-    int desktop = virtual_desktop_manager::self()->current();
+    int desktop = win->space.virtual_desktop_manager->current();
     if (asn_data.desktop() != 0)
         desktop = asn_data.desktop();
     if (!win->isOnAllDesktops()) {

@@ -99,12 +99,13 @@ virtual_desktop_layout_policy::virtual_desktop_layout_policy(layout_manager* man
                                                              KConfigGroup const& config)
     : layout_policy(manager, config)
 {
-    QObject::connect(win::virtual_desktop_manager::self(),
+    auto& space = manager->xkb.platform->redirect->space;
+    QObject::connect(space.virtual_desktop_manager.get(),
                      &win::virtual_desktop_manager::currentChanged,
                      this,
                      &virtual_desktop_layout_policy::handle_desktop_change);
 
-    auto session_manager = manager->xkb.platform->redirect->space.sessionManager();
+    auto session_manager = space.sessionManager();
     QObject::connect(
         session_manager, &win::session_manager::prepareSessionSaveRequested, this, [this] {
             clear_layouts();
@@ -123,7 +124,8 @@ virtual_desktop_layout_policy::virtual_desktop_layout_policy(layout_manager* man
 
     QObject::connect(session_manager, &win::session_manager::loadSessionRequested, this, [this] {
         if (xkb::get_primary_xkb_keyboard()->layouts_count() > 1) {
-            auto const& desktops = win::virtual_desktop_manager::self()->desktops();
+            auto const& desktops
+                = this->manager->xkb.platform->redirect->space.virtual_desktop_manager->desktops();
 
             for (auto const desktop : desktops) {
                 uint const layout = this->config.readEntry(
@@ -165,14 +167,15 @@ uint32_t getLayout(T const& layouts, U const& reference)
 
 void virtual_desktop_layout_policy::handle_desktop_change()
 {
-    if (auto desktop = win::virtual_desktop_manager::self()->currentDesktop()) {
+    if (auto desktop
+        = manager->xkb.platform->redirect->space.virtual_desktop_manager->currentDesktop()) {
         set_layout(getLayout(layouts, desktop));
     }
 }
 
 void virtual_desktop_layout_policy::handle_layout_change(uint index)
 {
-    auto desktop = win::virtual_desktop_manager::self()->currentDesktop();
+    auto desktop = manager->xkb.platform->redirect->space.virtual_desktop_manager->currentDesktop();
     if (!desktop) {
         return;
     }

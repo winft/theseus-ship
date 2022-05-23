@@ -20,8 +20,8 @@ space::space()
     edges = std::make_unique<win::screen_edger>(*this);
 
     QObject::connect(
-        virtual_desktop_manager::self(), &virtual_desktop_manager::desktopRemoved, this, [this] {
-            auto const desktop_count = static_cast<int>(virtual_desktop_manager::self()->count());
+        virtual_desktop_manager.get(), &virtual_desktop_manager::desktopRemoved, this, [this] {
+            auto const desktop_count = static_cast<int>(virtual_desktop_manager->count());
             for (auto const& window : m_windows) {
                 if (!window->control) {
                     continue;

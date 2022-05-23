@@ -379,7 +379,7 @@ void screen_edge::handleTouchCallback()
 void screen_edge::switchDesktop(QPoint const& cursorPos)
 {
     QPoint pos(cursorPos);
-    auto vds = virtual_desktop_manager::self();
+    auto& vds = edger->space.virtual_desktop_manager;
     uint const oldDesktop = vds->current();
     uint desktop = oldDesktop;
     int const OFFSET = 2;
@@ -723,7 +723,7 @@ screen_edger::screen_edger(win::space& space)
                      &base::options::configChanged,
                      this,
                      &win::screen_edger::reconfigure);
-    QObject::connect(virtual_desktop_manager::self(),
+    QObject::connect(space.virtual_desktop_manager.get(),
                      &virtual_desktop_manager::layoutChanged,
                      this,
                      &screen_edger::updateLayout);
@@ -884,7 +884,7 @@ void screen_edger::setActionForTouchBorder(ElectricBorder border, ElectricBorder
 
 void screen_edger::updateLayout()
 {
-    auto const desktopMatrix = virtual_desktop_manager::self()->grid().size();
+    auto const desktopMatrix = space.virtual_desktop_manager->grid().size();
     Qt::Orientations newLayout = {};
     if (desktopMatrix.width() > 1) {
         newLayout |= Qt::Horizontal;

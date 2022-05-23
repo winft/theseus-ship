@@ -209,7 +209,7 @@ desktop_thumbnail_item::~desktop_thumbnail_item()
 
 void desktop_thumbnail_item::setDesktop(int desktop)
 {
-    desktop = qBound<int>(1, desktop, win::virtual_desktop_manager::self()->count());
+    desktop = qBound<int>(1, desktop, workspace()->virtual_desktop_manager->count());
     if (desktop == m_desktop) {
         return;
     }

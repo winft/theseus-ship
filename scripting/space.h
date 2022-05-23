@@ -522,7 +522,7 @@ public:
     template_space(RefSpace* ref_space)
         : ref_space{ref_space}
     {
-        auto vds = win::virtual_desktop_manager::self();
+        auto vds = ref_space->virtual_desktop_manager.get();
 
         QObject::connect(
             ref_space, &RefSpace::desktopPresenceChanged, this, [this](auto client, auto desktop) {
@@ -585,22 +585,22 @@ public:
 
     int currentDesktop() const override
     {
-        return win::virtual_desktop_manager::self()->current();
+        return ref_space->virtual_desktop_manager->current();
     }
 
     void setCurrentDesktop(int desktop) override
     {
-        win::virtual_desktop_manager::self()->setCurrent(desktop);
+        ref_space->virtual_desktop_manager->setCurrent(desktop);
     }
 
     int numberOfDesktops() const override
     {
-        return win::virtual_desktop_manager::self()->count();
+        return ref_space->virtual_desktop_manager->count();
     }
 
     void setNumberOfDesktops(int count) override
     {
-        win::virtual_desktop_manager::self()->setCount(count);
+        ref_space->virtual_desktop_manager->setCount(count);
     }
 
     std::vector<window*> windows() const override
@@ -630,7 +630,7 @@ public:
 
     QSize desktopGridSize() const override
     {
-        return win::virtual_desktop_manager::self()->grid().size();
+        return ref_space->virtual_desktop_manager->grid().size();
     }
 
     int activeScreen() const override
@@ -765,23 +765,23 @@ protected:
 
     QString desktop_name_impl(int desktop) const override
     {
-        return win::virtual_desktop_manager::self()->name(desktop);
+        return ref_space->virtual_desktop_manager->name(desktop);
     }
     void create_desktop_impl(int position, QString const& name) const override
     {
-        win::virtual_desktop_manager::self()->createVirtualDesktop(position, name);
+        ref_space->virtual_desktop_manager->createVirtualDesktop(position, name);
     }
     void remove_desktop_impl(int position) const override
     {
-        if (auto vd = win::virtual_desktop_manager::self()->desktopForX11Id(position + 1)) {
-            win::virtual_desktop_manager::self()->removeVirtualDesktop(vd->id());
+        if (auto vd = ref_space->virtual_desktop_manager->desktopForX11Id(position + 1)) {
+            ref_space->virtual_desktop_manager->removeVirtualDesktop(vd->id());
         }
     }
 
     template<typename Direction>
     void switch_desktop() const
     {
-        win::virtual_desktop_manager::self()->moveTo<Direction>(
+        ref_space->virtual_desktop_manager->template moveTo<Direction>(
             kwinApp()->options->isRollOverDesktops());
     }
     void switch_desktop_next_impl() const override

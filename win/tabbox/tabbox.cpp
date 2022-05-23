@@ -79,7 +79,7 @@ tabbox_handler_impl::tabbox_handler_impl(win::tabbox* tabbox)
     , m_desktop_focus_chain(new tabbox_desktop_chain_manager(this))
 {
     // connects for DesktopFocusChainManager
-    auto vds = win::virtual_desktop_manager::self();
+    auto vds = workspace()->virtual_desktop_manager.get();
     connect(vds,
             &win::virtual_desktop_manager::countChanged,
             m_desktop_focus_chain,
@@ -105,22 +105,24 @@ int tabbox_handler_impl::active_screen() const
 
 int tabbox_handler_impl::current_desktop() const
 {
-    return win::virtual_desktop_manager::self()->current();
+    return workspace()->virtual_desktop_manager->current();
 }
 
 QString tabbox_handler_impl::desktop_name(tabbox_client* client) const
 {
+    auto& vds = workspace()->virtual_desktop_manager;
+
     if (tabbox_client_impl* c = static_cast<tabbox_client_impl*>(client)) {
         if (!c->client()->isOnAllDesktops())
-            return win::virtual_desktop_manager::self()->name(c->client()->desktop());
+            return vds->name(c->client()->desktop());
     }
-    return win::virtual_desktop_manager::self()->name(
-        win::virtual_desktop_manager::self()->current());
+
+    return vds->name(vds->current());
 }
 
 QString tabbox_handler_impl::desktop_name(int desktop) const
 {
-    return win::virtual_desktop_manager::self()->name(desktop);
+    return workspace()->virtual_desktop_manager->name(desktop);
 }
 
 std::weak_ptr<tabbox_client>
@@ -159,7 +161,7 @@ int tabbox_handler_impl::next_desktop_focus_chain(int desktop) const
 
 int tabbox_handler_impl::number_of_desktops() const
 {
-    return win::virtual_desktop_manager::self()->count();
+    return workspace()->virtual_desktop_manager->count();
 }
 
 std::weak_ptr<tabbox_client> tabbox_handler_impl::active_client() const
@@ -641,7 +643,7 @@ void tabbox::reset(bool partial_reset)
         m_tabbox->create_model();
 
         if (!partial_reset)
-            set_current_desktop(win::virtual_desktop_manager::self()->current());
+            set_current_desktop(workspace()->virtual_desktop_manager->current());
         break;
     }
 
@@ -1472,20 +1474,20 @@ void tabbox::modifiers_released()
         m_tab_grab = old_tab_grab;
         if (desktop != -1) {
             set_current_desktop(desktop);
-            win::virtual_desktop_manager::self()->setCurrent(desktop);
+            workspace()->virtual_desktop_manager->setCurrent(desktop);
         }
     }
 }
 
 int tabbox::next_desktop_static(int iDesktop) const
 {
-    win::virtual_desktop_next functor;
+    win::virtual_desktop_next functor(*workspace()->virtual_desktop_manager);
     return functor(iDesktop, true);
 }
 
 int tabbox::previous_desktop_static(int iDesktop) const
 {
-    win::virtual_desktop_previous functor;
+    win::virtual_desktop_previous functor(*workspace()->virtual_desktop_manager);
     return functor(iDesktop, true);
 }
 

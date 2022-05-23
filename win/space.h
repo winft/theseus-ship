@@ -106,6 +106,7 @@ class screen_edger;
 class shortcut_dialog;
 class stacking_order;
 class user_actions_menu;
+class virtual_desktop_manager;
 
 class KWIN_EXPORT space : public QObject
 {
@@ -234,6 +235,7 @@ public:
     win::stacking_order* stacking_order;
     std::unique_ptr<win::x11::stacking_tree> x_stacking_tree;
     std::unique_ptr<win::focus_chain> focus_chain;
+    std::unique_ptr<win::virtual_desktop_manager> virtual_desktop_manager;
 
     void stopUpdateToolWindowsTimer();
     void resetUpdateToolWindowsTimer();

@@ -100,6 +100,7 @@ space::space()
     , stacking_order(new win::stacking_order)
     , x_stacking_tree(std::make_unique<win::x11::stacking_tree>())
     , focus_chain{std::make_unique<win::focus_chain>(*this)}
+    , virtual_desktop_manager{std::make_unique<win::virtual_desktop_manager>()}
     , m_sessionManager(new win::session_manager(this))
 {
     // For invoke methods of user_actions_menu.
@@ -112,13 +113,8 @@ space::space()
 
     RuleBook::create(this)->load();
 
-    // win::virtual_desktop_manager needs to be created prior to init shortcuts
-    // and prior to TabBox, due to TabBox connecting to signals
-    // actual initialization happens in init()
-    win::virtual_desktop_manager::create(this);
-
     // dbus interface
-    new win::dbus::virtual_desktop_manager(win::virtual_desktop_manager::self());
+    new win::dbus::virtual_desktop_manager(virtual_desktop_manager.get());
 
 #if KWIN_BUILD_TABBOX
     // need to create the tabbox before compositing scene is setup
@@ -158,11 +154,11 @@ space::space()
 
     connect(this, &space::clientRemoved, focus_chain.get(), &win::focus_chain::remove);
     connect(this, &space::clientActivated, focus_chain.get(), &win::focus_chain::setActiveClient);
-    connect(win::virtual_desktop_manager::self(),
+    connect(virtual_desktop_manager.get(),
             &win::virtual_desktop_manager::countChanged,
             focus_chain.get(),
             &win::focus_chain::resize);
-    connect(win::virtual_desktop_manager::self(),
+    connect(virtual_desktop_manager.get(),
             &win::virtual_desktop_manager::currentChanged,
             focus_chain.get(),
             &win::focus_chain::setCurrentDesktop);
@@ -172,7 +168,7 @@ space::space()
             &win::focus_chain::setSeparateScreenFocus);
     focus_chain.get()->setSeparateScreenFocus(kwinApp()->options->isSeparateScreenFocus());
 
-    auto vds = win::virtual_desktop_manager::self();
+    auto vds = virtual_desktop_manager.get();
     connect(
         vds, &win::virtual_desktop_manager::countChanged, this, &space::slotDesktopCountChanged);
     connect(vds,
@@ -197,8 +193,9 @@ space::space()
     // load is needed to be called again when starting xwayalnd to sync to RootInfo, see BUG 385260
     vds->save();
 
-    if (!win::virtual_desktop_manager::self()->setCurrent(m_initialDesktop))
-        win::virtual_desktop_manager::self()->setCurrent(1);
+    if (!vds->setCurrent(m_initialDesktop)) {
+        vds->setCurrent(1);
+    }
 
     reconfigureTimer.setSingleShot(true);
     updateToolWindowsTimer.setSingleShot(true);
@@ -429,7 +426,7 @@ void space::resetClientAreas(uint desktopCount)
 void space::sendClientToDesktop(Toplevel* window, int desk, bool dont_activate)
 {
     if ((desk < 1 && desk != NET::OnAllDesktops)
-        || desk > static_cast<int>(win::virtual_desktop_manager::self()->count())) {
+        || desk > static_cast<int>(virtual_desktop_manager->count())) {
         return;
     }
     auto old_desktop = window->desktop();
@@ -441,7 +438,7 @@ void space::sendClientToDesktop(Toplevel* window, int desk, bool dont_activate)
     }
     desk = window->desktop(); // Client did range checking
 
-    if (window->isOnDesktop(win::virtual_desktop_manager::self()->current())) {
+    if (window->isOnDesktop(virtual_desktop_manager->current())) {
         if (win::wants_tab_focus(window) && kwinApp()->options->focusPolicyIsReasonable()
             && !was_on_desktop && // for stickyness changes
             !dont_activate) {
@@ -540,8 +537,7 @@ void space::setShowingDesktop(bool showing)
     if (showing_desktop && topDesk) {
         request_focus(topDesk);
     } else if (!showing_desktop && changed) {
-        const auto client
-            = focus_chain->getForActivation(win::virtual_desktop_manager::self()->current());
+        const auto client = focus_chain->getForActivation(virtual_desktop_manager->current());
         if (client) {
             activateClient(client);
         }
@@ -1020,7 +1016,7 @@ void space::updateClientArea(bool force)
     auto&& base = kwinApp()->get_base();
     auto const& outputs = base.get_outputs();
     auto const screens_count = outputs.size();
-    auto const desktops_count = static_cast<int>(win::virtual_desktop_manager::self()->count());
+    auto const desktops_count = static_cast<int>(virtual_desktop_manager->count());
 
     // To be determined are new:
     // * work areas,
@@ -1109,7 +1105,7 @@ QRect space::clientArea(clientAreaOption opt, base::output const* output, int de
     auto const& outputs = kwinApp()->get_base().get_outputs();
 
     if (desktop == NETWinInfo::OnAllDesktops || desktop == 0)
-        desktop = win::virtual_desktop_manager::self()->current();
+        desktop = virtual_desktop_manager->current();
     if (!output) {
         output = get_current_output(*workspace());
     }
@@ -1159,11 +1155,13 @@ QRect space::clientArea(clientAreaOption opt, Toplevel const* window) const
     return clientArea(opt, win::pending_frame_geometry(window).center(), window->desktop());
 }
 
-static QRegion
-strutsToRegion(int desktop, win::strut_area areas, std::vector<win::strut_rects> const& struts)
+static QRegion strutsToRegion(win::space const& space,
+                              int desktop,
+                              win::strut_area areas,
+                              std::vector<win::strut_rects> const& struts)
 {
     if (desktop == NETWinInfo::OnAllDesktops || desktop == 0) {
-        desktop = win::virtual_desktop_manager::self()->current();
+        desktop = space.virtual_desktop_manager->current();
     }
 
     QRegion region;
@@ -1180,7 +1178,7 @@ strutsToRegion(int desktop, win::strut_area areas, std::vector<win::strut_rects>
 
 QRegion space::restrictedMoveArea(int desktop, win::strut_area areas) const
 {
-    return strutsToRegion(desktop, areas, this->areas.restrictedmove);
+    return strutsToRegion(*this, desktop, areas, this->areas.restrictedmove);
 }
 
 bool space::inUpdateClientArea() const
@@ -1190,7 +1188,7 @@ bool space::inUpdateClientArea() const
 
 QRegion space::previousRestrictedMoveArea(int desktop, win::strut_area areas) const
 {
-    return strutsToRegion(desktop, areas, oldrestrictedmovearea);
+    return strutsToRegion(*this, desktop, areas, oldrestrictedmovearea);
 }
 
 std::vector<QRect> space::previousScreenSizes() const
@@ -1545,8 +1543,7 @@ QRect space::adjustClientSize(Toplevel* window, QRect moveResizeGeom, win::posit
             deltaX = int(snap);
             deltaY = int(snap);
             for (auto win : m_windows) {
-                if (win->control
-                    && win->isOnDesktop(win::virtual_desktop_manager::self()->current())
+                if (win->control && win->isOnDesktop(virtual_desktop_manager->current())
                     && !win->control->minimized() && win != window) {
                     lx = win->pos().x() - 1;
                     ly = win->pos().y() - 1;
@@ -1868,7 +1865,7 @@ int space::packPositionLeft(Toplevel const* window, int oldX, bool leftEdge) con
     }
 
     const int desktop = window->desktop() == 0 || window->isOnAllDesktops()
-        ? win::virtual_desktop_manager::self()->current()
+        ? virtual_desktop_manager->current()
         : window->desktop();
     for (auto win : m_windows) {
         if (is_irrelevant(win, window, desktop)) {
@@ -1911,7 +1908,7 @@ int space::packPositionRight(Toplevel const* window, int oldX, bool rightEdge) c
     }
 
     const int desktop = window->desktop() == 0 || window->isOnAllDesktops()
-        ? win::virtual_desktop_manager::self()->current()
+        ? virtual_desktop_manager->current()
         : window->desktop();
     for (auto win : m_windows) {
         if (is_irrelevant(win, window, desktop)) {
@@ -1944,7 +1941,7 @@ int space::packPositionUp(Toplevel const* window, int oldY, bool topEdge) const
     }
 
     const int desktop = window->desktop() == 0 || window->isOnAllDesktops()
-        ? win::virtual_desktop_manager::self()->current()
+        ? virtual_desktop_manager->current()
         : window->desktop();
     for (auto win : m_windows) {
         if (is_irrelevant(win, window, desktop)) {
@@ -1985,7 +1982,7 @@ int space::packPositionDown(Toplevel const* window, int oldY, bool bottomEdge) c
         return oldY;
     }
     const int desktop = window->desktop() == 0 || window->isOnAllDesktops()
-        ? win::virtual_desktop_manager::self()->current()
+        ? virtual_desktop_manager->current()
         : window->desktop();
     for (auto win : m_windows) {
         if (is_irrelevant(win, window, desktop)) {
@@ -2254,7 +2251,7 @@ void space::activateClient(Toplevel* window, bool force)
     win::raise_window(this, window);
     if (!window->isOnCurrentDesktop()) {
         ++block_focus;
-        win::virtual_desktop_manager::self()->setCurrent(window->desktop());
+        virtual_desktop_manager->setCurrent(window->desktop());
         --block_focus;
     }
     if (window->control->minimized()) {
@@ -2414,7 +2411,7 @@ bool space::activateNextClient(Toplevel* window)
 
     Toplevel* get_focus = nullptr;
 
-    const int desktop = win::virtual_desktop_manager::self()->current();
+    const int desktop = virtual_desktop_manager->current();
 
     if (!get_focus && showingDesktop())
         get_focus = win::find_desktop(this, true, desktop); // to not break the state
@@ -2466,7 +2463,7 @@ void space::setCurrentScreen(base::output const& output)
 
     closeActivePopup();
 
-    const int desktop = win::virtual_desktop_manager::self()->current();
+    const int desktop = virtual_desktop_manager->current();
     auto get_focus = focus_chain->getForActivation(desktop, &output);
     if (get_focus == nullptr) {
         get_focus = win::find_desktop(this, true, desktop);
@@ -2943,7 +2940,7 @@ void space::initShortcuts()
 #if KWIN_BUILD_TABBOX
     tabbox::tabbox::self()->init_shortcuts();
 #endif
-    win::virtual_desktop_manager::self()->initShortcuts();
+    virtual_desktop_manager->initShortcuts();
     kwinApp()->get_base().render->night_color->init_shortcuts();
 
     // so that it's recreated next time
@@ -3148,7 +3145,7 @@ void space::slotWindowToDesktop(uint i)
         if (i < 1)
             return;
 
-        if (i >= 1 && i <= win::virtual_desktop_manager::self()->count())
+        if (i >= 1 && i <= virtual_desktop_manager->count())
             sendClientToDesktop(active_client, i, true);
     }
 }
@@ -3310,7 +3307,7 @@ void space::slotWindowLower()
                     request_focus(next);
             } else {
                 activateClient(win::top_client_on_desktop(
-                    workspace(), win::virtual_desktop_manager::self()->current(), nullptr));
+                    workspace(), virtual_desktop_manager->current(), nullptr));
             }
         }
     }
@@ -3371,15 +3368,15 @@ void space::slotToggleShowDesktop()
 template<typename Direction>
 void windowToDesktop(Toplevel* window)
 {
-    auto vds = win::virtual_desktop_manager::self();
-    auto ws = workspace();
-    Direction functor;
+    auto& ws = window->space;
+    auto& vds = ws.virtual_desktop_manager;
+    Direction functor(*vds);
     // TODO: why is kwinApp()->options->isRollOverDesktops() not honored?
     const auto desktop = functor(nullptr, true);
     if (window && !win::is_desktop(window) && !win::is_dock(window)) {
-        ws->setMoveResizeClient(window);
+        ws.setMoveResizeClient(window);
         vds->setCurrent(desktop);
-        ws->setMoveResizeClient(nullptr);
+        ws.setMoveResizeClient(nullptr);
     }
 }
 
@@ -3412,46 +3409,45 @@ void space::windowToPreviousDesktop(Toplevel* window)
 }
 
 template<typename Direction>
-void activeClientToDesktop()
+void activeClientToDesktop(win::space& space)
 {
-    auto vds = win::virtual_desktop_manager::self();
-    auto ws = workspace();
+    auto& vds = space.virtual_desktop_manager;
     const int current = vds->current();
-    Direction functor;
+    Direction functor(*vds);
     const int d = functor(current, kwinApp()->options->isRollOverDesktops());
     if (d == current) {
         return;
     }
-    ws->setMoveResizeClient(ws->activeClient());
+    space.setMoveResizeClient(space.activeClient());
     vds->setCurrent(d);
-    ws->setMoveResizeClient(nullptr);
+    space.setMoveResizeClient(nullptr);
 }
 
 void space::slotWindowToDesktopRight()
 {
     if (USABLE_ACTIVE_CLIENT) {
-        activeClientToDesktop<win::virtual_desktop_right>();
+        activeClientToDesktop<win::virtual_desktop_right>(*this);
     }
 }
 
 void space::slotWindowToDesktopLeft()
 {
     if (USABLE_ACTIVE_CLIENT) {
-        activeClientToDesktop<win::virtual_desktop_left>();
+        activeClientToDesktop<win::virtual_desktop_left>(*this);
     }
 }
 
 void space::slotWindowToDesktopUp()
 {
     if (USABLE_ACTIVE_CLIENT) {
-        activeClientToDesktop<win::virtual_desktop_above>();
+        activeClientToDesktop<win::virtual_desktop_above>(*this);
     }
 }
 
 void space::slotWindowToDesktopDown()
 {
     if (USABLE_ACTIVE_CLIENT) {
-        activeClientToDesktop<win::virtual_desktop_below>();
+        activeClientToDesktop<win::virtual_desktop_below>(*this);
     }
 }
 
@@ -3474,8 +3470,7 @@ void space::switchWindow(Direction direction)
     if (!active_client)
         return;
     auto c = active_client;
-    int desktopNumber
-        = c->isOnAllDesktops() ? win::virtual_desktop_manager::self()->current() : c->desktop();
+    int desktopNumber = c->isOnAllDesktops() ? virtual_desktop_manager->current() : c->desktop();
 
     // Centre of the active window
     QPoint curPos(c->pos().x() + c->size().width() / 2, c->pos().y() + c->size().height() / 2);
@@ -3757,7 +3752,7 @@ void space::storeSession(const QString& sessionName, win::sm_save_phase phase)
         // but both Qt and KDE treat phase1 and phase2 separately,
         // which results in different sessionkey and different config file :(
         session_active_client = active_client;
-        session_desktop = win::virtual_desktop_manager::self()->current();
+        session_desktop = virtual_desktop_manager->current();
     } else if (phase == win::sm_save_phase2) {
         cg.writeEntry("count", count);
         cg.writeEntry("active", session_active_client);
@@ -3766,7 +3761,7 @@ void space::storeSession(const QString& sessionName, win::sm_save_phase phase)
         // SMSavePhase2Full
         cg.writeEntry("count", count);
         cg.writeEntry("active", session_active_client);
-        cg.writeEntry("desktop", win::virtual_desktop_manager::self()->current());
+        cg.writeEntry("desktop", virtual_desktop_manager->current());
     }
 
     // it previously did some "revert to defaults" stuff for phase1 I think

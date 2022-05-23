@@ -162,8 +162,8 @@ void TestXdgShellClientRules::initTestCase()
 
 void TestXdgShellClientRules::init()
 {
-    win::virtual_desktop_manager::self()->setCurrent(
-        win::virtual_desktop_manager::self()->desktops().first());
+    auto& vd_manager = Test::app()->workspace->virtual_desktop_manager;
+    vd_manager->setCurrent(vd_manager->desktops().first());
     Test::setup_wayland_connection(Test::global_selection::xdg_decoration);
 }
 
@@ -176,8 +176,9 @@ void TestXdgShellClientRules::cleanup()
     workspace()->slotReconfigure();
 
     // Restore virtual desktops to the initial state.
-    win::virtual_desktop_manager::self()->setCount(1);
-    QCOMPARE(win::virtual_desktop_manager::self()->count(), 1u);
+    auto& vd_manager = Test::app()->workspace->virtual_desktop_manager;
+    vd_manager->setCount(1);
+    QCOMPARE(vd_manager->count(), 1u);
 }
 
 std::tuple<win::wayland::window*, std::unique_ptr<Surface>, std::unique_ptr<XdgShellToplevel>>
@@ -1747,10 +1748,11 @@ void TestXdgShellClientRules::testDesktopDontAffect()
     workspace()->slotReconfigure();
 
     // We need at least two virtual desktop for this test.
-    win::virtual_desktop_manager::self()->setCount(2);
-    QCOMPARE(win::virtual_desktop_manager::self()->count(), 2u);
-    win::virtual_desktop_manager::self()->setCurrent(1);
-    QCOMPARE(win::virtual_desktop_manager::self()->current(), 1);
+    auto& vd_manager = Test::app()->workspace->virtual_desktop_manager;
+    vd_manager->setCount(2);
+    QCOMPARE(vd_manager->count(), 2u);
+    vd_manager->setCurrent(1);
+    QCOMPARE(vd_manager->current(), 1);
 
     // Create the test client.
     win::wayland::window* client;
@@ -1761,7 +1763,7 @@ void TestXdgShellClientRules::testDesktopDontAffect()
 
     // The client should appear on the current virtual desktop.
     QCOMPARE(client->desktop(), 1);
-    QCOMPARE(win::virtual_desktop_manager::self()->current(), 1);
+    QCOMPARE(vd_manager->current(), 1);
 
     // Destroy the client.
     shellSurface.reset();
@@ -1785,10 +1787,11 @@ void TestXdgShellClientRules::testDesktopApply()
     workspace()->slotReconfigure();
 
     // We need at least two virtual desktop for this test.
-    win::virtual_desktop_manager::self()->setCount(2);
-    QCOMPARE(win::virtual_desktop_manager::self()->count(), 2u);
-    win::virtual_desktop_manager::self()->setCurrent(1);
-    QCOMPARE(win::virtual_desktop_manager::self()->current(), 1);
+    auto& vd_manager = Test::app()->workspace->virtual_desktop_manager;
+    vd_manager->setCount(2);
+    QCOMPARE(vd_manager->count(), 2u);
+    vd_manager->setCurrent(1);
+    QCOMPARE(vd_manager->current(), 1);
 
     // Create the test client.
     win::wayland::window* client;
@@ -1799,23 +1802,23 @@ void TestXdgShellClientRules::testDesktopApply()
 
     // The client should appear on the second virtual desktop.
     QCOMPARE(client->desktop(), 2);
-    QCOMPARE(win::virtual_desktop_manager::self()->current(), 2);
+    QCOMPARE(vd_manager->current(), 2);
 
     // We still should be able to move the client between desktops.
     workspace()->sendClientToDesktop(client, 1, true);
     QCOMPARE(client->desktop(), 1);
-    QCOMPARE(win::virtual_desktop_manager::self()->current(), 2);
+    QCOMPARE(vd_manager->current(), 2);
 
     // If we re-open the client, it should appear on the second virtual desktop again.
     shellSurface.reset();
     surface.reset();
     QVERIFY(Test::wait_for_destroyed(client));
-    win::virtual_desktop_manager::self()->setCurrent(1);
-    QCOMPARE(win::virtual_desktop_manager::self()->current(), 1);
+    vd_manager->setCurrent(1);
+    QCOMPARE(vd_manager->current(), 1);
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
     QVERIFY(client);
     QCOMPARE(client->desktop(), 2);
-    QCOMPARE(win::virtual_desktop_manager::self()->current(), 2);
+    QCOMPARE(vd_manager->current(), 2);
 
     // Destroy the client.
     shellSurface.reset();
@@ -1839,10 +1842,11 @@ void TestXdgShellClientRules::testDesktopRemember()
     workspace()->slotReconfigure();
 
     // We need at least two virtual desktop for this test.
-    win::virtual_desktop_manager::self()->setCount(2);
-    QCOMPARE(win::virtual_desktop_manager::self()->count(), 2u);
-    win::virtual_desktop_manager::self()->setCurrent(1);
-    QCOMPARE(win::virtual_desktop_manager::self()->current(), 1);
+    auto& vd_manager = Test::app()->workspace->virtual_desktop_manager;
+    vd_manager->setCount(2);
+    QCOMPARE(vd_manager->count(), 2u);
+    vd_manager->setCurrent(1);
+    QCOMPARE(vd_manager->current(), 1);
 
     // Create the test client.
     win::wayland::window* client;
@@ -1851,12 +1855,12 @@ void TestXdgShellClientRules::testDesktopRemember()
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
     QVERIFY(client);
     QCOMPARE(client->desktop(), 2);
-    QCOMPARE(win::virtual_desktop_manager::self()->current(), 2);
+    QCOMPARE(vd_manager->current(), 2);
 
     // Move the client to the first virtual desktop.
     workspace()->sendClientToDesktop(client, 1, true);
     QCOMPARE(client->desktop(), 1);
-    QCOMPARE(win::virtual_desktop_manager::self()->current(), 2);
+    QCOMPARE(vd_manager->current(), 2);
 
     // If we create the client again, it should appear on the first virtual desktop.
     shellSurface.reset();
@@ -1865,7 +1869,7 @@ void TestXdgShellClientRules::testDesktopRemember()
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
     QVERIFY(client);
     QCOMPARE(client->desktop(), 1);
-    QCOMPARE(win::virtual_desktop_manager::self()->current(), 1);
+    QCOMPARE(vd_manager->current(), 1);
 
     // Destroy the client.
     shellSurface.reset();
@@ -1889,10 +1893,11 @@ void TestXdgShellClientRules::testDesktopForce()
     workspace()->slotReconfigure();
 
     // We need at least two virtual desktop for this test.
-    win::virtual_desktop_manager::self()->setCount(2);
-    QCOMPARE(win::virtual_desktop_manager::self()->count(), 2u);
-    win::virtual_desktop_manager::self()->setCurrent(1);
-    QCOMPARE(win::virtual_desktop_manager::self()->current(), 1);
+    auto& vd_manager = Test::app()->workspace->virtual_desktop_manager;
+    vd_manager->setCount(2);
+    QCOMPARE(vd_manager->count(), 2u);
+    vd_manager->setCurrent(1);
+    QCOMPARE(vd_manager->current(), 1);
 
     // Create the test client.
     win::wayland::window* client;
@@ -1903,23 +1908,23 @@ void TestXdgShellClientRules::testDesktopForce()
 
     // The client should appear on the second virtual desktop.
     QCOMPARE(client->desktop(), 2);
-    QCOMPARE(win::virtual_desktop_manager::self()->current(), 2);
+    QCOMPARE(vd_manager->current(), 2);
 
     // Any attempt to move the client to another virtual desktop should fail.
     workspace()->sendClientToDesktop(client, 1, true);
     QCOMPARE(client->desktop(), 2);
-    QCOMPARE(win::virtual_desktop_manager::self()->current(), 2);
+    QCOMPARE(vd_manager->current(), 2);
 
     // If we re-open the client, it should appear on the second virtual desktop again.
     shellSurface.reset();
     surface.reset();
     QVERIFY(Test::wait_for_destroyed(client));
-    win::virtual_desktop_manager::self()->setCurrent(1);
-    QCOMPARE(win::virtual_desktop_manager::self()->current(), 1);
+    vd_manager->setCurrent(1);
+    QCOMPARE(vd_manager->current(), 1);
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
     QVERIFY(client);
     QCOMPARE(client->desktop(), 2);
-    QCOMPARE(win::virtual_desktop_manager::self()->current(), 2);
+    QCOMPARE(vd_manager->current(), 2);
 
     // Destroy the client.
     shellSurface.reset();
@@ -1930,10 +1935,11 @@ void TestXdgShellClientRules::testDesktopForce()
 void TestXdgShellClientRules::testDesktopApplyNow()
 {
     // We need at least two virtual desktop for this test.
-    win::virtual_desktop_manager::self()->setCount(2);
-    QCOMPARE(win::virtual_desktop_manager::self()->count(), 2u);
-    win::virtual_desktop_manager::self()->setCurrent(1);
-    QCOMPARE(win::virtual_desktop_manager::self()->current(), 1);
+    auto& vd_manager = Test::app()->workspace->virtual_desktop_manager;
+    vd_manager->setCount(2);
+    QCOMPARE(vd_manager->count(), 2u);
+    vd_manager->setCurrent(1);
+    QCOMPARE(vd_manager->current(), 1);
 
     // Create the test client.
     win::wayland::window* client;
@@ -1942,7 +1948,7 @@ void TestXdgShellClientRules::testDesktopApplyNow()
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
     QVERIFY(client);
     QCOMPARE(client->desktop(), 1);
-    QCOMPARE(win::virtual_desktop_manager::self()->current(), 1);
+    QCOMPARE(vd_manager->current(), 1);
 
     // Initialize RuleBook with the test rule.
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
@@ -1959,17 +1965,17 @@ void TestXdgShellClientRules::testDesktopApplyNow()
 
     // The client should have been moved to the second virtual desktop.
     QCOMPARE(client->desktop(), 2);
-    QCOMPARE(win::virtual_desktop_manager::self()->current(), 1);
+    QCOMPARE(vd_manager->current(), 1);
 
     // One should still be able to move the client between desktops.
     workspace()->sendClientToDesktop(client, 1, true);
     QCOMPARE(client->desktop(), 1);
-    QCOMPARE(win::virtual_desktop_manager::self()->current(), 1);
+    QCOMPARE(vd_manager->current(), 1);
 
     // The rule should not be applied again.
     win::evaluate_rules(client);
     QCOMPARE(client->desktop(), 1);
-    QCOMPARE(win::virtual_desktop_manager::self()->current(), 1);
+    QCOMPARE(vd_manager->current(), 1);
 
     // Destroy the client.
     shellSurface.reset();
@@ -1993,10 +1999,11 @@ void TestXdgShellClientRules::testDesktopForceTemporarily()
     workspace()->slotReconfigure();
 
     // We need at least two virtual desktop for this test.
-    win::virtual_desktop_manager::self()->setCount(2);
-    QCOMPARE(win::virtual_desktop_manager::self()->count(), 2u);
-    win::virtual_desktop_manager::self()->setCurrent(1);
-    QCOMPARE(win::virtual_desktop_manager::self()->current(), 1);
+    auto& vd_manager = Test::app()->workspace->virtual_desktop_manager;
+    vd_manager->setCount(2);
+    QCOMPARE(vd_manager->count(), 2u);
+    vd_manager->setCurrent(1);
+    QCOMPARE(vd_manager->current(), 1);
 
     // Create the test client.
     win::wayland::window* client;
@@ -2007,31 +2014,31 @@ void TestXdgShellClientRules::testDesktopForceTemporarily()
 
     // The client should appear on the second virtual desktop.
     QCOMPARE(client->desktop(), 2);
-    QCOMPARE(win::virtual_desktop_manager::self()->current(), 2);
+    QCOMPARE(vd_manager->current(), 2);
 
     // Any attempt to move the client to another virtual desktop should fail.
     workspace()->sendClientToDesktop(client, 1, true);
     QCOMPARE(client->desktop(), 2);
-    QCOMPARE(win::virtual_desktop_manager::self()->current(), 2);
+    QCOMPARE(vd_manager->current(), 2);
 
     // The rule should be discarded when the client is withdrawn.
     shellSurface.reset();
     surface.reset();
     QVERIFY(Test::wait_for_destroyed(client));
-    win::virtual_desktop_manager::self()->setCurrent(1);
-    QCOMPARE(win::virtual_desktop_manager::self()->current(), 1);
+    vd_manager->setCurrent(1);
+    QCOMPARE(vd_manager->current(), 1);
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
     QVERIFY(client);
     QCOMPARE(client->desktop(), 1);
-    QCOMPARE(win::virtual_desktop_manager::self()->current(), 1);
+    QCOMPARE(vd_manager->current(), 1);
 
     // One should be able to move the client between desktops.
     workspace()->sendClientToDesktop(client, 2, true);
     QCOMPARE(client->desktop(), 2);
-    QCOMPARE(win::virtual_desktop_manager::self()->current(), 1);
+    QCOMPARE(vd_manager->current(), 1);
     workspace()->sendClientToDesktop(client, 1, true);
     QCOMPARE(client->desktop(), 1);
-    QCOMPARE(win::virtual_desktop_manager::self()->current(), 1);
+    QCOMPARE(vd_manager->current(), 1);
 
     // Destroy the client.
     shellSurface.reset();

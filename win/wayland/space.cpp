@@ -73,8 +73,7 @@ space::space(base::wayland::server* server)
     plasma_window_manager->setShowingDesktopState(
         Wrapland::Server::PlasmaWindowManager::ShowingDesktopState::Disabled);
     plasma_window_manager->setVirtualDesktopManager(plasma_virtual_desktop_manager.get());
-    win::virtual_desktop_manager::self()->setVirtualDesktopManagement(
-        plasma_virtual_desktop_manager.get());
+    virtual_desktop_manager->setVirtualDesktopManagement(plasma_virtual_desktop_manager.get());
 
     QObject::connect(compositor.get(), &WS::Compositor::surfaceCreated, this, [this](auto surface) {
         xwl::handle_new_surface(this, surface);
@@ -155,7 +154,7 @@ space::space(base::wayland::server* server)
     // For Xwayland windows we need to setup Plasma management too.
     QObject::connect(this, &space::clientAdded, this, &space::handle_x11_window_added);
 
-    QObject::connect(virtual_desktop_manager::self(),
+    QObject::connect(virtual_desktop_manager.get(),
                      &virtual_desktop_manager::desktopRemoved,
                      this,
                      &space::handle_desktop_removed);
@@ -327,9 +326,7 @@ void space::handle_desktop_removed(virtual_desktop* desktop)
             win::leave_desktop(client, desktop);
         } else {
             sendClientToDesktop(
-                client,
-                qMin(desktop->x11DesktopNumber(), virtual_desktop_manager::self()->count()),
-                true);
+                client, qMin(desktop->x11DesktopNumber(), virtual_desktop_manager->count()), true);
         }
     }
 }

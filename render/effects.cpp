@@ -129,11 +129,11 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     m_currentBuildQuadsIterator = m_activeEffects.constEnd();
 
     auto ws = workspace();
-    auto vds = win::virtual_desktop_manager::self();
+    auto& vds = ws->virtual_desktop_manager;
     connect(
         ws, &win::space::showingDesktopChanged, this, &effects_handler_impl::showingDesktopChanged);
     connect(ws, &win::space::currentDesktopChanged, this, [this](int old, Toplevel* c) {
-        int const newDesktop = win::virtual_desktop_manager::self()->current();
+        int const newDesktop = workspace()->virtual_desktop_manager->current();
         if (old != 0 && newDesktop != old) {
             assert(!c || c->render);
             assert(!c || c->render->effect);
@@ -181,7 +181,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
             &win::session_manager::stateChanged,
             this,
             &KWin::EffectsHandler::sessionStateChanged);
-    connect(vds,
+    connect(vds.get(),
             &win::virtual_desktop_manager::countChanged,
             this,
             &EffectsHandler::numberDesktopsChanged);
@@ -941,10 +941,10 @@ void effects_handler_impl::windowToDesktops(EffectWindow* w, const QVector<uint>
     QVector<win::virtual_desktop*> desktops;
     desktops.reserve(desktopIds.count());
     for (uint x11Id : desktopIds) {
-        if (x11Id > win::virtual_desktop_manager::self()->count()) {
+        if (x11Id > workspace()->virtual_desktop_manager->count()) {
             continue;
         }
-        auto d = win::virtual_desktop_manager::self()->desktopForX11Id(x11Id);
+        auto d = workspace()->virtual_desktop_manager->desktopForX11Id(x11Id);
         Q_ASSERT(d);
         if (desktops.contains(d)) {
             continue;
@@ -976,27 +976,27 @@ QString effects_handler_impl::currentActivity() const
 
 int effects_handler_impl::currentDesktop() const
 {
-    return win::virtual_desktop_manager::self()->current();
+    return workspace()->virtual_desktop_manager->current();
 }
 
 int effects_handler_impl::numberOfDesktops() const
 {
-    return win::virtual_desktop_manager::self()->count();
+    return workspace()->virtual_desktop_manager->count();
 }
 
 void effects_handler_impl::setCurrentDesktop(int desktop)
 {
-    win::virtual_desktop_manager::self()->setCurrent(desktop);
+    workspace()->virtual_desktop_manager->setCurrent(desktop);
 }
 
 void effects_handler_impl::setNumberOfDesktops(int desktops)
 {
-    win::virtual_desktop_manager::self()->setCount(desktops);
+    workspace()->virtual_desktop_manager->setCount(desktops);
 }
 
 QSize effects_handler_impl::desktopGridSize() const
 {
-    return win::virtual_desktop_manager::self()->grid().size();
+    return workspace()->virtual_desktop_manager->grid().size();
 }
 
 int effects_handler_impl::desktopGridWidth() const
@@ -1021,7 +1021,7 @@ int effects_handler_impl::workspaceHeight() const
 
 int effects_handler_impl::desktopAtCoords(QPoint coords) const
 {
-    if (auto vd = win::virtual_desktop_manager::self()->grid().at(coords)) {
+    if (auto vd = workspace()->virtual_desktop_manager->grid().at(coords)) {
         return vd->x11DesktopNumber();
     }
     return 0;
@@ -1029,12 +1029,12 @@ int effects_handler_impl::desktopAtCoords(QPoint coords) const
 
 QPoint effects_handler_impl::desktopGridCoords(int id) const
 {
-    return win::virtual_desktop_manager::self()->grid().gridCoords(id);
+    return workspace()->virtual_desktop_manager->grid().gridCoords(id);
 }
 
 QPoint effects_handler_impl::desktopCoords(int id) const
 {
-    QPoint coords = win::virtual_desktop_manager::self()->grid().gridCoords(id);
+    auto coords = workspace()->virtual_desktop_manager->grid().gridCoords(id);
     if (coords.x() == -1) {
         return QPoint(-1, -1);
     }
@@ -1044,27 +1044,31 @@ QPoint effects_handler_impl::desktopCoords(int id) const
 
 int effects_handler_impl::desktopAbove(int desktop, bool wrap) const
 {
-    return win::getDesktop<win::virtual_desktop_above>(desktop, wrap);
+    return win::getDesktop<win::virtual_desktop_above>(
+        *workspace()->virtual_desktop_manager, desktop, wrap);
 }
 
 int effects_handler_impl::desktopToRight(int desktop, bool wrap) const
 {
-    return win::getDesktop<win::virtual_desktop_right>(desktop, wrap);
+    return win::getDesktop<win::virtual_desktop_right>(
+        *workspace()->virtual_desktop_manager, desktop, wrap);
 }
 
 int effects_handler_impl::desktopBelow(int desktop, bool wrap) const
 {
-    return win::getDesktop<win::virtual_desktop_below>(desktop, wrap);
+    return win::getDesktop<win::virtual_desktop_below>(
+        *workspace()->virtual_desktop_manager, desktop, wrap);
 }
 
 int effects_handler_impl::desktopToLeft(int desktop, bool wrap) const
 {
-    return win::getDesktop<win::virtual_desktop_left>(desktop, wrap);
+    return win::getDesktop<win::virtual_desktop_left>(
+        *workspace()->virtual_desktop_manager, desktop, wrap);
 }
 
 QString effects_handler_impl::desktopName(int desktop) const
 {
-    return win::virtual_desktop_manager::self()->name(desktop);
+    return workspace()->virtual_desktop_manager->name(desktop);
 }
 
 bool effects_handler_impl::optionRollOverDesktops() const
@@ -1278,7 +1282,7 @@ QRect effects_handler_impl::clientArea(clientAreaOption opt, const EffectWindow*
         return workspace()->clientArea(opt, window);
     } else {
         return workspace()->clientArea(
-            opt, window->frameGeometry().center(), win::virtual_desktop_manager::self()->current());
+            opt, window->frameGeometry().center(), workspace()->virtual_desktop_manager->current());
     }
 }
 

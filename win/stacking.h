@@ -300,7 +300,7 @@ void raise_or_lower_client(Space* space, Window* window)
     } else {
         topmost = top_client_on_desktop(
             space,
-            window->isOnAllDesktops() ? win::virtual_desktop_manager::self()->current()
+            window->isOnAllDesktops() ? space->virtual_desktop_manager->current()
                                       : window->desktop(),
             kwinApp()->options->isSeparateScreenFocus() ? window->central_output : nullptr);
     }

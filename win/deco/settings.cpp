@@ -48,7 +48,7 @@ settings::settings(KDecoration2::DecorationSettings* parent)
                      &render::compositor::compositingToggled,
                      parent,
                      &KDecoration2::DecorationSettings::alphaChannelSupportedChanged);
-    connect(win::virtual_desktop_manager::self(),
+    connect(workspace()->virtual_desktop_manager.get(),
             &win::virtual_desktop_manager::countChanged,
             this,
             [parent](uint previous, uint current) {
@@ -77,7 +77,7 @@ bool settings::isAlphaChannelSupported() const
 
 bool settings::isOnAllDesktopsAvailable() const
 {
-    return win::virtual_desktop_manager::self()->count() > 1;
+    return workspace()->virtual_desktop_manager->count() > 1;
 }
 
 bool settings::isCloseOnDoubleClickOnMenu() const

@@ -185,7 +185,7 @@ void setup_plasma_management(Space* space, Win* win)
                      win,
                      [win](const QString& desktopId) {
                          auto vd
-                             = virtual_desktop_manager::self()->desktopForId(desktopId.toUtf8());
+                             = win->space.virtual_desktop_manager->desktopForId(desktopId.toUtf8());
                          if (vd) {
                              enter_desktop(win, vd);
                          }
@@ -194,16 +194,16 @@ void setup_plasma_management(Space* space, Win* win)
                      &Wrapland::Server::PlasmaWindow::enterNewPlasmaVirtualDesktopRequested,
                      win,
                      [win]() {
-                         virtual_desktop_manager::self()->setCount(
-                             virtual_desktop_manager::self()->count() + 1);
-                         enter_desktop(win, virtual_desktop_manager::self()->desktops().last());
+                         auto& vds = win->space.virtual_desktop_manager;
+                         vds->setCount(vds->count() + 1);
+                         enter_desktop(win, vds->desktops().last());
                      });
     QObject::connect(plasma_win,
                      &Wrapland::Server::PlasmaWindow::leavePlasmaVirtualDesktopRequested,
                      win,
                      [win](const QString& desktopId) {
                          auto vd
-                             = virtual_desktop_manager::self()->desktopForId(desktopId.toUtf8());
+                             = win->space.virtual_desktop_manager->desktopForId(desktopId.toUtf8());
                          if (vd) {
                              leave_desktop(win, vd);
                          }

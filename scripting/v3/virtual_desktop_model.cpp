@@ -5,6 +5,7 @@
 */
 #include "virtual_desktop_model.h"
 
+#include "win/space.h"
 #include "win/virtual_desktops.h"
 
 namespace KWin::scripting::models::v3
@@ -13,29 +14,27 @@ namespace KWin::scripting::models::v3
 virtual_desktop_model::virtual_desktop_model(QObject* parent)
     : QAbstractListModel(parent)
 {
-    auto manager = win::virtual_desktop_manager::self();
-
-    connect(manager,
+    connect(workspace()->virtual_desktop_manager.get(),
             &win::virtual_desktop_manager::desktopCreated,
             this,
             &virtual_desktop_model::handleVirtualDesktopAdded);
-    connect(manager,
+    connect(workspace()->virtual_desktop_manager.get(),
             &win::virtual_desktop_manager::desktopRemoved,
             this,
             &virtual_desktop_model::handleVirtualDesktopRemoved);
 
-    m_virtualDesktops = manager->desktops();
+    m_virtualDesktops = workspace()->virtual_desktop_manager->desktops();
 }
 
 void virtual_desktop_model::create(uint position, const QString& name)
 {
-    win::virtual_desktop_manager::self()->createVirtualDesktop(position, name);
+    workspace()->virtual_desktop_manager->createVirtualDesktop(position, name);
 }
 
 void virtual_desktop_model::remove(uint position)
 {
     if (static_cast<int>(position) < m_virtualDesktops.count()) {
-        win::virtual_desktop_manager::self()->removeVirtualDesktop(m_virtualDesktops[position]);
+        workspace()->virtual_desktop_manager->removeVirtualDesktop(m_virtualDesktops[position]);
     }
 }
 

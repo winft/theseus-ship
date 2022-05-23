@@ -321,7 +321,7 @@ void user_actions_menu::menuAboutToShow()
     if (m_client.isNull() || !m_menu)
         return;
 
-    if (win::virtual_desktop_manager::self()->count() == 1) {
+    if (workspace()->virtual_desktop_manager->count() == 1) {
         delete m_desktopMenu;
         m_desktopMenu = nullptr;
         delete m_multipleDesktopsMenu;
@@ -329,6 +329,7 @@ void user_actions_menu::menuAboutToShow()
     } else {
         initDesktopPopup();
     }
+
     if (kwinApp()->get_base().get_outputs().size() == 1
         || (!m_client->isMovable() && !m_client->isMovableAcrossScreens())) {
         delete m_screenMenu;
@@ -435,7 +436,7 @@ void user_actions_menu::desktopPopupAboutToShow()
 {
     if (!m_desktopMenu)
         return;
-    auto const vds = win::virtual_desktop_manager::self();
+    auto const vds = workspace()->virtual_desktop_manager.get();
 
     m_desktopMenu->clear();
     if (m_client) {
@@ -483,7 +484,7 @@ void user_actions_menu::multipleDesktopsPopupAboutToShow()
 {
     if (!m_multipleDesktopsMenu)
         return;
-    auto const vds = win::virtual_desktop_manager::self();
+    auto const vds = workspace()->virtual_desktop_manager.get();
 
     m_multipleDesktopsMenu->clear();
     if (m_client) {
@@ -616,7 +617,7 @@ void user_actions_menu::slotSendToDesktop(QAction* action)
     if (m_client.isNull())
         return;
     auto ws = workspace();
-    auto vds = win::virtual_desktop_manager::self();
+    auto vds = ws->virtual_desktop_manager.get();
     if (desk == 0) {
         // the 'on_all_desktops' menu entry
         if (m_client) {
@@ -641,7 +642,7 @@ void user_actions_menu::slotToggleOnVirtualDesktop(QAction* action)
     }
     show_on_desktop_action_data data = action->data().value<show_on_desktop_action_data>();
 
-    auto vds = win::virtual_desktop_manager::self();
+    auto vds = workspace()->virtual_desktop_manager.get();
     if (data.desktop == 0) {
         // the 'on_all_desktops' menu entry
         win::set_on_all_desktops(m_client.data(), !m_client->isOnAllDesktops());
@@ -653,7 +654,7 @@ void user_actions_menu::slotToggleOnVirtualDesktop(QAction* action)
     if (data.move_to_single) {
         win::set_desktop(m_client.data(), data.desktop);
     } else {
-        auto virtualDesktop = win::virtual_desktop_manager::self()->desktopForX11Id(data.desktop);
+        auto virtualDesktop = vds->desktopForX11Id(data.desktop);
         if (m_client->desktops().contains(virtualDesktop)) {
             win::leave_desktop(m_client.data(), virtualDesktop);
         } else {

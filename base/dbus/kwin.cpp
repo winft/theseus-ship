@@ -103,22 +103,22 @@ bool kwin::stopActivity(const QString& /*in0*/)
 
 int kwin::currentDesktop()
 {
-    return win::virtual_desktop_manager::self()->current();
+    return workspace()->virtual_desktop_manager->current();
 }
 
 bool kwin::setCurrentDesktop(int desktop)
 {
-    return win::virtual_desktop_manager::self()->setCurrent(desktop);
+    return workspace()->virtual_desktop_manager->setCurrent(desktop);
 }
 
 void kwin::nextDesktop()
 {
-    win::virtual_desktop_manager::self()->moveTo<win::virtual_desktop_next>();
+    workspace()->virtual_desktop_manager->moveTo<win::virtual_desktop_next>();
 }
 
 void kwin::previousDesktop()
 {
-    win::virtual_desktop_manager::self()->moveTo<win::virtual_desktop_previous>();
+    workspace()->virtual_desktop_manager->moveTo<win::virtual_desktop_previous>();
 }
 
 void kwin::showDebugConsole()

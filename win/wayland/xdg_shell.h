@@ -292,7 +292,7 @@ window* create_toplevel_window(Space* space, Wrapland::Server::XdgShellToplevel*
     QObject::connect(win, &Toplevel::clientStartUserMovedResized, win, configure);
     QObject::connect(win, &Toplevel::clientFinishUserMovedResized, win, configure);
 
-    set_desktop(win, virtual_desktop_manager::self()->current());
+    set_desktop(win, win->space.virtual_desktop_manager->current());
     set_color_scheme(win, QString());
 
     finalize_shell_window_creation(*space, win);
