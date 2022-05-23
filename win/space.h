@@ -244,7 +244,7 @@ public:
      */
     Toplevel* most_recently_raised{nullptr};
 
-    win::stacking_order* stacking_order;
+    std::unique_ptr<win::stacking_order> stacking_order;
     std::unique_ptr<win::x11::stacking_tree> x_stacking_tree;
     std::unique_ptr<win::focus_chain> focus_chain;
     std::unique_ptr<win::virtual_desktop_manager> virtual_desktop_manager;

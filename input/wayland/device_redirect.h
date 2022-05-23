@@ -29,7 +29,7 @@ void device_redirect_update(Dev* dev);
 template<typename Dev>
 void device_redirect_init(Dev* dev)
 {
-    QObject::connect(dev->redirect->space.stacking_order,
+    QObject::connect(dev->redirect->space.stacking_order.get(),
                      &win::stacking_order::changed,
                      dev,
                      [dev] { device_redirect_update(dev); });

@@ -793,7 +793,8 @@ void PointerInputTest::testFocusFollowsMouse()
     // signal spies for active window changed and stacking order changed
     QSignalSpy activeWindowChangedSpy(workspace(), &win::space::clientActivated);
     QVERIFY(activeWindowChangedSpy.isValid());
-    QSignalSpy stackingOrderChangedSpy(workspace()->stacking_order, &win::stacking_order::changed);
+    QSignalSpy stackingOrderChangedSpy(workspace()->stacking_order.get(),
+                                       &win::stacking_order::changed);
     QVERIFY(stackingOrderChangedSpy.isValid());
 
     QVERIFY(!window1->control->active());
@@ -885,7 +886,8 @@ void PointerInputTest::testMouseActionInactiveWindow()
     // Signal spies for active window changed and stacking order changed.
     QSignalSpy activeWindowChangedSpy(workspace(), &win::space::clientActivated);
     QVERIFY(activeWindowChangedSpy.isValid());
-    QSignalSpy stackingOrderChangedSpy(workspace()->stacking_order, &win::stacking_order::changed);
+    QSignalSpy stackingOrderChangedSpy(workspace()->stacking_order.get(),
+                                       &win::stacking_order::changed);
     QVERIFY(stackingOrderChangedSpy.isValid());
 
     QVERIFY(!window1->control->active());
@@ -992,7 +994,8 @@ void PointerInputTest::testMouseActionActiveWindow()
     QCOMPARE(win::top_client_on_desktop(workspace(), 1, nullptr), window1);
 
     // Signal spy for stacking order spy.
-    QSignalSpy stackingOrderChangedSpy(workspace()->stacking_order, &win::stacking_order::changed);
+    QSignalSpy stackingOrderChangedSpy(workspace()->stacking_order.get(),
+                                       &win::stacking_order::changed);
     QVERIFY(stackingOrderChangedSpy.isValid());
 
     // Move on top of second window.

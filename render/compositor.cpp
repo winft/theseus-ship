@@ -180,7 +180,10 @@ void compositor::startupWithWorkspace(win::space& space)
         Qt::UniqueConnection);
     setupX11Support();
 
-    connect(space.stacking_order, &win::stacking_order::changed, this, &compositor::addRepaintFull);
+    connect(space.stacking_order.get(),
+            &win::stacking_order::changed,
+            this,
+            &compositor::addRepaintFull);
 
     for (auto& client : space.windows()) {
         if (client->remnant()) {
@@ -195,7 +198,7 @@ void compositor::startupWithWorkspace(win::space& space)
     // Sets also the 'effects' pointer.
     platform.createEffectsHandler(this, scene());
     connect(effects, &EffectsHandler::screenGeometryChanged, this, &compositor::addRepaintFull);
-    connect(space.stacking_order, &win::stacking_order::unlocked, this, []() {
+    connect(space.stacking_order.get(), &win::stacking_order::unlocked, this, []() {
         if (auto eff_impl = static_cast<effects_handler_impl*>(effects)) {
             eff_impl->checkInputWindowStacking();
         }

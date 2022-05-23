@@ -200,7 +200,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
             }
         });
 
-    connect(ws->stacking_order,
+    connect(ws->stacking_order.get(),
             &win::stacking_order::changed,
             this,
             &EffectsHandler::stackingOrderChanged);

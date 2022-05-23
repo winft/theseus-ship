@@ -394,7 +394,8 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
     QCOMPARE(stackingOrder.front(), panel);
     QCOMPARE(stackingOrder.back(), c);
 
-    QSignalSpy stackingOrderChangedSpy(workspace()->stacking_order, &win::stacking_order::changed);
+    QSignalSpy stackingOrderChangedSpy(workspace()->stacking_order.get(),
+                                       &win::stacking_order::changed);
     QVERIFY(stackingOrderChangedSpy.isValid());
     // trigger screenedge
     QFETCH(QPoint, triggerPoint);
