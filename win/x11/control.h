@@ -933,7 +933,7 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
 
     // If a dialog is shown for minimized window, minimize it too
     if (!init_minimize && win->transient()->lead()
-        && space.sessionManager()->state() != SessionState::Saving) {
+        && space.session_manager->state() != SessionState::Saving) {
         bool visible_parent = false;
 
         for (auto const& lead : win->transient()->leads()) {
@@ -1058,7 +1058,7 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
             allow = space.allowClientActivation(win, win->userTime(), false);
         }
 
-        auto const isSessionSaving = space.sessionManager()->state() == SessionState::Saving;
+        auto const isSessionSaving = space.session_manager->state() == SessionState::Saving;
 
         // If session saving, force showing new windows (i.e. "save file?" dialogs etc.)
         // also force if activation is allowed

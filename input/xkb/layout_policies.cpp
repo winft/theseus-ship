@@ -79,7 +79,7 @@ QString const global_layout_policy::default_layout_entry_key() const
 global_layout_policy::global_layout_policy(layout_manager* manager, KConfigGroup const& config)
     : layout_policy(manager, config)
 {
-    auto session_manager = manager->xkb.platform->redirect->space.sessionManager();
+    auto session_manager = manager->xkb.platform->redirect->space.session_manager.get();
     QObject::connect(
         session_manager, &win::session_manager::prepareSessionSaveRequested, this, [this] {
             clear_layouts();
@@ -105,7 +105,7 @@ virtual_desktop_layout_policy::virtual_desktop_layout_policy(layout_manager* man
                      this,
                      &virtual_desktop_layout_policy::handle_desktop_change);
 
-    auto session_manager = space.sessionManager();
+    auto session_manager = space.session_manager.get();
     QObject::connect(
         session_manager, &win::session_manager::prepareSessionSaveRequested, this, [this] {
             clear_layouts();
@@ -250,8 +250,9 @@ application_layout_policy::application_layout_policy(layout_manager* manager,
                      this,
                      &application_layout_policy::handle_client_activated);
 
+    auto session_manager = space->session_manager.get();
     QObject::connect(
-        space->sessionManager(), &win::session_manager::prepareSessionSaveRequested, this, [this] {
+        session_manager, &win::session_manager::prepareSessionSaveRequested, this, [this] {
             clear_layouts();
 
             for (auto const& [win, layout] : layouts) {
@@ -264,18 +265,16 @@ application_layout_policy::application_layout_policy(layout_manager* manager,
                 }
             }
         });
-
-    QObject::connect(
-        space->sessionManager(), &win::session_manager::loadSessionRequested, this, [this] {
-            if (xkb::get_primary_xkb_keyboard()->layouts_count() > 1) {
-                auto const keyPrefix = default_layout_entry_key();
-                auto const keyList = this->config.keyList().filter(keyPrefix);
-                for (auto const& key : keyList) {
-                    restored_layouts.insert({QStringView(key).mid(keyPrefix.size()).toLatin1(),
-                                             this->config.readEntry(key, 0)});
-                }
+    QObject::connect(session_manager, &win::session_manager::loadSessionRequested, this, [this] {
+        if (xkb::get_primary_xkb_keyboard()->layouts_count() > 1) {
+            auto const keyPrefix = default_layout_entry_key();
+            auto const keyList = this->config.keyList().filter(keyPrefix);
+            for (auto const& key : keyList) {
+                restored_layouts.insert({QStringView(key).mid(keyPrefix.size()).toLatin1(),
+                                         this->config.readEntry(key, 0)});
             }
-        });
+        }
+    });
 }
 
 void application_layout_policy::handle_client_activated(Toplevel* window)

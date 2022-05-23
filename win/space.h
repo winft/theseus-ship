@@ -249,6 +249,7 @@ public:
     std::unique_ptr<win::focus_chain> focus_chain;
     std::unique_ptr<win::virtual_desktop_manager> virtual_desktop_manager;
     std::unique_ptr<base::dbus::kwin> dbus;
+    std::unique_ptr<win::session_manager> session_manager;
 
     void stopUpdateToolWindowsTimer();
     void resetUpdateToolWindowsTimer();
@@ -267,7 +268,6 @@ public:
      */
     std::vector<Toplevel*> remnants() const;
 
-    win::session_manager* sessionManager() const;
     void updateTabbox();
 
 private:
@@ -563,8 +563,6 @@ private:
 
     std::unique_ptr<win::kill_window> m_windowKiller;
 
-    win::session_manager* m_sessionManager;
-
 private:
     friend bool performTransiencyCheck();
 };
@@ -593,11 +591,6 @@ inline void space::removeGroup(win::x11::group* group)
 inline bool space::wasUserInteraction() const
 {
     return was_user_interaction;
-}
-
-inline win::session_manager* space::sessionManager() const
-{
-    return m_sessionManager;
 }
 
 inline bool space::showingDesktop() const

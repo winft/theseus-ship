@@ -103,7 +103,7 @@ space::space()
     , focus_chain{std::make_unique<win::focus_chain>(*this)}
     , virtual_desktop_manager{std::make_unique<win::virtual_desktop_manager>()}
     , dbus{std::make_unique<base::dbus::kwin>(*this)}
-    , m_sessionManager(new win::session_manager(this))
+    , session_manager{std::make_unique<win::session_manager>(*this)}
 {
     // For invoke methods of user_actions_menu.
     qRegisterMetaType<Toplevel*>();
@@ -132,15 +132,15 @@ space::space()
     deco->init();
     connect(this, &space::configChanged, deco->qobject.get(), [this] { deco->reconfigure(); });
 
-    connect(m_sessionManager,
+    connect(session_manager.get(),
             &win::session_manager::loadSessionRequested,
             this,
             &space::loadSessionInfo);
-    connect(m_sessionManager,
+    connect(session_manager.get(),
             &win::session_manager::prepareSessionSaveRequested,
             this,
             [this](const QString& name) { storeSession(name, win::sm_save_phase0); });
-    connect(m_sessionManager,
+    connect(session_manager.get(),
             &win::session_manager::finishSessionSaveRequested,
             this,
             [this](const QString& name) { storeSession(name, win::sm_save_phase2); });
@@ -2522,7 +2522,7 @@ bool space::allowClientActivation(Toplevel const* window,
     }
     auto level
         = window->control->rules().checkFSP(kwinApp()->options->focusStealingPreventionLevel());
-    if (sessionManager()->state() == SessionState::Saving && level <= FSP::Medium) { // <= normal
+    if (session_manager->state() == SessionState::Saving && level <= FSP::Medium) { // <= normal
         return true;
     }
     auto ac = mostRecentlyActivatedClient();
@@ -2609,7 +2609,7 @@ bool space::allowFullClientRaising(Toplevel const* window, xcb_timestamp_t time)
 {
     auto level
         = window->control->rules().checkFSP(kwinApp()->options->focusStealingPreventionLevel());
-    if (sessionManager()->state() == SessionState::Saving && level <= 2) { // <= normal
+    if (session_manager->state() == SessionState::Saving && level <= 2) { // <= normal
         return true;
     }
     auto ac = mostRecentlyActivatedClient();

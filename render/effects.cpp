@@ -177,7 +177,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
         Q_EMIT windowDeleted(d->render->effect.get());
         elevated_windows.removeAll(d->render->effect.get());
     });
-    connect(ws->sessionManager(),
+    connect(ws->session_manager.get(),
             &win::session_manager::stateChanged,
             this,
             &KWin::EffectsHandler::sessionStateChanged);
@@ -1756,7 +1756,7 @@ void effects_handler_impl::renderEffectQuickView(EffectQuickView* w) const
 
 SessionState effects_handler_impl::sessionState() const
 {
-    return workspace()->sessionManager()->state();
+    return workspace()->session_manager->state();
 }
 
 QList<EffectScreen*> effects_handler_impl::screens() const
