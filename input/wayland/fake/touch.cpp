@@ -41,7 +41,7 @@ touch::touch(Wrapland::Server::FakeInputDevice* device, input::platform* platfor
     QObject::connect(
         device, &Wrapland::Server::FakeInputDevice::touchUpRequested, this, [this](auto id) {
             // TODO: Fix time
-            this->platform->redirect->touch()->process_up({static_cast<int32_t>(id), nullptr, 0});
+            this->platform->redirect->touch()->process_up({static_cast<int32_t>(id), {nullptr, 0}});
             waylandServer()->simulate_user_activity();
         });
     QObject::connect(device,

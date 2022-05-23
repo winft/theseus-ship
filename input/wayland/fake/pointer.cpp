@@ -28,7 +28,7 @@ pointer::pointer(Wrapland::Server::FakeInputDevice* device, input::platform* pla
             // TODO: Fix time
             auto redirect = this->platform->redirect.get();
             redirect->pointer()->process_motion_absolute(
-                {redirect->globalPointer() + QPointF(delta.width(), delta.height()), this, 0});
+                {redirect->globalPointer() + QPointF(delta.width(), delta.height()), {this, 0}});
             waylandServer()->simulate_user_activity();
         });
     QObject::connect(

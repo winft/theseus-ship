@@ -195,7 +195,7 @@ QPointF get_abs_pos(QPointF const& pos, touch* dev)
 void touch_redirect::process_down(touch_down_event const& event)
 {
     auto const event_abs = touch_down_event(
-        {event.id, get_abs_pos(event.pos, event.base.dev), event.base.dev, event.base.time_msec});
+        {event.id, get_abs_pos(event.pos, event.base.dev), {event.base.dev, event.base.time_msec}});
 
     m_lastPosition = event_abs.pos;
     window_already_updated_this_cycle = false;
@@ -230,7 +230,7 @@ void touch_redirect::process_up(touch_up_event const& event)
 void touch_redirect::process_motion(touch_motion_event const& event)
 {
     auto const event_abs = touch_motion_event(
-        {event.id, get_abs_pos(event.pos, event.base.dev), event.base.dev, event.base.time_msec});
+        {event.id, get_abs_pos(event.pos, event.base.dev), {event.base.dev, event.base.time_msec}});
 
     m_lastPosition = event_abs.pos;
     window_already_updated_this_cycle = false;
