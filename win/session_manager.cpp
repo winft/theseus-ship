@@ -63,11 +63,11 @@ void session_manager::setState(SessionState state)
     }
     // If we're starting to save a session
     if (state == SessionState::Saving) {
-        RuleBook::self()->setUpdatesDisabled(true);
+        workspace()->rule_book->setUpdatesDisabled(true);
     }
     // If we're ending a save session due to either completion or cancellation
     if (m_sessionState == SessionState::Saving) {
-        RuleBook::self()->setUpdatesDisabled(false);
+        workspace()->rule_book->setUpdatesDisabled(false);
     }
     m_sessionState = state;
     Q_EMIT stateChanged();

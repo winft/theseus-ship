@@ -69,7 +69,7 @@ void WindowRules::update(Toplevel* window, int selection)
         }
     }
     if (updated) {
-        RuleBook::self()->requestDiskStorage();
+        window->space.rule_book->requestDiskStorage();
     }
 }
 
@@ -336,7 +336,7 @@ void Toplevel::applyWindowRules()
 
 void Toplevel::updateWindowRules(Rules::Types selection)
 {
-    if (RuleBook::self()->areUpdatesDisabled()) {
+    if (space.rule_book->areUpdatesDisabled()) {
         return;
     }
     control->rules().update(this, selection);

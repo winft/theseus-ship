@@ -172,7 +172,7 @@ void TestXdgShellClientRules::cleanup()
     Test::destroy_wayland_connection();
 
     // Unreference the previous config.
-    RuleBook::self()->setConfig({});
+    Test::app()->workspace->rule_book->setConfig({});
     workspace()->slotReconfigure();
 
     // Restore virtual desktops to the initial state.
@@ -228,7 +228,7 @@ void TestXdgShellClientRules::testPositionDontAffect()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -263,7 +263,7 @@ void TestXdgShellClientRules::testPositionApply()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -339,7 +339,7 @@ void TestXdgShellClientRules::testPositionRemember()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -415,7 +415,7 @@ void TestXdgShellClientRules::testPositionForce()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -486,7 +486,7 @@ void TestXdgShellClientRules::testPositionApplyNow()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
 
     // The client should be moved to the position specified by the rule.
     QSignalSpy geometryChangedSpy(client, &Toplevel::frame_geometry_changed);
@@ -550,7 +550,7 @@ void TestXdgShellClientRules::testPositionForceTemporarily()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -607,7 +607,7 @@ void TestXdgShellClientRules::testSizeDontAffect()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -655,7 +655,7 @@ void TestXdgShellClientRules::testSizeApply()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -791,7 +791,7 @@ void TestXdgShellClientRules::testSizeRemember()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -926,7 +926,7 @@ void TestXdgShellClientRules::testSizeForce()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -1037,7 +1037,7 @@ void TestXdgShellClientRules::testSizeApplyNow()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // The compositor should send a configure event with a new size.
@@ -1076,7 +1076,7 @@ void TestXdgShellClientRules::testSizeForceTemporarily()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -1163,7 +1163,7 @@ void TestXdgShellClientRules::testMaximizeDontAffect()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -1221,7 +1221,7 @@ void TestXdgShellClientRules::testMaximizeApply()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -1333,7 +1333,7 @@ void TestXdgShellClientRules::testMaximizeRemember()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -1445,7 +1445,7 @@ void TestXdgShellClientRules::testMaximizeForce()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -1579,7 +1579,7 @@ void TestXdgShellClientRules::testMaximizeApplyNow()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // We should receive a configure event with a new surface size.
@@ -1647,7 +1647,7 @@ void TestXdgShellClientRules::testMaximizeForceTemporarily()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -1744,7 +1744,7 @@ void TestXdgShellClientRules::testDesktopDontAffect()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // We need at least two virtual desktop for this test.
@@ -1783,7 +1783,7 @@ void TestXdgShellClientRules::testDesktopApply()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // We need at least two virtual desktop for this test.
@@ -1838,7 +1838,7 @@ void TestXdgShellClientRules::testDesktopRemember()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // We need at least two virtual desktop for this test.
@@ -1889,7 +1889,7 @@ void TestXdgShellClientRules::testDesktopForce()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // We need at least two virtual desktop for this test.
@@ -1960,7 +1960,7 @@ void TestXdgShellClientRules::testDesktopApplyNow()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // The client should have been moved to the second virtual desktop.
@@ -1995,7 +1995,7 @@ void TestXdgShellClientRules::testDesktopForceTemporarily()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // We need at least two virtual desktop for this test.
@@ -2058,7 +2058,7 @@ void TestXdgShellClientRules::testMinimizeDontAffect()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -2090,7 +2090,7 @@ void TestXdgShellClientRules::testMinimizeApply()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -2146,7 +2146,7 @@ void TestXdgShellClientRules::testMinimizeRemember()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -2197,7 +2197,7 @@ void TestXdgShellClientRules::testMinimizeForce()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -2251,7 +2251,7 @@ void TestXdgShellClientRules::testMinimizeApplyNow()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // The client should be minimized now.
@@ -2285,7 +2285,7 @@ void TestXdgShellClientRules::testMinimizeForceTemporarily()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -2330,7 +2330,7 @@ void TestXdgShellClientRules::testSkipTaskbarDontAffect()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -2361,7 +2361,7 @@ void TestXdgShellClientRules::testSkipTaskbarApply()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -2404,7 +2404,7 @@ void TestXdgShellClientRules::testSkipTaskbarRemember()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -2449,7 +2449,7 @@ void TestXdgShellClientRules::testSkipTaskbarForce()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -2502,7 +2502,7 @@ void TestXdgShellClientRules::testSkipTaskbarApplyNow()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // The client should not be on a taskbar now.
@@ -2534,7 +2534,7 @@ void TestXdgShellClientRules::testSkipTaskbarForceTemporarily()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -2581,7 +2581,7 @@ void TestXdgShellClientRules::testSkipPagerDontAffect()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -2612,7 +2612,7 @@ void TestXdgShellClientRules::testSkipPagerApply()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -2655,7 +2655,7 @@ void TestXdgShellClientRules::testSkipPagerRemember()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -2700,7 +2700,7 @@ void TestXdgShellClientRules::testSkipPagerForce()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -2753,7 +2753,7 @@ void TestXdgShellClientRules::testSkipPagerApplyNow()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // The client should not be on a pager now.
@@ -2785,7 +2785,7 @@ void TestXdgShellClientRules::testSkipPagerForceTemporarily()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -2832,7 +2832,7 @@ void TestXdgShellClientRules::testSkipSwitcherDontAffect()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -2863,7 +2863,7 @@ void TestXdgShellClientRules::testSkipSwitcherApply()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -2906,7 +2906,7 @@ void TestXdgShellClientRules::testSkipSwitcherRemember()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -2951,7 +2951,7 @@ void TestXdgShellClientRules::testSkipSwitcherForce()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -3004,7 +3004,7 @@ void TestXdgShellClientRules::testSkipSwitcherApplyNow()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // The client should be excluded from window switching effects now.
@@ -3036,7 +3036,7 @@ void TestXdgShellClientRules::testSkipSwitcherForceTemporarily()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -3083,7 +3083,7 @@ void TestXdgShellClientRules::testKeepAboveDontAffect()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -3114,7 +3114,7 @@ void TestXdgShellClientRules::testKeepAboveApply()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -3157,7 +3157,7 @@ void TestXdgShellClientRules::testKeepAboveRemember()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -3200,7 +3200,7 @@ void TestXdgShellClientRules::testKeepAboveForce()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -3251,7 +3251,7 @@ void TestXdgShellClientRules::testKeepAboveApplyNow()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // The client should now be kept above other clients.
@@ -3283,7 +3283,7 @@ void TestXdgShellClientRules::testKeepAboveForceTemporarily()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -3332,7 +3332,7 @@ void TestXdgShellClientRules::testKeepBelowDontAffect()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -3363,7 +3363,7 @@ void TestXdgShellClientRules::testKeepBelowApply()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -3406,7 +3406,7 @@ void TestXdgShellClientRules::testKeepBelowRemember()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -3449,7 +3449,7 @@ void TestXdgShellClientRules::testKeepBelowForce()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -3500,7 +3500,7 @@ void TestXdgShellClientRules::testKeepBelowApplyNow()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // The client should now be kept below other clients.
@@ -3532,7 +3532,7 @@ void TestXdgShellClientRules::testKeepBelowForceTemporarily()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -3581,7 +3581,7 @@ void TestXdgShellClientRules::testShortcutDontAffect()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -3625,7 +3625,7 @@ void TestXdgShellClientRules::testShortcutApply()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -3707,7 +3707,7 @@ void TestXdgShellClientRules::testShortcutRemember()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -3777,7 +3777,7 @@ void TestXdgShellClientRules::testShortcutForce()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -3853,7 +3853,7 @@ void TestXdgShellClientRules::testShortcutApplyNow()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // The client should now have a window shortcut assigned.
@@ -3910,7 +3910,7 @@ void TestXdgShellClientRules::testShortcutForceTemporarily()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -4024,7 +4024,7 @@ void TestXdgShellClientRules::testActiveOpacityDontAffect()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -4056,7 +4056,7 @@ void TestXdgShellClientRules::testActiveOpacityForce()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -4086,7 +4086,7 @@ void TestXdgShellClientRules::testActiveOpacityForceTemporarily()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -4125,7 +4125,7 @@ void TestXdgShellClientRules::testInactiveOpacityDontAffect()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -4161,7 +4161,7 @@ void TestXdgShellClientRules::testInactiveOpacityForce()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -4198,7 +4198,7 @@ void TestXdgShellClientRules::testInactiveOpacityForceTemporarily()
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // Create the test client.
@@ -4247,7 +4247,7 @@ void TestXdgShellClientRules::testMatchAfterNameChange()
     group.writeEntry("wmclassmatch", int(Rules::ExactMatch));
     group.sync();
 
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     auto surface = Test::create_surface();

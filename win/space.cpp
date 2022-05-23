@@ -96,6 +96,7 @@ space::space()
     , outline(std::make_unique<render::outline>())
     , deco{std::make_unique<deco::bridge<space>>(*this)}
     , app_menu{std::make_unique<win::app_menu>(*this)}
+    , rule_book{std::make_unique<RuleBook>(*this)}
     , user_actions_menu{std::make_unique<win::user_actions_menu>()}
     , stacking_order(new win::stacking_order)
     , x_stacking_tree(std::make_unique<win::x11::stacking_tree>())
@@ -111,7 +112,7 @@ space::space()
     m_quickTileCombineTimer = new QTimer(this);
     m_quickTileCombineTimer->setSingleShot(true);
 
-    RuleBook::create(this)->load();
+    rule_book->load();
 
     // dbus interface
     new win::dbus::virtual_desktop_manager(virtual_desktop_manager.get());
@@ -246,7 +247,7 @@ space::~space()
 
     delete stacking_order;
 
-    delete RuleBook::self();
+    rule_book.reset();
     kwinApp()->config()->sync();
 
     win::x11::root_info::destroy();
@@ -306,11 +307,11 @@ void space::slotReconfigure()
     user_actions_menu->discard();
     win::update_tool_windows(this, true);
 
-    RuleBook::self()->load();
+    rule_book->load();
     for (auto window : m_windows) {
         if (window->supportsWindowRules()) {
             win::evaluate_rules(window);
-            RuleBook::self()->discardUsed(window, false);
+            rule_book->discardUsed(window, false);
         }
     }
 
@@ -3099,10 +3100,10 @@ void space::performWindowOperation(Toplevel* window, base::options::WindowOperat
         break;
     }
     case base::options::WindowRulesOp:
-        RuleBook::self()->edit(window, false);
+        rule_book->edit(window, false);
         break;
     case base::options::ApplicationRulesOp:
-        RuleBook::self()->edit(window, true);
+        rule_book->edit(window, true);
         break;
     case base::options::SetupWindowShortcutOp:
         setupWindowShortcut(window);

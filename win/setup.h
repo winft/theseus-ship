@@ -26,7 +26,7 @@ void setup_rules(Win* win, bool ignore_temporary)
     //                There is only one so this works fine but it's not robustly specified.
     //                Either reshuffle later or use explicit connection object.
     QObject::disconnect(win, &Win::captionChanged, win, nullptr);
-    win->control->set_rules(RuleBook::self()->find(win, ignore_temporary));
+    win->control->set_rules(win->space.rule_book->find(win, ignore_temporary));
     // check only after getting the rules, because there may be a rule forcing window type
     // TODO(romangg): what does this mean?
 }

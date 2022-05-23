@@ -70,7 +70,7 @@ void WindowRuleTest::init()
 void WindowRuleTest::cleanup()
 {
     // discards old rules
-    RuleBook::self()->load();
+    Test::app()->workspace->rule_book->load();
 }
 
 void xcb_connection_deleter(xcb_connection_t* pointer)
@@ -99,7 +99,7 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
     // vertical the window is matched by class and role load the rule
     QFile ruleFile(QFINDTESTDATA("./data/rules/maximize-vert-apply-initial"));
     QVERIFY(ruleFile.open(QIODevice::ReadOnly | QIODevice::Text));
-    QMetaObject::invokeMethod(RuleBook::self(),
+    QMetaObject::invokeMethod(Test::app()->workspace->rule_book.get(),
                               "temporaryRulesMessage",
                               Q_ARG(QString, QString::fromUtf8(ruleFile.readAll())));
 
@@ -184,7 +184,7 @@ void WindowRuleTest::testWindowClassChange()
     group.writeEntry("wmclassmatch", 1);
     group.sync();
 
-    RuleBook::self()->setConfig(config);
+    Test::app()->workspace->rule_book->setConfig(config);
     workspace()->slotReconfigure();
 
     // create the test window

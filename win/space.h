@@ -47,6 +47,8 @@ class QStringList;
 namespace KWin
 {
 
+class RuleBook;
+
 namespace base::x11
 {
 
@@ -126,6 +128,7 @@ public:
     std::unique_ptr<win::app_menu> app_menu;
     std::unique_ptr<input::redirect> input;
     std::unique_ptr<win::tabbox> tabbox;
+    std::unique_ptr<RuleBook> rule_book;
     std::unique_ptr<x11::color_mapper> color_mapper;
 
     QScopedPointer<base::x11::event_filter> m_wasUserInteractionFilter;

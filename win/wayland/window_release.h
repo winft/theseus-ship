@@ -57,7 +57,7 @@ void destroy_window(Win* win)
             win->leaveMoveResize();
         }
 
-        RuleBook::self()->discardUsed(win, true);
+        win->space.rule_book->discardUsed(win, true);
 
         win->control->destroy_wayland_management();
         win->control->destroy_decoration();
