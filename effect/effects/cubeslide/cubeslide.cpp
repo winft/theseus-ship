@@ -273,7 +273,7 @@ void CubeSlideEffect::paintWindow(EffectWindow* w, int mask, QRegion region, Win
         if (w->isOnDesktop(painting_desktop)) {
             if (w->x() < rect.x()) {
                 WindowQuadList new_quads;
-                for (auto const& quad : data.quads) {
+                for (auto const& quad : qAsConst(data.quads)) {
                     if (quad.right() > -w->x()) {
                         new_quads.append(quad);
                     }
@@ -282,7 +282,7 @@ void CubeSlideEffect::paintWindow(EffectWindow* w, int mask, QRegion region, Win
             }
             if (w->x() + w->width() > rect.x() + rect.width()) {
                 WindowQuadList new_quads;
-                for (auto const& quad : data.quads) {
+                for (auto const& quad : qAsConst(data.quads)) {
                     if (quad.right() <= rect.width() - w->x()) {
                         new_quads.append(quad);
                     }
@@ -291,7 +291,7 @@ void CubeSlideEffect::paintWindow(EffectWindow* w, int mask, QRegion region, Win
             }
             if (w->y() < rect.y()) {
                 WindowQuadList new_quads;
-                for (auto const& quad : data.quads) {
+                for (auto const& quad : qAsConst(data.quads)) {
                     if (quad.bottom() > -w->y()) {
                         new_quads.append(quad);
                     }
@@ -300,7 +300,7 @@ void CubeSlideEffect::paintWindow(EffectWindow* w, int mask, QRegion region, Win
             }
             if (w->y() + w->height() > rect.y() + rect.height()) {
                 WindowQuadList new_quads;
-                for (auto const& quad : data.quads) {
+                for (auto const& quad : qAsConst(data.quads)) {
                     if (quad.bottom() <= rect.height() - w->y()) {
                         new_quads.append(quad);
                     }
@@ -314,7 +314,7 @@ void CubeSlideEffect::paintWindow(EffectWindow* w, int mask, QRegion region, Win
             if (w->x() < rect.x() && (direction == Left || direction == Right)) {
                 WindowQuadList new_quads;
                 data.setXTranslation(rect.width());
-                for (auto const& quad : data.quads) {
+                for (auto const& quad : qAsConst(data.quads)) {
                     if (quad.right() <= -w->x()) {
                         new_quads.append(quad);
                     }
@@ -325,7 +325,7 @@ void CubeSlideEffect::paintWindow(EffectWindow* w, int mask, QRegion region, Win
                 && (direction == Left || direction == Right)) {
                 WindowQuadList new_quads;
                 data.setXTranslation(-rect.width());
-                for (auto const& quad : data.quads) {
+                for (auto const& quad : qAsConst(data.quads)) {
                     if (quad.right() > rect.width() - w->x()) {
                         new_quads.append(quad);
                     }
@@ -335,7 +335,7 @@ void CubeSlideEffect::paintWindow(EffectWindow* w, int mask, QRegion region, Win
             if (w->y() < rect.y() && (direction == Upwards || direction == Downwards)) {
                 WindowQuadList new_quads;
                 data.setYTranslation(rect.height());
-                for (auto const& quad : data.quads) {
+                for (auto const& quad : qAsConst(data.quads)) {
                     if (quad.bottom() <= -w->y()) {
                         new_quads.append(quad);
                     }
@@ -346,7 +346,7 @@ void CubeSlideEffect::paintWindow(EffectWindow* w, int mask, QRegion region, Win
                 && (direction == Upwards || direction == Downwards)) {
                 WindowQuadList new_quads;
                 data.setYTranslation(-rect.height());
-                for (auto const& quad : data.quads) {
+                for (auto const& quad : qAsConst(data.quads)) {
                     if (quad.bottom() > rect.height() - w->y()) {
                         new_quads.append(quad);
                     }
@@ -400,7 +400,7 @@ void CubeSlideEffect::postPaintScreen()
             else
                 timeLine.setEasingCurve(QEasingCurve::Linear);
             if (slideRotations.empty()) {
-                for (EffectWindow* w : staticWindows) {
+                for (EffectWindow* w : qAsConst(staticWindows)) {
                     w->setData(WindowForceBlurRole, QVariant());
                     w->setData(WindowForceBackgroundContrastRole, QVariant());
                 }
@@ -689,7 +689,7 @@ void CubeSlideEffect::slotNumberDesktopsChanged()
         return;
     }
 
-    for (EffectWindow* w : staticWindows) {
+    for (EffectWindow* w : qAsConst(staticWindows)) {
         w->setData(WindowForceBlurRole, QVariant());
         w->setData(WindowForceBackgroundContrastRole, QVariant());
     }

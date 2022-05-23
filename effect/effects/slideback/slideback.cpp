@@ -158,7 +158,8 @@ void SlideBackEffect::prePaintScreen(ScreenPrePaintData& data,
         data.mask |= Effect::PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS;
     }
 
-    for (auto const& w : effects->stackingOrder()) {
+    auto const stack = effects->stackingOrder();
+    for (auto const& w : stack) {
         w->setData(WindowForceBlurRole, QVariant(true));
     }
 

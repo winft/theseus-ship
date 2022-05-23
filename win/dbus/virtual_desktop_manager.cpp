@@ -54,7 +54,8 @@ virtual_desktop_manager::virtual_desktop_manager(win::virtual_desktop_manager* p
                      this,
                      &virtual_desktop_manager::rowsChanged);
 
-    for (auto vd : m_manager->desktops()) {
+    auto const desks = m_manager->desktops();
+    for (auto vd : desks) {
         QObject::connect(vd, &win::virtual_desktop::x11DesktopNumberChanged, this, [this, vd]() {
             virtual_desktop_data data{
                 .position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};

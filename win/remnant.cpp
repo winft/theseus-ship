@@ -78,7 +78,8 @@ remnant::remnant(Toplevel* win, Toplevel* source)
     win->transient()->set_modal(source->transient()->modal());
     was_group_transient = source->groupTransient();
 
-    for (auto vd : win->desktops()) {
+    auto const desktops = win->desktops();
+    for (auto vd : desktops) {
         QObject::connect(vd, &QObject::destroyed, win, [=] {
             auto desks = win->desktops();
             desks.removeOne(vd);

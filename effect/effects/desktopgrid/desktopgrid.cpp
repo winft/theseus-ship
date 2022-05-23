@@ -209,7 +209,8 @@ void DesktopGridEffect::prePaintScreen(ScreenPrePaintData& data,
             finish();
     }
 
-    for (auto const& w : effects->stackingOrder()) {
+    auto const stack = effects->stackingOrder();
+    for (auto const& w : stack) {
         w->setData(WindowForceBlurRole, QVariant(true));
     }
 
@@ -229,7 +230,7 @@ void DesktopGridEffect::paintScreen(int mask, const QRegion& region, ScreenPaint
     }
 
     // paint the add desktop button
-    for (EffectQuickScene* view : m_desktopButtons) {
+    for (EffectQuickScene* view : qAsConst(m_desktopButtons)) {
         view->rootItem()->setOpacity(timeline.currentValue());
         effects->renderEffectQuickView(view);
     }
@@ -500,7 +501,7 @@ void DesktopGridEffect::windowInputMouseEvent(QEvent* e)
         return;
     QMouseEvent* me = static_cast<QMouseEvent*>(e);
     if (!(wasWindowMove || wasDesktopMove)) {
-        for (EffectQuickScene* view : m_desktopButtons) {
+        for (EffectQuickScene* view : qAsConst(m_desktopButtons)) {
             view->forwardMouseEvent(me);
             if (e->isAccepted()) {
                 return;
@@ -1109,7 +1110,7 @@ void DesktopGridEffect::setActive(bool active)
         QTimer::singleShot(zoomDuration + 1, this, [this] {
             if (activated)
                 return;
-            for (EffectQuickScene* view : m_desktopButtons) {
+            for (EffectQuickScene* view : qAsConst(m_desktopButtons)) {
                 view->hide();
             }
         });
@@ -1453,7 +1454,8 @@ void DesktopGridEffect::desktopsRemoved(int old)
     if (isUsingPresentWindows()) {
         for (int j = 0; j < effects->numScreens(); ++j) {
             WindowMotionManager& manager = m_managers[(desktop - 1) * (effects->numScreens()) + j];
-            for (auto const& w : effects->stackingOrder()) {
+            auto const stack = effects->stackingOrder();
+            for (auto const& w : stack) {
                 if (manager.isManaging(w))
                     continue;
                 if (w->isOnDesktop(desktop) && w->screen() == j
@@ -1486,7 +1488,8 @@ QVector<int> DesktopGridEffect::desktopList(const EffectWindow* w) const
     QVector<int> desks;
     desks.resize(w->desktops().count());
     int i = 0;
-    for (const int desk : w->desktops()) {
+    auto const desktops = w->desktops();
+    for (const int desk : desktops) {
         desks[i++] = desk - 1;
     }
     return desks;

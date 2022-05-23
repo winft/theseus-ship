@@ -45,7 +45,8 @@ void platform::init()
 {
     // TODO(romangg): Has to be here because in the integration tests base.backend is not yet
     //                available in the ctor. Can we change that?
-    for (auto render_type : get_supported_render_types(*this)) {
+    auto const supported_types = get_supported_render_types(*this);
+    for (auto render_type : supported_types) {
         if (render_type == OpenGLCompositing) {
             egl = create_render_backend<egl_backend>(*this, "gles2");
             break;

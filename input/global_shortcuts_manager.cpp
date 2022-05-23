@@ -55,7 +55,7 @@ void global_shortcuts_manager::objectDeleted(QObject* object)
 
 bool global_shortcuts_manager::addIfNotExists(global_shortcut sc)
 {
-    for (const auto& cs : m_shortcuts) {
+    for (const auto& cs : qAsConst(m_shortcuts)) {
         if (sc.shortcut() == cs.shortcut()) {
             return false;
         }

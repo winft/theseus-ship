@@ -1336,7 +1336,7 @@ void PresentWindowsEffect::calculateWindowTransformationsNatural(EffectWindowLis
         overlap = false;
         for (auto const& w : qAsConst(windowlist)) {
             QRect* target_w = &targets[w];
-            for (auto const& e : windowlist) {
+            for (auto const& e : qAsConst(windowlist)) {
                 if (w == e)
                     continue;
 

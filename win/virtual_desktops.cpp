@@ -253,7 +253,7 @@ void virtual_desktop_manager::setRootInfo(NETRootInfo* info)
         updateRootInfo();
         m_rootInfo->setCurrentDesktop(currentDesktop()->x11DesktopNumber());
 
-        for (auto vd : m_desktops) {
+        for (auto vd : qAsConst(m_desktops)) {
             m_rootInfo->setDesktopName(vd->x11DesktopNumber(), vd->name().toUtf8().data());
         }
     }
@@ -659,7 +659,7 @@ void virtual_desktop_manager::setCount(uint count)
     if (!s_loadingDesktopSettings) {
         save();
     }
-    for (auto vd : newDesktops) {
+    for (auto vd : qAsConst(newDesktops)) {
         Q_EMIT desktopCreated(vd);
     }
 

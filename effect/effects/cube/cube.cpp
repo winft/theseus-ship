@@ -1226,7 +1226,7 @@ void CubeEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPa
         if (w->isOnDesktop(prev_desktop) && (mask & PAINT_WINDOW_TRANSFORMED)) {
             QRect rect = effects->clientArea(FullArea, activeScreen, prev_desktop);
             WindowQuadList new_quads;
-            for (auto const& quad : data.quads) {
+            for (auto const& quad : qAsConst(data.quads)) {
                 if (quad.right() > rect.width() - w->x()) {
                     new_quads.append(quad);
                 }
@@ -1237,7 +1237,7 @@ void CubeEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPa
         if (w->isOnDesktop(next_desktop) && (mask & PAINT_WINDOW_TRANSFORMED)) {
             QRect rect = effects->clientArea(FullArea, activeScreen, next_desktop);
             WindowQuadList new_quads;
-            for (auto const& quad : data.quads) {
+            for (auto const& quad : qAsConst(data.quads)) {
                 if (w->x() + quad.right() <= rect.x()) {
                     new_quads.append(quad);
                 }
@@ -1276,7 +1276,7 @@ void CubeEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPa
 
         if (w->isOnDesktop(painting_desktop) && w->x() < rect.x()) {
             WindowQuadList new_quads;
-            for (auto const& quad : data.quads) {
+            for (auto const& quad : qAsConst(data.quads)) {
                 if (quad.right() > -w->x()) {
                     new_quads.append(quad);
                 }
@@ -1285,7 +1285,7 @@ void CubeEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPa
         }
         if (w->isOnDesktop(painting_desktop) && w->x() + w->width() > rect.x() + rect.width()) {
             WindowQuadList new_quads;
-            for (auto const& quad : data.quads) {
+            for (auto const& quad : qAsConst(data.quads)) {
                 if (quad.right() <= rect.width() - w->x()) {
                     new_quads.append(quad);
                 }
@@ -1294,7 +1294,7 @@ void CubeEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPa
         }
         if (w->y() < rect.y()) {
             WindowQuadList new_quads;
-            for (auto const& quad : data.quads) {
+            for (auto const& quad : qAsConst(data.quads)) {
                 if (quad.bottom() > -w->y()) {
                     new_quads.append(quad);
                 }
@@ -1303,7 +1303,7 @@ void CubeEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPa
         }
         if (w->y() + w->height() > rect.y() + rect.height()) {
             WindowQuadList new_quads;
-            for (auto const& quad : data.quads) {
+            for (auto const& quad : qAsConst(data.quads)) {
                 if (quad.bottom() <= rect.height() - w->y()) {
                     new_quads.append(quad);
                 }
