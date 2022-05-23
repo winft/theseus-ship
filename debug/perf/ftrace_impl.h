@@ -19,9 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
-#include "kwinglobals.h"
-
 #include <QFile>
+#include <QString>
+#include <memory>
 
 namespace KWin
 {
@@ -31,11 +31,10 @@ namespace Perf
 /**
  * Provides an interface to mark the Ftrace output for debugging.
  */
-class FtraceImpl : public QObject
+class FtraceImpl
 {
-    Q_OBJECT
 public:
-    ~FtraceImpl() override = default;
+    static FtraceImpl& instance();
 
     /**
      * @brief Enables or disables the marker
@@ -49,11 +48,10 @@ public:
     void printEnd(const QString& message, ulong ctx);
 
 private:
+    FtraceImpl() = default;
     bool findFile();
 
-    QFile* m_file = nullptr;
-
-    KWIN_SINGLETON(FtraceImpl)
+    std::unique_ptr<QFile> m_file;
 };
 
 }

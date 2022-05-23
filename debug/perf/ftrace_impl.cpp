@@ -43,20 +43,15 @@ void writeFunctionDisabled(QFile* file, const QString& message)
 
 void (*s_writeFunction)(QFile* file, const QString& message) = writeFunctionDisabled;
 
-KWIN_SINGLETON_FACTORY(FtraceImpl)
-
-FtraceImpl::FtraceImpl(QObject* parent)
-    : QObject(parent)
+FtraceImpl& FtraceImpl::instance()
 {
-    if (qEnvironmentVariableIsSet("KWIN_PERF_FTRACE")) {
-        qCDebug(KWIN_CORE) << "Ftrace marking initially enabled via environment variable";
-        setEnabled(true);
-    }
+    static FtraceImpl impl;
+    return impl;
 }
 
 bool FtraceImpl::setEnabled(bool enable)
 {
-    if ((bool)m_file == enable) {
+    if (static_cast<bool>(m_file) == enable) {
         // no change
         return true;
     }
@@ -69,25 +64,24 @@ bool FtraceImpl::setEnabled(bool enable)
         s_writeFunction = writeFunctionEnabled;
     } else {
         s_writeFunction = writeFunctionDisabled;
-        delete m_file;
-        m_file = nullptr;
+        m_file.reset();
     }
     return true;
 }
 
 void FtraceImpl::print(const QString& message)
 {
-    (*s_writeFunction)(m_file, message);
+    (*s_writeFunction)(m_file.get(), message);
 }
 
 void FtraceImpl::printBegin(const QString& message, ulong ctx)
 {
-    (*s_writeFunction)(m_file, message + QStringLiteral(" (begin_ctx=%1)").arg(ctx));
+    (*s_writeFunction)(m_file.get(), message + QStringLiteral(" (begin_ctx=%1)").arg(ctx));
 }
 
 void FtraceImpl::printEnd(const QString& message, ulong ctx)
 {
-    (*s_writeFunction)(m_file, message + QStringLiteral(" (end_ctx=%1)").arg(ctx));
+    (*s_writeFunction)(m_file.get(), message + QStringLiteral(" (end_ctx=%1)").arg(ctx));
 }
 
 bool FtraceImpl::findFile()
@@ -142,11 +136,10 @@ bool FtraceImpl::findFile()
     }
 
     const QString path = markerFileInfo.absoluteFilePath();
-    m_file = new QFile(path, this);
+    m_file = std::make_unique<QFile>(path);
     if (!m_file->open(QIODevice::WriteOnly)) {
         qCWarning(KWIN_CORE) << "No access to trace marker file at:" << path;
-        delete m_file;
-        m_file = nullptr;
+        m_file.reset();
         return false;
     }
     return true;

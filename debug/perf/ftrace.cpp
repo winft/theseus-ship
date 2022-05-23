@@ -35,31 +35,20 @@ namespace Ftrace
 #if HAVE_PERF
 void mark(const QString& message)
 {
-    FtraceImpl::self()->print(message);
+    FtraceImpl::instance().print(message);
 }
 void begin(const QString& message, ulong ctx)
 {
-    FtraceImpl::self()->printBegin(message, ctx);
+    FtraceImpl::instance().printBegin(message, ctx);
 }
 void end(const QString& message, ulong ctx)
 {
-    FtraceImpl::self()->printEnd(message, ctx);
-}
-
-bool valid(QObject* parent, bool create)
-{
-    if (FtraceImpl::self()) {
-        return true;
-    }
-    if (!create) {
-        return false;
-    }
-    return FtraceImpl::create(parent) != nullptr;
+    FtraceImpl::instance().printEnd(message, ctx);
 }
 
 bool setEnabled(bool enable)
 {
-    return FtraceImpl::self()->setEnabled(enable);
+    return FtraceImpl::instance().setEnabled(enable);
 }
 #else
 void mark(const QString& message)
@@ -77,11 +66,10 @@ void end(const QString& message, ulong ctx)
     Q_UNUSED(ctx)
 }
 
-bool valid(QObject* parent, bool create)
+bool setEnabled(bool enable)
 {
-    Q_UNUSED(parent)
-    Q_UNUSED(create)
-    return false;
+    // Report error iff trying to enable.
+    return !enable;
 }
 #endif
 

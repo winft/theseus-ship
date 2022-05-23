@@ -129,24 +129,15 @@ void kwin::showDebugConsole()
 
 void kwin::enableFtrace(bool enable)
 {
-    const QString name = QStringLiteral("org.kde.kwin.enableFtrace");
-#if HAVE_PERF
-    if (!Perf::Ftrace::valid()) {
-        const QString msg = QStringLiteral("Ftrace marker not available");
-        QDBusConnection::sessionBus().send(message().createErrorReply(name, msg));
+    if (Perf::Ftrace::setEnabled(enable)) {
         return;
     }
-    if (!Perf::Ftrace::setEnabled(enable)) {
-        const QString msg = QStringLiteral("Ftrace marker is available but could not be ")
-                                .append(enable ? "enabled" : "disabled");
-        QDBusConnection::sessionBus().send(message().createErrorReply(name, msg));
-    }
-    return;
-#else
-    Q_UNUSED(enable)
-    const QString msg = QStringLiteral("KWin built without ftrace marking capability");
-    QDBusConnection::sessionBus().send(message().createErrorReply(name, msg));
-#endif
+
+    // Operation failed. Send error reply.
+    auto const msg
+        = QStringLiteral("Ftrace marker could not be ").append(enable ? "enabled" : "disabled");
+    QDBusConnection::sessionBus().send(
+        message().createErrorReply("org.kde.KWin.enableFtrace", msg));
 }
 
 namespace
