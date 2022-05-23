@@ -17,9 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
-#ifndef KWIN_LIB_KWINGLOBALS_H
-#define KWIN_LIB_KWINGLOBALS_H
+#pragma once
 
 #include <QCoreApplication>
 #include <QImage>
@@ -214,36 +212,4 @@ private:
     QPoint m_hotSpot;
 };
 
-} // namespace
-
-#define KWIN_SINGLETON_VARIABLE(ClassName, variableName)                                           \
-public:                                                                                            \
-    static ClassName* create(QObject* parent = nullptr);                                           \
-    static ClassName* self()                                                                       \
-    {                                                                                              \
-        return variableName;                                                                       \
-    }                                                                                              \
-                                                                                                   \
-protected:                                                                                         \
-    explicit ClassName(QObject* parent = nullptr);                                                 \
-                                                                                                   \
-private:                                                                                           \
-    static ClassName* variableName;
-
-#define KWIN_SINGLETON(ClassName) KWIN_SINGLETON_VARIABLE(ClassName, s_self)
-
-#define KWIN_SINGLETON_FACTORY_VARIABLE_FACTORED(ClassName, FactoredClassName, variableName)       \
-    ClassName* ClassName::variableName = nullptr;                                                  \
-    ClassName* ClassName::create(QObject* parent)                                                  \
-    {                                                                                              \
-        Q_ASSERT(!variableName);                                                                   \
-        variableName = new FactoredClassName(parent);                                              \
-        return variableName;                                                                       \
-    }
-#define KWIN_SINGLETON_FACTORY_VARIABLE(ClassName, variableName)                                   \
-    KWIN_SINGLETON_FACTORY_VARIABLE_FACTORED(ClassName, ClassName, variableName)
-#define KWIN_SINGLETON_FACTORY_FACTORED(ClassName, FactoredClassName)                              \
-    KWIN_SINGLETON_FACTORY_VARIABLE_FACTORED(ClassName, FactoredClassName, s_self)
-#define KWIN_SINGLETON_FACTORY(ClassName) KWIN_SINGLETON_FACTORY_VARIABLE(ClassName, s_self)
-
-#endif
+}
