@@ -128,12 +128,12 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     // pass start
     m_currentBuildQuadsIterator = m_activeEffects.constEnd();
 
-    auto ws = workspace();
+    auto ws = compositor->space;
     auto& vds = ws->virtual_desktop_manager;
     connect(
         ws, &win::space::showingDesktopChanged, this, &effects_handler_impl::showingDesktopChanged);
     connect(ws, &win::space::currentDesktopChanged, this, [this](int old, Toplevel* c) {
-        int const newDesktop = workspace()->virtual_desktop_manager->current();
+        int const newDesktop = m_compositor->space->virtual_desktop_manager->current();
         if (old != 0 && newDesktop != old) {
             assert(!c || c->render);
             assert(!c || c->render->effect);
@@ -211,7 +211,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     connect(tabBox, &win::tabbox::tabbox_closed, this, &EffectsHandler::tabBoxClosed);
     connect(tabBox, &win::tabbox::tabbox_key_event, this, &EffectsHandler::tabBoxKeyEvent);
 #endif
-    connect(workspace()->edges.get(),
+    connect(ws->edges.get(),
             &win::screen_edger::approaching,
             this,
             &EffectsHandler::screenEdgeApproaching);
@@ -227,7 +227,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     auto make_property_filter = [this] {
         using filter = x11::property_notify_filter<effects_handler_impl, win::space>;
         x11_property_notify
-            = std::make_unique<filter>(*this, *workspace(), kwinApp()->x11RootWindow());
+            = std::make_unique<filter>(*this, *m_compositor->space, kwinApp()->x11RootWindow());
     };
 
     connect(kwinApp(), &Application::x11ConnectionChanged, this, [this, make_property_filter] {
@@ -897,13 +897,13 @@ void effects_handler_impl::activateWindow(EffectWindow* c)
 {
     auto window = static_cast<effects_window_impl*>(c)->window();
     if (window && window->control) {
-        workspace()->activateClient(window, true);
+        m_compositor->space->activateClient(window, true);
     }
 }
 
 EffectWindow* effects_handler_impl::activeWindow() const
 {
-    auto ac = workspace()->activeClient();
+    auto ac = m_compositor->space->activeClient();
     return ac ? ac->render->effect.get() : nullptr;
 }
 
@@ -918,7 +918,7 @@ void effects_handler_impl::moveWindow(EffectWindow* w,
     }
 
     if (snap) {
-        win::move(window, workspace()->adjustClientPosition(window, pos, true, snapAdjust));
+        win::move(window, m_compositor->space->adjustClientPosition(window, pos, true, snapAdjust));
     } else {
         win::move(window, pos);
     }
@@ -928,7 +928,7 @@ void effects_handler_impl::windowToDesktop(EffectWindow* w, int desktop)
 {
     auto window = static_cast<effects_window_impl*>(w)->window();
     if (window && window->control && !win::is_desktop(window) && !win::is_dock(window)) {
-        workspace()->sendClientToDesktop(window, desktop, true);
+        m_compositor->space->sendClientToDesktop(window, desktop, true);
     }
 }
 
@@ -941,10 +941,10 @@ void effects_handler_impl::windowToDesktops(EffectWindow* w, const QVector<uint>
     QVector<win::virtual_desktop*> desktops;
     desktops.reserve(desktopIds.count());
     for (uint x11Id : desktopIds) {
-        if (x11Id > workspace()->virtual_desktop_manager->count()) {
+        if (x11Id > m_compositor->space->virtual_desktop_manager->count()) {
             continue;
         }
-        auto d = workspace()->virtual_desktop_manager->desktopForX11Id(x11Id);
+        auto d = m_compositor->space->virtual_desktop_manager->desktopForX11Id(x11Id);
         Q_ASSERT(d);
         if (desktops.contains(d)) {
             continue;
@@ -960,13 +960,13 @@ void effects_handler_impl::windowToScreen(EffectWindow* w, int screen)
     auto window = static_cast<effects_window_impl*>(w)->window();
 
     if (output && window && window->control && !win::is_desktop(window) && !win::is_dock(window)) {
-        win::send_to_screen(*workspace(), window, *output);
+        win::send_to_screen(*m_compositor->space, window, *output);
     }
 }
 
 void effects_handler_impl::setShowingDesktop(bool showing)
 {
-    workspace()->setShowingDesktop(showing);
+    m_compositor->space->setShowingDesktop(showing);
 }
 
 QString effects_handler_impl::currentActivity() const
@@ -976,27 +976,27 @@ QString effects_handler_impl::currentActivity() const
 
 int effects_handler_impl::currentDesktop() const
 {
-    return workspace()->virtual_desktop_manager->current();
+    return m_compositor->space->virtual_desktop_manager->current();
 }
 
 int effects_handler_impl::numberOfDesktops() const
 {
-    return workspace()->virtual_desktop_manager->count();
+    return m_compositor->space->virtual_desktop_manager->count();
 }
 
 void effects_handler_impl::setCurrentDesktop(int desktop)
 {
-    workspace()->virtual_desktop_manager->setCurrent(desktop);
+    m_compositor->space->virtual_desktop_manager->setCurrent(desktop);
 }
 
 void effects_handler_impl::setNumberOfDesktops(int desktops)
 {
-    workspace()->virtual_desktop_manager->setCount(desktops);
+    m_compositor->space->virtual_desktop_manager->setCount(desktops);
 }
 
 QSize effects_handler_impl::desktopGridSize() const
 {
-    return workspace()->virtual_desktop_manager->grid().size();
+    return m_compositor->space->virtual_desktop_manager->grid().size();
 }
 
 int effects_handler_impl::desktopGridWidth() const
@@ -1021,7 +1021,7 @@ int effects_handler_impl::workspaceHeight() const
 
 int effects_handler_impl::desktopAtCoords(QPoint coords) const
 {
-    if (auto vd = workspace()->virtual_desktop_manager->grid().at(coords)) {
+    if (auto vd = m_compositor->space->virtual_desktop_manager->grid().at(coords)) {
         return vd->x11DesktopNumber();
     }
     return 0;
@@ -1029,12 +1029,12 @@ int effects_handler_impl::desktopAtCoords(QPoint coords) const
 
 QPoint effects_handler_impl::desktopGridCoords(int id) const
 {
-    return workspace()->virtual_desktop_manager->grid().gridCoords(id);
+    return m_compositor->space->virtual_desktop_manager->grid().gridCoords(id);
 }
 
 QPoint effects_handler_impl::desktopCoords(int id) const
 {
-    auto coords = workspace()->virtual_desktop_manager->grid().gridCoords(id);
+    auto coords = m_compositor->space->virtual_desktop_manager->grid().gridCoords(id);
     if (coords.x() == -1) {
         return QPoint(-1, -1);
     }
@@ -1045,30 +1045,30 @@ QPoint effects_handler_impl::desktopCoords(int id) const
 int effects_handler_impl::desktopAbove(int desktop, bool wrap) const
 {
     return win::getDesktop<win::virtual_desktop_above>(
-        *workspace()->virtual_desktop_manager, desktop, wrap);
+        *m_compositor->space->virtual_desktop_manager, desktop, wrap);
 }
 
 int effects_handler_impl::desktopToRight(int desktop, bool wrap) const
 {
     return win::getDesktop<win::virtual_desktop_right>(
-        *workspace()->virtual_desktop_manager, desktop, wrap);
+        *m_compositor->space->virtual_desktop_manager, desktop, wrap);
 }
 
 int effects_handler_impl::desktopBelow(int desktop, bool wrap) const
 {
     return win::getDesktop<win::virtual_desktop_below>(
-        *workspace()->virtual_desktop_manager, desktop, wrap);
+        *m_compositor->space->virtual_desktop_manager, desktop, wrap);
 }
 
 int effects_handler_impl::desktopToLeft(int desktop, bool wrap) const
 {
     return win::getDesktop<win::virtual_desktop_left>(
-        *workspace()->virtual_desktop_manager, desktop, wrap);
+        *m_compositor->space->virtual_desktop_manager, desktop, wrap);
 }
 
 QString effects_handler_impl::desktopName(int desktop) const
 {
-    return workspace()->virtual_desktop_manager->name(desktop);
+    return m_compositor->space->virtual_desktop_manager->name(desktop);
 }
 
 bool effects_handler_impl::optionRollOverDesktops() const
@@ -1089,10 +1089,10 @@ WindowQuadType effects_handler_impl::newWindowQuadType()
 EffectWindow* effects_handler_impl::find_window_by_wid(WId id) const
 {
     if (auto w = win::x11::find_controlled_window<win::x11::window>(
-            *workspace(), win::x11::predicate_match::window, id)) {
+            *m_compositor->space, win::x11::predicate_match::window, id)) {
         return w->render->effect.get();
     }
-    if (auto unmanaged = win::x11::find_unmanaged<win::x11::window>(*workspace(), id)) {
+    if (auto unmanaged = win::x11::find_unmanaged<win::x11::window>(*m_compositor->space, id)) {
         return unmanaged->render->effect.get();
     }
     return nullptr;
@@ -1106,7 +1106,7 @@ effects_handler_impl::find_window_by_surface(Wrapland::Server::Surface* /*surfac
 
 EffectWindow* effects_handler_impl::find_window_by_qwindow(QWindow* w) const
 {
-    if (Toplevel* toplevel = workspace()->findInternal(w)) {
+    if (Toplevel* toplevel = m_compositor->space->findInternal(w)) {
         return toplevel->render->effect.get();
     }
     return nullptr;
@@ -1114,7 +1114,7 @@ EffectWindow* effects_handler_impl::find_window_by_qwindow(QWindow* w) const
 
 EffectWindow* effects_handler_impl::find_window_by_uuid(const QUuid& id) const
 {
-    for (auto win : workspace()->m_windows) {
+    for (auto win : m_compositor->space->m_windows) {
         if (!win->remnant() && win->internalId() == id) {
             return win->render->effect.get();
         }
@@ -1124,7 +1124,7 @@ EffectWindow* effects_handler_impl::find_window_by_uuid(const QUuid& id) const
 
 EffectWindowList effects_handler_impl::stackingOrder() const
 {
-    auto list = workspace()->x_stacking_tree->as_list();
+    auto list = m_compositor->space->x_stacking_tree->as_list();
     EffectWindowList ret;
     for (auto t : list) {
         if (EffectWindow* w = effectWindow(t))
@@ -1145,7 +1145,7 @@ void effects_handler_impl::setTabBoxWindow(EffectWindow* w)
 #if KWIN_BUILD_TABBOX
     auto window = static_cast<effects_window_impl*>(w)->window();
     if (window->control) {
-        workspace()->tabbox->set_current_client(window);
+        m_compositor->space->tabbox->set_current_client(window);
     }
 #else
     Q_UNUSED(w)
@@ -1155,7 +1155,7 @@ void effects_handler_impl::setTabBoxWindow(EffectWindow* w)
 void effects_handler_impl::setTabBoxDesktop(int desktop)
 {
 #if KWIN_BUILD_TABBOX
-    workspace()->tabbox->set_current_desktop(desktop);
+    m_compositor->space->tabbox->set_current_desktop(desktop);
 #else
     Q_UNUSED(desktop)
 #endif
@@ -1164,7 +1164,7 @@ void effects_handler_impl::setTabBoxDesktop(int desktop)
 EffectWindowList effects_handler_impl::currentTabBoxWindowList() const
 {
 #if KWIN_BUILD_TABBOX
-    const auto clients = workspace()->tabbox->current_client_list();
+    const auto clients = m_compositor->space->tabbox->current_client_list();
     EffectWindowList ret;
     ret.reserve(clients.size());
     std::transform(std::cbegin(clients),
@@ -1180,28 +1180,28 @@ EffectWindowList effects_handler_impl::currentTabBoxWindowList() const
 void effects_handler_impl::refTabBox()
 {
 #if KWIN_BUILD_TABBOX
-    workspace()->tabbox->reference();
+    m_compositor->space->tabbox->reference();
 #endif
 }
 
 void effects_handler_impl::unrefTabBox()
 {
 #if KWIN_BUILD_TABBOX
-    workspace()->tabbox->unreference();
+    m_compositor->space->tabbox->unreference();
 #endif
 }
 
 void effects_handler_impl::closeTabBox()
 {
 #if KWIN_BUILD_TABBOX
-    workspace()->tabbox->close();
+    m_compositor->space->tabbox->close();
 #endif
 }
 
 QList<int> effects_handler_impl::currentTabBoxDesktopList() const
 {
 #if KWIN_BUILD_TABBOX
-    return workspace()->tabbox->current_desktop_list();
+    return m_compositor->space->tabbox->current_desktop_list();
 #else
     return QList<int>();
 #endif
@@ -1210,7 +1210,7 @@ QList<int> effects_handler_impl::currentTabBoxDesktopList() const
 int effects_handler_impl::currentTabBoxDesktop() const
 {
 #if KWIN_BUILD_TABBOX
-    return workspace()->tabbox->current_desktop();
+    return m_compositor->space->tabbox->current_desktop();
 #else
     return -1;
 #endif
@@ -1219,7 +1219,7 @@ int effects_handler_impl::currentTabBoxDesktop() const
 EffectWindow* effects_handler_impl::currentTabBoxWindow() const
 {
 #if KWIN_BUILD_TABBOX
-    if (auto c = workspace()->tabbox->current_client())
+    if (auto c = m_compositor->space->tabbox->current_client())
         return c->render->effect.get();
 #endif
     return nullptr;
@@ -1247,7 +1247,7 @@ void effects_handler_impl::addRepaint(int x, int y, int w, int h)
 
 int effects_handler_impl::activeScreen() const
 {
-    auto output = win::get_current_output(*workspace());
+    auto output = win::get_current_output(*m_compositor->space);
     if (!output) {
         return 0;
     }
@@ -1272,23 +1272,25 @@ int effects_handler_impl::screenNumber(const QPoint& pos) const
 QRect effects_handler_impl::clientArea(clientAreaOption opt, int screen, int desktop) const
 {
     auto output = base::get_output(kwinApp()->get_base().get_outputs(), screen);
-    return workspace()->clientArea(opt, output, desktop);
+    return m_compositor->space->clientArea(opt, output, desktop);
 }
 
 QRect effects_handler_impl::clientArea(clientAreaOption opt, const EffectWindow* c) const
 {
     auto window = static_cast<effects_window_impl const*>(c)->window();
+    auto space = m_compositor->space;
+
     if (window->control) {
-        return workspace()->clientArea(opt, window);
+        return space->clientArea(opt, window);
     } else {
-        return workspace()->clientArea(
-            opt, window->frameGeometry().center(), workspace()->virtual_desktop_manager->current());
+        return space->clientArea(
+            opt, window->frameGeometry().center(), space->virtual_desktop_manager->current());
     }
 }
 
 QRect effects_handler_impl::clientArea(clientAreaOption opt, const QPoint& p, int desktop) const
 {
-    return workspace()->clientArea(opt, p, desktop);
+    return m_compositor->space->clientArea(opt, p, desktop);
 }
 
 QRect effects_handler_impl::virtualScreenGeometry() const
@@ -1377,22 +1379,22 @@ QPoint effects_handler_impl::cursorPos() const
 
 void effects_handler_impl::reserveElectricBorder(ElectricBorder border, Effect* effect)
 {
-    workspace()->edges->reserve(border, effect, "borderActivated");
+    m_compositor->space->edges->reserve(border, effect, "borderActivated");
 }
 
 void effects_handler_impl::unreserveElectricBorder(ElectricBorder border, Effect* effect)
 {
-    workspace()->edges->unreserve(border, effect);
+    m_compositor->space->edges->unreserve(border, effect);
 }
 
 void effects_handler_impl::registerTouchBorder(ElectricBorder border, QAction* action)
 {
-    workspace()->edges->reserveTouch(border, action);
+    m_compositor->space->edges->reserveTouch(border, action);
 }
 
 void effects_handler_impl::unregisterTouchBorder(ElectricBorder border, QAction* action)
 {
-    workspace()->edges->unreserveTouch(border, action);
+    m_compositor->space->edges->unreserveTouch(border, action);
 }
 
 unsigned long effects_handler_impl::xrenderBufferPicture() const
@@ -1590,16 +1592,16 @@ QVariant effects_handler_impl::kwinOption(KWinOption kwopt)
     switch (kwopt) {
     case CloseButtonCorner: {
         // TODO: this could become per window and be derived from the actual position in the deco
-        auto deco_settings = workspace()->deco->settings();
+        auto deco_settings = m_compositor->space->deco->settings();
         auto close_enum = KDecoration2::DecorationButtonType::Close;
         return deco_settings && deco_settings->decorationButtonsLeft().contains(close_enum)
             ? Qt::TopLeftCorner
             : Qt::TopRightCorner;
     }
     case SwitchDesktopOnScreenEdge:
-        return workspace()->edges->desktop_switching.always;
+        return m_compositor->space->edges->desktop_switching.always;
     case SwitchDesktopOnScreenEdgeMovingWindows:
-        return workspace()->edges->desktop_switching.when_moving_client;
+        return m_compositor->space->edges->desktop_switching.when_moving_client;
     default:
         return QVariant(); // an invalid one
     }
@@ -1756,7 +1758,7 @@ void effects_handler_impl::renderEffectQuickView(EffectQuickView* w) const
 
 SessionState effects_handler_impl::sessionState() const
 {
-    return workspace()->session_manager->state();
+    return m_compositor->space->session_manager->state();
 }
 
 QList<EffectScreen*> effects_handler_impl::screens() const
