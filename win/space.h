@@ -49,16 +49,23 @@ namespace KWin
 
 class RuleBook;
 
-namespace base::x11
+namespace base
 {
 
+namespace dbus
+{
+class kwin;
+}
+
+namespace x11
+{
 namespace xcb
 {
 class tree;
 class window;
 }
-
 class event_filter;
+}
 
 }
 
@@ -241,6 +248,7 @@ public:
     std::unique_ptr<win::x11::stacking_tree> x_stacking_tree;
     std::unique_ptr<win::focus_chain> focus_chain;
     std::unique_ptr<win::virtual_desktop_manager> virtual_desktop_manager;
+    std::unique_ptr<base::dbus::kwin> dbus;
 
     void stopUpdateToolWindowsTimer();
     void resetUpdateToolWindowsTimer();

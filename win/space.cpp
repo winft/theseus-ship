@@ -102,6 +102,7 @@ space::space()
     , x_stacking_tree(std::make_unique<win::x11::stacking_tree>())
     , focus_chain{std::make_unique<win::focus_chain>(*this)}
     , virtual_desktop_manager{std::make_unique<win::virtual_desktop_manager>()}
+    , dbus{std::make_unique<base::dbus::kwin>(*this)}
     , m_sessionManager(new win::session_manager(this))
 {
     // For invoke methods of user_actions_menu.
@@ -143,8 +144,6 @@ space::space()
             &win::session_manager::finishSessionSaveRequested,
             this,
             [this](const QString& name) { storeSession(name, win::sm_save_phase2); });
-
-    new base::dbus::kwin(this);
 
     auto& base = kwinApp()->get_base();
     QObject::connect(&base, &base::platform::topology_changed, this, [this](auto old, auto topo) {
