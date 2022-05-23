@@ -582,18 +582,18 @@ void place_maximizing(Win* window, const QRect& area, placement nextPlacement)
 }
 
 /**
- * Unclutters the current desktop by smart-placing all clients again.
+ * Unclutters the current desktop by smart-placing all windows again.
  */
-inline void unclutter_desktop()
+inline void unclutter_desktop(win::space& space)
 {
-    auto const& clients = workspace()->m_windows;
-    for (int i = clients.size() - 1; i >= 0; i--) {
-        auto client = clients.at(i);
+    auto const& windows = space.m_windows;
+    for (int i = windows.size() - 1; i >= 0; i--) {
+        auto client = windows.at(i);
         if (!client->control || !client->isOnCurrentDesktop() || client->control->minimized()
             || client->isOnAllDesktops() || !client->isMovable()) {
             continue;
         }
-        const QRect placementArea = workspace()->clientArea(PlacementArea, client);
+        const QRect placementArea = space.clientArea(PlacementArea, client);
         place_smart(client, placementArea);
     }
 }

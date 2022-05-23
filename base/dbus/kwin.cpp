@@ -83,7 +83,7 @@ void kwin::killWindow()
 
 void kwin::unclutterDesktop()
 {
-    win::unclutter_desktop();
+    win::unclutter_desktop(space);
 }
 
 QString kwin::supportInformation()
