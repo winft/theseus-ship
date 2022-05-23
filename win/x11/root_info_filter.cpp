@@ -25,10 +25,10 @@ bool root_info_filter::event(xcb_generic_event_t* event)
     info->event(event, &dirtyProtocols, &dirtyProtocols2);
 
     if (dirtyProtocols & NET::DesktopNames) {
-        workspace()->virtual_desktop_manager->save();
+        info->space.virtual_desktop_manager->save();
     }
     if (dirtyProtocols2 & NET::WM2DesktopLayout) {
-        workspace()->virtual_desktop_manager->updateLayout();
+        info->space.virtual_desktop_manager->updateLayout();
     }
     return false;
 }

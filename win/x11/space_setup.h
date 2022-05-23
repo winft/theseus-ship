@@ -75,7 +75,7 @@ void init_space(Space& space)
                                                        nullFocusValues));
     space.m_nullFocus->map();
 
-    auto rootInfo = win::x11::root_info::create();
+    auto rootInfo = win::x11::root_info::create(space);
     auto& vds = space.virtual_desktop_manager;
     vds->setRootInfo(rootInfo);
     rootInfo->activate();
