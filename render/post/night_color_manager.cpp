@@ -655,13 +655,13 @@ int night_color_manager::current_target_temp() const
     auto f = [this, todayNow](int target1, int target2) {
         if (todayNow <= prev_transition.second) {
             double residueQuota = todayNow.msecsTo(prev_transition.second)
-                / (double)prev_transition.first.msecsTo(prev_transition.second);
+                / static_cast<double>(prev_transition.first.msecsTo(prev_transition.second));
 
-            double ret
-                = (int)((1. - residueQuota) * (double)target2 + residueQuota * (double)target1);
+            double ret = static_cast<int>(((1. - residueQuota) * static_cast<double>(target2)
+                                           + residueQuota * static_cast<double>(target1)));
             // remove single digits
-            ret = ((int)(0.1 * ret)) * 10;
-            return (int)ret;
+            ret = (static_cast<int>((0.1 * ret))) * 10;
+            return static_cast<int>(ret);
         } else {
             return target2;
         }
@@ -696,7 +696,7 @@ void night_color_manager::commit_gamma_ramps(int temperature)
 
         // linear default state
         for (int i = 0; i < rampsize; i++) {
-            uint16_t value = (double)i / rampsize * (UINT16_MAX + 1);
+            uint16_t value = static_cast<double>(i) / rampsize * (UINT16_MAX + 1);
             red[i] = value;
             green[i] = value;
             blue[i] = value;

@@ -390,15 +390,16 @@ void ShowFpsEffect::paintDrawSizeGraph(int x, int y)
     float drawscale = (MAX_TIME - minh) / (max_pixels_log - min_pixels_log);
     QList<int> drawlines;
 
-    for (int logh = (int)min_pixels_log; logh <= max_pixels_log; logh++)
-        drawlines.append((int)((logh - min_pixels_log) * drawscale) + minh);
+    for (int logh = static_cast<int>(min_pixels_log); logh <= max_pixels_log; logh++)
+        drawlines.append(static_cast<int>(((logh - min_pixels_log) * drawscale)) + minh);
 
     QList<int> drawvalues;
     for (int i = 0; i < NUM_PAINTS; ++i) {
         int value = paint_size[(i + paints_pos) % NUM_PAINTS];
         int h = 0;
         if (value > 0) {
-            h = (int)((log10((double)value) - min_pixels_log) * drawscale);
+            h = static_cast<int>(
+                ((log10(static_cast<double>(value)) - min_pixels_log) * drawscale));
             h = qMin(qMax(0, h) + minh, MAX_TIME);
         }
         drawvalues.append(h);

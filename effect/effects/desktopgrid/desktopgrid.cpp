@@ -209,7 +209,8 @@ void DesktopGridEffect::prePaintScreen(ScreenPrePaintData& data,
             finish();
     }
 
-    for (auto const& w : effects->stackingOrder()) {
+    auto const stack = effects->stackingOrder();
+    for (auto const& w : stack) {
         w->setData(WindowForceBlurRole, QVariant(true));
     }
 
@@ -229,7 +230,7 @@ void DesktopGridEffect::paintScreen(int mask, const QRegion& region, ScreenPaint
     }
 
     // paint the add desktop button
-    for (EffectQuickScene* view : m_desktopButtons) {
+    for (EffectQuickScene* view : qAsConst(m_desktopButtons)) {
         view->rootItem()->setOpacity(timeline.currentValue());
         effects->renderEffectQuickView(view);
     }
@@ -239,8 +240,8 @@ void DesktopGridEffect::paintScreen(int mask, const QRegion& region, ScreenPaint
         QPoint diff = cursorPos() - m_windowMoveStartPoint;
         QRect geo = m_windowMoveGeometry.translated(diff);
         WindowPaintData d(windowMove, data.projectionMatrix());
-        d *= QVector2D((qreal)geo.width() / (qreal)windowMove->width(),
-                       (qreal)geo.height() / (qreal)windowMove->height());
+        d *= QVector2D(static_cast<qreal>(geo.width()) / static_cast<qreal>(windowMove->width()),
+                       static_cast<qreal>(geo.height()) / static_cast<qreal>(windowMove->height()));
         d += QPoint(geo.left() - windowMove->x(), geo.top() - windowMove->y());
         effects->drawWindow(
             windowMove, PAINT_WINDOW_TRANSFORMED | PAINT_WINDOW_LANCZOS, infiniteRegion(), d);
@@ -381,14 +382,16 @@ void DesktopGridEffect::paintWindow(EffectWindow* w,
 
             QPointF newPos = scalePos(transformedGeo.topLeft().toPoint(), paintingDesktop, screen);
             double progress = timeline.currentValue();
-            d.setXScale(interpolate(1,
-                                    xScale * scale[screen] * (float)transformedGeo.width()
-                                        / (float)w->frameGeometry().width(),
-                                    progress));
-            d.setYScale(interpolate(1,
-                                    yScale * scale[screen] * (float)transformedGeo.height()
-                                        / (float)w->frameGeometry().height(),
-                                    progress));
+            d.setXScale(
+                interpolate(1,
+                            xScale * scale[screen] * static_cast<float>(transformedGeo.width())
+                                / static_cast<float>(w->frameGeometry().width()),
+                            progress));
+            d.setYScale(
+                interpolate(1,
+                            yScale * scale[screen] * static_cast<float>(transformedGeo.height())
+                                / static_cast<float>(w->frameGeometry().height()),
+                            progress));
             d += QPoint(qRound(newPos.x() - w->x()), qRound(newPos.y() - w->y()));
 
             if (isUsingPresentWindows() && (w->isDock() || w->isSkipSwitcher())) {
@@ -500,7 +503,7 @@ void DesktopGridEffect::windowInputMouseEvent(QEvent* e)
         return;
     QMouseEvent* me = static_cast<QMouseEvent*>(e);
     if (!(wasWindowMove || wasDesktopMove)) {
-        for (EffectQuickScene* view : m_desktopButtons) {
+        for (EffectQuickScene* view : qAsConst(m_desktopButtons)) {
             view->forwardMouseEvent(me);
             if (e->isAccepted()) {
                 return;
@@ -530,9 +533,10 @@ void DesktopGridEffect::windowInputMouseEvent(QEvent* e)
                             const QPointF pos = scalePos(transformedGeo.topLeft().toPoint(),
                                                          sourceDesktop,
                                                          windowMove->screen());
-                            const QSize size(
-                                scale[windowMove->screen()] * (float)transformedGeo.width(),
-                                scale[windowMove->screen()] * (float)transformedGeo.height());
+                            const QSize size(scale[windowMove->screen()]
+                                                 * static_cast<float>(transformedGeo.width()),
+                                             scale[windowMove->screen()]
+                                                 * static_cast<float>(transformedGeo.height()));
                             m_windowMoveGeometry = QRect(pos.toPoint(), size);
                             m_windowMoveStartPoint = me->pos();
                         }
@@ -1109,7 +1113,7 @@ void DesktopGridEffect::setActive(bool active)
         QTimer::singleShot(zoomDuration + 1, this, [this] {
             if (activated)
                 return;
-            for (EffectQuickScene* view : m_desktopButtons) {
+            for (EffectQuickScene* view : qAsConst(m_desktopButtons)) {
                 view->hide();
             }
         });
@@ -1453,7 +1457,8 @@ void DesktopGridEffect::desktopsRemoved(int old)
     if (isUsingPresentWindows()) {
         for (int j = 0; j < effects->numScreens(); ++j) {
             WindowMotionManager& manager = m_managers[(desktop - 1) * (effects->numScreens()) + j];
-            for (auto const& w : effects->stackingOrder()) {
+            auto const stack = effects->stackingOrder();
+            for (auto const& w : stack) {
                 if (manager.isManaging(w))
                     continue;
                 if (w->isOnDesktop(desktop) && w->screen() == j
@@ -1486,7 +1491,8 @@ QVector<int> DesktopGridEffect::desktopList(const EffectWindow* w) const
     QVector<int> desks;
     desks.resize(w->desktops().count());
     int i = 0;
-    for (const int desk : w->desktops()) {
+    auto const desktops = w->desktops();
+    for (const int desk : desktops) {
         desks[i++] = desk - 1;
     }
     return desks;

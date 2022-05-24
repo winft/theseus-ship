@@ -252,7 +252,7 @@ void root_info::moveResize(xcb_window_t w, int x_root, int y_root, unsigned long
     if (c) {
         // otherwise grabbing may have old timestamp - this message should include timestamp
         kwinApp()->update_x11_time_from_clock();
-        win::x11::net_move_resize(c, x_root, y_root, (Direction)direction);
+        win::x11::net_move_resize(c, x_root, y_root, static_cast<Direction>(direction));
     }
 }
 

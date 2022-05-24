@@ -138,7 +138,8 @@ bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
     }
 
     // Move elevated windows to the top of the stacking order
-    for (auto effect_window : static_cast<effects_handler_impl*>(effects)->elevatedWindows()) {
+    auto const elevated_windows = static_cast<effects_handler_impl*>(effects)->elevatedWindows();
+    for (auto effect_window : elevated_windows) {
         auto window = static_cast<effects_window_impl*>(effect_window)->window();
         remove_all(windows, window);
         windows.push_back(window);

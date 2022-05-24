@@ -145,11 +145,12 @@ void initGL(const std::function<resolveFuncPtr(const char*)>& resolveFunction)
         glGetIntegerv(GL_NUM_EXTENSIONS, &count);
 
         for (int i = 0; i < count; i++) {
-            const QByteArray name = (const char*)glGetStringi(GL_EXTENSIONS, i);
+            const QByteArray name = reinterpret_cast<const char*>(glGetStringi(GL_EXTENSIONS, i));
             glExtensions << name;
         }
     } else
-        glExtensions = QByteArray((const char*)glGetString(GL_EXTENSIONS)).split(' ');
+        glExtensions
+            = QByteArray(reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS))).split(' ');
 
     // handle OpenGL extensions functions
     glResolveFunctions(resolveFunction);
@@ -551,7 +552,7 @@ bool GLShader::setUniform(int location, int value)
 bool GLShader::setUniform(int location, const QVector2D& value)
 {
     if (location >= 0) {
-        glUniform2fv(location, 1, (const GLfloat*)&value);
+        glUniform2fv(location, 1, reinterpret_cast<const GLfloat*>(&value));
     }
     return (location >= 0);
 }
@@ -559,7 +560,7 @@ bool GLShader::setUniform(int location, const QVector2D& value)
 bool GLShader::setUniform(int location, const QVector3D& value)
 {
     if (location >= 0) {
-        glUniform3fv(location, 1, (const GLfloat*)&value);
+        glUniform3fv(location, 1, reinterpret_cast<const GLfloat*>(&value));
     }
     return (location >= 0);
 }
@@ -567,7 +568,7 @@ bool GLShader::setUniform(int location, const QVector3D& value)
 bool GLShader::setUniform(int location, const QVector4D& value)
 {
     if (location >= 0) {
-        glUniform4fv(location, 1, (const GLfloat*)&value);
+        glUniform4fv(location, 1, reinterpret_cast<const GLfloat*>(&value));
     }
     return (location >= 0);
 }
@@ -1435,8 +1436,8 @@ void IndexBuffer::accommodate(int count)
     // Map the new object and fill in the uninitialized section
     const GLbitfield access
         = GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT | GL_MAP_INVALIDATE_RANGE_BIT;
-    uint16_t* map
-        = (uint16_t*)glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, m_size, size - m_size, access);
+    uint16_t* map = static_cast<uint16_t*>(
+        glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, m_size, size - m_size, access));
 
     const uint16_t index[] = {1, 0, 3, 3, 2, 1};
     for (int i = m_count; i < count; i++) {
@@ -1703,7 +1704,7 @@ void GLVertexBufferPrivate::interleaveArrays(float* dst,
                                              int count)
 {
     if (!texcoords) {
-        memcpy((void*)dst, vertices, dim * sizeof(float) * count);
+        memcpy(static_cast<void*>(dst), vertices, dim * sizeof(float) * count);
         return;
     }
 
@@ -1755,7 +1756,7 @@ void GLVertexBufferPrivate::bindArrays()
                               attrib[index].type,
                               GL_FALSE,
                               stride,
-                              (const GLvoid*)(baseAddress + attrib[index].offset));
+                              reinterpret_cast<const GLvoid*>(baseAddress + attrib[index].offset));
         glEnableVertexAttribArray(index);
     }
 }
@@ -1790,7 +1791,7 @@ void GLVertexBufferPrivate::reallocatePersistentBuffer(size_t size)
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
     glBufferStorage(GL_ARRAY_BUFFER, bufferSize, nullptr, storage | access);
 
-    map = (uint8_t*)glMapBufferRange(GL_ARRAY_BUFFER, 0, bufferSize, access);
+    map = static_cast<uint8_t*>(glMapBufferRange(GL_ARRAY_BUFFER, 0, bufferSize, access));
 
     nextOffset = 0;
     bufferEnd = bufferSize;
@@ -1923,7 +1924,7 @@ void GLVertexBuffer::setData(int vertexCount,
     setVertexCount(vertexCount);
 
     GLvoid* ptr = map(vertexCount * stride);
-    d->interleaveArrays((float*)ptr, dim, vertices, texcoords, vertexCount);
+    d->interleaveArrays(static_cast<float*>(ptr), dim, vertices, texcoords, vertexCount);
     unmap();
 }
 
@@ -1948,7 +1949,7 @@ GLvoid* GLVertexBuffer::map(size_t size)
     if (size_t(d->dataStore.size()) < size)
         d->dataStore.resize(size);
 
-    return (GLvoid*)d->dataStore.data();
+    return static_cast<GLvoid*>(d->dataStore.data());
 }
 
 void GLVertexBuffer::unmap()

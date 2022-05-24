@@ -50,7 +50,7 @@ class virtual_desktop_manager : public QObject
      * list of key/value pairs which every one of them is representing a desktop
      */
     Q_PROPERTY(
-        KWin::win::dbus::virtual_desktop_data_vector desktops READ desktops NOTIFY desktopsChanged);
+        KWin::win::dbus::virtual_desktop_data_vector desktops READ desktops NOTIFY desktopsChanged)
 
 public:
     virtual_desktop_manager(win::virtual_desktop_manager* parent);

@@ -214,7 +214,8 @@ void Helper::init()
     // once it's loaded we can provide the Borders and access them from C++ side
     // so let's try to locate our plugin:
     QString pluginPath;
-    for (const QString &path : m_engine->importPathList()) {
+    auto const path_list = m_engine->importPathList();
+    for (const QString &path : path_list) {
         QDirIterator it(path, QDirIterator::Subdirectories);
         while (it.hasNext()) {
             it.next();
@@ -301,8 +302,8 @@ void Decoration::init()
         auto readButtonSize = [this, theme] {
             const KSharedConfigPtr conf = KSharedConfig::openConfig(QStringLiteral("auroraerc"));
             const KConfigGroup themeGroup(conf, m_themeName.mid(16));
-            theme->setButtonSize((KDecoration2::BorderSize)(themeGroup.readEntry<int>("ButtonSize",
-                                                                                      int(KDecoration2::BorderSize::Normal) - s_indexMapper) + s_indexMapper));
+            theme->setButtonSize(static_cast<KDecoration2::BorderSize>((themeGroup.readEntry<int>("ButtonSize",
+                                                                                                  int(KDecoration2::BorderSize::Normal) - s_indexMapper) + s_indexMapper)));
         };
         connect(this, &Decoration::configChanged, theme, readButtonSize);
         readButtonSize();
@@ -677,13 +678,14 @@ void ThemeProvider::findAllSvgThemes()
     const QStringList dirs = QStandardPaths::locateAll(QStandardPaths::GenericDataLocation, QStringLiteral("aurorae/themes/"), QStandardPaths::LocateDirectory);
     QStringList themeDirectories;
     for (const QString &dir : dirs) {
-        QDir directory = QDir(dir);
-        for (const QString &themeDir : directory.entryList(QDir::AllDirs | QDir::NoDotAndDotDot)) {
+        auto const entry_list = QDir(dir).entryList(QDir::AllDirs | QDir::NoDotAndDotDot);
+        for (const QString &themeDir : entry_list) {
             themeDirectories << dir + themeDir;
         }
     }
-    for (const QString &dir : themeDirectories) {
-        for (const QString & file : QDir(dir).entryList(QStringList() << QStringLiteral("metadata.desktop"))) {
+    for (const QString &dir : qAsConst(themeDirectories)) {
+        auto const entry_list = QDir(dir).entryList(QStringList() << QStringLiteral("metadata.desktop"));
+        for (const QString & file : entry_list) {
             themes.append(dir + '/' + file);
         }
     }

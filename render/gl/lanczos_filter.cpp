@@ -431,8 +431,8 @@ void lanczos_filter::discardCacheTexture(EffectWindow* w)
 
 void lanczos_filter::setUniforms()
 {
-    glUniform2fv(m_uOffsets, m_offsets.size(), (const GLfloat*)m_offsets.data());
-    glUniform4fv(m_uKernel, m_kernel.size(), (const GLfloat*)m_kernel.data());
+    glUniform2fv(m_uOffsets, m_offsets.size(), reinterpret_cast<const GLfloat*>(m_offsets.data()));
+    glUniform4fv(m_uKernel, m_kernel.size(), reinterpret_cast<const GLfloat*>(m_kernel.data()));
 }
 
 } // namespace

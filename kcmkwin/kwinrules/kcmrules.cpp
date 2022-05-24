@@ -274,7 +274,8 @@ void KCMKWinRules::exportToFile(const QUrl &path, const QList<int> &indexes)
 
     const auto config = KSharedConfig::openConfig(path.toLocalFile(), KConfig::SimpleConfig);
 
-    for (const QString &groupName : config->groupList()) {
+    auto const groups = config->groupList();
+    for (const QString &groupName : groups) {
         config->deleteGroup(groupName);
     }
 

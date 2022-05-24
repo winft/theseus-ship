@@ -36,7 +36,7 @@ static int const RENDER_MAX_MINOR = 11;
 static int const XFIXES_MAX_MAJOR = 5;
 static int const XFIXES_MAX_MINOR = 0;
 
-QVector<QByteArray> shapeOpCodes()
+static QVector<QByteArray> shapeOpCodes()
 {
     // see https://www.x.org/releases/X11R7.7/doc/xextproto/shape.html
     // extracted from <xcb/shape.h>
@@ -51,7 +51,7 @@ QVector<QByteArray> shapeOpCodes()
                                 QByteArrayLiteral("GetRectangles")});
 }
 
-QVector<QByteArray> randrOpCodes()
+static QVector<QByteArray> randrOpCodes()
 {
     // see https://www.x.org/releases/X11R7.7/doc/randrproto/randrproto.txt
     // extracted from <xcb/randr.h>
@@ -99,7 +99,7 @@ QVector<QByteArray> randrOpCodes()
                                 QByteArrayLiteral("GetProviderProperty")});
 }
 
-QVector<QByteArray> randrErrorCodes()
+static QVector<QByteArray> randrErrorCodes()
 {
     // see https://www.x.org/releases/X11R7.7/doc/randrproto/randrproto.txt
     // extracted from <xcb/randr.h>
@@ -109,7 +109,7 @@ QVector<QByteArray> randrErrorCodes()
                                 QByteArrayLiteral("BadProvider")});
 }
 
-QVector<QByteArray> damageOpCodes()
+static QVector<QByteArray> damageOpCodes()
 {
     // see https://www.x.org/releases/X11R7.7/doc/damageproto/damageproto.txt
     // extracted from <xcb/damage.h>
@@ -120,14 +120,14 @@ QVector<QByteArray> damageOpCodes()
                                 QByteArrayLiteral("Add")});
 }
 
-QVector<QByteArray> damageErrorCodes()
+static QVector<QByteArray> damageErrorCodes()
 {
     // see https://www.x.org/releases/X11R7.7/doc/damageproto/damageproto.txt
     // extracted from <xcb/damage.h>
     return QVector<QByteArray>({QByteArrayLiteral("BadDamage")});
 }
 
-QVector<QByteArray> compositeOpCodes()
+static QVector<QByteArray> compositeOpCodes()
 {
     // see https://www.x.org/releases/X11R7.7/doc/compositeproto/compositeproto.txt
     // extracted from <xcb/composite.h>
@@ -142,7 +142,7 @@ QVector<QByteArray> compositeOpCodes()
                                 QByteArrayLiteral("ReleaseOverlayWindow")});
 }
 
-QVector<QByteArray> fixesOpCodes()
+static QVector<QByteArray> fixesOpCodes()
 {
     // see https://www.x.org/releases/X11R7.7/doc/fixesproto/fixesproto.txt
     // extracted from <xcb/xfixes.h>
@@ -181,14 +181,14 @@ QVector<QByteArray> fixesOpCodes()
                                 QByteArrayLiteral("DeletePointerBarrier")});
 }
 
-QVector<QByteArray> fixesErrorCodes()
+static QVector<QByteArray> fixesErrorCodes()
 {
     // see https://www.x.org/releases/X11R7.7/doc/fixesproto/fixesproto.txt
     // extracted from <xcb/xfixes.h>
     return QVector<QByteArray>({QByteArrayLiteral("BadRegion")});
 }
 
-QVector<QByteArray> renderOpCodes()
+static QVector<QByteArray> renderOpCodes()
 {
     // see https://www.x.org/releases/X11R7.7/doc/renderproto/renderproto.txt
     // extracted from <xcb/render.h>
@@ -225,7 +225,7 @@ QVector<QByteArray> renderOpCodes()
                                 QByteArrayLiteral("CreateConicalGradient")});
 }
 
-QVector<QByteArray> syncOpCodes()
+static QVector<QByteArray> syncOpCodes()
 {
     // see https://www.x.org/releases/X11R7.7/doc/xextproto/sync.html
     // extracted from <xcb/sync.h>

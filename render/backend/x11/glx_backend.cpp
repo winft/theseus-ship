@@ -81,8 +81,10 @@ void glx_backend::present()
         glXSwapBuffers(data.display, data.window);
 
         if (supportsBufferAge()) {
-            glXQueryDrawable(
-                data.display, data.window, GLX_BACK_BUFFER_AGE_EXT, (GLuint*)&m_bufferAge);
+            glXQueryDrawable(data.display,
+                             data.window,
+                             GLX_BACK_BUFFER_AGE_EXT,
+                             reinterpret_cast<GLuint*>(&m_bufferAge));
         }
     } else if (data.extensions.mesa_copy_sub_buffer) {
         for (const QRect& r : lastDamage()) {

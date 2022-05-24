@@ -240,7 +240,7 @@ void pointer::set_scroll_method(scroll method)
     if (!set_scroll_method_impl(method)) {
         return;
     }
-    write_entry(this, pointer_config_key::scroll_method, (quint32)method);
+    write_entry(this, pointer_config_key::scroll_method, static_cast<quint32>(method));
     Q_EMIT scroll_method_changed();
 }
 
@@ -357,7 +357,7 @@ void pointer::set_acceleration_profile(accel_profile profile)
     if (!set_acceleration_profile_impl(profile)) {
         return;
     }
-    write_entry(this, pointer_config_key::acceleration_profile, (quint32)profile);
+    write_entry(this, pointer_config_key::acceleration_profile, static_cast<quint32>(profile));
     Q_EMIT acceleration_profile_changed();
 }
 
@@ -369,7 +369,7 @@ void pointer::set_click_method(clicks method)
     if (!set_click_method_impl(method)) {
         return;
     }
-    write_entry(this, pointer_config_key::click_method, (quint32)method);
+    write_entry(this, pointer_config_key::click_method, static_cast<quint32>(method));
     Q_EMIT click_method_changed();
 }
 

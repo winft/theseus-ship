@@ -231,7 +231,9 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
     }
 
     // Move elevated windows to the top of the stacking order
-    for (auto c : static_cast<effects_handler_impl*>(effects)->elevatedWindows()) {
+    auto const elevated_win_list = static_cast<effects_handler_impl*>(effects)->elevatedWindows();
+
+    for (auto c : elevated_win_list) {
         auto t = static_cast<effects_window_impl*>(c)->window();
         remove_all(windows, t);
         windows.push_back(t);
@@ -271,11 +273,8 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
     // TODO? This cannot be used so carelessly - needs protections against broken clients, the
     // window should not get focus before it's displayed, handle unredirected windows properly and
     // so on.
-    for (auto win : windows) {
-        if (!win->readyForPainting()) {
-            windows.erase(std::remove(windows.begin(), windows.end(), win), windows.end());
-        }
-    }
+
+    remove_all_if(windows, [](auto const& win) { return !win->readyForPainting(); });
 
     repaints = repaints_region;
 

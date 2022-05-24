@@ -750,7 +750,7 @@ bool Toplevel::is_popup_end() const
 int Toplevel::desktop() const
 {
     // TODO: for remnant special case?
-    return m_desktops.isEmpty() ? (int)NET::OnAllDesktops : m_desktops.last()->x11DesktopNumber();
+    return m_desktops.isEmpty() ? static_cast<int>(NET::OnAllDesktops) : m_desktops.last()->x11DesktopNumber();
 }
 
 QVector<win::virtual_desktop*> Toplevel::desktops() const

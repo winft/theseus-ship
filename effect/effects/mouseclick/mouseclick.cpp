@@ -165,7 +165,7 @@ float MouseClickEffect::computeRadius(const MouseEvent* click, int ring)
 float MouseClickEffect::computeAlpha(const MouseEvent* click, int ring)
 {
     float ringDistance = m_ringLife / (m_ringCount * 3);
-    return (m_ringLife - (float)click->m_time - ringDistance * (ring)) / m_ringLife;
+    return (m_ringLife - static_cast<float>(click->m_time) - ringDistance * (ring)) / m_ringLife;
 }
 
 void MouseClickEffect::slotMouseChanged(const QPoint& pos,

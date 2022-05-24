@@ -291,7 +291,7 @@ effects_handler_impl::~effects_handler_impl()
 
 void effects_handler_impl::unloadAllEffects()
 {
-    for (const EffectPair& pair : loaded_effects) {
+    for (const EffectPair& pair : qAsConst(loaded_effects)) {
         destroyEffect(pair.second);
     }
 
@@ -598,7 +598,8 @@ void effects_handler_impl::slotOpacityChanged(Toplevel* t, qreal oldOpacity)
         return;
     }
 
-    Q_EMIT windowOpacityChanged(t->render->effect.get(), oldOpacity, (qreal)t->opacity());
+    Q_EMIT windowOpacityChanged(
+        t->render->effect.get(), oldOpacity, static_cast<qreal>(t->opacity()));
 }
 
 void effects_handler_impl::slotClientShown(KWin::Toplevel* t)

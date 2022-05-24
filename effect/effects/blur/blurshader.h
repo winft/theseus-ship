@@ -98,7 +98,7 @@ private:
 
     bool m_valid = false;
 
-    Q_DISABLE_COPY(BlurShader);
+    Q_DISABLE_COPY(BlurShader)
 };
 
 inline bool BlurShader::isValid() const

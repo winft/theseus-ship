@@ -276,8 +276,8 @@ QRect egl_backend::get_viewport(egl_output const& egl_out) const
     auto const& geo = egl_out.out->base.geometry();
     auto const& view = egl_out.out->base.view_geometry();
 
-    auto const width_ratio = view.width() / (double)geo.width();
-    auto const height_ratio = view.height() / (double)geo.height();
+    auto const width_ratio = view.width() / static_cast<double>(geo.width());
+    auto const height_ratio = view.height() / static_cast<double>(geo.height());
 
     return QRect(-geo.x() * width_ratio,
                  -geo.y() * height_ratio,

@@ -202,7 +202,7 @@ void ContrastShader::init()
         shader->setUniform(colorMatrixLocation, QMatrix4x4());
         shader->setUniform(textureMatrixLocation, QMatrix4x4());
         shader->setUniform(mvpMatrixLocation, modelViewProjection);
-        shader->setUniform(opacityLocation, (float)1.0);
+        shader->setUniform(opacityLocation, static_cast<float>(1.0));
         ShaderManager::instance()->popShader();
     }
 

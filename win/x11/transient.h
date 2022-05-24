@@ -9,6 +9,7 @@
 #include "window_find.h"
 
 #include "base/logging.h"
+#include "base/x11/xcb/proto.h"
 #include "win/stacking.h"
 #include "win/transient.h"
 

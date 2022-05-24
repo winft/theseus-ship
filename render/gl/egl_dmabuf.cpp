@@ -314,7 +314,8 @@ QVector<uint32_t> egl_dmabuf::queryFormats()
     }
 
     QVector<uint32_t> formats(count);
-    if (!eglQueryDmaBufFormatsEXT(data.base.display, count, (EGLint*)formats.data(), &count)) {
+    if (!eglQueryDmaBufFormatsEXT(
+            data.base.display, count, reinterpret_cast<EGLint*>(formats.data()), &count)) {
         return QVector<uint32_t>();
     }
     return formats;

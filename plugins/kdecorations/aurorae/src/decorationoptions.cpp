@@ -137,7 +137,8 @@ QList<int> DecorationOptions::titleButtonsLeft() const
 {
     QList<int> ret;
     if (m_decoration) {
-        for (auto it : m_decoration->settings()->decorationButtonsLeft()) {
+        auto const buttons_left = m_decoration->settings()->decorationButtonsLeft();
+        for (auto it : buttons_left) {
             ret << decorationButton(it);
         }
     }
@@ -148,7 +149,8 @@ QList<int> DecorationOptions::titleButtonsRight() const
 {
     QList<int> ret;
     if (m_decoration) {
-        for (auto it : m_decoration->settings()->decorationButtonsRight()) {
+        auto const buttons_right = m_decoration->settings()->decorationButtonsRight();
+        for (auto it : buttons_right) {
             ret << decorationButton(it);
         }
     }
