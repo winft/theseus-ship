@@ -40,14 +40,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::render
 {
 
-outline::outline()
-    : m_active(false)
+outline::outline(render::compositor& compositor)
+    : compositor{compositor}
 {
-    assert(render::compositor::self());
-    connect(render::compositor::self(),
-            &render::compositor::compositingToggled,
-            this,
-            &outline::compositingChanged);
+    connect(
+        &compositor, &render::compositor::compositingToggled, this, &outline::compositingChanged);
 }
 
 outline::~outline()
@@ -56,10 +53,10 @@ outline::~outline()
 
 void outline::show()
 {
-    if (m_visual.isNull()) {
+    if (!m_visual) {
         createHelper();
     }
-    if (m_visual.isNull()) {
+    if (!m_visual) {
         // something went wrong
         return;
     }
@@ -75,7 +72,7 @@ void outline::hide()
     }
     m_active = false;
     Q_EMIT activeChanged();
-    if (m_visual.isNull()) {
+    if (!m_visual) {
         return;
     }
     m_visual->hide();
@@ -120,10 +117,16 @@ QRect outline::unifiedGeometry() const
 
 void outline::createHelper()
 {
-    if (!m_visual.isNull()) {
+    if (m_visual) {
         return;
     }
-    m_visual.reset(kwinApp()->get_base().render->createOutline(this));
+
+    if (compositor.isActive()) {
+        m_visual = std::make_unique<composited_outline_visual>(
+            this, *compositor.space->scripting->qmlEngine());
+    } else {
+        m_visual.reset(kwinApp()->get_base().render->create_non_composited_outline(this));
+    }
 }
 
 void outline::compositingChanged()
@@ -143,11 +146,12 @@ outline_visual::~outline_visual()
 {
 }
 
-composited_outline_visual::composited_outline_visual(render::outline* outline)
+composited_outline_visual::composited_outline_visual(render::outline* outline, QQmlEngine& engine)
     : outline_visual(outline)
     , m_qmlContext()
     , m_qmlComponent()
     , m_mainItem()
+    , engine{engine}
 {
 }
 
@@ -166,11 +170,11 @@ void composited_outline_visual::hide()
 void composited_outline_visual::show()
 {
     if (m_qmlContext.isNull()) {
-        m_qmlContext.reset(new QQmlContext(workspace()->scripting->qmlEngine()));
+        m_qmlContext.reset(new QQmlContext(&engine));
         m_qmlContext->setContextProperty(QStringLiteral("outline"), get_outline());
     }
     if (m_qmlComponent.isNull()) {
-        m_qmlComponent.reset(new QQmlComponent(workspace()->scripting->qmlEngine()));
+        m_qmlComponent.reset(new QQmlComponent(&engine));
         const QString fileName = QStandardPaths::locate(
             QStandardPaths::GenericDataLocation,
             kwinApp()

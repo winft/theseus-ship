@@ -24,13 +24,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QObject>
 #include <QRect>
+#include <memory>
 
 class QQmlContext;
 class QQmlComponent;
+class QQmlEngine;
 
 namespace KWin::render
 {
 
+class compositor;
 class outline_visual;
 
 /**
@@ -53,7 +56,7 @@ class KWIN_EXPORT outline : public QObject
     Q_PROPERTY(QRect unifiedGeometry READ unifiedGeometry NOTIFY unifiedGeometryChanged)
     Q_PROPERTY(bool active READ isActive NOTIFY activeChanged)
 public:
-    outline();
+    outline(render::compositor& compositor);
     ~outline() override;
 
     /**
@@ -123,10 +126,12 @@ Q_SIGNALS:
 
 private:
     void createHelper();
-    QScopedPointer<outline_visual> m_visual;
+
+    std::unique_ptr<outline_visual> m_visual;
     QRect m_outlineGeometry;
     QRect m_visualParentGeometry;
-    bool m_active;
+    bool m_active{false};
+    render::compositor& compositor;
 };
 
 class KWIN_EXPORT outline_visual
@@ -148,7 +153,7 @@ private:
 class composited_outline_visual : public outline_visual
 {
 public:
-    composited_outline_visual(render::outline* outline);
+    composited_outline_visual(render::outline* outline, QQmlEngine& engine);
     ~composited_outline_visual() override;
     void show() override;
     void hide() override;
@@ -157,6 +162,7 @@ private:
     QScopedPointer<QQmlContext> m_qmlContext;
     QScopedPointer<QQmlComponent> m_qmlComponent;
     QScopedPointer<QObject> m_mainItem;
+    QQmlEngine& engine;
 };
 
 inline bool outline::isActive() const

@@ -249,14 +249,9 @@ void platform::createOpenGLSafePoint(OpenGLSafePoint safePoint)
     }
 }
 
-outline_visual* platform::createOutline(render::outline* outline)
+outline_visual* platform::create_non_composited_outline(render::outline* outline)
 {
-    // first try composited Outline
-    auto ret = render::platform::createOutline(outline);
-    if (!ret) {
-        ret = new non_composited_outline(outline);
-    }
-    return ret;
+    return new non_composited_outline(outline);
 }
 
 win::deco::renderer* platform::createDecorationRenderer(win::deco::client_impl* client)

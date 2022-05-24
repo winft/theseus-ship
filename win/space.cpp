@@ -92,8 +92,7 @@ namespace KWin::win
 space* space::_self = nullptr;
 
 space::space(render::compositor& render)
-    : QObject(nullptr)
-    , outline(std::make_unique<render::outline>())
+    : outline{std::make_unique<render::outline>(render)}
     , render{render}
     , deco{std::make_unique<deco::bridge<space>>(*this)}
     , app_menu{std::make_unique<win::app_menu>(*this)}

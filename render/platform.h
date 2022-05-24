@@ -104,11 +104,7 @@ public:
      */
     virtual void createOpenGLSafePoint(OpenGLSafePoint safePoint);
 
-    /**
-     * Creates the outline_visual for the given @p outline.
-     * Default implementation creates an outline_visual suited for composited usage.
-     */
-    virtual render::outline_visual* createOutline(render::outline* outline);
+    virtual render::outline_visual* create_non_composited_outline(render::outline* outline);
 
     /**
      * Creates the deco renderer for the given @p client.

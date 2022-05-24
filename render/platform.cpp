@@ -62,11 +62,8 @@ void platform::createOpenGLSafePoint(OpenGLSafePoint safePoint)
     Q_UNUSED(safePoint)
 }
 
-render::outline_visual* platform::createOutline(render::outline* outline)
+render::outline_visual* platform::create_non_composited_outline(render::outline* /*outline*/)
 {
-    if (render::compositor::compositing()) {
-        return new render::composited_outline_visual(outline);
-    }
     return nullptr;
 }
 
