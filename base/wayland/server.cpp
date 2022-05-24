@@ -111,10 +111,6 @@ void server::create_globals()
         throw std::exception();
     }
 
-    globals->compositor = display->createCompositor();
-    globals->xdg_shell = display->createXdgShell();
-
-    globals->xdg_decoration_manager = display->createXdgDecorationManager(xdg_shell());
     display->createShm();
     globals->seats.push_back(display->createSeat());
 
@@ -123,20 +119,6 @@ void server::create_globals()
     globals->data_device_manager = display->createDataDeviceManager();
     globals->primary_selection_device_manager = display->createPrimarySelectionDeviceManager();
     globals->data_control_manager_v1 = display->create_data_control_manager_v1();
-    globals->kde_idle = display->createIdle();
-    globals->idle_inhibit_manager_v1 = display->createIdleInhibitManager();
-
-    globals->plasma_shell = display->createPlasmaShell();
-    globals->appmenu_manager = display->createAppmenuManager();
-
-    globals->server_side_decoration_palette_manager
-        = display->createServerSideDecorationPaletteManager();
-    globals->plasma_window_manager = display->createPlasmaWindowManager();
-    globals->plasma_window_manager->setShowingDesktopState(
-        Wrapland::Server::PlasmaWindowManager::ShowingDesktopState::Disabled);
-
-    globals->plasma_virtual_desktop_manager = display->createPlasmaVirtualDesktopManager();
-    globals->plasma_window_manager->setVirtualDesktopManager(virtual_desktop_management());
 
     globals->shadow_manager = display->createShadowManager();
     globals->dpms_manager = display->createDpmsManager();
@@ -150,26 +132,10 @@ void server::create_globals()
                 base::wayland::request_outputs_change(base, config);
             });
 
-    globals->subcompositor = display->createSubCompositor();
-    globals->layer_shell_v1 = display->createLayerShellV1();
-
-    globals->xdg_activation_v1 = display->createXdgActivationV1();
-    globals->xdg_foreign = display->createXdgForeign();
-
     globals->key_state = display->createKeyState();
     globals->viewporter = display->createViewporter();
 
     globals->relative_pointer_manager_v1 = display->createRelativePointerManager();
-}
-
-Wrapland::Server::Compositor* server::compositor() const
-{
-    return globals->compositor.get();
-}
-
-Wrapland::Server::Subcompositor* server::subcompositor() const
-{
-    return globals->subcompositor.get();
 }
 
 Wrapland::Server::linux_dmabuf_v1* server::linux_dmabuf()
@@ -180,11 +146,6 @@ Wrapland::Server::linux_dmabuf_v1* server::linux_dmabuf()
 Wrapland::Server::Viewporter* server::viewporter() const
 {
     return globals->viewporter.get();
-}
-
-Wrapland::Server::PresentationManager* server::presentation_manager() const
-{
-    return globals->presentation_manager.get();
 }
 
 Wrapland::Server::Seat* server::seat() const
@@ -203,87 +164,6 @@ Wrapland::Server::data_device_manager* server::data_device_manager() const
 Wrapland::Server::primary_selection_device_manager* server::primary_selection_device_manager() const
 {
     return globals->primary_selection_device_manager.get();
-}
-
-Wrapland::Server::XdgShell* server::xdg_shell() const
-{
-    return globals->xdg_shell.get();
-}
-
-Wrapland::Server::XdgActivationV1* server::xdg_activation() const
-{
-    return globals->xdg_activation_v1.get();
-}
-
-Wrapland::Server::PlasmaVirtualDesktopManager* server::virtual_desktop_management() const
-{
-    return globals->plasma_virtual_desktop_manager.get();
-}
-
-Wrapland::Server::LayerShellV1* server::layer_shell() const
-{
-    return globals->layer_shell_v1.get();
-}
-
-Wrapland::Server::PlasmaWindowManager* server::window_management() const
-{
-    return globals->plasma_window_manager.get();
-}
-
-Wrapland::Server::KdeIdle* server::kde_idle() const
-{
-    return globals->kde_idle.get();
-}
-
-Wrapland::Server::drm_lease_device_v1* server::drm_lease_device() const
-{
-    return globals->drm_lease_device_v1.get();
-}
-
-void server::create_presentation_manager()
-{
-    Q_ASSERT(!globals->presentation_manager);
-    globals->presentation_manager = display->createPresentationManager();
-}
-
-Wrapland::Server::Surface*
-server::find_foreign_parent_for_surface(Wrapland::Server::Surface* surface)
-{
-    return globals->xdg_foreign->parentOf(surface);
-}
-
-void server::init_workspace()
-{
-    auto ws = static_cast<win::wayland::space*>(workspace());
-
-    win::virtual_desktop_manager::self()->setVirtualDesktopManagement(virtual_desktop_management());
-
-    if (window_management()) {
-        connect(ws, &win::space::showingDesktopChanged, this, [this](bool set) {
-            using namespace Wrapland::Server;
-            window_management()->setShowingDesktopState(
-                set ? PlasmaWindowManager::ShowingDesktopState::Enabled
-                    : PlasmaWindowManager::ShowingDesktopState::Disabled);
-        });
-    }
-
-    connect(xdg_activation(),
-            &Wrapland::Server::XdgActivationV1::token_requested,
-            ws,
-            [ws](auto token) { win::wayland::xdg_activation_create_token(ws, token); });
-    connect(xdg_activation(),
-            &Wrapland::Server::XdgActivationV1::activate,
-            ws,
-            [ws, this](auto const& token, auto surface) {
-                win::wayland::handle_xdg_activation_activate(ws, token, surface);
-            });
-
-    // For Xwayland windows
-    QObject::connect(ws, &win::space::surface_id_changed, this, [this](auto window, auto id) {
-        if (auto surface = compositor()->getSurface(id, xwayland_connection())) {
-            win::wayland::set_surface(window, surface);
-        }
-    });
 }
 
 void server::init_screen_locker()
@@ -395,17 +275,9 @@ void server::destroy_xwayland_connection()
     m_xwayland.client = nullptr;
 }
 
-void server::create_drm_lease_device()
-{
-    if (!drm_lease_device()) {
-        globals->drm_lease_device_v1 = display->createDrmLeaseDeviceV1();
-    }
-}
-
 void server::create_addons(std::function<void()> callback)
 {
     auto handle_client_created = [this, callback](auto client_created) {
-        init_workspace();
         if (client_created && has_screen_locker_integration()) {
             init_screen_locker();
         }
@@ -499,13 +371,6 @@ bool server::has_screen_locker_integration() const
 bool server::has_global_shortcut_support() const
 {
     return !(m_initFlags & start_options::no_global_shortcuts);
-}
-
-void server::simulate_user_activity()
-{
-    if (globals->kde_idle) {
-        globals->kde_idle->simulateUserActivity();
-    }
 }
 
 void server::update_key_state(input::keyboard_leds leds)

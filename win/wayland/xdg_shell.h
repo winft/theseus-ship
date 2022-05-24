@@ -35,6 +35,7 @@
 #include <Wrapland/Server/xdg_shell_toplevel.h>
 
 #include <functional>
+#include <memory>
 
 namespace KWin::win::wayland
 {
@@ -60,7 +61,8 @@ private:
     window* m_window;
 };
 
-inline window* create_shell_window(Wrapland::Server::XdgShellSurface* shell_surface)
+template<typename Space>
+inline window* create_shell_window(Space& space, Wrapland::Server::XdgShellSurface* shell_surface)
 {
     namespace WS = Wrapland::Server;
 
@@ -74,22 +76,21 @@ inline window* create_shell_window(Wrapland::Server::XdgShellSurface* shell_surf
 
     win->shell_surface = shell_surface;
 
-    auto xdg_shell = waylandServer()->xdg_shell();
-    QObject::connect(xdg_shell, &WS::XdgShell::pingDelayed, win, [win](auto serial) {
+    QObject::connect(space.xdg_shell.get(), &WS::XdgShell::pingDelayed, win, [win](auto serial) {
         handle_ping_delayed(win, serial);
     });
-    QObject::connect(xdg_shell, &WS::XdgShell::pingTimeout, win, [win](auto serial) {
+    QObject::connect(space.xdg_shell.get(), &WS::XdgShell::pingTimeout, win, [win](auto serial) {
         handle_ping_timeout(win, serial);
     });
-    QObject::connect(xdg_shell, &WS::XdgShell::pongReceived, win, [win](auto serial) {
+    QObject::connect(space.xdg_shell.get(), &WS::XdgShell::pongReceived, win, [win](auto serial) {
         handle_pong(win, serial);
     });
 
     return win;
 }
 
-template<typename Win>
-void handle_parent_changed(Win* win);
+template<typename Space, typename Win>
+void handle_parent_changed(Space& space, Win* win);
 template<typename Win>
 void handle_minimize_request(Win* win);
 template<typename Win>
@@ -97,20 +98,12 @@ void handle_maximize_request(Win* win, bool maximized);
 template<typename Win>
 Wrapland::Server::XdgShellSurface::States xdg_surface_states(Win* win);
 
-inline void finalize_shell_window_creation(window* win)
+template<typename Space>
+void finalize_shell_window_creation(Space& space, window* win)
 {
     namespace WS = Wrapland::Server;
 
-    QObject::connect(waylandServer(),
-                     &base::wayland::server::foreign_transient_changed,
-                     win,
-                     [win](WS::Surface* child) {
-                         if (child == win->surface()) {
-                             handle_parent_changed(win);
-                         }
-                     });
-
-    auto handle_first_commit = [win] {
+    auto handle_first_commit = [&space, win] {
         QObject::disconnect(win->surface(), &WS::Surface::committed, win, nullptr);
         QObject::connect(win->surface(), &WS::Surface::committed, win, &window::handle_commit);
 
@@ -121,7 +114,7 @@ inline void finalize_shell_window_creation(window* win)
             }
         });
 
-        handle_parent_changed(win);
+        handle_parent_changed(space, win);
 
         if (win->control) {
             // Window is an xdg-shell toplevel.
@@ -203,14 +196,15 @@ void update_icon(Win* win)
     win->control->set_icon(QIcon::fromTheme(icon));
 }
 
-inline window* create_toplevel_window(Wrapland::Server::XdgShellToplevel* toplevel)
+template<typename Space>
+window* create_toplevel_window(Space* space, Wrapland::Server::XdgShellToplevel* toplevel)
 {
     namespace WS = Wrapland::Server;
 
-    auto win = create_shell_window(toplevel->surface());
+    auto win = create_shell_window(*space, toplevel->surface());
     win->toplevel = toplevel;
 
-    win->control = std::unique_ptr<control>(new xdg_shell_control(win));
+    win->control = std::make_unique<xdg_shell_control>(win);
     win->control->setup_tabbox();
     win->control->setup_color_scheme();
 
@@ -280,8 +274,8 @@ inline window* create_toplevel_window(Wrapland::Server::XdgShellToplevel* toplev
                      [win](auto seat, auto serial, auto surface_pos) {
                          handle_window_menu_request(win, seat, serial, surface_pos);
                      });
-    QObject::connect(toplevel, &WS::XdgShellToplevel::transientForChanged, win, [win] {
-        handle_parent_changed(win);
+    QObject::connect(toplevel, &WS::XdgShellToplevel::transientForChanged, win, [space, win] {
+        handle_parent_changed(*space, win);
     });
 
     auto configure = [win, toplevel] {
@@ -301,15 +295,16 @@ inline window* create_toplevel_window(Wrapland::Server::XdgShellToplevel* toplev
     set_desktop(win, virtual_desktop_manager::self()->current());
     set_color_scheme(win, QString());
 
-    finalize_shell_window_creation(win);
+    finalize_shell_window_creation(*space, win);
     return win;
 }
 
-inline window* create_popup_window(Wrapland::Server::XdgShellPopup* popup)
+template<typename Space>
+window* create_popup_window(Space* space, Wrapland::Server::XdgShellPopup* popup)
 {
     namespace WS = Wrapland::Server;
 
-    auto win = create_shell_window(popup->surface());
+    auto win = create_shell_window(*space, popup->surface());
     win->popup = popup;
     win->transient()->annexed = true;
 
@@ -335,7 +330,7 @@ inline window* create_popup_window(Wrapland::Server::XdgShellPopup* popup)
     QObject::connect(
         popup, &WS::XdgShellPopup::resourceDestroyed, win, [win] { destroy_window(win); });
 
-    finalize_shell_window_creation(win);
+    finalize_shell_window_creation(*space, win);
     return win;
 }
 
@@ -577,15 +572,10 @@ void install_deco(Win* win, Wrapland::Server::XdgDecoration* deco)
 template<typename Window, typename Space>
 void handle_new_toplevel(Space* space, Wrapland::Server::XdgShellToplevel* toplevel)
 {
-    if (!workspace()) {
-        // it's possible that a Surface gets created before Workspace is created
-        // TODO(romangg): Make this check unnecessary.
-        return;
-    }
     if (toplevel->client() == space->server->screen_locker_client_connection) {
         ScreenLocker::KSldApp::self()->lockScreenShown();
     }
-    auto window = win::wayland::create_toplevel_window(toplevel);
+    auto window = win::wayland::create_toplevel_window(space, toplevel);
 
     // TODO(romangg): Also relevant for popups?
     auto it = std::find_if(
@@ -597,11 +587,10 @@ void handle_new_toplevel(Space* space, Wrapland::Server::XdgShellToplevel* tople
         space->plasma_shell_surfaces.erase(it);
     }
 
-    if (auto menu = space->server->globals->appmenu_manager->appmenuForSurface(window->surface())) {
+    if (auto menu = space->appmenu_manager->appmenuForSurface(window->surface())) {
         win::wayland::install_appmenu(window, menu);
     }
-    if (auto palette
-        = space->server->globals->server_side_decoration_palette_manager->paletteForSurface(
+    if (auto palette = space->server_side_decoration_palette_manager->paletteForSurface(
             toplevel->surface()->surface())) {
         win::wayland::install_palette(window, palette);
     }
@@ -617,24 +606,20 @@ void handle_new_toplevel(Space* space, Wrapland::Server::XdgShellToplevel* tople
 
     // Not directly connected as the connection is tied to client instead of this.
     // TODO(romangg): What does this mean?
-    QObject::connect(space->server->globals->xdg_foreign.get(),
+    QObject::connect(space->xdg_foreign.get(),
                      &Wrapland::Server::XdgForeign::parentChanged,
                      window,
-                     [server = space->server](auto /*parent*/, auto child) {
-                         Q_EMIT server->foreign_transient_changed(child);
+                     [space, window](auto /*parent*/, auto child) {
+                         if (child == window->surface()) {
+                             handle_parent_changed(*space, window);
+                         }
                      });
 }
 
 template<typename Window, typename Space>
 void handle_new_popup(Space* space, Wrapland::Server::XdgShellPopup* popup)
 {
-    if (!workspace()) {
-        // it's possible that a Surface gets created before Workspace is created
-        // TODO(romangg): Make this check unnecessary.
-        return;
-    }
-
-    auto window = win::wayland::create_popup_window(popup);
+    auto window = win::wayland::create_popup_window(space, popup);
     space->m_windows.push_back(window);
 
     if (window->readyForPainting()) {
@@ -755,8 +740,8 @@ void handle_configure_ack(Win* win, uint32_t serial)
     win->acked_configure = serial;
 }
 
-template<typename Win>
-void handle_parent_changed(Win* win)
+template<typename Space, typename Win>
+void handle_parent_changed(Space& space, Win* win)
 {
     Wrapland::Server::Surface* parent_surface = nullptr;
     if (win->toplevel) {
@@ -769,10 +754,10 @@ void handle_parent_changed(Win* win)
     }
 
     if (!parent_surface) {
-        parent_surface = waylandServer()->find_foreign_parent_for_surface(win->surface());
+        parent_surface = space.xdg_foreign->parentOf(win->surface());
     }
 
-    auto parent = static_cast<space*>(workspace())->find_window(parent_surface);
+    auto parent = space.find_window(parent_surface);
 
     if (auto lead = win->transient()->lead(); parent != lead) {
         // Remove from main client.

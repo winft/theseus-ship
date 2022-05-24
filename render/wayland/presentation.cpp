@@ -27,6 +27,7 @@ namespace KWin::render::wayland
 
 presentation::presentation(QObject* parent)
     : QObject(parent)
+    , presentation_manager(waylandServer()->display->createPresentationManager())
 {
 }
 
@@ -40,10 +41,7 @@ bool presentation::init_clock(clockid_t clockid)
         return false;
     }
 
-    if (!waylandServer()->presentation_manager()) {
-        waylandServer()->create_presentation_manager();
-    }
-    waylandServer()->presentation_manager()->setClockId(clockid);
+    presentation_manager->setClockId(clockid);
 
     return true;
 }

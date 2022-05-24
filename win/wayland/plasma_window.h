@@ -7,6 +7,8 @@
 
 #include <cassert>
 
+#include <Wrapland/Server/plasma_window.h>
+
 namespace KWin::win::wayland
 {
 

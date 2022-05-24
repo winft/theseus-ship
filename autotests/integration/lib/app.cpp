@@ -97,7 +97,8 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode,
     addLibraryPath(ownPath);
 
     server.reset(new base::wayland::server(socket_name, flags));
-    base = base::backend::wlroots::platform(wlr_headless_backend_create(server->display->native()));
+    base = base::backend::wlroots::platform(server->display.get(),
+                                            wlr_headless_backend_create(server->display->native()));
 
     base.render = std::make_unique<render::backend::wlroots::platform>(base);
 

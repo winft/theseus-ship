@@ -39,7 +39,7 @@ non_desktop_output::non_desktop_output(wlr_output* wlr_out, wlroots::platform* p
 
 void non_desktop_output::create_lease_connector()
 {
-    auto lease_device = waylandServer()->drm_lease_device();
+    auto lease_device = platform->drm_lease_device.get();
     if (!lease_device) {
         return;
     }

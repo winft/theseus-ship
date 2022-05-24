@@ -75,41 +75,19 @@ public:
 
     void terminateClientConnections();
 
-    Wrapland::Server::Compositor* compositor() const;
-    Wrapland::Server::Subcompositor* subcompositor() const;
     Wrapland::Server::linux_dmabuf_v1* linux_dmabuf();
     Wrapland::Server::Viewporter* viewporter() const;
-    Wrapland::Server::PresentationManager* presentation_manager() const;
 
     Wrapland::Server::Seat* seat() const;
 
     Wrapland::Server::data_device_manager* data_device_manager() const;
     Wrapland::Server::primary_selection_device_manager* primary_selection_device_manager() const;
 
-    Wrapland::Server::XdgShell* xdg_shell() const;
-    Wrapland::Server::XdgActivationV1* xdg_activation() const;
-
-    Wrapland::Server::PlasmaVirtualDesktopManager* virtual_desktop_management() const;
-    Wrapland::Server::LayerShellV1* layer_shell() const;
-    Wrapland::Server::PlasmaWindowManager* window_management() const;
-
-    Wrapland::Server::KdeIdle* kde_idle() const;
-    Wrapland::Server::drm_lease_device_v1* drm_lease_device() const;
-
-    void create_presentation_manager();
-
-    /**
-     * @returns a parent of a surface imported with the foreign protocol, if any
-     */
-    Wrapland::Server::Surface* find_foreign_parent_for_surface(Wrapland::Server::Surface* surface);
-
     /**
      * @returns file descriptor for Xwayland to connect to.
      */
     int create_xwayland_connection();
     void destroy_xwayland_connection();
-
-    void create_drm_lease_device();
 
     bool is_screen_locked() const;
     /**
@@ -123,7 +101,6 @@ public:
     bool has_global_shortcut_support() const;
 
     void create_addons(std::function<void()> callback);
-    void init_workspace();
 
     Wrapland::Server::Client* xwayland_connection() const
     {
@@ -151,7 +128,6 @@ public:
      */
     socket_pair_connection create_connection();
 
-    void simulate_user_activity();
     void update_key_state(input::keyboard_leds leds);
 
     std::unique_ptr<Wrapland::Server::Display> display;
@@ -174,7 +150,6 @@ public:
 Q_SIGNALS:
     void terminating_internal_client_connection();
     void screenlocker_initialized();
-    void foreign_transient_changed(Wrapland::Server::Surface* child);
 
 private:
     explicit server(start_options flags);

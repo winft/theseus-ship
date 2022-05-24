@@ -69,7 +69,7 @@ class KWIN_EXPORT platform : public base::wayland::platform
 public:
     platform() = default;
     explicit platform(Wrapland::Server::Display* display);
-    explicit platform(wlr_backend* backend);
+    explicit platform(Wrapland::Server::Display* display, wlr_backend* backend);
 
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
@@ -85,7 +85,7 @@ public:
     wlr_backend* backend{nullptr};
 
 private:
-    void setup_drm_leasing();
+    void setup_drm_leasing(Wrapland::Server::Display* display, wlr_backend* drm_backend);
 
     std::unique_ptr<event_receiver<platform>> destroyed;
     std::unique_ptr<event_receiver<platform>> new_output;

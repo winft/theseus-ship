@@ -5,7 +5,6 @@
 */
 #pragma once
 
-#include "base/wayland/server.h"
 #include "win/control.h"
 #include "win/meta.h"
 #include "win/move.h"
@@ -19,21 +18,18 @@
 namespace KWin::win::wayland
 {
 
-template<typename Win>
-void setup_plasma_management(Win* win)
+template<typename Space, typename Win>
+void setup_plasma_management(Space* space, Win* win)
 {
     if (win->control->wayland_management()) {
         // Already setup.
         return;
     }
-    if (!waylandServer() || !win->surface()) {
-        return;
-    }
-    if (!waylandServer()->window_management()) {
+    if (!win->surface()) {
         return;
     }
     auto plasma_win
-        = waylandServer()->window_management()->createWindow(waylandServer()->window_management());
+        = space->plasma_window_manager->createWindow(space->plasma_window_manager.get());
     plasma_win->setTitle(win::caption(win));
     plasma_win->setActive(win->control->active());
     plasma_win->setFullscreen(win->control->fullscreen());
@@ -163,9 +159,9 @@ void setup_plasma_management(Win* win)
                      win,
                      [win](bool set) { win::set_demands_attention(win, set); });
     QObject::connect(
-        plasma_win, &Wrapland::Server::PlasmaWindow::activeRequested, win, [win](bool set) {
+        plasma_win, &Wrapland::Server::PlasmaWindow::activeRequested, win, [space, win](bool set) {
             if (set) {
-                workspace()->activateClient(win, true);
+                space->activateClient(win, true);
             }
         });
 
