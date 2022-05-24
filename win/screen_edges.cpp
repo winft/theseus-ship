@@ -22,6 +22,8 @@
 
 #include <KConfigGroup>
 #include <QAction>
+#include <QFontDatabase>
+#include <QFontMetrics>
 #include <QMouseEvent>
 
 namespace KWin::win
@@ -705,9 +707,10 @@ screen_edger::screen_edger(win::space& space)
     : gesture_recognizer{std::make_unique<input::gesture_recognizer>()}
     , space{space}
 {
-    auto const& outputs = kwinApp()->get_base().get_outputs();
-    auto const& phys_dpi = outputs.empty() ? QPoint() : base::output_physical_dpi(*outputs.front());
-    corner_offset = (phys_dpi.x() + phys_dpi.y() + 5) / 6;
+    int const gridUnit = QFontMetrics(QFontDatabase::systemFont(QFontDatabase::GeneralFont))
+                             .boundingRect(QLatin1Char('M'))
+                             .height();
+    corner_offset = 4 * gridUnit;
 
     config = kwinApp()->config();
 
