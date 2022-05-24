@@ -217,7 +217,7 @@ void ApplicationWayland::start()
     input::wayland::add_dbus(input.get());
     workspace->initShortcuts();
     tablet_mode_manager = std::make_unique<input::dbus::tablet_mode_manager>();
-    workspace->scripting = std::make_unique<scripting::platform>();
+    workspace->scripting = std::make_unique<scripting::platform>(*workspace);
 
     render->compositor->start(*workspace);
 

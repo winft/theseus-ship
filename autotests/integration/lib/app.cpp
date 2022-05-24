@@ -221,7 +221,7 @@ void WaylandTestApplication::start()
     workspace->input = std::make_unique<input::wayland::redirect>(*input, *workspace);
     input::wayland::add_dbus(input.get());
     workspace->initShortcuts();
-    workspace->scripting = std::make_unique<scripting::platform>();
+    workspace->scripting = std::make_unique<scripting::platform>(*workspace);
 
     base.render->compositor->start(*workspace);
 

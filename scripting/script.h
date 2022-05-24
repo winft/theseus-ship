@@ -24,6 +24,8 @@ class KConfigGroup;
 
 namespace KWin::scripting
 {
+
+class platform;
 class window;
 
 class KWIN_EXPORT abstract_script : public QObject
@@ -80,7 +82,11 @@ class script : public abstract_script, QDBusContext
 {
     Q_OBJECT
 public:
-    script(int id, QString scriptName, QString pluginName, QObject* parent = nullptr);
+    script(int id,
+           QString scriptName,
+           QString pluginName,
+           scripting::platform& platform,
+           QObject* parent = nullptr);
     virtual ~script();
 
     Q_INVOKABLE QVariant readConfig(const QString& key, const QVariant& defaultValue = QVariant());
@@ -224,10 +230,11 @@ private:
 
     QJSEngine* m_engine;
     QDBusMessage m_invocationContext;
-    bool m_starting;
+    bool m_starting{false};
     QHash<int, QJSValueList> m_screenEdgeCallbacks;
     QHash<int, QAction*> m_touchScreenEdgeCallbacks;
     QJSValueList m_userActionsMenuCallbacks;
+    scripting::platform& platform;
 };
 
 class declarative_script : public abstract_script
@@ -237,6 +244,7 @@ public:
     explicit declarative_script(int id,
                                 QString scriptName,
                                 QString pluginName,
+                                scripting::platform& platform,
                                 QObject* parent = nullptr);
     ~declarative_script() override;
 

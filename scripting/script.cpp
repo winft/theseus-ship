@@ -89,10 +89,14 @@ void abstract_script::stop()
     deleteLater();
 }
 
-script::script(int id, QString scriptName, QString pluginName, QObject* parent)
+script::script(int id,
+               QString scriptName,
+               QString pluginName,
+               scripting::platform& platform,
+               QObject* parent)
     : abstract_script(id, scriptName, pluginName, parent)
     , m_engine(new QJSEngine(this))
-    , m_starting(false)
+    , platform{platform}
 {
     // TODO: Remove in kwin 6. We have these converters only for compatibility reasons.
     if (!QMetaType::hasRegisteredConverterFunction<QJSValue, QRect>()) {
@@ -178,9 +182,8 @@ void script::slotScriptLoadedFromFile()
     m_engine->globalObject().setProperty(QStringLiteral("options"), optionsObject);
 
     // Make the workspace visible to QJSEngine.
-    QJSValue workspaceObject = m_engine->newQObject(workspace()->scripting->workspaceWrapper());
-    QQmlEngine::setObjectOwnership(workspace()->scripting->workspaceWrapper(),
-                                   QQmlEngine::CppOwnership);
+    QJSValue workspaceObject = m_engine->newQObject(platform.workspaceWrapper());
+    QQmlEngine::setObjectOwnership(platform.workspaceWrapper(), QQmlEngine::CppOwnership);
     m_engine->globalObject().setProperty(QStringLiteral("workspace"), workspaceObject);
 
     QJSValue self = m_engine->newQObject(this);
@@ -372,7 +375,8 @@ bool script::registerScreenEdge(int edge, const QJSValue& callback)
 
     QJSValueList& callbacks = m_screenEdgeCallbacks[edge];
     if (callbacks.isEmpty()) {
-        workspace()->edges->reserve(static_cast<ElectricBorder>(edge), this, "slotBorderActivated");
+        platform.space.edges->reserve(
+            static_cast<ElectricBorder>(edge), this, "slotBorderActivated");
     }
 
     callbacks << callback;
@@ -387,7 +391,7 @@ bool script::unregisterScreenEdge(int edge)
         return false;
     }
 
-    workspace()->edges->unreserve(static_cast<ElectricBorder>(edge), this);
+    platform.space.edges->unreserve(static_cast<ElectricBorder>(edge), this);
     m_screenEdgeCallbacks.erase(it);
 
     return true;
@@ -404,7 +408,7 @@ bool script::registerTouchScreenEdge(int edge, const QJSValue& callback)
     }
 
     QAction* action = new QAction(this);
-    workspace()->edges->reserveTouch(ElectricBorder(edge), action);
+    platform.space.edges->reserveTouch(ElectricBorder(edge), action);
     m_touchScreenEdgeCallbacks.insert(edge, action);
 
     connect(action, &QAction::triggered, this, [callback]() { QJSValue(callback).call(); });
@@ -530,13 +534,14 @@ QAction* script::createMenu(const QString& title, const QJSValue& items, QMenu* 
 declarative_script::declarative_script(int id,
                                        QString scriptName,
                                        QString pluginName,
+                                       scripting::platform& platform,
                                        QObject* parent)
     : abstract_script(id, scriptName, pluginName, parent)
-    , m_context(new QQmlContext(workspace()->scripting->declarativeScriptSharedContext(), this))
-    , m_component(new QQmlComponent(workspace()->scripting->qmlEngine(), this))
+    , m_context(new QQmlContext(platform.declarativeScriptSharedContext(), this))
+    , m_component(new QQmlComponent(platform.qmlEngine(), this))
 {
     m_context->setContextProperty(QStringLiteral("KWin"),
-                                  new js_engine_global_methods_wrapper(this));
+                                  new js_engine_global_methods_wrapper(platform, this));
 }
 
 declarative_script::~declarative_script()

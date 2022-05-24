@@ -269,7 +269,7 @@ void ApplicationX11::start()
         event_filter = std::make_unique<base::x11::xcb_event_filter<win::x11::space>>(*workspace);
         installNativeEventFilter(event_filter.get());
 
-        workspace->scripting = std::make_unique<scripting::platform>();
+        workspace->scripting = std::make_unique<scripting::platform>(*workspace);
 
         render->compositor->start(*workspace);
 

@@ -15,7 +15,9 @@ class QQuickWindow;
 
 namespace KWin::scripting
 {
+
 class declarative_script;
+class platform;
 
 class js_engine_global_methods_wrapper : public QObject
 {
@@ -43,7 +45,8 @@ public:
         ScreenArea
     };
     Q_ENUM(ClientAreaOption)
-    explicit js_engine_global_methods_wrapper(declarative_script* parent);
+
+    js_engine_global_methods_wrapper(scripting::platform& platform, declarative_script* parent);
     ~js_engine_global_methods_wrapper() override;
 
 public Q_SLOTS:
@@ -56,6 +59,7 @@ public Q_SLOTS:
 
 private:
     declarative_script* m_script;
+    scripting::platform& platform;
 };
 
 }
