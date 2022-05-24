@@ -120,7 +120,7 @@ space::space()
 
 #if KWIN_BUILD_TABBOX
     // need to create the tabbox before compositing scene is setup
-    tabbox = std::make_unique<win::tabbox>();
+    tabbox = std::make_unique<win::tabbox>(*this);
 #endif
 
     m_compositor = render::compositor::self();

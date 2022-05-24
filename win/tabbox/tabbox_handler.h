@@ -79,6 +79,8 @@ namespace KWin
  */
 namespace win
 {
+
+class space;
 class tabbox_desktop_model;
 class tabbox_client_model;
 class tabbox_config;
@@ -98,7 +100,8 @@ class tabbox_handler : public QObject
 {
     Q_OBJECT
 public:
-    tabbox_handler(QObject* parent);
+    // TODO(romangg): make space a reference once the tabbox mock for tests is gone.
+    tabbox_handler(win::space* space, QObject* parent);
     ~tabbox_handler() override;
 
     /**
@@ -354,6 +357,7 @@ private Q_SLOTS:
 private:
     friend class tabbox_handler_private;
     tabbox_handler_private* d;
+    win::space* space;
 };
 
 /**

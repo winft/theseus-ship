@@ -27,10 +27,12 @@ namespace KWin
 namespace win
 {
 
+class tabbox;
+
 class tabbox_x11_filter : public base::x11::event_filter
 {
 public:
-    explicit tabbox_x11_filter();
+    explicit tabbox_x11_filter(win::tabbox& tabbox);
 
     bool event(xcb_generic_event_t* event) override;
 
@@ -39,6 +41,8 @@ private:
     void motion(xcb_generic_event_t* event);
     void key_press(xcb_generic_event_t* event);
     void key_release(xcb_generic_event_t* event);
+
+    win::tabbox& tabbox;
 };
 
 }
