@@ -120,7 +120,7 @@ void handle_wl_selection_client_change(Selection* sel)
 {
     auto srv_src = sel->get_current_source();
 
-    if (!qobject_cast<win::x11::window*>(workspace()->activeClient())) {
+    if (!qobject_cast<win::x11::window*>(sel->data.x11.space->activeClient())) {
         // No active client or active client is Wayland native.
         if (sel->data.wayland_source) {
             cleanup_wl_to_x11_source(sel);
@@ -179,7 +179,7 @@ void handle_wl_selection_change(Selection* sel)
     // Wayland native client provides new selection.
     if (!sel->data.active_window_notifier) {
         sel->data.active_window_notifier = QObject::connect(
-            workspace(), &win::space::clientActivated, sel->data.qobject.get(), [sel] {
+            sel->data.x11.space, &win::space::clientActivated, sel->data.qobject.get(), [sel] {
                 handle_wl_selection_client_change(sel);
             });
     }

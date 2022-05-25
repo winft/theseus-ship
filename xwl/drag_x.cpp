@@ -113,8 +113,8 @@ drag_event_reply x11_drag::move_filter(Toplevel* target, QPoint const& pos)
         // Currently there is no target or target is an Xwayland window.
         // Handled here and by X directly.
         if (target && target->surface() && target->control) {
-            if (workspace()->activeClient() != target) {
-                workspace()->activateClient(target);
+            if (source.x11.space->activeClient() != target) {
+                source.x11.space->activateClient(target);
             }
         }
 
@@ -198,7 +198,7 @@ void x11_drag::set_offers(mime_atoms const& offers)
 void x11_drag::set_drag_target()
 {
     auto ac = visit->get_target();
-    workspace()->activateClient(ac);
+    source.x11.space->activateClient(ac);
     waylandServer()->seat()->drags().set_target(ac->surface(), ac->input_transform());
 }
 
@@ -264,8 +264,8 @@ wl_visit::wl_visit(Toplevel* target, x11_source_ext& source)
                         &version);
 
     xcb_map_window(xcb_con, window);
-    workspace()->stacking_order->add_manual_overlay(window);
-    workspace()->stacking_order->update(true);
+    source.x11.space->stacking_order->add_manual_overlay(window);
+    source.x11.space->stacking_order->update(true);
 
     xcb_flush(xcb_con);
     mapped = true;
@@ -490,8 +490,8 @@ void wl_visit::unmap_proxy_window()
 
     xcb_unmap_window(source.x11.connection, window);
 
-    workspace()->stacking_order->remove_manual_overlay(window);
-    workspace()->stacking_order->update(true);
+    source.x11.space->stacking_order->remove_manual_overlay(window);
+    source.x11.space->stacking_order->update(true);
 
     xcb_flush(source.x11.connection);
     mapped = false;

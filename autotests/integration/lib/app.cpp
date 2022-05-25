@@ -292,7 +292,7 @@ void WaylandTestApplication::create_xwayland()
     };
 
     try {
-        xwayland.reset(new xwl::xwayland(this, status_callback));
+        xwayland.reset(new xwl::xwayland(this, *workspace, status_callback));
     } catch (std::system_error const& exc) {
         std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
         exit(exc.code().value());
