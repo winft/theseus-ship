@@ -1853,6 +1853,16 @@ QImage effects_handler_impl::blit_from_framebuffer(QRect const& geometry, double
     return image;
 }
 
+bool effects_handler_impl::invert_screen()
+{
+    if (auto inverter = provides(Effect::ScreenInversion)) {
+        qCDebug(KWIN_CORE) << "inverting screen using Effect plugin";
+        QMetaObject::invokeMethod(inverter, "toggleScreenInversion", Qt::DirectConnection);
+        return true;
+    }
+    return false;
+}
+
 QRect effects_handler_impl::renderTargetRect() const
 {
     return m_scene->renderTargetRect();

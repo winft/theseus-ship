@@ -316,6 +316,7 @@ public:
     EffectScreen* findScreen(int screenId) const override;
     bool isCursorHidden() const override;
     QImage blit_from_framebuffer(QRect const& geometry, double scale) const override;
+    bool invert_screen();
 
     QRect renderTargetRect() const override;
     qreal renderTargetScale() const override;

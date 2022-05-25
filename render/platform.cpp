@@ -78,11 +78,7 @@ win::deco::renderer* platform::createDecorationRenderer(win::deco::client_impl* 
 void platform::invertScreen()
 {
     if (effects) {
-        if (auto inverter = static_cast<render::effects_handler_impl*>(effects)->provides(
-                Effect::ScreenInversion)) {
-            qCDebug(KWIN_CORE) << "inverting screen using Effect plugin";
-            QMetaObject::invokeMethod(inverter, "toggleScreenInversion", Qt::DirectConnection);
-        }
+        static_cast<render::effects_handler_impl*>(effects)->invert_screen();
     }
 }
 
