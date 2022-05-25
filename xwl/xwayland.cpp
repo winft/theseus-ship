@@ -70,7 +70,7 @@ namespace KWin::xwl
 xwayland::xwayland(Application* app,
                    win::wayland::space& space,
                    std::function<void(int)> status_callback)
-    : basic_data{nullptr, nullptr, nullptr, &space}
+    : basic_data{nullptr, nullptr, &space}
     , app{app}
     , space{space}
     , status_callback{status_callback}
@@ -240,8 +240,6 @@ void xwayland::continue_startup_with_x11()
     owner.claim(true);
 
     space.atoms = std::make_unique<base::x11::atoms>(basic_data.connection);
-    basic_data.atoms = space.atoms.get();
-
     event_filter = std::make_unique<base::x11::xcb_event_filter<win::wayland::space>>(space);
     app->installNativeEventFilter(event_filter.get());
 

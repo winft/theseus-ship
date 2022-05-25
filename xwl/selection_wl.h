@@ -79,7 +79,7 @@ template<typename Selection>
 void start_transfer_to_x11(Selection* sel, xcb_selection_request_event_t* event, qint32 fd)
 {
     auto transfer = new wl_to_x11_transfer(
-        sel->data.atom, event, fd, *sel->data.x11.atoms, sel->data.qobject.get());
+        sel->data.atom, event, fd, *sel->data.x11.space->atoms, sel->data.qobject.get());
 
     QObject::connect(transfer,
                      &wl_to_x11_transfer::selection_notify,
@@ -211,12 +211,12 @@ inline void send_wl_selection_targets(x11_data const& x11,
 {
     std::vector<xcb_atom_t> targets;
     targets.resize(offers.size() + 2);
-    targets[0] = x11.atoms->timestamp;
-    targets[1] = x11.atoms->targets;
+    targets[0] = x11.space->atoms->timestamp;
+    targets[1] = x11.space->atoms->targets;
 
     size_t cnt = 2;
     for (auto const& mime : offers) {
-        targets[cnt] = mime_type_to_atom(mime, *x11.atoms);
+        targets[cnt] = mime_type_to_atom(mime, *x11.space->atoms);
         cnt++;
     }
 
@@ -236,7 +236,7 @@ inline void send_wl_selection_targets(x11_data const& x11,
 template<typename Source>
 int selection_wl_start_transfer(Source&& source, xcb_selection_request_event_t* event)
 {
-    auto const targets = atom_to_mime_types(event->target, *source->x11.atoms);
+    auto const targets = atom_to_mime_types(event->target, *source->x11.space->atoms);
     if (targets.empty()) {
         qCDebug(KWIN_XWL) << "Unknown selection atom. Ignoring request.";
         return -1;
@@ -275,11 +275,11 @@ bool selection_wl_handle_request(Source&& source, xcb_selection_request_event_t*
 {
     auto& x11 = source->x11;
 
-    if (event->target == x11.atoms->targets) {
+    if (event->target == x11.space->atoms->targets) {
         send_wl_selection_targets(x11, event, source->offers);
-    } else if (event->target == x11.atoms->timestamp) {
+    } else if (event->target == x11.space->atoms->timestamp) {
         send_wl_selection_timestamp(x11, event, source->timestamp);
-    } else if (event->target == x11.atoms->delete_atom) {
+    } else if (event->target == x11.space->atoms->delete_atom) {
         send_selection_notify(x11.connection, event, true);
     } else {
         // try to send mime data

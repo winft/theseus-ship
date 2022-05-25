@@ -79,8 +79,8 @@ void do_handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t
         xcb_convert_selection(source->x11.connection,
                               sel->data.requestor_window,
                               sel->data.atom,
-                              sel->data.x11.atoms->targets,
-                              sel->data.x11.atoms->wl_selection,
+                              sel->data.x11.space->atoms->targets,
+                              sel->data.x11.space->atoms->wl_selection,
                               source->timestamp);
         xcb_flush(source->x11.connection);
     }

@@ -58,13 +58,13 @@ bool data_bridge::filter_event(xcb_generic_event_t* event)
 
 bool data_bridge::handle_xfixes_notify(xcb_xfixes_selection_notify_event_t* event)
 {
-    if (event->selection == x11.atoms->clipboard) {
+    if (event->selection == x11.space->atoms->clipboard) {
         return xwl::handle_xfixes_notify(clipboard.get(), event);
     }
-    if (event->selection == x11.atoms->primary_selection) {
+    if (event->selection == x11.space->atoms->primary_selection) {
         return xwl::handle_xfixes_notify(primary_selection.get(), event);
     }
-    if (event->selection == x11.atoms->xdnd_selection) {
+    if (event->selection == x11.space->atoms->xdnd_selection) {
         return xwl::handle_xfixes_notify(dnd.get(), event);
     }
     return false;

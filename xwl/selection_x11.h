@@ -151,7 +151,7 @@ void selection_x11_handle_targets(Source&& source, xcb_window_t const requestor)
     xcb_get_property_cookie_t cookie = xcb_get_property(source->x11.connection,
                                                         1,
                                                         requestor,
-                                                        source->x11.atoms->wl_selection,
+                                                        source->x11.space->atoms->wl_selection,
                                                         XCB_GET_PROPERTY_TYPE_ANY,
                                                         0,
                                                         4096);
@@ -176,7 +176,7 @@ void selection_x11_handle_targets(Source&& source, xcb_window_t const requestor)
             continue;
         }
 
-        auto const mimeStrings = atom_to_mime_types(value[i], *source->x11.atoms);
+        auto const mimeStrings = atom_to_mime_types(value[i], *source->x11.space->atoms);
         if (mimeStrings.empty()) {
             // TODO: this should never happen? assert?
             continue;
@@ -232,7 +232,7 @@ bool selection_x11_handle_notify(Source&& source, xcb_selection_notify_event_t* 
         qCWarning(KWIN_XWL) << "Incoming X selection conversion failed";
         return true;
     }
-    if (event->target == source->x11.atoms->targets) {
+    if (event->target == source->x11.space->atoms->targets) {
         selection_x11_handle_targets(source, event->requestor);
         return true;
     }

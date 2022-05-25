@@ -27,7 +27,6 @@ namespace xwl
 struct x11_data {
     xcb_connection_t* connection{nullptr};
     xcb_screen_t* screen{nullptr};
-    base::x11::atoms* atoms{nullptr};
     win::space* space{nullptr};
 };
 

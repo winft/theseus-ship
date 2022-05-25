@@ -33,7 +33,7 @@ namespace KWin::xwl
 clipboard::clipboard(x11_data const& x11)
 {
     data = create_selection_data<Wrapland::Server::data_source, data_source_ext>(
-        x11.atoms->clipboard, x11);
+        x11.space->atoms->clipboard, x11);
 
     register_x11_selection(this, QSize(10, 10));
 
