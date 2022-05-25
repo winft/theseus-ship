@@ -24,7 +24,6 @@
 #include "render/compositor.h"
 #include "render/x11/effects.h"
 #include "toplevel.h"
-#include "win/space.h"
 
 #include <kwinxrender/utils.h>
 
@@ -274,12 +273,7 @@ void platform::invertScreen()
         return;
     }
 
-    const auto active_client = workspace()->activeClient();
-    base::x11::xcb::randr::screen_resources res(
-        (active_client && active_client->xcb_window() != XCB_WINDOW_NONE)
-            ? active_client->xcb_window()
-            : rootWindow());
-
+    base::x11::xcb::randr::screen_resources res(rootWindow());
     if (res.is_null()) {
         return;
     }
