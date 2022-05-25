@@ -142,6 +142,8 @@ void output::update_dpms(base::dpms_mode mode)
     auto set_on = mode == base::dpms_mode::on;
 
     if (set_on) {
+        wlr_output_enable(native, true);
+        wlr_output_commit(native);
         get_render(render)->reset();
         dpms_set_on();
     } else if (disable_native()) {
