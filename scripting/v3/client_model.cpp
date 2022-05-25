@@ -6,9 +6,9 @@
 #include "client_model.h"
 
 #include "scripting/platform.h"
+#include "scripting/singleton_interface.h"
 #include "scripting/space.h"
 #include "scripting/window.h"
-#include "win/space.h"
 
 namespace KWin::scripting::models::v3
 {
@@ -16,7 +16,7 @@ namespace KWin::scripting::models::v3
 client_model::client_model(QObject* parent)
     : QAbstractListModel(parent)
 {
-    auto ws_wrap = workspace()->scripting->workspaceWrapper();
+    auto ws_wrap = singleton_interface::platform->workspaceWrapper();
 
     connect(ws_wrap, &space::clientAdded, this, &client_model::handleClientAdded);
     connect(ws_wrap, &space::clientRemoved, this, &client_model::handleClientRemoved);

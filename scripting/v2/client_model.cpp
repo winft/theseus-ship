@@ -6,12 +6,14 @@
 #include "client_model.h"
 
 #include "scripting/platform.h"
+#include "scripting/singleton_interface.h"
 #include "scripting/space.h"
 #include "scripting/window.h"
 
 #include "base/wayland/server.h"
 #include "config-kwin.h"
 #include "toplevel.h"
+#include "win/singleton_interface.h"
 #include "win/space.h"
 #include "win/virtual_desktops.h"
 
@@ -32,9 +34,9 @@ static quint32 nextId()
 client_level::client_level(client_model* model, abstract_level* parent)
     : abstract_level(model, parent)
 {
-    auto ws_wrap = workspace()->scripting->workspaceWrapper();
+    auto ws_wrap = singleton_interface::platform->workspaceWrapper();
 
-    connect(workspace()->virtual_desktop_manager.get(),
+    connect(win::singleton_interface::space->virtual_desktop_manager.get(),
             &win::virtual_desktop_manager::currentChanged,
             this,
             &client_level::reInit);
@@ -185,7 +187,7 @@ void client_level::removeClient(window* client)
 
 void client_level::init()
 {
-    auto const& clients = workspace()->scripting->workspaceWrapper()->clientList();
+    auto const& clients = singleton_interface::platform->workspaceWrapper()->clientList();
     for (auto const& client : clients) {
         setupClientConnections(client);
         if (!exclude(client) && shouldAdd(client)) {
@@ -196,7 +198,7 @@ void client_level::init()
 
 void client_level::reInit()
 {
-    auto const& clients = workspace()->scripting->workspaceWrapper()->clientList();
+    auto const& clients = singleton_interface::platform->workspaceWrapper()->clientList();
     for (auto const& client : clients) {
         checkClient(client);
     }
@@ -308,7 +310,8 @@ abstract_level* abstract_level::create(const QList<client_model::LevelRestrictio
         break;
     }
     case client_model::VirtualDesktopRestriction:
-        for (uint i = 1; i <= workspace()->virtual_desktop_manager->count(); ++i) {
+        for (uint i = 1; i <= win::singleton_interface::space->virtual_desktop_manager->count();
+             ++i) {
             auto childLevel = create(childRestrictions, childrenRestrictions, model, currentLevel);
             if (!childLevel) {
                 continue;
@@ -372,7 +375,7 @@ fork_level::fork_level(const QList<client_model::LevelRestriction>& childRestric
     : abstract_level(model, parent)
     , m_childRestrictions(childRestrictions)
 {
-    connect(workspace()->virtual_desktop_manager.get(),
+    connect(win::singleton_interface::space->virtual_desktop_manager.get(),
             &win::virtual_desktop_manager::countChanged,
             this,
             &fork_level::desktopCountChanged);

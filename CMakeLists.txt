@@ -451,6 +451,7 @@ set(kwin_SRCS
     scripting/script.cpp
     scripting/script_timer.cpp
     scripting/scripting_logging.cpp
+    scripting/singleton_interface.cpp
     scripting/v2/client_model.cpp
     scripting/v3/client_model.cpp
     scripting/v3/virtual_desktop_model.cpp
@@ -477,6 +478,7 @@ set(kwin_SRCS
     win/session_manager.cpp
     win/screen_edges.cpp
     win/shortcut_dialog.cpp
+    win/singleton_interface.cpp
     win/space.cpp
     win/stacking_order.cpp
     win/transient.cpp

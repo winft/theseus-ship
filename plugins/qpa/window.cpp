@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/platform.h"
 #include "main.h"
 #include "win/internal_window.h"
+#include "win/singleton_interface.h"
 #include "win/space.h"
 
 #include <logging.h>
@@ -146,7 +147,7 @@ void Window::map()
         return;
     }
 
-    m_handle = new win::internal_window(window(), *workspace());
+    m_handle = new win::internal_window(window(), *win::singleton_interface::space);
 }
 
 void Window::unmap()

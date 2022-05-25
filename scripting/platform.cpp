@@ -10,6 +10,7 @@
 #include "dbus_call.h"
 #include "screen_edge_item.h"
 #include "script.h"
+#include "singleton_interface.h"
 #include "space.h"
 #include "v2/client_model.h"
 #include "v3/client_model.h"
@@ -46,6 +47,7 @@ platform::platform(win::space& space)
     , m_declarativeScriptSharedContext(new QQmlContext(m_qmlEngine, this))
     , qt_space{std::make_unique<template_space<qt_script_space, win::space>>(&space)}
 {
+    singleton_interface::platform = this;
     init();
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/Scripting"),
                                                  this,
@@ -60,6 +62,7 @@ platform::platform(win::space& space)
 platform::~platform()
 {
     QDBusConnection::sessionBus().unregisterObject(QStringLiteral("/Scripting"));
+    singleton_interface::platform = nullptr;
 }
 
 void platform::init()

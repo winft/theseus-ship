@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "space.h"
 
 #include "deco/bridge.h"
+#include "singleton_interface.h"
 
 #include "base/dbus/kwin.h"
 #include "base/output_helpers.h"
@@ -108,6 +109,7 @@ space::space(render::compositor& render)
     // For invoke methods of user_actions_menu.
     qRegisterMetaType<Toplevel*>();
 
+    singleton_interface::space = this;
     _self = this;
 
     m_quickTileCombineTimer = new QTimer(this);
@@ -255,6 +257,7 @@ space::~space()
 
     base::x11::xcb::extensions::destroy();
     _self = nullptr;
+    singleton_interface::space = nullptr;
 }
 
 void space::stopUpdateToolWindowsTimer()

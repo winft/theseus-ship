@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/compositor.h"
 #include "tabbox_handler.h"
 #include "win/screen.h"
+#include "win/singleton_interface.h"
 #include "win/space.h"
 
 #include <QAbstractItemModel>
@@ -90,7 +91,7 @@ void tabbox_switcher_item::set_visible(bool visible)
 
 QRect tabbox_switcher_item::screen_geometry() const
 {
-    auto output = win::get_current_output(*workspace());
+    auto output = win::get_current_output(*singleton_interface::space);
     return output ? output->geometry() : QRect();
 }
 
