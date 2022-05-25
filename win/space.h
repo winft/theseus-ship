@@ -128,7 +128,7 @@ public:
     std::unique_ptr<render::outline> outline;
     std::unique_ptr<win::screen_edger> edges;
 
-    render::compositor* m_compositor{nullptr};
+    render::compositor& render;
     KStartupInfo* startup{nullptr};
     std::unique_ptr<base::x11::atoms> atoms;
     std::unique_ptr<deco::bridge<space>> deco;
@@ -164,7 +164,7 @@ public:
 
     static space* _self;
 
-    space();
+    explicit space(render::compositor& render);
     ~space() override;
 
     bool workspaceEvent(QEvent*);

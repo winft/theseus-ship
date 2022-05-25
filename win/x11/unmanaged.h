@@ -112,7 +112,7 @@ auto create_unmanaged_window(xcb_window_t w, Space& space) -> typename Space::x1
         static_cast<render::effects_handler_impl*>(effects)->checkInputWindowStacking();
     }
 
-    QObject::connect(win, &Win::needsRepaint, space.m_compositor, [win] {
+    QObject::connect(win, &Win::needsRepaint, &space.render, [win] {
         render::compositor::self()->schedule_repaint(win);
     });
 

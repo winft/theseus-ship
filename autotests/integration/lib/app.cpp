@@ -216,7 +216,7 @@ void WaylandTestApplication::start()
     out->wrapland_output()->set_physical_size(QSize(1280, 1024));
 
     base.render->compositor = std::make_unique<render::wayland::compositor>(*base.render);
-    workspace = std::make_unique<win::wayland::space>(server.get());
+    workspace = std::make_unique<win::wayland::space>(*base.render->compositor, server.get());
 
     workspace->input = std::make_unique<input::wayland::redirect>(*input, *workspace);
     input::wayland::add_dbus(input.get());

@@ -262,7 +262,7 @@ void ApplicationX11::start()
 
         render->compositor = std::make_unique<render::x11::compositor>(*render);
 
-        workspace = std::make_unique<win::x11::space>();
+        workspace = std::make_unique<win::x11::space>(*render->compositor);
         workspace->input = std::make_unique<input::x11::redirect>(*input, *workspace);
         workspace->initShortcuts();
 

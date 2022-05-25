@@ -27,7 +27,7 @@ void delete_window_from_space(Space& space, Win* win)
     remove_window_from_stacking_order(space, win);
     remove_window_from_lists(space, win);
 
-    if (auto& update_block = space.m_compositor->x11_integration.update_blocking; update_block) {
+    if (auto& update_block = space.render.x11_integration.update_blocking; update_block) {
         auto& control = win->remnant() ? win->remnant()->control : win->control;
         if (control) {
             update_block(nullptr);
@@ -59,7 +59,7 @@ void add_remnant(Space& space, Win* orig, Win* remnant)
     }
 
     space.x_stacking_tree->mark_as_dirty();
-    QObject::connect(remnant, &Toplevel::needsRepaint, space.m_compositor, [remnant] {
+    QObject::connect(remnant, &Toplevel::needsRepaint, &space.render, [remnant] {
         render::compositor::self()->schedule_repaint(remnant);
     });
 }

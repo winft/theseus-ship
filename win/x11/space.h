@@ -26,7 +26,7 @@ class KWIN_EXPORT space : public win::space
 public:
     using x11_window = window;
 
-    space();
+    explicit space(render::compositor& render);
     ~space() override;
 
     Toplevel* findInternal(QWindow* window) const override;

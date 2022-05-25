@@ -211,7 +211,7 @@ void ApplicationWayland::start()
     }
 
     render->compositor = std::make_unique<render::wayland::compositor>(*render);
-    workspace = std::make_unique<win::wayland::space>(server.get());
+    workspace = std::make_unique<win::wayland::space>(*render->compositor, server.get());
 
     workspace->input = std::make_unique<input::wayland::redirect>(*input, *workspace);
     input::wayland::add_dbus(input.get());

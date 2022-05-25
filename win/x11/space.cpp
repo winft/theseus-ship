@@ -14,7 +14,8 @@
 namespace KWin::win::x11
 {
 
-space::space()
+space::space(render::compositor& render)
+    : win::space(render)
 {
     atoms = std::make_unique<base::x11::atoms>(connection());
     edges = std::make_unique<win::screen_edger>(*this);
@@ -45,7 +46,7 @@ space::space()
         // catch refresh rate changes
         //
         // TODO: is this still necessary since we get the maximal refresh rate now dynamically?
-        render::compositor::self()->reinitialize();
+        this->render.reinitialize();
     });
 
     init_space(*this);

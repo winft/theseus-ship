@@ -91,9 +91,10 @@ namespace KWin::win
 
 space* space::_self = nullptr;
 
-space::space()
+space::space(render::compositor& render)
     : QObject(nullptr)
     , outline(std::make_unique<render::outline>())
+    , render{render}
     , deco{std::make_unique<deco::bridge<space>>(*this)}
     , app_menu{std::make_unique<win::app_menu>(*this)}
     , rule_book{std::make_unique<RuleBook>(*this)}
@@ -123,11 +124,7 @@ space::space()
     tabbox = std::make_unique<win::tabbox>(*this);
 #endif
 
-    m_compositor = render::compositor::self();
-    assert(m_compositor);
-
-    connect(this, &space::currentDesktopChanged, m_compositor, &render::compositor::addRepaintFull);
-    connect(m_compositor, &QObject::destroyed, this, [this] { m_compositor = nullptr; });
+    connect(this, &space::currentDesktopChanged, &render, &render::compositor::addRepaintFull);
 
     deco->init();
     connect(this, &space::configChanged, deco->qobject.get(), [this] { deco->reconfigure(); });
@@ -854,7 +851,7 @@ QString space::supportInformation() const
 
 bool space::compositing() const
 {
-    return m_compositor && m_compositor->scene();
+    return render.scene();
 }
 
 void space::setWasUserInteraction()

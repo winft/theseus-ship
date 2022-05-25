@@ -48,8 +48,9 @@
 namespace KWin::win::wayland
 {
 
-space::space(base::wayland::server* server)
-    : server{server}
+space::space(render::compositor& render, base::wayland::server* server)
+    : win::space(render)
+    , server{server}
     , compositor{server->display->createCompositor()}
     , subcompositor{server->display->createSubCompositor()}
     , xdg_shell{server->display->createXdgShell()}
