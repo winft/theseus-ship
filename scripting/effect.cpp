@@ -149,7 +149,7 @@ static KWin::FPx2 fpx2FromScriptValue(const QJSValue& value)
     return FPx2();
 }
 
-effect* effect::create(const KPluginMetaData& effect)
+effect* effect::create(const KPluginMetaData& effect, win::space& space)
 {
     const QString name = effect.pluginId();
     const QString scriptName = effect.value(QStringLiteral("X-Plasma-MainScript"));
@@ -164,12 +164,16 @@ effect* effect::create(const KPluginMetaData& effect)
         qCDebug(KWIN_SCRIPTING) << "Could not locate the effect script";
         return nullptr;
     }
-    return effect::create(name, scriptFile, effect.value(QStringLiteral("X-KDE-Ordering")).toInt());
+    return effect::create(
+        name, scriptFile, effect.value(QStringLiteral("X-KDE-Ordering")).toInt(), space);
 }
 
-effect* effect::create(const QString& effectName, const QString& pathToScript, int chainPosition)
+effect* effect::create(const QString& effectName,
+                       const QString& pathToScript,
+                       int chainPosition,
+                       win::space& space)
 {
-    auto effect = new scripting::effect();
+    auto effect = new scripting::effect(space);
     if (!effect->init(effectName, pathToScript)) {
         delete effect;
         return nullptr;
@@ -183,12 +187,11 @@ bool effect::supported()
     return effects->animationsSupported();
 }
 
-effect::effect()
+effect::effect(win::space& space)
     : AnimationEffect()
     , m_engine(new QJSEngine(this))
     , m_scriptFile(QString())
-    , m_config(nullptr)
-    , m_chainPosition(0)
+    , space{space}
 {
     Q_ASSERT(effects);
     connect(effects, &EffectsHandler::activeFullScreenEffectChanged, this, [this]() {
@@ -686,8 +689,7 @@ bool effect::registerScreenEdge(int edge, const QJSValue& callback)
     auto it = screenEdgeCallbacks().find(edge);
     if (it == screenEdgeCallbacks().end()) {
         // not yet registered
-        workspace()->edges->reserve(
-            static_cast<KWin::ElectricBorder>(edge), this, "borderActivated");
+        space.edges->reserve(static_cast<KWin::ElectricBorder>(edge), this, "borderActivated");
         screenEdgeCallbacks().insert(edge, QJSValueList{callback});
     } else {
         it->append(callback);
@@ -702,7 +704,7 @@ bool effect::unregisterScreenEdge(int edge)
         // not previously registered
         return false;
     }
-    workspace()->edges->unreserve(static_cast<KWin::ElectricBorder>(edge), this);
+    space.edges->unreserve(static_cast<KWin::ElectricBorder>(edge), this);
     screenEdgeCallbacks().erase(it);
     return true;
 }
@@ -718,7 +720,7 @@ bool effect::registerTouchScreenEdge(int edge, const QJSValue& callback)
     }
     QAction* action = new QAction(this);
     connect(action, &QAction::triggered, this, [callback]() { QJSValue(callback).call(); });
-    workspace()->edges->reserveTouch(KWin::ElectricBorder(edge), action);
+    space.edges->reserveTouch(KWin::ElectricBorder(edge), action);
     m_touchScreenEdgeCallbacks.insert(edge, action);
     return true;
 }

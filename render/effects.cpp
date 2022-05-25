@@ -107,7 +107,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     , m_scene(scene)
     , m_desktopRendering(false)
     , m_currentRenderedDesktop(0)
-    , m_effectLoader(new effect_loader(this))
+    , m_effectLoader(new effect_loader(*compositor->space, this))
     , m_trackingCursorChanges(0)
 {
     qRegisterMetaType<QVector<KWin::EffectWindow*>>();
