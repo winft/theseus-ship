@@ -748,9 +748,9 @@ void keyboard_layout_test::test_window_policy()
     QCOMPARE(xkb->layout_name(), "German (Neo 2)");
 
     // Activate other window.
-    workspace()->activateClient(c1);
+    Test::app()->workspace->activateClient(c1);
     QCOMPARE(xkb->layout_name(), "German");
-    workspace()->activateClient(c2);
+    Test::app()->workspace->activateClient(c2);
     QCOMPARE(xkb->layout_name(), "German (Neo 2)");
 }
 
@@ -793,19 +793,19 @@ void keyboard_layout_test::test_application_policy()
     reset_layouts();
 
     // Resetting layouts should trigger layout application for current client.
-    workspace()->activateClient(c1);
-    workspace()->activateClient(c2);
+    Test::app()->workspace->activateClient(c1);
+    Test::app()->workspace->activateClient(c2);
     QVERIFY(spies->v1.layout_changed.wait());
     QCOMPARE(spies->v1.layout_changed.count(), 1);
     QCOMPARE(xkb->layout_name(), "German (Neo 2)");
 
     // Activate other window.
-    workspace()->activateClient(c1);
+    Test::app()->workspace->activateClient(c1);
 
     // It is the same application and should not switch the layout.
     QVERIFY(!spies->v1.layout_changed.wait(1000));
     QCOMPARE(xkb->layout_name(), "German (Neo 2)");
-    workspace()->activateClient(c2);
+    Test::app()->workspace->activateClient(c2);
     QVERIFY(!spies->v1.layout_changed.wait(1000));
     QCOMPARE(xkb->layout_name(), "German (Neo 2)");
 

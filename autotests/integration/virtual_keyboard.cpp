@@ -135,7 +135,7 @@ void virtual_keyboard_test::cleanup()
 {
     // Make sure we animate.
     QTest::qWait(1000);
-    QVERIFY(workspace()->windows().empty());
+    QVERIFY(Test::app()->workspace->windows().empty());
 
     vk_client = {};
     focus_client = {};
@@ -162,7 +162,7 @@ void virtual_keyboard_test::test_keymap()
     QVERIFY(client_keymap_spy.isValid());
 
     auto window = create_window(focus_client);
-    QCOMPARE(workspace()->activeClient(), window.window);
+    QCOMPARE(Test::app()->workspace->activeClient(), window.window);
 
     // After focus we don't yet get the current keymap as none was set yet.
     QVERIFY(!client_keymap_spy.wait(500));
@@ -239,7 +239,7 @@ void virtual_keyboard_test::test_keys()
     QVERIFY(key_spy.isValid());
 
     auto window = create_window(focus_client);
-    QCOMPARE(workspace()->activeClient(), window.window);
+    QCOMPARE(Test::app()->workspace->activeClient(), window.window);
 
     // Now we press on the virtual keyboard and we should get the new new keymap.
     uint32_t timestamp{0};

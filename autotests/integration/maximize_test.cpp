@@ -91,7 +91,7 @@ void TestMaximized::cleanup()
     auto group = kwinApp()->config()->group("Windows");
     group.writeEntry("BorderlessMaximizedWindows", false);
     group.sync();
-    workspace()->slotReconfigure();
+    Test::app()->workspace->slotReconfigure();
     QCOMPARE(kwinApp()->options->borderlessMaximizedWindows(), false);
 }
 
@@ -123,7 +123,7 @@ void TestMaximized::testMaximizedPassedToDeco()
     // When there are no borders, there is no change to them when maximizing.
     // TODO: we should test both cases with fixed fake decoration for autotests.
     auto const hasBorders
-        = workspace()->deco->settings()->borderSize() != KDecoration2::BorderSize::None;
+        = Test::app()->workspace->deco->settings()->borderSize() != KDecoration2::BorderSize::None;
 
     // now maximize
     QSignalSpy bordersChangedSpy(decoration, &KDecoration2::Decoration::bordersChanged);
@@ -134,7 +134,7 @@ void TestMaximized::testMaximizedPassedToDeco()
     QSignalSpy geometryShapeChangedSpy(client, &Toplevel::frame_geometry_changed);
     QVERIFY(geometryShapeChangedSpy.isValid());
 
-    workspace()->slotWindowMaximize();
+    Test::app()->workspace->slotWindowMaximize();
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 2);
     QCOMPARE(configureRequestedSpy.last().at(0).toSize(),
@@ -156,7 +156,7 @@ void TestMaximized::testMaximizedPassedToDeco()
     QVERIFY(decoration->borderTop() != 0);
 
     // now unmaximize again
-    workspace()->slotWindowMaximize();
+    Test::app()->workspace->slotWindowMaximize();
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
     QCOMPARE(configureRequestedSpy.last().at(0).toSize(), QSize(100, 50));
@@ -222,7 +222,7 @@ void TestMaximized::testInitiallyMaximizedBorderless()
     auto group = kwinApp()->config()->group("Windows");
     group.writeEntry("BorderlessMaximizedWindows", true);
     group.sync();
-    workspace()->slotReconfigure();
+    Test::app()->workspace->slotReconfigure();
     QCOMPARE(kwinApp()->options->borderlessMaximizedWindows(), true);
 
     // Create the test client.
@@ -276,7 +276,7 @@ void TestMaximized::testBorderlessMaximizedWindow()
     auto group = kwinApp()->config()->group("Windows");
     group.writeEntry("BorderlessMaximizedWindows", true);
     group.sync();
-    workspace()->slotReconfigure();
+    Test::app()->workspace->slotReconfigure();
     QCOMPARE(kwinApp()->options->borderlessMaximizedWindows(), true);
 
     // Create the test client.
@@ -319,7 +319,7 @@ void TestMaximized::testBorderlessMaximizedWindow()
 
     // Maximize the client.
     const QRect maximizeRestoreGeometry = client->frameGeometry();
-    workspace()->slotWindowMaximize();
+    Test::app()->workspace->slotWindowMaximize();
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
     QCOMPARE(configureRequestedSpy.last().at(0).toSize(), QSize(1280, 1024));
@@ -338,7 +338,7 @@ void TestMaximized::testBorderlessMaximizedWindow()
     QVERIFY(!win::decoration(client));
 
     // Restore the client.
-    workspace()->slotWindowMaximize();
+    Test::app()->workspace->slotWindowMaximize();
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 4);
     QCOMPARE(configureRequestedSpy.last().at(0).toSize(), QSize(100, 50));
@@ -368,7 +368,7 @@ void TestMaximized::testBorderlessMaximizedWindowNoClientSideDecoration()
     auto group = kwinApp()->config()->group("Windows");
     group.writeEntry("BorderlessMaximizedWindows", true);
     group.sync();
-    workspace()->slotReconfigure();
+    Test::app()->workspace->slotReconfigure();
     QCOMPARE(kwinApp()->options->borderlessMaximizedWindows(), true);
 
     std::unique_ptr<Surface> surface(Test::create_surface());

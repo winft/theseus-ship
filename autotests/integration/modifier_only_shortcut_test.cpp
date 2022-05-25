@@ -195,7 +195,7 @@ void ModifierOnlyShortcutTest::testTrigger()
     group.writeEntry("Shift", shiftConfig);
     group.writeEntry("Control", controlConfig);
     group.sync();
-    workspace()->slotReconfigure();
+    Test::app()->workspace->slotReconfigure();
 
     // configured shortcut should trigger
     quint32 timestamp = 1;
@@ -315,7 +315,7 @@ void ModifierOnlyShortcutTest::testCapsLock()
                      QStringList{s_serviceName, s_path, s_serviceName, QStringLiteral("shortcut")});
     group.writeEntry("Control", QStringList());
     group.sync();
-    workspace()->slotReconfigure();
+    Test::app()->workspace->slotReconfigure();
 
     // first test that the normal shortcut triggers
     quint32 timestamp = 1;
@@ -344,7 +344,7 @@ void ModifierOnlyShortcutTest::testCapsLock()
     group.writeEntry("Shift", QStringList{});
     group.writeEntry("Control", QStringList());
     group.sync();
-    workspace()->slotReconfigure();
+    Test::app()->workspace->slotReconfigure();
 
     Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
     QTRY_COMPARE(input::xkb::get_active_keyboard_modifiers(kwinApp()->input),
@@ -363,7 +363,7 @@ void ModifierOnlyShortcutTest::testCapsLock()
                      QStringList{s_serviceName, s_path, s_serviceName, QStringLiteral("shortcut")});
     group.writeEntry("Control", QStringList());
     group.sync();
-    workspace()->slotReconfigure();
+    Test::app()->workspace->slotReconfigure();
 
     // release caps lock
     Test::keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
@@ -412,20 +412,20 @@ void ModifierOnlyShortcutTest::testGlobalShortcutsDisabled()
     group.writeEntry("Shift", shiftConfig);
     group.writeEntry("Control", controlConfig);
     group.sync();
-    workspace()->slotReconfigure();
+    Test::app()->workspace->slotReconfigure();
 
     // trigger once to verify the shortcut works
     quint32 timestamp = 1;
     QFETCH(int, modifier);
-    QVERIFY(!workspace()->globalShortcutsDisabled());
+    QVERIFY(!Test::app()->workspace->globalShortcutsDisabled());
     Test::keyboard_key_pressed(modifier, timestamp++);
     Test::keyboard_key_released(modifier, timestamp++);
     QTRY_COMPARE(triggeredSpy.count(), 1);
     triggeredSpy.clear();
 
     // now disable global shortcuts
-    workspace()->disableGlobalShortcutsForClient(true);
-    QVERIFY(workspace()->globalShortcutsDisabled());
+    Test::app()->workspace->disableGlobalShortcutsForClient(true);
+    QVERIFY(Test::app()->workspace->globalShortcutsDisabled());
     // Should not get triggered
     Test::keyboard_key_pressed(modifier, timestamp++);
     Test::keyboard_key_released(modifier, timestamp++);
@@ -433,8 +433,8 @@ void ModifierOnlyShortcutTest::testGlobalShortcutsDisabled()
     triggeredSpy.clear();
 
     // enable again
-    workspace()->disableGlobalShortcutsForClient(false);
-    QVERIFY(!workspace()->globalShortcutsDisabled());
+    Test::app()->workspace->disableGlobalShortcutsForClient(false);
+    QVERIFY(!Test::app()->workspace->globalShortcutsDisabled());
     // should get triggered again
     Test::keyboard_key_pressed(modifier, timestamp++);
     Test::keyboard_key_released(modifier, timestamp++);

@@ -146,7 +146,7 @@ void MaximizeAnimationTest::testMaximizeRestore()
         qOverload<Toplevel*, bool, bool>(&win::wayland::window::clientMaximizedStateChanged));
     QVERIFY(maximizeChangedSpy.isValid());
 
-    workspace()->slotWindowMaximize();
+    Test::app()->workspace->slotWindowMaximize();
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
     QCOMPARE(configureRequestedSpy.last().at(0).value<QSize>(), QSize(1280, 1024));
@@ -167,7 +167,7 @@ void MaximizeAnimationTest::testMaximizeRestore()
     QTRY_VERIFY(!effect->isActive());
 
     // Restore the client.
-    workspace()->slotWindowMaximize();
+    Test::app()->workspace->slotWindowMaximize();
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 4);
     QCOMPARE(configureRequestedSpy.last().at(0).value<QSize>(), QSize(100, 50));

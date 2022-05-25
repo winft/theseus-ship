@@ -101,7 +101,8 @@ void TabBoxTest::testCapsLock()
     QVERIFY(c3);
     QVERIFY(c3->control->active());
 
-    QTRY_COMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{c1, c2, c3}));
+    QTRY_COMPARE(Test::app()->workspace->stacking_order->sorted(),
+                 (std::deque<Toplevel*>{c1, c2, c3}));
 
     // Setup tabbox signal spies
     QSignalSpy tabboxAddedSpy(Test::app()->workspace->tabbox.get(), &win::tabbox::tabbox_added);
@@ -138,8 +139,8 @@ void TabBoxTest::testCapsLock()
     QCOMPARE(Test::app()->workspace->tabbox->is_grabbed(), false);
 
     // Has walked backwards to the previously lowest client in the stacking order.
-    QCOMPARE(workspace()->activeClient(), c1);
-    QCOMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{c2, c3, c1}));
+    QCOMPARE(Test::app()->workspace->activeClient(), c1);
+    QCOMPARE(Test::app()->workspace->stacking_order->sorted(), (std::deque<Toplevel*>{c2, c3, c1}));
 
     surface3.reset();
     QVERIFY(Test::wait_for_destroyed(c3));
@@ -190,7 +191,7 @@ void TabBoxTest::testMoveForward()
     Test::keyboard_key_released(KEY_LEFTALT, timestamp++);
     QCOMPARE(tabboxClosedSpy.count(), 1);
     QCOMPARE(Test::app()->workspace->tabbox->is_grabbed(), false);
-    QCOMPARE(workspace()->activeClient(), c2);
+    QCOMPARE(Test::app()->workspace->activeClient(), c2);
 
     surface3.reset();
     QVERIFY(Test::wait_for_destroyed(c3));
@@ -246,7 +247,7 @@ void TabBoxTest::testMoveBackward()
     Test::keyboard_key_released(KEY_LEFTALT, timestamp++);
     QCOMPARE(tabboxClosedSpy.count(), 1);
     QCOMPARE(Test::app()->workspace->tabbox->is_grabbed(), false);
-    QCOMPARE(workspace()->activeClient(), c1);
+    QCOMPARE(Test::app()->workspace->activeClient(), c1);
 
     surface3.reset();
     QVERIFY(Test::wait_for_destroyed(c3));

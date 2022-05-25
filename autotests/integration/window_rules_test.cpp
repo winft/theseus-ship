@@ -134,7 +134,7 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
     xcb_change_property(c.get(),
                         XCB_PROP_MODE_REPLACE,
                         w,
-                        workspace()->atoms->wm_window_role,
+                        Test::app()->workspace->atoms->wm_window_role,
                         XCB_ATOM_STRING,
                         8,
                         role.length(),
@@ -145,7 +145,7 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 
-    QSignalSpy windowCreatedSpy(workspace(), &win::space::clientAdded);
+    QSignalSpy windowCreatedSpy(Test::app()->workspace.get(), &win::space::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.last().first().value<win::x11::window*>();
@@ -185,7 +185,7 @@ void WindowRuleTest::testWindowClassChange()
     group.sync();
 
     Test::app()->workspace->rule_book->setConfig(config);
-    workspace()->slotReconfigure();
+    Test::app()->workspace->slotReconfigure();
 
     // create the test window
     auto c = create_xcb_connection();
@@ -219,7 +219,7 @@ void WindowRuleTest::testWindowClassChange()
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 
-    QSignalSpy windowCreatedSpy(workspace(), &win::space::clientAdded);
+    QSignalSpy windowCreatedSpy(Test::app()->workspace.get(), &win::space::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.last().first().value<win::x11::window*>();

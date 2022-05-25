@@ -163,8 +163,7 @@ QRect target_geo(QRect const& area_geo,
 void layer_shell_test::test_create()
 {
     // Tries to create multiple kinds of layer surfaces.
-    QSignalSpy window_spy(static_cast<win::wayland::space*>(workspace()),
-                          &win::wayland::space::wayland_window_added);
+    QSignalSpy window_spy(Test::app()->workspace.get(), &win::wayland::space::wayland_window_added);
     QVERIFY(window_spy.isValid());
 
     auto surface = std::unique_ptr<Clt::Surface>(Test::create_surface());
@@ -195,7 +194,7 @@ void layer_shell_test::test_create()
     QVERIFY(window->hasAlpha());
 
     // By default layer surfaces have keyboard interactivity set to none.
-    QCOMPARE(workspace()->activeClient(), nullptr);
+    QCOMPARE(Test::app()->workspace->activeClient(), nullptr);
 
     QVERIFY(!window->isMaximizable());
     QVERIFY(!window->isMovable());
@@ -241,7 +240,7 @@ void layer_shell_test::test_create()
     QVERIFY(window2->isShown());
     QCOMPARE(window2->isHiddenInternal(), false);
     QCOMPARE(window2->readyForPainting(), true);
-    QCOMPARE(workspace()->activeClient(), window2);
+    QCOMPARE(Test::app()->workspace->activeClient(), window2);
 
     // Surface is centered.
     QCOMPARE(window2->frameGeometry(),
@@ -321,8 +320,7 @@ void layer_shell_test::test_geo_data()
 void layer_shell_test::test_geo()
 {
     // Checks various standard geometries.
-    QSignalSpy window_spy(static_cast<win::wayland::space*>(workspace()),
-                          &win::wayland::space::wayland_window_added);
+    QSignalSpy window_spy(Test::app()->workspace.get(), &win::wayland::space::wayland_window_added);
     QVERIFY(window_spy.isValid());
 
     QFETCH(int, output);

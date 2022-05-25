@@ -182,8 +182,8 @@ void PopupOpenCloseAnimationTest::testAnimateUserActionsPopup()
     QVERIFY(!effect->isActive());
 
     // Show the user actions popup.
-    workspace()->showWindowMenu(QRect(), client);
-    auto& userActionsMenu = workspace()->user_actions_menu;
+    Test::app()->workspace->showWindowMenu(QRect(), client);
+    auto& userActionsMenu = Test::app()->workspace->user_actions_menu;
     QTRY_VERIFY(userActionsMenu->isShown());
     QVERIFY(userActionsMenu->hasClient());
     QVERIFY(effect->isActive());
@@ -239,7 +239,7 @@ void PopupOpenCloseAnimationTest::testAnimateDecorationTooltips()
     QVERIFY(!effect->isActive());
 
     // Show a decoration tooltip.
-    QSignalSpy tooltipAddedSpy(workspace(), &win::space::internalClientAdded);
+    QSignalSpy tooltipAddedSpy(Test::app()->workspace.get(), &win::space::internalClientAdded);
     QVERIFY(tooltipAddedSpy.isValid());
     client->control->deco().client->requestShowToolTip(QStringLiteral("KWin rocks!"));
     QVERIFY(tooltipAddedSpy.wait());

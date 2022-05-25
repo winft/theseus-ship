@@ -128,7 +128,7 @@ Toplevel* TouchInputTest::showWindow(bool decorated)
     auto c = Test::render_and_wait_for_shown(client.surface, QSize(100, 50), Qt::blue);
 
     VERIFY(c);
-    COMPARE(workspace()->activeClient(), c);
+    COMPARE(Test::app()->workspace->activeClient(), c);
 
 #undef VERIFY
 #undef COMPARE

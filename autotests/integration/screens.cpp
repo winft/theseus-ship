@@ -296,7 +296,7 @@ void TestScreens::testCurrentClient()
     changedSpy.clear();
 
     // Create a window.
-    QSignalSpy clientAddedSpy(static_cast<win::wayland::space*>(workspace()),
+    QSignalSpy clientAddedSpy(Test::app()->workspace.get(),
                               &win::wayland::space::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
     auto surface = Test::create_surface();
@@ -306,13 +306,13 @@ void TestScreens::testCurrentClient()
     Test::render(surface, QSize(100, 50), Qt::blue);
     Test::flush_wayland_connection();
     QVERIFY(clientAddedSpy.wait());
-    auto client = workspace()->activeClient();
+    auto client = Test::app()->workspace->activeClient();
     QVERIFY(client);
 
     win::move(client, QPoint(101, 0));
-    QCOMPARE(workspace()->activeClient(), client);
-    workspace()->setActiveClient(nullptr);
-    QCOMPARE(workspace()->activeClient(), nullptr);
+    QCOMPARE(Test::app()->workspace->activeClient(), client);
+    Test::app()->workspace->setActiveClient(nullptr);
+    QCOMPARE(Test::app()->workspace->activeClient(), nullptr);
 
     QCOMPARE(win::get_current_output(*Test::app()->workspace),
              base::get_output(Test::app()->base.get_outputs(), 0));
@@ -327,7 +327,7 @@ void TestScreens::testCurrentClient()
 
     // making the client active should affect things
     win::set_active(client, true);
-    workspace()->setActiveClient(client);
+    Test::app()->workspace->setActiveClient(client);
 
     // first of all current should be changed just by the fact that there is an active client
     output = base::get_output(Test::app()->base.get_outputs(), 1);
@@ -347,7 +347,7 @@ void TestScreens::testCurrentClient()
     QCOMPARE(changedSpy.count(), 1);
 
     // and it should even still be on screen 1 if we make the client non-current again
-    workspace()->setActiveClient(nullptr);
+    Test::app()->workspace->setActiveClient(nullptr);
     win::set_active(client, false);
 
     output = base::get_output(Test::app()->base.get_outputs(), 1);

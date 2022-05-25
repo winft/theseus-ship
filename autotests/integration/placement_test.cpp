@@ -123,15 +123,14 @@ void TestPlacement::setPlacementPolicy(win::placement policy)
     auto group = kwinApp()->config()->group("Windows");
     group.writeEntry("Placement", policy_to_string(policy));
     group.sync();
-    workspace()->slotReconfigure();
+    Test::app()->workspace->slotReconfigure();
 }
 
 PlaceWindowResult TestPlacement::createAndPlaceWindow(QSize const& defaultSize)
 {
     PlaceWindowResult rc;
 
-    QSignalSpy window_spy(static_cast<win::wayland::space*>(workspace()),
-                          &win::wayland::space::wayland_window_added);
+    QSignalSpy window_spy(Test::app()->workspace.get(), &win::wayland::space::wayland_window_added);
     assert(window_spy.isValid());
 
     // create a new window
@@ -272,7 +271,7 @@ void TestPlacement::testPlaceCentered()
     KConfigGroup group = kwinApp()->config()->group("Windows");
     group.writeEntry("Placement", policy_to_string(win::placement::centered));
     group.sync();
-    workspace()->slotReconfigure();
+    Test::app()->workspace->slotReconfigure();
 
     std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
@@ -291,7 +290,7 @@ void TestPlacement::testPlaceUnderMouse()
     KConfigGroup group = kwinApp()->config()->group("Windows");
     group.writeEntry("Placement", policy_to_string(win::placement::under_mouse));
     group.sync();
-    workspace()->slotReconfigure();
+    Test::app()->workspace->slotReconfigure();
 
     input::get_cursor()->set_pos(QPoint(200, 300));
     QCOMPARE(input::get_cursor()->pos(), QPoint(200, 300));
@@ -313,7 +312,7 @@ void TestPlacement::testPlaceRandom()
     KConfigGroup group = kwinApp()->config()->group("Windows");
     group.writeEntry("Placement", policy_to_string(win::placement::random));
     group.sync();
-    workspace()->slotReconfigure();
+    Test::app()->workspace->slotReconfigure();
 
     std::unique_ptr<Surface> surface1(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
