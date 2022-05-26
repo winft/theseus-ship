@@ -27,6 +27,12 @@
 namespace KWin::render::backend::wlroots
 {
 
+static void load_egl_proc(void* proc_ptr, const char* name)
+{
+    void* proc = (void*)eglGetProcAddress(name);
+    *(void**)proc_ptr = proc;
+}
+
 using eglFuncPtr = void (*)();
 static eglFuncPtr get_proc_address(char const* name)
 {
@@ -47,8 +53,8 @@ egl_backend::egl_backend(wlroots::platform& platform)
     data.base.display = native->display;
     data.base.context = native->context;
 
-    data.base.create_image_khr = native->procs.eglCreateImageKHR;
-    data.base.destroy_image_khr = native->procs.eglDestroyImageKHR;
+    load_egl_proc(&data.base.create_image_khr, "eglCreateImageKHR");
+    load_egl_proc(&data.base.destroy_image_khr, "eglDestroyImageKHR");
 
     platform.egl_data = &data.base;
 
