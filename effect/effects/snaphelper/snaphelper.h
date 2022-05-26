@@ -56,7 +56,6 @@ private:
     struct Animation {
         bool active = false;
         TimeLine timeLine;
-        std::chrono::milliseconds lastPresentTime = std::chrono::milliseconds::zero();
     };
 
     Animation m_animation;

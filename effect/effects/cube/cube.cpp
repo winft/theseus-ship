@@ -75,7 +75,6 @@ CubeEffect::CubeEffect()
     , wallpaper(nullptr)
     , texturedCaps(true)
     , capTexture(nullptr)
-    , lastPresentTime(std::chrono::milliseconds::zero())
     , reflectionPainting(false)
     , activeScreen(0)
     , bottomCap(false)
@@ -407,12 +406,6 @@ void CubeEffect::startVerticalAnimation(VerticalAnimationState state)
 
 void CubeEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime)
 {
-    std::chrono::milliseconds delta = std::chrono::milliseconds::zero();
-    if (lastPresentTime.count()) {
-        delta = presentTime - lastPresentTime;
-    }
-    lastPresentTime = presentTime;
-
     if (activated) {
         data.mask |= PAINT_SCREEN_TRANSFORMED | Effect::PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS
             | PAINT_SCREEN_BACKGROUND_FIRST;
@@ -426,10 +419,10 @@ void CubeEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseco
         if (animationState != AnimationState::None
             || verticalAnimationState != VerticalAnimationState::None) {
             if (animationState != AnimationState::None) {
-                timeLine.update(delta);
+                timeLine.advance(presentTime);
             }
             if (verticalAnimationState != VerticalAnimationState::None) {
-                verticalTimeLine.update(delta);
+                verticalTimeLine.advance(presentTime);
             }
             rotateCube();
         }
@@ -1079,7 +1072,6 @@ void CubeEffect::postPaintScreen()
             animations.clear();
             verticalAnimationState = VerticalAnimationState::None;
             verticalAnimations.clear();
-            lastPresentTime = std::chrono::milliseconds::zero();
         } else {
             if (!animations.empty())
                 startAnimation(animations.dequeue());
@@ -1098,8 +1090,6 @@ void CubeEffect::postPaintScreen()
     /* Repaint if there is any animation */
     if (animation) {
         effects->addRepaintFull();
-    } else {
-        lastPresentTime = std::chrono::milliseconds::zero();
     }
 }
 

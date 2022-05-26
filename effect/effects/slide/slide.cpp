@@ -92,12 +92,7 @@ inline QRegion buildClipRegion(const QPoint& pos, int w, int h)
 
 void SlideEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime)
 {
-    std::chrono::milliseconds delta = std::chrono::milliseconds::zero();
-    if (m_lastPresentTime.count()) {
-        delta = presentTime - m_lastPresentTime;
-    }
-    m_lastPresentTime = presentTime;
-    m_timeLine.update(delta);
+    m_timeLine.advance(presentTime);
 
     const int w = workspaceWidth();
     const int h = workspaceHeight();
@@ -410,7 +405,6 @@ void SlideEffect::stop()
     m_paintCtx.fullscreenWindows.clear();
     m_movingWindow = nullptr;
     m_active = false;
-    m_lastPresentTime = std::chrono::milliseconds::zero();
     effects->setActiveFullScreenEffect(nullptr);
 }
 

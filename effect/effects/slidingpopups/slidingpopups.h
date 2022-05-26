@@ -49,7 +49,6 @@ public:
     struct Animation {
         AnimationKind kind;
         TimeLine timeline;
-        std::chrono::milliseconds last_present_time{std::chrono::milliseconds::zero()};
     };
     QHash<EffectWindow*, Animation> animations;
     QHash<EffectWindow const*, effect::anim_update> window_data;

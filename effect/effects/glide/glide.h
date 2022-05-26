@@ -31,7 +31,6 @@ namespace KWin
 
 struct GlideAnimation {
     TimeLine timeLine;
-    std::chrono::milliseconds lastPresentTime = std::chrono::milliseconds::zero();
 };
 
 class GlideEffect : public Effect

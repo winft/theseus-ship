@@ -159,7 +159,6 @@ private:
     bool stopRequested;
     bool startRequested;
     TimeLine timeLine;
-    std::chrono::milliseconds lastPresentTime;
     QRect area;
     float zPosition;
     float scaleFactor;

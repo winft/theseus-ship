@@ -100,7 +100,6 @@ private:
     QPoint m_startPos;
     QPoint m_diff;
     EffectWindow* m_movingWindow = nullptr;
-    std::chrono::milliseconds m_lastPresentTime = std::chrono::milliseconds::zero();
 
     struct {
         int desktop;

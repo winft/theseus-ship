@@ -217,7 +217,6 @@ private:
     VerticalAnimationState verticalAnimationState;
     TimeLine verticalTimeLine;
     QQueue<VerticalAnimationState> verticalAnimations;
-    std::chrono::milliseconds lastPresentTime;
 
     bool reflectionPainting;
     std::chrono::milliseconds rotationDuration;
