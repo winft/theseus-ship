@@ -67,7 +67,7 @@ void platform::init()
 gl::backend* platform::createOpenGLBackend(render::compositor& /*compositor*/)
 {
     assert(egl);
-    wlr_egl_make_current(egl->native);
+    egl->make_current();
     return egl.get();
 }
 

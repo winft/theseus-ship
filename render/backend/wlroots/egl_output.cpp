@@ -93,7 +93,7 @@ void egl_output::cleanup_framebuffer()
 
 void egl_output::make_current() const
 {
-    wlr_egl_make_current(egl_back->native);
+    egl_back->make_current();
 }
 
 bool egl_output::present()

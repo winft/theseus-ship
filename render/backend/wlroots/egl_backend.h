@@ -37,6 +37,10 @@ public:
 
     void tear_down();
 
+    // TODO(romangg): Is there a reasonable difference between a plain eglMakeCurrent call that this
+    // function does and the override, where we set doneCurrent on the QOpenGLContext? Otherwise we
+    // could merge the calls.
+    void make_current();
     bool makeCurrent() override;
     void doneCurrent() override;
 

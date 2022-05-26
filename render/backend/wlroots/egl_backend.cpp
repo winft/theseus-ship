@@ -33,6 +33,21 @@ static void load_egl_proc(void* proc_ptr, const char* name)
     *(void**)proc_ptr = proc;
 }
 
+void make_context_current(wayland::egl_data& data)
+{
+    eglMakeCurrent(data.base.display, EGL_NO_SURFACE, EGL_NO_SURFACE, data.base.context);
+}
+
+void unset_context_current(wayland::egl_data& data)
+{
+    eglMakeCurrent(data.base.display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+}
+
+bool is_context_current(wayland::egl_data& data)
+{
+    return eglGetCurrentContext() == data.base.context;
+}
+
 using eglFuncPtr = void (*)();
 static eglFuncPtr get_proc_address(char const* name)
 {
@@ -69,7 +84,7 @@ egl_backend::egl_backend(wlroots::platform& platform)
         get_egl_out(out) = std::make_unique<egl_output>(*render, this);
     }
 
-    wlr_egl_make_current(native);
+    make_context_current(data);
 
     gl::init_gl(EglPlatformInterface, get_proc_address);
     gl::init_buffer_age(*this);
@@ -122,19 +137,24 @@ void egl_backend::present()
     Q_UNREACHABLE();
 }
 
+void egl_backend::make_current()
+{
+    make_context_current(data);
+}
+
 bool egl_backend::makeCurrent()
 {
     if (auto context = QOpenGLContext::currentContext()) {
         // Workaround to tell Qt that no QOpenGLContext is current
         context->doneCurrent();
     }
-    wlr_egl_make_current(native);
-    return wlr_egl_is_current(native);
+    make_context_current(data);
+    return is_context_current(data);
 }
 
 void egl_backend::doneCurrent()
 {
-    wlr_egl_unset_current(native);
+    unset_context_current(data);
 }
 
 void egl_backend::screenGeometryChanged(QSize const& size)
