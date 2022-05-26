@@ -6,6 +6,8 @@
 */
 #include "input_method.h"
 
+#include "platform.h"
+
 #include "base/wayland/server.h"
 #include "input/filters/keyboard_grab.h"
 #include "input/redirect.h"
@@ -29,11 +31,12 @@ namespace
 {
 using namespace KWin;
 
-Toplevel* get_window(Wrapland::Server::text_input_v3* text_input)
+Toplevel* get_window(input::wayland::platform& platform,
+                     Wrapland::Server::text_input_v3* text_input)
 {
     auto input_surface = text_input->entered_surface();
 
-    for (auto win : workspace()->m_windows) {
+    for (auto win : platform.redirect->space.m_windows) {
         if (win->control && win->surface() == input_surface) {
             return win;
         }
@@ -44,12 +47,14 @@ Toplevel* get_window(Wrapland::Server::text_input_v3* text_input)
 }
 
 template<typename Win>
-QRect get_input_popup_placement(Win* parent_window, QRect const& cursor_rectangle)
+QRect get_input_popup_placement(input::wayland::platform& platform,
+                                Win* parent_window,
+                                QRect const& cursor_rectangle)
 {
     using constraint_adjust = Wrapland::Server::XdgShellSurface::ConstraintAdjustment;
 
     auto const toplevel = win::lead_of_annexed_transient(parent_window);
-    auto const& screen_bounds = workspace()->clientArea(
+    auto const& screen_bounds = platform.redirect->space.clientArea(
         toplevel->control->fullscreen() ? FullScreenArea : PlacementArea, toplevel);
 
     auto const& text_area = cursor_rectangle.isValid() ? cursor_rectangle : QRect(0, 0, 0, 0);
@@ -81,7 +86,8 @@ namespace KWin::input::wayland
 using Wrapland::Server::input_method_keyboard_grab_v2;
 using Wrapland::Server::input_method_popup_surface_v2;
 
-input_method::input_method(base::wayland::server* server)
+input_method::input_method(wayland::platform& platform, base::wayland::server* server)
+    : platform{platform}
 {
     auto seat = server->seat();
 
@@ -134,7 +140,7 @@ void input_method::handle_keyboard_grabbed(input_method_keyboard_grab_v2* grab)
 
     QObject::connect(grab,
                      &Wrapland::Server::input_method_keyboard_grab_v2::resourceDestroyed,
-                     kwinApp()->input->redirect.get(),
+                     kwinApp()->input->redirect,
                      [this, filter] {
                          kwinApp()->input->redirect->uninstallInputEventFilter(filter);
                          remove_all_if(filters, [filter](auto&& f) { return f.get() == filter; });
@@ -157,13 +163,13 @@ void input_method::handle_popup_surface_created(input_method_popup_surface_v2* p
 {
     using win::wayland::window;
 
-    auto popup = popups.emplace_back(new window(popup_surface->surface()));
+    auto space = static_cast<win::wayland::space*>(&platform.redirect->space);
+    auto popup = popups.emplace_back(new window(popup_surface->surface(), *space));
     popup->input_method_popup = popup_surface;
     popup->transient()->annexed = true;
     popup->hidden = true;
     popup->set_layer(win::layer::notification);
 
-    auto space = static_cast<win::wayland::space*>(workspace());
     space->m_windows.push_back(popup);
 
     QObject::connect(popup, &window::closed, this, [this](auto win) { remove_all(popups, win); });
@@ -204,9 +210,9 @@ void input_method::handle_popup_surface_created(input_method_popup_surface_v2* p
 
     if (auto text_input = waylandServer()->seat()->text_inputs().v3.text_input) {
         if (text_input->state().enabled) {
-            auto parent_window = get_window(text_input);
-            auto const& placement
-                = get_input_popup_placement(parent_window, text_input->state().cursor_rectangle);
+            auto parent_window = get_window(platform, text_input);
+            auto const& placement = get_input_popup_placement(
+                platform, parent_window, text_input->state().cursor_rectangle);
 
             parent_window->transient()->add_child(popup);
             popup->setFrameGeometry(placement);
@@ -222,9 +228,9 @@ void input_method::activate_popups()
     }
 
     auto text_input = waylandServer()->seat()->text_inputs().v3.text_input;
-    auto parent_window = get_window(text_input);
+    auto parent_window = get_window(platform, text_input);
     auto const placement
-        = get_input_popup_placement(parent_window, text_input->state().cursor_rectangle);
+        = get_input_popup_placement(platform, parent_window, text_input->state().cursor_rectangle);
 
     for (auto const& popup : popups) {
         parent_window->transient()->add_child(popup);

@@ -27,12 +27,12 @@
 namespace KWin::debug
 {
 
-wayland_console::wayland_console()
+wayland_console::wayland_console(win::space& space)
     : console()
 {
     m_ui->windowsView->setItemDelegate(new wayland_console_delegate(this));
-    m_ui->windowsView->setModel(new wayland_console_model(this));
-    m_ui->surfacesView->setModel(new surface_tree_model(this));
+    m_ui->windowsView->setModel(new wayland_console_model(space, this));
+    m_ui->surfacesView->setModel(new surface_tree_model(space, this));
 
     m_ui->inputDevicesView->setModel(new input_device_model(this));
     m_ui->inputDevicesView->setItemDelegate(new wayland_console_delegate(this));
@@ -45,7 +45,7 @@ wayland_console::wayland_console()
         }
         if (index == 5) {
             update_keyboard_tab();
-            QObject::connect(kwinApp()->input->redirect.get(),
+            QObject::connect(kwinApp()->input->redirect,
                              &input::redirect::keyStateChanged,
                              this,
                              &wayland_console::update_keyboard_tab);
@@ -112,26 +112,27 @@ void wayland_console::update_keyboard_tab()
         xkb->state, xkb_keymap_num_mods(keymap), modActive, &xkb_keymap_mod_get_name));
 }
 
-wayland_console_model::wayland_console_model(QObject* parent)
-    : console_model(parent)
+wayland_console_model::wayland_console_model(win::space& space, QObject* parent)
+    : console_model(space, parent)
 {
-    auto space = static_cast<win::wayland::space*>(workspace());
+    auto& wlspace = static_cast<win::wayland::space&>(space);
 
-    for (auto window : space->m_windows) {
+    for (auto window : space.m_windows) {
         if (auto wayland_window = qobject_cast<win::wayland::window*>(window)) {
             m_shellClients.append(wayland_window);
         }
     }
 
     // TODO: that only includes windows getting shown, not those which are only created
-    QObject::connect(space, &win::wayland::space::wayland_window_added, this, [this](auto win) {
+    QObject::connect(&wlspace, &win::wayland::space::wayland_window_added, this, [this](auto win) {
         auto wayland_win = static_cast<win::wayland::window*>(win);
         add_window(this, s_waylandClientId - 1, m_shellClients, wayland_win);
     });
-    QObject::connect(space, &win::wayland::space::wayland_window_removed, this, [this](auto win) {
-        auto wayland_win = static_cast<win::wayland::window*>(win);
-        remove_window(this, s_waylandClientId - 1, m_shellClients, wayland_win);
-    });
+    QObject::connect(
+        &wlspace, &win::wayland::space::wayland_window_removed, this, [this](auto win) {
+            auto wayland_win = static_cast<win::wayland::window*>(win);
+            remove_window(this, s_waylandClientId - 1, m_shellClients, wayland_win);
+        });
 }
 
 int wayland_console_model::topLevelRowCount() const

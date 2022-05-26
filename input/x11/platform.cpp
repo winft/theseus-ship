@@ -12,11 +12,10 @@
 #include "input/x11/xinput_integration.h"
 #endif
 
-#include "input/keyboard_redirect.h"
 #include "input/logging.h"
-#include "input/x11/redirect.h"
 #include "main.h"
 
+#include <QAction>
 #include <QX11Info>
 
 namespace KWin::input::x11
@@ -39,8 +38,6 @@ platform::platform()
         }
     }
 #endif
-
-    redirect = std::make_unique<input::x11::redirect>();
     create_cursor();
 }
 
@@ -82,7 +79,7 @@ void platform::start_interactive_window_selection(std::function<void(KWin::Tople
                                                   QByteArray const& cursorName)
 {
     if (!window_sel) {
-        window_sel.reset(new window_selector);
+        window_sel.reset(new window_selector(*this));
     }
     window_sel->start(callback, cursorName);
 }
@@ -90,7 +87,7 @@ void platform::start_interactive_window_selection(std::function<void(KWin::Tople
 void platform::start_interactive_position_selection(std::function<void(QPoint const&)> callback)
 {
     if (!window_sel) {
-        window_sel.reset(new window_selector);
+        window_sel.reset(new window_selector(*this));
     }
     window_sel->start(callback);
 }

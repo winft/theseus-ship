@@ -20,8 +20,9 @@
 namespace KWin::debug
 {
 
-surface_tree_model::surface_tree_model(QObject* parent)
+surface_tree_model::surface_tree_model(win::space& space, QObject* parent)
     : QAbstractItemModel(parent)
+    , space{space}
 {
     // TODO: it would be nice to not have to reset the model on each change
     auto reset = [this] {
@@ -29,7 +30,7 @@ surface_tree_model::surface_tree_model(QObject* parent)
         endResetModel();
     };
 
-    const auto unmangeds = workspace()->unmanagedList();
+    const auto unmangeds = space.unmanagedList();
     for (auto u : unmangeds) {
         if (!u->surface()) {
             continue;
@@ -37,14 +38,14 @@ surface_tree_model::surface_tree_model(QObject* parent)
         QObject::connect(
             u->surface(), &Wrapland::Server::Surface::subsurfaceTreeChanged, this, reset);
     }
-    for (auto c : workspace()->m_windows) {
+    for (auto c : space.m_windows) {
         if (!c->control || !c->surface()) {
             continue;
         }
         QObject::connect(
             c->surface(), &Wrapland::Server::Surface::subsurfaceTreeChanged, this, reset);
     }
-    QObject::connect(static_cast<win::wayland::space*>(workspace()),
+    QObject::connect(static_cast<win::wayland::space*>(&space),
                      &win::wayland::space::wayland_window_added,
                      this,
                      [this, reset](auto win) {
@@ -54,25 +55,22 @@ surface_tree_model::surface_tree_model(QObject* parent)
                                           reset);
                          reset();
                      });
-    QObject::connect(workspace(), &win::space::clientAdded, this, [this, reset](auto c) {
+    QObject::connect(&space, &win::space::clientAdded, this, [this, reset](auto c) {
         if (c->surface()) {
             QObject::connect(
                 c->surface(), &Wrapland::Server::Surface::subsurfaceTreeChanged, this, reset);
         }
         reset();
     });
-    QObject::connect(workspace(), &win::space::clientRemoved, this, reset);
-    QObject::connect(
-        workspace(), &win::space::unmanagedAdded, this, [this, reset](Toplevel* window) {
-            if (window->surface()) {
-                QObject::connect(window->surface(),
-                                 &Wrapland::Server::Surface::subsurfaceTreeChanged,
-                                 this,
-                                 reset);
-            }
-            reset();
-        });
-    QObject::connect(workspace(), &win::space::unmanagedRemoved, this, reset);
+    QObject::connect(&space, &win::space::clientRemoved, this, reset);
+    QObject::connect(&space, &win::space::unmanagedAdded, this, [this, reset](Toplevel* window) {
+        if (window->surface()) {
+            QObject::connect(
+                window->surface(), &Wrapland::Server::Surface::subsurfaceTreeChanged, this, reset);
+        }
+        reset();
+    });
+    QObject::connect(&space, &win::space::unmanagedRemoved, this, reset);
 }
 
 int surface_tree_model::columnCount(const QModelIndex& parent) const
@@ -103,8 +101,7 @@ int surface_tree_model::rowCount(const QModelIndex& parent) const
     }
 
     // toplevel are all windows
-    return get_windows_with_control(workspace()->m_windows).size()
-        + workspace()->unmanagedList().size();
+    return get_windows_with_control(space.m_windows).size() + space.unmanagedList().size();
 }
 
 QModelIndex surface_tree_model::index(int row, int column, const QModelIndex& parent) const
@@ -127,14 +124,14 @@ QModelIndex surface_tree_model::index(int row, int column, const QModelIndex& pa
     }
 
     // a window
-    auto const& allClients = get_windows_with_control(workspace()->m_windows);
+    auto const& allClients = get_windows_with_control(space.m_windows);
     if (row_u < allClients.size()) {
         // references a client
         return createIndex(row_u, column, allClients.at(row_u)->surface());
     }
 
     int reference = allClients.size();
-    const auto& unmanaged = workspace()->unmanagedList();
+    const auto& unmanaged = space.unmanagedList();
     if (row_u < reference + unmanaged.size()) {
         return createIndex(row_u, column, unmanaged.at(row_u - reference)->surface());
     }
@@ -174,14 +171,14 @@ QModelIndex surface_tree_model::parent(const QModelIndex& child) const
         }
         // not a subsurface, thus it's a true window
         size_t row = 0;
-        const auto& allClients = get_windows_with_control(workspace()->m_windows);
+        const auto& allClients = get_windows_with_control(space.m_windows);
         for (; row < allClients.size(); row++) {
             if (allClients.at(row)->surface() == parent) {
                 return createIndex(row, 0, parent);
             }
         }
         row = allClients.size();
-        const auto& unmanaged = workspace()->unmanagedList();
+        const auto& unmanaged = space.unmanagedList();
         for (size_t i = 0; i < unmanaged.size(); i++) {
             if (unmanaged.at(i)->surface() == parent) {
                 return createIndex(row + i, 0, parent);

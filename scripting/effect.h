@@ -17,7 +17,15 @@
 class KConfigLoader;
 class KPluginMetaData;
 
-namespace KWin::scripting
+namespace KWin
+{
+
+namespace win
+{
+class space;
+}
+
+namespace scripting
 {
 
 class KWIN_EXPORT effect : public KWin::AnimationEffect
@@ -66,9 +74,13 @@ public:
     }
     QString activeConfig() const;
     void setActiveConfig(const QString& name);
-    static effect*
-    create(const QString& effectName, const QString& pathToScript, int chainPosition);
-    static effect* create(const KPluginMetaData& effect);
+
+    static effect* create(const QString& effectName,
+                          const QString& pathToScript,
+                          int chainPosition,
+                          win::space& space);
+    static effect* create(const KPluginMetaData& effect, win::space& space);
+
     static bool supported();
     ~effect() override;
     /**
@@ -185,7 +197,7 @@ Q_SIGNALS:
     void isActiveFullScreenEffectChanged();
 
 protected:
-    effect();
+    effect(win::space& space);
     QJSEngine* engine() const;
     bool init(const QString& effectName, const QString& pathToScript);
     void animationEnded(KWin::EffectWindow* w, Attribute a, uint meta) override;
@@ -199,10 +211,12 @@ private:
     QString m_effectName;
     QString m_scriptFile;
     QHash<int, QJSValueList> m_screenEdgeCallbacks;
-    KConfigLoader* m_config;
-    int m_chainPosition;
+    KConfigLoader* m_config{nullptr};
+    int m_chainPosition{0};
     QHash<int, QAction*> m_touchScreenEdgeCallbacks;
     Effect* m_activeFullScreenEffect = nullptr;
+    win::space& space;
 };
 
+}
 }

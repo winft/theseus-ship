@@ -101,7 +101,7 @@ private:
 
     QVector<global_shortcut> m_shortcuts;
 
-    KGlobalAccelD* m_kglobalAccel = nullptr;
+    std::unique_ptr<KGlobalAccelD> m_kglobalAccel;
     KGlobalAccelInterface* m_kglobalAccelInterface = nullptr;
     std::unique_ptr<gesture_recognizer> m_gestureRecognizer;
 };

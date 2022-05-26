@@ -6,18 +6,18 @@
 #include "control.h"
 
 #include "app_menu.h"
+#include "deco/client_impl.h"
+#include "deco/palette.h"
+#include "deco/window.h"
 #include "stacking.h"
 
 #include <config-kwin.h>
 
-#include "decorations/decoratedclient.h"
-#include "decorations/decorationpalette.h"
-#include "decorations/window.h"
-#include "render/effects.h"
-
 #if KWIN_BUILD_TABBOX
 #include "tabbox/tabbox.h"
 #endif
+
+#include "render/effects.h"
 #include "toplevel.h"
 
 #include <Wrapland/Server/plasma_window.h>
@@ -131,7 +131,7 @@ void control::set_icon(QIcon const& icon)
 
 bool control::has_application_menu() const
 {
-    return app_menu::self()->applicationMenuEnabled() && !m_application_menu.is_empty();
+    return m_win->space.app_menu->applicationMenuEnabled() && !m_application_menu.is_empty();
 }
 
 bool control::application_menu_active() const
@@ -373,7 +373,7 @@ win::move_resize_op& control::move_resize()
     return m_move_resize;
 }
 
-win::deco& control::deco()
+win::deco_impl& control::deco()
 {
     return m_deco;
 }

@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "transfer.h"
 
 #include "main.h"
+#include "win/space.h"
 
 #include <unistd.h>
 #include <xwayland_logging.h>
@@ -265,7 +266,7 @@ x11_to_wl_transfer::x11_to_wl_transfer(xcb_atom_t selection,
                                        xcb_window_t parentWindow,
                                        x11_data const& x11,
                                        QObject* parent)
-    : transfer(selection, fd, timestamp, *x11.atoms, parent)
+    : transfer(selection, fd, timestamp, *x11.space->atoms, parent)
 {
     // create transfer window
     auto xcb_con = kwinApp()->x11Connection();

@@ -7,15 +7,23 @@
 
 #include "base/x11/event_filter.h"
 
-namespace KWin::win::x11
+namespace KWin::win
+{
+
+class space;
+
+namespace x11
 {
 
 class screen_edges_filter : public base::x11::event_filter
 {
 public:
-    screen_edges_filter();
+    explicit screen_edges_filter(win::space& space);
 
     bool event(xcb_generic_event_t* event) override;
+
+    win::space& space;
 };
 
+}
 }

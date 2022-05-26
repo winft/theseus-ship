@@ -31,7 +31,7 @@ bool is_most_recently_raised(Win* win)
 {
     // The last toplevel in the unconstrained stacking order is the most recently raised one.
     auto last = top_client_on_desktop(
-        workspace(), virtual_desktop_manager::self()->current(), nullptr, true, false);
+        &win->space, win->space.virtual_desktop_manager->current(), nullptr, true, false);
     return last == win;
 }
 
@@ -86,7 +86,7 @@ bool perform_mouse_command(Win* win, base::options::MouseCommand cmd, QPoint con
 {
     bool replay = false;
     auto& base = kwinApp()->get_base();
-    auto space = workspace();
+    auto space = &win->space;
 
     switch (cmd) {
     case base::options::MouseRaise:
@@ -294,17 +294,17 @@ bool perform_mouse_command(Win* win, base::options::MouseCommand cmd, QPoint con
 template<typename Win>
 void enter_event(Win* win, const QPoint& globalPos)
 {
-    auto space = workspace();
+    auto space = &win->space;
 
     if (kwinApp()->options->focusPolicy() == base::options::ClickToFocus
-        || space->userActionsMenu()->isShown()) {
+        || space->user_actions_menu->isShown()) {
         return;
     }
 
     if (kwinApp()->options->isAutoRaise() && !win::is_desktop(win) && !win::is_dock(win)
         && space->focusChangeEnabled() && globalPos != space->focusMousePosition()
         && top_client_on_desktop(space,
-                                 virtual_desktop_manager::self()->current(),
+                                 win->space.virtual_desktop_manager->current(),
                                  kwinApp()->options->isSeparateScreenFocus() ? win->central_output
                                                                              : nullptr)
             != win) {
@@ -327,7 +327,7 @@ template<typename Win>
 void leave_event(Win* win)
 {
     win->control->cancel_auto_raise();
-    workspace()->cancelDelayFocus();
+    win->space.cancelDelayFocus();
     // TODO: send hover leave to deco
     // TODO: handle base::options::FocusStrictlyUnderMouse
 }
@@ -364,8 +364,8 @@ bool process_decoration_button_press(Win* win, QMouseEvent* event, bool ignoreMe
                 // expired -> new first click and pot. init
                 deco.double_click.start();
             } else {
-                workspace()->performWindowOperation(
-                    win, kwinApp()->options->operationTitlebarDblClick());
+                win->space.performWindowOperation(win,
+                                                  kwinApp()->options->operationTitlebarDblClick());
                 end_move_resize(win);
                 return false;
             }
@@ -534,7 +534,7 @@ void set_shortcut(Win* win, QString const& shortcut)
     //
     if (!cut.contains(QLatin1Char('(')) && !cut.contains(QLatin1Char(')'))
         && !cut.contains(QLatin1String(" - "))) {
-        if (workspace()->shortcutAvailable(cut, win)) {
+        if (win->space.shortcutAvailable(cut, win)) {
             update_shortcut(QKeySequence(cut));
         } else {
             update_shortcut();
@@ -573,7 +573,7 @@ void set_shortcut(Win* win, QString const& shortcut)
         }
     }
     for (auto it = keys.constBegin(); it != keys.constEnd(); ++it) {
-        if (workspace()->shortcutAvailable(*it, win)) {
+        if (win->space.shortcutAvailable(*it, win)) {
             update_shortcut(*it);
             return;
         }

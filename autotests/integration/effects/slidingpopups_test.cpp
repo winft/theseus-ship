@@ -68,7 +68,7 @@ void SlidingPopupsTest::initTestCase()
     // disable all effects - we don't want to have it interact with the rendering
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    const auto builtinNames = render::effect_loader().listOfKnownEffects();
+    const auto builtinNames = render::effect_loader(*Test::app()->workspace).listOfKnownEffects();
     for (QString name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
@@ -233,7 +233,7 @@ void SlidingPopupsTest::testWithOtherEffect()
     xcb_flush(c.get());
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(workspace(), &win::space::clientAdded);
+    QSignalSpy windowCreatedSpy(Test::app()->workspace.get(), &win::space::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();

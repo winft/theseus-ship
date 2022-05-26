@@ -13,16 +13,18 @@
 namespace KWin::win
 {
 
-void osd_show(QString const& message, QString const& iconName = QString());
-void osd_show(QString const& message, int timeout);
-void osd_show(QString const& message, QString const& iconName, int timeout);
+class space;
+
+void osd_show(win::space& space, QString const& message, QString const& iconName = QString());
+void osd_show(win::space& space, QString const& message, int timeout);
+void osd_show(win::space& space, QString const& message, QString const& iconName, int timeout);
 
 enum class osd_hide_flags {
     none = 0x0,
     skip_close_animation = 0x1,
 };
 
-void osd_hide(osd_hide_flags hide_flags = osd_hide_flags::none);
+void osd_hide(win::space& space, osd_hide_flags hide_flags = osd_hide_flags::none);
 
 }
 

@@ -191,7 +191,7 @@ void place(Win* window, const QRect& area, placement policy, placement nextPlace
         QPoint corner = geo.topLeft();
         auto const frameMargins = frame_margins(window);
 
-        const QRect fullRect = workspace()->clientArea(FullArea, window);
+        const QRect fullRect = window->space.clientArea(FullArea, window);
         if (!(window->maximizeMode() & maximize_mode::horizontal)) {
             if (geo.right() == fullRect.right()) {
                 corner.rx() += frameMargins.right();
@@ -281,7 +281,7 @@ void place_smart(Win* window, const QRect& area, placement /*next*/)
     int x_optimal, y_optimal;
     int possible;
     int desktop = window->desktop() == 0 || window->isOnAllDesktops()
-        ? virtual_desktop_manager::self()->current()
+        ? window->space.virtual_desktop_manager->current()
         : window->desktop();
 
     int cxl, cxr, cyt, cyb; // temp coords
@@ -314,7 +314,7 @@ void place_smart(Win* window, const QRect& area, placement /*next*/)
             cxr = x + cw;
             cyt = y;
             cyb = y + ch;
-            for (auto const& client : workspace()->stacking_order->sorted()) {
+            for (auto const& client : window->space.stacking_order->sorted()) {
                 if (is_irrelevant(client, window, desktop)) {
                     continue;
                 }
@@ -367,7 +367,7 @@ void place_smart(Win* window, const QRect& area, placement /*next*/)
                 possible -= cw;
 
             // compare to the position of each client on the same desk
-            for (auto const& client : workspace()->stacking_order->sorted()) {
+            for (auto const& client : window->space.stacking_order->sorted()) {
                 if (is_irrelevant(client, window, desktop)) {
                     continue;
                 }
@@ -401,7 +401,7 @@ void place_smart(Win* window, const QRect& area, placement /*next*/)
                 possible -= ch;
 
             // test the position of each window on the desk
-            for (auto const& client : workspace()->stacking_order->sorted()) {
+            for (auto const& client : window->space.stacking_order->sorted()) {
                 if (is_irrelevant(client, window, desktop)) {
                     continue;
                 }
@@ -556,7 +556,7 @@ void place_on_main_window(Win* window, const QRect& area, placement nextPlacemen
     geom.moveCenter(place_on->geometry_update.frame.center());
     move(window, geom.topLeft());
     // get area again, because the mainwindow may be on different xinerama screen
-    const QRect placementArea = workspace()->clientArea(PlacementArea, window);
+    const QRect placementArea = window->space.clientArea(PlacementArea, window);
     keep_in_area(window, placementArea, false); // make sure it's kept inside workarea
 }
 
@@ -569,7 +569,7 @@ void place_maximizing(Win* window, const QRect& area, placement nextPlacement)
         nextPlacement = placement::smart;
     if (window->isMaximizable() && window->maxSize().width() >= area.width()
         && window->maxSize().height() >= area.height()) {
-        if (workspace()->clientArea(MaximizeArea, window) == area)
+        if (window->space.clientArea(MaximizeArea, window) == area)
             maximize(window, maximize_mode::full);
         else { // if the geometry doesn't match default maximize area (xinerama case?),
             // it's probably better to use the given area
@@ -582,18 +582,18 @@ void place_maximizing(Win* window, const QRect& area, placement nextPlacement)
 }
 
 /**
- * Unclutters the current desktop by smart-placing all clients again.
+ * Unclutters the current desktop by smart-placing all windows again.
  */
-inline void unclutter_desktop()
+inline void unclutter_desktop(win::space& space)
 {
-    auto const& clients = workspace()->m_windows;
-    for (int i = clients.size() - 1; i >= 0; i--) {
-        auto client = clients.at(i);
+    auto const& windows = space.m_windows;
+    for (int i = windows.size() - 1; i >= 0; i--) {
+        auto client = windows.at(i);
         if (!client->control || !client->isOnCurrentDesktop() || client->control->minimized()
             || client->isOnAllDesktops() || !client->isMovable()) {
             continue;
         }
-        const QRect placementArea = workspace()->clientArea(PlacementArea, client);
+        const QRect placementArea = space.clientArea(PlacementArea, client);
         place_smart(client, placementArea);
     }
 }

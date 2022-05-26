@@ -16,33 +16,35 @@
 namespace KWin::input::wayland::fake
 {
 
-static win::wayland::space& wlspace()
+static win::wayland::space& wlspace(win::space& space)
 {
-    return static_cast<win::wayland::space&>(*workspace());
+    return static_cast<win::wayland::space&>(space);
 }
 
 keyboard::keyboard(Wrapland::Server::FakeInputDevice* device, input::platform* platform)
     : input::keyboard(platform)
     , device{device}
 {
-    QObject::connect(device,
-                     &Wrapland::Server::FakeInputDevice::keyboardKeyPressRequested,
-                     this,
-                     [this](auto button) {
-                         // TODO: Fix time
-                         this->platform->redirect->keyboard()->process_key(
-                             {button, key_state::pressed, false, this, 0});
-                         wlspace().kde_idle->simulateUserActivity();
-                     });
-    QObject::connect(device,
-                     &Wrapland::Server::FakeInputDevice::keyboardKeyReleaseRequested,
-                     this,
-                     [this](auto button) {
-                         // TODO: Fix time
-                         this->platform->redirect->keyboard()->process_key(
-                             {button, key_state::released, false, this, 0});
-                         wlspace().kde_idle->simulateUserActivity();
-                     });
+    QObject::connect(
+        device,
+        &Wrapland::Server::FakeInputDevice::keyboardKeyPressRequested,
+        this,
+        [this](auto button) {
+            auto redirect = this->platform->redirect;
+            // TODO: Fix time
+            redirect->keyboard()->process_key({button, key_state::pressed, false, this, 0});
+            wlspace(redirect->space).kde_idle->simulateUserActivity();
+        });
+    QObject::connect(
+        device,
+        &Wrapland::Server::FakeInputDevice::keyboardKeyReleaseRequested,
+        this,
+        [this](auto button) {
+            auto redirect = this->platform->redirect;
+            // TODO: Fix time
+            redirect->keyboard()->process_key({button, key_state::released, false, this, 0});
+            wlspace(redirect->space).kde_idle->simulateUserActivity();
+        });
 }
 
 }

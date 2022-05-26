@@ -18,11 +18,10 @@
 namespace KWin::render::dbus
 {
 
-compositing::compositing(render::platform& platform)
-    : QObject(&platform)
-    , platform{platform}
+compositing::compositing(render::compositor& compositor)
+    : compositor{compositor}
 {
-    connect(platform.compositor.get(),
+    connect(&compositor,
             &render::compositor::compositingToggled,
             this,
             &compositing::compositingToggled);
@@ -39,15 +38,15 @@ compositing::compositing(render::platform& platform)
 
 QString compositing::compositingNotPossibleReason() const
 {
-    return platform.compositingNotPossibleReason();
+    return compositor.platform.compositingNotPossibleReason();
 }
 
 QString compositing::compositingType() const
 {
-    if (!platform.compositor->scene()) {
+    if (!compositor.scene()) {
         return QStringLiteral("none");
     }
-    switch (platform.compositor->scene()->compositingType()) {
+    switch (compositor.scene()->compositingType()) {
     case XRenderCompositing:
         return QStringLiteral("xrender");
     case OpenGLCompositing:
@@ -66,22 +65,22 @@ QString compositing::compositingType() const
 
 bool compositing::isActive() const
 {
-    return platform.compositor->isActive();
+    return compositor.isActive();
 }
 
 bool compositing::isCompositingPossible() const
 {
-    return platform.compositingPossible();
+    return compositor.platform.compositingPossible();
 }
 
 bool compositing::isOpenGLBroken() const
 {
-    return platform.openGLCompositingIsBroken();
+    return compositor.platform.openGLCompositingIsBroken();
 }
 
 bool compositing::platformRequiresCompositing() const
 {
-    return platform.requiresCompositing();
+    return compositor.platform.requiresCompositing();
 }
 
 void compositing::resume()
@@ -100,7 +99,7 @@ void compositing::suspend()
 
 void compositing::reinitialize()
 {
-    platform.compositor->reinitialize();
+    compositor.reinitialize();
 }
 
 QStringList compositing::supportedOpenGLPlatformInterfaces() const

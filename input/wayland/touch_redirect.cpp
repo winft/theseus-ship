@@ -115,11 +115,11 @@ void touch_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
 
     if (focusNow && focusNow->control) {
         win::enter_event(focusNow, m_lastPosition.toPoint());
-        workspace()->updateFocusMousePosition(m_lastPosition.toPoint());
+        redirect->space.updateFocusMousePosition(m_lastPosition.toPoint());
     }
 
     auto seat = waylandServer()->seat();
-    if (!focusNow || !focusNow->surface() || decoration()) {
+    if (!focusNow || !focusNow->surface() || focus.deco) {
         // no new surface or internal window or on decoration -> cleanup
         seat->touches().set_focused_surface(nullptr);
         return;
@@ -133,15 +133,16 @@ void touch_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
                                             + focusNow->pos());
     focus_geometry_notifier
         = QObject::connect(focusNow, &Toplevel::frame_geometry_changed, this, [this] {
-              if (!focus()) {
+              auto focus_win = focus.window;
+              if (!focus_win) {
                   return;
               }
               auto seat = waylandServer()->seat();
-              if (focus()->surface() != seat->touches().get_focus().surface) {
+              if (focus_win->surface() != seat->touches().get_focus().surface) {
                   return;
               }
               seat->touches().set_focused_surface_position(
-                  -1 * focus()->input_transform().map(focus()->pos()) + focus()->pos());
+                  -1 * focus_win->input_transform().map(focus_win->pos()) + focus_win->pos());
           });
 }
 
@@ -150,8 +151,8 @@ void touch_redirect::cleanupInternalWindow(QWindow* /*old*/, QWindow* /*now*/)
     // nothing to do
 }
 
-void touch_redirect::cleanupDecoration(Decoration::DecoratedClientImpl* /*old*/,
-                                       Decoration::DecoratedClientImpl* /*now*/)
+void touch_redirect::cleanupDecoration(win::deco::client_impl* /*old*/,
+                                       win::deco::client_impl* /*now*/)
 {
     // nothing to do
 }

@@ -39,13 +39,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/logging.h"
 #include "base/output.h"
 #include "base/platform.h"
-#include "decorations/decoratedclient.h"
 #include "input/cursor.h"
 #include "main.h"
 #include "render/compositor.h"
 #include "render/cursor.h"
 #include "render/effects.h"
 #include "render/platform.h"
+#include "win/deco/client_impl.h"
 #include "win/geo.h"
 #include "win/transient.h"
 
@@ -824,7 +824,7 @@ std::unique_ptr<render::shadow> scene::createShadow(Toplevel* toplevel)
     return std::make_unique<shadow>(toplevel);
 }
 
-Decoration::Renderer* scene::createDecorationRenderer(Decoration::DecoratedClientImpl* impl)
+win::deco::renderer* scene::createDecorationRenderer(win::deco::client_impl* impl)
 {
     return new deco_renderer(impl);
 }

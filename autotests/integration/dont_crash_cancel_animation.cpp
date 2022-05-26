@@ -74,8 +74,10 @@ void DontCrashCancelAnimationFromAnimationEndedTest::cleanup()
 void DontCrashCancelAnimationFromAnimationEndedTest::testScript()
 {
     // load a scripted effect which deletes animation data
-    auto effect = scripting::effect::create(
-        QStringLiteral("crashy"), QFINDTESTDATA("data/anim-data-delete-effect/effect.js"), 10);
+    auto effect = scripting::effect::create(QStringLiteral("crashy"),
+                                            QFINDTESTDATA("data/anim-data-delete-effect/effect.js"),
+                                            10,
+                                            *Test::app()->workspace);
     QVERIFY(effect);
 
     const auto children = effects->children();
@@ -102,7 +104,7 @@ void DontCrashCancelAnimationFromAnimationEndedTest::testScript()
     // let's render
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(workspace()->activeClient(), c);
+    QCOMPARE(Test::app()->workspace->activeClient(), c);
 
     // make sure we animate
     QTest::qWait(200);

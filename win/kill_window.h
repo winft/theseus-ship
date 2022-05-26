@@ -22,16 +22,22 @@ namespace KWin::win
 class kill_window
 {
 public:
+    kill_window(win::space& space)
+        : space{space}
+    {
+    }
+
     void start()
     {
         osd_show(
+            space,
             i18n("Select window to force close with left click or enter.\nEscape or right click "
                  "to cancel."),
             QStringLiteral("window-close"));
 
         kwinApp()->input->start_interactive_window_selection(
-            [](auto window) {
-                osd_hide();
+            [this](auto window) {
+                osd_hide(space);
 
                 if (!window) {
                     return;
@@ -48,6 +54,9 @@ public:
             },
             QByteArrayLiteral("pirate"));
     }
+
+private:
+    win::space& space;
 };
 
 }

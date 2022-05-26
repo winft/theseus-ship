@@ -91,7 +91,7 @@ void DontCrashAuroraeDestroyDecoTest::testBorderlessMaximizedWindows()
     KConfigGroup group = kwinApp()->config()->group("Windows");
     group.writeEntry("BorderlessMaximizedWindows", true);
     group.sync();
-    workspace()->slotReconfigure();
+    Test::app()->workspace->slotReconfigure();
     QCOMPARE(kwinApp()->options->borderlessMaximizedWindows(), true);
 
     // create an xcb window
@@ -116,7 +116,7 @@ void DontCrashAuroraeDestroyDecoTest::testBorderlessMaximizedWindows()
     xcb_flush(c);
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(workspace(), &win::space::clientAdded);
+    QSignalSpy windowCreatedSpy(Test::app()->workspace.get(), &win::space::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();

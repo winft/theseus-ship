@@ -183,8 +183,8 @@ GLTexture* window::getDecorationTexture() const
         if (!remnant->control || remnant->no_border) {
             return nullptr;
         }
-        if (auto renderer = static_cast<const deco_renderer*>(remnant->decoration_renderer)) {
-            return renderer->texture();
+        if (auto& renderer = remnant->decoration_renderer) {
+            return static_cast<deco_renderer&>(*renderer).texture();
         }
     }
     return nullptr;

@@ -109,7 +109,7 @@ void InputStackingOrderTest::testPointerFocusUpdatesOnStackingOrderChange()
     QVERIFY(leftSpy.isValid());
 
     // now create the two windows and make them overlap
-    QSignalSpy clientAddedSpy(static_cast<win::wayland::space*>(workspace()),
+    QSignalSpy clientAddedSpy(Test::app()->workspace.get(),
                               &win::wayland::space::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
     auto surface1 = Test::create_surface();
@@ -118,7 +118,7 @@ void InputStackingOrderTest::testPointerFocusUpdatesOnStackingOrderChange()
     QVERIFY(shellSurface1);
     render(surface1);
     QVERIFY(clientAddedSpy.wait());
-    auto window1 = workspace()->activeClient();
+    auto window1 = Test::app()->workspace->activeClient();
     QVERIFY(window1);
 
     auto surface2 = Test::create_surface();
@@ -128,7 +128,7 @@ void InputStackingOrderTest::testPointerFocusUpdatesOnStackingOrderChange()
     render(surface2);
     QVERIFY(clientAddedSpy.wait());
 
-    auto window2 = workspace()->activeClient();
+    auto window2 = Test::app()->workspace->activeClient();
     QVERIFY(window2);
     QVERIFY(window1 != window2);
 
@@ -147,7 +147,7 @@ void InputStackingOrderTest::testPointerFocusUpdatesOnStackingOrderChange()
 
     // raise window 1 above window 2
     QVERIFY(leftSpy.isEmpty());
-    win::raise_window(workspace(), window1);
+    win::raise_window(Test::app()->workspace.get(), window1);
     // should send leave to window2
     QVERIFY(leftSpy.wait());
     QCOMPARE(leftSpy.count(), 1);

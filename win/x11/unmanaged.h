@@ -112,7 +112,7 @@ auto create_unmanaged_window(xcb_window_t w, Space& space) -> typename Space::x1
         static_cast<render::effects_handler_impl*>(effects)->checkInputWindowStacking();
     }
 
-    QObject::connect(win, &Win::needsRepaint, space.m_compositor, [win] {
+    QObject::connect(win, &Win::needsRepaint, &space.render, [win] {
         render::compositor::self()->schedule_repaint(win);
     });
 
@@ -158,7 +158,7 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* e)
     win->info->event(e, &dirtyProperties, &dirtyProperties2);
 
     if (dirtyProperties2 & NET::WM2Opacity) {
-        if (win::compositing()) {
+        if (win->space.compositing()) {
             win->addRepaintFull();
             Q_EMIT win->opacityChanged(win, old_opacity);
         }
@@ -180,7 +180,7 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* e)
         break;
     case XCB_UNMAP_NOTIFY: {
         // may cause leave event
-        workspace()->updateFocusMousePosition(input::get_cursor()->pos());
+        win->space.updateFocusMousePosition(input::get_cursor()->pos());
 
         // unmap notify might have been emitted due to a destroy notify
         // but unmap notify gets emitted before the destroy notify, nevertheless at this

@@ -138,7 +138,7 @@ void set_transient_lead(Win* win, xcb_window_t lead_id)
 
     if (lead_id != XCB_WINDOW_NONE && lead_id != rootWindow()) {
         auto lead
-            = find_controlled_window<x11::window>(*workspace(), predicate_match::window, lead_id);
+            = find_controlled_window<x11::window>(win->space, predicate_match::window, lead_id);
 
         if (contains(win->transient()->children, lead)) {
             // Ensure we do not add a loop.
@@ -150,7 +150,7 @@ void set_transient_lead(Win* win, xcb_window_t lead_id)
 
     check_group(win, nullptr);
     update_layer(win);
-    workspace()->resetUpdateToolWindowsTimer();
+    win->space.resetUpdateToolWindowsTimer();
 }
 
 template<typename Win>
@@ -277,7 +277,7 @@ xcb_window_t verify_transient_for(Win* win, xcb_window_t new_transient_for, bool
 
     while (new_transient_for != XCB_WINDOW_NONE && new_transient_for != rootWindow()
            && !find_controlled_window<x11::window>(
-               *workspace(), predicate_match::window, new_transient_for)) {
+               win->space, predicate_match::window, new_transient_for)) {
         base::x11::xcb::tree tree(new_transient_for);
         if (tree.is_null()) {
             break;
@@ -286,7 +286,7 @@ xcb_window_t verify_transient_for(Win* win, xcb_window_t new_transient_for, bool
     }
 
     if (auto new_transient_for_client = find_controlled_window<x11::window>(
-            *workspace(), predicate_match::window, new_transient_for)) {
+            win->space, predicate_match::window, new_transient_for)) {
         if (new_transient_for != before_search) {
             qCDebug(KWIN_CORE) << "Client " << win
                                << " has WM_TRANSIENT_FOR poiting to non-toplevel window "
@@ -309,7 +309,7 @@ xcb_window_t verify_transient_for(Win* win, xcb_window_t new_transient_for, bool
 
     while (loop_pos != XCB_WINDOW_NONE && loop_pos != rootWindow()) {
         auto pos
-            = find_controlled_window<x11::window>(*workspace(), predicate_match::window, loop_pos);
+            = find_controlled_window<x11::window>(win->space, predicate_match::window, loop_pos);
         if (pos == nullptr) {
             break;
         }
@@ -324,7 +324,7 @@ xcb_window_t verify_transient_for(Win* win, xcb_window_t new_transient_for, bool
 
     if (new_transient_for != rootWindow()
         && find_controlled_window<x11::window>(
-               *workspace(), predicate_match::window, new_transient_for)
+               win->space, predicate_match::window, new_transient_for)
             == nullptr) {
         // it's transient for a specific window, but that window is not mapped
         new_transient_for = rootWindow();
@@ -337,11 +337,11 @@ xcb_window_t verify_transient_for(Win* win, xcb_window_t new_transient_for, bool
     return new_transient_for;
 }
 
-template<typename Win>
-void check_active_modal()
+template<typename Win, typename Space>
+void check_active_modal(Space& space)
 {
     // If the active window got new modal transient, activate it.
-    auto win = qobject_cast<Win*>(workspace()->mostRecentlyActivatedClient());
+    auto win = qobject_cast<Win*>(space.mostRecentlyActivatedClient());
     if (!win) {
         return;
     }
@@ -353,7 +353,7 @@ void check_active_modal()
             // postpone check until end of manage()
             return;
         }
-        workspace()->activateClient(new_modal);
+        space.activateClient(new_modal);
     }
 }
 
@@ -369,15 +369,15 @@ void check_group(Win* win, x11::group* group)
             // by this app, but transient for another, so make it part of that group).
             group = lead->group();
         } else if (win->info->groupLeader() != XCB_WINDOW_NONE) {
-            group = workspace()->findGroup(win->info->groupLeader());
+            group = win->space.findGroup(win->info->groupLeader());
             if (!group) {
                 // doesn't exist yet
-                group = new x11::group(win->info->groupLeader());
+                group = new x11::group(win->info->groupLeader(), win->space);
             }
         } else {
             group = find_client_leader_group(win);
             if (!group) {
-                group = new x11::group(XCB_WINDOW_NONE);
+                group = new x11::group(XCB_WINDOW_NONE, win->space);
             }
         }
     }
@@ -392,7 +392,7 @@ void check_group(Win* win, x11::group* group)
         update_group(win, true);
     }
 
-    check_active_modal<Win>();
+    check_active_modal<Win>(win->space);
     update_layer(win);
 }
 
@@ -422,7 +422,7 @@ group* find_client_leader_group(Win const* win)
 {
     group* ret = nullptr;
 
-    for (auto const& other : workspace()->m_windows) {
+    for (auto const& other : win->space.m_windows) {
         if (!other->control) {
             continue;
         }

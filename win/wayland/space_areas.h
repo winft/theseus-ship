@@ -23,7 +23,7 @@ void update_space_areas(Window* win,
 {
     auto const& base = kwinApp()->get_base();
     auto const screens_count = base.get_outputs().size();
-    auto const desktops_count = static_cast<int>(virtual_desktop_manager::self()->count());
+    auto const desktops_count = static_cast<int>(win->space.virtual_desktop_manager->count());
 
     // Assuming that only docks have "struts" and that all docks have a strut.
     if (!win->hasStrut()) {

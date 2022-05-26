@@ -28,11 +28,6 @@ namespace KWin
 {
 class Toplevel;
 
-namespace Decoration
-{
-class DecoratedClientImpl;
-}
-
 namespace input
 {
 

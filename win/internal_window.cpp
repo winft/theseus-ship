@@ -21,6 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "internal_window.h"
 
 #include "control.h"
+#include "deco/bridge.h"
+#include "deco/window.h"
 #include "geo.h"
 #include "meta.h"
 #include "remnant.h"
@@ -29,9 +31,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "setup.h"
 #include "space.h"
 #include "space_helpers.h"
-
-#include "decorations/decorationbridge.h"
-#include "decorations/window.h"
 
 #include <KDecoration2/Decoration>
 
@@ -69,8 +68,9 @@ private:
     internal_window* m_client;
 };
 
-internal_window::internal_window(QWindow* window)
-    : m_internalWindow(window)
+internal_window::internal_window(QWindow* window, win::space& space)
+    : Toplevel(space)
+    , m_internalWindow(window)
     , synced_geo(window->geometry())
     , m_internalWindowFlags(window->flags())
 {
@@ -157,7 +157,7 @@ bool internal_window::eventFilter(QObject* watched, QEvent* event)
         }
         if (pe->propertyName() == "kwin_windowType") {
             m_windowType = m_internalWindow->property("kwin_windowType").value<NET::WindowType>();
-            workspace()->updateClientArea();
+            space.updateClientArea();
         }
     }
     return false;
@@ -426,15 +426,15 @@ void internal_window::destroyClient()
 
     control->destroy_decoration();
 
-    remove_window_from_lists(*workspace(), this);
-    workspace()->stacking_order->update(true);
-    workspace()->updateClientArea();
-    Q_EMIT workspace()->internalClientRemoved(this);
+    remove_window_from_lists(space, this);
+    space.stacking_order->update(true);
+    space.updateClientArea();
+    Q_EMIT space.internalClientRemoved(this);
 
     if (deleted) {
         deleted->remnant()->unref();
     } else {
-        delete_window_from_space(*workspace(), this);
+        delete_window_from_space(space, this);
     }
     m_internalWindow = nullptr;
 
@@ -533,9 +533,8 @@ double internal_window::buffer_scale_internal() const
 
 void internal_window::createDecoration(const QRect& rect)
 {
-    control->deco().window = new Decoration::window(this);
-    auto decoration
-        = Decoration::DecorationBridge::self()->createDecoration(control->deco().window);
+    control->deco().window = new deco::window(this);
+    auto decoration = space.deco->createDecoration(control->deco().window);
 
     if (decoration) {
         QMetaObject::invokeMethod(decoration, "update", Qt::QueuedConnection);
@@ -588,22 +587,21 @@ void internal_window::markAsMapped()
 
     setReadyForPainting();
 
-    auto space = workspace();
-    space->m_windows.push_back(this);
+    space.m_windows.push_back(this);
 
-    setup_space_window_connections(space, this);
+    setup_space_window_connections(&space, this);
     update_layer(this);
 
     if (placeable()) {
-        auto const area = space->clientArea(PlacementArea, get_current_output(*space), desktop());
+        auto const area = space.clientArea(PlacementArea, get_current_output(space), desktop());
         place(this, area);
     }
 
-    space->x_stacking_tree->mark_as_dirty();
-    space->stacking_order->update(true);
-    space->updateClientArea();
+    space.x_stacking_tree->mark_as_dirty();
+    space.stacking_order->update(true);
+    space.updateClientArea();
 
-    Q_EMIT space->internalClientAdded(this);
+    Q_EMIT space.internalClientAdded(this);
 }
 
 void internal_window::updateInternalWindowGeometry()

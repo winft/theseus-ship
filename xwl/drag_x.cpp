@@ -113,8 +113,8 @@ drag_event_reply x11_drag::move_filter(Toplevel* target, QPoint const& pos)
         // Currently there is no target or target is an Xwayland window.
         // Handled here and by X directly.
         if (target && target->surface() && target->control) {
-            if (workspace()->activeClient() != target) {
-                workspace()->activateClient(target);
+            if (source.x11.space->activeClient() != target) {
+                source.x11.space->activateClient(target);
             }
         }
 
@@ -198,7 +198,7 @@ void x11_drag::set_offers(mime_atoms const& offers)
 void x11_drag::set_drag_target()
 {
     auto ac = visit->get_target();
-    workspace()->activateClient(ac);
+    source.x11.space->activateClient(ac);
     waylandServer()->seat()->drags().set_target(ac->surface(), ac->input_transform());
 }
 
@@ -257,15 +257,15 @@ wl_visit::wl_visit(Toplevel* target, x11_source_ext& source)
     xcb_change_property(xcb_con,
                         XCB_PROP_MODE_REPLACE,
                         window,
-                        source.x11.atoms->xdnd_aware,
+                        source.x11.space->atoms->xdnd_aware,
                         XCB_ATOM_ATOM,
                         32,
                         1,
                         &version);
 
     xcb_map_window(xcb_con, window);
-    workspace()->stacking_order->add_manual_overlay(window);
-    workspace()->stacking_order->update(true);
+    source.x11.space->stacking_order->add_manual_overlay(window);
+    source.x11.space->stacking_order->update(true);
 
     xcb_flush(xcb_con);
     mapped = true;
@@ -291,7 +291,7 @@ bool wl_visit::handle_client_message(xcb_client_message_event_t* event)
         return false;
     }
 
-    auto atoms = source.x11.atoms;
+    auto& atoms = source.x11.space->atoms;
     if (event->type == atoms->xdnd_enter) {
         return handle_enter(event);
     } else if (event->type == atoms->xdnd_position) {
@@ -328,7 +328,7 @@ bool wl_visit::handle_enter(xcb_client_message_event_t* event)
         // message has only max 3 types (which are directly in data)
         for (size_t i = 0; i < 3; i++) {
             xcb_atom_t mimeAtom = data->data32[2 + i];
-            auto const mimeStrings = atom_to_mime_types(mimeAtom, *source.x11.atoms);
+            auto const mimeStrings = atom_to_mime_types(mimeAtom, *source.x11.space->atoms);
             for (auto const& mime : mimeStrings) {
                 if (!hasMimeName(offers, mime)) {
                     offers.emplace_back(mime, mimeAtom);
@@ -349,7 +349,7 @@ void wl_visit::get_mimes_from_win_property(mime_atoms& offers)
     auto cookie = xcb_get_property(source.x11.connection,
                                    0,
                                    source_window,
-                                   source.x11.atoms->xdnd_type_list,
+                                   source.x11.space->atoms->xdnd_type_list,
                                    XCB_GET_PROPERTY_TYPE_ANY,
                                    0,
                                    0x1fffffff);
@@ -366,7 +366,7 @@ void wl_visit::get_mimes_from_win_property(mime_atoms& offers)
 
     auto mimeAtoms = static_cast<xcb_atom_t*>(xcb_get_property_value(reply));
     for (size_t i = 0; i < reply->value_len; ++i) {
-        auto const mimeStrings = atom_to_mime_types(mimeAtoms[i], *source.x11.atoms);
+        auto const mimeStrings = atom_to_mime_types(mimeAtoms[i], *source.x11.space->atoms);
         for (auto const& mime : mimeStrings) {
             if (!hasMimeName(offers, mime)) {
                 offers.emplace_back(mime, mimeAtoms[i]);
@@ -394,7 +394,7 @@ bool wl_visit::handle_position(xcb_client_message_event_t* event)
 
     source.timestamp = data->data32[3];
 
-    auto atoms = source.x11.atoms;
+    auto& atoms = source.x11.space->atoms;
     xcb_atom_t actionAtom = m_version > 1 ? data->data32[4] : atoms->xdnd_action_copy;
     auto action = atom_to_client_action(actionAtom, *atoms);
 
@@ -457,7 +457,8 @@ void wl_visit::send_status()
     data.data32[1] = flags;
     data.data32[4] = flags & (1 << 0) ? action_atom : static_cast<uint32_t>(XCB_ATOM_NONE);
 
-    send_client_message(source.x11.connection, source_window, source.x11.atoms->xdnd_status, &data);
+    send_client_message(
+        source.x11.connection, source_window, source.x11.space->atoms->xdnd_status, &data);
 }
 
 void wl_visit::send_finished()
@@ -470,7 +471,7 @@ void wl_visit::send_finished()
     data.data32[2] = accepted ? action_atom : static_cast<uint32_t>(XCB_ATOM_NONE);
 
     send_client_message(
-        source.x11.connection, source_window, source.x11.atoms->xdnd_finished, &data);
+        source.x11.connection, source_window, source.x11.space->atoms->xdnd_finished, &data);
 }
 
 bool wl_visit::target_accepts_action() const
@@ -490,8 +491,8 @@ void wl_visit::unmap_proxy_window()
 
     xcb_unmap_window(source.x11.connection, window);
 
-    workspace()->stacking_order->remove_manual_overlay(window);
-    workspace()->stacking_order->update(true);
+    source.x11.space->stacking_order->remove_manual_overlay(window);
+    source.x11.space->stacking_order->update(true);
 
     xcb_flush(source.x11.connection);
     mapped = false;

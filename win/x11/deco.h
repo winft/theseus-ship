@@ -9,12 +9,11 @@
 #include "input.h"
 #include "window.h"
 
+#include "render/compositor.h"
+#include "win/deco/bridge.h"
+#include "win/deco/window.h"
 #include "win/move.h"
 #include "win/scene.h"
-
-#include "decorations/decorationbridge.h"
-#include "decorations/window.h"
-#include "render/compositor.h"
 
 #include <KDecoration2/DecoratedClient>
 
@@ -142,9 +141,8 @@ void create_decoration(Win* win)
         return;
     }
 
-    win->control->deco().window = new Decoration::window(win);
-    auto decoration
-        = Decoration::DecorationBridge::self()->createDecoration(win->control->deco().window);
+    win->control->deco().window = new deco::window(win);
+    auto decoration = win->space.deco->createDecoration(win->control->deco().window);
 
     if (decoration) {
         QMetaObject::invokeMethod(decoration, "update", Qt::QueuedConnection);

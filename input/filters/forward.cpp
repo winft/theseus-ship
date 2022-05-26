@@ -16,7 +16,6 @@
 #include "input/redirect.h"
 #include "input/touch_redirect.h"
 #include "main.h"
-#include "win/space.h"
 
 #include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
@@ -27,9 +26,6 @@ namespace KWin::input
 
 bool forward_filter::key(key_event const& event)
 {
-    if (!workspace()) {
-        return false;
-    }
     auto seat = waylandServer()->seat();
     kwinApp()->input->redirect->keyboard()->update();
     seat->setTimestamp(event.base.time_msec);
@@ -71,9 +67,6 @@ bool forward_filter::motion(motion_event const& event)
 
 bool forward_filter::touch_down(touch_down_event const& event)
 {
-    if (!workspace()) {
-        return false;
-    }
     auto seat = waylandServer()->seat();
     seat->setTimestamp(event.base.time_msec);
     kwinApp()->input->redirect->touch()->insertId(event.id, seat->touches().touch_down(event.pos));
@@ -81,9 +74,6 @@ bool forward_filter::touch_down(touch_down_event const& event)
 }
 bool forward_filter::touch_motion(touch_motion_event const& event)
 {
-    if (!workspace()) {
-        return false;
-    }
     auto seat = waylandServer()->seat();
     seat->setTimestamp(event.base.time_msec);
     const qint32 wraplandId = kwinApp()->input->redirect->touch()->mappedId(event.id);
@@ -94,9 +84,6 @@ bool forward_filter::touch_motion(touch_motion_event const& event)
 }
 bool forward_filter::touch_up(touch_up_event const& event)
 {
-    if (!workspace()) {
-        return false;
-    }
     auto seat = waylandServer()->seat();
     seat->setTimestamp(event.base.time_msec);
     const qint32 wraplandId = kwinApp()->input->redirect->touch()->mappedId(event.id);
@@ -144,10 +131,6 @@ bool forward_filter::axis(axis_event const& event)
 
 bool forward_filter::pinch_begin(pinch_begin_event const& event)
 {
-    if (!workspace()) {
-        return false;
-    }
-
     auto seat = waylandServer()->seat();
     seat->setTimestamp(event.base.time_msec);
     seat->pointers().start_pinch_gesture(event.fingers);
@@ -157,10 +140,6 @@ bool forward_filter::pinch_begin(pinch_begin_event const& event)
 
 bool forward_filter::pinch_update(pinch_update_event const& event)
 {
-    if (!workspace()) {
-        return false;
-    }
-
     auto seat = waylandServer()->seat();
     seat->setTimestamp(event.base.time_msec);
     seat->pointers().update_pinch_gesture(
@@ -171,9 +150,6 @@ bool forward_filter::pinch_update(pinch_update_event const& event)
 
 bool forward_filter::pinch_end(pinch_end_event const& event)
 {
-    if (!workspace()) {
-        return false;
-    }
     auto seat = waylandServer()->seat();
     seat->setTimestamp(event.base.time_msec);
 
@@ -188,9 +164,6 @@ bool forward_filter::pinch_end(pinch_end_event const& event)
 
 bool forward_filter::swipe_begin(swipe_begin_event const& event)
 {
-    if (!workspace()) {
-        return false;
-    }
     auto seat = waylandServer()->seat();
     seat->setTimestamp(event.base.time_msec);
     seat->pointers().start_swipe_gesture(event.fingers);
@@ -200,9 +173,6 @@ bool forward_filter::swipe_begin(swipe_begin_event const& event)
 
 bool forward_filter::swipe_update(swipe_update_event const& event)
 {
-    if (!workspace()) {
-        return false;
-    }
     auto seat = waylandServer()->seat();
     seat->setTimestamp(event.base.time_msec);
     seat->pointers().update_swipe_gesture(QSize(event.delta.x(), event.delta.y()));
@@ -212,9 +182,6 @@ bool forward_filter::swipe_update(swipe_update_event const& event)
 
 bool forward_filter::swipe_end(swipe_end_event const& event)
 {
-    if (!workspace()) {
-        return false;
-    }
     auto seat = waylandServer()->seat();
     seat->setTimestamp(event.base.time_msec);
 

@@ -12,10 +12,10 @@
 namespace KWin::win::x11
 {
 
-color_mapper::color_mapper(QObject* parent)
-    : QObject(parent)
-    , m_default(defaultScreen()->default_colormap)
+color_mapper::color_mapper(win::space& space)
+    : m_default(defaultScreen()->default_colormap)
     , m_installed(defaultScreen()->default_colormap)
+    , space{space}
 {
 }
 
@@ -24,7 +24,7 @@ color_mapper::~color_mapper() = default;
 void color_mapper::update()
 {
     auto cmap = m_default;
-    if (auto window = dynamic_cast<x11::window*>(workspace()->activeClient())) {
+    if (auto window = dynamic_cast<x11::window*>(space.activeClient())) {
         if (window->colormap != XCB_COLORMAP_NONE) {
             cmap = window->colormap;
         }

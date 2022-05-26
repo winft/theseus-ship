@@ -13,13 +13,21 @@
 #include <vector>
 #include <xcb/xcb.h>
 
-namespace KWin::xwl
+namespace KWin
+{
+
+namespace win
+{
+class space;
+}
+
+namespace xwl
 {
 
 struct x11_data {
     xcb_connection_t* connection{nullptr};
     xcb_screen_t* screen{nullptr};
-    base::x11::atoms* atoms{nullptr};
+    win::space* space{nullptr};
 };
 
 struct mime_atom {
@@ -43,4 +51,5 @@ struct mime_atom {
 
 using mime_atoms = std::vector<mime_atom>;
 
+}
 }

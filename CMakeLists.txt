@@ -391,13 +391,6 @@ set(kwin_SRCS
     render/post/suncalc.cpp
     debug/console/console.cpp
     debug/perf/ftrace.cpp
-    decorations/decoratedclient.cpp
-    decorations/decorationbridge.cpp
-    decorations/decorationpalette.cpp
-    decorations/decorationrenderer.cpp
-    decorations/decorations_logging.cpp
-    decorations/settings.cpp
-    decorations/window.cpp
     input/device_redirect.cpp
     input/event_filter.cpp
     input/event_spy.cpp
@@ -458,6 +451,7 @@ set(kwin_SRCS
     scripting/script.cpp
     scripting/script_timer.cpp
     scripting/scripting_logging.cpp
+    scripting/singleton_interface.cpp
     scripting/v2/client_model.cpp
     scripting/v3/client_model.cpp
     scripting/v3/virtual_desktop_model.cpp
@@ -469,6 +463,13 @@ set(kwin_SRCS
     win/control.cpp
     win/dbus/virtual_desktop_manager.cpp
     win/dbus/virtual_desktop_types.cpp
+    win/deco/client_impl.cpp
+    win/deco/bridge.cpp
+    win/deco/palette.cpp
+    win/deco/renderer.cpp
+    win/deco/decorations_logging.cpp
+    win/deco/settings.cpp
+    win/deco/window.cpp
     win/focus_chain.cpp
     win/internal_window.cpp
     win/osd_notification.cpp
@@ -477,6 +478,7 @@ set(kwin_SRCS
     win/session_manager.cpp
     win/screen_edges.cpp
     win/shortcut_dialog.cpp
+    win/singleton_interface.cpp
     win/space.cpp
     win/stacking_order.cpp
     win/transient.cpp

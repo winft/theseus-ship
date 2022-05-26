@@ -24,7 +24,7 @@ void map(Win* win)
     // XComposite invalidates backing pixmaps on unmap (minimize, different
     // virtual desktop, etc.).  We kept the last known good pixmap around
     // for use in effects, but now we want to have access to the new pixmap
-    if (win::compositing()) {
+    if (win->space.compositing()) {
         win->discard_buffer();
     }
 
@@ -78,7 +78,7 @@ template<typename Win>
 void update_hidden_preview(Win* win)
 {
     if (hidden_preview(win)) {
-        workspace()->stacking_order->force_restacking();
+        win->space.stacking_order->force_restacking();
         if (base::x11::xcb::extensions::self()->is_shape_input_available()) {
             xcb_shape_rectangles(connection(),
                                  XCB_SHAPE_SO_SET,
@@ -91,7 +91,7 @@ void update_hidden_preview(Win* win)
                                  nullptr);
         }
     } else {
-        workspace()->stacking_order->force_restacking();
+        win->space.stacking_order->force_restacking();
         win->update_input_shape();
     }
 }
@@ -136,14 +136,14 @@ void internal_hide(Win* win)
     }
 
     win->addWorkspaceRepaint(win::visible_rect(win));
-    workspace()->clientHidden(win);
+    win->space.clientHidden(win);
     Q_EMIT win->windowHidden(win);
 }
 
 template<typename Win>
 void internal_keep(Win* win)
 {
-    assert(win::compositing());
+    assert(win->space.compositing());
 
     if (win->mapping == mapping_state::kept) {
         return;
@@ -159,12 +159,12 @@ void internal_keep(Win* win)
     win->xcb_windows.input.unmap();
     if (win->control->active()) {
         // get rid of input focus, bug #317484
-        workspace()->focusToNull();
+        win->space.focusToNull();
     }
 
     update_hidden_preview(win);
     win->addWorkspaceRepaint(win::visible_rect(win));
-    workspace()->clientHidden(win);
+    win->space.clientHidden(win);
 }
 
 template<typename Win>
@@ -177,7 +177,7 @@ void update_visibility(Win* win)
     if (win->hidden) {
         win->info->setState(NET::Hidden, NET::Hidden);
         win::set_skip_taskbar(win, true);
-        if (win::compositing()
+        if (win->space.compositing()
             && kwinApp()->options->hiddenPreviews() == base::HiddenPreviewsAlways) {
             internal_keep(win);
         } else {
@@ -190,7 +190,7 @@ void update_visibility(Win* win)
 
     if (win->control->minimized()) {
         win->info->setState(NET::Hidden, NET::Hidden);
-        if (win::compositing()
+        if (win->space.compositing()
             && kwinApp()->options->hiddenPreviews() == base::HiddenPreviewsAlways) {
             internal_keep(win);
         } else {
@@ -201,7 +201,7 @@ void update_visibility(Win* win)
 
     win->info->setState(NET::States(), NET::Hidden);
     if (!win->isOnCurrentDesktop()) {
-        if (win::compositing()
+        if (win->space.compositing()
             && kwinApp()->options->hiddenPreviews() != base::HiddenPreviewsNever) {
             internal_keep(win);
         } else {

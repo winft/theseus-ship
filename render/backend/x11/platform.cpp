@@ -24,7 +24,6 @@
 #include "render/compositor.h"
 #include "render/x11/effects.h"
 #include "toplevel.h"
-#include "win/space.h"
 
 #include <kwinxrender/utils.h>
 
@@ -249,17 +248,12 @@ void platform::createOpenGLSafePoint(OpenGLSafePoint safePoint)
     }
 }
 
-outline_visual* platform::createOutline(render::outline* outline)
+outline_visual* platform::create_non_composited_outline(render::outline* outline)
 {
-    // first try composited Outline
-    auto ret = render::platform::createOutline(outline);
-    if (!ret) {
-        ret = new non_composited_outline(outline);
-    }
-    return ret;
+    return new non_composited_outline(outline);
 }
 
-Decoration::Renderer* platform::createDecorationRenderer(Decoration::DecoratedClientImpl* client)
+win::deco::renderer* platform::createDecorationRenderer(win::deco::client_impl* client)
 {
     auto renderer = render::platform::createDecorationRenderer(client);
     if (!renderer) {
@@ -270,45 +264,42 @@ Decoration::Renderer* platform::createDecorationRenderer(Decoration::DecoratedCl
 
 void platform::invertScreen()
 {
-    bool succeeded = false;
-
-    if (base::x11::xcb::extensions::self()->is_randr_available()) {
-        const auto active_client = workspace()->activeClient();
-        base::x11::xcb::randr::screen_resources res(
-            (active_client && active_client->xcb_window() != XCB_WINDOW_NONE)
-                ? active_client->xcb_window()
-                : rootWindow());
-
-        if (!res.is_null()) {
-            for (int j = 0; j < res->num_crtcs; ++j) {
-                auto crtc = res.crtcs()[j];
-                base::x11::xcb::randr::crtc_gamma gamma(crtc);
-                if (gamma.is_null()) {
-                    continue;
-                }
-                if (gamma->size) {
-                    qCDebug(KWIN_X11) << "inverting screen using xcb_randr_set_crtc_gamma";
-                    const int half = gamma->size / 2 + 1;
-
-                    uint16_t* red = gamma.red();
-                    uint16_t* green = gamma.green();
-                    uint16_t* blue = gamma.blue();
-                    for (int i = 0; i < half; ++i) {
-                        auto invert = [&gamma, i](uint16_t* ramp) {
-                            qSwap(ramp[i], ramp[gamma->size - 1 - i]);
-                        };
-                        invert(red);
-                        invert(green);
-                        invert(blue);
-                    }
-                    xcb_randr_set_crtc_gamma(connection(), crtc, gamma->size, red, green, blue);
-                    succeeded = true;
-                }
-            }
-        }
+    // We prefer inversion via effects.
+    if (effects && static_cast<render::effects_handler_impl*>(effects)->invert_screen()) {
+        return;
     }
-    if (!succeeded) {
-        render::platform::invertScreen();
+
+    if (!base::x11::xcb::extensions::self()->is_randr_available()) {
+        return;
+    }
+
+    base::x11::xcb::randr::screen_resources res(rootWindow());
+    if (res.is_null()) {
+        return;
+    }
+
+    for (int j = 0; j < res->num_crtcs; ++j) {
+        auto crtc = res.crtcs()[j];
+        base::x11::xcb::randr::crtc_gamma gamma(crtc);
+        if (gamma.is_null()) {
+            continue;
+        }
+        if (gamma->size) {
+            qCDebug(KWIN_X11) << "inverting screen using xcb_randr_set_crtc_gamma";
+            const int half = gamma->size / 2 + 1;
+
+            uint16_t* red = gamma.red();
+            uint16_t* green = gamma.green();
+            uint16_t* blue = gamma.blue();
+            for (int i = 0; i < half; ++i) {
+                auto invert
+                    = [&gamma, i](uint16_t* ramp) { qSwap(ramp[i], ramp[gamma->size - 1 - i]); };
+                invert(red);
+                invert(green);
+                invert(blue);
+            }
+            xcb_randr_set_crtc_gamma(connection(), crtc, gamma->size, red, green, blue);
+        }
     }
 }
 

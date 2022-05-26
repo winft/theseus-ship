@@ -20,6 +20,12 @@ class KXMessages;
 
 namespace KWin
 {
+
+namespace win
+{
+class space;
+}
+
 class Rules;
 class Toplevel;
 
@@ -28,7 +34,9 @@ class KWIN_EXPORT RuleBook : public QObject
 {
     Q_OBJECT
 public:
+    RuleBook(win::space& space);
     ~RuleBook() override;
+
     WindowRules find(Toplevel const* window, bool);
     void discardUsed(Toplevel* window, bool withdraw);
     void setUpdatesDisabled(bool disable);
@@ -55,8 +63,7 @@ private:
     QList<Rules*> m_rules;
     QScopedPointer<KXMessages> m_temporaryRulesMessages;
     KSharedConfig::Ptr m_config;
-
-    KWIN_SINGLETON(RuleBook)
+    win::space& space;
 };
 
 #endif

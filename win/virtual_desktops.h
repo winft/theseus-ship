@@ -7,7 +7,6 @@
 #pragma once
 
 #include "kwin_export.h"
-#include "kwinglobals.h"
 
 #include <KConfig>
 #include <KSharedConfig>
@@ -71,6 +70,8 @@ private:
     int m_x11DesktopNumber = 0;
 };
 
+class virtual_desktop_manager;
+
 /**
  * @brief Two dimensional grid containing the ID of the virtual desktop at a specific position
  * in the grid.
@@ -82,7 +83,7 @@ private:
 class KWIN_EXPORT virtual_desktop_grid
 {
 public:
-    virtual_desktop_grid();
+    virtual_desktop_grid(virtual_desktop_manager& manager);
     ~virtual_desktop_grid();
 
     void update(QSize const& size,
@@ -110,6 +111,7 @@ public:
 private:
     QSize m_size;
     QVector<QVector<virtual_desktop*>> m_grid;
+    virtual_desktop_manager& manager;
 };
 
 /**
@@ -150,7 +152,8 @@ class KWIN_EXPORT virtual_desktop_manager : public QObject
                    setNavigationWrappingAround NOTIFY navigationWrappingAroundChanged)
 
 public:
-    ~virtual_desktop_manager() override;
+    virtual_desktop_manager();
+
     /**
      * @internal, for X11 case
      */
@@ -495,14 +498,12 @@ private:
     QVector<virtual_desktop*> m_desktops;
     QPointer<virtual_desktop> m_current;
     quint32 m_rows = 2;
-    bool m_navigationWrapsAround;
+    bool m_navigationWrapsAround{false};
     virtual_desktop_grid m_grid;
     // TODO: QPointer
-    NETRootInfo* m_rootInfo;
+    NETRootInfo* m_rootInfo{nullptr};
     Wrapland::Server::PlasmaVirtualDesktopManager* m_virtualDesktopManagement = nullptr;
     KSharedConfig::Ptr m_config;
-
-    KWIN_SINGLETON_VARIABLE(virtual_desktop_manager, s_manager)
 };
 
 /**
@@ -512,7 +513,8 @@ private:
 class virtual_desktop_above
 {
 public:
-    virtual_desktop_above()
+    virtual_desktop_above(virtual_desktop_manager& manager)
+        : manager{manager}
     {
     }
     /**
@@ -523,8 +525,7 @@ public:
      */
     uint operator()(uint desktop, bool wrap)
     {
-        return (*this)(virtual_desktop_manager::self()->desktopForX11Id(desktop), wrap)
-            ->x11DesktopNumber();
+        return (*this)(manager.desktopForX11Id(desktop), wrap)->x11DesktopNumber();
     }
     /**
      * @param desktop The desktop from which the desktop above should be selected. If @c 0 the
@@ -534,8 +535,11 @@ public:
      */
     virtual_desktop* operator()(virtual_desktop* desktop, bool wrap)
     {
-        return virtual_desktop_manager::self()->above(desktop, wrap);
+        return manager.above(desktop, wrap);
     }
+
+private:
+    virtual_desktop_manager& manager;
 };
 
 /**
@@ -545,7 +549,8 @@ public:
 class virtual_desktop_below
 {
 public:
-    virtual_desktop_below()
+    virtual_desktop_below(virtual_desktop_manager& manager)
+        : manager{manager}
     {
     }
     /**
@@ -556,8 +561,7 @@ public:
      */
     uint operator()(uint desktop, bool wrap)
     {
-        return (*this)(virtual_desktop_manager::self()->desktopForX11Id(desktop), wrap)
-            ->x11DesktopNumber();
+        return (*this)(manager.desktopForX11Id(desktop), wrap)->x11DesktopNumber();
     }
     /**
      * @param desktop The desktop from which the desktop below should be selected. If @c 0 the
@@ -567,8 +571,11 @@ public:
      */
     virtual_desktop* operator()(virtual_desktop* desktop, bool wrap)
     {
-        return virtual_desktop_manager::self()->below(desktop, wrap);
+        return manager.below(desktop, wrap);
     }
+
+private:
+    virtual_desktop_manager& manager;
 };
 
 /**
@@ -578,7 +585,8 @@ public:
 class virtual_desktop_left
 {
 public:
-    virtual_desktop_left()
+    virtual_desktop_left(virtual_desktop_manager& manager)
+        : manager{manager}
     {
     }
     /**
@@ -589,8 +597,7 @@ public:
      */
     uint operator()(uint desktop, bool wrap)
     {
-        return (*this)(virtual_desktop_manager::self()->desktopForX11Id(desktop), wrap)
-            ->x11DesktopNumber();
+        return (*this)(manager.desktopForX11Id(desktop), wrap)->x11DesktopNumber();
     }
     /**
      * @param desktop The desktop from which the desktop on the left should be selected. If @c 0 the
@@ -600,8 +607,11 @@ public:
      */
     virtual_desktop* operator()(virtual_desktop* desktop, bool wrap)
     {
-        return virtual_desktop_manager::self()->toLeft(desktop, wrap);
+        return manager.toLeft(desktop, wrap);
     }
+
+private:
+    virtual_desktop_manager& manager;
 };
 
 /**
@@ -611,7 +621,8 @@ public:
 class virtual_desktop_right
 {
 public:
-    virtual_desktop_right()
+    virtual_desktop_right(virtual_desktop_manager& manager)
+        : manager{manager}
     {
     }
     /**
@@ -622,8 +633,7 @@ public:
      */
     uint operator()(uint desktop, bool wrap)
     {
-        return (*this)(virtual_desktop_manager::self()->desktopForX11Id(desktop), wrap)
-            ->x11DesktopNumber();
+        return (*this)(manager.desktopForX11Id(desktop), wrap)->x11DesktopNumber();
     }
     /**
      * @param desktop The desktop from which the desktop on the right should be selected. If @c 0
@@ -633,8 +643,11 @@ public:
      */
     virtual_desktop* operator()(virtual_desktop* desktop, bool wrap)
     {
-        return virtual_desktop_manager::self()->toRight(desktop, wrap);
+        return manager.toRight(desktop, wrap);
     }
+
+private:
+    virtual_desktop_manager& manager;
 };
 
 /**
@@ -644,7 +657,8 @@ public:
 class virtual_desktop_next
 {
 public:
-    virtual_desktop_next()
+    virtual_desktop_next(virtual_desktop_manager& manager)
+        : manager{manager}
     {
     }
     /**
@@ -655,8 +669,7 @@ public:
      */
     uint operator()(uint desktop, bool wrap)
     {
-        return (*this)(virtual_desktop_manager::self()->desktopForX11Id(desktop), wrap)
-            ->x11DesktopNumber();
+        return (*this)(manager.desktopForX11Id(desktop), wrap)->x11DesktopNumber();
     }
     /**
      * @param desktop The desktop from which the next desktop should be selected. If @c 0 the
@@ -666,8 +679,11 @@ public:
      */
     virtual_desktop* operator()(virtual_desktop* desktop, bool wrap)
     {
-        return virtual_desktop_manager::self()->next(desktop, wrap);
+        return manager.next(desktop, wrap);
     }
+
+private:
+    virtual_desktop_manager& manager;
 };
 
 /**
@@ -677,7 +693,8 @@ public:
 class virtual_desktop_previous
 {
 public:
-    virtual_desktop_previous()
+    virtual_desktop_previous(virtual_desktop_manager& manager)
+        : manager{manager}
     {
     }
     /**
@@ -688,8 +705,7 @@ public:
      */
     uint operator()(uint desktop, bool wrap)
     {
-        return (*this)(virtual_desktop_manager::self()->desktopForX11Id(desktop), wrap)
-            ->x11DesktopNumber();
+        return (*this)(manager.desktopForX11Id(desktop), wrap)->x11DesktopNumber();
     }
     /**
      * @param desktop The desktop from which the previous desktop should be selected. If @c 0 the
@@ -699,8 +715,11 @@ public:
      */
     virtual_desktop* operator()(virtual_desktop* desktop, bool wrap)
     {
-        return virtual_desktop_manager::self()->previous(desktop, wrap);
+        return manager.previous(desktop, wrap);
     }
+
+private:
+    virtual_desktop_manager& manager;
 };
 
 /**
@@ -714,9 +733,9 @@ template<typename Direction>
 uint getDesktop(int desktop = 0, bool wrap = true);
 
 template<typename Direction>
-uint getDesktop(int d, bool wrap)
+uint getDesktop(virtual_desktop_manager& manager, int d, bool wrap)
 {
-    Direction direction;
+    Direction direction(manager);
     return direction(d, wrap);
 }
 
@@ -763,7 +782,7 @@ inline virtual_desktop_grid const& virtual_desktop_manager::grid() const
 template<typename Direction>
 void virtual_desktop_manager::moveTo(bool wrap)
 {
-    Direction functor;
+    Direction functor(*this);
     setCurrent(functor(nullptr, wrap));
 }
 

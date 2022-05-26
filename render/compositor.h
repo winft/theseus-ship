@@ -21,6 +21,11 @@ namespace KWin
 {
 class Toplevel;
 
+namespace win
+{
+class space;
+}
+
 namespace render
 {
 
@@ -54,8 +59,11 @@ public:
         Stopping,
     };
 
+    explicit compositor(render::platform& platform);
     ~compositor() override;
     static compositor* self();
+
+    virtual void start(win::space& space) = 0;
 
     // when adding repaints caused by a window, you probably want to use
     // either Toplevel::addRepaint() or Toplevel::addWorkspaceRepaint()
@@ -114,6 +122,7 @@ public:
     std::unique_ptr<cursor> software_cursor;
     compositor_x11_integration x11_integration;
     render::platform& platform;
+    win::space* space{nullptr};
 
 Q_SIGNALS:
     void compositingToggled(bool active);
@@ -122,10 +131,7 @@ Q_SIGNALS:
     void sceneCreated();
 
 protected:
-    compositor(render::platform& platform);
     void timerEvent(QTimerEvent* te) override;
-
-    virtual void start() = 0;
     void stop(bool on_shutdown);
 
     /**
@@ -136,7 +142,7 @@ protected:
     /**
      * Continues the startup after Scene And Workspace are created
      */
-    void startupWithWorkspace();
+    void startupWithWorkspace(win::space& space);
     virtual render::scene* create_scene(QVector<CompositingType> const& support) = 0;
 
     virtual void performCompositing() = 0;
@@ -148,13 +154,13 @@ protected:
 
     void destroyCompositorSelection();
 
-    State m_state;
-    x11::compositor_selection_owner* m_selectionOwner;
+    State m_state{State::Off};
+    x11::compositor_selection_owner* m_selectionOwner{nullptr};
     QRegion repaints_region;
     QBasicTimer compositeTimer;
-    qint64 m_delay;
-    bool m_bufferSwapPending;
-    dbus::compositing* dbus{nullptr};
+    qint64 m_delay{0};
+    bool m_bufferSwapPending{false};
+    std::unique_ptr<dbus::compositing> dbus;
 
 private:
     void claimCompositorSelection();

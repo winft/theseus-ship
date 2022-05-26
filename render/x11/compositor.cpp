@@ -68,12 +68,12 @@ compositor::compositor(render::platform& platform)
         &m_releaseSelectionTimer, &QTimer::timeout, this, &compositor::releaseCompositorSelection);
     QObject::connect(
         this, &compositor::aboutToToggleCompositing, this, [this] { overlay_window = nullptr; });
-
-    start();
 }
 
-void compositor::start()
+void compositor::start(win::space& space)
 {
+    this->space = &space;
+
     if (m_suspended) {
         QStringList reasons;
         if (m_suspended & UserSuspend) {
@@ -87,10 +87,12 @@ void compositor::start()
         }
         qCDebug(KWIN_CORE) << "Compositing is suspended, reason:" << reasons;
         return;
-    } else if (!platform.compositingPossible()) {
+    }
+    if (!platform.compositingPossible()) {
         qCCritical(KWIN_CORE) << "Compositing is not possible";
         return;
     }
+
     if (!render::compositor::setupStart()) {
         // Internal setup failed, abort.
         return;
@@ -100,11 +102,7 @@ void compositor::start()
         m_releaseSelectionTimer.stop();
     }
 
-    if (workspace()) {
-        startupWithWorkspace();
-    } else {
-        connect(kwinApp(), &Application::workspaceCreated, this, &compositor::startupWithWorkspace);
-    }
+    startupWithWorkspace(space);
 }
 
 void compositor::schedule_repaint()
@@ -138,7 +136,7 @@ void compositor::suspend(compositor::SuspendReason reason)
     if (reason & ScriptSuspend) {
         // When disabled show a shortcut how the user can get back compositing.
         const auto shortcuts = KGlobalAccel::self()->shortcut(
-            workspace()->findChild<QAction*>(QStringLiteral("Suspend Compositing")));
+            space->findChild<QAction*>(QStringLiteral("Suspend Compositing")));
         if (!shortcuts.isEmpty()) {
             // Display notification only if there is the shortcut.
             const QString message = i18n(
@@ -156,7 +154,9 @@ void compositor::resume(compositor::SuspendReason reason)
 {
     assert(reason != NoReasonSuspend);
     m_suspended &= ~reason;
-    start();
+
+    assert(space);
+    start(*space);
 }
 
 void compositor::reinitialize()
@@ -212,7 +212,7 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
     }
 
     // Create a list of all windows in the stacking order
-    windows = workspace()->x_stacking_tree->as_list();
+    windows = space->x_stacking_tree->as_list();
     std::vector<Toplevel*> damaged;
 
     // Reset the damage state of each window and fetch the damage region
@@ -257,7 +257,7 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
         win->getDamageRegionReply();
     }
 
-    if (auto const& wins = workspace()->windows();
+    if (auto const& wins = space->m_windows;
         repaints_region.isEmpty() && !std::any_of(wins.cbegin(), wins.cend(), [](auto const& win) {
             return win->has_pending_repaints();
         })) {
@@ -397,7 +397,7 @@ void compositor::updateClientCompositeBlocking(Toplevel* window)
         // If !c we just check if we can resume in case a blocking client was lost.
         bool shouldResume = true;
 
-        for (auto const& client : workspace()->m_windows) {
+        for (auto const& client : space->m_windows) {
             if (client->isBlockingCompositing()) {
                 shouldResume = false;
                 break;

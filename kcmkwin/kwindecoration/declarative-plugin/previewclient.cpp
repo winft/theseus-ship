@@ -97,8 +97,8 @@ PreviewClient::PreviewClient(DecoratedClient *c, Decoration *decoration)
             Q_EMIT onAllDesktopsChanged(isOnAllDesktops());
         }
     );
-    connect(&m_palette, &KWin::Decoration::DecorationPalette::changed, [this]() {
-        Q_EMIT paletteChanged(m_palette.palette());
+    connect(&m_palette, &KWin::win::deco::palette::changed, [this]() {
+        Q_EMIT paletteChanged(m_palette.get_qt_palette());
     });
     auto emitEdgesChanged = [this, c]() {
         Q_EMIT c->adjacentScreenEdgesChanged(adjacentScreenEdges());
@@ -253,7 +253,7 @@ WId PreviewClient::windowId() const
 
 QPalette PreviewClient::palette() const
 {
-    return m_palette.palette();
+    return m_palette.get_qt_palette();
 }
 
 QColor PreviewClient::color(ColorGroup group, ColorRole role) const

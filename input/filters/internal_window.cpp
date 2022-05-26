@@ -27,14 +27,19 @@
 namespace KWin::input
 {
 
+internal_window_filter::internal_window_filter(input::redirect& redirect)
+    : redirect{redirect}
+{
+}
+
 bool internal_window_filter::button(button_event const& event)
 {
-    auto internal = kwinApp()->input->redirect->pointer()->internalWindow();
+    auto internal = kwinApp()->input->redirect->pointer()->focus.internal_window;
     if (!internal) {
         return false;
     }
 
-    auto window = qobject_cast<win::internal_window*>(workspace()->findInternal(internal));
+    auto window = qobject_cast<win::internal_window*>(redirect.space.findInternal(internal));
 
     if (window && win::decoration(window)) {
         // only perform mouse commands on decorated internal windows
@@ -58,7 +63,7 @@ bool internal_window_filter::button(button_event const& event)
 
 bool internal_window_filter::motion(motion_event const& event)
 {
-    auto internal = kwinApp()->input->redirect->pointer()->internalWindow();
+    auto internal = kwinApp()->input->redirect->pointer()->focus.internal_window;
     if (!internal) {
         return false;
     }
@@ -77,13 +82,13 @@ bool internal_window_filter::motion(motion_event const& event)
 
 bool internal_window_filter::axis(axis_event const& event)
 {
-    auto internal = kwinApp()->input->redirect->pointer()->internalWindow();
+    auto internal = kwinApp()->input->redirect->pointer()->focus.internal_window;
     if (!internal) {
         return false;
     }
 
     if (event.orientation == axis_orientation::vertical) {
-        auto window = qobject_cast<win::internal_window*>(workspace()->findInternal(internal));
+        auto window = qobject_cast<win::internal_window*>(redirect.space.findInternal(internal));
         if (window && win::decoration(window)) {
             // client window action only on vertical scrolling
             auto const action_result = perform_wheel_and_window_action(event, window);
@@ -108,9 +113,8 @@ bool internal_window_filter::axis(axis_event const& event)
     return adapted_qt_event.isAccepted();
 }
 
-QWindow* get_internal_window()
+QWindow* get_internal_window(std::vector<Toplevel*> const& windows)
 {
-    auto const& windows = workspace()->windows();
     if (windows.empty()) {
         return nullptr;
     }
@@ -173,7 +177,7 @@ QKeyEvent get_internal_key_event(key_event const& event)
 
 bool internal_window_filter::key(key_event const& event)
 {
-    auto window = get_internal_window();
+    auto window = get_internal_window(redirect.space.windows());
     if (!window) {
         return false;
     }
@@ -189,7 +193,7 @@ bool internal_window_filter::key(key_event const& event)
 
 bool internal_window_filter::key_repeat(key_event const& event)
 {
-    auto window = get_internal_window();
+    auto window = get_internal_window(redirect.space.windows());
     if (!window) {
         return false;
     }
@@ -213,7 +217,7 @@ bool internal_window_filter::touch_down(touch_down_event const& event)
     }
     // a new touch point
     seat->setTimestamp(event.base.time_msec);
-    auto internal = touch->internalWindow();
+    auto internal = touch->focus.internal_window;
     if (!internal) {
         return false;
     }
@@ -239,7 +243,7 @@ bool internal_window_filter::touch_down(touch_down_event const& event)
 bool internal_window_filter::touch_motion(touch_motion_event const& event)
 {
     auto touch = kwinApp()->input->redirect->touch();
-    auto internal = touch->internalWindow();
+    auto internal = touch->focus.internal_window;
     if (!internal) {
         return false;
     }
@@ -267,7 +271,7 @@ bool internal_window_filter::touch_motion(touch_motion_event const& event)
 bool internal_window_filter::touch_up(touch_up_event const& event)
 {
     auto touch = kwinApp()->input->redirect->touch();
-    auto internal = touch->internalWindow();
+    auto internal = touch->focus.internal_window;
     const bool removed = m_pressedIds.remove(event.id);
     if (!internal) {
         return removed;

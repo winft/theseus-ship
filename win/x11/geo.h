@@ -75,7 +75,7 @@ void update_shape(Win* win)
     // when the decoration calls it or when the decoration is created/destroyed
     win->update_input_shape();
 
-    if (win::compositing()) {
+    if (win->space.compositing()) {
         win->addRepaintFull();
 
         // In case shape change removes part of this window
@@ -232,12 +232,12 @@ void get_wm_normal_hints(Win* win)
                 && !win->control->fullscreen()) {
                 // try to keep the window in its xinerama screen if possible,
                 // if that fails at least keep it visible somewhere
-                auto area = workspace()->clientArea(MovementArea, win);
+                auto area = win->space.clientArea(MovementArea, win);
                 if (area.contains(orig_client_geo)) {
                     win::keep_in_area(win, area, false);
                 }
 
-                area = workspace()->clientArea(WorkArea, win);
+                area = win->space.clientArea(WorkArea, win);
                 if (area.contains(orig_client_geo)) {
                     win::keep_in_area(win, area, false);
                 }
@@ -685,7 +685,7 @@ void configure_position_size_from_request(Win* win,
 
     win->setFrameGeometry(frame_rect);
 
-    auto area = workspace()->clientArea(WorkArea, win);
+    auto area = win->space.clientArea(WorkArea, win);
 
     if (!from_tool && (!is_special_window(win) || is_toolbar(win)) && !win->control->fullscreen()
         && area.contains(frame_to_client_rect(win, frame_rect))) {
@@ -723,12 +723,12 @@ void configure_only_size_from_request(Win* win,
 
     // TODO(romangg): If this is about Xinerama, can be removed?
 
-    auto area = workspace()->clientArea(MovementArea, win);
+    auto area = win->space.clientArea(MovementArea, win);
     if (area.contains(orig_client_geo)) {
         keep_in_area(win, area, false);
     }
 
-    area = workspace()->clientArea(WorkArea, win);
+    area = win->space.clientArea(WorkArea, win);
     if (area.contains(orig_client_geo)) {
         keep_in_area(win, area, false);
     }
@@ -900,7 +900,7 @@ bool update_server_geometry(Win* win, QRect const& frame_geo)
     }
 
     if (win->control->move_resize().enabled) {
-        if (win::compositing()) {
+        if (win->space.compositing()) {
             // Defer the X server update until we leave this mode.
             win->move_needs_server_update = true;
         } else {
@@ -1026,7 +1026,7 @@ QRect adjusted_client_area(Win const* win, QRect const& desktopArea, QRect const
                           str.bottom_end - str.bottom_start + 1,
                           str.bottom_width);
 
-    auto screenarea = workspace()->clientArea(ScreenArea, win);
+    auto screenarea = win->space.clientArea(ScreenArea, win);
 
     // HACK: workarea handling is not xinerama aware, so if this strut
     // reserves place at a xinerama edge that's inside the virtual screen,

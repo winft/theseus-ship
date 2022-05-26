@@ -34,7 +34,7 @@ QRectF layer_surface_area(Win* win)
 
     if (layer_surf->exclusive_zone() == 0) {
         auto output_geo_rect = output_geo.toRect();
-        auto area = workspace()->clientArea(WorkArea, output_geo_rect.center(), 0);
+        auto area = win->space.clientArea(WorkArea, output_geo_rect.center(), 0);
         return area.intersected(output_geo_rect);
     }
     return layer_surf->output()->geometry();
@@ -138,7 +138,7 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
         layer_surface, &WS::LayerSurfaceV1::resourceDestroyed, win, [win] { destroy_window(win); });
 
     QObject::connect(layer_surface, &WS::LayerSurfaceV1::got_popup, win, [win](auto popup) {
-        for (auto window : static_cast<win::wayland::space*>(workspace())->m_windows) {
+        for (auto window : static_cast<win::wayland::space&>(win->space).m_windows) {
             if (auto wayland_window = qobject_cast<win::wayland::window*>(window);
                 wayland_window && wayland_window->popup == popup) {
                 win->transient()->add_child(wayland_window);
@@ -159,7 +159,7 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
         block_geometry_updates(win, false);
 
         if (!win->layer_surface->output()) {
-            if (auto output = get_current_output(*workspace())) {
+            if (auto output = get_current_output(win->space)) {
                 win->layer_surface->set_output(
                     static_cast<base::wayland::output const*>(output)->wrapland_output());
             }
@@ -181,7 +181,7 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
 template<typename Window, typename Space>
 void handle_new_layer_surface(Space* space, Wrapland::Server::LayerSurfaceV1* layer_surface)
 {
-    auto window = new Window(layer_surface->surface());
+    auto window = new Window(layer_surface->surface(), *space);
     if (layer_surface->surface()->client() == space->server->screen_locker_client_connection) {
         ScreenLocker::KSldApp::self()->lockScreenShown();
     }
@@ -210,7 +210,7 @@ void layer_surface_handle_keyboard_interactivity(Win* win)
     auto interactivity = win->layer_surface->keyboard_interactivity();
     if (interactivity != inter::OnDemand) {
         // With interactivity None or Exclusive just reset control.
-        workspace()->activateNextClient(win);
+        win->space.activateNextClient(win);
     }
     kwinApp()->input->redirect->keyboard()->update();
 }
@@ -302,7 +302,7 @@ void process_layer_surface_commit(Win* win)
 
     // TODO(romangg): update client area also on size change?
     if (win->layer_surface->exclusive_zone() > 0) {
-        workspace()->updateClientArea();
+        win->space.updateClientArea();
     }
 }
 

@@ -5,6 +5,7 @@
 */
 #include "root_info_filter.h"
 
+#include "win/space.h"
 #include "win/virtual_desktops.h"
 #include "win/x11/netinfo.h"
 
@@ -24,10 +25,10 @@ bool root_info_filter::event(xcb_generic_event_t* event)
     info->event(event, &dirtyProtocols, &dirtyProtocols2);
 
     if (dirtyProtocols & NET::DesktopNames) {
-        virtual_desktop_manager::self()->save();
+        info->space.virtual_desktop_manager->save();
     }
     if (dirtyProtocols2 & NET::WM2DesktopLayout) {
-        virtual_desktop_manager::self()->updateLayout();
+        info->space.virtual_desktop_manager->updateLayout();
     }
     return false;
 }

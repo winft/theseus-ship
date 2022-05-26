@@ -9,7 +9,15 @@
 #include <QObject>
 #include <QtDBus>
 
-namespace KWin::base::dbus
+namespace KWin
+{
+
+namespace win
+{
+class space;
+}
+
+namespace base::dbus
 {
 
 /**
@@ -32,7 +40,7 @@ class kwin : public QObject, protected QDBusContext
     Q_CLASSINFO("D-Bus Interface", "org.kde.KWin")
 
 public:
-    explicit kwin(QObject* parent);
+    explicit kwin(win::space& space);
     ~kwin() override;
 
 public Q_SLOTS:
@@ -62,6 +70,8 @@ private Q_SLOTS:
 private:
     QString m_serviceName;
     QDBusMessage m_replyQueryWindowInfo;
+    win::space& space;
 };
 
+}
 }

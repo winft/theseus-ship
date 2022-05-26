@@ -17,8 +17,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_DECORATED_CLIENT_H
-#define KWIN_DECORATED_CLIENT_H
+#pragma once
+
 #include "base/options.h"
 
 #include <KDecoration2/Private/DecoratedClientPrivate>
@@ -29,22 +29,34 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
+
 class Toplevel;
 
-namespace Decoration
+namespace win
 {
 
-class Renderer;
+class space;
 
-class KWIN_EXPORT DecoratedClientImpl
-        : public QObject,
-          public KDecoration2::ApplicationMenuEnabledDecoratedClientPrivate
+namespace deco
+{
+
+class renderer;
+
+class client_impl_qobject : public QObject
 {
     Q_OBJECT
 public:
-    explicit DecoratedClientImpl(Toplevel* window, KDecoration2::DecoratedClient *decoratedClient,
-                                 KDecoration2::Decoration *decoration);
-    ~DecoratedClientImpl() override;
+    ~client_impl_qobject() override;
+};
+
+class KWIN_EXPORT client_impl : public KDecoration2::ApplicationMenuEnabledDecoratedClientPrivate
+{
+public:
+    client_impl(Toplevel* window,
+                KDecoration2::DecoratedClient* decoratedClient,
+                KDecoration2::Decoration* decoration);
+    ~client_impl() override;
+
     QString caption() const override;
     WId decorationId() const override;
     int desktop() const override;
@@ -65,8 +77,14 @@ public:
     bool isResizeable() const override;
 
     // Deprecated.
-    bool isShadeable() const override { return false; }
-    bool isShaded() const override { return false; }
+    bool isShadeable() const override
+    {
+        return false;
+    }
+    bool isShaded() const override
+    {
+        return false;
+    }
 
     QPalette palette() const override;
     QColor color(KDecoration2::ColorGroup group, KDecoration2::ColorRole role) const override;
@@ -80,53 +98,58 @@ public:
     bool hasApplicationMenu() const override;
     bool isApplicationMenuActive() const override;
 
-    void requestShowToolTip(const QString &text) override;
+    void requestShowToolTip(const QString& text) override;
     void requestHideToolTip() override;
     void requestClose() override;
     void requestContextHelp() override;
     void requestToggleMaximization(Qt::MouseButtons buttons) override;
     void requestMinimize() override;
     void requestShowWindowMenu(QRect const& rect) override;
-    void requestShowApplicationMenu(const QRect &rect, int actionId) override;
+    void requestShowApplicationMenu(const QRect& rect, int actionId) override;
     void requestToggleKeepAbove() override;
     void requestToggleKeepBelow() override;
     void requestToggleOnAllDesktops() override;
 
     // Deprecated.
-    void requestToggleShade() override {}
+    void requestToggleShade() override
+    {
+    }
 
     void showApplicationMenu(int actionId) override;
 
     void update_size();
 
-    Toplevel* client() {
+    Toplevel* client()
+    {
         return m_client;
     }
-    Renderer *renderer() {
-        return m_renderer;
+    deco::renderer* renderer()
+    {
+        return m_renderer.get();
     }
-    KDecoration2::DecoratedClient *decoratedClient() {
+    std::unique_ptr<deco::renderer> move_renderer();
+    KDecoration2::DecoratedClient* decoratedClient()
+    {
         return KDecoration2::DecoratedClientPrivate::client();
     }
 
-private Q_SLOTS:
-    void delayedRequestToggleMaximization(base::options::WindowOperation operation);
+    std::unique_ptr<client_impl_qobject> qobject;
 
 private:
     void createRenderer();
-    void destroyRenderer();
+
     Toplevel* m_client;
     QSize m_clientSize;
-    Renderer *m_renderer;
+    std::unique_ptr<deco::renderer> m_renderer;
     QMetaObject::Connection m_compositorToggledConnection;
 
     QString m_toolTipText;
     QTimer m_toolTipWakeUp;
     QDeadlineTimer m_toolTipFallAsleep;
     bool m_toolTipShowing = false;
+    win::space& space;
 };
 
 }
 }
-
-#endif
+}

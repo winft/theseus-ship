@@ -35,18 +35,19 @@ namespace KWin
 namespace win
 {
 
-tabbox_x11_filter::tabbox_x11_filter()
+tabbox_x11_filter::tabbox_x11_filter(win::tabbox& tabbox)
     : base::x11::event_filter(QVector<int>{XCB_KEY_PRESS,
                                            XCB_KEY_RELEASE,
                                            XCB_MOTION_NOTIFY,
                                            XCB_BUTTON_PRESS,
                                            XCB_BUTTON_RELEASE})
+    , tabbox{tabbox}
 {
 }
 
 bool tabbox_x11_filter::event(xcb_generic_event_t* event)
 {
-    if (!tabbox::tabbox::self()->is_grabbed()) {
+    if (!tabbox.is_grabbed()) {
         return false;
     }
     const uint8_t event_type = event->response_type & ~0x80;
@@ -55,8 +56,7 @@ bool tabbox_x11_filter::event(xcb_generic_event_t* event)
     case XCB_BUTTON_RELEASE: {
         auto e = reinterpret_cast<xcb_button_press_event_t*>(event);
         xcb_allow_events(connection(), XCB_ALLOW_ASYNC_POINTER, XCB_CURRENT_TIME);
-        const auto tab = tabbox::tabbox::self();
-        if (!tab->is_shown() && tab->is_displayed()) {
+        if (!tabbox.is_shown() && tabbox.is_displayed()) {
             if (effects
                 && static_cast<render::effects_handler_impl*>(effects)->isMouseInterception()) {
                 // pass on to effects, effects will filter out the event
@@ -85,20 +85,19 @@ bool tabbox_x11_filter::event(xcb_generic_event_t* event)
 bool tabbox_x11_filter::button_press(xcb_button_press_event_t* event)
 {
     // press outside Tabbox?
-    const auto tab = tabbox::tabbox::self();
     QPoint pos(event->root_x, event->root_y);
-    if ((!tab->is_shown() && tab->is_displayed())
+    if ((!tabbox.is_shown() && tabbox.is_displayed())
         || (!tabbox_handle->contains_pos(pos)
             && (event->detail == XCB_BUTTON_INDEX_1 || event->detail == XCB_BUTTON_INDEX_2
                 || event->detail == XCB_BUTTON_INDEX_3))) {
-        tab->close(); // click outside closes tab
+        tabbox.close(); // click outside closes tab
         return true;
     }
     if (event->detail == XCB_BUTTON_INDEX_5 || event->detail == XCB_BUTTON_INDEX_4) {
         // mouse wheel event
         const QModelIndex index = tabbox_handle->next_prev(event->detail == XCB_BUTTON_INDEX_5);
         if (index.isValid()) {
-            tab->set_current_index(index);
+            tabbox.set_current_index(index);
         }
         return true;
     }
@@ -110,7 +109,7 @@ void tabbox_x11_filter::motion(xcb_generic_event_t* event)
     auto* mouse_event = reinterpret_cast<xcb_motion_notify_event_t*>(event);
     const QPoint rootPos(mouse_event->root_x, mouse_event->root_y);
     // TODO: this should be in ScreenEdges directly
-    workspace()->edges->check(rootPos, QDateTime::fromMSecsSinceEpoch(xTime(), Qt::UTC), true);
+    tabbox.space.edges->check(rootPos, QDateTime::fromMSecsSinceEpoch(xTime(), Qt::UTC), true);
     xcb_allow_events(connection(), XCB_ALLOW_ASYNC_POINTER, XCB_CURRENT_TIME);
 }
 
@@ -119,7 +118,7 @@ void tabbox_x11_filter::key_press(xcb_generic_event_t* event)
     int key_qt;
     xcb_key_press_event_t* key_event = reinterpret_cast<xcb_key_press_event_t*>(event);
     KKeyServer::xcbKeyPressEventToQt(key_event, &key_qt);
-    tabbox::tabbox::self()->key_press(key_qt);
+    tabbox.key_press(key_qt);
 }
 
 void tabbox_x11_filter::key_release(xcb_generic_event_t* event)
@@ -159,7 +158,7 @@ void tabbox_x11_filter::key_release(xcb_generic_event_t* event)
         }
     }
     if (release) {
-        tabbox::tabbox::self()->modifiers_released();
+        tabbox.modifiers_released();
     }
 }
 

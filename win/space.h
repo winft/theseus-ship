@@ -47,17 +47,31 @@ class QStringList;
 namespace KWin
 {
 
-namespace base::x11
+class RuleBook;
+
+namespace base
 {
 
+namespace dbus
+{
+class kwin;
+}
+
+namespace x11
+{
 namespace xcb
 {
 class tree;
 class window;
 }
-
 class event_filter;
+}
 
+}
+
+namespace input
+{
+class redirect;
 }
 
 namespace render
@@ -76,22 +90,33 @@ class Toplevel;
 namespace win
 {
 
+namespace deco
+{
+template<typename Space>
+class bridge;
+}
+
 namespace x11
 {
 enum class predicate_match;
+class color_mapper;
 class window;
 class group;
 class stacking_tree;
 }
 
 enum class activation;
+class app_menu;
+class focus_chain;
 class internal_window;
 class kill_window;
 class screen_edge;
 class screen_edger;
 class shortcut_dialog;
 class stacking_order;
+class tabbox;
 class user_actions_menu;
+class virtual_desktop_manager;
 
 class KWIN_EXPORT space : public QObject
 {
@@ -103,9 +128,15 @@ public:
     std::unique_ptr<render::outline> outline;
     std::unique_ptr<win::screen_edger> edges;
 
-    render::compositor* m_compositor{nullptr};
+    render::compositor& render;
     KStartupInfo* startup{nullptr};
     std::unique_ptr<base::x11::atoms> atoms;
+    std::unique_ptr<deco::bridge<space>> deco;
+    std::unique_ptr<win::app_menu> app_menu;
+    std::unique_ptr<input::redirect> input;
+    std::unique_ptr<win::tabbox> tabbox;
+    std::unique_ptr<RuleBook> rule_book;
+    std::unique_ptr<x11::color_mapper> color_mapper;
 
     QScopedPointer<base::x11::event_filter> m_wasUserInteractionFilter;
     QScopedPointer<base::x11::event_filter> m_movingClientFilter;
@@ -129,11 +160,9 @@ public:
      * Holds the menu containing the user actions which is shown
      * on e.g. right click the window decoration.
      */
-    win::user_actions_menu* m_userActionsMenu;
+    std::unique_ptr<win::user_actions_menu> user_actions_menu;
 
-    static space* _self;
-
-    space();
+    explicit space(render::compositor& render);
     ~space() override;
 
     bool workspaceEvent(QEvent*);
@@ -154,6 +183,7 @@ public:
 
     QRegion restrictedMoveArea(int desktop, win::strut_area areas = win::strut_area::all) const;
 
+    void initShortcuts();
     bool initializing() const;
 
     /**
@@ -212,8 +242,12 @@ public:
      */
     Toplevel* most_recently_raised{nullptr};
 
-    win::stacking_order* stacking_order;
+    std::unique_ptr<win::stacking_order> stacking_order;
     std::unique_ptr<win::x11::stacking_tree> x_stacking_tree;
+    std::unique_ptr<win::focus_chain> focus_chain;
+    std::unique_ptr<win::virtual_desktop_manager> virtual_desktop_manager;
+    std::unique_ptr<base::dbus::kwin> dbus;
+    std::unique_ptr<win::session_manager> session_manager;
 
     void stopUpdateToolWindowsTimer();
     void resetUpdateToolWindowsTimer();
@@ -232,7 +266,6 @@ public:
      */
     std::vector<Toplevel*> remnants() const;
 
-    win::session_manager* sessionManager() const;
     void updateTabbox();
 
 private:
@@ -263,10 +296,6 @@ public:
      * it's not already.
      */
     void showWindowMenu(const QRect& pos, Toplevel* window);
-    win::user_actions_menu const* userActionsMenu() const
-    {
-        return m_userActionsMenu;
-    }
 
     void showApplicationMenu(const QRect& pos, Toplevel* window, int actionId);
 
@@ -464,7 +493,6 @@ Q_SIGNALS:
     void surface_id_changed(KWin::Toplevel*, quint32);
 
 private:
-    void initShortcuts();
     template<typename Slot>
     void initShortcut(const QString& actionName,
                       const QString& description,
@@ -533,8 +561,6 @@ private:
 
     std::unique_ptr<win::kill_window> m_windowKiller;
 
-    win::session_manager* m_sessionManager;
-
 private:
     friend bool performTransiencyCheck();
 };
@@ -565,11 +591,6 @@ inline bool space::wasUserInteraction() const
     return was_user_interaction;
 }
 
-inline win::session_manager* space::sessionManager() const
-{
-    return m_sessionManager;
-}
-
 inline bool space::showingDesktop() const
 {
     return showing_desktop;
@@ -590,11 +611,6 @@ inline QPoint space::focusMousePosition() const
     return focusMousePos;
 }
 
-}
-
-inline win::space* workspace()
-{
-    return win::space::_self;
 }
 
 }

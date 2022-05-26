@@ -18,11 +18,6 @@
 namespace KWin::win
 {
 
-inline bool compositing()
-{
-    return workspace() && workspace()->compositing();
-}
-
 /**
  * Returns the pointer to the window's shadow. A shadow is only available if Compositing is enabled
  * and on X11 if the corresponding X window has the shadow property set.
@@ -154,7 +149,7 @@ bool setup_compositing(Win& win, bool add_full_damage)
     static_assert(!Win::is_toplevel);
     assert(!win.remnant());
 
-    if (!compositing()) {
+    if (!win.space.compositing()) {
         return false;
     }
 

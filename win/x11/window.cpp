@@ -17,11 +17,11 @@
 #include "window_release.h"
 
 #include "base/x11/grabs.h"
-#include "decorations/window.h"
 #include "render/x11/buffer.h"
 #include "render/x11/shadow.h"
 #include "rules/rules.h"
 #include "win/deco.h"
+#include "win/deco/window.h"
 #include "win/layers.h"
 #include "win/remnant.h"
 #include "win/stacking.h"
@@ -33,8 +33,7 @@ namespace KWin::win::x11
 {
 
 window::window(win::space& space)
-    : Toplevel(new x11::transient(this))
-    , space{space}
+    : Toplevel(new x11::transient(this), space)
     , motif_hints(space.atoms->motif_wm_hints)
 {
 }
@@ -590,7 +589,7 @@ void window::setShortcutInternal()
     // Workaround for kwin<->kglobalaccel deadlock, when KWin has X grab and the kded
     // kglobalaccel module tries to create the key grab. KWin should preferably grab
     // they keys itself anyway :(.
-    QTimer::singleShot(0, this, std::bind(&space::clientShortcutUpdated, workspace(), this));
+    QTimer::singleShot(0, this, std::bind(&space::clientShortcutUpdated, &space, this));
 #endif
 }
 
@@ -818,7 +817,7 @@ void window::do_set_fullscreen(bool full)
     control->set_fullscreen(full);
 
     if (full) {
-        raise_window(workspace(), this);
+        raise_window(&space, this);
     } else {
         // TODO(romangg): Can we do this also in setFullScreen? What about deco update?
         info->setState(full ? NET::FullScreen : NET::States(), NET::FullScreen);

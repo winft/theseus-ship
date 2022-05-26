@@ -27,22 +27,11 @@ class platform;
 namespace input
 {
 
-namespace dbus
-{
-class device_manager;
-}
-
-class cursor;
 class dpms_filter;
-
-class keyboard;
-class pointer;
-class redirect;
-class switch_device;
-class touch;
 
 namespace wayland
 {
+
 class input_method;
 
 class KWIN_EXPORT platform : public input::platform
@@ -54,6 +43,7 @@ public:
     platform& operator=(platform const&) = delete;
     ~platform() override;
 
+    void install_shortcuts();
     void update_keyboard_leds(input::keyboard_leds leds);
 
     void toggle_touchpads();
@@ -72,6 +62,8 @@ public:
     std::unique_ptr<input::dpms_filter> dpms_filter;
 
 private:
+    void setup_touchpad_shortcuts();
+
     base::wayland::platform const& base;
     bool touchpads_enabled{true};
 };

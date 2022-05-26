@@ -12,12 +12,8 @@
 
 namespace KWin
 {
-class Toplevel;
 
-namespace Decoration
-{
-class DecoratedClientImpl;
-}
+class Toplevel;
 
 namespace input
 {
@@ -56,8 +52,7 @@ public:
     qint32 internalPressId() const override;
 
     void cleanupInternalWindow(QWindow* old, QWindow* now) override;
-    void cleanupDecoration(Decoration::DecoratedClientImpl* old,
-                           Decoration::DecoratedClientImpl* now) override;
+    void cleanupDecoration(win::deco::client_impl* old, win::deco::client_impl* now) override;
 
     void focusUpdate(Toplevel* focusOld, Toplevel* focusNow) override;
 

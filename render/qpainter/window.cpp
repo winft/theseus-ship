@@ -178,7 +178,7 @@ void window::renderWindowDecorations(QPainter* painter)
     } else if (remnant && !remnant->no_border) {
         noBorder = false;
         remnant->layout_decoration_rects(dlr, dtr, drr, dbr);
-        renderer = static_cast<const deco_renderer*>(remnant->decoration_renderer);
+        renderer = static_cast<const deco_renderer*>(remnant->decoration_renderer.get());
     }
     if (noBorder || !renderer) {
         return;

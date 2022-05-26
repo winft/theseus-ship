@@ -19,13 +19,14 @@ namespace KWin
 {
 class Toplevel;
 
-namespace Decoration
-{
-class Renderer;
-}
-
 namespace win
 {
+
+namespace deco
+{
+class renderer;
+}
+
 class control;
 
 class KWIN_EXPORT remnant
@@ -48,7 +49,7 @@ public:
 
     bool minimized{false};
 
-    Decoration::Renderer* decoration_renderer{nullptr};
+    std::unique_ptr<deco::renderer> decoration_renderer;
     double opacity{1};
     NET::WindowType window_type{NET::Unknown};
     QByteArray window_role;

@@ -32,7 +32,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/platform.h"
 #include "base/x11/grabs.h"
 #include "base/x11/xcb/proto.h"
-#include "input/keyboard_redirect.h"
 #include "input/pointer_redirect.h"
 #include "input/redirect.h"
 #include "input/xkb/helpers.h"
@@ -75,12 +74,12 @@ namespace win
 {
 
 tabbox_handler_impl::tabbox_handler_impl(win::tabbox* tabbox)
-    : tabbox_handler(tabbox)
+    : tabbox_handler(&tabbox->space, tabbox)
     , m_tabbox(tabbox)
     , m_desktop_focus_chain(new tabbox_desktop_chain_manager(this))
 {
     // connects for DesktopFocusChainManager
-    auto vds = win::virtual_desktop_manager::self();
+    auto vds = tabbox->space.virtual_desktop_manager.get();
     connect(vds,
             &win::virtual_desktop_manager::countChanged,
             m_desktop_focus_chain,
@@ -97,7 +96,7 @@ tabbox_handler_impl::~tabbox_handler_impl()
 
 int tabbox_handler_impl::active_screen() const
 {
-    auto output = win::get_current_output(*workspace());
+    auto output = win::get_current_output(m_tabbox->space);
     if (!output) {
         return 0;
     }
@@ -106,29 +105,31 @@ int tabbox_handler_impl::active_screen() const
 
 int tabbox_handler_impl::current_desktop() const
 {
-    return win::virtual_desktop_manager::self()->current();
+    return m_tabbox->space.virtual_desktop_manager->current();
 }
 
 QString tabbox_handler_impl::desktop_name(tabbox_client* client) const
 {
+    auto& vds = m_tabbox->space.virtual_desktop_manager;
+
     if (tabbox_client_impl* c = static_cast<tabbox_client_impl*>(client)) {
         if (!c->client()->isOnAllDesktops())
-            return win::virtual_desktop_manager::self()->name(c->client()->desktop());
+            return vds->name(c->client()->desktop());
     }
-    return win::virtual_desktop_manager::self()->name(
-        win::virtual_desktop_manager::self()->current());
+
+    return vds->name(vds->current());
 }
 
 QString tabbox_handler_impl::desktop_name(int desktop) const
 {
-    return win::virtual_desktop_manager::self()->name(desktop);
+    return m_tabbox->space.virtual_desktop_manager->name(desktop);
 }
 
 std::weak_ptr<tabbox_client>
 tabbox_handler_impl::next_client_focus_chain(tabbox_client* client) const
 {
     if (tabbox_client_impl* c = static_cast<tabbox_client_impl*>(client)) {
-        auto next = win::focus_chain::self()->nextMostRecentlyUsed(c->client());
+        auto next = m_tabbox->space.focus_chain->nextMostRecentlyUsed(c->client());
         if (next) {
             return next->control->tabbox();
         }
@@ -138,7 +139,7 @@ tabbox_handler_impl::next_client_focus_chain(tabbox_client* client) const
 
 std::weak_ptr<tabbox_client> tabbox_handler_impl::first_client_focus_chain() const
 {
-    if (auto c = win::focus_chain::self()->firstMostRecentlyUsed()) {
+    if (auto c = m_tabbox->space.focus_chain->firstMostRecentlyUsed()) {
         return c->control->tabbox();
     } else {
         return std::weak_ptr<tabbox_client>();
@@ -148,7 +149,7 @@ std::weak_ptr<tabbox_client> tabbox_handler_impl::first_client_focus_chain() con
 bool tabbox_handler_impl::is_in_focus_chain(tabbox_client* client) const
 {
     if (tabbox_client_impl* c = static_cast<tabbox_client_impl*>(client)) {
-        return win::focus_chain::self()->contains(c->client());
+        return m_tabbox->space.focus_chain->contains(c->client());
     }
     return false;
 }
@@ -160,13 +161,13 @@ int tabbox_handler_impl::next_desktop_focus_chain(int desktop) const
 
 int tabbox_handler_impl::number_of_desktops() const
 {
-    return win::virtual_desktop_manager::self()->count();
+    return m_tabbox->space.virtual_desktop_manager->count();
 }
 
 std::weak_ptr<tabbox_client> tabbox_handler_impl::active_client() const
 {
-    if (workspace()->activeClient())
-        return workspace()->activeClient()->control->tabbox();
+    if (m_tabbox->space.activeClient())
+        return m_tabbox->space.activeClient()->control->tabbox();
     else
         return std::weak_ptr<tabbox_client>();
 }
@@ -239,7 +240,7 @@ bool tabbox_handler_impl::check_minimized(tabbox_client* client) const
 bool tabbox_handler_impl::check_multi_screen(tabbox_client* client) const
 {
     auto current_window = (static_cast<tabbox_client_impl*>(client))->client();
-    auto current_output = win::get_current_output(*workspace());
+    auto current_output = win::get_current_output(m_tabbox->space);
 
     switch (config().client_multi_screen_mode()) {
     case tabbox_config::IgnoreMultiScreen:
@@ -285,7 +286,7 @@ std::weak_ptr<tabbox_client> tabbox_handler_impl::client_to_add_to_list(tabbox_c
 
 tabbox_client_list tabbox_handler_impl::stacking_order() const
 {
-    auto const stacking = workspace()->stacking_order->sorted();
+    auto const stacking = m_tabbox->space.stacking_order->sorted();
     tabbox_client_list ret;
     for (auto const& toplevel : stacking) {
         if (toplevel->control) {
@@ -297,17 +298,17 @@ tabbox_client_list tabbox_handler_impl::stacking_order() const
 
 bool tabbox_handler_impl::is_kwin_compositing() const
 {
-    return workspace()->compositing();
+    return m_tabbox->space.compositing();
 }
 
 void tabbox_handler_impl::raise_client(tabbox_client* c) const
 {
-    win::raise_window(workspace(), static_cast<tabbox_client_impl*>(c)->client());
+    win::raise_window(&m_tabbox->space, static_cast<tabbox_client_impl*>(c)->client());
 }
 
 void tabbox_handler_impl::restack(tabbox_client* c, tabbox_client* under)
 {
-    win::restack(workspace(),
+    win::restack(&m_tabbox->space,
                  static_cast<tabbox_client_impl*>(c)->client(),
                  static_cast<tabbox_client_impl*>(under)->client(),
                  true);
@@ -317,16 +318,16 @@ void tabbox_handler_impl::elevate_client(tabbox_client* c, QWindow* tabbox, bool
 {
     auto cl = static_cast<tabbox_client_impl*>(c)->client();
     win::elevate(cl, b);
-    if (auto w = workspace()->findInternal(tabbox)) {
+    if (auto w = m_tabbox->space.findInternal(tabbox)) {
         win::elevate(w, b);
     }
 }
 
 std::weak_ptr<tabbox_client> tabbox_handler_impl::desktop_client() const
 {
-    for (auto const& window : workspace()->stacking_order->sorted()) {
+    for (auto const& window : m_tabbox->space.stacking_order->sorted()) {
         if (window->control && win::is_desktop(window) && window->isOnCurrentDesktop()
-            && window->central_output == win::get_current_output(*workspace())) {
+            && window->central_output == win::get_current_output(m_tabbox->space)) {
             return window->control->tabbox();
         }
     }
@@ -347,7 +348,7 @@ void tabbox_handler_impl::highlight_windows(tabbox_client* window, QWindow* cont
     if (window) {
         windows << static_cast<tabbox_client_impl*>(window)->client()->render->effect.get();
     }
-    if (auto t = workspace()->findInternal(controller)) {
+    if (auto t = m_tabbox->space.findInternal(controller)) {
         windows << t->render->effect.get();
     }
     static_cast<render::effects_handler_impl*>(effects)->highlightWindows(windows);
@@ -435,25 +436,9 @@ QUuid tabbox_client_impl::internal_id() const
 /*********************************************************
  * TabBox
  *********************************************************/
-tabbox* tabbox::s_self = nullptr;
-
-tabbox* tabbox::create(QObject* parent)
+tabbox::tabbox(win::space& space)
+    : space{space}
 {
-    Q_ASSERT(!s_self);
-    s_self = new tabbox(parent);
-    return s_self;
-}
-
-tabbox::tabbox(QObject* parent)
-    : QObject(parent)
-    , m_display_ref_count(0)
-    , m_desktop_grab(false)
-    , m_tab_grab(false)
-    , m_no_modifier_grab(false)
-    , m_forced_global_mouse_grab(false)
-    , m_ready(false)
-{
-    m_is_shown = false;
     m_default_config = tabbox_config();
     m_default_config.set_tabbox_mode(tabbox_config::ClientTabBox);
     m_default_config.set_client_desktop_mode(tabbox_config::OnlyCurrentDesktopClients);
@@ -496,13 +481,10 @@ tabbox::tabbox(QObject* parent)
 
     m_tabbox_mode = TabBoxDesktopMode; // init variables
     connect(&m_delayed_show_timer, &QTimer::timeout, this, &tabbox::show);
-    connect(workspace(), &win::space::configChanged, this, &tabbox::reconfigure);
+    connect(&space, &win::space::configChanged, this, &tabbox::reconfigure);
 }
 
-tabbox::~tabbox()
-{
-    s_self = nullptr;
-}
+tabbox::~tabbox() = default;
 
 void tabbox::handler_ready()
 {
@@ -519,7 +501,7 @@ void tabbox::key(const KLazyLocalizedString& action_name, Slot slot, const QKeyS
     a->setObjectName(QString::fromUtf8(action_name.untranslatedText()));
     a->setText(action_name.toString());
     KGlobalAccel::self()->setGlobalShortcut(a, QList<QKeySequence>() << shortcut);
-    kwinApp()->input->redirect->registerShortcut(shortcut, a, tabbox::self(), slot);
+    kwinApp()->input->registerShortcut(shortcut, a, this, slot);
     auto cuts = KGlobalAccel::self()->shortcut(a);
     global_shortcut_changed(a, cuts.isEmpty() ? QKeySequence() : cuts.first());
 }
@@ -626,8 +608,8 @@ void tabbox::reset(bool partial_reset)
     case tabbox_config::ClientTabBox:
         m_tabbox->create_model(partial_reset);
         if (!partial_reset) {
-            if (workspace()->activeClient())
-                set_current_client(workspace()->activeClient());
+            if (space.activeClient())
+                set_current_client(space.activeClient());
             // it's possible that the active client is not part of the model
             // in that case the index is invalid
             if (!m_tabbox->current_index().isValid())
@@ -642,7 +624,7 @@ void tabbox::reset(bool partial_reset)
         m_tabbox->create_model();
 
         if (!partial_reset)
-            set_current_desktop(win::virtual_desktop_manager::self()->current());
+            set_current_desktop(space.virtual_desktop_manager->current());
         break;
     }
 
@@ -659,7 +641,7 @@ Toplevel* tabbox::current_client()
 {
     if (auto client
         = static_cast<tabbox_client_impl*>(m_tabbox->client(m_tabbox->current_index()))) {
-        for (auto win : workspace()->m_windows) {
+        for (auto win : space.m_windows) {
             if (win == client->client()) {
                 return win;
             }
@@ -722,7 +704,7 @@ void tabbox::show()
         m_is_shown = false;
         return;
     }
-    workspace()->setShowingDesktop(false);
+    space.setShowingDesktop(false);
     reference();
     m_is_shown = true;
     m_tabbox->show();
@@ -773,7 +755,7 @@ void tabbox::reconfigure()
     QString border_config = QStringLiteral("BorderActivate");
     for (int i = 0; i < 2; ++i) {
         for (auto const& border : qAsConst(*borders)) {
-            workspace()->edges->unreserve(border, this);
+            space.edges->unreserve(border, this);
         }
         borders->clear();
         QStringList list = config.readEntry(border_config, QStringList());
@@ -783,7 +765,7 @@ void tabbox::reconfigure()
             if (!ok)
                 continue;
             borders->append(ElectricBorder(i));
-            workspace()->edges->reserve(ElectricBorder(i), this, "toggle");
+            space.edges->reserve(ElectricBorder(i), this, "toggle");
         }
         borders = &m_border_alternative_activate;
         border_config = QStringLiteral("BorderAlternativeActivate");
@@ -808,7 +790,7 @@ void tabbox::reconfigure()
             }
             QAction* a = new QAction(this);
             connect(a, &QAction::triggered, this, std::bind(&tabbox::toggle_mode, this, mode));
-            workspace()->edges->reserveTouch(ElectricBorder(i), a);
+            space.edges->reserveTouch(ElectricBorder(i), a);
             actions.insert(ElectricBorder(i), a);
         }
     };
@@ -1237,9 +1219,9 @@ void tabbox::cde_walk_through_windows(bool forward)
     // this function find the first suitable client for unreasonable focus
     // policies - the topmost one, with some exceptions (can't be keepabove/below,
     // otherwise it gets stuck on them)
-    //     Q_ASSERT(workspace()->block_stacking_updates == 0);
-    for (int i = workspace()->stacking_order->sorted().size() - 1; i >= 0; --i) {
-        auto window = workspace()->stacking_order->sorted().at(i);
+    //     Q_ASSERT(space.block_stacking_updates == 0);
+    for (int i = space.stacking_order->sorted().size() - 1; i >= 0; --i) {
+        auto window = space.stacking_order->sorted().at(i);
         if (window->control && window->isOnCurrentDesktop() && !win::is_special_window(window)
             && window->isShown() && win::wants_tab_focus(window) && !window->control->keep_above()
             && !window->control->keep_below()) {
@@ -1272,13 +1254,13 @@ void tabbox::cde_walk_through_windows(bool forward)
                  || nc->control->keep_above() || nc->control->keep_below()));
     if (nc) {
         if (c && c != nc)
-            win::lower_window(workspace(), c);
+            win::lower_window(&space, c);
         if (kwinApp()->options->focusPolicyIsReasonable()) {
-            workspace()->activateClient(nc);
+            space.activateClient(nc);
         } else {
             if (!nc->isOnDesktop(current_desktop()))
                 set_current_desktop(nc->desktop());
-            win::raise_window(workspace(), nc);
+            win::raise_window(&space, nc);
         }
     }
 }
@@ -1289,7 +1271,7 @@ void tabbox::kde_one_step_through_windows(bool forward, TabBoxMode mode)
     reset();
     next_prev(forward);
     if (auto c = current_client()) {
-        workspace()->activateClient(c);
+        space.activateClient(c);
     }
 }
 
@@ -1450,9 +1432,9 @@ void tabbox::accept(bool closeTabBox)
     if (closeTabBox)
         close();
     if (c) {
-        workspace()->activateClient(c);
+        space.activateClient(c);
         if (win::is_desktop(c))
-            workspace()->setShowingDesktop(!workspace()->showingDesktop());
+            space.setShowingDesktop(!space.showingDesktop());
     }
 }
 
@@ -1473,20 +1455,20 @@ void tabbox::modifiers_released()
         m_tab_grab = old_tab_grab;
         if (desktop != -1) {
             set_current_desktop(desktop);
-            win::virtual_desktop_manager::self()->setCurrent(desktop);
+            space.virtual_desktop_manager->setCurrent(desktop);
         }
     }
 }
 
 int tabbox::next_desktop_static(int iDesktop) const
 {
-    win::virtual_desktop_next functor;
+    win::virtual_desktop_next functor(*space.virtual_desktop_manager);
     return functor(iDesktop, true);
 }
 
 int tabbox::previous_desktop_static(int iDesktop) const
 {
-    win::virtual_desktop_previous functor;
+    win::virtual_desktop_previous functor(*space.virtual_desktop_manager);
     return functor(iDesktop, true);
 }
 
@@ -1507,7 +1489,7 @@ std::vector<Toplevel*> get_windows_with_control(std::vector<Toplevel*>& windows)
  */
 Toplevel* tabbox::next_client_static(Toplevel* c) const
 {
-    auto const& list = get_windows_with_control(workspace()->m_windows);
+    auto const& list = get_windows_with_control(space.m_windows);
     if (!c || list.empty()) {
         return nullptr;
     }
@@ -1528,7 +1510,7 @@ Toplevel* tabbox::next_client_static(Toplevel* c) const
  */
 Toplevel* tabbox::previous_client_static(Toplevel* c) const
 {
-    auto const& list = get_windows_with_control(workspace()->m_windows);
+    auto const& list = get_windows_with_control(space.m_windows);
     if (!c || list.empty()) {
         return nullptr;
     }
@@ -1560,9 +1542,9 @@ bool tabbox::establish_tabbox_grab()
     // the active client, which may not have it.
     Q_ASSERT(!m_forced_global_mouse_grab);
     m_forced_global_mouse_grab = true;
-    if (workspace()->activeClient() != nullptr)
-        workspace()->activeClient()->control->update_mouse_grab();
-    m_x11_event_filter.reset(new tabbox_x11_filter);
+    if (space.activeClient() != nullptr)
+        space.activeClient()->control->update_mouse_grab();
+    m_x11_event_filter.reset(new tabbox_x11_filter(*this));
     return true;
 }
 
@@ -1576,8 +1558,8 @@ void tabbox::remove_tabbox_grab()
     base::x11::ungrab_keyboard();
     Q_ASSERT(m_forced_global_mouse_grab);
     m_forced_global_mouse_grab = false;
-    if (workspace()->activeClient() != nullptr)
-        workspace()->activeClient()->control->update_mouse_grab();
+    if (space.activeClient() != nullptr)
+        space.activeClient()->control->update_mouse_grab();
     m_x11_event_filter.reset();
 }
 } // namespace win

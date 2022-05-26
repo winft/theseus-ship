@@ -9,6 +9,7 @@
 #include "cursor_image.h"
 
 #include "cursor_theme.h"
+#include "platform.h"
 
 #include "base/platform.h"
 #include "base/wayland/server.h"
@@ -38,7 +39,8 @@
 namespace KWin::input::wayland
 {
 
-cursor_image::cursor_image()
+cursor_image::cursor_image(wayland::platform& platform)
+    : platform{platform}
 {
     QObject::connect(waylandServer()->seat(),
                      &Wrapland::Server::Seat::focusedPointerChanged,
@@ -62,16 +64,16 @@ cursor_image::cursor_image()
 
     m_surfaceRenderedTimer.start();
 
-    assert(!workspace());
-    QObject::connect(
-        kwinApp(), &Application::startup_finished, this, &cursor_image::setup_workspace);
+    // Loading the theme is delayed to end of startup because we depend on the client connection.
+    // TODO(romangg): Instead load the theme without client connection and setup directly.
+    QObject::connect(kwinApp(), &Application::startup_finished, this, &cursor_image::setup_theme);
 }
 
 cursor_image::~cursor_image() = default;
 
-void cursor_image::setup_workspace()
+void cursor_image::setup_theme()
 {
-    QObject::connect(static_cast<win::wayland::space*>(workspace()),
+    QObject::connect(static_cast<win::wayland::space*>(&platform.redirect->space),
                      &win::wayland::space::wayland_window_added,
                      this,
                      &cursor_image::setup_move_resize);
@@ -89,10 +91,13 @@ void cursor_image::setup_workspace()
         });
     }
 
-    auto const clients = workspace()->m_windows;
+    auto const clients = platform.redirect->space.m_windows;
     std::for_each(clients.begin(), clients.end(), [this](auto win) { setup_move_resize(win); });
 
-    QObject::connect(workspace(), &win::space::clientAdded, this, &cursor_image::setup_move_resize);
+    QObject::connect(&platform.redirect->space,
+                     &win::space::clientAdded,
+                     this,
+                     &cursor_image::setup_move_resize);
 
     Q_EMIT changed();
 }
@@ -176,7 +181,7 @@ void cursor_image::update()
 void cursor_image::updateDecoration()
 {
     QObject::disconnect(m_decorationConnection);
-    auto deco = kwinApp()->input->redirect->pointer()->decoration();
+    auto deco = kwinApp()->input->redirect->pointer()->focus.deco;
     auto c = deco ? deco->client() : nullptr;
     if (c) {
         m_decorationConnection = QObject::connect(
@@ -192,7 +197,7 @@ void cursor_image::updateDecorationCursor()
     m_decorationCursor.image = QImage();
     m_decorationCursor.hotSpot = QPoint();
 
-    auto deco = kwinApp()->input->redirect->pointer()->decoration();
+    auto deco = kwinApp()->input->redirect->pointer()->focus.deco;
     if (auto c = deco ? deco->client() : nullptr) {
         loadThemeCursor(c->control->move_resize().cursor, &m_decorationCursor);
         if (m_currentSource == CursorSource::Decoration) {
@@ -206,7 +211,7 @@ void cursor_image::updateMoveResize()
 {
     m_moveResizeCursor.image = QImage();
     m_moveResizeCursor.hotSpot = QPoint();
-    if (auto window = workspace()->moveResizeClient()) {
+    if (auto window = platform.redirect->space.moveResizeClient()) {
         loadThemeCursor(window->control->move_resize().cursor, &m_moveResizeCursor);
         if (m_currentSource == CursorSource::MoveResize) {
             Q_EMIT changed();
@@ -480,15 +485,15 @@ void cursor_image::reevaluteSource()
         setSource(CursorSource::EffectsOverride);
         return;
     }
-    if (workspace() && workspace()->moveResizeClient()) {
+    if (platform.redirect->space.moveResizeClient()) {
         setSource(CursorSource::MoveResize);
         return;
     }
-    if (kwinApp()->input->redirect->pointer()->decoration()) {
+    if (kwinApp()->input->redirect->pointer()->focus.deco) {
         setSource(CursorSource::Decoration);
         return;
     }
-    if (kwinApp()->input->redirect->pointer()->focus()
+    if (kwinApp()->input->redirect->pointer()->focus.window
         && !waylandServer()->seat()->pointers().get_focus().devices.empty()) {
         setSource(CursorSource::PointerSurface);
         return;

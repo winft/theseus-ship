@@ -11,10 +11,10 @@
 #include "shadow.h"
 #include "window.h"
 
-#include "decorations/decoratedclient.h"
 #include "render/effects.h"
 #include "render/shadow.h"
 #include "toplevel.h"
+#include "win/deco/client_impl.h"
 #include "win/geo.h"
 #include "win/scene.h"
 #include "win/x11/window.h"
@@ -24,12 +24,12 @@
 namespace KWin::render::xrender
 {
 
-deco_renderer::deco_renderer(Decoration::DecoratedClientImpl* client)
-    : Renderer(client)
+deco_renderer::deco_renderer(win::deco::client_impl* client)
+    : renderer(client)
     , m_gc(XCB_NONE)
 {
     connect(this,
-            &Renderer::renderScheduled,
+            &renderer::renderScheduled,
             client->client(),
             static_cast<void (Toplevel::*)(QRegion const&)>(&Toplevel::addRepaint));
     for (int i = 0; i < int(DecorationPart::Count); ++i) {
@@ -155,10 +155,10 @@ xcb_render_picture_t deco_renderer::picture(deco_renderer::DecorationPart part) 
     return *picture;
 }
 
-void deco_renderer::reparent(Toplevel* window)
+void deco_renderer::reparent()
 {
     render();
-    Renderer::reparent(window);
+    renderer::reparent();
 }
 
 }

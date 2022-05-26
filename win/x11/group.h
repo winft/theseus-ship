@@ -34,14 +34,20 @@ namespace render
 class effect_window_group_impl;
 }
 
-namespace win::x11
+namespace win
 {
+
+class space;
+
+namespace x11
+{
+
 class window;
 
 class KWIN_EXPORT group
 {
 public:
-    group(xcb_window_t leader);
+    group(xcb_window_t leader, win::space& space);
     ~group();
     xcb_window_t leader() const;
     const win::x11::window* leaderClient() const;
@@ -61,12 +67,13 @@ public:
 private:
     void startupIdChanged();
     std::vector<win::x11::window*> _members;
-    win::x11::window* leader_client;
+    win::x11::window* leader_client{nullptr};
     xcb_window_t leader_wid;
-    NETWinInfo* leader_info;
-    xcb_timestamp_t user_time;
-    int refcount;
+    NETWinInfo* leader_info{nullptr};
+    xcb_timestamp_t user_time{-1U};
+    int refcount{0};
     render::effect_window_group_impl* effect_group;
+    win::space& space;
 };
 
 inline xcb_window_t group::leader() const
@@ -99,5 +106,6 @@ inline render::effect_window_group_impl* group::effectGroup()
     return effect_group;
 }
 
+}
 }
 }

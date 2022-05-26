@@ -27,6 +27,11 @@
 namespace KWin::input
 {
 
+lock_screen_filter::lock_screen_filter(input::redirect& redirect)
+    : redirect{redirect}
+{
+}
+
 bool lock_screen_filter::button(button_event const& event)
 {
     if (!kwinApp()->is_screen_locked()) {
@@ -197,10 +202,10 @@ bool lock_screen_filter::swipe_end(swipe_end_event const& /*event*/)
 }
 
 template<typename Pool>
-bool is_surface_allowed(Pool const& device_pool)
+bool is_surface_allowed(input::redirect& redirect, Pool const& device_pool)
 {
     if (auto surface = device_pool.get_focus().surface) {
-        if (auto win = static_cast<win::wayland::space*>(workspace())->find_window(surface)) {
+        if (auto win = static_cast<win::wayland::space*>(&redirect.space)->find_window(surface)) {
             return win->isLockScreen() || win->isInputMethod();
         }
         return false;
@@ -210,17 +215,17 @@ bool is_surface_allowed(Pool const& device_pool)
 
 bool lock_screen_filter::pointerSurfaceAllowed() const
 {
-    return is_surface_allowed(waylandServer()->seat()->pointers());
+    return is_surface_allowed(redirect, waylandServer()->seat()->pointers());
 }
 
 bool lock_screen_filter::keyboardSurfaceAllowed() const
 {
-    return is_surface_allowed(waylandServer()->seat()->keyboards());
+    return is_surface_allowed(redirect, waylandServer()->seat()->keyboards());
 }
 
 bool lock_screen_filter::touchSurfaceAllowed() const
 {
-    return is_surface_allowed(waylandServer()->seat()->touches());
+    return is_surface_allowed(redirect, waylandServer()->seat()->touches());
 }
 
 }

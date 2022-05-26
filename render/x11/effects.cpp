@@ -101,14 +101,14 @@ void effects_handler_impl::doStartMouseInterception(Qt::CursorShape shape)
 
     // Raise electric border windows above the input windows
     // so they can still be triggered.
-    workspace()->edges->ensureOnTop();
+    m_compositor->space->edges->ensureOnTop();
 }
 
 void effects_handler_impl::doStopMouseInterception()
 {
     mouse_intercept.window.unmap();
     mouse_intercept.filter.reset();
-    win::x11::stack_screen_edges_under_override_redirect(workspace());
+    win::x11::stack_screen_edges_under_override_redirect(m_compositor->space);
 }
 
 void effects_handler_impl::defineCursor(Qt::CursorShape shape)
@@ -159,7 +159,7 @@ void effects_handler_impl::doCheckInputWindowStacking()
 
     // Raise electric border windows above the input windows
     // so they can still be triggered. TODO: Do both at once.
-    workspace()->edges->ensureOnTop();
+    m_compositor->space->edges->ensureOnTop();
 }
 
 void effects_handler_impl::handle_effect_destroy(Effect& effect)

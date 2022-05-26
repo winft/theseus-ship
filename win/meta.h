@@ -100,7 +100,7 @@ bool is_special_window(Win* win)
 template<typename Win>
 Win* find_client_with_same_caption(Win const* win)
 {
-    for (auto candidate : workspace()->m_windows) {
+    for (auto candidate : win->space.m_windows) {
         if (!candidate->control || candidate == win) {
             continue;
         }

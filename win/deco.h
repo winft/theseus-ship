@@ -27,7 +27,7 @@ void show_application_menu(Win* win, int actionId)
         decoration->showApplicationMenu(actionId);
     } else {
         // No info where application menu button is, show it in the top left corner by default.
-        workspace()->showApplicationMenu(QRect(), win, actionId);
+        win->space.showApplicationMenu(QRect(), win, actionId);
     }
 }
 

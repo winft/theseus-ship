@@ -26,7 +26,7 @@ namespace KWin::input
 
 bool decoration_event_filter::button(button_event const& event)
 {
-    auto decoration = kwinApp()->input->redirect->pointer()->decoration();
+    auto decoration = kwinApp()->input->redirect->pointer()->focus.deco;
     if (!decoration) {
         return false;
     }
@@ -61,7 +61,7 @@ bool decoration_event_filter::button(button_event const& event)
 
 bool decoration_event_filter::motion([[maybe_unused]] motion_event const& event)
 {
-    auto decoration = kwinApp()->input->redirect->pointer()->decoration();
+    auto decoration = kwinApp()->input->redirect->pointer()->focus.deco;
     if (!decoration) {
         return false;
     }
@@ -77,7 +77,7 @@ bool decoration_event_filter::motion([[maybe_unused]] motion_event const& event)
 
 bool decoration_event_filter::axis(axis_event const& event)
 {
-    auto decoration = kwinApp()->input->redirect->pointer()->decoration();
+    auto decoration = kwinApp()->input->redirect->pointer()->focus.deco;
     if (!decoration) {
         return false;
     }
@@ -103,7 +103,7 @@ bool decoration_event_filter::axis(axis_event const& event)
                                         qt_event.modifiers());
 
     adapted_qt_event.setAccepted(false);
-    QCoreApplication::sendEvent(decoration, &adapted_qt_event);
+    QCoreApplication::sendEvent(decoration->decoration(), &adapted_qt_event);
 
     if (adapted_qt_event.isAccepted()) {
         return true;
@@ -129,7 +129,7 @@ bool decoration_event_filter::touch_down(touch_down_event const& event)
         return true;
     }
     seat->setTimestamp(event.base.time_msec);
-    auto decoration = kwinApp()->input->redirect->touch()->decoration();
+    auto decoration = kwinApp()->input->redirect->touch()->focus.deco;
     if (!decoration) {
         return false;
     }
@@ -158,7 +158,7 @@ bool decoration_event_filter::touch_down(touch_down_event const& event)
 bool decoration_event_filter::touch_motion(touch_motion_event const& event)
 {
     Q_UNUSED(time)
-    auto decoration = kwinApp()->input->redirect->touch()->decoration();
+    auto decoration = kwinApp()->input->redirect->touch()->focus.deco;
     if (!decoration) {
         return false;
     }
@@ -182,7 +182,7 @@ bool decoration_event_filter::touch_motion(touch_motion_event const& event)
 bool decoration_event_filter::touch_up(touch_up_event const& event)
 {
     Q_UNUSED(time);
-    auto decoration = kwinApp()->input->redirect->touch()->decoration();
+    auto decoration = kwinApp()->input->redirect->touch()->focus.deco;
     if (!decoration) {
         return false;
     }

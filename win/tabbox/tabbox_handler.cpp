@@ -307,10 +307,10 @@ void tabbox_handler_private::show()
     if (m_qml_context.isNull()) {
         qmlRegisterType<win::tabbox_switcher_item>("org.kde.kwin", 2, 0, "Switcher");
         qmlRegisterType<win::tabbox_switcher_item>("org.kde.kwin", 3, 0, "TabBoxSwitcher");
-        m_qml_context.reset(new QQmlContext(workspace()->scripting->qmlEngine()));
+        m_qml_context.reset(new QQmlContext(q->space->scripting->qmlEngine()));
     }
     if (m_qml_component.isNull()) {
-        m_qml_component.reset(new QQmlComponent(workspace()->scripting->qmlEngine()));
+        m_qml_component.reset(new QQmlComponent(q->space->scripting->qmlEngine()));
     }
     const bool desktop_mode = (config.tabbox_mode() == tabbox_config::DesktopTabBox);
     auto find_main_item = [this](const QMap<QString, QObject*>& tabBoxes) -> QObject* {
@@ -361,8 +361,9 @@ void tabbox_handler_private::show()
  * TabBoxHandler
  ***********************************************/
 
-tabbox_handler::tabbox_handler(QObject* parent)
+tabbox_handler::tabbox_handler(win::space* space, QObject* parent)
     : QObject(parent)
+    , space{space}
 {
     KWin::win::tabbox_handle = this;
     d = new tabbox_handler_private(this);

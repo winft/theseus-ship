@@ -187,7 +187,7 @@ Toplevel* LockScreenTest::showWindow()
     auto c = Test::render_and_wait_for_shown(surface_holder, QSize(100, 50), Qt::blue);
 
     VERIFY(c);
-    COMPARE(workspace()->activeClient(), c);
+    COMPARE(Test::app()->workspace->activeClient(), c);
 
 #undef VERIFY
 #undef COMPARE
@@ -240,7 +240,7 @@ void LockScreenTest::testStackingOrder()
 {
     // This test verifies that the lockscreen greeter is placed above other windows.
 
-    QSignalSpy clientAddedSpy(static_cast<win::wayland::space*>(workspace()),
+    QSignalSpy clientAddedSpy(Test::app()->workspace.get(),
                               &win::wayland::space::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
 
@@ -452,7 +452,7 @@ void LockScreenTest::testKeyboard()
 
 void LockScreenTest::testScreenEdge()
 {
-    QSignalSpy screenEdgeSpy(workspace()->edges.get(), &win::screen_edger::approaching);
+    QSignalSpy screenEdgeSpy(Test::app()->workspace->edges.get(), &win::screen_edger::approaching);
     QVERIFY(screenEdgeSpy.isValid());
     QCOMPARE(screenEdgeSpy.count(), 0);
 
@@ -605,8 +605,8 @@ void LockScreenTest::testMoveWindow()
     QVERIFY(clientStepUserMovedResizedSpy.isValid());
     quint32 timestamp = 1;
 
-    workspace()->slotWindowMove();
-    QCOMPARE(workspace()->moveResizeClient(), c);
+    Test::app()->workspace->slotWindowMove();
+    QCOMPARE(Test::app()->workspace->moveResizeClient(), c);
     QVERIFY(win::is_move(c));
 
     Test::keyboard_key_pressed(KEY_RIGHT, timestamp++);
@@ -620,14 +620,14 @@ void LockScreenTest::testMoveWindow()
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
 
     // While locking our window should continue to be in move resize.
-    LOCK QCOMPARE(workspace()->moveResizeClient(), c);
+    LOCK QCOMPARE(Test::app()->workspace->moveResizeClient(), c);
     QVERIFY(win::is_move(c));
     Test::keyboard_key_pressed(KEY_RIGHT, timestamp++);
     Test::keyboard_key_released(KEY_RIGHT, timestamp++);
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
 
     UNLOCK
-    QCOMPARE(workspace()->moveResizeClient(), c);
+    QCOMPARE(Test::app()->workspace->moveResizeClient(), c);
     QVERIFY(win::is_move(c));
 
     Test::keyboard_key_pressed(KEY_RIGHT, timestamp++);
@@ -647,8 +647,7 @@ void LockScreenTest::testPointerShortcut()
     QSignalSpy actionSpy(action.get(), &QAction::triggered);
     QVERIFY(actionSpy.isValid());
 
-    kwinApp()->input->redirect->registerPointerShortcut(
-        Qt::MetaModifier, Qt::LeftButton, action.get());
+    kwinApp()->input->registerPointerShortcut(Qt::MetaModifier, Qt::LeftButton, action.get());
 
     // Try to trigger the shortcut.
     quint32 timestamp = 1;
@@ -703,7 +702,7 @@ void LockScreenTest::testAxisShortcut()
         axisDirection = sign > 0 ? PointerAxisLeft : PointerAxisRight;
     }
 
-    kwinApp()->input->redirect->registerAxisShortcut(Qt::MetaModifier, axisDirection, action.get());
+    kwinApp()->input->registerAxisShortcut(Qt::MetaModifier, axisDirection, action.get());
 
     // Try to trigger the shortcut.
     quint32 timestamp = 1;

@@ -73,8 +73,9 @@ void TestIdleInhibition::cleanup()
 {
     Test::destroy_wayland_connection();
 
-    win::virtual_desktop_manager::self()->setCount(1);
-    QCOMPARE(win::virtual_desktop_manager::self()->count(), 1u);
+    auto& vd_manager = Test::app()->workspace->virtual_desktop_manager;
+    vd_manager->setCount(1);
+    QCOMPARE(vd_manager->count(), 1u);
 }
 
 void TestIdleInhibition::testInhibit()
@@ -122,8 +123,9 @@ void TestIdleInhibition::testDontInhibitWhenNotOnCurrentDesktop()
     // This test verifies that the idle inhibitor object is not honored when
     // the associated surface is not on the current virtual desktop.
 
-    win::virtual_desktop_manager::self()->setCount(2);
-    QCOMPARE(win::virtual_desktop_manager::self()->count(), 2u);
+    auto& vd_manager = Test::app()->workspace->virtual_desktop_manager;
+    vd_manager->setCount(2);
+    QCOMPARE(vd_manager->count(), 2u);
 
     // Get reference to the idle interface.
     auto idle = Test::app()->workspace->kde_idle.get();
@@ -149,14 +151,14 @@ void TestIdleInhibition::testDontInhibitWhenNotOnCurrentDesktop()
 
     // The test client should be only on the first virtual desktop.
     QCOMPARE(c->desktops().count(), 1);
-    QCOMPARE(c->desktops().first(), win::virtual_desktop_manager::self()->desktops().first());
+    QCOMPARE(c->desktops().first(), vd_manager->desktops().first());
 
     // This should inhibit our server object.
     QVERIFY(idle->isInhibited());
     QCOMPARE(inhibitedSpy.count(), 1);
 
     // Switch to the second virtual desktop.
-    win::virtual_desktop_manager::self()->setCurrent(2);
+    vd_manager->setCurrent(2);
 
     // The surface is no longer visible, so the compositor don't have to honor the
     // idle inhibitor object.
@@ -164,7 +166,7 @@ void TestIdleInhibition::testDontInhibitWhenNotOnCurrentDesktop()
     QCOMPARE(inhibitedSpy.count(), 2);
 
     // Switch back to the first virtual desktop.
-    win::virtual_desktop_manager::self()->setCurrent(1);
+    vd_manager->setCurrent(1);
 
     // The test client became visible again, so the compositor has to honor the idle
     // inhibitor object back again.
@@ -292,8 +294,9 @@ void TestIdleInhibition::testDontInhibitWhenLeftCurrentDesktop()
     // This test verifies that the idle inhibitor object is not honored by KWin
     // when the associated surface leaves the current virtual desktop.
 
-    win::virtual_desktop_manager::self()->setCount(2);
-    QCOMPARE(win::virtual_desktop_manager::self()->count(), 2u);
+    auto& vd_manager = Test::app()->workspace->virtual_desktop_manager;
+    vd_manager->setCount(2);
+    QCOMPARE(vd_manager->count(), 2u);
 
     // Get reference to the idle interface.
     auto idle = Test::app()->workspace->kde_idle.get();
@@ -319,25 +322,25 @@ void TestIdleInhibition::testDontInhibitWhenLeftCurrentDesktop()
 
     // The test client should be only on the first virtual desktop.
     QCOMPARE(c->desktops().count(), 1);
-    QCOMPARE(c->desktops().first(), win::virtual_desktop_manager::self()->desktops().first());
+    QCOMPARE(c->desktops().first(), vd_manager->desktops().first());
 
     // This should inhibit our server object.
     QVERIFY(idle->isInhibited());
     QCOMPARE(inhibitedSpy.count(), 1);
 
     // Let the client enter the second virtual desktop.
-    win::enter_desktop(c, win::virtual_desktop_manager::self()->desktops().at(1));
+    win::enter_desktop(c, vd_manager->desktops().at(1));
     QCOMPARE(inhibitedSpy.count(), 1);
 
     // If the client leaves the first virtual desktop, then the associated idle
     // inhibitor object should not be honored.
-    win::leave_desktop(c, win::virtual_desktop_manager::self()->desktops().at(0));
+    win::leave_desktop(c, vd_manager->desktops().at(0));
     QVERIFY(!idle->isInhibited());
     QCOMPARE(inhibitedSpy.count(), 2);
 
     // If the client enters the first desktop, then the associated idle inhibitor
     // object should be honored back again.
-    win::enter_desktop(c, win::virtual_desktop_manager::self()->desktops().at(0));
+    win::enter_desktop(c, vd_manager->desktops().at(0));
     QVERIFY(idle->isInhibited());
     QCOMPARE(inhibitedSpy.count(), 3);
 

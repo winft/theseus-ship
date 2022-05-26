@@ -63,7 +63,7 @@ drag_event_reply wl_drag::move_filter(Toplevel* target, QPoint const& pos)
 
     // We have a new target.
 
-    workspace()->activateClient(target, false);
+    source.x11.space->activateClient(target, false);
     seat->drags().set_target(target->surface(), pos, target->input_transform());
 
     visit.reset(new x11_visit(target, source, proxy_window));
@@ -108,7 +108,7 @@ x11_visit::x11_visit(Toplevel* target,
     auto cookie = xcb_get_property(xcb_con,
                                    0,
                                    target->xcb_window(),
-                                   source.x11.atoms->xdnd_aware,
+                                   source.x11.space->atoms->xdnd_aware,
                                    XCB_GET_PROPERTY_TYPE_ANY,
                                    0,
                                    1);
@@ -150,7 +150,7 @@ x11_visit::x11_visit(Toplevel* target,
 
 bool x11_visit::handle_client_message(xcb_client_message_event_t* event)
 {
-    auto atoms = source.x11.atoms;
+    auto& atoms = source.x11.space->atoms;
     if (event->type == atoms->xdnd_status) {
         return handle_status(event);
     } else if (event->type == atoms->xdnd_finished) {
@@ -177,7 +177,7 @@ bool x11_visit::handle_status(xcb_client_message_event_t* event)
 
     if (!state.dropped) {
         // as long as the drop is not yet done determine requested action
-        actions.preferred = atom_to_client_action(actionAtom, *source.x11.atoms);
+        actions.preferred = atom_to_client_action(actionAtom, *source.x11.space->atoms);
         update_actions();
     }
 
@@ -234,10 +234,10 @@ void x11_visit::send_position(QPointF const& globalPos)
     data.data32[0] = drag_window;
     data.data32[2] = (x << 16) | y;
     data.data32[3] = XCB_CURRENT_TIME;
-    data.data32[4] = client_action_to_atom(actions.proposed, *source.x11.atoms);
+    data.data32[4] = client_action_to_atom(actions.proposed, *source.x11.space->atoms);
 
     send_client_message(
-        source.x11.connection, target->xcb_window(), source.x11.atoms->xdnd_position, &data);
+        source.x11.connection, target->xcb_window(), source.x11.space->atoms->xdnd_position, &data);
 }
 
 void x11_visit::leave()
@@ -302,7 +302,7 @@ void x11_visit::send_enter()
         if (totalCnt == 3) {
             break;
         }
-        auto const atom = mime_type_to_atom(mimeName.c_str(), *source.x11.atoms);
+        auto const atom = mime_type_to_atom(mimeName.c_str(), *source.x11.space->atoms);
 
         if (atom != XCB_ATOM_NONE) {
             data.data32[cnt + 2] = atom;
@@ -324,7 +324,7 @@ void x11_visit::send_enter()
 
         size_t cnt = 0;
         for (auto const& mimeName : mimeTypesNames) {
-            auto const atom = mime_type_to_atom(mimeName.c_str(), *source.x11.atoms);
+            auto const atom = mime_type_to_atom(mimeName.c_str(), *source.x11.space->atoms);
             if (atom != XCB_ATOM_NONE) {
                 targets[cnt] = atom;
                 cnt++;
@@ -334,7 +334,7 @@ void x11_visit::send_enter()
         xcb_change_property(source.x11.connection,
                             XCB_PROP_MODE_REPLACE,
                             drag_window,
-                            source.x11.atoms->xdnd_type_list,
+                            source.x11.space->atoms->xdnd_type_list,
                             XCB_ATOM_ATOM,
                             32,
                             cnt,
@@ -342,7 +342,7 @@ void x11_visit::send_enter()
     }
 
     send_client_message(
-        source.x11.connection, target->xcb_window(), source.x11.atoms->xdnd_enter, &data);
+        source.x11.connection, target->xcb_window(), source.x11.space->atoms->xdnd_enter, &data);
 }
 
 void x11_visit::send_drop(uint32_t time)
@@ -352,7 +352,7 @@ void x11_visit::send_drop(uint32_t time)
     data.data32[2] = time;
 
     send_client_message(
-        source.x11.connection, target->xcb_window(), source.x11.atoms->xdnd_drop, &data);
+        source.x11.connection, target->xcb_window(), source.x11.space->atoms->xdnd_drop, &data);
 
     if (version < 2) {
         do_finish();
@@ -365,7 +365,7 @@ void x11_visit::send_leave()
     data.data32[0] = drag_window;
 
     send_client_message(
-        source.x11.connection, target->xcb_window(), source.x11.atoms->xdnd_leave, &data);
+        source.x11.connection, target->xcb_window(), source.x11.space->atoms->xdnd_leave, &data);
 }
 
 void x11_visit::update_actions()

@@ -110,7 +110,7 @@ bool TestObject::callback(KWin::ElectricBorder border)
 
 void reset_edger()
 {
-    workspace()->edges = std::make_unique<win::screen_edger>(*Test::app()->workspace);
+    Test::app()->workspace->edges = std::make_unique<win::screen_edger>(*Test::app()->workspace);
 }
 
 void reset_edger(KSharedConfig::Ptr config)
@@ -122,7 +122,7 @@ void reset_edger(KSharedConfig::Ptr config)
 void TestScreenEdges::testInit()
 {
     reset_edger();
-    auto& screenEdges = workspace()->edges;
+    auto& screenEdges = Test::app()->workspace->edges;
     QCOMPARE(screenEdges->desktop_switching.always, false);
     QCOMPARE(screenEdges->desktop_switching.when_moving_client, false);
     QCOMPARE(screenEdges->time_threshold, 150);
@@ -222,7 +222,7 @@ void TestScreenEdges::testCreatingInitialEdges()
     config->sync();
 
     reset_edger(config);
-    auto& screenEdges = workspace()->edges;
+    auto& screenEdges = Test::app()->workspace->edges;
 
     // we don't have multiple desktops, so it's returning false
     QCOMPARE(screenEdges->desktop_switching.always, true);
@@ -241,7 +241,7 @@ void TestScreenEdges::testCreatingInitialEdges()
     // set some reasonable virtual desktops
     config->group("Desktops").writeEntry("Number", 4);
     config->sync();
-    auto vd = win::virtual_desktop_manager::self();
+    auto& vd = Test::app()->workspace->virtual_desktop_manager;
     vd->setConfig(config);
     vd->load();
     vd->updateLayout();
@@ -340,7 +340,7 @@ void TestScreenEdges::testCreatingInitialEdges()
     }
 
     // Let's start a window move. First create a window.
-    QSignalSpy clientAddedSpy(static_cast<win::wayland::space*>(workspace()),
+    QSignalSpy clientAddedSpy(Test::app()->workspace.get(),
                               &win::wayland::space::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
     auto surface = Test::create_surface();
@@ -350,10 +350,10 @@ void TestScreenEdges::testCreatingInitialEdges()
     Test::render(surface, QSize(100, 50), Qt::blue);
     Test::flush_wayland_connection();
     QVERIFY(clientAddedSpy.wait());
-    auto client = workspace()->activeClient();
+    auto client = Test::app()->workspace->activeClient();
     QVERIFY(client);
 
-    workspace()->setMoveResizeClient(client);
+    Test::app()->workspace->setMoveResizeClient(client);
     for (int i = 0; i < 8; ++i) {
         auto e = edges.at(i);
         QVERIFY(e->reserved_count > 0);
@@ -371,7 +371,7 @@ void TestScreenEdges::testCreatingInitialEdges()
         QCOMPARE(e->activatesForTouchGesture(), false);
         QCOMPARE(e->approach_geometry, expectedGeometries.at(i * 2 + 1));
     }
-    workspace()->setMoveResizeClient(nullptr);
+    Test::app()->workspace->setMoveResizeClient(nullptr);
 }
 
 void TestScreenEdges::testCallback()
@@ -385,7 +385,7 @@ void TestScreenEdges::testCallback()
     QCOMPARE(changedSpy.count(), 1);
 
     reset_edger();
-    auto& screenEdges = workspace()->edges;
+    auto& screenEdges = Test::app()->workspace->edges;
     TestObject callback;
     QSignalSpy spy(&callback, &TestObject::gotCallback);
     QVERIFY(spy.isValid());
@@ -532,7 +532,7 @@ void TestScreenEdges::testCallback()
 void TestScreenEdges::testCallbackWithCheck()
 {
     reset_edger();
-    auto& screenEdges = workspace()->edges;
+    auto& screenEdges = Test::app()->workspace->edges;
 
     TestObject callback;
     QSignalSpy spy(&callback, &TestObject::gotCallback);
@@ -641,7 +641,7 @@ void TestScreenEdges::testPushBack()
     Test::app()->set_outputs(geometries);
 
     reset_edger(config);
-    auto& screenEdges = workspace()->edges;
+    auto& screenEdges = Test::app()->workspace->edges;
     TestObject callback;
     QSignalSpy spy(&callback, &TestObject::gotCallback);
     QVERIFY(spy.isValid());
@@ -671,7 +671,7 @@ void TestScreenEdges::testFullScreenBlocking()
     config->group("Windows").writeEntry("ElectricBorderPushbackPixels", 1);
     config->sync();
 
-    QSignalSpy clientAddedSpy(static_cast<win::wayland::space*>(workspace()),
+    QSignalSpy clientAddedSpy(Test::app()->workspace.get(),
                               &win::wayland::space::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
     auto surface = Test::create_surface();
@@ -681,11 +681,11 @@ void TestScreenEdges::testFullScreenBlocking()
     Test::render(surface, QSize(100, 50), Qt::blue);
     Test::flush_wayland_connection();
     QVERIFY(clientAddedSpy.wait());
-    auto client = workspace()->activeClient();
+    auto client = Test::app()->workspace->activeClient();
     QVERIFY(client);
 
     reset_edger(config);
-    auto& screenEdges = workspace()->edges;
+    auto& screenEdges = Test::app()->workspace->edges;
     TestObject callback;
     QSignalSpy spy(&callback, &TestObject::gotCallback);
     QVERIFY(spy.isValid());
@@ -708,7 +708,7 @@ void TestScreenEdges::testFullScreenBlocking()
     client->setFrameGeometry(QRect({}, Test::app()->base.topology.size));
     win::set_active(client, true);
     client->setFullScreen(true);
-    workspace()->setActiveClient(client);
+    Test::app()->workspace->setActiveClient(client);
     Q_EMIT screenEdges->checkBlocking();
 
     // the signal doesn't trigger for corners, let's go over all windows just to be sure that it
@@ -772,7 +772,7 @@ void TestScreenEdges::testFullScreenBlocking()
 
 void TestScreenEdges::testClientEdge()
 {
-    QSignalSpy clientAddedSpy(static_cast<win::wayland::space*>(workspace()),
+    QSignalSpy clientAddedSpy(Test::app()->workspace.get(),
                               &win::wayland::space::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
     auto surface = Test::create_surface();
@@ -782,13 +782,13 @@ void TestScreenEdges::testClientEdge()
     Test::render(surface, QSize(100, 50), Qt::blue);
     Test::flush_wayland_connection();
     QVERIFY(clientAddedSpy.wait());
-    auto client = workspace()->activeClient();
+    auto client = Test::app()->workspace->activeClient();
     QVERIFY(client);
 
     client->setFrameGeometry(QRect(10, 50, 10, 50));
 
     reset_edger();
-    auto& screenEdges = workspace()->edges;
+    auto& screenEdges = Test::app()->workspace->edges;
 
     screenEdges->reserve(client, KWin::ElectricBottom);
 
@@ -850,7 +850,7 @@ void TestScreenEdges::testClientEdge()
     QCOMPARE(client->isHiddenInternal(), true);
 
     // now let's emulate the removal of a Client through Workspace
-    Q_EMIT workspace()->clientRemoved(client);
+    Q_EMIT Test::app()->workspace->clientRemoved(client);
     for (auto e : screenEdges->findChildren<win::screen_edge*>()) {
         QVERIFY(!e->client());
     }
@@ -899,7 +899,7 @@ void TestScreenEdges::testTouchEdge()
     config->sync();
 
     reset_edger(config);
-    auto& screenEdges = workspace()->edges;
+    auto& screenEdges = Test::app()->workspace->edges;
 
     // we don't have multiple desktops, so it's returning false
     QEXPECT_FAIL("", "Possible on Wayland. Needs investigation.", Abort);
@@ -993,7 +993,7 @@ void TestScreenEdges::testTouchCallback()
     config->sync();
 
     reset_edger(config);
-    auto& screenEdges = workspace()->edges;
+    auto& screenEdges = Test::app()->workspace->edges;
 
     // none of our actions should be reserved
     auto edges

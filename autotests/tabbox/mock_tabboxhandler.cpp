@@ -24,7 +24,7 @@ namespace KWin
 {
 
 MockTabBoxHandler::MockTabBoxHandler(QObject* parent)
-    : tabbox_handler(parent)
+    : tabbox_handler(nullptr, parent)
 {
 }
 

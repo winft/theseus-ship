@@ -93,7 +93,7 @@ void PlasmaSurfaceTest::init()
 void PlasmaSurfaceTest::cleanup()
 {
     Test::destroy_wayland_connection();
-    QTRY_VERIFY(workspace()->stacking_order->sorted().empty());
+    QTRY_VERIFY(Test::app()->workspace->stacking_order->sorted().empty());
 }
 
 void PlasmaSurfaceTest::testRoleOnAllDesktops_data()
@@ -123,7 +123,7 @@ void PlasmaSurfaceTest::testRoleOnAllDesktops()
     // now render to map the window
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(workspace()->activeClient(), c);
+    QCOMPARE(Test::app()->workspace->activeClient(), c);
 
     // currently the role is not yet set, so the window should not be on all desktops
     QCOMPARE(c->isOnAllDesktops(), false);
@@ -311,7 +311,7 @@ void PlasmaSurfaceTest::testPanelTypeHasStrut()
     QVERIFY(win::is_dock(c));
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
     QTEST(c->hasStrut(), "expectedStrut");
-    QTEST(workspace()->clientArea(MaximizeArea, 0, 0), "expectedMaxArea");
+    QTEST(Test::app()->workspace->clientArea(MaximizeArea, 0, 0), "expectedMaxArea");
     QTEST(c->layer(), "expectedLayer");
 }
 
@@ -370,7 +370,7 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
     QVERIFY(win::is_dock(panel));
     QCOMPARE(panel->frameGeometry(), panelGeometry);
     QCOMPARE(panel->hasStrut(), false);
-    QCOMPARE(workspace()->clientArea(MaximizeArea, 0, 0), QRect(0, 0, 1280, 1024));
+    QCOMPARE(Test::app()->workspace->clientArea(MaximizeArea, 0, 0), QRect(0, 0, 1280, 1024));
     QCOMPARE(panel->layer(), KWin::win::layer::normal);
 
     // create a Window
@@ -389,18 +389,19 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
     win::move(c, windowGeometry.topLeft());
     QCOMPARE(c->frameGeometry(), windowGeometry);
 
-    auto stackingOrder = workspace()->stacking_order->sorted();
+    auto stackingOrder = Test::app()->workspace->stacking_order->sorted();
     QCOMPARE(stackingOrder.size(), 2);
     QCOMPARE(stackingOrder.front(), panel);
     QCOMPARE(stackingOrder.back(), c);
 
-    QSignalSpy stackingOrderChangedSpy(workspace()->stacking_order, &win::stacking_order::changed);
+    QSignalSpy stackingOrderChangedSpy(Test::app()->workspace->stacking_order.get(),
+                                       &win::stacking_order::changed);
     QVERIFY(stackingOrderChangedSpy.isValid());
     // trigger screenedge
     QFETCH(QPoint, triggerPoint);
     input::get_cursor()->set_pos(triggerPoint);
     QCOMPARE(stackingOrderChangedSpy.count(), 1);
-    stackingOrder = workspace()->stacking_order->sorted();
+    stackingOrder = Test::app()->workspace->stacking_order->sorted();
     QCOMPARE(stackingOrder.size(), 2);
     QCOMPARE(stackingOrder.front(), c);
     QCOMPARE(stackingOrder.back(), panel);

@@ -166,7 +166,7 @@ QSize constrain_and_adjust_size(Win* win, QSize const& size)
     auto width = size.width();
     auto height = size.height();
 
-    auto const area = workspace()->clientArea(WorkArea, win);
+    auto const area = win->space.clientArea(WorkArea, win);
 
     width = std::min(width, area.width());
     height = std::min(height, area.height());
@@ -190,18 +190,18 @@ void grow_horizontal(Win* win)
     }
 
     auto frame_geo = win->frameGeometry();
-    frame_geo.setRight(workspace()->packPositionRight(win, frame_geo.right(), true));
+    frame_geo.setRight(win->space.packPositionRight(win, frame_geo.right(), true));
     auto const adjsize = adjusted_frame_size(win, frame_geo.size(), size_mode::fixed_width);
 
     if (win->frameGeometry().size() == adjsize && frame_geo.size() != adjsize
         && win->resizeIncrements().width() > 1) {
         // Grow by increment.
-        auto const grown_right = workspace()->packPositionRight(
+        auto const grown_right = win->space.packPositionRight(
             win, frame_geo.right() + win->resizeIncrements().width() - 1, true);
 
         // Check that it hasn't grown outside of the area, due to size increments.
         // TODO this may be wrong?
-        auto const area = workspace()->clientArea(
+        auto const area = win->space.clientArea(
             MovementArea,
             QPoint((win->pos().x() + grown_right) / 2, win->frameGeometry().center().y()),
             win->desktop());
@@ -214,7 +214,7 @@ void grow_horizontal(Win* win)
     frame_geo.setSize(adjusted_frame_size(win, frame_geo.size(), size_mode::fixed_height));
 
     // May cause leave event.
-    workspace()->updateFocusMousePosition(input::get_cursor()->pos());
+    win->space.updateFocusMousePosition(input::get_cursor()->pos());
     win->setFrameGeometry(frame_geo);
 }
 
@@ -226,7 +226,7 @@ void shrink_horizontal(Win* win)
     }
 
     auto geom = win->frameGeometry();
-    geom.setRight(workspace()->packPositionLeft(win, geom.right(), false));
+    geom.setRight(win->space.packPositionLeft(win, geom.right(), false));
 
     if (geom.width() <= 1) {
         return;
@@ -237,7 +237,7 @@ void shrink_horizontal(Win* win)
     // TODO(romangg): Magic number 20. Why?
     if (geom.width() > 20) {
         // May cause leave event.
-        workspace()->updateFocusMousePosition(input::get_cursor()->pos());
+        win->space.updateFocusMousePosition(input::get_cursor()->pos());
         win->setFrameGeometry(geom);
     }
 }
@@ -250,17 +250,17 @@ void grow_vertical(Win* win)
     }
 
     auto frame_geo = win->frameGeometry();
-    frame_geo.setBottom(workspace()->packPositionDown(win, frame_geo.bottom(), true));
+    frame_geo.setBottom(win->space.packPositionDown(win, frame_geo.bottom(), true));
     auto adjsize = adjusted_frame_size(win, frame_geo.size(), size_mode::fixed_height);
 
     if (win->frameGeometry().size() == adjsize && frame_geo.size() != adjsize
         && win->resizeIncrements().height() > 1) {
         // Grow by increment.
-        auto const newbottom = workspace()->packPositionDown(
+        auto const newbottom = win->space.packPositionDown(
             win, frame_geo.bottom() + win->resizeIncrements().height() - 1, true);
 
         // check that it hasn't grown outside of the area, due to size increments
-        auto const area = workspace()->clientArea(
+        auto const area = win->space.clientArea(
             MovementArea,
             QPoint(win->frameGeometry().center().x(), (win->pos().y() + newbottom) / 2),
             win->desktop());
@@ -272,7 +272,7 @@ void grow_vertical(Win* win)
     frame_geo.setSize(adjusted_frame_size(win, frame_geo.size(), size_mode::fixed_height));
 
     // May cause leave event.
-    workspace()->updateFocusMousePosition(input::get_cursor()->pos());
+    win->space.updateFocusMousePosition(input::get_cursor()->pos());
     win->setFrameGeometry(frame_geo);
 }
 
@@ -284,7 +284,7 @@ void shrink_vertical(Win* win)
     }
 
     auto frame_geo = win->frameGeometry();
-    frame_geo.setBottom(workspace()->packPositionUp(win, frame_geo.bottom(), false));
+    frame_geo.setBottom(win->space.packPositionUp(win, frame_geo.bottom(), false));
     if (frame_geo.height() <= 1) {
         return;
     }
@@ -294,7 +294,7 @@ void shrink_vertical(Win* win)
     // TODO(romangg): Magic number 20. Why?
     if (frame_geo.height() > 20) {
         // May cause leave event.
-        workspace()->updateFocusMousePosition(input::get_cursor()->pos());
+        win->space.updateFocusMousePosition(input::get_cursor()->pos());
         win->setFrameGeometry(frame_geo);
     }
 }
@@ -338,11 +338,11 @@ QRect electric_border_maximize_geometry(Win const* win, QPoint pos, int desktop)
         if (win->maximizeMode() == maximize_mode::full) {
             return win->restore_geometries.maximize;
         } else {
-            return workspace()->clientArea(MaximizeArea, pos, desktop);
+            return win->space.clientArea(MaximizeArea, pos, desktop);
         }
     }
 
-    auto ret = workspace()->clientArea(MaximizeArea, pos, desktop);
+    auto ret = win->space.clientArea(MaximizeArea, pos, desktop);
 
     if (flags(win->control->electric() & win::quicktiles::left)) {
         ret.setRight(ret.left() + ret.width() / 2 - 1);
@@ -365,11 +365,11 @@ void set_electric_maximizing(Win* win, bool maximizing)
     win->control->set_electric_maximizing(maximizing);
 
     if (maximizing) {
-        workspace()->outline->show(
+        win->space.outline->show(
             electric_border_maximize_geometry(win, input::get_cursor()->pos(), win->desktop()),
             win->control->move_resize().geometry);
     } else {
-        workspace()->outline->hide();
+        win->space.outline->hide();
     }
 
     elevate(win, maximizing);

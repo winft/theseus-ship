@@ -54,8 +54,8 @@ inline void restack_subsurfaces(Toplevel* window)
 
     // Optimize and do that only for the first window up the chain not being annexed.
     if (!window->transient()->annexed) {
-        workspace()->x_stacking_tree->mark_as_dirty();
-        workspace()->stacking_order->update(false);
+        window->space.x_stacking_tree->mark_as_dirty();
+        window->space.stacking_order->update(false);
     }
 }
 
@@ -133,7 +133,7 @@ void set_subsurface_parent(Win* win, Lead* lead)
 template<typename Window, typename Space>
 void handle_new_subsurface(Space* space, Wrapland::Server::Subsurface* subsurface)
 {
-    auto window = new Window(subsurface->surface());
+    auto window = new Window(subsurface->surface(), *space);
 
     space->m_windows.push_back(window);
     QObject::connect(subsurface,

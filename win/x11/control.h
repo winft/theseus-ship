@@ -79,7 +79,7 @@ public:
         xcb_ungrab_button(
             connection(), XCB_BUTTON_INDEX_ANY, m_window->xcb_windows.wrapper, XCB_MOD_MASK_ANY);
 
-        if (tabbox::tabbox::self()->forced_global_mouse_grab()) {
+        if (m_window->space.tabbox->forced_global_mouse_grab()) {
             // see TabBox::establishTabBoxGrab()
             m_window->xcb_windows.wrapper.grab_button(XCB_GRAB_MODE_SYNC, XCB_GRAB_MODE_ASYNC);
             return;
@@ -113,7 +113,7 @@ public:
         // client will receive funky EnterNotify and LeaveNotify events, but there is nothing that
         // we can do about it, unfortunately.
 
-        if (!workspace()->globalShortcutsDisabled()) {
+        if (!m_window->space.globalShortcutsDisabled()) {
             if (kwinApp()->options->commandAll1() != base::options::MouseNothing) {
                 establish_command_all_grab(m_window, XCB_BUTTON_INDEX_1);
             }
@@ -153,7 +153,7 @@ public:
         }
         if (rules().checkStrictGeometry(true)) {
             // check geometry constraints (rule to obey is set)
-            const QRect fsarea = workspace()->clientArea(FullScreenArea, m_window);
+            const QRect fsarea = m_window->space.clientArea(FullScreenArea, m_window);
             if (size_for_client_size(m_window, fsarea.size(), win::size_mode::any, true)
                 != fsarea.size()) {
                 // the app wouldn't fit exactly fullscreen geometry due to its strict geometry
@@ -289,7 +289,7 @@ bool position_via_hint(Win* win, QRect const& geo, bool ignore_default, QRect& p
     // Window provides its own placement via geometry hint.
 
     // Disobey xinerama placement option for now (#70943)
-    place_area = workspace()->clientArea(PlacementArea, geo.center(), win->desktop());
+    place_area = win->space.clientArea(PlacementArea, geo.center(), win->desktop());
 
     return true;
 }
@@ -307,7 +307,7 @@ bool move_with_force_rule(Win* win, QRect& frame_geo, bool is_inital_placement, 
     frame_geo = pending_frame_geometry(win);
 
     // Don't keep inside workarea if the window has specially configured position
-    area = workspace()->clientArea(FullArea, frame_geo.center(), win->desktop());
+    area = win->space.clientArea(FullArea, frame_geo.center(), win->desktop());
     return true;
 }
 
@@ -372,8 +372,8 @@ void place_max_fs(Win* win,
     }
 
     auto const screen_area
-        = workspace()->clientArea(ScreenArea, area.center(), win->desktop()).size();
-    auto const full_area = workspace()->clientArea(FullArea, frame_geo.center(), win->desktop());
+        = win->space.clientArea(ScreenArea, area.center(), win->desktop()).size();
+    auto const full_area = win->space.clientArea(FullArea, frame_geo.center(), win->desktop());
     auto const client_size = frame_to_client_size(win, win->size());
 
     auto pseudo_max{maximize_mode::restore};
@@ -458,7 +458,7 @@ QRect place_mapped(Win* win, QRect& frame_geo)
 {
     auto must_place{false};
 
-    auto area = workspace()->clientArea(FullArea, frame_geo.center(), win->desktop());
+    auto area = win->space.clientArea(FullArea, frame_geo.center(), win->desktop());
     check_offscreen_position(frame_geo, area);
 
     if (must_correct_position(win, frame_geo, area)) {
@@ -486,7 +486,7 @@ QRect place_mapped(Win* win, QRect& frame_geo)
     frame_geo = pending_frame_geometry(win);
 
     // The client may have been moved to another screen, update placement area.
-    area = workspace()->clientArea(PlacementArea, win);
+    area = win->space.clientArea(PlacementArea, win);
 
     place_max_fs(win, frame_geo, area, false, true);
     return area;
@@ -497,7 +497,7 @@ QRect place_session(Win* win, QRect& frame_geo)
 {
     auto must_place{false};
 
-    auto area = workspace()->clientArea(FullArea, frame_geo.center(), win->desktop());
+    auto area = win->space.clientArea(FullArea, frame_geo.center(), win->desktop());
     check_offscreen_position(frame_geo, area);
 
     if (must_correct_position(win, frame_geo, area)) {
@@ -526,7 +526,7 @@ QRect place_session(Win* win, QRect& frame_geo)
     frame_geo = pending_frame_geometry(win);
 
     // The client may have been moved to another screen, update placement area.
-    area = workspace()->clientArea(PlacementArea, win);
+    area = win->space.clientArea(PlacementArea, win);
     frame_geo = keep_in_placement_area(win, area, true);
     return area;
 }
@@ -559,10 +559,9 @@ bool ignore_position_default(Win* win)
 template<typename Win>
 QRect place_unmapped(Win* win, QRect& frame_geo, KStartupInfoData const& asn_data)
 {
-    auto space = workspace();
     auto const& base = kwinApp()->get_base();
     auto output = asn_data.xinerama() == -1
-        ? get_current_output(*space)
+        ? get_current_output(win->space)
         : base::get_output(base.get_outputs(), asn_data.xinerama());
 
     QPoint center;
@@ -571,7 +570,7 @@ QRect place_unmapped(Win* win, QRect& frame_geo, KStartupInfoData const& asn_dat
         center = output->geometry().center();
     }
 
-    auto area = space->clientArea(PlacementArea, center, win->desktop());
+    auto area = win->space.clientArea(PlacementArea, center, win->desktop());
 
     // Desktop windows' positions are not placed by us.
     auto must_place = !is_desktop(win);
@@ -597,7 +596,7 @@ QRect place_unmapped(Win* win, QRect& frame_geo, KStartupInfoData const& asn_dat
         frame_geo = pending_frame_geometry(win);
 
         // The client may have been moved to another screen, update placement area.
-        area = space->clientArea(PlacementArea, win);
+        area = win->space.clientArea(PlacementArea, win);
     }
 
     place_max_fs(win, frame_geo, area, false, false);
@@ -858,7 +857,7 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
             if (on_all) {
                 desk = NET::OnAllDesktops;
             } else if (on_current) {
-                desk = virtual_desktop_manager::self()->current();
+                desk = space.virtual_desktop_manager->current();
             } else if (maincl != nullptr) {
                 desk = maincl->desktop();
             }
@@ -877,13 +876,13 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
     if (desk == 0) {
         // Assume window wants to be visible on the current desktop
         desk = is_desktop(win) ? static_cast<int>(NET::OnAllDesktops)
-                               : virtual_desktop_manager::self()->current();
+                               : space.virtual_desktop_manager->current();
     }
     desk = win->control->rules().checkDesktop(desk, !isMapped);
 
     if (desk != NET::OnAllDesktops) {
         // Do range check
-        desk = qBound(1, desk, static_cast<int>(virtual_desktop_manager::self()->count()));
+        desk = qBound(1, desk, static_cast<int>(space.virtual_desktop_manager->count()));
     }
 
     set_desktop(win, desk);
@@ -934,7 +933,7 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
 
     // If a dialog is shown for minimized window, minimize it too
     if (!init_minimize && win->transient()->lead()
-        && space.sessionManager()->state() != SessionState::Saving) {
+        && space.session_manager->state() != SessionState::Saving) {
         bool visible_parent = false;
 
         for (auto const& lead : win->transient()->leads()) {
@@ -1044,7 +1043,7 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
         restore_session_stacking_order(&space, win);
     }
 
-    if (!compositing()) {
+    if (!win->space.compositing()) {
         // set to true in case compositing is turned on later. bug #160393
         win->ready_for_painting = true;
     }
@@ -1059,17 +1058,17 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
             allow = space.allowClientActivation(win, win->userTime(), false);
         }
 
-        auto const isSessionSaving = space.sessionManager()->state() == SessionState::Saving;
+        auto const isSessionSaving = space.session_manager->state() == SessionState::Saving;
 
         // If session saving, force showing new windows (i.e. "save file?" dialogs etc.)
         // also force if activation is allowed
         if (!win->isOnCurrentDesktop() && !isMapped && !session && (allow || isSessionSaving)) {
-            virtual_desktop_manager::self()->setCurrent(win->desktop());
+            space.virtual_desktop_manager->setCurrent(win->desktop());
         }
 
         if (win->isOnCurrentDesktop() && !isMapped && !allow
             && (!session || session->stackingOrder < 0)) {
-            restack_client_under_active(workspace(), win);
+            restack_client_under_active(&win->space, win);
         }
 
         update_visibility(win);
@@ -1114,7 +1113,7 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
     win->control->discard_temporary_rules();
 
     // Remove ApplyNow rules
-    RuleBook::self()->discardUsed(win, false);
+    space.rule_book->discardUsed(win, false);
 
     // Was blocked while !control.
     win->updateWindowRules(Rules::All);
@@ -1250,15 +1249,15 @@ void restack_window(Win* win,
 {
     Win* other = nullptr;
     if (detail == XCB_STACK_MODE_OPPOSITE) {
-        other = find_controlled_window<win::x11::window>(
-            *workspace(), predicate_match::window, above);
+        other
+            = find_controlled_window<win::x11::window>(win->space, predicate_match::window, above);
         if (!other) {
-            raise_or_lower_client(workspace(), win);
+            raise_or_lower_client(&win->space, win);
             return;
         }
 
-        auto it = workspace()->stacking_order->sorted().cbegin();
-        auto end = workspace()->stacking_order->sorted().cend();
+        auto it = win->space.stacking_order->sorted().cbegin();
+        auto end = win->space.stacking_order->sorted().cend();
 
         while (it != end) {
             if (*it == win) {
@@ -1271,28 +1270,28 @@ void restack_window(Win* win,
             ++it;
         }
     } else if (detail == XCB_STACK_MODE_TOP_IF) {
-        other = find_controlled_window<win::x11::window>(
-            *workspace(), predicate_match::window, above);
+        other
+            = find_controlled_window<win::x11::window>(win->space, predicate_match::window, above);
         if (other && other->frameGeometry().intersects(win->frameGeometry())) {
-            raise_client_request(workspace(), win, src, timestamp);
+            raise_client_request(&win->space, win, src, timestamp);
         }
         return;
     } else if (detail == XCB_STACK_MODE_BOTTOM_IF) {
-        other = find_controlled_window<win::x11::window>(
-            *workspace(), predicate_match::window, above);
+        other
+            = find_controlled_window<win::x11::window>(win->space, predicate_match::window, above);
         if (other && other->frameGeometry().intersects(win->frameGeometry())) {
-            lower_client_request(workspace(), win, src, timestamp);
+            lower_client_request(&win->space, win, src, timestamp);
         }
         return;
     }
 
     if (!other)
-        other = find_controlled_window<win::x11::window>(
-            *workspace(), predicate_match::window, above);
+        other
+            = find_controlled_window<win::x11::window>(win->space, predicate_match::window, above);
 
     if (other && detail == XCB_STACK_MODE_ABOVE) {
-        auto it = workspace()->stacking_order->sorted().cend();
-        auto begin = workspace()->stacking_order->sorted().cbegin();
+        auto it = win->space.stacking_order->sorted().cend();
+        auto begin = win->space.stacking_order->sorted().cbegin();
 
         while (--it != begin) {
             if (*it == other) {
@@ -1321,12 +1320,13 @@ void restack_window(Win* win,
         }
     }
 
-    if (other)
-        restack(workspace(), win, other);
-    else if (detail == XCB_STACK_MODE_BELOW)
-        lower_client_request(workspace(), win, src, timestamp);
-    else if (detail == XCB_STACK_MODE_ABOVE)
-        raise_client_request(workspace(), win, src, timestamp);
+    if (other) {
+        restack(&win->space, win, other);
+    } else if (detail == XCB_STACK_MODE_BELOW) {
+        lower_client_request(&win->space, win, src, timestamp);
+    } else if (detail == XCB_STACK_MODE_ABOVE) {
+        raise_client_request(&win->space, win, src, timestamp);
+    }
 
     if (send_event) {
         send_synthetic_configure_notify(win, frame_to_client_rect(win, win->frameGeometry()));
@@ -1450,7 +1450,7 @@ xcb_timestamp_t read_user_time_map_timestamp(Win* win,
         // Otherwise, refuse activation of a window
         // from already running application if this application
         // is not the active one (unless focus stealing prevention is turned off).
-        auto act = dynamic_cast<Win*>(workspace()->mostRecentlyActivatedClient());
+        auto act = dynamic_cast<Win*>(win->space.mostRecentlyActivatedClient());
         if (act != nullptr
             && !belong_to_same_application(act, win, same_client_check::relaxed_for_active)) {
             bool first_window = true;
@@ -1485,7 +1485,7 @@ xcb_timestamp_t read_user_time_map_timestamp(Win* win,
                 else
                     first_window = false;
             } else {
-                for (auto win : workspace()->m_windows) {
+                for (auto win : win->space.m_windows) {
                     if (win->control && sameApplicationActiveHackPredicate(win)) {
                         first_window = false;
                         break;
@@ -1540,33 +1540,33 @@ void startup_id_changed(Win* win)
 {
     KStartupInfoId asn_id;
     KStartupInfoData asn_data;
-    bool asn_valid = workspace()->checkStartupNotification(win->xcb_window(), asn_id, asn_data);
+    bool asn_valid = win->space.checkStartupNotification(win->xcb_window(), asn_id, asn_data);
     if (!asn_valid)
         return;
     // If the ASN contains desktop, move it to the desktop, otherwise move it to the current
     // desktop (since the new ASN should make the window act like if it's a new application
     // launched). However don't affect the window's desktop if it's set to be on all desktops.
-    int desktop = virtual_desktop_manager::self()->current();
+    int desktop = win->space.virtual_desktop_manager->current();
     if (asn_data.desktop() != 0)
         desktop = asn_data.desktop();
     if (!win->isOnAllDesktops()) {
-        workspace()->sendClientToDesktop(win, desktop, true);
+        win->space.sendClientToDesktop(win, desktop, true);
     }
     if (asn_data.xinerama() != -1) {
         auto output = base::get_output(kwinApp()->get_base().get_outputs(), asn_data.xinerama());
         if (output) {
-            send_to_screen(*workspace(), win, *output);
+            send_to_screen(win->space, win, *output);
         }
     }
     auto const timestamp = asn_id.timestamp();
     if (timestamp != 0) {
-        auto activate = workspace()->allowClientActivation(win, timestamp);
+        auto activate = win->space.allowClientActivation(win, timestamp);
         if (asn_data.desktop() != 0 && !win->isOnCurrentDesktop()) {
             // it was started on different desktop than current one
             activate = false;
         }
         if (activate) {
-            workspace()->activateClient(win);
+            win->space.activateClient(win);
         } else {
             set_demands_attention(win, true);
         }
@@ -1663,7 +1663,7 @@ void read_show_on_screen_edge(Win* win, base::x11::xcb::property& property)
             win->connections.edge_remove
                 = QObject::connect(win, &Win::keepBelowChanged, win, [win]() {
                       if (!win->control->keep_below()) {
-                          workspace()->edges->reserve(win, ElectricNone);
+                          win->space.edges->reserve(win, ElectricNone);
                       }
                   });
         } else {
@@ -1673,14 +1673,14 @@ void read_show_on_screen_edge(Win* win, base::x11::xcb::property& property)
             win->connections.edge_geometry
                 = QObject::connect(win, &Win::frame_geometry_changed, win, [win, border]() {
                       win->hideClient(true);
-                      workspace()->edges->reserve(win, border);
+                      win->space.edges->reserve(win, border);
                   });
         }
 
         if (successfullyHidden) {
-            workspace()->edges->reserve(win, border);
+            win->space.edges->reserve(win, border);
         } else {
-            workspace()->edges->reserve(win, ElectricNone);
+            win->space.edges->reserve(win, ElectricNone);
         }
     } else if (!property.is_null() && property->type != XCB_ATOM_NONE) {
         // property value is incorrect, delete the property
@@ -1693,7 +1693,7 @@ void read_show_on_screen_edge(Win* win, base::x11::xcb::property& property)
 
         // this will call showOnScreenEdge to reset the state
         QObject::disconnect(win->connections.edge_geometry);
-        workspace()->edges->reserve(win, ElectricNone);
+        win->space.edges->reserve(win, ElectricNone);
     }
 }
 

@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/logging.h"
 #include "base/platform.h"
 #include "main.h"
+#include "render/compositor.h"
 #include "render/effects.h"
 #include "toplevel.h"
 #include "win/space.h"
@@ -181,8 +182,8 @@ void lanczos_filter::performPaint(effects_window_impl* w,
             init();
         }
 
-        auto const screenRect
-            = workspace()->clientArea(ScreenArea, w->window()->central_output, w->desktop());
+        auto const screenRect = m_scene->compositor.space->clientArea(
+            ScreenArea, w->window()->central_output, w->desktop());
 
         // window geometry may not be bigger than screen geometry to fit into the FBO
         QRect winGeo(w->expandedGeometry());
@@ -412,7 +413,7 @@ void lanczos_filter::timerEvent(QTimerEvent* event)
         m_offscreenTarget = nullptr;
         m_offscreenTex = nullptr;
 
-        for (auto win : workspace()->m_windows) {
+        for (auto win : m_scene->compositor.space->m_windows) {
             discardCacheTexture(win->render->effect.get());
         }
 

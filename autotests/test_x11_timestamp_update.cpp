@@ -79,15 +79,15 @@ base::platform& X11TestApplication::get_base()
 
 debug::console* X11TestApplication::create_debug_console()
 {
-    return new debug::x11_console;
+    return new debug::x11_console(*workspace);
 }
 
 void X11TestApplication::start()
 {
     prepare_start();
     compositor = std::make_unique<render::x11::compositor>(*base.render);
-    workspace = std::make_unique<win::x11::space>();
-    Q_EMIT workspaceCreated();
+    workspace = std::make_unique<win::x11::space>(*compositor);
+    compositor->start(*workspace);
 }
 
 }

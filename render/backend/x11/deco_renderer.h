@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "decorations/decorationrenderer.h"
+#include "win/deco/renderer.h"
 
 #include <xcb/xcb.h>
 
@@ -14,14 +14,14 @@ class QTimer;
 namespace KWin::render::backend::x11
 {
 
-class deco_renderer : public Decoration::Renderer
+class deco_renderer : public win::deco::renderer
 {
     Q_OBJECT
 public:
-    explicit deco_renderer(Decoration::DecoratedClientImpl* client);
+    explicit deco_renderer(win::deco::client_impl* client);
     ~deco_renderer() override;
 
-    void reparent(Toplevel* window) override;
+    void reparent() override;
 
 protected:
     void render() override;

@@ -68,7 +68,7 @@ inline window* create_shell_window(Space& space, Wrapland::Server::XdgShellSurfa
 
     auto const surface = shell_surface->surface();
 
-    auto win = new window(surface);
+    auto win = new window(surface, space);
     block_geometry_updates(win, true);
 
     QObject::connect(
@@ -158,7 +158,7 @@ void finalize_shell_window_creation(Space& space, window* win)
                 ctrl->discard_temporary_rules();
 
                 // Remove Apply Now rules.
-                RuleBook::self()->discardUsed(win, false);
+                win->space.rule_book->discardUsed(win, false);
 
                 win->updateWindowRules(Rules::All);
             }
@@ -292,7 +292,7 @@ window* create_toplevel_window(Space* space, Wrapland::Server::XdgShellToplevel*
     QObject::connect(win, &Toplevel::clientStartUserMovedResized, win, configure);
     QObject::connect(win, &Toplevel::clientFinishUserMovedResized, win, configure);
 
-    set_desktop(win, virtual_desktop_manager::self()->current());
+    set_desktop(win, win->space.virtual_desktop_manager->current());
     set_color_scheme(win, QString());
 
     finalize_shell_window_creation(*space, win);
@@ -339,14 +339,14 @@ void update_screen_edge(Win* win)
 {
     using PSS = Wrapland::Server::PlasmaShellSurface;
 
-    if (!workspace()->edges) {
+    if (!win->space.edges) {
         return;
     }
 
     auto const& plasma_surface = win->plasma_shell_surface;
 
     if (!win->mapped || !plasma_surface || plasma_surface->role() != PSS::Role::Panel) {
-        workspace()->edges->reserve(win, ElectricNone);
+        win->space.edges->reserve(win, ElectricNone);
         return;
     }
 
@@ -357,7 +357,7 @@ void update_screen_edge(Win* win)
 
     if (!is_auto_hidden && !can_get_covered) {
         // Simple case with space being reserved for the panel.
-        workspace()->edges->reserve(win, ElectricNone);
+        win->space.edges->reserve(win, ElectricNone);
         return;
     }
 
@@ -420,7 +420,7 @@ void update_screen_edge(Win* win)
     if (edges.testFlag(Qt::BottomEdge)) {
         border = ElectricBottom;
     }
-    workspace()->edges->reserve(win, border);
+    win->space.edges->reserve(win, border);
 }
 
 template<typename Win>
@@ -469,7 +469,7 @@ void install_plasma_shell_surface(Win* win, Wrapland::Server::PlasmaShellSurface
                 || type == NET::CriticalNotification) {
                 set_on_all_desktops(win, true);
             }
-            workspace()->updateClientArea();
+            win->space.updateClientArea();
         }
     };
 
@@ -485,7 +485,7 @@ void install_plasma_shell_surface(Win* win, Wrapland::Server::PlasmaShellSurface
     QObject::connect(surface, &PSS::roleChanged, win, update_role);
     QObject::connect(surface, &PSS::panelBehaviorChanged, win, [win] {
         update_screen_edge(win);
-        workspace()->updateClientArea();
+        win->space.updateClientArea();
     });
     QObject::connect(win, &window::frame_geometry_changed, win, [win] { update_screen_edge(win); });
 
@@ -499,7 +499,7 @@ void install_plasma_shell_surface(Win* win, Wrapland::Server::PlasmaShellSurface
         });
         QObject::connect(surface, &PSS::panelAutoHideShowRequested, win, [win] {
             win->hideClient(false);
-            workspace()->edges->reserve(win, ElectricNone);
+            win->space.edges->reserve(win, ElectricNone);
             win->plasma_shell_surface->showAutoHidingPanel();
         });
 
@@ -557,7 +557,7 @@ void install_deco(Win* win, Wrapland::Server::XdgDecoration* deco)
 
     QObject::connect(deco, &Deco::resourceDestroyed, win, [win] {
         win->xdg_deco = nullptr;
-        if (win->closing || !workspace()) {
+        if (win->closing) {
             return;
         }
         win->updateDecoration(true);

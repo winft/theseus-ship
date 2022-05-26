@@ -41,8 +41,8 @@ struct show_on_desktop_action_data {
     bool move_to_single;
 };
 
-user_actions_menu::user_actions_menu(QObject* parent)
-    : QObject(parent)
+user_actions_menu::user_actions_menu(win::space& space)
+    : space{space}
 {
 }
 
@@ -112,8 +112,8 @@ void user_actions_menu::helperDialog(const QString& message, Toplevel* window)
 {
     QStringList args;
     QString type;
-    auto shortcut = [](const QString& name) {
-        QAction* action = workspace()->findChild<QAction*>(name);
+    auto shortcut = [this](const QString& name) {
+        QAction* action = space.findChild<QAction*>(name);
         Q_ASSERT(action != nullptr);
         const auto shortcuts = KGlobalAccel::self()->shortcut(action);
         return QStringLiteral("%1 (%2)")
@@ -193,9 +193,9 @@ void user_actions_menu::init()
         }
     });
 
-    auto setShortcut = [](QAction* action, const QString& actionName) {
+    auto setShortcut = [this](QAction* action, const QString& actionName) {
         const auto shortcuts
-            = KGlobalAccel::self()->shortcut(workspace()->findChild<QAction*>(actionName));
+            = KGlobalAccel::self()->shortcut(space.findChild<QAction*>(actionName));
         if (!shortcuts.isEmpty()) {
             action->setShortcut(shortcuts.first());
         }
@@ -322,7 +322,7 @@ void user_actions_menu::menuAboutToShow()
     if (m_client.isNull() || !m_menu)
         return;
 
-    if (win::virtual_desktop_manager::self()->count() == 1) {
+    if (space.virtual_desktop_manager->count() == 1) {
         delete m_desktopMenu;
         m_desktopMenu = nullptr;
         delete m_multipleDesktopsMenu;
@@ -330,6 +330,7 @@ void user_actions_menu::menuAboutToShow()
     } else {
         initDesktopPopup();
     }
+
     if (kwinApp()->get_base().get_outputs().size() == 1
         || (!m_client->isMovable() && !m_client->isMovableAcrossScreens())) {
         delete m_screenMenu;
@@ -357,8 +358,7 @@ void user_actions_menu::menuAboutToShow()
     delete m_scriptsMenu;
     m_scriptsMenu = nullptr;
     // ask scripts whether they want to add entries for the given Client
-    auto scriptActions
-        = workspace()->scripting->actionsForUserActionMenu(m_client.data(), m_scriptsMenu);
+    auto scriptActions = space.scripting->actionsForUserActionMenu(m_client.data(), m_scriptsMenu);
     if (!scriptActions.isEmpty()) {
         m_scriptsMenu = new QMenu(m_menu);
         m_scriptsMenu->setPalette(m_client->control->palette().q_palette());
@@ -436,7 +436,7 @@ void user_actions_menu::desktopPopupAboutToShow()
 {
     if (!m_desktopMenu)
         return;
-    auto const vds = win::virtual_desktop_manager::self();
+    auto const vds = space.virtual_desktop_manager.get();
 
     m_desktopMenu->clear();
     if (m_client) {
@@ -484,7 +484,7 @@ void user_actions_menu::multipleDesktopsPopupAboutToShow()
 {
     if (!m_multipleDesktopsMenu)
         return;
-    auto const vds = win::virtual_desktop_manager::self();
+    auto const vds = space.virtual_desktop_manager.get();
 
     m_multipleDesktopsMenu->clear();
     if (m_client) {
@@ -579,7 +579,7 @@ void user_actions_menu::slotWindowOperation(QAction* action)
         return;
 
     auto op = static_cast<base::options::WindowOperation>(action->data().toInt());
-    auto c = m_client ? m_client : QPointer<Toplevel>(workspace()->activeClient());
+    auto c = m_client ? m_client : QPointer<Toplevel>(space.activeClient());
     if (c.isNull())
         return;
     QString type;
@@ -600,7 +600,7 @@ void user_actions_menu::slotWindowOperation(QAction* action)
     // need to delay performing the window operation as we need to have the
     // user actions menu closed before we destroy the decoration. Otherwise Qt crashes
     qRegisterMetaType<base::options::WindowOperation>();
-    QMetaObject::invokeMethod(workspace(),
+    QMetaObject::invokeMethod(&space,
                               "performWindowOperation",
                               Qt::QueuedConnection,
                               Q_ARG(KWin::Toplevel*, c),
@@ -614,10 +614,11 @@ void user_actions_menu::slotSendToDesktop(QAction* action)
     if (!ok) {
         return;
     }
-    if (m_client.isNull())
+    if (m_client.isNull()) {
         return;
-    auto ws = workspace();
-    auto vds = win::virtual_desktop_manager::self();
+    }
+
+    auto& vds = space.virtual_desktop_manager;
     if (desk == 0) {
         // the 'on_all_desktops' menu entry
         if (m_client) {
@@ -628,7 +629,7 @@ void user_actions_menu::slotSendToDesktop(QAction* action)
         vds->setCount(desk);
     }
 
-    ws->sendClientToDesktop(m_client.data(), desk, false);
+    space.sendClientToDesktop(m_client.data(), desk, false);
 }
 
 void user_actions_menu::slotToggleOnVirtualDesktop(QAction* action)
@@ -642,7 +643,7 @@ void user_actions_menu::slotToggleOnVirtualDesktop(QAction* action)
     }
     show_on_desktop_action_data data = action->data().value<show_on_desktop_action_data>();
 
-    auto vds = win::virtual_desktop_manager::self();
+    auto vds = space.virtual_desktop_manager.get();
     if (data.desktop == 0) {
         // the 'on_all_desktops' menu entry
         win::set_on_all_desktops(m_client.data(), !m_client->isOnAllDesktops());
@@ -654,7 +655,7 @@ void user_actions_menu::slotToggleOnVirtualDesktop(QAction* action)
     if (data.move_to_single) {
         win::set_desktop(m_client.data(), data.desktop);
     } else {
-        auto virtualDesktop = win::virtual_desktop_manager::self()->desktopForX11Id(data.desktop);
+        auto virtualDesktop = vds->desktopForX11Id(data.desktop);
         if (m_client->desktops().contains(virtualDesktop)) {
             win::leave_desktop(m_client.data(), virtualDesktop);
         } else {
@@ -675,7 +676,7 @@ void user_actions_menu::slotSendToScreen(QAction* action)
         return;
     }
 
-    win::send_to_screen(*workspace(), m_client.data(), *output);
+    win::send_to_screen(space, m_client.data(), *output);
 }
 
 }

@@ -51,9 +51,12 @@ class event_filter;
 
 namespace win
 {
+
+class space;
 class tabbox_desktop_chain_manager;
 class tabbox_config;
 class tabbox;
+
 class tabbox_handler_impl : public tabbox_handler
 {
 public:
@@ -123,6 +126,7 @@ class KWIN_EXPORT tabbox : public QObject
 {
     Q_OBJECT
 public:
+    tabbox(win::space& space);
     ~tabbox() override;
 
     /**
@@ -278,8 +282,7 @@ public:
     }
     void set_current_index(QModelIndex index, bool notify_effects = true);
 
-    static win::tabbox* self();
-    static win::tabbox* create(QObject* parent);
+    win::space& space;
 
 public Q_SLOTS:
     /**
@@ -313,7 +316,6 @@ Q_SIGNALS:
     void tabbox_key_event(QKeyEvent*);
 
 private:
-    explicit tabbox(QObject* parent);
     void load_config(const KConfigGroup& config, tabbox_config& tabbox_config);
 
     bool start_kde_walk_through_windows(
@@ -355,7 +357,7 @@ private:
     int m_delay_show_time;
 
     QTimer m_delayed_show_timer;
-    int m_display_ref_count;
+    int m_display_ref_count{0};
 
     tabbox_config m_default_config;
     tabbox_config m_alternative_config;
@@ -363,13 +365,13 @@ private:
     tabbox_config m_alternative_current_application_config;
     tabbox_config m_desktop_config;
     tabbox_config m_desktop_list_config;
+
     // false if an effect has referenced the tabbox
     // true if tabbox is active (independent on showTabbox setting)
-    bool m_is_shown;
-    bool m_desktop_grab;
-    bool m_tab_grab;
-    // true if tabbox is in modal mode which does not require holding a modifier
-    bool m_no_modifier_grab;
+    bool m_is_shown{false};
+    bool m_desktop_grab{false};
+    bool m_tab_grab{false};
+
     QKeySequence m_cut_walk_through_desktops, m_cut_walk_through_desktops_reverse;
     QKeySequence m_cut_walk_through_desktop_list, m_cut_walk_through_desktop_list_reverse;
     QKeySequence m_cut_walk_through_windows, m_cut_walk_through_windows_reverse;
@@ -379,20 +381,18 @@ private:
         m_cut_walk_through_current_app_windows_reverse;
     QKeySequence m_cut_walk_through_current_app_windows_alternative,
         m_cut_walk_through_current_app_windows_alternative_reverse;
-    bool m_forced_global_mouse_grab;
-    bool m_ready; // indicates whether the config is completely loaded
+
+    // true if tabbox is in modal mode which does not require holding a modifier
+    bool m_no_modifier_grab{false};
+    bool m_forced_global_mouse_grab{false};
+
+    // indicates whether the config is completely loaded
+    bool m_ready{false};
     QList<ElectricBorder> m_border_activate, m_border_alternative_activate;
     QHash<ElectricBorder, QAction*> m_touch_activate;
     QHash<ElectricBorder, QAction*> m_touch_alternative_activate;
     QScopedPointer<base::x11::event_filter> m_x11_event_filter;
-
-    static win::tabbox* s_self;
 };
-
-inline win::tabbox* win::tabbox::self()
-{
-    return s_self;
-}
 
 } // namespace win
 } // namespace

@@ -18,7 +18,6 @@
 #include "xdg_shell.h"
 
 #include "base/wayland/server.h"
-#include "decorations/window.h"
 #include "render/compositor.h"
 #include "render/platform.h"
 #include "render/wayland/buffer.h"
@@ -26,6 +25,7 @@
 #include "rules/rules.h"
 #include "utils/blocker.h"
 #include "win/deco.h"
+#include "win/deco/window.h"
 #include "win/geo.h"
 #include "win/layers.h"
 #include "win/remnant.h"
@@ -56,8 +56,8 @@ namespace KWin::win::wayland
 
 namespace WS = Wrapland::Server;
 
-window::window(WS::Surface* surface)
-    : Toplevel()
+window::window(WS::Surface* surface, win::space& space)
+    : Toplevel(space)
 {
     connect(surface, &WS::Surface::subsurfaceTreeChanged, this, [this] {
         discard_shape();
@@ -192,8 +192,7 @@ bool window::belongsToSameApplication(Toplevel const* other, win::same_client_ch
 bool window::noBorder() const
 {
     if (xdg_deco && xdg_deco->requestedMode() != WS::XdgDecoration::Mode::ClientSide) {
-        return !Decoration::DecorationBridge::hasPlugin() || user_no_border
-            || geometry_update.fullscreen;
+        return !space.deco->hasPlugin() || user_no_border || geometry_update.fullscreen;
     }
     return true;
 }
@@ -338,7 +337,7 @@ void window::takeFocus()
     }
 
     if (!control->keep_above() && !is_on_screen_display(this) && !belongsToDesktop()) {
-        workspace()->setShowingDesktop(false);
+        space.setShowingDesktop(false);
     }
 }
 
@@ -349,8 +348,8 @@ void window::doSetActive()
     if (!control->active()) {
         return;
     }
-    blocker block(workspace()->stacking_order);
-    workspace()->focusToNull();
+    blocker block(space.stacking_order);
+    space.focusToNull();
 }
 
 bool window::userCanSetFullScreen() const
@@ -360,7 +359,7 @@ bool window::userCanSetFullScreen() const
 
 bool window::userCanSetNoBorder() const
 {
-    if (!Decoration::DecorationBridge::hasPlugin()) {
+    if (!space.deco->hasPlugin()) {
         return false;
     }
     if (!xdg_deco || xdg_deco->requestedMode() == WS::XdgDecoration::Mode::ClientSide) {
@@ -467,7 +466,7 @@ void window::hideClient(bool hide)
 
     if (hide) {
         addWorkspaceRepaint(visible_rect(this));
-        workspace()->clientHidden(this);
+        space.clientHidden(this);
         Q_EMIT windowHidden(this);
     } else {
         Q_EMIT windowShown(this);
@@ -548,7 +547,7 @@ void window::configure_geometry(QRect const& frame_geo)
         auto parent = transient()->lead();
         if (parent) {
             auto const top_lead = lead_of_annexed_transient(this);
-            auto const bounds = workspace()->clientArea(
+            auto const bounds = space.clientArea(
                 top_lead->control->fullscreen() ? FullScreenArea : PlacementArea, top_lead);
 
             serial = popup->configure(
@@ -629,7 +628,7 @@ void window::apply_pending_geometry()
             return;
         }
 
-        auto const screen_bounds = workspace()->clientArea(
+        auto const screen_bounds = space.clientArea(
             toplevel->control->fullscreen() ? FullScreenArea : PlacementArea, toplevel);
 
         // Need to set that for get_xdg_shell_popup_placement(..) call.
@@ -738,7 +737,7 @@ void window::do_set_geometry(QRect const& frame_geo)
 
     // Must be done after signal is emitted so the screen margins are updated.
     if (hasStrut()) {
-        workspace()->updateClientArea();
+        space.updateClientArea();
     }
 }
 
@@ -788,13 +787,13 @@ void window::do_set_fullscreen(bool full)
     if (old_full) {
         // May cause focus leave.
         // TODO: Must always be done when fullscreening to other output allowed.
-        workspace()->updateFocusMousePosition(input::get_cursor()->pos());
+        space.updateFocusMousePosition(input::get_cursor()->pos());
     }
 
     control->set_fullscreen(full);
 
     if (full) {
-        raise_window(workspace(), this);
+        raise_window(&space, this);
     }
 
     // Active fullscreens gets a different layer.
@@ -806,7 +805,7 @@ void window::do_set_fullscreen(bool full)
 
 bool window::belongsToDesktop() const
 {
-    auto const windows = static_cast<win::wayland::space*>(workspace())->m_windows;
+    auto const windows = static_cast<win::wayland::space&>(space).m_windows;
 
     return std::any_of(windows.cbegin(), windows.cend(), [this](auto const& win) {
         if (belongsToSameApplication(win, flags<same_client_check>())) {
@@ -861,8 +860,7 @@ void window::map()
 
     if (control) {
         if (!isLockScreen()) {
-            auto space = static_cast<win::wayland::space*>(workspace());
-            setup_plasma_management(space, this);
+            setup_plasma_management(static_cast<win::wayland::space*>(&space), this);
         }
         update_screen_edge(this);
     }
@@ -896,11 +894,9 @@ void window::unmap()
         control->destroy_wayland_management();
     }
 
-    if (workspace()) {
-        addWorkspaceRepaint(visible_rect(this));
-        if (control) {
-            workspace()->clientHidden(this);
-        }
+    addWorkspaceRepaint(visible_rect(this));
+    if (control) {
+        space.clientHidden(this);
     }
 
     Q_EMIT windowHidden(this);
@@ -929,8 +925,7 @@ void window::handle_commit()
         // Plasma surfaces might set their position late. So check again initial position being set.
         if (must_place && !isInitialPositionSet()) {
             must_place = false;
-            auto const area = workspace()->clientArea(
-                PlacementArea, get_current_output(*workspace()), desktop());
+            auto const area = space.clientArea(PlacementArea, get_current_output(space), desktop());
             placeIn(area);
         }
     } else if (layer_surface) {
@@ -997,9 +992,8 @@ void window::updateDecoration(bool check_workspace_pos, bool force)
         control->destroy_decoration();
     } else {
         // Create decoration.
-        control->deco().window = new Decoration::window(this);
-        auto decoration
-            = Decoration::DecorationBridge::self()->createDecoration(control->deco().window);
+        control->deco().window = new deco::window(this);
+        auto decoration = space.deco->createDecoration(control->deco().window);
         if (decoration) {
             QMetaObject::invokeMethod(decoration, "update", Qt::QueuedConnection);
             connect(decoration, &KDecoration2::Decoration::shadowChanged, this, [this] {
@@ -1117,18 +1111,17 @@ void window::ping(window::ping_reason reason)
 {
     assert(toplevel);
 
-    auto shell = static_cast<win::wayland::space*>(workspace())->xdg_shell.get();
-    auto const serial = shell->ping(toplevel->client());
+    auto serial = static_cast<win::wayland::space&>(space).xdg_shell->ping(toplevel->client());
     pings.insert({serial, reason});
 }
 void window::doMinimize()
 {
     if (control->minimized()) {
-        workspace()->clientHidden(this);
+        space.clientHidden(this);
     } else {
         Q_EMIT windowShown(this);
     }
-    workspace()->updateMinimizedOfTransients(this);
+    space.updateMinimizedOfTransients(this);
 }
 
 void window::placeIn(QRect const& area)
@@ -1143,7 +1136,7 @@ void window::showOnScreenEdge()
     }
 
     hideClient(false);
-    raise_window(workspace(), this);
+    raise_window(&space, this);
 
     if (plasma_shell_surface->panelBehavior() == WS::PlasmaShellSurface::PanelBehavior::AutoHide) {
         plasma_shell_surface->showAutoHidingPanel();

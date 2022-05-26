@@ -29,7 +29,7 @@ bool window_action_filter::button(button_event const& event)
         return false;
     }
 
-    auto focus_window = get_focus_lead(kwinApp()->input->redirect->pointer()->focus());
+    auto focus_window = get_focus_lead(kwinApp()->input->redirect->pointer()->focus.window);
     if (!focus_window) {
         return false;
     }
@@ -48,7 +48,7 @@ bool window_action_filter::axis(axis_event const& event)
         return false;
     }
 
-    auto focus_window = get_focus_lead(kwinApp()->input->redirect->pointer()->focus());
+    auto focus_window = get_focus_lead(kwinApp()->input->redirect->pointer()->focus.window);
     if (!focus_window) {
         return false;
     }
@@ -66,7 +66,7 @@ bool window_action_filter::touch_down(touch_down_event const& event)
     if (seat->touches().is_in_progress()) {
         return false;
     }
-    auto focus_window = get_focus_lead(kwinApp()->input->redirect->touch()->focus());
+    auto focus_window = get_focus_lead(kwinApp()->input->redirect->touch()->focus.window);
     if (!focus_window) {
         return false;
     }

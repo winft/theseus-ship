@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
-#include "kwinglobals.h"
+#include "kwin_export.h"
 
 #include <QObject>
 #include <xcb/xcb.h>
@@ -37,12 +37,15 @@ class Toplevel;
 
 namespace win
 {
+
+class space;
+
 class KWIN_EXPORT app_menu : public QObject
 {
     Q_OBJECT
 
 public:
-    ~app_menu() override;
+    explicit app_menu(win::space& space);
 
     void showApplicationMenu(const QPoint& pos, Toplevel* window, int actionId);
 
@@ -68,8 +71,7 @@ private:
                                                     const QDBusObjectPath& menuObjectPath);
 
     bool m_applicationMenuEnabled = false;
-
-    KWIN_SINGLETON(app_menu)
+    win::space& space;
 };
 
 }

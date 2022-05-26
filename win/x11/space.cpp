@@ -14,14 +14,15 @@
 namespace KWin::win::x11
 {
 
-space::space()
+space::space(render::compositor& render)
+    : win::space(render)
 {
     atoms = std::make_unique<base::x11::atoms>(connection());
     edges = std::make_unique<win::screen_edger>(*this);
 
     QObject::connect(
-        virtual_desktop_manager::self(), &virtual_desktop_manager::desktopRemoved, this, [this] {
-            auto const desktop_count = static_cast<int>(virtual_desktop_manager::self()->count());
+        virtual_desktop_manager.get(), &virtual_desktop_manager::desktopRemoved, this, [this] {
+            auto const desktop_count = static_cast<int>(virtual_desktop_manager->count());
             for (auto const& window : m_windows) {
                 if (!window->control) {
                     continue;
@@ -45,7 +46,7 @@ space::space()
         // catch refresh rate changes
         //
         // TODO: is this still necessary since we get the maximal refresh rate now dynamically?
-        render::compositor::self()->reinitialize();
+        this->render.reinitialize();
     });
 
     init_space(*this);
@@ -66,7 +67,7 @@ Toplevel* space::findInternal(QWindow* window) const
 win::screen_edge* space::create_screen_edge(win::screen_edger& edger)
 {
     if (!edges_filter) {
-        edges_filter = std::make_unique<screen_edges_filter>();
+        edges_filter = std::make_unique<screen_edges_filter>(*this);
     }
     return new screen_edge(&edger, *atoms);
 }

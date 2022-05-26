@@ -158,7 +158,7 @@ base::wayland::server* WaylandTestApplication::get_wayland_server()
 
 debug::console* WaylandTestApplication::create_debug_console()
 {
-    return new debug::wayland_console;
+    return new debug::wayland_console(*workspace);
 }
 
 void WaylandTestApplication::start()
@@ -171,10 +171,8 @@ void WaylandTestApplication::start()
     createOptions();
 
     session = std::make_unique<base::seat::backend::wlroots::session>(headless_backend);
-
     input = std::make_unique<input::backend::wlroots::platform>(base);
-    input::wayland::add_dbus(input.get());
-    input->redirect->install_shortcuts();
+    static_cast<input::wayland::platform&>(*input).install_shortcuts();
 
 #if HAVE_WLR_BASE_INPUT_DEVICES
     auto keyboard = static_cast<wlr_keyboard*>(calloc(1, sizeof(wlr_keyboard)));
@@ -218,10 +216,14 @@ void WaylandTestApplication::start()
     out->wrapland_output()->set_physical_size(QSize(1280, 1024));
 
     base.render->compositor = std::make_unique<render::wayland::compositor>(*base.render);
-    workspace = std::make_unique<win::wayland::space>(server.get());
-    Q_EMIT workspaceCreated();
+    workspace = std::make_unique<win::wayland::space>(*base.render->compositor, server.get());
 
-    workspace->scripting = std::make_unique<scripting::platform>();
+    workspace->input = std::make_unique<input::wayland::redirect>(*input, *workspace);
+    input::wayland::add_dbus(input.get());
+    workspace->initShortcuts();
+    workspace->scripting = std::make_unique<scripting::platform>(*workspace);
+
+    base.render->compositor->start(*workspace);
 
     waylandServer()->create_addons([this] { handle_server_addons_created(); });
     kwinApp()->screen_locker_watcher->initialize();
@@ -290,7 +292,7 @@ void WaylandTestApplication::create_xwayland()
     };
 
     try {
-        xwayland.reset(new xwl::xwayland(this, status_callback));
+        xwayland.reset(new xwl::xwayland(this, *workspace, status_callback));
     } catch (std::system_error const& exc) {
         std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
         exit(exc.code().value());

@@ -238,7 +238,6 @@ public:
 Q_SIGNALS:
     void x11ConnectionChanged();
     void x11ConnectionAboutToBeDestroyed();
-    void workspaceCreated();
     void startup_finished();
     void virtualTerminalCreated();
 

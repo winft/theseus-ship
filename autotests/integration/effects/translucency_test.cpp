@@ -64,7 +64,7 @@ void TranslucencyTest::initTestCase()
     // disable all effects - we don't want to have it interact with the rendering
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    const auto builtinNames = render::effect_loader().listOfKnownEffects();
+    const auto builtinNames = render::effect_loader(*Test::app()->workspace).listOfKnownEffects();
     for (QString name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
@@ -157,7 +157,7 @@ void TranslucencyTest::testMoveAfterDesktopChange()
     xcb_flush(c.get());
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(workspace(), &win::space::clientAdded);
+    QSignalSpy windowCreatedSpy(Test::app()->workspace.get(), &win::space::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
@@ -170,11 +170,11 @@ void TranslucencyTest::testMoveAfterDesktopChange()
     // let's send the window to desktop 2
     effects->setNumberOfDesktops(2);
     QCOMPARE(effects->numberOfDesktops(), 2);
-    workspace()->sendClientToDesktop(client, 2, false);
+    Test::app()->workspace->sendClientToDesktop(client, 2, false);
     effects->setCurrentDesktop(2);
     QVERIFY(!m_translucencyEffect->isActive());
     input::get_cursor()->set_pos(client->frameGeometry().center());
-    workspace()->performWindowOperation(client, base::options::MoveOp);
+    Test::app()->workspace->performWindowOperation(client, base::options::MoveOp);
     QVERIFY(m_translucencyEffect->isActive());
     QTest::qWait(200);
     QVERIFY(m_translucencyEffect->isActive());
@@ -235,7 +235,7 @@ void TranslucencyTest::testDialogClose()
     xcb_flush(c.get());
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(workspace(), &win::space::clientAdded);
+    QSignalSpy windowCreatedSpy(Test::app()->workspace.get(), &win::space::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();

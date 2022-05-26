@@ -204,7 +204,7 @@ void NoGlobalShortcutsTest::testTrigger()
     group.writeEntry("Shift", shiftConfig);
     group.writeEntry("Control", controlConfig);
     group.sync();
-    workspace()->slotReconfigure();
+    Test::app()->workspace->slotReconfigure();
 
     // configured shortcut should trigger
     quint32 timestamp = 1;
@@ -233,7 +233,7 @@ void NoGlobalShortcutsTest::testKGlobalAccel()
     KGlobalAccel::self()->setShortcut(action.get(),
                                       QList<QKeySequence>{Qt::META + Qt::SHIFT + Qt::Key_W},
                                       KGlobalAccel::NoAutoloading);
-    kwinApp()->input->redirect->registerShortcut(Qt::META + Qt::SHIFT + Qt::Key_W, action.get());
+    kwinApp()->input->registerShortcut(Qt::META + Qt::SHIFT + Qt::Key_W, action.get());
 
     // press meta+shift+w
     quint32 timestamp = 0;
@@ -261,8 +261,7 @@ void NoGlobalShortcutsTest::testPointerShortcut()
     std::unique_ptr<QAction> action(new QAction(nullptr));
     QSignalSpy actionSpy(action.get(), &QAction::triggered);
     QVERIFY(actionSpy.isValid());
-    kwinApp()->input->redirect->registerPointerShortcut(
-        Qt::MetaModifier, Qt::LeftButton, action.get());
+    kwinApp()->input->registerPointerShortcut(Qt::MetaModifier, Qt::LeftButton, action.get());
 
     // try to trigger the shortcut
     quint32 timestamp = 1;
@@ -301,7 +300,7 @@ void NoGlobalShortcutsTest::testAxisShortcut()
     } else {
         axisDirection = sign > 0 ? PointerAxisLeft : PointerAxisRight;
     }
-    kwinApp()->input->redirect->registerAxisShortcut(Qt::MetaModifier, axisDirection, action.get());
+    kwinApp()->input->registerAxisShortcut(Qt::MetaModifier, axisDirection, action.get());
 
     // try to trigger the shortcut
     quint32 timestamp = 1;
@@ -320,7 +319,7 @@ void NoGlobalShortcutsTest::testAxisShortcut()
 void NoGlobalShortcutsTest::testScreenEdge()
 {
     // based on LockScreenTest::testScreenEdge
-    QSignalSpy screenEdgeSpy(workspace()->edges.get(), &win::screen_edger::approaching);
+    QSignalSpy screenEdgeSpy(Test::app()->workspace->edges.get(), &win::screen_edger::approaching);
     QVERIFY(screenEdgeSpy.isValid());
     QCOMPARE(screenEdgeSpy.count(), 0);
 

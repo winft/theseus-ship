@@ -7,7 +7,7 @@
 */
 #include "virtual_desktops.h"
 
-#include "input/redirect.h"
+#include "input/platform.h"
 #include "main.h"
 
 #include <KConfigGroup>
@@ -145,10 +145,11 @@ void virtual_desktop::setName(QString const& name)
     Q_EMIT nameChanged();
 }
 
-virtual_desktop_grid::virtual_desktop_grid()
+virtual_desktop_grid::virtual_desktop_grid(virtual_desktop_manager& manager)
     : m_size(1, 2) // Default to tow rows
     , m_grid(QVector<QVector<virtual_desktop*>>{QVector<virtual_desktop*>{},
                                                 QVector<virtual_desktop*>{}})
+    , manager{manager}
 {
 }
 
@@ -192,7 +193,7 @@ void virtual_desktop_grid::update(QSize const& size,
 
 QPoint virtual_desktop_grid::gridCoords(uint id) const
 {
-    return gridCoords(virtual_desktop_manager::self()->desktopForX11Id(id));
+    return gridCoords(manager.desktopForX11Id(id));
 }
 
 QPoint virtual_desktop_grid::gridCoords(virtual_desktop* vd) const
@@ -223,18 +224,9 @@ virtual_desktop* virtual_desktop_grid::at(const QPoint& coords) const
     return row.at(coords.x());
 }
 
-KWIN_SINGLETON_FACTORY_VARIABLE(virtual_desktop_manager, s_manager)
-
-virtual_desktop_manager::virtual_desktop_manager(QObject* parent)
-    : QObject(parent)
-    , m_navigationWrapsAround(false)
-    , m_rootInfo(nullptr)
+virtual_desktop_manager::virtual_desktop_manager()
+    : m_grid{*this}
 {
-}
-
-virtual_desktop_manager::~virtual_desktop_manager()
-{
-    s_manager = nullptr;
 }
 
 void virtual_desktop_manager::setRootInfo(NETRootInfo* info)
@@ -871,12 +863,12 @@ void virtual_desktop_manager::initShortcuts()
     auto nextAction = addAction(QStringLiteral("Switch to Next Desktop"),
                                 i18n("Switch to Next Desktop"),
                                 &virtual_desktop_manager::slotNext);
-    kwinApp()->input->redirect->registerTouchpadSwipeShortcut(SwipeDirection::Right, nextAction);
+    kwinApp()->input->registerTouchpadSwipeShortcut(SwipeDirection::Right, nextAction);
 
     auto previousAction = addAction(QStringLiteral("Switch to Previous Desktop"),
                                     i18n("Switch to Previous Desktop"),
                                     &virtual_desktop_manager::slotPrevious);
-    kwinApp()->input->redirect->registerTouchpadSwipeShortcut(SwipeDirection::Left, previousAction);
+    kwinApp()->input->registerTouchpadSwipeShortcut(SwipeDirection::Left, previousAction);
 
     addAction(QStringLiteral("Switch One Desktop to the Right"),
               i18n("Switch One Desktop to the Right"),
@@ -892,11 +884,11 @@ void virtual_desktop_manager::initShortcuts()
               &virtual_desktop_manager::slotDown);
 
     // axis events
-    kwinApp()->input->redirect->registerAxisShortcut(
+    kwinApp()->input->registerAxisShortcut(
         Qt::ControlModifier | Qt::AltModifier,
         PointerAxisDown,
         findChild<QAction*>(QStringLiteral("Switch to Next Desktop")));
-    kwinApp()->input->redirect->registerAxisShortcut(
+    kwinApp()->input->registerAxisShortcut(
         Qt::ControlModifier | Qt::AltModifier,
         PointerAxisUp,
         findChild<QAction*>(QStringLiteral("Switch to Previous Desktop")));
@@ -947,7 +939,7 @@ QAction* virtual_desktop_manager::addAction(QString const& name,
     a->setData(value);
 
     KGlobalAccel::setGlobalShortcut(a, key);
-    kwinApp()->input->redirect->registerShortcut(key, a, this, slot);
+    kwinApp()->input->registerShortcut(key, a, this, slot);
 
     return a;
 }
@@ -962,7 +954,7 @@ QAction* virtual_desktop_manager::addAction(QString const& name,
     a->setText(label);
 
     KGlobalAccel::setGlobalShortcut(a, QKeySequence());
-    kwinApp()->input->redirect->registerShortcut(QKeySequence(), a, this, slot);
+    kwinApp()->input->registerShortcut(QKeySequence(), a, this, slot);
 
     return a;
 }

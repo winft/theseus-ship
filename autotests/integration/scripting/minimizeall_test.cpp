@@ -82,10 +82,10 @@ void MinimizeAllScriptTest::init()
 {
     Test::setup_wayland_connection();
 
-    workspace()->scripting->loadScript(locateMainScript(s_scriptName), s_scriptName);
-    QTRY_VERIFY(workspace()->scripting->isScriptLoaded(s_scriptName));
+    Test::app()->workspace->scripting->loadScript(locateMainScript(s_scriptName), s_scriptName);
+    QTRY_VERIFY(Test::app()->workspace->scripting->isScriptLoaded(s_scriptName));
 
-    auto script = workspace()->scripting->findScript(s_scriptName);
+    auto script = Test::app()->workspace->scripting->findScript(s_scriptName);
     QVERIFY(script);
     QSignalSpy runningChangedSpy(script, &scripting::abstract_script::runningChanged);
     QVERIFY(runningChangedSpy.isValid());
@@ -97,8 +97,8 @@ void MinimizeAllScriptTest::cleanup()
 {
     Test::destroy_wayland_connection();
 
-    workspace()->scripting->unloadScript(s_scriptName);
-    QTRY_VERIFY(!workspace()->scripting->isScriptLoaded(s_scriptName));
+    Test::app()->workspace->scripting->unloadScript(s_scriptName);
+    QTRY_VERIFY(!Test::app()->workspace->scripting->isScriptLoaded(s_scriptName));
 }
 
 void MinimizeAllScriptTest::testMinimizeUnminimize()

@@ -34,22 +34,16 @@ class Toplevel;
 
 namespace win
 {
+
+namespace deco
+{
+class palette;
+}
+
 class tabbox_client_impl;
-}
-
-namespace Decoration
-{
-class DecoratedClientImpl;
-class DecorationPalette;
-}
-
-namespace win
-{
 
 class KWIN_EXPORT control
 {
-    using DecoPalette = Decoration::DecorationPalette;
-
     bool m_skip_taskbar{false};
     bool m_original_skip_taskbar{false};
     bool m_skip_pager{false};
@@ -99,7 +93,7 @@ class KWIN_EXPORT control
 
     win::move_resize_op m_move_resize;
 
-    win::deco m_deco;
+    win::deco_impl m_deco;
     win::palette m_palette;
 
     WindowRules m_rules;
@@ -202,7 +196,7 @@ public:
 
     win::move_resize_op& move_resize();
 
-    win::deco& deco();
+    win::deco_impl& deco();
     virtual void destroy_decoration();
 
     win::palette& palette();

@@ -51,8 +51,6 @@ public:
     explicit window(win::space& space);
     ~window();
 
-    win::space& space;
-
     QString iconic_caption;
 
     struct {

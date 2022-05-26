@@ -26,7 +26,7 @@ class KWIN_EXPORT space : public win::space
 public:
     using x11_window = window;
 
-    space();
+    explicit space(render::compositor& render);
     ~space() override;
 
     Toplevel* findInternal(QWindow* window) const override;
@@ -74,7 +74,7 @@ void restore_session_stacking_order(Space space, Window* c)
  * Effects::destroyInputWindow so far.
  */
 template<typename Space>
-void stack_screen_edges_under_override_redirect(Space* /*space*/)
+void stack_screen_edges_under_override_redirect(Space* space)
 {
     if (!rootInfo()) {
         return;
@@ -83,7 +83,7 @@ void stack_screen_edges_under_override_redirect(Space* /*space*/)
     std::vector<xcb_window_t> windows;
     windows.push_back(rootInfo()->supportWindow());
 
-    auto const edges_wins = workspace()->edges->windows();
+    auto const edges_wins = space->edges->windows();
     windows.insert(windows.end(), edges_wins.begin(), edges_wins.end());
 
     base::x11::xcb::restack_windows(windows);

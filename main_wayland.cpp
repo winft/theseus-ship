@@ -174,7 +174,7 @@ base::wayland::server* ApplicationWayland::get_wayland_server()
 
 debug::console* ApplicationWayland::create_debug_console()
 {
-    return new debug::wayland_console;
+    return new debug::wayland_console(*workspace);
 }
 
 void ApplicationWayland::start()
@@ -197,8 +197,7 @@ void ApplicationWayland::start()
     session->take_control();
 
     input.reset(new input::backend::wlroots::platform(*base));
-    input::wayland::add_dbus(input.get());
-    input->redirect->install_shortcuts();
+    static_cast<input::wayland::platform&>(*input).install_shortcuts();
 
     // now libinput thread has been created, adjust scheduler to not leak into other processes
     // TODO(romangg): can be removed?
@@ -211,13 +210,16 @@ void ApplicationWayland::start()
         QCoreApplication::exit(1);
     }
 
-    tablet_mode_manager = std::make_unique<input::dbus::tablet_mode_manager>();
-
     render->compositor = std::make_unique<render::wayland::compositor>(*render);
-    workspace = std::make_unique<win::wayland::space>(server.get());
-    Q_EMIT workspaceCreated();
+    workspace = std::make_unique<win::wayland::space>(*render->compositor, server.get());
 
-    workspace->scripting = std::make_unique<scripting::platform>();
+    workspace->input = std::make_unique<input::wayland::redirect>(*input, *workspace);
+    input::wayland::add_dbus(input.get());
+    workspace->initShortcuts();
+    tablet_mode_manager = std::make_unique<input::dbus::tablet_mode_manager>();
+    workspace->scripting = std::make_unique<scripting::platform>(*workspace);
+
+    render->compositor->start(*workspace);
 
     waylandServer()->create_addons([this] { handle_server_addons_created(); });
     kwinApp()->screen_locker_watcher->initialize();
@@ -245,7 +247,7 @@ void ApplicationWayland::create_xwayland()
     };
 
     try {
-        xwayland.reset(new xwl::xwayland(this, status_callback));
+        xwayland = std::make_unique<xwl::xwayland>(this, *workspace, status_callback);
     } catch (std::system_error const& exc) {
         std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
         exit(exc.code().value());

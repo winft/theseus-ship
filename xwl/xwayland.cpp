@@ -67,9 +67,12 @@ static void readDisplay(int pipe)
 namespace KWin::xwl
 {
 
-xwayland::xwayland(Application* app, std::function<void(int)> status_callback)
-    : xwayland_interface()
+xwayland::xwayland(Application* app,
+                   win::wayland::space& space,
+                   std::function<void(int)> status_callback)
+    : basic_data{nullptr, nullptr, &space}
     , app{app}
+    , space{space}
     , status_callback{status_callback}
 {
     int pipeFds[2];
@@ -157,11 +160,11 @@ xwayland::~xwayland()
 
     disconnect(xwayland_fail_notifier);
 
-    win::x11::clear_space(*workspace());
+    win::x11::clear_space(space);
 
     if (app->x11Connection()) {
         base::x11::xcb::set_input_focus(XCB_INPUT_FOCUS_POINTER_ROOT);
-        workspace()->atoms.reset();
+        space.atoms.reset();
         Q_EMIT app->x11ConnectionAboutToBeDestroyed();
         app->setX11Connection(nullptr);
         xcb_disconnect(app->x11Connection());
@@ -236,20 +239,16 @@ void xwayland::continue_startup_with_x11()
     KSelectionOwner owner("WM_S0", basic_data.connection, app->x11RootWindow());
     owner.claim(true);
 
-    auto space = static_cast<win::wayland::space*>(workspace());
-    space->atoms = std::make_unique<base::x11::atoms>(basic_data.connection);
-    basic_data.atoms = space->atoms.get();
-
-    event_filter = std::make_unique<base::x11::xcb_event_filter<win::wayland::space>>(*space);
+    space.atoms = std::make_unique<base::x11::atoms>(basic_data.connection);
+    event_filter = std::make_unique<base::x11::xcb_event_filter<win::wayland::space>>(space);
     app->installNativeEventFilter(event_filter.get());
 
     QObject::connect(
-        space,
+        &space,
         &win::space::surface_id_changed,
         this,
-        [space, xwayland_connection = waylandServer()->xwayland_connection()](auto window,
-                                                                              auto id) {
-            if (auto surface = space->compositor->getSurface(id, xwayland_connection)) {
+        [this, xwayland_connection = waylandServer()->xwayland_connection()](auto window, auto id) {
+            if (auto surface = space.compositor->getSurface(id, xwayland_connection)) {
                 win::wayland::set_surface(window, surface);
             }
         });
@@ -281,7 +280,7 @@ void xwayland::continue_startup_with_x11()
     app->setProcessStartupEnvironment(env);
 
     status_callback(0);
-    win::x11::init_space(*space);
+    win::x11::init_space(space);
     Q_EMIT app->x11ConnectionChanged();
 
     // Trigger possible errors, there's still a chance to abort

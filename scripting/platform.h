@@ -59,7 +59,7 @@ private:
     void runScripts();
 
 public:
-    platform();
+    platform(win::space& space);
     ~platform() override;
     Q_SCRIPTABLE Q_INVOKABLE int loadScript(const QString& filePath,
                                             const QString& pluginName = QString());
@@ -84,6 +84,8 @@ public:
     qt_script_space* workspaceWrapper() const;
 
     abstract_script* findScript(const QString& pluginName) const;
+
+    win::space& space;
 
 public Q_SLOTS:
     void scriptDestroyed(QObject* object);

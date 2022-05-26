@@ -5,8 +5,8 @@
 */
 #include "device_redirect.h"
 
-#include "decorations/decoratedclient.h"
 #include "toplevel.h"
+#include "win/deco/client_impl.h"
 
 namespace KWin::input
 {
@@ -18,26 +18,6 @@ device_redirect::device_redirect(input::redirect* redirect)
 
 device_redirect::~device_redirect() = default;
 
-Toplevel* device_redirect::at() const
-{
-    return m_at.at.data();
-}
-
-Toplevel* device_redirect::focus() const
-{
-    return m_focus.focus.data();
-}
-
-Decoration::DecoratedClientImpl* device_redirect::decoration() const
-{
-    return m_focus.decoration;
-}
-
-QWindow* device_redirect::internalWindow() const
-{
-    return m_focus.internalWindow;
-}
-
 QPointF device_redirect::position() const
 {
     return {};
@@ -46,8 +26,8 @@ QPointF device_redirect::position() const
 void device_redirect::cleanupInternalWindow(QWindow* /*old*/, QWindow* /*now*/)
 {
 }
-void device_redirect::cleanupDecoration(Decoration::DecoratedClientImpl* /*old*/,
-                                        Decoration::DecoratedClientImpl* /*now*/)
+void device_redirect::cleanupDecoration(win::deco::client_impl* /*old*/,
+                                        win::deco::client_impl* /*now*/)
 {
 }
 

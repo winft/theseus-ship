@@ -33,7 +33,12 @@ namespace KWin
 {
 class Toplevel;
 
-namespace win::x11
+namespace win
+{
+
+class space;
+
+namespace x11
 {
 class root_info_filter;
 class window;
@@ -44,10 +49,12 @@ class window;
 class KWIN_EXPORT root_info : public NETRootInfo
 {
 public:
-    static root_info* create();
+    static root_info* create(win::space& space);
     static void destroy();
 
     void setActiveClient(Toplevel* window);
+
+    win::space& space;
 
 protected:
     void changeNumberOfDesktops(int n) override;
@@ -68,7 +75,8 @@ protected:
     void changeShowingDesktop(bool showing) override;
 
 private:
-    root_info(xcb_window_t w,
+    root_info(win::space& space,
+              xcb_window_t w,
               const char* name,
               NET::Properties properties,
               NET::WindowTypes types,
@@ -108,5 +116,6 @@ private:
     win::x11::window* m_client;
 };
 
+}
 }
 }

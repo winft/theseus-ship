@@ -20,9 +20,14 @@
 namespace KWin::input
 {
 
+move_resize_filter::move_resize_filter(input::redirect& redirect)
+    : redirect{redirect}
+{
+}
+
 bool move_resize_filter::button([[maybe_unused]] button_event const& event)
 {
-    auto window = workspace()->moveResizeClient();
+    auto window = redirect.space.moveResizeClient();
     if (!window) {
         return false;
     }
@@ -34,7 +39,7 @@ bool move_resize_filter::button([[maybe_unused]] button_event const& event)
 
 bool move_resize_filter::motion([[maybe_unused]] motion_event const& event)
 {
-    auto window = workspace()->moveResizeClient();
+    auto window = redirect.space.moveResizeClient();
     if (!window) {
         return false;
     }
@@ -45,7 +50,7 @@ bool move_resize_filter::motion([[maybe_unused]] motion_event const& event)
 
 bool move_resize_filter::axis([[maybe_unused]] axis_event const& event)
 {
-    return workspace()->moveResizeClient() != nullptr;
+    return redirect.space.moveResizeClient() != nullptr;
 }
 
 void process_key_press(Toplevel* window, key_event const& event)
@@ -64,7 +69,7 @@ void process_key_press(Toplevel* window, key_event const& event)
 
 bool move_resize_filter::key(key_event const& event)
 {
-    auto window = workspace()->moveResizeClient();
+    auto window = redirect.space.moveResizeClient();
     if (!window) {
         return false;
     }
@@ -77,7 +82,7 @@ bool move_resize_filter::key(key_event const& event)
 
 bool move_resize_filter::key_repeat(key_event const& event)
 {
-    auto window = workspace()->moveResizeClient();
+    auto window = redirect.space.moveResizeClient();
     if (!window) {
         return false;
     }
@@ -88,7 +93,7 @@ bool move_resize_filter::key_repeat(key_event const& event)
 
 bool move_resize_filter::touch_down(touch_down_event const& /*event*/)
 {
-    auto c = workspace()->moveResizeClient();
+    auto c = redirect.space.moveResizeClient();
     if (!c) {
         return false;
     }
@@ -98,7 +103,7 @@ bool move_resize_filter::touch_down(touch_down_event const& /*event*/)
 bool move_resize_filter::touch_motion(touch_motion_event const& event)
 {
     Q_UNUSED(time)
-    auto c = workspace()->moveResizeClient();
+    auto c = redirect.space.moveResizeClient();
     if (!c) {
         return false;
     }
@@ -114,7 +119,7 @@ bool move_resize_filter::touch_motion(touch_motion_event const& event)
 
 bool move_resize_filter::touch_up(touch_up_event const& event)
 {
-    auto c = workspace()->moveResizeClient();
+    auto c = redirect.space.moveResizeClient();
     if (!c) {
         return false;
     }

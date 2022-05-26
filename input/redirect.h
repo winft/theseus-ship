@@ -11,26 +11,28 @@
 #include "event.h"
 
 #include "kwin_export.h"
-#include "kwinglobals.h"
 
-#include <QAction>
 #include <QObject>
 #include <QPoint>
 #include <list>
 #include <memory>
 #include <vector>
 
-class KGlobalAccelInterface;
-
 namespace KWin
 {
 class Toplevel;
 
+namespace win
+{
+class space;
+}
+
 namespace input
 {
+
 class event_filter;
 class event_spy;
-class global_shortcuts_manager;
+class platform;
 class window_selector_filter;
 
 class keyboard_redirect;
@@ -64,26 +66,6 @@ public:
     QPointF globalPointer() const;
     Qt::MouseButtons qtButtonStates() const;
 
-    void registerShortcut(const QKeySequence& shortcut, QAction* action);
-    /**
-     * @overload
-     *
-     * Like registerShortcut, but also connects QAction::triggered to the @p slot on @p receiver.
-     * It's recommended to use this method as it ensures that the X11 timestamp is updated prior
-     * to the @p slot being invoked. If not using this overload it's required to ensure that
-     * registerShortcut is called before connecting to QAction's triggered signal.
-     */
-    template<typename T, typename Slot>
-    void registerShortcut(const QKeySequence& shortcut, QAction* action, T* receiver, Slot slot);
-    void registerPointerShortcut(Qt::KeyboardModifiers modifiers,
-                                 Qt::MouseButton pointerButtons,
-                                 QAction* action);
-    void registerAxisShortcut(Qt::KeyboardModifiers modifiers,
-                              PointerAxisDirection axis,
-                              QAction* action);
-    void registerTouchpadSwipeShortcut(SwipeDirection direction, QAction* action);
-    void registerGlobalAccel(KGlobalAccelInterface* interface);
-
     void cancelTouch();
 
     /**
@@ -115,10 +97,6 @@ public:
 
     Toplevel* findToplevel(const QPoint& pos);
     Toplevel* findManagedToplevel(const QPoint& pos);
-    global_shortcuts_manager* shortcuts() const
-    {
-        return m_shortcuts.get();
-    }
 
     /**
      * Sends an event through all InputFilters.
@@ -181,7 +159,8 @@ public:
     virtual void startInteractivePositionSelection(std::function<void(QPoint const&)> callback);
     virtual bool isSelectingWindow() const;
 
-    virtual void install_shortcuts() = 0;
+    input::platform& platform;
+    win::space& space;
 
 Q_SIGNALS:
     /**
@@ -216,14 +195,12 @@ Q_SIGNALS:
     void keyStateChanged(quint32 keyCode, key_state state);
 
 protected:
-    redirect() = default;
+    redirect(input::platform& platform, win::space& space);
 
     std::unique_ptr<keyboard_redirect> m_keyboard;
     std::unique_ptr<pointer_redirect> m_pointer;
     std::unique_ptr<tablet_redirect> m_tablet;
     std::unique_ptr<touch_redirect> m_touch;
-
-    std::unique_ptr<global_shortcuts_manager> m_shortcuts;
 
     std::list<event_filter*> m_filters;
     std::list<event_filter*>::const_iterator m_filters_install_iterator;
@@ -235,14 +212,6 @@ private:
     friend class InternalWindowEventFilter;
     friend class ForwardInputFilter;
 };
-
-template<typename T, typename Slot>
-inline void
-redirect::registerShortcut(const QKeySequence& shortcut, QAction* action, T* receiver, Slot slot)
-{
-    registerShortcut(shortcut, action);
-    QObject::connect(action, &QAction::triggered, receiver, slot);
-}
 
 }
 

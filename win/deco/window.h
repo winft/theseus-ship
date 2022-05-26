@@ -10,9 +10,10 @@
 
 namespace KWin
 {
+
 class Toplevel;
 
-namespace Decoration
+namespace win::deco
 {
 
 /**

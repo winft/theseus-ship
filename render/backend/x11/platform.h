@@ -49,9 +49,8 @@ public:
     bool openGLCompositingIsBroken() const override;
     void createOpenGLSafePoint(OpenGLSafePoint safePoint) override;
 
-    outline_visual* createOutline(render::outline* outline) override;
-    Decoration::Renderer*
-    createDecorationRenderer(Decoration::DecoratedClientImpl* client) override;
+    outline_visual* create_non_composited_outline(render::outline* outline) override;
+    win::deco::renderer* createDecorationRenderer(win::deco::client_impl* client) override;
 
     void invertScreen() override;
 

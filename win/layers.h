@@ -27,7 +27,7 @@ bool is_active_fullscreen(Win const* win)
     }
 
     // Instead of activeClient() - avoids flicker.
-    auto const ac = workspace()->mostRecentlyActivatedClient();
+    auto const ac = win->space.mostRecentlyActivatedClient();
 
     // According to NETWM spec implementation notes suggests "focused windows having state
     // _NET_WM_STATE_FULLSCREEN" to be on the highest layer. Also take the screen into account.
@@ -51,13 +51,13 @@ layer belong_to_layer(Win* win)
         return win::layer::unmanaged;
     }
     if (is_desktop(win)) {
-        return workspace()->showingDesktop() ? win::layer::above : win::layer::desktop;
+        return win->space.showingDesktop() ? win::layer::above : win::layer::desktop;
     }
     if (is_splash(win)) {
         return win::layer::normal;
     }
     if (is_dock(win)) {
-        if (workspace()->showingDesktop()) {
+        if (win->space.showingDesktop()) {
             return win::layer::notification;
         }
         return win->layer_for_dock();
@@ -71,7 +71,7 @@ layer belong_to_layer(Win* win)
     if (is_critical_notification(win)) {
         return win::layer::critical_notification;
     }
-    if (workspace()->showingDesktop() && win->belongsToDesktop()) {
+    if (win->space.showingDesktop() && win->belongsToDesktop()) {
         return win::layer::above;
     }
     if (win->control->keep_below()) {
@@ -102,7 +102,7 @@ void update_layer(Win* win)
         return;
     }
 
-    blocker block(workspace()->stacking_order);
+    blocker block(win->space.stacking_order);
 
     // Invalidate, will be updated when doing restacking.
     invalidate_layer(win);

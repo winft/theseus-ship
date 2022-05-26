@@ -38,13 +38,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-Toplevel::Toplevel()
-    : Toplevel(new win::transient(this))
+Toplevel::Toplevel(win::space& space)
+    : Toplevel(new win::transient(this), space)
 {
 }
 
-Toplevel::Toplevel(win::transient* transient)
-    : m_clientMachine(new win::x11::client_machine(this))
+Toplevel::Toplevel(win::transient* transient, win::space& space)
+    : space{space}
+    , m_clientMachine(new win::x11::client_machine(this))
     , m_internalId(QUuid::createUuid())
     , m_damageReplyPending(false)
     , m_skipCloseAnimation(false)
@@ -122,11 +123,11 @@ Toplevel* Toplevel::create_remnant(Toplevel* source)
         return nullptr;
     }
 
-    auto win = new Toplevel();
+    auto win = new Toplevel(source->space);
     win->copyToDeleted(source);
     win->m_remnant = new win::remnant(win, source);
 
-    win::add_remnant(*workspace(), source, win);
+    win::add_remnant(win->space, source, win);
     Q_EMIT source->remnant_created(win);
     return win;
 }
@@ -231,7 +232,7 @@ void Toplevel::setOpacity(double new_opacity)
     if (old_opacity == new_opacity)
         return;
     info->setOpacity(static_cast< unsigned long >(new_opacity * 0xffffffff));
-    if (win::compositing()) {
+    if (space.compositing()) {
         addRepaintFull();
         Q_EMIT opacityChanged(this, old_opacity);
     }
@@ -361,7 +362,7 @@ void Toplevel::getDamageRegionReply()
 
 void Toplevel::addDamageFull()
 {
-    if (!win::compositing()) {
+    if (!space.compositing()) {
         return;
     }
 
@@ -397,7 +398,7 @@ void Toplevel::addRepaint(QRect const& rect)
 
 void Toplevel::addRepaint(QRegion const& region)
 {
-    if (!win::compositing()) {
+    if (!space.compositing()) {
         return;
     }
     repaints_region += region;
@@ -417,7 +418,7 @@ void Toplevel::addLayerRepaint(QRect const& rect)
 
 void Toplevel::addLayerRepaint(QRegion const& region)
 {
-    if (!win::compositing()) {
+    if (!space.compositing()) {
         return;
     }
     layer_repaints_region += region;
@@ -505,7 +506,7 @@ void Toplevel::addWorkspaceRepaint(int x, int y, int w, int h)
 
 void Toplevel::addWorkspaceRepaint(QRect const& rect)
 {
-    if (!win::compositing()) {
+    if (!space.compositing()) {
         return;
     }
     render::compositor::self()->addRepaint(rect);
@@ -515,7 +516,7 @@ void Toplevel::setReadyForPainting()
 {
     if (!ready_for_painting) {
         ready_for_painting = true;
-        if (win::compositing()) {
+        if (space.compositing()) {
             addRepaintFull();
             Q_EMIT windowShown(this);
         }
@@ -1033,13 +1034,13 @@ void Toplevel::doPerformMoveResize()
 
 void Toplevel::leaveMoveResize()
 {
-    workspace()->setMoveResizeClient(nullptr);
+    space.setMoveResizeClient(nullptr);
     control->move_resize().enabled = false;
-    if (workspace()->edges->desktop_switching.when_moving_client) {
-        workspace()->edges->reserveDesktopSwitching(false, Qt::Vertical|Qt::Horizontal);
+    if (space.edges->desktop_switching.when_moving_client) {
+        space.edges->reserveDesktopSwitching(false, Qt::Vertical|Qt::Horizontal);
     }
     if (control->electric_maximizing()) {
-        workspace()->outline->hide();
+        space.outline->hide();
         win::elevate(this, false);
     }
 }
@@ -1117,7 +1118,7 @@ bool Toplevel::belongsToSameApplication([[maybe_unused]] Toplevel const* other,
 
 QRect Toplevel::iconGeometry() const
 {
-    return workspace()->get_icon_geometry(this);
+    return space.get_icon_geometry(this);
 }
 
 void Toplevel::setWindowHandles(xcb_window_t w)
@@ -1129,7 +1130,7 @@ void Toplevel::setWindowHandles(xcb_window_t w)
 void Toplevel::setShortcutInternal()
 {
     updateCaption();
-    workspace()->clientShortcutUpdated(this);
+    space.clientShortcutUpdated(this);
 }
 
 }

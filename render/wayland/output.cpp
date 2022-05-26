@@ -95,7 +95,7 @@ bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
     }
 
     // Create a list of all windows in the stacking order
-    windows = workspace()->x_stacking_tree->as_list();
+    windows = platform.compositor->space->x_stacking_tree->as_list();
     bool has_window_repaints{false};
     std::deque<Toplevel*> frame_windows;
 
@@ -237,7 +237,7 @@ void output::run()
 
 void output::dry_run()
 {
-    auto windows = workspace()->x_stacking_tree->as_list();
+    auto windows = platform.compositor->space->x_stacking_tree->as_list();
     std::deque<Toplevel*> frame_windows;
 
     for (auto win : windows) {

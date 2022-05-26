@@ -10,6 +10,7 @@
 #include "dbus_call.h"
 #include "screen_edge_item.h"
 #include "script.h"
+#include "singleton_interface.h"
 #include "space.h"
 #include "v2/client_model.h"
 #include "v3/client_model.h"
@@ -39,12 +40,14 @@
 namespace KWin::scripting
 {
 
-platform::platform()
+platform::platform(win::space& space)
     : m_scriptsLock(new QRecursiveMutex)
+    , space{space}
     , m_qmlEngine(new QQmlEngine(this))
     , m_declarativeScriptSharedContext(new QQmlContext(m_qmlEngine, this))
-    , qt_space{std::make_unique<template_space<qt_script_space, win::space>>(workspace())}
+    , qt_space{std::make_unique<template_space<qt_script_space, win::space>>(&space)}
 {
+    singleton_interface::platform = this;
     init();
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/Scripting"),
                                                  this,
@@ -59,6 +62,7 @@ platform::platform()
 platform::~platform()
 {
     QDBusConnection::sessionBus().unregisterObject(QStringLiteral("/Scripting"));
+    singleton_interface::platform = nullptr;
 }
 
 void platform::init()
@@ -90,10 +94,10 @@ void platform::init()
         3,
         0,
         "Workspace",
-        [](QQmlEngine* qmlEngine, QJSEngine* jsEngine) -> qt_script_space* {
+        [this](QQmlEngine* qmlEngine, QJSEngine* jsEngine) -> qt_script_space* {
             Q_UNUSED(qmlEngine)
             Q_UNUSED(jsEngine)
-            return new template_space<qt_script_space, win::space>(workspace());
+            return new template_space<qt_script_space, win::space>(&space);
         });
     qmlRegisterType<QAbstractItemModel>();
 
@@ -101,8 +105,7 @@ void platform::init()
     m_qmlEngine->rootContext()->setContextProperty(QStringLiteral("options"),
                                                    kwinApp()->options.get());
 
-    decl_space
-        = std::make_unique<template_space<declarative_script_space, win::space>>(workspace());
+    decl_space = std::make_unique<template_space<declarative_script_space, win::space>>(&space);
     m_declarativeScriptSharedContext->setContextProperty(QStringLiteral("workspace"),
                                                          decl_space.get());
     // QQmlListProperty interfaces only work via properties, rebind them as functions here
@@ -264,7 +267,7 @@ int platform::loadScript(const QString& filePath, const QString& pluginName)
         return -1;
     }
     const int id = scripts.size();
-    auto script = new scripting::script(id, filePath, pluginName, this);
+    auto script = new scripting::script(id, filePath, pluginName, *this, this);
     connect(script, &QObject::destroyed, this, &platform::scriptDestroyed);
     scripts.append(script);
     return id;
@@ -277,7 +280,7 @@ int platform::loadDeclarativeScript(const QString& filePath, const QString& plug
         return -1;
     }
     const int id = scripts.size();
-    auto script = new declarative_script(id, filePath, pluginName, this);
+    auto script = new declarative_script(id, filePath, pluginName, *this, this);
     connect(script, &QObject::destroyed, this, &platform::scriptDestroyed);
     scripts.append(script);
     return id;

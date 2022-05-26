@@ -25,8 +25,8 @@ void remove_controlled_window_from_space(Space& space, Win* win)
         space.closeActivePopup();
     }
 
-    if (space.m_userActionsMenu->isMenuClient(win)) {
-        space.m_userActionsMenu->close();
+    if (space.user_actions_menu->isMenuClient(win)) {
+        space.user_actions_menu->close();
     }
 
     if (space.client_keys_client == win) {
@@ -93,19 +93,20 @@ void reset_have_resize_effect(Win& win)
 template<typename Win>
 void finish_unmanaged_removal(Win* win, Toplevel* remnant)
 {
-    assert(contains(workspace()->m_windows, win));
+    auto& space = win->space;
+    assert(contains(space.m_windows, win));
 
-    remove_window_from_lists(*workspace(), win);
+    remove_window_from_lists(space, win);
     win->addWorkspaceRepaint(win::visible_rect(win));
 
     if (remnant) {
         win->disownDataPassedToDeleted();
         remnant->remnant()->unref();
     } else {
-        delete_window_from_space(*workspace(), win);
+        delete_window_from_space(space, win);
     }
 
-    Q_EMIT workspace()->unmanagedRemoved(win);
+    Q_EMIT space.unmanagedRemoved(win);
 }
 
 template<typename Win>
@@ -153,7 +154,7 @@ void release_window(Win* win, bool on_shutdown)
     }
 
 #if KWIN_BUILD_TABBOX
-    auto tabbox = tabbox::tabbox::self();
+    auto& tabbox = win->space.tabbox;
     if (tabbox->is_displayed() && tabbox->current_client() == win) {
         tabbox->next_prev(true);
     }
@@ -179,9 +180,9 @@ void release_window(Win* win, bool on_shutdown)
     Q_EMIT win->closed(win);
 
     // Remove ForceTemporarily rules
-    RuleBook::self()->discardUsed(win, true);
+    win->space.rule_book->discardUsed(win, true);
 
-    blocker block(workspace()->stacking_order);
+    blocker block(win->space.stacking_order);
 
     if (win->control->move_resize().enabled) {
         win->leaveMoveResize();
@@ -204,7 +205,7 @@ void release_window(Win* win, bool on_shutdown)
     win->hidden = true;
 
     if (!on_shutdown) {
-        workspace()->clientHidden(win);
+        win->space.clientHidden(win);
     }
 
     // Destroying decoration would cause ugly visual effect
@@ -214,7 +215,7 @@ void release_window(Win* win, bool on_shutdown)
     clean_grouping(win);
 
     if (!on_shutdown) {
-        remove_controlled_window_from_space(*workspace(), win);
+        remove_controlled_window_from_space(win->space, win);
         // Only when the window is being unmapped, not when closing down KWin (NETWM
         // sections 5.5,5.7)
         win->info->setDesktop(0);
@@ -255,7 +256,7 @@ void release_window(Win* win, bool on_shutdown)
         win->disownDataPassedToDeleted();
         del->remnant()->unref();
     } else {
-        delete_window_from_space(*workspace(), win);
+        delete_window_from_space(win->space, win);
     }
 
     delete win;
@@ -277,7 +278,7 @@ void destroy_window(Win* win)
     }
 
 #if KWIN_BUILD_TABBOX
-    auto tabbox = tabbox::tabbox::self();
+    auto& tabbox = win->space.tabbox;
     if (tabbox && tabbox->is_displayed() && tabbox->current_client() == win) {
         tabbox->next_prev(true);
     }
@@ -295,9 +296,9 @@ void destroy_window(Win* win)
     Q_EMIT win->closed(win);
 
     // Remove ForceTemporarily rules
-    RuleBook::self()->discardUsed(win, true);
+    win->space.rule_book->discardUsed(win, true);
 
-    blocker block(workspace()->stacking_order);
+    blocker block(win->space.stacking_order);
     if (win->control->move_resize().enabled) {
         win->leaveMoveResize();
     }
@@ -312,10 +313,10 @@ void destroy_window(Win* win)
     // So that it's not considered visible anymore
     win->hidden = true;
 
-    workspace()->clientHidden(win);
+    win->space.clientHidden(win);
     win->control->destroy_decoration();
     clean_grouping(win);
-    remove_controlled_window_from_space(*workspace(), win);
+    remove_controlled_window_from_space(win->space, win);
 
     // invalidate
     win->xcb_windows.client.reset();
@@ -328,7 +329,7 @@ void destroy_window(Win* win)
         win->disownDataPassedToDeleted();
         del->remnant()->unref();
     } else {
-        delete_window_from_space(*workspace(), win);
+        delete_window_from_space(win->space, win);
     }
     delete win;
 }

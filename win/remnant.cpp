@@ -6,6 +6,7 @@
 #include "remnant.h"
 
 #include "control.h"
+#include "deco/renderer.h"
 #include "geo.h"
 #include "meta.h"
 #include "net.h"
@@ -14,7 +15,6 @@
 #include "x11/window.h"
 
 #include "base/logging.h"
-#include "decorations/decorationrenderer.h"
 
 #include <cassert>
 
@@ -42,10 +42,7 @@ remnant::remnant(Toplevel* win, Toplevel* source)
             source->layoutDecorationRects(
                 decoration_left, decoration_top, decoration_right, decoration_bottom);
             if (win::decoration(source)) {
-                if (auto renderer = source->control->deco().client->renderer()) {
-                    decoration_renderer = renderer;
-                    decoration_renderer->reparent(win);
-                }
+                decoration_renderer = source->control->deco().client->move_renderer();
             }
         }
         minimized = source->control->minimized();
@@ -104,10 +101,7 @@ remnant::~remnant()
         qCCritical(KWIN_CORE) << "Deleted client has non-zero reference count (" << refcount << ")";
     }
     assert(refcount == 0);
-
-    if (workspace()) {
-        delete_window_from_space(*workspace(), win);
-    }
+    delete_window_from_space(win->space, win);
 }
 
 void remnant::ref()

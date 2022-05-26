@@ -42,13 +42,15 @@ class keyboard_grab;
 namespace wayland
 {
 
+class platform;
+
 using im_keyboard_grab_v2 = keyboard_grab<Wrapland::Server::input_method_keyboard_grab_v2>;
 
 class KWIN_EXPORT input_method : public QObject
 {
     Q_OBJECT
 public:
-    input_method(base::wayland::server* server);
+    input_method(wayland::platform& platform, base::wayland::server* server);
     ~input_method();
 
 private:
@@ -71,6 +73,8 @@ private:
 
     std::unique_ptr<Wrapland::Server::text_input_manager_v3> text_input_manager_v3;
     std::unique_ptr<Wrapland::Server::input_method_manager_v2> input_method_manager_v2;
+
+    wayland::platform& platform;
 };
 
 }

@@ -23,6 +23,11 @@ public:
     {
         p->lock();
     }
+    explicit blocker(std::unique_ptr<BasicLockable>& lock)
+        : p(lock.get())
+    {
+        p->lock();
+    }
     blocker(blocker const& other)
     {
         p = other.p;

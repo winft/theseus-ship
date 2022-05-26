@@ -57,7 +57,7 @@ class KWIN_EXPORT space : public win::space
 public:
     using x11_window = xwl_window;
 
-    space(base::wayland::server* server);
+    space(render::compositor& render, base::wayland::server* server);
     ~space() override;
 
     Toplevel* findInternal(QWindow* window) const override;

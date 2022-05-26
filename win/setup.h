@@ -7,11 +7,11 @@
 
 #include "app_menu.h"
 #include "deco.h"
+#include "deco/bridge.h"
 #include "placement.h"
-#include "render/compositor.h"
 #include "screen.h"
 
-#include "decorations/decorationbridge.h"
+#include "render/compositor.h"
 #include "rules/rule_book.h"
 
 #include <KDecoration2/Decoration>
@@ -26,7 +26,7 @@ void setup_rules(Win* win, bool ignore_temporary)
     //                There is only one so this works fine but it's not robustly specified.
     //                Either reshuffle later or use explicit connection object.
     QObject::disconnect(win, &Win::captionChanged, win, nullptr);
-    win->control->set_rules(RuleBook::self()->find(win, ignore_temporary));
+    win->control->set_rules(win->space.rule_book->find(win, ignore_temporary));
     // check only after getting the rules, because there may be a rule forcing window type
     // TODO(romangg): what does this mean?
 }
@@ -62,7 +62,7 @@ void setup_window_control_connections(Win* win)
 
     QObject::connect(win, &Win::paletteChanged, win, [win] { trigger_decoration_repaint(win); });
 
-    QObject::connect(Decoration::DecorationBridge::self(), &QObject::destroyed, win, [win] {
+    QObject::connect(win->space.deco.get(), &QObject::destroyed, win, [win] {
         win->control->destroy_decoration();
     });
 
@@ -89,15 +89,16 @@ void setup_window_control_connections(Win* win)
                          }
                          geometry_updates_blocker blocker(win);
 
-                         auto const area = workspace()->clientArea(
-                             PlacementArea, get_current_output(*workspace()), win->desktop());
+                         auto const area = win->space.clientArea(
+                             PlacementArea, get_current_output(win->space), win->desktop());
 
                          win::place(win, area);
                      });
 
-    QObject::connect(app_menu::self(), &app_menu::applicationMenuEnabledChanged, win, [win] {
-        Q_EMIT win->hasApplicationMenuChanged(win->control->has_application_menu());
-    });
+    QObject::connect(
+        win->space.app_menu.get(), &app_menu::applicationMenuEnabledChanged, win, [win] {
+            Q_EMIT win->hasApplicationMenuChanged(win->control->has_application_menu());
+        });
 }
 
 }

@@ -17,7 +17,6 @@
 #include "tablet_redirect.h"
 #include "touch_redirect.h"
 
-#include "global_shortcuts_manager.h"
 #include "main.h"
 #include "render/effects.h"
 #include "render/platform.h"
@@ -29,6 +28,13 @@
 
 namespace KWin::input
 {
+
+redirect::redirect(input::platform& platform, win::space& space)
+    : platform{platform}
+    , space{space}
+{
+    platform.redirect = this;
+}
 
 redirect::~redirect()
 {
@@ -82,17 +88,13 @@ Qt::MouseButtons redirect::qtButtonStates() const
 
 Toplevel* redirect::findToplevel(const QPoint& pos)
 {
-    if (!workspace()) {
-        return nullptr;
-    }
-
     // TODO: check whether the unmanaged wants input events at all
     if (!kwinApp()->is_screen_locked()) {
         // if an effect overrides the cursor we don't have a window to focus
         if (effects && static_cast<render::effects_handler_impl*>(effects)->isMouseInterception()) {
             return nullptr;
         }
-        auto const& unmanaged = workspace()->unmanagedList();
+        auto const& unmanaged = space.unmanagedList();
         for (auto const& u : unmanaged) {
             if (win::input_geometry(u).contains(pos) && win::wayland::accepts_input(u, pos)) {
                 return u;
@@ -104,11 +106,8 @@ Toplevel* redirect::findToplevel(const QPoint& pos)
 
 Toplevel* redirect::findManagedToplevel(const QPoint& pos)
 {
-    if (!workspace()) {
-        return nullptr;
-    }
     auto const isScreenLocked = kwinApp()->is_screen_locked();
-    auto const& stacking = workspace()->stacking_order->sorted();
+    auto const& stacking = space.stacking_order->sorted();
     if (stacking.empty()) {
         return nullptr;
     }
@@ -141,36 +140,6 @@ Toplevel* redirect::findManagedToplevel(const QPoint& pos)
         }
     } while (it != stacking.begin());
     return nullptr;
-}
-
-void redirect::registerShortcut(const QKeySequence& shortcut, QAction* action)
-{
-    Q_UNUSED(shortcut)
-    kwinApp()->input->setup_action_for_global_accel(action);
-}
-
-void redirect::registerPointerShortcut(Qt::KeyboardModifiers modifiers,
-                                       Qt::MouseButton pointerButtons,
-                                       QAction* action)
-{
-    m_shortcuts->registerPointerShortcut(action, modifiers, pointerButtons);
-}
-
-void redirect::registerAxisShortcut(Qt::KeyboardModifiers modifiers,
-                                    PointerAxisDirection axis,
-                                    QAction* action)
-{
-    m_shortcuts->registerAxisShortcut(action, modifiers, axis);
-}
-
-void redirect::registerTouchpadSwipeShortcut(SwipeDirection direction, QAction* action)
-{
-    m_shortcuts->registerTouchpadSwipe(action, direction);
-}
-
-void redirect::registerGlobalAccel(KGlobalAccelInterface* interface)
-{
-    m_shortcuts->setKGlobalAccelInterface(interface);
 }
 
 QPointF redirect::globalPointer() const

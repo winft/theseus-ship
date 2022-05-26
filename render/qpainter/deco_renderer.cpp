@@ -11,12 +11,12 @@
 #include "window.h"
 
 #include "base/output.h"
-#include "decorations/decoratedclient.h"
 #include "input/cursor.h"
 #include "main.h"
 #include "render/compositor.h"
 #include "render/cursor.h"
 #include "toplevel.h"
+#include "win/deco/client_impl.h"
 
 #include <KDecoration2/Decoration>
 #include <QPainter>
@@ -28,11 +28,11 @@
 namespace KWin::render::qpainter
 {
 
-deco_renderer::deco_renderer(Decoration::DecoratedClientImpl* client)
-    : Renderer(client)
+deco_renderer::deco_renderer(win::deco::client_impl* client)
+    : renderer(client)
 {
     connect(this,
-            &Renderer::renderScheduled,
+            &renderer::renderScheduled,
             client->client(),
             static_cast<void (Toplevel::*)(QRegion const&)>(&Toplevel::addRepaint));
 }
@@ -110,10 +110,10 @@ void deco_renderer::resizeImages()
     checkAndCreate(int(DecorationPart::Bottom), bottom.size());
 }
 
-void deco_renderer::reparent(Toplevel* window)
+void deco_renderer::reparent()
 {
     render();
-    Renderer::reparent(window);
+    renderer::reparent();
 }
 
 }

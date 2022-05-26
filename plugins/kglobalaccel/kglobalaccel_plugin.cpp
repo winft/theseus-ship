@@ -42,15 +42,16 @@ void KGlobalAccelImpl::setEnabled(bool enabled)
     if (m_shuttingDown) {
         return;
     }
-    auto s_input = KWin::kwinApp()->input->redirect.get();
-    if (!s_input) {
+    auto input = KWin::kwinApp()->input.get();
+    if (!input) {
         qFatal("This plugin is intended to be used with KWin and this is not KWin, exiting now");
     } else {
         if (!m_inputDestroyedConnection) {
-            m_inputDestroyedConnection = connect(s_input, &QObject::destroyed, this, [this] { m_shuttingDown = true; });
+            m_inputDestroyedConnection
+                = connect(input, &QObject::destroyed, this, [this] { m_shuttingDown = true; });
         }
     }
-    s_input->registerGlobalAccel(enabled ? this : nullptr);
+    input->registerGlobalAccel(enabled ? this : nullptr);
 }
 
 bool KGlobalAccelImpl::checkKeyPressed(int keyQt)

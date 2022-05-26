@@ -122,7 +122,7 @@ void input_method_test::cleanup()
     }
 
     toplevel.client_surface.reset();
-    QVERIFY(workspace()->windows().empty());
+    QVERIFY(Test::app()->workspace->windows().empty());
 
     input_method.reset();
     text_input.reset();
@@ -181,8 +181,7 @@ void input_method_test::create_popup()
     popup.server_popup_surface
         = popup_spy.front().front().value<Wrapland::Server::input_method_popup_surface_v2*>();
 
-    popup.window = static_cast<win::wayland::space*>(workspace())
-                       ->find_window(popup.server_popup_surface->surface());
+    popup.window = Test::app()->workspace->find_window(popup.server_popup_surface->surface());
     QVERIFY(popup.window);
 
     popup.shown_spy
@@ -213,10 +212,11 @@ void input_method_test::render_popup()
  */
 void input_method_test::test_early_popup_window()
 {
-    QSignalSpy window_added_spy(workspace(), &win::space::wayland_window_added);
+    QSignalSpy window_added_spy(Test::app()->workspace.get(), &win::space::wayland_window_added);
     QVERIFY(window_added_spy.isValid());
 
-    QSignalSpy window_removed_spy(workspace(), &win::space::wayland_window_removed);
+    QSignalSpy window_removed_spy(Test::app()->workspace.get(),
+                                  &win::space::wayland_window_removed);
     QVERIFY(window_removed_spy.isValid());
 
     QSignalSpy done_spy(input_method.get(), &Wrapland::Client::input_method_v2::done);
@@ -269,10 +269,11 @@ void input_method_test::test_early_popup_window()
  */
 void input_method_test::test_late_popup_window()
 {
-    QSignalSpy window_added_spy(workspace(), &win::space::wayland_window_added);
+    QSignalSpy window_added_spy(Test::app()->workspace.get(), &win::space::wayland_window_added);
     QVERIFY(window_added_spy.isValid());
 
-    QSignalSpy window_removed_spy(workspace(), &win::space::wayland_window_removed);
+    QSignalSpy window_removed_spy(Test::app()->workspace.get(),
+                                  &win::space::wayland_window_removed);
     QVERIFY(window_removed_spy.isValid());
 
     QSignalSpy done_spy(input_method.get(), &Wrapland::Client::input_method_v2::done);

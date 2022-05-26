@@ -22,11 +22,13 @@ class window;
 namespace input
 {
 
+class redirect;
+
 class popup_filter : public QObject, public event_filter
 {
     Q_OBJECT
 public:
-    explicit popup_filter();
+    explicit popup_filter(input::redirect& redirect);
 
     bool key(key_event const& event) override;
     bool key_repeat(key_event const& event) override;

@@ -31,7 +31,7 @@ void add_controlled_window_to_space(Space& space, Win* win)
             space.request_focus(win);
         }
     } else {
-        focus_chain::self()->update(win, focus_chain::Update);
+        space.focus_chain->update(win, focus_chain::Update);
     }
 
     if (!contains(space.stacking_order->pre_stack, win)) {
@@ -53,10 +53,10 @@ void add_controlled_window_to_space(Space& space, Win* win)
         // If there's no active client, make this desktop the active one
         if (!space.activeClient() && space.should_get_focus.size() == 0)
             space.activateClient(
-                find_desktop(&space, true, virtual_desktop_manager::self()->current()));
+                find_desktop(&space, true, space.virtual_desktop_manager->current()));
     }
 
-    check_active_modal<Win>();
+    check_active_modal<Win>(space);
     space.checkTransients(win);
 
     // Propagate new client

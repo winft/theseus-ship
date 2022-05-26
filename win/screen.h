@@ -60,7 +60,7 @@ void set_current_output_by_window(Base& base, Win const& window)
 template<typename Win>
 bool on_active_screen(Win* win)
 {
-    return on_screen(win, get_current_output(*workspace()));
+    return on_screen(win, get_current_output(win->space));
 }
 
 template<typename Win>
@@ -79,7 +79,7 @@ bool on_desktop(Win* win, int d)
 {
     return (kwinApp()->operationMode() == Application::OperationModeWaylandOnly
                     || kwinApp()->operationMode() == Application::OperationModeXwayland
-                ? win->desktops().contains(virtual_desktop_manager::self()->desktopForX11Id(d))
+                ? win->desktops().contains(win->space.virtual_desktop_manager->desktopForX11Id(d))
                 : win->desktop() == d)
         || on_all_desktops(win);
 }
@@ -87,7 +87,7 @@ bool on_desktop(Win* win, int d)
 template<typename Win>
 bool on_current_desktop(Win* win)
 {
-    return on_desktop(win, virtual_desktop_manager::self()->current());
+    return on_desktop(win, win->space.virtual_desktop_manager->current());
 }
 
 template<typename Win>
@@ -132,11 +132,11 @@ void set_desktops(Win* win, QVector<virtual_desktop*> desktops)
 
     if ((was_desk == NET::OnAllDesktops) != (win->desktop() == NET::OnAllDesktops)) {
         // OnAllDesktops changed
-        workspace()->updateOnAllDesktopsOfTransients(win);
+        win->space.updateOnAllDesktopsOfTransients(win);
     }
 
     auto transients_stacking_order
-        = restacked_by_space_stacking_order(workspace(), win->transient()->children);
+        = restacked_by_space_stacking_order(&win->space, win->transient()->children);
     for (auto const& child : transients_stacking_order) {
         if (!child->transient()->annexed) {
             set_desktops(child, desktops);
@@ -153,7 +153,7 @@ void set_desktops(Win* win, QVector<virtual_desktop*> desktops)
 
     win->doSetDesktop(win->desktop(), was_desk);
 
-    focus_chain::self()->update(win, focus_chain::MakeFirst);
+    win->space.focus_chain->update(win, focus_chain::MakeFirst);
     win->updateWindowRules(Rules::Desktop);
 
     Q_EMIT win->desktopChanged();
@@ -169,7 +169,7 @@ void set_desktops(Win* win, QVector<virtual_desktop*> desktops)
 template<typename Win>
 void set_desktop(Win* win, int desktop)
 {
-    auto const desktops_count = static_cast<int>(virtual_desktop_manager::self()->count());
+    auto const desktops_count = static_cast<int>(win->space.virtual_desktop_manager->count());
     if (desktop != NET::OnAllDesktops) {
         // Check range.
         desktop = std::max(1, std::min(desktops_count, desktop));
@@ -178,7 +178,7 @@ void set_desktop(Win* win, int desktop)
 
     QVector<virtual_desktop*> desktops;
     if (desktop != NET::OnAllDesktops) {
-        desktops << virtual_desktop_manager::self()->desktopForX11Id(desktop);
+        desktops << win->space.virtual_desktop_manager->desktopForX11Id(desktop);
     }
     set_desktops(win, desktops);
 }
@@ -193,7 +193,7 @@ void set_on_all_desktops(Win* win, bool set)
     if (set) {
         set_desktop(win, NET::OnAllDesktops);
     } else {
-        set_desktop(win, virtual_desktop_manager::self()->current());
+        set_desktop(win, win->space.virtual_desktop_manager->current());
     }
 }
 
@@ -225,7 +225,7 @@ void leave_desktop(Win* win, virtual_desktop* virtualDesktop)
 {
     QVector<virtual_desktop*> currentDesktops;
     if (win->desktops().isEmpty()) {
-        currentDesktops = virtual_desktop_manager::self()->desktops();
+        currentDesktops = win->space.virtual_desktop_manager->desktops();
     } else {
         currentDesktops = win->desktops();
     }

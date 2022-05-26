@@ -29,10 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/x11/xcb/extensions.h"
 #include "debug/perf/ftrace.h"
 #include "desktop/screen_locker_watcher.h"
-#include "render/compositor.h"
-#include "input/global_shortcuts_manager.h"
-#include "input/platform.h"
-#include "input/redirect.h"
 #include "win/space.h"
 
 #include <kwineffects/effect_window.h>
@@ -96,11 +92,9 @@ Application::Application(Application::OperationMode mode, int &argc, char **argv
 {
     qDebug("Starting KWinFT %s", KWIN_VERSION_STRING);
 
-#if HAVE_PERF
-    if(!Perf::Ftrace::valid(this, true)) {
-        qCWarning(KWIN_CORE) << "Not able to setup Ftracing interface.";
+    if(!Perf::Ftrace::setEnabled(qEnvironmentVariableIsSet("KWIN_PERF_FTRACE"))) {
+        qCWarning(KWIN_CORE) << "Can't enable Ftrace via environment variable.";
     }
-#endif
 
     qRegisterMetaType<base::options::WindowOperation>("base::options::WindowOperation");
     qRegisterMetaType<KWin::EffectWindow*>();

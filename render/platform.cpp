@@ -62,15 +62,12 @@ void platform::createOpenGLSafePoint(OpenGLSafePoint safePoint)
     Q_UNUSED(safePoint)
 }
 
-render::outline_visual* platform::createOutline(render::outline* outline)
+render::outline_visual* platform::create_non_composited_outline(render::outline* /*outline*/)
 {
-    if (render::compositor::compositing()) {
-        return new render::composited_outline_visual(outline);
-    }
     return nullptr;
 }
 
-Decoration::Renderer* platform::createDecorationRenderer(Decoration::DecoratedClientImpl* client)
+win::deco::renderer* platform::createDecorationRenderer(win::deco::client_impl* client)
 {
     if (render::compositor::self()->scene()) {
         return render::compositor::self()->scene()->createDecorationRenderer(client);
@@ -81,11 +78,7 @@ Decoration::Renderer* platform::createDecorationRenderer(Decoration::DecoratedCl
 void platform::invertScreen()
 {
     if (effects) {
-        if (auto inverter = static_cast<render::effects_handler_impl*>(effects)->provides(
-                Effect::ScreenInversion)) {
-            qCDebug(KWIN_CORE) << "inverting screen using Effect plugin";
-            QMetaObject::invokeMethod(inverter, "toggleScreenInversion", Qt::DirectConnection);
-        }
+        static_cast<render::effects_handler_impl*>(effects)->invert_screen();
     }
 }
 

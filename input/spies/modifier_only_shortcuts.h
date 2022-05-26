@@ -29,11 +29,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::input
 {
 
+class redirect;
+
 class KWIN_EXPORT modifier_only_shortcuts_spy : public QObject, public event_spy
 {
     Q_OBJECT
 public:
-    explicit modifier_only_shortcuts_spy();
+    explicit modifier_only_shortcuts_spy(input::redirect& redirect);
     ~modifier_only_shortcuts_spy() override;
 
     void button(button_event const& event) override;
@@ -50,6 +52,7 @@ private:
     Qt::KeyboardModifiers m_cachedMods;
     Qt::MouseButtons m_pressedButtons;
     QSet<quint32> m_pressedKeys;
+    input::redirect& redirect;
 };
 
 }

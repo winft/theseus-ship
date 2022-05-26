@@ -17,8 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_DECORATION_RENDERER_H
-#define KWIN_DECORATION_RENDERER_H
+#pragma once
 
 #include <QObject>
 #include <QRegion>
@@ -29,31 +28,27 @@ namespace KWin
 {
 class Toplevel;
 
-namespace Decoration
+namespace win::deco
 {
 
-class DecoratedClientImpl;
+class client_impl;
 
-class KWIN_EXPORT Renderer : public QObject
+class KWIN_EXPORT renderer : public QObject
 {
     Q_OBJECT
 public:
-    ~Renderer() override;
+    ~renderer() override;
 
-    void schedule(const QRegion &region);
+    void schedule(const QRegion& region);
 
-    /**
-     * Reparents this Renderer to the @p deleted.
-     * After this call the Renderer is no longer able to render
-     * anything, client() returns a nullptr.
-     */
-    virtual void reparent(Toplevel* window);
+    /// After this call the renderer is no longer able to render anything, client() returns null.
+    virtual void reparent();
 
 Q_SIGNALS:
-    void renderScheduled(const QRegion &geo);
+    void renderScheduled(const QRegion& geo);
 
 protected:
-    explicit Renderer(DecoratedClientImpl *client);
+    explicit renderer(client_impl* client);
     /**
      * @returns the scheduled paint region and resets
      */
@@ -61,26 +56,27 @@ protected:
 
     virtual void render() = 0;
 
-    DecoratedClientImpl *client() {
+    client_impl* client()
+    {
         return m_client;
     }
 
-    bool areImageSizesDirty() const {
+    bool areImageSizesDirty() const
+    {
         return m_imageSizesDirty;
     }
-    void resetImageSizesDirty() {
+    void resetImageSizesDirty()
+    {
         m_imageSizesDirty = false;
     }
-    QImage renderToImage(const QRect &geo);
-    void renderToPainter(QPainter *painter, const QRect &rect);
+    QImage renderToImage(const QRect& geo);
+    void renderToPainter(QPainter* painter, const QRect& rect);
 
 private:
-    DecoratedClientImpl *m_client;
+    client_impl* m_client;
     QRegion m_scheduled;
     bool m_imageSizesDirty;
 };
 
 }
 }
-
-#endif

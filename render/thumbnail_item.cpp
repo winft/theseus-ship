@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/compositor.h"
 #include "toplevel.h"
 #include "win/control.h"
+#include "win/singleton_interface.h"
 #include "win/space.h"
 
 #include <QPainter>
@@ -134,7 +135,7 @@ window_thumbnail_item::~window_thumbnail_item()
 
 Toplevel* find_controlled_window(QUuid const& wId)
 {
-    for (auto win : workspace()->m_windows) {
+    for (auto win : win::singleton_interface::space->m_windows) {
         if (win->control && win->internalId() == wId) {
             return win;
         }
@@ -209,7 +210,8 @@ desktop_thumbnail_item::~desktop_thumbnail_item()
 
 void desktop_thumbnail_item::setDesktop(int desktop)
 {
-    desktop = qBound<int>(1, desktop, win::virtual_desktop_manager::self()->count());
+    desktop = qBound<int>(
+        1, desktop, win::singleton_interface::space->virtual_desktop_manager->count());
     if (desktop == m_desktop) {
         return;
     }

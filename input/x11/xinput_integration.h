@@ -47,6 +47,8 @@ public:
         std::unique_ptr<input::keyboard> keyboard;
     } fake_devices;
 
+    x11::platform* platform;
+
 private:
     void setup_fake_devices();
     Display* display() const
@@ -60,7 +62,6 @@ private:
     int m_minorVersion = 0;
     QPointer<cursor> m_x11Cursor;
     Display* m_x11Display;
-    x11::platform* platform;
 
     QScopedPointer<XInputEventFilter> m_xiEventFilter;
     QScopedPointer<XKeyPressReleaseEventFilter> m_keyPressFilter;

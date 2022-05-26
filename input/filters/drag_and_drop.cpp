@@ -22,6 +22,11 @@
 namespace KWin::input
 {
 
+drag_and_drop_filter::drag_and_drop_filter(input::redirect& redirect)
+    : redirect{redirect}
+{
+}
+
 bool drag_and_drop_filter::button(button_event const& event)
 {
     auto seat = waylandServer()->seat();
@@ -71,7 +76,7 @@ bool drag_and_drop_filter::motion(motion_event const& event)
         // TODO: consider decorations
         if (window->surface() != seat->drags().get_target().surface) {
             if (window->control) {
-                workspace()->activateClient(window);
+                redirect.space.activateClient(window);
             }
             seat->drags().set_target(window->surface(), window->input_transform());
         }
@@ -126,11 +131,11 @@ bool drag_and_drop_filter::touch_motion(touch_motion_event const& event)
 
     seat->touches().touch_move(wraplandId, event.pos);
 
-    if (Toplevel* t = kwinApp()->input->redirect->findToplevel(event.pos.toPoint())) {
+    if (auto t = redirect.findToplevel(event.pos.toPoint())) {
         // TODO: consider decorations
         if (t->surface() != seat->drags().get_target().surface) {
             if (t->control) {
-                workspace()->activateClient(t);
+                redirect.space.activateClient(t);
             }
             seat->drags().set_target(t->surface(), event.pos, t->input_transform());
         }

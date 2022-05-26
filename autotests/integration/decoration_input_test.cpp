@@ -28,13 +28,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/space.h"
 
 #include "win/deco.h"
+#include "win/deco/bridge.h"
+#include "win/deco/client_impl.h"
+#include "win/deco/settings.h"
 #include "win/internal_window.h"
 #include "win/move.h"
 #include "win/wayland/window.h"
-
-#include "decorations/decoratedclient.h"
-#include "decorations/decorationbridge.h"
-#include "decorations/settings.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/connection_thread.h>
@@ -133,7 +132,7 @@ Toplevel* DecorationInputTest::showWindow()
     // let's render
     auto c = Test::render_and_wait_for_shown(client.surface, QSize(500, 50), Qt::blue);
     VERIFY(c);
-    COMPARE(workspace()->activeClient(), c);
+    COMPARE(Test::app()->workspace->activeClient(), c);
     COMPARE(c->userCanSetNoBorder(), true);
     COMPARE(win::decoration(c) != nullptr, true);
 
@@ -208,8 +207,8 @@ void DecorationInputTest::testAxis()
 
     MOTION(QPoint(c->frameGeometry().center().x(), win::frame_to_client_pos(c, QPoint()).y() / 2));
 
-    QVERIFY(kwinApp()->input->redirect->pointer()->decoration());
-    QCOMPARE(kwinApp()->input->redirect->pointer()->decoration()->decoration()->sectionUnderMouse(),
+    QVERIFY(kwinApp()->input->redirect->pointer()->focus.deco);
+    QCOMPARE(kwinApp()->input->redirect->pointer()->focus.deco->decoration()->sectionUnderMouse(),
              Qt::TitleBarArea);
 
     // TODO: mouse wheel direction looks wrong to me
@@ -228,12 +227,14 @@ void DecorationInputTest::testAxis()
     win::move(c, QPoint(0, 0));
     QFETCH(QPoint, decoPoint);
     MOTION(decoPoint);
-    QVERIFY(kwinApp()->input->redirect->pointer()->decoration());
-    QCOMPARE(kwinApp()->input->redirect->pointer()->decoration()->client(), c);
-    QTEST(kwinApp()->input->redirect->pointer()->decoration()->decoration()->sectionUnderMouse(),
+    QVERIFY(kwinApp()->input->redirect->pointer()->focus.deco);
+    QCOMPARE(kwinApp()->input->redirect->pointer()->focus.deco->client(), c);
+    QTEST(kwinApp()->input->redirect->pointer()->focus.deco->decoration()->sectionUnderMouse(),
           "expectedSection");
     Test::pointer_axis_vertical(5.0, timestamp++, 0);
     QVERIFY(!c->control->keep_below());
+
+    QEXPECT_FAIL("topLeft|xdgWmBase", "Button at (0,0;24x24) filters out the event", Continue);
     QVERIFY(!c->control->keep_above());
 }
 
@@ -275,9 +276,9 @@ void KWin::DecorationInputTest::testDoubleClick()
     win::move(c, QPoint(0, 0));
     QFETCH(QPoint, decoPoint);
     MOTION(decoPoint);
-    QVERIFY(kwinApp()->input->redirect->pointer()->decoration());
-    QCOMPARE(kwinApp()->input->redirect->pointer()->decoration()->client(), c);
-    QTEST(kwinApp()->input->redirect->pointer()->decoration()->decoration()->sectionUnderMouse(),
+    QVERIFY(kwinApp()->input->redirect->pointer()->focus.deco);
+    QCOMPARE(kwinApp()->input->redirect->pointer()->focus.deco->client(), c);
+    QTEST(kwinApp()->input->redirect->pointer()->focus.deco->decoration()->sectionUnderMouse(),
           "expectedSection");
     // double click
     PRESS;
@@ -331,9 +332,9 @@ void KWin::DecorationInputTest::testDoubleTap()
     QFETCH(QPoint, decoPoint);
     // double click
     Test::touch_down(0, decoPoint, timestamp++);
-    QVERIFY(kwinApp()->input->redirect->touch()->decoration());
-    QCOMPARE(kwinApp()->input->redirect->touch()->decoration()->client(), c);
-    QTEST(kwinApp()->input->redirect->touch()->decoration()->decoration()->sectionUnderMouse(),
+    QVERIFY(kwinApp()->input->redirect->touch()->focus.deco);
+    QCOMPARE(kwinApp()->input->redirect->touch()->focus.deco->client(), c);
+    QTEST(kwinApp()->input->redirect->touch()->focus.deco->decoration()->sectionUnderMouse(),
           "expectedSection");
     Test::touch_up(0, timestamp++);
     QVERIFY(!c->isOnAllDesktops());
@@ -362,8 +363,8 @@ void DecorationInputTest::testHover()
     //
     // TODO: Test input position with different border sizes.
     // TODO: We should test with the fake decoration to have a fixed test environment.
-    const bool hasBorders = Decoration::DecorationBridge::self()->settings()->borderSize()
-        != KDecoration2::BorderSize::None;
+    auto const hasBorders
+        = Test::app()->workspace->deco->settings()->borderSize() != KDecoration2::BorderSize::None;
     auto deviation = [hasBorders] { return hasBorders ? -1 : 0; };
 
     MOTION(QPoint(c->frameGeometry().x(), 0));
@@ -558,7 +559,7 @@ void DecorationInputTest::testResizeOutsideWindow()
         ->group("org.kde.kdecoration2")
         .writeEntry("BorderSize", QStringLiteral("None"));
     kwinApp()->config()->sync();
-    workspace()->slotReconfigure();
+    Test::app()->workspace->slotReconfigure();
 
     // now create window
     auto c = showWindow();
@@ -658,7 +659,7 @@ void DecorationInputTest::testModifierClickUnrestrictedMove()
     group.writeEntry("CommandAll2", "Move");
     group.writeEntry("CommandAll3", "Move");
     group.sync();
-    workspace()->slotReconfigure();
+    Test::app()->workspace->slotReconfigure();
     QCOMPARE(kwinApp()->options->commandAllModifier(),
              modKey == QStringLiteral("Alt") ? Qt::AltModifier : Qt::MetaModifier);
     QCOMPARE(kwinApp()->options->commandAll1(), base::options::MouseUnrestrictedMove);
@@ -730,7 +731,7 @@ void DecorationInputTest::testModifierScrollOpacity()
     group.writeEntry("CommandAllKey", modKey);
     group.writeEntry("CommandAllWheel", "change opacity");
     group.sync();
-    workspace()->slotReconfigure();
+    Test::app()->workspace->slotReconfigure();
 
     auto c = showWindow();
     QVERIFY(c);
@@ -811,10 +812,10 @@ void DecorationInputTest::testTouchEvents()
     const QPoint tapPoint(c->frameGeometry().center().x(),
                           win::frame_to_client_pos(c, QPoint()).y() / 2);
 
-    QVERIFY(!kwinApp()->input->redirect->touch()->decoration());
+    QVERIFY(!kwinApp()->input->redirect->touch()->focus.deco);
     Test::touch_down(0, tapPoint, timestamp++);
-    QVERIFY(kwinApp()->input->redirect->touch()->decoration());
-    QCOMPARE(kwinApp()->input->redirect->touch()->decoration()->decoration(), win::decoration(c));
+    QVERIFY(kwinApp()->input->redirect->touch()->focus.deco);
+    QCOMPARE(kwinApp()->input->redirect->touch()->focus.deco->decoration(), win::decoration(c));
     QCOMPARE(hoverMoveSpy.count(), 1);
     QCOMPARE(hoverLeaveSpy.count(), 0);
     Test::touch_up(0, timestamp++);
@@ -855,7 +856,7 @@ void DecorationInputTest::testTooltipDoesntEatKeyEvents()
     QSignalSpy keyEvent(keyboard, &Wrapland::Client::Keyboard::keyChanged);
     QVERIFY(keyEvent.isValid());
 
-    QSignalSpy clientAddedSpy(workspace(), &win::space::internalClientAdded);
+    QSignalSpy clientAddedSpy(Test::app()->workspace.get(), &win::space::internalClientAdded);
     QVERIFY(clientAddedSpy.isValid());
     c->control->deco().client->requestShowToolTip(QStringLiteral("test"));
     // now we should get an internal window

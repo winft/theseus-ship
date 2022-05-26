@@ -76,9 +76,10 @@ static const QString s_nameProperty = QStringLiteral("X-KDE-PluginInfo-Name");
 static const QString s_jsConstraint = QStringLiteral("[X-Plasma-API] == 'javascript'");
 static const QString s_serviceType = QStringLiteral("KWin/Effect");
 
-scripted_effect_loader::scripted_effect_loader(QObject* parent)
+scripted_effect_loader::scripted_effect_loader(win::space& space, QObject* parent)
     : basic_effect_loader(parent)
     , m_queue(new effect_load_queue<scripted_effect_loader, KPluginMetaData>(this))
+    , space{space}
 {
 }
 
@@ -136,7 +137,7 @@ bool scripted_effect_loader::loadEffect(const KPluginMetaData& effect, load_effe
         return false;
     }
 
-    auto e = scripting::effect::create(effect);
+    auto e = scripting::effect::create(effect, space);
     if (!e) {
         qCDebug(KWIN_CORE) << "Could not initialize scripted effect: " << name;
         return false;
@@ -359,10 +360,10 @@ void plugin_effect_loader::clear()
 {
 }
 
-effect_loader::effect_loader(QObject* parent)
+effect_loader::effect_loader(win::space& space, QObject* parent)
     : basic_effect_loader(parent)
 {
-    m_loaders << new scripted_effect_loader(this) << new plugin_effect_loader(this);
+    m_loaders << new scripted_effect_loader(space, this) << new plugin_effect_loader(this);
     for (auto it = m_loaders.constBegin(); it != m_loaders.constEnd(); ++it) {
         connect(*it, &basic_effect_loader::effectLoaded, this, &basic_effect_loader::effectLoaded);
     }

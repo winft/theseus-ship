@@ -20,11 +20,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "lib/app.h"
 
 #include "base/wayland/server.h"
-#include "decorations/decoratedclient.h"
 #include "render/effect_loader.h"
 #include "render/effects.h"
 #include "toplevel.h"
 #include "win/deco.h"
+#include "win/deco/client_impl.h"
 #include "win/internal_window.h"
 #include "win/net.h"
 #include "win/space.h"
@@ -65,7 +65,7 @@ void PopupOpenCloseAnimationTest::initTestCase()
 
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    const auto builtinNames = render::effect_loader().listOfKnownEffects();
+    const auto builtinNames = render::effect_loader(*Test::app()->workspace).listOfKnownEffects();
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
@@ -182,8 +182,8 @@ void PopupOpenCloseAnimationTest::testAnimateUserActionsPopup()
     QVERIFY(!effect->isActive());
 
     // Show the user actions popup.
-    workspace()->showWindowMenu(QRect(), client);
-    auto userActionsMenu = workspace()->userActionsMenu();
+    Test::app()->workspace->showWindowMenu(QRect(), client);
+    auto& userActionsMenu = Test::app()->workspace->user_actions_menu;
     QTRY_VERIFY(userActionsMenu->isShown());
     QVERIFY(userActionsMenu->hasClient());
     QVERIFY(effect->isActive());
@@ -239,7 +239,7 @@ void PopupOpenCloseAnimationTest::testAnimateDecorationTooltips()
     QVERIFY(!effect->isActive());
 
     // Show a decoration tooltip.
-    QSignalSpy tooltipAddedSpy(workspace(), &win::space::internalClientAdded);
+    QSignalSpy tooltipAddedSpy(Test::app()->workspace.get(), &win::space::internalClientAdded);
     QVERIFY(tooltipAddedSpy.isValid());
     client->control->deco().client->requestShowToolTip(QStringLiteral("KWin rocks!"));
     QVERIFY(tooltipAddedSpy.wait());

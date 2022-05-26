@@ -8,9 +8,12 @@
 */
 #include "window_selector.h"
 
+#include "platform.h"
+
 #include "base/x11/grabs.h"
 #include "base/x11/xcb/proto.h"
 #include "input/cursor.h"
+#include "input/redirect.h"
 #include "win/space.h"
 #include "win/x11/unmanaged.h"
 #include "win/x11/window.h"
@@ -25,7 +28,7 @@
 namespace KWin::input::x11
 {
 
-window_selector::window_selector()
+window_selector::window_selector(x11::platform& platform)
     : base::x11::event_filter(QVector<int>{XCB_BUTTON_PRESS,
                                            XCB_BUTTON_RELEASE,
                                            XCB_MOTION_NOTIFY,
@@ -35,7 +38,7 @@ window_selector::window_selector()
                                            XCB_KEY_RELEASE,
                                            XCB_FOCUS_IN,
                                            XCB_FOCUS_OUT})
-    , m_active(false)
+    , platform{platform}
 {
 }
 
@@ -255,7 +258,7 @@ void window_selector::selectWindowId(xcb_window_t window_to_select)
     win::x11::window* client = nullptr;
     while (true) {
         client = win::x11::find_controlled_window<win::x11::window>(
-            *workspace(), win::x11::predicate_match::frame_id, window);
+            platform.redirect->space, win::x11::predicate_match::frame_id, window);
         if (client) {
             break; // Found the client
         }
@@ -269,7 +272,8 @@ void window_selector::selectWindowId(xcb_window_t window_to_select)
     if (client) {
         m_callback(client);
     } else {
-        m_callback(win::x11::find_unmanaged<win::x11::window>(*workspace(), window_to_select));
+        m_callback(
+            win::x11::find_unmanaged<win::x11::window>(platform.redirect->space, window_to_select));
     }
 }
 

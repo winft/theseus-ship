@@ -29,12 +29,13 @@ namespace wayland
 {
 
 class cursor_theme;
+class platform;
 
 class KWIN_EXPORT cursor_image : public QObject
 {
     Q_OBJECT
 public:
-    cursor_image();
+    cursor_image(wayland::platform& platform);
     ~cursor_image() override;
 
     void setEffectsOverrideCursor(Qt::CursorShape shape);
@@ -52,7 +53,7 @@ Q_SIGNALS:
     void changed();
 
 private:
-    void setup_workspace();
+    void setup_theme();
     void setup_move_resize(Toplevel* window);
 
     void reevaluteSource();
@@ -106,6 +107,8 @@ private:
         Image cursor;
         QMetaObject::Connection connection;
     } m_drag;
+
+    wayland::platform& platform;
 };
 
 }

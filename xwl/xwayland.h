@@ -57,7 +57,9 @@ public:
     /** The @ref status_callback is called once with 0 code when Xwayland is ready, other codes
      *  indicate a critical error happened at runtime.
      */
-    xwayland(Application* app, std::function<void(int code)> status_callback);
+    xwayland(Application* app,
+             win::wayland::space& space,
+             std::function<void(int code)> status_callback);
     ~xwayland() override;
 
     std::unique_ptr<xwl::data_bridge> data_bridge;
@@ -77,6 +79,7 @@ private:
     std::unique_ptr<base::x11::xcb_event_filter<win::wayland::space>> event_filter;
 
     Application* app;
+    win::wayland::space& space;
     std::function<void(int code)> status_callback;
 
     Q_DISABLE_COPY(xwayland)

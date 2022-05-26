@@ -23,9 +23,9 @@
 namespace KWin::base::dbus
 {
 
-kwin::kwin(QObject* parent)
-    : QObject(parent)
-    , m_serviceName(QStringLiteral("org.kde.KWin"))
+kwin::kwin(win::space& space)
+    : m_serviceName(QStringLiteral("org.kde.KWin"))
+    , space{space}
 {
     (void)new KWinAdaptor(this);
 
@@ -47,7 +47,7 @@ kwin::kwin(QObject* parent)
                  QStringLiteral("/KWin"),
                  QStringLiteral("org.kde.KWin"),
                  QStringLiteral("reloadConfig"),
-                 workspace(),
+                 &space,
                  SLOT(slotReloadConfig()));
 }
 
@@ -73,22 +73,22 @@ kwin::~kwin()
 
 void kwin::reconfigure()
 {
-    workspace()->reconfigure();
+    space.reconfigure();
 }
 
 void kwin::killWindow()
 {
-    workspace()->slotKillWindow();
+    space.slotKillWindow();
 }
 
 void kwin::unclutterDesktop()
 {
-    win::unclutter_desktop();
+    win::unclutter_desktop(space);
 }
 
 QString kwin::supportInformation()
 {
-    return workspace()->supportInformation();
+    return space.supportInformation();
 }
 
 bool kwin::startActivity(const QString& /*in0*/)
@@ -103,22 +103,22 @@ bool kwin::stopActivity(const QString& /*in0*/)
 
 int kwin::currentDesktop()
 {
-    return win::virtual_desktop_manager::self()->current();
+    return space.virtual_desktop_manager->current();
 }
 
 bool kwin::setCurrentDesktop(int desktop)
 {
-    return win::virtual_desktop_manager::self()->setCurrent(desktop);
+    return space.virtual_desktop_manager->setCurrent(desktop);
 }
 
 void kwin::nextDesktop()
 {
-    win::virtual_desktop_manager::self()->moveTo<win::virtual_desktop_next>();
+    space.virtual_desktop_manager->moveTo<win::virtual_desktop_next>();
 }
 
 void kwin::previousDesktop()
 {
-    win::virtual_desktop_manager::self()->moveTo<win::virtual_desktop_previous>();
+    space.virtual_desktop_manager->moveTo<win::virtual_desktop_previous>();
 }
 
 void kwin::showDebugConsole()
@@ -129,24 +129,15 @@ void kwin::showDebugConsole()
 
 void kwin::enableFtrace(bool enable)
 {
-    const QString name = QStringLiteral("org.kde.kwin.enableFtrace");
-#if HAVE_PERF
-    if (!Perf::Ftrace::valid()) {
-        const QString msg = QStringLiteral("Ftrace marker not available");
-        QDBusConnection::sessionBus().send(message().createErrorReply(name, msg));
+    if (Perf::Ftrace::setEnabled(enable)) {
         return;
     }
-    if (!Perf::Ftrace::setEnabled(enable)) {
-        const QString msg = QStringLiteral("Ftrace marker is available but could not be ")
-                                .append(enable ? "enabled" : "disabled");
-        QDBusConnection::sessionBus().send(message().createErrorReply(name, msg));
-    }
-    return;
-#else
-    Q_UNUSED(enable)
-    const QString msg = QStringLiteral("KWin built without ftrace marking capability");
-    QDBusConnection::sessionBus().send(message().createErrorReply(name, msg));
-#endif
+
+    // Operation failed. Send error reply.
+    auto const msg
+        = QStringLiteral("Ftrace marker could not be ").append(enable ? "enabled" : "disabled");
+    QDBusConnection::sessionBus().send(
+        message().createErrorReply("org.kde.KWin.enableFtrace", msg));
 }
 
 namespace
@@ -213,7 +204,7 @@ QVariantMap kwin::getWindowInfo(const QString& uuid)
 {
     auto const id = QUuid::fromString(uuid);
 
-    for (auto win : workspace()->m_windows) {
+    for (auto win : space.m_windows) {
         if (!win->control) {
             continue;
         }

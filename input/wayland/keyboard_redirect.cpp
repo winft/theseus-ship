@@ -99,7 +99,7 @@ void keyboard_redirect::init()
     layout_manager->init();
 
     if (waylandServer()->has_global_shortcut_support()) {
-        redirect->installInputEventSpy(new modifier_only_shortcuts_spy);
+        redirect->installInputEventSpy(new modifier_only_shortcuts_spy(*redirect));
     }
 
     auto keyRepeatSpy = new keyboard_repeat_spy();
@@ -109,9 +109,9 @@ void keyboard_redirect::init()
                      &keyboard_redirect::process_key_repeat);
     redirect->installInputEventSpy(keyRepeatSpy);
 
-    QObject::connect(workspace(), &win::space::clientActivated, this, [this] {
+    QObject::connect(&redirect->space, &win::space::clientActivated, this, [this] {
         QObject::disconnect(m_activeClientSurfaceChangedConnection);
-        if (auto c = workspace()->activeClient()) {
+        if (auto c = redirect->space.activeClient()) {
             m_activeClientSurfaceChangedConnection
                 = QObject::connect(c, &Toplevel::surfaceChanged, this, &keyboard_redirect::update);
         } else {
@@ -136,7 +136,7 @@ void keyboard_redirect::update()
 
     // TODO: this needs better integration
     Toplevel* found = nullptr;
-    auto const& stacking = workspace()->stacking_order->sorted();
+    auto const& stacking = redirect->space.stacking_order->sorted();
     if (!stacking.empty()) {
         auto it = stacking.end();
         do {
@@ -163,7 +163,7 @@ void keyboard_redirect::update()
     }
 
     if (!found && !kwinApp()->input->redirect->isSelectingWindow()) {
-        found = workspace()->activeClient();
+        found = redirect->space.activeClient();
     }
     if (found && found->surface()) {
         if (found->surface() != seat->keyboards().get_focus().surface) {

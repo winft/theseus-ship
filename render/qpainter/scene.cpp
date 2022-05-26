@@ -26,7 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/output.h"
 #include "base/platform.h"
-#include "decorations/decoratedclient.h"
 #include "input/cursor.h"
 #include "main.h"
 #include "render/compositor.h"
@@ -34,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/platform.h"
 #include "toplevel.h"
 #include "wayland_logging.h"
+#include "win/deco/client_impl.h"
 #include "win/space.h"
 
 #include <kwineffects/effects_handler.h>
@@ -178,7 +178,7 @@ std::unique_ptr<render::shadow> scene::createShadow(Toplevel* toplevel)
     return std::make_unique<shadow>(toplevel);
 }
 
-Decoration::Renderer* scene::createDecorationRenderer(Decoration::DecoratedClientImpl* impl)
+win::deco::renderer* scene::createDecorationRenderer(win::deco::client_impl* impl)
 {
     return new deco_renderer(impl);
 }

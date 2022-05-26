@@ -25,7 +25,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
 {
     reconfigure();
 
-    auto space = static_cast<win::wayland::space*>(workspace());
+    auto space = static_cast<win::wayland::space*>(compositor->space);
 
     // TODO(romangg): We do this for every window here, even for windows that are not an xdg-shell
     //                type window. Restrict that?
@@ -65,7 +65,7 @@ bool effects_handler_impl::eventFilter(QObject* watched, QEvent* event)
 
 EffectWindow* effects_handler_impl::find_window_by_surface(Wrapland::Server::Surface* surface) const
 {
-    if (auto win = static_cast<win::wayland::space*>(workspace())->find_window(surface)) {
+    if (auto win = static_cast<win::wayland::space*>(m_compositor->space)->find_window(surface)) {
         return win->render->effect.get();
     }
     return nullptr;
