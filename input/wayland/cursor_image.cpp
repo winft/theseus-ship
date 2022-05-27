@@ -11,12 +11,14 @@
 #include "cursor_theme.h"
 #include "platform.h"
 
-#include "base/platform.h"
+#include "base/wayland/platform.h"
 #include "base/wayland/server.h"
 #include "input/pointer_redirect.h"
 #include "input/redirect.h"
 #include "main.h"
+#include "render/compositor.h"
 #include "render/effects.h"
+#include "render/platform.h"
 #include "win/control.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
@@ -481,7 +483,8 @@ void cursor_image::reevaluteSource()
         setSource(CursorSource::WindowSelector);
         return;
     }
-    if (effects && static_cast<render::effects_handler_impl*>(effects)->isMouseInterception()) {
+    if (auto& effects = platform.base.render->compositor->effects;
+        effects && effects->isMouseInterception()) {
         setSource(CursorSource::EffectsOverride);
         return;
     }

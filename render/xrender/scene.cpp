@@ -149,7 +149,7 @@ void scene::paintEffectQuickView(KWin::EffectQuickView* w)
                          XCB_RENDER_PICT_OP_OVER,
                          picture,
                          XCB_RENDER_PICTURE_NONE,
-                         effects->xrenderBufferPicture(),
+                         compositor.effects->xrenderBufferPicture(),
                          0,
                          0,
                          0,

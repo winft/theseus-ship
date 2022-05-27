@@ -134,7 +134,7 @@ void scene::paintScreen(paint_type& mask,
     }
 
     // preparation step
-    static_cast<effects_handler_impl*>(effects)->startPaint();
+    compositor.effects->startPaint();
 
     QRegion region = damage;
 
@@ -142,7 +142,7 @@ void scene::paintScreen(paint_type& mask,
     pdata.mask = static_cast<int>(mask);
     pdata.paint = region;
 
-    effects->prePaintScreen(pdata, m_expectedPresentTimestamp);
+    compositor.effects->prePaintScreen(pdata, m_expectedPresentTimestamp);
 
     mask = static_cast<paint_type>(pdata.mask);
     region = pdata.paint;
@@ -169,14 +169,15 @@ void scene::paintScreen(paint_type& mask,
     }
 
     ScreenPaintData data(projection,
-                         repaint_output ? effects->findScreen(repaint_output->name()) : nullptr);
-    effects->paintScreen(static_cast<int>(mask), region, data);
+                         repaint_output ? compositor.effects->findScreen(repaint_output->name())
+                                        : nullptr);
+    compositor.effects->paintScreen(static_cast<int>(mask), region, data);
 
     for (auto const& w : stacking_order) {
-        effects->postPaintWindow(w->effect.get());
+        compositor.effects->postPaintWindow(w->effect.get());
     }
 
-    effects->postPaintScreen();
+    compositor.effects->postPaintScreen();
 
     // make sure not to go outside of the screen area
     *updateRegion = damaged_region;
@@ -231,8 +232,9 @@ void scene::paintGenericScreen(paint_type orig_mask, ScreenPaintData)
         data.paint = infiniteRegion(); // no clipping, so doesn't really matter
         data.clip = QRegion();
         data.quads = w->buildQuads();
+
         // preparation step
-        effects->prePaintWindow(w->effect.get(), data, m_expectedPresentTimestamp);
+        compositor.effects->prePaintWindow(w->effect.get(), data, m_expectedPresentTimestamp);
 #if !defined(QT_NO_DEBUG)
         if (data.quads.isTransformed()) {
             qFatal("Pre-paint calls are not allowed to transform quads!");
@@ -313,8 +315,9 @@ void scene::paintSimpleScreen(paint_type orig_mask, QRegion region)
         }
 
         data.quads = window->buildQuads();
+
         // preparation step
-        effects->prePaintWindow(window->effect.get(), data, m_expectedPresentTimestamp);
+        compositor.effects->prePaintWindow(window->effect.get(), data, m_expectedPresentTimestamp);
 #if !defined(QT_NO_DEBUG)
         if (data.quads.isTransformed()) {
             qFatal("Pre-paint calls are not allowed to transform quads!");
@@ -458,7 +461,8 @@ void scene::paintWindow(window* w, paint_type mask, QRegion region, WindowQuadLi
 
     WindowPaintData data(w->effect.get(), screenProjectionMatrix());
     data.quads = quads;
-    effects->paintWindow(w->effect.get(), static_cast<int>(mask), region, data);
+    compositor.effects->paintWindow(w->effect.get(), static_cast<int>(mask), region, data);
+
     // paint thumbnails on top of window
     paintWindowThumbnails(w, region, data.opacity(), data.brightness(), data.saturation());
     // and desktop thumbnails
@@ -548,7 +552,8 @@ void scene::paintWindowThumbnails(window* w,
         QRegion clippingRegion = region;
         clippingRegion &= QRegion(wImpl->x(), wImpl->y(), wImpl->width(), wImpl->height());
         adjustClipRegion(item, clippingRegion);
-        effects->drawWindow(thumb, static_cast<int>(thumbMask), clippingRegion, thumbData);
+        compositor.effects->drawWindow(
+            thumb, static_cast<int>(thumbMask), clippingRegion, thumbData);
     }
 }
 
@@ -596,8 +601,7 @@ void scene::paintDesktopThumbnails(window* w)
 
 void scene::paintDesktop(int desktop, paint_type mask, const QRegion& region, ScreenPaintData& data)
 {
-    static_cast<effects_handler_impl*>(effects)->paintDesktop(
-        desktop, static_cast<int>(mask), region, data);
+    compositor.effects->paintDesktop(desktop, static_cast<int>(mask), region, data);
 }
 
 // the function that'll be eventually called by paintWindow() above
@@ -606,7 +610,7 @@ void scene::finalPaintWindow(effects_window_impl* w,
                              QRegion region,
                              WindowPaintData& data)
 {
-    effects->drawWindow(w, static_cast<int>(mask), region, data);
+    compositor.effects->drawWindow(w, static_cast<int>(mask), region, data);
 }
 
 // will be eventually called from drawWindow()

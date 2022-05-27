@@ -262,7 +262,7 @@ win::deco::renderer* platform::createDecorationRenderer(win::deco::client_impl* 
 void platform::invertScreen()
 {
     // We prefer inversion via effects.
-    if (effects && static_cast<render::effects_handler_impl*>(effects)->invert_screen()) {
+    if (compositor->effects && compositor->effects->invert_screen()) {
         return;
     }
 

@@ -6,6 +6,7 @@
 */
 #include "effect_frame.h"
 
+#include "render/compositor.h"
 #include "render/effects.h"
 
 #include <QPainter>
@@ -88,6 +89,7 @@ void effect_frame::render(QRegion region, double opacity, double frameOpacity)
         return; // Nothing to display
     }
 
+    auto& effects = m_effectFrame->scene.compositor.effects;
     // Render the actual frame
     if (m_effectFrame->style() == EffectFrameUnstyled) {
         renderUnstyled(

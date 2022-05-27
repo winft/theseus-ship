@@ -106,8 +106,8 @@ auto create_unmanaged_window(xcb_window_t w, Space& space) -> typename Space::x1
     if (auto internalWindow = find_internal_window()) {
         win->is_outline = internalWindow->property("__kwin_outline").toBool();
     }
-    if (effects) {
-        static_cast<render::effects_handler_impl*>(effects)->checkInputWindowStacking();
+    if (auto& effects = space.render.effects) {
+        effects->checkInputWindowStacking();
     }
 
     QObject::connect(
@@ -123,9 +123,9 @@ auto create_unmanaged_window(xcb_window_t w, Space& space) -> typename Space::x1
 template<typename Win>
 void unmanaged_configure_event(Win* win, xcb_configure_notify_event_t* e)
 {
-    if (effects) {
+    if (auto& effects = win->space.render.effects) {
         // keep them on top
-        static_cast<render::effects_handler_impl*>(effects)->checkInputWindowStacking();
+        effects->checkInputWindowStacking();
     }
     QRect newgeom(e->x, e->y, e->width, e->height);
     if (newgeom != win->frameGeometry()) {

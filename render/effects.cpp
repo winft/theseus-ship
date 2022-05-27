@@ -433,7 +433,7 @@ void effects_handler_impl::paintDesktop(int desktop,
     // save the paint screen iterator
     EffectsIterator savedIterator = m_currentPaintScreenIterator;
     m_currentPaintScreenIterator = m_activeEffects.constBegin();
-    effects->paintScreen(mask, region, data);
+    paintScreen(mask, region, data);
     // restore the saved iterator
     m_currentPaintScreenIterator = savedIterator;
     m_desktopRendering = false;
@@ -2467,6 +2467,7 @@ effect_frame_impl::effect_frame_impl(render::scene& scene,
                                      Qt::Alignment alignment)
     : QObject(nullptr)
     , EffectFrame()
+    , scene{scene}
     , m_style(style)
     , m_static(staticSize)
     , m_point(position)

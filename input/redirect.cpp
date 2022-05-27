@@ -91,7 +91,7 @@ Toplevel* redirect::findToplevel(const QPoint& pos)
     // TODO: check whether the unmanaged wants input events at all
     if (!kwinApp()->is_screen_locked()) {
         // if an effect overrides the cursor we don't have a window to focus
-        if (effects && static_cast<render::effects_handler_impl*>(effects)->isMouseInterception()) {
+        if (space.render.effects && space.render.effects->isMouseInterception()) {
             return nullptr;
         }
         auto const& unmanaged = space.unmanagedList();

@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "main.h"
 #include "render/compositor.h"
 #include "render/cursor.h"
+#include "render/effects.h"
 #include "render/platform.h"
 #include "toplevel.h"
 #include "wayland_logging.h"
@@ -149,7 +150,7 @@ void scene::paintCursor()
 
 void scene::paintEffectQuickView(EffectQuickView* w)
 {
-    QPainter* painter = effects->scenePainter();
+    auto painter = compositor.effects->scenePainter();
     const QImage buffer = w->bufferAsImage();
     if (buffer.isNull()) {
         return;

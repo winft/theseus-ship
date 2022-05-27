@@ -60,11 +60,11 @@ public:
     std::unique_ptr<wayland::input_method> input_method;
     std::unique_ptr<Wrapland::Server::virtual_keyboard_manager_v1> virtual_keyboard;
     std::unique_ptr<input::dpms_filter> dpms_filter;
+    base::wayland::platform const& base;
 
 private:
     void setup_touchpad_shortcuts();
 
-    base::wayland::platform const& base;
     bool touchpads_enabled{true};
 };
 

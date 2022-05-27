@@ -677,6 +677,8 @@ public:
      */
     QColor styledTextColor();
 
+    render::scene& scene;
+
 private Q_SLOTS:
     void plasmaThemeChanged();
 

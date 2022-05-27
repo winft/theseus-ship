@@ -23,12 +23,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "ui_debug_console.h"
 
 #include "render/compositor.h"
+#include "render/effects.h"
 #include "render/scene.h"
 #include "win/internal_window.h"
 #include "win/space.h"
 #include "win/x11/window.h"
 
-#include <kwineffects/effects_handler.h>
 #include <kwingl/platform.h>
 #include <kwingl/utils.h>
 
@@ -63,7 +63,7 @@ console::~console() = default;
 
 void console::initGLTab(render::scene& scene)
 {
-    if (!effects || !effects->isOpenGLCompositing()) {
+    if (!scene.compositor.effects || !scene.compositor.effects->isOpenGLCompositing()) {
         m_ui->noOpenGLLabel->setVisible(true);
         m_ui->glInfoScrollArea->setVisible(false);
         return;

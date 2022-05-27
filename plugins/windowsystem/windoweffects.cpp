@@ -19,6 +19,9 @@
  */
 #include "windoweffects.h"
 
+#include "render/compositor.h"
+#include "render/platform.h"
+#include "render/singleton_interface.h"
 #include "../../render/effects.h"
 
 #include <QGuiApplication>
@@ -54,17 +57,17 @@ QWindow *findWindow(WId win)
 
 bool WindowEffects::isEffectAvailable(KWindowEffects::Effect effect)
 {
+    auto& effects = render::singleton_interface::platform->compositor->effects;
     if (!effects) {
         return false;
     }
-    auto e = static_cast<render::effects_handler_impl*>(effects);
     switch (effect) {
     case KWindowEffects::BackgroundContrast:
-        return e->isEffectLoaded(QStringLiteral("contrast"));
+        return effects->isEffectLoaded(QStringLiteral("contrast"));
     case KWindowEffects::BlurBehind:
-        return e->isEffectLoaded(QStringLiteral("blur"));
+        return effects->isEffectLoaded(QStringLiteral("blur"));
     case KWindowEffects::Slide:
-        return e->isEffectLoaded(QStringLiteral("slidingpopups"));
+        return effects->isEffectLoaded(QStringLiteral("slidingpopups"));
     default:
         // plugin does not provide integration for other effects
         return false;

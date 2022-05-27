@@ -719,7 +719,7 @@ QString space::supportInformation() const
 
     support.append(QStringLiteral("\nCompositing\n"));
     support.append(QStringLiteral("===========\n"));
-    if (effects) {
+    if (auto& effects = render.effects) {
         support.append(QStringLiteral("Compositing is active\n"));
         switch (effects->compositingType()) {
         case OpenGLCompositing: {
@@ -822,23 +822,20 @@ QString space::supportInformation() const
         }
         support.append(QStringLiteral("\nLoaded Effects:\n"));
         support.append(QStringLiteral("---------------\n"));
-        auto const& loaded_effects
-            = static_cast<render::effects_handler_impl*>(effects)->loadedEffects();
+        auto const& loaded_effects = effects->loadedEffects();
         for (auto const& effect : qAsConst(loaded_effects)) {
             support.append(effect + QStringLiteral("\n"));
         }
         support.append(QStringLiteral("\nCurrently Active Effects:\n"));
         support.append(QStringLiteral("-------------------------\n"));
-        auto const& active_effects
-            = static_cast<render::effects_handler_impl*>(effects)->activeEffects();
+        auto const& active_effects = effects->activeEffects();
         for (auto const& effect : qAsConst(active_effects)) {
             support.append(effect + QStringLiteral("\n"));
         }
         support.append(QStringLiteral("\nEffect Settings:\n"));
         support.append(QStringLiteral("----------------\n"));
         for (auto const& effect : qAsConst(loaded_effects)) {
-            support.append(
-                static_cast<render::effects_handler_impl*>(effects)->supportInformation(effect));
+            support.append(effects->supportInformation(effect));
             support.append(QStringLiteral("\n"));
         }
     } else {
@@ -976,8 +973,8 @@ void space::desktopResized()
     // TODO: emit a signal instead and remove the deep function calls into edges and effects
     edges->recreateEdges();
 
-    if (effects) {
-        static_cast<render::effects_handler_impl*>(effects)->desktopResized(geom.size());
+    if (auto& effects = render.effects) {
+        effects->desktopResized(geom.size());
     }
 }
 
@@ -2675,9 +2672,8 @@ bool space::workspaceEvent(QEvent* e)
 {
     if ((e->type() == QEvent::KeyPress || e->type() == QEvent::KeyRelease
          || e->type() == QEvent::ShortcutOverride)
-        && effects && static_cast<render::effects_handler_impl*>(effects)->hasKeyboardGrab()) {
-        static_cast<render::effects_handler_impl*>(effects)->grabbedKeyboardEvent(
-            static_cast<QKeyEvent*>(e));
+        && render.effects && render.effects->hasKeyboardGrab()) {
+        render.effects->grabbedKeyboardEvent(static_cast<QKeyEvent*>(e));
         return true;
     }
     return false;
