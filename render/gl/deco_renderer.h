@@ -16,12 +16,14 @@
 namespace KWin::render::gl
 {
 
+class scene;
+
 class deco_renderer : public win::deco::renderer
 {
     Q_OBJECT
 public:
     enum class DecorationPart : int { Left, Top, Right, Bottom, Count };
-    explicit deco_renderer(win::deco::client_impl* client);
+    deco_renderer(win::deco::client_impl* client, gl::scene& scene);
     ~deco_renderer() override;
 
     void render() override;
@@ -39,6 +41,7 @@ public:
 private:
     void resizeTexture();
     QScopedPointer<GLTexture> m_texture;
+    gl::scene& scene;
 };
 
 }

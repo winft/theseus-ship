@@ -826,7 +826,7 @@ std::unique_ptr<render::shadow> scene::createShadow(Toplevel* toplevel)
 
 win::deco::renderer* scene::createDecorationRenderer(win::deco::client_impl* impl)
 {
-    return new deco_renderer(impl);
+    return new deco_renderer(impl, *this);
 }
 
 bool scene::animationsSupported() const

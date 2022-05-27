@@ -8,6 +8,7 @@
 #include "deco_renderer.h"
 
 #include "effect_frame.h"
+#include "scene.h"
 #include "shadow.h"
 #include "texture.h"
 #include "window.h"
@@ -39,9 +40,10 @@
 namespace KWin::render::gl
 {
 
-deco_renderer::deco_renderer(win::deco::client_impl* client)
+deco_renderer::deco_renderer(win::deco::client_impl* client, gl::scene& scene)
     : renderer(client)
     , m_texture()
+    , scene{scene}
 {
     connect(this,
             &renderer::renderScheduled,
@@ -51,9 +53,7 @@ deco_renderer::deco_renderer(win::deco::client_impl* client)
 
 deco_renderer::~deco_renderer()
 {
-    if (auto scene = render::compositor::self()->scene()) {
-        scene->makeOpenGLContextCurrent();
-    }
+    scene.makeOpenGLContextCurrent();
 }
 
 // Rotates the given source rect 90° counter-clockwise,
