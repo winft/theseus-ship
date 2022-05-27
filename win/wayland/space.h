@@ -48,7 +48,9 @@ class virtual_desktop;
 
 namespace wayland
 {
+
 class window;
+template<typename Space>
 struct xdg_activation;
 
 class KWIN_EXPORT space : public win::space
@@ -91,7 +93,7 @@ public:
     std::unique_ptr<Wrapland::Server::ServerSideDecorationPaletteManager>
         server_side_decoration_palette_manager;
 
-    std::unique_ptr<win::wayland::xdg_activation> activation;
+    std::unique_ptr<wayland::xdg_activation<space>> activation;
 
     QVector<Wrapland::Server::PlasmaShellSurface*> plasma_shell_surfaces;
 

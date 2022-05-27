@@ -48,8 +48,12 @@ inline bool generate_token(char out[token_strlen])
 }
 }
 
+template<typename Space>
 struct xdg_activation {
-    std::string token;
+    xdg_activation(Space& space)
+        : space{space}
+    {
+    }
 
     void clear()
     {
@@ -57,9 +61,14 @@ struct xdg_activation {
             return;
         }
 
-        Q_EMIT effects->startupRemoved(QString::fromStdString(token));
+        Q_EMIT space.render.effects->startupRemoved(QString::fromStdString(token));
         token.clear();
     }
+
+    std::string token;
+
+private:
+    Space& space;
 };
 
 template<typename Space>
@@ -120,7 +129,7 @@ void xdg_activation_create_token(Space* space, Wrapland::Server::XdgActivationTo
     if (!token->app_id().empty()) {
         auto const icon = QIcon::fromTheme(icon_from_desktop_file(QString(token->app_id().c_str())),
                                            QIcon::fromTheme(QStringLiteral("system-run")));
-        Q_EMIT effects->startupAdded(token_str, icon);
+        Q_EMIT space->render.effects->startupAdded(token_str, icon);
     }
 }
 
