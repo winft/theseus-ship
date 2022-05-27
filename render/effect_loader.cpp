@@ -20,7 +20,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "effect_loader.h"
 
 #include "base/logging.h"
+#include "render/compositor.h"
 #include "scripting/effect.h"
+#include "win/space.h"
 
 #include "config-kwin.h"
 #include "kwineffects/effect_plugin_factory.h"
@@ -95,7 +97,7 @@ bool scripted_effect_loader::hasEffect(const QString& name) const
 bool scripted_effect_loader::isEffectSupported(const QString& name) const
 {
     // scripted effects are in general supported
-    if (!scripting::effect::supported()) {
+    if (!scripting::effect::supported(*space.render.effects)) {
         return false;
     }
     return hasEffect(name);
@@ -132,7 +134,7 @@ bool scripted_effect_loader::loadEffect(const KPluginMetaData& effect, load_effe
         return false;
     }
 
-    if (!scripting::effect::supported()) {
+    if (!scripting::effect::supported(*space.render.effects)) {
         qCDebug(KWIN_CORE) << "Effect is not supported: " << name;
         return false;
     }

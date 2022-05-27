@@ -182,9 +182,9 @@ effect* effect::create(const QString& effectName,
     return effect;
 }
 
-bool effect::supported()
+bool effect::supported(render::effects_handler_impl& effects)
 {
-    return effects->animationsSupported();
+    return effects.animationsSupported();
 }
 
 effect::effect(win::space& space)
