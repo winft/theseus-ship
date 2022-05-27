@@ -651,11 +651,11 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
 
     setup_space_window_connections(&space, win);
 
-    if (auto comp = render::compositor::self(); comp->x11_integration.update_blocking) {
+    if (auto& comp = space.render; comp.x11_integration.update_blocking) {
         QObject::connect(win,
                          &win::x11::window::blockingCompositingChanged,
-                         comp,
-                         [comp](auto window) { comp->x11_integration.update_blocking(window); });
+                         &comp,
+                         [&comp](auto window) { comp.x11_integration.update_blocking(window); });
     }
 
     QObject::connect(win,
@@ -1123,10 +1123,7 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
 
     // Forward all opacity values to the frame in case there'll be other CM running.
     QObject::connect(
-        render::compositor::self(),
-        &render::compositor::compositingToggled,
-        win,
-        [win](bool active) {
+        &win->space.render, &render::compositor::compositingToggled, win, [win](bool active) {
             if (active) {
                 return;
             }

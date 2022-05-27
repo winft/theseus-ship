@@ -48,7 +48,7 @@ void setup_scale_scene_notify(Win& win)
 {
     assert(win.surface());
 
-    auto scene = render::compositor::self()->scene();
+    auto scene = win.space.render.scene();
 
     // A change of scale won't affect the geometry in compositor co-ordinates, but will affect the
     // window quads.

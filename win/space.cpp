@@ -2916,7 +2916,7 @@ void space::initShortcuts()
     DEF(kli18n("Kill Window"), Qt::CTRL + Qt::ALT + Qt::Key_Escape, slotKillWindow);
     DEF6(kli18n("Suspend Compositing"),
          Qt::SHIFT + Qt::ALT + Qt::Key_F12,
-         render::compositor::self(),
+         &render,
          render::compositor::toggleCompositing);
     DEF6(kli18n("Invert Screen Colors"),
          0,

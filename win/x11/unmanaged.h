@@ -33,9 +33,7 @@ auto create_unmanaged_window(xcb_window_t w, Space& space) -> typename Space::x1
 {
     using Win = typename Space::x11_window;
 
-    auto compositor = render::compositor::self();
-    assert(compositor);
-    if (auto& is_overlay = compositor->x11_integration.is_overlay_window;
+    if (auto& is_overlay = space.render.x11_integration.is_overlay_window;
         is_overlay && is_overlay(w)) {
         return nullptr;
     }
@@ -112,9 +110,8 @@ auto create_unmanaged_window(xcb_window_t w, Space& space) -> typename Space::x1
         static_cast<render::effects_handler_impl*>(effects)->checkInputWindowStacking();
     }
 
-    QObject::connect(win, &Win::needsRepaint, &space.render, [win] {
-        render::compositor::self()->schedule_repaint(win);
-    });
+    QObject::connect(
+        win, &Win::needsRepaint, &space.render, [win] { win->space.render.schedule_repaint(win); });
 
     space.m_windows.push_back(win);
     space.x_stacking_tree->mark_as_dirty();

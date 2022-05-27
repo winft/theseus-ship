@@ -167,7 +167,7 @@ bool setup_compositing(Win& win, bool add_full_damage)
     win.discard_shape();
     win.damage_region = QRegion(QRect(QPoint(), win.size()));
 
-    add_scene_window(*render::compositor::self()->scene(), win);
+    add_scene_window(*win.space.render.scene(), win);
 
     if (add_full_damage) {
         // With unmanaged windows there is a race condition between the client painting the window

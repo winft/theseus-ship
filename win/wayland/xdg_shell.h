@@ -308,8 +308,8 @@ window* create_popup_window(Space* space, Wrapland::Server::XdgShellPopup* popup
     win->popup = popup;
     win->transient()->annexed = true;
 
-    QObject::connect(win, &window::needsRepaint, render::compositor::self(), [win] {
-        render::compositor::self()->schedule_repaint(win);
+    QObject::connect(win, &window::needsRepaint, &win->space.render, [win] {
+        win->space.render.schedule_repaint(win);
     });
     QObject::connect(win, &window::frame_geometry_changed, win, [](auto win, auto old_frame_geo) {
         auto const old_visible_geo = visible_rect(win, old_frame_geo);

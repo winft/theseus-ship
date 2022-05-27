@@ -509,7 +509,7 @@ void Toplevel::addWorkspaceRepaint(QRect const& rect)
     if (!space.compositing()) {
         return;
     }
-    render::compositor::self()->addRepaint(rect);
+    space.render.addRepaint(rect);
 }
 
 void Toplevel::setReadyForPainting()
