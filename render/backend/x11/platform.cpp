@@ -80,8 +80,10 @@ void platform::init()
 
 gl::backend* platform::createOpenGLBackend(render::compositor& compositor)
 {
+    auto& x11comp = static_cast<render::x11::compositor&>(compositor);
+
     if (gl_backend) {
-        start_glx_backend(m_x11Display, compositor, *gl_backend);
+        start_glx_backend(m_x11Display, x11comp, *gl_backend);
         return gl_backend.get();
     }
 
@@ -89,7 +91,7 @@ gl::backend* platform::createOpenGLBackend(render::compositor& compositor)
 #if HAVE_EPOXY_GLX
     case GlxPlatformInterface:
         if (has_glx()) {
-            gl_backend = std::make_unique<glx_backend>(m_x11Display, compositor);
+            gl_backend = std::make_unique<glx_backend>(m_x11Display, x11comp);
             return gl_backend.get();
         } else {
             qCWarning(KWIN_X11) << "Glx not available, trying EGL instead.";

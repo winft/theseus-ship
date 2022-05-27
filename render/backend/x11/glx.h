@@ -358,7 +358,7 @@ static glXFuncPtr getProcAddress(const char* name)
 }
 
 template<typename Backend>
-void start_glx_backend(Display* display, render::compositor& compositor, Backend& backend)
+void start_glx_backend(Display* display, render::x11::compositor& compositor, Backend& backend)
 {
     backend.data.display = display;
     backend.overlay_window = std::make_unique<render::x11::overlay_window>();

@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/effects.h"
 #include "render/platform.h"
 #include "render/shadow.h"
+#include "render/x11/compositor.h"
 #include "toplevel.h"
 #include "win/geo.h"
 #include "win/scene.h"
@@ -130,7 +131,7 @@ win::deco::renderer* scene::createDecorationRenderer(win::deco::client_impl* cli
     return new deco_renderer(client);
 }
 
-render::scene* create_scene(render::compositor& compositor)
+render::scene* create_scene(x11::compositor& compositor)
 {
     QScopedPointer<xrender::backend> backend;
     backend.reset(new xrender::backend(compositor));
