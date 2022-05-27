@@ -42,11 +42,6 @@ static ulong s_msc = 0;
 // 2 sec which should be enough to restart the compositor.
 constexpr auto compositor_lost_message_delay = 2000;
 
-compositor* compositor::self()
-{
-    return qobject_cast<compositor*>(render::compositor::self());
-}
-
 compositor::compositor(render::platform& platform)
     : render::compositor(platform)
     , m_suspended(kwinApp()->options->isUseCompositing() ? NoReasonSuspend : UserSuspend)

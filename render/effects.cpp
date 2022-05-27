@@ -1584,7 +1584,7 @@ EffectFrame* effects_handler_impl::effectFrame(EffectFrameStyle style,
                                                const QPoint& position,
                                                Qt::Alignment alignment) const
 {
-    return new effect_frame_impl(style, staticSize, position, alignment);
+    return new effect_frame_impl(*m_scene, style, staticSize, position, alignment);
 }
 
 QVariant effects_handler_impl::kwinOption(KWinOption kwopt)
@@ -2460,7 +2460,8 @@ EffectWindowList effect_window_group_impl::members() const
 // effect_frame_impl
 //****************************************
 
-effect_frame_impl::effect_frame_impl(EffectFrameStyle style,
+effect_frame_impl::effect_frame_impl(render::scene& scene,
+                                     EffectFrameStyle style,
                                      bool staticSize,
                                      QPoint position,
                                      Qt::Alignment alignment)
@@ -2484,7 +2485,7 @@ effect_frame_impl::effect_frame_impl(EffectFrameStyle style,
     m_selection.setCacheAllRenderedFrames(true);
     m_selection.setEnabledBorders(Plasma::FrameSvg::AllBorders);
 
-    m_sceneFrame = render::compositor::self()->scene()->createEffectFrame(this);
+    m_sceneFrame = scene.createEffectFrame(this);
 }
 
 effect_frame_impl::~effect_frame_impl()

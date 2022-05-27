@@ -79,7 +79,7 @@ std::unique_ptr<Shadow> create_shadow(Win& win)
         return {};
     }
 
-    auto shadow = render::compositor::self()->scene()->createShadow(&win);
+    auto shadow = win.space.render.scene()->createShadow(&win);
     if (!update_shadow(*shadow)) {
         return {};
     }

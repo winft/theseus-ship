@@ -74,8 +74,8 @@ render::outline_visual* platform::create_non_composited_outline(render::outline*
 
 win::deco::renderer* platform::createDecorationRenderer(win::deco::client_impl* client)
 {
-    if (render::compositor::self()->scene()) {
-        return render::compositor::self()->scene()->createDecorationRenderer(client);
+    if (compositor->scene()) {
+        return compositor->scene()->createDecorationRenderer(client);
     }
     return nullptr;
 }

@@ -34,11 +34,6 @@ namespace KWin::render
 // 2 sec which should be enough to restart the compositor.
 constexpr auto compositor_lost_message_delay = 2000;
 
-compositor* compositor::self()
-{
-    return kwinApp()->get_base().render->compositor.get();
-}
-
 bool compositor::compositing()
 {
     auto const& compositor = kwinApp()->get_base().render->compositor;

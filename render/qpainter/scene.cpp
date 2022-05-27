@@ -136,7 +136,7 @@ void scene::paintBackground(QRegion region)
 
 void scene::paintCursor()
 {
-    auto cursor = render::compositor::self()->software_cursor.get();
+    auto cursor = compositor.software_cursor.get();
     if (!cursor->enabled) {
         return;
     }

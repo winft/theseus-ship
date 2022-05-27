@@ -443,7 +443,7 @@ void scene::insertWait()
  */
 void scene::paintCursor()
 {
-    auto cursor = render::compositor::self()->software_cursor.get();
+    auto cursor = compositor.software_cursor.get();
 
     // don't paint if we use hardware cursor or the cursor is hidden
     if (!cursor->enabled || kwinApp()->input->cursor->is_hidden() || cursor->image().isNull()) {
@@ -452,7 +452,7 @@ void scene::paintCursor()
 
     // lazy init texture cursor only in case we need software rendering
     if (sw_cursor.dirty) {
-        auto const img = render::compositor::self()->software_cursor->image();
+        auto const img = compositor.software_cursor->image();
 
         // If there was no new image we are still dirty and try to update again next paint cycle.
         sw_cursor.dirty = img.isNull();

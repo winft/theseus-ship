@@ -61,7 +61,6 @@ public:
 
     explicit compositor(render::platform& platform);
     ~compositor() override;
-    static compositor* self();
 
     virtual void start(win::space& space) = 0;
 
