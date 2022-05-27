@@ -43,7 +43,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::debug
 {
 
-console::console()
+console::console(win::space& space)
     : QWidget()
     , m_ui(new Ui::debug_console)
 {
@@ -56,12 +56,12 @@ console::console()
 
     connect(m_ui->quitButton, &QAbstractButton::clicked, this, &console::deleteLater);
 
-    initGLTab();
+    initGLTab(*space.render.scene());
 }
 
 console::~console() = default;
 
-void console::initGLTab()
+void console::initGLTab(render::scene& scene)
 {
     if (!effects || !effects->isOpenGLCompositing()) {
         m_ui->noOpenGLLabel->setVisible(true);
@@ -91,7 +91,7 @@ void console::initGLTab()
     };
 
     m_ui->platformExtensionsLabel->setText(
-        extensionsString(render::compositor::self()->scene()->openGLPlatformInterfaceExtensions()));
+        extensionsString(scene.openGLPlatformInterfaceExtensions()));
     m_ui->openGLExtensionsLabel->setText(extensionsString(openGLExtensions()));
 }
 
