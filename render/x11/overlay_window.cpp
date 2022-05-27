@@ -221,7 +221,7 @@ bool overlay_window::event(xcb_generic_event_t* event)
             || (m_window != XCB_WINDOW_NONE
                 && expose->window == m_window)) { // overlay needs repainting
             render::compositor::self()->addRepaint(
-                expose->x, expose->y, expose->width, expose->height);
+                QRegion(expose->x, expose->y, expose->width, expose->height));
         }
     } else if (eventType == XCB_VISIBILITY_NOTIFY) {
         const auto* visibility = reinterpret_cast<xcb_visibility_notify_event_t*>(event);

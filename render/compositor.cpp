@@ -322,16 +322,6 @@ void compositor::reinitialize()
     }
 }
 
-void compositor::addRepaint(int x, int y, int w, int h)
-{
-    addRepaint(QRegion(x, y, w, h));
-}
-
-void compositor::addRepaint(QRect const& rect)
-{
-    addRepaint(QRegion(rect));
-}
-
 void compositor::addRepaint([[maybe_unused]] QRegion const& region)
 {
 }

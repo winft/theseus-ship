@@ -1242,7 +1242,7 @@ void effects_handler_impl::addRepaint(const QRegion& r)
 
 void effects_handler_impl::addRepaint(int x, int y, int w, int h)
 {
-    m_compositor->addRepaint(x, y, w, h);
+    m_compositor->addRepaint(QRegion(x, y, w, h));
 }
 
 int effects_handler_impl::activeScreen() const
