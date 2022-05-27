@@ -40,7 +40,7 @@ void layout_manager::init()
     switchKeyboardAction->setObjectName(QStringLiteral("Switch to Next Keyboard Layout"));
     switchKeyboardAction->setProperty("componentName",
                                       QStringLiteral("KDE Keyboard Layout Switcher"));
-    const QKeySequence sequence = QKeySequence(Qt::ALT + Qt::CTRL + Qt::Key_K);
+    QKeySequence sequence{Qt::META | Qt::ALT | Qt::Key_K};
     KGlobalAccel::self()->setDefaultShortcut(switchKeyboardAction, QList<QKeySequence>({sequence}));
     KGlobalAccel::self()->setShortcut(switchKeyboardAction, QList<QKeySequence>({sequence}));
     kwinApp()->input->setup_action_for_global_accel(switchKeyboardAction);
