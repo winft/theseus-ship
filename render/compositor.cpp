@@ -116,8 +116,6 @@ bool compositor::setupStart()
     platform.selected_compositor = scene->compositingType();
 
     connect(scene.get(), &scene::resetCompositing, this, &compositor::reinitialize);
-    Q_EMIT sceneCreated();
-
     return true;
 }
 

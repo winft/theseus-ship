@@ -292,15 +292,8 @@ void SceneQPainterTest::testCompositorRestart()
     auto oldScene
         = dynamic_cast<render::qpainter::scene*>(Test::app()->base.render->compositor->scene.get());
     QVERIFY(oldScene);
-    QSignalSpy sceneCreatedSpy(Test::app()->base.render->compositor.get(),
-                               &render::compositor::sceneCreated);
-    QVERIFY(sceneCreatedSpy.isValid());
-    Test::app()->base.render->compositor->reinitialize();
 
-    if (sceneCreatedSpy.isEmpty()) {
-        QVERIFY(sceneCreatedSpy.wait());
-    }
-    QCOMPARE(sceneCreatedSpy.count(), 1);
+    Test::app()->base.render->compositor->reinitialize();
 
     auto scene
         = dynamic_cast<render::qpainter::scene*>(Test::app()->base.render->compositor->scene.get());

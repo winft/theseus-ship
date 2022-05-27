@@ -82,15 +82,7 @@ void GenericSceneOpenGLTest::initTestCase()
 void GenericSceneOpenGLTest::testRestart()
 {
     // simple restart of the OpenGL compositor without any windows being shown
-
-    QSignalSpy sceneCreatedSpy(Test::app()->base.render->compositor.get(),
-                               &render::compositor::sceneCreated);
-    QVERIFY(sceneCreatedSpy.isValid());
     Test::app()->base.render->compositor->reinitialize();
-    if (sceneCreatedSpy.isEmpty()) {
-        QVERIFY(sceneCreatedSpy.wait());
-    }
-    QCOMPARE(sceneCreatedSpy.count(), 1);
 
     auto& scene = Test::app()->base.render->compositor->scene;
     QVERIFY(scene);
