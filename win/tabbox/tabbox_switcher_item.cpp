@@ -22,6 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/platform.h"
 #include "main.h"
 #include "render/compositor.h"
+#include "render/platform.h"
+#include "render/singleton_interface.h"
 #include "tabbox_handler.h"
 #include "win/screen.h"
 #include "win/singleton_interface.h"
@@ -52,7 +54,7 @@ tabbox_switcher_item::tabbox_switcher_item(QObject* parent)
             &base::platform::topology_changed,
             this,
             &tabbox_switcher_item::screen_geometry_changed);
-    connect(render::compositor::self(),
+    connect(render::singleton_interface::platform->compositor.get(),
             &render::compositor::compositingToggled,
             this,
             &tabbox_switcher_item::compositing_changed);

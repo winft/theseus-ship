@@ -11,6 +11,7 @@
 #include "outline.h"
 #include "post/night_color_manager.h"
 #include "scene.h"
+#include "singleton_interface.h"
 
 #include "base/logging.h"
 #include "config-kwin.h"
@@ -23,9 +24,13 @@ platform::platform(base::platform& base)
     : night_color{std::make_unique<render::post::night_color_manager>()}
     , base{base}
 {
+    singleton_interface::platform = this;
 }
 
-platform::~platform() = default;
+platform::~platform()
+{
+    singleton_interface::platform = nullptr;
+}
 
 render::gl::backend* platform::createOpenGLBackend(render::compositor& /*compositor*/)
 {

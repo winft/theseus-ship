@@ -19,9 +19,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "thumbnail_item.h"
 
+#include "compositor.h"
+#include "platform.h"
+#include "singleton_interface.h"
+
 #include "base/logging.h"
 #include "effects.h"
-#include "render/compositor.h"
 #include "toplevel.h"
 #include "win/control.h"
 #include "win/singleton_interface.h"
@@ -39,7 +42,7 @@ basic_thumbnail_item::basic_thumbnail_item(QQuickItem* parent)
     , m_saturation(1.0)
     , m_clipToItem()
 {
-    connect(render::compositor::self(),
+    connect(singleton_interface::platform->compositor.get(),
             &render::compositor::compositingToggled,
             this,
             &basic_thumbnail_item::compositingToggled);
