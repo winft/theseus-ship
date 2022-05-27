@@ -20,8 +20,8 @@
 namespace KWin::render::xrender
 {
 
-backend::backend(render::compositor& compositor)
-    : overlay_window{std::make_unique<render::x11::overlay_window>()}
+backend::backend(x11::compositor& compositor)
+    : overlay_window{std::make_unique<render::x11::overlay_window>(compositor)}
 {
     if (!base::x11::xcb::extensions::self()->is_render_available()) {
         setFailed("No XRender extension available");
@@ -32,10 +32,7 @@ backend::backend(render::compositor& compositor)
         return;
     }
 
-    auto x11_compositor = dynamic_cast<render::x11::compositor*>(&compositor);
-    assert(x11_compositor);
-    x11_compositor->overlay_window = overlay_window.get();
-
+    compositor.overlay_window = overlay_window.get();
     init(true);
 }
 

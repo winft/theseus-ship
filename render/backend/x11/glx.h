@@ -361,7 +361,7 @@ template<typename Backend>
 void start_glx_backend(Display* display, render::x11::compositor& compositor, Backend& backend)
 {
     backend.data.display = display;
-    backend.overlay_window = std::make_unique<render::x11::overlay_window>();
+    backend.overlay_window = std::make_unique<render::x11::overlay_window>(compositor);
 
     auto x11_compositor = dynamic_cast<render::x11::compositor*>(&compositor);
     assert(x11_compositor);
