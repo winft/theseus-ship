@@ -406,7 +406,7 @@ void start_glx_backend(Display* display, render::compositor& compositor, Backend
     if (backend.hasExtension(QByteArrayLiteral("GLX_INTEL_swap_event"))
         && qgetenv("KWIN_USE_INTEL_SWAP_EVENT") != QByteArrayLiteral("0")) {
         backend.data.swap_filter
-            = std::make_unique<swap_event_filter>(backend.window, backend.data.window);
+            = std::make_unique<swap_event_filter>(compositor, backend.window, backend.data.window);
         glXSelectEvent(display, backend.data.window, GLX_BUFFER_SWAP_COMPLETE_INTEL_MASK);
     }
 
