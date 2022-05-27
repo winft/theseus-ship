@@ -90,19 +90,17 @@ QSharedPointer<GLTexture> DecorationShadowTextureCache::getTexture(gl::shadow* s
     return d.texture;
 }
 
-shadow::shadow(Toplevel* toplevel)
+shadow::shadow(Toplevel* toplevel, gl::scene& scene)
     : render::shadow(toplevel)
+    , scene{scene}
 {
 }
 
 shadow::~shadow()
 {
-    auto scene = render::compositor::self()->scene();
-    if (scene) {
-        scene->makeOpenGLContextCurrent();
-        DecorationShadowTextureCache::instance().unregister(this);
-        m_texture.reset();
-    }
+    scene.makeOpenGLContextCurrent();
+    DecorationShadowTextureCache::instance().unregister(this);
+    m_texture.reset();
 }
 
 static inline void distributeHorizontally(QRectF& leftRect, QRectF& rightRect)
@@ -353,8 +351,7 @@ bool shadow::prepareBackend()
 {
     if (hasDecorationShadow()) {
         // simplifies a lot by going directly to
-        auto scene = render::compositor::self()->scene();
-        scene->makeOpenGLContextCurrent();
+        scene.makeOpenGLContextCurrent();
         m_texture = DecorationShadowTextureCache::instance().getTexture(this);
 
         return true;
@@ -444,8 +441,7 @@ bool shadow::prepareBackend()
         }
     }
 
-    auto scene = render::compositor::self()->scene();
-    scene->makeOpenGLContextCurrent();
+    scene.makeOpenGLContextCurrent();
     m_texture = QSharedPointer<GLTexture>::create(image);
 
     if (m_texture->internalFormat() == GL_R8) {
