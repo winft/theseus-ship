@@ -300,9 +300,10 @@ void platform::invertScreen()
     }
 }
 
-void platform::createEffectsHandler(render::compositor* compositor, render::scene* scene)
+std::unique_ptr<render::effects_handler_impl>
+platform::createEffectsHandler(render::compositor* compositor, render::scene* scene)
 {
-    new render::x11::effects_handler_impl(compositor, scene);
+    return std::make_unique<render::x11::effects_handler_impl>(compositor, scene);
 }
 
 CompositingType platform::selected_compositor() const

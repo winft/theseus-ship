@@ -32,6 +32,7 @@ class renderer;
 
 namespace render
 {
+
 namespace gl
 {
 class backend;
@@ -46,6 +47,7 @@ class backend;
 }
 
 class compositor;
+class effects_handler_impl;
 class outline;
 class outline_visual;
 class scene;
@@ -113,7 +115,8 @@ public:
      * is no Compositor.
      */
     virtual win::deco::renderer* createDecorationRenderer(win::deco::client_impl* client);
-    virtual void createEffectsHandler(render::compositor* compositor, render::scene* scene) = 0;
+    virtual std::unique_ptr<effects_handler_impl>
+    createEffectsHandler(render::compositor* compositor, render::scene* scene) = 0;
 
     /**
      * Platform specific way to invert the screen.

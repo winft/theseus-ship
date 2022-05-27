@@ -79,9 +79,10 @@ void platform::render_stop(bool on_shutdown)
     }
 }
 
-void platform::createEffectsHandler(render::compositor* compositor, render::scene* scene)
+std::unique_ptr<render::effects_handler_impl>
+platform::createEffectsHandler(render::compositor* compositor, render::scene* scene)
 {
-    new wayland::effects_handler_impl(compositor, scene);
+    return std::make_unique<wayland::effects_handler_impl>(compositor, scene);
 }
 
 CompositingType platform::selected_compositor() const

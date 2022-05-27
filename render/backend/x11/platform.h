@@ -54,7 +54,8 @@ public:
 
     void invertScreen() override;
 
-    void createEffectsHandler(render::compositor* compositor, render::scene* scene) override;
+    std::unique_ptr<render::effects_handler_impl>
+    createEffectsHandler(render::compositor* compositor, render::scene* scene) override;
     CompositingType selected_compositor() const override;
 
 private:

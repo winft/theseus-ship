@@ -40,6 +40,7 @@ class compositor_selection_owner;
 }
 
 class cursor;
+class effects_handler_impl;
 class platform;
 class scene;
 
@@ -114,10 +115,12 @@ public:
     void removeSupportProperty(xcb_atom_t atom);
 
     std::unique_ptr<render::scene> scene;
+    std::unique_ptr<render::effects_handler_impl> effects;
 
     // TODO(romangg): Only relevant for Wayland. Put in child class.
     std::unique_ptr<cursor> software_cursor;
     compositor_x11_integration x11_integration;
+
     render::platform& platform;
     win::space* space{nullptr};
 

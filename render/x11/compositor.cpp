@@ -238,7 +238,7 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
     }
 
     // Move elevated windows to the top of the stacking order
-    auto const elevated_win_list = static_cast<effects_handler_impl*>(effects)->elevatedWindows();
+    auto const elevated_win_list = effects->elevatedWindows();
 
     for (auto c : elevated_win_list) {
         auto t = static_cast<effects_window_impl*>(c)->window();

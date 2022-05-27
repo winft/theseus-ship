@@ -94,11 +94,12 @@ void compositor::start_scene()
     }
 
     // Sets also the 'effects' pointer.
-    platform.createEffectsHandler(this, scene.get());
-    connect(effects, &EffectsHandler::screenGeometryChanged, this, &compositor::addRepaintFull);
-    connect(space->stacking_order.get(), &win::stacking_order::unlocked, this, []() {
-        if (auto eff_impl = static_cast<effects_handler_impl*>(effects)) {
-            eff_impl->checkInputWindowStacking();
+    effects = platform.createEffectsHandler(this, scene.get());
+    connect(
+        effects.get(), &EffectsHandler::screenGeometryChanged, this, &compositor::addRepaintFull);
+    connect(space->stacking_order.get(), &win::stacking_order::unlocked, this, [this]() {
+        if (effects) {
+            effects->checkInputWindowStacking();
         }
     });
 
@@ -166,8 +167,7 @@ void compositor::stop(bool on_shutdown)
     // Some effects might need access to effect windows when they are about to
     // be destroyed, for example to unreference deleted windows, so we have to
     // make sure that effect windows outlive effects.
-    delete effects;
-    effects = nullptr;
+    effects.reset();
 
     if (space) {
         for (auto& c : space->windows()) {
