@@ -152,7 +152,7 @@ void compositor::start(win::space& space)
 
     // For now we use the software cursor as our wlroots backend does not support yet a hardware
     // cursor.
-    software_cursor = std::make_unique<cursor>(kwinApp()->input.get());
+    software_cursor = std::make_unique<cursor>(platform, kwinApp()->input.get());
     software_cursor->set_enabled(true);
 
     startupWithWorkspace(space);
