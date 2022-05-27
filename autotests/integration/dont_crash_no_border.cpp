@@ -68,7 +68,7 @@ void DontCrashNoBorder::initTestCase()
     QVERIFY(startup_spy.size() || startup_spy.wait());
     Test::test_outputs_default();
 
-    auto scene = Test::app()->base.render->compositor->scene();
+    auto& scene = Test::app()->base.render->compositor->scene;
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
 }

@@ -56,7 +56,7 @@ console::console(win::space& space)
 
     connect(m_ui->quitButton, &QAbstractButton::clicked, this, &console::deleteLater);
 
-    initGLTab(*space.render.scene());
+    initGLTab(*space.render.scene);
 }
 
 console::~console() = default;

@@ -48,15 +48,14 @@ void setup_scale_scene_notify(Win& win)
 {
     assert(win.surface());
 
-    auto scene = win.space.render.scene();
-
     // A change of scale won't affect the geometry in compositor co-ordinates, but will affect the
     // window quads.
-    QObject::connect(win.surface(), &Wrapland::Server::Surface::committed, scene, [&, scene] {
-        if (win.surface()->state().updates & Wrapland::Server::surface_change::scale) {
-            scene->windowGeometryShapeChanged(&win);
-        }
-    });
+    QObject::connect(
+        win.surface(), &Wrapland::Server::Surface::committed, win.space.render.scene.get(), [&] {
+            if (win.surface()->state().updates & Wrapland::Server::surface_change::scale) {
+                win.space.render.scene->windowGeometryShapeChanged(&win);
+            }
+        });
 }
 
 }

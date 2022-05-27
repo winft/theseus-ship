@@ -849,7 +849,7 @@ QString space::supportInformation() const
 
 bool space::compositing() const
 {
-    return render.scene();
+    return static_cast<bool>(render.scene);
 }
 
 void space::setWasUserInteraction()

@@ -56,7 +56,7 @@ void compositor::check_idle()
             return;
         }
     }
-    scene()->idle();
+    scene->idle();
 }
 
 compositor::compositor(render::platform& platform)
@@ -144,8 +144,8 @@ void compositor::start(win::space& space)
         return;
     }
 
-    assert(scene());
-    if (scene()->compositingType() == QPainterCompositing) {
+    assert(scene);
+    if (scene->compositingType() == QPainterCompositing) {
         // Force Software QtQuick on first startup with QPainter.
         QQuickWindow::setSceneGraphBackend(QSGRendererInterface::Software);
     }

@@ -87,14 +87,14 @@ bool compositor::setupStart()
 
     auto supported_render_types = get_supported_render_types(platform);
 
-    assert(!m_scene);
-    m_scene.reset(create_scene(supported_render_types));
+    assert(!scene);
+    scene.reset(create_scene(supported_render_types));
 
-    if (!m_scene || m_scene->initFailed()) {
+    if (!scene || scene->initFailed()) {
         qCCritical(KWIN_CORE) << "Failed to initialize compositing, compositing disabled";
         m_state = State::Off;
 
-        m_scene.reset();
+        scene.reset();
 
         if (auto con = kwinApp()->x11Connection()) {
             // TODO(romangg): That's X11-only. Move to the x11::compositor class.
@@ -113,9 +113,9 @@ bool compositor::setupStart()
         return false;
     }
 
-    platform.selected_compositor = m_scene->compositingType();
+    platform.selected_compositor = scene->compositingType();
 
-    connect(scene(), &scene::resetCompositing, this, &compositor::reinitialize);
+    connect(scene.get(), &scene::resetCompositing, this, &compositor::reinitialize);
     Q_EMIT sceneCreated();
 
     return true;
@@ -165,7 +165,7 @@ void compositor::startupWithWorkspace(win::space& space)
             &compositor::setupX11Support,
             Qt::UniqueConnection);
     space.x_stacking_tree->mark_as_dirty();
-    assert(m_scene);
+    assert(scene);
 
     connect(
         &space,
@@ -191,7 +191,7 @@ void compositor::startupWithWorkspace(win::space& space)
     }
 
     // Sets also the 'effects' pointer.
-    platform.createEffectsHandler(this, scene());
+    platform.createEffectsHandler(this, scene.get());
     connect(effects, &EffectsHandler::screenGeometryChanged, this, &compositor::addRepaintFull);
     connect(space.stacking_order.get(), &win::stacking_order::unlocked, this, []() {
         if (auto eff_impl = static_cast<effects_handler_impl*>(effects)) {
@@ -249,8 +249,8 @@ void compositor::stop(bool on_shutdown)
         }
     }
 
-    assert(m_scene);
-    m_scene.reset();
+    assert(scene);
+    scene.reset();
     platform.render_stop(on_shutdown);
 
     m_bufferSwapPending = false;
@@ -394,7 +394,7 @@ void compositor::update_paint_periods(int64_t duration)
 
 void compositor::retard_next_composition()
 {
-    if (m_scene->hasSwapEvent()) {
+    if (scene->hasSwapEvent()) {
         // We wait on an explicit callback from the backend to unlock next composition runs.
         return;
     }
@@ -426,11 +426,6 @@ void compositor::setCompositeTimer()
 bool compositor::isActive()
 {
     return m_state == State::On;
-}
-
-render::scene* compositor::scene() const
-{
-    return m_scene.get();
 }
 
 int compositor::refreshRate() const

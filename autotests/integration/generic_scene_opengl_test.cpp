@@ -73,7 +73,7 @@ void GenericSceneOpenGLTest::initTestCase()
     QVERIFY(startup_spy.size() || startup_spy.wait());
     QVERIFY(Test::app()->base.render->compositor);
 
-    auto scene = Test::app()->base.render->compositor->scene();
+    auto& scene = Test::app()->base.render->compositor->scene;
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
     QCOMPARE(kwinApp()->get_base().render->selected_compositor, KWin::OpenGLCompositing);
@@ -91,7 +91,8 @@ void GenericSceneOpenGLTest::testRestart()
         QVERIFY(sceneCreatedSpy.wait());
     }
     QCOMPARE(sceneCreatedSpy.count(), 1);
-    auto scene = Test::app()->base.render->compositor->scene();
+
+    auto& scene = Test::app()->base.render->compositor->scene;
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
     QCOMPARE(kwinApp()->get_base().render->selected_compositor, KWin::OpenGLCompositing);

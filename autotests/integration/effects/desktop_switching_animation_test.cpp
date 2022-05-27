@@ -70,7 +70,7 @@ void DesktopSwitchingAnimationTest::initTestCase()
     Test::app()->start();
     QVERIFY(startup_spy.size() || startup_spy.wait());
 
-    auto scene = Test::app()->base.render->compositor->scene();
+    auto& scene = Test::app()->base.render->compositor->scene;
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), OpenGLCompositing);
 }

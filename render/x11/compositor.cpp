@@ -219,7 +219,7 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
     }
 
     if (damaged.size() > 0) {
-        scene()->triggerFence();
+        scene->triggerFence();
         if (auto c = kwinApp()->x11Connection()) {
             xcb_flush(c);
         }
@@ -256,7 +256,7 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
         repaints_region.isEmpty() && !std::any_of(wins.cbegin(), wins.cend(), [](auto const& win) {
             return win->has_pending_repaints();
         })) {
-        scene()->idle();
+        scene->idle();
 
         // This means the next time we composite it is done without timer delay.
         m_delay = 0;
@@ -325,7 +325,7 @@ void compositor::performCompositing()
     auto now = std::chrono::duration_cast<std::chrono::milliseconds>(now_ns);
 
     // Start the actual painting process.
-    auto const duration = scene()->paint(repaints, windows, now);
+    auto const duration = scene->paint(repaints, windows, now);
 
     update_paint_periods(duration);
     create_opengl_safepoint(OpenGLSafePoint::PostFrame);
@@ -345,7 +345,7 @@ void compositor::create_opengl_safepoint(OpenGLSafePoint safepoint)
     if (m_framesToTestForSafety <= 0) {
         return;
     }
-    if (!(scene()->compositingType() & OpenGLCompositing)) {
+    if (!(scene->compositingType() & OpenGLCompositing)) {
         return;
     }
 

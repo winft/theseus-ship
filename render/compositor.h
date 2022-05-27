@@ -107,13 +107,13 @@ public:
      */
     bool isActive();
 
-    render::scene* scene() const;
-
     static bool compositing();
 
     // for delayed supportproperty management of effects
     void keepSupportProperty(xcb_atom_t atom);
     void removeSupportProperty(xcb_atom_t atom);
+
+    std::unique_ptr<render::scene> scene;
 
     // TODO(romangg): Only relevant for Wayland. Put in child class.
     std::unique_ptr<cursor> software_cursor;
@@ -180,8 +180,6 @@ private:
     // Compositing delay (in ns).
     qint64 m_lastPaintDurations[2]{0};
     int m_paintPeriods{0};
-
-    std::unique_ptr<render::scene> m_scene;
 };
 
 }

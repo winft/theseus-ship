@@ -140,7 +140,7 @@ void SceneOpenGLShadowTest::initTestCase()
     group.sync();
     Test::app()->workspace->slotReconfigure();
 
-    auto scene = Test::app()->base.render->compositor->scene();
+    auto& scene = Test::app()->base.render->compositor->scene;
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
 }
