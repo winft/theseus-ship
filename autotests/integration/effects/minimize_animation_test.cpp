@@ -74,7 +74,7 @@ void MinimizeAnimationTest::initTestCase()
     Test::app()->start();
     QVERIFY(startup_spy.size() || startup_spy.wait());
 
-    auto scene = render::compositor::self()->scene();
+    auto scene = Test::app()->base.render->compositor->scene();
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), OpenGLCompositing);
 }

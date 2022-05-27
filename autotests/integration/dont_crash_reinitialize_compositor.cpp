@@ -72,7 +72,7 @@ void DontCrashReinitializeCompositorTest::initTestCase()
     QVERIFY(startup_spy.count() || startup_spy.wait());
     Test::test_outputs_default();
 
-    auto scene = render::compositor::self()->scene();
+    auto scene = Test::app()->base.render->compositor->scene();
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
 }
@@ -143,7 +143,7 @@ void DontCrashReinitializeCompositorTest::testReinitializeCompositor()
     QTRY_VERIFY(effect->isActive());
 
     // Re-initialize the compositor, effects will be destroyed and created again.
-    render::compositor::self()->reinitialize();
+    Test::app()->base.render->compositor->reinitialize();
 
     // By this time, KWin should still be alive.
 }

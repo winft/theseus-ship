@@ -95,14 +95,15 @@ void SceneQPainterTest::initTestCase()
 
     Test::app()->start();
     QVERIFY(startup_spy.size() || startup_spy.wait());
-    QVERIFY(render::compositor::self());
+    QVERIFY(Test::app()->base.render->compositor);
 }
 
 void SceneQPainterTest::testStartFrame()
 {
     // this test verifies that the initial rendering is correct
-    render::compositor::self()->addRepaintFull();
-    auto scene = dynamic_cast<render::qpainter::scene*>(render::compositor::self()->scene());
+    Test::app()->base.render->compositor->addRepaintFull();
+    auto scene
+        = dynamic_cast<render::qpainter::scene*>(Test::app()->base.render->compositor->scene());
     QVERIFY(scene);
     QCOMPARE(kwinApp()->get_base().render->selected_compositor, QPainterCompositing);
     QSignalSpy frameRenderedSpy(scene, &render::scene::frameRendered);
@@ -114,7 +115,7 @@ void SceneQPainterTest::testStartFrame()
     referenceImage.fill(Qt::black);
 
     QPainter p(&referenceImage);
-    auto& sw_cursor = render::compositor::self()->software_cursor;
+    auto& sw_cursor = Test::app()->base.render->compositor->software_cursor;
     auto const cursorImage = sw_cursor->image();
 
     QVERIFY(!cursorImage.isNull());
@@ -126,7 +127,8 @@ void SceneQPainterTest::testStartFrame()
 void SceneQPainterTest::testCursorMoving()
 {
     // this test verifies that rendering is correct also after moving the cursor a few times
-    auto scene = dynamic_cast<render::qpainter::scene*>(render::compositor::self()->scene());
+    auto scene
+        = dynamic_cast<render::qpainter::scene*>(Test::app()->base.render->compositor->scene());
     QVERIFY(scene);
 
     QSignalSpy frameRenderedSpy(scene, &render::scene::frameRendered);
@@ -150,7 +152,7 @@ void SceneQPainterTest::testCursorMoving()
     QImage referenceImage(QSize(1280, 1024), QImage::Format_RGB32);
     referenceImage.fill(Qt::black);
     QPainter p(&referenceImage);
-    auto& sw_cursor = render::compositor::self()->software_cursor;
+    auto& sw_cursor = Test::app()->base.render->compositor->software_cursor;
     auto const cursorImage = sw_cursor->image();
 
     QVERIFY(!cursorImage.isNull());
@@ -173,7 +175,8 @@ void SceneQPainterTest::testWindow()
     std::unique_ptr<XdgShellToplevel> ss(Test::create_xdg_shell_toplevel(s));
     std::unique_ptr<Pointer> p(Test::get_client().interfaces.seat->createPointer());
 
-    auto scene = dynamic_cast<render::qpainter::scene*>(render::compositor::self()->scene());
+    auto scene
+        = dynamic_cast<render::qpainter::scene*>(Test::app()->base.render->compositor->scene());
     QVERIFY(scene);
 
     QSignalSpy frameRenderedSpy(scene, &render::scene::frameRendered);
@@ -233,7 +236,8 @@ void SceneQPainterTest::testWindowScaled()
     QSignalSpy pointerEnteredSpy(p.get(), &Pointer::entered);
     QVERIFY(pointerEnteredSpy.isValid());
 
-    auto scene = dynamic_cast<render::qpainter::scene*>(render::compositor::self()->scene());
+    auto scene
+        = dynamic_cast<render::qpainter::scene*>(Test::app()->base.render->compositor->scene());
     QVERIFY(scene);
     QSignalSpy frameRenderedSpy(scene, &render::scene::frameRendered);
     QVERIFY(frameRenderedSpy.isValid());
@@ -285,22 +289,25 @@ void SceneQPainterTest::testCompositorRestart()
     QVERIFY(Test::render_and_wait_for_shown(s, QSize(200, 300), Qt::blue));
 
     // now let's try to reinitialize the compositing scene
-    auto oldScene = dynamic_cast<render::qpainter::scene*>(render::compositor::self()->scene());
+    auto oldScene
+        = dynamic_cast<render::qpainter::scene*>(Test::app()->base.render->compositor->scene());
     QVERIFY(oldScene);
-    QSignalSpy sceneCreatedSpy(render::compositor::self(), &render::compositor::sceneCreated);
+    QSignalSpy sceneCreatedSpy(Test::app()->base.render->compositor.get(),
+                               &render::compositor::sceneCreated);
     QVERIFY(sceneCreatedSpy.isValid());
-    render::compositor::self()->reinitialize();
+    Test::app()->base.render->compositor->reinitialize();
 
     if (sceneCreatedSpy.isEmpty()) {
         QVERIFY(sceneCreatedSpy.wait());
     }
     QCOMPARE(sceneCreatedSpy.count(), 1);
 
-    auto scene = dynamic_cast<render::qpainter::scene*>(render::compositor::self()->scene());
+    auto scene
+        = dynamic_cast<render::qpainter::scene*>(Test::app()->base.render->compositor->scene());
     QVERIFY(scene);
 
     // this should directly trigger a frame
-    render::compositor::self()->addRepaintFull();
+    Test::app()->base.render->compositor->addRepaintFull();
     QSignalSpy frameRenderedSpy(scene, &render::scene::frameRendered);
     QVERIFY(frameRenderedSpy.isValid());
     QVERIFY(frameRenderedSpy.wait());
@@ -311,7 +318,7 @@ void SceneQPainterTest::testCompositorRestart()
     QPainter painter(&referenceImage);
     painter.fillRect(0, 0, 200, 300, Qt::blue);
 
-    auto& sw_cursor = render::compositor::self()->software_cursor;
+    auto& sw_cursor = Test::app()->base.render->compositor->software_cursor;
     auto const cursorImage = sw_cursor->image();
     QVERIFY(!cursorImage.isNull());
     painter.drawImage(QPoint(400, 400) - sw_cursor->hotspot(), cursorImage);
@@ -403,11 +410,12 @@ void SceneQPainterTest::testX11Window()
     // enough time for rendering the window
     QTest::qWait(100);
 
-    auto scene = dynamic_cast<render::qpainter::scene*>(render::compositor::self()->scene());
+    auto scene
+        = dynamic_cast<render::qpainter::scene*>(Test::app()->base.render->compositor->scene());
     QVERIFY(scene);
 
     // this should directly trigger a frame
-    render::compositor::self()->addRepaintFull();
+    Test::app()->base.render->compositor->addRepaintFull();
     QSignalSpy frameRenderedSpy(scene, &render::scene::frameRendered);
     QVERIFY(frameRenderedSpy.isValid());
     QVERIFY(frameRenderedSpy.wait());
