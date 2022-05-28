@@ -817,7 +817,7 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
     win->user_no_border = win->control->rules().checkNoBorder(win->user_no_border, !isMapped);
 
     // We setup compositing already here so a desktop presence change can access effects.
-    win->setupCompositing(false);
+    win->setupCompositing();
 
     // Initial desktop placement
     int desk = 0;

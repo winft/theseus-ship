@@ -36,7 +36,7 @@ public:
     explicit internal_window(QWindow* window, win::space& space);
     ~internal_window() override;
 
-    bool setupCompositing(bool add_full_damage) override;
+    bool setupCompositing() override;
     void add_scene_window_addon() override;
     bool eventFilter(QObject* watched, QEvent* event) override;
 

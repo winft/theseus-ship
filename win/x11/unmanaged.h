@@ -91,7 +91,7 @@ auto create_unmanaged_window(xcb_window_t w, Space& space) -> typename Space::x1
     win->detectShape(w);
     win->getWmOpaqueRegion();
     win->getSkipCloseAnimation();
-    win->setupCompositing(true);
+    win->setupCompositing();
 
     auto find_internal_window = [&win]() -> QWindow* {
         auto const windows = kwinApp()->topLevelWindows();

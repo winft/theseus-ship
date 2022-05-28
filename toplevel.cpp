@@ -250,7 +250,7 @@ bool Toplevel::isOutline() const
     return is_outline;
 }
 
-bool Toplevel::setupCompositing(bool /*add_full_damage*/)
+bool Toplevel::setupCompositing()
 {
     // Should never be called, always through the child classes instead.
     assert(false);

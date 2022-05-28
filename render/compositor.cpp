@@ -155,8 +155,7 @@ void compositor::finish_start()
     assert(scene);
 
     for (auto& client : space->windows()) {
-        assert(!client->remnant());
-        client->setupCompositing(!client->control);
+        client->setupCompositing();
     }
 
     // Sets also the 'effects' pointer.

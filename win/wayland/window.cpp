@@ -66,7 +66,7 @@ window::window(WS::Surface* surface, win::space& space)
     connect(surface, &WS::Surface::destroyed, this, [this] { destroy_window(this); });
 
     set_surface(this, surface);
-    setupCompositing(false);
+    setupCompositing();
 }
 
 qreal window::bufferScale() const
@@ -79,9 +79,8 @@ bool window::is_wayland_window() const
     return true;
 }
 
-bool window::setupCompositing([[maybe_unused]] bool add_full_damage)
+bool window::setupCompositing()
 {
-    assert(!add_full_damage);
     return win::setup_compositing(*this, false);
 }
 
