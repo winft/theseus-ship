@@ -156,9 +156,7 @@ void compositor::finish_start()
     assert(scene);
 
     for (auto& client : space->windows()) {
-        if (client->remnant()) {
-            continue;
-        }
+        assert(!client->remnant());
         client->setupCompositing(!client->control);
         if (!win::is_desktop(client)) {
             win::update_shadow(client);

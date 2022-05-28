@@ -118,6 +118,10 @@ NET::WindowType Toplevel::windowType([[maybe_unused]] bool direct,int supported_
 
 Toplevel* Toplevel::create_remnant(Toplevel* source)
 {
+    if (!source->space.render.scene) {
+        // Don't create effect remnants when we don't render.
+        return nullptr;
+    }
     if (!source->readyForPainting()) {
         // Don't create remnants for windows that have never been shown.
         return nullptr;
