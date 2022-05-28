@@ -68,12 +68,14 @@ gl::backend* platform::createOpenGLBackend(render::compositor& /*compositor*/)
 {
     assert(egl);
     egl->make_current();
+    selected_compositor = OpenGLCompositing;
     return egl.get();
 }
 
 qpainter::backend* platform::createQPainterBackend(render::compositor& /*compositor*/)
 {
     assert(qpainter);
+    selected_compositor = QPainterCompositing;
     return qpainter.get();
 }
 

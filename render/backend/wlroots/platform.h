@@ -46,6 +46,9 @@ public:
 
     wlr_renderer* renderer{nullptr};
     wlr_allocator* allocator{nullptr};
+
+private:
+    CompositingType selected_compositor{NoCompositing};
 };
 
 }

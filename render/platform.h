@@ -129,14 +129,6 @@ public:
     virtual QVector<CompositingType> supportedCompositors() const = 0;
 
     std::unique_ptr<render::post::night_color_manager> night_color;
-
-    /**
-     * The compositor plugin which got selected from @ref supportedCompositors. Prior to selecting
-     * this returns @c NoCompositing. Allows to limit the offerings in @ref supportedCompositors
-     * in case they do not support runtime compositor switching.
-     */
-    CompositingType selected_compositor{NoCompositing};
-
     std::unique_ptr<render::compositor> compositor;
     base::platform& base;
 
