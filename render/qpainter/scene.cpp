@@ -40,9 +40,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <KDecoration2/Decoration>
 #include <QPainter>
+#include <QQuickWindow>
 #include <Wrapland/Server/buffer.h>
 #include <Wrapland/Server/surface.h>
-
 #include <cmath>
 
 namespace KWin::render::qpainter
@@ -53,6 +53,7 @@ scene::scene(qpainter::backend* backend, render::compositor& compositor)
     , m_backend(backend)
     , m_painter(new QPainter())
 {
+    QQuickWindow::setSceneGraphBackend(QSGRendererInterface::Software);
 }
 
 scene::~scene()

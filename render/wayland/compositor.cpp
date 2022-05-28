@@ -26,8 +26,6 @@
 
 #include "wayland_logging.h"
 
-#include <QQuickWindow>
-
 namespace KWin::render::wayland
 {
 
@@ -151,12 +149,6 @@ void compositor::start(win::space& space)
     if (!render::compositor::setupStart()) {
         // Internal setup failed, abort.
         return;
-    }
-
-    assert(scene);
-    if (scene->compositingType() == QPainterCompositing) {
-        // Force Software QtQuick on first startup with QPainter.
-        QQuickWindow::setSceneGraphBackend(QSGRendererInterface::Software);
     }
 
     // For now we use the software cursor as our wlroots backend does not support yet a hardware
