@@ -102,10 +102,6 @@ void compositor::start(win::space& space)
         return;
     }
 
-    space.x_stacking_tree->mark_as_dirty();
-
-    finish_start();
-
     if (m_releaseSelectionTimer.isActive()) {
         m_releaseSelectionTimer.stop();
     }

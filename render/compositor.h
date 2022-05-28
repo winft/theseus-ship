@@ -136,7 +136,6 @@ protected:
      */
     bool setupStart();
     void setupX11Support();
-    void finish_start();
     virtual render::scene* create_scene(QVector<CompositingType> const& support) = 0;
 
     virtual void performCompositing() = 0;

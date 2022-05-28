@@ -24,6 +24,7 @@
 #include "win/scene.h"
 #include "win/space.h"
 #include "win/stacking_order.h"
+#include "win/x11/stacking_tree.h"
 
 #include <QTimerEvent>
 
@@ -68,25 +69,25 @@ compositor::~compositor()
 
 bool compositor::setupStart()
 {
+    assert(space);
+    assert(!scene);
+
     if (kwinApp()->isTerminating()) {
         // Don't start while KWin is terminating. An event to restart might be lingering
         // in the event queue due to graphics reset.
         return false;
     }
+
     if (m_state != State::Off) {
         return false;
     }
+
     m_state = State::Starting;
-
     kwinApp()->options->reloadCompositingSettings(true);
-
     setupX11Support();
-
     Q_EMIT aboutToToggleCompositing();
 
     auto supported_render_types = get_supported_render_types(platform);
-
-    assert(!scene);
     scene.reset(create_scene(supported_render_types));
 
     if (!scene || scene->initFailed()) {
@@ -112,6 +113,26 @@ bool compositor::setupStart()
         return false;
     }
 
+    space->x_stacking_tree->mark_as_dirty();
+    for (auto& client : space->windows()) {
+        client->setupCompositing();
+    }
+
+    // Sets also the 'effects' pointer.
+    platform.createEffectsHandler(this, scene.get());
+    connect(effects, &EffectsHandler::screenGeometryChanged, this, &compositor::addRepaintFull);
+    connect(space->stacking_order.get(), &win::stacking_order::unlocked, this, []() {
+        if (auto eff_impl = static_cast<effects_handler_impl*>(effects)) {
+            eff_impl->checkInputWindowStacking();
+        }
+    });
+
+    m_state = State::On;
+    Q_EMIT compositingToggled(true);
+
+    // Render at least once.
+    addRepaintFull();
+    performCompositing();
     return true;
 }
 
@@ -147,32 +168,6 @@ void compositor::setupX11Support()
     claimCompositorSelection();
     xcb_composite_redirect_subwindows(
         con, kwinApp()->x11RootWindow(), XCB_COMPOSITE_REDIRECT_MANUAL);
-}
-
-void compositor::finish_start()
-{
-    assert(space);
-    assert(scene);
-
-    for (auto& client : space->windows()) {
-        client->setupCompositing();
-    }
-
-    // Sets also the 'effects' pointer.
-    platform.createEffectsHandler(this, scene.get());
-    connect(effects, &EffectsHandler::screenGeometryChanged, this, &compositor::addRepaintFull);
-    connect(space->stacking_order.get(), &win::stacking_order::unlocked, this, []() {
-        if (auto eff_impl = static_cast<effects_handler_impl*>(effects)) {
-            eff_impl->checkInputWindowStacking();
-        }
-    });
-
-    m_state = State::On;
-    Q_EMIT compositingToggled(true);
-
-    // Render at least once.
-    addRepaintFull();
-    performCompositing();
 }
 
 void compositor::schedule_repaint(Toplevel* /*window*/)

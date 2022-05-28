@@ -22,7 +22,6 @@
 #include "win/scene.h"
 #include "win/space.h"
 #include "win/stacking_order.h"
-#include "win/x11/stacking_tree.h"
 
 #include "wayland_logging.h"
 
@@ -151,14 +150,7 @@ void compositor::start(win::space& space)
     software_cursor = std::make_unique<cursor>(platform, kwinApp()->input.get());
     software_cursor->set_enabled(true);
 
-    if (!render::compositor::setupStart()) {
-        // Internal setup failed, abort.
-        return;
-    }
-
-    space.x_stacking_tree->mark_as_dirty();
-
-    finish_start();
+    render::compositor::setupStart();
 }
 
 render::scene* compositor::create_scene(QVector<CompositingType> const& support)
