@@ -157,9 +157,6 @@ void compositor::finish_start()
     for (auto& client : space->windows()) {
         assert(!client->remnant());
         client->setupCompositing(!client->control);
-        if (!win::is_desktop(client)) {
-            win::update_shadow(client);
-        }
     }
 
     // Sets also the 'effects' pointer.
