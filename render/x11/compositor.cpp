@@ -97,14 +97,7 @@ void compositor::start(win::space& space)
         return;
     }
 
-    if (!render::compositor::setupStart()) {
-        // Internal setup failed, abort.
-        return;
-    }
-
-    if (m_releaseSelectionTimer.isActive()) {
-        m_releaseSelectionTimer.stop();
-    }
+    render::compositor::setupStart();
 }
 
 void compositor::schedule_repaint()
