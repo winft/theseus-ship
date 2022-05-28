@@ -165,12 +165,6 @@ void compositor::startupWithWorkspace(win::space& space)
     space.x_stacking_tree->mark_as_dirty();
     assert(scene);
 
-    connect(
-        &space,
-        &win::space::destroyed,
-        this,
-        [this] { compositeTimer.stop(); },
-        Qt::UniqueConnection);
     setupX11Support();
 
     connect(space.stacking_order.get(),
