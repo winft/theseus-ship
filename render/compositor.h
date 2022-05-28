@@ -135,10 +135,8 @@ protected:
      * @return bool @c true if start should be continued and @c if not.
      */
     bool setupStart();
-    /**
-     * Continues the startup after Scene And Workspace are created
-     */
-    void startupWithWorkspace(win::space& space);
+    void setupX11Support();
+    void finish_start();
     virtual render::scene* create_scene(QVector<CompositingType> const& support) = 0;
 
     virtual void performCompositing() = 0;
@@ -161,8 +159,6 @@ protected:
 private:
     void claimCompositorSelection();
     int refreshRate() const;
-
-    void setupX11Support();
 
     void deleteUnusedSupportProperties();
 

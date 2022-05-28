@@ -67,7 +67,16 @@ compositor::compositor(render::platform& platform)
 
 void compositor::start(win::space& space)
 {
-    this->space = &space;
+    if (!this->space) {
+        // On first start setup connections.
+        QObject::connect(
+            kwinApp(), &Application::x11ConnectionChanged, this, &compositor::setupX11Support);
+        QObject::connect(space.stacking_order.get(),
+                         &win::stacking_order::changed,
+                         this,
+                         &compositor::addRepaintFull);
+        this->space = &space;
+    }
 
     if (m_suspended) {
         QStringList reasons;
@@ -97,7 +106,9 @@ void compositor::start(win::space& space)
         m_releaseSelectionTimer.stop();
     }
 
-    startupWithWorkspace(space);
+    space.x_stacking_tree->mark_as_dirty();
+
+    finish_start();
 }
 
 void compositor::schedule_repaint()

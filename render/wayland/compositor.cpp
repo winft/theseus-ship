@@ -21,6 +21,8 @@
 #include "render/scene.h"
 #include "win/scene.h"
 #include "win/space.h"
+#include "win/stacking_order.h"
+#include "win/x11/stacking_tree.h"
 
 #include "wayland_logging.h"
 
@@ -127,6 +129,12 @@ void compositor::start(win::space& space)
     if (!this->space) {
         // On first start setup connections.
         QObject::connect(
+            kwinApp(), &Application::x11ConnectionChanged, this, &compositor::setupX11Support);
+        QObject::connect(space.stacking_order.get(),
+                         &win::stacking_order::changed,
+                         this,
+                         &compositor::addRepaintFull);
+        QObject::connect(
             &platform.base, &base::platform::output_removed, this, [this](auto output) {
                 for (auto& win : this->space->m_windows) {
                     remove_all(win->repaint_outputs, output);
@@ -137,6 +145,7 @@ void compositor::start(win::space& space)
                 get_output(output)->render->delay_timer.stop();
             }
         });
+        this->space = &space;
     }
 
     if (!render::compositor::setupStart()) {
@@ -155,7 +164,9 @@ void compositor::start(win::space& space)
     software_cursor = std::make_unique<cursor>(platform, kwinApp()->input.get());
     software_cursor->set_enabled(true);
 
-    startupWithWorkspace(space);
+    space.x_stacking_tree->mark_as_dirty();
+
+    finish_start();
 }
 
 render::scene* compositor::create_scene(QVector<CompositingType> const& support)

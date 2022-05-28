@@ -24,7 +24,6 @@
 #include "win/scene.h"
 #include "win/space.h"
 #include "win/stacking_order.h"
-#include "win/x11/stacking_tree.h"
 
 #include <QTimerEvent>
 
@@ -153,26 +152,12 @@ void compositor::setupX11Support()
         con, kwinApp()->x11RootWindow(), XCB_COMPOSITE_REDIRECT_MANUAL);
 }
 
-void compositor::startupWithWorkspace(win::space& space)
+void compositor::finish_start()
 {
-    this->space = &space;
-
-    connect(kwinApp(),
-            &Application::x11ConnectionChanged,
-            this,
-            &compositor::setupX11Support,
-            Qt::UniqueConnection);
-    space.x_stacking_tree->mark_as_dirty();
+    assert(space);
     assert(scene);
 
-    setupX11Support();
-
-    connect(space.stacking_order.get(),
-            &win::stacking_order::changed,
-            this,
-            &compositor::addRepaintFull);
-
-    for (auto& client : space.windows()) {
+    for (auto& client : space->windows()) {
         if (client->remnant()) {
             continue;
         }
@@ -185,7 +170,7 @@ void compositor::startupWithWorkspace(win::space& space)
     // Sets also the 'effects' pointer.
     platform.createEffectsHandler(this, scene.get());
     connect(effects, &EffectsHandler::screenGeometryChanged, this, &compositor::addRepaintFull);
-    connect(space.stacking_order.get(), &win::stacking_order::unlocked, this, []() {
+    connect(space->stacking_order.get(), &win::stacking_order::unlocked, this, []() {
         if (auto eff_impl = static_cast<effects_handler_impl*>(effects)) {
             eff_impl->checkInputWindowStacking();
         }
