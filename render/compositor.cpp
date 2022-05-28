@@ -112,7 +112,6 @@ bool compositor::setupStart()
         return false;
     }
 
-    connect(scene.get(), &scene::resetCompositing, this, &compositor::reinitialize);
     return true;
 }
 

@@ -177,7 +177,6 @@ public:
 
 Q_SIGNALS:
     void frameRendered();
-    void resetCompositing();
 
 public Q_SLOTS:
     // shape/size of a window changed
