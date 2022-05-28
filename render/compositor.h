@@ -129,12 +129,7 @@ Q_SIGNALS:
 protected:
     void timerEvent(QTimerEvent* te) override;
     void stop(bool on_shutdown);
-
-    /**
-     * @brief Prepares start.
-     * @return bool @c true if start should be continued and @c if not.
-     */
-    bool setupStart();
+    void start_scene();
     void setupX11Support();
     virtual render::scene* create_scene(QVector<CompositingType> const& support) = 0;
 

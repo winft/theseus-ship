@@ -31,6 +31,7 @@
 #include <KGlobalAccel>
 #include <KLocalizedString>
 #include <KNotification>
+#include <stdexcept>
 
 Q_DECLARE_METATYPE(KWin::render::x11::compositor::SuspendReason)
 
@@ -92,12 +93,18 @@ void compositor::start(win::space& space)
         qCDebug(KWIN_CORE) << "Compositing is suspended, reason:" << reasons;
         return;
     }
+
     if (!platform.compositingPossible()) {
         qCCritical(KWIN_CORE) << "Compositing is not possible";
         return;
     }
 
-    render::compositor::setupStart();
+    try {
+        render::compositor::start_scene();
+    } catch (std::runtime_error const& ex) {
+        qCWarning(KWIN_CORE) << "Error: " << ex.what();
+        qCWarning(KWIN_CORE) << "Compositing not possible. Continue without it.";
+    }
 }
 
 void compositor::schedule_repaint()

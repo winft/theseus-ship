@@ -25,6 +25,8 @@
 
 #include "wayland_logging.h"
 
+#include <stdexcept>
+
 namespace KWin::render::wayland
 {
 
@@ -150,7 +152,13 @@ void compositor::start(win::space& space)
     software_cursor = std::make_unique<cursor>(platform, kwinApp()->input.get());
     software_cursor->set_enabled(true);
 
-    render::compositor::setupStart();
+    try {
+        render::compositor::start_scene();
+    } catch (std::runtime_error const& ex) {
+        qCCritical(KWIN_WL) << "Error: " << ex.what();
+        qCCritical(KWIN_WL) << "Wayland requires compositing. Going to quit.";
+        qApp->quit();
+    }
 }
 
 render::scene* compositor::create_scene(QVector<CompositingType> const& support)

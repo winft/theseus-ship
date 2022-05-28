@@ -27,6 +27,7 @@
 #include "win/x11/stacking_tree.h"
 
 #include <QTimerEvent>
+#include <stdexcept>
 
 namespace KWin::render
 {
@@ -67,7 +68,7 @@ compositor::~compositor()
     destroyCompositorSelection();
 }
 
-bool compositor::setupStart()
+void compositor::start_scene()
 {
     assert(space);
     assert(!scene);
@@ -75,11 +76,11 @@ bool compositor::setupStart()
     if (kwinApp()->isTerminating()) {
         // Don't start while KWin is terminating. An event to restart might be lingering
         // in the event queue due to graphics reset.
-        return false;
+        return;
     }
 
     if (m_state != State::Off) {
-        return false;
+        return;
     }
 
     m_state = State::Starting;
@@ -105,12 +106,8 @@ bool compositor::setupStart()
         if (m_selectionOwner) {
             m_selectionOwner->disown();
         }
-        if (!supported_render_types.contains(NoCompositing)) {
-            qCCritical(KWIN_CORE) << "The used windowing system requires compositing";
-            qCCritical(KWIN_CORE) << "We are going to quit KWin now as it is broken";
-            qApp->quit();
-        }
-        return false;
+
+        throw std::runtime_error("Failed to initialize compositing");
     }
 
     space->x_stacking_tree->mark_as_dirty();
@@ -133,7 +130,6 @@ bool compositor::setupStart()
     // Render at least once.
     addRepaintFull();
     performCompositing();
-    return true;
 }
 
 void compositor::claimCompositorSelection()
