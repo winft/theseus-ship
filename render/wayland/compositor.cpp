@@ -146,15 +146,15 @@ void compositor::start(win::space& space)
         this->space = &space;
     }
 
-    if (!render::compositor::setupStart()) {
-        // Internal setup failed, abort.
-        return;
-    }
-
     // For now we use the software cursor as our wlroots backend does not support yet a hardware
     // cursor.
     software_cursor = std::make_unique<cursor>(platform, kwinApp()->input.get());
     software_cursor->set_enabled(true);
+
+    if (!render::compositor::setupStart()) {
+        // Internal setup failed, abort.
+        return;
+    }
 
     space.x_stacking_tree->mark_as_dirty();
 
