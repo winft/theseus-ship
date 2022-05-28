@@ -104,6 +104,10 @@ void compositor::start(win::space& space)
     } catch (std::runtime_error const& ex) {
         qCWarning(KWIN_CORE) << "Error: " << ex.what();
         qCWarning(KWIN_CORE) << "Compositing not possible. Continue without it.";
+
+        xcb_composite_unredirect_subwindows(
+            kwinApp()->x11Connection(), kwinApp()->x11RootWindow(), XCB_COMPOSITE_REDIRECT_MANUAL);
+        destroyCompositorSelection();
     }
 }
 
