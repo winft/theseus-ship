@@ -87,22 +87,18 @@ gl::backend* platform::createOpenGLBackend(render::compositor& compositor)
         return gl_backend.get();
     }
 
-    switch (kwinApp()->options->glPlatformInterface()) {
-#if HAVE_EPOXY_GLX
-    case GlxPlatformInterface:
-        if (has_glx()) {
-            gl_backend = std::make_unique<glx_backend>(m_x11Display, x11comp);
-            return gl_backend.get();
-        } else {
-            qCWarning(KWIN_X11) << "Glx not available, trying EGL instead.";
-            // no break, needs fall-through
-            Q_FALLTHROUGH();
-        }
-#endif
-    case EglPlatformInterface:
-    default:
-        throw std::runtime_error("No OpenGL backend available");
+    if (kwinApp()->options->glPlatformInterface() == EglPlatformInterface) {
+        qCWarning(KWIN_CORE)
+            << "Requested EGL on X11 backend, but support has been removed. Trying GLX instead.";
     }
+
+#if HAVE_EPOXY_GLX
+    if (has_glx()) {
+        gl_backend = std::make_unique<glx_backend>(m_x11Display, x11comp);
+        return gl_backend.get();
+    }
+#endif
+    throw std::runtime_error("GLX backend not available.");
 }
 
 void platform::render_stop(bool /*on_shutdown*/)
@@ -321,5 +317,4 @@ QVector<CompositingType> platform::supportedCompositors() const
     compositors << NoCompositing;
     return compositors;
 }
-
 }
