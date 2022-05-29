@@ -51,7 +51,7 @@ namespace KWin::render::qpainter
 
 scene::scene(render::compositor& compositor)
     : render::scene(compositor)
-    , m_backend{compositor.platform.createQPainterBackend(compositor)}
+    , m_backend{compositor.platform.get_qpainter_backend(compositor)}
     , m_painter(new QPainter())
 {
     QQuickWindow::setSceneGraphBackend(QSGRendererInterface::Software);

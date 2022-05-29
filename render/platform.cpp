@@ -32,12 +32,12 @@ platform::~platform()
     singleton_interface::platform = nullptr;
 }
 
-render::gl::backend* platform::createOpenGLBackend(render::compositor& /*compositor*/)
+render::gl::backend* platform::get_opengl_backend(render::compositor& /*compositor*/)
 {
     return nullptr;
 }
 
-render::qpainter::backend* platform::createQPainterBackend(render::compositor& /*compositor*/)
+render::qpainter::backend* platform::get_qpainter_backend(render::compositor& /*compositor*/)
 {
     return nullptr;
 }

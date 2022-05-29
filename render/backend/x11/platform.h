@@ -40,7 +40,7 @@ public:
 
     void init();
 
-    gl::backend* createOpenGLBackend(render::compositor& compositor) override;
+    gl::backend* get_opengl_backend(render::compositor& compositor) override;
     void render_stop(bool on_shutdown) override;
 
     bool requiresCompositing() const override;

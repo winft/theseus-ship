@@ -56,8 +56,8 @@ class KWIN_EXPORT platform : public QObject
 public:
     ~platform() override;
 
-    virtual render::gl::backend* createOpenGLBackend(render::compositor& compositor);
-    virtual render::qpainter::backend* createQPainterBackend(render::compositor& compositor);
+    virtual render::gl::backend* get_opengl_backend(render::compositor& compositor);
+    virtual render::qpainter::backend* get_qpainter_backend(render::compositor& compositor);
 
     // TODO(romangg): Remove the boolean trap.
     virtual void render_stop(bool on_shutdown) = 0;

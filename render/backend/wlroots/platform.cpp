@@ -60,14 +60,14 @@ void platform::init()
     base::update_output_topology(base);
 }
 
-gl::backend* platform::createOpenGLBackend(render::compositor& /*compositor*/)
+gl::backend* platform::get_opengl_backend(render::compositor& /*compositor*/)
 {
     assert(egl);
     egl->make_current();
     return egl.get();
 }
 
-qpainter::backend* platform::createQPainterBackend(render::compositor& /*compositor*/)
+qpainter::backend* platform::get_qpainter_backend(render::compositor& /*compositor*/)
 {
     assert(qpainter);
     return qpainter.get();

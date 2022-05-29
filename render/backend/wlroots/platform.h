@@ -36,8 +36,8 @@ public:
     void createEffectsHandler(render::compositor* compositor, render::scene* scene) override;
     QVector<CompositingType> supportedCompositors() const override;
 
-    gl::backend* createOpenGLBackend(render::compositor& compositor) override;
-    qpainter::backend* createQPainterBackend(render::compositor& compositor) override;
+    gl::backend* get_opengl_backend(render::compositor& compositor) override;
+    qpainter::backend* get_qpainter_backend(render::compositor& compositor) override;
     void render_stop(bool on_shutdown) override;
 
     base::backend::wlroots::platform& base;

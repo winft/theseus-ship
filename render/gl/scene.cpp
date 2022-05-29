@@ -288,7 +288,7 @@ bool SyncManager::updateFences()
 
 scene::scene(render::compositor& compositor)
     : render::scene(compositor)
-    , m_backend{compositor.platform.createOpenGLBackend(compositor)}
+    , m_backend{compositor.platform.get_opengl_backend(compositor)}
 {
     if (!viewportLimitsMatched(kwinApp()->get_base().topology.size)) {
         // TODO(romangg): throw?

@@ -78,7 +78,7 @@ void platform::init()
     XRenderUtils::init(kwinApp()->x11Connection(), kwinApp()->x11RootWindow());
 }
 
-gl::backend* platform::createOpenGLBackend(render::compositor& compositor)
+gl::backend* platform::get_opengl_backend(render::compositor& compositor)
 {
     auto& x11comp = static_cast<render::x11::compositor&>(compositor);
 
