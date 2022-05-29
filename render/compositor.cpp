@@ -88,9 +88,7 @@ void compositor::start_scene()
     setupX11Support();
     Q_EMIT aboutToToggleCompositing();
 
-    auto supported_render_types = get_supported_render_types(platform);
-    scene.reset(create_scene(supported_render_types));
-
+    scene.reset(create_scene());
     if (!scene || scene->initFailed()) {
         qCCritical(KWIN_CORE) << "Failed to initialize compositing, compositing disabled";
         m_state = State::Off;

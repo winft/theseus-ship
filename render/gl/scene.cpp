@@ -1005,7 +1005,7 @@ render::scene* create_scene_impl(render::compositor& compositor)
 
 render::scene* create_scene(render::compositor& compositor)
 {
-    qCDebug(KWIN_CORE) << "Initializing OpenGL compositing";
+    qCDebug(KWIN_CORE) << "Creating OpenGL scene.";
 
     // Some broken drivers crash on glXQuery() so to prevent constant KWin crashes:
     if (compositor.platform.openGLCompositingIsBroken()) {

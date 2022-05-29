@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "shadow.h"
 #include "window.h"
 
+#include "base/logging.h"
 #include "render/effects.h"
 #include "render/platform.h"
 #include "render/shadow.h"
@@ -133,6 +134,8 @@ win::deco::renderer* scene::createDecorationRenderer(win::deco::client_impl* cli
 
 render::scene* create_scene(x11::compositor& compositor)
 {
+    qCDebug(KWIN_CORE) << "Creating XRender scene.";
+
     QScopedPointer<xrender::backend> backend;
     backend.reset(new xrender::backend(compositor));
     if (backend->isFailed()) {

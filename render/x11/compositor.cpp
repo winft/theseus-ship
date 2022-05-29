@@ -290,34 +290,41 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
     return true;
 }
 
-render::scene* compositor::create_scene(QVector<CompositingType> const& support)
+render::scene* compositor::create_scene()
 {
-    render::scene* scene{nullptr};
-
-    for (auto type : support) {
-        if (type == OpenGLCompositing) {
-            qCDebug(KWIN_CORE) << "Creating OpenGL scene.";
-            scene = gl::create_scene(*this);
-            break;
-        }
-#ifdef KWIN_HAVE_XRENDER_COMPOSITING
-        if (type == XRenderCompositing) {
-            qCDebug(KWIN_CORE) << "Creating XRender scene.";
-            scene = xrender::create_scene(*this);
-            break;
-        }
-#endif
-    }
-
-    if (scene) {
-        scene->windowing_integration.handle_viewport_limits_alarm = [this] {
+    auto setup_hooks = [&](auto& scene) {
+        scene->windowing_integration.handle_viewport_limits_alarm = [&] {
             qCDebug(KWIN_CORE) << "Suspending compositing because viewport limits are not met";
             QTimer::singleShot(
                 0, this, [this] { suspend(render::x11::compositor::AllReasonSuspend); });
         };
+    };
+
+    std::deque<std::function<render::scene*(compositor&)>> factories;
+    factories.push_back(gl::create_scene);
+
+    auto const req_mode = kwinApp()->options->compositingMode();
+#ifdef KWIN_HAVE_XRENDER_COMPOSITING
+    if (req_mode == XRenderCompositing) {
+        factories.push_front(xrender::create_scene);
+    } else {
+        factories.push_back(xrender::create_scene);
+    }
+#else
+    if (req_mode == XRenderCompositing) {
+        qCDebug(KWIN_CORE) << "Requested XRender compositing, but support has not been compiled. "
+                              "Continue with OpenGL.";
+    }
+#endif
+
+    for (auto factory : factories) {
+        if (auto scene = factory(*this)) {
+            setup_hooks(scene);
+            return scene;
+        }
     }
 
-    return scene;
+    return nullptr;
 }
 
 void compositor::performCompositing()
@@ -416,5 +423,4 @@ void compositor::updateClientCompositeBlocking(Toplevel* window)
         }
     }
 }
-
 }

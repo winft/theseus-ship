@@ -200,6 +200,8 @@ backend* create_backend(render::compositor& compositor)
 
 render::scene* create_scene(render::compositor& compositor)
 {
+    qCDebug(KWIN_WL) << "Creating QPainter scene.";
+
     auto backend = create_backend(compositor);
     if (!backend) {
         return nullptr;

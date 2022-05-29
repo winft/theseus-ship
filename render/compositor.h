@@ -131,7 +131,7 @@ protected:
     void stop(bool on_shutdown);
     void start_scene();
     void setupX11Support();
-    virtual render::scene* create_scene(QVector<CompositingType> const& support) = 0;
+    virtual render::scene* create_scene() = 0;
 
     virtual void performCompositing() = 0;
     void update_paint_periods(int64_t duration);

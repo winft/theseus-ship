@@ -161,18 +161,23 @@ void compositor::start(win::space& space)
     }
 }
 
-render::scene* compositor::create_scene(QVector<CompositingType> const& support)
+render::scene* compositor::create_scene()
 {
-    for (auto type : support) {
-        if (type == OpenGLCompositing) {
-            qCDebug(KWIN_WL) << "Creating OpenGL scene.";
-            return gl::create_scene(*this);
-        }
-        if (type == QPainterCompositing) {
-            qCDebug(KWIN_WL) << "Creating QPainter scene.";
-            return qpainter::create_scene(*this);
+    std::deque<std::function<render::scene*(compositor&)>> factories;
+    factories.push_back(gl::create_scene);
+
+    if (kwinApp()->options->compositingMode() == QPainterCompositing) {
+        factories.push_front(qpainter::create_scene);
+    } else {
+        factories.push_back(qpainter::create_scene);
+    }
+
+    for (auto factory : factories) {
+        if (auto scene = factory(*this)) {
+            return scene;
         }
     }
+
     return nullptr;
 }
 

@@ -53,7 +53,7 @@ public:
     std::unique_ptr<render::wayland::presentation> presentation;
 
 protected:
-    render::scene* create_scene(QVector<CompositingType> const& support) override;
+    render::scene* create_scene() override;
     void performCompositing() override;
 
 private:
