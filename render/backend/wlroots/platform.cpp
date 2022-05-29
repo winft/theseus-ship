@@ -47,8 +47,10 @@ void platform::init()
     //                available in the ctor. Can we change that?
     if (kwinApp()->options->compositingMode() == QPainterCompositing) {
         qpainter = create_render_backend<qpainter_backend>(*this, "pixman");
+        selected_compositor = QPainterCompositing;
     } else {
         egl = create_render_backend<egl_backend>(*this, "gles2");
+        selected_compositor = OpenGLCompositing;
     }
 
     if (!wlr_backend_start(base.backend)) {
@@ -62,14 +64,12 @@ gl::backend* platform::createOpenGLBackend(render::compositor& /*compositor*/)
 {
     assert(egl);
     egl->make_current();
-    selected_compositor = OpenGLCompositing;
     return egl.get();
 }
 
 qpainter::backend* platform::createQPainterBackend(render::compositor& /*compositor*/)
 {
     assert(qpainter);
-    selected_compositor = QPainterCompositing;
     return qpainter.get();
 }
 

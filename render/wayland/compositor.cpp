@@ -163,22 +163,11 @@ void compositor::start(win::space& space)
 
 render::scene* compositor::create_scene()
 {
-    std::deque<std::function<render::scene*(compositor&)>> factories;
-    factories.push_back(gl::create_scene);
-
-    if (kwinApp()->options->compositingMode() == QPainterCompositing) {
-        factories.push_front(qpainter::create_scene);
-    } else {
-        factories.push_back(qpainter::create_scene);
+    assert(platform.supportedCompositors().size() == 1);
+    if (platform.supportedCompositors().at(0) == QPainterCompositing) {
+        return qpainter::create_scene(*this);
     }
-
-    for (auto factory : factories) {
-        if (auto scene = factory(*this)) {
-            return scene;
-        }
-    }
-
-    return nullptr;
+    return gl::create_scene(*this);
 }
 
 void compositor::performCompositing()
