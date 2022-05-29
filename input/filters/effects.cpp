@@ -10,88 +10,93 @@
 
 #include "base/wayland/server.h"
 #include "input/qt_event.h"
+#include "input/redirect.h"
 #include "main.h"
+#include "render/compositor.h"
 #include "render/effects.h"
+#include "win/space.h"
 
 #include <Wrapland/Server/seat.h>
 
 namespace KWin::input
 {
 
+effects_filter::effects_filter(input::redirect& redirect)
+    : redirect{redirect}
+{
+}
+
 bool effects_filter::button(button_event const& event)
 {
-    if (!effects) {
+    if (!redirect.space.render.effects) {
         return false;
     }
     auto qt_event = button_to_qt_event(event);
-    return static_cast<render::effects_handler_impl*>(effects)->checkInputWindowEvent(&qt_event);
+    return redirect.space.render.effects->checkInputWindowEvent(&qt_event);
 }
 
 bool effects_filter::motion(motion_event const& event)
 {
-    if (!effects) {
+    if (!redirect.space.render.effects) {
         return false;
     }
     auto qt_event = motion_to_qt_event(event);
-    return static_cast<render::effects_handler_impl*>(effects)->checkInputWindowEvent(&qt_event);
+    return redirect.space.render.effects->checkInputWindowEvent(&qt_event);
 }
 
 bool effects_filter::axis(axis_event const& event)
 {
-    if (!effects) {
+    if (!redirect.space.render.effects) {
         return false;
     }
     auto qt_event = axis_to_qt_event(event);
-    return static_cast<render::effects_handler_impl*>(effects)->checkInputWindowEvent(&qt_event);
+    return redirect.space.render.effects->checkInputWindowEvent(&qt_event);
 }
 
 bool effects_filter::key(key_event const& event)
 {
-    if (!effects || !static_cast<render::effects_handler_impl*>(effects)->hasKeyboardGrab()) {
+    if (!redirect.space.render.effects || !redirect.space.render.effects->hasKeyboardGrab()) {
         return false;
     }
     waylandServer()->seat()->setFocusedKeyboardSurface(nullptr);
     pass_to_wayland_server(event);
     auto qt_event = key_to_qt_event(event);
-    static_cast<render::effects_handler_impl*>(effects)->grabbedKeyboardEvent(&qt_event);
+    redirect.space.render.effects->grabbedKeyboardEvent(&qt_event);
     return true;
 }
 
 bool effects_filter::key_repeat(key_event const& event)
 {
-    if (!effects || !static_cast<render::effects_handler_impl*>(effects)->hasKeyboardGrab()) {
+    if (!redirect.space.render.effects || !redirect.space.render.effects->hasKeyboardGrab()) {
         return false;
     }
     auto qt_event = key_to_qt_event(event);
-    static_cast<render::effects_handler_impl*>(effects)->grabbedKeyboardEvent(&qt_event);
+    redirect.space.render.effects->grabbedKeyboardEvent(&qt_event);
     return true;
 }
 
 bool effects_filter::touch_down(touch_down_event const& event)
 {
-    if (!effects) {
+    if (!redirect.space.render.effects) {
         return false;
     }
-    return static_cast<render::effects_handler_impl*>(effects)->touchDown(
-        event.id, event.pos, event.base.time_msec);
+    return redirect.space.render.effects->touchDown(event.id, event.pos, event.base.time_msec);
 }
 
 bool effects_filter::touch_motion(touch_motion_event const& event)
 {
-    if (!effects) {
+    if (!redirect.space.render.effects) {
         return false;
     }
-    return static_cast<render::effects_handler_impl*>(effects)->touchMotion(
-        event.id, event.pos, event.base.time_msec);
+    return redirect.space.render.effects->touchMotion(event.id, event.pos, event.base.time_msec);
 }
 
 bool effects_filter::touch_up(touch_up_event const& event)
 {
-    if (!effects) {
+    if (!redirect.space.render.effects) {
         return false;
     }
-    return static_cast<render::effects_handler_impl*>(effects)->touchUp(event.id,
-                                                                        event.base.time_msec);
+    return redirect.space.render.effects->touchUp(event.id, event.base.time_msec);
 }
 
 }

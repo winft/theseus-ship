@@ -129,8 +129,8 @@ ApplicationWayland::~ApplicationWayland()
     }
 
     // need to unload all effects prior to destroying X connection as they might do X calls
-    if (effects) {
-        static_cast<render::effects_handler_impl*>(effects)->unloadAllEffects();
+    if (base->render->compositor->effects) {
+        base->render->compositor->effects->unloadAllEffects();
     }
 
     if (exit_with_process && exit_with_process->state() != QProcess::NotRunning) {
