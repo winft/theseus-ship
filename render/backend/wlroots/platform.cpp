@@ -11,9 +11,9 @@
 #include "wlr_helpers.h"
 
 #include "base/backend/wlroots/output.h"
+#include "base/options.h"
 #include "base/output_helpers.h"
 #include "input/wayland/platform.h"
-#include "render/utils.h"
 #include "render/wayland/compositor.h"
 #include "render/wayland/effects.h"
 #include "render/wayland/egl.h"
@@ -45,16 +45,10 @@ void platform::init()
 {
     // TODO(romangg): Has to be here because in the integration tests base.backend is not yet
     //                available in the ctor. Can we change that?
-    auto const supported_types = get_supported_render_types(*this);
-    for (auto render_type : supported_types) {
-        if (render_type == OpenGLCompositing) {
-            egl = create_render_backend<egl_backend>(*this, "gles2");
-            break;
-        }
-        if (render_type == QPainterCompositing) {
-            qpainter = create_render_backend<qpainter_backend>(*this, "pixman");
-            break;
-        }
+    if (kwinApp()->options->compositingMode() == QPainterCompositing) {
+        qpainter = create_render_backend<qpainter_backend>(*this, "pixman");
+    } else {
+        egl = create_render_backend<egl_backend>(*this, "gles2");
     }
 
     if (!wlr_backend_start(base.backend)) {

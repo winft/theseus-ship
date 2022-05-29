@@ -11,7 +11,6 @@
 #include "effects.h"
 #include "platform.h"
 #include "scene.h"
-#include "utils.h"
 #include "x11/compositor_selection_owner.h"
 
 #include "base/logging.h"
