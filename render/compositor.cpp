@@ -87,15 +87,7 @@ void compositor::start_scene()
     setupX11Support();
     Q_EMIT aboutToToggleCompositing();
 
-    scene.reset(create_scene());
-    if (!scene || scene->initFailed()) {
-        qCCritical(KWIN_CORE) << "Failed to initialize compositing, compositing disabled";
-        m_state = State::Off;
-
-        scene.reset();
-        throw std::runtime_error("Failed to initialize compositing");
-    }
-
+    scene = create_scene();
     space->x_stacking_tree->mark_as_dirty();
     for (auto& client : space->windows()) {
         client->setupCompositing();

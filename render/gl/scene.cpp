@@ -322,9 +322,7 @@ scene::scene(render::gl::backend* backend, render::compositor& compositor)
 
     // We only support the OpenGL 2+ shader API, not GL_ARB_shader_objects
     if (!hasGLVersion(2, 0)) {
-        qCDebug(KWIN_CORE) << "OpenGL 2.0 is not supported";
-        init_ok = false;
-        return;
+        throw std::runtime_error("OpenGL 2.0 is not supported");
     }
 
     // It is not legal to not have a vertex array object bound in a core context
@@ -335,14 +333,11 @@ scene::scene(render::gl::backend* backend, render::compositor& compositor)
     }
 
     qCDebug(KWIN_CORE) << "OpenGL 2 compositing successfully initialized";
-    init_ok = true;
 }
 
 scene::~scene()
 {
-    if (init_ok || lanczos) {
-        makeOpenGLContextCurrent();
-    }
+    makeOpenGLContextCurrent();
 
     // Need to reset early, otherwise the GL context is gone.
     sw_cursor.texture.reset();
@@ -371,11 +366,6 @@ void scene::idle()
 {
     m_backend->idle();
     render::scene::idle();
-}
-
-bool scene::initFailed() const
-{
-    return !init_ok;
 }
 
 void scene::handleGraphicsReset(GLenum status)
@@ -959,65 +949,32 @@ void scene::performPaintWindow(effects_window_impl* w,
         w->sceneWindow()->performPaint(mask, region, data);
 }
 
-backend* create_backend(render::compositor& compositor)
+std::unique_ptr<render::scene> create_scene_impl(render::compositor& compositor)
 {
-    try {
-        return compositor.platform.createOpenGLBackend(compositor);
-    } catch (std::runtime_error& error) {
-        qCWarning(KWIN_CORE) << "Creating OpenGL backend failed:" << error.what();
-        return nullptr;
-    }
+    auto backend = compositor.platform.createOpenGLBackend(compositor);
+    return std::make_unique<gl::scene>(backend, compositor);
 }
 
-render::scene* create_scene_impl(render::compositor& compositor)
-{
-    auto backend = create_backend(compositor);
-    if (!backend) {
-        return nullptr;
-    }
-
-    gl::scene* scene{nullptr};
-
-    // first let's try an OpenGL 2 scene
-    if (scene::supported(backend)) {
-        scene = new gl::scene(backend, compositor);
-        if (scene->initFailed()) {
-            delete scene;
-            scene = nullptr;
-        }
-    }
-
-    if (!scene) {
-        if (GLPlatform::instance()->recommendedCompositor() == XRenderCompositing) {
-            qCCritical(KWIN_CORE)
-                << "OpenGL driver recommends XRender based compositing. Falling back to XRender.";
-            qCCritical(KWIN_CORE)
-                << "To overwrite the detection use the environment variable KWIN_COMPOSE";
-            qCCritical(KWIN_CORE)
-                << "For more information see "
-                   "https://community.kde.org/KWin/Environment_Variables#KWIN_COMPOSE";
-        }
-        compositor.platform.render_stop(false);
-    }
-
-    return scene;
-}
-
-render::scene* create_scene(render::compositor& compositor)
+std::unique_ptr<render::scene> create_scene(render::compositor& compositor)
 {
     qCDebug(KWIN_CORE) << "Creating OpenGL scene.";
 
     // Some broken drivers crash on glXQuery() so to prevent constant KWin crashes:
     if (compositor.platform.openGLCompositingIsBroken()) {
-        qCWarning(KWIN_CORE) << "KWin has detected that your OpenGL library is unsafe to use";
-        return nullptr;
+        throw std::runtime_error("OpenGL library is unsafe to use");
     }
 
     compositor.platform.createOpenGLSafePoint(OpenGLSafePoint::PreInit);
-    auto scene = create_scene_impl(compositor);
-    compositor.platform.createOpenGLSafePoint(OpenGLSafePoint::PostInit);
+    auto post = [&] { compositor.platform.createOpenGLSafePoint(OpenGLSafePoint::PostInit); };
 
-    return scene;
+    try {
+        auto scene = create_scene_impl(compositor);
+        post();
+        return scene;
+    } catch (std::runtime_error const& exc) {
+        post();
+        throw exc;
+    }
 }
 
 }

@@ -41,7 +41,6 @@ public:
     scene(xrender::backend* backend, render::compositor& compositor);
     ~scene() override;
 
-    bool initFailed() const override;
     CompositingType compositingType() const override
     {
         return XRenderCompositing;
@@ -77,7 +76,7 @@ private:
     QScopedPointer<xrender::backend> m_backend;
 };
 
-KWIN_EXPORT render::scene* create_scene(x11::compositor& compositor);
+KWIN_EXPORT std::unique_ptr<render::scene> create_scene(x11::compositor& compositor);
 
 }
 }

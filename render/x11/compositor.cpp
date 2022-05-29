@@ -105,6 +105,7 @@ void compositor::start(win::space& space)
         qCWarning(KWIN_CORE) << "Error: " << ex.what();
         qCWarning(KWIN_CORE) << "Compositing not possible. Continue without it.";
 
+        m_state = State::Off;
         xcb_composite_unredirect_subwindows(
             kwinApp()->x11Connection(), kwinApp()->x11RootWindow(), XCB_COMPOSITE_REDIRECT_MANUAL);
         destroyCompositorSelection();
@@ -290,20 +291,40 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
     return true;
 }
 
-render::scene* compositor::create_scene()
+template<typename Factory>
+std::unique_ptr<render::scene>
+create_scene_impl(x11::compositor& compositor, Factory& factory, std::string const& prev_err)
 {
     auto setup_hooks = [&](auto& scene) {
         scene->windowing_integration.handle_viewport_limits_alarm = [&] {
             qCDebug(KWIN_CORE) << "Suspending compositing because viewport limits are not met";
-            QTimer::singleShot(
-                0, this, [this] { suspend(render::x11::compositor::AllReasonSuspend); });
+            QTimer::singleShot(0, &compositor, [&] {
+                compositor.suspend(render::x11::compositor::AllReasonSuspend);
+            });
         };
     };
 
-    std::deque<std::function<render::scene*(compositor&)>> factories;
+    try {
+        auto scene = factory(compositor);
+        setup_hooks(scene);
+        if (!prev_err.empty()) {
+            qCDebug(KWIN_CORE) << "Fallback after error:" << prev_err.c_str();
+        }
+        return scene;
+    } catch (std::runtime_error const& exc) {
+        throw std::runtime_error(prev_err + " " + exc.what());
+    }
+}
+
+std::unique_ptr<render::scene> compositor::create_scene()
+{
+    using Factory = std::function<std::unique_ptr<render::scene>(compositor&)>;
+
+    std::deque<Factory> factories;
     factories.push_back(gl::create_scene);
 
     auto const req_mode = kwinApp()->options->compositingMode();
+
 #ifdef KWIN_HAVE_XRENDER_COMPOSITING
     if (req_mode == XRenderCompositing) {
         factories.push_front(xrender::create_scene);
@@ -317,14 +338,14 @@ render::scene* compositor::create_scene()
     }
 #endif
 
-    for (auto factory : factories) {
-        if (auto scene = factory(*this)) {
-            setup_hooks(scene);
-            return scene;
+    try {
+        return create_scene_impl(*this, factories.at(0), "");
+    } catch (std::runtime_error const& exc) {
+        if (factories.size() > 1) {
+            return create_scene_impl(*this, factories.at(1), exc.what());
         }
+        throw exc;
     }
-
-    return nullptr;
 }
 
 void compositor::performCompositing()

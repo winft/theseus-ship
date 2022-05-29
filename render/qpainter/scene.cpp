@@ -44,6 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Server/buffer.h>
 #include <Wrapland/Server/surface.h>
 #include <cmath>
+#include <stdexcept>
 
 namespace KWin::render::qpainter
 {
@@ -63,11 +64,6 @@ scene::~scene()
 CompositingType scene::compositingType() const
 {
     return QPainterCompositing;
-}
-
-bool scene::initFailed() const
-{
-    return false;
 }
 
 void scene::paintGenericScreen(paint_type mask, ScreenPaintData data)
@@ -198,22 +194,16 @@ backend* create_backend(render::compositor& compositor)
     }
 }
 
-render::scene* create_scene(render::compositor& compositor)
+std::unique_ptr<render::scene> create_scene(render::compositor& compositor)
 {
     qCDebug(KWIN_WL) << "Creating QPainter scene.";
 
     auto backend = create_backend(compositor);
     if (!backend) {
-        return nullptr;
+        throw std::runtime_error("Backend failed");
     }
 
-    auto scene = new qpainter::scene(backend, compositor);
-
-    if (scene && scene->initFailed()) {
-        delete scene;
-        scene = nullptr;
-    }
-    return scene;
+    return std::make_unique<qpainter::scene>(backend, compositor);
 }
 
 }

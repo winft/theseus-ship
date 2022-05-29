@@ -49,7 +49,6 @@ class KWIN_EXPORT scene : public render::scene
 public:
     explicit scene(render::gl::backend* backend, render::compositor& compositor);
     ~scene() override;
-    bool initFailed() const override;
     bool hasPendingFlush() const override;
 
     int64_t paint(QRegion damage,
@@ -120,8 +119,6 @@ protected:
     void doPaintBackground(const QVector<float>& vertices);
     void updateProjectionMatrix();
 
-    bool init_ok{true};
-
 private:
     bool viewportLimitsMatched(const QSize& size) const;
     std::deque<Toplevel*> get_leads(std::deque<Toplevel*> const& windows);
@@ -154,7 +151,7 @@ inline bool scene::hasPendingFlush() const
     return m_backend->hasPendingFlush();
 }
 
-KWIN_EXPORT render::scene* create_scene(render::compositor& compositor);
+KWIN_EXPORT std::unique_ptr<render::scene> create_scene(render::compositor& compositor);
 
 }
 }

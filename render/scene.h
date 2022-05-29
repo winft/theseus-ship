@@ -73,8 +73,6 @@ class KWIN_EXPORT scene : public QObject
 public:
     explicit scene(render::compositor& compositor);
 
-    // Returns true if the ctor failed to properly initialize.
-    virtual bool initFailed() const = 0;
     virtual CompositingType compositingType() const = 0;
 
     virtual bool hasPendingFlush() const

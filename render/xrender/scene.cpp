@@ -40,6 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwineffects/paint_clipper.h>
 
 #include <cassert>
+#include <stdexcept>
 
 namespace KWin::render::xrender
 {
@@ -56,11 +57,6 @@ scene::~scene()
 {
     window::cleanup();
     effect_frame::cleanup();
-}
-
-bool scene::initFailed() const
-{
-    return false;
 }
 
 // the entry point for painting
@@ -132,16 +128,16 @@ win::deco::renderer* scene::createDecorationRenderer(win::deco::client_impl* cli
     return new deco_renderer(client);
 }
 
-render::scene* create_scene(x11::compositor& compositor)
+std::unique_ptr<render::scene> create_scene(x11::compositor& compositor)
 {
     qCDebug(KWIN_CORE) << "Creating XRender scene.";
 
     QScopedPointer<xrender::backend> backend;
     backend.reset(new xrender::backend(compositor));
     if (backend->isFailed()) {
-        return nullptr;
+        throw std::runtime_error("Backend failed");
     }
-    return new scene(backend.take(), compositor);
+    return std::make_unique<xrender::scene>(backend.take(), compositor);
 }
 
 void scene::paintCursor()

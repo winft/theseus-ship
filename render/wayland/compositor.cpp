@@ -25,8 +25,6 @@
 
 #include "wayland_logging.h"
 
-#include <stdexcept>
-
 namespace KWin::render::wayland
 {
 
@@ -161,7 +159,7 @@ void compositor::start(win::space& space)
     }
 }
 
-render::scene* compositor::create_scene()
+std::unique_ptr<render::scene> compositor::create_scene()
 {
     assert(platform.supportedCompositors().size() == 1);
     if (platform.supportedCompositors().at(0) == QPainterCompositing) {
