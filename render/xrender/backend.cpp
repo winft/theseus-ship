@@ -16,6 +16,7 @@
 #include "win/space.h"
 
 #include <kwinxrender/utils.h>
+#include <stdexcept>
 
 namespace KWin::render::xrender
 {
@@ -24,12 +25,10 @@ backend::backend(x11::compositor& compositor)
     : overlay_window{std::make_unique<render::x11::overlay_window>(compositor)}
 {
     if (!base::x11::xcb::extensions::self()->is_render_available()) {
-        setFailed("No XRender extension available");
-        return;
+        throw std::runtime_error("No XRender extension available");
     }
     if (!base::x11::xcb::extensions::self()->is_fixes_region_available()) {
-        setFailed("No XFixes v3+ extension available");
-        return;
+        throw std::runtime_error("No XFixes v3+ extension available");
     }
 
     compositor.overlay_window = overlay_window.get();
@@ -58,12 +57,6 @@ void backend::setBuffer(xcb_render_picture_t buffer)
     m_buffer = buffer;
 }
 
-void backend::setFailed(QString const& reason)
-{
-    qCCritical(KWIN_CORE) << "Creating the XRender backend failed: " << reason;
-    m_failed = true;
-}
-
 void backend::showOverlay()
 {
     // Show the window only after the first pass, since that pass may take long.
@@ -85,13 +78,11 @@ void backend::init(bool createOverlay)
             xcb_get_window_attributes_unchecked(connection(), overlay_window->window()),
             nullptr));
         if (!attribs) {
-            setFailed("Failed getting window attributes for overlay window");
-            return;
+            throw std::runtime_error("Failed getting window attributes for overlay window");
         }
         m_format = XRenderUtils::findPictFormat(attribs->visual);
         if (m_format == 0) {
-            setFailed("Failed to find XRender format for overlay window");
-            return;
+            throw std::runtime_error("Failed to find XRender format for overlay window");
         }
         m_front = xcb_generate_id(connection());
         xcb_render_create_picture(
@@ -100,8 +91,7 @@ void backend::init(bool createOverlay)
         // create XRender picture for the root window
         m_format = XRenderUtils::findPictFormat(defaultScreen()->root_visual);
         if (m_format == 0) {
-            setFailed("Failed to find XRender format for root window");
-            return; // error
+            throw std::runtime_error("Failed to find XRender format for root window");
         }
         m_front = xcb_generate_id(connection());
         const uint32_t values[] = {XCB_SUBWINDOW_MODE_INCLUDE_INFERIORS};

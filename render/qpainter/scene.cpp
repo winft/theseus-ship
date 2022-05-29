@@ -49,9 +49,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::render::qpainter
 {
 
-scene::scene(qpainter::backend* backend, render::compositor& compositor)
+scene::scene(render::compositor& compositor)
     : render::scene(compositor)
-    , m_backend(backend)
+    , m_backend{compositor.platform.createQPainterBackend(compositor)}
     , m_painter(new QPainter())
 {
     QQuickWindow::setSceneGraphBackend(QSGRendererInterface::Software);
@@ -184,26 +184,10 @@ void scene::handle_screen_geometry_change(QSize const& /*size*/)
 {
 }
 
-backend* create_backend(render::compositor& compositor)
-{
-    try {
-        return compositor.platform.createQPainterBackend(compositor);
-    } catch (std::runtime_error& error) {
-        qCWarning(KWIN_WL) << "Creating QPainter backend failed:" << error.what();
-        return nullptr;
-    }
-}
-
 std::unique_ptr<render::scene> create_scene(render::compositor& compositor)
 {
     qCDebug(KWIN_WL) << "Creating QPainter scene.";
-
-    auto backend = create_backend(compositor);
-    if (!backend) {
-        throw std::runtime_error("Backend failed");
-    }
-
-    return std::make_unique<qpainter::scene>(backend, compositor);
+    return std::make_unique<qpainter::scene>(compositor);
 }
 
 }

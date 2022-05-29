@@ -286,9 +286,9 @@ bool SyncManager::updateFences()
  * scene
  ***********************************************/
 
-scene::scene(render::gl::backend* backend, render::compositor& compositor)
+scene::scene(render::compositor& compositor)
     : render::scene(compositor)
-    , m_backend(backend)
+    , m_backend{compositor.platform.createOpenGLBackend(compositor)}
 {
     if (!viewportLimitsMatched(kwinApp()->get_base().topology.size)) {
         // TODO(romangg): throw?
@@ -949,12 +949,6 @@ void scene::performPaintWindow(effects_window_impl* w,
         w->sceneWindow()->performPaint(mask, region, data);
 }
 
-std::unique_ptr<render::scene> create_scene_impl(render::compositor& compositor)
-{
-    auto backend = compositor.platform.createOpenGLBackend(compositor);
-    return std::make_unique<gl::scene>(backend, compositor);
-}
-
 std::unique_ptr<render::scene> create_scene(render::compositor& compositor)
 {
     qCDebug(KWIN_CORE) << "Creating OpenGL scene.";
@@ -968,7 +962,7 @@ std::unique_ptr<render::scene> create_scene(render::compositor& compositor)
     auto post = [&] { compositor.platform.createOpenGLSafePoint(OpenGLSafePoint::PostInit); };
 
     try {
-        auto scene = create_scene_impl(compositor);
+        auto scene = std::make_unique<gl::scene>(compositor);
         post();
         return scene;
     } catch (std::runtime_error const& exc) {

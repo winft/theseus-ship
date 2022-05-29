@@ -38,7 +38,7 @@ class scene : public render::scene
 {
     Q_OBJECT
 public:
-    scene(xrender::backend* backend, render::compositor& compositor);
+    explicit scene(render::compositor& compositor);
     ~scene() override;
 
     CompositingType compositingType() const override
@@ -73,7 +73,7 @@ protected:
     void paintEffectQuickView(EffectQuickView* w) override;
 
 private:
-    QScopedPointer<xrender::backend> m_backend;
+    std::unique_ptr<xrender::backend> m_backend;
 };
 
 KWIN_EXPORT std::unique_ptr<render::scene> create_scene(x11::compositor& compositor);

@@ -47,7 +47,7 @@ class KWIN_EXPORT scene : public render::scene
 {
     Q_OBJECT
 public:
-    explicit scene(render::gl::backend* backend, render::compositor& compositor);
+    explicit scene(render::compositor& compositor);
     ~scene() override;
     bool hasPendingFlush() const override;
 

@@ -36,7 +36,7 @@ class KWIN_EXPORT scene : public render::scene
     Q_OBJECT
 
 public:
-    explicit scene(qpainter::backend* backend, render::compositor& compositor);
+    explicit scene(render::compositor& compositor);
     ~scene() override;
 
     int64_t paint_output(base::output* output,

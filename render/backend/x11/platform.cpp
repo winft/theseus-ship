@@ -101,8 +101,7 @@ gl::backend* platform::createOpenGLBackend(render::compositor& compositor)
 #endif
     case EglPlatformInterface:
     default:
-        // no backend available
-        return nullptr;
+        throw std::runtime_error("No OpenGL backend available");
     }
 }
 
