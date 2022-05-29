@@ -75,11 +75,6 @@ public:
 
     virtual CompositingType compositingType() const = 0;
 
-    virtual bool hasPendingFlush() const
-    {
-        return false;
-    }
-
     /**
      * The entry point for the main part of the painting pass. Repaints the given screen areas.
      *

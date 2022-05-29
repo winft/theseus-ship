@@ -49,7 +49,6 @@ class KWIN_EXPORT scene : public render::scene
 public:
     explicit scene(render::compositor& compositor);
     ~scene() override;
-    bool hasPendingFlush() const override;
 
     int64_t paint(QRegion damage,
                   std::deque<Toplevel*> const& windows,
@@ -145,11 +144,6 @@ private:
     QMatrix4x4 m_screenProjectionMatrix;
     GLuint vao{0};
 };
-
-inline bool scene::hasPendingFlush() const
-{
-    return m_backend->hasPendingFlush();
-}
 
 KWIN_EXPORT std::unique_ptr<render::scene> create_scene(render::compositor& compositor);
 
