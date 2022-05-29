@@ -364,7 +364,10 @@ bool scene::hasSwapEvent() const
 
 void scene::idle()
 {
-    m_backend->idle();
+    if (m_backend->hasPendingFlush()) {
+        makeOpenGLContextCurrent();
+        m_backend->present();
+    }
     render::scene::idle();
 }
 

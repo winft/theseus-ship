@@ -91,6 +91,12 @@ public:
     virtual void endRenderingFrameForScreen(base::output* output,
                                             const QRegion& damage,
                                             const QRegion& damagedRegion);
+
+    /**
+     * @brief Backend specific flushing of frame to screen.
+     */
+    virtual void present() = 0;
+
     virtual bool makeCurrent() = 0;
     virtual void doneCurrent() = 0;
     virtual bool hasSwapEvent() const
@@ -98,10 +104,6 @@ public:
         return true;
     }
     virtual QRegion prepareRenderingForScreen(base::output* output);
-    /**
-     * @brief Compositor is going into idle mode, flushes any pending paints.
-     */
-    void idle();
 
     /**
      * @return bool Whether the scene needs to flush a frame.
@@ -207,11 +209,6 @@ public:
     QMatrix4x4 transformation;
 
 protected:
-    /**
-     * @brief Backend specific flushing of frame to screen.
-     */
-    virtual void present() = 0;
-
     /**
      * @return const QRegion& Damage of previously rendered frame
      */
