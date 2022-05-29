@@ -920,7 +920,7 @@ void scene::doPaintBackground(const QVector<float>& vertices)
 
 std::unique_ptr<render::window> scene::createWindow(Toplevel* t)
 {
-    return std::make_unique<window>(t, this);
+    return std::make_unique<window>(t, *this);
 }
 
 void scene::finalDrawWindow(effects_window_impl* w,

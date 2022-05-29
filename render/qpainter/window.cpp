@@ -20,9 +20,8 @@
 namespace KWin::render::qpainter
 {
 
-window::window(qpainter::scene* scene, Toplevel* c)
-    : render::window(c)
-    , m_scene(scene)
+window::window(Toplevel* c, qpainter::scene& scene)
+    : render::window(c, scene)
 {
 }
 
@@ -58,7 +57,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
         toplevel->resetDamage();
     }
 
-    QPainter* scenePainter = m_scene->scenePainter();
+    auto scenePainter = static_cast<qpainter::scene&>(scene).scenePainter();
     QPainter* painter = scenePainter;
     painter->save();
     painter->setClipRegion(region);

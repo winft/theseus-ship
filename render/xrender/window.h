@@ -23,7 +23,7 @@ class scene;
 class window : public render::window
 {
 public:
-    window(Toplevel* c, xrender::scene* scene);
+    window(Toplevel* c, xrender::scene& scene);
     ~window() override;
 
     void performPaint(paint_type mask, QRegion region, WindowPaintData data) override;
@@ -45,7 +45,6 @@ private:
     void prepareTempPixmap();
     void setPictureFilter(xcb_render_picture_t pic, image_filter_type filter);
 
-    xrender::scene* m_scene;
     xcb_render_pictformat_t format;
     QRegion transformed_shape;
 

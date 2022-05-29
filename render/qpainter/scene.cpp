@@ -162,7 +162,7 @@ void scene::paintEffectQuickView(EffectQuickView* w)
 
 std::unique_ptr<render::window> scene::createWindow(Toplevel* toplevel)
 {
-    return std::make_unique<window>(this, toplevel);
+    return std::make_unique<window>(toplevel, *this);
 }
 
 render::effect_frame* scene::createEffectFrame(effect_frame_impl* frame)

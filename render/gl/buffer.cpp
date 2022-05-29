@@ -19,10 +19,9 @@
 namespace KWin::render::gl
 {
 
-buffer::buffer(render::window* window, gl::scene* scene)
+buffer::buffer(render::window* window, gl::scene& scene)
     : render::buffer(window)
-    , m_texture(scene->createTexture())
-    , m_scene(scene)
+    , m_texture(scene.createTexture())
 {
 }
 

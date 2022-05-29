@@ -21,16 +21,15 @@
 namespace KWin::render::gl
 {
 
-window::window(Toplevel* toplevel, gl::scene* scene)
-    : render::window(toplevel)
-    , m_scene(scene)
+window::window(Toplevel* toplevel, gl::scene& scene)
+    : render::window(toplevel, scene)
 {
-    m_scene->windows.insert({id(), this});
+    scene.windows.insert({id(), this});
 }
 
 window::~window()
 {
-    m_scene->windows.erase(id());
+    static_cast<gl::scene&>(scene).windows.erase(id());
 }
 
 // Bind the buffer to an OpenGL texture.
@@ -45,7 +44,7 @@ render::gl::texture* window::bindTexture()
     }
 
     if (!get_window()->damage().isEmpty())
-        m_scene->insertWait();
+        static_cast<gl::scene&>(scene).insertWait();
 
     if (!buffer->bind()) {
         return nullptr;
@@ -192,7 +191,7 @@ GLTexture* window::getDecorationTexture() const
 
 render::buffer* window::create_buffer()
 {
-    return new buffer(this, m_scene);
+    return new buffer(this, static_cast<gl::scene&>(scene));
 }
 
 QVector4D window::modulate(float opacity, float brightness) const
@@ -263,8 +262,9 @@ void window::setupLeafNodes(std::vector<LeafNode>& nodes,
             continue;
         }
 
-        auto it = m_scene->windows.find(quad_list.front().id());
-        if (it != m_scene->windows.end()) {
+        auto& glscene = static_cast<gl::scene&>(scene);
+        auto it = glscene.windows.find(quad_list.front().id());
+        if (it != glscene.windows.end()) {
             setup_content(i, it->second, it->second->bindTexture());
         }
     }
@@ -296,10 +296,10 @@ QMatrix4x4 window::modelViewProjectionMatrix(paint_type mask, const WindowPaintD
     // with the default projection matrix.  If the effect hasn't specified a
     // model-view matrix, mvMatrix will be the identity matrix.
     if (flags(mask & paint_type::screen_transformed)) {
-        return m_scene->screenProjectionMatrix() * mvMatrix;
+        return scene.screenProjectionMatrix() * mvMatrix;
     }
 
-    return m_scene->projectionMatrix() * mvMatrix;
+    return static_cast<gl::scene&>(scene).projectionMatrix() * mvMatrix;
 }
 
 void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
@@ -448,7 +448,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
     // The scissor region must be in the render target local coordinate system.
     QRegion scissorRegion = infiniteRegion();
     if (m_hardwareClipping) {
-        scissorRegion = m_scene->mapToRenderTarget(region);
+        scissorRegion = scene.mapToRenderTarget(region);
     }
 
     for (size_t i = 0; i < quads.size(); i++) {

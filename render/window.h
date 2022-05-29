@@ -34,11 +34,12 @@ struct window_win_integration {
 };
 
 class effects_window_impl;
+class scene;
 
 class KWIN_EXPORT window
 {
 public:
-    window(Toplevel* c);
+    window(Toplevel* c, render::scene& scene);
     virtual ~window();
     uint32_t id() const;
 
@@ -83,6 +84,7 @@ public:
     std::unique_ptr<effects_window_impl> effect;
     window_win_integration win_integration;
     shadow_windowing_integration shadow_windowing;
+    render::scene& scene;
 
 protected:
     WindowQuadList
