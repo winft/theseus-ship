@@ -47,10 +47,8 @@ void platform::init()
     //                available in the ctor. Can we change that?
     if (kwinApp()->options->compositingMode() == QPainterCompositing) {
         qpainter = create_render_backend<qpainter_backend>(*this, "pixman");
-        selected_compositor = QPainterCompositing;
     } else {
         egl = create_render_backend<egl_backend>(*this, "gles2");
-        selected_compositor = OpenGLCompositing;
     }
 
     if (!wlr_backend_start(base.backend)) {
@@ -86,12 +84,13 @@ void platform::createEffectsHandler(render::compositor* compositor, render::scen
     new wayland::effects_handler_impl(compositor, scene);
 }
 
-QVector<CompositingType> platform::supportedCompositors() const
+CompositingType platform::selected_compositor() const
 {
-    if (selected_compositor != NoCompositing) {
-        return {selected_compositor};
+    if (qpainter) {
+        return QPainterCompositing;
     }
-    return QVector<CompositingType>{OpenGLCompositing, QPainterCompositing};
+    assert(egl);
+    return OpenGLCompositing;
 }
 
 }

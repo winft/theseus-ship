@@ -34,7 +34,7 @@ public:
 
     void init();
     void createEffectsHandler(render::compositor* compositor, render::scene* scene) override;
-    QVector<CompositingType> supportedCompositors() const override;
+    CompositingType selected_compositor() const override;
 
     gl::backend* get_opengl_backend(render::compositor& compositor) override;
     qpainter::backend* get_qpainter_backend(render::compositor& compositor) override;
@@ -46,9 +46,6 @@ public:
 
     wlr_renderer* renderer{nullptr};
     wlr_allocator* allocator{nullptr};
-
-private:
-    CompositingType selected_compositor{NoCompositing};
 };
 
 }

@@ -161,8 +161,7 @@ void compositor::start(win::space& space)
 
 std::unique_ptr<render::scene> compositor::create_scene()
 {
-    assert(platform.supportedCompositors().size() == 1);
-    if (platform.supportedCompositors().at(0) == QPainterCompositing) {
+    if (platform.selected_compositor() == QPainterCompositing) {
         return qpainter::create_scene(*this);
     }
     return gl::create_scene(*this);

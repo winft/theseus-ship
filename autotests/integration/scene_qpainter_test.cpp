@@ -105,7 +105,7 @@ void SceneQPainterTest::testStartFrame()
     auto scene
         = dynamic_cast<render::qpainter::scene*>(Test::app()->base.render->compositor->scene.get());
     QVERIFY(scene);
-    QCOMPARE(kwinApp()->get_base().render->supportedCompositors(), {QPainterCompositing});
+    QCOMPARE(kwinApp()->get_base().render->selected_compositor(), QPainterCompositing);
     QSignalSpy frameRenderedSpy(scene, &render::scene::frameRendered);
     QVERIFY(frameRenderedSpy.isValid());
     QVERIFY(frameRenderedSpy.wait());

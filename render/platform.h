@@ -121,12 +121,7 @@ public:
      */
     virtual void invertScreen();
 
-    /**
-     * The CompositingTypes supported by the Platform.
-     * The first item should be the most preferred one.
-     * @since 5.11
-     */
-    virtual QVector<CompositingType> supportedCompositors() const = 0;
+    virtual CompositingType selected_compositor() const = 0;
 
     std::unique_ptr<render::post::night_color_manager> night_color;
     std::unique_ptr<render::compositor> compositor;

@@ -305,16 +305,14 @@ void platform::createEffectsHandler(render::compositor* compositor, render::scen
     new render::x11::effects_handler_impl(compositor, scene);
 }
 
-QVector<CompositingType> platform::supportedCompositors() const
+CompositingType platform::selected_compositor() const
 {
-    QVector<CompositingType> compositors;
-#if HAVE_EPOXY_GLX
-    compositors << OpenGLCompositing;
-#endif
+    if (gl_backend) {
+        return OpenGLCompositing;
+    }
 #ifdef KWIN_HAVE_XRENDER_COMPOSITING
-    compositors << XRenderCompositing;
+    return XRenderCompositing;
 #endif
-    compositors << NoCompositing;
-    return compositors;
+    return NoCompositing;
 }
 }

@@ -69,7 +69,6 @@ void GenericSceneOpenGLTest::initTestCase()
     qputenv("XCURSOR_SIZE", QByteArrayLiteral("24"));
     qputenv("KWIN_COMPOSE", m_envVariable);
 
-    QCOMPARE(kwinApp()->get_base().render->supportedCompositors().size(), 2);
     Test::app()->start();
     QVERIFY(startup_spy.size() || startup_spy.wait());
     QVERIFY(Test::app()->base.render->compositor);
@@ -77,7 +76,7 @@ void GenericSceneOpenGLTest::initTestCase()
     auto& scene = Test::app()->base.render->compositor->scene;
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
-    QCOMPARE(kwinApp()->get_base().render->supportedCompositors(), {KWin::OpenGLCompositing});
+    QCOMPARE(kwinApp()->get_base().render->selected_compositor(), KWin::OpenGLCompositing);
 }
 
 void GenericSceneOpenGLTest::testRestart()
@@ -88,7 +87,7 @@ void GenericSceneOpenGLTest::testRestart()
     auto& scene = Test::app()->base.render->compositor->scene;
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
-    QCOMPARE(kwinApp()->get_base().render->supportedCompositors(), {KWin::OpenGLCompositing});
+    QCOMPARE(kwinApp()->get_base().render->selected_compositor(), KWin::OpenGLCompositing);
 
     // trigger a repaint
     Test::app()->base.render->compositor->addRepaintFull();

@@ -55,7 +55,7 @@ public:
     void invertScreen() override;
 
     void createEffectsHandler(render::compositor* compositor, render::scene* scene) override;
-    QVector<CompositingType> supportedCompositors() const override;
+    CompositingType selected_compositor() const override;
 
 private:
     QThread* m_openGLFreezeProtectionThread = nullptr;
