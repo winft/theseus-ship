@@ -82,10 +82,14 @@ output::output(wlr_output* wlr_out, wlroots::platform* platform)
         }
     }
 
+    auto const make = std::string(wlr_out->make ? wlr_out->make : "");
+    auto const model = std::string(wlr_out->model ? wlr_out->model : "");
+    auto const serial = std::string(wlr_out->serial ? wlr_out->serial : "");
+
     init_interfaces(wlr_out->name,
-                    wlr_out->make,
-                    wlr_out->model,
-                    wlr_out->serial,
+                    make,
+                    model,
+                    serial,
                     QSize(wlr_out->phys_width, wlr_out->phys_height),
                     modes,
                     current_mode.id != -1 ? &current_mode : nullptr);
