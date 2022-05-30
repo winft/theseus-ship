@@ -321,17 +321,19 @@ void process_layer_surface_commit(Win* win)
         }
     }
 
+    win->window_type = layer_surface_type(win);
+
     if (win->layer_surface->layer() == Wrapland::Server::LayerSurfaceV1::Layer::Bottom) {
         win->control->set_keep_below(true);
-        win->window_type = NET::Normal;
     } else {
         win->control->set_keep_below(false);
-        win->window_type = layer_surface_type(win);
-        if (win->window_type == NET::Desktop || win->window_type == NET::OnScreenDisplay
-            || win->window_type == NET::Notification) {
-            set_on_all_desktops(win, true);
-        }
     }
+
+    if (win->window_type == NET::Desktop || win->window_type == NET::OnScreenDisplay
+        || win->window_type == NET::Notification) {
+        set_on_all_desktops(win, true);
+    }
+
     update_layer(win);
 
     // TODO(romangg): update client area also on size change?

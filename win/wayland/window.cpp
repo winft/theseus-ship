@@ -1149,6 +1149,11 @@ bool window::dockWantsInput() const
         && plasma_shell_surface->role() == WS::PlasmaShellSurface::Role::Panel) {
         return plasma_shell_surface->panelTakesFocus();
     }
+    if (layer_surface
+        && layer_surface->keyboard_interactivity()
+            != Wrapland::Server::LayerSurfaceV1::KeyboardInteractivity::None) {
+        return true;
+    }
     return false;
 }
 
