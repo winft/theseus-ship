@@ -226,6 +226,9 @@ void check_workspace_position(Win* win,
     if (is_dock(win)) {
         return;
     }
+    if (is_notification(win) || is_on_screen_display(win)) {
+        return;
+    }
 
     if (kwinApp()->get_base().get_outputs().empty()) {
         return;
