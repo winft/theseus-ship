@@ -114,7 +114,7 @@ void finalize_shell_window_creation(Space& space, window* win)
             }
         });
 
-        handle_parent_changed(space, win);
+        xdg_shell_setup_parent(space, *win);
 
         if (win->control) {
             // Window is an xdg-shell toplevel.
@@ -741,23 +741,39 @@ void handle_configure_ack(Win* win, uint32_t serial)
 }
 
 template<typename Space, typename Win>
-void handle_parent_changed(Space& space, Win* win)
+Win* xdg_shell_find_parent(Space& space, Win& win)
 {
-    Wrapland::Server::Surface* parent_surface = nullptr;
-    if (win->toplevel) {
-        if (auto parent = win->toplevel->transientFor()) {
-            parent_surface = parent->surface()->surface();
+    auto find = [&space](auto parent_surface) { return space.find_window(parent_surface); };
+
+    if (win.toplevel) {
+        if (auto parent = win.toplevel->transientFor()) {
+            return find(parent->surface()->surface());
+        }
+    } else if (win.popup) {
+        if (auto parent = win.popup->transientFor()) {
+            return find(parent->surface());
         }
     }
-    if (win->popup) {
-        parent_surface = win->popup->transientFor()->surface();
+    return find(space.xdg_foreign->parentOf(win.surface()));
+}
+
+template<typename Space, typename Win>
+void xdg_shell_setup_parent(Space& space, Win& win)
+{
+    if (win.transient()->lead()) {
+        // Parent already set by other protocol (for example layer shell).
+        return;
     }
 
-    if (!parent_surface) {
-        parent_surface = space.xdg_foreign->parentOf(win->surface());
+    if (auto parent = xdg_shell_find_parent(space, win)) {
+        parent->transient()->add_child(&win);
     }
+}
 
-    auto parent = space.find_window(parent_surface);
+template<typename Space, typename Win>
+void handle_parent_changed(Space& space, Win* win)
+{
+    auto parent = xdg_shell_find_parent(space, *win);
 
     if (auto lead = win->transient()->lead(); parent != lead) {
         // Remove from main client.
