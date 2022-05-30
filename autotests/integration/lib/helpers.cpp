@@ -281,8 +281,15 @@ create_xdg_shell_popup(client const& clt,
     if (!clt.interfaces.xdg_shell) {
         return nullptr;
     }
-    auto popup = std::unique_ptr<Clt::XdgShellPopup>(
-        clt.interfaces.xdg_shell->create_popup(surface.get(), parent_toplevel.get(), positioner));
+
+    std::unique_ptr<Clt::XdgShellPopup> popup;
+    if (parent_toplevel) {
+        popup.reset(clt.interfaces.xdg_shell->create_popup(
+            surface.get(), parent_toplevel.get(), positioner));
+    } else {
+        popup.reset(clt.interfaces.xdg_shell->create_popup(surface.get(), positioner));
+    }
+
     if (!popup->isValid()) {
         return nullptr;
     }

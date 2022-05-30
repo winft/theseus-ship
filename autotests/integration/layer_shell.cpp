@@ -45,6 +45,7 @@ private Q_SLOTS:
     void test_geo_data();
     void test_geo();
     void test_output_change();
+    void test_popup();
 };
 
 void layer_shell_test::initTestCase()
@@ -428,6 +429,59 @@ void layer_shell_test::test_output_change()
 
     wlr_output_destroy(wlr_out);
     QVERIFY(close_spy.wait());
+}
+
+void layer_shell_test::test_popup()
+{
+    // Checks popup creation.
+    QSignalSpy window_spy(Test::app()->workspace.get(), &win::wayland::space::wayland_window_added);
+    QVERIFY(window_spy.isValid());
+
+    // First create the layer surface.
+    auto surface = Test::create_surface();
+    auto layer_surface = std::unique_ptr<Clt::LayerSurfaceV1>(
+        create_layer_surface(surface.get(),
+                             Test::get_client().interfaces.outputs.at(1).get(),
+                             Clt::LayerShellV1::layer::top,
+                             ""));
+
+    layer_surface->set_anchor(Qt::TopEdge | Qt::RightEdge | Qt::BottomEdge | Qt::LeftEdge);
+
+    configure_payload payload;
+    init_ack_layer_surface(surface.get(), layer_surface.get(), payload);
+
+    auto const output1_geo = Test::get_output(1)->geometry();
+    QCOMPARE(payload.size, output1_geo.size());
+
+    auto render_size = QSize(100, 50);
+    Test::render_and_wait_for_shown(surface, render_size, Qt::blue);
+    QVERIFY(!window_spy.isEmpty());
+
+    auto window = window_spy.first().first().value<win::wayland::window*>();
+    QVERIFY(window);
+    QVERIFY(window->isShown());
+
+    // Surface is centered.
+    QCOMPARE(window->frameGeometry(),
+             target_geo(output1_geo, render_size, QMargins(), align::center, align::center));
+
+    window_spy.clear();
+
+    Clt::XdgPositioner positioner(QSize(50, 40), QRect(0, 0, 5, 10));
+    positioner.setAnchorEdge(Qt::BottomEdge | Qt::RightEdge);
+    positioner.setGravity(Qt::BottomEdge | Qt::RightEdge);
+
+    auto popup_surface = Test::create_surface();
+    auto popup = Test::create_xdg_shell_popup(
+        popup_surface, nullptr, positioner, Test::CreationSetup::CreateOnly);
+    layer_surface->get_popup(popup.get());
+    Test::init_xdg_shell_popup(popup_surface, popup);
+
+    auto server_popup
+        = Test::render_and_wait_for_shown(popup_surface, positioner.initialSize(), Qt::blue);
+    QVERIFY(server_popup);
+    QCOMPARE(server_popup->frameGeometry(),
+             QRect(window->frameGeometry().topLeft() + QPoint(5, 10), QSize(50, 40)));
 }
 
 }
