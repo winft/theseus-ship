@@ -44,6 +44,7 @@ private Q_SLOTS:
     void test_create();
     void test_geo_data();
     void test_geo();
+    void test_output_change();
 };
 
 void layer_shell_test::initTestCase()
@@ -356,6 +357,77 @@ void layer_shell_test::test_geo()
                           align_horizontal,
                           align_vertical);
     QCOMPARE(window->frameGeometry(), geo);
+}
+
+void layer_shell_test::test_output_change()
+{
+    // Checks that output changes are handled correctly.
+    QSignalSpy window_spy(Test::app()->workspace.get(), &win::wayland::space::wayland_window_added);
+    QVERIFY(window_spy.isValid());
+
+    auto const output_geo = QRect(2000, 0, 1000, 500);
+    auto wlr_out = wlr_headless_add_output(
+        Test::app()->base.backend, output_geo.width(), output_geo.height());
+    QCOMPARE(Test::app()->base.outputs.size(), 3);
+
+    Test::app()->base.all_outputs.back()->force_geometry(output_geo);
+    base::update_output_topology(Test::app()->base);
+
+    QTRY_COMPARE(Test::get_client().interfaces.outputs.size(), 3);
+    QTRY_COMPARE(Test::get_client().interfaces.outputs.at(2)->geometry(), output_geo);
+
+    auto surface = std::unique_ptr<Clt::Surface>(Test::create_surface());
+    auto layer_surface = std::unique_ptr<Clt::LayerSurfaceV1>(
+        create_layer_surface(surface.get(),
+                             Test::get_client().interfaces.outputs.at(2).get(),
+                             Clt::LayerShellV1::layer::top,
+                             ""));
+
+    layer_surface->set_size(QSize(0, 50));
+    layer_surface->set_anchor(Qt::RightEdge | Qt::LeftEdge);
+
+    QSignalSpy configure_spy(layer_surface.get(), &Clt::LayerSurfaceV1::configure_requested);
+    QVERIFY(configure_spy.isValid());
+
+    configure_payload payload;
+    init_ack_layer_surface(surface.get(), layer_surface.get(), payload);
+
+    QCOMPARE(payload.size, QSize(output_geo.size().width(), 50));
+    QCOMPARE(configure_spy.size(), 1);
+
+    auto render_size = QSize(100, 50);
+    Test::render_and_wait_for_shown(surface, render_size, Qt::blue);
+    QVERIFY(!window_spy.isEmpty());
+
+    auto window = window_spy.first().first().value<win::wayland::window*>();
+    QVERIFY(window);
+    QVERIFY(window->isShown());
+
+    // Surface is centered.
+    QCOMPARE(window->frameGeometry(),
+             target_geo(output_geo, render_size, QMargins(), align::center, align::center));
+
+    QSignalSpy topology_spy(&Test::app()->base, &base::platform::topology_changed);
+    QVERIFY(topology_spy.isValid());
+
+    // Now let's change the size of the output.
+    auto output_geo2 = output_geo;
+    output_geo2.setWidth(800);
+    Test::app()->base.all_outputs.back()->force_geometry(output_geo2);
+    base::update_output_topology(Test::app()->base);
+    QCOMPARE(topology_spy.count(), 1);
+
+    QVERIFY(configure_spy.wait());
+    payload.size = configure_spy.last()[0].toSize();
+    payload.serial = configure_spy.last()[1].toInt();
+    layer_surface->ack_configure(payload.serial);
+    QCOMPARE(payload.size, QSize(output_geo2.width(), 50));
+
+    QSignalSpy close_spy(layer_surface.get(), &Clt::LayerSurfaceV1::closed);
+    QVERIFY(close_spy.isValid());
+
+    wlr_output_destroy(wlr_out);
+    QVERIFY(close_spy.wait());
 }
 
 }
