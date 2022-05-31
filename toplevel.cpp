@@ -1102,7 +1102,7 @@ void Toplevel::closeWindow()
 
 bool Toplevel::performMouseCommand(base::options::MouseCommand cmd, const QPoint &globalPos)
 {
-    return win::perform_mouse_command(this, cmd, globalPos);
+    return win::perform_mouse_command(*this, cmd, globalPos);
 }
 
 Toplevel* Toplevel::findModal()
