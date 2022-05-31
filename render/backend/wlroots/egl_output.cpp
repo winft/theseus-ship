@@ -41,7 +41,7 @@ egl_output& egl_output::operator=(egl_output&& other) noexcept
     egl_back = other.egl_back;
     damageHistory = std::move(other.damageHistory);
 
-    render = other.render;
+    render = std::move(other.render);
     other.render = {};
 
     return *this;
