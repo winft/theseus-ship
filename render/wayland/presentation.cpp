@@ -14,37 +14,27 @@
 #include "toplevel.h"
 #include "wayland_logging.h"
 
+#include <QElapsedTimer>
 #include <Wrapland/Server/output.h>
 #include <Wrapland/Server/presentation_time.h>
 #include <Wrapland/Server/surface.h>
-
-#include <QElapsedTimer>
+#include <system_error>
 
 #define NSEC_PER_SEC 1000000000
 
 namespace KWin::render::wayland
 {
 
-presentation::presentation()
+presentation::presentation(clockid_t clockid)
     : presentation_manager{waylandServer()->display->createPresentationManager()}
+    , clockid{clockid}
 {
-}
-
-bool presentation::init_clock(clockid_t clockid)
-{
-    this->clockid = clockid;
-
     struct timespec ts;
-    if (clock_gettime(clockid, &ts) != 0) {
-        qCWarning(KWIN_WL) << "Could not get presentation clock.";
-        return false;
+    if (auto ret = clock_gettime(clockid, &ts); ret != 0) {
+        throw std::system_error(ret, std::generic_category(), "Could not get presentation clock.");
     }
-
     presentation_manager->setClockId(clockid);
-
-    return true;
 }
-
 std::chrono::milliseconds get_now_in_ms()
 {
     return std::chrono::duration_cast<std::chrono::milliseconds>(

@@ -215,7 +215,12 @@ void WaylandTestApplication::start()
     auto out = base.outputs.at(0);
     out->wrapland_output()->set_physical_size(QSize(1280, 1024));
 
-    base.render->compositor = std::make_unique<render::wayland::compositor>(*base.render);
+    try {
+        base.render->compositor = std::make_unique<render::wayland::compositor>(*base.render);
+    } catch (std::system_error const& exc) {
+        std::cerr << "FATAL ERROR: compositor creation failed: " << exc.what() << std::endl;
+        exit(exc.code().value());
+    }
     workspace = std::make_unique<win::wayland::space>(*base.render->compositor, server.get());
 
     workspace->input = std::make_unique<input::wayland::redirect>(*input, *workspace);
