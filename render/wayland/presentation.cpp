@@ -25,9 +25,8 @@
 namespace KWin::render::wayland
 {
 
-presentation::presentation(QObject* parent)
-    : QObject(parent)
-    , presentation_manager(waylandServer()->display->createPresentationManager())
+presentation::presentation()
+    : presentation_manager{waylandServer()->display->createPresentationManager()}
 {
 }
 

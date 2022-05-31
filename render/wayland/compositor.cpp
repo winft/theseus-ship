@@ -61,7 +61,7 @@ void compositor::check_idle()
 
 compositor::compositor(render::platform& platform)
     : render::compositor(platform)
-    , presentation(new render::wayland::presentation(this))
+    , presentation{std::make_unique<wayland::presentation>()}
 {
     dbus->integration.get_types = [] { return QStringList{"egl"}; };
 

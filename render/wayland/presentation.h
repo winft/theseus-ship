@@ -57,7 +57,7 @@ class KWIN_EXPORT presentation : public QObject
 {
     Q_OBJECT
 public:
-    presentation(QObject* parent = nullptr);
+    presentation();
 
     bool init_clock(clockid_t clockid);
 
