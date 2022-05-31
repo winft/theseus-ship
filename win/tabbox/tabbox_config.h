@@ -121,9 +121,14 @@ public:
         ClientTabBox, ///< tabbox uses client_model
         DesktopTabBox ///< tabbox uses desktop_model
     };
+
     tabbox_config();
+    tabbox_config(tabbox_config const& other);
+    tabbox_config& operator=(tabbox_config const& other);
+    tabbox_config(tabbox_config&& other) noexcept;
+    tabbox_config& operator=(tabbox_config&& other) noexcept;
+
     ~tabbox_config();
-    tabbox_config& operator=(const tabbox_config& object);
 
     // getters
     /**
@@ -304,7 +309,7 @@ public:
     }
 
 private:
-    tabbox_config_private* d;
+    tabbox_config_private* d{nullptr};
 };
 
 } // namespace TabBox
