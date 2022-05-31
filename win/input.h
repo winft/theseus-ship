@@ -189,10 +189,10 @@ bool perform_mouse_command(Win& win, base::options::MouseCommand cmd, QPoint con
         break;
     }
     case base::options::MousePreviousDesktop:
-        space.windowToPreviousDesktop(&win);
+        space.windowToPreviousDesktop(win);
         break;
     case base::options::MouseNextDesktop:
-        space.windowToNextDesktop(&win);
+        space.windowToNextDesktop(win);
         break;
     case base::options::MouseOpacityMore:
         // No point in changing the opacity of the desktop.

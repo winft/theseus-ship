@@ -3359,15 +3359,15 @@ void space::slotToggleShowDesktop()
 }
 
 template<typename Direction>
-void windowToDesktop(Toplevel* window)
+void windowToDesktop(Toplevel& window)
 {
-    auto& ws = window->space;
+    auto& ws = window.space;
     auto& vds = ws.virtual_desktop_manager;
     Direction functor(*vds);
     // TODO: why is kwinApp()->options->isRollOverDesktops() not honored?
     const auto desktop = functor(nullptr, true);
-    if (window && !win::is_desktop(window) && !win::is_dock(window)) {
-        ws.setMoveResizeClient(window);
+    if (!win::is_desktop(&window) && !win::is_dock(&window)) {
+        ws.setMoveResizeClient(&window);
         vds->setCurrent(desktop);
         ws.setMoveResizeClient(nullptr);
     }
@@ -3379,10 +3379,10 @@ void windowToDesktop(Toplevel* window)
 void space::slotWindowToNextDesktop()
 {
     if (USABLE_ACTIVE_CLIENT)
-        windowToNextDesktop(active_client);
+        windowToNextDesktop(*active_client);
 }
 
-void space::windowToNextDesktop(Toplevel* window)
+void space::windowToNextDesktop(Toplevel& window)
 {
     windowToDesktop<win::virtual_desktop_next>(window);
 }
@@ -3393,10 +3393,10 @@ void space::windowToNextDesktop(Toplevel* window)
 void space::slotWindowToPreviousDesktop()
 {
     if (USABLE_ACTIVE_CLIENT)
-        windowToPreviousDesktop(active_client);
+        windowToPreviousDesktop(*active_client);
 }
 
-void space::windowToPreviousDesktop(Toplevel* window)
+void space::windowToPreviousDesktop(Toplevel& window)
 {
     windowToDesktop<win::virtual_desktop_previous>(window);
 }
