@@ -53,11 +53,11 @@ void stacking_tree::update()
         auto const& unmanaged_list = space.unmanagedList();
 
         for (auto const& win : windows) {
-            auto unmanaged = std::find_if(unmanaged_list.begin(),
-                                          unmanaged_list.end(),
+            auto unmanaged = std::find_if(unmanaged_list.cbegin(),
+                                          unmanaged_list.cend(),
                                           [&win](auto u) { return win == u->xcb_window(); });
 
-            if (unmanaged != std::end(unmanaged_list)) {
+            if (unmanaged != std::cend(unmanaged_list)) {
                 winlist.push_back(*unmanaged);
             }
         }
