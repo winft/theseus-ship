@@ -82,10 +82,14 @@ output::output(wlr_output* wlr_out, wlroots::platform* platform)
         }
     }
 
+    auto const make = std::string(wlr_out->make ? wlr_out->make : "");
+    auto const model = std::string(wlr_out->model ? wlr_out->model : "");
+    auto const serial = std::string(wlr_out->serial ? wlr_out->serial : "");
+
     init_interfaces(wlr_out->name,
-                    wlr_out->make,
-                    wlr_out->model,
-                    wlr_out->serial,
+                    make,
+                    model,
+                    serial,
                     QSize(wlr_out->phys_width, wlr_out->phys_height),
                     modes,
                     current_mode.id != -1 ? &current_mode : nullptr);
@@ -138,6 +142,8 @@ void output::update_dpms(base::dpms_mode mode)
     auto set_on = mode == base::dpms_mode::on;
 
     if (set_on) {
+        wlr_output_enable(native, true);
+        wlr_output_commit(native);
         get_render(render)->reset();
         dpms_set_on();
     } else if (disable_native()) {

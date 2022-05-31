@@ -1153,9 +1153,14 @@ void GLRenderTarget::blitFromFramebuffer(const QRect& source,
     }
 
     auto top = currentRenderTarget();
+    if (!top) {
+        qCWarning(LIBKWINGLUTILS) << "Abort blit from framebuffer due to no current render target.";
+        return;
+    }
+
     GLRenderTarget::pushRenderTarget(this);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mFramebuffer);
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, top ? top->mFramebuffer : 0);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, top->mFramebuffer);
 
     auto const ssize = top->size();
     auto const dsize = size();

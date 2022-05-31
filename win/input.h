@@ -82,186 +82,186 @@ void key_press_event(Win* win, uint key_code)
 }
 
 template<typename Win>
-bool perform_mouse_command(Win* win, base::options::MouseCommand cmd, QPoint const& globalPos)
+bool perform_mouse_command(Win& win, base::options::MouseCommand cmd, QPoint const& globalPos)
 {
     bool replay = false;
     auto& base = kwinApp()->get_base();
-    auto space = &win->space;
+    auto& space = win.space;
 
     switch (cmd) {
     case base::options::MouseRaise:
-        raise_window(space, win);
+        raise_window(&space, &win);
         break;
     case base::options::MouseLower: {
-        lower_window(space, win);
+        lower_window(&space, &win);
         // Used to be activateNextClient(win), then topClientOnDesktop
         // since win is a mouseOp it's however safe to use the client under the mouse instead.
-        if (win->control->active() && kwinApp()->options->focusPolicyIsReasonable()) {
-            auto next = space->clientUnderMouse(win->central_output);
-            if (next && next != win)
-                space->request_focus(next);
+        if (win.control->active() && kwinApp()->options->focusPolicyIsReasonable()) {
+            auto next = space.clientUnderMouse(win.central_output);
+            if (next && next != &win)
+                space.request_focus(next);
         }
         break;
     }
     case base::options::MouseOperationsMenu:
-        if (win->control->active() && kwinApp()->options->isClickRaise()) {
-            auto_raise(win);
+        if (win.control->active() && kwinApp()->options->isClickRaise()) {
+            auto_raise(&win);
         }
-        space->showWindowMenu(QRect(globalPos, globalPos), win);
+        space.showWindowMenu(QRect(globalPos, globalPos), &win);
         break;
     case base::options::MouseToggleRaiseAndLower:
-        raise_or_lower_client(space, win);
+        raise_or_lower_client(&space, &win);
         break;
     case base::options::MouseActivateAndRaise: {
         // For clickraise mode.
-        replay = win->control->active();
-        bool mustReplay = !win->control->rules().checkAcceptFocus(win->acceptsFocus());
+        replay = win.control->active();
+        bool mustReplay = !win.control->rules().checkAcceptFocus(win.acceptsFocus());
 
         if (mustReplay) {
-            auto it = space->stacking_order->sorted().cend();
-            auto begin = space->stacking_order->sorted().cbegin();
-            while (mustReplay && --it != begin && *it != win) {
+            auto it = space.stacking_order->sorted().cend();
+            auto begin = space.stacking_order->sorted().cbegin();
+            while (mustReplay && --it != begin && *it != &win) {
                 auto window = *it;
                 if (!window->control
-                    || (window->control->keep_above() && !win->control->keep_above())
-                    || (win->control->keep_below() && !window->control->keep_below())) {
+                    || (window->control->keep_above() && !win.control->keep_above())
+                    || (win.control->keep_below() && !window->control->keep_below())) {
                     // Can never raise above "it".
                     continue;
                 }
                 mustReplay = !(window->isOnCurrentDesktop()
-                               && window->frameGeometry().intersects(win->frameGeometry()));
+                               && window->frameGeometry().intersects(win.frameGeometry()));
             }
         }
 
-        space->request_focus(win, true);
+        space.request_focus(&win, true);
         base::set_current_output_by_position(base, globalPos);
         replay = replay || mustReplay;
         break;
     }
     case base::options::MouseActivateAndLower:
-        space->request_focus(win);
-        lower_window(space, win);
+        space.request_focus(&win);
+        lower_window(&space, &win);
         base::set_current_output_by_position(base, globalPos);
-        replay = replay || !win->control->rules().checkAcceptFocus(win->acceptsFocus());
+        replay = replay || !win.control->rules().checkAcceptFocus(win.acceptsFocus());
         break;
     case base::options::MouseActivate:
         // For clickraise mode.
-        replay = win->control->active();
-        space->request_focus(win);
+        replay = win.control->active();
+        space.request_focus(&win);
         base::set_current_output_by_position(base, globalPos);
-        replay = replay || !win->control->rules().checkAcceptFocus(win->acceptsFocus());
+        replay = replay || !win.control->rules().checkAcceptFocus(win.acceptsFocus());
         break;
     case base::options::MouseActivateRaiseAndPassClick:
-        space->request_focus(win, true);
+        space.request_focus(&win, true);
         base::set_current_output_by_position(base, globalPos);
         replay = true;
         break;
     case base::options::MouseActivateAndPassClick:
-        space->request_focus(win);
+        space.request_focus(&win);
         base::set_current_output_by_position(base, globalPos);
         replay = true;
         break;
     case base::options::MouseMaximize:
-        maximize(win, maximize_mode::full);
+        maximize(&win, maximize_mode::full);
         break;
     case base::options::MouseRestore:
-        maximize(win, maximize_mode::restore);
+        maximize(&win, maximize_mode::restore);
         break;
     case base::options::MouseMinimize:
-        set_minimized(win, true);
+        set_minimized(&win, true);
         break;
     case base::options::MouseAbove: {
-        blocker block(space->stacking_order);
-        if (win->control->keep_below()) {
-            set_keep_below(win, false);
+        blocker block(space.stacking_order);
+        if (win.control->keep_below()) {
+            set_keep_below(&win, false);
         } else {
-            set_keep_above(win, true);
+            set_keep_above(&win, true);
         }
         break;
     }
     case base::options::MouseBelow: {
-        blocker block(space->stacking_order);
-        if (win->control->keep_above()) {
-            set_keep_above(win, false);
+        blocker block(space.stacking_order);
+        if (win.control->keep_above()) {
+            set_keep_above(&win, false);
         } else {
-            set_keep_below(win, true);
+            set_keep_below(&win, true);
         }
         break;
     }
     case base::options::MousePreviousDesktop:
-        space->windowToPreviousDesktop(win);
+        space.windowToPreviousDesktop(win);
         break;
     case base::options::MouseNextDesktop:
-        space->windowToNextDesktop(win);
+        space.windowToNextDesktop(win);
         break;
     case base::options::MouseOpacityMore:
         // No point in changing the opacity of the desktop.
-        if (!is_desktop(win)) {
-            win->setOpacity(qMin(win->opacity() + 0.1, 1.0));
+        if (!is_desktop(&win)) {
+            win.setOpacity(qMin(win.opacity() + 0.1, 1.0));
         }
         break;
     case base::options::MouseOpacityLess:
-        if (!is_desktop(win)) {
-            win->setOpacity(qMax(win->opacity() - 0.1, 0.1));
+        if (!is_desktop(&win)) {
+            win.setOpacity(qMax(win.opacity() - 0.1, 0.1));
         }
         break;
     case base::options::MouseClose:
-        win->closeWindow();
+        win.closeWindow();
         break;
     case base::options::MouseActivateRaiseAndMove:
     case base::options::MouseActivateRaiseAndUnrestrictedMove:
-        raise_window(space, win);
-        space->request_focus(win);
+        raise_window(&space, &win);
+        space.request_focus(&win);
         base::set_current_output_by_position(base, globalPos);
         // Fallthrough
     case base::options::MouseMove:
     case base::options::MouseUnrestrictedMove: {
-        if (!win->isMovableAcrossScreens()) {
+        if (!win.isMovableAcrossScreens()) {
             break;
         }
 
-        auto& mov_res = win->control->move_resize();
+        auto& mov_res = win.control->move_resize();
         if (mov_res.enabled) {
-            finish_move_resize(win, false);
+            finish_move_resize(&win, false);
         }
         mov_res.contact = position::center;
         mov_res.button_down = true;
 
         // map from global
-        mov_res.offset = QPoint(globalPos.x() - win->pos().x(), globalPos.y() - win->pos().y());
+        mov_res.offset = QPoint(globalPos.x() - win.pos().x(), globalPos.y() - win.pos().y());
 
         mov_res.inverted_offset
-            = QPoint(win->size().width() - 1, win->size().height() - 1) - mov_res.offset;
+            = QPoint(win.size().width() - 1, win.size().height() - 1) - mov_res.offset;
         mov_res.unrestricted = (cmd == base::options::MouseActivateRaiseAndUnrestrictedMove
                                 || cmd == base::options::MouseUnrestrictedMove);
-        if (!start_move_resize(win)) {
+        if (!start_move_resize(&win)) {
             mov_res.button_down = false;
         }
-        update_cursor(win);
+        update_cursor(&win);
         break;
     }
     case base::options::MouseResize:
     case base::options::MouseUnrestrictedResize: {
-        if (!win->isResizable()) {
+        if (!win.isResizable()) {
             break;
         }
-        auto& mov_res = win->control->move_resize();
+        auto& mov_res = win.control->move_resize();
         if (mov_res.enabled) {
-            finish_move_resize(win, false);
+            finish_move_resize(&win, false);
         }
         mov_res.button_down = true;
 
         // Map from global
         auto const moveOffset
-            = QPoint(globalPos.x() - win->pos().x(), globalPos.y() - win->pos().y());
+            = QPoint(globalPos.x() - win.pos().x(), globalPos.y() - win.pos().y());
         mov_res.offset = moveOffset;
 
         auto x = moveOffset.x();
         auto y = moveOffset.y();
-        auto left = x < win->size().width() / 3;
-        auto right = x >= 2 * win->size().width() / 3;
-        auto top = y < win->size().height() / 3;
-        auto bot = y >= 2 * win->size().height() / 3;
+        auto left = x < win.size().width() / 3;
+        auto right = x >= 2 * win.size().width() / 3;
+        auto top = y < win.size().height() / 3;
+        auto bot = y >= 2 * win.size().height() / 3;
 
         position mode;
         if (top) {
@@ -270,16 +270,16 @@ bool perform_mouse_command(Win* win, base::options::MouseCommand cmd, QPoint con
             mode = left ? position::bottom_left
                         : (right ? position::bottom_right : position::bottom);
         } else {
-            mode = (x < win->size().width() / 2) ? position::left : position::right;
+            mode = (x < win.size().width() / 2) ? position::left : position::right;
         }
         mov_res.contact = mode;
         mov_res.inverted_offset
-            = QPoint(win->size().width() - 1, win->size().height() - 1) - moveOffset;
+            = QPoint(win.size().width() - 1, win.size().height() - 1) - moveOffset;
         mov_res.unrestricted = cmd == base::options::MouseUnrestrictedResize;
-        if (!start_move_resize(win)) {
+        if (!start_move_resize(&win)) {
             mov_res.button_down = false;
         }
-        update_cursor(win);
+        update_cursor(&win);
         break;
     }
 

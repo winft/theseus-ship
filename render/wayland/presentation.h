@@ -57,9 +57,7 @@ class KWIN_EXPORT presentation : public QObject
 {
     Q_OBJECT
 public:
-    presentation(QObject* parent = nullptr);
-
-    bool init_clock(clockid_t clockid);
+    presentation(clockid_t clockid);
 
     void frame(render::wayland::output* output, std::deque<Toplevel*> const& windows);
     void lock(render::wayland::output* output, std::deque<Toplevel*> const& windows);
@@ -67,10 +65,8 @@ public:
 
 private:
     QHash<uint32_t, Wrapland::Server::Surface*> surfaces;
-
-    clockid_t clockid;
-
     std::unique_ptr<Wrapland::Server::PresentationManager> presentation_manager;
+    clockid_t clockid;
 };
 
 }

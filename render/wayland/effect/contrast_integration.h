@@ -66,7 +66,8 @@ public:
 
     void reset()
     {
-        for (auto const& [effect, update_call] : registry) {
+        auto const reg_cp = registry;
+        for (auto const& [effect, update_call] : reg_cp) {
             update_call({});
         }
     }

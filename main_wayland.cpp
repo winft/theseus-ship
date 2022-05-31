@@ -210,7 +210,13 @@ void ApplicationWayland::start()
         QCoreApplication::exit(1);
     }
 
-    render->compositor = std::make_unique<render::wayland::compositor>(*render);
+    try {
+        render->compositor = std::make_unique<render::wayland::compositor>(*render);
+    } catch(std::system_error const& exc) {
+        std::cerr << "FATAL ERROR: compositor creation failed: " << exc.what() << std::endl;
+        exit(exc.code().value());
+    }
+
     workspace = std::make_unique<win::wayland::space>(*render->compositor, server.get());
 
     workspace->input = std::make_unique<input::wayland::redirect>(*input, *workspace);

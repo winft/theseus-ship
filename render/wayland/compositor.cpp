@@ -61,14 +61,9 @@ void compositor::check_idle()
 
 compositor::compositor(render::platform& platform)
     : render::compositor(platform)
-    , presentation(new render::wayland::presentation(this))
+    , presentation{std::make_unique<wayland::presentation>(platform.base.get_clockid())}
 {
     dbus->integration.get_types = [] { return QStringList{"egl"}; };
-
-    if (!presentation->init_clock(platform.base.get_clockid())) {
-        qCCritical(KWIN_WL) << "Presentation clock failed. Exit.";
-        qApp->quit();
-    }
 
     connect(kwinApp(),
             &Application::x11ConnectionAboutToBeDestroyed,

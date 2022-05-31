@@ -288,8 +288,8 @@ public:
     Toplevel* active_client{nullptr};
 
     void sendClientToDesktop(Toplevel* window, int desktop, bool dont_activate);
-    void windowToPreviousDesktop(Toplevel* window);
-    void windowToNextDesktop(Toplevel* window);
+    void windowToPreviousDesktop(Toplevel& window);
+    void windowToNextDesktop(Toplevel& window);
 
     /**
      * Shows the menu operations menu for the client and makes it active if

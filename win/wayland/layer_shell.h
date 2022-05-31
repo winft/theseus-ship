@@ -14,6 +14,8 @@
 #include "win/transient.h"
 
 #include "base/wayland/output.h"
+#include "base/wayland/output_helpers.h"
+#include "base/wayland/platform.h"
 #include "base/wayland/server.h"
 #include "input/keyboard_redirect.h"
 #include "input/redirect.h"
@@ -30,43 +32,92 @@ template<typename Win>
 QRectF layer_surface_area(Win* win)
 {
     auto layer_surf = win->layer_surface;
-    auto output_geo = layer_surf->output()->geometry();
+    auto output = layer_surf->output();
+    assert(output);
+
+    // TODO(romangg): Instead of using the output geometry we should use some Workspace::clientArea
+    //                depending on the layer the surface is on.
+    auto const output_geo = output->geometry();
 
     if (layer_surf->exclusive_zone() == 0) {
         auto output_geo_rect = output_geo.toRect();
         auto area = win->space.clientArea(WorkArea, output_geo_rect.center(), 0);
         return area.intersected(output_geo_rect);
     }
-    return layer_surf->output()->geometry();
+
+    return output_geo;
 }
 
 template<typename Win>
-QRect layer_surface_geometry(Win* win)
+QSize layer_surface_size(Win* win)
 {
     auto layer_surf = win->layer_surface;
-    auto output = layer_surf->output();
-    assert(output);
-
-    // TODO(romangg): Instead of using the output geometry we should use some Workspace::clientArea
-    //                depending on the layer the surface is on.
     auto const area_geo = layer_surface_area(win);
 
-    auto get_size = [&] {
-        auto size = layer_surf->size();
-        auto margins = layer_surf->margins();
-        if (size.width() == 0) {
-            assert(layer_surf->anchor() & Qt::LeftEdge);
-            assert(layer_surf->anchor() & Qt::RightEdge);
-            size.setWidth(area_geo.width() - margins.left() - margins.right());
+    auto size = layer_surf->size();
+    auto margins = layer_surf->margins();
+    if (size.width() == 0) {
+        assert(layer_surf->anchor() & Qt::LeftEdge);
+        assert(layer_surf->anchor() & Qt::RightEdge);
+        size.setWidth(area_geo.width() - margins.left() - margins.right());
+    }
+    if (size.height() == 0) {
+        assert(layer_surf->anchor() & Qt::TopEdge);
+        assert(layer_surf->anchor() & Qt::BottomEdge);
+        size.setHeight(area_geo.height() - margins.top() - margins.bottom());
+    }
+    return size;
+}
+
+template<typename Win>
+QPoint layer_surface_position(Win* win, QSize const& surface_size)
+{
+    auto layer_surf = win->layer_surface;
+    auto const area_geo = layer_surface_area(win);
+
+    auto anchor = layer_surf->anchor();
+    auto margins = layer_surf->margins();
+
+    auto x_mid = area_geo.x() + area_geo.width() / 2;
+    auto y_mid = area_geo.y() + area_geo.height() / 2;
+
+    // When not anchored to opposite edges or to both we center the surface in this dimension.
+    auto x = x_mid - surface_size.width() / 2;
+    auto y = y_mid - surface_size.height() / 2;
+
+    if (anchor & Qt::LeftEdge) {
+        if (!(anchor & Qt::RightEdge)) {
+            // Anchored only left. We use the output position plus margin.
+            x = area_geo.x() + margins.left();
         }
-        if (size.height() == 0) {
-            assert(layer_surf->anchor() & Qt::TopEdge);
-            assert(layer_surf->anchor() & Qt::BottomEdge);
-            size.setHeight(area_geo.height() - margins.top() - margins.bottom());
+    } else if (anchor & Qt::RightEdge) {
+        // Only anchored right. We position it relative to right output side minus margin.
+        x = area_geo.right() - margins.right() - surface_size.width();
+    }
+    if (anchor & Qt::TopEdge) {
+        if (!(anchor & Qt::BottomEdge)) {
+            // Anchored only top. We use the output position plus margin.
+            y = area_geo.y() + margins.top();
         }
-        return size;
-    };
-    auto const set_size = get_size();
+    } else if (anchor & Qt::BottomEdge) {
+        // Only anchored bottom. We position it relative to output bottom minus margin.
+        y = area_geo.bottom() - margins.bottom() - surface_size.height();
+    }
+    return QPoint(x, y);
+}
+
+template<typename Win>
+QRect layer_surface_recommended_geometry(Win* win)
+{
+    auto size = layer_surface_size(win);
+    return QRect(layer_surface_position(win, size), size);
+}
+
+template<typename Win>
+QRect layer_surface_requested_geometry(Win* win)
+{
+    auto const area_geo = layer_surface_area(win);
+    auto const set_size = layer_surface_size(win);
 
     auto get_effective_size = [&] {
         auto size = set_size;
@@ -82,41 +133,9 @@ QRect layer_surface_geometry(Win* win)
         size.setWidth(std::min(size.width(), static_cast<int>(area_geo.width())));
         return size;
     };
+
     auto const eff_size = get_effective_size();
-
-    auto get_pos = [&] {
-        auto anchor = layer_surf->anchor();
-        auto margins = layer_surf->margins();
-
-        auto x_mid = area_geo.x() + area_geo.width() / 2;
-        auto y_mid = area_geo.y() + area_geo.height() / 2;
-
-        // When not anchored to opposite edges or to both we center the surface in this dimension.
-        auto x = x_mid - eff_size.width() / 2;
-        auto y = y_mid - eff_size.height() / 2;
-
-        if (anchor & Qt::LeftEdge) {
-            if (!(anchor & Qt::RightEdge)) {
-                // Anchored only left. We use the output position plus margin.
-                x = area_geo.x() + margins.left();
-            }
-        } else if (anchor & Qt::RightEdge) {
-            // Only anchored right. We position it relative to right output side minus margin.
-            x = area_geo.right() - margins.right() - eff_size.width();
-        }
-        if (anchor & Qt::TopEdge) {
-            if (!(anchor & Qt::BottomEdge)) {
-                // Anchored only top. We use the output position plus margin.
-                y = area_geo.y() + margins.top();
-            }
-        } else if (anchor & Qt::BottomEdge) {
-            // Only anchored bottom. We position it relative to output bottom minus margin.
-            y = area_geo.bottom() - margins.bottom() - eff_size.height();
-        }
-        return QPoint(x, y);
-    };
-
-    return QRect(get_pos(), eff_size);
+    return QRect(layer_surface_position(win, eff_size), eff_size);
 }
 
 template<typename Win>
@@ -164,6 +183,21 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
                     static_cast<base::wayland::output const*>(output)->wrapland_output());
             }
         }
+
+        if (!base::wayland::find_output(
+                static_cast<base::wayland::platform&>(kwinApp()->get_base()),
+                win->layer_surface->output())) {
+            // Output not found. Close surface and ignore.
+            win->layer_surface->close();
+            return;
+        }
+
+        QObject::connect(&kwinApp()->get_base(), &base::platform::topology_changed, win, [win] {
+            auto geo = layer_surface_recommended_geometry(win);
+            if (win->geometry_update.frame != geo) {
+                win->setFrameGeometry(geo);
+            }
+        });
 
         if (win->pending_configures.empty()) {
             // wlr-layer-shell protocol stipulates a single configure event on first commit.
@@ -273,7 +307,7 @@ void process_layer_surface_commit(Win* win)
 {
     layer_surface_handle_keyboard_interactivity(win);
 
-    auto geo = layer_surface_geometry(win);
+    auto geo = layer_surface_requested_geometry(win);
     layer_surface_handle_exclusive_zone(win);
 
     if (win->pending_configures.empty()) {
@@ -287,17 +321,19 @@ void process_layer_surface_commit(Win* win)
         }
     }
 
+    win->window_type = layer_surface_type(win);
+
     if (win->layer_surface->layer() == Wrapland::Server::LayerSurfaceV1::Layer::Bottom) {
         win->control->set_keep_below(true);
-        win->window_type = NET::Normal;
     } else {
         win->control->set_keep_below(false);
-        win->window_type = layer_surface_type(win);
-        if (win->window_type == NET::Desktop || win->window_type == NET::OnScreenDisplay
-            || win->window_type == NET::Notification) {
-            set_on_all_desktops(win, true);
-        }
     }
+
+    if (win->window_type == NET::Desktop || win->window_type == NET::OnScreenDisplay
+        || win->window_type == NET::Notification) {
+        set_on_all_desktops(win, true);
+    }
+
     update_layer(win);
 
     // TODO(romangg): update client area also on size change?

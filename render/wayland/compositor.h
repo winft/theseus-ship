@@ -50,7 +50,7 @@ public:
     void lock();
     void unlock();
 
-    render::wayland::presentation* presentation;
+    std::unique_ptr<render::wayland::presentation> presentation;
 
 protected:
     render::scene* create_scene(QVector<CompositingType> const& support) override;

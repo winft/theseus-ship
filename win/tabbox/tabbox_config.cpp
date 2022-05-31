@@ -68,19 +68,36 @@ tabbox_config::~tabbox_config()
     delete d;
 }
 
-tabbox_config& tabbox_config::operator=(const KWin::win::tabbox_config& object)
+tabbox_config::tabbox_config(tabbox_config const& other)
 {
-    d->show_tabbox = object.is_show_tabbox();
-    d->highlight_windows = object.is_highlight_windows();
-    d->tabbox_mode = object.tabbox_mode();
-    d->client_desktop_mode = object.client_desktop_mode();
-    d->client_applications_mode = object.client_applications_mode();
-    d->client_minimized_mode = object.client_minimized_mode();
-    d->show_desktop_mode = object.show_desktop_mode();
-    d->client_multi_screen_mode = object.client_multi_screen_mode();
-    d->client_switching_mode = object.client_switching_mode();
-    d->desktop_switching_mode = object.desktop_switching_mode();
-    d->layout_name = object.layout_name();
+    *this = other;
+}
+
+tabbox_config& tabbox_config::operator=(tabbox_config const& object)
+{
+    if (this == &object) {
+        return *this;
+    }
+
+    if (!d) {
+        d = new tabbox_config_private();
+    }
+
+    *d = *object.d;
+    return *this;
+}
+
+tabbox_config::tabbox_config(tabbox_config&& other) noexcept
+{
+    *this = std::move(other);
+}
+
+tabbox_config& tabbox_config::operator=(tabbox_config&& other) noexcept
+{
+    if (this != &other) {
+        d = other.d;
+        other.d = nullptr;
+    }
     return *this;
 }
 
