@@ -44,7 +44,7 @@ bool handle_internal_window_effect_update_event(EffectIntegrator& effi,
 
     auto const& pe_name = static_cast<QDynamicPropertyChangeEvent*>(event)->propertyName();
     if (!contains_if(effi.internal_properties, [&](auto const& prop_var) {
-            bool match;
+            auto match{false};
             std::visit([&](auto&& prop) { match = pe_name == prop.name.data(); }, prop_var);
             return match;
         })) {
