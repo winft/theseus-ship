@@ -36,7 +36,7 @@ class KWIN_EXPORT scene : public render::scene
     Q_OBJECT
 
 public:
-    explicit scene(qpainter::backend* backend, render::compositor& compositor);
+    explicit scene(render::compositor& compositor);
     ~scene() override;
 
     int64_t paint_output(base::output* output,
@@ -47,7 +47,6 @@ public:
     void paintGenericScreen(paint_type mask, ScreenPaintData data) override;
 
     CompositingType compositingType() const override;
-    bool initFailed() const override;
     render::effect_frame* createEffectFrame(effect_frame_impl* frame) override;
     std::unique_ptr<render::shadow> createShadow(Toplevel* toplevel) override;
     win::deco::renderer* createDecorationRenderer(win::deco::client_impl* impl) override;
@@ -76,7 +75,7 @@ private:
     QScopedPointer<QPainter> m_painter;
 };
 
-KWIN_EXPORT render::scene* create_scene(render::compositor& compositor);
+KWIN_EXPORT std::unique_ptr<render::scene> create_scene(render::compositor& compositor);
 
 inline QPainter* scene::scenePainter() const
 {

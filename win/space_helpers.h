@@ -60,7 +60,7 @@ void add_remnant(Space& space, Win* orig, Win* remnant)
 
     space.x_stacking_tree->mark_as_dirty();
     QObject::connect(remnant, &Toplevel::needsRepaint, &space.render, [remnant] {
-        render::compositor::self()->schedule_repaint(remnant);
+        remnant->space.render.schedule_repaint(remnant);
     });
 }
 

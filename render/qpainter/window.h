@@ -15,7 +15,7 @@ class scene;
 class window : public render::window
 {
 public:
-    window(qpainter::scene* scene, Toplevel* c);
+    window(Toplevel* c, qpainter::scene& scene);
     ~window() override;
 
     void performPaint(paint_type mask, QRegion region, WindowPaintData data) override;
@@ -26,8 +26,6 @@ protected:
 private:
     void renderShadow(QPainter* painter);
     void renderWindowDecorations(QPainter* painter);
-
-    scene* m_scene;
 };
 
 }

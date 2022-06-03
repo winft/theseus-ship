@@ -49,6 +49,11 @@ class window;
 }
 }
 
+namespace render
+{
+class scene;
+}
+
 class X11Client;
 class Toplevel;
 
@@ -114,12 +119,12 @@ class KWIN_EXPORT console : public QWidget
 {
     Q_OBJECT
 public:
-    console();
+    console(win::space& space);
     ~console();
 
 protected:
     void showEvent(QShowEvent* event) override;
-    void initGLTab();
+    void initGLTab(render::scene& scene);
 
     QScopedPointer<Ui::debug_console> m_ui;
 };

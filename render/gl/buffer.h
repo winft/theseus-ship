@@ -18,7 +18,7 @@ class texture;
 class buffer : public render::buffer
 {
 public:
-    buffer(render::window* window, gl::scene* scene);
+    buffer(render::window* window, gl::scene& scene);
     ~buffer() override;
     render::gl::texture* texture() const;
     bool bind();
@@ -26,7 +26,6 @@ public:
 
 private:
     QScopedPointer<render::gl::texture> m_texture;
-    scene* m_scene;
 };
 
 }

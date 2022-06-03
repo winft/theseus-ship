@@ -286,9 +286,9 @@ bool SyncManager::updateFences()
  * scene
  ***********************************************/
 
-scene::scene(render::gl::backend* backend, render::compositor& compositor)
+scene::scene(render::compositor& compositor)
     : render::scene(compositor)
-    , m_backend(backend)
+    , m_backend{compositor.platform.get_opengl_backend(compositor)}
 {
     if (!viewportLimitsMatched(kwinApp()->get_base().topology.size)) {
         // TODO(romangg): throw?
@@ -322,9 +322,7 @@ scene::scene(render::gl::backend* backend, render::compositor& compositor)
 
     // We only support the OpenGL 2+ shader API, not GL_ARB_shader_objects
     if (!hasGLVersion(2, 0)) {
-        qCDebug(KWIN_CORE) << "OpenGL 2.0 is not supported";
-        init_ok = false;
-        return;
+        throw std::runtime_error("OpenGL 2.0 is not supported");
     }
 
     // It is not legal to not have a vertex array object bound in a core context
@@ -335,14 +333,11 @@ scene::scene(render::gl::backend* backend, render::compositor& compositor)
     }
 
     qCDebug(KWIN_CORE) << "OpenGL 2 compositing successfully initialized";
-    init_ok = true;
 }
 
 scene::~scene()
 {
-    if (init_ok || lanczos) {
-        makeOpenGLContextCurrent();
-    }
+    makeOpenGLContextCurrent();
 
     // Need to reset early, otherwise the GL context is gone.
     sw_cursor.texture.reset();
@@ -369,13 +364,11 @@ bool scene::hasSwapEvent() const
 
 void scene::idle()
 {
-    m_backend->idle();
+    if (m_backend->hasPendingFlush()) {
+        makeOpenGLContextCurrent();
+        m_backend->present();
+    }
     render::scene::idle();
-}
-
-bool scene::initFailed() const
-{
-    return !init_ok;
 }
 
 void scene::handleGraphicsReset(GLenum status)
@@ -406,7 +399,8 @@ void scene::handleGraphicsReset(GLenum status)
         usleep(50);
 
     qCDebug(KWIN_CORE) << "Attempting to reset compositing.";
-    QMetaObject::invokeMethod(this, "resetCompositing", Qt::QueuedConnection);
+    QMetaObject::invokeMethod(
+        this, [this] { compositor.reinitialize(); }, Qt::QueuedConnection);
 
     KNotification::event(QStringLiteral("graphicsreset"),
                          i18n("Desktop effects were restarted due to a graphics reset"));
@@ -443,7 +437,7 @@ void scene::insertWait()
  */
 void scene::paintCursor()
 {
-    auto cursor = render::compositor::self()->software_cursor.get();
+    auto cursor = compositor.software_cursor.get();
 
     // don't paint if we use hardware cursor or the cursor is hidden
     if (!cursor->enabled || kwinApp()->input->cursor->is_hidden() || cursor->image().isNull()) {
@@ -452,7 +446,7 @@ void scene::paintCursor()
 
     // lazy init texture cursor only in case we need software rendering
     if (sw_cursor.dirty) {
-        auto const img = render::compositor::self()->software_cursor->image();
+        auto const img = compositor.software_cursor->image();
 
         // If there was no new image we are still dirty and try to update again next paint cycle.
         sw_cursor.dirty = img.isNull();
@@ -821,12 +815,12 @@ render::effect_frame* scene::createEffectFrame(effect_frame_impl* frame)
 
 std::unique_ptr<render::shadow> scene::createShadow(Toplevel* toplevel)
 {
-    return std::make_unique<shadow>(toplevel);
+    return std::make_unique<shadow>(toplevel, *this);
 }
 
 win::deco::renderer* scene::createDecorationRenderer(win::deco::client_impl* impl)
 {
-    return new deco_renderer(impl);
+    return new deco_renderer(impl, *this);
 }
 
 bool scene::animationsSupported() const
@@ -929,7 +923,7 @@ void scene::doPaintBackground(const QVector<float>& vertices)
 
 std::unique_ptr<render::window> scene::createWindow(Toplevel* t)
 {
-    return std::make_unique<window>(t, this);
+    return std::make_unique<window>(t, *this);
 }
 
 void scene::finalDrawWindow(effects_window_impl* w,
@@ -958,65 +952,26 @@ void scene::performPaintWindow(effects_window_impl* w,
         w->sceneWindow()->performPaint(mask, region, data);
 }
 
-backend* create_backend(render::compositor& compositor)
+std::unique_ptr<render::scene> create_scene(render::compositor& compositor)
 {
-    try {
-        return compositor.platform.createOpenGLBackend(compositor);
-    } catch (std::runtime_error& error) {
-        qCWarning(KWIN_CORE) << "Creating OpenGL backend failed:" << error.what();
-        return nullptr;
-    }
-}
-
-render::scene* create_scene_impl(render::compositor& compositor)
-{
-    auto backend = create_backend(compositor);
-    if (!backend) {
-        return nullptr;
-    }
-
-    gl::scene* scene{nullptr};
-
-    // first let's try an OpenGL 2 scene
-    if (scene::supported(backend)) {
-        scene = new gl::scene(backend, compositor);
-        if (scene->initFailed()) {
-            delete scene;
-            scene = nullptr;
-        }
-    }
-
-    if (!scene) {
-        if (GLPlatform::instance()->recommendedCompositor() == XRenderCompositing) {
-            qCCritical(KWIN_CORE)
-                << "OpenGL driver recommends XRender based compositing. Falling back to XRender.";
-            qCCritical(KWIN_CORE)
-                << "To overwrite the detection use the environment variable KWIN_COMPOSE";
-            qCCritical(KWIN_CORE)
-                << "For more information see "
-                   "https://community.kde.org/KWin/Environment_Variables#KWIN_COMPOSE";
-        }
-        compositor.platform.render_stop(false);
-    }
-
-    return scene;
-}
-
-render::scene* create_scene(render::compositor& compositor)
-{
-    qCDebug(KWIN_CORE) << "Initializing OpenGL compositing";
+    qCDebug(KWIN_CORE) << "Creating OpenGL scene.";
 
     // Some broken drivers crash on glXQuery() so to prevent constant KWin crashes:
     if (compositor.platform.openGLCompositingIsBroken()) {
-        qCWarning(KWIN_CORE) << "KWin has detected that your OpenGL library is unsafe to use";
-        return nullptr;
+        throw std::runtime_error("OpenGL library is unsafe to use");
     }
 
     compositor.platform.createOpenGLSafePoint(OpenGLSafePoint::PreInit);
-    auto scene = create_scene_impl(compositor);
-    compositor.platform.createOpenGLSafePoint(OpenGLSafePoint::PostInit);
+    auto post = [&] { compositor.platform.createOpenGLSafePoint(OpenGLSafePoint::PostInit); };
 
-    return scene;
+    try {
+        auto scene = std::make_unique<gl::scene>(compositor);
+        post();
+        return scene;
+    } catch (std::runtime_error const& exc) {
+        post();
+        throw exc;
+    }
 }
 
 }

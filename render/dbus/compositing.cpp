@@ -43,10 +43,11 @@ QString compositing::compositingNotPossibleReason() const
 
 QString compositing::compositingType() const
 {
-    if (!compositor.scene()) {
+    if (!compositor.scene) {
         return QStringLiteral("none");
     }
-    switch (compositor.scene()->compositingType()) {
+
+    switch (compositor.scene->compositingType()) {
     case XRenderCompositing:
         return QStringLiteral("xrender");
     case OpenGLCompositing:

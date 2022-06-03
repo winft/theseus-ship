@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "tabbox.h"
 
 #include "base/x11/xcb/proto.h"
+#include "render/compositor.h"
 #include "render/effects.h"
 #include "win/screen_edges.h"
 #include "win/space.h"
@@ -57,8 +58,8 @@ bool tabbox_x11_filter::event(xcb_generic_event_t* event)
         auto e = reinterpret_cast<xcb_button_press_event_t*>(event);
         xcb_allow_events(connection(), XCB_ALLOW_ASYNC_POINTER, XCB_CURRENT_TIME);
         if (!tabbox.is_shown() && tabbox.is_displayed()) {
-            if (effects
-                && static_cast<render::effects_handler_impl*>(effects)->isMouseInterception()) {
+            if (auto& effects = tabbox.space.render.effects;
+                effects && effects->isMouseInterception()) {
                 // pass on to effects, effects will filter out the event
                 return false;
             }

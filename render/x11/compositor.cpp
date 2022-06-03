@@ -31,6 +31,7 @@
 #include <KGlobalAccel>
 #include <KLocalizedString>
 #include <KNotification>
+#include <stdexcept>
 
 Q_DECLARE_METATYPE(KWin::render::x11::compositor::SuspendReason)
 
@@ -41,11 +42,6 @@ static ulong s_msc = 0;
 
 // 2 sec which should be enough to restart the compositor.
 constexpr auto compositor_lost_message_delay = 2000;
-
-compositor* compositor::self()
-{
-    return qobject_cast<compositor*>(render::compositor::self());
-}
 
 compositor::compositor(render::platform& platform)
     : render::compositor(platform)
@@ -72,7 +68,16 @@ compositor::compositor(render::platform& platform)
 
 void compositor::start(win::space& space)
 {
-    this->space = &space;
+    if (!this->space) {
+        // On first start setup connections.
+        QObject::connect(
+            kwinApp(), &Application::x11ConnectionChanged, this, &compositor::setupX11Support);
+        QObject::connect(space.stacking_order.get(),
+                         &win::stacking_order::changed,
+                         this,
+                         &compositor::addRepaintFull);
+        this->space = &space;
+    }
 
     if (m_suspended) {
         QStringList reasons;
@@ -88,21 +93,23 @@ void compositor::start(win::space& space)
         qCDebug(KWIN_CORE) << "Compositing is suspended, reason:" << reasons;
         return;
     }
+
     if (!platform.compositingPossible()) {
         qCCritical(KWIN_CORE) << "Compositing is not possible";
         return;
     }
 
-    if (!render::compositor::setupStart()) {
-        // Internal setup failed, abort.
-        return;
-    }
+    try {
+        render::compositor::start_scene();
+    } catch (std::runtime_error const& ex) {
+        qCWarning(KWIN_CORE) << "Error: " << ex.what();
+        qCWarning(KWIN_CORE) << "Compositing not possible. Continue without it.";
 
-    if (m_releaseSelectionTimer.isActive()) {
-        m_releaseSelectionTimer.stop();
+        m_state = State::Off;
+        xcb_composite_unredirect_subwindows(
+            kwinApp()->x11Connection(), kwinApp()->x11RootWindow(), XCB_COMPOSITE_REDIRECT_MANUAL);
+        destroyCompositorSelection();
     }
-
-    startupWithWorkspace(space);
 }
 
 void compositor::schedule_repaint()
@@ -224,14 +231,14 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
     }
 
     if (damaged.size() > 0) {
-        scene()->triggerFence();
+        scene->triggerFence();
         if (auto c = kwinApp()->x11Connection()) {
             xcb_flush(c);
         }
     }
 
     // Move elevated windows to the top of the stacking order
-    auto const elevated_win_list = static_cast<effects_handler_impl*>(effects)->elevatedWindows();
+    auto const elevated_win_list = effects->elevatedWindows();
 
     for (auto c : elevated_win_list) {
         auto t = static_cast<effects_window_impl*>(c)->window();
@@ -261,7 +268,7 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
         repaints_region.isEmpty() && !std::any_of(wins.cbegin(), wins.cend(), [](auto const& win) {
             return win->has_pending_repaints();
         })) {
-        scene()->idle();
+        scene->idle();
 
         // This means the next time we composite it is done without timer delay.
         m_delay = 0;
@@ -284,34 +291,61 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
     return true;
 }
 
-render::scene* compositor::create_scene(QVector<CompositingType> const& support)
+template<typename Factory>
+std::unique_ptr<render::scene>
+create_scene_impl(x11::compositor& compositor, Factory& factory, std::string const& prev_err)
 {
-    render::scene* scene{nullptr};
-
-    for (auto type : support) {
-        if (type == OpenGLCompositing) {
-            qCDebug(KWIN_CORE) << "Creating OpenGL scene.";
-            scene = gl::create_scene(*this);
-            break;
-        }
-#ifdef KWIN_HAVE_XRENDER_COMPOSITING
-        if (type == XRenderCompositing) {
-            qCDebug(KWIN_CORE) << "Creating XRender scene.";
-            scene = xrender::create_scene(*this);
-            break;
-        }
-#endif
-    }
-
-    if (scene) {
-        scene->windowing_integration.handle_viewport_limits_alarm = [this] {
+    auto setup_hooks = [&](auto& scene) {
+        scene->windowing_integration.handle_viewport_limits_alarm = [&] {
             qCDebug(KWIN_CORE) << "Suspending compositing because viewport limits are not met";
-            QTimer::singleShot(
-                0, this, [this] { suspend(render::x11::compositor::AllReasonSuspend); });
+            QTimer::singleShot(0, &compositor, [&] {
+                compositor.suspend(render::x11::compositor::AllReasonSuspend);
+            });
         };
-    }
+    };
 
-    return scene;
+    try {
+        auto scene = factory(compositor);
+        setup_hooks(scene);
+        if (!prev_err.empty()) {
+            qCDebug(KWIN_CORE) << "Fallback after error:" << prev_err.c_str();
+        }
+        return scene;
+    } catch (std::runtime_error const& exc) {
+        throw std::runtime_error(prev_err + " " + exc.what());
+    }
+}
+
+std::unique_ptr<render::scene> compositor::create_scene()
+{
+    using Factory = std::function<std::unique_ptr<render::scene>(compositor&)>;
+
+    std::deque<Factory> factories;
+    factories.push_back(gl::create_scene);
+
+    auto const req_mode = kwinApp()->options->compositingMode();
+
+#ifdef KWIN_HAVE_XRENDER_COMPOSITING
+    if (req_mode == XRenderCompositing) {
+        factories.push_front(xrender::create_scene);
+    } else {
+        factories.push_back(xrender::create_scene);
+    }
+#else
+    if (req_mode == XRenderCompositing) {
+        qCDebug(KWIN_CORE) << "Requested XRender compositing, but support has not been compiled. "
+                              "Continue with OpenGL.";
+    }
+#endif
+
+    try {
+        return create_scene_impl(*this, factories.at(0), "");
+    } catch (std::runtime_error const& exc) {
+        if (factories.size() > 1) {
+            return create_scene_impl(*this, factories.at(1), exc.what());
+        }
+        throw exc;
+    }
 }
 
 void compositor::performCompositing()
@@ -330,7 +364,7 @@ void compositor::performCompositing()
     auto now = std::chrono::duration_cast<std::chrono::milliseconds>(now_ns);
 
     // Start the actual painting process.
-    auto const duration = scene()->paint(repaints, windows, now);
+    auto const duration = scene->paint(repaints, windows, now);
 
     update_paint_periods(duration);
     create_opengl_safepoint(OpenGLSafePoint::PostFrame);
@@ -350,7 +384,7 @@ void compositor::create_opengl_safepoint(OpenGLSafePoint safepoint)
     if (m_framesToTestForSafety <= 0) {
         return;
     }
-    if (!(scene()->compositingType() & OpenGLCompositing)) {
+    if (!(scene->compositingType() & OpenGLCompositing)) {
         return;
     }
 
@@ -410,5 +444,4 @@ void compositor::updateClientCompositeBlocking(Toplevel* window)
         }
     }
 }
-
 }

@@ -85,9 +85,9 @@ void SlidingPopupsTest::initTestCase()
 
     Test::app()->start();
     QVERIFY(startup_spy.wait());
-    QVERIFY(render::compositor::self());
+    QVERIFY(Test::app()->base.render->compositor);
 
-    auto scene = render::compositor::self()->scene();
+    auto& scene = Test::app()->base.render->compositor->scene;
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
 }

@@ -21,7 +21,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "render/scene.h"
 
-namespace KWin::render::xrender
+namespace KWin::render
+{
+
+namespace x11
+{
+class compositor;
+}
+
+namespace xrender
 {
 
 class backend;
@@ -30,10 +38,9 @@ class scene : public render::scene
 {
     Q_OBJECT
 public:
-    scene(xrender::backend* backend, render::compositor& compositor);
+    explicit scene(render::compositor& compositor);
     ~scene() override;
 
-    bool initFailed() const override;
     CompositingType compositingType() const override
     {
         return XRenderCompositing;
@@ -66,9 +73,10 @@ protected:
     void paintEffectQuickView(EffectQuickView* w) override;
 
 private:
-    QScopedPointer<xrender::backend> m_backend;
+    std::unique_ptr<xrender::backend> m_backend;
 };
 
-KWIN_EXPORT render::scene* create_scene(render::compositor& compositor);
+KWIN_EXPORT std::unique_ptr<render::scene> create_scene(x11::compositor& compositor);
 
+}
 }

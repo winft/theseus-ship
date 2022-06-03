@@ -17,7 +17,6 @@ public:
     explicit xwl_window(win::space& space);
 
     qreal bufferScale() const override;
-    bool setupCompositing(bool add_full_damage) override;
     void add_scene_window_addon() override;
 };
 

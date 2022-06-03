@@ -242,9 +242,9 @@ QRect window::iconGeometry() const
     return Toplevel::iconGeometry();
 }
 
-bool window::setupCompositing(bool add_full_damage)
+bool window::setupCompositing()
 {
-    return x11::setup_compositing(*this, add_full_damage);
+    return x11::setup_compositing(*this);
 }
 
 void window::finishCompositing()

@@ -10,9 +10,13 @@
 namespace KWin::input
 {
 
+class redirect;
+
 class KWIN_EXPORT effects_filter : public event_filter
 {
 public:
+    explicit effects_filter(input::redirect& redirect);
+
     bool button(button_event const& event) override;
     bool motion(motion_event const& event) override;
     bool axis(axis_event const& event) override;
@@ -23,6 +27,9 @@ public:
     bool touch_down(touch_down_event const& event) override;
     bool touch_motion(touch_motion_event const& event) override;
     bool touch_up(touch_up_event const& event) override;
+
+private:
+    input::redirect& redirect;
 };
 
 }

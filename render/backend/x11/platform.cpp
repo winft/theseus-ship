@@ -78,30 +78,27 @@ void platform::init()
     XRenderUtils::init(kwinApp()->x11Connection(), kwinApp()->x11RootWindow());
 }
 
-gl::backend* platform::createOpenGLBackend(render::compositor& compositor)
+gl::backend* platform::get_opengl_backend(render::compositor& compositor)
 {
+    auto& x11comp = static_cast<render::x11::compositor&>(compositor);
+
     if (gl_backend) {
-        start_glx_backend(m_x11Display, compositor, *gl_backend);
+        start_glx_backend(m_x11Display, x11comp, *gl_backend);
         return gl_backend.get();
     }
 
-    switch (kwinApp()->options->glPlatformInterface()) {
-#if HAVE_EPOXY_GLX
-    case GlxPlatformInterface:
-        if (has_glx()) {
-            gl_backend = std::make_unique<glx_backend>(m_x11Display, compositor);
-            return gl_backend.get();
-        } else {
-            qCWarning(KWIN_X11) << "Glx not available, trying EGL instead.";
-            // no break, needs fall-through
-            Q_FALLTHROUGH();
-        }
-#endif
-    case EglPlatformInterface:
-    default:
-        // no backend available
-        return nullptr;
+    if (kwinApp()->options->glPlatformInterface() == EglPlatformInterface) {
+        qCWarning(KWIN_CORE)
+            << "Requested EGL on X11 backend, but support has been removed. Trying GLX instead.";
     }
+
+#if HAVE_EPOXY_GLX
+    if (has_glx()) {
+        gl_backend = std::make_unique<glx_backend>(m_x11Display, x11comp);
+        return gl_backend.get();
+    }
+#endif
+    throw std::runtime_error("GLX backend not available.");
 }
 
 void platform::render_stop(bool /*on_shutdown*/)
@@ -265,7 +262,7 @@ win::deco::renderer* platform::createDecorationRenderer(win::deco::client_impl* 
 void platform::invertScreen()
 {
     // We prefer inversion via effects.
-    if (effects && static_cast<render::effects_handler_impl*>(effects)->invert_screen()) {
+    if (compositor->effects && compositor->effects->invert_screen()) {
         return;
     }
 
@@ -303,22 +300,20 @@ void platform::invertScreen()
     }
 }
 
-void platform::createEffectsHandler(render::compositor* compositor, render::scene* scene)
+std::unique_ptr<render::effects_handler_impl>
+platform::createEffectsHandler(render::compositor* compositor, render::scene* scene)
 {
-    new render::x11::effects_handler_impl(compositor, scene);
+    return std::make_unique<render::x11::effects_handler_impl>(compositor, scene);
 }
 
-QVector<CompositingType> platform::supportedCompositors() const
+CompositingType platform::selected_compositor() const
 {
-    QVector<CompositingType> compositors;
-#if HAVE_EPOXY_GLX
-    compositors << OpenGLCompositing;
-#endif
+    if (gl_backend) {
+        return OpenGLCompositing;
+    }
 #ifdef KWIN_HAVE_XRENDER_COMPOSITING
-    compositors << XRenderCompositing;
+    return XRenderCompositing;
 #endif
-    compositors << NoCompositing;
-    return compositors;
+    return NoCompositing;
 }
-
 }

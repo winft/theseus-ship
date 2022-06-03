@@ -40,7 +40,7 @@ public:
 
     void init();
 
-    gl::backend* createOpenGLBackend(render::compositor& compositor) override;
+    gl::backend* get_opengl_backend(render::compositor& compositor) override;
     void render_stop(bool on_shutdown) override;
 
     bool requiresCompositing() const override;
@@ -54,8 +54,9 @@ public:
 
     void invertScreen() override;
 
-    void createEffectsHandler(render::compositor* compositor, render::scene* scene) override;
-    QVector<CompositingType> supportedCompositors() const override;
+    std::unique_ptr<render::effects_handler_impl>
+    createEffectsHandler(render::compositor* compositor, render::scene* scene) override;
+    CompositingType selected_compositor() const override;
 
 private:
     QThread* m_openGLFreezeProtectionThread = nullptr;

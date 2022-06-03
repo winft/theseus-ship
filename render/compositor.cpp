@@ -11,7 +11,6 @@
 #include "effects.h"
 #include "platform.h"
 #include "scene.h"
-#include "utils.h"
 #include "x11/compositor_selection_owner.h"
 
 #include "base/logging.h"
@@ -27,17 +26,13 @@
 #include "win/x11/stacking_tree.h"
 
 #include <QTimerEvent>
+#include <stdexcept>
 
 namespace KWin::render
 {
 
 // 2 sec which should be enough to restart the compositor.
 constexpr auto compositor_lost_message_delay = 2000;
-
-compositor* compositor::self()
-{
-    return kwinApp()->get_base().render->compositor.get();
-}
 
 bool compositor::compositing()
 {
@@ -72,58 +67,48 @@ compositor::~compositor()
     destroyCompositorSelection();
 }
 
-bool compositor::setupStart()
+void compositor::start_scene()
 {
+    assert(space);
+    assert(!scene);
+
     if (kwinApp()->isTerminating()) {
         // Don't start while KWin is terminating. An event to restart might be lingering
         // in the event queue due to graphics reset.
-        return false;
+        return;
     }
+
     if (m_state != State::Off) {
-        return false;
+        return;
     }
+
     m_state = State::Starting;
-
     kwinApp()->options->reloadCompositingSettings(true);
-
     setupX11Support();
-
     Q_EMIT aboutToToggleCompositing();
 
-    auto supported_render_types = get_supported_render_types(platform);
-
-    assert(!m_scene);
-    m_scene.reset(create_scene(supported_render_types));
-
-    if (!m_scene || m_scene->initFailed()) {
-        qCCritical(KWIN_CORE) << "Failed to initialize compositing, compositing disabled";
-        m_state = State::Off;
-
-        m_scene.reset();
-
-        if (auto con = kwinApp()->x11Connection()) {
-            // TODO(romangg): That's X11-only. Move to the x11::compositor class.
-            xcb_composite_unredirect_subwindows(
-                con, kwinApp()->x11RootWindow(), XCB_COMPOSITE_REDIRECT_MANUAL);
-        }
-
-        if (m_selectionOwner) {
-            m_selectionOwner->disown();
-        }
-        if (!supported_render_types.contains(NoCompositing)) {
-            qCCritical(KWIN_CORE) << "The used windowing system requires compositing";
-            qCCritical(KWIN_CORE) << "We are going to quit KWin now as it is broken";
-            qApp->quit();
-        }
-        return false;
+    scene = create_scene();
+    space->x_stacking_tree->mark_as_dirty();
+    for (auto& client : space->windows()) {
+        client->setupCompositing();
     }
 
-    platform.selected_compositor = m_scene->compositingType();
+    // Sets also the 'effects' pointer.
+    effects = platform.createEffectsHandler(this, scene.get());
+    connect(
+        effects.get(), &EffectsHandler::screenGeometryChanged, this, &compositor::addRepaintFull);
+    connect(space->stacking_order.get(), &win::stacking_order::unlocked, this, [this]() {
+        if (effects) {
+            effects->checkInputWindowStacking();
+        }
+    });
 
-    connect(scene(), &scene::resetCompositing, this, &compositor::reinitialize);
-    Q_EMIT sceneCreated();
+    m_state = State::On;
+    Q_EMIT compositingToggled(true);
 
-    return true;
+    // Render at least once.
+    addRepaintFull();
+    performCompositing();
 }
 
 void compositor::claimCompositorSelection()
@@ -160,58 +145,6 @@ void compositor::setupX11Support()
         con, kwinApp()->x11RootWindow(), XCB_COMPOSITE_REDIRECT_MANUAL);
 }
 
-void compositor::startupWithWorkspace(win::space& space)
-{
-    this->space = &space;
-
-    connect(kwinApp(),
-            &Application::x11ConnectionChanged,
-            this,
-            &compositor::setupX11Support,
-            Qt::UniqueConnection);
-    space.x_stacking_tree->mark_as_dirty();
-    assert(m_scene);
-
-    connect(
-        &space,
-        &win::space::destroyed,
-        this,
-        [this] { compositeTimer.stop(); },
-        Qt::UniqueConnection);
-    setupX11Support();
-
-    connect(space.stacking_order.get(),
-            &win::stacking_order::changed,
-            this,
-            &compositor::addRepaintFull);
-
-    for (auto& client : space.windows()) {
-        if (client->remnant()) {
-            continue;
-        }
-        client->setupCompositing(!client->control);
-        if (!win::is_desktop(client)) {
-            win::update_shadow(client);
-        }
-    }
-
-    // Sets also the 'effects' pointer.
-    platform.createEffectsHandler(this, scene());
-    connect(effects, &EffectsHandler::screenGeometryChanged, this, &compositor::addRepaintFull);
-    connect(space.stacking_order.get(), &win::stacking_order::unlocked, this, []() {
-        if (auto eff_impl = static_cast<effects_handler_impl*>(effects)) {
-            eff_impl->checkInputWindowStacking();
-        }
-    });
-
-    m_state = State::On;
-    Q_EMIT compositingToggled(true);
-
-    // Render at least once.
-    addRepaintFull();
-    performCompositing();
-}
-
 void compositor::schedule_repaint(Toplevel* /*window*/)
 {
     // Needs to be implemented because might get called on destructor.
@@ -234,8 +167,7 @@ void compositor::stop(bool on_shutdown)
     // Some effects might need access to effect windows when they are about to
     // be destroyed, for example to unreference deleted windows, so we have to
     // make sure that effect windows outlive effects.
-    delete effects;
-    effects = nullptr;
+    effects.reset();
 
     if (space) {
         for (auto& c : space->windows()) {
@@ -254,8 +186,8 @@ void compositor::stop(bool on_shutdown)
         }
     }
 
-    assert(m_scene);
-    m_scene.reset();
+    assert(scene);
+    scene.reset();
     platform.render_stop(on_shutdown);
 
     m_bufferSwapPending = false;
@@ -320,16 +252,6 @@ void compositor::reinitialize()
         // start() may fail
         effects->reconfigure();
     }
-}
-
-void compositor::addRepaint(int x, int y, int w, int h)
-{
-    addRepaint(QRegion(x, y, w, h));
-}
-
-void compositor::addRepaint(QRect const& rect)
-{
-    addRepaint(QRegion(rect));
 }
 
 void compositor::addRepaint([[maybe_unused]] QRegion const& region)
@@ -409,7 +331,7 @@ void compositor::update_paint_periods(int64_t duration)
 
 void compositor::retard_next_composition()
 {
-    if (m_scene->hasSwapEvent()) {
+    if (scene->hasSwapEvent()) {
         // We wait on an explicit callback from the backend to unlock next composition runs.
         return;
     }
@@ -441,11 +363,6 @@ void compositor::setCompositeTimer()
 bool compositor::isActive()
 {
     return m_state == State::On;
-}
-
-render::scene* compositor::scene() const
-{
-    return m_scene.get();
 }
 
 int compositor::refreshRate() const

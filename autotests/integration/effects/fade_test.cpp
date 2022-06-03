@@ -74,7 +74,7 @@ void FadeTest::initTestCase()
 
     Test::app()->start();
     QVERIFY(startup_spy.wait());
-    QVERIFY(render::compositor::self());
+    QVERIFY(Test::app()->base.render->compositor);
 }
 
 void FadeTest::init()

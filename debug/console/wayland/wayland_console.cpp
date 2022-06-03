@@ -28,7 +28,7 @@ namespace KWin::debug
 {
 
 wayland_console::wayland_console(win::space& space)
-    : console()
+    : console(space)
 {
     m_ui->windowsView->setItemDelegate(new wayland_console_delegate(this));
     m_ui->windowsView->setModel(new wayland_console_model(space, this));

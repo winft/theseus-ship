@@ -128,7 +128,7 @@ void SceneOpenGLShadowTest::initTestCase()
 
     Test::app()->start();
     QVERIFY(startup_spy.size() || startup_spy.wait());
-    QVERIFY(render::compositor::self());
+    QVERIFY(Test::app()->base.render->compositor);
 
     // Add directory with fake decorations to the plugin search path.
     QCoreApplication::addLibraryPath(
@@ -140,7 +140,7 @@ void SceneOpenGLShadowTest::initTestCase()
     group.sync();
     Test::app()->workspace->slotReconfigure();
 
-    auto scene = render::compositor::self()->scene();
+    auto& scene = Test::app()->base.render->compositor->scene;
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
 }

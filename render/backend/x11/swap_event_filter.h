@@ -34,11 +34,14 @@ namespace KWin::render::backend::x11
 class swap_event_filter : public base::x11::event_filter
 {
 public:
-    swap_event_filter(xcb_drawable_t drawable, xcb_glx_drawable_t glxDrawable)
+    swap_event_filter(render::compositor& compositor,
+                      xcb_drawable_t drawable,
+                      xcb_glx_drawable_t glxDrawable)
         : base::x11::event_filter(base::x11::xcb::extensions::self()->glx_event_base()
                                   + XCB_GLX_BUFFER_SWAP_COMPLETE)
         , m_drawable(drawable)
         , m_glxDrawable(glxDrawable)
+        , compositor{compositor}
     {
     }
 
@@ -51,7 +54,7 @@ public:
         // by a WireToEvent handler, and the GLX drawable when the event was
         // received over the wire
         if (ev->drawable == m_drawable || ev->drawable == m_glxDrawable) {
-            render::compositor::self()->bufferSwapComplete();
+            compositor.bufferSwapComplete();
             return true;
         }
 
@@ -61,6 +64,7 @@ public:
 private:
     xcb_drawable_t m_drawable;
     xcb_glx_drawable_t m_glxDrawable;
+    render::compositor& compositor;
 };
 
 }

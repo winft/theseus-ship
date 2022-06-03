@@ -433,7 +433,7 @@ void effects_handler_impl::paintDesktop(int desktop,
     // save the paint screen iterator
     EffectsIterator savedIterator = m_currentPaintScreenIterator;
     m_currentPaintScreenIterator = m_activeEffects.constBegin();
-    effects->paintScreen(mask, region, data);
+    paintScreen(mask, region, data);
     // restore the saved iterator
     m_currentPaintScreenIterator = savedIterator;
     m_desktopRendering = false;
@@ -1242,7 +1242,7 @@ void effects_handler_impl::addRepaint(const QRegion& r)
 
 void effects_handler_impl::addRepaint(int x, int y, int w, int h)
 {
-    m_compositor->addRepaint(x, y, w, h);
+    m_compositor->addRepaint(QRegion(x, y, w, h));
 }
 
 int effects_handler_impl::activeScreen() const
@@ -1584,7 +1584,7 @@ EffectFrame* effects_handler_impl::effectFrame(EffectFrameStyle style,
                                                const QPoint& position,
                                                Qt::Alignment alignment) const
 {
-    return new effect_frame_impl(style, staticSize, position, alignment);
+    return new effect_frame_impl(*m_scene, style, staticSize, position, alignment);
 }
 
 QVariant effects_handler_impl::kwinOption(KWinOption kwopt)
@@ -2460,12 +2460,14 @@ EffectWindowList effect_window_group_impl::members() const
 // effect_frame_impl
 //****************************************
 
-effect_frame_impl::effect_frame_impl(EffectFrameStyle style,
+effect_frame_impl::effect_frame_impl(render::scene& scene,
+                                     EffectFrameStyle style,
                                      bool staticSize,
                                      QPoint position,
                                      Qt::Alignment alignment)
     : QObject(nullptr)
     , EffectFrame()
+    , scene{scene}
     , m_style(style)
     , m_static(staticSize)
     , m_point(position)
@@ -2484,7 +2486,7 @@ effect_frame_impl::effect_frame_impl(EffectFrameStyle style,
     m_selection.setCacheAllRenderedFrames(true);
     m_selection.setEnabledBorders(Plasma::FrameSvg::AllBorders);
 
-    m_sceneFrame = render::compositor::self()->scene()->createEffectFrame(this);
+    m_sceneFrame = scene.createEffectFrame(this);
 }
 
 effect_frame_impl::~effect_frame_impl()

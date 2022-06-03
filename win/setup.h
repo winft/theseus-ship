@@ -42,8 +42,8 @@ template<typename Space, typename Win>
 void setup_space_window_connections(Space* space, Win* win)
 {
     // TODO(romangg): Move into a different function about compositor(render) <-> window setup.
-    QObject::connect(win, &Win::needsRepaint, render::compositor::self(), [win] {
-        render::compositor::self()->schedule_repaint(win);
+    QObject::connect(win, &Win::needsRepaint, &space->render, [win] {
+        win->space.render.schedule_repaint(win);
     });
     QObject::connect(win, &Win::desktopPresenceChanged, space, &Space::desktopPresenceChanged);
     QObject::connect(

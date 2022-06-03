@@ -84,22 +84,21 @@ client_impl::client_impl(Toplevel* window,
                      decoratedClient,
                      &KDecoration2::DecoratedClient::keepBelowChanged);
 
-    QObject::connect(render::compositor::self(),
+    QObject::connect(&space.render,
                      &render::compositor::aboutToToggleCompositing,
                      qobject.get(),
                      [this] { m_renderer.reset(); });
-    m_compositorToggledConnection = QObject::connect(render::compositor::self(),
+    m_compositorToggledConnection = QObject::connect(&space.render,
                                                      &render::compositor::compositingToggled,
                                                      qobject.get(),
                                                      [this, decoration]() {
                                                          createRenderer();
                                                          decoration->update();
                                                      });
-    QObject::connect(
-        render::compositor::self(), &render::compositor::aboutToDestroy, qobject.get(), [this] {
-            QObject::disconnect(m_compositorToggledConnection);
-            m_compositorToggledConnection = QMetaObject::Connection();
-        });
+    QObject::connect(&space.render, &render::compositor::aboutToDestroy, qobject.get(), [this] {
+        QObject::disconnect(m_compositorToggledConnection);
+        m_compositorToggledConnection = QMetaObject::Connection();
+    });
     QObject::connect(
         window, &Toplevel::quicktiling_changed, decoratedClient, [this, decoratedClient]() {
             Q_EMIT decoratedClient->adjacentScreenEdgesChanged(adjacentScreenEdges());

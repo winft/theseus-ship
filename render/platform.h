@@ -32,6 +32,7 @@ class renderer;
 
 namespace render
 {
+
 namespace gl
 {
 class backend;
@@ -46,6 +47,7 @@ class backend;
 }
 
 class compositor;
+class effects_handler_impl;
 class outline;
 class outline_visual;
 class scene;
@@ -56,8 +58,8 @@ class KWIN_EXPORT platform : public QObject
 public:
     ~platform() override;
 
-    virtual render::gl::backend* createOpenGLBackend(render::compositor& compositor);
-    virtual render::qpainter::backend* createQPainterBackend(render::compositor& compositor);
+    virtual render::gl::backend* get_opengl_backend(render::compositor& compositor);
+    virtual render::qpainter::backend* get_qpainter_backend(render::compositor& compositor);
 
     // TODO(romangg): Remove the boolean trap.
     virtual void render_stop(bool on_shutdown) = 0;
@@ -113,7 +115,8 @@ public:
      * is no Compositor.
      */
     virtual win::deco::renderer* createDecorationRenderer(win::deco::client_impl* client);
-    virtual void createEffectsHandler(render::compositor* compositor, render::scene* scene) = 0;
+    virtual std::unique_ptr<effects_handler_impl>
+    createEffectsHandler(render::compositor* compositor, render::scene* scene) = 0;
 
     /**
      * Platform specific way to invert the screen.
@@ -121,22 +124,9 @@ public:
      */
     virtual void invertScreen();
 
-    /**
-     * The CompositingTypes supported by the Platform.
-     * The first item should be the most preferred one.
-     * @since 5.11
-     */
-    virtual QVector<CompositingType> supportedCompositors() const = 0;
+    virtual CompositingType selected_compositor() const = 0;
 
     std::unique_ptr<render::post::night_color_manager> night_color;
-
-    /**
-     * The compositor plugin which got selected from @ref supportedCompositors. Prior to selecting
-     * this returns @c NoCompositing. Allows to limit the offerings in @ref supportedCompositors
-     * in case they do not support runtime compositor switching.
-     */
-    CompositingType selected_compositor{NoCompositing};
-
     std::unique_ptr<render::compositor> compositor;
     base::platform& base;
 

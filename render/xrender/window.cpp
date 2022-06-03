@@ -27,9 +27,8 @@ XRenderPicture* window::s_tempPicture = nullptr;
 QRect window::temp_visibleRect;
 XRenderPicture* window::s_fadeAlphaPicture = nullptr;
 
-window::window(Toplevel* c, xrender::scene* scene)
-    : render::window(c)
-    , m_scene(scene)
+window::window(Toplevel* c, xrender::scene& scene)
+    : render::window(c, scene)
     , format(XRenderUtils::findPictFormat(c->visual()))
 {
 }
@@ -261,7 +260,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
         || (scaled
             && (wantShadow || (client && !client->noBorder()) || (remnant && !remnant->no_border)));
 
-    xcb_render_picture_t renderTarget = m_scene->xrenderBufferPicture();
+    auto renderTarget = static_cast<xrender::scene&>(scene).xrenderBufferPicture();
     if (blitInTempPixmap) {
         if (scene_xRenderOffscreenTarget()) {
             temp_visibleRect = win::visible_rect(toplevel).translated(-toplevel->pos());
@@ -544,7 +543,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
                                  XCB_RENDER_PICT_OP_OVER,
                                  *s_tempPicture,
                                  XCB_RENDER_PICTURE_NONE,
-                                 m_scene->xrenderBufferPicture(),
+                                 static_cast<xrender::scene&>(scene).xrenderBufferPicture(),
                                  0,
                                  0,
                                  0,

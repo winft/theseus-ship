@@ -72,7 +72,7 @@ void X11ClientTest::initTestCase()
 
     Test::app()->start();
     QVERIFY(startup_spy.wait());
-    QVERIFY(render::compositor::self());
+    QVERIFY(Test::app()->base.render->compositor);
 }
 
 void X11ClientTest::init()

@@ -19,9 +19,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "thumbnail_item.h"
 
+#include "compositor.h"
+#include "platform.h"
+#include "singleton_interface.h"
+
 #include "base/logging.h"
 #include "effects.h"
-#include "render/compositor.h"
 #include "toplevel.h"
 #include "win/control.h"
 #include "win/singleton_interface.h"
@@ -39,7 +42,7 @@ basic_thumbnail_item::basic_thumbnail_item(QQuickItem* parent)
     , m_saturation(1.0)
     , m_clipToItem()
 {
-    connect(render::compositor::self(),
+    connect(singleton_interface::platform->compositor.get(),
             &render::compositor::compositingToggled,
             this,
             &basic_thumbnail_item::compositingToggled);
@@ -54,6 +57,7 @@ basic_thumbnail_item::~basic_thumbnail_item()
 void basic_thumbnail_item::compositingToggled()
 {
     m_parent.clear();
+    auto effects = singleton_interface::platform->compositor->effects.get();
     if (effects) {
         connect(
             effects, &EffectsHandler::windowAdded, this, &basic_thumbnail_item::effectWindowAdded);
@@ -72,6 +76,7 @@ void basic_thumbnail_item::init()
 
 void basic_thumbnail_item::findParentEffectWindow()
 {
+    auto effects = singleton_interface::platform->compositor->effects.get();
     if (effects) {
         QQuickWindow* qw = window();
         if (!qw) {
@@ -174,7 +179,7 @@ void window_thumbnail_item::setClient(Toplevel* window)
 
 void window_thumbnail_item::paint(QPainter* painter)
 {
-    if (effects) {
+    if (singleton_interface::platform->compositor->effects) {
         return;
     }
     auto client = find_controlled_window(m_wId);
@@ -223,7 +228,7 @@ void desktop_thumbnail_item::setDesktop(int desktop)
 void desktop_thumbnail_item::paint(QPainter* painter)
 {
     Q_UNUSED(painter)
-    if (effects) {
+    if (singleton_interface::platform->compositor->effects) {
         return;
     }
     // TODO: render icon

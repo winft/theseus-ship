@@ -14,11 +14,11 @@ namespace KWin::win::x11
 {
 
 template<typename Win>
-auto setup_compositing(Win& win, bool add_full_damage)
+auto setup_compositing(Win& win)
 {
     static_assert(!Win::is_toplevel);
 
-    if (!win::setup_compositing(win, add_full_damage)) {
+    if (!win::setup_compositing(win, !win.control)) {
         return false;
     }
 

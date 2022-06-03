@@ -105,7 +105,7 @@ internal_window::internal_window(QWindow* window, win::space& space)
     setOpacity(m_internalWindow->opacity());
     setSkipCloseAnimation(m_internalWindow->property(s_skipClosePropertyName).toBool());
 
-    setupCompositing(false);
+    setupCompositing();
     updateColorScheme();
 
     win::block_geometry_updates(this, true);
@@ -119,9 +119,8 @@ internal_window::internal_window(QWindow* window, win::space& space)
 
 internal_window::~internal_window() = default;
 
-bool internal_window::setupCompositing([[maybe_unused]] bool add_full_damage)
+bool internal_window::setupCompositing()
 {
-    assert(!add_full_damage);
     return win::setup_compositing(*this, false);
 }
 

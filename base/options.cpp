@@ -845,8 +845,7 @@ bool options::loadCompositingConfig(bool force)
     }
     setCompositingMode(compositingMode);
 
-    const bool platformSupportsNoCompositing
-        = kwinApp()->get_base().render->supportedCompositors().contains(NoCompositing);
+    auto const platformSupportsNoCompositing = !kwinApp()->shouldUseWaylandForCompositing();
     if (m_compositingMode == NoCompositing && platformSupportsNoCompositing) {
         setUseCompositing(false);
         return false; // do not even detect compositing preferences if explicitly disabled

@@ -56,7 +56,7 @@ void DontCrashCancelAnimationFromAnimationEndedTest::initTestCase()
     QVERIFY(startup_spy.isValid());
 
     Test::app()->start();
-    QVERIFY(render::compositor::self());
+    QVERIFY(Test::app()->base.render->compositor);
     QVERIFY(startup_spy.size() || startup_spy.wait());
     QVERIFY(effects);
 }

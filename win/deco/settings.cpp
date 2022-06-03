@@ -45,7 +45,7 @@ settings::settings(win::space& space, KDecoration2::DecorationSettings* parent)
 {
     readSettings();
 
-    auto c = connect(render::compositor::self(),
+    auto c = connect(&space.render,
                      &render::compositor::compositingToggled,
                      parent,
                      &KDecoration2::DecorationSettings::alphaChannelSupportedChanged);
@@ -59,9 +59,7 @@ settings::settings(win::space& space, KDecoration2::DecorationSettings* parent)
                 Q_EMIT parent->onAllDesktopsAvailableChanged(current > 1);
             });
     // prevent changes in Decoration due to compositor being destroyed
-    connect(render::compositor::self(), &render::compositor::aboutToDestroy, this, [c] {
-        disconnect(c);
-    });
+    connect(&space.render, &render::compositor::aboutToDestroy, this, [c] { disconnect(c); });
     connect(&space, &win::space::configChanged, this, &settings::readSettings);
     connect(
         space.deco->qobject.get(), &bridge_qobject::metaDataLoaded, this, &settings::readSettings);
@@ -71,7 +69,7 @@ settings::~settings() = default;
 
 bool settings::isAlphaChannelSupported() const
 {
-    return render::compositor::self()->compositing();
+    return space.render.compositing();
 }
 
 bool settings::isOnAllDesktopsAvailable() const

@@ -191,7 +191,7 @@ void redirect::setup_filters()
     if (has_global_shortcuts) {
         m_filters.emplace_back(new screen_edge_filter(*this));
     }
-    m_filters.emplace_back(new effects_filter);
+    m_filters.emplace_back(new effects_filter(*this));
     m_filters.emplace_back(new move_resize_filter(*this));
 
 #if KWIN_BUILD_TABBOX

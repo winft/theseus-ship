@@ -26,7 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/wayland/dpms.h"
 #include "input/wayland/platform.h"
 #include "main.h"
-#include "render/compositor.h"
 #include "render/wayland/output.h"
 #include "wayland_logging.h"
 
@@ -324,10 +323,6 @@ void output::dpms_set_on()
     auto& wlroots_base = static_cast<platform&>(kwinApp()->get_base());
     auto wayland_input = static_cast<input::wayland::platform*>(kwinApp()->input.get());
     base::wayland::check_outputs_on(wlroots_base, wayland_input->dpms_filter);
-
-    if (auto compositor = render::compositor::self()) {
-        compositor->addRepaintFull();
-    }
 }
 
 void output::dpms_set_off(base::dpms_mode mode)

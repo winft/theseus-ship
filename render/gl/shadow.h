@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include "scene.h"
+
 #include "render/shadow.h"
 
 #include <kwingl/utils.h>
@@ -22,7 +24,7 @@ namespace render::gl
 class shadow : public render::shadow
 {
 public:
-    explicit shadow(Toplevel* toplevel);
+    shadow(Toplevel* toplevel, gl::scene& scene);
     ~shadow() override;
 
     GLTexture* shadowTexture()
@@ -36,6 +38,7 @@ protected:
 
 private:
     QSharedPointer<GLTexture> m_texture;
+    gl::scene& scene;
 };
 
 }

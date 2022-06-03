@@ -20,6 +20,11 @@ class KPluginMetaData;
 namespace KWin
 {
 
+namespace render
+{
+class effects_handler_impl;
+}
+
 namespace win
 {
 class space;
@@ -81,7 +86,7 @@ public:
                           win::space& space);
     static effect* create(const KPluginMetaData& effect, win::space& space);
 
-    static bool supported();
+    static bool supported(render::effects_handler_impl& effects);
     ~effect() override;
     /**
      * Whether another effect has grabbed the @p w with the given @p grabRole.

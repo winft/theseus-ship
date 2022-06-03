@@ -33,9 +33,7 @@ auto create_unmanaged_window(xcb_window_t w, Space& space) -> typename Space::x1
 {
     using Win = typename Space::x11_window;
 
-    auto compositor = render::compositor::self();
-    assert(compositor);
-    if (auto& is_overlay = compositor->x11_integration.is_overlay_window;
+    if (auto& is_overlay = space.render.x11_integration.is_overlay_window;
         is_overlay && is_overlay(w)) {
         return nullptr;
     }
@@ -93,7 +91,7 @@ auto create_unmanaged_window(xcb_window_t w, Space& space) -> typename Space::x1
     win->detectShape(w);
     win->getWmOpaqueRegion();
     win->getSkipCloseAnimation();
-    win->setupCompositing(true);
+    win->setupCompositing();
 
     auto find_internal_window = [&win]() -> QWindow* {
         auto const windows = kwinApp()->topLevelWindows();
@@ -108,13 +106,12 @@ auto create_unmanaged_window(xcb_window_t w, Space& space) -> typename Space::x1
     if (auto internalWindow = find_internal_window()) {
         win->is_outline = internalWindow->property("__kwin_outline").toBool();
     }
-    if (effects) {
-        static_cast<render::effects_handler_impl*>(effects)->checkInputWindowStacking();
+    if (auto& effects = space.render.effects) {
+        effects->checkInputWindowStacking();
     }
 
-    QObject::connect(win, &Win::needsRepaint, &space.render, [win] {
-        render::compositor::self()->schedule_repaint(win);
-    });
+    QObject::connect(
+        win, &Win::needsRepaint, &space.render, [win] { win->space.render.schedule_repaint(win); });
 
     space.m_windows.push_back(win);
     space.x_stacking_tree->mark_as_dirty();
@@ -126,9 +123,9 @@ auto create_unmanaged_window(xcb_window_t w, Space& space) -> typename Space::x1
 template<typename Win>
 void unmanaged_configure_event(Win* win, xcb_configure_notify_event_t* e)
 {
-    if (effects) {
+    if (auto& effects = win->space.render.effects) {
         // keep them on top
-        static_cast<render::effects_handler_impl*>(effects)->checkInputWindowStacking();
+        effects->checkInputWindowStacking();
     }
     QRect newgeom(e->x, e->y, e->width, e->height);
     if (newgeom != win->frameGeometry()) {

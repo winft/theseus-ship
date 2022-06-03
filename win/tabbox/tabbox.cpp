@@ -341,9 +341,11 @@ void tabbox_handler_impl::activate_and_close()
 
 void tabbox_handler_impl::highlight_windows(tabbox_client* window, QWindow* controller)
 {
+    auto& effects = m_tabbox->space.render.effects;
     if (!effects) {
         return;
     }
+
     QVector<EffectWindow*> windows;
     if (window) {
         windows << static_cast<tabbox_client_impl*>(window)->client()->render->effect.get();
@@ -351,7 +353,8 @@ void tabbox_handler_impl::highlight_windows(tabbox_client* window, QWindow* cont
     if (auto t = m_tabbox->space.findInternal(controller)) {
         windows << t->render->effect.get();
     }
-    static_cast<render::effects_handler_impl*>(effects)->highlightWindows(windows);
+
+    effects->highlightWindows(windows);
 }
 
 bool tabbox_handler_impl::no_modifier_grab() const
@@ -843,8 +846,8 @@ bool tabbox::handle_mouse_event(QMouseEvent* event)
 {
     if (!m_is_shown && is_displayed()) {
         // tabbox has been replaced, check effects
-        if (effects
-            && static_cast<render::effects_handler_impl*>(effects)->checkInputWindowEvent(event)) {
+        if (auto& effects = space.render.effects;
+            effects && effects->checkInputWindowEvent(event)) {
             return true;
         }
     }
@@ -874,8 +877,8 @@ bool tabbox::handle_wheel_event(QWheelEvent* event)
 {
     if (!m_is_shown && is_displayed()) {
         // tabbox has been replaced, check effects
-        if (effects
-            && static_cast<render::effects_handler_impl*>(effects)->checkInputWindowEvent(event)) {
+        if (auto& effects = space.render.effects;
+            effects && effects->checkInputWindowEvent(event)) {
             return true;
         }
     }

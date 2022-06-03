@@ -73,14 +73,7 @@ class KWIN_EXPORT scene : public QObject
 public:
     explicit scene(render::compositor& compositor);
 
-    // Returns true if the ctor failed to properly initialize.
-    virtual bool initFailed() const = 0;
     virtual CompositingType compositingType() const = 0;
-
-    virtual bool hasPendingFlush() const
-    {
-        return false;
-    }
 
     /**
      * The entry point for the main part of the painting pass. Repaints the given screen areas.
@@ -177,7 +170,6 @@ public:
 
 Q_SIGNALS:
     void frameRendered();
-    void resetCompositing();
 
 public Q_SLOTS:
     // shape/size of a window changed

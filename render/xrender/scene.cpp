@@ -27,9 +27,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "shadow.h"
 #include "window.h"
 
+#include "base/logging.h"
 #include "render/effects.h"
 #include "render/platform.h"
 #include "render/shadow.h"
+#include "render/x11/compositor.h"
 #include "toplevel.h"
 #include "win/geo.h"
 #include "win/scene.h"
@@ -38,15 +40,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwineffects/paint_clipper.h>
 
 #include <cassert>
+#include <stdexcept>
 
 namespace KWin::render::xrender
 {
 
 ScreenPaintData scene::screen_paint;
 
-scene::scene(xrender::backend* backend, render::compositor& compositor)
+scene::scene(render::compositor& compositor)
     : render::scene(compositor)
-    , m_backend(backend)
+    , m_backend{std::make_unique<xrender::backend>(static_cast<x11::compositor&>(compositor))}
 {
 }
 
@@ -54,11 +57,6 @@ scene::~scene()
 {
     window::cleanup();
     effect_frame::cleanup();
-}
-
-bool scene::initFailed() const
-{
-    return false;
 }
 
 // the entry point for painting
@@ -112,7 +110,7 @@ void scene::paintBackground(QRegion region)
 
 std::unique_ptr<render::window> scene::createWindow(Toplevel* toplevel)
 {
-    return std::make_unique<window>(toplevel, this);
+    return std::make_unique<window>(toplevel, *this);
 }
 
 render::effect_frame* scene::createEffectFrame(effect_frame_impl* frame)
@@ -130,14 +128,10 @@ win::deco::renderer* scene::createDecorationRenderer(win::deco::client_impl* cli
     return new deco_renderer(client);
 }
 
-render::scene* create_scene(render::compositor& compositor)
+std::unique_ptr<render::scene> create_scene(x11::compositor& compositor)
 {
-    QScopedPointer<xrender::backend> backend;
-    backend.reset(new xrender::backend(compositor));
-    if (backend->isFailed()) {
-        return nullptr;
-    }
-    return new scene(backend.take(), compositor);
+    qCDebug(KWIN_CORE) << "Creating XRender scene.";
+    return std::make_unique<xrender::scene>(compositor);
 }
 
 void scene::paintCursor()
@@ -155,7 +149,7 @@ void scene::paintEffectQuickView(KWin::EffectQuickView* w)
                          XCB_RENDER_PICT_OP_OVER,
                          picture,
                          XCB_RENDER_PICTURE_NONE,
-                         effects->xrenderBufferPicture(),
+                         compositor.effects->xrenderBufferPicture(),
                          0,
                          0,
                          0,

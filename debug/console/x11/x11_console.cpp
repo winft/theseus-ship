@@ -11,7 +11,7 @@ namespace KWin::debug
 {
 
 x11_console::x11_console(win::space& space)
-    : console()
+    : console(space)
 {
     m_ui->windowsView->setItemDelegate(new console_delegate(this));
     m_ui->windowsView->setModel(new console_model(space, this));

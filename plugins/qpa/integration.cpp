@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "backingstore.h"
 #include "offscreensurface.h"
 #include "render/platform.h"
+#include "render/singleton_interface.h"
 #include "screen.h"
 #include "sharingplatformcontext.h"
 #include "window.h"
@@ -146,7 +147,7 @@ QStringList Integration::themeNames() const
 
 QPlatformOpenGLContext* Integration::createPlatformOpenGLContext(QOpenGLContext* context) const
 {
-    if (render::compositor::self()->scene()->supportsSurfacelessContext()) {
+    if (render::singleton_interface::platform->compositor->scene->supportsSurfacelessContext()) {
         return new SharingPlatformContext(context);
     }
     return nullptr;

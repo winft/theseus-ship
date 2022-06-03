@@ -6,6 +6,7 @@
 #include "cursor.h"
 
 #include "compositor.h"
+#include "platform.h"
 
 #include "input/cursor.h"
 #include "input/platform.h"
@@ -15,8 +16,8 @@
 namespace KWin::render
 {
 
-cursor::cursor(input::platform* input)
-    : QObject()
+cursor::cursor(render::platform& platform, input::platform* input)
+    : platform{platform}
     , input{input}
 {
     connect(this, &cursor::changed, this, &cursor::rerender);
@@ -65,10 +66,7 @@ void cursor::set_enabled(bool enable)
 
 void cursor::rerender()
 {
-    auto compositor = compositor::self();
-    if (!compositor) {
-        return;
-    }
+    auto& compositor = platform.compositor;
     compositor->addRepaint(last_rendered_geometry);
     compositor->addRepaint(QRect(input->cursor->pos() - hotspot(), image().size()));
 }

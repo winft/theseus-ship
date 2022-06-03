@@ -162,7 +162,7 @@ public:
     static void cleanupX11();
     QRect iconGeometry() const override;
 
-    bool setupCompositing(bool add_full_damage) override;
+    bool setupCompositing() override;
     void finishCompositing() override;
     void setBlockingCompositing(bool block) override;
     void add_scene_window_addon() override;

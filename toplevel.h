@@ -200,7 +200,7 @@ public:
     virtual double opacity() const;
     int depth() const;
     bool hasAlpha() const;
-    virtual bool setupCompositing(bool add_full_damage);
+    virtual bool setupCompositing();
     virtual void add_scene_window_addon();
     virtual void finishCompositing();
 

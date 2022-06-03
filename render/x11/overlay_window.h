@@ -28,10 +28,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::render::x11
 {
 
+class compositor;
+
 class KWIN_EXPORT overlay_window : public base::x11::event_filter
 {
 public:
-    overlay_window();
+    explicit overlay_window(x11::compositor& compositor);
     ~overlay_window();
 
     /// Creates XComposite overlay window, call initOverlay() afterwards
@@ -65,6 +67,7 @@ private:
 
     QRegion m_shape;
     xcb_window_t m_window;
+    x11::compositor& compositor;
 };
 
 }

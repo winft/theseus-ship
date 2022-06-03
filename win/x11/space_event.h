@@ -121,7 +121,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
         }
     }
 
-    if (effects && static_cast<render::effects_handler_impl*>(effects)->hasKeyboardGrab()
+    if (auto& effects = space.render.effects; effects && effects->hasKeyboardGrab()
         && (event_type == XCB_KEY_PRESS || event_type == XCB_KEY_RELEASE))
         return false; // let Qt process it, it'll be intercepted again in eventFilter()
 

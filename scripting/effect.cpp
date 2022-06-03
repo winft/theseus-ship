@@ -182,9 +182,9 @@ effect* effect::create(const QString& effectName,
     return effect;
 }
 
-bool effect::supported()
+bool effect::supported(render::effects_handler_impl& effects)
 {
-    return effects->animationsSupported();
+    return effects.animationsSupported();
 }
 
 effect::effect(win::space& space)
@@ -193,17 +193,18 @@ effect::effect(win::space& space)
     , m_scriptFile(QString())
     , space{space}
 {
-    Q_ASSERT(effects);
-    connect(effects, &EffectsHandler::activeFullScreenEffectChanged, this, [this]() {
-        Effect* fullScreenEffect = effects->activeFullScreenEffect();
-        if (fullScreenEffect == m_activeFullScreenEffect) {
-            return;
-        }
-        if (m_activeFullScreenEffect == this || fullScreenEffect == this) {
-            Q_EMIT isActiveFullScreenEffectChanged();
-        }
-        m_activeFullScreenEffect = fullScreenEffect;
-    });
+    assert(space.render.effects);
+    connect(
+        space.render.effects.get(), &EffectsHandler::activeFullScreenEffectChanged, this, [this]() {
+            auto fullScreenEffect = this->space.render.effects->activeFullScreenEffect();
+            if (fullScreenEffect == m_activeFullScreenEffect) {
+                return;
+            }
+            if (m_activeFullScreenEffect == this || fullScreenEffect == this) {
+                Q_EMIT isActiveFullScreenEffectChanged();
+            }
+            m_activeFullScreenEffect = fullScreenEffect;
+        });
 }
 
 effect::~effect()
@@ -241,8 +242,8 @@ bool effect::init(const QString& effectName, const QString& pathToScript)
 
     QJSValue globalObject = m_engine->globalObject();
 
-    QJSValue effectsObject = m_engine->newQObject(effects);
-    QQmlEngine::setObjectOwnership(effects, QQmlEngine::CppOwnership);
+    QJSValue effectsObject = m_engine->newQObject(space.render.effects.get());
+    QQmlEngine::setObjectOwnership(space.render.effects.get(), QQmlEngine::CppOwnership);
     globalObject.setProperty(QStringLiteral("effects"), effectsObject);
 
     QJSValue selfObject = m_engine->newQObject(this);
@@ -315,7 +316,7 @@ QString effect::pluginId() const
 
 bool effect::isActiveFullScreenEffect() const
 {
-    return effects->activeFullScreenEffect() == this;
+    return space.render.effects->activeFullScreenEffect() == this;
 }
 
 QJSValue effect::animate_helper(const QJSValue& object, AnimationType animationType)

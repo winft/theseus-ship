@@ -22,13 +22,15 @@ class platform;
 namespace render
 {
 
+class platform;
+
 class KWIN_EXPORT cursor : public QObject
 {
     Q_OBJECT
 public:
     bool enabled{false};
 
-    cursor(input::platform* input);
+    cursor(render::platform& platform, input::platform* input);
     void set_enabled(bool enable);
 
     QImage image() const;
@@ -41,6 +43,7 @@ Q_SIGNALS:
 private:
     void rerender();
 
+    render::platform& platform;
     input::platform* input;
     QRect last_rendered_geometry;
 };

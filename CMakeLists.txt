@@ -437,6 +437,7 @@ set(kwin_SRCS
     render/platform.cpp
     render/scene.cpp
     render/shadow.cpp
+    render/singleton_interface.cpp
     render/thumbnail_item.cpp
     render/window.cpp
     render/x11/compositor_selection_owner.cpp

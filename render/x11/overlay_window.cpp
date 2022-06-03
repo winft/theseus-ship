@@ -40,11 +40,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin::render::x11
 {
-overlay_window::overlay_window()
+overlay_window::overlay_window(x11::compositor& compositor)
     : base::x11::event_filter(QVector<int>{XCB_EXPOSE, XCB_VISIBILITY_NOTIFY})
     , m_visible(true)
     , m_shown(false)
     , m_window(XCB_WINDOW_NONE)
+    , compositor{compositor}
 {
 }
 
@@ -220,21 +221,19 @@ bool overlay_window::event(xcb_generic_event_t* event)
         if (expose->window == rootWindow() // root window needs repainting
             || (m_window != XCB_WINDOW_NONE
                 && expose->window == m_window)) { // overlay needs repainting
-            render::compositor::self()->addRepaint(
-                expose->x, expose->y, expose->width, expose->height);
+            compositor.addRepaint(QRegion(expose->x, expose->y, expose->width, expose->height));
         }
     } else if (eventType == XCB_VISIBILITY_NOTIFY) {
         const auto* visibility = reinterpret_cast<xcb_visibility_notify_event_t*>(event);
         if (m_window != XCB_WINDOW_NONE && visibility->window == m_window) {
             bool was_visible = isVisible();
             setVisibility((visibility->state != XCB_VISIBILITY_FULLY_OBSCURED));
-            auto compositor = static_cast<render::x11::compositor*>(render::compositor::self());
             if (!was_visible && m_visible) {
                 // hack for #154825
-                compositor->addRepaintFull();
-                QTimer::singleShot(2000, compositor, &render::compositor::addRepaintFull);
+                compositor.addRepaintFull();
+                QTimer::singleShot(2000, &compositor, &render::compositor::addRepaintFull);
             }
-            compositor->schedule_repaint();
+            compositor.schedule_repaint();
         }
     }
     return false;

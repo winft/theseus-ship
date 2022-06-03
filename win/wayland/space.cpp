@@ -145,7 +145,7 @@ space::space(render::compositor& render, base::wayland::server* server)
             handle_new_layer_surface<window>(this, layer_surface);
         });
 
-    activation = std::make_unique<win::wayland::xdg_activation>();
+    activation = std::make_unique<wayland::xdg_activation<space>>(*this);
     QObject::connect(this, &space::clientActivated, this, [this] {
         if (activeClient()) {
             activation->clear();

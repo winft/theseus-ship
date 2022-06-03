@@ -138,7 +138,7 @@ bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
     }
 
     // Move elevated windows to the top of the stacking order
-    auto const elevated_windows = static_cast<effects_handler_impl*>(effects)->elevatedWindows();
+    auto const elevated_windows = platform.compositor->effects->elevatedWindows();
     for (auto effect_window : elevated_windows) {
         auto window = static_cast<effects_window_impl*>(effect_window)->window();
         remove_all(windows, window);
@@ -211,7 +211,7 @@ void output::run()
 
     // Start the actual painting process.
     auto const duration = std::chrono::nanoseconds(
-        get_compositor(platform)->scene()->paint_output(&base, repaints, windows, now));
+        get_compositor(platform)->scene->paint_output(&base, repaints, windows, now));
 
 #if SWAP_TIME_DEBUG
     qDebug().noquote() << "RUN gap:" << to_ms(now_ns - swap_ref_time)
@@ -280,7 +280,7 @@ std::chrono::nanoseconds output::refresh_length() const
 
 void output::set_delay(presentation_data const& data)
 {
-    auto scene = platform.compositor->scene();
+    auto& scene = platform.compositor->scene;
     if (scene->compositingType() != CompositingType::OpenGLCompositing) {
         return;
     }
@@ -288,7 +288,7 @@ void output::set_delay(presentation_data const& data)
         return;
     }
 
-    static_cast<gl::scene*>(scene)->backend()->makeCurrent();
+    static_cast<gl::scene&>(*scene).backend()->makeCurrent();
 
     // First get the latest Gl timer queries.
     std::chrono::nanoseconds render_time_debug;
@@ -391,7 +391,7 @@ void output::timerEvent(QTimerEvent* event)
 
 void output::retard_next_run()
 {
-    if (get_compositor(platform)->scene()->hasSwapEvent()) {
+    if (get_compositor(platform)->scene->hasSwapEvent()) {
         // We wait on an explicit callback from the backend to unlock next composition runs.
         return;
     }

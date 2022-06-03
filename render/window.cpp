@@ -19,8 +19,9 @@ namespace KWin::render
 
 uint32_t window_id{0};
 
-window::window(Toplevel* c)
-    : toplevel(c)
+window::window(Toplevel* c, render::scene& scene)
+    : scene{scene}
+    , toplevel(c)
     , filter(image_filter_type::fast)
     , cached_quad_list(nullptr)
     , m_id{window_id++}
@@ -123,9 +124,8 @@ void window::resetPaintingEnabled()
     if (toplevel->isDeleted()) {
         disable_painting |= window_paint_disable_type::by_delete;
     }
-    if (static_cast<effects_handler_impl*>(effects)->isDesktopRendering()) {
-        if (!toplevel->isOnDesktop(
-                static_cast<effects_handler_impl*>(effects)->currentRenderedDesktop())) {
+    if (scene.compositor.effects->isDesktopRendering()) {
+        if (!toplevel->isOnDesktop(scene.compositor.effects->currentRenderedDesktop())) {
             disable_painting |= window_paint_disable_type::by_desktop;
         }
     } else {
@@ -177,7 +177,7 @@ WindowQuadList window::buildQuads(bool force) const
         ret << m_shadow->shadowQuads();
     }
 
-    effects->buildQuads(effect.get(), ret);
+    scene.compositor.effects->buildQuads(effect.get(), ret);
     cached_quad_list.reset(new WindowQuadList(ret));
     return ret;
 }

@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "main.h"
 #include "render/compositor.h"
 #include "render/cursor.h"
+#include "render/effects.h"
 #include "render/platform.h"
 #include "toplevel.h"
 #include "wayland_logging.h"
@@ -40,19 +41,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <KDecoration2/Decoration>
 #include <QPainter>
+#include <QQuickWindow>
 #include <Wrapland/Server/buffer.h>
 #include <Wrapland/Server/surface.h>
-
 #include <cmath>
+#include <stdexcept>
 
 namespace KWin::render::qpainter
 {
 
-scene::scene(qpainter::backend* backend, render::compositor& compositor)
+scene::scene(render::compositor& compositor)
     : render::scene(compositor)
-    , m_backend(backend)
+    , m_backend{compositor.platform.get_qpainter_backend(compositor)}
     , m_painter(new QPainter())
 {
+    QQuickWindow::setSceneGraphBackend(QSGRendererInterface::Software);
 }
 
 scene::~scene()
@@ -62,11 +65,6 @@ scene::~scene()
 CompositingType scene::compositingType() const
 {
     return QPainterCompositing;
-}
-
-bool scene::initFailed() const
-{
-    return false;
 }
 
 void scene::paintGenericScreen(paint_type mask, ScreenPaintData data)
@@ -136,7 +134,7 @@ void scene::paintBackground(QRegion region)
 
 void scene::paintCursor()
 {
-    auto cursor = render::compositor::self()->software_cursor.get();
+    auto cursor = compositor.software_cursor.get();
     if (!cursor->enabled) {
         return;
     }
@@ -152,7 +150,7 @@ void scene::paintCursor()
 
 void scene::paintEffectQuickView(EffectQuickView* w)
 {
-    QPainter* painter = effects->scenePainter();
+    auto painter = compositor.effects->scenePainter();
     const QImage buffer = w->bufferAsImage();
     if (buffer.isNull()) {
         return;
@@ -165,7 +163,7 @@ void scene::paintEffectQuickView(EffectQuickView* w)
 
 std::unique_ptr<render::window> scene::createWindow(Toplevel* toplevel)
 {
-    return std::make_unique<window>(this, toplevel);
+    return std::make_unique<window>(toplevel, *this);
 }
 
 render::effect_frame* scene::createEffectFrame(effect_frame_impl* frame)
@@ -187,30 +185,10 @@ void scene::handle_screen_geometry_change(QSize const& /*size*/)
 {
 }
 
-backend* create_backend(render::compositor& compositor)
+std::unique_ptr<render::scene> create_scene(render::compositor& compositor)
 {
-    try {
-        return compositor.platform.createQPainterBackend(compositor);
-    } catch (std::runtime_error& error) {
-        qCWarning(KWIN_WL) << "Creating QPainter backend failed:" << error.what();
-        return nullptr;
-    }
-}
-
-render::scene* create_scene(render::compositor& compositor)
-{
-    auto backend = create_backend(compositor);
-    if (!backend) {
-        return nullptr;
-    }
-
-    auto scene = new qpainter::scene(backend, compositor);
-
-    if (scene && scene->initFailed()) {
-        delete scene;
-        scene = nullptr;
-    }
-    return scene;
+    qCDebug(KWIN_WL) << "Creating QPainter scene.";
+    return std::make_unique<qpainter::scene>(compositor);
 }
 
 }

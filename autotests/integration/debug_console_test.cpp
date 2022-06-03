@@ -504,7 +504,7 @@ void DebugConsoleTest::testClosingDebugConsole()
     // this test verifies that the DebugConsole gets destroyed when closing the window
     // BUG: 369858
 
-    auto console = new debug::console;
+    auto console = new debug::console(*Test::app()->workspace);
     QSignalSpy destroyedSpy(console, &QObject::destroyed);
     QVERIFY(destroyedSpy.isValid());
 

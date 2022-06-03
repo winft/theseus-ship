@@ -40,6 +40,7 @@ class compositor_selection_owner;
 }
 
 class cursor;
+class effects_handler_impl;
 class platform;
 class scene;
 
@@ -61,14 +62,11 @@ public:
 
     explicit compositor(render::platform& platform);
     ~compositor() override;
-    static compositor* self();
 
     virtual void start(win::space& space) = 0;
 
     // when adding repaints caused by a window, you probably want to use
     // either Toplevel::addRepaint() or Toplevel::addWorkspaceRepaint()
-    void addRepaint(QRect const& rect);
-    void addRepaint(int x, int y, int w, int h);
     virtual void addRepaint(QRegion const& region);
     void addRepaintFull();
 
@@ -110,17 +108,19 @@ public:
      */
     bool isActive();
 
-    render::scene* scene() const;
-
     static bool compositing();
 
     // for delayed supportproperty management of effects
     void keepSupportProperty(xcb_atom_t atom);
     void removeSupportProperty(xcb_atom_t atom);
 
+    std::unique_ptr<render::scene> scene;
+    std::unique_ptr<render::effects_handler_impl> effects;
+
     // TODO(romangg): Only relevant for Wayland. Put in child class.
     std::unique_ptr<cursor> software_cursor;
     compositor_x11_integration x11_integration;
+
     render::platform& platform;
     win::space* space{nullptr};
 
@@ -128,22 +128,13 @@ Q_SIGNALS:
     void compositingToggled(bool active);
     void aboutToDestroy();
     void aboutToToggleCompositing();
-    void sceneCreated();
 
 protected:
     void timerEvent(QTimerEvent* te) override;
     void stop(bool on_shutdown);
-
-    /**
-     * @brief Prepares start.
-     * @return bool @c true if start should be continued and @c if not.
-     */
-    bool setupStart();
-    /**
-     * Continues the startup after Scene And Workspace are created
-     */
-    void startupWithWorkspace(win::space& space);
-    virtual render::scene* create_scene(QVector<CompositingType> const& support) = 0;
+    void start_scene();
+    void setupX11Support();
+    virtual std::unique_ptr<render::scene> create_scene() = 0;
 
     virtual void performCompositing() = 0;
     void update_paint_periods(int64_t duration);
@@ -166,8 +157,6 @@ private:
     void claimCompositorSelection();
     int refreshRate() const;
 
-    void setupX11Support();
-
     void deleteUnusedSupportProperties();
 
     /**
@@ -183,8 +172,6 @@ private:
     // Compositing delay (in ns).
     qint64 m_lastPaintDurations[2]{0};
     int m_paintPeriods{0};
-
-    std::unique_ptr<render::scene> m_scene;
 };
 
 }

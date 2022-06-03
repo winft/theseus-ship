@@ -181,8 +181,8 @@ void input_method::handle_popup_surface_created(input_method_popup_surface_v2* p
 
     QObject::connect(
         popup->surface(), &Wrapland::Server::Surface::committed, popup, &window::handle_commit);
-    QObject::connect(popup, &window::needsRepaint, render::compositor::self(), [popup] {
-        render::compositor::self()->schedule_repaint(popup);
+    QObject::connect(popup, &window::needsRepaint, &space->render, [popup] {
+        popup->space.render.schedule_repaint(popup);
     });
     QObject::connect(
         popup, &window::frame_geometry_changed, popup, [](auto win, auto old_frame_geo) {

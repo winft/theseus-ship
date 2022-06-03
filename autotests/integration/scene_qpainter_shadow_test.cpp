@@ -144,7 +144,7 @@ void SceneQPainterShadowTest::initTestCase()
 
     Test::app()->start();
     QVERIFY(startup_spy.size() || startup_spy.wait());
-    QVERIFY(render::compositor::self());
+    QVERIFY(Test::app()->base.render->compositor);
 
     // Add directory with fake decorations to the plugin search path.
     QCoreApplication::addLibraryPath(

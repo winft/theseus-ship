@@ -21,10 +21,9 @@
 #include "render/scene.h"
 #include "win/scene.h"
 #include "win/space.h"
+#include "win/stacking_order.h"
 
 #include "wayland_logging.h"
-
-#include <QQuickWindow>
 
 namespace KWin::render::wayland
 {
@@ -56,7 +55,7 @@ void compositor::check_idle()
             return;
         }
     }
-    scene()->idle();
+    scene->idle();
 }
 
 compositor::compositor(render::platform& platform)
@@ -127,6 +126,12 @@ void compositor::start(win::space& space)
     if (!this->space) {
         // On first start setup connections.
         QObject::connect(
+            kwinApp(), &Application::x11ConnectionChanged, this, &compositor::setupX11Support);
+        QObject::connect(space.stacking_order.get(),
+                         &win::stacking_order::changed,
+                         this,
+                         &compositor::addRepaintFull);
+        QObject::connect(
             &platform.base, &base::platform::output_removed, this, [this](auto output) {
                 for (auto& win : this->space->m_windows) {
                     remove_all(win->repaint_outputs, output);
@@ -137,40 +142,29 @@ void compositor::start(win::space& space)
                 get_output(output)->render->delay_timer.stop();
             }
         });
-    }
-
-    if (!render::compositor::setupStart()) {
-        // Internal setup failed, abort.
-        return;
-    }
-
-    assert(scene());
-    if (scene()->compositingType() == QPainterCompositing) {
-        // Force Software QtQuick on first startup with QPainter.
-        QQuickWindow::setSceneGraphBackend(QSGRendererInterface::Software);
+        this->space = &space;
     }
 
     // For now we use the software cursor as our wlroots backend does not support yet a hardware
     // cursor.
-    software_cursor = std::make_unique<cursor>(kwinApp()->input.get());
+    software_cursor = std::make_unique<cursor>(platform, kwinApp()->input.get());
     software_cursor->set_enabled(true);
 
-    startupWithWorkspace(space);
+    try {
+        render::compositor::start_scene();
+    } catch (std::runtime_error const& ex) {
+        qCCritical(KWIN_WL) << "Error: " << ex.what();
+        qCCritical(KWIN_WL) << "Wayland requires compositing. Going to quit.";
+        qApp->quit();
+    }
 }
 
-render::scene* compositor::create_scene(QVector<CompositingType> const& support)
+std::unique_ptr<render::scene> compositor::create_scene()
 {
-    for (auto type : support) {
-        if (type == OpenGLCompositing) {
-            qCDebug(KWIN_WL) << "Creating OpenGL scene.";
-            return gl::create_scene(*this);
-        }
-        if (type == QPainterCompositing) {
-            qCDebug(KWIN_WL) << "Creating QPainter scene.";
-            return qpainter::create_scene(*this);
-        }
+    if (platform.selected_compositor() == QPainterCompositing) {
+        return qpainter::create_scene(*this);
     }
-    return nullptr;
+    return gl::create_scene(*this);
 }
 
 void compositor::performCompositing()

@@ -11,9 +11,9 @@
 #include "wlr_helpers.h"
 
 #include "base/backend/wlroots/output.h"
+#include "base/options.h"
 #include "base/output_helpers.h"
 #include "input/wayland/platform.h"
-#include "render/utils.h"
 #include "render/wayland/compositor.h"
 #include "render/wayland/effects.h"
 #include "render/wayland/egl.h"
@@ -45,16 +45,10 @@ void platform::init()
 {
     // TODO(romangg): Has to be here because in the integration tests base.backend is not yet
     //                available in the ctor. Can we change that?
-    auto const supported_types = get_supported_render_types(*this);
-    for (auto render_type : supported_types) {
-        if (render_type == OpenGLCompositing) {
-            egl = create_render_backend<egl_backend>(*this, "gles2");
-            break;
-        }
-        if (render_type == QPainterCompositing) {
-            qpainter = create_render_backend<qpainter_backend>(*this, "pixman");
-            break;
-        }
+    if (kwinApp()->options->compositingMode() == QPainterCompositing) {
+        qpainter = create_render_backend<qpainter_backend>(*this, "pixman");
+    } else {
+        egl = create_render_backend<egl_backend>(*this, "gles2");
     }
 
     if (!wlr_backend_start(base.backend)) {
@@ -64,14 +58,14 @@ void platform::init()
     base::update_output_topology(base);
 }
 
-gl::backend* platform::createOpenGLBackend(render::compositor& /*compositor*/)
+gl::backend* platform::get_opengl_backend(render::compositor& /*compositor*/)
 {
     assert(egl);
     egl->make_current();
     return egl.get();
 }
 
-qpainter::backend* platform::createQPainterBackend(render::compositor& /*compositor*/)
+qpainter::backend* platform::get_qpainter_backend(render::compositor& /*compositor*/)
 {
     assert(qpainter);
     return qpainter.get();
@@ -85,17 +79,19 @@ void platform::render_stop(bool on_shutdown)
     }
 }
 
-void platform::createEffectsHandler(render::compositor* compositor, render::scene* scene)
+std::unique_ptr<render::effects_handler_impl>
+platform::createEffectsHandler(render::compositor* compositor, render::scene* scene)
 {
-    new wayland::effects_handler_impl(compositor, scene);
+    return std::make_unique<wayland::effects_handler_impl>(compositor, scene);
 }
 
-QVector<CompositingType> platform::supportedCompositors() const
+CompositingType platform::selected_compositor() const
 {
-    if (selected_compositor != NoCompositing) {
-        return {selected_compositor};
+    if (qpainter) {
+        return QPainterCompositing;
     }
-    return QVector<CompositingType>{OpenGLCompositing, QPainterCompositing};
+    assert(egl);
+    return OpenGLCompositing;
 }
 
 }
