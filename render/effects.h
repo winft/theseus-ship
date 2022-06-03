@@ -620,9 +620,9 @@ class KWIN_EXPORT effect_frame_impl : public QObject, public EffectFrame
 public:
     effect_frame_impl(render::scene& scene,
                       EffectFrameStyle style,
-                      bool staticSize = true,
-                      QPoint position = QPoint(-1, -1),
-                      Qt::Alignment alignment = Qt::AlignCenter);
+                      bool staticSize,
+                      QPoint position,
+                      Qt::Alignment alignment);
     ~effect_frame_impl() override;
 
     void free() override;
