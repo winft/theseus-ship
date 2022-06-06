@@ -151,6 +151,8 @@ public:
     virtual int numberOfDesktops() const = 0;
     virtual void setNumberOfDesktops(int count) = 0;
 
+    Q_INVOKABLE int screenAt(const QPointF& pos) const;
+
     /// Deprecated
     QString currentActivity() const
     {

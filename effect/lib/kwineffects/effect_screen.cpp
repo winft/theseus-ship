@@ -5,12 +5,24 @@
 */
 #include "effect_screen.h"
 
+#include <QRect>
+
 namespace KWin
 {
 
 EffectScreen::EffectScreen(QObject* parent)
     : QObject(parent)
 {
+}
+
+QPointF EffectScreen::mapToGlobal(const QPointF& pos) const
+{
+    return pos + geometry().topLeft();
+}
+
+QPointF EffectScreen::mapFromGlobal(const QPointF& pos) const
+{
+    return pos - geometry().topLeft();
 }
 
 }
