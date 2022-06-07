@@ -124,7 +124,8 @@ public:
             NET::WM2FullscreenMonitors |
             NET::WM2KDEShadow |
             NET::WM2OpaqueRegion |
-            NET::WM2GTKFrameExtents;
+            NET::WM2GTKFrameExtents |
+            NET::WM2GTKShowWindowMenu;
         const NET::Actions actions = NET::ActionMove |
             NET::ActionResize |
             NET::ActionMinimize |
@@ -244,6 +245,14 @@ protected:
     {
         if (auto win = find_controlled_window<window_t>(space, predicate_match::window, w)) {
             x11::net_move_resize_window(win, flags, x, y, width, height);
+        }
+    }
+
+    void showWindowMenu(xcb_window_t w, int /*device_id*/, int x_root, int y_root) override
+    {
+        if (auto win = find_controlled_window<window_t>(space, predicate_match::window, w)) {
+            auto pos = QPoint(x_root, y_root);
+            space.user_actions_menu->show(QRect(pos, pos), win);
         }
     }
 
