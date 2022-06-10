@@ -34,6 +34,7 @@
 #include <KPackage/PackageStructure>
 #include <KPluginFactory>
 #include <KSharedConfig>
+
 #include <KCMultiDialog>
 
 #include "config-kwin.h"
