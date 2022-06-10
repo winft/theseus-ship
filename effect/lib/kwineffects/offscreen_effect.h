@@ -12,28 +12,27 @@
 namespace KWin
 {
 
-class DeformEffectPrivate;
+class OffscreenEffectPrivate;
 
 /**
- * The DeformEffect class is the base class for effects that paint deformed windows.
+ * The OffscreenEffect class is the base class for effects that paint deformed windows.
  *
- * Under the hood, the DeformEffect will paint the window into an offscreen texture,
- * which will be mapped onto transformed window quad grid later on.
+ * Under the hood, the OffscreenEffect will paint the window into an offscreen texture
+ * and the offscreen texture will be transformed afterwards.
  *
  * The redirect() function must be called when the effect wants to transform a window.
  * Once the effect is no longer interested in the window, the unredirect() function
  * must be called.
  *
- * If a window is redirected into offscreen texture, the deform() function will be
- * called with the window quads that can be mutated by the effect. The effect can
- * sub-divide, remove, or transform the window quads.
+ * If a window is redirected into offscreen texture, the apply() function will be
+ * called to transform the offscreen texture.
  */
-class KWINEFFECTS_EXPORT DeformEffect : public Effect
+class KWINEFFECTS_EXPORT OffscreenEffect : public Effect
 {
     Q_OBJECT
 public:
-    explicit DeformEffect(QObject* parent = nullptr);
-    ~DeformEffect() override;
+    explicit OffscreenEffect(QObject* parent = nullptr);
+    ~OffscreenEffect() override;
 
     static bool supported();
 
@@ -62,10 +61,10 @@ protected:
     void unredirect(EffectWindow* window);
 
     /**
-     * Override this function to transform the window quad grid of the given window.
+     * Override this function to transform the window.
      */
     virtual void
-    deform(EffectWindow* window, int mask, WindowPaintData& data, WindowQuadList& quads);
+    apply(EffectWindow* window, int mask, WindowPaintData& data, WindowQuadList& quads);
 
 private Q_SLOTS:
     void handleWindowGeometryChanged(EffectWindow* window);
@@ -76,7 +75,7 @@ private:
     void setupConnections();
     void destroyConnections();
 
-    QScopedPointer<DeformEffectPrivate> d;
+    QScopedPointer<OffscreenEffectPrivate> d;
 };
 
 }

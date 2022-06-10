@@ -7,7 +7,7 @@
 
 // This header is deprecated, but installed for backwards compatibility. Do not include it anymore.
 // Instead directly include the header below.
-#include <kwineffects/deform_effect.h>
+#include <kwineffects/offscreen_effect.h>
 
 // Below header include is preserved for backwards compatibility.
 #include <kwineffects.h>

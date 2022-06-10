@@ -15,7 +15,7 @@
 namespace KWin
 {
 BlendChanges::BlendChanges()
-    : DeformEffect()
+    : OffscreenEffect()
 {
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/org/kde/KWin/BlendChanges"),
                                                  QStringLiteral("org.kde.KWin.BlendChanges"),
@@ -69,18 +69,15 @@ void BlendChanges::drawWindow(EffectWindow* window,
     }
     // then the old on top, it works better than changing both alphas with the current blend mode
     if (m_state != Off) {
-        DeformEffect::drawWindow(window, mask, region, data);
+        OffscreenEffect::drawWindow(window, mask, region, data);
     }
 }
 
-void BlendChanges::deform(EffectWindow* window,
-                          int mask,
-                          WindowPaintData& data,
-                          WindowQuadList& quads)
+void BlendChanges::apply(EffectWindow* /*window*/,
+                         int /*mask*/,
+                         WindowPaintData& data,
+                         WindowQuadList& /*quads*/)
 {
-    Q_UNUSED(window)
-    Q_UNUSED(mask)
-    Q_UNUSED(quads)
     data.setOpacity(1.0 - m_timeline.value() * data.opacity());
 }
 
