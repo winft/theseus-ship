@@ -9,8 +9,6 @@
 #include "wayland_logging.h"
 #include "win/stacking.h"
 
-#include <Wrapland/Server/xdg_activation_v1.h>
-
 #include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -71,11 +69,11 @@ private:
     Space& space;
 };
 
-template<typename Space>
-void xdg_activation_create_token(Space* space, Wrapland::Server::XdgActivationTokenV1* token)
+template<typename Space, typename TokenRequest>
+void xdg_activation_handle_token_request(Space* space, TokenRequest& token)
 {
     auto check_allowance = [&] {
-        if (!token->surface()) {
+        if (!token.surface()) {
             qCDebug(KWIN_WL) << "Token request has no surface set.";
             return false;
         }
@@ -83,16 +81,16 @@ void xdg_activation_create_token(Space* space, Wrapland::Server::XdgActivationTo
         if (auto& plasma_surfaces = space->plasma_shell_surfaces;
             std::any_of(plasma_surfaces.cbegin(),
                         plasma_surfaces.cend(),
-                        [surface = token->surface()](auto const& plasma_surface) {
+                        [surface = token.surface()](auto const& plasma_surface) {
                             return plasma_surface->surface() == surface;
                         })) {
             // Plasma internal surfaces are always allowed.
             return true;
         }
 
-        auto win = space->find_window(token->surface());
+        auto win = space->find_window(token.surface());
         if (!win) {
-            qCDebug(KWIN_WL) << "No window associated with token surface" << token->surface();
+            qCDebug(KWIN_WL) << "No window associated with token surface" << token.surface();
             return false;
         }
 
@@ -110,24 +108,24 @@ void xdg_activation_create_token(Space* space, Wrapland::Server::XdgActivationTo
 
     if (!check_allowance()) {
         qCDebug(KWIN_WL) << "Deny creation of XDG Activation token.";
-        token->done("");
+        token.done("");
         return;
     }
 
     char token_str[token_strlen + 1] = {0};
     if (!generate_token(token_str)) {
         qCWarning(KWIN_WL) << "Error creating XDG Activation token.";
-        token->done("");
+        token.done("");
         return;
     }
 
     space->activation->clear();
     space->activation->token = token_str;
 
-    token->done(token_str);
+    token.done(token_str);
 
-    if (!token->app_id().empty()) {
-        auto const icon = QIcon::fromTheme(icon_from_desktop_file(QString(token->app_id().c_str())),
+    if (!token.app_id().empty()) {
+        auto const icon = QIcon::fromTheme(icon_from_desktop_file(QString(token.app_id().c_str())),
                                            QIcon::fromTheme(QStringLiteral("system-run")));
         Q_EMIT space->render.effects->startupAdded(token_str, icon);
     }
