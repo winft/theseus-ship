@@ -70,7 +70,7 @@ private:
 };
 
 template<typename Space, typename TokenRequest>
-void xdg_activation_handle_token_request(Space* space, TokenRequest& token)
+void xdg_activation_handle_token_request(Space& space, TokenRequest& token)
 {
     auto check_allowance = [&] {
         if (!token.surface()) {
@@ -78,7 +78,7 @@ void xdg_activation_handle_token_request(Space* space, TokenRequest& token)
             return false;
         }
 
-        if (auto& plasma_surfaces = space->plasma_shell_surfaces;
+        if (auto& plasma_surfaces = space.plasma_shell_surfaces;
             std::any_of(plasma_surfaces.cbegin(),
                         plasma_surfaces.cend(),
                         [surface = token.surface()](auto const& plasma_surface) {
@@ -88,7 +88,7 @@ void xdg_activation_handle_token_request(Space* space, TokenRequest& token)
             return true;
         }
 
-        auto win = space->find_window(token.surface());
+        auto win = space.find_window(token.surface());
         if (!win) {
             qCDebug(KWIN_WL) << "No window associated with token surface" << token.surface();
             return false;
@@ -99,7 +99,7 @@ void xdg_activation_handle_token_request(Space* space, TokenRequest& token)
             return true;
         }
 
-        if (win != space->active_client) {
+        if (win != space.active_client) {
             qCDebug(KWIN_WL) << "Requesting window" << win << "currently not active.";
             return false;
         }
@@ -119,15 +119,15 @@ void xdg_activation_handle_token_request(Space* space, TokenRequest& token)
         return;
     }
 
-    space->activation->clear();
-    space->activation->token = token_str;
+    space.activation->clear();
+    space.activation->token = token_str;
 
     token.done(token_str);
 
     if (!token.app_id().empty()) {
         auto const icon = QIcon::fromTheme(icon_from_desktop_file(QString(token.app_id().c_str())),
                                            QIcon::fromTheme(QStringLiteral("system-run")));
-        Q_EMIT space->render.effects->startupAdded(token_str, icon);
+        Q_EMIT space.render.effects->startupAdded(token_str, icon);
     }
 }
 
