@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "base/logging.h"
 #include "base/wayland/server.h"
 #include "wayland_logging.h"
 #include "win/stacking.h"
@@ -29,17 +30,17 @@ inline bool generate_token(char out[token_strlen])
 
     if (!urandom) {
         if (!(urandom = fopen("/dev/urandom", "r"))) {
-            qCWarning(KWIN_WL) << "Failed to open random device.";
+            qCWarning(KWIN_CORE) << "Failed to open random device.";
             return false;
         }
     }
     if (fread(data, sizeof(data), 1, urandom) != 1) {
-        qCWarning(KWIN_WL) << "Failed to read from random device.";
+        qCWarning(KWIN_CORE) << "Failed to read from random device.";
         return false;
     }
     if (snprintf(out, token_strlen, "%016" PRIx64 "%016" PRIx64, data[0], data[1])
         != token_strlen - 1) {
-        qCWarning(KWIN_WL) << "Failed to format hex string token.";
+        qCWarning(KWIN_CORE) << "Failed to format hex string token.";
         return false;
     }
     return true;
@@ -74,7 +75,7 @@ std::string xdg_activation_set_token(Space& space, std::string const& appid)
 {
     char token_str[token_strlen + 1] = {0};
     if (!generate_token(token_str)) {
-        qCWarning(KWIN_WL) << "Error creating XDG Activation token.";
+        qCWarning(KWIN_CORE) << "Error creating XDG Activation token.";
         return {};
     }
 
