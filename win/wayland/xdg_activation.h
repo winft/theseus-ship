@@ -69,6 +69,26 @@ private:
     Space& space;
 };
 
+template<typename Space>
+std::string xdg_activation_set_token(Space& space, std::string const& appid)
+{
+    char token_str[token_strlen + 1] = {0};
+    if (!generate_token(token_str)) {
+        qCWarning(KWIN_WL) << "Error creating XDG Activation token.";
+        return {};
+    }
+
+    space.activation->clear();
+    space.activation->token = token_str;
+
+    if (!appid.empty()) {
+        auto const icon = QIcon::fromTheme(icon_from_desktop_file(QString::fromStdString(appid)),
+                                           QIcon::fromTheme(QStringLiteral("system-run")));
+        Q_EMIT space.render.effects->startupAdded(token_str, icon);
+    }
+    return token_str;
+}
+
 template<typename Space, typename TokenRequest>
 void xdg_activation_handle_token_request(Space& space, TokenRequest& token)
 {
@@ -112,23 +132,7 @@ void xdg_activation_handle_token_request(Space& space, TokenRequest& token)
         return;
     }
 
-    char token_str[token_strlen + 1] = {0};
-    if (!generate_token(token_str)) {
-        qCWarning(KWIN_WL) << "Error creating XDG Activation token.";
-        token.done("");
-        return;
-    }
-
-    space.activation->clear();
-    space.activation->token = token_str;
-
-    token.done(token_str);
-
-    if (!token.app_id().empty()) {
-        auto const icon = QIcon::fromTheme(icon_from_desktop_file(QString(token.app_id().c_str())),
-                                           QIcon::fromTheme(QStringLiteral("system-run")));
-        Q_EMIT space.render.effects->startupAdded(token_str, icon);
-    }
+    token.done(xdg_activation_set_token(space, token.app_id()));
 }
 
 template<typename Space, typename Window>
