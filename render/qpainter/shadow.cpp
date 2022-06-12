@@ -6,7 +6,6 @@
 */
 #include "shadow.h"
 
-#include "effect_frame.h"
 #include "window.h"
 
 #include "base/output.h"

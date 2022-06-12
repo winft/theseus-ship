@@ -420,10 +420,7 @@ void AnimationEffect::prePaintScreen(ScreenPrePaintData& data,
     for (auto entry = d->m_animations.begin(); entry != d->m_animations.end(); ++entry) {
         for (auto anim = entry->first.begin(); anim != entry->first.end(); ++anim) {
             if (anim->startTime <= clock()) {
-                if (anim->lastPresentTime.count()) {
-                    anim->timeLine.update(presentTime - anim->lastPresentTime);
-                }
-                anim->lastPresentTime = presentTime;
+                anim->timeLine.advance(presentTime);
             }
         }
     }

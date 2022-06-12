@@ -75,6 +75,8 @@ Q_SIGNALS:
     void edgeSelectionChanged(int edge, int index);
 protected:
     void resizeEvent(QResizeEvent* e) override;
+    bool event(QEvent* event) override;
+
 private:
     class Corner;
     void popup(Corner* c, QPoint pos);

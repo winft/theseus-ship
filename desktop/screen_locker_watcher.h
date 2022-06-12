@@ -37,8 +37,7 @@ private:
     void service_owner_changed(QString const& service_name,
                                QString const& old_owner,
                                QString const& new_owner);
-    void service_registered_queried();
-    void service_owner_queried();
+    void query_active();
 
     OrgFreedesktopScreenSaverInterface* m_interface{nullptr};
     OrgKdeScreensaverInterface* m_kdeInterface{nullptr};

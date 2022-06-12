@@ -36,6 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QCoreApplication>
 #include <QtConcurrentRun>
 
+#include <qpa/qplatformnativeinterface.h>
 #include <qpa/qplatformwindow.h>
 #include <qpa/qwindowsysteminterface.h>
 
@@ -53,6 +54,7 @@ Integration::Integration()
     : QObject()
     , QPlatformIntegration()
     , m_fontDb(new QGenericUnixFontDatabase())
+    , m_nativeInterface(new QPlatformNativeInterface())
     , m_services(new QGenericUnixServices())
 {
 }
@@ -177,6 +179,11 @@ void Integration::initScreens()
     }
 
     m_screens = newScreens;
+}
+
+QPlatformNativeInterface *Integration::nativeInterface() const
+{
+    return m_nativeInterface.data();
 }
 
 QPlatformServices *Integration::services() const

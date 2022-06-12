@@ -259,24 +259,6 @@ public:
     virtual void postPaintWindow(EffectWindow* w);
 
     /**
-     * This method is called directly before painting an @ref EffectFrame.
-     * You can implement this method if you need to bind a shader or perform
-     * other operations before the frame is rendered.
-     * @param frame The EffectFrame which will be rendered
-     * @param region Region to restrict painting to
-     * @param opacity Opacity of text/icon
-     * @param frameOpacity Opacity of background
-     * @since 4.6
-     *
-     * In OpenGL based compositing, the frameworks ensures that the context is current
-     * when this method is invoked.
-     */
-    virtual void paintEffectFrame(EffectFrame* frame,
-                                  const QRegion& region,
-                                  double opacity,
-                                  double frameOpacity);
-
-    /**
      * Called on Transparent resizes.
      * return true if your effect substitutes questioned feature
      */

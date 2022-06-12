@@ -37,7 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwintouchscreensettings.h"
 #include "kwintouchscreenscriptsettings.h"
 
-K_PLUGIN_FACTORY(KWinScreenEdgesConfigFactory, registerPlugin<KWin::KWinScreenEdgesConfig>(); registerPlugin<KWin::KWinTouchScreenData>();)
+K_PLUGIN_FACTORY_WITH_JSON(KWinScreenEdgesConfigFactory, "kwintouchscreen.json", registerPlugin<KWin::KWinScreenEdgesConfig>(); registerPlugin<KWin::KWinTouchScreenData>();)
 
 namespace KWin
 {
@@ -150,7 +150,7 @@ void KWinScreenEdgesConfig::monitorInit()
 
     KConfigGroup config(m_config, "Plugins");
     for (const KPluginMetaData &script: scripts) {
-        if (script.value(QStringLiteral("X-KWin-Border-Activate")) != QLatin1String("true")) {
+        if (script.value(QStringLiteral("X-KWin-Border-Activate"), false) != QLatin1String("true")) {
             continue;
         }
 

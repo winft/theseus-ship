@@ -36,26 +36,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-static QWindow *windowFromWidget(const QWidget *widget)
-{
-    QWindow *windowHandle = widget->windowHandle();
-    if (windowHandle) {
-        return windowHandle;
-    }
-
-    const QWidget *nativeParent = widget->nativeParentWidget();
-    if (nativeParent) {
-        return nativeParent->windowHandle();
-    }
-
-    return nullptr;
-}
-
 static QScreen *screenFromWidget(const QWidget *widget)
 {
-    const QWindow *windowHandle = windowFromWidget(widget);
-    if (windowHandle && windowHandle->screen()) {
-        return windowHandle->screen();
+    QScreen *screen = widget->screen();
+    if (screen) {
+        return screen;
     }
 
     return QGuiApplication::primaryScreen();
@@ -64,8 +49,6 @@ static QScreen *screenFromWidget(const QWidget *widget)
 Monitor::Monitor(QWidget* parent)
     : ScreenPreviewWidget(parent)
 {
-    QRect avail = screenFromWidget(this)->geometry();
-    setRatio((qreal)avail.width() / (qreal)avail.height());
     for (int i = 0;
             i < 8;
             ++i)
@@ -85,6 +68,8 @@ Monitor::Monitor(QWidget* parent)
         hidden[ i ] = false;
         grp[ i ] = new QActionGroup(this);
     }
+    QRect avail = screenFromWidget(this)->geometry();
+    setRatio((qreal)avail.width() / (qreal)avail.height());
     checkSize();
 }
 
@@ -105,6 +90,17 @@ void Monitor::resizeEvent(QResizeEvent* e)
 {
     ScreenPreviewWidget::resizeEvent(e);
     checkSize();
+}
+
+bool Monitor::event(QEvent* event)
+{
+    const bool r = ScreenPreviewWidget::event(event);
+    if (event->type() == QEvent::ScreenChangeInternal) {
+        QRect avail = screenFromWidget(this)->geometry();
+        setRatio((qreal)avail.width() / (qreal)avail.height());
+        checkSize();
+    }
+    return r;
 }
 
 void Monitor::checkSize()

@@ -42,6 +42,8 @@ RulesModel::RulesModel(QObject *parent)
                                          QStringLiteral("Do not create objects of type RuleItem"));
     qmlRegisterUncreatableType<RulesModel>("org.kde.kcms.kwinrules", 1, 0, "RulesModel",
                                                  QStringLiteral("Do not create objects of type RulesModel"));
+    qmlRegisterUncreatableType<OptionsModel>("org.kde.kcms.kwinrules", 1, 0, "OptionsModel",
+                                             QStringLiteral("Do not create objects of type OptionsModel"));
 
     qDBusRegisterMetaType<KWin::win::dbus::virtual_desktop_data>();
     qDBusRegisterMetaType<KWin::win::dbus::virtual_desktop_data_vector>();
@@ -69,7 +71,6 @@ QHash< int, QByteArray > RulesModel::roleNames() const
         {PolicyRole,         QByteArrayLiteral("policy")},
         {PolicyModelRole,    QByteArrayLiteral("policyModel")},
         {OptionsModelRole,   QByteArrayLiteral("options")},
-        {OptionsMaskRole,    QByteArrayLiteral("optionsMask")},
         {SuggestedValueRole, QByteArrayLiteral("suggested")},
     };
 }
@@ -117,8 +118,6 @@ QVariant RulesModel::data(const QModelIndex &index, int role) const
         return rule->policyModel();
     case OptionsModelRole:
         return rule->options();
-    case OptionsMaskRole:
-        return rule->optionsMask();
     case SuggestedValueRole:
         return rule->suggestedValue();
     }
@@ -444,11 +443,19 @@ void RulesModel::populateRuleList()
                          i18n("Maximized vertically"), i18n("Size & Position"),
                          QIcon::fromTheme("resizerow")));
 
-    auto desktop = addRule(new RuleItem(QLatin1String("desktop"),
-                                        RulePolicy::SetRule, RuleItem::Option,
-                                        i18n("Virtual Desktop"), i18n("Size & Position"),
-                                        QIcon::fromTheme("virtual-desktops")));
-    desktop->setOptionsData(virtualDesktopsModelData());
+    RuleItem *desktops;
+    desktops = new RuleItem(QLatin1String("desktops"),
+                            RulePolicy::SetRule, RuleItem::Option,
+                            i18n("Virtual Desktop"), i18n("Size & Position"),
+                            QIcon::fromTheme("virtual-desktops"));
+    addRule(desktops);
+    desktops->setOptionsData(virtualDesktopsModelData());
+
+    connect(this, &RulesModel::virtualDesktopsUpdated, this, [this]() {
+        m_rules["desktops"]->setOptionsData(virtualDesktopsModelData());
+        const QModelIndex index = indexOf("desktops");
+        Q_EMIT dataChanged(index, index, {OptionsModelRole});
+    });
 
     connect(this, &RulesModel::virtualDesktopsUpdated,
             this, [this] { m_rules["desktop"]->setOptionsData(virtualDesktopsModelData()); });
@@ -692,34 +699,40 @@ void RulesModel::setSuggestedProperties(const QVariantMap &info)
 
 QList<OptionsModel::Data> RulesModel::windowTypesModelData() const
 {
-    static const auto modelData = QList<OptionsModel::Data> {
-        //TODO: Find/create better icons
-        { NET::Normal,  i18n("Normal Window")     , QIcon::fromTheme("window")                   },
-        { NET::Dialog,  i18n("Dialog Window")     , QIcon::fromTheme("window-duplicate")         },
-        { NET::Utility, i18n("Utility Window")    , QIcon::fromTheme("dialog-object-properties") },
-        { NET::Dock,    i18n("Dock (panel)")      , QIcon::fromTheme("list-remove")              },
-        { NET::Toolbar, i18n("Toolbar")           , QIcon::fromTheme("tools")                    },
-        { NET::Menu,    i18n("Torn-Off Menu")     , QIcon::fromTheme("overflow-menu-left")       },
-        { NET::Splash,  i18n("Splash Screen")     , QIcon::fromTheme("embosstool")               },
-        { NET::Desktop, i18n("Desktop")           , QIcon::fromTheme("desktop")                  },
-        // { NET::Override, i18n("Unmanaged Window")   },  deprecated
-        { NET::TopMenu, i18n("Standalone Menubar"), QIcon::fromTheme("application-menu")       },
-        { NET::OnScreenDisplay, i18n("On Screen Display"), QIcon::fromTheme("osd-duplicate")     }
-    };
+    static const auto modelData = QList<OptionsModel::Data>{
+        // TODO: Find/create better icons
+        {0, i18n("All Window Types"), {}, {}, OptionsModel::SelectAllOption},
+        {1 << NET::Normal, i18n("Normal Window"), QIcon::fromTheme("window")},
+        {1 << NET::Dialog, i18n("Dialog Window"), QIcon::fromTheme("window-duplicate")},
+        {1 << NET::Utility, i18n("Utility Window"), QIcon::fromTheme("dialog-object-properties")},
+        {1 << NET::Dock, i18n("Dock (panel)"), QIcon::fromTheme("list-remove")},
+        {1 << NET::Toolbar, i18n("Toolbar"), QIcon::fromTheme("tools")},
+        {1 << NET::Menu, i18n("Torn-Off Menu"), QIcon::fromTheme("overflow-menu-left")},
+        {1 << NET::Splash, i18n("Splash Screen"), QIcon::fromTheme("embosstool")},
+        {1 << NET::Desktop, i18n("Desktop"), QIcon::fromTheme("desktop")},
+        // {1 <<  NET::Override, i18n("Unmanaged Window")},  deprecated
+        {1 << NET::TopMenu, i18n("Standalone Menubar"), QIcon::fromTheme("application-menu")},
+        {1 << NET::OnScreenDisplay, i18n("On Screen Display"), QIcon::fromTheme("osd-duplicate")}};
+
     return modelData;
 }
 
 QList<OptionsModel::Data> RulesModel::virtualDesktopsModelData() const
 {
     QList<OptionsModel::Data> modelData;
+    modelData << OptionsModel::Data{
+        QString(),
+        i18n("All Desktops"),
+        QIcon::fromTheme("window-pin"),
+        i18nc("@info:tooltip in the virtual desktop list", "Make the window available on all desktops"),
+        OptionsModel::ExclusiveOption,
+    };
     for (auto const& desktop : m_virtualDesktops) {
         modelData << OptionsModel::Data{
-            desktop.position + 1,  // "desktop" setting uses the desktop position (int) starting at 1
+            desktop.id,
             QString::number(desktop.position + 1).rightJustified(2) + QStringLiteral(": ") + desktop.name,
-            QIcon::fromTheme("virtual-desktops")
-        };
+            QIcon::fromTheme("virtual-desktops")};
     }
-    modelData << OptionsModel::Data{ NET::OnAllDesktops, i18n("All Desktops"), QIcon::fromTheme("window-pin") };
     return modelData;
 }
 

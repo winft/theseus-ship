@@ -35,8 +35,9 @@ public:
                const QRegion& region,
                const WindowPaintData& data,
                const WindowQuadList& quads);
-
     GLTexture* maybeRender(EffectWindow* window, DeformOffscreenData* offscreenData);
+
+    bool live = true;
 };
 
 DeformEffect::DeformEffect(QObject* parent)
@@ -53,6 +54,12 @@ DeformEffect::~DeformEffect()
 bool DeformEffect::supported()
 {
     return effects->isOpenGLCompositing();
+}
+
+void DeformEffect::setLive(bool live)
+{
+    Q_ASSERT(d->windows.isEmpty());
+    d->live = live;
 }
 
 static void allocateOffscreenData(EffectWindow* window, DeformOffscreenData* offscreenData)
@@ -78,6 +85,11 @@ void DeformEffect::redirect(EffectWindow* window)
 
     if (d->windows.count() == 1) {
         setupConnections();
+    }
+
+    if (!d->live) {
+        effects->makeOpenGLContextCurrent();
+        d->maybeRender(window, offscreenData);
     }
 }
 
@@ -156,9 +168,6 @@ void DeformEffectPrivate::paint(EffectWindow* window,
     quads.makeInterleavedArrays(primitiveType, map, texture->matrix(NormalizedCoordinates));
     vbo->unmap();
     vbo->bindArrays();
-    glEnable(GL_SCISSOR_TEST);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
     const qreal rgb = data.brightness() * data.opacity();
     const qreal a = data.opacity();
@@ -169,16 +178,24 @@ void DeformEffectPrivate::paint(EffectWindow* window,
     shader->setUniform(GLShader::ModulationConstant, QVector4D(rgb, rgb, rgb, a));
     shader->setUniform(GLShader::Saturation, data.saturation());
 
+    const bool clipping = region != infiniteRegion();
+    const QRegion clipRegion = clipping ? effects->mapToRenderTarget(region) : infiniteRegion();
+
+    if (clipping) {
+        glEnable(GL_SCISSOR_TEST);
+    }
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
     texture->bind();
-    vbo->draw(effects->mapToRenderTarget(region),
-              primitiveType,
-              0,
-              verticesPerQuad * quads.count(),
-              true);
+    vbo->draw(clipRegion, primitiveType, 0, verticesPerQuad * quads.count(), clipping);
     texture->unbind();
 
     glDisable(GL_BLEND);
-    glDisable(GL_SCISSOR_TEST);
+    if (clipping) {
+        glDisable(GL_SCISSOR_TEST);
+    }
     vbo->unbindArrays();
 }
 
@@ -244,8 +261,11 @@ void DeformEffect::setupConnections()
                   &EffectsHandler::windowExpandedGeometryChanged,
                   this,
                   &DeformEffect::handleWindowGeometryChanged);
-    d->windowDamagedConnection = connect(
-        effects, &EffectsHandler::windowDamaged, this, &DeformEffect::handleWindowDamaged);
+
+    if (d->live) {
+        d->windowDamagedConnection = connect(
+            effects, &EffectsHandler::windowDamaged, this, &DeformEffect::handleWindowDamaged);
+    }
     d->windowDeletedConnection = connect(
         effects, &EffectsHandler::windowDeleted, this, &DeformEffect::handleWindowDeleted);
 }

@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "scene.h"
 
 #include "deco_renderer.h"
-#include "effect_frame.h"
 #include "shadow.h"
 #include "window.h"
 
@@ -164,11 +163,6 @@ void scene::paintEffectQuickView(EffectQuickView* w)
 std::unique_ptr<render::window> scene::createWindow(Toplevel* toplevel)
 {
     return std::make_unique<window>(toplevel, *this);
-}
-
-render::effect_frame* scene::createEffectFrame(effect_frame_impl* frame)
-{
-    return new effect_frame(frame, this);
 }
 
 std::unique_ptr<render::shadow> scene::createShadow(Toplevel* toplevel)

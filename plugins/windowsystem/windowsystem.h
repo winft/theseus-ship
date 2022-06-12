@@ -26,7 +26,7 @@
 namespace KWin
 {
 
-class WindowSystem : public QObject, public KWindowSystemPrivate
+class WindowSystem : public QObject, public KWindowSystemPrivateV2
 {
     Q_OBJECT
 public:
@@ -80,6 +80,10 @@ public:
     QPoint constrainViewportRelativePosition(const QPoint &pos) override;
 
     void connectNotify(const QMetaMethod &signal) override;
+
+    void requestToken(QWindow* win, uint32_t serial, QString const& app_id) override;
+    void setCurrentToken(QString const& token) override;
+    quint32 lastInputSerial(QWindow* window) override;
 };
 
 }

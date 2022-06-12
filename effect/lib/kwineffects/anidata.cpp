@@ -75,7 +75,6 @@ AniData::AniData()
     , startTime(0)
     , waitAtSource(false)
     , keepAlive(true)
-    , lastPresentTime(std::chrono::milliseconds::zero())
 {
 }
 
@@ -97,7 +96,6 @@ AniData::AniData(AnimationEffect::Attribute a,
     , waitAtSource(waitAtSource_)
     , keepAlive(keepAlive)
     , previousWindowPixmapLock(std::move(previousWindowPixmapLock_))
-    , lastPresentTime(std::chrono::milliseconds::zero())
 {
 }
 

@@ -23,6 +23,7 @@ import QtQuick.Layouts 1.14
 import QtQuick.Controls 2.14 as QQC2
 
 import org.kde.kirigami 2.10 as Kirigami
+import org.kde.kcms.kwinrules 1.0
 
 
 QQC2.ComboBox {
@@ -33,6 +34,7 @@ QQC2.ComboBox {
 
     property bool multipleChoice: false
     property int selectionMask: 0
+    readonly property int allOptionsMask: model.allOptionsMask
 
     currentIndex: multipleChoice ? -1 : model.selectedIndex
 
@@ -40,30 +42,41 @@ QQC2.ComboBox {
         if (!multipleChoice) {
             return currentText;
         }
-        var selectionCount = selectionMask.toString(2).replace(/0/g, '').length;
+        const selectionCount = selectionMask.toString(2).replace(/0/g, '').length;
+        const optionsCount = allOptionsMask.toString(2).replace(/0/g, '').length;
         switch (selectionCount) {
             case 0:
                 return i18n("None selected");
             case 1:
-                var selectedValue = selectionMask.toString(2).length - 1;
-                return model.textOfValue(selectedValue);
-            case count:
+                const selectedBit = selectionMask.toString(2).length - 1;
+                const selectedIndex = (model.useFlags) ? model.indexOf(selectionMask) : selectedBit
+                return model.data(model.index(selectedIndex, 0), Qt.DisplayRole);
+            case optionsCount:
                 return i18n("All selected");
         }
         return i18np("%1 selected", "%1 selected", selectionCount);
     }
 
     delegate: QQC2.ItemDelegate {
+        id: delegateItem
+
         highlighted: optionsCombo.highlightedIndex == index
         width: parent.width
 
         contentItem: RowLayout {
+            QQC2.RadioButton {
+                id: radioButton
+                visible: multipleChoice && model.optionType === OptionsModel.ExclusiveOption
+                checked: (selectionMask & bitMask) == bitMask
+                enabled: false  // We don't want to uncheck the exclusive option on toggle
+            }
             QQC2.CheckBox {
-                id: itemSelection
-                visible: multipleChoice
-                checked: (selectionMask & (1 << value))
+                id: checkBox
+                visible: multipleChoice && model.optionType !== OptionsModel.ExclusiveOption
+                checked: (selectionMask & model.bitMask) == model.bitMask
                 onToggled: {
-                    selectionMask = (selectionMask & ~(1 << value)) | (checked << value);
+                    selectionMask = (checked) ? selectionMask | model.bitMask : selectionMask & ~model.bitMask;
+                    selectionMask &= allOptionsMask;
                     activated(index);
                 }
             }
@@ -84,8 +97,13 @@ QQC2.ComboBox {
             anchors.fill: contentItem
             enabled: multipleChoice
             onClicked: {
-                itemSelection.toggle();
-                itemSelection.toggled();
+                if (checkBox.visible) {
+                    checkBox.toggle();
+                    checkBox.toggled();
+                } else if (radioButton.visible) {
+                    selectionMask = model.bitMask; // Only check the exclusive option
+                    activated(index);
+                }
             }
         }
 

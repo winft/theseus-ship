@@ -6,6 +6,8 @@
 */
 #include "time_line.h"
 
+#include <optional>
+
 namespace KWin
 {
 
@@ -17,6 +19,7 @@ public:
     QEasingCurve easingCurve;
 
     std::chrono::milliseconds elapsed = std::chrono::milliseconds::zero();
+    std::optional<std::chrono::milliseconds> lastTimestamp = std::nullopt;
     bool done = false;
     RedirectMode sourceRedirectMode = RedirectMode::Relaxed;
     RedirectMode targetRedirectMode = RedirectMode::Strict;
@@ -48,16 +51,25 @@ qreal TimeLine::value() const
     return d->easingCurve.valueForProgress(d->direction == Backward ? 1.0 - t : t);
 }
 
-void TimeLine::update(std::chrono::milliseconds delta)
+void TimeLine::advance(std::chrono::milliseconds timestamp)
 {
-    Q_ASSERT(delta >= std::chrono::milliseconds::zero());
     if (d->done) {
         return;
     }
+
+    std::chrono::milliseconds delta = std::chrono::milliseconds::zero();
+    if (d->lastTimestamp.has_value()) {
+        delta = timestamp - d->lastTimestamp.value();
+    }
+
+    Q_ASSERT(delta >= std::chrono::milliseconds::zero());
+    d->lastTimestamp = timestamp;
+
     d->elapsed += delta;
     if (d->elapsed >= d->duration) {
-        d->done = true;
         d->elapsed = d->duration;
+        d->done = true;
+        d->lastTimestamp = std::nullopt;
     }
 }
 
@@ -72,8 +84,16 @@ void TimeLine::setElapsed(std::chrono::milliseconds elapsed)
     if (elapsed == d->elapsed) {
         return;
     }
+
     reset();
-    update(elapsed);
+
+    d->elapsed = elapsed;
+
+    if (d->elapsed >= d->duration) {
+        d->elapsed = d->duration;
+        d->done = true;
+        d->lastTimestamp = std::nullopt;
+    }
 }
 
 std::chrono::milliseconds TimeLine::duration() const
@@ -91,6 +111,7 @@ void TimeLine::setDuration(std::chrono::milliseconds duration)
     d->duration = duration;
     if (d->elapsed == d->duration) {
         d->done = true;
+        d->lastTimestamp = std::nullopt;
     }
 }
 
@@ -118,6 +139,7 @@ void TimeLine::setDirection(TimeLine::Direction direction)
 
     if (d->elapsed >= d->duration) {
         d->done = true;
+        d->lastTimestamp = std::nullopt;
     }
 }
 
@@ -153,6 +175,7 @@ bool TimeLine::done() const
 
 void TimeLine::reset()
 {
+    d->lastTimestamp = std::nullopt;
     d->elapsed = std::chrono::milliseconds::zero();
     d->done = false;
 }

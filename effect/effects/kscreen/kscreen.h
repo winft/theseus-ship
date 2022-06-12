@@ -63,7 +63,6 @@ public:
 
 private:
     void switchState();
-    std::chrono::milliseconds m_lastPresentTime;
 };
 
 } // namespace KWin

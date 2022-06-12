@@ -209,6 +209,11 @@
             <default>false</default>
         </entry>
     </group>
+    <group name="ScreenEdges">
+        <entry name="RemainActiveOnFullscreen" type="Bool">
+            <default>false</default>
+        </entry>
+    </group>
     <group name="Compositing">
         <entry name="MaxFPS" type="UInt">
             <default>60</default>

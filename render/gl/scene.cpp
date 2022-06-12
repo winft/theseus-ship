@@ -30,7 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "scene.h"
 
 #include "deco_renderer.h"
-#include "effect_frame.h"
 #include "lanczos_filter.h"
 #include "shadow.h"
 #include "texture.h"
@@ -347,8 +346,6 @@ scene::~scene()
         lanczos = nullptr;
     }
 
-    effect_frame::cleanup();
-
     delete m_syncManager;
 }
 
@@ -662,7 +659,7 @@ void scene::paintBackground(QRegion region)
 {
     PaintClipper pc(region);
     if (!PaintClipper::clip()) {
-        glClearColor(0, 0, 0, 1);
+        glClearColor(0, 0, 0, 0);
         glClear(GL_COLOR_BUFFER_BIT);
         return;
     }
@@ -808,11 +805,6 @@ bool scene::supportsSurfacelessContext() const
     return m_backend->supportsSurfacelessContext();
 }
 
-render::effect_frame* scene::createEffectFrame(effect_frame_impl* frame)
-{
-    return new effect_frame(frame, this);
-}
-
 std::unique_ptr<render::shadow> scene::createShadow(Toplevel* toplevel)
 {
     return std::make_unique<shadow>(toplevel, *this);
@@ -912,7 +904,7 @@ void scene::doPaintBackground(const QVector<float>& vertices)
 {
     GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
     vbo->reset();
-    vbo->setUseColor(true);
+    vbo->setColor(QColor(0, 0, 0, 0));
     vbo->setData(vertices.count() / 2, 2, vertices.data(), nullptr);
 
     ShaderBinder binder(ShaderTrait::UniformColor);

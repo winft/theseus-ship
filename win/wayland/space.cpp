@@ -94,7 +94,7 @@ space::space(render::compositor& render, base::wayland::server* server)
 
     QObject::connect(
         xdg_activation.get(), &WS::XdgActivationV1::token_requested, this, [this](auto token) {
-            win::wayland::xdg_activation_create_token(this, token);
+            win::wayland::xdg_activation_handle_token_request(*this, *token);
         });
     QObject::connect(xdg_activation.get(),
                      &WS::XdgActivationV1::activate,

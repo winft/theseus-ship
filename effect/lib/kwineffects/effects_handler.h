@@ -108,9 +108,6 @@ public:
     paintWindow(EffectWindow* w, int mask, const QRegion& region, WindowPaintData& data)
         = 0;
     virtual void postPaintWindow(EffectWindow* w) = 0;
-    virtual void
-    paintEffectFrame(EffectFrame* frame, const QRegion& region, double opacity, double frameOpacity)
-        = 0;
     virtual void drawWindow(EffectWindow* w, int mask, const QRegion& region, WindowPaintData& data)
         = 0;
     virtual void buildQuads(EffectWindow* w, WindowQuadList& quadList) = 0;

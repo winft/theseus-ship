@@ -58,7 +58,6 @@ CoverSwitchEffect::CoverSwitchEffect()
     , stop(false)
     , stopRequested(false)
     , startRequested(false)
-    , lastPresentTime(std::chrono::milliseconds::zero())
     , zPosition(900.0)
     , scaleFactor(0.0)
     , direction(Left)
@@ -136,12 +135,7 @@ void CoverSwitchEffect::prePaintScreen(ScreenPrePaintData& data,
     if (mActivated || stop || stopRequested) {
         data.mask |= Effect::PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS;
         if (animation || start || stop) {
-            std::chrono::milliseconds delta = std::chrono::milliseconds::zero();
-            if (lastPresentTime.count()) {
-                delta = presentTime - lastPresentTime;
-            }
-            lastPresentTime = presentTime;
-            timeLine.update(delta);
+            timeLine.advance(presentTime);
         }
         if (selected_window == nullptr)
             abort();
@@ -325,7 +319,6 @@ void CoverSwitchEffect::postPaintScreen()
     if ((mActivated && (animation || start)) || stop || stopRequested) {
         if (timeLine.done()) {
             timeLine.reset();
-            lastPresentTime = std::chrono::milliseconds::zero();
             if (stop) {
                 stop = false;
                 effects->setActiveFullScreenEffect(nullptr);
@@ -607,7 +600,6 @@ void CoverSwitchEffect::slotTabBoxClosed()
             start = false;
             animation = false;
             timeLine.reset();
-            lastPresentTime = std::chrono::milliseconds::zero();
         }
         mActivated = false;
         effects->unrefTabBox();
@@ -1012,7 +1004,6 @@ void CoverSwitchEffect::abort()
     }
     effects->setActiveFullScreenEffect(nullptr);
     timeLine.reset();
-    lastPresentTime = std::chrono::milliseconds::zero();
     mActivated = false;
     stop = false;
     stopRequested = false;

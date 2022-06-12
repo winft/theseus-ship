@@ -15,6 +15,7 @@
 #include "input/logging.h"
 #include "main.h"
 
+#include <KGlobalAccel>
 #include <QAction>
 #include <QX11Info>
 
@@ -45,14 +46,22 @@ platform::~platform() = default;
 
 void platform::setup_action_for_global_accel(QAction* action)
 {
-    QObject::connect(action, &QAction::triggered, this, [action] {
-        auto timestamp = action->property("org.kde.kglobalaccel.activationTimestamp");
-        bool ok = false;
-        auto const time = timestamp.toULongLong(&ok);
-        if (ok) {
-            kwinApp()->setX11Time(time);
-        }
-    });
+    QObject::connect(KGlobalAccel::self(),
+                     &KGlobalAccel::globalShortcutActiveChanged,
+                     kwinApp(),
+                     [action](QAction* triggeredAction, bool /*active*/) {
+                         if (triggeredAction != action) {
+                             return;
+                         }
+
+                         QVariant timestamp
+                             = action->property("org.kde.kglobalaccel.activationTimestamp");
+                         bool ok = false;
+                         const quint32 t = timestamp.toULongLong(&ok);
+                         if (ok) {
+                             kwinApp()->setX11Time(t);
+                         }
+                     });
 }
 
 #if HAVE_X11_XINPUT

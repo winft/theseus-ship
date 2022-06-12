@@ -37,7 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwinscreenedgesettings.h"
 #include "kwinscreenedgescriptsettings.h"
 
-K_PLUGIN_FACTORY(KWinScreenEdgesConfigFactory, registerPlugin<KWin::KWinScreenEdgesConfig>(); registerPlugin<KWin::KWinScreenEdgeData>();)
+K_PLUGIN_FACTORY_WITH_JSON(KWinScreenEdgesConfigFactory, "metadata.json", registerPlugin<KWin::KWinScreenEdgesConfig>(); registerPlugin<KWin::KWinScreenEdgeData>();)
 
 namespace KWin
 {
@@ -74,6 +74,7 @@ void KWinScreenEdgesConfig::load()
 
     monitorLoadSettings();
     monitorLoadDefaultSettings();
+    m_form->setRemainActiveOnFullscreen(m_data->settings()->remainActiveOnFullscreen());
     m_form->setElectricBorderCornerRatio(m_data->settings()->electricBorderCornerRatio());
     m_form->setDefaultElectricBorderCornerRatio(m_data->settings()->defaultElectricBorderCornerRatioValue());
     m_form->reload();
@@ -82,6 +83,7 @@ void KWinScreenEdgesConfig::load()
 void KWinScreenEdgesConfig::save()
 {
     monitorSaveSettings();
+    m_data->settings()->setRemainActiveOnFullscreen(m_form->remainActiveOnFullscreen());
     m_data->settings()->setElectricBorderCornerRatio(m_form->electricBorderCornerRatio());
     m_data->settings()->save();
     for (KWinScreenEdgeScriptSettings *setting : qAsConst(m_scriptSettings)) {
@@ -91,6 +93,7 @@ void KWinScreenEdgesConfig::save()
     // Reload saved settings to ScreenEdge UI
     monitorLoadSettings();
     m_form->setElectricBorderCornerRatio(m_data->settings()->electricBorderCornerRatio());
+    m_form->setRemainActiveOnFullscreen(m_data->settings()->remainActiveOnFullscreen());
     m_form->reload();
 
     // Reload KWin.
@@ -152,7 +155,7 @@ void KWinScreenEdgesConfig::monitorInit()
 
     KConfigGroup config(m_config, "Plugins");
     for (const KPluginMetaData &script: scripts) {
-        if (script.value(QStringLiteral("X-KWin-Border-Activate")) != QLatin1String("true")) {
+        if (script.value(QStringLiteral("X-KWin-Border-Activate"), false) != QLatin1String("true")) {
             continue;
         }
 

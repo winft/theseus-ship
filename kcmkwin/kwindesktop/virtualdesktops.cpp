@@ -29,7 +29,7 @@
 #include <KPluginFactory>
 
 K_PLUGIN_FACTORY_WITH_JSON(VirtualDesktopsFactory,
-                           "kcm_kwin_virtualdesktops.json",
+                           "metadata.json",
                            registerPlugin<KWin::VirtualDesktops>();
                            registerPlugin<KWin::VirtualDesktopsData>();)
 
@@ -45,7 +45,7 @@ VirtualDesktops::VirtualDesktops(QObject *parent, const QVariantList &args)
         QStringLiteral("2.0"), QString(), KAboutLicense::GPL);
     setAboutData(about);
 
-    qmlRegisterType<VirtualDesktopsSettings>();
+    qmlRegisterAnonymousType<VirtualDesktopsSettings>("org.kde.kwin.kcm.desktop", 0);
 
     setButtons(Apply | Default);
 

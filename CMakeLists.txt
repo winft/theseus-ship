@@ -61,6 +61,7 @@ include(ECMConfiguredInstall)
 
 # required frameworks by Core
 find_package(KF5 ${KF5_MIN_VERSION} REQUIRED COMPONENTS
+    Auth
     Config
     ConfigWidgets
     CoreAddons
@@ -83,6 +84,7 @@ find_package(KF5 ${KF5_MIN_VERSION} REQUIRED COMPONENTS
     NewStuff
     Service
     XmlGui
+    ItemViews
 )
 
 # Required frameworks by Wayland binary
@@ -426,7 +428,6 @@ set(kwin_SRCS
     render/gl/backend.cpp
     render/gl/context_attribute_builder.cpp
     render/gl/deco_renderer.cpp
-    render/gl/effect_frame.cpp
     render/gl/egl_context_attribute_builder.cpp
     render/gl/lanczos_filter.cpp
     render/gl/scene.cpp
@@ -573,8 +574,7 @@ set(kwin_KDE_LIBS
     KF5::I18n
     KF5::Notifications
     KF5::Package
-    KF5::Plasma
-    KF5::QuickAddons
+    KF5::Service
     KF5::WindowSystem
 
     KDecoration2::KDecoration
@@ -679,7 +679,6 @@ if (KWIN_HAVE_XRENDER_COMPOSITING)
     render/xrender/buffer.cpp
     render/xrender/backend.cpp
     render/xrender/deco_renderer.cpp
-    render/xrender/effect_frame.cpp
     render/xrender/scene.cpp
     render/xrender/shadow.cpp
     render/xrender/window.cpp
@@ -846,7 +845,6 @@ set(kwin_WAYLAND_SRCS
    render/gl/egl_dmabuf.cpp
    render/qpainter/buffer.cpp
    render/qpainter/deco_renderer.cpp
-   render/qpainter/effect_frame.cpp
    render/qpainter/scene.cpp
    render/qpainter/shadow.cpp
    render/qpainter/window.cpp
@@ -926,10 +924,6 @@ target_link_libraries(kwin_wayland
     KF5::DBusAddons
 )
 
-if (HAVE_LIBCAP)
-    target_link_libraries(kwin_wayland ${Libcap_LIBRARIES})
-endif()
-
 install(TARGETS kwin_wayland_lib ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
 install(TARGETS kwin_wayland ${INSTALL_TARGETS_DEFAULT_ARGS})
 if (HAVE_LIBCAP)
@@ -986,6 +980,7 @@ install(FILES win/tabbox/kwindesktopswitcher.desktop DESTINATION ${KDE_INSTALL_K
 
 # Install QML files
 install(DIRECTORY render/qml/outline/plasma DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_NAME}/outline)
+install(DIRECTORY render/qml/frames/plasma DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_NAME}/frames)
 install(
   DIRECTORY win/qml/onscreennotification/plasma
   DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_NAME}/onscreennotification

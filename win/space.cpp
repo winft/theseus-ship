@@ -2798,7 +2798,7 @@ void space::initShortcuts()
     DEF2("Window Above Other Windows", kli18n("Keep Window Above Others"), 0, slotWindowAbove);
     DEF2("Window Below Other Windows", kli18n("Keep Window Below Others"), 0, slotWindowBelow);
     DEF(kli18n("Activate Window Demanding Attention"),
-        Qt::CTRL + Qt::ALT + Qt::Key_A,
+        Qt::META | Qt::CTRL | Qt::Key_A,
         slotActivateAttentionWindow);
     DEF(kli18n("Setup Window Shortcut"), 0, slotSetupWindowShortcut);
     DEF2("Window Pack Right", kli18n("Pack Window to the Right"), 0, slotWindowPackRight);
@@ -2909,7 +2909,7 @@ void space::initShortcuts()
     DEF(kli18n("Switch to Next Screen"), 0, slotSwitchToNextScreen);
     DEF(kli18n("Switch to Previous Screen"), 0, slotSwitchToPrevScreen);
 
-    DEF(kli18n("Kill Window"), Qt::CTRL + Qt::ALT + Qt::Key_Escape, slotKillWindow);
+    DEF(kli18n("Kill Window"), Qt::META | Qt::CTRL | Qt::Key_Escape, slotKillWindow);
     DEF6(kli18n("Suspend Compositing"),
          Qt::SHIFT + Qt::ALT + Qt::Key_F12,
          &render,

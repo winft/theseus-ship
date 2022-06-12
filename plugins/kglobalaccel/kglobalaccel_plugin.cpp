@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDebug>
 
 KGlobalAccelImpl::KGlobalAccelImpl(QObject *parent)
-    : KGlobalAccelInterface(parent)
+    : KGlobalAccelInterfaceV2(parent)
 {
 }
 
@@ -57,4 +57,9 @@ void KGlobalAccelImpl::setEnabled(bool enabled)
 bool KGlobalAccelImpl::checkKeyPressed(int keyQt)
 {
     return keyPressed(keyQt);
+}
+
+bool KGlobalAccelImpl::checkKeyReleased(int keyQt)
+{
+    return keyReleased(keyQt);
 }

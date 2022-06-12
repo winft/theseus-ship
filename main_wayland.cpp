@@ -45,7 +45,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KCrash>
 #include <KLocalizedString>
 #include <KPluginMetaData>
-#include <KQuickAddons/QtQuickSettings>
 #include <KShell>
 #include <UpdateLaunchEnvironmentJob>
 
@@ -58,11 +57,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDebug>
 #include <QWindow>
 
-#if HAVE_LIBCAP
-#include <sys/capability.h>
-#endif
-
 #include <sched.h>
+#include <sys/resource.h>
 
 #include <iostream>
 #include <iomanip>
@@ -74,6 +70,39 @@ Q_IMPORT_PLUGIN(KWinIdleTimePoller)
 
 namespace KWin
 {
+
+static rlimit originalNofileLimit = {
+    .rlim_cur = 0,
+    .rlim_max = 0,
+};
+
+static bool bumpNofileLimit()
+{
+    if (getrlimit(RLIMIT_NOFILE, &originalNofileLimit) == -1) {
+        std::cerr << "Failed to bump RLIMIT_NOFILE limit, getrlimit() failed: " << strerror(errno)
+                  << std::endl;
+        return false;
+    }
+
+    rlimit limit = originalNofileLimit;
+    limit.rlim_cur = limit.rlim_max;
+
+    if (setrlimit(RLIMIT_NOFILE, &limit) == -1) {
+        std::cerr << "Failed to bump RLIMIT_NOFILE limit, setrlimit() failed: " << strerror(errno)
+                  << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
+static void restoreNofileLimit()
+{
+    if (setrlimit(RLIMIT_NOFILE, &originalNofileLimit) == -1) {
+        std::cerr << "Failed to restore RLIMIT_NOFILE limit, legacy apps might be broken"
+                  << std::endl;
+    }
+}
 
 static void sighandler(int)
 {
@@ -95,19 +124,13 @@ enum class RealTimeFlags
 };
 
 namespace {
-void gainRealTime(RealTimeFlags flags = RealTimeFlags::DontReset)
+void gainRealTime()
 {
 #if HAVE_SCHED_RESET_ON_FORK
     const int minPriority = sched_get_priority_min(SCHED_RR);
-    struct sched_param sp;
+    sched_param sp;
     sp.sched_priority = minPriority;
-    int policy = SCHED_RR;
-    if (flags == RealTimeFlags::ResetOnFork) {
-        policy |= SCHED_RESET_ON_FORK;
-    }
-    sched_setscheduler(0, policy, &sp);
-#else
-    Q_UNUSED(flags);
+    sched_setscheduler(0, SCHED_RR | SCHED_RESET_ON_FORK, &sp);
 #endif
 }
 }
@@ -198,10 +221,6 @@ void ApplicationWayland::start()
 
     input.reset(new input::backend::wlroots::platform(*base));
     static_cast<input::wayland::platform&>(*input).install_shortcuts();
-
-    // now libinput thread has been created, adjust scheduler to not leak into other processes
-    // TODO(romangg): can be removed?
-    gainRealTime(RealTimeFlags::ResetOnFork);
 
     try {
         render->init();
@@ -336,27 +355,6 @@ void ApplicationWayland::startSession()
     Q_EMIT startup_finished();
 }
 
-void dropNiceCapability()
-{
-#if HAVE_LIBCAP
-    cap_t caps = cap_get_proc();
-    if (!caps) {
-        return;
-    }
-    cap_value_t capList[] = { CAP_SYS_NICE };
-    if (cap_set_flag(caps, CAP_PERMITTED, 1, capList, CAP_CLEAR) == -1) {
-        cap_free(caps);
-        return;
-    }
-    if (cap_set_flag(caps, CAP_EFFECTIVE, 1, capList, CAP_CLEAR) == -1) {
-        cap_free(caps);
-        return;
-    }
-    cap_set_proc(caps);
-    cap_free(caps);
-#endif
-}
-
 } // namespace
 
 int main(int argc, char * argv[])
@@ -377,7 +375,6 @@ int main(int argc, char * argv[])
     KWin::Application::setupMalloc();
     KWin::Application::setupLocalizedString();
     KWin::gainRealTime();
-    KWin::dropNiceCapability();
 
     if (signal(SIGTERM, KWin::sighandler) == SIG_IGN)
         signal(SIGTERM, SIG_IGN);
@@ -386,12 +383,20 @@ int main(int argc, char * argv[])
     if (signal(SIGHUP, KWin::sighandler) == SIG_IGN)
         signal(SIGHUP, SIG_IGN);
     signal(SIGPIPE, SIG_IGN);
+
     // ensure that no thread takes SIGUSR
     sigset_t userSignals;
     sigemptyset(&userSignals);
     sigaddset(&userSignals, SIGUSR1);
     sigaddset(&userSignals, SIGUSR2);
     pthread_sigmask(SIG_BLOCK, &userSignals, nullptr);
+
+    // It's easy to exceed the file descriptor limit because many things are backed using fds
+    // nowadays, e.g. dmabufs, shm buffers, etc. Bump the RLIMIT_NOFILE limit to handle that.
+    // Some apps may still use select(), so we reset the limit to its original value in fork().
+    if (KWin::bumpNofileLimit()) {
+        pthread_atfork(nullptr, nullptr, KWin::restoreNofileLimit);
+    }
 
     auto environment = QProcessEnvironment::systemEnvironment();
 
@@ -409,8 +414,6 @@ int main(int argc, char * argv[])
     qunsetenv("QT_QPA_PLATFORM");
 
     KWin::Application::createAboutData();
-    KQuickAddons::QtQuickSettings::init();
-
     QCommandLineOption xwaylandOption(QStringLiteral("xwayland"),
                                       i18n("Start a rootless Xwayland server."));
     QCommandLineOption waylandSocketOption(QStringList{QStringLiteral("s"), QStringLiteral("socket")},

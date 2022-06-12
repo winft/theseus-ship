@@ -250,9 +250,8 @@ void KWinCompositingKCM::save()
     QDBusConnection::sessionBus().send(message);
 }
 
-K_PLUGIN_FACTORY(KWinCompositingConfigFactory,
-                 registerPlugin<KWinCompositingKCM>();
-                 registerPlugin<KWinCompositingData>();
-                )
+K_PLUGIN_FACTORY_WITH_JSON(KWinCompositingConfigFactory, "metadata.json",
+                           registerPlugin<KWinCompositingKCM>();
+                           registerPlugin<KWinCompositingData>();)
 
 #include "main.moc"

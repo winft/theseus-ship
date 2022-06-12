@@ -7,7 +7,6 @@
 */
 #include "deco_renderer.h"
 
-#include "effect_frame.h"
 #include "scene.h"
 #include "shadow.h"
 #include "texture.h"

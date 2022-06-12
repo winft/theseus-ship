@@ -34,8 +34,10 @@ namespace KWin
 class ZoomAccessibilityIntegration;
 #endif
 
+class EffectScreen;
+class GLRenderTarget;
 class GLTexture;
-class XRenderPicture;
+class GLVertexBuffer;
 
 class ZoomEffect : public Effect
 {
@@ -56,6 +58,7 @@ public:
     void paintScreen(int mask, const QRegion& region, ScreenPaintData& data) override;
     void postPaintScreen() override;
     bool isActive() const override;
+    int requestedEffectChainPosition() const override;
     // for properties
     qreal configuredZoomFactor() const
     {
@@ -106,7 +109,7 @@ private Q_SLOTS:
                           Qt::KeyboardModifiers modifiers,
                           Qt::KeyboardModifiers oldmodifiers);
     void slotWindowDamaged();
-    void recreateTexture();
+    void slotScreenRemoved(EffectScreen* screen);
 
 private:
     void showCursor();
@@ -114,6 +117,17 @@ private:
     void moveZoom(int x, int y);
 
 private:
+    struct OffscreenData {
+        QScopedPointer<GLTexture> texture;
+        QScopedPointer<GLRenderTarget> framebuffer;
+        QScopedPointer<GLVertexBuffer> vbo;
+        QRect viewport;
+    };
+
+    GLTexture* ensureCursorTexture();
+    OffscreenData* ensureOffscreenData(EffectScreen* screen);
+    void markCursorTextureDirty();
+
 #if HAVE_ACCESSIBILITY
     ZoomAccessibilityIntegration* m_accessibilityIntegration = nullptr;
 #endif
@@ -133,22 +147,18 @@ private:
     MousePointerType mousePointer;
     int focusDelay;
     QPoint cursorPoint;
-    QPoint cursorHotSpot;
     QPoint focusPoint;
     QPoint prevPoint;
     QTime lastMouseEvent;
     QTime lastFocusEvent;
-    QScopedPointer<GLTexture> texture;
-#ifdef KWIN_HAVE_XRENDER_COMPOSITING
-    QScopedPointer<XRenderPicture> xrenderPicture;
-#endif
-    int imageWidth;
-    int imageHeight;
+    QScopedPointer<GLTexture> m_cursorTexture;
+    bool m_cursorTextureDirty = false;
     bool isMouseHidden;
     QTimeLine timeline;
     int xMove, yMove;
     double moveFactor;
     std::chrono::milliseconds lastPresentTime;
+    QHash<EffectScreen*, OffscreenData*> m_offscreenData;
 };
 
 } // namespace

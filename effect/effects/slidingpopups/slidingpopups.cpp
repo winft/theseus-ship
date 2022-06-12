@@ -169,13 +169,7 @@ void SlidingPopupsEffect::prePaintWindow(EffectWindow* win,
         return;
     }
 
-    std::chrono::milliseconds delta = std::chrono::milliseconds::zero();
-    if (animationIt->last_present_time.count()) {
-        delta = presentTime - animationIt->last_present_time;
-    }
-    animationIt->last_present_time = presentTime;
-
-    (*animationIt).timeline.update(delta);
+    (*animationIt).timeline.advance(presentTime);
     data.setTransformed();
     win->enablePainting(EffectWindow::PAINT_DISABLED | EffectWindow::PAINT_DISABLED_BY_DELETE);
 

@@ -77,7 +77,6 @@ void update_function(KscreenEffect& effect, KWin::effect::fade_update const& upd
 
 KscreenEffect::KscreenEffect()
     : Effect()
-    , m_lastPresentTime(std::chrono::milliseconds::zero())
 {
     initConfig<KscreenConfig>();
 
@@ -102,22 +101,11 @@ void KscreenEffect::reconfigure(ReconfigureFlags flags)
 
 void KscreenEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime)
 {
-    std::chrono::milliseconds delta = std::chrono::milliseconds::zero();
-    if (m_lastPresentTime.count()) {
-        delta = presentTime - m_lastPresentTime;
-    }
-
     if (m_state == StateFadingIn || m_state == StateFadingOut) {
-        m_timeLine.update(delta);
+        m_timeLine.advance(presentTime);
         if (m_timeLine.done()) {
             switchState();
         }
-    }
-
-    if (isActive()) {
-        m_lastPresentTime = presentTime;
-    } else {
-        m_lastPresentTime = std::chrono::milliseconds::zero();
     }
 
     effects->prePaintScreen(data, presentTime);

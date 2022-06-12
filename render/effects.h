@@ -109,10 +109,6 @@ public:
     void
     paintWindow(EffectWindow* w, int mask, const QRegion& region, WindowPaintData& data) override;
     void postPaintWindow(EffectWindow* w) override;
-    void paintEffectFrame(EffectFrame* frame,
-                          const QRegion& region,
-                          double opacity,
-                          double frameOpacity) override;
 
     Effect* provides(Effect::Feature ef);
 
@@ -412,7 +408,6 @@ private:
     EffectsList m_activeEffects;
     EffectsIterator m_currentDrawWindowIterator;
     EffectsIterator m_currentPaintWindowIterator;
-    EffectsIterator m_currentPaintEffectFrameIterator;
     EffectsIterator m_currentPaintScreenIterator;
     EffectsIterator m_currentBuildQuadsIterator;
     render::scene* m_scene;
@@ -614,15 +609,93 @@ private:
     win::x11::group* group;
 };
 
+class effect_frame_quick_scene : public EffectQuickScene
+{
+    Q_OBJECT
+
+    Q_PROPERTY(QFont font READ font NOTIFY fontChanged)
+    Q_PROPERTY(QIcon icon READ icon NOTIFY iconChanged)
+    Q_PROPERTY(QSize iconSize READ iconSize NOTIFY iconSizeChanged)
+    Q_PROPERTY(QString text READ text NOTIFY textChanged)
+    Q_PROPERTY(qreal frameOpacity READ frameOpacity NOTIFY frameOpacityChanged)
+    Q_PROPERTY(bool crossFadeEnabled READ crossFadeEnabled NOTIFY crossFadeEnabledChanged)
+    Q_PROPERTY(qreal crossFadeProgress READ crossFadeProgress NOTIFY crossFadeProgressChanged)
+
+public:
+    effect_frame_quick_scene(EffectFrameStyle style,
+                             bool staticSize,
+                             QPoint position,
+                             Qt::Alignment alignment,
+                             QObject* parent = nullptr);
+    ~effect_frame_quick_scene() override;
+
+    EffectFrameStyle style() const;
+    bool isStatic() const;
+
+    // has to be const-ref to match effect_frame_impl...
+    const QFont& font() const;
+    void setFont(const QFont& font);
+    Q_SIGNAL void fontChanged(const QFont& font);
+
+    const QIcon& icon() const;
+    void setIcon(const QIcon& icon);
+    Q_SIGNAL void iconChanged(const QIcon& icon);
+
+    const QSize& iconSize() const;
+    void setIconSize(const QSize& iconSize);
+    Q_SIGNAL void iconSizeChanged(const QSize& iconSize);
+
+    const QString& text() const;
+    void setText(const QString& text);
+    Q_SIGNAL void textChanged(const QString& text);
+
+    qreal frameOpacity() const;
+    void setFrameOpacity(qreal frameOpacity);
+    Q_SIGNAL void frameOpacityChanged(qreal frameOpacity);
+
+    bool crossFadeEnabled() const;
+    void setCrossFadeEnabled(bool enabled);
+    Q_SIGNAL void crossFadeEnabledChanged(bool enabled);
+
+    qreal crossFadeProgress() const;
+    void setCrossFadeProgress(qreal progress);
+    Q_SIGNAL void crossFadeProgressChanged(qreal progress);
+
+    Qt::Alignment alignment() const;
+    void setAlignment(Qt::Alignment alignment);
+
+    QPoint position() const;
+    void setPosition(const QPoint& point);
+
+private:
+    void reposition();
+
+    EffectFrameStyle m_style;
+
+    // Position
+    bool m_static;
+    QPoint m_point;
+    Qt::Alignment m_alignment;
+
+    // Contents
+    QFont m_font;
+    QIcon m_icon;
+    QSize m_iconSize;
+    QString m_text;
+    qreal m_frameOpacity = 0.0;
+    bool m_crossFadeEnabled = false;
+    qreal m_crossFadeProgress = 0.0;
+};
+
 class KWIN_EXPORT effect_frame_impl : public QObject, public EffectFrame
 {
     Q_OBJECT
 public:
-    effect_frame_impl(render::scene& scene,
-                      EffectFrameStyle style,
-                      bool staticSize,
-                      QPoint position,
-                      Qt::Alignment alignment);
+    explicit effect_frame_impl(render::scene& scene,
+                               EffectFrameStyle style,
+                               bool staticSize = true,
+                               QPoint position = QPoint(-1, -1),
+                               Qt::Alignment alignment = Qt::AlignCenter);
     ~effect_frame_impl() override;
 
     void free() override;
@@ -642,72 +715,20 @@ public:
     void setPosition(const QPoint& point) override;
     const QString& text() const override;
     void setText(const QString& text) override;
-    EffectFrameStyle style() const override
-    {
-        return m_style;
-    }
-    Plasma::FrameSvg& frame()
-    {
-        return m_frame;
-    }
-    bool isStatic() const
-    {
-        return m_static;
-    }
-    void finalRender(QRegion region, double opacity, double frameOpacity) const;
-    void setShader(GLShader* shader) override
-    {
-        m_shader = shader;
-    }
-    GLShader* shader() const override
-    {
-        return m_shader;
-    }
-    void setSelection(const QRect& selection) override;
-    const QRect& selection() const
-    {
-        return m_selectionGeometry;
-    }
-    Plasma::FrameSvg& selectionFrame()
-    {
-        return m_selection;
-    }
-    /**
-     * The foreground text color as specified by the default Plasma theme.
-     */
-    QColor styledTextColor();
+    EffectFrameStyle style() const override;
+    bool isCrossFade() const override;
+    void enableCrossFade(bool enable) override;
+    qreal crossFadeProgress() const override;
+    void setCrossFadeProgress(qreal progress) override;
 
     render::scene& scene;
 
-private Q_SLOTS:
-    void plasmaThemeChanged();
-
 private:
-    Q_DISABLE_COPY(effect_frame_impl) // As we need to use Qt slots we cannot copy this class
-    void align(QRect& geometry);      // positions geometry around m_point respecting m_alignment
-    void autoResize();                // Auto-resize if not a static size
+    // As we need to use Qt slots we cannot copy this class.
+    Q_DISABLE_COPY(effect_frame_impl)
 
-    EffectFrameStyle m_style;
-    Plasma::FrameSvg m_frame; // TODO: share between all EffectFrames
-    Plasma::FrameSvg m_selection;
-
-    // Position
-    bool m_static;
-    QPoint m_point;
-    Qt::Alignment m_alignment;
+    effect_frame_quick_scene* m_view;
     QRect m_geometry;
-
-    // Contents
-    QString m_text;
-    QFont m_font;
-    QIcon m_icon;
-    QSize m_iconSize;
-    QRect m_selectionGeometry;
-
-    render::effect_frame* m_sceneFrame;
-    GLShader* m_shader;
-
-    Plasma::Theme* m_theme;
 };
 
 inline QList<EffectWindow*> effects_handler_impl::elevatedWindows() const

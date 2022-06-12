@@ -10,7 +10,6 @@
 #cmakedefine01 HAVE_X11_XINPUT
 #cmakedefine01 HAVE_PERF
 #cmakedefine01 HAVE_BREEZE_DECO
-#cmakedefine01 HAVE_LIBCAP
 #cmakedefine01 HAVE_SCHED_RESET_ON_FORK
 #cmakedefine01 HAVE_ACCESSIBILITY
 #cmakedefine01 HAVE_WLR_BASE_INPUT_DEVICES

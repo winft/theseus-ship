@@ -22,6 +22,8 @@
 
 #include <KConfigGroup>
 #include <QAction>
+#include <QFontDatabase>
+#include <QFontMetrics>
 #include <QMouseEvent>
 
 namespace KWin::win
@@ -132,8 +134,7 @@ void screen_edge::unreserve()
 }
 void screen_edge::unreserve(QObject* object)
 {
-    if (callbacks.contains(object)) {
-        callbacks.remove(object);
+    if (callbacks.remove(object) > 0) {
         disconnect(object, &QObject::destroyed, this, qOverload<QObject*>(&screen_edge::unreserve));
         unreserve();
     }
@@ -520,15 +521,12 @@ void screen_edge::setGeometry(QRect const& geometry)
 
 void screen_edge::checkBlocking()
 {
-    if (isCorner()) {
-        return;
-    }
+    auto window = edger->space.activeClient();
+    auto const newValue = !edger->remainActiveOnFullscreen() && window
+        && window->control->fullscreen() && window->frameGeometry().contains(geometry.center())
+        && !(edger->space.render.effects
+             && edger->space.render.effects->hasActiveFullScreenEffect());
 
-    bool newValue = false;
-    if (auto client = edger->space.activeClient()) {
-        newValue
-            = client->control->fullscreen() && client->frameGeometry().contains(geometry.center());
-    }
     if (newValue == is_blocked) {
         return;
     }
@@ -709,9 +707,10 @@ screen_edger::screen_edger(win::space& space)
     : gesture_recognizer{std::make_unique<input::gesture_recognizer>()}
     , space{space}
 {
-    auto const& outputs = kwinApp()->get_base().get_outputs();
-    auto const& phys_dpi = outputs.empty() ? QPoint() : base::output_physical_dpi(*outputs.front());
-    corner_offset = (phys_dpi.x() + phys_dpi.y() + 5) / 6;
+    int const gridUnit = QFontMetrics(QFontDatabase::systemFont(QFontDatabase::GeneralFont))
+                             .boundingRect(QLatin1Char('M'))
+                             .height();
+    corner_offset = 4 * gridUnit;
 
     config = kwinApp()->config();
 
@@ -754,6 +753,9 @@ void screen_edger::reconfigure()
     if (!config) {
         return;
     }
+
+    KConfigGroup screenEdgesConfig = config->group("ScreenEdges");
+    setRemainActiveOnFullscreen(screenEdgesConfig.readEntry("RemainActiveOnFullscreen", false));
 
     // TODO: migrate settings to a group ScreenEdges
     auto windowsConfig = config->group("Windows");
@@ -880,6 +882,11 @@ void screen_edger::setActionForTouchBorder(ElectricBorder border, ElectricBorder
             (*it)->set_touch_action(newValue);
         }
     }
+}
+
+void screen_edger::setRemainActiveOnFullscreen(bool remainActive)
+{
+    m_remainActiveOnFullscreen = remainActive;
 }
 
 void screen_edger::updateLayout()
@@ -1197,10 +1204,10 @@ screen_edge* screen_edger::createEdge(ElectricBorder border,
             }
         }
     }
+
     connect(edge, &screen_edge::approaching, this, &screen_edger::approaching);
-    if (edge->isScreenEdge()) {
-        connect(this, &screen_edger::checkBlocking, edge, &screen_edge::checkBlocking);
-    }
+    connect(this, &screen_edger::checkBlocking, edge, &screen_edge::checkBlocking);
+
     return edge;
 }
 
@@ -1545,6 +1552,10 @@ bool screen_edger::handleDndNotify(xcb_window_t window, QPoint const& point)
         }
     }
     return false;
+}
+bool screen_edger::remainActiveOnFullscreen() const
+{
+    return m_remainActiveOnFullscreen;
 }
 
 void screen_edger::ensureOnTop()

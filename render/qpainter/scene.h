@@ -47,7 +47,6 @@ public:
     void paintGenericScreen(paint_type mask, ScreenPaintData data) override;
 
     CompositingType compositingType() const override;
-    render::effect_frame* createEffectFrame(effect_frame_impl* frame) override;
     std::unique_ptr<render::shadow> createShadow(Toplevel* toplevel) override;
     win::deco::renderer* createDecorationRenderer(win::deco::client_impl* impl) override;
     void handle_screen_geometry_change(QSize const& size) override;

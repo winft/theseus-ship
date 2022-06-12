@@ -28,7 +28,6 @@
 #include <KLocalizedString>
 #include <KPluginMetaData>
 #include <KSelectionOwner>
-#include <KQuickAddons/QtQuickSettings>
 
 #include <qplatformdefs.h>
 #include <QComboBox>
@@ -44,10 +43,8 @@
 #include <QtDBus>
 
 // system
-#if __has_include(<unistd.h>)
-#include <unistd.h>
-#endif
 #include <iostream>
+#include <unistd.h>
 
 Q_LOGGING_CATEGORY(KWIN_CORE, "kwin_core", QtWarningMsg)
 
@@ -396,7 +393,6 @@ int main(int argc, char * argv[])
     a.setupTranslator();
 
     KWin::Application::createAboutData();
-    KQuickAddons::QtQuickSettings::init();
 
     // disables vsync for any QtQuick windows we create (BUG 406180)
     QSurfaceFormat format = QSurfaceFormat::defaultFormat();
