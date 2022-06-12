@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
-project(KWinFT VERSION 5.24.90)
+project(KWinFT VERSION 5.25.80)
 
 set(QT_MIN_VERSION "5.15.0")
 set(KF5_MIN_VERSION "5.91")
