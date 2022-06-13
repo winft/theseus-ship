@@ -405,6 +405,10 @@ public:
 
         bool const wasTouch = activatesForTouchGesture();
         is_blocked = newValue;
+
+        if (is_blocked && is_approaching) {
+            stopApproaching();
+        }
         if (wasTouch != activatesForTouchGesture()) {
             Q_EMIT qobject->activatesForTouchGestureChanged();
         }
@@ -532,6 +536,7 @@ public:
     int reserved_count{0};
     QHash<uint32_t, std::function<bool(ElectricBorder)>> callbacks;
 
+    bool is_blocked{false};
     bool is_approaching{false};
     QRect approach_geometry;
 
@@ -559,8 +564,6 @@ protected:
     virtual void doUpdateBlocking()
     {
     }
-
-    bool is_blocked{false};
 
 private:
     // Mouse should not move more than this many pixels
@@ -937,7 +940,7 @@ public:
         bool activatedForClient = false;
 
         for (auto& edge : edges) {
-            if (edge->reserved_count == 0) {
+            if (edge->reserved_count == 0 || edge->is_blocked) {
                 continue;
             }
             if (!edge->activatesForPointer()) {
@@ -1119,7 +1122,7 @@ public:
         bool activatedForClient = false;
 
         for (auto& edge : edges) {
-            if (edge->reserved_count == 0) {
+            if (edge->reserved_count == 0 || edge->is_blocked) {
                 continue;
             }
             if (!edge->activatesForPointer()) {
@@ -1210,7 +1213,7 @@ public:
             if (!edge || edge->window_id() == XCB_WINDOW_NONE) {
                 continue;
             }
-            if (edge->reserved_count == 0) {
+            if (edge->reserved_count == 0 || edge->is_blocked) {
                 continue;
             }
             if (!edge->activatesForPointer()) {
