@@ -1,32 +1,17 @@
 /*
- * Copyright 2016  Martin Graesslin <mgraesslin@kde.org>
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License or (at your option) version 3 or any later version
- * accepted by the membership of KDE e.V. (or its successor approved
- * by the membership of KDE e.V.), which shall act as a proxy
- * defined in Section 14 of version 3 of the license.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- */
+    SPDX-FileCopyrightText: 2016 Martin Graesslin <mgraesslin@kde.org>
 
-import QtQuick 2.0;
-import QtQuick.Window 2.0;
-import org.kde.plasma.core 2.0 as PlasmaCore;
-import org.kde.plasma.components 3.0 as Plasma;
-import QtQuick.Layouts 1.3;
+    SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL
+*/
+
+import QtQuick 2.15
+import QtQuick.Layouts 1.15
+import QtQuick.Window 2.15
+
+import org.kde.plasma.core 2.1 as PlasmaCore
+import org.kde.plasma.components 3.0 as PlasmaComponents3
 
 PlasmaCore.Dialog {
-    id: dialog
     location: PlasmaCore.Types.Floating
     visible: osd.visible
     flags: Qt.FramelessWindowHint
@@ -34,13 +19,14 @@ PlasmaCore.Dialog {
     outputOnly: true
 
     mainItem: RowLayout {
+        spacing: PlasmaCore.Units.smallSpacing
         PlasmaCore.IconItem {
-            implicitWidth: PlasmaCore.Units.iconSizes["medium"]
+            implicitWidth: PlasmaCore.Units.iconSizes.medium
             implicitHeight: implicitWidth
             source: osd.iconName
-            visible: osd.iconName != ""
+            visible: osd.iconName !== ""
         }
-        Plasma.Label {
+        PlasmaComponents3.Label {
             text: osd.message
         }
     }
