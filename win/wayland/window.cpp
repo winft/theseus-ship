@@ -842,7 +842,7 @@ layer window::layer_for_dock() const
 
 bool window::has_pending_repaints() const
 {
-    return readyForPainting() && Toplevel::has_pending_repaints();
+    return ready_for_painting && Toplevel::has_pending_repaints();
 }
 
 void window::map()

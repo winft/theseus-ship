@@ -294,7 +294,7 @@ bool internal_window::isOutline() const
 
 bool internal_window::isShown() const
 {
-    return readyForPainting();
+    return ready_for_painting;
 }
 
 bool internal_window::isHiddenInternal() const

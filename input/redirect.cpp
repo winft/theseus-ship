@@ -127,7 +127,7 @@ Toplevel* redirect::findManagedToplevel(const QPoint& pos)
         if (window->isHiddenInternal()) {
             continue;
         }
-        if (!window->readyForPainting()) {
+        if (!window->ready_for_painting) {
             continue;
         }
         if (isScreenLocked) {

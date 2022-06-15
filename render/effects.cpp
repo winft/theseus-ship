@@ -152,7 +152,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
         Q_EMIT desktopPresenceChanged(c->render->effect.get(), old, c->desktop());
     });
     connect(ws, &win::space::clientAdded, this, [this](auto c) {
-        if (c->readyForPainting())
+        if (c->ready_for_painting)
             slotClientShown(c);
         else
             connect(c, &Toplevel::windowShown, this, &effects_handler_impl::slotClientShown);

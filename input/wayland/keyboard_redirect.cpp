@@ -146,7 +146,7 @@ void keyboard_redirect::update()
                 // a deleted window doesn't get mouse events
                 continue;
             }
-            if (!t->readyForPainting()) {
+            if (!t->ready_for_painting) {
                 continue;
             }
             auto wayland_window = qobject_cast<win::wayland::window*>(t);

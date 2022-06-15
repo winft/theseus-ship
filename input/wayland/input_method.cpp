@@ -201,7 +201,7 @@ void input_method::handle_popup_surface_created(input_method_popup_surface_v2* p
             }
         });
 
-    if (popup->readyForPainting()) {
+    if (popup->ready_for_painting) {
         space->handle_window_added(popup);
     } else {
         QObject::connect(

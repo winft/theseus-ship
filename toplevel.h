@@ -193,7 +193,6 @@ public:
     xcb_window_t wmClientLeader() const;
     virtual pid_t pid() const;
 
-    bool readyForPainting() const; // true if the window has been already painted its contents
     xcb_visualid_t visual() const;
     bool shape() const;
     virtual void setOpacity(double opacity);
@@ -746,11 +745,6 @@ inline QSize Toplevel::size() const
 inline QPoint Toplevel::pos() const
 {
     return m_frameGeometry.topLeft();
-}
-
-inline bool Toplevel::readyForPainting() const
-{
-    return ready_for_painting;
 }
 
 inline xcb_visualid_t Toplevel::visual() const

@@ -171,7 +171,7 @@ void TestXdgShellClient::testMapUnmapMap()
     QVERIFY(client);
     QVERIFY(client->isShown());
     QCOMPARE(client->isHiddenInternal(), false);
-    QCOMPARE(client->readyForPainting(), true);
+    QCOMPARE(client->ready_for_painting, true);
     QCOMPARE(client->depth(), 32);
     QVERIFY(client->hasAlpha());
     QCOMPARE(client->control->icon().name(), QStringLiteral("wayland"));
@@ -202,7 +202,7 @@ void TestXdgShellClient::testMapUnmapMap()
     surface->attachBuffer(Buffer::Ptr());
     surface->commit(Surface::CommitFlag::None);
     QVERIFY(hiddenSpy.wait());
-    QCOMPARE(client->readyForPainting(), true);
+    QCOMPARE(client->ready_for_painting, true);
     QCOMPARE(client->isHiddenInternal(), true);
     QVERIFY(windowClosedSpy.isEmpty());
     QVERIFY(!Test::app()->workspace->activeClient());
@@ -217,7 +217,7 @@ void TestXdgShellClient::testMapUnmapMap()
     QVERIFY(windowShownSpy.wait());
     QCOMPARE(windowShownSpy.count(), 1);
     QCOMPARE(clientAddedSpy.count(), 1);
-    QCOMPARE(client->readyForPainting(), true);
+    QCOMPARE(client->ready_for_painting, true);
     QCOMPARE(client->isHiddenInternal(), false);
     QCOMPARE(client->depth(), 24);
     QVERIFY(!client->hasAlpha());
@@ -231,7 +231,7 @@ void TestXdgShellClient::testMapUnmapMap()
     surface->commit(Surface::CommitFlag::None);
     QVERIFY(hiddenSpy.wait());
     QCOMPARE(hiddenSpy.count(), 2);
-    QCOMPARE(client->readyForPainting(), true);
+    QCOMPARE(client->ready_for_painting, true);
     QCOMPARE(client->isHiddenInternal(), true);
     QCOMPARE(client->internalId(), uuid);
     QVERIFY(windowClosedSpy.isEmpty());

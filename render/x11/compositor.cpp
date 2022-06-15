@@ -281,7 +281,7 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
     // window should not get focus before it's displayed, handle unredirected windows properly and
     // so on.
 
-    remove_all_if(windows, [](auto const& win) { return !win->readyForPainting(); });
+    remove_all_if(windows, [](auto const& win) { return !win->ready_for_painting; });
 
     repaints = repaints_region;
 

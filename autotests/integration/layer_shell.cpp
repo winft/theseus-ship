@@ -191,7 +191,7 @@ void layer_shell_test::test_create()
     QVERIFY(window);
     QVERIFY(window->isShown());
     QCOMPARE(window->isHiddenInternal(), false);
-    QCOMPARE(window->readyForPainting(), true);
+    QCOMPARE(window->ready_for_painting, true);
     QCOMPARE(window->depth(), 32);
     QVERIFY(window->hasAlpha());
 
@@ -241,7 +241,7 @@ void layer_shell_test::test_create()
     QVERIFY(window2);
     QVERIFY(window2->isShown());
     QCOMPARE(window2->isHiddenInternal(), false);
-    QCOMPARE(window2->readyForPainting(), true);
+    QCOMPARE(window2->ready_for_painting, true);
     QCOMPARE(Test::app()->workspace->activeClient(), window2);
 
     // Surface is centered.

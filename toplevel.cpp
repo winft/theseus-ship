@@ -122,7 +122,7 @@ Toplevel* Toplevel::create_remnant(Toplevel* source)
         // Don't create effect remnants when we don't render.
         return nullptr;
     }
-    if (!source->readyForPainting()) {
+    if (!source->ready_for_painting) {
         // Don't create remnants for windows that have never been shown.
         return nullptr;
     }

@@ -597,7 +597,7 @@ void handle_new_toplevel(Space* space, Wrapland::Server::XdgShellToplevel* tople
 
     space->m_windows.push_back(window);
 
-    if (window->readyForPainting()) {
+    if (window->ready_for_painting) {
         space->handle_window_added(window);
     } else {
         QObject::connect(
@@ -622,7 +622,7 @@ void handle_new_popup(Space* space, Wrapland::Server::XdgShellPopup* popup)
     auto window = win::wayland::create_popup_window(space, popup);
     space->m_windows.push_back(window);
 
-    if (window->readyForPainting()) {
+    if (window->ready_for_painting) {
         space->handle_window_added(window);
     } else {
         QObject::connect(

@@ -304,7 +304,7 @@ void window::damageNotifyEvent()
         return;
     }
 
-    if (!readyForPainting()) {
+    if (!ready_for_painting) {
         // avoid "setReadyForPainting()" function calling overhead
         if (sync_request.counter == XCB_NONE) {
             // cannot detect complete redraw, consider done now

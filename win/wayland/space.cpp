@@ -304,7 +304,7 @@ void space::handle_window_removed(wayland::window* window)
 
 void space::handle_x11_window_added(x11::window* window)
 {
-    if (window->readyForPainting()) {
+    if (window->ready_for_painting) {
         setup_plasma_management(this, window);
     } else {
         QObject::connect(window, &x11::window::windowShown, this, [this](auto window) {

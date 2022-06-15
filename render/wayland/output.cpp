@@ -171,7 +171,7 @@ bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
         auto screen_lock_filtered
             = kwinApp()->is_screen_locked() && !win->isLockScreen() && !win->isInputMethod();
 
-        return !win->readyForPainting() || screen_lock_filtered;
+        return !win->ready_for_painting || screen_lock_filtered;
     });
 
     // Submit pending output repaints and clear the pending field, so that post-pass can add new

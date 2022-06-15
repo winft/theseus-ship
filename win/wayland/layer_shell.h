@@ -228,7 +228,7 @@ void handle_new_layer_surface(Space* space, Wrapland::Server::LayerSurfaceV1* la
 
     win::wayland::assign_layer_surface_role(window, layer_surface);
 
-    if (window->readyForPainting()) {
+    if (window->ready_for_painting) {
         space->handle_window_added(window);
     } else {
         QObject::connect(

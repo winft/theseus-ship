@@ -134,7 +134,7 @@ void DontCrashAuroraeDestroyDecoTest::testBorderlessMaximizedWindows()
 
     // mark the window as ready for painting, otherwise it doesn't get input events
     QMetaObject::invokeMethod(client, "setReadyForPainting");
-    QVERIFY(client->readyForPainting());
+    QVERIFY(client->ready_for_painting);
 
     // simulate click on maximize button
     QSignalSpy maximizedStateChangedSpy(
