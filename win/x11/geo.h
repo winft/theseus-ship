@@ -54,7 +54,7 @@ void update_shape(Win* win)
                               win->frameId(),
                               client_pos.x(),
                               client_pos.y(),
-                              win->xcb_window());
+                              win->xcb_window);
         }
     } else if (win->app_no_border) {
         xcb_shape_mask(connection(),

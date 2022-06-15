@@ -149,7 +149,7 @@ void Toplevel::copyToDeleted(Toplevel* c)
         win_info->disable();
     }
 
-    m_client.reset(c->m_client, false);
+    xcb_window.reset(c->xcb_window, false);
     ready_for_painting = c->ready_for_painting;
     damage_handle = XCB_NONE;
     damage_region = c->damage_region;
@@ -211,7 +211,7 @@ xcb_window_t Toplevel::wmClientLeader() const
     if (m_wmClientLeader != XCB_WINDOW_NONE) {
         return m_wmClientLeader;
     }
-    return xcb_window();
+    return xcb_window;
 }
 
 void Toplevel::setResourceClass(const QByteArray &name, const QByteArray &className)
@@ -574,7 +574,7 @@ xcb_window_t Toplevel::frameId() const
     if (m_remnant) {
         return m_remnant->frame;
     }
-    return m_client;
+    return xcb_window;
 }
 
 void Toplevel::debug(QDebug& stream) const
@@ -582,7 +582,7 @@ void Toplevel::debug(QDebug& stream) const
     if (remnant()) {
         stream << "\'REMNANT:" << reinterpret_cast<void const*>(this) << "\'";
     } else {
-        stream << "\'ID:" << reinterpret_cast<void const*>(this) << xcb_window() << "\'";
+        stream << "\'ID:" << reinterpret_cast<void const*>(this) << xcb_window << "\'";
     }
 }
 
@@ -1096,8 +1096,8 @@ QRect Toplevel::iconGeometry() const
 
 void Toplevel::setWindowHandles(xcb_window_t w)
 {
-    Q_ASSERT(!m_client.is_valid() && w != XCB_WINDOW_NONE);
-    m_client.reset(w, false);
+    assert(!xcb_window.is_valid() && w != XCB_WINDOW_NONE);
+    xcb_window.reset(w, false);
 }
 
 void Toplevel::setShortcutInternal()

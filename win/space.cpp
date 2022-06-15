@@ -1705,7 +1705,7 @@ std::vector<Toplevel*> space::unmanagedList() const
 {
     std::vector<Toplevel*> ret;
     for (auto const& window : m_windows) {
-        if (window->xcb_window() && !window->control && !window->remnant()) {
+        if (window->xcb_window && !window->control && !window->remnant()) {
             ret.push_back(window);
         }
     }
@@ -2985,7 +2985,7 @@ void space::setupWindowShortcutDone(bool ok)
 
 void space::clientShortcutUpdated(Toplevel* window)
 {
-    QString key = QStringLiteral("_k_session:%1").arg(window->xcb_window());
+    QString key = QStringLiteral("_k_session:%1").arg(window->xcb_window);
     QAction* action = findChild<QAction*>(key);
     if (!window->control->shortcut().isEmpty()) {
         if (action == nullptr) { // new shortcut

@@ -157,7 +157,7 @@ void X11DesktopWindowTest::testDesktopWindow()
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
     QVERIFY(client);
-    QCOMPARE(client->xcb_window(), w);
+    QCOMPARE(client->xcb_window, w);
     QVERIFY(!win::decoration(client));
     QCOMPARE(client->windowType(), NET::Desktop);
     QCOMPARE(client->frameGeometry(), windowGeometry);

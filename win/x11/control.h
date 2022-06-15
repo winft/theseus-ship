@@ -726,8 +726,8 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
     auto firstInTabBoxCookie = fetch_first_in_tabbox(win);
     auto transientCookie = fetch_transient(win);
 
-    win->geometry_hints.init(win->xcb_window());
-    win->motif_hints.init(win->xcb_window());
+    win->geometry_hints.init(win->xcb_window);
+    win->motif_hints.init(win->xcb_window);
 
     win->info = new win_info(win, win->xcb_windows.client, rootWindow(), properties, properties2);
 
@@ -753,10 +753,10 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
     QObject::connect(win, &Win::windowClassChanged, win, [win] { evaluate_rules(win); });
 
     if (base::x11::xcb::extensions::self()->is_shape_available()) {
-        xcb_shape_select_input(connection(), win->xcb_window(), true);
+        xcb_shape_select_input(connection(), win->xcb_window, true);
     }
 
-    win->detectShape(win->xcb_window());
+    win->detectShape(win->xcb_window);
     detect_no_border(win);
     fetch_iconic_name(win);
 
@@ -796,7 +796,7 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
 
     KStartupInfoId asn_id;
     KStartupInfoData asn_data;
-    auto asn_valid = space.checkStartupNotification(win->xcb_window(), asn_id, asn_data);
+    auto asn_valid = space.checkStartupNotification(win->xcb_window, asn_id, asn_data);
 
     // Make sure that the input window is created before we update the stacking order
     // TODO(romangg): Does it matter that the frame geometry is not set yet here?
@@ -1414,7 +1414,7 @@ template<typename Win>
 xcb_timestamp_t read_user_creation_time(Win* win)
 {
     base::x11::xcb::property prop(false,
-                                  win->xcb_window(),
+                                  win->xcb_window,
                                   win->space.atoms->kde_net_wm_user_creation_time,
                                   XCB_ATOM_CARDINAL,
                                   0,
@@ -1537,7 +1537,7 @@ void startup_id_changed(Win* win)
 {
     KStartupInfoId asn_id;
     KStartupInfoData asn_data;
-    bool asn_valid = win->space.checkStartupNotification(win->xcb_window(), asn_id, asn_data);
+    bool asn_valid = win->space.checkStartupNotification(win->xcb_window, asn_id, asn_data);
     if (!asn_valid)
         return;
     // If the ASN contains desktop, move it to the desktop, otherwise move it to the current
@@ -1617,7 +1617,7 @@ template<typename Win>
 base::x11::xcb::property fetch_show_on_screen_edge(Win* win)
 {
     return base::x11::xcb::property(
-        false, win->xcb_window(), win->space.atoms->kde_screen_edge_show, XCB_ATOM_CARDINAL, 0, 1);
+        false, win->xcb_window, win->space.atoms->kde_screen_edge_show, XCB_ATOM_CARDINAL, 0, 1);
 }
 
 template<typename Win>
@@ -1682,8 +1682,7 @@ void read_show_on_screen_edge(Win* win, base::x11::xcb::property& property)
     } else if (!property.is_null() && property->type != XCB_ATOM_NONE) {
         // property value is incorrect, delete the property
         // so that the client knows that it is not hidden
-        xcb_delete_property(
-            connection(), win->xcb_window(), win->space.atoms->kde_screen_edge_show);
+        xcb_delete_property(connection(), win->xcb_window, win->space.atoms->kde_screen_edge_show);
     } else {
         // restore
         // TODO: add proper unreserve

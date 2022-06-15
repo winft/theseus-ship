@@ -279,7 +279,7 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
     QVERIFY(client);
-    QCOMPARE(client->xcb_window(), w);
+    QCOMPARE(client->xcb_window, w);
     QCOMPARE(win::frame_to_client_size(client, client->size()), windowGeometry.size());
 
     // let's get the window info

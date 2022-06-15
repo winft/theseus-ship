@@ -817,7 +817,7 @@ protected:
     window* get_client_impl(qulonglong windowId) override
     {
         for (auto& win : ref_space->m_windows) {
-            if (win->control && win->xcb_window() == windowId) {
+            if (win->control && win->xcb_window == windowId) {
                 return win->control->scripting.get();
             }
         }

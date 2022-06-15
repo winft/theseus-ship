@@ -368,7 +368,7 @@ void SceneQPainterTest::testX11Window()
 
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
     QVERIFY(client);
-    QCOMPARE(client->xcb_window(), w);
+    QCOMPARE(client->xcb_window, w);
     QCOMPARE(win::frame_to_client_size(client, client->size()), QSize(100, 200));
 
     if (!client->surface) {

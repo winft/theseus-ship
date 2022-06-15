@@ -21,7 +21,7 @@ template<typename Win, typename Space>
 Win* find_unmanaged(Space&& space, xcb_window_t xcb_win)
 {
     for (auto win : space.m_windows) {
-        if (!win->remnant() && !win->control && win->xcb_window() == xcb_win) {
+        if (!win->remnant() && !win->control && win->xcb_window == xcb_win) {
             return static_cast<Win*>(win);
         }
     }
@@ -96,7 +96,7 @@ auto create_unmanaged_window(xcb_window_t w, Space& space) -> typename Space::x1
     auto find_internal_window = [&win]() -> QWindow* {
         auto const windows = kwinApp()->topLevelWindows();
         for (auto w : windows) {
-            if (w->winId() == win->xcb_window()) {
+            if (w->winId() == win->xcb_window) {
                 return w;
             }
         }
@@ -209,7 +209,7 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* e)
         break;
     default: {
         if (eventType == base::x11::xcb::extensions::self()->shape_notify_event()) {
-            win->detectShape(win->xcb_window());
+            win->detectShape(win->xcb_window);
             win->addRepaintFull();
 
             // In case shape change removes part of this window.

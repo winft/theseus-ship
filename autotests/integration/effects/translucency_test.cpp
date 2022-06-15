@@ -162,7 +162,7 @@ void TranslucencyTest::testMoveAfterDesktopChange()
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
     QVERIFY(client);
-    QCOMPARE(client->xcb_window(), w);
+    QCOMPARE(client->xcb_window, w);
     QVERIFY(win::decoration(client));
 
     QVERIFY(windowAddedSpy.wait());
@@ -240,7 +240,7 @@ void TranslucencyTest::testDialogClose()
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
     QVERIFY(client);
-    QCOMPARE(client->xcb_window(), w);
+    QCOMPARE(client->xcb_window, w);
     QVERIFY(win::decoration(client));
     QVERIFY(win::is_dialog(client));
 

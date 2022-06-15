@@ -48,8 +48,8 @@ public:
                     return;
                 }
 
-                if (window->xcb_window()) {
-                    xcb_kill_client(connection(), window->xcb_window());
+                if (window->xcb_window) {
+                    xcb_kill_client(connection(), window->xcb_window);
                 }
             },
             QByteArrayLiteral("pirate"));

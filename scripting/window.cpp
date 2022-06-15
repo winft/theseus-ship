@@ -124,7 +124,7 @@ xcb_window_t window::frameId() const
 
 quint32 window::windowId() const
 {
-    return m_client->xcb_window();
+    return m_client->xcb_window;
 }
 
 QByteArray window::resourceName() const

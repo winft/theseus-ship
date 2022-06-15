@@ -278,11 +278,12 @@ void root_info::changeShowingDesktop(bool showing)
 
 void root_info::setActiveClient(Toplevel* window)
 {
-    const xcb_window_t w = window ? window->xcb_window() : xcb_window_t{XCB_WINDOW_NONE};
-    if (m_activeWindow == w) {
+    auto const xcb_win
+        = window ? static_cast<xcb_window_t>(window->xcb_window) : xcb_window_t{XCB_WINDOW_NONE};
+    if (m_activeWindow == xcb_win) {
         return;
     }
-    m_activeWindow = w;
+    m_activeWindow = xcb_win;
     setActiveWindow(m_activeWindow);
 }
 

@@ -46,7 +46,7 @@ void remove_controlled_window_from_space(Space& space, Win* win)
     remove_window_from_lists(space, win);
     remove_all(space.attention_chain, win);
 
-    auto group = space.findGroup(win->xcb_window());
+    auto group = space.findGroup(win->xcb_window);
     if (group) {
         group->lostLeader();
     }
@@ -119,11 +119,11 @@ void release_unmanaged(Win* win, bool on_shutdown)
     Q_EMIT win->closed(win);
 
     // Don't affect our own windows.
-    if (!QWidget::find(win->xcb_window())) {
+    if (!QWidget::find(win->xcb_window)) {
         if (base::x11::xcb::extensions::self()->is_shape_available()) {
-            xcb_shape_select_input(connection(), win->xcb_window(), false);
+            xcb_shape_select_input(connection(), win->xcb_window, false);
         }
-        base::x11::xcb::select_input(win->xcb_window(), XCB_EVENT_MASK_NO_EVENT);
+        base::x11::xcb::select_input(win->xcb_window, XCB_EVENT_MASK_NO_EVENT);
     }
 
     if (!on_shutdown) {

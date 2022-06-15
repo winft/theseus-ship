@@ -569,7 +569,7 @@ QVariant console_model::get_client_data(QModelIndex const& index, int role) cons
         }
         auto u = m_unmanageds.at(index.row());
         if (role == Qt::DisplayRole) {
-            return u->xcb_window();
+            return static_cast<xcb_window_t>(u->xcb_window);
         }
         return QVariant();
     }

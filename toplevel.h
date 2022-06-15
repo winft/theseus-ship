@@ -142,7 +142,6 @@ public:
     ~Toplevel() override;
 
     virtual xcb_window_t frameId() const;
-    xcb_window_t xcb_window() const;
 
     QRegion render_region() const;
     void discard_shape();
@@ -293,6 +292,7 @@ public:
 
     // A UUID to uniquely identify this Toplevel independent of windowing system.
     QUuid internal_id;
+    base::x11::xcb::window xcb_window{};
 
     // TODO: These are Unmanaged-only properties.
     bool is_outline{false};
@@ -397,9 +397,6 @@ private:
     void handle_output_added(base::output* output);
     void handle_output_removed(base::output* output);
     void add_repaint_outputs(QRegion const& region);
-
-    // when adding new data members, check also copyToDeleted()
-    base::x11::xcb::window m_client{};
 
     QRect m_frameGeometry;
     win::layer m_layer{win::layer::unknown};
@@ -705,11 +702,6 @@ Q_SIGNALS:
     void maximizeableChanged(bool);
     void desktopFileNameChanged();
 };
-
-inline xcb_window_t Toplevel::xcb_window() const
-{
-    return m_client;
-}
 
 inline QRect Toplevel::frameGeometry() const
 {

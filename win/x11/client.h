@@ -118,7 +118,7 @@ void ping(Win* win)
     win->ping_timer->start(kwinApp()->options->killPingTimeout() / 2);
 
     win->ping_timestamp = xTime();
-    rootInfo()->sendPing(win->xcb_window(), win->ping_timestamp);
+    rootInfo()->sendPing(win->xcb_window, win->ping_timestamp);
 }
 
 template<typename Win>
@@ -182,7 +182,7 @@ void kill_process(Win* win, bool ask, xcb_timestamp_t timestamp = XCB_TIME_CURRE
                                     << QStringLiteral("--windowname") << win->caption.normal
                                     << QStringLiteral("--applicationname")
                                     << QString::fromUtf8(win->resource_class)
-                                    << QStringLiteral("--wid") << QString::number(win->xcb_window())
+                                    << QStringLiteral("--wid") << QString::number(win->xcb_window)
                                     << QStringLiteral("--timestamp") << QString::number(timestamp),
                                 QString(),
                                 &win->kill_helper_pid);
@@ -214,7 +214,7 @@ void get_sync_counter(Win* win)
     }
 
     base::x11::xcb::property syncProp(false,
-                                      win->xcb_window(),
+                                      win->xcb_window,
                                       win->space.atoms->net_wm_sync_request_counter,
                                       XCB_ATOM_CARDINAL,
                                       0,
@@ -289,7 +289,7 @@ void send_sync_request(Win* win)
     // Send the message to client
     auto& atoms = win->space.atoms;
     send_client_message(
-        win->xcb_window(), atoms->wm_protocols, atoms->net_wm_sync_request, number_lo, number_hi);
+        win->xcb_window, atoms->wm_protocols, atoms->net_wm_sync_request, number_lo, number_hi);
 
     win->sync_request.timestamp = xTime();
 }
@@ -305,8 +305,8 @@ void send_synthetic_configure_notify(Win* win, QRect const& client_geo)
     memset(&c, 0, sizeof(c));
 
     c.response_type = XCB_CONFIGURE_NOTIFY;
-    c.event = win->xcb_window();
-    c.window = win->xcb_window();
+    c.event = win->xcb_window;
+    c.window = win->xcb_window;
     c.x = client_geo.x();
     c.y = client_geo.y();
 
@@ -314,7 +314,7 @@ void send_synthetic_configure_notify(Win* win, QRect const& client_geo)
     c.height = client_geo.height();
     auto getEmulatedXWaylandSize = [win, &client_geo]() {
         auto property = base::x11::xcb::property(false,
-                                                 win->xcb_window(),
+                                                 win->xcb_window,
                                                  win->space.atoms->xwayland_randr_emu_monitor_rects,
                                                  XCB_ATOM_CARDINAL,
                                                  0,

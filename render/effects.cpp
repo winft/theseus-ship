@@ -1913,8 +1913,7 @@ effects_window_impl::effects_window_impl(Toplevel* toplevel)
     managed = toplevel->isClient();
 
     waylandClient = toplevel->is_wayland_window();
-    x11Client
-        = qobject_cast<KWin::win::x11::window*>(toplevel) != nullptr || toplevel->xcb_window();
+    x11Client = qobject_cast<KWin::win::x11::window*>(toplevel) != nullptr || toplevel->xcb_window;
 }
 
 effects_window_impl::~effects_window_impl()
@@ -2237,13 +2236,13 @@ QByteArray effects_window_impl::readProperty(long atom, long type, int format) c
     if (!kwinApp()->x11Connection()) {
         return QByteArray();
     }
-    return readWindowProperty(window()->xcb_window(), atom, type, format);
+    return readWindowProperty(window()->xcb_window, atom, type, format);
 }
 
 void effects_window_impl::deleteProperty(long int atom) const
 {
     if (kwinApp()->x11Connection()) {
-        deleteWindowProperty(window()->xcb_window(), atom);
+        deleteWindowProperty(window()->xcb_window, atom);
     }
 }
 

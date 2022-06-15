@@ -101,7 +101,7 @@ void window::showContextHelp()
 {
     if (info->supportsProtocol(NET::ContextHelpProtocol)) {
         send_client_message(
-            xcb_window(), space.atoms->wm_protocols, space.atoms->net_wm_context_help);
+            xcb_window, space.atoms->wm_protocols, space.atoms->net_wm_context_help);
     }
 }
 
@@ -202,7 +202,7 @@ void window::update_input_shape()
                       shape_helper_window,
                       deco_margin.x(),
                       deco_margin.y(),
-                      xcb_window());
+                      xcb_window);
     xcb_shape_combine(con,
                       XCB_SHAPE_SO_UNION,
                       XCB_SHAPE_SK_INPUT,
@@ -210,7 +210,7 @@ void window::update_input_shape()
                       shape_helper_window,
                       deco_margin.x(),
                       deco_margin.y(),
-                      xcb_window());
+                      xcb_window);
     xcb_shape_combine(con,
                       XCB_SHAPE_SO_SET,
                       XCB_SHAPE_SK_INPUT,
@@ -340,7 +340,7 @@ void window::closeWindow()
     update_user_time(this);
 
     if (info->supportsProtocol(NET::DeleteWindowProtocol)) {
-        send_client_message(xcb_window(), space.atoms->wm_protocols, space.atoms->wm_delete_window);
+        send_client_message(xcb_window, space.atoms->wm_protocols, space.atoms->wm_delete_window);
         ping(this);
     } else {
         // Client will not react on wm_delete_window. We have not choice
@@ -499,7 +499,7 @@ void window::takeFocus()
 
     if (info->supportsProtocol(NET::TakeFocusProtocol)) {
         kwinApp()->update_x11_time_from_clock();
-        send_client_message(xcb_window(), space.atoms->wm_protocols, space.atoms->wm_take_focus);
+        send_client_message(xcb_window, space.atoms->wm_protocols, space.atoms->wm_take_focus);
     }
 
     space.setShouldGetFocus(this);
@@ -875,7 +875,7 @@ group* window::group()
 
 void window::checkTransient(Toplevel* window)
 {
-    auto id = window->xcb_window();
+    auto id = static_cast<xcb_window_t>(window->xcb_window);
     if (x11_transient(this)->original_lead_id != id) {
         return;
     }
@@ -958,18 +958,18 @@ void window::getResourceClass()
 
 void window::getWmClientMachine()
 {
-    client_machine->resolve(xcb_window(), wmClientLeader());
+    client_machine->resolve(xcb_window, wmClientLeader());
 }
 
 base::x11::xcb::property window::fetchWmClientLeader() const
 {
     return base::x11::xcb::property(
-        false, xcb_window(), space.atoms->wm_client_leader, XCB_ATOM_WINDOW, 0, 10000);
+        false, xcb_window, space.atoms->wm_client_leader, XCB_ATOM_WINDOW, 0, 10000);
 }
 
 void window::readWmClientLeader(base::x11::xcb::property& prop)
 {
-    m_wmClientLeader = prop.value<xcb_window_t>(xcb_window());
+    m_wmClientLeader = prop.value<xcb_window_t>(xcb_window);
 }
 
 void window::getWmClientLeader()
@@ -1009,8 +1009,8 @@ void window::detectShape(xcb_window_t id)
  */
 QByteArray window::sessionId() const
 {
-    QByteArray result = base::x11::xcb::string_property(xcb_window(), space.atoms->sm_client_id);
-    if (result.isEmpty() && m_wmClientLeader && m_wmClientLeader != xcb_window()) {
+    QByteArray result = base::x11::xcb::string_property(xcb_window, space.atoms->sm_client_id);
+    if (result.isEmpty() && m_wmClientLeader && m_wmClientLeader != xcb_window) {
         result = base::x11::xcb::string_property(m_wmClientLeader, space.atoms->sm_client_id);
     }
     return result;
@@ -1022,8 +1022,8 @@ QByteArray window::sessionId() const
  */
 QByteArray window::wmCommand()
 {
-    QByteArray result = base::x11::xcb::string_property(xcb_window(), XCB_ATOM_WM_COMMAND);
-    if (result.isEmpty() && m_wmClientLeader && m_wmClientLeader != xcb_window()) {
+    QByteArray result = base::x11::xcb::string_property(xcb_window, XCB_ATOM_WM_COMMAND);
+    if (result.isEmpty() && m_wmClientLeader && m_wmClientLeader != xcb_window) {
         result = base::x11::xcb::string_property(m_wmClientLeader, XCB_ATOM_WM_COMMAND);
     }
     result.replace(0, ' ');
@@ -1057,7 +1057,7 @@ void window::debug(QDebug& stream) const
 
     stream.nospace();
     stream << "\'x11::window"
-           << "(" << QString::fromStdString(type) << "):" << xcb_window() << ";"
+           << "(" << QString::fromStdString(type) << "):" << xcb_window << ";"
            << ";WMCLASS:" << resource_class << ":" << resource_name
            << ";Caption:" << QString::fromStdString(caption) << "\'";
 }
@@ -1075,7 +1075,7 @@ void window::showOnScreenEdge()
 
     hideClient(false);
     win::set_keep_below(this, false);
-    xcb_delete_property(connection(), xcb_window(), space.atoms->kde_screen_edge_show);
+    xcb_delete_property(connection(), xcb_window, space.atoms->kde_screen_edge_show);
 }
 
 bool window::doStartMoveResize()

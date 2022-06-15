@@ -107,7 +107,7 @@ x11_visit::x11_visit(Toplevel* target,
     auto xcb_con = source.x11.connection;
     auto cookie = xcb_get_property(xcb_con,
                                    0,
-                                   target->xcb_window(),
+                                   target->xcb_window,
                                    source.x11.space->atoms->xdnd_aware,
                                    XCB_GET_PROPERTY_TYPE_ANY,
                                    0,
@@ -162,7 +162,7 @@ bool x11_visit::handle_client_message(xcb_client_message_event_t* event)
 bool x11_visit::handle_status(xcb_client_message_event_t* event)
 {
     auto data = &event->data;
-    if (data->data32[0] != target->xcb_window()) {
+    if (data->data32[0] != target->xcb_window) {
         // wrong target window
         return false;
     }
@@ -196,7 +196,7 @@ bool x11_visit::handle_finished(xcb_client_message_event_t* event)
 {
     auto data = &event->data;
 
-    if (data->data32[0] != target->xcb_window()) {
+    if (data->data32[0] != target->xcb_window) {
         // different target window
         return false;
     }
@@ -237,7 +237,7 @@ void x11_visit::send_position(QPointF const& globalPos)
     data.data32[4] = client_action_to_atom(actions.proposed, *source.x11.space->atoms);
 
     send_client_message(
-        source.x11.connection, target->xcb_window(), source.x11.space->atoms->xdnd_position, &data);
+        source.x11.connection, target->xcb_window, source.x11.space->atoms->xdnd_position, &data);
 }
 
 void x11_visit::leave()
@@ -342,7 +342,7 @@ void x11_visit::send_enter()
     }
 
     send_client_message(
-        source.x11.connection, target->xcb_window(), source.x11.space->atoms->xdnd_enter, &data);
+        source.x11.connection, target->xcb_window, source.x11.space->atoms->xdnd_enter, &data);
 }
 
 void x11_visit::send_drop(uint32_t time)
@@ -352,7 +352,7 @@ void x11_visit::send_drop(uint32_t time)
     data.data32[2] = time;
 
     send_client_message(
-        source.x11.connection, target->xcb_window(), source.x11.space->atoms->xdnd_drop, &data);
+        source.x11.connection, target->xcb_window, source.x11.space->atoms->xdnd_drop, &data);
 
     if (version < 2) {
         do_finish();
@@ -365,7 +365,7 @@ void x11_visit::send_leave()
     data.data32[0] = drag_window;
 
     send_client_message(
-        source.x11.connection, target->xcb_window(), source.x11.space->atoms->xdnd_leave, &data);
+        source.x11.connection, target->xcb_window, source.x11.space->atoms->xdnd_leave, &data);
 }
 
 void x11_visit::update_actions()

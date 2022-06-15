@@ -95,7 +95,7 @@ static inline xcb_window_t find_event_window(xcb_generic_event_t* event)
 template<typename Win>
 bool window_event(Win* win, xcb_generic_event_t* e)
 {
-    if (find_event_window(e) == win->xcb_window()) {
+    if (find_event_window(e) == win->xcb_window) {
         // avoid doing stuff on frame or wrapper
         NET::Properties dirtyProperties;
         NET::Properties2 dirtyProperties2;
@@ -307,10 +307,9 @@ bool window_event(Win* win, xcb_generic_event_t* e)
     }
     default:
         if (eventType == base::x11::xcb::extensions::self()->shape_notify_event()
-            && reinterpret_cast<xcb_shape_notify_event_t*>(e)->affected_window
-                == win->xcb_window()) {
+            && reinterpret_cast<xcb_shape_notify_event_t*>(e)->affected_window == win->xcb_window) {
             // workaround for #19644
-            win->detectShape(win->xcb_window());
+            win->detectShape(win->xcb_window);
             update_shape(win);
         }
         if (eventType == base::x11::xcb::extensions::self()->damage_notify_event()
@@ -328,7 +327,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
 template<typename Win>
 bool map_request_event(Win* win, xcb_map_request_event_t* e)
 {
-    if (e->window != win->xcb_window()) {
+    if (e->window != win->xcb_window) {
         // Special support for the save-set feature, which is a bit broken.
         // If there's a window from one client embedded in another one,
         // e.g. using XEMBED, and the embedder suddenly loses its X connection,
@@ -367,7 +366,7 @@ bool map_request_event(Win* win, xcb_map_request_event_t* e)
 template<typename Win>
 void unmap_notify_event(Win* win, xcb_unmap_notify_event_t* e)
 {
-    if (e->window != win->xcb_window())
+    if (e->window != win->xcb_window)
         return;
     if (e->event != win->xcb_windows.wrapper) {
         // most probably event from root window when initially reparenting
@@ -396,7 +395,7 @@ void unmap_notify_event(Win* win, xcb_unmap_notify_event_t* e)
 template<typename Win>
 void destroy_notify_event(Win* win, xcb_destroy_notify_event_t* e)
 {
-    if (e->window != win->xcb_window()) {
+    if (e->window != win->xcb_window) {
         return;
     }
     destroy_window(win);
@@ -410,7 +409,7 @@ void client_message_event(Win* win, xcb_client_message_event_t* e)
 {
     win->clientMessageEvent(e);
 
-    if (e->window != win->xcb_window()) {
+    if (e->window != win->xcb_window) {
         return; // ignore frame/wrapper
     }
 
@@ -429,7 +428,7 @@ void client_message_event(Win* win, xcb_client_message_event_t* e)
 template<typename Win>
 void configure_request_event(Win* win, xcb_configure_request_event_t* e)
 {
-    if (e->window != win->xcb_window())
+    if (e->window != win->xcb_window)
         return; // ignore frame/wrapper
     if (win::is_resize(win) || win::is_move(win))
         return; // we have better things to do right now
@@ -470,7 +469,7 @@ void configure_request_event(Win* win, xcb_configure_request_event_t* e)
 template<typename Win>
 void property_notify_event_prepare(Win& win, xcb_property_notify_event_t* event)
 {
-    if (event->window != win.xcb_window()) {
+    if (event->window != win.xcb_window) {
         // ignore frame/wrapper
         return;
     }
@@ -493,7 +492,7 @@ void property_notify_event(Win* win, xcb_property_notify_event_t* e)
 {
     property_notify_event_prepare(*win, e);
 
-    if (e->window != win->xcb_window()) {
+    if (e->window != win->xcb_window) {
         // ignore frame/wrapper
         return;
     }
@@ -858,7 +857,7 @@ bool motion_notify_event(Win* win, xcb_window_t w, int state, int x, int y, int 
 template<typename Win>
 void focus_in_event(Win* win, xcb_focus_in_event_t* e)
 {
-    if (e->event != win->xcb_window()) {
+    if (e->event != win->xcb_window) {
         return;
     }
     if (e->mode == XCB_NOTIFY_MODE_UNGRAB) {
@@ -895,7 +894,7 @@ void focus_in_event(Win* win, xcb_focus_in_event_t* e)
 template<typename Win>
 void focus_out_event(Win* win, xcb_focus_out_event_t* e)
 {
-    if (e->event != win->xcb_window())
+    if (e->event != win->xcb_window)
         return; // only window gets focus
     if (e->mode == XCB_NOTIFY_MODE_GRAB)
         return; // we don't care
