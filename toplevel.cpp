@@ -390,16 +390,6 @@ void Toplevel::resetDamage()
     damage_region = QRegion();
 }
 
-void Toplevel::addRepaint(int x, int y, int w, int h)
-{
-    addRepaint(QRegion(x, y, w, h));
-}
-
-void Toplevel::addRepaint(QRect const& rect)
-{
-    addRepaint(QRegion(rect));
-}
-
 void Toplevel::addRepaint(QRegion const& region)
 {
     if (!space.compositing()) {
@@ -408,16 +398,6 @@ void Toplevel::addRepaint(QRegion const& region)
     repaints_region += region;
     add_repaint_outputs(region.translated(pos()));
     Q_EMIT needsRepaint();
-}
-
-void Toplevel::addLayerRepaint(int x, int y, int w, int h)
-{
-    addLayerRepaint(QRegion(x, y, w, h));
-}
-
-void Toplevel::addLayerRepaint(QRect const& rect)
-{
-    addLayerRepaint(QRegion(rect));
 }
 
 void Toplevel::addLayerRepaint(QRegion const& region)

@@ -204,11 +204,7 @@ public:
     virtual void add_scene_window_addon();
     virtual void finishCompositing();
 
-    Q_INVOKABLE void addRepaint(int x, int y, int w, int h);
-    Q_INVOKABLE void addRepaint(QRect const& rect);
     Q_INVOKABLE void addRepaint(QRegion const& region);
-    Q_INVOKABLE void addLayerRepaint(int x, int y, int w, int h);
-    Q_INVOKABLE void addLayerRepaint(QRect const& r);
     Q_INVOKABLE void addLayerRepaint(QRegion const& r);
 
     Q_INVOKABLE virtual void addRepaintFull();

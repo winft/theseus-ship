@@ -1948,7 +1948,7 @@ void effects_window_impl::addRepaint(const QRect& r)
 
 void effects_window_impl::addRepaint(int x, int y, int w, int h)
 {
-    toplevel->addRepaint(x, y, w, h);
+    addRepaint(QRect(x, y, w, h));
 }
 
 void effects_window_impl::addRepaintFull()
@@ -1963,7 +1963,7 @@ void effects_window_impl::addLayerRepaint(const QRect& r)
 
 void effects_window_impl::addLayerRepaint(int x, int y, int w, int h)
 {
-    toplevel->addLayerRepaint(x, y, w, h);
+    addLayerRepaint(QRect(x, y, w, h));
 }
 
 const EffectWindowGroup* effects_window_impl::group() const
