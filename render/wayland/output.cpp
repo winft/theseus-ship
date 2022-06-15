@@ -116,9 +116,8 @@ bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
 
         if (prepare_repaint(win)) {
             has_window_repaints = true;
-        } else if (win->surface()
-                   && win->surface()->client() != waylandServer()->xwayland_connection()
-                   && (win->surface()->state().updates & Wrapland::Server::surface_change::frame)
+        } else if (win->surface && win->surface->client() != waylandServer()->xwayland_connection()
+                   && (win->surface->state().updates & Wrapland::Server::surface_change::frame)
                    && max_coverage_output(win) == &base) {
             frame_windows.push_back(win);
         }
@@ -241,10 +240,10 @@ void output::dry_run()
     std::deque<Toplevel*> frame_windows;
 
     for (auto win : windows) {
-        if (!win->surface() || win->surface()->client() == waylandServer()->xwayland_connection()) {
+        if (!win->surface || win->surface->client() == waylandServer()->xwayland_connection()) {
             continue;
         }
-        if (!(win->surface()->state().updates & Wrapland::Server::surface_change::frame)) {
+        if (!(win->surface->state().updates & Wrapland::Server::surface_change::frame)) {
             continue;
         }
         frame_windows.push_back(win);

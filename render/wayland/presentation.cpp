@@ -46,11 +46,11 @@ void presentation::frame(render::wayland::output* output, std::deque<Toplevel*> 
     auto const now = get_now_in_ms().count();
 
     for (auto& win : windows) {
-        assert(win->surface());
+        assert(win->surface);
         assert(max_coverage_output(win) == &output->base);
 
         // TODO (romangg): Split this up to do on every subsurface (annexed transient) separately.
-        win->surface()->frameRendered(now);
+        win->surface->frameRendered(now);
     }
 }
 
@@ -62,7 +62,7 @@ void presentation::lock(render::wayland::output* output, std::deque<Toplevel*> c
     // surfaces?
 
     for (auto& win : windows) {
-        auto surface = win->surface();
+        auto surface = win->surface;
         if (!surface) {
             continue;
         }

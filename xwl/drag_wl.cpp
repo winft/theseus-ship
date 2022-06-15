@@ -64,7 +64,7 @@ drag_event_reply wl_drag::move_filter(Toplevel* target, QPoint const& pos)
     // We have a new target.
 
     source.x11.space->activateClient(target, false);
-    seat->drags().set_target(target->surface(), pos, target->input_transform());
+    seat->drags().set_target(target->surface, pos, target->input_transform());
 
     visit.reset(new x11_visit(target, source, proxy_window));
     return drag_event_reply::take;

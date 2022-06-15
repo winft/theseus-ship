@@ -433,7 +433,7 @@ bool tabbox_client_impl::is_first_in_tabbox() const
 
 QUuid tabbox_client_impl::internal_id() const
 {
-    return m_client->internalId();
+    return m_client->internal_id;
 }
 
 /*********************************************************

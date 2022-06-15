@@ -676,7 +676,7 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
     win->control->setup_color_scheme();
 
     QObject::connect(
-        win->clientMachine(), &client_machine::localhostChanged, win, &window::updateCaption);
+        win->client_machine, &client_machine::localhostChanged, win, &window::updateCaption);
     QObject::connect(kwinApp()->options.get(), &base::options::configChanged, win, [win] {
         win->control->update_mouse_grab();
     });
@@ -707,7 +707,7 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
 
     embed_client(win, w, attr->visual, attr->colormap, windowGeometry->depth);
 
-    win->m_visual = attr->visual;
+    win->xcb_visual = attr->visual;
     win->bit_depth = windowGeometry->depth;
 
     const NET::Properties properties = NET::WMDesktop | NET::WMState | NET::WMWindowType

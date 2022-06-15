@@ -95,7 +95,7 @@ void RuleBook::edit(Toplevel* window, bool whole_app)
 {
     save();
     QStringList args;
-    args << QStringLiteral("--uuid") << window->internalId().toString();
+    args << QStringLiteral("--uuid") << window->internal_id.toString();
     if (whole_app)
         args << QStringLiteral("--whole-app");
     auto p = new QProcess(this);

@@ -43,7 +43,7 @@ render::gl::texture* window::bindTexture()
         return buffer->texture();
     }
 
-    if (!get_window()->damage().isEmpty())
+    if (!get_window()->damage_region.isEmpty())
         static_cast<gl::scene&>(scene).insertWait();
 
     if (!buffer->bind()) {

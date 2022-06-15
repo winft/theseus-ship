@@ -165,9 +165,9 @@ void keyboard_redirect::update()
     if (!found && !kwinApp()->input->redirect->isSelectingWindow()) {
         found = redirect->space.activeClient();
     }
-    if (found && found->surface()) {
-        if (found->surface() != seat->keyboards().get_focus().surface) {
-            seat->setFocusedKeyboardSurface(found->surface());
+    if (found && found->surface) {
+        if (found->surface != seat->keyboards().get_focus().surface) {
+            seat->setFocusedKeyboardSurface(found->surface);
         }
     } else {
         seat->setFocusedKeyboardSurface(nullptr);

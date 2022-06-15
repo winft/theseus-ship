@@ -119,7 +119,7 @@ void touch_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
     }
 
     auto seat = waylandServer()->seat();
-    if (!focusNow || !focusNow->surface() || focus.deco) {
+    if (!focusNow || !focusNow->surface || focus.deco) {
         // no new surface or internal window or on decoration -> cleanup
         seat->touches().set_focused_surface(nullptr);
         return;
@@ -128,9 +128,8 @@ void touch_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
     // TODO(romangg): Invalidate pointer focus?
 
     // TODO(romangg): Add input transformation API to Wrapland::Server::Seat for touch input.
-    seat->touches().set_focused_surface(focusNow->surface(),
-                                        -1 * focusNow->input_transform().map(focusNow->pos())
-                                            + focusNow->pos());
+    seat->touches().set_focused_surface(
+        focusNow->surface, -1 * focusNow->input_transform().map(focusNow->pos()) + focusNow->pos());
     focus_geometry_notifier
         = QObject::connect(focusNow, &Toplevel::frame_geometry_changed, this, [this] {
               auto focus_win = focus.window;
@@ -138,7 +137,7 @@ void touch_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
                   return;
               }
               auto seat = waylandServer()->seat();
-              if (focus_win->surface() != seat->touches().get_focus().surface) {
+              if (focus_win->surface != seat->touches().get_focus().surface) {
                   return;
               }
               seat->touches().set_focused_surface_position(

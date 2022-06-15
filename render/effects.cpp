@@ -1102,7 +1102,7 @@ EffectWindow* effects_handler_impl::find_window_by_qwindow(QWindow* w) const
 EffectWindow* effects_handler_impl::find_window_by_uuid(const QUuid& id) const
 {
     for (auto win : m_compositor->space->m_windows) {
-        if (!win->remnant() && win->internalId() == id) {
+        if (!win->remnant() && win->internal_id == id) {
             return win->render->effect.get();
         }
     }
@@ -2022,7 +2022,6 @@ TOPLEVEL_HELPER(int, desktop, desktop)
 TOPLEVEL_HELPER(bool, isDeleted, isDeleted)
 TOPLEVEL_HELPER(QString, windowRole, windowRole)
 TOPLEVEL_HELPER(bool, skipsCloseAnimation, skipsCloseAnimation)
-TOPLEVEL_HELPER(Wrapland::Server::Surface*, surface, surface)
 TOPLEVEL_HELPER(bool, isOutline, isOutline)
 TOPLEVEL_HELPER(bool, isLockScreen, isLockScreen)
 TOPLEVEL_HELPER(pid_t, pid, pid)
@@ -2090,6 +2089,11 @@ CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, isFullScreen, fullscreen, false)
 
 #undef CLIENT_HELPER_WITH_DELETED_WIN_CTRL
 
+Wrapland::Server::Surface* effects_window_impl::surface() const
+{
+    return toplevel->surface;
+}
+
 QStringList effects_window_impl::activities() const
 {
     // No support for Activities.
@@ -2133,7 +2137,7 @@ bool effects_window_impl::isCurrentTab() const
 
 QString effects_window_impl::windowClass() const
 {
-    return toplevel->resourceName() + QLatin1Char(' ') + toplevel->resourceClass();
+    return toplevel->resource_name + QLatin1Char(' ') + toplevel->resource_class;
 }
 
 QRect effects_window_impl::contentsRect() const

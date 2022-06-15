@@ -162,7 +162,7 @@ void X11DesktopWindowTest::testDesktopWindow()
     QCOMPARE(client->windowType(), NET::Desktop);
     QCOMPARE(client->frameGeometry(), windowGeometry);
     QVERIFY(win::is_desktop(client));
-    QCOMPARE(client->depth(), 24);
+    QCOMPARE(client->bit_depth, 24);
     QVERIFY(!client->hasAlpha());
 
     // and destroy the window again

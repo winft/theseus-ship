@@ -122,7 +122,7 @@ QRect layer_surface_requested_geometry(Win* win)
     auto get_effective_size = [&] {
         auto size = set_size;
 
-        if (auto const surface_size = win->surface()->size(); !surface_size.isEmpty()) {
+        if (auto const surface_size = win->surface->size(); !surface_size.isEmpty()) {
             // The client might have committed a surface with different size than the set_size.
             size.setWidth(std::min(set_size.width(), surface_size.width()));
             size.setHeight(std::min(set_size.height(), surface_size.height()));
@@ -143,8 +143,8 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
 {
     namespace WS = Wrapland::Server;
 
-    assert(win->surface());
-    assert(layer_surface->surface() == win->surface());
+    assert(win->surface);
+    assert(layer_surface->surface() == win->surface);
 
     win->control.reset(new control(win));
     win->layer_surface = layer_surface;
@@ -172,8 +172,8 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
                      [win](auto serial) { win->acked_configure = serial; });
 
     auto handle_first_commit = [win] {
-        QObject::disconnect(win->surface(), &WS::Surface::committed, win, nullptr);
-        QObject::connect(win->surface(), &WS::Surface::committed, win, &window::handle_commit);
+        QObject::disconnect(win->surface, &WS::Surface::committed, win, nullptr);
+        QObject::connect(win->surface, &WS::Surface::committed, win, &window::handle_commit);
 
         block_geometry_updates(win, false);
 
@@ -207,7 +207,7 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
         win->initialized = true;
     };
 
-    QObject::connect(win->surface(), &WS::Surface::committed, win, [handle_first_commit] {
+    QObject::connect(win->surface, &WS::Surface::committed, win, [handle_first_commit] {
         handle_first_commit();
     });
 }

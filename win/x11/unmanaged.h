@@ -74,7 +74,7 @@ auto create_unmanaged_window(xcb_window_t w, Space& space) -> typename Space::x1
                                      | XCB_EVENT_MASK_PROPERTY_CHANGE);
     win->set_frame_geometry(geo.rect());
     win->checkScreen();
-    win->m_visual = attr->visual;
+    win->xcb_visual = attr->visual;
     win->bit_depth = geo->depth;
     win->info = new NETWinInfo(connection(),
                                w,

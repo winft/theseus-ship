@@ -192,7 +192,7 @@ void layer_shell_test::test_create()
     QVERIFY(window->isShown());
     QCOMPARE(window->isHiddenInternal(), false);
     QCOMPARE(window->ready_for_painting, true);
-    QCOMPARE(window->depth(), 32);
+    QCOMPARE(window->bit_depth, 32);
     QVERIFY(window->hasAlpha());
 
     // By default layer surfaces have keyboard interactivity set to none.

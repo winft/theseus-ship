@@ -3763,8 +3763,8 @@ void space::storeClient(KConfigGroup& cg, int num, win::x11::window* c)
     cg.writeEntry(QLatin1String("sessionId") + n, c->sessionId().constData());
     cg.writeEntry(QLatin1String("windowRole") + n, c->windowRole().constData());
     cg.writeEntry(QLatin1String("wmCommand") + n, c->wmCommand().constData());
-    cg.writeEntry(QLatin1String("resourceName") + n, c->resourceName().constData());
-    cg.writeEntry(QLatin1String("resourceClass") + n, c->resourceClass().constData());
+    cg.writeEntry(QLatin1String("resourceName") + n, c->resource_name.constData());
+    cg.writeEntry(QLatin1String("resourceClass") + n, c->resource_class.constData());
     cg.writeEntry(
         QLatin1String("geometry") + n,
         QRect(win::x11::calculate_gravitation(c, true), win::frame_to_client_size(c, c->size())));
@@ -3925,8 +3925,8 @@ win::session_info* space::takeSessionInfo(win::x11::window* c)
     QByteArray sessionId = c->sessionId();
     QByteArray windowRole = c->windowRole();
     QByteArray wmCommand = c->wmCommand();
-    QByteArray resourceName = c->resourceName();
-    QByteArray resourceClass = c->resourceClass();
+    auto const& resourceName = c->resource_name;
+    auto const& resourceClass = c->resource_class;
 
     // First search ``session''
     if (!sessionId.isEmpty()) {

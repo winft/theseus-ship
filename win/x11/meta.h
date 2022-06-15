@@ -94,10 +94,10 @@ void set_caption(Win* win, QString const& _s, bool force = false)
     QString machine_suffix;
     if (!kwinApp()->options->condensedTitle()) {
         // machine doesn't qualify for "clean"
-        if (win->clientMachine()->hostname() != client_machine::localhost()
-            && !win->clientMachine()->is_local()) {
+        if (win->client_machine->hostname() != client_machine::localhost()
+            && !win->client_machine->is_local()) {
             machine_suffix = QLatin1String(" <@")
-                + QString::fromUtf8(win->clientMachine()->hostname()) + QLatin1Char('>') + LRM;
+                + QString::fromUtf8(win->client_machine->hostname()) + QLatin1Char('>') + LRM;
         }
     }
     auto shortcut_suffix = win::shortcut_caption_suffix(win);

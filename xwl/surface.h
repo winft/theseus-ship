@@ -24,7 +24,7 @@ void handle_new_surface(Space* space, Wrapland::Server::Surface* surface)
     for (auto win : space->m_windows) {
         // Match on surface id and exclude windows already having a surface. This way we only find
         // Xwayland windows. Wayland native windows always have a surface.
-        if (!win->remnant() && win->surfaceId() == surface->id() && !win->surface()) {
+        if (!win->remnant() && win->surface_id == surface->id() && !win->surface) {
             win::wayland::set_surface(win, surface);
             break;
         }

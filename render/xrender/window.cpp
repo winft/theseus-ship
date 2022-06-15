@@ -29,7 +29,7 @@ XRenderPicture* window::s_fadeAlphaPicture = nullptr;
 
 window::window(Toplevel* c, xrender::scene& scene)
     : render::window(c, scene)
-    , format(XRenderUtils::findPictFormat(c->visual()))
+    , format(XRenderUtils::findPictFormat(c->xcb_visual))
 {
 }
 

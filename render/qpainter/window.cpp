@@ -52,7 +52,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
     if (!buffer || !buffer->isValid()) {
         return;
     }
-    if (!toplevel->damage().isEmpty()) {
+    if (!toplevel->damage_region.isEmpty()) {
         buffer->updateBuffer();
         toplevel->resetDamage();
     }
@@ -90,8 +90,8 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
     QRectF source;
     QRectF target;
     QRectF viewportRectangle;
-    if (toplevel->surface()) {
-        viewportRectangle = toplevel->surface()->state().source_rectangle;
+    if (toplevel->surface) {
+        viewportRectangle = toplevel->surface->state().source_rectangle;
     }
     if (isXwaylandClient(toplevel)) {
         // special case for XWayland windows

@@ -45,8 +45,8 @@ Toplevel::Toplevel(win::space& space)
 
 Toplevel::Toplevel(win::transient* transient, win::space& space)
     : space{space}
-    , m_clientMachine(new win::x11::client_machine(this))
-    , m_internalId(QUuid::createUuid())
+    , client_machine(new win::x11::client_machine(this))
+    , internal_id{QUuid::createUuid()}
     , m_damageReplyPending(false)
     , m_skipCloseAnimation(false)
 {
@@ -139,9 +139,9 @@ Toplevel* Toplevel::create_remnant(Toplevel* source)
 // used only by Deleted::copy()
 void Toplevel::copyToDeleted(Toplevel* c)
 {
-    m_internalId = c->internalId();
+    internal_id = c->internal_id;
     m_frameGeometry = c->m_frameGeometry;
-    m_visual = c->m_visual;
+    xcb_visual = c->xcb_visual;
     bit_depth = c->bit_depth;
 
     info = c->info;
@@ -162,12 +162,14 @@ void Toplevel::copyToDeleted(Toplevel* c)
         render->effect->setWindow(this);
     }
 
-    resource_name = c->resourceName();
-    resource_class = c->resourceClass();
-    m_clientMachine = c->m_clientMachine;
-    m_clientMachine->setParent(this);
+    resource_name = c->resource_name;
+    resource_class = c->resource_class;
+
+    client_machine = c->client_machine;
+    client_machine->setParent(this);
     m_wmClientLeader = c->wmClientLeader();
-    opaque_region = c->opaqueRegion();
+
+    opaque_region = c->opaque_region;
     central_output = c->central_output;
     m_skipCloseAnimation = c->m_skipCloseAnimation;
     m_desktops = c->desktops();
@@ -189,15 +191,15 @@ void Toplevel::disownDataPassedToDeleted()
  */
 QByteArray Toplevel::wmClientMachine(bool use_localhost) const
 {
-    if (!m_clientMachine) {
+    if (!client_machine) {
         // this should never happen
         return QByteArray();
     }
-    if (use_localhost && m_clientMachine->is_local()) {
+    if (use_localhost && client_machine->is_local()) {
         // special name for the local machine (localhost)
         return win::x11::client_machine::localhost();
     }
-    return m_clientMachine->hostname();
+    return client_machine->hostname();
 }
 
 /**
@@ -705,10 +707,10 @@ QRegion Toplevel::render_region() const
 
 bool Toplevel::isLocalhost() const
 {
-    if (!m_clientMachine) {
+    if (!client_machine) {
         return true;
     }
-    return m_clientMachine->is_local();
+    return client_machine->is_local();
 }
 
 bool Toplevel::is_popup_end() const

@@ -151,26 +151,26 @@ void kill_process(Win* win, bool ask, xcb_timestamp_t timestamp = XCB_TIME_CURRE
     assert(!ask || timestamp != XCB_TIME_CURRENT_TIME);
 
     auto pid = win->info->pid();
-    if (pid <= 0 || win->clientMachine()->hostname().isEmpty()) {
+    if (pid <= 0 || win->client_machine->hostname().isEmpty()) {
         // Needed properties missing
         return;
     }
 
-    qCDebug(KWIN_CORE) << "Kill process:" << pid << "(" << win->clientMachine()->hostname() << ")";
+    qCDebug(KWIN_CORE) << "Kill process:" << pid << "(" << win->client_machine->hostname() << ")";
 
     if (!ask) {
-        if (!win->clientMachine()->is_local()) {
+        if (!win->client_machine->is_local()) {
             QStringList lst;
-            lst << QString::fromUtf8(win->clientMachine()->hostname()) << QStringLiteral("kill")
+            lst << QString::fromUtf8(win->client_machine->hostname()) << QStringLiteral("kill")
                 << QString::number(pid);
             QProcess::startDetached(QStringLiteral("xon"), lst);
         } else {
             ::kill(pid, SIGTERM);
         }
     } else {
-        auto hostname = win->clientMachine()->is_local()
+        auto hostname = win->client_machine->is_local()
             ? QStringLiteral("localhost")
-            : QString::fromUtf8(win->clientMachine()->hostname());
+            : QString::fromUtf8(win->client_machine->hostname());
         // execute helper from build dir or the system installed one
         QFileInfo const buildDirBinary{QDir{QCoreApplication::applicationDirPath()},
                                        QStringLiteral("kwin_killer_helper")};
@@ -181,7 +181,7 @@ void kill_process(Win* win, bool ask, xcb_timestamp_t timestamp = XCB_TIME_CURRE
                                     << QStringLiteral("--hostname") << hostname
                                     << QStringLiteral("--windowname") << win->caption.normal
                                     << QStringLiteral("--applicationname")
-                                    << QString::fromUtf8(win->resourceClass())
+                                    << QString::fromUtf8(win->resource_class)
                                     << QStringLiteral("--wid") << QString::number(win->xcb_window())
                                     << QStringLiteral("--timestamp") << QString::number(timestamp),
                                 QString(),

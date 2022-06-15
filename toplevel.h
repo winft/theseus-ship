@@ -29,8 +29,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <NETWM>
 // Qt
-#include <QObject>
 #include <QMatrix4x4>
+#include <QObject>
 #include <QUuid>
 // xcb
 #include <xcb/damage.h>
@@ -84,6 +84,10 @@ public:
         QString suffix;
     } caption;
 
+    // Always lowercase
+    QByteArray resource_name;
+    QByteArray resource_class;
+
     struct {
         int block{0};
         win::pending_geometry pending{win::pending_geometry::none};
@@ -122,6 +126,9 @@ public:
     bool ready_for_painting{false};
     bool m_isDamaged{false};
     bool is_shape{false};
+
+    /// Area to be opaque. Only provides valuable information if hasAlpha is @c true.
+    QRegion opaque_region;
 
     base::output const* central_output{nullptr};
 
@@ -186,18 +193,13 @@ public:
     bool isOnAllDesktops() const;
 
     virtual QByteArray windowRole() const;
-    QByteArray resourceName() const;
-    QByteArray resourceClass() const;
     QByteArray wmClientMachine(bool use_localhost) const;
-    win::x11::client_machine const* clientMachine() const;
     virtual bool isLocalhost() const;
     xcb_window_t wmClientLeader() const;
     virtual pid_t pid() const;
 
-    xcb_visualid_t visual() const;
     virtual void setOpacity(double opacity);
     virtual double opacity() const;
-    int depth() const;
     bool hasAlpha() const;
     virtual bool setupCompositing();
     virtual void add_scene_window_addon();
@@ -212,11 +214,9 @@ public:
     QRegion repaints() const;
     void resetRepaints(base::output* output);
 
-    QRegion damage() const;
     void resetDamage();
-
     void addDamageFull();
-    virtual void addDamage(const QRegion &damage);
+    virtual void addDamage(const QRegion& damage);
 
     static Toplevel* create_remnant(Toplevel* source);
 
@@ -225,13 +225,6 @@ public:
      * implementation always returns @c true.
      */
     virtual bool wantsShadowToBeRendered() const;
-
-    /**
-     * This method returns the area that the Toplevel window reports to be opaque.
-     * It is supposed to only provide valuable information if hasAlpha is @c true .
-     * @see hasAlpha
-     */
-    const QRegion& opaqueRegion() const;
 
     win::layer layer() const;
     void set_layer(win::layer layer);
@@ -255,27 +248,15 @@ public:
     bool skipsCloseAnimation() const;
     void setSkipCloseAnimation(bool set);
 
-    quint32 surfaceId() const;
-    Wrapland::Server::Surface *surface() const;
-
     /**
      * Maps from global to window coordinates.
      */
     QMatrix4x4 input_transform() const;
 
-
     /**
      * Can be implemented by child classes to add additional checks to the ones in win::is_popup.
      */
     virtual bool is_popup_end() const;
-
-    /**
-     * A UUID to uniquely identify this Toplevel independent of windowing system.
-     */
-    QUuid internalId() const
-    {
-        return m_internalId;
-    }
 
     virtual win::layer layer_for_dock() const;
 
@@ -297,21 +278,26 @@ public:
     virtual void damageNotifyEvent();
     void discard_buffer();
 
-    void setResourceClass(const QByteArray &name, const QByteArray &className = QByteArray());
+    void setResourceClass(const QByteArray& name, const QByteArray& className = QByteArray());
 
     NETWinInfo* info{nullptr};
-    Wrapland::Server::Surface* m_surface{nullptr};
-    quint32 m_surfaceId{0};
+    Wrapland::Server::Surface* surface{nullptr};
+    quint32 surface_id{0};
 
     // TODO: These are X11-only properties, should go into a separate struct once we use class
     //       templates only.
     int supported_default_types{0};
     int bit_depth{24};
     QMargins client_frame_extents;
+    win::x11::client_machine* client_machine;
+
+    // A UUID to uniquely identify this Toplevel independent of windowing system.
+    QUuid internal_id;
+
     // TODO: These are Unmanaged-only properties.
     bool is_outline{false};
     bool has_scheduled_release{false};
-    xcb_visualid_t m_visual{XCB_NONE};
+    xcb_visualid_t xcb_visual{XCB_NONE};
     // End of X11-only properties.
 
     bool has_in_content_deco{false};
@@ -405,9 +391,6 @@ protected:
     friend QDebug& operator<<(QDebug& stream, const Toplevel*);
     void setDepth(int depth);
 
-    QRegion opaque_region;
-
-    win::x11::client_machine* m_clientMachine;
     xcb_window_t m_wmClientLeader{XCB_WINDOW_NONE};
 
 private:
@@ -416,7 +399,6 @@ private:
     void add_repaint_outputs(QRegion const& region);
 
     // when adding new data members, check also copyToDeleted()
-    QUuid m_internalId;
     base::x11::xcb::window m_client{};
 
     QRect m_frameGeometry;
@@ -424,8 +406,6 @@ private:
     mutable bool m_render_shape_valid{false};
     mutable QRegion m_render_shape;
 
-    QByteArray resource_name;
-    QByteArray resource_class;
     bool m_damageReplyPending;
     xcb_xfixes_fetch_region_cookie_t m_regionCookie;
     bool m_skipCloseAnimation;
@@ -508,7 +488,7 @@ public:
 
     // TODO: fix boolean traps
     virtual void updateDecoration(bool check_workspace_pos, bool force = false);
-    virtual void layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRect &bottom) const;
+    virtual void layoutDecorationRects(QRect& left, QRect& top, QRect& right, QRect& bottom) const;
 
     /**
      * Returns whether the window provides context help or not. If it does,
@@ -531,9 +511,9 @@ public:
     virtual void showContextHelp();
 
     /**
-     * Restores the AbstractClient after it had been hidden due to show on screen edge functionality.
-     * The AbstractClient also gets raised (e.g. Panel mode windows can cover) and the AbstractClient
-     * gets informed in a window specific way that it is shown and raised again.
+     * Restores the AbstractClient after it had been hidden due to show on screen edge
+     * functionality. The AbstractClient also gets raised (e.g. Panel mode windows can cover) and
+     * the AbstractClient gets informed in a window specific way that it is shown and raised again.
      */
     virtual void showOnScreenEdge();
 
@@ -642,8 +622,8 @@ public:
     virtual void doSetKeepBelow();
 
     /**
-     * Called from @ref minimize and @ref unminimize once the minimized value got updated, but before the
-     * changed signal is emitted.
+     * Called from @ref minimize and @ref unminimize once the minimized value got updated, but
+     * before the changed signal is emitted.
      *
      * Default implementation does nothig.
      */
@@ -675,12 +655,12 @@ public:
 
     Q_INVOKABLE virtual void closeWindow();
 
-    virtual bool performMouseCommand(base::options::MouseCommand, const QPoint &globalPos);
+    virtual bool performMouseCommand(base::options::MouseCommand, const QPoint& globalPos);
 
     virtual Toplevel* findModal();
 
-    virtual
-    bool belongsToSameApplication(Toplevel const* other, win::same_client_check checks) const;
+    virtual bool belongsToSameApplication(Toplevel const* other,
+                                          win::same_client_check checks) const;
 
     virtual QRect iconGeometry() const;
     virtual void setShortcutInternal();
@@ -710,7 +690,7 @@ Q_SIGNALS:
     void skipPagerChanged();
     void skipSwitcherChanged();
 
-    void paletteChanged(const QPalette &p);
+    void paletteChanged(const QPalette& p);
     void colorSchemeChanged();
     void transientChanged();
     void modalChanged();
@@ -746,11 +726,6 @@ inline QPoint Toplevel::pos() const
     return m_frameGeometry.topLeft();
 }
 
-inline xcb_visualid_t Toplevel::visual() const
-{
-    return m_visual;
-}
-
 inline bool Toplevel::isLockScreen() const
 {
     return false;
@@ -761,49 +736,9 @@ inline bool Toplevel::isInputMethod() const
     return false;
 }
 
-inline QRegion Toplevel::damage() const
-{
-    return damage_region;
-}
-
-inline int Toplevel::depth() const
-{
-    return bit_depth;
-}
-
 inline bool Toplevel::hasAlpha() const
 {
-    return depth() == 32;
-}
-
-inline const QRegion& Toplevel::opaqueRegion() const
-{
-    return opaque_region;
-}
-
-inline QByteArray Toplevel::resourceName() const
-{
-    return resource_name; // it is always lowercase
-}
-
-inline QByteArray Toplevel::resourceClass() const
-{
-    return resource_class; // it is always lowercase
-}
-
-inline const win::x11::client_machine* Toplevel::clientMachine() const
-{
-    return m_clientMachine;
-}
-
-inline quint32 Toplevel::surfaceId() const
-{
-    return m_surfaceId;
-}
-
-inline Wrapland::Server::Surface *Toplevel::surface() const
-{
-    return m_surface;
+    return bit_depth == 32;
 }
 
 KWIN_EXPORT QDebug& operator<<(QDebug& stream, const Toplevel*);

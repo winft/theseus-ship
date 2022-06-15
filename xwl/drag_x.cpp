@@ -108,11 +108,11 @@ drag_event_reply x11_drag::move_filter(Toplevel* target, QPoint const& pos)
         }
     }
 
-    if (!target || !target->surface()
-        || target->surface()->client() == waylandServer()->xwayland_connection()) {
+    if (!target || !target->surface
+        || target->surface->client() == waylandServer()->xwayland_connection()) {
         // Currently there is no target or target is an Xwayland window.
         // Handled here and by X directly.
-        if (target && target->surface() && target->control) {
+        if (target && target->surface && target->control) {
             if (source.x11.space->activeClient() != target) {
                 source.x11.space->activateClient(target);
             }
@@ -199,7 +199,7 @@ void x11_drag::set_drag_target()
 {
     auto ac = visit->get_target();
     source.x11.space->activateClient(ac);
-    waylandServer()->seat()->drags().set_target(ac->surface(), ac->input_transform());
+    waylandServer()->seat()->drags().set_target(ac->surface, ac->input_transform());
 }
 
 bool x11_drag::check_for_finished()

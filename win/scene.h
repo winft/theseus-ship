@@ -158,7 +158,7 @@ bool setup_compositing(Win& win, bool add_full_damage)
     }
 
     if (kwinApp()->operationMode() == Application::OperationModeX11) {
-        assert(!win.surface());
+        assert(!win.surface);
         win.damage_handle = xcb_generate_id(connection());
         xcb_damage_create(
             connection(), win.damage_handle, win.frameId(), XCB_DAMAGE_REPORT_LEVEL_NON_EMPTY);

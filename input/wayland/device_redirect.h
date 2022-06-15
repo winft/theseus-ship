@@ -106,7 +106,7 @@ void device_redirect_update_focus(Dev* dev)
 {
     auto oldFocus = dev->focus.window;
 
-    if (dev->at.window && !dev->at.window->surface()) {
+    if (dev->at.window && !dev->at.window->surface) {
         // The surface has not yet been created (special XWayland case).
         // Therefore listen for its creation.
         if (!dev->at.notifiers.surface) {

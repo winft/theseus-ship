@@ -129,12 +129,12 @@ quint32 window::windowId() const
 
 QByteArray window::resourceName() const
 {
-    return m_client->resourceName();
+    return m_client->resource_name;
 }
 
 QByteArray window::resourceClass() const
 {
-    return m_client->resourceClass();
+    return m_client->resource_class;
 }
 
 QString window::caption() const
@@ -154,7 +154,7 @@ QRect window::iconGeometry() const
 
 QUuid window::internalId() const
 {
-    return m_client->internalId();
+    return m_client->internal_id;
 }
 
 pid_t window::pid() const
@@ -635,12 +635,12 @@ bool window::isDeleted() const
 
 quint32 window::surfaceId() const
 {
-    return m_client->surfaceId();
+    return m_client->surface_id;
 }
 
 Wrapland::Server::Surface* window::surface() const
 {
-    return m_client->surface();
+    return m_client->surface;
 }
 
 QSize window::basicUnit() const

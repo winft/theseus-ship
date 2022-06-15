@@ -120,8 +120,7 @@ void xdg_activation_test::test_single_client()
     QVERIFY(!xdg_activate_spy.empty());
 
     QCOMPARE(xdg_activate_spy.front().front().value<std::string>(), token_string);
-    QCOMPARE(xdg_activate_spy.front().back().value<Wrapland::Server::Surface*>(),
-             window1->surface());
+    QCOMPARE(xdg_activate_spy.front().back().value<Wrapland::Server::Surface*>(), window1->surface);
     QVERIFY(window1->control->active());
     QCOMPARE(Test::app()->workspace->activeClient(), window1);
 }
@@ -191,8 +190,7 @@ void xdg_activation_test::test_multi_client()
     QVERIFY(!xdg_activate_spy.empty());
 
     QCOMPARE(xdg_activate_spy.front().front().value<std::string>(), token_string);
-    QCOMPARE(xdg_activate_spy.front().back().value<Wrapland::Server::Surface*>(),
-             window1->surface());
+    QCOMPARE(xdg_activate_spy.front().back().value<Wrapland::Server::Surface*>(), window1->surface);
     QVERIFY(window1->control->active());
     QCOMPARE(Test::app()->workspace->activeClient(), window1);
 }

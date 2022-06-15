@@ -181,7 +181,7 @@ window* space::find_window(Wrapland::Server::Surface* surface) const
     }
 
     auto it = std::find_if(m_windows.cbegin(), m_windows.cend(), [surface](auto win) {
-        return win->surface() == surface;
+        return win->surface == surface;
     });
     return it != m_windows.cend() ? qobject_cast<window*>(*it) : nullptr;
 }

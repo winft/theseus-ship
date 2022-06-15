@@ -116,7 +116,7 @@ void pointer_redirect::init()
 
 void pointer_redirect::update_on_start_move_resize()
 {
-    break_pointer_constraints(focus.window ? focus.window->surface() : nullptr);
+    break_pointer_constraints(focus.window ? focus.window->surface : nullptr);
     disconnect_pointer_constraints_connection();
     device_redirect_set_focus(this, nullptr);
     waylandServer()->seat()->pointers().set_focused_surface(nullptr);
@@ -142,7 +142,7 @@ void pointer_redirect::update_to_reset()
         }
         QObject::disconnect(notifiers.focus_geometry);
         notifiers.focus_geometry = QMetaObject::Connection();
-        break_pointer_constraints(focus_window->surface());
+        break_pointer_constraints(focus_window->surface);
         disconnect_pointer_constraints_connection();
         device_redirect_set_focus(this, nullptr);
     }
@@ -462,7 +462,7 @@ void pointer_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
         if (auto lead = win::lead_of_annexed_transient(focusOld); lead && lead->control) {
             win::leave_event(lead);
         }
-        break_pointer_constraints(focusOld->surface());
+        break_pointer_constraints(focusOld->surface);
         disconnect_pointer_constraints_connection();
     }
     QObject::disconnect(notifiers.focus_geometry);
@@ -483,7 +483,7 @@ void pointer_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
     }
 
     auto seat = waylandServer()->seat();
-    if (!focusNow || !focusNow->surface() || focus.deco) {
+    if (!focusNow || !focusNow->surface || focus.deco) {
         // Clean up focused pointer surface if there's no client to take focus,
         // or the pointer is on a client without surface or on a decoration.
         warp_xcb_on_surface_left(nullptr);
@@ -492,7 +492,7 @@ void pointer_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
     }
 
     // TODO: add convenient API to update global pos together with updating focused surface
-    warp_xcb_on_surface_left(focusNow->surface());
+    warp_xcb_on_surface_left(focusNow->surface);
 
     // TODO: why? in order to reset the cursor icon?
     s_cursorUpdateBlocking = true;
@@ -500,7 +500,7 @@ void pointer_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
     s_cursorUpdateBlocking = false;
 
     seat->pointers().set_position(m_pos.toPoint());
-    seat->pointers().set_focused_surface(focusNow->surface(), focusNow->input_transform());
+    seat->pointers().set_focused_surface(focusNow->surface, focusNow->input_transform());
 
     notifiers.focus_geometry
         = QObject::connect(focusNow, &Toplevel::frame_geometry_changed, this, [this] {
@@ -515,13 +515,13 @@ void pointer_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
                   return;
               }
               auto seat = waylandServer()->seat();
-              if (focus.window->surface() != seat->pointers().get_focus().surface) {
+              if (focus.window->surface != seat->pointers().get_focus().surface) {
                   return;
               }
               seat->pointers().set_focused_surface_transformation(focus.window->input_transform());
           });
 
-    notifiers.constraints = QObject::connect(focusNow->surface(),
+    notifiers.constraints = QObject::connect(focusNow->surface,
                                              &Wrapland::Server::Surface::pointerConstraintsChanged,
                                              this,
                                              &pointer_redirect::updatePointerConstraints);
@@ -574,17 +574,17 @@ void pointer_redirect::disconnect_pointer_constraints_connection()
 template<typename T>
 static QRegion getConstraintRegion(Toplevel* t, T* constraint)
 {
-    if (!t->surface()) {
+    if (!t->surface) {
         return QRegion();
     }
 
     QRegion constraint_region;
 
-    if (t->surface()->state().input_is_infinite) {
+    if (t->surface->state().input_is_infinite) {
         auto const client_size = win::frame_relative_client_rect(t).size();
         constraint_region = QRegion(0, 0, client_size.width(), client_size.height());
     } else {
-        constraint_region = t->surface()->state().input;
+        constraint_region = t->surface->state().input;
     }
 
     if (auto const& reg = constraint->region(); !reg.isEmpty()) {
@@ -614,7 +614,7 @@ void pointer_redirect::updatePointerConstraints()
         return;
     }
 
-    const auto s = focus.window->surface();
+    const auto s = focus.window->surface;
     if (!s) {
         return;
     }
@@ -648,7 +648,7 @@ void pointer_redirect::updatePointerConstraints()
                     if (!focus.window) {
                         return;
                     }
-                    const auto s = focus.window->surface();
+                    const auto s = focus.window->surface;
                     if (!s) {
                         return;
                     }
@@ -753,7 +753,7 @@ QPointF pointer_redirect::apply_pointer_confinement(const QPointF& pos) const
     if (!focus.window) {
         return pos;
     }
-    auto s = focus.window->surface();
+    auto s = focus.window->surface;
     if (!s) {
         return pos;
     }

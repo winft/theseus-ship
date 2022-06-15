@@ -17,7 +17,7 @@ void idle_update(Device& idle, win::wayland::window& window)
 {
     auto const is_visible = window.isShown() && window.isOnCurrentDesktop();
 
-    if (is_visible && window.surface() && window.surface()->inhibitsIdle()) {
+    if (is_visible && window.surface && window.surface->inhibitsIdle()) {
         if (!window.inhibit_idle) {
             window.inhibit_idle = true;
             idle.inhibit();
@@ -38,7 +38,7 @@ void idle_setup(Device& idle, win::wayland::window& window)
     auto update = [&idle, &window] { idle_update(idle, window); };
 
     QObject::connect(
-        window.surface(), &Wrapland::Server::Surface::inhibitsIdleChanged, &window, update);
+        window.surface, &Wrapland::Server::Surface::inhibitsIdleChanged, &window, update);
     QObject::connect(&window, &win::wayland::window::desktopChanged, &window, update);
     QObject::connect(&window, &win::wayland::window::clientMinimized, &window, update);
     QObject::connect(&window, &win::wayland::window::clientUnminimized, &window, update);

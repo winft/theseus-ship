@@ -239,7 +239,7 @@ bool GlxTexture::updateTexture(render::buffer* buffer)
     }
 
     auto const size = win::render_geometry(buffer->toplevel()).size();
-    auto const visual = buffer->toplevel()->visual();
+    auto const visual = buffer->toplevel()->xcb_visual;
 
     auto const& win_integrate
         = static_cast<render::x11::buffer_win_integration&>(*buffer->win_integration);

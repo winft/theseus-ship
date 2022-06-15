@@ -958,7 +958,7 @@ void window::getResourceClass()
 
 void window::getWmClientMachine()
 {
-    m_clientMachine->resolve(xcb_window(), wmClientLeader());
+    client_machine->resolve(xcb_window(), wmClientLeader());
 }
 
 base::x11::xcb::property window::fetchWmClientLeader() const
@@ -1036,14 +1036,14 @@ void window::clientMessageEvent(xcb_client_message_event_t* e)
         return;
     }
 
-    m_surfaceId = e->data.data32[0];
-    Q_EMIT space.surface_id_changed(this, m_surfaceId);
-    Q_EMIT surfaceIdChanged(m_surfaceId);
+    surface_id = e->data.data32[0];
+    Q_EMIT space.surface_id_changed(this, surface_id);
+    Q_EMIT surfaceIdChanged(surface_id);
 }
 
 bool window::resourceMatch(window const* c1, window const* c2)
 {
-    return c1->resourceClass() == c2->resourceClass();
+    return c1->resource_class == c2->resource_class;
 }
 
 void window::debug(QDebug& stream) const
@@ -1058,7 +1058,7 @@ void window::debug(QDebug& stream) const
     stream.nospace();
     stream << "\'x11::window"
            << "(" << QString::fromStdString(type) << "):" << xcb_window() << ";"
-           << ";WMCLASS:" << resourceClass() << ":" << resourceName()
+           << ";WMCLASS:" << resource_class << ":" << resource_name
            << ";Caption:" << QString::fromStdString(caption) << "\'";
 }
 

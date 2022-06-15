@@ -414,13 +414,13 @@ void X11ClientTest::testX11WindowId()
     QCOMPARE(client->xcb_window(), w);
     QVERIFY(client->control->active());
     QCOMPARE(client->xcb_window(), w);
-    QCOMPARE(client->internalId().isNull(), false);
-    const auto uuid = client->internalId();
+    QCOMPARE(client->internal_id.isNull(), false);
+    auto const uuid = client->internal_id;
     QUuid deletedUuid;
     QCOMPARE(deletedUuid.isNull(), true);
 
     connect(client, &win::x11::window::remnant_created, this, [&deletedUuid](auto remnant) {
-        deletedUuid = remnant->internalId();
+        deletedUuid = remnant->internal_id;
     });
 
     NETRootInfo rootInfo(c.get(), NET::WMAllProperties);
