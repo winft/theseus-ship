@@ -25,7 +25,7 @@ remnant::remnant(Toplevel* win, Toplevel* source)
     : win{win}
 {
     assert(win != source);
-    assert(!win->remnant());
+    assert(!win->remnant);
 
     frame_margins = win::frame_margins(source);
     render_region = source->render_region();

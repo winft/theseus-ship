@@ -178,7 +178,7 @@ GLTexture* window::getDecorationTexture() const
             renderer->render();
             return renderer->texture();
         }
-    } else if (auto remnant = toplevel->remnant()) {
+    } else if (auto& remnant = toplevel->remnant) {
         if (!remnant->control || remnant->no_border) {
             return nullptr;
         }

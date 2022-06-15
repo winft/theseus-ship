@@ -232,7 +232,7 @@ space::~space()
 
     // At this point only remnants are remaining.
     for (auto it = m_windows.begin(); it != m_windows.end();) {
-        assert((*it)->remnant());
+        assert((*it)->remnant);
         Q_EMIT window_deleted(*it);
         it = m_windows.erase(it);
     }
@@ -1705,7 +1705,7 @@ std::vector<Toplevel*> space::unmanagedList() const
 {
     std::vector<Toplevel*> ret;
     for (auto const& window : m_windows) {
-        if (window->xcb_window && !window->control && !window->remnant()) {
+        if (window->xcb_window && !window->control && !window->remnant) {
             ret.push_back(window);
         }
     }
@@ -1716,7 +1716,7 @@ std::vector<Toplevel*> space::remnants() const
 {
     std::vector<Toplevel*> ret;
     for (auto const& window : m_windows) {
-        if (window->remnant()) {
+        if (window->remnant) {
             ret.push_back(window);
         }
     }

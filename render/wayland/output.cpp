@@ -103,10 +103,10 @@ bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
     while (window_it != windows.end()) {
         auto win = *window_it;
 
-        if (win->remnant() && win->transient()->annexed) {
-            if (auto lead = win::lead_of_annexed_transient(win); !lead || !lead->remnant()) {
+        if (win->remnant && win->transient()->annexed) {
+            if (auto lead = win::lead_of_annexed_transient(win); !lead || !lead->remnant) {
                 // TODO(romangg): Add repaint to compositor?
-                win->remnant()->refcount = 0;
+                win->remnant->refcount = 0;
                 delete win;
                 window_it = windows.erase(window_it);
                 continue;
@@ -226,7 +226,7 @@ void output::run()
     }
 
     for (auto win : windows) {
-        if (win->remnant() && !win->remnant()->refcount) {
+        if (win->remnant && !win->remnant->refcount) {
             delete win;
         }
     }

@@ -66,7 +66,7 @@ void destroy_window(Win* win)
     space.handle_window_removed(win);
 
     if (remnant_window) {
-        remnant_window->remnant()->unref();
+        remnant_window->remnant->unref();
     } else {
         delete_window_from_space(space, win);
     }

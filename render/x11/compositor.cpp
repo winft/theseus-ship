@@ -371,7 +371,7 @@ void compositor::performCompositing()
     retard_next_composition();
 
     for (auto win : windows) {
-        if (win->remnant() && !win->remnant()->refcount) {
+        if (win->remnant && !win->remnant->refcount) {
             delete win;
         }
     }

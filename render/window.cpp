@@ -308,7 +308,7 @@ WindowQuadList window::makeContentsQuads(int id, QPoint const& offset) const
         if (!child->transient()->annexed) {
             continue;
         }
-        if (child->remnant() && !toplevel->remnant()) {
+        if (child->remnant && !toplevel->remnant) {
             // When the child is a remnant but the parent not there is no guarentee the toplevel
             // will become one too what can cause artficats before the child cleanup timer fires.
             continue;

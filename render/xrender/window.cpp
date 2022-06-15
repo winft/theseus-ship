@@ -180,7 +180,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
     bool scaled = false;
 
     auto client = dynamic_cast<win::x11::window*>(toplevel);
-    auto remnant = toplevel->remnant();
+    auto& remnant = toplevel->remnant;
     auto const decorationRect = QRect(QPoint(), toplevel->size());
     if ((client && client->control && !client->noBorder()) || (remnant && !remnant->no_border)) {
         // decorated client

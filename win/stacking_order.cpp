@@ -61,7 +61,7 @@ bool stacking_order::sort()
             // Child will be in a layer above the lead and should not be pulled down from that.
             return false;
         }
-        if (child->remnant()) {
+        if (child->remnant) {
             return keep_deleted_transient_above(lead, child);
         }
         return keep_transient_above(lead, child);

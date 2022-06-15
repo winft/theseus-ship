@@ -76,7 +76,6 @@ Toplevel::Toplevel(win::transient* transient, win::space& space)
 Toplevel::~Toplevel()
 {
     delete info;
-    delete m_remnant;
 }
 
 QDebug& operator<<(QDebug& stream, const Toplevel* cl)
@@ -89,8 +88,8 @@ QDebug& operator<<(QDebug& stream, const Toplevel* cl)
 
 NET::WindowType Toplevel::windowType([[maybe_unused]] bool direct,int supported_types) const
 {
-    if (m_remnant) {
-        return m_remnant->window_type;
+    if (remnant) {
+        return remnant->window_type;
     }
     if (supported_types == 0) {
         supported_types = supported_default_types;
@@ -129,7 +128,7 @@ Toplevel* Toplevel::create_remnant(Toplevel* source)
 
     auto win = new Toplevel(source->space);
     win->copyToDeleted(source);
-    win->m_remnant = new win::remnant(win, source);
+    win->remnant = std::make_unique<win::remnant>(win, source);
 
     win::add_remnant(win->space, source, win);
     Q_EMIT source->remnant_created(win);
@@ -223,8 +222,8 @@ void Toplevel::setResourceClass(const QByteArray &name, const QByteArray &classN
 
 double Toplevel::opacity() const
 {
-    if (m_remnant) {
-        return m_remnant->opacity;
+    if (remnant) {
+        return remnant->opacity;
     }
     if (info->opacity() == 0xffffffff)
         return 1.0;
@@ -246,8 +245,8 @@ void Toplevel::setOpacity(double new_opacity)
 
 bool Toplevel::isOutline() const
 {
-    if (m_remnant) {
-        return m_remnant->was_outline;
+    if (remnant) {
+        return remnant->was_outline;
     }
     return is_outline;
 }
@@ -265,7 +264,7 @@ void Toplevel::add_scene_window_addon()
 
 void Toplevel::finishCompositing()
 {
-    assert(!remnant());
+    assert(!remnant);
 
     if (render) {
         discard_buffer();
@@ -541,7 +540,7 @@ void Toplevel::handle_output_removed(base::output* output)
 
 qreal Toplevel::bufferScale() const
 {
-    return m_remnant ? m_remnant->buffer_scale : 1.;
+    return remnant ? remnant->buffer_scale : 1.;
 }
 
 bool Toplevel::wantsShadowToBeRendered() const
@@ -561,7 +560,7 @@ bool Toplevel::isClient() const
 
 bool Toplevel::isDeleted() const
 {
-    return remnant() != nullptr;
+    return static_cast<bool>(remnant);
 }
 
 pid_t Toplevel::pid() const
@@ -571,15 +570,15 @@ pid_t Toplevel::pid() const
 
 xcb_window_t Toplevel::frameId() const
 {
-    if (m_remnant) {
-        return m_remnant->frame;
+    if (remnant) {
+        return remnant->frame;
     }
     return xcb_window;
 }
 
 void Toplevel::debug(QDebug& stream) const
 {
-    if (remnant()) {
+    if (remnant) {
         stream << "\'REMNANT:" << reinterpret_cast<void const*>(this) << "\'";
     } else {
         stream << "\'ID:" << reinterpret_cast<void const*>(this) << xcb_window << "\'";
@@ -616,8 +615,8 @@ void Toplevel::addDamage(const QRegion &damage)
 
 QByteArray Toplevel::windowRole() const
 {
-    if (m_remnant) {
-        return m_remnant->window_role;
+    if (remnant) {
+        return remnant->window_role;
     }
     return QByteArray(info->windowRole());
 }
@@ -670,8 +669,8 @@ void Toplevel::discard_quads()
 
 QRegion Toplevel::render_region() const
 {
-    if (m_remnant) {
-        return m_remnant->render_region;
+    if (remnant) {
+        return remnant->render_region;
     }
 
     auto const render_geo = win::render_geometry(this);
@@ -715,8 +714,8 @@ bool Toplevel::isLocalhost() const
 
 bool Toplevel::is_popup_end() const
 {
-    if (m_remnant) {
-        return m_remnant->was_popup_window;
+    if (remnant) {
+        return remnant->was_popup_window;
     }
     return false;
 }
@@ -799,11 +798,6 @@ void Toplevel::checkTransient([[maybe_unused]] Toplevel* window)
 {
 }
 
-win::remnant* Toplevel::remnant() const
-{
-    return m_remnant;
-}
-
 win::transient* Toplevel::transient() const
 {
     return m_transient.get();
@@ -839,8 +833,8 @@ win::maximize_mode Toplevel::maximizeMode() const
 
 bool Toplevel::noBorder() const
 {
-    if (m_remnant) {
-        return m_remnant->no_border;
+    if (remnant) {
+        return remnant->no_border;
     }
     return true;
 }
@@ -934,8 +928,8 @@ void Toplevel::updateDecoration([[maybe_unused]] bool check_workspace_pos,
 
 void Toplevel::layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRect &bottom) const
 {
-    if (m_remnant) {
-        return m_remnant->layout_decoration_rects(left, top, right, bottom);
+    if (remnant) {
+        return remnant->layout_decoration_rects(left, top, right, bottom);
     }
     win::layout_decoration_rects(this, left, top, right, bottom);
 }

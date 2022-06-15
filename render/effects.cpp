@@ -1102,7 +1102,7 @@ EffectWindow* effects_handler_impl::find_window_by_qwindow(QWindow* w) const
 EffectWindow* effects_handler_impl::find_window_by_uuid(const QUuid& id) const
 {
     for (auto win : m_compositor->space->m_windows) {
-        if (!win->remnant() && win->internal_id == id) {
+        if (!win->remnant && win->internal_id == id) {
             return win->render->effect.get();
         }
     }
@@ -1978,7 +1978,7 @@ void effects_window_impl::refWindow()
     if (toplevel->transient()->annexed) {
         return;
     }
-    if (auto remnant = toplevel->remnant()) {
+    if (auto& remnant = toplevel->remnant) {
         return remnant->ref();
     }
     abort(); // TODO
@@ -1989,7 +1989,7 @@ void effects_window_impl::unrefWindow()
     if (toplevel->transient()->annexed) {
         return;
     }
-    if (auto remnant = toplevel->remnant()) {
+    if (auto& remnant = toplevel->remnant) {
         // delays deletion in case
         return remnant->unref();
     }
@@ -2058,7 +2058,7 @@ TOPLEVEL_HELPER_WIN(QRect, bufferGeometry, render_geometry)
 #define CLIENT_HELPER_WITH_DELETED_WIN(rettype, prototype, propertyname, defaultValue)             \
     rettype effects_window_impl::prototype() const                                                 \
     {                                                                                              \
-        if (toplevel->control || toplevel->remnant()) {                                            \
+        if (toplevel->control || toplevel->remnant) {                                              \
             return win::propertyname(toplevel);                                                    \
         }                                                                                          \
         return defaultValue;                                                                       \
@@ -2075,7 +2075,7 @@ CLIENT_HELPER_WITH_DELETED_WIN(QVector<uint>, desktops, x11_desktop_ids, QVector
         if (toplevel->control) {                                                                   \
             return toplevel->control->propertyname();                                              \
         }                                                                                          \
-        if (auto remnant = toplevel->remnant()) {                                                  \
+        if (auto& remnant = toplevel->remnant) {                                                   \
             return remnant->propertyname;                                                          \
         }                                                                                          \
         return defaultValue;                                                                       \
@@ -2297,7 +2297,7 @@ EffectWindowList getMainWindows(T* c)
 
 EffectWindowList effects_window_impl::mainWindows() const
 {
-    if (toplevel->control || toplevel->remnant()) {
+    if (toplevel->control || toplevel->remnant) {
         return getMainWindows(toplevel);
     }
     return {};

@@ -171,7 +171,7 @@ void compositor::stop(bool on_shutdown)
 
     if (space) {
         for (auto& c : space->windows()) {
-            if (c->remnant()) {
+            if (c->remnant) {
                 continue;
             }
             c->finishCompositing();
@@ -182,7 +182,7 @@ void compositor::stop(bool on_shutdown)
                 con, kwinApp()->x11RootWindow(), XCB_COMPOSITE_REDIRECT_MANUAL);
         }
         while (!space->remnants().empty()) {
-            space->remnants().front()->remnant()->discard();
+            space->remnants().front()->remnant->discard();
         }
     }
 

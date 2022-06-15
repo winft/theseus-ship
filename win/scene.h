@@ -147,7 +147,7 @@ template<typename Win>
 bool setup_compositing(Win& win, bool add_full_damage)
 {
     static_assert(!Win::is_toplevel);
-    assert(!win.remnant());
+    assert(!win.remnant);
 
     if (!win.space.compositing()) {
         return false;

@@ -408,12 +408,12 @@ private:
     bool m_skipCloseAnimation;
     QVector<win::virtual_desktop*> m_desktops;
 
-    win::remnant* m_remnant{nullptr};
     std::unique_ptr<win::transient> m_transient;
 
 public:
     std::unique_ptr<win::control> control;
-    win::remnant* remnant() const;
+    std::unique_ptr<win::remnant> remnant;
+
     win::transient* transient() const;
 
     /**

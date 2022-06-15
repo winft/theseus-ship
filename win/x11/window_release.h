@@ -101,7 +101,7 @@ void finish_unmanaged_removal(Win* win, Toplevel* remnant)
 
     if (remnant) {
         win->disownDataPassedToDeleted();
-        remnant->remnant()->unref();
+        remnant->remnant->unref();
     } else {
         delete_window_from_space(space, win);
     }
@@ -254,7 +254,7 @@ void release_window(Win* win, bool on_shutdown)
 
     if (del) {
         win->disownDataPassedToDeleted();
-        del->remnant()->unref();
+        del->remnant->unref();
     } else {
         delete_window_from_space(win->space, win);
     }
@@ -327,7 +327,7 @@ void destroy_window(Win* win)
     win->geometry_update.block--;
     if (del) {
         win->disownDataPassedToDeleted();
-        del->remnant()->unref();
+        del->remnant->unref();
     } else {
         delete_window_from_space(win->space, win);
     }

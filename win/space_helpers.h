@@ -28,7 +28,7 @@ void delete_window_from_space(Space& space, Win* win)
     remove_window_from_lists(space, win);
 
     if (auto& update_block = space.render.x11_integration.update_blocking; update_block) {
-        auto& control = win->remnant() ? win->remnant()->control : win->control;
+        auto& control = win->remnant ? win->remnant->control : win->control;
         if (control) {
             update_block(nullptr);
         }

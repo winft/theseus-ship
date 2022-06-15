@@ -36,8 +36,8 @@ bool is_move(Win* win)
 template<typename Win>
 QMargins frame_margins(Win* win)
 {
-    if (auto remnant = win->remnant()) {
-        return remnant->frame_margins;
+    if (win->remnant) {
+        return win->remnant->frame_margins;
     }
     return QMargins(left_border(win), top_border(win), right_border(win), bottom_border(win));
 }

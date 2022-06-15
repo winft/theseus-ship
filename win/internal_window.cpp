@@ -431,7 +431,7 @@ void internal_window::destroyClient()
     Q_EMIT space.internalClientRemoved(this);
 
     if (deleted) {
-        deleted->remnant()->unref();
+        deleted->remnant->unref();
     } else {
         delete_window_from_space(space, this);
     }
