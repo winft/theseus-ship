@@ -24,6 +24,7 @@
 #include <kwingl/utils.h>
 
 #include <QOpenGLContext>
+#include <Wrapland/Server/linux_dmabuf_v1.h>
 #include <memory>
 #include <stdexcept>
 
@@ -72,11 +73,17 @@ public:
         wayland::init_egl(*this, data);
 
         if (this->hasExtension(QByteArrayLiteral("EGL_EXT_image_dma_buf_import"))) {
-            dmabuf = new gl::egl_dmabuf;
+            auto const formats_set = wlr_renderer_get_dmabuf_texture_formats(platform.renderer);
+            auto const formats_map = get_drm_formats<Wrapland::Server::drm_format>(formats_set);
 
-            auto formats_set = wlr_renderer_get_dmabuf_texture_formats(platform.renderer);
-            auto formats_map = get_drm_formats<Wrapland::Server::drm_format>(formats_set);
-            waylandServer()->linux_dmabuf()->set_formats(formats_map);
+            dmabuf = std::make_unique<Wrapland::Server::linux_dmabuf_v1>(
+                waylandServer()->display.get(),
+                [this](
+                    auto const& planes, auto format, auto modifier, auto const& size, auto flags) {
+                    return std::make_unique<Wrapland::Server::linux_dmabuf_buffer_v1>(
+                        planes, format, modifier, size, flags);
+                });
+            dmabuf->set_formats(formats_map);
         }
     }
 
@@ -248,7 +255,7 @@ public:
 
     Platform& platform;
 
-    gl::egl_dmabuf* dmabuf{nullptr};
+    std::unique_ptr<Wrapland::Server::linux_dmabuf_v1> dmabuf;
     wayland::egl_data data;
 
     GLRenderTarget native_fbo;
@@ -268,8 +275,7 @@ private:
         doneCurrent();
         cleanupSurfaces();
 
-        delete dmabuf;
-        dmabuf = nullptr;
+        dmabuf.reset();
     }
 
     void cleanupSurfaces()

@@ -10,7 +10,6 @@
 #include "wlr_includes.h"
 #include "wlr_non_owning_data_buffer.h"
 
-#include "render/gl/egl_dmabuf.h"
 #include "render/gl/kwin_eglext.h"
 #include "render/gl/window.h"
 #include "render/wayland/buffer.h"
