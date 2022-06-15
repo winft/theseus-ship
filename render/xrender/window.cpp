@@ -185,7 +185,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
     if ((client && client->control && !client->noBorder()) || (remnant && !remnant->no_border)) {
         // decorated client
         transformed_shape = decorationRect;
-        if (toplevel->shape()) {
+        if (toplevel->is_shape) {
             // "xeyes" + decoration
             transformed_shape -= bufferToWindowRect(cr);
             transformed_shape += bufferToWindowRegion(get_window()->render_region());

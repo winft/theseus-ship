@@ -457,7 +457,7 @@ bool window::isOutline() const
 
 bool window::isShape() const
 {
-    return m_client->shape();
+    return m_client->is_shape;
 }
 
 bool window::isShade() const

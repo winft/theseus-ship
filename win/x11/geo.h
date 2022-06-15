@@ -37,7 +37,7 @@ private:
 template<typename Win>
 void update_shape(Win* win)
 {
-    if (win->shape()) {
+    if (win->is_shape) {
         // Workaround for #19644 - Shaped windows shouldn't have decoration
         if (!win->app_no_border) {
             // Only when shape is detected for the first time, still let the user to override

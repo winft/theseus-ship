@@ -121,6 +121,7 @@ public:
     QRegion layer_repaints_region;
     bool ready_for_painting{false};
     bool m_isDamaged{false};
+    bool is_shape{false};
 
     base::output const* central_output{nullptr};
 
@@ -194,7 +195,6 @@ public:
     virtual pid_t pid() const;
 
     xcb_visualid_t visual() const;
-    bool shape() const;
     virtual void setOpacity(double opacity);
     virtual double opacity() const;
     int depth() const;
@@ -405,7 +405,6 @@ protected:
     friend QDebug& operator<<(QDebug& stream, const Toplevel*);
     void setDepth(int depth);
 
-    bool is_shape{false};
     QRegion opaque_region;
 
     win::x11::client_machine* m_clientMachine;
@@ -765,11 +764,6 @@ inline bool Toplevel::isInputMethod() const
 inline QRegion Toplevel::damage() const
 {
     return damage_region;
-}
-
-inline bool Toplevel::shape() const
-{
-    return is_shape;
 }
 
 inline int Toplevel::depth() const
