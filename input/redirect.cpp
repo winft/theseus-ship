@@ -115,7 +115,7 @@ Toplevel* redirect::findManagedToplevel(const QPoint& pos)
     do {
         --it;
         auto window = *it;
-        if (window->isDeleted()) {
+        if (window->remnant) {
             // a deleted window doesn't get mouse events
             continue;
         }

@@ -167,7 +167,6 @@ public:
 
     virtual bool is_wayland_window() const;
     virtual bool isClient() const;
-    bool isDeleted() const;
 
     // prefer isXXX() instead
     // 0 for supported types means default for managed/unmanaged types

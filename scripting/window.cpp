@@ -630,7 +630,7 @@ bool window::isClient() const
 
 bool window::isDeleted() const
 {
-    return m_client->isDeleted();
+    return static_cast<bool>(m_client->remnant);
 }
 
 quint32 window::surfaceId() const

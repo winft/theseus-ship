@@ -558,11 +558,6 @@ bool Toplevel::isClient() const
     return false;
 }
 
-bool Toplevel::isDeleted() const
-{
-    return static_cast<bool>(remnant);
-}
-
 pid_t Toplevel::pid() const
 {
     return info->pid();

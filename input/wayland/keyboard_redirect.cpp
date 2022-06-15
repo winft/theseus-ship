@@ -142,7 +142,7 @@ void keyboard_redirect::update()
         do {
             --it;
             Toplevel* t = (*it);
-            if (t->isDeleted()) {
+            if (t->remnant) {
                 // a deleted window doesn't get mouse events
                 continue;
             }

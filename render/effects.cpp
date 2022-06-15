@@ -2018,7 +2018,6 @@ TOPLEVEL_HELPER(QSize, size, size)
 TOPLEVEL_HELPER(QRect, geometry, frameGeometry)
 TOPLEVEL_HELPER(QRect, frameGeometry, frameGeometry)
 TOPLEVEL_HELPER(int, desktop, desktop)
-TOPLEVEL_HELPER(bool, isDeleted, isDeleted)
 TOPLEVEL_HELPER(QString, windowRole, windowRole)
 TOPLEVEL_HELPER(bool, skipsCloseAnimation, skipsCloseAnimation)
 TOPLEVEL_HELPER(bool, isOutline, isOutline)
@@ -2087,6 +2086,11 @@ CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, isMinimized, minimized, false)
 CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, isFullScreen, fullscreen, false)
 
 #undef CLIENT_HELPER_WITH_DELETED_WIN_CTRL
+
+bool effects_window_impl::isDeleted() const
+{
+    return static_cast<bool>(toplevel->remnant);
+}
 
 Wrapland::Server::Surface* effects_window_impl::surface() const
 {

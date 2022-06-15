@@ -26,7 +26,7 @@ buffer::~buffer()
 
 void buffer::create()
 {
-    if (isValid() || toplevel()->isDeleted()) {
+    if (isValid() || toplevel()->remnant) {
         return;
     }
 
