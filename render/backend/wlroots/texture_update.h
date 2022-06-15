@@ -174,8 +174,8 @@ bool update_texture_from_egl(Texture& texture, Wrapland::Server::Buffer* buffer)
     return true;
 }
 
-template<typename Texture>
-bool update_texture_from_dmabuf(Texture& texture, gl::egl_dmabuf_buffer* dmabuf)
+template<typename Texture, typename Dmabuf>
+bool update_texture_from_dmabuf(Texture& texture, Dmabuf* dmabuf)
 {
     assert(dmabuf);
     assert(texture.m_image == EGL_NO_IMAGE_KHR);
@@ -303,7 +303,7 @@ bool update_texture_from_external(Texture& texture, WinBuffer const& buffer)
     assert(extbuf);
 
     if (auto dmabuf = extbuf->linuxDmabufBuffer()) {
-        ret = update_texture_from_dmabuf(texture, static_cast<gl::egl_dmabuf_buffer*>(dmabuf));
+        ret = update_texture_from_dmabuf(texture, dmabuf);
     } else if (auto shm = extbuf->shmBuffer()) {
         ret = update_texture_from_shm(texture, buffer);
     } else {

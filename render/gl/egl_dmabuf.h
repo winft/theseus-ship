@@ -27,16 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::render::gl
 {
 
-class KWIN_EXPORT egl_dmabuf_buffer : public Wrapland::Server::linux_dmabuf_buffer_v1
-{
-public:
-    egl_dmabuf_buffer(std::vector<Wrapland::Server::linux_dmabuf_plane_v1> planes,
-                      uint32_t format,
-                      uint64_t modifier,
-                      const QSize& size,
-                      Wrapland::Server::linux_dmabuf_flags_v1 flags);
-};
-
 class KWIN_EXPORT egl_dmabuf
 {
 public:

@@ -35,15 +35,6 @@ namespace KWin::render::gl
 using Plane = Wrapland::Server::linux_dmabuf_plane_v1;
 using Flags = Wrapland::Server::linux_dmabuf_flags_v1;
 
-egl_dmabuf_buffer::egl_dmabuf_buffer(std::vector<Plane> planes,
-                                     uint32_t format,
-                                     uint64_t modifier,
-                                     const QSize& size,
-                                     Flags flags)
-    : Wrapland::Server::linux_dmabuf_buffer_v1(std::move(planes), format, modifier, size, flags)
-{
-}
-
 std::unique_ptr<Wrapland::Server::linux_dmabuf_buffer_v1>
 egl_dmabuf::import_buffer(std::vector<Plane> const& planes,
                           uint32_t format,
@@ -52,7 +43,8 @@ egl_dmabuf::import_buffer(std::vector<Plane> const& planes,
                           Flags flags)
 {
     Q_ASSERT(planes.size() > 0);
-    return std::make_unique<egl_dmabuf_buffer>(planes, format, modifier, size, flags);
+    return std::make_unique<Wrapland::Server::linux_dmabuf_buffer_v1>(
+        planes, format, modifier, size, flags);
 }
 
 egl_dmabuf::egl_dmabuf()
