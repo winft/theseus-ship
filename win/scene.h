@@ -193,7 +193,7 @@ void elevate(Win* win, bool elevate)
     }
 
     win->render->effect->elevate(elevate);
-    win->addWorkspaceRepaint(visible_rect(win));
+    win->space.render.addRepaint(visible_rect(win));
 }
 
 }

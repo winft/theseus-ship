@@ -97,7 +97,10 @@ void finish_unmanaged_removal(Win* win, Toplevel* remnant)
     assert(contains(space.m_windows, win));
 
     remove_window_from_lists(space, win);
-    win->addWorkspaceRepaint(win::visible_rect(win));
+
+    if (win->render) {
+        win->space.render.addRepaint(visible_rect(win));
+    }
 
     if (remnant) {
         win->disownDataPassedToDeleted();
@@ -191,8 +194,8 @@ void release_window(Win* win, bool on_shutdown)
     finish_rules(win);
     win->geometry_update.block++;
 
-    if (win->isOnCurrentDesktop() && win->isShown()) {
-        win->addWorkspaceRepaint(visible_rect(win));
+    if (win->isOnCurrentDesktop() && win->isShown() && win->render) {
+        win->space.render.addRepaint(visible_rect(win));
     }
 
     // Grab X during the release to make removing of properties, setting to withdrawn state
@@ -306,8 +309,8 @@ void destroy_window(Win* win)
     finish_rules(win);
     win->geometry_update.block++;
 
-    if (win->isOnCurrentDesktop() && win->isShown()) {
-        win->addWorkspaceRepaint(visible_rect(win));
+    if (win->isOnCurrentDesktop() && win->isShown() && win->render) {
+        win->space.render.addRepaint(visible_rect(win));
     }
 
     // So that it's not considered visible anymore

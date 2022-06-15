@@ -503,19 +503,6 @@ void Toplevel::add_repaint_outputs(QRegion const& region)
     }
 }
 
-void Toplevel::addWorkspaceRepaint(int x, int y, int w, int h)
-{
-    addWorkspaceRepaint(QRect(x, y, w, h));
-}
-
-void Toplevel::addWorkspaceRepaint(QRect const& rect)
-{
-    if (!space.compositing()) {
-        return;
-    }
-    space.render.addRepaint(rect);
-}
-
 void Toplevel::setReadyForPainting()
 {
     if (!ready_for_painting) {

@@ -496,8 +496,10 @@ void set_minimized(Win* win, bool set, bool avoid_animation = false)
         win->doMinimize();
 
         win->updateWindowRules(Rules::Minimize);
+        if (win->render) {
+            win->space.render.addRepaint(visible_rect(win));
+        }
         // TODO: merge signal with s_minimized
-        win->addWorkspaceRepaint(visible_rect(win));
         Q_EMIT win->clientMinimized(win, !avoid_animation);
         Q_EMIT win->minimizedChanged();
     } else {

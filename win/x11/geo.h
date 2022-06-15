@@ -75,11 +75,11 @@ void update_shape(Win* win)
     // when the decoration calls it or when the decoration is created/destroyed
     win->update_input_shape();
 
-    if (win->space.compositing()) {
+    if (win->render) {
         win->addRepaintFull();
 
         // In case shape change removes part of this window
-        win->addWorkspaceRepaint(win::visible_rect(win));
+        win->space.render.addRepaint(visible_rect(win));
     }
 
     win->discard_shape();

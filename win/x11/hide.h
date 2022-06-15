@@ -135,7 +135,10 @@ void internal_hide(Win* win)
         update_hidden_preview(win);
     }
 
-    win->addWorkspaceRepaint(win::visible_rect(win));
+    if (win->render) {
+        win->space.render.addRepaint(visible_rect(win));
+    }
+
     win->space.clientHidden(win);
     Q_EMIT win->windowHidden(win);
 }
@@ -163,7 +166,11 @@ void internal_keep(Win* win)
     }
 
     update_hidden_preview(win);
-    win->addWorkspaceRepaint(win::visible_rect(win));
+
+    if (win->render) {
+        win->space.render.addRepaint(visible_rect(win));
+    }
+
     win->space.clientHidden(win);
 }
 

@@ -212,9 +212,6 @@ public:
     Q_INVOKABLE void addLayerRepaint(QRegion const& r);
 
     Q_INVOKABLE virtual void addRepaintFull();
-    // these call workspace->addRepaint(), but first transform the damage if needed
-    void addWorkspaceRepaint(int x, int y, int w, int h);
-    void addWorkspaceRepaint(QRect const& rect);
 
     virtual bool has_pending_repaints() const;
     QRegion repaints() const;

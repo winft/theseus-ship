@@ -130,7 +130,10 @@ void unmanaged_configure_event(Win* win, xcb_configure_notify_event_t* e)
     QRect newgeom(e->x, e->y, e->width, e->height);
     if (newgeom != win->frameGeometry()) {
         // Damage old area.
-        win->addWorkspaceRepaint(win::visible_rect(win));
+
+        if (win->render) {
+            win->space.render.addRepaint(visible_rect(win));
+        }
 
         auto const old = win->frameGeometry();
         win->set_frame_geometry(newgeom);
@@ -212,8 +215,11 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* e)
             win->detectShape(win->xcb_window());
             win->addRepaintFull();
 
-            // In case shape change removes part of this window.
-            win->addWorkspaceRepaint(win->frameGeometry());
+            if (win->render) {
+                // In case shape change removes part of this window.
+                win->space.render.addRepaint(win->frameGeometry());
+            }
+
             Q_EMIT win->frame_geometry_changed(win, win->frameGeometry());
         }
         if (eventType == base::x11::xcb::extensions::self()->damage_notify_event()) {

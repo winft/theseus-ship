@@ -464,7 +464,9 @@ void window::hideClient(bool hide)
     hidden = hide;
 
     if (hide) {
-        addWorkspaceRepaint(visible_rect(this));
+        if (render) {
+            space.render.addRepaint(visible_rect(this));
+        }
         space.clientHidden(this);
         Q_EMIT windowHidden(this);
     } else {
@@ -893,7 +895,10 @@ void window::unmap()
         control->destroy_wayland_management();
     }
 
-    addWorkspaceRepaint(visible_rect(this));
+    if (render) {
+        space.render.addRepaint(visible_rect(this));
+    }
+
     if (control) {
         space.clientHidden(this);
     }
