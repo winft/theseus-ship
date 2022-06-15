@@ -97,10 +97,7 @@ void finish_unmanaged_removal(Win* win, Toplevel* remnant)
     assert(contains(space.m_windows, win));
 
     remove_window_from_lists(space, win);
-
-    if (win->render) {
-        win->space.render.addRepaint(visible_rect(win));
-    }
+    space.render.addRepaint(visible_rect(win));
 
     if (remnant) {
         win->disownDataPassedToDeleted();
@@ -194,7 +191,7 @@ void release_window(Win* win, bool on_shutdown)
     finish_rules(win);
     win->geometry_update.block++;
 
-    if (win->isOnCurrentDesktop() && win->isShown() && win->render) {
+    if (win->isOnCurrentDesktop() && win->isShown()) {
         win->space.render.addRepaint(visible_rect(win));
     }
 
@@ -309,7 +306,7 @@ void destroy_window(Win* win)
     finish_rules(win);
     win->geometry_update.block++;
 
-    if (win->isOnCurrentDesktop() && win->isShown() && win->render) {
+    if (win->isOnCurrentDesktop() && win->isShown()) {
         win->space.render.addRepaint(visible_rect(win));
     }
 

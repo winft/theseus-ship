@@ -340,9 +340,7 @@ void internal_window::do_set_geometry(QRect const& frame_geo)
         win::perform_move_resize(this);
     }
 
-    if (render) {
-        space.render.addRepaint(visible_rect(this));
-    }
+    space.render.addRepaint(visible_rect(this));
 
     Q_EMIT frame_geometry_changed(this, old_frame_geo);
 }
