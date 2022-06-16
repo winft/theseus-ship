@@ -25,7 +25,7 @@ class OverviewEffect : public QuickSceneEffect
     Q_PROPERTY(bool gestureInProgress READ gestureInProgress NOTIFY gestureInProgressChanged)
 
 public:
-    enum class Status { Inactive, Activating, Active };
+    enum class Status { Inactive, Activating, Deactivating, Active };
     OverviewEffect();
     ~OverviewEffect() override;
 
@@ -41,7 +41,10 @@ public:
     void setBlurBackground(bool blur);
 
     qreal partialActivationFactor() const;
+    void setPartialActivationFactor(qreal factor);
+
     bool gestureInProgress() const;
+    void setGestureInProgress(bool gesture);
 
     int requestedEffectChainPosition() const override;
     bool borderActivated(ElectricBorder border) override;
@@ -58,7 +61,10 @@ Q_SIGNALS:
 
 public Q_SLOTS:
     void activate();
-    void partialActivate();
+    void partialActivate(qreal factor);
+    void cancelPartialActivate();
+    void partialDeactivate(qreal factor);
+    void cancelPartialDeactivate();
     void deactivate();
     void quickDeactivate();
     void toggle();
@@ -80,6 +86,7 @@ private:
     Status m_status = Status::Inactive;
     int m_animationDuration = 200;
     int m_layout = 1;
+    bool m_gestureInProgress = false;
 };
 
 } // namespace KWin

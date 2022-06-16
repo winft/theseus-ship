@@ -61,34 +61,35 @@ DesktopGridEffect::DesktopGridEffect()
     });
 
     connect(m_realtimeToggleAction, &QAction::triggered, this, [this]() {
-        if (isRunning() && m_partialActivationFactor > 0.5) {
-            activate();
-        } else {
-            deactivate(animationDuration());
+        if (m_status == Status::Deactivating) {
+            if (m_partialActivationFactor < 0.5) {
+                deactivate(animationDuration());
+            } else {
+                cancelPartialDeactivate();
+            }
+        } else if (m_status == Status::Activating) {
+            if (m_partialActivationFactor > 0.5) {
+                activate();
+            } else {
+                cancelPartialActivate();
+            }
         }
-        m_partialActivationFactor = 0;
-        Q_EMIT gestureInProgressChanged();
-        Q_EMIT partialActivationFactorChanged();
     });
 
     effects->registerRealtimeTouchpadSwipeShortcut(
         SwipeDirection::Up, 4, m_realtimeToggleAction, [this](qreal progress) {
-            if (m_status == Status::Active) {
-                return;
-            }
-            if (effects->hasActiveFullScreenEffect() && effects->activeFullScreenEffect() != this) {
-                return;
-            }
-
-            const bool wasInProgress = m_partialActivationFactor > 0;
-            m_partialActivationFactor = progress;
-
-            Q_EMIT partialActivationFactorChanged();
-            if (!wasInProgress) {
-                Q_EMIT gestureInProgressChanged();
-            }
-            if (!isRunning()) {
-                partialActivate();
+            if (!effects->hasActiveFullScreenEffect()
+                || effects->activeFullScreenEffect() == this) {
+                switch (m_status) {
+                case Status::Inactive:
+                case Status::Activating:
+                    partialActivate(progress);
+                    break;
+                case Status::Active:
+                case Status::Deactivating:
+                    partialDeactivate(progress);
+                    break;
+                }
             }
         });
 
@@ -149,27 +150,14 @@ void DesktopGridEffect::reconfigure(ReconfigureFlags)
                 }
                 const int rows = gridRows();
                 const int columns = gridColumns();
-                const bool wasInProgress = m_partialActivationFactor > 0;
-                int maxDelta = 500; // Arbitrary logical pixels value seems to behave better than
-                                    // scaledScreenSize
                 if (border == ElectricTop || border == ElectricBottom) {
-                    maxDelta = (screen->geometry().height() / rows)
+                    const int maxDelta = (screen->geometry().height() / rows)
                         * (rows - (effects->currentDesktop() % rows));
-                    m_partialActivationFactor
-                        = std::min(1.0, qAbs(deltaProgress.height()) / maxDelta);
+                    partialActivate(std::min(1.0, qAbs(deltaProgress.height()) / maxDelta));
                 } else {
-                    maxDelta = (screen->geometry().width() / columns)
+                    const int maxDelta = (screen->geometry().width() / columns)
                         * (columns - (effects->currentDesktop() % columns));
-                    m_partialActivationFactor
-                        = std::min(1.0, qAbs(deltaProgress.width()) / maxDelta);
-                }
-
-                Q_EMIT partialActivationFactorChanged();
-                if (!wasInProgress) {
-                    Q_EMIT gestureInProgressChanged();
-                }
-                if (!isRunning()) {
-                    partialActivate();
+                    partialActivate(std::min(1.0, qAbs(deltaProgress.width()) / maxDelta));
                 }
             });
     }
@@ -314,9 +302,25 @@ qreal DesktopGridEffect::partialActivationFactor() const
     return m_partialActivationFactor;
 }
 
+void DesktopGridEffect::setPartialActivationFactor(qreal factor)
+{
+    if (m_partialActivationFactor != factor) {
+        m_partialActivationFactor = factor;
+        Q_EMIT partialActivationFactorChanged();
+    }
+}
+
 bool DesktopGridEffect::gestureInProgress() const
 {
-    return m_partialActivationFactor > 0;
+    return m_gestureInProgress;
+}
+
+void DesktopGridEffect::setGestureInProgress(bool gesture)
+{
+    if (m_gestureInProgress != gesture) {
+        m_gestureInProgress = gesture;
+        Q_EMIT gestureInProgressChanged();
+    }
 }
 
 void DesktopGridEffect::toggle()
@@ -326,9 +330,6 @@ void DesktopGridEffect::toggle()
     } else {
         deactivate(animationDuration());
     }
-    m_partialActivationFactor = 0;
-    Q_EMIT gestureInProgressChanged();
-    Q_EMIT partialActivationFactorChanged();
 }
 
 void DesktopGridEffect::activate()
@@ -336,17 +337,34 @@ void DesktopGridEffect::activate()
     if (effects->isScreenLocked()) {
         return;
     }
+
     m_status = Status::Active;
+
+    setGestureInProgress(false);
+    setPartialActivationFactor(0.0);
+
+    // This one should be the last.
     setRunning(true);
 }
 
-void DesktopGridEffect::partialActivate()
+void DesktopGridEffect::partialActivate(qreal factor)
 {
     if (effects->isScreenLocked()) {
         return;
     }
+
     m_status = Status::Activating;
+
+    setPartialActivationFactor(factor);
+    setGestureInProgress(true);
+
+    // This one should be the last.
     setRunning(true);
+}
+
+void DesktopGridEffect::cancelPartialActivate()
+{
+    deactivate(animationDuration());
 }
 
 void DesktopGridEffect::deactivate(int timeout)
@@ -356,7 +374,22 @@ void DesktopGridEffect::deactivate(int timeout)
         QMetaObject::invokeMethod(view->rootItem(), "stop");
     }
     m_shutdownTimer->start(timeout);
-    m_status = Status::Inactive;
+
+    setGestureInProgress(false);
+    setPartialActivationFactor(0.0);
+}
+
+void DesktopGridEffect::partialDeactivate(qreal factor)
+{
+    m_status = Status::Deactivating;
+
+    setPartialActivationFactor(1 - factor);
+    setGestureInProgress(true);
+}
+
+void DesktopGridEffect::cancelPartialDeactivate()
+{
+    activate();
 }
 
 void DesktopGridEffect::realDeactivate()
