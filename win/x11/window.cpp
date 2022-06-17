@@ -36,7 +36,7 @@ window::window(win::space& space)
     : Toplevel(new x11::transient(this), space)
     , motif_hints(space.atoms->motif_wm_hints)
 {
-    client_machine = new win::x11::client_machine(this);
+    client_machine = new win::x11::client_machine;
 }
 
 window::~window()

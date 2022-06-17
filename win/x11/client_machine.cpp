@@ -173,17 +173,6 @@ void get_addr_info_wrapper::compare()
     Q_EMIT finished();
 }
 
-client_machine::client_machine(QObject* parent)
-    : QObject(parent)
-    , m_localhost(false)
-    , m_resolved(false)
-{
-}
-
-client_machine::~client_machine()
-{
-}
-
 void client_machine::resolve(xcb_window_t window, xcb_window_t clientLeader)
 {
     if (m_resolved) {

@@ -74,6 +74,7 @@ Toplevel::Toplevel(win::transient* transient, win::space& space)
 
 Toplevel::~Toplevel()
 {
+    delete client_machine;
     delete info;
 }
 
@@ -163,10 +164,7 @@ void Toplevel::copyToDeleted(Toplevel* c)
     resource_name = c->resource_name;
     resource_class = c->resource_class;
 
-    if (c->client_machine) {
-        client_machine = c->client_machine;
-        client_machine->setParent(this);
-    }
+    client_machine = c->client_machine;
     m_wmClientLeader = c->wmClientLeader();
 
     opaque_region = c->opaque_region;
@@ -182,6 +180,7 @@ void Toplevel::copyToDeleted(Toplevel* c)
 // owner by Deleted
 void Toplevel::disownDataPassedToDeleted()
 {
+    client_machine = nullptr;
     info = nullptr;
 }
 

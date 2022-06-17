@@ -68,9 +68,6 @@ class KWIN_EXPORT client_machine : public QObject
 {
     Q_OBJECT
 public:
-    explicit client_machine(QObject* parent = nullptr);
-    ~client_machine() override;
-
     void resolve(xcb_window_t window, xcb_window_t clientLeader);
     QByteArray const& hostname() const;
     bool is_local() const;
@@ -89,8 +86,8 @@ private:
 
     QByteArray m_hostname;
     std::unique_ptr<get_addr_info_wrapper> resolver;
-    bool m_localhost;
-    bool m_resolved;
+    bool m_localhost{false};
+    bool m_resolved{false};
 };
 
 inline bool client_machine::is_local() const
