@@ -25,6 +25,7 @@ class WindowViewEffect : public QuickSceneEffect
     Q_PROPERTY(qreal partialActivationFactor READ partialActivationFactor NOTIFY
                    partialActivationFactorChanged)
     Q_PROPERTY(bool gestureInProgress READ gestureInProgress NOTIFY gestureInProgressChanged)
+    Q_PROPERTY(QString searchText MEMBER m_searchText NOTIFY searchTextChanged)
 
 public:
     enum PresentWindowsMode {
@@ -80,6 +81,7 @@ Q_SIGNALS:
     void modeChanged();
     void layoutChanged();
     void ignoreMinimizedChanged();
+    void searchTextChanged();
 
 protected:
     QVariantMap initialProperties(EffectScreen* screen) override;
@@ -105,6 +107,7 @@ private:
     QList<ElectricBorder> m_touchBorderActivate;
     QList<ElectricBorder> m_touchBorderActivateAll;
     QList<ElectricBorder> m_touchBorderActivateClass;
+    QString m_searchText;
     Status m_status = Status::Inactive;
     qreal m_partialActivationFactor = 0;
     PresentWindowsMode m_mode;
