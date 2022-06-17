@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwin_export.h"
 
 #include <QObject>
+#include <memory>
 #include <xcb/xcb.h>
 
 // forward declaration
@@ -36,13 +37,14 @@ class get_addr_info_wrapper : public QObject
 {
     Q_OBJECT
 public:
-    explicit get_addr_info_wrapper(QByteArray const& hostName, QObject* parent = nullptr);
+    explicit get_addr_info_wrapper(QByteArray const& hostName);
     ~get_addr_info_wrapper() override;
 
     void resolve();
 
 Q_SIGNALS:
     void local();
+    void finished();
 
 private Q_SLOTS:
     void slotResolved();
@@ -86,9 +88,9 @@ private:
     void check_for_localhost();
 
     QByteArray m_hostname;
+    std::unique_ptr<get_addr_info_wrapper> resolver;
     bool m_localhost;
     bool m_resolved;
-    bool m_resolving;
 };
 
 inline bool client_machine::is_local() const
@@ -108,7 +110,7 @@ inline QByteArray client_machine::localhost()
 
 inline bool client_machine::is_resolving() const
 {
-    return m_resolving;
+    return static_cast<bool>(resolver);
 }
 
 }
