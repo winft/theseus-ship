@@ -403,8 +403,8 @@ bool Rules::match(Toplevel const* window) const
     if (!matchRole(window->windowRole().toLower())) {
         return false;
     }
-    if (!matchClientMachine(window->client_machine->hostname(),
-                            window->client_machine->is_local())) {
+    if (auto& cm = window->client_machine;
+        cm && !matchClientMachine(cm->hostname(), cm->is_local())) {
         return false;
     }
 

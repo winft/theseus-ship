@@ -287,7 +287,7 @@ public:
     int supported_default_types{0};
     int bit_depth{24};
     QMargins client_frame_extents;
-    win::x11::client_machine* client_machine;
+    win::x11::client_machine* client_machine{nullptr};
 
     // A UUID to uniquely identify this Toplevel independent of windowing system.
     QUuid internal_id;

@@ -45,7 +45,6 @@ Toplevel::Toplevel(win::space& space)
 
 Toplevel::Toplevel(win::transient* transient, win::space& space)
     : space{space}
-    , client_machine(new win::x11::client_machine(this))
     , internal_id{QUuid::createUuid()}
     , m_damageReplyPending(false)
     , m_skipCloseAnimation(false)
@@ -164,8 +163,10 @@ void Toplevel::copyToDeleted(Toplevel* c)
     resource_name = c->resource_name;
     resource_class = c->resource_class;
 
-    client_machine = c->client_machine;
-    client_machine->setParent(this);
+    if (c->client_machine) {
+        client_machine = c->client_machine;
+        client_machine->setParent(this);
+    }
     m_wmClientLeader = c->wmClientLeader();
 
     opaque_region = c->opaque_region;
@@ -191,7 +192,6 @@ void Toplevel::disownDataPassedToDeleted()
 QByteArray Toplevel::wmClientMachine(bool use_localhost) const
 {
     if (!client_machine) {
-        // this should never happen
         return QByteArray();
     }
     if (use_localhost && client_machine->is_local()) {
