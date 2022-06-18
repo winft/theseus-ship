@@ -178,7 +178,7 @@ bool has_user_time_support(Win* win)
 
 template<typename Win>
 void embed_client(Win* win,
-                  xcb_window_t w,
+                  xcb_window_t xcb_win,
                   xcb_visualid_t visualid,
                   xcb_colormap_t colormap,
                   uint8_t depth)
@@ -186,7 +186,7 @@ void embed_client(Win* win,
     assert(win->xcb_windows.client == XCB_WINDOW_NONE);
     assert(win->frameId() == XCB_WINDOW_NONE);
     assert(win->xcb_windows.wrapper == XCB_WINDOW_NONE);
-    win->xcb_windows.client.reset(w, false);
+    win->xcb_windows.client.reset(xcb_win, false);
 
     uint32_t const zero_value = 0;
     auto conn = connection();
@@ -631,15 +631,15 @@ QRect place_on_taking_control(Win* win,
  * Returns false if KWin is not going to manage this window.
  */
 template<typename Space>
-auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
+auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space) ->
     typename Space::x11_window*
 {
     using Win = typename Space::x11_window;
 
     blocker block(space.stacking_order);
 
-    base::x11::xcb::window_attributes attr(w);
-    base::x11::xcb::geometry windowGeometry(w);
+    base::x11::xcb::window_attributes attr(xcb_win);
+    base::x11::xcb::geometry windowGeometry(xcb_win);
     if (attr.is_null() || windowGeometry.is_null()) {
         return nullptr;
     }
@@ -705,7 +705,7 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
 
     block_geometry_updates(win, true);
 
-    embed_client(win, w, attr->visual, attr->colormap, windowGeometry->depth);
+    embed_client(win, xcb_win, attr->visual, attr->colormap, windowGeometry->depth);
 
     win->xcb_visual = attr->visual;
     win->bit_depth = windowGeometry->depth;
