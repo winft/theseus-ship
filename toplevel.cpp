@@ -115,26 +115,6 @@ NET::WindowType Toplevel::windowType([[maybe_unused]] bool direct,int supported_
     return wt;
 }
 
-Toplevel* Toplevel::create_remnant(Toplevel* source)
-{
-    if (!source->space.render.scene) {
-        // Don't create effect remnants when we don't render.
-        return nullptr;
-    }
-    if (!source->ready_for_painting) {
-        // Don't create remnants for windows that have never been shown.
-        return nullptr;
-    }
-
-    auto win = new Toplevel(source->space);
-    win->copyToDeleted(source);
-    win->remnant = std::make_unique<win::remnant>(win, source);
-
-    win::add_remnant(win->space, source, win);
-    Q_EMIT source->remnant_created(win);
-    return win;
-}
-
 // used only by Deleted::copy()
 void Toplevel::copyToDeleted(Toplevel* c)
 {

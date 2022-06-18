@@ -31,6 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "setup.h"
 #include "space.h"
 #include "space_helpers.h"
+#include "window_release.h"
 
 #include <KDecoration2/Decoration>
 
@@ -420,7 +421,7 @@ void internal_window::destroyClient()
         leaveMoveResize();
     }
 
-    auto deleted = create_remnant(this);
+    auto deleted = create_remnant(*this);
     Q_EMIT closed(this);
 
     control->destroy_decoration();

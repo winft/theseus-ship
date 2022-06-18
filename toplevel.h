@@ -216,8 +216,6 @@ public:
     void addDamageFull();
     virtual void addDamage(const QRegion& damage);
 
-    static Toplevel* create_remnant(Toplevel* source);
-
     /**
      * Whether the Toplevel currently wants the shadow to be rendered. Default
      * implementation always returns @c true.
@@ -277,6 +275,7 @@ public:
     void discard_buffer();
 
     void setResourceClass(const QByteArray& name, const QByteArray& className = QByteArray());
+    void copyToDeleted(Toplevel* c);
 
     NETWinInfo* info{nullptr};
     Wrapland::Server::Surface* surface{nullptr};
@@ -386,7 +385,6 @@ protected:
     Toplevel(win::transient* transient, win::space& space);
 
     virtual void debug(QDebug& stream) const;
-    void copyToDeleted(Toplevel* c);
     friend QDebug& operator<<(QDebug& stream, const Toplevel*);
     void setDepth(int depth);
 

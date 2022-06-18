@@ -37,30 +37,31 @@ void delete_window_from_space(Space& space, Win* win)
     Q_EMIT space.window_deleted(win);
 }
 
-template<typename Space, typename Win>
-void add_remnant(Space& space, Win* orig, Win* remnant)
+template<typename Win1, typename Win2>
+void add_remnant(Win1& orig, Win2& remnant)
 {
-    assert(!contains(space.m_windows, remnant));
+    auto& space = orig.space;
+    assert(!contains(space.m_windows, &remnant));
 
-    space.m_windows.push_back(remnant);
+    space.m_windows.push_back(&remnant);
 
-    auto const unconstraintedIndex = index_of(space.stacking_order->pre_stack, orig);
+    auto const unconstraintedIndex = index_of(space.stacking_order->pre_stack, &orig);
     if (unconstraintedIndex != -1) {
-        space.stacking_order->pre_stack.at(unconstraintedIndex) = remnant;
+        space.stacking_order->pre_stack.at(unconstraintedIndex) = &remnant;
     } else {
-        space.stacking_order->pre_stack.push_back(remnant);
+        space.stacking_order->pre_stack.push_back(&remnant);
     }
 
-    auto const index = index_of(space.stacking_order->sorted(), orig);
+    auto const index = index_of(space.stacking_order->sorted(), &orig);
     if (index != -1) {
-        space.stacking_order->win_stack.at(index) = remnant;
+        space.stacking_order->win_stack.at(index) = &remnant;
     } else {
-        space.stacking_order->win_stack.push_back(remnant);
+        space.stacking_order->win_stack.push_back(&remnant);
     }
 
     space.x_stacking_tree->mark_as_dirty();
-    QObject::connect(remnant, &Toplevel::needsRepaint, &space.render, [remnant] {
-        remnant->space.render.schedule_repaint(remnant);
+    QObject::connect(&remnant, &Toplevel::needsRepaint, &space.render, [&] {
+        remnant.space.render.schedule_repaint(&remnant);
     });
 }
 
