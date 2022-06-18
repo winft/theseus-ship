@@ -1062,12 +1062,6 @@ QRect Toplevel::iconGeometry() const
     return space.get_icon_geometry(this);
 }
 
-void Toplevel::setWindowHandles(xcb_window_t w)
-{
-    assert(!xcb_window.is_valid() && w != XCB_WINDOW_NONE);
-    xcb_window.reset(w, false);
-}
-
 void Toplevel::setShortcutInternal()
 {
     updateCaption();

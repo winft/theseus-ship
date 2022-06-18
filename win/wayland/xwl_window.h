@@ -14,7 +14,7 @@ class KWIN_EXPORT xwl_window : public x11::window
 {
     Q_OBJECT
 public:
-    explicit xwl_window(win::space& space);
+    xwl_window(xcb_window_t xcb_win, win::space& space);
 
     qreal bufferScale() const override;
     void add_scene_window_addon() override;

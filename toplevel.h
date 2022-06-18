@@ -268,7 +268,6 @@ public:
     virtual bool belongsToDesktop() const;
     virtual void checkTransient(Toplevel* window);
 
-    void setWindowHandles(xcb_window_t w);
     void disownDataPassedToDeleted();
 
     virtual void damageNotifyEvent();

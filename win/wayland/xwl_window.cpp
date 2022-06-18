@@ -14,8 +14,8 @@
 namespace KWin::win::wayland
 {
 
-xwl_window::xwl_window(win::space& space)
-    : window(space)
+xwl_window::xwl_window(xcb_window_t xcb_win, win::space& space)
+    : window(xcb_win, space)
 {
 }
 

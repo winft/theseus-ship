@@ -177,15 +177,15 @@ bool has_user_time_support(Win* win)
 }
 
 template<typename Win>
-void embed_client(Win* win,
-                  xcb_window_t xcb_win,
-                  xcb_visualid_t visualid,
-                  xcb_colormap_t colormap,
-                  uint8_t depth)
+void embed_client(Win* win, xcb_visualid_t visualid, xcb_colormap_t colormap, uint8_t depth)
 {
+    auto xcb_win = static_cast<xcb_window_t>(win->xcb_window);
+
+    assert(xcb_win != XCB_WINDOW_NONE);
     assert(win->xcb_windows.client == XCB_WINDOW_NONE);
     assert(win->frameId() == XCB_WINDOW_NONE);
     assert(win->xcb_windows.wrapper == XCB_WINDOW_NONE);
+
     win->xcb_windows.client.reset(xcb_win, false);
 
     uint32_t const zero_value = 0;
@@ -239,8 +239,6 @@ void embed_client(Win* win,
                       cw_mask,
                       cw_values);
     win->xcb_windows.outer.reset(frame);
-
-    win->setWindowHandles(win->xcb_windows.client);
 
     // Create the wrapper window
     auto wrapperId = xcb_generate_id(conn);
@@ -644,7 +642,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         return nullptr;
     }
 
-    auto win = new Win(space);
+    auto win = new Win(xcb_win, space);
 
     // So that decorations don't start with size being (0,0).
     win->set_frame_geometry(QRect(0, 0, 100, 100));
@@ -705,7 +703,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
     block_geometry_updates(win, true);
 
-    embed_client(win, xcb_win, attr->visual, attr->colormap, windowGeometry->depth);
+    embed_client(win, attr->visual, attr->colormap, windowGeometry->depth);
 
     win->xcb_visual = attr->visual;
     win->bit_depth = windowGeometry->depth;
