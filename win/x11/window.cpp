@@ -32,6 +32,12 @@
 namespace KWin::win::x11
 {
 
+window::window(win::space& space)
+    : Toplevel(space)
+    , motif_hints{space.atoms->motif_wm_hints}
+{
+}
+
 window::window(xcb_window_t xcb_win, win::space& space)
     : Toplevel(new x11::transient(this), space)
     , motif_hints(space.atoms->motif_wm_hints)
@@ -65,6 +71,9 @@ bool window::isClient() const
 
 xcb_window_t window::frameId() const
 {
+    if (remnant) {
+        return remnant->frame;
+    }
     if (!control) {
         return Toplevel::frameId();
     }
@@ -109,6 +118,9 @@ void window::showContextHelp()
 
 bool window::noBorder() const
 {
+    if (remnant) {
+        return remnant->no_border;
+    }
     return user_no_border || control->fullscreen();
 }
 
@@ -911,6 +923,9 @@ Toplevel* window::findModal()
 
 void window::layoutDecorationRects(QRect& left, QRect& top, QRect& right, QRect& bottom) const
 {
+    if (remnant) {
+        return remnant->layout_decoration_rects(left, top, right, bottom);
+    }
     layout_decoration_rects(this, left, top, right, bottom);
 }
 
@@ -1050,6 +1065,11 @@ bool window::resourceMatch(window const* c1, window const* c2)
 
 void window::debug(QDebug& stream) const
 {
+    if (remnant) {
+        stream << "\'REMNANT:" << reinterpret_cast<void const*>(this) << "\'";
+        return;
+    }
+
     std::string type = "unmanaged";
     std::string caption = "";
     if (control) {

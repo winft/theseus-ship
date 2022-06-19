@@ -195,7 +195,7 @@ void clear_space(Space& space)
 
     for (auto it = stack.cbegin(), end = stack.cend(); it != end; ++it) {
         auto window = qobject_cast<x11::window*>(const_cast<Toplevel*>(*it));
-        if (!window) {
+        if (!window || window->remnant) {
             continue;
         }
 
