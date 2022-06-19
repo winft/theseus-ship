@@ -7,6 +7,7 @@
 
 #include "remnant.h"
 #include "space_helpers.h"
+#include "space_window_release.h"
 #include "toplevel.h"
 
 namespace KWin::win
@@ -87,7 +88,7 @@ RemnantWin* create_remnant(Win& source)
         });
     }
 
-    auto remnant = std::make_unique<win::remnant<Toplevel>>(*win);
+    auto remnant = std::make_unique<win::remnant>();
 
     remnant->frame_margins = win::frame_margins(&source);
     remnant->render_region = source.render_region();

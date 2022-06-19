@@ -7,7 +7,6 @@
 
 #include "control.h"
 #include "deco/renderer.h"
-#include "space_window_release.h"
 
 #include "base/logging.h"
 
@@ -21,21 +20,14 @@
 namespace KWin::win
 {
 
-template<typename Win>
 class remnant
 {
 public:
-    remnant(Win& win)
-        : win{win}
-    {
-    }
-
     ~remnant()
     {
         if (refcount != 0) {
             qCCritical(KWIN_CORE) << "Remnant on destroy still with" << refcount << "refs.";
         }
-        delete_window_from_space(win.space, &win);
     }
 
     void ref()
@@ -95,9 +87,6 @@ public:
     double buffer_scale{1};
 
     std::unique_ptr<win::control> control;
-
-private:
-    Win& win;
 };
 
 }

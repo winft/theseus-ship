@@ -20,6 +20,7 @@
 #include "wayland_logging.h"
 #include "win/remnant.h"
 #include "win/space.h"
+#include "win/space_window_release.h"
 #include "win/transient.h"
 #include "win/x11/stacking_tree.h"
 
@@ -107,7 +108,7 @@ bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
             if (auto lead = win::lead_of_annexed_transient(win); !lead || !lead->remnant) {
                 // TODO(romangg): Add repaint to compositor?
                 win->remnant->refcount = 0;
-                delete win;
+                win::delete_window_from_space(win->space, win);
                 window_it = windows.erase(window_it);
                 continue;
             }
@@ -227,7 +228,7 @@ void output::run()
 
     for (auto win : windows) {
         if (win->remnant && !win->remnant->refcount) {
-            delete win;
+            win::delete_window_from_space(win->space, win);
         }
     }
 

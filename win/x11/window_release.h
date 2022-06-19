@@ -100,14 +100,15 @@ void finish_unmanaged_removal(Win* win, Toplevel* remnant)
     remove_window_from_lists(space, win);
     space.render.addRepaint(visible_rect(win));
 
+    Q_EMIT space.unmanagedRemoved(win);
+
     if (remnant) {
         win->disownDataPassedToDeleted();
         remnant->remnant->unref();
+        delete win;
     } else {
         delete_window_from_space(space, win);
     }
-
-    Q_EMIT space.unmanagedRemoved(win);
 }
 
 template<typename Win>
@@ -127,10 +128,11 @@ void release_unmanaged(Win* win, bool on_shutdown)
         base::x11::xcb::select_input(win->xcb_window, XCB_EVENT_MASK_NO_EVENT);
     }
 
-    if (!on_shutdown) {
+    if (on_shutdown) {
+        delete win;
+    } else {
         finish_unmanaged_removal(win, del);
     }
-    delete win;
 }
 
 template<typename Win>
@@ -139,7 +141,6 @@ void destroy_unmanaged(Win* win)
     auto del = create_remnant<Win>(*win);
     Q_EMIT win->closed(win);
     finish_unmanaged_removal(win, del);
-    delete win;
 }
 
 template<typename Win>
@@ -256,11 +257,11 @@ void release_window(Win* win, bool on_shutdown)
     if (del) {
         win->disownDataPassedToDeleted();
         del->remnant->unref();
+        delete win;
     } else {
         delete_window_from_space(win->space, win);
     }
 
-    delete win;
     base::x11::ungrab_server();
 }
 
@@ -326,13 +327,14 @@ void destroy_window(Win* win)
 
     // Don't use GeometryUpdatesBlocker, it would now set the geometry
     win->geometry_update.block--;
+
     if (del) {
         win->disownDataPassedToDeleted();
         del->remnant->unref();
+        delete win;
     } else {
         delete_window_from_space(win->space, win);
     }
-    delete win;
 }
 
 }

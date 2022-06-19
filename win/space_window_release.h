@@ -41,6 +41,7 @@ void delete_window_from_space(Space& space, Win* win)
     }
 
     Q_EMIT space.window_deleted(win);
+    delete win;
 }
 
 template<typename Win1, typename Win2>

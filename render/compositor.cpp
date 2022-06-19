@@ -22,6 +22,7 @@
 #include "win/remnant.h"
 #include "win/scene.h"
 #include "win/space.h"
+#include "win/space_window_release.h"
 #include "win/stacking_order.h"
 #include "win/x11/stacking_tree.h"
 
@@ -184,7 +185,7 @@ void compositor::stop(bool on_shutdown)
         while (!space->remnants().empty()) {
             auto win = space->remnants().front();
             win->remnant->refcount = 0;
-            delete win;
+            win::delete_window_from_space(win->space, win);
         }
     }
 

@@ -68,11 +68,10 @@ void destroy_window(Win* win)
 
     if (remnant_window) {
         remnant_window->remnant->unref();
+        delete win;
     } else {
         delete_window_from_space(space, win);
     }
-
-    delete win;
 }
 
 }
