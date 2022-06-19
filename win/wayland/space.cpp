@@ -166,7 +166,7 @@ space::~space()
     stacking_order->lock();
 
     for (auto const& window : m_windows) {
-        if (auto win = qobject_cast<win::wayland::window*>(window)) {
+        if (auto win = qobject_cast<win::wayland::window*>(window); win && !win->remnant) {
             destroy_window(win);
             remove_all(m_windows, win);
         }

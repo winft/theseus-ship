@@ -56,6 +56,11 @@ namespace KWin::win::wayland
 
 namespace WS = Wrapland::Server;
 
+window::window(win::space& space)
+    : Toplevel(space)
+{
+}
+
 window::window(WS::Surface* surface, win::space& space)
     : Toplevel(space)
 {
@@ -71,6 +76,9 @@ window::window(WS::Surface* surface, win::space& space)
 
 qreal window::bufferScale() const
 {
+    if (remnant) {
+        return remnant->buffer_scale;
+    }
     return surface->state().scale;
 }
 
@@ -131,6 +139,9 @@ void window::add_scene_window_addon()
 NET::WindowType window::windowType([[maybe_unused]] bool direct,
                                    [[maybe_unused]] int supported_types) const
 {
+    if (remnant) {
+        return remnant->window_type;
+    }
     return window_type;
 }
 
@@ -141,7 +152,7 @@ QByteArray window::windowRole() const
 
 pid_t window::pid() const
 {
-    if (!surface->client()) {
+    if (remnant || !surface->client()) {
         return 0;
     }
     return surface->client()->processId();
@@ -154,7 +165,7 @@ bool window::isLocalhost() const
 
 bool window::isLockScreen() const
 {
-    return surface->client() == waylandServer()->screen_locker_client_connection;
+    return !remnant && surface->client() == waylandServer()->screen_locker_client_connection;
 }
 
 void window::updateCaption()
@@ -190,6 +201,10 @@ bool window::belongsToSameApplication(Toplevel const* other, win::same_client_ch
 
 bool window::noBorder() const
 {
+    if (remnant) {
+        return remnant->no_border;
+    }
+
     if (xdg_deco && xdg_deco->requestedMode() != WS::XdgDecoration::Mode::ClientSide) {
         return !space.deco->hasPlugin() || user_no_border || geometry_update.fullscreen;
     }
@@ -403,6 +418,9 @@ bool window::acceptsFocus() const
 
 double window::opacity() const
 {
+    if (remnant) {
+        return remnant->opacity;
+    }
     if (transient()->lead() && transient()->annexed) {
         return transient()->lead()->opacity();
     }
@@ -427,7 +445,7 @@ void window::setOpacity(double opacity)
 
 bool window::isShown() const
 {
-    if (closing || hidden) {
+    if (closing || hidden || remnant) {
         return false;
     }
     if (!control && !transient()->lead()) {
@@ -447,6 +465,9 @@ bool window::isShown() const
 
 bool window::isHiddenInternal() const
 {
+    if (remnant) {
+        return false;
+    }
     if (auto lead = transient()->lead()) {
         if (!lead->isHiddenInternal()) {
             return false;
@@ -951,6 +972,9 @@ bool window::isInitialPositionSet() const
 // xdg-shell toplevels and popups are required to be mapped after their parents.
 void window::checkTransient(Toplevel* window)
 {
+    if (remnant) {
+        return;
+    }
     if (transient()->lead()) {
         // This already has a parent set, we can only set one once.
         return;
@@ -1091,6 +1115,11 @@ void window::handle_title_changed()
 
 void window::debug(QDebug& stream) const
 {
+    if (remnant) {
+        stream << "\'REMNANT:" << reinterpret_cast<void const*>(this) << "\'";
+        return;
+    }
+
     std::string type = "role unknown";
     if (control) {
         type = "toplevel";
@@ -1193,7 +1222,7 @@ bool window::isInputMethod() const
 
 bool window::is_popup_end() const
 {
-    return popup != nullptr;
+    return remnant ? remnant->was_popup_window : static_cast<bool>(popup);
 }
 
 bool window::supportsWindowRules() const

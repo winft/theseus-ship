@@ -118,8 +118,8 @@ wayland_console_model::wayland_console_model(win::space& space, QObject* parent)
     auto& wlspace = static_cast<win::wayland::space&>(space);
 
     for (auto window : space.m_windows) {
-        if (auto wayland_window = qobject_cast<win::wayland::window*>(window)) {
-            m_shellClients.append(wayland_window);
+        if (auto wwin = qobject_cast<win::wayland::window*>(window); wwin && !wwin->remnant) {
+            m_shellClients.append(wwin);
         }
     }
 
