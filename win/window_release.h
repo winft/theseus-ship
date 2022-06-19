@@ -14,6 +14,60 @@ namespace KWin::win
 {
 
 template<typename RemnantWin, typename Win>
+std::unique_ptr<win::remnant> create_remnant(Win& source, RemnantWin& win)
+{
+    auto remnant = std::make_unique<win::remnant>();
+
+    remnant->frame_margins = win::frame_margins(&source);
+    remnant->render_region = source.render_region();
+    remnant->buffer_scale = source.bufferScale();
+    remnant->desk = source.desktop();
+    remnant->frame = source.frameId();
+    remnant->opacity = source.opacity();
+    remnant->window_type = source.windowType();
+    remnant->window_role = source.windowRole();
+
+    if (source.control) {
+        remnant->no_border = source.noBorder();
+        if (!remnant->no_border) {
+            source.layoutDecorationRects(remnant->decoration_left,
+                                         remnant->decoration_top,
+                                         remnant->decoration_right,
+                                         remnant->decoration_bottom);
+            if (win::decoration(&source)) {
+                remnant->decoration_renderer = source.control->deco().client->move_renderer();
+            }
+        }
+        remnant->minimized = source.control->minimized();
+
+        remnant->fullscreen = source.control->fullscreen();
+        remnant->keep_above = source.control->keep_above();
+        remnant->keep_below = source.control->keep_below();
+        remnant->caption = win::caption(&source);
+
+        remnant->was_active = source.control->active();
+    }
+
+    if (win.transient()->annexed) {
+        remnant->refcount += win.transient()->leads().size();
+    }
+
+    remnant->was_group_transient = source.groupTransient();
+
+    remnant->was_wayland_client = source.is_wayland_window();
+    remnant->was_x11_client = qobject_cast<win::x11::window*>(&source) != nullptr;
+    remnant->was_popup_window = win::is_popup(&source);
+    remnant->was_outline = source.isOutline();
+    remnant->was_lock_screen = source.isLockScreen();
+
+    if (source.control) {
+        remnant->control = std::make_unique<win::control>(&win);
+    }
+
+    return remnant;
+}
+
+template<typename RemnantWin, typename Win>
 RemnantWin* create_remnant_window(Win& source)
 {
     if (!source.space.render.scene) {
@@ -88,56 +142,7 @@ RemnantWin* create_remnant_window(Win& source)
         });
     }
 
-    auto remnant = std::make_unique<win::remnant>();
-
-    remnant->frame_margins = win::frame_margins(&source);
-    remnant->render_region = source.render_region();
-    remnant->buffer_scale = source.bufferScale();
-    remnant->desk = source.desktop();
-    remnant->frame = source.frameId();
-    remnant->opacity = source.opacity();
-    remnant->window_type = source.windowType();
-    remnant->window_role = source.windowRole();
-
-    if (source.control) {
-        remnant->no_border = source.noBorder();
-        if (!remnant->no_border) {
-            source.layoutDecorationRects(remnant->decoration_left,
-                                         remnant->decoration_top,
-                                         remnant->decoration_right,
-                                         remnant->decoration_bottom);
-            if (win::decoration(&source)) {
-                remnant->decoration_renderer = source.control->deco().client->move_renderer();
-            }
-        }
-        remnant->minimized = source.control->minimized();
-
-        remnant->fullscreen = source.control->fullscreen();
-        remnant->keep_above = source.control->keep_above();
-        remnant->keep_below = source.control->keep_below();
-        remnant->caption = win::caption(&source);
-
-        remnant->was_active = source.control->active();
-    }
-
-    if (win->transient()->annexed) {
-        remnant->refcount += win->transient()->leads().size();
-    }
-
-    remnant->was_group_transient = source.groupTransient();
-
-    remnant->was_wayland_client = source.is_wayland_window();
-    remnant->was_x11_client = qobject_cast<win::x11::window*>(&source) != nullptr;
-    remnant->was_popup_window = win::is_popup(&source);
-    remnant->was_outline = source.isOutline();
-    remnant->was_lock_screen = source.isLockScreen();
-
-    if (source.control) {
-        remnant->control = std::make_unique<win::control>(win);
-    }
-
-    win->remnant = std::move(remnant);
-
+    win->remnant = create_remnant(source, *win);
     win::add_remnant(source, *win);
     Q_EMIT source.remnant_created(win);
     return win;
