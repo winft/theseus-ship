@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/x11/xcb/window.h"
 #include "input/cursor.h"
 #include "rules/rules.h"
+#include "win/remnant.h"
 #include "win/virtual_desktops.h"
 
 #include <NETWM>
@@ -38,6 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // c++
 #include <functional>
 #include <memory>
+#include <optional>
 
 class QOpenGLFramebufferObject;
 
@@ -64,7 +66,6 @@ class group;
 }
 
 class control;
-class remnant;
 class space;
 class transient;
 }
@@ -407,7 +408,7 @@ private:
 
 public:
     std::unique_ptr<win::control> control;
-    std::unique_ptr<win::remnant> remnant;
+    std::optional<win::remnant> remnant;
 
     win::transient* transient() const;
 

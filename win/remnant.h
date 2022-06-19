@@ -22,6 +22,10 @@ namespace KWin::win
 class remnant
 {
 public:
+    remnant() = default;
+    remnant(remnant&& other) noexcept = default;
+    remnant& operator=(remnant&& other) noexcept = default;
+
     ~remnant()
     {
         if (refcount != 0) {
