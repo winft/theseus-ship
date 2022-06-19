@@ -385,8 +385,9 @@ public:
     void desktopResized();
     void closeActivePopup();
 
-public Q_SLOTS:
     void performWindowOperation(KWin::Toplevel* window, base::options::WindowOperation op);
+
+public Q_SLOTS:
     // Keybindings
     // void slotSwitchToWindow( int );
     void slotWindowToDesktop(uint i);
