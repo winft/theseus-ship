@@ -74,7 +74,7 @@ public:
 
     Toplevel* win;
 
-    remnant(Toplevel* win, Toplevel* source);
+    remnant(Toplevel* win);
     ~remnant();
 
     void ref();
