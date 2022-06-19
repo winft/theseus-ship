@@ -421,7 +421,7 @@ void internal_window::destroyClient()
         leaveMoveResize();
     }
 
-    auto deleted = create_remnant(*this);
+    auto deleted = create_remnant<Toplevel>(*this);
     Q_EMIT closed(this);
 
     control->destroy_decoration();

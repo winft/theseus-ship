@@ -12,8 +12,8 @@
 namespace KWin::win
 {
 
-template<typename Win>
-Toplevel* create_remnant(Win& source)
+template<typename RemnantWin, typename Win>
+RemnantWin* create_remnant(Win& source)
 {
     if (!source.space.render.scene) {
         // Don't create effect remnants when we don't render.
@@ -24,7 +24,7 @@ Toplevel* create_remnant(Win& source)
         return nullptr;
     }
 
-    auto win = new Toplevel(source.space);
+    auto win = new RemnantWin(source.space);
     win->copyToDeleted(&source);
     win->remnant = std::make_unique<win::remnant>(win, &source);
 
