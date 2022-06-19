@@ -182,7 +182,9 @@ void compositor::stop(bool on_shutdown)
                 con, kwinApp()->x11RootWindow(), XCB_COMPOSITE_REDIRECT_MANUAL);
         }
         while (!space->remnants().empty()) {
-            space->remnants().front()->remnant->discard();
+            auto win = space->remnants().front();
+            win->remnant->refcount = 0;
+            delete win;
         }
     }
 

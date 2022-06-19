@@ -48,12 +48,6 @@ public:
         --refcount;
     }
 
-    void discard()
-    {
-        refcount = 0;
-        delete &win;
-    }
-
     void layout_decoration_rects(QRect& left, QRect& top, QRect& right, QRect& bottom) const
     {
         left = decoration_left;
