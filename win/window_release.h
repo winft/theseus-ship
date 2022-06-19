@@ -60,10 +60,6 @@ std::unique_ptr<win::remnant> create_remnant(Win& source, RemnantWin& win)
     remnant->was_outline = source.isOutline();
     remnant->was_lock_screen = source.isLockScreen();
 
-    if (source.control) {
-        remnant->control = std::make_unique<win::control>(&win);
-    }
-
     return remnant;
 }
 

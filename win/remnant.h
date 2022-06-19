@@ -5,7 +5,6 @@
 */
 #pragma once
 
-#include "control.h"
 #include "deco/renderer.h"
 
 #include "base/logging.h"
@@ -85,8 +84,6 @@ public:
     bool was_lock_screen{false};
 
     double buffer_scale{1};
-
-    std::unique_ptr<win::control> control;
 };
 
 }
