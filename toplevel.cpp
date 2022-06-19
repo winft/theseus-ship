@@ -43,6 +43,12 @@ Toplevel::Toplevel(win::space& space)
 {
 }
 
+Toplevel::Toplevel(win::remnant remnant, win::space& space)
+    : Toplevel(space)
+{
+    this->remnant = std::move(remnant);
+}
+
 Toplevel::Toplevel(win::transient* transient, win::space& space)
     : space{space}
     , internal_id{QUuid::createUuid()}

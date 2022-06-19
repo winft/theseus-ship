@@ -32,8 +32,8 @@
 namespace KWin::win::x11
 {
 
-window::window(win::space& space)
-    : Toplevel(space)
+window::window(win::remnant remnant, win::space& space)
+    : Toplevel(std::move(remnant), space)
     , motif_hints{space.atoms->motif_wm_hints}
 {
 }

@@ -13,8 +13,8 @@
 namespace KWin::win
 {
 
-template<typename RemnantWin, typename Win>
-win::remnant create_remnant(Win& source, RemnantWin& win)
+template<typename Win>
+win::remnant create_remnant(Win& source)
 {
     win::remnant remnant;
 
@@ -48,8 +48,8 @@ win::remnant create_remnant(Win& source, RemnantWin& win)
         remnant.was_active = source.control->active();
     }
 
-    if (win.transient()->annexed) {
-        remnant.refcount += win.transient()->leads().size();
+    if (source.transient()->annexed) {
+        remnant.refcount += source.transient()->leads().size();
     }
 
     remnant.was_group_transient = source.groupTransient();
@@ -75,7 +75,7 @@ RemnantWin* create_remnant_window(Win& source)
         return nullptr;
     }
 
-    auto win = new RemnantWin(source.space);
+    auto win = new RemnantWin(create_remnant(source), source.space);
 
     win->internal_id = source.internal_id;
     win->m_frameGeometry = source.m_frameGeometry;
@@ -138,7 +138,6 @@ RemnantWin* create_remnant_window(Win& source)
         });
     }
 
-    win->remnant = create_remnant(source, *win);
     win::add_remnant(source, *win);
     Q_EMIT source.remnant_created(win);
     return win;

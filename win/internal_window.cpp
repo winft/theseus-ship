@@ -69,8 +69,8 @@ private:
     internal_window* m_client;
 };
 
-internal_window::internal_window(win::space& space)
-    : Toplevel(space)
+internal_window::internal_window(win::remnant remnant, win::space& space)
+    : Toplevel(std::move(remnant), space)
 {
 }
 

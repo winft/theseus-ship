@@ -56,8 +56,8 @@ namespace KWin::win::wayland
 
 namespace WS = Wrapland::Server;
 
-window::window(win::space& space)
-    : Toplevel(space)
+window::window(win::remnant remnant, win::space& space)
+    : Toplevel(std::move(remnant), space)
 {
 }
 

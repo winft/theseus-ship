@@ -387,6 +387,7 @@ public Q_SLOTS:
 
 protected:
     explicit Toplevel(win::space& space);
+    Toplevel(win::remnant remnant, win::space& space);
     Toplevel(win::transient* transient, win::space& space);
 
     virtual void debug(QDebug& stream) const;
