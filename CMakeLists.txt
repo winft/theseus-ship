@@ -477,7 +477,6 @@ set(kwin_SRCS
     win/internal_window.cpp
     win/osd_notification.cpp
     win/osd.cpp
-    win/remnant.cpp
     win/session_manager.cpp
     win/screen_edges.cpp
     win/shortcut_dialog.cpp

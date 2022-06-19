@@ -27,7 +27,7 @@ RemnantWin* create_remnant(Win& source)
     auto win = new RemnantWin(source.space);
     win->copyToDeleted(&source);
 
-    auto remnant = std::make_unique<win::remnant>(win);
+    auto remnant = std::make_unique<win::remnant<Toplevel>>(*win);
 
     remnant->frame_margins = win::frame_margins(&source);
     remnant->render_region = source.render_region();

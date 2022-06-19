@@ -64,6 +64,8 @@ class group;
 }
 
 class control;
+
+template<typename Toplevel>
 class remnant;
 class space;
 class transient;
@@ -408,7 +410,7 @@ private:
 
 public:
     std::unique_ptr<win::control> control;
-    std::unique_ptr<win::remnant> remnant;
+    std::unique_ptr<win::remnant<Toplevel>> remnant;
 
     win::transient* transient() const;
 
