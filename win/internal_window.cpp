@@ -361,6 +361,11 @@ void internal_window::do_set_geometry(QRect const& frame_geo)
     Q_EMIT frame_geometry_changed(this, old_frame_geo);
 }
 
+bool internal_window::hasStrut() const
+{
+    return false;
+}
+
 bool internal_window::supportsWindowRules() const
 {
     return false;
@@ -428,6 +433,15 @@ void internal_window::updateColorScheme()
 
 void internal_window::showOnScreenEdge()
 {
+}
+
+void internal_window::checkTransient(Toplevel* /*window*/)
+{
+}
+
+bool internal_window::belongsToDesktop() const
+{
+    return false;
 }
 
 void internal_window::destroyClient()

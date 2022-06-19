@@ -763,77 +763,14 @@ bool Toplevel::isInternal() const
     return false;
 }
 
-bool Toplevel::belongsToDesktop() const
-{
-    return false;
-}
-
-void Toplevel::checkTransient([[maybe_unused]] Toplevel* window)
-{
-}
-
 win::transient* Toplevel::transient() const
 {
     return m_transient.get();
 }
 
-bool Toplevel::isCloseable() const
-{
-    return false;
-}
-
-bool Toplevel::isShown() const
-{
-    return false;
-}
-
-bool Toplevel::isHiddenInternal() const
-{
-    return false;
-}
-
-void Toplevel::hideClient([[maybe_unused]] bool hide)
-{
-}
-
-void Toplevel::setFullScreen([[maybe_unused]] bool set, [[maybe_unused]] bool user)
-{
-}
-
 win::maximize_mode Toplevel::maximizeMode() const
 {
     return win::maximize_mode::restore;
-}
-
-bool Toplevel::noBorder() const
-{
-    if (remnant) {
-        return remnant->no_border;
-    }
-    return true;
-}
-
-void Toplevel::setNoBorder([[maybe_unused]] bool set)
-{
-}
-
-bool Toplevel::isResizable() const
-{
-    return false;
-}
-
-bool Toplevel::isMovable() const
-{
-    return false;
-}
-
-bool Toplevel::isMovableAcrossScreens() const
-{
-    return false;
-}
-
-void Toplevel::takeFocus()
-{
 }
 
 bool Toplevel::wantsInput() const
@@ -842,26 +779,6 @@ bool Toplevel::wantsInput() const
 }
 
 bool Toplevel::dockWantsInput() const
-{
-    return false;
-}
-
-bool Toplevel::isMaximizable() const
-{
-    return false;
-}
-
-bool Toplevel::isMinimizable() const
-{
-    return false;
-}
-
-bool Toplevel::userCanSetFullScreen() const
-{
-    return false;
-}
-
-bool Toplevel::userCanSetNoBorder() const
 {
     return false;
 }
@@ -884,20 +801,6 @@ QSize Toplevel::maxSize() const
 QSize Toplevel::minSize() const
 {
     return control->rules().checkMinSize(QSize(0, 0));
-}
-
-void Toplevel::setFrameGeometry([[maybe_unused]] QRect const& rect)
-{
-}
-
-bool Toplevel::hasStrut() const
-{
-    return false;
-}
-
-void Toplevel::updateDecoration([[maybe_unused]] bool check_workspace_pos,
-                                [[maybe_unused]] bool force)
-{
 }
 
 void Toplevel::layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRect &bottom) const
@@ -1028,16 +931,7 @@ void Toplevel::updateCaption()
 {
 }
 
-bool Toplevel::acceptsFocus() const
-{
-    return false;
-}
-
 void Toplevel::update_maximized([[maybe_unused]] win::maximize_mode mode)
-{
-}
-
-void Toplevel::closeWindow()
 {
 }
 

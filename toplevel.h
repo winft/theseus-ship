@@ -138,7 +138,6 @@ public:
     std::vector<base::output*> repaint_outputs;
     win::space& space;
 
-    explicit Toplevel(win::space& space);
     ~Toplevel() override;
 
     virtual xcb_window_t frameId() const;
@@ -265,8 +264,8 @@ public:
      * Default implementation returns @c false.
      */
     virtual bool isInternal() const;
-    virtual bool belongsToDesktop() const;
-    virtual void checkTransient(Toplevel* window);
+    virtual bool belongsToDesktop() const = 0;
+    virtual void checkTransient(Toplevel* window) = 0;
 
     void disownDataPassedToDeleted();
 
@@ -381,6 +380,7 @@ public Q_SLOTS:
     void setReadyForPainting();
 
 protected:
+    explicit Toplevel(win::space& space);
     Toplevel(win::transient* transient, win::space& space);
 
     virtual void debug(QDebug& stream) const;
@@ -417,34 +417,33 @@ public:
      * TODO: move this functionality into control.
      */
 
-    virtual bool isCloseable() const;
-    // TODO: remove boolean trap
-    virtual bool isShown() const;
-    virtual bool isHiddenInternal() const;
-    // TODO: remove boolean trap
-    virtual void hideClient(bool hide);
+    virtual bool isCloseable() const = 0;
+    virtual bool isShown() const = 0;
+    virtual bool isHiddenInternal() const = 0;
 
-    virtual void setFullScreen(bool set, bool user = true);
+    // TODO: remove boolean traps
+    virtual void hideClient(bool hide) = 0;
+    virtual void setFullScreen(bool set, bool user = true) = 0;
 
     virtual win::maximize_mode maximizeMode() const;
 
-    virtual bool noBorder() const;
-    virtual void setNoBorder(bool set);
+    virtual bool noBorder() const = 0;
+    virtual void setNoBorder(bool set) = 0;
 
     /**
      * Returns whether the window is resizable or has a fixed size.
      */
-    virtual bool isResizable() const;
+    virtual bool isResizable() const = 0;
     /**
      * Returns whether the window is moveable or has a fixed position.
      */
-    virtual bool isMovable() const;
+    virtual bool isMovable() const = 0;
     /**
      * Returns whether the window can be moved to another screen.
      */
-    virtual bool isMovableAcrossScreens() const;
+    virtual bool isMovableAcrossScreens() const = 0;
 
-    virtual void takeFocus();
+    virtual void takeFocus() = 0;
     virtual bool wantsInput() const;
 
     /**
@@ -463,10 +462,10 @@ public:
     /**
      * Returns whether the window is maximizable or not.
      */
-    virtual bool isMaximizable() const;
-    virtual bool isMinimizable() const;
-    virtual bool userCanSetFullScreen() const;
-    virtual bool userCanSetNoBorder() const;
+    virtual bool isMaximizable() const = 0;
+    virtual bool isMinimizable() const = 0;
+    virtual bool userCanSetFullScreen() const = 0;
+    virtual bool userCanSetNoBorder() const = 0;
     virtual void checkNoBorder();
 
     virtual xcb_timestamp_t userTime() const;
@@ -475,12 +474,12 @@ public:
     virtual QSize minSize() const;
     virtual QSize maxSize() const;
 
-    virtual void setFrameGeometry(QRect const& rect);
+    virtual void setFrameGeometry(QRect const& rect) = 0;
 
-    virtual bool hasStrut() const;
+    virtual bool hasStrut() const = 0;
 
     // TODO: fix boolean traps
-    virtual void updateDecoration(bool check_workspace_pos, bool force = false);
+    virtual void updateDecoration(bool check_workspace_pos, bool force = false) = 0;
     virtual void layoutDecorationRects(QRect& left, QRect& top, QRect& right, QRect& bottom) const;
 
     /**
@@ -642,11 +641,11 @@ public:
      * The difference to wantsInput is that the implementation should not check rules and return
      * what the window effectively supports.
      */
-    virtual bool acceptsFocus() const;
+    virtual bool acceptsFocus() const = 0;
 
     virtual void update_maximized(win::maximize_mode mode);
 
-    Q_INVOKABLE virtual void closeWindow();
+    Q_INVOKABLE virtual void closeWindow() = 0;
 
     virtual bool performMouseCommand(base::options::MouseCommand, const QPoint& globalPos);
 
