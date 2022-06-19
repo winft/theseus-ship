@@ -33,7 +33,8 @@ class KWIN_EXPORT internal_window : public Toplevel
 public:
     constexpr static bool is_toplevel{false};
 
-    explicit internal_window(QWindow* window, win::space& space);
+    explicit internal_window(win::space& space);
+    internal_window(QWindow* window, win::space& space);
     ~internal_window() override;
 
     bool setupCompositing() override;

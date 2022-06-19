@@ -224,7 +224,8 @@ space::~space()
     win::x11::clear_space(*this);
 
     for (auto const& window : m_windows) {
-        if (auto internal = qobject_cast<win::internal_window*>(window)) {
+        if (auto internal = qobject_cast<win::internal_window*>(window);
+            internal && !internal->remnant) {
             internal->destroyClient();
             remove_all(m_windows, internal);
         }

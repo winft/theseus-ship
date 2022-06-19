@@ -69,6 +69,11 @@ private:
     internal_window* m_client;
 };
 
+internal_window::internal_window(win::space& space)
+    : Toplevel(space)
+{
+}
+
 internal_window::internal_window(QWindow* window, win::space& space)
     : Toplevel(space)
     , m_internalWindow(window)
@@ -165,11 +170,15 @@ bool internal_window::eventFilter(QObject* watched, QEvent* event)
 
 qreal internal_window::bufferScale() const
 {
-    return buffer_scale_internal();
+    return remnant ? remnant->buffer_scale : buffer_scale_internal();
 }
 
 void internal_window::debug(QDebug& stream) const
 {
+    if (remnant) {
+        stream << "\'REMNANT:" << reinterpret_cast<void const*>(this) << "\'";
+        return;
+    }
     stream.nospace() << "\'internal_window:" << m_internalWindow << "\'";
 }
 
@@ -177,12 +186,12 @@ NET::WindowType internal_window::windowType(bool direct, int supported_types) co
 {
     Q_UNUSED(direct)
     Q_UNUSED(supported_types)
-    return m_windowType;
+    return remnant ? remnant->window_type : m_windowType;
 }
 
 double internal_window::opacity() const
 {
-    return m_opacity;
+    return remnant ? remnant->opacity : m_opacity;
 }
 
 void internal_window::setOpacity(double opacity)
@@ -204,7 +213,7 @@ void internal_window::killWindow()
 
 bool internal_window::is_popup_end() const
 {
-    return m_internalWindowFlags.testFlag(Qt::Popup);
+    return remnant ? remnant->was_popup_window : m_internalWindowFlags.testFlag(Qt::Popup);
 }
 
 QByteArray internal_window::windowRole() const
@@ -257,6 +266,9 @@ bool internal_window::placeable() const
 
 bool internal_window::noBorder() const
 {
+    if (remnant) {
+        return remnant->no_border;
+    }
     return m_userNoBorder || m_internalWindowFlags.testFlag(Qt::FramelessWindowHint)
         || m_internalWindowFlags.testFlag(Qt::Popup);
 }
@@ -287,6 +299,9 @@ bool internal_window::isLockScreen() const
 
 bool internal_window::isOutline() const
 {
+    if (remnant) {
+        return remnant->was_outline;
+    }
     if (m_internalWindow) {
         return m_internalWindow->property("__kwin_outline").toBool();
     }
@@ -421,7 +436,7 @@ void internal_window::destroyClient()
         leaveMoveResize();
     }
 
-    auto deleted = create_remnant<Toplevel>(*this);
+    auto deleted = create_remnant<internal_window>(*this);
     Q_EMIT closed(this);
 
     control->destroy_decoration();
