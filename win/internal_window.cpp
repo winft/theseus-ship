@@ -450,7 +450,7 @@ void internal_window::destroyClient()
         leaveMoveResize();
     }
 
-    auto deleted = create_remnant<internal_window>(*this);
+    auto deleted = create_remnant_window<internal_window>(*this);
     Q_EMIT closed(this);
 
     control->destroy_decoration();

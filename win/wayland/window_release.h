@@ -44,7 +44,7 @@ void destroy_window(Win* win)
         return;
     }
 
-    auto remnant_window = create_remnant<Win>(*win);
+    auto remnant_window = create_remnant_window<Win>(*win);
     Q_EMIT win->closed(win);
 
     if (win->control) {

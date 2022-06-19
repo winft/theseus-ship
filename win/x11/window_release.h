@@ -116,7 +116,7 @@ void release_unmanaged(Win* win, bool on_shutdown)
 {
     Toplevel* del = nullptr;
     if (!on_shutdown) {
-        del = create_remnant<Win>(*win);
+        del = create_remnant_window<Win>(*win);
     }
     Q_EMIT win->closed(win);
 
@@ -138,7 +138,7 @@ void release_unmanaged(Win* win, bool on_shutdown)
 template<typename Win>
 void destroy_unmanaged(Win* win)
 {
-    auto del = create_remnant<Win>(*win);
+    auto del = create_remnant_window<Win>(*win);
     Q_EMIT win->closed(win);
     finish_unmanaged_removal(win, del);
 }
@@ -172,7 +172,7 @@ void release_window(Win* win, bool on_shutdown)
         auto const offset = QPoint(left_border(win), top_border(win));
         win->setFrameGeometry(win->frameGeometry().translated(offset));
     } else {
-        del = create_remnant<Win>(*win);
+        del = create_remnant_window<Win>(*win);
     }
 
     if (win->control->move_resize().enabled) {
@@ -289,7 +289,7 @@ void destroy_window(Win* win)
     win->control->destroy_wayland_management();
     reset_have_resize_effect(*win);
 
-    auto del = create_remnant<Win>(*win);
+    auto del = create_remnant_window<Win>(*win);
 
     if (win->control->move_resize().enabled) {
         Q_EMIT win->clientFinishUserMovedResized(win);

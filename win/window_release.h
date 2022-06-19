@@ -14,7 +14,7 @@ namespace KWin::win
 {
 
 template<typename RemnantWin, typename Win>
-RemnantWin* create_remnant(Win& source)
+RemnantWin* create_remnant_window(Win& source)
 {
     if (!source.space.render.scene) {
         // Don't create effect remnants when we don't render.
