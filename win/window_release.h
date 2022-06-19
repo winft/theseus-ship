@@ -63,6 +63,30 @@ RemnantWin* create_remnant(Win& source)
     win->has_in_content_deco = source.has_in_content_deco;
     win->client_frame_extents = source.client_frame_extents;
 
+    win->transient()->annexed = source.transient()->annexed;
+    win->transient()->set_modal(source.transient()->modal());
+
+    auto const leads = source.transient()->leads();
+    for (auto const& lead : leads) {
+        lead->transient()->add_child(win);
+        lead->transient()->remove_child(&source);
+    }
+
+    auto const children = source.transient()->children;
+    for (auto const& child : children) {
+        win->transient()->add_child(child);
+        source.transient()->remove_child(child);
+    }
+
+    auto const desktops = win->desktops();
+    for (auto vd : desktops) {
+        QObject::connect(vd, &QObject::destroyed, win, [=] {
+            auto desks = win->desktops();
+            desks.removeOne(vd);
+            win->set_desktops(desks);
+        });
+    }
+
     auto remnant = std::make_unique<win::remnant<Toplevel>>(*win);
 
     remnant->frame_margins = win::frame_margins(&source);
@@ -95,34 +119,11 @@ RemnantWin* create_remnant(Win& source)
         remnant->was_active = source.control->active();
     }
 
-    win->transient()->annexed = source.transient()->annexed;
-
-    auto const leads = source.transient()->leads();
-    for (auto const& lead : leads) {
-        lead->transient()->add_child(win);
-        lead->transient()->remove_child(&source);
-        if (win->transient()->annexed) {
-            remnant->refcount++;
-        }
+    if (win->transient()->annexed) {
+        remnant->refcount += win->transient()->leads().size();
     }
 
-    auto const children = source.transient()->children;
-    for (auto const& child : children) {
-        win->transient()->add_child(child);
-        source.transient()->remove_child(child);
-    }
-
-    win->transient()->set_modal(source.transient()->modal());
     remnant->was_group_transient = source.groupTransient();
-
-    auto const desktops = win->desktops();
-    for (auto vd : desktops) {
-        QObject::connect(vd, &QObject::destroyed, win, [=] {
-            auto desks = win->desktops();
-            desks.removeOne(vd);
-            win->set_desktops(desks);
-        });
-    }
 
     remnant->was_wayland_client = source.is_wayland_window();
     remnant->was_x11_client = qobject_cast<win::x11::window*>(&source) != nullptr;
