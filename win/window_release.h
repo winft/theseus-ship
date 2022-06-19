@@ -25,7 +25,43 @@ RemnantWin* create_remnant(Win& source)
     }
 
     auto win = new RemnantWin(source.space);
-    win->copyToDeleted(&source);
+
+    win->internal_id = source.internal_id;
+    win->m_frameGeometry = source.m_frameGeometry;
+    win->xcb_visual = source.xcb_visual;
+    win->bit_depth = source.bit_depth;
+
+    win->info = source.info;
+    if (auto winfo = dynamic_cast<win::x11::win_info*>(win->info)) {
+        winfo->disable();
+    }
+
+    win->xcb_window.reset(source.xcb_window, false);
+    win->ready_for_painting = source.ready_for_painting;
+    win->damage_handle = XCB_NONE;
+    win->damage_region = source.damage_region;
+    win->repaints_region = source.repaints_region;
+    win->layer_repaints_region = source.layer_repaints_region;
+    win->is_shape = source.is_shape;
+
+    win->render = std::move(source.render);
+    if (win->render) {
+        win->render->effect->setWindow(win);
+    }
+
+    win->resource_name = source.resource_name;
+    win->resource_class = source.resource_class;
+
+    win->client_machine = source.client_machine;
+    win->m_wmClientLeader = source.wmClientLeader();
+
+    win->opaque_region = source.opaque_region;
+    win->central_output = source.central_output;
+    win->m_skipCloseAnimation = source.m_skipCloseAnimation;
+    win->m_desktops = source.desktops();
+    win->m_layer = source.layer();
+    win->has_in_content_deco = source.has_in_content_deco;
+    win->client_frame_extents = source.client_frame_extents;
 
     auto remnant = std::make_unique<win::remnant<Toplevel>>(*win);
 

@@ -47,7 +47,6 @@ Toplevel::Toplevel(win::transient* transient, win::space& space)
     : space{space}
     , internal_id{QUuid::createUuid()}
     , m_damageReplyPending(false)
-    , m_skipCloseAnimation(false)
 {
     m_transient.reset(transient);
 
@@ -113,47 +112,6 @@ NET::WindowType Toplevel::windowType([[maybe_unused]] bool direct,int supported_
         wt = transient()->lead() ? NET::Dialog : NET::Normal;
     }
     return wt;
-}
-
-// used only by Deleted::copy()
-void Toplevel::copyToDeleted(Toplevel* c)
-{
-    internal_id = c->internal_id;
-    m_frameGeometry = c->m_frameGeometry;
-    xcb_visual = c->xcb_visual;
-    bit_depth = c->bit_depth;
-
-    info = c->info;
-    if (auto win_info = dynamic_cast<win::x11::win_info*>(info)) {
-        win_info->disable();
-    }
-
-    xcb_window.reset(c->xcb_window, false);
-    ready_for_painting = c->ready_for_painting;
-    damage_handle = XCB_NONE;
-    damage_region = c->damage_region;
-    repaints_region = c->repaints_region;
-    layer_repaints_region = c->layer_repaints_region;
-    is_shape = c->is_shape;
-
-    render = std::move(c->render);
-    if (render) {
-        render->effect->setWindow(this);
-    }
-
-    resource_name = c->resource_name;
-    resource_class = c->resource_class;
-
-    client_machine = c->client_machine;
-    m_wmClientLeader = c->wmClientLeader();
-
-    opaque_region = c->opaque_region;
-    central_output = c->central_output;
-    m_skipCloseAnimation = c->m_skipCloseAnimation;
-    m_desktops = c->desktops();
-    m_layer = c->layer();
-    has_in_content_deco = c->has_in_content_deco;
-    client_frame_extents = c->client_frame_extents;
 }
 
 // before being deleted, remove references to everything that's now

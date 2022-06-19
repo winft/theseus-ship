@@ -275,7 +275,6 @@ public:
     void discard_buffer();
 
     void setResourceClass(const QByteArray& name, const QByteArray& className = QByteArray());
-    void copyToDeleted(Toplevel* c);
 
     NETWinInfo* info{nullptr};
     Wrapland::Server::Surface* surface{nullptr};
@@ -299,6 +298,12 @@ public:
     // End of X11-only properties.
 
     bool has_in_content_deco{false};
+
+    xcb_window_t m_wmClientLeader{XCB_WINDOW_NONE};
+    QRect m_frameGeometry;
+    win::layer m_layer{win::layer::unknown};
+    bool m_skipCloseAnimation{false};
+    QVector<win::virtual_desktop*> m_desktops;
 
 Q_SIGNALS:
     void opacityChanged(KWin::Toplevel* toplevel, qreal oldOpacity);
@@ -389,22 +394,16 @@ protected:
     friend QDebug& operator<<(QDebug& stream, const Toplevel*);
     void setDepth(int depth);
 
-    xcb_window_t m_wmClientLeader{XCB_WINDOW_NONE};
-
 private:
     void handle_output_added(base::output* output);
     void handle_output_removed(base::output* output);
     void add_repaint_outputs(QRegion const& region);
 
-    QRect m_frameGeometry;
-    win::layer m_layer{win::layer::unknown};
     mutable bool m_render_shape_valid{false};
     mutable QRegion m_render_shape;
 
     bool m_damageReplyPending;
     xcb_xfixes_fetch_region_cookie_t m_regionCookie;
-    bool m_skipCloseAnimation;
-    QVector<win::virtual_desktop*> m_desktops;
 
     std::unique_ptr<win::transient> m_transient;
 
