@@ -328,13 +328,26 @@ void MoveResizeWindowTest::testResize()
 
 void MoveResizeWindowTest::testPackTo_data()
 {
-    QTest::addColumn<QString>("methodCall");
     QTest::addColumn<QRect>("expectedGeometry");
 
-    QTest::newRow("left") << QStringLiteral("slotWindowPackLeft") << QRect(0, 487, 100, 50);
-    QTest::newRow("up") << QStringLiteral("slotWindowPackUp") << QRect(590, 0, 100, 50);
-    QTest::newRow("right") << QStringLiteral("slotWindowPackRight") << QRect(1180, 487, 100, 50);
-    QTest::newRow("down") << QStringLiteral("slotWindowPackDown") << QRect(590, 974, 100, 50);
+    QTest::newRow("left") << QRect(0, 487, 100, 50);
+    QTest::newRow("up") << QRect(590, 0, 100, 50);
+    QTest::newRow("right") << QRect(1180, 487, 100, 50);
+    QTest::newRow("down") << QRect(590, 974, 100, 50);
+}
+
+std::function<void(win::space*)> get_space_pack_method(std::string const& method_name)
+{
+    if (method_name == "left") {
+        return &win::space::slotWindowPackLeft;
+    } else if (method_name == "up") {
+        return &win::space::slotWindowPackUp;
+    } else if (method_name == "right") {
+        return &win::space::slotWindowPackRight;
+    } else if (method_name == "down") {
+        return &win::space::slotWindowPackDown;
+    }
+    return {};
 }
 
 void MoveResizeWindowTest::testPackTo()
@@ -359,8 +372,10 @@ void MoveResizeWindowTest::testPackTo()
     win::place_centered(c, QRect(0, 0, 1280, 1024));
     QCOMPARE(c->frameGeometry(), QRect(590, 487, 100, 50));
 
-    QFETCH(QString, methodCall);
-    QMetaObject::invokeMethod(Test::app()->workspace.get(), methodCall.toLocal8Bit().constData());
+    auto method_call = get_space_pack_method(QTest::currentDataTag());
+    QVERIFY(method_call);
+    method_call(Test::app()->workspace.get());
+
     QTEST(c->frameGeometry(), "expectedGeometry");
     surface.reset();
     QVERIFY(Test::wait_for_destroyed(c));
@@ -368,13 +383,12 @@ void MoveResizeWindowTest::testPackTo()
 
 void MoveResizeWindowTest::testPackAgainstClient_data()
 {
-    QTest::addColumn<QString>("methodCall");
     QTest::addColumn<QRect>("expectedGeometry");
 
-    QTest::newRow("left") << QStringLiteral("slotWindowPackLeft") << QRect(10, 487, 100, 50);
-    QTest::newRow("up") << QStringLiteral("slotWindowPackUp") << QRect(590, 10, 100, 50);
-    QTest::newRow("right") << QStringLiteral("slotWindowPackRight") << QRect(1170, 487, 100, 50);
-    QTest::newRow("down") << QStringLiteral("slotWindowPackDown") << QRect(590, 964, 100, 50);
+    QTest::newRow("left") << QRect(10, 487, 100, 50);
+    QTest::newRow("up") << QRect(590, 10, 100, 50);
+    QTest::newRow("right") << QRect(1170, 487, 100, 50);
+    QTest::newRow("down") << QRect(590, 964, 100, 50);
 }
 
 void MoveResizeWindowTest::testPackAgainstClient()
@@ -399,7 +413,7 @@ void MoveResizeWindowTest::testPackAgainstClient()
     std::unique_ptr<XdgShellToplevel> shellSurface4(Test::create_xdg_shell_toplevel(surface4));
     QVERIFY(shellSurface4);
     auto renderWindow = [this](std::unique_ptr<Surface> const& surface,
-                               const QString& methodCall,
+                               std::function<void(win::space*)> const& method_call,
                                const QRect& expectedGeometry) {
         // let's render
         auto c = Test::render_and_wait_for_shown(surface, QSize(10, 10), Qt::blue);
@@ -410,14 +424,13 @@ void MoveResizeWindowTest::testPackAgainstClient()
         // let's place it centered
         win::place_centered(c, QRect(0, 0, 1280, 1024));
         QCOMPARE(c->frameGeometry(), QRect(635, 507, 10, 10));
-        QMetaObject::invokeMethod(Test::app()->workspace.get(),
-                                  methodCall.toLocal8Bit().constData());
+        method_call(Test::app()->workspace.get());
         QCOMPARE(c->frameGeometry(), expectedGeometry);
     };
-    renderWindow(surface1, QStringLiteral("slotWindowPackLeft"), QRect(0, 507, 10, 10));
-    renderWindow(surface2, QStringLiteral("slotWindowPackUp"), QRect(635, 0, 10, 10));
-    renderWindow(surface3, QStringLiteral("slotWindowPackRight"), QRect(1270, 507, 10, 10));
-    renderWindow(surface4, QStringLiteral("slotWindowPackDown"), QRect(635, 1014, 10, 10));
+    renderWindow(surface1, &win::space::slotWindowPackLeft, QRect(0, 507, 10, 10));
+    renderWindow(surface2, &win::space::slotWindowPackUp, QRect(635, 0, 10, 10));
+    renderWindow(surface3, &win::space::slotWindowPackRight, QRect(1270, 507, 10, 10));
+    renderWindow(surface4, &win::space::slotWindowPackDown, QRect(635, 1014, 10, 10));
 
     std::unique_ptr<Surface> surface(Test::create_surface());
     QVERIFY(surface);
@@ -431,24 +444,34 @@ void MoveResizeWindowTest::testPackAgainstClient()
     win::place_centered(c, QRect(0, 0, 1280, 1024));
     QCOMPARE(c->frameGeometry(), QRect(590, 487, 100, 50));
 
-    QFETCH(QString, methodCall);
-    QMetaObject::invokeMethod(Test::app()->workspace.get(), methodCall.toLocal8Bit().constData());
+    auto method_call = get_space_pack_method(QTest::currentDataTag());
+    QVERIFY(method_call);
+    method_call(Test::app()->workspace.get());
     QTEST(c->frameGeometry(), "expectedGeometry");
+}
+
+std::function<void(win::space*)> get_space_grow_shrink_method(std::string const& method_name)
+{
+    if (method_name == "grow vertical") {
+        return &win::space::slotWindowGrowVertical;
+    } else if (method_name == "grow horizontal") {
+        return &win::space::slotWindowGrowHorizontal;
+    } else if (method_name == "shrink vertical") {
+        return &win::space::slotWindowShrinkVertical;
+    } else if (method_name == "shrink horizontal") {
+        return &win::space::slotWindowShrinkHorizontal;
+    }
+    return {};
 }
 
 void MoveResizeWindowTest::testGrowShrink_data()
 {
-    QTest::addColumn<QString>("methodCall");
     QTest::addColumn<QRect>("expectedGeometry");
 
-    QTest::newRow("grow vertical")
-        << QStringLiteral("slotWindowGrowVertical") << QRect(590, 487, 100, 537);
-    QTest::newRow("grow horizontal")
-        << QStringLiteral("slotWindowGrowHorizontal") << QRect(590, 487, 690, 50);
-    QTest::newRow("shrink vertical")
-        << QStringLiteral("slotWindowShrinkVertical") << QRect(590, 487, 100, 23);
-    QTest::newRow("shrink horizontal")
-        << QStringLiteral("slotWindowShrinkHorizontal") << QRect(590, 487, 40, 50);
+    QTest::newRow("grow vertical") << QRect(590, 487, 100, 537);
+    QTest::newRow("grow horizontal") << QRect(590, 487, 690, 50);
+    QTest::newRow("shrink vertical") << QRect(590, 487, 100, 23);
+    QTest::newRow("shrink horizontal") << QRect(590, 487, 40, 50);
 }
 
 void MoveResizeWindowTest::testGrowShrink()
@@ -490,8 +513,9 @@ void MoveResizeWindowTest::testGrowShrink()
     QCOMPARE(c->frameGeometry(), QRect(590, 487, 100, 50));
 
     // Now according to test data grow/shrink vertically/horizontally.
-    QFETCH(QString, methodCall);
-    QMetaObject::invokeMethod(Test::app()->workspace.get(), methodCall.toLocal8Bit().constData());
+    auto method_call = get_space_grow_shrink_method(QTest::currentDataTag());
+    QVERIFY(method_call);
+    method_call(Test::app()->workspace.get());
 
     QVERIFY(sizeChangeSpy.wait());
     QCOMPARE(configure_spy.count(), 2);

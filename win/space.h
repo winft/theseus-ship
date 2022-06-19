@@ -387,7 +387,6 @@ public:
 
     void performWindowOperation(KWin::Toplevel* window, base::options::WindowOperation op);
 
-public Q_SLOTS:
     // Keybindings
     // void slotSwitchToWindow( int );
     void slotWindowToDesktop(uint i);
@@ -438,7 +437,6 @@ public Q_SLOTS:
     void slotWindowToDesktopUp();
     void slotWindowToDesktopDown();
 
-    void reconfigure();
     void slotReconfigure();
 
     void slotKillWindow();
@@ -448,13 +446,17 @@ public Q_SLOTS:
 
     void updateClientArea();
 
+public Q_SLOTS:
+    void reconfigure();
+
 protected:
     virtual void update_space_area_from_windows(QRect const& desktop_area,
                                                 std::vector<QRect> const& screens_geos,
                                                 win::space_areas& areas);
 
-private Q_SLOTS:
     void slotUpdateToolWindows();
+
+private:
     void delayFocus();
 
     // virtual desktop handling
