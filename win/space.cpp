@@ -2707,6 +2707,24 @@ void space::closeActivePopup()
     user_actions_menu->close();
 }
 
+QAction* prepare_shortcut_action(win::space& space,
+                                 QString const& actionName,
+                                 QString const& description,
+                                 QKeySequence const& shortcut,
+                                 QVariant const& data)
+{
+    auto action = new QAction(&space);
+    action->setProperty("componentName", QStringLiteral(KWIN_NAME));
+    action->setObjectName(actionName);
+    action->setText(description);
+    if (data.isValid()) {
+        action->setData(data);
+    }
+    KGlobalAccel::self()->setDefaultShortcut(action, QList<QKeySequence>() << shortcut);
+    KGlobalAccel::self()->setShortcut(action, QList<QKeySequence>() << shortcut);
+    return action;
+}
+
 template<typename Slot>
 void space::initShortcut(const QString& actionName,
                          const QString& description,
@@ -2725,16 +2743,21 @@ void space::initShortcut(const QString& actionName,
                          Slot slot,
                          const QVariant& data)
 {
-    QAction* a = new QAction(this);
-    a->setProperty("componentName", QStringLiteral(KWIN_NAME));
-    a->setObjectName(actionName);
-    a->setText(description);
-    if (data.isValid()) {
-        a->setData(data);
-    }
-    KGlobalAccel::self()->setDefaultShortcut(a, QList<QKeySequence>() << shortcut);
-    KGlobalAccel::self()->setShortcut(a, QList<QKeySequence>() << shortcut);
-    kwinApp()->input->registerShortcut(shortcut, a, receiver, slot);
+    auto action = prepare_shortcut_action(*this, actionName, description, shortcut, data);
+    kwinApp()->input->registerShortcut(shortcut, action, receiver, slot);
+}
+
+template<typename T, typename Slot>
+void space::init_shortcut_with_action_arg(const QString& actionName,
+                                          const QString& description,
+                                          const QKeySequence& shortcut,
+                                          T* receiver,
+                                          Slot slot,
+                                          QVariant const& data)
+{
+    auto action = prepare_shortcut_action(*this, actionName, description, shortcut, data);
+    kwinApp()->input->registerShortcut(
+        shortcut, action, receiver, [this, action, &slot] { slot(action); });
 }
 
 /**
@@ -2753,11 +2776,12 @@ void space::initShortcuts()
     initShortcut(QString::fromUtf8(name.untranslatedText()), name.toString(), key, &space::fnSlot);
 
 #define DEF3(name, key, fnSlot, value)                                                             \
-    initShortcut(QString::fromUtf8(name.untranslatedText()).arg(value),                            \
-                 name.subs(value).toString(),                                                      \
-                 key,                                                                              \
-                 &space::fnSlot,                                                                   \
-                 value);
+    init_shortcut_with_action_arg(QString::fromUtf8(name.untranslatedText()).arg(value),           \
+                                  name.subs(value).toString(),                                     \
+                                  key,                                                             \
+                                  this,                                                            \
+                                  fnSlot,                                                          \
+                                  value);
 
 #define DEF4(name, descr, key, functor)                                                            \
     initShortcut(QStringLiteral(name), descr.toString(), key, functor);
@@ -2898,14 +2922,22 @@ void space::initShortcuts()
     DEF(kli18n("Window One Desktop Down"), 0, slotWindowToDesktopDown);
 
     for (int i = 0; i < 8; ++i) {
-        DEF3(kli18n("Window to Screen %1"), 0, slotWindowToScreen, i);
+        DEF3(
+            kli18n("Window to Screen %1"),
+            0,
+            [this](QAction* action) { slotWindowToScreen(action); },
+            i);
     }
     DEF(kli18n("Window to Next Screen"), 0, slotWindowToNextScreen);
     DEF(kli18n("Window to Previous Screen"), 0, slotWindowToPrevScreen);
     DEF(kli18n("Show Desktop"), Qt::META + Qt::Key_D, slotToggleShowDesktop);
 
     for (int i = 0; i < 8; ++i) {
-        DEF3(kli18n("Switch to Screen %1"), 0, slotSwitchToScreen, i);
+        DEF3(
+            kli18n("Switch to Screen %1"),
+            0,
+            [this](QAction* action) { slotSwitchToScreen(action); },
+            i);
     }
 
     DEF(kli18n("Switch to Next Screen"), 0, slotSwitchToNextScreen);
@@ -3115,9 +3147,8 @@ void space::slotActivateAttentionWindow()
     }
 }
 
-static uint senderValue(QObject* sender)
+static uint senderValue(QAction* act)
 {
-    QAction* act = qobject_cast<QAction*>(sender);
     bool ok = false;
     uint i = -1;
     if (act)
@@ -3157,13 +3188,13 @@ static bool screenSwitchImpossible()
     return true;
 }
 
-void space::slotSwitchToScreen()
+void space::slotSwitchToScreen(QAction* action)
 {
     if (screenSwitchImpossible()) {
         return;
     }
 
-    int const screen = senderValue(sender());
+    int const screen = senderValue(action);
     auto output = base::get_output(kwinApp()->get_base().get_outputs(), screen);
 
     if (output) {
@@ -3204,10 +3235,10 @@ void space::slotSwitchToPrevScreen()
     }
 }
 
-void space::slotWindowToScreen()
+void space::slotWindowToScreen(QAction* action)
 {
     if (USABLE_ACTIVE_CLIENT) {
-        int const screen = senderValue(sender());
+        int const screen = senderValue(action);
         auto output = base::get_output(kwinApp()->get_base().get_outputs(), screen);
         if (output) {
             send_to_screen(*this, active_client, *output);

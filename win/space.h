@@ -42,6 +42,7 @@ class KConfigGroup;
 class KStartupInfo;
 class KStartupInfoData;
 class KStartupInfoId;
+class QAction;
 class QStringList;
 
 namespace KWin
@@ -392,8 +393,8 @@ public:
     void slotWindowToDesktop(uint i);
 
     // void slotWindowToListPosition( int );
-    void slotSwitchToScreen();
-    void slotWindowToScreen();
+    void slotSwitchToScreen(QAction* action);
+    void slotWindowToScreen(QAction* action);
     void slotSwitchToNextScreen();
     void slotWindowToNextScreen();
     void slotSwitchToPrevScreen();
@@ -506,6 +507,13 @@ private:
                       T* receiver,
                       Slot slot,
                       const QVariant& data = QVariant());
+    template<typename T, typename Slot>
+    void init_shortcut_with_action_arg(const QString& actionName,
+                                       const QString& description,
+                                       const QKeySequence& shortcut,
+                                       T* receiver,
+                                       Slot slot,
+                                       QVariant const& data);
     void setupWindowShortcut(Toplevel* window);
     bool switchWindow(Toplevel* c, Direction direction, QPoint curPos, int desktop);
 
