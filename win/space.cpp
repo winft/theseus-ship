@@ -276,11 +276,6 @@ void space::slotUpdateToolWindows()
     x11::update_tool_windows_visibility(this, true);
 }
 
-void space::slotReloadConfig()
-{
-    reconfigure();
-}
-
 void space::reconfigure()
 {
     reconfigureTimer.start(200);

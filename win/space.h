@@ -456,7 +456,6 @@ protected:
 private Q_SLOTS:
     void slotUpdateToolWindows();
     void delayFocus();
-    void slotReloadConfig();
 
     // virtual desktop handling
     void slotDesktopCountChanged(uint previousCount, uint newCount);
