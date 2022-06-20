@@ -84,7 +84,7 @@ void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)
 {
     for (auto const& toplevel : space->stacking_order->sorted()) {
         auto client = qobject_cast<x11::window*>(toplevel);
-        if (!client) {
+        if (!client || !client->control) {
             continue;
         }
 
@@ -107,7 +107,7 @@ void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)
     auto const& list = space->stacking_order->sorted();
     for (int i = list.size() - 1; i >= 0; --i) {
         auto client = qobject_cast<x11::window*>(list.at(i));
-        if (!client) {
+        if (!client || !client->control) {
             continue;
         }
         if (client->isOnDesktop(newDesktop)) {

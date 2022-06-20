@@ -170,6 +170,8 @@ void internal_keep(Win* win)
 template<typename Win>
 void update_visibility(Win* win)
 {
+    assert(win->control);
+
     if (win->deleting) {
         return;
     }
