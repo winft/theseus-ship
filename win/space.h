@@ -137,12 +137,12 @@ public:
     std::unique_ptr<RuleBook> rule_book;
     std::unique_ptr<x11::color_mapper> color_mapper;
 
-    QScopedPointer<base::x11::event_filter> m_wasUserInteractionFilter;
-    QScopedPointer<base::x11::event_filter> m_movingClientFilter;
-    QScopedPointer<base::x11::event_filter> m_syncAlarmFilter;
+    std::unique_ptr<base::x11::event_filter> m_wasUserInteractionFilter;
+    std::unique_ptr<base::x11::event_filter> m_movingClientFilter;
+    std::unique_ptr<base::x11::event_filter> m_syncAlarmFilter;
 
     int m_initialDesktop{1};
-    QScopedPointer<base::x11::xcb::window> m_nullFocus;
+    std::unique_ptr<base::x11::xcb::window> m_nullFocus;
     Toplevel* active_popup_client{nullptr};
 
     Toplevel* last_active_client{nullptr};
