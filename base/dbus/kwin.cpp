@@ -47,7 +47,7 @@ kwin::kwin(win::space& space)
                  QStringLiteral("/KWin"),
                  QStringLiteral("org.kde.KWin"),
                  QStringLiteral("reloadConfig"),
-                 &space,
+                 space.qobject.get(),
                  SLOT(reconfigure()));
 }
 

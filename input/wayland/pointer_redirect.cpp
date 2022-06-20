@@ -96,9 +96,12 @@ void pointer_redirect::init()
 
     auto const clients = redirect->space.m_windows;
     std::for_each(clients.begin(), clients.end(), setupMoveResizeConnection);
-    QObject::connect(&redirect->space, &win::space::clientAdded, this, setupMoveResizeConnection);
-    QObject::connect(static_cast<win::wayland::space*>(&redirect->space),
-                     &win::wayland::space::wayland_window_added,
+    QObject::connect(redirect->space.qobject.get(),
+                     &win::space::qobject_t::clientAdded,
+                     this,
+                     setupMoveResizeConnection);
+    QObject::connect(redirect->space.qobject.get(),
+                     &win::space::qobject_t::wayland_window_added,
                      this,
                      setupMoveResizeConnection);
 
@@ -525,8 +528,8 @@ void pointer_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
                                              &Wrapland::Server::Surface::pointerConstraintsChanged,
                                              this,
                                              &pointer_redirect::updatePointerConstraints);
-    notifiers.constraints_activated = QObject::connect(&redirect->space,
-                                                       &win::space::clientActivated,
+    notifiers.constraints_activated = QObject::connect(redirect->space.qobject.get(),
+                                                       &win::space::qobject_t::clientActivated,
                                                        this,
                                                        &pointer_redirect::updatePointerConstraints);
     updatePointerConstraints();

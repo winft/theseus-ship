@@ -90,8 +90,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::win
 {
 
+space_qobject::space_qobject(std::function<void()> reconfigure_callback)
+    : reconfigure_callback{reconfigure_callback}
+{
+}
+
+void space_qobject::reconfigure()
+{
+    reconfigure_callback();
+}
+
 space::space(render::compositor& render)
-    : outline{std::make_unique<render::outline>(render)}
+    : qobject{std::make_unique<space_qobject>([this] { reconfigure(); })}
+    , outline{std::make_unique<render::outline>(render)}
     , render{render}
     , deco{std::make_unique<deco::bridge<space>>(*this)}
     , app_menu{std::make_unique<win::app_menu>(*this)}
@@ -108,7 +119,7 @@ space::space(render::compositor& render)
 
     singleton_interface::space = this;
 
-    m_quickTileCombineTimer = new QTimer(this);
+    m_quickTileCombineTimer = new QTimer(qobject.get());
     m_quickTileCombineTimer->setSingleShot(true);
 
     rule_book->load();
@@ -121,59 +132,71 @@ space::space(render::compositor& render)
     tabbox = std::make_unique<win::tabbox>(*this);
 #endif
 
-    connect(this, &space::currentDesktopChanged, &render, &render::compositor::addRepaintFull);
+    QObject::connect(qobject.get(),
+                     &space_qobject::currentDesktopChanged,
+                     &render,
+                     &render::compositor::addRepaintFull);
 
     deco->init();
-    connect(this, &space::configChanged, deco->qobject.get(), [this] { deco->reconfigure(); });
-
-    connect(session_manager.get(),
-            &win::session_manager::loadSessionRequested,
-            this,
-            &space::loadSessionInfo);
-    connect(session_manager.get(),
-            &win::session_manager::prepareSessionSaveRequested,
-            this,
-            [this](const QString& name) { storeSession(name, win::sm_save_phase0); });
-    connect(session_manager.get(),
-            &win::session_manager::finishSessionSaveRequested,
-            this,
-            [this](const QString& name) { storeSession(name, win::sm_save_phase2); });
-
-    auto& base = kwinApp()->get_base();
-    QObject::connect(&base, &base::platform::topology_changed, this, [this](auto old, auto topo) {
-        if (old.size != topo.size) {
-            desktopResized();
-        }
+    QObject::connect(qobject.get(), &space_qobject::configChanged, deco->qobject.get(), [this] {
+        deco->reconfigure();
     });
 
-    connect(this, &space::clientRemoved, focus_chain.get(), &win::focus_chain::remove);
-    connect(this, &space::clientActivated, focus_chain.get(), &win::focus_chain::setActiveClient);
-    connect(virtual_desktop_manager.get(),
-            &win::virtual_desktop_manager::countChanged,
-            focus_chain.get(),
-            &win::focus_chain::resize);
-    connect(virtual_desktop_manager.get(),
-            &win::virtual_desktop_manager::currentChanged,
-            focus_chain.get(),
-            &win::focus_chain::setCurrentDesktop);
-    connect(kwinApp()->options.get(),
-            &base::options::separateScreenFocusChanged,
-            focus_chain.get(),
-            &win::focus_chain::setSeparateScreenFocus);
+    QObject::connect(session_manager.get(),
+                     &win::session_manager::loadSessionRequested,
+                     qobject.get(),
+                     [this](auto&& session_name) { loadSessionInfo(session_name); });
+    QObject::connect(session_manager.get(),
+                     &win::session_manager::prepareSessionSaveRequested,
+                     qobject.get(),
+                     [this](const QString& name) { storeSession(name, win::sm_save_phase0); });
+    QObject::connect(session_manager.get(),
+                     &win::session_manager::finishSessionSaveRequested,
+                     qobject.get(),
+                     [this](const QString& name) { storeSession(name, win::sm_save_phase2); });
+
+    auto& base = kwinApp()->get_base();
+    QObject::connect(
+        &base, &base::platform::topology_changed, qobject.get(), [this](auto old, auto topo) {
+            if (old.size != topo.size) {
+                desktopResized();
+            }
+        });
+
+    QObject::connect(
+        qobject.get(), &qobject_t::clientRemoved, focus_chain.get(), &win::focus_chain::remove);
+    QObject::connect(qobject.get(),
+                     &qobject_t::clientActivated,
+                     focus_chain.get(),
+                     &win::focus_chain::setActiveClient);
+    QObject::connect(virtual_desktop_manager.get(),
+                     &win::virtual_desktop_manager::countChanged,
+                     focus_chain.get(),
+                     &win::focus_chain::resize);
+    QObject::connect(virtual_desktop_manager.get(),
+                     &win::virtual_desktop_manager::currentChanged,
+                     focus_chain.get(),
+                     &win::focus_chain::setCurrentDesktop);
+    QObject::connect(kwinApp()->options.get(),
+                     &base::options::separateScreenFocusChanged,
+                     focus_chain.get(),
+                     &win::focus_chain::setSeparateScreenFocus);
     focus_chain.get()->setSeparateScreenFocus(kwinApp()->options->isSeparateScreenFocus());
 
     auto vds = virtual_desktop_manager.get();
-    connect(
-        vds, &win::virtual_desktop_manager::countChanged, this, &space::slotDesktopCountChanged);
-    connect(vds,
-            &win::virtual_desktop_manager::currentChanged,
-            this,
-            &space::slotCurrentDesktopChanged);
+    QObject::connect(vds,
+                     &win::virtual_desktop_manager::countChanged,
+                     qobject.get(),
+                     [this](auto prev, auto next) { slotDesktopCountChanged(prev, next); });
+    QObject::connect(vds,
+                     &win::virtual_desktop_manager::currentChanged,
+                     qobject.get(),
+                     [this](auto prev, auto next) { slotCurrentDesktopChanged(prev, next); });
     vds->setNavigationWrappingAround(kwinApp()->options->isRollOverDesktops());
-    connect(kwinApp()->options.get(),
-            &base::options::rollOverDesktopsChanged,
-            vds,
-            &win::virtual_desktop_manager::setNavigationWrappingAround);
+    QObject::connect(kwinApp()->options.get(),
+                     &base::options::rollOverDesktopsChanged,
+                     vds,
+                     &win::virtual_desktop_manager::setNavigationWrappingAround);
 
     auto config = kwinApp()->config();
     vds->setConfig(config);
@@ -194,8 +217,11 @@ space::space(render::compositor& render)
     reconfigureTimer.setSingleShot(true);
     updateToolWindowsTimer.setSingleShot(true);
 
-    connect(&reconfigureTimer, &QTimer::timeout, this, &space::slotReconfigure);
-    connect(&updateToolWindowsTimer, &QTimer::timeout, this, &space::slotUpdateToolWindows);
+    QObject::connect(
+        &reconfigureTimer, &QTimer::timeout, qobject.get(), [this] { slotReconfigure(); });
+    QObject::connect(&updateToolWindowsTimer, &QTimer::timeout, qobject.get(), [this] {
+        slotUpdateToolWindows();
+    });
 
     // TODO: do we really need to reconfigure everything when fonts change?
     // maybe just reconfigure the decorations? Move this into libkdecoration?
@@ -203,18 +229,18 @@ space::space(render::compositor& render)
                                           QStringLiteral("/KDEPlatformTheme"),
                                           QStringLiteral("org.kde.KDEPlatformTheme"),
                                           QStringLiteral("refreshFonts"),
-                                          this,
+                                          qobject.get(),
                                           SLOT(reconfigure()));
 
     active_client = nullptr;
     QObject::connect(
-        stacking_order.get(), &stacking_order::changed, this, [this](auto count_changed) {
+        stacking_order.get(), &stacking_order::changed, qobject.get(), [this](auto count_changed) {
             x11::propagate_clients(*this, count_changed);
             if (active_client) {
                 active_client->control->update_mouse_grab();
             }
         });
-    QObject::connect(stacking_order.get(), &stacking_order::render_restack, this, [this] {
+    QObject::connect(stacking_order.get(), &stacking_order::render_restack, qobject.get(), [this] {
         x11::render_stack_unmanaged_windows(*this);
     });
 }
@@ -238,7 +264,7 @@ space::~space()
     // At this point only remnants are remaining.
     for (auto it = m_windows.begin(); it != m_windows.end();) {
         assert((*it)->remnant);
-        Q_EMIT window_deleted(*it);
+        Q_EMIT qobject->window_deleted(*it);
         it = m_windows.erase(it);
     }
 
@@ -296,7 +322,7 @@ void space::slotReconfigure()
     kwinApp()->options->updateSettings();
     scripting->start();
 
-    Q_EMIT configChanged();
+    Q_EMIT qobject->configChanged();
 
     user_actions_menu->discard();
     x11::update_tool_windows_visibility(this, true);
@@ -331,7 +357,7 @@ void space::slotCurrentDesktopChanged(uint oldDesktop, uint newDesktop)
     --block_focus;
 
     activateClientOnNewDesktop(newDesktop);
-    Q_EMIT currentDesktopChanged(oldDesktop, movingClient);
+    Q_EMIT qobject->currentDesktopChanged(oldDesktop, movingClient);
 }
 
 void space::activateClientOnNewDesktop(uint desktop)
@@ -469,8 +495,8 @@ void space::requestDelayFocus(Toplevel* c)
 {
     delayfocus_client = c;
     delete delayFocusTimer;
-    delayFocusTimer = new QTimer(this);
-    connect(delayFocusTimer, &QTimer::timeout, this, &space::delayFocus);
+    delayFocusTimer = new QTimer(qobject.get());
+    QObject::connect(delayFocusTimer, &QTimer::timeout, qobject.get(), [this] { delayFocus(); });
     delayFocusTimer->setSingleShot(true);
     delayFocusTimer->start(kwinApp()->options->delayFocusInterval());
 }
@@ -537,8 +563,9 @@ void space::setShowingDesktop(bool showing)
             activateClient(client);
         }
     }
-    if (changed)
-        Q_EMIT showingDesktopChanged(showing);
+    if (changed) {
+        Q_EMIT qobject->showingDesktopChanged(showing);
+    }
 }
 
 void space::disableGlobalShortcutsForClient(bool disable)
@@ -856,7 +883,7 @@ void space::setWasUserInteraction()
     }
     was_user_interaction = true;
     // might be called from within the filter, so delay till we now the filter returned
-    QTimer::singleShot(0, this, [this] { m_wasUserInteractionFilter.reset(); });
+    QTimer::singleShot(0, qobject.get(), [this] { m_wasUserInteractionFilter.reset(); });
 }
 
 win::screen_edge* space::create_screen_edge(win::screen_edger& edger)
@@ -2217,7 +2244,7 @@ void space::setActiveClient(Toplevel* window)
         win::x11::rootInfo()->setActiveClient(active_client);
     }
 
-    Q_EMIT clientActivated(active_client);
+    Q_EMIT qobject->clientActivated(active_client);
     --set_active_client_recursion;
 }
 
@@ -2649,7 +2676,7 @@ void space::clientAttentionChanged(Toplevel* window, bool set)
     if (set) {
         attention_chain.push_front(window);
     }
-    Q_EMIT clientDemandsAttentionChanged(window, set);
+    Q_EMIT qobject->clientDemandsAttentionChanged(window, set);
 }
 
 /// X11 event handling
@@ -2713,7 +2740,7 @@ QAction* prepare_shortcut_action(win::space& space,
                                  QKeySequence const& shortcut,
                                  QVariant const& data)
 {
-    auto action = new QAction(&space);
+    auto action = new QAction(space.qobject.get());
     action->setProperty("componentName", QStringLiteral(KWIN_NAME));
     action->setObjectName(actionName);
     action->setText(description);
@@ -2732,7 +2759,7 @@ void space::initShortcut(const QString& actionName,
                          Slot slot,
                          const QVariant& data)
 {
-    initShortcut(actionName, description, shortcut, this, slot, data);
+    initShortcut(actionName, description, shortcut, qobject.get(), slot, data);
 }
 
 template<typename T, typename Slot>
@@ -2770,18 +2797,20 @@ void space::initShortcuts()
     // new DEF3 allows to pass data to the action, replacing the %1 argument in the name
 
 #define DEF2(name, descr, key, fnSlot)                                                             \
-    initShortcut(QStringLiteral(name), descr.toString(), key, &space::fnSlot);
+    initShortcut(QStringLiteral(name), descr.toString(), key, [this] { fnSlot(); });
 
 #define DEF(name, key, fnSlot)                                                                     \
-    initShortcut(QString::fromUtf8(name.untranslatedText()), name.toString(), key, &space::fnSlot);
+    initShortcut(                                                                                  \
+        QString::fromUtf8(name.untranslatedText()), name.toString(), key, [this] { fnSlot(); });
 
 #define DEF3(name, key, fnSlot, value)                                                             \
-    init_shortcut_with_action_arg(QString::fromUtf8(name.untranslatedText()).arg(value),           \
-                                  name.subs(value).toString(),                                     \
-                                  key,                                                             \
-                                  this,                                                            \
-                                  fnSlot,                                                          \
-                                  value);
+    init_shortcut_with_action_arg(                                                                 \
+        QString::fromUtf8(name.untranslatedText()).arg(value),                                     \
+        name.subs(value).toString(),                                                               \
+        key,                                                                                       \
+        qobject.get(),                                                                             \
+        [this](QAction* action) { fnSlot(action); },                                               \
+        value);
 
 #define DEF4(name, descr, key, functor)                                                            \
     initShortcut(QStringLiteral(name), descr.toString(), key, functor);
@@ -2980,10 +3009,10 @@ void space::setupWindowShortcut(Toplevel* window)
     client_keys_dialog = new win::shortcut_dialog(window->control->shortcut());
     client_keys_client = window;
 
-    connect(client_keys_dialog,
-            &win::shortcut_dialog::dialogDone,
-            this,
-            &space::setupWindowShortcutDone);
+    QObject::connect(client_keys_dialog,
+                     &win::shortcut_dialog::dialogDone,
+                     qobject.get(),
+                     [this](auto&& ok) { setupWindowShortcutDone(ok); });
 
     auto area = clientArea(ScreenArea, window);
     auto size = client_keys_dialog->sizeHint();
@@ -3020,18 +3049,18 @@ void space::setupWindowShortcutDone(bool ok)
 void space::clientShortcutUpdated(Toplevel* window)
 {
     QString key = QStringLiteral("_k_session:%1").arg(window->xcb_window);
-    QAction* action = findChild<QAction*>(key);
+    auto action = qobject->findChild<QAction*>(key);
     if (!window->control->shortcut().isEmpty()) {
         if (action == nullptr) { // new shortcut
-            action = new QAction(this);
+            action = new QAction(qobject.get());
             kwinApp()->input->setup_action_for_global_accel(action);
             action->setProperty("componentName", QStringLiteral(KWIN_NAME));
             action->setObjectName(key);
             action->setText(i18n("Activate Window (%1)", win::caption(window)));
-            connect(action,
-                    &QAction::triggered,
-                    window,
-                    std::bind(&space::activateClient, this, window, true));
+            QObject::connect(action,
+                             &QAction::triggered,
+                             window,
+                             std::bind(&space::activateClient, this, window, true));
         }
 
         // no autoloading, since it's configured explicitly here and is not meant to be reused

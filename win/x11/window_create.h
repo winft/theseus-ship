@@ -17,7 +17,7 @@ void add_controlled_window_to_space(Space& space, Win* win)
     auto grp = space.findGroup(win->xcb_window);
 
     space.m_windows.push_back(win);
-    Q_EMIT space.clientAdded(win);
+    Q_EMIT space.qobject->clientAdded(win);
 
     if (grp) {
         grp->gotLeader(win);

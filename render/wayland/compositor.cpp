@@ -137,7 +137,7 @@ void compositor::start(win::space& space)
                     remove_all(win->repaint_outputs, output);
                 }
             });
-        QObject::connect(&space, &win::space::destroyed, this, [this] {
+        QObject::connect(space.qobject.get(), &win::space::qobject_t::destroyed, this, [this] {
             for (auto& output : get_platform(this->platform.base).outputs) {
                 get_output(output)->render->delay_timer.stop();
             }

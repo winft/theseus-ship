@@ -152,7 +152,8 @@ void X11DesktopWindowTest::testDesktopWindow()
     QCOMPARE(geo->depth, uint8_t(32));
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(Test::app()->workspace.get(), &win::space::clientAdded);
+    QSignalSpy windowCreatedSpy(Test::app()->workspace->qobject.get(),
+                                &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();

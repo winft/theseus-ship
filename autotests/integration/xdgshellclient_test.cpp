@@ -151,8 +151,8 @@ void TestXdgShellClient::cleanup()
 void TestXdgShellClient::testMapUnmapMap()
 {
     // this test verifies that mapping a previously mapped window works correctly
-    QSignalSpy clientAddedSpy(Test::app()->workspace.get(),
-                              &win::wayland::space::wayland_window_added);
+    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+                              &win::space::qobject_t::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
     QSignalSpy effectsWindowShownSpy(effects, &EffectsHandler::windowShown);
     QVERIFY(effectsWindowShownSpy.isValid());
@@ -259,8 +259,8 @@ void TestXdgShellClient::testDesktopPresenceChanged()
     effects->setNumberOfDesktops(4);
     QSignalSpy desktopPresenceChangedClientSpy(c, &win::wayland::window::desktopPresenceChanged);
     QVERIFY(desktopPresenceChangedClientSpy.isValid());
-    QSignalSpy desktopPresenceChangedWorkspaceSpy(Test::app()->workspace.get(),
-                                                  &win::space::desktopPresenceChanged);
+    QSignalSpy desktopPresenceChangedWorkspaceSpy(Test::app()->workspace->qobject.get(),
+                                                  &win::space::qobject_t::desktopPresenceChanged);
     QVERIFY(desktopPresenceChangedWorkspaceSpy.isValid());
     QSignalSpy desktopPresenceChangedEffectsSpy(effects, &EffectsHandler::desktopPresenceChanged);
     QVERIFY(desktopPresenceChangedEffectsSpy.isValid());
@@ -932,8 +932,8 @@ void TestXdgShellClient::testUnresponsiveWindow()
     // for this an external binary is launched
     const QString kill = QFINDTESTDATA(QStringLiteral("kill"));
     QVERIFY(!kill.isEmpty());
-    QSignalSpy shellClientAddedSpy(Test::app()->workspace.get(),
-                                   &win::wayland::space::wayland_window_added);
+    QSignalSpy shellClientAddedSpy(Test::app()->workspace->qobject.get(),
+                                   &win::space::qobject_t::wayland_window_added);
     QVERIFY(shellClientAddedSpy.isValid());
 
     std::unique_ptr<QProcess> process(new QProcess);

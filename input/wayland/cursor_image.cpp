@@ -75,8 +75,8 @@ cursor_image::~cursor_image() = default;
 
 void cursor_image::setup_theme()
 {
-    QObject::connect(static_cast<win::wayland::space*>(&platform.redirect->space),
-                     &win::wayland::space::wayland_window_added,
+    QObject::connect(platform.redirect->space.qobject.get(),
+                     &win::space::qobject_t::wayland_window_added,
                      this,
                      &cursor_image::setup_move_resize);
 
@@ -96,8 +96,8 @@ void cursor_image::setup_theme()
     auto const clients = platform.redirect->space.m_windows;
     std::for_each(clients.begin(), clients.end(), [this](auto win) { setup_move_resize(win); });
 
-    QObject::connect(&platform.redirect->space,
-                     &win::space::clientAdded,
+    QObject::connect(platform.redirect->space.qobject.get(),
+                     &win::space::qobject_t::clientAdded,
                      this,
                      &cursor_image::setup_move_resize);
 

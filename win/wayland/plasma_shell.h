@@ -18,7 +18,7 @@ void handle_new_plasma_shell_surface(Space* space, Wrapland::Server::PlasmaShell
         install_plasma_shell_surface(win, surface);
     } else {
         space->plasma_shell_surfaces << surface;
-        QObject::connect(surface, &QObject::destroyed, space, [space, surface] {
+        QObject::connect(surface, &QObject::destroyed, space->qobject.get(), [space, surface] {
             space->plasma_shell_surfaces.removeOne(surface);
         });
     }

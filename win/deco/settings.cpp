@@ -60,7 +60,7 @@ settings::settings(win::space& space, KDecoration2::DecorationSettings* parent)
             });
     // prevent changes in Decoration due to compositor being destroyed
     connect(&space.render, &render::compositor::aboutToDestroy, this, [c] { disconnect(c); });
-    connect(&space, &win::space::configChanged, this, &settings::readSettings);
+    connect(space.qobject.get(), &win::space_qobject::configChanged, this, &settings::readSettings);
     connect(
         space.deco->qobject.get(), &bridge_qobject::metaDataLoaded, this, &settings::readSettings);
 }

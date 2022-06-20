@@ -45,9 +45,15 @@ void setup_space_window_connections(Space* space, Win* win)
     QObject::connect(win, &Win::needsRepaint, &space->render, [win] {
         win->space.render.schedule_repaint(win);
     });
-    QObject::connect(win, &Win::desktopPresenceChanged, space, &Space::desktopPresenceChanged);
+    QObject::connect(win,
+                     &Win::desktopPresenceChanged,
+                     space->qobject.get(),
+                     &Space::qobject_t::desktopPresenceChanged);
     QObject::connect(
-        win, &Win::minimizedChanged, space, std::bind(&Space::clientMinimizedChanged, space, win));
+        win,
+        &Win::minimizedChanged,
+        space->qobject.get(),
+        std::bind(&Space::qobject_t::clientMinimizedChanged, space->qobject.get(), win));
 }
 
 template<typename Win>

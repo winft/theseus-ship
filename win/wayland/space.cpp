@@ -75,7 +75,7 @@ space::space(render::compositor& render, base::wayland::server* server)
     plasma_window_manager->setVirtualDesktopManager(plasma_virtual_desktop_manager.get());
     virtual_desktop_manager->setVirtualDesktopManagement(plasma_virtual_desktop_manager.get());
 
-    QObject::connect(stacking_order.get(), &stacking_order::render_restack, this, [this] {
+    QObject::connect(stacking_order.get(), &stacking_order::render_restack, qobject.get(), [this] {
         for (auto win : m_windows) {
             if (auto iwin = qobject_cast<internal_window*>(win); iwin && iwin->isShown()) {
                 stacking_order->render_overlays.push_back(iwin);
@@ -83,47 +83,53 @@ space::space(render::compositor& render, base::wayland::server* server)
         }
     });
 
-    QObject::connect(compositor.get(), &WS::Compositor::surfaceCreated, this, [this](auto surface) {
-        xwl::handle_new_surface(this, surface);
-    });
+    QObject::connect(compositor.get(),
+                     &WS::Compositor::surfaceCreated,
+                     qobject.get(),
+                     [this](auto surface) { xwl::handle_new_surface(this, surface); });
 
-    QObject::connect(xdg_shell.get(), &WS::XdgShell::toplevelCreated, this, [this](auto toplevel) {
-        handle_new_toplevel<window>(this, toplevel);
-    });
-    QObject::connect(xdg_shell.get(), &WS::XdgShell::popupCreated, this, [this](auto popup) {
-        handle_new_popup<window>(this, popup);
-    });
+    QObject::connect(xdg_shell.get(),
+                     &WS::XdgShell::toplevelCreated,
+                     qobject.get(),
+                     [this](auto toplevel) { handle_new_toplevel<window>(this, toplevel); });
+    QObject::connect(xdg_shell.get(),
+                     &WS::XdgShell::popupCreated,
+                     qobject.get(),
+                     [this](auto popup) { handle_new_popup<window>(this, popup); });
 
     QObject::connect(xdg_decoration_manager.get(),
                      &WS::XdgDecorationManager::decorationCreated,
-                     this,
+                     qobject.get(),
                      [this](auto deco) { handle_new_xdg_deco(this, deco); });
 
     QObject::connect(
-        xdg_activation.get(), &WS::XdgActivationV1::token_requested, this, [this](auto token) {
-            win::wayland::xdg_activation_handle_token_request(*this, *token);
-        });
+        xdg_activation.get(),
+        &WS::XdgActivationV1::token_requested,
+        qobject.get(),
+        [this](auto token) { win::wayland::xdg_activation_handle_token_request(*this, *token); });
     QObject::connect(xdg_activation.get(),
                      &WS::XdgActivationV1::activate,
-                     this,
+                     qobject.get(),
                      [this](auto const& token, auto surface) {
                          handle_xdg_activation_activate(this, token, surface);
                      });
 
-    QObject::connect(plasma_shell.get(), &WS::PlasmaShell::surfaceCreated, [this](auto surface) {
-        handle_new_plasma_shell_surface(this, surface);
-    });
+    QObject::connect(plasma_shell.get(),
+                     &WS::PlasmaShell::surfaceCreated,
+                     qobject.get(),
+                     [this](auto surface) { handle_new_plasma_shell_surface(this, surface); });
 
-    QObject::connect(this, &space::currentDesktopChanged, kde_idle.get(), [this] {
-        for (auto win : m_windows) {
-            if (!win->control) {
-                continue;
+    QObject::connect(
+        qobject.get(), &space::qobject_t::currentDesktopChanged, kde_idle.get(), [this] {
+            for (auto win : m_windows) {
+                if (!win->control) {
+                    continue;
+                }
+                if (auto wlwin = qobject_cast<wayland::window*>(win)) {
+                    idle_update(*kde_idle, *wlwin);
+                }
             }
-            if (auto wlwin = qobject_cast<wayland::window*>(win)) {
-                idle_update(*kde_idle, *wlwin);
-            }
-        }
-    });
+        });
 
     QObject::connect(appmenu_manager.get(),
                      &WS::AppmenuManager::appmenuCreated,
@@ -135,37 +141,46 @@ space::space(render::compositor& render, base::wayland::server* server)
 
     QObject::connect(plasma_window_manager.get(),
                      &WS::PlasmaWindowManager::requestChangeShowingDesktop,
-                     this,
+                     qobject.get(),
                      [this](auto state) { handle_change_showing_desktop(this, state); });
-    QObject::connect(this, &win::space::showingDesktopChanged, this, [this](bool set) {
-        using ShowingState = Wrapland::Server::PlasmaWindowManager::ShowingDesktopState;
-        plasma_window_manager->setShowingDesktopState(set ? ShowingState::Enabled
-                                                          : ShowingState::Disabled);
-    });
+    QObject::connect(qobject.get(),
+                     &win::space::qobject_t::showingDesktopChanged,
+                     qobject.get(),
+                     [this](bool set) {
+                         using ShowingState
+                             = Wrapland::Server::PlasmaWindowManager::ShowingDesktopState;
+                         plasma_window_manager->setShowingDesktopState(
+                             set ? ShowingState::Enabled : ShowingState::Disabled);
+                     });
 
     QObject::connect(subcompositor.get(),
                      &WS::Subcompositor::subsurfaceCreated,
-                     this,
+                     qobject.get(),
                      [this](auto subsurface) { handle_new_subsurface<window>(this, subsurface); });
     QObject::connect(
-        layer_shell.get(), &WS::LayerShellV1::surface_created, this, [this](auto layer_surface) {
-            handle_new_layer_surface<window>(this, layer_surface);
-        });
+        layer_shell.get(),
+        &WS::LayerShellV1::surface_created,
+        qobject.get(),
+        [this](auto layer_surface) { handle_new_layer_surface<window>(this, layer_surface); });
 
     activation = std::make_unique<wayland::xdg_activation<space>>(*this);
-    QObject::connect(this, &space::clientActivated, this, [this] {
-        if (activeClient()) {
-            activation->clear();
-        }
-    });
+    QObject::connect(
+        qobject.get(), &space::qobject_t::clientActivated, qobject.get(), [this](auto&& win) {
+            if (win) {
+                activation->clear();
+            }
+        });
 
     // For Xwayland windows we need to setup Plasma management too.
-    QObject::connect(this, &space::clientAdded, this, &space::handle_x11_window_added);
+    QObject::connect(qobject.get(),
+                     &space::qobject_t::clientAdded,
+                     qobject.get(),
+                     [this](auto&& win) { handle_x11_window_added(win); });
 
     QObject::connect(virtual_desktop_manager.get(),
                      &virtual_desktop_manager::desktopRemoved,
-                     this,
-                     &space::handle_desktop_removed);
+                     qobject.get(),
+                     [this](auto&& desktop) { handle_desktop_removed(desktop); });
 }
 
 space::~space()
@@ -235,7 +250,7 @@ void space::handle_window_added(wayland::window* window)
 
         updateTabbox();
 
-        QObject::connect(window, &win::wayland::window::windowShown, this, [this, window] {
+        QObject::connect(window, &win::wayland::window::windowShown, qobject.get(), [this, window] {
             win::update_layer(window);
             stacking_order->update_count();
             updateClientArea();
@@ -243,7 +258,7 @@ void space::handle_window_added(wayland::window* window)
                 activateClient(window);
             }
         });
-        QObject::connect(window, &win::wayland::window::windowHidden, this, [this] {
+        QObject::connect(window, &win::wayland::window::windowHidden, qobject.get(), [this] {
             // TODO: update tabbox if it's displayed
             stacking_order->update_count();
             updateClientArea();
@@ -253,7 +268,7 @@ void space::handle_window_added(wayland::window* window)
     }
 
     adopt_transient_children(this, window);
-    Q_EMIT wayland_window_added(window);
+    Q_EMIT qobject->wayland_window_added(window);
 }
 
 void space::handle_window_removed(wayland::window* window)
@@ -278,7 +293,7 @@ void space::handle_window_removed(wayland::window* window)
             win::set_shortcut(window, QString());
         }
         clientHidden(window);
-        Q_EMIT clientRemoved(window);
+        Q_EMIT qobject->clientRemoved(window);
     }
 
     stacking_order->update_count();
@@ -288,7 +303,7 @@ void space::handle_window_removed(wayland::window* window)
         updateTabbox();
     }
 
-    Q_EMIT wayland_window_removed(window);
+    Q_EMIT qobject->wayland_window_removed(window);
 }
 
 void space::handle_x11_window_added(x11::window* window)
@@ -296,7 +311,7 @@ void space::handle_x11_window_added(x11::window* window)
     if (window->ready_for_painting) {
         setup_plasma_management(this, window);
     } else {
-        QObject::connect(window, &x11::window::windowShown, this, [this](auto window) {
+        QObject::connect(window, &x11::window::windowShown, qobject.get(), [this](auto window) {
             setup_plasma_management(this, window);
         });
     }

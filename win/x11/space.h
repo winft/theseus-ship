@@ -22,7 +22,6 @@ namespace KWin::win::x11
 
 class KWIN_EXPORT space : public win::space
 {
-    Q_OBJECT
 public:
     using x11_window = window;
 

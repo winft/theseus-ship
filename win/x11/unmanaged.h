@@ -114,7 +114,7 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
 
     space.m_windows.push_back(win);
     space.stacking_order->render_restack_required = true;
-    Q_EMIT space.unmanagedAdded(win);
+    Q_EMIT space.qobject->unmanagedAdded(win);
 
     return win;
 }

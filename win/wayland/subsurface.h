@@ -136,7 +136,7 @@ void handle_new_subsurface(Space* space, Wrapland::Server::Subsurface* subsurfac
     space->m_windows.push_back(window);
     QObject::connect(subsurface,
                      &Wrapland::Server::Subsurface::resourceDestroyed,
-                     space,
+                     space->qobject.get(),
                      [space, window] { remove_all(space->m_windows, window); });
 
     assign_subsurface_role(window);

@@ -55,7 +55,6 @@ struct xdg_activation;
 
 class KWIN_EXPORT space : public win::space
 {
-    Q_OBJECT
 public:
     using x11_window = xwl_window;
 

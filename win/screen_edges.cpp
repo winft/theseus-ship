@@ -727,8 +727,14 @@ screen_edger::screen_edger(win::space& space)
                      this,
                      &screen_edger::updateLayout);
 
-    QObject::connect(&space, &win::space::clientActivated, this, &win::screen_edger::checkBlocking);
-    QObject::connect(&space, &win::space::clientRemoved, this, &screen_edger::deleteEdgeForClient);
+    QObject::connect(space.qobject.get(),
+                     &win::space_qobject::clientActivated,
+                     this,
+                     &win::screen_edger::checkBlocking);
+    QObject::connect(space.qobject.get(),
+                     &win::space_qobject::clientRemoved,
+                     this,
+                     &screen_edger::deleteEdgeForClient);
 }
 
 screen_edger::~screen_edger() = default;

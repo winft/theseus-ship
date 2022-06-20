@@ -165,7 +165,8 @@ QRect target_geo(QRect const& area_geo,
 void layer_shell_test::test_create()
 {
     // Tries to create multiple kinds of layer surfaces.
-    QSignalSpy window_spy(Test::app()->workspace.get(), &win::wayland::space::wayland_window_added);
+    QSignalSpy window_spy(Test::app()->workspace->qobject.get(),
+                          &win::space::qobject_t::wayland_window_added);
     QVERIFY(window_spy.isValid());
 
     auto surface = std::unique_ptr<Clt::Surface>(Test::create_surface());
@@ -322,7 +323,8 @@ void layer_shell_test::test_geo_data()
 void layer_shell_test::test_geo()
 {
     // Checks various standard geometries.
-    QSignalSpy window_spy(Test::app()->workspace.get(), &win::wayland::space::wayland_window_added);
+    QSignalSpy window_spy(Test::app()->workspace->qobject.get(),
+                          &win::space::qobject_t::wayland_window_added);
     QVERIFY(window_spy.isValid());
 
     QFETCH(int, output);
@@ -363,7 +365,8 @@ void layer_shell_test::test_geo()
 void layer_shell_test::test_output_change()
 {
     // Checks that output changes are handled correctly.
-    QSignalSpy window_spy(Test::app()->workspace.get(), &win::wayland::space::wayland_window_added);
+    QSignalSpy window_spy(Test::app()->workspace->qobject.get(),
+                          &win::space::qobject_t::wayland_window_added);
     QVERIFY(window_spy.isValid());
 
     auto const output_geo = QRect(2000, 0, 1000, 500);
@@ -434,7 +437,8 @@ void layer_shell_test::test_output_change()
 void layer_shell_test::test_popup()
 {
     // Checks popup creation.
-    QSignalSpy window_spy(Test::app()->workspace.get(), &win::wayland::space::wayland_window_added);
+    QSignalSpy window_spy(Test::app()->workspace->qobject.get(),
+                          &win::space::qobject_t::wayland_window_added);
     QVERIFY(window_spy.isValid());
 
     // First create the layer surface.

@@ -243,8 +243,8 @@ void xwayland::continue_startup_with_x11()
     app->installNativeEventFilter(event_filter.get());
 
     QObject::connect(
-        &space,
-        &win::space::surface_id_changed,
+        space.qobject.get(),
+        &win::space::qobject_t::surface_id_changed,
         this,
         [this, xwayland_connection = waylandServer()->xwayland_connection()](auto window, auto id) {
             if (auto surface = space.compositor->getSurface(id, xwayland_connection)) {

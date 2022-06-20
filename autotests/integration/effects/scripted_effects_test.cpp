@@ -480,7 +480,8 @@ void ScriptedEffectsTest::testKeepAlive()
     } else {
         // the test effect doesn't keep the window alive, so it should be
         // removed immediately
-        QSignalSpy deletedRemovedSpy(Test::app()->workspace.get(), &win::space::window_deleted);
+        QSignalSpy deletedRemovedSpy(Test::app()->workspace->qobject.get(),
+                                     &win::space::qobject_t::window_deleted);
         QVERIFY(deletedRemovedSpy.isValid());
         QVERIFY(deletedRemovedSpy.count() == 1
                 || deletedRemovedSpy.wait(100)); // 100ms is less than duration of the animation
