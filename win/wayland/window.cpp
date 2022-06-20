@@ -478,11 +478,17 @@ bool window::isHiddenInternal() const
 
 void window::hideClient(bool hide)
 {
+    auto const was_shown = isShown();
+
     if (hidden == hide) {
         return;
     }
 
     hidden = hide;
+
+    if (was_shown == isShown()) {
+        return;
+    }
 
     if (hide) {
         space.render.addRepaint(visible_rect(this));
