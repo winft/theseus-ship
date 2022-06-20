@@ -152,9 +152,9 @@ void handle_new_subsurface(Space* space, Wrapland::Server::Subsurface* subsurfac
             break;
         }
     }
-    // Must wait till a parent is mapped and subsurface is ready for painting.
-    QObject::connect(
-        window, &win::wayland::window::windowShown, space, &Space::handle_wayland_window_shown);
+
+    // No further processing of the subsurface in space. Must wait till a parent is mapped and
+    // subsurface is ready for painting.
 }
 
 }

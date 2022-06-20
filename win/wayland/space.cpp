@@ -193,12 +193,6 @@ window* space::find_window(Wrapland::Server::Surface* surface) const
     return it != m_windows.cend() ? qobject_cast<window*>(*it) : nullptr;
 }
 
-void space::handle_wayland_window_shown(Toplevel* window)
-{
-    QObject::disconnect(window, &Toplevel::windowShown, this, &space::handle_wayland_window_shown);
-    handle_window_added(static_cast<win::wayland::window*>(window));
-}
-
 void space::handle_window_added(wayland::window* window)
 {
     if (window->control && !window->layer_surface) {

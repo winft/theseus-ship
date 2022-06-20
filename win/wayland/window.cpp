@@ -495,7 +495,7 @@ void window::hideClient(bool hide)
         space.clientHidden(this);
         Q_EMIT windowHidden(this);
     } else {
-        Q_EMIT windowShown(this);
+        handle_shown_and_mapped();
     }
 }
 
@@ -872,12 +872,8 @@ bool window::has_pending_repaints() const
     return ready_for_painting && Toplevel::has_pending_repaints();
 }
 
-void window::map()
+void window::handle_shown_and_mapped()
 {
-    if (mapped || !isShown()) {
-        return;
-    }
-
     mapped = true;
 
     if (transient()->annexed) {
@@ -891,12 +887,25 @@ void window::map()
         update_screen_edge(this);
     }
 
-    if (!ready_for_painting) {
-        setReadyForPainting();
-    } else {
+    if (ready_for_painting) {
+        // Was already shown in the past once. Just repaint and emit shown again.
         addRepaintFull();
         Q_EMIT windowShown(this);
+        return;
     }
+
+    // First time shown. Must be added to space.
+    setReadyForPainting();
+    static_cast<wayland::space&>(space).handle_window_added(this);
+}
+
+void window::map()
+{
+    if (mapped || !isShown()) {
+        return;
+    }
+
+    handle_shown_and_mapped();
 }
 
 void window::unmap()

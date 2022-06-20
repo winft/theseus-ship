@@ -184,6 +184,9 @@ public:
 
     void handle_class_changed();
     void handle_title_changed();
+
+private:
+    void handle_shown_and_mapped();
 };
 
 }

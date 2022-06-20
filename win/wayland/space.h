@@ -67,7 +67,6 @@ public:
 
     window* find_window(Wrapland::Server::Surface* surface) const;
 
-    void handle_wayland_window_shown(Toplevel* window);
     void handle_window_added(wayland::window* window);
     void handle_window_removed(wayland::window* window);
 
