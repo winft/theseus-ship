@@ -53,7 +53,7 @@ void update_function(ContrastEffect& effect, KWin::effect::color_update const& u
 
 ContrastEffect::ContrastEffect()
 {
-    shader = ContrastShader::create();
+    shader = std::make_unique<ContrastShader>();
 
     reconfigure(ReconfigureAll);
 
@@ -68,7 +68,6 @@ ContrastEffect::ContrastEffect()
 
 ContrastEffect::~ContrastEffect()
 {
-    delete shader;
 }
 
 void ContrastEffect::reset()

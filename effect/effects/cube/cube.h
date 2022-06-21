@@ -192,7 +192,7 @@ private:
     float cubeOpacity;
     bool opacityDesktopOnly;
     bool displayDesktopName;
-    EffectFrame* desktopNameFrame;
+    std::unique_ptr<EffectFrame> desktopNameFrame;
     QFont desktopNameFont;
     bool reflection;
     bool rotating;
@@ -233,10 +233,10 @@ private:
     bool shortcutsRegistered;
     CubeMode mode;
     bool useShaders;
-    GLShader* cylinderShader;
-    GLShader* sphereShader;
-    GLShader* m_reflectionShader;
-    GLShader* m_capShader;
+    std::unique_ptr<GLShader> cylinderShader;
+    std::unique_ptr<GLShader> sphereShader;
+    std::unique_ptr<GLShader> m_reflectionShader;
+    std::unique_ptr<GLShader> m_capShader;
     float capDeformationFactor;
     bool useZOrdering;
     float zOrderingFactor;

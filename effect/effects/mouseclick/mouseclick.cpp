@@ -53,20 +53,18 @@ MouseClickEffect::MouseClickEffect()
 
     reconfigure(ReconfigureAll);
 
-    m_buttons[0] = new MouseButton(i18nc("Left mouse button", "Left"), Qt::LeftButton);
-    m_buttons[1] = new MouseButton(i18nc("Middle mouse button", "Middle"), Qt::MiddleButton);
-    m_buttons[2] = new MouseButton(i18nc("Right mouse button", "Right"), Qt::RightButton);
+    m_buttons[0]
+        = std::make_unique<MouseButton>(i18nc("Left mouse button", "Left"), Qt::LeftButton);
+    m_buttons[1]
+        = std::make_unique<MouseButton>(i18nc("Middle mouse button", "Middle"), Qt::MiddleButton);
+    m_buttons[2]
+        = std::make_unique<MouseButton>(i18nc("Right mouse button", "Right"), Qt::RightButton);
 }
 
 MouseClickEffect::~MouseClickEffect()
 {
-    if (m_enabled)
+    if (m_enabled) {
         effects->stopMousePolling();
-    qDeleteAll(m_clicks);
-    m_clicks.clear();
-
-    for (int i = 0; i < BUTTON_COUNT; ++i) {
-        delete m_buttons[i];
     }
 }
 
@@ -89,7 +87,7 @@ void MouseClickEffect::prePaintScreen(ScreenPrePaintData& data,
 {
     const int time = m_lastPresentTime.count() ? (presentTime - m_lastPresentTime).count() : 0;
 
-    for (auto const& click : qAsConst(m_clicks)) {
+    for (auto& click : m_clicks) {
         click->m_time += time;
     }
 
@@ -100,12 +98,10 @@ void MouseClickEffect::prePaintScreen(ScreenPrePaintData& data,
     }
 
     while (m_clicks.size() > 0) {
-        MouseEvent* first = m_clicks[0];
-        if (first->m_time <= m_ringLife) {
+        if (m_clicks.front()->m_time <= m_ringLife) {
             break;
         }
         m_clicks.pop_front();
-        delete first;
     }
 
     if (isActive()) {
@@ -122,10 +118,10 @@ void MouseClickEffect::paintScreen(int mask, const QRegion& region, ScreenPaintD
     effects->paintScreen(mask, region, data);
 
     paintScreenSetup(mask, region, data);
-    for (auto const& click : qAsConst(m_clicks)) {
+    for (const auto& click : m_clicks) {
         for (int i = 0; i < m_ringCount; ++i) {
-            float alpha = computeAlpha(click, i);
-            float size = computeRadius(click, i);
+            float alpha = computeAlpha(click.get(), i);
+            float size = computeRadius(click.get(), i);
             if (size > 0 && alpha > 0) {
                 QColor color = m_colors[click->m_button];
                 color.setAlphaF(alpha);
@@ -173,35 +169,39 @@ void MouseClickEffect::slotMouseChanged(const QPoint& pos,
     if (buttons == oldButtons)
         return;
 
-    MouseEvent* m = nullptr;
+    std::unique_ptr<MouseEvent> m;
     int i = BUTTON_COUNT;
     while (--i >= 0) {
-        MouseButton* b = m_buttons[i];
+        MouseButton* b = m_buttons[i].get();
         if (isPressed(b->m_button, buttons, oldButtons)) {
-            m = new MouseEvent(i, pos, 0, createEffectFrame(pos, b->m_labelDown), true);
+            m = std::make_unique<MouseEvent>(
+                i, pos, 0, createEffectFrame(pos, b->m_labelDown), true);
             break;
         } else if (isReleased(b->m_button, buttons, oldButtons)
                    && (!b->m_isPressed || b->m_time > m_ringLife)) {
             // we might miss a press, thus also check !b->m_isPressed, bug #314762
-            m = new MouseEvent(i, pos, 0, createEffectFrame(pos, b->m_labelUp), false);
+            m = std::make_unique<MouseEvent>(
+                i, pos, 0, createEffectFrame(pos, b->m_labelUp), false);
             break;
         }
         b->setPressed(b->m_button & buttons);
     }
 
     if (m) {
-        m_clicks.append(m);
+        m_clicks.push_back(std::move(m));
     }
     repaint();
 }
 
-EffectFrame* MouseClickEffect::createEffectFrame(const QPoint& pos, const QString& text)
+std::unique_ptr<EffectFrame> MouseClickEffect::createEffectFrame(const QPoint& pos,
+                                                                 const QString& text)
 {
     if (!m_showText) {
         return nullptr;
     }
     QPoint point(pos.x() + m_ringMaxSize, pos.y());
-    EffectFrame* frame = effects->effectFrame(EffectFrameStyled, false, point, Qt::AlignLeft);
+    std::unique_ptr<EffectFrame> frame
+        = effects->effectFrame(EffectFrameStyled, false, point, Qt::AlignLeft);
     frame->setFont(m_font);
     frame->setText(text);
     return frame;
@@ -212,7 +212,7 @@ void MouseClickEffect::repaint()
     if (m_clicks.size() > 0) {
         QRegion dirtyRegion;
         const int radius = m_ringMaxSize + m_lineWidth;
-        for (auto const& click : qAsConst(m_clicks)) {
+        for (auto& click : m_clicks) {
             dirtyRegion |= QRect(
                 click->m_pos.x() - radius, click->m_pos.y() - radius, 2 * radius, 2 * radius);
             if (click->m_frame) {
@@ -251,7 +251,6 @@ void MouseClickEffect::toggleEnabled()
         effects->stopMousePolling();
     }
 
-    qDeleteAll(m_clicks);
     m_clicks.clear();
 
     for (int i = 0; i < BUTTON_COUNT; ++i) {
@@ -338,6 +337,56 @@ void MouseClickEffect::paintScreenFinishGl(int, QRegion, ScreenPaintData&)
     glDisable(GL_BLEND);
 
     ShaderManager::instance()->popShader();
+}
+
+QColor MouseClickEffect::color1() const
+{
+    return m_colors[0];
+}
+
+QColor MouseClickEffect::color2() const
+{
+    return m_colors[1];
+}
+
+QColor MouseClickEffect::color3() const
+{
+    return m_colors[2];
+}
+
+qreal MouseClickEffect::lineWidth() const
+{
+    return m_lineWidth;
+}
+
+int MouseClickEffect::ringLife() const
+{
+    return m_ringLife;
+}
+
+int MouseClickEffect::ringSize() const
+{
+    return m_ringMaxSize;
+}
+
+int MouseClickEffect::ringCount() const
+{
+    return m_ringCount;
+}
+
+bool MouseClickEffect::isShowText() const
+{
+    return m_showText;
+}
+
+QFont MouseClickEffect::font() const
+{
+    return m_font;
+}
+
+bool MouseClickEffect::isEnabled() const
+{
+    return m_enabled;
 }
 
 } // namespace

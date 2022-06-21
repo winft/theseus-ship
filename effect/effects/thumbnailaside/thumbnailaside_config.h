@@ -48,7 +48,7 @@ public:
     void save() override;
 
 private:
-    ThumbnailAsideEffectConfigForm* m_ui;
+    ThumbnailAsideEffectConfigForm m_ui;
     KActionCollection* m_actionCollection;
 };
 

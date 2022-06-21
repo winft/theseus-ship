@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define KWIN_INVERT_H
 
 #include <kwineffects/effect.h>
+#include <memory>
 
 namespace KWin
 {
@@ -59,7 +60,7 @@ protected:
 private:
     bool m_inited;
     bool m_valid;
-    GLShader* m_shader;
+    std::unique_ptr<GLShader> m_shader;
     bool m_allWindows;
     QList<EffectWindow*> m_windows;
 };

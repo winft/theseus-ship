@@ -190,10 +190,7 @@ effect::effect(EffectsHandler& effects,
     });
 }
 
-effect::~effect()
-{
-    qDeleteAll(m_shaders);
-}
+effect::~effect() = default;
 
 bool effect::init(QString const& effectName, QString const& pathToScript, KSharedConfigPtr config)
 {
@@ -860,21 +857,20 @@ uint effect::addFragmentShader(ShaderTrait traits, const QString& fragmentShader
         static_cast<KWin::ShaderTraits>(int(traits)), {}, fragment);
     if (!shader->isValid()) {
         m_engine->throwError(QStringLiteral("Shader failed to load"));
-        delete shader;
         // 0 is never a valid shader identifier, it's ensured the first shader gets id 1
         return 0;
     }
 
     const uint shaderId{m_nextShaderId};
     m_nextShaderId++;
-    m_shaders.insert(shaderId, shader);
+    m_shaders[shaderId] = std::move(shader);
     return shaderId;
 }
 
 GLShader* effect::findShader(uint shaderId) const
 {
     if (auto it = m_shaders.find(shaderId); it != m_shaders.end()) {
-        return it.value();
+        return it->second.get();
     }
     return nullptr;
 }

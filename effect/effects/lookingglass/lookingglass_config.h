@@ -49,7 +49,7 @@ public:
     void defaults() override;
 
 private:
-    LookingGlassEffectConfigForm* m_ui;
+    LookingGlassEffectConfigForm m_ui;
     KActionCollection* m_actionCollection;
 };
 

@@ -290,7 +290,9 @@ private:
     KConfigLoader* m_config{nullptr};
     int m_chainPosition{0};
     Effect* m_activeFullScreenEffect = nullptr;
-    QHash<uint, GLShader*> m_shaders;
+
+    std::unordered_map<uint, std::unique_ptr<GLShader>> m_shaders;
+
     uint m_nextShaderId{1u};
 
     std::function<base::options&()> get_options;

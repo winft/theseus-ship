@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <kwineffects/effect.h>
 #include <kwinxrender/utils.h>
+#include <memory>
 
 class QTimer;
 namespace Plasma
@@ -55,14 +56,14 @@ private Q_SLOTS:
 
 private:
     void ensureGlowSvg();
-    Glow* createGlow(ElectricBorder border, qreal factor, const QRect& geometry);
+    std::unique_ptr<Glow> createGlow(ElectricBorder border, qreal factor, const QRect& geometry);
     template<typename T>
     T* createCornerGlow(ElectricBorder border);
     template<typename T>
     T* createEdgeGlow(ElectricBorder border, const QSize& size);
     QSize cornerGlowSize(ElectricBorder border);
     Plasma::Svg* m_glow = nullptr;
-    QHash<ElectricBorder, Glow*> m_borders;
+    std::map<ElectricBorder, std::unique_ptr<Glow>> m_borders;
     QTimer* m_cleanupTimer;
 };
 

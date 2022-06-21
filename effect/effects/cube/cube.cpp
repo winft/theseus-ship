@@ -244,7 +244,7 @@ void CubeEffect::reconfigure(ReconfigureFlags)
 
     // set the cap color on the shader
     if (m_capShader && m_capShader->isValid()) {
-        ShaderBinder binder(m_capShader);
+        ShaderBinder binder(m_capShader.get());
         m_capShader->setUniform(GLShader::Color, capColor);
     }
 
@@ -273,11 +273,6 @@ CubeEffect::~CubeEffect()
 {
     delete wallpaper;
     delete capTexture;
-    delete cylinderShader;
-    delete sphereShader;
-    delete desktopNameFrame;
-    delete m_reflectionShader;
-    delete m_capShader;
     delete m_cubeCapBuffer;
 }
 
@@ -348,7 +343,7 @@ bool CubeEffect::loadShader()
         qCCritical(KWIN_CUBE) << "The cylinder shader failed to load!";
         return false;
     } else {
-        ShaderBinder binder(cylinderShader);
+        ShaderBinder binder(cylinderShader.get());
         cylinderShader->setUniform("sampler", 0);
         QRect rect = effects->clientArea(FullArea, activeScreen, effects->currentDesktop());
         cylinderShader->setUniform("width", static_cast<float>(rect.width()) * 0.5f);
@@ -362,7 +357,7 @@ bool CubeEffect::loadShader()
         qCCritical(KWIN_CUBE) << "The sphere shader failed to load!";
         return false;
     } else {
-        ShaderBinder binder(sphereShader);
+        ShaderBinder binder(sphereShader.get());
         sphereShader->setUniform("sampler", 0);
         QRect rect = effects->clientArea(FullArea, activeScreen, effects->currentDesktop());
         sphereShader->setUniform("width", static_cast<float>(rect.width()) * 0.5f);
@@ -543,7 +538,7 @@ void CubeEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& d
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             if (m_reflectionShader && m_reflectionShader->isValid()) {
                 // ensure blending is enabled - no attribute stack
-                ShaderBinder binder(m_reflectionShader);
+                ShaderBinder binder(m_reflectionShader.get());
                 QMatrix4x4 windowTransformation = data.projectionMatrix();
                 windowTransformation.translate(rect.x() + rect.width() * 0.5f, 0.0, 0.0);
                 m_reflectionShader->setUniform(GLShader::ModelViewProjectionMatrix,
@@ -759,7 +754,7 @@ void CubeEffect::paintCap(bool frontFirst, float zOffset, const QMatrix4x4& proj
     bool capShader = false;
     if (effects->compositingType() == OpenGLCompositing && m_capShader && m_capShader->isValid()) {
         capShader = true;
-        ShaderManager::instance()->pushShader(m_capShader);
+        ShaderManager::instance()->pushShader(m_capShader.get());
         float opacity = cubeOpacity;
         if (animationState == AnimationState::Start) {
             opacity *= timeLine.value();
@@ -1310,7 +1305,7 @@ void CubeEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPa
         }
         GLShader* currentShader = nullptr;
         if (mode == Cylinder) {
-            shaderManager->pushShader(cylinderShader);
+            shaderManager->pushShader(cylinderShader.get());
             cylinderShader->setUniform("xCoord", static_cast<float>(w->x()));
             cylinderShader->setUniform("cubeAngle",
                                        (effects->numberOfDesktops() - 2)
@@ -1323,10 +1318,10 @@ void CubeEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPa
                 factor = timeLine.value();
             }
             cylinderShader->setUniform("timeLine", factor);
-            currentShader = cylinderShader;
+            currentShader = cylinderShader.get();
         }
         if (mode == Sphere) {
-            shaderManager->pushShader(sphereShader);
+            shaderManager->pushShader(sphereShader.get());
             sphereShader->setUniform("u_offset", QVector2D(w->x(), w->y()));
             sphereShader->setUniform("cubeAngle",
                                      (effects->numberOfDesktops() - 2)
@@ -1338,7 +1333,7 @@ void CubeEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPa
                 factor = timeLine.value();
             }
             sphereShader->setUniform("timeLine", factor);
-            currentShader = sphereShader;
+            currentShader = sphereShader.get();
         }
         if (currentShader) {
             data.shader = currentShader;
@@ -1412,7 +1407,7 @@ void CubeEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPa
                 if (effects->compositingType() == OpenGLCompositing && m_capShader
                     && m_capShader->isValid()) {
                     capShader = true;
-                    ShaderManager::instance()->pushShader(m_capShader);
+                    ShaderManager::instance()->pushShader(m_capShader.get());
                     m_capShader->setUniform("u_mirror", 0);
                     m_capShader->setUniform("u_untextured", 1);
                     QMatrix4x4 mvp = data.screenProjectionMatrix();

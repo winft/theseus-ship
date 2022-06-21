@@ -167,7 +167,7 @@ public:
                 createKernel(dx, &kernelSize);
                 createOffsets(kernelSize, sw, Qt::Horizontal);
 
-                ShaderManager::instance()->pushShader(m_shader.data());
+                ShaderManager::instance()->pushShader(m_shader.get());
                 m_shader->setUniform(GLShader::ModelViewProjectionMatrix,
                                      modelViewProjectionMatrix);
                 setUniforms();
@@ -334,12 +334,14 @@ private:
             }
         }
 
-        m_shader.reset(ShaderManager::instance()->generateShaderFromFile(
-            ShaderTrait::MapTexture,
-            QString(),
-            QStringLiteral(":/render/gl/shaders/lanczos.frag")));
+        m_shader.reset(
+            ShaderManager::instance()
+                ->generateShaderFromFile(ShaderTrait::MapTexture,
+                                         QString(),
+                                         QStringLiteral(":/render/gl/shaders/lanczos.frag"))
+                .release());
         if (m_shader->isValid()) {
-            ShaderBinder binder(m_shader.data());
+            ShaderBinder binder(m_shader.get());
             m_uKernel = m_shader->uniformLocation("kernel");
             m_uOffsets = m_shader->uniformLocation("offsets");
         } else {
@@ -439,7 +441,7 @@ private:
     GLRenderTarget* m_offscreenTarget;
     QBasicTimer m_timer;
     bool m_inited;
-    QScopedPointer<GLShader> m_shader;
+    std::unique_ptr<GLShader> m_shader;
     int m_uOffsets;
     int m_uKernel;
     std::array<QVector2D, 16> m_offsets;

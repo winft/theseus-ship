@@ -577,12 +577,12 @@ Wrapland::Server::Display* effects_handler_wrap::waylandDisplay() const
     return nullptr;
 }
 
-EffectFrame* effects_handler_wrap::effectFrame(EffectFrameStyle style,
-                                               bool staticSize,
-                                               const QPoint& position,
-                                               Qt::Alignment alignment) const
+std::unique_ptr<EffectFrame> effects_handler_wrap::effectFrame(EffectFrameStyle style,
+                                                               bool staticSize,
+                                                               const QPoint& position,
+                                                               Qt::Alignment alignment) const
 {
-    return new effect_frame_impl(
+    return std::make_unique<effect_frame_impl>(
         const_cast<effects_handler_wrap&>(*this), style, staticSize, position, alignment);
 }
 

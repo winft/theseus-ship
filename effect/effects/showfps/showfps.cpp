@@ -60,9 +60,7 @@ ShowFpsEffect::ShowFpsEffect()
     reconfigure(ReconfigureAll);
 }
 
-ShowFpsEffect::~ShowFpsEffect()
-{
-}
+ShowFpsEffect::~ShowFpsEffect() = default;
 
 void ShowFpsEffect::reconfigure(ReconfigureFlags)
 {

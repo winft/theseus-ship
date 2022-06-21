@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define KWIN_LOOKINGGLASS_H
 
 #include <kwineffects/effect.h>
+#include <memory>
 
 namespace KWin
 {
@@ -76,10 +77,10 @@ private:
     bool polling; // Mouse polling
     int radius;
     int initialradius;
-    GLTexture* m_texture;
-    GLRenderTarget* m_fbo;
-    GLVertexBuffer* m_vbo;
-    GLShader* m_shader;
+    std::unique_ptr<GLTexture> m_texture;
+    std::unique_ptr<GLRenderTarget> m_fbo;
+    std::unique_ptr<GLVertexBuffer> m_vbo;
+    std::unique_ptr<GLShader> m_shader;
     std::chrono::milliseconds m_lastPresentTime;
     bool m_enabled;
     bool m_valid;

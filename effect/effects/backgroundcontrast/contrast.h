@@ -72,7 +72,7 @@ private:
     void uploadGeometry(GLVertexBuffer* vbo, const QRegion& region);
 
 private:
-    ContrastShader* shader;
+    std::unique_ptr<ContrastShader> shader;
 };
 
 inline bool ContrastEffect::provides(Effect::Feature feature)

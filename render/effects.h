@@ -143,10 +143,10 @@ public:
     bool hasDecorationShadows() const override;
     bool decorationsHaveAlpha() const override;
 
-    EffectFrame* effectFrame(EffectFrameStyle style,
-                             bool staticSize,
-                             const QPoint& position,
-                             Qt::Alignment alignment) const override;
+    std::unique_ptr<EffectFrame> effectFrame(EffectFrameStyle style,
+                                             bool staticSize,
+                                             const QPoint& position,
+                                             Qt::Alignment alignment) const override;
 
     // internal (used by kwin core or compositing code)
     void startPaint();

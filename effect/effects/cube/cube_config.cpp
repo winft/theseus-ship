@@ -47,15 +47,14 @@ CubeEffectConfigForm::CubeEffectConfigForm(QWidget* parent)
 
 CubeEffectConfig::CubeEffectConfig(QWidget* parent, const QVariantList& args)
     : KCModule(parent, args)
+    , m_ui(this)
 {
-    m_ui = new CubeEffectConfigForm(this);
-
     QVBoxLayout* layout = new QVBoxLayout(this);
 
-    layout->addWidget(m_ui);
+    layout->addWidget(&m_ui);
 
-    m_ui->tabWidget->setTabText(0, i18nc("@title:tab Basic Settings", "Basic"));
-    m_ui->tabWidget->setTabText(1, i18nc("@title:tab Advanced Settings", "Advanced"));
+    m_ui.tabWidget->setTabText(0, i18nc("@title:tab Basic Settings", "Basic"));
+    m_ui.tabWidget->setTabText(1, i18nc("@title:tab Advanced Settings", "Advanced"));
 
     // Shortcut config. The shortcut belongs to the component "kwin"!
     m_actionCollection = new KActionCollection(this, QStringLiteral("kwin"));
@@ -80,21 +79,21 @@ CubeEffectConfig::CubeEffectConfig(QWidget* parent, const QVariantList& args)
     sphereAction->setProperty("isConfigurationAction", true);
     KGlobalAccel::self()->setShortcut(sphereAction, QList<QKeySequence>());
 
-    m_ui->editor->addCollection(m_actionCollection);
+    m_ui.editor->addCollection(m_actionCollection);
 
     capsSelectionChanged();
     connect(
-        m_ui->kcfg_Caps, &QCheckBox::stateChanged, this, &CubeEffectConfig::capsSelectionChanged);
-    m_ui->kcfg_Wallpaper->setFilter(QStringLiteral("*.png *.jpeg *.jpg "));
+        m_ui.kcfg_Caps, &QCheckBox::stateChanged, this, &CubeEffectConfig::capsSelectionChanged);
+    m_ui.kcfg_Wallpaper->setFilter(QStringLiteral("*.png *.jpeg *.jpg "));
     CubeConfig::instance(KWIN_CONFIG);
-    addConfig(CubeConfig::self(), m_ui);
+    addConfig(CubeConfig::self(), &m_ui);
     load();
 }
 
 void CubeEffectConfig::save()
 {
     KCModule::save();
-    m_ui->editor->save();
+    m_ui.editor->save();
     OrgKdeKwinEffectsInterface interface(
         QStringLiteral("org.kde.KWin"), QStringLiteral("/Effects"), QDBusConnection::sessionBus());
     interface.reconfigureEffect(QStringLiteral("cube"));
@@ -102,16 +101,16 @@ void CubeEffectConfig::save()
 
 void CubeEffectConfig::capsSelectionChanged()
 {
-    if (m_ui->kcfg_Caps->checkState() == Qt::Checked) {
+    if (m_ui.kcfg_Caps->checkState() == Qt::Checked) {
         // activate cap color
-        m_ui->kcfg_CapColor->setEnabled(true);
-        m_ui->capColorLabel->setEnabled(true);
-        m_ui->kcfg_TexturedCaps->setEnabled(true);
+        m_ui.kcfg_CapColor->setEnabled(true);
+        m_ui.capColorLabel->setEnabled(true);
+        m_ui.kcfg_TexturedCaps->setEnabled(true);
     } else {
         // deactivate cap color
-        m_ui->kcfg_CapColor->setEnabled(false);
-        m_ui->capColorLabel->setEnabled(false);
-        m_ui->kcfg_TexturedCaps->setEnabled(false);
+        m_ui.kcfg_CapColor->setEnabled(false);
+        m_ui.capColorLabel->setEnabled(false);
+        m_ui.kcfg_TexturedCaps->setEnabled(false);
     }
 }
 

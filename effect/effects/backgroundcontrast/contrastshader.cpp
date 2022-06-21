@@ -38,20 +38,9 @@ ContrastShader::ContrastShader()
 {
 }
 
-ContrastShader::~ContrastShader()
-{
-    reset();
-}
-
-ContrastShader* ContrastShader::create()
-{
-    return new ContrastShader();
-}
-
 void ContrastShader::reset()
 {
-    delete shader;
-    shader = nullptr;
+    shader.reset();
 
     setIsValid(false);
 }
@@ -60,8 +49,8 @@ void ContrastShader::setOpacity(float opacity)
 {
     m_opacity = opacity;
 
-    ShaderManager::instance()->pushShader(shader);
-    shader->setUniform(opacityLocation, opacity);
+    ShaderManager::instance()->pushShader(shader.get());
+    shader->setUniform(m_opacityLocation, opacity);
     ShaderManager::instance()->popShader();
 }
 
@@ -72,36 +61,40 @@ float ContrastShader::opacity() const
 
 void ContrastShader::setColorMatrix(const QMatrix4x4& matrix)
 {
-    if (!isValid())
+    if (!isValid()) {
         return;
+    }
 
-    ShaderManager::instance()->pushShader(shader);
-    shader->setUniform(colorMatrixLocation, matrix);
+    ShaderManager::instance()->pushShader(shader.get());
+    shader->setUniform(m_colorMatrixLocation, matrix);
     ShaderManager::instance()->popShader();
 }
 
 void ContrastShader::setTextureMatrix(const QMatrix4x4& matrix)
 {
-    if (!isValid())
+    if (!isValid()) {
         return;
+    }
 
-    shader->setUniform(textureMatrixLocation, matrix);
+    shader->setUniform(m_textureMatrixLocation, matrix);
 }
 
 void ContrastShader::setModelViewProjectionMatrix(const QMatrix4x4& matrix)
 {
-    if (!isValid())
+    if (!isValid()) {
         return;
+    }
 
-    shader->setUniform(mvpMatrixLocation, matrix);
+    shader->setUniform(m_mvpMatrixLocation, matrix);
 }
 
 void ContrastShader::bind()
 {
-    if (!isValid())
+    if (!isValid()) {
         return;
+    }
 
-    ShaderManager::instance()->pushShader(shader);
+    ShaderManager::instance()->pushShader(shader.get());
 }
 
 void ContrastShader::unbind()
@@ -190,21 +183,31 @@ void ContrastShader::init()
     shader = ShaderManager::instance()->loadShaderFromCode(vertexSource, fragmentSource);
 
     if (shader->isValid()) {
-        colorMatrixLocation = shader->uniformLocation("colorMatrix");
-        textureMatrixLocation = shader->uniformLocation("textureMatrix");
-        mvpMatrixLocation = shader->uniformLocation("modelViewProjectionMatrix");
-        opacityLocation = shader->uniformLocation("opacity");
+        m_colorMatrixLocation = shader->uniformLocation("colorMatrix");
+        m_textureMatrixLocation = shader->uniformLocation("textureMatrix");
+        m_mvpMatrixLocation = shader->uniformLocation("modelViewProjectionMatrix");
+        m_opacityLocation = shader->uniformLocation("opacity");
 
         QMatrix4x4 modelViewProjection;
         const QSize screenSize = effects->virtualScreenSize();
         modelViewProjection.ortho(0, screenSize.width(), screenSize.height(), 0, 0, 65535);
-        ShaderManager::instance()->pushShader(shader);
-        shader->setUniform(colorMatrixLocation, QMatrix4x4());
-        shader->setUniform(textureMatrixLocation, QMatrix4x4());
-        shader->setUniform(mvpMatrixLocation, modelViewProjection);
-        shader->setUniform(opacityLocation, static_cast<float>(1.0));
+        ShaderManager::instance()->pushShader(shader.get());
+        shader->setUniform(m_colorMatrixLocation, QMatrix4x4());
+        shader->setUniform(m_textureMatrixLocation, QMatrix4x4());
+        shader->setUniform(m_mvpMatrixLocation, modelViewProjection);
+        shader->setUniform(m_opacityLocation, static_cast<float>(1.0));
         ShaderManager::instance()->popShader();
     }
 
     setIsValid(shader->isValid());
+}
+
+void ContrastShader::setIsValid(bool value)
+{
+    mValid = value;
+}
+
+bool ContrastShader::isValid() const
+{
+    return mValid;
 }

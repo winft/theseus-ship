@@ -48,7 +48,7 @@ private Q_SLOTS:
     void capsSelectionChanged();
 
 private:
-    CubeEffectConfigForm* m_ui;
+    CubeEffectConfigForm m_ui;
     KActionCollection* m_actionCollection;
 };
 

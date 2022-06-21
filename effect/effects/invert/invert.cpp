@@ -73,10 +73,7 @@ InvertEffect::InvertEffect()
     connect(effects, &EffectsHandler::windowClosed, this, &InvertEffect::slotWindowClosed);
 }
 
-InvertEffect::~InvertEffect()
-{
-    delete m_shader;
-}
+InvertEffect::~InvertEffect() = default;
 
 bool InvertEffect::supported()
 {
@@ -88,8 +85,10 @@ bool InvertEffect::loadData()
     ensureResources();
     m_inited = true;
 
-    m_shader = ShaderManager::instance()->generateShaderFromFile(
-        ShaderTrait::MapTexture, QString(), QStringLiteral(":/effects/invert/shaders/invert.frag"));
+    m_shader = std::unique_ptr<GLShader>(ShaderManager::instance()->generateShaderFromFile(
+        ShaderTrait::MapTexture,
+        QString(),
+        QStringLiteral(":/effects/invert/shaders/invert.frag")));
     if (!m_shader->isValid()) {
         qCCritical(KWIN_INVERT) << "The shader failed to load!";
         return false;
@@ -110,9 +109,9 @@ void InvertEffect::drawWindow(EffectWindow* w,
     bool useShader = m_valid && (m_allWindows != m_windows.contains(w));
     if (useShader) {
         ShaderManager* shaderManager = ShaderManager::instance();
-        shaderManager->pushShader(m_shader);
+        shaderManager->pushShader(m_shader.get());
 
-        data.shader = m_shader;
+        data.shader = m_shader.get();
     }
 
     effects->drawWindow(w, mask, region, data);

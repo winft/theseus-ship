@@ -92,13 +92,7 @@ LookingGlassEffect::LookingGlassEffect()
     reconfigure(ReconfigureAll);
 }
 
-LookingGlassEffect::~LookingGlassEffect()
-{
-    delete m_texture;
-    delete m_fbo;
-    delete m_shader;
-    delete m_vbo;
-}
+LookingGlassEffect::~LookingGlassEffect() = default;
 
 bool LookingGlassEffect::supported()
 {
@@ -125,11 +119,11 @@ bool LookingGlassEffect::loadData()
 
     // Create texture and render target
     const int levels = std::log2(qMin(texw, texh)) + 1;
-    m_texture = new GLTexture(GL_RGBA8, texw, texh, levels);
+    m_texture = std::make_unique<GLTexture>(GL_RGBA8, texw, texh, levels);
     m_texture->setFilter(GL_LINEAR_MIPMAP_LINEAR);
     m_texture->setWrapMode(GL_CLAMP_TO_EDGE);
 
-    m_fbo = new GLRenderTarget(m_texture);
+    m_fbo = std::make_unique<GLRenderTarget>(m_texture.get());
     if (!m_fbo->valid()) {
         return false;
     }
@@ -139,14 +133,14 @@ bool LookingGlassEffect::loadData()
         QString(),
         QStringLiteral(":/effects/lookingglass/shaders/lookingglass.frag"));
     if (m_shader->isValid()) {
-        ShaderBinder binder(m_shader);
+        ShaderBinder binder(m_shader.get());
         m_shader->setUniform("u_textureSize", QVector2D(screenSize.width(), screenSize.height()));
     } else {
         qCCritical(KWIN_LOOKINGGLASS) << "The shader failed to load!";
         return false;
     }
 
-    m_vbo = new GLVertexBuffer(GLVertexBuffer::Static);
+    m_vbo = std::make_unique<GLVertexBuffer>(GLVertexBuffer::Static);
     QVector<float> verts;
     QVector<float> texcoords;
     texcoords << screenSize.width() << 0.0;
@@ -248,7 +242,7 @@ void LookingGlassEffect::prePaintScreen(ScreenPrePaintData& data,
     if (m_valid && m_enabled) {
         data.mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS;
         // Start rendering to texture
-        GLRenderTarget::pushRenderTarget(m_fbo);
+        GLRenderTarget::pushRenderTarget(m_fbo.get());
     }
 
     effects->prePaintScreen(data, presentTime);
@@ -281,13 +275,13 @@ void LookingGlassEffect::paintScreen(int mask, const QRegion& region, ScreenPain
     if (m_valid && m_enabled) {
         // Disable render texture
         GLRenderTarget* target = GLRenderTarget::popRenderTarget();
-        Q_ASSERT(target == m_fbo);
+        Q_ASSERT(target == m_fbo.get());
         Q_UNUSED(target);
         m_texture->bind();
         m_texture->generateMipmaps();
 
         // Use the shader
-        ShaderBinder binder(m_shader);
+        ShaderBinder binder(m_shader.get());
         m_shader->setUniform("u_zoom", static_cast<float>(zoom));
         m_shader->setUniform("u_radius", static_cast<float>(radius));
         m_shader->setUniform("u_cursor", QVector2D(cursorPos().x(), cursorPos().y()));
