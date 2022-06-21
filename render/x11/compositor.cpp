@@ -243,8 +243,9 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
 
     for (auto c : elevated_win_list) {
         auto t = static_cast<effects_window_impl*>(c)->window();
-        remove_all(windows, t);
-        windows.push_back(t);
+        if (!move_to_back(windows, t)) {
+            windows.push_back(t);
+        }
     }
 
     // Get the replies
