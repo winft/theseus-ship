@@ -176,10 +176,7 @@ std::deque<R*> ensure_stacking_order_in_list(std::deque<Toplevel*> const& stacki
         if (!rwin) {
             continue;
         }
-        if (contains(result, rwin)) {
-            remove_all(result, rwin);
-            result.push_back(rwin);
-        }
+        move_to_back(result, rwin);
     }
 
     return result;
@@ -201,8 +198,10 @@ void lower_window(Space* space, Window* window)
 
         blocker block(space->stacking_order);
 
-        remove_all(space->stacking_order->pre_stack, win);
-        space->stacking_order->pre_stack.push_front(win);
+        auto& pre_stack = space->stacking_order->pre_stack;
+        if (!move_to_front(pre_stack, win)) {
+            pre_stack.push_front(win);
+        }
 
         return block;
     };
@@ -246,8 +245,10 @@ void raise_window(Space* space, Window* window)
         return blocker(space->stacking_order);
     };
     auto do_raise = [space](auto window) {
-        remove_all(space->stacking_order->pre_stack, window);
-        space->stacking_order->pre_stack.push_back(window);
+        auto& pre_stack = space->stacking_order->pre_stack;
+        if (!move_to_back(pre_stack, window)) {
+            pre_stack.push_back(window);
+        }
 
         if (!is_special_window(window)) {
             space->most_recently_raised = static_cast<Toplevel*>(window);
