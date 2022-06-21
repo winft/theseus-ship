@@ -56,6 +56,11 @@ namespace KWin::win::wayland
 
 namespace WS = Wrapland::Server;
 
+window::window(win::remnant remnant, win::space& space)
+    : Toplevel(std::move(remnant), space)
+{
+}
+
 window::window(WS::Surface* surface, win::space& space)
     : Toplevel(space)
 {
@@ -71,7 +76,10 @@ window::window(WS::Surface* surface, win::space& space)
 
 qreal window::bufferScale() const
 {
-    return surface()->state().scale;
+    if (remnant) {
+        return remnant->buffer_scale;
+    }
+    return surface->state().scale;
 }
 
 bool window::is_wayland_window() const
@@ -86,7 +94,7 @@ bool window::setupCompositing()
 
 void window::add_scene_window_addon()
 {
-    assert(surface());
+    assert(surface);
 
     auto setup_buffer = [this](auto& buffer) {
         auto win_integrate = std::make_unique<render::wayland::buffer_win_integration>(buffer);
@@ -99,7 +107,7 @@ void window::add_scene_window_addon()
         buffer.win_integration = std::move(win_integrate);
     };
     auto get_viewport = [](auto window, auto contentsRect) {
-        if (!window->surface()) {
+        if (!window->surface) {
             // Can happen on remnant.
             return QRectF();
         }
@@ -107,7 +115,7 @@ void window::add_scene_window_addon()
             return rect;
         }
 
-        auto buffer = window->surface()->state().buffer;
+        auto buffer = window->surface->state().buffer;
         if (buffer) {
             // Try to get the source rectangle from the buffer size, what defines the source
             // size without respect to destination size.
@@ -131,6 +139,9 @@ void window::add_scene_window_addon()
 NET::WindowType window::windowType([[maybe_unused]] bool direct,
                                    [[maybe_unused]] int supported_types) const
 {
+    if (remnant) {
+        return remnant->window_type;
+    }
     return window_type;
 }
 
@@ -141,10 +152,10 @@ QByteArray window::windowRole() const
 
 pid_t window::pid() const
 {
-    if (!surface()->client()) {
+    if (remnant || !surface->client()) {
         return 0;
     }
-    return surface()->client()->processId();
+    return surface->client()->processId();
 }
 
 bool window::isLocalhost() const
@@ -154,7 +165,7 @@ bool window::isLocalhost() const
 
 bool window::isLockScreen() const
 {
-    return surface()->client() == waylandServer()->screen_locker_client_connection;
+    return !remnant && surface->client() == waylandServer()->screen_locker_client_connection;
 }
 
 void window::updateCaption()
@@ -182,14 +193,18 @@ bool window::belongsToSameApplication(Toplevel const* other, win::same_client_ch
             return true;
         }
     }
-    if (auto s = other->surface()) {
-        return s->client() == surface()->client();
+    if (auto s = other->surface) {
+        return s->client() == surface->client();
     }
     return false;
 }
 
 bool window::noBorder() const
 {
+    if (remnant) {
+        return remnant->no_border;
+    }
+
     if (xdg_deco && xdg_deco->requestedMode() != WS::XdgDecoration::Mode::ClientSide) {
         return !space.deco->hasPlugin() || user_no_border || geometry_update.fullscreen;
     }
@@ -403,6 +418,9 @@ bool window::acceptsFocus() const
 
 double window::opacity() const
 {
+    if (remnant) {
+        return remnant->opacity;
+    }
     if (transient()->lead() && transient()->annexed) {
         return transient()->lead()->opacity();
     }
@@ -427,7 +445,7 @@ void window::setOpacity(double opacity)
 
 bool window::isShown() const
 {
-    if (closing || hidden) {
+    if (closing || hidden || remnant) {
         return false;
     }
     if (!control && !transient()->lead()) {
@@ -442,17 +460,20 @@ bool window::isShown() const
     if (control && control->minimized()) {
         return false;
     }
-    return surface()->state().buffer.get();
+    return surface->state().buffer.get();
 }
 
 bool window::isHiddenInternal() const
 {
+    if (remnant) {
+        return false;
+    }
     if (auto lead = transient()->lead()) {
         if (!lead->isHiddenInternal()) {
             return false;
         }
     }
-    return hidden || !surface()->state().buffer;
+    return hidden || !surface->state().buffer;
 }
 
 void window::hideClient(bool hide)
@@ -464,7 +485,7 @@ void window::hideClient(bool hide)
     hidden = hide;
 
     if (hide) {
-        addWorkspaceRepaint(visible_rect(this));
+        space.render.addRepaint(visible_rect(this));
         space.clientHidden(this);
         Q_EMIT windowHidden(this);
     } else {
@@ -842,7 +863,7 @@ layer window::layer_for_dock() const
 
 bool window::has_pending_repaints() const
 {
-    return readyForPainting() && Toplevel::has_pending_repaints();
+    return ready_for_painting && Toplevel::has_pending_repaints();
 }
 
 void window::map()
@@ -893,7 +914,8 @@ void window::unmap()
         control->destroy_wayland_management();
     }
 
-    addWorkspaceRepaint(visible_rect(this));
+    space.render.addRepaint(visible_rect(this));
+
     if (control) {
         space.clientHidden(this);
     }
@@ -903,18 +925,18 @@ void window::unmap()
 
 void window::handle_commit()
 {
-    if (!surface()->state().buffer) {
+    if (!surface->state().buffer) {
         unmap();
         return;
     }
 
-    if (surface()->state().updates & Wrapland::Server::surface_change::size) {
+    if (surface->state().updates & Wrapland::Server::surface_change::size) {
         discard_buffer();
     }
 
-    if (!surface()->state().damage.isEmpty()) {
-        addDamage(surface()->state().damage);
-    } else if (surface()->state().updates & Wrapland::Server::surface_change::frame) {
+    if (!surface->state().damage.isEmpty()) {
+        addDamage(surface->state().damage);
+    } else if (surface->state().updates & Wrapland::Server::surface_change::frame) {
         kwinApp()->get_base().render->compositor->schedule_frame_callback(this);
     }
 
@@ -930,11 +952,11 @@ void window::handle_commit()
     } else if (layer_surface) {
         handle_layer_surface_commit(this);
         apply_pending_geometry();
-    } else if (auto cur_size = client_to_frame_size(this, surface()->size()); size() != cur_size) {
+    } else if (auto cur_size = client_to_frame_size(this, surface->size()); size() != cur_size) {
         do_set_geometry(QRect(pos(), cur_size));
     }
 
-    setDepth((surface()->state().buffer->hasAlphaChannel() && !is_desktop(this)) ? 32 : 24);
+    setDepth((surface->state().buffer->hasAlphaChannel() && !is_desktop(this)) ? 32 : 24);
     map();
 }
 
@@ -950,15 +972,18 @@ bool window::isInitialPositionSet() const
 // xdg-shell toplevels and popups are required to be mapped after their parents.
 void window::checkTransient(Toplevel* window)
 {
+    if (remnant) {
+        return;
+    }
     if (transient()->lead()) {
         // This already has a parent set, we can only set one once.
         return;
     }
-    if (!surface()->subsurface()) {
+    if (!surface->subsurface()) {
         // This is not a subsurface.
         return;
     }
-    if (surface()->subsurface()->parentSurface() != window->surface()) {
+    if (surface->subsurface()->parentSurface() != window->surface) {
         // This has a parent different to window.
         return;
     }
@@ -1067,7 +1092,7 @@ void window::setFullScreen(bool full, bool user)
 void window::handle_class_changed()
 {
     auto const window_class = QByteArray(toplevel->appId().c_str());
-    setResourceClass(resourceName(), window_class);
+    setResourceClass(resource_name, window_class);
     if (initialized && supportsWindowRules()) {
         setup_rules(this, true);
         applyWindowRules();
@@ -1090,6 +1115,11 @@ void window::handle_title_changed()
 
 void window::debug(QDebug& stream) const
 {
+    if (remnant) {
+        stream << "\'REMNANT:" << reinterpret_cast<void const*>(this) << "\'";
+        return;
+    }
+
     std::string type = "role unknown";
     if (control) {
         type = "toplevel";
@@ -1102,7 +1132,7 @@ void window::debug(QDebug& stream) const
 
     stream.nospace();
     stream << "\'wayland::window"
-           << "(" << QString::fromStdString(type) << "):" << surface() << ";"
+           << "(" << QString::fromStdString(type) << "):" << surface << ";"
            << static_cast<void const*>(this) << "\'";
 }
 
@@ -1165,7 +1195,7 @@ bool window::has_exclusive_keyboard_interactivity() const
 
 void window::killWindow()
 {
-    auto client = surface()->client();
+    auto client = surface->client();
     if (client->processId() == getpid() || client->processId() == 0) {
         client->destroy();
         return;
@@ -1192,7 +1222,7 @@ bool window::isInputMethod() const
 
 bool window::is_popup_end() const
 {
-    return popup != nullptr;
+    return remnant ? remnant->was_popup_window : static_cast<bool>(popup);
 }
 
 bool window::supportsWindowRules() const

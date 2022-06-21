@@ -711,15 +711,15 @@ void SceneQPainterShadowTest::testShadowTextureReconstruction()
     clientShadow->setOffsets(QMarginsF(128, 128, 128, 128));
 
     // Commit shadow.
-    QSignalSpy committed_spy(client->surface(), &Wrapland::Server::Surface::committed);
+    QSignalSpy committed_spy(client->surface, &Wrapland::Server::Surface::committed);
     QVERIFY(committed_spy.isValid());
     clientShadow->commit();
     surface->commit(Surface::CommitFlag::None);
     QVERIFY(committed_spy.wait());
-    QVERIFY(client->surface()->state().updates & Wrapland::Server::surface_change::shadow);
+    QVERIFY(client->surface->state().updates & Wrapland::Server::surface_change::shadow);
 
     // Check whether we've got right shadow.
-    auto shadowIface = client->surface()->state().shadow;
+    auto shadowIface = client->surface->state().shadow;
     QVERIFY(!shadowIface.isNull());
     QCOMPARE(shadowIface->offset().left(), 128.0);
     QCOMPARE(shadowIface->offset().top(), 128.0);

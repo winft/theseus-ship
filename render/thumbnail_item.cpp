@@ -141,7 +141,7 @@ window_thumbnail_item::~window_thumbnail_item()
 Toplevel* find_controlled_window(QUuid const& wId)
 {
     for (auto win : win::singleton_interface::space->m_windows) {
-        if (win->control && win->internalId() == wId) {
+        if (win->control && win->internal_id == wId) {
             return win;
         }
     }
@@ -170,7 +170,7 @@ void window_thumbnail_item::setClient(Toplevel* window)
     }
     m_client = window;
     if (m_client) {
-        setWId(m_client->internalId());
+        setWId(m_client->internal_id);
     } else {
         setWId({});
     }
@@ -198,7 +198,7 @@ void window_thumbnail_item::paint(QPainter* painter)
 
 void window_thumbnail_item::repaint(KWin::EffectWindow* w)
 {
-    if (static_cast<KWin::render::effects_window_impl*>(w)->window()->internalId() == m_wId) {
+    if (static_cast<KWin::render::effects_window_impl*>(w)->window()->internal_id == m_wId) {
         update();
     }
 }

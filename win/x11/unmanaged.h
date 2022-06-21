@@ -21,7 +21,7 @@ template<typename Win, typename Space>
 Win* find_unmanaged(Space&& space, xcb_window_t xcb_win)
 {
     for (auto win : space.m_windows) {
-        if (!win->remnant() && !win->control && win->xcb_window() == xcb_win) {
+        if (!win->remnant && !win->control && win->xcb_window == xcb_win) {
             return static_cast<Win*>(win);
         }
     }
@@ -29,12 +29,12 @@ Win* find_unmanaged(Space&& space, xcb_window_t xcb_win)
 }
 
 template<typename Space>
-auto create_unmanaged_window(xcb_window_t w, Space& space) -> typename Space::x11_window*
+auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Space::x11_window*
 {
     using Win = typename Space::x11_window;
 
     if (auto& is_overlay = space.render.x11_integration.is_overlay_window;
-        is_overlay && is_overlay(w)) {
+        is_overlay && is_overlay(xcb_win)) {
         return nullptr;
     }
 
@@ -47,8 +47,8 @@ auto create_unmanaged_window(xcb_window_t w, Space& space) -> typename Space::x1
         | NET::CriticalNotificationMask;
 
     base::x11::server_grabber xserverGrabber;
-    base::x11::xcb::window_attributes attr(w);
-    base::x11::xcb::geometry geo(w);
+    base::x11::xcb::window_attributes attr(xcb_win);
+    base::x11::xcb::geometry geo(xcb_win);
 
     if (attr.is_null() || attr->map_state != XCB_MAP_STATE_VIEWABLE) {
         return nullptr;
@@ -60,7 +60,7 @@ auto create_unmanaged_window(xcb_window_t w, Space& space) -> typename Space::x1
         return nullptr;
     }
 
-    auto win = new Win(space);
+    auto win = new Win(xcb_win, space);
 
     win->supported_default_types = supported_default_types;
     win->set_layer(win::layer::unmanaged);
@@ -68,16 +68,15 @@ auto create_unmanaged_window(xcb_window_t w, Space& space) -> typename Space::x1
     QTimer::singleShot(50, win, &Win::setReadyForPainting);
 
     // The window is also the frame.
-    win->setWindowHandles(w);
-    base::x11::xcb::select_input(w,
+    base::x11::xcb::select_input(xcb_win,
                                  attr->your_event_mask | XCB_EVENT_MASK_STRUCTURE_NOTIFY
                                      | XCB_EVENT_MASK_PROPERTY_CHANGE);
     win->set_frame_geometry(geo.rect());
     win->checkScreen();
-    win->m_visual = attr->visual;
+    win->xcb_visual = attr->visual;
     win->bit_depth = geo->depth;
     win->info = new NETWinInfo(connection(),
-                               w,
+                               xcb_win,
                                rootWindow(),
                                NET::WMWindowType | NET::WMPid,
                                NET::WM2Opacity | NET::WM2WindowRole | NET::WM2WindowClass
@@ -86,18 +85,18 @@ auto create_unmanaged_window(xcb_window_t w, Space& space) -> typename Space::x1
     win->getWmClientLeader();
     win->getWmClientMachine();
     if (base::x11::xcb::extensions::self()->is_shape_available()) {
-        xcb_shape_select_input(connection(), w, true);
+        xcb_shape_select_input(connection(), xcb_win, true);
     }
-    win->detectShape(w);
+    win->detectShape(xcb_win);
     win->getWmOpaqueRegion();
     win->getSkipCloseAnimation();
     win->setupCompositing();
 
     auto find_internal_window = [&win]() -> QWindow* {
         auto const windows = kwinApp()->topLevelWindows();
-        for (auto w : windows) {
-            if (w->winId() == win->xcb_window()) {
-                return w;
+        for (auto xcb_win : windows) {
+            if (xcb_win->winId() == win->xcb_window) {
+                return xcb_win;
             }
         }
         return nullptr;
@@ -121,16 +120,16 @@ auto create_unmanaged_window(xcb_window_t w, Space& space) -> typename Space::x1
 }
 
 template<typename Win>
-void unmanaged_configure_event(Win* win, xcb_configure_notify_event_t* e)
+void unmanaged_configure_event(Win* win, xcb_configure_notify_event_t* event)
 {
     if (auto& effects = win->space.render.effects) {
         // keep them on top
         effects->checkInputWindowStacking();
     }
-    QRect newgeom(e->x, e->y, e->width, e->height);
+    QRect newgeom(event->x, event->y, event->width, event->height);
     if (newgeom != win->frameGeometry()) {
         // Damage old area.
-        win->addWorkspaceRepaint(win::visible_rect(win));
+        win->space.render.addRepaint(visible_rect(win));
 
         auto const old = win->frameGeometry();
         win->set_frame_geometry(newgeom);
@@ -145,14 +144,14 @@ void unmanaged_configure_event(Win* win, xcb_configure_notify_event_t* e)
 }
 
 template<typename Win>
-bool unmanaged_event(Win* win, xcb_generic_event_t* e)
+bool unmanaged_event(Win* win, xcb_generic_event_t* event)
 {
     auto old_opacity = win->opacity();
     NET::Properties dirtyProperties;
     NET::Properties2 dirtyProperties2;
 
     // Pass through the NET stuff.
-    win->info->event(e, &dirtyProperties, &dirtyProperties2);
+    win->info->event(event, &dirtyProperties, &dirtyProperties2);
 
     if (dirtyProperties2 & NET::WM2Opacity) {
         if (win->space.compositing()) {
@@ -170,7 +169,7 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* e)
         win->getResourceClass();
     }
 
-    auto const eventType = e->response_type & ~0x80;
+    auto const eventType = event->response_type & ~0x80;
     switch (eventType) {
     case XCB_DESTROY_NOTIFY:
         destroy_window(win);
@@ -199,21 +198,22 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* e)
         break;
     }
     case XCB_CONFIGURE_NOTIFY:
-        unmanaged_configure_event(win, reinterpret_cast<xcb_configure_notify_event_t*>(e));
+        unmanaged_configure_event(win, reinterpret_cast<xcb_configure_notify_event_t*>(event));
         break;
     case XCB_PROPERTY_NOTIFY:
-        property_notify_event_prepare(*win, reinterpret_cast<xcb_property_notify_event_t*>(e));
+        property_notify_event_prepare(*win, reinterpret_cast<xcb_property_notify_event_t*>(event));
         break;
     case XCB_CLIENT_MESSAGE:
-        win->clientMessageEvent(reinterpret_cast<xcb_client_message_event_t*>(e));
+        win->clientMessageEvent(reinterpret_cast<xcb_client_message_event_t*>(event));
         break;
     default: {
         if (eventType == base::x11::xcb::extensions::self()->shape_notify_event()) {
-            win->detectShape(win->xcb_window());
+            win->detectShape(win->xcb_window);
             win->addRepaintFull();
 
             // In case shape change removes part of this window.
-            win->addWorkspaceRepaint(win->frameGeometry());
+            win->space.render.addRepaint(win->frameGeometry());
+
             Q_EMIT win->frame_geometry_changed(win, win->frameGeometry());
         }
         if (eventType == base::x11::xcb::extensions::self()->damage_notify_event()) {

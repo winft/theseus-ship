@@ -33,7 +33,8 @@ class KWIN_EXPORT internal_window : public Toplevel
 public:
     constexpr static bool is_toplevel{false};
 
-    explicit internal_window(QWindow* window, win::space& space);
+    internal_window(win::remnant remnant, win::space& space);
+    internal_window(QWindow* window, win::space& space);
     ~internal_window() override;
 
     bool setupCompositing() override;
@@ -66,6 +67,7 @@ public:
     bool isHiddenInternal() const override;
     void hideClient(bool hide) override;
     void setFrameGeometry(QRect const& rect) override;
+    bool hasStrut() const override;
     bool supportsWindowRules() const override;
     void takeFocus() override;
     bool userCanSetFullScreen() const override;
@@ -74,6 +76,8 @@ public:
     void updateDecoration(bool check_workspace_pos, bool force = false) override;
     void updateColorScheme() override;
     void showOnScreenEdge() override;
+    void checkTransient(Toplevel* window) override;
+    bool belongsToDesktop() const override;
 
     void destroyClient();
     void present(std::shared_ptr<QOpenGLFramebufferObject> const& fbo);

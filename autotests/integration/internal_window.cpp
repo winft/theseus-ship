@@ -327,7 +327,7 @@ void InternalWindowTest::testKeyboard()
     auto internalClient = clientAddedSpy.first().first().value<win::internal_window*>();
     QVERIFY(internalClient);
     QVERIFY(internalClient->isInternal());
-    QVERIFY(internalClient->readyForPainting());
+    QVERIFY(internalClient->ready_for_painting);
 
     quint32 timestamp = 1;
     QFETCH(QPoint, cursorPos);
@@ -357,7 +357,7 @@ void InternalWindowTest::testKeyboardShowWithoutActivating()
     auto internalClient = clientAddedSpy.first().first().value<win::internal_window*>();
     QVERIFY(internalClient);
     QVERIFY(internalClient->isInternal());
-    QVERIFY(internalClient->readyForPainting());
+    QVERIFY(internalClient->ready_for_painting);
 
     quint32 timestamp = 1;
     const QPoint cursorPos = QPoint(50, 50);
@@ -412,7 +412,7 @@ void InternalWindowTest::testKeyboardTriggersLeave()
     auto internalClient = clientAddedSpy.first().first().value<win::internal_window*>();
     QVERIFY(internalClient);
     QVERIFY(internalClient->isInternal());
-    QVERIFY(internalClient->readyForPainting());
+    QVERIFY(internalClient->ready_for_painting);
 
     QVERIFY(leftSpy.isEmpty());
     QVERIFY(!leftSpy.wait(100));

@@ -98,11 +98,11 @@ bool popup_filter::key(key_event const& event)
     auto seat = waylandServer()->seat();
 
     auto last = m_popups.back();
-    if (last->surface() == nullptr) {
+    if (!last->surface) {
         return false;
     }
 
-    seat->setFocusedKeyboardSurface(last->surface());
+    seat->setFocusedKeyboardSurface(last->surface);
     pass_to_wayland_server(event);
     return true;
 }
@@ -112,7 +112,7 @@ bool popup_filter::key_repeat(key_event const& /*event*/)
     // Filter out event when a popup is active.
     // TODO(romangg): Are we supposed to do something more with a key repeat? But the clients are
     //                handling key repeats themselves.
-    return !m_popups.empty() && m_popups.back()->surface();
+    return !m_popups.empty() && m_popups.back()->surface;
 }
 
 void popup_filter::cancelPopups()

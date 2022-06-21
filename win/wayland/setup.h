@@ -25,7 +25,7 @@ void setup_plasma_management(Space* space, Win* win)
         // Already setup.
         return;
     }
-    if (!win->surface()) {
+    if (!win->surface) {
         return;
     }
     auto plasma_win
@@ -46,7 +46,7 @@ void setup_plasma_management(Space* space, Win* win)
     plasma_win->setIcon(win->control->icon());
     auto updateAppId = [win, plasma_win] {
         auto const name = win->control->desktop_file_name();
-        plasma_win->setAppId(QString::fromUtf8(name.isEmpty() ? win->resourceClass() : name));
+        plasma_win->setAppId(QString::fromUtf8(name.isEmpty() ? win->resource_class : name));
     };
     updateAppId();
     plasma_win->setSkipTaskbar(win->control->skip_taskbar());

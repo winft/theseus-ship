@@ -32,10 +32,18 @@
 namespace KWin::win::x11
 {
 
-window::window(win::space& space)
+window::window(win::remnant remnant, win::space& space)
+    : Toplevel(std::move(remnant), space)
+    , motif_hints{space.atoms->motif_wm_hints}
+{
+}
+
+window::window(xcb_window_t xcb_win, win::space& space)
     : Toplevel(new x11::transient(this), space)
     , motif_hints(space.atoms->motif_wm_hints)
 {
+    xcb_window.reset(xcb_win, false);
+    client_machine = new win::x11::client_machine;
 }
 
 window::~window()
@@ -63,6 +71,9 @@ bool window::isClient() const
 
 xcb_window_t window::frameId() const
 {
+    if (remnant) {
+        return remnant->frame;
+    }
     if (!control) {
         return Toplevel::frameId();
     }
@@ -101,12 +112,15 @@ void window::showContextHelp()
 {
     if (info->supportsProtocol(NET::ContextHelpProtocol)) {
         send_client_message(
-            xcb_window(), space.atoms->wm_protocols, space.atoms->net_wm_context_help);
+            xcb_window, space.atoms->wm_protocols, space.atoms->net_wm_context_help);
     }
 }
 
 bool window::noBorder() const
 {
+    if (remnant) {
+        return remnant->no_border;
+    }
     return user_no_border || control->fullscreen();
 }
 
@@ -202,7 +216,7 @@ void window::update_input_shape()
                       shape_helper_window,
                       deco_margin.x(),
                       deco_margin.y(),
-                      xcb_window());
+                      xcb_window);
     xcb_shape_combine(con,
                       XCB_SHAPE_SO_UNION,
                       XCB_SHAPE_SK_INPUT,
@@ -210,7 +224,7 @@ void window::update_input_shape()
                       shape_helper_window,
                       deco_margin.x(),
                       deco_margin.y(),
-                      xcb_window());
+                      xcb_window);
     xcb_shape_combine(con,
                       XCB_SHAPE_SO_SET,
                       XCB_SHAPE_SK_INPUT,
@@ -304,7 +318,7 @@ void window::damageNotifyEvent()
         return;
     }
 
-    if (!readyForPainting()) {
+    if (!ready_for_painting) {
         // avoid "setReadyForPainting()" function calling overhead
         if (sync_request.counter == XCB_NONE) {
             // cannot detect complete redraw, consider done now
@@ -340,7 +354,7 @@ void window::closeWindow()
     update_user_time(this);
 
     if (info->supportsProtocol(NET::DeleteWindowProtocol)) {
-        send_client_message(xcb_window(), space.atoms->wm_protocols, space.atoms->wm_delete_window);
+        send_client_message(xcb_window, space.atoms->wm_protocols, space.atoms->wm_delete_window);
         ping(this);
     } else {
         // Client will not react on wm_delete_window. We have not choice
@@ -499,7 +513,7 @@ void window::takeFocus()
 
     if (info->supportsProtocol(NET::TakeFocusProtocol)) {
         kwinApp()->update_x11_time_from_clock();
-        send_client_message(xcb_window(), space.atoms->wm_protocols, space.atoms->wm_take_focus);
+        send_client_message(xcb_window, space.atoms->wm_protocols, space.atoms->wm_take_focus);
     }
 
     space.setShouldGetFocus(this);
@@ -875,7 +889,7 @@ group* window::group()
 
 void window::checkTransient(Toplevel* window)
 {
-    auto id = window->xcb_window();
+    auto id = static_cast<xcb_window_t>(window->xcb_window);
     if (x11_transient(this)->original_lead_id != id) {
         return;
     }
@@ -909,6 +923,9 @@ Toplevel* window::findModal()
 
 void window::layoutDecorationRects(QRect& left, QRect& top, QRect& right, QRect& bottom) const
 {
+    if (remnant) {
+        return remnant->layout_decoration_rects(left, top, right, bottom);
+    }
     layout_decoration_rects(this, left, top, right, bottom);
 }
 
@@ -958,18 +975,18 @@ void window::getResourceClass()
 
 void window::getWmClientMachine()
 {
-    m_clientMachine->resolve(xcb_window(), wmClientLeader());
+    client_machine->resolve(xcb_window, wmClientLeader());
 }
 
 base::x11::xcb::property window::fetchWmClientLeader() const
 {
     return base::x11::xcb::property(
-        false, xcb_window(), space.atoms->wm_client_leader, XCB_ATOM_WINDOW, 0, 10000);
+        false, xcb_window, space.atoms->wm_client_leader, XCB_ATOM_WINDOW, 0, 10000);
 }
 
 void window::readWmClientLeader(base::x11::xcb::property& prop)
 {
-    m_wmClientLeader = prop.value<xcb_window_t>(xcb_window());
+    m_wmClientLeader = prop.value<xcb_window_t>(xcb_window);
 }
 
 void window::getWmClientLeader()
@@ -1009,8 +1026,8 @@ void window::detectShape(xcb_window_t id)
  */
 QByteArray window::sessionId() const
 {
-    QByteArray result = base::x11::xcb::string_property(xcb_window(), space.atoms->sm_client_id);
-    if (result.isEmpty() && m_wmClientLeader && m_wmClientLeader != xcb_window()) {
+    QByteArray result = base::x11::xcb::string_property(xcb_window, space.atoms->sm_client_id);
+    if (result.isEmpty() && m_wmClientLeader && m_wmClientLeader != xcb_window) {
         result = base::x11::xcb::string_property(m_wmClientLeader, space.atoms->sm_client_id);
     }
     return result;
@@ -1022,8 +1039,8 @@ QByteArray window::sessionId() const
  */
 QByteArray window::wmCommand()
 {
-    QByteArray result = base::x11::xcb::string_property(xcb_window(), XCB_ATOM_WM_COMMAND);
-    if (result.isEmpty() && m_wmClientLeader && m_wmClientLeader != xcb_window()) {
+    QByteArray result = base::x11::xcb::string_property(xcb_window, XCB_ATOM_WM_COMMAND);
+    if (result.isEmpty() && m_wmClientLeader && m_wmClientLeader != xcb_window) {
         result = base::x11::xcb::string_property(m_wmClientLeader, XCB_ATOM_WM_COMMAND);
     }
     result.replace(0, ' ');
@@ -1036,18 +1053,23 @@ void window::clientMessageEvent(xcb_client_message_event_t* e)
         return;
     }
 
-    m_surfaceId = e->data.data32[0];
-    Q_EMIT space.surface_id_changed(this, m_surfaceId);
-    Q_EMIT surfaceIdChanged(m_surfaceId);
+    surface_id = e->data.data32[0];
+    Q_EMIT space.surface_id_changed(this, surface_id);
+    Q_EMIT surfaceIdChanged(surface_id);
 }
 
 bool window::resourceMatch(window const* c1, window const* c2)
 {
-    return c1->resourceClass() == c2->resourceClass();
+    return c1->resource_class == c2->resource_class;
 }
 
 void window::debug(QDebug& stream) const
 {
+    if (remnant) {
+        stream << "\'REMNANT:" << reinterpret_cast<void const*>(this) << "\'";
+        return;
+    }
+
     std::string type = "unmanaged";
     std::string caption = "";
     if (control) {
@@ -1057,8 +1079,8 @@ void window::debug(QDebug& stream) const
 
     stream.nospace();
     stream << "\'x11::window"
-           << "(" << QString::fromStdString(type) << "):" << xcb_window() << ";"
-           << ";WMCLASS:" << resourceClass() << ":" << resourceName()
+           << "(" << QString::fromStdString(type) << "):" << xcb_window << ";"
+           << ";WMCLASS:" << resource_class << ":" << resource_name
            << ";Caption:" << QString::fromStdString(caption) << "\'";
 }
 
@@ -1075,7 +1097,7 @@ void window::showOnScreenEdge()
 
     hideClient(false);
     win::set_keep_below(this, false);
-    xcb_delete_property(connection(), xcb_window(), space.atoms->kde_screen_edge_show);
+    xcb_delete_property(connection(), xcb_window, space.atoms->kde_screen_edge_show);
 }
 
 bool window::doStartMoveResize()

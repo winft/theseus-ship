@@ -105,7 +105,7 @@ void DontCrashEmptyDecorationTest::testBug361551()
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
     QVERIFY(client);
-    QCOMPARE(client->xcb_window(), w);
+    QCOMPARE(client->xcb_window, w);
     QVERIFY(win::decoration(client));
 
     // let's set a stupid geometry

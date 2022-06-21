@@ -200,7 +200,7 @@ void input_method_test::create_popup()
 
 void input_method_test::render_popup()
 {
-    QSignalSpy spy(popup.window->surface(), &Wrapland::Server::Surface::committed);
+    QSignalSpy spy(popup.window->surface, &Wrapland::Server::Surface::committed);
     Test::render(im_client, popup.client_surface, QSize(60, 30), Qt::blue);
     Test::flush_wayland_connection(im_client);
     QVERIFY(spy.wait());

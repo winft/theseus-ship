@@ -104,12 +104,12 @@ void finalize_shell_window_creation(Space& space, window* win)
     namespace WS = Wrapland::Server;
 
     auto handle_first_commit = [&space, win] {
-        QObject::disconnect(win->surface(), &WS::Surface::committed, win, nullptr);
-        QObject::connect(win->surface(), &WS::Surface::committed, win, &window::handle_commit);
+        QObject::disconnect(win->surface, &WS::Surface::committed, win, nullptr);
+        QObject::connect(win->surface, &WS::Surface::committed, win, &window::handle_commit);
 
         update_shadow(win);
-        QObject::connect(win->surface(), &Wrapland::Server::Surface::committed, win, [win] {
-            if (win->surface()->state().updates & Wrapland::Server::surface_change::shadow) {
+        QObject::connect(win->surface, &Wrapland::Server::Surface::committed, win, [win] {
+            if (win->surface->state().updates & Wrapland::Server::surface_change::shadow) {
                 update_shadow(win);
             }
         });
@@ -179,7 +179,7 @@ void finalize_shell_window_creation(Space& space, window* win)
         win->initialized = true;
     };
 
-    QObject::connect(win->surface(), &WS::Surface::committed, win, [handle_first_commit] {
+    QObject::connect(win->surface, &WS::Surface::committed, win, [handle_first_commit] {
         handle_first_commit();
     });
 }
@@ -581,13 +581,13 @@ void handle_new_toplevel(Space* space, Wrapland::Server::XdgShellToplevel* tople
     auto it = std::find_if(
         space->plasma_shell_surfaces.begin(),
         space->plasma_shell_surfaces.end(),
-        [window](auto shell_surface) { return window->surface() == shell_surface->surface(); });
+        [window](auto shell_surface) { return window->surface == shell_surface->surface(); });
     if (it != space->plasma_shell_surfaces.end()) {
         win::wayland::install_plasma_shell_surface(window, *it);
         space->plasma_shell_surfaces.erase(it);
     }
 
-    if (auto menu = space->appmenu_manager->appmenuForSurface(window->surface())) {
+    if (auto menu = space->appmenu_manager->appmenuForSurface(window->surface)) {
         win::wayland::install_appmenu(window, menu);
     }
     if (auto palette = space->server_side_decoration_palette_manager->paletteForSurface(
@@ -597,7 +597,7 @@ void handle_new_toplevel(Space* space, Wrapland::Server::XdgShellToplevel* tople
 
     space->m_windows.push_back(window);
 
-    if (window->readyForPainting()) {
+    if (window->ready_for_painting) {
         space->handle_window_added(window);
     } else {
         QObject::connect(
@@ -610,7 +610,7 @@ void handle_new_toplevel(Space* space, Wrapland::Server::XdgShellToplevel* tople
                      &Wrapland::Server::XdgForeign::parentChanged,
                      window,
                      [space, window](auto /*parent*/, auto child) {
-                         if (child == window->surface()) {
+                         if (child == window->surface) {
                              handle_parent_changed(*space, window);
                          }
                      });
@@ -622,7 +622,7 @@ void handle_new_popup(Space* space, Wrapland::Server::XdgShellPopup* popup)
     auto window = win::wayland::create_popup_window(space, popup);
     space->m_windows.push_back(window);
 
-    if (window->readyForPainting()) {
+    if (window->ready_for_painting) {
         space->handle_window_added(window);
     } else {
         QObject::connect(
@@ -754,7 +754,7 @@ Win* xdg_shell_find_parent(Space& space, Win& win)
             return find(parent->surface());
         }
     }
-    return find(space.xdg_foreign->parentOf(win.surface()));
+    return find(space.xdg_foreign->parentOf(win.surface));
 }
 
 template<typename Space, typename Win>

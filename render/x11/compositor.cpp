@@ -22,6 +22,7 @@
 #include "toplevel.h"
 #include "win/remnant.h"
 #include "win/space.h"
+#include "win/space_window_release.h"
 #include "win/stacking_order.h"
 #include "win/transient.h"
 #include "win/x11/stacking_tree.h"
@@ -281,7 +282,7 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
     // window should not get focus before it's displayed, handle unredirected windows properly and
     // so on.
 
-    remove_all_if(windows, [](auto const& win) { return !win->readyForPainting(); });
+    remove_all_if(windows, [](auto const& win) { return !win->ready_for_painting; });
 
     repaints = repaints_region;
 
@@ -371,8 +372,8 @@ void compositor::performCompositing()
     retard_next_composition();
 
     for (auto win : windows) {
-        if (win->remnant() && !win->remnant()->refcount) {
-            delete win;
+        if (win->remnant && !win->remnant->refcount) {
+            win::delete_window_from_space(win->space, win);
         }
     }
 

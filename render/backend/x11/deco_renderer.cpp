@@ -90,7 +90,7 @@ void deco_renderer::render()
                       geo.x(),
                       geo.y(),
                       0,
-                      client()->client()->depth(),
+                      client()->client()->bit_depth,
                       image.sizeInBytes(),
                       image.constBits());
     };

@@ -25,12 +25,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/x11/xcb/window.h"
 #include "input/cursor.h"
 #include "rules/rules.h"
+#include "win/remnant.h"
 #include "win/virtual_desktops.h"
 
 #include <NETWM>
 // Qt
-#include <QObject>
 #include <QMatrix4x4>
+#include <QObject>
 #include <QUuid>
 // xcb
 #include <xcb/damage.h>
@@ -38,6 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // c++
 #include <functional>
 #include <memory>
+#include <optional>
 
 class QOpenGLFramebufferObject;
 
@@ -64,7 +66,6 @@ class group;
 }
 
 class control;
-class remnant;
 class space;
 class transient;
 }
@@ -83,6 +84,10 @@ public:
         // suffix added to normal caption (e.g. shortcut, machine name, etc.).
         QString suffix;
     } caption;
+
+    // Always lowercase
+    QByteArray resource_name;
+    QByteArray resource_class;
 
     struct {
         int block{0};
@@ -121,6 +126,10 @@ public:
     QRegion layer_repaints_region;
     bool ready_for_painting{false};
     bool m_isDamaged{false};
+    bool is_shape{false};
+
+    /// Area to be opaque. Only provides valuable information if hasAlpha is @c true.
+    QRegion opaque_region;
 
     base::output const* central_output{nullptr};
 
@@ -130,11 +139,9 @@ public:
     std::vector<base::output*> repaint_outputs;
     win::space& space;
 
-    explicit Toplevel(win::space& space);
     ~Toplevel() override;
 
     virtual xcb_window_t frameId() const;
-    xcb_window_t xcb_window() const;
 
     QRegion render_region() const;
     void discard_shape();
@@ -160,7 +167,6 @@ public:
 
     virtual bool is_wayland_window() const;
     virtual bool isClient() const;
-    bool isDeleted() const;
 
     // prefer isXXX() instead
     // 0 for supported types means default for managed/unmanaged types
@@ -185,61 +191,36 @@ public:
     bool isOnAllDesktops() const;
 
     virtual QByteArray windowRole() const;
-    QByteArray resourceName() const;
-    QByteArray resourceClass() const;
     QByteArray wmClientMachine(bool use_localhost) const;
-    win::x11::client_machine const* clientMachine() const;
     virtual bool isLocalhost() const;
     xcb_window_t wmClientLeader() const;
     virtual pid_t pid() const;
 
-    bool readyForPainting() const; // true if the window has been already painted its contents
-    xcb_visualid_t visual() const;
-    bool shape() const;
     virtual void setOpacity(double opacity);
     virtual double opacity() const;
-    int depth() const;
     bool hasAlpha() const;
     virtual bool setupCompositing();
     virtual void add_scene_window_addon();
     virtual void finishCompositing();
 
-    Q_INVOKABLE void addRepaint(int x, int y, int w, int h);
-    Q_INVOKABLE void addRepaint(QRect const& rect);
     Q_INVOKABLE void addRepaint(QRegion const& region);
-    Q_INVOKABLE void addLayerRepaint(int x, int y, int w, int h);
-    Q_INVOKABLE void addLayerRepaint(QRect const& r);
     Q_INVOKABLE void addLayerRepaint(QRegion const& r);
 
     Q_INVOKABLE virtual void addRepaintFull();
-    // these call workspace->addRepaint(), but first transform the damage if needed
-    void addWorkspaceRepaint(int x, int y, int w, int h);
-    void addWorkspaceRepaint(QRect const& rect);
 
     virtual bool has_pending_repaints() const;
     QRegion repaints() const;
     void resetRepaints(base::output* output);
 
-    QRegion damage() const;
     void resetDamage();
-
     void addDamageFull();
-    virtual void addDamage(const QRegion &damage);
-
-    static Toplevel* create_remnant(Toplevel* source);
+    virtual void addDamage(const QRegion& damage);
 
     /**
      * Whether the Toplevel currently wants the shadow to be rendered. Default
      * implementation always returns @c true.
      */
     virtual bool wantsShadowToBeRendered() const;
-
-    /**
-     * This method returns the area that the Toplevel window reports to be opaque.
-     * It is supposed to only provide valuable information if hasAlpha is @c true .
-     * @see hasAlpha
-     */
-    const QRegion& opaqueRegion() const;
 
     win::layer layer() const;
     void set_layer(win::layer layer);
@@ -263,27 +244,15 @@ public:
     bool skipsCloseAnimation() const;
     void setSkipCloseAnimation(bool set);
 
-    quint32 surfaceId() const;
-    Wrapland::Server::Surface *surface() const;
-
     /**
      * Maps from global to window coordinates.
      */
     QMatrix4x4 input_transform() const;
 
-
     /**
      * Can be implemented by child classes to add additional checks to the ones in win::is_popup.
      */
     virtual bool is_popup_end() const;
-
-    /**
-     * A UUID to uniquely identify this Toplevel independent of windowing system.
-     */
-    QUuid internalId() const
-    {
-        return m_internalId;
-    }
 
     virtual win::layer layer_for_dock() const;
 
@@ -296,33 +265,44 @@ public:
      * Default implementation returns @c false.
      */
     virtual bool isInternal() const;
-    virtual bool belongsToDesktop() const;
-    virtual void checkTransient(Toplevel* window);
+    virtual bool belongsToDesktop() const = 0;
+    virtual void checkTransient(Toplevel* window) = 0;
 
-    void setWindowHandles(xcb_window_t w);
     void disownDataPassedToDeleted();
 
     virtual void damageNotifyEvent();
     void discard_buffer();
 
-    void setResourceClass(const QByteArray &name, const QByteArray &className = QByteArray());
+    void setResourceClass(const QByteArray& name, const QByteArray& className = QByteArray());
 
     NETWinInfo* info{nullptr};
-    Wrapland::Server::Surface* m_surface{nullptr};
-    quint32 m_surfaceId{0};
+    Wrapland::Server::Surface* surface{nullptr};
+    quint32 surface_id{0};
 
     // TODO: These are X11-only properties, should go into a separate struct once we use class
     //       templates only.
     int supported_default_types{0};
     int bit_depth{24};
     QMargins client_frame_extents;
+    win::x11::client_machine* client_machine{nullptr};
+
+    // A UUID to uniquely identify this Toplevel independent of windowing system.
+    QUuid internal_id;
+    base::x11::xcb::window xcb_window{};
+
     // TODO: These are Unmanaged-only properties.
     bool is_outline{false};
     bool has_scheduled_release{false};
-    xcb_visualid_t m_visual{XCB_NONE};
+    xcb_visualid_t xcb_visual{XCB_NONE};
     // End of X11-only properties.
 
     bool has_in_content_deco{false};
+
+    xcb_window_t m_wmClientLeader{XCB_WINDOW_NONE};
+    QRect m_frameGeometry;
+    win::layer m_layer{win::layer::unknown};
+    bool m_skipCloseAnimation{false};
+    QVector<win::virtual_desktop*> m_desktops;
 
 Q_SIGNALS:
     void opacityChanged(KWin::Toplevel* toplevel, qreal oldOpacity);
@@ -406,46 +386,31 @@ public Q_SLOTS:
     void setReadyForPainting();
 
 protected:
+    explicit Toplevel(win::space& space);
+    Toplevel(win::remnant remnant, win::space& space);
     Toplevel(win::transient* transient, win::space& space);
 
     virtual void debug(QDebug& stream) const;
-    void copyToDeleted(Toplevel* c);
     friend QDebug& operator<<(QDebug& stream, const Toplevel*);
     void setDepth(int depth);
-
-    bool is_shape{false};
-    QRegion opaque_region;
-
-    win::x11::client_machine* m_clientMachine;
-    xcb_window_t m_wmClientLeader{XCB_WINDOW_NONE};
 
 private:
     void handle_output_added(base::output* output);
     void handle_output_removed(base::output* output);
     void add_repaint_outputs(QRegion const& region);
 
-    // when adding new data members, check also copyToDeleted()
-    QUuid m_internalId;
-    base::x11::xcb::window m_client{};
-
-    QRect m_frameGeometry;
-    win::layer m_layer{win::layer::unknown};
     mutable bool m_render_shape_valid{false};
     mutable QRegion m_render_shape;
 
-    QByteArray resource_name;
-    QByteArray resource_class;
     bool m_damageReplyPending;
     xcb_xfixes_fetch_region_cookie_t m_regionCookie;
-    bool m_skipCloseAnimation;
-    QVector<win::virtual_desktop*> m_desktops;
 
-    win::remnant* m_remnant{nullptr};
     std::unique_ptr<win::transient> m_transient;
 
 public:
     std::unique_ptr<win::control> control;
-    win::remnant* remnant() const;
+    std::optional<win::remnant> remnant;
+
     win::transient* transient() const;
 
     /**
@@ -453,34 +418,33 @@ public:
      * TODO: move this functionality into control.
      */
 
-    virtual bool isCloseable() const;
-    // TODO: remove boolean trap
-    virtual bool isShown() const;
-    virtual bool isHiddenInternal() const;
-    // TODO: remove boolean trap
-    virtual void hideClient(bool hide);
+    virtual bool isCloseable() const = 0;
+    virtual bool isShown() const = 0;
+    virtual bool isHiddenInternal() const = 0;
 
-    virtual void setFullScreen(bool set, bool user = true);
+    // TODO: remove boolean traps
+    virtual void hideClient(bool hide) = 0;
+    virtual void setFullScreen(bool set, bool user = true) = 0;
 
     virtual win::maximize_mode maximizeMode() const;
 
-    virtual bool noBorder() const;
-    virtual void setNoBorder(bool set);
+    virtual bool noBorder() const = 0;
+    virtual void setNoBorder(bool set) = 0;
 
     /**
      * Returns whether the window is resizable or has a fixed size.
      */
-    virtual bool isResizable() const;
+    virtual bool isResizable() const = 0;
     /**
      * Returns whether the window is moveable or has a fixed position.
      */
-    virtual bool isMovable() const;
+    virtual bool isMovable() const = 0;
     /**
      * Returns whether the window can be moved to another screen.
      */
-    virtual bool isMovableAcrossScreens() const;
+    virtual bool isMovableAcrossScreens() const = 0;
 
-    virtual void takeFocus();
+    virtual void takeFocus() = 0;
     virtual bool wantsInput() const;
 
     /**
@@ -499,10 +463,10 @@ public:
     /**
      * Returns whether the window is maximizable or not.
      */
-    virtual bool isMaximizable() const;
-    virtual bool isMinimizable() const;
-    virtual bool userCanSetFullScreen() const;
-    virtual bool userCanSetNoBorder() const;
+    virtual bool isMaximizable() const = 0;
+    virtual bool isMinimizable() const = 0;
+    virtual bool userCanSetFullScreen() const = 0;
+    virtual bool userCanSetNoBorder() const = 0;
     virtual void checkNoBorder();
 
     virtual xcb_timestamp_t userTime() const;
@@ -511,13 +475,13 @@ public:
     virtual QSize minSize() const;
     virtual QSize maxSize() const;
 
-    virtual void setFrameGeometry(QRect const& rect);
+    virtual void setFrameGeometry(QRect const& rect) = 0;
 
-    virtual bool hasStrut() const;
+    virtual bool hasStrut() const = 0;
 
     // TODO: fix boolean traps
-    virtual void updateDecoration(bool check_workspace_pos, bool force = false);
-    virtual void layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRect &bottom) const;
+    virtual void updateDecoration(bool check_workspace_pos, bool force = false) = 0;
+    virtual void layoutDecorationRects(QRect& left, QRect& top, QRect& right, QRect& bottom) const;
 
     /**
      * Returns whether the window provides context help or not. If it does,
@@ -540,9 +504,9 @@ public:
     virtual void showContextHelp();
 
     /**
-     * Restores the AbstractClient after it had been hidden due to show on screen edge functionality.
-     * The AbstractClient also gets raised (e.g. Panel mode windows can cover) and the AbstractClient
-     * gets informed in a window specific way that it is shown and raised again.
+     * Restores the AbstractClient after it had been hidden due to show on screen edge
+     * functionality. The AbstractClient also gets raised (e.g. Panel mode windows can cover) and
+     * the AbstractClient gets informed in a window specific way that it is shown and raised again.
      */
     virtual void showOnScreenEdge();
 
@@ -651,8 +615,8 @@ public:
     virtual void doSetKeepBelow();
 
     /**
-     * Called from @ref minimize and @ref unminimize once the minimized value got updated, but before the
-     * changed signal is emitted.
+     * Called from @ref minimize and @ref unminimize once the minimized value got updated, but
+     * before the changed signal is emitted.
      *
      * Default implementation does nothig.
      */
@@ -678,18 +642,18 @@ public:
      * The difference to wantsInput is that the implementation should not check rules and return
      * what the window effectively supports.
      */
-    virtual bool acceptsFocus() const;
+    virtual bool acceptsFocus() const = 0;
 
     virtual void update_maximized(win::maximize_mode mode);
 
-    Q_INVOKABLE virtual void closeWindow();
+    Q_INVOKABLE virtual void closeWindow() = 0;
 
-    virtual bool performMouseCommand(base::options::MouseCommand, const QPoint &globalPos);
+    virtual bool performMouseCommand(base::options::MouseCommand, const QPoint& globalPos);
 
     virtual Toplevel* findModal();
 
-    virtual
-    bool belongsToSameApplication(Toplevel const* other, win::same_client_check checks) const;
+    virtual bool belongsToSameApplication(Toplevel const* other,
+                                          win::same_client_check checks) const;
 
     virtual QRect iconGeometry() const;
     virtual void setShortcutInternal();
@@ -719,7 +683,7 @@ Q_SIGNALS:
     void skipPagerChanged();
     void skipSwitcherChanged();
 
-    void paletteChanged(const QPalette &p);
+    void paletteChanged(const QPalette& p);
     void colorSchemeChanged();
     void transientChanged();
     void modalChanged();
@@ -734,11 +698,6 @@ Q_SIGNALS:
     void maximizeableChanged(bool);
     void desktopFileNameChanged();
 };
-
-inline xcb_window_t Toplevel::xcb_window() const
-{
-    return m_client;
-}
 
 inline QRect Toplevel::frameGeometry() const
 {
@@ -755,16 +714,6 @@ inline QPoint Toplevel::pos() const
     return m_frameGeometry.topLeft();
 }
 
-inline bool Toplevel::readyForPainting() const
-{
-    return ready_for_painting;
-}
-
-inline xcb_visualid_t Toplevel::visual() const
-{
-    return m_visual;
-}
-
 inline bool Toplevel::isLockScreen() const
 {
     return false;
@@ -775,54 +724,9 @@ inline bool Toplevel::isInputMethod() const
     return false;
 }
 
-inline QRegion Toplevel::damage() const
-{
-    return damage_region;
-}
-
-inline bool Toplevel::shape() const
-{
-    return is_shape;
-}
-
-inline int Toplevel::depth() const
-{
-    return bit_depth;
-}
-
 inline bool Toplevel::hasAlpha() const
 {
-    return depth() == 32;
-}
-
-inline const QRegion& Toplevel::opaqueRegion() const
-{
-    return opaque_region;
-}
-
-inline QByteArray Toplevel::resourceName() const
-{
-    return resource_name; // it is always lowercase
-}
-
-inline QByteArray Toplevel::resourceClass() const
-{
-    return resource_class; // it is always lowercase
-}
-
-inline const win::x11::client_machine* Toplevel::clientMachine() const
-{
-    return m_clientMachine;
-}
-
-inline quint32 Toplevel::surfaceId() const
-{
-    return m_surfaceId;
-}
-
-inline Wrapland::Server::Surface *Toplevel::surface() const
-{
-    return m_surface;
+    return bit_depth == 32;
 }
 
 KWIN_EXPORT QDebug& operator<<(QDebug& stream, const Toplevel*);

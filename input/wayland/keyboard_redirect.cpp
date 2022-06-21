@@ -142,11 +142,11 @@ void keyboard_redirect::update()
         do {
             --it;
             Toplevel* t = (*it);
-            if (t->isDeleted()) {
+            if (t->remnant) {
                 // a deleted window doesn't get mouse events
                 continue;
             }
-            if (!t->readyForPainting()) {
+            if (!t->ready_for_painting) {
                 continue;
             }
             auto wayland_window = qobject_cast<win::wayland::window*>(t);
@@ -165,9 +165,9 @@ void keyboard_redirect::update()
     if (!found && !kwinApp()->input->redirect->isSelectingWindow()) {
         found = redirect->space.activeClient();
     }
-    if (found && found->surface()) {
-        if (found->surface() != seat->keyboards().get_focus().surface) {
-            seat->setFocusedKeyboardSurface(found->surface());
+    if (found && found->surface) {
+        if (found->surface != seat->keyboards().get_focus().surface) {
+            seat->setFocusedKeyboardSurface(found->surface);
         }
     } else {
         seat->setFocusedKeyboardSurface(nullptr);

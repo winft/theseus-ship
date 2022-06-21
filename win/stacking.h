@@ -452,7 +452,7 @@ void set_active(Win* win, bool active)
 
     auto leads = win->transient()->leads();
     for (auto lead : leads) {
-        if (lead->remnant()) {
+        if (lead->remnant) {
             continue;
         }
         if (lead->control->fullscreen()) {
@@ -496,8 +496,9 @@ void set_minimized(Win* win, bool set, bool avoid_animation = false)
         win->doMinimize();
 
         win->updateWindowRules(Rules::Minimize);
+        win->space.render.addRepaint(visible_rect(win));
+
         // TODO: merge signal with s_minimized
-        win->addWorkspaceRepaint(visible_rect(win));
         Q_EMIT win->clientMinimized(win, !avoid_animation);
         Q_EMIT win->minimizedChanged();
     } else {
@@ -547,18 +548,18 @@ bool keep_transient_above(Win1 const* mainwindow, Win2 const* transient)
 template<typename Win1, typename Win2>
 bool keep_deleted_transient_above(Win1 const* mainWindow, Win2 const* transient)
 {
-    assert(transient->remnant());
+    assert(transient->remnant);
 
     // #93832 - Don't keep splashscreens above dialogs.
     if (win::is_splash(transient) && win::is_dialog(mainWindow)) {
         return false;
     }
 
-    if (transient->remnant()->was_x11_client) {
+    if (transient->remnant->was_x11_client) {
         // If a group transient was active, we should keep it above no matter
         // what, because at the time when the transient was closed, it was above
         // the main window.
-        if (transient->remnant()->was_group_transient && transient->remnant()->was_active) {
+        if (transient->remnant->was_group_transient && transient->remnant->was_active) {
             return true;
         }
 
@@ -566,7 +567,7 @@ bool keep_deleted_transient_above(Win1 const* mainWindow, Win2 const* transient)
         // the mainwindow, but only if they're group transient (since only such
         // dialogs have taskbar entry in Kicker). A proper way of doing this
         // (both kwin and kicker) needs to be found.
-        if (transient->remnant()->was_group_transient && win::is_dialog(transient)
+        if (transient->remnant->was_group_transient && win::is_dialog(transient)
             && !transient->transient()->modal()) {
             return false;
         }

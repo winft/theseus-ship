@@ -177,16 +177,16 @@ bool has_user_time_support(Win* win)
 }
 
 template<typename Win>
-void embed_client(Win* win,
-                  xcb_window_t w,
-                  xcb_visualid_t visualid,
-                  xcb_colormap_t colormap,
-                  uint8_t depth)
+void embed_client(Win* win, xcb_visualid_t visualid, xcb_colormap_t colormap, uint8_t depth)
 {
+    auto xcb_win = static_cast<xcb_window_t>(win->xcb_window);
+
+    assert(xcb_win != XCB_WINDOW_NONE);
     assert(win->xcb_windows.client == XCB_WINDOW_NONE);
     assert(win->frameId() == XCB_WINDOW_NONE);
     assert(win->xcb_windows.wrapper == XCB_WINDOW_NONE);
-    win->xcb_windows.client.reset(w, false);
+
+    win->xcb_windows.client.reset(xcb_win, false);
 
     uint32_t const zero_value = 0;
     auto conn = connection();
@@ -239,8 +239,6 @@ void embed_client(Win* win,
                       cw_mask,
                       cw_values);
     win->xcb_windows.outer.reset(frame);
-
-    win->setWindowHandles(win->xcb_windows.client);
 
     // Create the wrapper window
     auto wrapperId = xcb_generate_id(conn);
@@ -631,20 +629,20 @@ QRect place_on_taking_control(Win* win,
  * Returns false if KWin is not going to manage this window.
  */
 template<typename Space>
-auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
+auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space) ->
     typename Space::x11_window*
 {
     using Win = typename Space::x11_window;
 
     blocker block(space.stacking_order);
 
-    base::x11::xcb::window_attributes attr(w);
-    base::x11::xcb::geometry windowGeometry(w);
+    base::x11::xcb::window_attributes attr(xcb_win);
+    base::x11::xcb::geometry windowGeometry(xcb_win);
     if (attr.is_null() || windowGeometry.is_null()) {
         return nullptr;
     }
 
-    auto win = new Win(space);
+    auto win = new Win(xcb_win, space);
 
     // So that decorations don't start with size being (0,0).
     win->set_frame_geometry(QRect(0, 0, 100, 100));
@@ -676,7 +674,7 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
     win->control->setup_color_scheme();
 
     QObject::connect(
-        win->clientMachine(), &client_machine::localhostChanged, win, &window::updateCaption);
+        win->client_machine, &client_machine::localhostChanged, win, &window::updateCaption);
     QObject::connect(kwinApp()->options.get(), &base::options::configChanged, win, [win] {
         win->control->update_mouse_grab();
     });
@@ -705,9 +703,9 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
 
     block_geometry_updates(win, true);
 
-    embed_client(win, w, attr->visual, attr->colormap, windowGeometry->depth);
+    embed_client(win, attr->visual, attr->colormap, windowGeometry->depth);
 
-    win->m_visual = attr->visual;
+    win->xcb_visual = attr->visual;
     win->bit_depth = windowGeometry->depth;
 
     const NET::Properties properties = NET::WMDesktop | NET::WMState | NET::WMWindowType
@@ -726,8 +724,8 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
     auto firstInTabBoxCookie = fetch_first_in_tabbox(win);
     auto transientCookie = fetch_transient(win);
 
-    win->geometry_hints.init(win->xcb_window());
-    win->motif_hints.init(win->xcb_window());
+    win->geometry_hints.init(win->xcb_window);
+    win->motif_hints.init(win->xcb_window);
 
     win->info = new win_info(win, win->xcb_windows.client, rootWindow(), properties, properties2);
 
@@ -753,10 +751,10 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
     QObject::connect(win, &Win::windowClassChanged, win, [win] { evaluate_rules(win); });
 
     if (base::x11::xcb::extensions::self()->is_shape_available()) {
-        xcb_shape_select_input(connection(), win->xcb_window(), true);
+        xcb_shape_select_input(connection(), win->xcb_window, true);
     }
 
-    win->detectShape(win->xcb_window());
+    win->detectShape(win->xcb_window);
     detect_no_border(win);
     fetch_iconic_name(win);
 
@@ -796,7 +794,7 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
 
     KStartupInfoId asn_id;
     KStartupInfoData asn_data;
-    auto asn_valid = space.checkStartupNotification(win->xcb_window(), asn_id, asn_data);
+    auto asn_valid = space.checkStartupNotification(win->xcb_window, asn_id, asn_data);
 
     // Make sure that the input window is created before we update the stacking order
     // TODO(romangg): Does it matter that the frame geometry is not set yet here?
@@ -1414,7 +1412,7 @@ template<typename Win>
 xcb_timestamp_t read_user_creation_time(Win* win)
 {
     base::x11::xcb::property prop(false,
-                                  win->xcb_window(),
+                                  win->xcb_window,
                                   win->space.atoms->kde_net_wm_user_creation_time,
                                   XCB_ATOM_CARDINAL,
                                   0,
@@ -1537,7 +1535,7 @@ void startup_id_changed(Win* win)
 {
     KStartupInfoId asn_id;
     KStartupInfoData asn_data;
-    bool asn_valid = win->space.checkStartupNotification(win->xcb_window(), asn_id, asn_data);
+    bool asn_valid = win->space.checkStartupNotification(win->xcb_window, asn_id, asn_data);
     if (!asn_valid)
         return;
     // If the ASN contains desktop, move it to the desktop, otherwise move it to the current
@@ -1617,7 +1615,7 @@ template<typename Win>
 base::x11::xcb::property fetch_show_on_screen_edge(Win* win)
 {
     return base::x11::xcb::property(
-        false, win->xcb_window(), win->space.atoms->kde_screen_edge_show, XCB_ATOM_CARDINAL, 0, 1);
+        false, win->xcb_window, win->space.atoms->kde_screen_edge_show, XCB_ATOM_CARDINAL, 0, 1);
 }
 
 template<typename Win>
@@ -1682,8 +1680,7 @@ void read_show_on_screen_edge(Win* win, base::x11::xcb::property& property)
     } else if (!property.is_null() && property->type != XCB_ATOM_NONE) {
         // property value is incorrect, delete the property
         // so that the client knows that it is not hidden
-        xcb_delete_property(
-            connection(), win->xcb_window(), win->space.atoms->kde_screen_edge_show);
+        xcb_delete_property(connection(), win->xcb_window, win->space.atoms->kde_screen_edge_show);
     } else {
         // restore
         // TODO: add proper unreserve

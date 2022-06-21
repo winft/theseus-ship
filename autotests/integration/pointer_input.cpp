@@ -235,7 +235,7 @@ void PointerInputTest::testWarpingUpdatesFocus()
     // window should have focus
     QCOMPARE(pointer->enteredSurface(), surface.get());
     // also on the server
-    QCOMPARE(waylandServer()->seat()->pointers().get_focus().surface, window->surface());
+    QCOMPARE(waylandServer()->seat()->pointers().get_focus().surface, window->surface);
 
     // and out again
     input::get_cursor()->set_pos(QPoint(250, 250));

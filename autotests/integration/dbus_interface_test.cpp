@@ -129,7 +129,7 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
     QVERIFY(client);
 
     // let's get the window info
-    QDBusPendingReply<QVariantMap> reply{getWindowInfo(client->internalId())};
+    QDBusPendingReply<QVariantMap> reply{getWindowInfo(client->internal_id)};
     reply.waitForFinished();
     QVERIFY(reply.isValid());
     QVERIFY(!reply.isError());
@@ -164,7 +164,7 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
     QCOMPARE(windowData.value(QStringLiteral("caption")).toString(), QStringLiteral("Test window"));
 
     auto verifyProperty = [client](const QString& name) {
-        QDBusPendingReply<QVariantMap> reply{getWindowInfo(client->internalId())};
+        QDBusPendingReply<QVariantMap> reply{getWindowInfo(client->internal_id)};
         reply.waitForFinished();
         return reply.value().value(name).toBool();
     };
@@ -205,19 +205,19 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
     QCOMPARE(client->desktop(), 1);
     Test::app()->workspace->sendClientToDesktop(client, 2, false);
     QCOMPARE(client->desktop(), 2);
-    reply = getWindowInfo(client->internalId());
+    reply = getWindowInfo(client->internal_id);
     reply.waitForFinished();
     QCOMPARE(reply.value().value(QStringLiteral("x11DesktopNumber")).toInt(), 2);
 
     win::move(client, QPoint(10, 20));
-    reply = getWindowInfo(client->internalId());
+    reply = getWindowInfo(client->internal_id);
     reply.waitForFinished();
     QCOMPARE(reply.value().value(QStringLiteral("x")).toInt(), client->pos().x());
     QCOMPARE(reply.value().value(QStringLiteral("y")).toInt(), client->pos().y());
     // not testing width, height as that would require window geometry change
 
     // finally close window
-    const auto id = client->internalId();
+    const auto id = client->internal_id;
     QSignalSpy windowClosedSpy(client, &win::wayland::window::closed);
     QVERIFY(windowClosedSpy.isValid());
     shellSurface.reset();
@@ -279,11 +279,11 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
     QVERIFY(client);
-    QCOMPARE(client->xcb_window(), w);
+    QCOMPARE(client->xcb_window, w);
     QCOMPARE(win::frame_to_client_size(client, client->size()), windowGeometry.size());
 
     // let's get the window info
-    QDBusPendingReply<QVariantMap> reply{getWindowInfo(client->internalId())};
+    QDBusPendingReply<QVariantMap> reply{getWindowInfo(client->internal_id)};
     reply.waitForFinished();
     QVERIFY(reply.isValid());
     QVERIFY(!reply.isError());
@@ -318,7 +318,7 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     // due to that also not testing localhost
 
     auto verifyProperty = [client](const QString& name) {
-        QDBusPendingReply<QVariantMap> reply{getWindowInfo(client->internalId())};
+        QDBusPendingReply<QVariantMap> reply{getWindowInfo(client->internal_id)};
         reply.waitForFinished();
         return reply.value().value(name).toBool();
     };
@@ -365,7 +365,7 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     QVERIFY(client->control->fullscreen());
     QVERIFY(win::frame_to_client_size(client, client->size()) != windowGeometry.size());
     QCOMPARE(verifyProperty(QStringLiteral("fullscreen")), true);
-    reply = getWindowInfo(client->internalId());
+    reply = getWindowInfo(client->internal_id);
     reply.waitForFinished();
     QCOMPARE(reply.value().value(QStringLiteral("width")).toInt(), client->size().width());
     QCOMPARE(reply.value().value(QStringLiteral("height")).toInt(), client->size().height());
@@ -385,7 +385,7 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     QSignalSpy windowClosedSpy(client, &win::x11::window::closed);
     QVERIFY(windowClosedSpy.isValid());
 
-    const auto id = client->internalId();
+    const auto id = client->internal_id;
 
     xcb_destroy_window(c.get(), w);
     xcb_flush(c.get());

@@ -166,7 +166,7 @@ space::~space()
     stacking_order->lock();
 
     for (auto const& window : m_windows) {
-        if (auto win = qobject_cast<win::wayland::window*>(window)) {
+        if (auto win = qobject_cast<win::wayland::window*>(window); win && !win->remnant) {
             destroy_window(win);
             remove_all(m_windows, win);
         }
@@ -181,7 +181,7 @@ window* space::find_window(Wrapland::Server::Surface* surface) const
     }
 
     auto it = std::find_if(m_windows.cbegin(), m_windows.cend(), [surface](auto win) {
-        return win->surface() == surface;
+        return win->surface == surface;
     });
     return it != m_windows.cend() ? qobject_cast<window*>(*it) : nullptr;
 }
@@ -304,7 +304,7 @@ void space::handle_window_removed(wayland::window* window)
 
 void space::handle_x11_window_added(x11::window* window)
 {
-    if (window->readyForPainting()) {
+    if (window->ready_for_painting) {
         setup_plasma_management(this, window);
     } else {
         QObject::connect(window, &x11::window::windowShown, this, [this](auto window) {

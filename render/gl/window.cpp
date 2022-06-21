@@ -43,7 +43,7 @@ render::gl::texture* window::bindTexture()
         return buffer->texture();
     }
 
-    if (!get_window()->damage().isEmpty())
+    if (!get_window()->damage_region.isEmpty())
         static_cast<gl::scene&>(scene).insertWait();
 
     if (!buffer->bind()) {
@@ -178,8 +178,8 @@ GLTexture* window::getDecorationTexture() const
             renderer->render();
             return renderer->texture();
         }
-    } else if (auto remnant = toplevel->remnant()) {
-        if (!remnant->control || remnant->no_border) {
+    } else if (auto& remnant = toplevel->remnant) {
+        if (!remnant->decoration_renderer || remnant->no_border) {
             return nullptr;
         }
         if (auto& renderer = remnant->decoration_renderer) {

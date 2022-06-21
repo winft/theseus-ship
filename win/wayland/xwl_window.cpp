@@ -14,14 +14,14 @@
 namespace KWin::win::wayland
 {
 
-xwl_window::xwl_window(win::space& space)
-    : window(space)
+xwl_window::xwl_window(xcb_window_t xcb_win, win::space& space)
+    : window(xcb_win, space)
 {
 }
 
 qreal xwl_window::bufferScale() const
 {
-    return surface() ? surface()->state().scale : 1;
+    return surface ? surface->state().scale : 1;
 }
 
 void xwl_window::add_scene_window_addon()
@@ -39,13 +39,13 @@ void xwl_window::add_scene_window_addon()
     auto get_viewport = [](auto window, auto /*contentsRect*/) {
         // XWayland client's geometry must be taken from their content placement since the
         // buffer size is not in sync. So we only consider an explicitly set source rectangle.
-        return window->surface() ? get_scaled_source_rectangle(*window) : QRectF();
+        return window->surface ? get_scaled_source_rectangle(*window) : QRectF();
     };
 
     render->win_integration.setup_buffer = setup_buffer;
     render->win_integration.get_viewport = get_viewport;
 
-    if (surface()) {
+    if (surface) {
         setup_scale_scene_notify(*this);
     }
 }

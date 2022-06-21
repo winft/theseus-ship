@@ -124,17 +124,17 @@ xcb_window_t window::frameId() const
 
 quint32 window::windowId() const
 {
-    return m_client->xcb_window();
+    return m_client->xcb_window;
 }
 
 QByteArray window::resourceName() const
 {
-    return m_client->resourceName();
+    return m_client->resource_name;
 }
 
 QByteArray window::resourceClass() const
 {
-    return m_client->resourceClass();
+    return m_client->resource_class;
 }
 
 QString window::caption() const
@@ -154,7 +154,7 @@ QRect window::iconGeometry() const
 
 QUuid window::internalId() const
 {
-    return m_client->internalId();
+    return m_client->internal_id;
 }
 
 pid_t window::pid() const
@@ -457,7 +457,7 @@ bool window::isOutline() const
 
 bool window::isShape() const
 {
-    return m_client->shape();
+    return m_client->is_shape;
 }
 
 bool window::isShade() const
@@ -630,17 +630,17 @@ bool window::isClient() const
 
 bool window::isDeleted() const
 {
-    return m_client->isDeleted();
+    return static_cast<bool>(m_client->remnant);
 }
 
 quint32 window::surfaceId() const
 {
-    return m_client->surfaceId();
+    return m_client->surface_id;
 }
 
 Wrapland::Server::Surface* window::surface() const
 {
-    return m_client->surface();
+    return m_client->surface;
 }
 
 QSize window::basicUnit() const

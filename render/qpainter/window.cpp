@@ -35,7 +35,7 @@ static bool isXwaylandClient(Toplevel* toplevel)
     if (client) {
         return true;
     }
-    if (auto remnant = toplevel->remnant()) {
+    if (auto& remnant = toplevel->remnant) {
         return remnant->was_x11_client;
     }
     return false;
@@ -52,7 +52,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
     if (!buffer || !buffer->isValid()) {
         return;
     }
-    if (!toplevel->damage().isEmpty()) {
+    if (!toplevel->damage_region.isEmpty()) {
         buffer->updateBuffer();
         toplevel->resetDamage();
     }
@@ -90,8 +90,8 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
     QRectF source;
     QRectF target;
     QRectF viewportRectangle;
-    if (toplevel->surface()) {
-        viewportRectangle = toplevel->surface()->state().source_rectangle;
+    if (toplevel->surface) {
+        viewportRectangle = toplevel->surface->state().source_rectangle;
     }
     if (isXwaylandClient(toplevel)) {
         // special case for XWayland windows
@@ -156,7 +156,7 @@ void window::renderWindowDecorations(QPainter* painter)
 {
     // TODO: custom decoration opacity
     auto const& ctrl = toplevel->control;
-    auto remnant = toplevel->remnant();
+    auto& remnant = toplevel->remnant;
     if (!ctrl && !remnant) {
         return;
     }

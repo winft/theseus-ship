@@ -855,11 +855,11 @@ bool client_filter_model::filterAcceptsRow(int sourceRow, const QModelIndex& sou
     if (windowRole.contains(m_filter, Qt::CaseInsensitive)) {
         return true;
     }
-    const QString resourceName(QString::fromUtf8(client->resourceName()));
+    auto const resourceName = QString::fromUtf8(client->resource_name);
     if (resourceName.contains(m_filter, Qt::CaseInsensitive)) {
         return true;
     }
-    const QString resourceClass(QString::fromUtf8(client->resourceClass()));
+    auto const resourceClass = QString::fromUtf8(client->resource_class);
     if (resourceClass.contains(m_filter, Qt::CaseInsensitive)) {
         return true;
     }

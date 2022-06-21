@@ -260,7 +260,7 @@ void TestPointerConstraints::testConfinedPointer()
     confinedPointer.reset(nullptr);
     Test::flush_wayland_connection();
 
-    QSignalSpy constraintsChangedSpy(kwinApp()->input->redirect->pointer()->focus.window->surface(),
+    QSignalSpy constraintsChangedSpy(kwinApp()->input->redirect->pointer()->focus.window->surface,
                                      &Wrapland::Server::Surface::pointerConstraintsChanged);
     QVERIFY(constraintsChangedSpy.isValid());
     QVERIFY(constraintsChangedSpy.wait());
@@ -344,7 +344,7 @@ void TestPointerConstraints::testLockedPointer()
     lockedPointer.reset(nullptr);
     Test::flush_wayland_connection();
 
-    QSignalSpy constraintsChangedSpy(kwinApp()->input->redirect->pointer()->focus.window->surface(),
+    QSignalSpy constraintsChangedSpy(kwinApp()->input->redirect->pointer()->focus.window->surface,
                                      &Wrapland::Server::Surface::pointerConstraintsChanged);
     QVERIFY(constraintsChangedSpy.isValid());
     QVERIFY(constraintsChangedSpy.wait());

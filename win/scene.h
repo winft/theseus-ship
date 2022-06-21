@@ -147,7 +147,7 @@ template<typename Win>
 bool setup_compositing(Win& win, bool add_full_damage)
 {
     static_assert(!Win::is_toplevel);
-    assert(!win.remnant());
+    assert(!win.remnant);
 
     if (!win.space.compositing()) {
         return false;
@@ -158,7 +158,7 @@ bool setup_compositing(Win& win, bool add_full_damage)
     }
 
     if (kwinApp()->operationMode() == Application::OperationModeX11) {
-        assert(!win.surface());
+        assert(!win.surface);
         win.damage_handle = xcb_generate_id(connection());
         xcb_damage_create(
             connection(), win.damage_handle, win.frameId(), XCB_DAMAGE_REPORT_LEVEL_NON_EMPTY);
@@ -193,7 +193,7 @@ void elevate(Win* win, bool elevate)
     }
 
     win->render->effect->elevate(elevate);
-    win->addWorkspaceRepaint(visible_rect(win));
+    win->space.render.addRepaint(visible_rect(win));
 }
 
 }

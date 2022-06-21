@@ -30,7 +30,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     // TODO(romangg): We do this for every window here, even for windows that are not an xdg-shell
     //                type window. Restrict that?
     QObject::connect(space, &win::wayland::space::wayland_window_added, this, [this](auto c) {
-        if (c->readyForPainting()) {
+        if (c->ready_for_painting) {
             slotXdgShellClientShown(c);
         } else {
             QObject::connect(
@@ -44,7 +44,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
         if (!wayland_window) {
             continue;
         }
-        if (wayland_window->readyForPainting()) {
+        if (wayland_window->ready_for_painting) {
             setupAbstractClientConnections(wayland_window);
         } else {
             QObject::connect(wayland_window,

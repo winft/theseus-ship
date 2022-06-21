@@ -101,7 +101,7 @@ transient* x11_transient(Win* win)
 template<typename Win>
 base::x11::xcb::transient_for fetch_transient(Win* win)
 {
-    return base::x11::xcb::transient_for(win->xcb_window());
+    return base::x11::xcb::transient_for(win->xcb_window);
 }
 
 template<typename Win>
@@ -206,7 +206,7 @@ void update_group(Win* win, bool add)
         win->in_group->removeMember(win);
 
         for (auto member : win->in_group->members()) {
-            if (x11_transient(win)->lead_id == member->xcb_window()) {
+            if (x11_transient(win)->lead_id == member->xcb_window) {
                 if (!contains(member->transient()->children, win)) {
                     member->transient()->add_child(win);
                 }
@@ -263,7 +263,7 @@ xcb_window_t verify_transient_for(Win* win, xcb_window_t new_transient_for, bool
             return XCB_WINDOW_NONE;
         }
     }
-    if (new_transient_for == win->xcb_window()) {
+    if (new_transient_for == win->xcb_window) {
         // pointing to self
         // also fix the property itself
         qCWarning(KWIN_CORE) << "Client " << win << " has WM_TRANSIENT_FOR poiting to itself.";
@@ -331,7 +331,7 @@ xcb_window_t verify_transient_for(Win* win, xcb_window_t new_transient_for, bool
     }
 
     if (new_property_value != x11_transient(win)->original_lead_id) {
-        base::x11::xcb::set_transient_for(win->xcb_window(), new_property_value);
+        base::x11::xcb::set_transient_for(win->xcb_window, new_property_value);
     }
 
     return new_transient_for;

@@ -83,7 +83,7 @@ QVariant window_data(QModelIndex const& index, int role, QVector<Window*> const&
     auto window = windows.at(index.row());
     if (role == Qt::DisplayRole) {
         return QStringLiteral("%1: %2")
-            .arg(static_cast<Toplevel*>(window)->xcb_window())
+            .arg(static_cast<Toplevel*>(window)->xcb_window)
             .arg(win::caption(window));
     } else if (role == Qt::DecorationRole) {
         return window->control->icon();

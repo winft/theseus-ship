@@ -15,6 +15,7 @@
 #include "win/space_helpers.h"
 #include "win/stacking_order.h"
 #include "win/transient.h"
+#include "win/window_release.h"
 #include "win/x11/stacking_tree.h"
 
 #if KWIN_BUILD_TABBOX
@@ -43,7 +44,7 @@ void destroy_window(Win* win)
         return;
     }
 
-    auto remnant_window = win->create_remnant(win);
+    auto remnant_window = create_remnant_window<Win>(*win);
     Q_EMIT win->closed(win);
 
     if (win->control) {
@@ -66,12 +67,11 @@ void destroy_window(Win* win)
     space.handle_window_removed(win);
 
     if (remnant_window) {
-        remnant_window->remnant()->unref();
+        remnant_window->remnant->unref();
+        delete win;
     } else {
         delete_window_from_space(space, win);
     }
-
-    delete win;
 }
 
 }

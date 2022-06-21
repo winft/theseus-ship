@@ -708,7 +708,7 @@ void MoveResizeWindowTest::testNetMove()
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
     QVERIFY(client);
-    QCOMPARE(client->xcb_window(), w);
+    QCOMPARE(client->xcb_window, w);
     const QRect origGeo = client->frameGeometry();
 
     // let's move the cursor outside the window
@@ -812,7 +812,7 @@ void MoveResizeWindowTest::testAdjustClientGeometryOfAutohidingX11Panel()
     QVERIFY(windowCreatedSpy.wait());
     auto panel = windowCreatedSpy.first().first().value<win::x11::window*>();
     QVERIFY(panel);
-    QCOMPARE(panel->xcb_window(), w);
+    QCOMPARE(panel->xcb_window, w);
     QCOMPARE(panel->frameGeometry(), panelGeometry);
     QVERIFY(win::is_dock(panel));
 

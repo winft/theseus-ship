@@ -171,8 +171,8 @@ void TestXdgShellClient::testMapUnmapMap()
     QVERIFY(client);
     QVERIFY(client->isShown());
     QCOMPARE(client->isHiddenInternal(), false);
-    QCOMPARE(client->readyForPainting(), true);
-    QCOMPARE(client->depth(), 32);
+    QCOMPARE(client->ready_for_painting, true);
+    QCOMPARE(client->bit_depth, 32);
     QVERIFY(client->hasAlpha());
     QCOMPARE(client->control->icon().name(), QStringLiteral("wayland"));
     QCOMPARE(Test::app()->workspace->activeClient(), client);
@@ -185,13 +185,13 @@ void TestXdgShellClient::testMapUnmapMap()
     QVERIFY(client->render);
     QVERIFY(client->render->effect);
     QVERIFY(!client->render->effect->internalWindow());
-    QCOMPARE(client->internalId().isNull(), false);
-    const auto uuid = client->internalId();
+    QCOMPARE(client->internal_id.isNull(), false);
+    const auto uuid = client->internal_id;
     QUuid deletedUuid;
     QCOMPARE(deletedUuid.isNull(), true);
 
     connect(client, &win::wayland::window::remnant_created, this, [&deletedUuid](auto remnant) {
-        deletedUuid = remnant->internalId();
+        deletedUuid = remnant->internal_id;
     });
 
     // now unmap
@@ -202,7 +202,7 @@ void TestXdgShellClient::testMapUnmapMap()
     surface->attachBuffer(Buffer::Ptr());
     surface->commit(Surface::CommitFlag::None);
     QVERIFY(hiddenSpy.wait());
-    QCOMPARE(client->readyForPainting(), true);
+    QCOMPARE(client->ready_for_painting, true);
     QCOMPARE(client->isHiddenInternal(), true);
     QVERIFY(windowClosedSpy.isEmpty());
     QVERIFY(!Test::app()->workspace->activeClient());
@@ -217,9 +217,9 @@ void TestXdgShellClient::testMapUnmapMap()
     QVERIFY(windowShownSpy.wait());
     QCOMPARE(windowShownSpy.count(), 1);
     QCOMPARE(clientAddedSpy.count(), 1);
-    QCOMPARE(client->readyForPainting(), true);
+    QCOMPARE(client->ready_for_painting, true);
     QCOMPARE(client->isHiddenInternal(), false);
-    QCOMPARE(client->depth(), 24);
+    QCOMPARE(client->bit_depth, 24);
     QVERIFY(!client->hasAlpha());
     QCOMPARE(Test::app()->workspace->activeClient(), client);
     QCOMPARE(effectsWindowShownSpy.count(), 1);
@@ -231,9 +231,9 @@ void TestXdgShellClient::testMapUnmapMap()
     surface->commit(Surface::CommitFlag::None);
     QVERIFY(hiddenSpy.wait());
     QCOMPARE(hiddenSpy.count(), 2);
-    QCOMPARE(client->readyForPainting(), true);
+    QCOMPARE(client->ready_for_painting, true);
     QCOMPARE(client->isHiddenInternal(), true);
-    QCOMPARE(client->internalId(), uuid);
+    QCOMPARE(client->internal_id, uuid);
     QVERIFY(windowClosedSpy.isEmpty());
     QCOMPARE(effectsWindowHiddenSpy.count(), 2);
     QCOMPARE(effectsWindowHiddenSpy.last().first().value<EffectWindow*>(),
@@ -825,8 +825,8 @@ void TestXdgShellClient::testDesktopFileName()
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(c->control->desktop_file_name(), QByteArrayLiteral("org.kde.foo"));
-    QCOMPARE(c->resourceClass(), QByteArrayLiteral("org.kde.foo"));
-    QVERIFY(c->resourceName().startsWith("testXdgShellClient"));
+    QCOMPARE(c->resource_class, QByteArrayLiteral("org.kde.foo"));
+    QVERIFY(c->resource_name.startsWith("testXdgShellClient"));
     // the desktop file does not exist, so icon should be generic Wayland
     QCOMPARE(c->control->icon().name(), QStringLiteral("wayland"));
 
@@ -837,8 +837,8 @@ void TestXdgShellClient::testDesktopFileName()
     shellSurface->setAppId(QByteArrayLiteral("org.kde.bar"));
     QVERIFY(desktopFileNameChangedSpy.wait());
     QCOMPARE(c->control->desktop_file_name(), QByteArrayLiteral("org.kde.bar"));
-    QCOMPARE(c->resourceClass(), QByteArrayLiteral("org.kde.bar"));
-    QVERIFY(c->resourceName().startsWith("testXdgShellClient"));
+    QCOMPARE(c->resource_class, QByteArrayLiteral("org.kde.bar"));
+    QVERIFY(c->resource_name.startsWith("testXdgShellClient"));
     // icon should still be wayland
     QCOMPARE(c->control->icon().name(), QStringLiteral("wayland"));
     QVERIFY(iconChangedSpy.isEmpty());
@@ -1381,7 +1381,7 @@ void TestXdgShellClient::testXdgWindowGeometryAttachBuffer()
     QCOMPARE(client->frameGeometry().topLeft(), first_pos);
 
     QCOMPARE(client->frameGeometry().size(),
-             first_win_geo.intersected(client->surface()->expanse()).size());
+             first_win_geo.intersected(client->surface->expanse()).size());
     QCOMPARE(client->frameGeometry().size(), QSize(90, 40));
     QCOMPARE(win::render_geometry(client).topLeft(), first_pos - QPoint(10, 10));
     QCOMPARE(win::render_geometry(client).size(), QSize(100, 50));

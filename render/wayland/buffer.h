@@ -33,13 +33,13 @@ public:
     QRegion damage() const override
     {
         if (external) {
-            if (auto surf = buffer.toplevel()->surface()) {
+            if (auto surf = buffer.toplevel()->surface) {
                 return surf->trackedDamage();
             }
             return {};
         }
         if (internal.fbo || !internal.image.isNull()) {
-            return buffer.toplevel()->damage();
+            return buffer.toplevel()->damage_region;
         }
         return {};
     }

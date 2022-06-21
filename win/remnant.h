@@ -1,37 +1,56 @@
 /*
-    SPDX-FileCopyrightText: 2020 Roman Gilg <subdiff@gmail.com>
+    SPDX-FileCopyrightText: 2022 Roman Gilg <subdiff@gmail.com>
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #pragma once
 
-#include "kwin_export.h"
+#include "deco/renderer.h"
+
+#include "base/logging.h"
 
 #include <NETWM>
 #include <QMargins>
 #include <QRect>
 #include <QRegion>
-
+#include <cassert>
 #include <memory>
-#include <vector>
 
-namespace KWin
-{
-class Toplevel;
-
-namespace win
+namespace KWin::win
 {
 
-namespace deco
-{
-class renderer;
-}
-
-class control;
-
-class KWIN_EXPORT remnant
+class remnant
 {
 public:
+    remnant() = default;
+    remnant(remnant&& other) noexcept = default;
+    remnant& operator=(remnant&& other) noexcept = default;
+
+    ~remnant()
+    {
+        if (refcount != 0) {
+            qCCritical(KWIN_CORE) << "Remnant on destroy still with" << refcount << "refs.";
+        }
+    }
+
+    void ref()
+    {
+        ++refcount;
+    }
+
+    void unref()
+    {
+        --refcount;
+    }
+
+    void layout_decoration_rects(QRect& left, QRect& top, QRect& right, QRect& bottom) const
+    {
+        left = decoration_left;
+        top = decoration_top;
+        right = decoration_right;
+        bottom = decoration_bottom;
+    }
+
     QMargins frame_margins;
     QRegion render_region;
 
@@ -69,24 +88,6 @@ public:
     bool was_lock_screen{false};
 
     double buffer_scale{1};
-
-    std::unique_ptr<win::control> control;
-
-    Toplevel* win;
-
-    remnant(Toplevel* win, Toplevel* source);
-    ~remnant();
-
-    void ref();
-    void unref();
-    void discard();
-
-    bool was_transient() const;
-    bool has_lead(Toplevel const* toplevel) const;
-    void lead_closed(Toplevel* window, Toplevel* deleted);
-
-    void layout_decoration_rects(QRect& left, QRect& top, QRect& right, QRect& bottom) const;
 };
 
-}
 }

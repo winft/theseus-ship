@@ -22,6 +22,7 @@
 #include "win/remnant.h"
 #include "win/scene.h"
 #include "win/space.h"
+#include "win/space_window_release.h"
 #include "win/stacking_order.h"
 #include "win/x11/stacking_tree.h"
 
@@ -171,7 +172,7 @@ void compositor::stop(bool on_shutdown)
 
     if (space) {
         for (auto& c : space->windows()) {
-            if (c->remnant()) {
+            if (c->remnant) {
                 continue;
             }
             c->finishCompositing();
@@ -182,7 +183,9 @@ void compositor::stop(bool on_shutdown)
                 con, kwinApp()->x11RootWindow(), XCB_COMPOSITE_REDIRECT_MANUAL);
         }
         while (!space->remnants().empty()) {
-            space->remnants().front()->remnant()->discard();
+            auto win = space->remnants().front();
+            win->remnant->refcount = 0;
+            win::delete_window_from_space(win->space, win);
         }
     }
 

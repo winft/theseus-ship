@@ -145,8 +145,8 @@ namespace
 
 QVariantMap clientToVariantMap(Toplevel const* c)
 {
-    return {{QStringLiteral("resourceClass"), c->resourceClass()},
-            {QStringLiteral("resourceName"), c->resourceName()},
+    return {{QStringLiteral("resourceClass"), c->resource_class},
+            {QStringLiteral("resourceName"), c->resource_name},
             {QStringLiteral("desktopFile"), c->control->desktop_file_name()},
             {QStringLiteral("role"), c->windowRole()},
             {QStringLiteral("caption"), c->caption.normal},
@@ -208,7 +208,7 @@ QVariantMap kwin::getWindowInfo(const QString& uuid)
         if (!win->control) {
             continue;
         }
-        if (win->internalId() == id) {
+        if (win->internal_id == id) {
             return clientToVariantMap(win);
         }
     }

@@ -152,7 +152,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
         Q_EMIT desktopPresenceChanged(c->render->effect.get(), old, c->desktop());
     });
     connect(ws, &win::space::clientAdded, this, [this](auto c) {
-        if (c->readyForPainting())
+        if (c->ready_for_painting)
             slotClientShown(c);
         else
             connect(c, &Toplevel::windowShown, this, &effects_handler_impl::slotClientShown);
@@ -1102,7 +1102,7 @@ EffectWindow* effects_handler_impl::find_window_by_qwindow(QWindow* w) const
 EffectWindow* effects_handler_impl::find_window_by_uuid(const QUuid& id) const
 {
     for (auto win : m_compositor->space->m_windows) {
-        if (!win->remnant() && win->internalId() == id) {
+        if (!win->remnant && win->internal_id == id) {
             return win->render->effect.get();
         }
     }
@@ -1913,8 +1913,7 @@ effects_window_impl::effects_window_impl(Toplevel* toplevel)
     managed = toplevel->isClient();
 
     waylandClient = toplevel->is_wayland_window();
-    x11Client
-        = qobject_cast<KWin::win::x11::window*>(toplevel) != nullptr || toplevel->xcb_window();
+    x11Client = qobject_cast<KWin::win::x11::window*>(toplevel) != nullptr || toplevel->xcb_window;
 }
 
 effects_window_impl::~effects_window_impl()
@@ -1948,7 +1947,7 @@ void effects_window_impl::addRepaint(const QRect& r)
 
 void effects_window_impl::addRepaint(int x, int y, int w, int h)
 {
-    toplevel->addRepaint(x, y, w, h);
+    addRepaint(QRect(x, y, w, h));
 }
 
 void effects_window_impl::addRepaintFull()
@@ -1963,7 +1962,7 @@ void effects_window_impl::addLayerRepaint(const QRect& r)
 
 void effects_window_impl::addLayerRepaint(int x, int y, int w, int h)
 {
-    toplevel->addLayerRepaint(x, y, w, h);
+    addLayerRepaint(QRect(x, y, w, h));
 }
 
 const EffectWindowGroup* effects_window_impl::group() const
@@ -1979,7 +1978,7 @@ void effects_window_impl::refWindow()
     if (toplevel->transient()->annexed) {
         return;
     }
-    if (auto remnant = toplevel->remnant()) {
+    if (auto& remnant = toplevel->remnant) {
         return remnant->ref();
     }
     abort(); // TODO
@@ -1990,7 +1989,7 @@ void effects_window_impl::unrefWindow()
     if (toplevel->transient()->annexed) {
         return;
     }
-    if (auto remnant = toplevel->remnant()) {
+    if (auto& remnant = toplevel->remnant) {
         // delays deletion in case
         return remnant->unref();
     }
@@ -2019,10 +2018,8 @@ TOPLEVEL_HELPER(QSize, size, size)
 TOPLEVEL_HELPER(QRect, geometry, frameGeometry)
 TOPLEVEL_HELPER(QRect, frameGeometry, frameGeometry)
 TOPLEVEL_HELPER(int, desktop, desktop)
-TOPLEVEL_HELPER(bool, isDeleted, isDeleted)
 TOPLEVEL_HELPER(QString, windowRole, windowRole)
 TOPLEVEL_HELPER(bool, skipsCloseAnimation, skipsCloseAnimation)
-TOPLEVEL_HELPER(Wrapland::Server::Surface*, surface, surface)
 TOPLEVEL_HELPER(bool, isOutline, isOutline)
 TOPLEVEL_HELPER(bool, isLockScreen, isLockScreen)
 TOPLEVEL_HELPER(pid_t, pid, pid)
@@ -2060,7 +2057,7 @@ TOPLEVEL_HELPER_WIN(QRect, bufferGeometry, render_geometry)
 #define CLIENT_HELPER_WITH_DELETED_WIN(rettype, prototype, propertyname, defaultValue)             \
     rettype effects_window_impl::prototype() const                                                 \
     {                                                                                              \
-        if (toplevel->control || toplevel->remnant()) {                                            \
+        if (toplevel->control || toplevel->remnant) {                                              \
             return win::propertyname(toplevel);                                                    \
         }                                                                                          \
         return defaultValue;                                                                       \
@@ -2077,7 +2074,7 @@ CLIENT_HELPER_WITH_DELETED_WIN(QVector<uint>, desktops, x11_desktop_ids, QVector
         if (toplevel->control) {                                                                   \
             return toplevel->control->propertyname();                                              \
         }                                                                                          \
-        if (auto remnant = toplevel->remnant()) {                                                  \
+        if (auto& remnant = toplevel->remnant) {                                                   \
             return remnant->propertyname;                                                          \
         }                                                                                          \
         return defaultValue;                                                                       \
@@ -2089,6 +2086,16 @@ CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, isMinimized, minimized, false)
 CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, isFullScreen, fullscreen, false)
 
 #undef CLIENT_HELPER_WITH_DELETED_WIN_CTRL
+
+bool effects_window_impl::isDeleted() const
+{
+    return static_cast<bool>(toplevel->remnant);
+}
+
+Wrapland::Server::Surface* effects_window_impl::surface() const
+{
+    return toplevel->surface;
+}
 
 QStringList effects_window_impl::activities() const
 {
@@ -2133,7 +2140,7 @@ bool effects_window_impl::isCurrentTab() const
 
 QString effects_window_impl::windowClass() const
 {
-    return toplevel->resourceName() + QLatin1Char(' ') + toplevel->resourceClass();
+    return toplevel->resource_name + QLatin1Char(' ') + toplevel->resource_class;
 }
 
 QRect effects_window_impl::contentsRect() const
@@ -2233,13 +2240,13 @@ QByteArray effects_window_impl::readProperty(long atom, long type, int format) c
     if (!kwinApp()->x11Connection()) {
         return QByteArray();
     }
-    return readWindowProperty(window()->xcb_window(), atom, type, format);
+    return readWindowProperty(window()->xcb_window, atom, type, format);
 }
 
 void effects_window_impl::deleteProperty(long int atom) const
 {
     if (kwinApp()->x11Connection()) {
-        deleteWindowProperty(window()->xcb_window(), atom);
+        deleteWindowProperty(window()->xcb_window, atom);
     }
 }
 
@@ -2294,7 +2301,7 @@ EffectWindowList getMainWindows(T* c)
 
 EffectWindowList effects_window_impl::mainWindows() const
 {
-    if (toplevel->control || toplevel->remnant()) {
+    if (toplevel->control || toplevel->remnant) {
         return getMainWindows(toplevel);
     }
     return {};

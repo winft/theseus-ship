@@ -224,7 +224,8 @@ space::~space()
     win::x11::clear_space(*this);
 
     for (auto const& window : m_windows) {
-        if (auto internal = qobject_cast<win::internal_window*>(window)) {
+        if (auto internal = qobject_cast<win::internal_window*>(window);
+            internal && !internal->remnant) {
             internal->destroyClient();
             remove_all(m_windows, internal);
         }
@@ -232,7 +233,7 @@ space::~space()
 
     // At this point only remnants are remaining.
     for (auto it = m_windows.begin(); it != m_windows.end();) {
-        assert((*it)->remnant());
+        assert((*it)->remnant);
         Q_EMIT window_deleted(*it);
         it = m_windows.erase(it);
     }
@@ -1705,7 +1706,7 @@ std::vector<Toplevel*> space::unmanagedList() const
 {
     std::vector<Toplevel*> ret;
     for (auto const& window : m_windows) {
-        if (window->xcb_window() && !window->control && !window->remnant()) {
+        if (window->xcb_window && !window->control && !window->remnant) {
             ret.push_back(window);
         }
     }
@@ -1716,7 +1717,7 @@ std::vector<Toplevel*> space::remnants() const
 {
     std::vector<Toplevel*> ret;
     for (auto const& window : m_windows) {
-        if (window->remnant()) {
+        if (window->remnant) {
             ret.push_back(window);
         }
     }
@@ -2985,7 +2986,7 @@ void space::setupWindowShortcutDone(bool ok)
 
 void space::clientShortcutUpdated(Toplevel* window)
 {
-    QString key = QStringLiteral("_k_session:%1").arg(window->xcb_window());
+    QString key = QStringLiteral("_k_session:%1").arg(window->xcb_window);
     QAction* action = findChild<QAction*>(key);
     if (!window->control->shortcut().isEmpty()) {
         if (action == nullptr) { // new shortcut
@@ -3763,8 +3764,8 @@ void space::storeClient(KConfigGroup& cg, int num, win::x11::window* c)
     cg.writeEntry(QLatin1String("sessionId") + n, c->sessionId().constData());
     cg.writeEntry(QLatin1String("windowRole") + n, c->windowRole().constData());
     cg.writeEntry(QLatin1String("wmCommand") + n, c->wmCommand().constData());
-    cg.writeEntry(QLatin1String("resourceName") + n, c->resourceName().constData());
-    cg.writeEntry(QLatin1String("resourceClass") + n, c->resourceClass().constData());
+    cg.writeEntry(QLatin1String("resourceName") + n, c->resource_name.constData());
+    cg.writeEntry(QLatin1String("resourceClass") + n, c->resource_class.constData());
     cg.writeEntry(
         QLatin1String("geometry") + n,
         QRect(win::x11::calculate_gravitation(c, true), win::frame_to_client_size(c, c->size())));
@@ -3925,8 +3926,8 @@ win::session_info* space::takeSessionInfo(win::x11::window* c)
     QByteArray sessionId = c->sessionId();
     QByteArray windowRole = c->windowRole();
     QByteArray wmCommand = c->wmCommand();
-    QByteArray resourceName = c->resourceName();
-    QByteArray resourceClass = c->resourceClass();
+    auto const& resourceName = c->resource_name;
+    auto const& resourceClass = c->resource_class;
 
     // First search ``session''
     if (!sessionId.isEmpty()) {

@@ -604,7 +604,7 @@ std::deque<Toplevel*> scene::get_leads(std::deque<Toplevel*> const& windows)
 
     for (auto const& window : windows) {
         if (window->transient()->lead() && window->transient()->annexed) {
-            auto const damage = window->damage();
+            auto const damage = window->damage_region;
             if (damage.isEmpty()) {
                 continue;
             }

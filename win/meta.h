@@ -24,8 +24,8 @@ namespace KWin::win
 template<typename Win>
 QString caption(Win* win)
 {
-    if (auto remnant = win->remnant()) {
-        return remnant->caption;
+    if (win->remnant) {
+        return win->remnant->caption;
     }
     QString cap = win->caption.normal + win->caption.suffix;
     if (win->control->unresponsive()) {

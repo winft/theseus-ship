@@ -37,7 +37,7 @@ private:
 template<typename Win>
 void update_shape(Win* win)
 {
-    if (win->shape()) {
+    if (win->is_shape) {
         // Workaround for #19644 - Shaped windows shouldn't have decoration
         if (!win->app_no_border) {
             // Only when shape is detected for the first time, still let the user to override
@@ -54,7 +54,7 @@ void update_shape(Win* win)
                               win->frameId(),
                               client_pos.x(),
                               client_pos.y(),
-                              win->xcb_window());
+                              win->xcb_window);
         }
     } else if (win->app_no_border) {
         xcb_shape_mask(connection(),
@@ -75,11 +75,11 @@ void update_shape(Win* win)
     // when the decoration calls it or when the decoration is created/destroyed
     win->update_input_shape();
 
-    if (win->space.compositing()) {
+    if (win->render) {
         win->addRepaintFull();
 
         // In case shape change removes part of this window
-        win->addWorkspaceRepaint(win::visible_rect(win));
+        win->space.render.addRepaint(visible_rect(win));
     }
 
     win->discard_shape();

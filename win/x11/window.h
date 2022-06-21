@@ -48,7 +48,8 @@ class KWIN_EXPORT window : public Toplevel
 public:
     constexpr static bool is_toplevel{false};
 
-    explicit window(win::space& space);
+    window(win::remnant remnant, win::space& space);
+    window(xcb_window_t xcb_win, win::space& space);
     ~window();
 
     QString iconic_caption;

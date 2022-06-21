@@ -43,12 +43,16 @@ Toplevel::Toplevel(win::space& space)
 {
 }
 
+Toplevel::Toplevel(win::remnant remnant, win::space& space)
+    : Toplevel(space)
+{
+    this->remnant = std::move(remnant);
+}
+
 Toplevel::Toplevel(win::transient* transient, win::space& space)
     : space{space}
-    , m_clientMachine(new win::x11::client_machine(this))
-    , m_internalId(QUuid::createUuid())
+    , internal_id{QUuid::createUuid()}
     , m_damageReplyPending(false)
-    , m_skipCloseAnimation(false)
 {
     m_transient.reset(transient);
 
@@ -75,8 +79,8 @@ Toplevel::Toplevel(win::transient* transient, win::space& space)
 
 Toplevel::~Toplevel()
 {
+    delete client_machine;
     delete info;
-    delete m_remnant;
 }
 
 QDebug& operator<<(QDebug& stream, const Toplevel* cl)
@@ -89,8 +93,8 @@ QDebug& operator<<(QDebug& stream, const Toplevel* cl)
 
 NET::WindowType Toplevel::windowType([[maybe_unused]] bool direct,int supported_types) const
 {
-    if (m_remnant) {
-        return m_remnant->window_type;
+    if (remnant) {
+        return remnant->window_type;
     }
     if (supported_types == 0) {
         supported_types = supported_default_types;
@@ -116,70 +120,11 @@ NET::WindowType Toplevel::windowType([[maybe_unused]] bool direct,int supported_
     return wt;
 }
 
-Toplevel* Toplevel::create_remnant(Toplevel* source)
-{
-    if (!source->space.render.scene) {
-        // Don't create effect remnants when we don't render.
-        return nullptr;
-    }
-    if (!source->readyForPainting()) {
-        // Don't create remnants for windows that have never been shown.
-        return nullptr;
-    }
-
-    auto win = new Toplevel(source->space);
-    win->copyToDeleted(source);
-    win->m_remnant = new win::remnant(win, source);
-
-    win::add_remnant(win->space, source, win);
-    Q_EMIT source->remnant_created(win);
-    return win;
-}
-
-// used only by Deleted::copy()
-void Toplevel::copyToDeleted(Toplevel* c)
-{
-    m_internalId = c->internalId();
-    m_frameGeometry = c->m_frameGeometry;
-    m_visual = c->m_visual;
-    bit_depth = c->bit_depth;
-
-    info = c->info;
-    if (auto win_info = dynamic_cast<win::x11::win_info*>(info)) {
-        win_info->disable();
-    }
-
-    m_client.reset(c->m_client, false);
-    ready_for_painting = c->ready_for_painting;
-    damage_handle = XCB_NONE;
-    damage_region = c->damage_region;
-    repaints_region = c->repaints_region;
-    layer_repaints_region = c->layer_repaints_region;
-    is_shape = c->is_shape;
-
-    render = std::move(c->render);
-    if (render) {
-        render->effect->setWindow(this);
-    }
-
-    resource_name = c->resourceName();
-    resource_class = c->resourceClass();
-    m_clientMachine = c->m_clientMachine;
-    m_clientMachine->setParent(this);
-    m_wmClientLeader = c->wmClientLeader();
-    opaque_region = c->opaqueRegion();
-    central_output = c->central_output;
-    m_skipCloseAnimation = c->m_skipCloseAnimation;
-    m_desktops = c->desktops();
-    m_layer = c->layer();
-    has_in_content_deco = c->has_in_content_deco;
-    client_frame_extents = c->client_frame_extents;
-}
-
 // before being deleted, remove references to everything that's now
 // owner by Deleted
 void Toplevel::disownDataPassedToDeleted()
 {
+    client_machine = nullptr;
     info = nullptr;
 }
 
@@ -189,15 +134,14 @@ void Toplevel::disownDataPassedToDeleted()
  */
 QByteArray Toplevel::wmClientMachine(bool use_localhost) const
 {
-    if (!m_clientMachine) {
-        // this should never happen
+    if (!client_machine) {
         return QByteArray();
     }
-    if (use_localhost && m_clientMachine->is_local()) {
+    if (use_localhost && client_machine->is_local()) {
         // special name for the local machine (localhost)
         return win::x11::client_machine::localhost();
     }
-    return m_clientMachine->hostname();
+    return client_machine->hostname();
 }
 
 /**
@@ -209,7 +153,7 @@ xcb_window_t Toplevel::wmClientLeader() const
     if (m_wmClientLeader != XCB_WINDOW_NONE) {
         return m_wmClientLeader;
     }
-    return xcb_window();
+    return xcb_window;
 }
 
 void Toplevel::setResourceClass(const QByteArray &name, const QByteArray &className)
@@ -221,8 +165,8 @@ void Toplevel::setResourceClass(const QByteArray &name, const QByteArray &classN
 
 double Toplevel::opacity() const
 {
-    if (m_remnant) {
-        return m_remnant->opacity;
+    if (remnant) {
+        return remnant->opacity;
     }
     if (info->opacity() == 0xffffffff)
         return 1.0;
@@ -244,8 +188,8 @@ void Toplevel::setOpacity(double new_opacity)
 
 bool Toplevel::isOutline() const
 {
-    if (m_remnant) {
-        return m_remnant->was_outline;
+    if (remnant) {
+        return remnant->was_outline;
     }
     return is_outline;
 }
@@ -263,7 +207,7 @@ void Toplevel::add_scene_window_addon()
 
 void Toplevel::finishCompositing()
 {
-    assert(!remnant());
+    assert(!remnant);
 
     if (render) {
         discard_buffer();
@@ -390,16 +334,6 @@ void Toplevel::resetDamage()
     damage_region = QRegion();
 }
 
-void Toplevel::addRepaint(int x, int y, int w, int h)
-{
-    addRepaint(QRegion(x, y, w, h));
-}
-
-void Toplevel::addRepaint(QRect const& rect)
-{
-    addRepaint(QRegion(rect));
-}
-
 void Toplevel::addRepaint(QRegion const& region)
 {
     if (!space.compositing()) {
@@ -408,16 +342,6 @@ void Toplevel::addRepaint(QRegion const& region)
     repaints_region += region;
     add_repaint_outputs(region.translated(pos()));
     Q_EMIT needsRepaint();
-}
-
-void Toplevel::addLayerRepaint(int x, int y, int w, int h)
-{
-    addLayerRepaint(QRegion(x, y, w, h));
-}
-
-void Toplevel::addLayerRepaint(QRect const& rect)
-{
-    addLayerRepaint(QRegion(rect));
 }
 
 void Toplevel::addLayerRepaint(QRegion const& region)
@@ -503,19 +427,6 @@ void Toplevel::add_repaint_outputs(QRegion const& region)
     }
 }
 
-void Toplevel::addWorkspaceRepaint(int x, int y, int w, int h)
-{
-    addWorkspaceRepaint(QRect(x, y, w, h));
-}
-
-void Toplevel::addWorkspaceRepaint(QRect const& rect)
-{
-    if (!space.compositing()) {
-        return;
-    }
-    space.render.addRepaint(rect);
-}
-
 void Toplevel::setReadyForPainting()
 {
     if (!ready_for_painting) {
@@ -572,7 +483,7 @@ void Toplevel::handle_output_removed(base::output* output)
 
 qreal Toplevel::bufferScale() const
 {
-    return m_remnant ? m_remnant->buffer_scale : 1.;
+    return remnant ? remnant->buffer_scale : 1.;
 }
 
 bool Toplevel::wantsShadowToBeRendered() const
@@ -590,11 +501,6 @@ bool Toplevel::isClient() const
     return false;
 }
 
-bool Toplevel::isDeleted() const
-{
-    return remnant() != nullptr;
-}
-
 pid_t Toplevel::pid() const
 {
     return info->pid();
@@ -602,18 +508,18 @@ pid_t Toplevel::pid() const
 
 xcb_window_t Toplevel::frameId() const
 {
-    if (m_remnant) {
-        return m_remnant->frame;
+    if (remnant) {
+        return remnant->frame;
     }
-    return m_client;
+    return xcb_window;
 }
 
 void Toplevel::debug(QDebug& stream) const
 {
-    if (remnant()) {
+    if (remnant) {
         stream << "\'REMNANT:" << reinterpret_cast<void const*>(this) << "\'";
     } else {
-        stream << "\'ID:" << reinterpret_cast<void const*>(this) << xcb_window() << "\'";
+        stream << "\'ID:" << reinterpret_cast<void const*>(this) << xcb_window << "\'";
     }
 }
 
@@ -647,8 +553,8 @@ void Toplevel::addDamage(const QRegion &damage)
 
 QByteArray Toplevel::windowRole() const
 {
-    if (m_remnant) {
-        return m_remnant->window_role;
+    if (remnant) {
+        return remnant->window_role;
     }
     return QByteArray(info->windowRole());
 }
@@ -701,8 +607,8 @@ void Toplevel::discard_quads()
 
 QRegion Toplevel::render_region() const
 {
-    if (m_remnant) {
-        return m_remnant->render_region;
+    if (remnant) {
+        return remnant->render_region;
     }
 
     auto const render_geo = win::render_geometry(this);
@@ -738,16 +644,16 @@ QRegion Toplevel::render_region() const
 
 bool Toplevel::isLocalhost() const
 {
-    if (!m_clientMachine) {
+    if (!client_machine) {
         return true;
     }
-    return m_clientMachine->is_local();
+    return client_machine->is_local();
 }
 
 bool Toplevel::is_popup_end() const
 {
-    if (m_remnant) {
-        return m_remnant->was_popup_window;
+    if (remnant) {
+        return remnant->was_popup_window;
     }
     return false;
 }
@@ -821,82 +727,14 @@ bool Toplevel::isInternal() const
     return false;
 }
 
-bool Toplevel::belongsToDesktop() const
-{
-    return false;
-}
-
-void Toplevel::checkTransient([[maybe_unused]] Toplevel* window)
-{
-}
-
-win::remnant* Toplevel::remnant() const
-{
-    return m_remnant;
-}
-
 win::transient* Toplevel::transient() const
 {
     return m_transient.get();
 }
 
-bool Toplevel::isCloseable() const
-{
-    return false;
-}
-
-bool Toplevel::isShown() const
-{
-    return false;
-}
-
-bool Toplevel::isHiddenInternal() const
-{
-    return false;
-}
-
-void Toplevel::hideClient([[maybe_unused]] bool hide)
-{
-}
-
-void Toplevel::setFullScreen([[maybe_unused]] bool set, [[maybe_unused]] bool user)
-{
-}
-
 win::maximize_mode Toplevel::maximizeMode() const
 {
     return win::maximize_mode::restore;
-}
-
-bool Toplevel::noBorder() const
-{
-    if (m_remnant) {
-        return m_remnant->no_border;
-    }
-    return true;
-}
-
-void Toplevel::setNoBorder([[maybe_unused]] bool set)
-{
-}
-
-bool Toplevel::isResizable() const
-{
-    return false;
-}
-
-bool Toplevel::isMovable() const
-{
-    return false;
-}
-
-bool Toplevel::isMovableAcrossScreens() const
-{
-    return false;
-}
-
-void Toplevel::takeFocus()
-{
 }
 
 bool Toplevel::wantsInput() const
@@ -905,26 +743,6 @@ bool Toplevel::wantsInput() const
 }
 
 bool Toplevel::dockWantsInput() const
-{
-    return false;
-}
-
-bool Toplevel::isMaximizable() const
-{
-    return false;
-}
-
-bool Toplevel::isMinimizable() const
-{
-    return false;
-}
-
-bool Toplevel::userCanSetFullScreen() const
-{
-    return false;
-}
-
-bool Toplevel::userCanSetNoBorder() const
 {
     return false;
 }
@@ -949,24 +767,10 @@ QSize Toplevel::minSize() const
     return control->rules().checkMinSize(QSize(0, 0));
 }
 
-void Toplevel::setFrameGeometry([[maybe_unused]] QRect const& rect)
-{
-}
-
-bool Toplevel::hasStrut() const
-{
-    return false;
-}
-
-void Toplevel::updateDecoration([[maybe_unused]] bool check_workspace_pos,
-                                [[maybe_unused]] bool force)
-{
-}
-
 void Toplevel::layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRect &bottom) const
 {
-    if (m_remnant) {
-        return m_remnant->layout_decoration_rects(left, top, right, bottom);
+    if (remnant) {
+        return remnant->layout_decoration_rects(left, top, right, bottom);
     }
     win::layout_decoration_rects(this, left, top, right, bottom);
 }
@@ -1091,16 +895,7 @@ void Toplevel::updateCaption()
 {
 }
 
-bool Toplevel::acceptsFocus() const
-{
-    return false;
-}
-
 void Toplevel::update_maximized([[maybe_unused]] win::maximize_mode mode)
-{
-}
-
-void Toplevel::closeWindow()
 {
 }
 
@@ -1123,12 +918,6 @@ bool Toplevel::belongsToSameApplication([[maybe_unused]] Toplevel const* other,
 QRect Toplevel::iconGeometry() const
 {
     return space.get_icon_geometry(this);
-}
-
-void Toplevel::setWindowHandles(xcb_window_t w)
-{
-    Q_ASSERT(!m_client.is_valid() && w != XCB_WINDOW_NONE);
-    m_client.reset(w, false);
 }
 
 void Toplevel::setShortcutInternal()

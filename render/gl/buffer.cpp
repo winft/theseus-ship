@@ -47,7 +47,7 @@ render::gl::texture* buffer::texture() const
 bool buffer::bind()
 {
     if (!m_texture->isNull()) {
-        if (!toplevel()->damage().isEmpty()) {
+        if (!toplevel()->damage_region.isEmpty()) {
             updateBuffer();
         }
         if (needs_buffer_update(this)) {

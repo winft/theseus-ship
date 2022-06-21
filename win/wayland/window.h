@@ -93,6 +93,7 @@ public:
     bool must_place{false};
     bool inhibit_idle{false};
 
+    window(win::remnant remnant, win::space& space);
     window(Wrapland::Server::Surface* surface, win::space& space);
     ~window() = default;
 

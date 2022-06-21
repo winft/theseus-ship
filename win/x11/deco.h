@@ -47,7 +47,7 @@ void layout_decoration_rects(Win* win, QRect& left, QRect& top, QRect& right, QR
 template<typename Win>
 void detect_no_border(Win* win)
 {
-    if (win->shape()) {
+    if (win->is_shape) {
         win->user_no_border = true;
         win->app_no_border = true;
         return;

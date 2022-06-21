@@ -74,11 +74,11 @@ bool drag_and_drop_filter::motion(motion_event const& event)
 
     if (window) {
         // TODO: consider decorations
-        if (window->surface() != seat->drags().get_target().surface) {
+        if (window->surface != seat->drags().get_target().surface) {
             if (window->control) {
                 redirect.space.activateClient(window);
             }
-            seat->drags().set_target(window->surface(), window->input_transform());
+            seat->drags().set_target(window->surface, window->input_transform());
         }
     } else {
         // No window at that place, if we have a surface we need to reset.
@@ -133,11 +133,11 @@ bool drag_and_drop_filter::touch_motion(touch_motion_event const& event)
 
     if (auto t = redirect.findToplevel(event.pos.toPoint())) {
         // TODO: consider decorations
-        if (t->surface() != seat->drags().get_target().surface) {
+        if (t->surface != seat->drags().get_target().surface) {
             if (t->control) {
                 redirect.space.activateClient(t);
             }
-            seat->drags().set_target(t->surface(), event.pos, t->input_transform());
+            seat->drags().set_target(t->surface, event.pos, t->input_transform());
         }
     } else {
         // no window at that place, if we have a surface we need to reset

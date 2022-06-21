@@ -208,7 +208,7 @@ void PlasmaSurfaceTest::testDesktopIsOpaque()
     QVERIFY(win::is_desktop(c));
 
     QVERIFY(!c->hasAlpha());
-    QCOMPARE(c->depth(), 24);
+    QCOMPARE(c->bit_depth, 24);
 }
 
 void PlasmaSurfaceTest::testOSDPlacement()

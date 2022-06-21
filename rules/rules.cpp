@@ -397,14 +397,14 @@ bool Rules::match(Toplevel const* window) const
     if (!matchType(window->windowType(true))) {
         return false;
     }
-    if (!matchWMClass(window->resourceClass(), window->resourceName())) {
+    if (!matchWMClass(window->resource_class, window->resource_name)) {
         return false;
     }
     if (!matchRole(window->windowRole().toLower())) {
         return false;
     }
-    if (!matchClientMachine(window->clientMachine()->hostname(),
-                            window->clientMachine()->is_local())) {
+    if (auto& cm = window->client_machine;
+        cm && !matchClientMachine(cm->hostname(), cm->is_local())) {
         return false;
     }
 

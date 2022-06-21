@@ -24,8 +24,8 @@ namespace KWin::win::wayland
 template<typename Win>
 void assign_subsurface_role(Win* win)
 {
-    assert(win->surface());
-    assert(win->surface()->subsurface());
+    assert(win->surface);
+    assert(win->surface->subsurface());
 
     win->transient()->annexed = true;
 }
@@ -33,13 +33,13 @@ void assign_subsurface_role(Win* win)
 inline void restack_subsurfaces(Toplevel* window)
 {
     auto subsurface_stacker = [&window](std::vector<Toplevel*>& children) {
-        auto const& subsurfaces = window->surface()->state().children;
+        auto const& subsurfaces = window->surface->state().children;
         std::vector<Toplevel*> stacking;
 
         for (auto const& subsurface : subsurfaces) {
             auto surface = subsurface->surface();
             auto it = std::find_if(children.begin(), children.end(), [&surface](Toplevel* child) {
-                return child->surface() == surface;
+                return child->surface == surface;
             });
             if (it == children.end()) {
                 continue;
@@ -70,11 +70,11 @@ void set_subsurface_parent(Win* win, Lead* lead)
     lead->transient()->add_child(win);
     restack_subsurfaces(lead);
 
-    QObject::connect(win->surface(), &WS::Surface::committed, win, [win] {
-        if (win->surface()->state().updates & Wrapland::Server::surface_change::size) {
+    QObject::connect(win->surface, &WS::Surface::committed, win, [win] {
+        if (win->surface->state().updates & Wrapland::Server::surface_change::size) {
             auto const old_geo = win->frameGeometry();
             // TODO(romangg): use setFrameGeometry?
-            win->set_frame_geometry(QRect(win->pos(), win->surface()->size()));
+            win->set_frame_geometry(QRect(win->pos(), win->surface->size()));
             Q_EMIT win->frame_geometry_changed(win, old_geo);
         }
         win->handle_commit();
@@ -89,14 +89,14 @@ void set_subsurface_parent(Win* win, Lead* lead)
         win->space.render.schedule_repaint(win);
     });
 
-    auto subsurface = win->surface()->subsurface();
+    auto subsurface = win->surface->subsurface();
 
     auto get_pos = [lead, subsurface] {
         return win::render_geometry(lead).topLeft() + subsurface->position();
     };
     auto set_pos = [win, get_pos]() {
         auto const old_frame_geo = win->frameGeometry();
-        auto const frame_geo = QRect(get_pos(), win->surface()->size());
+        auto const frame_geo = QRect(get_pos(), win->surface->size());
 
         if (old_frame_geo != frame_geo) {
             // TODO(romangg): use setFrameGeometry?
@@ -144,9 +144,9 @@ void handle_new_subsurface(Space* space, Wrapland::Server::Subsurface* subsurfac
     assign_subsurface_role(window);
 
     for (auto& win : space->m_windows) {
-        if (win->surface() == subsurface->parentSurface()) {
+        if (win->surface == subsurface->parentSurface()) {
             win::wayland::set_subsurface_parent(window, win);
-            if (window->readyForPainting()) {
+            if (window->ready_for_painting) {
                 space->handle_window_added(window);
                 adopt_transient_children(space, window);
                 return;

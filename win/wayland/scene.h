@@ -17,11 +17,11 @@ namespace KWin::win::wayland
 template<typename Win>
 void update_buffer(Win& win, std::shared_ptr<Wrapland::Server::Buffer>& target)
 {
-    if (!win.surface()) {
+    if (!win.surface) {
         return;
     }
 
-    auto& buffer = win.surface()->state().buffer;
+    auto& buffer = win.surface->state().buffer;
     if (!buffer) {
         return;
     }
@@ -36,7 +36,7 @@ void update_buffer(Win& win, std::shared_ptr<Wrapland::Server::Buffer>& target)
 template<typename Win>
 QRectF get_scaled_source_rectangle(Win& win)
 {
-    if (auto const rect = win.surface()->state().source_rectangle; rect.isValid()) {
+    if (auto const rect = win.surface->state().source_rectangle; rect.isValid()) {
         auto scale = win.bufferScale();
         return QRectF(rect.topLeft() * scale, rect.bottomRight() * scale);
     }
@@ -46,13 +46,13 @@ QRectF get_scaled_source_rectangle(Win& win)
 template<typename Win>
 void setup_scale_scene_notify(Win& win)
 {
-    assert(win.surface());
+    assert(win.surface);
 
     // A change of scale won't affect the geometry in compositor co-ordinates, but will affect the
     // window quads.
     QObject::connect(
-        win.surface(), &Wrapland::Server::Surface::committed, win.space.render.scene.get(), [&] {
-            if (win.surface()->state().updates & Wrapland::Server::surface_change::scale) {
+        win.surface, &Wrapland::Server::Surface::committed, win.space.render.scene.get(), [&] {
+            if (win.surface->state().updates & Wrapland::Server::surface_change::scale) {
                 win.space.render.scene->windowGeometryShapeChanged(&win);
             }
         });

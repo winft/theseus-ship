@@ -37,7 +37,7 @@ Toplevel* get_window(input::wayland::platform& platform,
     auto input_surface = text_input->entered_surface();
 
     for (auto win : platform.redirect->space.m_windows) {
-        if (win->control && win->surface() == input_surface) {
+        if (win->control && win->surface == input_surface) {
             return win;
         }
     }
@@ -180,7 +180,7 @@ void input_method::handle_popup_surface_created(input_method_popup_surface_v2* p
                      [popup] { win::wayland::destroy_window(popup); });
 
     QObject::connect(
-        popup->surface(), &Wrapland::Server::Surface::committed, popup, &window::handle_commit);
+        popup->surface, &Wrapland::Server::Surface::committed, popup, &window::handle_commit);
     QObject::connect(popup, &window::needsRepaint, &space->render, [popup] {
         popup->space.render.schedule_repaint(popup);
     });
@@ -201,7 +201,7 @@ void input_method::handle_popup_surface_created(input_method_popup_surface_v2* p
             }
         });
 
-    if (popup->readyForPainting()) {
+    if (popup->ready_for_painting) {
         space->handle_window_added(popup);
     } else {
         QObject::connect(

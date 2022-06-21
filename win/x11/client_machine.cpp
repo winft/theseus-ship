@@ -49,9 +49,8 @@ static QByteArray get_hostname_helper()
     return QByteArray();
 }
 
-get_addr_info_wrapper::get_addr_info_wrapper(QByteArray const& hostName, QObject* parent)
-    : QObject(parent)
-    , m_resolving(false)
+get_addr_info_wrapper::get_addr_info_wrapper(QByteArray const& hostName)
+    : m_resolving(false)
     , m_resolved(false)
     , m_ownResolved(false)
     , m_hostname(hostName)
@@ -63,12 +62,12 @@ get_addr_info_wrapper::get_addr_info_wrapper(QByteArray const& hostName, QObject
 {
     // Watcher will be deleted together with the get_addr_info_wrapper once the future got canceled
     // or finished.
-    connect(m_watcher, &QFutureWatcher<int>::canceled, this, &get_addr_info_wrapper::deleteLater);
+    connect(m_watcher, &QFutureWatcher<int>::canceled, this, &get_addr_info_wrapper::finished);
     connect(m_watcher, &QFutureWatcher<int>::finished, this, &get_addr_info_wrapper::slotResolved);
     connect(m_ownAddressWatcher,
             &QFutureWatcher<int>::canceled,
             this,
-            &get_addr_info_wrapper::deleteLater);
+            &get_addr_info_wrapper::finished);
     connect(m_ownAddressWatcher,
             &QFutureWatcher<int>::finished,
             this,
@@ -140,7 +139,7 @@ bool get_addr_info_wrapper::resolved(QFutureWatcher<int>* watcher)
     if (watcher->result() != 0) {
         qCDebug(KWIN_CORE) << "getaddrinfo failed with error:" << gai_strerror(watcher->result());
         // call failed;
-        deleteLater();
+        Q_EMIT finished();
         return false;
     }
     return true;
@@ -171,19 +170,7 @@ void get_addr_info_wrapper::compare()
         }
         address = address->ai_next;
     }
-    deleteLater();
-}
-
-client_machine::client_machine(QObject* parent)
-    : QObject(parent)
-    , m_localhost(false)
-    , m_resolved(false)
-    , m_resolving(false)
-{
-}
-
-client_machine::~client_machine()
-{
+    Q_EMIT finished();
 }
 
 void client_machine::resolve(xcb_window_t window, xcb_window_t clientLeader)
@@ -235,14 +222,16 @@ void client_machine::check_for_localhost()
                 return;
             }
         } else {
-            m_resolving = true;
             // check using information from get addr info
             // get_addr_info_wrapper gets automatically destroyed once it finished or not
-            auto info = new get_addr_info_wrapper(lowerHostName, this);
-            connect(info, &get_addr_info_wrapper::local, this, &client_machine::set_local);
+            resolver = std::make_unique<get_addr_info_wrapper>(lowerHostName);
             connect(
-                info, &get_addr_info_wrapper::destroyed, this, &client_machine::resolve_finished);
-            info->resolve();
+                resolver.get(), &get_addr_info_wrapper::local, this, &client_machine::set_local);
+            connect(resolver.get(),
+                    &get_addr_info_wrapper::finished,
+                    this,
+                    &client_machine::resolve_finished);
+            resolver->resolve();
         }
     }
 }
@@ -255,7 +244,7 @@ void client_machine::set_local()
 
 void client_machine::resolve_finished()
 {
-    m_resolving = false;
+    resolver.reset();
 }
 
 } // namespace

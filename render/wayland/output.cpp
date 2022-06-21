@@ -20,6 +20,7 @@
 #include "wayland_logging.h"
 #include "win/remnant.h"
 #include "win/space.h"
+#include "win/space_window_release.h"
 #include "win/transient.h"
 #include "win/x11/stacking_tree.h"
 
@@ -103,11 +104,11 @@ bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
     while (window_it != windows.end()) {
         auto win = *window_it;
 
-        if (win->remnant() && win->transient()->annexed) {
-            if (auto lead = win::lead_of_annexed_transient(win); !lead || !lead->remnant()) {
+        if (win->remnant && win->transient()->annexed) {
+            if (auto lead = win::lead_of_annexed_transient(win); !lead || !lead->remnant) {
                 // TODO(romangg): Add repaint to compositor?
-                win->remnant()->refcount = 0;
-                delete win;
+                win->remnant->refcount = 0;
+                win::delete_window_from_space(win->space, win);
                 window_it = windows.erase(window_it);
                 continue;
             }
@@ -116,9 +117,8 @@ bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
 
         if (prepare_repaint(win)) {
             has_window_repaints = true;
-        } else if (win->surface()
-                   && win->surface()->client() != waylandServer()->xwayland_connection()
-                   && (win->surface()->state().updates & Wrapland::Server::surface_change::frame)
+        } else if (win->surface && win->surface->client() != waylandServer()->xwayland_connection()
+                   && (win->surface->state().updates & Wrapland::Server::surface_change::frame)
                    && max_coverage_output(win) == &base) {
             frame_windows.push_back(win);
         }
@@ -171,7 +171,7 @@ bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
         auto screen_lock_filtered
             = kwinApp()->is_screen_locked() && !win->isLockScreen() && !win->isInputMethod();
 
-        return !win->readyForPainting() || screen_lock_filtered;
+        return !win->ready_for_painting || screen_lock_filtered;
     });
 
     // Submit pending output repaints and clear the pending field, so that post-pass can add new
@@ -227,8 +227,8 @@ void output::run()
     }
 
     for (auto win : windows) {
-        if (win->remnant() && !win->remnant()->refcount) {
-            delete win;
+        if (win->remnant && !win->remnant->refcount) {
+            win::delete_window_from_space(win->space, win);
         }
     }
 
@@ -241,10 +241,10 @@ void output::dry_run()
     std::deque<Toplevel*> frame_windows;
 
     for (auto win : windows) {
-        if (!win->surface() || win->surface()->client() == waylandServer()->xwayland_connection()) {
+        if (!win->surface || win->surface->client() == waylandServer()->xwayland_connection()) {
             continue;
         }
-        if (!(win->surface()->state().updates & Wrapland::Server::surface_change::frame)) {
+        if (!(win->surface->state().updates & Wrapland::Server::surface_change::frame)) {
             continue;
         }
         frame_windows.push_back(win);

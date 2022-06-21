@@ -241,7 +241,6 @@ DELEGATE_WIN_TRANSIENT(bool, isModal, modal)
         return m_client->clientName();                                                             \
     }
 
-DELEGATE(WId, windowId, xcb_window)
 DELEGATE(WId, decorationId, frameId)
 
 #undef DELEGATE
@@ -267,6 +266,11 @@ DELEGATE(requestToggleKeepBelow, KeepBelowOp)
 DELEGATE(requestContextHelp, showContextHelp)
 
 #undef DELEGATE
+
+WId client_impl::windowId() const
+{
+    return m_client->xcb_window;
+}
 
 void client_impl::requestMinimize()
 {

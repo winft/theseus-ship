@@ -121,7 +121,7 @@ void DontCrashAuroraeDestroyDecoTest::testBorderlessMaximizedWindows()
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
     QVERIFY(client);
-    QCOMPARE(client->xcb_window(), w);
+    QCOMPARE(client->xcb_window, w);
     QVERIFY(win::decoration(client) != nullptr);
     QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
     QCOMPARE(client->noBorder(), false);
@@ -134,7 +134,7 @@ void DontCrashAuroraeDestroyDecoTest::testBorderlessMaximizedWindows()
 
     // mark the window as ready for painting, otherwise it doesn't get input events
     QMetaObject::invokeMethod(client, "setReadyForPainting");
-    QVERIFY(client->readyForPainting());
+    QVERIFY(client->ready_for_painting);
 
     // simulate click on maximize button
     QSignalSpy maximizedStateChangedSpy(

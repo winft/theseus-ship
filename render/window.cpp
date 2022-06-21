@@ -98,7 +98,7 @@ QPoint window::bufferOffset() const
 
 bool window::isVisible() const
 {
-    if (toplevel->isDeleted())
+    if (toplevel->remnant)
         return false;
     if (!toplevel->isOnCurrentDesktop())
         return false;
@@ -121,7 +121,7 @@ bool window::isPaintingEnabled() const
 void window::resetPaintingEnabled()
 {
     disable_painting = window_paint_disable_type::none;
-    if (toplevel->isDeleted()) {
+    if (toplevel->remnant) {
         disable_painting |= window_paint_disable_type::by_delete;
     }
     if (scene.compositor.effects->isDesktopRendering()) {
@@ -308,7 +308,7 @@ WindowQuadList window::makeContentsQuads(int id, QPoint const& offset) const
         if (!child->transient()->annexed) {
             continue;
         }
-        if (child->remnant() && !toplevel->remnant()) {
+        if (child->remnant && !toplevel->remnant) {
             // When the child is a remnant but the parent not there is no guarentee the toplevel
             // will become one too what can cause artficats before the child cleanup timer fires.
             continue;

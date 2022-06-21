@@ -10,6 +10,7 @@
 #include "utils/blocker.h"
 #include "win/rules.h"
 #include "win/space_helpers.h"
+#include "win/window_release.h"
 
 #if KWIN_BUILD_TABBOX
 #include "win/tabbox/tabbox.h"
@@ -46,7 +47,7 @@ void remove_controlled_window_from_space(Space& space, Win* win)
     remove_window_from_lists(space, win);
     remove_all(space.attention_chain, win);
 
-    auto group = space.findGroup(win->xcb_window());
+    auto group = space.findGroup(win->xcb_window);
     if (group) {
         group->lostLeader();
     }
@@ -97,16 +98,17 @@ void finish_unmanaged_removal(Win* win, Toplevel* remnant)
     assert(contains(space.m_windows, win));
 
     remove_window_from_lists(space, win);
-    win->addWorkspaceRepaint(win::visible_rect(win));
+    space.render.addRepaint(visible_rect(win));
+
+    Q_EMIT space.unmanagedRemoved(win);
 
     if (remnant) {
         win->disownDataPassedToDeleted();
-        remnant->remnant()->unref();
+        remnant->remnant->unref();
+        delete win;
     } else {
         delete_window_from_space(space, win);
     }
-
-    Q_EMIT space.unmanagedRemoved(win);
 }
 
 template<typename Win>
@@ -114,31 +116,31 @@ void release_unmanaged(Win* win, bool on_shutdown)
 {
     Toplevel* del = nullptr;
     if (!on_shutdown) {
-        del = Toplevel::create_remnant(win);
+        del = create_remnant_window<Win>(*win);
     }
     Q_EMIT win->closed(win);
 
     // Don't affect our own windows.
-    if (!QWidget::find(win->xcb_window())) {
+    if (!QWidget::find(win->xcb_window)) {
         if (base::x11::xcb::extensions::self()->is_shape_available()) {
-            xcb_shape_select_input(connection(), win->xcb_window(), false);
+            xcb_shape_select_input(connection(), win->xcb_window, false);
         }
-        base::x11::xcb::select_input(win->xcb_window(), XCB_EVENT_MASK_NO_EVENT);
+        base::x11::xcb::select_input(win->xcb_window, XCB_EVENT_MASK_NO_EVENT);
     }
 
-    if (!on_shutdown) {
+    if (on_shutdown) {
+        delete win;
+    } else {
         finish_unmanaged_removal(win, del);
     }
-    delete win;
 }
 
 template<typename Win>
 void destroy_unmanaged(Win* win)
 {
-    auto del = Toplevel::create_remnant(win);
+    auto del = create_remnant_window<Win>(*win);
     Q_EMIT win->closed(win);
     finish_unmanaged_removal(win, del);
-    delete win;
 }
 
 template<typename Win>
@@ -170,7 +172,7 @@ void release_window(Win* win, bool on_shutdown)
         auto const offset = QPoint(left_border(win), top_border(win));
         win->setFrameGeometry(win->frameGeometry().translated(offset));
     } else {
-        del = win->create_remnant(win);
+        del = create_remnant_window<Win>(*win);
     }
 
     if (win->control->move_resize().enabled) {
@@ -192,7 +194,7 @@ void release_window(Win* win, bool on_shutdown)
     win->geometry_update.block++;
 
     if (win->isOnCurrentDesktop() && win->isShown()) {
-        win->addWorkspaceRepaint(visible_rect(win));
+        win->space.render.addRepaint(visible_rect(win));
     }
 
     // Grab X during the release to make removing of properties, setting to withdrawn state
@@ -254,12 +256,12 @@ void release_window(Win* win, bool on_shutdown)
 
     if (del) {
         win->disownDataPassedToDeleted();
-        del->remnant()->unref();
+        del->remnant->unref();
+        delete win;
     } else {
         delete_window_from_space(win->space, win);
     }
 
-    delete win;
     base::x11::ungrab_server();
 }
 
@@ -287,7 +289,7 @@ void destroy_window(Win* win)
     win->control->destroy_wayland_management();
     reset_have_resize_effect(*win);
 
-    auto del = win->create_remnant(win);
+    auto del = create_remnant_window<Win>(*win);
 
     if (win->control->move_resize().enabled) {
         Q_EMIT win->clientFinishUserMovedResized(win);
@@ -307,7 +309,7 @@ void destroy_window(Win* win)
     win->geometry_update.block++;
 
     if (win->isOnCurrentDesktop() && win->isShown()) {
-        win->addWorkspaceRepaint(visible_rect(win));
+        win->space.render.addRepaint(visible_rect(win));
     }
 
     // So that it's not considered visible anymore
@@ -325,13 +327,14 @@ void destroy_window(Win* win)
 
     // Don't use GeometryUpdatesBlocker, it would now set the geometry
     win->geometry_update.block--;
+
     if (del) {
         win->disownDataPassedToDeleted();
-        del->remnant()->unref();
+        del->remnant->unref();
+        delete win;
     } else {
         delete_window_from_space(win->space, win);
     }
-    delete win;
 }
 
 }

@@ -125,7 +125,7 @@ void group::deref()
 
 void group::gotLeader(win::x11::window* leader_P)
 {
-    assert(leader_P->xcb_window() == leader_wid);
+    assert(leader_P->xcb_window == leader_wid);
     leader_client = leader_P;
 }
 

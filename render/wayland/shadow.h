@@ -21,7 +21,7 @@ namespace KWin::render::wayland
 template<typename Shadow>
 bool update_shadow(Shadow& impl)
 {
-    auto surface = impl.m_topLevel->surface();
+    auto surface = impl.m_topLevel->surface;
     if (!surface) {
         return false;
     }
@@ -74,7 +74,7 @@ bool update_shadow(Shadow& impl)
 template<typename Shadow, typename Win>
 std::unique_ptr<Shadow> create_shadow(Win& win)
 {
-    auto surface = win.surface();
+    auto surface = win.surface;
     if (!surface || !surface->state().shadow) {
         return {};
     }

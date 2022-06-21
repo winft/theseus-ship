@@ -32,7 +32,7 @@ void update_surface_outputs(Win* win)
         }
     }
 
-    win->surface()->setOutputs(surface_outputs);
+    win->surface->setOutputs(surface_outputs);
 }
 
 template<typename Win>
@@ -40,11 +40,11 @@ void set_surface(Win* win, Wrapland::Server::Surface* surface)
 {
     assert(surface);
 
-    if (win->m_surface) {
+    if (win->surface) {
         // This can happen with XWayland clients since receiving the surface destroy signal through
         // the Wayland connection is independent of when the corresponding X11 unmap/map events
         // are received.
-        QObject::disconnect(win->m_surface, nullptr, win, nullptr);
+        QObject::disconnect(win->surface, nullptr, win, nullptr);
         QObject::disconnect(win->notifiers.frame_update_outputs);
         QObject::disconnect(win->notifiers.screens_update_outputs);
     } else {
@@ -58,16 +58,16 @@ void set_surface(Win* win, Wrapland::Server::Surface* surface)
             });
     }
 
-    win->m_surface = surface;
+    win->surface = surface;
 
     if (surface->client() == waylandServer()->xwayland_connection()) {
-        QObject::connect(win->m_surface, &Wrapland::Server::Surface::committed, win, [win] {
-            if (!win->m_surface->state().damage.isEmpty()) {
-                win->addDamage(win->m_surface->state().damage);
+        QObject::connect(win->surface, &Wrapland::Server::Surface::committed, win, [win] {
+            if (!win->surface->state().damage.isEmpty()) {
+                win->addDamage(win->surface->state().damage);
             }
         });
-        QObject::connect(win->m_surface, &Wrapland::Server::Surface::committed, win, [win] {
-            if (win->m_surface->state().updates & Wrapland::Server::surface_change::size) {
+        QObject::connect(win->surface, &Wrapland::Server::Surface::committed, win, [win] {
+            if (win->surface->state().updates & Wrapland::Server::surface_change::size) {
                 win->discard_buffer();
                 // Quads for Xwayland clients need for size emulation.
                 // Also apparently needed for unmanaged Xwayland clients (compare Kate's open-file
@@ -78,21 +78,21 @@ void set_surface(Win* win, Wrapland::Server::Surface* surface)
         });
     }
 
-    QObject::connect(win->m_surface, &Wrapland::Server::Surface::subsurfaceTreeChanged, win, [win] {
+    QObject::connect(win->surface, &Wrapland::Server::Surface::subsurfaceTreeChanged, win, [win] {
         // TODO improve to only update actual visual area
         if (win->ready_for_painting) {
             win->addDamageFull();
             win->m_isDamaged = true;
         }
     });
-    QObject::connect(win->m_surface, &Wrapland::Server::Surface::destroyed, win, [win] {
-        win->m_surface = nullptr;
-        win->m_surfaceId = 0;
+    QObject::connect(win->surface, &Wrapland::Server::Surface::destroyed, win, [win] {
+        win->surface = nullptr;
+        win->surface_id = 0;
         QObject::disconnect(win->notifiers.frame_update_outputs);
         QObject::disconnect(win->notifiers.screens_update_outputs);
     });
 
-    win->m_surfaceId = surface->id();
+    win->surface_id = surface->id();
     update_surface_outputs(win);
     Q_EMIT win->surfaceChanged();
 }

@@ -29,7 +29,7 @@ XRenderPicture* window::s_fadeAlphaPicture = nullptr;
 
 window::window(Toplevel* c, xrender::scene& scene)
     : render::window(c, scene)
-    , format(XRenderUtils::findPictFormat(c->visual()))
+    , format(XRenderUtils::findPictFormat(c->xcb_visual))
 {
 }
 
@@ -180,12 +180,12 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
     bool scaled = false;
 
     auto client = dynamic_cast<win::x11::window*>(toplevel);
-    auto remnant = toplevel->remnant();
+    auto& remnant = toplevel->remnant;
     auto const decorationRect = QRect(QPoint(), toplevel->size());
     if ((client && client->control && !client->noBorder()) || (remnant && !remnant->no_border)) {
         // decorated client
         transformed_shape = decorationRect;
-        if (toplevel->shape()) {
+        if (toplevel->is_shape) {
             // "xeyes" + decoration
             transformed_shape -= bufferToWindowRect(cr);
             transformed_shape += bufferToWindowRegion(get_window()->render_region());

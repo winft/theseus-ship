@@ -61,7 +61,7 @@ bool stacking_order::sort()
             // Child will be in a layer above the lead and should not be pulled down from that.
             return false;
         }
-        if (child->remnant()) {
+        if (child->remnant) {
             return keep_deleted_transient_above(lead, child);
         }
         return keep_transient_above(lead, child);
@@ -198,9 +198,9 @@ void stacking_order::propagate_clients(bool propagate_new_clients)
             }
 
             if (is_desktop(x11_window)) {
-                xcb_windows.push_back(x11_window->xcb_window());
+                xcb_windows.push_back(x11_window->xcb_window);
             } else {
-                non_desktops.push_back(x11_window->xcb_window());
+                non_desktops.push_back(x11_window->xcb_window);
             }
         }
 
@@ -214,7 +214,7 @@ void stacking_order::propagate_clients(bool propagate_new_clients)
 
     for (auto window : win_stack) {
         if (auto x11_window = qobject_cast<x11::window*>(window)) {
-            stacked_xcb_windows.push_back(x11_window->xcb_window());
+            stacked_xcb_windows.push_back(x11_window->xcb_window);
         }
     }
 

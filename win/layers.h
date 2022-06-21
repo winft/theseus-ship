@@ -98,7 +98,7 @@ void update_layer(Win* win)
     if (!win) {
         return;
     }
-    if (win->remnant() || win->layer() == belong_to_layer(win)) {
+    if (win->remnant || win->layer() == belong_to_layer(win)) {
         return;
     }
 

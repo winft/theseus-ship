@@ -15,15 +15,15 @@ namespace KWin::win::wayland
 template<typename Win>
 bool accepts_input(Win* win, QPoint const& pos)
 {
-    if (!win->surface()) {
+    if (!win->surface) {
         // Only wl_surfaces provide means of limiting the input region. So just accept otherwise.
         return true;
     }
-    if (win->surface()->state().input_is_infinite) {
+    if (win->surface->state().input_is_infinite) {
         return true;
     }
 
-    auto const input_region = win->surface()->state().input;
+    auto const input_region = win->surface->state().input;
     auto const local_point = pos - win::frame_to_client_pos(win, win->pos());
 
     return input_region.contains(local_point);

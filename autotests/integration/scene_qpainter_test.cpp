@@ -368,35 +368,35 @@ void SceneQPainterTest::testX11Window()
 
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
     QVERIFY(client);
-    QCOMPARE(client->xcb_window(), w);
+    QCOMPARE(client->xcb_window, w);
     QCOMPARE(win::frame_to_client_size(client, client->size()), QSize(100, 200));
 
-    if (!client->surface()) {
+    if (!client->surface) {
         // wait for surface
         QSignalSpy surfaceChangedSpy(client, &Toplevel::surfaceChanged);
         QVERIFY(surfaceChangedSpy.isValid());
         QVERIFY(surfaceChangedSpy.wait());
     }
 
-    QVERIFY(client->surface());
+    QVERIFY(client->surface);
 
-    QSignalSpy committed_spy(client->surface(), &Wrapland::Server::Surface::committed);
+    QSignalSpy committed_spy(client->surface, &Wrapland::Server::Surface::committed);
     QVERIFY(committed_spy.isValid());
 
-    QTRY_VERIFY(client->surface()->state().buffer);
+    QTRY_VERIFY(client->surface->state().buffer);
 
     // Xwayland might send one more buffer after the first one with a size of 1x1.
-    if (client->surface()->state().buffer->size() != client->size()) {
-        QTRY_COMPARE(client->surface()->state().buffer->size(), QSize(1, 1));
+    if (client->surface->state().buffer->size() != client->size()) {
+        QTRY_COMPARE(client->surface->state().buffer->size(), QSize(1, 1));
         QVERIFY(committed_spy.wait());
     }
 
-    QTRY_COMPARE(client->surface()->state().buffer->size(), client->size());
-    QTRY_COMPARE(client->surface()->state().buffer->shmImage()->createQImage().size(),
+    QTRY_COMPARE(client->surface->state().buffer->size(), client->size());
+    QTRY_COMPARE(client->surface->state().buffer->shmImage()->createQImage().size(),
                  client->size());
     QImage compareImage(win::frame_relative_client_rect(client).size(), QImage::Format_RGB32);
     compareImage.fill(Qt::white);
-    QCOMPARE(client->surface()->state().buffer->shmImage()->createQImage().copy(
+    QCOMPARE(client->surface->state().buffer->shmImage()->createQImage().copy(
                  win::frame_relative_client_rect(client)),
              compareImage);
 

@@ -144,7 +144,7 @@ void place(Win* window, const QRect& area)
     } else if (is_on_screen_display(window) || is_notification(window)
                || is_critical_notification(window)) {
         place_on_screen_display(window, area);
-    } else if (window->transient()->lead() && window->surface()) {
+    } else if (window->transient()->lead() && window->surface) {
         place_dialog(window, area, kwinApp()->options->placement());
     } else {
         place(window, area, kwinApp()->options->placement());

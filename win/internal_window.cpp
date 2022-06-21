@@ -31,6 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "setup.h"
 #include "space.h"
 #include "space_helpers.h"
+#include "window_release.h"
 
 #include <KDecoration2/Decoration>
 
@@ -67,6 +68,11 @@ public:
 private:
     internal_window* m_client;
 };
+
+internal_window::internal_window(win::remnant remnant, win::space& space)
+    : Toplevel(std::move(remnant), space)
+{
+}
 
 internal_window::internal_window(QWindow* window, win::space& space)
     : Toplevel(space)
@@ -164,11 +170,15 @@ bool internal_window::eventFilter(QObject* watched, QEvent* event)
 
 qreal internal_window::bufferScale() const
 {
-    return buffer_scale_internal();
+    return remnant ? remnant->buffer_scale : buffer_scale_internal();
 }
 
 void internal_window::debug(QDebug& stream) const
 {
+    if (remnant) {
+        stream << "\'REMNANT:" << reinterpret_cast<void const*>(this) << "\'";
+        return;
+    }
     stream.nospace() << "\'internal_window:" << m_internalWindow << "\'";
 }
 
@@ -176,12 +186,12 @@ NET::WindowType internal_window::windowType(bool direct, int supported_types) co
 {
     Q_UNUSED(direct)
     Q_UNUSED(supported_types)
-    return m_windowType;
+    return remnant ? remnant->window_type : m_windowType;
 }
 
 double internal_window::opacity() const
 {
-    return m_opacity;
+    return remnant ? remnant->opacity : m_opacity;
 }
 
 void internal_window::setOpacity(double opacity)
@@ -203,7 +213,7 @@ void internal_window::killWindow()
 
 bool internal_window::is_popup_end() const
 {
-    return m_internalWindowFlags.testFlag(Qt::Popup);
+    return remnant ? remnant->was_popup_window : m_internalWindowFlags.testFlag(Qt::Popup);
 }
 
 QByteArray internal_window::windowRole() const
@@ -256,6 +266,9 @@ bool internal_window::placeable() const
 
 bool internal_window::noBorder() const
 {
+    if (remnant) {
+        return remnant->no_border;
+    }
     return m_userNoBorder || m_internalWindowFlags.testFlag(Qt::FramelessWindowHint)
         || m_internalWindowFlags.testFlag(Qt::Popup);
 }
@@ -286,6 +299,9 @@ bool internal_window::isLockScreen() const
 
 bool internal_window::isOutline() const
 {
+    if (remnant) {
+        return remnant->was_outline;
+    }
     if (m_internalWindow) {
         return m_internalWindow->property("__kwin_outline").toBool();
     }
@@ -294,7 +310,7 @@ bool internal_window::isOutline() const
 
 bool internal_window::isShown() const
 {
-    return readyForPainting();
+    return ready_for_painting;
 }
 
 bool internal_window::isHiddenInternal() const
@@ -340,9 +356,14 @@ void internal_window::do_set_geometry(QRect const& frame_geo)
         win::perform_move_resize(this);
     }
 
-    addWorkspaceRepaint(win::visible_rect(this));
+    space.render.addRepaint(visible_rect(this));
 
     Q_EMIT frame_geometry_changed(this, old_frame_geo);
+}
+
+bool internal_window::hasStrut() const
+{
+    return false;
 }
 
 bool internal_window::supportsWindowRules() const
@@ -414,13 +435,22 @@ void internal_window::showOnScreenEdge()
 {
 }
 
+void internal_window::checkTransient(Toplevel* /*window*/)
+{
+}
+
+bool internal_window::belongsToDesktop() const
+{
+    return false;
+}
+
 void internal_window::destroyClient()
 {
     if (control->move_resize().enabled) {
         leaveMoveResize();
     }
 
-    auto deleted = create_remnant(this);
+    auto deleted = create_remnant_window<internal_window>(*this);
     Q_EMIT closed(this);
 
     control->destroy_decoration();
@@ -431,7 +461,7 @@ void internal_window::destroyClient()
     Q_EMIT space.internalClientRemoved(this);
 
     if (deleted) {
-        deleted->remnant()->unref();
+        deleted->remnant->unref();
     } else {
         delete_window_from_space(space, this);
     }
