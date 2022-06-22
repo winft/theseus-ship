@@ -50,6 +50,7 @@ std::vector<Toplevel*> sort_windows_by_layer(Container const& list)
     }
 
     std::vector<Toplevel*> sorted;
+    sorted.reserve(list.size());
 
     for (auto lay = static_cast<size_t>(layer::first); lay < layer_count; ++lay) {
         sorted.insert(sorted.end(), layers[lay].begin(), layers[lay].end());
