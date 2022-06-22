@@ -220,7 +220,17 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
     }
 
     // Create a list of all windows in the stacking order
-    windows = space->x_stacking_tree->as_list();
+    // Skip windows that are not yet ready for being painted.
+    //
+    // TODO? This cannot be used so carelessly - needs protections against broken clients, the
+    // window should not get focus before it's displayed, handle unredirected windows properly and
+    // so on.
+    auto const& stack_list = space->x_stacking_tree->as_list();
+    std::copy_if(stack_list.begin(),
+                 stack_list.end(),
+                 std::back_inserter(windows),
+                 [](auto const& win) { return win->ready_for_painting; });
+
     std::vector<Toplevel*> damaged;
 
     // Reset the damage state of each window and fetch the damage region
@@ -276,14 +286,6 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
         m_delay = 0;
         return false;
     }
-
-    // Skip windows that are not yet ready for being painted.
-    //
-    // TODO? This cannot be used so carelessly - needs protections against broken clients, the
-    // window should not get focus before it's displayed, handle unredirected windows properly and
-    // so on.
-
-    remove_all_if(windows, [](auto const& win) { return !win->ready_for_painting; });
 
     repaints = repaints_region;
 
