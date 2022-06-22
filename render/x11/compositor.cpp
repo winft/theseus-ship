@@ -231,15 +231,17 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
                  std::back_inserter(windows),
                  [](auto const& win) { return win->ready_for_painting; });
 
+    // Create a list of damaged windows and reset the damage state of each window and fetch the
+    // damage region without waiting for a reply
     std::vector<Toplevel*> damaged;
 
-    // Reset the damage state of each window and fetch the damage region
-    // without waiting for a reply
-    for (auto win : windows) {
-        if (win->resetAndFetchDamage()) {
-            damaged.push_back(win);
-        }
-    }
+    // Reserve a size for damaged to reduce reallocations when copying, its a bit larger then needed
+    // but the exact size required us unknown beforehand.
+    damaged.reserve(windows.size());
+
+    std::copy_if(windows.begin(), windows.end(), std::back_inserter(damaged), [](auto const& win) {
+        return win->resetAndFetchDamage();
+    });
 
     if (damaged.size() > 0) {
         scene->triggerFence();
