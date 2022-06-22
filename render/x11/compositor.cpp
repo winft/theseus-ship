@@ -260,21 +260,21 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
         }
     }
 
+    // Discard the lanczos texture
+    auto discard_lanczos_texture = [](auto window) {
+        assert(window->render);
+        assert(window->render->effect);
+
+        auto const texture = window->render->effect->data(LanczosCacheRole);
+        if (texture.isValid()) {
+            delete static_cast<GLTexture*>(texture.template value<void*>());
+            window->render->effect->setData(LanczosCacheRole, QVariant());
+        }
+    };
+
     // Get the replies
     for (auto win : damaged) {
-        // Discard the cached lanczos texture
-        if (win->transient()->annexed) {
-            win = win::lead_of_annexed_transient(win);
-        }
-        assert(win->render);
-        assert(win->render->effect);
-
-        auto const texture = win->render->effect->data(LanczosCacheRole);
-        if (texture.isValid()) {
-            delete static_cast<GLTexture*>(texture.value<void*>());
-            win->render->effect->setData(LanczosCacheRole, QVariant());
-        }
-
+        discard_lanczos_texture(win);
         win->getDamageRegionReply();
     }
 
