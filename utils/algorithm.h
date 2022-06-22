@@ -23,7 +23,7 @@ int index_of(V const& container, T const& arg)
     if (it == container.cend()) {
         return -1;
     }
-    return it - container.cbegin();
+    return std::distance(container.cbegin(), it);
 }
 
 template<typename V, typename T>
