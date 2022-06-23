@@ -334,6 +334,7 @@ void WindowViewEffect::activate(const QStringList& windowIds)
     }
     if (!internalIds.isEmpty()) {
         m_windowIds = internalIds;
+        m_searchText = "";
         setRunning(true);
     }
 }
@@ -351,6 +352,7 @@ void WindowViewEffect::activate()
     setPartialActivationFactor(0);
 
     // This one should be the last.
+    m_searchText = "";
     setRunning(true);
 }
 
@@ -366,6 +368,7 @@ void WindowViewEffect::partialActivate(qreal factor)
     setGestureInProgress(true);
 
     // This one should be the last.
+    m_searchText = "";
     setRunning(true);
 }
 
