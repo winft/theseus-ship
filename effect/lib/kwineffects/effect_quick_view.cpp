@@ -442,6 +442,11 @@ QQuickItem* EffectQuickView::contentItem() const
     return d->m_view->contentItem();
 }
 
+QQuickWindow* EffectQuickView::window() const
+{
+    return d->m_view;
+}
+
 void EffectQuickView::setVisible(bool visible)
 {
     if (d->m_visible == visible) {
