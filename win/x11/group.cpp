@@ -50,11 +50,12 @@ group::group(xcb_window_t leader_P, win::space& space)
             connection(), leader_P, rootWindow(), NET::Properties(), NET::WM2StartupId);
     }
     effect_group = new render::effect_window_group_impl(this);
-    space.addGroup(this);
+    space.groups.push_back(this);
 }
 
 group::~group()
 {
+    remove_all(space.groups, this);
     delete leader_info;
     delete effect_group;
 }
@@ -105,7 +106,6 @@ void group::removeMember(win::x11::window* member_P)
     // other members of the group (which would be however deleted already
     // if there were no other members)
     if (refcount == 0 && _members.empty()) {
-        space.removeGroup(this);
         delete this;
     }
 }
@@ -118,7 +118,6 @@ void group::ref()
 void group::deref()
 {
     if (--refcount == 0 && _members.empty()) {
-        space.removeGroup(this);
         delete this;
     }
 }
@@ -134,7 +133,6 @@ void group::lostLeader()
     assert(std::find(_members.cbegin(), _members.cend(), leader_client) == _members.cend());
     leader_client = nullptr;
     if (_members.empty()) {
-        space.removeGroup(this);
         delete this;
     }
 }

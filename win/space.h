@@ -139,7 +139,6 @@ Q_SIGNALS:
     void clientActivated(KWin::Toplevel*);
     void clientDemandsAttentionChanged(KWin::Toplevel*, bool);
     void clientMinimizedChanged(KWin::Toplevel*);
-    void groupAdded(KWin::win::x11::group*);
     void unmanagedAdded(KWin::Toplevel*);
     void unmanagedRemoved(KWin::Toplevel*);
     void window_deleted(KWin::Toplevel*);
@@ -160,6 +159,7 @@ public:
     std::unique_ptr<qobject_t> qobject;
 
     std::vector<Toplevel*> m_windows;
+    std::vector<win::x11::group*> groups;
 
     std::unique_ptr<scripting::platform> scripting;
     std::unique_ptr<render::outline> outline;
@@ -353,8 +353,6 @@ public:
 
     void setActiveClient(Toplevel* window);
     win::x11::group* findGroup(xcb_window_t leader) const;
-    void addGroup(win::x11::group* group);
-    void removeGroup(win::x11::group* group);
 
     bool checkStartupNotification(xcb_window_t w, KStartupInfoId& id, KStartupInfoData& data);
 
@@ -527,9 +525,6 @@ private:
     QTimer* delayFocusTimer{nullptr};
 
     bool showing_desktop{false};
-
-    std::vector<win::x11::group*> groups;
-
     bool was_user_interaction{false};
 
     int session_active_client;
@@ -567,17 +562,6 @@ private:
 inline Toplevel* space::mostRecentlyActivatedClient() const
 {
     return should_get_focus.size() > 0 ? should_get_focus.back() : active_client;
-}
-
-inline void space::addGroup(win::x11::group* group)
-{
-    Q_EMIT qobject->groupAdded(group);
-    groups.push_back(group);
-}
-
-inline void space::removeGroup(win::x11::group* group)
-{
-    remove_all(groups, group);
 }
 
 inline bool space::wasUserInteraction() const
