@@ -30,7 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <KStartupInfo>
 #include <KWindowSystem>
-#include <QDebug>
 
 namespace KWin::win::x11
 {
@@ -39,15 +38,15 @@ namespace KWin::win::x11
 // group
 //********************************************
 
-group::group(xcb_window_t leader_P, win::space& space)
-    : leader_wid(leader_P)
+group::group(xcb_window_t xcb_leader, win::space& space)
+    : xcb_leader{xcb_leader}
     , space{space}
 {
-    if (leader_P != XCB_WINDOW_NONE) {
-        leader_client
-            = find_controlled_window<win::x11::window>(space, predicate_match::window, leader_P);
+    if (xcb_leader != XCB_WINDOW_NONE) {
+        leader
+            = find_controlled_window<win::x11::window>(space, predicate_match::window, xcb_leader);
         leader_info = new NETWinInfo(
-            connection(), leader_P, rootWindow(), NET::Properties(), NET::WM2StartupId);
+            connection(), xcb_leader, rootWindow(), NET::Properties(), NET::WM2StartupId);
     }
     effect_group = new render::effect_window_group_impl(this);
     space.groups.push_back(this);
@@ -62,13 +61,13 @@ group::~group()
 
 QIcon group::icon() const
 {
-    if (leader_client != nullptr)
-        return leader_client->control->icon();
-    else if (leader_wid != XCB_WINDOW_NONE) {
+    if (leader) {
+        return leader->control->icon();
+    } else if (xcb_leader != XCB_WINDOW_NONE) {
         QIcon ic;
-        NETWinInfo info(connection(), leader_wid, rootWindow(), NET::WMIcon, NET::WM2IconPixmap);
+        NETWinInfo info(connection(), xcb_leader, rootWindow(), NET::WMIcon, NET::WM2IconPixmap);
         auto readIcon = [&ic, &info, this](int size, bool scale = true) {
-            const QPixmap pix = KWindowSystem::icon(leader_wid,
+            const QPixmap pix = KWindowSystem::icon(xcb_leader,
                                                     size,
                                                     size,
                                                     scale,
@@ -88,24 +87,20 @@ QIcon group::icon() const
     return QIcon();
 }
 
-void group::addMember(win::x11::window* member_P)
+void group::addMember(win::x11::window* member)
 {
-    _members.push_back(member_P);
-    //    qDebug() << "GROUPADD:" << this << ":" << member_P;
-    //    qDebug() << kBacktrace();
+    members.push_back(member);
 }
 
-void group::removeMember(win::x11::window* member_P)
+void group::removeMember(win::x11::window* member)
 {
-    //    qDebug() << "GROUPREMOVE:" << this << ":" << member_P;
-    //    qDebug() << kBacktrace();
-    assert(std::find(_members.cbegin(), _members.cend(), member_P) != _members.cend());
-    remove_all(_members, member_P);
+    assert(std::find(members.cbegin(), members.cend(), member) != members.cend());
+    remove_all(members, member);
     // there are cases when automatic deleting of groups must be delayed,
     // e.g. when removing a member and doing some operation on the possibly
     // other members of the group (which would be however deleted already
     // if there were no other members)
-    if (refcount == 0 && _members.empty()) {
+    if (refcount == 0 && members.empty()) {
         delete this;
     }
 }
@@ -117,22 +112,22 @@ void group::ref()
 
 void group::deref()
 {
-    if (--refcount == 0 && _members.empty()) {
+    if (--refcount == 0 && members.empty()) {
         delete this;
     }
 }
 
-void group::gotLeader(win::x11::window* leader_P)
+void group::gotLeader(win::x11::window* leader)
 {
-    assert(leader_P->xcb_window == leader_wid);
-    leader_client = leader_P;
+    assert(leader->xcb_window == xcb_leader);
+    this->leader = leader;
 }
 
 void group::lostLeader()
 {
-    assert(std::find(_members.cbegin(), _members.cend(), leader_client) == _members.cend());
-    leader_client = nullptr;
-    if (_members.empty()) {
+    assert(std::find(members.cbegin(), members.cend(), leader) == members.cend());
+    leader = nullptr;
+    if (members.empty()) {
         delete this;
     }
 }
@@ -145,7 +140,7 @@ void group::startupIdChanged()
 {
     KStartupInfoId asn_id;
     KStartupInfoData asn_data;
-    bool asn_valid = space.checkStartupNotification(leader_wid, asn_id, asn_data);
+    bool asn_valid = space.checkStartupNotification(xcb_leader, asn_id, asn_data);
     if (!asn_valid)
         return;
     if (asn_id.timestamp() != 0 && user_time != -1U

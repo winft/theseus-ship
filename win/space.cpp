@@ -546,7 +546,7 @@ void space::setShowingDesktop(bool showing)
                     if (!topDesk)
                         topDesk = c;
                     if (auto group = c->group()) {
-                        for (auto cm : group->members()) {
+                        for (auto cm : group->members) {
                             win::update_layer(cm);
                         }
                     }

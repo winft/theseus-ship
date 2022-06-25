@@ -89,7 +89,7 @@ public:
 
  - list of mainwindows       : mainClients()  (call once and loop over the result)
  - list of transients        : transients()
- - every window in the group : group()->members()
+ - every window in the group : group()->members
 */
 
 template<typename Win>
@@ -171,7 +171,7 @@ void update_group(Win* win, bool add)
     assert(win->in_group);
 
     if (add) {
-        if (!contains(win->in_group->members(), win)) {
+        if (!contains(win->in_group->members, win)) {
             win->in_group->addMember(win);
         }
         auto const win_is_group_tr = win->groupTransient();
@@ -179,7 +179,7 @@ void update_group(Win* win, bool add)
 
         // This added window must be set as transient child for all windows that have no direct
         // or indirect transient relation with it (that way we ensure there are no cycles).
-        for (auto member : win->in_group->members()) {
+        for (auto member : win->in_group->members) {
             if (member == win) {
                 continue;
             }
@@ -205,7 +205,7 @@ void update_group(Win* win, bool add)
         win->in_group->ref();
         win->in_group->removeMember(win);
 
-        for (auto member : win->in_group->members()) {
+        for (auto member : win->in_group->members) {
             if (x11_transient(win)->lead_id == member->xcb_window) {
                 if (!contains(member->transient()->children, win)) {
                     member->transient()->add_child(win);
@@ -217,12 +217,12 @@ void update_group(Win* win, bool add)
 
         // Restore indirect group transient relations between members that have been cut off because
         // off the removal of this.
-        for (auto& member : win->in_group->members()) {
+        for (auto& member : win->in_group->members) {
             if (!member->groupTransient()) {
                 continue;
             }
 
-            for (auto lead : win->in_group->members()) {
+            for (auto lead : win->in_group->members) {
                 if (lead == member) {
                     continue;
                 }
@@ -443,7 +443,7 @@ group* find_client_leader_group(Win const* win)
         // This most probably means the app uses group transients without
         // setting group for its windows. Merging the two groups is a bad
         // hack, but there's no really good solution for this case.
-        auto old_group_members = other->group()->members();
+        auto old_group_members = other->group()->members;
 
         // The old group auto-deletes when being empty.
         for (size_t pos = 0; pos < old_group_members.size(); ++pos) {

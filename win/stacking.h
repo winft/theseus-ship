@@ -216,7 +216,7 @@ void lower_window(Space* space, Window* window)
 
     if (window->transient()->lead() && window->group()) {
         // Lower also all windows in the group, in reversed stacking order.
-        auto const wins = restacked_by_space_stacking_order(space, window->group()->members());
+        auto const wins = restacked_by_space_stacking_order(space, window->group()->members);
 
         for (auto it = wins.crbegin(); it != wins.crend(); it++) {
             auto gwin = *it;

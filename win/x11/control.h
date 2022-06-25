@@ -1521,11 +1521,13 @@ xcb_timestamp_t user_time(Win* win)
         // doesn't want focus after showing
         return 0;
     }
-    assert(win->group() != nullptr);
+
+    auto group = win->group();
+    assert(group);
+
     if (time == -1U
-        || (win->group()->userTime() != -1U
-            && NET::timestampCompare(win->group()->userTime(), time) > 0)) {
-        time = win->group()->userTime();
+        || (group->user_time != -1U && NET::timestampCompare(group->user_time, time) > 0)) {
+        time = group->user_time;
     }
     return time;
 }

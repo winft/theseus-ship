@@ -271,7 +271,7 @@ void update_tool_windows_visibility(Space* space, bool also_hide)
                 = active_window && window->transient()->is_follower_of(active_window);
             show = in_active_group || has_active_lead;
         } else {
-            auto const is_individual = !window->group() || window->group()->members().size() == 1;
+            auto const is_individual = !window->group() || window->group()->members.size() == 1;
             auto const in_active_group = active_window && active_window->group() == window->group();
             show = is_individual || in_active_group;
         }
