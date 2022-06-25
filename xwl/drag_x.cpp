@@ -113,7 +113,7 @@ drag_event_reply x11_drag::move_filter(Toplevel* target, QPoint const& pos)
         // Currently there is no target or target is an Xwayland window.
         // Handled here and by X directly.
         if (target && target->surface && target->control) {
-            if (source.x11.space->activeClient() != target) {
+            if (source.x11.space->active_client != target) {
                 source.x11.space->activateClient(target);
             }
         }

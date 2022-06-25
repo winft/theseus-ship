@@ -220,7 +220,7 @@ void PointerInputTest::testWarpingUpdatesFocus()
     QVERIFY(shellSurface);
     render(surface);
     QVERIFY(clientAddedSpy.wait());
-    auto window = Test::app()->workspace->activeClient();
+    auto window = Test::app()->workspace->active_client;
     QVERIFY(window);
 
     // currently there should not be a focused pointer surface
@@ -270,7 +270,7 @@ void PointerInputTest::testWarpingGeneratesPointerMotion()
     QVERIFY(shellSurface);
     render(surface);
     QVERIFY(clientAddedSpy.wait());
-    auto window = Test::app()->workspace->activeClient();
+    auto window = Test::app()->workspace->active_client;
     QVERIFY(window);
 
     // enter
@@ -311,7 +311,7 @@ void PointerInputTest::testWarpingDuringFilter()
     QVERIFY(shellSurface);
     render(surface);
     QVERIFY(clientAddedSpy.wait());
-    auto window = Test::app()->workspace->activeClient();
+    auto window = Test::app()->workspace->active_client;
     QVERIFY(window);
 
     QCOMPARE(window->pos(), QPoint(0, 0));
@@ -360,7 +360,7 @@ void PointerInputTest::testUpdateFocusAfterScreenChange()
     render(surface, QSize(1280, 1024));
     QVERIFY(clientAddedSpy.wait());
 
-    auto window = Test::app()->workspace->activeClient();
+    auto window = Test::app()->workspace->active_client;
     QVERIFY(window);
     QVERIFY(!window->frameGeometry().contains(input::get_cursor()->pos()));
 
@@ -461,7 +461,7 @@ void PointerInputTest::testModifierClickUnrestrictedMove()
     QVERIFY(shellSurface);
     render(surface);
     QVERIFY(clientAddedSpy.wait());
-    auto window = Test::app()->workspace->activeClient();
+    auto window = Test::app()->workspace->active_client;
     QVERIFY(window);
 
     // move cursor on window
@@ -529,7 +529,7 @@ void PointerInputTest::testModifierClickUnrestrictedMoveGlobalShortcutsDisabled(
     QVERIFY(shellSurface);
     render(surface);
     QVERIFY(clientAddedSpy.wait());
-    auto window = Test::app()->workspace->activeClient();
+    auto window = Test::app()->workspace->active_client;
     QVERIFY(window);
 
     // disable global shortcuts
@@ -603,7 +603,7 @@ void PointerInputTest::testModifierScrollOpacity()
     QVERIFY(shellSurface);
     render(surface);
     QVERIFY(clientAddedSpy.wait());
-    auto window = Test::app()->workspace->activeClient();
+    auto window = Test::app()->workspace->active_client;
     QVERIFY(window);
     // set the opacity to 0.5
     window->setOpacity(0.5);
@@ -663,7 +663,7 @@ void PointerInputTest::testModifierScrollOpacityGlobalShortcutsDisabled()
     QVERIFY(shellSurface);
     render(surface);
     QVERIFY(clientAddedSpy.wait());
-    auto window = Test::app()->workspace->activeClient();
+    auto window = Test::app()->workspace->active_client;
     QVERIFY(window);
     // set the opacity to 0.5
     window->setOpacity(0.5);
@@ -714,7 +714,7 @@ void PointerInputTest::testScrollAction()
     QVERIFY(shellSurface1);
     render(surface1);
     QVERIFY(clientAddedSpy.wait());
-    auto window1 = Test::app()->workspace->activeClient();
+    auto window1 = Test::app()->workspace->active_client;
     QVERIFY(window1);
     auto surface2 = Test::create_surface();
     QVERIFY(surface2);
@@ -722,7 +722,7 @@ void PointerInputTest::testScrollAction()
     QVERIFY(shellSurface2);
     render(surface2);
     QVERIFY(clientAddedSpy.wait());
-    auto window2 = Test::app()->workspace->activeClient();
+    auto window2 = Test::app()->workspace->active_client;
     QVERIFY(window2);
     QVERIFY(window1 != window2);
 
@@ -775,7 +775,7 @@ void PointerInputTest::testFocusFollowsMouse()
     QVERIFY(shellSurface1);
     render(surface1, QSize(800, 800));
     QVERIFY(clientAddedSpy.wait());
-    auto window1 = Test::app()->workspace->activeClient();
+    auto window1 = Test::app()->workspace->active_client;
     QVERIFY(window1);
     auto surface2 = Test::create_surface();
     QVERIFY(surface2);
@@ -783,7 +783,7 @@ void PointerInputTest::testFocusFollowsMouse()
     QVERIFY(shellSurface2);
     render(surface2, QSize(800, 800));
     QVERIFY(clientAddedSpy.wait());
-    auto window2 = Test::app()->workspace->activeClient();
+    auto window2 = Test::app()->workspace->active_client;
     QVERIFY(window2);
     QVERIFY(window1 != window2);
     QCOMPARE(win::top_client_on_desktop(Test::app()->workspace.get(), 1, nullptr), window2);
@@ -866,7 +866,7 @@ void PointerInputTest::testMouseActionInactiveWindow()
 
     render(surface1, QSize(800, 800));
     QVERIFY(clientAddedSpy.wait());
-    auto window1 = Test::app()->workspace->activeClient();
+    auto window1 = Test::app()->workspace->active_client;
     QVERIFY(window1);
 
     auto surface2 = Test::create_surface();
@@ -876,7 +876,7 @@ void PointerInputTest::testMouseActionInactiveWindow()
 
     render(surface2, QSize(800, 800));
     QVERIFY(clientAddedSpy.wait());
-    auto window2 = Test::app()->workspace->activeClient();
+    auto window2 = Test::app()->workspace->active_client;
     QVERIFY(window2);
     QVERIFY(window1 != window2);
     QCOMPARE(win::top_client_on_desktop(Test::app()->workspace.get(), 1, nullptr), window2);
@@ -968,7 +968,7 @@ void PointerInputTest::testMouseActionActiveWindow()
     render(surface1, QSize(800, 800));
     QVERIFY(clientAddedSpy.wait());
 
-    auto window1 = Test::app()->workspace->activeClient();
+    auto window1 = Test::app()->workspace->active_client;
     QVERIFY(window1);
     QSignalSpy window1DestroyedSpy(window1, &QObject::destroyed);
     QVERIFY(window1DestroyedSpy.isValid());
@@ -980,7 +980,7 @@ void PointerInputTest::testMouseActionActiveWindow()
     render(surface2, QSize(800, 800));
     QVERIFY(clientAddedSpy.wait());
 
-    auto window2 = Test::app()->workspace->activeClient();
+    auto window2 = Test::app()->workspace->active_client;
     QVERIFY(window2);
     QVERIFY(window1 != window2);
 
@@ -1065,7 +1065,7 @@ void PointerInputTest::testCursorImage()
     render(surface);
     QVERIFY(clientAddedSpy.wait());
 
-    auto window = Test::app()->workspace->activeClient();
+    auto window = Test::app()->workspace->active_client;
     QVERIFY(window);
 
     // Move the cursor to center of window. This should first set a null pointer. So we still show
@@ -1187,7 +1187,7 @@ void PointerInputTest::testEffectOverrideCursorImage()
 
     render(surface);
     QVERIFY(clientAddedSpy.wait());
-    auto window = Test::app()->workspace->activeClient();
+    auto window = Test::app()->workspace->active_client;
     QVERIFY(window);
 
     // And move cursor to the window.
@@ -1268,7 +1268,7 @@ void PointerInputTest::testPopup()
     QVERIFY(shellSurface);
     render(surface);
     QVERIFY(clientAddedSpy.wait());
-    auto window = Test::app()->workspace->activeClient();
+    auto window = Test::app()->workspace->active_client;
     QVERIFY(window);
     QCOMPARE(window->transient()->input_grab, false);
     // move pointer into window
@@ -1309,7 +1309,7 @@ void PointerInputTest::testPopup()
     auto popupClient = clientAddedSpy.last().first().value<win::wayland::window*>();
     QVERIFY(popupClient);
     QVERIFY(popupClient != window);
-    QCOMPARE(window, Test::app()->workspace->activeClient());
+    QCOMPARE(window, Test::app()->workspace->active_client);
     QCOMPARE(popupClient->transient()->lead(), window);
     QCOMPARE(popupClient->pos(), window->pos() + QPoint(80, 20));
     QCOMPARE(popupClient->transient()->input_grab, true);
@@ -1395,7 +1395,7 @@ void PointerInputTest::testDecoCancelsPopup()
 
     render(surface);
     QVERIFY(clientAddedSpy.wait());
-    auto window = Test::app()->workspace->activeClient();
+    auto window = Test::app()->workspace->active_client;
     QVERIFY(window);
     QCOMPARE(window->transient()->input_grab, false);
     QVERIFY(win::decoration(window));
@@ -1426,7 +1426,7 @@ void PointerInputTest::testDecoCancelsPopup()
     auto popupClient = clientAddedSpy.last().first().value<win::wayland::window*>();
     QVERIFY(popupClient);
     QVERIFY(popupClient != window);
-    QCOMPARE(window, Test::app()->workspace->activeClient());
+    QCOMPARE(window, Test::app()->workspace->active_client);
     QCOMPARE(popupClient->transient()->lead(), window);
     QCOMPARE(popupClient->pos(), win::frame_to_client_pos(window, window->pos()) + QPoint(80, 20));
     QCOMPARE(popupClient->transient()->input_grab, true);
@@ -1469,7 +1469,7 @@ void PointerInputTest::testWindowUnderCursorWhileButtonPressed()
     QVERIFY(shellSurface);
     render(surface);
     QVERIFY(clientAddedSpy.wait());
-    auto window = Test::app()->workspace->activeClient();
+    auto window = Test::app()->workspace->active_client;
     QVERIFY(window);
 
     // move cursor over window

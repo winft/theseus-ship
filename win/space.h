@@ -199,6 +199,8 @@ public:
      */
     std::unique_ptr<win::user_actions_menu> user_actions_menu;
 
+    QPoint focusMousePos;
+
     explicit space(render::compositor& render);
     virtual ~space();
 
@@ -223,11 +225,6 @@ public:
     void initShortcuts();
     bool initializing() const;
 
-    /**
-     * Returns the active client, i.e. the client that has the focus (or None
-     * if no client has the focus)
-     */
-    Toplevel* activeClient() const;
     /**
      * Client that was activated, but it's not yet really activeClient(), because
      * we didn't process yet the matching FocusIn event. Used mostly in focus
@@ -380,17 +377,6 @@ public:
     void requestDelayFocus(Toplevel*);
 
     /**
-     * updates the mouse position to track whether a focus follow mouse focus change was caused by
-     * an actual mouse move
-     * is esp. called on enter/motion events of inactive windows
-     * since an active window doesn't receive mouse events, it must also be invoked if a
-     * (potentially) active window might be moved/resize away from the cursor (causing a leave
-     * event)
-     */
-    void updateFocusMousePosition(const QPoint& pos);
-    QPoint focusMousePosition() const;
-
-    /**
      * Returns a client that is currently being moved or resized by the user.
      *
      * If none of clients is being moved or resized, @c null will be returned.
@@ -539,7 +525,6 @@ private:
 
     // Delay(ed) window focus timer and client
     QTimer* delayFocusTimer{nullptr};
-    QPoint focusMousePos;
 
     bool showing_desktop{false};
 
@@ -579,11 +564,6 @@ private:
     friend bool performTransiencyCheck();
 };
 
-inline Toplevel* space::activeClient() const
-{
-    return active_client;
-}
-
 inline Toplevel* space::mostRecentlyActivatedClient() const
 {
     return should_get_focus.size() > 0 ? should_get_focus.back() : active_client;
@@ -613,16 +593,6 @@ inline bool space::showingDesktop() const
 inline bool space::globalShortcutsDisabled() const
 {
     return global_shortcuts_disabled_for_client;
-}
-
-inline void space::updateFocusMousePosition(const QPoint& pos)
-{
-    focusMousePos = pos;
-}
-
-inline QPoint space::focusMousePosition() const
-{
-    return focusMousePos;
 }
 
 }

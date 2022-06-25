@@ -521,7 +521,7 @@ void screen_edge::setGeometry(QRect const& geometry)
 
 void screen_edge::checkBlocking()
 {
-    auto window = edger->space.activeClient();
+    auto window = edger->space.active_client;
     auto const newValue = !edger->remainActiveOnFullscreen() && window
         && window->control->fullscreen() && window->frameGeometry().contains(geometry.center())
         && !(edger->space.render.effects

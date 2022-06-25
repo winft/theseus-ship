@@ -40,7 +40,7 @@ base::output const* get_current_output(Space const& space)
     }
 
     auto const cur = base.topology.current;
-    if (auto client = space.activeClient(); client && !win::on_screen(client, cur)) {
+    if (auto client = space.active_client; client && !win::on_screen(client, cur)) {
         return client->central_output;
     }
     return cur;

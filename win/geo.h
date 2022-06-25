@@ -214,7 +214,7 @@ void grow_horizontal(Win* win)
     frame_geo.setSize(adjusted_frame_size(win, frame_geo.size(), size_mode::fixed_height));
 
     // May cause leave event.
-    win->space.updateFocusMousePosition(input::get_cursor()->pos());
+    win->space.focusMousePos = input::get_cursor()->pos();
     win->setFrameGeometry(frame_geo);
 }
 
@@ -237,7 +237,7 @@ void shrink_horizontal(Win* win)
     // TODO(romangg): Magic number 20. Why?
     if (geom.width() > 20) {
         // May cause leave event.
-        win->space.updateFocusMousePosition(input::get_cursor()->pos());
+        win->space.focusMousePos = input::get_cursor()->pos();
         win->setFrameGeometry(geom);
     }
 }
@@ -272,7 +272,7 @@ void grow_vertical(Win* win)
     frame_geo.setSize(adjusted_frame_size(win, frame_geo.size(), size_mode::fixed_height));
 
     // May cause leave event.
-    win->space.updateFocusMousePosition(input::get_cursor()->pos());
+    win->space.focusMousePos = input::get_cursor()->pos();
     win->setFrameGeometry(frame_geo);
 }
 
@@ -294,7 +294,7 @@ void shrink_vertical(Win* win)
     // TODO(romangg): Magic number 20. Why?
     if (frame_geo.height() > 20) {
         // May cause leave event.
-        win->space.updateFocusMousePosition(input::get_cursor()->pos());
+        win->space.focusMousePos = input::get_cursor()->pos();
         win->setFrameGeometry(frame_geo);
     }
 }

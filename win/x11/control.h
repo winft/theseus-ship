@@ -1050,8 +1050,8 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         bool allow;
         if (session) {
             allow = session->active
-                && (!space.wasUserInteraction() || space.activeClient() == nullptr
-                    || is_desktop(space.activeClient()));
+                && (!space.wasUserInteraction() || !space.active_client
+                    || is_desktop(space.active_client));
         } else {
             allow = space.allowClientActivation(win, win->userTime(), false);
         }

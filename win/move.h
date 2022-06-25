@@ -596,8 +596,7 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
         return;
     }
 
-    // May cause leave event
-    win->space.updateFocusMousePosition(input::get_cursor()->pos());
+    win->space.focusMousePos = input::get_cursor()->pos();
 
     geometry_updates_blocker blocker(win);
 
@@ -1409,7 +1408,7 @@ template<typename Win>
 void pack_to(Win* win, int left, int top)
 {
     // May cause leave event.
-    win->space.updateFocusMousePosition(input::get_cursor()->pos());
+    win->space.focusMousePos = input::get_cursor()->pos();
 
     auto const old_screen = win->central_output;
     move(win, QPoint(left, top));

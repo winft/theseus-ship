@@ -902,7 +902,7 @@ void effects_handler_impl::activateWindow(EffectWindow* c)
 
 EffectWindow* effects_handler_impl::activeWindow() const
 {
-    auto ac = m_compositor->space->activeClient();
+    auto ac = m_compositor->space->active_client;
     return ac ? ac->render->effect.get() : nullptr;
 }
 

@@ -24,7 +24,7 @@ color_mapper::~color_mapper() = default;
 void color_mapper::update()
 {
     auto cmap = m_default;
-    if (auto window = dynamic_cast<x11::window*>(space.activeClient())) {
+    if (auto window = dynamic_cast<x11::window*>(space.active_client)) {
         if (window->colormap != XCB_COLORMAP_NONE) {
             cmap = window->colormap;
         }

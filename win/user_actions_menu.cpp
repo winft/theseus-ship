@@ -579,7 +579,7 @@ void user_actions_menu::slotWindowOperation(QAction* action)
         return;
 
     auto op = static_cast<base::options::WindowOperation>(action->data().toInt());
-    auto c = m_client ? m_client : QPointer<Toplevel>(space.activeClient());
+    auto c = m_client ? m_client : QPointer<Toplevel>(space.active_client);
     if (c.isNull())
         return;
     QString type;

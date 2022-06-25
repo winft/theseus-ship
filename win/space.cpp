@@ -2204,13 +2204,14 @@ void space::setActiveClient(Toplevel* window)
 
     blocker block(stacking_order);
     ++set_active_client_recursion;
-    updateFocusMousePosition(input::get_cursor()->pos());
+    focusMousePos = input::get_cursor()->pos();
+
     if (active_client != nullptr) {
         // note that this may call setActiveClient( NULL ), therefore the recursion counter
         win::set_active(active_client, false);
     }
-    active_client = window;
 
+    active_client = window;
     Q_ASSERT(window == nullptr || window->control->active());
 
     if (active_client) {
@@ -3469,7 +3470,7 @@ void activeClientToDesktop(win::space& space)
     if (d == current) {
         return;
     }
-    space.setMoveResizeClient(space.activeClient());
+    space.setMoveResizeClient(space.active_client);
     vds->setCurrent(d);
     space.setMoveResizeClient(nullptr);
 }

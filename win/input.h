@@ -302,7 +302,7 @@ void enter_event(Win* win, const QPoint& globalPos)
     }
 
     if (kwinApp()->options->isAutoRaise() && !win::is_desktop(win) && !win::is_dock(win)
-        && space->focusChangeEnabled() && globalPos != space->focusMousePosition()
+        && space->focusChangeEnabled() && globalPos != space->focusMousePos
         && top_client_on_desktop(space,
                                  win->space.virtual_desktop_manager->current(),
                                  kwinApp()->options->isSeparateScreenFocus() ? win->central_output
@@ -318,7 +318,7 @@ void enter_event(Win* win, const QPoint& globalPos)
     // For FocusFollowsMouse, change focus only if the mouse has actually been moved, not if the
     // focus change came because of window changes (e.g. closing a window) - #92290
     if (kwinApp()->options->focusPolicy() != base::options::FocusFollowsMouse
-        || globalPos != space->focusMousePosition()) {
+        || globalPos != space->focusMousePos) {
         space->requestDelayFocus(win);
     }
 }

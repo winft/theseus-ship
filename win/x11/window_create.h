@@ -48,7 +48,7 @@ void add_controlled_window_to_space(Space& space, Win* win)
     if (is_desktop(win)) {
         raise_window(&space, win);
         // If there's no active client, make this desktop the active one
-        if (!space.activeClient() && space.should_get_focus.size() == 0)
+        if (!space.active_client && space.should_get_focus.size() == 0)
             space.activateClient(
                 find_desktop(&space, true, space.virtual_desktop_manager->current()));
     }

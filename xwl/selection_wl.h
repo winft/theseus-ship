@@ -120,7 +120,7 @@ void handle_wl_selection_client_change(Selection* sel)
 {
     auto srv_src = sel->get_current_source();
 
-    if (!qobject_cast<win::x11::window*>(sel->data.x11.space->activeClient())) {
+    if (!qobject_cast<win::x11::window*>(sel->data.x11.space->active_client)) {
         // No active client or active client is Wayland native.
         if (sel->data.wayland_source) {
             cleanup_wl_to_x11_source(sel);

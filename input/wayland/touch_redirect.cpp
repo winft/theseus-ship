@@ -115,7 +115,7 @@ void touch_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
 
     if (focusNow && focusNow->control) {
         win::enter_event(focusNow, m_lastPosition.toPoint());
-        redirect->space.updateFocusMousePosition(m_lastPosition.toPoint());
+        redirect->space.focusMousePos = m_lastPosition.toPoint();
     }
 
     auto seat = waylandServer()->seat();

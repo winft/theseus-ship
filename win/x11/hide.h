@@ -231,7 +231,7 @@ void update_tool_windows_visibility(Space* space, bool also_hide)
     }
 
     x11::group const* active_group = nullptr;
-    auto active_window = space->activeClient();
+    auto active_window = space->active_client;
 
     // Go up in transiency hiearchy, if the top is found, only tool transients for the top
     // window will be shown; if a group transient is group, all tools in the group will be shown.

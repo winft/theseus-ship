@@ -631,7 +631,7 @@ public:
 
     window* activeClient() const override
     {
-        auto active_client = ref_space->activeClient();
+        auto active_client = ref_space->active_client;
         if (!active_client) {
             return nullptr;
         }
