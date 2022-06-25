@@ -118,14 +118,13 @@ void RuleBook::load()
 {
     deleteAll();
 
-    if (!m_config) {
-        m_config
-            = KSharedConfig::openConfig(QStringLiteral(KWIN_NAME "rulesrc"), KConfig::NoGlobals);
+    if (!config) {
+        config = KSharedConfig::openConfig(QStringLiteral(KWIN_NAME "rulesrc"), KConfig::NoGlobals);
     } else {
-        m_config->reparseConfiguration();
+        config->reparseConfiguration();
     }
 
-    RuleBookSettings book(m_config);
+    RuleBookSettings book(config);
     book.load();
     m_rules = book.rules().toList();
 }
@@ -134,7 +133,7 @@ void RuleBook::save()
 {
     m_updateTimer->stop();
 
-    if (!m_config) {
+    if (!config) {
         qCWarning(KWIN_CORE) << "RuleBook::save invoked without prior invocation of RuleBook::load";
         return;
     }
@@ -146,7 +145,7 @@ void RuleBook::save()
         }
     }
 
-    RuleBookSettings settings(m_config);
+    RuleBookSettings settings(config);
     settings.setRules(filteredRules);
     settings.save();
 }
