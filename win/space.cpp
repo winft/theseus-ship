@@ -905,15 +905,6 @@ QRect space::get_icon_geometry(Toplevel const* /*win*/) const
     return QRect();
 }
 
-win::x11::group* space::findGroup(xcb_window_t leader) const
-{
-    Q_ASSERT(leader != XCB_WINDOW_NONE);
-    for (auto it = groups.cbegin(); it != groups.cend(); ++it)
-        if ((*it)->leader() == leader)
-            return *it;
-    return nullptr;
-}
-
 void space::updateMinimizedOfTransients(Toplevel* c)
 {
     // if mainwindow is minimized or shaded, minimize transients too

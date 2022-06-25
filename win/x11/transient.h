@@ -369,7 +369,7 @@ void check_group(Win* win, x11::group* group)
             // by this app, but transient for another, so make it part of that group).
             group = lead->group();
         } else if (win->info->groupLeader() != XCB_WINDOW_NONE) {
-            group = win->space.findGroup(win->info->groupLeader());
+            group = find_group(win->space, win->info->groupLeader());
             if (!group) {
                 // doesn't exist yet
                 group = new x11::group(win->info->groupLeader(), win->space);

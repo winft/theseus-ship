@@ -352,7 +352,6 @@ public:
     bool showingDesktop() const;
 
     void setActiveClient(Toplevel* window);
-    win::x11::group* findGroup(xcb_window_t leader) const;
 
     bool checkStartupNotification(xcb_window_t w, KStartupInfoId& id, KStartupInfoData& data);
 

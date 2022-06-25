@@ -106,6 +106,18 @@ inline render::effect_window_group_impl* group::effectGroup()
     return effect_group;
 }
 
+template<typename Space>
+group* find_group(Space& space, xcb_window_t leader)
+{
+    assert(leader != XCB_WINDOW_NONE);
+    for (auto group : space.groups) {
+        if (group->leader() == leader) {
+            return group;
+        }
+    }
+    return nullptr;
+}
+
 }
 }
 }
