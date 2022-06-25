@@ -6,27 +6,23 @@
 */
 #include "rule_book.h"
 
-#include "base/logging.h"
-
-#include <KXMessages>
-#include <QDir>
-#include <QFile>
-#include <QFileInfo>
-#include <kconfig.h>
-
 #ifndef KCMRULES
+#include "base/logging.h"
 #include "toplevel.h"
 #include "win/control.h"
 #include "win/space.h"
-#endif
 
 #include "rule_book_settings.h"
 #include "rule_settings.h"
 
+#include <KConfig>
+#include <KXMessages>
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
+
 namespace KWin
 {
-
-#ifndef KCMRULES
 
 RuleBook::RuleBook(win::space& space)
     : m_updateTimer(new QTimer(this))
@@ -121,12 +117,14 @@ void RuleBook::edit(Toplevel* window, bool whole_app)
 void RuleBook::load()
 {
     deleteAll();
+
     if (!m_config) {
         m_config
             = KSharedConfig::openConfig(QStringLiteral(KWIN_NAME "rulesrc"), KConfig::NoGlobals);
     } else {
         m_config->reparseConfiguration();
     }
+
     RuleBookSettings book(m_config);
     book.load();
     m_rules = book.rules().toList();
@@ -135,16 +133,19 @@ void RuleBook::load()
 void RuleBook::save()
 {
     m_updateTimer->stop();
+
     if (!m_config) {
         qCWarning(KWIN_CORE) << "RuleBook::save invoked without prior invocation of RuleBook::load";
         return;
     }
+
     QVector<Rules*> filteredRules;
     for (const auto& rule : qAsConst(m_rules)) {
         if (!rule->isTemporary()) {
             filteredRules.append(rule);
         }
     }
+
     RuleBookSettings settings(m_config);
     settings.setRules(filteredRules);
     settings.save();
@@ -152,12 +153,17 @@ void RuleBook::save()
 
 void RuleBook::temporaryRulesMessage(const QString& message)
 {
-    bool was_temporary = false;
-    for (QList<Rules*>::ConstIterator it = m_rules.constBegin(); it != m_rules.constEnd(); ++it)
-        if ((*it)->isTemporary())
+    auto was_temporary = false;
+    for (auto it = m_rules.constBegin(); it != m_rules.constEnd(); ++it) {
+        if ((*it)->isTemporary()) {
             was_temporary = true;
-    Rules* rule = new Rules(message, true);
-    m_rules.prepend(rule); // highest priority first
+        }
+    }
+
+    auto rule = new Rules(message, true);
+
+    // highest priority first
+    m_rules.prepend(rule);
 
     if (!was_temporary) {
         QTimer::singleShot(60000, this, &RuleBook::cleanupTemporaryRules);
@@ -166,24 +172,30 @@ void RuleBook::temporaryRulesMessage(const QString& message)
 
 void RuleBook::cleanupTemporaryRules()
 {
-    bool has_temporary = false;
-    for (QList<Rules*>::Iterator it = m_rules.begin(); it != m_rules.end();) {
-        if ((*it)->discardTemporary(false)) { // deletes (*it)
+    auto has_temporary = false;
+
+    for (auto it = m_rules.begin(); it != m_rules.end();) {
+        if ((*it)->discardTemporary(false)) {
+            // deletes (*it)
             it = m_rules.erase(it);
         } else {
-            if ((*it)->isTemporary())
+            if ((*it)->isTemporary()) {
                 has_temporary = true;
+            }
             ++it;
         }
     }
-    if (has_temporary)
+
+    if (has_temporary) {
         QTimer::singleShot(60000, this, SLOT(cleanupTemporaryRules()));
+    }
 }
 
 void RuleBook::discardUsed(Toplevel* window, bool withdrawn)
 {
-    bool updated = false;
-    for (QList<Rules*>::Iterator it = m_rules.begin(); it != m_rules.end();) {
+    auto updated = false;
+
+    for (auto it = m_rules.begin(); it != m_rules.end();) {
         if (window->control->rules().contains(*it)) {
             if ((*it)->discardUsed(withdrawn)) {
                 updated = true;
@@ -198,8 +210,10 @@ void RuleBook::discardUsed(Toplevel* window, bool withdrawn)
         }
         ++it;
     }
-    if (updated)
+
+    if (updated) {
         requestDiskStorage();
+    }
 }
 
 void RuleBook::requestDiskStorage()
@@ -225,5 +239,4 @@ bool RuleBook::areUpdatesDisabled() const
 }
 
 #endif
-
 }

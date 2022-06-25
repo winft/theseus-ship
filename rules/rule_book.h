@@ -4,18 +4,12 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#ifndef KWIN_RULES_RULE_BOOK_H
-#define KWIN_RULES_RULE_BOOK_H
+#pragma once
 
-#include <QRect>
-#include <QVector>
-#include <netwm_def.h>
+#ifndef KCMRULES
 
-#include "base/options.h"
 #include "window_rules.h"
 
-class QDebug;
-class KConfig;
 class KXMessages;
 
 namespace KWin
@@ -29,7 +23,6 @@ class space;
 class Rules;
 class Toplevel;
 
-#ifndef KCMRULES
 class KWIN_EXPORT RuleBook : public QObject
 {
     Q_OBJECT
@@ -58,6 +51,7 @@ private Q_SLOTS:
 private:
     void deleteAll();
     void initWithX11();
+
     QTimer* m_updateTimer;
     bool m_updatesDisabled;
     QList<Rules*> m_rules;
@@ -67,7 +61,4 @@ private:
 };
 
 #endif
-
 }
-
-#endif
