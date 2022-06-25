@@ -112,7 +112,7 @@ space::space(render::compositor& render)
     , focus_chain{std::make_unique<win::focus_chain>(*this)}
     , virtual_desktop_manager{std::make_unique<win::virtual_desktop_manager>()}
     , dbus{std::make_unique<base::dbus::kwin>(*this)}
-    , session_manager{std::make_unique<win::session_manager>(*this)}
+    , session_manager{std::make_unique<win::session_manager>()}
 {
     // For invoke methods of user_actions_menu.
     qRegisterMetaType<Toplevel*>();
@@ -122,7 +122,7 @@ space::space(render::compositor& render)
     m_quickTileCombineTimer = new QTimer(qobject.get());
     m_quickTileCombineTimer->setSingleShot(true);
 
-    rule_book->load();
+    init_rule_book(*rule_book, session_manager.get());
 
     // dbus interface
     new win::dbus::virtual_desktop_manager(virtual_desktop_manager.get());
