@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwin_export.h"
 
 #include <QObject>
+#include <memory>
 #include <xcb/xcb.h>
 
 class QPoint;
@@ -46,6 +47,7 @@ class KWIN_EXPORT appmenu : public QObject
 
 public:
     explicit appmenu(win::space& space);
+    ~appmenu();
 
     void showApplicationMenu(const QPoint& pos, Toplevel* window, int actionId);
 
@@ -64,8 +66,8 @@ private Q_SLOTS:
     void slotMenuHidden(const QString& serviceName, const QDBusObjectPath& menuObjectPath);
 
 private:
-    OrgKdeKappmenuInterface* m_appmenuInterface;
-    QDBusServiceWatcher* m_kappMenuWatcher;
+    std::unique_ptr<OrgKdeKappmenuInterface> dbus_iface;
+    std::unique_ptr<QDBusServiceWatcher> dbus_watcher;
 
     Toplevel* findAbstractClientWithApplicationMenu(const QString& serviceName,
                                                     const QDBusObjectPath& menuObjectPath);

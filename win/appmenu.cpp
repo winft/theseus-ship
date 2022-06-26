@@ -37,29 +37,27 @@ using namespace KWin::win;
 static const QString s_viewService(QStringLiteral("org.kde.kappmenuview"));
 
 appmenu::appmenu(win::space& space)
-    : m_appmenuInterface(new OrgKdeKappmenuInterface(QStringLiteral("org.kde.kappmenu"),
-                                                     QStringLiteral("/KAppMenu"),
-                                                     QDBusConnection::sessionBus(),
-                                                     this))
+    : dbus_iface{std::make_unique<OrgKdeKappmenuInterface>(QStringLiteral("org.kde.kappmenu"),
+                                                           QStringLiteral("/KAppMenu"),
+                                                           QDBusConnection::sessionBus())}
+    , dbus_watcher{std::make_unique<QDBusServiceWatcher>(
+          QStringLiteral("org.kde.kappmenu"),
+          QDBusConnection::sessionBus(),
+          QDBusServiceWatcher::WatchForRegistration | QDBusServiceWatcher::WatchForUnregistration)}
     , space{space}
 {
-    connect(
-        m_appmenuInterface, &OrgKdeKappmenuInterface::showRequest, this, &appmenu::slotShowRequest);
-    connect(m_appmenuInterface, &OrgKdeKappmenuInterface::menuShown, this, &appmenu::slotMenuShown);
-    connect(
-        m_appmenuInterface, &OrgKdeKappmenuInterface::menuHidden, this, &appmenu::slotMenuHidden);
+    QObject::connect(
+        dbus_iface.get(), &OrgKdeKappmenuInterface::showRequest, this, &appmenu::slotShowRequest);
+    QObject::connect(
+        dbus_iface.get(), &OrgKdeKappmenuInterface::menuShown, this, &appmenu::slotMenuShown);
+    QObject::connect(
+        dbus_iface.get(), &OrgKdeKappmenuInterface::menuHidden, this, &appmenu::slotMenuHidden);
 
-    m_kappMenuWatcher = new QDBusServiceWatcher(QStringLiteral("org.kde.kappmenu"),
-                                                QDBusConnection::sessionBus(),
-                                                QDBusServiceWatcher::WatchForRegistration
-                                                    | QDBusServiceWatcher::WatchForUnregistration,
-                                                this);
-
-    connect(m_kappMenuWatcher, &QDBusServiceWatcher::serviceRegistered, this, [this]() {
+    QObject::connect(dbus_watcher.get(), &QDBusServiceWatcher::serviceRegistered, this, [this]() {
         m_applicationMenuEnabled = true;
         Q_EMIT applicationMenuEnabledChanged(true);
     });
-    connect(m_kappMenuWatcher, &QDBusServiceWatcher::serviceUnregistered, this, [this]() {
+    QObject::connect(dbus_watcher.get(), &QDBusServiceWatcher::serviceUnregistered, this, [this]() {
         m_applicationMenuEnabled = false;
         Q_EMIT applicationMenuEnabledChanged(false);
     });
@@ -67,6 +65,8 @@ appmenu::appmenu(win::space& space)
     m_applicationMenuEnabled = QDBusConnection::sessionBus().interface()->isServiceRegistered(
         QStringLiteral("org.kde.kappmenu"));
 }
+
+appmenu::~appmenu() = default;
 
 bool appmenu::applicationMenuEnabled() const
 {
@@ -124,7 +124,7 @@ void appmenu::showApplicationMenu(const QPoint& p, Toplevel* window, int actionI
     }
 
     auto const& [name, path] = window->control->application_menu();
-    m_appmenuInterface->showMenu(p.x(), p.y(), name, QDBusObjectPath(path), actionId);
+    dbus_iface->showMenu(p.x(), p.y(), name, QDBusObjectPath(path), actionId);
 }
 
 Toplevel* appmenu::findAbstractClientWithApplicationMenu(const QString& serviceName,
