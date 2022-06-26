@@ -40,12 +40,12 @@ namespace win
 
 class space;
 
-class KWIN_EXPORT app_menu : public QObject
+class KWIN_EXPORT appmenu : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit app_menu(win::space& space);
+    explicit appmenu(win::space& space);
 
     void showApplicationMenu(const QPoint& pos, Toplevel* window, int actionId);
 

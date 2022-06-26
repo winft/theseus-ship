@@ -106,7 +106,7 @@ class group;
 }
 
 enum class activation;
-class app_menu;
+class appmenu;
 class focus_chain;
 class internal_window;
 class kill_window;
@@ -169,7 +169,7 @@ public:
     KStartupInfo* startup{nullptr};
     std::unique_ptr<base::x11::atoms> atoms;
     std::unique_ptr<deco::bridge<space>> deco;
-    std::unique_ptr<win::app_menu> app_menu;
+    std::unique_ptr<win::appmenu> appmenu;
     std::unique_ptr<input::redirect> input;
     std::unique_ptr<win::tabbox> tabbox;
     std::unique_ptr<RuleBook> rule_book;

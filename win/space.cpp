@@ -105,7 +105,7 @@ space::space(render::compositor& render)
     , outline{std::make_unique<render::outline>(render)}
     , render{render}
     , deco{std::make_unique<deco::bridge<space>>(*this)}
-    , app_menu{std::make_unique<win::app_menu>(*this)}
+    , appmenu{std::make_unique<win::appmenu>(*this)}
     , rule_book{std::make_unique<RuleBook>(*this)}
     , user_actions_menu{std::make_unique<win::user_actions_menu>(*this)}
     , stacking_order{std::make_unique<win::stacking_order>()}
@@ -3614,7 +3614,7 @@ void space::showWindowMenu(const QRect& pos, Toplevel* window)
 
 void space::showApplicationMenu(const QRect& pos, Toplevel* window, int actionId)
 {
-    app_menu->showApplicationMenu(window->pos() + pos.bottomLeft(), window, actionId);
+    appmenu->showApplicationMenu(window->pos() + pos.bottomLeft(), window, actionId);
 }
 
 /**
