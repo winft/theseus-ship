@@ -22,17 +22,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "appmenu.h"
 
 #include "appmenu_interface.h"
-#include "deco.h"
-#include "deco/bridge.h"
-#include "space.h"
+
+#include "win/deco.h"
+#include "win/deco/bridge.h"
+#include "win/space.h"
 
 #include <QDBusObjectPath>
 #include <QDBusServiceWatcher>
 
 #include <KDecoration2/DecorationSettings>
 
-using namespace KWin;
-using namespace KWin::win;
+namespace KWin::win::dbus
+{
 
 static const QString s_viewService(QStringLiteral("org.kde.kappmenuview"));
 
@@ -142,4 +143,6 @@ Toplevel* appmenu::findAbstractClientWithApplicationMenu(const QString& serviceN
         }
     }
     return nullptr;
+}
+
 }

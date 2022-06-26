@@ -41,6 +41,9 @@ namespace win
 
 class space;
 
+namespace dbus
+{
+
 class KWIN_EXPORT appmenu : public QObject
 {
     Q_OBJECT
@@ -76,5 +79,6 @@ private:
     win::space& space;
 };
 
+}
 }
 }

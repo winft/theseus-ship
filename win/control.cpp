@@ -5,7 +5,7 @@
 */
 #include "control.h"
 
-#include "appmenu.h"
+#include "dbus/appmenu.h"
 #include "deco/client_impl.h"
 #include "deco/palette.h"
 #include "deco/window.h"

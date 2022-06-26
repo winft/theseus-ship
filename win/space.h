@@ -91,6 +91,11 @@ class Toplevel;
 namespace win
 {
 
+namespace dbus
+{
+class appmenu;
+}
+
 namespace deco
 {
 template<typename Space>
@@ -106,7 +111,6 @@ class group;
 }
 
 enum class activation;
-class appmenu;
 class focus_chain;
 class internal_window;
 class kill_window;
@@ -169,7 +173,7 @@ public:
     KStartupInfo* startup{nullptr};
     std::unique_ptr<base::x11::atoms> atoms;
     std::unique_ptr<deco::bridge<space>> deco;
-    std::unique_ptr<win::appmenu> appmenu;
+    std::unique_ptr<dbus::appmenu> appmenu;
     std::unique_ptr<input::redirect> input;
     std::unique_ptr<win::tabbox> tabbox;
     std::unique_ptr<RuleBook> rule_book;

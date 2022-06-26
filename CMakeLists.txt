@@ -462,8 +462,8 @@ set(kwin_SRCS
     scripting/window.cpp
     scripting/space.cpp
     toplevel.cpp
-    win/appmenu.cpp
     win/control.cpp
+    win/dbus/appmenu.cpp
     win/dbus/virtual_desktop_manager.cpp
     win/dbus/virtual_desktop_types.cpp
     win/deco/client_impl.cpp
