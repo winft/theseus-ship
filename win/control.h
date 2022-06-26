@@ -44,68 +44,7 @@ class tabbox_client_impl;
 
 class KWIN_EXPORT control
 {
-    bool m_skip_taskbar{false};
-    bool m_original_skip_taskbar{false};
-    bool m_skip_pager{false};
-    bool m_skip_switcher{false};
-
-    std::shared_ptr<win::tabbox_client_impl> m_tabbox;
-    bool m_first_in_tabbox{false};
-
-    QByteArray m_desktop_file_name;
-    QIcon m_icon;
-
-    struct {
-        bool active{false};
-        // address's 1st item is the interface name, and the 2nd item is the
-        // object path.
-        std::tuple<QString, QString> address;
-
-        bool is_empty() const
-        {
-            auto const& [lhs, rhs] = address;
-            return lhs.isEmpty() && rhs.isEmpty();
-        }
-
-    } m_application_menu;
-
-    QKeySequence m_shortcut;
-
-    bool m_active{false};
-    bool m_keep_above{false};
-    bool m_keep_below{false};
-    bool m_demands_attention{false};
-    bool m_unresponsive{false};
-
-    QTimer* m_auto_raise_timer{nullptr};
-    bool m_minimized{false};
-
-    Wrapland::Server::PlasmaWindow* m_wayland_management{nullptr};
-
-    bool m_have_resize_effect{false};
-
-    quicktiles m_quicktiling{quicktiles::none};
-    quicktiles m_electric{quicktiles::none};
-    bool m_electric_maximizing{false};
-    QTimer* m_electric_maximizing_delay{nullptr};
-
-    bool m_fullscreen{false};
-
-    win::move_resize_op m_move_resize;
-
-    win::deco_impl m_deco;
-    win::palette m_palette;
-
-    WindowRules m_rules;
-
-    Toplevel* m_win;
-
-    void minimize(bool avoid_animation);
-    void unminimize(bool avoid_animation);
-
 public:
-    std::unique_ptr<scripting::window> scripting;
-
     explicit control(Toplevel* win);
     virtual ~control();
 
@@ -208,6 +147,68 @@ public:
 
     void remove_rule(Rules* r);
     void discard_temporary_rules();
+
+    std::unique_ptr<scripting::window> scripting;
+
+private:
+    void minimize(bool avoid_animation);
+    void unminimize(bool avoid_animation);
+
+    bool m_skip_taskbar{false};
+    bool m_original_skip_taskbar{false};
+    bool m_skip_pager{false};
+    bool m_skip_switcher{false};
+
+    std::shared_ptr<win::tabbox_client_impl> m_tabbox;
+    bool m_first_in_tabbox{false};
+
+    QByteArray m_desktop_file_name;
+    QIcon m_icon;
+
+    struct {
+        bool active{false};
+        // address's 1st item is the interface name, and the 2nd item is the
+        // object path.
+        std::tuple<QString, QString> address;
+
+        bool is_empty() const
+        {
+            auto const& [lhs, rhs] = address;
+            return lhs.isEmpty() && rhs.isEmpty();
+        }
+
+    } m_application_menu;
+
+    QKeySequence m_shortcut;
+
+    bool m_active{false};
+    bool m_keep_above{false};
+    bool m_keep_below{false};
+    bool m_demands_attention{false};
+    bool m_unresponsive{false};
+
+    QTimer* m_auto_raise_timer{nullptr};
+    bool m_minimized{false};
+
+    Wrapland::Server::PlasmaWindow* m_wayland_management{nullptr};
+
+    bool m_have_resize_effect{false};
+
+    quicktiles m_quicktiling{quicktiles::none};
+    quicktiles m_electric{quicktiles::none};
+    bool m_electric_maximizing{false};
+    QTimer* m_electric_maximizing_delay{nullptr};
+
+    bool m_fullscreen{false};
+
+    win::move_resize_op m_move_resize;
+
+    win::deco_impl m_deco;
+    win::palette m_palette;
+
+    WindowRules m_rules;
+
+    Toplevel* m_win;
 };
 
 }
