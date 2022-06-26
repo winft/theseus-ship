@@ -124,8 +124,12 @@ void appmenu::showApplicationMenu(const QPoint& p, Toplevel* window, int actionI
         return;
     }
 
-    auto const& [name, path] = window->control->application_menu();
-    dbus_iface->showMenu(p.x(), p.y(), name, QDBusObjectPath(path), actionId);
+    auto const menu = window->control->application_menu();
+    dbus_iface->showMenu(p.x(),
+                         p.y(),
+                         QString::fromStdString(menu.address.name),
+                         QDBusObjectPath(QString::fromStdString(menu.address.path)),
+                         actionId);
 }
 
 Toplevel* appmenu::findAbstractClientWithApplicationMenu(const QString& serviceName,
@@ -135,10 +139,10 @@ Toplevel* appmenu::findAbstractClientWithApplicationMenu(const QString& serviceN
         return nullptr;
     }
 
-    auto const addr = std::make_tuple(serviceName, menuObjectPath.path());
+    appmenu_address addr{serviceName.toStdString(), menuObjectPath.path().toStdString()};
 
     for (auto win : space.m_windows) {
-        if (win->control && win->control->application_menu() == addr) {
+        if (win->control && win->control->application_menu().address == addr) {
             return win;
         }
     }

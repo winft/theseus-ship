@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "appmenu.h"
 #include "structs.h"
 #include "types.h"
 
@@ -78,9 +79,9 @@ public:
     bool application_menu_active() const;
     void set_application_menu_active(bool active);
 
-    std::tuple<QString, QString> application_menu() const;
+    win::appmenu application_menu() const;
 
-    void update_application_menu(std::tuple<QString, QString> const& addr);
+    void update_application_menu(appmenu_address const& address);
 
     QKeySequence const& shortcut() const;
     void set_shortcut(QString const& shortcut);
@@ -165,20 +166,7 @@ private:
     QByteArray m_desktop_file_name;
     QIcon m_icon;
 
-    struct {
-        bool active{false};
-        // address's 1st item is the interface name, and the 2nd item is the
-        // object path.
-        std::tuple<QString, QString> address;
-
-        bool is_empty() const
-        {
-            auto const& [lhs, rhs] = address;
-            return lhs.isEmpty() && rhs.isEmpty();
-        }
-
-    } m_application_menu;
-
+    win::appmenu appmenu;
     QKeySequence m_shortcut;
 
     bool m_active{false};

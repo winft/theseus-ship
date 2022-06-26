@@ -521,7 +521,8 @@ void install_appmenu(Win* win, Wrapland::Server::Appmenu* menu)
     using Menu = Wrapland::Server::Appmenu;
 
     auto update = [win](Menu::InterfaceAddress address) {
-        win->control->update_application_menu({address.serviceName, address.objectPath});
+        win->control->update_application_menu(
+            {address.serviceName.toStdString(), address.objectPath.toStdString()});
     };
 
     QObject::connect(menu, &Menu::addressChanged, win, [update](Menu::InterfaceAddress address) {

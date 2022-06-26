@@ -1020,8 +1020,8 @@ void TestXdgShellClient::testAppMenu()
     menu->setAddress("service.name", "object/path");
     spy.wait();
     QCOMPARE(c->control->has_application_menu(), true);
-    QCOMPARE(c->control->application_menu(),
-             std::make_tuple(QString("service.name"), QString("object/path")));
+    QCOMPARE(c->control->application_menu().address,
+             win::appmenu_address("service.name", "object/path"));
 
     QVERIFY(QDBusConnection::sessionBus().unregisterService("org.kde.kappmenu"));
 }

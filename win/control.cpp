@@ -131,37 +131,37 @@ void control::set_icon(QIcon const& icon)
 
 bool control::has_application_menu() const
 {
-    return m_win->space.appmenu->applicationMenuEnabled() && !m_application_menu.is_empty();
+    return m_win->space.appmenu->applicationMenuEnabled() && !appmenu.address.empty();
 }
 
 bool control::application_menu_active() const
 {
-    return m_application_menu.active;
+    return appmenu.active;
 }
 
 void control::set_application_menu_active(bool active)
 {
-    if (m_application_menu.active == active) {
+    if (appmenu.active == active) {
         return;
     }
-    m_application_menu.active = active;
+    appmenu.active = active;
     Q_EMIT m_win->applicationMenuActiveChanged(active);
 }
 
-std::tuple<QString, QString> control::application_menu() const
+appmenu control::application_menu() const
 {
-    return m_application_menu.address;
+    return appmenu;
 }
 
-void control::update_application_menu(const std::tuple<QString, QString>& address)
+void control::update_application_menu(appmenu_address const& address)
 {
-    if (address == m_application_menu.address) {
+    if (address == appmenu.address) {
         return;
     }
 
     auto const had_menu = has_application_menu();
 
-    m_application_menu.address = address;
+    appmenu.address = address;
     Q_EMIT m_win->applicationMenuChanged();
 
     auto const has_menu = has_application_menu();
