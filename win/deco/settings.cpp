@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "config-kwin.h"
 #include "main.h"
 #include "render/compositor.h"
-#include "win/app_menu.h"
+#include "win/appmenu.h"
 #include "win/space.h"
 #include "win/virtual_desktops.h"
 

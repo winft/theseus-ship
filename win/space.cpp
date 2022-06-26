@@ -38,7 +38,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "rules/rules.h"
 #include "scripting/platform.h"
 #include "utils/blocker.h"
-#include "win/app_menu.h"
+#include "win/appmenu.h"
 #include "win/controlling.h"
 #include "win/dbus/virtual_desktop_manager.h"
 #include "win/focus_chain.h"
