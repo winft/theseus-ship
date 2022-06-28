@@ -11,7 +11,7 @@ namespace KWin
 {
 
 template<typename V, typename T>
-auto find(V const& container, T const& arg)
+auto find(V&& container, T const& arg)
 {
     return std::find(container.begin(), container.end(), arg);
 }
