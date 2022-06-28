@@ -75,7 +75,11 @@ static void handle_modifiers(struct wl_listener* listener, [[maybe_unused]] void
 keyboard::keyboard(wlr_input_device* dev, input::platform* platform)
     : input::keyboard(platform)
 {
+#if HAVE_WLR_BASE_INPUT_DEVICES
+    backend = wlr_keyboard_from_input_device(dev);
+#else
     backend = dev->keyboard;
+#endif
 
     if (auto libinput = get_libinput_device(dev)) {
         control = std::make_unique<keyboard_control>(libinput, platform);

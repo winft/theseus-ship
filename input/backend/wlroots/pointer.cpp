@@ -272,7 +272,11 @@ static void handle_frame(struct wl_listener* listener, [[maybe_unused]] void* da
 pointer::pointer(wlr_input_device* dev, input::platform* platform)
     : input::pointer(platform)
 {
+#if HAVE_WLR_BASE_INPUT_DEVICES
+    backend = wlr_pointer_from_input_device(dev);
+#else
     backend = dev->pointer;
+#endif
 
     if (auto libinput = get_libinput_device(dev)) {
         control = std::make_unique<pointer_control>(libinput, platform);

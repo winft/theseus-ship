@@ -124,7 +124,11 @@ static void handle_frame(struct wl_listener* listener, [[maybe_unused]] void* da
 touch::touch(wlr_input_device* dev, input::platform* platform)
     : input::touch(platform)
 {
+#if HAVE_WLR_BASE_INPUT_DEVICES
+    backend = wlr_touch_from_input_device(dev);
+#else
     backend = dev->touch;
+#endif
 
     if (auto libinput = get_libinput_device(dev)) {
         control = std::make_unique<touch_control>(libinput, platform);
