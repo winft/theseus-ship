@@ -48,7 +48,11 @@ static void handle_toggle(struct wl_listener* listener, [[maybe_unused]] void* d
 switch_device::switch_device(wlr_input_device* dev, input::platform* platform)
     : input::switch_device(platform)
 {
+#if HAVE_WLR_BASE_INPUT_DEVICES
+    backend = wlr_switch_from_input_device(dev);
+#else
     backend = dev->switch_device;
+#endif
 
     if (auto libinput = get_libinput_device(dev)) {
         control = std::make_unique<switch_control>(libinput, platform);
