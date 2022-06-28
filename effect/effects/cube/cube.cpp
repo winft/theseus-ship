@@ -597,18 +597,20 @@ void CubeEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& d
             } else if (animationState == AnimationState::Stop) {
                 opacity = 1.0 - timeLine.value();
             }
-            QRect screenRect = effects->clientArea(ScreenArea, activeScreen, frontDesktop);
-            QRect frameRect = QRect(screenRect.width() * 0.33f + screenRect.x(),
-                                    screenRect.height() * 0.95f + screenRect.y(),
-                                    screenRect.width() * 0.34f,
-                                    QFontMetrics(desktopNameFont).height());
+
             if (!desktopNameFrame) {
-                desktopNameFrame = effects->effectFrame(EffectFrameStyled);
+                auto screen_rect = effects->clientArea(ScreenArea, activeScreen, frontDesktop);
+                auto frame_x = screen_rect.width() * 0.5f + screen_rect.x();
+                auto frame_y = screen_rect.height() * 0.95f + screen_rect.y();
+
+                desktopNameFrame = effects->effectFrame(
+                    EffectFrameStyled, false, QPoint(frame_x, frame_y), Qt::AlignCenter);
                 desktopNameFrame->setFont(desktopNameFont);
             }
-            desktopNameFrame->setGeometry(frameRect);
+
             desktopNameFrame->setText(effects->desktopName(frontDesktop));
             desktopNameFrame->render(region, opacity);
+            effects->makeOpenGLContextCurrent();
         }
     } else {
         effects->paintScreen(mask, region, data);
