@@ -71,16 +71,6 @@ public:
         unlock();
     }
 
-    void add_manual_overlay(xcb_window_t id)
-    {
-        manual_overlays.push_back(id);
-    }
-
-    void remove_manual_overlay(xcb_window_t id)
-    {
-        manual_overlays.erase(std::find(manual_overlays.begin(), manual_overlays.end(), id));
-    }
-
     /// How windows are configured in z-direction.
     std::deque<Toplevel*> win_stack;
     /// Unsorted deque
