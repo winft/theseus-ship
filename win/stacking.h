@@ -24,6 +24,7 @@
 
 #include "base/output_helpers.h"
 #include "base/platform.h"
+#include "utils/algorithm.h"
 #include "utils/blocker.h"
 
 #include "rules/rules.h"
@@ -590,8 +591,7 @@ bool keep_deleted_transient_above(Win1 const* mainWindow, Win2 const* transient)
 template<typename Container>
 std::vector<Toplevel*> sort_windows_by_layer(Container const& list)
 {
-    constexpr size_t layer_count = static_cast<int>(layer::count);
-    std::deque<Toplevel*> layers[layer_count];
+    std::deque<Toplevel*> layers[enum_index(layer::count)];
     auto const& outputs = kwinApp()->get_base().get_outputs();
 
     // Build the order from layers.
@@ -614,8 +614,7 @@ std::vector<Toplevel*> sort_windows_by_layer(Container const& list)
             // If a window is raised above some other window in the same window group
             // which is in the ActiveLayer (i.e. it's fulscreened), make sure it stays
             // above that window (see #95731).
-            if (*group_layer_it == layer::active
-                && (static_cast<int>(lay) > static_cast<int>(layer::below))) {
+            if (*group_layer_it == layer::active && (enum_index(lay) > enum_index(layer::below))) {
                 lay = layer::active;
             }
             *group_layer_it = lay;
@@ -623,13 +622,13 @@ std::vector<Toplevel*> sort_windows_by_layer(Container const& list)
             fs_group_layers[output_index].insertMulti(x11_win->group(), lay);
         }
 
-        layers[static_cast<size_t>(lay)].push_back(win);
+        layers[enum_index(lay)].push_back(win);
     }
 
     std::vector<Toplevel*> sorted;
     sorted.reserve(list.size());
 
-    for (auto lay = static_cast<size_t>(layer::first); lay < layer_count; ++lay) {
+    for (auto lay = enum_index(layer::first); lay < enum_index(layer::count); ++lay) {
         sorted.insert(sorted.end(), layers[lay].begin(), layers[lay].end());
     }
 
