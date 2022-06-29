@@ -30,8 +30,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/remnant.h"
 #include "win/scene.h"
 #include "win/space.h"
-#include "win/space_helpers.h"
 #include "win/transient.h"
+#include "win/x11/client_machine.h"
 
 #include <QDebug>
 

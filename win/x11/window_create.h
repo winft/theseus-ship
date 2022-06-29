@@ -5,10 +5,9 @@
 */
 #pragma once
 
+#include "hide.h"
 #include "stacking_tree.h"
 #include "transient.h"
-
-#include "win/space_helpers.h"
 
 namespace KWin::win::x11
 {
@@ -63,7 +62,7 @@ void add_controlled_window_to_space(Space& space, Win* win)
     space.stacking_order->update(true);
 
     if (is_utility(win) || is_menu(win) || is_toolbar(win)) {
-        update_tool_windows(&space, true);
+        update_tool_windows_visibility(&space, true);
     }
 
     space.updateTabbox();

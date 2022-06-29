@@ -269,7 +269,7 @@ void space::resetUpdateToolWindowsTimer()
 
 void space::slotUpdateToolWindows()
 {
-    win::update_tool_windows(this, true);
+    x11::update_tool_windows_visibility(this, true);
 }
 
 void space::slotReloadConfig()
@@ -300,7 +300,7 @@ void space::slotReconfigure()
     Q_EMIT configChanged();
 
     user_actions_menu->discard();
-    win::update_tool_windows(this, true);
+    x11::update_tool_windows_visibility(this, true);
 
     rule_book->load();
     for (auto window : m_windows) {
@@ -2204,7 +2204,7 @@ void space::setActiveClient(Toplevel* window)
         }
     }
 
-    win::update_tool_windows(this, false);
+    x11::update_tool_windows_visibility(this, false);
     if (window)
         disableGlobalShortcutsForClient(
             window->control->rules().checkDisableGlobalShortcuts(false));
