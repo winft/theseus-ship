@@ -93,7 +93,7 @@ void PlasmaSurfaceTest::init()
 void PlasmaSurfaceTest::cleanup()
 {
     Test::destroy_wayland_connection();
-    QTRY_VERIFY(Test::app()->workspace->stacking_order->sorted().empty());
+    QTRY_VERIFY(Test::app()->workspace->stacking_order->stack.empty());
 }
 
 void PlasmaSurfaceTest::testRoleOnAllDesktops_data()
@@ -389,7 +389,7 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
     win::move(c, windowGeometry.topLeft());
     QCOMPARE(c->frameGeometry(), windowGeometry);
 
-    auto stackingOrder = Test::app()->workspace->stacking_order->sorted();
+    auto stackingOrder = Test::app()->workspace->stacking_order->stack;
     QCOMPARE(stackingOrder.size(), 2);
     QCOMPARE(stackingOrder.front(), panel);
     QCOMPARE(stackingOrder.back(), c);
@@ -401,7 +401,7 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
     QFETCH(QPoint, triggerPoint);
     input::get_cursor()->set_pos(triggerPoint);
     QCOMPARE(stackingOrderChangedSpy.count(), 1);
-    stackingOrder = Test::app()->workspace->stacking_order->sorted();
+    stackingOrder = Test::app()->workspace->stacking_order->stack;
     QCOMPARE(stackingOrder.size(), 2);
     QCOMPARE(stackingOrder.front(), c);
     QCOMPARE(stackingOrder.back(), panel);

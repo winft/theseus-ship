@@ -374,8 +374,8 @@ Toplevel* space::findClientToActivateOnDesktop(uint desktop)
     }
     // from actiavtion.cpp
     if (kwinApp()->options->isNextFocusPrefersMouse()) {
-        auto it = stacking_order->sorted().cend();
-        while (it != stacking_order->sorted().cbegin()) {
+        auto it = stacking_order->stack.cend();
+        while (it != stacking_order->stack.cbegin()) {
             auto client = qobject_cast<win::x11::window*>(*(--it));
             if (!client) {
                 continue;
@@ -510,8 +510,8 @@ void space::setShowingDesktop(bool showing)
 
     {                                  // for the blocker RAII
         blocker block(stacking_order); // updateLayer & lowerClient would invalidate stacking_order
-        for (int i = static_cast<int>(stacking_order->sorted().size()) - 1; i > -1; --i) {
-            auto c = qobject_cast<Toplevel*>(stacking_order->sorted().at(i));
+        for (int i = static_cast<int>(stacking_order->stack.size()) - 1; i > -1; --i) {
+            auto c = qobject_cast<Toplevel*>(stacking_order->stack.at(i));
             if (c && c->isOnCurrentDesktop()) {
                 if (win::is_dock(c)) {
                     win::update_layer(c);
@@ -2351,8 +2351,8 @@ void space::clientHidden(Toplevel* window)
 
 Toplevel* space::clientUnderMouse(base::output const* output) const
 {
-    auto it = stacking_order->sorted().cend();
-    while (it != stacking_order->sorted().cbegin()) {
+    auto it = stacking_order->stack.cend();
+    while (it != stacking_order->stack.cbegin()) {
         auto client = *(--it);
         if (!client->control) {
             continue;
@@ -3490,7 +3490,7 @@ bool space::switchWindow(Toplevel* c, Direction direction, QPoint curPos, int d)
     Toplevel* switchTo = nullptr;
     int bestScore = 0;
 
-    auto clist = stacking_order->sorted();
+    auto clist = stacking_order->stack;
     for (auto i = clist.rbegin(); i != clist.rend(); ++i) {
         auto client = *i;
         if (!client->control) {

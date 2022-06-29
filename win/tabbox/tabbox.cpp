@@ -286,7 +286,7 @@ std::weak_ptr<tabbox_client> tabbox_handler_impl::client_to_add_to_list(tabbox_c
 
 tabbox_client_list tabbox_handler_impl::stacking_order() const
 {
-    auto const stacking = m_tabbox->space.stacking_order->sorted();
+    auto const stacking = m_tabbox->space.stacking_order->stack;
     tabbox_client_list ret;
     for (auto const& toplevel : stacking) {
         if (toplevel->control) {
@@ -325,7 +325,7 @@ void tabbox_handler_impl::elevate_client(tabbox_client* c, QWindow* tabbox, bool
 
 std::weak_ptr<tabbox_client> tabbox_handler_impl::desktop_client() const
 {
-    for (auto const& window : m_tabbox->space.stacking_order->sorted()) {
+    for (auto const& window : m_tabbox->space.stacking_order->stack) {
         if (window->control && win::is_desktop(window) && window->isOnCurrentDesktop()
             && window->central_output == win::get_current_output(m_tabbox->space)) {
             return window->control->tabbox();
@@ -1223,8 +1223,8 @@ void tabbox::cde_walk_through_windows(bool forward)
     // policies - the topmost one, with some exceptions (can't be keepabove/below,
     // otherwise it gets stuck on them)
     //     Q_ASSERT(space.block_stacking_updates == 0);
-    for (int i = space.stacking_order->sorted().size() - 1; i >= 0; --i) {
-        auto window = space.stacking_order->sorted().at(i);
+    for (int i = space.stacking_order->stack.size() - 1; i >= 0; --i) {
+        auto window = space.stacking_order->stack.at(i);
         if (window->control && window->isOnCurrentDesktop() && !win::is_special_window(window)
             && window->isShown() && win::wants_tab_focus(window) && !window->control->keep_above()
             && !window->control->keep_below()) {

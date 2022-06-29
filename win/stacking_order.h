@@ -37,16 +37,6 @@ class KWIN_EXPORT stacking_order : public QObject
 public:
     explicit stacking_order(win::space& space);
 
-    /**
-     * Returns the list of clients sorted in stacking order, with topmost client
-     * at the last position
-     */
-    std::deque<Toplevel*> const& sorted() const
-    {
-        // TODO: Q_ASSERT( block_stacking_updates == 0 );
-        return win_stack;
-    }
-
     void update(bool propagate_new_clients = false);
 
     void lock()
@@ -71,11 +61,9 @@ public:
         unlock();
     }
 
-    /// How windows are configured in z-direction.
-    std::deque<Toplevel*> win_stack;
-    /// Unsorted deque
+    /// How windows are configured in z-direction. Topmost window at back.
+    std::deque<Toplevel*> stack;
     std::deque<Toplevel*> pre_stack;
-
     std::deque<xcb_window_t> manual_overlays;
 
     win::space& space;

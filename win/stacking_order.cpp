@@ -71,7 +71,7 @@ void append_children(stacking_order& order, Toplevel* window, std::deque<Topleve
         return;
     }
 
-    auto stacked_next = ensure_stacking_order_in_list(order.win_stack, children);
+    auto stacked_next = ensure_stacking_order_in_list(order.stack, children);
     std::deque<Toplevel*> stacked;
 
     // Append children by one first-level child after the other but between them any
@@ -114,8 +114,8 @@ bool stacking_order::sort()
         append_children(*this, window, stack);
     }
 
-    auto order_changed = win_stack != stack;
-    win_stack = stack;
+    auto order_changed = this->stack != stack;
+    this->stack = stack;
     return order_changed;
 }
 

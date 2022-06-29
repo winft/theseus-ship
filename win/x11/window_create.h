@@ -37,9 +37,9 @@ void add_controlled_window_to_space(Space& space, Win* win)
         // Raise if it hasn't got any stacking position yet
         space.stacking_order->pre_stack.push_back(win);
     }
-    if (!contains(space.stacking_order->sorted(), win)) {
+    if (!contains(space.stacking_order->stack, win)) {
         // It'll be updated later, and updateToolWindows() requires c to be in stacking_order.
-        space.stacking_order->win_stack.push_back(win);
+        space.stacking_order->stack.push_back(win);
     }
     space.x_stacking_tree->mark_as_dirty();
 

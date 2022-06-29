@@ -254,7 +254,7 @@ void update_tool_windows_visibility(Space* space, bool also_hide)
     std::vector<Toplevel*> to_show;
     std::vector<Toplevel*> to_hide;
 
-    for (auto const& window : space->stacking_order->sorted()) {
+    for (auto const& window : space->stacking_order->stack) {
         if (!window->control) {
             continue;
         }

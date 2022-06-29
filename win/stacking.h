@@ -102,8 +102,8 @@ Toplevel* top_client_on_desktop(Space* space,
                                 bool only_normal = true)
 {
     // TODO    Q_ASSERT( block_stacking_updates == 0 );
-    const auto& list
-        = unconstrained ? space->stacking_order->pre_stack : space->stacking_order->sorted();
+    auto const& list
+        = unconstrained ? space->stacking_order->pre_stack : space->stacking_order->stack;
     for (auto it = std::crbegin(list); it != std::crend(list); it++) {
         auto c = *it;
         if (c && c->isOnDesktop(desktop) && c->isShown()) {
@@ -125,7 +125,7 @@ template<typename Space>
 Toplevel* find_desktop(Space* space, bool topmost, int desktop)
 {
     // TODO(fsorr): use C++20 std::ranges::reverse_view
-    auto const& list = space->stacking_order->sorted();
+    auto const& list = space->stacking_order->stack;
     auto is_desktop = [desktop](auto window) {
         return window->control && window->isOnDesktop(desktop) && win::is_desktop(window)
             && window->isShown();
@@ -186,7 +186,7 @@ std::deque<R*> ensure_stacking_order_in_list(std::deque<Toplevel*> const& stacki
 template<class Space, class Win>
 std::deque<Win*> restacked_by_space_stacking_order(Space* space, std::vector<Win*> const& list)
 {
-    return ensure_stacking_order_in_list(space->stacking_order->sorted(), list);
+    return ensure_stacking_order_in_list(space->stacking_order->stack, list);
 }
 
 template<typename Space, typename Window>
@@ -296,7 +296,7 @@ void raise_or_lower_client(Space* space, Window* window)
     Toplevel* topmost = nullptr;
 
     if (space->most_recently_raised
-        && contains(space->stacking_order->sorted(), space->most_recently_raised)
+        && contains(space->stacking_order->stack, space->most_recently_raised)
         && space->most_recently_raised->isShown() && window->isOnCurrentDesktop()) {
         topmost = space->most_recently_raised;
     } else {

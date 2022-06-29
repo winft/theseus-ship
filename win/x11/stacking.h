@@ -42,32 +42,31 @@ void propagate_clients(Order& order, bool propagate_new_clients)
     stack.insert(stack.end(), order.manual_overlays.begin(), order.manual_overlays.end());
 
     // Twice the stacking-order size for inputWindow
-    stack.reserve(stack.size() + 2 * order.win_stack.size());
+    stack.reserve(stack.size() + 2 * order.stack.size());
 
     // TODO use ranges::view and ranges::transform in c++20
     std::vector<xcb_window_t> hidden_windows;
-    std::for_each(
-        order.win_stack.rbegin(), order.win_stack.rend(), [&stack, &hidden_windows](auto window) {
-            auto x11_window = qobject_cast<x11::window*>(window);
-            if (!x11_window) {
-                return;
-            }
+    std::for_each(order.stack.rbegin(), order.stack.rend(), [&stack, &hidden_windows](auto window) {
+        auto x11_window = qobject_cast<x11::window*>(window);
+        if (!x11_window) {
+            return;
+        }
 
-            // Hidden windows with preview are windows that should be unmapped but is kept
-            // for compositing ensure they are stacked below everything else (as far as
-            // pure X stacking order is concerned).
-            if (hidden_preview(x11_window)) {
-                hidden_windows.push_back(x11_window->frameId());
-                return;
-            }
+        // Hidden windows with preview are windows that should be unmapped but is kept
+        // for compositing ensure they are stacked below everything else (as far as
+        // pure X stacking order is concerned).
+        if (hidden_preview(x11_window)) {
+            hidden_windows.push_back(x11_window->frameId());
+            return;
+        }
 
-            // Stack the input window above the frame
-            if (x11_window->xcb_windows.input) {
-                stack.push_back(x11_window->xcb_windows.input);
-            }
+        // Stack the input window above the frame
+        if (x11_window->xcb_windows.input) {
+            stack.push_back(x11_window->xcb_windows.input);
+        }
 
-            stack.push_back(x11_window->frameId());
-        });
+        stack.push_back(x11_window->frameId());
+    });
 
     // when having hidden previews, stack hidden windows below everything else
     // (as far as pure X stacking order is concerned), in order to avoid having
@@ -113,7 +112,7 @@ void propagate_clients(Order& order, bool propagate_new_clients)
 
     std::vector<xcb_window_t> stacked_clients;
 
-    for (auto window : order.win_stack) {
+    for (auto window : order.stack) {
         if (auto x11_window = qobject_cast<x11::window*>(window)) {
             stacked_clients.push_back(x11_window->xcb_window);
         }

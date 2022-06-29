@@ -107,7 +107,7 @@ Toplevel* redirect::findToplevel(const QPoint& pos)
 Toplevel* redirect::findManagedToplevel(const QPoint& pos)
 {
     auto const isScreenLocked = kwinApp()->is_screen_locked();
-    auto const& stacking = space.stacking_order->sorted();
+    auto const& stacking = space.stacking_order->stack;
     if (stacking.empty()) {
         return nullptr;
     }

@@ -39,7 +39,7 @@ void destroy_window(Win* win)
         space.x_stacking_tree->mark_as_dirty();
         remove_all(space.m_windows, win);
         remove_all(space.stacking_order->pre_stack, win);
-        remove_all(space.stacking_order->win_stack, win);
+        remove_all(space.stacking_order->stack, win);
         delete win;
         return;
     }

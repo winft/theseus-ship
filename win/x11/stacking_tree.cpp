@@ -42,7 +42,7 @@ std::deque<Toplevel*> const& stacking_tree::as_list()
 void stacking_tree::update()
 {
     // use our own stacking order, not the X one, as they may differ
-    winlist = space.stacking_order->sorted();
+    winlist = space.stacking_order->stack;
 
     if (xcbtree && !xcbtree->is_null()) {
         // this constructs a vector of references with the start and end
