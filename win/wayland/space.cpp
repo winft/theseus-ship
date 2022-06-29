@@ -221,18 +221,9 @@ void space::handle_window_added(wayland::window* window)
         }
     }
 
-    if (!contains(stacking_order->pre_stack, window)) {
-        // Raise if it hasn't got any stacking position yet.
-        stacking_order->pre_stack.push_back(window);
-    }
-    if (!contains(stacking_order->sorted(), window)) {
-        // It'll be updated later, and updateToolWindows() requires window to be in
-        // stacking_order.
-        stacking_order->win_stack.push_back(window);
-    }
-
-    x_stacking_tree->mark_as_dirty();
-    stacking_order->update(true);
+    assert(!contains(stacking_order->pre_stack, window));
+    stacking_order->pre_stack.push_back(window);
+    stacking_order->update(false);
 
     if (window->control) {
         updateClientArea();
