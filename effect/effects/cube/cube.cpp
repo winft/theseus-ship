@@ -99,7 +99,7 @@ CubeEffect::CubeEffect()
 {
     initConfig<CubeConfig>();
     desktopNameFont.setBold(true);
-    desktopNameFont.setPointSize(14);
+    desktopNameFont.setPointSize(12);
 
     if (effects->compositingType() == OpenGLCompositing) {
         ensureResources();

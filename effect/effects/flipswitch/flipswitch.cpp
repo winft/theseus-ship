@@ -57,7 +57,7 @@ FlipSwitchEffect::FlipSwitchEffect()
 
     // Caption frame
     m_captionFont.setBold(true);
-    m_captionFont.setPointSize(m_captionFont.pointSize() * 2);
+    m_captionFont.setPointSize(12);
 
     QAction* flipSwitchCurrentAction = new QAction(this);
     flipSwitchCurrentAction->setObjectName(QStringLiteral("FlipSwitchCurrent"));
