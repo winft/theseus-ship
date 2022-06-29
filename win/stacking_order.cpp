@@ -95,7 +95,7 @@ void append_children(stacking_order& order, Toplevel* window, std::deque<Topleve
  */
 bool stacking_order::sort()
 {
-    std::vector<Toplevel*> pre_order = x11::sort_windows_by_layer(pre_stack);
+    std::vector<Toplevel*> pre_order = sort_windows_by_layer(pre_stack);
     std::deque<Toplevel*> stack;
 
     for (auto const& window : pre_order) {
