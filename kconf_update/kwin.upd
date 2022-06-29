@@ -54,3 +54,9 @@ Id=enable-scale-effect-by-default
 File=kwinrc
 Group=Plugins
 Key=kwin4_effect_fadeEnabled,kwin4_effect_scaleEnabled
+
+# Tidy up after a bug from the animation speed movement
+Id=animation-speed-cleanup
+File=kwinrc
+Group=KDE
+RemoveKey=AnimationDurationFactor
