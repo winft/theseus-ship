@@ -220,16 +220,28 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
     }
 
     // Create a list of all windows in the stacking order
-    windows = space->x_stacking_tree->as_list();
+    // Skip windows that are not yet ready for being painted.
+    //
+    // TODO? This cannot be used so carelessly - needs protections against broken clients, the
+    // window should not get focus before it's displayed, handle unredirected windows properly and
+    // so on.
+    auto const& stack_list = space->x_stacking_tree->as_list();
+    std::copy_if(stack_list.begin(),
+                 stack_list.end(),
+                 std::back_inserter(windows),
+                 [](auto const& win) { return win->ready_for_painting; });
+
+    // Create a list of damaged windows and reset the damage state of each window and fetch the
+    // damage region without waiting for a reply
     std::vector<Toplevel*> damaged;
 
-    // Reset the damage state of each window and fetch the damage region
-    // without waiting for a reply
-    for (auto win : windows) {
-        if (win->resetAndFetchDamage()) {
-            damaged.push_back(win);
-        }
-    }
+    // Reserve a size for damaged to reduce reallocations when copying, its a bit larger then needed
+    // but the exact size required us unknown beforehand.
+    damaged.reserve(windows.size());
+
+    std::copy_if(windows.begin(), windows.end(), std::back_inserter(damaged), [](auto const& win) {
+        return win->resetAndFetchDamage();
+    });
 
     if (damaged.size() > 0) {
         scene->triggerFence();
@@ -243,25 +255,26 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
 
     for (auto c : elevated_win_list) {
         auto t = static_cast<effects_window_impl*>(c)->window();
-        remove_all(windows, t);
-        windows.push_back(t);
+        if (!move_to_back(windows, t)) {
+            windows.push_back(t);
+        }
     }
+
+    // Discard the lanczos texture
+    auto discard_lanczos_texture = [](auto window) {
+        assert(window->render);
+        assert(window->render->effect);
+
+        auto const texture = window->render->effect->data(LanczosCacheRole);
+        if (texture.isValid()) {
+            delete static_cast<GLTexture*>(texture.template value<void*>());
+            window->render->effect->setData(LanczosCacheRole, QVariant());
+        }
+    };
 
     // Get the replies
     for (auto win : damaged) {
-        // Discard the cached lanczos texture
-        if (win->transient()->annexed) {
-            win = win::lead_of_annexed_transient(win);
-        }
-        assert(win->render);
-        assert(win->render->effect);
-
-        auto const texture = win->render->effect->data(LanczosCacheRole);
-        if (texture.isValid()) {
-            delete static_cast<GLTexture*>(texture.value<void*>());
-            win->render->effect->setData(LanczosCacheRole, QVariant());
-        }
-
+        discard_lanczos_texture(win);
         win->getDamageRegionReply();
     }
 
@@ -275,14 +288,6 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
         m_delay = 0;
         return false;
     }
-
-    // Skip windows that are not yet ready for being painted.
-    //
-    // TODO? This cannot be used so carelessly - needs protections against broken clients, the
-    // window should not get focus before it's displayed, handle unredirected windows properly and
-    // so on.
-
-    remove_all_if(windows, [](auto const& win) { return !win->ready_for_painting; });
 
     repaints = repaints_region;
 

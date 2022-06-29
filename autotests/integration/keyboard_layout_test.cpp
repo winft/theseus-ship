@@ -113,7 +113,11 @@ private:
     void reset_layouts();
     auto change_layout(uint index);
     void call_session(QString const& method);
+#if HAVE_WLR_BASE_INPUT_DEVICES
+    wlr_keyboard* create_keyboard();
+#else
     wlr_input_device* create_keyboard();
+#endif
 
     KConfigGroup layout_group;
     std::unique_ptr<test_spies> spies;
@@ -121,28 +125,33 @@ private:
     uint32_t keyboards_index{0};
 };
 
-wlr_input_device* keyboard_layout_test::create_keyboard()
+#if HAVE_WLR_BASE_INPUT_DEVICES
+wlr_keyboard* keyboard_layout_test::create_keyboard()
 {
     keyboards_index++;
-#if HAVE_WLR_BASE_INPUT_DEVICES
     auto keyboard = static_cast<wlr_keyboard*>(calloc(1, sizeof(wlr_keyboard)));
     auto name = "headless-keyboard" + std::to_string(keyboards_index);
     wlr_keyboard_init(keyboard, nullptr, name.c_str());
     Test::wlr_signal_emit_safe(&Test::app()->base.backend->events.new_input, keyboard);
-    return &keyboard->base;
+    return keyboard;
+}
+
+void remove_input_device(wlr_keyboard* device)
+{
+    wlr_keyboard_finish(device);
+}
 #else
+wlr_input_device* keyboard_layout_test::create_keyboard()
+{
+    keyboards_index++;
     return wlr_headless_add_input_device(Test::app()->base.backend, WLR_INPUT_DEVICE_KEYBOARD);
-#endif
 }
 
 void remove_input_device(wlr_input_device* device)
 {
-#if HAVE_WLR_BASE_INPUT_DEVICES
-    wlr_keyboard_finish(device->keyboard);
-#else
     wlr_input_device_destroy(device);
-#endif
 }
+#endif
 
 void keyboard_layout_test::reconfigure_layouts()
 {

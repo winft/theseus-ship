@@ -18,6 +18,10 @@
 struct wl_signal;
 struct wlr_input_device;
 
+#if HAVE_WLR_BASE_INPUT_DEVICES
+struct wlr_keyboard;
+#endif
+
 namespace Wrapland::Client
 {
 class SubSurface;
@@ -195,8 +199,13 @@ KWIN_EXPORT void pointer_axis_vertical(double delta, uint32_t time, int32_t disc
 KWIN_EXPORT void keyboard_key_pressed(uint32_t key, uint32_t time);
 KWIN_EXPORT void keyboard_key_released(uint32_t key, uint32_t time);
 
+#if HAVE_WLR_BASE_INPUT_DEVICES
+KWIN_EXPORT void keyboard_key_pressed(uint32_t key, uint32_t time, wlr_keyboard* keyboard);
+KWIN_EXPORT void keyboard_key_released(uint32_t key, uint32_t time, wlr_keyboard* keyboard);
+#else
 KWIN_EXPORT void keyboard_key_pressed(uint32_t key, uint32_t time, wlr_input_device* keyboard);
 KWIN_EXPORT void keyboard_key_released(uint32_t key, uint32_t time, wlr_input_device* keyboard);
+#endif
 
 KWIN_EXPORT void touch_down(int32_t id, QPointF const& position, uint32_t time);
 KWIN_EXPORT void touch_up(int32_t id, uint32_t time);
