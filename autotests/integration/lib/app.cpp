@@ -113,9 +113,9 @@ WaylandTestApplication::~WaylandTestApplication()
     assert(keyboard);
     assert(pointer);
     assert(touch);
-    wlr_keyboard_finish(keyboard->keyboard);
-    wlr_pointer_finish(pointer->pointer);
-    wlr_touch_finish(touch->touch);
+    wlr_keyboard_finish(keyboard);
+    wlr_pointer_finish(pointer);
+    wlr_touch_finish(touch);
 #endif
 
     setTerminating();
@@ -175,9 +175,9 @@ void WaylandTestApplication::start()
     static_cast<input::wayland::platform&>(*input).install_shortcuts();
 
 #if HAVE_WLR_BASE_INPUT_DEVICES
-    auto keyboard = static_cast<wlr_keyboard*>(calloc(1, sizeof(wlr_keyboard)));
-    auto pointer = static_cast<wlr_pointer*>(calloc(1, sizeof(wlr_pointer)));
-    auto touch = static_cast<wlr_touch*>(calloc(1, sizeof(wlr_touch)));
+    keyboard = static_cast<wlr_keyboard*>(calloc(1, sizeof(wlr_keyboard)));
+    pointer = static_cast<wlr_pointer*>(calloc(1, sizeof(wlr_pointer)));
+    touch = static_cast<wlr_touch*>(calloc(1, sizeof(wlr_touch)));
 #else
     keyboard = wlr_headless_add_input_device(headless_backend, WLR_INPUT_DEVICE_KEYBOARD);
     pointer = wlr_headless_add_input_device(headless_backend, WLR_INPUT_DEVICE_POINTER);
@@ -198,12 +198,6 @@ void WaylandTestApplication::start()
     wlr_keyboard_init(keyboard, nullptr, "headless-keyboard");
     wlr_pointer_init(pointer, nullptr, "headless-pointer");
     wlr_touch_init(touch, nullptr, "headless-touch");
-
-    // TODO(romangg): Replace the wlr_input_device* members with specific devices once we depend on
-    //                wlroots 0.16.
-    this->keyboard = &keyboard->base;
-    this->pointer = &pointer->base;
-    this->touch = &touch->base;
 
     Test::wlr_signal_emit_safe(&base.backend->events.new_input, keyboard);
     Test::wlr_signal_emit_safe(&base.backend->events.new_input, pointer);
