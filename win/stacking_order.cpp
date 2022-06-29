@@ -34,17 +34,60 @@ stacking_order::stacking_order(win::space& space)
 void stacking_order::update(bool propagate_new_clients)
 {
     if (block_stacking_updates > 0) {
-        if (propagate_new_clients)
+        if (propagate_new_clients) {
             blocked_propagating_new_clients = true;
+        }
         return;
     }
-    bool order_changed = sort() || restacking_required;
+
+    auto order_changed = sort() || restacking_required;
     restacking_required = false;
+
     if (order_changed || propagate_new_clients) {
         propagate_clients(propagate_new_clients);
         space.x_stacking_tree->mark_as_dirty();
         Q_EMIT changed();
     }
+}
+
+template<typename Win>
+bool needs_child_restack(Win const& lead, Win const& child)
+{
+    // Tells if a transient child should be restacked directly above its lead.
+    if (lead.layer() < child.layer()) {
+        // Child will be in a layer above the lead and should not be pulled down from that.
+        return false;
+    }
+    if (child.remnant) {
+        return keep_deleted_transient_above(&lead, &child);
+    }
+    return keep_transient_above(&lead, &child);
+}
+
+void append_children(stacking_order& order, Toplevel* window, std::deque<Toplevel*>& list)
+{
+    auto const children = window->transient()->children;
+    if (!children.size()) {
+        return;
+    }
+
+    auto stacked_next = ensure_stacking_order_in_list(order.win_stack, children);
+    std::deque<Toplevel*> stacked;
+
+    // Append children by one first-level child after the other but between them any
+    // transient children of each first-level child (acts recursively).
+    for (auto child : stacked_next) {
+        // Transients to multiple leads are pushed to the very end.
+        if (!needs_child_restack(*window, *child)) {
+            continue;
+        }
+        remove_all(list, child);
+
+        stacked.push_back(child);
+        append_children(order, child, stacked);
+    }
+
+    list.insert(list.end(), stacked.begin(), stacked.end());
 }
 
 /**
@@ -55,53 +98,11 @@ bool stacking_order::sort()
     std::vector<Toplevel*> pre_order = x11::sort_windows_by_layer(pre_stack);
     std::deque<Toplevel*> stack;
 
-    auto child_restack = [](auto lead, auto child) {
-        // Tells if a transient child should be restacked directly above its lead.
-        if (lead->layer() < child->layer()) {
-            // Child will be in a layer above the lead and should not be pulled down from that.
-            return false;
-        }
-        if (child->remnant) {
-            return keep_deleted_transient_above(lead, child);
-        }
-        return keep_transient_above(lead, child);
-    };
-
-    auto append_children = [this, &child_restack](Toplevel* window, std::deque<Toplevel*>& list) {
-        auto impl =
-            [this, &child_restack](Toplevel* window, std::deque<Toplevel*>& list, auto& impl_ref) {
-                auto const children = window->transient()->children;
-                if (!children.size()) {
-                    return;
-                }
-
-                auto stacked_next = ensure_stacking_order_in_list(win_stack, children);
-                std::deque<Toplevel*> stacked;
-
-                // Append children by one first-level child after the other but between them any
-                // transient children of each first-level child (acts recursively).
-                for (auto child : stacked_next) {
-                    // Transients to multiple leads are pushed to the very end.
-                    if (!child_restack(window, child)) {
-                        continue;
-                    }
-                    remove_all(list, child);
-
-                    stacked.push_back(child);
-                    impl_ref(child, stacked, impl_ref);
-                }
-
-                list.insert(list.end(), stacked.begin(), stacked.end());
-            };
-
-        impl(window, list, impl);
-    };
-
     for (auto const& window : pre_order) {
         if (auto const leads = window->transient()->leads();
             std::find_if(leads.cbegin(),
                          leads.cend(),
-                         [window, child_restack](auto lead) { return child_restack(lead, window); })
+                         [window](auto lead) { return needs_child_restack(*lead, *window); })
             != leads.cend()) {
             // Transient children that must be pushed above at least one of its leads are inserted
             // with append_children.
@@ -110,10 +111,10 @@ bool stacking_order::sort()
 
         assert(!contains(stack, window));
         stack.push_back(window);
-        append_children(window, stack);
+        append_children(*this, window, stack);
     }
 
-    bool order_changed = (win_stack != stack);
+    auto order_changed = win_stack != stack;
     win_stack = stack;
     return order_changed;
 }
