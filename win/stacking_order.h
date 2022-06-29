@@ -86,6 +86,10 @@ public:
     /// Unsorted deque
     std::deque<Toplevel*> pre_stack;
 
+    std::deque<xcb_window_t> manual_overlays;
+
+    win::space& space;
+
 Q_SIGNALS:
     /**
      * This signal is emitted every time the `unlock()` method is called,
@@ -102,9 +106,6 @@ Q_SIGNALS:
 
 private:
     bool sort();
-    void propagate_clients(bool propagate_new_clients);
-
-    std::deque<xcb_window_t> manual_overlays;
 
     // When > 0, updates are temporarily disabled
     int block_stacking_updates{0};
@@ -113,7 +114,6 @@ private:
     bool blocked_propagating_new_clients{false};
 
     bool restacking_required{false};
-    win::space& space;
 };
 
 }
