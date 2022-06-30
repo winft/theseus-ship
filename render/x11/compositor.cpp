@@ -33,6 +33,7 @@
 #include <KLocalizedString>
 #include <KNotification>
 #include <stdexcept>
+#include <xcb/composite.h>
 
 Q_DECLARE_METATYPE(KWin::render::x11::compositor::SuspendReason)
 
@@ -225,9 +226,9 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
     // TODO? This cannot be used so carelessly - needs protections against broken clients, the
     // window should not get focus before it's displayed, handle unredirected windows properly and
     // so on.
-    auto const& stack_list = space->x_stacking_tree->as_list();
-    std::copy_if(stack_list.begin(),
-                 stack_list.end(),
+    auto const& render_stack = win::render_stack(*space->stacking_order);
+    std::copy_if(render_stack.begin(),
+                 render_stack.end(),
                  std::back_inserter(windows),
                  [](auto const& win) { return win->ready_for_painting; });
 

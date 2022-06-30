@@ -76,6 +76,14 @@ space::space(render::compositor& render, base::wayland::server* server)
     plasma_window_manager->setVirtualDesktopManager(plasma_virtual_desktop_manager.get());
     virtual_desktop_manager->setVirtualDesktopManagement(plasma_virtual_desktop_manager.get());
 
+    QObject::connect(stacking_order.get(), &stacking_order::render_restack, this, [this] {
+        for (auto win : m_windows) {
+            if (auto iwin = qobject_cast<internal_window*>(win); iwin && iwin->isShown()) {
+                stacking_order->render_overlays.push_back(iwin);
+            }
+        }
+    });
+
     QObject::connect(compositor.get(), &WS::Compositor::surfaceCreated, this, [this](auto surface) {
         xwl::handle_new_surface(this, surface);
     });
@@ -236,7 +244,7 @@ void space::handle_window_added(wayland::window* window)
 
         QObject::connect(window, &win::wayland::window::windowShown, this, [this, window] {
             win::update_layer(window);
-            x_stacking_tree->mark_as_dirty();
+            stacking_order->render_restack_required = true;
             stacking_order->update(true);
             updateClientArea();
             if (window->wantsInput()) {
@@ -245,7 +253,7 @@ void space::handle_window_added(wayland::window* window)
         });
         QObject::connect(window, &win::wayland::window::windowHidden, this, [this] {
             // TODO: update tabbox if it's displayed
-            x_stacking_tree->mark_as_dirty();
+            stacking_order->render_restack_required = true;
             stacking_order->update(true);
             updateClientArea();
         });
@@ -282,7 +290,7 @@ void space::handle_window_removed(wayland::window* window)
         Q_EMIT clientRemoved(window);
     }
 
-    x_stacking_tree->mark_as_dirty();
+    stacking_order->render_restack_required = true;
     stacking_order->update(true);
 
     if (window->control) {

@@ -31,6 +31,22 @@ class window;
 
 class space;
 
+template<typename Order>
+std::deque<Toplevel*> render_stack(Order& order)
+{
+    if (order.render_restack_required) {
+        order.render_restack_required = false;
+        order.render_overlays = {};
+        Q_EMIT order.render_restack();
+    }
+
+    auto stack = order.stack;
+    std::copy(std::begin(order.render_overlays),
+              std::end(order.render_overlays),
+              std::back_inserter(stack));
+    return stack;
+}
+
 class KWIN_EXPORT stacking_order : public QObject
 {
     Q_OBJECT
@@ -64,7 +80,12 @@ public:
     /// How windows are configured in z-direction. Topmost window at back.
     std::deque<Toplevel*> stack;
     std::deque<Toplevel*> pre_stack;
+
+    /// Windows on top of the the stack that shall be composited addtionally.
+    std::deque<Toplevel*> render_overlays;
     std::deque<xcb_window_t> manual_overlays;
+
+    bool render_restack_required{false};
 
     win::space& space;
 
@@ -76,6 +97,7 @@ Q_SIGNALS:
      * - EffectsHandlerImpl::checkInputWindowStacking()
      */
     void unlocked();
+    void render_restack();
     /**
      * This signal is emitted when the stacking order changed, i.e. a window is risen
      * or lowered

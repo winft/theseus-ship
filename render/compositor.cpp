@@ -28,6 +28,7 @@
 
 #include <QTimerEvent>
 #include <stdexcept>
+#include <xcb/composite.h>
 
 namespace KWin::render
 {
@@ -89,7 +90,8 @@ void compositor::start_scene()
     Q_EMIT aboutToToggleCompositing();
 
     scene = create_scene();
-    space->x_stacking_tree->mark_as_dirty();
+    space->stacking_order->render_restack_required = true;
+
     for (auto& client : space->windows()) {
         client->setupCompositing();
     }

@@ -113,7 +113,7 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
         win, &Win::needsRepaint, &space.render, [win] { win->space.render.schedule_repaint(win); });
 
     space.m_windows.push_back(win);
-    space.x_stacking_tree->mark_as_dirty();
+    space.stacking_order->render_restack_required = true;
     Q_EMIT space.unmanagedAdded(win);
 
     return win;

@@ -24,7 +24,7 @@ template<typename Space, typename Win>
 void remove_window_from_lists(Space& space, Win* win)
 {
     remove_all(space.m_windows, win);
-    space.x_stacking_tree->mark_as_dirty();
+    space.stacking_order->render_restack_required = true;
 }
 
 template<typename Space, typename Win>
@@ -63,7 +63,7 @@ void add_remnant(Win1& orig, Win2& remnant)
         space.stacking_order->stack.push_back(&remnant);
     }
 
-    space.x_stacking_tree->mark_as_dirty();
+    space.stacking_order->render_restack_required = true;
     QObject::connect(&remnant, &Win2::needsRepaint, &space.render, [&] {
         remnant.space.render.schedule_repaint(&remnant);
     });

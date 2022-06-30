@@ -45,7 +45,7 @@ void stacking_order::update(bool propagate_new_clients)
 
     if (order_changed || propagate_new_clients) {
         x11::propagate_clients(*this, propagate_new_clients);
-        space.x_stacking_tree->mark_as_dirty();
+        render_restack_required = true;
         Q_EMIT changed();
     }
 }

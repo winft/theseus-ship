@@ -1111,7 +1111,7 @@ EffectWindow* effects_handler_impl::find_window_by_uuid(const QUuid& id) const
 
 EffectWindowList effects_handler_impl::stackingOrder() const
 {
-    auto list = m_compositor->space->x_stacking_tree->as_list();
+    auto list = win::render_stack(*m_compositor->space->stacking_order);
     EffectWindowList ret;
     for (auto t : list) {
         if (EffectWindow* w = effectWindow(t))

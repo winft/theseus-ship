@@ -41,7 +41,7 @@ void add_controlled_window_to_space(Space& space, Win* win)
         // It'll be updated later, and updateToolWindows() requires c to be in stacking_order.
         space.stacking_order->stack.push_back(win);
     }
-    space.x_stacking_tree->mark_as_dirty();
+    space.stacking_order->render_restack_required = true;
 
     // This cannot be in manage(), because the client got added only now
     space.updateClientArea();

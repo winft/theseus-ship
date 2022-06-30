@@ -7,7 +7,6 @@
 */
 #pragma once
 
-#include "base/x11/xcb/proto.h"
 #include "kwin_export.h"
 
 #include <deque>
@@ -29,15 +28,10 @@ class KWIN_EXPORT stacking_tree
 {
 public:
     stacking_tree(win::space& space);
-    std::deque<Toplevel*> const& as_list();
-    void mark_as_dirty();
 
 private:
     void update();
 
-    std::deque<Toplevel*> winlist;
-    std::unique_ptr<base::x11::xcb::tree> xcbtree;
-    bool is_dirty{false};
     win::space& space;
 };
 

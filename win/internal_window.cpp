@@ -626,7 +626,7 @@ void internal_window::markAsMapped()
         place(this, area);
     }
 
-    space.x_stacking_tree->mark_as_dirty();
+    space.stacking_order->render_restack_required = true;
     space.stacking_order->update(true);
     space.updateClientArea();
 
