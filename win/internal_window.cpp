@@ -626,7 +626,6 @@ void internal_window::markAsMapped()
         place(this, area);
     }
 
-    space.stacking_order->render_restack_required = true;
     space.stacking_order->update(true);
     space.updateClientArea();
 

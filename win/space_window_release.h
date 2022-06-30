@@ -63,7 +63,6 @@ void add_remnant(Win1& orig, Win2& remnant)
         space.stacking_order->stack.push_back(&remnant);
     }
 
-    space.stacking_order->render_restack_required = true;
     QObject::connect(&remnant, &Win2::needsRepaint, &space.render, [&] {
         remnant.space.render.schedule_repaint(&remnant);
     });
