@@ -14,8 +14,6 @@
 #include "x11/group.h"
 #include "x11/hide.h"
 #include "x11/netinfo.h"
-#include "x11/stacking.h"
-#include "x11/stacking_tree.h"
 #include "x11/window.h"
 
 #include "toplevel.h"
@@ -44,9 +42,8 @@ void stacking_order::update(bool propagate_new_clients)
     restacking_required = false;
 
     if (order_changed || propagate_new_clients) {
-        x11::propagate_clients(*this, propagate_new_clients);
         render_restack_required = true;
-        Q_EMIT changed();
+        Q_EMIT changed(propagate_new_clients);
     }
 }
 

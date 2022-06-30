@@ -63,6 +63,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/x11/netinfo.h"
 #include "win/x11/space_areas.h"
 #include "win/x11/space_setup.h"
+#include "win/x11/stacking.h"
 #include "win/x11/stacking_tree.h"
 #include "win/x11/sync_alarm_filter.h"
 #include "win/x11/transient.h"
@@ -208,11 +209,13 @@ space::space(render::compositor& render)
                                           SLOT(reconfigure()));
 
     active_client = nullptr;
-    connect(stacking_order.get(), &win::stacking_order::changed, this, [this] {
-        if (active_client) {
-            active_client->control->update_mouse_grab();
-        }
-    });
+    QObject::connect(
+        stacking_order.get(), &stacking_order::changed, this, [this](auto count_changed) {
+            x11::propagate_clients(*stacking_order, count_changed);
+            if (active_client) {
+                active_client->control->update_mouse_grab();
+            }
+        });
 }
 
 space::~space()

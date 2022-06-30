@@ -102,7 +102,7 @@ Q_SIGNALS:
      * This signal is emitted when the stacking order changed, i.e. a window is risen
      * or lowered
      */
-    void changed();
+    void changed(bool window_count_changed);
 
 private:
     bool sort();
