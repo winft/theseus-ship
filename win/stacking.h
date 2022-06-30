@@ -246,9 +246,9 @@ void raise_window(Space* space, Window* window)
         return blocker(space->stacking_order);
     };
     auto do_raise = [space](auto window) {
-        auto& pre_stack = space->stacking_order->pre_stack;
-        if (!move_to_back(pre_stack, window)) {
-            pre_stack.push_back(window);
+        if (!move_to_back(space->stacking_order->pre_stack, window)) {
+            // Window not yet in pre-stack. Can happen on creation. It will be raised once shown.
+            return;
         }
 
         if (!is_special_window(window)) {
