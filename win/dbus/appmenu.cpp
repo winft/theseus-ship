@@ -23,21 +23,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "appmenu_interface.h"
 
-#include "win/appmenu.h"
 #include "win/deco/bridge.h"
-#include "win/space.h"
 
 #include <QDBusObjectPath>
 #include <QDBusServiceWatcher>
-
-#include <KDecoration2/DecorationSettings>
 
 namespace KWin::win::dbus
 {
 
 static const QString s_viewService(QStringLiteral("org.kde.kappmenuview"));
 
-appmenu::appmenu(win::space& space)
+appmenu::appmenu(appmenu_callbacks callbacks)
     : dbus_iface{std::make_unique<OrgKdeKappmenuInterface>(QStringLiteral("org.kde.kappmenu"),
                                                            QStringLiteral("/KAppMenu"),
                                                            QDBusConnection::sessionBus())}
@@ -45,8 +41,11 @@ appmenu::appmenu(win::space& space)
           QStringLiteral("org.kde.kappmenu"),
           QDBusConnection::sessionBus(),
           QDBusServiceWatcher::WatchForRegistration | QDBusServiceWatcher::WatchForUnregistration)}
-    , space{space}
+    , callbacks{callbacks}
 {
+    assert(callbacks.show_request);
+    assert(callbacks.visibility);
+
     QObject::connect(
         dbus_iface.get(), &OrgKdeKappmenuInterface::showRequest, this, &appmenu::slotShowRequest);
     QObject::connect(
@@ -86,35 +85,36 @@ void appmenu::setViewEnabled(bool enabled)
     }
 }
 
+bool is_address_valid(appmenu_address const& addr)
+{
+    return !addr.name.empty() && !addr.path.empty();
+}
+
+appmenu_address get_address(QString const& name, QDBusObjectPath const& objpath)
+{
+    return {name.toStdString(), objpath.path().toStdString()};
+}
+
 void appmenu::slotShowRequest(const QString& serviceName,
                               const QDBusObjectPath& menuObjectPath,
                               int actionId)
 {
-    // Ignore show request when user has not configured the application menu title bar button
-    auto deco_settings = space.deco->settings();
-    auto menu_enum = KDecoration2::DecorationButtonType::ApplicationMenu;
-    auto not_left = deco_settings && !deco_settings->decorationButtonsLeft().contains(menu_enum);
-    auto not_right = deco_settings && !deco_settings->decorationButtonsRight().contains(menu_enum);
-    if (not_left && not_right) {
-        return;
-    }
-
-    if (auto c = findAbstractClientWithApplicationMenu(serviceName, menuObjectPath)) {
-        win::show_appmenu(*c, actionId);
+    if (auto const addr = get_address(serviceName, menuObjectPath); is_address_valid(addr)) {
+        callbacks.show_request(addr, actionId);
     }
 }
 
 void appmenu::slotMenuShown(const QString& serviceName, const QDBusObjectPath& menuObjectPath)
 {
-    if (auto c = findAbstractClientWithApplicationMenu(serviceName, menuObjectPath)) {
-        c->control->set_application_menu_active(true);
+    if (auto const addr = get_address(serviceName, menuObjectPath); is_address_valid(addr)) {
+        callbacks.visibility(addr, true);
     }
 }
 
 void appmenu::slotMenuHidden(const QString& serviceName, const QDBusObjectPath& menuObjectPath)
 {
-    if (auto c = findAbstractClientWithApplicationMenu(serviceName, menuObjectPath)) {
-        c->control->set_application_menu_active(false);
+    if (auto const addr = get_address(serviceName, menuObjectPath); is_address_valid(addr)) {
+        callbacks.visibility(addr, false);
     }
 }
 
@@ -130,17 +130,6 @@ void appmenu::showApplicationMenu(const QPoint& p, Toplevel* window, int actionI
                          QString::fromStdString(menu.address.name),
                          QDBusObjectPath(QString::fromStdString(menu.address.path)),
                          actionId);
-}
-
-Toplevel* appmenu::findAbstractClientWithApplicationMenu(const QString& serviceName,
-                                                         const QDBusObjectPath& menuObjectPath)
-{
-    if (serviceName.isEmpty() || menuObjectPath.path().isEmpty()) {
-        return nullptr;
-    }
-
-    return find_window_with_appmenu(
-        space, appmenu_address{serviceName.toStdString(), menuObjectPath.path().toStdString()});
 }
 
 }

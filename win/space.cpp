@@ -105,7 +105,7 @@ space::space(render::compositor& render)
     , outline{std::make_unique<render::outline>(render)}
     , render{render}
     , deco{std::make_unique<deco::bridge<space>>(*this)}
-    , appmenu{std::make_unique<dbus::appmenu>(*this)}
+    , appmenu{std::make_unique<dbus::appmenu>(dbus::create_appmenu_callbacks(*this))}
     , rule_book{std::make_unique<RuleBook>()}
     , user_actions_menu{std::make_unique<win::user_actions_menu<space>>(*this)}
     , stacking_order{std::make_unique<win::stacking_order>()}
