@@ -53,17 +53,15 @@ appmenu_callbacks create_appmenu_callbacks(Space const& space)
     appmenu_callbacks callbacks;
 
     callbacks.show_request = [&space](appmenu_address const& addr, int action_id) {
-        // Ignore show request when user has not configured the application menu title bar button
-        auto deco_settings = space.deco->settings();
-        auto menu_enum = KDecoration2::DecorationButtonType::ApplicationMenu;
-        auto not_left
-            = deco_settings && !deco_settings->decorationButtonsLeft().contains(menu_enum);
-        auto not_right
-            = deco_settings && !deco_settings->decorationButtonsRight().contains(menu_enum);
-        if (not_left && not_right) {
-            return;
+        if (auto deco_settings = space.deco->settings()) {
+            // Ignore request when user has not configured appmenu title bar button.
+            auto menu_enum = KDecoration2::DecorationButtonType::ApplicationMenu;
+            auto const& lbtn = deco_settings->decorationButtonsLeft();
+            auto const& rbtn = deco_settings->decorationButtonsRight();
+            if (!lbtn.contains(menu_enum) && !rbtn.contains(menu_enum)) {
+                return;
+            }
         }
-
         if (auto win = find_window_with_appmenu(space, addr)) {
             win::show_appmenu(*win, action_id);
         }
