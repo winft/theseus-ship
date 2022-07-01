@@ -167,13 +167,13 @@ public:
         }
     }
 
-private Q_SLOTS:
+private:
     /**
      * The menu will become visible soon.
      *
      * Adjust the items according to the respective Client.
      */
-    void menuAboutToShow()
+    void handle_menu_about_to_show()
     {
         if (m_client.isNull() || !m_menu)
             return;
@@ -236,7 +236,7 @@ private Q_SLOTS:
      * Adjusts the desktop popup to the current values and the location of
      * the Client.
      */
-    void desktopPopupAboutToShow()
+    void handle_desktop_popup_about_to_show()
     {
         if (!m_desktopMenu)
             return;
@@ -288,7 +288,7 @@ private Q_SLOTS:
      * Adjusts the multipleDesktopsMenu popup to the current values and the location of
      * the Client, Wayland only.
      */
-    void multipleDesktopsPopupAboutToShow()
+    void handle_multiple_desktops_popup_about_to_show()
     {
         if (!m_multipleDesktopsMenu)
             return;
@@ -355,7 +355,7 @@ private Q_SLOTS:
      * Adjusts the screen popup to the current values and the location of
      * the Client.
      */
-    void screenPopupAboutToShow()
+    void handle_screen_popup_about_to_show()
     {
         if (!m_screenMenu) {
             return;
@@ -392,7 +392,7 @@ private Q_SLOTS:
      *
      * @param action Invoked Action containing the Desktop as data element
      */
-    void slotSendToDesktop(QAction* action)
+    void send_to_desktop(QAction* action)
     {
         bool ok = false;
         uint desk = action->data().toUInt(&ok);
@@ -422,7 +422,7 @@ private Q_SLOTS:
      *
      * @param action Invoked Action containing the Desktop as data element
      */
-    void slotToggleOnVirtualDesktop(QAction* action)
+    void toggle_on_desktop(QAction* action)
     {
         if (m_client.isNull()) {
             return;
@@ -459,7 +459,7 @@ private Q_SLOTS:
      *
      * @param action Invoked Action containing the Screen as data element
      */
-    void slotSendToScreen(QAction* action)
+    void send_to_screen(QAction* action)
     {
         size_t const screen = action->data().toInt();
         if (m_client.isNull()) {
@@ -479,7 +479,7 @@ private Q_SLOTS:
      *
      * @param action Invoked Action containing the Window Operation to perform for the Client
      */
-    void slotWindowOperation(QAction* action)
+    void perform_window_operation(QAction* action)
     {
         if (!action->data().isValid())
             return;
@@ -511,7 +511,6 @@ private Q_SLOTS:
         });
     }
 
-private:
     /// Creates the menu if not already created.
     void init()
     {
@@ -536,11 +535,11 @@ private:
             return;
         }
         m_menu = new QMenu;
-        connect(m_menu, &QMenu::aboutToShow, this, &user_actions_menu::menuAboutToShow);
+        connect(m_menu, &QMenu::aboutToShow, this, &user_actions_menu::handle_menu_about_to_show);
         connect(m_menu,
                 &QMenu::triggered,
                 this,
-                &user_actions_menu::slotWindowOperation,
+                &user_actions_menu::perform_window_operation,
                 Qt::QueuedConnection);
 
         QMenu* advancedMenu = new QMenu(m_menu);
@@ -679,11 +678,11 @@ private:
             connect(m_multipleDesktopsMenu,
                     &QMenu::triggered,
                     this,
-                    &user_actions_menu::slotToggleOnVirtualDesktop);
+                    &user_actions_menu::toggle_on_desktop);
             connect(m_multipleDesktopsMenu,
                     &QMenu::aboutToShow,
                     this,
-                    &user_actions_menu::multipleDesktopsPopupAboutToShow);
+                    &user_actions_menu::handle_multiple_desktops_popup_about_to_show);
 
             QAction* action = m_multipleDesktopsMenu->menuAction();
             // set it as the first item
@@ -696,11 +695,11 @@ private:
                 return;
 
             m_desktopMenu = new QMenu(m_menu);
-            connect(m_desktopMenu, &QMenu::triggered, this, &user_actions_menu::slotSendToDesktop);
+            connect(m_desktopMenu, &QMenu::triggered, this, &user_actions_menu::send_to_desktop);
             connect(m_desktopMenu,
                     &QMenu::aboutToShow,
                     this,
-                    &user_actions_menu::desktopPopupAboutToShow);
+                    &user_actions_menu::handle_desktop_popup_about_to_show);
 
             QAction* action = m_desktopMenu->menuAction();
             // set it as the first item
@@ -718,9 +717,11 @@ private:
         }
 
         m_screenMenu = new QMenu(m_menu);
-        connect(m_screenMenu, &QMenu::triggered, this, &user_actions_menu::slotSendToScreen);
-        connect(
-            m_screenMenu, &QMenu::aboutToShow, this, &user_actions_menu::screenPopupAboutToShow);
+        connect(m_screenMenu, &QMenu::triggered, this, &user_actions_menu::send_to_screen);
+        connect(m_screenMenu,
+                &QMenu::aboutToShow,
+                this,
+                &user_actions_menu::handle_screen_popup_about_to_show);
 
         QAction* action = m_screenMenu->menuAction();
         // set it as the first item after desktop
