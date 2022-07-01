@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "appmenu_interface.h"
 
+#include "win/appmenu.h"
 #include "win/deco.h"
 #include "win/deco/bridge.h"
 #include "win/space.h"
@@ -139,14 +140,8 @@ Toplevel* appmenu::findAbstractClientWithApplicationMenu(const QString& serviceN
         return nullptr;
     }
 
-    appmenu_address addr{serviceName.toStdString(), menuObjectPath.path().toStdString()};
-
-    for (auto win : space.m_windows) {
-        if (win->control && win->control->application_menu().address == addr) {
-            return win;
-        }
-    }
-    return nullptr;
+    return find_window_with_appmenu(
+        space, appmenu_address{serviceName.toStdString(), menuObjectPath.path().toStdString()});
 }
 
 }
