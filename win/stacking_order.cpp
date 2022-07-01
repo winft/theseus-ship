@@ -23,22 +23,34 @@
 namespace KWin::win
 {
 
-void stacking_order::update(bool propagate_new_clients)
+void stacking_order::update_order()
 {
     if (block_stacking_updates > 0) {
-        if (propagate_new_clients) {
-            blocked_propagating_new_clients = true;
-        }
         return;
     }
 
-    auto order_changed = sort() || restacking_required;
-    restacking_required = false;
-
-    if (order_changed || propagate_new_clients) {
-        render_restack_required = true;
-        Q_EMIT changed(propagate_new_clients);
+    if (sort() || restacking_required) {
+        process_change();
+        Q_EMIT changed(false);
     }
+}
+
+void stacking_order::update_count()
+{
+    if (block_stacking_updates > 0) {
+        blocked_propagating_new_clients = true;
+        return;
+    }
+
+    sort();
+    process_change();
+    Q_EMIT changed(true);
+}
+
+void stacking_order::process_change()
+{
+    restacking_required = false;
+    render_restack_required = true;
 }
 
 template<typename Win>

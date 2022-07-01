@@ -54,7 +54,7 @@ inline void restack_subsurfaces(Toplevel* window)
 
     // Optimize and do that only for the first window up the chain not being annexed.
     if (!window->transient()->annexed) {
-        window->space.stacking_order->update(false);
+        window->space.stacking_order->update_order();
     }
 }
 

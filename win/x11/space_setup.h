@@ -135,7 +135,7 @@ void init_space(Space& space)
         }
 
         // Propagate clients, will really happen at the end of the updates blocker block
-        space.stacking_order->update(true);
+        space.stacking_order->update_count();
 
         space.saveOldScreenSizes();
         space.updateClientArea();

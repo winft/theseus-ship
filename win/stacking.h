@@ -345,7 +345,7 @@ void restack(Space* space, Window* window, Toplevel* under, bool force = false)
 
     assert(contains(space->stacking_order->pre_stack, window));
     space->focus_chain->moveAfterClient(window, under);
-    space->stacking_order->update();
+    space->stacking_order->update_order();
 }
 
 template<typename Space, typename Win>

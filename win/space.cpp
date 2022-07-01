@@ -2214,7 +2214,8 @@ void space::setActiveClient(Toplevel* window)
     else
         disableGlobalShortcutsForClient(false);
 
-    stacking_order->update(); // e.g. fullscreens have different layer when active/not-active
+    // e.g. fullscreens have different layer when active/not-active
+    stacking_order->update_order();
 
     if (win::x11::rootInfo()) {
         win::x11::rootInfo()->setActiveClient(active_client);
@@ -2486,8 +2487,9 @@ void space::gotFocusIn(Toplevel const* window)
 void space::setShouldGetFocus(Toplevel* window)
 {
     should_get_focus.push_back(window);
+
     // e.g. fullscreens have different layer when active/not-active
-    stacking_order->update();
+    stacking_order->update_order();
 }
 
 namespace FSP

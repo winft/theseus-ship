@@ -231,7 +231,7 @@ void space::handle_window_added(wayland::window* window)
 
     assert(!contains(stacking_order->pre_stack, window));
     stacking_order->pre_stack.push_back(window);
-    stacking_order->update(false);
+    stacking_order->update_order();
 
     if (window->control) {
         updateClientArea();
@@ -244,7 +244,7 @@ void space::handle_window_added(wayland::window* window)
 
         QObject::connect(window, &win::wayland::window::windowShown, this, [this, window] {
             win::update_layer(window);
-            stacking_order->update(true);
+            stacking_order->update_count();
             updateClientArea();
             if (window->wantsInput()) {
                 activateClient(window);
@@ -252,7 +252,7 @@ void space::handle_window_added(wayland::window* window)
         });
         QObject::connect(window, &win::wayland::window::windowHidden, this, [this] {
             // TODO: update tabbox if it's displayed
-            stacking_order->update(true);
+            stacking_order->update_count();
             updateClientArea();
         });
 
@@ -288,7 +288,7 @@ void space::handle_window_removed(wayland::window* window)
         Q_EMIT clientRemoved(window);
     }
 
-    stacking_order->update(true);
+    stacking_order->update_count();
 
     if (window->control) {
         updateClientArea();

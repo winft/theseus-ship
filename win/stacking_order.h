@@ -49,7 +49,8 @@ class KWIN_EXPORT stacking_order : public QObject
 {
     Q_OBJECT
 public:
-    void update(bool propagate_new_clients = false);
+    void update_order();
+    void update_count();
 
     void lock()
     {
@@ -61,7 +62,11 @@ public:
     void unlock()
     {
         if (--block_stacking_updates == 0) {
-            update(blocked_propagating_new_clients);
+            if (blocked_propagating_new_clients) {
+                update_count();
+            } else {
+                update_order();
+            }
             Q_EMIT unlocked();
         }
     }
@@ -100,6 +105,7 @@ Q_SIGNALS:
 
 private:
     bool sort();
+    void process_change();
 
     // When > 0, updates are temporarily disabled
     int block_stacking_updates{0};

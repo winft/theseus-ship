@@ -58,7 +58,7 @@ void add_controlled_window_to_space(Space& space, Win* win)
     space.checkTransients(win);
 
     // Propagate new client
-    space.stacking_order->update(true);
+    space.stacking_order->update_count();
 
     if (is_utility(win) || is_menu(win) || is_toolbar(win)) {
         update_tool_windows_visibility(&space, true);
