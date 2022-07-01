@@ -43,51 +43,53 @@ public:
         --refcount;
     }
 
-    void layout_decoration_rects(QRect& left, QRect& top, QRect& right, QRect& bottom) const
-    {
-        left = decoration_left;
-        top = decoration_top;
-        right = decoration_right;
-        bottom = decoration_bottom;
-    }
-
-    QMargins frame_margins;
-    QRegion render_region;
-
     int refcount{1};
 
-    int desk;
+    struct {
+        void layout_decoration_rects(QRect& left, QRect& top, QRect& right, QRect& bottom) const
+        {
+            left = decoration_left;
+            top = decoration_top;
+            right = decoration_right;
+            bottom = decoration_bottom;
+        }
 
-    xcb_window_t frame{XCB_WINDOW_NONE};
+        QMargins frame_margins;
+        QRegion render_region;
 
-    bool no_border{true};
-    QRect decoration_left;
-    QRect decoration_right;
-    QRect decoration_top;
-    QRect decoration_bottom;
+        int desk;
 
-    bool minimized{false};
+        xcb_window_t frame{XCB_WINDOW_NONE};
 
-    std::unique_ptr<deco::renderer> decoration_renderer;
-    double opacity{1};
-    NET::WindowType window_type{NET::Unknown};
-    QByteArray window_role;
-    QString caption;
+        bool no_border{true};
+        QRect decoration_left;
+        QRect decoration_right;
+        QRect decoration_top;
+        QRect decoration_bottom;
 
-    bool fullscreen{false};
-    bool keep_above{false};
-    bool keep_below{false};
-    bool was_active{false};
+        bool minimized{false};
 
-    bool was_x11_client{false};
-    bool was_wayland_client{false};
+        std::unique_ptr<deco::renderer> decoration_renderer;
+        double opacity{1};
+        NET::WindowType window_type{NET::Unknown};
+        QByteArray window_role;
+        QString caption;
 
-    bool was_group_transient{false};
-    bool was_popup_window{false};
-    bool was_outline{false};
-    bool was_lock_screen{false};
+        bool fullscreen{false};
+        bool keep_above{false};
+        bool keep_below{false};
+        bool was_active{false};
 
-    double buffer_scale{1};
+        bool was_x11_client{false};
+        bool was_wayland_client{false};
+
+        bool was_group_transient{false};
+        bool was_popup_window{false};
+        bool was_outline{false};
+        bool was_lock_screen{false};
+
+        double buffer_scale{1};
+    } data;
 };
 
 }

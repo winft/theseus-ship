@@ -25,7 +25,7 @@ template<typename Win>
 QString caption(Win* win)
 {
     if (win->remnant) {
-        return win->remnant->caption;
+        return win->remnant->data.caption;
     }
     QString cap = win->caption.normal + win->caption.suffix;
     if (win->control->unresponsive()) {

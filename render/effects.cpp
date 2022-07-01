@@ -2074,7 +2074,7 @@ CLIENT_HELPER_WITH_DELETED_WIN(QVector<uint>, desktops, x11_desktop_ids, QVector
             return toplevel->control->propertyname();                                              \
         }                                                                                          \
         if (auto& remnant = toplevel->remnant) {                                                   \
-            return remnant->propertyname;                                                          \
+            return remnant->data.propertyname;                                                     \
         }                                                                                          \
         return defaultValue;                                                                       \
     }

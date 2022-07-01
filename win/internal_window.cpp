@@ -170,7 +170,7 @@ bool internal_window::eventFilter(QObject* watched, QEvent* event)
 
 qreal internal_window::bufferScale() const
 {
-    return remnant ? remnant->buffer_scale : buffer_scale_internal();
+    return remnant ? remnant->data.buffer_scale : buffer_scale_internal();
 }
 
 void internal_window::debug(QDebug& stream) const
@@ -186,12 +186,12 @@ NET::WindowType internal_window::windowType(bool direct, int supported_types) co
 {
     Q_UNUSED(direct)
     Q_UNUSED(supported_types)
-    return remnant ? remnant->window_type : m_windowType;
+    return remnant ? remnant->data.window_type : m_windowType;
 }
 
 double internal_window::opacity() const
 {
-    return remnant ? remnant->opacity : m_opacity;
+    return remnant ? remnant->data.opacity : m_opacity;
 }
 
 void internal_window::setOpacity(double opacity)
@@ -213,7 +213,7 @@ void internal_window::killWindow()
 
 bool internal_window::is_popup_end() const
 {
-    return remnant ? remnant->was_popup_window : m_internalWindowFlags.testFlag(Qt::Popup);
+    return remnant ? remnant->data.was_popup_window : m_internalWindowFlags.testFlag(Qt::Popup);
 }
 
 QByteArray internal_window::windowRole() const
@@ -267,7 +267,7 @@ bool internal_window::placeable() const
 bool internal_window::noBorder() const
 {
     if (remnant) {
-        return remnant->no_border;
+        return remnant->data.no_border;
     }
     return m_userNoBorder || m_internalWindowFlags.testFlag(Qt::FramelessWindowHint)
         || m_internalWindowFlags.testFlag(Qt::Popup);
@@ -300,7 +300,7 @@ bool internal_window::isLockScreen() const
 bool internal_window::isOutline() const
 {
     if (remnant) {
-        return remnant->was_outline;
+        return remnant->data.was_outline;
     }
     if (m_internalWindow) {
         return m_internalWindow->property("__kwin_outline").toBool();

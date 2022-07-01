@@ -77,7 +77,7 @@ window::window(WS::Surface* surface, win::space& space)
 qreal window::bufferScale() const
 {
     if (remnant) {
-        return remnant->buffer_scale;
+        return remnant->data.buffer_scale;
     }
     return surface->state().scale;
 }
@@ -140,7 +140,7 @@ NET::WindowType window::windowType([[maybe_unused]] bool direct,
                                    [[maybe_unused]] int supported_types) const
 {
     if (remnant) {
-        return remnant->window_type;
+        return remnant->data.window_type;
     }
     return window_type;
 }
@@ -202,7 +202,7 @@ bool window::belongsToSameApplication(Toplevel const* other, win::same_client_ch
 bool window::noBorder() const
 {
     if (remnant) {
-        return remnant->no_border;
+        return remnant->data.no_border;
     }
 
     if (xdg_deco && xdg_deco->requestedMode() != WS::XdgDecoration::Mode::ClientSide) {
@@ -419,7 +419,7 @@ bool window::acceptsFocus() const
 double window::opacity() const
 {
     if (remnant) {
-        return remnant->opacity;
+        return remnant->data.opacity;
     }
     if (transient()->lead() && transient()->annexed) {
         return transient()->lead()->opacity();
@@ -1222,7 +1222,7 @@ bool window::isInputMethod() const
 
 bool window::is_popup_end() const
 {
-    return remnant ? remnant->was_popup_window : static_cast<bool>(popup);
+    return remnant ? remnant->data.was_popup_window : static_cast<bool>(popup);
 }
 
 bool window::supportsWindowRules() const

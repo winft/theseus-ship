@@ -94,7 +94,7 @@ QDebug& operator<<(QDebug& stream, const Toplevel* cl)
 NET::WindowType Toplevel::windowType([[maybe_unused]] bool direct,int supported_types) const
 {
     if (remnant) {
-        return remnant->window_type;
+        return remnant->data.window_type;
     }
     if (supported_types == 0) {
         supported_types = supported_default_types;
@@ -166,7 +166,7 @@ void Toplevel::setResourceClass(const QByteArray &name, const QByteArray &classN
 double Toplevel::opacity() const
 {
     if (remnant) {
-        return remnant->opacity;
+        return remnant->data.opacity;
     }
     if (info->opacity() == 0xffffffff)
         return 1.0;
@@ -189,7 +189,7 @@ void Toplevel::setOpacity(double new_opacity)
 bool Toplevel::isOutline() const
 {
     if (remnant) {
-        return remnant->was_outline;
+        return remnant->data.was_outline;
     }
     return is_outline;
 }
@@ -483,7 +483,7 @@ void Toplevel::handle_output_removed(base::output* output)
 
 qreal Toplevel::bufferScale() const
 {
-    return remnant ? remnant->buffer_scale : 1.;
+    return remnant ? remnant->data.buffer_scale : 1.;
 }
 
 bool Toplevel::wantsShadowToBeRendered() const
@@ -509,7 +509,7 @@ pid_t Toplevel::pid() const
 xcb_window_t Toplevel::frameId() const
 {
     if (remnant) {
-        return remnant->frame;
+        return remnant->data.frame;
     }
     return xcb_window;
 }
@@ -554,7 +554,7 @@ void Toplevel::addDamage(const QRegion &damage)
 QByteArray Toplevel::windowRole() const
 {
     if (remnant) {
-        return remnant->window_role;
+        return remnant->data.window_role;
     }
     return QByteArray(info->windowRole());
 }
@@ -608,7 +608,7 @@ void Toplevel::discard_quads()
 QRegion Toplevel::render_region() const
 {
     if (remnant) {
-        return remnant->render_region;
+        return remnant->data.render_region;
     }
 
     auto const render_geo = win::render_geometry(this);
@@ -653,7 +653,7 @@ bool Toplevel::isLocalhost() const
 bool Toplevel::is_popup_end() const
 {
     if (remnant) {
-        return remnant->was_popup_window;
+        return remnant->data.was_popup_window;
     }
     return false;
 }
@@ -770,7 +770,7 @@ QSize Toplevel::minSize() const
 void Toplevel::layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRect &bottom) const
 {
     if (remnant) {
-        return remnant->layout_decoration_rects(left, top, right, bottom);
+        return remnant->data.layout_decoration_rects(left, top, right, bottom);
     }
     win::layout_decoration_rects(this, left, top, right, bottom);
 }
