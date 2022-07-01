@@ -64,7 +64,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/x11/space_areas.h"
 #include "win/x11/space_setup.h"
 #include "win/x11/stacking.h"
-#include "win/x11/stacking_tree.h"
 #include "win/x11/sync_alarm_filter.h"
 #include "win/x11/transient.h"
 #include "win/x11/unmanaged.h"
@@ -99,7 +98,6 @@ space::space(render::compositor& render)
     , rule_book{std::make_unique<RuleBook>(*this)}
     , user_actions_menu{std::make_unique<win::user_actions_menu>(*this)}
     , stacking_order{std::make_unique<win::stacking_order>()}
-    , x_stacking_tree{std::make_unique<win::x11::stacking_tree>(*this)}
     , focus_chain{std::make_unique<win::focus_chain>(*this)}
     , virtual_desktop_manager{std::make_unique<win::virtual_desktop_manager>()}
     , dbus{std::make_unique<base::dbus::kwin>(*this)}
@@ -216,6 +214,9 @@ space::space(render::compositor& render)
                 active_client->control->update_mouse_grab();
             }
         });
+    QObject::connect(stacking_order.get(), &stacking_order::render_restack, this, [this] {
+        x11::render_stack_unmanaged_windows(*this);
+    });
 }
 
 space::~space()

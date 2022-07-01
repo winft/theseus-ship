@@ -13,7 +13,6 @@
 #include "render/compositor.h"
 #include "win/space_helpers.h"
 #include "win/transient.h"
-#include "win/x11/stacking_tree.h"
 
 #include <Wrapland/Server/subcompositor.h>
 #include <Wrapland/Server/surface.h>

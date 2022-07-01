@@ -28,7 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/space.h"
 #include "win/stacking_order.h"
 #include "win/wayland/window.h"
-#include "win/x11/stacking_tree.h"
 #include "win/x11/window.h"
 
 #include <Wrapland/Client/surface.h>

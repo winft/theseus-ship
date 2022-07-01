@@ -25,7 +25,6 @@
 #include "win/space_window_release.h"
 #include "win/stacking_order.h"
 #include "win/transient.h"
-#include "win/x11/stacking_tree.h"
 
 #include <kwingl/texture.h>
 

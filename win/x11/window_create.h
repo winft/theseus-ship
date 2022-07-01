@@ -6,7 +6,6 @@
 #pragma once
 
 #include "hide.h"
-#include "stacking_tree.h"
 #include "transient.h"
 
 namespace KWin::win::x11

@@ -28,7 +28,6 @@
 #include "win/stacking_order.h"
 #include "win/virtual_desktops.h"
 #include "win/x11/space_areas.h"
-#include "win/x11/stacking_tree.h"
 #include "xwl/surface.h"
 
 #if KWIN_BUILD_TABBOX

@@ -6,7 +6,6 @@
 #pragma once
 
 #include "stacking_order.h"
-#include "x11/stacking_tree.h"
 
 #include "utils/algorithm.h"
 

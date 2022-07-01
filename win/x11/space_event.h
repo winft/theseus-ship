@@ -6,7 +6,6 @@
 #pragma once
 
 #include "event.h"
-#include "stacking_tree.h"
 #include "unmanaged.h"
 
 #include "base/x11/event_filter.h"

@@ -21,6 +21,36 @@ namespace KWin::win::x11
 {
 
 template<typename Space>
+void render_stack_unmanaged_windows(Space& space)
+{
+    if (!kwinApp()->x11Connection()) {
+        return;
+    }
+
+    auto xcbtree = std::make_unique<base::x11::xcb::tree>(kwinApp()->x11RootWindow());
+    if (xcbtree->is_null()) {
+        return;
+    }
+
+    // this constructs a vector of references with the start and end
+    // of the xcbtree C pointer array of type xcb_window_t, we use reference_wrapper to only
+    // create an vector of references instead of making a copy of each element into the vector.
+    std::vector<std::reference_wrapper<xcb_window_t>> windows(
+        xcbtree->children(), xcbtree->children() + xcbtree->data()->children_len);
+    auto const& unmanaged_list = space.unmanagedList();
+
+    for (auto const& win : windows) {
+        auto unmanaged = std::find_if(unmanaged_list.cbegin(),
+                                      unmanaged_list.cend(),
+                                      [&win](auto u) { return win.get() == u->xcb_window; });
+
+        if (unmanaged != std::cend(unmanaged_list)) {
+            space.stacking_order->render_overlays.push_back(*unmanaged);
+        }
+    }
+}
+
+template<typename Space>
 void propagate_clients(Space& space, bool propagate_new_clients)
 {
     if (!rootInfo()) {

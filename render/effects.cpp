@@ -50,7 +50,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/transient.h"
 #include "win/virtual_desktops.h"
 #include "win/x11/group.h"
-#include "win/x11/stacking_tree.h"
 #include "win/x11/unmanaged.h"
 #include "win/x11/window.h"
 #include "win/x11/window_find.h"

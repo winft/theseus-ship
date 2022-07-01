@@ -494,7 +494,6 @@ set(kwin_SRCS
     win/x11/screen_edge.cpp
     win/x11/screen_edges_filter.cpp
     win/x11/space.cpp
-    win/x11/stacking_tree.cpp
     win/x11/sync_alarm_filter.cpp
     win/x11/window.cpp
     xwl/xwayland_interface.cpp

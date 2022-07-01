@@ -24,7 +24,6 @@
 #include "win/space.h"
 #include "win/space_window_release.h"
 #include "win/stacking_order.h"
-#include "win/x11/stacking_tree.h"
 
 #include <QTimerEvent>
 #include <stdexcept>

@@ -16,7 +16,6 @@
 #include "win/stacking_order.h"
 #include "win/transient.h"
 #include "win/window_release.h"
-#include "win/x11/stacking_tree.h"
 
 #if KWIN_BUILD_TABBOX
 #include "win/tabbox/tabbox.h"
