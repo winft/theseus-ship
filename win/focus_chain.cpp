@@ -73,7 +73,7 @@ Toplevel* focus_chain::getForActivation(uint desktop, base::output const* output
     return nullptr;
 }
 
-void focus_chain::update(Toplevel* window, focus_chain::Change change)
+void focus_chain::update(Toplevel* window, focus_chain_change change)
 {
     if (!win::wants_tab_focus(window)) {
         // Doesn't want tab focus, remove
@@ -86,8 +86,10 @@ void focus_chain::update(Toplevel* window, focus_chain::Change change)
         for (auto it = desktop_focus_chains.begin(); it != desktop_focus_chains.end(); ++it) {
             auto& chain = it.value();
             // Making first/last works only on current desktop, don't affect all desktops
-            if (it.key() == m_currentDesktop && (change == MakeFirst || change == MakeLast)) {
-                if (change == MakeFirst) {
+            if (it.key() == m_currentDesktop
+                && (change == focus_chain_change::make_first
+                    || change == focus_chain_change::make_last)) {
+                if (change == focus_chain_change::make_first) {
                     makeFirstInChain(window, chain);
                 } else {
                     makeLastInChain(window, chain);
@@ -112,11 +114,11 @@ void focus_chain::update(Toplevel* window, focus_chain::Change change)
     updateClientInChain(window, change, m_mostRecentlyUsed);
 }
 
-void focus_chain::updateClientInChain(Toplevel* window, focus_chain::Change change, Chain& chain)
+void focus_chain::updateClientInChain(Toplevel* window, focus_chain_change change, Chain& chain)
 {
-    if (change == MakeFirst) {
+    if (change == focus_chain_change::make_first) {
         makeFirstInChain(window, chain);
-    } else if (change == MakeLast) {
+    } else if (change == focus_chain_change::make_last) {
         makeLastInChain(window, chain);
     } else {
         insertClientIntoChain(window, chain);

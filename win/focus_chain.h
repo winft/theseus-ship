@@ -21,6 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "kwin_export.h"
 
+#include "types.h"
+
 #include <QHash>
 
 namespace KWin
@@ -56,12 +58,6 @@ class space;
 class KWIN_EXPORT focus_chain
 {
 public:
-    enum Change {
-        MakeFirst,
-        MakeLast,
-        Update,
-    };
-
     focus_chain(win::space& space);
 
     /**
@@ -87,7 +83,7 @@ public:
      * @param change Where to move the Client
      * @return void
      */
-    void update(Toplevel* window, Change change);
+    void update(Toplevel* window, focus_chain_change change);
     /**
      * @brief Moves @p client behind the @p reference Client in all focus chains.
      *
@@ -223,7 +219,7 @@ private:
      */
     void makeLastInChain(Toplevel* window, Chain& chain);
     void moveAfterClientInChain(Toplevel* window, Toplevel* reference, Chain& chain);
-    void updateClientInChain(Toplevel* window, Change change, Chain& chain);
+    void updateClientInChain(Toplevel* window, focus_chain_change change, Chain& chain);
     void insertClientIntoChain(Toplevel* window, Chain& chain);
     Chain m_mostRecentlyUsed;
     QHash<uint, Chain> desktop_focus_chains;

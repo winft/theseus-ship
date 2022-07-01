@@ -204,7 +204,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
             // event->xmaprequest.window is different from event->xany.window
             // TODO this shouldn't be necessary now
             win::x11::window_event(c, event);
-            space.focus_chain->update(c, win::focus_chain::Update);
+            space.focus_chain->update(c, focus_chain_change::update);
         } else if (true /*|| event->xmaprequest.parent != root */) {
             // NOTICE don't check for the parent being the root window, this breaks when some app
             // unmaps a window, changes something and immediately maps it back, without giving KWin

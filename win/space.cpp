@@ -2208,7 +2208,7 @@ void space::setActiveClient(Toplevel* window)
 
     if (active_client) {
         last_active_client = active_client;
-        focus_chain->update(active_client, win::focus_chain::MakeFirst);
+        focus_chain->update(active_client, focus_chain_change::make_first);
         win::set_demands_attention(active_client, false);
 
         // activating a client can cause a non active fullscreen window to loose the ActiveLayer

@@ -106,6 +106,12 @@ enum class quicktiles {
     maximize = left | right | top | bottom,
 };
 
+enum class focus_chain_change {
+    make_first,
+    make_last,
+    update,
+};
+
 }
 
 ENUM_FLAGS(KWin::win::position)
