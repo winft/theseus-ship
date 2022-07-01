@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "appmenu_interface.h"
 
 #include "win/appmenu.h"
-#include "win/deco.h"
 #include "win/deco/bridge.h"
 #include "win/space.h"
 
@@ -101,7 +100,7 @@ void appmenu::slotShowRequest(const QString& serviceName,
     }
 
     if (auto c = findAbstractClientWithApplicationMenu(serviceName, menuObjectPath)) {
-        win::show_application_menu(c, actionId);
+        win::show_appmenu(*c, actionId);
     }
 }
 

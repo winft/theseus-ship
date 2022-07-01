@@ -16,21 +16,6 @@
 namespace KWin::win
 {
 
-/**
- * Request showing the application menu bar.
- * @param actionId The DBus menu ID of the action that should be highlighted, 0 for the root menu.
- */
-template<typename Win>
-void show_application_menu(Win* win, int actionId)
-{
-    if (auto decoration = win->control->deco().decoration) {
-        decoration->showApplicationMenu(actionId);
-    } else {
-        // No info where application menu button is, show it in the top left corner by default.
-        win->space.showApplicationMenu(QRect(), win, actionId);
-    }
-}
-
 template<typename Win>
 KDecoration2::Decoration* decoration(Win* win)
 {
