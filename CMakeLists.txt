@@ -484,7 +484,6 @@ set(kwin_SRCS
     win/space.cpp
     win/stacking_order.cpp
     win/transient.cpp
-    win/user_actions_menu.cpp
     win/virtual_desktops.cpp
     win/x11/client_machine.cpp
     win/x11/color_mapper.cpp

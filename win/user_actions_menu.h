@@ -6,7 +6,7 @@
 */
 #pragma once
 
-#include "kwin_export.h"
+#include "config-kwin.h"
 
 #include "move.h"
 #include "net.h"
@@ -61,12 +61,15 @@ struct user_actions_menu_desktop_action_data {
  *
  * @author Martin Gräßlin <mgraesslin@kde.org>
  */
-class KWIN_EXPORT user_actions_menu : public QObject
+class user_actions_menu
 {
-    Q_OBJECT
 public:
-    explicit user_actions_menu(win::space& space);
-    ~user_actions_menu() override
+    explicit user_actions_menu(win::space& space)
+        : qobject{std::make_unique<QObject>()}
+        , space{space}
+    {
+    }
+    ~user_actions_menu()
     {
         discard();
     }
@@ -535,15 +538,17 @@ private:
             return;
         }
         m_menu = new QMenu;
-        connect(m_menu, &QMenu::aboutToShow, this, &user_actions_menu::handle_menu_about_to_show);
-        connect(m_menu,
-                &QMenu::triggered,
-                this,
-                &user_actions_menu::perform_window_operation,
-                Qt::QueuedConnection);
+        QObject::connect(
+            m_menu, &QMenu::aboutToShow, qobject.get(), [this] { handle_menu_about_to_show(); });
+        QObject::connect(
+            m_menu,
+            &QMenu::triggered,
+            qobject.get(),
+            [this](auto action) { perform_window_operation(action); },
+            Qt::QueuedConnection);
 
         QMenu* advancedMenu = new QMenu(m_menu);
-        connect(advancedMenu, &QMenu::aboutToShow, [this, advancedMenu]() {
+        QObject::connect(advancedMenu, &QMenu::aboutToShow, qobject.get(), [this, advancedMenu]() {
             if (m_client) {
                 advancedMenu->setPalette(m_client->control->palette().q_palette());
             }
@@ -615,7 +620,7 @@ private:
                                                 "open the configuration module of KWin",
                                                 "Configure W&indow Manager..."));
             action->setIcon(QIcon::fromTheme(QStringLiteral("configure")));
-            connect(action, &QAction::triggered, this, [this, configModules]() {
+            QObject::connect(action, &QAction::triggered, qobject.get(), [this, configModules]() {
                 // opens the KWin configuration
                 QStringList args;
                 args << QStringLiteral("--icon") << QStringLiteral("preferences-system-windows");
@@ -626,20 +631,21 @@ private:
                     args << QStringLiteral("--desktopfile") << path;
                 }
                 args << configModules(false);
-                QProcess* p = new QProcess(this);
+                auto p = new QProcess(qobject.get());
                 p->setArguments(args);
                 p->setProcessEnvironment(kwinApp()->processStartupEnvironment());
                 p->setProgram(QStringLiteral("kcmshell5"));
-                connect(
+                QObject::connect(
                     p,
                     static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
                     p,
                     &QProcess::deleteLater);
-                connect(p, &QProcess::errorOccurred, this, [](QProcess::ProcessError e) {
-                    if (e == QProcess::FailedToStart) {
-                        qCDebug(KWIN_CORE) << "Failed to start kcmshell5";
-                    }
-                });
+                QObject::connect(
+                    p, &QProcess::errorOccurred, qobject.get(), [](QProcess::ProcessError e) {
+                        if (e == QProcess::FailedToStart) {
+                            qCDebug(KWIN_CORE) << "Failed to start kcmshell5";
+                        }
+                    });
                 p->start();
             });
         }
@@ -675,14 +681,13 @@ private:
             }
 
             m_multipleDesktopsMenu = new QMenu(m_menu);
-            connect(m_multipleDesktopsMenu,
-                    &QMenu::triggered,
-                    this,
-                    &user_actions_menu::toggle_on_desktop);
-            connect(m_multipleDesktopsMenu,
-                    &QMenu::aboutToShow,
-                    this,
-                    &user_actions_menu::handle_multiple_desktops_popup_about_to_show);
+            QObject::connect(m_multipleDesktopsMenu,
+                             &QMenu::triggered,
+                             qobject.get(),
+                             [this](auto action) { toggle_on_desktop(action); });
+            QObject::connect(m_multipleDesktopsMenu, &QMenu::aboutToShow, qobject.get(), [this] {
+                handle_multiple_desktops_popup_about_to_show();
+            });
 
             QAction* action = m_multipleDesktopsMenu->menuAction();
             // set it as the first item
@@ -695,11 +700,12 @@ private:
                 return;
 
             m_desktopMenu = new QMenu(m_menu);
-            connect(m_desktopMenu, &QMenu::triggered, this, &user_actions_menu::send_to_desktop);
-            connect(m_desktopMenu,
-                    &QMenu::aboutToShow,
-                    this,
-                    &user_actions_menu::handle_desktop_popup_about_to_show);
+            QObject::connect(m_desktopMenu, &QMenu::triggered, qobject.get(), [this](auto action) {
+                send_to_desktop(action);
+            });
+            QObject::connect(m_desktopMenu, &QMenu::aboutToShow, qobject.get(), [this] {
+                handle_desktop_popup_about_to_show();
+            });
 
             QAction* action = m_desktopMenu->menuAction();
             // set it as the first item
@@ -717,11 +723,12 @@ private:
         }
 
         m_screenMenu = new QMenu(m_menu);
-        connect(m_screenMenu, &QMenu::triggered, this, &user_actions_menu::send_to_screen);
-        connect(m_screenMenu,
-                &QMenu::aboutToShow,
-                this,
-                &user_actions_menu::handle_screen_popup_about_to_show);
+        QObject::connect(m_screenMenu, &QMenu::triggered, qobject.get(), [this](auto action) {
+            send_to_screen(action);
+        });
+        QObject::connect(m_screenMenu, &QMenu::aboutToShow, qobject.get(), [this] {
+            handle_screen_popup_about_to_show();
+        });
 
         QAction* action = m_screenMenu->menuAction();
         // set it as the first item after desktop
@@ -816,6 +823,7 @@ private:
     QAction* m_rulesOperation{nullptr};
     QAction* m_applicationRulesOperation{nullptr};
 
+    std::unique_ptr<QObject> qobject;
     win::space& space;
 };
 
