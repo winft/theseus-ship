@@ -10,7 +10,6 @@
 #include "base/logging.h"
 #include "toplevel.h"
 #include "win/control.h"
-#include "win/space.h"
 
 #include "rule_book_settings.h"
 #include "rule_settings.h"
@@ -24,11 +23,10 @@
 namespace KWin
 {
 
-RuleBook::RuleBook(win::space& space)
+RuleBook::RuleBook()
     : m_updateTimer(new QTimer(this))
     , m_updatesDisabled(false)
     , m_temporaryRulesMessages()
-    , space{space}
 {
     initWithX11();
     connect(kwinApp(), &Application::x11ConnectionChanged, this, &RuleBook::initWithX11);
@@ -224,11 +222,7 @@ void RuleBook::setUpdatesDisabled(bool disable)
 {
     m_updatesDisabled = disable;
     if (!disable) {
-        for (auto window : space.m_windows) {
-            if (window->control) {
-                window->updateWindowRules(Rules::All);
-            }
-        }
+        Q_EMIT updates_enabled();
     }
 }
 

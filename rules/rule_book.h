@@ -27,7 +27,7 @@ class KWIN_EXPORT RuleBook : public QObject
 {
     Q_OBJECT
 public:
-    RuleBook(win::space& space);
+    RuleBook();
     ~RuleBook() override;
 
     WindowRules find(Toplevel const* window, bool);
@@ -39,6 +39,9 @@ public:
     void requestDiskStorage();
 
     KSharedConfig::Ptr config;
+
+Q_SIGNALS:
+    void updates_enabled();
 
 private Q_SLOTS:
     void temporaryRulesMessage(const QString&);
@@ -53,7 +56,6 @@ private:
     bool m_updatesDisabled;
     QList<Rules*> m_rules;
     QScopedPointer<KXMessages> m_temporaryRulesMessages;
-    win::space& space;
 };
 
 #endif
