@@ -23,8 +23,17 @@ class remnant
 {
 public:
     remnant() = default;
-    remnant(remnant&& other) noexcept = default;
-    remnant& operator=(remnant&& other) noexcept = default;
+    remnant(remnant&& other) noexcept
+    {
+        *this = std::move(other);
+    }
+    remnant& operator=(remnant&& other) noexcept
+    {
+        data = std::move(other.data);
+        refcount = other.refcount;
+        other.refcount = 0;
+        return *this;
+    }
 
     ~remnant()
     {
