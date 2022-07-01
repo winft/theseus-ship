@@ -119,6 +119,8 @@ class screen_edger;
 class shortcut_dialog;
 class stacking_order;
 class tabbox;
+
+template<typename Space>
 class user_actions_menu;
 class virtual_desktop_manager;
 
@@ -201,7 +203,7 @@ public:
      * Holds the menu containing the user actions which is shown
      * on e.g. right click the window decoration.
      */
-    std::unique_ptr<win::user_actions_menu> user_actions_menu;
+    std::unique_ptr<win::user_actions_menu<space>> user_actions_menu;
 
     QPoint focusMousePos;
 

@@ -11,7 +11,6 @@
 #include "move.h"
 #include "net.h"
 #include "screen.h"
-#include "space.h"
 
 #include "base/logging.h"
 #include "main.h"
@@ -61,10 +60,11 @@ struct user_actions_menu_desktop_action_data {
  *
  * @author Martin Gräßlin <mgraesslin@kde.org>
  */
+template<typename Space>
 class user_actions_menu
 {
 public:
-    explicit user_actions_menu(win::space& space)
+    explicit user_actions_menu(Space& space)
         : qobject{std::make_unique<QObject>()}
         , space{space}
     {
@@ -555,8 +555,8 @@ private:
         });
 
         auto setShortcut = [this](QAction* action, const QString& actionName) {
-            const auto shortcuts
-                = KGlobalAccel::self()->shortcut(space.qobject->findChild<QAction*>(actionName));
+            const auto shortcuts = KGlobalAccel::self()->shortcut(
+                space.qobject->template findChild<QAction*>(actionName));
             if (!shortcuts.isEmpty()) {
                 action->setShortcut(shortcuts.first());
             }
@@ -748,7 +748,7 @@ private:
         QStringList args;
         QString type;
         auto shortcut = [this](const QString& name) {
-            auto action = space.qobject->findChild<QAction*>(name);
+            auto action = space.qobject->template findChild<QAction*>(name);
             Q_ASSERT(action != nullptr);
             const auto shortcuts = KGlobalAccel::self()->shortcut(action);
             return QStringLiteral("%1 (%2)")
@@ -824,7 +824,7 @@ private:
     QAction* m_applicationRulesOperation{nullptr};
 
     std::unique_ptr<QObject> qobject;
-    win::space& space;
+    Space& space;
 };
 
 }
