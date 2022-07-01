@@ -72,7 +72,7 @@ bool window::isClient() const
 xcb_window_t window::frameId() const
 {
     if (remnant) {
-        return remnant->frame;
+        return remnant->data.frame;
     }
     if (!control) {
         return Toplevel::frameId();
@@ -119,7 +119,7 @@ void window::showContextHelp()
 bool window::noBorder() const
 {
     if (remnant) {
-        return remnant->no_border;
+        return remnant->data.no_border;
     }
     return user_no_border || control->fullscreen();
 }
@@ -750,7 +750,7 @@ void window::do_set_geometry(QRect const& frame_geo)
 
     // TODO(romangg): Remove?
     win::set_current_output_by_window(kwinApp()->get_base(), *this);
-    space.stacking_order->update();
+    space.stacking_order->update_order();
 
     updateWindowRules(static_cast<Rules::Types>(Rules::Position | Rules::Size));
 
@@ -924,7 +924,7 @@ Toplevel* window::findModal()
 void window::layoutDecorationRects(QRect& left, QRect& top, QRect& right, QRect& bottom) const
 {
     if (remnant) {
-        return remnant->layout_decoration_rects(left, top, right, bottom);
+        return remnant->data.layout_decoration_rects(left, top, right, bottom);
     }
     layout_decoration_rects(this, left, top, right, bottom);
 }

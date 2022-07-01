@@ -24,10 +24,10 @@
 #include "win/space.h"
 #include "win/space_window_release.h"
 #include "win/stacking_order.h"
-#include "win/x11/stacking_tree.h"
 
 #include <QTimerEvent>
 #include <stdexcept>
+#include <xcb/composite.h>
 
 namespace KWin::render
 {
@@ -89,7 +89,8 @@ void compositor::start_scene()
     Q_EMIT aboutToToggleCompositing();
 
     scene = create_scene();
-    space->x_stacking_tree->mark_as_dirty();
+    space->stacking_order->render_restack_required = true;
+
     for (auto& client : space->windows()) {
         client->setupCompositing();
     }

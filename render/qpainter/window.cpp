@@ -36,7 +36,7 @@ static bool isXwaylandClient(Toplevel* toplevel)
         return true;
     }
     if (auto& remnant = toplevel->remnant) {
-        return remnant->was_x11_client;
+        return remnant->data.was_x11_client;
     }
     return false;
 }
@@ -174,10 +174,10 @@ void window::renderWindowDecorations(QPainter* painter)
         }
         toplevel->layoutDecorationRects(dlr, dtr, drr, dbr);
         noBorder = false;
-    } else if (remnant && !remnant->no_border) {
+    } else if (remnant && !remnant->data.no_border) {
         noBorder = false;
-        remnant->layout_decoration_rects(dlr, dtr, drr, dbr);
-        renderer = static_cast<const deco_renderer*>(remnant->decoration_renderer.get());
+        remnant->data.layout_decoration_rects(dlr, dtr, drr, dbr);
+        renderer = static_cast<const deco_renderer*>(remnant->data.decoration_renderer.get());
     }
     if (noBorder || !renderer) {
         return;

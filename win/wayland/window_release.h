@@ -16,7 +16,6 @@
 #include "win/stacking_order.h"
 #include "win/transient.h"
 #include "win/window_release.h"
-#include "win/x11/stacking_tree.h"
 
 #if KWIN_BUILD_TABBOX
 #include "win/tabbox/tabbox.h"
@@ -36,10 +35,9 @@ void destroy_window(Win* win)
         // With the lead gone there is no way - and no need - for remnant effects. Delete directly.
         Q_EMIT win->closed(win);
         space.handle_window_removed(win);
-        space.x_stacking_tree->mark_as_dirty();
         remove_all(space.m_windows, win);
         remove_all(space.stacking_order->pre_stack, win);
-        remove_all(space.stacking_order->win_stack, win);
+        remove_all(space.stacking_order->stack, win);
         delete win;
         return;
     }

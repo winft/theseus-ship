@@ -29,25 +29,28 @@ namespace x11
 class window;
 }
 
-class space;
+template<typename Order>
+std::deque<Toplevel*> render_stack(Order& order)
+{
+    if (order.render_restack_required) {
+        order.render_restack_required = false;
+        order.render_overlays = {};
+        Q_EMIT order.render_restack();
+    }
+
+    auto stack = order.stack;
+    std::copy(std::begin(order.render_overlays),
+              std::end(order.render_overlays),
+              std::back_inserter(stack));
+    return stack;
+}
 
 class KWIN_EXPORT stacking_order : public QObject
 {
     Q_OBJECT
 public:
-    explicit stacking_order(win::space& space);
-
-    /**
-     * Returns the list of clients sorted in stacking order, with topmost client
-     * at the last position
-     */
-    std::deque<Toplevel*> const& sorted() const
-    {
-        // TODO: Q_ASSERT( block_stacking_updates == 0 );
-        return win_stack;
-    }
-
-    void update(bool propagate_new_clients = false);
+    void update_order();
+    void update_count();
 
     void lock()
     {
@@ -59,7 +62,11 @@ public:
     void unlock()
     {
         if (--block_stacking_updates == 0) {
-            update(blocked_propagating_new_clients);
+            if (blocked_propagating_new_clients) {
+                update_count();
+            } else {
+                update_order();
+            }
             Q_EMIT unlocked();
         }
     }
@@ -71,20 +78,15 @@ public:
         unlock();
     }
 
-    void add_manual_overlay(xcb_window_t id)
-    {
-        manual_overlays.push_back(id);
-    }
-
-    void remove_manual_overlay(xcb_window_t id)
-    {
-        manual_overlays.erase(std::find(manual_overlays.begin(), manual_overlays.end(), id));
-    }
-
-    /// How windows are configured in z-direction.
-    std::deque<Toplevel*> win_stack;
-    /// Unsorted deque
+    /// How windows are configured in z-direction. Topmost window at back.
+    std::deque<Toplevel*> stack;
     std::deque<Toplevel*> pre_stack;
+
+    /// Windows on top of the the stack that shall be composited addtionally.
+    std::deque<Toplevel*> render_overlays;
+    std::deque<xcb_window_t> manual_overlays;
+
+    bool render_restack_required{false};
 
 Q_SIGNALS:
     /**
@@ -94,17 +96,16 @@ Q_SIGNALS:
      * - EffectsHandlerImpl::checkInputWindowStacking()
      */
     void unlocked();
+    void render_restack();
     /**
      * This signal is emitted when the stacking order changed, i.e. a window is risen
      * or lowered
      */
-    void changed();
+    void changed(bool window_count_changed);
 
 private:
     bool sort();
-    void propagate_clients(bool propagate_new_clients);
-
-    std::deque<xcb_window_t> manual_overlays;
+    void process_change();
 
     // When > 0, updates are temporarily disabled
     int block_stacking_updates{0};
@@ -113,7 +114,6 @@ private:
     bool blocked_propagating_new_clients{false};
 
     bool restacking_required{false};
-    win::space& space;
 };
 
 }

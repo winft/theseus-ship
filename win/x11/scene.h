@@ -8,6 +8,7 @@
 #include "hide.h"
 
 #include "base/x11/grabs.h"
+#include "base/x11/xcb/proto.h"
 #include "win/scene.h"
 
 namespace KWin::win::x11

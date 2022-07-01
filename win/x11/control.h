@@ -1251,8 +1251,8 @@ void restack_window(Win* win,
             return;
         }
 
-        auto it = win->space.stacking_order->sorted().cbegin();
-        auto end = win->space.stacking_order->sorted().cend();
+        auto it = win->space.stacking_order->stack.cbegin();
+        auto end = win->space.stacking_order->stack.cend();
 
         while (it != end) {
             if (*it == win) {
@@ -1285,8 +1285,8 @@ void restack_window(Win* win,
             = find_controlled_window<win::x11::window>(win->space, predicate_match::window, above);
 
     if (other && detail == XCB_STACK_MODE_ABOVE) {
-        auto it = win->space.stacking_order->sorted().cend();
-        auto begin = win->space.stacking_order->sorted().cbegin();
+        auto it = win->space.stacking_order->stack.cend();
+        auto begin = win->space.stacking_order->stack.cbegin();
 
         while (--it != begin) {
             if (*it == other) {

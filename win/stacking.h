@@ -24,6 +24,7 @@
 
 #include "base/output_helpers.h"
 #include "base/platform.h"
+#include "utils/algorithm.h"
 #include "utils/blocker.h"
 
 #include "rules/rules.h"
@@ -101,8 +102,8 @@ Toplevel* top_client_on_desktop(Space* space,
                                 bool only_normal = true)
 {
     // TODO    Q_ASSERT( block_stacking_updates == 0 );
-    const auto& list
-        = unconstrained ? space->stacking_order->pre_stack : space->stacking_order->sorted();
+    auto const& list
+        = unconstrained ? space->stacking_order->pre_stack : space->stacking_order->stack;
     for (auto it = std::crbegin(list); it != std::crend(list); it++) {
         auto c = *it;
         if (c && c->isOnDesktop(desktop) && c->isShown()) {
@@ -124,7 +125,7 @@ template<typename Space>
 Toplevel* find_desktop(Space* space, bool topmost, int desktop)
 {
     // TODO(fsorr): use C++20 std::ranges::reverse_view
-    auto const& list = space->stacking_order->sorted();
+    auto const& list = space->stacking_order->stack;
     auto is_desktop = [desktop](auto window) {
         return window->control && window->isOnDesktop(desktop) && win::is_desktop(window)
             && window->isShown();
@@ -185,7 +186,7 @@ std::deque<R*> ensure_stacking_order_in_list(std::deque<Toplevel*> const& stacki
 template<class Space, class Win>
 std::deque<Win*> restacked_by_space_stacking_order(Space* space, std::vector<Win*> const& list)
 {
-    return ensure_stacking_order_in_list(space->stacking_order->sorted(), list);
+    return ensure_stacking_order_in_list(space->stacking_order->stack, list);
 }
 
 template<typename Space, typename Window>
@@ -245,9 +246,9 @@ void raise_window(Space* space, Window* window)
         return blocker(space->stacking_order);
     };
     auto do_raise = [space](auto window) {
-        auto& pre_stack = space->stacking_order->pre_stack;
-        if (!move_to_back(pre_stack, window)) {
-            pre_stack.push_back(window);
+        if (!move_to_back(space->stacking_order->pre_stack, window)) {
+            // Window not yet in pre-stack. Can happen on creation. It will be raised once shown.
+            return;
         }
 
         if (!is_special_window(window)) {
@@ -295,7 +296,7 @@ void raise_or_lower_client(Space* space, Window* window)
     Toplevel* topmost = nullptr;
 
     if (space->most_recently_raised
-        && contains(space->stacking_order->sorted(), space->most_recently_raised)
+        && contains(space->stacking_order->stack, space->most_recently_raised)
         && space->most_recently_raised->isShown() && window->isOnCurrentDesktop()) {
         topmost = space->most_recently_raised;
     } else {
@@ -344,7 +345,7 @@ void restack(Space* space, Window* window, Toplevel* under, bool force = false)
 
     assert(contains(space->stacking_order->pre_stack, window));
     space->focus_chain->moveAfterClient(window, under);
-    space->stacking_order->update();
+    space->stacking_order->update_order();
 }
 
 template<typename Space, typename Win>
@@ -556,11 +557,11 @@ bool keep_deleted_transient_above(Win1 const* mainWindow, Win2 const* transient)
         return false;
     }
 
-    if (transient->remnant->was_x11_client) {
+    if (transient->remnant->data.was_x11_client) {
         // If a group transient was active, we should keep it above no matter
         // what, because at the time when the transient was closed, it was above
         // the main window.
-        if (transient->remnant->was_group_transient && transient->remnant->was_active) {
+        if (transient->remnant->data.was_group_transient && transient->remnant->data.was_active) {
             return true;
         }
 
@@ -568,7 +569,7 @@ bool keep_deleted_transient_above(Win1 const* mainWindow, Win2 const* transient)
         // the mainwindow, but only if they're group transient (since only such
         // dialogs have taskbar entry in Kicker). A proper way of doing this
         // (both kwin and kicker) needs to be found.
-        if (transient->remnant->was_group_transient && win::is_dialog(transient)
+        if (transient->remnant->data.was_group_transient && win::is_dialog(transient)
             && !transient->transient()->modal()) {
             return false;
         }
@@ -581,6 +582,57 @@ bool keep_deleted_transient_above(Win1 const* mainWindow, Win2 const* transient)
     }
 
     return true;
+}
+
+/**
+ * Group windows by layer, than flatten to a list.
+ * @param list container of windows to sort
+ */
+template<typename Container>
+std::vector<Toplevel*> sort_windows_by_layer(Container const& list)
+{
+    std::deque<Toplevel*> layers[enum_index(layer::count)];
+    auto const& outputs = kwinApp()->get_base().get_outputs();
+
+    // Build the order from layers.
+
+    // This is needed as a workaround for group windows with fullscreen members, such that other
+    // group members are moved per output to the active (fullscreen) level too.
+    QVector<QMap<x11::group*, layer>> fs_group_layers(std::max<size_t>(outputs.size(), 1));
+
+    for (auto const& win : list) {
+        auto lay = win->layer();
+
+        auto const output_index
+            = win->central_output ? base::get_output_index(outputs, *win->central_output) : 0;
+        auto x11_win = qobject_cast<x11::window*>(win);
+
+        auto group_layer_it
+            = fs_group_layers[output_index].find(x11_win ? x11_win->group() : nullptr);
+
+        if (group_layer_it != fs_group_layers[output_index].end()) {
+            // If a window is raised above some other window in the same window group
+            // which is in the ActiveLayer (i.e. it's fulscreened), make sure it stays
+            // above that window (see #95731).
+            if (*group_layer_it == layer::active && (enum_index(lay) > enum_index(layer::below))) {
+                lay = layer::active;
+            }
+            *group_layer_it = lay;
+        } else if (x11_win) {
+            fs_group_layers[output_index].insertMulti(x11_win->group(), lay);
+        }
+
+        layers[enum_index(lay)].push_back(win);
+    }
+
+    std::vector<Toplevel*> sorted;
+    sorted.reserve(list.size());
+
+    for (auto lay = enum_index(layer::first); lay < enum_index(layer::count); ++lay) {
+        sorted.insert(sorted.end(), layers[lay].begin(), layers[lay].end());
+    }
+
+    return sorted;
 }
 
 }

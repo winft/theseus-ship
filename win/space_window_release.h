@@ -6,7 +6,6 @@
 #pragma once
 
 #include "stacking_order.h"
-#include "x11/stacking_tree.h"
 
 #include "utils/algorithm.h"
 
@@ -17,14 +16,14 @@ template<typename Space, typename Win>
 void remove_window_from_stacking_order(Space& space, Win* win)
 {
     remove_all(space.stacking_order->pre_stack, win);
-    remove_all(space.stacking_order->win_stack, win);
+    remove_all(space.stacking_order->stack, win);
 }
 
 template<typename Space, typename Win>
 void remove_window_from_lists(Space& space, Win* win)
 {
     remove_all(space.m_windows, win);
-    space.x_stacking_tree->mark_as_dirty();
+    space.stacking_order->render_restack_required = true;
 }
 
 template<typename Space, typename Win>
@@ -56,14 +55,13 @@ void add_remnant(Win1& orig, Win2& remnant)
         space.stacking_order->pre_stack.push_back(&remnant);
     }
 
-    auto const index = index_of(space.stacking_order->sorted(), &orig);
+    auto const index = index_of(space.stacking_order->stack, &orig);
     if (index != -1) {
-        space.stacking_order->win_stack.at(index) = &remnant;
+        space.stacking_order->stack.at(index) = &remnant;
     } else {
-        space.stacking_order->win_stack.push_back(&remnant);
+        space.stacking_order->stack.push_back(&remnant);
     }
 
-    space.x_stacking_tree->mark_as_dirty();
     QObject::connect(&remnant, &Win2::needsRepaint, &space.render, [&] {
         remnant.space.render.schedule_repaint(&remnant);
     });

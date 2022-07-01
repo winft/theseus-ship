@@ -179,10 +179,10 @@ GLTexture* window::getDecorationTexture() const
             return renderer->texture();
         }
     } else if (auto& remnant = toplevel->remnant) {
-        if (!remnant->decoration_renderer || remnant->no_border) {
+        if (!remnant->data.decoration_renderer || remnant->data.no_border) {
             return nullptr;
         }
-        if (auto& renderer = remnant->decoration_renderer) {
+        if (auto& renderer = remnant->data.decoration_renderer) {
             return static_cast<deco_renderer&>(*renderer).texture();
         }
     }

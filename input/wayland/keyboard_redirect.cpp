@@ -136,7 +136,7 @@ void keyboard_redirect::update()
 
     // TODO: this needs better integration
     Toplevel* found = nullptr;
-    auto const& stacking = redirect->space.stacking_order->sorted();
+    auto const& stacking = redirect->space.stacking_order->stack;
     if (!stacking.empty()) {
         auto it = stacking.end();
         do {

@@ -28,7 +28,6 @@
 #include "win/stacking_order.h"
 #include "win/virtual_desktops.h"
 #include "win/x11/space_areas.h"
-#include "win/x11/stacking_tree.h"
 #include "xwl/surface.h"
 
 #if KWIN_BUILD_TABBOX
@@ -75,6 +74,14 @@ space::space(render::compositor& render, base::wayland::server* server)
         Wrapland::Server::PlasmaWindowManager::ShowingDesktopState::Disabled);
     plasma_window_manager->setVirtualDesktopManager(plasma_virtual_desktop_manager.get());
     virtual_desktop_manager->setVirtualDesktopManagement(plasma_virtual_desktop_manager.get());
+
+    QObject::connect(stacking_order.get(), &stacking_order::render_restack, this, [this] {
+        for (auto win : m_windows) {
+            if (auto iwin = qobject_cast<internal_window*>(win); iwin && iwin->isShown()) {
+                stacking_order->render_overlays.push_back(iwin);
+            }
+        }
+    });
 
     QObject::connect(compositor.get(), &WS::Compositor::surfaceCreated, this, [this](auto surface) {
         xwl::handle_new_surface(this, surface);
@@ -221,18 +228,9 @@ void space::handle_window_added(wayland::window* window)
         }
     }
 
-    if (!contains(stacking_order->pre_stack, window)) {
-        // Raise if it hasn't got any stacking position yet.
-        stacking_order->pre_stack.push_back(window);
-    }
-    if (!contains(stacking_order->sorted(), window)) {
-        // It'll be updated later, and updateToolWindows() requires window to be in
-        // stacking_order.
-        stacking_order->win_stack.push_back(window);
-    }
-
-    x_stacking_tree->mark_as_dirty();
-    stacking_order->update(true);
+    assert(!contains(stacking_order->pre_stack, window));
+    stacking_order->pre_stack.push_back(window);
+    stacking_order->update_order();
 
     if (window->control) {
         updateClientArea();
@@ -245,8 +243,7 @@ void space::handle_window_added(wayland::window* window)
 
         QObject::connect(window, &win::wayland::window::windowShown, this, [this, window] {
             win::update_layer(window);
-            x_stacking_tree->mark_as_dirty();
-            stacking_order->update(true);
+            stacking_order->update_count();
             updateClientArea();
             if (window->wantsInput()) {
                 activateClient(window);
@@ -254,8 +251,7 @@ void space::handle_window_added(wayland::window* window)
         });
         QObject::connect(window, &win::wayland::window::windowHidden, this, [this] {
             // TODO: update tabbox if it's displayed
-            x_stacking_tree->mark_as_dirty();
-            stacking_order->update(true);
+            stacking_order->update_count();
             updateClientArea();
         });
 
@@ -291,8 +287,7 @@ void space::handle_window_removed(wayland::window* window)
         Q_EMIT clientRemoved(window);
     }
 
-    x_stacking_tree->mark_as_dirty();
-    stacking_order->update(true);
+    stacking_order->update_count();
 
     if (window->control) {
         updateClientArea();

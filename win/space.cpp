@@ -63,7 +63,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/x11/netinfo.h"
 #include "win/x11/space_areas.h"
 #include "win/x11/space_setup.h"
-#include "win/x11/stacking_tree.h"
+#include "win/x11/stacking.h"
 #include "win/x11/sync_alarm_filter.h"
 #include "win/x11/transient.h"
 #include "win/x11/unmanaged.h"
@@ -97,8 +97,7 @@ space::space(render::compositor& render)
     , app_menu{std::make_unique<win::app_menu>(*this)}
     , rule_book{std::make_unique<RuleBook>(*this)}
     , user_actions_menu{std::make_unique<win::user_actions_menu>(*this)}
-    , stacking_order{std::make_unique<win::stacking_order>(*this)}
-    , x_stacking_tree{std::make_unique<win::x11::stacking_tree>(*this)}
+    , stacking_order{std::make_unique<win::stacking_order>()}
     , focus_chain{std::make_unique<win::focus_chain>(*this)}
     , virtual_desktop_manager{std::make_unique<win::virtual_desktop_manager>()}
     , dbus{std::make_unique<base::dbus::kwin>(*this)}
@@ -208,10 +207,15 @@ space::space(render::compositor& render)
                                           SLOT(reconfigure()));
 
     active_client = nullptr;
-    connect(stacking_order.get(), &win::stacking_order::changed, this, [this] {
-        if (active_client) {
-            active_client->control->update_mouse_grab();
-        }
+    QObject::connect(
+        stacking_order.get(), &stacking_order::changed, this, [this](auto count_changed) {
+            x11::propagate_clients(*this, count_changed);
+            if (active_client) {
+                active_client->control->update_mouse_grab();
+            }
+        });
+    QObject::connect(stacking_order.get(), &stacking_order::render_restack, this, [this] {
+        x11::render_stack_unmanaged_windows(*this);
     });
 }
 
@@ -269,7 +273,7 @@ void space::resetUpdateToolWindowsTimer()
 
 void space::slotUpdateToolWindows()
 {
-    win::update_tool_windows(this, true);
+    x11::update_tool_windows_visibility(this, true);
 }
 
 void space::slotReloadConfig()
@@ -300,7 +304,7 @@ void space::slotReconfigure()
     Q_EMIT configChanged();
 
     user_actions_menu->discard();
-    win::update_tool_windows(this, true);
+    x11::update_tool_windows_visibility(this, true);
 
     rule_book->load();
     for (auto window : m_windows) {
@@ -374,8 +378,8 @@ Toplevel* space::findClientToActivateOnDesktop(uint desktop)
     }
     // from actiavtion.cpp
     if (kwinApp()->options->isNextFocusPrefersMouse()) {
-        auto it = stacking_order->sorted().cend();
-        while (it != stacking_order->sorted().cbegin()) {
+        auto it = stacking_order->stack.cend();
+        while (it != stacking_order->stack.cbegin()) {
             auto client = qobject_cast<win::x11::window*>(*(--it));
             if (!client) {
                 continue;
@@ -510,8 +514,8 @@ void space::setShowingDesktop(bool showing)
 
     {                                  // for the blocker RAII
         blocker block(stacking_order); // updateLayer & lowerClient would invalidate stacking_order
-        for (int i = static_cast<int>(stacking_order->sorted().size()) - 1; i > -1; --i) {
-            auto c = qobject_cast<Toplevel*>(stacking_order->sorted().at(i));
+        for (int i = static_cast<int>(stacking_order->stack.size()) - 1; i > -1; --i) {
+            auto c = qobject_cast<Toplevel*>(stacking_order->stack.at(i));
             if (c && c->isOnCurrentDesktop()) {
                 if (win::is_dock(c)) {
                     win::update_layer(c);
@@ -2204,14 +2208,15 @@ void space::setActiveClient(Toplevel* window)
         }
     }
 
-    win::update_tool_windows(this, false);
+    x11::update_tool_windows_visibility(this, false);
     if (window)
         disableGlobalShortcutsForClient(
             window->control->rules().checkDisableGlobalShortcuts(false));
     else
         disableGlobalShortcutsForClient(false);
 
-    stacking_order->update(); // e.g. fullscreens have different layer when active/not-active
+    // e.g. fullscreens have different layer when active/not-active
+    stacking_order->update_order();
 
     if (win::x11::rootInfo()) {
         win::x11::rootInfo()->setActiveClient(active_client);
@@ -2351,8 +2356,8 @@ void space::clientHidden(Toplevel* window)
 
 Toplevel* space::clientUnderMouse(base::output const* output) const
 {
-    auto it = stacking_order->sorted().cend();
-    while (it != stacking_order->sorted().cbegin()) {
+    auto it = stacking_order->stack.cend();
+    while (it != stacking_order->stack.cbegin()) {
         auto client = *(--it);
         if (!client->control) {
             continue;
@@ -2483,8 +2488,9 @@ void space::gotFocusIn(Toplevel const* window)
 void space::setShouldGetFocus(Toplevel* window)
 {
     should_get_focus.push_back(window);
+
     // e.g. fullscreens have different layer when active/not-active
-    stacking_order->update();
+    stacking_order->update_order();
 }
 
 namespace FSP
@@ -3490,7 +3496,7 @@ bool space::switchWindow(Toplevel* c, Direction direction, QPoint curPos, int d)
     Toplevel* switchTo = nullptr;
     int bestScore = 0;
 
-    auto clist = stacking_order->sorted();
+    auto clist = stacking_order->stack;
     for (auto i = clist.rbegin(); i != clist.rend(); ++i) {
         auto client = *i;
         if (!client->control) {

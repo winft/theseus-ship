@@ -22,7 +22,6 @@
 #include "win/space.h"
 #include "win/space_window_release.h"
 #include "win/transient.h"
-#include "win/x11/stacking_tree.h"
 
 #include <kwingl/platform.h>
 #include <kwingl/texture.h>
@@ -96,7 +95,7 @@ bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
     }
 
     // Create a list of all windows in the stacking order
-    windows = platform.compositor->space->x_stacking_tree->as_list();
+    windows = win::render_stack(*platform.compositor->space->stacking_order);
     bool has_window_repaints{false};
     std::deque<Toplevel*> frame_windows;
 
@@ -238,7 +237,7 @@ void output::run()
 
 void output::dry_run()
 {
-    auto windows = platform.compositor->space->x_stacking_tree->as_list();
+    auto windows = win::render_stack(*platform.compositor->space->stacking_order);
     std::deque<Toplevel*> frame_windows;
 
     for (auto win : windows) {

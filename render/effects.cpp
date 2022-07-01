@@ -50,7 +50,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/transient.h"
 #include "win/virtual_desktops.h"
 #include "win/x11/group.h"
-#include "win/x11/stacking_tree.h"
 #include "win/x11/unmanaged.h"
 #include "win/x11/window.h"
 #include "win/x11/window_find.h"
@@ -1111,7 +1110,7 @@ EffectWindow* effects_handler_impl::find_window_by_uuid(const QUuid& id) const
 
 EffectWindowList effects_handler_impl::stackingOrder() const
 {
-    auto list = m_compositor->space->x_stacking_tree->as_list();
+    auto list = win::render_stack(*m_compositor->space->stacking_order);
     EffectWindowList ret;
     for (auto t : list) {
         if (EffectWindow* w = effectWindow(t))
@@ -2075,7 +2074,7 @@ CLIENT_HELPER_WITH_DELETED_WIN(QVector<uint>, desktops, x11_desktop_ids, QVector
             return toplevel->control->propertyname();                                              \
         }                                                                                          \
         if (auto& remnant = toplevel->remnant) {                                                   \
-            return remnant->propertyname;                                                          \
+            return remnant->data.propertyname;                                                     \
         }                                                                                          \
         return defaultValue;                                                                       \
     }

@@ -6,7 +6,6 @@
 #pragma once
 
 #include "event.h"
-#include "stacking_tree.h"
 #include "unmanaged.h"
 
 #include "base/x11/event_filter.h"
@@ -128,8 +127,9 @@ bool space_event(Space& space, xcb_generic_event_t* event)
     // events that should be handled before Clients can get them
     switch (event_type) {
     case XCB_CONFIGURE_NOTIFY:
-        if (reinterpret_cast<xcb_configure_notify_event_t*>(event)->event == rootWindow())
-            space.x_stacking_tree->mark_as_dirty();
+        if (reinterpret_cast<xcb_configure_notify_event_t*>(event)->event == rootWindow()) {
+            space.stacking_order->render_restack_required = true;
+        }
         break;
     };
 

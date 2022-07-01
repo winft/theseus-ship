@@ -5,10 +5,8 @@
 */
 #pragma once
 
-#include "stacking_tree.h"
+#include "hide.h"
 #include "transient.h"
-
-#include "win/space_helpers.h"
 
 namespace KWin::win::x11
 {
@@ -38,11 +36,10 @@ void add_controlled_window_to_space(Space& space, Win* win)
         // Raise if it hasn't got any stacking position yet
         space.stacking_order->pre_stack.push_back(win);
     }
-    if (!contains(space.stacking_order->sorted(), win)) {
+    if (!contains(space.stacking_order->stack, win)) {
         // It'll be updated later, and updateToolWindows() requires c to be in stacking_order.
-        space.stacking_order->win_stack.push_back(win);
+        space.stacking_order->stack.push_back(win);
     }
-    space.x_stacking_tree->mark_as_dirty();
 
     // This cannot be in manage(), because the client got added only now
     space.updateClientArea();
@@ -60,10 +57,10 @@ void add_controlled_window_to_space(Space& space, Win* win)
     space.checkTransients(win);
 
     // Propagate new client
-    space.stacking_order->update(true);
+    space.stacking_order->update_count();
 
     if (is_utility(win) || is_menu(win) || is_toolbar(win)) {
-        update_tool_windows(&space, true);
+        update_tool_windows_visibility(&space, true);
     }
 
     space.updateTabbox();

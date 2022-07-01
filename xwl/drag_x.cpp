@@ -264,8 +264,8 @@ wl_visit::wl_visit(Toplevel* target, x11_source_ext& source)
                         &version);
 
     xcb_map_window(xcb_con, window);
-    source.x11.space->stacking_order->add_manual_overlay(window);
-    source.x11.space->stacking_order->update(true);
+    source.x11.space->stacking_order->manual_overlays.push_back(window);
+    source.x11.space->stacking_order->update_count();
 
     xcb_flush(xcb_con);
     mapped = true;
@@ -491,8 +491,8 @@ void wl_visit::unmap_proxy_window()
 
     xcb_unmap_window(source.x11.connection, window);
 
-    source.x11.space->stacking_order->remove_manual_overlay(window);
-    source.x11.space->stacking_order->update(true);
+    remove_all(source.x11.space->stacking_order->manual_overlays, window);
+    source.x11.space->stacking_order->update_count();
 
     xcb_flush(source.x11.connection);
     mapped = false;

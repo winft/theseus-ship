@@ -182,7 +182,8 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
     auto client = dynamic_cast<win::x11::window*>(toplevel);
     auto& remnant = toplevel->remnant;
     auto const decorationRect = QRect(QPoint(), toplevel->size());
-    if ((client && client->control && !client->noBorder()) || (remnant && !remnant->no_border)) {
+    if ((client && client->control && !client->noBorder())
+        || (remnant && !remnant->data.no_border)) {
         // decorated client
         transformed_shape = decorationRect;
         if (toplevel->is_shape) {
@@ -258,7 +259,8 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
     // it optimizes painting quite a bit
     const bool blitInTempPixmap = xRenderOffscreen() || (data.crossFadeProgress() < 1.0 && !opaque)
         || (scaled
-            && (wantShadow || (client && !client->noBorder()) || (remnant && !remnant->no_border)));
+            && (wantShadow || (client && !client->noBorder())
+                || (remnant && !remnant->data.no_border)));
 
     auto renderTarget = static_cast<xrender::scene&>(scene).xrenderBufferPicture();
     if (blitInTempPixmap) {
@@ -317,10 +319,10 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
         noBorder = client->noBorder();
         client->layoutDecorationRects(dlr, dtr, drr, dbr);
     }
-    if (remnant && !remnant->no_border) {
-        renderer = static_cast<const deco_renderer*>(remnant->decoration_renderer.get());
-        noBorder = remnant->no_border;
-        remnant->layout_decoration_rects(dlr, dtr, drr, dbr);
+    if (remnant && !remnant->data.no_border) {
+        renderer = static_cast<const deco_renderer*>(remnant->data.decoration_renderer.get());
+        noBorder = remnant->data.no_border;
+        remnant->data.layout_decoration_rects(dlr, dtr, drr, dbr);
     }
     if (renderer) {
         left = renderer->picture(deco_renderer::DecorationPart::Left);

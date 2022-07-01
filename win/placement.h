@@ -314,7 +314,7 @@ void place_smart(Win* window, const QRect& area, placement /*next*/)
             cxr = x + cw;
             cyt = y;
             cyb = y + ch;
-            for (auto const& client : window->space.stacking_order->sorted()) {
+            for (auto const& client : window->space.stacking_order->stack) {
                 if (is_irrelevant(client, window, desktop)) {
                     continue;
                 }
@@ -367,7 +367,7 @@ void place_smart(Win* window, const QRect& area, placement /*next*/)
                 possible -= cw;
 
             // compare to the position of each client on the same desk
-            for (auto const& client : window->space.stacking_order->sorted()) {
+            for (auto const& client : window->space.stacking_order->stack) {
                 if (is_irrelevant(client, window, desktop)) {
                     continue;
                 }
@@ -401,7 +401,7 @@ void place_smart(Win* window, const QRect& area, placement /*next*/)
                 possible -= ch;
 
             // test the position of each window on the desk
-            for (auto const& client : window->space.stacking_order->sorted()) {
+            for (auto const& client : window->space.stacking_order->stack) {
                 if (is_irrelevant(client, window, desktop)) {
                     continue;
                 }

@@ -135,7 +135,7 @@ void init_space(Space& space)
         }
 
         // Propagate clients, will really happen at the end of the updates blocker block
-        space.stacking_order->update(true);
+        space.stacking_order->update_count();
 
         space.saveOldScreenSizes();
         space.updateClientArea();
@@ -184,11 +184,11 @@ void clear_space(Space& space)
     space.stacking_order->lock();
 
     // Use stacking_order, so that kwin --replace keeps stacking order
-    auto const stack = space.stacking_order->sorted();
+    auto const stack = space.stacking_order->stack;
 
     // "mutex" the stackingorder, since anything trying to access it from now on will find
     // many dangeling pointers and crash
-    space.stacking_order->win_stack.clear();
+    space.stacking_order->stack.clear();
 
     // Only release windows on X11.
     auto is_x11 = kwinApp()->operationMode() == Application::OperationModeX11;

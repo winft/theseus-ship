@@ -1,4 +1,13 @@
+/*
+    SPDX-FileCopyrightText: 2022 Roman Gilg <subdiff@gmail.com>
+
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
+#pragma once
+
 #include "group.h"
+#include "hide.h"
+#include "netinfo.h"
 #include "window.h"
 
 #include "base/output_helpers.h"
@@ -11,52 +20,141 @@
 namespace KWin::win::x11
 {
 
-/**
- * Group windows by layer, than flatten to a list.
- * @param list container of windows to sort
- */
-template<typename Container>
-std::vector<Toplevel*> sort_windows_by_layer(Container const& list)
+template<typename Space>
+void render_stack_unmanaged_windows(Space& space)
 {
-    constexpr size_t layer_count = static_cast<int>(layer::count);
-    std::deque<Toplevel*> layers[layer_count];
-    auto const& outputs = kwinApp()->get_base().get_outputs();
+    if (!kwinApp()->x11Connection()) {
+        return;
+    }
 
-    // build the order from layers
-    QVector<QMap<group*, layer>> minimum_layer(std::max<size_t>(outputs.size(), 1));
+    auto xcbtree = std::make_unique<base::x11::xcb::tree>(kwinApp()->x11RootWindow());
+    if (xcbtree->is_null()) {
+        return;
+    }
 
-    for (auto const& win : list) {
-        auto l = win->layer();
+    // this constructs a vector of references with the start and end
+    // of the xcbtree C pointer array of type xcb_window_t, we use reference_wrapper to only
+    // create an vector of references instead of making a copy of each element into the vector.
+    std::vector<std::reference_wrapper<xcb_window_t>> windows(
+        xcbtree->children(), xcbtree->children() + xcbtree->data()->children_len);
+    auto const& unmanaged_list = space.unmanagedList();
 
-        auto const output_index
-            = win->central_output ? base::get_output_index(outputs, *win->central_output) : 0;
-        auto c = qobject_cast<window*>(win);
+    for (auto const& win : windows) {
+        auto unmanaged = std::find_if(unmanaged_list.cbegin(),
+                                      unmanaged_list.cend(),
+                                      [&win](auto u) { return win.get() == u->xcb_window; });
 
-        QMap<group*, layer>::iterator mLayer
-            = minimum_layer[output_index].find(c ? c->group() : nullptr);
-        if (mLayer != minimum_layer[output_index].end()) {
-            // If a window is raised above some other window in the same window group
-            // which is in the ActiveLayer (i.e. it's fulscreened), make sure it stays
-            // above that window (see #95731).
-            if (*mLayer == layer::active
-                && (static_cast<int>(l) > static_cast<int>(layer::below))) {
-                l = layer::active;
-            }
-            *mLayer = l;
-        } else if (c) {
-            minimum_layer[output_index].insertMulti(c->group(), l);
+        if (unmanaged != std::cend(unmanaged_list)) {
+            space.stacking_order->render_overlays.push_back(*unmanaged);
         }
-        layers[static_cast<size_t>(l)].push_back(win);
+    }
+}
+
+template<typename Space>
+void propagate_clients(Space& space, bool propagate_new_clients)
+{
+    if (!rootInfo()) {
+        return;
     }
 
-    std::vector<Toplevel*> sorted;
-    sorted.reserve(list.size());
+    auto& order = *space.stacking_order;
 
-    for (auto lay = static_cast<size_t>(layer::first); lay < layer_count; ++lay) {
-        sorted.insert(sorted.end(), layers[lay].begin(), layers[lay].end());
+    // restack the windows according to the stacking order
+    // supportWindow > electric borders > clients > hidden clients
+    std::vector<xcb_window_t> stack;
+
+    // Stack all windows under the support window. The support window is
+    // not used for anything (besides the NETWM property), and it's not shown,
+    // but it was lowered after kwin startup. Stacking all clients below
+    // it ensures that no client will be ever shown above override-redirect
+    // windows (e.g. popups).
+    stack.push_back(rootInfo()->supportWindow());
+
+    auto const edges_wins = space.edges->windows();
+    stack.insert(stack.end(), edges_wins.begin(), edges_wins.end());
+    stack.insert(stack.end(), order.manual_overlays.begin(), order.manual_overlays.end());
+
+    // Twice the stacking-order size for inputWindow
+    stack.reserve(stack.size() + 2 * order.stack.size());
+
+    // TODO use ranges::view and ranges::transform in c++20
+    std::vector<xcb_window_t> hidden_windows;
+    std::for_each(order.stack.rbegin(), order.stack.rend(), [&stack, &hidden_windows](auto window) {
+        auto x11_window = qobject_cast<x11::window*>(window);
+        if (!x11_window) {
+            return;
+        }
+
+        // Hidden windows with preview are windows that should be unmapped but is kept
+        // for compositing ensure they are stacked below everything else (as far as
+        // pure X stacking order is concerned).
+        if (hidden_preview(x11_window)) {
+            hidden_windows.push_back(x11_window->frameId());
+            return;
+        }
+
+        // Stack the input window above the frame
+        if (x11_window->xcb_windows.input) {
+            stack.push_back(x11_window->xcb_windows.input);
+        }
+
+        stack.push_back(x11_window->frameId());
+    });
+
+    // when having hidden previews, stack hidden windows below everything else
+    // (as far as pure X stacking order is concerned), in order to avoid having
+    // these windows that should be unmapped to interfere with other windows.
+    std::copy(hidden_windows.begin(), hidden_windows.end(), std::back_inserter(stack));
+
+    // TODO isn't it too inefficient to restack always all clients?
+    // TODO don't restack not visible windows?
+    Q_ASSERT(stack.at(0) == rootInfo()->supportWindow());
+    base::x11::xcb::restack_windows(stack);
+
+    if (propagate_new_clients) {
+        // TODO this is still not completely in the map order
+        // TODO use ranges::view and ranges::transform in c++20
+        std::vector<xcb_window_t> clients;
+        std::vector<xcb_window_t> non_desktops;
+        std::copy(order.manual_overlays.begin(),
+                  order.manual_overlays.end(),
+                  std::back_inserter(clients));
+
+        for (auto const& window : space.m_windows) {
+            if (!window->control) {
+                continue;
+            }
+
+            auto x11_window = qobject_cast<x11::window*>(window);
+            if (!x11_window) {
+                continue;
+            }
+
+            if (is_desktop(x11_window)) {
+                clients.push_back(x11_window->xcb_window);
+            } else {
+                non_desktops.push_back(x11_window->xcb_window);
+            }
+        }
+
+        /// Desktop windows are always on the bottom, so copy the non-desktop windows to the
+        /// end/top.
+        std::copy(non_desktops.begin(), non_desktops.end(), std::back_inserter(clients));
+        rootInfo()->setClientList(clients.data(), clients.size());
     }
 
-    return sorted;
+    std::vector<xcb_window_t> stacked_clients;
+
+    for (auto window : order.stack) {
+        if (auto x11_window = qobject_cast<x11::window*>(window)) {
+            stacked_clients.push_back(x11_window->xcb_window);
+        }
+    }
+
+    std::copy(order.manual_overlays.begin(),
+              order.manual_overlays.end(),
+              std::back_inserter(stacked_clients));
+    rootInfo()->setClientListStacking(stacked_clients.data(), stacked_clients.size());
 }
 
 }
