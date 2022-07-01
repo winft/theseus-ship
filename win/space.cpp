@@ -163,25 +163,26 @@ space::space(render::compositor& render)
             }
         });
 
-    QObject::connect(
-        qobject.get(), &qobject_t::clientRemoved, focus_chain.get(), &win::focus_chain::remove);
+    QObject::connect(qobject.get(), &qobject_t::clientRemoved, qobject.get(), [this](auto window) {
+        focus_chain->remove(window);
+    });
     QObject::connect(qobject.get(),
                      &qobject_t::clientActivated,
-                     focus_chain.get(),
-                     &win::focus_chain::setActiveClient);
+                     qobject.get(),
+                     [this](auto window) { focus_chain->setActiveClient(window); });
     QObject::connect(virtual_desktop_manager.get(),
                      &win::virtual_desktop_manager::countChanged,
-                     focus_chain.get(),
-                     &win::focus_chain::resize);
+                     qobject.get(),
+                     [this](auto prev, auto next) { focus_chain->resize(prev, next); });
     QObject::connect(virtual_desktop_manager.get(),
                      &win::virtual_desktop_manager::currentChanged,
-                     focus_chain.get(),
-                     &win::focus_chain::setCurrentDesktop);
+                     qobject.get(),
+                     [this](auto prev, auto next) { focus_chain->setCurrentDesktop(prev, next); });
     QObject::connect(kwinApp()->options.get(),
                      &base::options::separateScreenFocusChanged,
-                     focus_chain.get(),
-                     &win::focus_chain::setSeparateScreenFocus);
-    focus_chain.get()->setSeparateScreenFocus(kwinApp()->options->isSeparateScreenFocus());
+                     qobject.get(),
+                     [this](auto enable) { focus_chain->setSeparateScreenFocus(enable); });
+    focus_chain->setSeparateScreenFocus(kwinApp()->options->isSeparateScreenFocus());
 
     auto vds = virtual_desktop_manager.get();
     QObject::connect(vds,

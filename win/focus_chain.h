@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwin_export.h"
 
 #include <QHash>
-#include <QObject>
 
 namespace KWin
 {
@@ -54,9 +53,8 @@ class space;
  *
  * Furthermore this class contains various helper methods for the two different kind of chains.
  */
-class KWIN_EXPORT focus_chain : public QObject
+class KWIN_EXPORT focus_chain
 {
-    Q_OBJECT
 public:
     enum Change {
         MakeFirst,
@@ -179,7 +177,6 @@ public:
 
     bool isUsableFocusCandidate(Toplevel* window, Toplevel* prev) const;
 
-public Q_SLOTS:
     /**
      * @brief Resizes the per virtual desktop focus chains from @p previousSize to @p newSize.
      * This means that for each virtual desktop between previous and new size a new focus chain is
