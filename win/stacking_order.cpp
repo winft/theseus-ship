@@ -8,7 +8,6 @@
 #include "stacking_order.h"
 
 #include "screen_edges.h"
-#include "space.h"
 #include "stacking.h"
 #include "transient.h"
 #include "x11/group.h"
@@ -23,11 +22,6 @@
 
 namespace KWin::win
 {
-
-stacking_order::stacking_order(win::space& space)
-    : space{space}
-{
-}
 
 void stacking_order::update(bool propagate_new_clients)
 {

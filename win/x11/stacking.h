@@ -20,12 +20,15 @@
 namespace KWin::win::x11
 {
 
-template<typename Order>
-void propagate_clients(Order& order, bool propagate_new_clients)
+template<typename Space>
+void propagate_clients(Space& space, bool propagate_new_clients)
 {
     if (!rootInfo()) {
         return;
     }
+
+    auto& order = *space.stacking_order;
+
     // restack the windows according to the stacking order
     // supportWindow > electric borders > clients > hidden clients
     std::vector<xcb_window_t> stack;
@@ -37,7 +40,7 @@ void propagate_clients(Order& order, bool propagate_new_clients)
     // windows (e.g. popups).
     stack.push_back(rootInfo()->supportWindow());
 
-    auto const edges_wins = order.space.edges->windows();
+    auto const edges_wins = space.edges->windows();
     stack.insert(stack.end(), edges_wins.begin(), edges_wins.end());
     stack.insert(stack.end(), order.manual_overlays.begin(), order.manual_overlays.end());
 
@@ -87,7 +90,7 @@ void propagate_clients(Order& order, bool propagate_new_clients)
                   order.manual_overlays.end(),
                   std::back_inserter(clients));
 
-        for (auto const& window : order.space.m_windows) {
+        for (auto const& window : space.m_windows) {
             if (!window->control) {
                 continue;
             }

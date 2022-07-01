@@ -98,7 +98,7 @@ space::space(render::compositor& render)
     , app_menu{std::make_unique<win::app_menu>(*this)}
     , rule_book{std::make_unique<RuleBook>(*this)}
     , user_actions_menu{std::make_unique<win::user_actions_menu>(*this)}
-    , stacking_order{std::make_unique<win::stacking_order>(*this)}
+    , stacking_order{std::make_unique<win::stacking_order>()}
     , x_stacking_tree{std::make_unique<win::x11::stacking_tree>(*this)}
     , focus_chain{std::make_unique<win::focus_chain>(*this)}
     , virtual_desktop_manager{std::make_unique<win::virtual_desktop_manager>()}
@@ -211,7 +211,7 @@ space::space(render::compositor& render)
     active_client = nullptr;
     QObject::connect(
         stacking_order.get(), &stacking_order::changed, this, [this](auto count_changed) {
-            x11::propagate_clients(*stacking_order, count_changed);
+            x11::propagate_clients(*this, count_changed);
             if (active_client) {
                 active_client->control->update_mouse_grab();
             }

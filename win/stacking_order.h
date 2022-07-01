@@ -29,8 +29,6 @@ namespace x11
 class window;
 }
 
-class space;
-
 template<typename Order>
 std::deque<Toplevel*> render_stack(Order& order)
 {
@@ -51,8 +49,6 @@ class KWIN_EXPORT stacking_order : public QObject
 {
     Q_OBJECT
 public:
-    explicit stacking_order(win::space& space);
-
     void update(bool propagate_new_clients = false);
 
     void lock()
@@ -86,8 +82,6 @@ public:
     std::deque<xcb_window_t> manual_overlays;
 
     bool render_restack_required{false};
-
-    win::space& space;
 
 Q_SIGNALS:
     /**
