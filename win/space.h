@@ -22,6 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
+#include "focus_chain.h"
+
 #include "base/options.h"
 #include "base/output.h"
 #include "base/x11/atoms.h"
@@ -111,7 +113,6 @@ class group;
 }
 
 enum class activation;
-class focus_chain;
 class internal_window;
 class kill_window;
 class screen_edge;
@@ -283,7 +284,7 @@ public:
     Toplevel* most_recently_raised{nullptr};
 
     std::unique_ptr<win::stacking_order> stacking_order;
-    std::unique_ptr<win::focus_chain> focus_chain;
+    win::focus_chain focus_chain;
     std::unique_ptr<win::virtual_desktop_manager> virtual_desktop_manager;
     std::unique_ptr<base::dbus::kwin> dbus;
     std::unique_ptr<win::session_manager> session_manager;
