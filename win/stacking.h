@@ -8,6 +8,7 @@
 #include "control.h"
 #include "controlling.h"
 #include "focus_chain.h"
+#include "focus_chain_helpers.h"
 #include "geo.h"
 #include "layers.h"
 #include "meta.h"
@@ -314,6 +315,54 @@ void raise_or_lower_client(Space* space, Window* window)
     }
 }
 
+template<typename Chain, typename Win>
+void focus_chain_move_window_after_in_chain(Chain& chain, Win* window, Win* reference)
+{
+    if (!chain.contains(reference)) {
+        return;
+    }
+
+    chain.removeAll(window);
+
+    if (belong_to_same_client(reference, window)) {
+        // Simple case, just put it directly behind the reference window of the same client.
+        // TODO(romangg): can this special case be explained better?
+        chain.insert(chain.indexOf(reference), window);
+        return;
+    }
+
+    for (int i = chain.size() - 1; i >= 0; --i) {
+        if (belong_to_same_client(reference, chain.at(i))) {
+            chain.insert(i, window);
+            return;
+        }
+    }
+}
+
+/**
+ * @brief Moves @p window behind the @p reference in all focus chains.
+ *
+ * @param client The Client to move in the chains
+ * @param reference The Client behind which the @p client should be moved
+ * @return void
+ */
+template<typename Manager>
+void focus_chain_move_window_after(Manager& manager, Toplevel* window, Toplevel* reference)
+{
+    if (!wants_tab_focus(window)) {
+        return;
+    }
+
+    for (auto it = manager.chains.desktops.begin(); it != manager.chains.desktops.end(); ++it) {
+        if (!window->isOnDesktop(it.key())) {
+            continue;
+        }
+        focus_chain_move_window_after_in_chain(it.value(), window, reference);
+    }
+
+    focus_chain_move_window_after_in_chain(manager.chains.latest_use, window, reference);
+}
+
 template<typename Space, typename Window>
 void restack(Space* space, Window* window, Toplevel* under, bool force = false)
 {
@@ -344,7 +393,7 @@ void restack(Space* space, Window* window, Toplevel* under, bool force = false)
     space->stacking_order->pre_stack.insert(it, window);
 
     assert(contains(space->stacking_order->pre_stack, window));
-    space->focus_chain.moveAfterClient(window, under);
+    focus_chain_move_window_after(space->focus_chain, window, under);
     space->stacking_order->update_order();
 }
 

@@ -163,7 +163,7 @@ space::space(render::compositor& render)
         });
 
     QObject::connect(qobject.get(), &qobject_t::clientRemoved, qobject.get(), [this](auto window) {
-        focus_chain.remove(window);
+        focus_chain_remove(focus_chain, window);
     });
     QObject::connect(qobject.get(),
                      &qobject_t::clientActivated,
@@ -172,7 +172,7 @@ space::space(render::compositor& render)
     QObject::connect(virtual_desktop_manager.get(),
                      &win::virtual_desktop_manager::countChanged,
                      qobject.get(),
-                     [this](auto prev, auto next) { focus_chain.resize(prev, next); });
+                     [this](auto prev, auto next) { focus_chain_resize(focus_chain, prev, next); });
     QObject::connect(virtual_desktop_manager.get(),
                      &win::virtual_desktop_manager::currentChanged,
                      qobject.get(),
@@ -392,8 +392,8 @@ void space::activateClientOnNewDesktop(uint desktop)
 Toplevel* space::findClientToActivateOnDesktop(uint desktop)
 {
     if (movingClient != nullptr && active_client == movingClient
-        && focus_chain.contains(active_client, desktop) && active_client->isShown()
-        && active_client->isOnCurrentDesktop()) {
+        && focus_chain_at_desktop_contains(focus_chain, active_client, desktop)
+        && active_client->isShown() && active_client->isOnCurrentDesktop()) {
         // A requestFocus call will fail, as the client is already active
         return active_client;
     }
@@ -418,7 +418,7 @@ Toplevel* space::findClientToActivateOnDesktop(uint desktop)
             }
         }
     }
-    return focus_chain.getForActivation(desktop);
+    return focus_chain_get_for_activation_on_current_output<Toplevel>(focus_chain, desktop);
 }
 
 void space::slotDesktopCountChanged(uint previousCount, uint newCount)
@@ -558,7 +558,8 @@ void space::setShowingDesktop(bool showing)
     if (showing_desktop && topDesk) {
         request_focus(topDesk);
     } else if (!showing_desktop && changed) {
-        const auto client = focus_chain.getForActivation(virtual_desktop_manager->current());
+        const auto client = focus_chain_get_for_activation_on_current_output<Toplevel>(
+            focus_chain, virtual_desktop_manager->current());
         if (client) {
             activateClient(client);
         }
@@ -2207,7 +2208,7 @@ void space::setActiveClient(Toplevel* window)
 
     if (active_client) {
         last_active_client = active_client;
-        focus_chain.update(active_client, focus_chain_change::make_first);
+        focus_chain_update(focus_chain, active_client, focus_chain_change::make_first);
         win::set_demands_attention(active_client, false);
 
         // activating a client can cause a non active fullscreen window to loose the ActiveLayer
@@ -2440,7 +2441,8 @@ bool space::activateNextClient(Toplevel* window)
         // first try to pass the focus to the (former) active clients leader
         if (window && window->transient()->lead()) {
             auto leaders = window->transient()->leads();
-            if (leaders.size() == 1 && focus_chain.isUsableFocusCandidate(leaders.at(0), window)) {
+            if (leaders.size() == 1
+                && focus_chain_is_usable_focus_candidate(focus_chain, leaders.at(0), window)) {
                 get_focus = leaders.at(0);
 
                 // also raise - we don't know where it came from
@@ -2449,7 +2451,7 @@ bool space::activateNextClient(Toplevel* window)
         }
         if (!get_focus) {
             // nope, ask the focus chain for the next candidate
-            get_focus = focus_chain.nextForDesktop(window, desktop);
+            get_focus = focus_chain_next_for_desktop(focus_chain, window, desktop);
         }
     }
 
@@ -2474,7 +2476,7 @@ void space::setCurrentScreen(base::output const& output)
     closeActivePopup();
 
     const int desktop = virtual_desktop_manager->current();
-    auto get_focus = focus_chain.getForActivation(desktop, &output);
+    auto get_focus = focus_chain_get_for_activation<Toplevel>(focus_chain, desktop, &output);
     if (get_focus == nullptr) {
         get_focus = win::find_desktop(this, true, desktop);
     }
