@@ -190,11 +190,7 @@ public:
      * @return void
      */
     void remove(Toplevel* window);
-    void setSeparateScreenFocus(bool enabled);
-    void setActiveClient(Toplevel* window);
-    void setCurrentDesktop(uint previous, uint newDesktop);
 
-private:
     using Chain = QList<Toplevel*>;
     /**
      * @brief Makes @p client the first Client in the given focus @p chain.
@@ -221,33 +217,22 @@ private:
     void moveAfterClientInChain(Toplevel* window, Toplevel* reference, Chain& chain);
     void updateClientInChain(Toplevel* window, focus_chain_change change, Chain& chain);
     void insertClientIntoChain(Toplevel* window, Chain& chain);
-    Chain m_mostRecentlyUsed;
-    QHash<uint, Chain> desktop_focus_chains;
-    bool m_separateScreenFocus{false};
-    Toplevel* m_activeClient{nullptr};
-    uint m_currentDesktop{0};
+
+    struct {
+        Chain latest_use;
+        QHash<uint, Chain> desktops;
+    } chains;
+
+    Toplevel* active_window{nullptr};
+    uint current_desktop{0};
+
+    bool has_separate_screen_focus{false};
     win::space& space;
 };
 
 inline bool focus_chain::contains(Toplevel* window) const
 {
-    return m_mostRecentlyUsed.contains(window);
-}
-
-inline void focus_chain::setSeparateScreenFocus(bool enabled)
-{
-    m_separateScreenFocus = enabled;
-}
-
-inline void focus_chain::setActiveClient(Toplevel* window)
-{
-    m_activeClient = window;
-}
-
-inline void focus_chain::setCurrentDesktop(uint previous, uint newDesktop)
-{
-    Q_UNUSED(previous)
-    m_currentDesktop = newDesktop;
+    return chains.latest_use.contains(window);
 }
 
 }

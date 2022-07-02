@@ -35,19 +35,19 @@ focus_chain::focus_chain(win::space& space)
 
 void focus_chain::remove(Toplevel* window)
 {
-    for (auto it = desktop_focus_chains.begin(); it != desktop_focus_chains.end(); ++it) {
+    for (auto it = chains.desktops.begin(); it != chains.desktops.end(); ++it) {
         it.value().removeAll(window);
     }
-    m_mostRecentlyUsed.removeAll(window);
+    chains.latest_use.removeAll(window);
 }
 
 void focus_chain::resize(uint previousSize, uint newSize)
 {
     for (uint i = previousSize + 1; i <= newSize; ++i) {
-        desktop_focus_chains.insert(i, Chain());
+        chains.desktops.insert(i, Chain());
     }
     for (uint i = previousSize; i > newSize; --i) {
-        desktop_focus_chains.remove(i);
+        chains.desktops.remove(i);
     }
 }
 
@@ -58,15 +58,15 @@ Toplevel* focus_chain::getForActivation(uint desktop) const
 
 Toplevel* focus_chain::getForActivation(uint desktop, base::output const* output) const
 {
-    auto it = desktop_focus_chains.constFind(desktop);
-    if (it == desktop_focus_chains.constEnd()) {
+    auto it = chains.desktops.constFind(desktop);
+    if (it == chains.desktops.constEnd()) {
         return nullptr;
     }
     const auto& chain = it.value();
     for (int i = chain.size() - 1; i >= 0; --i) {
         auto tmp = chain.at(i);
         // TODO: move the check into Client
-        if (tmp->isShown() && (!m_separateScreenFocus || tmp->central_output == output)) {
+        if (tmp->isShown() && (!has_separate_screen_focus || tmp->central_output == output)) {
             return tmp;
         }
     }
@@ -83,10 +83,10 @@ void focus_chain::update(Toplevel* window, focus_chain_change change)
 
     if (window->isOnAllDesktops()) {
         // Now on all desktops, add it to focus chains it is not already in
-        for (auto it = desktop_focus_chains.begin(); it != desktop_focus_chains.end(); ++it) {
+        for (auto it = chains.desktops.begin(); it != chains.desktops.end(); ++it) {
             auto& chain = it.value();
             // Making first/last works only on current desktop, don't affect all desktops
-            if (it.key() == m_currentDesktop
+            if (it.key() == current_desktop
                 && (change == focus_chain_change::make_first
                     || change == focus_chain_change::make_last)) {
                 if (change == focus_chain_change::make_first) {
@@ -100,7 +100,7 @@ void focus_chain::update(Toplevel* window, focus_chain_change change)
         }
     } else {
         // Now only on desktop, remove it anywhere else
-        for (auto it = desktop_focus_chains.begin(); it != desktop_focus_chains.end(); ++it) {
+        for (auto it = chains.desktops.begin(); it != chains.desktops.end(); ++it) {
             auto& chain = it.value();
             if (window->isOnDesktop(it.key())) {
                 updateClientInChain(window, change, chain);
@@ -111,7 +111,7 @@ void focus_chain::update(Toplevel* window, focus_chain_change change)
     }
 
     // add for most recently used chain
-    updateClientInChain(window, change, m_mostRecentlyUsed);
+    updateClientInChain(window, change, chains.latest_use);
 }
 
 void focus_chain::updateClientInChain(Toplevel* window, focus_chain_change change, Chain& chain)
@@ -130,8 +130,8 @@ void focus_chain::insertClientIntoChain(Toplevel* window, Chain& chain)
     if (chain.contains(window)) {
         return;
     }
-    if (m_activeClient && m_activeClient != window && !chain.empty()
-        && chain.last() == m_activeClient) {
+    if (active_window && active_window != window && !chain.empty()
+        && chain.last() == active_window) {
         // Add it after the active client
         chain.insert(chain.size() - 1, window);
     } else {
@@ -146,13 +146,13 @@ void focus_chain::moveAfterClient(Toplevel* window, Toplevel* reference)
         return;
     }
 
-    for (auto it = desktop_focus_chains.begin(); it != desktop_focus_chains.end(); ++it) {
+    for (auto it = chains.desktops.begin(); it != chains.desktops.end(); ++it) {
         if (!window->isOnDesktop(it.key())) {
             continue;
         }
         moveAfterClientInChain(window, reference, it.value());
     }
-    moveAfterClientInChain(window, reference, m_mostRecentlyUsed);
+    moveAfterClientInChain(window, reference, chains.latest_use);
 }
 
 void focus_chain::moveAfterClientInChain(Toplevel* window, Toplevel* reference, Chain& chain)
@@ -176,39 +176,39 @@ void focus_chain::moveAfterClientInChain(Toplevel* window, Toplevel* reference, 
 
 Toplevel* focus_chain::firstMostRecentlyUsed() const
 {
-    if (m_mostRecentlyUsed.isEmpty()) {
+    if (chains.latest_use.isEmpty()) {
         return nullptr;
     }
-    return m_mostRecentlyUsed.first();
+    return chains.latest_use.first();
 }
 
 Toplevel* focus_chain::nextMostRecentlyUsed(Toplevel* reference) const
 {
-    if (m_mostRecentlyUsed.isEmpty()) {
+    if (chains.latest_use.isEmpty()) {
         return nullptr;
     }
-    const int index = m_mostRecentlyUsed.indexOf(reference);
+    const int index = chains.latest_use.indexOf(reference);
     if (index == -1) {
-        return m_mostRecentlyUsed.first();
+        return chains.latest_use.first();
     }
     if (index == 0) {
-        return m_mostRecentlyUsed.last();
+        return chains.latest_use.last();
     }
-    return m_mostRecentlyUsed.at(index - 1);
+    return chains.latest_use.at(index - 1);
 }
 
 // copied from activation.cpp
 bool focus_chain::isUsableFocusCandidate(Toplevel* window, Toplevel* prev) const
 {
     return window != prev && window->isShown() && window->isOnCurrentDesktop()
-        && (!m_separateScreenFocus
+        && (!has_separate_screen_focus
             || win::on_screen(window, prev ? prev->central_output : get_current_output(space)));
 }
 
 Toplevel* focus_chain::nextForDesktop(Toplevel* reference, uint desktop) const
 {
-    auto it = desktop_focus_chains.constFind(desktop);
-    if (it == desktop_focus_chains.constEnd()) {
+    auto it = chains.desktops.constFind(desktop);
+    if (it == chains.desktops.constEnd()) {
         return nullptr;
     }
     const auto& chain = it.value();
@@ -235,8 +235,8 @@ void focus_chain::makeLastInChain(Toplevel* window, Chain& chain)
 
 bool focus_chain::contains(Toplevel* window, uint desktop) const
 {
-    auto it = desktop_focus_chains.constFind(desktop);
-    if (it == desktop_focus_chains.constEnd()) {
+    auto it = chains.desktops.constFind(desktop);
+    if (it == chains.desktops.constEnd()) {
         return false;
     }
     return it.value().contains(window);

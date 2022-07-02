@@ -168,7 +168,7 @@ space::space(render::compositor& render)
     QObject::connect(qobject.get(),
                      &qobject_t::clientActivated,
                      qobject.get(),
-                     [this](auto window) { focus_chain.setActiveClient(window); });
+                     [this](auto window) { focus_chain.active_window = window; });
     QObject::connect(virtual_desktop_manager.get(),
                      &win::virtual_desktop_manager::countChanged,
                      qobject.get(),
@@ -176,12 +176,12 @@ space::space(render::compositor& render)
     QObject::connect(virtual_desktop_manager.get(),
                      &win::virtual_desktop_manager::currentChanged,
                      qobject.get(),
-                     [this](auto prev, auto next) { focus_chain.setCurrentDesktop(prev, next); });
+                     [this](auto /*prev*/, auto next) { focus_chain.current_desktop = next; });
     QObject::connect(kwinApp()->options.get(),
                      &base::options::separateScreenFocusChanged,
                      qobject.get(),
-                     [this](auto enable) { focus_chain.setSeparateScreenFocus(enable); });
-    focus_chain.setSeparateScreenFocus(kwinApp()->options->isSeparateScreenFocus());
+                     [this](auto enable) { focus_chain.has_separate_screen_focus = enable; });
+    focus_chain.has_separate_screen_focus = kwinApp()->options->isSeparateScreenFocus();
 
     auto vds = virtual_desktop_manager.get();
     QObject::connect(vds,
