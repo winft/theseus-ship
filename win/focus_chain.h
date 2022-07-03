@@ -39,8 +39,6 @@ class Toplevel;
 namespace win
 {
 
-class space;
-
 using focus_chain_list = std::list<Toplevel*>;
 
 /**
@@ -56,10 +54,11 @@ using focus_chain_list = std::list<Toplevel*>;
  * In addition there is one chain for each virtual desktop which is used to determine which Client
  * should get activated when the user switches to another virtual desktop.
  */
+template<typename Space>
 class focus_chain
 {
 public:
-    focus_chain(win::space& space)
+    focus_chain(Space& space)
         : space{space}
     {
     }
@@ -73,7 +72,7 @@ public:
     unsigned int current_desktop{0};
 
     bool has_separate_screen_focus{false};
-    win::space& space;
+    Space& space;
 };
 
 }

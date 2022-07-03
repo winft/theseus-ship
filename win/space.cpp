@@ -108,7 +108,7 @@ space::space(render::compositor& render)
     , rule_book{std::make_unique<RuleBook>()}
     , user_actions_menu{std::make_unique<win::user_actions_menu<space>>(*this)}
     , stacking_order{std::make_unique<win::stacking_order>()}
-    , focus_chain{win::focus_chain(*this)}
+    , focus_chain{win::focus_chain<space>(*this)}
     , virtual_desktop_manager{std::make_unique<win::virtual_desktop_manager>()}
     , dbus{std::make_unique<base::dbus::kwin>(*this)}
     , session_manager{std::make_unique<win::session_manager>()}

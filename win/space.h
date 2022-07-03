@@ -284,7 +284,7 @@ public:
     Toplevel* most_recently_raised{nullptr};
 
     std::unique_ptr<win::stacking_order> stacking_order;
-    win::focus_chain focus_chain;
+    win::focus_chain<space> focus_chain;
     std::unique_ptr<win::virtual_desktop_manager> virtual_desktop_manager;
     std::unique_ptr<base::dbus::kwin> dbus;
     std::unique_ptr<win::session_manager> session_manager;
