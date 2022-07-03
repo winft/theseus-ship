@@ -355,11 +355,11 @@ void focus_chain_move_window_after(Manager& manager, Toplevel* window, Toplevel*
         return;
     }
 
-    for (auto it = manager.chains.desktops.begin(); it != manager.chains.desktops.end(); ++it) {
-        if (!window->isOnDesktop(it.key())) {
+    for (auto& [key, chain] : manager.chains.desktops) {
+        if (!window->isOnDesktop(key)) {
             continue;
         }
-        focus_chain_move_window_after_in_chain(it.value(), window, reference);
+        focus_chain_move_window_after_in_chain(chain, window, reference);
     }
 
     focus_chain_move_window_after_in_chain(manager.chains.latest_use, window, reference);

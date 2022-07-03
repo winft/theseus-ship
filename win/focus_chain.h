@@ -23,8 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "types.h"
 
-#include <QHash>
 #include <list>
+#include <unordered_map>
 
 namespace KWin
 {
@@ -66,7 +66,7 @@ public:
 
     struct {
         focus_chain_list latest_use;
-        QHash<unsigned int, focus_chain_list> desktops;
+        std::unordered_map<unsigned int, focus_chain_list> desktops;
     } chains;
 
     Toplevel* active_window{nullptr};

@@ -55,10 +55,9 @@ void focus_chain_update(Manager& manager, Win* window, focus_chain_change change
 
     if (window->isOnAllDesktops()) {
         // Now on all desktops, add it to focus chains it is not already in.
-        for (auto it = manager.chains.desktops.begin(); it != manager.chains.desktops.end(); ++it) {
-            auto& chain = it.value();
+        for (auto& [key, chain] : manager.chains.desktops) {
             // Making first/last works only on current desktop, don't affect all desktops
-            if (it.key() == manager.current_desktop
+            if (key == manager.current_desktop
                 && (change == focus_chain_change::make_first
                     || change == focus_chain_change::make_last)) {
                 if (change == focus_chain_change::make_first) {
@@ -72,9 +71,8 @@ void focus_chain_update(Manager& manager, Win* window, focus_chain_change change
         }
     } else {
         // Now only on desktop, remove it anywhere else
-        for (auto it = manager.chains.desktops.begin(); it != manager.chains.desktops.end(); ++it) {
-            auto& chain = it.value();
-            if (window->isOnDesktop(it.key())) {
+        for (auto& [key, chain] : manager.chains.desktops) {
+            if (window->isOnDesktop(key)) {
                 focus_chain_update_window_in_chain(window, change, chain, manager.active_window);
             } else {
                 remove_all(chain, window);

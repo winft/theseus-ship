@@ -15,8 +15,8 @@ namespace KWin::win
 template<typename Manager, typename Win>
 void focus_chain_remove(Manager& manager, Win* window)
 {
-    for (auto it = manager.chains.desktops.begin(); it != manager.chains.desktops.end(); ++it) {
-        remove_all(it.value(), window);
+    for (auto& [key, chain] : manager.chains.desktops) {
+        remove_all(chain, window);
     }
     remove_all(manager.chains.latest_use, window);
 }
@@ -35,10 +35,10 @@ template<typename Manager>
 void focus_chain_resize(Manager& manager, unsigned int prev_size, unsigned int next_size)
 {
     for (auto i = prev_size + 1; i <= next_size; ++i) {
-        manager.chains.desktops.insert(i, decltype(manager.chains.latest_use)());
+        manager.chains.desktops.insert({i, decltype(manager.chains.latest_use)()});
     }
     for (auto i = prev_size; i > next_size; --i) {
-        manager.chains.desktops.remove(i);
+        manager.chains.desktops.erase(i);
     }
 }
 
@@ -49,11 +49,11 @@ void focus_chain_resize(Manager& manager, unsigned int prev_size, unsigned int n
 template<typename Manager, typename Win>
 bool focus_chain_at_desktop_contains(Manager& manager, Win* window, unsigned int desktop)
 {
-    auto it = manager.chains.desktops.constFind(desktop);
-    if (it == manager.chains.desktops.constEnd()) {
+    auto it = manager.chains.desktops.find(desktop);
+    if (it == manager.chains.desktops.end()) {
         return false;
     }
-    return contains(it.value(), window);
+    return contains(it->second, window);
 }
 
 template<typename Win, typename ActWin, typename Chain>

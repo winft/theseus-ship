@@ -71,12 +71,12 @@ base::output const* get_current_output(Space const& space)
 template<typename Win, typename Manager>
 Win* focus_chain_get_for_activation(Manager& manager, uint desktop, base::output const* output)
 {
-    auto desk_it = manager.chains.desktops.constFind(desktop);
-    if (desk_it == manager.chains.desktops.constEnd()) {
+    auto desk_it = manager.chains.desktops.find(desktop);
+    if (desk_it == manager.chains.desktops.end()) {
         return nullptr;
     }
 
-    auto const& chain = desk_it.value();
+    auto const& chain = desk_it->second;
 
     // TODO(romangg): reverse-range with C++20
     for (auto it = chain.rbegin(); it != chain.rend(); ++it) {
@@ -131,12 +131,12 @@ bool focus_chain_is_usable_focus_candidate(Manager& manager, Toplevel* window, T
 template<typename Manager, typename Win>
 Toplevel* focus_chain_next_for_desktop(Manager& manager, Win* reference, uint desktop)
 {
-    auto desk_it = manager.chains.desktops.constFind(desktop);
-    if (desk_it == manager.chains.desktops.constEnd()) {
+    auto desk_it = manager.chains.desktops.find(desktop);
+    if (desk_it == manager.chains.desktops.end()) {
         return nullptr;
     }
 
-    auto const& chain = desk_it.value();
+    auto const& chain = desk_it->second;
 
     // TODO(romangg): reverse-range with C++20
     for (auto it = chain.rbegin(); it != chain.rend(); ++it) {
