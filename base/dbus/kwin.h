@@ -6,6 +6,11 @@
 */
 #pragma once
 
+#include "input/platform.h"
+#include "main.h"
+#include "toplevel.h"
+#include "win/placement.h"
+
 #include <QObject>
 #include <QtDBus>
 
@@ -14,7 +19,6 @@ namespace KWin
 
 namespace win
 {
-class space;
 class space_qobject;
 }
 
@@ -116,28 +120,124 @@ private:
     win::space_qobject& space;
 };
 
+template<typename Space>
 class kwin_impl : public kwin
 {
 public:
-    explicit kwin_impl(win::space& space);
+    explicit kwin_impl(win::space& space)
+        : kwin(*space.qobject)
+        , space{space}
+    {
+    }
 
-    int current_desktop_impl() override;
-    void kill_window_impl() override;
+    void kill_window_impl() override
+    {
+        space.slotKillWindow();
+    }
 
-    void next_desktop_impl() override;
-    void previous_desktop_impl() override;
+    void unclutter_desktop_impl() override
+    {
+        win::unclutter_desktop(space);
+    }
 
-    bool set_current_desktop_impl(int desktop) override;
+    QString support_information_impl() override
+    {
+        return space.supportInformation();
+    }
 
-    QString support_information_impl() override;
-    void unclutter_desktop_impl() override;
+    int current_desktop_impl() override
+    {
+        return space.virtual_desktop_manager->current();
+    }
 
-    QVariantMap query_window_info_impl() override;
-    QVariantMap get_window_info_impl(QString const& uuid) override;
+    bool set_current_desktop_impl(int desktop) override
+    {
+        return space.virtual_desktop_manager->setCurrent(desktop);
+    }
+
+    void next_desktop_impl() override
+    {
+        space.virtual_desktop_manager->template moveTo<win::virtual_desktop_next>();
+    }
+
+    void previous_desktop_impl() override
+    {
+        space.virtual_desktop_manager->template moveTo<win::virtual_desktop_previous>();
+    }
+
+    QVariantMap query_window_info_impl() override
+    {
+        m_replyQueryWindowInfo = message();
+        setDelayedReply(true);
+
+        kwinApp()->input->start_interactive_window_selection([this](Toplevel* t) {
+            if (!t) {
+                QDBusConnection::sessionBus().send(m_replyQueryWindowInfo.createErrorReply(
+                    QStringLiteral("org.kde.KWin.Error.UserCancel"),
+                    QStringLiteral("User cancelled the query")));
+                return;
+            }
+            if (!t->control) {
+                QDBusConnection::sessionBus().send(m_replyQueryWindowInfo.createErrorReply(
+                    QStringLiteral("org.kde.KWin.Error.InvalidWindow"),
+                    QStringLiteral("Tried to query information about an unmanaged window")));
+                return;
+            }
+            QDBusConnection::sessionBus().send(
+                m_replyQueryWindowInfo.createReply(window_to_variant_map(t)));
+        });
+
+        return QVariantMap{};
+    }
+
+    QVariantMap get_window_info_impl(QString const& uuid) override
+    {
+        auto const id = QUuid::fromString(uuid);
+
+        for (auto win : space.m_windows) {
+            if (!win->control) {
+                continue;
+            }
+            if (win->internal_id == id) {
+                return window_to_variant_map(win);
+            }
+        }
+        return {};
+    }
 
 private:
+    QVariantMap window_to_variant_map(Toplevel const* c)
+    {
+        return {{QStringLiteral("resourceClass"), c->resource_class},
+                {QStringLiteral("resourceName"), c->resource_name},
+                {QStringLiteral("desktopFile"), c->control->desktop_file_name()},
+                {QStringLiteral("role"), c->windowRole()},
+                {QStringLiteral("caption"), c->caption.normal},
+                {QStringLiteral("clientMachine"), c->wmClientMachine(true)},
+                {QStringLiteral("localhost"), c->isLocalhost()},
+                {QStringLiteral("type"), c->windowType()},
+                {QStringLiteral("x"), c->pos().x()},
+                {QStringLiteral("y"), c->pos().y()},
+                {QStringLiteral("width"), c->size().width()},
+                {QStringLiteral("height"), c->size().height()},
+                {QStringLiteral("x11DesktopNumber"), c->desktop()},
+                {QStringLiteral("minimized"), c->control->minimized()},
+                {QStringLiteral("shaded"), false},
+                {QStringLiteral("fullscreen"), c->control->fullscreen()},
+                {QStringLiteral("keepAbove"), c->control->keep_above()},
+                {QStringLiteral("keepBelow"), c->control->keep_below()},
+                {QStringLiteral("noBorder"), c->noBorder()},
+                {QStringLiteral("skipTaskbar"), c->control->skip_taskbar()},
+                {QStringLiteral("skipPager"), c->control->skip_pager()},
+                {QStringLiteral("skipSwitcher"), c->control->skip_switcher()},
+                {QStringLiteral("maximizeHorizontal"),
+                 static_cast<int>(c->maximizeMode() & win::maximize_mode::horizontal)},
+                {QStringLiteral("maximizeVertical"),
+                 static_cast<int>(c->maximizeMode() & win::maximize_mode::vertical)}};
+    }
+
     QDBusMessage m_replyQueryWindowInfo;
-    win::space& space;
+    Space& space;
 };
 
 }

@@ -57,6 +57,7 @@ namespace base
 
 namespace dbus
 {
+template<typename Space>
 class kwin_impl;
 }
 
@@ -286,7 +287,7 @@ public:
     std::unique_ptr<win::stacking_order> stacking_order;
     win::focus_chain<space> focus_chain;
     std::unique_ptr<win::virtual_desktop_manager> virtual_desktop_manager;
-    std::unique_ptr<base::dbus::kwin_impl> dbus;
+    std::unique_ptr<base::dbus::kwin_impl<space>> dbus;
     std::unique_ptr<win::session_manager> session_manager;
 
     void stopUpdateToolWindowsTimer();

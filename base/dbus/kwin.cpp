@@ -10,12 +10,6 @@
 
 #include "debug/console/console.h"
 #include "debug/perf/ftrace.h"
-#include "input/platform.h"
-#include "main.h"
-#include "toplevel.h"
-#include "win/control.h"
-#include "win/geo.h"
-#include "win/placement.h"
 #include "win/space.h"
 
 #include <QDBusServiceWatcher>
@@ -103,122 +97,6 @@ void kwin::enableFtrace(bool enable)
         = QStringLiteral("Ftrace marker could not be ").append(enable ? "enabled" : "disabled");
     QDBusConnection::sessionBus().send(
         message().createErrorReply("org.kde.KWin.enableFtrace", msg));
-}
-
-kwin_impl::kwin_impl(win::space& space)
-    : kwin(*space.qobject)
-    , space{space}
-{
-}
-
-void kwin_impl::kill_window_impl()
-{
-    space.slotKillWindow();
-}
-
-void kwin_impl::unclutter_desktop_impl()
-{
-    win::unclutter_desktop(space);
-}
-
-QString kwin_impl::support_information_impl()
-{
-    return space.supportInformation();
-}
-
-int kwin_impl::current_desktop_impl()
-{
-    return space.virtual_desktop_manager->current();
-}
-
-bool kwin_impl::set_current_desktop_impl(int desktop)
-{
-    return space.virtual_desktop_manager->setCurrent(desktop);
-}
-
-void kwin_impl::next_desktop_impl()
-{
-    space.virtual_desktop_manager->moveTo<win::virtual_desktop_next>();
-}
-
-void kwin_impl::previous_desktop_impl()
-{
-    space.virtual_desktop_manager->moveTo<win::virtual_desktop_previous>();
-}
-
-namespace
-{
-
-QVariantMap clientToVariantMap(Toplevel const* c)
-{
-    return {{QStringLiteral("resourceClass"), c->resource_class},
-            {QStringLiteral("resourceName"), c->resource_name},
-            {QStringLiteral("desktopFile"), c->control->desktop_file_name()},
-            {QStringLiteral("role"), c->windowRole()},
-            {QStringLiteral("caption"), c->caption.normal},
-            {QStringLiteral("clientMachine"), c->wmClientMachine(true)},
-            {QStringLiteral("localhost"), c->isLocalhost()},
-            {QStringLiteral("type"), c->windowType()},
-            {QStringLiteral("x"), c->pos().x()},
-            {QStringLiteral("y"), c->pos().y()},
-            {QStringLiteral("width"), c->size().width()},
-            {QStringLiteral("height"), c->size().height()},
-            {QStringLiteral("x11DesktopNumber"), c->desktop()},
-            {QStringLiteral("minimized"), c->control->minimized()},
-            {QStringLiteral("shaded"), false},
-            {QStringLiteral("fullscreen"), c->control->fullscreen()},
-            {QStringLiteral("keepAbove"), c->control->keep_above()},
-            {QStringLiteral("keepBelow"), c->control->keep_below()},
-            {QStringLiteral("noBorder"), c->noBorder()},
-            {QStringLiteral("skipTaskbar"), c->control->skip_taskbar()},
-            {QStringLiteral("skipPager"), c->control->skip_pager()},
-            {QStringLiteral("skipSwitcher"), c->control->skip_switcher()},
-            {QStringLiteral("maximizeHorizontal"),
-             static_cast<int>(c->maximizeMode() & win::maximize_mode::horizontal)},
-            {QStringLiteral("maximizeVertical"),
-             static_cast<int>(c->maximizeMode() & win::maximize_mode::vertical)}};
-}
-
-}
-
-QVariantMap kwin_impl::query_window_info_impl()
-{
-    m_replyQueryWindowInfo = message();
-    setDelayedReply(true);
-
-    kwinApp()->input->start_interactive_window_selection([this](Toplevel* t) {
-        if (!t) {
-            QDBusConnection::sessionBus().send(m_replyQueryWindowInfo.createErrorReply(
-                QStringLiteral("org.kde.KWin.Error.UserCancel"),
-                QStringLiteral("User cancelled the query")));
-            return;
-        }
-        if (!t->control) {
-            QDBusConnection::sessionBus().send(m_replyQueryWindowInfo.createErrorReply(
-                QStringLiteral("org.kde.KWin.Error.InvalidWindow"),
-                QStringLiteral("Tried to query information about an unmanaged window")));
-            return;
-        }
-        QDBusConnection::sessionBus().send(
-            m_replyQueryWindowInfo.createReply(clientToVariantMap(t)));
-    });
-
-    return QVariantMap{};
-}
-
-QVariantMap kwin_impl::get_window_info_impl(QString const& uuid)
-{
-    auto const id = QUuid::fromString(uuid);
-
-    for (auto win : space.m_windows) {
-        if (!win->control) {
-            continue;
-        }
-        if (win->internal_id == id) {
-            return clientToVariantMap(win);
-        }
-    }
-    return {};
 }
 
 }
