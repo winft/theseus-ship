@@ -77,7 +77,7 @@ void focus_chain_update(Manager& manager, Win* window, focus_chain_change change
             if (window->isOnDesktop(it.key())) {
                 focus_chain_update_window_in_chain(window, change, chain, manager.active_window);
             } else {
-                chain.removeAll(window);
+                remove_all(chain, window);
             }
         }
     }

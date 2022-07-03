@@ -318,22 +318,24 @@ void raise_or_lower_client(Space* space, Window* window)
 template<typename Chain, typename Win>
 void focus_chain_move_window_after_in_chain(Chain& chain, Win* window, Win* reference)
 {
-    if (!chain.contains(reference)) {
+    if (!contains(chain, reference)) {
+        // TODO(romangg): better assert?
         return;
     }
 
-    chain.removeAll(window);
+    remove_all(chain, window);
 
     if (belong_to_same_client(reference, window)) {
         // Simple case, just put it directly behind the reference window of the same client.
         // TODO(romangg): can this special case be explained better?
-        chain.insert(chain.indexOf(reference), window);
+        auto it = find(chain, reference);
+        chain.insert(it, window);
         return;
     }
 
-    for (int i = chain.size() - 1; i >= 0; --i) {
-        if (belong_to_same_client(reference, chain.at(i))) {
-            chain.insert(i, window);
+    for (auto it = chain.rbegin(); it != chain.rend(); ++it) {
+        if (belong_to_same_client(reference, *it)) {
+            chain.insert(std::next(it).base(), window);
             return;
         }
     }

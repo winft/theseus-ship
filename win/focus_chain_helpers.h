@@ -7,6 +7,8 @@
 
 #include "types.h"
 
+#include "utils/algorithm.h"
+
 namespace KWin::win
 {
 
@@ -14,9 +16,9 @@ template<typename Manager, typename Win>
 void focus_chain_remove(Manager& manager, Win* window)
 {
     for (auto it = manager.chains.desktops.begin(); it != manager.chains.desktops.end(); ++it) {
-        it.value().removeAll(window);
+        remove_all(it.value(), window);
     }
-    manager.chains.latest_use.removeAll(window);
+    remove_all(manager.chains.latest_use, window);
 }
 
 /**
@@ -51,37 +53,38 @@ bool focus_chain_at_desktop_contains(Manager& manager, Win* window, unsigned int
     if (it == manager.chains.desktops.constEnd()) {
         return false;
     }
-    return it.value().contains(window);
+    return contains(it.value(), window);
 }
 
 template<typename Win, typename ActWin, typename Chain>
 void focus_chain_insert_window_into_chain(Win* window, Chain& chain, ActWin const* active_window)
 {
-    if (chain.contains(window)) {
+    if (contains(chain, window)) {
+        // TODO(romangg): better assert?
         return;
     }
     if (active_window && active_window != window && !chain.empty()
-        && chain.last() == active_window) {
+        && chain.back() == active_window) {
         // Add it after the active client
-        chain.insert(chain.size() - 1, window);
+        chain.insert(std::prev(chain.end()), window);
     } else {
         // Otherwise add as the first one
-        chain.append(window);
+        chain.push_back(window);
     }
 }
 
 template<typename Win, typename Chain>
 void focus_chain_make_first_in_chain(Win* window, Chain& chain)
 {
-    chain.removeAll(window);
-    chain.append(window);
+    remove_all(chain, window);
+    chain.push_back(window);
 }
 
 template<typename Win, typename Chain>
 void focus_chain_make_last_in_chain(Win* window, Chain& chain)
 {
-    chain.removeAll(window);
-    chain.prepend(window);
+    remove_all(chain, window);
+    chain.push_front(window);
 }
 
 template<typename Win, typename ActWin, typename Chain>
@@ -109,11 +112,11 @@ template<typename Win, typename Manager>
 Win* focus_chain_first_latest_use(Manager& manager)
 {
     auto& latest_chain = manager.chains.latest_use;
-    if (latest_chain.isEmpty()) {
+    if (latest_chain.empty()) {
         return nullptr;
     }
 
-    return latest_chain.first();
+    return latest_chain.front();
 }
 
 /**
@@ -133,20 +136,20 @@ template<typename Manager, typename Win>
 Win* focus_chain_next_latest_use(Manager& manager, Win* reference)
 {
     auto& latest_chain = manager.chains.latest_use;
-    if (latest_chain.isEmpty()) {
+    if (latest_chain.empty()) {
         return nullptr;
     }
 
-    auto const index = latest_chain.indexOf(reference);
+    auto it = find(latest_chain, reference);
 
-    if (index == -1) {
-        return latest_chain.first();
+    if (it == latest_chain.end()) {
+        return latest_chain.front();
     }
-    if (index == 0) {
-        return latest_chain.last();
+    if (it == latest_chain.begin()) {
+        return latest_chain.back();
     }
 
-    return latest_chain.at(index - 1);
+    return *std::prev(it);
 }
 
 }

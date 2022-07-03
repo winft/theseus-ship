@@ -149,7 +149,7 @@ std::weak_ptr<tabbox_client> tabbox_handler_impl::first_client_focus_chain() con
 bool tabbox_handler_impl::is_in_focus_chain(tabbox_client* client) const
 {
     if (tabbox_client_impl* c = static_cast<tabbox_client_impl*>(client)) {
-        return m_tabbox->space.focus_chain.chains.latest_use.contains(c->client());
+        return contains(m_tabbox->space.focus_chain.chains.latest_use, c->client());
     }
     return false;
 }

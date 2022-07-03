@@ -71,23 +71,24 @@ base::output const* get_current_output(Space const& space)
 template<typename Win, typename Manager>
 Win* focus_chain_get_for_activation(Manager& manager, uint desktop, base::output const* output)
 {
-    auto it = manager.chains.desktops.constFind(desktop);
-    if (it == manager.chains.desktops.constEnd()) {
+    auto desk_it = manager.chains.desktops.constFind(desktop);
+    if (desk_it == manager.chains.desktops.constEnd()) {
         return nullptr;
     }
 
-    auto const& chain = it.value();
+    auto const& chain = desk_it.value();
 
-    for (int i = chain.size() - 1; i >= 0; --i) {
-        auto tmp = chain.at(i);
+    // TODO(romangg): reverse-range with C++20
+    for (auto it = chain.rbegin(); it != chain.rend(); ++it) {
         // TODO: move the check into Client
-        if (!tmp->isShown()) {
+        auto win = *it;
+        if (!win->isShown()) {
             continue;
         }
-        if (manager.has_separate_screen_focus && tmp->central_output != output) {
+        if (manager.has_separate_screen_focus && win->central_output != output) {
             continue;
         }
-        return tmp;
+        return win;
     }
 
     return nullptr;
@@ -130,17 +131,17 @@ bool focus_chain_is_usable_focus_candidate(Manager& manager, Toplevel* window, T
 template<typename Manager, typename Win>
 Toplevel* focus_chain_next_for_desktop(Manager& manager, Win* reference, uint desktop)
 {
-    auto it = manager.chains.desktops.constFind(desktop);
-    if (it == manager.chains.desktops.constEnd()) {
+    auto desk_it = manager.chains.desktops.constFind(desktop);
+    if (desk_it == manager.chains.desktops.constEnd()) {
         return nullptr;
     }
 
-    auto const& chain = it.value();
+    auto const& chain = desk_it.value();
 
-    for (int i = chain.size() - 1; i >= 0; --i) {
-        auto client = chain.at(i);
-        if (focus_chain_is_usable_focus_candidate(manager, client, reference)) {
-            return client;
+    // TODO(romangg): reverse-range with C++20
+    for (auto it = chain.rbegin(); it != chain.rend(); ++it) {
+        if (focus_chain_is_usable_focus_candidate(manager, *it, reference)) {
+            return *it;
         }
     }
 

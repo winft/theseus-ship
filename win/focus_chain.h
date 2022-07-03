@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "types.h"
 
 #include <QHash>
+#include <list>
 
 namespace KWin
 {
@@ -40,7 +41,7 @@ namespace win
 
 class space;
 
-using focus_chain_list = QList<Toplevel*>;
+using focus_chain_list = std::list<Toplevel*>;
 
 /**
  * @brief Data struct to handle the various focus chains.
