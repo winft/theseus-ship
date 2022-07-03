@@ -65,11 +65,11 @@ public:
 
     struct {
         focus_chain_list latest_use;
-        QHash<uint, focus_chain_list> desktops;
+        QHash<unsigned int, focus_chain_list> desktops;
     } chains;
 
     Toplevel* active_window{nullptr};
-    uint current_desktop{0};
+    unsigned int current_desktop{0};
 
     bool has_separate_screen_focus{false};
     win::space& space;

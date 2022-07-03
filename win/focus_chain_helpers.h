@@ -30,12 +30,12 @@ void focus_chain_remove(Manager& manager, Win* window)
  * @return void
  */
 template<typename Manager>
-void focus_chain_resize(Manager& manager, uint prev_size, uint next_size)
+void focus_chain_resize(Manager& manager, unsigned int prev_size, unsigned int next_size)
 {
-    for (uint i = prev_size + 1; i <= next_size; ++i) {
+    for (auto i = prev_size + 1; i <= next_size; ++i) {
         manager.chains.desktops.insert(i, decltype(manager.chains.latest_use)());
     }
-    for (uint i = prev_size; i > next_size; --i) {
+    for (auto i = prev_size; i > next_size; --i) {
         manager.chains.desktops.remove(i);
     }
 }
@@ -45,7 +45,7 @@ void focus_chain_resize(Manager& manager, uint prev_size, uint next_size)
  * Does not consider the most recently used focus chain.
  */
 template<typename Manager, typename Win>
-bool focus_chain_at_desktop_contains(Manager& manager, Win* window, uint desktop)
+bool focus_chain_at_desktop_contains(Manager& manager, Win* window, unsigned int desktop)
 {
     auto it = manager.chains.desktops.constFind(desktop);
     if (it == manager.chains.desktops.constEnd()) {
