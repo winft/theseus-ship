@@ -25,18 +25,21 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
 {
     reconfigure();
 
-    auto space = static_cast<win::wayland::space*>(compositor->space);
+    auto space = compositor->space;
 
     // TODO(romangg): We do this for every window here, even for windows that are not an xdg-shell
     //                type window. Restrict that?
-    QObject::connect(space, &win::wayland::space::wayland_window_added, this, [this](auto c) {
-        if (c->ready_for_painting) {
-            slotXdgShellClientShown(c);
-        } else {
-            QObject::connect(
-                c, &Toplevel::windowShown, this, &effects_handler_impl::slotXdgShellClientShown);
-        }
-    });
+    QObject::connect(
+        space->qobject.get(), &win::space::qobject_t::wayland_window_added, this, [this](auto c) {
+            if (c->ready_for_painting) {
+                slotXdgShellClientShown(c);
+            } else {
+                QObject::connect(c,
+                                 &Toplevel::windowShown,
+                                 this,
+                                 &effects_handler_impl::slotXdgShellClientShown);
+            }
+        });
 
     // TODO(romangg): We do this here too for every window.
     for (auto window : space->m_windows) {

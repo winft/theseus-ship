@@ -124,15 +124,18 @@ wayland_console_model::wayland_console_model(win::space& space, QObject* parent)
     }
 
     // TODO: that only includes windows getting shown, not those which are only created
-    QObject::connect(&wlspace, &win::wayland::space::wayland_window_added, this, [this](auto win) {
-        auto wayland_win = static_cast<win::wayland::window*>(win);
-        add_window(this, s_waylandClientId - 1, m_shellClients, wayland_win);
-    });
     QObject::connect(
-        &wlspace, &win::wayland::space::wayland_window_removed, this, [this](auto win) {
+        space.qobject.get(), &win::space::qobject_t::wayland_window_added, this, [this](auto win) {
             auto wayland_win = static_cast<win::wayland::window*>(win);
-            remove_window(this, s_waylandClientId - 1, m_shellClients, wayland_win);
+            add_window(this, s_waylandClientId - 1, m_shellClients, wayland_win);
         });
+    QObject::connect(space.qobject.get(),
+                     &win::space::qobject_t::wayland_window_removed,
+                     this,
+                     [this](auto win) {
+                         auto wayland_win = static_cast<win::wayland::window*>(win);
+                         remove_window(this, s_waylandClientId - 1, m_shellClients, wayland_win);
+                     });
 }
 
 int wayland_console_model::topLevelRowCount() const

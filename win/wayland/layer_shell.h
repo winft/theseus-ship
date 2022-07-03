@@ -223,16 +223,13 @@ void handle_new_layer_surface(Space* space, Wrapland::Server::LayerSurfaceV1* la
     space->m_windows.push_back(window);
     QObject::connect(layer_surface,
                      &Wrapland::Server::LayerSurfaceV1::resourceDestroyed,
-                     space,
+                     space->qobject.get(),
                      [space, window] { remove_all(space->m_windows, window); });
 
     win::wayland::assign_layer_surface_role(window, layer_surface);
 
     if (window->ready_for_painting) {
         space->handle_window_added(window);
-    } else {
-        QObject::connect(
-            window, &win::wayland::window::windowShown, space, &Space::handle_wayland_window_shown);
     }
 }
 

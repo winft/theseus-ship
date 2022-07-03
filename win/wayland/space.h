@@ -55,7 +55,6 @@ struct xdg_activation;
 
 class KWIN_EXPORT space : public win::space
 {
-    Q_OBJECT
 public:
     using x11_window = xwl_window;
 
@@ -67,7 +66,6 @@ public:
 
     window* find_window(Wrapland::Server::Surface* surface) const;
 
-    void handle_wayland_window_shown(Toplevel* window);
     void handle_window_added(wayland::window* window);
     void handle_window_removed(wayland::window* window);
 

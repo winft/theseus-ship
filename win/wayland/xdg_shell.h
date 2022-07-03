@@ -599,9 +599,6 @@ void handle_new_toplevel(Space* space, Wrapland::Server::XdgShellToplevel* tople
 
     if (window->ready_for_painting) {
         space->handle_window_added(window);
-    } else {
-        QObject::connect(
-            window, &win::wayland::window::windowShown, space, &Space::handle_wayland_window_shown);
     }
 
     // Not directly connected as the connection is tied to client instead of this.
@@ -624,9 +621,6 @@ void handle_new_popup(Space* space, Wrapland::Server::XdgShellPopup* popup)
 
     if (window->ready_for_painting) {
         space->handle_window_added(window);
-    } else {
-        QObject::connect(
-            window, &win::wayland::window::windowShown, space, &Space::handle_wayland_window_shown);
     }
 }
 

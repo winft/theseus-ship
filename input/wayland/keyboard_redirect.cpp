@@ -109,16 +109,17 @@ void keyboard_redirect::init()
                      &keyboard_redirect::process_key_repeat);
     redirect->installInputEventSpy(keyRepeatSpy);
 
-    QObject::connect(&redirect->space, &win::space::clientActivated, this, [this] {
-        QObject::disconnect(m_activeClientSurfaceChangedConnection);
-        if (auto c = redirect->space.activeClient()) {
-            m_activeClientSurfaceChangedConnection
-                = QObject::connect(c, &Toplevel::surfaceChanged, this, &keyboard_redirect::update);
-        } else {
-            m_activeClientSurfaceChangedConnection = QMetaObject::Connection();
-        }
-        update();
-    });
+    QObject::connect(
+        redirect->space.qobject.get(), &win::space::qobject_t::clientActivated, this, [this] {
+            QObject::disconnect(m_activeClientSurfaceChangedConnection);
+            if (auto c = redirect->space.activeClient()) {
+                m_activeClientSurfaceChangedConnection = QObject::connect(
+                    c, &Toplevel::surfaceChanged, this, &keyboard_redirect::update);
+            } else {
+                m_activeClientSurfaceChangedConnection = QMetaObject::Connection();
+            }
+            update();
+        });
     if (waylandServer()->has_screen_locker_integration()) {
         QObject::connect(ScreenLocker::KSldApp::self(),
                          &ScreenLocker::KSldApp::lockStateChanged,

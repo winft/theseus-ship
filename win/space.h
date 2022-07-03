@@ -42,6 +42,7 @@ class KConfigGroup;
 class KStartupInfo;
 class KStartupInfoData;
 class KStartupInfoId;
+class QAction;
 class QStringList;
 
 namespace KWin
@@ -117,10 +118,47 @@ class tabbox;
 class user_actions_menu;
 class virtual_desktop_manager;
 
-class KWIN_EXPORT space : public QObject
+class space;
+
+class KWIN_EXPORT space_qobject : public QObject
 {
     Q_OBJECT
 public:
+    space_qobject(std::function<void()> reconfigure_callback);
+
+public Q_SLOTS:
+    void reconfigure();
+
+Q_SIGNALS:
+    void desktopPresenceChanged(KWin::Toplevel*, int);
+    void currentDesktopChanged(int, KWin::Toplevel*);
+    void clientAdded(KWin::win::x11::window*);
+    void clientRemoved(KWin::Toplevel*);
+    void wayland_window_added(KWin::Toplevel*);
+    void wayland_window_removed(KWin::Toplevel*);
+    void clientActivated(KWin::Toplevel*);
+    void clientDemandsAttentionChanged(KWin::Toplevel*, bool);
+    void clientMinimizedChanged(KWin::Toplevel*);
+    void groupAdded(KWin::win::x11::group*);
+    void unmanagedAdded(KWin::Toplevel*);
+    void unmanagedRemoved(KWin::Toplevel*);
+    void window_deleted(KWin::Toplevel*);
+    void configChanged();
+    void showingDesktopChanged(bool showing);
+    void internalClientAdded(KWin::win::internal_window* client);
+    void internalClientRemoved(KWin::win::internal_window* client);
+    void surface_id_changed(KWin::Toplevel*, quint32);
+
+private:
+    std::function<void()> reconfigure_callback;
+};
+
+class KWIN_EXPORT space
+{
+public:
+    using qobject_t = space_qobject;
+    std::unique_ptr<qobject_t> qobject;
+
     std::vector<Toplevel*> m_windows;
 
     std::unique_ptr<scripting::platform> scripting;
@@ -137,12 +175,12 @@ public:
     std::unique_ptr<RuleBook> rule_book;
     std::unique_ptr<x11::color_mapper> color_mapper;
 
-    QScopedPointer<base::x11::event_filter> m_wasUserInteractionFilter;
-    QScopedPointer<base::x11::event_filter> m_movingClientFilter;
-    QScopedPointer<base::x11::event_filter> m_syncAlarmFilter;
+    std::unique_ptr<base::x11::event_filter> m_wasUserInteractionFilter;
+    std::unique_ptr<base::x11::event_filter> m_movingClientFilter;
+    std::unique_ptr<base::x11::event_filter> m_syncAlarmFilter;
 
     int m_initialDesktop{1};
-    QScopedPointer<base::x11::xcb::window> m_nullFocus;
+    std::unique_ptr<base::x11::xcb::window> m_nullFocus;
     Toplevel* active_popup_client{nullptr};
 
     Toplevel* last_active_client{nullptr};
@@ -162,7 +200,7 @@ public:
     std::unique_ptr<win::user_actions_menu> user_actions_menu;
 
     explicit space(render::compositor& render);
-    ~space() override;
+    virtual ~space();
 
     bool workspaceEvent(QEvent*);
 
@@ -385,15 +423,15 @@ public:
     void desktopResized();
     void closeActivePopup();
 
-public Q_SLOTS:
     void performWindowOperation(KWin::Toplevel* window, base::options::WindowOperation op);
+
     // Keybindings
     // void slotSwitchToWindow( int );
     void slotWindowToDesktop(uint i);
 
     // void slotWindowToListPosition( int );
-    void slotSwitchToScreen();
-    void slotWindowToScreen();
+    void slotSwitchToScreen(QAction* action);
+    void slotWindowToScreen(QAction* action);
     void slotSwitchToNextScreen();
     void slotWindowToNextScreen();
     void slotSwitchToPrevScreen();
@@ -437,7 +475,6 @@ public Q_SLOTS:
     void slotWindowToDesktopUp();
     void slotWindowToDesktopDown();
 
-    void reconfigure();
     void slotReconfigure();
 
     void slotKillWindow();
@@ -447,50 +484,22 @@ public Q_SLOTS:
 
     void updateClientArea();
 
+    void reconfigure();
+
 protected:
     virtual void update_space_area_from_windows(QRect const& desktop_area,
                                                 std::vector<QRect> const& screens_geos,
                                                 win::space_areas& areas);
 
-private Q_SLOTS:
     void slotUpdateToolWindows();
+
+private:
     void delayFocus();
-    void slotReloadConfig();
 
     // virtual desktop handling
     void slotDesktopCountChanged(uint previousCount, uint newCount);
     void slotCurrentDesktopChanged(uint oldDesktop, uint newDesktop);
 
-Q_SIGNALS:
-    void desktopPresenceChanged(KWin::Toplevel*, int);
-    void currentDesktopChanged(int, KWin::Toplevel*);
-    void clientAdded(KWin::win::x11::window*);
-    void clientRemoved(KWin::Toplevel*);
-    void wayland_window_added(KWin::Toplevel*);
-    void wayland_window_removed(KWin::Toplevel*);
-    void clientActivated(KWin::Toplevel*);
-    void clientDemandsAttentionChanged(KWin::Toplevel*, bool);
-    void clientMinimizedChanged(KWin::Toplevel*);
-    void groupAdded(KWin::win::x11::group*);
-    void unmanagedAdded(KWin::Toplevel*);
-    void unmanagedRemoved(KWin::Toplevel*);
-    void window_deleted(KWin::Toplevel*);
-    void configChanged();
-    void showingDesktopChanged(bool showing);
-
-    /**
-     * This signal is emitted whenever an internal client is created.
-     */
-    void internalClientAdded(KWin::win::internal_window* client);
-
-    /**
-     * This signal is emitted whenever an internal client gets removed.
-     */
-    void internalClientRemoved(KWin::win::internal_window* client);
-
-    void surface_id_changed(KWin::Toplevel*, quint32);
-
-private:
     template<typename Slot>
     void initShortcut(const QString& actionName,
                       const QString& description,
@@ -504,6 +513,13 @@ private:
                       T* receiver,
                       Slot slot,
                       const QVariant& data = QVariant());
+    template<typename T, typename Slot>
+    void init_shortcut_with_action_arg(const QString& actionName,
+                                       const QString& description,
+                                       const QKeySequence& shortcut,
+                                       T* receiver,
+                                       Slot slot,
+                                       QVariant const& data);
     void setupWindowShortcut(Toplevel* window);
     bool switchWindow(Toplevel* c, Direction direction, QPoint curPos, int desktop);
 
@@ -575,7 +591,7 @@ inline Toplevel* space::mostRecentlyActivatedClient() const
 
 inline void space::addGroup(win::x11::group* group)
 {
-    Q_EMIT groupAdded(group);
+    Q_EMIT qobject->groupAdded(group);
     groups.push_back(group);
 }
 

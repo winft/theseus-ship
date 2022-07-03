@@ -33,9 +33,10 @@ void device_redirect_init(Dev* dev)
                      &win::stacking_order::changed,
                      dev,
                      [dev] { device_redirect_update(dev); });
-    QObject::connect(&dev->redirect->space, &win::space::clientMinimizedChanged, dev, [dev] {
-        device_redirect_update(dev);
-    });
+    QObject::connect(dev->redirect->space.qobject.get(),
+                     &win::space::qobject_t::clientMinimizedChanged,
+                     dev,
+                     [dev] { device_redirect_update(dev); });
     QObject::connect(dev->redirect->space.virtual_desktop_manager.get(),
                      &win::virtual_desktop_manager::currentChanged,
                      dev,

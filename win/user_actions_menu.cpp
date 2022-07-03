@@ -113,7 +113,7 @@ void user_actions_menu::helperDialog(const QString& message, Toplevel* window)
     QStringList args;
     QString type;
     auto shortcut = [this](const QString& name) {
-        QAction* action = space.findChild<QAction*>(name);
+        auto action = space.qobject->findChild<QAction*>(name);
         Q_ASSERT(action != nullptr);
         const auto shortcuts = KGlobalAccel::self()->shortcut(action);
         return QStringLiteral("%1 (%2)")
@@ -195,7 +195,7 @@ void user_actions_menu::init()
 
     auto setShortcut = [this](QAction* action, const QString& actionName) {
         const auto shortcuts
-            = KGlobalAccel::self()->shortcut(space.findChild<QAction*>(actionName));
+            = KGlobalAccel::self()->shortcut(space.qobject->findChild<QAction*>(actionName));
         if (!shortcuts.isEmpty()) {
             action->setShortcut(shortcuts.first());
         }
@@ -600,11 +600,9 @@ void user_actions_menu::slotWindowOperation(QAction* action)
     // need to delay performing the window operation as we need to have the
     // user actions menu closed before we destroy the decoration. Otherwise Qt crashes
     qRegisterMetaType<base::options::WindowOperation>();
-    QMetaObject::invokeMethod(&space,
-                              "performWindowOperation",
-                              Qt::QueuedConnection,
-                              Q_ARG(KWin::Toplevel*, c),
-                              Q_ARG(base::options::WindowOperation, op));
+    QMetaObject::invokeMethod(space.qobject.get(), [&space = this->space, c, op] {
+        space.performWindowOperation(c, op);
+    });
 }
 
 void user_actions_menu::slotSendToDesktop(QAction* action)

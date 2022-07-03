@@ -104,10 +104,11 @@ void XwaylandSelectionsTest::testSync()
     const QString paste = QFINDTESTDATA(QStringLiteral("paste"));
     QVERIFY(!paste.isEmpty());
 
-    QSignalSpy clientAddedSpy(Test::app()->workspace.get(), &win::space::clientAdded);
+    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+                              &win::space::qobject_t::clientAdded);
     QVERIFY(clientAddedSpy.isValid());
-    QSignalSpy shellClientAddedSpy(Test::app()->workspace.get(),
-                                   &win::wayland::space::wayland_window_added);
+    QSignalSpy shellClientAddedSpy(Test::app()->workspace->qobject.get(),
+                                   &win::space::qobject_t::wayland_window_added);
     QVERIFY(shellClientAddedSpy.isValid());
 
     QSignalSpy clipboardChangedSpy = [clipboardMode]() {
@@ -186,7 +187,8 @@ void XwaylandSelectionsTest::testSync()
     QVERIFY(pasteClient);
 
     if (Test::app()->workspace->activeClient() != pasteClient) {
-        QSignalSpy clientActivatedSpy(Test::app()->workspace.get(), &win::space::clientActivated);
+        QSignalSpy clientActivatedSpy(Test::app()->workspace->qobject.get(),
+                                      &win::space::qobject_t::clientActivated);
         QVERIFY(clientActivatedSpy.isValid());
         Test::app()->workspace->activateClient(pasteClient);
         QVERIFY(clientActivatedSpy.wait());

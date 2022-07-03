@@ -46,12 +46,15 @@ void init_space(Space& space)
     // first initialize the extensions
     base::x11::xcb::extensions::self();
     space.color_mapper = std::make_unique<color_mapper>(space);
-    QObject::connect(
-        &space, &Space::clientActivated, space.color_mapper.get(), &color_mapper::update);
+    QObject::connect(space.qobject.get(),
+                     &Space::qobject_t::clientActivated,
+                     space.color_mapper.get(),
+                     &color_mapper::update);
 
     // Call this before XSelectInput() on the root window
-    space.startup = new KStartupInfo(
-        KStartupInfo::DisableKWinModule | KStartupInfo::AnnounceSilenceChanges, &space);
+    space.startup
+        = new KStartupInfo(KStartupInfo::DisableKWinModule | KStartupInfo::AnnounceSilenceChanges,
+                           space.qobject.get());
 
     // Select windowmanager privileges
     select_wm_input_event_mask();

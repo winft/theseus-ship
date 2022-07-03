@@ -19,7 +19,7 @@ namespace KWin::win
 
 static osd_notification* create(win::space& space)
 {
-    auto osd = new osd_notification(&space);
+    auto osd = new osd_notification(space.qobject.get());
 
     osd->setConfig(kwinApp()->config());
     osd->setEngine(space.scripting->qmlEngine());

@@ -45,8 +45,8 @@ surface_tree_model::surface_tree_model(win::space& space, QObject* parent)
         QObject::connect(
             c->surface, &Wrapland::Server::Surface::subsurfaceTreeChanged, this, reset);
     }
-    QObject::connect(static_cast<win::wayland::space*>(&space),
-                     &win::wayland::space::wayland_window_added,
+    QObject::connect(space.qobject.get(),
+                     &win::space::qobject_t::wayland_window_added,
                      this,
                      [this, reset](auto win) {
                          QObject::connect(win->surface,
@@ -55,22 +55,28 @@ surface_tree_model::surface_tree_model(win::space& space, QObject* parent)
                                           reset);
                          reset();
                      });
-    QObject::connect(&space, &win::space::clientAdded, this, [this, reset](auto c) {
-        if (c->surface) {
-            QObject::connect(
-                c->surface, &Wrapland::Server::Surface::subsurfaceTreeChanged, this, reset);
-        }
-        reset();
-    });
-    QObject::connect(&space, &win::space::clientRemoved, this, reset);
-    QObject::connect(&space, &win::space::unmanagedAdded, this, [this, reset](Toplevel* window) {
-        if (window->surface) {
-            QObject::connect(
-                window->surface, &Wrapland::Server::Surface::subsurfaceTreeChanged, this, reset);
-        }
-        reset();
-    });
-    QObject::connect(&space, &win::space::unmanagedRemoved, this, reset);
+    QObject::connect(
+        space.qobject.get(), &win::space::qobject_t::clientAdded, this, [this, reset](auto c) {
+            if (c->surface) {
+                QObject::connect(
+                    c->surface, &Wrapland::Server::Surface::subsurfaceTreeChanged, this, reset);
+            }
+            reset();
+        });
+    QObject::connect(space.qobject.get(), &win::space::qobject_t::clientRemoved, this, reset);
+    QObject::connect(space.qobject.get(),
+                     &win::space::qobject_t::unmanagedAdded,
+                     this,
+                     [this, reset](Toplevel* window) {
+                         if (window->surface) {
+                             QObject::connect(window->surface,
+                                              &Wrapland::Server::Surface::subsurfaceTreeChanged,
+                                              this,
+                                              reset);
+                         }
+                         reset();
+                     });
+    QObject::connect(space.qobject.get(), &win::space::qobject_t::unmanagedRemoved, this, reset);
 }
 
 int surface_tree_model::columnCount(const QModelIndex& parent) const

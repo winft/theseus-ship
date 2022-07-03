@@ -340,8 +340,8 @@ void TestScreenEdges::testCreatingInitialEdges()
     }
 
     // Let's start a window move. First create a window.
-    QSignalSpy clientAddedSpy(Test::app()->workspace.get(),
-                              &win::wayland::space::wayland_window_added);
+    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+                              &win::space::qobject_t::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
     auto surface = Test::create_surface();
     QVERIFY(surface);
@@ -671,8 +671,8 @@ void TestScreenEdges::testFullScreenBlocking()
     config->group("Windows").writeEntry("ElectricBorderPushbackPixels", 1);
     config->sync();
 
-    QSignalSpy clientAddedSpy(Test::app()->workspace.get(),
-                              &win::wayland::space::wayland_window_added);
+    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+                              &win::space::qobject_t::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
     auto surface = Test::create_surface();
     QVERIFY(surface);
@@ -772,8 +772,8 @@ void TestScreenEdges::testFullScreenBlocking()
 
 void TestScreenEdges::testClientEdge()
 {
-    QSignalSpy clientAddedSpy(Test::app()->workspace.get(),
-                              &win::wayland::space::wayland_window_added);
+    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+                              &win::space::qobject_t::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
     auto surface = Test::create_surface();
     QVERIFY(surface);
@@ -850,7 +850,7 @@ void TestScreenEdges::testClientEdge()
     QCOMPARE(client->isHiddenInternal(), true);
 
     // now let's emulate the removal of a Client through Workspace
-    Q_EMIT Test::app()->workspace->clientRemoved(client);
+    Q_EMIT Test::app()->workspace->qobject->clientRemoved(client);
     for (auto e : screenEdges->findChildren<win::screen_edge*>()) {
         QVERIFY(!e->client());
     }

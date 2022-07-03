@@ -130,7 +130,8 @@ PlaceWindowResult TestPlacement::createAndPlaceWindow(QSize const& defaultSize)
 {
     PlaceWindowResult rc;
 
-    QSignalSpy window_spy(Test::app()->workspace.get(), &win::wayland::space::wayland_window_added);
+    QSignalSpy window_spy(Test::app()->workspace->qobject.get(),
+                          &win::space::qobject_t::wayland_window_added);
     assert(window_spy.isValid());
 
     // create a new window

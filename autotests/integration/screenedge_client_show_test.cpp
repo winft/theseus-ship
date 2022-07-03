@@ -143,7 +143,8 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowHideX11()
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 
-    QSignalSpy windowCreatedSpy(Test::app()->workspace.get(), &win::space::clientAdded);
+    QSignalSpy windowCreatedSpy(Test::app()->workspace->qobject.get(),
+                                &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.last().first().value<win::x11::window*>();
@@ -260,7 +261,8 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowX11Touch()
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 
-    QSignalSpy windowCreatedSpy(Test::app()->workspace.get(), &win::space::clientAdded);
+    QSignalSpy windowCreatedSpy(Test::app()->workspace->qobject.get(),
+                                &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.last().first().value<win::x11::window*>();

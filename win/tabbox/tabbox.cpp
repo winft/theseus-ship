@@ -484,7 +484,7 @@ tabbox::tabbox(win::space& space)
 
     m_tabbox_mode = TabBoxDesktopMode; // init variables
     connect(&m_delayed_show_timer, &QTimer::timeout, this, &tabbox::show);
-    connect(&space, &win::space::configChanged, this, &tabbox::reconfigure);
+    connect(space.qobject.get(), &win::space_qobject::configChanged, this, &tabbox::reconfigure);
 }
 
 tabbox::~tabbox() = default;

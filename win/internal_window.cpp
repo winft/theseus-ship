@@ -458,7 +458,7 @@ void internal_window::destroyClient()
     remove_window_from_lists(space, this);
     space.stacking_order->update_count();
     space.updateClientArea();
-    Q_EMIT space.internalClientRemoved(this);
+    Q_EMIT space.qobject->internalClientRemoved(this);
 
     if (deleted) {
         deleted->remnant->unref();
@@ -629,7 +629,7 @@ void internal_window::markAsMapped()
     space.stacking_order->update_count();
     space.updateClientArea();
 
-    Q_EMIT space.internalClientAdded(this);
+    Q_EMIT space.qobject->internalClientAdded(this);
 }
 
 void internal_window::updateInternalWindowGeometry()

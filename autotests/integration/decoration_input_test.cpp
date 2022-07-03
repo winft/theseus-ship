@@ -856,7 +856,8 @@ void DecorationInputTest::testTooltipDoesntEatKeyEvents()
     QSignalSpy keyEvent(keyboard, &Wrapland::Client::Keyboard::keyChanged);
     QVERIFY(keyEvent.isValid());
 
-    QSignalSpy clientAddedSpy(Test::app()->workspace.get(), &win::space::internalClientAdded);
+    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+                              &win::space::qobject_t::internalClientAdded);
     QVERIFY(clientAddedSpy.isValid());
     c->control->deco().client->requestShowToolTip(QStringLiteral("test"));
     // now we should get an internal window

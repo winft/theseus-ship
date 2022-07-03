@@ -144,7 +144,7 @@ void compositor::suspend(compositor::SuspendReason reason)
     if (reason & ScriptSuspend) {
         // When disabled show a shortcut how the user can get back compositing.
         const auto shortcuts = KGlobalAccel::self()->shortcut(
-            space->findChild<QAction*>(QStringLiteral("Suspend Compositing")));
+            space->qobject->findChild<QAction*>(QStringLiteral("Suspend Compositing")));
         if (!shortcuts.isEmpty()) {
             // Display notification only if there is the shortcut.
             const QString message = i18n(

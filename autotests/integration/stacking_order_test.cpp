@@ -361,7 +361,8 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
 
     auto conn = create_xcb_connection();
 
-    QSignalSpy windowCreatedSpy(Test::app()->workspace.get(), &win::space::clientAdded);
+    QSignalSpy windowCreatedSpy(Test::app()->workspace->qobject.get(),
+                                &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
 
     // Create the group leader.
@@ -480,7 +481,8 @@ void StackingOrderTest::testRaiseGroupTransient()
 
     auto conn = create_xcb_connection();
 
-    QSignalSpy windowCreatedSpy(Test::app()->workspace.get(), &win::space::clientAdded);
+    QSignalSpy windowCreatedSpy(Test::app()->workspace->qobject.get(),
+                                &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
 
     // Create the group leader.
@@ -619,7 +621,8 @@ void StackingOrderTest::testDeletedGroupTransient()
 
     auto conn = create_xcb_connection();
 
-    QSignalSpy windowCreatedSpy(Test::app()->workspace.get(), &win::space::clientAdded);
+    QSignalSpy windowCreatedSpy(Test::app()->workspace->qobject.get(),
+                                &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
 
     // Create the group leader.
@@ -743,7 +746,8 @@ void StackingOrderTest::testDontKeepAboveNonModalDialogGroupTransients()
 
     auto conn = create_xcb_connection();
 
-    QSignalSpy windowCreatedSpy(Test::app()->workspace.get(), &win::space::clientAdded);
+    QSignalSpy windowCreatedSpy(Test::app()->workspace->qobject.get(),
+                                &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
 
     // Create the group leader.

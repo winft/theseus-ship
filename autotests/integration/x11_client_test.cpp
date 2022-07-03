@@ -149,7 +149,8 @@ void X11ClientTest::testTrimCaption()
     xcb_flush(c.get());
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(Test::app()->workspace.get(), &win::space::clientAdded);
+    QSignalSpy windowCreatedSpy(Test::app()->workspace->qobject.get(),
+                                &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
@@ -202,7 +203,8 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
     xcb_flush(c.get());
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(Test::app()->workspace.get(), &win::space::clientAdded);
+    QSignalSpy windowCreatedSpy(Test::app()->workspace->qobject.get(),
+                                &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
@@ -340,7 +342,8 @@ void X11ClientTest::testFocusInWithWaylandLastActiveWindow()
     xcb_flush(c.get());
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(Test::app()->workspace.get(), &win::space::clientAdded);
+    QSignalSpy windowCreatedSpy(Test::app()->workspace->qobject.get(),
+                                &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
@@ -405,7 +408,8 @@ void X11ClientTest::testX11WindowId()
     xcb_flush(c.get());
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(Test::app()->workspace.get(), &win::space::clientAdded);
+    QSignalSpy windowCreatedSpy(Test::app()->workspace->qobject.get(),
+                                &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
@@ -488,7 +492,8 @@ void X11ClientTest::testCaptionChanges()
     xcb_flush(c.get());
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(Test::app()->workspace.get(), &win::space::clientAdded);
+    QSignalSpy windowCreatedSpy(Test::app()->workspace->qobject.get(),
+                                &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
@@ -518,7 +523,8 @@ void X11ClientTest::testCaptionWmName()
     // this test verifies that a caption set through WM_NAME is read correctly
 
     // open glxgears as that one only uses WM_NAME
-    QSignalSpy clientAddedSpy(Test::app()->workspace.get(), &win::space::clientAdded);
+    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+                              &win::space::qobject_t::clientAdded);
     QVERIFY(clientAddedSpy.isValid());
 
     QProcess glxgears;
@@ -567,7 +573,8 @@ void X11ClientTest::testCaptionMultipleWindows()
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 
-    QSignalSpy windowCreatedSpy(Test::app()->workspace.get(), &win::space::clientAdded);
+    QSignalSpy windowCreatedSpy(Test::app()->workspace->qobject.get(),
+                                &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
@@ -672,7 +679,8 @@ void X11ClientTest::testFullscreenWindowGroups()
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 
-    QSignalSpy windowCreatedSpy(Test::app()->workspace.get(), &win::space::clientAdded);
+    QSignalSpy windowCreatedSpy(Test::app()->workspace->qobject.get(),
+                                &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
@@ -746,7 +754,8 @@ void X11ClientTest::testActivateFocusedWindow()
     auto connection = create_xcb_connection();
     QVERIFY(!xcb_connection_has_error(connection.get()));
 
-    QSignalSpy windowCreatedSpy(Test::app()->workspace.get(), &win::space::clientAdded);
+    QSignalSpy windowCreatedSpy(Test::app()->workspace->qobject.get(),
+                                &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
 
     const QRect windowGeometry(0, 0, 100, 200);

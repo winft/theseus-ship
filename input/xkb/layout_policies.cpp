@@ -195,8 +195,8 @@ void virtual_desktop_layout_policy::handle_layout_change(uint index)
 window_layout_policy::window_layout_policy(layout_manager* manager)
     : layout_policy(manager)
 {
-    QObject::connect(&manager->xkb.platform->redirect->space,
-                     &win::space::clientActivated,
+    QObject::connect(manager->xkb.platform->redirect->space.qobject.get(),
+                     &win::space::qobject_t::clientActivated,
                      this,
                      [this](auto window) {
                          if (!window) {
@@ -244,13 +244,13 @@ application_layout_policy::application_layout_policy(layout_manager* manager,
                                                      KConfigGroup const& config)
     : layout_policy(manager, config)
 {
-    auto space = &manager->xkb.platform->redirect->space;
-    QObject::connect(space,
-                     &win::space::clientActivated,
+    auto& space = manager->xkb.platform->redirect->space;
+    QObject::connect(space.qobject.get(),
+                     &win::space::qobject_t::clientActivated,
                      this,
                      &application_layout_policy::handle_client_activated);
 
-    auto session_manager = space->session_manager.get();
+    auto session_manager = space.session_manager.get();
     QObject::connect(
         session_manager, &win::session_manager::prepareSessionSaveRequested, this, [this] {
             clear_layouts();

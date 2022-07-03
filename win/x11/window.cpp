@@ -1054,7 +1054,7 @@ void window::clientMessageEvent(xcb_client_message_event_t* e)
     }
 
     surface_id = e->data.data32[0];
-    Q_EMIT space.surface_id_changed(this, surface_id);
+    Q_EMIT space.qobject->surface_id_changed(this, surface_id);
     Q_EMIT surfaceIdChanged(surface_id);
 }
 

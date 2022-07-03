@@ -52,7 +52,8 @@ void DontCrashGlxgearsTest::testGlxgears()
     // closing a glxgears window through Aurorae themes used to crash KWin
     // Let's make sure that doesn't happen anymore
 
-    QSignalSpy clientAddedSpy(Test::app()->workspace.get(), &win::space::clientAdded);
+    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+                              &win::space::qobject_t::clientAdded);
     QVERIFY(clientAddedSpy.isValid());
 
     QProcess glxgears;

@@ -109,8 +109,8 @@ void InputStackingOrderTest::testPointerFocusUpdatesOnStackingOrderChange()
     QVERIFY(leftSpy.isValid());
 
     // now create the two windows and make them overlap
-    QSignalSpy clientAddedSpy(Test::app()->workspace.get(),
-                              &win::wayland::space::wayland_window_added);
+    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+                              &win::space::qobject_t::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
     auto surface1 = Test::create_surface();
     QVERIFY(surface1);

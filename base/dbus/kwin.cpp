@@ -47,8 +47,8 @@ kwin::kwin(win::space& space)
                  QStringLiteral("/KWin"),
                  QStringLiteral("org.kde.KWin"),
                  QStringLiteral("reloadConfig"),
-                 &space,
-                 SLOT(slotReloadConfig()));
+                 space.qobject.get(),
+                 SLOT(reconfigure()));
 }
 
 void kwin::becomeKWinService(const QString& service)

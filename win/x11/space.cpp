@@ -20,34 +20,38 @@ space::space(render::compositor& render)
     atoms = std::make_unique<base::x11::atoms>(connection());
     edges = std::make_unique<win::screen_edger>(*this);
 
-    QObject::connect(
-        virtual_desktop_manager.get(), &virtual_desktop_manager::desktopRemoved, this, [this] {
-            auto const desktop_count = static_cast<int>(virtual_desktop_manager->count());
-            for (auto const& window : m_windows) {
-                if (!window->control) {
-                    continue;
-                }
-                if (window->isOnAllDesktops()) {
-                    continue;
-                }
-                if (window->desktop() <= desktop_count) {
-                    continue;
-                }
-                sendClientToDesktop(window, desktop_count, true);
-            }
-        });
+    QObject::connect(virtual_desktop_manager.get(),
+                     &virtual_desktop_manager::desktopRemoved,
+                     qobject.get(),
+                     [this] {
+                         auto const desktop_count
+                             = static_cast<int>(virtual_desktop_manager->count());
+                         for (auto const& window : m_windows) {
+                             if (!window->control) {
+                                 continue;
+                             }
+                             if (window->isOnAllDesktops()) {
+                                 continue;
+                             }
+                             if (window->desktop() <= desktop_count) {
+                                 continue;
+                             }
+                             sendClientToDesktop(window, desktop_count, true);
+                         }
+                     });
 
-    QObject::connect(&kwinApp()->get_base(), &base::platform::topology_changed, this, [this] {
-        if (!compositing()) {
-            return;
-        }
-        // desktopResized() should take care of when the size or
-        // shape of the desktop has changed, but we also want to
-        // catch refresh rate changes
-        //
-        // TODO: is this still necessary since we get the maximal refresh rate now dynamically?
-        this->render.reinitialize();
-    });
+    QObject::connect(
+        &kwinApp()->get_base(), &base::platform::topology_changed, qobject.get(), [this] {
+            if (!compositing()) {
+                return;
+            }
+            // desktopResized() should take care of when the size or
+            // shape of the desktop has changed, but we also want to
+            // catch refresh rate changes
+            //
+            // TODO: is this still necessary since we get the maximal refresh rate now dynamically?
+            this->render.reinitialize();
+        });
 
     init_space(*this);
 }

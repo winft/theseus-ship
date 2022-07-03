@@ -136,7 +136,7 @@ void handle_new_subsurface(Space* space, Wrapland::Server::Subsurface* subsurfac
     space->m_windows.push_back(window);
     QObject::connect(subsurface,
                      &Wrapland::Server::Subsurface::resourceDestroyed,
-                     space,
+                     space->qobject.get(),
                      [space, window] { remove_all(space->m_windows, window); });
 
     assign_subsurface_role(window);
@@ -152,9 +152,9 @@ void handle_new_subsurface(Space* space, Wrapland::Server::Subsurface* subsurfac
             break;
         }
     }
-    // Must wait till a parent is mapped and subsurface is ready for painting.
-    QObject::connect(
-        window, &win::wayland::window::windowShown, space, &Space::handle_wayland_window_shown);
+
+    // No further processing of the subsurface in space. Must wait till a parent is mapped and
+    // subsurface is ready for painting.
 }
 
 }

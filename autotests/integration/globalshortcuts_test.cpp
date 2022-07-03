@@ -363,7 +363,8 @@ void GlobalShortcutsTest::testX11ClientShortcut()
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 
-    QSignalSpy windowCreatedSpy(Test::app()->workspace.get(), &win::space::clientAdded);
+    QSignalSpy windowCreatedSpy(Test::app()->workspace->qobject.get(),
+                                &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.last().first().value<win::x11::window*>();
@@ -456,8 +457,8 @@ void GlobalShortcutsTest::testSetupWindowShortcut()
     QVERIFY(client->control->active());
     QCOMPARE(client->control->shortcut(), QKeySequence());
 
-    QSignalSpy shortcutDialogAddedSpy(Test::app()->workspace.get(),
-                                      &win::space::internalClientAdded);
+    QSignalSpy shortcutDialogAddedSpy(Test::app()->workspace->qobject.get(),
+                                      &win::space::qobject_t::internalClientAdded);
     QVERIFY(shortcutDialogAddedSpy.isValid());
     Test::app()->workspace->slotSetupWindowShortcut();
     QTRY_COMPARE(shortcutDialogAddedSpy.count(), 1);
