@@ -23,7 +23,7 @@
 namespace KWin::base::dbus
 {
 
-kwin::kwin(win::space& space)
+kwin::kwin(win::space_qobject& space)
     : m_serviceName(QStringLiteral("org.kde.KWin"))
     , space{space}
 {
@@ -47,7 +47,7 @@ kwin::kwin(win::space& space)
                  QStringLiteral("/KWin"),
                  QStringLiteral("org.kde.KWin"),
                  QStringLiteral("reloadConfig"),
-                 space.qobject.get(),
+                 &space,
                  SLOT(reconfigure()));
 }
 
@@ -76,21 +76,6 @@ void kwin::reconfigure()
     space.reconfigure();
 }
 
-void kwin::killWindow()
-{
-    space.slotKillWindow();
-}
-
-void kwin::unclutterDesktop()
-{
-    win::unclutter_desktop(space);
-}
-
-QString kwin::supportInformation()
-{
-    return space.supportInformation();
-}
-
 bool kwin::startActivity(const QString& /*in0*/)
 {
     return false;
@@ -99,26 +84,6 @@ bool kwin::startActivity(const QString& /*in0*/)
 bool kwin::stopActivity(const QString& /*in0*/)
 {
     return false;
-}
-
-int kwin::currentDesktop()
-{
-    return space.virtual_desktop_manager->current();
-}
-
-bool kwin::setCurrentDesktop(int desktop)
-{
-    return space.virtual_desktop_manager->setCurrent(desktop);
-}
-
-void kwin::nextDesktop()
-{
-    space.virtual_desktop_manager->moveTo<win::virtual_desktop_next>();
-}
-
-void kwin::previousDesktop()
-{
-    space.virtual_desktop_manager->moveTo<win::virtual_desktop_previous>();
 }
 
 void kwin::showDebugConsole()
@@ -138,6 +103,47 @@ void kwin::enableFtrace(bool enable)
         = QStringLiteral("Ftrace marker could not be ").append(enable ? "enabled" : "disabled");
     QDBusConnection::sessionBus().send(
         message().createErrorReply("org.kde.KWin.enableFtrace", msg));
+}
+
+kwin_impl::kwin_impl(win::space& space)
+    : kwin(*space.qobject)
+    , space{space}
+{
+}
+
+void kwin_impl::kill_window_impl()
+{
+    space.slotKillWindow();
+}
+
+void kwin_impl::unclutter_desktop_impl()
+{
+    win::unclutter_desktop(space);
+}
+
+QString kwin_impl::support_information_impl()
+{
+    return space.supportInformation();
+}
+
+int kwin_impl::current_desktop_impl()
+{
+    return space.virtual_desktop_manager->current();
+}
+
+bool kwin_impl::set_current_desktop_impl(int desktop)
+{
+    return space.virtual_desktop_manager->setCurrent(desktop);
+}
+
+void kwin_impl::next_desktop_impl()
+{
+    space.virtual_desktop_manager->moveTo<win::virtual_desktop_next>();
+}
+
+void kwin_impl::previous_desktop_impl()
+{
+    space.virtual_desktop_manager->moveTo<win::virtual_desktop_previous>();
 }
 
 namespace
@@ -175,7 +181,7 @@ QVariantMap clientToVariantMap(Toplevel const* c)
 
 }
 
-QVariantMap kwin::queryWindowInfo()
+QVariantMap kwin_impl::query_window_info_impl()
 {
     m_replyQueryWindowInfo = message();
     setDelayedReply(true);
@@ -200,7 +206,7 @@ QVariantMap kwin::queryWindowInfo()
     return QVariantMap{};
 }
 
-QVariantMap kwin::getWindowInfo(const QString& uuid)
+QVariantMap kwin_impl::get_window_info_impl(QString const& uuid)
 {
     auto const id = QUuid::fromString(uuid);
 

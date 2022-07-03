@@ -110,7 +110,7 @@ space::space(render::compositor& render)
     , stacking_order{std::make_unique<win::stacking_order>()}
     , focus_chain{win::focus_chain<space>(*this)}
     , virtual_desktop_manager{std::make_unique<win::virtual_desktop_manager>()}
-    , dbus{std::make_unique<base::dbus::kwin>(*this)}
+    , dbus{std::make_unique<base::dbus::kwin_impl>(*this)}
     , session_manager{std::make_unique<win::session_manager>()}
 {
     // For invoke methods of user_actions_menu.
