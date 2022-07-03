@@ -3501,10 +3501,10 @@ void space::slotWindowToDesktopDown()
  */
 void space::slotKillWindow()
 {
-    if (!m_windowKiller) {
-        m_windowKiller = std::make_unique<win::kill_window>(*this);
+    if (!window_killer) {
+        window_killer = std::make_unique<kill_window<space>>(*this);
     }
-    m_windowKiller->start();
+    window_killer->start();
 }
 
 /**

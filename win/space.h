@@ -115,6 +115,8 @@ class group;
 
 enum class activation;
 class internal_window;
+
+template<typename Space>
 class kill_window;
 class screen_edge;
 class screen_edger;
@@ -560,7 +562,7 @@ private:
 
     int set_active_client_recursion{0};
 
-    std::unique_ptr<win::kill_window> m_windowKiller;
+    std::unique_ptr<kill_window<space>> window_killer;
 
 private:
     friend bool performTransiencyCheck();
