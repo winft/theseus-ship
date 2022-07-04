@@ -242,10 +242,10 @@ void space::handle_window_added(wayland::window* window)
     stacking_order->update_order();
 
     if (window->control) {
-        updateClientArea();
+        win::update_space_areas(*this);
 
         if (window->wantsInput() && !window->control->minimized()) {
-            activateClient(window);
+            activate_window(*this, window);
         }
 
         updateTabbox();
@@ -253,15 +253,15 @@ void space::handle_window_added(wayland::window* window)
         QObject::connect(window, &win::wayland::window::windowShown, qobject.get(), [this, window] {
             win::update_layer(window);
             stacking_order->update_count();
-            updateClientArea();
+            win::update_space_areas(*this);
             if (window->wantsInput()) {
-                activateClient(window);
+                activate_window(*this, window);
             }
         });
         QObject::connect(window, &win::wayland::window::windowHidden, qobject.get(), [this] {
             // TODO: update tabbox if it's displayed
             stacking_order->update_count();
-            updateClientArea();
+            win::update_space_areas(*this);
         });
 
         idle_setup(*kde_idle, *window);
@@ -280,7 +280,7 @@ void space::handle_window_removed(wayland::window* window)
             most_recently_raised = nullptr;
         }
         if (window == delayfocus_client) {
-            cancelDelayFocus();
+            cancel_delay_focus(*this);
         }
         if (window == last_active_client) {
             last_active_client = nullptr;
@@ -299,7 +299,7 @@ void space::handle_window_removed(wayland::window* window)
     stacking_order->update_count();
 
     if (window->control) {
-        updateClientArea();
+        win::update_space_areas(*this);
         updateTabbox();
     }
 
@@ -330,8 +330,11 @@ void space::handle_desktop_removed(virtual_desktop* desktop)
         if (client->desktops().count() > 1) {
             win::leave_desktop(client, desktop);
         } else {
-            sendClientToDesktop(
-                client, qMin(desktop->x11DesktopNumber(), virtual_desktop_manager->count()), true);
+            send_window_to_desktop(
+                *this,
+                client,
+                qMin(desktop->x11DesktopNumber(), virtual_desktop_manager->count()),
+                true);
         }
     }
 }

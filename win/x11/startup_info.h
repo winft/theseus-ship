@@ -7,6 +7,7 @@
 
 #include "base/output_helpers.h"
 #include "main.h"
+#include "win/desktop_space.h"
 
 #include <KStartupInfo>
 
@@ -28,7 +29,7 @@ void startup_id_changed(Win* win)
     if (asn_data.desktop() != 0)
         desktop = asn_data.desktop();
     if (!win->isOnAllDesktops()) {
-        win->space.sendClientToDesktop(win, desktop, true);
+        send_window_to_desktop(win->space, win, desktop, true);
     }
     if (asn_data.xinerama() != -1) {
         auto output = base::get_output(kwinApp()->get_base().get_outputs(), asn_data.xinerama());
@@ -44,7 +45,7 @@ void startup_id_changed(Win* win)
             activate = false;
         }
         if (activate) {
-            win->space.activateClient(win);
+            activate_window(win->space, win);
         } else {
             set_demands_attention(win, true);
         }

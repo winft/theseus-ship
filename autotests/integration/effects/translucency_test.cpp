@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/compositor.h"
 #include "render/effect_loader.h"
 #include "render/effects.h"
+#include "win/desktop_space.h"
 #include "win/move.h"
 #include "win/space.h"
 #include "win/x11/window.h"
@@ -171,7 +172,7 @@ void TranslucencyTest::testMoveAfterDesktopChange()
     // let's send the window to desktop 2
     effects->setNumberOfDesktops(2);
     QCOMPARE(effects->numberOfDesktops(), 2);
-    Test::app()->workspace->sendClientToDesktop(client, 2, false);
+    win::send_window_to_desktop(*Test::app()->workspace, client, 2, false);
     effects->setCurrentDesktop(2);
     QVERIFY(!m_translucencyEffect->isActive());
     input::get_cursor()->set_pos(client->frameGeometry().center());

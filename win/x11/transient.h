@@ -11,6 +11,7 @@
 
 #include "base/logging.h"
 #include "base/x11/xcb/proto.h"
+#include "win/activation.h"
 #include "win/stacking.h"
 #include "win/transient.h"
 
@@ -342,7 +343,7 @@ template<typename Win, typename Space>
 void check_active_modal(Space& space)
 {
     // If the active window got new modal transient, activate it.
-    auto win = qobject_cast<Win*>(space.mostRecentlyActivatedClient());
+    auto win = qobject_cast<Win*>(most_recently_activated_window(space));
     if (!win) {
         return;
     }
@@ -354,7 +355,7 @@ void check_active_modal(Space& space)
             // postpone check until end of manage()
             return;
         }
-        space.activateClient(new_modal);
+        activate_window(space, new_modal);
     }
 }
 

@@ -31,7 +31,6 @@ public:
     Toplevel* findInternal(QWindow* window) const override;
     win::screen_edge* create_screen_edge(win::screen_edger& edger) override;
 
-protected:
     void update_space_area_from_windows(QRect const& desktop_area,
                                         std::vector<QRect> const& screens_geos,
                                         win::space_areas& areas) override;

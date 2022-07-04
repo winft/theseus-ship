@@ -36,18 +36,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/redirect.h"
 #include "input/xkb/helpers.h"
 #include "render/effects.h"
-#include "win/screen.h"
-#include "win/screen_edges.h"
-#include "win/space.h"
-#include "win/virtual_desktops.h"
-
+#include "win/activation.h"
 #include "win/controlling.h"
 #include "win/focus_chain.h"
 #include "win/meta.h"
 #include "win/scene.h"
+#include "win/screen.h"
+#include "win/screen_edges.h"
+#include "win/space.h"
 #include "win/stacking.h"
 #include "win/stacking_order.h"
 #include "win/util.h"
+#include "win/virtual_desktops.h"
 #include "win/x11/window.h"
 
 #include <QAction>
@@ -1262,7 +1262,7 @@ void tabbox::cde_walk_through_windows(bool forward)
         if (c && c != nc)
             win::lower_window(&space, c);
         if (kwinApp()->options->focusPolicyIsReasonable()) {
-            space.activateClient(nc);
+            activate_window(space, nc);
         } else {
             if (!nc->isOnDesktop(current_desktop()))
                 set_current_desktop(nc->desktop());
@@ -1277,7 +1277,7 @@ void tabbox::kde_one_step_through_windows(bool forward, TabBoxMode mode)
     reset();
     next_prev(forward);
     if (auto c = current_client()) {
-        space.activateClient(c);
+        activate_window(space, c);
     }
 }
 
@@ -1437,7 +1437,7 @@ void tabbox::accept(bool closeTabBox)
     if (closeTabBox)
         close();
     if (c) {
-        space.activateClient(c);
+        activate_window(space, c);
         if (win::is_desktop(c))
             space.setShowingDesktop(!space.showingDesktop());
     }

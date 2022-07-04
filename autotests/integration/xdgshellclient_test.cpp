@@ -266,7 +266,7 @@ void TestXdgShellClient::testDesktopPresenceChanged()
     QVERIFY(desktopPresenceChangedEffectsSpy.isValid());
 
     // let's change the desktop
-    Test::app()->workspace->sendClientToDesktop(c, 2, false);
+    win::send_window_to_desktop(*Test::app()->workspace, c, 2, false);
     QCOMPARE(c->desktop(), 2);
     QCOMPARE(desktopPresenceChangedClientSpy.count(), 1);
     QCOMPARE(desktopPresenceChangedWorkspaceSpy.count(), 1);
@@ -1085,7 +1085,7 @@ void TestXdgShellClient::testSendClientWithTransientToDesktop()
     QCOMPARE(transient->desktop(), 2);
 
     // activate c
-    Test::app()->workspace->activateClient(c);
+    win::activate_window(*Test::app()->workspace, c);
     QCOMPARE(Test::app()->workspace->active_client, c);
     QVERIFY(c->control->active());
 

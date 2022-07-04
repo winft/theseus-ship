@@ -11,6 +11,8 @@
 #include "space_setup.h"
 #include "window.h"
 
+#include "win/desktop_space.h"
+
 namespace KWin::win::x11
 {
 
@@ -36,7 +38,7 @@ space::space(render::compositor& render)
                              if (window->desktop() <= desktop_count) {
                                  continue;
                              }
-                             sendClientToDesktop(window, desktop_count, true);
+                             send_window_to_desktop(*this, window, desktop_count, true);
                          }
                      });
 

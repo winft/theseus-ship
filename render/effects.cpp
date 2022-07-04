@@ -37,8 +37,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/cursor.h"
 #include "input/pointer_redirect.h"
 #include "scripting/effect.h"
+#include "win/activation.h"
 #include "win/control.h"
 #include "win/deco/bridge.h"
+#include "win/desktop_space.h"
 #include "win/internal_window.h"
 #include "win/meta.h"
 #include "win/osd.h"
@@ -896,7 +898,7 @@ void effects_handler_impl::activateWindow(EffectWindow* c)
 {
     auto window = static_cast<effects_window_impl*>(c)->window();
     if (window && window->control) {
-        m_compositor->space->activateClient(window, true);
+        win::force_activate_window(*m_compositor->space, window);
     }
 }
 
@@ -927,7 +929,7 @@ void effects_handler_impl::windowToDesktop(EffectWindow* w, int desktop)
 {
     auto window = static_cast<effects_window_impl*>(w)->window();
     if (window && window->control && !win::is_desktop(window) && !win::is_dock(window)) {
-        m_compositor->space->sendClientToDesktop(window, desktop, true);
+        win::send_window_to_desktop(*m_compositor->space, window, desktop, true);
     }
 }
 

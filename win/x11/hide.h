@@ -10,6 +10,7 @@
 #include "window.h"
 
 #include "base/options.h"
+#include "win/activation.h"
 #include "win/controlling.h"
 #include "win/scene.h"
 #include "win/stacking_order.h"
@@ -160,7 +161,7 @@ void internal_keep(Win* win)
     win->xcb_windows.input.unmap();
     if (win->control->active()) {
         // get rid of input focus, bug #317484
-        win->space.focusToNull();
+        focus_to_null(win->space);
     }
 
     update_hidden_preview(win);

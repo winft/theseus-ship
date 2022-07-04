@@ -6,6 +6,7 @@
 #include "lib/app.h"
 
 #include "input/cursor.h"
+#include "win/activation.h"
 #include "win/space.h"
 #include "win/wayland/window.h"
 
@@ -172,7 +173,7 @@ void keyboard_keymap_test::test_focus()
     QCOMPARE(client2_keymap_spy.size(), 1);
 
     // We switch back and don't get a new keymap.
-    Test::app()->workspace->activateClient(window1.window);
+    win::activate_window(*Test::app()->workspace, window1.window);
     QCOMPARE(Test::app()->workspace->active_client, window1.window);
 
     QVERIFY(!client1_keymap_spy.wait(500));

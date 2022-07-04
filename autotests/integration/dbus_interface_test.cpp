@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "rules/rules.h"
 #include "win/actions.h"
 #include "win/controlling.h"
+#include "win/desktop_space.h"
 #include "win/move.h"
 #include "win/space.h"
 #include "win/virtual_desktops.h"
@@ -203,7 +204,7 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
     // window geometry changes
 
     QCOMPARE(client->desktop(), 1);
-    Test::app()->workspace->sendClientToDesktop(client, 2, false);
+    win::send_window_to_desktop(*Test::app()->workspace, client, 2, false);
     QCOMPARE(client->desktop(), 2);
     reply = getWindowInfo(client->internal_id);
     reply.waitForFinished();

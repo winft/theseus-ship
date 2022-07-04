@@ -8,6 +8,7 @@
 
 #include "config-kwin.h"
 
+#include "desktop_space.h"
 #include "move.h"
 #include "net.h"
 #include "screen.h"
@@ -417,7 +418,7 @@ private:
             vds->setCount(desk);
         }
 
-        space.sendClientToDesktop(m_client.data(), desk, false);
+        send_window_to_desktop(space, m_client.data(), desk, false);
     }
 
     /**

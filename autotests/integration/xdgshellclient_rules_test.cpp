@@ -1806,7 +1806,7 @@ void TestXdgShellClientRules::testDesktopApply()
     QCOMPARE(vd_manager->current(), 2);
 
     // We still should be able to move the client between desktops.
-    Test::app()->workspace->sendClientToDesktop(client, 1, true);
+    win::send_window_to_desktop(*Test::app()->workspace, client, 1, true);
     QCOMPARE(client->desktop(), 1);
     QCOMPARE(vd_manager->current(), 2);
 
@@ -1859,7 +1859,7 @@ void TestXdgShellClientRules::testDesktopRemember()
     QCOMPARE(vd_manager->current(), 2);
 
     // Move the client to the first virtual desktop.
-    Test::app()->workspace->sendClientToDesktop(client, 1, true);
+    win::send_window_to_desktop(*Test::app()->workspace, client, 1, true);
     QCOMPARE(client->desktop(), 1);
     QCOMPARE(vd_manager->current(), 2);
 
@@ -1912,7 +1912,7 @@ void TestXdgShellClientRules::testDesktopForce()
     QCOMPARE(vd_manager->current(), 2);
 
     // Any attempt to move the client to another virtual desktop should fail.
-    Test::app()->workspace->sendClientToDesktop(client, 1, true);
+    win::send_window_to_desktop(*Test::app()->workspace, client, 1, true);
     QCOMPARE(client->desktop(), 2);
     QCOMPARE(vd_manager->current(), 2);
 
@@ -1969,7 +1969,7 @@ void TestXdgShellClientRules::testDesktopApplyNow()
     QCOMPARE(vd_manager->current(), 1);
 
     // One should still be able to move the client between desktops.
-    Test::app()->workspace->sendClientToDesktop(client, 1, true);
+    win::send_window_to_desktop(*Test::app()->workspace, client, 1, true);
     QCOMPARE(client->desktop(), 1);
     QCOMPARE(vd_manager->current(), 1);
 
@@ -2018,7 +2018,7 @@ void TestXdgShellClientRules::testDesktopForceTemporarily()
     QCOMPARE(vd_manager->current(), 2);
 
     // Any attempt to move the client to another virtual desktop should fail.
-    Test::app()->workspace->sendClientToDesktop(client, 1, true);
+    win::send_window_to_desktop(*Test::app()->workspace, client, 1, true);
     QCOMPARE(client->desktop(), 2);
     QCOMPARE(vd_manager->current(), 2);
 
@@ -2034,10 +2034,10 @@ void TestXdgShellClientRules::testDesktopForceTemporarily()
     QCOMPARE(vd_manager->current(), 1);
 
     // One should be able to move the client between desktops.
-    Test::app()->workspace->sendClientToDesktop(client, 2, true);
+    win::send_window_to_desktop(*Test::app()->workspace, client, 2, true);
     QCOMPARE(client->desktop(), 2);
     QCOMPARE(vd_manager->current(), 1);
-    Test::app()->workspace->sendClientToDesktop(client, 1, true);
+    win::send_window_to_desktop(*Test::app()->workspace, client, 1, true);
     QCOMPARE(client->desktop(), 1);
     QCOMPARE(vd_manager->current(), 1);
 
@@ -4138,7 +4138,7 @@ void TestXdgShellClientRules::testInactiveOpacityDontAffect()
     QVERIFY(client->control->active());
 
     // Make the client inactive.
-    Test::app()->workspace->setActiveClient(nullptr);
+    win::set_active_window(*Test::app()->workspace, nullptr);
     QVERIFY(!client->control->active());
 
     // The opacity of the client should not be affected by the rule.
@@ -4175,7 +4175,7 @@ void TestXdgShellClientRules::testInactiveOpacityForce()
     QCOMPARE(client->opacity(), 1.0);
 
     // Make the client inactive.
-    Test::app()->workspace->setActiveClient(nullptr);
+    win::set_active_window(*Test::app()->workspace, nullptr);
     QVERIFY(!client->control->active());
 
     // The opacity should be forced by the rule.
@@ -4212,7 +4212,7 @@ void TestXdgShellClientRules::testInactiveOpacityForceTemporarily()
     QCOMPARE(client->opacity(), 1.0);
 
     // Make the client inactive.
-    Test::app()->workspace->setActiveClient(nullptr);
+    win::set_active_window(*Test::app()->workspace, nullptr);
     QVERIFY(!client->control->active());
 
     // The opacity should be forced by the rule.
@@ -4225,7 +4225,7 @@ void TestXdgShellClientRules::testInactiveOpacityForceTemporarily()
     QVERIFY(client);
     QVERIFY(client->control->active());
     QCOMPARE(client->opacity(), 1.0);
-    Test::app()->workspace->setActiveClient(nullptr);
+    win::set_active_window(*Test::app()->workspace, nullptr);
     QVERIFY(!client->control->active());
     QCOMPARE(client->opacity(), 1.0);
 

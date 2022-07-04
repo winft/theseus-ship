@@ -21,8 +21,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "space.h"
 
+#include "activation.h"
 #include "deco/bridge.h"
+#include "desktop_space.h"
+#include "output_space.h"
 #include "singleton_interface.h"
+#include "space_areas_helpers.h"
 #include "x11/tool_windows.h"
 
 #include "base/dbus/kwin.h"
@@ -186,14 +190,16 @@ space::space(render::compositor& render)
     focus_chain.has_separate_screen_focus = kwinApp()->options->isSeparateScreenFocus();
 
     auto vds = virtual_desktop_manager.get();
-    QObject::connect(vds,
-                     &win::virtual_desktop_manager::countChanged,
-                     qobject.get(),
-                     [this](auto prev, auto next) { slotDesktopCountChanged(prev, next); });
-    QObject::connect(vds,
-                     &win::virtual_desktop_manager::currentChanged,
-                     qobject.get(),
-                     [this](auto prev, auto next) { slotCurrentDesktopChanged(prev, next); });
+    QObject::connect(
+        vds,
+        &win::virtual_desktop_manager::countChanged,
+        qobject.get(),
+        [this](auto prev, auto next) { handle_desktop_count_changed(*this, prev, next); });
+    QObject::connect(
+        vds,
+        &win::virtual_desktop_manager::currentChanged,
+        qobject.get(),
+        [this](auto prev, auto next) { handle_current_desktop_changed(*this, prev, next); });
     vds->setNavigationWrappingAround(kwinApp()->options->isRollOverDesktops());
     QObject::connect(kwinApp()->options.get(),
                      &base::options::rollOverDesktopsChanged,
@@ -289,180 +295,9 @@ space::~space()
     singleton_interface::space = nullptr;
 }
 
-void space::slotCurrentDesktopChanged(uint oldDesktop, uint newDesktop)
-{
-    closeActivePopup();
-    ++block_focus;
-    blocker block(stacking_order);
-    win::update_client_visibility_on_desktop_change(this, newDesktop);
-    // Restore the focus on this desktop
-    --block_focus;
-
-    activateClientOnNewDesktop(newDesktop);
-    Q_EMIT qobject->currentDesktopChanged(oldDesktop, movingClient);
-}
-
-void space::activateClientOnNewDesktop(uint desktop)
-{
-    Toplevel* c = nullptr;
-    if (kwinApp()->options->focusPolicyIsReasonable()) {
-        c = findClientToActivateOnDesktop(desktop);
-    }
-    // If "unreasonable focus policy" and active_client is on_all_desktops and
-    // under mouse (Hence == old_active_client), conserve focus.
-    // (Thanks to Volker Schatz <V.Schatz at thphys.uni-heidelberg.de>)
-    else if (active_client && active_client->isShown() && active_client->isOnCurrentDesktop())
-        c = active_client;
-
-    if (!c) {
-        c = win::find_desktop(this, true, desktop);
-    }
-
-    if (c != active_client) {
-        setActiveClient(nullptr);
-    }
-
-    if (c) {
-        request_focus(c);
-    } else if (auto desktop_client = win::find_desktop(this, true, desktop)) {
-        request_focus(desktop_client);
-    } else {
-        focusToNull();
-    }
-}
-
-Toplevel* space::findClientToActivateOnDesktop(uint desktop)
-{
-    if (movingClient != nullptr && active_client == movingClient
-        && focus_chain_at_desktop_contains(focus_chain, active_client, desktop)
-        && active_client->isShown() && active_client->isOnCurrentDesktop()) {
-        // A requestFocus call will fail, as the client is already active
-        return active_client;
-    }
-    // from actiavtion.cpp
-    if (kwinApp()->options->isNextFocusPrefersMouse()) {
-        auto it = stacking_order->stack.cend();
-        while (it != stacking_order->stack.cbegin()) {
-            auto client = qobject_cast<win::x11::window*>(*(--it));
-            if (!client) {
-                continue;
-            }
-
-            if (!(client->isShown() && client->isOnDesktop(desktop)
-                  && win::on_active_screen(client)))
-                continue;
-
-            if (client->frameGeometry().contains(input::get_cursor()->pos())) {
-                if (!win::is_desktop(client))
-                    return client;
-                break; // unconditional break  - we do not pass the focus to some client below an
-                       // unusable one
-            }
-        }
-    }
-    return focus_chain_get_for_activation_on_current_output<Toplevel>(focus_chain, desktop);
-}
-
-void space::slotDesktopCountChanged(uint previousCount, uint newCount)
-{
-    Q_UNUSED(previousCount)
-    resetClientAreas(newCount);
-}
-
-void space::resetClientAreas(uint desktopCount)
-{
-    // Make it +1, so that it can be accessed as [1..numberofdesktops]
-    areas.work.clear();
-    areas.work.resize(desktopCount + 1);
-    areas.restrictedmove.clear();
-    areas.restrictedmove.resize(desktopCount + 1);
-    areas.screen.clear();
-
-    updateClientArea(true);
-}
-
-/**
- * Sends client \a c to desktop \a desk.
- *
- * Takes care of transients as well.
- */
-void space::sendClientToDesktop(Toplevel* window, int desk, bool dont_activate)
-{
-    if ((desk < 1 && desk != NET::OnAllDesktops)
-        || desk > static_cast<int>(virtual_desktop_manager->count())) {
-        return;
-    }
-    auto old_desktop = window->desktop();
-    auto was_on_desktop = window->isOnDesktop(desk) || window->isOnAllDesktops();
-    win::set_desktop(window, desk);
-    if (window->desktop() != desk) {
-        // No change or desktop forced
-        return;
-    }
-    desk = window->desktop(); // Client did range checking
-
-    if (window->isOnDesktop(virtual_desktop_manager->current())) {
-        if (win::wants_tab_focus(window) && kwinApp()->options->focusPolicyIsReasonable()
-            && !was_on_desktop && // for stickyness changes
-            !dont_activate) {
-            request_focus(window);
-        } else {
-            win::restack_client_under_active(this, window);
-        }
-    } else
-        win::raise_window(this, window);
-
-    win::check_workspace_position(window, QRect(), old_desktop);
-
-    auto transients_stacking_order
-        = win::restacked_by_space_stacking_order(this, window->transient()->children);
-    for (auto const& transient : transients_stacking_order) {
-        if (transient->control) {
-            sendClientToDesktop(transient, desk, dont_activate);
-        }
-    }
-    updateClientArea();
-}
-
-/**
- * Delayed focus functions
- */
-void space::delayFocus()
-{
-    request_focus(delayfocus_client);
-    cancelDelayFocus();
-}
-
-void space::requestDelayFocus(Toplevel* c)
-{
-    delayfocus_client = c;
-    delete delayFocusTimer;
-    delayFocusTimer = new QTimer(qobject.get());
-    QObject::connect(delayFocusTimer, &QTimer::timeout, qobject.get(), [this] { delayFocus(); });
-    delayFocusTimer->setSingleShot(true);
-    delayFocusTimer->start(kwinApp()->options->delayFocusInterval());
-}
-
-void space::cancelDelayFocus()
-{
-    delete delayFocusTimer;
-    delayFocusTimer = nullptr;
-}
-
 bool space::checkStartupNotification(xcb_window_t w, KStartupInfoId& id, KStartupInfoData& data)
 {
     return startup->checkStartup(w, id, data) == KStartupInfo::Match;
-}
-
-/**
- * Puts the focus on a dummy window
- * Just using XSetInputFocus() with None would block keyboard input
- */
-void space::focusToNull()
-{
-    if (m_nullFocus) {
-        m_nullFocus->focus();
-    }
 }
 
 void space::setShowingDesktop(bool showing)
@@ -498,12 +333,12 @@ void space::setShowingDesktop(bool showing)
     } // ~Blocker
 
     if (showing_desktop && topDesk) {
-        request_focus(topDesk);
+        request_focus(*this, topDesk);
     } else if (!showing_desktop && changed) {
         const auto client = focus_chain_get_for_activation_on_current_output<Toplevel>(
             focus_chain, virtual_desktop_manager->current());
         if (client) {
-            activateClient(client);
+            activate_window(*this, client);
         }
     }
     if (changed) {
@@ -645,7 +480,7 @@ void space::desktopResized()
         win::x11::rootInfo()->setDesktopGeometry(desktop_geometry);
     }
 
-    updateClientArea();
+    update_space_areas(*this);
     saveOldScreenSizes(); // after updateClientArea(), so that one still uses the previous one
 
     // TODO: emit a signal instead and remove the deep function calls into edges and effects
@@ -669,99 +504,11 @@ void space::saveOldScreenSizes()
     }
 }
 
-/**
- * Updates the current client areas according to the current clients.
- *
- * If the area changes or force is @c true, the new areas are propagated to the world.
- *
- * The client area is the area that is available for clients (that
- * which is not taken by windows like panels, the top-of-screen menu
- * etc).
- *
- * @see clientArea()
- */
-void space::updateClientArea(bool force)
-{
-    auto&& base = kwinApp()->get_base();
-    auto const& outputs = base.get_outputs();
-    auto const screens_count = outputs.size();
-    auto const desktops_count = static_cast<int>(virtual_desktop_manager->count());
-
-    // To be determined are new:
-    // * work areas,
-    // * restricted-move areas,
-    // * screen areas.
-    win::space_areas new_areas(desktops_count + 1);
-
-    std::vector<QRect> screens_geos(screens_count);
-    QRect desktop_area;
-
-    for (size_t screen = 0; screen < screens_count; screen++) {
-        desktop_area |= outputs.at(screen)->geometry();
-    }
-
-    for (size_t screen = 0; screen < screens_count; screen++) {
-        screens_geos[screen] = outputs.at(screen)->geometry();
-    }
-
-    for (auto desktop = 1; desktop <= desktops_count; ++desktop) {
-        new_areas.work[desktop] = desktop_area;
-        new_areas.screen[desktop].resize(screens_count);
-        for (size_t screen = 0; screen < screens_count; screen++) {
-            new_areas.screen[desktop][screen] = screens_geos[screen];
-        }
-    }
-
-    update_space_area_from_windows(desktop_area, screens_geos, new_areas);
-
-    auto changed = force || areas.screen.empty();
-
-    for (int desktop = 1; !changed && desktop <= desktops_count; ++desktop) {
-        changed |= areas.work[desktop] != new_areas.work[desktop];
-        changed |= areas.restrictedmove[desktop] != new_areas.restrictedmove[desktop];
-        changed |= areas.screen[desktop].size() != new_areas.screen[desktop].size();
-
-        for (size_t screen = 0; !changed && screen < screens_count; screen++) {
-            changed |= new_areas.screen[desktop][screen] != areas.screen[desktop][screen];
-        }
-    }
-
-    if (changed) {
-        oldrestrictedmovearea = areas.restrictedmove;
-        areas = new_areas;
-
-        if (win::x11::rootInfo()) {
-            NETRect rect;
-            for (int desktop = 1; desktop <= desktops_count; desktop++) {
-                rect.pos.x = areas.work[desktop].x();
-                rect.pos.y = areas.work[desktop].y();
-                rect.size.width = areas.work[desktop].width();
-                rect.size.height = areas.work[desktop].height();
-                win::x11::rootInfo()->setWorkArea(desktop, rect);
-            }
-        }
-
-        for (auto win : m_windows) {
-            if (win->control) {
-                check_workspace_position(win);
-            }
-        }
-
-        // Reset, no longer valid or needed.
-        oldrestrictedmovearea.clear();
-    }
-}
-
 void space::update_space_area_from_windows(QRect const& /*desktop_area*/,
                                            std::vector<QRect> const& /*screens_geos*/,
                                            win::space_areas& /*areas*/)
 {
     // Can't be pure virtual because the function might be called from the ctor.
-}
-
-void space::updateClientArea()
-{
-    updateClientArea(false);
 }
 
 /**
@@ -1670,351 +1417,6 @@ int space::packPositionDown(Toplevel const* window, int oldY, bool bottomEdge) c
 
 #endif
 
-/*
- Prevention of focus stealing:
-
- KWin tries to prevent unwanted changes of focus, that would result
- from mapping a new window. Also, some nasty applications may try
- to force focus change even in cases when ICCCM 4.2.7 doesn't allow it
- (e.g. they may try to activate their main window because the user
- definitely "needs" to see something happened - misusing
- of QWidget::setActiveWindow() may be such case).
-
- There are 4 ways how a window may become active:
- - the user changes the active window (e.g. focus follows mouse, clicking
-   on some window's titlebar) - the change of focus will
-   be done by KWin, so there's nothing to solve in this case
- - the change of active window will be requested using the _NET_ACTIVE_WINDOW
-   message (handled in RootInfo::changeActiveWindow()) - such requests
-   will be obeyed, because this request is meant mainly for e.g. taskbar
-   asking the WM to change the active window as a result of some user action.
-   Normal applications should use this request only rarely in special cases.
-   See also below the discussion of _NET_ACTIVE_WINDOW_TRANSFER.
- - the change of active window will be done by performing XSetInputFocus()
-   on a window that's not currently active. ICCCM 4.2.7 describes when
-   the application may perform change of input focus. In order to handle
-   misbehaving applications, KWin will try to detect focus changes to
-   windows that don't belong to currently active application, and restore
-   focus back to the currently active window, instead of activating the window
-   that got focus (unfortunately there's no way to FocusChangeRedirect similar
-   to e.g. SubstructureRedirect, so there will be short time when the focus
-   will be changed). The check itself that's done is
-   space::allowClientActivation() (see below).
- - a new window will be mapped - this is the most complicated case. If
-   the new window belongs to the currently active application, it may be safely
-   mapped on top and activated. The same if there's no active window,
-   or the active window is the desktop. These checks are done by
-   space::allowClientActivation().
-    Following checks need to compare times. One time is the timestamp
-   of last user action in the currently active window, the other time is
-   the timestamp of the action that originally caused mapping of the new window
-   (e.g. when the application was started). If the first time is newer than
-   the second one, the window will not be activated, as that indicates
-   futher user actions took place after the action leading to this new
-   mapped window. This check is done by space::allowClientActivation().
-    There are several ways how to get the timestamp of action that caused
-   the new mapped window (done in win::x11::window::readUserTimeMapTimestamp()) :
-     - the window may have the _NET_WM_USER_TIME property. This way
-       the application may either explicitly request that the window is not
-       activated (by using 0 timestamp), or the property contains the time
-       of last user action in the application.
-     - KWin itself tries to detect time of last user action in every window,
-       by watching KeyPress and ButtonPress events on windows. This way some
-       events may be missed (if they don't propagate to the toplevel window),
-       but it's good as a fallback for applications that don't provide
-       _NET_WM_USER_TIME, and missing some events may at most lead
-       to unwanted focus stealing.
-     - the timestamp may come from application startup notification.
-       Application startup notification, if it exists for the new mapped window,
-       should include time of the user action that caused it.
-     - if there's no timestamp available, it's checked whether the new window
-       belongs to some already running application - if yes, the timestamp
-       will be 0 (i.e. refuse activation)
-     - if the window is from session restored window, the timestamp will
-       be 0 too, unless this application was the active one at the time
-       when the session was saved, in which case the window will be
-       activated if there wasn't any user interaction since the time
-       KWin was started.
-     - as the last resort, the _KDE_NET_USER_CREATION_TIME timestamp
-       is used. For every toplevel window that is created (see CreateNotify
-       handling), this property is set to the at that time current time.
-       Since at this time it's known that the new window doesn't belong
-       to any existing application (better said, the application doesn't
-       have any other window mapped), it is either the very first window
-       of the application, or it is the only window of the application
-       that was hidden before. The latter case is handled by removing
-       the property from windows before withdrawing them, making
-       the timestamp empty for next mapping of the window. In the sooner
-       case, the timestamp will be used. This helps in case when
-       an application is launched without application startup notification,
-       it creates its mainwindow, and starts its initialization (that
-       may possibly take long time). The timestamp used will be older
-       than any user action done after launching this application.
-     - if no timestamp is found at all, the window is activated.
-    The check whether two windows belong to the same application (same
-   process) is done in win::x11::window::belongToSameApplication(). Not 100% reliable,
-   but hopefully 99,99% reliable.
-
- As a somewhat special case, window activation is always enabled when
- session saving is in progress. When session saving, the session
- manager allows only one application to interact with the user.
- Not allowing window activation in such case would result in e.g. dialogs
- not becoming active, so focus stealing prevention would cause here
- more harm than good.
-
- Windows that attempted to become active but KWin prevented this will
- be marked as demanding user attention. They'll get
- the _NET_WM_STATE_DEMANDS_ATTENTION state, and the taskbar should mark
- them specially (blink, etc.). The state will be reset when the window
- eventually really becomes active.
-
- There are two more ways how a window can become obtrusive, window stealing
- focus: By showing above the active window, by either raising itself,
- or by moving itself on the active desktop.
-     - KWin will refuse raising non-active window above the active one,
-         unless they belong to the same application. Applications shouldn't
-         raise their windows anyway (unless the app wants to raise one
-         of its windows above another of its windows).
-     - KWin activates windows moved to the current desktop (as that seems
-         logical from the user's point of view, after sending the window
-         there directly from KWin, or e.g. using pager). This means
-         applications shouldn't send their windows to another desktop
-         (SELI TODO - but what if they do?)
-
- Special cases I can think of:
-    - konqueror reusing, i.e. kfmclient tells running Konqueror instance
-        to open new window
-        - without focus stealing prevention - no problem
-        - with ASN (application startup notification) - ASN is forwarded,
-            and because it's newer than the instance's user timestamp,
-            it takes precedence
-        - without ASN - user timestamp needs to be reset, otherwise it would
-            be used, and it's old; moreover this new window mustn't be detected
-            as window belonging to already running application, or it wouldn't
-            be activated - see win::x11::window::sameAppWindowRoleMatch() for the (rather ugly)
-            hack
-    - konqueror preloading, i.e. window is created in advance, and kfmclient
-        tells this Konqueror instance to show it later
-        - without focus stealing prevention - no problem
-        - with ASN - ASN is forwarded, and because it's newer than the instance's
-            user timestamp, it takes precedence
-        - without ASN - user timestamp needs to be reset, otherwise it would
-            be used, and it's old; also, creation timestamp is changed to
-            the time the instance starts (re-)initializing the window,
-            this ensures creation timestamp will still work somewhat even in this case
-    - KUniqueApplication - when the window is already visible, and the new instance
-        wants it to activate
-        - without focus stealing prevention - _NET_ACTIVE_WINDOW - no problem
-        - with ASN - ASN is forwarded, and set on the already visible window, KWin
-            treats the window as new with that ASN
-        - without ASN - _NET_ACTIVE_WINDOW as application request is used,
-                and there's no really usable timestamp, only timestamp
-                from the time the (new) application instance was started,
-                so KWin will activate the window *sigh*
-                - the bad thing here is that there's absolutely no chance to recognize
-                    the case of starting this KUniqueApp from Konsole (and thus wanting
-                    the already visible window to become active) from the case
-                    when something started this KUniqueApp without ASN (in which case
-                    the already visible window shouldn't become active)
-                - the only solution is using ASN for starting applications, at least silent
-                    (i.e. without feedback)
-    - when one application wants to activate another application's window (e.g. KMail
-        activating already running KAddressBook window ?)
-        - without focus stealing prevention - _NET_ACTIVE_WINDOW - no problem
-        - with ASN - can't be here, it's the KUniqueApp case then
-        - without ASN - _NET_ACTIVE_WINDOW as application request should be used,
-            KWin will activate the new window depending on the timestamp and
-            whether it belongs to the currently active application
-
- _NET_ACTIVE_WINDOW usage:
- data.l[0]= 1 ->app request
-          = 2 ->pager request
-          = 0 - backwards compatibility
- data.l[1]= timestamp
-*/
-
-/**
- * Informs the space:: about the active client, i.e. the client that
- * has the focus (or None if no client has the focus). This functions
- * is called by the client itself that gets focus. It has no other
- * effect than fixing the focus chain and the return value of
- * activeClient(). And of course, to propagate the active client to the
- * world.
- */
-void space::setActiveClient(Toplevel* window)
-{
-    if (active_client == window)
-        return;
-
-    if (active_popup && active_popup_client != window && set_active_client_recursion == 0)
-        closeActivePopup();
-    if (user_actions_menu->hasClient() && !user_actions_menu->isMenuClient(window)
-        && set_active_client_recursion == 0) {
-        user_actions_menu->close();
-    }
-
-    blocker block(stacking_order);
-    ++set_active_client_recursion;
-    focusMousePos = input::get_cursor()->pos();
-
-    if (active_client != nullptr) {
-        // note that this may call setActiveClient( NULL ), therefore the recursion counter
-        win::set_active(active_client, false);
-    }
-
-    active_client = window;
-    Q_ASSERT(window == nullptr || window->control->active());
-
-    if (active_client) {
-        last_active_client = active_client;
-        focus_chain_update(focus_chain, active_client, focus_chain_change::make_first);
-        win::set_demands_attention(active_client, false);
-
-        // activating a client can cause a non active fullscreen window to loose the ActiveLayer
-        // status on > 1 screens
-        if (kwinApp()->get_base().get_outputs().size() > 1) {
-            for (auto win : m_windows) {
-                if (win->control && win != active_client && win->layer() == win::layer::active
-                    && win->central_output == active_client->central_output) {
-                    update_layer(win);
-                }
-            }
-        }
-    }
-
-    x11::update_tool_windows_visibility(this, false);
-    if (window)
-        disableGlobalShortcutsForClient(
-            window->control->rules().checkDisableGlobalShortcuts(false));
-    else
-        disableGlobalShortcutsForClient(false);
-
-    // e.g. fullscreens have different layer when active/not-active
-    stacking_order->update_order();
-
-    if (win::x11::rootInfo()) {
-        win::x11::rootInfo()->setActiveClient(active_client);
-    }
-
-    Q_EMIT qobject->clientActivated(active_client);
-    --set_active_client_recursion;
-}
-
-/**
- * Tries to activate the client \a c. This function performs what you
- * expect when clicking the respective entry in a taskbar: showing and
- * raising the client (this may imply switching to the another virtual
- * desktop) and putting the focus onto it. Once X really gave focus to
- * the client window as requested, the client itself will call
- * setActiveClient() and the operation is complete. This may not happen
- * with certain focus policies, though.
- *
- * @see setActiveClient
- * @see requestFocus
- */
-void space::activateClient(Toplevel* window, bool force)
-{
-    if (window == nullptr) {
-        focusToNull();
-        setActiveClient(nullptr);
-        return;
-    }
-    win::raise_window(this, window);
-    if (!window->isOnCurrentDesktop()) {
-        ++block_focus;
-        virtual_desktop_manager->setCurrent(window->desktop());
-        --block_focus;
-    }
-    if (window->control->minimized()) {
-        win::set_minimized(window, false);
-    }
-
-    // ensure the window is really visible - could eg. be a hidden utility window, see bug #348083
-    window->hideClient(false);
-
-    // TODO force should perhaps allow this only if the window already contains the mouse
-    if (kwinApp()->options->focusPolicyIsReasonable() || force) {
-        request_focus(window, false, force);
-    }
-
-    // Don't update user time for clients that have focus stealing workaround.
-    // As they usually belong to the current active window but fail to provide
-    // this information, updating their user time would make the user time
-    // of the currently active window old, and reject further activation for it.
-    // E.g. typing URL in minicli which will show kio_uiserver dialog (with workaround),
-    // and then kdesktop shows dialog about SSL certificate.
-    // This needs also avoiding user creation time in win::x11::window::readUserTimeMapTimestamp().
-    if (auto client = dynamic_cast<win::x11::window*>(window)) {
-        // updateUserTime is X11 specific
-        win::x11::update_user_time(client);
-    }
-}
-
-/**
- * Tries to activate the client by asking X for the input focus. This
- * function does not perform any show, raise or desktop switching. See
- * space::activateClient() instead.
- *
- * @see activateClient
- */
-void space::request_focus(Toplevel* window, bool raise, bool force_focus)
-{
-    auto take_focus = focusChangeEnabled() || window == active_client;
-
-    if (!window) {
-        focusToNull();
-        return;
-    }
-
-    if (take_focus) {
-        auto modal = window->findModal();
-        if (modal && modal->control && modal != window) {
-            if (!modal->isOnDesktop(window->desktop())) {
-                win::set_desktop(modal, window->desktop());
-            }
-            if (!modal->isShown() && !modal->control->minimized()) {
-                // forced desktop or utility window
-                // activating a minimized blocked window will unminimize its modal implicitly
-                activateClient(modal);
-            }
-            // if the click was inside the window (i.e. handled is set),
-            // but it has a modal, there's no need to use handled mode, because
-            // the modal doesn't get the click anyway
-            // raising of the original window needs to be still done
-            if (raise) {
-                win::raise_window(this, window);
-            }
-            window = modal;
-        }
-        cancelDelayFocus();
-    }
-
-    if (!force_focus && (win::is_dock(window) || win::is_splash(window))) {
-        // toplevel menus and dock windows don't take focus if not forced
-        // and don't have a flag that they take focus
-        if (!window->dockWantsInput()) {
-            take_focus = false;
-        }
-    }
-
-    if (!window->isShown()) {
-        // Shouldn't happen, call activateClient() if needed.
-        qCWarning(KWIN_CORE) << "request_focus: not shown";
-        return;
-    }
-
-    if (take_focus) {
-        window->takeFocus();
-    }
-    if (raise) {
-        win::raise_window(this, window);
-    }
-
-    if (!win::on_active_screen(window)) {
-        base::set_current_output(kwinApp()->get_base(), window->central_output);
-    }
-}
-
 /**
  * Informs the space:: that the client \a c has been hidden. If it
  * was the active client (or to-become the active client),
@@ -2025,7 +1427,7 @@ void space::request_focus(Toplevel* window, bool raise, bool force_focus)
 void space::clientHidden(Toplevel* window)
 {
     Q_ASSERT(!window->isShown() || !window->isOnCurrentDesktop());
-    activateNextClient(window);
+    activate_next_window(*this, window);
 }
 
 Toplevel* space::clientUnderMouse(base::output const* output) const
@@ -2048,103 +1450,6 @@ Toplevel* space::clientUnderMouse(base::output const* output) const
         }
     }
     return nullptr;
-}
-
-// deactivates 'c' and activates next client
-bool space::activateNextClient(Toplevel* window)
-{
-    // if 'c' is not the active or the to-become active one, do nothing
-    if (!(window == active_client
-          || (should_get_focus.size() > 0 && window == should_get_focus.back()))) {
-        return false;
-    }
-
-    closeActivePopup();
-
-    if (window != nullptr) {
-        if (window == active_client) {
-            setActiveClient(nullptr);
-        }
-        should_get_focus.erase(
-            std::remove(should_get_focus.begin(), should_get_focus.end(), window),
-            should_get_focus.end());
-    }
-
-    // if blocking focus, move focus to the desktop later if needed
-    // in order to avoid flickering
-    if (!focusChangeEnabled()) {
-        focusToNull();
-        return true;
-    }
-
-    if (!kwinApp()->options->focusPolicyIsReasonable())
-        return false;
-
-    Toplevel* get_focus = nullptr;
-
-    const int desktop = virtual_desktop_manager->current();
-
-    if (!get_focus && showingDesktop())
-        get_focus = win::find_desktop(this, true, desktop); // to not break the state
-
-    if (!get_focus && kwinApp()->options->isNextFocusPrefersMouse()) {
-        get_focus = clientUnderMouse(window ? window->central_output : get_current_output(*this));
-        if (get_focus && (get_focus == window || win::is_desktop(get_focus))) {
-            // should rather not happen, but it cannot get the focus. rest of usability is tested
-            // above
-            get_focus = nullptr;
-        }
-    }
-
-    if (!get_focus) { // no suitable window under the mouse -> find sth. else
-        // first try to pass the focus to the (former) active clients leader
-        if (window && window->transient()->lead()) {
-            auto leaders = window->transient()->leads();
-            if (leaders.size() == 1
-                && focus_chain_is_usable_focus_candidate(focus_chain, leaders.at(0), window)) {
-                get_focus = leaders.at(0);
-
-                // also raise - we don't know where it came from
-                win::raise_window(this, get_focus);
-            }
-        }
-        if (!get_focus) {
-            // nope, ask the focus chain for the next candidate
-            get_focus = focus_chain_next_for_desktop(focus_chain, window, desktop);
-        }
-    }
-
-    if (get_focus == nullptr) // last chance: focus the desktop
-        get_focus = win::find_desktop(this, true, desktop);
-
-    if (get_focus != nullptr) {
-        request_focus(get_focus);
-    } else {
-        focusToNull();
-    }
-
-    return true;
-}
-
-void space::setCurrentScreen(base::output const& output)
-{
-    if (!kwinApp()->options->focusPolicyIsReasonable()) {
-        return;
-    }
-
-    closeActivePopup();
-
-    const int desktop = virtual_desktop_manager->current();
-    auto get_focus = focus_chain_get_for_activation<Toplevel>(focus_chain, desktop, &output);
-    if (get_focus == nullptr) {
-        get_focus = win::find_desktop(this, true, desktop);
-    }
-
-    if (get_focus != nullptr && get_focus != mostRecentlyActivatedClient()) {
-        request_focus(get_focus);
-    }
-
-    base::set_current_output(kwinApp()->get_base(), &output);
 }
 
 void space::gotFocusIn(Toplevel const* window)
@@ -2198,7 +1503,7 @@ bool space::allowClientActivation(Toplevel const* window,
     if (session_manager->state() == SessionState::Saving && level <= FSP::Medium) { // <= normal
         return true;
     }
-    auto ac = mostRecentlyActivatedClient();
+    auto ac = most_recently_activated_window(*this);
     if (focus_in) {
         if (std::find(
                 should_get_focus.cbegin(), should_get_focus.cend(), const_cast<Toplevel*>(window))
@@ -2285,7 +1590,7 @@ bool space::allowFullClientRaising(Toplevel const* window, xcb_timestamp_t time)
     if (session_manager->state() == SessionState::Saving && level <= 2) { // <= normal
         return true;
     }
-    auto ac = mostRecentlyActivatedClient();
+    auto ac = most_recently_activated_window(*this);
     if (level == 0) // none
         return true;
     if (level == 4) // extreme
@@ -2317,9 +1622,9 @@ void space::restoreFocus()
     // the attempt to restore the focus would fail due to old timestamp
     kwinApp()->update_x11_time_from_clock();
     if (should_get_focus.size() > 0) {
-        request_focus(should_get_focus.back());
+        request_focus(*this, should_get_focus.back());
     } else if (last_active_client) {
-        request_focus(last_active_client);
+        request_focus(*this, last_active_client);
     }
 }
 
@@ -2375,16 +1680,6 @@ void space::slotLowerWindowOpacity()
         return;
     }
     active_client->setOpacity(qMax(active_client->opacity() - 0.05, 0.05));
-}
-
-void space::closeActivePopup()
-{
-    if (active_popup) {
-        active_popup->close();
-        active_popup = nullptr;
-        active_popup_client = nullptr;
-    }
-    user_actions_menu->close();
 }
 
 QAction* prepare_shortcut_action(win::space& space,
@@ -2691,7 +1986,7 @@ void space::setupWindowShortcutDone(bool ok)
     //    client_keys->setEnabled( true );
     if (ok)
         win::set_shortcut(client_keys_client, client_keys_dialog->shortcut().toString());
-    closeActivePopup();
+    close_active_popup(*this);
     client_keys_dialog->deleteLater();
     client_keys_dialog = nullptr;
     client_keys_client = nullptr;
@@ -2710,10 +2005,9 @@ void space::clientShortcutUpdated(Toplevel* window)
             action->setProperty("componentName", QStringLiteral(KWIN_NAME));
             action->setObjectName(key);
             action->setText(i18n("Activate Window (%1)", win::caption(window)));
-            QObject::connect(action,
-                             &QAction::triggered,
-                             window,
-                             std::bind(&space::activateClient, this, window, true));
+            QObject::connect(action, &QAction::triggered, window, [this, window] {
+                force_activate_window(*this, window);
+            });
         }
 
         // no autoloading, since it's configured explicitly here and is not meant to be reused
@@ -2825,7 +2119,7 @@ void space::performWindowOperation(Toplevel* window, base::options::WindowOperat
 void space::slotActivateAttentionWindow()
 {
     if (attention_chain.size() > 0) {
-        activateClient(attention_chain.front());
+        activate_window(*this, attention_chain.front());
     }
 }
 
@@ -2850,7 +2144,7 @@ void space::slotWindowToDesktop(uint i)
             return;
 
         if (i >= 1 && i <= virtual_desktop_manager->count())
-            sendClientToDesktop(active_client, i, true);
+            send_window_to_desktop(*this, active_client, i, true);
     }
 }
 
@@ -2880,7 +2174,7 @@ void space::slotSwitchToScreen(QAction* action)
     auto output = base::get_output(kwinApp()->get_base().get_outputs(), screen);
 
     if (output) {
-        setCurrentScreen(*output);
+        set_current_output(*this, *output);
     }
 }
 
@@ -2903,7 +2197,7 @@ void space::slotSwitchToNextScreen()
         return;
     }
     if (auto output = get_derivated_output(*this, 1)) {
-        setCurrentScreen(*output);
+        set_current_output(*this, *output);
     }
 }
 
@@ -2913,7 +2207,7 @@ void space::slotSwitchToPrevScreen()
         return;
     }
     if (auto output = get_derivated_output(*this, -1)) {
-        setCurrentScreen(*output);
+        set_current_output(*this, *output);
     }
 }
 
@@ -3008,10 +2302,11 @@ void space::slotWindowLower()
             if (kwinApp()->options->isNextFocusPrefersMouse()) {
                 auto next = clientUnderMouse(active_client->central_output);
                 if (next && next != active_client)
-                    request_focus(next);
+                    request_focus(*this, next);
             } else {
-                activateClient(
-                    win::top_client_on_desktop(this, virtual_desktop_manager->current(), nullptr));
+                activate_window(
+                    *this,
+                    top_client_on_desktop(this, virtual_desktop_manager->current(), nullptr));
             }
         }
     }
@@ -3251,7 +2546,7 @@ bool space::switchWindow(Toplevel* c, Direction direction, QPoint curPos, int d)
         }
     }
     if (switchTo) {
-        activateClient(switchTo);
+        activate_window(*this, switchTo);
     }
 
     return switchTo;

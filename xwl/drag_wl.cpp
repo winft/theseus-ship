@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "mime.h"
 
 #include "base/wayland/server.h"
+#include "win/activation.h"
 #include "win/space.h"
 #include "win/x11/window.h"
 
@@ -63,7 +64,7 @@ drag_event_reply wl_drag::move_filter(Toplevel* target, QPoint const& pos)
 
     // We have a new target.
 
-    source.x11.space->activateClient(target, false);
+    win::activate_window(*source.x11.space, target);
     seat->drags().set_target(target->surface, pos, target->input_transform());
 
     visit.reset(new x11_visit(target, source, proxy_window));

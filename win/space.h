@@ -171,6 +171,8 @@ public:
     std::vector<Toplevel*> m_windows;
     std::vector<win::x11::group*> groups;
 
+    win::space_areas areas;
+
     std::unique_ptr<scripting::platform> scripting;
     std::unique_ptr<render::outline> outline;
     std::unique_ptr<win::screen_edger> edges;
@@ -215,6 +217,11 @@ public:
     QTimer reconfigureTimer;
     QTimer updateToolWindowsTimer;
 
+    Toplevel* movingClient{nullptr};
+
+    // Array of the previous restricted areas that window cannot be moved into
+    std::vector<win::strut_rects> oldrestrictedmovearea;
+
     explicit space(render::compositor& render);
     virtual ~space();
 
@@ -239,24 +246,7 @@ public:
     void initShortcuts();
     bool initializing() const;
 
-    /**
-     * Client that was activated, but it's not yet really activeClient(), because
-     * we didn't process yet the matching FocusIn event. Used mostly in focus
-     * stealing prevention code.
-     */
-    Toplevel* mostRecentlyActivatedClient() const;
-
     Toplevel* clientUnderMouse(base::output const* output) const;
-
-    void activateClient(Toplevel* window, bool force = false);
-
-    /**
-     * Request focus and optionally try raising the window.
-     * @param window The window to focus.
-     * @param raise Should additionally raise the window.
-     * @param force_focus Focus even if panel, dock and so on.
-     */
-    void request_focus(Toplevel* window, bool raise = false, bool force_focus = false);
 
     bool allowClientActivation(Toplevel const* window,
                                xcb_timestamp_t time = -1U,
@@ -265,11 +255,6 @@ public:
     void restoreFocus();
     void gotFocusIn(Toplevel const* window);
     void setShouldGetFocus(Toplevel* window);
-    bool activateNextClient(Toplevel* window);
-    bool focusChangeEnabled()
-    {
-        return block_focus == 0;
-    }
 
     /**
      * Indicates that the client c is being moved or resized by the user.
@@ -331,7 +316,6 @@ public:
 
     Toplevel* active_client{nullptr};
 
-    void sendClientToDesktop(Toplevel* window, int desktop, bool dont_activate);
     void windowToPreviousDesktop(Toplevel& window);
     void windowToNextDesktop(Toplevel& window);
 
@@ -354,16 +338,10 @@ public:
 
     win::session_info* takeSessionInfo(win::x11::window*);
 
-    void setCurrentScreen(base::output const& output);
-
     void setShowingDesktop(bool showing);
     bool showingDesktop() const;
 
-    void setActiveClient(Toplevel* window);
-
     bool checkStartupNotification(xcb_window_t w, KStartupInfoId& id, KStartupInfoData& data);
-
-    void focusToNull(); // SELI TODO: Public?
 
     void clientShortcutUpdated(Toplevel* window);
     bool shortcutAvailable(const QKeySequence& cut, Toplevel* ignore = nullptr) const;
@@ -377,9 +355,6 @@ public:
     int packPositionRight(Toplevel const* window, int oldX, bool rightEdge) const;
     int packPositionUp(Toplevel const* window, int oldY, bool topEdge) const;
     int packPositionDown(Toplevel const* window, int oldY, bool bottomEdge) const;
-
-    void cancelDelayFocus();
-    void requestDelayFocus(Toplevel*);
 
     /**
      * Returns a client that is currently being moved or resized by the user.
@@ -412,7 +387,6 @@ public:
     void fixPositionAfterCrash(xcb_window_t w, const xcb_get_geometry_reply_t* geom);
     void saveOldScreenSizes();
     void desktopResized();
-    void closeActivePopup();
 
     void performWindowOperation(KWin::Toplevel* window, base::options::WindowOperation op);
 
@@ -471,19 +445,9 @@ public:
     void slotSetupWindowShortcut();
     void setupWindowShortcutDone(bool);
 
-    void updateClientArea();
-
-protected:
     virtual void update_space_area_from_windows(QRect const& desktop_area,
                                                 std::vector<QRect> const& screens_geos,
                                                 win::space_areas& areas);
-
-private:
-    void delayFocus();
-
-    // virtual desktop handling
-    void slotDesktopCountChanged(uint previousCount, uint newCount);
-    void slotCurrentDesktopChanged(uint oldDesktop, uint newDesktop);
 
     template<typename Slot>
     void initShortcut(const QString& actionName,
@@ -508,19 +472,12 @@ private:
     void setupWindowShortcut(Toplevel* window);
     bool switchWindow(Toplevel* c, Direction direction, QPoint curPos, int desktop);
 
-    void updateClientArea(bool force);
-    void resetClientAreas(uint desktopCount);
-    void activateClientOnNewDesktop(uint desktop);
-    Toplevel* findClientToActivateOnDesktop(uint desktop);
-
     QWidget* active_popup{nullptr};
 
     void loadSessionInfo(const QString& sessionName);
     void addSessionInfo(KConfigGroup& cg);
 
     std::vector<win::session_info*> session;
-
-    Toplevel* movingClient{nullptr};
 
     // Delay(ed) window focus timer and client
     QTimer* delayFocusTimer{nullptr};
@@ -536,11 +493,6 @@ private:
     win::shortcut_dialog* client_keys_dialog{nullptr};
     bool global_shortcuts_disabled_for_client{false};
 
-    win::space_areas areas;
-
-    // Array of the previous restricted areas that window cannot be moved into
-    std::vector<win::strut_rects> oldrestrictedmovearea;
-
     // array of previous sizes of xinerama screens
     std::vector<QRect> oldscreensizes;
 
@@ -554,11 +506,6 @@ private:
 private:
     friend bool performTransiencyCheck();
 };
-
-inline Toplevel* space::mostRecentlyActivatedClient() const
-{
-    return should_get_focus.size() > 0 ? should_get_focus.back() : active_client;
-}
 
 inline bool space::wasUserInteraction() const
 {

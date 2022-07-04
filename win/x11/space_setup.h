@@ -15,6 +15,7 @@
 #include "main.h"
 #include "utils/blocker.h"
 #include "win/desktop_space.h"
+#include "win/space_areas_helpers.h"
 
 #include <KStartupInfo>
 
@@ -95,7 +96,7 @@ void init_space(Space& space)
 
     // TODO: better value
     rootInfo->setActiveWindow(XCB_WINDOW_NONE);
-    space.focusToNull();
+    focus_to_null(space);
 
     if (!qApp->isSessionRestored())
         ++space.block_focus; // Because it will be set below
@@ -143,7 +144,7 @@ void init_space(Space& space)
         space.stacking_order->update_count();
 
         space.saveOldScreenSizes();
-        space.updateClientArea();
+        update_space_areas(space);
 
         // NETWM spec says we have to set it to (0,0) if we don't support it
         NETPoint* viewports = new NETPoint[vds->count()];
@@ -179,7 +180,7 @@ void init_space(Space& space)
         }
     }
     if (new_active_client != nullptr)
-        space.activateClient(new_active_client);
+        activate_window(space, new_active_client);
 }
 
 template<typename Space>

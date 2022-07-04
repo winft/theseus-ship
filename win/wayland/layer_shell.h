@@ -8,8 +8,10 @@
 #include "space.h"
 #include "window_release.h"
 
+#include "win/activation.h"
 #include "win/geo.h"
 #include "win/screen.h"
+#include "win/space_areas_helpers.h"
 #include "win/stacking.h"
 #include "win/transient.h"
 
@@ -241,7 +243,7 @@ void layer_surface_handle_keyboard_interactivity(Win* win)
     auto interactivity = win->layer_surface->keyboard_interactivity();
     if (interactivity != inter::OnDemand) {
         // With interactivity None or Exclusive just reset control.
-        win->space.activateNextClient(win);
+        activate_next_window(win->space, win);
     }
     kwinApp()->input->redirect->keyboard()->update();
 }
@@ -335,7 +337,7 @@ void process_layer_surface_commit(Win* win)
 
     // TODO(romangg): update client area also on size change?
     if (win->layer_surface->exclusive_zone() > 0) {
-        win->space.updateClientArea();
+        update_space_areas(win->space);
     }
 }
 

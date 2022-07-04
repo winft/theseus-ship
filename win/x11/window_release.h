@@ -10,6 +10,7 @@
 #include "utils/blocker.h"
 #include "win/input.h"
 #include "win/rules.h"
+#include "win/space_areas_helpers.h"
 #include "win/space_helpers.h"
 #include "win/window_release.h"
 
@@ -24,7 +25,7 @@ template<typename Space, typename Win>
 void remove_controlled_window_from_space(Space& space, Win* win)
 {
     if (win == space.active_popup_client) {
-        space.closeActivePopup();
+        close_active_popup(space);
     }
 
     if (space.user_actions_menu->isMenuClient(win)) {
@@ -64,13 +65,14 @@ void remove_controlled_window_from_space(Space& space, Win* win)
     if (win == space.last_active_client) {
         space.last_active_client = nullptr;
     }
-    if (win == space.delayfocus_client)
-        space.cancelDelayFocus();
+    if (win == space.delayfocus_client) {
+        cancel_delay_focus(space);
+    }
 
     Q_EMIT space.qobject->clientRemoved(win);
 
     space.stacking_order->update_count();
-    space.updateClientArea();
+    update_space_areas(space);
     space.updateTabbox();
 }
 

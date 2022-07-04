@@ -717,7 +717,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
             if (allow && win->isOnCurrentDesktop()) {
                 if (!is_special_window(win)) {
                     if (kwinApp()->options->focusPolicyIsReasonable() && wants_tab_focus(win)) {
-                        space.request_focus(win);
+                        request_focus(space, win);
                     }
                 }
             } else if (!session && !is_special_window(win)) {
@@ -804,7 +804,7 @@ xcb_timestamp_t read_user_time_map_timestamp(Win* win,
         // Otherwise, refuse activation of a window
         // from already running application if this application
         // is not the active one (unless focus stealing prevention is turned off).
-        auto act = dynamic_cast<Win*>(win->space.mostRecentlyActivatedClient());
+        auto act = dynamic_cast<Win*>(most_recently_activated_window(win->space));
         if (act != nullptr
             && !belong_to_same_application(act, win, same_client_check::relaxed_for_active)) {
             bool first_window = true;

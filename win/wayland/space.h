@@ -69,6 +69,10 @@ public:
     void handle_window_added(wayland::window* window);
     void handle_window_removed(wayland::window* window);
 
+    void update_space_area_from_windows(QRect const& desktop_area,
+                                        std::vector<QRect> const& screens_geos,
+                                        win::space_areas& areas) override;
+
     base::wayland::server* server;
 
     std::unique_ptr<Wrapland::Server::Compositor> compositor;
@@ -94,11 +98,6 @@ public:
     std::unique_ptr<wayland::xdg_activation<space>> activation;
 
     QVector<Wrapland::Server::PlasmaShellSurface*> plasma_shell_surfaces;
-
-protected:
-    void update_space_area_from_windows(QRect const& desktop_area,
-                                        std::vector<QRect> const& screens_geos,
-                                        win::space_areas& areas) override;
 
 private:
     void handle_x11_window_added(x11::window* window);

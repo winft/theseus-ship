@@ -304,13 +304,13 @@ bool space_event(Space& space, xcb_generic_event_t* event)
                     || currentInput->focus == XCB_INPUT_FOCUS_POINTER_ROOT
                     || lostFocusPointerToRoot)) {
                 // kWarning( 1212 ) << "X focus set to None/PointerRoot, reseting focus" ;
-                auto window = space.mostRecentlyActivatedClient();
+                auto window = most_recently_activated_window(space);
                 if (window != nullptr) {
-                    space.request_focus(window, false, true);
-                } else if (space.activateNextClient(nullptr)) {
+                    request_focus(space, window, false, true);
+                } else if (activate_next_window(space, nullptr)) {
                     ; // ok, activated
                 } else {
-                    space.focusToNull();
+                    focus_to_null(space);
                 }
             }
         }

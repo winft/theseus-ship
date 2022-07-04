@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "scene.h"
 #include "setup.h"
 #include "space.h"
+#include "space_areas_helpers.h"
 #include "space_helpers.h"
 #include "window_release.h"
 
@@ -162,7 +163,7 @@ bool internal_window::eventFilter(QObject* watched, QEvent* event)
         }
         if (pe->propertyName() == "kwin_windowType") {
             m_windowType = m_internalWindow->property("kwin_windowType").value<NET::WindowType>();
-            space.updateClientArea();
+            update_space_areas(space);
         }
     }
     return false;
@@ -457,7 +458,7 @@ void internal_window::destroyClient()
 
     remove_window_from_lists(space, this);
     space.stacking_order->update_count();
-    space.updateClientArea();
+    update_space_areas(space);
     Q_EMIT space.qobject->internalClientRemoved(this);
 
     if (deleted) {
@@ -627,7 +628,7 @@ void internal_window::markAsMapped()
     }
 
     space.stacking_order->update_count();
-    space.updateClientArea();
+    update_space_areas(space);
 
     Q_EMIT space.qobject->internalClientAdded(this);
 }

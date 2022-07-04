@@ -383,7 +383,7 @@ void GlobalShortcutsTest::testX11ClientShortcut()
     // it's delayed
     QCoreApplication::processEvents();
 
-    Test::app()->workspace->activateClient(nullptr);
+    win::activate_window(*Test::app()->workspace, nullptr);
     QVERIFY(!Test::app()->workspace->active_client);
     QVERIFY(!client->control->active());
 
@@ -422,7 +422,7 @@ void GlobalShortcutsTest::testWaylandClientShortcut()
     QVERIFY(!Test::app()->workspace->shortcutAvailable(seq));
     QCOMPARE(win::caption(client), QStringLiteral(" {Meta+Shift+Y}"));
 
-    Test::app()->workspace->activateClient(nullptr);
+    win::activate_window(*Test::app()->workspace, nullptr);
     QVERIFY(!Test::app()->workspace->active_client);
     QVERIFY(!client->control->active());
 

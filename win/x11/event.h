@@ -118,7 +118,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
         }
         if ((dirtyProperties & NET::WMStrut) != 0
             || (dirtyProperties2 & NET::WM2ExtendedStrut) != 0) {
-            win->space.updateClientArea();
+            update_space_areas(win->space);
         }
         if ((dirtyProperties & NET::WMIcon) != 0) {
             get_icons(win);
@@ -355,7 +355,7 @@ bool map_request_event(Win* win, xcb_map_request_event_t* e)
     }
     if (!win->isOnCurrentDesktop()) {
         if (win->space.allowClientActivation(win)) {
-            win->space.activateClient(win);
+            activate_window(win->space, win);
         } else {
             win::set_demands_attention(win, true);
         }
@@ -602,7 +602,7 @@ void leave_notify_event(Win* win, xcb_leave_notify_event_t* e)
         }
         if (kwinApp()->options->focusPolicy() == base::options::FocusStrictlyUnderMouse
             && win->control->active() && lostMouse) {
-            win->space.requestDelayFocus(nullptr);
+            request_delay_focus(win->space, nullptr);
         }
         return;
     }

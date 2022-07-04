@@ -13,6 +13,8 @@
 #include "stacking_order.h"
 #include "util.h"
 #include "x11/group.h"
+#include "x11/netinfo.h"
+#include "x11/tool_windows.h"
 
 // Required for casts between Toplevel and window in some template functions.
 // TODO(romangg): Remove these casts and this include to make the functions truly generic.

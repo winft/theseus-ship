@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/platform.h"
 #include "debug/support_info.h"
 #include "main.h"
+#include "win/activation.h"
 #include "win/move.h"
 #include "win/screen.h"
 #include "win/virtual_desktops.h"
@@ -641,7 +642,7 @@ public:
 
     void setActiveClient(window* win) override
     {
-        ref_space->activateClient(win->client());
+        win::activate_window(*ref_space, win->client());
     }
 
     QSize desktopGridSize() const override

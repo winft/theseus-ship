@@ -8,6 +8,7 @@
 #include "base/logging.h"
 #include "base/wayland/server.h"
 #include "wayland_logging.h"
+#include "win/activation.h"
 #include "win/stacking.h"
 
 #include <inttypes.h>
@@ -155,7 +156,7 @@ void xdg_activation_activate(Space* space, Window* win, std::string const& token
     }
 
     space->activation->clear();
-    space->activateClient(win);
+    activate_window(*space, win);
 }
 
 template<typename Space>

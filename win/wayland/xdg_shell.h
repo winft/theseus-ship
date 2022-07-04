@@ -19,6 +19,7 @@
 #include "win/input.h"
 #include "win/meta.h"
 #include "win/setup.h"
+#include "win/space_areas_helpers.h"
 #include "win/transient.h"
 
 #include <KScreenLocker/KsldApp>
@@ -469,7 +470,7 @@ void install_plasma_shell_surface(Win* win, Wrapland::Server::PlasmaShellSurface
                 || type == NET::CriticalNotification) {
                 set_on_all_desktops(win, true);
             }
-            win->space.updateClientArea();
+            win::update_space_areas(win->space);
         }
     };
 
@@ -485,7 +486,7 @@ void install_plasma_shell_surface(Win* win, Wrapland::Server::PlasmaShellSurface
     QObject::connect(surface, &PSS::roleChanged, win, update_role);
     QObject::connect(surface, &PSS::panelBehaviorChanged, win, [win] {
         update_screen_edge(win);
-        win->space.updateClientArea();
+        win::update_space_areas(win->space);
     });
     QObject::connect(win, &window::frame_geometry_changed, win, [win] { update_screen_edge(win); });
 

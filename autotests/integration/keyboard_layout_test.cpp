@@ -12,6 +12,7 @@
 #include "input/keyboard_redirect.h"
 #include "input/xkb/helpers.h"
 #include "input/xkb/layout_manager.h"
+#include "win/activation.h"
 #include "win/space.h"
 #include "win/virtual_desktops.h"
 #include "win/wayland/window.h"
@@ -757,9 +758,9 @@ void keyboard_layout_test::test_window_policy()
     QCOMPARE(xkb->layout_name(), "German (Neo 2)");
 
     // Activate other window.
-    Test::app()->workspace->activateClient(c1);
+    win::activate_window(*Test::app()->workspace, c1);
     QCOMPARE(xkb->layout_name(), "German");
-    Test::app()->workspace->activateClient(c2);
+    win::activate_window(*Test::app()->workspace, c2);
     QCOMPARE(xkb->layout_name(), "German (Neo 2)");
 }
 
@@ -802,19 +803,19 @@ void keyboard_layout_test::test_application_policy()
     reset_layouts();
 
     // Resetting layouts should trigger layout application for current client.
-    Test::app()->workspace->activateClient(c1);
-    Test::app()->workspace->activateClient(c2);
+    win::activate_window(*Test::app()->workspace, c1);
+    win::activate_window(*Test::app()->workspace, c2);
     QVERIFY(spies->v1.layout_changed.wait());
     QCOMPARE(spies->v1.layout_changed.count(), 1);
     QCOMPARE(xkb->layout_name(), "German (Neo 2)");
 
     // Activate other window.
-    Test::app()->workspace->activateClient(c1);
+    win::activate_window(*Test::app()->workspace, c1);
 
     // It is the same application and should not switch the layout.
     QVERIFY(!spies->v1.layout_changed.wait(1000));
     QCOMPARE(xkb->layout_name(), "German (Neo 2)");
-    Test::app()->workspace->activateClient(c2);
+    win::activate_window(*Test::app()->workspace, c2);
     QVERIFY(!spies->v1.layout_changed.wait(1000));
     QCOMPARE(xkb->layout_name(), "German (Neo 2)");
 

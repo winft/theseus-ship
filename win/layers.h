@@ -19,6 +19,17 @@ class Toplevel;
 namespace win
 {
 
+/**
+ * Window that was activated, but it's not yet really active_client, because
+ * we didn't process yet the matching FocusIn event. Used mostly in focus
+ * stealing prevention code.
+ */
+template<typename Space>
+Toplevel* most_recently_activated_window(Space const& space)
+{
+    return space.should_get_focus.size() > 0 ? space.should_get_focus.back() : space.active_client;
+}
+
 template<typename Win>
 bool is_active_fullscreen(Win const* win)
 {
@@ -27,7 +38,7 @@ bool is_active_fullscreen(Win const* win)
     }
 
     // Instead of activeClient() - avoids flicker.
-    auto const ac = win->space.mostRecentlyActivatedClient();
+    auto const ac = most_recently_activated_window(win->space);
 
     // According to NETWM spec implementation notes suggests "focused windows having state
     // _NET_WM_STATE_FULLSCREEN" to be on the highest layer. Also take the screen into account.

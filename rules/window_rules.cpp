@@ -308,8 +308,10 @@ void Toplevel::applyWindowRules()
 
     // FSP
     // AcceptFocus :
-    if (space.mostRecentlyActivatedClient() == this && !client_rules.checkAcceptFocus(true))
-        space.activateNextClient(this);
+    if (win::most_recently_activated_window(space) == this
+        && !client_rules.checkAcceptFocus(true)) {
+        win::activate_next_window(space, this);
+    }
 
     // Closeable
     if (auto s = size(); s != size() && s.isValid()) {

@@ -27,6 +27,7 @@
 #include "win/deco/window.h"
 #include "win/layers.h"
 #include "win/remnant.h"
+#include "win/space_areas_helpers.h"
 #include "win/stacking.h"
 #include "win/stacking_order.h"
 
@@ -768,7 +769,7 @@ void window::do_set_geometry(QRect const& frame_geo)
 
     // Must be done after signal is emitted so the screen margins are update.
     if (hasStrut()) {
-        space.updateClientArea();
+        update_space_areas(space);
     }
 }
 

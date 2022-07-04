@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "lib/app.h"
 
 #include "base/wayland/server.h"
+#include "win/activation.h"
 #include "win/space.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
@@ -146,7 +147,7 @@ void XwaylandSelectionsTest::testSync()
     }
     QVERIFY(copyClient);
     if (Test::app()->workspace->active_client != copyClient) {
-        Test::app()->workspace->activateClient(copyClient);
+        win::activate_window(*Test::app()->workspace, copyClient);
     }
     QCOMPARE(Test::app()->workspace->active_client, copyClient);
     if (copyPlatform == QLatin1String("xcb")) {
@@ -190,7 +191,7 @@ void XwaylandSelectionsTest::testSync()
         QSignalSpy clientActivatedSpy(Test::app()->workspace->qobject.get(),
                                       &win::space::qobject_t::clientActivated);
         QVERIFY(clientActivatedSpy.isValid());
-        Test::app()->workspace->activateClient(pasteClient);
+        win::activate_window(*Test::app()->workspace, pasteClient);
         QVERIFY(clientActivatedSpy.wait());
     }
     QTRY_COMPARE(Test::app()->workspace->active_client, pasteClient);
