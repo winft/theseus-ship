@@ -18,6 +18,7 @@
 
 #include "base/x11/xcb/qt_types.h"
 #include "win/activation.h"
+#include "win/desktop_space.h"
 #include "win/input.h"
 #include "win/meta.h"
 #include "win/space.h"

@@ -5,17 +5,12 @@
 */
 #pragma once
 
-#include "control.h"
 #include "controlling.h"
 #include "focus_chain.h"
 #include "focus_chain_helpers.h"
 #include "geo.h"
 #include "layers.h"
-#include "meta.h"
-#include "net.h"
-#include "space.h"
 #include "stacking_order.h"
-#include "transient.h"
 #include "util.h"
 #include "x11/group.h"
 
@@ -119,32 +114,6 @@ Toplevel* top_client_on_desktop(Space* space,
             }
         }
     }
-    return nullptr;
-}
-
-template<typename Space>
-Toplevel* find_desktop(Space* space, bool topmost, int desktop)
-{
-    // TODO(fsorr): use C++20 std::ranges::reverse_view
-    auto const& list = space->stacking_order->stack;
-    auto is_desktop = [desktop](auto window) {
-        return window->control && window->isOnDesktop(desktop) && win::is_desktop(window)
-            && window->isShown();
-    };
-
-    if (topmost) {
-        auto it = std::find_if(list.rbegin(), list.rend(), is_desktop);
-        if (it != list.rend()) {
-            return *it;
-        }
-    } else {
-        // bottom-most
-        auto it = std::find_if(list.begin(), list.end(), is_desktop);
-        if (it != list.end()) {
-            return *it;
-        }
-    }
-
     return nullptr;
 }
 
@@ -315,56 +284,6 @@ void raise_or_lower_client(Space* space, Window* window)
     }
 }
 
-template<typename Chain, typename Win>
-void focus_chain_move_window_after_in_chain(Chain& chain, Win* window, Win* reference)
-{
-    if (!contains(chain, reference)) {
-        // TODO(romangg): better assert?
-        return;
-    }
-
-    remove_all(chain, window);
-
-    if (belong_to_same_client(reference, window)) {
-        // Simple case, just put it directly behind the reference window of the same client.
-        // TODO(romangg): can this special case be explained better?
-        auto it = find(chain, reference);
-        chain.insert(it, window);
-        return;
-    }
-
-    for (auto it = chain.rbegin(); it != chain.rend(); ++it) {
-        if (belong_to_same_client(reference, *it)) {
-            chain.insert(std::next(it).base(), window);
-            return;
-        }
-    }
-}
-
-/**
- * @brief Moves @p window behind the @p reference in all focus chains.
- *
- * @param client The Client to move in the chains
- * @param reference The Client behind which the @p client should be moved
- * @return void
- */
-template<typename Manager>
-void focus_chain_move_window_after(Manager& manager, Toplevel* window, Toplevel* reference)
-{
-    if (!wants_tab_focus(window)) {
-        return;
-    }
-
-    for (auto& [key, chain] : manager.chains.desktops) {
-        if (!window->isOnDesktop(key)) {
-            continue;
-        }
-        focus_chain_move_window_after_in_chain(chain, window, reference);
-    }
-
-    focus_chain_move_window_after_in_chain(manager.chains.latest_use, window, reference);
-}
-
 template<typename Space, typename Window>
 void restack(Space* space, Window* window, Toplevel* under, bool force = false)
 {
@@ -415,205 +334,6 @@ void auto_raise(Win* win)
 {
     raise_window(&win->space, win);
     win->control->cancel_auto_raise();
-}
-
-template<typename Win>
-void set_keep_below(Win* win, bool keep);
-
-template<typename Win>
-void set_keep_above(Win* win, bool keep)
-{
-    keep = win->control->rules().checkKeepAbove(keep);
-    if (keep && !win->control->rules().checkKeepBelow(false)) {
-        set_keep_below(win, false);
-    }
-    if (keep == win->control->keep_above()) {
-        // force hint change if different
-        if (win->info && bool(win->info->state() & NET::KeepAbove) != keep) {
-            win->info->setState(keep ? NET::KeepAbove : NET::States(), NET::KeepAbove);
-        }
-        return;
-    }
-    win->control->set_keep_above(keep);
-    if (win->info) {
-        win->info->setState(keep ? NET::KeepAbove : NET::States(), NET::KeepAbove);
-    }
-    update_layer(win);
-    win->updateWindowRules(Rules::Above);
-
-    win->doSetKeepAbove();
-    Q_EMIT win->keepAboveChanged(keep);
-}
-
-template<typename Win>
-void set_keep_below(Win* win, bool keep)
-{
-    keep = win->control->rules().checkKeepBelow(keep);
-    if (keep && !win->control->rules().checkKeepAbove(false)) {
-        set_keep_above(win, false);
-    }
-    if (keep == win->control->keep_below()) {
-        // force hint change if different
-        if (win->info && bool(win->info->state() & NET::KeepBelow) != keep)
-            win->info->setState(keep ? NET::KeepBelow : NET::States(), NET::KeepBelow);
-        return;
-    }
-    win->control->set_keep_below(keep);
-    if (win->info) {
-        win->info->setState(keep ? NET::KeepBelow : NET::States(), NET::KeepBelow);
-    }
-    update_layer(win);
-    win->updateWindowRules(Rules::Below);
-
-    win->doSetKeepBelow();
-    Q_EMIT win->keepBelowChanged(keep);
-}
-
-/**
- * Sets the client's active state to \a act.
- *
- * This function does only change the visual appearance of the client,
- * it does not change the focus setting. Use
- * Workspace::activateClient() or Workspace::requestFocus() instead.
- *
- * If a client receives or looses the focus, it calls setActive() on
- * its own.
- */
-template<typename Win>
-void set_active(Win* win, bool active)
-{
-    if (win->control->active() == active) {
-        return;
-    }
-    win->control->set_active(active);
-
-    auto const ruledOpacity = active
-        ? win->control->rules().checkOpacityActive(qRound(win->opacity() * 100.0))
-        : win->control->rules().checkOpacityInactive(qRound(win->opacity() * 100.0));
-    win->setOpacity(ruledOpacity / 100.0);
-
-    win->space.setActiveClient(active ? win : nullptr);
-
-    if (!active) {
-        win->control->cancel_auto_raise();
-    }
-
-    blocker block(win->space.stacking_order);
-
-    // active windows may get different layer
-    update_layer(win);
-
-    auto leads = win->transient()->leads();
-    for (auto lead : leads) {
-        if (lead->remnant) {
-            continue;
-        }
-        if (lead->control->fullscreen()) {
-            // Fullscreens go high even if their transient is active.
-            update_layer(lead);
-        }
-    }
-
-    win->doSetActive();
-    Q_EMIT win->activeChanged();
-    win->control->update_mouse_grab();
-}
-
-template<typename Win>
-void set_minimized(Win* win, bool set, bool avoid_animation = false)
-{
-    if (set) {
-        if (!win->isMinimizable() || win->control->minimized())
-            return;
-
-        win->control->set_minimized(true);
-        win->doMinimize();
-
-        win->updateWindowRules(Rules::Minimize);
-        win->space.render.addRepaint(visible_rect(win));
-
-        // TODO: merge signal with s_minimized
-        Q_EMIT win->clientMinimized(win, !avoid_animation);
-        Q_EMIT win->minimizedChanged();
-    } else {
-        if (!win->control->minimized()) {
-            return;
-        }
-        if (win->control->rules().checkMinimize(false)) {
-            return;
-        }
-
-        win->control->set_minimized(false);
-        win->doMinimize();
-
-        win->updateWindowRules(Rules::Minimize);
-        Q_EMIT win->clientUnminimized(win, !avoid_animation);
-        Q_EMIT win->minimizedChanged();
-    }
-}
-
-// check whether a transient should be actually kept above its mainwindow
-// there may be some special cases where this rule shouldn't be enfored
-template<typename Win1, typename Win2>
-bool keep_transient_above(Win1 const* mainwindow, Win2 const* transient)
-{
-    if (transient->transient()->annexed) {
-        return true;
-    }
-    // #93832 - don't keep splashscreens above dialogs
-    if (win::is_splash(transient) && win::is_dialog(mainwindow))
-        return false;
-    // This is rather a hack for #76026. Don't keep non-modal dialogs above
-    // the mainwindow, but only if they're group transient (since only such dialogs
-    // have taskbar entry in Kicker). A proper way of doing this (both kwin and kicker)
-    // needs to be found.
-    if (win::is_dialog(transient) && !transient->transient()->modal()
-        && transient->groupTransient())
-        return false;
-    // #63223 - don't keep transients above docks, because the dock is kept high,
-    // and e.g. dialogs for them would be too high too
-    // ignore this if the transient has a placement hint which indicates it should go above it's
-    // parent
-    if (win::is_dock(mainwindow))
-        return false;
-    return true;
-}
-
-template<typename Win1, typename Win2>
-bool keep_deleted_transient_above(Win1 const* mainWindow, Win2 const* transient)
-{
-    assert(transient->remnant);
-
-    // #93832 - Don't keep splashscreens above dialogs.
-    if (win::is_splash(transient) && win::is_dialog(mainWindow)) {
-        return false;
-    }
-
-    if (transient->remnant->data.was_x11_client) {
-        // If a group transient was active, we should keep it above no matter
-        // what, because at the time when the transient was closed, it was above
-        // the main window.
-        if (transient->remnant->data.was_group_transient && transient->remnant->data.was_active) {
-            return true;
-        }
-
-        // This is rather a hack for #76026. Don't keep non-modal dialogs above
-        // the mainwindow, but only if they're group transient (since only such
-        // dialogs have taskbar entry in Kicker). A proper way of doing this
-        // (both kwin and kicker) needs to be found.
-        if (transient->remnant->data.was_group_transient && win::is_dialog(transient)
-            && !transient->transient()->modal()) {
-            return false;
-        }
-
-        // #63223 - Don't keep transients above docks, because the dock is kept
-        // high, and e.g. dialogs for them would be too high too.
-        if (win::is_dock(mainWindow)) {
-            return false;
-        }
-    }
-
-    return true;
 }
 
 /**

@@ -25,8 +25,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "render/effect_loader.h"
 #include "render/effects.h"
 #include "scripting/effect.h"
+#include "win/actions.h"
 #include "win/space.h"
-#include "win/stacking.h"
 #include "win/virtual_desktops.h"
 
 #include <QJSValue>

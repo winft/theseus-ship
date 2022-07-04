@@ -120,4 +120,11 @@ bool is_dnd_icon(Win* win)
     return win->windowType() == NET::DNDIcon;
 }
 
+template<typename Win>
+bool wants_tab_focus(Win* win)
+{
+    auto const suitable_type = is_normal(win) || is_dialog(win);
+    return suitable_type && win->wantsInput();
+}
+
 }

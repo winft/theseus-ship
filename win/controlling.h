@@ -15,13 +15,6 @@
 namespace KWin::win
 {
 
-template<typename Win>
-bool wants_tab_focus(Win* win)
-{
-    auto const suitable_type = is_normal(win) || is_dialog(win);
-    return suitable_type && win->wantsInput();
-}
-
 /**
  * @brief Updates the position of the @p window according to the requested @p change in the
  * focus chain.

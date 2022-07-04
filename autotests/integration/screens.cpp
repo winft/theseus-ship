@@ -26,9 +26,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/cursor.h"
 #include "lib/app.h"
 
+#include "win/activation.h"
 #include "win/move.h"
 #include "win/screen.h"
-#include "win/stacking.h"
 #include "win/wayland/space.h"
 
 #include <Wrapland/Client/compositor.h>

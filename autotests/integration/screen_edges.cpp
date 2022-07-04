@@ -25,9 +25,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/cursor.h"
 #include "input/gestures.h"
 #include "toplevel.h"
+#include "win/actions.h"
+#include "win/activation.h"
 #include "win/screen_edges.h"
 #include "win/space.h"
-#include "win/stacking.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
 

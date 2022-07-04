@@ -14,6 +14,7 @@
 #include "base/x11/user_interaction_filter.h"
 #include "main.h"
 #include "utils/blocker.h"
+#include "win/desktop_space.h"
 
 #include <KStartupInfo>
 

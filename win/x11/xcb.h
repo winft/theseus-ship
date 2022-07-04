@@ -6,6 +6,7 @@
 #pragma once
 
 #include "base/x11/xcb/property.h"
+#include "win/actions.h"
 
 namespace KWin::win::x11
 {

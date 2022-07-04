@@ -10,6 +10,7 @@
 #include "screen_edges.h"
 #include "stacking.h"
 #include "transient.h"
+#include "transient_stacking.h"
 #include "x11/group.h"
 #include "x11/hide.h"
 #include "x11/netinfo.h"

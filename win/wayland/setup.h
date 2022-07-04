@@ -5,12 +5,12 @@
 */
 #pragma once
 
+#include "win/actions.h"
 #include "win/activation.h"
 #include "win/control.h"
 #include "win/meta.h"
 #include "win/move.h"
 #include "win/screen.h"
-#include "win/stacking.h"
 #include "win/types.h"
 #include "win/virtual_desktops.h"
 
