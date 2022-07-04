@@ -31,6 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/virtual_desktops.h"
 #include "win/x11/event.h"
 #include "win/x11/geo.h"
+#include "win/x11/stacking.h"
 #include "win/x11/window.h"
 
 #include <QDebug>

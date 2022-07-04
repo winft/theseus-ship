@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "win/activation.h"
 #include "win/control.h"
 #include "win/meta.h"
 #include "win/move.h"

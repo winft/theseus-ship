@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "control.h"
 #include "event.h"
 #include "unmanaged.h"
 

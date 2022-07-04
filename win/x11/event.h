@@ -5,14 +5,19 @@
 */
 #pragma once
 
+#include "actions.h"
+#include "activation.h"
 #include "client.h"
-#include "control.h"
 #include "geo.h"
 #include "meta.h"
+#include "stacking.h"
+#include "startup_info.h"
 #include "transient.h"
+#include "user_time.h"
 #include "window_release.h"
 
 #include "base/x11/xcb/qt_types.h"
+#include "win/activation.h"
 #include "win/input.h"
 #include "win/meta.h"
 #include "win/space.h"

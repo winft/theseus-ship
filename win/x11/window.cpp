@@ -5,6 +5,7 @@
 */
 #include "window.h"
 
+#include "activation.h"
 #include "client.h"
 #include "deco.h"
 #include "fullscreen.h"
@@ -15,11 +16,13 @@
 #include "transient.h"
 #include "unmanaged.h"
 #include "window_release.h"
+#include "xcb.h"
 
 #include "base/x11/grabs.h"
 #include "render/x11/buffer.h"
 #include "render/x11/shadow.h"
 #include "rules/rules.h"
+#include "utils/geo.h"
 #include "win/deco.h"
 #include "win/deco/window.h"
 #include "win/layers.h"

@@ -6,6 +6,7 @@
 #pragma once
 
 #include "color_mapper.h"
+#include "control.h"
 #include "moving_window_filter.h"
 #include "space_event.h"
 #include "sync_alarm_filter.h"

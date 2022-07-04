@@ -8,6 +8,7 @@
 #include "base/x11/event_filter.h"
 
 #include "win/x11/event.h"
+#include "win/x11/stacking.h"
 #include "win/x11/window.h"
 
 #include <KKeyServer>

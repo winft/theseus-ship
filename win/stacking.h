@@ -520,25 +520,6 @@ void set_active(Win* win, bool active)
 }
 
 template<typename Win>
-void set_demands_attention(Win* win, bool demand)
-{
-    if (win->control->active()) {
-        demand = false;
-    }
-    if (win->control->demands_attention() == demand) {
-        return;
-    }
-    win->control->set_demands_attention(demand);
-
-    if (win->info) {
-        win->info->setState(demand ? NET::DemandsAttention : NET::States(), NET::DemandsAttention);
-    }
-
-    win->space.clientAttentionChanged(win, demand);
-    Q_EMIT win->demandsAttentionChanged();
-}
-
-template<typename Win>
 void set_minimized(Win* win, bool set, bool avoid_animation = false)
 {
     if (set) {

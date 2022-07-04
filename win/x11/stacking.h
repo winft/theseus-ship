@@ -9,11 +9,13 @@
 #include "hide.h"
 #include "netinfo.h"
 #include "window.h"
+#include "window_find.h"
 
 #include "base/output_helpers.h"
 #include "base/platform.h"
 #include "main.h"
 #include "toplevel.h"
+#include "win/activation.h"
 
 #include <deque>
 
@@ -155,6 +157,197 @@ void propagate_clients(Space& space, bool propagate_new_clients)
               order.manual_overlays.end(),
               std::back_inserter(stacked_clients));
     rootInfo()->setClientListStacking(stacked_clients.data(), stacked_clients.size());
+}
+
+template<typename Space, typename Win>
+void lower_client_within_application(Space* space, Win* window)
+{
+    if (!window) {
+        return;
+    }
+
+    window->control->cancel_auto_raise();
+
+    blocker block(space->stacking_order);
+
+    remove_all(space->stacking_order->pre_stack, window);
+
+    bool lowered = false;
+    // first try to put it below the bottom-most window of the application
+    for (auto it = space->stacking_order->pre_stack.begin();
+         it != space->stacking_order->pre_stack.end();
+         ++it) {
+        auto const& client = *it;
+        if (!client) {
+            continue;
+        }
+        if (win::belong_to_same_client(client, window)) {
+            space->stacking_order->pre_stack.insert(it, window);
+            lowered = true;
+            break;
+        }
+    }
+    if (!lowered)
+        space->stacking_order->pre_stack.push_front(window);
+    // ignore mainwindows
+}
+
+template<typename Space, typename Win>
+void raise_client_within_application(Space* space, Win* window)
+{
+    if (!window) {
+        return;
+    }
+
+    window->control->cancel_auto_raise();
+
+    blocker block(space->stacking_order);
+    // ignore mainwindows
+
+    // first try to put it above the top-most window of the application
+    for (int i = space->stacking_order->pre_stack.size() - 1; i > -1; --i) {
+        auto other = space->stacking_order->pre_stack.at(i);
+        if (!other) {
+            continue;
+        }
+        if (other == window) {
+            // Don't lower it just because it asked to be raised.
+            return;
+        }
+        if (belong_to_same_client(other, window)) {
+            remove_all(space->stacking_order->pre_stack, window);
+            auto it = find(space->stacking_order->pre_stack, other);
+            assert(it != space->stacking_order->pre_stack.end());
+            // Insert after the found one.
+            space->stacking_order->pre_stack.insert(it + 1, window);
+            break;
+        }
+    }
+}
+
+template<typename Space, typename Win>
+void raise_client_request(Space* space,
+                          Win* c,
+                          NET::RequestSource src = NET::FromApplication,
+                          xcb_timestamp_t timestamp = 0)
+{
+    if (src == NET::FromTool || space->allowFullClientRaising(c, timestamp)) {
+        raise_window(space, c);
+    } else {
+        raise_client_within_application(space, c);
+        set_demands_attention(c, true);
+    }
+}
+
+template<typename Space, typename Win>
+void lower_client_request(Space* space,
+                          Win* c,
+                          NET::RequestSource src,
+                          [[maybe_unused]] xcb_timestamp_t /*timestamp*/)
+{
+    // If the client has support for all this focus stealing prevention stuff,
+    // do only lowering within the application, as that's the more logical
+    // variant of lowering when application requests it.
+    // No demanding of attention here of course.
+    if (src == NET::FromTool || !has_user_time_support(c)) {
+        lower_window(space, c);
+    } else {
+        lower_client_within_application(space, c);
+    }
+}
+
+template<typename Win>
+void restack_window(Win* win,
+                    xcb_window_t above,
+                    int detail,
+                    NET::RequestSource src,
+                    xcb_timestamp_t timestamp,
+                    bool send_event = false)
+{
+    Win* other = nullptr;
+    if (detail == XCB_STACK_MODE_OPPOSITE) {
+        other
+            = find_controlled_window<win::x11::window>(win->space, predicate_match::window, above);
+        if (!other) {
+            raise_or_lower_client(&win->space, win);
+            return;
+        }
+
+        auto it = win->space.stacking_order->stack.cbegin();
+        auto end = win->space.stacking_order->stack.cend();
+
+        while (it != end) {
+            if (*it == win) {
+                detail = XCB_STACK_MODE_ABOVE;
+                break;
+            } else if (*it == other) {
+                detail = XCB_STACK_MODE_BELOW;
+                break;
+            }
+            ++it;
+        }
+    } else if (detail == XCB_STACK_MODE_TOP_IF) {
+        other
+            = find_controlled_window<win::x11::window>(win->space, predicate_match::window, above);
+        if (other && other->frameGeometry().intersects(win->frameGeometry())) {
+            raise_client_request(&win->space, win, src, timestamp);
+        }
+        return;
+    } else if (detail == XCB_STACK_MODE_BOTTOM_IF) {
+        other
+            = find_controlled_window<win::x11::window>(win->space, predicate_match::window, above);
+        if (other && other->frameGeometry().intersects(win->frameGeometry())) {
+            lower_client_request(&win->space, win, src, timestamp);
+        }
+        return;
+    }
+
+    if (!other)
+        other
+            = find_controlled_window<win::x11::window>(win->space, predicate_match::window, above);
+
+    if (other && detail == XCB_STACK_MODE_ABOVE) {
+        auto it = win->space.stacking_order->stack.cend();
+        auto begin = win->space.stacking_order->stack.cbegin();
+
+        while (--it != begin) {
+            if (*it == other) {
+                // the other one is top on stack
+                // invalidate and force
+                it = begin;
+                src = NET::FromTool;
+                break;
+            }
+            auto c = qobject_cast<Win*>(*it);
+
+            if (!c
+                || !(is_normal(*it) && c->isShown() && (*it)->isOnCurrentDesktop()
+                     && on_screen(*it, win->central_output))) {
+                continue;
+            }
+
+            if (*(it - 1) == other)
+                break; // "it" is the one above the target one, stack below "it"
+        }
+
+        if (it != begin && (*(it - 1) == other)) {
+            other = qobject_cast<Win*>(*it);
+        } else {
+            other = nullptr;
+        }
+    }
+
+    if (other) {
+        restack(&win->space, win, other);
+    } else if (detail == XCB_STACK_MODE_BELOW) {
+        lower_client_request(&win->space, win, src, timestamp);
+    } else if (detail == XCB_STACK_MODE_ABOVE) {
+        raise_client_request(&win->space, win, src, timestamp);
+    }
+
+    if (send_event) {
+        send_synthetic_configure_notify(win, frame_to_client_rect(win, win->frameGeometry()));
+    }
 }
 
 }

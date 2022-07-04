@@ -8,6 +8,7 @@
 #include "space.h"
 
 #include "toplevel.h"
+#include "win/activation.h"
 #include "win/controlling.h"
 #include "win/meta.h"
 #include "win/screen.h"

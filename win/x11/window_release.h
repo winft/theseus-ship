@@ -8,6 +8,7 @@
 #include "base/x11/grabs.h"
 #include "toplevel.h"
 #include "utils/blocker.h"
+#include "win/input.h"
 #include "win/rules.h"
 #include "win/space_helpers.h"
 #include "win/window_release.h"

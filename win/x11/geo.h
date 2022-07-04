@@ -5,7 +5,6 @@
 */
 #pragma once
 
-#include "control.h"
 #include "scene.h"
 
 #include "win/setup.h"
