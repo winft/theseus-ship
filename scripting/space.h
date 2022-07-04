@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/output_helpers.h"
 #include "base/platform.h"
+#include "debug/support_info.h"
 #include "main.h"
 #include "win/move.h"
 #include "win/screen.h"
@@ -826,7 +827,7 @@ protected:
 
     QString supportInformation() const override
     {
-        return ref_space->supportInformation();
+        return debug::get_support_info(*ref_space);
     }
 
     window* get_client_impl(qulonglong windowId) override

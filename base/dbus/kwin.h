@@ -6,6 +6,7 @@
 */
 #pragma once
 
+#include "debug/support_info.h"
 #include "input/platform.h"
 #include "main.h"
 #include "toplevel.h"
@@ -142,7 +143,7 @@ public:
 
     QString support_information_impl() override
     {
-        return space.supportInformation();
+        return debug::get_support_info(space);
     }
 
     int current_desktop_impl() override

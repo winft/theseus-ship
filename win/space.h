@@ -353,9 +353,6 @@ public:
 
     win::session_info* takeSessionInfo(win::x11::window*);
 
-    // D-Bus interface
-    QString supportInformation() const;
-
     void setCurrentScreen(base::output const& output);
 
     void setShowingDesktop(bool showing);
