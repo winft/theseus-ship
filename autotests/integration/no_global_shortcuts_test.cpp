@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/xkb/helpers.h"
 #include "win/screen_edges.h"
 #include "win/space.h"
+#include "win/space_reconfigure.h"
 
 #include <KConfigGroup>
 #include <KGlobalAccel>
@@ -204,7 +205,7 @@ void NoGlobalShortcutsTest::testTrigger()
     group.writeEntry("Shift", shiftConfig);
     group.writeEntry("Control", controlConfig);
     group.sync();
-    Test::app()->workspace->slotReconfigure();
+    win::space_reconfigure(*Test::app()->workspace);
 
     // configured shortcut should trigger
     quint32 timestamp = 1;

@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/move.h"
 #include "win/net.h"
 #include "win/space.h"
+#include "win/space_reconfigure.h"
 
 #include <QPainter>
 #include <QRasterWindow>
@@ -618,7 +619,7 @@ void InternalWindowTest::testModifierClickUnrestrictedMove()
     group.writeEntry("CommandAll2", "Move");
     group.writeEntry("CommandAll3", "Move");
     group.sync();
-    Test::app()->workspace->slotReconfigure();
+    win::space_reconfigure(*Test::app()->workspace);
     QCOMPARE(kwinApp()->options->commandAllModifier(), Qt::MetaModifier);
     QCOMPARE(kwinApp()->options->commandAll1(), base::options::MouseUnrestrictedMove);
     QCOMPARE(kwinApp()->options->commandAll2(), base::options::MouseUnrestrictedMove);
@@ -659,7 +660,7 @@ void InternalWindowTest::testModifierScroll()
     group.writeEntry("CommandAllKey", "Meta");
     group.writeEntry("CommandAllWheel", "change opacity");
     group.sync();
-    Test::app()->workspace->slotReconfigure();
+    win::space_reconfigure(*Test::app()->workspace);
 
     // move cursor on window
     input::get_cursor()->set_pos(internalClient->frameGeometry().center());

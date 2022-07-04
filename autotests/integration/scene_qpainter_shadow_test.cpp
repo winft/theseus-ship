@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "shadow.h"
 #include "win/deco.h"
 #include "win/space.h"
+#include "win/space_reconfigure.h"
 
 #include <algorithm>
 #include <cmath>
@@ -154,7 +155,7 @@ void SceneQPainterShadowTest::initTestCase()
     KConfigGroup group = kwinApp()->config()->group("org.kde.kdecoration2");
     group.writeEntry("library", "org.kde.test.fakedecowithshadows");
     group.sync();
-    Test::app()->workspace->slotReconfigure();
+    win::space_reconfigure(*Test::app()->workspace);
 }
 
 void SceneQPainterShadowTest::cleanup()

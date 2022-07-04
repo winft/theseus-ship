@@ -211,6 +211,8 @@ public:
 
     QPoint focusMousePos;
 
+    // Timer to collect requests for 'reconfigure'
+    QTimer reconfigureTimer;
     QTimer updateToolWindowsTimer;
 
     explicit space(render::compositor& render);
@@ -464,16 +466,12 @@ public:
     void slotWindowToDesktopUp();
     void slotWindowToDesktopDown();
 
-    void slotReconfigure();
-
     void slotKillWindow();
 
     void slotSetupWindowShortcut();
     void setupWindowShortcutDone(bool);
 
     void updateClientArea();
-
-    void reconfigure();
 
 protected:
     virtual void update_space_area_from_windows(QRect const& desktop_area,
@@ -537,9 +535,6 @@ private:
 
     win::shortcut_dialog* client_keys_dialog{nullptr};
     bool global_shortcuts_disabled_for_client{false};
-
-    // Timer to collect requests for 'reconfigure'
-    QTimer reconfigureTimer;
 
     win::space_areas areas;
 

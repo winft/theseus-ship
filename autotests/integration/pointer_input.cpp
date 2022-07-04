@@ -26,13 +26,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/wayland/cursor_theme.h"
 #include "render/effects.h"
 #include "toplevel.h"
-#include "win/space.h"
-#include "win/stacking_order.h"
-#include "win/transient.h"
-
 #include "win/move.h"
 #include "win/screen_edges.h"
+#include "win/space.h"
+#include "win/space_reconfigure.h"
 #include "win/stacking.h"
+#include "win/stacking_order.h"
+#include "win/transient.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
 
@@ -444,7 +444,7 @@ void PointerInputTest::testModifierClickUnrestrictedMove()
     group.writeEntry("CommandAll2", "Move");
     group.writeEntry("CommandAll3", "Move");
     group.sync();
-    Test::app()->workspace->slotReconfigure();
+    win::space_reconfigure(*Test::app()->workspace);
     QCOMPARE(kwinApp()->options->commandAllModifier(),
              modKey == QStringLiteral("Alt") ? Qt::AltModifier : Qt::MetaModifier);
     QCOMPARE(kwinApp()->options->commandAll1(), base::options::MouseUnrestrictedMove);
@@ -513,7 +513,7 @@ void PointerInputTest::testModifierClickUnrestrictedMoveGlobalShortcutsDisabled(
     group.writeEntry("CommandAll2", "Move");
     group.writeEntry("CommandAll3", "Move");
     group.sync();
-    Test::app()->workspace->slotReconfigure();
+    win::space_reconfigure(*Test::app()->workspace);
     QCOMPARE(kwinApp()->options->commandAllModifier(), Qt::MetaModifier);
     QCOMPARE(kwinApp()->options->commandAll1(), base::options::MouseUnrestrictedMove);
     QCOMPARE(kwinApp()->options->commandAll2(), base::options::MouseUnrestrictedMove);
@@ -591,7 +591,7 @@ void PointerInputTest::testModifierScrollOpacity()
     group.writeEntry("CommandAllKey", modKey);
     group.writeEntry("CommandAllWheel", "change opacity");
     group.sync();
-    Test::app()->workspace->slotReconfigure();
+    win::space_reconfigure(*Test::app()->workspace);
 
     // create a window
     QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
@@ -651,7 +651,7 @@ void PointerInputTest::testModifierScrollOpacityGlobalShortcutsDisabled()
     group.writeEntry("CommandAllKey", "Meta");
     group.writeEntry("CommandAllWheel", "change opacity");
     group.sync();
-    Test::app()->workspace->slotReconfigure();
+    win::space_reconfigure(*Test::app()->workspace);
 
     // create a window
     QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
@@ -703,7 +703,7 @@ void PointerInputTest::testScrollAction()
     KConfigGroup group = kwinApp()->config()->group("MouseBindings");
     group.writeEntry("CommandWindowWheel", "activate and scroll");
     group.sync();
-    Test::app()->workspace->slotReconfigure();
+    win::space_reconfigure(*Test::app()->workspace);
     // create two windows
     QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
                               &win::space::qobject_t::wayland_window_added);
@@ -758,7 +758,7 @@ void PointerInputTest::testFocusFollowsMouse()
     group.writeEntry("DelayFocusInterval", 200);
     group.writeEntry("FocusPolicy", "FocusFollowsMouse");
     group.sync();
-    Test::app()->workspace->slotReconfigure();
+    win::space_reconfigure(*Test::app()->workspace);
     // verify the settings
     QCOMPARE(kwinApp()->options->focusPolicy(), base::options::FocusFollowsMouse);
     QVERIFY(kwinApp()->options->isAutoRaise());
@@ -852,7 +852,7 @@ void PointerInputTest::testMouseActionInactiveWindow()
     group.writeEntry("CommandWindow2", "Activate, raise and pass click");
     group.writeEntry("CommandWindow3", "Activate, raise and pass click");
     group.sync();
-    Test::app()->workspace->slotReconfigure();
+    win::space_reconfigure(*Test::app()->workspace);
 
     // Create two windows.
     QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
@@ -953,7 +953,7 @@ void PointerInputTest::testMouseActionActiveWindow()
     KConfigGroup group = kwinApp()->config()->group("Windows");
     group.writeEntry("ClickRaise", clickRaise);
     group.sync();
-    Test::app()->workspace->slotReconfigure();
+    win::space_reconfigure(*Test::app()->workspace);
     QCOMPARE(kwinApp()->options->isClickRaise(), clickRaise);
 
     // Create two windows.
@@ -1649,7 +1649,7 @@ void PointerInputTest::testResizeCursor()
     group.writeEntry("CommandAllKey", "Meta");
     group.writeEntry("CommandAll3", "Resize");
     group.sync();
-    Test::app()->workspace->slotReconfigure();
+    win::space_reconfigure(*Test::app()->workspace);
     QCOMPARE(kwinApp()->options->commandAllModifier(), Qt::MetaModifier);
     QCOMPARE(kwinApp()->options->commandAll3(), base::options::MouseUnrestrictedResize);
 
@@ -1719,7 +1719,7 @@ void PointerInputTest::testMoveCursor()
     group.writeEntry("CommandAllKey", "Meta");
     group.writeEntry("CommandAll1", "Move");
     group.sync();
-    Test::app()->workspace->slotReconfigure();
+    win::space_reconfigure(*Test::app()->workspace);
     QCOMPARE(kwinApp()->options->commandAllModifier(), Qt::MetaModifier);
     QCOMPARE(kwinApp()->options->commandAll1(), base::options::MouseUnrestrictedMove);
 

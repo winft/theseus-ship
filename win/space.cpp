@@ -73,6 +73,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "tabbox/tabbox.h"
 #endif
 
+// TODO(romangg): For now this needs to be included late because of some conflict with Qt libraries.
+#include "space_reconfigure.h"
+
 #include <KConfig>
 #include <KConfigGroup>
 #include <KGlobalAccel>
@@ -99,7 +102,7 @@ void space_qobject::reconfigure()
 }
 
 space::space(render::compositor& render)
-    : qobject{std::make_unique<space_qobject>([this] { reconfigure(); })}
+    : qobject{std::make_unique<space_qobject>([this] { space_start_reconfigure_timer(*this); })}
     , outline{std::make_unique<render::outline>(render)}
     , render{render}
     , deco{std::make_unique<deco::bridge<space>>(*this)}
@@ -217,7 +220,7 @@ space::space(render::compositor& render)
     updateToolWindowsTimer.setSingleShot(true);
 
     QObject::connect(
-        &reconfigureTimer, &QTimer::timeout, qobject.get(), [this] { slotReconfigure(); });
+        &reconfigureTimer, &QTimer::timeout, qobject.get(), [this] { space_reconfigure(*this); });
     QObject::connect(&updateToolWindowsTimer, &QTimer::timeout, qobject.get(), [this] {
         x11::update_tool_windows_visibility(this, true);
     });
@@ -284,51 +287,6 @@ space::~space()
 
     base::x11::xcb::extensions::destroy();
     singleton_interface::space = nullptr;
-}
-
-void space::reconfigure()
-{
-    reconfigureTimer.start(200);
-}
-
-/**
- * Reread settings
- */
-
-void space::slotReconfigure()
-{
-    qCDebug(KWIN_CORE) << "space::slotReconfigure()";
-    reconfigureTimer.stop();
-
-    bool borderlessMaximizedWindows = kwinApp()->options->borderlessMaximizedWindows();
-
-    kwinApp()->config()->reparseConfiguration();
-    kwinApp()->options->updateSettings();
-    scripting->start();
-
-    Q_EMIT qobject->configChanged();
-
-    user_actions_menu->discard();
-    x11::update_tool_windows_visibility(this, true);
-
-    rule_book->load();
-    for (auto window : m_windows) {
-        if (window->supportsWindowRules()) {
-            win::evaluate_rules(window);
-            rule_book->discardUsed(window, false);
-        }
-    }
-
-    if (borderlessMaximizedWindows != kwinApp()->options->borderlessMaximizedWindows()
-        && !kwinApp()->options->borderlessMaximizedWindows()) {
-        // in case borderless maximized windows option changed and new option
-        // is to have borders, we need to unset the borders for all maximized windows
-        for (auto window : m_windows) {
-            if (window->maximizeMode() == win::maximize_mode::full) {
-                window->checkNoBorder();
-            }
-        }
-    }
 }
 
 void space::slotCurrentDesktopChanged(uint oldDesktop, uint newDesktop)

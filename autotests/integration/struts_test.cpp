@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/input.h"
 #include "win/screen_edges.h"
 #include "win/space.h"
+#include "win/space_reconfigure.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
@@ -357,7 +358,7 @@ void StrutsTest::testWaylandMobilePanel()
     KConfigGroup group = kwinApp()->config()->group("Windows");
     group.writeEntry("Placement", "maximizing");
     group.sync();
-    Test::app()->workspace->slotReconfigure();
+    win::space_reconfigure(*Test::app()->workspace);
 
     // create first top panel
     const QRect windowGeometry(0, 0, 1280, 60);

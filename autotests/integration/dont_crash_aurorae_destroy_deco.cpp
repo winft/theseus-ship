@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/deco.h"
 #include "win/screen_edges.h"
 #include "win/space.h"
+#include "win/space_reconfigure.h"
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
 
@@ -91,7 +92,7 @@ void DontCrashAuroraeDestroyDecoTest::testBorderlessMaximizedWindows()
     KConfigGroup group = kwinApp()->config()->group("Windows");
     group.writeEntry("BorderlessMaximizedWindows", true);
     group.sync();
-    Test::app()->workspace->slotReconfigure();
+    win::space_reconfigure(*Test::app()->workspace);
     QCOMPARE(kwinApp()->options->borderlessMaximizedWindows(), true);
 
     // create an xcb window

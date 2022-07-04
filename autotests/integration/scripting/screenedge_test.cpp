@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "scripting/platform.h"
 #include "scripting/script.h"
 #include "win/space.h"
+#include "win/space_reconfigure.h"
 
 #define private public
 #include "win/screen_edges.h"
@@ -222,7 +223,7 @@ void ScreenEdgeTest::testTouchEdge()
 
 void ScreenEdgeTest::triggerConfigReload()
 {
-    Test::app()->workspace->slotReconfigure();
+    win::space_reconfigure(*Test::app()->workspace);
 }
 
 void ScreenEdgeTest::testEdgeUnregister()

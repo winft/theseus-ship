@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/keyboard_redirect.h"
 #include "input/xkb/helpers.h"
 #include "win/space.h"
+#include "win/space_reconfigure.h"
 
 #include <KConfigGroup>
 
@@ -195,7 +196,7 @@ void ModifierOnlyShortcutTest::testTrigger()
     group.writeEntry("Shift", shiftConfig);
     group.writeEntry("Control", controlConfig);
     group.sync();
-    Test::app()->workspace->slotReconfigure();
+    win::space_reconfigure(*Test::app()->workspace);
 
     // configured shortcut should trigger
     quint32 timestamp = 1;
@@ -315,7 +316,7 @@ void ModifierOnlyShortcutTest::testCapsLock()
                      QStringList{s_serviceName, s_path, s_serviceName, QStringLiteral("shortcut")});
     group.writeEntry("Control", QStringList());
     group.sync();
-    Test::app()->workspace->slotReconfigure();
+    win::space_reconfigure(*Test::app()->workspace);
 
     // first test that the normal shortcut triggers
     quint32 timestamp = 1;
@@ -344,7 +345,7 @@ void ModifierOnlyShortcutTest::testCapsLock()
     group.writeEntry("Shift", QStringList{});
     group.writeEntry("Control", QStringList());
     group.sync();
-    Test::app()->workspace->slotReconfigure();
+    win::space_reconfigure(*Test::app()->workspace);
 
     Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
     QTRY_COMPARE(input::xkb::get_active_keyboard_modifiers(kwinApp()->input),
@@ -363,7 +364,7 @@ void ModifierOnlyShortcutTest::testCapsLock()
                      QStringList{s_serviceName, s_path, s_serviceName, QStringLiteral("shortcut")});
     group.writeEntry("Control", QStringList());
     group.sync();
-    Test::app()->workspace->slotReconfigure();
+    win::space_reconfigure(*Test::app()->workspace);
 
     // release caps lock
     Test::keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
@@ -412,7 +413,7 @@ void ModifierOnlyShortcutTest::testGlobalShortcutsDisabled()
     group.writeEntry("Shift", shiftConfig);
     group.writeEntry("Control", controlConfig);
     group.sync();
-    Test::app()->workspace->slotReconfigure();
+    win::space_reconfigure(*Test::app()->workspace);
 
     // trigger once to verify the shortcut works
     quint32 timestamp = 1;

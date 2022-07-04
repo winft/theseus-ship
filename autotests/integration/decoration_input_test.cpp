@@ -24,15 +24,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/pointer_redirect.h"
 #include "input/touch_redirect.h"
 #include "toplevel.h"
-#include "win/screen_edges.h"
-#include "win/space.h"
-
 #include "win/deco.h"
 #include "win/deco/bridge.h"
 #include "win/deco/client_impl.h"
 #include "win/deco/settings.h"
 #include "win/internal_window.h"
 #include "win/move.h"
+#include "win/screen_edges.h"
+#include "win/space.h"
+#include "win/space_reconfigure.h"
 #include "win/wayland/window.h"
 
 #include <Wrapland/Client/compositor.h>
@@ -559,7 +559,7 @@ void DecorationInputTest::testResizeOutsideWindow()
         ->group("org.kde.kdecoration2")
         .writeEntry("BorderSize", QStringLiteral("None"));
     kwinApp()->config()->sync();
-    Test::app()->workspace->slotReconfigure();
+    win::space_reconfigure(*Test::app()->workspace);
 
     // now create window
     auto c = showWindow();
@@ -659,7 +659,7 @@ void DecorationInputTest::testModifierClickUnrestrictedMove()
     group.writeEntry("CommandAll2", "Move");
     group.writeEntry("CommandAll3", "Move");
     group.sync();
-    Test::app()->workspace->slotReconfigure();
+    win::space_reconfigure(*Test::app()->workspace);
     QCOMPARE(kwinApp()->options->commandAllModifier(),
              modKey == QStringLiteral("Alt") ? Qt::AltModifier : Qt::MetaModifier);
     QCOMPARE(kwinApp()->options->commandAll1(), base::options::MouseUnrestrictedMove);
@@ -731,7 +731,7 @@ void DecorationInputTest::testModifierScrollOpacity()
     group.writeEntry("CommandAllKey", modKey);
     group.writeEntry("CommandAllWheel", "change opacity");
     group.sync();
-    Test::app()->workspace->slotReconfigure();
+    win::space_reconfigure(*Test::app()->workspace);
 
     auto c = showWindow();
     QVERIFY(c);

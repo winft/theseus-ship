@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/redirect.h"
 #include "win/move.h"
 #include "win/space.h"
+#include "win/space_reconfigure.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/keyboard.h>
@@ -181,7 +182,7 @@ void TestPointerConstraints::testConfinedPointer()
     group.writeEntry("CommandAll3", "Move");
     group.writeEntry("CommandAllWheel", "change opacity");
     group.sync();
-    Test::app()->workspace->slotReconfigure();
+    win::space_reconfigure(*Test::app()->workspace);
     QCOMPARE(kwinApp()->options->commandAllModifier(), Qt::MetaModifier);
     QCOMPARE(kwinApp()->options->commandAll1(), base::options::MouseUnrestrictedMove);
     QCOMPARE(kwinApp()->options->commandAll2(), base::options::MouseUnrestrictedMove);
