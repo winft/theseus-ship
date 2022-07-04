@@ -211,6 +211,8 @@ public:
 
     QPoint focusMousePos;
 
+    QTimer updateToolWindowsTimer;
+
     explicit space(render::compositor& render);
     virtual ~space();
 
@@ -291,9 +293,6 @@ public:
     std::unique_ptr<win::virtual_desktop_manager> virtual_desktop_manager;
     std::unique_ptr<base::dbus::kwin_impl<space>> dbus;
     std::unique_ptr<win::session_manager> session_manager;
-
-    void stopUpdateToolWindowsTimer();
-    void resetUpdateToolWindowsTimer();
 
     void clientHidden(Toplevel* window);
     void clientAttentionChanged(Toplevel* window, bool set);
@@ -481,8 +480,6 @@ protected:
                                                 std::vector<QRect> const& screens_geos,
                                                 win::space_areas& areas);
 
-    void slotUpdateToolWindows();
-
 private:
     void delayFocus();
 
@@ -543,8 +540,6 @@ private:
 
     // Timer to collect requests for 'reconfigure'
     QTimer reconfigureTimer;
-
-    QTimer updateToolWindowsTimer;
 
     win::space_areas areas;
 

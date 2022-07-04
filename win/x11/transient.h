@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "tool_windows.h"
 #include "window.h"
 #include "window_find.h"
 
@@ -150,7 +151,7 @@ void set_transient_lead(Win* win, xcb_window_t lead_id)
 
     check_group(win, nullptr);
     update_layer(win);
-    win->space.resetUpdateToolWindowsTimer();
+    reset_update_tool_windows_timer(win->space);
 }
 
 template<typename Win>

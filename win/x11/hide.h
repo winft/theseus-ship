@@ -7,6 +7,7 @@
 
 #include "client.h"
 #include "input.h"
+#include "tool_windows.h"
 #include "window.h"
 
 #include "base/options.h"
@@ -304,11 +305,11 @@ void update_tool_windows_visibility(Space* space, bool also_hide)
         for (auto const& window : to_hide) {
             window->hideClient(true);
         }
-        space->stopUpdateToolWindowsTimer();
+        space->updateToolWindowsTimer.stop();
     } else {
         // Workspace::setActiveClient(..) is afterwards called with NULL client, quickly followed
         // by setting a new client, which would result in flickering.
-        space->resetUpdateToolWindowsTimer();
+        reset_update_tool_windows_timer(*space);
     }
 }
 

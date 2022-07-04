@@ -218,7 +218,7 @@ space::space(render::compositor& render)
     QObject::connect(
         &reconfigureTimer, &QTimer::timeout, qobject.get(), [this] { slotReconfigure(); });
     QObject::connect(&updateToolWindowsTimer, &QTimer::timeout, qobject.get(), [this] {
-        slotUpdateToolWindows();
+        x11::update_tool_windows_visibility(this, true);
     });
 
     // TODO: do we really need to reconfigure everything when fonts change?
@@ -283,21 +283,6 @@ space::~space()
 
     base::x11::xcb::extensions::destroy();
     singleton_interface::space = nullptr;
-}
-
-void space::stopUpdateToolWindowsTimer()
-{
-    updateToolWindowsTimer.stop();
-}
-
-void space::resetUpdateToolWindowsTimer()
-{
-    updateToolWindowsTimer.start(200);
-}
-
-void space::slotUpdateToolWindows()
-{
-    x11::update_tool_windows_visibility(this, true);
 }
 
 void space::reconfigure()
