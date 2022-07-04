@@ -250,7 +250,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
                             event->event_y,
                             event->root_x,
                             event->root_y);
-        win->space.updateFocusMousePosition(QPoint(event->root_x, event->root_y));
+        win->space.focusMousePos = QPoint(event->root_x, event->root_y);
         break;
     }
     case XCB_ENTER_NOTIFY: {
@@ -268,7 +268,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
                             event->event_y,
                             event->root_x,
                             event->root_y);
-        win->space.updateFocusMousePosition(QPoint(event->root_x, event->root_y));
+        win->space.focusMousePos = QPoint(event->root_x, event->root_y);
         break;
     }
     case XCB_LEAVE_NOTIFY: {
@@ -281,9 +281,6 @@ bool window_event(Win* win, xcb_generic_event_t* e)
                             event->root_x,
                             event->root_y);
         leave_notify_event(win, event);
-        // not here, it'd break following enter notify handling
-        // win->space.updateFocusMousePosition( QPoint( e->xcrossing.x_root, e->xcrossing.y_root
-        // ));
         break;
     }
     case XCB_FOCUS_IN:

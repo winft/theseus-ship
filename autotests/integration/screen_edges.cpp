@@ -350,7 +350,7 @@ void TestScreenEdges::testCreatingInitialEdges()
     Test::render(surface, QSize(100, 50), Qt::blue);
     Test::flush_wayland_connection();
     QVERIFY(clientAddedSpy.wait());
-    auto client = Test::app()->workspace->activeClient();
+    auto client = Test::app()->workspace->active_client;
     QVERIFY(client);
 
     Test::app()->workspace->setMoveResizeClient(client);
@@ -681,7 +681,7 @@ void TestScreenEdges::testFullScreenBlocking()
     Test::render(surface, QSize(100, 50), Qt::blue);
     Test::flush_wayland_connection();
     QVERIFY(clientAddedSpy.wait());
-    auto client = Test::app()->workspace->activeClient();
+    auto client = Test::app()->workspace->active_client;
     QVERIFY(client);
 
     reset_edger(config);
@@ -782,7 +782,7 @@ void TestScreenEdges::testClientEdge()
     Test::render(surface, QSize(100, 50), Qt::blue);
     Test::flush_wayland_connection();
     QVERIFY(clientAddedSpy.wait());
-    auto client = Test::app()->workspace->activeClient();
+    auto client = Test::app()->workspace->active_client;
     QVERIFY(client);
 
     client->setFrameGeometry(QRect(10, 50, 10, 50));

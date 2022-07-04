@@ -222,7 +222,7 @@ void InternalWindowTest::testEnterLeave()
     win.show();
 
     QTRY_COMPARE(clientAddedSpy.count(), 1);
-    QVERIFY(!Test::app()->workspace->activeClient());
+    QVERIFY(!Test::app()->workspace->active_client);
     auto c = clientAddedSpy.first().first().value<win::internal_window*>();
     QVERIFY(c);
     QVERIFY(c->isInternal());

@@ -73,14 +73,14 @@ void ShowingDesktopTest::testRestoreFocus()
     auto client2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::blue);
     QVERIFY(client1 != client2);
 
-    QCOMPARE(Test::app()->workspace->activeClient(), client2);
+    QCOMPARE(Test::app()->workspace->active_client, client2);
     Test::app()->workspace->slotToggleShowDesktop();
     QVERIFY(Test::app()->workspace->showingDesktop());
     Test::app()->workspace->slotToggleShowDesktop();
     QVERIFY(!Test::app()->workspace->showingDesktop());
 
-    QVERIFY(Test::app()->workspace->activeClient());
-    QCOMPARE(Test::app()->workspace->activeClient(), client2);
+    QVERIFY(Test::app()->workspace->active_client);
+    QCOMPARE(Test::app()->workspace->active_client, client2);
 }
 
 void ShowingDesktopTest::testRestoreFocusWithDesktopWindow()
@@ -110,15 +110,15 @@ void ShowingDesktopTest::testRestoreFocusWithDesktopWindow()
     auto client2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::blue);
     QVERIFY(client1 != client2);
 
-    QCOMPARE(Test::app()->workspace->activeClient(), client2);
+    QCOMPARE(Test::app()->workspace->active_client, client2);
     Test::app()->workspace->slotToggleShowDesktop();
     QVERIFY(Test::app()->workspace->showingDesktop());
-    QCOMPARE(Test::app()->workspace->activeClient(), desktop);
+    QCOMPARE(Test::app()->workspace->active_client, desktop);
     Test::app()->workspace->slotToggleShowDesktop();
     QVERIFY(!Test::app()->workspace->showingDesktop());
 
-    QVERIFY(Test::app()->workspace->activeClient());
-    QCOMPARE(Test::app()->workspace->activeClient(), client2);
+    QVERIFY(Test::app()->workspace->active_client);
+    QCOMPARE(Test::app()->workspace->active_client, client2);
 }
 
 }

@@ -112,7 +112,7 @@ void keyboard_redirect::init()
     QObject::connect(
         redirect->space.qobject.get(), &win::space::qobject_t::clientActivated, this, [this] {
             QObject::disconnect(m_activeClientSurfaceChangedConnection);
-            if (auto c = redirect->space.activeClient()) {
+            if (auto c = redirect->space.active_client) {
                 m_activeClientSurfaceChangedConnection = QObject::connect(
                     c, &Toplevel::surfaceChanged, this, &keyboard_redirect::update);
             } else {
@@ -164,7 +164,7 @@ void keyboard_redirect::update()
     }
 
     if (!found && !kwinApp()->input->redirect->isSelectingWindow()) {
-        found = redirect->space.activeClient();
+        found = redirect->space.active_client;
     }
     if (found && found->surface) {
         if (found->surface != seat->keyboards().get_focus().surface) {

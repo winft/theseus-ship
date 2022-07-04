@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "app_menu.h"
+#include "dbus/appmenu.h"
 #include "deco.h"
 #include "deco/bridge.h"
 #include "placement.h"
@@ -102,7 +102,7 @@ void setup_window_control_connections(Win* win)
                      });
 
     QObject::connect(
-        win->space.app_menu.get(), &app_menu::applicationMenuEnabledChanged, win, [win] {
+        win->space.appmenu.get(), &dbus::appmenu::applicationMenuEnabledChanged, win, [win] {
             Q_EMIT win->hasApplicationMenuChanged(win->control->has_application_menu());
         });
 }

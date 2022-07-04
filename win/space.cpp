@@ -38,8 +38,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "rules/rules.h"
 #include "scripting/platform.h"
 #include "utils/blocker.h"
-#include "win/app_menu.h"
 #include "win/controlling.h"
+#include "win/dbus/appmenu.h"
 #include "win/dbus/virtual_desktop_manager.h"
 #include "win/focus_chain.h"
 #include "win/input.h"
@@ -105,14 +105,14 @@ space::space(render::compositor& render)
     , outline{std::make_unique<render::outline>(render)}
     , render{render}
     , deco{std::make_unique<deco::bridge<space>>(*this)}
-    , app_menu{std::make_unique<win::app_menu>(*this)}
-    , rule_book{std::make_unique<RuleBook>(*this)}
-    , user_actions_menu{std::make_unique<win::user_actions_menu>(*this)}
+    , appmenu{std::make_unique<dbus::appmenu>(dbus::create_appmenu_callbacks(*this))}
+    , rule_book{std::make_unique<RuleBook>()}
+    , user_actions_menu{std::make_unique<win::user_actions_menu<space>>(*this)}
     , stacking_order{std::make_unique<win::stacking_order>()}
     , focus_chain{std::make_unique<win::focus_chain>(*this)}
     , virtual_desktop_manager{std::make_unique<win::virtual_desktop_manager>()}
     , dbus{std::make_unique<base::dbus::kwin>(*this)}
-    , session_manager{std::make_unique<win::session_manager>(*this)}
+    , session_manager{std::make_unique<win::session_manager>()}
 {
     // For invoke methods of user_actions_menu.
     qRegisterMetaType<Toplevel*>();
@@ -122,7 +122,7 @@ space::space(render::compositor& render)
     m_quickTileCombineTimer = new QTimer(qobject.get());
     m_quickTileCombineTimer->setSingleShot(true);
 
-    rule_book->load();
+    init_rule_book(*rule_book, *this);
 
     // dbus interface
     new win::dbus::virtual_desktop_manager(virtual_desktop_manager.get());
@@ -546,7 +546,7 @@ void space::setShowingDesktop(bool showing)
                     if (!topDesk)
                         topDesk = c;
                     if (auto group = c->group()) {
-                        for (auto cm : group->members()) {
+                        for (auto cm : group->members) {
                             win::update_layer(cm);
                         }
                     }
@@ -903,15 +903,6 @@ void space::updateTabbox()
 QRect space::get_icon_geometry(Toplevel const* /*win*/) const
 {
     return QRect();
-}
-
-win::x11::group* space::findGroup(xcb_window_t leader) const
-{
-    Q_ASSERT(leader != XCB_WINDOW_NONE);
-    for (auto it = groups.cbegin(); it != groups.cend(); ++it)
-        if ((*it)->leader() == leader)
-            return *it;
-    return nullptr;
 }
 
 void space::updateMinimizedOfTransients(Toplevel* c)
@@ -2204,13 +2195,14 @@ void space::setActiveClient(Toplevel* window)
 
     blocker block(stacking_order);
     ++set_active_client_recursion;
-    updateFocusMousePosition(input::get_cursor()->pos());
+    focusMousePos = input::get_cursor()->pos();
+
     if (active_client != nullptr) {
         // note that this may call setActiveClient( NULL ), therefore the recursion counter
         win::set_active(active_client, false);
     }
-    active_client = window;
 
+    active_client = window;
     Q_ASSERT(window == nullptr || window->control->active());
 
     if (active_client) {
@@ -3469,7 +3461,7 @@ void activeClientToDesktop(win::space& space)
     if (d == current) {
         return;
     }
-    space.setMoveResizeClient(space.activeClient());
+    space.setMoveResizeClient(space.active_client);
     vds->setCurrent(d);
     space.setMoveResizeClient(nullptr);
 }
@@ -3622,7 +3614,7 @@ void space::showWindowMenu(const QRect& pos, Toplevel* window)
 
 void space::showApplicationMenu(const QRect& pos, Toplevel* window, int actionId)
 {
-    app_menu->showApplicationMenu(window->pos() + pos.bottomLeft(), window, actionId);
+    appmenu->showApplicationMenu(window->pos() + pos.bottomLeft(), window, actionId);
 }
 
 /**

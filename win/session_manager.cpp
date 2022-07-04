@@ -14,8 +14,6 @@
 #include "x11/geo.h"
 #include "x11/window.h"
 
-#include "rules/rule_book.h"
-
 #include <KConfig>
 #include <QDBusConnection>
 #include <cstdlib>
@@ -25,8 +23,7 @@
 namespace KWin::win
 {
 
-session_manager::session_manager(win::space& space)
-    : space{space}
+session_manager::session_manager()
 {
     new SessionAdaptor(this);
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/Session"), this);
@@ -61,16 +58,11 @@ void session_manager::setState(SessionState state)
     if (state == m_sessionState) {
         return;
     }
-    // If we're starting to save a session
-    if (state == SessionState::Saving) {
-        space.rule_book->setUpdatesDisabled(true);
-    }
-    // If we're ending a save session due to either completion or cancellation
-    if (m_sessionState == SessionState::Saving) {
-        space.rule_book->setUpdatesDisabled(false);
-    }
+
+    auto const old_state = m_sessionState;
     m_sessionState = state;
-    Q_EMIT stateChanged();
+
+    Q_EMIT stateChanged(old_state, state);
 }
 
 void session_manager::loadSession(const QString& name)

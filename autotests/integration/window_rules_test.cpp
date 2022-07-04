@@ -185,7 +185,7 @@ void WindowRuleTest::testWindowClassChange()
     group.writeEntry("wmclassmatch", 1);
     group.sync();
 
-    Test::app()->workspace->rule_book->setConfig(config);
+    Test::app()->workspace->rule_book->config = config;
     Test::app()->workspace->slotReconfigure();
 
     // create the test window

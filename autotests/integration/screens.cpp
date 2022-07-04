@@ -306,13 +306,13 @@ void TestScreens::testCurrentClient()
     Test::render(surface, QSize(100, 50), Qt::blue);
     Test::flush_wayland_connection();
     QVERIFY(clientAddedSpy.wait());
-    auto client = Test::app()->workspace->activeClient();
+    auto client = Test::app()->workspace->active_client;
     QVERIFY(client);
 
     win::move(client, QPoint(101, 0));
-    QCOMPARE(Test::app()->workspace->activeClient(), client);
+    QCOMPARE(Test::app()->workspace->active_client, client);
     Test::app()->workspace->setActiveClient(nullptr);
-    QCOMPARE(Test::app()->workspace->activeClient(), nullptr);
+    QCOMPARE(Test::app()->workspace->active_client, nullptr);
 
     QCOMPARE(win::get_current_output(*Test::app()->workspace),
              base::get_output(Test::app()->base.get_outputs(), 0));

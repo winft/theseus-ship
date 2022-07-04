@@ -1050,8 +1050,8 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         bool allow;
         if (session) {
             allow = session->active
-                && (!space.wasUserInteraction() || space.activeClient() == nullptr
-                    || is_desktop(space.activeClient()));
+                && (!space.wasUserInteraction() || !space.active_client
+                    || is_desktop(space.active_client));
         } else {
             allow = space.allowClientActivation(win, win->userTime(), false);
         }
@@ -1521,11 +1521,13 @@ xcb_timestamp_t user_time(Win* win)
         // doesn't want focus after showing
         return 0;
     }
-    assert(win->group() != nullptr);
+
+    auto group = win->group();
+    assert(group);
+
     if (time == -1U
-        || (win->group()->userTime() != -1U
-            && NET::timestampCompare(win->group()->userTime(), time) > 0)) {
-        time = win->group()->userTime();
+        || (group->user_time != -1U && NET::timestampCompare(group->user_time, time) > 0)) {
+        time = group->user_time;
     }
     return time;
 }
@@ -1708,8 +1710,9 @@ base::x11::xcb::string_property fetch_application_menu_service_name(Win* win)
 template<typename Win>
 void read_application_menu_service_name(Win* win, base::x11::xcb::string_property& property)
 {
-    auto const& [_, path] = win->control->application_menu();
-    win->control->update_application_menu({QString::fromUtf8(property), path});
+    auto const appmenu = win->control->application_menu();
+    win->control->update_application_menu(
+        {QString::fromUtf8(property).toStdString(), appmenu.address.path});
 }
 
 template<typename Win>
@@ -1729,8 +1732,9 @@ base::x11::xcb::string_property fetch_application_menu_object_path(Win* win)
 template<typename Win>
 void read_application_menu_object_path(Win* win, base::x11::xcb::string_property& property)
 {
-    auto const& [name, _] = win->control->application_menu();
-    win->control->update_application_menu({name, QString::fromUtf8(property)});
+    auto const appmenu = win->control->application_menu();
+    win->control->update_application_menu(
+        {appmenu.address.name, QString::fromUtf8(property).toStdString()});
 }
 
 template<typename Win>

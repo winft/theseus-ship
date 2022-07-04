@@ -123,22 +123,22 @@ void BindingsTest::testSwitchWindow()
         QDBusConnection::sessionBus().asyncCall(msg);
     };
     invokeShortcut(QStringLiteral("Switch Window Up"));
-    QTRY_COMPARE(Test::app()->workspace->activeClient(), c1);
+    QTRY_COMPARE(Test::app()->workspace->active_client, c1);
     invokeShortcut(QStringLiteral("Switch Window Right"));
-    QTRY_COMPARE(Test::app()->workspace->activeClient(), c2);
+    QTRY_COMPARE(Test::app()->workspace->active_client, c2);
     invokeShortcut(QStringLiteral("Switch Window Down"));
-    QTRY_COMPARE(Test::app()->workspace->activeClient(), c3);
+    QTRY_COMPARE(Test::app()->workspace->active_client, c3);
     invokeShortcut(QStringLiteral("Switch Window Left"));
-    QTRY_COMPARE(Test::app()->workspace->activeClient(), c4);
+    QTRY_COMPARE(Test::app()->workspace->active_client, c4);
     // test opposite direction
     invokeShortcut(QStringLiteral("Switch Window Left"));
-    QTRY_COMPARE(Test::app()->workspace->activeClient(), c3);
+    QTRY_COMPARE(Test::app()->workspace->active_client, c3);
     invokeShortcut(QStringLiteral("Switch Window Down"));
-    QTRY_COMPARE(Test::app()->workspace->activeClient(), c2);
+    QTRY_COMPARE(Test::app()->workspace->active_client, c2);
     invokeShortcut(QStringLiteral("Switch Window Right"));
-    QTRY_COMPARE(Test::app()->workspace->activeClient(), c1);
+    QTRY_COMPARE(Test::app()->workspace->active_client, c1);
     invokeShortcut(QStringLiteral("Switch Window Up"));
-    QTRY_COMPARE(Test::app()->workspace->activeClient(), c4);
+    QTRY_COMPARE(Test::app()->workspace->active_client, c4);
 }
 
 void BindingsTest::testSwitchWindowScript()
@@ -189,13 +189,13 @@ void BindingsTest::testSwitchWindowScript()
     };
 
     runScript(QStringLiteral("slotSwitchWindowUp"));
-    QTRY_COMPARE(Test::app()->workspace->activeClient(), c1);
+    QTRY_COMPARE(Test::app()->workspace->active_client, c1);
     runScript(QStringLiteral("slotSwitchWindowRight"));
-    QTRY_COMPARE(Test::app()->workspace->activeClient(), c2);
+    QTRY_COMPARE(Test::app()->workspace->active_client, c2);
     runScript(QStringLiteral("slotSwitchWindowDown"));
-    QTRY_COMPARE(Test::app()->workspace->activeClient(), c3);
+    QTRY_COMPARE(Test::app()->workspace->active_client, c3);
     runScript(QStringLiteral("slotSwitchWindowLeft"));
-    QTRY_COMPARE(Test::app()->workspace->activeClient(), c4);
+    QTRY_COMPARE(Test::app()->workspace->active_client, c4);
 }
 
 void BindingsTest::testWindowToDesktop_data()
@@ -235,7 +235,7 @@ void BindingsTest::testWindowToDesktop()
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QSignalSpy desktopChangedSpy(c, &Toplevel::desktopChanged);
     QVERIFY(desktopChangedSpy.isValid());
-    QCOMPARE(Test::app()->workspace->activeClient(), c);
+    QCOMPARE(Test::app()->workspace->active_client, c);
 
     QFETCH(int, desktop);
     vd_manager->setCount(desktop);

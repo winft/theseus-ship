@@ -360,7 +360,7 @@ void X11ClientTest::testFocusInWithWaylandLastActiveWindow()
     // activate no window
     Test::app()->workspace->setActiveClient(nullptr);
     QVERIFY(!waylandClient->control->active());
-    QVERIFY(!Test::app()->workspace->activeClient());
+    QVERIFY(!Test::app()->workspace->active_client);
     // and close Wayland window again
     shellSurface.reset();
     surface.reset();

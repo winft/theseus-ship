@@ -23,8 +23,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "kwin_export.h"
 
+#include "win/appmenu.h"
+
+#include <KDecoration2/DecorationSettings>
 #include <QObject>
-#include <xcb/xcb.h>
+#include <functional>
+#include <memory>
 
 class QPoint;
 class OrgKdeKappmenuInterface;
@@ -35,17 +39,49 @@ namespace KWin
 {
 class Toplevel;
 
-namespace win
+namespace win::dbus
 {
 
-class space;
+struct appmenu_callbacks {
+    std::function<void(appmenu_address const&, int action_id)> show_request;
+    std::function<void(appmenu_address const&, bool)> visibility;
+};
 
-class KWIN_EXPORT app_menu : public QObject
+template<typename Space>
+appmenu_callbacks create_appmenu_callbacks(Space const& space)
+{
+    appmenu_callbacks callbacks;
+
+    callbacks.show_request = [&space](appmenu_address const& addr, int action_id) {
+        if (auto deco_settings = space.deco->settings()) {
+            // Ignore request when user has not configured appmenu title bar button.
+            auto menu_enum = KDecoration2::DecorationButtonType::ApplicationMenu;
+            auto const& lbtn = deco_settings->decorationButtonsLeft();
+            auto const& rbtn = deco_settings->decorationButtonsRight();
+            if (!lbtn.contains(menu_enum) && !rbtn.contains(menu_enum)) {
+                return;
+            }
+        }
+        if (auto win = find_window_with_appmenu(space, addr)) {
+            win::show_appmenu(*win, action_id);
+        }
+    };
+    callbacks.visibility = [&space](appmenu_address const& addr, bool active) {
+        if (auto win = find_window_with_appmenu(space, addr)) {
+            win->control->set_application_menu_active(active);
+        }
+    };
+
+    return callbacks;
+}
+
+class KWIN_EXPORT appmenu : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit app_menu(win::space& space);
+    explicit appmenu(appmenu_callbacks callbacks);
+    ~appmenu();
 
     void showApplicationMenu(const QPoint& pos, Toplevel* window, int actionId);
 
@@ -64,14 +100,11 @@ private Q_SLOTS:
     void slotMenuHidden(const QString& serviceName, const QDBusObjectPath& menuObjectPath);
 
 private:
-    OrgKdeKappmenuInterface* m_appmenuInterface;
-    QDBusServiceWatcher* m_kappMenuWatcher;
-
-    Toplevel* findAbstractClientWithApplicationMenu(const QString& serviceName,
-                                                    const QDBusObjectPath& menuObjectPath);
+    std::unique_ptr<OrgKdeKappmenuInterface> dbus_iface;
+    std::unique_ptr<QDBusServiceWatcher> dbus_watcher;
 
     bool m_applicationMenuEnabled = false;
-    win::space& space;
+    appmenu_callbacks callbacks;
 };
 
 }

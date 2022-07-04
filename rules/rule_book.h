@@ -4,18 +4,12 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#ifndef KWIN_RULES_RULE_BOOK_H
-#define KWIN_RULES_RULE_BOOK_H
+#pragma once
 
-#include <QRect>
-#include <QVector>
-#include <netwm_def.h>
+#ifndef KCMRULES
 
-#include "base/options.h"
 #include "window_rules.h"
 
-class QDebug;
-class KConfig;
 class KXMessages;
 
 namespace KWin
@@ -29,12 +23,11 @@ class space;
 class Rules;
 class Toplevel;
 
-#ifndef KCMRULES
 class KWIN_EXPORT RuleBook : public QObject
 {
     Q_OBJECT
 public:
-    RuleBook(win::space& space);
+    RuleBook();
     ~RuleBook() override;
 
     WindowRules find(Toplevel const* window, bool);
@@ -45,10 +38,10 @@ public:
     void edit(Toplevel* window, bool whole_app);
     void requestDiskStorage();
 
-    void setConfig(const KSharedConfig::Ptr& config)
-    {
-        m_config = config;
-    }
+    KSharedConfig::Ptr config;
+
+Q_SIGNALS:
+    void updates_enabled();
 
 private Q_SLOTS:
     void temporaryRulesMessage(const QString&);
@@ -58,16 +51,12 @@ private Q_SLOTS:
 private:
     void deleteAll();
     void initWithX11();
+
     QTimer* m_updateTimer;
     bool m_updatesDisabled;
     QList<Rules*> m_rules;
     QScopedPointer<KXMessages> m_temporaryRulesMessages;
-    KSharedConfig::Ptr m_config;
-    win::space& space;
 };
 
 #endif
-
 }
-
-#endif

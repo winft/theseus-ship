@@ -520,7 +520,7 @@ void window::takeFocus()
     auto breakShowingDesktop = !control->keep_above();
 
     if (breakShowingDesktop) {
-        for (auto const& c : group()->members()) {
+        for (auto const& c : group()->members) {
             if (win::is_desktop(c)) {
                 breakShowingDesktop = false;
                 break;
@@ -544,8 +544,8 @@ xcb_timestamp_t window::userTime() const
     assert(group() != nullptr);
 
     if (time == -1U
-        || (group()->userTime() != -1U && NET::timestampCompare(group()->userTime(), time) > 0)) {
-        time = group()->userTime();
+        || (group()->user_time != -1U && NET::timestampCompare(group()->user_time, time) > 0)) {
+        time = group()->user_time;
     }
     return time;
 }
@@ -825,7 +825,7 @@ void window::do_set_fullscreen(bool full)
     if (old_full) {
         // May cause focus leave.
         // TODO: Must always be done when fullscreening to other output allowed.
-        space.updateFocusMousePosition(input::get_cursor()->pos());
+        space.focusMousePos = input::get_cursor()->pos();
     }
 
     control->set_fullscreen(full);
@@ -864,7 +864,7 @@ void window::setFullScreen(bool full, bool user)
 
 bool window::belongsToDesktop() const
 {
-    for (auto const& member : group()->members()) {
+    for (auto const& member : group()->members) {
         if (win::is_desktop(member)) {
             return true;
         }

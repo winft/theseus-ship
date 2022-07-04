@@ -47,63 +47,41 @@ class window;
 class KWIN_EXPORT group
 {
 public:
-    group(xcb_window_t leader, win::space& space);
+    group(xcb_window_t xcb_leader, win::space& space);
     ~group();
-    xcb_window_t leader() const;
-    const win::x11::window* leaderClient() const;
-    win::x11::window* leaderClient();
-    std::vector<win::x11::window*> const& members() const;
+
     QIcon icon() const;
     void addMember(win::x11::window* member);
     void removeMember(win::x11::window* member);
     void gotLeader(win::x11::window* leader);
     void lostLeader();
     void updateUserTime(xcb_timestamp_t time);
-    xcb_timestamp_t userTime() const;
     void ref();
     void deref();
-    render::effect_window_group_impl* effectGroup();
+
+    std::vector<win::x11::window*> members;
+    win::x11::window* leader{nullptr};
+    xcb_window_t xcb_leader;
+    NETWinInfo* leader_info{nullptr};
+    xcb_timestamp_t user_time{-1U};
+    render::effect_window_group_impl* effect_group;
 
 private:
     void startupIdChanged();
-    std::vector<win::x11::window*> _members;
-    win::x11::window* leader_client{nullptr};
-    xcb_window_t leader_wid;
-    NETWinInfo* leader_info{nullptr};
-    xcb_timestamp_t user_time{-1U};
     int refcount{0};
-    render::effect_window_group_impl* effect_group;
     win::space& space;
 };
 
-inline xcb_window_t group::leader() const
+template<typename Space>
+group* find_group(Space& space, xcb_window_t leader)
 {
-    return leader_wid;
-}
-
-inline const win::x11::window* group::leaderClient() const
-{
-    return leader_client;
-}
-
-inline win::x11::window* group::leaderClient()
-{
-    return leader_client;
-}
-
-inline std::vector<win::x11::window*> const& group::members() const
-{
-    return _members;
-}
-
-inline xcb_timestamp_t group::userTime() const
-{
-    return user_time;
-}
-
-inline render::effect_window_group_impl* group::effectGroup()
-{
-    return effect_group;
+    assert(leader != XCB_WINDOW_NONE);
+    for (auto group : space.groups) {
+        if (group->xcb_leader == leader) {
+            return group;
+        }
+    }
+    return nullptr;
 }
 
 }

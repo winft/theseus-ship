@@ -219,7 +219,7 @@ void window_layout_policy::clear_cache()
 
 void window_layout_policy::handle_layout_change(uint index)
 {
-    auto window = manager->xkb.platform->redirect->space.activeClient();
+    auto window = manager->xkb.platform->redirect->space.active_client;
     if (!window) {
         return;
     }
@@ -324,7 +324,7 @@ void application_layout_policy::clear_cache()
 
 void application_layout_policy::handle_layout_change(uint index)
 {
-    auto window = manager->xkb.platform->redirect->space.activeClient();
+    auto window = manager->xkb.platform->redirect->space.active_client;
     if (!window) {
         return;
     }

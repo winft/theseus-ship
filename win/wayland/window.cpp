@@ -813,7 +813,7 @@ void window::do_set_fullscreen(bool full)
     if (old_full) {
         // May cause focus leave.
         // TODO: Must always be done when fullscreening to other output allowed.
-        space.updateFocusMousePosition(input::get_cursor()->pos());
+        space.focusMousePos = input::get_cursor()->pos();
     }
 
     control->set_fullscreen(full);

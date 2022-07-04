@@ -166,10 +166,11 @@ int tabbox_handler_impl::number_of_desktops() const
 
 std::weak_ptr<tabbox_client> tabbox_handler_impl::active_client() const
 {
-    if (m_tabbox->space.activeClient())
-        return m_tabbox->space.activeClient()->control->tabbox();
-    else
+    if (auto win = m_tabbox->space.active_client) {
+        return win->control->tabbox();
+    } else {
         return std::weak_ptr<tabbox_client>();
+    }
 }
 
 bool tabbox_handler_impl::check_desktop(tabbox_client* client, int desktop) const
@@ -611,8 +612,10 @@ void tabbox::reset(bool partial_reset)
     case tabbox_config::ClientTabBox:
         m_tabbox->create_model(partial_reset);
         if (!partial_reset) {
-            if (space.activeClient())
-                set_current_client(space.activeClient());
+            if (space.active_client) {
+                set_current_client(space.active_client);
+            }
+
             // it's possible that the active client is not part of the model
             // in that case the index is invalid
             if (!m_tabbox->current_index().isValid())
@@ -1544,8 +1547,9 @@ bool tabbox::establish_tabbox_grab()
     // the active client, which may not have it.
     Q_ASSERT(!m_forced_global_mouse_grab);
     m_forced_global_mouse_grab = true;
-    if (space.activeClient() != nullptr)
-        space.activeClient()->control->update_mouse_grab();
+    if (space.active_client) {
+        space.active_client->control->update_mouse_grab();
+    }
     m_x11_event_filter.reset(new tabbox_x11_filter(*this));
     return true;
 }
@@ -1560,8 +1564,9 @@ void tabbox::remove_tabbox_grab()
     base::x11::ungrab_keyboard();
     Q_ASSERT(m_forced_global_mouse_grab);
     m_forced_global_mouse_grab = false;
-    if (space.activeClient() != nullptr)
-        space.activeClient()->control->update_mouse_grab();
+    if (space.active_client) {
+        space.active_client->control->update_mouse_grab();
+    }
     m_x11_event_filter.reset();
 }
 } // namespace win

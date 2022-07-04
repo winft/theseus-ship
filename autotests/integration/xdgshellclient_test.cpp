@@ -175,7 +175,7 @@ void TestXdgShellClient::testMapUnmapMap()
     QCOMPARE(client->bit_depth, 32);
     QVERIFY(client->hasAlpha());
     QCOMPARE(client->control->icon().name(), QStringLiteral("wayland"));
-    QCOMPARE(Test::app()->workspace->activeClient(), client);
+    QCOMPARE(Test::app()->workspace->active_client, client);
     QVERIFY(effectsWindowShownSpy.isEmpty());
     QVERIFY(client->isMaximizable());
     QVERIFY(client->isMovable());
@@ -205,7 +205,7 @@ void TestXdgShellClient::testMapUnmapMap()
     QCOMPARE(client->ready_for_painting, true);
     QCOMPARE(client->isHiddenInternal(), true);
     QVERIFY(windowClosedSpy.isEmpty());
-    QVERIFY(!Test::app()->workspace->activeClient());
+    QVERIFY(!Test::app()->workspace->active_client);
     QCOMPARE(effectsWindowHiddenSpy.count(), 1);
     QCOMPARE(effectsWindowHiddenSpy.first().first().value<EffectWindow*>(),
              client->render->effect.get());
@@ -221,7 +221,7 @@ void TestXdgShellClient::testMapUnmapMap()
     QCOMPARE(client->isHiddenInternal(), false);
     QCOMPARE(client->bit_depth, 24);
     QVERIFY(!client->hasAlpha());
-    QCOMPARE(Test::app()->workspace->activeClient(), client);
+    QCOMPARE(Test::app()->workspace->active_client, client);
     QCOMPARE(effectsWindowShownSpy.count(), 1);
     QCOMPARE(effectsWindowShownSpy.first().first().value<EffectWindow*>(),
              client->render->effect.get());
@@ -370,7 +370,7 @@ void TestXdgShellClient::testMinimizeActiveWindow()
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QVERIFY(c->control->active());
-    QCOMPARE(Test::app()->workspace->activeClient(), c);
+    QCOMPARE(Test::app()->workspace->active_client, c);
     QVERIFY(c->wantsInput());
     QVERIFY(win::wants_tab_focus(c));
     QVERIFY(c->isShown());
@@ -380,7 +380,7 @@ void TestXdgShellClient::testMinimizeActiveWindow()
     QVERIFY(c->wantsInput());
     QVERIFY(win::wants_tab_focus(c));
     QVERIFY(!c->control->active());
-    QVERIFY(!Test::app()->workspace->activeClient());
+    QVERIFY(!Test::app()->workspace->active_client);
     QVERIFY(c->control->minimized());
 
     // unminimize again
@@ -390,7 +390,7 @@ void TestXdgShellClient::testMinimizeActiveWindow()
     QVERIFY(c->wantsInput());
     QVERIFY(win::wants_tab_focus(c));
     QVERIFY(c->isShown());
-    QCOMPARE(Test::app()->workspace->activeClient(), c);
+    QCOMPARE(Test::app()->workspace->active_client, c);
 }
 
 void TestXdgShellClient::testFullscreen_data()
@@ -794,7 +794,7 @@ void TestXdgShellClient::testHidden()
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QVERIFY(c->control->active());
-    QCOMPARE(Test::app()->workspace->activeClient(), c);
+    QCOMPARE(Test::app()->workspace->active_client, c);
     QVERIFY(c->wantsInput());
     QVERIFY(win::wants_tab_focus(c));
     QVERIFY(c->isShown());
@@ -811,7 +811,7 @@ void TestXdgShellClient::testHidden()
     QVERIFY(c->wantsInput());
     QVERIFY(win::wants_tab_focus(c));
 
-    // QCOMPARE(Test::app()->workspace->activeClient(), c);
+    // QCOMPARE(Test::app()->workspace->active_client, c);
 }
 
 void TestXdgShellClient::testDesktopFileName()
@@ -1020,8 +1020,8 @@ void TestXdgShellClient::testAppMenu()
     menu->setAddress("service.name", "object/path");
     spy.wait();
     QCOMPARE(c->control->has_application_menu(), true);
-    QCOMPARE(c->control->application_menu(),
-             std::make_tuple(QString("service.name"), QString("object/path")));
+    QCOMPARE(c->control->application_menu().address,
+             win::appmenu_address("service.name", "object/path"));
 
     QVERIFY(QDBusConnection::sessionBus().unregisterService("org.kde.kappmenu"));
 }
@@ -1071,7 +1071,7 @@ void TestXdgShellClient::testSendClientWithTransientToDesktop()
 
     auto transient = Test::render_and_wait_for_shown(transientSurface, QSize(100, 50), Qt::blue);
     QVERIFY(transient);
-    QCOMPARE(Test::app()->workspace->activeClient(), transient);
+    QCOMPARE(Test::app()->workspace->active_client, transient);
     QCOMPARE(transient->transient()->lead(), c);
     QVERIFY(contains(c->transient()->children, transient));
 
@@ -1086,7 +1086,7 @@ void TestXdgShellClient::testSendClientWithTransientToDesktop()
 
     // activate c
     Test::app()->workspace->activateClient(c);
-    QCOMPARE(Test::app()->workspace->activeClient(), c);
+    QCOMPARE(Test::app()->workspace->active_client, c);
     QVERIFY(c->control->active());
 
     // and send it to the desktop it's already on
@@ -1409,7 +1409,7 @@ void TestXdgShellClient::testSendToScreen()
 
     auto window = Test::render_and_wait_for_shown(surface, QSize(200, 100), Qt::red);
     QVERIFY(window);
-    QCOMPARE(Test::app()->workspace->activeClient(), window);
+    QCOMPARE(Test::app()->workspace->active_client, window);
     QCOMPARE(window->frameGeometry().size(), QSize(200, 100));
 
     XdgPositioner positioner(QSize(50, 40), QRect(0, 0, 5, 10));

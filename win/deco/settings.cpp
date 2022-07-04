@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "config-kwin.h"
 #include "main.h"
 #include "render/compositor.h"
-#include "win/app_menu.h"
+#include "win/dbus/appmenu.h"
 #include "win/space.h"
 #include "win/virtual_desktops.h"
 
@@ -182,7 +182,7 @@ void settings::readSettings()
         m_rightButtons = right;
         Q_EMIT decorationSettings()->decorationButtonsRightChanged(m_rightButtons);
     }
-    space.app_menu->setViewEnabled(
+    space.appmenu->setViewEnabled(
         left.contains(KDecoration2::DecorationButtonType::ApplicationMenu)
         || right.contains(KDecoration2::DecorationButtonType::ApplicationMenu));
     const bool close = config.readEntry("CloseOnDoubleClickOnMenu", false);

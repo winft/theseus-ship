@@ -416,7 +416,7 @@ void pointer_redirect::cleanupDecoration(win::deco::client_impl* old, win::deco:
 {
     QObject::disconnect(notifiers.decoration_geometry);
     notifiers.decoration_geometry = QMetaObject::Connection();
-    redirect->space.updateFocusMousePosition(position().toPoint());
+    redirect->space.focusMousePos = position().toPoint();
 
     if (old) {
         // send leave event to old decoration
@@ -475,7 +475,7 @@ void pointer_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
         if (auto lead = win::lead_of_annexed_transient(focusNow)) {
             win::enter_event(lead, m_pos.toPoint());
         }
-        redirect->space.updateFocusMousePosition(m_pos.toPoint());
+        redirect->space.focusMousePos = m_pos.toPoint();
     }
 
     if (auto focus_internal = focus.internal_window) {
@@ -630,7 +630,7 @@ void pointer_redirect::updatePointerConstraints()
     if (s != seat->pointers().get_focus().surface) {
         return;
     }
-    auto const canConstrain = constraints.enabled && focus.window == redirect->space.activeClient();
+    auto const canConstrain = constraints.enabled && focus.window == redirect->space.active_client;
     auto const cf = s->confinedPointer();
 
     if (cf) {

@@ -168,8 +168,7 @@ void init_space(Space& space)
         new_active_client = find_controlled_window<x11::window>(
             space, predicate_match::window, client_info.activeWindow());
     }
-    if (new_active_client == nullptr && space.activeClient() == nullptr
-        && space.should_get_focus.size() == 0) {
+    if (!new_active_client && !space.active_client && space.should_get_focus.size() == 0) {
         // No client activated in manage()
         if (new_active_client == nullptr)
             new_active_client = win::top_client_on_desktop(&space, vds->current(), nullptr);

@@ -902,7 +902,7 @@ void effects_handler_impl::activateWindow(EffectWindow* c)
 
 EffectWindow* effects_handler_impl::activeWindow() const
 {
-    auto ac = m_compositor->space->activeClient();
+    auto ac = m_compositor->space->active_client;
     return ac ? ac->render->effect.get() : nullptr;
 }
 
@@ -1980,7 +1980,7 @@ void effects_window_impl::addLayerRepaint(int x, int y, int w, int h)
 const EffectWindowGroup* effects_window_impl::group() const
 {
     if (auto c = qobject_cast<win::x11::window*>(toplevel); c && c->group()) {
-        return c->group()->effectGroup();
+        return c->group()->effect_group;
     }
     return nullptr; // TODO
 }
@@ -2452,7 +2452,7 @@ bool effects_window_impl::isX11Client() const
 
 EffectWindowList effect_window_group_impl::members() const
 {
-    const auto memberList = group->members();
+    const auto memberList = group->members;
     EffectWindowList ret;
     ret.reserve(memberList.size());
     std::transform(std::cbegin(memberList),

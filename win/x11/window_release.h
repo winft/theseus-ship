@@ -47,7 +47,7 @@ void remove_controlled_window_from_space(Space& space, Win* win)
     remove_window_from_lists(space, win);
     remove_all(space.attention_chain, win);
 
-    auto group = space.findGroup(win->xcb_window);
+    auto group = find_group(space, win->xcb_window);
     if (group) {
         group->lostLeader();
     }

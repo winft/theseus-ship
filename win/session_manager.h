@@ -15,19 +15,17 @@
 namespace KWin::win
 {
 
-class space;
-
 class KWIN_EXPORT session_manager : public QObject
 {
     Q_OBJECT
 public:
-    session_manager(win::space& space);
+    session_manager();
     ~session_manager() override;
 
     SessionState state() const;
 
 Q_SIGNALS:
-    void stateChanged();
+    void stateChanged(SessionState prev, SessionState next);
 
     void loadSessionRequested(const QString& name);
     void prepareSessionSaveRequested(const QString& name);
@@ -44,7 +42,6 @@ public Q_SLOTS:
 private:
     void setState(SessionState state);
     SessionState m_sessionState{SessionState::Normal};
-    win::space& space;
 };
 
 struct session_info {

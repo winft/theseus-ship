@@ -91,6 +91,11 @@ class Toplevel;
 namespace win
 {
 
+namespace dbus
+{
+class appmenu;
+}
+
 namespace deco
 {
 template<typename Space>
@@ -106,7 +111,6 @@ class group;
 }
 
 enum class activation;
-class app_menu;
 class focus_chain;
 class internal_window;
 class kill_window;
@@ -115,6 +119,8 @@ class screen_edger;
 class shortcut_dialog;
 class stacking_order;
 class tabbox;
+
+template<typename Space>
 class user_actions_menu;
 class virtual_desktop_manager;
 
@@ -139,7 +145,6 @@ Q_SIGNALS:
     void clientActivated(KWin::Toplevel*);
     void clientDemandsAttentionChanged(KWin::Toplevel*, bool);
     void clientMinimizedChanged(KWin::Toplevel*);
-    void groupAdded(KWin::win::x11::group*);
     void unmanagedAdded(KWin::Toplevel*);
     void unmanagedRemoved(KWin::Toplevel*);
     void window_deleted(KWin::Toplevel*);
@@ -160,6 +165,7 @@ public:
     std::unique_ptr<qobject_t> qobject;
 
     std::vector<Toplevel*> m_windows;
+    std::vector<win::x11::group*> groups;
 
     std::unique_ptr<scripting::platform> scripting;
     std::unique_ptr<render::outline> outline;
@@ -169,7 +175,7 @@ public:
     KStartupInfo* startup{nullptr};
     std::unique_ptr<base::x11::atoms> atoms;
     std::unique_ptr<deco::bridge<space>> deco;
-    std::unique_ptr<win::app_menu> app_menu;
+    std::unique_ptr<dbus::appmenu> appmenu;
     std::unique_ptr<input::redirect> input;
     std::unique_ptr<win::tabbox> tabbox;
     std::unique_ptr<RuleBook> rule_book;
@@ -197,7 +203,9 @@ public:
      * Holds the menu containing the user actions which is shown
      * on e.g. right click the window decoration.
      */
-    std::unique_ptr<win::user_actions_menu> user_actions_menu;
+    std::unique_ptr<win::user_actions_menu<space>> user_actions_menu;
+
+    QPoint focusMousePos;
 
     explicit space(render::compositor& render);
     virtual ~space();
@@ -223,11 +231,6 @@ public:
     void initShortcuts();
     bool initializing() const;
 
-    /**
-     * Returns the active client, i.e. the client that has the focus (or None
-     * if no client has the focus)
-     */
-    Toplevel* activeClient() const;
     /**
      * Client that was activated, but it's not yet really activeClient(), because
      * we didn't process yet the matching FocusIn event. Used mostly in focus
@@ -355,9 +358,6 @@ public:
     bool showingDesktop() const;
 
     void setActiveClient(Toplevel* window);
-    win::x11::group* findGroup(xcb_window_t leader) const;
-    void addGroup(win::x11::group* group);
-    void removeGroup(win::x11::group* group);
 
     bool checkStartupNotification(xcb_window_t w, KStartupInfoId& id, KStartupInfoData& data);
 
@@ -378,17 +378,6 @@ public:
 
     void cancelDelayFocus();
     void requestDelayFocus(Toplevel*);
-
-    /**
-     * updates the mouse position to track whether a focus follow mouse focus change was caused by
-     * an actual mouse move
-     * is esp. called on enter/motion events of inactive windows
-     * since an active window doesn't receive mouse events, it must also be invoked if a
-     * (potentially) active window might be moved/resize away from the cursor (causing a leave
-     * event)
-     */
-    void updateFocusMousePosition(const QPoint& pos);
-    QPoint focusMousePosition() const;
 
     /**
      * Returns a client that is currently being moved or resized by the user.
@@ -539,12 +528,8 @@ private:
 
     // Delay(ed) window focus timer and client
     QTimer* delayFocusTimer{nullptr};
-    QPoint focusMousePos;
 
     bool showing_desktop{false};
-
-    std::vector<win::x11::group*> groups;
-
     bool was_user_interaction{false};
 
     int session_active_client;
@@ -579,25 +564,9 @@ private:
     friend bool performTransiencyCheck();
 };
 
-inline Toplevel* space::activeClient() const
-{
-    return active_client;
-}
-
 inline Toplevel* space::mostRecentlyActivatedClient() const
 {
     return should_get_focus.size() > 0 ? should_get_focus.back() : active_client;
-}
-
-inline void space::addGroup(win::x11::group* group)
-{
-    Q_EMIT qobject->groupAdded(group);
-    groups.push_back(group);
-}
-
-inline void space::removeGroup(win::x11::group* group)
-{
-    remove_all(groups, group);
 }
 
 inline bool space::wasUserInteraction() const
@@ -613,16 +582,6 @@ inline bool space::showingDesktop() const
 inline bool space::globalShortcutsDisabled() const
 {
     return global_shortcuts_disabled_for_client;
-}
-
-inline void space::updateFocusMousePosition(const QPoint& pos)
-{
-    focusMousePos = pos;
-}
-
-inline QPoint space::focusMousePosition() const
-{
-    return focusMousePos;
 }
 
 }
