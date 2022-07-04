@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "deco/bridge.h"
 #include "singleton_interface.h"
+#include "x11/tool_windows.h"
 
 #include "base/dbus/kwin.h"
 #include "base/output_helpers.h"
