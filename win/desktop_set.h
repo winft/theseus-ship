@@ -6,8 +6,13 @@
 #pragma once
 
 #include "desktop_get.h"
+#include "focus_chain_edit.h"
+#include "stacking.h"
+#include "transient.h"
 
 #include "main.h"
+
+#include <Wrapland/Server/plasma_window.h>
 
 namespace KWin::win
 {

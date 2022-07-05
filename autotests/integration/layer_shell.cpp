@@ -6,6 +6,8 @@
 #include "lib/app.h"
 
 #include "base/wayland/server.h"
+#include "render/effects.h"
+#include "render/window.h"
 #include "win/screen.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"

@@ -7,14 +7,13 @@
 
 #include "controlling.h"
 #include "focus_chain.h"
-#include "focus_chain_helpers.h"
+#include "focus_chain_edit.h"
 #include "geo.h"
 #include "layers.h"
 #include "stacking_order.h"
 #include "util.h"
 #include "x11/group.h"
 #include "x11/netinfo.h"
-#include "x11/tool_windows.h"
 
 // Required for casts between Toplevel and window in some template functions.
 // TODO(romangg): Remove these casts and this include to make the functions truly generic.
@@ -22,6 +21,7 @@
 
 #include "base/output_helpers.h"
 #include "base/platform.h"
+#include "main.h"
 #include "utils/algorithm.h"
 #include "utils/blocker.h"
 

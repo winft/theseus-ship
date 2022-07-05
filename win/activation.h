@@ -7,11 +7,15 @@
 
 #include "actions.h"
 #include "desktop_set.h"
+#include "focus_chain_find.h"
 #include "layers.h"
 #include "screen.h"
+#include "stacking.h"
 #include "stacking_order.h"
 #include "user_actions_menu.h"
 #include "window_find.h"
+#include "x11/netinfo.h"
+#include "x11/tool_windows.h"
 #include "x11/user_time.h"
 
 #include "utils/blocker.h"
