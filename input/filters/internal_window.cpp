@@ -22,6 +22,7 @@
 #include "win/space.h"
 
 #include <QWindow>
+#include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/touch_pool.h>
 
 namespace KWin::input

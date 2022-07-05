@@ -7,7 +7,7 @@
 #include "buffer.h"
 
 #include "base/logging.h"
-
+#include "render/window.h"
 #include "toplevel.h"
 #include "win/geo.h"
 

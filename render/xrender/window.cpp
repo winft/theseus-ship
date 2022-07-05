@@ -13,6 +13,7 @@
 #include "shadow.h"
 
 #include "win/geo.h"
+#include "win/scene.h"
 #include "win/x11/window.h"
 
 #include <kwineffects/paint_clipper.h>

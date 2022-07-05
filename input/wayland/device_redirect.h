@@ -9,6 +9,7 @@
 #pragma once
 
 #include "input/redirect.h"
+#include "main.h"
 #include "toplevel.h"
 #include "win/geo.h"
 #include "win/internal_window.h"

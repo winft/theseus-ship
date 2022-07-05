@@ -26,10 +26,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KCMRULES
 #include "base/options.h"
 #include "input/cursor.h"
+#include "kwinglobals.h"
 #include "rules/rules.h"
 
-#include "geo.h"
-#include "kwinglobals.h"
+#include "geo_change.h"
 #include "meta.h"
 #include "move.h"
 #include "net.h"

@@ -12,6 +12,7 @@
 
 #include "win/deco.h"
 #include "win/scene.h"
+#include "win/space.h"
 
 #include <KDecoration2/Decoration>
 #include <KDecoration2/DecorationShadow>

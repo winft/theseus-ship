@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "effects.h"
 
 #include "toplevel.h"
+#include "utils/algorithm.h"
 #include "win/deco.h"
 #include "win/scene.h"
 

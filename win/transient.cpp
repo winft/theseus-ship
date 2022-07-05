@@ -5,9 +5,11 @@
 */
 #include "transient.h"
 
-#include "geo.h"
 #include "remnant.h"
+#include "scene.h"
 #include "toplevel.h"
+
+#include "utils/algorithm.h"
 
 #include <cassert>
 

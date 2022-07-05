@@ -6,7 +6,9 @@
 #pragma once
 
 #include "deco.h"
-#include "geo.h"
+#include "geo_block.h"
+#include "geo_change.h"
+#include "geo_electric.h"
 #include "net.h"
 #include "space.h"
 #include "stacking.h"

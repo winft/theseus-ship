@@ -15,6 +15,7 @@
 #include "wayland_logging.h"
 
 #include <QElapsedTimer>
+#include <Wrapland/Server/display.h>
 #include <Wrapland/Server/output.h>
 #include <Wrapland/Server/presentation_time.h>
 #include <Wrapland/Server/surface.h>

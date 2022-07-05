@@ -16,6 +16,8 @@
 #include "input/cursor.h"
 #include "input/gestures.h"
 #include "main.h"
+#include "render/compositor.h"
+#include "render/effects.h"
 
 // DBus generated
 #include "screenlocker_interface.h"

@@ -14,6 +14,9 @@
 #include "shadow.h"
 #include "texture.h"
 
+#include "main.h"
+#include "toplevel.h"
+#include "utils/algorithm.h"
 #include "win/geo.h"
 
 #include <cmath>

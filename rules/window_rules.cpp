@@ -10,6 +10,7 @@
 
 #ifndef KCMRULES
 #include "win/controlling.h"
+#include "win/geo_change.h"
 #include "win/input.h"
 #include "win/meta.h"
 #include "win/rules.h"

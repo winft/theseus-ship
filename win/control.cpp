@@ -17,6 +17,7 @@
 #include "tabbox/tabbox.h"
 #endif
 
+#include "render/compositor.h"
 #include "render/effects.h"
 #include "toplevel.h"
 

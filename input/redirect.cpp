@@ -18,6 +18,7 @@
 #include "touch_redirect.h"
 
 #include "main.h"
+#include "render/compositor.h"
 #include "render/effects.h"
 #include "render/platform.h"
 #include "toplevel.h"
