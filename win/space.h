@@ -237,10 +237,6 @@ public:
      */
     virtual Toplevel* findInternal(QWindow* w) const = 0;
 
-    QRect clientArea(clientAreaOption, const QPoint& p, int desktop) const;
-    QRect clientArea(clientAreaOption, Toplevel const* window) const;
-    QRect clientArea(clientAreaOption, base::output const* output, int desktop) const;
-
     QRegion restrictedMoveArea(int desktop, win::strut_area areas = win::strut_area::all) const;
 
     void initShortcuts();

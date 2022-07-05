@@ -574,8 +574,8 @@ void window::configure_geometry(QRect const& frame_geo)
         auto parent = transient()->lead();
         if (parent) {
             auto const top_lead = lead_of_annexed_transient(this);
-            auto const bounds = space.clientArea(
-                top_lead->control->fullscreen() ? FullScreenArea : PlacementArea, top_lead);
+            auto const bounds = space_window_area(
+                space, top_lead->control->fullscreen() ? FullScreenArea : PlacementArea, top_lead);
 
             serial = popup->configure(
                 get_xdg_shell_popup_placement(this, bounds).translated(-top_lead->pos()));
@@ -655,8 +655,8 @@ void window::apply_pending_geometry()
             return;
         }
 
-        auto const screen_bounds = space.clientArea(
-            toplevel->control->fullscreen() ? FullScreenArea : PlacementArea, toplevel);
+        auto const screen_bounds = space_window_area(
+            space, toplevel->control->fullscreen() ? FullScreenArea : PlacementArea, toplevel);
 
         // Need to set that for get_xdg_shell_popup_placement(..) call.
         // TODO(romangg): make this less akward, i.e. if possible include it in the call.
@@ -962,7 +962,8 @@ void window::handle_commit()
         // Plasma surfaces might set their position late. So check again initial position being set.
         if (must_place && !isInitialPositionSet()) {
             must_place = false;
-            auto const area = space.clientArea(PlacementArea, get_current_output(space), desktop());
+            auto const area
+                = space_window_area(space, PlacementArea, get_current_output(space), desktop());
             placeIn(area);
         }
     } else if (layer_surface) {

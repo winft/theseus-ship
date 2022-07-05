@@ -19,6 +19,7 @@
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
 #include "win/wayland/window_release.h"
+#include "win/window_area.h"
 
 #include <Wrapland/Server/input_method_v2.h>
 #include <Wrapland/Server/seat.h>
@@ -54,8 +55,10 @@ QRect get_input_popup_placement(input::wayland::platform& platform,
     using constraint_adjust = Wrapland::Server::XdgShellSurface::ConstraintAdjustment;
 
     auto const toplevel = win::lead_of_annexed_transient(parent_window);
-    auto const& screen_bounds = platform.redirect->space.clientArea(
-        toplevel->control->fullscreen() ? FullScreenArea : PlacementArea, toplevel);
+    auto const& screen_bounds
+        = win::space_window_area(platform.redirect->space,
+                                 toplevel->control->fullscreen() ? FullScreenArea : PlacementArea,
+                                 toplevel);
 
     auto const& text_area = cursor_rectangle.isValid() ? cursor_rectangle : QRect(0, 0, 0, 0);
 

@@ -139,7 +139,7 @@ public:
         }
         if (rules().checkStrictGeometry(true)) {
             // check geometry constraints (rule to obey is set)
-            const QRect fsarea = m_window->space.clientArea(FullScreenArea, m_window);
+            const QRect fsarea = space_window_area(m_window->space, FullScreenArea, m_window);
             if (size_for_client_size(m_window, fsarea.size(), win::size_mode::any, true)
                 != fsarea.size()) {
                 // the app wouldn't fit exactly fullscreen geometry due to its strict geometry

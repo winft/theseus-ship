@@ -8,6 +8,7 @@
 #include "geo.h"
 #include "scene.h"
 #include "types.h"
+#include "window_area.h"
 
 namespace KWin::win
 {
@@ -18,7 +19,7 @@ QSize constrain_and_adjust_size(Win* win, QSize const& size)
     auto width = size.width();
     auto height = size.height();
 
-    auto const area = win->space.clientArea(WorkArea, win);
+    auto const area = space_window_area(win->space, WorkArea, win);
 
     width = std::min(width, area.width());
     height = std::min(height, area.height());
@@ -53,7 +54,8 @@ void grow_horizontal(Win* win)
 
         // Check that it hasn't grown outside of the area, due to size increments.
         // TODO this may be wrong?
-        auto const area = win->space.clientArea(
+        auto const area = space_window_area(
+            win->space,
             MovementArea,
             QPoint((win->pos().x() + grown_right) / 2, win->frameGeometry().center().y()),
             win->desktop());
@@ -112,7 +114,8 @@ void grow_vertical(Win* win)
             win, frame_geo.bottom() + win->resizeIncrements().height() - 1, true);
 
         // check that it hasn't grown outside of the area, due to size increments
-        auto const area = win->space.clientArea(
+        auto const area = space_window_area(
+            win->space,
             MovementArea,
             QPoint(win->frameGeometry().center().x(), (win->pos().y() + newbottom) / 2),
             win->desktop());

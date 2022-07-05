@@ -338,8 +338,8 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     plasmaSurface->setPanelBehavior(PlasmaShellSurface::PanelBehavior::AlwaysVisible);
 
     // Placement area still full screen.
-    QVERIFY(Test::app()->workspace->clientArea(PlacementArea, 0, 1)
-            == Test::app()->workspace->clientArea(FullScreenArea, 0, 1));
+    QVERIFY(win::space_window_area(*Test::app()->workspace, PlacementArea, 0, 1)
+            == win::space_window_area(*Test::app()->workspace, FullScreenArea, 0, 1));
 
     // Now map the panel and placement area is reduced.
     auto dock = Test::render_and_wait_for_shown(surface, QSize(1280, 50), Qt::blue);
@@ -349,8 +349,8 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     QCOMPARE(dock->frameGeometry(),
              QRect(0, Test::get_output(0)->geometry().height() - 50, 1280, 50));
     QCOMPARE(dock->hasStrut(), true);
-    QVERIFY(Test::app()->workspace->clientArea(PlacementArea, 0, 1)
-            != Test::app()->workspace->clientArea(FullScreenArea, 0, 1));
+    QVERIFY(win::space_window_area(*Test::app()->workspace, PlacementArea, 0, 1)
+            != win::space_window_area(*Test::app()->workspace, FullScreenArea, 0, 1));
 
     // Create parent
     auto parentSurface = Test::create_surface();
@@ -363,7 +363,8 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     QVERIFY(!win::decoration(parent));
 
     win::move(parent, {0, Test::get_output(0)->geometry().height() - 300});
-    win::keep_in_area(parent, Test::app()->workspace->clientArea(PlacementArea, parent), false);
+    win::keep_in_area(
+        parent, win::space_window_area(*Test::app()->workspace, PlacementArea, parent), false);
     QCOMPARE(parent->frameGeometry(),
              QRect(0, Test::get_output(0)->geometry().height() - 600 - 50, 800, 600));
 

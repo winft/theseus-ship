@@ -762,22 +762,22 @@ protected:
     QRect client_area_impl(clientAreaOption option, int screen, int desktop) const override
     {
         auto output = base::get_output(kwinApp()->get_base().get_outputs(), screen);
-        return ref_space->clientArea(option, output, desktop);
+        return win::space_window_area(*ref_space, option, output, desktop);
     }
 
     QRect client_area_impl(clientAreaOption option, QPoint const& point, int desktop) const override
     {
-        return ref_space->clientArea(option, point, desktop);
+        return win::space_window_area(*ref_space, option, point, desktop);
     }
 
     QRect client_area_impl(clientAreaOption option, window* window) const override
     {
-        return ref_space->clientArea(option, window->client());
+        return win::space_window_area(*ref_space, option, window->client());
     }
 
     QRect client_area_impl(clientAreaOption option, window const* window) const override
     {
-        return ref_space->clientArea(option, window->client());
+        return win::space_window_area(*ref_space, option, window->client());
     }
 
     QString desktop_name_impl(int desktop) const override

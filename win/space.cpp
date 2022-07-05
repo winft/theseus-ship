@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "output_space.h"
 #include "singleton_interface.h"
 #include "space_areas_helpers.h"
+#include "window_area.h"
 #include "x11/tool_windows.h"
 
 #include "base/dbus/kwin.h"
@@ -480,7 +481,9 @@ void space::desktopResized()
     }
 
     update_space_areas(*this);
-    saveOldScreenSizes(); // after updateClientArea(), so that one still uses the previous one
+
+    // after updateClientArea(), so that one still uses the previous one
+    saveOldScreenSizes();
 
     // TODO: emit a signal instead and remove the deep function calls into edges and effects
     edges->recreateEdges();
@@ -510,66 +513,6 @@ void space::update_space_area_from_windows(QRect const& /*desktop_area*/,
     // Can't be pure virtual because the function might be called from the ctor.
 }
 
-/**
- * Returns the area available for clients. This is the desktop
- * geometry minus windows on the dock. Placement algorithms should
- * refer to this rather than Screens::geometry.
- */
-QRect space::clientArea(clientAreaOption opt, base::output const* output, int desktop) const
-{
-    auto const& outputs = kwinApp()->get_base().get_outputs();
-
-    if (desktop == NETWinInfo::OnAllDesktops || desktop == 0)
-        desktop = virtual_desktop_manager->current();
-    if (!output) {
-        output = get_current_output(*this);
-    }
-
-    QRect output_geo;
-    size_t output_index{0};
-
-    if (output) {
-        output_geo = output->geometry();
-        output_index = base::get_output_index(outputs, *output);
-    }
-
-    auto& base = kwinApp()->get_base();
-    QRect sarea, warea;
-    sarea = (!areas.screen.empty()
-             // screens may be missing during KWin initialization or screen config changes
-             && output_index < areas.screen[desktop].size())
-        ? areas.screen[desktop][output_index]
-        : output_geo;
-    warea = areas.work[desktop].isNull() ? QRect({}, base.topology.size) : areas.work[desktop];
-
-    switch (opt) {
-    case MaximizeArea:
-    case PlacementArea:
-        return sarea;
-    case MaximizeFullArea:
-    case FullScreenArea:
-    case MovementArea:
-    case ScreenArea:
-        return output_geo;
-    case WorkArea:
-        return warea;
-    case FullArea:
-        return QRect({}, base.topology.size);
-    }
-    abort();
-}
-
-QRect space::clientArea(clientAreaOption opt, const QPoint& p, int desktop) const
-{
-    return clientArea(
-        opt, base::get_nearest_output(kwinApp()->get_base().get_outputs(), p), desktop);
-}
-
-QRect space::clientArea(clientAreaOption opt, Toplevel const* window) const
-{
-    return clientArea(opt, win::pending_frame_geometry(window).center(), window->desktop());
-}
-
 static QRegion strutsToRegion(win::space const& space,
                               int desktop,
                               win::strut_area areas,
@@ -594,11 +537,6 @@ static QRegion strutsToRegion(win::space const& space,
 QRegion space::restrictedMoveArea(int desktop, win::strut_area areas) const
 {
     return strutsToRegion(*this, desktop, areas, this->areas.restrictedmove);
-}
-
-bool space::inUpdateClientArea() const
-{
-    return !oldrestrictedmovearea.empty();
 }
 
 QRegion space::previousRestrictedMoveArea(int desktop, win::strut_area areas) const
@@ -638,8 +576,8 @@ space::adjustClientPosition(Toplevel* window, QPoint pos, bool unrestricted, dou
     QRect maxRect;
     auto guideMaximized = win::maximize_mode::restore;
     if (window->maximizeMode() != win::maximize_mode::restore) {
-        maxRect = clientArea(
-            MaximizeArea, pos + QRect(QPoint(), window->size()).center(), window->desktop());
+        maxRect = space_window_area(
+            *this, MaximizeArea, pos + QRect(QPoint(), window->size()).center(), window->desktop());
         QRect geo = window->frameGeometry();
         if (flags(window->maximizeMode() & win::maximize_mode::horizontal)
             && (geo.x() == maxRect.left() || geo.right() == maxRect.right())) {
@@ -661,7 +599,7 @@ space::adjustClientPosition(Toplevel* window, QPoint pos, bool unrestricted, dou
             = base::get_nearest_output(outputs, pos + QRect(QPoint(), window->size()).center());
 
         if (maxRect.isNull()) {
-            maxRect = clientArea(MovementArea, output, window->desktop());
+            maxRect = space_window_area(*this, MovementArea, output, window->desktop());
         }
 
         const int xmin = maxRect.left();
@@ -869,8 +807,8 @@ QRect space::adjustClientSize(Toplevel* window, QRect moveResizeGeom, win::posit
         || kwinApp()->options->borderSnapZone()) { // || kwinApp()->options->centerSnapZone )
         const bool sOWO = kwinApp()->options->isSnapOnlyWhenOverlapping();
 
-        auto const maxRect = clientArea(
-            MovementArea, QRect(QPoint(0, 0), window->size()).center(), window->desktop());
+        auto const maxRect = space_window_area(
+            *this, MovementArea, QRect(QPoint(0, 0), window->size()).center(), window->desktop());
         const int xmin = maxRect.left();
         const int xmax = maxRect.right(); // desk size
         const int ymin = maxRect.top();
@@ -1258,12 +1196,14 @@ void space::quickTileWindow(win::quicktiles mode)
 
 int space::packPositionLeft(Toplevel const* window, int oldX, bool leftEdge) const
 {
-    int newX = clientArea(MaximizeArea, window).left();
-    if (oldX <= newX) { // try another Xinerama screen
-        newX = clientArea(MaximizeArea,
-                          QPoint(window->geometry_update.frame.left() - 1,
-                                 window->geometry_update.frame.center().y()),
-                          window->desktop())
+    int newX = space_window_area(*this, MaximizeArea, window).left();
+    if (oldX <= newX) {
+        // try another Xinerama screen
+        newX = space_window_area(*this,
+                                 MaximizeArea,
+                                 QPoint(window->geometry_update.frame.left() - 1,
+                                        window->geometry_update.frame.center().y()),
+                                 window->desktop())
                    .left();
     }
 
@@ -1299,14 +1239,15 @@ int space::packPositionLeft(Toplevel const* window, int oldX, bool leftEdge) con
 
 int space::packPositionRight(Toplevel const* window, int oldX, bool rightEdge) const
 {
-    int newX = clientArea(MaximizeArea, window).right();
+    int newX = space_window_area(*this, MaximizeArea, window).right();
 
     if (oldX >= newX) {
         // try another Xinerama screen
-        newX = clientArea(MaximizeArea,
-                          QPoint(window->geometry_update.frame.right() + 1,
-                                 window->geometry_update.frame.center().y()),
-                          window->desktop())
+        newX = space_window_area(*this,
+                                 MaximizeArea,
+                                 QPoint(window->geometry_update.frame.right() + 1,
+                                        window->geometry_update.frame.center().y()),
+                                 window->desktop())
                    .right();
     }
 
@@ -1342,12 +1283,14 @@ int space::packPositionRight(Toplevel const* window, int oldX, bool rightEdge) c
 
 int space::packPositionUp(Toplevel const* window, int oldY, bool topEdge) const
 {
-    int newY = clientArea(MaximizeArea, window).top();
-    if (oldY <= newY) { // try another Xinerama screen
-        newY = clientArea(MaximizeArea,
-                          QPoint(window->geometry_update.frame.center().x(),
-                                 window->geometry_update.frame.top() - 1),
-                          window->desktop())
+    int newY = space_window_area(*this, MaximizeArea, window).top();
+    if (oldY <= newY) {
+        // try another Xinerama screen
+        newY = space_window_area(*this,
+                                 MaximizeArea,
+                                 QPoint(window->geometry_update.frame.center().x(),
+                                        window->geometry_update.frame.top() - 1),
+                                 window->desktop())
                    .top();
     }
 
@@ -1376,12 +1319,13 @@ int space::packPositionUp(Toplevel const* window, int oldY, bool topEdge) const
 
 int space::packPositionDown(Toplevel const* window, int oldY, bool bottomEdge) const
 {
-    int newY = clientArea(MaximizeArea, window).bottom();
+    int newY = space_window_area(*this, MaximizeArea, window).bottom();
     if (oldY >= newY) { // try another Xinerama screen
-        newY = clientArea(MaximizeArea,
-                          QPoint(window->geometry_update.frame.center().x(),
-                                 window->geometry_update.frame.bottom() + 1),
-                          window->desktop())
+        newY = space_window_area(*this,
+                                 MaximizeArea,
+                                 QPoint(window->geometry_update.frame.center().x(),
+                                        window->geometry_update.frame.bottom() + 1),
+                                 window->desktop())
                    .bottom();
     }
 
@@ -1961,7 +1905,7 @@ void space::setupWindowShortcut(Toplevel* window)
                      qobject.get(),
                      [this](auto&& ok) { setupWindowShortcutDone(ok); });
 
-    auto area = clientArea(ScreenArea, window);
+    auto area = space_window_area(*this, ScreenArea, window);
     auto size = client_keys_dialog->sizeHint();
 
     auto pos = win::frame_to_client_pos(window, window->pos());

@@ -623,7 +623,8 @@ void internal_window::markAsMapped()
     update_layer(this);
 
     if (placeable()) {
-        auto const area = space.clientArea(PlacementArea, get_current_output(space), desktop());
+        auto const area
+            = space_window_area(space, PlacementArea, get_current_output(space), desktop());
         place(this, area);
     }
 

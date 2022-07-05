@@ -51,6 +51,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/stacking_order.h"
 #include "win/transient.h"
 #include "win/virtual_desktops.h"
+#include "win/window_area.h"
 #include "win/x11/group.h"
 #include "win/x11/unmanaged.h"
 #include "win/x11/window.h"
@@ -1273,7 +1274,7 @@ int effects_handler_impl::screenNumber(const QPoint& pos) const
 QRect effects_handler_impl::clientArea(clientAreaOption opt, int screen, int desktop) const
 {
     auto output = base::get_output(kwinApp()->get_base().get_outputs(), screen);
-    return m_compositor->space->clientArea(opt, output, desktop);
+    return win::space_window_area(*m_compositor->space, opt, output, desktop);
 }
 
 QRect effects_handler_impl::clientArea(clientAreaOption opt, const EffectWindow* c) const
@@ -1282,16 +1283,18 @@ QRect effects_handler_impl::clientArea(clientAreaOption opt, const EffectWindow*
     auto space = m_compositor->space;
 
     if (window->control) {
-        return space->clientArea(opt, window);
+        return win::space_window_area(*space, opt, window);
     } else {
-        return space->clientArea(
-            opt, window->frameGeometry().center(), space->virtual_desktop_manager->current());
+        return win::space_window_area(*space,
+                                      opt,
+                                      window->frameGeometry().center(),
+                                      space->virtual_desktop_manager->current());
     }
 }
 
 QRect effects_handler_impl::clientArea(clientAreaOption opt, const QPoint& p, int desktop) const
 {
-    return m_compositor->space->clientArea(opt, p, desktop);
+    return win::space_window_area(*m_compositor->space, opt, p, desktop);
 }
 
 QRect effects_handler_impl::virtualScreenGeometry() const

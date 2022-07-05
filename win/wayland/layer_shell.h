@@ -43,7 +43,7 @@ QRectF layer_surface_area(Win* win)
 
     if (layer_surf->exclusive_zone() == 0) {
         auto output_geo_rect = output_geo.toRect();
-        auto area = win->space.clientArea(WorkArea, output_geo_rect.center(), 0);
+        auto area = space_window_area(win->space, WorkArea, output_geo_rect.center(), 0);
         return area.intersected(output_geo_rect);
     }
 

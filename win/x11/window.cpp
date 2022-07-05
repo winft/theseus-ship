@@ -1111,7 +1111,7 @@ bool window::doStartMoveResize()
     // This reportedly improves smoothness of the moveresize operation,
     // something with Enter/LeaveNotify events, looks like XFree performance problem or something
     // *shrug* (https://lists.kde.org/?t=107302193400001&r=1&w=2)
-    auto r = space.clientArea(FullArea, this);
+    auto r = space_window_area(space, FullArea, this);
 
     xcb_windows.grab.create(r, XCB_WINDOW_CLASS_INPUT_ONLY, 0, nullptr, rootWindow());
     xcb_windows.grab.map();

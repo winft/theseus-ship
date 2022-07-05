@@ -311,7 +311,7 @@ void PlasmaSurfaceTest::testPanelTypeHasStrut()
     QVERIFY(win::is_dock(c));
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
     QTEST(c->hasStrut(), "expectedStrut");
-    QTEST(Test::app()->workspace->clientArea(MaximizeArea, 0, 0), "expectedMaxArea");
+    QTEST(win::space_window_area(*Test::app()->workspace, MaximizeArea, 0, 0), "expectedMaxArea");
     QTEST(c->layer(), "expectedLayer");
 }
 
@@ -370,7 +370,8 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
     QVERIFY(win::is_dock(panel));
     QCOMPARE(panel->frameGeometry(), panelGeometry);
     QCOMPARE(panel->hasStrut(), false);
-    QCOMPARE(Test::app()->workspace->clientArea(MaximizeArea, 0, 0), QRect(0, 0, 1280, 1024));
+    QCOMPARE(win::space_window_area(*Test::app()->workspace, MaximizeArea, 0, 0),
+             QRect(0, 0, 1280, 1024));
     QCOMPARE(panel->layer(), KWin::win::layer::normal);
 
     // create a Window

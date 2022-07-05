@@ -1341,7 +1341,7 @@ void screen_edger::createEdgeForClient(Toplevel* window, ElectricBorder border)
 
     auto const& outputs = kwinApp()->get_base().get_outputs();
     QRect const geo = window->frameGeometry();
-    QRect const fullArea = space.clientArea(FullArea, 0, 1);
+    auto const fullArea = space_window_area(space, FullArea, 0, 1);
 
     for (auto output : outputs) {
         auto const screen = output->geometry();

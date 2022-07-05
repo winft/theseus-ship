@@ -6,6 +6,7 @@
 #pragma once
 
 #include "types.h"
+#include "window_area.h"
 
 namespace KWin::win
 {
@@ -17,11 +18,11 @@ QRect electric_border_maximize_geometry(Win const* win, QPoint pos, int desktop)
         if (win->maximizeMode() == maximize_mode::full) {
             return win->restore_geometries.maximize;
         } else {
-            return win->space.clientArea(MaximizeArea, pos, desktop);
+            return space_window_area(win->space, MaximizeArea, pos, desktop);
         }
     }
 
-    auto ret = win->space.clientArea(MaximizeArea, pos, desktop);
+    auto ret = space_window_area(win->space, MaximizeArea, pos, desktop);
 
     if (flags(win->control->electric() & win::quicktiles::left)) {
         ret.setRight(ret.left() + ret.width() / 2 - 1);

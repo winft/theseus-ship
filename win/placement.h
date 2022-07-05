@@ -36,6 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "space.h"
 #include "stacking_order.h"
 #include "transient.h"
+#include "window_area.h"
 
 #include <QList>
 #include <QPoint>
@@ -191,7 +192,7 @@ void place(Win* window, const QRect& area, placement policy, placement nextPlace
         QPoint corner = geo.topLeft();
         auto const frameMargins = frame_margins(window);
 
-        const QRect fullRect = window->space.clientArea(FullArea, window);
+        const QRect fullRect = space_window_area(window->space, FullArea, window);
         if (!(window->maximizeMode() & maximize_mode::horizontal)) {
             if (geo.right() == fullRect.right()) {
                 corner.rx() += frameMargins.right();
@@ -556,7 +557,7 @@ void place_on_main_window(Win* window, const QRect& area, placement nextPlacemen
     geom.moveCenter(place_on->geometry_update.frame.center());
     move(window, geom.topLeft());
     // get area again, because the mainwindow may be on different xinerama screen
-    const QRect placementArea = window->space.clientArea(PlacementArea, window);
+    const QRect placementArea = space_window_area(window->space, PlacementArea, window);
     keep_in_area(window, placementArea, false); // make sure it's kept inside workarea
 }
 
@@ -569,7 +570,7 @@ void place_maximizing(Win* window, const QRect& area, placement nextPlacement)
         nextPlacement = placement::smart;
     if (window->isMaximizable() && window->maxSize().width() >= area.width()
         && window->maxSize().height() >= area.height()) {
-        if (window->space.clientArea(MaximizeArea, window) == area)
+        if (space_window_area(window->space, MaximizeArea, window) == area)
             maximize(window, maximize_mode::full);
         else { // if the geometry doesn't match default maximize area (xinerama case?),
             // it's probably better to use the given area
@@ -593,7 +594,7 @@ inline void unclutter_desktop(win::space& space)
             || client->isOnAllDesktops() || !client->isMovable()) {
             continue;
         }
-        const QRect placementArea = space.clientArea(PlacementArea, client);
+        auto const placementArea = space_window_area(space, PlacementArea, client);
         place_smart(client, placementArea);
     }
 }
