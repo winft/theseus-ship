@@ -129,7 +129,7 @@ std::weak_ptr<tabbox_client>
 tabbox_handler_impl::next_client_focus_chain(tabbox_client* client) const
 {
     if (tabbox_client_impl* c = static_cast<tabbox_client_impl*>(client)) {
-        auto next = m_tabbox->space.focus_chain->nextMostRecentlyUsed(c->client());
+        auto next = focus_chain_next_latest_use(m_tabbox->space.focus_chain, c->client());
         if (next) {
             return next->control->tabbox();
         }
@@ -139,7 +139,7 @@ tabbox_handler_impl::next_client_focus_chain(tabbox_client* client) const
 
 std::weak_ptr<tabbox_client> tabbox_handler_impl::first_client_focus_chain() const
 {
-    if (auto c = m_tabbox->space.focus_chain->firstMostRecentlyUsed()) {
+    if (auto c = focus_chain_first_latest_use<Toplevel>(m_tabbox->space.focus_chain)) {
         return c->control->tabbox();
     } else {
         return std::weak_ptr<tabbox_client>();
@@ -149,7 +149,7 @@ std::weak_ptr<tabbox_client> tabbox_handler_impl::first_client_focus_chain() con
 bool tabbox_handler_impl::is_in_focus_chain(tabbox_client* client) const
 {
     if (tabbox_client_impl* c = static_cast<tabbox_client_impl*>(client)) {
-        return m_tabbox->space.focus_chain->contains(c->client());
+        return contains(m_tabbox->space.focus_chain.chains.latest_use, c->client());
     }
     return false;
 }

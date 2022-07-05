@@ -41,7 +41,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/controlling.h"
 #include "win/dbus/appmenu.h"
 #include "win/dbus/virtual_desktop_manager.h"
-#include "win/focus_chain.h"
 #include "win/input.h"
 #include "win/internal_window.h"
 #include "win/kill_window.h"
@@ -109,9 +108,9 @@ space::space(render::compositor& render)
     , rule_book{std::make_unique<RuleBook>()}
     , user_actions_menu{std::make_unique<win::user_actions_menu<space>>(*this)}
     , stacking_order{std::make_unique<win::stacking_order>()}
-    , focus_chain{std::make_unique<win::focus_chain>(*this)}
+    , focus_chain{win::focus_chain<space>(*this)}
     , virtual_desktop_manager{std::make_unique<win::virtual_desktop_manager>()}
-    , dbus{std::make_unique<base::dbus::kwin>(*this)}
+    , dbus{std::make_unique<base::dbus::kwin_impl<space>>(*this)}
     , session_manager{std::make_unique<win::session_manager>()}
 {
     // For invoke methods of user_actions_menu.
@@ -163,25 +162,26 @@ space::space(render::compositor& render)
             }
         });
 
-    QObject::connect(
-        qobject.get(), &qobject_t::clientRemoved, focus_chain.get(), &win::focus_chain::remove);
+    QObject::connect(qobject.get(), &qobject_t::clientRemoved, qobject.get(), [this](auto window) {
+        focus_chain_remove(focus_chain, window);
+    });
     QObject::connect(qobject.get(),
                      &qobject_t::clientActivated,
-                     focus_chain.get(),
-                     &win::focus_chain::setActiveClient);
+                     qobject.get(),
+                     [this](auto window) { focus_chain.active_window = window; });
     QObject::connect(virtual_desktop_manager.get(),
                      &win::virtual_desktop_manager::countChanged,
-                     focus_chain.get(),
-                     &win::focus_chain::resize);
+                     qobject.get(),
+                     [this](auto prev, auto next) { focus_chain_resize(focus_chain, prev, next); });
     QObject::connect(virtual_desktop_manager.get(),
                      &win::virtual_desktop_manager::currentChanged,
-                     focus_chain.get(),
-                     &win::focus_chain::setCurrentDesktop);
+                     qobject.get(),
+                     [this](auto /*prev*/, auto next) { focus_chain.current_desktop = next; });
     QObject::connect(kwinApp()->options.get(),
                      &base::options::separateScreenFocusChanged,
-                     focus_chain.get(),
-                     &win::focus_chain::setSeparateScreenFocus);
-    focus_chain.get()->setSeparateScreenFocus(kwinApp()->options->isSeparateScreenFocus());
+                     qobject.get(),
+                     [this](auto enable) { focus_chain.has_separate_screen_focus = enable; });
+    focus_chain.has_separate_screen_focus = kwinApp()->options->isSeparateScreenFocus();
 
     auto vds = virtual_desktop_manager.get();
     QObject::connect(vds,
@@ -392,8 +392,8 @@ void space::activateClientOnNewDesktop(uint desktop)
 Toplevel* space::findClientToActivateOnDesktop(uint desktop)
 {
     if (movingClient != nullptr && active_client == movingClient
-        && focus_chain->contains(active_client, desktop) && active_client->isShown()
-        && active_client->isOnCurrentDesktop()) {
+        && focus_chain_at_desktop_contains(focus_chain, active_client, desktop)
+        && active_client->isShown() && active_client->isOnCurrentDesktop()) {
         // A requestFocus call will fail, as the client is already active
         return active_client;
     }
@@ -418,7 +418,7 @@ Toplevel* space::findClientToActivateOnDesktop(uint desktop)
             }
         }
     }
-    return focus_chain->getForActivation(desktop);
+    return focus_chain_get_for_activation_on_current_output<Toplevel>(focus_chain, desktop);
 }
 
 void space::slotDesktopCountChanged(uint previousCount, uint newCount)
@@ -558,7 +558,8 @@ void space::setShowingDesktop(bool showing)
     if (showing_desktop && topDesk) {
         request_focus(topDesk);
     } else if (!showing_desktop && changed) {
-        const auto client = focus_chain->getForActivation(virtual_desktop_manager->current());
+        const auto client = focus_chain_get_for_activation_on_current_output<Toplevel>(
+            focus_chain, virtual_desktop_manager->current());
         if (client) {
             activateClient(client);
         }
@@ -2207,7 +2208,7 @@ void space::setActiveClient(Toplevel* window)
 
     if (active_client) {
         last_active_client = active_client;
-        focus_chain->update(active_client, win::focus_chain::MakeFirst);
+        focus_chain_update(focus_chain, active_client, focus_chain_change::make_first);
         win::set_demands_attention(active_client, false);
 
         // activating a client can cause a non active fullscreen window to loose the ActiveLayer
@@ -2440,7 +2441,8 @@ bool space::activateNextClient(Toplevel* window)
         // first try to pass the focus to the (former) active clients leader
         if (window && window->transient()->lead()) {
             auto leaders = window->transient()->leads();
-            if (leaders.size() == 1 && focus_chain->isUsableFocusCandidate(leaders.at(0), window)) {
+            if (leaders.size() == 1
+                && focus_chain_is_usable_focus_candidate(focus_chain, leaders.at(0), window)) {
                 get_focus = leaders.at(0);
 
                 // also raise - we don't know where it came from
@@ -2449,7 +2451,7 @@ bool space::activateNextClient(Toplevel* window)
         }
         if (!get_focus) {
             // nope, ask the focus chain for the next candidate
-            get_focus = focus_chain->nextForDesktop(window, desktop);
+            get_focus = focus_chain_next_for_desktop(focus_chain, window, desktop);
         }
     }
 
@@ -2474,7 +2476,7 @@ void space::setCurrentScreen(base::output const& output)
     closeActivePopup();
 
     const int desktop = virtual_desktop_manager->current();
-    auto get_focus = focus_chain->getForActivation(desktop, &output);
+    auto get_focus = focus_chain_get_for_activation<Toplevel>(focus_chain, desktop, &output);
     if (get_focus == nullptr) {
         get_focus = win::find_desktop(this, true, desktop);
     }
@@ -3499,10 +3501,10 @@ void space::slotWindowToDesktopDown()
  */
 void space::slotKillWindow()
 {
-    if (!m_windowKiller) {
-        m_windowKiller = std::make_unique<win::kill_window>(*this);
+    if (!window_killer) {
+        window_killer = std::make_unique<kill_window<space>>(*this);
     }
-    m_windowKiller->start();
+    window_killer->start();
 }
 
 /**

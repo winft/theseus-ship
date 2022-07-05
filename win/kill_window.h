@@ -19,10 +19,11 @@
 namespace KWin::win
 {
 
+template<typename Space>
 class kill_window
 {
 public:
-    kill_window(win::space& space)
+    kill_window(Space& space)
         : space{space}
     {
     }
@@ -56,7 +57,7 @@ public:
     }
 
 private:
-    win::space& space;
+    Space& space;
 };
 
 }

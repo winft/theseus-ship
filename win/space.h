@@ -22,6 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
+#include "focus_chain.h"
+
 #include "base/options.h"
 #include "base/output.h"
 #include "base/x11/atoms.h"
@@ -55,7 +57,8 @@ namespace base
 
 namespace dbus
 {
-class kwin;
+template<typename Space>
+class kwin_impl;
 }
 
 namespace x11
@@ -111,8 +114,9 @@ class group;
 }
 
 enum class activation;
-class focus_chain;
 class internal_window;
+
+template<typename Space>
 class kill_window;
 class screen_edge;
 class screen_edger;
@@ -283,9 +287,9 @@ public:
     Toplevel* most_recently_raised{nullptr};
 
     std::unique_ptr<win::stacking_order> stacking_order;
-    std::unique_ptr<win::focus_chain> focus_chain;
+    win::focus_chain<space> focus_chain;
     std::unique_ptr<win::virtual_desktop_manager> virtual_desktop_manager;
-    std::unique_ptr<base::dbus::kwin> dbus;
+    std::unique_ptr<base::dbus::kwin_impl<space>> dbus;
     std::unique_ptr<win::session_manager> session_manager;
 
     void stopUpdateToolWindowsTimer();
@@ -558,7 +562,7 @@ private:
 
     int set_active_client_recursion{0};
 
-    std::unique_ptr<win::kill_window> m_windowKiller;
+    std::unique_ptr<kill_window<space>> window_killer;
 
 private:
     friend bool performTransiencyCheck();

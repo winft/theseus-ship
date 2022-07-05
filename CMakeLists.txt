@@ -473,7 +473,6 @@ set(kwin_SRCS
     win/deco/decorations_logging.cpp
     win/deco/settings.cpp
     win/deco/window.cpp
-    win/focus_chain.cpp
     win/internal_window.cpp
     win/osd_notification.cpp
     win/osd.cpp
