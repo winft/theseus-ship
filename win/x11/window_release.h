@@ -11,7 +11,6 @@
 #include "win/input.h"
 #include "win/rules.h"
 #include "win/space_areas_helpers.h"
-#include "win/space_helpers.h"
 #include "win/window_release.h"
 
 #if KWIN_BUILD_TABBOX

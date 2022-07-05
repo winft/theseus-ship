@@ -54,7 +54,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/screen_edges.h"
 #include "win/setup.h"
 #include "win/shortcut_dialog.h"
-#include "win/space_helpers.h"
 #include "win/stacking.h"
 #include "win/stacking_order.h"
 #include "win/user_actions_menu.h"

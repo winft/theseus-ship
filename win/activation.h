@@ -6,6 +6,7 @@
 #pragma once
 
 #include "actions.h"
+#include "desktop_set.h"
 #include "layers.h"
 #include "screen.h"
 #include "stacking_order.h"
@@ -547,6 +548,75 @@ bool activate_next_window(Space& space, Toplevel* window)
     }
 
     return true;
+}
+
+template<typename Space>
+Toplevel* find_window_to_activate_on_desktop(Space& space, unsigned int desktop)
+{
+    if (space.movingClient != nullptr && space.active_client == space.movingClient
+        && focus_chain_at_desktop_contains(space.focus_chain, space.active_client, desktop)
+        && space.active_client->isShown() && space.active_client->isOnCurrentDesktop()) {
+        // A requestFocus call will fail, as the client is already active
+        return space.active_client;
+    }
+
+    // from actiavtion.cpp
+    if (kwinApp()->options->isNextFocusPrefersMouse()) {
+        auto it = space.stacking_order->stack.cend();
+        while (it != space.stacking_order->stack.cbegin()) {
+            auto client = qobject_cast<win::x11::window*>(*(--it));
+            if (!client) {
+                continue;
+            }
+
+            if (!(client->isShown() && client->isOnDesktop(desktop) && on_active_screen(client)))
+                continue;
+
+            if (client->frameGeometry().contains(input::get_cursor()->pos())) {
+                if (!is_desktop(client)) {
+                    return client;
+                }
+                // Unconditional break, we don't pass focus to some client below an unusable one.
+                break;
+            }
+        }
+    }
+
+    return focus_chain_get_for_activation_on_current_output<Toplevel>(space.focus_chain, desktop);
+}
+
+template<typename Space>
+void activate_window_on_new_desktop(Space& space, unsigned int desktop)
+{
+    Toplevel* c = nullptr;
+
+    if (kwinApp()->options->focusPolicyIsReasonable()) {
+        c = find_window_to_activate_on_desktop(space, desktop);
+    }
+
+    // If "unreasonable focus policy" and active_client is on_all_desktops and
+    // under mouse (Hence == old_active_client), conserve focus.
+    // (Thanks to Volker Schatz <V.Schatz at thphys.uni-heidelberg.de>)
+    else if (space.active_client && space.active_client->isShown()
+             && space.active_client->isOnCurrentDesktop()) {
+        c = space.active_client;
+    }
+
+    if (!c) {
+        c = find_desktop(&space, true, desktop);
+    }
+
+    if (c != space.active_client) {
+        set_active_window(space, nullptr);
+    }
+
+    if (c) {
+        request_focus(space, c);
+    } else if (auto desktop_client = find_desktop(&space, true, desktop)) {
+        request_focus(space, desktop_client);
+    } else {
+        focus_to_null(space);
+    }
 }
 
 template<typename Space>

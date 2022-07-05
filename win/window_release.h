@@ -5,9 +5,11 @@
 */
 #pragma once
 
+#include "geo.h"
 #include "remnant.h"
-#include "space_helpers.h"
 #include "space_window_release.h"
+#include "x11/netinfo.h"
+
 #include "toplevel.h"
 
 namespace KWin::win

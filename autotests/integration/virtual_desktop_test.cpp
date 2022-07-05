@@ -8,6 +8,7 @@
 
 #include "base/wayland/server.h"
 #include "main.h"
+#include "win/desktop_set.h"
 #include "win/screen.h"
 #include "win/virtual_desktops.h"
 #include "win/wayland/window.h"

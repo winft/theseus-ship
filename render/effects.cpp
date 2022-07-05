@@ -40,7 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/activation.h"
 #include "win/control.h"
 #include "win/deco/bridge.h"
-#include "win/desktop_space.h"
+#include "win/desktop_get.h"
 #include "win/internal_window.h"
 #include "win/meta.h"
 #include "win/osd.h"

@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "lib/app.h"
 
 #include "win/actions.h"
+#include "win/desktop_set.h"
 #include "win/screen.h"
 #include "win/space.h"
 #include "win/wayland/window.h"

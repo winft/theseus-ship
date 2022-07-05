@@ -6,8 +6,8 @@
 #pragma once
 
 #include "activation.h"
+#include "desktop_set.h"
 #include "space_areas_helpers.h"
-#include "space_helpers.h"
 #include "toplevel.h"
 
 #include "utils/blocker.h"
@@ -61,71 +61,44 @@ void send_window_to_desktop(Space& space, Toplevel* window, int desk, bool dont_
 }
 
 template<typename Space>
-Toplevel* find_window_to_activate_on_desktop(Space& space, unsigned int desktop)
+void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)
 {
-    if (space.movingClient != nullptr && space.active_client == space.movingClient
-        && focus_chain_at_desktop_contains(space.focus_chain, space.active_client, desktop)
-        && space.active_client->isShown() && space.active_client->isOnCurrentDesktop()) {
-        // A requestFocus call will fail, as the client is already active
-        return space.active_client;
-    }
+    for (auto const& toplevel : space->stacking_order->stack) {
+        auto client = qobject_cast<x11::window*>(toplevel);
+        if (!client || !client->control) {
+            continue;
+        }
 
-    // from actiavtion.cpp
-    if (kwinApp()->options->isNextFocusPrefersMouse()) {
-        auto it = space.stacking_order->stack.cend();
-        while (it != space.stacking_order->stack.cbegin()) {
-            auto client = qobject_cast<win::x11::window*>(*(--it));
-            if (!client) {
-                continue;
-            }
-
-            if (!(client->isShown() && client->isOnDesktop(desktop) && on_active_screen(client)))
-                continue;
-
-            if (client->frameGeometry().contains(input::get_cursor()->pos())) {
-                if (!is_desktop(client)) {
-                    return client;
-                }
-                // Unconditional break, we don't pass focus to some client below an unusable one.
-                break;
-            }
+        if (!client->isOnDesktop(newDesktop) && client != space->moveResizeClient()) {
+            update_visibility(client);
         }
     }
 
-    return focus_chain_get_for_activation_on_current_output<Toplevel>(space.focus_chain, desktop);
-}
-
-template<typename Space>
-void activate_window_on_new_desktop(Space& space, unsigned int desktop)
-{
-    Toplevel* c = nullptr;
-
-    if (kwinApp()->options->focusPolicyIsReasonable()) {
-        c = find_window_to_activate_on_desktop(space, desktop);
+    // Now propagate the change, after hiding, before showing.
+    if (x11::rootInfo()) {
+        x11::rootInfo()->setCurrentDesktop(space->virtual_desktop_manager->current());
     }
 
-    // If "unreasonable focus policy" and active_client is on_all_desktops and
-    // under mouse (Hence == old_active_client), conserve focus.
-    // (Thanks to Volker Schatz <V.Schatz at thphys.uni-heidelberg.de>)
-    else if (space.active_client && space.active_client->isShown()
-             && space.active_client->isOnCurrentDesktop()) {
-        c = space.active_client;
+    if (auto move_resize_client = space->moveResizeClient()) {
+        if (!move_resize_client->isOnDesktop(newDesktop)) {
+            win::set_desktop(move_resize_client, newDesktop);
+        }
     }
 
-    if (!c) {
-        c = find_desktop(&space, true, desktop);
+    auto const& list = space->stacking_order->stack;
+    for (int i = list.size() - 1; i >= 0; --i) {
+        auto client = qobject_cast<x11::window*>(list.at(i));
+        if (!client || !client->control) {
+            continue;
+        }
+        if (client->isOnDesktop(newDesktop)) {
+            update_visibility(client);
+        }
     }
 
-    if (c != space.active_client) {
-        set_active_window(space, nullptr);
-    }
-
-    if (c) {
-        request_focus(space, c);
-    } else if (auto desktop_client = find_desktop(&space, true, desktop)) {
-        request_focus(space, desktop_client);
-    } else {
-        focus_to_null(space);
+    if (space->showingDesktop()) {
+        // Do this only after desktop change to avoid flicker.
+        space->setShowingDesktop(false);
     }
 }
 

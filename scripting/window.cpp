@@ -11,6 +11,7 @@
 #include "win/actions.h"
 #include "win/activation.h"
 #include "win/controlling.h"
+#include "win/desktop_get.h"
 #include "win/meta.h"
 #include "win/screen.h"
 #include "win/transient.h"

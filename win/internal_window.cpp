@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "control.h"
 #include "deco/bridge.h"
 #include "deco/window.h"
+#include "desktop_set.h"
 #include "geo.h"
 #include "meta.h"
 #include "remnant.h"
@@ -31,7 +32,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "setup.h"
 #include "space.h"
 #include "space_areas_helpers.h"
-#include "space_helpers.h"
 #include "window_release.h"
 
 #include <KDecoration2/Decoration>

@@ -12,7 +12,6 @@
 #include "rules/rule_book.h"
 #include "utils/blocker.h"
 #include "win/remnant.h"
-#include "win/space_helpers.h"
 #include "win/stacking_order.h"
 #include "win/transient.h"
 #include "win/window_release.h"

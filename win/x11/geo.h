@@ -8,7 +8,6 @@
 #include "scene.h"
 
 #include "win/setup.h"
-#include "win/space_helpers.h"
 
 #include <xcb/xcb_icccm.h>
 

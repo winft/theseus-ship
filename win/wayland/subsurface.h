@@ -5,13 +5,11 @@
 */
 #pragma once
 
-#include "window.h"
-
 #include "transient.h"
+#include "window.h"
 #include "window_release.h"
 
 #include "render/compositor.h"
-#include "win/space_helpers.h"
 #include "win/transient.h"
 
 #include <Wrapland/Server/subcompositor.h>
