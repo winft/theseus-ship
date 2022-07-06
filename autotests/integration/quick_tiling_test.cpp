@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/move.h"
 #include "win/screen.h"
 #include "win/wayland/space.h"
+#include "win/window_operation.h"
 #include "win/x11/window.h"
 
 #include <KDecoration2/DecoratedClient>
@@ -426,7 +427,7 @@ void QuickTilingTest::testQuickTilingKeyboardMove()
     QSignalSpy quickTileChangedSpy(c, &Toplevel::quicktiling_changed);
     QVERIFY(quickTileChangedSpy.isValid());
 
-    Test::app()->workspace->performWindowOperation(c, base::options::UnrestrictedMoveOp);
+    win::perform_window_operation(*Test::app()->workspace, c, base::options::UnrestrictedMoveOp);
     QCOMPARE(c, Test::app()->workspace->moveResizeClient());
     QCOMPARE(input::get_cursor()->pos(), QPoint(49, 24));
 
@@ -509,7 +510,7 @@ void QuickTilingTest::testQuickTilingPointerMove()
     QSignalSpy quickTileChangedSpy(c, &Toplevel::quicktiling_changed);
     QVERIFY(quickTileChangedSpy.isValid());
 
-    Test::app()->workspace->performWindowOperation(c, base::options::UnrestrictedMoveOp);
+    win::perform_window_operation(*Test::app()->workspace, c, base::options::UnrestrictedMoveOp);
     QCOMPARE(c, Test::app()->workspace->moveResizeClient());
     QCOMPARE(input::get_cursor()->pos(), QPoint(49, 24));
     QVERIFY(configureRequestedSpy.wait());

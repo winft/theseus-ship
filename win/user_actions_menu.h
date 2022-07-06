@@ -12,6 +12,7 @@
 #include "move.h"
 #include "net.h"
 #include "screen.h"
+#include "window_operation.h"
 
 #include "base/logging.h"
 #include "main.h"
@@ -511,7 +512,7 @@ private:
         // user actions menu closed before we destroy the decoration. Otherwise Qt crashes
         qRegisterMetaType<base::options::WindowOperation>();
         QMetaObject::invokeMethod(space.qobject.get(), [&space = this->space, c, op] {
-            space.performWindowOperation(c, op);
+            win::perform_window_operation(space, c, op);
         });
     }
 

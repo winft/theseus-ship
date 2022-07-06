@@ -91,7 +91,7 @@ void ScreenEdgeTest::init()
 {
     input::get_cursor()->set_pos(640, 512);
     if (Test::app()->workspace->showingDesktop()) {
-        Test::app()->workspace->slotToggleShowDesktop();
+        win::toggle_show_desktop(*Test::app()->workspace);
     }
     QVERIFY(!Test::app()->workspace->showingDesktop());
 }
@@ -252,7 +252,7 @@ void ScreenEdgeTest::testEdgeUnregister()
 
     // reset
     input::get_cursor()->set_pos(500, 500);
-    Test::app()->workspace->slotToggleShowDesktop();
+    win::toggle_show_desktop(*Test::app()->workspace);
     showDesktopSpy.clear();
 
     // trigger again, to show that retriggering works
@@ -261,7 +261,7 @@ void ScreenEdgeTest::testEdgeUnregister()
 
     // reset
     input::get_cursor()->set_pos(500, 500);
-    Test::app()->workspace->slotToggleShowDesktop();
+    win::toggle_show_desktop(*Test::app()->workspace);
     showDesktopSpy.clear();
 
     // make the script unregister the edge

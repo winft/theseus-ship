@@ -352,7 +352,7 @@ void window::takeFocus()
     }
 
     if (!control->keep_above() && !is_on_screen_display(this) && !belongsToDesktop()) {
-        space.setShowingDesktop(false);
+        set_showing_desktop(space, false);
     }
 }
 

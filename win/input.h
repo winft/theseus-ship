@@ -15,6 +15,7 @@
 #include "toplevel.h"
 #include "types.h"
 #include "user_actions_menu.h"
+#include "window_operation.h"
 
 #include "base/options.h"
 #include "utils/blocker.h"
@@ -189,10 +190,10 @@ bool perform_mouse_command(Win& win, base::options::MouseCommand cmd, QPoint con
         break;
     }
     case base::options::MousePreviousDesktop:
-        space.windowToPreviousDesktop(win);
+        window_to_prev_desktop(win);
         break;
     case base::options::MouseNextDesktop:
-        space.windowToNextDesktop(win);
+        window_to_next_desktop(win);
         break;
     case base::options::MouseOpacityMore:
         // No point in changing the opacity of the desktop.
@@ -364,8 +365,8 @@ bool process_decoration_button_press(Win* win, QMouseEvent* event, bool ignoreMe
                 // expired -> new first click and pot. init
                 deco.double_click.start();
             } else {
-                win->space.performWindowOperation(win,
-                                                  kwinApp()->options->operationTitlebarDblClick());
+                perform_window_operation(
+                    win->space, win, kwinApp()->options->operationTitlebarDblClick());
                 end_move_resize(win);
                 return false;
             }

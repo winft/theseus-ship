@@ -533,7 +533,7 @@ void window::takeFocus()
     }
 
     if (breakShowingDesktop) {
-        space.setShowingDesktop(false);
+        set_showing_desktop(space, false);
     }
 }
 

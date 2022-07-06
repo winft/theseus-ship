@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/cursor.h"
 #include "render/effects.h"
 #include "toplevel.h"
+#include "win/active_window.h"
 #include "win/input.h"
 #include "win/move.h"
 #include "win/placement.h"
@@ -153,7 +154,7 @@ void MoveResizeWindowTest::testMove()
     QCOMPARE(win::is_move(c), false);
 
     // begin move
-    Test::app()->workspace->slotWindowMove();
+    win::active_window_move(*Test::app()->workspace);
     QCOMPARE(Test::app()->workspace->moveResizeClient(), c);
     QCOMPARE(startMoveResizedSpy.count(), 1);
     QCOMPARE(moveResizedChangedSpy.count(), 1);
@@ -252,7 +253,7 @@ void MoveResizeWindowTest::testResize()
     QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
     QCOMPARE(win::is_move(c), false);
     QCOMPARE(win::is_resize(c), false);
-    Test::app()->workspace->slotWindowResize();
+    win::active_window_resize(*Test::app()->workspace);
     QCOMPARE(Test::app()->workspace->moveResizeClient(), c);
     QCOMPARE(startMoveResizedSpy.count(), 1);
     QCOMPARE(moveResizedChangedSpy.count(), 1);
@@ -336,16 +337,16 @@ void MoveResizeWindowTest::testPackTo_data()
     QTest::newRow("down") << QRect(590, 974, 100, 50);
 }
 
-std::function<void(win::space*)> get_space_pack_method(std::string const& method_name)
+std::function<void(win::space&)> get_space_pack_method(std::string const& method_name)
 {
     if (method_name == "left") {
-        return &win::space::slotWindowPackLeft;
+        return win::active_window_pack_left<win::space>;
     } else if (method_name == "up") {
-        return &win::space::slotWindowPackUp;
+        return &win::active_window_pack_up<win::space>;
     } else if (method_name == "right") {
-        return &win::space::slotWindowPackRight;
+        return &win::active_window_pack_right<win::space>;
     } else if (method_name == "down") {
-        return &win::space::slotWindowPackDown;
+        return &win::active_window_pack_down<win::space>;
     }
     return {};
 }
@@ -374,7 +375,7 @@ void MoveResizeWindowTest::testPackTo()
 
     auto method_call = get_space_pack_method(QTest::currentDataTag());
     QVERIFY(method_call);
-    method_call(Test::app()->workspace.get());
+    method_call(*Test::app()->workspace.get());
 
     QTEST(c->frameGeometry(), "expectedGeometry");
     surface.reset();
@@ -413,7 +414,7 @@ void MoveResizeWindowTest::testPackAgainstClient()
     std::unique_ptr<XdgShellToplevel> shellSurface4(Test::create_xdg_shell_toplevel(surface4));
     QVERIFY(shellSurface4);
     auto renderWindow = [this](std::unique_ptr<Surface> const& surface,
-                               std::function<void(win::space*)> const& method_call,
+                               std::function<void(win::space&)> const& method_call,
                                const QRect& expectedGeometry) {
         // let's render
         auto c = Test::render_and_wait_for_shown(surface, QSize(10, 10), Qt::blue);
@@ -424,13 +425,13 @@ void MoveResizeWindowTest::testPackAgainstClient()
         // let's place it centered
         win::place_centered(c, QRect(0, 0, 1280, 1024));
         QCOMPARE(c->frameGeometry(), QRect(635, 507, 10, 10));
-        method_call(Test::app()->workspace.get());
+        method_call(*Test::app()->workspace.get());
         QCOMPARE(c->frameGeometry(), expectedGeometry);
     };
-    renderWindow(surface1, &win::space::slotWindowPackLeft, QRect(0, 507, 10, 10));
-    renderWindow(surface2, &win::space::slotWindowPackUp, QRect(635, 0, 10, 10));
-    renderWindow(surface3, &win::space::slotWindowPackRight, QRect(1270, 507, 10, 10));
-    renderWindow(surface4, &win::space::slotWindowPackDown, QRect(635, 1014, 10, 10));
+    renderWindow(surface1, &win::active_window_pack_left<win::space>, QRect(0, 507, 10, 10));
+    renderWindow(surface2, &win::active_window_pack_up<win::space>, QRect(635, 0, 10, 10));
+    renderWindow(surface3, &win::active_window_pack_right<win::space>, QRect(1270, 507, 10, 10));
+    renderWindow(surface4, &win::active_window_pack_down<win::space>, QRect(635, 1014, 10, 10));
 
     std::unique_ptr<Surface> surface(Test::create_surface());
     QVERIFY(surface);
@@ -446,20 +447,20 @@ void MoveResizeWindowTest::testPackAgainstClient()
 
     auto method_call = get_space_pack_method(QTest::currentDataTag());
     QVERIFY(method_call);
-    method_call(Test::app()->workspace.get());
+    method_call(*Test::app()->workspace.get());
     QTEST(c->frameGeometry(), "expectedGeometry");
 }
 
-std::function<void(win::space*)> get_space_grow_shrink_method(std::string const& method_name)
+std::function<void(win::space&)> get_space_grow_shrink_method(std::string const& method_name)
 {
     if (method_name == "grow vertical") {
-        return &win::space::slotWindowGrowVertical;
+        return win::active_window_grow_vertical<win::space>;
     } else if (method_name == "grow horizontal") {
-        return &win::space::slotWindowGrowHorizontal;
+        return win::active_window_grow_horizontal<win::space>;
     } else if (method_name == "shrink vertical") {
-        return &win::space::slotWindowShrinkVertical;
+        return win::active_window_shrink_vertical<win::space>;
     } else if (method_name == "shrink horizontal") {
-        return &win::space::slotWindowShrinkHorizontal;
+        return win::active_window_shrink_horizontal<win::space>;
     }
     return {};
 }
@@ -485,8 +486,8 @@ void MoveResizeWindowTest::testGrowShrink()
     QVERIFY(shellSurface1);
     auto window = Test::render_and_wait_for_shown(surface1, QSize(650, 514), Qt::blue);
     QVERIFY(window);
-    Test::app()->workspace->slotWindowPackRight();
-    Test::app()->workspace->slotWindowPackDown();
+    win::active_window_pack_right(*Test::app()->workspace);
+    win::active_window_pack_down(*Test::app()->workspace);
 
     std::unique_ptr<Surface> surface(Test::create_surface());
     QVERIFY(surface);
@@ -515,7 +516,7 @@ void MoveResizeWindowTest::testGrowShrink()
     // Now according to test data grow/shrink vertically/horizontally.
     auto method_call = get_space_grow_shrink_method(QTest::currentDataTag());
     QVERIFY(method_call);
-    method_call(Test::app()->workspace.get());
+    method_call(*Test::app()->workspace.get());
 
     QVERIFY(sizeChangeSpy.wait());
     QCOMPARE(configure_spy.count(), 2);
@@ -567,7 +568,7 @@ void MoveResizeWindowTest::testPointerMoveEnd()
     quint32 timestamp = 1;
     Test::pointer_button_pressed(BTN_LEFT, timestamp++);
     QVERIFY(!win::is_move(c));
-    Test::app()->workspace->slotWindowMove();
+    win::active_window_move(*Test::app()->workspace);
     QVERIFY(win::is_move(c));
 
     // let's press another button
@@ -1006,7 +1007,7 @@ void MoveResizeWindowTest::testDestroyMoveClient()
     QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
     QCOMPARE(win::is_move(client), false);
     QCOMPARE(win::is_resize(client), false);
-    Test::app()->workspace->slotWindowMove();
+    win::active_window_move(*Test::app()->workspace);
     QCOMPARE(clientStartMoveResizedSpy.count(), 1);
     QCOMPARE(Test::app()->workspace->moveResizeClient(), client);
     QCOMPARE(win::is_move(client), true);
@@ -1043,7 +1044,7 @@ void MoveResizeWindowTest::testDestroyResizeClient()
     QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
     QCOMPARE(win::is_move(client), false);
     QCOMPARE(win::is_resize(client), false);
-    Test::app()->workspace->slotWindowResize();
+    win::active_window_resize(*Test::app()->workspace);
     QCOMPARE(clientStartMoveResizedSpy.count(), 1);
     QCOMPARE(Test::app()->workspace->moveResizeClient(), client);
     QCOMPARE(win::is_move(client), false);
@@ -1080,7 +1081,7 @@ void MoveResizeWindowTest::testUnmapMoveClient()
     QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
     QCOMPARE(win::is_move(client), false);
     QCOMPARE(win::is_resize(client), false);
-    Test::app()->workspace->slotWindowMove();
+    win::active_window_move(*Test::app()->workspace);
     QCOMPARE(clientStartMoveResizedSpy.count(), 1);
     QCOMPARE(Test::app()->workspace->moveResizeClient(), client);
     QCOMPARE(win::is_move(client), true);
@@ -1126,7 +1127,7 @@ void MoveResizeWindowTest::testUnmapResizeClient()
     QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
     QCOMPARE(win::is_move(client), false);
     QCOMPARE(win::is_resize(client), false);
-    Test::app()->workspace->slotWindowResize();
+    win::active_window_resize(*Test::app()->workspace);
     QCOMPARE(clientStartMoveResizedSpy.count(), 1);
     QCOMPARE(Test::app()->workspace->moveResizeClient(), client);
     QCOMPARE(win::is_move(client), false);
@@ -1169,7 +1170,7 @@ void MoveResizeWindowTest::testSetFullScreenWhenMoving()
     QVERIFY(configureRequestedSpy.isValid());
     QVERIFY(configureRequestedSpy.wait());
 
-    Test::app()->workspace->slotWindowMove();
+    win::active_window_move(*Test::app()->workspace);
     QCOMPARE(win::is_move(client), true);
 
     QVERIFY(configureRequestedSpy.wait());
@@ -1224,7 +1225,7 @@ void MoveResizeWindowTest::testSetMaximizeWhenMoving()
     auto client = Test::render_and_wait_for_shown(surface, QSize(500, 800), Qt::blue);
     QVERIFY(client);
 
-    Test::app()->workspace->slotWindowMove();
+    win::active_window_move(*Test::app()->workspace);
     QCOMPARE(win::is_move(client), true);
     win::set_maximize(client, true, true);
 

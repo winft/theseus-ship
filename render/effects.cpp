@@ -968,7 +968,7 @@ void effects_handler_impl::windowToScreen(EffectWindow* w, int screen)
 
 void effects_handler_impl::setShowingDesktop(bool showing)
 {
-    m_compositor->space->setShowingDesktop(showing);
+    win::set_showing_desktop(*m_compositor->space, showing);
 }
 
 QString effects_handler_impl::currentActivity() const

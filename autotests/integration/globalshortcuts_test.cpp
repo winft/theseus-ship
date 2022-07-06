@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/cursor.h"
 #include "input/keyboard_redirect.h"
 #include "input/xkb/helpers.h"
+#include "win/active_window.h"
 #include "win/input.h"
 #include "win/internal_window.h"
 #include "win/meta.h"
@@ -460,7 +461,7 @@ void GlobalShortcutsTest::testSetupWindowShortcut()
     QSignalSpy shortcutDialogAddedSpy(Test::app()->workspace->qobject.get(),
                                       &win::space::qobject_t::internalClientAdded);
     QVERIFY(shortcutDialogAddedSpy.isValid());
-    Test::app()->workspace->slotSetupWindowShortcut();
+    win::active_window_setup_window_shortcut(*Test::app()->workspace);
     QTRY_COMPARE(shortcutDialogAddedSpy.count(), 1);
     auto dialog = shortcutDialogAddedSpy.first().first().value<win::internal_window*>();
     QVERIFY(dialog);

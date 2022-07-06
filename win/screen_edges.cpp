@@ -10,6 +10,7 @@
 */
 #include "screen_edges.h"
 
+#include "activation.h"
 #include "move.h"
 #include "space.h"
 
@@ -318,7 +319,7 @@ bool screen_edge::handleAction(ElectricBorderAction action)
 {
     switch (action) {
     case ElectricActionShowDesktop: {
-        edger->space.setShowingDesktop(!edger->space.showingDesktop());
+        set_showing_desktop(edger->space, !edger->space.showingDesktop());
         return true;
     }
     case ElectricActionLockScreen: { // Lock the screen

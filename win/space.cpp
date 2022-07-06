@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "space.h"
 
 #include "activation.h"
+#include "active_window.h"
 #include "deco/bridge.h"
 #include "desktop_space.h"
 #include "output_space.h"
@@ -299,52 +300,6 @@ space::~space()
 bool space::checkStartupNotification(xcb_window_t w, KStartupInfoId& id, KStartupInfoData& data)
 {
     return startup->checkStartup(w, id, data) == KStartupInfo::Match;
-}
-
-void space::setShowingDesktop(bool showing)
-{
-    const bool changed = showing != showing_desktop;
-    if (win::x11::rootInfo() && changed) {
-        win::x11::rootInfo()->setShowingDesktop(showing);
-    }
-    showing_desktop = showing;
-
-    Toplevel* topDesk = nullptr;
-
-    {                                  // for the blocker RAII
-        blocker block(stacking_order); // updateLayer & lowerClient would invalidate stacking_order
-        for (int i = static_cast<int>(stacking_order->stack.size()) - 1; i > -1; --i) {
-            auto c = qobject_cast<Toplevel*>(stacking_order->stack.at(i));
-            if (c && c->isOnCurrentDesktop()) {
-                if (win::is_dock(c)) {
-                    win::update_layer(c);
-                } else if (win::is_desktop(c) && c->isShown()) {
-                    win::update_layer(c);
-                    win::lower_window(this, c);
-                    if (!topDesk)
-                        topDesk = c;
-                    if (auto group = c->group()) {
-                        for (auto cm : group->members) {
-                            win::update_layer(cm);
-                        }
-                    }
-                }
-            }
-        }
-    } // ~Blocker
-
-    if (showing_desktop && topDesk) {
-        request_focus(*this, topDesk);
-    } else if (!showing_desktop && changed) {
-        const auto client = focus_chain_get_for_activation_on_current_output<Toplevel>(
-            focus_chain, virtual_desktop_manager->current());
-        if (client) {
-            activate_window(*this, client);
-        }
-    }
-    if (changed) {
-        Q_EMIT qobject->showingDesktopChanged(showing);
-    }
 }
 
 void space::disableGlobalShortcutsForClient(bool disable)
@@ -1027,82 +982,6 @@ std::vector<Toplevel*> space::remnants() const
 
 #ifndef KCMRULES
 
-// ********************
-// placement code
-// ********************
-
-/**
- * Moves active window left until in bumps into another window or workarea edge.
- */
-void space::slotWindowPackLeft()
-{
-    if (!win::can_move(active_client)) {
-        return;
-    }
-    auto const pos = active_client->geometry_update.frame.topLeft();
-    win::pack_to(active_client, packPositionLeft(active_client, pos.x(), true), pos.y());
-}
-
-void space::slotWindowPackRight()
-{
-    if (!win::can_move(active_client)) {
-        return;
-    }
-    auto const pos = active_client->geometry_update.frame.topLeft();
-    auto const width = active_client->geometry_update.frame.size().width();
-    win::pack_to(active_client,
-                 packPositionRight(active_client, pos.x() + width, true) - width + 1,
-                 pos.y());
-}
-
-void space::slotWindowPackUp()
-{
-    if (!win::can_move(active_client)) {
-        return;
-    }
-    auto const pos = active_client->geometry_update.frame.topLeft();
-    win::pack_to(active_client, pos.x(), packPositionUp(active_client, pos.y(), true));
-}
-
-void space::slotWindowPackDown()
-{
-    if (!win::can_move(active_client)) {
-        return;
-    }
-    auto const pos = active_client->geometry_update.frame.topLeft();
-    auto const height = active_client->geometry_update.frame.size().height();
-    win::pack_to(active_client,
-                 pos.x(),
-                 packPositionDown(active_client, pos.y() + height, true) - height + 1);
-}
-
-void space::slotWindowGrowHorizontal()
-{
-    if (active_client) {
-        win::grow_horizontal(active_client);
-    }
-}
-
-void space::slotWindowShrinkHorizontal()
-{
-    if (active_client) {
-        win::shrink_horizontal(active_client);
-    }
-}
-void space::slotWindowGrowVertical()
-{
-    if (active_client) {
-        win::grow_vertical(active_client);
-    }
-}
-
-void space::slotWindowShrinkVertical()
-{
-    if (active_client) {
-        win::shrink_vertical(active_client);
-    }
-}
-
 void space::quickTileWindow(win::quicktiles mode)
 {
     if (!active_client) {
@@ -1527,22 +1406,6 @@ bool space::workspaceEvent(QEvent* e)
     return false;
 }
 
-void space::slotIncreaseWindowOpacity()
-{
-    if (!active_client) {
-        return;
-    }
-    active_client->setOpacity(qMin(active_client->opacity() + 0.05, 1.0));
-}
-
-void space::slotLowerWindowOpacity()
-{
-    if (!active_client) {
-        return;
-    }
-    active_client->setOpacity(qMax(active_client->opacity() - 0.05, 0.05));
-}
-
 QAction* prepare_shortcut_action(win::space& space,
                                  QString const& actionName,
                                  QString const& description,
@@ -1606,11 +1469,12 @@ void space::initShortcuts()
     // new DEF3 allows to pass data to the action, replacing the %1 argument in the name
 
 #define DEF2(name, descr, key, fnSlot)                                                             \
-    initShortcut(QStringLiteral(name), descr.toString(), key, [this] { fnSlot(); });
+    initShortcut(QStringLiteral(name), descr.toString(), key, [this] { fnSlot(*this); });
 
 #define DEF(name, key, fnSlot)                                                                     \
-    initShortcut(                                                                                  \
-        QString::fromUtf8(name.untranslatedText()), name.toString(), key, [this] { fnSlot(); });
+    initShortcut(QString::fromUtf8(name.untranslatedText()), name.toString(), key, [this] {        \
+        fnSlot(*this);                                                                             \
+    });
 
 #define DEF3(name, key, fnSlot, value)                                                             \
     init_shortcut_with_action_arg(                                                                 \
@@ -1618,70 +1482,82 @@ void space::initShortcuts()
         name.subs(value).toString(),                                                               \
         key,                                                                                       \
         qobject.get(),                                                                             \
-        [this](QAction* action) { fnSlot(action); },                                               \
+        [this](QAction* action) { fnSlot(*this, action); },                                        \
         value);
 
 #define DEF4(name, descr, key, functor)                                                            \
     initShortcut(QStringLiteral(name), descr.toString(), key, functor);
 
-#define DEF5(name, key, functor, value)                                                            \
-    initShortcut(QString::fromUtf8(name.untranslatedText()).arg(value),                            \
-                 name.subs(value).toString(),                                                      \
-                 key,                                                                              \
-                 functor,                                                                          \
-                 value);
+    auto def5 = [this](auto name, auto key, auto functor, auto value) {
+        initShortcut(QString::fromUtf8(name.untranslatedText()).arg(value),
+                     name.subs(value).toString(),
+                     key,
+                     functor,
+                     value);
+    };
 
 #define DEF6(name, key, target, fnSlot)                                                            \
     initShortcut(QString::fromUtf8(name.untranslatedText()), name.toString(), key, target, &fnSlot);
 
-    DEF(kli18n("Window Operations Menu"), Qt::ALT + Qt::Key_F3, slotWindowOperations);
-    DEF2("Window Close", kli18n("Close Window"), Qt::ALT + Qt::Key_F4, slotWindowClose);
+    DEF(kli18n("Window Operations Menu"),
+        Qt::ALT + Qt::Key_F3,
+        active_window_show_operations_popup);
+    DEF2("Window Close", kli18n("Close Window"), Qt::ALT + Qt::Key_F4, active_window_close);
     DEF2("Window Maximize",
          kli18n("Maximize Window"),
          Qt::META + Qt::Key_PageUp,
-         slotWindowMaximize);
+         active_window_maximize);
     DEF2("Window Maximize Vertical",
          kli18n("Maximize Window Vertically"),
          0,
-         slotWindowMaximizeVertical);
+         active_window_maximize_vertical);
     DEF2("Window Maximize Horizontal",
          kli18n("Maximize Window Horizontally"),
          0,
-         slotWindowMaximizeHorizontal);
+         active_window_maximize_horizontal);
     DEF2("Window Minimize",
          kli18n("Minimize Window"),
          Qt::META + Qt::Key_PageDown,
-         slotWindowMinimize);
-    DEF2("Window Move", kli18n("Move Window"), 0, slotWindowMove);
-    DEF2("Window Resize", kli18n("Resize Window"), 0, slotWindowResize);
-    DEF2("Window Raise", kli18n("Raise Window"), 0, slotWindowRaise);
-    DEF2("Window Lower", kli18n("Lower Window"), 0, slotWindowLower);
-    DEF(kli18n("Toggle Window Raise/Lower"), 0, slotWindowRaiseOrLower);
-    DEF2("Window Fullscreen", kli18n("Make Window Fullscreen"), 0, slotWindowFullScreen);
-    DEF2("Window No Border", kli18n("Hide Window Border"), 0, slotWindowNoBorder);
-    DEF2("Window Above Other Windows", kli18n("Keep Window Above Others"), 0, slotWindowAbove);
-    DEF2("Window Below Other Windows", kli18n("Keep Window Below Others"), 0, slotWindowBelow);
+         active_window_minimize);
+    DEF2("Window Move", kli18n("Move Window"), 0, active_window_move);
+    DEF2("Window Resize", kli18n("Resize Window"), 0, active_window_resize);
+    DEF2("Window Raise", kli18n("Raise Window"), 0, active_window_raise);
+    DEF2("Window Lower", kli18n("Lower Window"), 0, active_window_lower);
+    DEF(kli18n("Toggle Window Raise/Lower"), 0, active_window_raise_or_lower);
+    DEF2("Window Fullscreen", kli18n("Make Window Fullscreen"), 0, active_window_set_fullscreen);
+    DEF2("Window No Border", kli18n("Hide Window Border"), 0, active_window_set_no_border);
+    DEF2("Window Above Other Windows",
+         kli18n("Keep Window Above Others"),
+         0,
+         active_window_set_keep_above);
+    DEF2("Window Below Other Windows",
+         kli18n("Keep Window Below Others"),
+         0,
+         active_window_set_keep_below);
     DEF(kli18n("Activate Window Demanding Attention"),
         Qt::META | Qt::CTRL | Qt::Key_A,
-        slotActivateAttentionWindow);
-    DEF(kli18n("Setup Window Shortcut"), 0, slotSetupWindowShortcut);
-    DEF2("Window Pack Right", kli18n("Pack Window to the Right"), 0, slotWindowPackRight);
-    DEF2("Window Pack Left", kli18n("Pack Window to the Left"), 0, slotWindowPackLeft);
-    DEF2("Window Pack Up", kli18n("Pack Window Up"), 0, slotWindowPackUp);
-    DEF2("Window Pack Down", kli18n("Pack Window Down"), 0, slotWindowPackDown);
+        activate_attention_window);
+    DEF(kli18n("Setup Window Shortcut"), 0, active_window_setup_window_shortcut);
+    DEF2("Window Pack Right", kli18n("Pack Window to the Right"), 0, active_window_pack_right);
+    DEF2("Window Pack Left", kli18n("Pack Window to the Left"), 0, active_window_pack_left);
+    DEF2("Window Pack Up", kli18n("Pack Window Up"), 0, active_window_pack_up);
+    DEF2("Window Pack Down", kli18n("Pack Window Down"), 0, active_window_pack_down);
     DEF2("Window Grow Horizontal",
          kli18n("Pack Grow Window Horizontally"),
          0,
-         slotWindowGrowHorizontal);
-    DEF2("Window Grow Vertical", kli18n("Pack Grow Window Vertically"), 0, slotWindowGrowVertical);
+         active_window_grow_horizontal);
+    DEF2("Window Grow Vertical",
+         kli18n("Pack Grow Window Vertically"),
+         0,
+         active_window_grow_vertical);
     DEF2("Window Shrink Horizontal",
          kli18n("Pack Shrink Window Horizontally"),
          0,
-         slotWindowShrinkHorizontal);
+         active_window_shrink_horizontal);
     DEF2("Window Shrink Vertical",
          kli18n("Pack Shrink Window Vertically"),
          0,
-         slotWindowShrinkVertical);
+         active_window_shrink_vertical);
     DEF4("Window Quick Tile Left",
          kli18n("Quick Tile Window to the Left"),
          Qt::META + Qt::Key_Left,
@@ -1738,50 +1614,47 @@ void space::initShortcuts()
     DEF2("Increase Opacity",
          kli18n("Increase Opacity of Active Window by 5 %"),
          0,
-         slotIncreaseWindowOpacity);
+         active_window_increase_opacity);
     DEF2("Decrease Opacity",
          kli18n("Decrease Opacity of Active Window by 5 %"),
          0,
-         slotLowerWindowOpacity);
+         active_window_lower_opacity);
 
     DEF2("Window On All Desktops",
          kli18n("Keep Window on All Desktops"),
          0,
-         slotWindowOnAllDesktops);
+         active_window_set_on_all_desktops);
 
     for (int i = 1; i < 21; ++i) {
-        DEF5(kli18n("Window to Desktop %1"), 0, std::bind(&space::slotWindowToDesktop, this, i), i);
-    }
-    DEF(kli18n("Window to Next Desktop"), 0, slotWindowToNextDesktop);
-    DEF(kli18n("Window to Previous Desktop"), 0, slotWindowToPreviousDesktop);
-    DEF(kli18n("Window One Desktop to the Right"), 0, slotWindowToDesktopRight);
-    DEF(kli18n("Window One Desktop to the Left"), 0, slotWindowToDesktopLeft);
-    DEF(kli18n("Window One Desktop Up"), 0, slotWindowToDesktopUp);
-    DEF(kli18n("Window One Desktop Down"), 0, slotWindowToDesktopDown);
-
-    for (int i = 0; i < 8; ++i) {
-        DEF3(
-            kli18n("Window to Screen %1"),
+        def5(
+            kli18n("Window to Desktop %1"),
             0,
-            [this](QAction* action) { slotWindowToScreen(action); },
-            i);
-    }
-    DEF(kli18n("Window to Next Screen"), 0, slotWindowToNextScreen);
-    DEF(kli18n("Window to Previous Screen"), 0, slotWindowToPrevScreen);
-    DEF(kli18n("Show Desktop"), Qt::META + Qt::Key_D, slotToggleShowDesktop);
-
-    for (int i = 0; i < 8; ++i) {
-        DEF3(
-            kli18n("Switch to Screen %1"),
-            0,
-            [this](QAction* action) { slotSwitchToScreen(action); },
+            [this, i] { active_window_to_desktop(*this, i); },
             i);
     }
 
-    DEF(kli18n("Switch to Next Screen"), 0, slotSwitchToNextScreen);
-    DEF(kli18n("Switch to Previous Screen"), 0, slotSwitchToPrevScreen);
+    DEF(kli18n("Window to Next Desktop"), 0, active_window_to_next_desktop);
+    DEF(kli18n("Window to Previous Desktop"), 0, active_window_to_prev_desktop);
+    DEF(kli18n("Window One Desktop to the Right"), 0, active_window_to_right_desktop);
+    DEF(kli18n("Window One Desktop to the Left"), 0, active_window_to_left_desktop);
+    DEF(kli18n("Window One Desktop Up"), 0, active_window_to_above_desktop);
+    DEF(kli18n("Window One Desktop Down"), 0, active_window_to_below_desktop);
 
-    DEF(kli18n("Kill Window"), Qt::META | Qt::CTRL | Qt::Key_Escape, slotKillWindow);
+    for (int i = 0; i < 8; ++i) {
+        DEF3(kli18n("Window to Screen %1"), 0, active_window_to_output, i);
+    }
+    DEF(kli18n("Window to Next Screen"), 0, active_window_to_next_output);
+    DEF(kli18n("Window to Previous Screen"), 0, active_window_to_prev_output);
+    DEF(kli18n("Show Desktop"), Qt::META + Qt::Key_D, toggle_show_desktop);
+
+    for (int i = 0; i < 8; ++i) {
+        DEF3(kli18n("Switch to Screen %1"), 0, switch_to_output, i);
+    }
+
+    DEF(kli18n("Switch to Next Screen"), 0, switch_to_next_output);
+    DEF(kli18n("Switch to Previous Screen"), 0, switch_to_prev_output);
+
+    DEF(kli18n("Kill Window"), Qt::META | Qt::CTRL | Qt::Key_Escape, start_window_killer);
     DEF6(kli18n("Suspend Compositing"),
          Qt::SHIFT + Qt::ALT + Qt::Key_F12,
          &render,
@@ -1883,445 +1756,6 @@ void space::clientShortcutUpdated(Toplevel* window)
     }
 }
 
-void space::performWindowOperation(Toplevel* window, base::options::WindowOperation op)
-{
-    if (!window) {
-        return;
-    }
-
-    auto cursor = input::get_cursor();
-
-    if (op == base::options::MoveOp || op == base::options::UnrestrictedMoveOp) {
-        cursor->set_pos(window->frameGeometry().center());
-    }
-    if (op == base::options::ResizeOp || op == base::options::UnrestrictedResizeOp) {
-        cursor->set_pos(window->frameGeometry().bottomRight());
-    }
-
-    switch (op) {
-    case base::options::MoveOp:
-        window->performMouseCommand(base::options::MouseMove, cursor->pos());
-        break;
-    case base::options::UnrestrictedMoveOp:
-        window->performMouseCommand(base::options::MouseUnrestrictedMove, cursor->pos());
-        break;
-    case base::options::ResizeOp:
-        window->performMouseCommand(base::options::MouseResize, cursor->pos());
-        break;
-    case base::options::UnrestrictedResizeOp:
-        window->performMouseCommand(base::options::MouseUnrestrictedResize, cursor->pos());
-        break;
-    case base::options::CloseOp:
-        QMetaObject::invokeMethod(window, "closeWindow", Qt::QueuedConnection);
-        break;
-    case base::options::MaximizeOp:
-        win::maximize(window,
-                      window->maximizeMode() == win::maximize_mode::full
-                          ? win::maximize_mode::restore
-                          : win::maximize_mode::full);
-        break;
-    case base::options::HMaximizeOp:
-        win::maximize(window, window->maximizeMode() ^ win::maximize_mode::horizontal);
-        break;
-    case base::options::VMaximizeOp:
-        win::maximize(window, window->maximizeMode() ^ win::maximize_mode::vertical);
-        break;
-    case base::options::RestoreOp:
-        win::maximize(window, win::maximize_mode::restore);
-        break;
-    case base::options::MinimizeOp:
-        win::set_minimized(window, true);
-        break;
-    case base::options::OnAllDesktopsOp:
-        win::set_on_all_desktops(window, !window->isOnAllDesktops());
-        break;
-    case base::options::FullScreenOp:
-        window->setFullScreen(!window->control->fullscreen(), true);
-        break;
-    case base::options::NoBorderOp:
-        window->setNoBorder(!window->noBorder());
-        break;
-    case base::options::KeepAboveOp: {
-        blocker block(stacking_order);
-        bool was = window->control->keep_above();
-        win::set_keep_above(window, !window->control->keep_above());
-        if (was && !window->control->keep_above()) {
-            win::raise_window(this, window);
-        }
-        break;
-    }
-    case base::options::KeepBelowOp: {
-        blocker block(stacking_order);
-        bool was = window->control->keep_below();
-        win::set_keep_below(window, !window->control->keep_below());
-        if (was && !window->control->keep_below()) {
-            win::lower_window(this, window);
-        }
-        break;
-    }
-    case base::options::WindowRulesOp:
-        rule_book->edit(window, false);
-        break;
-    case base::options::ApplicationRulesOp:
-        rule_book->edit(window, true);
-        break;
-    case base::options::SetupWindowShortcutOp:
-        setupWindowShortcut(window);
-        break;
-    case base::options::LowerOp:
-        win::lower_window(this, window);
-        break;
-    case base::options::OperationsOp:
-    case base::options::NoOp:
-        break;
-    }
-}
-
-void space::slotActivateAttentionWindow()
-{
-    if (attention_chain.size() > 0) {
-        activate_window(*this, attention_chain.front());
-    }
-}
-
-static uint senderValue(QAction* act)
-{
-    bool ok = false;
-    uint i = -1;
-    if (act)
-        i = act->data().toUInt(&ok);
-    if (ok)
-        return i;
-    return -1;
-}
-
-#define USABLE_ACTIVE_CLIENT                                                                       \
-    (active_client && !(win::is_desktop(active_client) || win::is_dock(active_client)))
-
-void space::slotWindowToDesktop(uint i)
-{
-    if (USABLE_ACTIVE_CLIENT) {
-        if (i < 1)
-            return;
-
-        if (i >= 1 && i <= virtual_desktop_manager->count())
-            send_window_to_desktop(*this, active_client, i, true);
-    }
-}
-
-static bool screenSwitchImpossible()
-{
-    if (!kwinApp()->options->get_current_output_follows_mouse()) {
-        return false;
-    }
-    QStringList args;
-    args << QStringLiteral("--passivepopup")
-         << i18n(
-                "The window manager is configured to consider the screen with the mouse on it as "
-                "active one.\n"
-                "Therefore it is not possible to switch to a screen explicitly.")
-         << QStringLiteral("20");
-    KProcess::startDetached(QStringLiteral("kdialog"), args);
-    return true;
-}
-
-void space::slotSwitchToScreen(QAction* action)
-{
-    if (screenSwitchImpossible()) {
-        return;
-    }
-
-    int const screen = senderValue(action);
-    auto output = base::get_output(kwinApp()->get_base().get_outputs(), screen);
-
-    if (output) {
-        set_current_output(*this, *output);
-    }
-}
-
-base::output const* get_derivated_output(base::output const* output, int drift)
-{
-    auto const& outputs = kwinApp()->get_base().get_outputs();
-    auto index = output ? base::get_output_index(outputs, *output) : 0;
-    index += drift;
-    return base::get_output(outputs, index % outputs.size());
-}
-
-base::output const* get_derivated_output(win::space& space, int drift)
-{
-    return get_derivated_output(get_current_output(space), drift);
-}
-
-void space::slotSwitchToNextScreen()
-{
-    if (screenSwitchImpossible()) {
-        return;
-    }
-    if (auto output = get_derivated_output(*this, 1)) {
-        set_current_output(*this, *output);
-    }
-}
-
-void space::slotSwitchToPrevScreen()
-{
-    if (screenSwitchImpossible()) {
-        return;
-    }
-    if (auto output = get_derivated_output(*this, -1)) {
-        set_current_output(*this, *output);
-    }
-}
-
-void space::slotWindowToScreen(QAction* action)
-{
-    if (USABLE_ACTIVE_CLIENT) {
-        int const screen = senderValue(action);
-        auto output = base::get_output(kwinApp()->get_base().get_outputs(), screen);
-        if (output) {
-            send_to_screen(*this, active_client, *output);
-        }
-    }
-}
-
-void space::slotWindowToNextScreen()
-{
-    if (!USABLE_ACTIVE_CLIENT) {
-        return;
-    }
-    if (auto output = get_derivated_output(active_client->central_output, 1)) {
-        send_to_screen(*this, active_client, *output);
-    }
-}
-
-void space::slotWindowToPrevScreen()
-{
-    if (!USABLE_ACTIVE_CLIENT) {
-        return;
-    }
-    if (auto output = get_derivated_output(active_client->central_output, -1)) {
-        send_to_screen(*this, active_client, *output);
-    }
-}
-
-/**
- * Maximizes the active client.
- */
-void space::slotWindowMaximize()
-{
-    if (USABLE_ACTIVE_CLIENT)
-        performWindowOperation(active_client, base::options::MaximizeOp);
-}
-
-/**
- * Maximizes the active client vertically.
- */
-void space::slotWindowMaximizeVertical()
-{
-    if (USABLE_ACTIVE_CLIENT)
-        performWindowOperation(active_client, base::options::VMaximizeOp);
-}
-
-/**
- * Maximizes the active client horiozontally.
- */
-void space::slotWindowMaximizeHorizontal()
-{
-    if (USABLE_ACTIVE_CLIENT)
-        performWindowOperation(active_client, base::options::HMaximizeOp);
-}
-
-/**
- * Minimizes the active client.
- */
-void space::slotWindowMinimize()
-{
-    if (USABLE_ACTIVE_CLIENT)
-        performWindowOperation(active_client, base::options::MinimizeOp);
-}
-
-/**
- * Raises the active client.
- */
-void space::slotWindowRaise()
-{
-    if (USABLE_ACTIVE_CLIENT) {
-        win::raise_window(this, active_client);
-    }
-}
-
-/**
- * Lowers the active client.
- */
-void space::slotWindowLower()
-{
-    if (USABLE_ACTIVE_CLIENT) {
-        win::lower_window(this, active_client);
-        // As this most likely makes the window no longer visible change the
-        // keyboard focus to the next available window.
-        // activateNextClient( c ); // Doesn't work when we lower a child window
-        if (active_client->control->active() && kwinApp()->options->focusPolicyIsReasonable()) {
-            if (kwinApp()->options->isNextFocusPrefersMouse()) {
-                auto next = window_under_mouse(*this, active_client->central_output);
-                if (next && next != active_client)
-                    request_focus(*this, next);
-            } else {
-                activate_window(
-                    *this,
-                    top_client_on_desktop(this, virtual_desktop_manager->current(), nullptr));
-            }
-        }
-    }
-}
-
-/**
- * Does a toggle-raise-and-lower on the active client.
- */
-void space::slotWindowRaiseOrLower()
-{
-    if (USABLE_ACTIVE_CLIENT)
-        win::raise_or_lower_client(this, active_client);
-}
-
-void space::slotWindowOnAllDesktops()
-{
-    if (USABLE_ACTIVE_CLIENT)
-        win::set_on_all_desktops(active_client, !active_client->isOnAllDesktops());
-}
-
-void space::slotWindowFullScreen()
-{
-    if (USABLE_ACTIVE_CLIENT)
-        performWindowOperation(active_client, base::options::FullScreenOp);
-}
-
-void space::slotWindowNoBorder()
-{
-    if (USABLE_ACTIVE_CLIENT)
-        performWindowOperation(active_client, base::options::NoBorderOp);
-}
-
-void space::slotWindowAbove()
-{
-    if (USABLE_ACTIVE_CLIENT)
-        performWindowOperation(active_client, base::options::KeepAboveOp);
-}
-
-void space::slotWindowBelow()
-{
-    if (USABLE_ACTIVE_CLIENT)
-        performWindowOperation(active_client, base::options::KeepBelowOp);
-}
-void space::slotSetupWindowShortcut()
-{
-    if (USABLE_ACTIVE_CLIENT)
-        performWindowOperation(active_client, base::options::SetupWindowShortcutOp);
-}
-
-/**
- * Toggles show desktop.
- */
-void space::slotToggleShowDesktop()
-{
-    setShowingDesktop(!showingDesktop());
-}
-
-template<typename Direction>
-void windowToDesktop(Toplevel& window)
-{
-    auto& ws = window.space;
-    auto& vds = ws.virtual_desktop_manager;
-    Direction functor(*vds);
-    // TODO: why is kwinApp()->options->isRollOverDesktops() not honored?
-    const auto desktop = functor(nullptr, true);
-    if (!win::is_desktop(&window) && !win::is_dock(&window)) {
-        set_move_resize_window(ws, &window);
-        vds->setCurrent(desktop);
-        set_move_resize_window(ws, nullptr);
-    }
-}
-
-/**
- * Moves the active client to the next desktop.
- */
-void space::slotWindowToNextDesktop()
-{
-    if (USABLE_ACTIVE_CLIENT)
-        windowToNextDesktop(*active_client);
-}
-
-void space::windowToNextDesktop(Toplevel& window)
-{
-    windowToDesktop<win::virtual_desktop_next>(window);
-}
-
-/**
- * Moves the active client to the previous desktop.
- */
-void space::slotWindowToPreviousDesktop()
-{
-    if (USABLE_ACTIVE_CLIENT)
-        windowToPreviousDesktop(*active_client);
-}
-
-void space::windowToPreviousDesktop(Toplevel& window)
-{
-    windowToDesktop<win::virtual_desktop_previous>(window);
-}
-
-template<typename Direction>
-void activeClientToDesktop(win::space& space)
-{
-    auto& vds = space.virtual_desktop_manager;
-    const int current = vds->current();
-    Direction functor(*vds);
-    const int d = functor(current, kwinApp()->options->isRollOverDesktops());
-    if (d == current) {
-        return;
-    }
-    set_move_resize_window(space, space.active_client);
-    vds->setCurrent(d);
-    set_move_resize_window(space, nullptr);
-}
-
-void space::slotWindowToDesktopRight()
-{
-    if (USABLE_ACTIVE_CLIENT) {
-        activeClientToDesktop<win::virtual_desktop_right>(*this);
-    }
-}
-
-void space::slotWindowToDesktopLeft()
-{
-    if (USABLE_ACTIVE_CLIENT) {
-        activeClientToDesktop<win::virtual_desktop_left>(*this);
-    }
-}
-
-void space::slotWindowToDesktopUp()
-{
-    if (USABLE_ACTIVE_CLIENT) {
-        activeClientToDesktop<win::virtual_desktop_above>(*this);
-    }
-}
-
-void space::slotWindowToDesktopDown()
-{
-    if (USABLE_ACTIVE_CLIENT) {
-        activeClientToDesktop<win::virtual_desktop_below>(*this);
-    }
-}
-
-/**
- * Kill Window feature, similar to xkill.
- */
-void space::slotKillWindow()
-{
-    if (!window_killer) {
-        window_killer = std::make_unique<kill_window<space>>(*this);
-    }
-    window_killer->start();
-}
-
 /**
  * Switches to the nearest window in given direction.
  */
@@ -2413,17 +1847,6 @@ bool space::switchWindow(Toplevel* c, Direction direction, QPoint curPos, int d)
     return switchTo;
 }
 
-/**
- * Shows the window operations popup menu for the active client.
- */
-void space::slotWindowOperations()
-{
-    if (!active_client)
-        return;
-    auto pos = win::frame_to_client_pos(active_client, active_client->pos());
-    showWindowMenu(QRect(pos, pos), active_client);
-}
-
 void space::showWindowMenu(const QRect& pos, Toplevel* window)
 {
     user_actions_menu->show(pos, window);
@@ -2433,38 +1856,6 @@ void space::showApplicationMenu(const QRect& pos, Toplevel* window, int actionId
 {
     appmenu->showApplicationMenu(window->pos() + pos.bottomLeft(), window, actionId);
 }
-
-/**
- * Closes the active client.
- */
-void space::slotWindowClose()
-{
-    // TODO: why?
-    //     if ( tab_box->isVisible())
-    //         return;
-    if (USABLE_ACTIVE_CLIENT)
-        performWindowOperation(active_client, base::options::CloseOp);
-}
-
-/**
- * Starts keyboard move mode for the active client.
- */
-void space::slotWindowMove()
-{
-    if (USABLE_ACTIVE_CLIENT)
-        performWindowOperation(active_client, base::options::UnrestrictedMoveOp);
-}
-
-/**
- * Starts keyboard resize mode for the active client.
- */
-void space::slotWindowResize()
-{
-    if (USABLE_ACTIVE_CLIENT)
-        performWindowOperation(active_client, base::options::UnrestrictedResizeOp);
-}
-
-#undef USABLE_ACTIVE_CLIENT
 
 bool space::shortcutAvailable(const QKeySequence& cut, Toplevel* ignore) const
 {

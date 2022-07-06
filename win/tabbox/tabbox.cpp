@@ -710,7 +710,8 @@ void tabbox::show()
         m_is_shown = false;
         return;
     }
-    space.setShowingDesktop(false);
+
+    set_showing_desktop(space, false);
     reference();
     m_is_shown = true;
     m_tabbox->show();
@@ -1439,7 +1440,7 @@ void tabbox::accept(bool closeTabBox)
     if (c) {
         activate_window(space, c);
         if (win::is_desktop(c))
-            space.setShowingDesktop(!space.showingDesktop());
+            set_showing_desktop(space, !space.showingDesktop());
     }
 }
 

@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/wayland/server.h"
 #include "input/cursor.h"
+#include "win/active_window.h"
 #include "win/deco.h"
 #include "win/deco/bridge.h"
 #include "win/deco/settings.h"
@@ -134,7 +135,7 @@ void TestMaximized::testMaximizedPassedToDeco()
     QSignalSpy geometryShapeChangedSpy(client, &Toplevel::frame_geometry_changed);
     QVERIFY(geometryShapeChangedSpy.isValid());
 
-    Test::app()->workspace->slotWindowMaximize();
+    win::active_window_maximize(*Test::app()->workspace);
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 2);
     QCOMPARE(configureRequestedSpy.last().at(0).toSize(),
@@ -156,7 +157,7 @@ void TestMaximized::testMaximizedPassedToDeco()
     QVERIFY(decoration->borderTop() != 0);
 
     // now unmaximize again
-    Test::app()->workspace->slotWindowMaximize();
+    win::active_window_maximize(*Test::app()->workspace);
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
     QCOMPARE(configureRequestedSpy.last().at(0).toSize(), QSize(100, 50));
@@ -319,7 +320,7 @@ void TestMaximized::testBorderlessMaximizedWindow()
 
     // Maximize the client.
     const QRect maximizeRestoreGeometry = client->frameGeometry();
-    Test::app()->workspace->slotWindowMaximize();
+    win::active_window_maximize(*Test::app()->workspace);
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
     QCOMPARE(configureRequestedSpy.last().at(0).toSize(), QSize(1280, 1024));
@@ -338,7 +339,7 @@ void TestMaximized::testBorderlessMaximizedWindow()
     QVERIFY(!win::decoration(client));
 
     // Restore the client.
-    Test::app()->workspace->slotWindowMaximize();
+    win::active_window_maximize(*Test::app()->workspace);
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 4);
     QCOMPARE(configureRequestedSpy.last().at(0).toSize(), QSize(100, 50));

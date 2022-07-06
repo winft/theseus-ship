@@ -298,9 +298,6 @@ public:
 
     Toplevel* active_client{nullptr};
 
-    void windowToPreviousDesktop(Toplevel& window);
-    void windowToNextDesktop(Toplevel& window);
-
     /**
      * Shows the menu operations menu for the client and makes it active if
      * it's not already.
@@ -313,7 +310,6 @@ public:
     void updateOnAllDesktopsOfTransients(Toplevel* window);
     void checkTransients(Toplevel* window);
 
-    void setShowingDesktop(bool showing);
     bool showingDesktop() const;
 
     bool checkStartupNotification(xcb_window_t w, KStartupInfoId& id, KStartupInfoData& data);
@@ -363,61 +359,6 @@ public:
     void saveOldScreenSizes();
     void desktopResized();
 
-    void performWindowOperation(KWin::Toplevel* window, base::options::WindowOperation op);
-
-    // Keybindings
-    // void slotSwitchToWindow( int );
-    void slotWindowToDesktop(uint i);
-
-    // void slotWindowToListPosition( int );
-    void slotSwitchToScreen(QAction* action);
-    void slotWindowToScreen(QAction* action);
-    void slotSwitchToNextScreen();
-    void slotWindowToNextScreen();
-    void slotSwitchToPrevScreen();
-    void slotWindowToPrevScreen();
-    void slotToggleShowDesktop();
-
-    void slotWindowMaximize();
-    void slotWindowMaximizeVertical();
-    void slotWindowMaximizeHorizontal();
-    void slotWindowMinimize();
-    void slotWindowRaise();
-    void slotWindowLower();
-    void slotWindowRaiseOrLower();
-    void slotActivateAttentionWindow();
-    void slotWindowPackLeft();
-    void slotWindowPackRight();
-    void slotWindowPackUp();
-    void slotWindowPackDown();
-    void slotWindowGrowHorizontal();
-    void slotWindowGrowVertical();
-    void slotWindowShrinkHorizontal();
-    void slotWindowShrinkVertical();
-
-    void slotIncreaseWindowOpacity();
-    void slotLowerWindowOpacity();
-
-    void slotWindowOperations();
-    void slotWindowClose();
-    void slotWindowMove();
-    void slotWindowResize();
-    void slotWindowAbove();
-    void slotWindowBelow();
-    void slotWindowOnAllDesktops();
-    void slotWindowFullScreen();
-    void slotWindowNoBorder();
-
-    void slotWindowToNextDesktop();
-    void slotWindowToPreviousDesktop();
-    void slotWindowToDesktopRight();
-    void slotWindowToDesktopLeft();
-    void slotWindowToDesktopUp();
-    void slotWindowToDesktopDown();
-
-    void slotKillWindow();
-
-    void slotSetupWindowShortcut();
     void setupWindowShortcutDone(bool);
 
     virtual void update_space_area_from_windows(QRect const& desktop_area,

@@ -276,7 +276,7 @@ void root_info::gotPing(xcb_window_t w, xcb_timestamp_t timestamp)
 
 void root_info::changeShowingDesktop(bool showing)
 {
-    space.setShowingDesktop(showing);
+    set_showing_desktop(space, showing);
 }
 
 void root_info::setActiveClient(Toplevel* window)

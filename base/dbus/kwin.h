@@ -10,6 +10,7 @@
 #include "input/platform.h"
 #include "main.h"
 #include "toplevel.h"
+#include "win/kill_window.h"
 #include "win/placement.h"
 
 #include <QObject>
@@ -133,7 +134,7 @@ public:
 
     void kill_window_impl() override
     {
-        space.slotKillWindow();
+        win::start_window_killer(space);
     }
 
     void unclutter_desktop_impl() override

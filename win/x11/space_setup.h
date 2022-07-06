@@ -160,7 +160,7 @@ void init_space(Space& space)
         desktop_geometry.width = geom.width();
         desktop_geometry.height = geom.height();
         rootInfo->setDesktopGeometry(desktop_geometry);
-        space.setShowingDesktop(false);
+        set_showing_desktop(space, false);
 
     } // End updates blocker block
 

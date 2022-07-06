@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/wayland/server.h"
 #include "input/cursor.h"
+#include "win/active_window.h"
 #include "win/control.h"
 #include "win/move.h"
 #include "win/space.h"
@@ -370,7 +371,7 @@ void ActivationTest::testSwitchToWindowMaximized()
     QVERIFY(client1->control->active());
     QSignalSpy configureRequestedSpy1(shellSurface1.get(), &XdgShellToplevel::configureRequested);
     QVERIFY(configureRequestedSpy1.wait());
-    Test::app()->workspace->slotWindowMaximize();
+    win::active_window_maximize(*Test::app()->workspace);
     QVERIFY(configureRequestedSpy1.wait());
     QSignalSpy geometryChangedSpy1(client1, &win::wayland::window::frame_geometry_changed);
     QVERIFY(geometryChangedSpy1.isValid());
@@ -386,7 +387,7 @@ void ActivationTest::testSwitchToWindowMaximized()
     QVERIFY(client2->control->active());
     QSignalSpy configureRequestedSpy2(shellSurface2.get(), &XdgShellToplevel::configureRequested);
     QVERIFY(configureRequestedSpy2.wait());
-    Test::app()->workspace->slotWindowMaximize();
+    win::active_window_maximize(*Test::app()->workspace);
     QVERIFY(configureRequestedSpy2.wait());
     QSignalSpy geometryChangedSpy2(client2, &win::wayland::window::frame_geometry_changed);
     QVERIFY(geometryChangedSpy2.isValid());
@@ -456,7 +457,7 @@ void ActivationTest::testSwitchToWindowFullScreen()
     QVERIFY(client1->control->active());
     QSignalSpy configureRequestedSpy1(shellSurface1.get(), &XdgShellToplevel::configureRequested);
     QVERIFY(configureRequestedSpy1.wait());
-    Test::app()->workspace->slotWindowFullScreen();
+    win::active_window_set_fullscreen(*Test::app()->workspace);
     QVERIFY(configureRequestedSpy1.wait());
     QSignalSpy geometryChangedSpy1(client1, &win::wayland::window::frame_geometry_changed);
     QVERIFY(geometryChangedSpy1.isValid());
@@ -471,7 +472,7 @@ void ActivationTest::testSwitchToWindowFullScreen()
     QVERIFY(client2->control->active());
     QSignalSpy configureRequestedSpy2(shellSurface2.get(), &XdgShellToplevel::configureRequested);
     QVERIFY(configureRequestedSpy2.wait());
-    Test::app()->workspace->slotWindowFullScreen();
+    win::active_window_set_fullscreen(*Test::app()->workspace);
     QVERIFY(configureRequestedSpy2.wait());
     QSignalSpy geometryChangedSpy2(client2, &win::wayland::window::frame_geometry_changed);
     QVERIFY(geometryChangedSpy2.isValid());

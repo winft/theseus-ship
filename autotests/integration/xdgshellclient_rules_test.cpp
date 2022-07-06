@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/cursor.h"
 #include "rules/rule_book.h"
 #include "rules/rules.h"
+#include "win/active_window.h"
 #include "win/controlling.h"
 #include "win/input.h"
 #include "win/setup.h"
@@ -291,7 +292,7 @@ void TestXdgShellClientRules::testPositionApply()
     QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
-    Test::app()->workspace->slotWindowMove();
+    win::active_window_move(*Test::app()->workspace);
     QCOMPARE(Test::app()->workspace->moveResizeClient(), client);
     QCOMPARE(clientStartMoveResizedSpy.count(), 1);
     QVERIFY(win::is_move(client));
@@ -367,7 +368,7 @@ void TestXdgShellClientRules::testPositionRemember()
     QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
-    Test::app()->workspace->slotWindowMove();
+    win::active_window_move(*Test::app()->workspace);
     QCOMPARE(Test::app()->workspace->moveResizeClient(), client);
     QCOMPARE(clientStartMoveResizedSpy.count(), 1);
     QVERIFY(win::is_move(client));
@@ -438,7 +439,7 @@ void TestXdgShellClientRules::testPositionForce()
     QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
-    Test::app()->workspace->slotWindowMove();
+    win::active_window_move(*Test::app()->workspace);
     QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
     QCOMPARE(clientStartMoveResizedSpy.count(), 0);
     QVERIFY(!win::is_move(client));
@@ -509,7 +510,7 @@ void TestXdgShellClientRules::testPositionApplyNow()
     QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
-    Test::app()->workspace->slotWindowMove();
+    win::active_window_move(*Test::app()->workspace);
     QCOMPARE(Test::app()->workspace->moveResizeClient(), client);
     QCOMPARE(clientStartMoveResizedSpy.count(), 1);
     QVERIFY(win::is_move(client));
@@ -573,7 +574,7 @@ void TestXdgShellClientRules::testPositionForceTemporarily()
     QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
-    Test::app()->workspace->slotWindowMove();
+    win::active_window_move(*Test::app()->workspace);
     QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
     QCOMPARE(clientStartMoveResizedSpy.count(), 0);
     QVERIFY(!win::is_move(client));
@@ -708,7 +709,7 @@ void TestXdgShellClientRules::testSizeApply()
     QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
-    Test::app()->workspace->slotWindowResize();
+    win::active_window_resize(*Test::app()->workspace);
     QCOMPARE(Test::app()->workspace->moveResizeClient(), client);
     QCOMPARE(clientStartMoveResizedSpy.count(), 1);
     QVERIFY(!win::is_move(client));
@@ -843,7 +844,7 @@ void TestXdgShellClientRules::testSizeRemember()
     QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
-    Test::app()->workspace->slotWindowResize();
+    win::active_window_resize(*Test::app()->workspace);
     QCOMPARE(Test::app()->workspace->moveResizeClient(), client);
     QCOMPARE(clientStartMoveResizedSpy.count(), 1);
     QVERIFY(!win::is_move(client));
@@ -962,7 +963,7 @@ void TestXdgShellClientRules::testSizeForce()
     QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
-    Test::app()->workspace->slotWindowResize();
+    win::active_window_resize(*Test::app()->workspace);
     QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
     QCOMPARE(clientStartMoveResizedSpy.count(), 0);
     QVERIFY(!win::is_move(client));
@@ -1112,7 +1113,7 @@ void TestXdgShellClientRules::testSizeForceTemporarily()
     QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
-    Test::app()->workspace->slotWindowResize();
+    win::active_window_resize(*Test::app()->workspace);
     QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
     QCOMPARE(clientStartMoveResizedSpy.count(), 0);
     QVERIFY(!win::is_move(client));
@@ -1261,7 +1262,7 @@ void TestXdgShellClientRules::testMaximizeApply()
     QVERIFY(states.testFlag(XdgShellToplevel::State::Maximized));
 
     // One should still be able to change the maximized state of the client.
-    Test::app()->workspace->slotWindowMaximize();
+    win::active_window_maximize(*Test::app()->workspace);
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 3);
 
@@ -1373,7 +1374,7 @@ void TestXdgShellClientRules::testMaximizeRemember()
     QVERIFY(states.testFlag(XdgShellToplevel::State::Maximized));
 
     // One should still be able to change the maximized state of the client.
-    Test::app()->workspace->slotWindowMaximize();
+    win::active_window_maximize(*Test::app()->workspace);
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 3);
 
@@ -1486,7 +1487,7 @@ void TestXdgShellClientRules::testMaximizeForce()
 
     // Any attempt to change the maximized state should not succeed.
     const QRect oldGeometry = client->frameGeometry();
-    Test::app()->workspace->slotWindowMaximize();
+    win::active_window_maximize(*Test::app()->workspace);
     QVERIFY(!configureRequestedSpy->wait(100));
     QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
     QCOMPARE(client->synced_geometry.max_mode, win::maximize_mode::full);
@@ -1605,7 +1606,7 @@ void TestXdgShellClientRules::testMaximizeApplyNow()
     QVERIFY(client->isMaximizable());
 
     // Restore the client.
-    Test::app()->workspace->slotWindowMaximize();
+    win::active_window_maximize(*Test::app()->workspace);
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 4);
     QCOMPARE(configureRequestedSpy->last().at(0).toSize(), QSize(100, 50));
@@ -1688,7 +1689,7 @@ void TestXdgShellClientRules::testMaximizeForceTemporarily()
 
     // Any attempt to change the maximized state should not succeed.
     const QRect oldGeometry = client->frameGeometry();
-    Test::app()->workspace->slotWindowMaximize();
+    win::active_window_maximize(*Test::app()->workspace);
     QVERIFY(!configureRequestedSpy->wait(100));
     QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
     QCOMPARE(client->synced_geometry.max_mode, win::maximize_mode::full);

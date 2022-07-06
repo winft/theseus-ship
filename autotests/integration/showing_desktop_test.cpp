@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "lib/app.h"
 
 #include "base/wayland/server.h"
+#include "win/activation.h"
 #include "win/net.h"
 #include "win/space.h"
 #include "win/wayland/window.h"
@@ -74,9 +75,9 @@ void ShowingDesktopTest::testRestoreFocus()
     QVERIFY(client1 != client2);
 
     QCOMPARE(Test::app()->workspace->active_client, client2);
-    Test::app()->workspace->slotToggleShowDesktop();
+    win::toggle_show_desktop(*Test::app()->workspace);
     QVERIFY(Test::app()->workspace->showingDesktop());
-    Test::app()->workspace->slotToggleShowDesktop();
+    win::toggle_show_desktop(*Test::app()->workspace);
     QVERIFY(!Test::app()->workspace->showingDesktop());
 
     QVERIFY(Test::app()->workspace->active_client);
@@ -111,10 +112,10 @@ void ShowingDesktopTest::testRestoreFocusWithDesktopWindow()
     QVERIFY(client1 != client2);
 
     QCOMPARE(Test::app()->workspace->active_client, client2);
-    Test::app()->workspace->slotToggleShowDesktop();
+    win::toggle_show_desktop(*Test::app()->workspace);
     QVERIFY(Test::app()->workspace->showingDesktop());
     QCOMPARE(Test::app()->workspace->active_client, desktop);
-    Test::app()->workspace->slotToggleShowDesktop();
+    win::toggle_show_desktop(*Test::app()->workspace);
     QVERIFY(!Test::app()->workspace->showingDesktop());
 
     QVERIFY(Test::app()->workspace->active_client);

@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/effects.h"
 #include "render/scene.h"
 #include "toplevel.h"
+#include "win/active_window.h"
 #include "win/control.h"
 #include "win/space.h"
 #include "win/wayland/window.h"
@@ -146,7 +147,7 @@ void MaximizeAnimationTest::testMaximizeRestore()
         qOverload<Toplevel*, bool, bool>(&win::wayland::window::clientMaximizedStateChanged));
     QVERIFY(maximizeChangedSpy.isValid());
 
-    Test::app()->workspace->slotWindowMaximize();
+    win::active_window_maximize(*Test::app()->workspace);
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
     QCOMPARE(configureRequestedSpy.last().at(0).value<QSize>(), QSize(1280, 1024));
@@ -167,7 +168,7 @@ void MaximizeAnimationTest::testMaximizeRestore()
     QTRY_VERIFY(!effect->isActive());
 
     // Restore the client.
-    Test::app()->workspace->slotWindowMaximize();
+    win::active_window_maximize(*Test::app()->workspace);
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 4);
     QCOMPARE(configureRequestedSpy.last().at(0).value<QSize>(), QSize(100, 50));

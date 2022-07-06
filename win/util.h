@@ -7,8 +7,22 @@
 
 #include "types.h"
 
+#include <QAction>
+
 namespace KWin::win
 {
+
+static inline unsigned int get_action_data_as_uint(QAction* act)
+{
+    auto ok = false;
+    unsigned int i = -1;
+
+    if (act) {
+        i = act->data().toUInt(&ok);
+    }
+
+    return ok ? i : -1;
+}
 
 /**
  * @brief Finds the window matching the condition expressed in @p func in @p list.

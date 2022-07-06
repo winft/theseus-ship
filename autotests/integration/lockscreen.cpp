@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/compositor.h"
 #include "render/scene.h"
 #include "toplevel.h"
+#include "win/active_window.h"
 #include "win/move.h"
 #include "win/screen.h"
 #include "win/screen_edges.h"
@@ -605,7 +606,7 @@ void LockScreenTest::testMoveWindow()
     QVERIFY(clientStepUserMovedResizedSpy.isValid());
     quint32 timestamp = 1;
 
-    Test::app()->workspace->slotWindowMove();
+    win::active_window_move(*Test::app()->workspace);
     QCOMPARE(Test::app()->workspace->moveResizeClient(), c);
     QVERIFY(win::is_move(c));
 

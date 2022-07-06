@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/effect_loader.h"
 #include "render/effects.h"
 #include "win/activation.h"
+#include "win/active_window.h"
 #include "win/meta.h"
 #include "win/space.h"
 #include "win/stacking_order.h"
@@ -215,7 +216,7 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
     QVERIFY(client->control->active());
     QCOMPARE(client->layer(), win::layer::normal);
 
-    Test::app()->workspace->slotWindowFullScreen();
+    win::active_window_set_fullscreen(*Test::app()->workspace);
     QVERIFY(client->control->fullscreen());
     QCOMPARE(client->layer(), win::layer::active);
     QCOMPARE(Test::app()->workspace->stacking_order->stack.back(), client);
@@ -249,10 +250,10 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
     QTRY_VERIFY(client->control->active());
     // remove fullscreen
     QVERIFY(client->control->fullscreen());
-    Test::app()->workspace->slotWindowFullScreen();
+    win::active_window_set_fullscreen(*Test::app()->workspace);
     QVERIFY(!client->control->fullscreen());
     // and fullscreen again
-    Test::app()->workspace->slotWindowFullScreen();
+    win::active_window_set_fullscreen(*Test::app()->workspace);
     QVERIFY(client->control->fullscreen());
     QCOMPARE(Test::app()->workspace->stacking_order->stack.back(), client);
     QCOMPARE(win::render_stack(*Test::app()->workspace->stacking_order).back(), client);
@@ -269,7 +270,7 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
 
     // remove fullscreen
     QVERIFY(client->control->fullscreen());
-    Test::app()->workspace->slotWindowFullScreen();
+    win::active_window_set_fullscreen(*Test::app()->workspace);
     QVERIFY(!client->control->fullscreen());
 
     // Wait a moment for the X11 client to catch up.
@@ -693,7 +694,7 @@ void X11ClientTest::testFullscreenWindowGroups()
 
     QCOMPARE(client->control->fullscreen(), false);
     QCOMPARE(client->layer(), win::layer::normal);
-    Test::app()->workspace->slotWindowFullScreen();
+    win::active_window_set_fullscreen(*Test::app()->workspace);
     QCOMPARE(client->control->fullscreen(), true);
     QCOMPARE(client->layer(), win::layer::active);
 

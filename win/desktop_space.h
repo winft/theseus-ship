@@ -98,7 +98,7 @@ void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)
 
     if (space->showingDesktop()) {
         // Do this only after desktop change to avoid flicker.
-        space->setShowingDesktop(false);
+        set_showing_desktop(*space, false);
     }
 }
 
@@ -122,6 +122,35 @@ template<typename Space>
 void handle_desktop_count_changed(Space& space, unsigned int /*prev*/, unsigned int next)
 {
     reset_space_areas(space, next);
+}
+
+template<typename Direction, typename Win>
+void window_to_desktop(Win& window)
+{
+    auto& ws = window.space;
+    auto& vds = ws.virtual_desktop_manager;
+    Direction functor(*vds);
+
+    // TODO: why is kwinApp()->options->isRollOverDesktops() not honored?
+    auto const desktop = functor(nullptr, true);
+
+    if (!is_desktop(&window) && !is_dock(&window)) {
+        set_move_resize_window(ws, &window);
+        vds->setCurrent(desktop);
+        set_move_resize_window(ws, nullptr);
+    }
+}
+
+template<typename Win>
+void window_to_next_desktop(Win& window)
+{
+    window_to_desktop<win::virtual_desktop_next>(window);
+}
+
+template<typename Win>
+void window_to_prev_desktop(Win& window)
+{
+    window_to_desktop<win::virtual_desktop_previous>(window);
 }
 
 }

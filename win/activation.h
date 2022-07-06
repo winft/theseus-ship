@@ -496,6 +496,14 @@ void force_activate_window(Space& space, Win* window)
     activate_window_impl(space, window, true);
 }
 
+template<typename Space>
+void activate_attention_window(Space& space)
+{
+    if (space.attention_chain.size() > 0) {
+        activate_window(space, space.attention_chain.front());
+    }
+}
+
 /// Deactivates 'window' and activates next one.
 template<typename Space>
 bool activate_next_window(Space& space, Toplevel* window)
@@ -680,6 +688,62 @@ void close_active_popup(Space& space)
     }
 
     space.user_actions_menu->close();
+}
+
+template<typename Space>
+void set_showing_desktop(Space& space, bool showing)
+{
+    const bool changed = showing != space.showing_desktop;
+    if (x11::rootInfo() && changed) {
+        x11::rootInfo()->setShowingDesktop(showing);
+    }
+
+    space.showing_desktop = showing;
+
+    Toplevel* topDesk = nullptr;
+
+    // for the blocker RAII
+    // updateLayer & lowerClient would invalidate stacking_order
+    {
+        blocker block(space.stacking_order);
+        for (int i = static_cast<int>(space.stacking_order->stack.size()) - 1; i > -1; --i) {
+            auto c = qobject_cast<Toplevel*>(space.stacking_order->stack.at(i));
+            if (c && c->isOnCurrentDesktop()) {
+                if (is_dock(c)) {
+                    update_layer(c);
+                } else if (is_desktop(c) && c->isShown()) {
+                    update_layer(c);
+                    lower_window(&space, c);
+                    if (!topDesk)
+                        topDesk = c;
+                    if (auto group = c->group()) {
+                        for (auto cm : group->members) {
+                            update_layer(cm);
+                        }
+                    }
+                }
+            }
+        }
+    } // ~Blocker
+
+    if (space.showing_desktop && topDesk) {
+        request_focus(space, topDesk);
+    } else if (!space.showing_desktop && changed) {
+        auto const window = focus_chain_get_for_activation_on_current_output<Toplevel>(
+            space.focus_chain, space.virtual_desktop_manager->current());
+        if (window) {
+            activate_window(space, window);
+        }
+    }
+    if (changed) {
+        Q_EMIT space.qobject->showingDesktopChanged(showing);
+    }
+}
+
+template<typename Space>
+void toggle_show_desktop(Space& space)
+{
+    set_showing_desktop(space, !space.showingDesktop());
 }
 
 }
