@@ -1865,16 +1865,6 @@ bool space::switchWindow(Toplevel* c, Direction direction, QPoint curPos, int d)
     return switchTo;
 }
 
-void space::showWindowMenu(const QRect& pos, Toplevel* window)
-{
-    user_actions_menu->show(pos, window);
-}
-
-void space::showApplicationMenu(const QRect& pos, Toplevel* window, int actionId)
-{
-    appmenu->showApplicationMenu(window->pos() + pos.bottomLeft(), window, actionId);
-}
-
 bool space::shortcutAvailable(const QKeySequence& cut, Toplevel* ignore) const
 {
     if (ignore && cut == ignore->control->shortcut())

@@ -108,7 +108,7 @@ bool perform_mouse_command(Win& win, base::options::MouseCommand cmd, QPoint con
         if (win.control->active() && kwinApp()->options->isClickRaise()) {
             auto_raise(&win);
         }
-        space.showWindowMenu(QRect(globalPos, globalPos), &win);
+        space.user_actions_menu->show(QRect(globalPos, globalPos), &win);
         break;
     case base::options::MouseToggleRaiseAndLower:
         raise_or_lower_client(&space, &win);

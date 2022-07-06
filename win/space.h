@@ -298,14 +298,6 @@ public:
 
     Toplevel* active_client{nullptr};
 
-    /**
-     * Shows the menu operations menu for the client and makes it active if
-     * it's not already.
-     */
-    void showWindowMenu(const QRect& pos, Toplevel* window);
-
-    void showApplicationMenu(const QRect& pos, Toplevel* window, int actionId);
-
     void updateMinimizedOfTransients(Toplevel*);
     void updateOnAllDesktopsOfTransients(Toplevel* window);
     void checkTransients(Toplevel* window);

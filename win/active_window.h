@@ -303,7 +303,7 @@ void active_window_show_operations_popup(Space& space)
     }
 
     auto pos = frame_to_client_pos(space.active_client, space.active_client->pos());
-    space.showWindowMenu(QRect(pos, pos), space.active_client);
+    space.user_actions_menu->show(QRect(pos, pos), space.active_client);
 }
 
 template<typename Space>
