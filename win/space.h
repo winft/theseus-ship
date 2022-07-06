@@ -313,13 +313,6 @@ public:
     void updateOnAllDesktopsOfTransients(Toplevel* window);
     void checkTransients(Toplevel* window);
 
-    void storeSession(const QString& sessionName, win::sm_save_phase phase);
-    void storeClient(KConfigGroup& cg, int num, win::x11::window* c);
-    void storeSubSession(const QString& name, QSet<QByteArray> sessionIds);
-    void loadSubSessionInfo(const QString& name);
-
-    win::session_info* takeSessionInfo(win::x11::window*);
-
     void setShowingDesktop(bool showing);
     bool showingDesktop() const;
 
@@ -455,9 +448,6 @@ public:
     bool switchWindow(Toplevel* c, Direction direction, QPoint curPos, int desktop);
 
     QWidget* active_popup{nullptr};
-
-    void loadSessionInfo(const QString& sessionName);
-    void addSessionInfo(KConfigGroup& cg);
 
     std::vector<win::session_info*> session;
 

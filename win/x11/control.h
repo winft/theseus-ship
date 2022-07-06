@@ -20,6 +20,7 @@
 #include "base/logging.h"
 #include "win/input.h"
 #include "win/layers.h"
+#include "win/session.h"
 
 #if KWIN_BUILD_TABBOX
 #include "win/tabbox/tabbox.h"
@@ -444,7 +445,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
     update_layer(win);
 
-    auto session = space.takeSessionInfo(win);
+    auto session = take_session_info(space, win);
     if (session) {
         init_minimize = session->minimized;
         win->user_no_border = session->noBorder;
