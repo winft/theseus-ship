@@ -221,7 +221,8 @@ void StrutsTest::testWaylandStruts()
              QRect(0, 0, 2560, 1024));
     QCOMPARE(win::space_window_area(*Test::app()->workspace, FullArea, outputs.at(0), 1),
              QRect(0, 0, 2560, 1024));
-    QCOMPARE(Test::app()->workspace->restrictedMoveArea(-1), QRegion());
+    QCOMPARE(win::restricted_move_area(*Test::app()->workspace, -1, win::strut_area::all),
+             QRegion());
 
     struct client_holder {
         win::wayland::window* window;
@@ -292,7 +293,8 @@ void StrutsTest::testWaylandStruts()
     QTEST(win::space_window_area(*Test::app()->workspace, MaximizeArea, outputs.at(1), 1),
           "screen1Maximized");
     QTEST(win::space_window_area(*Test::app()->workspace, WorkArea, outputs.at(0), 1), "workArea");
-    QTEST(Test::app()->workspace->restrictedMoveArea(-1), "restrictedMoveArea");
+    QTEST(win::restricted_move_area(*Test::app()->workspace, -1, win::strut_area::all),
+          "restrictedMoveArea");
 
     // delete all surfaces
     for (auto& client : clients) {
@@ -301,7 +303,8 @@ void StrutsTest::testWaylandStruts()
         client = {};
         QVERIFY(destroyedSpy.wait());
     }
-    QCOMPARE(Test::app()->workspace->restrictedMoveArea(-1), QRegion());
+    QCOMPARE(win::restricted_move_area(*Test::app()->workspace, -1, win::strut_area::all),
+             QRegion());
 }
 
 void StrutsTest::testMoveWaylandPanel()
@@ -562,7 +565,8 @@ void StrutsTest::testX11Struts()
              QRect(0, 0, 2560, 1024));
     QCOMPARE(win::space_window_area(*Test::app()->workspace, FullArea, outputs.at(0), 1),
              QRect(0, 0, 2560, 1024));
-    QCOMPARE(Test::app()->workspace->restrictedMoveArea(-1), QRegion());
+    QCOMPARE(win::restricted_move_area(*Test::app()->workspace, -1, win::strut_area::all),
+             QRegion());
 
     // create an xcb window
     auto c = create_xcb_connection();
@@ -667,7 +671,8 @@ void StrutsTest::testX11Struts()
     QTEST(win::space_window_area(*Test::app()->workspace, MaximizeArea, outputs.at(1), 1),
           "screen1Maximized");
     QTEST(win::space_window_area(*Test::app()->workspace, WorkArea, outputs.at(0), 1), "workArea");
-    QTEST(Test::app()->workspace->restrictedMoveArea(-1), "restrictedMoveArea");
+    QTEST(win::restricted_move_area(*Test::app()->workspace, -1, win::strut_area::all),
+          "restrictedMoveArea");
 
     // and destroy the window again
     xcb_unmap_window(c.get(), w);
@@ -712,7 +717,8 @@ void StrutsTest::testX11Struts()
              QRect(0, 0, 2560, 1024));
     QCOMPARE(win::space_window_area(*Test::app()->workspace, FullArea, outputs.at(0), 1),
              QRect(0, 0, 2560, 1024));
-    QCOMPARE(Test::app()->workspace->restrictedMoveArea(-1), QRegion());
+    QCOMPARE(win::restricted_move_area(*Test::app()->workspace, -1, win::strut_area::all),
+             QRegion());
 }
 
 void StrutsTest::test363804()
@@ -1018,7 +1024,8 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
              QRect(1390, 0, 1656, 1050));
     QCOMPARE(win::space_window_area(*Test::app()->workspace, WorkArea, outputs.at(0), 1),
              QRect(0, 0, 3046, 1050));
-    QCOMPARE(Test::app()->workspace->restrictedMoveArea(-1), QRegion(1366, 0, 24, 1050));
+    QCOMPARE(win::restricted_move_area(*Test::app()->workspace, -1, win::strut_area::all),
+             QRegion(1366, 0, 24, 1050));
 
     // create another window and try to move it
     xcb_window_t w2 = xcb_generate_id(c.get());

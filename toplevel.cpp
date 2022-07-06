@@ -842,7 +842,7 @@ void Toplevel::doPerformMoveResize()
 
 void Toplevel::leaveMoveResize()
 {
-    space.setMoveResizeClient(nullptr);
+    win::set_move_resize_window(space, nullptr);
     control->move_resize().enabled = false;
     if (space.edges->desktop_switching.when_moving_client) {
         space.edges->reserveDesktopSwitching(false, Qt::Vertical|Qt::Horizontal);

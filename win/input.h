@@ -96,7 +96,7 @@ bool perform_mouse_command(Win& win, base::options::MouseCommand cmd, QPoint con
         // Used to be activateNextClient(win), then topClientOnDesktop
         // since win is a mouseOp it's however safe to use the client under the mouse instead.
         if (win.control->active() && kwinApp()->options->focusPolicyIsReasonable()) {
-            auto next = space.clientUnderMouse(win.central_output);
+            auto next = window_under_mouse(space, win.central_output);
             if (next && next != &win) {
                 request_focus(space, next);
             }

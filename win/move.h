@@ -9,6 +9,7 @@
 #include "geo_block.h"
 #include "geo_change.h"
 #include "geo_electric.h"
+#include "geo_move.h"
 #include "net.h"
 #include "space.h"
 #include "stacking.h"
@@ -62,6 +63,22 @@ position mouse_position(Win* win)
         return position::top_right;
     default:
         return position::center;
+    }
+}
+
+template<typename Space>
+void set_move_resize_window(Space& space, Toplevel* window)
+{
+    // Catch attempts to move a second
+    assert(!window || !space.movingClient);
+
+    // window while still moving the first one.
+    space.movingClient = window;
+
+    if (space.movingClient) {
+        ++space.block_focus;
+    } else {
+        --space.block_focus;
     }
 }
 
@@ -284,9 +301,10 @@ void check_workspace_position(Win* win,
     QRect old_screen_area;
     if (in_update_window_area(win->space)) {
         // we need to find the screen area as it was before the change
-        old_screen_area = QRect(0, 0, win->space.oldDisplayWidth(), win->space.oldDisplayHeight());
+        old_screen_area
+            = QRect(0, 0, win->space.olddisplaysize.width(), win->space.olddisplaysize.height());
         int distance = INT_MAX;
-        for (auto const& r : win->space.previousScreenSizes()) {
+        for (auto const& r : win->space.oldscreensizes) {
             int d = r.contains(old_frame_geo.center())
                 ? 0
                 : (r.center() - old_frame_geo.center()).manhattanLength();
@@ -337,34 +355,34 @@ void check_workspace_position(Win* win,
     // the bottom struts bounded by the window's left and right sides).
 
     // Default is to use restrictedMoveArea. That's on active desktop or screen change.
-    auto moveAreaFunc = &space::restrictedMoveArea;
+    auto move_area_func = win::restricted_move_area<decltype(win->space)>;
     if (in_update_window_area(win->space)) {
         // On restriected area changes.
         // TODO(romangg): This check back on in_update_window_area and then setting here internally
         //                a different function is bad design. Replace with an argument or something.
-        moveAreaFunc = &space::previousRestrictedMoveArea;
+        move_area_func = win::previous_restricted_move_area<decltype(win->space)>;
     }
 
     // These 4 compute old bounds.
-    for (auto const& r : (win->space.*moveAreaFunc)(oldDesktop, strut_area::top)) {
+    for (auto const& r : move_area_func(win->space, oldDesktop, strut_area::top)) {
         auto rect = r & old_tall_frame_geo;
         if (!rect.isEmpty()) {
             old_top_max = std::max(old_top_max, rect.y() + rect.height());
         }
     }
-    for (auto const& r : (win->space.*moveAreaFunc)(oldDesktop, strut_area::right)) {
+    for (auto const& r : move_area_func(win->space, oldDesktop, strut_area::right)) {
         auto rect = r & old_wide_frame_geo;
         if (!rect.isEmpty()) {
             old_right_max = std::min(old_right_max, rect.x());
         }
     }
-    for (auto const& r : (win->space.*moveAreaFunc)(oldDesktop, strut_area::bottom)) {
+    for (auto const& r : move_area_func(win->space, oldDesktop, strut_area::bottom)) {
         auto rect = r & old_tall_frame_geo;
         if (!rect.isEmpty()) {
             old_bottom_max = std::min(old_bottom_max, rect.y());
         }
     }
-    for (auto const& r : (win->space.*moveAreaFunc)(oldDesktop, strut_area::left)) {
+    for (auto const& r : move_area_func(win->space, oldDesktop, strut_area::left)) {
         auto rect = r & old_wide_frame_geo;
         if (!rect.isEmpty()) {
             old_left_max = std::max(old_left_max, rect.x() + rect.width());
@@ -372,25 +390,25 @@ void check_workspace_position(Win* win,
     }
 
     // These 4 compute new bounds.
-    for (auto const& r : win->space.restrictedMoveArea(win->desktop(), strut_area::top)) {
+    for (auto const& r : restricted_move_area(win->space, win->desktop(), strut_area::top)) {
         auto rect = r & tall_frame_geo;
         if (!rect.isEmpty()) {
             top_max = std::max(top_max, rect.y() + rect.height());
         }
     }
-    for (auto const& r : win->space.restrictedMoveArea(win->desktop(), strut_area::right)) {
+    for (auto const& r : restricted_move_area(win->space, win->desktop(), strut_area::right)) {
         auto rect = r & wide_frame_geo;
         if (!rect.isEmpty()) {
             right_max = std::min(right_max, rect.x());
         }
     }
-    for (auto const& r : win->space.restrictedMoveArea(win->desktop(), strut_area::bottom)) {
+    for (auto const& r : restricted_move_area(win->space, win->desktop(), strut_area::bottom)) {
         auto rect = r & tall_frame_geo;
         if (!rect.isEmpty()) {
             bottom_max = std::min(bottom_max, rect.y());
         }
     }
-    for (auto const& r : win->space.restrictedMoveArea(win->desktop(), strut_area::left)) {
+    for (auto const& r : restricted_move_area(win->space, win->desktop(), strut_area::left)) {
         auto rect = r & wide_frame_geo;
         if (!rect.isEmpty()) {
             left_max = std::max(left_max, rect.x() + rect.width());
@@ -845,7 +863,7 @@ bool start_move_resize(Win* win)
     }
 
     mov_res.enabled = true;
-    win->space.setMoveResizeClient(win);
+    set_move_resize_window(win->space, win);
 
     win->control->update_have_resize_effect();
 
@@ -986,9 +1004,13 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
             // Make sure the titlebar isn't behind a restricted area. We don't need to restrict
             // the other directions. If not visible enough, move the window to the closest valid
             // point. We bruteforce this by slowly moving the window back to its previous position
-            QRegion availableArea(
-                space_window_area(win->space, FullArea, nullptr, 0));       // On the screen
-            availableArea -= win->space.restrictedMoveArea(win->desktop()); // Strut areas
+
+            // On the screen
+            QRegion availableArea(space_window_area(win->space, FullArea, nullptr, 0));
+
+            // Strut areas
+            availableArea -= restricted_move_area(win->space, win->desktop(), strut_area::all);
+
             bool transposed = false;
             int requiredPixels;
             QRect bTitleRect = titleBarRect(transposed, requiredPixels);
@@ -1123,7 +1145,8 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
 
             if (!mov_res.unrestricted) {
                 // Strut areas
-                auto const strut = win->space.restrictedMoveArea(win->desktop());
+                auto const strut
+                    = restricted_move_area(win->space, win->desktop(), strut_area::all);
 
                 // On the screen
                 QRegion availableArea(space_window_area(win->space, FullArea, nullptr, 0));

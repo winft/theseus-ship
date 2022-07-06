@@ -279,6 +279,31 @@ void focus_to_null(Space& space)
     }
 }
 
+template<typename Space>
+Toplevel* window_under_mouse(Space const& space, base::output const* output)
+{
+    auto it = space.stacking_order->stack.cend();
+
+    while (it != space.stacking_order->stack.cbegin()) {
+        auto window = *(--it);
+        if (!window->control) {
+            continue;
+        }
+
+        // Rule out windows which are not really visible.
+        // The screen test is rather superfluous for xrandr & twinview since the geometry would
+        // differ. -> TODO: might be dropped
+        if (!(window->isShown() && window->isOnCurrentDesktop() && on_screen(window, output)))
+            continue;
+
+        if (window->frameGeometry().contains(input::get_cursor()->pos())) {
+            return window;
+        }
+    }
+
+    return nullptr;
+}
+
 template<typename Win>
 void set_demands_attention(Win* win, bool demand)
 {
@@ -512,8 +537,8 @@ bool activate_next_window(Space& space, Toplevel* window)
     }
 
     if (!get_focus && kwinApp()->options->isNextFocusPrefersMouse()) {
-        get_focus
-            = space.clientUnderMouse(window ? window->central_output : get_current_output(space));
+        get_focus = window_under_mouse(space,
+                                       window ? window->central_output : get_current_output(space));
         if (get_focus && (get_focus == window || is_desktop(get_focus))) {
             // should rather not happen, but it cannot get the focus. rest of usability is tested
             // above

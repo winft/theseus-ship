@@ -513,52 +513,6 @@ void space::update_space_area_from_windows(QRect const& /*desktop_area*/,
     // Can't be pure virtual because the function might be called from the ctor.
 }
 
-static QRegion strutsToRegion(win::space const& space,
-                              int desktop,
-                              win::strut_area areas,
-                              std::vector<win::strut_rects> const& struts)
-{
-    if (desktop == NETWinInfo::OnAllDesktops || desktop == 0) {
-        desktop = space.virtual_desktop_manager->current();
-    }
-
-    QRegion region;
-    auto const& rects = struts[desktop];
-
-    for (auto const& rect : rects) {
-        if (flags(areas & rect.area())) {
-            region += rect;
-        }
-    }
-
-    return region;
-}
-
-QRegion space::restrictedMoveArea(int desktop, win::strut_area areas) const
-{
-    return strutsToRegion(*this, desktop, areas, this->areas.restrictedmove);
-}
-
-QRegion space::previousRestrictedMoveArea(int desktop, win::strut_area areas) const
-{
-    return strutsToRegion(*this, desktop, areas, oldrestrictedmovearea);
-}
-
-std::vector<QRect> space::previousScreenSizes() const
-{
-    return oldscreensizes;
-}
-
-int space::oldDisplayWidth() const
-{
-    return olddisplaysize.width();
-}
-
-int space::oldDisplayHeight() const
-{
-    return olddisplaysize.height();
-}
-
 /**
  * Client \a c is moved around to position \a pos. This gives the
  * space:: the opportunity to interveniate and to implement
@@ -1026,21 +980,6 @@ QRect space::adjustClientSize(Toplevel* window, QRect moveResizeGeom, win::posit
     return moveResizeGeom;
 }
 
-/**
- * Marks the client as being moved or resized by the user.
- */
-void space::setMoveResizeClient(Toplevel* window)
-{
-    Q_ASSERT(!window || !movingClient); // Catch attempts to move a second
-    // window while still moving the first one.
-    movingClient = window;
-    if (movingClient) {
-        ++block_focus;
-    } else {
-        --block_focus;
-    }
-}
-
 // When kwin crashes, windows will not be gravitated back to their original position
 // and will remain offset by the size of the decoration. So when restarting, fix this
 // (the property with the size of the frame remains on the window after the crash).
@@ -1371,28 +1310,6 @@ void space::clientHidden(Toplevel* window)
 {
     Q_ASSERT(!window->isShown() || !window->isOnCurrentDesktop());
     activate_next_window(*this, window);
-}
-
-Toplevel* space::clientUnderMouse(base::output const* output) const
-{
-    auto it = stacking_order->stack.cend();
-    while (it != stacking_order->stack.cbegin()) {
-        auto client = *(--it);
-        if (!client->control) {
-            continue;
-        }
-
-        // rule out clients which are not really visible.
-        // the screen test is rather superfluous for xrandr & twinview since the geometry would
-        // differ -> TODO: might be dropped
-        if (!(client->isShown() && client->isOnCurrentDesktop() && win::on_screen(client, output)))
-            continue;
-
-        if (client->frameGeometry().contains(input::get_cursor()->pos())) {
-            return client;
-        }
-    }
-    return nullptr;
 }
 
 void space::gotFocusIn(Toplevel const* window)
@@ -2243,7 +2160,7 @@ void space::slotWindowLower()
         // activateNextClient( c ); // Doesn't work when we lower a child window
         if (active_client->control->active() && kwinApp()->options->focusPolicyIsReasonable()) {
             if (kwinApp()->options->isNextFocusPrefersMouse()) {
-                auto next = clientUnderMouse(active_client->central_output);
+                auto next = window_under_mouse(*this, active_client->central_output);
                 if (next && next != active_client)
                     request_focus(*this, next);
             } else {
@@ -2316,9 +2233,9 @@ void windowToDesktop(Toplevel& window)
     // TODO: why is kwinApp()->options->isRollOverDesktops() not honored?
     const auto desktop = functor(nullptr, true);
     if (!win::is_desktop(&window) && !win::is_dock(&window)) {
-        ws.setMoveResizeClient(&window);
+        set_move_resize_window(ws, &window);
         vds->setCurrent(desktop);
-        ws.setMoveResizeClient(nullptr);
+        set_move_resize_window(ws, nullptr);
     }
 }
 
@@ -2360,9 +2277,9 @@ void activeClientToDesktop(win::space& space)
     if (d == current) {
         return;
     }
-    space.setMoveResizeClient(space.active_client);
+    set_move_resize_window(space, space.active_client);
     vds->setCurrent(d);
-    space.setMoveResizeClient(nullptr);
+    set_move_resize_window(space, nullptr);
 }
 
 void space::slotWindowToDesktopRight()

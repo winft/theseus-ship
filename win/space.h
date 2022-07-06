@@ -237,12 +237,8 @@ public:
      */
     virtual Toplevel* findInternal(QWindow* w) const = 0;
 
-    QRegion restrictedMoveArea(int desktop, win::strut_area areas = win::strut_area::all) const;
-
     void initShortcuts();
     bool initializing() const;
-
-    Toplevel* clientUnderMouse(base::output const* output) const;
 
     bool allowClientActivation(Toplevel const* window,
                                xcb_timestamp_t time = -1U,
@@ -251,11 +247,6 @@ public:
     void restoreFocus();
     void gotFocusIn(Toplevel const* window);
     void setShouldGetFocus(Toplevel* window);
-
-    /**
-     * Indicates that the client c is being moved or resized by the user.
-     */
-    void setMoveResizeClient(Toplevel* window);
 
     QPoint
     adjustClientPosition(Toplevel* window, QPoint pos, bool unrestricted, double snapAdjust = 1.0);
@@ -304,11 +295,6 @@ public:
     // True when performing space::updateClientArea().
     // The calls below are valid only in that case.
     bool inUpdateClientArea() const;
-    QRegion previousRestrictedMoveArea(int desktop,
-                                       win::strut_area areas = win::strut_area::all) const;
-    std::vector<QRect> previousScreenSizes() const;
-    int oldDisplayWidth() const;
-    int oldDisplayHeight() const;
 
     Toplevel* active_client{nullptr};
 
