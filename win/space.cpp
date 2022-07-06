@@ -742,57 +742,62 @@ QRect space::adjustClientSize(Toplevel* window, QRect moveResizeGeom, win::posit
             deltaX = int(snap);
             deltaY = int(snap);
 
-#define SNAP_BORDER_TOP                                                                            \
-    if ((sOWO ? (newcy < ymin) : true) && (qAbs(ymin - newcy) < deltaY)) {                         \
-        deltaY = qAbs(ymin - newcy);                                                               \
-        newcy = ymin;                                                                              \
-    }
+            auto snap_border_top = [&] {
+                if ((sOWO ? (newcy < ymin) : true) && (qAbs(ymin - newcy) < deltaY)) {
+                    deltaY = qAbs(ymin - newcy);
+                    newcy = ymin;
+                }
+            };
 
-#define SNAP_BORDER_BOTTOM                                                                         \
-    if ((sOWO ? (newry > ymax) : true) && (qAbs(ymax - newry) < deltaY)) {                         \
-        deltaY = qAbs(ymax - newcy);                                                               \
-        newry = ymax;                                                                              \
-    }
+            auto snap_border_bottom = [&] {
+                if ((sOWO ? (newry > ymax) : true) && (qAbs(ymax - newry) < deltaY)) {
+                    deltaY = qAbs(ymax - newcy);
+                    newry = ymax;
+                }
+            };
 
-#define SNAP_BORDER_LEFT                                                                           \
-    if ((sOWO ? (newcx < xmin) : true) && (qAbs(xmin - newcx) < deltaX)) {                         \
-        deltaX = qAbs(xmin - newcx);                                                               \
-        newcx = xmin;                                                                              \
-    }
+            auto snap_border_left = [&] {
+                if ((sOWO ? (newcx < xmin) : true) && (qAbs(xmin - newcx) < deltaX)) {
+                    deltaX = qAbs(xmin - newcx);
+                    newcx = xmin;
+                }
+            };
 
-#define SNAP_BORDER_RIGHT                                                                          \
-    if ((sOWO ? (newrx > xmax) : true) && (qAbs(xmax - newrx) < deltaX)) {                         \
-        deltaX = qAbs(xmax - newrx);                                                               \
-        newrx = xmax;                                                                              \
-    }
+            auto snap_border_right = [&] {
+                if ((sOWO ? (newrx > xmax) : true) && (qAbs(xmax - newrx) < deltaX)) {
+                    deltaX = qAbs(xmax - newrx);
+                    newrx = xmax;
+                }
+            };
+
             switch (mode) {
             case win::position::bottom_right:
-                SNAP_BORDER_BOTTOM
-                SNAP_BORDER_RIGHT
+                snap_border_bottom();
+                snap_border_right();
                 break;
             case win::position::right:
-                SNAP_BORDER_RIGHT
+                snap_border_right();
                 break;
             case win::position::bottom:
-                SNAP_BORDER_BOTTOM
+                snap_border_bottom();
                 break;
             case win::position::top_left:
-                SNAP_BORDER_TOP
-                SNAP_BORDER_LEFT
+                snap_border_top();
+                snap_border_left();
                 break;
             case win::position::left:
-                SNAP_BORDER_LEFT
+                snap_border_left();
                 break;
             case win::position::top:
-                SNAP_BORDER_TOP
+                snap_border_top();
                 break;
             case win::position::top_right:
-                SNAP_BORDER_TOP
-                SNAP_BORDER_RIGHT
+                snap_border_top();
+                snap_border_right();
                 break;
             case win::position::bottom_left:
-                SNAP_BORDER_BOTTOM
-                SNAP_BORDER_LEFT
+                snap_border_bottom();
+                snap_border_left();
                 break;
             default:
                 abort();
@@ -813,105 +818,113 @@ QRect space::adjustClientSize(Toplevel* window, QRect moveResizeGeom, win::posit
                     lrx = win->pos().x() + win->size().width();
                     lry = win->pos().y() + win->size().height();
 
-#define WITHIN_HEIGHT                                                                              \
-    (((newcy <= lry) && (newcy >= ly)) || ((newry >= ly) && (newry <= lry))                        \
-     || ((newcy <= ly) && (newry >= lry)))
+                    auto within_height = [&] {
+                        return ((newcy <= lry) && (newcy >= ly))
+                            || ((newry >= ly) && (newry <= lry))
+                            || ((newcy <= ly) && (newry >= lry));
+                    };
+                    auto within_width = [&] {
+                        return ((cx <= lrx) && (cx >= lx)) || ((rx >= lx) && (rx <= lrx))
+                            || ((cx <= lx) && (rx >= lrx));
+                    };
 
-#define WITHIN_WIDTH                                                                               \
-    (((cx <= lrx) && (cx >= lx)) || ((rx >= lx) && (rx <= lrx)) || ((cx <= lx) && (rx >= lrx)))
-
-#define SNAP_WINDOW_TOP                                                                            \
-    if ((sOWO ? (newcy < lry) : true) && WITHIN_WIDTH && (qAbs(lry - newcy) < deltaY)) {           \
-        deltaY = qAbs(lry - newcy);                                                                \
-        newcy = lry;                                                                               \
-    }
-
-#define SNAP_WINDOW_BOTTOM                                                                         \
-    if ((sOWO ? (newry > ly) : true) && WITHIN_WIDTH && (qAbs(ly - newry) < deltaY)) {             \
-        deltaY = qAbs(ly - newry);                                                                 \
-        newry = ly;                                                                                \
-    }
-
-#define SNAP_WINDOW_LEFT                                                                           \
-    if ((sOWO ? (newcx < lrx) : true) && WITHIN_HEIGHT && (qAbs(lrx - newcx) < deltaX)) {          \
-        deltaX = qAbs(lrx - newcx);                                                                \
-        newcx = lrx;                                                                               \
-    }
-
-#define SNAP_WINDOW_RIGHT                                                                          \
-    if ((sOWO ? (newrx > lx) : true) && WITHIN_HEIGHT && (qAbs(lx - newrx) < deltaX)) {            \
-        deltaX = qAbs(lx - newrx);                                                                 \
-        newrx = lx;                                                                                \
-    }
-
-#define SNAP_WINDOW_C_TOP                                                                          \
-    if ((sOWO ? (newcy < ly) : true) && (newcx == lrx || newrx == lx)                              \
-        && qAbs(ly - newcy) < deltaY) {                                                            \
-        deltaY = qAbs(ly - newcy + 1);                                                             \
-        newcy = ly + 1;                                                                            \
-    }
-
-#define SNAP_WINDOW_C_BOTTOM                                                                       \
-    if ((sOWO ? (newry > lry) : true) && (newcx == lrx || newrx == lx)                             \
-        && qAbs(lry - newry) < deltaY) {                                                           \
-        deltaY = qAbs(lry - newry - 1);                                                            \
-        newry = lry - 1;                                                                           \
-    }
-
-#define SNAP_WINDOW_C_LEFT                                                                         \
-    if ((sOWO ? (newcx < lx) : true) && (newcy == lry || newry == ly)                              \
-        && qAbs(lx - newcx) < deltaX) {                                                            \
-        deltaX = qAbs(lx - newcx + 1);                                                             \
-        newcx = lx + 1;                                                                            \
-    }
-
-#define SNAP_WINDOW_C_RIGHT                                                                        \
-    if ((sOWO ? (newrx > lrx) : true) && (newcy == lry || newry == ly)                             \
-        && qAbs(lrx - newrx) < deltaX) {                                                           \
-        deltaX = qAbs(lrx - newrx - 1);                                                            \
-        newrx = lrx - 1;                                                                           \
-    }
+                    auto snap_window_top = [&] {
+                        if ((sOWO ? (newcy < lry) : true) && within_width()
+                            && (qAbs(lry - newcy) < deltaY)) {
+                            deltaY = qAbs(lry - newcy);
+                            newcy = lry;
+                        }
+                    };
+                    auto snap_window_bottom = [&] {
+                        if ((sOWO ? (newry > ly) : true) && within_width()
+                            && (qAbs(ly - newry) < deltaY)) {
+                            deltaY = qAbs(ly - newry);
+                            newry = ly;
+                        }
+                    };
+                    auto snap_window_left = [&] {
+                        if ((sOWO ? (newcx < lrx) : true) && within_height()
+                            && (qAbs(lrx - newcx) < deltaX)) {
+                            deltaX = qAbs(lrx - newcx);
+                            newcx = lrx;
+                        }
+                    };
+                    auto snap_window_right = [&] {
+                        if ((sOWO ? (newrx > lx) : true) && within_height()
+                            && (qAbs(lx - newrx) < deltaX)) {
+                            deltaX = qAbs(lx - newrx);
+                            newrx = lx;
+                        }
+                    };
+                    auto snap_window_c_top = [&] {
+                        if ((sOWO ? (newcy < ly) : true) && (newcx == lrx || newrx == lx)
+                            && qAbs(ly - newcy) < deltaY) {
+                            deltaY = qAbs(ly - newcy + 1);
+                            newcy = ly + 1;
+                        }
+                    };
+                    auto snap_window_c_bottom = [&] {
+                        if ((sOWO ? (newry > lry) : true) && (newcx == lrx || newrx == lx)
+                            && qAbs(lry - newry) < deltaY) {
+                            deltaY = qAbs(lry - newry - 1);
+                            newry = lry - 1;
+                        }
+                    };
+                    auto snap_window_c_left = [&] {
+                        if ((sOWO ? (newcx < lx) : true) && (newcy == lry || newry == ly)
+                            && qAbs(lx - newcx) < deltaX) {
+                            deltaX = qAbs(lx - newcx + 1);
+                            newcx = lx + 1;
+                        }
+                    };
+                    auto snap_window_c_right = [&] {
+                        if ((sOWO ? (newrx > lrx) : true) && (newcy == lry || newry == ly)
+                            && qAbs(lrx - newrx) < deltaX) {
+                            deltaX = qAbs(lrx - newrx - 1);
+                            newrx = lrx - 1;
+                        }
+                    };
 
                     switch (mode) {
                     case win::position::bottom_right:
-                        SNAP_WINDOW_BOTTOM
-                        SNAP_WINDOW_RIGHT
-                        SNAP_WINDOW_C_BOTTOM
-                        SNAP_WINDOW_C_RIGHT
+                        snap_window_bottom();
+                        snap_window_right();
+                        snap_window_c_bottom();
+                        snap_window_c_right();
                         break;
                     case win::position::right:
-                        SNAP_WINDOW_RIGHT
-                        SNAP_WINDOW_C_RIGHT
+                        snap_window_right();
+                        snap_window_c_right();
                         break;
                     case win::position::bottom:
-                        SNAP_WINDOW_BOTTOM
-                        SNAP_WINDOW_C_BOTTOM
+                        snap_window_bottom();
+                        snap_window_c_bottom();
                         break;
                     case win::position::top_left:
-                        SNAP_WINDOW_TOP
-                        SNAP_WINDOW_LEFT
-                        SNAP_WINDOW_C_TOP
-                        SNAP_WINDOW_C_LEFT
+                        snap_window_top();
+                        snap_window_left();
+                        snap_window_c_top();
+                        snap_window_c_left();
                         break;
                     case win::position::left:
-                        SNAP_WINDOW_LEFT
-                        SNAP_WINDOW_C_LEFT
+                        snap_window_left();
+                        snap_window_c_left();
                         break;
                     case win::position::top:
-                        SNAP_WINDOW_TOP
-                        SNAP_WINDOW_C_TOP
+                        snap_window_top();
+                        snap_window_c_top();
                         break;
                     case win::position::top_right:
-                        SNAP_WINDOW_TOP
-                        SNAP_WINDOW_RIGHT
-                        SNAP_WINDOW_C_TOP
-                        SNAP_WINDOW_C_RIGHT
+                        snap_window_top();
+                        snap_window_right();
+                        snap_window_c_top();
+                        snap_window_c_right();
                         break;
                     case win::position::bottom_left:
-                        SNAP_WINDOW_BOTTOM
-                        SNAP_WINDOW_LEFT
-                        SNAP_WINDOW_C_BOTTOM
-                        SNAP_WINDOW_C_LEFT
+                        snap_window_bottom();
+                        snap_window_left();
+                        snap_window_c_bottom();
+                        snap_window_c_left();
                         break;
                     default:
                         abort();
