@@ -1620,23 +1620,25 @@ void space::initShortcuts()
     def4("Switch Window Up",
          kli18n("Switch to Window Above"),
          Qt::META + Qt::ALT + Qt::Key_Up,
-         std::bind(
-             static_cast<void (space::*)(Direction)>(&space::switchWindow), this, DirectionNorth));
+         std::bind(static_cast<void (space::*)(direction)>(&space::switchWindow),
+                   this,
+                   direction::north));
     def4("Switch Window Down",
          kli18n("Switch to Window Below"),
          Qt::META + Qt::ALT + Qt::Key_Down,
-         std::bind(
-             static_cast<void (space::*)(Direction)>(&space::switchWindow), this, DirectionSouth));
+         std::bind(static_cast<void (space::*)(direction)>(&space::switchWindow),
+                   this,
+                   direction::south));
     def4("Switch Window Right",
          kli18n("Switch to Window to the Right"),
          Qt::META + Qt::ALT + Qt::Key_Right,
          std::bind(
-             static_cast<void (space::*)(Direction)>(&space::switchWindow), this, DirectionEast));
+             static_cast<void (space::*)(direction)>(&space::switchWindow), this, direction::east));
     def4("Switch Window Left",
          kli18n("Switch to Window to the Left"),
          Qt::META + Qt::ALT + Qt::Key_Left,
          std::bind(
-             static_cast<void (space::*)(Direction)>(&space::switchWindow), this, DirectionWest));
+             static_cast<void (space::*)(direction)>(&space::switchWindow), this, direction::west));
     def2("Increase Opacity",
          kli18n("Increase Opacity of Active Window by 5 %"),
          0,
@@ -1777,7 +1779,7 @@ void space::clientShortcutUpdated(Toplevel* window)
 /**
  * Switches to the nearest window in given direction.
  */
-void space::switchWindow(Direction direction)
+void space::switchWindow(win::direction direction)
 {
     if (!active_client)
         return;
@@ -1790,13 +1792,13 @@ void space::switchWindow(Direction direction)
     if (!switchWindow(c, direction, curPos, desktopNumber)) {
         auto opposite = [&] {
             switch (direction) {
-            case DirectionNorth:
+            case direction::north:
                 return QPoint(curPos.x(), kwinApp()->get_base().topology.size.height());
-            case DirectionSouth:
+            case direction::south:
                 return QPoint(curPos.x(), 0);
-            case DirectionEast:
+            case direction::east:
                 return QPoint(0, curPos.y());
-            case DirectionWest:
+            case direction::west:
                 return QPoint(kwinApp()->get_base().topology.size.width(), curPos.y());
             default:
                 Q_UNREACHABLE();
@@ -1807,7 +1809,7 @@ void space::switchWindow(Direction direction)
     }
 }
 
-bool space::switchWindow(Toplevel* c, Direction direction, QPoint curPos, int d)
+bool space::switchWindow(Toplevel* c, win::direction direction, QPoint curPos, int d)
 {
     Toplevel* switchTo = nullptr;
     int bestScore = 0;
@@ -1827,19 +1829,19 @@ bool space::switchWindow(Toplevel* c, Direction direction, QPoint curPos, int d)
             int distance;
             int offset;
             switch (direction) {
-            case DirectionNorth:
+            case direction::north:
                 distance = curPos.y() - other.y();
                 offset = qAbs(other.x() - curPos.x());
                 break;
-            case DirectionEast:
+            case direction::east:
                 distance = other.x() - curPos.x();
                 offset = qAbs(other.y() - curPos.y());
                 break;
-            case DirectionSouth:
+            case direction::south:
                 distance = other.y() - curPos.y();
                 offset = qAbs(other.x() - curPos.x());
                 break;
-            case DirectionWest:
+            case direction::west:
                 distance = curPos.x() - other.x();
                 offset = qAbs(other.y() - curPos.y());
                 break;

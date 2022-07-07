@@ -336,8 +336,7 @@ public:
 
     void quickTileWindow(win::quicktiles mode);
 
-    enum Direction { DirectionNorth, DirectionEast, DirectionSouth, DirectionWest };
-    void switchWindow(Direction direction);
+    void switchWindow(win::direction direction);
 
     win::shortcut_dialog* shortcutDialog() const
     {
@@ -378,7 +377,7 @@ public:
                                        Slot slot,
                                        QVariant const& data);
     void setupWindowShortcut(Toplevel* window);
-    bool switchWindow(Toplevel* c, Direction direction, QPoint curPos, int desktop);
+    bool switchWindow(Toplevel* c, win::direction direction, QPoint curPos, int desktop);
 
     QWidget* active_popup{nullptr};
 

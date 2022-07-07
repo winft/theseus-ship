@@ -10,6 +10,13 @@
 namespace KWin::win
 {
 
+enum class direction {
+    north,
+    east,
+    south,
+    west,
+};
+
 enum class position {
     center = 0x0,
     left = 0x1,
