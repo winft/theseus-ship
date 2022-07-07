@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/input.h"
 #include "win/remnant.h"
 #include "win/scene.h"
+#include "win/shortcut_set.h"
 #include "win/space.h"
 #include "win/transient.h"
 #include "win/x11/client_machine.h"
@@ -923,7 +924,7 @@ QRect Toplevel::iconGeometry() const
 void Toplevel::setShortcutInternal()
 {
     updateCaption();
-    space.clientShortcutUpdated(this);
+    win::window_shortcut_updated(space, this);
 }
 
 }

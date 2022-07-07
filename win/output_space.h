@@ -13,6 +13,8 @@
 #include "base/output_helpers.h"
 #include "main.h"
 
+#include <KProcess>
+
 namespace KWin::win
 {
 

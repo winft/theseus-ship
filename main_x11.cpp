@@ -20,6 +20,7 @@
 #include "input/x11/redirect.h"
 #include "render/x11/compositor.h"
 #include "scripting/platform.h"
+#include "win/shortcuts_init.h"
 #include "win/space.h"
 #include "win/x11/space.h"
 
@@ -261,7 +262,7 @@ void ApplicationX11::start()
 
         workspace = std::make_unique<win::x11::space>(*render->compositor);
         workspace->input = std::make_unique<input::x11::redirect>(*input, *workspace);
-        workspace->initShortcuts();
+        win::init_shortcuts(*workspace);
 
         event_filter = std::make_unique<base::x11::xcb_event_filter<win::x11::space>>(*workspace);
         installNativeEventFilter(event_filter.get());

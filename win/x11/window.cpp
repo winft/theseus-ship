@@ -27,6 +27,7 @@
 #include "win/deco/window.h"
 #include "win/layers.h"
 #include "win/remnant.h"
+#include "win/shortcut_set.h"
 #include "win/space_areas_helpers.h"
 #include "win/stacking.h"
 #include "win/stacking_order.h"
@@ -602,12 +603,12 @@ void window::setShortcutInternal()
 {
     updateCaption();
 #if 0
-    space.clientShortcutUpdated(this);
+    window_shortcut_updated(space, this);
 #else
     // Workaround for kwin<->kglobalaccel deadlock, when KWin has X grab and the kded
     // kglobalaccel module tries to create the key grab. KWin should preferably grab
     // they keys itself anyway :(.
-    QTimer::singleShot(0, this, std::bind(&space::clientShortcutUpdated, &space, this));
+    QTimer::singleShot(0, this, [this] { window_shortcut_updated(space, this); });
 #endif
 }
 

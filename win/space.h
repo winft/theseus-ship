@@ -237,7 +237,6 @@ public:
      */
     virtual Toplevel* findInternal(QWindow* w) const = 0;
 
-    void initShortcuts();
     bool initializing() const;
 
     bool allowClientActivation(Toplevel const* window,
@@ -306,8 +305,6 @@ public:
 
     bool checkStartupNotification(xcb_window_t w, KStartupInfoId& id, KStartupInfoData& data);
 
-    void clientShortcutUpdated(Toplevel* window);
-    bool shortcutAvailable(const QKeySequence& cut, Toplevel* ignore = nullptr) const;
     bool globalShortcutsDisabled() const;
     void disableGlobalShortcutsForClient(bool disable);
 
@@ -350,33 +347,10 @@ public:
     void saveOldScreenSizes();
     void desktopResized();
 
-    void setupWindowShortcutDone(bool);
-
     virtual void update_space_area_from_windows(QRect const& desktop_area,
                                                 std::vector<QRect> const& screens_geos,
                                                 win::space_areas& areas);
 
-    template<typename Slot>
-    void initShortcut(const QString& actionName,
-                      const QString& description,
-                      const QKeySequence& shortcut,
-                      Slot slot,
-                      const QVariant& data = QVariant());
-    template<typename T, typename Slot>
-    void initShortcut(const QString& actionName,
-                      const QString& description,
-                      const QKeySequence& shortcut,
-                      T* receiver,
-                      Slot slot,
-                      const QVariant& data = QVariant());
-    template<typename T, typename Slot>
-    void init_shortcut_with_action_arg(const QString& actionName,
-                                       const QString& description,
-                                       const QKeySequence& shortcut,
-                                       T* receiver,
-                                       Slot slot,
-                                       QVariant const& data);
-    void setupWindowShortcut(Toplevel* window);
     bool switchWindow(Toplevel* c, win::direction direction, QPoint curPos, int desktop);
 
     QWidget* active_popup{nullptr};

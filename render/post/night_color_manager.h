@@ -200,6 +200,9 @@ public:
     // for auto tests
     void reconfigure();
 
+    // Internal
+    void init_shortcuts();
+
 public Q_SLOTS:
     void reset_slow_update_start_timer();
     void quick_adjust();
@@ -246,7 +249,6 @@ Q_SIGNALS:
     void scheduled_transition_timings_changed();
 
 private:
-    void init_shortcuts();
     void read_config();
     void hard_reset();
     void slow_update(int targetTemp);
@@ -324,9 +326,6 @@ private:
     int inhibit_reference_count{0};
 
     KConfigWatcher::Ptr config_watcher;
-
-    // The space class needs to call init_shortcuts during initialization.
-    friend class KWin::win::space;
 };
 
 }

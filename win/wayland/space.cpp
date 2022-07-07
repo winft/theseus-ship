@@ -286,7 +286,7 @@ void space::handle_window_removed(wayland::window* window)
             last_active_client = nullptr;
         }
         if (window == client_keys_client) {
-            setupWindowShortcutDone(false);
+            setup_window_shortcut_done(*this, false);
         }
         if (!window->control->shortcut().isEmpty()) {
             // Remove from client_keys.

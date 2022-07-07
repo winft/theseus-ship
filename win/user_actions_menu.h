@@ -38,6 +38,9 @@
 namespace KWin::win
 {
 
+template<typename Space>
+void perform_window_operation(Space& space, Toplevel* window, base::options::WindowOperation op);
+
 struct user_actions_menu_desktop_action_data {
     uint desktop;
     bool move_to_single;

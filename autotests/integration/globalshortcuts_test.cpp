@@ -375,10 +375,10 @@ void GlobalShortcutsTest::testX11ClientShortcut()
     QVERIFY(client->control->active());
     QCOMPARE(client->control->shortcut(), QKeySequence());
     const QKeySequence seq(Qt::META + Qt::SHIFT + Qt::Key_Y);
-    QVERIFY(Test::app()->workspace->shortcutAvailable(seq));
+    QVERIFY(win::shortcut_available(*Test::app()->workspace, seq, nullptr));
     win::set_shortcut(client, seq.toString());
     QCOMPARE(client->control->shortcut(), seq);
-    QVERIFY(!Test::app()->workspace->shortcutAvailable(seq));
+    QVERIFY(!win::shortcut_available(*Test::app()->workspace, seq, nullptr));
     QCOMPARE(win::caption(client), QStringLiteral(" {Meta+Shift+Y}"));
 
     // it's delayed
@@ -417,10 +417,10 @@ void GlobalShortcutsTest::testWaylandClientShortcut()
     QVERIFY(client->control->active());
     QCOMPARE(client->control->shortcut(), QKeySequence());
     const QKeySequence seq(Qt::META + Qt::SHIFT + Qt::Key_Y);
-    QVERIFY(Test::app()->workspace->shortcutAvailable(seq));
+    QVERIFY(win::shortcut_available(*Test::app()->workspace, seq, nullptr));
     win::set_shortcut(client, seq.toString());
     QCOMPARE(client->control->shortcut(), seq);
-    QVERIFY(!Test::app()->workspace->shortcutAvailable(seq));
+    QVERIFY(!win::shortcut_available(*Test::app()->workspace, seq, nullptr));
     QCOMPARE(win::caption(client), QStringLiteral(" {Meta+Shift+Y}"));
 
     win::activate_window(*Test::app()->workspace, nullptr);
@@ -443,7 +443,7 @@ void GlobalShortcutsTest::testWaylandClientShortcut()
 
     // Wait a bit for KGlobalAccel to catch up.
     QTest::qWait(100);
-    QVERIFY(Test::app()->workspace->shortcutAvailable(seq));
+    QVERIFY(win::shortcut_available(*Test::app()->workspace, seq, nullptr));
 }
 
 void GlobalShortcutsTest::testSetupWindowShortcut()

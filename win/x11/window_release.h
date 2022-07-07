@@ -10,6 +10,7 @@
 #include "utils/blocker.h"
 #include "win/input.h"
 #include "win/rules.h"
+#include "win/shortcut_set.h"
 #include "win/space_areas_helpers.h"
 #include "win/window_release.h"
 
@@ -32,14 +33,14 @@ void remove_controlled_window_from_space(Space& space, Win* win)
     }
 
     if (space.client_keys_client == win) {
-        space.setupWindowShortcutDone(false);
+        setup_window_shortcut_done(space, false);
     }
     if (!win->control->shortcut().isEmpty()) {
         // Remove from client_keys.
         set_shortcut(win, QString());
 
         // Needed, since this is otherwise delayed by setShortcut() and wouldn't run
-        space.clientShortcutUpdated(win);
+        window_shortcut_updated(space, win);
     }
 
     assert(contains(space.m_windows, win));

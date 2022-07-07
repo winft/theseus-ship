@@ -9,6 +9,7 @@
 #include "desktop_set.h"
 #include "move.h"
 #include "rules/rule_book.h"
+#include "shortcut_set.h"
 #include "stacking.h"
 
 #include "input/cursor.h"
@@ -99,7 +100,7 @@ void perform_window_operation(Space& space, Toplevel* window, base::options::Win
         space.rule_book->edit(window, true);
         break;
     case base::options::SetupWindowShortcutOp:
-        space.setupWindowShortcut(window);
+        setup_window_shortcut(space, window);
         break;
     case base::options::LowerOp:
         lower_window(&space, window);
