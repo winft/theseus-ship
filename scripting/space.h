@@ -348,7 +348,6 @@ public Q_SLOTS:
     virtual void slotWindowToDesktopDown() = 0;
 
 #undef QUICKTILE_SLOT
-#undef SWITCH_WINDOW_SLOT
 #undef SWITCH_VD_SLOT
 
     /**
@@ -685,12 +684,6 @@ public:
         ref_space->quickTileWindow(modes);                                                         \
     }
 
-#define SWITCH_WINDOW_SLOT(name, dir)                                                              \
-    void name() override                                                                           \
-    {                                                                                              \
-        ref_space->switchWindow(win::direction::dir);                                              \
-    }
-
     void slotSwitchToNextScreen() override
     {
         win::switch_to_next_output(*ref_space);
@@ -880,13 +873,24 @@ public:
     QUICKTILE_SLOT(slotWindowQuickTileBottomLeft, win::quicktiles::bottom | win::quicktiles::left)
     QUICKTILE_SLOT(slotWindowQuickTileBottomRight, win::quicktiles::bottom | win::quicktiles::right)
 
-    SWITCH_WINDOW_SLOT(slotSwitchWindowUp, north)
-    SWITCH_WINDOW_SLOT(slotSwitchWindowDown, south)
-    SWITCH_WINDOW_SLOT(slotSwitchWindowRight, east)
-    SWITCH_WINDOW_SLOT(slotSwitchWindowLeft, west)
-
 #undef QUICKTILE_SLOT
-#undef SWITCH_WINDOW_SLOT
+
+    void slotSwitchWindowUp() override
+    {
+        win::activate_window_direction(*ref_space, win::direction::north);
+    }
+    void slotSwitchWindowDown() override
+    {
+        win::activate_window_direction(*ref_space, win::direction::south);
+    }
+    void slotSwitchWindowRight() override
+    {
+        win::activate_window_direction(*ref_space, win::direction::east);
+    }
+    void slotSwitchWindowLeft() override
+    {
+        win::activate_window_direction(*ref_space, win::direction::west);
+    }
 
 protected:
     QRect client_area_impl(clientAreaOption option, int screen, int desktop) const override

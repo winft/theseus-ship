@@ -657,6 +657,107 @@ void activate_window_on_new_desktop(Space& space, unsigned int desktop)
 }
 
 template<typename Space>
+bool activate_window_direction(Space& space,
+                               Toplevel* c,
+                               win::direction direction,
+                               QPoint curPos,
+                               int d)
+{
+    Toplevel* switchTo = nullptr;
+    int bestScore = 0;
+    auto clist = space.stacking_order->stack;
+
+    for (auto i = clist.rbegin(); i != clist.rend(); ++i) {
+        auto client = *i;
+        if (!client->control) {
+            continue;
+        }
+
+        if (wants_tab_focus(client) && *i != c && client->isOnDesktop(d)
+            && !client->control->minimized()) {
+            // Centre of the other window
+            const QPoint other(client->pos().x() + client->size().width() / 2,
+                               client->pos().y() + client->size().height() / 2);
+
+            int distance;
+            int offset;
+            switch (direction) {
+            case direction::north:
+                distance = curPos.y() - other.y();
+                offset = qAbs(other.x() - curPos.x());
+                break;
+            case direction::east:
+                distance = other.x() - curPos.x();
+                offset = qAbs(other.y() - curPos.y());
+                break;
+            case direction::south:
+                distance = other.y() - curPos.y();
+                offset = qAbs(other.x() - curPos.x());
+                break;
+            case direction::west:
+                distance = curPos.x() - other.x();
+                offset = qAbs(other.y() - curPos.y());
+                break;
+            default:
+                distance = -1;
+                offset = -1;
+            }
+
+            if (distance > 0) {
+                // Inverse score
+                int score = distance + offset + ((offset * offset) / distance);
+                if (score < bestScore || !switchTo) {
+                    switchTo = client;
+                    bestScore = score;
+                }
+            }
+        }
+    }
+    if (switchTo) {
+        activate_window(space, switchTo);
+    }
+
+    return switchTo;
+}
+
+/**
+ * Switches to the nearest window in given direction.
+ */
+template<typename Space>
+void activate_window_direction(Space& space, win::direction direction)
+{
+    if (!space.active_client) {
+        return;
+    }
+
+    auto c = space.active_client;
+    int desktopNumber
+        = c->isOnAllDesktops() ? space.virtual_desktop_manager->current() : c->desktop();
+
+    // Centre of the active window
+    QPoint curPos(c->pos().x() + c->size().width() / 2, c->pos().y() + c->size().height() / 2);
+
+    if (!activate_window_direction(space, c, direction, curPos, desktopNumber)) {
+        auto opposite = [&] {
+            switch (direction) {
+            case direction::north:
+                return QPoint(curPos.x(), kwinApp()->get_base().topology.size.height());
+            case direction::south:
+                return QPoint(curPos.x(), 0);
+            case direction::east:
+                return QPoint(0, curPos.y());
+            case direction::west:
+                return QPoint(kwinApp()->get_base().topology.size.width(), curPos.y());
+            default:
+                Q_UNREACHABLE();
+            }
+        };
+
+        activate_window_direction(space, c, direction, opposite(), desktopNumber);
+    }
+}
+
+template<typename Space>
 void delay_focus(Space& space)
 {
     request_focus(space, space.delayfocus_client);

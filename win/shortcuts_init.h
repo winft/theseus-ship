@@ -243,27 +243,19 @@ void init_shortcuts(Space& space)
     def4("Switch Window Up",
          kli18n("Switch to Window Above"),
          Qt::META + Qt::ALT + Qt::Key_Up,
-         std::bind(static_cast<void (Space::*)(direction)>(&Space::switchWindow),
-                   &space,
-                   direction::north));
+         [&space] { activate_window_direction(space, direction::north); });
     def4("Switch Window Down",
          kli18n("Switch to Window Below"),
          Qt::META + Qt::ALT + Qt::Key_Down,
-         std::bind(static_cast<void (Space::*)(direction)>(&Space::switchWindow),
-                   &space,
-                   direction::south));
+         [&space] { activate_window_direction(space, direction::south); });
     def4("Switch Window Right",
          kli18n("Switch to Window to the Right"),
          Qt::META + Qt::ALT + Qt::Key_Right,
-         std::bind(static_cast<void (Space::*)(direction)>(&Space::switchWindow),
-                   &space,
-                   direction::east));
+         [&space] { activate_window_direction(space, direction::east); });
     def4("Switch Window Left",
          kli18n("Switch to Window to the Left"),
          Qt::META + Qt::ALT + Qt::Key_Left,
-         std::bind(static_cast<void (Space::*)(direction)>(&Space::switchWindow),
-                   &space,
-                   direction::west));
+         [&space] { activate_window_direction(space, direction::west); });
     def2("Increase Opacity",
          kli18n("Increase Opacity of Active Window by 5 %"),
          0,

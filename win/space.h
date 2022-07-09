@@ -333,8 +333,6 @@ public:
 
     void quickTileWindow(win::quicktiles mode);
 
-    void switchWindow(win::direction direction);
-
     win::shortcut_dialog* shortcutDialog() const
     {
         return client_keys_dialog;
@@ -350,8 +348,6 @@ public:
     virtual void update_space_area_from_windows(QRect const& desktop_area,
                                                 std::vector<QRect> const& screens_geos,
                                                 win::space_areas& areas);
-
-    bool switchWindow(Toplevel* c, win::direction direction, QPoint curPos, int desktop);
 
     QWidget* active_popup{nullptr};
 
