@@ -388,4 +388,34 @@ void active_window_shrink_vertical(Space& space)
     }
 }
 
+template<typename Space>
+void active_window_quicktile(Space& space, quicktiles mode)
+{
+    if (!space.active_client) {
+        return;
+    }
+
+    // If the user invokes two of these commands in a one second period, try to
+    // combine them together to enable easy and intuitive corner tiling
+    if (!space.m_quickTileCombineTimer->isActive()) {
+        space.m_quickTileCombineTimer->start(1000);
+        space.m_lastTilingMode = mode;
+    } else {
+        auto const was_left_or_right = space.m_lastTilingMode == quicktiles::left
+            || space.m_lastTilingMode == quicktiles::right;
+        auto const was_top_or_bottom = space.m_lastTilingMode == quicktiles::top
+            || space.m_lastTilingMode == quicktiles::bottom;
+
+        auto const is_left_or_right = mode == quicktiles::left || mode == quicktiles::right;
+        auto const is_top_or_bottom = mode == quicktiles::top || mode == quicktiles::bottom;
+
+        if ((was_left_or_right && is_top_or_bottom) || (was_top_or_bottom && is_left_or_right)) {
+            mode |= space.m_lastTilingMode;
+        }
+        space.m_quickTileCombineTimer->stop();
+    }
+
+    set_quicktile_mode(space.active_client, mode, true);
+}
+
 }

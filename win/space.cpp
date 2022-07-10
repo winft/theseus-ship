@@ -991,37 +991,6 @@ std::vector<Toplevel*> space::remnants() const
 
 #ifndef KCMRULES
 
-void space::quickTileWindow(win::quicktiles mode)
-{
-    if (!active_client) {
-        return;
-    }
-
-    // If the user invokes two of these commands in a one second period, try to
-    // combine them together to enable easy and intuitive corner tiling
-    if (!m_quickTileCombineTimer->isActive()) {
-        m_quickTileCombineTimer->start(1000);
-        m_lastTilingMode = mode;
-    } else {
-        auto const was_left_or_right = m_lastTilingMode == win::quicktiles::left
-            || m_lastTilingMode == win::quicktiles::right;
-        auto const was_top_or_bottom = m_lastTilingMode == win::quicktiles::top
-            || m_lastTilingMode == win::quicktiles::bottom;
-
-        auto const is_left_or_right
-            = mode == win::quicktiles::left || mode == win::quicktiles::right;
-        auto const is_top_or_bottom
-            = mode == win::quicktiles::top || mode == win::quicktiles::bottom;
-
-        if ((was_left_or_right && is_top_or_bottom) || (was_top_or_bottom && is_left_or_right)) {
-            mode |= m_lastTilingMode;
-        }
-        m_quickTileCombineTimer->stop();
-    }
-
-    win::set_quicktile_mode(active_client, mode, true);
-}
-
 int space::packPositionLeft(Toplevel const* window, int oldX, bool leftEdge) const
 {
     int newX = space_window_area(*this, MaximizeArea, window).left();

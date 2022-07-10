@@ -209,37 +209,33 @@ void init_shortcuts(Space& space)
     def4("Window Quick Tile Left",
          kli18n("Quick Tile Window to the Left"),
          Qt::META + Qt::Key_Left,
-         std::bind(&Space::quickTileWindow, &space, win::quicktiles::left));
+         [&space] { active_window_quicktile(space, quicktiles::left); });
     def4("Window Quick Tile Right",
          kli18n("Quick Tile Window to the Right"),
          Qt::META + Qt::Key_Right,
-         std::bind(&Space::quickTileWindow, &space, win::quicktiles::right));
+         [&space] { active_window_quicktile(space, quicktiles::right); });
     def4("Window Quick Tile Top",
          kli18n("Quick Tile Window to the Top"),
          Qt::META + Qt::Key_Up,
-         std::bind(&Space::quickTileWindow, &space, win::quicktiles::top));
+         [&space] { active_window_quicktile(space, quicktiles::top); });
     def4("Window Quick Tile Bottom",
          kli18n("Quick Tile Window to the Bottom"),
          Qt::META + Qt::Key_Down,
-         std::bind(&Space::quickTileWindow, &space, win::quicktiles::bottom));
-    def4("Window Quick Tile Top Left",
-         kli18n("Quick Tile Window to the Top Left"),
-         0,
-         std::bind(&Space::quickTileWindow, &space, win::quicktiles::top | win::quicktiles::left));
+         [&space] { active_window_quicktile(space, quicktiles::bottom); });
+    def4("Window Quick Tile Top Left", kli18n("Quick Tile Window to the Top Left"), 0, [&space] {
+        active_window_quicktile(space, quicktiles::top | quicktiles::left);
+    });
     def4("Window Quick Tile Bottom Left",
          kli18n("Quick Tile Window to the Bottom Left"),
          0,
-         std::bind(
-             &Space::quickTileWindow, &space, win::quicktiles::bottom | win::quicktiles::left));
-    def4("Window Quick Tile Top Right",
-         kli18n("Quick Tile Window to the Top Right"),
-         0,
-         std::bind(&Space::quickTileWindow, &space, win::quicktiles::top | win::quicktiles::right));
+         [&space] { active_window_quicktile(space, quicktiles::bottom | quicktiles::left); });
+    def4("Window Quick Tile Top Right", kli18n("Quick Tile Window to the Top Right"), 0, [&space] {
+        active_window_quicktile(space, quicktiles::top | quicktiles::right);
+    });
     def4("Window Quick Tile Bottom Right",
          kli18n("Quick Tile Window to the Bottom Right"),
          0,
-         std::bind(
-             &Space::quickTileWindow, &space, win::quicktiles::bottom | win::quicktiles::right));
+         [&space] { active_window_quicktile(space, quicktiles::bottom | quicktiles::right); });
     def4("Switch Window Up",
          kli18n("Switch to Window Above"),
          Qt::META + Qt::ALT + Qt::Key_Up,

@@ -678,12 +678,6 @@ public:
         ref_space->outline->hide();
     }
 
-#define QUICKTILE_SLOT(name, modes)                                                                \
-    void name() override                                                                           \
-    {                                                                                              \
-        ref_space->quickTileWindow(modes);                                                         \
-    }
-
     void slotSwitchToNextScreen() override
     {
         win::switch_to_next_output(*ref_space);
@@ -864,16 +858,38 @@ public:
         win::active_window_to_below_desktop(*ref_space);
     }
 
-    QUICKTILE_SLOT(slotWindowQuickTileLeft, win::quicktiles::left)
-    QUICKTILE_SLOT(slotWindowQuickTileRight, win::quicktiles::right)
-    QUICKTILE_SLOT(slotWindowQuickTileTop, win::quicktiles::top)
-    QUICKTILE_SLOT(slotWindowQuickTileBottom, win::quicktiles::bottom)
-    QUICKTILE_SLOT(slotWindowQuickTileTopLeft, win::quicktiles::top | win::quicktiles::left)
-    QUICKTILE_SLOT(slotWindowQuickTileTopRight, win::quicktiles::top | win::quicktiles::right)
-    QUICKTILE_SLOT(slotWindowQuickTileBottomLeft, win::quicktiles::bottom | win::quicktiles::left)
-    QUICKTILE_SLOT(slotWindowQuickTileBottomRight, win::quicktiles::bottom | win::quicktiles::right)
-
-#undef QUICKTILE_SLOT
+    void slotWindowQuickTileLeft() override
+    {
+        win::active_window_quicktile(*ref_space, win::quicktiles::left);
+    }
+    void slotWindowQuickTileRight() override
+    {
+        win::active_window_quicktile(*ref_space, win::quicktiles::right);
+    }
+    void slotWindowQuickTileTop() override
+    {
+        win::active_window_quicktile(*ref_space, win::quicktiles::top);
+    }
+    void slotWindowQuickTileBottom() override
+    {
+        win::active_window_quicktile(*ref_space, win::quicktiles::bottom);
+    }
+    void slotWindowQuickTileTopLeft() override
+    {
+        win::active_window_quicktile(*ref_space, win::quicktiles::top | win::quicktiles::left);
+    }
+    void slotWindowQuickTileTopRight() override
+    {
+        win::active_window_quicktile(*ref_space, win::quicktiles::top | win::quicktiles::right);
+    }
+    void slotWindowQuickTileBottomLeft() override
+    {
+        win::active_window_quicktile(*ref_space, win::quicktiles::bottom | win::quicktiles::left);
+    }
+    void slotWindowQuickTileBottomRight() override
+    {
+        win::active_window_quicktile(*ref_space, win::quicktiles::bottom | win::quicktiles::right);
+    }
 
     void slotSwitchWindowUp() override
     {

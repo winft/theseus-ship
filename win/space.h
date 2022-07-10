@@ -283,12 +283,8 @@ public:
 
     void updateTabbox();
 
-private:
     QTimer* m_quickTileCombineTimer{nullptr};
     win::quicktiles m_lastTilingMode{win::quicktiles::none};
-
-    //-------------------------------------------------
-    // Unsorted
 
 public:
     // True when performing space::updateClientArea().
@@ -330,8 +326,6 @@ public:
      * @returns Whether we have a compositor and it is active (Scene created)
      */
     bool compositing() const;
-
-    void quickTileWindow(win::quicktiles mode);
 
     win::shortcut_dialog* shortcutDialog() const
     {
