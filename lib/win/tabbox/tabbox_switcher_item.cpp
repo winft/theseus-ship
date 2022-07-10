@@ -105,5 +105,19 @@ void tabbox_switcher_item::set_no_modifier_grab(bool set)
     Q_EMIT no_modifier_grab_changed();
 }
 
+bool tabbox_switcher_item::get_automatically_hide() const
+{
+    return is_automatically_hide;
+}
+
+void tabbox_switcher_item::set_automatically_hide(bool value)
+{
+    if (is_automatically_hide == value) {
+        return;
+    }
+    is_automatically_hide = value;
+    Q_EMIT automatically_hide_changed();
+}
+
 }
 }

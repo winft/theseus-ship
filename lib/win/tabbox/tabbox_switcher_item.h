@@ -22,10 +22,13 @@ class tabbox_switcher_item : public QObject
     Q_PROPERTY(QAbstractItemModel* model READ model NOTIFY model_changed)
     Q_PROPERTY(QRect screenGeometry READ screen_geometry NOTIFY screen_geometry_changed)
     Q_PROPERTY(bool visible READ is_visible NOTIFY visible_changed)
+    Q_PROPERTY(bool visible READ is_visible WRITE set_visible NOTIFY visible_changed)
     Q_PROPERTY(bool allDesktops READ is_all_desktops NOTIFY all_desktops_changed)
     Q_PROPERTY(
         int currentIndex READ current_index WRITE set_current_index NOTIFY current_index_changed)
     Q_PROPERTY(bool noModifierGrab READ no_modifier_grab NOTIFY no_modifier_grab_changed)
+    Q_PROPERTY(bool automaticallyHide READ get_automatically_hide WRITE set_automatically_hide
+                   NOTIFY automatically_hide_changed)
 
     /**
      * The main QML item that will be displayed in the Dialog
@@ -50,11 +53,14 @@ public:
         return m_no_modifier_grab;
     }
 
+    bool get_automatically_hide() const;
+
     // for usage from outside
     void set_model(QAbstractItemModel* model);
     void set_all_desktops(bool all);
     void set_visible(bool visible);
     void set_no_modifier_grab(bool set);
+    void set_automatically_hide(bool value);
 
 Q_SIGNALS:
     void visible_changed();
@@ -64,6 +70,10 @@ Q_SIGNALS:
     void screen_geometry_changed();
     void item_changed();
     void no_modifier_grab_changed();
+    void automatically_hide_changed();
+
+    void about_to_show();
+    void about_to_hide();
 
 private:
     QAbstractItemModel* m_model;
@@ -73,6 +83,7 @@ private:
     int m_current_index;
     QMetaObject::Connection m_selected_index_connection;
     bool m_no_modifier_grab = false;
+    bool is_automatically_hide{true};
 };
 
 inline QAbstractItemModel* tabbox_switcher_item::model() const
