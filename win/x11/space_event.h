@@ -17,6 +17,19 @@
 #include <string>
 #include <vector>
 
+#ifndef XCB_GE_GENERIC
+#define XCB_GE_GENERIC 35
+typedef struct xcb_ge_generic_event_t {
+    uint8_t response_type;  /**<  */
+    uint8_t extension;      /**<  */
+    uint16_t sequence;      /**<  */
+    uint32_t length;        /**<  */
+    uint16_t event_type;    /**<  */
+    uint8_t pad0[22];       /**<  */
+    uint32_t full_sequence; /**<  */
+} xcb_ge_generic_event_t;
+#endif
+
 namespace KWin::win::x11
 {
 
@@ -325,6 +338,21 @@ bool space_event(Space& space, xcb_generic_event_t* event)
         break;
     }
 
+    return false;
+}
+
+// Used only to filter events that need to be processed by Qt first
+// (e.g. keyboard input to be composed), otherwise events are
+// handle by the XEvent filter above.
+template<typename Space>
+bool space_qt_event(Space& space, QEvent* event)
+{
+    auto is_key_event = event->type() == QEvent::KeyPress || event->type() == QEvent::KeyRelease
+        || event->type() == QEvent::ShortcutOverride;
+    if (is_key_event && space.render.effects && space.render.effects->hasKeyboardGrab()) {
+        space.render.effects->grabbedKeyboardEvent(static_cast<QKeyEvent*>(event));
+        return true;
+    }
     return false;
 }
 

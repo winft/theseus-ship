@@ -1187,33 +1187,4 @@ void space::clientAttentionChanged(Toplevel* window, bool set)
     Q_EMIT qobject->clientDemandsAttentionChanged(window, set);
 }
 
-/// X11 event handling
-
-#ifndef XCB_GE_GENERIC
-#define XCB_GE_GENERIC 35
-typedef struct xcb_ge_generic_event_t {
-    uint8_t response_type;  /**<  */
-    uint8_t extension;      /**<  */
-    uint16_t sequence;      /**<  */
-    uint32_t length;        /**<  */
-    uint16_t event_type;    /**<  */
-    uint8_t pad0[22];       /**<  */
-    uint32_t full_sequence; /**<  */
-} xcb_ge_generic_event_t;
-#endif
-
-// Used only to filter events that need to be processed by Qt first
-// (e.g. keyboard input to be composed), otherwise events are
-// handle by the XEvent filter above
-bool space::workspaceEvent(QEvent* e)
-{
-    if ((e->type() == QEvent::KeyPress || e->type() == QEvent::KeyRelease
-         || e->type() == QEvent::ShortcutOverride)
-        && render.effects && render.effects->hasKeyboardGrab()) {
-        render.effects->grabbedKeyboardEvent(static_cast<QKeyEvent*>(e));
-        return true;
-    }
-    return false;
-}
-
 }

@@ -23,6 +23,7 @@
 #include "win/shortcuts_init.h"
 #include "win/space.h"
 #include "win/x11/space.h"
+#include "win/x11/space_event.h"
 
 #include <KConfigGroup>
 #include <KCrash>
@@ -285,7 +286,7 @@ void ApplicationX11::start()
 
 bool ApplicationX11::notify(QObject* o, QEvent* e)
 {
-    if (e->spontaneous() && workspace->workspaceEvent(e)) {
+    if (e->spontaneous() && win::x11::space_qt_event(*workspace, e)) {
         return true;
     }
     return QApplication::notify(o, e);

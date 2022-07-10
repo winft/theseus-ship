@@ -225,8 +225,6 @@ public:
     explicit space(render::compositor& render);
     virtual ~space();
 
-    bool workspaceEvent(QEvent*);
-
     /**
      * @brief Finds a Toplevel for the internal window @p w.
      *
