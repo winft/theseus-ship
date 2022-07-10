@@ -313,8 +313,9 @@ void active_window_pack_left(Space& space)
         return;
     }
     auto const pos = space.active_client->geometry_update.frame.topLeft();
-    pack_to(
-        space.active_client, space.packPositionLeft(space.active_client, pos.x(), true), pos.y());
+    pack_to(space.active_client,
+            get_pack_position_left(space, space.active_client, pos.x(), true),
+            pos.y());
 }
 
 template<typename Space>
@@ -327,7 +328,7 @@ void active_window_pack_right(Space& space)
     auto const pos = space.active_client->geometry_update.frame.topLeft();
     auto const width = space.active_client->geometry_update.frame.size().width();
     pack_to(space.active_client,
-            space.packPositionRight(space.active_client, pos.x() + width, true) - width + 1,
+            get_pack_position_right(space, space.active_client, pos.x() + width, true) - width + 1,
             pos.y());
 }
 
@@ -339,7 +340,9 @@ void active_window_pack_up(Space& space)
     }
 
     auto const pos = space.active_client->geometry_update.frame.topLeft();
-    pack_to(space.active_client, pos.x(), space.packPositionUp(space.active_client, pos.y(), true));
+    pack_to(space.active_client,
+            pos.x(),
+            get_pack_position_up(space, space.active_client, pos.y(), true));
 }
 
 template<typename Space>
@@ -353,7 +356,8 @@ void active_window_pack_down(Space& space)
     auto const height = space.active_client->geometry_update.frame.size().height();
     pack_to(space.active_client,
             pos.x(),
-            space.packPositionDown(space.active_client, pos.y() + height, true) - height + 1);
+            get_pack_position_down(space, space.active_client, pos.y() + height, true) - height
+                + 1);
 }
 
 template<typename Space>

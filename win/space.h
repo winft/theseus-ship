@@ -307,11 +307,6 @@ public:
     void setWasUserInteraction();
     bool wasUserInteraction() const;
 
-    int packPositionLeft(Toplevel const* window, int oldX, bool leftEdge) const;
-    int packPositionRight(Toplevel const* window, int oldX, bool rightEdge) const;
-    int packPositionUp(Toplevel const* window, int oldY, bool topEdge) const;
-    int packPositionDown(Toplevel const* window, int oldY, bool bottomEdge) const;
-
     /**
      * Returns a client that is currently being moved or resized by the user.
      *

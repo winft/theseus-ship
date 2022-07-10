@@ -6,6 +6,7 @@
 #pragma once
 
 #include "deco.h"
+#include "net.h"
 #include "types.h"
 
 #include <QMargins>
@@ -13,6 +14,30 @@
 
 namespace KWin::win
 {
+
+template<typename Win1, typename Win2>
+static inline bool is_irrelevant(Win1 const* window, Win2 const* regarding, int desktop)
+{
+    if (!window) {
+        return true;
+    }
+    if (!window->control) {
+        return true;
+    }
+    if (window == regarding) {
+        return true;
+    }
+    if (!window->isShown()) {
+        return true;
+    }
+    if (!window->isOnDesktop(desktop)) {
+        return true;
+    }
+    if (is_desktop(window)) {
+        return true;
+    }
+    return false;
+}
 
 /**
  * Returns @c true if @p win is being interactively moved; otherwise @c false.

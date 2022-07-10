@@ -51,8 +51,6 @@ namespace win
 
 template<typename Win>
 static inline bool can_move(Win const* window);
-template<typename Win1, typename Win2>
-static inline bool is_irrelevant(Win1 const* window, Win2 const* regarding, int desktop);
 
 template<typename Win>
 void place(Win* window, const QRect& area);
@@ -97,30 +95,6 @@ bool can_move(Win const* window)
         return false;
     }
     return window->isMovable();
-}
-
-template<typename Win1, typename Win2>
-static inline bool is_irrelevant(Win1 const* window, Win2 const* regarding, int desktop)
-{
-    if (!window) {
-        return true;
-    }
-    if (!window->control) {
-        return true;
-    }
-    if (window == regarding) {
-        return true;
-    }
-    if (!window->isShown()) {
-        return true;
-    }
-    if (!window->isOnDesktop(desktop)) {
-        return true;
-    }
-    if (is_desktop(window)) {
-        return true;
-    }
-    return false;
 }
 
 /**
