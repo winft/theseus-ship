@@ -119,6 +119,15 @@ enum class focus_chain_change {
     update,
 };
 
+/// Focus Stealing Prevention Levels
+enum class fsp_level {
+    none = 0,
+    low,
+    medium,
+    high,
+    extreme,
+};
+
 }
 
 ENUM_FLAGS(KWin::win::position)

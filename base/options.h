@@ -106,7 +106,7 @@ class KWIN_EXPORT options : public QObject
     /**
      * 0 - 4 , see Workspace::allowClientActivation()
      */
-    Q_PROPERTY(int focusStealingPreventionLevel READ focusStealingPreventionLevel WRITE
+    Q_PROPERTY(win::fsp_level focusStealingPreventionLevel READ focusStealingPreventionLevel WRITE
                    setFocusStealingPreventionLevel NOTIFY focusStealingPreventionLevelChanged)
     Q_PROPERTY(KWin::base::options::WindowOperation operationTitlebarDblClick READ
                    operationTitlebarDblClick WRITE setOperationTitlebarDblClick NOTIFY
@@ -355,7 +355,7 @@ public:
      *
      * @see allowClientActivation
      */
-    int focusStealingPreventionLevel() const
+    win::fsp_level focusStealingPreventionLevel() const
     {
         return m_focusStealingPreventionLevel;
     }
@@ -661,7 +661,7 @@ public:
     void setCenterSnapZone(int centerSnapZone);
     void setSnapOnlyWhenOverlapping(bool snapOnlyWhenOverlapping);
     void setRollOverDesktops(bool rollOverDesktops);
-    void setFocusStealingPreventionLevel(int focusStealingPreventionLevel);
+    void setFocusStealingPreventionLevel(win::fsp_level focusStealingPreventionLevel);
     void setOperationTitlebarDblClick(WindowOperation operationTitlebarDblClick);
     void setOperationMaxButtonLeftClick(WindowOperation op);
     void setOperationMaxButtonRightClick(WindowOperation op);
@@ -908,7 +908,7 @@ private:
     int m_centerSnapZone;
     bool m_snapOnlyWhenOverlapping;
     bool m_rollOverDesktops;
-    int m_focusStealingPreventionLevel;
+    win::fsp_level m_focusStealingPreventionLevel{win::fsp_level::none};
     int m_killPingTimeout;
     bool m_hideUtilityWindowsForInactive;
 
@@ -963,4 +963,5 @@ private:
 
 Q_DECLARE_METATYPE(KWin::base::options::WindowOperation)
 Q_DECLARE_METATYPE(KWin::OpenGLPlatformInterface)
+Q_DECLARE_METATYPE(KWin::win::fsp_level)
 Q_DECLARE_METATYPE(KWin::win::placement)

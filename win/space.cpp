@@ -1023,11 +1023,6 @@ void space::setShouldGetFocus(Toplevel* window)
     stacking_order->update_order();
 }
 
-namespace FSP
-{
-enum Level { None = 0, Low, Medium, High, Extreme };
-}
-
 // focus_in -> the window got FocusIn event
 // ignore_desktop - call comes from _NET_ACTIVE_WINDOW message, don't refuse just because of window
 //     is on a different desktop
@@ -1048,11 +1043,15 @@ bool space::allowClientActivation(Toplevel const* window,
     if (time == -1U) {
         time = window->userTime();
     }
+
     auto level
         = window->control->rules().checkFSP(kwinApp()->options->focusStealingPreventionLevel());
-    if (session_manager->state() == SessionState::Saving && level <= FSP::Medium) { // <= normal
+    if (session_manager->state() == SessionState::Saving
+        && enum_index(level) <= enum_index(fsp_level::medium)) {
+        // <= normal
         return true;
     }
+
     auto ac = most_recently_activated_window(*this);
     if (focus_in) {
         if (std::find(
@@ -1069,14 +1068,15 @@ bool space::allowClientActivation(Toplevel const* window,
         if (!window->control->rules().checkAcceptFocus(false))
             return false;
     }
-    const int protection = ac ? ac->control->rules().checkFPP(2) : 0;
+
+    auto const protection = ac ? ac->control->rules().checkFPP(fsp_level::medium) : fsp_level::none;
 
     // stealing is unconditionally allowed (NETWM behavior)
-    if (level == FSP::None || protection == FSP::None)
+    if (level == fsp_level::none || protection == fsp_level::none)
         return true;
 
     // The active client "grabs" the focus or stealing is generally forbidden
-    if (level == FSP::Extreme || protection == FSP::Extreme)
+    if (level == fsp_level::extreme || protection == fsp_level::extreme)
         return false;
 
     // Desktop switching is only allowed in the "no protection" case
@@ -1096,7 +1096,7 @@ bool space::allowClientActivation(Toplevel const* window,
     // Unconditionally allow intra-client passing around for lower stealing protections
     // unless the active client has High interest
     if (win::belong_to_same_client(window, ac, win::same_client_check::relaxed_for_active)
-        && protection < FSP::High) {
+        && protection < fsp_level::high) {
         qCDebug(KWIN_CORE) << "Activation: Belongs to active application";
         return true;
     }
@@ -1108,13 +1108,13 @@ bool space::allowClientActivation(Toplevel const* window,
     }
 
     // High FPS, not intr-client change. Only allow if the active client has only minor interest
-    if (level > FSP::Medium && protection > FSP::Low)
+    if (level > fsp_level::medium && protection > fsp_level::low)
         return false;
 
     if (time == -1U) { // no time known
         qCDebug(KWIN_CORE) << "Activation: No timestamp at all";
         // Only allow for Low protection unless active client has High interest in focus
-        if (level < FSP::Medium && protection < FSP::High)
+        if (level < fsp_level::medium && protection < fsp_level::high)
             return true;
         // no timestamp at all, don't activate - because there's also creation timestamp
         // done on CreateNotify, this case should happen only in case application
@@ -1122,7 +1122,7 @@ bool space::allowClientActivation(Toplevel const* window,
         return false;
     }
 
-    // Low or medium FSP, usertime comparism is possible
+    // Low or medium FSP level, usertime comparism is possible
     const xcb_timestamp_t user_time = ac->userTime();
     qCDebug(KWIN_CORE) << "Activation, compared:" << window << ":" << time << ":" << user_time
                        << ":" << (NET::timestampCompare(time, user_time) >= 0);
@@ -1137,28 +1137,41 @@ bool space::allowFullClientRaising(Toplevel const* window, xcb_timestamp_t time)
 {
     auto level
         = window->control->rules().checkFSP(kwinApp()->options->focusStealingPreventionLevel());
-    if (session_manager->state() == SessionState::Saving && level <= 2) { // <= normal
+    if (session_manager->state() == SessionState::Saving
+        && enum_index(level) <= enum_index(fsp_level::medium)) {
+        // <= normal
         return true;
     }
+
     auto ac = most_recently_activated_window(*this);
-    if (level == 0) // none
+
+    if (level == fsp_level::none) {
         return true;
-    if (level == 4) // extreme
+    }
+    if (level == fsp_level::extreme) {
+        // extreme
         return false;
+    }
+
     if (ac == nullptr || win::is_desktop(ac)) {
         qCDebug(KWIN_CORE) << "Raising: No client active, allowing";
         return true; // no active client -> always allow
     }
+
     // TODO window urgency  -> return true?
     if (win::belong_to_same_client(window, ac, win::same_client_check::relaxed_for_active)) {
         qCDebug(KWIN_CORE) << "Raising: Belongs to active application";
         return true;
     }
-    if (level == 3) // high
+
+    if (level == fsp_level::high) {
         return false;
+    }
+
     xcb_timestamp_t user_time = ac->userTime();
     qCDebug(KWIN_CORE) << "Raising, compared:" << time << ":" << user_time << ":"
                        << (NET::timestampCompare(time, user_time) >= 0);
+
     return NET::timestampCompare(time, user_time) >= 0; // time >= user_time
 }
 

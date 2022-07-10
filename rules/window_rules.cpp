@@ -199,12 +199,12 @@ bool WindowRules::checkBlockCompositing(bool block) const
     return check_force(block, &Rules::applyBlockCompositing);
 }
 
-int WindowRules::checkFSP(int fsp) const
+win::fsp_level WindowRules::checkFSP(win::fsp_level fsp) const
 {
     return check_force(fsp, &Rules::applyFSP);
 }
 
-int WindowRules::checkFPP(int fpp) const
+win::fsp_level WindowRules::checkFPP(win::fsp_level fpp) const
 {
     return check_force(fpp, &Rules::applyFPP);
 }

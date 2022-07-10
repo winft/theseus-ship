@@ -700,14 +700,32 @@ bool Rules::applyBlockCompositing(bool& block) const
     return apply_force(block, this->blockcompositing);
 }
 
-bool Rules::applyFSP(int& fsp) const
+template<typename T>
+bool Rules::apply_force_enum(force_ruler<int> const& ruler, T& apply, T min, T max) const
 {
-    return apply_force(fsp, this->fsplevel);
+    auto setting = static_cast<int>(apply);
+    if (!apply_force(setting, ruler)) {
+        return false;
+    }
+
+    // Note: this does include the max item, so doesn't work for enums with "count" as last element.
+    if (setting < enum_index(min) || setting > enum_index(max)) {
+        // Loaded value is out of bounds.
+        return false;
+    }
+
+    apply = static_cast<win::fsp_level>(setting);
+    return true;
 }
 
-bool Rules::applyFPP(int& fpp) const
+bool Rules::applyFSP(win::fsp_level& fsp) const
 {
-    return apply_force(fpp, this->fpplevel);
+    return apply_force_enum(fsplevel, fsp, win::fsp_level::none, win::fsp_level::extreme);
+}
+
+bool Rules::applyFPP(win::fsp_level& fpp) const
+{
+    return apply_force_enum(fpplevel, fpp, win::fsp_level::none, win::fsp_level::extreme);
 }
 
 bool Rules::applyAcceptFocus(bool& focus) const

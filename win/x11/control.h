@@ -849,8 +849,8 @@ xcb_timestamp_t read_user_time_map_timestamp(Win* win,
             }
             // don't refuse if focus stealing prevention is turned off
             if (!first_window
-                && win->control->rules().checkFSP(
-                       kwinApp()->options->focusStealingPreventionLevel())
+                && enum_index(win->control->rules().checkFSP(
+                       kwinApp()->options->focusStealingPreventionLevel()))
                     > 0) {
                 qCDebug(KWIN_CORE) << "User timestamp, already exists:" << 0;
                 return 0; // refuse activation
