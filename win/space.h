@@ -237,10 +237,6 @@ public:
 
     bool initializing() const;
 
-    QPoint
-    adjustClientPosition(Toplevel* window, QPoint pos, bool unrestricted, double snapAdjust = 1.0);
-    QRect adjustClientSize(Toplevel* window, QRect moveResizeGeom, win::position mode);
-
     /**
      * Most recently raised window.
      *
@@ -303,7 +299,6 @@ public:
     virtual win::screen_edge* create_screen_edge(win::screen_edger& edger);
     virtual QRect get_icon_geometry(Toplevel const* win) const;
 
-    void fixPositionAfterCrash(xcb_window_t w, const xcb_get_geometry_reply_t* geom);
     void saveOldScreenSizes();
     void desktopResized();
 

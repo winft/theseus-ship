@@ -920,7 +920,9 @@ void effects_handler_impl::moveWindow(EffectWindow* w,
     }
 
     if (snap) {
-        win::move(window, m_compositor->space->adjustClientPosition(window, pos, true, snapAdjust));
+        win::move(
+            window,
+            win::adjust_window_position(*m_compositor->space, *window, pos, true, snapAdjust));
     } else {
         win::move(window, pos);
     }

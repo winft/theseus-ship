@@ -8,6 +8,7 @@
 #include "color_mapper.h"
 #include "control.h"
 #include "moving_window_filter.h"
+#include "placement.h"
 #include "space_event.h"
 #include "sync_alarm_filter.h"
 
@@ -132,7 +133,7 @@ void init_space(Space& space)
                     create_unmanaged_window(wins[i], space);
             } else if (attr->map_state != XCB_MAP_STATE_UNMAPPED) {
                 if (Application::wasCrash()) {
-                    space.fixPositionAfterCrash(wins[i], windowGeometries.at(i).data());
+                    fix_position_after_crash(space, wins[i], windowGeometries.at(i).data());
                 }
 
                 // ### This will request the attributes again

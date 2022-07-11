@@ -420,7 +420,7 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
         calculateMoveResizeGeom();
 
         // adjust new size to snap to other windows/borders
-        mov_res.geometry = win->space.adjustClientSize(win, mov_res.geometry, mode);
+        mov_res.geometry = adjust_window_size(win->space, *win, mov_res.geometry, mode);
 
         if (!mov_res.unrestricted) {
             // Make sure the titlebar isn't behind a restricted area. We don't need to restrict
@@ -561,8 +561,8 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
             // first move, then snap, then check bounds
             auto moveResizeGeom = mov_res.geometry;
             moveResizeGeom.moveTopLeft(topleft);
-            moveResizeGeom.moveTopLeft(win->space.adjustClientPosition(
-                win, moveResizeGeom.topLeft(), mov_res.unrestricted));
+            moveResizeGeom.moveTopLeft(adjust_window_position(
+                win->space, *win, moveResizeGeom.topLeft(), mov_res.unrestricted));
             mov_res.geometry = moveResizeGeom;
 
             if (!mov_res.unrestricted) {

@@ -856,7 +856,7 @@ void MoveResizeWindowTest::testAdjustClientGeometryOfAutohidingX11Panel()
     QVERIFY(testWindow->isMovable());
     // panel is not yet hidden, we should snap against it
     QFETCH(QPoint, targetPoint);
-    QTEST(Test::app()->workspace->adjustClientPosition(testWindow, targetPoint, false),
+    QTEST(win::adjust_window_position(*Test::app()->workspace, *testWindow, targetPoint, false),
           "expectedAdjustedPoint");
 
     // now let's hide the panel
@@ -875,7 +875,7 @@ void MoveResizeWindowTest::testAdjustClientGeometryOfAutohidingX11Panel()
     QVERIFY(panelHiddenSpy.wait());
 
     // now try to snap again
-    QCOMPARE(Test::app()->workspace->adjustClientPosition(testWindow, targetPoint, false),
+    QCOMPARE(win::adjust_window_position(*Test::app()->workspace, *testWindow, targetPoint, false),
              targetPoint);
 
     // and destroy the panel again
@@ -889,7 +889,7 @@ void MoveResizeWindowTest::testAdjustClientGeometryOfAutohidingX11Panel()
     QVERIFY(panelClosedSpy.wait());
 
     // snap once more
-    QCOMPARE(Test::app()->workspace->adjustClientPosition(testWindow, targetPoint, false),
+    QCOMPARE(win::adjust_window_position(*Test::app()->workspace, *testWindow, targetPoint, false),
              targetPoint);
 
     // and close
@@ -951,7 +951,7 @@ void MoveResizeWindowTest::testAdjustClientGeometryOfAutohidingWaylandPanel()
     QVERIFY(testWindow->isMovable());
     // panel is not yet hidden, we should snap against it
     QFETCH(QPoint, targetPoint);
-    QTEST(Test::app()->workspace->adjustClientPosition(testWindow, targetPoint, false),
+    QTEST(win::adjust_window_position(*Test::app()->workspace, *testWindow, targetPoint, false),
           "expectedAdjustedPoint");
 
     // now let's hide the panel
@@ -961,7 +961,7 @@ void MoveResizeWindowTest::testAdjustClientGeometryOfAutohidingWaylandPanel()
     QVERIFY(panelHiddenSpy.wait());
 
     // now try to snap again
-    QCOMPARE(Test::app()->workspace->adjustClientPosition(testWindow, targetPoint, false),
+    QCOMPARE(win::adjust_window_position(*Test::app()->workspace, *testWindow, targetPoint, false),
              targetPoint);
 
     // and destroy the panel again
@@ -973,7 +973,7 @@ void MoveResizeWindowTest::testAdjustClientGeometryOfAutohidingWaylandPanel()
     QVERIFY(panelClosedSpy.wait());
 
     // snap once more
-    QCOMPARE(Test::app()->workspace->adjustClientPosition(testWindow, targetPoint, false),
+    QCOMPARE(win::adjust_window_position(*Test::app()->workspace, *testWindow, targetPoint, false),
              targetPoint);
 
     // and close
