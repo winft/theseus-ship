@@ -26,6 +26,7 @@
 #include "win/screen.h"
 #include "win/setup.h"
 #include "win/stacking_order.h"
+#include "win/tabbox.h"
 #include "win/virtual_desktops.h"
 #include "win/x11/space_areas.h"
 #include "xwl/surface.h"
@@ -247,7 +248,7 @@ void space::handle_window_added(wayland::window* window)
             activate_window(*this, window);
         }
 
-        updateTabbox();
+        update_tabbox(*this);
 
         QObject::connect(window, &win::wayland::window::windowShown, qobject.get(), [this, window] {
             win::update_layer(window);
@@ -299,7 +300,7 @@ void space::handle_window_removed(wayland::window* window)
 
     if (window->control) {
         win::update_space_areas(*this);
-        updateTabbox();
+        update_tabbox(*this);
     }
 
     Q_EMIT qobject->wayland_window_removed(window);

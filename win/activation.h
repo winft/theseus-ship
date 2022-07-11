@@ -8,6 +8,7 @@
 #include "actions.h"
 #include "desktop_set.h"
 #include "focus_chain_find.h"
+#include "input.h"
 #include "layers.h"
 #include "screen.h"
 #include "stacking.h"
@@ -432,10 +433,10 @@ void set_active_window(Space& space, Toplevel* window)
 
     x11::update_tool_windows_visibility(&space, false);
     if (window) {
-        space.disableGlobalShortcutsForClient(
-            window->control->rules().checkDisableGlobalShortcuts(false));
+        set_global_shortcuts_disabled(space,
+                                      window->control->rules().checkDisableGlobalShortcuts(false));
     } else {
-        space.disableGlobalShortcutsForClient(false);
+        set_global_shortcuts_disabled(space, false);
     }
 
     // e.g. fullscreens have different layer when active/not-active
@@ -544,7 +545,7 @@ bool activate_next_window(Space& space, Toplevel* window)
 
     int const desktop = space.virtual_desktop_manager->current();
 
-    if (!get_focus && space.showingDesktop()) {
+    if (!get_focus && space.showing_desktop) {
         // to not break the state
         get_focus = find_desktop(&space, true, desktop);
     }
@@ -608,7 +609,7 @@ void process_window_hidden(Space& space, Win* window)
 template<typename Space>
 Toplevel* find_window_to_activate_on_desktop(Space& space, unsigned int desktop)
 {
-    if (space.movingClient != nullptr && space.active_client == space.movingClient
+    if (space.move_resize_window && space.active_client == space.move_resize_window
         && focus_chain_at_desktop_contains(space.focus_chain, space.active_client, desktop)
         && space.active_client->isShown() && space.active_client->isOnCurrentDesktop()) {
         // A requestFocus call will fail, as the client is already active
@@ -862,7 +863,7 @@ void set_showing_desktop(Space& space, bool showing)
 template<typename Space>
 void toggle_show_desktop(Space& space)
 {
-    set_showing_desktop(space, !space.showingDesktop());
+    set_showing_desktop(space, !space.showing_desktop);
 }
 
 }

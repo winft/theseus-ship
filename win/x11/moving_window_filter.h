@@ -30,7 +30,7 @@ public:
 
     bool event(xcb_generic_event_t* event) override
     {
-        auto mr_win = dynamic_cast<window*>(space.moveResizeClient());
+        auto mr_win = dynamic_cast<window*>(space.move_resize_window);
         if (!mr_win) {
             return false;
         }

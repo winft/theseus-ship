@@ -1535,9 +1535,9 @@ void TestXdgShellClient::testXdgWindowGeometryInteractiveResize()
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
     // Start interactively resizing the client.
-    QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
+    QCOMPARE(Test::app()->workspace->move_resize_window, nullptr);
     win::active_window_resize(*Test::app()->workspace);
-    QCOMPARE(Test::app()->workspace->moveResizeClient(), client);
+    QCOMPARE(Test::app()->workspace->move_resize_window, client);
     QCOMPARE(clientStartMoveResizedSpy.count(), 1);
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 2);
@@ -1584,7 +1584,7 @@ void TestXdgShellClient::testXdgWindowGeometryInteractiveResize()
     // Finish resizing the client.
     win::key_press_event(client, Qt::Key_Enter);
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
-    QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
+    QCOMPARE(Test::app()->workspace->move_resize_window, nullptr);
 #if 0
     QEXPECT_FAIL("", "XdgShellClient currently doesn't send final configure event", Abort);
     QVERIFY(configureRequestedSpy.wait());

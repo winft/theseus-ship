@@ -76,9 +76,9 @@ void ShowingDesktopTest::testRestoreFocus()
 
     QCOMPARE(Test::app()->workspace->active_client, client2);
     win::toggle_show_desktop(*Test::app()->workspace);
-    QVERIFY(Test::app()->workspace->showingDesktop());
+    QVERIFY(Test::app()->workspace->showing_desktop);
     win::toggle_show_desktop(*Test::app()->workspace);
-    QVERIFY(!Test::app()->workspace->showingDesktop());
+    QVERIFY(!Test::app()->workspace->showing_desktop);
 
     QVERIFY(Test::app()->workspace->active_client);
     QCOMPARE(Test::app()->workspace->active_client, client2);
@@ -113,10 +113,10 @@ void ShowingDesktopTest::testRestoreFocusWithDesktopWindow()
 
     QCOMPARE(Test::app()->workspace->active_client, client2);
     win::toggle_show_desktop(*Test::app()->workspace);
-    QVERIFY(Test::app()->workspace->showingDesktop());
+    QVERIFY(Test::app()->workspace->showing_desktop);
     QCOMPARE(Test::app()->workspace->active_client, desktop);
     win::toggle_show_desktop(*Test::app()->workspace);
-    QVERIFY(!Test::app()->workspace->showingDesktop());
+    QVERIFY(!Test::app()->workspace->showing_desktop);
 
     QVERIFY(Test::app()->workspace->active_client);
     QCOMPARE(Test::app()->workspace->active_client, client2);

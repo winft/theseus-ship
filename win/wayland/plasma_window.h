@@ -35,7 +35,7 @@ void handle_change_showing_desktop(Space* space,
         assert(false);
         break;
     }
-    if (set == space->showingDesktop()) {
+    if (set == space->showing_desktop) {
         return;
     }
     set_showing_desktop(*space, set);

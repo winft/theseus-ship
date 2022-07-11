@@ -16,14 +16,25 @@
 namespace KWin::win::x11
 {
 
+template<typename Space>
+bool check_startup_notification(Space& space,
+                                xcb_window_t w,
+                                KStartupInfoId& id,
+                                KStartupInfoData& data)
+{
+    return space.startup->checkStartup(w, id, data) == KStartupInfo::Match;
+}
+
 template<typename Win>
 void startup_id_changed(Win* win)
 {
     KStartupInfoId asn_id;
     KStartupInfoData asn_data;
-    bool asn_valid = win->space.checkStartupNotification(win->xcb_window, asn_id, asn_data);
-    if (!asn_valid)
+    auto asn_valid = check_startup_notification(win->space, win->xcb_window, asn_id, asn_data);
+    if (!asn_valid) {
         return;
+    }
+
     // If the ASN contains desktop, move it to the desktop, otherwise move it to the current
     // desktop (since the new ASN should make the window act like if it's a new application
     // launched). However don't affect the window's desktop if it's set to be on all desktops.

@@ -69,7 +69,7 @@ void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)
             continue;
         }
 
-        if (!client->isOnDesktop(newDesktop) && client != space->moveResizeClient()) {
+        if (!client->isOnDesktop(newDesktop) && client != space->move_resize_window) {
             update_visibility(client);
         }
     }
@@ -79,7 +79,7 @@ void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)
         x11::rootInfo()->setCurrentDesktop(space->virtual_desktop_manager->current());
     }
 
-    if (auto move_resize_client = space->moveResizeClient()) {
+    if (auto move_resize_client = space->move_resize_window) {
         if (!move_resize_client->isOnDesktop(newDesktop)) {
             win::set_desktop(move_resize_client, newDesktop);
         }
@@ -96,7 +96,7 @@ void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)
         }
     }
 
-    if (space->showingDesktop()) {
+    if (space->showing_desktop) {
         // Do this only after desktop change to avoid flicker.
         set_showing_desktop(*space, false);
     }
@@ -115,7 +115,7 @@ void handle_current_desktop_changed(Space& space, unsigned int oldDesktop, unsig
     --space.block_focus;
 
     activate_window_on_new_desktop(space, newDesktop);
-    Q_EMIT space.qobject->currentDesktopChanged(oldDesktop, space.movingClient);
+    Q_EMIT space.qobject->currentDesktopChanged(oldDesktop, space.move_resize_window);
 }
 
 template<typename Space>

@@ -1064,7 +1064,7 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
     input::get_cursor()->set_pos(origGeo.center());
     win::perform_window_operation(*Test::app()->workspace, client2, base::options::MoveOp);
 
-    QTRY_COMPARE(Test::app()->workspace->moveResizeClient(), client2);
+    QTRY_COMPARE(Test::app()->workspace->move_resize_window, client2);
     QVERIFY(win::is_move(client2));
 
     // move to next screen - step is 8 pixel, so 800 pixel
@@ -1075,7 +1075,7 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
 
     win::key_press_event(client2, Qt::Key_Enter);
     QCOMPARE(win::is_move(client2), false);
-    QVERIFY(Test::app()->workspace->moveResizeClient() == nullptr);
+    QVERIFY(Test::app()->workspace->move_resize_window == nullptr);
     QCOMPARE(client2->frameGeometry(), QRect(origGeo.translated(-800, 0)));
 
     // Destroy window again.

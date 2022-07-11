@@ -71,12 +71,12 @@ template<typename Space>
 void set_move_resize_window(Space& space, Toplevel* window)
 {
     // Catch attempts to move a second
-    assert(!window || !space.movingClient);
+    assert(!window || !space.move_resize_window);
 
     // window while still moving the first one.
-    space.movingClient = window;
+    space.move_resize_window = window;
 
-    if (space.movingClient) {
+    if (space.move_resize_window) {
         ++space.block_focus;
     } else {
         --space.block_focus;

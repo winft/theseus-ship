@@ -90,10 +90,10 @@ void ScreenEdgeTest::initTestCase()
 void ScreenEdgeTest::init()
 {
     input::get_cursor()->set_pos(640, 512);
-    if (Test::app()->workspace->showingDesktop()) {
+    if (Test::app()->workspace->showing_desktop) {
         win::toggle_show_desktop(*Test::app()->workspace);
     }
-    QVERIFY(!Test::app()->workspace->showingDesktop());
+    QVERIFY(!Test::app()->workspace->showing_desktop);
 }
 
 void ScreenEdgeTest::cleanup()
@@ -163,7 +163,7 @@ void ScreenEdgeTest::testEdge()
     QFETCH(QPoint, triggerPos);
     input::get_cursor()->set_pos(triggerPos);
     QCOMPARE(showDesktopSpy.count(), 1);
-    QVERIFY(Test::app()->workspace->showingDesktop());
+    QVERIFY(Test::app()->workspace->showing_desktop);
 }
 
 void ScreenEdgeTest::testTouchEdge_data()
@@ -218,7 +218,7 @@ void ScreenEdgeTest::testTouchEdge()
     Test::touch_up(0, timestamp++);
     QVERIFY(showDesktopSpy.wait());
     QCOMPARE(showDesktopSpy.count(), 1);
-    QVERIFY(Test::app()->workspace->showingDesktop());
+    QVERIFY(Test::app()->workspace->showing_desktop);
 }
 
 void ScreenEdgeTest::triggerConfigReload()

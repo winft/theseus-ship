@@ -533,9 +533,9 @@ void PointerInputTest::testModifierClickUnrestrictedMoveGlobalShortcutsDisabled(
     QVERIFY(window);
 
     // disable global shortcuts
-    QVERIFY(!Test::app()->workspace->globalShortcutsDisabled());
-    Test::app()->workspace->disableGlobalShortcutsForClient(true);
-    QVERIFY(Test::app()->workspace->globalShortcutsDisabled());
+    QVERIFY(!Test::app()->workspace->global_shortcuts_disabled);
+    win::set_global_shortcuts_disabled(*Test::app()->workspace, true);
+    QVERIFY(Test::app()->workspace->global_shortcuts_disabled);
 
     // move cursor on window
     input::get_cursor()->set_pos(window->frameGeometry().center());
@@ -551,7 +551,7 @@ void PointerInputTest::testModifierClickUnrestrictedMoveGlobalShortcutsDisabled(
     QVERIFY(!win::is_move(window));
     Test::pointer_button_released(BTN_LEFT, timestamp++);
 
-    Test::app()->workspace->disableGlobalShortcutsForClient(false);
+    win::set_global_shortcuts_disabled(*Test::app()->workspace, false);
 }
 
 void PointerInputTest::testModifierScrollOpacity_data()
@@ -673,9 +673,9 @@ void PointerInputTest::testModifierScrollOpacityGlobalShortcutsDisabled()
     input::get_cursor()->set_pos(window->frameGeometry().center());
 
     // disable global shortcuts
-    QVERIFY(!Test::app()->workspace->globalShortcutsDisabled());
-    Test::app()->workspace->disableGlobalShortcutsForClient(true);
-    QVERIFY(Test::app()->workspace->globalShortcutsDisabled());
+    QVERIFY(!Test::app()->workspace->global_shortcuts_disabled);
+    win::set_global_shortcuts_disabled(*Test::app()->workspace, true);
+    QVERIFY(Test::app()->workspace->global_shortcuts_disabled);
 
     // simulate modifier+wheel
     quint32 timestamp = 1;
@@ -686,7 +686,7 @@ void PointerInputTest::testModifierScrollOpacityGlobalShortcutsDisabled()
     QCOMPARE(window->opacity(), 0.5);
     Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
 
-    Test::app()->workspace->disableGlobalShortcutsForClient(false);
+    win::set_global_shortcuts_disabled(*Test::app()->workspace, false);
 }
 
 void PointerInputTest::testScrollAction()

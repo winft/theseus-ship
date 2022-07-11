@@ -289,11 +289,11 @@ void TestXdgShellClientRules::testPositionApply()
     QSignalSpy clientFinishUserMovedResizedSpy(client, &Toplevel::clientFinishUserMovedResized);
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
-    QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
+    QCOMPARE(Test::app()->workspace->move_resize_window, nullptr);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
     win::active_window_move(*Test::app()->workspace);
-    QCOMPARE(Test::app()->workspace->moveResizeClient(), client);
+    QCOMPARE(Test::app()->workspace->move_resize_window, client);
     QCOMPARE(clientStartMoveResizedSpy.count(), 1);
     QVERIFY(win::is_move(client));
     QVERIFY(!win::is_resize(client));
@@ -307,7 +307,7 @@ void TestXdgShellClientRules::testPositionApply()
 
     win::key_press_event(client, Qt::Key_Enter);
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
-    QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
+    QCOMPARE(Test::app()->workspace->move_resize_window, nullptr);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
     QCOMPARE(client->pos(), QPoint(50, 42));
@@ -365,11 +365,11 @@ void TestXdgShellClientRules::testPositionRemember()
     QSignalSpy clientFinishUserMovedResizedSpy(client, &Toplevel::clientFinishUserMovedResized);
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
-    QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
+    QCOMPARE(Test::app()->workspace->move_resize_window, nullptr);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
     win::active_window_move(*Test::app()->workspace);
-    QCOMPARE(Test::app()->workspace->moveResizeClient(), client);
+    QCOMPARE(Test::app()->workspace->move_resize_window, client);
     QCOMPARE(clientStartMoveResizedSpy.count(), 1);
     QVERIFY(win::is_move(client));
     QVERIFY(!win::is_resize(client));
@@ -383,7 +383,7 @@ void TestXdgShellClientRules::testPositionRemember()
 
     win::key_press_event(client, Qt::Key_Enter);
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
-    QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
+    QCOMPARE(Test::app()->workspace->move_resize_window, nullptr);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
     QCOMPARE(client->pos(), QPoint(50, 42));
@@ -436,11 +436,11 @@ void TestXdgShellClientRules::testPositionForce()
     // User should not be able to move the client.
     QSignalSpy clientStartMoveResizedSpy(client, &Toplevel::clientStartUserMovedResized);
     QVERIFY(clientStartMoveResizedSpy.isValid());
-    QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
+    QCOMPARE(Test::app()->workspace->move_resize_window, nullptr);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
     win::active_window_move(*Test::app()->workspace);
-    QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
+    QCOMPARE(Test::app()->workspace->move_resize_window, nullptr);
     QCOMPARE(clientStartMoveResizedSpy.count(), 0);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
@@ -507,11 +507,11 @@ void TestXdgShellClientRules::testPositionApplyNow()
     QSignalSpy clientFinishUserMovedResizedSpy(client, &Toplevel::clientFinishUserMovedResized);
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
-    QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
+    QCOMPARE(Test::app()->workspace->move_resize_window, nullptr);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
     win::active_window_move(*Test::app()->workspace);
-    QCOMPARE(Test::app()->workspace->moveResizeClient(), client);
+    QCOMPARE(Test::app()->workspace->move_resize_window, client);
     QCOMPARE(clientStartMoveResizedSpy.count(), 1);
     QVERIFY(win::is_move(client));
     QVERIFY(!win::is_resize(client));
@@ -525,7 +525,7 @@ void TestXdgShellClientRules::testPositionApplyNow()
 
     win::key_press_event(client, Qt::Key_Enter);
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
-    QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
+    QCOMPARE(Test::app()->workspace->move_resize_window, nullptr);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
     QCOMPARE(client->pos(), QPoint(50, 42));
@@ -571,11 +571,11 @@ void TestXdgShellClientRules::testPositionForceTemporarily()
     // User should not be able to move the client.
     QSignalSpy clientStartMoveResizedSpy(client, &Toplevel::clientStartUserMovedResized);
     QVERIFY(clientStartMoveResizedSpy.isValid());
-    QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
+    QCOMPARE(Test::app()->workspace->move_resize_window, nullptr);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
     win::active_window_move(*Test::app()->workspace);
-    QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
+    QCOMPARE(Test::app()->workspace->move_resize_window, nullptr);
     QCOMPARE(clientStartMoveResizedSpy.count(), 0);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
@@ -706,11 +706,11 @@ void TestXdgShellClientRules::testSizeApply()
     QSignalSpy surfaceSizeChangedSpy(shellSurface.get(), &XdgShellToplevel::sizeChanged);
     QVERIFY(surfaceSizeChangedSpy.isValid());
 
-    QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
+    QCOMPARE(Test::app()->workspace->move_resize_window, nullptr);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
     win::active_window_resize(*Test::app()->workspace);
-    QCOMPARE(Test::app()->workspace->moveResizeClient(), client);
+    QCOMPARE(Test::app()->workspace->move_resize_window, client);
     QCOMPARE(clientStartMoveResizedSpy.count(), 1);
     QVERIFY(!win::is_move(client));
     QVERIFY(win::is_resize(client));
@@ -741,7 +741,7 @@ void TestXdgShellClientRules::testSizeApply()
 
     win::key_press_event(client, Qt::Key_Enter);
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
-    QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
+    QCOMPARE(Test::app()->workspace->move_resize_window, nullptr);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
 
@@ -841,11 +841,11 @@ void TestXdgShellClientRules::testSizeRemember()
     QSignalSpy surfaceSizeChangedSpy(shellSurface.get(), &XdgShellToplevel::sizeChanged);
     QVERIFY(surfaceSizeChangedSpy.isValid());
 
-    QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
+    QCOMPARE(Test::app()->workspace->move_resize_window, nullptr);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
     win::active_window_resize(*Test::app()->workspace);
-    QCOMPARE(Test::app()->workspace->moveResizeClient(), client);
+    QCOMPARE(Test::app()->workspace->move_resize_window, client);
     QCOMPARE(clientStartMoveResizedSpy.count(), 1);
     QVERIFY(!win::is_move(client));
     QVERIFY(win::is_resize(client));
@@ -876,7 +876,7 @@ void TestXdgShellClientRules::testSizeRemember()
 
     win::key_press_event(client, Qt::Key_Enter);
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
-    QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
+    QCOMPARE(Test::app()->workspace->move_resize_window, nullptr);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
 
@@ -960,11 +960,11 @@ void TestXdgShellClientRules::testSizeForce()
     // Any attempt to resize the client should not succeed.
     QSignalSpy clientStartMoveResizedSpy(client, &Toplevel::clientStartUserMovedResized);
     QVERIFY(clientStartMoveResizedSpy.isValid());
-    QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
+    QCOMPARE(Test::app()->workspace->move_resize_window, nullptr);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
     win::active_window_resize(*Test::app()->workspace);
-    QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
+    QCOMPARE(Test::app()->workspace->move_resize_window, nullptr);
     QCOMPARE(clientStartMoveResizedSpy.count(), 0);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
@@ -1110,11 +1110,11 @@ void TestXdgShellClientRules::testSizeForceTemporarily()
     // Any attempt to resize the client should not succeed.
     QSignalSpy clientStartMoveResizedSpy(client, &Toplevel::clientStartUserMovedResized);
     QVERIFY(clientStartMoveResizedSpy.isValid());
-    QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
+    QCOMPARE(Test::app()->workspace->move_resize_window, nullptr);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
     win::active_window_resize(*Test::app()->workspace);
-    QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
+    QCOMPARE(Test::app()->workspace->move_resize_window, nullptr);
     QCOMPARE(clientStartMoveResizedSpy.count(), 0);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));

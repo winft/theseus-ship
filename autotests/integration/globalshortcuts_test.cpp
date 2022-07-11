@@ -466,7 +466,7 @@ void GlobalShortcutsTest::testSetupWindowShortcut()
     auto dialog = shortcutDialogAddedSpy.first().first().value<win::internal_window*>();
     QVERIFY(dialog);
     QVERIFY(dialog->isInternal());
-    auto sequenceEdit = Test::app()->workspace->shortcutDialog()->findChild<QKeySequenceEdit*>();
+    auto sequenceEdit = Test::app()->workspace->client_keys_dialog->findChild<QKeySequenceEdit*>();
     QVERIFY(sequenceEdit);
 
     // the QKeySequenceEdit field does not get focus, we need to pass it focus manually

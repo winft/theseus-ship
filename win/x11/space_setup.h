@@ -65,7 +65,7 @@ void init_space(Space& space)
 
     if (kwinApp()->operationMode() == Application::OperationModeX11) {
         space.m_wasUserInteractionFilter.reset(
-            new base::x11::user_interaction_filter([&space] { space.setWasUserInteraction(); }));
+            new base::x11::user_interaction_filter([&space] { mark_as_user_interaction(space); }));
         space.m_movingClientFilter.reset(new moving_window_filter(space));
     }
     if (base::x11::xcb::extensions::self()->is_sync_available()) {

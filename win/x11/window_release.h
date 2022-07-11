@@ -12,6 +12,7 @@
 #include "win/rules.h"
 #include "win/shortcut_set.h"
 #include "win/space_areas_helpers.h"
+#include "win/tabbox.h"
 #include "win/window_release.h"
 
 #if KWIN_BUILD_TABBOX
@@ -73,7 +74,7 @@ void remove_controlled_window_from_space(Space& space, Win* win)
 
     space.stacking_order->update_count();
     update_space_areas(space);
-    space.updateTabbox();
+    update_tabbox(space);
 }
 
 template<typename Win>

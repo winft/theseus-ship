@@ -513,7 +513,7 @@ void pointer_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
               }
 
               // TODO: can we check on the client instead?
-              if (redirect->space.moveResizeClient()) {
+              if (redirect->space.move_resize_window) {
                   // don't update while moving
                   return;
               }

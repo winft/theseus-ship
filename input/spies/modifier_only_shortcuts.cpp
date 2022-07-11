@@ -64,7 +64,7 @@ void modifier_only_shortcuts_spy::key(key_event const& event)
     } else if (!m_pressedKeys.isEmpty()) {
         m_pressedKeys.remove(event.keycode);
         if (m_pressedKeys.isEmpty() && mods == Qt::NoModifier
-            && !redirect.space.globalShortcutsDisabled()) {
+            && !redirect.space.global_shortcuts_disabled) {
             if (m_modifier != Qt::NoModifier) {
                 const auto list = kwinApp()->options->modifierOnlyDBusShortcut(m_modifier);
                 if (list.size() >= 4) {

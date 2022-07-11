@@ -607,7 +607,7 @@ void LockScreenTest::testMoveWindow()
     quint32 timestamp = 1;
 
     win::active_window_move(*Test::app()->workspace);
-    QCOMPARE(Test::app()->workspace->moveResizeClient(), c);
+    QCOMPARE(Test::app()->workspace->move_resize_window, c);
     QVERIFY(win::is_move(c));
 
     Test::keyboard_key_pressed(KEY_RIGHT, timestamp++);
@@ -621,14 +621,14 @@ void LockScreenTest::testMoveWindow()
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
 
     // While locking our window should continue to be in move resize.
-    LOCK QCOMPARE(Test::app()->workspace->moveResizeClient(), c);
+    LOCK QCOMPARE(Test::app()->workspace->move_resize_window, c);
     QVERIFY(win::is_move(c));
     Test::keyboard_key_pressed(KEY_RIGHT, timestamp++);
     Test::keyboard_key_released(KEY_RIGHT, timestamp++);
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
 
     UNLOCK
-    QCOMPARE(Test::app()->workspace->moveResizeClient(), c);
+    QCOMPARE(Test::app()->workspace->move_resize_window, c);
     QVERIFY(win::is_move(c));
 
     Test::keyboard_key_pressed(KEY_RIGHT, timestamp++);

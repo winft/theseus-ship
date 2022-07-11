@@ -87,4 +87,17 @@ bool perform_mouse_command(Win* win, base::options::MouseCommand command, QPoint
     return static_cast<Toplevel*>(win)->Toplevel::performMouseCommand(command, globalPos);
 }
 
+template<typename Space>
+void mark_as_user_interaction(Space& space)
+{
+    if (space.was_user_interaction) {
+        return;
+    }
+
+    space.was_user_interaction = true;
+
+    // might be called from within the filter, so delay till we now the filter returned
+    QTimer::singleShot(0, space.qobject.get(), [&] { space.m_wasUserInteractionFilter.reset(); });
+}
+
 }

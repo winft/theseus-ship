@@ -62,13 +62,13 @@ layer belong_to_layer(Win* win)
         return win::layer::unmanaged;
     }
     if (is_desktop(win)) {
-        return win->space.showingDesktop() ? win::layer::above : win::layer::desktop;
+        return win->space.showing_desktop ? win::layer::above : win::layer::desktop;
     }
     if (is_splash(win)) {
         return win::layer::normal;
     }
     if (is_dock(win)) {
-        if (win->space.showingDesktop()) {
+        if (win->space.showing_desktop) {
             return win::layer::notification;
         }
         return win->layer_for_dock();
@@ -82,7 +82,7 @@ layer belong_to_layer(Win* win)
     if (is_critical_notification(win)) {
         return win::layer::critical_notification;
     }
-    if (win->space.showingDesktop() && win->belongsToDesktop()) {
+    if (win->space.showing_desktop && win->belongsToDesktop()) {
         return win::layer::above;
     }
     if (win->control->keep_below()) {

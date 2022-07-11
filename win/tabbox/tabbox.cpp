@@ -1440,7 +1440,7 @@ void tabbox::accept(bool closeTabBox)
     if (c) {
         activate_window(space, c);
         if (win::is_desktop(c))
-            set_showing_desktop(space, !space.showingDesktop());
+            set_showing_desktop(space, !space.showing_desktop);
     }
 }
 

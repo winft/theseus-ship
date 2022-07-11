@@ -213,7 +213,7 @@ void cursor_image::updateMoveResize()
 {
     m_moveResizeCursor.image = QImage();
     m_moveResizeCursor.hotSpot = QPoint();
-    if (auto window = platform.redirect->space.moveResizeClient()) {
+    if (auto window = platform.redirect->space.move_resize_window) {
         loadThemeCursor(window->control->move_resize().cursor, &m_moveResizeCursor);
         if (m_currentSource == CursorSource::MoveResize) {
             Q_EMIT changed();
@@ -488,7 +488,7 @@ void cursor_image::reevaluteSource()
         setSource(CursorSource::EffectsOverride);
         return;
     }
-    if (platform.redirect->space.moveResizeClient()) {
+    if (platform.redirect->space.move_resize_window) {
         setSource(CursorSource::MoveResize);
         return;
     }

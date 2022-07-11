@@ -328,7 +328,8 @@ void Toplevel::applyWindowRules()
     // see also X11Client::setActive()
     if (control->active()) {
         setOpacity(control->rules().checkOpacityActive(qRound(opacity() * 100.0)) / 100.0);
-        space.disableGlobalShortcutsForClient(control->rules().checkDisableGlobalShortcuts(false));
+        win::set_global_shortcuts_disabled(space,
+                                           control->rules().checkDisableGlobalShortcuts(false));
     } else {
         setOpacity(control->rules().checkOpacityInactive(qRound(opacity() * 100.0)) / 100.0);
     }

@@ -152,7 +152,7 @@ bool screen_edge::activatesForPointer() const
         return true;
     }
     if (edger->desktop_switching.when_moving_client) {
-        auto c = edger->space.moveResizeClient();
+        auto c = edger->space.move_resize_window;
         if (c && !win::is_resize(c)) {
             return true;
         }
@@ -278,7 +278,7 @@ bool screen_edge::canActivate(QPoint const& cursorPos, QDateTime const& triggerT
 
 void screen_edge::handle(QPoint const& cursorPos)
 {
-    auto movingClient = edger->space.moveResizeClient();
+    auto movingClient = edger->space.move_resize_window;
 
     if ((edger->desktop_switching.when_moving_client && movingClient
          && !win::is_resize(movingClient))
@@ -319,7 +319,7 @@ bool screen_edge::handleAction(ElectricBorderAction action)
 {
     switch (action) {
     case ElectricActionShowDesktop: {
-        set_showing_desktop(edger->space, !edger->space.showingDesktop());
+        set_showing_desktop(edger->space, !edger->space.showing_desktop);
         return true;
     }
     case ElectricActionLockScreen: { // Lock the screen
@@ -412,7 +412,7 @@ void screen_edge::switchDesktop(QPoint const& cursorPos)
             pos.setY(OFFSET);
     }
 
-    if (auto c = edger->space.moveResizeClient()) {
+    if (auto c = edger->space.move_resize_window) {
         if (c->control->rules().checkDesktop(desktop) != int(desktop)) {
             // user attempts to move a client to another desktop where it is ruleforced to not be
             return;

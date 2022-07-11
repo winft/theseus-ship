@@ -20,6 +20,9 @@
 #include "base/options.h"
 #include "utils/blocker.h"
 
+#include <QDBusConnection>
+#include <QDBusMessage>
+#include <QDBusPendingCall>
 #include <QMouseEvent>
 #include <QStyleHints>
 
@@ -506,6 +509,30 @@ base::options::MouseCommand get_wheel_command(Win* win, Qt::Orientation orientat
         return kwinApp()->options->commandWindowWheel();
     }
     return base::options::MouseNothing;
+}
+
+template<typename Space>
+void set_global_shortcuts_disabled(Space& space, bool disable)
+{
+    if (space.global_shortcuts_disabled == disable) {
+        return;
+    }
+
+    QDBusMessage message = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"),
+                                                          QStringLiteral("/kglobalaccel"),
+                                                          QStringLiteral("org.kde.KGlobalAccel"),
+                                                          QStringLiteral("blockGlobalShortcuts"));
+    message.setArguments(QList<QVariant>() << disable);
+    QDBusConnection::sessionBus().asyncCall(message);
+
+    space.global_shortcuts_disabled = disable;
+
+    // Update also Meta+LMB actions etc.
+    for (auto window : space.windows) {
+        if (auto& ctrl = window->control) {
+            ctrl->update_mouse_grab();
+        }
+    }
 }
 
 }

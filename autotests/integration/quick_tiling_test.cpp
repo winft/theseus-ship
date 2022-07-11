@@ -428,7 +428,7 @@ void QuickTilingTest::testQuickTilingKeyboardMove()
     QVERIFY(quickTileChangedSpy.isValid());
 
     win::perform_window_operation(*Test::app()->workspace, c, base::options::UnrestrictedMoveOp);
-    QCOMPARE(c, Test::app()->workspace->moveResizeClient());
+    QCOMPARE(c, Test::app()->workspace->move_resize_window);
     QCOMPARE(input::get_cursor()->pos(), QPoint(49, 24));
 
     QFETCH(QPoint, targetPos);
@@ -454,7 +454,7 @@ void QuickTilingTest::testQuickTilingKeyboardMove()
     Test::keyboard_key_pressed(KEY_ENTER, timestamp++);
     Test::keyboard_key_released(KEY_ENTER, timestamp++);
     QCOMPARE(input::get_cursor()->pos(), targetPos);
-    QVERIFY(!Test::app()->workspace->moveResizeClient());
+    QVERIFY(!Test::app()->workspace->move_resize_window);
 
     QCOMPARE(quickTileChangedSpy.count(), 1);
     QTEST(c->control->quicktiling(), "expectedMode");
@@ -511,7 +511,7 @@ void QuickTilingTest::testQuickTilingPointerMove()
     QVERIFY(quickTileChangedSpy.isValid());
 
     win::perform_window_operation(*Test::app()->workspace, c, base::options::UnrestrictedMoveOp);
-    QCOMPARE(c, Test::app()->workspace->moveResizeClient());
+    QCOMPARE(c, Test::app()->workspace->move_resize_window);
     QCOMPARE(input::get_cursor()->pos(), QPoint(49, 24));
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
@@ -522,7 +522,7 @@ void QuickTilingTest::testQuickTilingPointerMove()
     Test::pointer_button_pressed(BTN_LEFT, timestamp++);
     Test::pointer_button_released(BTN_LEFT, timestamp++);
     QCOMPARE(input::get_cursor()->pos(), targetPos);
-    QVERIFY(!Test::app()->workspace->moveResizeClient());
+    QVERIFY(!Test::app()->workspace->move_resize_window);
 
     QCOMPARE(quickTileChangedSpy.count(), 1);
     QTEST(c->control->quicktiling(), "expectedMode");
@@ -604,13 +604,13 @@ void QuickTilingTest::testQuickTilingTouchMove()
                              c->frameGeometry().y() + decoration->borderTop() / 2),
                      timestamp++);
     QVERIFY(configureRequestedSpy.wait());
-    QCOMPARE(c, Test::app()->workspace->moveResizeClient());
+    QCOMPARE(c, Test::app()->workspace->move_resize_window);
     QCOMPARE(configureRequestedSpy.count(), 3);
 
     QFETCH(QPoint, targetPos);
     Test::touch_motion(0, targetPos, timestamp++);
     Test::touch_up(0, timestamp++);
-    QVERIFY(!Test::app()->workspace->moveResizeClient());
+    QVERIFY(!Test::app()->workspace->move_resize_window);
 
     // When there are no borders, there is no change to them when quick-tiling.
     // TODO: we should test both cases with fixed fake decoration for autotests.

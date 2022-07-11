@@ -418,15 +418,15 @@ void ModifierOnlyShortcutTest::testGlobalShortcutsDisabled()
     // trigger once to verify the shortcut works
     quint32 timestamp = 1;
     QFETCH(int, modifier);
-    QVERIFY(!Test::app()->workspace->globalShortcutsDisabled());
+    QVERIFY(!Test::app()->workspace->global_shortcuts_disabled);
     Test::keyboard_key_pressed(modifier, timestamp++);
     Test::keyboard_key_released(modifier, timestamp++);
     QTRY_COMPARE(triggeredSpy.count(), 1);
     triggeredSpy.clear();
 
     // now disable global shortcuts
-    Test::app()->workspace->disableGlobalShortcutsForClient(true);
-    QVERIFY(Test::app()->workspace->globalShortcutsDisabled());
+    win::set_global_shortcuts_disabled(*Test::app()->workspace, true);
+    QVERIFY(Test::app()->workspace->global_shortcuts_disabled);
     // Should not get triggered
     Test::keyboard_key_pressed(modifier, timestamp++);
     Test::keyboard_key_released(modifier, timestamp++);
@@ -434,8 +434,8 @@ void ModifierOnlyShortcutTest::testGlobalShortcutsDisabled()
     triggeredSpy.clear();
 
     // enable again
-    Test::app()->workspace->disableGlobalShortcutsForClient(false);
-    QVERIFY(!Test::app()->workspace->globalShortcutsDisabled());
+    win::set_global_shortcuts_disabled(*Test::app()->workspace, false);
+    QVERIFY(!Test::app()->workspace->global_shortcuts_disabled);
     // should get triggered again
     Test::keyboard_key_pressed(modifier, timestamp++);
     Test::keyboard_key_released(modifier, timestamp++);

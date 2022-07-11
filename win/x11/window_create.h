@@ -9,6 +9,7 @@
 #include "transient.h"
 
 #include "win/space_areas_helpers.h"
+#include "win/tabbox.h"
 
 namespace KWin::win::x11
 {
@@ -68,7 +69,7 @@ void add_controlled_window_to_space(Space& space, Win* win)
         update_tool_windows_visibility(&space, true);
     }
 
-    space.updateTabbox();
+    update_tabbox(space);
 }
 
 }

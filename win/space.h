@@ -217,7 +217,7 @@ public:
     QTimer reconfigureTimer;
     QTimer updateToolWindowsTimer;
 
-    Toplevel* movingClient{nullptr};
+    Toplevel* move_resize_window{nullptr};
 
     // Array of the previous restricted areas that window cannot be moved into
     std::vector<win::strut_rects> oldrestrictedmovearea;
@@ -235,8 +235,6 @@ public:
      */
     virtual Toplevel* findInternal(QWindow* w) const = 0;
 
-    bool initializing() const;
-
     /**
      * Most recently raised window.
      *
@@ -250,42 +248,11 @@ public:
     std::unique_ptr<base::dbus::kwin_impl<space>> dbus;
     std::unique_ptr<win::session_manager> session_manager;
 
-    void updateTabbox();
-
     QTimer* m_quickTileCombineTimer{nullptr};
     win::quicktiles m_lastTilingMode{win::quicktiles::none};
 
 public:
-    // True when performing space::updateClientArea().
-    // The calls below are valid only in that case.
-    bool inUpdateClientArea() const;
-
     Toplevel* active_client{nullptr};
-
-    bool showingDesktop() const;
-
-    bool checkStartupNotification(xcb_window_t w, KStartupInfoId& id, KStartupInfoData& data);
-
-    bool globalShortcutsDisabled() const;
-    void disableGlobalShortcutsForClient(bool disable);
-
-    void setWasUserInteraction();
-    bool wasUserInteraction() const;
-
-    /**
-     * Returns a client that is currently being moved or resized by the user.
-     *
-     * If none of clients is being moved or resized, @c null will be returned.
-     */
-    Toplevel* moveResizeClient()
-    {
-        return movingClient;
-    }
-
-    win::shortcut_dialog* shortcutDialog() const
-    {
-        return client_keys_dialog;
-    }
 
     virtual win::screen_edge* create_screen_edge(win::screen_edger& edger);
     virtual QRect get_icon_geometry(Toplevel const* win) const;
@@ -307,10 +274,8 @@ public:
     int session_active_client;
     int session_desktop;
 
-    void modalActionsSwitch(bool enabled);
-
     win::shortcut_dialog* client_keys_dialog{nullptr};
-    bool global_shortcuts_disabled_for_client{false};
+    bool global_shortcuts_disabled{false};
 
     // array of previous sizes of xinerama screens
     std::vector<QRect> oldscreensizes;
@@ -321,25 +286,7 @@ public:
     int set_active_client_recursion{0};
 
     std::unique_ptr<kill_window<space>> window_killer;
-
-private:
-    friend bool performTransiencyCheck();
 };
-
-inline bool space::wasUserInteraction() const
-{
-    return was_user_interaction;
-}
-
-inline bool space::showingDesktop() const
-{
-    return showing_desktop;
-}
-
-inline bool space::globalShortcutsDisabled() const
-{
-    return global_shortcuts_disabled_for_client;
-}
 
 }
 

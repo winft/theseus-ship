@@ -129,7 +129,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
         // info->userTime() is the value of the property, userTime() also includes
         // updates of the time done by KWin (ButtonPress on windowrapper etc.).
         if ((dirtyProperties2 & NET::WM2UserTime) != 0) {
-            win->space.setWasUserInteraction();
+            mark_as_user_interaction(win->space);
             update_user_time(win, win->info->userTime());
         }
         if ((dirtyProperties2 & NET::WM2StartupId) != 0) {

@@ -14,6 +14,7 @@
 #include "focus_stealing.h"
 #include "placement.h"
 #include "session.h"
+#include "startup_info.h"
 #include "user_time.h"
 #include "window_create.h"
 #include "xcb.h"
@@ -101,7 +102,7 @@ public:
         // client will receive funky EnterNotify and LeaveNotify events, but there is nothing that
         // we can do about it, unfortunately.
 
-        if (!m_window->space.globalShortcutsDisabled()) {
+        if (!m_window->space.global_shortcuts_disabled) {
             if (kwinApp()->options->commandAll1() != base::options::MouseNothing) {
                 establish_command_all_grab(m_window, XCB_BUTTON_INDEX_1);
             }
@@ -438,7 +439,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
     KStartupInfoId asn_id;
     KStartupInfoData asn_data;
-    auto asn_valid = space.checkStartupNotification(win->xcb_window, asn_id, asn_data);
+    auto asn_valid = check_startup_notification(space, win->xcb_window, asn_id, asn_data);
 
     // Make sure that the input window is created before we update the stacking order
     // TODO(romangg): Does it matter that the frame geometry is not set yet here?
@@ -694,7 +695,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         bool allow;
         if (session) {
             allow = session->active
-                && (!space.wasUserInteraction() || !space.active_client
+                && (!space.was_user_interaction || !space.active_client
                     || is_desktop(space.active_client));
         } else {
             allow = allow_window_activation(space, win, win->userTime(), false);

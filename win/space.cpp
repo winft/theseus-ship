@@ -293,53 +293,9 @@ space::~space()
     singleton_interface::space = nullptr;
 }
 
-bool space::checkStartupNotification(xcb_window_t w, KStartupInfoId& id, KStartupInfoData& data)
-{
-    return startup->checkStartup(w, id, data) == KStartupInfo::Match;
-}
-
-void space::disableGlobalShortcutsForClient(bool disable)
-{
-    if (global_shortcuts_disabled_for_client == disable)
-        return;
-    QDBusMessage message = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"),
-                                                          QStringLiteral("/kglobalaccel"),
-                                                          QStringLiteral("org.kde.KGlobalAccel"),
-                                                          QStringLiteral("blockGlobalShortcuts"));
-    message.setArguments(QList<QVariant>() << disable);
-    QDBusConnection::sessionBus().asyncCall(message);
-
-    global_shortcuts_disabled_for_client = disable;
-    // Update also Meta+LMB actions etc.
-    for (auto window : windows) {
-        if (auto& ctrl = window->control) {
-            ctrl->update_mouse_grab();
-        }
-    }
-}
-
-void space::setWasUserInteraction()
-{
-    if (was_user_interaction) {
-        return;
-    }
-    was_user_interaction = true;
-    // might be called from within the filter, so delay till we now the filter returned
-    QTimer::singleShot(0, qobject.get(), [this] { m_wasUserInteractionFilter.reset(); });
-}
-
 win::screen_edge* space::create_screen_edge(win::screen_edger& edger)
 {
     return new win::screen_edge(&edger);
-}
-
-void space::updateTabbox()
-{
-#if KWIN_BUILD_TABBOX
-    if (tabbox->is_displayed()) {
-        tabbox->reset(true);
-    }
-#endif
 }
 
 QRect space::get_icon_geometry(Toplevel const* /*win*/) const
