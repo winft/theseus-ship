@@ -96,4 +96,46 @@ void set_minimized(Win* win, bool set, bool avoid_animation = false)
     }
 }
 
+template<typename Win>
+void propagate_minimized_to_transients(Win& window)
+{
+    if (window.control->minimized()) {
+        for (auto win : window.transient()->children) {
+            if (!win->control) {
+                continue;
+            }
+            if (win->transient()->modal()) {
+                // There's no reason to hide modal dialogs with the main client...
+                continue;
+            }
+            // ... but to keep them to eg. watch progress or whatever.
+            if (!win->control->minimized()) {
+                set_minimized(win, true);
+                propagate_minimized_to_transients(*win);
+            }
+        }
+        if (window.transient()->modal()) {
+            // If a modal dialog is minimized, minimize its mainwindow too.
+            for (auto c2 : window.transient()->leads()) {
+                set_minimized(c2, true);
+            }
+        }
+    } else {
+        for (auto win : window.transient()->children) {
+            if (!win->control) {
+                continue;
+            }
+            if (win->control->minimized()) {
+                set_minimized(win, false);
+                propagate_minimized_to_transients(*win);
+            }
+        }
+        if (window.transient()->modal()) {
+            for (auto c2 : window.transient()->leads()) {
+                set_minimized(c2, false);
+            }
+        }
+    }
+}
+
 }

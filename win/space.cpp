@@ -352,64 +352,6 @@ QRect space::get_icon_geometry(Toplevel const* /*win*/) const
     return QRect();
 }
 
-void space::updateMinimizedOfTransients(Toplevel* c)
-{
-    // if mainwindow is minimized or shaded, minimize transients too
-    auto const transients = c->transient()->children;
-
-    if (c->control->minimized()) {
-        for (auto it = transients.cbegin(); it != transients.cend(); ++it) {
-            auto abstract_client = *it;
-            if (abstract_client->transient()->modal())
-                continue; // there's no reason to hide modal dialogs with the main client
-            if (!(*it)->control) {
-                continue;
-            }
-            // but to keep them to eg. watch progress or whatever
-            if (!(*it)->control->minimized()) {
-                win::set_minimized(abstract_client, true);
-                updateMinimizedOfTransients(abstract_client);
-            }
-        }
-        if (c->transient()
-                ->modal()) { // if a modal dialog is minimized, minimize its mainwindow too
-            for (auto c2 : c->transient()->leads()) {
-                win::set_minimized(c2, true);
-            }
-        }
-    } else {
-        // else unmiminize the transients
-        for (auto it = transients.cbegin(); it != transients.cend(); ++it) {
-            auto abstract_client = *it;
-            if (!(*it)->control) {
-                continue;
-            }
-            if ((*it)->control->minimized()) {
-                win::set_minimized(abstract_client, false);
-                updateMinimizedOfTransients(abstract_client);
-            }
-        }
-        if (c->transient()->modal()) {
-            for (auto c2 : c->transient()->leads()) {
-                win::set_minimized(c2, false);
-            }
-        }
-    }
-}
-
-/**
- * Sets the client \a c's transient windows' on_all_desktops property to \a on_all_desktops.
- */
-void space::updateOnAllDesktopsOfTransients(Toplevel* window)
-{
-    auto const transients = window->transient()->children;
-    for (auto const& transient : transients) {
-        if (transient->isOnAllDesktops() != window->isOnAllDesktops()) {
-            win::set_on_all_desktops(transient, window->isOnAllDesktops());
-        }
-    }
-}
-
 void space::update_space_area_from_windows(QRect const& /*desktop_area*/,
                                            std::vector<QRect> const& /*screens_geos*/,
                                            win::space_areas& /*areas*/)

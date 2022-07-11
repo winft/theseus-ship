@@ -18,6 +18,9 @@ namespace KWin::win
 {
 
 template<typename Win>
+void propagate_on_all_desktops_to_children(Win& window);
+
+template<typename Win>
 void set_desktops(Win* win, QVector<virtual_desktop*> desktops)
 {
     // On x11 we can have only one desktop at a time.
@@ -59,7 +62,7 @@ void set_desktops(Win* win, QVector<virtual_desktop*> desktops)
 
     if ((was_desk == NET::OnAllDesktops) != (win->desktop() == NET::OnAllDesktops)) {
         // OnAllDesktops changed
-        win->space.updateOnAllDesktopsOfTransients(win);
+        propagate_on_all_desktops_to_children(*win);
     }
 
     auto transients_stacking_order
@@ -151,6 +154,16 @@ void leave_desktop(Win* win, virtual_desktop* virtualDesktop)
     auto desktops = currentDesktops;
     desktops.removeOne(virtualDesktop);
     set_desktops(win, desktops);
+}
+
+template<typename Win>
+void propagate_on_all_desktops_to_children(Win& window)
+{
+    for (auto const& transient : window.transient()->children) {
+        if (transient->isOnAllDesktops() != window.isOnAllDesktops()) {
+            set_on_all_desktops(transient, window.isOnAllDesktops());
+        }
+    }
 }
 
 }

@@ -1167,7 +1167,7 @@ void window::doMinimize()
     } else {
         Q_EMIT windowShown(this);
     }
-    space.updateMinimizedOfTransients(this);
+    propagate_minimized_to_transients(*this);
 }
 
 void window::placeIn(QRect const& area)

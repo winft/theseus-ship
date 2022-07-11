@@ -1097,7 +1097,7 @@ void window::doMinimize()
 {
     update_visibility(this);
     update_allowed_actions(this);
-    space.updateMinimizedOfTransients(this);
+    propagate_minimized_to_transients(*this);
 }
 
 void window::showOnScreenEdge()

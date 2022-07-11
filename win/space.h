@@ -262,9 +262,6 @@ public:
 
     Toplevel* active_client{nullptr};
 
-    void updateMinimizedOfTransients(Toplevel*);
-    void updateOnAllDesktopsOfTransients(Toplevel* window);
-
     bool showingDesktop() const;
 
     bool checkStartupNotification(xcb_window_t w, KStartupInfoId& id, KStartupInfoData& data);

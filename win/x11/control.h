@@ -530,7 +530,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     set_desktop(win, desk);
     win->info->setDesktop(desk);
 
-    space.updateOnAllDesktopsOfTransients(win);
+    propagate_on_all_desktops_to_children(*win);
 
     win->client_frame_extents = gtk_frame_extents(win);
     win->geometry_update.original.client_frame_extents = win->client_frame_extents;
