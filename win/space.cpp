@@ -1191,13 +1191,4 @@ void space::restoreFocus()
     }
 }
 
-void space::clientAttentionChanged(Toplevel* window, bool set)
-{
-    remove_all(attention_chain, window);
-    if (set) {
-        attention_chain.push_front(window);
-    }
-    Q_EMIT qobject->clientDemandsAttentionChanged(window, set);
-}
-
 }

@@ -266,7 +266,6 @@ public:
     std::unique_ptr<win::session_manager> session_manager;
 
     void clientHidden(Toplevel* window);
-    void clientAttentionChanged(Toplevel* window, bool set);
 
     std::vector<Toplevel*> const& windows() const;
 

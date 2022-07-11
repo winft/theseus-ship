@@ -319,7 +319,12 @@ void set_demands_attention(Win* win, bool demand)
         win->info->setState(demand ? NET::DemandsAttention : NET::States(), NET::DemandsAttention);
     }
 
-    win->space.clientAttentionChanged(win, demand);
+    remove_all(win->space.attention_chain, win);
+    if (demand) {
+        win->space.attention_chain.push_front(win);
+    }
+
+    Q_EMIT win->space.qobject->clientDemandsAttentionChanged(win, demand);
     Q_EMIT win->demandsAttentionChanged();
 }
 
