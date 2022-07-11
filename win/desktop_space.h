@@ -153,4 +153,43 @@ void window_to_prev_desktop(Win& window)
     window_to_desktop<win::virtual_desktop_previous>(window);
 }
 
+template<typename Space>
+void save_old_output_sizes(Space& space)
+{
+    auto&& base = kwinApp()->get_base();
+    auto const& outputs = base.get_outputs();
+
+    space.olddisplaysize = base.topology.size;
+    space.oldscreensizes.clear();
+
+    for (auto output : outputs) {
+        space.oldscreensizes.push_back(output->geometry());
+    }
+}
+
+/// After an output topology change.
+template<typename Space>
+void handle_desktop_resize(Space& space)
+{
+    auto geom = QRect({}, kwinApp()->get_base().topology.size);
+    if (x11::rootInfo()) {
+        NETSize desktop_geometry;
+        desktop_geometry.width = geom.width();
+        desktop_geometry.height = geom.height();
+        x11::rootInfo()->setDesktopGeometry(desktop_geometry);
+    }
+
+    update_space_areas(space);
+
+    // after updateClientArea(), so that one still uses the previous one
+    save_old_output_sizes(space);
+
+    // TODO: emit a signal instead and remove the deep function calls into edges and effects
+    space.edges->recreateEdges();
+
+    if (auto& effects = space.render.effects) {
+        effects->desktopResized(geom.size());
+    }
+}
+
 }

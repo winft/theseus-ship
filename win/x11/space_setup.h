@@ -144,7 +144,7 @@ void init_space(Space& space)
         // Propagate clients, will really happen at the end of the updates blocker block
         space.stacking_order->update_count();
 
-        space.saveOldScreenSizes();
+        save_old_output_sizes(space);
         update_space_areas(space);
 
         // NETWM spec says we have to set it to (0,0) if we don't support it

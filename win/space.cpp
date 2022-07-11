@@ -162,7 +162,7 @@ space::space(render::compositor& render)
     QObject::connect(
         &base, &base::platform::topology_changed, qobject.get(), [this](auto old, auto topo) {
             if (old.size != topo.size) {
-                desktopResized();
+                handle_desktop_resize(*this);
             }
         });
 
@@ -417,45 +417,6 @@ void space::checkTransients(Toplevel* window)
     std::for_each(windows.cbegin(), windows.cend(), [&window](auto const& client) {
         client->checkTransient(window);
     });
-}
-
-/**
- * Resizes the space:: after an XRANDR screen size change
- */
-void space::desktopResized()
-{
-    auto geom = QRect({}, kwinApp()->get_base().topology.size);
-    if (win::x11::rootInfo()) {
-        NETSize desktop_geometry;
-        desktop_geometry.width = geom.width();
-        desktop_geometry.height = geom.height();
-        win::x11::rootInfo()->setDesktopGeometry(desktop_geometry);
-    }
-
-    update_space_areas(*this);
-
-    // after updateClientArea(), so that one still uses the previous one
-    saveOldScreenSizes();
-
-    // TODO: emit a signal instead and remove the deep function calls into edges and effects
-    edges->recreateEdges();
-
-    if (auto& effects = render.effects) {
-        effects->desktopResized(geom.size());
-    }
-}
-
-void space::saveOldScreenSizes()
-{
-    auto&& base = kwinApp()->get_base();
-    auto const& outputs = base.get_outputs();
-
-    olddisplaysize = base.topology.size;
-    oldscreensizes.clear();
-
-    for (auto output : outputs) {
-        oldscreensizes.push_back(output->geometry());
-    }
 }
 
 void space::update_space_area_from_windows(QRect const& /*desktop_area*/,
