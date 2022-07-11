@@ -256,15 +256,6 @@ public:
 
     std::vector<Toplevel*> const& windows() const;
 
-    /**
-     * @return List of unmanaged "clients" currently registered in space
-     */
-    std::vector<Toplevel*> unmanagedList() const;
-    /**
-     * @return Remnant windows, i.e. already closed but still kept around for closing effects.
-     */
-    std::vector<Toplevel*> remnants() const;
-
     void updateTabbox();
 
     QTimer* m_quickTileCombineTimer{nullptr};

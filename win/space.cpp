@@ -967,26 +967,4 @@ std::vector<Toplevel*> const& space::windows() const
     return m_windows;
 }
 
-std::vector<Toplevel*> space::unmanagedList() const
-{
-    std::vector<Toplevel*> ret;
-    for (auto const& window : m_windows) {
-        if (window->xcb_window && !window->control && !window->remnant) {
-            ret.push_back(window);
-        }
-    }
-    return ret;
-}
-
-std::vector<Toplevel*> space::remnants() const
-{
-    std::vector<Toplevel*> ret;
-    for (auto const& window : m_windows) {
-        if (window->remnant) {
-            ret.push_back(window);
-        }
-    }
-    return ret;
-}
-
 }

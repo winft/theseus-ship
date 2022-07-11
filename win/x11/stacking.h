@@ -23,6 +23,18 @@
 namespace KWin::win::x11
 {
 
+template<typename Win, typename Space>
+std::vector<Win*> get_unmanageds(Space const& space)
+{
+    std::vector<Win*> ret;
+    for (auto const& window : space.m_windows) {
+        if (window->xcb_window && !window->control && !window->remnant) {
+            ret.push_back(window);
+        }
+    }
+    return ret;
+}
+
 template<typename Space>
 void render_stack_unmanaged_windows(Space& space)
 {
@@ -40,7 +52,7 @@ void render_stack_unmanaged_windows(Space& space)
     // create an vector of references instead of making a copy of each element into the vector.
     std::vector<std::reference_wrapper<xcb_window_t>> windows(
         xcbtree->children(), xcbtree->children() + xcbtree->data()->children_len);
-    auto const& unmanaged_list = space.unmanagedList();
+    auto const& unmanaged_list = get_unmanageds<Toplevel>(space);
 
     for (auto const& win : windows) {
         auto unmanaged = std::find_if(unmanaged_list.cbegin(),

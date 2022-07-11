@@ -183,8 +183,8 @@ void compositor::stop(bool on_shutdown)
             xcb_composite_unredirect_subwindows(
                 con, kwinApp()->x11RootWindow(), XCB_COMPOSITE_REDIRECT_MANUAL);
         }
-        while (!space->remnants().empty()) {
-            auto win = space->remnants().front();
+        while (!win::get_remnants(*space).empty()) {
+            auto win = win::get_remnants(*space).front();
             win->remnant->refcount = 0;
             win::delete_window_from_space(win->space, win);
         }

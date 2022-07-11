@@ -211,7 +211,7 @@ void clear_space(Space& space)
         remove_all(space.m_windows, window);
     }
 
-    for (auto const& unmanaged : space.unmanagedList()) {
+    for (auto const& unmanaged : get_unmanageds<Toplevel>(space)) {
         release_window(static_cast<window*>(unmanaged), is_x11);
         remove_all(space.m_windows, unmanaged);
         remove_all(space.stacking_order->pre_stack, unmanaged);

@@ -53,7 +53,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/virtual_desktops.h"
 #include "win/window_area.h"
 #include "win/x11/group.h"
-#include "win/x11/unmanaged.h"
+#include "win/x11/stacking.h"
 #include "win/x11/window.h"
 #include "win/x11/window_find.h"
 
@@ -277,8 +277,8 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
         }
         setupClientConnections(x11_client);
     }
-    for (auto u : ws->unmanagedList()) {
-        setupUnmanagedConnections(u);
+    for (auto unmanaged : win::x11::get_unmanageds<Toplevel>(*ws)) {
+        setupUnmanagedConnections(unmanaged);
     }
     for (auto window : ws->windows()) {
         if (auto internal = qobject_cast<win::internal_window*>(window)) {
