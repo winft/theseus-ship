@@ -898,7 +898,7 @@ bool update_server_geometry(Win* win, QRect const& frame_geo)
     }
 
     if (win->control->move_resize().enabled) {
-        if (win->space.compositing()) {
+        if (win->space.render.scene) {
             // Defer the X server update until we leave this mode.
             win->move_needs_server_update = true;
         } else {

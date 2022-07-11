@@ -44,7 +44,7 @@ space::space(render::compositor& render)
 
     QObject::connect(
         &kwinApp()->get_base(), &base::platform::topology_changed, qobject.get(), [this] {
-            if (!compositing()) {
+            if (!this->render.scene) {
                 return;
             }
             // desktopResized() should take care of when the size or

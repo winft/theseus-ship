@@ -318,11 +318,6 @@ void space::disableGlobalShortcutsForClient(bool disable)
     }
 }
 
-bool space::compositing() const
-{
-    return static_cast<bool>(render.scene);
-}
-
 void space::setWasUserInteraction()
 {
     if (was_user_interaction) {

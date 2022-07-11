@@ -282,11 +282,6 @@ public:
         return movingClient;
     }
 
-    /**
-     * @returns Whether we have a compositor and it is active (Scene created)
-     */
-    bool compositing() const;
-
     win::shortcut_dialog* shortcutDialog() const
     {
         return client_keys_dialog;

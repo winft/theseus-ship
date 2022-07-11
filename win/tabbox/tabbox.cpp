@@ -299,7 +299,7 @@ tabbox_client_list tabbox_handler_impl::stacking_order() const
 
 bool tabbox_handler_impl::is_kwin_compositing() const
 {
-    return m_tabbox->space.compositing();
+    return static_cast<bool>(m_tabbox->space.render.scene);
 }
 
 void tabbox_handler_impl::raise_client(tabbox_client* c) const

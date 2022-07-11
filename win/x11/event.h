@@ -136,7 +136,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
             startup_id_changed(win);
         }
         if (dirtyProperties2 & NET::WM2Opacity) {
-            if (win->space.compositing()) {
+            if (win->space.render.scene) {
                 win->addRepaintFull();
                 Q_EMIT win->opacityChanged(win, old_opacity);
             } else {
