@@ -237,17 +237,9 @@ public:
 
     bool initializing() const;
 
-    bool allowClientActivation(Toplevel const* window,
-                               xcb_timestamp_t time = -1U,
-                               bool focus_in = false,
-                               bool ignore_desktop = false);
-
     QPoint
     adjustClientPosition(Toplevel* window, QPoint pos, bool unrestricted, double snapAdjust = 1.0);
     QRect adjustClientSize(Toplevel* window, QRect moveResizeGeom, win::position mode);
-
-    // used by layers.cpp, defined in activation.cpp
-    bool allowFullClientRaising(Toplevel const* c, xcb_timestamp_t timestamp);
 
     /**
      * Most recently raised window.

@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "focus_stealing.h"
 #include "group.h"
 #include "hide.h"
 #include "netinfo.h"
@@ -231,7 +232,7 @@ void raise_client_request(Space* space,
                           NET::RequestSource src = NET::FromApplication,
                           xcb_timestamp_t timestamp = 0)
 {
-    if (src == NET::FromTool || space->allowFullClientRaising(c, timestamp)) {
+    if (src == NET::FromTool || allow_full_window_raising(*space, c, timestamp)) {
         raise_window(space, c);
     } else {
         raise_client_within_application(space, c);

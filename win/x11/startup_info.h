@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include "focus_stealing.h"
+
 #include "base/output_helpers.h"
 #include "main.h"
 #include "win/desktop_space.h"
@@ -39,7 +41,7 @@ void startup_id_changed(Win* win)
     }
     auto const timestamp = asn_id.timestamp();
     if (timestamp != 0) {
-        auto activate = win->space.allowClientActivation(win, timestamp);
+        auto activate = allow_window_activation(win->space, win, timestamp);
         if (asn_data.desktop() != 0 && !win->isOnCurrentDesktop()) {
             // it was started on different desktop than current one
             activate = false;

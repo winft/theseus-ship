@@ -8,6 +8,7 @@
 #include "actions.h"
 #include "activation.h"
 #include "client.h"
+#include "focus_stealing.h"
 #include "geo.h"
 #include "meta.h"
 #include "stacking.h"
@@ -354,7 +355,7 @@ bool map_request_event(Win* win, xcb_map_request_event_t* e)
         win::set_minimized(win, false);
     }
     if (!win->isOnCurrentDesktop()) {
-        if (win->space.allowClientActivation(win)) {
+        if (allow_window_activation(win->space, win)) {
             activate_window(win->space, win);
         } else {
             win::set_demands_attention(win, true);
@@ -882,7 +883,7 @@ void focus_in_event(Win* win, xcb_focus_in_event_t* e)
     }
 
     // check if this client is in should_get_focus list or if activation is allowed
-    bool activate = win->space.allowClientActivation(win, -1U, true);
+    bool activate = allow_window_activation(win->space, win, -1U, true);
 
     // Remove from should_get_focus list.
     if (auto& sgf = win->space.should_get_focus; contains(sgf, win)) {

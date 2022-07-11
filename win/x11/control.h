@@ -11,6 +11,7 @@
 #include "client_machine.h"
 #include "command.h"
 #include "deco.h"
+#include "focus_stealing.h"
 #include "placement.h"
 #include "session.h"
 #include "user_time.h"
@@ -696,7 +697,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
                 && (!space.wasUserInteraction() || !space.active_client
                     || is_desktop(space.active_client));
         } else {
-            allow = space.allowClientActivation(win, win->userTime(), false);
+            allow = allow_window_activation(space, win, win->userTime(), false);
         }
 
         auto const isSessionSaving = space.session_manager->state() == SessionState::Saving;
@@ -859,7 +860,7 @@ xcb_timestamp_t read_user_time_map_timestamp(Win* win,
         // Creation time would just mess things up during session startup,
         // as possibly many apps are started up at the same time.
         // If there's no active window yet, no timestamp will be needed,
-        // as plain Workspace::allowClientActivation() will return true
+        // as plain allow_window_activation() will return true
         // in such case. And if there's already active window,
         // it's better not to activate the new one.
         // Unless it was the active window at the time

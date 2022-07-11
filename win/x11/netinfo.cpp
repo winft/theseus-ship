@@ -209,14 +209,17 @@ void root_info::changeActiveWindow(xcb_window_t w,
             return; // WORKAROUND? With > 1 plasma activities, we cause this ourselves. bug #240673
         } else {    // NET::FromApplication
             x11::window* c2;
-            if (space.allowClientActivation(c, timestamp, false, true))
+            if (allow_window_activation(space, c, timestamp, false, true)) {
                 activate_window(space, c);
+            }
+
             // if activation of the requestor's window would be allowed, allow activation too
             else if (active_window != XCB_WINDOW_NONE
                      && (c2 = find_controlled_window<x11::window>(
                              space, predicate_match::window, active_window))
                          != nullptr
-                     && space.allowClientActivation(
+                     && allow_window_activation(
+                         space,
                          c2,
                          timestampCompare(timestamp,
                                           c2->userTime() > 0 ? timestamp : c2->userTime()),
