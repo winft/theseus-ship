@@ -884,12 +884,32 @@ void focus_in_event(Win* win, xcb_focus_in_event_t* e)
     // check if this client is in should_get_focus list or if activation is allowed
     bool activate = win->space.allowClientActivation(win, -1U, true);
 
-    // remove from should_get_focus list
-    win->space.gotFocusIn(win);
+    // Remove from should_get_focus list.
+    if (auto& sgf = win->space.should_get_focus; contains(sgf, win)) {
+        // Remove also all sooner elements that should have got FocusIn, but didn't for some reason
+        // (and also won't anymore, because they were sooner).
+        while (sgf.front() != win) {
+            sgf.pop_front();
+        }
+
+        // Finally remove 'win'.
+        sgf.pop_front();
+    }
+
     if (activate) {
         win::set_active(win, true);
     } else {
-        win->space.restoreFocus();
+        // this updateXTime() is necessary - as FocusIn events don't have
+        // a timestamp *sigh*, kwin's timestamp would be older than the timestamp
+        // that was used by whoever caused the focus change, and therefore
+        // the attempt to restore the focus would fail due to old timestamp
+        kwinApp()->update_x11_time_from_clock();
+        if (win->space.should_get_focus.size() > 0) {
+            request_focus(win->space, win->space.should_get_focus.back());
+        } else if (win->space.last_active_client) {
+            request_focus(win->space, win->space.last_active_client);
+        }
+
         win::set_demands_attention(win, true);
     }
 }

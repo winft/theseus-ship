@@ -521,7 +521,11 @@ void window::takeFocus()
         send_client_message(xcb_window, space.atoms->wm_protocols, space.atoms->wm_take_focus);
     }
 
-    space.setShouldGetFocus(this);
+    space.should_get_focus.push_back(this);
+
+    // E.g. fullscreens have different layer when active/not-active.
+    space.stacking_order->update_order();
+
     auto breakShowingDesktop = !control->keep_above();
 
     if (breakShowingDesktop) {

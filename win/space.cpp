@@ -1002,27 +1002,6 @@ void space::clientHidden(Toplevel* window)
     activate_next_window(*this, window);
 }
 
-void space::gotFocusIn(Toplevel const* window)
-{
-    if (std::find(should_get_focus.cbegin(), should_get_focus.cend(), const_cast<Toplevel*>(window))
-        != should_get_focus.cend()) {
-        // remove also all sooner elements that should have got FocusIn,
-        // but didn't for some reason (and also won't anymore, because they were sooner)
-        while (should_get_focus.front() != window) {
-            should_get_focus.pop_front();
-        }
-        should_get_focus.pop_front(); // remove 'c'
-    }
-}
-
-void space::setShouldGetFocus(Toplevel* window)
-{
-    should_get_focus.push_back(window);
-
-    // e.g. fullscreens have different layer when active/not-active
-    stacking_order->update_order();
-}
-
 // focus_in -> the window got FocusIn event
 // ignore_desktop - call comes from _NET_ACTIVE_WINDOW message, don't refuse just because of window
 //     is on a different desktop
@@ -1173,22 +1152,6 @@ bool space::allowFullClientRaising(Toplevel const* window, xcb_timestamp_t time)
                        << (NET::timestampCompare(time, user_time) >= 0);
 
     return NET::timestampCompare(time, user_time) >= 0; // time >= user_time
-}
-
-// called from Client after FocusIn that wasn't initiated by KWin and the client
-// wasn't allowed to activate
-void space::restoreFocus()
-{
-    // this updateXTime() is necessary - as FocusIn events don't have
-    // a timestamp *sigh*, kwin's timestamp would be older than the timestamp
-    // that was used by whoever caused the focus change, and therefore
-    // the attempt to restore the focus would fail due to old timestamp
-    kwinApp()->update_x11_time_from_clock();
-    if (should_get_focus.size() > 0) {
-        request_focus(*this, should_get_focus.back());
-    } else if (last_active_client) {
-        request_focus(*this, last_active_client);
-    }
 }
 
 }

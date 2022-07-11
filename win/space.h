@@ -241,9 +241,6 @@ public:
                                xcb_timestamp_t time = -1U,
                                bool focus_in = false,
                                bool ignore_desktop = false);
-    void restoreFocus();
-    void gotFocusIn(Toplevel const* window);
-    void setShouldGetFocus(Toplevel* window);
 
     QPoint
     adjustClientPosition(Toplevel* window, QPoint pos, bool unrestricted, double snapAdjust = 1.0);
