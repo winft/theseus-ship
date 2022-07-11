@@ -94,7 +94,7 @@ void pointer_redirect::init()
         });
     };
 
-    auto const clients = redirect->space.m_windows;
+    auto const clients = redirect->space.windows;
     std::for_each(clients.begin(), clients.end(), setupMoveResizeConnection);
     QObject::connect(redirect->space.qobject.get(),
                      &win::space::qobject_t::clientAdded,

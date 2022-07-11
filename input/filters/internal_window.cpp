@@ -178,7 +178,7 @@ QKeyEvent get_internal_key_event(key_event const& event)
 
 bool internal_window_filter::key(key_event const& event)
 {
-    auto window = get_internal_window(redirect.space.windows());
+    auto window = get_internal_window(redirect.space.windows);
     if (!window) {
         return false;
     }
@@ -194,7 +194,7 @@ bool internal_window_filter::key(key_event const& event)
 
 bool internal_window_filter::key_repeat(key_event const& event)
 {
-    auto window = get_internal_window(redirect.space.windows());
+    auto window = get_internal_window(redirect.space.windows);
     if (!window) {
         return false;
     }

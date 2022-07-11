@@ -832,7 +832,7 @@ void window::do_set_fullscreen(bool full)
 
 bool window::belongsToDesktop() const
 {
-    auto const windows = static_cast<win::wayland::space&>(space).m_windows;
+    auto const windows = static_cast<win::wayland::space&>(space).windows;
 
     return std::any_of(windows.cbegin(), windows.cend(), [this](auto const& win) {
         if (belongsToSameApplication(win, flags<same_client_check>())) {

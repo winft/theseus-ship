@@ -32,7 +32,7 @@ bool shortcut_available(Space& space, const QKeySequence& cut, Toplevel* ignore)
     }
 
     // Check now conflicts with activation shortcuts for current clients.
-    for (auto const win : space.m_windows) {
+    for (auto const win : space.windows) {
         if (win != ignore && win->control && win->control->shortcut() == cut) {
             return false;
         }

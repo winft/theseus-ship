@@ -28,7 +28,7 @@ template<typename Space>
 void update_tool_windows_visibility(Space* space, bool also_hide)
 {
     if (!kwinApp()->options->isHideUtilityWindowsForInactive()) {
-        for (auto const& window : space->m_windows) {
+        for (auto const& window : space->windows) {
             if (window->control) {
                 window->hideClient(false);
             }

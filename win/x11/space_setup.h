@@ -208,12 +208,12 @@ void clear_space(Space& space)
 
         // No removeClient() is called, it does more than just removing.
         // However, remove from some lists to e.g. prevent performTransiencyCheck() from crashing.
-        remove_all(space.m_windows, window);
+        remove_all(space.windows, window);
     }
 
     for (auto const& unmanaged : get_unmanageds<Toplevel>(space)) {
         release_window(static_cast<window*>(unmanaged), is_x11);
-        remove_all(space.m_windows, unmanaged);
+        remove_all(space.windows, unmanaged);
         remove_all(space.stacking_order->pre_stack, unmanaged);
     }
 

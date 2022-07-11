@@ -95,7 +95,7 @@ void store_session(Space& space, QString const& sessionName, sm_save_phase phase
     int count = 0;
     int active_client = -1;
 
-    for (auto const& window : space.m_windows) {
+    for (auto const& window : space.windows) {
         if (!window->control) {
             continue;
         }
@@ -201,7 +201,7 @@ void store_subsession(Space const& space, QString const& name, QSet<QByteArray> 
     int count = 0;
     int active_client = -1;
 
-    for (auto const& window : space.m_windows) {
+    for (auto const& window : space.windows) {
         if (!window->control) {
             continue;
         }

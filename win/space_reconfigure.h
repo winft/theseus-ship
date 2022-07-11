@@ -40,7 +40,7 @@ void space_reconfigure(Space& space)
     x11::update_tool_windows_visibility(&space, true);
 
     space.rule_book->load();
-    for (auto window : space.m_windows) {
+    for (auto window : space.windows) {
         if (window->supportsWindowRules()) {
             win::evaluate_rules(window);
             space.rule_book->discardUsed(window, false);
@@ -51,7 +51,7 @@ void space_reconfigure(Space& space)
         && !kwinApp()->options->borderlessMaximizedWindows()) {
         // in case borderless maximized windows option changed and new option
         // is to have borders, we need to unset the borders for all maximized windows
-        for (auto window : space.m_windows) {
+        for (auto window : space.windows) {
             if (window->maximizeMode() == win::maximize_mode::full) {
                 window->checkNoBorder();
             }

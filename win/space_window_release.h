@@ -22,7 +22,7 @@ void remove_window_from_stacking_order(Space& space, Win* win)
 template<typename Space, typename Win>
 void remove_window_from_lists(Space& space, Win* win)
 {
-    remove_all(space.m_windows, win);
+    remove_all(space.windows, win);
     space.stacking_order->render_restack_required = true;
 }
 
@@ -44,9 +44,9 @@ template<typename Win1, typename Win2>
 void add_remnant(Win1& orig, Win2& remnant)
 {
     auto& space = orig.space;
-    assert(!contains(space.m_windows, &remnant));
+    assert(!contains(space.windows, &remnant));
 
-    space.m_windows.push_back(&remnant);
+    space.windows.push_back(&remnant);
 
     auto const unconstraintedIndex = index_of(space.stacking_order->pre_stack, &orig);
     if (unconstraintedIndex != -1) {

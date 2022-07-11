@@ -88,7 +88,7 @@ void update_space_areas_impl(Space& space, bool force)
             }
         }
 
-        for (auto win : space.m_windows) {
+        for (auto win : space.windows) {
             if (win->control) {
                 check_workspace_position(win);
             }

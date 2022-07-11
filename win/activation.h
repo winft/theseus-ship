@@ -421,7 +421,7 @@ void set_active_window(Space& space, Toplevel* window)
         // activating a client can cause a non active fullscreen window to loose the ActiveLayer
         // status on > 1 screens
         if (kwinApp()->get_base().get_outputs().size() > 1) {
-            for (auto win : space.m_windows) {
+            for (auto win : space.windows) {
                 if (win->control && win != space.active_client && win->layer() == win::layer::active
                     && win->central_output == space.active_client->central_output) {
                     update_layer(win);

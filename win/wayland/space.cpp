@@ -76,7 +76,7 @@ space::space(render::compositor& render, base::wayland::server* server)
     virtual_desktop_manager->setVirtualDesktopManagement(plasma_virtual_desktop_manager.get());
 
     QObject::connect(stacking_order.get(), &stacking_order::render_restack, qobject.get(), [this] {
-        for (auto win : m_windows) {
+        for (auto win : windows) {
             if (auto iwin = qobject_cast<internal_window*>(win); iwin && iwin->isShown()) {
                 stacking_order->render_overlays.push_back(iwin);
             }
@@ -121,7 +121,7 @@ space::space(render::compositor& render, base::wayland::server* server)
 
     QObject::connect(
         qobject.get(), &space::qobject_t::currentDesktopChanged, kde_idle.get(), [this] {
-            for (auto win : m_windows) {
+            for (auto win : windows) {
                 if (!win->control) {
                     continue;
                 }
@@ -187,10 +187,10 @@ space::~space()
 {
     stacking_order->lock();
 
-    for (auto const& window : m_windows) {
+    for (auto const& window : windows) {
         if (auto win = qobject_cast<win::wayland::window*>(window); win && !win->remnant) {
             destroy_window(win);
-            remove_all(m_windows, win);
+            remove_all(windows, win);
         }
     }
 }
@@ -202,10 +202,9 @@ window* space::find_window(Wrapland::Server::Surface* surface) const
         return nullptr;
     }
 
-    auto it = std::find_if(m_windows.cbegin(), m_windows.cend(), [surface](auto win) {
-        return win->surface == surface;
-    });
-    return it != m_windows.cend() ? qobject_cast<window*>(*it) : nullptr;
+    auto it = std::find_if(
+        windows.cbegin(), windows.cend(), [surface](auto win) { return win->surface == surface; });
+    return it != windows.cend() ? qobject_cast<window*>(*it) : nullptr;
 }
 
 void space::handle_window_added(wayland::window* window)
@@ -273,7 +272,7 @@ void space::handle_window_added(wayland::window* window)
 
 void space::handle_window_removed(wayland::window* window)
 {
-    remove_all(m_windows, window);
+    remove_all(windows, window);
 
     if (window->control) {
         if (window == most_recently_raised) {
@@ -319,7 +318,7 @@ void space::handle_x11_window_added(x11::window* window)
 
 void space::handle_desktop_removed(virtual_desktop* desktop)
 {
-    for (auto const& client : m_windows) {
+    for (auto const& client : windows) {
         if (!client->control) {
             continue;
         }
@@ -345,7 +344,7 @@ Toplevel* space::findInternal(QWindow* window) const
         return nullptr;
     }
 
-    for (auto win : m_windows) {
+    for (auto win : windows) {
         if (auto internal = qobject_cast<internal_window*>(win);
             internal && internal->internalWindow() == window) {
             return internal;
@@ -392,7 +391,7 @@ void space::update_space_area_from_windows(QRect const& desktop_area,
                                            std::vector<QRect> const& screens_geos,
                                            win::space_areas& areas)
 {
-    for (auto const& window : m_windows) {
+    for (auto const& window : windows) {
         if (!window->control) {
             continue;
         }
@@ -402,7 +401,7 @@ void space::update_space_area_from_windows(QRect const& desktop_area,
     }
 
     // TODO(romangg): Combine this and above loop.
-    for (auto win : m_windows) {
+    for (auto win : windows) {
         // TODO(romangg): check on control like in the previous loop?
         if (auto wl_win = qobject_cast<win::wayland::window*>(win)) {
             update_space_areas(wl_win, desktop_area, screens_geos, areas);

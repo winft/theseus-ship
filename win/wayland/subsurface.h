@@ -131,15 +131,15 @@ void handle_new_subsurface(Space* space, Wrapland::Server::Subsurface* subsurfac
 {
     auto window = new Window(subsurface->surface(), *space);
 
-    space->m_windows.push_back(window);
+    space->windows.push_back(window);
     QObject::connect(subsurface,
                      &Wrapland::Server::Subsurface::resourceDestroyed,
                      space->qobject.get(),
-                     [space, window] { remove_all(space->m_windows, window); });
+                     [space, window] { remove_all(space->windows, window); });
 
     assign_subsurface_role(window);
 
-    for (auto& win : space->m_windows) {
+    for (auto& win : space->windows) {
         if (win->surface == subsurface->parentSurface()) {
             win::wayland::set_subsurface_parent(window, win);
             if (window->ready_for_painting) {

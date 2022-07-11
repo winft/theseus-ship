@@ -168,7 +168,7 @@ public:
     using qobject_t = space_qobject;
     std::unique_ptr<qobject_t> qobject;
 
-    std::vector<Toplevel*> m_windows;
+    std::vector<Toplevel*> windows;
     std::vector<win::x11::group*> groups;
 
     win::space_areas areas;
@@ -253,8 +253,6 @@ public:
     std::unique_ptr<win::virtual_desktop_manager> virtual_desktop_manager;
     std::unique_ptr<base::dbus::kwin_impl<space>> dbus;
     std::unique_ptr<win::session_manager> session_manager;
-
-    std::vector<Toplevel*> const& windows() const;
 
     void updateTabbox();
 

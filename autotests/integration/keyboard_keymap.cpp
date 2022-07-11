@@ -119,7 +119,7 @@ void keyboard_keymap_test::cleanup()
 {
     // Make sure we animate.
     QTest::qWait(1000);
-    QVERIFY(Test::app()->workspace->windows().empty());
+    QVERIFY(Test::app()->workspace->windows.empty());
 
     Test::destroy_wayland_connection();
 }

@@ -42,7 +42,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
         });
 
     // TODO(romangg): We do this here too for every window.
-    for (auto window : space->m_windows) {
+    for (auto window : space->windows) {
         auto wayland_window = qobject_cast<win::wayland::window*>(window);
         if (!wayland_window) {
             continue;

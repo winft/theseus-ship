@@ -43,7 +43,7 @@ void remove_controlled_window_from_space(Space& space, Win* win)
         window_shortcut_updated(space, win);
     }
 
-    assert(contains(space.m_windows, win));
+    assert(contains(space.windows, win));
 
     // TODO: if marked client is removed, notify the marked list
     remove_window_from_lists(space, win);
@@ -98,7 +98,7 @@ template<typename Win>
 void finish_unmanaged_removal(Win* win, Toplevel* remnant)
 {
     auto& space = win->space;
-    assert(contains(space.m_windows, win));
+    assert(contains(space.windows, win));
 
     remove_window_from_lists(space, win);
     space.render.addRepaint(visible_rect(win));

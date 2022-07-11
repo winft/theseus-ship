@@ -278,7 +278,7 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
         win->getDamageRegionReply();
     }
 
-    if (auto const& wins = space->m_windows;
+    if (auto const& wins = space->windows;
         repaints_region.isEmpty() && !std::any_of(wins.cbegin(), wins.cend(), [](auto const& win) {
             return win->has_pending_repaints();
         })) {
@@ -437,7 +437,7 @@ void compositor::updateClientCompositeBlocking(Toplevel* window)
         // If !c we just check if we can resume in case a blocking client was lost.
         bool shouldResume = true;
 
-        for (auto const& client : space->m_windows) {
+        for (auto const& client : space->windows) {
             if (client->isBlockingCompositing()) {
                 shouldResume = false;
                 break;

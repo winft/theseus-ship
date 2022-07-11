@@ -266,7 +266,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     }
 
     // connect all clients
-    for (auto& window : ws->m_windows) {
+    for (auto& window : ws->windows) {
         // TODO: Can we merge this with the one for Wayland XdgShellClients below?
         if (!window->control) {
             continue;
@@ -280,7 +280,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     for (auto unmanaged : win::x11::get_unmanageds<Toplevel>(*ws)) {
         setupUnmanagedConnections(unmanaged);
     }
-    for (auto window : ws->windows()) {
+    for (auto window : ws->windows) {
         if (auto internal = qobject_cast<win::internal_window*>(window)) {
             setupAbstractClientConnections(internal);
         }
@@ -1116,7 +1116,7 @@ EffectWindow* effects_handler_impl::find_window_by_qwindow(QWindow* w) const
 
 EffectWindow* effects_handler_impl::find_window_by_uuid(const QUuid& id) const
 {
-    for (auto win : m_compositor->space->m_windows) {
+    for (auto win : m_compositor->space->windows) {
         if (!win->remnant && win->internal_id == id) {
             return win->render->effect.get();
         }

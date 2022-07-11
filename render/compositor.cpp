@@ -91,7 +91,7 @@ void compositor::start_scene()
     scene = create_scene();
     space->stacking_order->render_restack_required = true;
 
-    for (auto& client : space->windows()) {
+    for (auto& client : space->windows) {
         client->setupCompositing();
     }
 
@@ -172,7 +172,7 @@ void compositor::stop(bool on_shutdown)
     effects.reset();
 
     if (space) {
-        for (auto& c : space->windows()) {
+        for (auto& c : space->windows) {
             if (c->remnant) {
                 continue;
             }

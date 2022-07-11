@@ -209,7 +209,7 @@ createWindow(const QByteArray& appId, int timeout = 5000)
 win::wayland::window* get_toplevel_window(QSignalSpy const& spy)
 {
     auto xdg_toplevel = spy.last().at(0).value<Wrapland::Server::XdgShellToplevel*>();
-    for (auto win : Test::app()->workspace->m_windows) {
+    for (auto win : Test::app()->workspace->windows) {
         if (auto wl_win = qobject_cast<win::wayland::window*>(win);
             wl_win && wl_win->toplevel == xdg_toplevel) {
             return wl_win;

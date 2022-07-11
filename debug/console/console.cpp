@@ -250,7 +250,7 @@ console_model::console_model(win::space& space, QObject* parent)
     : QAbstractItemModel(parent)
     , space{space}
 {
-    for (auto const& window : space.m_windows) {
+    for (auto const& window : space.windows) {
         if (window->control) {
             if (auto x11_client = qobject_cast<win::x11::window*>(window)) {
                 m_x11Clients.append(x11_client);
@@ -279,7 +279,7 @@ console_model::console_model(win::space& space, QObject* parent)
     connect(space.qobject.get(), &win::space_qobject::unmanagedRemoved, this, [this](Toplevel* u) {
         remove_window(this, s_x11UnmanagedId - 1, m_unmanageds, u);
     });
-    for (auto const& window : space.windows()) {
+    for (auto const& window : space.windows) {
         if (auto internal = qobject_cast<win::internal_window*>(window)) {
             m_internalClients.append(internal);
         }

@@ -841,7 +841,7 @@ xcb_timestamp_t read_user_time_map_timestamp(Win* win,
                 else
                     first_window = false;
             } else {
-                for (auto win : win->space.m_windows) {
+                for (auto win : win->space.windows) {
                     if (win->control && sameApplicationActiveHackPredicate(win)) {
                         first_window = false;
                         break;

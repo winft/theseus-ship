@@ -259,22 +259,22 @@ space::~space()
 
     win::x11::clear_space(*this);
 
-    for (auto const& window : m_windows) {
+    for (auto const& window : windows) {
         if (auto internal = qobject_cast<win::internal_window*>(window);
             internal && !internal->remnant) {
             internal->destroyClient();
-            remove_all(m_windows, internal);
+            remove_all(windows, internal);
         }
     }
 
     // At this point only remnants are remaining.
-    for (auto it = m_windows.begin(); it != m_windows.end();) {
+    for (auto it = windows.begin(); it != windows.end();) {
         assert((*it)->remnant);
         Q_EMIT qobject->window_deleted(*it);
-        it = m_windows.erase(it);
+        it = windows.erase(it);
     }
 
-    assert(m_windows.empty());
+    assert(windows.empty());
 
     stacking_order.reset();
 
@@ -311,7 +311,7 @@ void space::disableGlobalShortcutsForClient(bool disable)
 
     global_shortcuts_disabled_for_client = disable;
     // Update also Meta+LMB actions etc.
-    for (auto window : m_windows) {
+    for (auto window : windows) {
         if (auto& ctrl = window->control) {
             ctrl->update_mouse_grab();
         }
@@ -414,7 +414,7 @@ void space::updateOnAllDesktopsOfTransients(Toplevel* window)
 // window.
 void space::checkTransients(Toplevel* window)
 {
-    std::for_each(m_windows.cbegin(), m_windows.cend(), [&window](auto const& client) {
+    std::for_each(windows.cbegin(), windows.cend(), [&window](auto const& client) {
         client->checkTransient(window);
     });
 }
@@ -589,7 +589,7 @@ space::adjustClientPosition(Toplevel* window, QPoint pos, bool unrestricted, dou
         // windows snap
         int snap = kwinApp()->options->windowSnapZone() * snapAdjust;
         if (snap) {
-            for (auto win : m_windows) {
+            for (auto win : windows) {
                 if (!win->control) {
                     continue;
                 }
@@ -806,7 +806,7 @@ QRect space::adjustClientSize(Toplevel* window, QRect moveResizeGeom, win::posit
         if (snap) {
             deltaX = int(snap);
             deltaY = int(snap);
-            for (auto win : m_windows) {
+            for (auto win : windows) {
                 if (win->control && win->isOnDesktop(virtual_desktop_manager->current())
                     && !win->control->minimized() && win != window) {
                     lx = win->pos().x() - 1;
@@ -960,11 +960,6 @@ void space::fixPositionAfterCrash(xcb_window_t w, const xcb_get_geometry_reply_t
         const uint32_t values[] = {geometry->x - left, geometry->y - top};
         xcb_configure_window(connection(), w, XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y, values);
     }
-}
-
-std::vector<Toplevel*> const& space::windows() const
-{
-    return m_windows;
 }
 
 }

@@ -647,7 +647,7 @@ Toplevel* tabbox::current_client()
 {
     if (auto client
         = static_cast<tabbox_client_impl*>(m_tabbox->client(m_tabbox->current_index()))) {
-        for (auto win : space.m_windows) {
+        for (auto win : space.windows) {
             if (win == client->client()) {
                 return win;
             }
@@ -1495,7 +1495,7 @@ std::vector<Toplevel*> get_windows_with_control(std::vector<Toplevel*>& windows)
  */
 Toplevel* tabbox::next_client_static(Toplevel* c) const
 {
-    auto const& list = get_windows_with_control(space.m_windows);
+    auto const& list = get_windows_with_control(space.windows);
     if (!c || list.empty()) {
         return nullptr;
     }
@@ -1516,7 +1516,7 @@ Toplevel* tabbox::next_client_static(Toplevel* c) const
  */
 Toplevel* tabbox::previous_client_static(Toplevel* c) const
 {
-    auto const& list = get_windows_with_control(space.m_windows);
+    auto const& list = get_windows_with_control(space.windows);
     if (!c || list.empty()) {
         return nullptr;
     }

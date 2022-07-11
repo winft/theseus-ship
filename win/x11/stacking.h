@@ -27,7 +27,7 @@ template<typename Win, typename Space>
 std::vector<Win*> get_unmanageds(Space const& space)
 {
     std::vector<Win*> ret;
-    for (auto const& window : space.m_windows) {
+    for (auto const& window : space.windows) {
         if (window->xcb_window && !window->control && !window->remnant) {
             ret.push_back(window);
         }
@@ -135,7 +135,7 @@ void propagate_clients(Space& space, bool propagate_new_clients)
                   order.manual_overlays.end(),
                   std::back_inserter(clients));
 
-        for (auto const& window : space.m_windows) {
+        for (auto const& window : space.windows) {
             if (!window->control) {
                 continue;
             }

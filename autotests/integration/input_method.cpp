@@ -122,7 +122,7 @@ void input_method_test::cleanup()
     }
 
     toplevel.client_surface.reset();
-    QVERIFY(Test::app()->workspace->windows().empty());
+    QVERIFY(Test::app()->workspace->windows.empty());
 
     input_method.reset();
     text_input.reset();

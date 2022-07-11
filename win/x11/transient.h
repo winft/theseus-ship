@@ -424,7 +424,7 @@ group* find_client_leader_group(Win const* win)
 {
     group* ret = nullptr;
 
-    for (auto const& other : win->space.m_windows) {
+    for (auto const& other : win->space.windows) {
         if (!other->control) {
             continue;
         }

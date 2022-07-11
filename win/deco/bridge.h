@@ -325,7 +325,7 @@ private:
 
     void recreateDecorations()
     {
-        for (auto win : space.m_windows) {
+        for (auto win : space.windows) {
             if (win->control) {
                 win->updateDecoration(true, true);
             }

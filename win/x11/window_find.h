@@ -17,7 +17,7 @@ template<typename Win, typename Space>
 Win* find_controlled_window(Space& space, predicate_match predicate, xcb_window_t w)
 {
     auto find_window = [&](std::function<bool(Win const*)> const& func) -> Win* {
-        for (auto win : space.m_windows) {
+        for (auto win : space.windows) {
             if (!win->control) {
                 continue;
             }

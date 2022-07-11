@@ -17,7 +17,7 @@ template<typename Space>
 void init_rule_book(RuleBook& book, Space& space)
 {
     QObject::connect(&book, &RuleBook::updates_enabled, space.qobject.get(), [&] {
-        for (auto window : space.m_windows) {
+        for (auto window : space.windows) {
             if (window->control) {
                 window->updateWindowRules(Rules::All);
             }

@@ -358,7 +358,7 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
     const QRect geometry = QRect(0, 0, 128, 128);
 
     // We need to wait until the remnant from previous test is gone.
-    QTRY_VERIFY(Test::app()->workspace->windows().empty());
+    QTRY_VERIFY(Test::app()->workspace->windows.empty());
 
     auto conn = create_xcb_connection();
 

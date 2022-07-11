@@ -159,7 +159,7 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
         layer_surface, &WS::LayerSurfaceV1::resourceDestroyed, win, [win] { destroy_window(win); });
 
     QObject::connect(layer_surface, &WS::LayerSurfaceV1::got_popup, win, [win](auto popup) {
-        for (auto window : static_cast<win::wayland::space&>(win->space).m_windows) {
+        for (auto window : static_cast<win::wayland::space&>(win->space).windows) {
             if (auto wayland_window = qobject_cast<win::wayland::window*>(window);
                 wayland_window && wayland_window->popup == popup) {
                 win->transient()->add_child(wayland_window);
@@ -222,11 +222,11 @@ void handle_new_layer_surface(Space* space, Wrapland::Server::LayerSurfaceV1* la
         ScreenLocker::KSldApp::self()->lockScreenShown();
     }
 
-    space->m_windows.push_back(window);
+    space->windows.push_back(window);
     QObject::connect(layer_surface,
                      &Wrapland::Server::LayerSurfaceV1::resourceDestroyed,
                      space->qobject.get(),
-                     [space, window] { remove_all(space->m_windows, window); });
+                     [space, window] { remove_all(space->windows, window); });
 
     win::wayland::assign_layer_surface_role(window, layer_surface);
 

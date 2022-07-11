@@ -39,7 +39,7 @@ surface_tree_model::surface_tree_model(win::space& space, QObject* parent)
         QObject::connect(
             u->surface, &Wrapland::Server::Surface::subsurfaceTreeChanged, this, reset);
     }
-    for (auto c : space.m_windows) {
+    for (auto c : space.windows) {
         if (!c->control || !c->surface) {
             continue;
         }
@@ -108,7 +108,7 @@ int surface_tree_model::rowCount(const QModelIndex& parent) const
     }
 
     // toplevel are all windows
-    return get_windows_with_control(space.m_windows).size()
+    return get_windows_with_control(space.windows).size()
         + win::x11::get_unmanageds<Toplevel>(space).size();
 }
 
@@ -132,7 +132,7 @@ QModelIndex surface_tree_model::index(int row, int column, const QModelIndex& pa
     }
 
     // a window
-    auto const& allClients = get_windows_with_control(space.m_windows);
+    auto const& allClients = get_windows_with_control(space.windows);
     if (row_u < allClients.size()) {
         // references a client
         return createIndex(row_u, column, allClients.at(row_u)->surface);
@@ -179,7 +179,7 @@ QModelIndex surface_tree_model::parent(const QModelIndex& child) const
         }
         // not a subsurface, thus it's a true window
         size_t row = 0;
-        const auto& allClients = get_windows_with_control(space.m_windows);
+        const auto& allClients = get_windows_with_control(space.windows);
         for (; row < allClients.size(); row++) {
             if (allClients.at(row)->surface == parent) {
                 return createIndex(row, 0, parent);

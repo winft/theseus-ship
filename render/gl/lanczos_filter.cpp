@@ -414,7 +414,7 @@ void lanczos_filter::timerEvent(QTimerEvent* event)
         m_offscreenTarget = nullptr;
         m_offscreenTex = nullptr;
 
-        for (auto win : m_scene->compositor.space->m_windows) {
+        for (auto win : m_scene->compositor.space->windows) {
             discardCacheTexture(win->render->effect.get());
         }
 

@@ -876,7 +876,7 @@ void focus_in_event(Win* win, xcb_focus_in_event_t* e)
         return;
     }
 
-    for (auto win : win->space.m_windows) {
+    for (auto win : win->space.windows) {
         if (auto x11_win = qobject_cast<window*>(win)) {
             cancel_focus_out_timer(x11_win);
         }

@@ -133,7 +133,7 @@ void compositor::start(win::space& space)
                          &compositor::addRepaintFull);
         QObject::connect(
             &platform.base, &base::platform::output_removed, this, [this](auto output) {
-                for (auto& win : this->space->m_windows) {
+                for (auto& win : this->space->windows) {
                     remove_all(win->repaint_outputs, output);
                 }
             });

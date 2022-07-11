@@ -28,7 +28,7 @@ space::space(render::compositor& render)
                      [this] {
                          auto const desktop_count
                              = static_cast<int>(virtual_desktop_manager->count());
-                         for (auto const& window : m_windows) {
+                         for (auto const& window : windows) {
                              if (!window->control) {
                                  continue;
                              }
@@ -82,7 +82,7 @@ void space::update_space_area_from_windows(QRect const& desktop_area,
                                            std::vector<QRect> const& screens_geos,
                                            win::space_areas& areas)
 {
-    for (auto const& window : m_windows) {
+    for (auto const& window : windows) {
         if (!window->control) {
             continue;
         }

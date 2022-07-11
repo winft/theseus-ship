@@ -37,7 +37,7 @@ Toplevel* get_window(input::wayland::platform& platform,
 {
     auto input_surface = text_input->entered_surface();
 
-    for (auto win : platform.redirect->space.m_windows) {
+    for (auto win : platform.redirect->space.windows) {
         if (win->control && win->surface == input_surface) {
             return win;
         }
@@ -173,7 +173,7 @@ void input_method::handle_popup_surface_created(input_method_popup_surface_v2* p
     popup->hidden = true;
     popup->set_layer(win::layer::notification);
 
-    space->m_windows.push_back(popup);
+    space->windows.push_back(popup);
 
     QObject::connect(popup, &window::closed, this, [this](auto win) { remove_all(popups, win); });
 

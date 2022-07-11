@@ -140,7 +140,7 @@ window_thumbnail_item::~window_thumbnail_item()
 
 Toplevel* find_controlled_window(QUuid const& wId)
 {
-    for (auto win : win::singleton_interface::space->m_windows) {
+    for (auto win : win::singleton_interface::space->windows) {
         if (win->control && win->internal_id == wId) {
             return win;
         }

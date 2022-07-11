@@ -93,7 +93,7 @@ void cursor_image::setup_theme()
         });
     }
 
-    auto const clients = platform.redirect->space.m_windows;
+    auto const clients = platform.redirect->space.windows;
     std::for_each(clients.begin(), clients.end(), [this](auto win) { setup_move_resize(win); });
 
     QObject::connect(platform.redirect->space.qobject.get(),

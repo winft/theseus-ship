@@ -593,7 +593,7 @@ public:
 
         connect_legacy_screen_resize(this);
 
-        for (auto window : ref_space->m_windows) {
+        for (auto window : ref_space->windows) {
             if (window->control) {
                 Space::handle_client_added(window);
             }
@@ -623,7 +623,7 @@ public:
     std::vector<window*> windows() const override
     {
         std::vector<window*> ret;
-        for (auto const& window : ref_space->m_windows) {
+        for (auto const& window : ref_space->windows) {
             if (window->control && window->control->scripting) {
                 ret.push_back(window->control->scripting.get());
             }
@@ -983,7 +983,7 @@ protected:
 
     window* get_client_impl(qulonglong windowId) override
     {
-        for (auto& win : ref_space->m_windows) {
+        for (auto& win : ref_space->windows) {
             if (win->control && win->xcb_window == windowId) {
                 return win->control->scripting.get();
             }

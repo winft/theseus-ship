@@ -19,7 +19,7 @@ namespace KWin::win::x11
 template<typename Win, typename Space>
 Win* find_unmanaged(Space&& space, xcb_window_t xcb_win)
 {
-    for (auto win : space.m_windows) {
+    for (auto win : space.windows) {
         if (!win->remnant && !win->control && win->xcb_window == xcb_win) {
             return static_cast<Win*>(win);
         }
@@ -111,7 +111,7 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
     QObject::connect(
         win, &Win::needsRepaint, &space.render, [win] { win->space.render.schedule_repaint(win); });
 
-    space.m_windows.push_back(win);
+    space.windows.push_back(win);
     space.stacking_order->render_restack_required = true;
     Q_EMIT space.qobject->unmanagedAdded(win);
 

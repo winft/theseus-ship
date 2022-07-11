@@ -34,7 +34,7 @@ void destroy_window(Win* win)
         // With the lead gone there is no way - and no need - for remnant effects. Delete directly.
         Q_EMIT win->closed(win);
         space.handle_window_removed(win);
-        remove_all(space.m_windows, win);
+        remove_all(space.windows, win);
         remove_all(space.stacking_order->pre_stack, win);
         remove_all(space.stacking_order->stack, win);
         delete win;

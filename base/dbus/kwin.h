@@ -196,7 +196,7 @@ public:
     {
         auto const id = QUuid::fromString(uuid);
 
-        for (auto win : space.m_windows) {
+        for (auto win : space.windows) {
             if (!win->control) {
                 continue;
             }
