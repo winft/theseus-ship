@@ -264,7 +264,6 @@ public:
 
     void updateMinimizedOfTransients(Toplevel*);
     void updateOnAllDesktopsOfTransients(Toplevel* window);
-    void checkTransients(Toplevel* window);
 
     bool showingDesktop() const;
 

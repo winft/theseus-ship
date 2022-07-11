@@ -410,15 +410,6 @@ void space::updateOnAllDesktopsOfTransients(Toplevel* window)
     }
 }
 
-// A new window has been mapped. Check if it's not a mainwindow for some already existing transient
-// window.
-void space::checkTransients(Toplevel* window)
-{
-    std::for_each(windows.cbegin(), windows.cend(), [&window](auto const& client) {
-        client->checkTransient(window);
-    });
-}
-
 void space::update_space_area_from_windows(QRect const& /*desktop_area*/,
                                            std::vector<QRect> const& /*screens_geos*/,
                                            win::space_areas& /*areas*/)

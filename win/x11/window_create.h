@@ -56,7 +56,10 @@ void add_controlled_window_to_space(Space& space, Win* win)
     }
 
     check_active_modal<Win>(space);
-    space.checkTransients(win);
+
+    for (auto window : space.windows) {
+        window->checkTransient(win);
+    }
 
     // Propagate new client
     space.stacking_order->update_count();
