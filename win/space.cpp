@@ -989,17 +989,4 @@ std::vector<Toplevel*> space::remnants() const
     return ret;
 }
 
-/**
- * Informs the space:: that the client \a c has been hidden. If it
- * was the active client (or to-become the active client),
- * the space:: activates another one.
- *
- * @note @p c may already be destroyed.
- */
-void space::clientHidden(Toplevel* window)
-{
-    Q_ASSERT(!window->isShown() || !window->isOnCurrentDesktop());
-    activate_next_window(*this, window);
-}
-
 }

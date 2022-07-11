@@ -254,8 +254,6 @@ public:
     std::unique_ptr<base::dbus::kwin_impl<space>> dbus;
     std::unique_ptr<win::session_manager> session_manager;
 
-    void clientHidden(Toplevel* window);
-
     std::vector<Toplevel*> const& windows() const;
 
     /**

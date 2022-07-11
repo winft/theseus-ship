@@ -592,6 +592,19 @@ bool activate_next_window(Space& space, Toplevel* window)
     return true;
 }
 
+/**
+ * Informs the space that the \a window has been hidden. If it was the active window (or to-become
+ * the active window), the space activates another one.
+ *
+ * @note @p window may already be destroyed.
+ */
+template<typename Space, typename Win>
+void process_window_hidden(Space& space, Win* window)
+{
+    assert(!window->isShown() || !window->isOnCurrentDesktop());
+    activate_next_window(space, window);
+}
+
 template<typename Space>
 Toplevel* find_window_to_activate_on_desktop(Space& space, unsigned int desktop)
 {

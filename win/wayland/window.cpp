@@ -493,7 +493,7 @@ void window::hideClient(bool hide)
 
     if (hide) {
         space.render.addRepaint(visible_rect(this));
-        space.clientHidden(this);
+        process_window_hidden(space, this);
         Q_EMIT windowHidden(this);
     } else {
         handle_shown_and_mapped();
@@ -933,7 +933,7 @@ void window::unmap()
     space.render.addRepaint(visible_rect(this));
 
     if (control) {
-        space.clientHidden(this);
+        process_window_hidden(space, this);
     }
 
     Q_EMIT windowHidden(this);
@@ -1163,7 +1163,7 @@ void window::ping(window::ping_reason reason)
 void window::doMinimize()
 {
     if (control->minimized()) {
-        space.clientHidden(this);
+        process_window_hidden(space, this);
     } else {
         Q_EMIT windowShown(this);
     }

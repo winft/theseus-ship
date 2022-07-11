@@ -292,7 +292,7 @@ void space::handle_window_removed(wayland::window* window)
             // Remove from client_keys.
             win::set_shortcut(window, QString());
         }
-        clientHidden(window);
+        process_window_hidden(*this, window);
         Q_EMIT qobject->clientRemoved(window);
     }
 

@@ -210,7 +210,7 @@ void release_window(Win* win, bool on_shutdown)
     win->hidden = true;
 
     if (!on_shutdown) {
-        win->space.clientHidden(win);
+        process_window_hidden(win->space, win);
     }
 
     // Destroying decoration would cause ugly visual effect
@@ -318,7 +318,7 @@ void destroy_window(Win* win)
     // So that it's not considered visible anymore
     win->hidden = true;
 
-    win->space.clientHidden(win);
+    process_window_hidden(win->space, win);
     win->control->destroy_decoration();
     clean_grouping(win);
     remove_controlled_window_from_space(win->space, win);
