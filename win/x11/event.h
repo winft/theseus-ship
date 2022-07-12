@@ -22,7 +22,6 @@
 #include "win/desktop_space.h"
 #include "win/input.h"
 #include "win/meta.h"
-#include "win/space.h"
 
 #include <kkeyserver.h>
 

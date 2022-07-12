@@ -33,7 +33,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "meta.h"
 #include "move.h"
 #include "net.h"
-#include "space.h"
 #include "stacking_order.h"
 #include "transient.h"
 #include "window_area.h"
@@ -559,7 +558,8 @@ void place_maximizing(Win* window, const QRect& area, placement nextPlacement)
 /**
  * Unclutters the current desktop by smart-placing all windows again.
  */
-inline void unclutter_desktop(win::space& space)
+template<typename Space>
+void unclutter_desktop(Space& space)
 {
     auto const& windows = space.windows;
     for (int i = windows.size() - 1; i >= 0; i--) {

@@ -33,7 +33,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "toplevel.h"
 #include "win/control.h"
 #include "win/deco.h"
-#include "win/space.h"
 
 #include <kwineffects/effect_plugin_factory.h>
 

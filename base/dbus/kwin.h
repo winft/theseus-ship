@@ -126,7 +126,7 @@ template<typename Space>
 class kwin_impl : public kwin
 {
 public:
-    explicit kwin_impl(win::space& space)
+    explicit kwin_impl(Space& space)
         : kwin(*space.qobject)
         , space{space}
     {
