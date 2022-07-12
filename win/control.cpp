@@ -9,6 +9,7 @@
 #include "deco/client_impl.h"
 #include "deco/palette.h"
 #include "deco/window.h"
+#include "space.h"
 #include "stacking.h"
 
 #include <config-kwin.h>

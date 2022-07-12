@@ -8,9 +8,9 @@
 #include <config-kwin.h>
 
 #include "dbus/virtual_desktop_manager.h"
+#include "internal_window.h"
 #include "rules.h"
 #include "singleton_interface.h"
-#include "space.h"
 #include "x11/space_setup.h"
 #include "x11/stacking.h"
 
@@ -44,13 +44,13 @@ void init_space(Space& space)
 #endif
 
     QObject::connect(space.qobject.get(),
-                     &space_qobject::currentDesktopChanged,
+                     &Space::qobject_t::currentDesktopChanged,
                      &space.render,
                      &render::compositor::addRepaintFull);
 
     space.deco->init();
     QObject::connect(space.qobject.get(),
-                     &space_qobject::configChanged,
+                     &Space::qobject_t::configChanged,
                      space.deco->qobject.get(),
                      [&] { space.deco->reconfigure(); });
 

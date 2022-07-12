@@ -8,7 +8,6 @@
 #include "control.h"
 #include "net.h"
 #include "remnant.h"
-#include "space.h"
 
 #include "rules/rules.h"
 

@@ -13,6 +13,7 @@
 #include "hide.h"
 #include "maximize.h"
 #include "meta.h"
+#include "space.h"
 #include "transient.h"
 #include "unmanaged.h"
 #include "window_release.h"

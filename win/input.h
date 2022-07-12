@@ -10,7 +10,6 @@
 #include "move.h"
 #include "net.h"
 #include "screen.h"
-#include "space.h"
 #include "stacking_order.h"
 #include "toplevel.h"
 #include "types.h"

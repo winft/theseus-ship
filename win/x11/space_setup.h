@@ -23,7 +23,7 @@
 namespace KWin::win::x11
 {
 
-static void select_wm_input_event_mask()
+inline static void select_wm_input_event_mask()
 {
     uint32_t presentMask = 0;
     base::x11::xcb::window_attributes attr(rootWindow());

@@ -12,7 +12,6 @@
 #include "geo_move.h"
 #include "net.h"
 #include "quicktile.h"
-#include "space.h"
 #include "stacking.h"
 #include "types.h"
 #include "window_area.h"

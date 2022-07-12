@@ -5,6 +5,8 @@
 */
 #include "xwl_window.h"
 
+#include "space.h"
+
 #include "render/wayland/buffer.h"
 #include "scene.h"
 #include "win/x11/scene.h"

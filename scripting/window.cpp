@@ -14,6 +14,7 @@
 #include "win/desktop_get.h"
 #include "win/meta.h"
 #include "win/screen.h"
+#include "win/space.h"
 #include "win/transient.h"
 #include "win/x11/window.h"
 

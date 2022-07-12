@@ -17,13 +17,12 @@
 #include "user_time.h"
 #include "window_release.h"
 
+#include "base/os/kkeyserver.h"
 #include "base/x11/xcb/qt_types.h"
 #include "win/activation.h"
 #include "win/desktop_space.h"
 #include "win/input.h"
 #include "win/meta.h"
-
-#include <kkeyserver.h>
 
 namespace KWin::win::x11
 {

@@ -7,6 +7,8 @@
 
 #include "window.h"
 
+#include "win/space.h"
+
 #include "kwinglobals.h"
 
 namespace KWin::win::x11

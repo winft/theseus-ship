@@ -55,7 +55,7 @@ space::space(render::compositor& render)
             this->render.reinitialize();
         });
 
-    init_space(*this);
+    x11::init_space(*this);
 }
 
 space::~space()

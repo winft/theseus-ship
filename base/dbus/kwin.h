@@ -8,6 +8,7 @@
 
 #include "debug/support_info.h"
 #include "input/platform.h"
+#include "kwin_export.h"
 #include "main.h"
 #include "toplevel.h"
 #include "win/kill_window.h"
@@ -41,7 +42,7 @@ namespace base::dbus
  *
  * @author Martin Gräßlin <mgraesslin@kde.org>
  */
-class kwin : public QObject, protected QDBusContext
+class KWIN_EXPORT kwin : public QObject, protected QDBusContext
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "org.kde.KWin")

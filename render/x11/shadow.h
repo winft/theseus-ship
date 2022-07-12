@@ -6,6 +6,7 @@
 */
 #pragma once
 
+#include "base/x11/xcb/atom.h"
 #include "base/x11/xcb/proto.h"
 #include "render/compositor.h"
 #include "render/scene.h"

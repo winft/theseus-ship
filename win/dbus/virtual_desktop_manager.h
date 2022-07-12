@@ -6,6 +6,7 @@
 */
 #pragma once
 
+#include "kwin_export.h"
 #include "virtual_desktop_types.h"
 
 #include <QObject>
@@ -21,7 +22,7 @@ namespace dbus
 
 // TODO: disable all of this in case of kiosk?
 
-class virtual_desktop_manager : public QObject
+class KWIN_EXPORT virtual_desktop_manager : public QObject
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "org.kde.KWin.VirtualDesktopManager")

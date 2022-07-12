@@ -22,15 +22,29 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
+#include "appmenu.h"
+#include "dbus/appmenu.h"
+#include "dbus/virtual_desktop_manager.h"
+#include "deco/bridge.h"
 #include "focus_chain.h"
+#include "kill_window.h"
+#include "screen_edges.h"
+#include "session_manager.h"
+#include "space_areas.h"
+#include "space_reconfigure.h"
+#include "space_setup.h"
+#include "stacking_order.h"
+#include "strut_rect.h"
+#include "user_actions_menu.h"
 
-#include "base/options.h"
+#include "base/dbus/kwin.h"
 #include "base/output.h"
 #include "base/x11/atoms.h"
-#include "utils/algorithm.h"
-#include "win/session_manager.h"
-#include "win/space_areas.h"
-#include "win/strut_rect.h"
+#include "base/x11/event_filter.h"
+#include "input/redirect.h"
+#include "render/outline.h"
+#include "rules/rule_book.h"
+#include "scripting/platform.h"
 
 #include <QTimer>
 
@@ -39,54 +53,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <memory>
 #include <vector>
 
-class KConfig;
-class KConfigGroup;
 class KStartupInfo;
-class KStartupInfoData;
-class KStartupInfoId;
-class QAction;
-class QStringList;
 
 namespace KWin
 {
 
-class RuleBook;
-
-namespace base
-{
-
-namespace dbus
-{
-template<typename Space>
-class kwin_impl;
-}
-
-namespace x11
-{
-namespace xcb
-{
-class tree;
-class window;
-}
-class event_filter;
-}
-
-}
-
-namespace input
-{
-class redirect;
-}
-
 namespace render
 {
 class compositor;
-class outline;
-}
-
-namespace scripting
-{
-class platform;
 }
 
 class Toplevel;
@@ -94,41 +68,9 @@ class Toplevel;
 namespace win
 {
 
-namespace dbus
-{
-class appmenu;
-}
-
-namespace deco
-{
-template<typename Space>
-class bridge;
-}
-
-namespace x11
-{
-enum class predicate_match;
-class color_mapper;
-class window;
-class group;
-}
-
-enum class activation;
 class internal_window;
-
-template<typename Space>
-class kill_window;
-class screen_edge;
-class screen_edger;
 class shortcut_dialog;
-class stacking_order;
 class tabbox;
-
-template<typename Space>
-class user_actions_menu;
-class virtual_desktop_manager;
-
-class space;
 
 class KWIN_EXPORT space_qobject : public QObject
 {
@@ -222,8 +164,27 @@ public:
     // Array of the previous restricted areas that window cannot be moved into
     std::vector<win::strut_rects> oldrestrictedmovearea;
 
-    explicit space(render::compositor& render);
-    virtual ~space();
+    explicit space(render::compositor& render)
+        : qobject{std::make_unique<space_qobject>([this] { space_start_reconfigure_timer(*this); })}
+        , outline{std::make_unique<render::outline>(render)}
+        , render{render}
+        , deco{std::make_unique<deco::bridge<space>>(*this)}
+        , appmenu{std::make_unique<dbus::appmenu>(dbus::create_appmenu_callbacks(*this))}
+        , rule_book{std::make_unique<RuleBook>()}
+        , user_actions_menu{std::make_unique<win::user_actions_menu<space>>(*this)}
+        , stacking_order{std::make_unique<win::stacking_order>()}
+        , focus_chain{win::focus_chain<space>(*this)}
+        , virtual_desktop_manager{std::make_unique<win::virtual_desktop_manager>()}
+        , dbus{std::make_unique<base::dbus::kwin_impl<space>>(*this)}
+        , session_manager{std::make_unique<win::session_manager>()}
+    {
+        init_space(*this);
+    }
+
+    virtual ~space()
+    {
+        clear_space(*this);
+    }
 
     /**
      * @brief Finds a Toplevel for the internal window @p w.
@@ -251,15 +212,24 @@ public:
     QTimer* m_quickTileCombineTimer{nullptr};
     win::quicktiles m_lastTilingMode{win::quicktiles::none};
 
-public:
     Toplevel* active_client{nullptr};
 
-    virtual win::screen_edge* create_screen_edge(win::screen_edger& edger);
-    virtual QRect get_icon_geometry(Toplevel const* win) const;
+    virtual win::screen_edge* create_screen_edge(win::screen_edger& edger)
+    {
+        return new win::screen_edge(&edger);
+    }
 
-    virtual void update_space_area_from_windows(QRect const& desktop_area,
-                                                std::vector<QRect> const& screens_geos,
-                                                win::space_areas& areas);
+    virtual QRect get_icon_geometry(Toplevel const* /*win*/) const
+    {
+        return {};
+    }
+
+    virtual void update_space_area_from_windows(QRect const& /*desktop_area*/,
+                                                std::vector<QRect> const& /*screens_geos*/,
+                                                win::space_areas& /*areas*/)
+    {
+        // Can't be pure virtual because the function might be called from the ctor.
+    }
 
     QWidget* active_popup{nullptr};
 

@@ -21,13 +21,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "tabbox.h"
 
+#include "base/os/kkeyserver.h"
 #include "base/x11/xcb/proto.h"
 #include "render/compositor.h"
 #include "render/effects.h"
 #include "win/screen_edges.h"
 #include "win/space.h"
-
-#include <KKeyServer>
 
 #include <xcb/xcb.h>
 

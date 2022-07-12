@@ -9,6 +9,7 @@
 #include "utils/geo.h"
 #include "win/geo.h"
 #include "win/placement.h"
+#include "win/session_manager.h"
 
 #include <KStartupInfo>
 

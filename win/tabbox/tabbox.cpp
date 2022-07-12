@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "tabbox_logging.h"
 #include "tabbox_x11_filter.h"
 
+#include "base/os/kkeyserver.h"
 #include "base/platform.h"
 #include "base/x11/grabs.h"
 #include "base/x11/xcb/proto.h"
@@ -58,7 +59,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KGlobalAccel>
 #include <KLazyLocalizedString>
 #include <KLocalizedString>
-#include <kkeyserver.h>
 // X11
 #include <X11/keysym.h>
 #include <X11/keysymdef.h>

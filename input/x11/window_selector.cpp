@@ -19,6 +19,10 @@
 #include "win/x11/window.h"
 #include "win/x11/window_find.h"
 
+// Needs to be included before Xutil, because XLib whose macros collide with Qt declarations in
+// QDBus, in particular the "True" and "False" names.
+#include <QtCore>
+
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
 #include <fixx11h.h>

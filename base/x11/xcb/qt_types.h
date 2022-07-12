@@ -5,7 +5,8 @@
 */
 #pragma once
 
-#include <kkeyserver.h>
+#include "base/os/kkeyserver.h"
+
 #include <xcb/xcb.h>
 
 namespace KWin::base::x11::xcb
