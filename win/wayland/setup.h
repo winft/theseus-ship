@@ -22,7 +22,7 @@ namespace KWin::win::wayland
 template<typename Space, typename Win>
 void setup_plasma_management(Space* space, Win* win)
 {
-    if (win->control->wayland_management()) {
+    if (win->control->plasma_wayland_integration) {
         // Already setup.
         return;
     }
@@ -63,7 +63,7 @@ void setup_plasma_management(Space* space, Win* win)
     plasma_win->setVirtualDesktopChangeable(true);
 
     auto transient_lead = win->transient()->lead();
-    plasma_win->setParentWindow(transient_lead ? transient_lead->control->wayland_management()
+    plasma_win->setParentWindow(transient_lead ? transient_lead->control->plasma_wayland_integration
                                                : nullptr);
     plasma_win->setGeometry(win->frameGeometry());
     QObject::connect(win, &Win::skipTaskbarChanged, plasma_win, [plasma_win, win] {
@@ -110,7 +110,7 @@ void setup_plasma_management(Space* space, Win* win)
             // When lead becomes remnant.
             lead = nullptr;
         }
-        plasma_win->setParentWindow(lead ? lead->control->wayland_management() : nullptr);
+        plasma_win->setParentWindow(lead ? lead->control->plasma_wayland_integration : nullptr);
     });
     QObject::connect(win, &Win::applicationMenuChanged, plasma_win, [plasma_win, win] {
         auto const appmenu = win->control->application_menu();
@@ -212,7 +212,7 @@ void setup_plasma_management(Space* space, Win* win)
                          }
                      });
 
-    win->control->set_wayland_management(plasma_win);
+    win->control->plasma_wayland_integration = plasma_win;
 }
 
 }

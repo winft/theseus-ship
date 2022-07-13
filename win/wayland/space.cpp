@@ -357,7 +357,7 @@ Toplevel* space::findInternal(QWindow* window) const
 
 QRect space::get_icon_geometry(Toplevel const* win) const
 {
-    auto management = win->control->wayland_management();
+    auto management = win->control->plasma_wayland_integration;
     if (!management || !waylandServer()) {
         // window management interface is only available if the surface is mapped
         return QRect();

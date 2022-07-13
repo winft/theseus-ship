@@ -927,7 +927,7 @@ void window::unmap()
         if (control->move_resize().enabled) {
             leaveMoveResize();
         }
-        control->destroy_wayland_management();
+        control->destroy_plasma_wayland_integration();
     }
 
     space.render.addRepaint(visible_rect(this));

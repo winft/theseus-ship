@@ -37,7 +37,7 @@ void set_desktops(Win* win, QVector<virtual_desktop*> desktops)
 
     win->set_desktops(desktops);
 
-    if (auto management = win->control->wayland_management()) {
+    if (auto management = win->control->plasma_wayland_integration) {
         if (desktops.isEmpty()) {
             management->setOnAllDesktops(true);
         } else {

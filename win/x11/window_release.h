@@ -166,7 +166,7 @@ void release_window(Win* win, bool on_shutdown)
     }
 #endif
 
-    win->control->destroy_wayland_management();
+    win->control->destroy_plasma_wayland_integration();
     destroy_damage_handle(*win);
     reset_have_resize_effect(*win);
 
@@ -290,7 +290,7 @@ void destroy_window(Win* win)
     }
 #endif
 
-    win->control->destroy_wayland_management();
+    win->control->destroy_plasma_wayland_integration();
     reset_have_resize_effect(*win);
 
     auto del = create_remnant_window<Win>(*win);

@@ -57,7 +57,7 @@ void destroy_window(Win* win)
 
         win->space.rule_book->discardUsed(win, true);
 
-        win->control->destroy_wayland_management();
+        win->control->destroy_plasma_wayland_integration();
         win->control->destroy_decoration();
     }
 

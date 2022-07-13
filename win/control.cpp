@@ -264,21 +264,11 @@ void control::update_mouse_grab()
 {
 }
 
-Wrapland::Server::PlasmaWindow* control::wayland_management() const
+void control::destroy_plasma_wayland_integration()
 {
-    return m_wayland_management;
-}
-
-void control::set_wayland_management(Wrapland::Server::PlasmaWindow* plasma_window)
-{
-    m_wayland_management = plasma_window;
-}
-
-void control::destroy_wayland_management()
-{
-    if (m_wayland_management) {
-        m_wayland_management->unmap();
-        m_wayland_management = nullptr;
+    if (plasma_wayland_integration) {
+        plasma_wayland_integration->unmap();
+        plasma_wayland_integration = nullptr;
     }
 }
 

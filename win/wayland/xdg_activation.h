@@ -116,7 +116,7 @@ void xdg_activation_handle_token_request(Space& space, TokenRequest& token)
             return false;
         }
 
-        if (win->control && win->control->wayland_management()) {
+        if (win->control && win->control->plasma_wayland_integration) {
             // Privileged windows are always allowed.
             return true;
         }
