@@ -116,11 +116,6 @@ void xdg_activation_handle_token_request(Space& space, TokenRequest& token)
             return false;
         }
 
-        if (win->control && win->control->plasma_wayland_integration) {
-            // Privileged windows are always allowed.
-            return true;
-        }
-
         if (win != space.active_client) {
             qCDebug(KWIN_WL) << "Requesting window" << win << "currently not active.";
             return false;
