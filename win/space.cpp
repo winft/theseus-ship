@@ -63,7 +63,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/user_actions_menu.h"
 #include "win/util.h"
 #include "win/virtual_desktops.h"
-#include "win/x11/control.h"
+#include "win/x11/control_create.h"
 #include "win/x11/event.h"
 #include "win/x11/group.h"
 #include "win/x11/moving_window_filter.h"
