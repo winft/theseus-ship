@@ -44,16 +44,23 @@ class KWIN_EXPORT kwin : public QObject, protected QDBusContext
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "org.kde.KWin")
+    Q_PROPERTY(bool showingDesktop READ showingDesktop NOTIFY showingDesktopChanged)
 
 public:
     explicit kwin(win::space_qobject& space);
     ~kwin() override;
+
+    bool showingDesktop() const
+    {
+        return showing_desktop_impl();
+    }
 
 public Q_SLOTS:
     int currentDesktop()
     {
         return current_desktop_impl();
     }
+    Q_NOREPLY void showDesktop(bool show);
     Q_NOREPLY void killWindow()
     {
         kill_window_impl();
@@ -106,13 +113,18 @@ public Q_SLOTS:
         return get_window_info_impl(uuid);
     }
 
+Q_SIGNALS:
+    void showingDesktopChanged(bool showing);
+
 protected:
+    virtual bool showing_desktop_impl() const = 0;
     virtual int current_desktop_impl() = 0;
     virtual void kill_window_impl() = 0;
 
     virtual void next_desktop_impl() = 0;
     virtual void previous_desktop_impl() = 0;
 
+    virtual void show_desktop_impl(bool show) = 0;
     virtual bool set_current_desktop_impl(int desktop) = 0;
 
     virtual QString support_information_impl() = 0;
@@ -137,6 +149,15 @@ public:
         , space{space}
         , input{input}
     {
+        QObject::connect(space.qobject.get(),
+                         &win::space_qobject::showingDesktopChanged,
+                         this,
+                         [this](auto show) { Q_EMIT showingDesktopChanged(show); });
+    }
+
+    bool showing_desktop_impl() const override
+    {
+        return space.showing_desktop;
     }
 
     void kill_window_impl() override
@@ -166,6 +187,11 @@ public:
     int current_desktop_impl() override
     {
         return space.virtual_desktop_manager->current();
+    }
+
+    void show_desktop_impl(bool show) override
+    {
+        win::set_showing_desktop(space, show);
     }
 
     bool set_current_desktop_impl(int desktop) override
