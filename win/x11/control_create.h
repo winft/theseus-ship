@@ -9,7 +9,7 @@
 #include "activation.h"
 #include "appmenu.h"
 #include "client_machine.h"
-#include "command.h"
+#include "control.h"
 #include "deco.h"
 #include "focus_stealing.h"
 #include "placement.h"
@@ -32,132 +32,6 @@
 
 namespace KWin::win::x11
 {
-
-template<typename Win>
-class x11_control : public win::control
-{
-public:
-    x11_control(Win* window)
-        : win::control(window)
-        , m_window{window}
-    {
-    }
-
-    void set_skip_pager(bool set) override
-    {
-        win::control::set_skip_pager(set);
-        m_window->info->setState(skip_pager() ? NET::SkipPager : NET::States(), NET::SkipPager);
-    }
-
-    void set_skip_switcher(bool set) override
-    {
-        win::control::set_skip_switcher(set);
-        m_window->info->setState(skip_switcher() ? NET::SkipSwitcher : NET::States(),
-                                 NET::SkipSwitcher);
-    }
-
-    void set_skip_taskbar(bool set) override
-    {
-        win::control::set_skip_taskbar(set);
-        m_window->info->setState(skip_taskbar() ? NET::SkipTaskbar : NET::States(),
-                                 NET::SkipTaskbar);
-    }
-
-    void update_mouse_grab() override
-    {
-        xcb_ungrab_button(
-            connection(), XCB_BUTTON_INDEX_ANY, m_window->xcb_windows.wrapper, XCB_MOD_MASK_ANY);
-
-        if (m_window->space.tabbox->forced_global_mouse_grab()) {
-            // see TabBox::establishTabBoxGrab()
-            m_window->xcb_windows.wrapper.grab_button(XCB_GRAB_MODE_SYNC, XCB_GRAB_MODE_ASYNC);
-            return;
-        }
-
-        // When a passive grab is activated or deactivated, the X server will generate crossing
-        // events as if the pointer were suddenly to warp from its current position to some position
-        // in the grab window. Some /broken/ X11 clients do get confused by such EnterNotify and
-        // LeaveNotify events so we release the passive grab for the active window.
-        //
-        // The passive grab below is established so the window can be raised or activated when it
-        // is clicked.
-        if ((kwinApp()->options->focusPolicyIsReasonable() && !active())
-            || (kwinApp()->options->isClickRaise() && !is_most_recently_raised(m_window))) {
-            if (kwinApp()->options->commandWindow1() != base::options::MouseNothing) {
-                establish_command_window_grab(m_window, XCB_BUTTON_INDEX_1);
-            }
-            if (kwinApp()->options->commandWindow2() != base::options::MouseNothing) {
-                establish_command_window_grab(m_window, XCB_BUTTON_INDEX_2);
-            }
-            if (kwinApp()->options->commandWindow3() != base::options::MouseNothing) {
-                establish_command_window_grab(m_window, XCB_BUTTON_INDEX_3);
-            }
-            if (kwinApp()->options->commandWindowWheel() != base::options::MouseNothing) {
-                establish_command_window_grab(m_window, XCB_BUTTON_INDEX_4);
-                establish_command_window_grab(m_window, XCB_BUTTON_INDEX_5);
-            }
-        }
-
-        // We want to grab <command modifier> + buttons no matter what state the window is in. The
-        // client will receive funky EnterNotify and LeaveNotify events, but there is nothing that
-        // we can do about it, unfortunately.
-
-        if (!m_window->space.global_shortcuts_disabled) {
-            if (kwinApp()->options->commandAll1() != base::options::MouseNothing) {
-                establish_command_all_grab(m_window, XCB_BUTTON_INDEX_1);
-            }
-            if (kwinApp()->options->commandAll2() != base::options::MouseNothing) {
-                establish_command_all_grab(m_window, XCB_BUTTON_INDEX_2);
-            }
-            if (kwinApp()->options->commandAll3() != base::options::MouseNothing) {
-                establish_command_all_grab(m_window, XCB_BUTTON_INDEX_3);
-            }
-            if (kwinApp()->options->commandAllWheel() != base::options::MouseWheelNothing) {
-                establish_command_all_grab(m_window, XCB_BUTTON_INDEX_4);
-                establish_command_all_grab(m_window, XCB_BUTTON_INDEX_5);
-            }
-        }
-    }
-
-    void destroy_decoration() override
-    {
-        if (decoration(m_window)) {
-            auto const grav = calculate_gravitation(m_window, true);
-            win::control::destroy_decoration();
-            move(m_window, grav);
-        }
-        m_window->xcb_windows.input.reset();
-    }
-
-    QSize adjusted_frame_size(QSize const& frame_size, size_mode mode) override
-    {
-        auto const client_size = frame_to_client_size(m_window, frame_size);
-        return size_for_client_size(m_window, client_size, mode, false);
-    }
-
-    bool can_fullscreen() const override
-    {
-        if (!rules().checkFullScreen(true)) {
-            return false;
-        }
-        if (rules().checkStrictGeometry(true)) {
-            // check geometry constraints (rule to obey is set)
-            const QRect fsarea = space_window_area(m_window->space, FullScreenArea, m_window);
-            if (size_for_client_size(m_window, fsarea.size(), win::size_mode::any, true)
-                != fsarea.size()) {
-                // the app wouldn't fit exactly fullscreen geometry due to its strict geometry
-                // requirements
-                return false;
-            }
-        }
-        // don't check size constrains - some apps request fullscreen despite requesting fixed size
-        // also better disallow weird types to go fullscreen
-        return !is_special_window(m_window);
-    }
-
-private:
-    Win* m_window;
-};
 
 template<typename Win>
 void embed_client(Win* win, xcb_visualid_t visualid, xcb_colormap_t colormap, uint8_t depth)
@@ -307,7 +181,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
                      &screen_edger::checkBlocking);
 
     // From this place on, manage() must not return false
-    win->control.reset(new x11_control(win));
+    win->control.reset(new x11::control(win));
 
     win->supported_default_types = supported_managed_window_types_mask;
     win->has_in_content_deco = true;
