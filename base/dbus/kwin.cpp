@@ -41,10 +41,6 @@ kwin::kwin(win::space_qobject& space)
 kwin::~kwin()
 {
     QDBusConnection::sessionBus().unregisterService(m_serviceName);
-
-    // KApplication automatically also grabs org.kde.kwin, so it's often been used externally -
-    // ensure to free it as well
-    QDBusConnection::sessionBus().unregisterService(QStringLiteral("org.kde.kwin"));
 }
 
 void kwin::reconfigure()
