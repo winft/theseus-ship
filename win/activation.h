@@ -621,19 +621,19 @@ Toplevel* find_window_to_activate_on_desktop(Space& space, unsigned int desktop)
     if (kwinApp()->options->isNextFocusPrefersMouse()) {
         auto it = space.stacking_order->stack.cend();
         while (it != space.stacking_order->stack.cbegin()) {
-            auto client = qobject_cast<win::x11::window*>(*(--it));
-            if (!client) {
+            auto window = *(--it);
+            if (!window->control) {
                 continue;
             }
 
-            if (!(client->isShown() && client->isOnDesktop(desktop) && on_active_screen(client)))
+            if (!(window->isShown() && window->isOnDesktop(desktop) && on_active_screen(window)))
                 continue;
 
-            if (client->frameGeometry().contains(input::get_cursor()->pos())) {
-                if (!is_desktop(client)) {
-                    return client;
+            if (window->frameGeometry().contains(input::get_cursor()->pos())) {
+                if (!is_desktop(window)) {
+                    return window;
                 }
-                // Unconditional break, we don't pass focus to some client below an unusable one.
+                // Unconditional break, we don't pass focus to some window below an unusable one.
                 break;
             }
         }
