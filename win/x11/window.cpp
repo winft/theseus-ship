@@ -507,6 +507,11 @@ bool window::groupTransient() const
     return static_cast<win::x11::transient*>(transient())->lead_id == rootWindow();
 }
 
+void window::handle_activated()
+{
+    update_user_time(this);
+}
+
 void window::takeFocus()
 {
     if (control->rules().checkAcceptFocus(info->input())) {

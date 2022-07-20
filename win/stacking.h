@@ -15,6 +15,7 @@
 #include "util.h"
 #include "x11/group.h"
 #include "x11/netinfo.h"
+#include "x11/window.h"
 
 #include "base/output_helpers.h"
 #include "base/platform.h"

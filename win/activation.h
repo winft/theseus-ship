@@ -18,7 +18,6 @@
 #include "x11/netinfo.h"
 #include "x11/tool_windows.h"
 #include "x11/user_time.h"
-#include "x11/window.h"
 
 #include "utils/blocker.h"
 
@@ -478,17 +477,7 @@ void activate_window_impl(Space& space, Win* window, bool force)
         request_focus(space, window, false, force);
     }
 
-    // Don't update user time for clients that have focus stealing workaround.
-    // As they usually belong to the current active window but fail to provide
-    // this information, updating their user time would make the user time
-    // of the currently active window old, and reject further activation for it.
-    // E.g. typing URL in minicli which will show kio_uiserver dialog (with workaround),
-    // and then kdesktop shows dialog about SSL certificate.
-    // This needs also avoiding user creation time in x11::window::readUserTimeMapTimestamp().
-    if (auto client = dynamic_cast<x11::window*>(window)) {
-        // updateUserTime is X11 specific
-        x11::update_user_time(client);
-    }
+    window->handle_activated();
 }
 
 template<typename Space>

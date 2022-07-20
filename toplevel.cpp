@@ -738,6 +738,10 @@ win::maximize_mode Toplevel::maximizeMode() const
     return win::maximize_mode::restore;
 }
 
+void Toplevel::handle_activated()
+{
+}
+
 bool Toplevel::wantsInput() const
 {
     return false;
