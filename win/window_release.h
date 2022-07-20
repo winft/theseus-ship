@@ -9,6 +9,7 @@
 #include "remnant.h"
 #include "space_window_release.h"
 #include "x11/netinfo.h"
+#include "x11/window.h"
 
 #include "toplevel.h"
 

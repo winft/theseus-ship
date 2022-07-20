@@ -9,6 +9,7 @@
 
 #include "win/setup.h"
 
+#include <xcb/sync.h>
 #include <xcb/xcb_icccm.h>
 
 namespace KWin::win::x11

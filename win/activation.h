@@ -18,6 +18,7 @@
 #include "x11/netinfo.h"
 #include "x11/tool_windows.h"
 #include "x11/user_time.h"
+#include "x11/window.h"
 
 #include "utils/blocker.h"
 

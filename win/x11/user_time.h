@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "base/x11/xcb/property.h"
 #include "base/x11/xcb/proto.h"
 #include "main.h"
 

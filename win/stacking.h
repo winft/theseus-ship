@@ -10,14 +10,11 @@
 #include "focus_chain_edit.h"
 #include "geo.h"
 #include "layers.h"
+#include "meta.h"
 #include "stacking_order.h"
 #include "util.h"
 #include "x11/group.h"
 #include "x11/netinfo.h"
-
-// Required for casts between Toplevel and window in some template functions.
-// TODO(romangg): Remove these casts and this include to make the functions truly generic.
-#include "x11/window.h"
 
 #include "base/output_helpers.h"
 #include "base/platform.h"
