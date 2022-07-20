@@ -826,10 +826,8 @@ void set_showing_desktop(Space& space, bool showing)
                     lower_window(&space, c);
                     if (!topDesk)
                         topDesk = c;
-                    if (auto group = c->group()) {
-                        for (auto cm : group->members) {
-                            update_layer(cm);
-                        }
+                    for (auto cm : get_transient_family(c)) {
+                        update_layer(cm);
                     }
                 }
             }

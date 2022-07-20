@@ -13,9 +13,7 @@
 #include "meta.h"
 #include "stacking_order.h"
 #include "util.h"
-#include "x11/group.h"
 #include "x11/netinfo.h"
-#include "x11/window.h"
 
 #include "base/output_helpers.h"
 #include "base/platform.h"
@@ -188,7 +186,7 @@ void lower_window(Space* space, Window* window)
 
     if (window->transient()->lead() && window->group()) {
         // Lower also all windows in the group, in reversed stacking order.
-        auto const wins = restacked_by_space_stacking_order(space, window->group()->members);
+        auto const wins = restacked_by_space_stacking_order(space, get_transient_family(window));
 
         for (auto it = wins.crbegin(); it != wins.crend(); it++) {
             auto gwin = *it;

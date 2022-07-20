@@ -6,6 +6,7 @@
 #pragma once
 
 #include "kwin_export.h"
+#include "utils/algorithm.h"
 
 #include <vector>
 
@@ -23,6 +24,32 @@ Toplevel* get_top_lead(Win* win)
         return get_top_lead(lead);
     }
     return win;
+}
+
+template<typename Win>
+std::vector<Toplevel*> get_transient_descendants(Win* win)
+{
+    std::vector<Toplevel*> descendants;
+
+    for (auto child : win->transient()->children) {
+        descendants.push_back(child);
+    }
+
+    for (auto child : win->transient()->children) {
+        auto const child_desc = get_transient_descendants(child);
+        descendants.insert(descendants.end(), child_desc.begin(), child_desc.end());
+    }
+
+    return descendants;
+}
+
+template<typename Win>
+std::vector<Toplevel*> get_transient_family(Win* win)
+{
+    auto top_lead = get_top_lead(win);
+    auto relatives = get_transient_descendants(top_lead);
+    relatives.push_back(top_lead);
+    return relatives;
 }
 
 template<typename Win>
