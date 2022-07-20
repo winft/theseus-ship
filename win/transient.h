@@ -17,6 +17,15 @@ namespace win
 {
 
 template<typename Win>
+Toplevel* get_top_lead(Win* win)
+{
+    if (auto lead = win->transient()->lead()) {
+        return get_top_lead(lead);
+    }
+    return win;
+}
+
+template<typename Win>
 Toplevel* lead_of_annexed_transient(Win* win)
 {
     if (win && win->transient()->annexed) {

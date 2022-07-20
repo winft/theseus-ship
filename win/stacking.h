@@ -27,6 +27,8 @@
 
 #include "rules/rules.h"
 
+#include <map>
+
 /**
  This file contains things relevant to stacking order and layers.
 
@@ -346,34 +348,29 @@ template<typename Container>
 std::vector<Toplevel*> sort_windows_by_layer(Container const& list)
 {
     std::deque<Toplevel*> layers[enum_index(layer::count)];
-    auto const& outputs = kwinApp()->get_base().get_outputs();
 
     // Build the order from layers.
 
     // This is needed as a workaround for group windows with fullscreen members, such that other
     // group members are moved per output to the active (fullscreen) level too.
-    QVector<QMap<x11::group*, layer>> fs_group_layers(std::max<size_t>(outputs.size(), 1));
+    using key = std::pair<base::output const*, Toplevel*>;
+    std::map<key, layer> lead_layers;
 
     for (auto const& win : list) {
         auto lay = win->layer();
+        auto lead = get_top_lead(win);
+        auto search = lead_layers.find({win->central_output, lead});
 
-        auto const output_index
-            = win->central_output ? base::get_output_index(outputs, *win->central_output) : 0;
-        auto x11_win = qobject_cast<x11::window*>(win);
-
-        auto group_layer_it
-            = fs_group_layers[output_index].find(x11_win ? x11_win->group() : nullptr);
-
-        if (group_layer_it != fs_group_layers[output_index].end()) {
+        if (search != lead_layers.end()) {
             // If a window is raised above some other window in the same window group
             // which is in the ActiveLayer (i.e. it's fulscreened), make sure it stays
             // above that window (see #95731).
-            if (*group_layer_it == layer::active && (enum_index(lay) > enum_index(layer::below))) {
+            if (search->second == layer::active && (enum_index(lay) > enum_index(layer::below))) {
                 lay = layer::active;
             }
-            *group_layer_it = lay;
-        } else if (x11_win) {
-            fs_group_layers[output_index].insertMulti(x11_win->group(), lay);
+            search->second = lay;
+        } else {
+            lead_layers[{win->central_output, lead}] = lay;
         }
 
         layers[enum_index(lay)].push_back(win);
