@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "control.h"
 #include "space.h"
 #include "window_release.h"
 
@@ -148,7 +149,7 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
     assert(win->surface);
     assert(layer_surface->surface() == win->surface);
 
-    win->control.reset(new control(win));
+    win->control.reset(new wayland::control(*win));
     win->layer_surface = layer_surface;
     block_geometry_updates(win, true);
 

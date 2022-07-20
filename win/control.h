@@ -51,6 +51,8 @@ public:
 
     void setup_tabbox();
 
+    virtual void set_desktops(QVector<virtual_desktop*> desktops) = 0;
+
     bool skip_pager() const;
     virtual void set_skip_pager(bool set);
 

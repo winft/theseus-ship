@@ -8,7 +8,11 @@
 #include "base/options.h"
 #include "main.h"
 
-#include <kkeyserver.h>
+// Needs to be included before KKeyServer, because KKeyServer includes XLib whose macros collide
+// with Qt declarations in QDBus, in particular the "True" and "False" names.
+#include <QtCore>
+
+#include <KKeyServer>
 
 namespace KWin::win::x11
 {

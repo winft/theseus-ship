@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "control.h"
 #include "popup_placement.h"
 #include "space.h"
 #include "window.h"
@@ -41,25 +42,26 @@
 namespace KWin::win::wayland
 {
 
-class xdg_shell_control : public control
+template<typename Win>
+class xdg_shell_control : public wayland::control<Win>
 {
 public:
-    xdg_shell_control(window* win)
-        : control(win)
+    xdg_shell_control(Win& win)
+        : wayland::control<Win>(win)
         , m_window{win}
     {
     }
 
     bool can_fullscreen() const override
     {
-        if (!rules().checkFullScreen(true)) {
+        if (!this->rules().checkFullScreen(true)) {
             return false;
         }
-        return !is_special_window(m_window);
+        return !is_special_window(&m_window);
     }
 
 private:
-    window* m_window;
+    wayland::window& m_window;
 };
 
 template<typename Space>
@@ -205,7 +207,7 @@ window* create_toplevel_window(Space* space, Wrapland::Server::XdgShellToplevel*
     auto win = create_shell_window(*space, toplevel->surface());
     win->toplevel = toplevel;
 
-    win->control = std::make_unique<xdg_shell_control>(win);
+    win->control = std::make_unique<xdg_shell_control<window>>(*win);
     win->control->setup_tabbox();
     win->control->setup_color_scheme();
 

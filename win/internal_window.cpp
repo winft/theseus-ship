@@ -55,6 +55,10 @@ public:
     {
     }
 
+    void set_desktops(QVector<virtual_desktop*> /*desktops*/) override
+    {
+    }
+
     void destroy_decoration() override
     {
         if (!win::decoration(m_client)) {

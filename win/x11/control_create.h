@@ -181,7 +181,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
                      &screen_edger::checkBlocking);
 
     // From this place on, manage() must not return false
-    win->control.reset(new x11::control(win));
+    win->control = std::make_unique<typename Win::control_t>(win);
 
     win->supported_default_types = supported_managed_window_types_mask;
     win->has_in_content_deco = true;

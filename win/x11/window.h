@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "control.h"
 #include "types.h"
 
 #include "toplevel.h"
@@ -46,6 +47,7 @@ class KWIN_EXPORT window : public Toplevel
 {
     Q_OBJECT
 public:
+    using control_t = x11::control<window>;
     constexpr static bool is_toplevel{false};
 
     window(win::remnant remnant, win::space& space);

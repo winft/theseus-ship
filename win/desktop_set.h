@@ -12,8 +12,6 @@
 
 #include "main.h"
 
-#include <Wrapland/Server/plasma_window.h>
-
 namespace KWin::win
 {
 
@@ -36,29 +34,7 @@ void set_desktops(Win* win, QVector<virtual_desktop*> desktops)
     auto const wasOnCurrentDesktop = on_current_desktop(win) && was_desk >= 0;
 
     win->set_desktops(desktops);
-
-    if (auto management = win->control->plasma_wayland_integration) {
-        if (desktops.isEmpty()) {
-            management->setOnAllDesktops(true);
-        } else {
-            management->setOnAllDesktops(false);
-            auto currentDesktops = management->plasmaVirtualDesktops();
-            for (auto desktop : desktops) {
-                auto id = desktop->id().toStdString();
-                if (!contains(currentDesktops, id)) {
-                    management->addPlasmaVirtualDesktop(id);
-                } else {
-                    remove_all(currentDesktops, id);
-                }
-            }
-            for (auto desktop : currentDesktops) {
-                management->removePlasmaVirtualDesktop(desktop);
-            }
-        }
-    }
-    if (win->info) {
-        win->info->setDesktop(win->desktop());
-    }
+    win->control->set_desktops(desktops);
 
     if ((was_desk == NET::OnAllDesktops) != (win->desktop() == NET::OnAllDesktops)) {
         // OnAllDesktops changed

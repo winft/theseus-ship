@@ -7,6 +7,7 @@
 
 #include "command.h"
 
+#include "main.h"
 #include "win/control.h"
 #include "win/input.h"
 #include "win/meta.h"
@@ -27,6 +28,12 @@ public:
         : win::control(window)
         , m_window{window}
     {
+    }
+
+    void set_desktops(QVector<virtual_desktop*> /*desktops*/) override
+    {
+        assert(m_window->info);
+        m_window->info->setDesktop(m_window->desktop());
     }
 
     void set_skip_pager(bool set) override
