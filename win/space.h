@@ -31,6 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screen_edges.h"
 #include "session_manager.h"
 #include "space_areas.h"
+#include "space_qobject.h"
 #include "space_reconfigure.h"
 #include "space_setup.h"
 #include "stacking_order.h"
@@ -68,43 +69,10 @@ class Toplevel;
 namespace win
 {
 
-class internal_window;
 class shortcut_dialog;
 class tabbox;
 
-class KWIN_EXPORT space_qobject : public QObject
-{
-    Q_OBJECT
-public:
-    space_qobject(std::function<void()> reconfigure_callback);
-
-public Q_SLOTS:
-    void reconfigure();
-
-Q_SIGNALS:
-    void desktopPresenceChanged(KWin::Toplevel*, int);
-    void currentDesktopChanged(int, KWin::Toplevel*);
-    void clientAdded(KWin::win::x11::window*);
-    void clientRemoved(KWin::Toplevel*);
-    void wayland_window_added(KWin::Toplevel*);
-    void wayland_window_removed(KWin::Toplevel*);
-    void clientActivated(KWin::Toplevel*);
-    void clientDemandsAttentionChanged(KWin::Toplevel*, bool);
-    void clientMinimizedChanged(KWin::Toplevel*);
-    void unmanagedAdded(KWin::Toplevel*);
-    void unmanagedRemoved(KWin::Toplevel*);
-    void window_deleted(KWin::Toplevel*);
-    void configChanged();
-    void showingDesktopChanged(bool showing);
-    void internalClientAdded(KWin::win::internal_window* client);
-    void internalClientRemoved(KWin::win::internal_window* client);
-    void surface_id_changed(KWin::Toplevel*, quint32);
-
-private:
-    std::function<void()> reconfigure_callback;
-};
-
-class KWIN_EXPORT space
+class space
 {
 public:
     using qobject_t = space_qobject;

@@ -480,7 +480,7 @@ set(kwin_SRCS
     win/screen_edges.cpp
     win/shortcut_dialog.cpp
     win/singleton_interface.cpp
-    win/space.cpp
+    win/space_qobject.cpp
     win/stacking_order.cpp
     win/transient.cpp
     win/virtual_desktops.cpp
