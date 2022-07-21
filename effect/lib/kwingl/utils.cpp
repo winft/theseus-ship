@@ -1396,6 +1396,15 @@ static const uint16_t indices[] = {
     2026, 2025, 2029, 2028, 2031, 2031, 2030, 2029, 2033, 2032, 2035, 2035, 2034, 2033, 2037, 2036,
     2039, 2039, 2038, 2037, 2041, 2040, 2043, 2043, 2042, 2041, 2045, 2044, 2047, 2047, 2046, 2045};
 
+// Certain GPUs, especially mobile, require the data copied to the GPU to be aligned to a
+// certain amount of bytes. For example, the Mali GPU requires data to be aligned to 8 bytes.
+// This function helps ensure that the data is aligned.
+template<typename T>
+T align(T value, int bytes)
+{
+    return (value + bytes - 1) & ~T(bytes - 1);
+}
+
 class IndexBuffer
 {
 public:
@@ -1971,7 +1980,7 @@ void GLVertexBuffer::unmap()
 {
     if (d->persistent) {
         d->baseAddress = d->nextOffset;
-        d->nextOffset += d->mappedSize;
+        d->nextOffset += align(d->mappedSize, 8);
         d->mappedSize = 0;
         return;
     }
@@ -1982,6 +1991,7 @@ void GLVertexBuffer::unmap()
         glUnmapBuffer(GL_ARRAY_BUFFER);
 
         d->baseAddress = d->nextOffset;
+        d->nextOffset += align(d->mappedSize, 8);
     } else {
         // Upload the data from local memory to the buffer object
         if (preferBufferSubData) {
@@ -1994,7 +2004,7 @@ void GLVertexBuffer::unmap()
                 GL_ARRAY_BUFFER, d->nextOffset, d->mappedSize, d->dataStore.constData());
 
             d->baseAddress = d->nextOffset;
-            d->nextOffset += d->mappedSize;
+            d->nextOffset += align(d->mappedSize, 8);
         } else {
             glBufferData(GL_ARRAY_BUFFER, d->mappedSize, d->dataStore.data(), d->usage);
             d->baseAddress = 0;
