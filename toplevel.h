@@ -444,6 +444,7 @@ public:
      */
     virtual bool isMovableAcrossScreens() const = 0;
 
+    virtual void handle_activated();
     virtual void takeFocus() = 0;
     virtual bool wantsInput() const;
 

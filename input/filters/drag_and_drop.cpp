@@ -11,6 +11,7 @@
 #include "input/touch_redirect.h"
 #include "main.h"
 #include "toplevel.h"
+#include "win/activation.h"
 #include "win/space.h"
 #include "xwl/xwayland_interface.h"
 
@@ -76,7 +77,7 @@ bool drag_and_drop_filter::motion(motion_event const& event)
         // TODO: consider decorations
         if (window->surface != seat->drags().get_target().surface) {
             if (window->control) {
-                redirect.space.activateClient(window);
+                win::activate_window(redirect.space, window);
             }
             seat->drags().set_target(window->surface, window->input_transform());
         }
@@ -135,7 +136,7 @@ bool drag_and_drop_filter::touch_motion(touch_motion_event const& event)
         // TODO: consider decorations
         if (t->surface != seat->drags().get_target().surface) {
             if (t->control) {
-                redirect.space.activateClient(t);
+                win::activate_window(redirect.space, t);
             }
             seat->drags().set_target(t->surface, event.pos, t->input_transform());
         }

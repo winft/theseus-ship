@@ -15,6 +15,7 @@
 #include "base/options.h"
 #include "input/platform.h"
 #include "win/screen_edges.h"
+#include "win/space.h"
 
 #include <kwineffects/effect_window.h>
 #include <kwineffects/effects_handler.h>

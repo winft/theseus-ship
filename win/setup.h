@@ -93,11 +93,12 @@ void setup_window_control_connections(Win* win)
                              // Position (geometry?) already set.
                              return;
                          }
+
                          geometry_updates_blocker blocker(win);
-
-                         auto const area = win->space.clientArea(
-                             PlacementArea, get_current_output(win->space), win->desktop());
-
+                         auto const area = space_window_area(win->space,
+                                                             PlacementArea,
+                                                             get_current_output(win->space),
+                                                             win->desktop());
                          win::place(win, area);
                      });
 

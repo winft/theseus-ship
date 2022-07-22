@@ -5,6 +5,7 @@
 */
 #include "window.h"
 
+#include "activation.h"
 #include "client.h"
 #include "deco.h"
 #include "fullscreen.h"
@@ -12,18 +13,23 @@
 #include "hide.h"
 #include "maximize.h"
 #include "meta.h"
+#include "space.h"
 #include "transient.h"
 #include "unmanaged.h"
 #include "window_release.h"
+#include "xcb.h"
 
 #include "base/x11/grabs.h"
 #include "render/x11/buffer.h"
 #include "render/x11/shadow.h"
 #include "rules/rules.h"
+#include "utils/geo.h"
 #include "win/deco.h"
 #include "win/deco/window.h"
 #include "win/layers.h"
 #include "win/remnant.h"
+#include "win/shortcut_set.h"
+#include "win/space_areas_helpers.h"
 #include "win/stacking.h"
 #include "win/stacking_order.h"
 
@@ -502,6 +508,11 @@ bool window::groupTransient() const
     return static_cast<win::x11::transient*>(transient())->lead_id == rootWindow();
 }
 
+void window::handle_activated()
+{
+    update_user_time(this);
+}
+
 void window::takeFocus()
 {
     if (control->rules().checkAcceptFocus(info->input())) {
@@ -516,7 +527,11 @@ void window::takeFocus()
         send_client_message(xcb_window, space.atoms->wm_protocols, space.atoms->wm_take_focus);
     }
 
-    space.setShouldGetFocus(this);
+    space.should_get_focus.push_back(this);
+
+    // E.g. fullscreens have different layer when active/not-active.
+    space.stacking_order->update_order();
+
     auto breakShowingDesktop = !control->keep_above();
 
     if (breakShowingDesktop) {
@@ -529,7 +544,7 @@ void window::takeFocus()
     }
 
     if (breakShowingDesktop) {
-        space.setShowingDesktop(false);
+        set_showing_desktop(space, false);
     }
 }
 
@@ -598,12 +613,12 @@ void window::setShortcutInternal()
 {
     updateCaption();
 #if 0
-    space.clientShortcutUpdated(this);
+    window_shortcut_updated(space, this);
 #else
     // Workaround for kwin<->kglobalaccel deadlock, when KWin has X grab and the kded
     // kglobalaccel module tries to create the key grab. KWin should preferably grab
     // they keys itself anyway :(.
-    QTimer::singleShot(0, this, std::bind(&space::clientShortcutUpdated, &space, this));
+    QTimer::singleShot(0, this, [this] { window_shortcut_updated(space, this); });
 #endif
 }
 
@@ -765,7 +780,7 @@ void window::do_set_geometry(QRect const& frame_geo)
 
     // Must be done after signal is emitted so the screen margins are update.
     if (hasStrut()) {
-        space.updateClientArea();
+        update_space_areas(space);
     }
 }
 
@@ -1088,7 +1103,7 @@ void window::doMinimize()
 {
     update_visibility(this);
     update_allowed_actions(this);
-    space.updateMinimizedOfTransients(this);
+    propagate_minimized_to_transients(*this);
 }
 
 void window::showOnScreenEdge()
@@ -1107,7 +1122,7 @@ bool window::doStartMoveResize()
     // This reportedly improves smoothness of the moveresize operation,
     // something with Enter/LeaveNotify events, looks like XFree performance problem or something
     // *shrug* (https://lists.kde.org/?t=107302193400001&r=1&w=2)
-    auto r = space.clientArea(FullArea, this);
+    auto r = space_window_area(space, FullArea, this);
 
     xcb_windows.grab.create(r, XCB_WINDOW_CLASS_INPUT_ONLY, 0, nullptr, rootWindow());
     xcb_windows.grab.map();

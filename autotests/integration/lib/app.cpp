@@ -34,6 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/wayland/compositor.h"
 #include "scripting/platform.h"
 #include "win/screen.h"
+#include "win/shortcuts_init.h"
 #include "win/wayland/space.h"
 #include "xwl/xwayland.h"
 
@@ -219,7 +220,7 @@ void WaylandTestApplication::start()
 
     workspace->input = std::make_unique<input::wayland::redirect>(*input, *workspace);
     input::wayland::add_dbus(input.get());
-    workspace->initShortcuts();
+    win::init_shortcuts(*workspace);
     workspace->scripting = std::make_unique<scripting::platform>(*workspace);
 
     base.render->compositor->start(*workspace);

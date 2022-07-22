@@ -33,7 +33,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "toplevel.h"
 #include "win/control.h"
 #include "win/deco.h"
-#include "win/space.h"
 
 #include <kwineffects/effect_plugin_factory.h>
 
@@ -55,17 +54,12 @@ namespace KWin
 
 class Toplevel;
 
-namespace win
-{
-class space;
-}
-
 namespace win::deco
 {
 
 class window;
 
-class bridge_qobject : public QObject
+class KWIN_EXPORT bridge_qobject : public QObject
 {
     Q_OBJECT
 public:
@@ -310,13 +304,13 @@ private:
     {
         const KPluginMetaData metaData = KPluginMetaData::findPluginById(s_pluginName, m_plugin);
         if (!metaData.isValid()) {
-            qCWarning(KWIN_DECORATIONS) << "Could not locate decoration plugin" << m_plugin;
+            qCWarning(KWIN_CORE) << "Could not locate decoration plugin" << m_plugin;
             return;
         }
-        qCDebug(KWIN_DECORATIONS) << "Trying to load decoration plugin: " << metaData.fileName();
+        qCDebug(KWIN_CORE) << "Trying to load decoration plugin: " << metaData.fileName();
         auto factoryResult = KPluginFactory::loadFactory(metaData);
         if (!factoryResult) {
-            qCWarning(KWIN_DECORATIONS) << "Error loading plugin:" << factoryResult.errorText;
+            qCWarning(KWIN_CORE) << "Error loading plugin:" << factoryResult.errorText;
         } else {
             m_factory = factoryResult.plugin;
             loadMetaData(metaData.rawData());
@@ -325,7 +319,7 @@ private:
 
     void recreateDecorations()
     {
-        for (auto win : space.m_windows) {
+        for (auto win : space.windows) {
             if (win->control) {
                 win->updateDecoration(true, true);
             }

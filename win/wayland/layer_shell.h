@@ -5,11 +5,14 @@
 */
 #pragma once
 
+#include "control.h"
 #include "space.h"
 #include "window_release.h"
 
+#include "win/activation.h"
 #include "win/geo.h"
 #include "win/screen.h"
+#include "win/space_areas_helpers.h"
 #include "win/stacking.h"
 #include "win/transient.h"
 
@@ -41,7 +44,7 @@ QRectF layer_surface_area(Win* win)
 
     if (layer_surf->exclusive_zone() == 0) {
         auto output_geo_rect = output_geo.toRect();
-        auto area = win->space.clientArea(WorkArea, output_geo_rect.center(), 0);
+        auto area = space_window_area(win->space, WorkArea, output_geo_rect.center(), 0);
         return area.intersected(output_geo_rect);
     }
 
@@ -146,7 +149,7 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
     assert(win->surface);
     assert(layer_surface->surface() == win->surface);
 
-    win->control.reset(new control(win));
+    win->control.reset(new wayland::control(*win));
     win->layer_surface = layer_surface;
     block_geometry_updates(win, true);
 
@@ -157,7 +160,7 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
         layer_surface, &WS::LayerSurfaceV1::resourceDestroyed, win, [win] { destroy_window(win); });
 
     QObject::connect(layer_surface, &WS::LayerSurfaceV1::got_popup, win, [win](auto popup) {
-        for (auto window : static_cast<win::wayland::space&>(win->space).m_windows) {
+        for (auto window : static_cast<win::wayland::space&>(win->space).windows) {
             if (auto wayland_window = qobject_cast<win::wayland::window*>(window);
                 wayland_window && wayland_window->popup == popup) {
                 win->transient()->add_child(wayland_window);
@@ -220,11 +223,11 @@ void handle_new_layer_surface(Space* space, Wrapland::Server::LayerSurfaceV1* la
         ScreenLocker::KSldApp::self()->lockScreenShown();
     }
 
-    space->m_windows.push_back(window);
+    space->windows.push_back(window);
     QObject::connect(layer_surface,
                      &Wrapland::Server::LayerSurfaceV1::resourceDestroyed,
                      space->qobject.get(),
-                     [space, window] { remove_all(space->m_windows, window); });
+                     [space, window] { remove_all(space->windows, window); });
 
     win::wayland::assign_layer_surface_role(window, layer_surface);
 
@@ -241,7 +244,7 @@ void layer_surface_handle_keyboard_interactivity(Win* win)
     auto interactivity = win->layer_surface->keyboard_interactivity();
     if (interactivity != inter::OnDemand) {
         // With interactivity None or Exclusive just reset control.
-        win->space.activateNextClient(win);
+        activate_next_window(win->space, win);
     }
     kwinApp()->input->redirect->keyboard()->update();
 }
@@ -335,7 +338,7 @@ void process_layer_surface_commit(Win* win)
 
     // TODO(romangg): update client area also on size change?
     if (win->layer_surface->exclusive_zone() > 0) {
-        win->space.updateClientArea();
+        update_space_areas(win->space);
     }
 }
 

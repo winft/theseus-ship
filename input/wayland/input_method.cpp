@@ -19,6 +19,7 @@
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
 #include "win/wayland/window_release.h"
+#include "win/window_area.h"
 
 #include <Wrapland/Server/input_method_v2.h>
 #include <Wrapland/Server/seat.h>
@@ -36,7 +37,7 @@ Toplevel* get_window(input::wayland::platform& platform,
 {
     auto input_surface = text_input->entered_surface();
 
-    for (auto win : platform.redirect->space.m_windows) {
+    for (auto win : platform.redirect->space.windows) {
         if (win->control && win->surface == input_surface) {
             return win;
         }
@@ -54,8 +55,10 @@ QRect get_input_popup_placement(input::wayland::platform& platform,
     using constraint_adjust = Wrapland::Server::XdgShellSurface::ConstraintAdjustment;
 
     auto const toplevel = win::lead_of_annexed_transient(parent_window);
-    auto const& screen_bounds = platform.redirect->space.clientArea(
-        toplevel->control->fullscreen() ? FullScreenArea : PlacementArea, toplevel);
+    auto const& screen_bounds
+        = win::space_window_area(platform.redirect->space,
+                                 toplevel->control->fullscreen() ? FullScreenArea : PlacementArea,
+                                 toplevel);
 
     auto const& text_area = cursor_rectangle.isValid() ? cursor_rectangle : QRect(0, 0, 0, 0);
 
@@ -170,7 +173,7 @@ void input_method::handle_popup_surface_created(input_method_popup_surface_v2* p
     popup->hidden = true;
     popup->set_layer(win::layer::notification);
 
-    space->m_windows.push_back(popup);
+    space->windows.push_back(popup);
 
     QObject::connect(popup, &window::closed, this, [this](auto win) { remove_all(popups, win); });
 

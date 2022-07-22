@@ -125,8 +125,8 @@ public:
     bool applyNoBorder(bool& noborder, bool init) const;
     bool applyDecoColor(QString& schemeFile) const;
     bool applyBlockCompositing(bool& block) const;
-    bool applyFSP(int& fsp) const;
-    bool applyFPP(int& fpp) const;
+    bool applyFSP(win::fsp_level& fsp) const;
+    bool applyFPP(win::fsp_level& fpp) const;
     bool applyAcceptFocus(bool& focus) const;
     bool applyCloseable(bool& closeable) const;
     bool applyAutogrouping(bool& autogroup) const;
@@ -153,6 +153,9 @@ private:
     static bool checkSetStop(set_rule rule);
     static bool checkForceStop(force_rule rule);
 #endif
+
+    template<typename T>
+    bool apply_force_enum(force_ruler<int> const& ruler, T& apply, T min, T max) const;
 
     template<typename T>
     bool apply_set(T& target, set_ruler<T> const& ruler, bool init) const

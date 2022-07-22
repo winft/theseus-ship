@@ -8,6 +8,7 @@
 #include "base/logging.h"
 #include "base/wayland/server.h"
 #include "wayland_logging.h"
+#include "win/activation.h"
 #include "win/stacking.h"
 
 #include <inttypes.h>
@@ -115,11 +116,6 @@ void xdg_activation_handle_token_request(Space& space, TokenRequest& token)
             return false;
         }
 
-        if (win->control && win->control->wayland_management()) {
-            // Privileged windows are always allowed.
-            return true;
-        }
-
         if (win != space.active_client) {
             qCDebug(KWIN_WL) << "Requesting window" << win << "currently not active.";
             return false;
@@ -155,7 +151,7 @@ void xdg_activation_activate(Space* space, Window* win, std::string const& token
     }
 
     space->activation->clear();
-    space->activateClient(win);
+    activate_window(*space, win);
 }
 
 template<typename Space>

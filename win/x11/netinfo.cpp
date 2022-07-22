@@ -25,12 +25,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "window_find.h"
 
 #include "win/controlling.h"
+#include "win/desktop_space.h"
 #include "win/move.h"
 #include "win/space.h"
 #include "win/stacking.h"
 #include "win/virtual_desktops.h"
 #include "win/x11/event.h"
 #include "win/x11/geo.h"
+#include "win/x11/stacking.h"
 #include "win/x11/window.h"
 
 #include <QDebug>
@@ -200,26 +202,30 @@ void root_info::changeActiveWindow(xcb_window_t w,
             timestamp = c->userTime();
         if (src != NET::FromApplication && src != FromTool)
             src = NET::FromTool;
-        if (src == NET::FromTool)
-            space.activateClient(c, true); // force
-        else if (c == space.mostRecentlyActivatedClient()) {
+
+        if (src == NET::FromTool) {
+            force_activate_window(space, c);
+        } else if (c == most_recently_activated_window(space)) {
             return; // WORKAROUND? With > 1 plasma activities, we cause this ourselves. bug #240673
         } else {    // NET::FromApplication
             x11::window* c2;
-            if (space.allowClientActivation(c, timestamp, false, true))
-                space.activateClient(c);
+            if (allow_window_activation(space, c, timestamp, false, true)) {
+                activate_window(space, c);
+            }
+
             // if activation of the requestor's window would be allowed, allow activation too
             else if (active_window != XCB_WINDOW_NONE
                      && (c2 = find_controlled_window<x11::window>(
                              space, predicate_match::window, active_window))
                          != nullptr
-                     && space.allowClientActivation(
+                     && allow_window_activation(
+                         space,
                          c2,
                          timestampCompare(timestamp,
                                           c2->userTime() > 0 ? timestamp : c2->userTime()),
                          false,
                          true)) {
-                space.activateClient(c);
+                activate_window(space, c);
             } else
                 win::set_demands_attention(c, true);
         }
@@ -273,7 +279,7 @@ void root_info::gotPing(xcb_window_t w, xcb_timestamp_t timestamp)
 
 void root_info::changeShowingDesktop(bool showing)
 {
-    space.setShowingDesktop(showing);
+    set_showing_desktop(space, showing);
 }
 
 void root_info::setActiveClient(Toplevel* window)
@@ -303,7 +309,7 @@ win_info::win_info(win::x11::window* c,
 
 void win_info::changeDesktop(int desktop)
 {
-    m_client->space.sendClientToDesktop(m_client, desktop, true);
+    send_window_to_desktop(m_client->space, m_client, desktop, true);
 }
 
 void win_info::changeFullscreenMonitors(NETFullscreenMonitors topology)

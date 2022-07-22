@@ -37,8 +37,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/cursor.h"
 #include "input/pointer_redirect.h"
 #include "scripting/effect.h"
+#include "win/activation.h"
 #include "win/control.h"
 #include "win/deco/bridge.h"
+#include "win/desktop_get.h"
 #include "win/internal_window.h"
 #include "win/meta.h"
 #include "win/osd.h"
@@ -49,8 +51,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/stacking_order.h"
 #include "win/transient.h"
 #include "win/virtual_desktops.h"
+#include "win/window_area.h"
 #include "win/x11/group.h"
-#include "win/x11/unmanaged.h"
+#include "win/x11/stacking.h"
 #include "win/x11/window.h"
 #include "win/x11/window_find.h"
 
@@ -263,7 +266,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     }
 
     // connect all clients
-    for (auto& window : ws->m_windows) {
+    for (auto& window : ws->windows) {
         // TODO: Can we merge this with the one for Wayland XdgShellClients below?
         if (!window->control) {
             continue;
@@ -274,10 +277,10 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
         }
         setupClientConnections(x11_client);
     }
-    for (auto u : ws->unmanagedList()) {
-        setupUnmanagedConnections(u);
+    for (auto unmanaged : win::x11::get_unmanageds<Toplevel>(*ws)) {
+        setupUnmanagedConnections(unmanaged);
     }
-    for (auto window : ws->windows()) {
+    for (auto window : ws->windows) {
         if (auto internal = qobject_cast<win::internal_window*>(window)) {
             setupAbstractClientConnections(internal);
         }
@@ -896,7 +899,7 @@ void effects_handler_impl::activateWindow(EffectWindow* c)
 {
     auto window = static_cast<effects_window_impl*>(c)->window();
     if (window && window->control) {
-        m_compositor->space->activateClient(window, true);
+        win::force_activate_window(*m_compositor->space, window);
     }
 }
 
@@ -917,7 +920,9 @@ void effects_handler_impl::moveWindow(EffectWindow* w,
     }
 
     if (snap) {
-        win::move(window, m_compositor->space->adjustClientPosition(window, pos, true, snapAdjust));
+        win::move(
+            window,
+            win::adjust_window_position(*m_compositor->space, *window, pos, true, snapAdjust));
     } else {
         win::move(window, pos);
     }
@@ -927,7 +932,7 @@ void effects_handler_impl::windowToDesktop(EffectWindow* w, int desktop)
 {
     auto window = static_cast<effects_window_impl*>(w)->window();
     if (window && window->control && !win::is_desktop(window) && !win::is_dock(window)) {
-        m_compositor->space->sendClientToDesktop(window, desktop, true);
+        win::send_window_to_desktop(*m_compositor->space, window, desktop, true);
     }
 }
 
@@ -965,7 +970,7 @@ void effects_handler_impl::windowToScreen(EffectWindow* w, int screen)
 
 void effects_handler_impl::setShowingDesktop(bool showing)
 {
-    m_compositor->space->setShowingDesktop(showing);
+    win::set_showing_desktop(*m_compositor->space, showing);
 }
 
 QString effects_handler_impl::currentActivity() const
@@ -1113,7 +1118,7 @@ EffectWindow* effects_handler_impl::find_window_by_qwindow(QWindow* w) const
 
 EffectWindow* effects_handler_impl::find_window_by_uuid(const QUuid& id) const
 {
-    for (auto win : m_compositor->space->m_windows) {
+    for (auto win : m_compositor->space->windows) {
         if (!win->remnant && win->internal_id == id) {
             return win->render->effect.get();
         }
@@ -1271,7 +1276,7 @@ int effects_handler_impl::screenNumber(const QPoint& pos) const
 QRect effects_handler_impl::clientArea(clientAreaOption opt, int screen, int desktop) const
 {
     auto output = base::get_output(kwinApp()->get_base().get_outputs(), screen);
-    return m_compositor->space->clientArea(opt, output, desktop);
+    return win::space_window_area(*m_compositor->space, opt, output, desktop);
 }
 
 QRect effects_handler_impl::clientArea(clientAreaOption opt, const EffectWindow* c) const
@@ -1280,16 +1285,18 @@ QRect effects_handler_impl::clientArea(clientAreaOption opt, const EffectWindow*
     auto space = m_compositor->space;
 
     if (window->control) {
-        return space->clientArea(opt, window);
+        return win::space_window_area(*space, opt, window);
     } else {
-        return space->clientArea(
-            opt, window->frameGeometry().center(), space->virtual_desktop_manager->current());
+        return win::space_window_area(*space,
+                                      opt,
+                                      window->frameGeometry().center(),
+                                      space->virtual_desktop_manager->current());
     }
 }
 
 QRect effects_handler_impl::clientArea(clientAreaOption opt, const QPoint& p, int desktop) const
 {
-    return m_compositor->space->clientArea(opt, p, desktop);
+    return win::space_window_area(*m_compositor->space, opt, p, desktop);
 }
 
 QRect effects_handler_impl::virtualScreenGeometry() const

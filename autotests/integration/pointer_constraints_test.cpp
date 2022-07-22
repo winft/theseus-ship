@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/redirect.h"
 #include "win/move.h"
 #include "win/space.h"
+#include "win/space_reconfigure.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/keyboard.h>
@@ -181,7 +182,7 @@ void TestPointerConstraints::testConfinedPointer()
     group.writeEntry("CommandAll3", "Move");
     group.writeEntry("CommandAllWheel", "change opacity");
     group.sync();
-    Test::app()->workspace->slotReconfigure();
+    win::space_reconfigure(*Test::app()->workspace);
     QCOMPARE(kwinApp()->options->commandAllModifier(), Qt::MetaModifier);
     QCOMPARE(kwinApp()->options->commandAll1(), base::options::MouseUnrestrictedMove);
     QCOMPARE(kwinApp()->options->commandAll2(), base::options::MouseUnrestrictedMove);
@@ -206,7 +207,7 @@ void TestPointerConstraints::testConfinedPointer()
     Test::keyboard_key_released(KEY_LEFTALT, timestamp++);
 
     // deactivate the client, this should unconfine
-    Test::app()->workspace->activateClient(nullptr);
+    win::activate_window(*Test::app()->workspace, nullptr);
     QVERIFY(unconfinedSpy.wait());
     QCOMPARE(kwinApp()->input->redirect->pointer()->isConstrained(), false);
 
@@ -219,17 +220,19 @@ void TestPointerConstraints::testConfinedPointer()
     QVERIFY(unconfinedSpy2.isValid());
 
     // activate it again, this confines again
-    Test::app()->workspace->activateClient(kwinApp()->input->redirect->pointer()->focus.window);
+    win::activate_window(*Test::app()->workspace,
+                         kwinApp()->input->redirect->pointer()->focus.window);
     QVERIFY(confinedSpy2.wait());
     QCOMPARE(kwinApp()->input->redirect->pointer()->isConstrained(), true);
 
     // deactivate the client one more time with the persistent life time constraint, this should
     // unconfine
-    Test::app()->workspace->activateClient(nullptr);
+    win::activate_window(*Test::app()->workspace, nullptr);
     QVERIFY(unconfinedSpy2.wait());
     QCOMPARE(kwinApp()->input->redirect->pointer()->isConstrained(), false);
     // activate it again, this confines again
-    Test::app()->workspace->activateClient(kwinApp()->input->redirect->pointer()->focus.window);
+    win::activate_window(*Test::app()->workspace,
+                         kwinApp()->input->redirect->pointer()->focus.window);
     QVERIFY(confinedSpy2.wait());
     QCOMPARE(kwinApp()->input->redirect->pointer()->isConstrained(), true);
 
@@ -317,7 +320,7 @@ void TestPointerConstraints::testLockedPointer()
     QCOMPARE(input::get_cursor()->pos(), c->frameGeometry().center());
 
     // deactivate the client, this should unlock
-    Test::app()->workspace->activateClient(nullptr);
+    win::activate_window(*Test::app()->workspace, nullptr);
     QCOMPARE(kwinApp()->input->redirect->pointer()->isConstrained(), false);
     QVERIFY(unlockedSpy.wait());
 
@@ -331,7 +334,8 @@ void TestPointerConstraints::testLockedPointer()
     QVERIFY(lockedSpy2.isValid());
 
     // activate the client again, this should lock again
-    Test::app()->workspace->activateClient(kwinApp()->input->redirect->pointer()->focus.window);
+    win::activate_window(*Test::app()->workspace,
+                         kwinApp()->input->redirect->pointer()->focus.window);
     QVERIFY(lockedSpy2.wait());
     QCOMPARE(kwinApp()->input->redirect->pointer()->isConstrained(), true);
 

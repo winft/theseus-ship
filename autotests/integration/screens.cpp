@@ -26,9 +26,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/cursor.h"
 #include "lib/app.h"
 
+#include "win/activation.h"
 #include "win/move.h"
 #include "win/screen.h"
-#include "win/stacking.h"
 #include "win/wayland/space.h"
 
 #include <Wrapland/Client/compositor.h>
@@ -311,7 +311,7 @@ void TestScreens::testCurrentClient()
 
     win::move(client, QPoint(101, 0));
     QCOMPARE(Test::app()->workspace->active_client, client);
-    Test::app()->workspace->setActiveClient(nullptr);
+    win::set_active_window(*Test::app()->workspace, nullptr);
     QCOMPARE(Test::app()->workspace->active_client, nullptr);
 
     QCOMPARE(win::get_current_output(*Test::app()->workspace),
@@ -327,7 +327,7 @@ void TestScreens::testCurrentClient()
 
     // making the client active should affect things
     win::set_active(client, true);
-    Test::app()->workspace->setActiveClient(client);
+    win::set_active_window(*Test::app()->workspace, client);
 
     // first of all current should be changed just by the fact that there is an active client
     output = base::get_output(Test::app()->base.get_outputs(), 1);
@@ -347,7 +347,7 @@ void TestScreens::testCurrentClient()
     QCOMPARE(changedSpy.count(), 1);
 
     // and it should even still be on screen 1 if we make the client non-current again
-    Test::app()->workspace->setActiveClient(nullptr);
+    win::set_active_window(*Test::app()->workspace, nullptr);
     win::set_active(client, false);
 
     output = base::get_output(Test::app()->base.get_outputs(), 1);

@@ -91,7 +91,7 @@ void compositor::start_scene()
     scene = create_scene();
     space->stacking_order->render_restack_required = true;
 
-    for (auto& client : space->windows()) {
+    for (auto& client : space->windows) {
         client->setupCompositing();
     }
 
@@ -172,7 +172,7 @@ void compositor::stop(bool on_shutdown)
     effects.reset();
 
     if (space) {
-        for (auto& c : space->windows()) {
+        for (auto& c : space->windows) {
             if (c->remnant) {
                 continue;
             }
@@ -183,8 +183,8 @@ void compositor::stop(bool on_shutdown)
             xcb_composite_unredirect_subwindows(
                 con, kwinApp()->x11RootWindow(), XCB_COMPOSITE_REDIRECT_MANUAL);
         }
-        while (!space->remnants().empty()) {
-            auto win = space->remnants().front();
+        while (!win::get_remnants(*space).empty()) {
+            auto win = win::get_remnants(*space).front();
             win->remnant->refcount = 0;
             win::delete_window_from_space(win->space, win);
         }

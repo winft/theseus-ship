@@ -19,6 +19,18 @@
 namespace KWin::win
 {
 
+template<typename Space>
+std::vector<Toplevel*> get_remnants(Space const& space)
+{
+    std::vector<Toplevel*> ret;
+    for (auto const& window : space.windows) {
+        if (window->remnant) {
+            ret.push_back(window);
+        }
+    }
+    return ret;
+}
+
 class remnant
 {
 public:

@@ -29,12 +29,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/compositor.h"
 #include "render/platform.h"
 #include "toplevel.h"
+#include "win/actions.h"
 #include "win/control.h"
+#include "win/dbus/appmenu.h"
 #include "win/geo.h"
 #include "win/meta.h"
 #include "win/space.h"
-#include "win/stacking.h"
 #include "win/transient.h"
+#include "win/user_actions_menu.h"
+#include "win/window_operation.h"
 
 #include <KDecoration2/DecoratedClient>
 #include <KDecoration2/Decoration>
@@ -248,7 +251,7 @@ DELEGATE(WId, decorationId, frameId)
 #define DELEGATE(name, op)                                                                         \
     void client_impl::name()                                                                       \
     {                                                                                              \
-        space.performWindowOperation(m_client, base::options::op);                                 \
+        win::perform_window_operation(space, m_client, base::options::op);                         \
     }
 
 DELEGATE(requestToggleOnAllDesktops, OnAllDesktopsOp)
@@ -315,13 +318,13 @@ void client_impl::requestShowWindowMenu(QRect const& rect)
 {
     // TODO: add rect to requestShowWindowMenu
     auto const client_pos = m_client->pos();
-    space.showWindowMenu(QRect(client_pos + rect.topLeft(), client_pos + rect.bottomRight()),
-                         m_client);
+    space.user_actions_menu->show(
+        QRect(client_pos + rect.topLeft(), client_pos + rect.bottomRight()), m_client);
 }
 
 void client_impl::requestShowApplicationMenu(const QRect& rect, int actionId)
 {
-    space.showApplicationMenu(rect, m_client, actionId);
+    space.appmenu->showApplicationMenu(m_client->pos() + rect.bottomLeft(), m_client, actionId);
 }
 
 void client_impl::showApplicationMenu(int actionId)
@@ -334,8 +337,8 @@ void client_impl::requestToggleMaximization(Qt::MouseButtons buttons)
     QMetaObject::invokeMethod(
         qobject.get(),
         [this, buttons] {
-            space.performWindowOperation(m_client,
-                                         kwinApp()->options->operationMaxButtonClick(buttons));
+            perform_window_operation(
+                space, m_client, kwinApp()->options->operationMaxButtonClick(buttons));
         },
         Qt::QueuedConnection);
 }

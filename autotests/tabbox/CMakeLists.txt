@@ -14,10 +14,15 @@ set(testTabBoxClientModel_SRCS
     test_tabbox_clientmodel.cpp
 )
 
+ki18n_wrap_ui(testTabBoxClientModel_SRCS
+    ../../win/shortcut_dialog.ui
+)
+
 add_executable(testTabBoxClientModel ${testTabBoxClientModel_SRCS})
 set_target_properties(testTabBoxClientModel PROPERTIES COMPILE_DEFINITIONS "NO_NONE_WINDOW")
 target_link_libraries(testTabBoxClientModel
     Qt::Core
+    Qt::Concurrent
     Qt::DBus
     Qt::Quick
     Qt::Test
@@ -26,9 +31,14 @@ target_link_libraries(testTabBoxClientModel
     Qt::GuiPrivate
 
     KF5::ConfigCore
+    KF5::ConfigWidgets
+    KF5::GlobalAccel
     KF5::I18n
     KF5::Package
+    KF5::Service
     KF5::WindowSystem
+
+    KDecoration2::KDecoration
 
     XCB::XCB
 )
@@ -49,10 +59,15 @@ set(testTabBoxHandler_SRCS
     test_tabbox_handler.cpp
 )
 
+ki18n_wrap_ui(testTabBoxHandler_SRCS
+    ../../win/shortcut_dialog.ui
+)
+
 add_executable(testTabBoxHandler ${testTabBoxHandler_SRCS})
 set_target_properties(testTabBoxHandler PROPERTIES COMPILE_DEFINITIONS "NO_NONE_WINDOW")
 target_link_libraries(testTabBoxHandler
     Qt::Core
+    Qt::Concurrent
     Qt::DBus
     Qt::Quick
     Qt::Test
@@ -61,9 +76,14 @@ target_link_libraries(testTabBoxHandler
     Qt::GuiPrivate
 
     KF5::ConfigCore
+    KF5::ConfigWidgets
+    KF5::GlobalAccel
     KF5::I18n
     KF5::Package
+    KF5::Service
     KF5::WindowSystem
+
+    KDecoration2::KDecoration
 
     XCB::XCB
 )

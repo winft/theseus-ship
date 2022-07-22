@@ -6,6 +6,8 @@
 */
 #pragma once
 
+#include "kwin_export.h"
+
 #include "ui_shortcut_dialog.h"
 
 #include <QDialog>
@@ -13,7 +15,7 @@
 namespace KWin::win
 {
 
-class shortcut_dialog : public QDialog
+class KWIN_EXPORT shortcut_dialog : public QDialog
 {
     Q_OBJECT
 public:

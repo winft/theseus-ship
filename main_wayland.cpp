@@ -35,6 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/wayland/redirect.h"
 #include "input/dbus/tablet_mode_manager.h"
 #include "scripting/platform.h"
+#include "win/shortcuts_init.h"
 #include "win/wayland/space.h"
 #include "xwl/xwayland.h"
 
@@ -240,7 +241,7 @@ void ApplicationWayland::start()
 
     workspace->input = std::make_unique<input::wayland::redirect>(*input, *workspace);
     input::wayland::add_dbus(input.get());
-    workspace->initShortcuts();
+    win::init_shortcuts(*workspace);
     tablet_mode_manager = std::make_unique<input::dbus::tablet_mode_manager>();
     workspace->scripting = std::make_unique<scripting::platform>(*workspace);
 

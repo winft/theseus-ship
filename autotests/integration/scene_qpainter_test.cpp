@@ -28,16 +28,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/space.h"
 #include "win/x11/window.h"
 
-#include <KConfigGroup>
+#include <kwineffects/effects_handler.h>
 
+#include <KConfigGroup>
+#include <QPainter>
 #include <Wrapland/Client/pointer.h>
 #include <Wrapland/Client/seat.h>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Server/buffer.h>
 #include <Wrapland/Server/surface.h>
-
-#include <QPainter>
-
 #include <netwm.h>
 #include <xcb/xcb_icccm.h>
 

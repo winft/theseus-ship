@@ -7,10 +7,11 @@
 
 #include "base/x11/event_filter.h"
 
+#include "base/os/kkeyserver.h"
 #include "win/x11/event.h"
+#include "win/x11/stacking.h"
 #include "win/x11/window.h"
 
-#include <KKeyServer>
 #include <xcb/xcb.h>
 
 namespace KWin::win::x11
@@ -29,7 +30,7 @@ public:
 
     bool event(xcb_generic_event_t* event) override
     {
-        auto mr_win = dynamic_cast<window*>(space.moveResizeClient());
+        auto mr_win = dynamic_cast<window*>(space.move_resize_window);
         if (!mr_win) {
             return false;
         }

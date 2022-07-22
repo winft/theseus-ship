@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/wayland/server.h"
 #include "input/cursor.h"
 #include "render/effects.h"
+#include "win/active_window.h"
 #include "win/control.h"
 #include "win/controlling.h"
 #include "win/deco/bridge.h"
@@ -266,7 +267,7 @@ void TestXdgShellClient::testDesktopPresenceChanged()
     QVERIFY(desktopPresenceChangedEffectsSpy.isValid());
 
     // let's change the desktop
-    Test::app()->workspace->sendClientToDesktop(c, 2, false);
+    win::send_window_to_desktop(*Test::app()->workspace, c, 2, false);
     QCOMPARE(c->desktop(), 2);
     QCOMPARE(desktopPresenceChangedClientSpy.count(), 1);
     QCOMPARE(desktopPresenceChangedWorkspaceSpy.count(), 1);
@@ -375,7 +376,7 @@ void TestXdgShellClient::testMinimizeActiveWindow()
     QVERIFY(win::wants_tab_focus(c));
     QVERIFY(c->isShown());
 
-    Test::app()->workspace->slotWindowMinimize();
+    win::active_window_minimize(*Test::app()->workspace);
     QVERIFY(!c->isShown());
     QVERIFY(c->wantsInput());
     QVERIFY(win::wants_tab_focus(c));
@@ -1079,20 +1080,20 @@ void TestXdgShellClient::testSendClientWithTransientToDesktop()
     QVERIFY(!c->isOnAllDesktops());
     QCOMPARE(transient->desktop(), 1);
     QVERIFY(!transient->isOnAllDesktops());
-    Test::app()->workspace->slotWindowToDesktop(2);
+    win::active_window_to_desktop(*Test::app()->workspace, 2);
 
     QCOMPARE(c->desktop(), 1);
     QCOMPARE(transient->desktop(), 2);
 
     // activate c
-    Test::app()->workspace->activateClient(c);
+    win::activate_window(*Test::app()->workspace, c);
     QCOMPARE(Test::app()->workspace->active_client, c);
     QVERIFY(c->control->active());
 
     // and send it to the desktop it's already on
     QCOMPARE(c->desktop(), 1);
     QCOMPARE(transient->desktop(), 2);
-    Test::app()->workspace->slotWindowToDesktop(1);
+    win::active_window_to_desktop(*Test::app()->workspace, 1);
 
     // which should move the transient back to the desktop
     QCOMPARE(c->desktop(), 1);
@@ -1241,7 +1242,7 @@ void TestXdgShellClient::testXdgInitiallyMaximised()
     QVERIFY(state & Wrapland::Client::XdgShellToplevel::State::Maximized);
 
     // Unmaximize again, an empty size is returned, that means the client should decide.
-    Test::app()->workspace->slotWindowMaximize();
+    win::active_window_maximize(*Test::app()->workspace);
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
 
@@ -1534,9 +1535,9 @@ void TestXdgShellClient::testXdgWindowGeometryInteractiveResize()
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
     // Start interactively resizing the client.
-    QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
-    Test::app()->workspace->slotWindowResize();
-    QCOMPARE(Test::app()->workspace->moveResizeClient(), client);
+    QCOMPARE(Test::app()->workspace->move_resize_window, nullptr);
+    win::active_window_resize(*Test::app()->workspace);
+    QCOMPARE(Test::app()->workspace->move_resize_window, client);
     QCOMPARE(clientStartMoveResizedSpy.count(), 1);
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 2);
@@ -1583,7 +1584,7 @@ void TestXdgShellClient::testXdgWindowGeometryInteractiveResize()
     // Finish resizing the client.
     win::key_press_event(client, Qt::Key_Enter);
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
-    QCOMPARE(Test::app()->workspace->moveResizeClient(), nullptr);
+    QCOMPARE(Test::app()->workspace->move_resize_window, nullptr);
 #if 0
     QEXPECT_FAIL("", "XdgShellClient currently doesn't send final configure event", Abort);
     QVERIFY(configureRequestedSpy.wait());
@@ -1630,7 +1631,7 @@ void TestXdgShellClient::testXdgWindowGeometryFullScreen()
     QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
     QCOMPARE(client->frameGeometry().size(), QSize(180, 80));
 
-    Test::app()->workspace->slotWindowFullScreen();
+    win::active_window_set_fullscreen(*Test::app()->workspace);
     QCOMPARE(client->restore_geometries.maximize, QRect(0, 0, 180, 80));
 
     QVERIFY(configureRequestedSpy.wait());
@@ -1648,7 +1649,7 @@ void TestXdgShellClient::testXdgWindowGeometryFullScreen()
     QCOMPARE(win::render_geometry(client).size(), QSize(1280, 1024));
     QCOMPARE(client->frameGeometry().size(), QSize(1280, 1024));
 
-    Test::app()->workspace->slotWindowFullScreen();
+    win::active_window_set_fullscreen(*Test::app()->workspace);
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
     QCOMPARE(configureRequestedSpy.last().at(0).toSize(), QSize(180, 80));
@@ -1691,7 +1692,7 @@ void TestXdgShellClient::testXdgWindowGeometryMaximize()
     QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
     QCOMPARE(client->frameGeometry().size(), QSize(180, 80));
 
-    Test::app()->workspace->slotWindowMaximize();
+    win::active_window_maximize(*Test::app()->workspace);
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 2);
     QCOMPARE(configureRequestedSpy.last().at(0).toSize(), QSize(1280, 1024));
@@ -1705,7 +1706,7 @@ void TestXdgShellClient::testXdgWindowGeometryMaximize()
     QCOMPARE(win::render_geometry(client).size(), QSize(1280, 1024));
     QCOMPARE(client->frameGeometry().size(), QSize(1280, 1024));
 
-    Test::app()->workspace->slotWindowMaximize();
+    win::active_window_maximize(*Test::app()->workspace);
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
     QCOMPARE(configureRequestedSpy.last().at(0).toSize(), QSize(180, 80));

@@ -31,7 +31,6 @@ public:
     Toplevel* findInternal(QWindow* window) const override;
     win::screen_edge* create_screen_edge(win::screen_edger& edger) override;
 
-protected:
     void update_space_area_from_windows(QRect const& desktop_area,
                                         std::vector<QRect> const& screens_geos,
                                         win::space_areas& areas) override;
@@ -39,31 +38,6 @@ protected:
 private:
     std::unique_ptr<base::x11::event_filter> edges_filter;
 };
-
-template<typename Space, typename Window>
-void restore_session_stacking_order(Space space, Window* c)
-{
-    if (c->sm_stacking_order < 0) {
-        return;
-    }
-
-    blocker block(space->stacking_order);
-    remove_all(space->stacking_order->pre_stack, c);
-
-    for (auto it = space->stacking_order->pre_stack.begin(); // from bottom
-         it != space->stacking_order->pre_stack.end();
-         ++it) {
-        auto current = qobject_cast<Window*>(*it);
-        if (!current) {
-            continue;
-        }
-        if (current->sm_stacking_order > c->sm_stacking_order) {
-            space->stacking_order->pre_stack.insert(it, c);
-            return;
-        }
-    }
-    space->stacking_order->pre_stack.push_back(c);
-}
 
 /**
  * Some fullscreen effects have to raise the screenedge on top of an input window, thus all windows

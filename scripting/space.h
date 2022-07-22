@@ -24,8 +24,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/output_helpers.h"
 #include "base/platform.h"
+#include "debug/support_info.h"
 #include "main.h"
+#include "win/activation.h"
+#include "win/active_window.h"
 #include "win/move.h"
+#include "win/output_space.h"
 #include "win/screen.h"
 #include "win/virtual_desktops.h"
 #include "win/wayland/window.h"
@@ -343,9 +347,7 @@ public Q_SLOTS:
     virtual void slotWindowToDesktopUp() = 0;
     virtual void slotWindowToDesktopDown() = 0;
 
-#undef SIMPLE_SLOT
 #undef QUICKTILE_SLOT
-#undef SWITCH_WINDOW_SLOT
 #undef SWITCH_VD_SLOT
 
     /**
@@ -591,7 +593,7 @@ public:
 
         connect_legacy_screen_resize(this);
 
-        for (auto window : ref_space->m_windows) {
+        for (auto window : ref_space->windows) {
             if (window->control) {
                 Space::handle_client_added(window);
             }
@@ -621,7 +623,7 @@ public:
     std::vector<window*> windows() const override
     {
         std::vector<window*> ret;
-        for (auto const& window : ref_space->m_windows) {
+        for (auto const& window : ref_space->windows) {
             if (window->control && window->control->scripting) {
                 ret.push_back(window->control->scripting.get());
             }
@@ -640,7 +642,7 @@ public:
 
     void setActiveClient(window* win) override
     {
-        ref_space->activateClient(win->client());
+        win::activate_window(*ref_space, win->client());
     }
 
     QSize desktopGridSize() const override
@@ -676,106 +678,256 @@ public:
         ref_space->outline->hide();
     }
 
-#define SIMPLE_SLOT(name)                                                                          \
-    void name() override                                                                           \
-    {                                                                                              \
-        ref_space->name();                                                                         \
+    void slotSwitchToNextScreen() override
+    {
+        win::switch_to_next_output(*ref_space);
     }
 
-#define QUICKTILE_SLOT(name, modes)                                                                \
-    void name() override                                                                           \
-    {                                                                                              \
-        ref_space->quickTileWindow(modes);                                                         \
+    void slotWindowToNextScreen() override
+    {
+        win::active_window_to_next_output(*ref_space);
     }
 
-#define SWITCH_WINDOW_SLOT(name, direction)                                                        \
-    void name() override                                                                           \
-    {                                                                                              \
-        ref_space->switchWindow(win::space::direction);                                            \
+    void slotToggleShowDesktop() override
+    {
+        win::toggle_show_desktop(*ref_space);
     }
 
-    SIMPLE_SLOT(slotSwitchToNextScreen)
-    SIMPLE_SLOT(slotWindowToNextScreen)
-    SIMPLE_SLOT(slotToggleShowDesktop)
+    void slotWindowMaximize() override
+    {
+        win::active_window_maximize(*ref_space);
+    }
 
-    SIMPLE_SLOT(slotWindowMaximize)
-    SIMPLE_SLOT(slotWindowMaximizeVertical)
-    SIMPLE_SLOT(slotWindowMaximizeHorizontal)
-    SIMPLE_SLOT(slotWindowMinimize)
+    void slotWindowMaximizeVertical() override
+    {
+        win::active_window_maximize_vertical(*ref_space);
+    }
 
-    SIMPLE_SLOT(slotWindowRaise)
-    SIMPLE_SLOT(slotWindowLower)
-    SIMPLE_SLOT(slotWindowRaiseOrLower)
-    SIMPLE_SLOT(slotActivateAttentionWindow)
+    void slotWindowMaximizeHorizontal() override
+    {
+        win::active_window_maximize_horizontal(*ref_space);
+    }
 
-    SIMPLE_SLOT(slotWindowPackLeft)
-    SIMPLE_SLOT(slotWindowPackRight)
-    SIMPLE_SLOT(slotWindowPackUp)
-    SIMPLE_SLOT(slotWindowPackDown)
+    void slotWindowMinimize() override
+    {
+        win::active_window_minimize(*ref_space);
+    }
 
-    SIMPLE_SLOT(slotWindowGrowHorizontal)
-    SIMPLE_SLOT(slotWindowGrowVertical)
-    SIMPLE_SLOT(slotWindowShrinkHorizontal)
-    SIMPLE_SLOT(slotWindowShrinkVertical)
+    void slotWindowRaise() override
+    {
+        win::active_window_raise(*ref_space);
+    }
 
-    QUICKTILE_SLOT(slotWindowQuickTileLeft, win::quicktiles::left)
-    QUICKTILE_SLOT(slotWindowQuickTileRight, win::quicktiles::right)
-    QUICKTILE_SLOT(slotWindowQuickTileTop, win::quicktiles::top)
-    QUICKTILE_SLOT(slotWindowQuickTileBottom, win::quicktiles::bottom)
-    QUICKTILE_SLOT(slotWindowQuickTileTopLeft, win::quicktiles::top | win::quicktiles::left)
-    QUICKTILE_SLOT(slotWindowQuickTileTopRight, win::quicktiles::top | win::quicktiles::right)
-    QUICKTILE_SLOT(slotWindowQuickTileBottomLeft, win::quicktiles::bottom | win::quicktiles::left)
-    QUICKTILE_SLOT(slotWindowQuickTileBottomRight, win::quicktiles::bottom | win::quicktiles::right)
+    void slotWindowLower() override
+    {
+        win::active_window_lower(*ref_space);
+    }
 
-    SWITCH_WINDOW_SLOT(slotSwitchWindowUp, DirectionNorth)
-    SWITCH_WINDOW_SLOT(slotSwitchWindowDown, DirectionSouth)
-    SWITCH_WINDOW_SLOT(slotSwitchWindowRight, DirectionEast)
-    SWITCH_WINDOW_SLOT(slotSwitchWindowLeft, DirectionWest)
+    void slotWindowRaiseOrLower() override
+    {
+        win::active_window_raise_or_lower(*ref_space);
+    }
 
-    SIMPLE_SLOT(slotIncreaseWindowOpacity)
-    SIMPLE_SLOT(slotLowerWindowOpacity)
+    void slotActivateAttentionWindow() override
+    {
+        win::activate_attention_window(*ref_space);
+    }
 
-    SIMPLE_SLOT(slotWindowOperations)
-    SIMPLE_SLOT(slotWindowClose)
-    SIMPLE_SLOT(slotWindowMove)
-    SIMPLE_SLOT(slotWindowResize)
-    SIMPLE_SLOT(slotWindowAbove)
-    SIMPLE_SLOT(slotWindowBelow)
-    SIMPLE_SLOT(slotWindowOnAllDesktops)
-    SIMPLE_SLOT(slotWindowFullScreen)
-    SIMPLE_SLOT(slotWindowNoBorder)
+    void slotWindowPackLeft() override
+    {
+        win::active_window_pack_left(*ref_space);
+    }
 
-    SIMPLE_SLOT(slotWindowToNextDesktop)
-    SIMPLE_SLOT(slotWindowToPreviousDesktop)
-    SIMPLE_SLOT(slotWindowToDesktopRight)
-    SIMPLE_SLOT(slotWindowToDesktopLeft)
-    SIMPLE_SLOT(slotWindowToDesktopUp)
-    SIMPLE_SLOT(slotWindowToDesktopDown)
+    void slotWindowPackRight() override
+    {
+        win::active_window_pack_right(*ref_space);
+    }
 
-#undef SIMPLE_SLOT
-#undef QUICKTILE_SLOT
-#undef SWITCH_WINDOW_SLOT
+    void slotWindowPackUp() override
+    {
+        win::active_window_pack_up(*ref_space);
+    }
+
+    void slotWindowPackDown() override
+    {
+        win::active_window_pack_down(*ref_space);
+    }
+
+    void slotWindowGrowHorizontal() override
+    {
+        win::active_window_grow_horizontal(*ref_space);
+    }
+
+    void slotWindowGrowVertical() override
+    {
+        win::active_window_grow_vertical(*ref_space);
+    }
+
+    void slotWindowShrinkHorizontal() override
+    {
+        win::active_window_shrink_horizontal(*ref_space);
+    }
+
+    void slotWindowShrinkVertical() override
+    {
+        win::active_window_shrink_vertical(*ref_space);
+    }
+
+    void slotIncreaseWindowOpacity() override
+    {
+        win::active_window_increase_opacity(*ref_space);
+    }
+
+    void slotLowerWindowOpacity() override
+    {
+        win::active_window_lower_opacity(*ref_space);
+    }
+
+    void slotWindowOperations() override
+    {
+        win::active_window_show_operations_popup(*ref_space);
+    }
+
+    void slotWindowClose() override
+    {
+        win::active_window_close(*ref_space);
+    }
+
+    void slotWindowMove() override
+    {
+        win::active_window_move(*ref_space);
+    }
+
+    void slotWindowResize() override
+    {
+        win::active_window_resize(*ref_space);
+    }
+
+    void slotWindowAbove() override
+    {
+        win::active_window_set_keep_above(*ref_space);
+    }
+
+    void slotWindowBelow() override
+    {
+        win::active_window_set_keep_below(*ref_space);
+    }
+
+    void slotWindowOnAllDesktops() override
+    {
+        win::active_window_set_on_all_desktops(*ref_space);
+    }
+
+    void slotWindowFullScreen() override
+    {
+        win::active_window_set_fullscreen(*ref_space);
+    }
+
+    void slotWindowNoBorder() override
+    {
+        win::active_window_set_no_border(*ref_space);
+    }
+
+    void slotWindowToNextDesktop() override
+    {
+        win::active_window_to_next_desktop(*ref_space);
+    }
+
+    void slotWindowToPreviousDesktop() override
+    {
+        win::active_window_to_prev_desktop(*ref_space);
+    }
+
+    void slotWindowToDesktopRight() override
+    {
+        win::active_window_to_right_desktop(*ref_space);
+    }
+
+    void slotWindowToDesktopLeft() override
+    {
+        win::active_window_to_left_desktop(*ref_space);
+    }
+
+    void slotWindowToDesktopUp() override
+    {
+        win::active_window_to_above_desktop(*ref_space);
+    }
+
+    void slotWindowToDesktopDown() override
+    {
+        win::active_window_to_below_desktop(*ref_space);
+    }
+
+    void slotWindowQuickTileLeft() override
+    {
+        win::active_window_quicktile(*ref_space, win::quicktiles::left);
+    }
+    void slotWindowQuickTileRight() override
+    {
+        win::active_window_quicktile(*ref_space, win::quicktiles::right);
+    }
+    void slotWindowQuickTileTop() override
+    {
+        win::active_window_quicktile(*ref_space, win::quicktiles::top);
+    }
+    void slotWindowQuickTileBottom() override
+    {
+        win::active_window_quicktile(*ref_space, win::quicktiles::bottom);
+    }
+    void slotWindowQuickTileTopLeft() override
+    {
+        win::active_window_quicktile(*ref_space, win::quicktiles::top | win::quicktiles::left);
+    }
+    void slotWindowQuickTileTopRight() override
+    {
+        win::active_window_quicktile(*ref_space, win::quicktiles::top | win::quicktiles::right);
+    }
+    void slotWindowQuickTileBottomLeft() override
+    {
+        win::active_window_quicktile(*ref_space, win::quicktiles::bottom | win::quicktiles::left);
+    }
+    void slotWindowQuickTileBottomRight() override
+    {
+        win::active_window_quicktile(*ref_space, win::quicktiles::bottom | win::quicktiles::right);
+    }
+
+    void slotSwitchWindowUp() override
+    {
+        win::activate_window_direction(*ref_space, win::direction::north);
+    }
+    void slotSwitchWindowDown() override
+    {
+        win::activate_window_direction(*ref_space, win::direction::south);
+    }
+    void slotSwitchWindowRight() override
+    {
+        win::activate_window_direction(*ref_space, win::direction::east);
+    }
+    void slotSwitchWindowLeft() override
+    {
+        win::activate_window_direction(*ref_space, win::direction::west);
+    }
 
 protected:
     QRect client_area_impl(clientAreaOption option, int screen, int desktop) const override
     {
         auto output = base::get_output(kwinApp()->get_base().get_outputs(), screen);
-        return ref_space->clientArea(option, output, desktop);
+        return win::space_window_area(*ref_space, option, output, desktop);
     }
 
     QRect client_area_impl(clientAreaOption option, QPoint const& point, int desktop) const override
     {
-        return ref_space->clientArea(option, point, desktop);
+        return win::space_window_area(*ref_space, option, point, desktop);
     }
 
     QRect client_area_impl(clientAreaOption option, window* window) const override
     {
-        return ref_space->clientArea(option, window->client());
+        return win::space_window_area(*ref_space, option, window->client());
     }
 
     QRect client_area_impl(clientAreaOption option, window const* window) const override
     {
-        return ref_space->clientArea(option, window->client());
+        return win::space_window_area(*ref_space, option, window->client());
     }
 
     QString desktop_name_impl(int desktop) const override
@@ -826,12 +978,12 @@ protected:
 
     QString supportInformation() const override
     {
-        return ref_space->supportInformation();
+        return debug::get_support_info(*ref_space);
     }
 
     window* get_client_impl(qulonglong windowId) override
     {
-        for (auto& win : ref_space->m_windows) {
+        for (auto& win : ref_space->windows) {
             if (win->control && win->xcb_window == windowId) {
                 return win->control->scripting.get();
             }

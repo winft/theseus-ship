@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "control.h"
 #include "deco/bridge.h"
 #include "deco/window.h"
+#include "desktop_set.h"
 #include "geo.h"
 #include "meta.h"
 #include "remnant.h"
@@ -30,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "scene.h"
 #include "setup.h"
 #include "space.h"
-#include "space_helpers.h"
+#include "space_areas_helpers.h"
 #include "window_release.h"
 
 #include <KDecoration2/Decoration>
@@ -51,6 +52,10 @@ public:
     internal_control(internal_window* client)
         : control(client)
         , m_client{client}
+    {
+    }
+
+    void set_desktops(QVector<virtual_desktop*> /*desktops*/) override
     {
     }
 
@@ -162,7 +167,7 @@ bool internal_window::eventFilter(QObject* watched, QEvent* event)
         }
         if (pe->propertyName() == "kwin_windowType") {
             m_windowType = m_internalWindow->property("kwin_windowType").value<NET::WindowType>();
-            space.updateClientArea();
+            update_space_areas(space);
         }
     }
     return false;
@@ -457,7 +462,7 @@ void internal_window::destroyClient()
 
     remove_window_from_lists(space, this);
     space.stacking_order->update_count();
-    space.updateClientArea();
+    update_space_areas(space);
     Q_EMIT space.qobject->internalClientRemoved(this);
 
     if (deleted) {
@@ -616,18 +621,19 @@ void internal_window::markAsMapped()
 
     setReadyForPainting();
 
-    space.m_windows.push_back(this);
+    space.windows.push_back(this);
 
     setup_space_window_connections(&space, this);
     update_layer(this);
 
     if (placeable()) {
-        auto const area = space.clientArea(PlacementArea, get_current_output(space), desktop());
+        auto const area
+            = space_window_area(space, PlacementArea, get_current_output(space), desktop());
         place(this, area);
     }
 
     space.stacking_order->update_count();
-    space.updateClientArea();
+    update_space_areas(space);
 
     Q_EMIT space.qobject->internalClientAdded(this);
 }

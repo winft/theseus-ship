@@ -51,6 +51,8 @@ public:
 
     void setup_tabbox();
 
+    virtual void set_desktops(QVector<virtual_desktop*> desktops) = 0;
+
     bool skip_pager() const;
     virtual void set_skip_pager(bool set);
 
@@ -109,9 +111,7 @@ public:
 
     virtual void update_mouse_grab();
 
-    Wrapland::Server::PlasmaWindow* wayland_management() const;
-    void set_wayland_management(Wrapland::Server::PlasmaWindow* plasma_window);
-    void destroy_wayland_management();
+    void destroy_plasma_wayland_integration();
 
     bool have_resize_effect() const;
     void update_have_resize_effect();
@@ -150,6 +150,7 @@ public:
     void discard_temporary_rules();
 
     std::unique_ptr<scripting::window> scripting;
+    Wrapland::Server::PlasmaWindow* plasma_wayland_integration{nullptr};
 
 private:
     void minimize(bool avoid_animation);
@@ -177,8 +178,6 @@ private:
 
     QTimer* m_auto_raise_timer{nullptr};
     bool m_minimized{false};
-
-    Wrapland::Server::PlasmaWindow* m_wayland_management{nullptr};
 
     bool m_have_resize_effect{false};
 

@@ -8,6 +8,7 @@
 #pragma once
 
 #include "kwin_export.h"
+#include "net.h"
 
 #include <qobject.h>
 #include <qobjectdefs.h>

@@ -64,7 +64,7 @@ void XWaylandInputTest::initTestCase()
 void XWaylandInputTest::init()
 {
     input::get_cursor()->set_pos(QPoint(640, 512));
-    QVERIFY(Test::app()->workspace->m_windows.empty());
+    QVERIFY(Test::app()->workspace->windows.empty());
 }
 
 void xcb_connection_deleter(xcb_connection_t* pointer)

@@ -11,6 +11,7 @@
 #include "base/wayland/server.h"
 #include "input/event.h"
 #include "input/redirect.h"
+#include "main.h"
 #include "win/deco.h"
 #include "win/geo.h"
 #include "win/transient.h"

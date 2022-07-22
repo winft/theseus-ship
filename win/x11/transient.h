@@ -5,11 +5,13 @@
 */
 #pragma once
 
+#include "tool_windows.h"
 #include "window.h"
 #include "window_find.h"
 
 #include "base/logging.h"
 #include "base/x11/xcb/proto.h"
+#include "win/activation.h"
 #include "win/stacking.h"
 #include "win/transient.h"
 
@@ -150,7 +152,7 @@ void set_transient_lead(Win* win, xcb_window_t lead_id)
 
     check_group(win, nullptr);
     update_layer(win);
-    win->space.resetUpdateToolWindowsTimer();
+    reset_update_tool_windows_timer(win->space);
 }
 
 template<typename Win>
@@ -341,7 +343,7 @@ template<typename Win, typename Space>
 void check_active_modal(Space& space)
 {
     // If the active window got new modal transient, activate it.
-    auto win = qobject_cast<Win*>(space.mostRecentlyActivatedClient());
+    auto win = qobject_cast<Win*>(most_recently_activated_window(space));
     if (!win) {
         return;
     }
@@ -353,7 +355,7 @@ void check_active_modal(Space& space)
             // postpone check until end of manage()
             return;
         }
-        space.activateClient(new_modal);
+        activate_window(space, new_modal);
     }
 }
 
@@ -422,7 +424,7 @@ group* find_client_leader_group(Win const* win)
 {
     group* ret = nullptr;
 
-    for (auto const& other : win->space.m_windows) {
+    for (auto const& other : win->space.windows) {
         if (!other->control) {
             continue;
         }

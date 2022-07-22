@@ -6,7 +6,6 @@
 #pragma once
 
 #include "net.h"
-#include "space.h"
 #include "transient.h"
 
 #include "toplevel.h"
@@ -19,6 +18,17 @@ class Toplevel;
 namespace win
 {
 
+/**
+ * Window that was activated, but it's not yet really active_client, because
+ * we didn't process yet the matching FocusIn event. Used mostly in focus
+ * stealing prevention code.
+ */
+template<typename Space>
+Toplevel* most_recently_activated_window(Space const& space)
+{
+    return space.should_get_focus.size() > 0 ? space.should_get_focus.back() : space.active_client;
+}
+
 template<typename Win>
 bool is_active_fullscreen(Win const* win)
 {
@@ -27,7 +37,7 @@ bool is_active_fullscreen(Win const* win)
     }
 
     // Instead of activeClient() - avoids flicker.
-    auto const ac = win->space.mostRecentlyActivatedClient();
+    auto const ac = most_recently_activated_window(win->space);
 
     // According to NETWM spec implementation notes suggests "focused windows having state
     // _NET_WM_STATE_FULLSCREEN" to be on the highest layer. Also take the screen into account.
@@ -51,13 +61,13 @@ layer belong_to_layer(Win* win)
         return win::layer::unmanaged;
     }
     if (is_desktop(win)) {
-        return win->space.showingDesktop() ? win::layer::above : win::layer::desktop;
+        return win->space.showing_desktop ? win::layer::above : win::layer::desktop;
     }
     if (is_splash(win)) {
         return win::layer::normal;
     }
     if (is_dock(win)) {
-        if (win->space.showingDesktop()) {
+        if (win->space.showing_desktop) {
             return win::layer::notification;
         }
         return win->layer_for_dock();
@@ -71,7 +81,7 @@ layer belong_to_layer(Win* win)
     if (is_critical_notification(win)) {
         return win::layer::critical_notification;
     }
-    if (win->space.showingDesktop() && win->belongsToDesktop()) {
+    if (win->space.showing_desktop && win->belongsToDesktop()) {
         return win::layer::above;
     }
     if (win->control->keep_below()) {

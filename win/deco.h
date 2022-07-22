@@ -6,9 +6,7 @@
 #pragma once
 
 #include "control.h"
-#include "space.h"
 #include "structs.h"
-#include "wayland/window.h"
 
 #include <KDecoration2/Decoration>
 #include <QObject>

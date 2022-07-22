@@ -8,8 +8,11 @@
 #include "base/x11/grabs.h"
 #include "toplevel.h"
 #include "utils/blocker.h"
+#include "win/input.h"
 #include "win/rules.h"
-#include "win/space_helpers.h"
+#include "win/shortcut_set.h"
+#include "win/space_areas_helpers.h"
+#include "win/tabbox.h"
 #include "win/window_release.h"
 
 #if KWIN_BUILD_TABBOX
@@ -23,7 +26,7 @@ template<typename Space, typename Win>
 void remove_controlled_window_from_space(Space& space, Win* win)
 {
     if (win == space.active_popup_client) {
-        space.closeActivePopup();
+        close_active_popup(space);
     }
 
     if (space.user_actions_menu->isMenuClient(win)) {
@@ -31,17 +34,17 @@ void remove_controlled_window_from_space(Space& space, Win* win)
     }
 
     if (space.client_keys_client == win) {
-        space.setupWindowShortcutDone(false);
+        setup_window_shortcut_done(space, false);
     }
     if (!win->control->shortcut().isEmpty()) {
         // Remove from client_keys.
         set_shortcut(win, QString());
 
         // Needed, since this is otherwise delayed by setShortcut() and wouldn't run
-        space.clientShortcutUpdated(win);
+        window_shortcut_updated(space, win);
     }
 
-    assert(contains(space.m_windows, win));
+    assert(contains(space.windows, win));
 
     // TODO: if marked client is removed, notify the marked list
     remove_window_from_lists(space, win);
@@ -63,14 +66,15 @@ void remove_controlled_window_from_space(Space& space, Win* win)
     if (win == space.last_active_client) {
         space.last_active_client = nullptr;
     }
-    if (win == space.delayfocus_client)
-        space.cancelDelayFocus();
+    if (win == space.delayfocus_client) {
+        cancel_delay_focus(space);
+    }
 
     Q_EMIT space.qobject->clientRemoved(win);
 
     space.stacking_order->update_count();
-    space.updateClientArea();
-    space.updateTabbox();
+    update_space_areas(space);
+    update_tabbox(space);
 }
 
 template<typename Win>
@@ -95,7 +99,7 @@ template<typename Win>
 void finish_unmanaged_removal(Win* win, Toplevel* remnant)
 {
     auto& space = win->space;
-    assert(contains(space.m_windows, win));
+    assert(contains(space.windows, win));
 
     remove_window_from_lists(space, win);
     space.render.addRepaint(visible_rect(win));
@@ -162,7 +166,7 @@ void release_window(Win* win, bool on_shutdown)
     }
 #endif
 
-    win->control->destroy_wayland_management();
+    win->control->destroy_plasma_wayland_integration();
     destroy_damage_handle(*win);
     reset_have_resize_effect(*win);
 
@@ -207,7 +211,7 @@ void release_window(Win* win, bool on_shutdown)
     win->hidden = true;
 
     if (!on_shutdown) {
-        win->space.clientHidden(win);
+        process_window_hidden(win->space, win);
     }
 
     // Destroying decoration would cause ugly visual effect
@@ -286,7 +290,7 @@ void destroy_window(Win* win)
     }
 #endif
 
-    win->control->destroy_wayland_management();
+    win->control->destroy_plasma_wayland_integration();
     reset_have_resize_effect(*win);
 
     auto del = create_remnant_window<Win>(*win);
@@ -315,7 +319,7 @@ void destroy_window(Win* win)
     // So that it's not considered visible anymore
     win->hidden = true;
 
-    win->space.clientHidden(win);
+    process_window_hidden(win->space, win);
     win->control->destroy_decoration();
     clean_grouping(win);
     remove_controlled_window_from_space(win->space, win);

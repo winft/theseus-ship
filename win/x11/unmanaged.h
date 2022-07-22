@@ -12,7 +12,6 @@
 #include "base/x11/xcb/proto.h"
 #include "render/effects.h"
 #include "win/remnant.h"
-#include "win/space_helpers.h"
 
 namespace KWin::win::x11
 {
@@ -20,7 +19,7 @@ namespace KWin::win::x11
 template<typename Win, typename Space>
 Win* find_unmanaged(Space&& space, xcb_window_t xcb_win)
 {
-    for (auto win : space.m_windows) {
+    for (auto win : space.windows) {
         if (!win->remnant && !win->control && win->xcb_window == xcb_win) {
             return static_cast<Win*>(win);
         }
@@ -112,7 +111,7 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
     QObject::connect(
         win, &Win::needsRepaint, &space.render, [win] { win->space.render.schedule_repaint(win); });
 
-    space.m_windows.push_back(win);
+    space.windows.push_back(win);
     space.stacking_order->render_restack_required = true;
     Q_EMIT space.qobject->unmanagedAdded(win);
 
@@ -154,7 +153,7 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* event)
     win->info->event(event, &dirtyProperties, &dirtyProperties2);
 
     if (dirtyProperties2 & NET::WM2Opacity) {
-        if (win->space.compositing()) {
+        if (win->space.render.scene) {
             win->addRepaintFull();
             Q_EMIT win->opacityChanged(win, old_opacity);
         }

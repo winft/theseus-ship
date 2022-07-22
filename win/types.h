@@ -10,6 +10,13 @@
 namespace KWin::win
 {
 
+enum class direction {
+    north,
+    east,
+    south,
+    west,
+};
+
 enum class position {
     center = 0x0,
     left = 0x1,
@@ -110,6 +117,15 @@ enum class focus_chain_change {
     make_first,
     make_last,
     update,
+};
+
+/// Focus Stealing Prevention Levels
+enum class fsp_level {
+    none = 0,
+    low,
+    medium,
+    high,
+    extreme,
 };
 
 }

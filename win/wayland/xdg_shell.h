@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "control.h"
 #include "popup_placement.h"
 #include "space.h"
 #include "window.h"
@@ -19,6 +20,7 @@
 #include "win/input.h"
 #include "win/meta.h"
 #include "win/setup.h"
+#include "win/space_areas_helpers.h"
 #include "win/transient.h"
 
 #include <KScreenLocker/KsldApp>
@@ -40,25 +42,26 @@
 namespace KWin::win::wayland
 {
 
-class xdg_shell_control : public control
+template<typename Win>
+class xdg_shell_control : public wayland::control<Win>
 {
 public:
-    xdg_shell_control(window* win)
-        : control(win)
+    xdg_shell_control(Win& win)
+        : wayland::control<Win>(win)
         , m_window{win}
     {
     }
 
     bool can_fullscreen() const override
     {
-        if (!rules().checkFullScreen(true)) {
+        if (!this->rules().checkFullScreen(true)) {
             return false;
         }
-        return !is_special_window(m_window);
+        return !is_special_window(&m_window);
     }
 
 private:
-    window* m_window;
+    wayland::window& m_window;
 };
 
 template<typename Space>
@@ -204,7 +207,7 @@ window* create_toplevel_window(Space* space, Wrapland::Server::XdgShellToplevel*
     auto win = create_shell_window(*space, toplevel->surface());
     win->toplevel = toplevel;
 
-    win->control = std::make_unique<xdg_shell_control>(win);
+    win->control = std::make_unique<xdg_shell_control<window>>(*win);
     win->control->setup_tabbox();
     win->control->setup_color_scheme();
 
@@ -469,7 +472,7 @@ void install_plasma_shell_surface(Win* win, Wrapland::Server::PlasmaShellSurface
                 || type == NET::CriticalNotification) {
                 set_on_all_desktops(win, true);
             }
-            win->space.updateClientArea();
+            win::update_space_areas(win->space);
         }
     };
 
@@ -485,7 +488,7 @@ void install_plasma_shell_surface(Win* win, Wrapland::Server::PlasmaShellSurface
     QObject::connect(surface, &PSS::roleChanged, win, update_role);
     QObject::connect(surface, &PSS::panelBehaviorChanged, win, [win] {
         update_screen_edge(win);
-        win->space.updateClientArea();
+        win::update_space_areas(win->space);
     });
     QObject::connect(win, &window::frame_geometry_changed, win, [win] { update_screen_edge(win); });
 
@@ -596,7 +599,7 @@ void handle_new_toplevel(Space* space, Wrapland::Server::XdgShellToplevel* tople
         win::wayland::install_palette(window, palette);
     }
 
-    space->m_windows.push_back(window);
+    space->windows.push_back(window);
 
     if (window->ready_for_painting) {
         space->handle_window_added(window);
@@ -618,7 +621,7 @@ template<typename Window, typename Space>
 void handle_new_popup(Space* space, Wrapland::Server::XdgShellPopup* popup)
 {
     auto window = win::wayland::create_popup_window(space, popup);
-    space->m_windows.push_back(window);
+    space->windows.push_back(window);
 
     if (window->ready_for_painting) {
         space->handle_window_added(window);

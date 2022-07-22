@@ -94,7 +94,7 @@ void pointer_redirect::init()
         });
     };
 
-    auto const clients = redirect->space.m_windows;
+    auto const clients = redirect->space.windows;
     std::for_each(clients.begin(), clients.end(), setupMoveResizeConnection);
     QObject::connect(redirect->space.qobject.get(),
                      &win::space::qobject_t::clientAdded,
@@ -513,7 +513,7 @@ void pointer_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
               }
 
               // TODO: can we check on the client instead?
-              if (redirect->space.moveResizeClient()) {
+              if (redirect->space.move_resize_window) {
                   // don't update while moving
                   return;
               }

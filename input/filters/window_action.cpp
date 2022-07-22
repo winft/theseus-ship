@@ -15,6 +15,7 @@
 #include "main.h"
 #include "toplevel.h"
 #include "win/input.h"
+#include "win/space.h"
 #include "win/transient.h"
 
 #include <Wrapland/Server/seat.h>

@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "tabbox_logging.h"
 #include "tabbox_x11_filter.h"
 
+#include "base/os/kkeyserver.h"
 #include "base/platform.h"
 #include "base/x11/grabs.h"
 #include "base/x11/xcb/proto.h"
@@ -36,18 +37,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/redirect.h"
 #include "input/xkb/helpers.h"
 #include "render/effects.h"
-#include "win/screen.h"
-#include "win/screen_edges.h"
-#include "win/space.h"
-#include "win/virtual_desktops.h"
-
+#include "win/activation.h"
 #include "win/controlling.h"
 #include "win/focus_chain.h"
 #include "win/meta.h"
 #include "win/scene.h"
+#include "win/screen.h"
+#include "win/screen_edges.h"
+#include "win/space.h"
 #include "win/stacking.h"
 #include "win/stacking_order.h"
 #include "win/util.h"
+#include "win/virtual_desktops.h"
 #include "win/x11/window.h"
 
 #include <QAction>
@@ -58,7 +59,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KGlobalAccel>
 #include <KLazyLocalizedString>
 #include <KLocalizedString>
-#include <kkeyserver.h>
 // X11
 #include <X11/keysym.h>
 #include <X11/keysymdef.h>
@@ -299,7 +299,7 @@ tabbox_client_list tabbox_handler_impl::stacking_order() const
 
 bool tabbox_handler_impl::is_kwin_compositing() const
 {
-    return m_tabbox->space.compositing();
+    return static_cast<bool>(m_tabbox->space.render.scene);
 }
 
 void tabbox_handler_impl::raise_client(tabbox_client* c) const
@@ -647,7 +647,7 @@ Toplevel* tabbox::current_client()
 {
     if (auto client
         = static_cast<tabbox_client_impl*>(m_tabbox->client(m_tabbox->current_index()))) {
-        for (auto win : space.m_windows) {
+        for (auto win : space.windows) {
             if (win == client->client()) {
                 return win;
             }
@@ -710,7 +710,8 @@ void tabbox::show()
         m_is_shown = false;
         return;
     }
-    space.setShowingDesktop(false);
+
+    set_showing_desktop(space, false);
     reference();
     m_is_shown = true;
     m_tabbox->show();
@@ -1262,7 +1263,7 @@ void tabbox::cde_walk_through_windows(bool forward)
         if (c && c != nc)
             win::lower_window(&space, c);
         if (kwinApp()->options->focusPolicyIsReasonable()) {
-            space.activateClient(nc);
+            activate_window(space, nc);
         } else {
             if (!nc->isOnDesktop(current_desktop()))
                 set_current_desktop(nc->desktop());
@@ -1277,7 +1278,7 @@ void tabbox::kde_one_step_through_windows(bool forward, TabBoxMode mode)
     reset();
     next_prev(forward);
     if (auto c = current_client()) {
-        space.activateClient(c);
+        activate_window(space, c);
     }
 }
 
@@ -1437,9 +1438,9 @@ void tabbox::accept(bool closeTabBox)
     if (closeTabBox)
         close();
     if (c) {
-        space.activateClient(c);
+        activate_window(space, c);
         if (win::is_desktop(c))
-            space.setShowingDesktop(!space.showingDesktop());
+            set_showing_desktop(space, !space.showing_desktop);
     }
 }
 
@@ -1494,7 +1495,7 @@ std::vector<Toplevel*> get_windows_with_control(std::vector<Toplevel*>& windows)
  */
 Toplevel* tabbox::next_client_static(Toplevel* c) const
 {
-    auto const& list = get_windows_with_control(space.m_windows);
+    auto const& list = get_windows_with_control(space.windows);
     if (!c || list.empty()) {
         return nullptr;
     }
@@ -1515,7 +1516,7 @@ Toplevel* tabbox::next_client_static(Toplevel* c) const
  */
 Toplevel* tabbox::previous_client_static(Toplevel* c) const
 {
-    auto const& list = get_windows_with_control(space.m_windows);
+    auto const& list = get_windows_with_control(space.windows);
     if (!c || list.empty()) {
         return nullptr;
     }

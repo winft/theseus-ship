@@ -6,9 +6,12 @@
 */
 #pragma once
 
+#include "debug/support_info.h"
 #include "input/platform.h"
+#include "kwin_export.h"
 #include "main.h"
 #include "toplevel.h"
+#include "win/kill_window.h"
 #include "win/placement.h"
 
 #include <QObject>
@@ -39,7 +42,7 @@ namespace base::dbus
  *
  * @author Martin Gräßlin <mgraesslin@kde.org>
  */
-class kwin : public QObject, protected QDBusContext
+class KWIN_EXPORT kwin : public QObject, protected QDBusContext
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "org.kde.KWin")
@@ -124,7 +127,7 @@ template<typename Space>
 class kwin_impl : public kwin
 {
 public:
-    explicit kwin_impl(win::space& space)
+    explicit kwin_impl(Space& space)
         : kwin(*space.qobject)
         , space{space}
     {
@@ -132,7 +135,7 @@ public:
 
     void kill_window_impl() override
     {
-        space.slotKillWindow();
+        win::start_window_killer(space);
     }
 
     void unclutter_desktop_impl() override
@@ -142,7 +145,7 @@ public:
 
     QString support_information_impl() override
     {
-        return space.supportInformation();
+        return debug::get_support_info(space);
     }
 
     int current_desktop_impl() override
@@ -194,7 +197,7 @@ public:
     {
         auto const id = QUuid::fromString(uuid);
 
-        for (auto win : space.m_windows) {
+        for (auto win : space.windows) {
             if (!win->control) {
                 continue;
             }

@@ -18,6 +18,7 @@
 #include "touch_redirect.h"
 
 #include "main.h"
+#include "render/compositor.h"
 #include "render/effects.h"
 #include "render/platform.h"
 #include "toplevel.h"
@@ -25,6 +26,7 @@
 #include "win/space.h"
 #include "win/stacking_order.h"
 #include "win/wayland/input.h"
+#include "win/x11/unmanaged.h"
 
 namespace KWin::input
 {
@@ -94,7 +96,7 @@ Toplevel* redirect::findToplevel(const QPoint& pos)
         if (space.render.effects && space.render.effects->isMouseInterception()) {
             return nullptr;
         }
-        auto const& unmanaged = space.unmanagedList();
+        auto const& unmanaged = win::x11::get_unmanageds<Toplevel>(space);
         for (auto const& u : unmanaged) {
             if (win::input_geometry(u).contains(pos) && win::wayland::accepts_input(u, pos)) {
                 return u;

@@ -12,7 +12,6 @@
 #include "rules/rule_book.h"
 #include "utils/blocker.h"
 #include "win/remnant.h"
-#include "win/space_helpers.h"
 #include "win/stacking_order.h"
 #include "win/transient.h"
 #include "win/window_release.h"
@@ -35,7 +34,7 @@ void destroy_window(Win* win)
         // With the lead gone there is no way - and no need - for remnant effects. Delete directly.
         Q_EMIT win->closed(win);
         space.handle_window_removed(win);
-        remove_all(space.m_windows, win);
+        remove_all(space.windows, win);
         remove_all(space.stacking_order->pre_stack, win);
         remove_all(space.stacking_order->stack, win);
         delete win;
@@ -58,7 +57,7 @@ void destroy_window(Win* win)
 
         win->space.rule_book->discardUsed(win, true);
 
-        win->control->destroy_wayland_management();
+        win->control->destroy_plasma_wayland_integration();
         win->control->destroy_decoration();
     }
 

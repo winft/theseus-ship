@@ -5,19 +5,24 @@
 */
 #pragma once
 
+#include "actions.h"
+#include "activation.h"
 #include "client.h"
-#include "control.h"
+#include "focus_stealing.h"
 #include "geo.h"
 #include "meta.h"
+#include "stacking.h"
+#include "startup_info.h"
 #include "transient.h"
+#include "user_time.h"
 #include "window_release.h"
 
+#include "base/os/kkeyserver.h"
 #include "base/x11/xcb/qt_types.h"
+#include "win/activation.h"
+#include "win/desktop_space.h"
 #include "win/input.h"
 #include "win/meta.h"
-#include "win/space.h"
-
-#include <kkeyserver.h>
 
 namespace KWin::win::x11
 {
@@ -112,7 +117,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
         }
         if ((dirtyProperties & NET::WMStrut) != 0
             || (dirtyProperties2 & NET::WM2ExtendedStrut) != 0) {
-            win->space.updateClientArea();
+            update_space_areas(win->space);
         }
         if ((dirtyProperties & NET::WMIcon) != 0) {
             get_icons(win);
@@ -122,14 +127,14 @@ bool window_event(Win* win, xcb_generic_event_t* e)
         // info->userTime() is the value of the property, userTime() also includes
         // updates of the time done by KWin (ButtonPress on windowrapper etc.).
         if ((dirtyProperties2 & NET::WM2UserTime) != 0) {
-            win->space.setWasUserInteraction();
+            mark_as_user_interaction(win->space);
             update_user_time(win, win->info->userTime());
         }
         if ((dirtyProperties2 & NET::WM2StartupId) != 0) {
             startup_id_changed(win);
         }
         if (dirtyProperties2 & NET::WM2Opacity) {
-            if (win->space.compositing()) {
+            if (win->space.render.scene) {
                 win->addRepaintFull();
                 Q_EMIT win->opacityChanged(win, old_opacity);
             } else {
@@ -348,8 +353,8 @@ bool map_request_event(Win* win, xcb_map_request_event_t* e)
         win::set_minimized(win, false);
     }
     if (!win->isOnCurrentDesktop()) {
-        if (win->space.allowClientActivation(win)) {
-            win->space.activateClient(win);
+        if (allow_window_activation(win->space, win)) {
+            activate_window(win->space, win);
         } else {
             win::set_demands_attention(win, true);
         }
@@ -596,7 +601,7 @@ void leave_notify_event(Win* win, xcb_leave_notify_event_t* e)
         }
         if (kwinApp()->options->focusPolicy() == base::options::FocusStrictlyUnderMouse
             && win->control->active() && lostMouse) {
-            win->space.requestDelayFocus(nullptr);
+            request_delay_focus(win->space, nullptr);
         }
         return;
     }
@@ -869,21 +874,41 @@ void focus_in_event(Win* win, xcb_focus_in_event_t* e)
         return;
     }
 
-    for (auto win : win->space.m_windows) {
+    for (auto win : win->space.windows) {
         if (auto x11_win = qobject_cast<window*>(win)) {
             cancel_focus_out_timer(x11_win);
         }
     }
 
     // check if this client is in should_get_focus list or if activation is allowed
-    bool activate = win->space.allowClientActivation(win, -1U, true);
+    bool activate = allow_window_activation(win->space, win, -1U, true);
 
-    // remove from should_get_focus list
-    win->space.gotFocusIn(win);
+    // Remove from should_get_focus list.
+    if (auto& sgf = win->space.should_get_focus; contains(sgf, win)) {
+        // Remove also all sooner elements that should have got FocusIn, but didn't for some reason
+        // (and also won't anymore, because they were sooner).
+        while (sgf.front() != win) {
+            sgf.pop_front();
+        }
+
+        // Finally remove 'win'.
+        sgf.pop_front();
+    }
+
     if (activate) {
         win::set_active(win, true);
     } else {
-        win->space.restoreFocus();
+        // this updateXTime() is necessary - as FocusIn events don't have
+        // a timestamp *sigh*, kwin's timestamp would be older than the timestamp
+        // that was used by whoever caused the focus change, and therefore
+        // the attempt to restore the focus would fail due to old timestamp
+        kwinApp()->update_x11_time_from_clock();
+        if (win->space.should_get_focus.size() > 0) {
+            request_focus(win->space, win->space.should_get_focus.back());
+        } else if (win->space.last_active_client) {
+            request_focus(win->space, win->space.last_active_client);
+        }
+
         win::set_demands_attention(win, true);
     }
 }

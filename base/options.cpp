@@ -17,6 +17,7 @@
 #ifndef KCMRULES
 #include "main.h"
 #include "options_settings.h"
+#include "utils/algorithm.h"
 
 #include <kwingl/platform.h>
 
@@ -99,7 +100,6 @@ options::options()
     , m_centerSnapZone(0)
     , m_snapOnlyWhenOverlapping(false)
     , m_rollOverDesktops(false)
-    , m_focusStealingPreventionLevel(0)
     , m_killPingTimeout(0)
     , m_hideUtilityWindowsForInactive(false)
     , m_compositingMode(options::defaultCompositingMode())
@@ -299,15 +299,22 @@ void options::setRollOverDesktops(bool rollOverDesktops)
     Q_EMIT rollOverDesktopsChanged(m_rollOverDesktops);
 }
 
-void options::setFocusStealingPreventionLevel(int focusStealingPreventionLevel)
+void options::setFocusStealingPreventionLevel(win::fsp_level focusStealingPreventionLevel)
 {
     if (!focusPolicyIsReasonable()) {
-        focusStealingPreventionLevel = 0;
+        focusStealingPreventionLevel = win::fsp_level::none;
     }
     if (m_focusStealingPreventionLevel == focusStealingPreventionLevel) {
         return;
     }
-    m_focusStealingPreventionLevel = qMax(0, qMin(4, focusStealingPreventionLevel));
+
+    if (enum_index(focusStealingPreventionLevel) > enum_index(win::fsp_level::extreme)) {
+        focusStealingPreventionLevel = win::fsp_level::extreme;
+    }
+    if (enum_index(focusStealingPreventionLevel) < enum_index(win::fsp_level::none)) {
+        focusStealingPreventionLevel = win::fsp_level::none;
+    }
+
     Q_EMIT focusStealingPreventionLevelChanged();
 }
 
@@ -774,7 +781,8 @@ void options::syncFromKcfgc()
     setSeparateScreenFocus(m_settings->separateScreenFocus());
     current_output_follows_mouse = m_settings->activeMouseScreen();
     setRollOverDesktops(m_settings->rollOverDesktops());
-    setFocusStealingPreventionLevel(m_settings->focusStealingPreventionLevel());
+    setFocusStealingPreventionLevel(
+        static_cast<win::fsp_level>(m_settings->focusStealingPreventionLevel()));
 
 #if KWIN_BUILD_DECORATIONS
     setPlacement(static_cast<win::placement>(m_settings->placement()));

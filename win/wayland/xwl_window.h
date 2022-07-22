@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include "xwl_control.h"
+
 #include "win/x11/window.h"
 
 namespace KWin::win::wayland
@@ -14,6 +16,8 @@ class KWIN_EXPORT xwl_window : public x11::window
 {
     Q_OBJECT
 public:
+    using control_t = xwl_control<xwl_window>;
+
     xwl_window(xcb_window_t xcb_win, win::space& space);
 
     qreal bufferScale() const override;

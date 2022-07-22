@@ -8,9 +8,13 @@
 #include "space.h"
 
 #include "toplevel.h"
+#include "win/actions.h"
+#include "win/activation.h"
 #include "win/controlling.h"
+#include "win/desktop_get.h"
 #include "win/meta.h"
 #include "win/screen.h"
+#include "win/space.h"
 #include "win/transient.h"
 #include "win/x11/window.h"
 

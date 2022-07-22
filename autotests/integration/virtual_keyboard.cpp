@@ -135,7 +135,7 @@ void virtual_keyboard_test::cleanup()
 {
     // Make sure we animate.
     QTest::qWait(1000);
-    QVERIFY(Test::app()->workspace->windows().empty());
+    QVERIFY(Test::app()->workspace->windows.empty());
 
     vk_client = {};
     focus_client = {};

@@ -10,6 +10,7 @@
 #include "toplevel.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
+#include "win/x11/stacking.h"
 #include "win/x11/window.h"
 
 #include <Wrapland/Server/buffer.h>
@@ -30,7 +31,7 @@ surface_tree_model::surface_tree_model(win::space& space, QObject* parent)
         endResetModel();
     };
 
-    const auto unmangeds = space.unmanagedList();
+    auto const unmangeds = win::x11::get_unmanageds<Toplevel>(space);
     for (auto u : unmangeds) {
         if (!u->surface) {
             continue;
@@ -38,7 +39,7 @@ surface_tree_model::surface_tree_model(win::space& space, QObject* parent)
         QObject::connect(
             u->surface, &Wrapland::Server::Surface::subsurfaceTreeChanged, this, reset);
     }
-    for (auto c : space.m_windows) {
+    for (auto c : space.windows) {
         if (!c->control || !c->surface) {
             continue;
         }
@@ -107,7 +108,8 @@ int surface_tree_model::rowCount(const QModelIndex& parent) const
     }
 
     // toplevel are all windows
-    return get_windows_with_control(space.m_windows).size() + space.unmanagedList().size();
+    return get_windows_with_control(space.windows).size()
+        + win::x11::get_unmanageds<Toplevel>(space).size();
 }
 
 QModelIndex surface_tree_model::index(int row, int column, const QModelIndex& parent) const
@@ -130,14 +132,14 @@ QModelIndex surface_tree_model::index(int row, int column, const QModelIndex& pa
     }
 
     // a window
-    auto const& allClients = get_windows_with_control(space.m_windows);
+    auto const& allClients = get_windows_with_control(space.windows);
     if (row_u < allClients.size()) {
         // references a client
         return createIndex(row_u, column, allClients.at(row_u)->surface);
     }
 
     int reference = allClients.size();
-    const auto& unmanaged = space.unmanagedList();
+    const auto& unmanaged = win::x11::get_unmanageds<Toplevel>(space);
     if (row_u < reference + unmanaged.size()) {
         return createIndex(row_u, column, unmanaged.at(row_u - reference)->surface);
     }
@@ -177,14 +179,14 @@ QModelIndex surface_tree_model::parent(const QModelIndex& child) const
         }
         // not a subsurface, thus it's a true window
         size_t row = 0;
-        const auto& allClients = get_windows_with_control(space.m_windows);
+        const auto& allClients = get_windows_with_control(space.windows);
         for (; row < allClients.size(); row++) {
             if (allClients.at(row)->surface == parent) {
                 return createIndex(row, 0, parent);
             }
         }
         row = allClients.size();
-        const auto& unmanaged = space.unmanagedList();
+        const auto& unmanaged = win::x11::get_unmanageds<Toplevel>(space);
         for (size_t i = 0; i < unmanaged.size(); i++) {
             if (unmanaged.at(i)->surface == parent) {
                 return createIndex(row + i, 0, parent);

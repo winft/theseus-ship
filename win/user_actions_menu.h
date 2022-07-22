@@ -8,9 +8,11 @@
 
 #include "config-kwin.h"
 
+#include "desktop_space.h"
 #include "move.h"
 #include "net.h"
 #include "screen.h"
+#include "window_operation.h"
 
 #include "base/logging.h"
 #include "main.h"
@@ -35,6 +37,9 @@
 
 namespace KWin::win
 {
+
+template<typename Space>
+void perform_window_operation(Space& space, Toplevel* window, base::options::WindowOperation op);
 
 struct user_actions_menu_desktop_action_data {
     uint desktop;
@@ -417,7 +422,7 @@ private:
             vds->setCount(desk);
         }
 
-        space.sendClientToDesktop(m_client.data(), desk, false);
+        send_window_to_desktop(space, m_client.data(), desk, false);
     }
 
     /**
@@ -510,7 +515,7 @@ private:
         // user actions menu closed before we destroy the decoration. Otherwise Qt crashes
         qRegisterMetaType<base::options::WindowOperation>();
         QMetaObject::invokeMethod(space.qobject.get(), [&space = this->space, c, op] {
-            space.performWindowOperation(c, op);
+            win::perform_window_operation(space, c, op);
         });
     }
 

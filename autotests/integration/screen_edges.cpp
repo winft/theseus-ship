@@ -25,9 +25,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/cursor.h"
 #include "input/gestures.h"
 #include "toplevel.h"
+#include "win/actions.h"
+#include "win/activation.h"
 #include "win/screen_edges.h"
 #include "win/space.h"
-#include "win/stacking.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
 
@@ -353,7 +354,7 @@ void TestScreenEdges::testCreatingInitialEdges()
     auto client = Test::app()->workspace->active_client;
     QVERIFY(client);
 
-    Test::app()->workspace->setMoveResizeClient(client);
+    win::set_move_resize_window(*Test::app()->workspace, client);
     for (int i = 0; i < 8; ++i) {
         auto e = edges.at(i);
         QVERIFY(e->reserved_count > 0);
@@ -371,7 +372,7 @@ void TestScreenEdges::testCreatingInitialEdges()
         QCOMPARE(e->activatesForTouchGesture(), false);
         QCOMPARE(e->approach_geometry, expectedGeometries.at(i * 2 + 1));
     }
-    Test::app()->workspace->setMoveResizeClient(nullptr);
+    win::set_move_resize_window(*Test::app()->workspace, nullptr);
 }
 
 void TestScreenEdges::testCallback()
@@ -708,7 +709,7 @@ void TestScreenEdges::testFullScreenBlocking()
     client->setFrameGeometry(QRect({}, Test::app()->base.topology.size));
     win::set_active(client, true);
     client->setFullScreen(true);
-    Test::app()->workspace->setActiveClient(client);
+    win::set_active_window(*Test::app()->workspace, client);
     Q_EMIT screenEdges->checkBlocking();
 
     // the signal doesn't trigger for corners, let's go over all windows just to be sure that it

@@ -40,7 +40,7 @@ bool sync_alarm_filter::event(xcb_generic_event_t* event)
 {
     auto alarmEvent = reinterpret_cast<xcb_sync_alarm_notify_event_t*>(event);
 
-    for (auto win : space.m_windows) {
+    for (auto win : space.windows) {
         if (!win->control) {
             continue;
         }

@@ -41,27 +41,12 @@ struct appmenu {
 template<typename Space>
 Toplevel* find_window_with_appmenu(Space const& space, appmenu_address const& address)
 {
-    for (auto win : space.m_windows) {
+    for (auto win : space.windows) {
         if (win->control && win->control->application_menu().address == address) {
             return win;
         }
     }
     return nullptr;
-}
-
-/**
- * Request showing the application menu bar.
- * @param actionId The DBus menu ID of the action that should be highlighted, 0 for the root menu.
- */
-template<typename Win>
-void show_appmenu(Win& win, int actionId)
-{
-    if (auto decoration = win.control->deco().decoration) {
-        decoration->showApplicationMenu(actionId);
-    } else {
-        // No info where application menu button is, show it in the top left corner by default.
-        win.space.showApplicationMenu(QRect(), &win, actionId);
-    }
 }
 
 }

@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "group.h"
 
+#include "startup_info.h"
 #include "window.h"
 #include "window_find.h"
 
@@ -140,9 +141,11 @@ void group::startupIdChanged()
 {
     KStartupInfoId asn_id;
     KStartupInfoData asn_data;
-    bool asn_valid = space.checkStartupNotification(xcb_leader, asn_id, asn_data);
-    if (!asn_valid)
+    auto asn_valid = check_startup_notification(space, xcb_leader, asn_id, asn_data);
+    if (!asn_valid) {
         return;
+    }
+
     if (asn_id.timestamp() != 0 && user_time != -1U
         && NET::timestampCompare(asn_id.timestamp(), user_time) > 0) {
         user_time = asn_id.timestamp();

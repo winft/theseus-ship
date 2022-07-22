@@ -5,9 +5,11 @@
 */
 #pragma once
 
+#include "geo.h"
 #include "remnant.h"
-#include "space_helpers.h"
 #include "space_window_release.h"
+#include "x11/netinfo.h"
+
 #include "toplevel.h"
 
 namespace KWin::win
@@ -55,7 +57,7 @@ win::remnant create_remnant(Win& source)
     remnant.data.was_group_transient = source.groupTransient();
 
     remnant.data.was_wayland_client = source.is_wayland_window();
-    remnant.data.was_x11_client = qobject_cast<win::x11::window*>(&source) != nullptr;
+    remnant.data.was_x11_client = source.isClient();
     remnant.data.was_popup_window = win::is_popup(&source);
     remnant.data.was_outline = source.isOutline();
     remnant.data.was_lock_screen = source.isLockScreen();

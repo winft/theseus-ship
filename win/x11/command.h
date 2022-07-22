@@ -6,9 +6,8 @@
 #pragma once
 
 #include "base/options.h"
+#include "base/os/kkeyserver.h"
 #include "main.h"
-
-#include <kkeyserver.h>
 
 namespace KWin::win::x11
 {

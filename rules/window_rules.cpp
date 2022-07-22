@@ -10,6 +10,7 @@
 
 #ifndef KCMRULES
 #include "win/controlling.h"
+#include "win/geo_change.h"
 #include "win/input.h"
 #include "win/meta.h"
 #include "win/rules.h"
@@ -198,12 +199,12 @@ bool WindowRules::checkBlockCompositing(bool block) const
     return check_force(block, &Rules::applyBlockCompositing);
 }
 
-int WindowRules::checkFSP(int fsp) const
+win::fsp_level WindowRules::checkFSP(win::fsp_level fsp) const
 {
     return check_force(fsp, &Rules::applyFSP);
 }
 
-int WindowRules::checkFPP(int fpp) const
+win::fsp_level WindowRules::checkFPP(win::fsp_level fpp) const
 {
     return check_force(fpp, &Rules::applyFPP);
 }
@@ -308,8 +309,10 @@ void Toplevel::applyWindowRules()
 
     // FSP
     // AcceptFocus :
-    if (space.mostRecentlyActivatedClient() == this && !client_rules.checkAcceptFocus(true))
-        space.activateNextClient(this);
+    if (win::most_recently_activated_window(space) == this
+        && !client_rules.checkAcceptFocus(true)) {
+        win::activate_next_window(space, this);
+    }
 
     // Closeable
     if (auto s = size(); s != size() && s.isValid()) {
@@ -325,7 +328,8 @@ void Toplevel::applyWindowRules()
     // see also X11Client::setActive()
     if (control->active()) {
         setOpacity(control->rules().checkOpacityActive(qRound(opacity() * 100.0)) / 100.0);
-        space.disableGlobalShortcutsForClient(control->rules().checkDisableGlobalShortcuts(false));
+        win::set_global_shortcuts_disabled(space,
+                                           control->rules().checkDisableGlobalShortcuts(false));
     } else {
         setOpacity(control->rules().checkOpacityInactive(qRound(opacity() * 100.0)) / 100.0);
     }

@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/input.h"
 #include "win/remnant.h"
 #include "win/scene.h"
+#include "win/shortcut_set.h"
 #include "win/space.h"
 #include "win/transient.h"
 #include "win/x11/client_machine.h"
@@ -180,7 +181,7 @@ void Toplevel::setOpacity(double new_opacity)
     if (old_opacity == new_opacity)
         return;
     info->setOpacity(static_cast< unsigned long >(new_opacity * 0xffffffff));
-    if (space.compositing()) {
+    if (space.render.scene) {
         addRepaintFull();
         Q_EMIT opacityChanged(this, old_opacity);
     }
@@ -310,7 +311,7 @@ void Toplevel::getDamageRegionReply()
 
 void Toplevel::addDamageFull()
 {
-    if (!space.compositing()) {
+    if (!space.render.scene) {
         return;
     }
 
@@ -336,7 +337,7 @@ void Toplevel::resetDamage()
 
 void Toplevel::addRepaint(QRegion const& region)
 {
-    if (!space.compositing()) {
+    if (!space.render.scene) {
         return;
     }
     repaints_region += region;
@@ -346,7 +347,7 @@ void Toplevel::addRepaint(QRegion const& region)
 
 void Toplevel::addLayerRepaint(QRegion const& region)
 {
-    if (!space.compositing()) {
+    if (!space.render.scene) {
         return;
     }
     layer_repaints_region += region;
@@ -431,7 +432,7 @@ void Toplevel::setReadyForPainting()
 {
     if (!ready_for_painting) {
         ready_for_painting = true;
-        if (space.compositing()) {
+        if (space.render.scene) {
             addRepaintFull();
             Q_EMIT windowShown(this);
         }
@@ -737,6 +738,10 @@ win::maximize_mode Toplevel::maximizeMode() const
     return win::maximize_mode::restore;
 }
 
+void Toplevel::handle_activated()
+{
+}
+
 bool Toplevel::wantsInput() const
 {
     return false;
@@ -842,7 +847,7 @@ void Toplevel::doPerformMoveResize()
 
 void Toplevel::leaveMoveResize()
 {
-    space.setMoveResizeClient(nullptr);
+    win::set_move_resize_window(space, nullptr);
     control->move_resize().enabled = false;
     if (space.edges->desktop_switching.when_moving_client) {
         space.edges->reserveDesktopSwitching(false, Qt::Vertical|Qt::Horizontal);
@@ -923,7 +928,7 @@ QRect Toplevel::iconGeometry() const
 void Toplevel::setShortcutInternal()
 {
     updateCaption();
-    space.clientShortcutUpdated(this);
+    win::window_shortcut_updated(space, this);
 }
 
 }

@@ -8,7 +8,6 @@
 #include "control.h"
 #include "net.h"
 #include "remnant.h"
-#include "space.h"
 
 #include "rules/rules.h"
 
@@ -100,7 +99,7 @@ bool is_special_window(Win* win)
 template<typename Win>
 Win* find_client_with_same_caption(Win const* win)
 {
-    for (auto candidate : win->space.m_windows) {
+    for (auto candidate : win->space.windows) {
         if (!candidate->control || candidate == win) {
             continue;
         }

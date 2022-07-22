@@ -149,7 +149,7 @@ bool setup_compositing(Win& win, bool add_full_damage)
     static_assert(!Win::is_toplevel);
     assert(!win.remnant);
 
-    if (!win.space.compositing()) {
+    if (!win.space.render.scene) {
         return false;
     }
 

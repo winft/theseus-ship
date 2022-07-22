@@ -6,20 +6,24 @@
 #pragma once
 
 #include "color_mapper.h"
+#include "control_create.h"
 #include "moving_window_filter.h"
+#include "placement.h"
 #include "space_event.h"
 #include "sync_alarm_filter.h"
 
 #include "base/x11/user_interaction_filter.h"
 #include "main.h"
 #include "utils/blocker.h"
+#include "win/desktop_space.h"
+#include "win/space_areas_helpers.h"
 
 #include <KStartupInfo>
 
 namespace KWin::win::x11
 {
 
-static void select_wm_input_event_mask()
+inline static void select_wm_input_event_mask()
 {
     uint32_t presentMask = 0;
     base::x11::xcb::window_attributes attr(rootWindow());
@@ -61,7 +65,7 @@ void init_space(Space& space)
 
     if (kwinApp()->operationMode() == Application::OperationModeX11) {
         space.m_wasUserInteractionFilter.reset(
-            new base::x11::user_interaction_filter([&space] { space.setWasUserInteraction(); }));
+            new base::x11::user_interaction_filter([&space] { mark_as_user_interaction(space); }));
         space.m_movingClientFilter.reset(new moving_window_filter(space));
     }
     if (base::x11::xcb::extensions::self()->is_sync_available()) {
@@ -93,7 +97,7 @@ void init_space(Space& space)
 
     // TODO: better value
     rootInfo->setActiveWindow(XCB_WINDOW_NONE);
-    space.focusToNull();
+    focus_to_null(space);
 
     if (!qApp->isSessionRestored())
         ++space.block_focus; // Because it will be set below
@@ -129,7 +133,7 @@ void init_space(Space& space)
                     create_unmanaged_window(wins[i], space);
             } else if (attr->map_state != XCB_MAP_STATE_UNMAPPED) {
                 if (Application::wasCrash()) {
-                    space.fixPositionAfterCrash(wins[i], windowGeometries.at(i).data());
+                    fix_position_after_crash(space, wins[i], windowGeometries.at(i).data());
                 }
 
                 // ### This will request the attributes again
@@ -140,8 +144,8 @@ void init_space(Space& space)
         // Propagate clients, will really happen at the end of the updates blocker block
         space.stacking_order->update_count();
 
-        space.saveOldScreenSizes();
-        space.updateClientArea();
+        save_old_output_sizes(space);
+        update_space_areas(space);
 
         // NETWM spec says we have to set it to (0,0) if we don't support it
         NETPoint* viewports = new NETPoint[vds->count()];
@@ -157,7 +161,7 @@ void init_space(Space& space)
         desktop_geometry.width = geom.width();
         desktop_geometry.height = geom.height();
         rootInfo->setDesktopGeometry(desktop_geometry);
-        space.setShowingDesktop(false);
+        set_showing_desktop(space, false);
 
     } // End updates blocker block
 
@@ -177,7 +181,7 @@ void init_space(Space& space)
         }
     }
     if (new_active_client != nullptr)
-        space.activateClient(new_active_client);
+        activate_window(space, new_active_client);
 }
 
 template<typename Space>
@@ -205,12 +209,12 @@ void clear_space(Space& space)
 
         // No removeClient() is called, it does more than just removing.
         // However, remove from some lists to e.g. prevent performTransiencyCheck() from crashing.
-        remove_all(space.m_windows, window);
+        remove_all(space.windows, window);
     }
 
-    for (auto const& unmanaged : space.unmanagedList()) {
+    for (auto const& unmanaged : get_unmanageds<Toplevel>(space)) {
         release_window(static_cast<window*>(unmanaged), is_x11);
-        remove_all(space.m_windows, unmanaged);
+        remove_all(space.windows, unmanaged);
         remove_all(space.stacking_order->pre_stack, unmanaged);
     }
 

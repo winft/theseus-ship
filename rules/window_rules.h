@@ -75,8 +75,8 @@ public:
     bool checkNoBorder(bool noborder, bool init = false) const;
     QString checkDecoColor(QString schemeFile) const;
     bool checkBlockCompositing(bool block) const;
-    int checkFSP(int fsp) const;
-    int checkFPP(int fpp) const;
+    win::fsp_level checkFSP(win::fsp_level fsp) const;
+    win::fsp_level checkFPP(win::fsp_level fpp) const;
     bool checkAcceptFocus(bool focus) const;
     bool checkCloseable(bool closeable) const;
     bool checkAutogrouping(bool autogroup) const;

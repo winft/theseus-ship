@@ -47,6 +47,21 @@ struct appmenu_callbacks {
     std::function<void(appmenu_address const&, bool)> visibility;
 };
 
+/**
+ * Request showing the application menu bar.
+ * @param actionId The DBus menu ID of the action that should be highlighted, 0 for the root menu.
+ */
+template<typename Win>
+void show_appmenu(Win& win, int actionId)
+{
+    if (auto decoration = win.control->deco().decoration) {
+        decoration->showApplicationMenu(actionId);
+    } else {
+        // No info where application menu button is, show it in the top left corner by default.
+        win.space.appmenu->showApplicationMenu(win.pos(), &win, actionId);
+    }
+}
+
 template<typename Space>
 appmenu_callbacks create_appmenu_callbacks(Space const& space)
 {
@@ -63,7 +78,7 @@ appmenu_callbacks create_appmenu_callbacks(Space const& space)
             }
         }
         if (auto win = find_window_with_appmenu(space, addr)) {
-            win::show_appmenu(*win, action_id);
+            show_appmenu(*win, action_id);
         }
     };
     callbacks.visibility = [&space](appmenu_address const& addr, bool active) {

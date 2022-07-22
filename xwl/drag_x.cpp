@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/wayland/server.h"
 #include "toplevel.h"
+#include "win/activation.h"
 #include "win/space.h"
 #include "win/stacking_order.h"
 
@@ -114,7 +115,7 @@ drag_event_reply x11_drag::move_filter(Toplevel* target, QPoint const& pos)
         // Handled here and by X directly.
         if (target && target->surface && target->control) {
             if (source.x11.space->active_client != target) {
-                source.x11.space->activateClient(target);
+                win::activate_window(*source.x11.space, target);
             }
         }
 
@@ -198,7 +199,7 @@ void x11_drag::set_offers(mime_atoms const& offers)
 void x11_drag::set_drag_target()
 {
     auto ac = visit->get_target();
-    source.x11.space->activateClient(ac);
+    win::activate_window(*source.x11.space, ac);
     waylandServer()->seat()->drags().set_target(ac->surface, ac->input_transform());
 }
 

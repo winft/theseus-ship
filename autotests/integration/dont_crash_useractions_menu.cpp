@@ -89,7 +89,7 @@ void TestDontCrashUseractionsMenu::testShowHideShowUseractionsMenu()
     auto client = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
     QVERIFY(client);
 
-    Test::app()->workspace->showWindowMenu(QRect(), client);
+    Test::app()->workspace->user_actions_menu->show(QRect(), client);
     auto& userActionsMenu = Test::app()->workspace->user_actions_menu;
     QTRY_VERIFY(userActionsMenu->isShown());
     QVERIFY(userActionsMenu->hasClient());
@@ -100,7 +100,7 @@ void TestDontCrashUseractionsMenu::testShowHideShowUseractionsMenu()
     QVERIFY(!userActionsMenu->hasClient());
 
     // and show again, this triggers BUG 382063
-    Test::app()->workspace->showWindowMenu(QRect(), client);
+    Test::app()->workspace->user_actions_menu->show(QRect(), client);
     QTRY_VERIFY(userActionsMenu->isShown());
     QVERIFY(userActionsMenu->hasClient());
 }

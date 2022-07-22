@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/scene.h"
 #include "win/internal_window.h"
 #include "win/space.h"
+#include "win/x11/stacking.h"
 #include "win/x11/window.h"
 
 #include <kwingl/platform.h>
@@ -249,7 +250,7 @@ console_model::console_model(win::space& space, QObject* parent)
     : QAbstractItemModel(parent)
     , space{space}
 {
-    for (auto const& window : space.m_windows) {
+    for (auto const& window : space.windows) {
         if (window->control) {
             if (auto x11_client = qobject_cast<win::x11::window*>(window)) {
                 m_x11Clients.append(x11_client);
@@ -268,17 +269,17 @@ console_model::console_model(win::space& space, QObject* parent)
             remove_window(this, s_x11ClientId - 1, m_x11Clients, c);
         });
 
-    const auto unmangeds = space.unmanagedList();
-    for (auto u : unmangeds) {
-        m_unmanageds.append(u);
+    for (auto unmanaged : win::x11::get_unmanageds<Toplevel>(space)) {
+        m_unmanageds.append(unmanaged);
     }
+
     connect(space.qobject.get(), &win::space_qobject::unmanagedAdded, this, [this](Toplevel* u) {
         add_window(this, s_x11UnmanagedId - 1, m_unmanageds, u);
     });
     connect(space.qobject.get(), &win::space_qobject::unmanagedRemoved, this, [this](Toplevel* u) {
         remove_window(this, s_x11UnmanagedId - 1, m_unmanageds, u);
     });
-    for (auto const& window : space.windows()) {
+    for (auto const& window : space.windows) {
         if (auto internal = qobject_cast<win::internal_window*>(window)) {
             m_internalClients.append(internal);
         }

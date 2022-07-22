@@ -5,21 +5,23 @@
 */
 #pragma once
 
+#include "actions.h"
 #include "control.h"
-#include "layers.h"
 #include "move.h"
 #include "net.h"
 #include "screen.h"
-#include "space.h"
-#include "stacking.h"
 #include "stacking_order.h"
 #include "toplevel.h"
 #include "types.h"
 #include "user_actions_menu.h"
+#include "window_operation.h"
 
 #include "base/options.h"
 #include "utils/blocker.h"
 
+#include <QDBusConnection>
+#include <QDBusMessage>
+#include <QDBusPendingCall>
 #include <QMouseEvent>
 #include <QStyleHints>
 
@@ -97,9 +99,10 @@ bool perform_mouse_command(Win& win, base::options::MouseCommand cmd, QPoint con
         // Used to be activateNextClient(win), then topClientOnDesktop
         // since win is a mouseOp it's however safe to use the client under the mouse instead.
         if (win.control->active() && kwinApp()->options->focusPolicyIsReasonable()) {
-            auto next = space.clientUnderMouse(win.central_output);
-            if (next && next != &win)
-                space.request_focus(next);
+            auto next = window_under_mouse(space, win.central_output);
+            if (next && next != &win) {
+                request_focus(space, next);
+            }
         }
         break;
     }
@@ -107,7 +110,7 @@ bool perform_mouse_command(Win& win, base::options::MouseCommand cmd, QPoint con
         if (win.control->active() && kwinApp()->options->isClickRaise()) {
             auto_raise(&win);
         }
-        space.showWindowMenu(QRect(globalPos, globalPos), &win);
+        space.user_actions_menu->show(QRect(globalPos, globalPos), &win);
         break;
     case base::options::MouseToggleRaiseAndLower:
         raise_or_lower_client(&space, &win);
@@ -133,13 +136,13 @@ bool perform_mouse_command(Win& win, base::options::MouseCommand cmd, QPoint con
             }
         }
 
-        space.request_focus(&win, true);
+        request_focus(space, &win, true);
         base::set_current_output_by_position(base, globalPos);
         replay = replay || mustReplay;
         break;
     }
     case base::options::MouseActivateAndLower:
-        space.request_focus(&win);
+        request_focus(space, &win);
         lower_window(&space, &win);
         base::set_current_output_by_position(base, globalPos);
         replay = replay || !win.control->rules().checkAcceptFocus(win.acceptsFocus());
@@ -147,17 +150,17 @@ bool perform_mouse_command(Win& win, base::options::MouseCommand cmd, QPoint con
     case base::options::MouseActivate:
         // For clickraise mode.
         replay = win.control->active();
-        space.request_focus(&win);
+        request_focus(space, &win);
         base::set_current_output_by_position(base, globalPos);
         replay = replay || !win.control->rules().checkAcceptFocus(win.acceptsFocus());
         break;
     case base::options::MouseActivateRaiseAndPassClick:
-        space.request_focus(&win, true);
+        request_focus(space, &win, true);
         base::set_current_output_by_position(base, globalPos);
         replay = true;
         break;
     case base::options::MouseActivateAndPassClick:
-        space.request_focus(&win);
+        request_focus(space, &win);
         base::set_current_output_by_position(base, globalPos);
         replay = true;
         break;
@@ -189,10 +192,10 @@ bool perform_mouse_command(Win& win, base::options::MouseCommand cmd, QPoint con
         break;
     }
     case base::options::MousePreviousDesktop:
-        space.windowToPreviousDesktop(win);
+        window_to_prev_desktop(win);
         break;
     case base::options::MouseNextDesktop:
-        space.windowToNextDesktop(win);
+        window_to_next_desktop(win);
         break;
     case base::options::MouseOpacityMore:
         // No point in changing the opacity of the desktop.
@@ -211,7 +214,7 @@ bool perform_mouse_command(Win& win, base::options::MouseCommand cmd, QPoint con
     case base::options::MouseActivateRaiseAndMove:
     case base::options::MouseActivateRaiseAndUnrestrictedMove:
         raise_window(&space, &win);
-        space.request_focus(&win);
+        request_focus(space, &win);
         base::set_current_output_by_position(base, globalPos);
         // Fallthrough
     case base::options::MouseMove:
@@ -302,7 +305,7 @@ void enter_event(Win* win, const QPoint& globalPos)
     }
 
     if (kwinApp()->options->isAutoRaise() && !win::is_desktop(win) && !win::is_dock(win)
-        && space->focusChangeEnabled() && globalPos != space->focusMousePos
+        && is_focus_change_allowed(*space) && globalPos != space->focusMousePos
         && top_client_on_desktop(space,
                                  win->space.virtual_desktop_manager->current(),
                                  kwinApp()->options->isSeparateScreenFocus() ? win->central_output
@@ -319,7 +322,7 @@ void enter_event(Win* win, const QPoint& globalPos)
     // focus change came because of window changes (e.g. closing a window) - #92290
     if (kwinApp()->options->focusPolicy() != base::options::FocusFollowsMouse
         || globalPos != space->focusMousePos) {
-        space->requestDelayFocus(win);
+        request_delay_focus(*space, win);
     }
 }
 
@@ -327,7 +330,7 @@ template<typename Win>
 void leave_event(Win* win)
 {
     win->control->cancel_auto_raise();
-    win->space.cancelDelayFocus();
+    cancel_delay_focus(win->space);
     // TODO: send hover leave to deco
     // TODO: handle base::options::FocusStrictlyUnderMouse
 }
@@ -364,8 +367,8 @@ bool process_decoration_button_press(Win* win, QMouseEvent* event, bool ignoreMe
                 // expired -> new first click and pot. init
                 deco.double_click.start();
             } else {
-                win->space.performWindowOperation(win,
-                                                  kwinApp()->options->operationTitlebarDblClick());
+                perform_window_operation(
+                    win->space, win, kwinApp()->options->operationTitlebarDblClick());
                 end_move_resize(win);
                 return false;
             }
@@ -507,78 +510,28 @@ base::options::MouseCommand get_wheel_command(Win* win, Qt::Orientation orientat
     return base::options::MouseNothing;
 }
 
-template<typename Win>
-void set_shortcut(Win* win, QString const& shortcut)
+template<typename Space>
+void set_global_shortcuts_disabled(Space& space, bool disable)
 {
-    auto update_shortcut = [&win](QKeySequence const& cut = QKeySequence()) {
-        if (win->control->shortcut() == cut) {
-            return;
-        }
-        win->control->set_shortcut(cut.toString());
-        win->setShortcutInternal();
-    };
-
-    auto cut = win->control->rules().checkShortcut(shortcut);
-    if (cut.isEmpty()) {
-        update_shortcut();
-        return;
-    }
-    if (cut == win->control->shortcut().toString()) {
-        // No change
+    if (space.global_shortcuts_disabled == disable) {
         return;
     }
 
-    // Format:
-    //       base+(abcdef)<space>base+(abcdef)
-    //   Alt+Ctrl+(ABCDEF);Meta+X,Meta+(ABCDEF)
-    //
-    if (!cut.contains(QLatin1Char('(')) && !cut.contains(QLatin1Char(')'))
-        && !cut.contains(QLatin1String(" - "))) {
-        if (win->space.shortcutAvailable(cut, win)) {
-            update_shortcut(QKeySequence(cut));
-        } else {
-            update_shortcut();
-        }
-        return;
-    }
+    QDBusMessage message = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"),
+                                                          QStringLiteral("/kglobalaccel"),
+                                                          QStringLiteral("org.kde.KGlobalAccel"),
+                                                          QStringLiteral("blockGlobalShortcuts"));
+    message.setArguments(QList<QVariant>() << disable);
+    QDBusConnection::sessionBus().asyncCall(message);
 
-    QRegularExpression const reg(QStringLiteral("(.*\\+)\\((.*)\\)"));
-    QList<QKeySequence> keys;
-    QStringList groups = cut.split(QStringLiteral(" - "));
-    for (QStringList::ConstIterator it = groups.constBegin(); it != groups.constEnd(); ++it) {
-        auto const match = reg.match(*it);
-        if (match.hasMatch()) {
-            auto const base = match.captured(1);
-            auto const list = match.captured(2);
+    space.global_shortcuts_disabled = disable;
 
-            for (int i = 0; i < list.length(); ++i) {
-                QKeySequence c(base + list[i]);
-                if (!c.isEmpty()) {
-                    keys.append(c);
-                }
-            }
-        } else {
-            // The regexp doesn't match, so it should be a normal shortcut.
-            QKeySequence c(*it);
-            if (!c.isEmpty()) {
-                keys.append(c);
-            }
+    // Update also Meta+LMB actions etc.
+    for (auto window : space.windows) {
+        if (auto& ctrl = window->control) {
+            ctrl->update_mouse_grab();
         }
     }
-
-    for (auto it = keys.constBegin(); it != keys.constEnd(); ++it) {
-        if (win->control->shortcut() == *it) {
-            // Current one is in the list.
-            return;
-        }
-    }
-    for (auto it = keys.constBegin(); it != keys.constEnd(); ++it) {
-        if (win->space.shortcutAvailable(*it, win)) {
-            update_shortcut(*it);
-            return;
-        }
-    }
-    update_shortcut();
 }
 
 }

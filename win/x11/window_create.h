@@ -8,6 +8,9 @@
 #include "hide.h"
 #include "transient.h"
 
+#include "win/space_areas_helpers.h"
+#include "win/tabbox.h"
+
 namespace KWin::win::x11
 {
 
@@ -16,7 +19,7 @@ void add_controlled_window_to_space(Space& space, Win* win)
 {
     auto grp = find_group(space, win->xcb_window);
 
-    space.m_windows.push_back(win);
+    space.windows.push_back(win);
     Q_EMIT space.qobject->clientAdded(win);
 
     if (grp) {
@@ -26,7 +29,7 @@ void add_controlled_window_to_space(Space& space, Win* win)
     if (is_desktop(win)) {
         if (!space.active_client && space.should_get_focus.empty() && win->isOnCurrentDesktop()) {
             // TODO: Make sure desktop is active after startup if there's no other window active
-            space.request_focus(win);
+            request_focus(space, win);
         }
     } else {
         focus_chain_update(space.focus_chain, win, focus_chain_change::update);
@@ -42,19 +45,22 @@ void add_controlled_window_to_space(Space& space, Win* win)
     }
 
     // This cannot be in manage(), because the client got added only now
-    space.updateClientArea();
+    update_space_areas(space);
     update_layer(win);
 
     if (is_desktop(win)) {
         raise_window(&space, win);
         // If there's no active client, make this desktop the active one
         if (!space.active_client && space.should_get_focus.size() == 0)
-            space.activateClient(
-                find_desktop(&space, true, space.virtual_desktop_manager->current()));
+            activate_window(space,
+                            find_desktop(&space, true, space.virtual_desktop_manager->current()));
     }
 
     check_active_modal<Win>(space);
-    space.checkTransients(win);
+
+    for (auto window : space.windows) {
+        window->checkTransient(win);
+    }
 
     // Propagate new client
     space.stacking_order->update_count();
@@ -63,7 +69,7 @@ void add_controlled_window_to_space(Space& space, Win* win)
         update_tool_windows_visibility(&space, true);
     }
 
-    space.updateTabbox();
+    update_tabbox(space);
 }
 
 }

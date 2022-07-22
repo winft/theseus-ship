@@ -29,6 +29,7 @@
 #include "win/geo.h"
 #include "win/layers.h"
 #include "win/remnant.h"
+#include "win/space_areas_helpers.h"
 #include "win/stacking.h"
 #include "win/stacking_order.h"
 #include "win/transient.h"
@@ -351,7 +352,7 @@ void window::takeFocus()
     }
 
     if (!control->keep_above() && !is_on_screen_display(this) && !belongsToDesktop()) {
-        space.setShowingDesktop(false);
+        set_showing_desktop(space, false);
     }
 }
 
@@ -363,7 +364,7 @@ void window::doSetActive()
         return;
     }
     blocker block(space.stacking_order);
-    space.focusToNull();
+    focus_to_null(space);
 }
 
 bool window::userCanSetFullScreen() const
@@ -492,7 +493,7 @@ void window::hideClient(bool hide)
 
     if (hide) {
         space.render.addRepaint(visible_rect(this));
-        space.clientHidden(this);
+        process_window_hidden(space, this);
         Q_EMIT windowHidden(this);
     } else {
         handle_shown_and_mapped();
@@ -573,8 +574,8 @@ void window::configure_geometry(QRect const& frame_geo)
         auto parent = transient()->lead();
         if (parent) {
             auto const top_lead = lead_of_annexed_transient(this);
-            auto const bounds = space.clientArea(
-                top_lead->control->fullscreen() ? FullScreenArea : PlacementArea, top_lead);
+            auto const bounds = space_window_area(
+                space, top_lead->control->fullscreen() ? FullScreenArea : PlacementArea, top_lead);
 
             serial = popup->configure(
                 get_xdg_shell_popup_placement(this, bounds).translated(-top_lead->pos()));
@@ -654,8 +655,8 @@ void window::apply_pending_geometry()
             return;
         }
 
-        auto const screen_bounds = space.clientArea(
-            toplevel->control->fullscreen() ? FullScreenArea : PlacementArea, toplevel);
+        auto const screen_bounds = space_window_area(
+            space, toplevel->control->fullscreen() ? FullScreenArea : PlacementArea, toplevel);
 
         // Need to set that for get_xdg_shell_popup_placement(..) call.
         // TODO(romangg): make this less akward, i.e. if possible include it in the call.
@@ -763,7 +764,7 @@ void window::do_set_geometry(QRect const& frame_geo)
 
     // Must be done after signal is emitted so the screen margins are updated.
     if (hasStrut()) {
-        space.updateClientArea();
+        update_space_areas(space);
     }
 }
 
@@ -831,7 +832,7 @@ void window::do_set_fullscreen(bool full)
 
 bool window::belongsToDesktop() const
 {
-    auto const windows = static_cast<win::wayland::space&>(space).m_windows;
+    auto const windows = static_cast<win::wayland::space&>(space).windows;
 
     return std::any_of(windows.cbegin(), windows.cend(), [this](auto const& win) {
         if (belongsToSameApplication(win, flags<same_client_check>())) {
@@ -926,13 +927,13 @@ void window::unmap()
         if (control->move_resize().enabled) {
             leaveMoveResize();
         }
-        control->destroy_wayland_management();
+        control->destroy_plasma_wayland_integration();
     }
 
     space.render.addRepaint(visible_rect(this));
 
     if (control) {
-        space.clientHidden(this);
+        process_window_hidden(space, this);
     }
 
     Q_EMIT windowHidden(this);
@@ -961,7 +962,8 @@ void window::handle_commit()
         // Plasma surfaces might set their position late. So check again initial position being set.
         if (must_place && !isInitialPositionSet()) {
             must_place = false;
-            auto const area = space.clientArea(PlacementArea, get_current_output(space), desktop());
+            auto const area
+                = space_window_area(space, PlacementArea, get_current_output(space), desktop());
             placeIn(area);
         }
     } else if (layer_surface) {
@@ -1161,11 +1163,11 @@ void window::ping(window::ping_reason reason)
 void window::doMinimize()
 {
     if (control->minimized()) {
-        space.clientHidden(this);
+        process_window_hidden(space, this);
     } else {
         Q_EMIT windowShown(this);
     }
-    space.updateMinimizedOfTransients(this);
+    propagate_minimized_to_transients(*this);
 }
 
 void window::placeIn(QRect const& area)

@@ -10,12 +10,15 @@
 */
 #include "screen_edges.h"
 
+#include "activation.h"
 #include "move.h"
 #include "space.h"
 
 #include "input/cursor.h"
 #include "input/gestures.h"
 #include "main.h"
+#include "render/compositor.h"
+#include "render/effects.h"
 
 // DBus generated
 #include "screenlocker_interface.h"
@@ -149,7 +152,7 @@ bool screen_edge::activatesForPointer() const
         return true;
     }
     if (edger->desktop_switching.when_moving_client) {
-        auto c = edger->space.moveResizeClient();
+        auto c = edger->space.move_resize_window;
         if (c && !win::is_resize(c)) {
             return true;
         }
@@ -275,7 +278,7 @@ bool screen_edge::canActivate(QPoint const& cursorPos, QDateTime const& triggerT
 
 void screen_edge::handle(QPoint const& cursorPos)
 {
-    auto movingClient = edger->space.moveResizeClient();
+    auto movingClient = edger->space.move_resize_window;
 
     if ((edger->desktop_switching.when_moving_client && movingClient
          && !win::is_resize(movingClient))
@@ -316,7 +319,7 @@ bool screen_edge::handleAction(ElectricBorderAction action)
 {
     switch (action) {
     case ElectricActionShowDesktop: {
-        edger->space.setShowingDesktop(!edger->space.showingDesktop());
+        set_showing_desktop(edger->space, !edger->space.showing_desktop);
         return true;
     }
     case ElectricActionLockScreen: { // Lock the screen
@@ -409,7 +412,7 @@ void screen_edge::switchDesktop(QPoint const& cursorPos)
             pos.setY(OFFSET);
     }
 
-    if (auto c = edger->space.moveResizeClient()) {
+    if (auto c = edger->space.move_resize_window) {
         if (c->control->rules().checkDesktop(desktop) != int(desktop)) {
             // user attempts to move a client to another desktop where it is ruleforced to not be
             return;
@@ -1339,7 +1342,7 @@ void screen_edger::createEdgeForClient(Toplevel* window, ElectricBorder border)
 
     auto const& outputs = kwinApp()->get_base().get_outputs();
     QRect const geo = window->frameGeometry();
-    QRect const fullArea = space.clientArea(FullArea, 0, 1);
+    auto const fullArea = space_window_area(space, FullArea, 0, 1);
 
     for (auto output : outputs) {
         auto const screen = output->geometry();

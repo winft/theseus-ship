@@ -26,6 +26,7 @@
 #include "win/screen.h"
 #include "win/setup.h"
 #include "win/stacking_order.h"
+#include "win/tabbox.h"
 #include "win/virtual_desktops.h"
 #include "win/x11/space_areas.h"
 #include "xwl/surface.h"
@@ -76,7 +77,7 @@ space::space(render::compositor& render, base::wayland::server* server)
     virtual_desktop_manager->setVirtualDesktopManagement(plasma_virtual_desktop_manager.get());
 
     QObject::connect(stacking_order.get(), &stacking_order::render_restack, qobject.get(), [this] {
-        for (auto win : m_windows) {
+        for (auto win : windows) {
             if (auto iwin = qobject_cast<internal_window*>(win); iwin && iwin->isShown()) {
                 stacking_order->render_overlays.push_back(iwin);
             }
@@ -121,7 +122,7 @@ space::space(render::compositor& render, base::wayland::server* server)
 
     QObject::connect(
         qobject.get(), &space::qobject_t::currentDesktopChanged, kde_idle.get(), [this] {
-            for (auto win : m_windows) {
+            for (auto win : windows) {
                 if (!win->control) {
                     continue;
                 }
@@ -187,10 +188,10 @@ space::~space()
 {
     stacking_order->lock();
 
-    for (auto const& window : m_windows) {
+    for (auto const& window : windows) {
         if (auto win = qobject_cast<win::wayland::window*>(window); win && !win->remnant) {
             destroy_window(win);
-            remove_all(m_windows, win);
+            remove_all(windows, win);
         }
     }
 }
@@ -202,10 +203,9 @@ window* space::find_window(Wrapland::Server::Surface* surface) const
         return nullptr;
     }
 
-    auto it = std::find_if(m_windows.cbegin(), m_windows.cend(), [surface](auto win) {
-        return win->surface == surface;
-    });
-    return it != m_windows.cend() ? qobject_cast<window*>(*it) : nullptr;
+    auto it = std::find_if(
+        windows.cbegin(), windows.cend(), [surface](auto win) { return win->surface == surface; });
+    return it != windows.cend() ? qobject_cast<window*>(*it) : nullptr;
 }
 
 void space::handle_window_added(wayland::window* window)
@@ -215,8 +215,8 @@ void space::handle_window_added(wayland::window* window)
         window->updateDecoration(false);
         win::update_layer(window);
 
-        auto const area
-            = clientArea(PlacementArea, get_current_output(window->space), window->desktop());
+        auto const area = space_window_area(
+            *this, PlacementArea, get_current_output(window->space), window->desktop());
         auto placementDone = false;
 
         if (window->isInitialPositionSet()) {
@@ -242,26 +242,26 @@ void space::handle_window_added(wayland::window* window)
     stacking_order->update_order();
 
     if (window->control) {
-        updateClientArea();
+        win::update_space_areas(*this);
 
         if (window->wantsInput() && !window->control->minimized()) {
-            activateClient(window);
+            activate_window(*this, window);
         }
 
-        updateTabbox();
+        update_tabbox(*this);
 
         QObject::connect(window, &win::wayland::window::windowShown, qobject.get(), [this, window] {
             win::update_layer(window);
             stacking_order->update_count();
-            updateClientArea();
+            win::update_space_areas(*this);
             if (window->wantsInput()) {
-                activateClient(window);
+                activate_window(*this, window);
             }
         });
         QObject::connect(window, &win::wayland::window::windowHidden, qobject.get(), [this] {
             // TODO: update tabbox if it's displayed
             stacking_order->update_count();
-            updateClientArea();
+            win::update_space_areas(*this);
         });
 
         idle_setup(*kde_idle, *window);
@@ -273,34 +273,34 @@ void space::handle_window_added(wayland::window* window)
 
 void space::handle_window_removed(wayland::window* window)
 {
-    remove_all(m_windows, window);
+    remove_all(windows, window);
 
     if (window->control) {
         if (window == most_recently_raised) {
             most_recently_raised = nullptr;
         }
         if (window == delayfocus_client) {
-            cancelDelayFocus();
+            cancel_delay_focus(*this);
         }
         if (window == last_active_client) {
             last_active_client = nullptr;
         }
         if (window == client_keys_client) {
-            setupWindowShortcutDone(false);
+            setup_window_shortcut_done(*this, false);
         }
         if (!window->control->shortcut().isEmpty()) {
             // Remove from client_keys.
             win::set_shortcut(window, QString());
         }
-        clientHidden(window);
+        process_window_hidden(*this, window);
         Q_EMIT qobject->clientRemoved(window);
     }
 
     stacking_order->update_count();
 
     if (window->control) {
-        updateClientArea();
-        updateTabbox();
+        win::update_space_areas(*this);
+        update_tabbox(*this);
     }
 
     Q_EMIT qobject->wayland_window_removed(window);
@@ -319,7 +319,7 @@ void space::handle_x11_window_added(x11::window* window)
 
 void space::handle_desktop_removed(virtual_desktop* desktop)
 {
-    for (auto const& client : m_windows) {
+    for (auto const& client : windows) {
         if (!client->control) {
             continue;
         }
@@ -330,8 +330,11 @@ void space::handle_desktop_removed(virtual_desktop* desktop)
         if (client->desktops().count() > 1) {
             win::leave_desktop(client, desktop);
         } else {
-            sendClientToDesktop(
-                client, qMin(desktop->x11DesktopNumber(), virtual_desktop_manager->count()), true);
+            send_window_to_desktop(
+                *this,
+                client,
+                qMin(desktop->x11DesktopNumber(), virtual_desktop_manager->count()),
+                true);
         }
     }
 }
@@ -342,7 +345,7 @@ Toplevel* space::findInternal(QWindow* window) const
         return nullptr;
     }
 
-    for (auto win : m_windows) {
+    for (auto win : windows) {
         if (auto internal = qobject_cast<internal_window*>(win);
             internal && internal->internalWindow() == window) {
             return internal;
@@ -354,7 +357,7 @@ Toplevel* space::findInternal(QWindow* window) const
 
 QRect space::get_icon_geometry(Toplevel const* win) const
 {
-    auto management = win->control->wayland_management();
+    auto management = win->control->plasma_wayland_integration;
     if (!management || !waylandServer()) {
         // window management interface is only available if the surface is mapped
         return QRect();
@@ -389,7 +392,7 @@ void space::update_space_area_from_windows(QRect const& desktop_area,
                                            std::vector<QRect> const& screens_geos,
                                            win::space_areas& areas)
 {
-    for (auto const& window : m_windows) {
+    for (auto const& window : windows) {
         if (!window->control) {
             continue;
         }
@@ -399,7 +402,7 @@ void space::update_space_area_from_windows(QRect const& desktop_area,
     }
 
     // TODO(romangg): Combine this and above loop.
-    for (auto win : m_windows) {
+    for (auto win : windows) {
         // TODO(romangg): check on control like in the previous loop?
         if (auto wl_win = qobject_cast<win::wayland::window*>(win)) {
             update_space_areas(wl_win, desktop_area, screens_geos, areas);

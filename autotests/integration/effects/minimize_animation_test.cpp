@@ -25,9 +25,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/effects.h"
 #include "render/scene.h"
 #include "toplevel.h"
+#include "win/actions.h"
 #include "win/net.h"
 #include "win/space.h"
-#include "win/stacking.h"
 #include "win/wayland/window.h"
 
 #include <Wrapland/Client/plasmashell.h>

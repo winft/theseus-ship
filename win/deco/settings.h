@@ -19,6 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
+#include "kwin_export.h"
+
 #include <KDecoration2/Private/DecorationSettingsPrivate>
 
 #include <QObject>
@@ -33,7 +35,7 @@ class space;
 namespace deco
 {
 
-class settings : public QObject, public KDecoration2::DecorationSettingsPrivate
+class KWIN_EXPORT settings : public QObject, public KDecoration2::DecorationSettingsPrivate
 {
     Q_OBJECT
 public:

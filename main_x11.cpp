@@ -20,8 +20,10 @@
 #include "input/x11/redirect.h"
 #include "render/x11/compositor.h"
 #include "scripting/platform.h"
+#include "win/shortcuts_init.h"
 #include "win/space.h"
 #include "win/x11/space.h"
+#include "win/x11/space_event.h"
 
 #include <KConfigGroup>
 #include <KCrash>
@@ -261,7 +263,7 @@ void ApplicationX11::start()
 
         workspace = std::make_unique<win::x11::space>(*render->compositor);
         workspace->input = std::make_unique<input::x11::redirect>(*input, *workspace);
-        workspace->initShortcuts();
+        win::init_shortcuts(*workspace);
 
         event_filter = std::make_unique<base::x11::xcb_event_filter<win::x11::space>>(*workspace);
         installNativeEventFilter(event_filter.get());
@@ -284,7 +286,7 @@ void ApplicationX11::start()
 
 bool ApplicationX11::notify(QObject* o, QEvent* e)
 {
-    if (e->spontaneous() && workspace->workspaceEvent(e)) {
+    if (e->spontaneous() && win::x11::space_qt_event(*workspace, e)) {
         return true;
     }
     return QApplication::notify(o, e);

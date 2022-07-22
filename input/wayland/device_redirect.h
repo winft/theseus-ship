@@ -9,6 +9,7 @@
 #pragma once
 
 #include "input/redirect.h"
+#include "main.h"
 #include "toplevel.h"
 #include "win/geo.h"
 #include "win/internal_window.h"
@@ -204,7 +205,7 @@ void device_redirect_update(Dev* dev)
 
     if (dev->positionValid()) {
         auto const pos = dev->position().toPoint();
-        internal_window = device_redirect_find_internal_window(dev->redirect->space.windows(), pos);
+        internal_window = device_redirect_find_internal_window(dev->redirect->space.windows, pos);
         if (internal_window) {
             toplevel = dev->redirect->space.findInternal(internal_window);
         } else {

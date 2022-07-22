@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "scripting/platform.h"
 #include "scripting/script.h"
 #include "win/space.h"
+#include "win/space_reconfigure.h"
 
 #define private public
 #include "win/screen_edges.h"
@@ -89,10 +90,10 @@ void ScreenEdgeTest::initTestCase()
 void ScreenEdgeTest::init()
 {
     input::get_cursor()->set_pos(640, 512);
-    if (Test::app()->workspace->showingDesktop()) {
-        Test::app()->workspace->slotToggleShowDesktop();
+    if (Test::app()->workspace->showing_desktop) {
+        win::toggle_show_desktop(*Test::app()->workspace);
     }
-    QVERIFY(!Test::app()->workspace->showingDesktop());
+    QVERIFY(!Test::app()->workspace->showing_desktop);
 }
 
 void ScreenEdgeTest::cleanup()
@@ -162,7 +163,7 @@ void ScreenEdgeTest::testEdge()
     QFETCH(QPoint, triggerPos);
     input::get_cursor()->set_pos(triggerPos);
     QCOMPARE(showDesktopSpy.count(), 1);
-    QVERIFY(Test::app()->workspace->showingDesktop());
+    QVERIFY(Test::app()->workspace->showing_desktop);
 }
 
 void ScreenEdgeTest::testTouchEdge_data()
@@ -217,12 +218,12 @@ void ScreenEdgeTest::testTouchEdge()
     Test::touch_up(0, timestamp++);
     QVERIFY(showDesktopSpy.wait());
     QCOMPARE(showDesktopSpy.count(), 1);
-    QVERIFY(Test::app()->workspace->showingDesktop());
+    QVERIFY(Test::app()->workspace->showing_desktop);
 }
 
 void ScreenEdgeTest::triggerConfigReload()
 {
-    Test::app()->workspace->slotReconfigure();
+    win::space_reconfigure(*Test::app()->workspace);
 }
 
 void ScreenEdgeTest::testEdgeUnregister()
@@ -251,7 +252,7 @@ void ScreenEdgeTest::testEdgeUnregister()
 
     // reset
     input::get_cursor()->set_pos(500, 500);
-    Test::app()->workspace->slotToggleShowDesktop();
+    win::toggle_show_desktop(*Test::app()->workspace);
     showDesktopSpy.clear();
 
     // trigger again, to show that retriggering works
@@ -260,7 +261,7 @@ void ScreenEdgeTest::testEdgeUnregister()
 
     // reset
     input::get_cursor()->set_pos(500, 500);
-    Test::app()->workspace->slotToggleShowDesktop();
+    win::toggle_show_desktop(*Test::app()->workspace);
     showDesktopSpy.clear();
 
     // make the script unregister the edge

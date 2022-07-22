@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/deco.h"
 #include "win/screen_edges.h"
 #include "win/space.h"
+#include "win/space_reconfigure.h"
 #include "win/wayland/space.h"
 #include "win/x11/window.h"
 
@@ -186,7 +187,7 @@ void WindowRuleTest::testWindowClassChange()
     group.sync();
 
     Test::app()->workspace->rule_book->config = config;
-    Test::app()->workspace->slotReconfigure();
+    win::space_reconfigure(*Test::app()->workspace);
 
     // create the test window
     auto c = create_xcb_connection();

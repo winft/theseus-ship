@@ -11,6 +11,8 @@
 #include "space_setup.h"
 #include "window.h"
 
+#include "win/desktop_space.h"
+
 namespace KWin::win::x11
 {
 
@@ -26,7 +28,7 @@ space::space(render::compositor& render)
                      [this] {
                          auto const desktop_count
                              = static_cast<int>(virtual_desktop_manager->count());
-                         for (auto const& window : m_windows) {
+                         for (auto const& window : windows) {
                              if (!window->control) {
                                  continue;
                              }
@@ -36,13 +38,13 @@ space::space(render::compositor& render)
                              if (window->desktop() <= desktop_count) {
                                  continue;
                              }
-                             sendClientToDesktop(window, desktop_count, true);
+                             send_window_to_desktop(*this, window, desktop_count, true);
                          }
                      });
 
     QObject::connect(
         &kwinApp()->get_base(), &base::platform::topology_changed, qobject.get(), [this] {
-            if (!compositing()) {
+            if (!this->render.scene) {
                 return;
             }
             // desktopResized() should take care of when the size or
@@ -53,7 +55,7 @@ space::space(render::compositor& render)
             this->render.reinitialize();
         });
 
-    init_space(*this);
+    x11::init_space(*this);
 }
 
 space::~space()
@@ -80,7 +82,7 @@ void space::update_space_area_from_windows(QRect const& desktop_area,
                                            std::vector<QRect> const& screens_geos,
                                            win::space_areas& areas)
 {
-    for (auto const& window : m_windows) {
+    for (auto const& window : windows) {
         if (!window->control) {
             continue;
         }

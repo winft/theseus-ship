@@ -11,6 +11,7 @@
 #include "base/output.h"
 #include "base/wayland/server.h"
 #include "main.h"
+#include "win/wayland/window.h"
 
 #include <QtTest>
 #include <Wrapland/Client/xdg_shell.h>
@@ -30,12 +31,8 @@ class Surface;
 
 namespace KWin
 {
-class WaylandTestApplication;
 
-namespace win::wayland
-{
-class window;
-}
+class WaylandTestApplication;
 
 class Toplevel;
 

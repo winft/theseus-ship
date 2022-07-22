@@ -10,6 +10,7 @@
 #include "window.h"
 
 #include "base/options.h"
+#include "win/activation.h"
 #include "win/controlling.h"
 #include "win/scene.h"
 #include "win/stacking_order.h"
@@ -25,7 +26,7 @@ void map(Win* win)
     // XComposite invalidates backing pixmaps on unmap (minimize, different
     // virtual desktop, etc.).  We kept the last known good pixmap around
     // for use in effects, but now we want to have access to the new pixmap
-    if (win->space.compositing()) {
+    if (win->space.render.scene) {
         win->discard_buffer();
     }
 
@@ -137,14 +138,14 @@ void internal_hide(Win* win)
     }
 
     win->space.render.addRepaint(visible_rect(win));
-    win->space.clientHidden(win);
+    process_window_hidden(win->space, win);
     Q_EMIT win->windowHidden(win);
 }
 
 template<typename Win>
 void internal_keep(Win* win)
 {
-    assert(win->space.compositing());
+    assert(win->space.render.scene);
 
     if (win->mapping == mapping_state::kept) {
         return;
@@ -160,12 +161,12 @@ void internal_keep(Win* win)
     win->xcb_windows.input.unmap();
     if (win->control->active()) {
         // get rid of input focus, bug #317484
-        win->space.focusToNull();
+        focus_to_null(win->space);
     }
 
     update_hidden_preview(win);
     win->space.render.addRepaint(visible_rect(win));
-    win->space.clientHidden(win);
+    process_window_hidden(win->space, win);
 }
 
 template<typename Win>
@@ -180,7 +181,7 @@ void update_visibility(Win* win)
     if (win->hidden) {
         win->info->setState(NET::Hidden, NET::Hidden);
         win::set_skip_taskbar(win, true);
-        if (win->space.compositing()
+        if (win->space.render.scene
             && kwinApp()->options->hiddenPreviews() == base::HiddenPreviewsAlways) {
             internal_keep(win);
         } else {
@@ -193,7 +194,7 @@ void update_visibility(Win* win)
 
     if (win->control->minimized()) {
         win->info->setState(NET::Hidden, NET::Hidden);
-        if (win->space.compositing()
+        if (win->space.render.scene
             && kwinApp()->options->hiddenPreviews() == base::HiddenPreviewsAlways) {
             internal_keep(win);
         } else {
@@ -204,7 +205,7 @@ void update_visibility(Win* win)
 
     win->info->setState(NET::States(), NET::Hidden);
     if (!win->isOnCurrentDesktop()) {
-        if (win->space.compositing()
+        if (win->space.render.scene
             && kwinApp()->options->hiddenPreviews() != base::HiddenPreviewsNever) {
             internal_keep(win);
         } else {
@@ -213,103 +214,6 @@ void update_visibility(Win* win)
         return;
     }
     internal_show(win);
-}
-
-/**
- * Relevant for windows of type NET::Utility, NET::Menu or NET::Toolbar.
- */
-template<typename Space>
-void update_tool_windows_visibility(Space* space, bool also_hide)
-{
-    if (!kwinApp()->options->isHideUtilityWindowsForInactive()) {
-        for (auto const& window : space->m_windows) {
-            if (window->control) {
-                window->hideClient(false);
-            }
-        }
-        return;
-    }
-
-    x11::group const* active_group = nullptr;
-    auto active_window = space->active_client;
-
-    // Go up in transiency hiearchy, if the top is found, only tool transients for the top
-    // window will be shown; if a group transient is group, all tools in the group will be shown.
-    while (active_window) {
-        if (!active_window->transient()->lead()) {
-            break;
-        }
-        if (active_window->groupTransient()) {
-            active_group = active_window->group();
-            break;
-        }
-        active_window = active_window->transient()->lead();
-    }
-
-    // Use stacking order only to reduce flicker, it doesn't matter if block_stacking_updates == 0,
-    // i.e. if it's not up to date.
-
-    // TODO(SELI): But maybe it should - what if a new window has been added that's not in stacking
-    // order yet?
-    std::vector<Toplevel*> to_show;
-    std::vector<Toplevel*> to_hide;
-
-    for (auto const& window : space->stacking_order->stack) {
-        if (!window->control) {
-            continue;
-        }
-
-        if (!is_utility(window) && !is_menu(window) && !is_toolbar(window)) {
-            continue;
-        }
-
-        auto show{true};
-
-        if (window->transient()->lead()) {
-            auto const in_active_group = active_group && window->group() == active_group;
-            auto const has_active_lead
-                = active_window && window->transient()->is_follower_of(active_window);
-            show = in_active_group || has_active_lead;
-        } else {
-            auto const is_individual = !window->group() || window->group()->members.size() == 1;
-            auto const in_active_group = active_window && active_window->group() == window->group();
-            show = is_individual || in_active_group;
-        }
-
-        if (!show && also_hide) {
-            auto const& leads = window->transient()->leads();
-            // Don't hide utility windows which are standalone(?) or have e.g. kicker as lead.
-            show = leads.empty()
-                || std::any_of(leads.cbegin(), leads.cend(), is_special_window<Toplevel>);
-            if (!show) {
-                to_hide.push_back(window);
-            }
-        }
-
-        if (show) {
-            to_show.push_back(window);
-        }
-    }
-
-    // First show new ones, then hide.
-    // Show from topmost.
-    for (int i = to_show.size() - 1; i >= 0; --i) {
-        // TODO(unknown author): Since this is in stacking order, the order of taskbar entries
-        //                       changes :(
-        to_show.at(i)->hideClient(false);
-    }
-
-    if (also_hide) {
-        // Hide from bottom-most.
-        for (auto const& window : to_hide) {
-            window->hideClient(true);
-        }
-        space->stopUpdateToolWindowsTimer();
-    } else {
-        // Workspace::setActiveClient(..) is afterwards called with NULL client, quickly followed
-        // by setting a new client, which would result in flickering.
-        space->resetUpdateToolWindowsTimer();
-    }
 }
 
 }
