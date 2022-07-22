@@ -52,7 +52,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwinpluginssettings.h"
 
 K_PLUGIN_FACTORY_WITH_JSON(KWinTabBoxConfigFactory,
-                           "metadata.json",
+                           "kcm_kwintabbox.json",
                            registerPlugin<KWin::KWinTabBoxConfig>();
                            registerPlugin<KWin::win::KWinTabboxData>();)
 

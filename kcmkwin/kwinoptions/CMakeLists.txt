@@ -35,6 +35,5 @@ qt_add_dbus_interface(kcm_kwinoptions_PART_SRCS
 )
 
 kcoreaddons_add_plugin(kcm_kwinoptions SOURCES ${kcm_kwinoptions_PART_SRCS} INSTALL_NAMESPACE "plasma/kcms/systemsettings_qwidgets")
+kcmutils_generate_desktop_file(kcm_kwinoptions)
 target_link_libraries(kcm_kwinoptions kwin Qt::DBus KF5::KCMUtils KF5::I18n KF5::ConfigWidgets KF5::Service KF5::WindowSystem)
-
-install(FILES kcm_kwinoptions.desktop DESTINATION ${KDE_INSTALL_APPDIR})

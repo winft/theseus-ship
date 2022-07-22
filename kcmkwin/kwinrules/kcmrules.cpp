@@ -506,7 +506,7 @@ void KCMKWinRules::fillSettingsFromProperties(win::rules::settings* settings,
     }
 }
 
-K_PLUGIN_CLASS_WITH_JSON(KCMKWinRules, "metadata.json");
+K_PLUGIN_CLASS_WITH_JSON(KCMKWinRules, "kcm_kwinrules.json");
 
 } // namespace
 
