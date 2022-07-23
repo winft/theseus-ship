@@ -5,38 +5,210 @@
 */
 #pragma once
 
+#include "helpers.h"
+
+#include "base/wayland/server.h"
+#include "input/event.h"
 #include "input/event_filter.h"
+#include "input/keyboard.h"
+#include "input/keyboard_redirect.h"
+#include "input/pointer_redirect.h"
+#include "input/qt_event.h"
+#include "input/redirect.h"
+#include "input/wayland/platform.h"
+#include "input/xkb/keyboard.h"
+#include "main.h"
 
-namespace KWin
-{
-class Toplevel;
+#include <Wrapland/Server/seat.h>
+#include <linux/input.h>
 
-namespace input
+namespace KWin::input
 {
 
 class window_selector_filter : public event_filter
 {
 public:
-    bool button(button_event const& event) override;
-    bool motion(motion_event const& event) override;
-    bool axis(axis_event const& event) override;
+    bool button(button_event const& event) override
+    {
+        if (!m_active) {
+            return false;
+        }
 
-    bool key(key_event const& event) override;
-    bool key_repeat(key_event const& event) override;
+        auto pointer = kwinApp()->input->redirect->pointer();
+        if (event.state == button_state::released) {
+            if (pointer->buttons() == Qt::NoButton) {
+                if (event.key == BTN_RIGHT) {
+                    cancel();
+                } else {
+                    accept(pointer->pos());
+                }
+            }
+        }
 
-    bool touch_down(touch_down_event const& event) override;
-    bool touch_motion(touch_motion_event const& event) override;
-    bool touch_up(touch_up_event const& event) override;
+        return true;
+    }
 
-    bool isActive() const;
-    void start(std::function<void(KWin::Toplevel*)> callback);
-    void start(std::function<void(const QPoint&)> callback);
+    bool motion(motion_event const& /*event*/) override
+    {
+        return m_active;
+    }
+
+    bool axis(axis_event const& /*event*/) override
+    {
+        return m_active;
+    }
+
+    bool key(key_event const& event) override
+    {
+        if (!m_active) {
+            return false;
+        }
+
+        waylandServer()->seat()->setFocusedKeyboardSurface(nullptr);
+        pass_to_wayland_server(event);
+
+        if (event.state == key_state::pressed) {
+            auto const qt_key = key_to_qt_key(event.keycode, event.base.dev->xkb.get());
+
+            // x11 variant does this on key press, so do the same
+            if (qt_key == Qt::Key_Escape) {
+                cancel();
+            } else if (qt_key == Qt::Key_Enter || qt_key == Qt::Key_Return
+                       || qt_key == Qt::Key_Space) {
+                accept(kwinApp()->input->redirect->globalPointer());
+            }
+
+            int mx = 0;
+            int my = 0;
+            if (qt_key == Qt::Key_Left) {
+                mx = -10;
+            }
+            if (qt_key == Qt::Key_Right) {
+                mx = 10;
+            }
+            if (qt_key == Qt::Key_Up) {
+                my = -10;
+            }
+            if (qt_key == Qt::Key_Down) {
+                my = 10;
+            }
+            if (event.base.dev->xkb->qt_modifiers & Qt::ControlModifier) {
+                mx /= 10;
+                my /= 10;
+            }
+
+            auto platform = static_cast<input::wayland::platform*>(kwinApp()->input.get());
+            auto const pos = kwinApp()->input->redirect->globalPointer() + QPointF(mx, my);
+
+            platform->warp_pointer(pos, event.base.time_msec);
+        }
+        // filter out while selecting a window
+        return true;
+    }
+
+    bool key_repeat(key_event const& /*event*/) override
+    {
+        return m_active;
+    }
+
+    bool touch_down(touch_down_event const& event) override
+    {
+        if (!isActive()) {
+            return false;
+        }
+        m_touchPoints.insert(event.id, event.pos);
+        return true;
+    }
+
+    bool touch_motion(touch_motion_event const& event) override
+    {
+        if (!isActive()) {
+            return false;
+        }
+        auto it = m_touchPoints.find(event.id);
+        if (it != m_touchPoints.end()) {
+            *it = event.pos;
+        }
+        return true;
+    }
+
+    bool touch_up(touch_up_event const& event) override
+    {
+        if (!isActive()) {
+            return false;
+        }
+        auto it = m_touchPoints.find(event.id);
+        if (it != m_touchPoints.end()) {
+            const auto pos = it.value();
+            m_touchPoints.erase(it);
+            if (m_touchPoints.isEmpty()) {
+                accept(pos);
+            }
+        }
+        return true;
+    }
+
+    bool isActive() const
+    {
+        return m_active;
+    }
+
+    void start(std::function<void(KWin::Toplevel*)> callback)
+    {
+        Q_ASSERT(!m_active);
+        m_active = true;
+        m_callback = callback;
+        kwinApp()->input->redirect->keyboard()->update();
+        kwinApp()->input->redirect->cancelTouch();
+    }
+
+    void start(std::function<void(const QPoint&)> callback)
+    {
+        Q_ASSERT(!m_active);
+        m_active = true;
+        m_pointSelectionFallback = callback;
+        kwinApp()->input->redirect->keyboard()->update();
+        kwinApp()->input->redirect->cancelTouch();
+    }
 
 private:
-    void deactivate();
-    void cancel();
-    void accept(const QPoint& pos);
-    void accept(const QPointF& pos);
+    void deactivate()
+    {
+        m_active = false;
+        m_callback = std::function<void(KWin::Toplevel*)>();
+        m_pointSelectionFallback = std::function<void(const QPoint&)>();
+        kwinApp()->input->redirect->pointer()->removeWindowSelectionCursor();
+        kwinApp()->input->redirect->keyboard()->update();
+        m_touchPoints.clear();
+    }
+
+    void cancel()
+    {
+        if (m_callback) {
+            m_callback(nullptr);
+        }
+        if (m_pointSelectionFallback) {
+            m_pointSelectionFallback(QPoint(-1, -1));
+        }
+        deactivate();
+    }
+
+    void accept(const QPoint& pos)
+    {
+        if (m_callback) {
+            // TODO: this ignores shaped windows
+            m_callback(kwinApp()->input->redirect->findToplevel(pos));
+        }
+        if (m_pointSelectionFallback) {
+            m_pointSelectionFallback(pos);
+        }
+        deactivate();
+    }
+
+    void accept(const QPointF& pos)
+    {
+        accept(pos.toPoint());
+    }
 
     bool m_active = false;
     std::function<void(KWin::Toplevel*)> m_callback;
@@ -44,5 +216,4 @@ private:
     QMap<quint32, QPointF> m_touchPoints;
 };
 
-}
 }

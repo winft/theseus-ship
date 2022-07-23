@@ -7,7 +7,9 @@
 #pragma once
 
 #include "event.h"
-#include "kwin_export.h"
+
+#include "main.h"
+#include "redirect.h"
 
 #include <QSet>
 #include <QTabletEvent>
@@ -34,38 +36,115 @@ namespace KWin::input
  * Deleting an instance of event_filter automatically uninstalls it from
  * InputRedirection.
  */
-class KWIN_EXPORT event_filter
+class event_filter
 {
 public:
-    event_filter();
-    virtual ~event_filter();
+    event_filter() = default;
 
-    virtual bool button(button_event const& event);
-    virtual bool motion(motion_event const& event);
-    virtual bool axis(axis_event const& event);
+    virtual ~event_filter()
+    {
+        assert(kwinApp()->input->redirect);
+        kwinApp()->input->redirect->uninstallInputEventFilter(this);
+    }
 
-    virtual bool key(key_event const& event);
-    virtual bool key_repeat(key_event const& event);
+    virtual bool button(button_event const& /*event*/)
+    {
+        return false;
+    }
 
-    virtual bool touch_down(touch_down_event const& event);
-    virtual bool touch_motion(touch_motion_event const& event);
-    virtual bool touch_up(touch_up_event const& event);
+    virtual bool motion(motion_event const& /*event*/)
+    {
+        return false;
+    }
+    virtual bool axis(axis_event const& /*event*/)
+    {
+        return false;
+    }
 
-    virtual bool pinch_begin(pinch_begin_event const& event);
-    virtual bool pinch_update(pinch_update_event const& event);
-    virtual bool pinch_end(pinch_end_event const& event);
+    virtual bool key(key_event const& /*event*/)
+    {
+        return false;
+    }
 
-    virtual bool swipe_begin(swipe_begin_event const& event);
-    virtual bool swipe_update(swipe_update_event const& event);
-    virtual bool swipe_end(swipe_end_event const& event);
+    virtual bool key_repeat(key_event const& /*event*/)
+    {
+        return false;
+    }
 
-    virtual bool switch_toggle(switch_toggle_event const& event);
+    virtual bool touch_down(touch_down_event const& /*event*/)
+    {
+        return false;
+    }
 
-    virtual bool tabletToolEvent(QTabletEvent* event);
-    virtual bool tabletToolButtonEvent(const QSet<uint>& buttons);
-    virtual bool tabletPadButtonEvent(const QSet<uint>& buttons);
-    virtual bool tabletPadStripEvent(int number, int position, bool isFinger);
-    virtual bool tabletPadRingEvent(int number, int position, bool isFinger);
+    virtual bool touch_motion(touch_motion_event const& /*event*/)
+    {
+        return false;
+    }
+
+    virtual bool touch_up(touch_up_event const& /*event*/)
+    {
+        return false;
+    }
+
+    virtual bool pinch_begin(pinch_begin_event const& /*event*/)
+    {
+        return false;
+    }
+
+    virtual bool pinch_update(pinch_update_event const& /*event*/)
+    {
+        return false;
+    }
+
+    virtual bool pinch_end(pinch_end_event const& /*event*/)
+    {
+        return false;
+    }
+
+    virtual bool swipe_begin(swipe_begin_event const& /*event*/)
+    {
+        return false;
+    }
+
+    virtual bool swipe_update(swipe_update_event const& /*event*/)
+    {
+        return false;
+    }
+
+    virtual bool swipe_end(swipe_end_event const& /*event*/)
+    {
+        return false;
+    }
+
+    virtual bool switch_toggle(switch_toggle_event const& /*event*/)
+    {
+        return false;
+    }
+
+    virtual bool tabletToolEvent(QTabletEvent* /*event*/)
+    {
+        return false;
+    }
+
+    virtual bool tabletToolButtonEvent(const QSet<uint>& /*buttons*/)
+    {
+        return false;
+    }
+
+    virtual bool tabletPadButtonEvent(const QSet<uint>& /*buttons*/)
+    {
+        return false;
+    }
+
+    virtual bool tabletPadStripEvent(int /*number*/, int /*position*/, bool /*isFinger*/)
+    {
+        return false;
+    }
+
+    virtual bool tabletPadRingEvent(int /*number*/, int /*position*/, bool /*isFinger*/)
+    {
+        return false;
+    }
 };
 
 }
