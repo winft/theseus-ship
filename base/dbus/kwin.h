@@ -9,7 +9,6 @@
 #include "debug/support_info.h"
 #include "input/platform.h"
 #include "kwin_export.h"
-#include "main.h"
 #include "toplevel.h"
 #include "win/kill_window.h"
 #include "win/placement.h"
@@ -123,13 +122,14 @@ private:
     win::space_qobject& space;
 };
 
-template<typename Space>
+template<typename Space, typename Input>
 class kwin_impl : public kwin
 {
 public:
-    explicit kwin_impl(Space& space)
+    kwin_impl(Space& space, Input* input)
         : kwin(*space.qobject)
         , space{space}
+        , input{input}
     {
     }
 
@@ -170,10 +170,14 @@ public:
 
     QVariantMap query_window_info_impl() override
     {
+        if (!input) {
+            return {};
+        }
+
         m_replyQueryWindowInfo = message();
         setDelayedReply(true);
 
-        kwinApp()->input->start_interactive_window_selection([this](Toplevel* t) {
+        input->start_interactive_window_selection([this](Toplevel* t) {
             if (!t) {
                 QDBusConnection::sessionBus().send(m_replyQueryWindowInfo.createErrorReply(
                     QStringLiteral("org.kde.KWin.Error.UserCancel"),
@@ -241,6 +245,7 @@ private:
 
     QDBusMessage m_replyQueryWindowInfo;
     Space& space;
+    Input* input;
 };
 
 }

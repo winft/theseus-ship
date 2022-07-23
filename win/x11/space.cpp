@@ -23,8 +23,10 @@ space::space(render::compositor& render, input::x11::platform* input)
     if (input) {
         this->input = std::make_unique<input::x11::redirect>(*input, *this);
     }
+
     atoms = std::make_unique<base::x11::atoms>(connection());
     edges = std::make_unique<win::screen_edger>(*this);
+    dbus = std::make_unique<base::dbus::kwin_impl<win::space, input::platform>>(*this, input);
 
     QObject::connect(virtual_desktop_manager.get(),
                      &virtual_desktop_manager::desktopRemoved,

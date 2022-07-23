@@ -143,7 +143,6 @@ public:
         , stacking_order{std::make_unique<win::stacking_order>()}
         , focus_chain{win::focus_chain<space>(*this)}
         , virtual_desktop_manager{std::make_unique<win::virtual_desktop_manager>()}
-        , dbus{std::make_unique<base::dbus::kwin_impl<space>>(*this)}
         , session_manager{std::make_unique<win::session_manager>()}
     {
         init_space(*this);
@@ -174,7 +173,7 @@ public:
     std::unique_ptr<win::stacking_order> stacking_order;
     win::focus_chain<space> focus_chain;
     std::unique_ptr<win::virtual_desktop_manager> virtual_desktop_manager;
-    std::unique_ptr<base::dbus::kwin_impl<space>> dbus;
+    std::unique_ptr<base::dbus::kwin_impl<space, input::platform>> dbus;
     std::unique_ptr<win::session_manager> session_manager;
 
     QTimer* m_quickTileCombineTimer{nullptr};
