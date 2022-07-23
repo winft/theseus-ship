@@ -123,19 +123,19 @@ void ActivationTest::testSwitchToWindowToLeft()
     win::move(client4, QPoint(1580, 200));
 
     // Switch to window to the left.
-    win::activate_window_direction(*Test::app()->workspace, win::direction::west);
+    win::activate_window_direction(*Test::app()->base.space, win::direction::west);
     QVERIFY(client3->control->active());
 
     // Switch to window to the left.
-    win::activate_window_direction(*Test::app()->workspace, win::direction::west);
+    win::activate_window_direction(*Test::app()->base.space, win::direction::west);
     QVERIFY(client2->control->active());
 
     // Switch to window to the left.
-    win::activate_window_direction(*Test::app()->workspace, win::direction::west);
+    win::activate_window_direction(*Test::app()->base.space, win::direction::west);
     QVERIFY(client1->control->active());
 
     // Switch to window to the left.
-    win::activate_window_direction(*Test::app()->workspace, win::direction::west);
+    win::activate_window_direction(*Test::app()->base.space, win::direction::west);
     QVERIFY(client4->control->active());
 
     // Destroy all clients.
@@ -191,19 +191,19 @@ void ActivationTest::testSwitchToWindowToRight()
     win::move(client4, QPoint(1580, 200));
 
     // Switch to window to the right.
-    win::activate_window_direction(*Test::app()->workspace, win::direction::east);
+    win::activate_window_direction(*Test::app()->base.space, win::direction::east);
     QVERIFY(client1->control->active());
 
     // Switch to window to the right.
-    win::activate_window_direction(*Test::app()->workspace, win::direction::east);
+    win::activate_window_direction(*Test::app()->base.space, win::direction::east);
     QVERIFY(client2->control->active());
 
     // Switch to window to the right.
-    win::activate_window_direction(*Test::app()->workspace, win::direction::east);
+    win::activate_window_direction(*Test::app()->base.space, win::direction::east);
     QVERIFY(client3->control->active());
 
     // Switch to window to the right.
-    win::activate_window_direction(*Test::app()->workspace, win::direction::east);
+    win::activate_window_direction(*Test::app()->base.space, win::direction::east);
     QVERIFY(client4->control->active());
 
     // Destroy all clients.
@@ -259,19 +259,19 @@ void ActivationTest::testSwitchToWindowAbove()
     win::move(client4, QPoint(200, 1424));
 
     // Switch to window above.
-    win::activate_window_direction(*Test::app()->workspace, win::direction::north);
+    win::activate_window_direction(*Test::app()->base.space, win::direction::north);
     QVERIFY(client3->control->active());
 
     // Switch to window above.
-    win::activate_window_direction(*Test::app()->workspace, win::direction::north);
+    win::activate_window_direction(*Test::app()->base.space, win::direction::north);
     QVERIFY(client2->control->active());
 
     // Switch to window above.
-    win::activate_window_direction(*Test::app()->workspace, win::direction::north);
+    win::activate_window_direction(*Test::app()->base.space, win::direction::north);
     QVERIFY(client1->control->active());
 
     // Switch to window above.
-    win::activate_window_direction(*Test::app()->workspace, win::direction::north);
+    win::activate_window_direction(*Test::app()->base.space, win::direction::north);
     QVERIFY(client4->control->active());
 
     // Destroy all clients.
@@ -327,19 +327,19 @@ void ActivationTest::testSwitchToWindowBelow()
     win::move(client4, QPoint(200, 1424));
 
     // Switch to window below.
-    win::activate_window_direction(*Test::app()->workspace, win::direction::south);
+    win::activate_window_direction(*Test::app()->base.space, win::direction::south);
     QVERIFY(client1->control->active());
 
     // Switch to window below.
-    win::activate_window_direction(*Test::app()->workspace, win::direction::south);
+    win::activate_window_direction(*Test::app()->base.space, win::direction::south);
     QVERIFY(client2->control->active());
 
     // Switch to window below.
-    win::activate_window_direction(*Test::app()->workspace, win::direction::south);
+    win::activate_window_direction(*Test::app()->base.space, win::direction::south);
     QVERIFY(client3->control->active());
 
     // Switch to window below.
-    win::activate_window_direction(*Test::app()->workspace, win::direction::south);
+    win::activate_window_direction(*Test::app()->base.space, win::direction::south);
     QVERIFY(client4->control->active());
 
     // Destroy all clients.
@@ -371,7 +371,7 @@ void ActivationTest::testSwitchToWindowMaximized()
     QVERIFY(client1->control->active());
     QSignalSpy configureRequestedSpy1(shellSurface1.get(), &XdgShellToplevel::configureRequested);
     QVERIFY(configureRequestedSpy1.wait());
-    win::active_window_maximize(*Test::app()->workspace);
+    win::active_window_maximize(*Test::app()->base.space);
     QVERIFY(configureRequestedSpy1.wait());
     QSignalSpy geometryChangedSpy1(client1, &win::wayland::window::frame_geometry_changed);
     QVERIFY(geometryChangedSpy1.isValid());
@@ -387,7 +387,7 @@ void ActivationTest::testSwitchToWindowMaximized()
     QVERIFY(client2->control->active());
     QSignalSpy configureRequestedSpy2(shellSurface2.get(), &XdgShellToplevel::configureRequested);
     QVERIFY(configureRequestedSpy2.wait());
-    win::active_window_maximize(*Test::app()->workspace);
+    win::active_window_maximize(*Test::app()->base.space);
     QVERIFY(configureRequestedSpy2.wait());
     QSignalSpy geometryChangedSpy2(client2, &win::wayland::window::frame_geometry_changed);
     QVERIFY(geometryChangedSpy2.isValid());
@@ -395,7 +395,7 @@ void ActivationTest::testSwitchToWindowMaximized()
     Test::render(surface2, configureRequestedSpy2.last().at(0).toSize(), Qt::red);
     QVERIFY(geometryChangedSpy2.wait());
 
-    auto const stackingOrder = Test::app()->workspace->stacking_order->stack;
+    auto const stackingOrder = Test::app()->base.space->stacking_order->stack;
     QVERIFY(index_of(stackingOrder, client1) < index_of(stackingOrder, client2));
     QCOMPARE(client1->maximizeMode(), win::maximize_mode::full);
     QCOMPARE(client2->maximizeMode(), win::maximize_mode::full);
@@ -417,15 +417,15 @@ void ActivationTest::testSwitchToWindowMaximized()
     win::move(client4, QPoint(1580, 200));
 
     // Switch to window to the left.
-    win::activate_window_direction(*Test::app()->workspace, win::direction::west);
+    win::activate_window_direction(*Test::app()->base.space, win::direction::west);
     QVERIFY(client3->control->active());
 
     // Switch to window to the left.
-    win::activate_window_direction(*Test::app()->workspace, win::direction::west);
+    win::activate_window_direction(*Test::app()->base.space, win::direction::west);
     QVERIFY(client2->control->active());
 
     // Switch to window to the left.
-    win::activate_window_direction(*Test::app()->workspace, win::direction::west);
+    win::activate_window_direction(*Test::app()->base.space, win::direction::west);
     QVERIFY(client4->control->active());
 
     // Destroy all clients.
@@ -457,7 +457,7 @@ void ActivationTest::testSwitchToWindowFullScreen()
     QVERIFY(client1->control->active());
     QSignalSpy configureRequestedSpy1(shellSurface1.get(), &XdgShellToplevel::configureRequested);
     QVERIFY(configureRequestedSpy1.wait());
-    win::active_window_set_fullscreen(*Test::app()->workspace);
+    win::active_window_set_fullscreen(*Test::app()->base.space);
     QVERIFY(configureRequestedSpy1.wait());
     QSignalSpy geometryChangedSpy1(client1, &win::wayland::window::frame_geometry_changed);
     QVERIFY(geometryChangedSpy1.isValid());
@@ -472,7 +472,7 @@ void ActivationTest::testSwitchToWindowFullScreen()
     QVERIFY(client2->control->active());
     QSignalSpy configureRequestedSpy2(shellSurface2.get(), &XdgShellToplevel::configureRequested);
     QVERIFY(configureRequestedSpy2.wait());
-    win::active_window_set_fullscreen(*Test::app()->workspace);
+    win::active_window_set_fullscreen(*Test::app()->base.space);
     QVERIFY(configureRequestedSpy2.wait());
     QSignalSpy geometryChangedSpy2(client2, &win::wayland::window::frame_geometry_changed);
     QVERIFY(geometryChangedSpy2.isValid());
@@ -480,7 +480,7 @@ void ActivationTest::testSwitchToWindowFullScreen()
     Test::render(surface2, configureRequestedSpy2.last().at(0).toSize(), Qt::red);
     QVERIFY(geometryChangedSpy2.wait());
 
-    auto const stackingOrder = Test::app()->workspace->stacking_order->stack;
+    auto const stackingOrder = Test::app()->base.space->stacking_order->stack;
     QVERIFY(index_of(stackingOrder, client1) < index_of(stackingOrder, client2));
     QVERIFY(client1->control->fullscreen());
     QVERIFY(client2->control->fullscreen());
@@ -502,15 +502,15 @@ void ActivationTest::testSwitchToWindowFullScreen()
     win::move(client4, QPoint(200, 1424));
 
     // Switch to window above.
-    win::activate_window_direction(*Test::app()->workspace, win::direction::north);
+    win::activate_window_direction(*Test::app()->base.space, win::direction::north);
     QVERIFY(client3->control->active());
 
     // Switch to window above.
-    win::activate_window_direction(*Test::app()->workspace, win::direction::north);
+    win::activate_window_direction(*Test::app()->base.space, win::direction::north);
     QVERIFY(client2->control->active());
 
     // Switch to window above.
-    win::activate_window_direction(*Test::app()->workspace, win::direction::north);
+    win::activate_window_direction(*Test::app()->base.space, win::direction::north);
     QVERIFY(client4->control->active());
 
     // Destroy all clients.

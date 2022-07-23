@@ -65,7 +65,7 @@ void PopupOpenCloseAnimationTest::initTestCase()
 
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    const auto builtinNames = render::effect_loader(*Test::app()->workspace).listOfKnownEffects();
+    const auto builtinNames = render::effect_loader(*Test::app()->base.space).listOfKnownEffects();
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
@@ -182,8 +182,8 @@ void PopupOpenCloseAnimationTest::testAnimateUserActionsPopup()
     QVERIFY(!effect->isActive());
 
     // Show the user actions popup.
-    Test::app()->workspace->user_actions_menu->show(QRect(), client);
-    auto& userActionsMenu = Test::app()->workspace->user_actions_menu;
+    Test::app()->base.space->user_actions_menu->show(QRect(), client);
+    auto& userActionsMenu = Test::app()->base.space->user_actions_menu;
     QTRY_VERIFY(userActionsMenu->isShown());
     QVERIFY(userActionsMenu->hasClient());
     QVERIFY(effect->isActive());
@@ -239,7 +239,7 @@ void PopupOpenCloseAnimationTest::testAnimateDecorationTooltips()
     QVERIFY(!effect->isActive());
 
     // Show a decoration tooltip.
-    QSignalSpy tooltipAddedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy tooltipAddedSpy(Test::app()->base.space->qobject.get(),
                                &win::space::qobject_t::internalClientAdded);
     QVERIFY(tooltipAddedSpy.isValid());
     client->control->deco().client->requestShowToolTip(QStringLiteral("KWin rocks!"));

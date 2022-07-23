@@ -141,7 +141,7 @@ void PlasmaWindowTest::testCreateDestroyX11PlasmaWindow()
     xcb_flush(c.get());
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy windowCreatedSpy(Test::app()->base.space->qobject.get(),
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
@@ -270,7 +270,7 @@ void PlasmaWindowTest::testLockScreenNoPlasmaWindow()
     QVERIFY(plasmaWindowCreatedSpy.isValid());
 
     // this time we use a QSignalSpy on XdgShellClient as it'a a little bit more complex setup
-    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
                               &win::wayland::space::qobject_t::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
 

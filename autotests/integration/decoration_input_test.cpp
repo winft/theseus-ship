@@ -132,7 +132,7 @@ Toplevel* DecorationInputTest::showWindow()
     // let's render
     auto c = Test::render_and_wait_for_shown(client.surface, QSize(500, 50), Qt::blue);
     VERIFY(c);
-    COMPARE(Test::app()->workspace->active_client, c);
+    COMPARE(Test::app()->base.space->active_client, c);
     COMPARE(c->userCanSetNoBorder(), true);
     COMPARE(win::decoration(c) != nullptr, true);
 
@@ -364,7 +364,7 @@ void DecorationInputTest::testHover()
     // TODO: Test input position with different border sizes.
     // TODO: We should test with the fake decoration to have a fixed test environment.
     auto const hasBorders
-        = Test::app()->workspace->deco->settings()->borderSize() != KDecoration2::BorderSize::None;
+        = Test::app()->base.space->deco->settings()->borderSize() != KDecoration2::BorderSize::None;
     auto deviation = [hasBorders] { return hasBorders ? -1 : 0; };
 
     MOTION(QPoint(c->frameGeometry().x(), 0));
@@ -559,7 +559,7 @@ void DecorationInputTest::testResizeOutsideWindow()
         ->group("org.kde.kdecoration2")
         .writeEntry("BorderSize", QStringLiteral("None"));
     kwinApp()->config()->sync();
-    win::space_reconfigure(*Test::app()->workspace);
+    win::space_reconfigure(*Test::app()->base.space);
 
     // now create window
     auto c = showWindow();
@@ -659,7 +659,7 @@ void DecorationInputTest::testModifierClickUnrestrictedMove()
     group.writeEntry("CommandAll2", "Move");
     group.writeEntry("CommandAll3", "Move");
     group.sync();
-    win::space_reconfigure(*Test::app()->workspace);
+    win::space_reconfigure(*Test::app()->base.space);
     QCOMPARE(kwinApp()->options->commandAllModifier(),
              modKey == QStringLiteral("Alt") ? Qt::AltModifier : Qt::MetaModifier);
     QCOMPARE(kwinApp()->options->commandAll1(), base::options::MouseUnrestrictedMove);
@@ -731,7 +731,7 @@ void DecorationInputTest::testModifierScrollOpacity()
     group.writeEntry("CommandAllKey", modKey);
     group.writeEntry("CommandAllWheel", "change opacity");
     group.sync();
-    win::space_reconfigure(*Test::app()->workspace);
+    win::space_reconfigure(*Test::app()->base.space);
 
     auto c = showWindow();
     QVERIFY(c);
@@ -856,7 +856,7 @@ void DecorationInputTest::testTooltipDoesntEatKeyEvents()
     QSignalSpy keyEvent(keyboard, &Wrapland::Client::Keyboard::keyChanged);
     QVERIFY(keyEvent.isValid());
 
-    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
                               &win::space::qobject_t::internalClientAdded);
     QVERIFY(clientAddedSpy.isValid());
     c->control->deco().client->requestShowToolTip(QStringLiteral("test"));

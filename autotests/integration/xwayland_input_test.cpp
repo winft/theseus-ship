@@ -64,7 +64,7 @@ void XWaylandInputTest::initTestCase()
 void XWaylandInputTest::init()
 {
     input::get_cursor()->set_pos(QPoint(640, 512));
-    QVERIFY(Test::app()->workspace->windows.empty());
+    QVERIFY(Test::app()->base.space->windows.empty());
 }
 
 void xcb_connection_deleter(xcb_connection_t* pointer)
@@ -173,7 +173,7 @@ void XWaylandInputTest::testPointerEnterLeave()
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 
-    QSignalSpy windowCreatedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy windowCreatedSpy(Test::app()->base.space->qobject.get(),
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());

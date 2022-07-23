@@ -180,7 +180,7 @@ ApplicationX11::ApplicationX11(int &argc, char **argv)
 ApplicationX11::~ApplicationX11()
 {
     setTerminating();
-    workspace.reset();
+    base.space.reset();
     base.render->compositor.reset();
     if (!owner.isNull() && owner->ownerWindow() != XCB_WINDOW_NONE)   // If there was no --replace (no new WM)
         base::x11::xcb::set_input_focus(XCB_INPUT_FOCUS_POINTER_ROOT);
@@ -195,7 +195,7 @@ void ApplicationX11::lostSelection()
 {
     sendPostedEvents();
     event_filter.reset();
-    workspace.reset();
+    base.space.reset();
     base.render->compositor.reset();
     // Remove windowmanager privileges
     base::x11::xcb::select_input(rootWindow(), XCB_EVENT_MASK_PROPERTY_CHANGE);
@@ -209,7 +209,7 @@ base::platform& ApplicationX11::get_base()
 
 debug::console* ApplicationX11::create_debug_console()
 {
-    return new debug::x11_console(*workspace);
+    return new debug::x11_console(*base.space);
 }
 
 void ApplicationX11::start()
@@ -261,16 +261,16 @@ void ApplicationX11::start()
 
         render->compositor = std::make_unique<render::x11::compositor>(*render);
 
-        workspace = std::make_unique<win::x11::space>(*render->compositor);
-        workspace->input = std::make_unique<input::x11::redirect>(*input, *workspace);
-        win::init_shortcuts(*workspace);
+        base.space = std::make_unique<win::x11::space>(*render->compositor);
+        base.space->input = std::make_unique<input::x11::redirect>(*input, *base.space);
+        win::init_shortcuts(*base.space);
 
-        event_filter = std::make_unique<base::x11::xcb_event_filter<win::x11::space>>(*workspace);
+        event_filter = std::make_unique<base::x11::xcb_event_filter<win::x11::space>>(*base.space);
         installNativeEventFilter(event_filter.get());
 
-        workspace->scripting = std::make_unique<scripting::platform>(*workspace);
+        base.space->scripting = std::make_unique<scripting::platform>(*base.space);
 
-        render->compositor->start(*workspace);
+        render->compositor->start(*base.space);
 
         Q_EMIT startup_finished();
 
@@ -286,7 +286,7 @@ void ApplicationX11::start()
 
 bool ApplicationX11::notify(QObject* o, QEvent* e)
 {
-    if (e->spontaneous() && win::x11::space_qt_event(*workspace, e)) {
+    if (e->spontaneous() && win::x11::space_qt_event(*base.space, e)) {
         return true;
     }
     return QApplication::notify(o, e);

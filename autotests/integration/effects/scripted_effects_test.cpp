@@ -103,7 +103,7 @@ QList<QAction*> ScriptedEffectWithDebugSpy::actions()
 }
 
 ScriptedEffectWithDebugSpy::ScriptedEffectWithDebugSpy()
-    : scripting::effect(*Test::app()->workspace)
+    : scripting::effect(*Test::app()->base.space)
 {
 }
 
@@ -145,7 +145,7 @@ void ScriptedEffectsTest::initTestCase()
     // disable all effects - we don't want to have it interact with the rendering
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    const auto builtinNames = render::effect_loader(*Test::app()->workspace).listOfKnownEffects();
+    const auto builtinNames = render::effect_loader(*Test::app()->base.space).listOfKnownEffects();
     for (QString name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
@@ -164,7 +164,7 @@ void ScriptedEffectsTest::initTestCase()
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
 
-    Test::app()->workspace->virtual_desktop_manager->setCount(2);
+    Test::app()->base.space->virtual_desktop_manager->setCount(2);
 }
 
 void ScriptedEffectsTest::init()
@@ -180,7 +180,7 @@ void ScriptedEffectsTest::cleanup()
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
 
-    Test::app()->workspace->virtual_desktop_manager->setCurrent(1);
+    Test::app()->base.space->virtual_desktop_manager->setCurrent(1);
 }
 
 void ScriptedEffectsTest::testEffectsHandler()
@@ -207,7 +207,7 @@ void ScriptedEffectsTest::testEffectsHandler()
     shellSurface->setTitle("WindowA");
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->workspace->active_client, c);
+    QCOMPARE(Test::app()->base.space->active_client, c);
 
     waitFor("windowAdded - WindowA");
     waitFor("stackingOrder - 1 WindowA");
@@ -223,7 +223,7 @@ void ScriptedEffectsTest::testEffectsHandler()
     waitFor("windowClosed - WindowA");
 
     // desktop management
-    Test::app()->workspace->virtual_desktop_manager->setCurrent(2);
+    Test::app()->base.space->virtual_desktop_manager->setCurrent(2);
     waitFor("desktopChanged - 1 2");
 }
 
@@ -287,7 +287,7 @@ void ScriptedEffectsTest::testAnimations()
     shellSurface->setTitle("Window 1");
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->workspace->active_client, c);
+    QCOMPARE(Test::app()->base.space->active_client, c);
 
     {
         const auto state = effect->state();
@@ -397,13 +397,13 @@ void ScriptedEffectsTest::testFullScreenEffect()
     shellSurface->setTitle("Window 1");
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->workspace->active_client, c);
+    QCOMPARE(Test::app()->base.space->active_client, c);
 
     QCOMPARE(effects->hasActiveFullScreenEffect(), false);
     QCOMPARE(effectMain->isActiveFullScreenEffect(), false);
 
     // trigger animation
-    Test::app()->workspace->virtual_desktop_manager->setCurrent(2);
+    Test::app()->base.space->virtual_desktop_manager->setCurrent(2);
 
     QCOMPARE(effects->activeFullScreenEffect(), effectMain);
     QCOMPARE(effects->hasActiveFullScreenEffect(), true);
@@ -417,7 +417,7 @@ void ScriptedEffectsTest::testFullScreenEffect()
 
     // after 500ms trigger another full screen animation
     QTest::qWait(500);
-    Test::app()->workspace->virtual_desktop_manager->setCurrent(1);
+    Test::app()->base.space->virtual_desktop_manager->setCurrent(1);
     QCOMPARE(effects->activeFullScreenEffect(), effectMain);
 
     // after 1000ms (+a safety margin for time based tests) we should still be the active full
@@ -460,7 +460,7 @@ void ScriptedEffectsTest::testKeepAlive()
     QVERIFY(shellSurface);
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->workspace->active_client, c);
+    QCOMPARE(Test::app()->base.space->active_client, c);
 
     // no active animations at the beginning
     QCOMPARE(effect->state().count(), 0);
@@ -480,7 +480,7 @@ void ScriptedEffectsTest::testKeepAlive()
     } else {
         // the test effect doesn't keep the window alive, so it should be
         // removed immediately
-        QSignalSpy deletedRemovedSpy(Test::app()->workspace->qobject.get(),
+        QSignalSpy deletedRemovedSpy(Test::app()->base.space->qobject.get(),
                                      &win::space::qobject_t::window_deleted);
         QVERIFY(deletedRemovedSpy.isValid());
         QVERIFY(deletedRemovedSpy.count() == 1
@@ -508,7 +508,7 @@ void ScriptedEffectsTest::testGrab()
     QVERIFY(shellSurface);
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->workspace->active_client, c);
+    QCOMPARE(Test::app()->base.space->active_client, c);
 
     // the test effect should grab the test client successfully
     QCOMPARE(effectOutputSpy.count(), 1);
@@ -541,7 +541,7 @@ void ScriptedEffectsTest::testGrabAlreadyGrabbedWindow()
     QVERIFY(shellSurface);
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->workspace->active_client, c);
+    QCOMPARE(Test::app()->base.space->active_client, c);
 
     // effect that initially held the grab should still hold the grab
     QCOMPARE(ownerOutputSpy.count(), 1);
@@ -578,7 +578,7 @@ void ScriptedEffectsTest::testGrabAlreadyGrabbedWindowForced()
     QVERIFY(shellSurface);
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->workspace->active_client, c);
+    QCOMPARE(Test::app()->base.space->active_client, c);
 
     // verify that the owner in fact held the grab
     QCOMPARE(ownerOutputSpy.count(), 1);
@@ -609,7 +609,7 @@ void ScriptedEffectsTest::testUngrab()
     QVERIFY(shellSurface);
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->workspace->active_client, c);
+    QCOMPARE(Test::app()->base.space->active_client, c);
 
     // the test effect should grab the test client successfully
     QCOMPARE(effectOutputSpy.count(), 1);
@@ -652,7 +652,7 @@ void ScriptedEffectsTest::testRedirect()
     QVERIFY(shellSurface);
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->workspace->active_client, c);
+    QCOMPARE(Test::app()->base.space->active_client, c);
 
     auto around = [](std::chrono::milliseconds elapsed,
                      std::chrono::milliseconds pivot,
@@ -730,7 +730,7 @@ void ScriptedEffectsTest::testComplete()
     QVERIFY(shellSurface);
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->workspace->active_client, c);
+    QCOMPARE(Test::app()->base.space->active_client, c);
 
     auto around = [](std::chrono::milliseconds elapsed,
                      std::chrono::milliseconds pivot,

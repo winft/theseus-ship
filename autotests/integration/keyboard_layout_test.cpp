@@ -652,7 +652,7 @@ void keyboard_layout_test::test_virtual_desktop_policy()
     QCOMPARE(xkb->layouts_count(), 3u);
     QCOMPARE(xkb->layout_name(), "English (US)");
 
-    auto& vd_manager = Test::app()->workspace->virtual_desktop_manager;
+    auto& vd_manager = Test::app()->base.space->virtual_desktop_manager;
     vd_manager->setCount(4);
     QCOMPARE(vd_manager->count(), 4u);
     auto desktops = vd_manager->desktops();
@@ -758,9 +758,9 @@ void keyboard_layout_test::test_window_policy()
     QCOMPARE(xkb->layout_name(), "German (Neo 2)");
 
     // Activate other window.
-    win::activate_window(*Test::app()->workspace, c1);
+    win::activate_window(*Test::app()->base.space, c1);
     QCOMPARE(xkb->layout_name(), "German");
-    win::activate_window(*Test::app()->workspace, c2);
+    win::activate_window(*Test::app()->base.space, c2);
     QCOMPARE(xkb->layout_name(), "German (Neo 2)");
 }
 
@@ -803,19 +803,19 @@ void keyboard_layout_test::test_application_policy()
     reset_layouts();
 
     // Resetting layouts should trigger layout application for current client.
-    win::activate_window(*Test::app()->workspace, c1);
-    win::activate_window(*Test::app()->workspace, c2);
+    win::activate_window(*Test::app()->base.space, c1);
+    win::activate_window(*Test::app()->base.space, c2);
     QVERIFY(spies->v1.layout_changed.wait());
     QCOMPARE(spies->v1.layout_changed.count(), 1);
     QCOMPARE(xkb->layout_name(), "German (Neo 2)");
 
     // Activate other window.
-    win::activate_window(*Test::app()->workspace, c1);
+    win::activate_window(*Test::app()->base.space, c1);
 
     // It is the same application and should not switch the layout.
     QVERIFY(!spies->v1.layout_changed.wait(1000));
     QCOMPARE(xkb->layout_name(), "German (Neo 2)");
-    win::activate_window(*Test::app()->workspace, c2);
+    win::activate_window(*Test::app()->base.space, c2);
     QVERIFY(!spies->v1.layout_changed.wait(1000));
     QCOMPARE(xkb->layout_name(), "German (Neo 2)");
 

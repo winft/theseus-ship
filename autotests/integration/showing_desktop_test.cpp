@@ -74,14 +74,14 @@ void ShowingDesktopTest::testRestoreFocus()
     auto client2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::blue);
     QVERIFY(client1 != client2);
 
-    QCOMPARE(Test::app()->workspace->active_client, client2);
-    win::toggle_show_desktop(*Test::app()->workspace);
-    QVERIFY(Test::app()->workspace->showing_desktop);
-    win::toggle_show_desktop(*Test::app()->workspace);
-    QVERIFY(!Test::app()->workspace->showing_desktop);
+    QCOMPARE(Test::app()->base.space->active_client, client2);
+    win::toggle_show_desktop(*Test::app()->base.space);
+    QVERIFY(Test::app()->base.space->showing_desktop);
+    win::toggle_show_desktop(*Test::app()->base.space);
+    QVERIFY(!Test::app()->base.space->showing_desktop);
 
-    QVERIFY(Test::app()->workspace->active_client);
-    QCOMPARE(Test::app()->workspace->active_client, client2);
+    QVERIFY(Test::app()->base.space->active_client);
+    QCOMPARE(Test::app()->base.space->active_client, client2);
 }
 
 void ShowingDesktopTest::testRestoreFocusWithDesktopWindow()
@@ -111,15 +111,15 @@ void ShowingDesktopTest::testRestoreFocusWithDesktopWindow()
     auto client2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::blue);
     QVERIFY(client1 != client2);
 
-    QCOMPARE(Test::app()->workspace->active_client, client2);
-    win::toggle_show_desktop(*Test::app()->workspace);
-    QVERIFY(Test::app()->workspace->showing_desktop);
-    QCOMPARE(Test::app()->workspace->active_client, desktop);
-    win::toggle_show_desktop(*Test::app()->workspace);
-    QVERIFY(!Test::app()->workspace->showing_desktop);
+    QCOMPARE(Test::app()->base.space->active_client, client2);
+    win::toggle_show_desktop(*Test::app()->base.space);
+    QVERIFY(Test::app()->base.space->showing_desktop);
+    QCOMPARE(Test::app()->base.space->active_client, desktop);
+    win::toggle_show_desktop(*Test::app()->base.space);
+    QVERIFY(!Test::app()->base.space->showing_desktop);
 
-    QVERIFY(Test::app()->workspace->active_client);
-    QCOMPARE(Test::app()->workspace->active_client, client2);
+    QVERIFY(Test::app()->base.space->active_client);
+    QCOMPARE(Test::app()->base.space->active_client, client2);
 }
 
 }

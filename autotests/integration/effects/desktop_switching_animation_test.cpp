@@ -57,7 +57,7 @@ void DesktopSwitchingAnimationTest::initTestCase()
 
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    const auto builtinNames = render::effect_loader(*Test::app()->workspace).listOfKnownEffects();
+    const auto builtinNames = render::effect_loader(*Test::app()->base.space).listOfKnownEffects();
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
@@ -87,7 +87,7 @@ void DesktopSwitchingAnimationTest::cleanup()
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
 
-    Test::app()->workspace->virtual_desktop_manager->setCount(1);
+    Test::app()->base.space->virtual_desktop_manager->setCount(1);
     Test::destroy_wayland_connection();
 }
 
@@ -106,7 +106,7 @@ void DesktopSwitchingAnimationTest::testSwitchDesktops()
     // try to animate switching between desktops.
 
     // We need at least 2 virtual desktops for the test.
-    auto& vd_manager = Test::app()->workspace->virtual_desktop_manager;
+    auto& vd_manager = Test::app()->base.space->virtual_desktop_manager;
     vd_manager->setCount(2);
     QCOMPARE(vd_manager->current(), 1u);
     QCOMPARE(vd_manager->count(), 2u);

@@ -9,6 +9,7 @@
 
 #include "base/platform.h"
 #include "utils/algorithm.h"
+#include "win/wayland/space.h"
 
 #include <cassert>
 #include <memory>
@@ -56,6 +57,7 @@ public:
 
     // A Wayland DRM node
     std::unique_ptr<Wrapland::Server::drm_lease_device_v1> drm_lease_device;
+    std::unique_ptr<win::wayland::space> space;
 };
 
 }

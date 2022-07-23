@@ -124,14 +124,14 @@ void TestPlacement::setPlacementPolicy(win::placement policy)
     auto group = kwinApp()->config()->group("Windows");
     group.writeEntry("Placement", policy_to_string(policy));
     group.sync();
-    win::space_reconfigure(*Test::app()->workspace);
+    win::space_reconfigure(*Test::app()->base.space);
 }
 
 PlaceWindowResult TestPlacement::createAndPlaceWindow(QSize const& defaultSize)
 {
     PlaceWindowResult rc;
 
-    QSignalSpy window_spy(Test::app()->workspace->qobject.get(),
+    QSignalSpy window_spy(Test::app()->base.space->qobject.get(),
                           &win::space::qobject_t::wayland_window_added);
     assert(window_spy.isValid());
 
@@ -273,7 +273,7 @@ void TestPlacement::testPlaceCentered()
     KConfigGroup group = kwinApp()->config()->group("Windows");
     group.writeEntry("Placement", policy_to_string(win::placement::centered));
     group.sync();
-    win::space_reconfigure(*Test::app()->workspace);
+    win::space_reconfigure(*Test::app()->base.space);
 
     std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
@@ -292,7 +292,7 @@ void TestPlacement::testPlaceUnderMouse()
     KConfigGroup group = kwinApp()->config()->group("Windows");
     group.writeEntry("Placement", policy_to_string(win::placement::under_mouse));
     group.sync();
-    win::space_reconfigure(*Test::app()->workspace);
+    win::space_reconfigure(*Test::app()->base.space);
 
     input::get_cursor()->set_pos(QPoint(200, 300));
     QCOMPARE(input::get_cursor()->pos(), QPoint(200, 300));
@@ -314,7 +314,7 @@ void TestPlacement::testPlaceRandom()
     KConfigGroup group = kwinApp()->config()->group("Windows");
     group.writeEntry("Placement", policy_to_string(win::placement::random));
     group.sync();
-    win::space_reconfigure(*Test::app()->workspace);
+    win::space_reconfigure(*Test::app()->base.space);
 
     std::unique_ptr<Surface> surface1(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));

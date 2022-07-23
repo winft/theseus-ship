@@ -7,6 +7,7 @@
 
 #include "base/output.h"
 #include "base/platform.h"
+#include "win/x11/space.h"
 
 #include <memory>
 #include <vector>
@@ -27,6 +28,8 @@ public:
         }
         return vec;
     }
+
+    std::unique_ptr<win::x11::space> space;
 };
 
 }

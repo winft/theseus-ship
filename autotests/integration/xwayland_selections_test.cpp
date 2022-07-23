@@ -105,10 +105,10 @@ void XwaylandSelectionsTest::testSync()
     const QString paste = QFINDTESTDATA(QStringLiteral("paste"));
     QVERIFY(!paste.isEmpty());
 
-    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
                               &win::space::qobject_t::clientAdded);
     QVERIFY(clientAddedSpy.isValid());
-    QSignalSpy shellClientAddedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy shellClientAddedSpy(Test::app()->base.space->qobject.get(),
                                    &win::space::qobject_t::wayland_window_added);
     QVERIFY(shellClientAddedSpy.isValid());
 
@@ -146,10 +146,10 @@ void XwaylandSelectionsTest::testSync()
         copyClient = shellClientAddedSpy.first().first().value<Toplevel*>();
     }
     QVERIFY(copyClient);
-    if (Test::app()->workspace->active_client != copyClient) {
-        win::activate_window(*Test::app()->workspace, copyClient);
+    if (Test::app()->base.space->active_client != copyClient) {
+        win::activate_window(*Test::app()->base.space, copyClient);
     }
-    QCOMPARE(Test::app()->workspace->active_client, copyClient);
+    QCOMPARE(Test::app()->base.space->active_client, copyClient);
     if (copyPlatform == QLatin1String("xcb")) {
         QVERIFY(clipboardChangedSpy.isEmpty());
         QVERIFY(clipboardChangedSpy.wait());
@@ -187,14 +187,14 @@ void XwaylandSelectionsTest::testSync()
     QCOMPARE(shellClientAddedSpy.count(), 1);
     QVERIFY(pasteClient);
 
-    if (Test::app()->workspace->active_client != pasteClient) {
-        QSignalSpy clientActivatedSpy(Test::app()->workspace->qobject.get(),
+    if (Test::app()->base.space->active_client != pasteClient) {
+        QSignalSpy clientActivatedSpy(Test::app()->base.space->qobject.get(),
                                       &win::space::qobject_t::clientActivated);
         QVERIFY(clientActivatedSpy.isValid());
-        win::activate_window(*Test::app()->workspace, pasteClient);
+        win::activate_window(*Test::app()->base.space, pasteClient);
         QVERIFY(clientActivatedSpy.wait());
     }
-    QTRY_COMPARE(Test::app()->workspace->active_client, pasteClient);
+    QTRY_COMPARE(Test::app()->base.space->active_client, pasteClient);
     QVERIFY(finishedSpy.wait());
     QCOMPARE(finishedSpy.first().first().toInt(), 0);
     delete m_pasteProcess;

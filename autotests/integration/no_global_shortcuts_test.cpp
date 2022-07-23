@@ -205,7 +205,7 @@ void NoGlobalShortcutsTest::testTrigger()
     group.writeEntry("Shift", shiftConfig);
     group.writeEntry("Control", controlConfig);
     group.sync();
-    win::space_reconfigure(*Test::app()->workspace);
+    win::space_reconfigure(*Test::app()->base.space);
 
     // configured shortcut should trigger
     quint32 timestamp = 1;
@@ -320,7 +320,7 @@ void NoGlobalShortcutsTest::testAxisShortcut()
 void NoGlobalShortcutsTest::testScreenEdge()
 {
     // based on LockScreenTest::testScreenEdge
-    QSignalSpy screenEdgeSpy(Test::app()->workspace->edges.get(), &win::screen_edger::approaching);
+    QSignalSpy screenEdgeSpy(Test::app()->base.space->edges.get(), &win::screen_edger::approaching);
     QVERIFY(screenEdgeSpy.isValid());
     QCOMPARE(screenEdgeSpy.count(), 0);
 

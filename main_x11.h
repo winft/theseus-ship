@@ -57,7 +57,6 @@ private:
     static void crashHandler(int signal);
 
     base::backend::x11::platform base;
-    std::unique_ptr<win::x11::space> workspace;
 
     QScopedPointer<KWinSelectionOwner> owner;
     std::unique_ptr<base::x11::xcb_event_filter<win::x11::space>> event_filter;

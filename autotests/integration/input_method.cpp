@@ -122,7 +122,7 @@ void input_method_test::cleanup()
     }
 
     toplevel.client_surface.reset();
-    QVERIFY(Test::app()->workspace->windows.empty());
+    QVERIFY(Test::app()->base.space->windows.empty());
 
     input_method.reset();
     text_input.reset();
@@ -181,7 +181,7 @@ void input_method_test::create_popup()
     popup.server_popup_surface
         = popup_spy.front().front().value<Wrapland::Server::input_method_popup_surface_v2*>();
 
-    popup.window = Test::app()->workspace->find_window(popup.server_popup_surface->surface());
+    popup.window = Test::app()->base.space->find_window(popup.server_popup_surface->surface());
     QVERIFY(popup.window);
 
     popup.shown_spy
@@ -212,11 +212,11 @@ void input_method_test::render_popup()
  */
 void input_method_test::test_early_popup_window()
 {
-    QSignalSpy window_added_spy(Test::app()->workspace->qobject.get(),
+    QSignalSpy window_added_spy(Test::app()->base.space->qobject.get(),
                                 &win::space::qobject_t::wayland_window_added);
     QVERIFY(window_added_spy.isValid());
 
-    QSignalSpy window_removed_spy(Test::app()->workspace->qobject.get(),
+    QSignalSpy window_removed_spy(Test::app()->base.space->qobject.get(),
                                   &win::space::qobject_t::wayland_window_removed);
     QVERIFY(window_removed_spy.isValid());
 
@@ -270,11 +270,11 @@ void input_method_test::test_early_popup_window()
  */
 void input_method_test::test_late_popup_window()
 {
-    QSignalSpy window_added_spy(Test::app()->workspace->qobject.get(),
+    QSignalSpy window_added_spy(Test::app()->base.space->qobject.get(),
                                 &win::space::qobject_t::wayland_window_added);
     QVERIFY(window_added_spy.isValid());
 
-    QSignalSpy window_removed_spy(Test::app()->workspace->qobject.get(),
+    QSignalSpy window_removed_spy(Test::app()->base.space->qobject.get(),
                                   &win::space::qobject_t::wayland_window_removed);
     QVERIFY(window_removed_spy.isValid());
 

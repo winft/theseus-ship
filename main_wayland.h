@@ -35,11 +35,6 @@ namespace input::dbus
 class tablet_mode_manager;
 }
 
-namespace win::wayland
-{
-class space;
-}
-
 namespace xwl
 {
 class xwayland;
@@ -50,7 +45,6 @@ class ApplicationWayland : public Application
     Q_OBJECT
 public:
     std::unique_ptr<base::wayland::server> server;
-    std::unique_ptr<win::wayland::space> workspace;
 
     ApplicationWayland(int &argc, char **argv);
     ~ApplicationWayland() override;

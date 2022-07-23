@@ -135,7 +135,7 @@ WaylandTestApplication::~WaylandTestApplication()
     // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
     static_cast<render::wayland::compositor*>(base.render->compositor.get())->lock();
 
-    workspace.reset();
+    base.space.reset();
     base.render->compositor.reset();
 }
 
@@ -159,7 +159,7 @@ base::wayland::server* WaylandTestApplication::get_wayland_server()
 
 debug::console* WaylandTestApplication::create_debug_console()
 {
-    return new debug::wayland_console(*workspace);
+    return new debug::wayland_console(*base.space);
 }
 
 void WaylandTestApplication::start()
@@ -216,14 +216,14 @@ void WaylandTestApplication::start()
         std::cerr << "FATAL ERROR: compositor creation failed: " << exc.what() << std::endl;
         exit(exc.code().value());
     }
-    workspace = std::make_unique<win::wayland::space>(*base.render->compositor, server.get());
+    base.space = std::make_unique<win::wayland::space>(*base.render->compositor, server.get());
 
-    workspace->input = std::make_unique<input::wayland::redirect>(*input, *workspace);
+    base.space->input = std::make_unique<input::wayland::redirect>(*input, *base.space);
     input::wayland::add_dbus(input.get());
-    win::init_shortcuts(*workspace);
-    workspace->scripting = std::make_unique<scripting::platform>(*workspace);
+    win::init_shortcuts(*base.space);
+    base.space->scripting = std::make_unique<scripting::platform>(*base.space);
 
-    base.render->compositor->start(*workspace);
+    base.render->compositor->start(*base.space);
 
     waylandServer()->create_addons([this] { handle_server_addons_created(); });
     kwinApp()->screen_locker_watcher->initialize();
@@ -292,7 +292,7 @@ void WaylandTestApplication::create_xwayland()
     };
 
     try {
-        xwayland.reset(new xwl::xwayland(this, *workspace, status_callback));
+        xwayland.reset(new xwl::xwayland(this, *base.space, status_callback));
     } catch (std::system_error const& exc) {
         std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
         exit(exc.code().value());
