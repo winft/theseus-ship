@@ -36,7 +36,7 @@ public:
                  "to cancel."),
             QStringLiteral("window-close"));
 
-        kwinApp()->input->start_interactive_window_selection(
+        space.input->platform.start_interactive_window_selection(
             [this](auto window) {
                 osd_hide(space);
 

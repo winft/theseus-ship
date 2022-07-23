@@ -69,7 +69,7 @@ void layer_shell_test::initTestCase()
 void layer_shell_test::init()
 {
     Test::setup_wayland_connection();
-    Test::app()->input->cursor->set_pos(QPoint(1280, 512));
+    Test::app()->base.input->cursor->set_pos(QPoint(1280, 512));
 }
 
 void layer_shell_test::cleanup()

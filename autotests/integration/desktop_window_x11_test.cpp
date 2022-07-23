@@ -63,7 +63,7 @@ void X11DesktopWindowTest::initTestCase()
 
 void X11DesktopWindowTest::init()
 {
-    Test::app()->input->cursor->set_pos(QPoint(640, 512));
+    Test::app()->base.input->cursor->set_pos(QPoint(640, 512));
 }
 
 void X11DesktopWindowTest::cleanup()

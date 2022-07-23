@@ -173,9 +173,9 @@ void virtual_keyboard_test::test_keymap()
     Test::keyboard_key_released(KEY_Y, timestamp++);
     QVERIFY(client_keymap_spy.wait());
 
-    QSignalSpy vk_spy(
-        static_cast<input::wayland::platform*>(Test::app()->input.get())->virtual_keyboard.get(),
-        &Wrapland::Server::virtual_keyboard_manager_v1::keyboard_created);
+    QSignalSpy vk_spy(static_cast<input::wayland::platform*>(Test::app()->base.input.get())
+                          ->virtual_keyboard.get(),
+                      &Wrapland::Server::virtual_keyboard_manager_v1::keyboard_created);
     QVERIFY(vk_spy.isValid());
 
     auto vk = create_virtual_keyboard(vk_client);
@@ -207,9 +207,9 @@ void virtual_keyboard_test::test_keymap()
  */
 void virtual_keyboard_test::test_keys()
 {
-    QSignalSpy vk_spy(
-        static_cast<input::wayland::platform*>(Test::app()->input.get())->virtual_keyboard.get(),
-        &Wrapland::Server::virtual_keyboard_manager_v1::keyboard_created);
+    QSignalSpy vk_spy(static_cast<input::wayland::platform*>(Test::app()->base.input.get())
+                          ->virtual_keyboard.get(),
+                      &Wrapland::Server::virtual_keyboard_manager_v1::keyboard_created);
     QVERIFY(vk_spy.isValid());
 
     auto vk = create_virtual_keyboard(vk_client);

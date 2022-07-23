@@ -40,9 +40,9 @@ public:
     bool button(button_event const& event) override
     {
         if (event.state == button_state::pressed) {
-            auto& input = kwinApp()->input;
             auto mods = xkb::get_active_keyboard_modifiers(this->redirect.platform);
-            if (input->shortcuts->processPointerPressed(mods, input->redirect->qtButtonStates())) {
+            if (this->redirect.platform.shortcuts->processPointerPressed(
+                    mods, this->redirect.qtButtonStates())) {
                 return true;
             }
         }
@@ -65,14 +65,14 @@ public:
             direction = PointerAxisDown;
         }
 
-        return kwinApp()->input->shortcuts->processAxis(mods, direction);
+        return this->redirect.platform.shortcuts->processAxis(mods, direction);
     }
 
     bool key(key_event const& event) override
     {
         auto xkb = event.base.dev->xkb.get();
         auto const& modifiers = xkb->qt_modifiers;
-        auto const& shortcuts = kwinApp()->input->shortcuts.get();
+        auto const& shortcuts = this->redirect.platform.shortcuts.get();
         auto qt_key = key_to_qt_key(event.keycode, xkb);
 
         auto handle_power_key = [this, state = event.state, shortcuts, modifiers, qt_key] {
@@ -117,27 +117,28 @@ public:
         }
 
         auto const& modifiers = xkb->modifiers_relevant_for_global_shortcuts();
-        return kwinApp()->input->shortcuts->processKey(modifiers, qt_key);
+        return this->redirect.platform.shortcuts->processKey(modifiers, qt_key);
     }
 
     bool swipe_begin(swipe_begin_event const& event) override
     {
-        kwinApp()->input->shortcuts->processSwipeStart(event.fingers);
+        this->redirect.platform.shortcuts->processSwipeStart(event.fingers);
         return false;
     }
 
     bool swipe_update(swipe_update_event const& event) override
     {
-        kwinApp()->input->shortcuts->processSwipeUpdate(QSizeF(event.delta.x(), event.delta.y()));
+        this->redirect.platform.shortcuts->processSwipeUpdate(
+            QSizeF(event.delta.x(), event.delta.y()));
         return false;
     }
 
     bool swipe_end(swipe_end_event const& event) override
     {
         if (event.cancelled) {
-            kwinApp()->input->shortcuts->processSwipeCancel();
+            this->redirect.platform.shortcuts->processSwipeCancel();
         } else {
-            kwinApp()->input->shortcuts->processSwipeEnd();
+            this->redirect.platform.shortcuts->processSwipeEnd();
         }
         return false;
     }

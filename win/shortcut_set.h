@@ -181,7 +181,7 @@ void window_shortcut_updated(Space& space, Toplevel* window)
         if (action == nullptr) {
             // new shortcut
             action = new QAction(space.qobject.get());
-            kwinApp()->input->setup_action_for_global_accel(action);
+            space.input->platform.setup_action_for_global_accel(action);
             action->setProperty("componentName", QStringLiteral(KWIN_NAME));
             action->setObjectName(key);
             action->setText(i18n("Activate Window (%1)", win::caption(window)));

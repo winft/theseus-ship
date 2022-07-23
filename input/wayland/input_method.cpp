@@ -140,31 +140,30 @@ void input_method::input_method_v2_changed()
 void input_method::handle_keyboard_grabbed(input_method_keyboard_grab_v2* grab)
 {
     auto xkb = xkb::get_primary_xkb_keyboard(platform);
-    auto filter
-        = filters
-              .emplace_back(new im_keyboard_grab_v2(
-                  static_cast<redirect&>(*kwinApp()->input->redirect), grab, xkb->keymap->raw))
-              .get();
+    auto filter = filters
+                      .emplace_back(new im_keyboard_grab_v2(
+                          static_cast<redirect&>(*platform.redirect), grab, xkb->keymap->raw))
+                      .get();
 
     QObject::connect(grab,
                      &Wrapland::Server::input_method_keyboard_grab_v2::resourceDestroyed,
-                     kwinApp()->input->redirect,
+                     platform.redirect,
                      [this, filter] {
-                         auto& wlredirect = static_cast<redirect&>(*kwinApp()->input->redirect);
+                         auto& wlredirect = static_cast<redirect&>(*platform.redirect);
                          wlredirect.uninstallInputEventFilter(filter);
                          remove_all_if(filters, [filter](auto&& f) { return f.get() == filter; });
                      });
 
     if (auto ti3 = waylandServer()->seat()->text_inputs().v3.text_input;
         ti3 && ti3->state().enabled) {
-        static_cast<redirect&>(*kwinApp()->input->redirect).append_filter(filter);
+        static_cast<redirect&>(*platform.redirect).append_filter(filter);
     }
 }
 
 void input_method::activate_filters()
 {
     for (auto const& filter : filters) {
-        static_cast<redirect&>(*kwinApp()->input->redirect).append_filter(filter.get());
+        static_cast<redirect&>(*platform.redirect).append_filter(filter.get());
     }
 }
 
@@ -248,7 +247,7 @@ void input_method::activate_popups()
 void input_method::deactivate()
 {
     for (auto const& filter : filters) {
-        static_cast<redirect&>(*kwinApp()->input->redirect).uninstallInputEventFilter(filter.get());
+        static_cast<redirect&>(*platform.redirect).uninstallInputEventFilter(filter.get());
     }
     for (auto const& popup : popups) {
         popup->hideClient(true);

@@ -65,7 +65,7 @@ void WindowRuleTest::initTestCase()
 
 void WindowRuleTest::init()
 {
-    Test::app()->input->cursor->set_pos(QPoint(640, 512));
+    Test::app()->base.input->cursor->set_pos(QPoint(640, 512));
 }
 
 void WindowRuleTest::cleanup()

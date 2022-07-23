@@ -220,8 +220,8 @@ void ApplicationWayland::start()
     this->session.reset(session);
     session->take_control();
 
-    input.reset(new input::backend::wlroots::platform(*base));
-    static_cast<input::wayland::platform&>(*input).install_shortcuts();
+    base->input = std::make_unique<input::backend::wlroots::platform>(*base);
+    static_cast<input::wayland::platform&>(*base->input).install_shortcuts();
 
     try {
         render->init();
@@ -237,14 +237,13 @@ void ApplicationWayland::start()
         exit(exc.code().value());
     }
 
-    base->space = std::make_unique<win::wayland::space>(
-        *render->compositor, static_cast<input::wayland::platform&>(*input), server.get());
-
-    input::wayland::add_dbus(input.get());
+    base->space
+        = std::make_unique<win::wayland::space>(*render->compositor, *base->input, server.get());
+    input::wayland::add_dbus(base->input.get());
     win::init_shortcuts(*base->space);
     tablet_mode_manager
         = std::make_unique<input::dbus::tablet_mode_manager<input::wayland::platform>>(
-            static_cast<input::wayland::platform&>(*input));
+            static_cast<input::wayland::platform&>(*base->input));
     base->space->scripting = std::make_unique<scripting::platform>(*base->space);
 
     render->compositor->start(*base->space);

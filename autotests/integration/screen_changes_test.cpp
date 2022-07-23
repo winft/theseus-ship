@@ -54,7 +54,7 @@ void ScreenChangesTest::initTestCase()
 void ScreenChangesTest::init()
 {
     Test::setup_wayland_connection();
-    Test::app()->input->cursor->set_pos(QPoint(640, 512));
+    Test::app()->base.input->cursor->set_pos(QPoint(640, 512));
 }
 
 void ScreenChangesTest::cleanup()

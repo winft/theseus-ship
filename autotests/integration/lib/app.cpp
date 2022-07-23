@@ -172,8 +172,8 @@ void WaylandTestApplication::start()
     createOptions();
 
     session = std::make_unique<base::seat::backend::wlroots::session>(headless_backend);
-    input = std::make_unique<input::backend::wlroots::platform>(base);
-    static_cast<input::wayland::platform&>(*input).install_shortcuts();
+    base.input = std::make_unique<input::backend::wlroots::platform>(base);
+    base.input->install_shortcuts();
 
 #if HAVE_WLR_BASE_INPUT_DEVICES
     keyboard = static_cast<wlr_keyboard*>(calloc(1, sizeof(wlr_keyboard)));
@@ -218,9 +218,8 @@ void WaylandTestApplication::start()
     }
 
     base.space = std::make_unique<win::wayland::space>(
-        *base.render->compositor, static_cast<input::wayland::platform&>(*input), server.get());
-
-    input::wayland::add_dbus(input.get());
+        *base.render->compositor, *base.input, server.get());
+    input::wayland::add_dbus(base.input.get());
     win::init_shortcuts(*base.space);
     base.space->scripting = std::make_unique<scripting::platform>(*base.space);
 

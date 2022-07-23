@@ -8,6 +8,7 @@
 #include "output.h"
 
 #include "base/platform.h"
+#include "input/wayland/platform.h"
 #include "utils/algorithm.h"
 #include "win/wayland/space.h"
 
@@ -57,6 +58,8 @@ public:
 
     // A Wayland DRM node
     std::unique_ptr<Wrapland::Server::drm_lease_device_v1> drm_lease_device;
+
+    std::unique_ptr<input::wayland::platform> input;
     std::unique_ptr<win::wayland::space> space;
 };
 

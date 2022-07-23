@@ -197,7 +197,7 @@ void init_shortcut(Space& space,
                    const QVariant& data = QVariant())
 {
     auto action = prepare_shortcut_action(space, actionName, description, shortcut, data);
-    kwinApp()->input->registerShortcut(shortcut, action, receiver, slot);
+    space.input->platform.registerShortcut(shortcut, action, receiver, slot);
 }
 
 template<typename Space, typename Slot>
@@ -221,7 +221,7 @@ void init_shortcut_with_action_arg(Space& space,
                                    QVariant const& data)
 {
     auto action = prepare_shortcut_action(space, actionName, description, shortcut, data);
-    kwinApp()->input->registerShortcut(
+    space.input->platform.registerShortcut(
         shortcut, action, receiver, [action, &slot] { slot(action); });
 }
 
@@ -450,7 +450,7 @@ void init_shortcuts(Space& space)
     space.tabbox->init_shortcuts();
 #endif
     shortcuts_init_virtual_desktops(space);
-    render::post::init_night_color_shortcuts(*kwinApp()->input,
+    render::post::init_night_color_shortcuts(space.input->platform,
                                              *kwinApp()->get_base().render->night_color);
 
     // so that it's recreated next time

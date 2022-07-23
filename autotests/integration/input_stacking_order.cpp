@@ -77,7 +77,7 @@ void InputStackingOrderTest::init()
     Test::setup_wayland_connection(Test::global_selection::seat);
     QVERIFY(Test::wait_for_wayland_pointer());
 
-    Test::app()->input->cursor->set_pos(QPoint(640, 512));
+    Test::app()->base.input->cursor->set_pos(QPoint(640, 512));
 }
 
 void InputStackingOrderTest::cleanup()

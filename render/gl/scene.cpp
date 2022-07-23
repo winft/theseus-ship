@@ -438,7 +438,8 @@ void scene::paintCursor()
     auto cursor = compositor.software_cursor.get();
 
     // don't paint if we use hardware cursor or the cursor is hidden
-    if (!cursor->enabled || kwinApp()->input->cursor->is_hidden() || cursor->image().isNull()) {
+    if (!cursor->enabled || compositor.space->input->platform.cursor->is_hidden()
+        || cursor->image().isNull()) {
         return;
     }
 

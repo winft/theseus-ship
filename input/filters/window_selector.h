@@ -103,10 +103,9 @@ public:
                 my /= 10;
             }
 
-            auto platform = static_cast<input::wayland::platform*>(kwinApp()->input.get());
             auto const pos = this->redirect.globalPointer() + QPointF(mx, my);
-
-            platform->warp_pointer(pos, event.base.time_msec);
+            static_cast<wayland::platform&>(this->redirect.platform)
+                .warp_pointer(pos, event.base.time_msec);
         }
         // filter out while selecting a window
         return true;

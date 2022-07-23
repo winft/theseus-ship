@@ -148,7 +148,7 @@ void output::update_dpms(base::dpms_mode mode)
         get_render(render)->reset();
         base::wayland::output_set_dpms_on(*this, *platform);
     } else if (disable_native()) {
-        base::wayland::output_set_dmps_off(mode, *this);
+        base::wayland::output_set_dmps_off(mode, *this, *platform);
     }
 }
 

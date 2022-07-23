@@ -245,10 +245,9 @@ void ApplicationX11::start()
 
         session.reset(new base::seat::backend::logind::session());
 
-        auto input = new input::x11::platform;
-        this->input.reset(input);
-        input->shortcuts = std::make_unique<input::global_shortcuts_manager>();
-        input->shortcuts->init();
+        base.input = std::make_unique<input::x11::platform>();
+        base.input->shortcuts = std::make_unique<input::global_shortcuts_manager>();
+        base.input->shortcuts->init();
 
         base.update_outputs();
         auto render = static_cast<render::backend::x11::platform*>(base.render.get());
@@ -261,7 +260,7 @@ void ApplicationX11::start()
 
         render->compositor = std::make_unique<render::x11::compositor>(*render);
 
-        base.space = std::make_unique<win::x11::space>(*render->compositor, input);
+        base.space = std::make_unique<win::x11::space>(*render->compositor, base.input.get());
         win::init_shortcuts(*base.space);
 
         event_filter = std::make_unique<base::x11::xcb_event_filter<win::x11::space>>(*base.space);

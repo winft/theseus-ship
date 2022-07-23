@@ -41,11 +41,11 @@ wayland_console::wayland_console(win::space& space)
         // delay creation of input event filter until the tab is selected
         if (index == 2 && m_inputFilter.isNull()) {
             m_inputFilter.reset(new input_filter(*space.input, m_ui->inputTextEdit));
-            kwinApp()->input->redirect->installInputEventSpy(m_inputFilter.data());
+            space.input->installInputEventSpy(m_inputFilter.data());
         }
         if (index == 5) {
             update_keyboard_tab();
-            QObject::connect(kwinApp()->input->redirect,
+            QObject::connect(space.input.get(),
                              &input::redirect::keyStateChanged,
                              this,
                              &wayland_console::update_keyboard_tab);

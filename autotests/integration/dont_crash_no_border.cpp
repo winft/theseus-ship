@@ -76,7 +76,7 @@ void DontCrashNoBorder::initTestCase()
 void DontCrashNoBorder::init()
 {
     Test::setup_wayland_connection(Test::global_selection::xdg_decoration);
-    Test::app()->input->cursor->set_pos(QPoint(640, 512));
+    Test::app()->base.input->cursor->set_pos(QPoint(640, 512));
 }
 
 void DontCrashNoBorder::cleanup()

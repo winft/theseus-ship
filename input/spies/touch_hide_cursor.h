@@ -49,7 +49,7 @@ private:
             return;
         }
         m_cursorHidden = false;
-        kwinApp()->input->cursor->show();
+        redirect.platform.cursor->show();
     }
 
     void hideCursor()
@@ -58,7 +58,7 @@ private:
             return;
         }
         m_cursorHidden = true;
-        kwinApp()->input->cursor->hide();
+        redirect.platform.cursor->hide();
     }
 
     bool m_cursorHidden = false;

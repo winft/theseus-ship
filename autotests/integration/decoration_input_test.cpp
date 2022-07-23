@@ -175,7 +175,7 @@ void DecorationInputTest::init()
                                    | Test::global_selection::xdg_decoration);
     QVERIFY(Test::wait_for_wayland_pointer());
 
-    Test::app()->input->cursor->set_pos(QPoint(640, 512));
+    Test::app()->base.input->cursor->set_pos(QPoint(640, 512));
 }
 
 void DecorationInputTest::cleanup()
@@ -207,10 +207,12 @@ void DecorationInputTest::testAxis()
 
     MOTION(QPoint(c->frameGeometry().center().x(), win::frame_to_client_pos(c, QPoint()).y() / 2));
 
-    QVERIFY(kwinApp()->input->redirect->get_pointer()->focus.deco);
-    QCOMPARE(
-        kwinApp()->input->redirect->get_pointer()->focus.deco->decoration()->sectionUnderMouse(),
-        Qt::TitleBarArea);
+    QVERIFY(Test::app()->base.input->redirect->get_pointer()->focus.deco);
+    QCOMPARE(Test::app()
+                 ->base.input->redirect->get_pointer()
+                 ->focus.deco->decoration()
+                 ->sectionUnderMouse(),
+             Qt::TitleBarArea);
 
     // TODO: mouse wheel direction looks wrong to me
     // simulate wheel
@@ -228,9 +230,12 @@ void DecorationInputTest::testAxis()
     win::move(c, QPoint(0, 0));
     QFETCH(QPoint, decoPoint);
     MOTION(decoPoint);
-    QVERIFY(kwinApp()->input->redirect->get_pointer()->focus.deco);
-    QCOMPARE(kwinApp()->input->redirect->get_pointer()->focus.deco->client(), c);
-    QTEST(kwinApp()->input->redirect->get_pointer()->focus.deco->decoration()->sectionUnderMouse(),
+    QVERIFY(Test::app()->base.input->redirect->get_pointer()->focus.deco);
+    QCOMPARE(Test::app()->base.input->redirect->get_pointer()->focus.deco->client(), c);
+    QTEST(Test::app()
+              ->base.input->redirect->get_pointer()
+              ->focus.deco->decoration()
+              ->sectionUnderMouse(),
           "expectedSection");
     Test::pointer_axis_vertical(5.0, timestamp++, 0);
     QVERIFY(!c->control->keep_below());
@@ -277,9 +282,12 @@ void KWin::DecorationInputTest::testDoubleClick()
     win::move(c, QPoint(0, 0));
     QFETCH(QPoint, decoPoint);
     MOTION(decoPoint);
-    QVERIFY(kwinApp()->input->redirect->get_pointer()->focus.deco);
-    QCOMPARE(kwinApp()->input->redirect->get_pointer()->focus.deco->client(), c);
-    QTEST(kwinApp()->input->redirect->get_pointer()->focus.deco->decoration()->sectionUnderMouse(),
+    QVERIFY(Test::app()->base.input->redirect->get_pointer()->focus.deco);
+    QCOMPARE(Test::app()->base.input->redirect->get_pointer()->focus.deco->client(), c);
+    QTEST(Test::app()
+              ->base.input->redirect->get_pointer()
+              ->focus.deco->decoration()
+              ->sectionUnderMouse(),
           "expectedSection");
     // double click
     PRESS;
@@ -333,9 +341,12 @@ void KWin::DecorationInputTest::testDoubleTap()
     QFETCH(QPoint, decoPoint);
     // double click
     Test::touch_down(0, decoPoint, timestamp++);
-    QVERIFY(kwinApp()->input->redirect->get_touch()->focus.deco);
-    QCOMPARE(kwinApp()->input->redirect->get_touch()->focus.deco->client(), c);
-    QTEST(kwinApp()->input->redirect->get_touch()->focus.deco->decoration()->sectionUnderMouse(),
+    QVERIFY(Test::app()->base.input->redirect->get_touch()->focus.deco);
+    QCOMPARE(Test::app()->base.input->redirect->get_touch()->focus.deco->client(), c);
+    QTEST(Test::app()
+              ->base.input->redirect->get_touch()
+              ->focus.deco->decoration()
+              ->sectionUnderMouse(),
           "expectedSection");
     Test::touch_up(0, timestamp++);
     QVERIFY(!c->isOnAllDesktops());
@@ -502,7 +513,7 @@ void DecorationInputTest::testTapToMove()
     Test::touch_down(0, p, timestamp++);
     QVERIFY(!win::is_move(c));
     QFETCH(QPoint, offset);
-    QCOMPARE(kwinApp()->input->redirect->get_touch()->decorationPressId(), 0);
+    QCOMPARE(Test::app()->base.input->redirect->get_touch()->decorationPressId(), 0);
     Test::touch_motion(0, p + offset, timestamp++);
     const QPoint oldPos = c->pos();
     QVERIFY(win::is_move(c));
@@ -516,7 +527,7 @@ void DecorationInputTest::testTapToMove()
 
     // again
     Test::touch_down(1, p + offset, timestamp++);
-    QCOMPARE(kwinApp()->input->redirect->get_touch()->decorationPressId(), 1);
+    QCOMPARE(Test::app()->base.input->redirect->get_touch()->decorationPressId(), 1);
     QVERIFY(!win::is_move(c));
     QFETCH(QPoint, offset2);
     Test::touch_motion(1,
@@ -593,7 +604,7 @@ void DecorationInputTest::testResizeOutsideWindow()
     default:
         break;
     }
-    QVERIFY(!c->frameGeometry().contains(Test::app()->input->cursor->pos()));
+    QVERIFY(!c->frameGeometry().contains(Test::app()->base.input->cursor->pos()));
 
     // pressing should trigger resize
     PRESS;
@@ -676,7 +687,7 @@ void DecorationInputTest::testModifierClickUnrestrictedMove()
               Test::get_output(0)->geometry().center()
                   - QPoint(c->size().width() / 2, c->size().height() / 2));
     // move cursor on window
-    Test::app()->input->cursor->set_pos(
+    Test::app()->base.input->cursor->set_pos(
         QPoint(c->frameGeometry().center().x(),
                c->pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2));
 
@@ -742,7 +753,7 @@ void DecorationInputTest::testModifierScrollOpacity()
               Test::get_output(0)->geometry().center()
                   - QPoint(c->size().width() / 2, c->size().height() / 2));
     // move cursor on window
-    Test::app()->input->cursor->set_pos(
+    Test::app()->base.input->cursor->set_pos(
         QPoint(c->frameGeometry().center().x(),
                c->pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2));
     // set the opacity to 0.5
@@ -813,10 +824,11 @@ void DecorationInputTest::testTouchEvents()
     const QPoint tapPoint(c->frameGeometry().center().x(),
                           win::frame_to_client_pos(c, QPoint()).y() / 2);
 
-    QVERIFY(!kwinApp()->input->redirect->get_touch()->focus.deco);
+    QVERIFY(!Test::app()->base.input->redirect->get_touch()->focus.deco);
     Test::touch_down(0, tapPoint, timestamp++);
-    QVERIFY(kwinApp()->input->redirect->get_touch()->focus.deco);
-    QCOMPARE(kwinApp()->input->redirect->get_touch()->focus.deco->decoration(), win::decoration(c));
+    QVERIFY(Test::app()->base.input->redirect->get_touch()->focus.deco);
+    QCOMPARE(Test::app()->base.input->redirect->get_touch()->focus.deco->decoration(),
+             win::decoration(c));
     QCOMPARE(hoverMoveSpy.count(), 1);
     QCOMPARE(hoverLeaveSpy.count(), 0);
     Test::touch_up(0, timestamp++);
@@ -826,7 +838,7 @@ void DecorationInputTest::testTouchEvents()
     QCOMPARE(win::is_move(c), false);
 
     // let's check that a hover motion is sent if the pointer is on deco, when touch release
-    Test::app()->input->cursor->set_pos(tapPoint);
+    Test::app()->base.input->cursor->set_pos(tapPoint);
     QCOMPARE(hoverMoveSpy.count(), 2);
     Test::touch_down(0, tapPoint, timestamp++);
     QCOMPARE(hoverMoveSpy.count(), 3);

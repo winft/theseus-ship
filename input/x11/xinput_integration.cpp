@@ -17,7 +17,6 @@
 #include "input/pointer_redirect.h"
 #include "input/redirect.h"
 #include "input/spies/modifier_only_shortcuts.h"
-#include "main.h"
 #include "platform.h"
 #include "win/screen_edges.h"
 #include "win/space.h"
@@ -315,7 +314,7 @@ void xinput_integration::startListening()
     m_keyReleaseFilter.reset(new XKeyPressReleaseEventFilter(XCB_KEY_RELEASE, this));
 
     // install the input event spies also relevant for X11 platform
-    auto redirect = kwinApp()->input->redirect;
+    auto redirect = platform->redirect;
     redirect->installInputEventSpy(new input::modifier_only_shortcuts_spy(*redirect));
 }
 

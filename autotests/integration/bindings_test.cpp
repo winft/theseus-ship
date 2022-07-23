@@ -70,8 +70,8 @@ void BindingsTest::initTestCase()
 void BindingsTest::init()
 {
     Test::setup_wayland_connection();
-    Test::app()->input->cursor->set_pos(QPoint(640, 512));
-    QCOMPARE(Test::app()->input->cursor->pos(), QPoint(640, 512));
+    Test::app()->base.input->cursor->set_pos(QPoint(640, 512));
+    QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(640, 512));
 }
 
 void BindingsTest::cleanup()

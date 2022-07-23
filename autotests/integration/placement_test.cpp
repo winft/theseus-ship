@@ -96,7 +96,7 @@ void TestPlacement::init()
 {
     Test::setup_wayland_connection(Test::global_selection::xdg_decoration
                                    | Test::global_selection::plasma_shell);
-    Test::app()->input->cursor->set_pos(QPoint(512, 512));
+    Test::app()->base.input->cursor->set_pos(QPoint(512, 512));
 }
 
 void TestPlacement::cleanup()
@@ -294,8 +294,8 @@ void TestPlacement::testPlaceUnderMouse()
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);
 
-    Test::app()->input->cursor->set_pos(QPoint(200, 300));
-    QCOMPARE(Test::app()->input->cursor->pos(), QPoint(200, 300));
+    Test::app()->base.input->cursor->set_pos(QPoint(200, 300));
+    QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(200, 300));
 
     std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));

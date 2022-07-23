@@ -141,7 +141,7 @@ void TestXdgShellClient::init()
                                    | Test::global_selection::appmenu);
 
     Test::set_current_output(0);
-    Test::app()->input->cursor->set_pos(QPoint(1280, 512));
+    Test::app()->base.input->cursor->set_pos(QPoint(1280, 512));
 }
 
 void TestXdgShellClient::cleanup()
@@ -1546,10 +1546,10 @@ void TestXdgShellClient::testXdgWindowGeometryInteractiveResize()
     QVERIFY(states.testFlag(XdgShellToplevel::State::Resizing));
 
     // Go right.
-    auto cursorPos = Test::app()->input->cursor->pos();
+    auto cursorPos = Test::app()->base.input->cursor->pos();
     win::key_press_event(client, Qt::Key_Right);
-    win::update_move_resize(client, Test::app()->input->cursor->pos());
-    QCOMPARE(Test::app()->input->cursor->pos(), cursorPos + QPoint(8, 0));
+    win::update_move_resize(client, Test::app()->base.input->cursor->pos());
+    QCOMPARE(Test::app()->base.input->cursor->pos(), cursorPos + QPoint(8, 0));
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
     states = configureRequestedSpy.last().at(1).value<XdgShellToplevel::States>();
@@ -1564,10 +1564,10 @@ void TestXdgShellClient::testXdgWindowGeometryInteractiveResize()
     QCOMPARE(client->frameGeometry().size(), QSize(188, 80));
 
     // Go down.
-    cursorPos = Test::app()->input->cursor->pos();
+    cursorPos = Test::app()->base.input->cursor->pos();
     win::key_press_event(client, Qt::Key_Down);
-    win::update_move_resize(client, Test::app()->input->cursor->pos());
-    QCOMPARE(Test::app()->input->cursor->pos(), cursorPos + QPoint(0, 8));
+    win::update_move_resize(client, Test::app()->base.input->cursor->pos());
+    QCOMPARE(Test::app()->base.input->cursor->pos(), cursorPos + QPoint(0, 8));
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 4);
     states = configureRequestedSpy.last().at(1).value<XdgShellToplevel::States>();

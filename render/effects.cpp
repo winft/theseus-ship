@@ -761,7 +761,7 @@ void effects_handler_impl::startMouseInterception(Effect* effect, Qt::CursorShap
 
 void effects_handler_impl::doStartMouseInterception(Qt::CursorShape shape)
 {
-    kwinApp()->input->redirect->get_pointer()->setEffectsOverrideCursor(shape);
+    m_compositor->space->input->get_pointer()->setEffectsOverrideCursor(shape);
 }
 
 void effects_handler_impl::stopMouseInterception(Effect* effect)
@@ -777,7 +777,7 @@ void effects_handler_impl::stopMouseInterception(Effect* effect)
 
 void effects_handler_impl::doStopMouseInterception()
 {
-    kwinApp()->input->redirect->get_pointer()->removeEffectsOverrideCursor();
+    m_compositor->space->input->get_pointer()->removeEffectsOverrideCursor();
 }
 
 bool effects_handler_impl::isMouseInterception() const
@@ -820,26 +820,26 @@ bool effects_handler_impl::touchUp(qint32 id, quint32 time)
 
 void effects_handler_impl::registerGlobalShortcut(const QKeySequence& shortcut, QAction* action)
 {
-    kwinApp()->input->registerShortcut(shortcut, action);
+    m_compositor->space->input->platform.registerShortcut(shortcut, action);
 }
 
 void effects_handler_impl::registerPointerShortcut(Qt::KeyboardModifiers modifiers,
                                                    Qt::MouseButton pointerButtons,
                                                    QAction* action)
 {
-    kwinApp()->input->registerPointerShortcut(modifiers, pointerButtons, action);
+    m_compositor->space->input->platform.registerPointerShortcut(modifiers, pointerButtons, action);
 }
 
 void effects_handler_impl::registerAxisShortcut(Qt::KeyboardModifiers modifiers,
                                                 PointerAxisDirection axis,
                                                 QAction* action)
 {
-    kwinApp()->input->registerAxisShortcut(modifiers, axis, action);
+    m_compositor->space->input->platform.registerAxisShortcut(modifiers, axis, action);
 }
 
 void effects_handler_impl::registerTouchpadSwipeShortcut(SwipeDirection direction, QAction* action)
 {
-    kwinApp()->input->registerTouchpadSwipeShortcut(direction, action);
+    m_compositor->space->input->platform.registerTouchpadSwipeShortcut(direction, action);
 }
 
 void* effects_handler_impl::getProxy(QString name)
@@ -1313,7 +1313,7 @@ QSize effects_handler_impl::virtualScreenSize() const
 
 void effects_handler_impl::defineCursor(Qt::CursorShape shape)
 {
-    kwinApp()->input->redirect->get_pointer()->setEffectsOverrideCursor(shape);
+    m_compositor->space->input->get_pointer()->setEffectsOverrideCursor(shape);
 }
 
 bool effects_handler_impl::checkInputWindowEvent(QMouseEvent* e)
@@ -1688,37 +1688,38 @@ void effects_handler_impl::highlightWindows(const QVector<EffectWindow*>& window
 
 PlatformCursorImage effects_handler_impl::cursorImage() const
 {
-    return kwinApp()->input->cursor->platform_image();
+    return m_compositor->space->input->platform.cursor->platform_image();
 }
 
 void effects_handler_impl::hideCursor()
 {
-    kwinApp()->input->cursor->hide();
+    m_compositor->space->input->platform.cursor->hide();
 }
 
 void effects_handler_impl::showCursor()
 {
-    kwinApp()->input->cursor->show();
+    m_compositor->space->input->platform.cursor->show();
 }
 
 void effects_handler_impl::startInteractiveWindowSelection(
     std::function<void(KWin::EffectWindow*)> callback)
 {
-    kwinApp()->input->start_interactive_window_selection([callback](KWin::Toplevel* t) {
-        if (t) {
-            assert(t->render);
-            assert(t->render->effect);
-            callback(t->render->effect.get());
-        } else {
-            callback(nullptr);
-        }
-    });
+    m_compositor->space->input->platform.start_interactive_window_selection(
+        [callback](KWin::Toplevel* t) {
+            if (t) {
+                assert(t->render);
+                assert(t->render->effect);
+                callback(t->render->effect.get());
+            } else {
+                callback(nullptr);
+            }
+        });
 }
 
 void effects_handler_impl::startInteractivePositionSelection(
     std::function<void(const QPoint&)> callback)
 {
-    kwinApp()->input->start_interactive_position_selection(callback);
+    m_compositor->space->input->platform.start_interactive_position_selection(callback);
 }
 
 void effects_handler_impl::showOnScreenMessage(const QString& message, const QString& iconName)

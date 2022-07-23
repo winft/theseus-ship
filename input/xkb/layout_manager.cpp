@@ -43,7 +43,7 @@ void layout_manager::init()
     QKeySequence sequence{Qt::META | Qt::ALT | Qt::Key_K};
     KGlobalAccel::self()->setDefaultShortcut(switchKeyboardAction, QList<QKeySequence>({sequence}));
     KGlobalAccel::self()->setShortcut(switchKeyboardAction, QList<QKeySequence>({sequence}));
-    kwinApp()->input->setup_action_for_global_accel(switchKeyboardAction);
+    xkb.platform->setup_action_for_global_accel(switchKeyboardAction);
     QObject::connect(
         switchKeyboardAction, &QAction::triggered, this, &layout_manager::switchToNextLayout);
 

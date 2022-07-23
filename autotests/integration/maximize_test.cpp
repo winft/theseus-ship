@@ -81,7 +81,7 @@ void TestMaximized::init()
     Test::setup_wayland_connection(Test::global_selection::xdg_decoration
                                    | Test::global_selection::plasma_shell);
 
-    Test::app()->input->cursor->set_pos(QPoint(1280, 512));
+    Test::app()->base.input->cursor->set_pos(QPoint(1280, 512));
 }
 
 void TestMaximized::cleanup()

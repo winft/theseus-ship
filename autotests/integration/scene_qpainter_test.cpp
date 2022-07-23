@@ -118,7 +118,7 @@ void SceneQPainterTest::testStartFrame()
     auto const cursorImage = sw_cursor->image();
 
     QVERIFY(!cursorImage.isNull());
-    p.drawImage(kwinApp()->input->cursor->pos() - sw_cursor->hotspot(), cursorImage);
+    p.drawImage(Test::app()->base.input->cursor->pos() - sw_cursor->hotspot(), cursorImage);
     QCOMPARE(referenceImage,
              *scene->backend()->bufferForScreen(kwinApp()->get_base().get_outputs().at(0)));
 }
@@ -133,7 +133,7 @@ void SceneQPainterTest::testCursorMoving()
     QSignalSpy frameRenderedSpy(scene, &render::scene::frameRendered);
     QVERIFY(frameRenderedSpy.isValid());
 
-    auto& cursor = kwinApp()->input->cursor;
+    auto& cursor = Test::app()->base.input->cursor;
     cursor->set_pos(0, 0);
     QVERIFY(frameRenderedSpy.wait());
     cursor->set_pos(10, 0);
@@ -162,7 +162,7 @@ void SceneQPainterTest::testCursorMoving()
 
 void SceneQPainterTest::testWindow()
 {
-    auto& cursor = kwinApp()->input->cursor;
+    auto& cursor = Test::app()->base.input->cursor;
     cursor->set_pos(45, 45);
     // this test verifies that a window is rendered correctly
     using namespace Wrapland::Client;
@@ -224,7 +224,7 @@ void SceneQPainterTest::testWindowScaled()
     // this test verifies that a window is rendered correctly
     using namespace Wrapland::Client;
 
-    kwinApp()->input->cursor->set_pos(10, 10);
+    Test::app()->base.input->cursor->set_pos(10, 10);
     Test::setup_wayland_connection(Test::global_selection::seat);
     QVERIFY(Test::wait_for_wayland_pointer());
 
@@ -278,7 +278,7 @@ void SceneQPainterTest::testCompositorRestart()
 {
     // this test verifies that the compositor/SceneQPainter survive a restart of the compositor and
     // still render correctly
-    kwinApp()->input->cursor->set_pos(400, 400);
+    Test::app()->base.input->cursor->set_pos(400, 400);
 
     // first create a window
     using namespace Wrapland::Client;
