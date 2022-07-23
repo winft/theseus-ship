@@ -216,9 +216,10 @@ void WaylandTestApplication::start()
         std::cerr << "FATAL ERROR: compositor creation failed: " << exc.what() << std::endl;
         exit(exc.code().value());
     }
-    base.space = std::make_unique<win::wayland::space>(*base.render->compositor, server.get());
 
-    base.space->input = std::make_unique<input::wayland::redirect>(*input, *base.space);
+    base.space = std::make_unique<win::wayland::space>(
+        *base.render->compositor, static_cast<input::wayland::platform&>(*input), server.get());
+
     input::wayland::add_dbus(input.get());
     win::init_shortcuts(*base.space);
     base.space->scripting = std::make_unique<scripting::platform>(*base.space);

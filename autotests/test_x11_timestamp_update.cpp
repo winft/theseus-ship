@@ -89,7 +89,7 @@ void X11TestApplication::start()
 {
     prepare_start();
     compositor = std::make_unique<render::x11::compositor>(*base.render);
-    workspace = std::make_unique<win::x11::space>(*compositor);
+    workspace = std::make_unique<win::x11::space>(*compositor, nullptr);
     compositor->start(*workspace);
 }
 

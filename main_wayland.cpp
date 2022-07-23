@@ -237,9 +237,9 @@ void ApplicationWayland::start()
         exit(exc.code().value());
     }
 
-    base->space = std::make_unique<win::wayland::space>(*render->compositor, server.get());
+    base->space = std::make_unique<win::wayland::space>(
+        *render->compositor, static_cast<input::wayland::platform&>(*input), server.get());
 
-    base->space->input = std::make_unique<input::wayland::redirect>(*input, *base->space);
     input::wayland::add_dbus(input.get());
     win::init_shortcuts(*base->space);
     tablet_mode_manager = std::make_unique<input::dbus::tablet_mode_manager>();

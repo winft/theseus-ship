@@ -10,6 +10,7 @@
 #include "netinfo.h"
 
 #include "base/x11/xcb/helpers.h"
+#include "input/x11/platform.h"
 #include "utils/blocker.h"
 #include "win/screen_edges.h"
 #include "win/space.h"
@@ -25,7 +26,7 @@ class KWIN_EXPORT space : public win::space
 public:
     using x11_window = window;
 
-    explicit space(render::compositor& render);
+    space(render::compositor& render, input::x11::platform* input);
     ~space() override;
 
     Toplevel* findInternal(QWindow* window) const override;

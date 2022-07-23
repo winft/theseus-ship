@@ -21,6 +21,7 @@
 #include "xdg_shell.h"
 
 #include "base/wayland/server.h"
+#include "input/wayland/redirect.h"
 #include "win/input.h"
 #include "win/internal_window.h"
 #include "win/screen.h"
@@ -48,7 +49,9 @@
 namespace KWin::win::wayland
 {
 
-space::space(render::compositor& render, base::wayland::server* server)
+space::space(render::compositor& render,
+             input::wayland::platform& input,
+             base::wayland::server* server)
     : win::space(render)
     , server{server}
     , compositor{server->display->createCompositor()}
@@ -69,6 +72,7 @@ space::space(render::compositor& render, base::wayland::server* server)
 {
     namespace WS = Wrapland::Server;
 
+    this->input = std::make_unique<input::wayland::redirect>(input, *this);
     edges = std::make_unique<win::screen_edger>(*this);
 
     plasma_window_manager->setShowingDesktopState(
