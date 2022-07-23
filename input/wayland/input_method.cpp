@@ -140,13 +140,18 @@ void input_method::input_method_v2_changed()
 void input_method::handle_keyboard_grabbed(input_method_keyboard_grab_v2* grab)
 {
     auto xkb = xkb::get_primary_xkb_keyboard();
-    auto filter = filters.emplace_back(new keyboard_grab(grab, xkb->keymap->raw)).get();
+    auto filter
+        = filters
+              .emplace_back(new im_keyboard_grab_v2(
+                  static_cast<redirect&>(*kwinApp()->input->redirect), grab, xkb->keymap->raw))
+              .get();
 
     QObject::connect(grab,
                      &Wrapland::Server::input_method_keyboard_grab_v2::resourceDestroyed,
                      kwinApp()->input->redirect,
                      [this, filter] {
-                         kwinApp()->input->redirect->uninstallInputEventFilter(filter);
+                         auto& wlredirect = static_cast<redirect&>(*kwinApp()->input->redirect);
+                         wlredirect.uninstallInputEventFilter(filter);
                          remove_all_if(filters, [filter](auto&& f) { return f.get() == filter; });
                      });
 
@@ -243,7 +248,7 @@ void input_method::activate_popups()
 void input_method::deactivate()
 {
     for (auto const& filter : filters) {
-        kwinApp()->input->redirect->uninstallInputEventFilter(filter.get());
+        static_cast<redirect&>(*kwinApp()->input->redirect).uninstallInputEventFilter(filter.get());
     }
     for (auto const& popup : popups) {
         popup->hideClient(true);

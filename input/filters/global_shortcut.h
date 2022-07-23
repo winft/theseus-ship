@@ -20,10 +20,12 @@
 namespace KWin::input
 {
 
-class global_shortcut_filter : public event_filter
+template<typename Redirect>
+class global_shortcut_filter : public event_filter<Redirect>
 {
 public:
-    global_shortcut_filter()
+    explicit global_shortcut_filter(Redirect& redirect)
+        : event_filter<Redirect>(redirect)
     {
         m_powerDown = new QTimer;
         m_powerDown->setSingleShot(true);

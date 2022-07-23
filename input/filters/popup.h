@@ -29,10 +29,12 @@
 namespace KWin::input
 {
 
-class popup_filter : public QObject, public event_filter
+template<typename Redirect>
+class popup_filter : public QObject, public event_filter<Redirect>
 {
 public:
-    explicit popup_filter(input::redirect& redirect)
+    explicit popup_filter(Redirect& redirect)
+        : event_filter<Redirect>(redirect)
     {
         QObject::connect(redirect.space.qobject.get(),
                          &win::space::qobject_t::wayland_window_added,
@@ -52,8 +54,8 @@ public:
         case button_state::released:
             return false;
         case button_state::pressed:
-            auto pos = kwinApp()->input->redirect->globalPointer();
-            auto focus_window = kwinApp()->input->redirect->findToplevel(pos.toPoint());
+            auto pos = this->redirect.globalPointer();
+            auto focus_window = this->redirect.findToplevel(pos.toPoint());
             if (!focus_window || !win::belong_to_same_client(focus_window, m_popups.back())) {
                 // a press on a window (or no window) not belonging to the popup window
                 cancelPopups();

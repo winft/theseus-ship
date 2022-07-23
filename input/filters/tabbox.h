@@ -23,17 +23,18 @@
 namespace KWin::input
 {
 
-class tabbox_filter : public event_filter
+template<typename Redirect>
+class tabbox_filter : public event_filter<Redirect>
 {
 public:
-    explicit tabbox_filter(input::redirect& redirect)
-        : redirect{redirect}
+    explicit tabbox_filter(Redirect& redirect)
+        : event_filter<Redirect>(redirect)
     {
     }
 
     bool button(button_event const& event) override
     {
-        auto& tabbox = redirect.space.tabbox;
+        auto& tabbox = this->redirect.space.tabbox;
         if (!tabbox || !tabbox->is_grabbed()) {
             return false;
         }
@@ -44,7 +45,7 @@ public:
 
     bool motion(motion_event const& event) override
     {
-        auto& tabbox = redirect.space.tabbox;
+        auto& tabbox = this->redirect.space.tabbox;
 
         if (!tabbox || !tabbox->is_grabbed()) {
             return false;
@@ -56,7 +57,7 @@ public:
 
     bool key(key_event const& event) override
     {
-        auto& tabbox = redirect.space.tabbox;
+        auto& tabbox = this->redirect.space.tabbox;
 
         if (!tabbox || !tabbox->is_grabbed()) {
             return false;
@@ -64,7 +65,7 @@ public:
 
         auto seat = waylandServer()->seat();
         seat->setFocusedKeyboardSurface(nullptr);
-        kwinApp()->input->redirect->pointer()->setEnableConstraints(false);
+        this->redirect.pointer()->setEnableConstraints(false);
 
         // pass the key event to the seat, so that it has a proper model of the currently hold keys
         // this is important for combinations like alt+shift to ensure that shift is not considered
@@ -84,7 +85,7 @@ public:
 
     bool key_repeat(key_event const& event) override
     {
-        auto& tabbox = redirect.space.tabbox;
+        auto& tabbox = this->redirect.space.tabbox;
 
         if (!tabbox || !tabbox->is_grabbed()) {
             return false;
@@ -97,7 +98,7 @@ public:
 
     bool axis(axis_event const& event) override
     {
-        auto& tabbox = redirect.space.tabbox;
+        auto& tabbox = this->redirect.space.tabbox;
 
         if (!tabbox || !tabbox->is_grabbed()) {
             return false;
@@ -106,9 +107,6 @@ public:
         auto qt_event = axis_to_qt_event(event);
         return tabbox->handle_wheel_event(&qt_event);
     }
-
-private:
-    input::redirect& redirect;
 };
 
 }

@@ -181,14 +181,16 @@ void keyboard_redirect::process_key(key_event const& event)
 
     input::keyboard_redirect::process_key(event);
 
-    redirect->processFilters(std::bind(&event_filter::key, std::placeholders::_1, event));
+    redirect->processFilters(
+        std::bind(&event_filter<wayland::redirect>::key, std::placeholders::_1, event));
     xkb->forward_modifiers();
 }
 
 void keyboard_redirect::process_key_repeat(const key_event& event)
 {
     input::keyboard_redirect::process_key_repeat(event);
-    redirect->processFilters(std::bind(&event_filter::key_repeat, std::placeholders::_1, event));
+    redirect->processFilters(
+        std::bind(&event_filter<wayland::redirect>::key_repeat, std::placeholders::_1, event));
 }
 
 void keyboard_redirect::process_modifiers(modifiers_event const& event)

@@ -36,15 +36,18 @@ namespace KWin::input
  * Deleting an instance of event_filter automatically uninstalls it from
  * InputRedirection.
  */
+template<typename Redirect>
 class event_filter
 {
 public:
-    event_filter() = default;
+    explicit event_filter(Redirect& redirect)
+        : redirect{redirect}
+    {
+    }
 
     virtual ~event_filter()
     {
-        assert(kwinApp()->input->redirect);
-        kwinApp()->input->redirect->uninstallInputEventFilter(this);
+        redirect.uninstallInputEventFilter(this);
     }
 
     virtual bool button(button_event const& /*event*/)
@@ -145,6 +148,8 @@ public:
     {
         return false;
     }
+
+    Redirect& redirect;
 };
 
 }

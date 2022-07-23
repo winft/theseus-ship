@@ -26,12 +26,18 @@
 namespace KWin::input
 {
 
-class decoration_event_filter : public event_filter
+template<typename Redirect>
+class decoration_event_filter : public event_filter<Redirect>
 {
 public:
+    explicit decoration_event_filter(Redirect& redirect)
+        : event_filter<Redirect>(redirect)
+    {
+    }
+
     bool button(button_event const& event) override
     {
-        auto decoration = kwinApp()->input->redirect->pointer()->focus.deco;
+        auto decoration = this->redirect.pointer()->focus.deco;
         if (!decoration) {
             return false;
         }
@@ -41,7 +47,7 @@ public:
             return action_result.second;
         }
 
-        auto const global_pos = kwinApp()->input->redirect->globalPointer();
+        auto const global_pos = this->redirect.globalPointer();
         auto const local_pos = global_pos - decoration->client()->pos();
 
         auto qt_type = event.state == button_state::pressed ? QEvent::MouseButtonPress
@@ -50,7 +56,7 @@ public:
                                     local_pos,
                                     global_pos,
                                     button_to_qt_mouse_button(event.key),
-                                    kwinApp()->input->redirect->pointer()->buttons(),
+                                    this->redirect.pointer()->buttons(),
                                     xkb::get_active_keyboard_modifiers(kwinApp()->input));
         qt_event.setAccepted(false);
 
@@ -66,12 +72,12 @@ public:
 
     bool motion(motion_event const& /*event*/) override
     {
-        auto decoration = kwinApp()->input->redirect->pointer()->focus.deco;
+        auto decoration = this->redirect.pointer()->focus.deco;
         if (!decoration) {
             return false;
         }
 
-        auto const global_pos = kwinApp()->input->redirect->globalPointer();
+        auto const global_pos = this->redirect.globalPointer();
         auto const local_pos = global_pos - decoration->client()->pos();
 
         auto qt_event = QHoverEvent(QEvent::HoverMove, local_pos, local_pos);
@@ -83,7 +89,7 @@ public:
 
     bool axis(axis_event const& event) override
     {
-        auto decoration = kwinApp()->input->redirect->pointer()->focus.deco;
+        auto decoration = this->redirect.pointer()->focus.deco;
         if (!decoration) {
             return false;
         }
@@ -119,7 +125,7 @@ public:
             && win::titlebar_positioned_under_mouse(window)) {
             window->performMouseCommand(
                 kwinApp()->options->operationTitlebarMouseWheel(event.delta * -1),
-                kwinApp()->input->redirect->pointer()->pos().toPoint());
+                this->redirect.pointer()->pos().toPoint());
         }
         return true;
     }
@@ -130,17 +136,17 @@ public:
         if (seat->touches().is_in_progress()) {
             return false;
         }
-        if (kwinApp()->input->redirect->touch()->decorationPressId() != -1) {
+        if (this->redirect.touch()->decorationPressId() != -1) {
             // already on a decoration, ignore further touch points, but filter out
             return true;
         }
         seat->setTimestamp(event.base.time_msec);
-        auto decoration = kwinApp()->input->redirect->touch()->focus.deco;
+        auto decoration = this->redirect.touch()->focus.deco;
         if (!decoration) {
             return false;
         }
 
-        kwinApp()->input->redirect->touch()->setDecorationPressId(event.id);
+        this->redirect.touch()->setDecorationPressId(event.id);
         m_lastGlobalTouchPos = event.pos;
         m_lastLocalTouchPos = event.pos - decoration->client()->pos();
 
@@ -164,14 +170,14 @@ public:
     bool touch_motion(touch_motion_event const& event) override
     {
         Q_UNUSED(time)
-        auto decoration = kwinApp()->input->redirect->touch()->focus.deco;
+        auto decoration = this->redirect.touch()->focus.deco;
         if (!decoration) {
             return false;
         }
-        if (kwinApp()->input->redirect->touch()->decorationPressId() == -1) {
+        if (this->redirect.touch()->decorationPressId() == -1) {
             return false;
         }
-        if (kwinApp()->input->redirect->touch()->decorationPressId() != qint32(event.id)) {
+        if (this->redirect.touch()->decorationPressId() != qint32(event.id)) {
             // ignore, but filter out
             return true;
         }
@@ -188,14 +194,14 @@ public:
     bool touch_up(touch_up_event const& event) override
     {
         Q_UNUSED(time);
-        auto decoration = kwinApp()->input->redirect->touch()->focus.deco;
+        auto decoration = this->redirect.touch()->focus.deco;
         if (!decoration) {
             return false;
         }
-        if (kwinApp()->input->redirect->touch()->decorationPressId() == -1) {
+        if (this->redirect.touch()->decorationPressId() == -1) {
             return false;
         }
-        if (kwinApp()->input->redirect->touch()->decorationPressId() != qint32(event.id)) {
+        if (this->redirect.touch()->decorationPressId() != qint32(event.id)) {
             // ignore, but filter out
             return true;
         }
@@ -216,7 +222,7 @@ public:
 
         m_lastGlobalTouchPos = QPointF();
         m_lastLocalTouchPos = QPointF();
-        kwinApp()->input->redirect->touch()->setDecorationPressId(-1);
+        this->redirect.touch()->setDecorationPressId(-1);
         return true;
     }
 

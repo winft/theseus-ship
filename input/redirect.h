@@ -30,7 +30,6 @@ class space;
 namespace input
 {
 
-class event_filter;
 class event_spy;
 class platform;
 
@@ -66,8 +65,6 @@ public:
     Qt::MouseButtons qtButtonStates() const;
 
     void cancelTouch();
-
-    virtual void uninstallInputEventFilter(event_filter* filter);
 
     /**
      * Installs the @p spy for spying on events.

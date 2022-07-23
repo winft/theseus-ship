@@ -28,22 +28,24 @@
 namespace KWin::input
 {
 
-class internal_window_filter : public event_filter
+template<typename Redirect>
+class internal_window_filter : public event_filter<Redirect>
 {
 public:
-    explicit internal_window_filter(input::redirect& redirect)
-        : redirect{redirect}
+    explicit internal_window_filter(Redirect& redirect)
+        : event_filter<Redirect>(redirect)
     {
     }
 
     bool button(button_event const& event) override
     {
-        auto internal = kwinApp()->input->redirect->pointer()->focus.internal_window;
+        auto internal = this->redirect.pointer()->focus.internal_window;
         if (!internal) {
             return false;
         }
 
-        auto window = qobject_cast<win::internal_window*>(redirect.space.findInternal(internal));
+        auto window
+            = qobject_cast<win::internal_window*>(this->redirect.space.findInternal(internal));
 
         if (window && win::decoration(window)) {
             // only perform mouse commands on decorated internal windows
@@ -67,7 +69,7 @@ public:
 
     bool motion(motion_event const& event) override
     {
-        auto internal = kwinApp()->input->redirect->pointer()->focus.internal_window;
+        auto internal = this->redirect.pointer()->focus.internal_window;
         if (!internal) {
             return false;
         }
@@ -86,14 +88,14 @@ public:
 
     bool axis(axis_event const& event) override
     {
-        auto internal = kwinApp()->input->redirect->pointer()->focus.internal_window;
+        auto internal = this->redirect.pointer()->focus.internal_window;
         if (!internal) {
             return false;
         }
 
         if (event.orientation == axis_orientation::vertical) {
             auto window
-                = qobject_cast<win::internal_window*>(redirect.space.findInternal(internal));
+                = qobject_cast<win::internal_window*>(this->redirect.space.findInternal(internal));
             if (window && win::decoration(window)) {
                 // client window action only on vertical scrolling
                 auto const action_result = perform_wheel_and_window_action(event, window);
@@ -182,7 +184,7 @@ public:
 
     bool key(key_event const& event) override
     {
-        auto window = get_internal_window(redirect.space.windows);
+        auto window = get_internal_window(this->redirect.space.windows);
         if (!window) {
             return false;
         }
@@ -198,7 +200,7 @@ public:
 
     bool key_repeat(key_event const& event) override
     {
-        auto window = get_internal_window(redirect.space.windows);
+        auto window = get_internal_window(this->redirect.space.windows);
         if (!window) {
             return false;
         }
@@ -214,7 +216,7 @@ public:
             // something else is getting the events
             return false;
         }
-        auto touch = kwinApp()->input->redirect->touch();
+        auto touch = this->redirect.touch();
         if (touch->internalPressId() != -1) {
             // already on internal window, ignore further touch points, but filter out
             m_pressedIds.insert(event.id);
@@ -247,7 +249,7 @@ public:
 
     bool touch_motion(touch_motion_event const& event) override
     {
-        auto touch = kwinApp()->input->redirect->touch();
+        auto touch = this->redirect.touch();
         auto internal = touch->focus.internal_window;
         if (!internal) {
             return false;
@@ -275,7 +277,7 @@ public:
 
     bool touch_up(touch_up_event const& event) override
     {
-        auto touch = kwinApp()->input->redirect->touch();
+        auto touch = this->redirect.touch();
         auto internal = touch->focus.internal_window;
         const bool removed = m_pressedIds.remove(event.id);
         if (!internal) {
@@ -304,7 +306,7 @@ public:
 
         m_lastGlobalTouchPos = QPointF();
         m_lastLocalTouchPos = QPointF();
-        kwinApp()->input->redirect->touch()->setInternalPressId(-1);
+        this->redirect.touch()->setInternalPressId(-1);
         return true;
     }
 
@@ -312,7 +314,6 @@ private:
     QSet<qint32> m_pressedIds;
     QPointF m_lastGlobalTouchPos;
     QPointF m_lastLocalTouchPos;
-    input::redirect& redirect;
 };
 
 }

@@ -20,6 +20,9 @@ class virtual_keyboard_v1;
 namespace KWin::input
 {
 
+template<typename Redirect>
+class event_filter;
+template<typename Redirect>
 class window_selector_filter;
 
 namespace wayland
@@ -52,7 +55,7 @@ public:
      * Install the filter at the back of the list for a X compositor, immediately before
      * the forward filter for a Wayland compositor.
      */
-    void append_filter(event_filter* filter);
+    void append_filter(event_filter<redirect>* filter);
     /**
      * Adds the @p filter to the list of event filters and makes it the first
      * event filter in processing.
@@ -60,8 +63,8 @@ public:
      * Note: the event filter will get events before the lock screen can get them, thus
      * this is a security relevant method.
      */
-    void prependInputEventFilter(event_filter* filter);
-    void uninstallInputEventFilter(event_filter* filter) override;
+    void prependInputEventFilter(event_filter<redirect>* filter);
+    void uninstallInputEventFilter(event_filter<redirect>* filter);
 
     /**
      * Sends an event through all InputFilters.
@@ -71,7 +74,7 @@ public:
      * The UnaryPredicate is defined like the UnaryPredicate of std::any_of.
      * The signature of the function should be equivalent to the following:
      * @code
-     * bool function(event_filter const* filter);
+     * bool function(event_filter<redirect> const* filter);
      * @endcode
      *
      * The intended usage is to std::bind the method to invoke on the filter with all arguments
@@ -112,10 +115,10 @@ private:
     std::unordered_map<Wrapland::Server::virtual_keyboard_v1*, std::unique_ptr<input::keyboard>>
         virtual_keyboards;
 
-    std::list<event_filter*> m_filters;
-    std::list<event_filter*>::const_iterator m_filters_install_iterator;
+    std::list<event_filter<redirect>*> m_filters;
+    std::list<event_filter<redirect>*>::const_iterator m_filters_install_iterator;
 
-    window_selector_filter* window_selector{nullptr};
+    window_selector_filter<redirect>* window_selector{nullptr};
 };
 
 }

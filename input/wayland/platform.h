@@ -27,12 +27,14 @@ class platform;
 namespace input
 {
 
+template<typename Platform, typename Redirect>
 class dpms_filter;
 
 namespace wayland
 {
 
 class input_method;
+class redirect;
 
 class KWIN_EXPORT platform : public input::platform
 {
@@ -59,7 +61,7 @@ public:
 
     std::unique_ptr<wayland::input_method> input_method;
     std::unique_ptr<Wrapland::Server::virtual_keyboard_manager_v1> virtual_keyboard;
-    std::unique_ptr<input::dpms_filter> dpms_filter;
+    std::unique_ptr<input::dpms_filter<platform, wayland::redirect>> dpms_filter;
     base::wayland::platform const& base;
 
 private:

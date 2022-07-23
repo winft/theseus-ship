@@ -23,12 +23,13 @@
 namespace KWin::input
 {
 
-class dpms_filter : public event_filter
+template<typename Platform, typename Redirect>
+class dpms_filter : public event_filter<Redirect>
 {
 public:
-    explicit dpms_filter(wayland::platform* input)
-        : event_filter()
-        , input{input}
+    explicit dpms_filter(Platform& platform, Redirect& redirect)
+        : event_filter<Redirect>(redirect)
+        , platform{platform}
     {
     }
 
@@ -103,13 +104,13 @@ private:
     void notify()
     {
         // Queued to not modify the list of event filters while filtering.
-        QTimer::singleShot(0, input, [this] { input->turn_outputs_on(); });
+        QTimer::singleShot(0, &platform, [this] { platform.turn_outputs_on(); });
     }
 
-    wayland::platform* input;
     QElapsedTimer m_doubleTapTimer;
     QVector<int32_t> m_touchPoints;
     bool m_secondTap = false;
+    Platform& platform;
 };
 
 }

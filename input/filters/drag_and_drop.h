@@ -23,11 +23,12 @@
 namespace KWin::input
 {
 
-class drag_and_drop_filter : public event_filter
+template<typename Redirect>
+class drag_and_drop_filter : public event_filter<Redirect>
 {
 public:
-    explicit drag_and_drop_filter(input::redirect& redirect)
-        : redirect{redirect}
+    explicit drag_and_drop_filter(Redirect& redirect)
+        : event_filter<Redirect>(redirect)
     {
     }
 
@@ -62,11 +63,11 @@ public:
         }
         seat->setTimestamp(event.base.time_msec);
 
-        auto const pos = kwinApp()->input->redirect->globalPointer();
+        auto const pos = this->redirect.globalPointer();
         seat->pointers().set_position(pos);
 
         // TODO: use InputDeviceHandler::at() here and check isClient()?
-        auto window = kwinApp()->input->redirect->findManagedToplevel(pos.toPoint());
+        auto window = this->redirect.findManagedToplevel(pos.toPoint());
         if (auto xwl = xwayland()) {
             const auto ret = xwl->drag_move_filter(window, pos.toPoint());
             if (ret == xwl::drag_event_reply::ignore) {
@@ -80,7 +81,7 @@ public:
             // TODO: consider decorations
             if (window->surface != seat->drags().get_target().surface) {
                 if (window->control) {
-                    win::activate_window(redirect.space, window);
+                    win::activate_window(this->redirect.space, window);
                 }
                 seat->drags().set_target(window->surface, window->input_transform());
             }
@@ -105,8 +106,7 @@ public:
             return true;
         }
         seat->setTimestamp(event.base.time_msec);
-        kwinApp()->input->redirect->touch()->insertId(event.id,
-                                                      seat->touches().touch_down(event.pos));
+        this->redirect.touch()->insertId(event.id, seat->touches().touch_down(event.pos));
         return true;
     }
 
@@ -129,18 +129,18 @@ public:
             return true;
         }
         seat->setTimestamp(event.base.time_msec);
-        const qint32 wraplandId = kwinApp()->input->redirect->touch()->mappedId(event.id);
+        const qint32 wraplandId = this->redirect.touch()->mappedId(event.id);
         if (wraplandId == -1) {
             return true;
         }
 
         seat->touches().touch_move(wraplandId, event.pos);
 
-        if (auto t = redirect.findToplevel(event.pos.toPoint())) {
+        if (auto t = this->redirect.findToplevel(event.pos.toPoint())) {
             // TODO: consider decorations
             if (t->surface != seat->drags().get_target().surface) {
                 if (t->control) {
-                    win::activate_window(redirect.space, t);
+                    win::activate_window(this->redirect.space, t);
                 }
                 seat->drags().set_target(t->surface, event.pos, t->input_transform());
             }
@@ -158,10 +158,10 @@ public:
             return false;
         }
         seat->setTimestamp(event.base.time_msec);
-        const qint32 wraplandId = kwinApp()->input->redirect->touch()->mappedId(event.id);
+        const qint32 wraplandId = this->redirect.touch()->mappedId(event.id);
         if (wraplandId != -1) {
             seat->touches().touch_up(wraplandId);
-            kwinApp()->input->redirect->touch()->removeId(event.id);
+            this->redirect.touch()->removeId(event.id);
         }
         if (m_touchId == event.id) {
             m_touchId = -1;
@@ -171,7 +171,6 @@ public:
 
 private:
     qint32 m_touchId = -1;
-    input::redirect& redirect;
 };
 
 }

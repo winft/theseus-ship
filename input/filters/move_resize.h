@@ -20,21 +20,22 @@
 namespace KWin::input
 {
 
-class move_resize_filter : public event_filter
+template<typename Redirect>
+class move_resize_filter : public event_filter<Redirect>
 {
 public:
-    explicit move_resize_filter(input::redirect& redirect)
-        : redirect{redirect}
+    explicit move_resize_filter(Redirect& redirect)
+        : event_filter<Redirect>(redirect)
     {
     }
 
     bool button(button_event const& /*event*/) override
     {
-        auto window = redirect.space.move_resize_window;
+        auto window = this->redirect.space.move_resize_window;
         if (!window) {
             return false;
         }
-        if (kwinApp()->input->redirect->pointer()->buttons() == Qt::NoButton) {
+        if (this->redirect.pointer()->buttons() == Qt::NoButton) {
             win::end_move_resize(window);
         }
         return true;
@@ -42,18 +43,18 @@ public:
 
     bool motion(motion_event const& /*event*/) override
     {
-        auto window = redirect.space.move_resize_window;
+        auto window = this->redirect.space.move_resize_window;
         if (!window) {
             return false;
         }
-        auto pos = kwinApp()->input->redirect->globalPointer();
+        auto pos = this->redirect.globalPointer();
         win::update_move_resize(window, pos.toPoint());
         return true;
     }
 
     bool axis(axis_event const& /*event*/) override
     {
-        return redirect.space.move_resize_window != nullptr;
+        return this->redirect.space.move_resize_window != nullptr;
     }
 
     void process_key_press(Toplevel* window, key_event const& event)
@@ -72,7 +73,7 @@ public:
 
     bool key(key_event const& event) override
     {
-        auto window = redirect.space.move_resize_window;
+        auto window = this->redirect.space.move_resize_window;
         if (!window) {
             return false;
         }
@@ -85,7 +86,7 @@ public:
 
     bool key_repeat(key_event const& event) override
     {
-        auto window = redirect.space.move_resize_window;
+        auto window = this->redirect.space.move_resize_window;
         if (!window) {
             return false;
         }
@@ -96,7 +97,7 @@ public:
 
     bool touch_down(touch_down_event const& /*event*/) override
     {
-        auto c = redirect.space.move_resize_window;
+        auto c = this->redirect.space.move_resize_window;
         if (!c) {
             return false;
         }
@@ -106,7 +107,7 @@ public:
     bool touch_motion(touch_motion_event const& event) override
     {
         Q_UNUSED(time)
-        auto c = redirect.space.move_resize_window;
+        auto c = this->redirect.space.move_resize_window;
         if (!c) {
             return false;
         }
@@ -122,7 +123,7 @@ public:
 
     bool touch_up(touch_up_event const& event) override
     {
-        auto c = redirect.space.move_resize_window;
+        auto c = this->redirect.space.move_resize_window;
         if (!c) {
             return false;
         }
@@ -139,7 +140,6 @@ public:
 private:
     qint32 m_id = 0;
     bool m_set = false;
-    input::redirect& redirect;
 };
 
 }

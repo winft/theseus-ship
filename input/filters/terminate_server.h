@@ -16,9 +16,15 @@
 namespace KWin::input
 {
 
-class terminate_server_filter : public event_filter
+template<typename Redirect>
+class terminate_server_filter : public event_filter<Redirect>
 {
 public:
+    explicit terminate_server_filter(Redirect& redirect)
+        : event_filter<Redirect>(redirect)
+    {
+    }
+
     bool key(key_event const& event) override
     {
         if (event.state == key_state::pressed) {

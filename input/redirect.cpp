@@ -45,10 +45,6 @@ redirect::~redirect()
     }
 }
 
-void redirect::uninstallInputEventFilter(event_filter* /*filter*/)
-{
-}
-
 void redirect::installInputEventSpy(event_spy* spy)
 {
     m_spies.push_back(spy);

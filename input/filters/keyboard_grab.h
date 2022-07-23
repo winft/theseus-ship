@@ -14,12 +14,13 @@
 namespace KWin::input
 {
 
-template<typename KeyboardFilter>
-class keyboard_grab : public event_filter
+template<typename Redirect, typename KeyboardFilter>
+class keyboard_grab : public event_filter<Redirect>
 {
 public:
-    keyboard_grab(KeyboardFilter* filter, xkb_keymap* keymap)
-        : filter{filter}
+    keyboard_grab(Redirect& redirect, KeyboardFilter* filter, xkb_keymap* keymap)
+        : event_filter<Redirect>(redirect)
+        , filter{filter}
         , keymap{xkb_keymap_get_as_string(keymap, XKB_KEYMAP_FORMAT_TEXT_V1)}
     {
         // TODO(romangg): Should we throw when keymap is null?

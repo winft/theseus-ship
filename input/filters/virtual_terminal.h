@@ -15,9 +15,15 @@
 namespace KWin::input
 {
 
-class virtual_terminal_filter : public event_filter
+template<typename Redirect>
+class virtual_terminal_filter : public event_filter<Redirect>
 {
 public:
+    explicit virtual_terminal_filter(Redirect& redirect)
+        : event_filter<Redirect>(redirect)
+    {
+    }
+
     bool key(key_event const& event) override
     {
         // really on press and not on release? X11 switches on press.

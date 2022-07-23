@@ -25,16 +25,22 @@
 namespace KWin::input
 {
 
-class window_selector_filter : public event_filter
+template<typename Redirect>
+class window_selector_filter : public event_filter<Redirect>
 {
 public:
+    explicit window_selector_filter(Redirect& redirect)
+        : event_filter<Redirect>(redirect)
+    {
+    }
+
     bool button(button_event const& event) override
     {
         if (!m_active) {
             return false;
         }
 
-        auto pointer = kwinApp()->input->redirect->pointer();
+        auto pointer = this->redirect.pointer();
         if (event.state == button_state::released) {
             if (pointer->buttons() == Qt::NoButton) {
                 if (event.key == BTN_RIGHT) {
@@ -75,7 +81,7 @@ public:
                 cancel();
             } else if (qt_key == Qt::Key_Enter || qt_key == Qt::Key_Return
                        || qt_key == Qt::Key_Space) {
-                accept(kwinApp()->input->redirect->globalPointer());
+                accept(this->redirect.globalPointer());
             }
 
             int mx = 0;
@@ -98,7 +104,7 @@ public:
             }
 
             auto platform = static_cast<input::wayland::platform*>(kwinApp()->input.get());
-            auto const pos = kwinApp()->input->redirect->globalPointer() + QPointF(mx, my);
+            auto const pos = this->redirect.globalPointer() + QPointF(mx, my);
 
             platform->warp_pointer(pos, event.base.time_msec);
         }
@@ -158,8 +164,8 @@ public:
         Q_ASSERT(!m_active);
         m_active = true;
         m_callback = callback;
-        kwinApp()->input->redirect->keyboard()->update();
-        kwinApp()->input->redirect->cancelTouch();
+        this->redirect.keyboard()->update();
+        this->redirect.cancelTouch();
     }
 
     void start(std::function<void(const QPoint&)> callback)
@@ -167,8 +173,8 @@ public:
         Q_ASSERT(!m_active);
         m_active = true;
         m_pointSelectionFallback = callback;
-        kwinApp()->input->redirect->keyboard()->update();
-        kwinApp()->input->redirect->cancelTouch();
+        this->redirect.keyboard()->update();
+        this->redirect.cancelTouch();
     }
 
 private:
@@ -177,8 +183,8 @@ private:
         m_active = false;
         m_callback = std::function<void(KWin::Toplevel*)>();
         m_pointSelectionFallback = std::function<void(const QPoint&)>();
-        kwinApp()->input->redirect->pointer()->removeWindowSelectionCursor();
-        kwinApp()->input->redirect->keyboard()->update();
+        this->redirect.pointer()->removeWindowSelectionCursor();
+        this->redirect.keyboard()->update();
         m_touchPoints.clear();
     }
 
@@ -197,7 +203,7 @@ private:
     {
         if (m_callback) {
             // TODO: this ignores shaped windows
-            m_callback(kwinApp()->input->redirect->findToplevel(pos));
+            m_callback(this->redirect.findToplevel(pos));
         }
         if (m_pointSelectionFallback) {
             m_pointSelectionFallback(pos);

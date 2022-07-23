@@ -181,18 +181,18 @@ void redirect::setup_filters()
     auto const has_global_shortcuts = waylandServer()->has_global_shortcut_support();
 
     if (kwinApp()->session->hasSessionControl() && has_global_shortcuts) {
-        m_filters.emplace_back(new virtual_terminal_filter);
+        m_filters.emplace_back(new virtual_terminal_filter<redirect>(*this));
     }
 
     installInputEventSpy(new touch_hide_cursor_spy);
     if (has_global_shortcuts) {
-        m_filters.emplace_back(new terminate_server_filter);
+        m_filters.emplace_back(new terminate_server_filter<redirect>(*this));
     }
-    m_filters.emplace_back(new drag_and_drop_filter(*this));
-    m_filters.emplace_back(new lock_screen_filter(*this));
-    m_filters.emplace_back(new popup_filter(*this));
+    m_filters.emplace_back(new drag_and_drop_filter<redirect>(*this));
+    m_filters.emplace_back(new lock_screen_filter<redirect>(*this));
+    m_filters.emplace_back(new popup_filter<redirect>(*this));
 
-    window_selector = new window_selector_filter;
+    window_selector = new window_selector_filter<redirect>(*this);
     m_filters.push_back(window_selector);
 
     if (has_global_shortcuts) {
@@ -206,14 +206,14 @@ void redirect::setup_filters()
 #endif
 
     if (has_global_shortcuts) {
-        m_filters.emplace_back(new global_shortcut_filter);
+        m_filters.emplace_back(new global_shortcut_filter(*this));
     }
 
-    m_filters.emplace_back(new decoration_event_filter);
+    m_filters.emplace_back(new decoration_event_filter(*this));
     m_filters.emplace_back(new internal_window_filter(*this));
 
-    m_filters.emplace_back(new window_action_filter);
-    m_filters_install_iterator = m_filters.insert(m_filters.cend(), new forward_filter);
+    m_filters.emplace_back(new window_action_filter(*this));
+    m_filters_install_iterator = m_filters.insert(m_filters.cend(), new forward_filter(*this));
     m_filters.emplace_back(new fake_tablet_filter(*this));
 }
 
@@ -270,19 +270,19 @@ bool redirect::isSelectingWindow() const
     return window_selector && window_selector->isActive();
 }
 
-void redirect::append_filter(event_filter* filter)
+void redirect::append_filter(event_filter<redirect>* filter)
 {
     Q_ASSERT(!contains(m_filters, filter));
     m_filters.insert(m_filters_install_iterator, filter);
 }
 
-void redirect::prependInputEventFilter(event_filter* filter)
+void redirect::prependInputEventFilter(event_filter<redirect>* filter)
 {
     Q_ASSERT(!contains(m_filters, filter));
     m_filters.insert(m_filters.begin(), filter);
 }
 
-void redirect::uninstallInputEventFilter(event_filter* filter)
+void redirect::uninstallInputEventFilter(event_filter<redirect>* filter)
 {
     remove_all(m_filters, filter);
 }

@@ -27,11 +27,12 @@
 namespace KWin::input
 {
 
-class lock_screen_filter : public event_filter
+template<typename Redirect>
+class lock_screen_filter : public event_filter<Redirect>
 {
 public:
-    explicit lock_screen_filter(input::redirect& redirect)
-        : redirect{redirect}
+    explicit lock_screen_filter(Redirect& redirect)
+        : event_filter<Redirect>(redirect)
     {
     }
 
@@ -65,7 +66,7 @@ public:
 
         if (pointerSurfaceAllowed()) {
             // TODO: should the pointer position always stay in sync, i.e. not do the check?
-            auto pos = kwinApp()->input->redirect->globalPointer();
+            auto pos = this->redirect.globalPointer();
             seat->pointers().set_position(pos.toPoint());
         }
 
@@ -106,7 +107,7 @@ public:
         }
 
         // continue normal processing
-        kwinApp()->input->redirect->keyboard()->update();
+        this->redirect.keyboard()->update();
 
         auto seat = waylandServer()->seat();
         seat->setTimestamp(event.base.time_msec);
@@ -134,8 +135,7 @@ public:
         auto seat = waylandServer()->seat();
         seat->setTimestamp(event.base.time_msec);
         if (touchSurfaceAllowed()) {
-            kwinApp()->input->redirect->touch()->insertId(event.id,
-                                                          seat->touches().touch_down(event.pos));
+            this->redirect.touch()->insertId(event.id, seat->touches().touch_down(event.pos));
         }
         return true;
     }
@@ -148,7 +148,7 @@ public:
         auto seat = waylandServer()->seat();
         seat->setTimestamp(event.base.time_msec);
         if (touchSurfaceAllowed()) {
-            const qint32 wraplandId = kwinApp()->input->redirect->touch()->mappedId(event.id);
+            const qint32 wraplandId = this->redirect.touch()->mappedId(event.id);
             if (wraplandId != -1) {
                 seat->touches().touch_move(wraplandId, event.pos);
             }
@@ -164,10 +164,10 @@ public:
         auto seat = waylandServer()->seat();
         seat->setTimestamp(event.base.time_msec);
         if (touchSurfaceAllowed()) {
-            const qint32 wraplandId = kwinApp()->input->redirect->touch()->mappedId(event.id);
+            const qint32 wraplandId = this->redirect.touch()->mappedId(event.id);
             if (wraplandId != -1) {
                 seat->touches().touch_up(wraplandId);
-                kwinApp()->input->redirect->touch()->removeId(event.id);
+                this->redirect.touch()->removeId(event.id);
             }
         }
         return true;
@@ -225,20 +225,18 @@ private:
 
     bool pointerSurfaceAllowed() const
     {
-        return is_surface_allowed(redirect, waylandServer()->seat()->pointers());
+        return is_surface_allowed(this->redirect, waylandServer()->seat()->pointers());
     }
 
     bool keyboardSurfaceAllowed() const
     {
-        return is_surface_allowed(redirect, waylandServer()->seat()->keyboards());
+        return is_surface_allowed(this->redirect, waylandServer()->seat()->keyboards());
     }
 
     bool touchSurfaceAllowed() const
     {
-        return is_surface_allowed(redirect, waylandServer()->seat()->touches());
+        return is_surface_allowed(this->redirect, waylandServer()->seat()->touches());
     }
-
-    input::redirect& redirect;
 };
 
 }
