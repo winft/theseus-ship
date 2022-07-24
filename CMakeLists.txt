@@ -395,7 +395,6 @@ set(kwin_SRCS
     debug/console/console.cpp
     debug/perf/ftrace.cpp
     input/device_redirect.cpp
-    input/event_spy.cpp
     input/keyboard.cpp
     input/keyboard_redirect.cpp
     input/platform.cpp
@@ -800,8 +799,6 @@ set(kwin_WAYLAND_SRCS
    input/dbus/tablet_mode_manager.cpp
    input/filters/helpers.cpp
    input/spies/keyboard_repeat.cpp
-   input/spies/touch_hide_cursor.cpp
-   input/spies/tablet_mode_switch.cpp
    input/wayland/cursor.cpp
    input/wayland/cursor_image.cpp
    input/wayland/cursor_theme.cpp
