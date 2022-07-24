@@ -83,9 +83,8 @@ void tablet_redirect::tabletToolEvent(redirect::TabletEventType type,
                     button,
                     button);
 
-    kwinApp()->input->redirect->processSpies(
-        std::bind(&event_spy::tabletToolEvent, std::placeholders::_1, &ev));
-    kwinApp()->input->redirect->processFilters(
+    redirect->processSpies(std::bind(&event_spy::tabletToolEvent, std::placeholders::_1, &ev));
+    redirect->processFilters(
         std::bind(&input::event_filter::tabletToolEvent, std::placeholders::_1, &ev));
 
     tip.down = tip_down;
@@ -100,9 +99,9 @@ void tablet_redirect::tabletToolButtonEvent(uint button, bool isPressed)
         pressed_buttons.tool.remove(button);
     }
 
-    kwinApp()->input->redirect->processSpies(
+    redirect->processSpies(
         std::bind(&event_spy::tabletToolButtonEvent, std::placeholders::_1, pressed_buttons.tool));
-    kwinApp()->input->redirect->processFilters(std::bind(
+    redirect->processFilters(std::bind(
         &input::event_filter::tabletToolButtonEvent, std::placeholders::_1, pressed_buttons.tool));
 }
 
@@ -114,32 +113,32 @@ void tablet_redirect::tabletPadButtonEvent(uint button, bool isPressed)
         pressed_buttons.pad.remove(button);
     }
 
-    kwinApp()->input->redirect->processSpies(
+    redirect->processSpies(
         std::bind(&event_spy::tabletPadButtonEvent, std::placeholders::_1, pressed_buttons.pad));
-    kwinApp()->input->redirect->processFilters(std::bind(
+    redirect->processFilters(std::bind(
         &input::event_filter::tabletPadButtonEvent, std::placeholders::_1, pressed_buttons.pad));
 }
 
 void tablet_redirect::tabletPadStripEvent(int number, int position, bool is_finger)
 {
-    kwinApp()->input->redirect->processSpies(std::bind(
+    redirect->processSpies(std::bind(
         &event_spy::tabletPadStripEvent, std::placeholders::_1, number, position, is_finger));
-    kwinApp()->input->redirect->processFilters(std::bind(&input::event_filter::tabletPadStripEvent,
-                                                         std::placeholders::_1,
-                                                         number,
-                                                         position,
-                                                         is_finger));
+    redirect->processFilters(std::bind(&input::event_filter::tabletPadStripEvent,
+                                       std::placeholders::_1,
+                                       number,
+                                       position,
+                                       is_finger));
 }
 
 void tablet_redirect::tabletPadRingEvent(int number, int position, bool is_finger)
 {
-    kwinApp()->input->redirect->processSpies(std::bind(
+    redirect->processSpies(std::bind(
         &event_spy::tabletPadRingEvent, std::placeholders::_1, number, position, is_finger));
-    kwinApp()->input->redirect->processFilters(std::bind(&input::event_filter::tabletPadRingEvent,
-                                                         std::placeholders::_1,
-                                                         number,
-                                                         position,
-                                                         is_finger));
+    redirect->processFilters(std::bind(&input::event_filter::tabletPadRingEvent,
+                                       std::placeholders::_1,
+                                       number,
+                                       position,
+                                       is_finger));
 }
 
 void tablet_redirect::cleanupDecoration(win::deco::client_impl* /*old*/,

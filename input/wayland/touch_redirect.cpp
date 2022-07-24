@@ -203,9 +203,8 @@ void touch_redirect::process_down(touch_down_event const& event)
     if (m_touches == 1) {
         device_redirect_update(this);
     }
-    kwinApp()->input->redirect->processSpies(
-        std::bind(&event_spy::touch_down, std::placeholders::_1, event_abs));
-    kwinApp()->input->redirect->processFilters(
+    redirect->processSpies(std::bind(&event_spy::touch_down, std::placeholders::_1, event_abs));
+    redirect->processFilters(
         std::bind(&input::event_filter::touch_down, std::placeholders::_1, event_abs));
     window_already_updated_this_cycle = false;
 }
@@ -214,9 +213,8 @@ void touch_redirect::process_up(touch_up_event const& event)
 {
     window_already_updated_this_cycle = false;
 
-    kwinApp()->input->redirect->processSpies(
-        std::bind(&event_spy::touch_up, std::placeholders::_1, event));
-    kwinApp()->input->redirect->processFilters(
+    redirect->processSpies(std::bind(&event_spy::touch_up, std::placeholders::_1, event));
+    redirect->processFilters(
         std::bind(&input::event_filter::touch_up, std::placeholders::_1, event));
 
     window_already_updated_this_cycle = false;
@@ -235,9 +233,8 @@ void touch_redirect::process_motion(touch_motion_event const& event)
     m_lastPosition = event_abs.pos;
     window_already_updated_this_cycle = false;
 
-    kwinApp()->input->redirect->processSpies(
-        std::bind(&event_spy::touch_motion, std::placeholders::_1, event_abs));
-    kwinApp()->input->redirect->processFilters(
+    redirect->processSpies(std::bind(&event_spy::touch_motion, std::placeholders::_1, event_abs));
+    redirect->processFilters(
         std::bind(&input::event_filter::touch_motion, std::placeholders::_1, event_abs));
 
     window_already_updated_this_cycle = false;
