@@ -37,6 +37,8 @@ public:
 
     void process_modifiers(modifiers_event const& event) override;
 
+    wayland::redirect* redirect;
+
 private:
     QMetaObject::Connection m_activeClientSurfaceChangedConnection;
     modifiers_changed_spy* modifiers_spy{nullptr};

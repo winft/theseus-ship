@@ -7,8 +7,6 @@
 
 #include "input/pointer_redirect.h"
 
-#include "redirect.h"
-
 class QWindow;
 
 namespace Wrapland::Server
@@ -22,16 +20,19 @@ class Toplevel;
 
 namespace input
 {
+
 class pointer;
 
 namespace wayland
 {
 
+class redirect;
+
 class KWIN_EXPORT pointer_redirect : public input::pointer_redirect
 {
     Q_OBJECT
 public:
-    explicit pointer_redirect(input::redirect* redirect);
+    explicit pointer_redirect(wayland::redirect* redirect);
     void init();
 
     void updateAfterScreenChange() override;
@@ -78,6 +79,8 @@ public:
 
     void focusUpdate(Toplevel* focusOld, Toplevel* focusNow) override;
     QPointF position() const override;
+
+    wayland::redirect* redirect;
 
 private:
     void update_on_start_move_resize();

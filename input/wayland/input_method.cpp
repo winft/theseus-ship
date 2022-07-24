@@ -7,6 +7,7 @@
 #include "input_method.h"
 
 #include "platform.h"
+#include "redirect.h"
 
 #include "base/wayland/server.h"
 #include "input/filters/keyboard_grab.h"
@@ -151,14 +152,14 @@ void input_method::handle_keyboard_grabbed(input_method_keyboard_grab_v2* grab)
 
     if (auto ti3 = waylandServer()->seat()->text_inputs().v3.text_input;
         ti3 && ti3->state().enabled) {
-        kwinApp()->input->redirect->append_filter(filter);
+        static_cast<redirect&>(*kwinApp()->input->redirect).append_filter(filter);
     }
 }
 
 void input_method::activate_filters()
 {
     for (auto const& filter : filters) {
-        kwinApp()->input->redirect->append_filter(filter.get());
+        static_cast<redirect&>(*kwinApp()->input->redirect).append_filter(filter.get());
     }
 }
 

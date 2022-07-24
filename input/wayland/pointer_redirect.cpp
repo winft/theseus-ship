@@ -11,6 +11,7 @@
 #include "cursor.h"
 #include "cursor_image.h"
 #include "device_redirect.h"
+#include "redirect.h"
 
 #include "base/wayland/server.h"
 #include "input/event.h"
@@ -51,8 +52,9 @@ static QPointF confineToBoundingBox(QPointF const& pos, QRectF const& boundingBo
                    qBound(boundingBox.top(), pos.y(), boundingBox.bottom() - 1.0));
 }
 
-pointer_redirect::pointer_redirect(input::redirect* redirect)
+pointer_redirect::pointer_redirect(wayland::redirect* redirect)
     : input::pointer_redirect(redirect)
+    , redirect{redirect}
 {
 }
 

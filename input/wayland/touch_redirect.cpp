@@ -7,6 +7,7 @@
 #include "touch_redirect.h"
 
 #include "device_redirect.h"
+#include "redirect.h"
 
 #include "input/event.h"
 #include "input/event_filter.h"
@@ -28,8 +29,9 @@
 namespace KWin::input::wayland
 {
 
-touch_redirect::touch_redirect(input::redirect* redirect)
+touch_redirect::touch_redirect(wayland::redirect* redirect)
     : input::touch_redirect(redirect)
+    , redirect{redirect}
 {
 }
 

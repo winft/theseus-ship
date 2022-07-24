@@ -17,6 +17,7 @@
 #include "fake/pointer.h"
 #include "fake/touch.h"
 
+#include "input/event_filter.h"
 #include "input/keyboard.h"
 #include "input/pointer.h"
 #include "input/switch.h"
@@ -125,7 +126,13 @@ void redirect::setup_devices()
     QObject::connect(&platform, &platform::switch_added, this, &redirect::handle_switch_added);
 }
 
-redirect::~redirect() = default;
+redirect::~redirect()
+{
+    auto const filters = m_filters;
+    for (auto filter : filters) {
+        delete filter;
+    }
+}
 
 void redirect::setup_workspace()
 {
@@ -261,6 +268,23 @@ bool redirect::isSelectingWindow() const
     // TODO(romangg): This function is called before setup_filters is run (from setup_workspace).
     //                Can we ensure it's only called afterwards and remove the nullptr check?
     return window_selector && window_selector->isActive();
+}
+
+void redirect::append_filter(event_filter* filter)
+{
+    Q_ASSERT(!contains(m_filters, filter));
+    m_filters.insert(m_filters_install_iterator, filter);
+}
+
+void redirect::prependInputEventFilter(event_filter* filter)
+{
+    Q_ASSERT(!contains(m_filters, filter));
+    m_filters.insert(m_filters.begin(), filter);
+}
+
+void redirect::uninstallInputEventFilter(event_filter* filter)
+{
+    remove_all(m_filters, filter);
 }
 
 void redirect::handle_pointer_added(input::pointer* pointer)

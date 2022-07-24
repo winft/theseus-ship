@@ -31,13 +31,14 @@ namespace KWin::input::wayland
 
 keyboard_redirect::keyboard_redirect(wayland::redirect* redirect)
     : input::keyboard_redirect(redirect)
+    , redirect{redirect}
 {
 }
 
 class KeyStateChangedSpy : public event_spy
 {
 public:
-    KeyStateChangedSpy(input::redirect* redirect)
+    KeyStateChangedSpy(wayland::redirect* redirect)
         : redirect(redirect)
     {
     }
@@ -48,7 +49,7 @@ public:
     }
 
 private:
-    input::redirect* redirect;
+    wayland::redirect* redirect;
 };
 
 class modifiers_changed_spy : public event_spy

@@ -19,8 +19,9 @@
 namespace KWin::input::wayland
 {
 
-tablet_redirect::tablet_redirect(input::redirect* redirect)
+tablet_redirect::tablet_redirect(wayland::redirect* redirect)
     : input::tablet_redirect(redirect)
+    , redirect{redirect}
 {
 }
 

@@ -10,7 +10,6 @@
 #include "switch.h"
 #include "touch.h"
 
-#include "event_filter.h"
 #include "event_spy.h"
 #include "keyboard_redirect.h"
 #include "pointer_redirect.h"
@@ -40,32 +39,14 @@ redirect::redirect(input::platform& platform, win::space& space)
 
 redirect::~redirect()
 {
-    auto const filters = m_filters;
-    for (auto filter : filters) {
-        delete filter;
-    }
-
     auto const spies = m_spies;
     for (auto spy : spies) {
         delete spy;
     }
 }
 
-void redirect::append_filter(event_filter* filter)
+void redirect::uninstallInputEventFilter(event_filter* /*filter*/)
 {
-    Q_ASSERT(!contains(m_filters, filter));
-    m_filters.insert(m_filters_install_iterator, filter);
-}
-
-void redirect::prependInputEventFilter(event_filter* filter)
-{
-    Q_ASSERT(!contains(m_filters, filter));
-    m_filters.insert(m_filters.begin(), filter);
-}
-
-void redirect::uninstallInputEventFilter(event_filter* filter)
-{
-    remove_all(m_filters, filter);
 }
 
 void redirect::installInputEventSpy(event_spy* spy)
