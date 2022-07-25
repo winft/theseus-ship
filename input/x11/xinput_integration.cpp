@@ -333,25 +333,6 @@ void xinput_integration::setup_fake_devices()
         pointer, &pointer::button_changed, pointer_red, &input::pointer_redirect::process_button);
 
     QObject::connect(
-        pointer, &pointer::motion, pointer_red, &input::pointer_redirect::process_motion);
-    QObject::connect(pointer,
-                     &pointer::motion_absolute,
-                     pointer_red,
-                     &input::pointer_redirect::process_motion_absolute);
-
-    QObject::connect(
-        pointer, &pointer::axis_changed, pointer_red, &input::pointer_redirect::process_axis);
-
-    QObject::connect(
-        pointer, &pointer::pinch_begin, pointer_red, &input::pointer_redirect::process_pinch_begin);
-    QObject::connect(pointer,
-                     &pointer::pinch_update,
-                     pointer_red,
-                     &input::pointer_redirect::process_pinch_update);
-    QObject::connect(
-        pointer, &pointer::pinch_end, pointer_red, &input::pointer_redirect::process_pinch_end);
-
-    QObject::connect(
         keyboard, &keyboard::key_changed, keyboard_red, &input::keyboard_redirect::process_key);
 }
 
