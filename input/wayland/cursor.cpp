@@ -61,9 +61,10 @@ void cursor::do_set_pos()
     Q_EMIT pos_changed(current_pos());
 }
 
-Qt::KeyboardModifiers get_keyboard_modifiers()
+template<typename Platform>
+Qt::KeyboardModifiers get_keyboard_modifiers(Platform const& platform)
 {
-    return xkb::get_active_keyboard_modifiers(kwinApp()->input.get());
+    return xkb::get_active_keyboard_modifiers(&platform);
 }
 
 void cursor::slot_pos_changed(const QPointF& pos)
@@ -71,7 +72,7 @@ void cursor::slot_pos_changed(const QPointF& pos)
     auto const oldPos = current_pos();
     update_pos(pos.toPoint());
 
-    auto mods = get_keyboard_modifiers();
+    auto mods = get_keyboard_modifiers(*platform);
     Q_EMIT mouse_changed(pos.toPoint(), oldPos, m_currentButtons, m_currentButtons, mods, mods);
 }
 
@@ -87,7 +88,7 @@ void cursor::slot_pointer_button_changed()
     m_currentButtons = platform->redirect->qtButtonStates();
 
     auto const pos = current_pos();
-    auto mods = get_keyboard_modifiers();
+    auto mods = get_keyboard_modifiers(*platform);
 
     Q_EMIT mouse_changed(pos, pos, m_currentButtons, oldButtons, mods, mods);
 }
