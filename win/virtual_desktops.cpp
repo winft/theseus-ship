@@ -856,6 +856,26 @@ void virtual_desktop_manager::setNETDesktopLayout(Qt::Orientation orientation,
     Q_EMIT rowsChanged(height);
 }
 
+template<typename Manager, typename Slot>
+QAction* add_action(Manager& manager,
+                    QString const& name,
+                    KLocalizedString const& label,
+                    uint value,
+                    const QKeySequence& key,
+                    Slot slot)
+{
+    auto a = new QAction(&manager);
+    a->setProperty("componentName", QStringLiteral(KWIN_NAME));
+    a->setObjectName(name.arg(value));
+    a->setText(label.subs(value).toString());
+    a->setData(value);
+
+    KGlobalAccel::setGlobalShortcut(a, key);
+    kwinApp()->input->registerShortcut(key, a, &manager, [a, slot] { slot(*a); });
+
+    return a;
+}
+
 void virtual_desktop_manager::initShortcuts()
 {
     initSwitchToShortcuts();
@@ -899,49 +919,36 @@ void virtual_desktop_manager::initSwitchToShortcuts()
     auto const toDesktop = QStringLiteral("Switch to Desktop %1");
     KLocalizedString const toDesktopLabel = ki18n("Switch to Desktop %1");
 
-    addAction(toDesktop,
-              toDesktopLabel,
-              1,
-              QKeySequence(Qt::CTRL + Qt::Key_F1),
-              &virtual_desktop_manager::slotSwitchTo);
-    addAction(toDesktop,
-              toDesktopLabel,
-              2,
-              QKeySequence(Qt::CTRL + Qt::Key_F2),
-              &virtual_desktop_manager::slotSwitchTo);
-    addAction(toDesktop,
-              toDesktopLabel,
-              3,
-              QKeySequence(Qt::CTRL + Qt::Key_F3),
-              &virtual_desktop_manager::slotSwitchTo);
-    addAction(toDesktop,
-              toDesktopLabel,
-              4,
-              QKeySequence(Qt::CTRL + Qt::Key_F4),
-              &virtual_desktop_manager::slotSwitchTo);
+    add_action(*this,
+               toDesktop,
+               toDesktopLabel,
+               1,
+               QKeySequence(Qt::CTRL + Qt::Key_F1),
+               [this](auto& action) { slotSwitchTo(action); });
+    add_action(*this,
+               toDesktop,
+               toDesktopLabel,
+               2,
+               QKeySequence(Qt::CTRL + Qt::Key_F2),
+               [this](auto& action) { slotSwitchTo(action); });
+    add_action(*this,
+               toDesktop,
+               toDesktopLabel,
+               3,
+               QKeySequence(Qt::CTRL + Qt::Key_F3),
+               [this](auto& action) { slotSwitchTo(action); });
+    add_action(*this,
+               toDesktop,
+               toDesktopLabel,
+               4,
+               QKeySequence(Qt::CTRL + Qt::Key_F4),
+               [this](auto& action) { slotSwitchTo(action); });
 
     for (uint i = 5; i <= maximum(); ++i) {
-        addAction(
-            toDesktop, toDesktopLabel, i, QKeySequence(), &virtual_desktop_manager::slotSwitchTo);
+        add_action(*this, toDesktop, toDesktopLabel, i, QKeySequence(), [this](auto& action) {
+            slotSwitchTo(action);
+        });
     }
-}
-
-QAction* virtual_desktop_manager::addAction(QString const& name,
-                                            KLocalizedString const& label,
-                                            uint value,
-                                            const QKeySequence& key,
-                                            void (virtual_desktop_manager::*slot)())
-{
-    auto a = new QAction(this);
-    a->setProperty("componentName", QStringLiteral(KWIN_NAME));
-    a->setObjectName(name.arg(value));
-    a->setText(label.subs(value).toString());
-    a->setData(value);
-
-    KGlobalAccel::setGlobalShortcut(a, key);
-    kwinApp()->input->registerShortcut(key, a, this, slot);
-
-    return a;
 }
 
 QAction* virtual_desktop_manager::addAction(QString const& name,
@@ -959,20 +966,13 @@ QAction* virtual_desktop_manager::addAction(QString const& name,
     return a;
 }
 
-void virtual_desktop_manager::slotSwitchTo()
+void virtual_desktop_manager::slotSwitchTo(QAction& action)
 {
-    auto act = qobject_cast<QAction*>(sender());
-    if (!act) {
-        return;
-    }
-
     bool ok = false;
-    uint const i = act->data().toUInt(&ok);
-    if (!ok) {
-        return;
+    uint const i = action.data().toUInt(&ok);
+    if (ok) {
+        setCurrent(i);
     }
-
-    setCurrent(i);
 }
 
 void virtual_desktop_manager::setNavigationWrappingAround(bool enabled)

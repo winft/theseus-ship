@@ -413,7 +413,7 @@ private:
      * This method uses the sender() method to access some data.
      * DO NOT CALL DIRECTLY! ONLY TO BE USED FROM AN ACTION!
      */
-    void slotSwitchTo();
+    void slotSwitchTo(QAction& action);
     /**
      * Slot for switch to next desktop action.
      */
@@ -452,21 +452,6 @@ private:
      * Creates all the global keyboard shortcuts for "Switch To Desktop n" actions.
      */
     void initSwitchToShortcuts();
-    /**
-     * Creates an action and connects it to the @p slot in this Manager. This method is
-     * meant to be used for the case that an additional information needs to be stored in
-     * the action and the label.
-     * @param name The name of the action to be created
-     * @param label The localized name for the action to be created
-     * @param value An additional value added to the label and to the created action
-     * @param key The global shortcut for the action
-     * @param slot The slot to invoke when the action is triggered
-     */
-    QAction* addAction(QString const& name,
-                       KLocalizedString const& label,
-                       uint value,
-                       QKeySequence const& key,
-                       void (virtual_desktop_manager::*slot)());
     /**
      * Creates an action and connects it to the @p slot in this Manager.
      * Overloaded method for the case that no additional value needs to be passed to the action and
