@@ -8,6 +8,7 @@
 */
 #include "cursor_image.h"
 
+#include "cursor.h"
 #include "cursor_theme.h"
 #include "platform.h"
 
@@ -283,7 +284,9 @@ void cursor_image::loadTheme()
 
     // check whether we can create it
     if (waylandServer()->internal_connection.shm) {
-        m_cursorTheme = std::make_unique<cursor_theme>(waylandServer()->internal_connection.shm);
+        m_cursorTheme
+            = std::make_unique<cursor_theme>(static_cast<wayland::cursor&>(*platform.cursor),
+                                             waylandServer()->internal_connection.shm);
         QObject::connect(waylandServer(),
                          &base::wayland::server::terminating_internal_client_connection,
                          this,

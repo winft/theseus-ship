@@ -23,12 +23,14 @@ class ShmPool;
 namespace KWin::input::wayland
 {
 
+class cursor;
+
 // Exported for integration tests.
 class KWIN_EXPORT cursor_theme : public QObject
 {
     Q_OBJECT
 public:
-    explicit cursor_theme(Wrapland::Client::ShmPool* shm);
+    cursor_theme(wayland::cursor& cursor, Wrapland::Client::ShmPool* shm);
     ~cursor_theme() override;
 
     wl_cursor_image* get(input::cursor_shape shape);
@@ -41,8 +43,9 @@ private:
     void loadTheme();
     void destroyTheme();
 
-    wl_cursor_theme* m_theme;
-    Wrapland::Client::ShmPool* m_shm = nullptr;
+    wayland::cursor& cursor;
+    wl_cursor_theme* m_theme{nullptr};
+    Wrapland::Client::ShmPool* m_shm;
 };
 
 }

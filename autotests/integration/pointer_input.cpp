@@ -21,8 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/options.h"
 #include "base/wayland/server.h"
-#include "input/cursor.h"
 #include "input/pointer_redirect.h"
+#include "input/wayland/cursor.h"
 #include "input/wayland/cursor_theme.h"
 #include "render/effects.h"
 #include "toplevel.h"
@@ -65,7 +65,9 @@ PlatformCursorImage loadReferenceThemeCursor(const T& shape)
     }
 
     std::unique_ptr<input::wayland::cursor_theme> cursorTheme;
-    cursorTheme.reset(new input::wayland::cursor_theme(waylandServer()->internal_connection.shm));
+    cursorTheme.reset(new input::wayland::cursor_theme(
+        static_cast<input::wayland::cursor&>(*Test::app()->input->cursor),
+        waylandServer()->internal_connection.shm));
 
     wl_cursor_image* cursor = cursorTheme->get(shape);
     if (!cursor) {
