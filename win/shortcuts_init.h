@@ -13,6 +13,7 @@
 #include "main.h"
 #include "render/platform.h"
 #include "render/post/night_color_manager.h"
+#include "render/post/night_color_setup.h"
 
 #include <QAction>
 #include <QKeySequence>
@@ -310,7 +311,8 @@ void init_shortcuts(Space& space)
     space.tabbox->init_shortcuts();
 #endif
     space.virtual_desktop_manager->initShortcuts();
-    kwinApp()->get_base().render->night_color->init_shortcuts();
+    render::post::init_night_color_shortcuts(*kwinApp()->input,
+                                             *kwinApp()->get_base().render->night_color);
 
     // so that it's recreated next time
     space.user_actions_menu->discard();

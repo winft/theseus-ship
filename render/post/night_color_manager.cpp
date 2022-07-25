@@ -34,9 +34,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "color_correct_settings.h"
 
-#include <KGlobalAccel>
-#include <KLocalizedString>
-#include <QAction>
 #include <QDBusConnection>
 #include <QTimer>
 
@@ -249,25 +246,6 @@ QDateTime night_color_manager::scheduled_transition_date_time() const
 qint64 night_color_manager::scheduled_transition_duration() const
 {
     return next_transition.first.msecsTo(next_transition.second);
-}
-
-void night_color_manager::init_shortcuts()
-{
-    // legacy shortcut with localized key (to avoid breaking existing config)
-    if (i18n("Toggle Night Color") != QStringLiteral("Toggle Night Color")) {
-        QAction toggleActionLegacy;
-        toggleActionLegacy.setProperty("componentName", QStringLiteral(KWIN_NAME));
-        toggleActionLegacy.setObjectName(i18n("Toggle Night Color"));
-        KGlobalAccel::self()->removeAllShortcuts(&toggleActionLegacy);
-    }
-
-    QAction* toggleAction = new QAction(this);
-    toggleAction->setProperty("componentName", QStringLiteral(KWIN_NAME));
-    toggleAction->setObjectName(QStringLiteral("Toggle Night Color"));
-    toggleAction->setText(i18n("Toggle Night Color"));
-    KGlobalAccel::setGlobalShortcut(toggleAction, QList<QKeySequence>());
-    kwinApp()->input->registerShortcut(
-        QKeySequence(), toggleAction, this, &night_color_manager::toggle);
 }
 
 void night_color_manager::read_config()
