@@ -16,8 +16,9 @@ namespace KWin::input
 class tablet_mode_switch_spy : public input::event_spy
 {
 public:
-    explicit tablet_mode_switch_spy(dbus::tablet_mode_manager* manager)
-        : manager(manager)
+    tablet_mode_switch_spy(input::redirect& redirect, dbus::tablet_mode_manager* manager)
+        : event_spy(redirect)
+        , manager(manager)
     {
     }
 

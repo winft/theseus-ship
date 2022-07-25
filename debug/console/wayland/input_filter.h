@@ -17,7 +17,7 @@ namespace KWin::debug
 class input_filter : public input::event_spy
 {
 public:
-    explicit input_filter(QTextEdit* textEdit);
+    input_filter(input::redirect& redirect, QTextEdit* textEdit);
 
     void button(input::button_event const& event) override;
     void motion(input::motion_event const& event) override;

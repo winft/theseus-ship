@@ -59,7 +59,8 @@ tablet_mode_manager::tablet_mode_manager()
     auto redirect = static_cast<input::wayland::redirect*>(kwinApp()->input->redirect);
 
     if (redirect->has_tablet_mode_switch()) {
-        redirect->installInputEventSpy(new tablet_mode_switch_spy(this));
+        redirect->installInputEventSpy(
+            new tablet_mode_switch_spy(*kwinApp()->input->redirect, this));
     } else {
         Q_EMIT redirect->has_tablet_mode_switch_changed(false);
     }
@@ -84,7 +85,7 @@ void tablet_mode_manager::hasTabletModeInputChanged(bool set)
 {
     if (set) {
         if (!spy) {
-            spy = new tablet_mode_switch_spy(this);
+            spy = new tablet_mode_switch_spy(*kwinApp()->input->redirect, this);
             kwinApp()->input->redirect->installInputEventSpy(spy);
         }
         setTabletModeAvailable(true);

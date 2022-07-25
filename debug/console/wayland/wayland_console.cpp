@@ -37,10 +37,10 @@ wayland_console::wayland_console(win::space& space)
     m_ui->inputDevicesView->setModel(new input_device_model(this));
     m_ui->inputDevicesView->setItemDelegate(new wayland_console_delegate(this));
 
-    QObject::connect(m_ui->tabWidget, &QTabWidget::currentChanged, this, [this](int index) {
+    QObject::connect(m_ui->tabWidget, &QTabWidget::currentChanged, this, [this, &space](int index) {
         // delay creation of input event filter until the tab is selected
         if (index == 2 && m_inputFilter.isNull()) {
-            m_inputFilter.reset(new input_filter(m_ui->inputTextEdit));
+            m_inputFilter.reset(new input_filter(*space.input, m_ui->inputTextEdit));
             kwinApp()->input->redirect->installInputEventSpy(m_inputFilter.data());
         }
         if (index == 5) {

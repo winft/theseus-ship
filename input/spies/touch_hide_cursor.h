@@ -17,6 +17,11 @@ namespace KWin::input
 class touch_hide_cursor_spy : public event_spy
 {
 public:
+    explicit touch_hide_cursor_spy(input::redirect& redirect)
+        : event_spy(redirect)
+    {
+    }
+
     void button(button_event const& /*event*/) override
     {
         showCursor();

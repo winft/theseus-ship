@@ -32,12 +32,14 @@ namespace KWin::input
 class event_spy
 {
 public:
-    event_spy() = default;
+    event_spy(input::redirect& redirect)
+        : redirect{redirect}
+    {
+    }
 
     virtual ~event_spy()
     {
-        assert(kwinApp()->input->redirect);
-        kwinApp()->input->redirect->uninstallInputEventSpy(this);
+        redirect.uninstallInputEventSpy(this);
     }
 
     virtual void button(button_event const& /*event*/)
@@ -119,6 +121,8 @@ public:
     virtual void tabletPadRingEvent(int /*number*/, int /*position*/, bool /*isFinger*/)
     {
     }
+
+    input::redirect& redirect;
 };
 
 }

@@ -36,8 +36,9 @@ Q_SIGNALS:
 class keyboard_repeat_spy : public input::event_spy
 {
 public:
-    keyboard_repeat_spy()
-        : qobject{std::make_unique<keyboard_repeat_spy_qobject>()}
+    keyboard_repeat_spy(input::redirect& redirect)
+        : event_spy(redirect)
+        , qobject{std::make_unique<keyboard_repeat_spy_qobject>()}
         , m_timer{std::make_unique<QTimer>()}
     {
         QObject::connect(

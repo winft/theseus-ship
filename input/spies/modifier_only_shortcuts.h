@@ -50,7 +50,8 @@ class modifier_only_shortcuts_spy : public event_spy
 {
 public:
     explicit modifier_only_shortcuts_spy(input::redirect& redirect)
-        : qobject{std::make_unique<modifier_only_shortcuts_spy_qobject>()}
+        : event_spy(redirect)
+        , qobject{std::make_unique<modifier_only_shortcuts_spy_qobject>()}
         , redirect{redirect}
     {
         QObject::connect(kwinApp()->screen_locker_watcher.get(),

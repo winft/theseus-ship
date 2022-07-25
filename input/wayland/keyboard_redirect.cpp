@@ -39,7 +39,8 @@ class KeyStateChangedSpy : public event_spy
 {
 public:
     KeyStateChangedSpy(wayland::redirect* redirect)
-        : redirect(redirect)
+        : event_spy(*redirect)
+        , redirect(redirect)
     {
     }
 
@@ -56,7 +57,8 @@ class modifiers_changed_spy : public event_spy
 {
 public:
     modifiers_changed_spy(input::redirect* redirect)
-        : redirect{redirect}
+        : event_spy(*redirect)
+        , redirect{redirect}
         , m_modifiers()
     {
     }
@@ -102,7 +104,7 @@ void keyboard_redirect::init()
         redirect->installInputEventSpy(new modifier_only_shortcuts_spy(*redirect));
     }
 
-    auto keyRepeatSpy = new keyboard_repeat_spy();
+    auto keyRepeatSpy = new keyboard_repeat_spy(*redirect);
     QObject::connect(keyRepeatSpy->qobject.get(),
                      &keyboard_repeat_spy_qobject::key_repeated,
                      this,

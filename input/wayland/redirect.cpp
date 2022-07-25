@@ -201,7 +201,7 @@ void redirect::setup_filters()
         m_filters.emplace_back(new virtual_terminal_filter<redirect>(*this));
     }
 
-    installInputEventSpy(new touch_hide_cursor_spy);
+    installInputEventSpy(new touch_hide_cursor_spy(*this));
     if (has_global_shortcuts) {
         m_filters.emplace_back(new terminate_server_filter<redirect>(*this));
     }

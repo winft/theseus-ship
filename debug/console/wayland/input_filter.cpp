@@ -136,8 +136,8 @@ static QString buttonsToString(Qt::MouseButtons buttons)
     return ret.trimmed();
 }
 
-input_filter::input_filter(QTextEdit* textEdit)
-    : input::event_spy()
+input_filter::input_filter(input::redirect& redirect, QTextEdit* textEdit)
+    : input::event_spy(redirect)
     , m_textEdit(textEdit)
 {
     m_textEdit->document()->setMaximumBlockCount(1000);
