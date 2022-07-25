@@ -857,6 +857,20 @@ void virtual_desktop_manager::setNETDesktopLayout(Qt::Orientation orientation,
 }
 
 template<typename Manager, typename Slot>
+QAction* add_action(Manager& manager, QString const& name, QString const& label, Slot slot)
+{
+    auto a = new QAction(&manager);
+    a->setProperty("componentName", QStringLiteral(KWIN_NAME));
+    a->setObjectName(name);
+    a->setText(label);
+
+    KGlobalAccel::setGlobalShortcut(a, QKeySequence());
+    kwinApp()->input->registerShortcut(QKeySequence(), a, &manager, slot);
+
+    return a;
+}
+
+template<typename Manager, typename Slot>
 QAction* add_action(Manager& manager,
                     QString const& name,
                     KLocalizedString const& label,
@@ -880,28 +894,34 @@ void virtual_desktop_manager::initShortcuts()
 {
     initSwitchToShortcuts();
 
-    auto nextAction = addAction(QStringLiteral("Switch to Next Desktop"),
-                                i18n("Switch to Next Desktop"),
-                                &virtual_desktop_manager::slotNext);
+    auto nextAction = add_action(*this,
+                                 QStringLiteral("Switch to Next Desktop"),
+                                 i18n("Switch to Next Desktop"),
+                                 &virtual_desktop_manager::slotNext);
     kwinApp()->input->registerTouchpadSwipeShortcut(SwipeDirection::Right, nextAction);
 
-    auto previousAction = addAction(QStringLiteral("Switch to Previous Desktop"),
-                                    i18n("Switch to Previous Desktop"),
-                                    &virtual_desktop_manager::slotPrevious);
+    auto previousAction = add_action(*this,
+                                     QStringLiteral("Switch to Previous Desktop"),
+                                     i18n("Switch to Previous Desktop"),
+                                     &virtual_desktop_manager::slotPrevious);
     kwinApp()->input->registerTouchpadSwipeShortcut(SwipeDirection::Left, previousAction);
 
-    addAction(QStringLiteral("Switch One Desktop to the Right"),
-              i18n("Switch One Desktop to the Right"),
-              &virtual_desktop_manager::slotRight);
-    addAction(QStringLiteral("Switch One Desktop to the Left"),
-              i18n("Switch One Desktop to the Left"),
-              &virtual_desktop_manager::slotLeft);
-    addAction(QStringLiteral("Switch One Desktop Up"),
-              i18n("Switch One Desktop Up"),
-              &virtual_desktop_manager::slotUp);
-    addAction(QStringLiteral("Switch One Desktop Down"),
-              i18n("Switch One Desktop Down"),
-              &virtual_desktop_manager::slotDown);
+    add_action(*this,
+               QStringLiteral("Switch One Desktop to the Right"),
+               i18n("Switch One Desktop to the Right"),
+               &virtual_desktop_manager::slotRight);
+    add_action(*this,
+               QStringLiteral("Switch One Desktop to the Left"),
+               i18n("Switch One Desktop to the Left"),
+               &virtual_desktop_manager::slotLeft);
+    add_action(*this,
+               QStringLiteral("Switch One Desktop Up"),
+               i18n("Switch One Desktop Up"),
+               &virtual_desktop_manager::slotUp);
+    add_action(*this,
+               QStringLiteral("Switch One Desktop Down"),
+               i18n("Switch One Desktop Down"),
+               &virtual_desktop_manager::slotDown);
 
     // axis events
     kwinApp()->input->registerAxisShortcut(
@@ -949,21 +969,6 @@ void virtual_desktop_manager::initSwitchToShortcuts()
             slotSwitchTo(action);
         });
     }
-}
-
-QAction* virtual_desktop_manager::addAction(QString const& name,
-                                            QString const& label,
-                                            void (virtual_desktop_manager::*slot)())
-{
-    auto a = new QAction(this);
-    a->setProperty("componentName", QStringLiteral(KWIN_NAME));
-    a->setObjectName(name);
-    a->setText(label);
-
-    KGlobalAccel::setGlobalShortcut(a, QKeySequence());
-    kwinApp()->input->registerShortcut(QKeySequence(), a, this, slot);
-
-    return a;
 }
 
 void virtual_desktop_manager::slotSwitchTo(QAction& action)

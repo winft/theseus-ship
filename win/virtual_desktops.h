@@ -452,16 +452,6 @@ private:
      * Creates all the global keyboard shortcuts for "Switch To Desktop n" actions.
      */
     void initSwitchToShortcuts();
-    /**
-     * Creates an action and connects it to the @p slot in this Manager.
-     * Overloaded method for the case that no additional value needs to be passed to the action and
-     * no global shortcut is defined by default.
-     * @param name The name of the action to be created
-     * @param label The localized name for the action to be created
-     * @param slot The slot to invoke when the action is triggered
-     */
-    QAction*
-    addAction(QString const& name, QString const& label, void (virtual_desktop_manager::*slot)());
 
     QVector<virtual_desktop*> m_desktops;
     QPointer<virtual_desktop> m_current;
