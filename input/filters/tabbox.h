@@ -39,7 +39,7 @@ public:
             return false;
         }
 
-        auto qt_event = button_to_qt_event(event);
+        auto qt_event = button_to_qt_event(*this->redirect.pointer(), event);
         return tabbox->handle_mouse_event(&qt_event);
     }
 
@@ -51,7 +51,7 @@ public:
             return false;
         }
 
-        auto qt_event = motion_to_qt_event(event);
+        auto qt_event = motion_to_qt_event(*this->redirect.pointer(), event);
         return tabbox->handle_mouse_event(&qt_event);
     }
 
@@ -104,7 +104,7 @@ public:
             return false;
         }
 
-        auto qt_event = axis_to_qt_event(event);
+        auto qt_event = axis_to_qt_event(*this->redirect.pointer(), event);
         return tabbox->handle_wheel_event(&qt_event);
     }
 };

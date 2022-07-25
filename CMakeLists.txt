@@ -412,7 +412,6 @@ set(kwin_SRCS
     input/logging.cpp
     input/pointer.cpp
     input/x11/redirect.cpp
-    input/qt_event.cpp
     input/xkb/keyboard.cpp
     input/xkb/keymap.cpp
     input/xkb/manager.cpp

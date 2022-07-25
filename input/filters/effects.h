@@ -35,7 +35,7 @@ public:
         if (!this->redirect.space.render.effects) {
             return false;
         }
-        auto qt_event = button_to_qt_event(event);
+        auto qt_event = button_to_qt_event(*this->redirect.pointer(), event);
         return this->redirect.space.render.effects->checkInputWindowEvent(&qt_event);
     }
 
@@ -44,7 +44,7 @@ public:
         if (!this->redirect.space.render.effects) {
             return false;
         }
-        auto qt_event = motion_to_qt_event(event);
+        auto qt_event = motion_to_qt_event(*this->redirect.pointer(), event);
         return this->redirect.space.render.effects->checkInputWindowEvent(&qt_event);
     }
 
@@ -53,7 +53,7 @@ public:
         if (!this->redirect.space.render.effects) {
             return false;
         }
-        auto qt_event = axis_to_qt_event(event);
+        auto qt_event = axis_to_qt_event(*this->redirect.pointer(), event);
         return this->redirect.space.render.effects->checkInputWindowEvent(&qt_event);
     }
 

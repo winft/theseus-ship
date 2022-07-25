@@ -55,7 +55,7 @@ public:
             }
         }
 
-        auto qt_event = button_to_qt_event(event);
+        auto qt_event = button_to_qt_event(*this->redirect.pointer(), event);
         auto adapted_qt_event = QMouseEvent(qt_event.type(),
                                             qt_event.pos() - internal->position(),
                                             qt_event.pos(),
@@ -74,7 +74,7 @@ public:
             return false;
         }
 
-        auto qt_event = motion_to_qt_event(event);
+        auto qt_event = motion_to_qt_event(*this->redirect.pointer(), event);
         auto adapted_qt_event = QMouseEvent(qt_event.type(),
                                             qt_event.pos() - internal->position(),
                                             qt_event.pos(),
@@ -105,7 +105,7 @@ public:
             }
         }
 
-        auto qt_event = axis_to_qt_event(event);
+        auto qt_event = axis_to_qt_event(*this->redirect.pointer(), event);
         auto adapted_qt_event = QWheelEvent(qt_event.pos() - internal->position(),
                                             qt_event.pos(),
                                             QPoint(),

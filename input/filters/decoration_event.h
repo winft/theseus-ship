@@ -104,7 +104,7 @@ public:
             }
         }
 
-        auto qt_event = axis_to_qt_event(event);
+        auto qt_event = axis_to_qt_event(*this->redirect.pointer(), event);
         auto adapted_qt_event = QWheelEvent(qt_event.pos() - window->pos(),
                                             qt_event.pos(),
                                             QPoint(),
