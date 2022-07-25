@@ -179,7 +179,7 @@ void keyboard_redirect::process_key(key_event const& event)
 {
     auto& xkb = event.base.dev->xkb;
 
-    input::keyboard_redirect::process_key(event);
+    keyboard_redirect_prepare_key(*this, event);
 
     redirect->processFilters(
         std::bind(&event_filter<wayland::redirect>::key, std::placeholders::_1, event));
@@ -188,7 +188,7 @@ void keyboard_redirect::process_key(key_event const& event)
 
 void keyboard_redirect::process_key_repeat(const key_event& event)
 {
-    input::keyboard_redirect::process_key_repeat(event);
+    redirect->processSpies(std::bind(&event_spy::key_repeat, std::placeholders::_1, event));
     redirect->processFilters(
         std::bind(&event_filter<wayland::redirect>::key_repeat, std::placeholders::_1, event));
 }

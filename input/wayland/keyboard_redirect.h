@@ -33,7 +33,7 @@ public:
     void update() override;
 
     void process_key(key_event const& event) override;
-    void process_key_repeat(key_event const& event) override;
+    void process_key_repeat(key_event const& event);
 
     void process_modifiers(modifiers_event const& event) override;
 
