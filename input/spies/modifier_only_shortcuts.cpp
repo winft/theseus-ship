@@ -36,14 +36,13 @@ namespace KWin::input
 {
 
 modifier_only_shortcuts_spy::modifier_only_shortcuts_spy(input::redirect& redirect)
-    : QObject()
-    , event_spy()
+    : qobject{std::make_unique<modifier_only_shortcuts_spy_qobject>()}
     , redirect{redirect}
 {
     QObject::connect(kwinApp()->screen_locker_watcher.get(),
                      &desktop::screen_locker_watcher::locked,
-                     this,
-                     &modifier_only_shortcuts_spy::reset);
+                     qobject.get(),
+                     [this] { reset(); });
 }
 
 modifier_only_shortcuts_spy::~modifier_only_shortcuts_spy() = default;
@@ -102,5 +101,4 @@ void modifier_only_shortcuts_spy::axis([[maybe_unused]] axis_event const& event)
 {
     reset();
 }
-
 }

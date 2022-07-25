@@ -76,10 +76,17 @@ tablet_mode_manager::tablet_mode_manager()
                      &tablet_mode_manager::hasTabletModeInputChanged);
 }
 
+tablet_mode_manager::~tablet_mode_manager()
+{
+    kwinApp()->input->redirect->uninstallInputEventSpy(spy);
+}
 void tablet_mode_manager::hasTabletModeInputChanged(bool set)
 {
     if (set) {
-        kwinApp()->input->redirect->installInputEventSpy(new tablet_mode_switch_spy(this));
+        if (!spy) {
+            spy = new tablet_mode_switch_spy(this);
+            kwinApp()->input->redirect->installInputEventSpy(spy);
+        }
         setTabletModeAvailable(true);
     } else {
         auto setupDetector = [this] {

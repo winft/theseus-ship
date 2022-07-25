@@ -22,9 +22,10 @@ namespace KWin::input
 {
 
 keyboard_repeat_spy::keyboard_repeat_spy()
-    : m_timer(new QTimer(this))
+    : qobject{std::make_unique<keyboard_repeat_spy_qobject>()}
+    , m_timer{std::make_unique<QTimer>()}
 {
-    QObject::connect(m_timer, &QTimer::timeout, this, &keyboard_repeat_spy::handleKeyRepeat);
+    QObject::connect(m_timer.get(), &QTimer::timeout, qobject.get(), [this] { handleKeyRepeat(); });
 }
 
 keyboard_repeat_spy::~keyboard_repeat_spy() = default;
@@ -37,7 +38,7 @@ void keyboard_repeat_spy::handleKeyRepeat()
         m_timer->setInterval(1000 / rate);
     }
     // TODO: better time
-    Q_EMIT key_repeated({m_key, key_state::pressed, false, keyboard, m_time});
+    Q_EMIT qobject->key_repeated({m_key, key_state::pressed, false, keyboard, m_time});
 }
 
 void keyboard_repeat_spy::key(key_event const& event)

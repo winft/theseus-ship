@@ -25,15 +25,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QObject>
 #include <QSet>
+#include <memory>
 
 namespace KWin::input
 {
 
 class redirect;
 
-class KWIN_EXPORT modifier_only_shortcuts_spy : public QObject, public event_spy
+class modifier_only_shortcuts_spy_qobject : public QObject
 {
-    Q_OBJECT
+};
+
+class KWIN_EXPORT modifier_only_shortcuts_spy : public event_spy
+{
 public:
     explicit modifier_only_shortcuts_spy(input::redirect& redirect);
     ~modifier_only_shortcuts_spy() override;
@@ -52,6 +56,8 @@ private:
     Qt::KeyboardModifiers m_cachedMods;
     Qt::MouseButtons m_pressedButtons;
     QSet<quint32> m_pressedKeys;
+
+    std::unique_ptr<modifier_only_shortcuts_spy_qobject> qobject;
     input::redirect& redirect;
 };
 

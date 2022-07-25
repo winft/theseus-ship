@@ -11,7 +11,12 @@
 
 #include <QObject>
 
-namespace KWin::input::dbus
+namespace KWin::input
+{
+
+class tablet_mode_switch_spy;
+
+namespace dbus
 {
 
 class KWIN_EXPORT tablet_mode_manager : public QObject
@@ -26,6 +31,7 @@ class KWIN_EXPORT tablet_mode_manager : public QObject
 
 public:
     tablet_mode_manager();
+    ~tablet_mode_manager() override;
 
     bool isTabletModeAvailable() const;
     void setTabletModeAvailable(bool detecting);
@@ -40,9 +46,11 @@ Q_SIGNALS:
 private:
     void hasTabletModeInputChanged(bool set);
 
+    tablet_mode_switch_spy* spy{nullptr};
     bool m_tabletModeAvailable{false};
     bool m_isTabletMode{false};
     bool m_detecting{false};
 };
 
+}
 }

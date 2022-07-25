@@ -103,8 +103,8 @@ void keyboard_redirect::init()
     }
 
     auto keyRepeatSpy = new keyboard_repeat_spy();
-    QObject::connect(keyRepeatSpy,
-                     &keyboard_repeat_spy::key_repeated,
+    QObject::connect(keyRepeatSpy->qobject.get(),
+                     &keyboard_repeat_spy_qobject::key_repeated,
                      this,
                      &keyboard_redirect::process_key_repeat);
     redirect->installInputEventSpy(keyRepeatSpy);

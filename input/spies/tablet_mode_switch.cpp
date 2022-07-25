@@ -13,9 +13,8 @@
 namespace KWin::input
 {
 
-tablet_mode_switch_spy::tablet_mode_switch_spy(dbus::tablet_mode_manager* parent)
-    : QObject(parent)
-    , m_parent(parent)
+tablet_mode_switch_spy::tablet_mode_switch_spy(dbus::tablet_mode_manager* manager)
+    : manager(manager)
 {
 }
 
@@ -27,10 +26,10 @@ void tablet_mode_switch_spy::switch_toggle(switch_toggle_event const& event)
 
     switch (event.state) {
     case input::switch_state::off:
-        m_parent->setIsTablet(false);
+        manager->setIsTablet(false);
         break;
     case input::switch_state::on:
-        m_parent->setIsTablet(true);
+        manager->setIsTablet(true);
         break;
     default:
         Q_UNREACHABLE();

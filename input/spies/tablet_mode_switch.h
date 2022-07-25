@@ -20,12 +20,12 @@ class tablet_mode_manager;
 class tablet_mode_switch_spy : public QObject, public input::event_spy
 {
 public:
-    explicit tablet_mode_switch_spy(dbus::tablet_mode_manager* parent);
+    explicit tablet_mode_switch_spy(dbus::tablet_mode_manager* manager);
 
     void switch_toggle(switch_toggle_event const& event) override;
 
 private:
-    dbus::tablet_mode_manager* const m_parent;
+    dbus::tablet_mode_manager* const manager;
 };
 
 }
