@@ -31,7 +31,7 @@ class osd_notification : public QObject
     Q_PROPERTY(int timeout READ timeout WRITE setTimeout NOTIFY timeoutChanged)
 
 public:
-    explicit osd_notification(QObject* parent = nullptr);
+    osd_notification();
     ~osd_notification() override;
 
     bool isVisible() const;

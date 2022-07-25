@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "deco/bridge.h"
 #include "focus_chain.h"
 #include "kill_window.h"
+#include "osd_notification.h"
 #include "screen_edges.h"
 #include "session_manager.h"
 #include "space_areas.h"
@@ -222,6 +223,7 @@ public:
 
     int set_active_client_recursion{0};
 
+    std::unique_ptr<osd_notification> osd;
     std::unique_ptr<kill_window<space>> window_killer;
 };
 

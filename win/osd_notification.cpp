@@ -51,9 +51,8 @@ void osd_notification_input_spy::motion(input::motion_event const& /*event*/)
     m_parent->setContainsPointer(m_parent->geometry().contains(pos.toPoint()));
 }
 
-osd_notification::osd_notification(QObject* parent)
-    : QObject(parent)
-    , m_timer(new QTimer(this))
+osd_notification::osd_notification()
+    : m_timer(new QTimer(this))
 {
     m_timer->setSingleShot(true);
     QObject::connect(
