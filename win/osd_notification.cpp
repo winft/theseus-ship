@@ -51,21 +51,28 @@ void osd_notification_input_spy::motion(input::motion_event const& /*event*/)
     m_parent->setContainsPointer(m_parent->geometry().contains(pos.toPoint()));
 }
 
-osd_notification::osd_notification()
-    : m_timer(new QTimer(this))
+osd_notification_qobject::osd_notification_qobject(QTimer& timer)
+    : timer{timer}
 {
-    m_timer->setSingleShot(true);
+}
+
+osd_notification::osd_notification()
+    : timer{std::make_unique<QTimer>()}
+    , qobject{std::make_unique<osd_notification_qobject>(*timer)}
+{
+    timer->setSingleShot(true);
     QObject::connect(
-        m_timer, &QTimer::timeout, this, std::bind(&osd_notification::setVisible, this, false));
-    QObject::connect(this, &osd_notification::visibleChanged, this, [this] {
-        if (m_visible) {
-            show();
-        } else {
-            m_timer->stop();
-            m_spy.reset();
-            m_containsPointer = false;
-        }
-    });
+        timer.get(), &QTimer::timeout, qobject.get(), [this] { qobject->setVisible(false); });
+    QObject::connect(
+        qobject.get(), &osd_notification_qobject::visibleChanged, qobject.get(), [this] {
+            if (qobject->m_visible) {
+                show();
+            } else {
+                timer->stop();
+                m_spy.reset();
+                m_containsPointer = false;
+            }
+        });
 }
 
 osd_notification::~osd_notification()
@@ -76,22 +83,12 @@ osd_notification::~osd_notification()
     }
 }
 
-void osd_notification::setConfig(KSharedConfigPtr config)
-{
-    m_config = config;
-}
-
-void osd_notification::setEngine(QQmlEngine* engine)
-{
-    m_qmlEngine = engine;
-}
-
-bool osd_notification::isVisible() const
+bool osd_notification_qobject::isVisible() const
 {
     return m_visible;
 }
 
-void osd_notification::setVisible(bool visible)
+void osd_notification_qobject::setVisible(bool visible)
 {
     if (m_visible == visible) {
         return;
@@ -101,12 +98,12 @@ void osd_notification::setVisible(bool visible)
     Q_EMIT visibleChanged();
 }
 
-QString osd_notification::message() const
+QString osd_notification_qobject::message() const
 {
     return m_message;
 }
 
-void osd_notification::setMessage(const QString& message)
+void osd_notification_qobject::setMessage(const QString& message)
 {
     if (m_message == message) {
         return;
@@ -116,12 +113,12 @@ void osd_notification::setMessage(const QString& message)
     Q_EMIT messageChanged();
 }
 
-QString osd_notification::iconName() const
+QString osd_notification_qobject::iconName() const
 {
     return m_iconName;
 }
 
-void osd_notification::setIconName(const QString& iconName)
+void osd_notification_qobject::setIconName(const QString& iconName)
 {
     if (m_iconName == iconName) {
         return;
@@ -131,31 +128,31 @@ void osd_notification::setIconName(const QString& iconName)
     Q_EMIT iconNameChanged();
 }
 
-int osd_notification::timeout() const
+int osd_notification_qobject::timeout() const
 {
-    return m_timer->interval();
+    return timer.interval();
 }
 
-void osd_notification::setTimeout(int timeout)
+void osd_notification_qobject::setTimeout(int timeout)
 {
-    if (m_timer->interval() == timeout) {
+    if (timer.interval() == timeout) {
         return;
     }
 
-    m_timer->setInterval(timeout);
+    timer.setInterval(timeout);
     Q_EMIT timeoutChanged();
 }
 
 void osd_notification::show()
 {
-    assert(m_visible);
+    assert(qobject->m_visible);
 
     ensureQmlContext();
     ensureQmlComponent();
     createInputSpy();
 
-    if (m_timer->interval() != 0) {
-        m_timer->start();
+    if (timer->interval() != 0) {
+        timer->start();
     }
 }
 
@@ -168,7 +165,7 @@ void osd_notification::ensureQmlContext()
     }
 
     m_qmlContext.reset(new QQmlContext(m_qmlEngine));
-    m_qmlContext->setContextProperty(QStringLiteral("osd"), this);
+    m_qmlContext->setContextProperty(QStringLiteral("osd"), qobject.get());
 }
 
 void osd_notification::ensureQmlComponent()
@@ -214,7 +211,7 @@ void osd_notification::createInputSpy()
     kwinApp()->input->redirect->installInputEventSpy(m_spy.get());
 
     if (!m_animation) {
-        m_animation = new QPropertyAnimation(win, "opacity", this);
+        m_animation = new QPropertyAnimation(win, "opacity", qobject.get());
         m_animation->setStartValue(1.0);
         m_animation->setEndValue(0.0);
         m_animation->setDuration(250);

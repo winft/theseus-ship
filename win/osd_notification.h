@@ -6,6 +6,8 @@
 */
 #pragma once
 
+#include "kwin_export.h"
+
 #include <QObject>
 
 #include <KSharedConfig>
@@ -22,7 +24,7 @@ namespace KWin::win
 
 class osd_notification_input_spy;
 
-class osd_notification : public QObject
+class osd_notification_qobject : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(bool visible READ isVisible WRITE setVisible NOTIFY visibleChanged)
@@ -31,26 +33,21 @@ class osd_notification : public QObject
     Q_PROPERTY(int timeout READ timeout WRITE setTimeout NOTIFY timeoutChanged)
 
 public:
-    osd_notification();
-    ~osd_notification() override;
+    osd_notification_qobject(QTimer& timer);
 
     bool isVisible() const;
     QString message() const;
     QString iconName() const;
     int timeout() const;
 
-    QRect geometry() const;
-
     void setVisible(bool m_visible);
     void setMessage(const QString& message);
     void setIconName(const QString& iconName);
     void setTimeout(int timeout);
 
-    void setConfig(KSharedConfigPtr config);
-    void setEngine(QQmlEngine* engine);
-
-    void setContainsPointer(bool contains);
-    void setSkipCloseAnimation(bool skip);
+    bool m_visible{false};
+    QString m_message;
+    QString m_iconName;
 
 Q_SIGNALS:
     void visibleChanged();
@@ -59,19 +56,34 @@ Q_SIGNALS:
     void timeoutChanged();
 
 private:
+    QTimer& timer;
+};
+
+class KWIN_EXPORT osd_notification
+{
+public:
+    osd_notification();
+    ~osd_notification();
+
+    QRect geometry() const;
+
+    void setContainsPointer(bool contains);
+    void setSkipCloseAnimation(bool skip);
+
+    std::unique_ptr<QTimer> timer;
+    std::unique_ptr<osd_notification_qobject> qobject;
+
+    KSharedConfigPtr m_config;
+    QQmlEngine* m_qmlEngine{nullptr};
+
+private:
     void show();
     void ensureQmlContext();
     void ensureQmlComponent();
     void createInputSpy();
 
-    bool m_visible{false};
-    QString m_message;
-    QString m_iconName;
-    QTimer* m_timer;
-    KSharedConfigPtr m_config;
-    std::unique_ptr<QQmlContext> m_qmlContext;
     std::unique_ptr<QQmlComponent> m_qmlComponent;
-    QQmlEngine* m_qmlEngine{nullptr};
+    std::unique_ptr<QQmlContext> m_qmlContext;
     std::unique_ptr<QObject> m_mainItem;
     std::unique_ptr<osd_notification_input_spy> m_spy;
     QPropertyAnimation* m_animation{nullptr};
