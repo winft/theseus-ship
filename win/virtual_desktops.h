@@ -136,21 +136,6 @@ class KWIN_EXPORT virtual_desktop_manager : public QObject
 {
     Q_OBJECT
 
-    /**
-     * The number of virtual desktops currently available.
-     * The ids of the virtual desktops are in the range [1, virtual_desktop_manager::maximum()].
-     */
-    Q_PROPERTY(uint count READ count WRITE setCount NOTIFY countChanged)
-    /**
-     * The id of the virtual desktop which is currently in use.
-     */
-    Q_PROPERTY(uint current READ current WRITE setCurrent NOTIFY currentChanged)
-    /**
-     * Whether navigation in the desktop layout wraps around at the borders.
-     */
-    Q_PROPERTY(bool navigationWrappingAround READ isNavigationWrappingAround WRITE
-                   setNavigationWrappingAround NOTIFY navigationWrappingAroundChanged)
-
 public:
     virtual_desktop_manager();
 
@@ -318,7 +303,6 @@ public:
      */
     static uint maximum();
 
-public Q_SLOTS:
     /**
      * Set the number of available desktops to @a count. This function overrides any previous
      * grid layout.
@@ -423,7 +407,7 @@ Q_SIGNALS:
      */
     void navigationWrappingAroundChanged();
 
-private Q_SLOTS:
+private:
     /**
      * Common slot for all "Switch to Desktop n" shortcuts.
      * This method uses the sender() method to access some data.
@@ -455,7 +439,6 @@ private Q_SLOTS:
      */
     void slotDown();
 
-private:
     /**
      * Generate a desktop layout from EWMH _NET_DESKTOP_LAYOUT property parameters.
      */
