@@ -11,6 +11,7 @@ namespace KWin::input::x11
 {
 
 class keyboard_redirect;
+class pointer_redirect;
 
 class KWIN_EXPORT redirect : public input::redirect
 {

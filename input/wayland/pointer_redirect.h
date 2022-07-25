@@ -35,19 +35,19 @@ public:
     explicit pointer_redirect(wayland::redirect* redirect);
     void init();
 
-    void updateAfterScreenChange() override;
+    void updateAfterScreenChange();
     void warp(QPointF const& pos);
 
     QPointF pos() const override;
     Qt::MouseButtons buttons() const override;
-    bool areButtonsPressed() const override;
+    bool areButtonsPressed() const;
 
     void setEffectsOverrideCursor(Qt::CursorShape shape) override;
     void removeEffectsOverrideCursor() override;
     void setWindowSelectionCursor(QByteArray const& shape) override;
     void removeWindowSelectionCursor() override;
 
-    void updatePointerConstraints() override;
+    void updatePointerConstraints();
 
     void setEnableConstraints(bool set) override;
 

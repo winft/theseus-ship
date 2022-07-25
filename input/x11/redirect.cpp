@@ -6,8 +6,8 @@
 #include "redirect.h"
 
 #include "keyboard_redirect.h"
+#include "pointer_redirect.h"
 
-#include "input/pointer_redirect.h"
 #include "input/tablet_redirect.h"
 #include "input/touch_redirect.h"
 
@@ -19,7 +19,7 @@ namespace KWin::input::x11
 redirect::redirect(input::platform& platform, win::space& space)
     : input::redirect(platform, space)
 {
-    pointer = std::make_unique<input::pointer_redirect>(this);
+    pointer = std::make_unique<x11::pointer_redirect>(this);
     keyboard = std::make_unique<x11::keyboard_redirect>(this);
     touch = std::make_unique<input::touch_redirect>(this);
     tablet = std::make_unique<input::tablet_redirect>(this);

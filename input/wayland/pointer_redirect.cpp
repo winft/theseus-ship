@@ -271,9 +271,7 @@ void pointer_redirect::process_button(button_event const& event)
     }
 
     update_button(event);
-
-    redirect->processSpies(std::bind(&event_spy::button, std::placeholders::_1, event));
-
+    pointer_redirect_process_button_spies(*this, event);
     redirect->processFilters(
         std::bind(&event_filter<wayland::redirect>::button, std::placeholders::_1, event));
 
