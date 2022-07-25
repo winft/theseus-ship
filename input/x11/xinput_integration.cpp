@@ -322,10 +322,10 @@ void xinput_integration::startListening()
 void xinput_integration::setup_fake_devices()
 {
     auto pointer = fake_devices.pointer.get();
-    auto pointer_red = platform->redirect->pointer();
+    auto pointer_red = platform->redirect->get_pointer();
 
     auto keyboard = fake_devices.keyboard.get();
-    auto keyboard_red = platform->redirect->keyboard();
+    auto keyboard_red = platform->redirect->get_keyboard();
 
     keyboard->xkb->update_from_default();
 

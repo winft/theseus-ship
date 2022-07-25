@@ -98,22 +98,10 @@ public:
         std::for_each(m_spies.cbegin(), m_spies.cend(), function);
     }
 
-    keyboard_redirect* keyboard() const
-    {
-        return m_keyboard.get();
-    }
-    pointer_redirect* pointer() const
-    {
-        return m_pointer.get();
-    }
-    tablet_redirect* tablet() const
-    {
-        return m_tablet.get();
-    }
-    touch_redirect* touch() const
-    {
-        return m_touch.get();
-    }
+    virtual keyboard_redirect* get_keyboard() const = 0;
+    virtual pointer_redirect* get_pointer() const = 0;
+    virtual tablet_redirect* get_tablet() const = 0;
+    virtual touch_redirect* get_touch() const = 0;
 
     virtual void startInteractiveWindowSelection(std::function<void(KWin::Toplevel*)> callback,
                                                  QByteArray const& cursorName);
@@ -157,11 +145,6 @@ Q_SIGNALS:
 
 protected:
     redirect(input::platform& platform, win::space& space);
-
-    std::unique_ptr<keyboard_redirect> m_keyboard;
-    std::unique_ptr<pointer_redirect> m_pointer;
-    std::unique_ptr<tablet_redirect> m_tablet;
-    std::unique_ptr<touch_redirect> m_touch;
 
 private:
     std::vector<event_spy*> m_spies;

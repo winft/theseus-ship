@@ -1426,7 +1426,7 @@ void tabbox::close(bool abort)
         remove_tabbox_grab();
     }
     hide(abort);
-    kwinApp()->input->redirect->pointer()->setEnableConstraints(true);
+    kwinApp()->input->redirect->get_pointer()->setEnableConstraints(true);
     m_tab_grab = false;
     m_desktop_grab = false;
     m_no_modifier_grab = false;

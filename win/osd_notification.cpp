@@ -46,7 +46,7 @@ osd_notification_input_spy::osd_notification_input_spy(osd_notification* parent)
 
 void osd_notification_input_spy::motion(input::motion_event const& /*event*/)
 {
-    auto const pos = kwinApp()->input->redirect->pointer()->pos();
+    auto const pos = kwinApp()->input->redirect->get_pointer()->pos();
     m_parent->setContainsPointer(m_parent->geometry().contains(pos.toPoint()));
 }
 

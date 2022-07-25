@@ -1045,7 +1045,7 @@ void PointerInputTest::testCursorImage()
 
     // Move cursor somewhere the new window won't open.
     input::get_cursor()->set_pos(800, 800);
-    auto p = kwinApp()->input->redirect->pointer();
+    auto p = kwinApp()->input->redirect->get_pointer();
 
     // At the moment it should be the fallback cursor.
     auto const fallback_cursor = input::get_cursor()->image();

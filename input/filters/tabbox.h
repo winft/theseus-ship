@@ -39,7 +39,7 @@ public:
             return false;
         }
 
-        auto qt_event = button_to_qt_event(*this->redirect.pointer(), event);
+        auto qt_event = button_to_qt_event(*this->redirect.pointer, event);
         return tabbox->handle_mouse_event(&qt_event);
     }
 
@@ -51,7 +51,7 @@ public:
             return false;
         }
 
-        auto qt_event = motion_to_qt_event(*this->redirect.pointer(), event);
+        auto qt_event = motion_to_qt_event(*this->redirect.pointer, event);
         return tabbox->handle_mouse_event(&qt_event);
     }
 
@@ -65,7 +65,7 @@ public:
 
         auto seat = waylandServer()->seat();
         seat->setFocusedKeyboardSurface(nullptr);
-        this->redirect.pointer()->setEnableConstraints(false);
+        this->redirect.pointer->setEnableConstraints(false);
 
         // pass the key event to the seat, so that it has a proper model of the currently hold keys
         // this is important for combinations like alt+shift to ensure that shift is not considered
@@ -104,7 +104,7 @@ public:
             return false;
         }
 
-        auto qt_event = axis_to_qt_event(*this->redirect.pointer(), event);
+        auto qt_event = axis_to_qt_event(*this->redirect.pointer, event);
         return tabbox->handle_wheel_event(&qt_event);
     }
 };

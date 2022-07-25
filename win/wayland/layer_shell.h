@@ -246,7 +246,7 @@ void layer_surface_handle_keyboard_interactivity(Win* win)
         // With interactivity None or Exclusive just reset control.
         activate_next_window(win->space, win);
     }
-    kwinApp()->input->redirect->keyboard()->update();
+    kwinApp()->input->redirect->get_keyboard()->update();
 }
 
 template<typename Win>

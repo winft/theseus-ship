@@ -57,12 +57,12 @@ void redirect::uninstallInputEventSpy(event_spy* spy)
 
 void redirect::cancelTouch()
 {
-    m_touch->cancel();
+    get_touch()->cancel();
 }
 
 Qt::MouseButtons redirect::qtButtonStates() const
 {
-    return m_pointer->buttons();
+    return get_pointer()->buttons();
 }
 
 Toplevel* redirect::findToplevel(const QPoint& pos)
@@ -123,7 +123,7 @@ Toplevel* redirect::findManagedToplevel(const QPoint& pos)
 
 QPointF redirect::globalPointer() const
 {
-    return m_pointer->pos();
+    return get_pointer()->pos();
 }
 
 void redirect::startInteractiveWindowSelection(std::function<void(KWin::Toplevel*)> callback,

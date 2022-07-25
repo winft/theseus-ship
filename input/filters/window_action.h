@@ -43,7 +43,7 @@ public:
             return false;
         }
 
-        auto focus_window = get_focus_lead(this->redirect.pointer()->focus.window);
+        auto focus_window = get_focus_lead(this->redirect.pointer->focus.window);
         if (!focus_window) {
             return false;
         }
@@ -62,7 +62,7 @@ public:
             return false;
         }
 
-        auto focus_window = get_focus_lead(this->redirect.pointer()->focus.window);
+        auto focus_window = get_focus_lead(this->redirect.pointer->focus.window);
         if (!focus_window) {
             return false;
         }
@@ -80,7 +80,7 @@ public:
         if (seat->touches().is_in_progress()) {
             return false;
         }
-        auto focus_window = get_focus_lead(this->redirect.touch()->focus.window);
+        auto focus_window = get_focus_lead(this->redirect.touch->focus.window);
         if (!focus_window) {
             return false;
         }

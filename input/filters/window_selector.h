@@ -40,7 +40,7 @@ public:
             return false;
         }
 
-        auto pointer = this->redirect.pointer();
+        auto& pointer = this->redirect.pointer;
         if (event.state == button_state::released) {
             if (pointer->buttons() == Qt::NoButton) {
                 if (event.key == BTN_RIGHT) {
@@ -164,7 +164,7 @@ public:
         Q_ASSERT(!m_active);
         m_active = true;
         m_callback = callback;
-        this->redirect.keyboard()->update();
+        this->redirect.keyboard->update();
         this->redirect.cancelTouch();
     }
 
@@ -173,7 +173,7 @@ public:
         Q_ASSERT(!m_active);
         m_active = true;
         m_pointSelectionFallback = callback;
-        this->redirect.keyboard()->update();
+        this->redirect.keyboard->update();
         this->redirect.cancelTouch();
     }
 
@@ -183,8 +183,8 @@ private:
         m_active = false;
         m_callback = std::function<void(KWin::Toplevel*)>();
         m_pointSelectionFallback = std::function<void(const QPoint&)>();
-        this->redirect.pointer()->removeWindowSelectionCursor();
-        this->redirect.keyboard()->update();
+        this->redirect.pointer->removeWindowSelectionCursor();
+        this->redirect.keyboard->update();
         m_touchPoints.clear();
     }
 

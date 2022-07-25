@@ -39,7 +39,7 @@ public:
 
     bool button(button_event const& event) override
     {
-        auto internal = this->redirect.pointer()->focus.internal_window;
+        auto internal = this->redirect.pointer->focus.internal_window;
         if (!internal) {
             return false;
         }
@@ -55,7 +55,7 @@ public:
             }
         }
 
-        auto qt_event = button_to_qt_event(*this->redirect.pointer(), event);
+        auto qt_event = button_to_qt_event(*this->redirect.pointer, event);
         auto adapted_qt_event = QMouseEvent(qt_event.type(),
                                             qt_event.pos() - internal->position(),
                                             qt_event.pos(),
@@ -69,12 +69,12 @@ public:
 
     bool motion(motion_event const& event) override
     {
-        auto internal = this->redirect.pointer()->focus.internal_window;
+        auto internal = this->redirect.pointer->focus.internal_window;
         if (!internal) {
             return false;
         }
 
-        auto qt_event = motion_to_qt_event(*this->redirect.pointer(), event);
+        auto qt_event = motion_to_qt_event(*this->redirect.pointer, event);
         auto adapted_qt_event = QMouseEvent(qt_event.type(),
                                             qt_event.pos() - internal->position(),
                                             qt_event.pos(),
@@ -88,7 +88,7 @@ public:
 
     bool axis(axis_event const& event) override
     {
-        auto internal = this->redirect.pointer()->focus.internal_window;
+        auto internal = this->redirect.pointer->focus.internal_window;
         if (!internal) {
             return false;
         }
@@ -105,7 +105,7 @@ public:
             }
         }
 
-        auto qt_event = axis_to_qt_event(*this->redirect.pointer(), event);
+        auto qt_event = axis_to_qt_event(*this->redirect.pointer, event);
         auto adapted_qt_event = QWheelEvent(qt_event.pos() - internal->position(),
                                             qt_event.pos(),
                                             QPoint(),
@@ -216,7 +216,7 @@ public:
             // something else is getting the events
             return false;
         }
-        auto touch = this->redirect.touch();
+        auto& touch = this->redirect.touch;
         if (touch->internalPressId() != -1) {
             // already on internal window, ignore further touch points, but filter out
             m_pressedIds.insert(event.id);
@@ -249,7 +249,7 @@ public:
 
     bool touch_motion(touch_motion_event const& event) override
     {
-        auto touch = this->redirect.touch();
+        auto& touch = this->redirect.touch;
         auto internal = touch->focus.internal_window;
         if (!internal) {
             return false;
@@ -277,7 +277,7 @@ public:
 
     bool touch_up(touch_up_event const& event) override
     {
-        auto touch = this->redirect.touch();
+        auto& touch = this->redirect.touch;
         auto internal = touch->focus.internal_window;
         const bool removed = m_pressedIds.remove(event.id);
         if (!internal) {
@@ -306,7 +306,7 @@ public:
 
         m_lastGlobalTouchPos = QPointF();
         m_lastLocalTouchPos = QPointF();
-        this->redirect.touch()->setInternalPressId(-1);
+        this->redirect.touch->setInternalPressId(-1);
         return true;
     }
 

@@ -161,7 +161,7 @@ void cursor_image::markAsRendered()
 
 void cursor_image::update()
 {
-    if (kwinApp()->input->redirect->pointer()->s_cursorUpdateBlocking) {
+    if (kwinApp()->input->redirect->get_pointer()->s_cursorUpdateBlocking) {
         return;
     }
     using namespace Wrapland::Server;
@@ -183,7 +183,7 @@ void cursor_image::update()
 void cursor_image::updateDecoration()
 {
     QObject::disconnect(m_decorationConnection);
-    auto deco = kwinApp()->input->redirect->pointer()->focus.deco;
+    auto deco = kwinApp()->input->redirect->get_pointer()->focus.deco;
     auto c = deco ? deco->client() : nullptr;
     if (c) {
         m_decorationConnection = QObject::connect(
@@ -199,7 +199,7 @@ void cursor_image::updateDecorationCursor()
     m_decorationCursor.image = QImage();
     m_decorationCursor.hotSpot = QPoint();
 
-    auto deco = kwinApp()->input->redirect->pointer()->focus.deco;
+    auto deco = kwinApp()->input->redirect->get_pointer()->focus.deco;
     if (auto c = deco ? deco->client() : nullptr) {
         loadThemeCursor(c->control->move_resize().cursor, &m_decorationCursor);
         if (m_currentSource == CursorSource::Decoration) {
@@ -492,11 +492,11 @@ void cursor_image::reevaluteSource()
         setSource(CursorSource::MoveResize);
         return;
     }
-    if (kwinApp()->input->redirect->pointer()->focus.deco) {
+    if (kwinApp()->input->redirect->get_pointer()->focus.deco) {
         setSource(CursorSource::Decoration);
         return;
     }
-    if (kwinApp()->input->redirect->pointer()->focus.window
+    if (kwinApp()->input->redirect->get_pointer()->focus.window
         && !waylandServer()->seat()->pointers().get_focus().devices.empty()) {
         setSource(CursorSource::PointerSurface);
         return;

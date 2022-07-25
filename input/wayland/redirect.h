@@ -35,6 +35,11 @@ class pointer;
 class touch;
 }
 
+class keyboard_redirect;
+class pointer_redirect;
+class tablet_redirect;
+class touch_redirect;
+
 class KWIN_EXPORT redirect : public input::redirect
 {
     Q_OBJECT
@@ -85,6 +90,16 @@ public:
     {
         std::any_of(m_filters.cbegin(), m_filters.cend(), function);
     }
+
+    input::keyboard_redirect* get_keyboard() const override;
+    input::pointer_redirect* get_pointer() const override;
+    input::tablet_redirect* get_tablet() const override;
+    input::touch_redirect* get_touch() const override;
+
+    std::unique_ptr<keyboard_redirect> keyboard;
+    std::unique_ptr<pointer_redirect> pointer;
+    std::unique_ptr<tablet_redirect> tablet;
+    std::unique_ptr<touch_redirect> touch;
 
 Q_SIGNALS:
     void has_tablet_mode_switch_changed(bool set);

@@ -759,7 +759,7 @@ void effects_handler_impl::startMouseInterception(Effect* effect, Qt::CursorShap
 
 void effects_handler_impl::doStartMouseInterception(Qt::CursorShape shape)
 {
-    kwinApp()->input->redirect->pointer()->setEffectsOverrideCursor(shape);
+    kwinApp()->input->redirect->get_pointer()->setEffectsOverrideCursor(shape);
 }
 
 void effects_handler_impl::stopMouseInterception(Effect* effect)
@@ -775,7 +775,7 @@ void effects_handler_impl::stopMouseInterception(Effect* effect)
 
 void effects_handler_impl::doStopMouseInterception()
 {
-    kwinApp()->input->redirect->pointer()->removeEffectsOverrideCursor();
+    kwinApp()->input->redirect->get_pointer()->removeEffectsOverrideCursor();
 }
 
 bool effects_handler_impl::isMouseInterception() const
@@ -1311,7 +1311,7 @@ QSize effects_handler_impl::virtualScreenSize() const
 
 void effects_handler_impl::defineCursor(Qt::CursorShape shape)
 {
-    kwinApp()->input->redirect->pointer()->setEffectsOverrideCursor(shape);
+    kwinApp()->input->redirect->get_pointer()->setEffectsOverrideCursor(shape);
 }
 
 bool effects_handler_impl::checkInputWindowEvent(QMouseEvent* e)

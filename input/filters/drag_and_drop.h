@@ -106,7 +106,7 @@ public:
             return true;
         }
         seat->setTimestamp(event.base.time_msec);
-        this->redirect.touch()->insertId(event.id, seat->touches().touch_down(event.pos));
+        this->redirect.touch->insertId(event.id, seat->touches().touch_down(event.pos));
         return true;
     }
 
@@ -129,7 +129,7 @@ public:
             return true;
         }
         seat->setTimestamp(event.base.time_msec);
-        const qint32 wraplandId = this->redirect.touch()->mappedId(event.id);
+        const qint32 wraplandId = this->redirect.touch->mappedId(event.id);
         if (wraplandId == -1) {
             return true;
         }
@@ -158,10 +158,10 @@ public:
             return false;
         }
         seat->setTimestamp(event.base.time_msec);
-        const qint32 wraplandId = this->redirect.touch()->mappedId(event.id);
+        const qint32 wraplandId = this->redirect.touch->mappedId(event.id);
         if (wraplandId != -1) {
             seat->touches().touch_up(wraplandId);
-            this->redirect.touch()->removeId(event.id);
+            this->redirect.touch->removeId(event.id);
         }
         if (m_touchId == event.id) {
             m_touchId = -1;

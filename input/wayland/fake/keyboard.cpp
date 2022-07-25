@@ -32,7 +32,7 @@ keyboard::keyboard(Wrapland::Server::FakeInputDevice* device, input::platform* p
         [this](auto button) {
             auto redirect = this->platform->redirect;
             // TODO: Fix time
-            redirect->keyboard()->process_key({button, key_state::pressed, false, this, 0});
+            redirect->get_keyboard()->process_key({button, key_state::pressed, false, this, 0});
             wlspace(redirect->space).kde_idle->simulateUserActivity();
         });
     QObject::connect(
@@ -42,7 +42,7 @@ keyboard::keyboard(Wrapland::Server::FakeInputDevice* device, input::platform* p
         [this](auto button) {
             auto redirect = this->platform->redirect;
             // TODO: Fix time
-            redirect->keyboard()->process_key({button, key_state::released, false, this, 0});
+            redirect->get_keyboard()->process_key({button, key_state::released, false, this, 0});
             wlspace(redirect->space).kde_idle->simulateUserActivity();
         });
 }

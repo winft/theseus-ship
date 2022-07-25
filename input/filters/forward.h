@@ -39,7 +39,7 @@ public:
     bool key(key_event const& event) override
     {
         auto seat = waylandServer()->seat();
-        this->redirect.keyboard()->update();
+        this->redirect.keyboard->update();
         seat->setTimestamp(event.base.time_msec);
         pass_to_wayland_server(event);
         return true;
@@ -67,7 +67,7 @@ public:
         auto seat = waylandServer()->seat();
         seat->setTimestamp(event.base.time_msec);
 
-        seat->pointers().set_position(this->redirect.pointer()->pos());
+        seat->pointers().set_position(this->redirect.pointer->pos());
         if (!event.delta.isNull()) {
             seat->pointers().relative_motion(
                 QSizeF(event.delta.x(), event.delta.y()),
@@ -82,7 +82,7 @@ public:
     {
         auto seat = waylandServer()->seat();
         seat->setTimestamp(event.base.time_msec);
-        this->redirect.touch()->insertId(event.id, seat->touches().touch_down(event.pos));
+        this->redirect.touch->insertId(event.id, seat->touches().touch_down(event.pos));
         return true;
     }
 
@@ -90,7 +90,7 @@ public:
     {
         auto seat = waylandServer()->seat();
         seat->setTimestamp(event.base.time_msec);
-        const qint32 wraplandId = this->redirect.touch()->mappedId(event.id);
+        const qint32 wraplandId = this->redirect.touch->mappedId(event.id);
         if (wraplandId != -1) {
             seat->touches().touch_move(wraplandId, event.pos);
         }
@@ -101,10 +101,10 @@ public:
     {
         auto seat = waylandServer()->seat();
         seat->setTimestamp(event.base.time_msec);
-        const qint32 wraplandId = this->redirect.touch()->mappedId(event.id);
+        const qint32 wraplandId = this->redirect.touch->mappedId(event.id);
         if (wraplandId != -1) {
             seat->touches().touch_up(wraplandId);
-            this->redirect.touch()->removeId(event.id);
+            this->redirect.touch->removeId(event.id);
         }
         return true;
     }

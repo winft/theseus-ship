@@ -30,7 +30,7 @@ bool get_modifier_command(uint32_t key, base::options::MouseCommand& command)
         != kwinApp()->options->commandAllModifier()) {
         return false;
     }
-    if (kwinApp()->input->redirect->pointer()->isConstrained()) {
+    if (kwinApp()->input->redirect->get_pointer()->isConstrained()) {
         return false;
     }
     if (kwinApp()->input->redirect->space.global_shortcuts_disabled) {
@@ -58,7 +58,7 @@ std::pair<bool, bool> do_perform_mouse_action(base::options::MouseCommand comman
 {
     return std::make_pair(true,
                           !window->performMouseCommand(
-                              command, kwinApp()->input->redirect->pointer()->pos().toPoint()));
+                              command, kwinApp()->input->redirect->get_pointer()->pos().toPoint()));
 }
 
 std::pair<bool, bool> KWIN_EXPORT perform_mouse_modifier_action(button_event const& event,
@@ -91,7 +91,7 @@ bool get_wheel_modifier_command(axis_orientation orientation,
         != kwinApp()->options->commandAllModifier()) {
         return false;
     }
-    if (kwinApp()->input->redirect->pointer()->isConstrained()) {
+    if (kwinApp()->input->redirect->get_pointer()->isConstrained()) {
         return false;
     }
     if (kwinApp()->input->redirect->space.global_shortcuts_disabled) {

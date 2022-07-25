@@ -108,7 +108,7 @@ void TestWindowSelection::testSelectOnWindowPointer()
     QVERIFY(client);
     QVERIFY(keyboardEnteredSpy.wait());
     input::get_cursor()->set_pos(client->frameGeometry().center());
-    QCOMPARE(kwinApp()->input->redirect->pointer()->focus.window, client);
+    QCOMPARE(kwinApp()->input->redirect->get_pointer()->focus.window, client);
     QVERIFY(pointerEnteredSpy.wait());
 
     Toplevel* selectedWindow = nullptr;
@@ -133,13 +133,13 @@ void TestWindowSelection::testSelectOnWindowPointer()
     // should not have ended the mode
     QCOMPARE(kwinApp()->input->redirect->isSelectingWindow(), true);
     QVERIFY(!selectedWindow);
-    QVERIFY(!kwinApp()->input->redirect->pointer()->focus.window);
+    QVERIFY(!kwinApp()->input->redirect->get_pointer()->focus.window);
 
     // updating the pointer should not change anything
-    input::wayland::device_redirect_update(kwinApp()->input->redirect->pointer());
-    QVERIFY(!kwinApp()->input->redirect->pointer()->focus.window);
+    input::wayland::device_redirect_update(kwinApp()->input->redirect->get_pointer());
+    QVERIFY(!kwinApp()->input->redirect->get_pointer()->focus.window);
     // updating keyboard should also not change
-    kwinApp()->input->redirect->keyboard()->update();
+    kwinApp()->input->redirect->get_keyboard()->update();
 
     // perform a right button click
     Test::pointer_button_pressed(BTN_RIGHT, timestamp++);
@@ -151,7 +151,7 @@ void TestWindowSelection::testSelectOnWindowPointer()
     Test::pointer_button_released(BTN_LEFT, timestamp++);
     QCOMPARE(kwinApp()->input->redirect->isSelectingWindow(), false);
     QCOMPARE(selectedWindow, client);
-    QCOMPARE(kwinApp()->input->redirect->pointer()->focus.window, client);
+    QCOMPARE(kwinApp()->input->redirect->get_pointer()->focus.window, client);
     // should give back keyboard and pointer
     QVERIFY(pointerEnteredSpy.wait());
     if (keyboardEnteredSpy.count() != 2) {
@@ -231,7 +231,7 @@ void TestWindowSelection::testSelectOnWindowKeyboard()
     Test::keyboard_key_pressed(key, timestamp++);
     QCOMPARE(kwinApp()->input->redirect->isSelectingWindow(), false);
     QCOMPARE(selectedWindow, client);
-    QCOMPARE(kwinApp()->input->redirect->pointer()->focus.window, client);
+    QCOMPARE(kwinApp()->input->redirect->get_pointer()->focus.window, client);
     // should give back keyboard and pointer
     QVERIFY(pointerEnteredSpy.wait());
     if (keyboardEnteredSpy.count() != 2) {
@@ -325,7 +325,7 @@ void TestWindowSelection::testCancelOnWindowPointer()
     QVERIFY(client);
     QVERIFY(keyboardEnteredSpy.wait());
     input::get_cursor()->set_pos(client->frameGeometry().center());
-    QCOMPARE(kwinApp()->input->redirect->pointer()->focus.window, client);
+    QCOMPARE(kwinApp()->input->redirect->get_pointer()->focus.window, client);
     QVERIFY(pointerEnteredSpy.wait());
 
     Toplevel* selectedWindow = nullptr;
@@ -350,7 +350,7 @@ void TestWindowSelection::testCancelOnWindowPointer()
     Test::pointer_button_released(BTN_RIGHT, timestamp++);
     QCOMPARE(kwinApp()->input->redirect->isSelectingWindow(), false);
     QVERIFY(!selectedWindow);
-    QCOMPARE(kwinApp()->input->redirect->pointer()->focus.window, client);
+    QCOMPARE(kwinApp()->input->redirect->get_pointer()->focus.window, client);
     // should give back keyboard and pointer
     QVERIFY(pointerEnteredSpy.wait());
     if (keyboardEnteredSpy.count() != 2) {
@@ -382,7 +382,7 @@ void TestWindowSelection::testCancelOnWindowKeyboard()
     QVERIFY(client);
     QVERIFY(keyboardEnteredSpy.wait());
     input::get_cursor()->set_pos(client->frameGeometry().center());
-    QCOMPARE(kwinApp()->input->redirect->pointer()->focus.window, client);
+    QCOMPARE(kwinApp()->input->redirect->get_pointer()->focus.window, client);
     QVERIFY(pointerEnteredSpy.wait());
 
     Toplevel* selectedWindow = nullptr;
@@ -406,7 +406,7 @@ void TestWindowSelection::testCancelOnWindowKeyboard()
     Test::keyboard_key_pressed(KEY_ESC, timestamp++);
     QCOMPARE(kwinApp()->input->redirect->isSelectingWindow(), false);
     QVERIFY(!selectedWindow);
-    QCOMPARE(kwinApp()->input->redirect->pointer()->focus.window, client);
+    QCOMPARE(kwinApp()->input->redirect->get_pointer()->focus.window, client);
     // should give back keyboard and pointer
     QVERIFY(pointerEnteredSpy.wait());
     if (keyboardEnteredSpy.count() != 2) {
@@ -439,7 +439,7 @@ void TestWindowSelection::testSelectPointPointer()
     QVERIFY(client);
     QVERIFY(keyboardEnteredSpy.wait());
     input::get_cursor()->set_pos(client->frameGeometry().center());
-    QCOMPARE(kwinApp()->input->redirect->pointer()->focus.window, client);
+    QCOMPARE(kwinApp()->input->redirect->get_pointer()->focus.window, client);
     QVERIFY(pointerEnteredSpy.wait());
 
     QPoint point;
@@ -470,13 +470,13 @@ void TestWindowSelection::testSelectPointPointer()
     // should not have ended the mode
     QCOMPARE(kwinApp()->input->redirect->isSelectingWindow(), true);
     QCOMPARE(point, QPoint());
-    QVERIFY(!kwinApp()->input->redirect->pointer()->focus.window);
+    QVERIFY(!kwinApp()->input->redirect->get_pointer()->focus.window);
 
     // updating the pointer should not change anything
-    input::wayland::device_redirect_update(kwinApp()->input->redirect->pointer());
-    QVERIFY(!kwinApp()->input->redirect->pointer()->focus.window);
+    input::wayland::device_redirect_update(kwinApp()->input->redirect->get_pointer());
+    QVERIFY(!kwinApp()->input->redirect->get_pointer()->focus.window);
     // updating keyboard should also not change
-    kwinApp()->input->redirect->keyboard()->update();
+    kwinApp()->input->redirect->get_keyboard()->update();
 
     // perform a right button click
     Test::pointer_button_pressed(BTN_RIGHT, timestamp++);
@@ -488,7 +488,7 @@ void TestWindowSelection::testSelectPointPointer()
     Test::pointer_button_released(BTN_LEFT, timestamp++);
     QCOMPARE(kwinApp()->input->redirect->isSelectingWindow(), false);
     QCOMPARE(point, kwinApp()->input->redirect->globalPointer().toPoint());
-    QCOMPARE(kwinApp()->input->redirect->pointer()->focus.window, client);
+    QCOMPARE(kwinApp()->input->redirect->get_pointer()->focus.window, client);
     // should give back keyboard and pointer
     QVERIFY(pointerEnteredSpy.wait());
     if (keyboardEnteredSpy.count() != 2) {

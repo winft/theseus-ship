@@ -35,7 +35,7 @@ public:
         if (!window) {
             return false;
         }
-        if (this->redirect.pointer()->buttons() == Qt::NoButton) {
+        if (this->redirect.pointer->buttons() == Qt::NoButton) {
             win::end_move_resize(window);
         }
         return true;

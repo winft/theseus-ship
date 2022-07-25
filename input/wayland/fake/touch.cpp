@@ -33,7 +33,7 @@ touch::touch(Wrapland::Server::FakeInputDevice* device, input::platform* platfor
         [this](auto id, auto const& pos) {
             auto redirect = this->platform->redirect;
             // TODO: Fix time
-            redirect->touch()->process_down({static_cast<int32_t>(id), pos, nullptr, 0});
+            redirect->get_touch()->process_down({static_cast<int32_t>(id), pos, nullptr, 0});
             wlspace(redirect->space).kde_idle->simulateUserActivity();
         });
     QObject::connect(
@@ -43,24 +43,24 @@ touch::touch(Wrapland::Server::FakeInputDevice* device, input::platform* platfor
         [this](auto id, auto const& pos) {
             auto redirect = this->platform->redirect;
             // TODO: Fix time
-            redirect->touch()->process_motion({static_cast<int32_t>(id), pos, nullptr, 0});
+            redirect->get_touch()->process_motion({static_cast<int32_t>(id), pos, nullptr, 0});
             wlspace(redirect->space).kde_idle->simulateUserActivity();
         });
     QObject::connect(
         device, &Wrapland::Server::FakeInputDevice::touchUpRequested, this, [this](auto id) {
             auto redirect = this->platform->redirect;
             // TODO: Fix time
-            redirect->touch()->process_up({static_cast<int32_t>(id), {nullptr, 0}});
+            redirect->get_touch()->process_up({static_cast<int32_t>(id), {nullptr, 0}});
             wlspace(redirect->space).kde_idle->simulateUserActivity();
         });
     QObject::connect(device,
                      &Wrapland::Server::FakeInputDevice::touchCancelRequested,
                      this,
-                     [this]() { this->platform->redirect->touch()->cancel(); });
+                     [this]() { this->platform->redirect->get_touch()->cancel(); });
     QObject::connect(device,
                      &Wrapland::Server::FakeInputDevice::touchFrameRequested,
                      this,
-                     [this]() { this->platform->redirect->touch()->frame(); });
+                     [this]() { this->platform->redirect->get_touch()->frame(); });
 }
 
 }

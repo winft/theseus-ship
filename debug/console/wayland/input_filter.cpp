@@ -154,7 +154,7 @@ void input_filter::button(input::button_event const& event)
     text.append(s_tableStart);
 
     auto qt_button = buttonToString(input::button_to_qt_mouse_button(event.key));
-    auto buttons = buttonsToString(kwinApp()->input->redirect->pointer()->buttons());
+    auto buttons = buttonsToString(kwinApp()->input->redirect->get_pointer()->buttons());
     switch (event.state) {
     case input::button_state::pressed:
         text.append(
