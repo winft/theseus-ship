@@ -524,8 +524,6 @@ public:
     template_space(RefSpace* ref_space)
         : ref_space{ref_space}
     {
-        auto vds = ref_space->virtual_desktop_manager.get();
-
         using space_qobject = typename RefSpace::qobject_t;
 
         QObject::connect(ref_space->qobject.get(),
@@ -571,10 +569,15 @@ public:
                              Q_EMIT Space::clientDemandsAttentionChanged(window, set);
                          });
 
-        QObject::connect(
-            vds, &win::virtual_desktop_manager::countChanged, this, &space::numberDesktopsChanged);
-        QObject::connect(
-            vds, &win::virtual_desktop_manager::layoutChanged, this, &space::desktopLayoutChanged);
+        auto& vds = ref_space->virtual_desktop_manager;
+        QObject::connect(vds->qobject.get(),
+                         &win::virtual_desktop_manager_qobject::countChanged,
+                         this,
+                         &space::numberDesktopsChanged);
+        QObject::connect(vds->qobject.get(),
+                         &win::virtual_desktop_manager_qobject::layoutChanged,
+                         this,
+                         &space::desktopLayoutChanged);
 
         auto& base = kwinApp()->get_base();
         QObject::connect(

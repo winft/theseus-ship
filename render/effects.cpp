@@ -198,8 +198,8 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
             &win::session_manager::stateChanged,
             this,
             &KWin::EffectsHandler::sessionStateChanged);
-    connect(vds.get(),
-            &win::virtual_desktop_manager::countChanged,
+    connect(vds->qobject.get(),
+            &win::virtual_desktop_manager_qobject::countChanged,
             this,
             &EffectsHandler::numberDesktopsChanged);
     QObject::connect(ws->input->platform.cursor.get(),

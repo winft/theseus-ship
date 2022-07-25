@@ -28,8 +28,8 @@ space::space(render::compositor& render, input::x11::platform* input)
     edges = std::make_unique<win::screen_edger>(*this);
     dbus = std::make_unique<base::dbus::kwin_impl<win::space, input::platform>>(*this, input);
 
-    QObject::connect(virtual_desktop_manager.get(),
-                     &virtual_desktop_manager::desktopRemoved,
+    QObject::connect(virtual_desktop_manager->qobject.get(),
+                     &virtual_desktop_manager_qobject::desktopRemoved,
                      qobject.get(),
                      [this] {
                          auto const desktop_count

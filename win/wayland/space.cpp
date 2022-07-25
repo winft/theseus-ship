@@ -183,8 +183,8 @@ space::space(render::compositor& render,
                      qobject.get(),
                      [this](auto&& win) { handle_x11_window_added(win); });
 
-    QObject::connect(virtual_desktop_manager.get(),
-                     &virtual_desktop_manager::desktopRemoved,
+    QObject::connect(virtual_desktop_manager->qobject.get(),
+                     &virtual_desktop_manager_qobject::desktopRemoved,
                      qobject.get(),
                      [this](auto&& desktop) { handle_desktop_removed(desktop); });
 }

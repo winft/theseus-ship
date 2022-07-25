@@ -79,13 +79,13 @@ tabbox_handler_impl::tabbox_handler_impl(win::tabbox* tabbox)
     , m_desktop_focus_chain(new tabbox_desktop_chain_manager(this))
 {
     // connects for DesktopFocusChainManager
-    auto vds = tabbox->space.virtual_desktop_manager.get();
-    connect(vds,
-            &win::virtual_desktop_manager::countChanged,
+    auto& vds = tabbox->space.virtual_desktop_manager;
+    connect(vds->qobject.get(),
+            &win::virtual_desktop_manager_qobject::countChanged,
             m_desktop_focus_chain,
             &tabbox_desktop_chain_manager::resize);
-    connect(vds,
-            &win::virtual_desktop_manager::currentChanged,
+    connect(vds->qobject.get(),
+            &win::virtual_desktop_manager_qobject::currentChanged,
             m_desktop_focus_chain,
             &tabbox_desktop_chain_manager::add_desktop);
 }

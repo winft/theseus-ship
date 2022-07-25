@@ -137,8 +137,9 @@ void VirtualDesktopTest::test_count()
     // start with a useful desktop count
     vds->setCount(s_countInitValue);
 
-    QSignalSpy spy(vds.get(), &win::virtual_desktop_manager::countChanged);
-    QSignalSpy desktopsRemoved(vds.get(), &win::virtual_desktop_manager::desktopRemoved);
+    QSignalSpy spy(vds->qobject.get(), &win::virtual_desktop_manager_qobject::countChanged);
+    QSignalSpy desktopsRemoved(vds->qobject.get(),
+                               &win::virtual_desktop_manager_qobject::desktopRemoved);
 
     auto vdToRemove = vds->desktops().last();
 
@@ -197,7 +198,8 @@ void VirtualDesktopTest::test_navigation_wraps_around()
     vds->setNavigationWrappingAround(init);
     QCOMPARE(vds->isNavigationWrappingAround(), init);
 
-    QSignalSpy spy(vds.get(), &win::virtual_desktop_manager::navigationWrappingAroundChanged);
+    QSignalSpy spy(vds->qobject.get(),
+                   &win::virtual_desktop_manager_qobject::navigationWrappingAroundChanged);
     vds->setNavigationWrappingAround(request);
     QCOMPARE(vds->isNavigationWrappingAround(), result);
     QCOMPARE(spy.isEmpty(), !signal);
@@ -232,7 +234,7 @@ void VirtualDesktopTest::test_current()
     QCOMPARE(vds->setCurrent(init), init != 1);
     QCOMPARE(vds->current(), init);
 
-    QSignalSpy spy(vds.get(), &win::virtual_desktop_manager::currentChanged);
+    QSignalSpy spy(vds->qobject.get(), &win::virtual_desktop_manager_qobject::currentChanged);
 
     QFETCH(uint, request);
     QFETCH(uint, result);
@@ -277,7 +279,7 @@ void VirtualDesktopTest::test_current_change_on_count_change()
     vds->setCount(initCount);
     vds->setCurrent(initCurrent);
 
-    QSignalSpy spy(vds.get(), &win::virtual_desktop_manager::currentChanged);
+    QSignalSpy spy(vds->qobject.get(), &win::virtual_desktop_manager_qobject::currentChanged);
 
     QFETCH(uint, request);
     QFETCH(uint, current);
@@ -316,7 +318,7 @@ void VirtualDesktopTest::test_direction(QString const& actionName)
 
     vds->setNavigationWrappingAround(wrap);
 
-    auto action = vds->findChild<QAction*>(actionName);
+    auto action = vds->qobject->findChild<QAction*>(actionName);
     QVERIFY(action);
     action->trigger();
 
@@ -566,7 +568,7 @@ void VirtualDesktopTest::update_layout()
 {
     auto& vds = Test::app()->base.space->virtual_desktop_manager;
 
-    QSignalSpy spy(vds.get(), &win::virtual_desktop_manager::layoutChanged);
+    QSignalSpy spy(vds->qobject.get(), &win::virtual_desktop_manager_qobject::layoutChanged);
     QVERIFY(spy.isValid());
 
     // call update layout - implicitly through setCount
@@ -638,14 +640,11 @@ void VirtualDesktopTest::test_switch_to_shortcuts()
 
     for (uint i = 1; i <= vds->maximum(); ++i) {
         const QString desktop(toDesktop.arg(i));
-        QAction* action = vds->findChild<QAction*>(desktop);
+        QAction* action = vds->qobject->findChild<QAction*>(desktop);
         QVERIFY2(action, desktop.toUtf8().constData());
         action->trigger();
         QCOMPARE(vds->current(), i);
     }
-
-    // invoke switchTo not from a QAction
-    QMetaObject::invokeMethod(vds.get(), "slotSwitchTo");
 
     // should still be on max
     QCOMPARE(vds->current(), vds->maximum());

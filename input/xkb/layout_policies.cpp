@@ -100,8 +100,8 @@ virtual_desktop_layout_policy::virtual_desktop_layout_policy(layout_manager* man
     : layout_policy(manager, config)
 {
     auto& space = manager->xkb.platform->redirect->space;
-    QObject::connect(space.virtual_desktop_manager.get(),
-                     &win::virtual_desktop_manager::currentChanged,
+    QObject::connect(space.virtual_desktop_manager->qobject.get(),
+                     &win::virtual_desktop_manager_qobject::currentChanged,
                      this,
                      &virtual_desktop_layout_policy::handle_desktop_change);
 

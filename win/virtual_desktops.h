@@ -114,6 +114,55 @@ private:
     virtual_desktop_manager& manager;
 };
 
+class KWIN_EXPORT virtual_desktop_manager_qobject : public QObject
+{
+    Q_OBJECT
+Q_SIGNALS:
+    /**
+     * Signal emitted whenever the number of virtual desktops changes.
+     * @param previousCount The number of desktops prior to the change
+     * @param newCount The new current number of desktops
+     */
+    void countChanged(uint previousCount, uint newCount);
+
+    /**
+     * Signal when the number of rows in the layout changes
+     * @param rows number of rows
+     */
+    void rowsChanged(uint rows);
+
+    /**
+     * A new desktop has been created
+     * @param desktop the new just crated desktop
+     */
+    void desktopCreated(KWin::win::virtual_desktop* desktop);
+
+    /**
+     * A desktop has been removed and is about to be deleted
+     * @param desktop the desktop that has been removed.
+     *          It's guaranteed to stil la valid pointer when the signal arrives,
+     *          but it's about to be deleted.
+     */
+    void desktopRemoved(KWin::win::virtual_desktop* desktop);
+
+    /**
+     * Signal emitted whenever the current desktop changes.
+     * @param previousDesktop The virtual desktop changed from
+     * @param newDesktop The virtual desktop changed to
+     */
+    void currentChanged(uint previousDesktop, uint newDesktop);
+    /**
+     * Signal emitted whenever the desktop layout changes.
+     * @param columns The new number of columns in the layout
+     * @param rows The new number of rows in the layout
+     */
+    void layoutChanged(int columns, int rows);
+    /**
+     * Signal emitted whenever the navigationWrappingAround property changes.
+     */
+    void navigationWrappingAroundChanged();
+};
+
 /**
  * @brief Manages the number of available virtual desktops, the layout of those and which virtual
  * desktop is the current one.
@@ -132,10 +181,8 @@ private:
  * of an adjacent desktop or to switch to an adjacent desktop. Interested parties should make use of
  * these methods and not replicate the logic to switch to the next desktop.
  */
-class KWIN_EXPORT virtual_desktop_manager : public QObject
+class KWIN_EXPORT virtual_desktop_manager
 {
-    Q_OBJECT
-
 public:
     virtual_desktop_manager();
 
@@ -362,50 +409,7 @@ public:
      */
     void save();
 
-Q_SIGNALS:
-    /**
-     * Signal emitted whenever the number of virtual desktops changes.
-     * @param previousCount The number of desktops prior to the change
-     * @param newCount The new current number of desktops
-     */
-    void countChanged(uint previousCount, uint newCount);
-
-    /**
-     * Signal when the number of rows in the layout changes
-     * @param rows number of rows
-     */
-    void rowsChanged(uint rows);
-
-    /**
-     * A new desktop has been created
-     * @param desktop the new just crated desktop
-     */
-    void desktopCreated(KWin::win::virtual_desktop* desktop);
-
-    /**
-     * A desktop has been removed and is about to be deleted
-     * @param desktop the desktop that has been removed.
-     *          It's guaranteed to stil la valid pointer when the signal arrives,
-     *          but it's about to be deleted.
-     */
-    void desktopRemoved(KWin::win::virtual_desktop* desktop);
-
-    /**
-     * Signal emitted whenever the current desktop changes.
-     * @param previousDesktop The virtual desktop changed from
-     * @param newDesktop The virtual desktop changed to
-     */
-    void currentChanged(uint previousDesktop, uint newDesktop);
-    /**
-     * Signal emitted whenever the desktop layout changes.
-     * @param columns The new number of columns in the layout
-     * @param rows The new number of rows in the layout
-     */
-    void layoutChanged(int columns, int rows);
-    /**
-     * Signal emitted whenever the navigationWrappingAround property changes.
-     */
-    void navigationWrappingAroundChanged();
+    std::unique_ptr<virtual_desktop_manager_qobject> qobject;
 
 private:
     /**

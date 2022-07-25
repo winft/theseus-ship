@@ -725,8 +725,8 @@ screen_edger::screen_edger(win::space& space)
                      &base::options::configChanged,
                      this,
                      &win::screen_edger::reconfigure);
-    QObject::connect(space.virtual_desktop_manager.get(),
-                     &virtual_desktop_manager::layoutChanged,
+    QObject::connect(space.virtual_desktop_manager->qobject.get(),
+                     &virtual_desktop_manager_qobject::layoutChanged,
                      this,
                      &screen_edger::updateLayout);
 

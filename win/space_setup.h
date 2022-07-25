@@ -84,12 +84,12 @@ void init_space(Space& space)
                      space.qobject.get(),
                      [&](auto window) { space.focus_chain.active_window = window; });
     QObject::connect(
-        space.virtual_desktop_manager.get(),
-        &virtual_desktop_manager::countChanged,
+        space.virtual_desktop_manager->qobject.get(),
+        &virtual_desktop_manager_qobject::countChanged,
         space.qobject.get(),
         [&](auto prev, auto next) { focus_chain_resize(space.focus_chain, prev, next); });
-    QObject::connect(space.virtual_desktop_manager.get(),
-                     &win::virtual_desktop_manager::currentChanged,
+    QObject::connect(space.virtual_desktop_manager->qobject.get(),
+                     &win::virtual_desktop_manager_qobject::currentChanged,
                      space.qobject.get(),
                      [&](auto /*prev*/, auto next) { space.focus_chain.current_desktop = next; });
     QObject::connect(kwinApp()->options.get(),
@@ -98,22 +98,22 @@ void init_space(Space& space)
                      [&](auto enable) { space.focus_chain.has_separate_screen_focus = enable; });
     space.focus_chain.has_separate_screen_focus = kwinApp()->options->isSeparateScreenFocus();
 
-    auto vds = space.virtual_desktop_manager.get();
+    auto& vds = space.virtual_desktop_manager;
     QObject::connect(
-        vds,
-        &win::virtual_desktop_manager::countChanged,
+        vds->qobject.get(),
+        &win::virtual_desktop_manager_qobject::countChanged,
         space.qobject.get(),
         [&](auto prev, auto next) { handle_desktop_count_changed(space, prev, next); });
     QObject::connect(
-        vds,
-        &win::virtual_desktop_manager::currentChanged,
+        vds->qobject.get(),
+        &win::virtual_desktop_manager_qobject::currentChanged,
         space.qobject.get(),
         [&](auto prev, auto next) { handle_current_desktop_changed(space, prev, next); });
     vds->setNavigationWrappingAround(kwinApp()->options->isRollOverDesktops());
     QObject::connect(kwinApp()->options.get(),
                      &base::options::rollOverDesktopsChanged,
-                     vds,
-                     &win::virtual_desktop_manager::setNavigationWrappingAround);
+                     vds->qobject.get(),
+                     [&vds](auto enabled) { vds->setNavigationWrappingAround(enabled); });
 
     auto config = kwinApp()->config();
     vds->setConfig(config);
