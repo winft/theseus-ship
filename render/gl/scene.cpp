@@ -46,6 +46,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/platform.h"
 #include "win/deco/client_impl.h"
 #include "win/geo.h"
+#include "win/space.h"
 #include "win/transient.h"
 
 #include "kwineffects/paint_clipper.h"
@@ -461,7 +462,7 @@ void scene::paintCursor()
     }
 
     // get cursor position in projection coordinates
-    auto const cursorPos = input::get_cursor()->pos() - cursor->hotspot();
+    auto const cursorPos = compositor.space->input->platform.cursor->pos() - cursor->hotspot();
     auto const cursorRect = QRect(0, 0, sw_cursor.texture->width(), sw_cursor.texture->height());
     QMatrix4x4 mvp = m_projectionMatrix;
     mvp.translate(cursorPos.x(), cursorPos.y());

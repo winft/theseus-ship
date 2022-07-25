@@ -82,7 +82,7 @@ void TestScreens::init()
 
     Test::app()->set_outputs(1);
     Test::set_current_output(0);
-    input::get_cursor()->set_pos(QPoint(640, 512));
+    Test::app()->input->cursor->set_pos(QPoint(640, 512));
 }
 
 void TestScreens::cleanup()

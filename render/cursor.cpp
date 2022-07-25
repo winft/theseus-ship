@@ -51,8 +51,8 @@ void cursor::set_enabled(bool enable)
     }
 
     enabled = enable;
+    auto cursor = input->cursor.get();
 
-    auto cursor = input::get_cursor();
     if (enable) {
         cursor->start_image_tracking();
         connect(cursor, &input::cursor::pos_changed, this, &cursor::rerender);

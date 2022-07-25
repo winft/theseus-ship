@@ -111,7 +111,7 @@ void pointer_redirect::init()
     warp(QRect({}, kwinApp()->get_base().topology.size).center());
     updateAfterScreenChange();
 
-    auto wayland_cursor = dynamic_cast<wayland::cursor*>(input::get_cursor());
+    auto wayland_cursor = dynamic_cast<wayland::cursor*>(redirect->platform.cursor.get());
     assert(wayland_cursor);
     QObject::connect(this,
                      &pointer_redirect::decorationChanged,
@@ -869,7 +869,7 @@ void pointer_redirect::setEffectsOverrideCursor(Qt::CursorShape shape)
 {
     // current pointer focus window should get a leave event
     device_redirect_update(this);
-    auto wayland_cursor = static_cast<wayland::cursor*>(input::get_cursor());
+    auto wayland_cursor = static_cast<wayland::cursor*>(redirect->platform.cursor.get());
     wayland_cursor->cursor_image->setEffectsOverrideCursor(shape);
 }
 
@@ -877,7 +877,7 @@ void pointer_redirect::removeEffectsOverrideCursor()
 {
     // cursor position might have changed while there was an effect in place
     device_redirect_update(this);
-    auto wayland_cursor = static_cast<wayland::cursor*>(input::get_cursor());
+    auto wayland_cursor = static_cast<wayland::cursor*>(redirect->platform.cursor.get());
     wayland_cursor->cursor_image->removeEffectsOverrideCursor();
 }
 
@@ -885,14 +885,14 @@ void pointer_redirect::setWindowSelectionCursor(QByteArray const& shape)
 {
     // send leave to current pointer focus window
     update_to_reset();
-    auto wayland_cursor = static_cast<wayland::cursor*>(input::get_cursor());
+    auto wayland_cursor = static_cast<wayland::cursor*>(redirect->platform.cursor.get());
     wayland_cursor->cursor_image->setWindowSelectionCursor(shape);
 }
 
 void pointer_redirect::removeWindowSelectionCursor()
 {
     device_redirect_update(this);
-    auto wayland_cursor = static_cast<wayland::cursor*>(input::get_cursor());
+    auto wayland_cursor = static_cast<wayland::cursor*>(redirect->platform.cursor.get());
     wayland_cursor->cursor_image->removeWindowSelectionCursor();
 }
 

@@ -10,6 +10,7 @@
 #include "global_shortcuts_manager.h"
 #include "keyboard.h"
 #include "pointer.h"
+#include "singleton_interface.h"
 #include "switch.h"
 #include "touch.h"
 
@@ -21,6 +22,8 @@ platform::platform()
 {
     qRegisterMetaType<button_state>();
     qRegisterMetaType<key_state>();
+
+    singleton_interface::platform = this;
 }
 
 platform::~platform()
@@ -37,6 +40,8 @@ platform::~platform()
     for (auto touch : touchs) {
         touch->platform = nullptr;
     }
+
+    singleton_interface::platform = nullptr;
 }
 
 void platform::registerShortcut(QKeySequence const& /*shortcut*/, QAction* action)

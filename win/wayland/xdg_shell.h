@@ -791,7 +791,8 @@ void handle_move_request(Win* win, Wrapland::Server::Seat* seat, uint32_t serial
         return;
     }
     if (win->isMovable()) {
-        win->performMouseCommand(base::options::MouseMove, input::get_cursor()->pos());
+        win->performMouseCommand(base::options::MouseMove,
+                                 win->space.input->platform.cursor->pos());
     }
 }
 
@@ -817,7 +818,7 @@ void handle_resize_request(Win* win, Wrapland::Server::Seat* seat, quint32 seria
     // i.e. with the origin in the top-left corner of the frame geometry.
     // Note that this might have negative coordinates if we resize by grabbing the shadow area of
     // the left or top edge.
-    mov_res.offset = input::get_cursor()->pos() - win->pos();
+    mov_res.offset = win->space.input->platform.cursor->pos() - win->pos();
 
     // The inverted offset describes the difference between bottom-right corner and offset.
     mov_res.inverted_offset
@@ -850,7 +851,8 @@ void handle_resize_request(Win* win, Wrapland::Server::Seat* seat, quint32 seria
 template<typename Win>
 void handle_minimize_request(Win* win)
 {
-    win->performMouseCommand(base::options::MouseMinimize, input::get_cursor()->pos());
+    win->performMouseCommand(base::options::MouseMinimize,
+                             win->space.input->platform.cursor->pos());
 }
 
 template<typename Win>

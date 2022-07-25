@@ -141,7 +141,7 @@ void scene::paintCursor()
     if (img.isNull()) {
         return;
     }
-    auto const cursorPos = input::get_cursor()->pos();
+    auto const cursorPos = compositor.space->input->platform.cursor->pos();
     auto const hotspot = cursor->hotspot();
     m_painter->drawImage(cursorPos - hotspot, img);
     cursor->mark_as_rendered();

@@ -80,7 +80,7 @@ void TestWindowSelection::init()
     Test::setup_wayland_connection(Test::global_selection::seat);
     QVERIFY(Test::wait_for_wayland_pointer());
 
-    input::get_cursor()->set_pos(QPoint(1280, 512));
+    Test::app()->input->cursor->set_pos(QPoint(1280, 512));
 }
 
 void TestWindowSelection::cleanup()
@@ -107,7 +107,7 @@ void TestWindowSelection::testSelectOnWindowPointer()
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
     QVERIFY(keyboardEnteredSpy.wait());
-    input::get_cursor()->set_pos(client->frameGeometry().center());
+    Test::app()->input->cursor->set_pos(client->frameGeometry().center());
     QCOMPARE(kwinApp()->input->redirect->get_pointer()->focus.window, client);
     QVERIFY(pointerEnteredSpy.wait());
 
@@ -191,7 +191,7 @@ void TestWindowSelection::testSelectOnWindowKeyboard()
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
     QVERIFY(keyboardEnteredSpy.wait());
-    QVERIFY(!client->frameGeometry().contains(input::get_cursor()->pos()));
+    QVERIFY(!client->frameGeometry().contains(Test::app()->input->cursor->pos()));
 
     Toplevel* selectedWindow = nullptr;
     auto callback = [&selectedWindow](Toplevel* t) { selectedWindow = t; };
@@ -213,17 +213,17 @@ void TestWindowSelection::testSelectOnWindowKeyboard()
         Test::keyboard_key_pressed(key, timestamp++);
         Test::keyboard_key_released(key, timestamp++);
     };
-    while (input::get_cursor()->pos().x()
+    while (Test::app()->input->cursor->pos().x()
            >= client->frameGeometry().x() + client->frameGeometry().width()) {
         keyPress(KEY_LEFT);
     }
-    while (input::get_cursor()->pos().x() <= client->frameGeometry().x()) {
+    while (Test::app()->input->cursor->pos().x() <= client->frameGeometry().x()) {
         keyPress(KEY_RIGHT);
     }
-    while (input::get_cursor()->pos().y() <= client->frameGeometry().y()) {
+    while (Test::app()->input->cursor->pos().y() <= client->frameGeometry().y()) {
         keyPress(KEY_DOWN);
     }
-    while (input::get_cursor()->pos().y()
+    while (Test::app()->input->cursor->pos().y()
            >= client->frameGeometry().y() + client->frameGeometry().height()) {
         keyPress(KEY_UP);
     }
@@ -324,7 +324,7 @@ void TestWindowSelection::testCancelOnWindowPointer()
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
     QVERIFY(keyboardEnteredSpy.wait());
-    input::get_cursor()->set_pos(client->frameGeometry().center());
+    Test::app()->input->cursor->set_pos(client->frameGeometry().center());
     QCOMPARE(kwinApp()->input->redirect->get_pointer()->focus.window, client);
     QVERIFY(pointerEnteredSpy.wait());
 
@@ -381,7 +381,7 @@ void TestWindowSelection::testCancelOnWindowKeyboard()
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
     QVERIFY(keyboardEnteredSpy.wait());
-    input::get_cursor()->set_pos(client->frameGeometry().center());
+    Test::app()->input->cursor->set_pos(client->frameGeometry().center());
     QCOMPARE(kwinApp()->input->redirect->get_pointer()->focus.window, client);
     QVERIFY(pointerEnteredSpy.wait());
 
@@ -438,7 +438,7 @@ void TestWindowSelection::testSelectPointPointer()
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
     QVERIFY(keyboardEnteredSpy.wait());
-    input::get_cursor()->set_pos(client->frameGeometry().center());
+    Test::app()->input->cursor->set_pos(client->frameGeometry().center());
     QCOMPARE(kwinApp()->input->redirect->get_pointer()->focus.window, client);
     QVERIFY(pointerEnteredSpy.wait());
 

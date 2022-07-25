@@ -38,7 +38,7 @@ base::output const* get_current_output(Space const& space)
     auto const& base = kwinApp()->get_base();
 
     if (kwinApp()->options->get_current_output_follows_mouse()) {
-        return base::get_nearest_output(base.get_outputs(), input::get_cursor()->pos());
+        return base::get_nearest_output(base.get_outputs(), space.input->platform.cursor->pos());
     }
 
     auto const cur = base.topology.current;

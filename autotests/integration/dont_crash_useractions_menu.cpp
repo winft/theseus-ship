@@ -73,7 +73,7 @@ void TestDontCrashUseractionsMenu::initTestCase()
 void TestDontCrashUseractionsMenu::init()
 {
     Test::setup_wayland_connection();
-    input::get_cursor()->set_pos(QPoint(1280, 512));
+    Test::app()->input->cursor->set_pos(QPoint(1280, 512));
 }
 
 void TestDontCrashUseractionsMenu::cleanup()

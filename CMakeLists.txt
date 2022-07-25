@@ -402,6 +402,7 @@ set(kwin_SRCS
     input/redirect.cpp
     input/tablet_redirect.cpp
     input/touch_redirect.cpp
+    input/singleton_interface.cpp
     input/spies/modifier_only_shortcuts.cpp
     input/cursor.cpp
     input/cursor_shape.cpp

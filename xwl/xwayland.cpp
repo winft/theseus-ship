@@ -268,10 +268,8 @@ void xwayland::continue_startup_with_x11()
         return;
     }
 
-    auto mouseCursor = input::get_cursor();
-    if (mouseCursor) {
-        base::x11::xcb::define_cursor(app->x11RootWindow(),
-                                      mouseCursor->x11_cursor(Qt::ArrowCursor));
+    if (auto& cursor = space.input->platform.cursor) {
+        base::x11::xcb::define_cursor(app->x11RootWindow(), cursor->x11_cursor(Qt::ArrowCursor));
     }
 
     auto env = app->processStartupEnvironment();

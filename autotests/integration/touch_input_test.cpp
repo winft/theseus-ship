@@ -86,7 +86,7 @@ void TouchInputTest::init()
     QVERIFY(touch);
     QVERIFY(touch->isValid());
 
-    input::get_cursor()->set_pos(QPoint(1280, 512));
+    Test::app()->input->cursor->set_pos(QPoint(1280, 512));
 }
 
 void TouchInputTest::cleanup()

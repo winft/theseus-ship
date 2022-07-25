@@ -24,7 +24,7 @@ void perform_window_operation(Space& space, Toplevel* window, base::options::Win
         return;
     }
 
-    auto cursor = input::get_cursor();
+    auto& cursor = space.input->platform.cursor;
 
     if (op == base::options::MoveOp || op == base::options::UnrestrictedMoveOp) {
         cursor->set_pos(window->frameGeometry().center());

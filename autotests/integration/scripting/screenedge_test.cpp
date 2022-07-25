@@ -89,7 +89,7 @@ void ScreenEdgeTest::initTestCase()
 
 void ScreenEdgeTest::init()
 {
-    input::get_cursor()->set_pos(640, 512);
+    Test::app()->input->cursor->set_pos(640, 512);
     if (Test::app()->base.space->showing_desktop) {
         win::toggle_show_desktop(*Test::app()->base.space);
     }
@@ -161,7 +161,7 @@ void ScreenEdgeTest::testEdge()
 
     // trigger the edge
     QFETCH(QPoint, triggerPos);
-    input::get_cursor()->set_pos(triggerPos);
+    Test::app()->input->cursor->set_pos(triggerPos);
     QCOMPARE(showDesktopSpy.count(), 1);
     QVERIFY(Test::app()->base.space->showing_desktop);
 }
@@ -247,27 +247,27 @@ void ScreenEdgeTest::testEdgeUnregister()
     QVERIFY(showDesktopSpy.isValid());
 
     // trigger the edge
-    input::get_cursor()->set_pos(triggerPos);
+    Test::app()->input->cursor->set_pos(triggerPos);
     QCOMPARE(showDesktopSpy.count(), 1);
 
     // reset
-    input::get_cursor()->set_pos(500, 500);
+    Test::app()->input->cursor->set_pos(500, 500);
     win::toggle_show_desktop(*Test::app()->base.space);
     showDesktopSpy.clear();
 
     // trigger again, to show that retriggering works
-    input::get_cursor()->set_pos(triggerPos);
+    Test::app()->input->cursor->set_pos(triggerPos);
     QCOMPARE(showDesktopSpy.count(), 1);
 
     // reset
-    input::get_cursor()->set_pos(500, 500);
+    Test::app()->input->cursor->set_pos(500, 500);
     win::toggle_show_desktop(*Test::app()->base.space);
     showDesktopSpy.clear();
 
     // make the script unregister the edge
     configGroup.writeEntry("mode", "unregister");
     triggerConfigReload();
-    input::get_cursor()->set_pos(triggerPos);
+    Test::app()->input->cursor->set_pos(triggerPos);
     QCOMPARE(showDesktopSpy.count(), 0); // not triggered
 
     // force the script to unregister a non-registered edge to prove it doesn't explode

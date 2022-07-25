@@ -202,8 +202,10 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
             &win::virtual_desktop_manager::countChanged,
             this,
             &EffectsHandler::numberDesktopsChanged);
-    connect(
-        input::get_cursor(), &input::cursor::mouse_changed, this, &EffectsHandler::mouseChanged);
+    QObject::connect(ws->input->platform.cursor.get(),
+                     &input::cursor::mouse_changed,
+                     this,
+                     &EffectsHandler::mouseChanged);
 
     auto& base = kwinApp()->get_base();
     connect(&base, &base::platform::output_added, this, &EffectsHandler::numberScreensChanged);
@@ -853,14 +855,14 @@ void* effects_handler_impl::getProxy(QString name)
 
 void effects_handler_impl::startMousePolling()
 {
-    if (auto cursor = input::get_cursor()) {
+    if (auto& cursor = m_compositor->space->input->platform.cursor) {
         cursor->start_mouse_polling();
     }
 }
 
 void effects_handler_impl::stopMousePolling()
 {
-    if (auto cursor = input::get_cursor()) {
+    if (auto& cursor = m_compositor->space->input->platform.cursor) {
         cursor->stop_mouse_polling();
     }
 }
@@ -1340,11 +1342,11 @@ void effects_handler_impl::connectNotify(const QMetaMethod& signal)
 {
     if (signal == QMetaMethod::fromSignal(&EffectsHandler::cursorShapeChanged)) {
         if (!m_trackingCursorChanges) {
-            connect(input::get_cursor(),
-                    &input::cursor::image_changed,
-                    this,
-                    &EffectsHandler::cursorShapeChanged);
-            input::get_cursor()->start_image_tracking();
+            QObject::connect(m_compositor->space->input->platform.cursor.get(),
+                             &input::cursor::image_changed,
+                             this,
+                             &EffectsHandler::cursorShapeChanged);
+            m_compositor->space->input->platform.cursor->start_image_tracking();
         }
         ++m_trackingCursorChanges;
     }
@@ -1356,11 +1358,11 @@ void effects_handler_impl::disconnectNotify(const QMetaMethod& signal)
     if (signal == QMetaMethod::fromSignal(&EffectsHandler::cursorShapeChanged)) {
         Q_ASSERT(m_trackingCursorChanges > 0);
         if (!--m_trackingCursorChanges) {
-            input::get_cursor()->stop_image_tracking();
-            disconnect(input::get_cursor(),
-                       &input::cursor::image_changed,
-                       this,
-                       &EffectsHandler::cursorShapeChanged);
+            m_compositor->space->input->platform.cursor->stop_image_tracking();
+            QObject::disconnect(m_compositor->space->input->platform.cursor.get(),
+                                &input::cursor::image_changed,
+                                this,
+                                &EffectsHandler::cursorShapeChanged);
         }
     }
     EffectsHandler::disconnectNotify(signal);
@@ -1380,7 +1382,7 @@ void effects_handler_impl::doCheckInputWindowStacking()
 
 QPoint effects_handler_impl::cursorPos() const
 {
-    return input::get_cursor()->pos();
+    return m_compositor->space->input->platform.cursor->pos();
 }
 
 void effects_handler_impl::reserveElectricBorder(ElectricBorder border, Effect* effect)
@@ -1815,7 +1817,7 @@ void effects_handler_impl::slotOutputDisabled(base::output* output)
 
 bool effects_handler_impl::isCursorHidden() const
 {
-    return input::get_cursor()->is_hidden();
+    return m_compositor->space->input->platform.cursor->is_hidden();
 }
 
 QImage effects_handler_impl::blit_from_framebuffer(QRect const& geometry, double scale) const

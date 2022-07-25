@@ -859,7 +859,7 @@ template<typename Win>
 void pack_to(Win* win, int left, int top)
 {
     // May cause leave event.
-    win->space.focusMousePos = input::get_cursor()->pos();
+    win->space.focusMousePos = win->space.input->platform.cursor->pos();
 
     auto const old_screen = win->central_output;
     move(win, QPoint(left, top));
