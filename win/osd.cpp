@@ -20,13 +20,13 @@ namespace KWin::win
 static void create_osd(win::space& space)
 {
     assert(!space.osd);
-    space.osd = std::make_unique<osd_notification>();
+    space.osd = std::make_unique<osd_notification<input::redirect>>(space.input.get());
 
     space.osd->m_config = kwinApp()->config();
     space.osd->m_qmlEngine = space.scripting->qmlEngine();
 }
 
-static osd_notification* get_osd(win::space& space)
+static osd_notification<input::redirect>* get_osd(win::space& space)
 {
     if (!space.osd) {
         create_osd(space);

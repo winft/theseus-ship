@@ -6,11 +6,25 @@
 */
 #pragma once
 
-#include "kwin_export.h"
+#include "input/event.h"
+#include "input/event_spy.h"
+#include "input/pointer_redirect.h"
+#include "input/redirect.h"
 
-#include <QObject>
+#include <epoxy/gl.h>
 
+#include <KConfigGroup>
 #include <KSharedConfig>
+#include <QObject>
+#include <QPropertyAnimation>
+#include <QQmlComponent>
+#include <QQmlContext>
+#include <QQmlEngine>
+#include <QQuickWindow>
+#include <QStandardPaths>
+#include <QTimer>
+#include <cassert>
+#include <functional>
 #include <memory>
 
 class QPropertyAnimation;
@@ -22,7 +36,25 @@ class QQmlEngine;
 namespace KWin::win
 {
 
-class osd_notification_input_spy;
+template<typename Osd>
+class osd_notification_input_spy : public input::event_spy
+{
+public:
+    explicit osd_notification_input_spy(Osd& osd)
+        : event_spy(*osd.input_redirect)
+        , osd{osd}
+    {
+    }
+
+    void motion(input::motion_event const& /*event*/) override
+    {
+        auto const pos = redirect.get_pointer()->pos();
+        osd.setContainsPointer(osd.geometry().contains(pos.toPoint()));
+    }
+
+private:
+    Osd& osd;
+};
 
 class osd_notification_qobject : public QObject
 {
@@ -59,33 +91,157 @@ private:
     QTimer& timer;
 };
 
-class KWIN_EXPORT osd_notification
+template<typename Redirect>
+class osd_notification
 {
 public:
-    osd_notification();
-    ~osd_notification();
+    osd_notification(Redirect* input_redirect)
+        : timer{std::make_unique<QTimer>()}
+        , qobject{std::make_unique<osd_notification_qobject>(*timer)}
+        , input_redirect{input_redirect}
+    {
+        timer->setSingleShot(true);
+        QObject::connect(
+            timer.get(), &QTimer::timeout, qobject.get(), [this] { qobject->setVisible(false); });
+        QObject::connect(
+            qobject.get(), &osd_notification_qobject::visibleChanged, qobject.get(), [this] {
+                if (qobject->m_visible) {
+                    show();
+                } else {
+                    timer->stop();
+                    m_spy.reset();
+                    m_containsPointer = false;
+                }
+            });
+    }
 
-    QRect geometry() const;
+    ~osd_notification()
+    {
+        if (auto win = qobject_cast<QQuickWindow*>(m_mainItem.get())) {
+            win->hide();
+            win->destroy();
+        }
+    }
 
-    void setContainsPointer(bool contains);
-    void setSkipCloseAnimation(bool skip);
+    QRect geometry() const
+    {
+        if (auto win = qobject_cast<QQuickWindow*>(m_mainItem.get())) {
+            return win->geometry();
+        }
+        return QRect();
+    }
+
+    void setContainsPointer(bool contains)
+    {
+        if (m_containsPointer == contains) {
+            return;
+        }
+        m_containsPointer = contains;
+        if (!m_animation) {
+            return;
+        }
+        m_animation->setDirection(m_containsPointer ? QAbstractAnimation::Forward
+                                                    : QAbstractAnimation::Backward);
+        m_animation->start();
+    }
+
+    void setSkipCloseAnimation(bool skip)
+    {
+        if (auto win = qobject_cast<QQuickWindow*>(m_mainItem.get())) {
+            win->setProperty("KWIN_SKIP_CLOSE_ANIMATION", skip);
+        }
+    }
 
     std::unique_ptr<QTimer> timer;
     std::unique_ptr<osd_notification_qobject> qobject;
+    Redirect* input_redirect{nullptr};
 
     KSharedConfigPtr m_config;
     QQmlEngine* m_qmlEngine{nullptr};
 
 private:
-    void show();
-    void ensureQmlContext();
-    void ensureQmlComponent();
-    void createInputSpy();
+    using input_spy = osd_notification_input_spy<osd_notification<Redirect>>;
+
+    void show()
+    {
+        assert(qobject->m_visible);
+
+        ensureQmlContext();
+        ensureQmlComponent();
+        createInputSpy();
+
+        if (timer->interval() != 0) {
+            timer->start();
+        }
+    }
+
+    void ensureQmlContext()
+    {
+        assert(m_qmlEngine);
+
+        if (m_qmlContext) {
+            return;
+        }
+
+        m_qmlContext.reset(new QQmlContext(m_qmlEngine));
+        m_qmlContext->setContextProperty(QStringLiteral("osd"), qobject.get());
+    }
+
+    void ensureQmlComponent()
+    {
+        assert(m_config);
+        assert(m_qmlEngine);
+
+        if (m_qmlComponent) {
+            return;
+        }
+
+        m_qmlComponent.reset(new QQmlComponent(m_qmlEngine));
+
+        auto const fileName = QStandardPaths::locate(
+            QStandardPaths::GenericDataLocation,
+            m_config->group(QStringLiteral("OnScreenNotification"))
+                .readEntry("QmlPath",
+                           QStringLiteral(KWIN_NAME "/onscreennotification/plasma/main.qml")));
+
+        if (fileName.isEmpty()) {
+            return;
+        }
+
+        m_qmlComponent->loadUrl(QUrl::fromLocalFile(fileName));
+
+        if (!m_qmlComponent->isError()) {
+            m_mainItem.reset(m_qmlComponent->create(m_qmlContext.get()));
+        } else {
+            m_qmlComponent.reset();
+        }
+    }
+
+    void createInputSpy()
+    {
+        assert(!m_spy);
+
+        auto win = qobject_cast<QQuickWindow*>(m_mainItem.get());
+        if (!win) {
+            return;
+        }
+
+        m_spy = std::make_unique<input_spy>(*this);
+        input_redirect->installInputEventSpy(m_spy.get());
+
+        if (!m_animation) {
+            m_animation = new QPropertyAnimation(win, "opacity", qobject.get());
+            m_animation->setStartValue(1.0);
+            m_animation->setEndValue(0.0);
+            m_animation->setDuration(250);
+            m_animation->setEasingCurve(QEasingCurve::InOutCubic);
+        }
+    }
 
     std::unique_ptr<QQmlComponent> m_qmlComponent;
     std::unique_ptr<QQmlContext> m_qmlContext;
     std::unique_ptr<QObject> m_mainItem;
-    std::unique_ptr<osd_notification_input_spy> m_spy;
+    std::unique_ptr<input_spy> m_spy;
     QPropertyAnimation* m_animation{nullptr};
     bool m_containsPointer{false};
 };

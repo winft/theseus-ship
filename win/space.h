@@ -223,7 +223,7 @@ public:
 
     int set_active_client_recursion{0};
 
-    std::unique_ptr<osd_notification> osd;
+    std::unique_ptr<osd_notification<input::redirect>> osd;
     std::unique_ptr<kill_window<space>> window_killer;
 };
 
