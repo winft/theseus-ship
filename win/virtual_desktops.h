@@ -298,8 +298,6 @@ public:
      */
     virtual_desktop* previous(virtual_desktop* desktop = nullptr, bool wrap = true) const;
 
-    void initShortcuts();
-
     /**
      * @returns all currently managed virtual_desktops
      */
@@ -411,7 +409,6 @@ public:
 
     std::unique_ptr<virtual_desktop_manager_qobject> qobject;
 
-private:
     /**
      * Common slot for all "Switch to Desktop n" shortcuts.
      * This method uses the sender() method to access some data.
@@ -443,6 +440,7 @@ private:
      */
     void slotDown();
 
+private:
     /**
      * Generate a desktop layout from EWMH _NET_DESKTOP_LAYOUT property parameters.
      */
@@ -452,10 +450,6 @@ private:
      * @returns A default name for the given @p desktop
      */
     QString defaultName(int desktop) const;
-    /**
-     * Creates all the global keyboard shortcuts for "Switch To Desktop n" actions.
-     */
-    void initSwitchToShortcuts();
 
     QVector<virtual_desktop*> m_desktops;
     QPointer<virtual_desktop> m_current;

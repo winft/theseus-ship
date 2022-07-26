@@ -7,9 +7,6 @@
 */
 #include "virtual_desktops.h"
 
-#include "input/platform.h"
-#include "main.h"
-
 #include <KConfigGroup>
 #include <KGlobalAccel>
 #include <KLocalizedString>
@@ -861,121 +858,6 @@ void virtual_desktop_manager::setNETDesktopLayout(Qt::Orientation orientation,
     // TODO: why is there no call to m_rootInfo->setDesktopLayout?
     Q_EMIT qobject->layoutChanged(width, height);
     Q_EMIT qobject->rowsChanged(height);
-}
-
-template<typename Manager, typename Slot>
-QAction* add_action(Manager& manager, QString const& name, QString const& label, Slot slot)
-{
-    auto a = new QAction(manager.qobject.get());
-    a->setProperty("componentName", QStringLiteral(KWIN_NAME));
-    a->setObjectName(name);
-    a->setText(label);
-
-    KGlobalAccel::setGlobalShortcut(a, QKeySequence());
-    kwinApp()->input->registerShortcut(QKeySequence(), a, manager.qobject.get(), slot);
-
-    return a;
-}
-
-template<typename Manager, typename Slot>
-QAction* add_action(Manager& manager,
-                    QString const& name,
-                    KLocalizedString const& label,
-                    uint value,
-                    const QKeySequence& key,
-                    Slot slot)
-{
-    auto a = new QAction(manager.qobject.get());
-    a->setProperty("componentName", QStringLiteral(KWIN_NAME));
-    a->setObjectName(name.arg(value));
-    a->setText(label.subs(value).toString());
-    a->setData(value);
-
-    KGlobalAccel::setGlobalShortcut(a, key);
-    kwinApp()->input->registerShortcut(key, a, manager.qobject.get(), [a, slot] { slot(*a); });
-
-    return a;
-}
-
-void virtual_desktop_manager::initShortcuts()
-{
-    initSwitchToShortcuts();
-
-    auto nextAction = add_action(*this,
-                                 QStringLiteral("Switch to Next Desktop"),
-                                 i18n("Switch to Next Desktop"),
-                                 [this] { slotNext(); });
-    kwinApp()->input->registerTouchpadSwipeShortcut(SwipeDirection::Right, nextAction);
-
-    auto previousAction = add_action(*this,
-                                     QStringLiteral("Switch to Previous Desktop"),
-                                     i18n("Switch to Previous Desktop"),
-                                     [this] { slotPrevious(); });
-    kwinApp()->input->registerTouchpadSwipeShortcut(SwipeDirection::Left, previousAction);
-
-    add_action(*this,
-               QStringLiteral("Switch One Desktop to the Right"),
-               i18n("Switch One Desktop to the Right"),
-               [this] { slotRight(); });
-    add_action(*this,
-               QStringLiteral("Switch One Desktop to the Left"),
-               i18n("Switch One Desktop to the Left"),
-               [this] { slotLeft(); });
-    add_action(*this,
-               QStringLiteral("Switch One Desktop Up"),
-               i18n("Switch One Desktop Up"),
-               [this] { slotUp(); });
-    add_action(*this,
-               QStringLiteral("Switch One Desktop Down"),
-               i18n("Switch One Desktop Down"),
-               [this] { slotDown(); });
-
-    // axis events
-    kwinApp()->input->registerAxisShortcut(
-        Qt::ControlModifier | Qt::AltModifier,
-        PointerAxisDown,
-        qobject->findChild<QAction*>(QStringLiteral("Switch to Next Desktop")));
-    kwinApp()->input->registerAxisShortcut(
-        Qt::ControlModifier | Qt::AltModifier,
-        PointerAxisUp,
-        qobject->findChild<QAction*>(QStringLiteral("Switch to Previous Desktop")));
-}
-
-void virtual_desktop_manager::initSwitchToShortcuts()
-{
-    auto const toDesktop = QStringLiteral("Switch to Desktop %1");
-    KLocalizedString const toDesktopLabel = ki18n("Switch to Desktop %1");
-
-    add_action(*this,
-               toDesktop,
-               toDesktopLabel,
-               1,
-               QKeySequence(Qt::CTRL + Qt::Key_F1),
-               [this](auto& action) { slotSwitchTo(action); });
-    add_action(*this,
-               toDesktop,
-               toDesktopLabel,
-               2,
-               QKeySequence(Qt::CTRL + Qt::Key_F2),
-               [this](auto& action) { slotSwitchTo(action); });
-    add_action(*this,
-               toDesktop,
-               toDesktopLabel,
-               3,
-               QKeySequence(Qt::CTRL + Qt::Key_F3),
-               [this](auto& action) { slotSwitchTo(action); });
-    add_action(*this,
-               toDesktop,
-               toDesktopLabel,
-               4,
-               QKeySequence(Qt::CTRL + Qt::Key_F4),
-               [this](auto& action) { slotSwitchTo(action); });
-
-    for (uint i = 5; i <= maximum(); ++i) {
-        add_action(*this, toDesktop, toDesktopLabel, i, QKeySequence(), [this](auto& action) {
-            slotSwitchTo(action);
-        });
-    }
 }
 
 void virtual_desktop_manager::slotSwitchTo(QAction& action)
