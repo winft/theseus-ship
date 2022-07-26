@@ -5,7 +5,6 @@
 */
 #pragma once
 
-#include "input/dbus/tablet_mode_manager.h"
 #include "input/event.h"
 #include "input/event_spy.h"
 #include "input/switch.h"
@@ -13,10 +12,11 @@
 namespace KWin::input
 {
 
+template<typename Manager>
 class tablet_mode_switch_spy : public input::event_spy
 {
 public:
-    tablet_mode_switch_spy(input::redirect& redirect, dbus::tablet_mode_manager* manager)
+    tablet_mode_switch_spy(input::redirect& redirect, Manager& manager)
         : event_spy(redirect)
         , manager(manager)
     {
@@ -30,10 +30,10 @@ public:
 
         switch (event.state) {
         case input::switch_state::off:
-            manager->setIsTablet(false);
+            manager.setIsTablet(false);
             break;
         case input::switch_state::on:
-            manager->setIsTablet(true);
+            manager.setIsTablet(true);
             break;
         default:
             Q_UNREACHABLE();
@@ -41,7 +41,7 @@ public:
     }
 
 private:
-    dbus::tablet_mode_manager* const manager;
+    Manager& manager;
 };
 
 }
