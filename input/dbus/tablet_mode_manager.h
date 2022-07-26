@@ -10,6 +10,7 @@
 #include "kwin_export.h"
 
 #include <QObject>
+#include <memory>
 
 namespace KWin::input
 {
@@ -18,6 +19,8 @@ class tablet_mode_switch_spy;
 
 namespace dbus
 {
+
+class tablet_mode_touchpad_removed_spy;
 
 class KWIN_EXPORT tablet_mode_manager : public QObject
 {
@@ -47,6 +50,7 @@ private:
     void hasTabletModeInputChanged(bool set);
 
     tablet_mode_switch_spy* spy{nullptr};
+    std::unique_ptr<tablet_mode_touchpad_removed_spy> removed_spy;
     bool m_tabletModeAvailable{false};
     bool m_isTabletMode{false};
     bool m_detecting{false};

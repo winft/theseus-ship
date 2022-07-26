@@ -24,8 +24,7 @@ class tablet_mode_touchpad_removed_spy : public QObject
 {
 public:
     explicit tablet_mode_touchpad_removed_spy(tablet_mode_manager* parent)
-        : QObject(parent)
-        , m_parent(parent)
+        : m_parent(parent)
     {
         auto plat = kwinApp()->input.get();
         QObject::connect(
@@ -91,13 +90,13 @@ void tablet_mode_manager::hasTabletModeInputChanged(bool set)
         setTabletModeAvailable(true);
     } else {
         auto setupDetector = [this] {
-            auto spy = new tablet_mode_touchpad_removed_spy(this);
+            removed_spy = std::make_unique<tablet_mode_touchpad_removed_spy>(this);
             QObject::connect(static_cast<input::wayland::redirect*>(kwinApp()->input->redirect),
                              &input::wayland::redirect::has_tablet_mode_switch_changed,
-                             spy,
-                             [spy](bool set) {
+                             removed_spy.get(),
+                             [this](bool set) {
                                  if (set)
-                                     spy->deleteLater();
+                                     removed_spy.reset();
                              });
         };
         setupDetector();
