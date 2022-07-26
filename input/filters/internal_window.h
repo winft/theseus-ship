@@ -16,7 +16,6 @@
 #include "input/redirect.h"
 #include "input/touch_redirect.h"
 #include "input/xkb/helpers.h"
-#include "main.h"
 #include "win/deco.h"
 #include "win/internal_window.h"
 #include "win/space.h"
@@ -241,7 +240,7 @@ public:
                       event.pos,
                       Qt::LeftButton,
                       Qt::LeftButton,
-                      xkb::get_active_keyboard_modifiers(kwinApp()->input));
+                      xkb::get_active_keyboard_modifiers(this->redirect.platform));
         e.setAccepted(false);
         QCoreApplication::sendEvent(internal, &e);
         return true;
@@ -270,7 +269,7 @@ public:
                       m_lastGlobalTouchPos,
                       Qt::LeftButton,
                       Qt::LeftButton,
-                      xkb::get_active_keyboard_modifiers(kwinApp()->input));
+                      xkb::get_active_keyboard_modifiers(this->redirect.platform));
         QCoreApplication::instance()->sendEvent(internal, &e);
         return true;
     }
@@ -297,7 +296,7 @@ public:
                       m_lastGlobalTouchPos,
                       Qt::LeftButton,
                       Qt::MouseButtons(),
-                      xkb::get_active_keyboard_modifiers(kwinApp()->input));
+                      xkb::get_active_keyboard_modifiers(this->redirect.platform));
         e.setAccepted(false);
         QCoreApplication::sendEvent(internal, &e);
 

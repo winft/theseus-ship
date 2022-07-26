@@ -26,7 +26,7 @@ namespace KWin::input
 
 bool get_modifier_command(uint32_t key, base::options::MouseCommand& command)
 {
-    if (xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(kwinApp()->input)
+    if (xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(*kwinApp()->input)
         != kwinApp()->options->commandAllModifier()) {
         return false;
     }
@@ -87,7 +87,7 @@ bool get_wheel_modifier_command(axis_orientation orientation,
                                 double delta,
                                 base::options::MouseCommand& command)
 {
-    if (xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(kwinApp()->input)
+    if (xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(*kwinApp()->input)
         != kwinApp()->options->commandAllModifier()) {
         return false;
     }

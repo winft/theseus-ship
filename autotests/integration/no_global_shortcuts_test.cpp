@@ -239,10 +239,10 @@ void NoGlobalShortcutsTest::testKGlobalAccel()
     // press meta+shift+w
     quint32 timestamp = 0;
     Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
-    QCOMPARE(input::xkb::get_active_keyboard_modifiers(kwinApp()->input), Qt::MetaModifier);
+    QCOMPARE(input::xkb::get_active_keyboard_modifiers(*Test::app()->input), Qt::MetaModifier);
 
     Test::keyboard_key_pressed(KEY_LEFTSHIFT, timestamp++);
-    QCOMPARE(input::xkb::get_active_keyboard_modifiers(kwinApp()->input),
+    QCOMPARE(input::xkb::get_active_keyboard_modifiers(*Test::app()->input),
              Qt::ShiftModifier | Qt::MetaModifier);
 
     Test::keyboard_key_pressed(KEY_W, timestamp++);

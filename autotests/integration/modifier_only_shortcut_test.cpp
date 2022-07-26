@@ -328,14 +328,14 @@ void ModifierOnlyShortcutTest::testCapsLock()
     // now capslock
     Test::keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
     Test::keyboard_key_released(KEY_CAPSLOCK, timestamp++);
-    QTRY_COMPARE(input::xkb::get_active_keyboard_modifiers(kwinApp()->input), Qt::ShiftModifier);
+    QTRY_COMPARE(input::xkb::get_active_keyboard_modifiers(*Test::app()->input), Qt::ShiftModifier);
     QTRY_COMPARE(triggeredSpy.count(), 1);
 
     // currently caps lock is on
     // shift still triggers
     Test::keyboard_key_pressed(modifier, timestamp++);
     Test::keyboard_key_released(modifier, timestamp++);
-    QTRY_COMPARE(input::xkb::get_active_keyboard_modifiers(kwinApp()->input), Qt::ShiftModifier);
+    QTRY_COMPARE(input::xkb::get_active_keyboard_modifiers(*Test::app()->input), Qt::ShiftModifier);
     QTRY_COMPARE(triggeredSpy.count(), 2);
 
     // meta should also trigger
@@ -348,11 +348,11 @@ void ModifierOnlyShortcutTest::testCapsLock()
     win::space_reconfigure(*Test::app()->base.space);
 
     Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
-    QTRY_COMPARE(input::xkb::get_active_keyboard_modifiers(kwinApp()->input),
+    QTRY_COMPARE(input::xkb::get_active_keyboard_modifiers(*Test::app()->input),
                  Qt::ShiftModifier | Qt::MetaModifier);
-    QTRY_COMPARE(
-        input::xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(kwinApp()->input),
-        Qt::MetaModifier);
+    QTRY_COMPARE(input::xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(
+                     *Test::app()->input),
+                 Qt::MetaModifier);
 
     Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
     QTRY_COMPARE(triggeredSpy.count(), 3);
@@ -369,7 +369,7 @@ void ModifierOnlyShortcutTest::testCapsLock()
     // release caps lock
     Test::keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
     Test::keyboard_key_released(KEY_CAPSLOCK, timestamp++);
-    QTRY_COMPARE(input::xkb::get_active_keyboard_modifiers(kwinApp()->input), Qt::NoModifier);
+    QTRY_COMPARE(input::xkb::get_active_keyboard_modifiers(*Test::app()->input), Qt::NoModifier);
     QTRY_COMPARE(triggeredSpy.count(), 3);
 }
 

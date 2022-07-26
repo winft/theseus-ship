@@ -73,10 +73,10 @@ public:
         pass_to_wayland_server(event);
 
         if (event.state == key_state::pressed) {
-            auto mods = xkb::get_active_keyboard_modifiers(kwinApp()->input);
+            auto mods = xkb::get_active_keyboard_modifiers(this->redirect.platform);
             tabbox->key_press(mods | key_to_qt_key(event.keycode, event.base.dev->xkb.get()));
         } else if (xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(
-                       kwinApp()->input)
+                       this->redirect.platform)
                    == Qt::NoModifier) {
             tabbox->modifiers_released();
         }
@@ -91,7 +91,7 @@ public:
             return false;
         }
 
-        auto mods = xkb::get_active_keyboard_modifiers(kwinApp()->input);
+        auto mods = xkb::get_active_keyboard_modifiers(this->redirect.platform);
         tabbox->key_press(mods | key_to_qt_key(event.keycode, event.base.dev->xkb.get()));
         return true;
     }

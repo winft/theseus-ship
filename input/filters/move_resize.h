@@ -12,7 +12,6 @@
 #include "input/qt_event.h"
 #include "input/redirect.h"
 #include "input/xkb/helpers.h"
-#include "main.h"
 #include "win/input.h"
 #include "win/move.h"
 #include "win/space.h"
@@ -59,15 +58,13 @@ public:
 
     void process_key_press(Toplevel* window, key_event const& event)
     {
-        auto const& input = kwinApp()->input;
-
         win::key_press_event(window,
                              key_to_qt_key(event.keycode, event.base.dev->xkb.get())
-                                 | xkb::get_active_keyboard_modifiers(input));
+                                 | xkb::get_active_keyboard_modifiers(this->redirect.platform));
 
         if (win::is_move(window) || win::is_resize(window)) {
             // Only update if mode didn't end.
-            win::update_move_resize(window, input->redirect->globalPointer());
+            win::update_move_resize(window, this->redirect.globalPointer());
         }
     }
 

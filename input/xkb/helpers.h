@@ -42,7 +42,7 @@ Qt::KeyboardModifiers get_active_keyboard_modifiers(Platform const& platform)
 {
     Qt::KeyboardModifiers all{Qt::NoModifier};
 
-    for (auto keyboard : platform->keyboards) {
+    for (auto keyboard : platform.keyboards) {
         all |= keyboard->xkb->qt_modifiers;
     }
 
@@ -55,7 +55,7 @@ get_active_keyboard_modifiers_relevant_for_global_shortcuts(Platform const& plat
 {
     Qt::KeyboardModifiers all{Qt::NoModifier};
 
-    for (auto keyboard : platform->keyboards) {
+    for (auto keyboard : platform.keyboards) {
         all |= keyboard->xkb->modifiers_relevant_for_global_shortcuts();
     }
 

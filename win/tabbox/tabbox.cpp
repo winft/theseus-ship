@@ -1002,8 +1002,8 @@ static bool areModKeysDepressedX11(const QKeySequence& seq)
 static bool areModKeysDepressedWayland(const QKeySequence& seq)
 {
     const int mod = seq[seq.count() - 1] & Qt::KeyboardModifierMask;
-    auto const mods
-        = input::xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(kwinApp()->input);
+    auto const mods = input::xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(
+        *kwinApp()->input);
     if ((mod & Qt::SHIFT) && mods.testFlag(Qt::ShiftModifier)) {
         return true;
     }

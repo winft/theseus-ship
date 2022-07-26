@@ -53,7 +53,7 @@ QMouseEvent
 get_qt_mouse_event(Ptr const& ptr, QEvent::Type type, QPointF const& pos, Qt::MouseButton button)
 {
     auto buttons = ptr.buttons();
-    auto modifiers = xkb::get_active_keyboard_modifiers(&ptr.redirect->platform);
+    auto modifiers = xkb::get_active_keyboard_modifiers(ptr.redirect->platform);
 
     return QMouseEvent(type, pos, pos, button, buttons, modifiers);
 }
@@ -133,7 +133,7 @@ QWheelEvent axis_to_qt_event(Ptr const& ptr, axis_event const& event)
 
     // TODO(romangg): In the future only get modifiers from keyboards associated with the seat of
     //                the pointer the event originated from.
-    auto mods = xkb::get_active_keyboard_modifiers(&ptr.redirect->platform);
+    auto mods = xkb::get_active_keyboard_modifiers(ptr.redirect->platform);
 
     auto const delta_int = static_cast<int>(std::round(event.delta));
     auto delta_point = QPoint(event.delta, 0);

@@ -64,7 +64,7 @@ void cursor::do_set_pos()
 template<typename Platform>
 Qt::KeyboardModifiers get_keyboard_modifiers(Platform const& platform)
 {
-    return xkb::get_active_keyboard_modifiers(&platform);
+    return xkb::get_active_keyboard_modifiers(platform);
 }
 
 void cursor::slot_pos_changed(const QPointF& pos)

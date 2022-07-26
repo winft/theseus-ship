@@ -189,7 +189,7 @@ void GlobalShortcutsTest::testConsumedShift()
     // press shift+5
     quint32 timestamp = 0;
     Test::keyboard_key_pressed(KEY_LEFTSHIFT, timestamp++);
-    QCOMPARE(input::xkb::get_active_keyboard_modifiers(kwinApp()->input), Qt::ShiftModifier);
+    QCOMPARE(input::xkb::get_active_keyboard_modifiers(*Test::app()->input), Qt::ShiftModifier);
     Test::keyboard_key_pressed(KEY_5, timestamp++);
 
     QVERIFY(triggeredSpy.size() || triggeredSpy.wait());
@@ -222,7 +222,7 @@ void GlobalShortcutsTest::testRepeatedTrigger()
     quint32 timestamp = 0;
     Test::keyboard_key_pressed(KEY_WAKEUP, timestamp++);
     Test::keyboard_key_pressed(KEY_LEFTSHIFT, timestamp++);
-    QCOMPARE(input::xkb::get_active_keyboard_modifiers(kwinApp()->input), Qt::ShiftModifier);
+    QCOMPARE(input::xkb::get_active_keyboard_modifiers(*Test::app()->input), Qt::ShiftModifier);
     Test::keyboard_key_pressed(KEY_5, timestamp++);
 
     QVERIFY(triggeredSpy.size() || triggeredSpy.wait());
@@ -285,9 +285,9 @@ void GlobalShortcutsTest::testMetaShiftW()
     // press meta+shift+w
     quint32 timestamp = 0;
     Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
-    QCOMPARE(input::xkb::get_active_keyboard_modifiers(kwinApp()->input), Qt::MetaModifier);
+    QCOMPARE(input::xkb::get_active_keyboard_modifiers(*Test::app()->input), Qt::MetaModifier);
     Test::keyboard_key_pressed(KEY_LEFTSHIFT, timestamp++);
-    QCOMPARE(input::xkb::get_active_keyboard_modifiers(kwinApp()->input),
+    QCOMPARE(input::xkb::get_active_keyboard_modifiers(*Test::app()->input),
              Qt::ShiftModifier | Qt::MetaModifier);
     Test::keyboard_key_pressed(KEY_W, timestamp++);
     QTRY_COMPARE(triggeredSpy.count(), 1);

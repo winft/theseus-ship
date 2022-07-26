@@ -57,7 +57,7 @@ public:
                                     global_pos,
                                     button_to_qt_mouse_button(event.key),
                                     this->redirect.pointer->buttons(),
-                                    xkb::get_active_keyboard_modifiers(kwinApp()->input));
+                                    xkb::get_active_keyboard_modifiers(this->redirect.platform));
         qt_event.setAccepted(false);
 
         QCoreApplication::sendEvent(decoration->decoration(), &qt_event);
@@ -158,7 +158,7 @@ public:
                       event.pos,
                       Qt::LeftButton,
                       Qt::LeftButton,
-                      xkb::get_active_keyboard_modifiers(kwinApp()->input));
+                      xkb::get_active_keyboard_modifiers(this->redirect.platform));
         e.setAccepted(false);
         QCoreApplication::sendEvent(decoration->decoration(), &e);
         if (!e.isAccepted()) {
@@ -212,7 +212,7 @@ public:
                       m_lastGlobalTouchPos,
                       Qt::LeftButton,
                       Qt::MouseButtons(),
-                      xkb::get_active_keyboard_modifiers(kwinApp()->input));
+                      xkb::get_active_keyboard_modifiers(this->redirect.platform));
         e.setAccepted(false);
         QCoreApplication::sendEvent(decoration->decoration(), &e);
         win::process_decoration_button_release(decoration->client(), &e);

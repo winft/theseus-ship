@@ -64,7 +64,7 @@ public:
 
     void key(key_event const& event) override
     {
-        auto mods = xkb::get_active_keyboard_modifiers(kwinApp()->input.get());
+        auto mods = xkb::get_active_keyboard_modifiers(redirect.platform);
 
         if (event.state == key_state::pressed) {
             const bool wasEmpty = m_pressedKeys.isEmpty();
@@ -99,8 +99,8 @@ public:
             m_modifier = Qt::NoModifier;
         }
 
-        m_cachedMods = xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(
-            kwinApp()->input.get());
+        m_cachedMods
+            = xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(redirect.platform);
     }
 
     void button(button_event const& event) override

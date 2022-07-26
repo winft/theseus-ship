@@ -41,7 +41,7 @@ public:
     {
         if (event.state == button_state::pressed) {
             auto& input = kwinApp()->input;
-            auto mods = xkb::get_active_keyboard_modifiers(kwinApp()->input.get());
+            auto mods = xkb::get_active_keyboard_modifiers(this->redirect.platform);
             if (input->shortcuts->processPointerPressed(mods, input->redirect->qtButtonStates())) {
                 return true;
             }
@@ -51,7 +51,7 @@ public:
 
     bool axis(axis_event const& event) override
     {
-        auto mods = xkb::get_active_keyboard_modifiers(kwinApp()->input);
+        auto mods = xkb::get_active_keyboard_modifiers(this->redirect.platform);
 
         if (mods == Qt::NoModifier) {
             return false;
