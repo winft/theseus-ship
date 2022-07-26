@@ -296,7 +296,7 @@ void keyboard_layout_test::cleanup()
     spies->v2.layout_changed.clear();
 
     // We always reset to a us layout.
-    if (auto xkb = input::xkb::get_primary_xkb_keyboard();
+    if (auto xkb = input::xkb::get_primary_xkb_keyboard(*Test::app()->input);
         xkb->layout_name() != "English (US)" || xkb->layouts_count() != 1) {
         layout_group.writeEntry("LayoutList", QStringLiteral("us"));
         layout_group.sync();
@@ -309,7 +309,7 @@ void keyboard_layout_test::test_reconfigure()
     // Verifies that we can change the keymap.
 
     // Default should be a keymap with only us layout.
-    auto xkb = input::xkb::get_primary_xkb_keyboard();
+    auto xkb = input::xkb::get_primary_xkb_keyboard(*Test::app()->input);
     QCOMPARE(xkb->layouts_count(), 1u);
     QCOMPARE(xkb->layout_name(), "English (US)");
     QCOMPARE(xkb->layouts_count(), 1);
@@ -361,7 +361,7 @@ void keyboard_layout_test::test_change_layout_through_dbus()
     reconfigure_layouts();
 
     // Now we should have three layouts.
-    auto xkb = input::xkb::get_primary_xkb_keyboard();
+    auto xkb = input::xkb::get_primary_xkb_keyboard(*Test::app()->input);
     QCOMPARE(xkb->layouts_count(), 3u);
 
     // Default layout is German.
@@ -433,7 +433,7 @@ void keyboard_layout_test::test_xkb_shortcut()
     layout_group.sync();
 
     // Now we should have three layouts.
-    auto xkb = input::xkb::get_primary_xkb_keyboard();
+    auto xkb = input::xkb::get_primary_xkb_keyboard(*Test::app()->input);
     reconfigure_layouts();
     QCOMPARE(xkb->layouts_count(), 3u);
 
@@ -554,7 +554,7 @@ void keyboard_layout_test::test_per_layout_shortcut()
     delete action;
 
     // Now we should have three layouts.
-    auto xkb = input::xkb::get_primary_xkb_keyboard();
+    auto xkb = input::xkb::get_primary_xkb_keyboard(*Test::app()->input);
     reconfigure_layouts();
     QCOMPARE(xkb->layouts_count(), 3u);
 
@@ -608,7 +608,7 @@ void keyboard_layout_test::test_dbus_service_export()
 {
     // Verifies that the dbus service is only exported if there are at least two layouts.
 
-    auto xkb = input::xkb::get_primary_xkb_keyboard();
+    auto xkb = input::xkb::get_primary_xkb_keyboard(*Test::app()->input);
     QCOMPARE(xkb->layouts_count(), 1u);
 
     // Default layout is English.
@@ -648,7 +648,7 @@ void keyboard_layout_test::test_virtual_desktop_policy()
     layout_group.sync();
     reconfigure_layouts();
 
-    auto xkb = input::xkb::get_primary_xkb_keyboard();
+    auto xkb = input::xkb::get_primary_xkb_keyboard(*Test::app()->input);
     QCOMPARE(xkb->layouts_count(), 3u);
     QCOMPARE(xkb->layout_name(), "English (US)");
 
@@ -726,7 +726,7 @@ void keyboard_layout_test::test_window_policy()
     layout_group.sync();
     reconfigure_layouts();
 
-    auto xkb = input::xkb::get_primary_xkb_keyboard();
+    auto xkb = input::xkb::get_primary_xkb_keyboard(*Test::app()->input);
     QCOMPARE(xkb->layouts_count(), 3u);
     QCOMPARE(xkb->layout_name(), "English (US)");
 
@@ -772,7 +772,7 @@ void keyboard_layout_test::test_application_policy()
     layout_group.sync();
     reconfigure_layouts();
 
-    auto xkb = input::xkb::get_primary_xkb_keyboard();
+    auto xkb = input::xkb::get_primary_xkb_keyboard(*Test::app()->input);
     QCOMPARE(xkb->layouts_count(), 3u);
     QCOMPARE(xkb->layout_name(), "English (US)");
 
@@ -831,7 +831,7 @@ void keyboard_layout_test::test_application_policy()
 
 void keyboard_layout_test::test_num_lock()
 {
-    auto xkb = input::xkb::get_primary_xkb_keyboard();
+    auto xkb = input::xkb::get_primary_xkb_keyboard(*Test::app()->input);
     QCOMPARE(xkb->layouts_count(), 1u);
     QCOMPARE(xkb->layout_name(), "English (US)");
 

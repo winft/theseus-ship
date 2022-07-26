@@ -139,7 +139,7 @@ void input_method::input_method_v2_changed()
 
 void input_method::handle_keyboard_grabbed(input_method_keyboard_grab_v2* grab)
 {
-    auto xkb = xkb::get_primary_xkb_keyboard();
+    auto xkb = xkb::get_primary_xkb_keyboard(platform);
     auto filter
         = filters
               .emplace_back(new im_keyboard_grab_v2(

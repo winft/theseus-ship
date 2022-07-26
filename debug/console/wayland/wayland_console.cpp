@@ -90,7 +90,7 @@ QString stateActiveComponents(xkb_state* state,
 
 void wayland_console::update_keyboard_tab()
 {
-    auto xkb = input::xkb::get_primary_xkb_keyboard();
+    auto xkb = input::xkb::get_primary_xkb_keyboard(space.input->platform);
     auto keymap = xkb->keymap->raw;
 
     m_ui->layoutsLabel->setText(keymapComponentToString<xkb_layout_index_t>(

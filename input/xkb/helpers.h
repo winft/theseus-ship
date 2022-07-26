@@ -17,10 +17,10 @@ namespace KWin::input::xkb
 /**
  * Retuns the first configurable keyboard, otherwise the default-created keyboard is returned.
  */
-inline keyboard* get_primary_xkb_keyboard()
+template<typename Platform>
+keyboard* get_primary_xkb_keyboard(Platform const& platform)
 {
-    auto const& platform = kwinApp()->input;
-    auto const& keyboards = platform->keyboards;
+    auto const& keyboards = platform.keyboards;
 
     for (auto& keyboard : keyboards) {
         if (keyboard->xkb->foreign_owned) {
@@ -34,7 +34,7 @@ inline keyboard* get_primary_xkb_keyboard()
         return keyboard->xkb.get();
     }
 
-    return platform->xkb.default_keyboard.get();
+    return platform.xkb.default_keyboard.get();
 }
 
 template<typename Platform>

@@ -65,9 +65,17 @@ void layout_manager::init()
     init_dbus_interface_v2();
 }
 
+namespace
+{
+auto get_keyboard(layout_manager* manager)
+{
+    return xkb::get_primary_xkb_keyboard(*manager->xkb.platform);
+}
+}
+
 void layout_manager::initDBusInterface()
 {
-    auto xkb = xkb::get_primary_xkb_keyboard();
+    auto xkb = get_keyboard(this);
 
     if (xkb->layouts_count() <= 1) {
         if (m_dbusInterface) {
@@ -102,17 +110,17 @@ void layout_manager::init_dbus_interface_v2()
 
 void layout_manager::switchToNextLayout()
 {
-    xkb::get_primary_xkb_keyboard()->switch_to_next_layout();
+    get_keyboard(this)->switch_to_next_layout();
 }
 
 void layout_manager::switchToPreviousLayout()
 {
-    xkb::get_primary_xkb_keyboard()->switch_to_previous_layout();
+    get_keyboard(this)->switch_to_previous_layout();
 }
 
 void layout_manager::switchToLayout(xkb_layout_index_t index)
 {
-    xkb::get_primary_xkb_keyboard()->switch_to_layout(index);
+    get_keyboard(this)->switch_to_layout(index);
 }
 
 void layout_manager::reconfigure()
@@ -129,7 +137,7 @@ void layout_manager::reconfigure()
         xkb.reconfigure();
     }
 
-    auto xkb = xkb::get_primary_xkb_keyboard();
+    auto xkb = get_keyboard(this);
 
     load_shortcuts(xkb);
 
@@ -176,7 +184,7 @@ void layout_manager::add_keyboard(input::keyboard* keyboard)
 
 void layout_manager::handle_layout_change(xkb::keyboard* xkb)
 {
-    if (xkb != xkb::get_primary_xkb_keyboard()) {
+    if (xkb != get_keyboard(this)) {
         // We currently only inform about changes on the primary device.
         return;
     }

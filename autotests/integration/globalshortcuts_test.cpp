@@ -92,7 +92,7 @@ void GlobalShortcutsTest::init()
     Test::setup_wayland_connection();
     Test::app()->input->cursor->set_pos(QPoint(640, 512));
 
-    input::xkb::get_primary_xkb_keyboard()->switch_to_layout(0);
+    input::xkb::get_primary_xkb_keyboard(*Test::app()->input)->switch_to_layout(0);
 }
 
 void GlobalShortcutsTest::cleanup()
@@ -140,7 +140,7 @@ void GlobalShortcutsTest::testNonLatinLayout_data()
 void GlobalShortcutsTest::testNonLatinLayout()
 {
     // Shortcuts on non-Latin layouts should still work, see BUG 375518
-    auto xkb = input::xkb::get_primary_xkb_keyboard();
+    auto xkb = input::xkb::get_primary_xkb_keyboard(*Test::app()->input);
     xkb->switch_to_layout(1);
     QCOMPARE(xkb->layout_name(), "Russian");
 
