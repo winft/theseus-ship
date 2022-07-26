@@ -28,6 +28,7 @@ platform_wrap::platform_wrap()
     , m_scriptsLock(new QRecursiveMutex)
 
 {
+    qRegisterMetaType<KWin::SessionState>();
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/Scripting"),
                                                  this,
                                                  QDBusConnection::ExportScriptableContents
