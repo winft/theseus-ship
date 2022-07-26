@@ -57,7 +57,7 @@ FlipSwitchEffect::FlipSwitchEffect()
 
     // Caption frame
     m_captionFont.setBold(true);
-    m_captionFont.setPointSize(m_captionFont.pointSize() * 2);
+    m_captionFont.setPointSize(12);
 
     QAction* flipSwitchCurrentAction = new QAction(this);
     flipSwitchCurrentAction->setObjectName(QStringLiteral("FlipSwitchCurrent"));
@@ -657,19 +657,19 @@ void FlipSwitchEffect::setActive(bool activate, FlipSwitchMode mode)
             break;
         }
 
-        // Setup caption frame geometry
-        QRect frameRect = QRect(m_screenArea.width() * 0.25f + m_screenArea.x(),
-                                m_screenArea.height() * 0.1f + m_screenArea.y()
-                                    - QFontMetrics(m_captionFont).height(),
-                                m_screenArea.width() * 0.5f,
-                                QFontMetrics(m_captionFont).height());
         if (!m_captionFrame) {
-            m_captionFrame = effects->effectFrame(EffectFrameStyled);
+            auto frame_x = m_screenArea.width() * 0.5f + m_screenArea.x();
+            auto frame_y = m_screenArea.height() * 0.95f + m_screenArea.y();
+
+            m_captionFrame = effects->effectFrame(
+                EffectFrameStyled, false, QPoint(frame_x, frame_y), Qt::AlignCenter);
             m_captionFrame->setFont(m_captionFont);
             m_captionFrame->enableCrossFade(true);
+            auto icon_size
+                = QSize(m_captionFrame->geometry().height(), m_captionFrame->geometry().height());
+            m_captionFrame->setIconSize(icon_size);
         }
-        m_captionFrame->setGeometry(frameRect);
-        m_captionFrame->setIconSize(QSize(frameRect.height(), frameRect.height()));
+
         updateCaption();
         effects->addRepaintFull();
     } else {
