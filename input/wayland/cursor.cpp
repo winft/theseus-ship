@@ -13,6 +13,7 @@
 
 #include "base/wayland/server.h"
 #include "input/xkb/helpers.h"
+#include "main.h"
 
 #include <Wrapland/Server/seat.h>
 

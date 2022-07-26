@@ -1,15 +1,11 @@
 /*
-    SPDX-FileCopyrightText: 2021 Roman Gilg <subdiff@gmail.com>
+    SPDX-FileCopyrightText: 2022 Roman Gilg <subdiff@gmail.com>
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #pragma once
 
-#include "keyboard.h"
-
-#include "input/keyboard.h"
-#include "input/platform.h"
-#include "main.h"
+#include <Qt>
 
 namespace KWin::input::xkb
 {
@@ -18,7 +14,7 @@ namespace KWin::input::xkb
  * Retuns the first configurable keyboard, otherwise the default-created keyboard is returned.
  */
 template<typename Platform>
-keyboard* get_primary_xkb_keyboard(Platform const& platform)
+auto get_primary_xkb_keyboard(Platform const& platform)
 {
     auto const& keyboards = platform.keyboards;
 
