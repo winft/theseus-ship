@@ -9,6 +9,8 @@
 
 #include "base/output_helpers.h"
 #include "input/filters/dpms.h"
+#include "input/wayland/dpms.h"
+#include "input/wayland/platform.h"
 #include "wayland_logging.h"
 
 #include <Wrapland/Server/output_changeset_v1.h>
@@ -76,6 +78,50 @@ void check_outputs_on(Base const& base, Filter& filter)
     if (std::all_of(outs.cbegin(), outs.cend(), [](auto&& out) { return out->is_dpms_on(); })) {
         // All outputs are on, disable the filter.
         filter.reset();
+    }
+}
+
+inline Wrapland::Server::Output::DpmsMode to_wayland_dpms_mode(base::dpms_mode mode)
+{
+    switch (mode) {
+    case base::dpms_mode::on:
+        return Wrapland::Server::Output::DpmsMode::On;
+    case base::dpms_mode::standby:
+        return Wrapland::Server::Output::DpmsMode::Standby;
+    case base::dpms_mode::suspend:
+        return Wrapland::Server::Output::DpmsMode::Suspend;
+    case base::dpms_mode::off:
+        return Wrapland::Server::Output::DpmsMode::Off;
+    default:
+        Q_UNREACHABLE();
+    }
+}
+
+template<typename Base>
+void output_set_dpms_on(base::wayland::output& output, Base& base)
+{
+    qCDebug(KWIN_WL) << "DPMS mode set for output" << output.name() << "to On.";
+    output.m_dpms = base::dpms_mode::on;
+
+    if (output.is_enabled()) {
+        output.m_output->set_dpms_mode(Wrapland::Server::Output::DpmsMode::On);
+    }
+
+    auto wayland_input = static_cast<input::wayland::platform*>(kwinApp()->input.get());
+    check_outputs_on(base, wayland_input->dpms_filter);
+}
+
+inline void output_set_dmps_off(base::dpms_mode mode, base::wayland::output& output)
+{
+    qCDebug(KWIN_WL) << "DPMS mode set for output" << output.name() << "to Off.";
+
+    output.m_dpms = mode;
+
+    if (output.is_enabled()) {
+        output.m_output->set_dpms_mode(to_wayland_dpms_mode(mode));
+
+        auto wayland_input = static_cast<input::wayland::platform*>(kwinApp()->input.get());
+        input::wayland::create_dpms_filter(wayland_input);
     }
 }
 
