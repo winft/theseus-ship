@@ -39,7 +39,7 @@ int main(int argc, char **argv)
     KWinDecorationSettings *settings = new KWinDecorationSettings(&app);
     QTextStream ts(stdout);
     if (!parser->positionalArguments().isEmpty()) {
-        QString requestedTheme{parser->positionalArguments().first()};
+        QString requestedTheme{parser->positionalArguments().constFirst()};
         if (requestedTheme.endsWith(QStringLiteral("/*"))) {
             // Themes installed through KNewStuff will commonly be given an installed files entry
             // which has the main directory name and an asterix to say the cursors are all in that directory,
@@ -62,7 +62,7 @@ int main(int argc, char **argv)
                     if (!path.isEmpty() && path == QStringLiteral("%1/metadata.desktop").arg(requestedTheme)) {
                         requestedTheme = QString("__aurorae__svg__").append(splitTheme.last());
                         themeResolved = true;
-                        ts << i18n("Resolved %1 to the KWin Aurorae theme \"%2\", and will attempt to set that as your current theme.").arg(parser->positionalArguments().first()).arg(requestedTheme) << endl;
+                        ts << i18n("Resolved %1 to the KWin Aurorae theme \"%2\", and will attempt to set that as your current theme.").arg(parser->positionalArguments().constFirst()).arg(requestedTheme) << endl;
                     }
                 }
             } else {

@@ -363,7 +363,7 @@ int session::takeDevice(const char* path)
 
     // The dup syscall removes the CLOEXEC flag as a side-effect. So use fcntl's F_DUPFD_CLOEXEC
     // cmd.
-    return fcntl(reply.arguments().first().value<QDBusUnixFileDescriptor>().fileDescriptor(),
+    return fcntl(reply.arguments().constFirst().value<QDBusUnixFileDescriptor>().fileDescriptor(),
                  F_DUPFD_CLOEXEC,
                  0);
 }

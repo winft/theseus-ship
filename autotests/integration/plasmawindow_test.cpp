@@ -165,14 +165,14 @@ void PlasmaWindowTest::testCreateDestroyX11PlasmaWindow()
     QVERIFY(plasmaWindowCreatedSpy.wait());
     QCOMPARE(plasmaWindowCreatedSpy.count(), 1);
     QCOMPARE(m_windowManagement->windows().count(), 1);
-    auto pw = m_windowManagement->windows().first();
+    auto pw = m_windowManagement->windows().constFirst();
     QCOMPARE(pw->geometry(), client->frameGeometry());
     QSignalSpy geometryChangedSpy(pw, &PlasmaWindow::geometryChanged);
     QVERIFY(geometryChangedSpy.isValid());
 
-    QSignalSpy unmappedSpy(m_windowManagement->windows().first(), &PlasmaWindow::unmapped);
+    QSignalSpy unmappedSpy(m_windowManagement->windows().constFirst(), &PlasmaWindow::unmapped);
     QVERIFY(unmappedSpy.isValid());
-    QSignalSpy destroyedSpy(m_windowManagement->windows().first(), &QObject::destroyed);
+    QSignalSpy destroyedSpy(m_windowManagement->windows().constFirst(), &QObject::destroyed);
     QVERIFY(destroyedSpy.isValid());
 
     // and destroy the window again

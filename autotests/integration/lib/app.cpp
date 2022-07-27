@@ -93,7 +93,7 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode,
     qunsetenv("XKB_DEFAULT_VARIANT");
     qunsetenv("XKB_DEFAULT_OPTIONS");
 
-    const auto ownPath = libraryPaths().last();
+    const auto ownPath = libraryPaths().constLast();
     removeLibraryPath(ownPath);
     addLibraryPath(ownPath);
 

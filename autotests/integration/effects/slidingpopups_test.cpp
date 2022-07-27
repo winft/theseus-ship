@@ -102,7 +102,7 @@ void SlidingPopupsTest::cleanup()
     Test::destroy_wayland_connection();
     auto e = static_cast<render::effects_handler_impl*>(effects);
     while (!e->loadedEffects().isEmpty()) {
-        const QString effect = e->loadedEffects().first();
+        const QString effect = e->loadedEffects().constFirst();
         e->unloadEffect(effect);
         QVERIFY(!e->isEffectLoaded(effect));
     }

@@ -121,7 +121,7 @@ void DesktopSwitchingAnimationTest::testSwitchDesktops()
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
     QCOMPARE(client->desktops().count(), 1);
-    QCOMPARE(client->desktops().first(), vd_manager->desktops().first());
+    QCOMPARE(client->desktops().constFirst(), vd_manager->desktops().first());
 
     // Load effect that will be tested.
     QFETCH(QString, effectName);
@@ -129,7 +129,7 @@ void DesktopSwitchingAnimationTest::testSwitchDesktops()
     QVERIFY(effectsImpl);
     QVERIFY(effectsImpl->loadEffect(effectName));
     QCOMPARE(effectsImpl->loadedEffects().count(), 1);
-    QCOMPARE(effectsImpl->loadedEffects().first(), effectName);
+    QCOMPARE(effectsImpl->loadedEffects().constFirst(), effectName);
     Effect* effect = effectsImpl->findEffect(effectName);
     QVERIFY(effect);
     QVERIFY(!effect->isActive());

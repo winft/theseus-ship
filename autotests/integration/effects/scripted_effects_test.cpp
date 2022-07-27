@@ -249,7 +249,7 @@ void ScriptedEffectsTest::testShortcuts()
     QSignalSpy effectOutputSpy(effect, &ScriptedEffectWithDebugSpy::testOutput);
     QVERIFY(effect->load("shortcutsTest"));
     QCOMPARE(effect->actions().count(), 1);
-    auto action = effect->actions()[0];
+    auto action = effect->actions().constFirst();
     QCOMPARE(action->objectName(), "testShortcut");
     QCOMPARE(action->text(), "Test Shortcut");
     QCOMPARE(KGlobalAccel::self()->shortcut(action).first(), QKeySequence("Meta+Shift+Y"));
@@ -357,7 +357,7 @@ void ScriptedEffectsTest::testScreenEdgeTouch()
     auto* effect = new ScriptedEffectWithDebugSpy; // cleaned up in ::clean
     QSignalSpy effectOutputSpy(effect, &ScriptedEffectWithDebugSpy::testOutput);
     QVERIFY(effect->load("screenEdgeTouchTest"));
-    effect->actions()[0]->trigger();
+    effect->actions().constFirst()->trigger();
     QCOMPARE(effectOutputSpy.count(), 1);
 }
 

@@ -64,7 +64,7 @@ X11TestApplication::X11TestApplication(int& argc, char** argv)
 
     // move directory containing executable to front, so that KPluginMetaData::findPluginById
     // prefers the plugins in the build dir over system installed ones
-    const auto ownPath = libraryPaths().last();
+    const auto ownPath = libraryPaths().constLast();
     removeLibraryPath(ownPath);
     addLibraryPath(ownPath);
 
