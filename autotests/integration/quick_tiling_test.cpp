@@ -898,7 +898,7 @@ void QuickTilingTest::testShortcut()
         QTest::qWait(1001);
     }
 
-    for (QString shortcut : shortcutList) {
+    for (const QString& shortcut : shortcutList) {
         // invoke global shortcut through dbus
         auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"),
                                                   QStringLiteral("/component/kwin"),

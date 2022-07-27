@@ -168,7 +168,7 @@ void scripted_effect_loader::queryAndLoadAll()
         this,
         [this, watcher]() {
             const auto effects = watcher->result();
-            for (auto effect : effects) {
+            for (const auto& effect : effects) {
                 auto const load_flags = readConfig(effect.pluginId(), effect.isEnabledByDefault());
                 if (flags(load_flags & load_effect_flags::load)) {
                     m_queue->enqueue(qMakePair(effect, load_flags));

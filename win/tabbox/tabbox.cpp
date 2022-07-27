@@ -195,7 +195,7 @@ bool tabbox_handler_impl::check_applications(tabbox_client* client) const
     switch (config().client_applications_mode()) {
     case tabbox_config::OneWindowPerApplication:
         // check if the list already contains an entry of this application
-        for (auto client_weak : client_list()) {
+        for (const auto& client_weak : client_list()) {
             auto client = client_weak.lock();
             if (!client) {
                 continue;
