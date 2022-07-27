@@ -798,7 +798,6 @@ set(kwin_WAYLAND_SRCS
    input/dbus/keyboard_layout.cpp
    input/dbus/keyboard_layouts_v2.cpp
    input/dbus/tablet_mode_manager.cpp
-   input/filters/helpers.cpp
    input/spies/keyboard_repeat.cpp
    input/wayland/cursor.cpp
    input/wayland/cursor_image.cpp
