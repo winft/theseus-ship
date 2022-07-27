@@ -9,7 +9,9 @@
 #include "render/compositor.h"
 #include "render/scene.h"
 #include "render/types.h"
+#include "utils/algorithm.h"
 
+#include <QPixmap>
 #include <QPointer>
 #include <Wrapland/Server/buffer.h>
 #include <Wrapland/Server/shadow.h>
