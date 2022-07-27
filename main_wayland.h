@@ -32,6 +32,7 @@ namespace KWin
 
 namespace input::dbus
 {
+template<typename Platform>
 class tablet_mode_manager;
 }
 
@@ -87,7 +88,7 @@ private:
     std::unique_ptr<base::backend::wlroots::platform> base;
     std::unique_ptr<xwl::xwayland> xwayland;
 
-    std::unique_ptr<input::dbus::tablet_mode_manager> tablet_mode_manager;
+    std::unique_ptr<input::dbus::tablet_mode_manager<input::wayland::platform>> tablet_mode_manager;
 
     QProcess* exit_with_process{nullptr};
 };
