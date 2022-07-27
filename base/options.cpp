@@ -30,55 +30,6 @@ namespace KWin::base
 
 #ifndef KCMRULES
 
-int currentRefreshRate()
-{
-    return options::currentRefreshRate();
-}
-
-int options::currentRefreshRate()
-{
-    int rate = -1;
-    QString syncScreenName(QLatin1String("primary screen"));
-    auto const& outputs = kwinApp()->get_base().get_outputs();
-
-    if (kwinApp()->options->refreshRate() > 0) {
-        // use manually configured refresh rate
-        rate = kwinApp()->options->refreshRate();
-    } else if (outputs.size() > 0) {
-        // prefer the refreshrate calculated from the screens mode information
-        // at least the nvidia driver reports 50Hz BS ... *again*!
-        int syncScreen = 0;
-        if (outputs.size() > 1) {
-            const QByteArray syncDisplayDevice(qgetenv("__GL_SYNC_DISPLAY_DEVICE"));
-            // if __GL_SYNC_DISPLAY_DEVICE is exported, the GPU shall sync to that device
-            // so we try to use its refresh rate
-            if (!syncDisplayDevice.isEmpty()) {
-                for (size_t i = 0; i < outputs.size(); ++i) {
-                    auto const& out_name = outputs.at(i)->name();
-                    if (out_name == syncDisplayDevice) {
-                        syncScreenName = out_name;
-                        syncScreen = i;
-                        break;
-                    }
-                }
-            }
-        }
-        // TODO forward float precision?
-        rate = qRound(outputs.at(syncScreen)->refresh_rate() / 1000.);
-    }
-
-    // 0Hz or less is invalid, so we fallback to a default rate
-    if (rate <= 0)
-        rate = 60; // and not shitty 50Hz for sure! *grrr*
-
-    // QTimer gives us 1msec (1000Hz) at best, so we ignore anything higher;
-    // however, additional throttling prevents very high rates from taking place anyway
-    else if (rate > 1000)
-        rate = 1000;
-    qCDebug(KWIN_CORE) << "Vertical Refresh rate " << rate << "Hz (" << syncScreenName << ")";
-    return rate;
-}
-
 OpenGLPlatformInterface defaultGlPlatformInterface()
 {
     return kwinApp()->shouldUseWaylandForCompositing() ? EglPlatformInterface

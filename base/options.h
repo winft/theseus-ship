@@ -828,8 +828,6 @@ public:
     bool loadCompositingConfig(bool force);
     void reparseConfiguration();
 
-    static int currentRefreshRate();
-
     //----------------------
 Q_SIGNALS:
     // for properties
