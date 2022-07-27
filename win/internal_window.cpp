@@ -465,14 +465,14 @@ void internal_window::destroyClient()
     update_space_areas(space);
     Q_EMIT space.qobject->internalClientRemoved(this);
 
+    m_internalWindow = nullptr;
+
     if (deleted) {
         deleted->remnant->unref();
+        delete this;
     } else {
         delete_window_from_space(space, this);
     }
-    m_internalWindow = nullptr;
-
-    delete this;
 }
 
 void internal_window::present(std::shared_ptr<QOpenGLFramebufferObject> const& fbo)
