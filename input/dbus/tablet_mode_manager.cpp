@@ -9,17 +9,17 @@
 namespace KWin::input::dbus
 {
 
-bool tablet_mode_manager::isTabletModeAvailable() const
+bool tablet_mode_manager_qobject::isTabletModeAvailable() const
 {
     return m_detecting;
 }
 
-bool tablet_mode_manager::isTablet() const
+bool tablet_mode_manager_qobject::isTablet() const
 {
     return m_isTabletMode;
 }
 
-void tablet_mode_manager::setIsTablet(bool tablet)
+void tablet_mode_manager_qobject::setIsTablet(bool tablet)
 {
     if (m_isTabletMode == tablet) {
         return;
@@ -29,7 +29,7 @@ void tablet_mode_manager::setIsTablet(bool tablet)
     Q_EMIT tabletModeChanged(tablet);
 }
 
-void tablet_mode_manager::setTabletModeAvailable(bool detecting)
+void tablet_mode_manager_qobject::setTabletModeAvailable(bool detecting)
 {
     if (m_detecting != detecting) {
         m_detecting = detecting;

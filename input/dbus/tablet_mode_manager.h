@@ -51,15 +51,15 @@ public:
         auto& plat = kwinApp()->input;
         auto has_touch = !plat->touchs.empty();
         auto has_pointer = !plat->pointers.empty();
-        manager.setTabletModeAvailable(has_touch);
-        manager.setIsTablet(has_touch && !has_pointer);
+        manager.qobject->setTabletModeAvailable(has_touch);
+        manager.qobject->setIsTablet(has_touch && !has_pointer);
     }
 
 private:
     Manager& manager;
 };
 
-class KWIN_EXPORT tablet_mode_manager : public QObject
+class KWIN_EXPORT tablet_mode_manager_qobject : public QObject
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "org.kde.KWin.TabletModeManager")
@@ -70,33 +70,6 @@ class KWIN_EXPORT tablet_mode_manager : public QObject
     Q_PROPERTY(bool tabletMode READ isTablet NOTIFY tabletModeChanged)
 
 public:
-    tablet_mode_manager()
-    {
-        auto redirect = static_cast<input::wayland::redirect*>(kwinApp()->input->redirect);
-
-        if (redirect->has_tablet_mode_switch()) {
-            redirect->installInputEventSpy(
-                new tablet_mode_switch_spy(*kwinApp()->input->redirect, *this));
-        } else {
-            Q_EMIT redirect->has_tablet_mode_switch_changed(false);
-        }
-
-        QDBusConnection::sessionBus().registerObject(
-            QStringLiteral("/org/kde/KWin"),
-            QStringLiteral("org.kde.KWin.TabletModeManager"),
-            this,
-            QDBusConnection::ExportAllProperties | QDBusConnection::ExportAllSignals);
-
-        QObject::connect(redirect,
-                         &input::wayland::redirect::has_tablet_mode_switch_changed,
-                         this,
-                         &tablet_mode_manager::hasTabletModeInputChanged);
-    }
-    ~tablet_mode_manager() override
-    {
-        kwinApp()->input->redirect->uninstallInputEventSpy(spy);
-    }
-
     bool isTabletModeAvailable() const;
     void setTabletModeAvailable(bool detecting);
 
@@ -108,15 +81,56 @@ Q_SIGNALS:
     void tabletModeChanged(bool tabletMode);
 
 private:
+    bool m_tabletModeAvailable{false};
+    bool m_isTabletMode{false};
+    bool m_detecting{false};
+};
+
+class tablet_mode_manager
+{
+public:
+    tablet_mode_manager()
+        : qobject{std::make_unique<tablet_mode_manager_qobject>()}
+    {
+        auto redirect = static_cast<input::wayland::redirect*>(kwinApp()->input->redirect);
+
+        if (redirect->has_tablet_mode_switch()) {
+            redirect->installInputEventSpy(
+                new tablet_mode_switch_spy(*kwinApp()->input->redirect, *qobject));
+        } else {
+            Q_EMIT redirect->has_tablet_mode_switch_changed(false);
+        }
+
+        QDBusConnection::sessionBus().registerObject(
+            QStringLiteral("/org/kde/KWin"),
+            QStringLiteral("org.kde.KWin.TabletModeManager"),
+            qobject.get(),
+            QDBusConnection::ExportAllProperties | QDBusConnection::ExportAllSignals);
+
+        QObject::connect(redirect,
+                         &input::wayland::redirect::has_tablet_mode_switch_changed,
+                         qobject.get(),
+                         [this](auto set) { hasTabletModeInputChanged(set); });
+    }
+
+    ~tablet_mode_manager()
+    {
+        kwinApp()->input->redirect->uninstallInputEventSpy(spy);
+    }
+
+    std::unique_ptr<tablet_mode_manager_qobject> qobject;
+
+private:
     using removed_spy_t = tablet_mode_touchpad_removed_spy<tablet_mode_manager>;
+
     void hasTabletModeInputChanged(bool set)
     {
         if (set) {
             if (!spy) {
-                spy = new tablet_mode_switch_spy(*kwinApp()->input->redirect, *this);
+                spy = new tablet_mode_switch_spy(*kwinApp()->input->redirect, *qobject);
                 kwinApp()->input->redirect->installInputEventSpy(spy);
             }
-            setTabletModeAvailable(true);
+            qobject->setTabletModeAvailable(true);
         } else {
             auto setupDetector = [this] {
                 removed_spy = std::make_unique<removed_spy_t>(*this);
@@ -132,11 +146,8 @@ private:
         }
     }
 
-    tablet_mode_switch_spy<tablet_mode_manager>* spy{nullptr};
+    tablet_mode_switch_spy<tablet_mode_manager_qobject>* spy{nullptr};
     std::unique_ptr<removed_spy_t> removed_spy;
-    bool m_tabletModeAvailable{false};
-    bool m_isTabletMode{false};
-    bool m_detecting{false};
 };
 
 }
