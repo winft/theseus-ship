@@ -457,8 +457,6 @@ void RulesModel::populateRuleList()
         Q_EMIT dataChanged(index, index, {OptionsModelRole});
     });
 
-    connect(this, &RulesModel::virtualDesktopsUpdated,
-            this, [this] { m_rules["desktop"]->setOptionsData(virtualDesktopsModelData()); });
     updateVirtualDesktops();
 
     addRule(new RuleItem(QLatin1String("screen"),
