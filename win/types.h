@@ -61,6 +61,7 @@ enum class layer {
     above,
     notification,          // layer for windows of type notification
     active,                // active fullscreen, or active dialog
+    popup,                 // layer for popups, xdg shell popups, etc
     critical_notification, // layer for notifications that should be shown even on top of fullscreen
     on_screen_display,     // layer for On Screen Display windows such as volume feedback
     unmanaged,             // layer for override redirect windows.
