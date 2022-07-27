@@ -447,11 +447,14 @@ void PointerInputTest::testModifierClickUnrestrictedMove()
     group.writeEntry("CommandAll3", "Move");
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);
-    QCOMPARE(kwinApp()->options->commandAllModifier(),
+    QCOMPARE(kwinApp()->options->qobject->commandAllModifier(),
              modKey == QStringLiteral("Alt") ? Qt::AltModifier : Qt::MetaModifier);
-    QCOMPARE(kwinApp()->options->commandAll1(), base::options::MouseUnrestrictedMove);
-    QCOMPARE(kwinApp()->options->commandAll2(), base::options::MouseUnrestrictedMove);
-    QCOMPARE(kwinApp()->options->commandAll3(), base::options::MouseUnrestrictedMove);
+    QCOMPARE(kwinApp()->options->qobject->commandAll1(),
+             base::options_qobject::MouseUnrestrictedMove);
+    QCOMPARE(kwinApp()->options->qobject->commandAll2(),
+             base::options_qobject::MouseUnrestrictedMove);
+    QCOMPARE(kwinApp()->options->qobject->commandAll3(),
+             base::options_qobject::MouseUnrestrictedMove);
 
     // create a window
     QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
@@ -516,10 +519,13 @@ void PointerInputTest::testModifierClickUnrestrictedMoveGlobalShortcutsDisabled(
     group.writeEntry("CommandAll3", "Move");
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);
-    QCOMPARE(kwinApp()->options->commandAllModifier(), Qt::MetaModifier);
-    QCOMPARE(kwinApp()->options->commandAll1(), base::options::MouseUnrestrictedMove);
-    QCOMPARE(kwinApp()->options->commandAll2(), base::options::MouseUnrestrictedMove);
-    QCOMPARE(kwinApp()->options->commandAll3(), base::options::MouseUnrestrictedMove);
+    QCOMPARE(kwinApp()->options->qobject->commandAllModifier(), Qt::MetaModifier);
+    QCOMPARE(kwinApp()->options->qobject->commandAll1(),
+             base::options_qobject::MouseUnrestrictedMove);
+    QCOMPARE(kwinApp()->options->qobject->commandAll2(),
+             base::options_qobject::MouseUnrestrictedMove);
+    QCOMPARE(kwinApp()->options->qobject->commandAll3(),
+             base::options_qobject::MouseUnrestrictedMove);
 
     // create a window
     QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
@@ -762,10 +768,10 @@ void PointerInputTest::testFocusFollowsMouse()
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);
     // verify the settings
-    QCOMPARE(kwinApp()->options->focusPolicy(), base::options::FocusFollowsMouse);
-    QVERIFY(kwinApp()->options->isAutoRaise());
-    QCOMPARE(kwinApp()->options->autoRaiseInterval(), 20);
-    QCOMPARE(kwinApp()->options->delayFocusInterval(), 200);
+    QCOMPARE(kwinApp()->options->qobject->focusPolicy(), base::options_qobject::FocusFollowsMouse);
+    QVERIFY(kwinApp()->options->qobject->isAutoRaise());
+    QCOMPARE(kwinApp()->options->qobject->autoRaiseInterval(), 20);
+    QCOMPARE(kwinApp()->options->qobject->delayFocusInterval(), 200);
 
     // create two windows
     QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
@@ -956,7 +962,7 @@ void PointerInputTest::testMouseActionActiveWindow()
     group.writeEntry("ClickRaise", clickRaise);
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);
-    QCOMPARE(kwinApp()->options->isClickRaise(), clickRaise);
+    QCOMPARE(kwinApp()->options->qobject->isClickRaise(), clickRaise);
 
     // Create two windows.
     QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
@@ -1653,8 +1659,9 @@ void PointerInputTest::testResizeCursor()
     group.writeEntry("CommandAll3", "Resize");
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);
-    QCOMPARE(kwinApp()->options->commandAllModifier(), Qt::MetaModifier);
-    QCOMPARE(kwinApp()->options->commandAll3(), base::options::MouseUnrestrictedResize);
+    QCOMPARE(kwinApp()->options->qobject->commandAllModifier(), Qt::MetaModifier);
+    QCOMPARE(kwinApp()->options->qobject->commandAll3(),
+             base::options_qobject::MouseUnrestrictedResize);
 
     // create a test client
     using namespace Wrapland::Client;
@@ -1723,8 +1730,9 @@ void PointerInputTest::testMoveCursor()
     group.writeEntry("CommandAll1", "Move");
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);
-    QCOMPARE(kwinApp()->options->commandAllModifier(), Qt::MetaModifier);
-    QCOMPARE(kwinApp()->options->commandAll1(), base::options::MouseUnrestrictedMove);
+    QCOMPARE(kwinApp()->options->qobject->commandAllModifier(), Qt::MetaModifier);
+    QCOMPARE(kwinApp()->options->qobject->commandAll1(),
+             base::options_qobject::MouseUnrestrictedMove);
 
     // create a test client
     using namespace Wrapland::Client;

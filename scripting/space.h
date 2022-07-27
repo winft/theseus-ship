@@ -952,7 +952,7 @@ protected:
     void switch_desktop() const
     {
         ref_space->virtual_desktop_manager->template moveTo<Direction>(
-            kwinApp()->options->isRollOverDesktops());
+            kwinApp()->options->qobject->isRollOverDesktops());
     }
     void switch_desktop_next_impl() const override
     {

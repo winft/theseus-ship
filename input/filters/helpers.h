@@ -34,10 +34,12 @@ enum class MouseAction {
 };
 
 template<typename Redirect>
-bool get_modifier_command(Redirect& redirect, uint32_t key, base::options::MouseCommand& command)
+bool get_modifier_command(Redirect& redirect,
+                          uint32_t key,
+                          base::options_qobject::MouseCommand& command)
 {
     if (xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(redirect.platform)
-        != kwinApp()->options->commandAllModifier()) {
+        != kwinApp()->options->qobject->commandAllModifier()) {
         return false;
     }
     if (redirect.get_pointer()->isConstrained()) {
@@ -49,13 +51,13 @@ bool get_modifier_command(Redirect& redirect, uint32_t key, base::options::Mouse
     auto qt_key = button_to_qt_mouse_button(key);
     switch (qt_key) {
     case Qt::LeftButton:
-        command = kwinApp()->options->commandAll1();
+        command = kwinApp()->options->qobject->commandAll1();
         break;
     case Qt::MiddleButton:
-        command = kwinApp()->options->commandAll2();
+        command = kwinApp()->options->qobject->commandAll2();
         break;
     case Qt::RightButton:
-        command = kwinApp()->options->commandAll3();
+        command = kwinApp()->options->qobject->commandAll3();
         break;
     default:
         // nothing
@@ -65,8 +67,9 @@ bool get_modifier_command(Redirect& redirect, uint32_t key, base::options::Mouse
 }
 
 template<typename Redirect>
-std::pair<bool, bool>
-do_perform_mouse_action(Redirect& redirect, base::options::MouseCommand command, Toplevel* window)
+std::pair<bool, bool> do_perform_mouse_action(Redirect& redirect,
+                                              base::options_qobject::MouseCommand command,
+                                              Toplevel* window)
 {
     return std::make_pair(
         true, !window->performMouseCommand(command, redirect.get_pointer()->pos().toPoint()));
@@ -76,7 +79,7 @@ template<typename Redirect>
 std::pair<bool, bool>
 perform_mouse_modifier_action(Redirect& redirect, button_event const& event, Toplevel* window)
 {
-    auto command = base::options::MouseNothing;
+    auto command = base::options_qobject::MouseNothing;
     auto was_action = get_modifier_command(redirect, event.key, command);
 
     return was_action ? do_perform_mouse_action(redirect, command, window)
@@ -88,7 +91,7 @@ std::pair<bool, bool> perform_mouse_modifier_and_window_action(Redirect& redirec
                                                                button_event const& event,
                                                                Toplevel* window)
 {
-    auto command = base::options::MouseNothing;
+    auto command = base::options_qobject::MouseNothing;
     auto was_action = get_modifier_command(redirect, event.key, command);
 
     if (!was_action) {
@@ -103,10 +106,10 @@ template<typename Redirect>
 bool get_wheel_modifier_command(Redirect& redirect,
                                 axis_orientation orientation,
                                 double delta,
-                                base::options::MouseCommand& command)
+                                base::options_qobject::MouseCommand& command)
 {
     if (xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(redirect.platform)
-        != kwinApp()->options->commandAllModifier()) {
+        != kwinApp()->options->qobject->commandAllModifier()) {
         return false;
     }
     if (redirect.get_pointer()->isConstrained()) {
@@ -126,7 +129,7 @@ template<typename Redirect>
 std::pair<bool, bool>
 perform_wheel_action(Redirect& redirect, axis_event const& event, Toplevel* window)
 {
-    auto command = base::options::MouseNothing;
+    auto command = base::options_qobject::MouseNothing;
     auto was_action = get_wheel_modifier_command(redirect, event.orientation, event.delta, command);
 
     return was_action ? do_perform_mouse_action(redirect, command, window)
@@ -137,7 +140,7 @@ template<typename Redirect>
 std::pair<bool, bool>
 perform_wheel_and_window_action(Redirect& redirect, axis_event const& event, Toplevel* window)
 {
-    auto command = base::options::MouseNothing;
+    auto command = base::options_qobject::MouseNothing;
     auto was_action = get_wheel_modifier_command(redirect, event.orientation, event.delta, command);
 
     if (!was_action) {

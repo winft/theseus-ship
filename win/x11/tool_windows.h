@@ -27,7 +27,7 @@ void reset_update_tool_windows_timer(Space& space)
 template<typename Space>
 void update_tool_windows_visibility(Space* space, bool also_hide)
 {
-    if (!kwinApp()->options->isHideUtilityWindowsForInactive()) {
+    if (!kwinApp()->options->qobject->isHideUtilityWindowsForInactive()) {
         for (auto const& window : space->windows) {
             if (window->control) {
                 window->hideClient(false);

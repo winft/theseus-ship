@@ -35,7 +35,7 @@ KWIN_EXPORT OpenGLPlatformInterface defaultGlPlatformInterface();
 
 class Settings;
 
-class KWIN_EXPORT options : public QObject
+class KWIN_EXPORT options_qobject : public QObject
 {
     Q_OBJECT
     Q_ENUMS(FocusPolicy)
@@ -109,16 +109,16 @@ class KWIN_EXPORT options : public QObject
      */
     Q_PROPERTY(win::fsp_level focusStealingPreventionLevel READ focusStealingPreventionLevel WRITE
                    setFocusStealingPreventionLevel NOTIFY focusStealingPreventionLevelChanged)
-    Q_PROPERTY(KWin::base::options::WindowOperation operationTitlebarDblClick READ
+    Q_PROPERTY(KWin::base::options_qobject::WindowOperation operationTitlebarDblClick READ
                    operationTitlebarDblClick WRITE setOperationTitlebarDblClick NOTIFY
                        operationTitlebarDblClickChanged)
-    Q_PROPERTY(KWin::base::options::WindowOperation operationMaxButtonLeftClick READ
+    Q_PROPERTY(KWin::base::options_qobject::WindowOperation operationMaxButtonLeftClick READ
                    operationMaxButtonLeftClick WRITE setOperationMaxButtonLeftClick NOTIFY
                        operationMaxButtonLeftClickChanged)
-    Q_PROPERTY(KWin::base::options::WindowOperation operationMaxButtonMiddleClick READ
+    Q_PROPERTY(KWin::base::options_qobject::WindowOperation operationMaxButtonMiddleClick READ
                    operationMaxButtonMiddleClick WRITE setOperationMaxButtonMiddleClick NOTIFY
                        operationMaxButtonMiddleClickChanged)
-    Q_PROPERTY(KWin::base::options::WindowOperation operationMaxButtonRightClick READ
+    Q_PROPERTY(KWin::base::options_qobject::WindowOperation operationMaxButtonRightClick READ
                    operationMaxButtonRightClick WRITE setOperationMaxButtonRightClick NOTIFY
                        operationMaxButtonRightClickChanged)
     Q_PROPERTY(MouseCommand commandActiveTitlebar1 READ commandActiveTitlebar1 WRITE
@@ -207,11 +207,6 @@ class KWIN_EXPORT options : public QObject
     Q_PROPERTY(bool windowsBlockCompositing READ windowsBlockCompositing WRITE
                    setWindowsBlockCompositing NOTIFY windowsBlockCompositingChanged)
 public:
-    options();
-    ~options() override;
-
-    void updateSettings();
-
     /**
      * This enum type is used to specify the focus policy.
      *
@@ -298,8 +293,6 @@ public:
     {
         return m_separateScreenFocus;
     }
-
-    bool get_current_output_follows_mouse() const;
 
     win::placement placement() const
     {
@@ -450,15 +443,6 @@ public:
         MouseWheelNothing
     };
 
-    MouseCommand operationTitlebarMouseWheel(int delta) const
-    {
-        return wheelToMouseCommand(CmdTitlebarWheel, delta);
-    }
-    MouseCommand operationWindowMouseWheel(int delta) const
-    {
-        return wheelToMouseCommand(CmdAllWheel, delta);
-    }
-
     MouseCommand commandActiveTitlebar1() const
     {
         return CmdActiveTitlebar1;
@@ -531,10 +515,6 @@ public:
         }
     }
 
-    static WindowOperation windowOperation(const QString& name, bool restricted);
-    static MouseCommand mouseCommand(const QString& name, bool restricted);
-    static MouseWheelCommand mouseWheelCommand(const QString& name);
-
     /**
      * Returns whether the user prefers his caption clean.
      */
@@ -585,14 +565,8 @@ public:
         return m_hideUtilityWindowsForInactive;
     }
 
-    /**
-     * Returns the animation time factor for desktop effects.
-     */
-    double animationTimeFactor() const;
-
     //----------------------
     // Compositing settings
-    void reloadCompositingSettings(bool force = false);
     CompositingType compositingMode() const
     {
         return m_compositingMode;
@@ -645,8 +619,6 @@ public:
     {
         return m_animationCurve;
     }
-
-    QStringList modifierOnlyDBusShortcut(Qt::KeyboardModifier mod) const;
 
     // setters
     void setFocusPolicy(FocusPolicy focusPolicy);
@@ -817,14 +789,6 @@ public:
     {
         return true;
     }
-    /**
-     * Performs loading all settings except compositing related.
-     */
-    void loadConfig();
-    /**
-     * Performs loading of compositing settings which do not depend on OpenGL.
-     */
-    bool loadCompositingConfig(bool force);
 
     //----------------------
 Q_SIGNALS:
@@ -885,10 +849,6 @@ Q_SIGNALS:
     void configChanged();
 
 private:
-    void syncFromKcfgc();
-    QScopedPointer<Settings> m_settings;
-    KConfigWatcher::Ptr m_configWatcher;
-
     FocusPolicy m_focusPolicy{ClickToFocus};
     bool m_nextFocusPrefersMouse{false};
     bool m_clickRaise{false};
@@ -897,7 +857,6 @@ private:
     int m_delayFocusInterval{0};
 
     bool m_separateScreenFocus{false};
-    bool current_output_follows_mouse{false};
 
     win::placement m_placement{win::placement::no_placement};
     int m_borderSnapZone{0};
@@ -951,14 +910,67 @@ private:
     bool borderless_maximized_windows{false};
     bool condensed_title{false};
 
-    QHash<Qt::KeyboardModifier, QStringList> m_modifierOnlyShortcuts;
+    friend class options;
+};
 
-    MouseCommand wheelToMouseCommand(MouseWheelCommand com, int delta) const;
+class KWIN_EXPORT options
+{
+public:
+    options();
+    ~options();
+
+    void updateSettings();
+
+    void reloadCompositingSettings(bool force = false);
+
+    /**
+     * Performs loading all settings except compositing related.
+     */
+    void loadConfig();
+    /**
+     * Performs loading of compositing settings which do not depend on OpenGL.
+     */
+    bool loadCompositingConfig(bool force);
+
+    /**
+     * Returns the animation time factor for desktop effects.
+     */
+    double animationTimeFactor() const;
+
+    bool get_current_output_follows_mouse() const;
+    QStringList modifierOnlyDBusShortcut(Qt::KeyboardModifier mod) const;
+
+    static options_qobject::WindowOperation windowOperation(const QString& name, bool restricted);
+    static options_qobject::MouseCommand mouseCommand(const QString& name, bool restricted);
+    static options_qobject::MouseWheelCommand mouseWheelCommand(const QString& name);
+
+    options_qobject::MouseCommand operationTitlebarMouseWheel(int delta) const
+    {
+        return wheelToMouseCommand(qobject->CmdTitlebarWheel, delta);
+    }
+    options_qobject::MouseCommand operationWindowMouseWheel(int delta) const
+    {
+        return wheelToMouseCommand(qobject->CmdAllWheel, delta);
+    }
+
+    std::unique_ptr<options_qobject> qobject;
+
+private:
+    void syncFromKcfgc();
+
+    options_qobject::MouseCommand wheelToMouseCommand(options_qobject::MouseWheelCommand com,
+                                                      int delta) const;
+
+    QScopedPointer<Settings> m_settings;
+    KConfigWatcher::Ptr m_configWatcher;
+
+    bool current_output_follows_mouse{false};
+    QHash<Qt::KeyboardModifier, QStringList> m_modifierOnlyShortcuts;
 };
 
 }
 
-Q_DECLARE_METATYPE(KWin::base::options::WindowOperation)
+Q_DECLARE_METATYPE(KWin::base::options_qobject::WindowOperation)
 Q_DECLARE_METATYPE(KWin::OpenGLPlatformInterface)
 Q_DECLARE_METATYPE(KWin::win::fsp_level)
 Q_DECLARE_METATYPE(KWin::win::placement)

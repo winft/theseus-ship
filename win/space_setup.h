@@ -92,11 +92,12 @@ void init_space(Space& space)
                      &win::virtual_desktop_manager_qobject::currentChanged,
                      space.qobject.get(),
                      [&](auto /*prev*/, auto next) { space.focus_chain.current_desktop = next; });
-    QObject::connect(kwinApp()->options.get(),
-                     &base::options::separateScreenFocusChanged,
+    QObject::connect(kwinApp()->options->qobject.get(),
+                     &base::options_qobject::separateScreenFocusChanged,
                      space.qobject.get(),
                      [&](auto enable) { space.focus_chain.has_separate_screen_focus = enable; });
-    space.focus_chain.has_separate_screen_focus = kwinApp()->options->isSeparateScreenFocus();
+    space.focus_chain.has_separate_screen_focus
+        = kwinApp()->options->qobject->isSeparateScreenFocus();
 
     auto& vds = space.virtual_desktop_manager;
     QObject::connect(
@@ -109,9 +110,9 @@ void init_space(Space& space)
         &win::virtual_desktop_manager_qobject::currentChanged,
         space.qobject.get(),
         [&](auto prev, auto next) { handle_current_desktop_changed(space, prev, next); });
-    vds->setNavigationWrappingAround(kwinApp()->options->isRollOverDesktops());
-    QObject::connect(kwinApp()->options.get(),
-                     &base::options::rollOverDesktopsChanged,
+    vds->setNavigationWrappingAround(kwinApp()->options->qobject->isRollOverDesktops());
+    QObject::connect(kwinApp()->options->qobject.get(),
+                     &base::options_qobject::rollOverDesktopsChanged,
                      vds->qobject.get(),
                      [&vds](auto enabled) { vds->setNavigationWrappingAround(enabled); });
 

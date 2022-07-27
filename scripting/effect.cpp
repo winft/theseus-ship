@@ -86,21 +86,21 @@ AnimationSettings animationSettingsFromObject(const QJSValue& object)
         settings.curve = static_cast<QEasingCurve::Type>(curve.toInt());
         settings.set |= AnimationSettings::Curve;
     } else {
-        auto get_qt_curve = [](base::options::AnimationCurve curve) {
+        auto get_qt_curve = [](base::options_qobject::AnimationCurve curve) {
             switch (curve) {
-            case base::options::AnimationCurve::Quadratic:
+            case base::options_qobject::AnimationCurve::Quadratic:
                 return QEasingCurve::InOutQuart;
-            case base::options::AnimationCurve::Cubic:
+            case base::options_qobject::AnimationCurve::Cubic:
                 return QEasingCurve::InOutCubic;
-            case base::options::AnimationCurve::Quartic:
+            case base::options_qobject::AnimationCurve::Quartic:
                 return QEasingCurve::InOutQuad;
-            case base::options::AnimationCurve::Sine:
+            case base::options_qobject::AnimationCurve::Sine:
                 return QEasingCurve::InOutSine;
             default:
                 return QEasingCurve::Linear;
             }
         };
-        settings.curve = get_qt_curve(kwinApp()->options->animationCurve());
+        settings.curve = get_qt_curve(kwinApp()->options->qobject->animationCurve());
     }
 
     const QJSValue type = object.property(QStringLiteral("type"));

@@ -649,7 +649,7 @@ public:
 
     Q_INVOKABLE virtual void closeWindow() = 0;
 
-    virtual bool performMouseCommand(base::options::MouseCommand, const QPoint& globalPos);
+    virtual bool performMouseCommand(base::options_qobject::MouseCommand, const QPoint& globalPos);
 
     virtual Toplevel* findModal();
 

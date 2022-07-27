@@ -36,29 +36,7 @@ OpenGLPlatformInterface defaultGlPlatformInterface()
                                                        : GlxPlatformInterface;
 }
 
-options::options()
-    : m_settings(new Settings(kwinApp()->config()))
-{
-    m_settings->setDefaults();
-    syncFromKcfgc();
-
-    m_configWatcher = KConfigWatcher::create(m_settings->sharedConfig());
-    connect(m_configWatcher.data(),
-            &KConfigWatcher::configChanged,
-            this,
-            [this](const KConfigGroup& group, const QByteArrayList& names) {
-                if (group.name() == QLatin1String("KDE")
-                    && names.contains(QByteArrayLiteral("AnimationDurationFactor"))) {
-                    Q_EMIT animationSpeedChanged();
-                }
-            });
-}
-
-options::~options()
-{
-}
-
-void options::setFocusPolicy(FocusPolicy focusPolicy)
+void options_qobject::setFocusPolicy(FocusPolicy focusPolicy)
 {
     if (m_focusPolicy == focusPolicy) {
         return;
@@ -77,7 +55,7 @@ bool options::get_current_output_follows_mouse() const
     return current_output_follows_mouse;
 }
 
-void options::setNextFocusPrefersMouse(bool nextFocusPrefersMouse)
+void options_qobject::setNextFocusPrefersMouse(bool nextFocusPrefersMouse)
 {
     if (m_nextFocusPrefersMouse == nextFocusPrefersMouse) {
         return;
@@ -86,7 +64,7 @@ void options::setNextFocusPrefersMouse(bool nextFocusPrefersMouse)
     Q_EMIT nextFocusPrefersMouseChanged();
 }
 
-void options::setClickRaise(bool clickRaise)
+void options_qobject::setClickRaise(bool clickRaise)
 {
     if (m_autoRaise) {
         // important: autoRaise implies ClickRaise
@@ -99,7 +77,7 @@ void options::setClickRaise(bool clickRaise)
     Q_EMIT clickRaiseChanged();
 }
 
-void options::setAutoRaise(bool autoRaise)
+void options_qobject::setAutoRaise(bool autoRaise)
 {
     if (m_focusPolicy == ClickToFocus) {
         autoRaise = false;
@@ -115,7 +93,7 @@ void options::setAutoRaise(bool autoRaise)
     Q_EMIT autoRaiseChanged();
 }
 
-void options::setAutoRaiseInterval(int autoRaiseInterval)
+void options_qobject::setAutoRaiseInterval(int autoRaiseInterval)
 {
     if (m_focusPolicy == ClickToFocus) {
         autoRaiseInterval = 0;
@@ -127,7 +105,7 @@ void options::setAutoRaiseInterval(int autoRaiseInterval)
     Q_EMIT autoRaiseIntervalChanged();
 }
 
-void options::setDelayFocusInterval(int delayFocusInterval)
+void options_qobject::setDelayFocusInterval(int delayFocusInterval)
 {
     if (m_focusPolicy == ClickToFocus) {
         delayFocusInterval = 0;
@@ -139,7 +117,7 @@ void options::setDelayFocusInterval(int delayFocusInterval)
     Q_EMIT delayFocusIntervalChanged();
 }
 
-void options::setSeparateScreenFocus(bool separateScreenFocus)
+void options_qobject::setSeparateScreenFocus(bool separateScreenFocus)
 {
     if (m_separateScreenFocus == separateScreenFocus) {
         return;
@@ -148,7 +126,7 @@ void options::setSeparateScreenFocus(bool separateScreenFocus)
     Q_EMIT separateScreenFocusChanged(m_separateScreenFocus);
 }
 
-void options::setPlacement(win::placement placement)
+void options_qobject::setPlacement(win::placement placement)
 {
     if (m_placement == placement) {
         return;
@@ -157,7 +135,7 @@ void options::setPlacement(win::placement placement)
     Q_EMIT placementChanged();
 }
 
-void options::setBorderSnapZone(int borderSnapZone)
+void options_qobject::setBorderSnapZone(int borderSnapZone)
 {
     if (m_borderSnapZone == borderSnapZone) {
         return;
@@ -166,7 +144,7 @@ void options::setBorderSnapZone(int borderSnapZone)
     Q_EMIT borderSnapZoneChanged();
 }
 
-void options::setWindowSnapZone(int windowSnapZone)
+void options_qobject::setWindowSnapZone(int windowSnapZone)
 {
     if (m_windowSnapZone == windowSnapZone) {
         return;
@@ -175,7 +153,7 @@ void options::setWindowSnapZone(int windowSnapZone)
     Q_EMIT windowSnapZoneChanged();
 }
 
-void options::setCenterSnapZone(int centerSnapZone)
+void options_qobject::setCenterSnapZone(int centerSnapZone)
 {
     if (m_centerSnapZone == centerSnapZone) {
         return;
@@ -184,7 +162,7 @@ void options::setCenterSnapZone(int centerSnapZone)
     Q_EMIT centerSnapZoneChanged();
 }
 
-void options::setSnapOnlyWhenOverlapping(bool snapOnlyWhenOverlapping)
+void options_qobject::setSnapOnlyWhenOverlapping(bool snapOnlyWhenOverlapping)
 {
     if (m_snapOnlyWhenOverlapping == snapOnlyWhenOverlapping) {
         return;
@@ -193,7 +171,7 @@ void options::setSnapOnlyWhenOverlapping(bool snapOnlyWhenOverlapping)
     Q_EMIT snapOnlyWhenOverlappingChanged();
 }
 
-void options::setRollOverDesktops(bool rollOverDesktops)
+void options_qobject::setRollOverDesktops(bool rollOverDesktops)
 {
     if (m_rollOverDesktops == rollOverDesktops) {
         return;
@@ -202,7 +180,7 @@ void options::setRollOverDesktops(bool rollOverDesktops)
     Q_EMIT rollOverDesktopsChanged(m_rollOverDesktops);
 }
 
-void options::setFocusStealingPreventionLevel(win::fsp_level focusStealingPreventionLevel)
+void options_qobject::setFocusStealingPreventionLevel(win::fsp_level focusStealingPreventionLevel)
 {
     if (!focusPolicyIsReasonable()) {
         focusStealingPreventionLevel = win::fsp_level::none;
@@ -222,7 +200,7 @@ void options::setFocusStealingPreventionLevel(win::fsp_level focusStealingPreven
     Q_EMIT focusStealingPreventionLevelChanged();
 }
 
-void options::setOperationTitlebarDblClick(WindowOperation operationTitlebarDblClick)
+void options_qobject::setOperationTitlebarDblClick(WindowOperation operationTitlebarDblClick)
 {
     if (OpTitlebarDblClick == operationTitlebarDblClick) {
         return;
@@ -231,7 +209,7 @@ void options::setOperationTitlebarDblClick(WindowOperation operationTitlebarDblC
     Q_EMIT operationTitlebarDblClickChanged();
 }
 
-void options::setOperationMaxButtonLeftClick(WindowOperation op)
+void options_qobject::setOperationMaxButtonLeftClick(WindowOperation op)
 {
     if (opMaxButtonLeftClick == op) {
         return;
@@ -240,7 +218,7 @@ void options::setOperationMaxButtonLeftClick(WindowOperation op)
     Q_EMIT operationMaxButtonLeftClickChanged();
 }
 
-void options::setOperationMaxButtonRightClick(WindowOperation op)
+void options_qobject::setOperationMaxButtonRightClick(WindowOperation op)
 {
     if (opMaxButtonRightClick == op) {
         return;
@@ -249,7 +227,7 @@ void options::setOperationMaxButtonRightClick(WindowOperation op)
     Q_EMIT operationMaxButtonRightClickChanged();
 }
 
-void options::setOperationMaxButtonMiddleClick(WindowOperation op)
+void options_qobject::setOperationMaxButtonMiddleClick(WindowOperation op)
 {
     if (opMaxButtonMiddleClick == op) {
         return;
@@ -258,7 +236,7 @@ void options::setOperationMaxButtonMiddleClick(WindowOperation op)
     Q_EMIT operationMaxButtonMiddleClickChanged();
 }
 
-void options::setCommandActiveTitlebar1(MouseCommand commandActiveTitlebar1)
+void options_qobject::setCommandActiveTitlebar1(MouseCommand commandActiveTitlebar1)
 {
     if (CmdActiveTitlebar1 == commandActiveTitlebar1) {
         return;
@@ -267,7 +245,7 @@ void options::setCommandActiveTitlebar1(MouseCommand commandActiveTitlebar1)
     Q_EMIT commandActiveTitlebar1Changed();
 }
 
-void options::setCommandActiveTitlebar2(MouseCommand commandActiveTitlebar2)
+void options_qobject::setCommandActiveTitlebar2(MouseCommand commandActiveTitlebar2)
 {
     if (CmdActiveTitlebar2 == commandActiveTitlebar2) {
         return;
@@ -276,7 +254,7 @@ void options::setCommandActiveTitlebar2(MouseCommand commandActiveTitlebar2)
     Q_EMIT commandActiveTitlebar2Changed();
 }
 
-void options::setCommandActiveTitlebar3(MouseCommand commandActiveTitlebar3)
+void options_qobject::setCommandActiveTitlebar3(MouseCommand commandActiveTitlebar3)
 {
     if (CmdActiveTitlebar3 == commandActiveTitlebar3) {
         return;
@@ -285,7 +263,7 @@ void options::setCommandActiveTitlebar3(MouseCommand commandActiveTitlebar3)
     Q_EMIT commandActiveTitlebar3Changed();
 }
 
-void options::setCommandInactiveTitlebar1(MouseCommand commandInactiveTitlebar1)
+void options_qobject::setCommandInactiveTitlebar1(MouseCommand commandInactiveTitlebar1)
 {
     if (CmdInactiveTitlebar1 == commandInactiveTitlebar1) {
         return;
@@ -294,7 +272,7 @@ void options::setCommandInactiveTitlebar1(MouseCommand commandInactiveTitlebar1)
     Q_EMIT commandInactiveTitlebar1Changed();
 }
 
-void options::setCommandInactiveTitlebar2(MouseCommand commandInactiveTitlebar2)
+void options_qobject::setCommandInactiveTitlebar2(MouseCommand commandInactiveTitlebar2)
 {
     if (CmdInactiveTitlebar2 == commandInactiveTitlebar2) {
         return;
@@ -303,7 +281,7 @@ void options::setCommandInactiveTitlebar2(MouseCommand commandInactiveTitlebar2)
     Q_EMIT commandInactiveTitlebar2Changed();
 }
 
-void options::setCommandInactiveTitlebar3(MouseCommand commandInactiveTitlebar3)
+void options_qobject::setCommandInactiveTitlebar3(MouseCommand commandInactiveTitlebar3)
 {
     if (CmdInactiveTitlebar3 == commandInactiveTitlebar3) {
         return;
@@ -312,7 +290,7 @@ void options::setCommandInactiveTitlebar3(MouseCommand commandInactiveTitlebar3)
     Q_EMIT commandInactiveTitlebar3Changed();
 }
 
-void options::setCommandWindow1(MouseCommand commandWindow1)
+void options_qobject::setCommandWindow1(MouseCommand commandWindow1)
 {
     if (CmdWindow1 == commandWindow1) {
         return;
@@ -321,7 +299,7 @@ void options::setCommandWindow1(MouseCommand commandWindow1)
     Q_EMIT commandWindow1Changed();
 }
 
-void options::setCommandWindow2(MouseCommand commandWindow2)
+void options_qobject::setCommandWindow2(MouseCommand commandWindow2)
 {
     if (CmdWindow2 == commandWindow2) {
         return;
@@ -330,7 +308,7 @@ void options::setCommandWindow2(MouseCommand commandWindow2)
     Q_EMIT commandWindow2Changed();
 }
 
-void options::setCommandWindow3(MouseCommand commandWindow3)
+void options_qobject::setCommandWindow3(MouseCommand commandWindow3)
 {
     if (CmdWindow3 == commandWindow3) {
         return;
@@ -339,7 +317,7 @@ void options::setCommandWindow3(MouseCommand commandWindow3)
     Q_EMIT commandWindow3Changed();
 }
 
-void options::setCommandWindowWheel(MouseCommand commandWindowWheel)
+void options_qobject::setCommandWindowWheel(MouseCommand commandWindowWheel)
 {
     if (CmdWindowWheel == commandWindowWheel) {
         return;
@@ -348,7 +326,7 @@ void options::setCommandWindowWheel(MouseCommand commandWindowWheel)
     Q_EMIT commandWindowWheelChanged();
 }
 
-void options::setCommandAll1(MouseCommand commandAll1)
+void options_qobject::setCommandAll1(MouseCommand commandAll1)
 {
     if (CmdAll1 == commandAll1) {
         return;
@@ -357,7 +335,7 @@ void options::setCommandAll1(MouseCommand commandAll1)
     Q_EMIT commandAll1Changed();
 }
 
-void options::setCommandAll2(MouseCommand commandAll2)
+void options_qobject::setCommandAll2(MouseCommand commandAll2)
 {
     if (CmdAll2 == commandAll2) {
         return;
@@ -366,7 +344,7 @@ void options::setCommandAll2(MouseCommand commandAll2)
     Q_EMIT commandAll2Changed();
 }
 
-void options::setCommandAll3(MouseCommand commandAll3)
+void options_qobject::setCommandAll3(MouseCommand commandAll3)
 {
     if (CmdAll3 == commandAll3) {
         return;
@@ -375,7 +353,7 @@ void options::setCommandAll3(MouseCommand commandAll3)
     Q_EMIT commandAll3Changed();
 }
 
-void options::setKeyCmdAllModKey(uint keyCmdAllModKey)
+void options_qobject::setKeyCmdAllModKey(uint keyCmdAllModKey)
 {
     if (CmdAllModKey == keyCmdAllModKey) {
         return;
@@ -384,7 +362,7 @@ void options::setKeyCmdAllModKey(uint keyCmdAllModKey)
     Q_EMIT keyCmdAllModKeyChanged();
 }
 
-void options::setCondensedTitle(bool condensedTitle)
+void options_qobject::setCondensedTitle(bool condensedTitle)
 {
     if (condensed_title == condensedTitle) {
         return;
@@ -393,7 +371,7 @@ void options::setCondensedTitle(bool condensedTitle)
     Q_EMIT condensedTitleChanged();
 }
 
-void options::setElectricBorderMaximize(bool electricBorderMaximize)
+void options_qobject::setElectricBorderMaximize(bool electricBorderMaximize)
 {
     if (electric_border_maximize == electricBorderMaximize) {
         return;
@@ -402,7 +380,7 @@ void options::setElectricBorderMaximize(bool electricBorderMaximize)
     Q_EMIT electricBorderMaximizeChanged();
 }
 
-void options::setElectricBorderTiling(bool electricBorderTiling)
+void options_qobject::setElectricBorderTiling(bool electricBorderTiling)
 {
     if (electric_border_tiling == electricBorderTiling) {
         return;
@@ -411,7 +389,7 @@ void options::setElectricBorderTiling(bool electricBorderTiling)
     Q_EMIT electricBorderTilingChanged();
 }
 
-void options::setElectricBorderCornerRatio(float electricBorderCornerRatio)
+void options_qobject::setElectricBorderCornerRatio(float electricBorderCornerRatio)
 {
     if (electric_border_corner_ratio == electricBorderCornerRatio) {
         return;
@@ -420,7 +398,7 @@ void options::setElectricBorderCornerRatio(float electricBorderCornerRatio)
     Q_EMIT electricBorderCornerRatioChanged();
 }
 
-void options::setBorderlessMaximizedWindows(bool borderlessMaximizedWindows)
+void options_qobject::setBorderlessMaximizedWindows(bool borderlessMaximizedWindows)
 {
     if (borderless_maximized_windows == borderlessMaximizedWindows) {
         return;
@@ -429,7 +407,7 @@ void options::setBorderlessMaximizedWindows(bool borderlessMaximizedWindows)
     Q_EMIT borderlessMaximizedWindowsChanged();
 }
 
-void options::setKillPingTimeout(int killPingTimeout)
+void options_qobject::setKillPingTimeout(int killPingTimeout)
 {
     if (m_killPingTimeout == killPingTimeout) {
         return;
@@ -438,7 +416,7 @@ void options::setKillPingTimeout(int killPingTimeout)
     Q_EMIT killPingTimeoutChanged();
 }
 
-void options::setHideUtilityWindowsForInactive(bool hideUtilityWindowsForInactive)
+void options_qobject::setHideUtilityWindowsForInactive(bool hideUtilityWindowsForInactive)
 {
     if (m_hideUtilityWindowsForInactive == hideUtilityWindowsForInactive) {
         return;
@@ -447,7 +425,7 @@ void options::setHideUtilityWindowsForInactive(bool hideUtilityWindowsForInactiv
     Q_EMIT hideUtilityWindowsForInactiveChanged();
 }
 
-void options::setCompositingMode(int compositingMode)
+void options_qobject::setCompositingMode(int compositingMode)
 {
     if (m_compositingMode == static_cast<CompositingType>(compositingMode)) {
         return;
@@ -456,7 +434,7 @@ void options::setCompositingMode(int compositingMode)
     Q_EMIT compositingModeChanged();
 }
 
-void options::setUseCompositing(bool useCompositing)
+void options_qobject::setUseCompositing(bool useCompositing)
 {
     if (m_useCompositing == useCompositing) {
         return;
@@ -465,7 +443,7 @@ void options::setUseCompositing(bool useCompositing)
     Q_EMIT useCompositingChanged();
 }
 
-void options::setHiddenPreviews(int hiddenPreviews)
+void options_qobject::setHiddenPreviews(int hiddenPreviews)
 {
     if (m_hiddenPreviews == static_cast<HiddenPreviews>(hiddenPreviews)) {
         return;
@@ -474,7 +452,7 @@ void options::setHiddenPreviews(int hiddenPreviews)
     Q_EMIT hiddenPreviewsChanged();
 }
 
-void options::setMaxFpsInterval(qint64 maxFpsInterval)
+void options_qobject::setMaxFpsInterval(qint64 maxFpsInterval)
 {
     if (m_maxFpsInterval == maxFpsInterval) {
         return;
@@ -483,7 +461,7 @@ void options::setMaxFpsInterval(qint64 maxFpsInterval)
     Q_EMIT maxFpsIntervalChanged();
 }
 
-void options::setRefreshRate(uint refreshRate)
+void options_qobject::setRefreshRate(uint refreshRate)
 {
     if (m_refreshRate == refreshRate) {
         return;
@@ -492,7 +470,7 @@ void options::setRefreshRate(uint refreshRate)
     Q_EMIT refreshRateChanged();
 }
 
-void options::setVBlankTime(qint64 vBlankTime)
+void options_qobject::setVBlankTime(qint64 vBlankTime)
 {
     if (m_vBlankTime == vBlankTime) {
         return;
@@ -501,7 +479,7 @@ void options::setVBlankTime(qint64 vBlankTime)
     Q_EMIT vBlankTimeChanged();
 }
 
-void options::setGlStrictBinding(bool glStrictBinding)
+void options_qobject::setGlStrictBinding(bool glStrictBinding)
 {
     if (m_glStrictBinding == glStrictBinding) {
         return;
@@ -510,7 +488,7 @@ void options::setGlStrictBinding(bool glStrictBinding)
     Q_EMIT glStrictBindingChanged();
 }
 
-void options::setGlStrictBindingFollowsDriver(bool glStrictBindingFollowsDriver)
+void options_qobject::setGlStrictBindingFollowsDriver(bool glStrictBindingFollowsDriver)
 {
     if (m_glStrictBindingFollowsDriver == glStrictBindingFollowsDriver) {
         return;
@@ -519,7 +497,7 @@ void options::setGlStrictBindingFollowsDriver(bool glStrictBindingFollowsDriver)
     Q_EMIT glStrictBindingFollowsDriverChanged();
 }
 
-void options::setWindowsBlockCompositing(bool value)
+void options_qobject::setWindowsBlockCompositing(bool value)
 {
     if (m_windowsBlockCompositing == value) {
         return;
@@ -528,7 +506,7 @@ void options::setWindowsBlockCompositing(bool value)
     Q_EMIT windowsBlockCompositingChanged();
 }
 
-void options::setAnimationCurve(AnimationCurve curve)
+void options_qobject::setAnimationCurve(AnimationCurve curve)
 {
     if (m_animationCurve == curve) {
         return;
@@ -539,7 +517,7 @@ void options::setAnimationCurve(AnimationCurve curve)
     Q_EMIT animationCurveChanged();
 }
 
-void options::setGlPlatformInterface(OpenGLPlatformInterface interface)
+void options_qobject::setGlPlatformInterface(OpenGLPlatformInterface interface)
 {
     // check environment variable
     const QByteArray envOpenGLInterface(qgetenv("KWIN_OPENGL_INTERFACE"));
@@ -591,7 +569,7 @@ void options::updateSettings()
     // Driver-specific config detection
     reloadCompositingSettings();
 
-    Q_EMIT configChanged();
+    Q_EMIT qobject->configChanged();
 }
 
 void options::loadConfig()
@@ -602,53 +580,56 @@ void options::loadConfig()
 
     // Electric borders
     KConfigGroup config(m_settings->config(), "Windows");
-    OpTitlebarDblClick
+    qobject->OpTitlebarDblClick
         = windowOperation(config.readEntry("TitlebarDoubleClickCommand", "Maximize"), true);
-    setOperationMaxButtonLeftClick(
+    qobject->setOperationMaxButtonLeftClick(
         windowOperation(config.readEntry("MaximizeButtonLeftClickCommand", "Maximize"), true));
-    setOperationMaxButtonMiddleClick(windowOperation(
+    qobject->setOperationMaxButtonMiddleClick(windowOperation(
         config.readEntry("MaximizeButtonMiddleClickCommand", "Maximize (vertical only)"), true));
-    setOperationMaxButtonRightClick(windowOperation(
+    qobject->setOperationMaxButtonRightClick(windowOperation(
         config.readEntry("MaximizeButtonRightClickCommand", "Maximize (horizontal only)"), true));
 
     // Mouse bindings
     config = KConfigGroup(m_settings->config(), "MouseBindings");
     // TODO: add properties for missing options
-    CmdTitlebarWheel = mouseWheelCommand(config.readEntry("CommandTitlebarWheel", "Nothing"));
-    CmdAllModKey = (config.readEntry("CommandAllKey", "Meta") == QStringLiteral("Meta"))
+    qobject->CmdTitlebarWheel
+        = mouseWheelCommand(config.readEntry("CommandTitlebarWheel", "Nothing"));
+    qobject->CmdAllModKey = (config.readEntry("CommandAllKey", "Meta") == QStringLiteral("Meta"))
         ? Qt::Key_Meta
         : Qt::Key_Alt;
-    CmdAllWheel = mouseWheelCommand(config.readEntry("CommandAllWheel", "Nothing"));
-    setCommandActiveTitlebar1(
+    qobject->CmdAllWheel = mouseWheelCommand(config.readEntry("CommandAllWheel", "Nothing"));
+    qobject->setCommandActiveTitlebar1(
         mouseCommand(config.readEntry("CommandActiveTitlebar1", "Raise"), true));
-    setCommandActiveTitlebar2(
+    qobject->setCommandActiveTitlebar2(
         mouseCommand(config.readEntry("CommandActiveTitlebar2", "Nothing"), true));
-    setCommandActiveTitlebar3(
+    qobject->setCommandActiveTitlebar3(
         mouseCommand(config.readEntry("CommandActiveTitlebar3", "Operations menu"), true));
-    setCommandInactiveTitlebar1(
+    qobject->setCommandInactiveTitlebar1(
         mouseCommand(config.readEntry("CommandInactiveTitlebar1", "Activate and raise"), true));
-    setCommandInactiveTitlebar2(
+    qobject->setCommandInactiveTitlebar2(
         mouseCommand(config.readEntry("CommandInactiveTitlebar2", "Nothing"), true));
-    setCommandInactiveTitlebar3(
+    qobject->setCommandInactiveTitlebar3(
         mouseCommand(config.readEntry("CommandInactiveTitlebar3", "Operations menu"), true));
-    setCommandWindow1(
+    qobject->setCommandWindow1(
         mouseCommand(config.readEntry("CommandWindow1", "Activate, raise and pass click"), false));
-    setCommandWindow2(
+    qobject->setCommandWindow2(
         mouseCommand(config.readEntry("CommandWindow2", "Activate and pass click"), false));
-    setCommandWindow3(
+    qobject->setCommandWindow3(
         mouseCommand(config.readEntry("CommandWindow3", "Activate and pass click"), false));
-    setCommandWindowWheel(mouseCommand(config.readEntry("CommandWindowWheel", "Scroll"), false));
-    setCommandAll1(mouseCommand(config.readEntry("CommandAll1", "Move"), false));
-    setCommandAll2(mouseCommand(config.readEntry("CommandAll2", "Toggle raise and lower"), false));
-    setCommandAll3(mouseCommand(config.readEntry("CommandAll3", "Resize"), false));
+    qobject->setCommandWindowWheel(
+        mouseCommand(config.readEntry("CommandWindowWheel", "Scroll"), false));
+    qobject->setCommandAll1(mouseCommand(config.readEntry("CommandAll1", "Move"), false));
+    qobject->setCommandAll2(
+        mouseCommand(config.readEntry("CommandAll2", "Toggle raise and lower"), false));
+    qobject->setCommandAll3(mouseCommand(config.readEntry("CommandAll3", "Resize"), false));
 
     // TODO: should they be moved into reloadCompositingSettings?
     config = KConfigGroup(m_settings->config(), "Compositing");
-    setMaxFpsInterval(1 * 1000 * 1000 * 1000
-                      / config.readEntry("MaxFPS", options::defaultMaxFps()));
-    setRefreshRate(config.readEntry("RefreshRate", options::defaultRefreshRate()));
-    setVBlankTime(config.readEntry("VBlankTime", options::defaultVBlankTime())
-                  * 1000); // config in micro, value in nano resolution
+    qobject->setMaxFpsInterval(1 * 1000 * 1000 * 1000
+                               / config.readEntry("MaxFPS", options_qobject::defaultMaxFps()));
+    qobject->setRefreshRate(config.readEntry("RefreshRate", options_qobject::defaultRefreshRate()));
+    qobject->setVBlankTime(config.readEntry("VBlankTime", options_qobject::defaultVBlankTime())
+                           * 1000); // config in micro, value in nano resolution
 
     // Modifier Only Shortcuts
     config = KConfigGroup(m_settings->config(), "ModifierOnlyShortcuts");
@@ -674,37 +655,37 @@ void options::loadConfig()
 
 void options::syncFromKcfgc()
 {
-    setCondensedTitle(m_settings->condensedTitle());
-    setFocusPolicy(m_settings->focusPolicy());
-    setNextFocusPrefersMouse(m_settings->nextFocusPrefersMouse());
-    setSeparateScreenFocus(m_settings->separateScreenFocus());
+    qobject->setCondensedTitle(m_settings->condensedTitle());
+    qobject->setFocusPolicy(m_settings->focusPolicy());
+    qobject->setNextFocusPrefersMouse(m_settings->nextFocusPrefersMouse());
+    qobject->setSeparateScreenFocus(m_settings->separateScreenFocus());
     current_output_follows_mouse = m_settings->activeMouseScreen();
-    setRollOverDesktops(m_settings->rollOverDesktops());
-    setFocusStealingPreventionLevel(
+    qobject->setRollOverDesktops(m_settings->rollOverDesktops());
+    qobject->setFocusStealingPreventionLevel(
         static_cast<win::fsp_level>(m_settings->focusStealingPreventionLevel()));
 
 #if KWIN_BUILD_DECORATIONS
-    setPlacement(static_cast<win::placement>(m_settings->placement()));
+    qobject->setPlacement(static_cast<win::placement>(m_settings->placement()));
 #else
-    setPlacement(win::placement::maximizing);
+    qobject->setPlacement(win::placement::maximizing);
 #endif
 
-    setAutoRaise(m_settings->autoRaise());
-    setAutoRaiseInterval(m_settings->autoRaiseInterval());
-    setDelayFocusInterval(m_settings->delayFocusInterval());
-    setClickRaise(m_settings->clickRaise());
-    setBorderSnapZone(m_settings->borderSnapZone());
-    setWindowSnapZone(m_settings->windowSnapZone());
-    setCenterSnapZone(m_settings->centerSnapZone());
-    setSnapOnlyWhenOverlapping(m_settings->snapOnlyWhenOverlapping());
-    setKillPingTimeout(m_settings->killPingTimeout());
-    setHideUtilityWindowsForInactive(m_settings->hideUtilityWindowsForInactive());
-    setBorderlessMaximizedWindows(m_settings->borderlessMaximizedWindows());
-    setElectricBorderMaximize(m_settings->electricBorderMaximize());
-    setElectricBorderTiling(m_settings->electricBorderTiling());
-    setElectricBorderCornerRatio(m_settings->electricBorderCornerRatio());
-    setWindowsBlockCompositing(m_settings->windowsBlockCompositing());
-    setAnimationCurve(m_settings->animationCurve());
+    qobject->setAutoRaise(m_settings->autoRaise());
+    qobject->setAutoRaiseInterval(m_settings->autoRaiseInterval());
+    qobject->setDelayFocusInterval(m_settings->delayFocusInterval());
+    qobject->setClickRaise(m_settings->clickRaise());
+    qobject->setBorderSnapZone(m_settings->borderSnapZone());
+    qobject->setWindowSnapZone(m_settings->windowSnapZone());
+    qobject->setCenterSnapZone(m_settings->centerSnapZone());
+    qobject->setSnapOnlyWhenOverlapping(m_settings->snapOnlyWhenOverlapping());
+    qobject->setKillPingTimeout(m_settings->killPingTimeout());
+    qobject->setHideUtilityWindowsForInactive(m_settings->hideUtilityWindowsForInactive());
+    qobject->setBorderlessMaximizedWindows(m_settings->borderlessMaximizedWindows());
+    qobject->setElectricBorderMaximize(m_settings->electricBorderMaximize());
+    qobject->setElectricBorderTiling(m_settings->electricBorderTiling());
+    qobject->setElectricBorderCornerRatio(m_settings->electricBorderCornerRatio());
+    qobject->setWindowsBlockCompositing(m_settings->windowsBlockCompositing());
+    qobject->setAnimationCurve(m_settings->animationCurve());
 }
 
 bool options::loadCompositingConfig(bool force)
@@ -750,21 +731,21 @@ bool options::loadCompositingConfig(bool force)
             break;
         }
     }
-    setCompositingMode(compositingMode);
+    qobject->setCompositingMode(compositingMode);
 
     auto const platformSupportsNoCompositing = !kwinApp()->shouldUseWaylandForCompositing();
-    if (m_compositingMode == NoCompositing && platformSupportsNoCompositing) {
-        setUseCompositing(false);
+    if (qobject->m_compositingMode == NoCompositing && platformSupportsNoCompositing) {
+        qobject->setUseCompositing(false);
         return false; // do not even detect compositing preferences if explicitly disabled
     }
 
     // it's either enforced by env or by initial resume from "suspend" or we check the settings
-    setUseCompositing(
-        useCompositing || force
-        || config.readEntry("Enabled",
-                            options::defaultUseCompositing() || !platformSupportsNoCompositing));
+    qobject->setUseCompositing(useCompositing || force
+                               || config.readEntry("Enabled",
+                                                   options_qobject::defaultUseCompositing()
+                                                       || !platformSupportsNoCompositing));
 
-    if (!m_useCompositing)
+    if (!qobject->m_useCompositing)
         return false; // not enforced or necessary and not "enabled" by settings
     return true;
 }
@@ -780,12 +761,13 @@ void options::reloadCompositingSettings(bool force)
     // Compositing settings
     KConfigGroup config(m_settings->config(), "Compositing");
 
-    setGlStrictBindingFollowsDriver(!config.hasKey("GLStrictBinding"));
-    if (!isGlStrictBindingFollowsDriver()) {
-        setGlStrictBinding(config.readEntry("GLStrictBinding", options::defaultGlStrictBinding()));
+    qobject->setGlStrictBindingFollowsDriver(!config.hasKey("GLStrictBinding"));
+    if (!qobject->isGlStrictBindingFollowsDriver()) {
+        qobject->setGlStrictBinding(
+            config.readEntry("GLStrictBinding", options_qobject::defaultGlStrictBinding()));
     }
 
-    HiddenPreviews previews = options::defaultHiddenPreviews();
+    HiddenPreviews previews = options_qobject::defaultHiddenPreviews();
     // 4 - off, 5 - shown, 6 - always, other are old values
     int hps = config.readEntry("HiddenPreviews", 5);
     if (hps == 4)
@@ -794,7 +776,7 @@ void options::reloadCompositingSettings(bool force)
         previews = HiddenPreviewsShown;
     else if (hps == 6)
         previews = HiddenPreviewsAlways;
-    setHiddenPreviews(previews);
+    qobject->setHiddenPreviews(previews);
 
     auto interfaceToKey = [](OpenGLPlatformInterface interface) {
         switch (interface) {
@@ -814,123 +796,126 @@ void options::reloadCompositingSettings(bool force)
         }
         return defaultGlPlatformInterface();
     };
-    setGlPlatformInterface(keyToInterface(
-        config.readEntry("GLPlatformInterface", interfaceToKey(m_glPlatformInterface))));
+    qobject->setGlPlatformInterface(keyToInterface(
+        config.readEntry("GLPlatformInterface", interfaceToKey(qobject->m_glPlatformInterface))));
 }
 
 // restricted should be true for operations that the user may not be able to repeat
 // if the window is moved out of the workspace (e.g. if the user moves a window
 // by the titlebar, and moves it too high beneath Kicker at the top edge, they
 // may not be able to move it back, unless they know about Meta+LMB)
-options::WindowOperation options::windowOperation(const QString& name, bool restricted)
+options_qobject::WindowOperation options::windowOperation(const QString& name, bool restricted)
 {
     if (name == QStringLiteral("Move"))
-        return restricted ? MoveOp : UnrestrictedMoveOp;
+        return restricted ? options_qobject::MoveOp : options_qobject::UnrestrictedMoveOp;
     else if (name == QStringLiteral("Resize"))
-        return restricted ? ResizeOp : UnrestrictedResizeOp;
+        return restricted ? options_qobject::ResizeOp : options_qobject::UnrestrictedResizeOp;
     else if (name == QStringLiteral("Maximize"))
-        return MaximizeOp;
+        return options_qobject::MaximizeOp;
     else if (name == QStringLiteral("Minimize"))
-        return MinimizeOp;
+        return options_qobject::MinimizeOp;
     else if (name == QStringLiteral("Close"))
-        return CloseOp;
+        return options_qobject::CloseOp;
     else if (name == QStringLiteral("OnAllDesktops"))
-        return OnAllDesktopsOp;
+        return options_qobject::OnAllDesktopsOp;
     else if (name == QStringLiteral("Operations"))
-        return OperationsOp;
+        return options_qobject::OperationsOp;
     else if (name == QStringLiteral("Maximize (vertical only)"))
-        return VMaximizeOp;
+        return options_qobject::VMaximizeOp;
     else if (name == QStringLiteral("Maximize (horizontal only)"))
-        return HMaximizeOp;
+        return options_qobject::HMaximizeOp;
     else if (name == QStringLiteral("Lower"))
-        return LowerOp;
-    return NoOp;
+        return options_qobject::LowerOp;
+    return options_qobject::NoOp;
 }
 
-options::MouseCommand options::mouseCommand(const QString& name, bool restricted)
+options_qobject::MouseCommand options::mouseCommand(const QString& name, bool restricted)
 {
     QString lowerName = name.toLower();
     if (lowerName == QStringLiteral("raise"))
-        return MouseRaise;
+        return options_qobject::MouseRaise;
     if (lowerName == QStringLiteral("lower"))
-        return MouseLower;
+        return options_qobject::MouseLower;
     if (lowerName == QStringLiteral("operations menu"))
-        return MouseOperationsMenu;
+        return options_qobject::MouseOperationsMenu;
     if (lowerName == QStringLiteral("toggle raise and lower"))
-        return MouseToggleRaiseAndLower;
+        return options_qobject::MouseToggleRaiseAndLower;
     if (lowerName == QStringLiteral("activate and raise"))
-        return MouseActivateAndRaise;
+        return options_qobject::MouseActivateAndRaise;
     if (lowerName == QStringLiteral("activate and lower"))
-        return MouseActivateAndLower;
+        return options_qobject::MouseActivateAndLower;
     if (lowerName == QStringLiteral("activate"))
-        return MouseActivate;
+        return options_qobject::MouseActivate;
     if (lowerName == QStringLiteral("activate, raise and pass click"))
-        return MouseActivateRaiseAndPassClick;
+        return options_qobject::MouseActivateRaiseAndPassClick;
     if (lowerName == QStringLiteral("activate and pass click"))
-        return MouseActivateAndPassClick;
+        return options_qobject::MouseActivateAndPassClick;
     if (lowerName == QStringLiteral("scroll"))
-        return MouseNothing;
+        return options_qobject::MouseNothing;
     if (lowerName == QStringLiteral("activate and scroll"))
-        return MouseActivateAndPassClick;
+        return options_qobject::MouseActivateAndPassClick;
     if (lowerName == QStringLiteral("activate, raise and scroll"))
-        return MouseActivateRaiseAndPassClick;
+        return options_qobject::MouseActivateRaiseAndPassClick;
     if (lowerName == QStringLiteral("activate, raise and move"))
-        return restricted ? MouseActivateRaiseAndMove : MouseActivateRaiseAndUnrestrictedMove;
+        return restricted ? options_qobject::MouseActivateRaiseAndMove
+                          : options_qobject::MouseActivateRaiseAndUnrestrictedMove;
     if (lowerName == QStringLiteral("move"))
-        return restricted ? MouseMove : MouseUnrestrictedMove;
+        return restricted ? options_qobject::MouseMove : options_qobject::MouseUnrestrictedMove;
     if (lowerName == QStringLiteral("resize"))
-        return restricted ? MouseResize : MouseUnrestrictedResize;
+        return restricted ? options_qobject::MouseResize : options_qobject::MouseUnrestrictedResize;
     if (lowerName == QStringLiteral("minimize"))
-        return MouseMinimize;
+        return options_qobject::MouseMinimize;
     if (lowerName == QStringLiteral("close"))
-        return MouseClose;
+        return options_qobject::MouseClose;
     if (lowerName == QStringLiteral("increase opacity"))
-        return MouseOpacityMore;
+        return options_qobject::MouseOpacityMore;
     if (lowerName == QStringLiteral("decrease opacity"))
-        return MouseOpacityLess;
+        return options_qobject::MouseOpacityLess;
     if (lowerName == QStringLiteral("nothing"))
-        return MouseNothing;
-    return MouseNothing;
+        return options_qobject::MouseNothing;
+    return options_qobject::MouseNothing;
 }
 
-options::MouseWheelCommand options::mouseWheelCommand(const QString& name)
+options_qobject::MouseWheelCommand options::mouseWheelCommand(const QString& name)
 {
     QString lowerName = name.toLower();
     if (lowerName == QStringLiteral("raise/lower"))
-        return MouseWheelRaiseLower;
+        return options_qobject::MouseWheelRaiseLower;
     if (lowerName == QStringLiteral("maximize/restore"))
-        return MouseWheelMaximizeRestore;
+        return options_qobject::MouseWheelMaximizeRestore;
     if (lowerName == QStringLiteral("above/below"))
-        return MouseWheelAboveBelow;
+        return options_qobject::MouseWheelAboveBelow;
     if (lowerName == QStringLiteral("previous/next desktop"))
-        return MouseWheelPreviousNextDesktop;
+        return options_qobject::MouseWheelPreviousNextDesktop;
     if (lowerName == QStringLiteral("change opacity"))
-        return MouseWheelChangeOpacity;
+        return options_qobject::MouseWheelChangeOpacity;
     if (lowerName == QStringLiteral("nothing"))
-        return MouseWheelNothing;
-    return MouseWheelNothing;
+        return options_qobject::MouseWheelNothing;
+    return options_qobject::MouseWheelNothing;
 }
 
-bool options::condensedTitle() const
+bool options_qobject::condensedTitle() const
 {
     return condensed_title;
 }
 
-options::MouseCommand options::wheelToMouseCommand(MouseWheelCommand com, int delta) const
+options_qobject::MouseCommand options::wheelToMouseCommand(options_qobject::MouseWheelCommand com,
+                                                           int delta) const
 {
     switch (com) {
-    case MouseWheelRaiseLower:
-        return delta > 0 ? MouseRaise : MouseLower;
-    case MouseWheelMaximizeRestore:
-        return delta > 0 ? MouseMaximize : MouseRestore;
-    case MouseWheelAboveBelow:
-        return delta > 0 ? MouseAbove : MouseBelow;
-    case MouseWheelPreviousNextDesktop:
-        return delta > 0 ? MousePreviousDesktop : MouseNextDesktop;
-    case MouseWheelChangeOpacity:
-        return delta > 0 ? MouseOpacityMore : MouseOpacityLess;
+    case options_qobject::MouseWheelRaiseLower:
+        return delta > 0 ? options_qobject::MouseRaise : options_qobject::MouseLower;
+    case options_qobject::MouseWheelMaximizeRestore:
+        return delta > 0 ? options_qobject::MouseMaximize : options_qobject::MouseRestore;
+    case options_qobject::MouseWheelAboveBelow:
+        return delta > 0 ? options_qobject::MouseAbove : options_qobject::MouseBelow;
+    case options_qobject::MouseWheelPreviousNextDesktop:
+        return delta > 0 ? options_qobject::MousePreviousDesktop
+                         : options_qobject::MouseNextDesktop;
+    case options_qobject::MouseWheelChangeOpacity:
+        return delta > 0 ? options_qobject::MouseOpacityMore : options_qobject::MouseOpacityLess;
     default:
-        return MouseNothing;
+        return options_qobject::MouseNothing;
     }
 }
 #endif
@@ -944,7 +929,8 @@ double options::animationTimeFactor() const
 #endif
 }
 
-options::WindowOperation options::operationMaxButtonClick(Qt::MouseButtons button) const
+options_qobject::WindowOperation
+options_qobject::operationMaxButtonClick(Qt::MouseButtons button) const
 {
     return button == Qt::RightButton ? opMaxButtonRightClick
         : button == Qt::MiddleButton ? opMaxButtonMiddleClick
@@ -956,9 +942,32 @@ QStringList options::modifierOnlyDBusShortcut(Qt::KeyboardModifier mod) const
     return m_modifierOnlyShortcuts.value(mod);
 }
 
-bool options::isUseCompositing() const
+bool options_qobject::isUseCompositing() const
 {
     return m_useCompositing || kwinApp()->get_base().render->requiresCompositing();
 }
 
-} // namespace
+options::options()
+    : qobject{std::make_unique<options_qobject>()}
+    , m_settings(new Settings(kwinApp()->config()))
+{
+    m_settings->setDefaults();
+    syncFromKcfgc();
+
+    m_configWatcher = KConfigWatcher::create(m_settings->sharedConfig());
+
+    // TODO(romangg): Is this connect necessary? We don't do it for other config data.
+    QObject::connect(m_configWatcher.data(),
+                     &KConfigWatcher::configChanged,
+                     qobject.get(),
+                     [this](KConfigGroup const& group, QByteArrayList const& names) {
+                         if (group.name() == QLatin1String("KDE")
+                             && names.contains(QByteArrayLiteral("AnimationDurationFactor"))) {
+                             Q_EMIT qobject->animationSpeedChanged();
+                         }
+                     });
+}
+
+options::~options() = default;
+
+}

@@ -36,7 +36,7 @@ void send_window_to_desktop(Space& space, Toplevel* window, int desk, bool dont_
     desk = window->desktop();
 
     if (window->isOnDesktop(space.virtual_desktop_manager->current())) {
-        if (win::wants_tab_focus(window) && kwinApp()->options->focusPolicyIsReasonable()
+        if (win::wants_tab_focus(window) && kwinApp()->options->qobject->focusPolicyIsReasonable()
             && !was_on_desktop && // for stickyness changes
             !dont_activate) {
             request_focus(space, window);

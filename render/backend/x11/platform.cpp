@@ -87,7 +87,7 @@ gl::backend* platform::get_opengl_backend(render::compositor& compositor)
         return gl_backend.get();
     }
 
-    if (kwinApp()->options->glPlatformInterface() == EglPlatformInterface) {
+    if (kwinApp()->options->qobject->glPlatformInterface() == EglPlatformInterface) {
         qCWarning(KWIN_CORE)
             << "Requested EGL on X11 backend, but support has been removed. Trying GLX instead.";
     }

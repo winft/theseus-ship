@@ -1062,7 +1062,7 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
 
     const QRect origGeo = client2->frameGeometry();
     Test::app()->base.input->cursor->set_pos(origGeo.center());
-    win::perform_window_operation(*Test::app()->base.space, client2, base::options::MoveOp);
+    win::perform_window_operation(*Test::app()->base.space, client2, base::options_qobject::MoveOp);
 
     QTRY_COMPARE(Test::app()->base.space->move_resize_window, client2);
     QVERIFY(win::is_move(client2));

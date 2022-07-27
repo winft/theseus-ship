@@ -620,10 +620,13 @@ void InternalWindowTest::testModifierClickUnrestrictedMove()
     group.writeEntry("CommandAll3", "Move");
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);
-    QCOMPARE(kwinApp()->options->commandAllModifier(), Qt::MetaModifier);
-    QCOMPARE(kwinApp()->options->commandAll1(), base::options::MouseUnrestrictedMove);
-    QCOMPARE(kwinApp()->options->commandAll2(), base::options::MouseUnrestrictedMove);
-    QCOMPARE(kwinApp()->options->commandAll3(), base::options::MouseUnrestrictedMove);
+    QCOMPARE(kwinApp()->options->qobject->commandAllModifier(), Qt::MetaModifier);
+    QCOMPARE(kwinApp()->options->qobject->commandAll1(),
+             base::options_qobject::MouseUnrestrictedMove);
+    QCOMPARE(kwinApp()->options->qobject->commandAll2(),
+             base::options_qobject::MouseUnrestrictedMove);
+    QCOMPARE(kwinApp()->options->qobject->commandAll3(),
+             base::options_qobject::MouseUnrestrictedMove);
 
     // move cursor on window
     Test::app()->base.input->cursor->set_pos(internalClient->frameGeometry().center());

@@ -39,7 +39,7 @@ static inline bool is_output_switch_impossible()
 template<typename Space>
 void set_current_output(Space& space, base::output const& output)
 {
-    if (!kwinApp()->options->focusPolicyIsReasonable()) {
+    if (!kwinApp()->options->qobject->focusPolicyIsReasonable()) {
         return;
     }
 

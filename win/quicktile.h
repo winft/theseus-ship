@@ -51,7 +51,7 @@ void check_quicktile_maximization_zones(Win* win, int xroot, int yroot)
 
         auto area
             = space_window_area(win->space, MaximizeArea, QPoint(xroot, yroot), win->desktop());
-        if (kwinApp()->options->electricBorderTiling()) {
+        if (kwinApp()->options->qobject->electricBorderTiling()) {
             if (xroot <= area.x() + 20) {
                 mode |= quicktiles::left;
                 inner_border = in_screen(QPoint(area.x() - 1, yroot));
@@ -62,12 +62,13 @@ void check_quicktile_maximization_zones(Win* win, int xroot, int yroot)
         }
 
         if (mode != quicktiles::none) {
-            if (yroot <= area.y() + area.height() * kwinApp()->options->electricBorderCornerRatio())
+            auto ratio = kwinApp()->options->qobject->electricBorderCornerRatio();
+            if (yroot <= area.y() + area.height() * ratio) {
                 mode |= quicktiles::top;
-            else if (yroot >= area.y() + area.height()
-                         - area.height() * kwinApp()->options->electricBorderCornerRatio())
+            } else if (yroot >= area.y() + area.height() - area.height() * ratio) {
                 mode |= quicktiles::bottom;
-        } else if (kwinApp()->options->electricBorderMaximize() && yroot <= area.y() + 5
+            }
+        } else if (kwinApp()->options->qobject->electricBorderMaximize() && yroot <= area.y() + 5
                    && win->isMaximizable()) {
             mode = quicktiles::maximize;
             inner_border = in_screen(QPoint(xroot, area.y() - 1));

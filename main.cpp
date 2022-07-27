@@ -92,7 +92,7 @@ Application::Application(Application::OperationMode mode, int &argc, char **argv
         qCWarning(KWIN_CORE) << "Can't enable Ftrace via environment variable.";
     }
 
-    qRegisterMetaType<base::options::WindowOperation>("base::options::WindowOperation");
+    qRegisterMetaType<base::options_qobject::WindowOperation>("base::options::WindowOperation");
     qRegisterMetaType<KWin::EffectWindow*>();
     qRegisterMetaType<Wrapland::Server::Surface*>("Wrapland::Server::Surface*");
     qRegisterMetaType<KSharedConfigPtr>();

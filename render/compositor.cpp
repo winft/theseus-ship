@@ -39,10 +39,12 @@ compositor::compositor(render::platform& platform)
     : platform{platform}
     , dbus{std::make_unique<dbus::compositing>(*this)}
 {
-    connect(
-        kwinApp()->options.get(), &base::options::configChanged, this, &compositor::configChanged);
-    connect(kwinApp()->options.get(),
-            &base::options::animationSpeedChanged,
+    connect(kwinApp()->options->qobject.get(),
+            &base::options_qobject::configChanged,
+            this,
+            &compositor::configChanged);
+    connect(kwinApp()->options->qobject.get(),
+            &base::options_qobject::animationSpeedChanged,
             this,
             &compositor::configChanged);
 

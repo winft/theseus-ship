@@ -1037,7 +1037,7 @@ void tabbox::navigating_through_windows(bool forward, const QKeySequence& shortc
     if (!m_ready || is_grabbed()) {
         return;
     }
-    if (!kwinApp()->options->focusPolicyIsReasonable()) {
+    if (!kwinApp()->options->qobject->focusPolicyIsReasonable()) {
         // ungrabXKeyboard(); // need that because of accelerator raw mode
         //  CDE style raise / lower
         cde_walk_through_windows(forward);
@@ -1163,8 +1163,10 @@ bool tabbox::toggle(ElectricBorder eb)
 
 bool tabbox::toggle_mode(TabBoxMode mode)
 {
-    if (!kwinApp()->options->focusPolicyIsReasonable())
-        return false; // not supported.
+    if (!kwinApp()->options->qobject->focusPolicyIsReasonable()) {
+        // not supported.
+        return false;
+    }
     if (is_displayed()) {
         accept();
         return true;
@@ -1264,7 +1266,7 @@ void tabbox::cde_walk_through_windows(bool forward)
     if (nc) {
         if (c && c != nc)
             win::lower_window(&space, c);
-        if (kwinApp()->options->focusPolicyIsReasonable()) {
+        if (kwinApp()->options->qobject->focusPolicyIsReasonable()) {
             activate_window(space, nc);
         } else {
             if (!nc->isOnDesktop(current_desktop()))
