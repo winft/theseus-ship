@@ -715,7 +715,7 @@ void SceneOpenGLShadowTest::testNoCornerShadowTiles()
     expectedQuads << makeShadowQuad(
         QRectF(-128, 0, 128, 512), 0.0, 128.0 / 257.0, 128.0 / 257.0, 129.0 / 257.0); // left
 
-    for (const WindowQuad& expectedQuad : expectedQuads) {
+    for (const WindowQuad& expectedQuad : qAsConst(expectedQuads)) {
         auto it = std::find_if(
             quads.constBegin(), quads.constEnd(), [&expectedQuad](const WindowQuad& quad) {
                 return compareQuads(quad, expectedQuad);
@@ -802,7 +802,7 @@ void SceneOpenGLShadowTest::testDistributeHugeCornerTiles()
     const WindowQuadList& quads = shadow->shadowQuads();
     QCOMPARE(quads.count(), expectedQuads.count());
 
-    for (const WindowQuad& expectedQuad : expectedQuads) {
+    for (const WindowQuad& expectedQuad : qAsConst(expectedQuads)) {
         auto it = std::find_if(
             quads.constBegin(), quads.constEnd(), [&expectedQuad](const WindowQuad& quad) {
                 return compareQuads(quad, expectedQuad);

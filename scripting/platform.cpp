@@ -296,7 +296,7 @@ QList<QAction*> platform::actionsForUserActionMenu(Toplevel* window, QMenu* pare
     assert(window_it != w_wins.cend());
 
     QList<QAction*> actions;
-    for (auto s : scripts) {
+    for (auto s : qAsConst(scripts)) {
         // TODO: Allow declarative scripts to add their own user actions.
         if (auto script = qobject_cast<scripting::script*>(s)) {
             actions << script->actionsForUserActionMenu(*window_it, parent);
