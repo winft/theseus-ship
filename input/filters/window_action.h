@@ -48,7 +48,8 @@ public:
             return false;
         }
 
-        auto action_result = perform_mouse_modifier_and_window_action(event, focus_window);
+        auto action_result
+            = perform_mouse_modifier_and_window_action(this->redirect, event, focus_window);
         if (action_result.first) {
             return action_result.second;
         }
@@ -67,7 +68,8 @@ public:
             return false;
         }
 
-        auto const action_result = perform_wheel_and_window_action(event, focus_window);
+        auto const action_result
+            = perform_wheel_and_window_action(this->redirect, event, focus_window);
         if (action_result.first) {
             return action_result.second;
         }

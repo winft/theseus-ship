@@ -33,16 +33,17 @@ enum class MouseAction {
     ModifierAndWindow,
 };
 
-inline bool get_modifier_command(uint32_t key, base::options::MouseCommand& command)
+template<typename Redirect>
+bool get_modifier_command(Redirect& redirect, uint32_t key, base::options::MouseCommand& command)
 {
-    if (xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(*kwinApp()->input)
+    if (xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(redirect.platform)
         != kwinApp()->options->commandAllModifier()) {
         return false;
     }
-    if (kwinApp()->input->redirect->get_pointer()->isConstrained()) {
+    if (redirect.get_pointer()->isConstrained()) {
         return false;
     }
-    if (kwinApp()->input->redirect->space.global_shortcuts_disabled) {
+    if (redirect.space.global_shortcuts_disabled) {
         return false;
     }
     auto qt_key = button_to_qt_mouse_button(key);
@@ -63,48 +64,55 @@ inline bool get_modifier_command(uint32_t key, base::options::MouseCommand& comm
     return true;
 }
 
-inline std::pair<bool, bool> do_perform_mouse_action(base::options::MouseCommand command,
-                                                     Toplevel* window)
+template<typename Redirect>
+std::pair<bool, bool>
+do_perform_mouse_action(Redirect& redirect, base::options::MouseCommand command, Toplevel* window)
 {
-    return std::make_pair(true,
-                          !window->performMouseCommand(
-                              command, kwinApp()->input->redirect->get_pointer()->pos().toPoint()));
+    return std::make_pair(
+        true, !window->performMouseCommand(command, redirect.get_pointer()->pos().toPoint()));
 }
 
-inline std::pair<bool, bool> perform_mouse_modifier_action(button_event const& event,
-                                                           Toplevel* window)
+template<typename Redirect>
+std::pair<bool, bool>
+perform_mouse_modifier_action(Redirect& redirect, button_event const& event, Toplevel* window)
 {
     auto command = base::options::MouseNothing;
-    auto was_action = get_modifier_command(event.key, command);
+    auto was_action = get_modifier_command(redirect, event.key, command);
 
-    return was_action ? do_perform_mouse_action(command, window) : std::make_pair(false, false);
+    return was_action ? do_perform_mouse_action(redirect, command, window)
+                      : std::make_pair(false, false);
 }
 
-inline std::pair<bool, bool> perform_mouse_modifier_and_window_action(button_event const& event,
-                                                                      Toplevel* window)
+template<typename Redirect>
+std::pair<bool, bool> perform_mouse_modifier_and_window_action(Redirect& redirect,
+                                                               button_event const& event,
+                                                               Toplevel* window)
 {
     auto command = base::options::MouseNothing;
-    auto was_action = get_modifier_command(event.key, command);
+    auto was_action = get_modifier_command(redirect, event.key, command);
 
     if (!was_action) {
         command = win::get_mouse_command(window, button_to_qt_mouse_button(event.key), &was_action);
     }
 
-    return was_action ? do_perform_mouse_action(command, window) : std::make_pair(false, false);
+    return was_action ? do_perform_mouse_action(redirect, command, window)
+                      : std::make_pair(false, false);
 }
 
-inline bool get_wheel_modifier_command(axis_orientation orientation,
-                                       double delta,
-                                       base::options::MouseCommand& command)
+template<typename Redirect>
+bool get_wheel_modifier_command(Redirect& redirect,
+                                axis_orientation orientation,
+                                double delta,
+                                base::options::MouseCommand& command)
 {
-    if (xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(*kwinApp()->input)
+    if (xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(redirect.platform)
         != kwinApp()->options->commandAllModifier()) {
         return false;
     }
-    if (kwinApp()->input->redirect->get_pointer()->isConstrained()) {
+    if (redirect.get_pointer()->isConstrained()) {
         return false;
     }
-    if (kwinApp()->input->redirect->space.global_shortcuts_disabled) {
+    if (redirect.space.global_shortcuts_disabled) {
         return false;
     }
 
@@ -114,25 +122,30 @@ inline bool get_wheel_modifier_command(axis_orientation orientation,
     return true;
 }
 
-inline std::pair<bool, bool> perform_wheel_action(axis_event const& event, Toplevel* window)
+template<typename Redirect>
+std::pair<bool, bool>
+perform_wheel_action(Redirect& redirect, axis_event const& event, Toplevel* window)
 {
     auto command = base::options::MouseNothing;
-    auto was_action = get_wheel_modifier_command(event.orientation, event.delta, command);
+    auto was_action = get_wheel_modifier_command(redirect, event.orientation, event.delta, command);
 
-    return was_action ? do_perform_mouse_action(command, window) : std::make_pair(false, false);
+    return was_action ? do_perform_mouse_action(redirect, command, window)
+                      : std::make_pair(false, false);
 }
 
-inline std::pair<bool, bool> perform_wheel_and_window_action(axis_event const& event,
-                                                             Toplevel* window)
+template<typename Redirect>
+std::pair<bool, bool>
+perform_wheel_and_window_action(Redirect& redirect, axis_event const& event, Toplevel* window)
 {
     auto command = base::options::MouseNothing;
-    auto was_action = get_wheel_modifier_command(event.orientation, event.delta, command);
+    auto was_action = get_wheel_modifier_command(redirect, event.orientation, event.delta, command);
 
     if (!was_action) {
         command = win::get_wheel_command(window, Qt::Vertical, &was_action);
     }
 
-    return was_action ? do_perform_mouse_action(command, window) : std::make_pair(false, false);
+    return was_action ? do_perform_mouse_action(redirect, command, window)
+                      : std::make_pair(false, false);
 }
 
 inline void pass_to_wayland_server(key_event const& event)

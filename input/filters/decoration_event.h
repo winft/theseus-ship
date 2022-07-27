@@ -42,7 +42,8 @@ public:
             return false;
         }
 
-        auto const action_result = perform_mouse_modifier_action(event, decoration->client());
+        auto const action_result
+            = perform_mouse_modifier_action(this->redirect, event, decoration->client());
         if (action_result.first) {
             return action_result.second;
         }
@@ -98,7 +99,7 @@ public:
 
         if (event.orientation == axis_orientation::vertical) {
             // client window action only on vertical scrolling
-            auto const actionResult = perform_wheel_action(event, window);
+            auto const actionResult = perform_wheel_action(this->redirect, event, window);
             if (actionResult.first) {
                 return actionResult.second;
             }

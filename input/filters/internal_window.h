@@ -48,7 +48,7 @@ public:
 
         if (window && win::decoration(window)) {
             // only perform mouse commands on decorated internal windows
-            auto const actionResult = perform_mouse_modifier_action(event, window);
+            auto const actionResult = perform_mouse_modifier_action(this->redirect, event, window);
             if (actionResult.first) {
                 return actionResult.second;
             }
@@ -97,7 +97,8 @@ public:
                 = qobject_cast<win::internal_window*>(this->redirect.space.findInternal(internal));
             if (window && win::decoration(window)) {
                 // client window action only on vertical scrolling
-                auto const action_result = perform_wheel_and_window_action(event, window);
+                auto const action_result
+                    = perform_wheel_and_window_action(this->redirect, event, window);
                 if (action_result.first) {
                     return action_result.second;
                 }
