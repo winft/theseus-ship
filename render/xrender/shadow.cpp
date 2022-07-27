@@ -48,14 +48,14 @@ void shadow::layoutShadowRects(QRect& top,
         return;
     }
 
-    WindowQuad topQuad = quads.select(WindowQuadShadowTop)[0];
-    WindowQuad topRightQuad = quads.select(WindowQuadShadowTopRight)[0];
-    WindowQuad topLeftQuad = quads.select(WindowQuadShadowTopLeft)[0];
-    WindowQuad leftQuad = quads.select(WindowQuadShadowLeft)[0];
-    WindowQuad rightQuad = quads.select(WindowQuadShadowRight)[0];
-    WindowQuad bottomQuad = quads.select(WindowQuadShadowBottom)[0];
-    WindowQuad bottomRightQuad = quads.select(WindowQuadShadowBottomRight)[0];
-    WindowQuad bottomLeftQuad = quads.select(WindowQuadShadowBottomLeft)[0];
+    WindowQuad topQuad = quads.select(WindowQuadShadowTop).at(0);
+    WindowQuad topRightQuad = quads.select(WindowQuadShadowTopRight).at(0);
+    WindowQuad topLeftQuad = quads.select(WindowQuadShadowTopLeft).at(0);
+    WindowQuad leftQuad = quads.select(WindowQuadShadowLeft).at(0);
+    WindowQuad rightQuad = quads.select(WindowQuadShadowRight).at(0);
+    WindowQuad bottomQuad = quads.select(WindowQuadShadowBottom).at(0);
+    WindowQuad bottomRightQuad = quads.select(WindowQuadShadowBottomRight).at(0);
+    WindowQuad bottomLeftQuad = quads.select(WindowQuadShadowBottomLeft).at(0);
 
     top = QRect(topQuad.left(),
                 topQuad.top(),
