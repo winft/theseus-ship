@@ -177,7 +177,7 @@ void create_decoration(Win* win)
     win->control->deco().decoration = decoration;
     win->geometry_update.original.deco_margins = frame_margins(win);
 
-    if (render::compositor::compositing()) {
+    if (win->space.render.isActive()) {
         win->discard_buffer();
     }
 }
