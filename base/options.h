@@ -39,7 +39,6 @@ class KWIN_EXPORT options : public QObject
 {
     Q_OBJECT
     Q_ENUMS(FocusPolicy)
-    Q_ENUMS(GlSwapStrategy)
     Q_ENUMS(MouseCommand)
     Q_ENUMS(MouseWheelCommand)
     Q_ENUMS(WindowOperation)
@@ -826,7 +825,6 @@ public:
      * Performs loading of compositing settings which do not depend on OpenGL.
      */
     bool loadCompositingConfig(bool force);
-    void reparseConfiguration();
 
     //----------------------
 Q_SIGNALS:
@@ -887,7 +885,6 @@ Q_SIGNALS:
     void configChanged();
 
 private:
-    void setElectricBorders(int borders);
     void syncFromKcfgc();
     QScopedPointer<Settings> m_settings;
     KConfigWatcher::Ptr m_configWatcher;

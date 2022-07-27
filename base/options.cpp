@@ -577,11 +577,6 @@ void options::setGlPlatformInterface(OpenGLPlatformInterface interface)
     Q_EMIT glPlatformInterfaceChanged();
 }
 
-void options::reparseConfiguration()
-{
-    m_settings->config()->reparseConfiguration();
-}
-
 void options::updateSettings()
 {
     loadConfig();
