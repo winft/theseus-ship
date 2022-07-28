@@ -8,9 +8,6 @@
 
 #include "input/dbus/device.h"
 #include "input/dbus/device_manager.h"
-#include "input/wayland/platform.h"
-#include "input/wayland/redirect.h"
-#include "main.h"
 
 #include <QMetaProperty>
 
@@ -20,12 +17,10 @@ namespace KWin::debug
 static const quint32 s_propertyBitMask = 0xFFFF0000;
 static const quint32 s_clientBitMask = 0x0000FFFF;
 
-input_device_model::input_device_model(QObject* parent)
+input_device_model::input_device_model(input::dbus::device_manager& dbus, QObject* parent)
     : QAbstractItemModel(parent)
 {
-    auto platform = kwinApp()->input.get();
-
-    for (auto& dev : platform->dbus->devices) {
+    for (auto& dev : dbus.devices) {
         m_devices.push_back(dev);
     }
 
@@ -33,12 +28,11 @@ input_device_model::input_device_model(QObject* parent)
         setupDeviceConnections(dev);
     }
 
-    QObject::connect(platform->dbus.get(),
+    QObject::connect(&dbus,
                      &input::dbus::device_manager::deviceAdded,
                      this,
-                     [this](auto const& sys_name) {
-                         auto platform = kwinApp()->input.get();
-                         for (auto& dev : platform->dbus->devices) {
+                     [&dbus, this](auto const& sys_name) {
+                         for (auto& dev : dbus.devices) {
                              if (dev->sysName() != sys_name) {
                                  continue;
                              }
@@ -50,24 +44,22 @@ input_device_model::input_device_model(QObject* parent)
                          }
                      });
 
-    QObject::connect(platform->dbus.get(),
-                     &input::dbus::device_manager::deviceRemoved,
-                     this,
-                     [this](auto const& sys_name) {
-                         int index{-1};
-                         for (int i = 0; i < m_devices.size(); i++) {
-                             if (m_devices.at(i)->sysName() == sys_name) {
-                                 index = i;
-                                 break;
-                             }
-                         }
-                         if (index == -1) {
-                             return;
-                         }
-                         beginRemoveRows(QModelIndex(), index, index);
-                         m_devices.removeAt(index);
-                         endRemoveRows();
-                     });
+    QObject::connect(
+        &dbus, &input::dbus::device_manager::deviceRemoved, this, [this](auto const& sys_name) {
+            int index{-1};
+            for (int i = 0; i < m_devices.size(); i++) {
+                if (m_devices.at(i)->sysName() == sys_name) {
+                    index = i;
+                    break;
+                }
+            }
+            if (index == -1) {
+                return;
+            }
+            beginRemoveRows(QModelIndex(), index, index);
+            m_devices.removeAt(index);
+            endRemoveRows();
+        });
 }
 
 int input_device_model::columnCount(const QModelIndex& parent) const

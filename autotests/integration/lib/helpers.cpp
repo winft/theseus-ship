@@ -179,7 +179,7 @@ win::wayland::window* render_and_wait_for_shown(client const& clt,
                                                 QImage::Format const& format,
                                                 int timeout)
 {
-    QSignalSpy clientAddedSpy(app()->workspace->qobject.get(),
+    QSignalSpy clientAddedSpy(app()->base.space->qobject.get(),
                               &win::space::qobject_t::wayland_window_added);
     if (!clientAddedSpy.isValid()) {
         return nullptr;

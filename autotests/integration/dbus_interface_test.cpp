@@ -77,7 +77,7 @@ void TestDbusInterface::initTestCase()
 
     Test::app()->start();
     QVERIFY(startup_spy.wait());
-    Test::app()->workspace->virtual_desktop_manager->setCount(4);
+    Test::app()->base.space->virtual_desktop_manager->setCount(4);
 }
 
 void TestDbusInterface::init()
@@ -113,7 +113,7 @@ void TestDbusInterface::testGetWindowInfoInvalidUuid()
 
 void TestDbusInterface::testGetWindowInfoXdgShellClient()
 {
-    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
                               &win::space::qobject_t::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
 
@@ -204,7 +204,7 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
     // window geometry changes
 
     QCOMPARE(client->desktop(), 1);
-    win::send_window_to_desktop(*Test::app()->workspace, client, 2, false);
+    win::send_window_to_desktop(*Test::app()->base.space, client, 2, false);
     QCOMPARE(client->desktop(), 2);
     reply = getWindowInfo(client->internal_id);
     reply.waitForFinished();
@@ -275,7 +275,7 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     xcb_flush(c.get());
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy windowCreatedSpy(Test::app()->base.space->qobject.get(),
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());

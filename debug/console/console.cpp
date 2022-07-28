@@ -47,6 +47,7 @@ namespace KWin::debug
 console::console(win::space& space)
     : QWidget()
     , m_ui(new Ui::debug_console)
+    , space{space}
 {
     setAttribute(Qt::WA_ShowWithoutActivating);
     m_ui->setupUi(this);

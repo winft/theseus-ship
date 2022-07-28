@@ -6,24 +6,59 @@
 #pragma once
 
 #include "input/event_filter.h"
+#include "input/logging.h"
+#include "input/pointer_redirect.h"
+#include "input/qt_event.h"
+#include "input/redirect.h"
+#include "main.h"
+#include "win/wayland/space.h"
+
+#include <Wrapland/Server/kde_idle.h>
 
 namespace KWin::input
 {
 
-class redirect;
-
 /**
  * Useful when there's no proper tablet support on the clients
  */
-class fake_tablet_filter : public event_filter
+template<typename Redirect>
+class fake_tablet_filter : public event_filter<Redirect>
 {
 public:
-    explicit fake_tablet_filter(input::redirect& redirect);
+    explicit fake_tablet_filter(Redirect& redirect)
+        : event_filter<Redirect>(redirect)
+    {
+    }
 
-    bool tabletToolEvent(QTabletEvent* event) override;
+    bool tabletToolEvent(QTabletEvent* event) override
+    {
+        auto get_event = [&event](button_state state) {
+            return button_event{qt_mouse_button_to_button(Qt::LeftButton),
+                                state,
+                                {nullptr, static_cast<uint32_t>(event->timestamp())}};
+        };
 
-private:
-    input::redirect& redirect;
+        switch (event->type()) {
+        case QEvent::TabletMove:
+        case QEvent::TabletEnterProximity:
+            this->redirect.pointer->processMotion(event->globalPosF(), event->timestamp());
+            break;
+        case QEvent::TabletPress:
+            this->redirect.pointer->process_button(get_event(button_state::pressed));
+            break;
+        case QEvent::TabletRelease:
+            this->redirect.pointer->process_button(get_event(button_state::released));
+            break;
+        case QEvent::TabletLeaveProximity:
+            break;
+        default:
+            qCWarning(KWIN_INPUT) << "Unexpected tablet event type" << event;
+            break;
+        }
+        static_cast<win::wayland::space&>(this->redirect.space).kde_idle->simulateUserActivity();
+
+        return true;
+    }
 };
 
 }

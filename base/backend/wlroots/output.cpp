@@ -7,6 +7,7 @@
 
 #include "platform.h"
 
+#include "base/wayland/output_helpers.h"
 #include "render/backend/wlroots/output.h"
 #include "render/wayland/compositor.h"
 #include "render/wayland/presentation.h"
@@ -145,9 +146,9 @@ void output::update_dpms(base::dpms_mode mode)
         wlr_output_enable(native, true);
         wlr_output_commit(native);
         get_render(render)->reset();
-        dpms_set_on();
+        base::wayland::output_set_dpms_on(*this, *platform);
     } else if (disable_native()) {
-        dpms_set_off(mode);
+        base::wayland::output_set_dmps_off(mode, *this, *platform);
     }
 }
 

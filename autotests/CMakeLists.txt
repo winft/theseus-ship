@@ -116,7 +116,6 @@ include_directories(${KWIN_SOURCE_DIR})
 # Test OnScreenNotification
 ########################################################
 set(testOnScreenNotification_SRCS
-    ../input/event_spy.cpp
     ../win/osd_notification.cpp
     onscreennotificationtest.cpp
 )

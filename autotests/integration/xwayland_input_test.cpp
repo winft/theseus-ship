@@ -63,8 +63,8 @@ void XWaylandInputTest::initTestCase()
 
 void XWaylandInputTest::init()
 {
-    input::get_cursor()->set_pos(QPoint(640, 512));
-    QVERIFY(Test::app()->workspace->windows.empty());
+    Test::app()->base.input->cursor->set_pos(QPoint(640, 512));
+    QVERIFY(Test::app()->base.space->windows.empty());
 }
 
 void xcb_connection_deleter(xcb_connection_t* pointer)
@@ -173,7 +173,7 @@ void XWaylandInputTest::testPointerEnterLeave()
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 
-    QSignalSpy windowCreatedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy windowCreatedSpy(Test::app()->base.space->qobject.get(),
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
@@ -192,15 +192,16 @@ void XWaylandInputTest::testPointerEnterLeave()
     QVERIFY(client->surface);
 
     // move pointer into the window, should trigger an enter
-    QVERIFY(!client->frameGeometry().contains(input::get_cursor()->pos()));
+    QVERIFY(!client->frameGeometry().contains(Test::app()->base.input->cursor->pos()));
     QVERIFY(enteredSpy.isEmpty());
-    input::get_cursor()->set_pos(client->frameGeometry().center());
+    Test::app()->base.input->cursor->set_pos(client->frameGeometry().center());
     QCOMPARE(waylandServer()->seat()->pointers().get_focus().surface, client->surface);
     QVERIFY(!waylandServer()->seat()->pointers().get_focus().devices.empty());
     QVERIFY(enteredSpy.wait());
 
     // move out of window
-    input::get_cursor()->set_pos(client->frameGeometry().bottomRight() + QPoint(10, 10));
+    Test::app()->base.input->cursor->set_pos(client->frameGeometry().bottomRight()
+                                             + QPoint(10, 10));
     QVERIFY(leftSpy.wait());
 
     // destroy window again

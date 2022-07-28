@@ -70,8 +70,8 @@ void BindingsTest::initTestCase()
 void BindingsTest::init()
 {
     Test::setup_wayland_connection();
-    input::get_cursor()->set_pos(QPoint(640, 512));
-    QCOMPARE(input::get_cursor()->pos(), QPoint(640, 512));
+    Test::app()->base.input->cursor->set_pos(QPoint(640, 512));
+    QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(640, 512));
 }
 
 void BindingsTest::cleanup()
@@ -123,27 +123,27 @@ void BindingsTest::testSwitchWindow()
         QDBusConnection::sessionBus().asyncCall(msg);
     };
     invokeShortcut(QStringLiteral("Switch Window Up"));
-    QTRY_COMPARE(Test::app()->workspace->active_client, c1);
+    QTRY_COMPARE(Test::app()->base.space->active_client, c1);
     invokeShortcut(QStringLiteral("Switch Window Right"));
-    QTRY_COMPARE(Test::app()->workspace->active_client, c2);
+    QTRY_COMPARE(Test::app()->base.space->active_client, c2);
     invokeShortcut(QStringLiteral("Switch Window Down"));
-    QTRY_COMPARE(Test::app()->workspace->active_client, c3);
+    QTRY_COMPARE(Test::app()->base.space->active_client, c3);
     invokeShortcut(QStringLiteral("Switch Window Left"));
-    QTRY_COMPARE(Test::app()->workspace->active_client, c4);
+    QTRY_COMPARE(Test::app()->base.space->active_client, c4);
     // test opposite direction
     invokeShortcut(QStringLiteral("Switch Window Left"));
-    QTRY_COMPARE(Test::app()->workspace->active_client, c3);
+    QTRY_COMPARE(Test::app()->base.space->active_client, c3);
     invokeShortcut(QStringLiteral("Switch Window Down"));
-    QTRY_COMPARE(Test::app()->workspace->active_client, c2);
+    QTRY_COMPARE(Test::app()->base.space->active_client, c2);
     invokeShortcut(QStringLiteral("Switch Window Right"));
-    QTRY_COMPARE(Test::app()->workspace->active_client, c1);
+    QTRY_COMPARE(Test::app()->base.space->active_client, c1);
     invokeShortcut(QStringLiteral("Switch Window Up"));
-    QTRY_COMPARE(Test::app()->workspace->active_client, c4);
+    QTRY_COMPARE(Test::app()->base.space->active_client, c4);
 }
 
 void BindingsTest::testSwitchWindowScript()
 {
-    QVERIFY(Test::app()->workspace->scripting);
+    QVERIFY(Test::app()->base.space->scripting);
 
     // first create windows
     std::unique_ptr<Surface> surface1(Test::create_surface());
@@ -177,10 +177,10 @@ void BindingsTest::testSwitchWindowScript()
         out << "workspace." << slot << "()";
         out.flush();
 
-        auto const id = Test::app()->workspace->scripting->loadScript(tmpFile.fileName());
+        auto const id = Test::app()->base.space->scripting->loadScript(tmpFile.fileName());
         QVERIFY(id != -1);
-        QVERIFY(Test::app()->workspace->scripting->isScriptLoaded(tmpFile.fileName()));
-        auto s = Test::app()->workspace->scripting->findScript(tmpFile.fileName());
+        QVERIFY(Test::app()->base.space->scripting->isScriptLoaded(tmpFile.fileName()));
+        auto s = Test::app()->base.space->scripting->findScript(tmpFile.fileName());
         QVERIFY(s);
         QSignalSpy runningChangedSpy(s, &scripting::abstract_script::runningChanged);
         QVERIFY(runningChangedSpy.isValid());
@@ -189,13 +189,13 @@ void BindingsTest::testSwitchWindowScript()
     };
 
     runScript(QStringLiteral("slotSwitchWindowUp"));
-    QTRY_COMPARE(Test::app()->workspace->active_client, c1);
+    QTRY_COMPARE(Test::app()->base.space->active_client, c1);
     runScript(QStringLiteral("slotSwitchWindowRight"));
-    QTRY_COMPARE(Test::app()->workspace->active_client, c2);
+    QTRY_COMPARE(Test::app()->base.space->active_client, c2);
     runScript(QStringLiteral("slotSwitchWindowDown"));
-    QTRY_COMPARE(Test::app()->workspace->active_client, c3);
+    QTRY_COMPARE(Test::app()->base.space->active_client, c3);
     runScript(QStringLiteral("slotSwitchWindowLeft"));
-    QTRY_COMPARE(Test::app()->workspace->active_client, c4);
+    QTRY_COMPARE(Test::app()->base.space->active_client, c4);
 }
 
 void BindingsTest::testWindowToDesktop_data()
@@ -226,7 +226,7 @@ void BindingsTest::testWindowToDesktop_data()
 void BindingsTest::testWindowToDesktop()
 {
     // first go to desktop one
-    auto& vd_manager = Test::app()->workspace->virtual_desktop_manager;
+    auto& vd_manager = Test::app()->base.space->virtual_desktop_manager;
     vd_manager->setCurrent(vd_manager->desktops().first());
 
     // now create a window
@@ -235,7 +235,7 @@ void BindingsTest::testWindowToDesktop()
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QSignalSpy desktopChangedSpy(c, &Toplevel::desktopChanged);
     QVERIFY(desktopChangedSpy.isValid());
-    QCOMPARE(Test::app()->workspace->active_client, c);
+    QCOMPARE(Test::app()->base.space->active_client, c);
 
     QFETCH(int, desktop);
     vd_manager->setCount(desktop);

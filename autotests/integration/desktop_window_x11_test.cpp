@@ -63,7 +63,7 @@ void X11DesktopWindowTest::initTestCase()
 
 void X11DesktopWindowTest::init()
 {
-    input::get_cursor()->set_pos(QPoint(640, 512));
+    Test::app()->base.input->cursor->set_pos(QPoint(640, 512));
 }
 
 void X11DesktopWindowTest::cleanup()
@@ -152,7 +152,7 @@ void X11DesktopWindowTest::testDesktopWindow()
     QCOMPARE(geo->depth, uint8_t(32));
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy windowCreatedSpy(Test::app()->base.space->qobject.get(),
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());

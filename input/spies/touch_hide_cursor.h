@@ -6,7 +6,10 @@
 */
 #pragma once
 
+#include "input/cursor.h"
 #include "input/event_spy.h"
+#include "input/platform.h"
+#include "main.h"
 
 namespace KWin::input
 {
@@ -14,15 +17,49 @@ namespace KWin::input
 class touch_hide_cursor_spy : public event_spy
 {
 public:
-    void button(button_event const& event) override;
-    void motion(motion_event const& event) override;
-    void axis(axis_event const& event) override;
+    explicit touch_hide_cursor_spy(input::redirect& redirect)
+        : event_spy(redirect)
+    {
+    }
 
-    void touch_down(touch_down_event const& event) override;
+    void button(button_event const& /*event*/) override
+    {
+        showCursor();
+    }
+
+    void motion(motion_event const& /*event*/) override
+    {
+        showCursor();
+    }
+
+    void axis(axis_event const& /*event*/) override
+    {
+        showCursor();
+    }
+
+    void touch_down(touch_down_event const& /*event*/) override
+    {
+        hideCursor();
+    }
 
 private:
-    void showCursor();
-    void hideCursor();
+    void showCursor()
+    {
+        if (!m_cursorHidden) {
+            return;
+        }
+        m_cursorHidden = false;
+        redirect.platform.cursor->show();
+    }
+
+    void hideCursor()
+    {
+        if (m_cursorHidden) {
+            return;
+        }
+        m_cursorHidden = true;
+        redirect.platform.cursor->hide();
+    }
 
     bool m_cursorHidden = false;
 };

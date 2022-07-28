@@ -137,6 +137,8 @@ public:
     QSize orientate_size(QSize const& size) const;
 
     std::unique_ptr<render::wayland::output> render;
+    std::unique_ptr<Wrapland::Server::Output> m_output;
+    base::dpms_mode m_dpms{base::dpms_mode::on};
 
 Q_SIGNALS:
     void mode_changed();
@@ -182,16 +184,11 @@ protected:
     void set_transform(base::wayland::output_transform transform);
 
     base::dpms_mode dpms_mode() const;
-    void dpms_set_on();
-    void dpms_set_off(base::dpms_mode mode);
 
 private:
     QSizeF logical_size() const;
     void update_view_geometry();
 
-    std::unique_ptr<Wrapland::Server::Output> m_output;
-
-    base::dpms_mode m_dpms{base::dpms_mode::on};
     QRect m_view_geometry;
 
     bool m_internal = false;

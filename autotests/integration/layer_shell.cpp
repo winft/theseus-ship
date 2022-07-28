@@ -69,7 +69,7 @@ void layer_shell_test::initTestCase()
 void layer_shell_test::init()
 {
     Test::setup_wayland_connection();
-    input::get_cursor()->set_pos(QPoint(1280, 512));
+    Test::app()->base.input->cursor->set_pos(QPoint(1280, 512));
 }
 
 void layer_shell_test::cleanup()
@@ -167,7 +167,7 @@ QRect target_geo(QRect const& area_geo,
 void layer_shell_test::test_create()
 {
     // Tries to create multiple kinds of layer surfaces.
-    QSignalSpy window_spy(Test::app()->workspace->qobject.get(),
+    QSignalSpy window_spy(Test::app()->base.space->qobject.get(),
                           &win::space::qobject_t::wayland_window_added);
     QVERIFY(window_spy.isValid());
 
@@ -199,7 +199,7 @@ void layer_shell_test::test_create()
     QVERIFY(window->hasAlpha());
 
     // By default layer surfaces have keyboard interactivity set to none.
-    QCOMPARE(Test::app()->workspace->active_client, nullptr);
+    QCOMPARE(Test::app()->base.space->active_client, nullptr);
 
     QVERIFY(!window->isMaximizable());
     QVERIFY(!window->isMovable());
@@ -245,7 +245,7 @@ void layer_shell_test::test_create()
     QVERIFY(window2->isShown());
     QCOMPARE(window2->isHiddenInternal(), false);
     QCOMPARE(window2->ready_for_painting, true);
-    QCOMPARE(Test::app()->workspace->active_client, window2);
+    QCOMPARE(Test::app()->base.space->active_client, window2);
 
     // Surface is centered.
     QCOMPARE(window2->frameGeometry(),
@@ -325,7 +325,7 @@ void layer_shell_test::test_geo_data()
 void layer_shell_test::test_geo()
 {
     // Checks various standard geometries.
-    QSignalSpy window_spy(Test::app()->workspace->qobject.get(),
+    QSignalSpy window_spy(Test::app()->base.space->qobject.get(),
                           &win::space::qobject_t::wayland_window_added);
     QVERIFY(window_spy.isValid());
 
@@ -367,7 +367,7 @@ void layer_shell_test::test_geo()
 void layer_shell_test::test_output_change()
 {
     // Checks that output changes are handled correctly.
-    QSignalSpy window_spy(Test::app()->workspace->qobject.get(),
+    QSignalSpy window_spy(Test::app()->base.space->qobject.get(),
                           &win::space::qobject_t::wayland_window_added);
     QVERIFY(window_spy.isValid());
 
@@ -439,7 +439,7 @@ void layer_shell_test::test_output_change()
 void layer_shell_test::test_popup()
 {
     // Checks popup creation.
-    QSignalSpy window_spy(Test::app()->workspace->qobject.get(),
+    QSignalSpy window_spy(Test::app()->base.space->qobject.get(),
                           &win::space::qobject_t::wayland_window_added);
     QVERIFY(window_spy.isValid());
 

@@ -11,6 +11,7 @@
 #include "cursor.h"
 #include "cursor_image.h"
 #include "device_redirect.h"
+#include "redirect.h"
 
 #include "base/wayland/server.h"
 #include "input/event.h"
@@ -51,8 +52,9 @@ static QPointF confineToBoundingBox(QPointF const& pos, QRectF const& boundingBo
                    qBound(boundingBox.top(), pos.y(), boundingBox.bottom() - 1.0));
 }
 
-pointer_redirect::pointer_redirect(input::redirect* redirect)
+pointer_redirect::pointer_redirect(wayland::redirect* redirect)
     : input::pointer_redirect(redirect)
+    , redirect{redirect}
 {
 }
 
@@ -109,7 +111,7 @@ void pointer_redirect::init()
     warp(QRect({}, kwinApp()->get_base().topology.size).center());
     updateAfterScreenChange();
 
-    auto wayland_cursor = dynamic_cast<wayland::cursor*>(input::get_cursor());
+    auto wayland_cursor = dynamic_cast<wayland::cursor*>(redirect->platform.cursor.get());
     assert(wayland_cursor);
     QObject::connect(this,
                      &pointer_redirect::decorationChanged,
@@ -230,10 +232,9 @@ void pointer_redirect::process_motion(motion_event const& event)
     update_position(pos);
     device_redirect_update(this);
 
-    kwinApp()->input->redirect->processSpies(
-        std::bind(&event_spy::motion, std::placeholders::_1, event));
-    kwinApp()->input->redirect->processFilters(
-        std::bind(&input::event_filter::motion, std::placeholders::_1, event));
+    redirect->processSpies(std::bind(&event_spy::motion, std::placeholders::_1, event));
+    redirect->processFilters(
+        std::bind(&event_filter<wayland::redirect>::motion, std::placeholders::_1, event));
 
     process_frame();
 }
@@ -255,10 +256,9 @@ void pointer_redirect::process_motion_absolute(motion_absolute_event const& even
 
     auto motion_ev = motion_event({{}, {}, event.base});
 
-    kwinApp()->input->redirect->processSpies(
-        std::bind(&event_spy::motion, std::placeholders::_1, motion_ev));
-    kwinApp()->input->redirect->processFilters(
-        std::bind(&input::event_filter::motion, std::placeholders::_1, motion_ev));
+    redirect->processSpies(std::bind(&event_spy::motion, std::placeholders::_1, motion_ev));
+    redirect->processFilters(
+        std::bind(&event_filter<wayland::redirect>::motion, std::placeholders::_1, motion_ev));
 
     process_frame();
 }
@@ -271,12 +271,9 @@ void pointer_redirect::process_button(button_event const& event)
     }
 
     update_button(event);
-
-    kwinApp()->input->redirect->processSpies(
-        std::bind(&event_spy::button, std::placeholders::_1, event));
-
-    kwinApp()->input->redirect->processFilters(
-        std::bind(&input::event_filter::button, std::placeholders::_1, event));
+    pointer_redirect_process_button_spies(*this, event);
+    redirect->processFilters(
+        std::bind(&event_filter<wayland::redirect>::button, std::placeholders::_1, event));
 
     if (event.state == button_state::released) {
         // Check focus after processing spies/filters.
@@ -290,70 +287,63 @@ void pointer_redirect::process_axis(axis_event const& event)
 {
     device_redirect_update(this);
 
-    kwinApp()->input->redirect->processSpies(
-        std::bind(&event_spy::axis, std::placeholders::_1, event));
-    kwinApp()->input->redirect->processFilters(
-        std::bind(&event_filter::axis, std::placeholders::_1, event));
+    redirect->processSpies(std::bind(&event_spy::axis, std::placeholders::_1, event));
+    redirect->processFilters(
+        std::bind(&event_filter<wayland::redirect>::axis, std::placeholders::_1, event));
 
     process_frame();
 }
 
 void pointer_redirect::process_swipe_begin(swipe_begin_event const& event)
 {
-    kwinApp()->input->redirect->processSpies(
-        std::bind(&event_spy::swipe_begin, std::placeholders::_1, event));
-    kwinApp()->input->redirect->processFilters(
-        std::bind(&event_filter::swipe_begin, std::placeholders::_1, event));
+    redirect->processSpies(std::bind(&event_spy::swipe_begin, std::placeholders::_1, event));
+    redirect->processFilters(
+        std::bind(&event_filter<wayland::redirect>::swipe_begin, std::placeholders::_1, event));
 }
 
 void pointer_redirect::process_swipe_update(swipe_update_event const& event)
 {
     device_redirect_update(this);
 
-    kwinApp()->input->redirect->processSpies(
-        std::bind(&event_spy::swipe_update, std::placeholders::_1, event));
-    kwinApp()->input->redirect->processFilters(
-        std::bind(&event_filter::swipe_update, std::placeholders::_1, event));
+    redirect->processSpies(std::bind(&event_spy::swipe_update, std::placeholders::_1, event));
+    redirect->processFilters(
+        std::bind(&event_filter<wayland::redirect>::swipe_update, std::placeholders::_1, event));
 }
 
 void pointer_redirect::process_swipe_end(swipe_end_event const& event)
 {
     device_redirect_update(this);
 
-    kwinApp()->input->redirect->processSpies(
-        std::bind(&event_spy::swipe_end, std::placeholders::_1, event));
-    kwinApp()->input->redirect->processFilters(
-        std::bind(&event_filter::swipe_end, std::placeholders::_1, event));
+    redirect->processSpies(std::bind(&event_spy::swipe_end, std::placeholders::_1, event));
+    redirect->processFilters(
+        std::bind(&event_filter<wayland::redirect>::swipe_end, std::placeholders::_1, event));
 }
 
 void pointer_redirect::process_pinch_begin(pinch_begin_event const& event)
 {
     device_redirect_update(this);
 
-    kwinApp()->input->redirect->processSpies(
-        std::bind(&event_spy::pinch_begin, std::placeholders::_1, event));
-    kwinApp()->input->redirect->processFilters(
-        std::bind(&event_filter::pinch_begin, std::placeholders::_1, event));
+    redirect->processSpies(std::bind(&event_spy::pinch_begin, std::placeholders::_1, event));
+    redirect->processFilters(
+        std::bind(&event_filter<wayland::redirect>::pinch_begin, std::placeholders::_1, event));
 }
 
 void pointer_redirect::process_pinch_update(pinch_update_event const& event)
 {
     device_redirect_update(this);
 
-    kwinApp()->input->redirect->processSpies(
-        std::bind(&event_spy::pinch_update, std::placeholders::_1, event));
-    kwinApp()->input->redirect->processFilters(
-        std::bind(&event_filter::pinch_update, std::placeholders::_1, event));
+    redirect->processSpies(std::bind(&event_spy::pinch_update, std::placeholders::_1, event));
+    redirect->processFilters(
+        std::bind(&event_filter<wayland::redirect>::pinch_update, std::placeholders::_1, event));
 }
 
 void pointer_redirect::process_pinch_end(pinch_end_event const& event)
 {
     device_redirect_update(this);
 
-    kwinApp()->input->redirect->processSpies(
-        std::bind(&event_spy::pinch_end, std::placeholders::_1, event));
-    kwinApp()->input->redirect->processFilters(
-        std::bind(&event_filter::pinch_end, std::placeholders::_1, event));
+    redirect->processSpies(std::bind(&event_spy::pinch_end, std::placeholders::_1, event));
+    redirect->processFilters(
+        std::bind(&event_filter<wayland::redirect>::pinch_end, std::placeholders::_1, event));
 }
 
 void pointer_redirect::process_frame()
@@ -382,7 +372,7 @@ bool pointer_redirect::focusUpdatesBlocked()
         // ignore during touch operations
         return true;
     }
-    if (kwinApp()->input->redirect->isSelectingWindow()) {
+    if (redirect->isSelectingWindow()) {
         return true;
     }
     if (areButtonsPressed()) {
@@ -816,7 +806,7 @@ void pointer_redirect::update_position(const QPointF& pos)
         return;
     }
     m_pos = p;
-    Q_EMIT kwinApp()->input->redirect->globalPointerChanged(m_pos);
+    Q_EMIT redirect->globalPointerChanged(m_pos);
 }
 
 void pointer_redirect::update_button(button_event const& event)
@@ -832,7 +822,7 @@ void pointer_redirect::update_button(button_event const& event)
         qt_buttons |= button_to_qt_mouse_button(it.key());
     }
 
-    Q_EMIT kwinApp()->input->redirect->pointerButtonStateChanged(event.key, event.state);
+    Q_EMIT redirect->pointerButtonStateChanged(event.key, event.state);
 }
 
 void pointer_redirect::warp(QPointF const& pos)
@@ -879,7 +869,7 @@ void pointer_redirect::setEffectsOverrideCursor(Qt::CursorShape shape)
 {
     // current pointer focus window should get a leave event
     device_redirect_update(this);
-    auto wayland_cursor = static_cast<wayland::cursor*>(input::get_cursor());
+    auto wayland_cursor = static_cast<wayland::cursor*>(redirect->platform.cursor.get());
     wayland_cursor->cursor_image->setEffectsOverrideCursor(shape);
 }
 
@@ -887,7 +877,7 @@ void pointer_redirect::removeEffectsOverrideCursor()
 {
     // cursor position might have changed while there was an effect in place
     device_redirect_update(this);
-    auto wayland_cursor = static_cast<wayland::cursor*>(input::get_cursor());
+    auto wayland_cursor = static_cast<wayland::cursor*>(redirect->platform.cursor.get());
     wayland_cursor->cursor_image->removeEffectsOverrideCursor();
 }
 
@@ -895,14 +885,14 @@ void pointer_redirect::setWindowSelectionCursor(QByteArray const& shape)
 {
     // send leave to current pointer focus window
     update_to_reset();
-    auto wayland_cursor = static_cast<wayland::cursor*>(input::get_cursor());
+    auto wayland_cursor = static_cast<wayland::cursor*>(redirect->platform.cursor.get());
     wayland_cursor->cursor_image->setWindowSelectionCursor(shape);
 }
 
 void pointer_redirect::removeWindowSelectionCursor()
 {
     device_redirect_update(this);
-    auto wayland_cursor = static_cast<wayland::cursor*>(input::get_cursor());
+    auto wayland_cursor = static_cast<wayland::cursor*>(redirect->platform.cursor.get());
     wayland_cursor->cursor_image->removeWindowSelectionCursor();
 }
 

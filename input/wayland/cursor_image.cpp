@@ -8,6 +8,7 @@
 */
 #include "cursor_image.h"
 
+#include "cursor.h"
 #include "cursor_theme.h"
 #include "platform.h"
 
@@ -161,7 +162,7 @@ void cursor_image::markAsRendered()
 
 void cursor_image::update()
 {
-    if (kwinApp()->input->redirect->pointer()->s_cursorUpdateBlocking) {
+    if (platform.redirect->get_pointer()->s_cursorUpdateBlocking) {
         return;
     }
     using namespace Wrapland::Server;
@@ -183,7 +184,7 @@ void cursor_image::update()
 void cursor_image::updateDecoration()
 {
     QObject::disconnect(m_decorationConnection);
-    auto deco = kwinApp()->input->redirect->pointer()->focus.deco;
+    auto deco = platform.redirect->get_pointer()->focus.deco;
     auto c = deco ? deco->client() : nullptr;
     if (c) {
         m_decorationConnection = QObject::connect(
@@ -199,7 +200,7 @@ void cursor_image::updateDecorationCursor()
     m_decorationCursor.image = QImage();
     m_decorationCursor.hotSpot = QPoint();
 
-    auto deco = kwinApp()->input->redirect->pointer()->focus.deco;
+    auto deco = platform.redirect->get_pointer()->focus.deco;
     if (auto c = deco ? deco->client() : nullptr) {
         loadThemeCursor(c->control->move_resize().cursor, &m_decorationCursor);
         if (m_currentSource == CursorSource::Decoration) {
@@ -283,7 +284,9 @@ void cursor_image::loadTheme()
 
     // check whether we can create it
     if (waylandServer()->internal_connection.shm) {
-        m_cursorTheme = std::make_unique<cursor_theme>(waylandServer()->internal_connection.shm);
+        m_cursorTheme
+            = std::make_unique<cursor_theme>(static_cast<wayland::cursor&>(*platform.cursor),
+                                             waylandServer()->internal_connection.shm);
         QObject::connect(waylandServer(),
                          &base::wayland::server::terminating_internal_client_connection,
                          this,
@@ -479,7 +482,7 @@ void cursor_image::reevaluteSource()
         setSource(CursorSource::LockScreen);
         return;
     }
-    if (kwinApp()->input->redirect->isSelectingWindow()) {
+    if (platform.redirect->isSelectingWindow()) {
         setSource(CursorSource::WindowSelector);
         return;
     }
@@ -492,11 +495,11 @@ void cursor_image::reevaluteSource()
         setSource(CursorSource::MoveResize);
         return;
     }
-    if (kwinApp()->input->redirect->pointer()->focus.deco) {
+    if (platform.redirect->get_pointer()->focus.deco) {
         setSource(CursorSource::Decoration);
         return;
     }
-    if (kwinApp()->input->redirect->pointer()->focus.window
+    if (platform.redirect->get_pointer()->focus.window
         && !waylandServer()->seat()->pointers().get_focus().devices.empty()) {
         setSource(CursorSource::PointerSurface);
         return;

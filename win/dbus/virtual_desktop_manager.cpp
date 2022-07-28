@@ -14,7 +14,7 @@ namespace KWin::win::dbus
 {
 
 virtual_desktop_manager::virtual_desktop_manager(win::virtual_desktop_manager* parent)
-    : QObject(parent)
+    : QObject(parent->qobject.get())
     , m_manager(parent)
 {
     qDBusRegisterMetaType<KWin::win::dbus::virtual_desktop_data>();
@@ -26,8 +26,8 @@ virtual_desktop_manager::virtual_desktop_manager(win::virtual_desktop_manager* p
         QStringLiteral("org.kde.KWin.VirtualDesktopManager"),
         this);
 
-    QObject::connect(m_manager,
-                     &win::virtual_desktop_manager::currentChanged,
+    QObject::connect(m_manager->qobject.get(),
+                     &win::virtual_desktop_manager_qobject::currentChanged,
                      this,
                      [this](uint previousDesktop, uint newDesktop) {
                          Q_UNUSED(previousDesktop);
@@ -35,8 +35,8 @@ virtual_desktop_manager::virtual_desktop_manager(win::virtual_desktop_manager* p
                          Q_EMIT currentChanged(m_manager->currentDesktop()->id());
                      });
 
-    QObject::connect(m_manager,
-                     &win::virtual_desktop_manager::countChanged,
+    QObject::connect(m_manager->qobject.get(),
+                     &win::virtual_desktop_manager_qobject::countChanged,
                      this,
                      [this](uint previousCount, uint newCount) {
                          Q_UNUSED(previousCount);
@@ -45,12 +45,13 @@ virtual_desktop_manager::virtual_desktop_manager(win::virtual_desktop_manager* p
                      });
 
     QObject::connect(
-        m_manager, &win::virtual_desktop_manager::navigationWrappingAroundChanged, this, [this]() {
-            Q_EMIT navigationWrappingAroundChanged(isNavigationWrappingAround());
-        });
+        m_manager->qobject.get(),
+        &win::virtual_desktop_manager_qobject::navigationWrappingAroundChanged,
+        this,
+        [this]() { Q_EMIT navigationWrappingAroundChanged(isNavigationWrappingAround()); });
 
-    QObject::connect(m_manager,
-                     &win::virtual_desktop_manager::rowsChanged,
+    QObject::connect(m_manager->qobject.get(),
+                     &win::virtual_desktop_manager_qobject::rowsChanged,
                      this,
                      &virtual_desktop_manager::rowsChanged);
 
@@ -70,7 +71,10 @@ virtual_desktop_manager::virtual_desktop_manager(win::virtual_desktop_manager* p
         });
     }
     QObject::connect(
-        m_manager, &win::virtual_desktop_manager::desktopCreated, this, [this](auto vd) {
+        m_manager->qobject.get(),
+        &win::virtual_desktop_manager_qobject::desktopCreated,
+        this,
+        [this](auto vd) {
             QObject::connect(
                 vd, &win::virtual_desktop::x11DesktopNumberChanged, this, [this, vd]() {
                     virtual_desktop_data data{
@@ -89,11 +93,13 @@ virtual_desktop_manager::virtual_desktop_manager(win::virtual_desktop_manager* p
             Q_EMIT desktopCreated(vd->id(), data);
             Q_EMIT desktopsChanged(desktops());
         });
-    QObject::connect(
-        m_manager, &win::virtual_desktop_manager::desktopRemoved, this, [this](auto vd) {
-            Q_EMIT desktopRemoved(vd->id());
-            Q_EMIT desktopsChanged(desktops());
-        });
+    QObject::connect(m_manager->qobject.get(),
+                     &win::virtual_desktop_manager_qobject::desktopRemoved,
+                     this,
+                     [this](auto vd) {
+                         Q_EMIT desktopRemoved(vd->id());
+                         Q_EMIT desktopsChanged(desktops());
+                     });
 }
 
 uint virtual_desktop_manager::count() const

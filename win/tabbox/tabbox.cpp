@@ -79,13 +79,13 @@ tabbox_handler_impl::tabbox_handler_impl(win::tabbox* tabbox)
     , m_desktop_focus_chain(new tabbox_desktop_chain_manager(this))
 {
     // connects for DesktopFocusChainManager
-    auto vds = tabbox->space.virtual_desktop_manager.get();
-    connect(vds,
-            &win::virtual_desktop_manager::countChanged,
+    auto& vds = tabbox->space.virtual_desktop_manager;
+    connect(vds->qobject.get(),
+            &win::virtual_desktop_manager_qobject::countChanged,
             m_desktop_focus_chain,
             &tabbox_desktop_chain_manager::resize);
-    connect(vds,
-            &win::virtual_desktop_manager::currentChanged,
+    connect(vds->qobject.get(),
+            &win::virtual_desktop_manager_qobject::currentChanged,
             m_desktop_focus_chain,
             &tabbox_desktop_chain_manager::add_desktop);
 }
@@ -505,7 +505,7 @@ void tabbox::key(const KLazyLocalizedString& action_name, Slot slot, const QKeyS
     a->setObjectName(QString::fromUtf8(action_name.untranslatedText()));
     a->setText(action_name.toString());
     KGlobalAccel::self()->setGlobalShortcut(a, QList<QKeySequence>() << shortcut);
-    kwinApp()->input->registerShortcut(shortcut, a, this, slot);
+    space.input->platform.registerShortcut(shortcut, a, this, slot);
     auto cuts = KGlobalAccel::self()->shortcut(a);
     global_shortcut_changed(a, cuts.isEmpty() ? QKeySequence() : cuts.first());
 }
@@ -999,11 +999,12 @@ static bool areModKeysDepressedX11(const QKeySequence& seq)
     return areKeySymXsDepressed(rgKeySyms, nKeySyms);
 }
 
-static bool areModKeysDepressedWayland(const QKeySequence& seq)
+template<typename Input>
+static bool areModKeysDepressedWayland(Input const& input, const QKeySequence& seq)
 {
     const int mod = seq[seq.count() - 1] & Qt::KeyboardModifierMask;
     auto const mods
-        = input::xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(kwinApp()->input);
+        = input::xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(input);
     if ((mod & Qt::SHIFT) && mods.testFlag(Qt::ShiftModifier)) {
         return true;
     }
@@ -1019,12 +1020,13 @@ static bool areModKeysDepressedWayland(const QKeySequence& seq)
     return false;
 }
 
-static bool areModKeysDepressed(const QKeySequence& seq)
+template<typename Input>
+bool areModKeysDepressed(Input const& input, const QKeySequence& seq)
 {
     if (seq.isEmpty())
         return false;
     if (kwinApp()->shouldUseWaylandForCompositing()) {
-        return areModKeysDepressedWayland(seq);
+        return areModKeysDepressedWayland(input, seq);
     } else {
         return areModKeysDepressedX11(seq);
     }
@@ -1040,7 +1042,7 @@ void tabbox::navigating_through_windows(bool forward, const QKeySequence& shortc
         //  CDE style raise / lower
         cde_walk_through_windows(forward);
     } else {
-        if (areModKeysDepressed(shortcut)) {
+        if (areModKeysDepressed(space.input->platform, shortcut)) {
             if (start_kde_walk_through_windows(mode))
                 kde_walk_through_windows(forward);
         } else
@@ -1103,7 +1105,7 @@ void tabbox::slot_walk_through_desktops()
     if (!m_ready || is_grabbed()) {
         return;
     }
-    if (areModKeysDepressed(m_cut_walk_through_desktops)) {
+    if (areModKeysDepressed(space.input->platform, m_cut_walk_through_desktops)) {
         if (start_walk_through_desktops())
             walk_through_desktops(true);
     } else {
@@ -1116,7 +1118,7 @@ void tabbox::slot_walk_back_through_desktops()
     if (!m_ready || is_grabbed()) {
         return;
     }
-    if (areModKeysDepressed(m_cut_walk_through_desktops_reverse)) {
+    if (areModKeysDepressed(space.input->platform, m_cut_walk_through_desktops_reverse)) {
         if (start_walk_through_desktops())
             walk_through_desktops(false);
     } else {
@@ -1129,7 +1131,7 @@ void tabbox::slot_walk_through_desktop_list()
     if (!m_ready || is_grabbed()) {
         return;
     }
-    if (areModKeysDepressed(m_cut_walk_through_desktop_list)) {
+    if (areModKeysDepressed(space.input->platform, m_cut_walk_through_desktop_list)) {
         if (start_walk_through_desktop_list())
             walk_through_desktops(true);
     } else {
@@ -1142,7 +1144,7 @@ void tabbox::slot_walk_back_through_desktop_list()
     if (!m_ready || is_grabbed()) {
         return;
     }
-    if (areModKeysDepressed(m_cut_walk_through_desktop_list_reverse)) {
+    if (areModKeysDepressed(space.input->platform, m_cut_walk_through_desktop_list_reverse)) {
         if (start_walk_through_desktop_list())
             walk_through_desktops(false);
     } else {
@@ -1426,7 +1428,7 @@ void tabbox::close(bool abort)
         remove_tabbox_grab();
     }
     hide(abort);
-    kwinApp()->input->redirect->pointer()->setEnableConstraints(true);
+    space.input->get_pointer()->setEnableConstraints(true);
     m_tab_grab = false;
     m_desktop_grab = false;
     m_no_modifier_grab = false;

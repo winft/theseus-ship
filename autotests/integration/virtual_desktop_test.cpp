@@ -101,7 +101,7 @@ void VirtualDesktopTest::initTestCase()
 void VirtualDesktopTest::init()
 {
     Test::setup_wayland_connection();
-    auto& vd_manager = Test::app()->workspace->virtual_desktop_manager;
+    auto& vd_manager = Test::app()->base.space->virtual_desktop_manager;
     vd_manager->setCount(1);
     vd_manager->setCurrent(0u);
 }
@@ -131,14 +131,15 @@ void VirtualDesktopTest::test_count_data()
 
 void VirtualDesktopTest::test_count()
 {
-    auto& vds = Test::app()->workspace->virtual_desktop_manager;
+    auto& vds = Test::app()->base.space->virtual_desktop_manager;
     QCOMPARE(vds->count(), 1);
 
     // start with a useful desktop count
     vds->setCount(s_countInitValue);
 
-    QSignalSpy spy(vds.get(), &win::virtual_desktop_manager::countChanged);
-    QSignalSpy desktopsRemoved(vds.get(), &win::virtual_desktop_manager::desktopRemoved);
+    QSignalSpy spy(vds->qobject.get(), &win::virtual_desktop_manager_qobject::countChanged);
+    QSignalSpy desktopsRemoved(vds->qobject.get(),
+                               &win::virtual_desktop_manager_qobject::desktopRemoved);
 
     auto vdToRemove = vds->desktops().last();
 
@@ -183,7 +184,7 @@ void VirtualDesktopTest::test_navigation_wraps_around_data()
 
 void VirtualDesktopTest::test_navigation_wraps_around()
 {
-    auto& vds = Test::app()->workspace->virtual_desktop_manager;
+    auto& vds = Test::app()->base.space->virtual_desktop_manager;
 
     // TODO(romangg): This is sometimes false. Why?
     // QCOMPARE(vds->isNavigationWrappingAround(), true);
@@ -197,7 +198,8 @@ void VirtualDesktopTest::test_navigation_wraps_around()
     vds->setNavigationWrappingAround(init);
     QCOMPARE(vds->isNavigationWrappingAround(), init);
 
-    QSignalSpy spy(vds.get(), &win::virtual_desktop_manager::navigationWrappingAroundChanged);
+    QSignalSpy spy(vds->qobject.get(),
+                   &win::virtual_desktop_manager_qobject::navigationWrappingAroundChanged);
     vds->setNavigationWrappingAround(request);
     QCOMPARE(vds->isNavigationWrappingAround(), result);
     QCOMPARE(spy.isEmpty(), !signal);
@@ -222,7 +224,7 @@ void VirtualDesktopTest::test_current_data()
 
 void VirtualDesktopTest::test_current()
 {
-    auto& vds = Test::app()->workspace->virtual_desktop_manager;
+    auto& vds = Test::app()->base.space->virtual_desktop_manager;
     QCOMPARE(vds->current(), 1);
 
     QFETCH(uint, count);
@@ -232,7 +234,7 @@ void VirtualDesktopTest::test_current()
     QCOMPARE(vds->setCurrent(init), init != 1);
     QCOMPARE(vds->current(), init);
 
-    QSignalSpy spy(vds.get(), &win::virtual_desktop_manager::currentChanged);
+    QSignalSpy spy(vds->qobject.get(), &win::virtual_desktop_manager_qobject::currentChanged);
 
     QFETCH(uint, request);
     QFETCH(uint, result);
@@ -270,14 +272,14 @@ void VirtualDesktopTest::test_current_change_on_count_change_data()
 
 void VirtualDesktopTest::test_current_change_on_count_change()
 {
-    auto& vds = Test::app()->workspace->virtual_desktop_manager;
+    auto& vds = Test::app()->base.space->virtual_desktop_manager;
 
     QFETCH(uint, initCount);
     QFETCH(uint, initCurrent);
     vds->setCount(initCount);
     vds->setCurrent(initCurrent);
 
-    QSignalSpy spy(vds.get(), &win::virtual_desktop_manager::currentChanged);
+    QSignalSpy spy(vds->qobject.get(), &win::virtual_desktop_manager_qobject::currentChanged);
 
     QFETCH(uint, request);
     QFETCH(uint, current);
@@ -299,7 +301,7 @@ void add_direction_columns()
 template<typename T>
 void VirtualDesktopTest::test_direction(QString const& actionName)
 {
-    auto& vds = Test::app()->workspace->virtual_desktop_manager;
+    auto& vds = Test::app()->base.space->virtual_desktop_manager;
 
     QFETCH(uint, initCount);
     QFETCH(uint, initCurrent);
@@ -316,7 +318,7 @@ void VirtualDesktopTest::test_direction(QString const& actionName)
 
     vds->setNavigationWrappingAround(wrap);
 
-    auto action = vds->findChild<QAction*>(actionName);
+    auto action = vds->qobject->findChild<QAction*>(actionName);
     QVERIFY(action);
     action->trigger();
 
@@ -506,7 +508,7 @@ void VirtualDesktopTest::update_grid_data()
 
 void VirtualDesktopTest::update_grid()
 {
-    auto& vds = Test::app()->workspace->virtual_desktop_manager;
+    auto& vds = Test::app()->base.space->virtual_desktop_manager;
 
     QFETCH(uint, initCount);
     vds->setCount(initCount);
@@ -564,9 +566,9 @@ void VirtualDesktopTest::update_layout_data()
 
 void VirtualDesktopTest::update_layout()
 {
-    auto& vds = Test::app()->workspace->virtual_desktop_manager;
+    auto& vds = Test::app()->base.space->virtual_desktop_manager;
 
-    QSignalSpy spy(vds.get(), &win::virtual_desktop_manager::layoutChanged);
+    QSignalSpy spy(vds->qobject.get(), &win::virtual_desktop_manager_qobject::layoutChanged);
     QVERIFY(spy.isValid());
 
     // call update layout - implicitly through setCount
@@ -617,7 +619,7 @@ void VirtualDesktopTest::test_name_data()
 
 void VirtualDesktopTest::test_name()
 {
-    auto& vds = Test::app()->workspace->virtual_desktop_manager;
+    auto& vds = Test::app()->base.space->virtual_desktop_manager;
 
     QFETCH(uint, initCount);
     QFETCH(uint, desktop);
@@ -628,7 +630,7 @@ void VirtualDesktopTest::test_name()
 
 void VirtualDesktopTest::test_switch_to_shortcuts()
 {
-    auto& vds = Test::app()->workspace->virtual_desktop_manager;
+    auto& vds = Test::app()->base.space->virtual_desktop_manager;
     vds->setCount(vds->maximum());
     vds->setCurrent(vds->maximum());
 
@@ -638,14 +640,11 @@ void VirtualDesktopTest::test_switch_to_shortcuts()
 
     for (uint i = 1; i <= vds->maximum(); ++i) {
         const QString desktop(toDesktop.arg(i));
-        QAction* action = vds->findChild<QAction*>(desktop);
+        QAction* action = vds->qobject->findChild<QAction*>(desktop);
         QVERIFY2(action, desktop.toUtf8().constData());
         action->trigger();
         QCOMPARE(vds->current(), i);
     }
-
-    // invoke switchTo not from a QAction
-    QMetaObject::invokeMethod(vds.get(), "slotSwitchTo");
 
     // should still be on max
     QCOMPARE(vds->current(), vds->maximum());
@@ -653,7 +652,7 @@ void VirtualDesktopTest::test_switch_to_shortcuts()
 
 void VirtualDesktopTest::test_change_rows()
 {
-    auto& vds = Test::app()->workspace->virtual_desktop_manager;
+    auto& vds = Test::app()->base.space->virtual_desktop_manager;
 
     vds->setCount(4);
     vds->setRows(4);
@@ -674,7 +673,7 @@ void VirtualDesktopTest::test_change_rows()
 
 void VirtualDesktopTest::test_load()
 {
-    auto& vds = Test::app()->workspace->virtual_desktop_manager;
+    auto& vds = Test::app()->base.space->virtual_desktop_manager;
 
     // No config yet, load should not change anything.
     vds->load();
@@ -699,7 +698,7 @@ void VirtualDesktopTest::test_load()
 
 void VirtualDesktopTest::test_save()
 {
-    auto& vds = Test::app()->workspace->virtual_desktop_manager;
+    auto& vds = Test::app()->base.space->virtual_desktop_manager;
     vds->setCount(4);
 
     // No config yet, just to ensure it actually works.
@@ -728,7 +727,7 @@ void VirtualDesktopTest::testNetCurrentDesktop()
     if (!kwinApp()->x11Connection()) {
         QSKIP("Skipped on Wayland only");
     }
-    auto& vd_manager = Test::app()->workspace->virtual_desktop_manager;
+    auto& vd_manager = Test::app()->base.space->virtual_desktop_manager;
     QCOMPARE(vd_manager->count(), 1u);
     vd_manager->setCount(4);
     QCOMPARE(vd_manager->count(), 4u);
@@ -773,7 +772,7 @@ void VirtualDesktopTest::testNetCurrentDesktop()
 void VirtualDesktopTest::testLastDesktopRemoved()
 {
     // first create a new desktop
-    auto& vd_manager = Test::app()->workspace->virtual_desktop_manager;
+    auto& vd_manager = Test::app()->base.space->virtual_desktop_manager;
     QCOMPARE(vd_manager->count(), 1u);
     vd_manager->setCount(2);
     QCOMPARE(vd_manager->count(), 2u);
@@ -809,7 +808,7 @@ void VirtualDesktopTest::testLastDesktopRemoved()
 void VirtualDesktopTest::testWindowOnMultipleDesktops()
 {
     // first create two new desktops
-    auto& vd_manager = Test::app()->workspace->virtual_desktop_manager;
+    auto& vd_manager = Test::app()->base.space->virtual_desktop_manager;
     QCOMPARE(vd_manager->count(), 1u);
     vd_manager->setCount(3);
     QCOMPARE(vd_manager->count(), 3u);
@@ -889,7 +888,7 @@ void VirtualDesktopTest::testWindowOnMultipleDesktops()
 void VirtualDesktopTest::testRemoveDesktopWithWindow()
 {
     // first create two new desktops
-    auto& vd_manager = Test::app()->workspace->virtual_desktop_manager;
+    auto& vd_manager = Test::app()->base.space->virtual_desktop_manager;
     QCOMPARE(vd_manager->count(), 1u);
     vd_manager->setCount(3);
     QCOMPARE(vd_manager->count(), 3u);

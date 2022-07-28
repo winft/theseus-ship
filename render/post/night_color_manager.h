@@ -200,9 +200,6 @@ public:
     // for auto tests
     void reconfigure();
 
-    // Internal
-    void init_shortcuts();
-
 public Q_SLOTS:
     void reset_slow_update_start_timer();
     void quick_adjust();

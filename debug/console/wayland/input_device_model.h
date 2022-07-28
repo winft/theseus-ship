@@ -14,6 +14,7 @@ namespace KWin
 namespace input::dbus
 {
 class device;
+class device_manager;
 }
 
 namespace debug
@@ -23,7 +24,7 @@ class input_device_model : public QAbstractItemModel
 {
     Q_OBJECT
 public:
-    explicit input_device_model(QObject* parent = nullptr);
+    explicit input_device_model(input::dbus::device_manager& dbus, QObject* parent = nullptr);
 
     int columnCount(const QModelIndex& parent) const override;
     QVariant data(const QModelIndex& index, int role) const override;

@@ -564,9 +564,4 @@ QVector<QByteArray> cursor::alternative_names(QByteArray const& name) const
     return QVector<QByteArray>();
 }
 
-cursor* get_cursor()
-{
-    return kwinApp()->input->cursor.get();
-}
-
 }

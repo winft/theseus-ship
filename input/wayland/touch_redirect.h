@@ -22,11 +22,13 @@ class touch;
 namespace wayland
 {
 
+class redirect;
+
 class KWIN_EXPORT touch_redirect : public input::touch_redirect
 {
     Q_OBJECT
 public:
-    explicit touch_redirect(input::redirect* redirect);
+    explicit touch_redirect(wayland::redirect* redirect);
 
     void init();
 
@@ -55,6 +57,8 @@ public:
     void cleanupDecoration(win::deco::client_impl* old, win::deco::client_impl* now) override;
 
     void focusUpdate(Toplevel* focusOld, Toplevel* focusNow) override;
+
+    wayland::redirect* redirect;
 
 private:
     qint32 m_decorationId = -1;

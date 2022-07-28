@@ -136,8 +136,8 @@ static QString buttonsToString(Qt::MouseButtons buttons)
     return ret.trimmed();
 }
 
-input_filter::input_filter(QTextEdit* textEdit)
-    : input::event_spy()
+input_filter::input_filter(input::redirect& redirect, QTextEdit* textEdit)
+    : input::event_spy(redirect)
     , m_textEdit(textEdit)
 {
     m_textEdit->document()->setMaximumBlockCount(1000);
@@ -154,7 +154,7 @@ void input_filter::button(input::button_event const& event)
     text.append(s_tableStart);
 
     auto qt_button = buttonToString(input::button_to_qt_mouse_button(event.key));
-    auto buttons = buttonsToString(kwinApp()->input->redirect->pointer()->buttons());
+    auto buttons = buttonsToString(redirect.get_pointer()->buttons());
     switch (event.state) {
     case input::button_state::pressed:
         text.append(
@@ -212,7 +212,7 @@ void input_filter::motion(input::motion_event const& event)
             QStringLiteral("%1/%2").arg(event.unaccel_delta.x()).arg(event.unaccel_delta.y())));
     }
 
-    auto pos = kwinApp()->input->redirect->globalPointer();
+    auto pos = redirect.globalPointer();
     text.append(tableRow(i18nc("The global mouse pointer position", "Global Position"),
                          QStringLiteral("%1/%2").arg(pos.x()).arg(pos.y())));
 

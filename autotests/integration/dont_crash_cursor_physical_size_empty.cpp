@@ -54,7 +54,7 @@ private Q_SLOTS:
 void DontCrashCursorPhysicalSizeEmpty::init()
 {
     Test::setup_wayland_connection(Test::global_selection::xdg_decoration);
-    input::get_cursor()->set_pos(QPoint(640, 512));
+    Test::app()->base.input->cursor->set_pos(QPoint(640, 512));
 }
 
 void DontCrashCursorPhysicalSizeEmpty::cleanup()
@@ -102,9 +102,9 @@ void DontCrashCursorPhysicalSizeEmpty::testMoveCursorOverDeco()
     output->set_physical_size(QSize(0, 0));
 
     // and fake a cursor theme change, so that the theme gets recreated
-    Q_EMIT input::get_cursor()->theme_changed();
+    Q_EMIT Test::app()->base.input->cursor->theme_changed();
 
-    input::get_cursor()->set_pos(
+    Test::app()->base.input->cursor->set_pos(
         QPoint(c->frameGeometry().center().x(), win::frame_to_client_pos(c, QPoint()).y() / 2));
 }
 

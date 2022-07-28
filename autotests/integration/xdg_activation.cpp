@@ -72,7 +72,7 @@ void xdg_activation_test::test_single_client()
     QCOMPARE(win::render_geometry(window1).size(), QSize(200, 100));
     QCOMPARE(window1->frameGeometry().size(), QSize(200, 100));
     QVERIFY(window1->control->active());
-    QCOMPARE(Test::app()->workspace->active_client, window1);
+    QCOMPARE(Test::app()->base.space->active_client, window1);
 
     std::unique_ptr<Clt::Surface> surface2(Test::create_surface());
     auto shell_surface2 = Test::create_xdg_shell_toplevel(surface2);
@@ -81,12 +81,12 @@ void xdg_activation_test::test_single_client()
     QCOMPARE(win::render_geometry(window2).size(), QSize(400, 200));
     QCOMPARE(window2->frameGeometry().size(), QSize(400, 200));
     QVERIFY(window2->control->active());
-    QCOMPARE(Test::app()->workspace->active_client, window2);
+    QCOMPARE(Test::app()->base.space->active_client, window2);
 
     auto activation = Test::get_client().interfaces.xdg_activation.get();
     QVERIFY(activation);
 
-    auto server_activation = Test::app()->workspace->xdg_activation.get();
+    auto server_activation = Test::app()->base.space->xdg_activation.get();
     QVERIFY(server_activation);
     QSignalSpy token_spy(server_activation, &Wrapland::Server::XdgActivationV1::token_requested);
     QVERIFY(token_spy.isValid());
@@ -101,7 +101,7 @@ void xdg_activation_test::test_single_client()
     auto server_token = token_spy.front().front().value<Wrapland::Server::XdgActivationTokenV1*>();
     QCOMPARE(server_token->app_id(), "testclient1");
 
-    auto const token_string = Test::app()->workspace->activation->token;
+    auto const token_string = Test::app()->base.space->activation->token;
 
     QSignalSpy done_spy(token.get(), &Clt::XdgActivationTokenV1::done);
     QVERIFY(done_spy.isValid());
@@ -113,7 +113,7 @@ void xdg_activation_test::test_single_client()
 
     QSignalSpy xdg_activate_spy(server_activation, &Wrapland::Server::XdgActivationV1::activate);
     QVERIFY(xdg_activate_spy.isValid());
-    QSignalSpy activated_spy(Test::app()->workspace->qobject.get(),
+    QSignalSpy activated_spy(Test::app()->base.space->qobject.get(),
                              &win::space::qobject_t::clientActivated);
     QVERIFY(activated_spy.isValid());
 
@@ -123,7 +123,7 @@ void xdg_activation_test::test_single_client()
     QCOMPARE(xdg_activate_spy.front().front().value<std::string>(), token_string);
     QCOMPARE(xdg_activate_spy.front().back().value<Wrapland::Server::Surface*>(), window1->surface);
     QVERIFY(window1->control->active());
-    QCOMPARE(Test::app()->workspace->active_client, window1);
+    QCOMPARE(Test::app()->base.space->active_client, window1);
 }
 
 void xdg_activation_test::test_multi_client()
@@ -137,7 +137,7 @@ void xdg_activation_test::test_multi_client()
     QCOMPARE(win::render_geometry(window1).size(), QSize(200, 100));
     QCOMPARE(window1->frameGeometry().size(), QSize(200, 100));
     QVERIFY(window1->control->active());
-    QCOMPARE(Test::app()->workspace->active_client, window1);
+    QCOMPARE(Test::app()->base.space->active_client, window1);
 
     // Create a second client.
     Test::setup_wayland_connection(Test::global_selection::seat
@@ -151,12 +151,12 @@ void xdg_activation_test::test_multi_client()
     QCOMPARE(win::render_geometry(window2).size(), QSize(400, 200));
     QCOMPARE(window2->frameGeometry().size(), QSize(400, 200));
     QVERIFY(window2->control->active());
-    QCOMPARE(Test::app()->workspace->active_client, window2);
+    QCOMPARE(Test::app()->base.space->active_client, window2);
 
     auto activation2 = client2.interfaces.xdg_activation.get();
     QVERIFY(activation2);
 
-    auto server_activation = Test::app()->workspace->xdg_activation.get();
+    auto server_activation = Test::app()->base.space->xdg_activation.get();
     QVERIFY(server_activation);
     QSignalSpy token_spy(server_activation, &Wrapland::Server::XdgActivationV1::token_requested);
     QVERIFY(token_spy.isValid());
@@ -171,7 +171,7 @@ void xdg_activation_test::test_multi_client()
     auto server_token = token_spy.front().front().value<Wrapland::Server::XdgActivationTokenV1*>();
     QCOMPARE(server_token->app_id(), "testclient1");
 
-    auto const token_string = Test::app()->workspace->activation->token;
+    auto const token_string = Test::app()->base.space->activation->token;
 
     QSignalSpy done_spy(token.get(), &Clt::XdgActivationTokenV1::done);
     QVERIFY(done_spy.isValid());
@@ -184,7 +184,7 @@ void xdg_activation_test::test_multi_client()
 
     QSignalSpy xdg_activate_spy(server_activation, &Wrapland::Server::XdgActivationV1::activate);
     QVERIFY(xdg_activate_spy.isValid());
-    QSignalSpy activated_spy(Test::app()->workspace->qobject.get(),
+    QSignalSpy activated_spy(Test::app()->base.space->qobject.get(),
                              &win::space::qobject_t::clientActivated);
     QVERIFY(activated_spy.isValid());
 
@@ -194,7 +194,7 @@ void xdg_activation_test::test_multi_client()
     QCOMPARE(xdg_activate_spy.front().front().value<std::string>(), token_string);
     QCOMPARE(xdg_activate_spy.front().back().value<Wrapland::Server::Surface*>(), window1->surface);
     QVERIFY(window1->control->active());
-    QCOMPARE(Test::app()->workspace->active_client, window1);
+    QCOMPARE(Test::app()->base.space->active_client, window1);
 }
 
 }

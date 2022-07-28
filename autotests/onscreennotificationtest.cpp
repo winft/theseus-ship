@@ -35,6 +35,29 @@ QTEST_MAIN(OnScreenNotificationTest);
 namespace KWin
 {
 
+class mock_redirect : public input::redirect
+{
+public:
+    ~mock_redirect();
+
+    input::keyboard_redirect* get_keyboard() const override
+    {
+        return nullptr;
+    }
+    input::pointer_redirect* get_pointer() const override
+    {
+        return nullptr;
+    }
+    input::tablet_redirect* get_tablet() const override
+    {
+        return nullptr;
+    }
+    input::touch_redirect* get_touch() const override
+    {
+        return nullptr;
+    }
+};
+
 void input::redirect::installInputEventSpy(input::event_spy* spy)
 {
     Q_UNUSED(spy);
@@ -49,87 +72,91 @@ void input::redirect::uninstallInputEventSpy(input::event_spy* spy)
 
 void OnScreenNotificationTest::show()
 {
-    KWin::win::osd_notification notification;
+    KWin::win::osd_notification<KWin::mock_redirect> notification(nullptr);
     auto config = KSharedConfig::openConfig(QString(), KSharedConfig::SimpleConfig);
     KConfigGroup group = config->group("OnScreenNotification");
     group.writeEntry(QStringLiteral("QmlPath"), QString("/does/not/exist.qml"));
     group.sync();
-    notification.setConfig(config);
-    notification.setEngine(new QQmlEngine(&notification));
-    notification.setMessage(QStringLiteral("Some text so that we see it in the test"));
+    notification.m_config = config;
+    notification.m_qmlEngine = new QQmlEngine(notification.qobject.get());
+    notification.qobject->setMessage(QStringLiteral("Some text so that we see it in the test"));
 
-    QSignalSpy visibleChangedSpy(&notification, &KWin::win::osd_notification::visibleChanged);
-    QCOMPARE(notification.isVisible(), false);
-    notification.setVisible(true);
-    QCOMPARE(notification.isVisible(), true);
+    QSignalSpy visibleChangedSpy(notification.qobject.get(),
+                                 &KWin::win::osd_notification_qobject::visibleChanged);
+    QCOMPARE(notification.qobject->isVisible(), false);
+    notification.qobject->setVisible(true);
+    QCOMPARE(notification.qobject->isVisible(), true);
     QCOMPARE(visibleChangedSpy.count(), 1);
 
     // show again should not trigger
-    notification.setVisible(true);
+    notification.qobject->setVisible(true);
     QCOMPARE(visibleChangedSpy.count(), 1);
 
     // timer should not have hidden
     QTest::qWait(500);
-    QCOMPARE(notification.isVisible(), true);
+    QCOMPARE(notification.qobject->isVisible(), true);
 
     // hide again
-    notification.setVisible(false);
-    QCOMPARE(notification.isVisible(), false);
+    notification.qobject->setVisible(false);
+    QCOMPARE(notification.qobject->isVisible(), false);
     QCOMPARE(visibleChangedSpy.count(), 2);
 
     // now show with timer
-    notification.setTimeout(250);
-    notification.setVisible(true);
-    QCOMPARE(notification.isVisible(), true);
+    notification.qobject->setTimeout(250);
+    notification.qobject->setVisible(true);
+    QCOMPARE(notification.qobject->isVisible(), true);
     QCOMPARE(visibleChangedSpy.count(), 3);
     QVERIFY(visibleChangedSpy.wait());
-    QCOMPARE(notification.isVisible(), false);
+    QCOMPARE(notification.qobject->isVisible(), false);
     QCOMPARE(visibleChangedSpy.count(), 4);
 }
 
 void OnScreenNotificationTest::timeout()
 {
-    KWin::win::osd_notification notification;
-    QSignalSpy timeoutChangedSpy(&notification, &KWin::win::osd_notification::timeoutChanged);
-    QCOMPARE(notification.timeout(), 0);
-    notification.setTimeout(1000);
-    QCOMPARE(notification.timeout(), 1000);
+    KWin::win::osd_notification<KWin::mock_redirect> notification(nullptr);
+    QSignalSpy timeoutChangedSpy(notification.qobject.get(),
+                                 &KWin::win::osd_notification_qobject::timeoutChanged);
+    QCOMPARE(notification.qobject->timeout(), 0);
+    notification.qobject->setTimeout(1000);
+    QCOMPARE(notification.qobject->timeout(), 1000);
     QCOMPARE(timeoutChangedSpy.count(), 1);
-    notification.setTimeout(1000);
+    notification.qobject->setTimeout(1000);
     QCOMPARE(timeoutChangedSpy.count(), 1);
-    notification.setTimeout(0);
-    QCOMPARE(notification.timeout(), 0);
+    notification.qobject->setTimeout(0);
+    QCOMPARE(notification.qobject->timeout(), 0);
     QCOMPARE(timeoutChangedSpy.count(), 2);
 }
 
 void OnScreenNotificationTest::iconName()
 {
-    KWin::win::osd_notification notification;
-    QSignalSpy iconNameChangedSpy(&notification, &KWin::win::osd_notification::iconNameChanged);
+    KWin::win::osd_notification<KWin::mock_redirect> notification(nullptr);
+    QSignalSpy iconNameChangedSpy(notification.qobject.get(),
+                                  &KWin::win::osd_notification_qobject::iconNameChanged);
     QVERIFY(iconNameChangedSpy.isValid());
-    QCOMPARE(notification.iconName(), QString());
-    notification.setIconName(QStringLiteral("foo"));
-    QCOMPARE(notification.iconName(), QStringLiteral("foo"));
+    QCOMPARE(notification.qobject->iconName(), QString());
+    notification.qobject->setIconName(QStringLiteral("foo"));
+    QCOMPARE(notification.qobject->iconName(), QStringLiteral("foo"));
     QCOMPARE(iconNameChangedSpy.count(), 1);
-    notification.setIconName(QStringLiteral("foo"));
+    notification.qobject->setIconName(QStringLiteral("foo"));
     QCOMPARE(iconNameChangedSpy.count(), 1);
-    notification.setIconName(QStringLiteral("bar"));
-    QCOMPARE(notification.iconName(), QStringLiteral("bar"));
+    notification.qobject->setIconName(QStringLiteral("bar"));
+    QCOMPARE(notification.qobject->iconName(), QStringLiteral("bar"));
     QCOMPARE(iconNameChangedSpy.count(), 2);
 }
 
 void OnScreenNotificationTest::message()
 {
-    KWin::win::osd_notification notification;
-    QSignalSpy messageChangedSpy(&notification, &KWin::win::osd_notification::messageChanged);
+    KWin::win::osd_notification<KWin::mock_redirect> notification(nullptr);
+    QSignalSpy messageChangedSpy(notification.qobject.get(),
+                                 &KWin::win::osd_notification_qobject::messageChanged);
     QVERIFY(messageChangedSpy.isValid());
-    QCOMPARE(notification.message(), QString());
-    notification.setMessage(QStringLiteral("foo"));
-    QCOMPARE(notification.message(), QStringLiteral("foo"));
+    QCOMPARE(notification.qobject->message(), QString());
+    notification.qobject->setMessage(QStringLiteral("foo"));
+    QCOMPARE(notification.qobject->message(), QStringLiteral("foo"));
     QCOMPARE(messageChangedSpy.count(), 1);
-    notification.setMessage(QStringLiteral("foo"));
+    notification.qobject->setMessage(QStringLiteral("foo"));
     QCOMPARE(messageChangedSpy.count(), 1);
-    notification.setMessage(QStringLiteral("bar"));
-    QCOMPARE(notification.message(), QStringLiteral("bar"));
+    notification.qobject->setMessage(QStringLiteral("bar"));
+    QCOMPARE(notification.qobject->message(), QStringLiteral("bar"));
     QCOMPARE(messageChangedSpy.count(), 2);
 }

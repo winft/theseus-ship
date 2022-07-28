@@ -82,7 +82,7 @@ void TestScreens::init()
 
     Test::app()->set_outputs(1);
     Test::set_current_output(0);
-    input::get_cursor()->set_pos(QPoint(640, 512));
+    Test::app()->base.input->cursor->set_pos(QPoint(640, 512));
 }
 
 void TestScreens::cleanup()
@@ -279,7 +279,7 @@ void TestScreens::testCurrent()
     QFETCH(int, current);
     Test::set_current_output(current);
     QCOMPARE(base::get_output_index(base.get_outputs(),
-                                    *win::get_current_output(*Test::app()->workspace)),
+                                    *win::get_current_output(*Test::app()->base.space)),
              current);
     QTEST(!current_changed_spy.isEmpty(), "signal");
 }
@@ -296,7 +296,7 @@ void TestScreens::testCurrentClient()
     changedSpy.clear();
 
     // Create a window.
-    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
                               &win::space::qobject_t::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
     auto surface = Test::create_surface();
@@ -306,15 +306,15 @@ void TestScreens::testCurrentClient()
     Test::render(surface, QSize(100, 50), Qt::blue);
     Test::flush_wayland_connection();
     QVERIFY(clientAddedSpy.wait());
-    auto client = Test::app()->workspace->active_client;
+    auto client = Test::app()->base.space->active_client;
     QVERIFY(client);
 
     win::move(client, QPoint(101, 0));
-    QCOMPARE(Test::app()->workspace->active_client, client);
-    win::set_active_window(*Test::app()->workspace, nullptr);
-    QCOMPARE(Test::app()->workspace->active_client, nullptr);
+    QCOMPARE(Test::app()->base.space->active_client, client);
+    win::set_active_window(*Test::app()->base.space, nullptr);
+    QCOMPARE(Test::app()->base.space->active_client, nullptr);
 
-    QCOMPARE(win::get_current_output(*Test::app()->workspace),
+    QCOMPARE(win::get_current_output(*Test::app()->base.space),
              base::get_output(Test::app()->base.get_outputs(), 0));
 
     // it's not the active client, so changing won't work
@@ -323,16 +323,16 @@ void TestScreens::testCurrentClient()
 
     auto output = base::get_output(Test::app()->base.get_outputs(), 0);
     QVERIFY(output);
-    QCOMPARE(win::get_current_output(*Test::app()->workspace), output);
+    QCOMPARE(win::get_current_output(*Test::app()->base.space), output);
 
     // making the client active should affect things
     win::set_active(client, true);
-    win::set_active_window(*Test::app()->workspace, client);
+    win::set_active_window(*Test::app()->base.space, client);
 
     // first of all current should be changed just by the fact that there is an active client
     output = base::get_output(Test::app()->base.get_outputs(), 1);
     QVERIFY(output);
-    QCOMPARE(win::get_current_output(*Test::app()->workspace), output);
+    QCOMPARE(win::get_current_output(*Test::app()->base.space), output);
 
     // but also calling setCurrent should emit the changed signal
     win::set_current_output_by_window(Test::app()->base, *client);
@@ -340,19 +340,19 @@ void TestScreens::testCurrentClient()
 
     output = base::get_output(Test::app()->base.get_outputs(), 1);
     QVERIFY(output);
-    QCOMPARE(win::get_current_output(*Test::app()->workspace), output);
+    QCOMPARE(win::get_current_output(*Test::app()->base.space), output);
 
     // setting current with the same client again should not change, though
     win::set_current_output_by_window(Test::app()->base, *client);
     QCOMPARE(changedSpy.count(), 1);
 
     // and it should even still be on screen 1 if we make the client non-current again
-    win::set_active_window(*Test::app()->workspace, nullptr);
+    win::set_active_window(*Test::app()->base.space, nullptr);
     win::set_active(client, false);
 
     output = base::get_output(Test::app()->base.get_outputs(), 1);
     QVERIFY(output);
-    QCOMPARE(win::get_current_output(*Test::app()->workspace), output);
+    QCOMPARE(win::get_current_output(*Test::app()->base.space), output);
 }
 
 void TestScreens::testCurrentWithFollowsMouse_data()
@@ -385,7 +385,7 @@ void TestScreens::testCurrentWithFollowsMouse()
 
     auto output = base::get_output(Test::app()->base.get_outputs(), 0);
     QVERIFY(output);
-    QCOMPARE(win::get_current_output(*Test::app()->workspace), output);
+    QCOMPARE(win::get_current_output(*Test::app()->base.space), output);
 
     QFETCH(QList<QRect>, geometries);
     Test::app()->set_outputs(to_vector(geometries));
@@ -397,7 +397,7 @@ void TestScreens::testCurrentWithFollowsMouse()
     QFETCH(int, expected);
     output = base::get_output(Test::app()->base.get_outputs(), expected);
     QVERIFY(output);
-    QCOMPARE(win::get_current_output(*Test::app()->workspace), output);
+    QCOMPARE(win::get_current_output(*Test::app()->base.space), output);
 }
 
 void TestScreens::testCurrentPoint_data()
@@ -436,7 +436,7 @@ void TestScreens::testCurrentPoint()
     QFETCH(int, expected);
     auto output = base::get_output(Test::app()->base.get_outputs(), expected);
     QVERIFY(output);
-    QCOMPARE(win::get_current_output(*Test::app()->workspace), output);
+    QCOMPARE(win::get_current_output(*Test::app()->base.space), output);
 }
 
 }

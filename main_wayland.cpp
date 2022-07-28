@@ -174,7 +174,7 @@ ApplicationWayland::~ApplicationWayland()
         static_cast<render::wayland::compositor*>(base->render->compositor.get())->lock();
     }
 
-    workspace.reset();
+    base->space.reset();
     base->render->compositor.reset();
 }
 
@@ -198,7 +198,7 @@ base::wayland::server* ApplicationWayland::get_wayland_server()
 
 debug::console* ApplicationWayland::create_debug_console()
 {
-    return new debug::wayland_console(*workspace);
+    return new debug::wayland_console(*base->space);
 }
 
 void ApplicationWayland::start()
@@ -220,8 +220,8 @@ void ApplicationWayland::start()
     this->session.reset(session);
     session->take_control();
 
-    input.reset(new input::backend::wlroots::platform(*base));
-    static_cast<input::wayland::platform&>(*input).install_shortcuts();
+    base->input = std::make_unique<input::backend::wlroots::platform>(*base);
+    static_cast<input::wayland::platform&>(*base->input).install_shortcuts();
 
     try {
         render->init();
@@ -237,15 +237,16 @@ void ApplicationWayland::start()
         exit(exc.code().value());
     }
 
-    workspace = std::make_unique<win::wayland::space>(*render->compositor, server.get());
+    base->space
+        = std::make_unique<win::wayland::space>(*render->compositor, *base->input, server.get());
+    input::wayland::add_dbus(base->input.get());
+    win::init_shortcuts(*base->space);
+    tablet_mode_manager
+        = std::make_unique<input::dbus::tablet_mode_manager<input::wayland::platform>>(
+            static_cast<input::wayland::platform&>(*base->input));
+    base->space->scripting = std::make_unique<scripting::platform>(*base->space);
 
-    workspace->input = std::make_unique<input::wayland::redirect>(*input, *workspace);
-    input::wayland::add_dbus(input.get());
-    win::init_shortcuts(*workspace);
-    tablet_mode_manager = std::make_unique<input::dbus::tablet_mode_manager>();
-    workspace->scripting = std::make_unique<scripting::platform>(*workspace);
-
-    render->compositor->start(*workspace);
+    render->compositor->start(*base->space);
 
     waylandServer()->create_addons([this] { handle_server_addons_created(); });
     kwinApp()->screen_locker_watcher->initialize();
@@ -273,7 +274,7 @@ void ApplicationWayland::create_xwayland()
     };
 
     try {
-        xwayland = std::make_unique<xwl::xwayland>(this, *workspace, status_callback);
+        xwayland = std::make_unique<xwl::xwayland>(this, *base->space, status_callback);
     } catch (std::system_error const& exc) {
         std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
         exit(exc.code().value());

@@ -957,7 +957,7 @@ template<typename Win>
 void net_move_resize(Win* win, int x_root, int y_root, NET::Direction direction)
 {
     auto& mov_res = win->control->move_resize();
-    auto cursor = input::get_cursor();
+    auto& cursor = win->space.input->platform.cursor;
 
     if (direction == NET::Move) {
         // move cursor to the provided position to prevent the window jumping there on first

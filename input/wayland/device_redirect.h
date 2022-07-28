@@ -38,8 +38,8 @@ void device_redirect_init(Dev* dev)
                      &win::space::qobject_t::clientMinimizedChanged,
                      dev,
                      [dev] { device_redirect_update(dev); });
-    QObject::connect(dev->redirect->space.virtual_desktop_manager.get(),
-                     &win::virtual_desktop_manager::currentChanged,
+    QObject::connect(dev->redirect->space.virtual_desktop_manager->qobject.get(),
+                     &win::virtual_desktop_manager_qobject::currentChanged,
                      dev,
                      [dev] { device_redirect_update(dev); });
 }

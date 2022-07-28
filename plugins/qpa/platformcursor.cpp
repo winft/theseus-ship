@@ -18,7 +18,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "platformcursor.h"
+
 #include "../../input/cursor.h"
+#include "../../input/platform.h"
+#include "../../input/singleton_interface.h"
 
 namespace KWin
 {
@@ -34,12 +37,12 @@ PlatformCursor::~PlatformCursor() = default;
 
 QPoint PlatformCursor::pos() const
 {
-    return input::get_cursor()->pos();
+    return input::singleton_interface::platform->cursor->pos();
 }
 
 void PlatformCursor::setPos(const QPoint &pos)
 {
-    input::get_cursor()->set_pos(pos);
+    input::singleton_interface::platform->cursor->set_pos(pos);
 }
 
 void PlatformCursor::changeCursor(QCursor *windowCursor, QWindow *window)

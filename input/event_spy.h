@@ -7,18 +7,17 @@
 #pragma once
 
 #include "event.h"
-#include "kwin_export.h"
 
-#include <QtGlobal>
+#include "main.h"
+#include "platform.h"
+#include "redirect.h"
 
-class QPointF;
-class QSizeF;
+#include <QSet>
+
 class QTabletEvent;
 
 namespace KWin::input
 {
-class MouseEvent;
-class WheelEvent;
 
 /**
  * Base class for spying on input events inside InputRedirection.
@@ -30,38 +29,100 @@ class WheelEvent;
  * Deleting an instance of event_spy automatically uninstalls it from
  * InputRedirection.
  */
-class KWIN_EXPORT event_spy
+class event_spy
 {
 public:
-    event_spy();
-    virtual ~event_spy();
+    event_spy(input::redirect& redirect)
+        : redirect{redirect}
+    {
+    }
 
-    virtual void button(button_event const& event);
-    virtual void motion(motion_event const& event);
-    virtual void axis(axis_event const& event);
+    virtual ~event_spy()
+    {
+        redirect.uninstallInputEventSpy(this);
+    }
 
-    virtual void key(key_event const& event);
-    virtual void key_repeat(key_event const& event);
+    virtual void button(button_event const& /*event*/)
+    {
+    }
 
-    virtual void touch_down(touch_down_event const& event);
-    virtual void touch_motion(touch_motion_event const& event);
-    virtual void touch_up(touch_up_event const& event);
+    virtual void motion(motion_event const& /*event*/)
+    {
+    }
 
-    virtual void pinch_begin(pinch_begin_event const& event);
-    virtual void pinch_update(pinch_update_event const& event);
-    virtual void pinch_end(pinch_end_event const& event);
+    virtual void axis(axis_event const& /*event*/)
+    {
+    }
 
-    virtual void swipe_begin(swipe_begin_event const& event);
-    virtual void swipe_update(swipe_update_event const& event);
-    virtual void swipe_end(swipe_end_event const&);
+    virtual void key(key_event const& /*event*/)
+    {
+    }
 
-    virtual void switch_toggle(switch_toggle_event const& event);
+    virtual void key_repeat(key_event const& /*event*/)
+    {
+    }
 
-    virtual void tabletToolEvent(QTabletEvent* event);
-    virtual void tabletToolButtonEvent(const QSet<uint>& pressedButtons);
-    virtual void tabletPadButtonEvent(const QSet<uint>& pressedButtons);
-    virtual void tabletPadStripEvent(int number, int position, bool isFinger);
-    virtual void tabletPadRingEvent(int number, int position, bool isFinger);
+    virtual void touch_down(touch_down_event const& /*event*/)
+    {
+    }
+
+    virtual void touch_motion(touch_motion_event const& /*event*/)
+    {
+    }
+
+    virtual void touch_up(touch_up_event const& /*event*/)
+    {
+    }
+
+    virtual void pinch_begin(pinch_begin_event const& /*event*/)
+    {
+    }
+
+    virtual void pinch_update(pinch_update_event const& /*event*/)
+    {
+    }
+
+    virtual void pinch_end(pinch_end_event const& /*event*/)
+    {
+    }
+
+    virtual void swipe_begin(swipe_begin_event const& /*event*/)
+    {
+    }
+
+    virtual void swipe_update(swipe_update_event const& /*event*/)
+    {
+    }
+
+    virtual void swipe_end(swipe_end_event const& /*event*/)
+    {
+    }
+
+    virtual void switch_toggle(switch_toggle_event const& /*event*/)
+    {
+    }
+
+    virtual void tabletToolEvent(QTabletEvent* /*event*/)
+    {
+    }
+
+    virtual void tabletToolButtonEvent(const QSet<uint>& /*pressedButtons*/)
+    {
+    }
+
+    virtual void tabletPadButtonEvent(const QSet<uint>& /*pressedButtons*/)
+    {
+    }
+
+    virtual void tabletPadStripEvent(int /*number*/, int /*position*/, bool /*isFinger*/)
+    {
+    }
+
+    virtual void tabletPadRingEvent(int /*number*/, int /*position*/, bool /*isFinger*/)
+    {
+    }
+
+    input::redirect& redirect;
 };
 
 }

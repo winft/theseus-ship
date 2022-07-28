@@ -395,8 +395,6 @@ set(kwin_SRCS
     debug/console/console.cpp
     debug/perf/ftrace.cpp
     input/device_redirect.cpp
-    input/event_filter.cpp
-    input/event_spy.cpp
     input/keyboard.cpp
     input/keyboard_redirect.cpp
     input/platform.cpp
@@ -404,6 +402,7 @@ set(kwin_SRCS
     input/redirect.cpp
     input/tablet_redirect.cpp
     input/touch_redirect.cpp
+    input/singleton_interface.cpp
     input/spies/modifier_only_shortcuts.cpp
     input/cursor.cpp
     input/cursor_shape.cpp
@@ -413,7 +412,6 @@ set(kwin_SRCS
     input/logging.cpp
     input/pointer.cpp
     input/x11/redirect.cpp
-    input/qt_event.cpp
     input/xkb/keyboard.cpp
     input/xkb/keymap.cpp
     input/xkb/manager.cpp
@@ -800,26 +798,7 @@ set(kwin_WAYLAND_SRCS
    input/dbus/keyboard_layout.cpp
    input/dbus/keyboard_layouts_v2.cpp
    input/dbus/tablet_mode_manager.cpp
-   input/filters/decoration_event.cpp
-   input/filters/dpms.cpp
-   input/filters/drag_and_drop.cpp
-   input/filters/effects.cpp
-   input/filters/fake_tablet.cpp
-   input/filters/forward.cpp
-   input/filters/global_shortcut.cpp
-   input/filters/helpers.cpp
-   input/filters/internal_window.cpp
-   input/filters/lock_screen.cpp
-   input/filters/move_resize.cpp
-   input/filters/popup.cpp
-   input/filters/screen_edge.cpp
-   input/filters/terminate_server.cpp
-   input/filters/virtual_terminal.cpp
-   input/filters/window_action.cpp
-   input/filters/window_selector.cpp
    input/spies/keyboard_repeat.cpp
-   input/spies/touch_hide_cursor.cpp
-   input/spies/tablet_mode_switch.cpp
    input/wayland/cursor.cpp
    input/wayland/cursor_image.cpp
    input/wayland/cursor_theme.cpp
@@ -863,7 +842,6 @@ set(kwin_WAYLAND_SRCS
 if (KWIN_BUILD_TABBOX)
   set(kwin_WAYLAND_SRCS
     ${kwin_WAYLAND_SRCS}
-    input/filters/tabbox.cpp
   )
 endif()
 

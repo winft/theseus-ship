@@ -60,7 +60,7 @@ void keyboard_layout::switchToPreviousLayout()
 
 bool keyboard_layout::setLayout(uint index)
 {
-    auto xkb = xkb::get_primary_xkb_keyboard();
+    auto xkb = xkb::get_primary_xkb_keyboard(*manager->xkb.platform);
 
     if (!xkb->switch_to_layout(index)) {
         return false;
@@ -71,12 +71,12 @@ bool keyboard_layout::setLayout(uint index)
 
 uint keyboard_layout::getLayout() const
 {
-    return xkb::get_primary_xkb_keyboard()->layout;
+    return xkb::get_primary_xkb_keyboard(*manager->xkb.platform)->layout;
 }
 
 QVector<keyboard_layout::LayoutNames> keyboard_layout::getLayoutsList() const
 {
-    auto xkb = xkb::get_primary_xkb_keyboard();
+    auto xkb = xkb::get_primary_xkb_keyboard(*manager->xkb.platform);
 
     // TODO: - should be handled by layout applet itself, it has nothing to do with KWin
     auto const display_names = m_configGroup.readEntry("DisplayNames", QStringList());

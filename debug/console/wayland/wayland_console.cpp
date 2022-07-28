@@ -34,18 +34,18 @@ wayland_console::wayland_console(win::space& space)
     m_ui->windowsView->setModel(new wayland_console_model(space, this));
     m_ui->surfacesView->setModel(new surface_tree_model(space, this));
 
-    m_ui->inputDevicesView->setModel(new input_device_model(this));
+    m_ui->inputDevicesView->setModel(new input_device_model(*space.input->platform.dbus, this));
     m_ui->inputDevicesView->setItemDelegate(new wayland_console_delegate(this));
 
-    QObject::connect(m_ui->tabWidget, &QTabWidget::currentChanged, this, [this](int index) {
+    QObject::connect(m_ui->tabWidget, &QTabWidget::currentChanged, this, [this, &space](int index) {
         // delay creation of input event filter until the tab is selected
         if (index == 2 && m_inputFilter.isNull()) {
-            m_inputFilter.reset(new input_filter(m_ui->inputTextEdit));
-            kwinApp()->input->redirect->installInputEventSpy(m_inputFilter.data());
+            m_inputFilter.reset(new input_filter(*space.input, m_ui->inputTextEdit));
+            space.input->installInputEventSpy(m_inputFilter.data());
         }
         if (index == 5) {
             update_keyboard_tab();
-            QObject::connect(kwinApp()->input->redirect,
+            QObject::connect(space.input.get(),
                              &input::redirect::keyStateChanged,
                              this,
                              &wayland_console::update_keyboard_tab);
@@ -90,7 +90,7 @@ QString stateActiveComponents(xkb_state* state,
 
 void wayland_console::update_keyboard_tab()
 {
-    auto xkb = input::xkb::get_primary_xkb_keyboard();
+    auto xkb = input::xkb::get_primary_xkb_keyboard(space.input->platform);
     auto keymap = xkb->keymap->raw;
 
     m_ui->layoutsLabel->setText(keymapComponentToString<xkb_layout_index_t>(
@@ -115,8 +115,6 @@ void wayland_console::update_keyboard_tab()
 wayland_console_model::wayland_console_model(win::space& space, QObject* parent)
     : console_model(space, parent)
 {
-    auto& wlspace = static_cast<win::wayland::space&>(space);
-
     for (auto window : space.windows) {
         if (auto wwin = qobject_cast<win::wayland::window*>(window); wwin && !wwin->remnant) {
             m_shellClients.append(wwin);

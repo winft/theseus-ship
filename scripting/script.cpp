@@ -357,7 +357,7 @@ bool script::registerShortcut(const QString& objectName,
 
     const QKeySequence shortcut = keySequence;
     KGlobalAccel::self()->setShortcut(action, {shortcut});
-    kwinApp()->input->registerShortcut(shortcut, action);
+    platform.space.input->platform.registerShortcut(shortcut, action);
 
     connect(action, &QAction::triggered, this, [this, action, callback]() {
         QJSValue(callback).call({m_engine->toScriptValue(action)});

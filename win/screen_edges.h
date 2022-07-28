@@ -95,6 +95,8 @@ public:
     bool is_approaching{false};
     QRect approach_geometry;
 
+    screen_edger* edger;
+
 public Q_SLOTS:
     void reserve();
     void unreserve();
@@ -137,7 +139,6 @@ private:
     void switchDesktop(QPoint const& cursorPos);
     void pushCursorBack(QPoint const& cursorPos);
 
-    screen_edger* edger;
     ElectricBorderAction pointer_action{ElectricActionNone};
     ElectricBorderAction touch_action{ElectricActionNone};
 

@@ -7,6 +7,9 @@
 #pragma once
 
 #include "event.h"
+#include "event_spy.h"
+#include "keyboard.h"
+
 #include "kwin_export.h"
 
 #include <QObject>
@@ -17,21 +20,24 @@ namespace KWin::input
 class keyboard;
 class redirect;
 
+template<typename Keyboard>
+void keyboard_redirect_prepare_key(Keyboard& keys, key_event const& event)
+{
+    event.base.dev->xkb->update_key(event.keycode, event.state);
+    keys.redirect->processSpies(std::bind(&event_spy::key, std::placeholders::_1, event));
+}
+
 class KWIN_EXPORT keyboard_redirect : public QObject
 {
-    Q_OBJECT
 public:
     explicit keyboard_redirect(input::redirect* parent);
-    ~keyboard_redirect() override;
 
-    virtual void update();
+    virtual void update() = 0;
 
-    virtual void process_key(key_event const& event);
-    virtual void process_key_repeat(key_event const& event);
+    virtual void process_key(key_event const& event) = 0;
 
-    virtual void process_modifiers(modifiers_event const& event);
+    virtual void process_modifiers(modifiers_event const& event) = 0;
 
-protected:
     input::redirect* redirect;
 };
 

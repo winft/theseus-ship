@@ -16,12 +16,12 @@ virtual_desktop_model::virtual_desktop_model(QObject* parent)
     : QAbstractListModel(parent)
 {
     auto vds = win::singleton_interface::space->virtual_desktop_manager.get();
-    connect(vds,
-            &win::virtual_desktop_manager::desktopCreated,
+    connect(vds->qobject.get(),
+            &win::virtual_desktop_manager_qobject::desktopCreated,
             this,
             &virtual_desktop_model::handleVirtualDesktopAdded);
-    connect(vds,
-            &win::virtual_desktop_manager::desktopRemoved,
+    connect(vds->qobject.get(),
+            &win::virtual_desktop_manager_qobject::desktopRemoved,
             this,
             &virtual_desktop_model::handleVirtualDesktopRemoved);
 

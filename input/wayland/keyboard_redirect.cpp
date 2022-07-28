@@ -17,7 +17,6 @@
 #include "input/spies/modifier_only_shortcuts.h"
 #include "input/xkb/helpers.h"
 #include "input/xkb/layout_manager.h"
-#include "main.h"
 #include "toplevel.h"
 #include "win/space.h"
 #include "win/stacking_order.h"
@@ -32,14 +31,16 @@ namespace KWin::input::wayland
 
 keyboard_redirect::keyboard_redirect(wayland::redirect* redirect)
     : input::keyboard_redirect(redirect)
+    , redirect{redirect}
 {
 }
 
 class KeyStateChangedSpy : public event_spy
 {
 public:
-    KeyStateChangedSpy(input::redirect* redirect)
-        : redirect(redirect)
+    KeyStateChangedSpy(wayland::redirect* redirect)
+        : event_spy(*redirect)
+        , redirect(redirect)
     {
     }
 
@@ -49,14 +50,15 @@ public:
     }
 
 private:
-    input::redirect* redirect;
+    wayland::redirect* redirect;
 };
 
 class modifiers_changed_spy : public event_spy
 {
 public:
     modifiers_changed_spy(input::redirect* redirect)
-        : redirect{redirect}
+        : event_spy(*redirect)
+        , redirect{redirect}
         , m_modifiers()
     {
     }
@@ -86,7 +88,7 @@ keyboard_redirect::~keyboard_redirect() = default;
 
 void keyboard_redirect::init()
 {
-    auto& xkb = kwinApp()->input->xkb;
+    auto& xkb = redirect->platform.xkb;
     auto const config = kwinApp()->kxkbConfig();
     xkb.setNumLockConfig(kwinApp()->inputConfig());
     xkb.setConfig(config);
@@ -95,16 +97,16 @@ void keyboard_redirect::init()
     modifiers_spy = new modifiers_changed_spy(redirect);
     redirect->installInputEventSpy(modifiers_spy);
 
-    layout_manager = std::make_unique<xkb::layout_manager>(kwinApp()->input->xkb, config);
+    layout_manager = std::make_unique<xkb::layout_manager>(redirect->platform.xkb, config);
     layout_manager->init();
 
     if (waylandServer()->has_global_shortcut_support()) {
         redirect->installInputEventSpy(new modifier_only_shortcuts_spy(*redirect));
     }
 
-    auto keyRepeatSpy = new keyboard_repeat_spy();
-    QObject::connect(keyRepeatSpy,
-                     &keyboard_repeat_spy::key_repeated,
+    auto keyRepeatSpy = new keyboard_repeat_spy(*redirect);
+    QObject::connect(keyRepeatSpy->qobject.get(),
+                     &keyboard_repeat_spy_qobject::key_repeated,
                      this,
                      &keyboard_redirect::process_key_repeat);
     redirect->installInputEventSpy(keyRepeatSpy);
@@ -163,7 +165,7 @@ void keyboard_redirect::update()
         } while (it != stacking.begin());
     }
 
-    if (!found && !kwinApp()->input->redirect->isSelectingWindow()) {
+    if (!found && !redirect->isSelectingWindow()) {
         found = redirect->space.active_client;
     }
     if (found && found->surface) {
@@ -179,16 +181,18 @@ void keyboard_redirect::process_key(key_event const& event)
 {
     auto& xkb = event.base.dev->xkb;
 
-    input::keyboard_redirect::process_key(event);
+    keyboard_redirect_prepare_key(*this, event);
 
-    redirect->processFilters(std::bind(&event_filter::key, std::placeholders::_1, event));
+    redirect->processFilters(
+        std::bind(&event_filter<wayland::redirect>::key, std::placeholders::_1, event));
     xkb->forward_modifiers();
 }
 
 void keyboard_redirect::process_key_repeat(const key_event& event)
 {
-    input::keyboard_redirect::process_key_repeat(event);
-    redirect->processFilters(std::bind(&event_filter::key_repeat, std::placeholders::_1, event));
+    redirect->processSpies(std::bind(&event_spy::key_repeat, std::placeholders::_1, event));
+    redirect->processFilters(
+        std::bind(&event_filter<wayland::redirect>::key_repeat, std::placeholders::_1, event));
 }
 
 void keyboard_redirect::process_modifiers(modifiers_event const& event)

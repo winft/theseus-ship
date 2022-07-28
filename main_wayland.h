@@ -32,12 +32,8 @@ namespace KWin
 
 namespace input::dbus
 {
+template<typename Platform>
 class tablet_mode_manager;
-}
-
-namespace win::wayland
-{
-class space;
 }
 
 namespace xwl
@@ -50,7 +46,6 @@ class ApplicationWayland : public Application
     Q_OBJECT
 public:
     std::unique_ptr<base::wayland::server> server;
-    std::unique_ptr<win::wayland::space> workspace;
 
     ApplicationWayland(int &argc, char **argv);
     ~ApplicationWayland() override;
@@ -93,7 +88,7 @@ private:
     std::unique_ptr<base::backend::wlroots::platform> base;
     std::unique_ptr<xwl::xwayland> xwayland;
 
-    std::unique_ptr<input::dbus::tablet_mode_manager> tablet_mode_manager;
+    std::unique_ptr<input::dbus::tablet_mode_manager<input::wayland::platform>> tablet_mode_manager;
 
     QProcess* exit_with_process{nullptr};
 };

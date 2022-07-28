@@ -423,7 +423,7 @@ void screen_edge::switchDesktop(QPoint const& cursorPos)
 
     if (vds->current() != oldDesktop) {
         push_back_is_blocked = true;
-        input::get_cursor()->set_pos(pos);
+        edger->space.input->platform.cursor->set_pos(pos);
 
         QSharedPointer<QMetaObject::Connection> me(new QMetaObject::Connection);
         *me = QObject::connect(QCoreApplication::eventDispatcher(),
@@ -462,7 +462,7 @@ void screen_edge::pushCursorBack(QPoint const& cursorPos)
         y -= distance.height();
     }
 
-    input::get_cursor()->set_pos(x, y);
+    edger->space.input->platform.cursor->set_pos(x, y);
 }
 
 void screen_edge::setGeometry(QRect const& geometry)
@@ -725,8 +725,8 @@ screen_edger::screen_edger(win::space& space)
                      &base::options::configChanged,
                      this,
                      &win::screen_edger::reconfigure);
-    QObject::connect(space.virtual_desktop_manager.get(),
-                     &virtual_desktop_manager::layoutChanged,
+    QObject::connect(space.virtual_desktop_manager->qobject.get(),
+                     &virtual_desktop_manager_qobject::layoutChanged,
                      this,
                      &screen_edger::updateLayout);
 

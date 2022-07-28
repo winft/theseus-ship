@@ -72,7 +72,7 @@ bool js_engine_global_methods_wrapper::registerShortcut(const QString& name,
     a->setText(text);
     const QKeySequence shortcut = QKeySequence(keys);
     KGlobalAccel::self()->setShortcut(a, QList<QKeySequence>{shortcut});
-    kwinApp()->input->registerShortcut(shortcut, a);
+    platform.space.input->platform.registerShortcut(shortcut, a);
 
     connect(a, &QAction::triggered, this, [=]() mutable {
         QJSValueList arguments;

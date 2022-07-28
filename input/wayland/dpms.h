@@ -5,8 +5,9 @@
 */
 #pragma once
 
+#include "redirect.h"
+
 #include "input/filters/dpms.h"
-#include "input/redirect.h"
 
 #include <memory>
 
@@ -20,8 +21,10 @@ void create_dpms_filter(Input* input)
         // Already another output is off.
         return;
     }
-    input->dpms_filter = std::make_unique<dpms_filter>(input);
-    input->redirect->prependInputEventFilter(input->dpms_filter.get());
+
+    auto& wlredirect = static_cast<redirect&>(*input->redirect);
+    input->dpms_filter = std::make_unique<dpms_filter<Input, redirect>>(*input, wlredirect);
+    wlredirect.prependInputEventFilter(input->dpms_filter.get());
 }
 
 }

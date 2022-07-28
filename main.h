@@ -232,7 +232,6 @@ public:
     std::unique_ptr<base::options> options;
     std::unique_ptr<base::seat::session> session;
     std::unique_ptr<base::x11::event_filter_manager> x11_event_filters;
-    std::unique_ptr<input::platform> input;
     std::unique_ptr<desktop::screen_locker_watcher> screen_locker_watcher;
 
 Q_SIGNALS:

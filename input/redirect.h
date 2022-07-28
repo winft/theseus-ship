@@ -30,10 +30,8 @@ class space;
 namespace input
 {
 
-class event_filter;
 class event_spy;
 class platform;
-class window_selector_filter;
 
 class keyboard_redirect;
 class pointer_redirect;
@@ -69,23 +67,6 @@ public:
     void cancelTouch();
 
     /**
-     * Adds the @p filter to the list of event filters at the last relevant position.
-     *
-     * Install the filter at the back of the list for a X compositor, immediately before
-     * the forward filter for a Wayland compositor.
-     */
-    void append_filter(event_filter* filter);
-    /**
-     * Adds the @p filter to the list of event filters and makes it the first
-     * event filter in processing.
-     *
-     * Note: the event filter will get events before the lock screen can get them, thus
-     * this is a security relevant method.
-     */
-    void prependInputEventFilter(event_filter* filter);
-    void uninstallInputEventFilter(event_filter* filter);
-
-    /**
      * Installs the @p spy for spying on events.
      */
     void installInputEventSpy(event_spy* spy);
@@ -97,26 +78,6 @@ public:
 
     Toplevel* findToplevel(const QPoint& pos);
     Toplevel* findManagedToplevel(const QPoint& pos);
-
-    /**
-     * Sends an event through all InputFilters.
-     * The method @p function is invoked on each input filter. Processing is stopped if
-     * a filter returns @c true for @p function.
-     *
-     * The UnaryPredicate is defined like the UnaryPredicate of std::any_of.
-     * The signature of the function should be equivalent to the following:
-     * @code
-     * bool function(event_filter const* filter);
-     * @endcode
-     *
-     * The intended usage is to std::bind the method to invoke on the filter with all arguments
-     * bind.
-     */
-    template<class UnaryPredicate>
-    void processFilters(UnaryPredicate function)
-    {
-        std::any_of(m_filters.cbegin(), m_filters.cend(), function);
-    }
 
     /**
      * Sends an event through all input event spies.
@@ -137,22 +98,10 @@ public:
         std::for_each(m_spies.cbegin(), m_spies.cend(), function);
     }
 
-    keyboard_redirect* keyboard() const
-    {
-        return m_keyboard.get();
-    }
-    pointer_redirect* pointer() const
-    {
-        return m_pointer.get();
-    }
-    tablet_redirect* tablet() const
-    {
-        return m_tablet.get();
-    }
-    touch_redirect* touch() const
-    {
-        return m_touch.get();
-    }
+    virtual keyboard_redirect* get_keyboard() const = 0;
+    virtual pointer_redirect* get_pointer() const = 0;
+    virtual tablet_redirect* get_tablet() const = 0;
+    virtual touch_redirect* get_touch() const = 0;
 
     virtual void startInteractiveWindowSelection(std::function<void(KWin::Toplevel*)> callback,
                                                  QByteArray const& cursorName);
@@ -197,20 +146,8 @@ Q_SIGNALS:
 protected:
     redirect(input::platform& platform, win::space& space);
 
-    std::unique_ptr<keyboard_redirect> m_keyboard;
-    std::unique_ptr<pointer_redirect> m_pointer;
-    std::unique_ptr<tablet_redirect> m_tablet;
-    std::unique_ptr<touch_redirect> m_touch;
-
-    std::list<event_filter*> m_filters;
-    std::list<event_filter*>::const_iterator m_filters_install_iterator;
-
 private:
     std::vector<event_spy*> m_spies;
-
-    friend class DecorationEventFilter;
-    friend class InternalWindowEventFilter;
-    friend class ForwardInputFilter;
 };
 
 }

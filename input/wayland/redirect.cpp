@@ -17,6 +17,7 @@
 #include "fake/pointer.h"
 #include "fake/touch.h"
 
+#include "input/event_filter.h"
 #include "input/keyboard.h"
 #include "input/pointer.h"
 #include "input/switch.h"
@@ -90,7 +91,7 @@ void redirect::setup_devices()
     QObject::connect(&platform, &platform::pointer_removed, this, [this]() {
         if (platform.pointers.empty()) {
             auto seat = find_seat();
-            unset_focus(m_pointer);
+            unset_focus(pointer.get());
             seat->setHasPointer(false);
         }
     });
@@ -114,7 +115,7 @@ void redirect::setup_devices()
     QObject::connect(&platform, &platform::touch_removed, this, [this]() {
         if (platform.touchs.empty()) {
             auto seat = find_seat();
-            unset_focus(m_touch);
+            unset_focus(touch.get());
             seat->setHasTouch(false);
         }
     });
@@ -125,7 +126,30 @@ void redirect::setup_devices()
     QObject::connect(&platform, &platform::switch_added, this, &redirect::handle_switch_added);
 }
 
-redirect::~redirect() = default;
+redirect::~redirect()
+{
+    auto const filters = m_filters;
+    for (auto filter : filters) {
+        delete filter;
+    }
+}
+
+input::keyboard_redirect* redirect::get_keyboard() const
+{
+    return keyboard.get();
+}
+input::pointer_redirect* redirect::get_pointer() const
+{
+    return pointer.get();
+}
+input::tablet_redirect* redirect::get_tablet() const
+{
+    return tablet.get();
+}
+input::touch_redirect* redirect::get_touch() const
+{
+    return touch.get();
+}
 
 void redirect::setup_workspace()
 {
@@ -139,10 +163,10 @@ void redirect::setup_workspace()
 
     platform.cursor = std::make_unique<wayland::cursor>(&wl_plat(platform));
 
-    m_pointer = std::make_unique<wayland::pointer_redirect>(this);
-    m_keyboard = std::make_unique<wayland::keyboard_redirect>(this);
-    m_touch = std::make_unique<wayland::touch_redirect>(this);
-    m_tablet = std::make_unique<wayland::tablet_redirect>(this);
+    pointer = std::make_unique<wayland::pointer_redirect>(this);
+    keyboard = std::make_unique<wayland::keyboard_redirect>(this);
+    touch = std::make_unique<wayland::touch_redirect>(this);
+    tablet = std::make_unique<wayland::tablet_redirect>(this);
 
     setup_devices();
 
@@ -161,10 +185,10 @@ void redirect::setup_workspace()
                      this,
                      &redirect::handle_virtual_keyboard_added);
 
-    static_cast<keyboard_redirect*>(m_keyboard.get())->init();
-    static_cast<pointer_redirect*>(m_pointer.get())->init();
-    static_cast<touch_redirect*>(m_touch.get())->init();
-    static_cast<tablet_redirect*>(m_tablet.get())->init();
+    keyboard->init();
+    pointer->init();
+    touch->init();
+    tablet->init();
 
     setup_filters();
 }
@@ -174,18 +198,18 @@ void redirect::setup_filters()
     auto const has_global_shortcuts = waylandServer()->has_global_shortcut_support();
 
     if (kwinApp()->session->hasSessionControl() && has_global_shortcuts) {
-        m_filters.emplace_back(new virtual_terminal_filter);
+        m_filters.emplace_back(new virtual_terminal_filter<redirect>(*this));
     }
 
-    installInputEventSpy(new touch_hide_cursor_spy);
+    installInputEventSpy(new touch_hide_cursor_spy(*this));
     if (has_global_shortcuts) {
-        m_filters.emplace_back(new terminate_server_filter);
+        m_filters.emplace_back(new terminate_server_filter<redirect>(*this));
     }
-    m_filters.emplace_back(new drag_and_drop_filter(*this));
-    m_filters.emplace_back(new lock_screen_filter(*this));
-    m_filters.emplace_back(new popup_filter(*this));
+    m_filters.emplace_back(new drag_and_drop_filter<redirect>(*this));
+    m_filters.emplace_back(new lock_screen_filter<redirect>(*this));
+    m_filters.emplace_back(new popup_filter<redirect>(*this));
 
-    window_selector = new window_selector_filter;
+    window_selector = new window_selector_filter<redirect>(*this);
     m_filters.push_back(window_selector);
 
     if (has_global_shortcuts) {
@@ -199,14 +223,14 @@ void redirect::setup_filters()
 #endif
 
     if (has_global_shortcuts) {
-        m_filters.emplace_back(new global_shortcut_filter);
+        m_filters.emplace_back(new global_shortcut_filter(*this));
     }
 
-    m_filters.emplace_back(new decoration_event_filter);
+    m_filters.emplace_back(new decoration_event_filter(*this));
     m_filters.emplace_back(new internal_window_filter(*this));
 
-    m_filters.emplace_back(new window_action_filter);
-    m_filters_install_iterator = m_filters.insert(m_filters.cend(), new forward_filter);
+    m_filters.emplace_back(new window_action_filter(*this));
+    m_filters_install_iterator = m_filters.insert(m_filters.cend(), new forward_filter(*this));
     m_filters.emplace_back(new fake_tablet_filter(*this));
 }
 
@@ -243,7 +267,7 @@ void redirect::startInteractiveWindowSelection(std::function<void(KWin::Toplevel
         return;
     }
     window_selector->start(callback);
-    m_pointer->setWindowSelectionCursor(cursorName);
+    pointer->setWindowSelectionCursor(cursorName);
 }
 
 void redirect::startInteractivePositionSelection(std::function<void(QPoint const&)> callback)
@@ -253,7 +277,7 @@ void redirect::startInteractivePositionSelection(std::function<void(QPoint const
         return;
     }
     window_selector->start(callback);
-    m_pointer->setWindowSelectionCursor(QByteArray());
+    pointer->setWindowSelectionCursor(QByteArray());
 }
 
 bool redirect::isSelectingWindow() const
@@ -263,9 +287,26 @@ bool redirect::isSelectingWindow() const
     return window_selector && window_selector->isActive();
 }
 
+void redirect::append_filter(event_filter<redirect>* filter)
+{
+    Q_ASSERT(!contains(m_filters, filter));
+    m_filters.insert(m_filters_install_iterator, filter);
+}
+
+void redirect::prependInputEventFilter(event_filter<redirect>* filter)
+{
+    Q_ASSERT(!contains(m_filters, filter));
+    m_filters.insert(m_filters.begin(), filter);
+}
+
+void redirect::uninstallInputEventFilter(event_filter<redirect>* filter)
+{
+    remove_all(m_filters, filter);
+}
+
 void redirect::handle_pointer_added(input::pointer* pointer)
 {
-    auto pointer_red = m_pointer.get();
+    auto pointer_red = this->pointer.get();
 
     QObject::connect(
         pointer, &pointer::button_changed, pointer_red, &input::pointer_redirect::process_button);
@@ -304,13 +345,13 @@ void redirect::handle_pointer_added(input::pointer* pointer)
     auto seat = find_seat();
     if (!seat->hasPointer()) {
         seat->setHasPointer(true);
-        device_redirect_update_focus(m_pointer.get());
+        device_redirect_update_focus(this->pointer.get());
     }
 }
 
 void redirect::handle_keyboard_added(input::keyboard* keyboard)
 {
-    auto keyboard_red = m_keyboard.get();
+    auto keyboard_red = this->keyboard.get();
 
     QObject::connect(
         keyboard, &keyboard::key_changed, keyboard_red, &input::keyboard_redirect::process_key);
@@ -323,7 +364,7 @@ void redirect::handle_keyboard_added(input::keyboard* keyboard)
 
     if (!seat->hasKeyboard()) {
         seat->setHasKeyboard(true);
-        m_keyboard->update();
+        this->keyboard->update();
         reconfigure();
     }
 
@@ -348,7 +389,7 @@ void redirect::handle_keyboard_added(input::keyboard* keyboard)
 
 void redirect::handle_touch_added(input::touch* touch)
 {
-    auto touch_red = m_touch.get();
+    auto touch_red = this->touch.get();
 
     QObject::connect(touch, &touch::down, touch_red, &input::touch_redirect::process_down);
     QObject::connect(touch, &touch::up, touch_red, &input::touch_redirect::process_up);
@@ -359,7 +400,7 @@ void redirect::handle_touch_added(input::touch* touch)
     auto seat = find_seat();
     if (!seat->hasTouch()) {
         seat->setHasTouch(true);
-        device_redirect_update_focus(m_touch.get());
+        device_redirect_update_focus(this->touch.get());
     }
 }
 

@@ -49,8 +49,8 @@ settings::settings(win::space& space, KDecoration2::DecorationSettings* parent)
                      &render::compositor::compositingToggled,
                      parent,
                      &KDecoration2::DecorationSettings::alphaChannelSupportedChanged);
-    connect(space.virtual_desktop_manager.get(),
-            &win::virtual_desktop_manager::countChanged,
+    connect(space.virtual_desktop_manager->qobject.get(),
+            &win::virtual_desktop_manager_qobject::countChanged,
             this,
             [parent](uint previous, uint current) {
                 if (previous != 1 && current != 1) {

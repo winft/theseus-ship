@@ -5,7 +5,8 @@
 */
 #pragma once
 
-#include "input/redirect.h"
+#include "redirect.h"
+
 #include "input/tablet_redirect.h"
 
 #include <QPointF>
@@ -23,7 +24,7 @@ class KWIN_EXPORT tablet_redirect : public input::tablet_redirect
 {
     Q_OBJECT
 public:
-    explicit tablet_redirect(input::redirect* redirect);
+    explicit tablet_redirect(wayland::redirect* redirect);
 
     void init();
 
@@ -50,6 +51,8 @@ public:
     void cleanupDecoration(win::deco::client_impl* old, win::deco::client_impl* now) override;
     void cleanupInternalWindow(QWindow* old, QWindow* now) override;
     void focusUpdate(KWin::Toplevel* old, KWin::Toplevel* now) override;
+
+    wayland::redirect* redirect;
 
 private:
     struct {

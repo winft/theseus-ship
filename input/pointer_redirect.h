@@ -10,6 +10,7 @@
 
 #include "device_redirect.h"
 #include "event.h"
+#include "event_spy.h"
 
 #include <QPointF>
 
@@ -18,7 +19,14 @@ namespace KWin
 
 namespace input
 {
+
 class pointer;
+
+template<typename Pointer>
+void pointer_redirect_process_button_spies(Pointer& ptr, button_event const& event)
+{
+    ptr.redirect->processSpies(std::bind(&event_spy::button, std::placeholders::_1, event));
+}
 
 class KWIN_EXPORT pointer_redirect : public device_redirect
 {
@@ -28,9 +36,6 @@ public:
 
     explicit pointer_redirect(input::redirect* redirect);
 
-    virtual void updateAfterScreenChange()
-    {
-    }
     virtual QPointF pos() const
     {
         return {};
@@ -39,28 +44,17 @@ public:
     {
         return {};
     }
-    virtual bool areButtonsPressed() const
-    {
-        return false;
-    }
-    virtual void setEffectsOverrideCursor(Qt::CursorShape /*shape*/)
-    {
-    }
-    virtual void removeEffectsOverrideCursor()
-    {
-    }
+    virtual void setEffectsOverrideCursor(Qt::CursorShape /*shape*/) = 0;
+    virtual void removeEffectsOverrideCursor() = 0;
+
     virtual void setWindowSelectionCursor(QByteArray const& /*shape*/)
     {
     }
     virtual void removeWindowSelectionCursor()
     {
     }
-    virtual void updatePointerConstraints()
-    {
-    }
-    virtual void setEnableConstraints(bool /*set*/)
-    {
-    }
+
+    virtual void setEnableConstraints(bool /*set*/) = 0;
     virtual bool isConstrained() const
     {
         return false;
@@ -77,7 +71,7 @@ public:
     {
     }
 
-    virtual void process_button(button_event const& event);
+    virtual void process_button(button_event const& event) = 0;
 
     virtual void process_axis(axis_event const& /*event*/)
     {

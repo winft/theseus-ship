@@ -214,7 +214,7 @@ void QuickTilingTest::testQuickTiling()
     // Map the client.
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->workspace->active_client, c);
+    QCOMPARE(Test::app()->base.space->active_client, c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
     QCOMPARE(c->control->quicktiling(), win::quicktiles::none);
 
@@ -261,7 +261,7 @@ void QuickTilingTest::testQuickTiling()
 
     auto output = base::get_output(Test::app()->base.get_outputs(), 1);
     QVERIFY(output);
-    win::send_to_screen(*Test::app()->workspace, c, *output);
+    win::send_to_screen(*Test::app()->base.space, c, *output);
     QCOMPARE(c->central_output, Test::app()->base.get_outputs().at(1));
 
     // quick tile should not be changed
@@ -293,7 +293,7 @@ void QuickTilingTest::testQuickMaximizing()
     // Map the client.
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->workspace->active_client, c);
+    QCOMPARE(Test::app()->base.space->active_client, c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
     QCOMPARE(c->control->quicktiling(), win::quicktiles::none);
     QCOMPARE(c->maximizeMode(), win::maximize_mode::restore);
@@ -419,7 +419,7 @@ void QuickTilingTest::testQuickTilingKeyboardMove()
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(c);
-    QCOMPARE(Test::app()->workspace->active_client, c);
+    QCOMPARE(Test::app()->base.space->active_client, c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
     QCOMPARE(c->control->quicktiling(), win::quicktiles::none);
     QCOMPARE(c->maximizeMode(), win::maximize_mode::restore);
@@ -427,34 +427,34 @@ void QuickTilingTest::testQuickTilingKeyboardMove()
     QSignalSpy quickTileChangedSpy(c, &Toplevel::quicktiling_changed);
     QVERIFY(quickTileChangedSpy.isValid());
 
-    win::perform_window_operation(*Test::app()->workspace, c, base::options::UnrestrictedMoveOp);
-    QCOMPARE(c, Test::app()->workspace->move_resize_window);
-    QCOMPARE(input::get_cursor()->pos(), QPoint(49, 24));
+    win::perform_window_operation(*Test::app()->base.space, c, base::options::UnrestrictedMoveOp);
+    QCOMPARE(c, Test::app()->base.space->move_resize_window);
+    QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(49, 24));
 
     QFETCH(QPoint, targetPos);
     quint32 timestamp = 1;
     Test::keyboard_key_pressed(KEY_LEFTCTRL, timestamp++);
-    while (input::get_cursor()->pos().x() > targetPos.x()) {
+    while (Test::app()->base.input->cursor->pos().x() > targetPos.x()) {
         Test::keyboard_key_pressed(KEY_LEFT, timestamp++);
         Test::keyboard_key_released(KEY_LEFT, timestamp++);
     }
-    while (input::get_cursor()->pos().x() < targetPos.x()) {
+    while (Test::app()->base.input->cursor->pos().x() < targetPos.x()) {
         Test::keyboard_key_pressed(KEY_RIGHT, timestamp++);
         Test::keyboard_key_released(KEY_RIGHT, timestamp++);
     }
-    while (input::get_cursor()->pos().y() < targetPos.y()) {
+    while (Test::app()->base.input->cursor->pos().y() < targetPos.y()) {
         Test::keyboard_key_pressed(KEY_DOWN, timestamp++);
         Test::keyboard_key_released(KEY_DOWN, timestamp++);
     }
-    while (input::get_cursor()->pos().y() > targetPos.y()) {
+    while (Test::app()->base.input->cursor->pos().y() > targetPos.y()) {
         Test::keyboard_key_pressed(KEY_UP, timestamp++);
         Test::keyboard_key_released(KEY_UP, timestamp++);
     }
     Test::keyboard_key_released(KEY_LEFTCTRL, timestamp++);
     Test::keyboard_key_pressed(KEY_ENTER, timestamp++);
     Test::keyboard_key_released(KEY_ENTER, timestamp++);
-    QCOMPARE(input::get_cursor()->pos(), targetPos);
-    QVERIFY(!Test::app()->workspace->move_resize_window);
+    QCOMPARE(Test::app()->base.input->cursor->pos(), targetPos);
+    QVERIFY(!Test::app()->base.space->move_resize_window);
 
     QCOMPARE(quickTileChangedSpy.count(), 1);
     QTEST(c->control->quicktiling(), "expectedMode");
@@ -498,7 +498,7 @@ void QuickTilingTest::testQuickTilingPointerMove()
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(c);
-    QCOMPARE(Test::app()->workspace->active_client, c);
+    QCOMPARE(Test::app()->base.space->active_client, c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
     QCOMPARE(c->control->quicktiling(), win::quicktiles::none);
     QCOMPARE(c->maximizeMode(), win::maximize_mode::restore);
@@ -510,9 +510,9 @@ void QuickTilingTest::testQuickTilingPointerMove()
     QSignalSpy quickTileChangedSpy(c, &Toplevel::quicktiling_changed);
     QVERIFY(quickTileChangedSpy.isValid());
 
-    win::perform_window_operation(*Test::app()->workspace, c, base::options::UnrestrictedMoveOp);
-    QCOMPARE(c, Test::app()->workspace->move_resize_window);
-    QCOMPARE(input::get_cursor()->pos(), QPoint(49, 24));
+    win::perform_window_operation(*Test::app()->base.space, c, base::options::UnrestrictedMoveOp);
+    QCOMPARE(c, Test::app()->base.space->move_resize_window);
+    QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(49, 24));
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
 
@@ -521,8 +521,8 @@ void QuickTilingTest::testQuickTilingPointerMove()
     Test::pointer_motion_absolute(targetPos, timestamp++);
     Test::pointer_button_pressed(BTN_LEFT, timestamp++);
     Test::pointer_button_released(BTN_LEFT, timestamp++);
-    QCOMPARE(input::get_cursor()->pos(), targetPos);
-    QVERIFY(!Test::app()->workspace->move_resize_window);
+    QCOMPARE(Test::app()->base.input->cursor->pos(), targetPos);
+    QVERIFY(!Test::app()->base.space->move_resize_window);
 
     QCOMPARE(quickTileChangedSpy.count(), 1);
     QTEST(c->control->quicktiling(), "expectedMode");
@@ -582,7 +582,7 @@ void QuickTilingTest::testQuickTilingTouchMove()
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     auto const decoration = win::decoration(c);
-    QCOMPARE(Test::app()->workspace->active_client, c);
+    QCOMPARE(Test::app()->base.space->active_client, c);
     QCOMPARE(c->frameGeometry(),
              QRect(-decoration->borderLeft(),
                    0,
@@ -604,18 +604,18 @@ void QuickTilingTest::testQuickTilingTouchMove()
                              c->frameGeometry().y() + decoration->borderTop() / 2),
                      timestamp++);
     QVERIFY(configureRequestedSpy.wait());
-    QCOMPARE(c, Test::app()->workspace->move_resize_window);
+    QCOMPARE(c, Test::app()->base.space->move_resize_window);
     QCOMPARE(configureRequestedSpy.count(), 3);
 
     QFETCH(QPoint, targetPos);
     Test::touch_motion(0, targetPos, timestamp++);
     Test::touch_up(0, timestamp++);
-    QVERIFY(!Test::app()->workspace->move_resize_window);
+    QVERIFY(!Test::app()->base.space->move_resize_window);
 
     // When there are no borders, there is no change to them when quick-tiling.
     // TODO: we should test both cases with fixed fake decoration for autotests.
     auto const hasBorders
-        = Test::app()->workspace->deco->settings()->borderSize() != KDecoration2::BorderSize::None;
+        = Test::app()->base.space->deco->settings()->borderSize() != KDecoration2::BorderSize::None;
 
     QCOMPARE(quickTileChangedSpy.count(), 1);
     QTEST(c->control->quicktiling(), "expectedMode");
@@ -686,7 +686,7 @@ void QuickTilingTest::testX11QuickTiling()
     xcb_flush(c.get());
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy windowCreatedSpy(Test::app()->base.space->qobject.get(),
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
@@ -783,7 +783,7 @@ void QuickTilingTest::testX11QuickTilingAfterVertMaximize()
     xcb_flush(c.get());
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy windowCreatedSpy(Test::app()->base.space->qobject.get(),
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
@@ -879,7 +879,7 @@ void QuickTilingTest::testShortcut()
     // Map the client.
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->workspace->active_client, c);
+    QCOMPARE(Test::app()->base.space->active_client, c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
     QCOMPARE(c->control->quicktiling(), win::quicktiles::none);
 
@@ -972,7 +972,7 @@ void QuickTilingTest::testScript()
     // Map the client.
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->workspace->active_client, c);
+    QCOMPARE(Test::app()->base.space->active_client, c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
     QCOMPARE(c->control->quicktiling(), win::quicktiles::none);
 
@@ -987,7 +987,7 @@ void QuickTilingTest::testScript()
     QSignalSpy geometryChangedSpy(c, &Toplevel::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
 
-    QVERIFY(Test::app()->workspace->scripting);
+    QVERIFY(Test::app()->base.space->scripting);
     QTemporaryFile tmpFile;
     QVERIFY(tmpFile.open());
     QTextStream out(&tmpFile);
@@ -999,10 +999,10 @@ void QuickTilingTest::testScript()
     QFETCH(win::quicktiles, expectedMode);
     QFETCH(QRect, expectedGeometry);
 
-    auto const id = Test::app()->workspace->scripting->loadScript(tmpFile.fileName());
+    auto const id = Test::app()->base.space->scripting->loadScript(tmpFile.fileName());
     QVERIFY(id != -1);
-    QVERIFY(Test::app()->workspace->scripting->isScriptLoaded(tmpFile.fileName()));
-    auto s = Test::app()->workspace->scripting->findScript(tmpFile.fileName());
+    QVERIFY(Test::app()->base.space->scripting->isScriptLoaded(tmpFile.fileName()));
+    auto s = Test::app()->base.space->scripting->findScript(tmpFile.fileName());
     QVERIFY(s);
     QSignalSpy runningChangedSpy(s, &scripting::abstract_script::runningChanged);
     QVERIFY(runningChangedSpy.isValid());

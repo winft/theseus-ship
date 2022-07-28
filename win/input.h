@@ -50,7 +50,7 @@ void key_press_event(Win* win, uint key_code)
     key_code = key_code & ~Qt::KeyboardModifierMask;
 
     auto delta = is_control ? 1 : is_alt ? 32 : 8;
-    auto pos = input::get_cursor()->pos();
+    auto pos = win->space.input->platform.cursor->pos();
 
     switch (key_code) {
     case Qt::Key_Left:
@@ -80,7 +80,7 @@ void key_press_event(Win* win, uint key_code)
     default:
         return;
     }
-    input::get_cursor()->set_pos(pos);
+    win->space.input->platform.cursor->set_pos(pos);
 }
 
 template<typename Win>

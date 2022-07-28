@@ -36,15 +36,17 @@ class window;
 namespace input
 {
 
-template<typename>
+template<typename, typename>
 class keyboard_grab;
 
 namespace wayland
 {
 
 class platform;
+class redirect;
 
-using im_keyboard_grab_v2 = keyboard_grab<Wrapland::Server::input_method_keyboard_grab_v2>;
+using im_keyboard_grab_v2
+    = keyboard_grab<wayland::redirect, Wrapland::Server::input_method_keyboard_grab_v2>;
 
 class KWIN_EXPORT input_method : public QObject
 {

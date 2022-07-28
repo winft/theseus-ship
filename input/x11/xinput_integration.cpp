@@ -17,7 +17,6 @@
 #include "input/pointer_redirect.h"
 #include "input/redirect.h"
 #include "input/spies/modifier_only_shortcuts.h"
-#include "main.h"
 #include "platform.h"
 #include "win/screen_edges.h"
 #include "win/space.h"
@@ -315,41 +314,22 @@ void xinput_integration::startListening()
     m_keyReleaseFilter.reset(new XKeyPressReleaseEventFilter(XCB_KEY_RELEASE, this));
 
     // install the input event spies also relevant for X11 platform
-    auto redirect = kwinApp()->input->redirect;
+    auto redirect = platform->redirect;
     redirect->installInputEventSpy(new input::modifier_only_shortcuts_spy(*redirect));
 }
 
 void xinput_integration::setup_fake_devices()
 {
     auto pointer = fake_devices.pointer.get();
-    auto pointer_red = platform->redirect->pointer();
+    auto pointer_red = platform->redirect->get_pointer();
 
     auto keyboard = fake_devices.keyboard.get();
-    auto keyboard_red = platform->redirect->keyboard();
+    auto keyboard_red = platform->redirect->get_keyboard();
 
     keyboard->xkb->update_from_default();
 
     QObject::connect(
         pointer, &pointer::button_changed, pointer_red, &input::pointer_redirect::process_button);
-
-    QObject::connect(
-        pointer, &pointer::motion, pointer_red, &input::pointer_redirect::process_motion);
-    QObject::connect(pointer,
-                     &pointer::motion_absolute,
-                     pointer_red,
-                     &input::pointer_redirect::process_motion_absolute);
-
-    QObject::connect(
-        pointer, &pointer::axis_changed, pointer_red, &input::pointer_redirect::process_axis);
-
-    QObject::connect(
-        pointer, &pointer::pinch_begin, pointer_red, &input::pointer_redirect::process_pinch_begin);
-    QObject::connect(pointer,
-                     &pointer::pinch_update,
-                     pointer_red,
-                     &input::pointer_redirect::process_pinch_update);
-    QObject::connect(
-        pointer, &pointer::pinch_end, pointer_red, &input::pointer_redirect::process_pinch_end);
 
     QObject::connect(
         keyboard, &keyboard::key_changed, keyboard_red, &input::keyboard_redirect::process_key);

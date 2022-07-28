@@ -17,20 +17,21 @@
 namespace KWin::win
 {
 
-static osd_notification* create(win::space& space)
+static void create_osd(win::space& space)
 {
-    auto osd = new osd_notification(space.qobject.get());
+    assert(!space.osd);
+    space.osd = std::make_unique<osd_notification<input::redirect>>(space.input.get());
 
-    osd->setConfig(kwinApp()->config());
-    osd->setEngine(space.scripting->qmlEngine());
-
-    return osd;
+    space.osd->m_config = kwinApp()->config();
+    space.osd->m_qmlEngine = space.scripting->qmlEngine();
 }
 
-static osd_notification* osd(win::space& space)
+static osd_notification<input::redirect>* get_osd(win::space& space)
 {
-    static osd_notification* s_osd = create(space);
-    return s_osd;
+    if (!space.osd) {
+        create_osd(space);
+    }
+    return space.osd.get();
 }
 
 void osd_show(win::space& space, QString const& message, QString const& iconName, int timeout)
@@ -40,11 +41,11 @@ void osd_show(win::space& space, QString const& message, QString const& iconName
         return;
     }
 
-    auto notification = osd(space);
-    notification->setIconName(iconName);
-    notification->setMessage(message);
-    notification->setTimeout(timeout);
-    notification->setVisible(true);
+    auto notification = get_osd(space);
+    notification->qobject->setIconName(iconName);
+    notification->qobject->setMessage(message);
+    notification->qobject->setTimeout(timeout);
+    notification->qobject->setVisible(true);
 }
 
 void osd_show(win::space& space, QString const& message, int timeout)
@@ -64,8 +65,8 @@ void osd_hide(win::space& space, osd_hide_flags hide_flags)
         return;
     }
 
-    osd(space)->setSkipCloseAnimation(flags(hide_flags & osd_hide_flags::skip_close_animation));
-    osd(space)->setVisible(false);
+    get_osd(space)->setSkipCloseAnimation(flags(hide_flags & osd_hide_flags::skip_close_animation));
+    get_osd(space)->qobject->setVisible(false);
 }
 
 }

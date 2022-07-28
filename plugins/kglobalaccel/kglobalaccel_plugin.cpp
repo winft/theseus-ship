@@ -18,8 +18,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kglobalaccel_plugin.h"
-#include "input/redirect.h"
-#include "../../main.h"
+
+#include "input/platform.h"
+#include "input/singleton_interface.h"
 
 #include <QDebug>
 
@@ -42,7 +43,7 @@ void KGlobalAccelImpl::setEnabled(bool enabled)
     if (m_shuttingDown) {
         return;
     }
-    auto input = KWin::kwinApp()->input.get();
+    auto input = KWin::input::singleton_interface::platform;
     if (!input) {
         qFatal("This plugin is intended to be used with KWin and this is not KWin, exiting now");
     } else {

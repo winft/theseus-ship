@@ -23,8 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 
 #include "base/wayland/server.h"
-#include "input/wayland/dpms.h"
-#include "input/wayland/platform.h"
 #include "main.h"
 #include "render/wayland/output.h"
 #include "wayland_logging.h"
@@ -221,22 +219,6 @@ base::dpms_mode from_wayland_dpms_mode(Wrapland::Server::Output::DpmsMode wlMode
     }
 }
 
-Wrapland::Server::Output::DpmsMode to_wayland_dpms_mode(base::dpms_mode mode)
-{
-    switch (mode) {
-    case base::dpms_mode::on:
-        return Wrapland::Server::Output::DpmsMode::On;
-    case base::dpms_mode::standby:
-        return Wrapland::Server::Output::DpmsMode::Standby;
-    case base::dpms_mode::suspend:
-        return Wrapland::Server::Output::DpmsMode::Suspend;
-    case base::dpms_mode::off:
-        return Wrapland::Server::Output::DpmsMode::Off;
-    default:
-        Q_UNREACHABLE();
-    }
-}
-
 void output::init_interfaces(std::string const& name,
                              std::string const& make,
                              std::string const& model,
@@ -309,34 +291,6 @@ void output::set_transform(base::wayland::output_transform transform)
 base::wayland::output_transform output::transform() const
 {
     return static_cast<base::wayland::output_transform>(m_output->transform());
-}
-
-void output::dpms_set_on()
-{
-    qCDebug(KWIN_WL) << "DPMS mode set for output" << name() << "to On.";
-    m_dpms = base::dpms_mode::on;
-
-    if (is_enabled()) {
-        m_output->set_dpms_mode(Wrapland::Server::Output::DpmsMode::On);
-    }
-
-    auto& wlroots_base = static_cast<platform&>(kwinApp()->get_base());
-    auto wayland_input = static_cast<input::wayland::platform*>(kwinApp()->input.get());
-    base::wayland::check_outputs_on(wlroots_base, wayland_input->dpms_filter);
-}
-
-void output::dpms_set_off(base::dpms_mode mode)
-{
-    qCDebug(KWIN_WL) << "DPMS mode set for output" << name() << "to Off.";
-
-    m_dpms = mode;
-
-    if (is_enabled()) {
-        m_output->set_dpms_mode(to_wayland_dpms_mode(mode));
-
-        auto wayland_input = static_cast<input::wayland::platform*>(kwinApp()->input.get());
-        input::wayland::create_dpms_filter(wayland_input);
-    }
 }
 
 base::dpms_mode output::dpms_mode() const

@@ -21,6 +21,7 @@
 #include "xdg_shell.h"
 
 #include "base/wayland/server.h"
+#include "input/wayland/redirect.h"
 #include "win/input.h"
 #include "win/internal_window.h"
 #include "win/screen.h"
@@ -48,7 +49,9 @@
 namespace KWin::win::wayland
 {
 
-space::space(render::compositor& render, base::wayland::server* server)
+space::space(render::compositor& render,
+             input::wayland::platform& input,
+             base::wayland::server* server)
     : win::space(render)
     , server{server}
     , compositor{server->display->createCompositor()}
@@ -69,6 +72,8 @@ space::space(render::compositor& render, base::wayland::server* server)
 {
     namespace WS = Wrapland::Server;
 
+    this->input = std::make_unique<input::wayland::redirect>(input, *this);
+    dbus = std::make_unique<base::dbus::kwin_impl<win::space, input::platform>>(*this, &input);
     edges = std::make_unique<win::screen_edger>(*this);
 
     plasma_window_manager->setShowingDesktopState(
@@ -178,8 +183,8 @@ space::space(render::compositor& render, base::wayland::server* server)
                      qobject.get(),
                      [this](auto&& win) { handle_x11_window_added(win); });
 
-    QObject::connect(virtual_desktop_manager.get(),
-                     &virtual_desktop_manager::desktopRemoved,
+    QObject::connect(virtual_desktop_manager->qobject.get(),
+                     &virtual_desktop_manager_qobject::desktopRemoved,
                      qobject.get(),
                      [this](auto&& desktop) { handle_desktop_removed(desktop); });
 }

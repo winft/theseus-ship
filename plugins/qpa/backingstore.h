@@ -21,6 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_QPA_BACKINGSTORE_H
 #define KWIN_QPA_BACKINGSTORE_H
 
+#include <epoxy/gl.h>
+
 #include <qpa/qplatformbackingstore.h>
 
 namespace KWin

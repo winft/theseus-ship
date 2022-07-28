@@ -36,9 +36,17 @@ layout_policy::layout_policy(layout_manager* manager, KConfigGroup const& config
 
 layout_policy::~layout_policy() = default;
 
+namespace
+{
+auto get_keyboard(layout_policy* policy)
+{
+    return xkb::get_primary_xkb_keyboard(*policy->manager->xkb.platform);
+}
+}
+
 void layout_policy::set_layout(uint index)
 {
-    xkb::get_primary_xkb_keyboard()->switch_to_layout(index);
+    get_keyboard(this)->switch_to_layout(index);
 }
 
 layout_policy*
@@ -83,13 +91,13 @@ global_layout_policy::global_layout_policy(layout_manager* manager, KConfigGroup
     QObject::connect(
         session_manager, &win::session_manager::prepareSessionSaveRequested, this, [this] {
             clear_layouts();
-            if (auto const layout = xkb::get_primary_xkb_keyboard()->layout) {
+            if (auto const layout = get_keyboard(this)->layout) {
                 this->config.writeEntry(default_layout_entry_key(), layout);
             }
         });
 
     QObject::connect(session_manager, &win::session_manager::loadSessionRequested, this, [this] {
-        if (xkb::get_primary_xkb_keyboard()->layouts_count() > 1) {
+        if (get_keyboard(this)->layouts_count() > 1) {
             set_layout(this->config.readEntry(default_layout_entry_key(), 0));
         }
     });
@@ -100,8 +108,8 @@ virtual_desktop_layout_policy::virtual_desktop_layout_policy(layout_manager* man
     : layout_policy(manager, config)
 {
     auto& space = manager->xkb.platform->redirect->space;
-    QObject::connect(space.virtual_desktop_manager.get(),
-                     &win::virtual_desktop_manager::currentChanged,
+    QObject::connect(space.virtual_desktop_manager->qobject.get(),
+                     &win::virtual_desktop_manager_qobject::currentChanged,
                      this,
                      &virtual_desktop_layout_policy::handle_desktop_change);
 
@@ -123,7 +131,7 @@ virtual_desktop_layout_policy::virtual_desktop_layout_policy(layout_manager* man
         });
 
     QObject::connect(session_manager, &win::session_manager::loadSessionRequested, this, [this] {
-        if (xkb::get_primary_xkb_keyboard()->layouts_count() > 1) {
+        if (get_keyboard(this)->layouts_count() > 1) {
             auto const& desktops
                 = this->manager->xkb.platform->redirect->space.virtual_desktop_manager->desktops();
 
@@ -266,7 +274,7 @@ application_layout_policy::application_layout_policy(layout_manager* manager,
             }
         });
     QObject::connect(session_manager, &win::session_manager::loadSessionRequested, this, [this] {
-        if (xkb::get_primary_xkb_keyboard()->layouts_count() > 1) {
+        if (get_keyboard(this)->layouts_count() > 1) {
             auto const keyPrefix = default_layout_entry_key();
             auto const keyList = this->config.keyList().filter(keyPrefix);
             for (auto const& key : keyList) {
@@ -312,7 +320,7 @@ void application_layout_policy::handle_client_activated(Toplevel* window)
 
     set_layout(restored_layout);
 
-    if (auto index = xkb::get_primary_xkb_keyboard()->layout) {
+    if (auto index = get_keyboard(this)->layout) {
         handle_layout_change(index);
     }
 }

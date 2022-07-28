@@ -86,7 +86,7 @@ void TouchInputTest::init()
     QVERIFY(touch);
     QVERIFY(touch->isValid());
 
-    input::get_cursor()->set_pos(QPoint(1280, 512));
+    Test::app()->base.input->cursor->set_pos(QPoint(1280, 512));
 }
 
 void TouchInputTest::cleanup()
@@ -128,7 +128,7 @@ Toplevel* TouchInputTest::showWindow(bool decorated)
     auto c = Test::render_and_wait_for_shown(client.surface, QSize(100, 50), Qt::blue);
 
     VERIFY(c);
-    COMPARE(Test::app()->workspace->active_client, c);
+    COMPARE(Test::app()->base.space->active_client, c);
 
 #undef VERIFY
 #undef COMPARE
@@ -139,26 +139,26 @@ Toplevel* TouchInputTest::showWindow(bool decorated)
 
 void TouchInputTest::testTouchHidesCursor()
 {
-    QCOMPARE(kwinApp()->input->cursor->is_hidden(), false);
+    QCOMPARE(Test::app()->base.input->cursor->is_hidden(), false);
     quint32 timestamp = 1;
     Test::touch_down(1, QPointF(125, 125), timestamp++);
-    QCOMPARE(kwinApp()->input->cursor->is_hidden(), true);
+    QCOMPARE(Test::app()->base.input->cursor->is_hidden(), true);
     Test::touch_down(2, QPointF(130, 125), timestamp++);
     Test::touch_up(2, timestamp++);
     Test::touch_up(1, timestamp++);
 
     // now a mouse event should show the cursor again
     Test::pointer_motion_absolute(QPointF(0, 0), timestamp++);
-    QCOMPARE(kwinApp()->input->cursor->is_hidden(), false);
+    QCOMPARE(Test::app()->base.input->cursor->is_hidden(), false);
 
     // touch should hide again
     Test::touch_down(1, QPointF(125, 125), timestamp++);
     Test::touch_up(1, timestamp++);
-    QCOMPARE(kwinApp()->input->cursor->is_hidden(), true);
+    QCOMPARE(Test::app()->base.input->cursor->is_hidden(), true);
 
     // wheel should also show
     Test::pointer_axis_vertical(1.0, timestamp++, 0);
-    QCOMPARE(kwinApp()->input->cursor->is_hidden(), false);
+    QCOMPARE(Test::app()->base.input->cursor->is_hidden(), false);
 }
 
 void TouchInputTest::testMultipleTouchPoints_data()

@@ -201,7 +201,7 @@ void InternalWindowTest::initTestCase()
 
 void InternalWindowTest::init()
 {
-    input::get_cursor()->set_pos(QPoint(1280, 512));
+    Test::app()->base.input->cursor->set_pos(QPoint(1280, 512));
     Test::setup_wayland_connection(Test::global_selection::seat);
     QVERIFY(Test::wait_for_wayland_keyboard());
 }
@@ -213,25 +213,25 @@ void InternalWindowTest::cleanup()
 
 void InternalWindowTest::testEnterLeave()
 {
-    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
                               &win::space::qobject_t::internalClientAdded);
     QVERIFY(clientAddedSpy.isValid());
     HelperWindow win;
-    QVERIFY(!Test::app()->workspace->findInternal(nullptr));
-    QVERIFY(!Test::app()->workspace->findInternal(&win));
+    QVERIFY(!Test::app()->base.space->findInternal(nullptr));
+    QVERIFY(!Test::app()->base.space->findInternal(&win));
     win.setGeometry(0, 0, 100, 100);
     win.show();
 
     QTRY_COMPARE(clientAddedSpy.count(), 1);
-    QVERIFY(!Test::app()->workspace->active_client);
+    QVERIFY(!Test::app()->base.space->active_client);
     auto c = clientAddedSpy.first().first().value<win::internal_window*>();
     QVERIFY(c);
     QVERIFY(c->isInternal());
     QVERIFY(!win::decoration(c));
-    QCOMPARE(Test::app()->workspace->findInternal(&win), c);
+    QCOMPARE(Test::app()->base.space->findInternal(&win), c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 100));
     QVERIFY(c->isShown());
-    QVERIFY(contains(win::render_stack(*Test::app()->workspace->stacking_order), c));
+    QVERIFY(contains(win::render_stack(*Test::app()->base.space->stacking_order), c));
 
     QSignalSpy enterSpy(&win, &HelperWindow::entered);
     QVERIFY(enterSpy.isValid());
@@ -264,7 +264,7 @@ void InternalWindowTest::testEnterLeave()
 
 void InternalWindowTest::testPointerPressRelease()
 {
-    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
                               &win::space::qobject_t::internalClientAdded);
     QVERIFY(clientAddedSpy.isValid());
     HelperWindow win;
@@ -288,7 +288,7 @@ void InternalWindowTest::testPointerPressRelease()
 
 void InternalWindowTest::testPointerAxis()
 {
-    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
                               &win::space::qobject_t::internalClientAdded);
     QVERIFY(clientAddedSpy.isValid());
     HelperWindow win;
@@ -317,7 +317,7 @@ void InternalWindowTest::testKeyboard_data()
 
 void InternalWindowTest::testKeyboard()
 {
-    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
                               &win::space::qobject_t::internalClientAdded);
     QVERIFY(clientAddedSpy.isValid());
     HelperWindow win;
@@ -347,7 +347,7 @@ void InternalWindowTest::testKeyboard()
 
 void InternalWindowTest::testKeyboardShowWithoutActivating()
 {
-    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
                               &win::space::qobject_t::internalClientAdded);
     QVERIFY(clientAddedSpy.isValid());
     HelperWindow win;
@@ -404,7 +404,7 @@ void InternalWindowTest::testKeyboardTriggersLeave()
     QCOMPARE(enteredSpy.count(), 1);
 
     // create internal window
-    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
                               &win::space::qobject_t::internalClientAdded);
     QVERIFY(clientAddedSpy.isValid());
     HelperWindow win;
@@ -446,7 +446,7 @@ void InternalWindowTest::testKeyboardTriggersLeave()
 void InternalWindowTest::testTouch()
 {
     // touch events for internal windows are emulated through mouse events
-    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
                               &win::space::qobject_t::internalClientAdded);
     QVERIFY(clientAddedSpy.isValid());
     HelperWindow win;
@@ -512,7 +512,7 @@ void InternalWindowTest::testTouch()
 void InternalWindowTest::testOpacity()
 {
     // this test verifies that opacity is properly synced from QWindow to InternalClient
-    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
                               &win::space::qobject_t::internalClientAdded);
     QVERIFY(clientAddedSpy.isValid());
     HelperWindow win;
@@ -534,7 +534,7 @@ void InternalWindowTest::testOpacity()
 
 void InternalWindowTest::testMove()
 {
-    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
                               &win::space::qobject_t::internalClientAdded);
     QVERIFY(clientAddedSpy.isValid());
     HelperWindow win;
@@ -576,7 +576,7 @@ void InternalWindowTest::testSkipCloseAnimation_data()
 
 void InternalWindowTest::testSkipCloseAnimation()
 {
-    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
                               &win::space::qobject_t::internalClientAdded);
     QVERIFY(clientAddedSpy.isValid());
     HelperWindow win;
@@ -601,7 +601,7 @@ void InternalWindowTest::testSkipCloseAnimation()
 
 void InternalWindowTest::testModifierClickUnrestrictedMove()
 {
-    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
                               &win::space::qobject_t::internalClientAdded);
     QVERIFY(clientAddedSpy.isValid());
     HelperWindow win;
@@ -619,14 +619,14 @@ void InternalWindowTest::testModifierClickUnrestrictedMove()
     group.writeEntry("CommandAll2", "Move");
     group.writeEntry("CommandAll3", "Move");
     group.sync();
-    win::space_reconfigure(*Test::app()->workspace);
+    win::space_reconfigure(*Test::app()->base.space);
     QCOMPARE(kwinApp()->options->commandAllModifier(), Qt::MetaModifier);
     QCOMPARE(kwinApp()->options->commandAll1(), base::options::MouseUnrestrictedMove);
     QCOMPARE(kwinApp()->options->commandAll2(), base::options::MouseUnrestrictedMove);
     QCOMPARE(kwinApp()->options->commandAll3(), base::options::MouseUnrestrictedMove);
 
     // move cursor on window
-    input::get_cursor()->set_pos(internalClient->frameGeometry().center());
+    Test::app()->base.input->cursor->set_pos(internalClient->frameGeometry().center());
 
     // simulate modifier+click
     quint32 timestamp = 1;
@@ -644,7 +644,7 @@ void InternalWindowTest::testModifierClickUnrestrictedMove()
 
 void InternalWindowTest::testModifierScroll()
 {
-    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
                               &win::space::qobject_t::internalClientAdded);
     QVERIFY(clientAddedSpy.isValid());
     HelperWindow win;
@@ -660,10 +660,10 @@ void InternalWindowTest::testModifierScroll()
     group.writeEntry("CommandAllKey", "Meta");
     group.writeEntry("CommandAllWheel", "change opacity");
     group.sync();
-    win::space_reconfigure(*Test::app()->workspace);
+    win::space_reconfigure(*Test::app()->base.space);
 
     // move cursor on window
-    input::get_cursor()->set_pos(internalClient->frameGeometry().center());
+    Test::app()->base.input->cursor->set_pos(internalClient->frameGeometry().center());
 
     // set the opacity to 0.5
     internalClient->setOpacity(0.5);
@@ -679,7 +679,7 @@ void InternalWindowTest::testModifierScroll()
 
 void InternalWindowTest::testPopup()
 {
-    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
                               &win::space::qobject_t::internalClientAdded);
     QVERIFY(clientAddedSpy.isValid());
     HelperWindow win;
@@ -696,7 +696,7 @@ void InternalWindowTest::testScale()
 {
     Test::app()->set_outputs({{{QRect(0, 0, 1280, 1024), 2}, {QRect(1280 / 2, 0, 1280, 1024), 2}}});
 
-    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
                               &win::space::qobject_t::internalClientAdded);
     QVERIFY(clientAddedSpy.isValid());
     HelperWindow win;
@@ -732,7 +732,7 @@ void InternalWindowTest::testWindowType_data()
 
 void InternalWindowTest::testWindowType()
 {
-    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
                               &win::space::qobject_t::internalClientAdded);
     QVERIFY(clientAddedSpy.isValid());
     HelperWindow win;
@@ -768,7 +768,7 @@ void InternalWindowTest::testChangeWindowType_data()
 
 void InternalWindowTest::testChangeWindowType()
 {
-    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
                               &win::space::qobject_t::internalClientAdded);
     QVERIFY(clientAddedSpy.isValid());
     HelperWindow win;
@@ -789,7 +789,7 @@ void InternalWindowTest::testChangeWindowType()
 
 void InternalWindowTest::testEffectWindow()
 {
-    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
                               &win::space::qobject_t::internalClientAdded);
     QVERIFY(clientAddedSpy.isValid());
     HelperWindow win;

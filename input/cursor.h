@@ -207,6 +207,4 @@ private:
     int hide_count{0};
 };
 
-KWIN_EXPORT cursor* get_cursor();
-
 }

@@ -85,7 +85,7 @@ void TestScreenEdges::init()
 {
     Test::setup_wayland_connection();
     m_compositor = Test::get_client().interfaces.compositor.get();
-    input::get_cursor()->set_pos(QPoint(640, 512));
+    Test::app()->base.input->cursor->set_pos(QPoint(640, 512));
 }
 
 void TestScreenEdges::cleanup()
@@ -111,7 +111,7 @@ bool TestObject::callback(KWin::ElectricBorder border)
 
 void reset_edger()
 {
-    Test::app()->workspace->edges = std::make_unique<win::screen_edger>(*Test::app()->workspace);
+    Test::app()->base.space->edges = std::make_unique<win::screen_edger>(*Test::app()->base.space);
 }
 
 void reset_edger(KSharedConfig::Ptr config)
@@ -123,7 +123,7 @@ void reset_edger(KSharedConfig::Ptr config)
 void TestScreenEdges::testInit()
 {
     reset_edger();
-    auto& screenEdges = Test::app()->workspace->edges;
+    auto& screenEdges = Test::app()->base.space->edges;
     QCOMPARE(screenEdges->desktop_switching.always, false);
     QCOMPARE(screenEdges->desktop_switching.when_moving_client, false);
     QCOMPARE(screenEdges->time_threshold, 150);
@@ -223,7 +223,7 @@ void TestScreenEdges::testCreatingInitialEdges()
     config->sync();
 
     reset_edger(config);
-    auto& screenEdges = Test::app()->workspace->edges;
+    auto& screenEdges = Test::app()->base.space->edges;
 
     // we don't have multiple desktops, so it's returning false
     QCOMPARE(screenEdges->desktop_switching.always, true);
@@ -242,7 +242,7 @@ void TestScreenEdges::testCreatingInitialEdges()
     // set some reasonable virtual desktops
     config->group("Desktops").writeEntry("Number", 4);
     config->sync();
-    auto& vd = Test::app()->workspace->virtual_desktop_manager;
+    auto& vd = Test::app()->base.space->virtual_desktop_manager;
     vd->setConfig(config);
     vd->load();
     vd->updateLayout();
@@ -341,7 +341,7 @@ void TestScreenEdges::testCreatingInitialEdges()
     }
 
     // Let's start a window move. First create a window.
-    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
                               &win::space::qobject_t::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
     auto surface = Test::create_surface();
@@ -351,10 +351,10 @@ void TestScreenEdges::testCreatingInitialEdges()
     Test::render(surface, QSize(100, 50), Qt::blue);
     Test::flush_wayland_connection();
     QVERIFY(clientAddedSpy.wait());
-    auto client = Test::app()->workspace->active_client;
+    auto client = Test::app()->base.space->active_client;
     QVERIFY(client);
 
-    win::set_move_resize_window(*Test::app()->workspace, client);
+    win::set_move_resize_window(*Test::app()->base.space, client);
     for (int i = 0; i < 8; ++i) {
         auto e = edges.at(i);
         QVERIFY(e->reserved_count > 0);
@@ -372,7 +372,7 @@ void TestScreenEdges::testCreatingInitialEdges()
         QCOMPARE(e->activatesForTouchGesture(), false);
         QCOMPARE(e->approach_geometry, expectedGeometries.at(i * 2 + 1));
     }
-    win::set_move_resize_window(*Test::app()->workspace, nullptr);
+    win::set_move_resize_window(*Test::app()->base.space, nullptr);
 }
 
 void TestScreenEdges::testCallback()
@@ -386,7 +386,7 @@ void TestScreenEdges::testCallback()
     QCOMPARE(changedSpy.count(), 1);
 
     reset_edger();
-    auto& screenEdges = Test::app()->workspace->edges;
+    auto& screenEdges = Test::app()->base.space->edges;
     TestObject callback;
     QSignalSpy spy(&callback, &TestObject::gotCallback);
     QVERIFY(spy.isValid());
@@ -421,20 +421,20 @@ void TestScreenEdges::testCallback()
 
     // doesn't trigger as the edge was not triggered yet
     QVERIFY(spy.isEmpty());
-    QCOMPARE(input::get_cursor()->pos(), QPoint(1, 50));
+    QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(1, 50));
 
     // test doesn't trigger due to too much offset
     QTest::qWait(160);
     setPos(QPoint(0, 100));
     QVERIFY(spy.isEmpty());
-    QCOMPARE(input::get_cursor()->pos(), QPoint(1, 100));
+    QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(1, 100));
 
     // doesn't trigger as we are waiting too long already
     QTest::qWait(200);
     setPos(QPoint(0, 101));
 
     QVERIFY(spy.isEmpty());
-    QCOMPARE(input::get_cursor()->pos(), QPoint(1, 101));
+    QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(1, 101));
 
     spy.clear();
 
@@ -442,7 +442,7 @@ void TestScreenEdges::testCallback()
     QTest::qWait(50);
     setPos(QPoint(0, 100));
     QVERIFY(spy.isEmpty());
-    QCOMPARE(input::get_cursor()->pos(), QPoint(1, 100));
+    QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(1, 100));
 
     // and this one triggers
     QTest::qWait(110);
@@ -453,7 +453,7 @@ void TestScreenEdges::testCallback()
     QVERIFY(!spy.isEmpty());
 
     QEXPECT_FAIL("", "No dead pixel on Wayland? Needs investigation.", Continue);
-    QCOMPARE(input::get_cursor()->pos(), QPoint(1, 101));
+    QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(1, 101));
 
     // now let's try to trigger again
     QTest::qWait(351);
@@ -465,7 +465,7 @@ void TestScreenEdges::testCallback()
     QCOMPARE(spy.count(), 1);
 
     QEXPECT_FAIL("", "No pushback on Wayland. Needs investigation.", Continue);
-    QCOMPARE(input::get_cursor()->pos(), QPoint(1, 100));
+    QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(1, 100));
 
     // it's still under the reactivation
     QTest::qWait(50);
@@ -477,7 +477,7 @@ void TestScreenEdges::testCallback()
     QCOMPARE(spy.count(), 1);
 
     QEXPECT_FAIL("", "No pushback on Wayland. Needs investigation.", Continue);
-    QCOMPARE(input::get_cursor()->pos(), QPoint(1, 100));
+    QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(1, 100));
 
     // now it should trigger again
     QTest::qWait(250);
@@ -488,7 +488,7 @@ void TestScreenEdges::testCallback()
     QCOMPARE(spy.count(), 2);
     QCOMPARE(spy.first().first().value<ElectricBorder>(), ElectricLeft);
     QCOMPARE(spy.last().first().value<ElectricBorder>(), ElectricLeft);
-    QCOMPARE(input::get_cursor()->pos(), QPoint(1, 100));
+    QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(1, 100));
 
     // let's disable pushback
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
@@ -509,7 +509,7 @@ void TestScreenEdges::testCallback()
     QCOMPARE(spy.at(2).first().value<ElectricBorder>(), ElectricLeft);
 #endif
     QEXPECT_FAIL("", "No dead pixel on Wayland? Needs investigation.", Continue);
-    QCOMPARE(input::get_cursor()->pos(), QPoint(0, 100));
+    QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(0, 100));
 
     // now let's unreserve again
     screenEdges->unreserve(ElectricTopLeft, &callback);
@@ -533,7 +533,7 @@ void TestScreenEdges::testCallback()
 void TestScreenEdges::testCallbackWithCheck()
 {
     reset_edger();
-    auto& screenEdges = Test::app()->workspace->edges;
+    auto& screenEdges = Test::app()->base.space->edges;
 
     TestObject callback;
     QSignalSpy spy(&callback, &TestObject::gotCallback);
@@ -545,18 +545,18 @@ void TestScreenEdges::testCallbackWithCheck()
     QVERIFY(spy.isEmpty());
 
     // try a direct activate without pushback
-    input::get_cursor()->set_pos(0, 50);
+    Test::app()->base.input->cursor->set_pos(0, 50);
     screenEdges->check(QPoint(0, 50), QDateTime::currentDateTimeUtc(), true);
 
     QEXPECT_FAIL("", "Is twice on Wayland. Should be only one. Needs investigation", Continue);
     QCOMPARE(spy.count(), 1);
 
     QEXPECT_FAIL("", "Cursor moves on other output. Needs investigation.", Continue);
-    QCOMPARE(input::get_cursor()->pos(), QPoint(0, 50));
+    QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(0, 50));
 
     // use a different edge, this time with pushback
     screenEdges->reserve(KWin::ElectricRight, &callback, "callback");
-    input::get_cursor()->set_pos(99, 50);
+    Test::app()->base.input->cursor->set_pos(99, 50);
     screenEdges->check(QPoint(99, 50), QDateTime::currentDateTimeUtc());
 
     QEXPECT_FAIL("", "Should have been triggered. Needs investigation", Abort);
@@ -564,13 +564,13 @@ void TestScreenEdges::testCallbackWithCheck()
     QCOMPARE(spy.last().first().value<ElectricBorder>(), ElectricLeft);
 
     QEXPECT_FAIL("", "No dead pixel on Wayland? Needs investigation.", Continue);
-    QCOMPARE(input::get_cursor()->pos(), QPoint(98, 50));
+    QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(98, 50));
 
-    input::get_cursor()->set_pos(98, 50);
+    Test::app()->base.input->cursor->set_pos(98, 50);
 
     // and trigger it again
     QTest::qWait(160);
-    input::get_cursor()->set_pos(99, 50);
+    Test::app()->base.input->cursor->set_pos(99, 50);
     screenEdges->check(QPoint(99, 50), QDateTime::currentDateTimeUtc());
 
     QEXPECT_FAIL("", "Should have been triggered once more. Needs investigation", Continue);
@@ -578,7 +578,7 @@ void TestScreenEdges::testCallbackWithCheck()
     QEXPECT_FAIL("", "Follow up", Continue);
     QCOMPARE(spy.last().first().value<ElectricBorder>(), ElectricRight);
     QEXPECT_FAIL("", "Follow up", Continue);
-    QCOMPARE(input::get_cursor()->pos(), QPoint(98, 50));
+    QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(98, 50));
 }
 
 void TestScreenEdges::test_overlapping_edges_data()
@@ -642,7 +642,7 @@ void TestScreenEdges::testPushBack()
     Test::app()->set_outputs(geometries);
 
     reset_edger(config);
-    auto& screenEdges = Test::app()->workspace->edges;
+    auto& screenEdges = Test::app()->base.space->edges;
     TestObject callback;
     QSignalSpy spy(&callback, &TestObject::gotCallback);
     QVERIFY(spy.isValid());
@@ -650,19 +650,19 @@ void TestScreenEdges::testPushBack()
     screenEdges->reserve(border, &callback, "callback");
 
     QFETCH(QPoint, trigger);
-    input::get_cursor()->set_pos(trigger);
+    Test::app()->base.input->cursor->set_pos(trigger);
 
     QVERIFY(spy.isEmpty());
 
     // TODO: Does not work for all data at the moment on Wayland.
 #if 0
-    QTEST(input::get_cursor()->pos(), "expected");
+    QTEST(Test::app()->base.input->cursor->pos(), "expected");
 
     // do the same without the event, but the check method
-    input::get_cursor()->set_pos(trigger);
+    Test::app()->base.input->cursor->set_pos(trigger);
     screenEdges->check(trigger, QDateTime::currentDateTimeUtc());
     QVERIFY(spy.isEmpty());
-    QTEST(input::get_cursor()->pos(), "expected");
+    QTEST(Test::app()->base.input->cursor->pos(), "expected");
 #endif
 }
 
@@ -672,7 +672,7 @@ void TestScreenEdges::testFullScreenBlocking()
     config->group("Windows").writeEntry("ElectricBorderPushbackPixels", 1);
     config->sync();
 
-    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
                               &win::space::qobject_t::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
     auto surface = Test::create_surface();
@@ -682,11 +682,11 @@ void TestScreenEdges::testFullScreenBlocking()
     Test::render(surface, QSize(100, 50), Qt::blue);
     Test::flush_wayland_connection();
     QVERIFY(clientAddedSpy.wait());
-    auto client = Test::app()->workspace->active_client;
+    auto client = Test::app()->base.space->active_client;
     QVERIFY(client);
 
     reset_edger(config);
-    auto& screenEdges = Test::app()->workspace->edges;
+    auto& screenEdges = Test::app()->base.space->edges;
     TestObject callback;
     QSignalSpy spy(&callback, &TestObject::gotCallback);
     QVERIFY(spy.isValid());
@@ -702,14 +702,14 @@ void TestScreenEdges::testFullScreenBlocking()
         QCOMPARE(e->activatesForTouchGesture(), e->border == KWin::ElectricRight);
     }
 
-    input::get_cursor()->set_pos(0, 50);
+    Test::app()->base.input->cursor->set_pos(0, 50);
     QVERIFY(spy.isEmpty());
-    QCOMPARE(input::get_cursor()->pos(), QPoint(1, 50));
+    QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(1, 50));
 
     client->setFrameGeometry(QRect({}, Test::app()->base.topology.size));
     win::set_active(client, true);
     client->setFullScreen(true);
-    win::set_active_window(*Test::app()->workspace, client);
+    win::set_active_window(*Test::app()->base.space, client);
     Q_EMIT screenEdges->checkBlocking();
 
     // the signal doesn't trigger for corners, let's go over all windows just to be sure that it
@@ -720,12 +720,12 @@ void TestScreenEdges::testFullScreenBlocking()
     }
     // calling again should not trigger
     QTest::qWait(160);
-    input::get_cursor()->set_pos(0, 50);
+    Test::app()->base.input->cursor->set_pos(0, 50);
     QVERIFY(spy.isEmpty());
 
     // and no pushback
     QEXPECT_FAIL("", "Does for some reason pushback on Wayland", Continue);
-    QCOMPARE(input::get_cursor()->pos(), QPoint(0, 50));
+    QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(0, 50));
 
     // let's make the client not fullscreen, which should trigger
     client->setFullScreen(false);
@@ -737,7 +737,7 @@ void TestScreenEdges::testFullScreenBlocking()
     // TODO: Does not trigger for some reason on Wayland.
 #if 0
     QVERIFY(!spy.isEmpty());
-    QCOMPARE(input::get_cursor()->pos(), QPoint(1, 50));
+    QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(1, 50));
 
     // let's make the client fullscreen again, but with a geometry not intersecting the left edge
     QTest::qWait(351);
@@ -745,35 +745,35 @@ void TestScreenEdges::testFullScreenBlocking()
     client->setFrameGeometry(client->frameGeometry().translated(10, 0));
     Q_EMIT screenEdges->checkBlocking();
     spy.clear();
-    input::get_cursor()->set_pos(0, 50);
+    Test::app()->base.input->cursor->set_pos(0, 50);
     QVERIFY(spy.isEmpty());
     // and a pushback
-    QCOMPARE(input::get_cursor()->pos(), QPoint(1, 50));
+    QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(1, 50));
 
     // just to be sure, let's set geometry back
-    client->setFrameGeometry(QRect({}, Test::app()->workspace->size));
+    client->setFrameGeometry(QRect({}, Test::app()->base.space->size));
     Q_EMIT screenEdges->checkBlocking();
-    input::get_cursor()->set_pos(0, 50);
+    Test::app()->base.input->cursor->set_pos(0, 50);
     QVERIFY(spy.isEmpty());
     // and no pushback
-    QCOMPARE(input::get_cursor()->pos(), QPoint(0, 50));
+    QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(0, 50));
 
     // the corner should always trigger
     screenEdges->unreserve(KWin::ElectricLeft, &callback);
-    input::get_cursor()->set_pos(99, 99);
+    Test::app()->base.input->cursor->set_pos(99, 99);
     QVERIFY(spy.isEmpty());
 
     // and pushback
-    QCOMPARE(input::get_cursor()->pos(), QPoint(98, 98));
+    QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(98, 98));
     QTest::qWait(160);
-    input::get_cursor()->set_pos(99, 99);
+    Test::app()->base.input->cursor->set_pos(99, 99);
     QVERIFY(!spy.isEmpty());
 #endif
 }
 
 void TestScreenEdges::testClientEdge()
 {
-    QSignalSpy clientAddedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
                               &win::space::qobject_t::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
     auto surface = Test::create_surface();
@@ -783,13 +783,13 @@ void TestScreenEdges::testClientEdge()
     Test::render(surface, QSize(100, 50), Qt::blue);
     Test::flush_wayland_connection();
     QVERIFY(clientAddedSpy.wait());
-    auto client = Test::app()->workspace->active_client;
+    auto client = Test::app()->base.space->active_client;
     QVERIFY(client);
 
     client->setFrameGeometry(QRect(10, 50, 10, 50));
 
     reset_edger();
-    auto& screenEdges = Test::app()->workspace->edges;
+    auto& screenEdges = Test::app()->base.space->edges;
 
     screenEdges->reserve(client, KWin::ElectricBottom);
 
@@ -819,12 +819,12 @@ void TestScreenEdges::testClientEdge()
     screenEdges->reserve(client, KWin::ElectricLeft);
     QCOMPARE(client->isHiddenInternal(), true);
 
-    input::get_cursor()->set_pos(0, 50);
+    Test::app()->base.input->cursor->set_pos(0, 50);
 
     // autohiding panels shall activate instantly
     QEXPECT_FAIL("", "Is hidden on Wayland but was not on X11. Needs investigation.", Abort);
     QCOMPARE(client->isHiddenInternal(), false);
-    QCOMPARE(input::get_cursor()->pos(), QPoint(1, 50));
+    QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(1, 50));
 
     // now let's reserve the client for each of the edges, in the end for the right one
     client->hideClient(true);
@@ -850,8 +850,8 @@ void TestScreenEdges::testClientEdge()
     screenEdges->reserve(client, KWin::ElectricRight);
     QCOMPARE(client->isHiddenInternal(), true);
 
-    // now let's emulate the removal of a Client through Workspace
-    Q_EMIT Test::app()->workspace->qobject->clientRemoved(client);
+    // now let's emulate the removal of a Client through base.space
+    Q_EMIT Test::app()->base.space->qobject->clientRemoved(client);
     for (auto e : screenEdges->findChildren<win::screen_edge*>()) {
         QVERIFY(!e->client());
     }
@@ -860,19 +860,19 @@ void TestScreenEdges::testClientEdge()
     // now let's try to trigger the client showing with the check method instead of enter notify
     screenEdges->reserve(client, KWin::ElectricTop);
     QCOMPARE(client->isHiddenInternal(), true);
-    input::get_cursor()->set_pos(50, 0);
+    Test::app()->base.input->cursor->set_pos(50, 0);
     screenEdges->check(QPoint(50, 0), QDateTime::currentDateTimeUtc());
     QCOMPARE(client->isHiddenInternal(), false);
-    QCOMPARE(input::get_cursor()->pos(), QPoint(50, 1));
+    QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(50, 1));
 
     // unreserve by setting to none edge
     screenEdges->reserve(client, KWin::ElectricNone);
     // check on previous edge again, should fail
     client->hideClient(true);
-    input::get_cursor()->set_pos(50, 0);
+    Test::app()->base.input->cursor->set_pos(50, 0);
     screenEdges->check(QPoint(50, 0), QDateTime::currentDateTimeUtc());
     QCOMPARE(client->isHiddenInternal(), true);
-    QCOMPARE(input::get_cursor()->pos(), QPoint(50, 0));
+    QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(50, 0));
 
     // set to windows can cover
     client->setFrameGeometry(QRect({}, Test::app()->base.topology.size));
@@ -882,10 +882,10 @@ void TestScreenEdges::testClientEdge()
     QCOMPARE(client->control->keep_below(), true);
     QCOMPARE(client->isHiddenInternal(), false);
 
-    input::get_cursor()->set_pos(0, 50);
+    Test::app()->base.input->cursor->set_pos(0, 50);
     QCOMPARE(client->control->keep_below(), false);
     QCOMPARE(client->isHiddenInternal(), false);
-    QCOMPARE(input::get_cursor()->pos(), QPoint(1, 50));
+    QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(1, 50));
 }
 
 void TestScreenEdges::testTouchEdge()
@@ -900,7 +900,7 @@ void TestScreenEdges::testTouchEdge()
     config->sync();
 
     reset_edger(config);
-    auto& screenEdges = Test::app()->workspace->edges;
+    auto& screenEdges = Test::app()->base.space->edges;
 
     // we don't have multiple desktops, so it's returning false
     QEXPECT_FAIL("", "Possible on Wayland. Needs investigation.", Abort);
@@ -937,7 +937,7 @@ void TestScreenEdges::testTouchEdge()
     QSignalSpy approachingSpy(screenEdges.get(), &win::screen_edger::approaching);
     QVERIFY(approachingSpy.isValid());
 
-    auto setPos = [](const QPoint& pos) { input::get_cursor()->set_pos(pos); };
+    auto setPos = [](const QPoint& pos) { Test::app()->base.input->cursor->set_pos(pos); };
     setPos(QPoint(0, 50));
     QVERIFY(approachingSpy.isEmpty());
     // let's also verify the check
@@ -994,7 +994,7 @@ void TestScreenEdges::testTouchCallback()
     config->sync();
 
     reset_edger(config);
-    auto& screenEdges = Test::app()->workspace->edges;
+    auto& screenEdges = Test::app()->base.space->edges;
 
     // none of our actions should be reserved
     auto edges

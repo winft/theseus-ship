@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "keyboard.h"
 #include "xkb/manager.h"
 
 #include "kwin_export.h"
@@ -32,7 +33,6 @@ class device_manager;
 
 class cursor;
 class global_shortcuts_manager;
-class keyboard;
 class pointer;
 class redirect;
 class switch_device;

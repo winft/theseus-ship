@@ -127,6 +127,7 @@ protected:
     void initGLTab(render::scene& scene);
 
     QScopedPointer<Ui::debug_console> m_ui;
+    win::space& space;
 };
 
 }

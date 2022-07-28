@@ -137,7 +137,7 @@ void platform::warp_pointer(QPointF const& pos, uint32_t time)
         return;
     }
 
-    redirect->pointer()->processMotion(pos, time, pointers.front());
+    redirect->get_pointer()->processMotion(pos, time, pointers.front());
 }
 
 void platform::setup_touchpad_shortcuts()

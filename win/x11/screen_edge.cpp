@@ -9,6 +9,8 @@
 */
 #include "screen_edge.h"
 
+#include "space.h"
+
 #include "input/cursor.h"
 
 namespace KWin::win::x11
@@ -93,7 +95,7 @@ void screen_edge::doStartApproaching()
         return;
     }
     m_approachWindow.unmap();
-    auto cursor = input::get_cursor();
+    auto cursor = edger->space.input->platform.cursor.get();
 #ifndef KWIN_UNIT_TEST
     m_cursorPollingConnection
         = connect(cursor, &input::cursor::pos_changed, this, &screen_edge::updateApproaching);
@@ -108,7 +110,7 @@ void screen_edge::doStopApproaching()
     }
     disconnect(m_cursorPollingConnection);
     m_cursorPollingConnection = QMetaObject::Connection();
-    input::get_cursor()->stop_mouse_polling();
+    edger->space.input->platform.cursor->stop_mouse_polling();
     m_approachWindow.map();
 }
 

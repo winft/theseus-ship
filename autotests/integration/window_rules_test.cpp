@@ -65,13 +65,13 @@ void WindowRuleTest::initTestCase()
 
 void WindowRuleTest::init()
 {
-    input::get_cursor()->set_pos(QPoint(640, 512));
+    Test::app()->base.input->cursor->set_pos(QPoint(640, 512));
 }
 
 void WindowRuleTest::cleanup()
 {
     // discards old rules
-    Test::app()->workspace->rule_book->load();
+    Test::app()->base.space->rule_book->load();
 }
 
 void xcb_connection_deleter(xcb_connection_t* pointer)
@@ -100,7 +100,7 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
     // vertical the window is matched by class and role load the rule
     QFile ruleFile(QFINDTESTDATA("./data/rules/maximize-vert-apply-initial"));
     QVERIFY(ruleFile.open(QIODevice::ReadOnly | QIODevice::Text));
-    QMetaObject::invokeMethod(Test::app()->workspace->rule_book.get(),
+    QMetaObject::invokeMethod(Test::app()->base.space->rule_book.get(),
                               "temporaryRulesMessage",
                               Q_ARG(QString, QString::fromUtf8(ruleFile.readAll())));
 
@@ -135,7 +135,7 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
     xcb_change_property(c.get(),
                         XCB_PROP_MODE_REPLACE,
                         w,
-                        Test::app()->workspace->atoms->wm_window_role,
+                        Test::app()->base.space->atoms->wm_window_role,
                         XCB_ATOM_STRING,
                         8,
                         role.length(),
@@ -146,7 +146,7 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 
-    QSignalSpy windowCreatedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy windowCreatedSpy(Test::app()->base.space->qobject.get(),
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
@@ -186,8 +186,8 @@ void WindowRuleTest::testWindowClassChange()
     group.writeEntry("wmclassmatch", 1);
     group.sync();
 
-    Test::app()->workspace->rule_book->config = config;
-    win::space_reconfigure(*Test::app()->workspace);
+    Test::app()->base.space->rule_book->config = config;
+    win::space_reconfigure(*Test::app()->base.space);
 
     // create the test window
     auto c = create_xcb_connection();
@@ -221,7 +221,7 @@ void WindowRuleTest::testWindowClassChange()
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 
-    QSignalSpy windowCreatedSpy(Test::app()->workspace->qobject.get(),
+    QSignalSpy windowCreatedSpy(Test::app()->base.space->qobject.get(),
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
