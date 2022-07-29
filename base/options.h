@@ -202,6 +202,8 @@ class KWIN_EXPORT options_qobject : public QObject
      */
     Q_PROPERTY(bool glStrictBindingFollowsDriver READ isGlStrictBindingFollowsDriver WRITE
                    setGlStrictBindingFollowsDriver NOTIFY glStrictBindingFollowsDriverChanged)
+
+    /// Deprecated
     Q_PROPERTY(KWin::OpenGLPlatformInterface glPlatformInterface READ glPlatformInterface WRITE
                    setGlPlatformInterface NOTIFY glPlatformInterfaceChanged)
     Q_PROPERTY(bool windowsBlockCompositing READ windowsBlockCompositing WRITE
@@ -605,9 +607,11 @@ public:
     {
         return m_glStrictBindingFollowsDriver;
     }
+
+    /// Deprecated
     OpenGLPlatformInterface glPlatformInterface() const
     {
-        return m_glPlatformInterface;
+        return defaultGlPlatformInterface();
     }
 
     bool windowsBlockCompositing() const
@@ -668,7 +672,11 @@ public:
     void setVBlankTime(qint64 vBlankTime);
     void setGlStrictBinding(bool glStrictBinding);
     void setGlStrictBindingFollowsDriver(bool glStrictBindingFollowsDriver);
-    void setGlPlatformInterface(OpenGLPlatformInterface interface);
+
+    /// Deprecated
+    void setGlPlatformInterface(OpenGLPlatformInterface /*interface*/)
+    {
+    }
     void setWindowsBlockCompositing(bool set);
     void setAnimationCurve(AnimationCurve curve);
 
@@ -841,6 +849,8 @@ Q_SIGNALS:
     void vBlankTimeChanged();
     void glStrictBindingChanged();
     void glStrictBindingFollowsDriverChanged();
+
+    /// Deprecated
     void glPlatformInterfaceChanged();
     void windowsBlockCompositingChanged();
     void animationSpeedChanged();
@@ -877,7 +887,6 @@ private:
     qint64 m_vBlankTime{defaultVBlankTime()};
     bool m_glStrictBinding{defaultGlStrictBinding()};
     bool m_glStrictBindingFollowsDriver{defaultGlStrictBindingFollowsDriver()};
-    OpenGLPlatformInterface m_glPlatformInterface{defaultGlPlatformInterface()};
     bool m_windowsBlockCompositing{true};
     AnimationCurve m_animationCurve{AnimationCurve::Linear};
 

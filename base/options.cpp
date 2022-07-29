@@ -517,44 +517,6 @@ void options_qobject::setAnimationCurve(AnimationCurve curve)
     Q_EMIT animationCurveChanged();
 }
 
-void options_qobject::setGlPlatformInterface(OpenGLPlatformInterface interface)
-{
-    // check environment variable
-    const QByteArray envOpenGLInterface(qgetenv("KWIN_OPENGL_INTERFACE"));
-    if (!envOpenGLInterface.isEmpty()) {
-        if (qstrcmp(envOpenGLInterface, "egl") == 0) {
-            qCDebug(KWIN_CORE) << "Forcing EGL native interface through environment variable";
-            interface = EglPlatformInterface;
-        } else if (qstrcmp(envOpenGLInterface, "glx") == 0) {
-            qCDebug(KWIN_CORE) << "Forcing GLX native interface through environment variable";
-            interface = GlxPlatformInterface;
-        }
-    }
-    if (kwinApp()->shouldUseWaylandForCompositing() && interface == GlxPlatformInterface) {
-        // Glx is impossible on Wayland, enforce egl
-        qCDebug(KWIN_CORE) << "Forcing EGL native interface for Wayland mode";
-        interface = EglPlatformInterface;
-    }
-#if !HAVE_EPOXY_GLX
-    qCDebug(KWIN_CORE) << "Forcing EGL native interface as compiled without GLX support";
-    interface = EglPlatformInterface;
-#endif
-    if (QOpenGLContext::openGLModuleType() == QOpenGLContext::LibGLES) {
-        qCDebug(KWIN_CORE) << "Forcing EGL native interface as Qt uses OpenGL ES";
-        interface = EglPlatformInterface;
-    } else if (qstrcmp(qgetenv("KWIN_COMPOSE"), "O2ES") == 0) {
-        qCDebug(KWIN_CORE) << "Forcing EGL native interface as OpenGL ES requested through "
-                              "KWIN_COMPOSE environment variable.";
-        interface = EglPlatformInterface;
-    }
-
-    if (m_glPlatformInterface == interface) {
-        return;
-    }
-    m_glPlatformInterface = interface;
-    Q_EMIT glPlatformInterfaceChanged();
-}
-
 void options::updateSettings()
 {
     loadConfig();
@@ -777,27 +739,6 @@ void options::reloadCompositingSettings(bool force)
     else if (hps == 6)
         previews = HiddenPreviewsAlways;
     qobject->setHiddenPreviews(previews);
-
-    auto interfaceToKey = [](OpenGLPlatformInterface interface) {
-        switch (interface) {
-        case GlxPlatformInterface:
-            return QStringLiteral("glx");
-        case EglPlatformInterface:
-            return QStringLiteral("egl");
-        default:
-            return QString();
-        }
-    };
-    auto keyToInterface = [](const QString& key) {
-        if (key == QStringLiteral("glx")) {
-            return GlxPlatformInterface;
-        } else if (key == QStringLiteral("egl")) {
-            return EglPlatformInterface;
-        }
-        return defaultGlPlatformInterface();
-    };
-    qobject->setGlPlatformInterface(keyToInterface(
-        config.readEntry("GLPlatformInterface", interfaceToKey(qobject->m_glPlatformInterface))));
 }
 
 // restricted should be true for operations that the user may not be able to repeat
