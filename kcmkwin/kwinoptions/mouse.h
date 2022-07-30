@@ -94,7 +94,7 @@ private:
     bool standAlone;
 
     KWinActionsConfigForm *m_ui;
-    KWinOptionsSettings *m_settings;
+    KWinOptionsSettings *m_settings{nullptr};
 };
 
 #endif

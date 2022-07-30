@@ -138,7 +138,7 @@ private:
 
     bool     standAlone;
     KWinAdvancedConfigForm *m_ui;
-    KWinOptionsSettings *m_settings;
+    KWinOptionsSettings *m_settings{nullptr};
 };
 
 #endif // KKWMWINDOWS_H
