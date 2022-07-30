@@ -119,7 +119,7 @@ private:
     QList<RuleItem *> m_ruleList;
     QHash<QString, RuleItem *> m_rules;
     win::dbus::virtual_desktop_data_vector m_virtualDesktops;
-    RuleSettings *m_settings;
+    RuleSettings *m_settings{nullptr};
 };
 
 }
