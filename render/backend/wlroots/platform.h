@@ -10,11 +10,9 @@
 #include "base/backend/wlroots/output.h"
 #include "base/backend/wlroots/platform.h"
 #include "base/utils.h"
-#include "render/platform.h"
+#include "render/wayland/platform.h"
 
 #include <variant>
-
-struct gbm_device;
 
 namespace KWin
 {
@@ -25,7 +23,7 @@ namespace render::backend::wlroots
 class egl_backend;
 class qpainter_backend;
 
-class KWIN_EXPORT platform : public render::platform
+class KWIN_EXPORT platform : public wayland::platform
 {
     Q_OBJECT
 public:
@@ -34,8 +32,6 @@ public:
 
     void init();
 
-    std::unique_ptr<render::effects_handler_impl>
-    createEffectsHandler(render::compositor* compositor, render::scene* scene) override;
     CompositingType selected_compositor() const override;
 
     gl::backend* get_opengl_backend(render::compositor& compositor) override;

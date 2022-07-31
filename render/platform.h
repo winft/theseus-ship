@@ -64,57 +64,14 @@ public:
     // TODO(romangg): Remove the boolean trap.
     virtual void render_stop(bool on_shutdown) = 0;
 
-    /**
-     * Whether the Platform requires compositing for rendering.
-     * Default implementation returns @c true. If the implementing Platform allows to be used
-     * without compositing (e.g. rendering is done by the windowing system), re-implement this
-     * method.
-     */
-    virtual bool requiresCompositing() const;
-    /**
-     * Whether Compositing is possible in the Platform.
-     * Returning @c false in this method makes only sense if requiresCompositing returns @c false.
-     *
-     * The default implementation returns @c true.
-     * @see requiresCompositing
-     */
-    virtual bool compositingPossible() const;
-    /**
-     * Returns a user facing text explaining why compositing is not possible in case
-     * compositingPossible returns @c false.
-     *
-     * The default implementation returns an empty string.
-     * @see compositingPossible
-     */
-    virtual QString compositingNotPossibleReason() const;
-    /**
-     * Whether OpenGL compositing is broken.
-     * The Platform can implement this method if it is able to detect whether OpenGL compositing
-     * broke (e.g. triggered a crash in a previous run).
-     *
-     * Default implementation returns @c false.
-     * @see createOpenGLSafePoint
-     */
-    virtual bool openGLCompositingIsBroken() const;
-    /**
-     * This method is invoked before and after creating the OpenGL rendering Scene.
-     * An implementing Platform can use it to detect crashes triggered by the OpenGL implementation.
-     * This can be used for openGLCompositingIsBroken.
-     *
-     * The default implementation does nothing.
-     * @see openGLCompositingIsBroken.
-     */
-    virtual void createOpenGLSafePoint(OpenGLSafePoint safePoint);
+    virtual bool requiresCompositing() const = 0;
+    virtual bool compositingPossible() const = 0;
+    virtual QString compositingNotPossibleReason() const = 0;
+    virtual bool openGLCompositingIsBroken() const = 0;
+    virtual void createOpenGLSafePoint(OpenGLSafePoint safePoint) = 0;
 
-    virtual render::outline_visual* create_non_composited_outline(render::outline* outline);
-
-    /**
-     * Creates the deco renderer for the given @p client.
-     *
-     * The default implementation creates a Renderer suited for the Compositor, @c nullptr if there
-     * is no Compositor.
-     */
-    virtual win::deco::renderer* createDecorationRenderer(win::deco::client_impl* client);
+    virtual render::outline_visual* create_non_composited_outline(render::outline* outline) = 0;
+    virtual win::deco::renderer* createDecorationRenderer(win::deco::client_impl* client) = 0;
     virtual std::unique_ptr<effects_handler_impl>
     createEffectsHandler(render::compositor* compositor, render::scene* scene) = 0;
 
@@ -122,7 +79,7 @@ public:
      * Platform specific way to invert the screen.
      * Default implementation invokes the invert effect
      */
-    virtual void invertScreen();
+    virtual void invertScreen() = 0;
 
     virtual CompositingType selected_compositor() const = 0;
 

@@ -42,49 +42,4 @@ render::qpainter::backend* platform::get_qpainter_backend(render::compositor& /*
     return nullptr;
 }
 
-bool platform::requiresCompositing() const
-{
-    return true;
-}
-
-bool platform::compositingPossible() const
-{
-    return true;
-}
-
-QString platform::compositingNotPossibleReason() const
-{
-    return QString();
-}
-
-bool platform::openGLCompositingIsBroken() const
-{
-    return false;
-}
-
-void platform::createOpenGLSafePoint(OpenGLSafePoint safePoint)
-{
-    Q_UNUSED(safePoint)
-}
-
-render::outline_visual* platform::create_non_composited_outline(render::outline* /*outline*/)
-{
-    return nullptr;
-}
-
-win::deco::renderer* platform::createDecorationRenderer(win::deco::client_impl* client)
-{
-    if (compositor->scene) {
-        return compositor->scene->createDecorationRenderer(client);
-    }
-    return nullptr;
-}
-
-void platform::invertScreen()
-{
-    if (compositor->effects) {
-        compositor->effects->invert_screen();
-    }
-}
-
 }

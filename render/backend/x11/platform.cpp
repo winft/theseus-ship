@@ -53,7 +53,7 @@ static bool has_glx()
 }
 
 platform::platform(base::x11::platform& base)
-    : render::platform(base)
+    : render::x11::platform(base)
     , m_x11Display(QX11Info::display())
     , base{base}
 {
@@ -107,17 +107,6 @@ void platform::render_stop(bool /*on_shutdown*/)
         tear_down_glx_backend(*gl_backend);
         gl_backend.reset();
     }
-}
-
-bool platform::requiresCompositing() const
-{
-    return false;
-}
-
-bool platform::openGLCompositingIsBroken() const
-{
-    const QString unsafeKey = QLatin1String("OpenGLIsUnsafe");
-    return KConfigGroup(kwinApp()->config(), "Compositing").readEntry(unsafeKey, false);
 }
 
 QString platform::compositingNotPossibleReason() const
@@ -252,11 +241,11 @@ outline_visual* platform::create_non_composited_outline(render::outline* outline
 
 win::deco::renderer* platform::createDecorationRenderer(win::deco::client_impl* client)
 {
-    auto renderer = render::platform::createDecorationRenderer(client);
-    if (!renderer) {
-        renderer = new deco_renderer(client);
+    if (!compositor->scene) {
+        // Non-composited fallback
+        return new deco_renderer(client);
     }
-    return renderer;
+    return compositor->scene->createDecorationRenderer(client);
 }
 
 void platform::invertScreen()
@@ -298,12 +287,6 @@ void platform::invertScreen()
             xcb_randr_set_crtc_gamma(connection(), crtc, gamma->size, red, green, blue);
         }
     }
-}
-
-std::unique_ptr<render::effects_handler_impl>
-platform::createEffectsHandler(render::compositor* compositor, render::scene* scene)
-{
-    return std::make_unique<render::x11::effects_handler_impl>(compositor, scene);
 }
 
 CompositingType platform::selected_compositor() const

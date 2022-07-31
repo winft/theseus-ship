@@ -24,7 +24,7 @@ namespace KWin::render::backend::wlroots
 {
 
 platform::platform(base::backend::wlroots::platform& base)
-    : render::platform(base)
+    : wayland::platform(base)
     , base{base}
 {
 }
@@ -77,12 +77,6 @@ void platform::render_stop(bool on_shutdown)
         wayland::unbind_egl_display(*egl, egl->data);
         egl->tear_down();
     }
-}
-
-std::unique_ptr<render::effects_handler_impl>
-platform::createEffectsHandler(render::compositor* compositor, render::scene* scene)
-{
-    return std::make_unique<wayland::effects_handler_impl>(compositor, scene);
 }
 
 CompositingType platform::selected_compositor() const

@@ -6,7 +6,7 @@
 */
 #pragma once
 
-#include "render/platform.h"
+#include "render/x11/platform.h"
 
 #include "base/x11/platform.h"
 
@@ -31,7 +31,7 @@ namespace render::backend::x11
 class glx_backend;
 class output;
 
-class KWIN_EXPORT platform : public render::platform
+class KWIN_EXPORT platform : public render::x11::platform
 {
     Q_OBJECT
 public:
@@ -43,10 +43,8 @@ public:
     gl::backend* get_opengl_backend(render::compositor& compositor) override;
     void render_stop(bool on_shutdown) override;
 
-    bool requiresCompositing() const override;
     bool compositingPossible() const override;
     QString compositingNotPossibleReason() const override;
-    bool openGLCompositingIsBroken() const override;
     void createOpenGLSafePoint(OpenGLSafePoint safePoint) override;
 
     outline_visual* create_non_composited_outline(render::outline* outline) override;
@@ -54,8 +52,6 @@ public:
 
     void invertScreen() override;
 
-    std::unique_ptr<render::effects_handler_impl>
-    createEffectsHandler(render::compositor* compositor, render::scene* scene) override;
     CompositingType selected_compositor() const override;
 
 private:
