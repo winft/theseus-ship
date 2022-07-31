@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "kwin_export.h"
 #include "render/wayland/egl_data.h"
 
 #include <kwingl/texture.h>
@@ -21,7 +22,7 @@ namespace KWin::render::backend::wlroots
 
 class output;
 
-class egl_output
+class KWIN_EXPORT egl_output
 {
 public:
     egl_output(output& out, wayland::egl_data egl_data);

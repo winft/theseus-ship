@@ -5,12 +5,23 @@
 */
 #pragma once
 
-#include "wlr_includes.h"
+#include "egl_backend.h"
+#include "output.h"
+#include "qpainter_backend.h"
+#include "wlr_helpers.h"
 
 #include "base/backend/wlroots/output.h"
 #include "base/backend/wlroots/platform.h"
+#include "base/options.h"
+#include "base/output_helpers.h"
 #include "base/utils.h"
+#include "input/wayland/platform.h"
+#include "render/wayland/compositor.h"
+#include "render/wayland/effects.h"
+#include "render/wayland/egl.h"
 #include "render/wayland/platform.h"
+
+#include <wayland_logging.h>
 
 #include <variant>
 
@@ -26,19 +37,61 @@ class egl_backend;
 template<typename Platform>
 class qpainter_backend;
 
-class KWIN_EXPORT platform : public wayland::platform
+class platform : public wayland::platform
 {
 public:
-    explicit platform(base::backend::wlroots::platform& base);
-    ~platform() override;
+    explicit platform(base::backend::wlroots::platform& base)
+        : wayland::platform(base)
+        , base{base}
+    {
+    }
 
-    void init();
+    void init()
+    {
+        // TODO(romangg): Has to be here because in the integration tests base.backend is not yet
+        //                available in the ctor. Can we change that?
+        if (kwinApp()->options->qobject->compositingMode() == QPainterCompositing) {
+            qpainter = create_render_backend<qpainter_backend<platform>>(*this, "pixman");
+        } else {
+            egl = create_render_backend<egl_backend<platform>>(*this, "gles2");
+        }
 
-    CompositingType selected_compositor() const override;
+        if (!wlr_backend_start(base.backend)) {
+            throw std::exception();
+        }
 
-    gl::backend* get_opengl_backend(render::compositor& compositor) override;
-    qpainter::backend* get_qpainter_backend(render::compositor& compositor) override;
-    void render_stop(bool on_shutdown) override;
+        base::update_output_topology(base);
+    }
+
+    CompositingType selected_compositor() const override
+    {
+        if (qpainter) {
+            return QPainterCompositing;
+        }
+        assert(egl);
+        return OpenGLCompositing;
+    }
+
+    gl::backend* get_opengl_backend(render::compositor& /*compositor*/) override
+    {
+        assert(egl);
+        egl->make_current();
+        return egl.get();
+    }
+
+    qpainter::backend* get_qpainter_backend(render::compositor& /*compositor*/) override
+    {
+        assert(qpainter);
+        return qpainter.get();
+    }
+
+    void render_stop(bool on_shutdown) override
+    {
+        if (egl && on_shutdown) {
+            wayland::unbind_egl_display(*egl, egl->data);
+            egl->tear_down();
+        }
+    }
 
     base::backend::wlroots::platform& base;
     std::unique_ptr<egl_backend<platform>> egl;
@@ -46,6 +99,17 @@ public:
 
     wlr_renderer* renderer{nullptr};
     wlr_allocator* allocator{nullptr};
+
+private:
+    template<typename Render>
+    std::unique_ptr<Render> create_render_backend(wlroots::platform& platform,
+                                                  std::string const& wlroots_name)
+    {
+        setenv("WLR_RENDERER", wlroots_name.c_str(), true);
+        platform.renderer = wlr_renderer_autocreate(platform.base.backend);
+        platform.allocator = wlr_allocator_autocreate(platform.base.backend, platform.renderer);
+        return std::make_unique<Render>(platform);
+    }
 };
 
 }

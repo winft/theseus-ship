@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include "kwin_export.h"
+
 #include <QImage>
 #include <memory>
 
@@ -15,7 +17,7 @@ namespace KWin::render::backend::wlroots
 
 class output;
 
-class qpainter_output
+class KWIN_EXPORT qpainter_output
 {
 public:
     qpainter_output(wlroots::output& output, wlr_renderer* renderer);
