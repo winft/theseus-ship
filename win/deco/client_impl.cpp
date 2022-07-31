@@ -412,7 +412,7 @@ bool client_impl::isApplicationMenuActive() const
 
 void client_impl::createRenderer()
 {
-    m_renderer.reset(kwinApp()->get_base().render->createDecorationRenderer(this));
+    m_renderer.reset(space.render.platform.createDecorationRenderer(this));
 }
 
 }
