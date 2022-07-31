@@ -25,7 +25,6 @@ class qpainter_backend;
 
 class KWIN_EXPORT platform : public wayland::platform
 {
-    Q_OBJECT
 public:
     explicit platform(base::backend::wlroots::platform& base);
     ~platform() override;

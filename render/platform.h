@@ -12,7 +12,6 @@
 #include "kwin_export.h"
 #include "kwinglobals.h"
 
-#include <QObject>
 #include <epoxy/egl.h>
 #include <memory>
 
@@ -52,11 +51,10 @@ class outline;
 class outline_visual;
 class scene;
 
-class KWIN_EXPORT platform : public QObject
+class KWIN_EXPORT platform
 {
-    Q_OBJECT
 public:
-    ~platform() override;
+    virtual ~platform();
 
     virtual render::gl::backend* get_opengl_backend(render::compositor& compositor);
     virtual render::qpainter::backend* get_qpainter_backend(render::compositor& compositor);

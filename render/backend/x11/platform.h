@@ -33,7 +33,6 @@ class output;
 
 class KWIN_EXPORT platform : public render::x11::platform
 {
-    Q_OBJECT
 public:
     platform(base::x11::platform& base);
     ~platform() override;
@@ -55,7 +54,7 @@ public:
     CompositingType selected_compositor() const override;
 
 private:
-    QThread* m_openGLFreezeProtectionThread = nullptr;
+    std::unique_ptr<QThread> m_openGLFreezeProtectionThread;
     QTimer* m_openGLFreezeProtection = nullptr;
 
     Display* m_x11Display;

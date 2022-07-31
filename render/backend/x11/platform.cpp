@@ -64,7 +64,7 @@ platform::~platform()
     if (m_openGLFreezeProtectionThread) {
         m_openGLFreezeProtectionThread->quit();
         m_openGLFreezeProtectionThread->wait();
-        delete m_openGLFreezeProtectionThread;
+        m_openGLFreezeProtectionThread.reset();
     }
     XRenderUtils::cleanup();
 }
@@ -186,9 +186,9 @@ void platform::createOpenGLSafePoint(OpenGLSafePoint safePoint)
         // Deliberately continue with PreFrame
         Q_FALLTHROUGH();
     case OpenGLSafePoint::PreFrame:
-        if (m_openGLFreezeProtectionThread == nullptr) {
+        if (!m_openGLFreezeProtectionThread) {
             Q_ASSERT(m_openGLFreezeProtection == nullptr);
-            m_openGLFreezeProtectionThread = new QThread(this);
+            m_openGLFreezeProtectionThread = std::make_unique<QThread>();
             m_openGLFreezeProtectionThread->setObjectName("FreezeDetector");
             m_openGLFreezeProtectionThread->start();
             m_openGLFreezeProtection = new QTimer;
@@ -196,8 +196,8 @@ void platform::createOpenGLSafePoint(OpenGLSafePoint safePoint)
             m_openGLFreezeProtection->setSingleShot(true);
             m_openGLFreezeProtection->start();
             const QString configName = kwinApp()->config()->name();
-            m_openGLFreezeProtection->moveToThread(m_openGLFreezeProtectionThread);
-            connect(
+            m_openGLFreezeProtection->moveToThread(m_openGLFreezeProtectionThread.get());
+            QObject::connect(
                 m_openGLFreezeProtection,
                 &QTimer::timeout,
                 m_openGLFreezeProtection,
@@ -228,8 +228,7 @@ void platform::createOpenGLSafePoint(OpenGLSafePoint safePoint)
         m_openGLFreezeProtection = nullptr;
         m_openGLFreezeProtectionThread->quit();
         m_openGLFreezeProtectionThread->wait();
-        delete m_openGLFreezeProtectionThread;
-        m_openGLFreezeProtectionThread = nullptr;
+        m_openGLFreezeProtectionThread.reset();
         break;
     }
 }
