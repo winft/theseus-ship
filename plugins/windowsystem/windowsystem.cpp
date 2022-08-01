@@ -19,12 +19,11 @@
  */
 #include "windowsystem.h"
 
-#include <win/wayland/space.h>
-#include <win/wayland/xdg_activation.h>
 #include <win/singleton_interface.h>
 
 #include <KWindowSystem/KWindowSystem>
 #include <QGuiApplication>
+#include <QTimer>
 #include <QWindow>
 
 Q_DECLARE_METATYPE(NET::WindowType)
@@ -332,10 +331,9 @@ void WindowSystem::requestToken(QWindow* /*win*/, uint32_t serial, QString const
 {
     // It's coming from within kwin, it doesn't matter the window.
 
-    auto space = static_cast<win::wayland::space*>(win::singleton_interface::space);
-    assert(space);
-
-    auto token = win::wayland::xdg_activation_set_token(*space, appId.toStdString());
+    auto& token_setter = win::singleton_interface::set_activation_token;
+    assert(token_setter);
+    auto token = token_setter(appId.toStdString());
 
     // Ensure that xdgActivationTokenArrived is always emitted asynchronously
     QTimer::singleShot(0, [serial, token] {

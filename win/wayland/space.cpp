@@ -72,6 +72,9 @@ space::space(render::compositor& render,
 {
     namespace WS = Wrapland::Server;
 
+    singleton_interface::set_activation_token
+        = [this](auto const& appid) { return xdg_activation_set_token(*this, appid); };
+
     this->input = std::make_unique<input::wayland::redirect>(input, *this);
     dbus = std::make_unique<base::dbus::kwin_impl<win::space, input::platform>>(*this, &input);
     edges = std::make_unique<win::screen_edger>(*this);
