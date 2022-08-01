@@ -7,8 +7,6 @@
 
 #include "config-kwin.h"
 
-#include "space.h"
-
 #include "utils/blocker.h"
 #include "win/remnant.h"
 #include "win/rules/book.h"
@@ -26,17 +24,16 @@ namespace KWin::win::wayland
 template<typename Win>
 void destroy_window(Win* win)
 {
-    auto& space = static_cast<win::wayland::space&>(win->space);
-    blocker block(space.stacking_order);
+    blocker block(win->space.stacking_order);
     win->closing = true;
 
     if (win->transient()->annexed && !lead_of_annexed_transient(win)) {
         // With the lead gone there is no way - and no need - for remnant effects. Delete directly.
         Q_EMIT win->closed(win);
-        space.handle_window_removed(win);
-        remove_all(space.windows, win);
-        remove_all(space.stacking_order->pre_stack, win);
-        remove_all(space.stacking_order->stack, win);
+        win->space.handle_window_removed(win);
+        remove_all(win->space.windows, win);
+        remove_all(win->space.stacking_order->pre_stack, win);
+        remove_all(win->space.stacking_order->stack, win);
         delete win;
         return;
     }
@@ -61,13 +58,13 @@ void destroy_window(Win* win)
         win->control->destroy_decoration();
     }
 
-    space.handle_window_removed(win);
+    win->space.handle_window_removed(win);
 
     if (remnant_window) {
         remnant_window->remnant->unref();
         delete win;
     } else {
-        delete_window_from_space(space, win);
+        delete_window_from_space(win->space, win);
     }
 }
 

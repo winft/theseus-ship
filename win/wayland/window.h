@@ -29,6 +29,8 @@ class XdgDecoration;
 namespace KWin::win::wayland
 {
 
+class space;
+
 class KWIN_EXPORT window : public Toplevel
 {
     Q_OBJECT
@@ -40,8 +42,8 @@ public:
         focus,
     };
 
-    window(win::remnant remnant, win::space& space);
-    window(Wrapland::Server::Surface* surface, win::space& space);
+    window(win::remnant remnant, wayland::space& space);
+    window(Wrapland::Server::Surface* surface, wayland::space& space);
     ~window() = default;
 
     qreal bufferScale() const override;
@@ -185,6 +187,8 @@ public:
 
     bool must_place{false};
     bool inhibit_idle{false};
+
+    wayland::space& space;
 
 private:
     void handle_shown_and_mapped();

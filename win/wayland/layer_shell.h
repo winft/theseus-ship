@@ -6,7 +6,6 @@
 #pragma once
 
 #include "control.h"
-#include "space.h"
 #include "window_release.h"
 
 #include "win/activation.h"
@@ -160,7 +159,7 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
         layer_surface, &WS::LayerSurfaceV1::resourceDestroyed, win, [win] { destroy_window(win); });
 
     QObject::connect(layer_surface, &WS::LayerSurfaceV1::got_popup, win, [win](auto popup) {
-        for (auto window : static_cast<win::wayland::space&>(win->space).windows) {
+        for (auto window : win->space.windows) {
             if (auto wayland_window = qobject_cast<win::wayland::window*>(window);
                 wayland_window && wayland_window->popup == popup) {
                 win->transient()->add_child(wayland_window);

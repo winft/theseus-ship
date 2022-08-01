@@ -12,16 +12,20 @@
 namespace KWin::win::wayland
 {
 
+class space;
+
 class KWIN_EXPORT xwl_window : public x11::window
 {
     Q_OBJECT
 public:
     using control_t = xwl_control<xwl_window>;
 
-    xwl_window(xcb_window_t xcb_win, win::space& space);
+    xwl_window(xcb_window_t xcb_win, wayland::space& space);
 
     qreal bufferScale() const override;
     void add_scene_window_addon() override;
+
+    wayland::space& space;
 };
 
 }

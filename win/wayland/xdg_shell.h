@@ -7,7 +7,6 @@
 
 #include "control.h"
 #include "popup_placement.h"
-#include "space.h"
 #include "window.h"
 #include "window_release.h"
 
