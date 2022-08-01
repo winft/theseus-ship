@@ -20,6 +20,7 @@ namespace KWin
 namespace render::backend::wlroots
 {
 
+template<typename Platform>
 class egl_backend;
 
 template<typename Platform>
@@ -40,7 +41,7 @@ public:
     void render_stop(bool on_shutdown) override;
 
     base::backend::wlroots::platform& base;
-    std::unique_ptr<egl_backend> egl;
+    std::unique_ptr<egl_backend<platform>> egl;
     std::unique_ptr<qpainter_backend<platform>> qpainter;
 
     wlr_renderer* renderer{nullptr};

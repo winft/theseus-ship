@@ -48,7 +48,7 @@ void platform::init()
     if (kwinApp()->options->qobject->compositingMode() == QPainterCompositing) {
         qpainter = create_render_backend<qpainter_backend<platform>>(*this, "pixman");
     } else {
-        egl = create_render_backend<egl_backend>(*this, "gles2");
+        egl = create_render_backend<egl_backend<platform>>(*this, "gles2");
     }
 
     if (!wlr_backend_start(base.backend)) {

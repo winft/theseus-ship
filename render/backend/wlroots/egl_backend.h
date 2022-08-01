@@ -11,7 +11,6 @@
 #include "egl_output.h"
 #include "egl_texture.h"
 #include "output.h"
-#include "platform.h"
 #include "wlr_helpers.h"
 
 #include "base/backend/wlroots/output.h"
@@ -21,7 +20,6 @@
 #include "render/wayland/egl.h"
 #include "render/wayland/egl_data.h"
 #include "wayland_logging.h"
-#include "win/space.h"
 
 #include <kwingl/platform.h>
 #include <kwingl/utils.h>
@@ -33,10 +31,11 @@
 namespace KWin::render::backend::wlroots
 {
 
+template<typename Platform>
 class egl_backend : public gl::backend
 {
 public:
-    egl_backend(wlroots::platform& platform)
+    egl_backend(Platform& platform)
         : gl::backend()
         , platform{platform}
     {
@@ -242,7 +241,7 @@ public:
             ->egl;
     }
 
-    wlroots::platform& platform;
+    Platform& platform;
 
     gl::egl_dmabuf* dmabuf{nullptr};
     wayland::egl_data data;
