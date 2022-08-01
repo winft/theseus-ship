@@ -16,10 +16,11 @@
 namespace KWin::render::wayland
 {
 
+template<typename Base>
 class platform : public render::platform
 {
 public:
-    platform(base::wayland::platform& base)
+    platform(Base& base)
         : render::platform(base)
     {
     }

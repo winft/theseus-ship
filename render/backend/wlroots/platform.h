@@ -10,7 +10,6 @@
 #include "qpainter_backend.h"
 #include "wlr_helpers.h"
 
-#include "base/backend/wlroots/platform.h"
 #include "base/options.h"
 #include "render/wayland/platform.h"
 
@@ -21,13 +20,14 @@
 namespace KWin::render::backend::wlroots
 {
 
-class platform : public wayland::platform
+template<typename Base>
+class platform : public wayland::platform<Base>
 {
 public:
     using output_t = output<platform>;
 
-    explicit platform(base::backend::wlroots::platform& base)
-        : wayland::platform(base)
+    explicit platform(Base& base)
+        : wayland::platform<Base>(base)
         , base{base}
     {
     }
@@ -79,7 +79,7 @@ public:
         }
     }
 
-    base::backend::wlroots::platform& base;
+    Base& base;
     std::unique_ptr<egl_backend<platform>> egl;
     std::unique_ptr<qpainter_backend<platform>> qpainter;
 
@@ -87,8 +87,8 @@ public:
     wlr_allocator* allocator{nullptr};
 
 private:
-    template<typename Render>
-    std::unique_ptr<Render> create_render_backend(wlroots::platform& platform,
+    template<typename Render, typename Platform>
+    std::unique_ptr<Render> create_render_backend(Platform& platform,
                                                   std::string const& wlroots_name)
     {
         setenv("WLR_RENDERER", wlroots_name.c_str(), true);

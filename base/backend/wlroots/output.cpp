@@ -20,7 +20,7 @@
 namespace KWin::base::backend::wlroots
 {
 
-using render_platform = render::backend::wlroots::platform;
+using render_platform = render::backend::wlroots::platform<platform>;
 using render_output = render::backend::wlroots::output<render_platform>;
 
 static render_output* get_render(std::unique_ptr<render::wayland::output>& output)

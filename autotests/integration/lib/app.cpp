@@ -101,7 +101,7 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode,
     base = base::backend::wlroots::platform(server->display.get(),
                                             wlr_headless_backend_create(server->display->native()));
 
-    base.render = std::make_unique<render::backend::wlroots::platform>(base);
+    base.render = std::make_unique<render::backend::wlroots::platform<decltype(base)>>(base);
 
     auto environment = QProcessEnvironment::systemEnvironment();
     environment.insert(QStringLiteral("WAYLAND_DISPLAY"), socket_name.c_str());
@@ -189,7 +189,7 @@ void WaylandTestApplication::start()
     assert(touch);
 
     try {
-        static_cast<render::backend::wlroots::platform*>(base.render.get())->init();
+        static_cast<render::backend::wlroots::platform<decltype(base)>*>(base.render.get())->init();
     } catch (std::exception const&) {
         std::cerr << "FATAL ERROR: backend failed to initialize, exiting now" << std::endl;
         ::exit(1);

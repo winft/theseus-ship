@@ -18,7 +18,7 @@
 namespace KWin::base::backend::wlroots
 {
 
-using render_platform = render::backend::wlroots::platform;
+using render_platform = render::backend::wlroots::platform<platform>;
 
 static auto align_horizontal{false};
 
