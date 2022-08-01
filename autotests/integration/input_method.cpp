@@ -40,7 +40,8 @@ private Q_SLOTS:
     void test_late_popup_window();
 
 private:
-    using wayland_window = win::wayland::window;
+    using wayland_space = win::wayland::space<base::wayland::platform>;
+    using wayland_window = win::wayland::window<wayland_space>;
 
     Test::client ti_client;
     Test::client im_client;

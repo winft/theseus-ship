@@ -53,7 +53,7 @@ public:
 
     base::backend::x11::platform base;
     std::unique_ptr<render::x11::compositor> compositor;
-    std::unique_ptr<win::x11::space> workspace;
+    std::unique_ptr<win::x11::space<base::x11::platform>> workspace;
 };
 
 X11TestApplication::X11TestApplication(int& argc, char** argv)
@@ -89,7 +89,7 @@ void X11TestApplication::start()
 {
     prepare_start();
     compositor = std::make_unique<render::x11::compositor>(*base.render);
-    workspace = std::make_unique<win::x11::space>(base);
+    workspace = std::make_unique<win::x11::space<base::x11::platform>>(base);
     compositor->start(*workspace);
 }
 

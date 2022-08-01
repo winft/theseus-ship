@@ -26,7 +26,8 @@
 namespace KWin
 {
 
-using wayland_window = win::wayland::window;
+using wayland_space = win::wayland::space<base::wayland::platform>;
+using wayland_window = win::wayland::window<wayland_space>;
 
 struct test_window {
     test_window() = default;

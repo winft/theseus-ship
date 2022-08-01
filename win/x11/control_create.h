@@ -690,7 +690,7 @@ xcb_timestamp_t read_user_time_map_timestamp(Win* win,
             auto sameApplicationActiveHackPredicate = [win](Toplevel const* cl) {
                 // ignore already existing splashes, toolbars, utilities and menus,
                 // as the app may show those before the main window
-                auto x11_client = qobject_cast<Win const*>(cl);
+                auto x11_client = dynamic_cast<Win const*>(cl);
                 return x11_client && !is_splash(x11_client) && !is_toolbar(x11_client)
                     && !is_utility(x11_client) && !is_menu(x11_client) && x11_client != win
                     && belong_to_same_application(

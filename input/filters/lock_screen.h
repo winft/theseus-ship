@@ -213,9 +213,10 @@ private:
     template<typename Pool>
     static bool is_surface_allowed(input::redirect& redirect, Pool const& device_pool)
     {
+        using wayland_space = win::wayland::space<base::wayland::platform>;
+
         if (auto surface = device_pool.get_focus().surface) {
-            if (auto win
-                = static_cast<win::wayland::space*>(&redirect.space)->find_window(surface)) {
+            if (auto win = static_cast<wayland_space*>(&redirect.space)->find_window(surface)) {
                 return win->isLockScreen() || win->isInputMethod();
             }
             return false;

@@ -6,7 +6,6 @@
 #pragma once
 
 #include "transient.h"
-#include "window.h"
 #include "window_release.h"
 
 #include "render/compositor.h"

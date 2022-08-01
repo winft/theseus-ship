@@ -8,43 +8,112 @@
 #pragma once
 
 #include "netinfo.h"
+#include "screen_edge.h"
+#include "screen_edges_filter.h"
+#include "space_areas.h"
+#include "space_setup.h"
+#include "window.h"
 
 #include "base/x11/xcb/helpers.h"
 #include "input/x11/platform.h"
+#include "input/x11/redirect.h"
 #include "utils/blocker.h"
+#include "win/desktop_space.h"
 #include "win/screen_edges.h"
 #include "win/space.h"
 #include "win/stacking_order.h"
 
 #include <vector>
 
-namespace KWin
+namespace KWin::win::x11
 {
 
-namespace base::x11
-{
-class platform;
-}
-
-namespace win::x11
-{
-
-class KWIN_EXPORT space : public win::space
+template<typename Base>
+class space : public win::space
 {
 public:
     using x11_window = window;
 
-    space(base::x11::platform& base);
-    ~space() override;
+    space(Base& base)
+        : win::space(*base.render->compositor)
+        , base{base}
+    {
+        if (base.input) {
+            this->input = std::make_unique<input::x11::redirect>(*base.input, *this);
+        }
 
-    Toplevel* findInternal(QWindow* window) const override;
-    win::screen_edge* create_screen_edge(win::screen_edger& edger) override;
+        atoms = std::make_unique<base::x11::atoms>(connection());
+        edges = std::make_unique<win::screen_edger>(*this);
+        dbus = std::make_unique<base::dbus::kwin_impl<win::space, input::platform>>(
+            *this, base.input.get());
+
+        QObject::connect(virtual_desktop_manager->qobject.get(),
+                         &virtual_desktop_manager_qobject::desktopRemoved,
+                         qobject.get(),
+                         [this] {
+                             auto const desktop_count
+                                 = static_cast<int>(virtual_desktop_manager->count());
+                             for (auto const& window : windows) {
+                                 if (!window->control) {
+                                     continue;
+                                 }
+                                 if (window->isOnAllDesktops()) {
+                                     continue;
+                                 }
+                                 if (window->desktop() <= desktop_count) {
+                                     continue;
+                                 }
+                                 send_window_to_desktop(*this, window, desktop_count, true);
+                             }
+                         });
+
+        QObject::connect(&base, &base::platform::topology_changed, qobject.get(), [this] {
+            if (!this->render.scene) {
+                return;
+            }
+            // desktopResized() should take care of when the size or
+            // shape of the desktop has changed, but we also want to
+            // catch refresh rate changes
+            //
+            // TODO: is this still necessary since we get the maximal refresh rate now
+            // dynamically?
+            this->render.reinitialize();
+        });
+
+        x11::init_space(*this);
+    }
+
+    Toplevel* findInternal(QWindow* window) const override
+    {
+        if (!window) {
+            return nullptr;
+        }
+        return find_unmanaged<win::x11::window>(*this, window->winId());
+    }
+
+    win::screen_edge* create_screen_edge(win::screen_edger& edger) override
+    {
+        if (!edges_filter) {
+            edges_filter = std::make_unique<screen_edges_filter>(*this);
+        }
+        return new screen_edge(&edger, *atoms);
+    }
 
     void update_space_area_from_windows(QRect const& desktop_area,
                                         std::vector<QRect> const& screens_geos,
-                                        win::space_areas& areas) override;
+                                        win::space_areas& areas) override
+    {
+        for (auto const& window : windows) {
+            if (!window->control) {
+                continue;
+            }
+            if (auto x11_window = qobject_cast<win::x11::window*>(window)) {
+                update_space_areas(x11_window, desktop_area, screens_geos, areas);
+            }
+        }
+    }
 
-    base::x11::platform& base;
+    Base& base;
 
 private:
     std::unique_ptr<base::x11::event_filter> edges_filter;
@@ -73,5 +142,4 @@ void stack_screen_edges_under_override_redirect(Space* space)
     base::x11::xcb::restack_windows(windows);
 }
 
-}
 }

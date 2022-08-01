@@ -6,6 +6,7 @@
 #pragma once
 
 #include "base/x11/event_filter.h"
+#include "kwin_export.h"
 
 namespace KWin::win
 {
@@ -15,7 +16,7 @@ class space;
 namespace x11
 {
 
-class screen_edges_filter : public base::x11::event_filter
+class KWIN_EXPORT screen_edges_filter : public base::x11::event_filter
 {
 public:
     explicit screen_edges_filter(win::space& space);

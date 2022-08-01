@@ -488,7 +488,6 @@ set(kwin_SRCS
     win/x11/root_info_filter.cpp
     win/x11/screen_edge.cpp
     win/x11/screen_edges_filter.cpp
-    win/x11/space.cpp
     win/x11/sync_alarm_filter.cpp
     win/x11/window.cpp
     xwl/xwayland_interface.cpp
@@ -826,9 +825,6 @@ set(kwin_WAYLAND_SRCS
    render/wayland/effects.cpp
    render/wayland/output.cpp
    render/wayland/presentation.cpp
-   win/wayland/space.cpp
-   win/wayland/window.cpp
-   win/wayland/xwl_window.cpp
 )
 
 if (KWIN_BUILD_TABBOX)

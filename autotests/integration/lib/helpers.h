@@ -11,6 +11,7 @@
 #include "base/output.h"
 #include "base/wayland/server.h"
 #include "main.h"
+#include "win/wayland/space.h"
 #include "win/wayland/window.h"
 
 #include <QtTest>
@@ -48,6 +49,9 @@ struct KWIN_EXPORT output {
     QRect geometry;
     double scale;
 };
+
+using wayland_space = win::wayland::space<base::wayland::platform>;
+using wayland_window = win::wayland::window<wayland_space>;
 
 KWIN_EXPORT WaylandTestApplication* app();
 
@@ -152,13 +156,13 @@ KWIN_EXPORT void render(client const& clt,
  * Renders and then waits untill the new window is shown. Returns the created window.
  * If no window gets shown during @p timeout @c null is returned.
  */
-KWIN_EXPORT win::wayland::window*
+KWIN_EXPORT wayland_window*
 render_and_wait_for_shown(std::unique_ptr<Wrapland::Client::Surface> const& surface,
                           QSize const& size,
                           QColor const& color,
                           QImage::Format const& format = QImage::Format_ARGB32_Premultiplied,
                           int timeout = 5000);
-KWIN_EXPORT win::wayland::window*
+KWIN_EXPORT wayland_window*
 render_and_wait_for_shown(client const& clt,
                           std::unique_ptr<Wrapland::Client::Surface> const& surface,
                           QSize const& size,

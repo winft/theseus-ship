@@ -6,7 +6,6 @@
 #pragma once
 
 #include "base/output_helpers.h"
-#include "base/platform.h"
 #include "win/space_areas.h"
 #include "win/virtual_desktops.h"
 

@@ -238,7 +238,9 @@ void ApplicationWayland::start()
         exit(exc.code().value());
     }
 
-    base->space = std::make_unique<win::wayland::space>(*base, server.get());
+    using wayland_space = win::wayland::space<base::wayland::platform>;
+    base->space = std::make_unique<wayland_space>(*base, server.get());
+
     input::wayland::add_dbus(base->input.get());
     win::init_shortcuts(*base->space);
     tablet_mode_manager

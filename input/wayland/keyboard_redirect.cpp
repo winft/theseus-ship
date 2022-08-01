@@ -8,6 +8,7 @@
 
 #include "redirect.h"
 
+#include "base/wayland/platform.h"
 #include "base/wayland/server.h"
 #include "input/event.h"
 #include "input/event_filter.h"
@@ -20,6 +21,7 @@
 #include "toplevel.h"
 #include "win/space.h"
 #include "win/stacking_order.h"
+#include "win/wayland/space.h"
 #include "win/wayland/window.h"
 
 #include <KScreenLocker/KsldApp>
@@ -137,6 +139,9 @@ void keyboard_redirect::update()
         return;
     }
 
+    using wayland_space = win::wayland::space<base::wayland::platform>;
+    using wayland_window = win::wayland::window<wayland_space>;
+
     // TODO: this needs better integration
     Toplevel* found = nullptr;
     auto const& stacking = redirect->space.stacking_order->stack;
@@ -152,7 +157,7 @@ void keyboard_redirect::update()
             if (!t->ready_for_painting) {
                 continue;
             }
-            auto wlwin = dynamic_cast<win::wayland::window*>(t);
+            auto wlwin = dynamic_cast<wayland_window*>(t);
             if (!wlwin) {
                 continue;
             }

@@ -35,7 +35,8 @@ Q_DECLARE_METATYPE(align)
 namespace KWin
 {
 
-using wayland_window = win::wayland::window;
+using wayland_space = win::wayland::space<base::wayland::platform>;
+using wayland_window = win::wayland::window<wayland_space>;
 
 class layer_shell_test : public QObject
 {

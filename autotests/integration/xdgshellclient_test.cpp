@@ -69,7 +69,8 @@ using namespace Wrapland::Client;
 namespace KWin
 {
 
-using wayland_window = win::wayland::window;
+using wayland_space = win::wayland::space<base::wayland::platform>;
+using wayland_window = win::wayland::window<wayland_space>;
 
 class TestXdgShellClient : public QObject
 {

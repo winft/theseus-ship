@@ -96,7 +96,7 @@ void xdg_activation_handle_token_request(Space& space, TokenRequest& token)
 {
     auto check_allowance = [&] {
         if (!token.surface()) {
-            qCDebug(KWIN_WL) << "Token request has no surface set.";
+            qCDebug(KWIN_CORE) << "Token request has no surface set.";
             return false;
         }
 
@@ -112,19 +112,19 @@ void xdg_activation_handle_token_request(Space& space, TokenRequest& token)
 
         auto win = space.find_window(token.surface());
         if (!win) {
-            qCDebug(KWIN_WL) << "No window associated with token surface" << token.surface();
+            qCDebug(KWIN_CORE) << "No window associated with token surface" << token.surface();
             return false;
         }
 
         if (win != space.active_client) {
-            qCDebug(KWIN_WL) << "Requesting window" << win << "currently not active.";
+            qCDebug(KWIN_CORE) << "Requesting window" << win << "currently not active.";
             return false;
         }
         return true;
     };
 
     if (!check_allowance()) {
-        qCDebug(KWIN_WL) << "Deny creation of XDG Activation token.";
+        qCDebug(KWIN_CORE) << "Deny creation of XDG Activation token.";
         token.done("");
         return;
     }
@@ -138,14 +138,14 @@ void xdg_activation_activate(Space* space, Window* win, std::string const& token
     assert(win);
 
     if (space->activation->token.empty()) {
-        qCDebug(KWIN_WL) << "Empty token provided on XDG Activation of" << win;
+        qCDebug(KWIN_CORE) << "Empty token provided on XDG Activation of" << win;
         set_demands_attention(win, true);
         return;
     }
     if (space->activation->token != token) {
-        qCDebug(KWIN_WL) << "Token mismatch on XDG Activation of" << win;
-        qCDebug(KWIN_WL).nospace() << "Provided: '" << token.c_str() << "', match: '"
-                                   << space->activation->token.c_str() << "'";
+        qCDebug(KWIN_CORE) << "Token mismatch on XDG Activation of" << win;
+        qCDebug(KWIN_CORE).nospace() << "Provided: '" << token.c_str() << "', match: '"
+                                     << space->activation->token.c_str() << "'";
         set_demands_attention(win, true);
         return;
     }
@@ -161,14 +161,14 @@ void handle_xdg_activation_activate(Space* space,
 {
     auto win = space->find_window(surface);
     if (!win) {
-        qCDebug(KWIN_WL) << "No window found to xdg-activate" << surface;
+        qCDebug(KWIN_CORE) << "No window found to xdg-activate" << surface;
         return;
     }
 
     while (!win->control) {
         auto lead = win->transient()->lead();
         if (!lead) {
-            qCDebug(KWIN_WL) << "No window lead with control found to xdg-activate" << surface;
+            qCDebug(KWIN_CORE) << "No window lead with control found to xdg-activate" << surface;
             return;
         }
         win = static_cast<decltype(win)>(lead);

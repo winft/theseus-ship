@@ -17,6 +17,9 @@
 namespace KWin::render::wayland
 {
 
+using wayland_space = win::wayland::space<base::wayland::platform>;
+using wayland_window = win::wayland::window<wayland_space>;
+
 effects_handler_impl::effects_handler_impl(render::compositor* compositor, render::scene* scene)
     : render::effects_handler_impl(compositor, scene)
     , blur{*this, *waylandServer()->display}
@@ -43,7 +46,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
 
     // TODO(romangg): We do this here too for every window.
     for (auto window : space->windows) {
-        auto wlwin = dynamic_cast<win::wayland::window*>(window);
+        auto wlwin = dynamic_cast<wayland_window*>(window);
         if (!wlwin) {
             continue;
         }
@@ -68,7 +71,7 @@ bool effects_handler_impl::eventFilter(QObject* watched, QEvent* event)
 
 EffectWindow* effects_handler_impl::find_window_by_surface(Wrapland::Server::Surface* surface) const
 {
-    if (auto win = static_cast<win::wayland::space*>(m_compositor->space)->find_window(surface)) {
+    if (auto win = static_cast<wayland_space*>(m_compositor->space)->find_window(surface)) {
         return win->render->effect.get();
     }
     return nullptr;

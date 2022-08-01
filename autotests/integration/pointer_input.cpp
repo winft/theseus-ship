@@ -57,7 +57,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-using wayland_window = win::wayland::window;
+using wayland_space = win::wayland::space<base::wayland::platform>;
+using wayland_window = win::wayland::window<wayland_space>;
 
 template<typename T>
 PlatformCursorImage loadReferenceThemeCursor(const T& shape)

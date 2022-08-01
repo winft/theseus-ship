@@ -5,10 +5,9 @@
 */
 #pragma once
 
-#include "space.h"
-
 #include "base/platform.h"
 #include "base/wayland/server.h"
+#include "main.h"
 #include "toplevel.h"
 
 #include <Wrapland/Server/display.h>

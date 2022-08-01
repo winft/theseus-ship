@@ -60,7 +60,7 @@ public:
     std::unique_ptr<Wrapland::Server::drm_lease_device_v1> drm_lease_device;
 
     std::unique_ptr<input::wayland::platform> input;
-    std::unique_ptr<win::wayland::space> space;
+    std::unique_ptr<win::wayland::space<platform>> space;
 };
 
 }

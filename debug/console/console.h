@@ -39,10 +39,6 @@ namespace win
 class internal_window;
 class space;
 
-namespace wayland
-{
-class window;
-}
 namespace x11
 {
 class window;

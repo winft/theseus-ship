@@ -27,7 +27,7 @@
 namespace KWin::debug
 {
 
-wayland_console::wayland_console(win::space& space)
+wayland_console::wayland_console(wayland_space& space)
     : console(space)
 {
     m_ui->windowsView->setItemDelegate(new wayland_console_delegate(this));
@@ -116,7 +116,7 @@ wayland_console_model::wayland_console_model(win::space& space, QObject* parent)
     : console_model(space, parent)
 {
     for (auto window : space.windows) {
-        if (auto wwin = dynamic_cast<win::wayland::window*>(window); wwin && !wwin->remnant) {
+        if (auto wwin = dynamic_cast<wayland_window*>(window); wwin && !wwin->remnant) {
             m_shellClients.append(wwin);
         }
     }
@@ -124,14 +124,14 @@ wayland_console_model::wayland_console_model(win::space& space, QObject* parent)
     // TODO: that only includes windows getting shown, not those which are only created
     QObject::connect(
         space.qobject.get(), &win::space::qobject_t::wayland_window_added, this, [this](auto win) {
-            auto wayland_win = static_cast<win::wayland::window*>(win);
+            auto wayland_win = static_cast<wayland_window*>(win);
             add_window(this, s_waylandClientId - 1, m_shellClients, wayland_win);
         });
     QObject::connect(space.qobject.get(),
                      &win::space::qobject_t::wayland_window_removed,
                      this,
                      [this](auto win) {
-                         auto wayland_win = static_cast<win::wayland::window*>(win);
+                         auto wayland_win = static_cast<wayland_window*>(win);
                          remove_window(this, s_waylandClientId - 1, m_shellClients, wayland_win);
                      });
 }
@@ -210,7 +210,7 @@ QVariant wayland_console_model::get_client_data(QModelIndex const& index, int ro
     return console_model::get_client_data(index, role);
 }
 
-win::wayland::window* wayland_console_model::shellClient(const QModelIndex& index) const
+wayland_window* wayland_console_model::shellClient(const QModelIndex& index) const
 {
     return window_for_index(index, m_shellClients, s_waylandClientId);
 }

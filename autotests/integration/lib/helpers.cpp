@@ -163,21 +163,21 @@ void render(client const& clt, std::unique_ptr<Clt::Surface> const& surface, con
     surface->commit(Clt::Surface::CommitFlag::None);
 }
 
-win::wayland::window* render_and_wait_for_shown(std::unique_ptr<Clt::Surface> const& surface,
-                                                QSize const& size,
-                                                QColor const& color,
-                                                QImage::Format const& format,
-                                                int timeout)
+wayland_window* render_and_wait_for_shown(std::unique_ptr<Clt::Surface> const& surface,
+                                          QSize const& size,
+                                          QColor const& color,
+                                          QImage::Format const& format,
+                                          int timeout)
 {
     return render_and_wait_for_shown(get_client(), surface, size, color, format, timeout);
 }
 
-win::wayland::window* render_and_wait_for_shown(client const& clt,
-                                                std::unique_ptr<Clt::Surface> const& surface,
-                                                QSize const& size,
-                                                QColor const& color,
-                                                QImage::Format const& format,
-                                                int timeout)
+wayland_window* render_and_wait_for_shown(client const& clt,
+                                          std::unique_ptr<Clt::Surface> const& surface,
+                                          QSize const& size,
+                                          QColor const& color,
+                                          QImage::Format const& format,
+                                          int timeout)
 {
     QSignalSpy clientAddedSpy(app()->base.space->qobject.get(),
                               &win::space::qobject_t::wayland_window_added);
@@ -189,7 +189,7 @@ win::wayland::window* render_and_wait_for_shown(client const& clt,
     if (!clientAddedSpy.wait(timeout)) {
         return nullptr;
     }
-    return dynamic_cast<win::wayland::window*>(clientAddedSpy.first().first().value<Toplevel*>());
+    return dynamic_cast<wayland_window*>(clientAddedSpy.first().first().value<Toplevel*>());
 }
 
 void flush_wayland_connection()

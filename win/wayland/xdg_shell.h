@@ -902,7 +902,7 @@ void handle_ping_delayed(Win* win, uint32_t serial)
 {
     auto it = win->pings.find(serial);
     if (it != win->pings.end()) {
-        qCDebug(KWIN_WL) << "First ping timeout:" << caption(win);
+        qCDebug(KWIN_CORE) << "First ping timeout:" << caption(win);
         win->control->set_unresponsive(true);
     }
 }
@@ -913,8 +913,8 @@ void handle_ping_timeout(Win* win, uint32_t serial)
     auto it = win->pings.find(serial);
     if (it != win->pings.end()) {
         if (it->second == Win::ping_reason::close) {
-            qCDebug(KWIN_WL) << "Final ping timeout on a close attempt, asking to kill:"
-                             << win::caption(win);
+            qCDebug(KWIN_CORE) << "Final ping timeout on a close attempt, asking to kill:"
+                               << win::caption(win);
 
             // for internal windows, killing the window will delete this
             QPointer<QObject> guard(win);
