@@ -77,6 +77,55 @@ class space
 {
 public:
     using qobject_t = space_qobject;
+
+    explicit space(render::compositor& render)
+        : qobject{std::make_unique<space_qobject>([this] { space_start_reconfigure_timer(*this); })}
+        , outline{std::make_unique<render::outline>(render)}
+        , render{render}
+        , deco{std::make_unique<deco::bridge<space>>(*this)}
+        , appmenu{std::make_unique<dbus::appmenu>(dbus::create_appmenu_callbacks(*this))}
+        , rule_book{std::make_unique<rules::book>()}
+        , user_actions_menu{std::make_unique<win::user_actions_menu<space>>(*this)}
+        , stacking_order{std::make_unique<win::stacking_order>()}
+        , focus_chain{win::focus_chain<space>(*this)}
+        , virtual_desktop_manager{std::make_unique<win::virtual_desktop_manager>()}
+        , session_manager{std::make_unique<win::session_manager>()}
+    {
+        init_space(*this);
+    }
+
+    virtual ~space()
+    {
+        clear_space(*this);
+    }
+
+    /**
+     * @brief Finds a Toplevel for the internal window @p w.
+     *
+     * Internal window means a window created by KWin itself. On X11 this is an Unmanaged
+     * and mapped by the window id, on Wayland a XdgShellClient mapped on the internal window id.
+     *
+     * @returns Toplevel
+     */
+    virtual Toplevel* findInternal(QWindow* w) const = 0;
+
+    virtual win::screen_edge* create_screen_edge(win::screen_edger& edger)
+    {
+        return new win::screen_edge(&edger);
+    }
+
+    virtual QRect get_icon_geometry(Toplevel const* /*win*/) const
+    {
+        return {};
+    }
+
+    virtual void update_space_area_from_windows(QRect const& /*desktop_area*/,
+                                                std::vector<QRect> const& /*screens_geos*/,
+                                                win::space_areas& /*areas*/)
+    {
+        // Can't be pure virtual because the function might be called from the ctor.
+    }
+
     std::unique_ptr<qobject_t> qobject;
 
     std::vector<Toplevel*> windows;
@@ -133,37 +182,6 @@ public:
     // Array of the previous restricted areas that window cannot be moved into
     std::vector<win::strut_rects> oldrestrictedmovearea;
 
-    explicit space(render::compositor& render)
-        : qobject{std::make_unique<space_qobject>([this] { space_start_reconfigure_timer(*this); })}
-        , outline{std::make_unique<render::outline>(render)}
-        , render{render}
-        , deco{std::make_unique<deco::bridge<space>>(*this)}
-        , appmenu{std::make_unique<dbus::appmenu>(dbus::create_appmenu_callbacks(*this))}
-        , rule_book{std::make_unique<rules::book>()}
-        , user_actions_menu{std::make_unique<win::user_actions_menu<space>>(*this)}
-        , stacking_order{std::make_unique<win::stacking_order>()}
-        , focus_chain{win::focus_chain<space>(*this)}
-        , virtual_desktop_manager{std::make_unique<win::virtual_desktop_manager>()}
-        , session_manager{std::make_unique<win::session_manager>()}
-    {
-        init_space(*this);
-    }
-
-    virtual ~space()
-    {
-        clear_space(*this);
-    }
-
-    /**
-     * @brief Finds a Toplevel for the internal window @p w.
-     *
-     * Internal window means a window created by KWin itself. On X11 this is an Unmanaged
-     * and mapped by the window id, on Wayland a XdgShellClient mapped on the internal window id.
-     *
-     * @returns Toplevel
-     */
-    virtual Toplevel* findInternal(QWindow* w) const = 0;
-
     /**
      * Most recently raised window.
      *
@@ -181,23 +199,6 @@ public:
     win::quicktiles m_lastTilingMode{win::quicktiles::none};
 
     Toplevel* active_client{nullptr};
-
-    virtual win::screen_edge* create_screen_edge(win::screen_edger& edger)
-    {
-        return new win::screen_edge(&edger);
-    }
-
-    virtual QRect get_icon_geometry(Toplevel const* /*win*/) const
-    {
-        return {};
-    }
-
-    virtual void update_space_area_from_windows(QRect const& /*desktop_area*/,
-                                                std::vector<QRect> const& /*screens_geos*/,
-                                                win::space_areas& /*areas*/)
-    {
-        // Can't be pure virtual because the function might be called from the ctor.
-    }
 
     QWidget* active_popup{nullptr};
 
