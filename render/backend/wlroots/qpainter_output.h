@@ -5,21 +5,20 @@
 */
 #pragma once
 
-#include "render/qpainter/backend.h"
-
 #include <QImage>
 #include <memory>
+
+struct wlr_renderer;
 
 namespace KWin::render::backend::wlroots
 {
 
-class qpainter_backend;
 class output;
 
 class qpainter_output
 {
 public:
-    qpainter_output(wlroots::output& output, qpainter_backend& backend);
+    qpainter_output(wlroots::output& output, wlr_renderer* renderer);
     qpainter_output(qpainter_output const&) = delete;
     qpainter_output& operator=(qpainter_output const&) = delete;
     qpainter_output(qpainter_output&& other) noexcept = default;
@@ -29,7 +28,7 @@ public:
     void present(QRegion const& damage);
 
     wlroots::output& output;
-    qpainter_backend& backend;
+    wlr_renderer* renderer;
 
     std::unique_ptr<QImage> buffer;
 };

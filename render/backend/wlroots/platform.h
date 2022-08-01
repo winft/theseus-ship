@@ -21,6 +21,8 @@ namespace render::backend::wlroots
 {
 
 class egl_backend;
+
+template<typename Platform>
 class qpainter_backend;
 
 class KWIN_EXPORT platform : public wayland::platform
@@ -39,7 +41,7 @@ public:
 
     base::backend::wlroots::platform& base;
     std::unique_ptr<egl_backend> egl;
-    std::unique_ptr<qpainter_backend> qpainter;
+    std::unique_ptr<qpainter_backend<platform>> qpainter;
 
     wlr_renderer* renderer{nullptr};
     wlr_allocator* allocator{nullptr};

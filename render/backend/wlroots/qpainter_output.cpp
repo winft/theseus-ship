@@ -7,7 +7,6 @@
 
 #include "output.h"
 #include "platform.h"
-#include "qpainter_backend.h"
 #include "wlr_includes.h"
 
 #include "wayland_logging.h"
@@ -20,9 +19,9 @@ static base::backend::wlroots::output& get_base(base::wayland::output& output)
     return static_cast<base::backend::wlroots::output&>(output);
 }
 
-qpainter_output::qpainter_output(wlroots::output& output, qpainter_backend& backend)
+qpainter_output::qpainter_output(wlroots::output& output, wlr_renderer* renderer)
     : output{output}
-    , backend{backend}
+    , renderer{renderer}
 {
 }
 
@@ -53,11 +52,10 @@ void qpainter_output::begin_render()
     auto const size = output.base.geometry().size();
 
     wlr_output_attach_render(native_out, nullptr);
-    wlr_renderer_begin(backend.platform.renderer, size.width(), size.height());
+    wlr_renderer_begin(renderer, size.width(), size.height());
 
     if (!buffer || size != buffer->size()) {
-        auto current_pixman_image
-            = wlr_pixman_renderer_get_current_image(backend.platform.renderer);
+        auto current_pixman_image = wlr_pixman_renderer_get_current_image(renderer);
         auto pixman_format = pixman_image_get_format(current_pixman_image);
         buffer = std::make_unique<QImage>(size, pixman_to_qt_image_format(pixman_format));
         if (buffer->isNull()) {
@@ -72,8 +70,7 @@ void qpainter_output::begin_render()
 void qpainter_output::present(QRegion const& /*damage*/)
 {
     auto buffer_bits = buffer->constBits();
-    auto pixman_data
-        = pixman_image_get_data(wlr_pixman_renderer_get_current_image(backend.platform.renderer));
+    auto pixman_data = pixman_image_get_data(wlr_pixman_renderer_get_current_image(renderer));
 
     memcpy(pixman_data, buffer_bits, buffer->width() * buffer->height() * 4);
 

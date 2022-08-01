@@ -6,7 +6,6 @@
 #pragma once
 
 #include "output.h"
-#include "platform.h"
 #include "qpainter_output.h"
 #include "wlr_includes.h"
 
@@ -23,17 +22,19 @@ static std::unique_ptr<qpainter_output>& get_qpainter_output(base::output& outpu
     return backend_output.qpainter;
 }
 
+template<typename Platform>
 class qpainter_backend : public qpainter::backend
 {
 public:
-    qpainter_backend(wlroots::platform& platform)
+    qpainter_backend(Platform& platform)
         : qpainter::backend()
         , platform{platform}
     {
         for (auto& out : platform.base.all_outputs) {
             auto render
                 = static_cast<output*>(static_cast<base::wayland::output*>(out)->render.get());
-            get_qpainter_output(*out) = std::make_unique<qpainter_output>(*render, *this);
+            get_qpainter_output(*out)
+                = std::make_unique<qpainter_output>(*render, platform.renderer);
         }
     }
 
@@ -67,7 +68,7 @@ public:
     {
     }
 
-    wlroots::platform& platform;
+    Platform& platform;
 };
 
 }

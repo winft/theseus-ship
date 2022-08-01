@@ -87,7 +87,7 @@ output::output(base::backend::wlroots::output& base, render::platform& platform)
             &base, &base::backend::wlroots::output::mode_changed, this, [this] { egl->reset(); });
     } else {
         assert(render.qpainter);
-        qpainter = std::make_unique<qpainter_output>(*this, *render.qpainter);
+        qpainter = std::make_unique<qpainter_output>(*this, render.renderer);
     }
 
     present_rec.receiver = this;
