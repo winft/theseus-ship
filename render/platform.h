@@ -6,13 +6,12 @@
 */
 #pragma once
 
+#include "compositor.h"
+#include "effects.h"
 #include "gl/egl_data.h"
+#include "post/night_color_manager.h"
+#include "singleton_interface.h"
 
-#include "input/redirect.h"
-#include "kwin_export.h"
-#include "kwinglobals.h"
-
-#include <epoxy/egl.h>
 #include <memory>
 
 namespace KWin
@@ -36,28 +35,32 @@ namespace gl
 {
 class backend;
 }
-namespace post
-{
-class night_color_manager;
-}
 namespace qpainter
 {
 class backend;
 }
 
-class compositor;
-class effects_handler_impl;
 class outline;
 class outline_visual;
 class scene;
 
-class KWIN_EXPORT platform
+class platform
 {
 public:
-    virtual ~platform();
+    virtual ~platform()
+    {
+        singleton_interface::platform = nullptr;
+    }
 
-    virtual render::gl::backend* get_opengl_backend(render::compositor& compositor);
-    virtual render::qpainter::backend* get_qpainter_backend(render::compositor& compositor);
+    virtual render::gl::backend* get_opengl_backend(render::compositor& /*compositor*/)
+    {
+        return nullptr;
+    }
+
+    virtual render::qpainter::backend* get_qpainter_backend(render::compositor& /*compositor*/)
+    {
+        return nullptr;
+    }
 
     // TODO(romangg): Remove the boolean trap.
     virtual void render_stop(bool on_shutdown) = 0;
@@ -88,7 +91,12 @@ public:
     gl::egl_data* egl_data{nullptr};
 
 protected:
-    platform(base::platform& base);
+    platform(base::platform& base)
+        : night_color{std::make_unique<render::post::night_color_manager>()}
+        , base{base}
+    {
+        singleton_interface::platform = this;
+    }
 };
 
 }

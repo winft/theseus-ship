@@ -433,7 +433,6 @@ set(kwin_SRCS
     render/gl/texture.cpp
     render/gl/window.cpp
     render/outline.cpp
-    render/platform.cpp
     render/scene.cpp
     render/shadow.cpp
     render/singleton_interface.cpp
