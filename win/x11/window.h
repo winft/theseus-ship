@@ -54,107 +54,6 @@ public:
     window(xcb_window_t xcb_win, win::space& space);
     ~window();
 
-    QString iconic_caption;
-
-    struct {
-        // Most outer window that encompasses all other windows.
-        base::x11::xcb::window outer{};
-
-        // Window with the same dimensions as client.
-        // TODO(romangg): Why do we need this again?
-        base::x11::xcb::window wrapper{};
-
-        // The actual client window.
-        base::x11::xcb::window client{};
-
-        // Including decoration.
-        base::x11::xcb::window input{};
-
-        // For move-resize operations.
-        base::x11::xcb::window grab{};
-    } xcb_windows;
-
-    bool blocks_compositing{false};
-    uint deleting{0};
-
-    // True when X11 Server must be informed about the final location of a move on leaving the move.
-    bool move_needs_server_update{false};
-    bool move_resize_has_keyboard_grab{false};
-
-    NET::Actions allowed_actions{};
-
-    uint user_no_border{0};
-    uint app_no_border{0};
-
-    win::maximize_mode max_mode{win::maximize_mode::restore};
-    win::maximize_mode prev_max_mode{win::maximize_mode::restore};
-
-    // Forcibly hidden by calling hide()
-    uint hidden{0};
-
-    xcb_timestamp_t ping_timestamp{XCB_TIME_CURRENT_TIME};
-    xcb_timestamp_t user_time{XCB_TIME_CURRENT_TIME};
-
-    qint64 kill_helper_pid{0};
-
-    struct {
-        xcb_sync_counter_t counter{XCB_NONE};
-        xcb_sync_alarm_t alarm{XCB_NONE};
-
-        // The update request number is the serial of our latest configure request.
-        int64_t update_request_number{0};
-        xcb_timestamp_t timestamp{XCB_NONE};
-
-        int suppressed{0};
-    } sync_request;
-
-    struct configure_event {
-        int64_t update_request_number{0};
-
-        // Geometry to apply after a resize operation has been completed.
-        struct {
-            QRect frame;
-            // TODO(romangg): instead of client geometry remember deco and extents margins?
-            QRect client;
-            maximize_mode max_mode{maximize_mode::restore};
-            bool fullscreen{false};
-        } geometry;
-    };
-    std::vector<configure_event> pending_configures;
-
-    // The geometry clients are configured with via the sync extension.
-    struct {
-        QRect frame;
-        QRect client;
-        maximize_mode max_mode{maximize_mode::restore};
-        bool fullscreen{false};
-    } synced_geometry;
-
-    bool first_geo_synced{false};
-
-    QTimer* syncless_resize_retarder{nullptr};
-
-    struct {
-        QMetaObject::Connection edge_remove;
-        QMetaObject::Connection edge_geometry;
-    } connections;
-
-    mapping_state mapping{mapping_state::withdrawn};
-
-    base::x11::xcb::geometry_hints geometry_hints;
-    base::x11::xcb::motif_hints motif_hints;
-
-    QTimer* focus_out_timer{nullptr};
-    QTimer* ping_timer{nullptr};
-
-    QPoint input_offset;
-
-    int sm_stacking_order{-1};
-
-    x11::group* in_group{nullptr};
-
-    xcb_colormap_t colormap{XCB_COLORMAP_NONE};
-
     bool isClient() const override;
     xcb_window_t frameId() const override;
     bool providesContextHelp() const override;
@@ -276,6 +175,107 @@ public:
 
     static bool resourceMatch(window const* c1, window const* c2);
     void debug(QDebug& stream) const override;
+
+    QString iconic_caption;
+
+    struct {
+        // Most outer window that encompasses all other windows.
+        base::x11::xcb::window outer{};
+
+        // Window with the same dimensions as client.
+        // TODO(romangg): Why do we need this again?
+        base::x11::xcb::window wrapper{};
+
+        // The actual client window.
+        base::x11::xcb::window client{};
+
+        // Including decoration.
+        base::x11::xcb::window input{};
+
+        // For move-resize operations.
+        base::x11::xcb::window grab{};
+    } xcb_windows;
+
+    bool blocks_compositing{false};
+    uint deleting{0};
+
+    // True when X11 Server must be informed about the final location of a move on leaving the move.
+    bool move_needs_server_update{false};
+    bool move_resize_has_keyboard_grab{false};
+
+    NET::Actions allowed_actions{};
+
+    uint user_no_border{0};
+    uint app_no_border{0};
+
+    win::maximize_mode max_mode{win::maximize_mode::restore};
+    win::maximize_mode prev_max_mode{win::maximize_mode::restore};
+
+    // Forcibly hidden by calling hide()
+    uint hidden{0};
+
+    xcb_timestamp_t ping_timestamp{XCB_TIME_CURRENT_TIME};
+    xcb_timestamp_t user_time{XCB_TIME_CURRENT_TIME};
+
+    qint64 kill_helper_pid{0};
+
+    struct {
+        xcb_sync_counter_t counter{XCB_NONE};
+        xcb_sync_alarm_t alarm{XCB_NONE};
+
+        // The update request number is the serial of our latest configure request.
+        int64_t update_request_number{0};
+        xcb_timestamp_t timestamp{XCB_NONE};
+
+        int suppressed{0};
+    } sync_request;
+
+    struct configure_event {
+        int64_t update_request_number{0};
+
+        // Geometry to apply after a resize operation has been completed.
+        struct {
+            QRect frame;
+            // TODO(romangg): instead of client geometry remember deco and extents margins?
+            QRect client;
+            maximize_mode max_mode{maximize_mode::restore};
+            bool fullscreen{false};
+        } geometry;
+    };
+    std::vector<configure_event> pending_configures;
+
+    // The geometry clients are configured with via the sync extension.
+    struct {
+        QRect frame;
+        QRect client;
+        maximize_mode max_mode{maximize_mode::restore};
+        bool fullscreen{false};
+    } synced_geometry;
+
+    bool first_geo_synced{false};
+
+    QTimer* syncless_resize_retarder{nullptr};
+
+    struct {
+        QMetaObject::Connection edge_remove;
+        QMetaObject::Connection edge_geometry;
+    } connections;
+
+    mapping_state mapping{mapping_state::withdrawn};
+
+    base::x11::xcb::geometry_hints geometry_hints;
+    base::x11::xcb::motif_hints motif_hints;
+
+    QTimer* focus_out_timer{nullptr};
+    QTimer* ping_timer{nullptr};
+
+    QPoint input_offset;
+
+    int sm_stacking_order{-1};
+
+    x11::group* in_group{nullptr};
+
+    xcb_colormap_t colormap{XCB_COLORMAP_NONE};
 
 Q_SIGNALS:
     void client_fullscreen_set(KWin::win::x11::window*, bool, bool);

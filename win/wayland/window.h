@@ -35,63 +35,10 @@ class KWIN_EXPORT window : public Toplevel
 public:
     constexpr static bool is_toplevel{false};
 
-    bool initialized{false};
-    NET::WindowType window_type{NET::Normal};
-
-    bool user_no_border{false};
-
-    bool hidden{false};
-    bool mapped{false};
-    bool closing{false};
-
-    double m_opacity = 1.0;
-
-    struct configure_event {
-        uint32_t serial{0};
-
-        // Geometry to apply after a resize operation has been completed.
-        struct {
-            QRect frame;
-            maximize_mode max_mode{maximize_mode::restore};
-            bool fullscreen{false};
-        } geometry;
-    };
-    std::vector<configure_event> pending_configures;
-
-    void handle_commit();
-    void do_set_maximize_mode(win::maximize_mode mode);
-    void do_set_fullscreen(bool full);
-
-    bool acceptsFocus() const override;
-    void updateCaption() override;
-
-    maximize_mode max_mode{maximize_mode::restore};
-
-    struct {
-        QRect window;
-        maximize_mode max_mode{maximize_mode::restore};
-        bool fullscreen{false};
-    } synced_geometry;
-
-    Wrapland::Server::XdgShellSurface* shell_surface{nullptr};
-    Wrapland::Server::XdgShellToplevel* toplevel{nullptr};
-    Wrapland::Server::XdgShellPopup* popup{nullptr};
-    Wrapland::Server::LayerSurfaceV1* layer_surface{nullptr};
-    Wrapland::Server::input_method_popup_surface_v2* input_method_popup{nullptr};
-
-    Wrapland::Server::XdgDecoration* xdg_deco{nullptr};
-    Wrapland::Server::PlasmaShellSurface* plasma_shell_surface{nullptr};
-    Wrapland::Server::ServerSideDecorationPalette* palette{nullptr};
-
     enum class ping_reason {
         close = 0,
         focus,
     };
-    std::map<uint32_t, ping_reason> pings;
-    uint32_t acked_configure{0};
-
-    bool must_place{false};
-    bool inhibit_idle{false};
 
     window(win::remnant remnant, win::space& space);
     window(Wrapland::Server::Surface* surface, win::space& space);
@@ -184,6 +131,60 @@ public:
 
     void handle_class_changed();
     void handle_title_changed();
+
+    bool initialized{false};
+    NET::WindowType window_type{NET::Normal};
+
+    bool user_no_border{false};
+
+    bool hidden{false};
+    bool mapped{false};
+    bool closing{false};
+
+    double m_opacity = 1.0;
+
+    struct configure_event {
+        uint32_t serial{0};
+
+        // Geometry to apply after a resize operation has been completed.
+        struct {
+            QRect frame;
+            maximize_mode max_mode{maximize_mode::restore};
+            bool fullscreen{false};
+        } geometry;
+    };
+    std::vector<configure_event> pending_configures;
+
+    void handle_commit();
+    void do_set_maximize_mode(win::maximize_mode mode);
+    void do_set_fullscreen(bool full);
+
+    bool acceptsFocus() const override;
+    void updateCaption() override;
+
+    maximize_mode max_mode{maximize_mode::restore};
+
+    struct {
+        QRect window;
+        maximize_mode max_mode{maximize_mode::restore};
+        bool fullscreen{false};
+    } synced_geometry;
+
+    Wrapland::Server::XdgShellSurface* shell_surface{nullptr};
+    Wrapland::Server::XdgShellToplevel* toplevel{nullptr};
+    Wrapland::Server::XdgShellPopup* popup{nullptr};
+    Wrapland::Server::LayerSurfaceV1* layer_surface{nullptr};
+    Wrapland::Server::input_method_popup_surface_v2* input_method_popup{nullptr};
+
+    Wrapland::Server::XdgDecoration* xdg_deco{nullptr};
+    Wrapland::Server::PlasmaShellSurface* plasma_shell_surface{nullptr};
+    Wrapland::Server::ServerSideDecorationPalette* palette{nullptr};
+
+    std::map<uint32_t, ping_reason> pings;
+    uint32_t acked_configure{0};
+
+    bool must_place{false};
+    bool inhibit_idle{false};
 
 private:
     void handle_shown_and_mapped();
