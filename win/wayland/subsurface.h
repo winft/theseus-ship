@@ -27,7 +27,8 @@ void assign_subsurface_role(Win* win)
     win->transient()->annexed = true;
 }
 
-inline void restack_subsurfaces(Toplevel* window)
+template<typename Win>
+void restack_subsurfaces(Win* window)
 {
     auto subsurface_stacker = [&window](std::vector<Toplevel*>& children) {
         auto const& subsurfaces = window->surface->state().children;

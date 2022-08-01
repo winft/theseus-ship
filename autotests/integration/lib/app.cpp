@@ -217,8 +217,7 @@ void WaylandTestApplication::start()
         exit(exc.code().value());
     }
 
-    base.space = std::make_unique<win::wayland::space>(
-        *base.render->compositor, *base.input, server.get());
+    base.space = std::make_unique<win::wayland::space>(base, server.get());
     input::wayland::add_dbus(base.input.get());
     win::init_shortcuts(*base.space);
     base.space->scripting = std::make_unique<scripting::platform>(*base.space);

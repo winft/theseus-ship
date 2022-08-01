@@ -248,7 +248,9 @@ void xwayland::continue_startup_with_x11()
         this,
         [this, xwayland_connection = waylandServer()->xwayland_connection()](auto window, auto id) {
             if (auto surface = space.compositor->getSurface(id, xwayland_connection)) {
-                win::wayland::set_surface(window, surface);
+                auto xwl_win = dynamic_cast<win::wayland::xwl_window*>(window);
+                assert(xwl_win);
+                win::wayland::set_surface(xwl_win, surface);
             }
         });
 

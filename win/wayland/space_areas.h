@@ -7,7 +7,6 @@
 
 #include "base/output_helpers.h"
 #include "base/platform.h"
-#include "main.h"
 #include "win/space_areas.h"
 #include "win/virtual_desktops.h"
 
@@ -20,8 +19,7 @@ void update_space_areas(Window* win,
                         std::vector<QRect> const& screens_geos,
                         space_areas& areas)
 {
-    auto const& base = kwinApp()->get_base();
-    auto const screens_count = base.get_outputs().size();
+    auto const screens_count = win->space.base.get_outputs().size();
     auto const desktops_count = static_cast<int>(win->space.virtual_desktop_manager->count());
 
     // Assuming that only docks have "struts" and that all docks have a strut.
@@ -75,7 +73,7 @@ void update_space_areas(Window* win,
     auto const strut = margins(win->central_output ? win->central_output->geometry() : QRect());
     auto const strut_region
         = strut_rects{strut_rect(win->frameGeometry(), margins_to_strut_area(strut))};
-    auto rect = desktop_area - margins(QRect({}, base.topology.size));
+    auto rect = desktop_area - margins(QRect({}, win->space.base.topology.size));
 
     if (win->isOnAllDesktops()) {
         for (int desktop = 1; desktop <= desktops_count; ++desktop) {

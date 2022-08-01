@@ -17,6 +17,7 @@
 #include "window_release.h"
 #include "xdg_shell.h"
 
+#include "base/wayland/platform.h"
 #include "base/wayland/server.h"
 #include "render/compositor.h"
 #include "render/platform.h"
@@ -956,7 +957,7 @@ void window::handle_commit()
     if (!surface->state().damage.isEmpty()) {
         addDamage(surface->state().damage);
     } else if (surface->state().updates & Wrapland::Server::surface_change::frame) {
-        kwinApp()->get_base().render->compositor->schedule_frame_callback(this);
+        space.base.render->compositor->schedule_frame_callback(this);
     }
 
     if (toplevel || popup) {

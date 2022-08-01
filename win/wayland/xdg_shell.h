@@ -367,7 +367,7 @@ void update_screen_edge(Win* win)
     Qt::Edges edges;
     auto const geometry = win->frameGeometry();
 
-    for (auto output : kwinApp()->get_base().get_outputs()) {
+    for (auto output : win->space.base.get_outputs()) {
         auto const screen_geo = output->geometry();
         if (screen_geo.left() == geometry.left()) {
             edges |= Qt::LeftEdge;

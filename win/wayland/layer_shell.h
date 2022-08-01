@@ -15,9 +15,9 @@
 #include "win/stacking.h"
 #include "win/transient.h"
 
+#include "base/platform.h"
 #include "base/wayland/output.h"
 #include "base/wayland/output_helpers.h"
-#include "base/wayland/platform.h"
 #include "base/wayland/server.h"
 #include "input/keyboard_redirect.h"
 #include "input/redirect.h"
@@ -186,15 +186,13 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
             }
         }
 
-        if (!base::wayland::find_output(
-                static_cast<base::wayland::platform&>(kwinApp()->get_base()),
-                win->layer_surface->output())) {
+        if (!base::wayland::find_output(win->space.base, win->layer_surface->output())) {
             // Output not found. Close surface and ignore.
             win->layer_surface->close();
             return;
         }
 
-        QObject::connect(&kwinApp()->get_base(), &base::platform::topology_changed, win, [win] {
+        QObject::connect(&win->space.base, &base::platform::topology_changed, win, [win] {
             auto geo = layer_surface_recommended_geometry(win);
             if (win->geometry_update.frame != geo) {
                 win->setFrameGeometry(geo);

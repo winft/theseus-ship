@@ -59,9 +59,7 @@ class KWIN_EXPORT space : public win::space
 public:
     using x11_window = xwl_window;
 
-    space(render::compositor& render,
-          input::wayland::platform& input,
-          base::wayland::server* server);
+    space(base::wayland::platform& base, base::wayland::server* server);
     ~space() override;
 
     Toplevel* findInternal(QWindow* window) const override;
@@ -76,6 +74,7 @@ public:
                                         std::vector<QRect> const& screens_geos,
                                         win::space_areas& areas) override;
 
+    base::wayland::platform& base;
     base::wayland::server* server;
 
     std::unique_ptr<Wrapland::Server::Compositor> compositor;

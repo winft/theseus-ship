@@ -20,8 +20,10 @@
 #include "xdg_activation.h"
 #include "xdg_shell.h"
 
+#include "base/wayland/platform.h"
 #include "base/wayland/server.h"
 #include "input/wayland/redirect.h"
+#include "render/platform.h"
 #include "win/input.h"
 #include "win/internal_window.h"
 #include "win/screen.h"
@@ -49,10 +51,9 @@
 namespace KWin::win::wayland
 {
 
-space::space(render::compositor& render,
-             input::wayland::platform& input,
-             base::wayland::server* server)
-    : win::space(render)
+space::space(base::wayland::platform& base, base::wayland::server* server)
+    : win::space(*base.render->compositor)
+    , base{base}
     , server{server}
     , compositor{server->display->createCompositor()}
     , subcompositor{server->display->createSubCompositor()}
@@ -75,8 +76,9 @@ space::space(render::compositor& render,
     singleton_interface::set_activation_token
         = [this](auto const& appid) { return xdg_activation_set_token(*this, appid); };
 
-    this->input = std::make_unique<input::wayland::redirect>(input, *this);
-    dbus = std::make_unique<base::dbus::kwin_impl<win::space, input::platform>>(*this, &input);
+    this->input = std::make_unique<input::wayland::redirect>(*base.input, *this);
+    dbus = std::make_unique<base::dbus::kwin_impl<win::space, input::platform>>(*this,
+                                                                                base.input.get());
     edges = std::make_unique<win::screen_edger>(*this);
 
     plasma_window_manager->setShowingDesktopState(

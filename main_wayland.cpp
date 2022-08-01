@@ -238,8 +238,7 @@ void ApplicationWayland::start()
         exit(exc.code().value());
     }
 
-    base->space
-        = std::make_unique<win::wayland::space>(*render->compositor, *base->input, server.get());
+    base->space = std::make_unique<win::wayland::space>(*base, server.get());
     input::wayland::add_dbus(base->input.get());
     win::init_shortcuts(*base->space);
     tablet_mode_manager
