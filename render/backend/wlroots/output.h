@@ -5,31 +5,72 @@
 */
 #pragma once
 
+#include "egl_output.h"
+#include "output_event.h"
+#include "qpainter_output.h"
+#include "wlr_includes.h"
+
 #include "base/backend/wlroots/output.h"
 #include "base/utils.h"
+#include "base/wayland/server.h"
+#include "main.h"
+#include "render/platform.h"
+#include "render/wayland/compositor.h"
 #include "render/wayland/output.h"
+#include "render/wayland/presentation.h"
 
-#include <Wrapland/Server/drm_lease_v1.h>
+#include "wayland_logging.h"
 
-struct wlr_output;
+#include <chrono>
+#include <stdexcept>
 
 namespace KWin::render::backend::wlroots
 {
 
-class egl_output;
-class qpainter_output;
-
+template<typename Platform>
 class output : public wayland::output
 {
 public:
-    output(base::backend::wlroots::output& base, render::platform& platform);
-    ~output();
+    using egl_output_t = egl_output<output<Platform>>;
+    using qpainter_output_t = qpainter_output<output<Platform>>;
 
-    void reset();
-    void disable();
+    output(base::backend::wlroots::output& base, Platform& platform)
+        : wayland::output(base, platform)
+    {
+        swap_pending = base.native->frame_pending;
 
-    std::unique_ptr<egl_output> egl;
-    std::unique_ptr<qpainter_output> qpainter;
+        if (platform.egl) {
+            egl = std::make_unique<egl_output_t>(*this, platform.egl->data);
+            QObject::connect(&base, &base::backend::wlroots::output::mode_changed, this, [this] {
+                egl->reset();
+            });
+        } else {
+            assert(platform.qpainter);
+            qpainter = std::make_unique<qpainter_output_t>(*this, platform.renderer);
+        }
+
+        present_rec.receiver = this;
+        present_rec.event.notify = output_handle_present<output>;
+        wl_signal_add(&base.native->events.present, &present_rec.event);
+
+        frame_rec.receiver = this;
+        frame_rec.event.notify = output_handle_frame<output>;
+        wl_signal_add(&base.native->events.frame, &frame_rec.event);
+    }
+
+    void reset()
+    {
+        platform.compositor->addRepaint(base.geometry());
+    }
+
+    void disable()
+    {
+        delay_timer.stop();
+        frame_timer.stop();
+    }
+
+    std::unique_ptr<egl_output_t> egl;
+    std::unique_ptr<qpainter_output_t> qpainter;
 
 private:
     base::event_receiver<output> present_rec;

@@ -823,9 +823,6 @@ set(kwin_WAYLAND_SRCS
    render/qpainter/scene.cpp
    render/qpainter/shadow.cpp
    render/qpainter/window.cpp
-   render/backend/wlroots/egl_output.cpp
-   render/backend/wlroots/output.cpp
-   render/backend/wlroots/qpainter_output.cpp
    render/wayland/compositor.cpp
    render/wayland/effects.cpp
    render/wayland/output.cpp

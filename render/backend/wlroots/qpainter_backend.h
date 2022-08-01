@@ -5,7 +5,6 @@
 */
 #pragma once
 
-#include "output.h"
 #include "qpainter_output.h"
 #include "wlr_includes.h"
 
@@ -15,26 +14,21 @@
 namespace KWin::render::backend::wlroots
 {
 
-static std::unique_ptr<qpainter_output>& get_qpainter_output(base::output& output)
-{
-    auto&& wayland_output = static_cast<base::wayland::output&&>(output);
-    auto& backend_output = static_cast<wlroots::output&>(*wayland_output.render);
-    return backend_output.qpainter;
-}
-
 template<typename Platform>
 class qpainter_backend : public qpainter::backend
 {
 public:
+    using qpainter_output_t = qpainter_output<typename Platform::output_t>;
+
     qpainter_backend(Platform& platform)
         : qpainter::backend()
         , platform{platform}
     {
         for (auto& out : platform.base.all_outputs) {
-            auto render
-                = static_cast<output*>(static_cast<base::wayland::output*>(out)->render.get());
+            auto render = static_cast<typename Platform::output_t*>(
+                static_cast<base::wayland::output*>(out)->render.get());
             get_qpainter_output(*out)
-                = std::make_unique<qpainter_output>(*render, platform.renderer);
+                = std::make_unique<qpainter_output_t>(*render, platform.renderer);
         }
     }
 
@@ -69,6 +63,14 @@ public:
     }
 
     Platform& platform;
+
+private:
+    static std::unique_ptr<qpainter_output_t>& get_qpainter_output(base::output& output)
+    {
+        auto&& wayland_output = static_cast<base::wayland::output&&>(output);
+        auto& backend_output = static_cast<typename Platform::output_t&>(*wayland_output.render);
+        return backend_output.qpainter;
+    }
 };
 
 }

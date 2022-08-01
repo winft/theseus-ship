@@ -10,7 +10,6 @@
 #include "egl_helpers.h"
 #include "egl_output.h"
 #include "egl_texture.h"
-#include "output.h"
 #include "wlr_helpers.h"
 
 #include "base/backend/wlroots/output.h"
@@ -35,6 +34,8 @@ template<typename Platform>
 class egl_backend : public gl::backend
 {
 public:
+    using egl_output_t = egl_output<typename Platform::output_t>;
+
     egl_backend(Platform& platform)
         : gl::backend()
         , platform{platform}
@@ -61,9 +62,9 @@ public:
         gl::init_server_extensions(*this);
 
         for (auto& out : platform.base.all_outputs) {
-            auto render
-                = static_cast<output*>(static_cast<base::wayland::output*>(out)->render.get());
-            get_egl_out(out) = std::make_unique<egl_output>(*render, data);
+            auto render = static_cast<typename Platform::output_t*>(
+                static_cast<base::wayland::output*>(out)->render.get());
+            get_egl_out(out) = std::make_unique<egl_output_t>(*render, data);
         }
 
         make_context_current(data);
@@ -235,9 +236,10 @@ public:
         return data.base.client_extensions.contains(ext);
     }
 
-    std::unique_ptr<egl_output>& get_egl_out(base::output const* out)
+    std::unique_ptr<egl_output<typename Platform::output_t>>& get_egl_out(base::output const* out)
     {
-        return static_cast<output*>(static_cast<base::wayland::output const*>(out)->render.get())
+        return static_cast<typename Platform::output_t*>(
+                   static_cast<base::wayland::output const*>(out)->render.get())
             ->egl;
     }
 
@@ -288,7 +290,7 @@ private:
         pixman_region32_fini(&damage);
     }
 
-    QRect get_viewport(egl_output const& egl_out) const
+    QRect get_viewport(egl_output_t const& egl_out) const
     {
         auto const& overall = platform.base.topology.size;
         auto const& geo = egl_out.out->base.geometry();
@@ -303,7 +305,7 @@ private:
                      overall.height() * height_ratio);
     }
 
-    void initRenderTarget(egl_output& egl_out)
+    void initRenderTarget(egl_output_t& egl_out)
     {
         if (egl_out.render.vbo) {
             // Already initialized.
@@ -314,14 +316,14 @@ private:
         egl_out.render.vbo = vbo;
     }
 
-    void prepareRenderFramebuffer(egl_output& egl_out) const
+    void prepareRenderFramebuffer(egl_output_t& egl_out) const
     {
         if (egl_out.render.fbo.valid()) {
             GLRenderTarget::pushRenderTarget(&egl_out.render.fbo);
         }
     }
 
-    void renderFramebufferToSurface(egl_output& egl_out)
+    void renderFramebufferToSurface(egl_output_t& egl_out)
     {
         if (!egl_out.render.fbo.valid()) {
             // No additional render target.

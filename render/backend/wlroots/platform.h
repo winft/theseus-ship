@@ -10,36 +10,22 @@
 #include "qpainter_backend.h"
 #include "wlr_helpers.h"
 
-#include "base/backend/wlroots/output.h"
 #include "base/backend/wlroots/platform.h"
 #include "base/options.h"
-#include "base/output_helpers.h"
-#include "base/utils.h"
-#include "input/wayland/platform.h"
-#include "render/wayland/compositor.h"
-#include "render/wayland/effects.h"
-#include "render/wayland/egl.h"
 #include "render/wayland/platform.h"
 
 #include <wayland_logging.h>
 
 #include <variant>
 
-namespace KWin
+namespace KWin::render::backend::wlroots
 {
-
-namespace render::backend::wlroots
-{
-
-template<typename Platform>
-class egl_backend;
-
-template<typename Platform>
-class qpainter_backend;
 
 class platform : public wayland::platform
 {
 public:
+    using output_t = output<platform>;
+
     explicit platform(base::backend::wlroots::platform& base)
         : wayland::platform(base)
         , base{base}
@@ -112,5 +98,4 @@ private:
     }
 };
 
-}
 }

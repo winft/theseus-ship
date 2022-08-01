@@ -18,6 +18,8 @@
 namespace KWin::base::backend::wlroots
 {
 
+using render_platform = render::backend::wlroots::platform;
+
 static auto align_horizontal{false};
 
 static void handle_destroy(struct wl_listener* listener, void* /*data*/)
@@ -31,7 +33,7 @@ static void handle_destroy(struct wl_listener* listener, void* /*data*/)
 
 void add_new_output(wlroots::platform& platform, wlr_output* native)
 {
-    auto& render = static_cast<render::backend::wlroots::platform&>(*platform.render);
+    auto& render = static_cast<render_platform&>(*platform.render);
     wlr_output_init_render(native, render.allocator, render.renderer);
 
     if (!wl_list_empty(&native->modes)) {
