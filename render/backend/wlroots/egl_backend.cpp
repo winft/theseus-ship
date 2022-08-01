@@ -8,6 +8,7 @@
 
 #include <config-kwin.h>
 
+#include "egl_helpers.h"
 #include "egl_output.h"
 #include "egl_texture.h"
 #include "output.h"
@@ -28,33 +29,6 @@
 
 namespace KWin::render::backend::wlroots
 {
-
-static void load_egl_proc(void* proc_ptr, const char* name)
-{
-    void* proc = (void*)eglGetProcAddress(name);
-    *(void**)proc_ptr = proc;
-}
-
-void make_context_current(wayland::egl_data& data)
-{
-    eglMakeCurrent(data.base.display, EGL_NO_SURFACE, EGL_NO_SURFACE, data.base.context);
-}
-
-void unset_context_current(wayland::egl_data& data)
-{
-    eglMakeCurrent(data.base.display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-}
-
-bool is_context_current(wayland::egl_data& data)
-{
-    return eglGetCurrentContext() == data.base.context;
-}
-
-using eglFuncPtr = void (*)();
-static eglFuncPtr get_proc_address(char const* name)
-{
-    return eglGetProcAddress(name);
-}
 
 std::unique_ptr<egl_output>& egl_backend::get_egl_out(base::output const* out)
 {
@@ -88,7 +62,7 @@ egl_backend::egl_backend(wlroots::platform& platform)
 
     for (auto& out : platform.base.all_outputs) {
         auto render = static_cast<output*>(static_cast<base::wayland::output*>(out)->render.get());
-        get_egl_out(out) = std::make_unique<egl_output>(*render, this);
+        get_egl_out(out) = std::make_unique<egl_output>(*render, data);
     }
 
     make_context_current(data);

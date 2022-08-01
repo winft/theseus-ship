@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include "render/wayland/egl_data.h"
+
 #include <kwingl/texture.h>
 #include <kwingl/utils.h>
 
@@ -17,13 +19,12 @@
 namespace KWin::render::backend::wlroots
 {
 
-class egl_backend;
 class output;
 
 class egl_output
 {
 public:
-    egl_output(output& out, egl_backend* egl_back);
+    egl_output(output& out, wayland::egl_data egl_data);
     egl_output(egl_output const&) = delete;
     egl_output& operator=(egl_output const&) = delete;
     egl_output(egl_output&& other) noexcept;
@@ -39,7 +40,7 @@ public:
 
     output* out;
     int bufferAge{0};
-    egl_backend* egl_back;
+    wayland::egl_data egl_data;
 
     /** Damage history for the past 10 frames. */
     std::deque<QRegion> damageHistory;

@@ -6,7 +6,7 @@
 */
 #include "egl_output.h"
 
-#include "egl_backend.h"
+#include "egl_helpers.h"
 #include "output.h"
 #include "platform.h"
 
@@ -22,9 +22,9 @@ static base::backend::wlroots::output& get_base(base::wayland::output& output)
     return static_cast<base::backend::wlroots::output&>(output);
 }
 
-egl_output::egl_output(output& out, egl_backend* egl_back)
+egl_output::egl_output(output& out, wayland::egl_data egl_data)
     : out{&out}
-    , egl_back{egl_back}
+    , egl_data{egl_data}
 {
     reset();
 }
@@ -38,7 +38,7 @@ egl_output& egl_output::operator=(egl_output&& other) noexcept
 {
     out = other.out;
     bufferAge = other.bufferAge;
-    egl_back = other.egl_back;
+    egl_data = std::move(other.egl_data);
     damageHistory = std::move(other.damageHistory);
 
     render = std::move(other.render);
@@ -93,7 +93,7 @@ void egl_output::cleanup_framebuffer()
 
 void egl_output::make_current() const
 {
-    egl_back->make_current();
+    make_context_current(egl_data);
 }
 
 bool egl_output::present()

@@ -5,6 +5,7 @@
 */
 #include "output.h"
 
+#include "egl_backend.h"
 #include "egl_output.h"
 #include "platform.h"
 #include "qpainter_output.h"
@@ -81,7 +82,7 @@ output::output(base::backend::wlroots::output& base, render::platform& platform)
 
     auto& render = static_cast<wlroots::platform&>(platform);
     if (render.egl) {
-        egl = std::make_unique<egl_output>(*this, render.egl.get());
+        egl = std::make_unique<egl_output>(*this, render.egl->data);
         QObject::connect(
             &base, &base::backend::wlroots::output::mode_changed, this, [this] { egl->reset(); });
     } else {
