@@ -315,6 +315,7 @@ void options::setFocusStealingPreventionLevel(win::fsp_level focusStealingPreven
         focusStealingPreventionLevel = win::fsp_level::none;
     }
 
+    m_focusStealingPreventionLevel = focusStealingPreventionLevel;
     Q_EMIT focusStealingPreventionLevelChanged();
 }
 

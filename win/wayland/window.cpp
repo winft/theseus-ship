@@ -245,7 +245,7 @@ QSize window::minSize() const
 
 QSize window::maxSize() const
 {
-    return control->rules().checkMinSize(toplevel->maximumSize());
+    return control->rules().checkMaxSize(toplevel->maximumSize());
 }
 
 bool window::isCloseable() const

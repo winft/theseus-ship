@@ -443,7 +443,7 @@ QList<QAction*> script::actionsForUserActionMenu(window* window, QMenu* parent)
     QList<QAction*> actions;
     actions.reserve(m_userActionsMenuCallbacks.count());
 
-    for (QJSValue callback : m_userActionsMenuCallbacks) {
+    for (QJSValue callback : qAsConst(m_userActionsMenuCallbacks)) {
         QJSValue result = callback.call({m_engine->toScriptValue(window)});
         if (result.isError()) {
             continue;

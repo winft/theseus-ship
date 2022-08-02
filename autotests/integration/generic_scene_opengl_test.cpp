@@ -58,7 +58,7 @@ void GenericSceneOpenGLTest::initTestCase()
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
     const auto builtinNames = render::effect_loader(*Test::app()->base.space).listOfKnownEffects();
-    for (QString name : builtinNames) {
+    for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
 

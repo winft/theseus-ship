@@ -116,7 +116,7 @@ void ToplevelOpenCloseAnimationTest::testAnimateToplevels()
     QFETCH(QString, effectName);
     QVERIFY(effectsImpl->loadEffect(effectName));
     QCOMPARE(effectsImpl->loadedEffects().count(), 1);
-    QCOMPARE(effectsImpl->loadedEffects().first(), effectName);
+    QCOMPARE(effectsImpl->loadedEffects().constFirst(), effectName);
     Effect* effect = effectsImpl->findEffect(effectName);
     QVERIFY(effect);
     QVERIFY(!effect->isActive());
@@ -179,7 +179,7 @@ void ToplevelOpenCloseAnimationTest::testDontAnimatePopups()
     QFETCH(QString, effectName);
     QVERIFY(effectsImpl->loadEffect(effectName));
     QCOMPARE(effectsImpl->loadedEffects().count(), 1);
-    QCOMPARE(effectsImpl->loadedEffects().first(), effectName);
+    QCOMPARE(effectsImpl->loadedEffects().constFirst(), effectName);
     Effect* effect = effectsImpl->findEffect(effectName);
     QVERIFY(effect);
     QVERIFY(!effect->isActive());

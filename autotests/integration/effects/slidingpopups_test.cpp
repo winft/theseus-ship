@@ -69,7 +69,7 @@ void SlidingPopupsTest::initTestCase()
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
     const auto builtinNames = render::effect_loader(*Test::app()->base.space).listOfKnownEffects();
-    for (QString name : builtinNames) {
+    for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
     KConfigGroup wobblyGroup = config->group("Effect-Wobbly");
@@ -102,7 +102,7 @@ void SlidingPopupsTest::cleanup()
     Test::destroy_wayland_connection();
     auto e = static_cast<render::effects_handler_impl*>(effects);
     while (!e->loadedEffects().isEmpty()) {
-        const QString effect = e->loadedEffects().first();
+        const QString effect = e->loadedEffects().constFirst();
         e->unloadEffect(effect);
         QVERIFY(!e->isEffectLoaded(effect));
     }

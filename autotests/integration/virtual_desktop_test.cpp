@@ -792,7 +792,7 @@ void VirtualDesktopTest::testLastDesktopRemoved()
     QVERIFY(desktopPresenceChangedSpy.isValid());
 
     QCOMPARE(client->desktops().count(), 1u);
-    QCOMPARE(vd_manager->currentDesktop(), client->desktops().first());
+    QCOMPARE(vd_manager->currentDesktop(), client->desktops().constFirst());
 
     // and remove last desktop
     vd_manager->setCount(1);
@@ -802,7 +802,7 @@ void VirtualDesktopTest::testLastDesktopRemoved()
     QCOMPARE(client->desktop(), 1);
 
     QCOMPARE(client->desktops().count(), 1u);
-    QCOMPARE(vd_manager->currentDesktop(), client->desktops().first());
+    QCOMPARE(vd_manager->currentDesktop(), client->desktops().constFirst());
 }
 
 void VirtualDesktopTest::testWindowOnMultipleDesktops()
@@ -828,13 +828,13 @@ void VirtualDesktopTest::testWindowOnMultipleDesktops()
     QVERIFY(desktopPresenceChangedSpy.isValid());
 
     QCOMPARE(client->desktops().count(), 1u);
-    QCOMPARE(vd_manager->currentDesktop(), client->desktops().first());
+    QCOMPARE(vd_manager->currentDesktop(), client->desktops().constFirst());
 
     // Set the window on desktop 2 as well
     win::enter_desktop(client, vd_manager->desktopForX11Id(2));
     QCOMPARE(client->desktops().count(), 2u);
-    QCOMPARE(vd_manager->desktops()[2], client->desktops()[0]);
-    QCOMPARE(vd_manager->desktops()[1], client->desktops()[1]);
+    QCOMPARE(vd_manager->desktops()[2], client->desktops().at(0));
+    QCOMPARE(vd_manager->desktops()[1], client->desktops().at(1));
     QVERIFY(client->isOnDesktop(2));
     QVERIFY(client->isOnDesktop(3));
 
@@ -908,13 +908,13 @@ void VirtualDesktopTest::testRemoveDesktopWithWindow()
     QVERIFY(desktopPresenceChangedSpy.isValid());
 
     QCOMPARE(client->desktops().count(), 1u);
-    QCOMPARE(vd_manager->currentDesktop(), client->desktops().first());
+    QCOMPARE(vd_manager->currentDesktop(), client->desktops().constFirst());
 
     // Set the window on desktop 2 as well
     win::enter_desktop(client, vd_manager->desktops()[1]);
     QCOMPARE(client->desktops().count(), 2u);
-    QCOMPARE(vd_manager->desktops()[2], client->desktops()[0]);
-    QCOMPARE(vd_manager->desktops()[1], client->desktops()[1]);
+    QCOMPARE(vd_manager->desktops()[2], client->desktops().at(0));
+    QCOMPARE(vd_manager->desktops()[1], client->desktops().at(1));
     QVERIFY(client->isOnDesktop(2));
     QVERIFY(client->isOnDesktop(3));
 
@@ -922,7 +922,7 @@ void VirtualDesktopTest::testRemoveDesktopWithWindow()
     vd_manager->setCount(2);
     QCOMPARE(client->desktops().count(), 1u);
     // window is only on desktop 2
-    QCOMPARE(vd_manager->desktops()[1], client->desktops()[0]);
+    QCOMPARE(vd_manager->desktops()[1], client->desktops().at(0));
 
     // Again 3 desktops
     vd_manager->setCount(3);
@@ -931,13 +931,13 @@ void VirtualDesktopTest::testRemoveDesktopWithWindow()
     win::leave_desktop(client, vd_manager->desktops()[1]);
     QCOMPARE(client->desktops().count(), 1u);
     // window is only on desktop 3
-    QCOMPARE(vd_manager->desktops()[2], client->desktops()[0]);
+    QCOMPARE(vd_manager->desktops()[2], client->desktops().at(0));
 
     // remove desktop 3
     vd_manager->setCount(2);
     QCOMPARE(client->desktops().count(), 1u);
     // window is only on desktop 2
-    QCOMPARE(vd_manager->desktops()[1], client->desktops()[0]);
+    QCOMPARE(vd_manager->desktops()[1], client->desktops().at(0));
 }
 
 }

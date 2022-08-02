@@ -1843,7 +1843,7 @@ QImage effects_handler_impl::blit_from_framebuffer(QRect const& geometry, double
             GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, static_cast<GLvoid*>(image.bits()));
         texture.unbind();
     } else {
-        image = QImage(nativeSize.width(), nativeSize.height(), QImage::Format_ARGB32);
+        image = QImage(nativeSize.width(), nativeSize.height(), QImage::Format_RGBA8888);
         glReadPixels(0,
                      0,
                      nativeSize.width(),
@@ -1853,11 +1853,6 @@ QImage effects_handler_impl::blit_from_framebuffer(QRect const& geometry, double
                      static_cast<GLvoid*>(image.bits()));
     }
 
-    auto gl_backend = static_cast<render::gl::scene*>(m_scene)->backend();
-    QMatrix4x4 flip_vert;
-    flip_vert(1, 1) = -1;
-
-    image = image.transformed((flip_vert * gl_backend->transformation).toTransform());
     image.setDevicePixelRatio(scale);
     return image;
 }

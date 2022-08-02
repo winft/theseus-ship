@@ -21,7 +21,6 @@
 
 #include "rulesmodel.h"
 #include "rules/rules.h"
-
 #include <QIcon>
 #include <QQmlEngine>
 #include <QtDBus>
@@ -444,10 +443,19 @@ void RulesModel::populateRuleList()
                          QIcon::fromTheme("resizerow")));
 
     RuleItem *desktops;
-    desktops = new RuleItem(QLatin1String("desktops"),
-                            RulePolicy::SetRule, RuleItem::Option,
-                            i18n("Virtual Desktop"), i18n("Size & Position"),
-                            QIcon::fromTheme("virtual-desktops"));
+    if (KWindowSystem::isPlatformX11()) {
+        // Single selection of Virtual Desktop on X11
+        desktops = new RuleItem(QLatin1String("desktops"),
+                                RulePolicy::SetRule, RuleItem::Option,
+                                i18n("Virtual Desktop"), i18n("Size & Position"),
+                                QIcon::fromTheme("virtual-desktops"));
+    } else {
+        // Multiple selection on Wayland
+        desktops = new RuleItem(QLatin1String("desktops"),
+                                RulePolicy::SetRule, RuleItem::OptionList,
+                                i18n("Virtual Desktops"), i18n("Size & Position"),
+                                QIcon::fromTheme("virtual-desktops"));
+    }
     addRule(desktops);
     desktops->setOptionsData(virtualDesktopsModelData());
 
@@ -457,8 +465,6 @@ void RulesModel::populateRuleList()
         Q_EMIT dataChanged(index, index, {OptionsModelRole});
     });
 
-    connect(this, &RulesModel::virtualDesktopsUpdated,
-            this, [this] { m_rules["desktop"]->setOptionsData(virtualDesktopsModelData()); });
     updateVirtualDesktops();
 
     addRule(new RuleItem(QLatin1String("screen"),
@@ -641,7 +647,6 @@ const QHash<QString, QString> RulesModel::x11PropertyHash()
         { "caption",            "title"         },
         { "role",               "windowrole"    },
         { "clientMachine",      "clientmachine" },
-        { "x11DesktopNumber",   "desktop"       },
         { "maximizeHorizontal", "maximizehoriz" },
         { "maximizeVertical",   "maximizevert"  },
         { "minimized",          "minimize"      },
@@ -653,7 +658,8 @@ const QHash<QString, QString> RulesModel::x11PropertyHash()
         { "skipPager",          "skippager"     },
         { "skipSwitcher",       "skipswitcher"  },
         { "type",               "type"          },
-        { "desktopFile",        "desktopfile"   }
+        { "desktopFile",        "desktopfile"   },
+        { "desktops",           "desktop"       },
     };
     return propertyToRule;
 };

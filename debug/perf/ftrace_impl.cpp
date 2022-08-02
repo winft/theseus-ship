@@ -97,7 +97,7 @@ bool FtraceImpl::findFile()
         const int start = line.indexOf(' ') + 1;
         const int end = line.indexOf(' ', start);
         const QString dirPath(line.mid(start, end - start));
-        if (dirPath.isEmpty() || !QFileInfo(dirPath).exists()) {
+        if (dirPath.isEmpty() || !QFileInfo::exists(dirPath)) {
             return QFileInfo();
         }
         return QFileInfo(QDir(dirPath), QStringLiteral("trace_marker"));
