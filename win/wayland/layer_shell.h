@@ -152,7 +152,7 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
     win->layer_surface = layer_surface;
     block_geometry_updates(win, true);
 
-    QObject::connect(win, &window::needsRepaint, &win->space.render, [win] {
+    QObject::connect(win, &Win::needsRepaint, &win->space.render, [win] {
         win->space.render.schedule_repaint(win);
     });
     QObject::connect(
@@ -175,7 +175,7 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
 
     auto handle_first_commit = [win] {
         QObject::disconnect(win->surface, &WS::Surface::committed, win, nullptr);
-        QObject::connect(win->surface, &WS::Surface::committed, win, &window::handle_commit);
+        QObject::connect(win->surface, &WS::Surface::committed, win, &Win::handle_commit);
 
         block_geometry_updates(win, false);
 
