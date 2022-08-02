@@ -143,6 +143,7 @@ public:
     void doMinimize() override;
 
     void setFrameGeometry(QRect const& rect) override;
+    void apply_restore_geometry(QRect const& restore_geo) override;
     void do_set_geometry(QRect const& frame_geo);
     void do_set_maximize_mode(win::maximize_mode mode);
     void do_set_fullscreen(bool full);

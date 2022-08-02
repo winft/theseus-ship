@@ -7,7 +7,6 @@
 
 #include "fullscreen.h"
 #include "layer_shell.h"
-#include "maximize.h"
 #include "scene.h"
 #include "setup.h"
 #include "subsurface.h"
@@ -28,6 +27,7 @@
 #include "win/deco/window.h"
 #include "win/geo.h"
 #include "win/layers.h"
+#include "win/maximize.h"
 #include "win/remnant.h"
 #include "win/rules/ruling.h"
 #include "win/space_areas_helpers.h"
@@ -550,6 +550,21 @@ void window::setFrameGeometry(QRect const& rect)
     }
 
     do_set_geometry(frame_geo);
+}
+
+void window::apply_restore_geometry(QRect const& restore_geo)
+{
+    auto rectified_geo = rectify_restore_geometry(this, restore_geo);
+
+    if (!restore_geo.isValid()) {
+        // When the restore geometry was not valid we let the client send a new size instead of
+        // using the one determined by our rectify function.
+        // TODO(romangg): This can offset the relative Placement, e.g. when centered. Place again
+        //                later on when we received the new size from client?
+        rectified_geo.setSize(QSize());
+    }
+
+    setFrameGeometry(rectified_geo);
 }
 
 /**

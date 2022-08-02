@@ -98,12 +98,6 @@ QRect rectify_restore_geometry(Win* win, QRect restore_geo)
 }
 
 template<typename Win>
-void update_frame_from_restore_geometry(Win* win, QRect const& restore_geo)
-{
-    win->setFrameGeometry(rectify_restore_geometry(win, restore_geo));
-}
-
-template<typename Win>
 void maximize_restore(Win* win)
 {
     auto const old_mode = win->geometry_update.max_mode;
@@ -120,7 +114,7 @@ void maximize_restore(Win* win)
     }
 
     geometry_updates_blocker blocker(win);
-    update_frame_from_restore_geometry(win, final_restore_geo);
+    win->apply_restore_geometry(final_restore_geo);
 
     if (win->info) {
         // TODO(romangg): That is x11::window only. Put it in a template specialization?

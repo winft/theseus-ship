@@ -120,6 +120,7 @@ public:
     void doMinimize() override;
 
     void setFrameGeometry(QRect const& rect) override;
+    void apply_restore_geometry(QRect const& restore_geo) override;
 
     win::layer layer_for_dock() const override;
     bool has_pending_repaints() const override;

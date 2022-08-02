@@ -67,6 +67,7 @@ public:
     bool isHiddenInternal() const override;
     void hideClient(bool hide) override;
     void setFrameGeometry(QRect const& rect) override;
+    void apply_restore_geometry(QRect const& restore_geo) override;
     bool hasStrut() const override;
     bool supportsWindowRules() const override;
     void takeFocus() override;

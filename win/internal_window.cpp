@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "deco/window.h"
 #include "desktop_set.h"
 #include "geo.h"
+#include "maximize.h"
 #include "meta.h"
 #include "remnant.h"
 #include "render/wayland/buffer.h"
@@ -345,6 +346,11 @@ void internal_window::setFrameGeometry(QRect const& rect)
     }
 
     do_set_geometry(rect);
+}
+
+void internal_window::apply_restore_geometry(QRect const& restore_geo)
+{
+    setFrameGeometry(rectify_restore_geometry(this, restore_geo));
 }
 
 void internal_window::do_set_geometry(QRect const& frame_geo)

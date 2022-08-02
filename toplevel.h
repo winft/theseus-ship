@@ -477,6 +477,7 @@ public:
     virtual QSize maxSize() const;
 
     virtual void setFrameGeometry(QRect const& rect) = 0;
+    virtual void apply_restore_geometry(QRect const& restore_geo) = 0;
 
     virtual bool hasStrut() const = 0;
 

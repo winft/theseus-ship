@@ -747,6 +747,11 @@ void window::setFrameGeometry(QRect const& rect)
     send_synthetic_configure_notify(this, client_geo);
 }
 
+void window::apply_restore_geometry(QRect const& restore_geo)
+{
+    setFrameGeometry(rectify_restore_geometry(this, restore_geo));
+}
+
 void window::do_set_geometry(QRect const& frame_geo)
 {
     assert(control);
