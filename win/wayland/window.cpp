@@ -5,7 +5,6 @@
 */
 #include "window.h"
 
-#include "fullscreen.h"
 #include "layer_shell.h"
 #include "scene.h"
 #include "setup.h"
@@ -25,6 +24,7 @@
 #include "utils/blocker.h"
 #include "win/deco.h"
 #include "win/deco/window.h"
+#include "win/fullscreen.h"
 #include "win/geo.h"
 #include "win/layers.h"
 #include "win/maximize.h"
@@ -565,6 +565,22 @@ void window::apply_restore_geometry(QRect const& restore_geo)
     }
 
     setFrameGeometry(rectified_geo);
+}
+
+void window::restore_geometry_from_fullscreen()
+{
+    assert(!has_special_geometry_mode_besides_fullscreen(this));
+
+    // In case the restore geometry is invalid, use the placement from the rectify function.
+    auto restore_geo = rectify_fullscreen_restore_geometry(this);
+
+    if (!restore_geometries.maximize.isValid()) {
+        // We let the client decide on a size.
+        restore_geo.setSize(QSize(0, 0));
+    }
+
+    setFrameGeometry(restore_geo);
+    restore_geometries.maximize = {};
 }
 
 /**

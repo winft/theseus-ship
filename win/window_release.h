@@ -6,6 +6,7 @@
 #pragma once
 
 #include "geo.h"
+#include "meta.h"
 #include "remnant.h"
 #include "space_window_release.h"
 #include "x11/netinfo.h"

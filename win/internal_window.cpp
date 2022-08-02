@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "deco/bridge.h"
 #include "deco/window.h"
 #include "desktop_set.h"
+#include "fullscreen.h"
 #include "geo.h"
 #include "maximize.h"
 #include "meta.h"
@@ -351,6 +352,10 @@ void internal_window::setFrameGeometry(QRect const& rect)
 void internal_window::apply_restore_geometry(QRect const& restore_geo)
 {
     setFrameGeometry(rectify_restore_geometry(this, restore_geo));
+}
+
+void internal_window::restore_geometry_from_fullscreen()
+{
 }
 
 void internal_window::do_set_geometry(QRect const& frame_geo)

@@ -63,15 +63,6 @@ void fullscreen_restore_special_mode(Win* win)
 }
 
 template<typename Win>
-void fullscreen_restore_geometry(Win* win)
-{
-    assert(!has_special_geometry_mode_besides_fullscreen(win));
-
-    win->setFrameGeometry(rectify_fullscreen_restore_geometry(win));
-    win->restore_geometries.maximize = QRect();
-}
-
-template<typename Win>
 void update_fullscreen_enable(Win* win)
 {
     if (!win->restore_geometries.maximize.isValid()) {
@@ -88,7 +79,7 @@ void update_fullscreen_disable(Win* win)
     if (has_special_geometry_mode_besides_fullscreen(win)) {
         fullscreen_restore_special_mode(win);
     } else {
-        fullscreen_restore_geometry(win);
+        win->restore_geometry_from_fullscreen();
     }
 
     if (old_output && old_output != win->central_output) {

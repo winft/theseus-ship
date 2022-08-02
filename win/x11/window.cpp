@@ -752,6 +752,13 @@ void window::apply_restore_geometry(QRect const& restore_geo)
     setFrameGeometry(rectify_restore_geometry(this, restore_geo));
 }
 
+void window::restore_geometry_from_fullscreen()
+{
+    assert(!has_special_geometry_mode_besides_fullscreen(this));
+    setFrameGeometry(rectify_fullscreen_restore_geometry(this));
+    restore_geometries.maximize = {};
+}
+
 void window::do_set_geometry(QRect const& frame_geo)
 {
     assert(control);

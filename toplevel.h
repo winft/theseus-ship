@@ -478,6 +478,7 @@ public:
 
     virtual void setFrameGeometry(QRect const& rect) = 0;
     virtual void apply_restore_geometry(QRect const& restore_geo) = 0;
+    virtual void restore_geometry_from_fullscreen() = 0;
 
     virtual bool hasStrut() const = 0;
 
