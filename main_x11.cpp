@@ -260,7 +260,7 @@ void ApplicationX11::start()
 
         render->compositor = std::make_unique<render::x11::compositor>(*render);
 
-        base.space = std::make_unique<win::x11::space>(*render->compositor, base.input.get());
+        base.space = std::make_unique<win::x11::space>(base);
         win::init_shortcuts(*base.space);
 
         event_filter = std::make_unique<base::x11::xcb_event_filter<win::x11::space>>(*base.space);

@@ -11,22 +11,26 @@
 #include "space_setup.h"
 #include "window.h"
 
+#include "base/x11/platform.h"
 #include "input/x11/redirect.h"
+#include "render/platform.h"
 #include "win/desktop_space.h"
 
 namespace KWin::win::x11
 {
 
-space::space(render::compositor& render, input::x11::platform* input)
-    : win::space(render)
+space::space(base::x11::platform& base)
+    : win::space(*base.render->compositor)
+    , base{base}
 {
-    if (input) {
-        this->input = std::make_unique<input::x11::redirect>(*input, *this);
+    if (base.input) {
+        this->input = std::make_unique<input::x11::redirect>(*base.input, *this);
     }
 
     atoms = std::make_unique<base::x11::atoms>(connection());
     edges = std::make_unique<win::screen_edger>(*this);
-    dbus = std::make_unique<base::dbus::kwin_impl<win::space, input::platform>>(*this, input);
+    dbus = std::make_unique<base::dbus::kwin_impl<win::space, input::platform>>(*this,
+                                                                                base.input.get());
 
     QObject::connect(virtual_desktop_manager->qobject.get(),
                      &virtual_desktop_manager_qobject::desktopRemoved,
@@ -48,18 +52,17 @@ space::space(render::compositor& render, input::x11::platform* input)
                          }
                      });
 
-    QObject::connect(
-        &kwinApp()->get_base(), &base::platform::topology_changed, qobject.get(), [this] {
-            if (!this->render.scene) {
-                return;
-            }
-            // desktopResized() should take care of when the size or
-            // shape of the desktop has changed, but we also want to
-            // catch refresh rate changes
-            //
-            // TODO: is this still necessary since we get the maximal refresh rate now dynamically?
-            this->render.reinitialize();
-        });
+    QObject::connect(&base, &base::platform::topology_changed, qobject.get(), [this] {
+        if (!this->render.scene) {
+            return;
+        }
+        // desktopResized() should take care of when the size or
+        // shape of the desktop has changed, but we also want to
+        // catch refresh rate changes
+        //
+        // TODO: is this still necessary since we get the maximal refresh rate now dynamically?
+        this->render.reinitialize();
+    });
 
     x11::init_space(*this);
 }

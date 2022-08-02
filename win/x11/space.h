@@ -18,7 +18,15 @@
 
 #include <vector>
 
-namespace KWin::win::x11
+namespace KWin
+{
+
+namespace base::x11
+{
+class platform;
+}
+
+namespace win::x11
 {
 
 class KWIN_EXPORT space : public win::space
@@ -26,7 +34,7 @@ class KWIN_EXPORT space : public win::space
 public:
     using x11_window = window;
 
-    space(render::compositor& render, input::x11::platform* input);
+    space(base::x11::platform& base);
     ~space() override;
 
     Toplevel* findInternal(QWindow* window) const override;
@@ -35,6 +43,8 @@ public:
     void update_space_area_from_windows(QRect const& desktop_area,
                                         std::vector<QRect> const& screens_geos,
                                         win::space_areas& areas) override;
+
+    base::x11::platform& base;
 
 private:
     std::unique_ptr<base::x11::event_filter> edges_filter;
@@ -63,4 +73,5 @@ void stack_screen_edges_under_override_redirect(Space* space)
     base::x11::xcb::restack_windows(windows);
 }
 
+}
 }
