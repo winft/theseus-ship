@@ -67,6 +67,12 @@ void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)
     // Restore the focus on this desktop afterwards.
     focus_blocker<Space> blocker(*space);
 
+    if (auto move_resize_client = space->move_resize_window) {
+        if (!move_resize_client->isOnDesktop(newDesktop)) {
+            win::set_desktop(move_resize_client, newDesktop);
+        }
+    }
+
     for (auto const& toplevel : space->stacking_order->stack) {
         auto client = qobject_cast<x11::window*>(toplevel);
         if (!client || !client->control) {
@@ -81,12 +87,6 @@ void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)
     // Now propagate the change, after hiding, before showing.
     if (x11::rootInfo()) {
         x11::rootInfo()->setCurrentDesktop(space->virtual_desktop_manager->current());
-    }
-
-    if (auto move_resize_client = space->move_resize_window) {
-        if (!move_resize_client->isOnDesktop(newDesktop)) {
-            win::set_desktop(move_resize_client, newDesktop);
-        }
     }
 
     auto const& list = space->stacking_order->stack;
