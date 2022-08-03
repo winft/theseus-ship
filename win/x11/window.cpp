@@ -171,13 +171,6 @@ QSize window::resizeIncrements() const
     return geometry_hints.resize_increments();
 }
 
-static base::x11::xcb::window shape_helper_window(XCB_WINDOW_NONE);
-
-void window::cleanupX11()
-{
-    shape_helper_window.reset();
-}
-
 void window::update_input_shape()
 {
     if (hidden_preview(this)) {
@@ -198,11 +191,11 @@ void window::update_input_shape()
     // until the real shape of the client is added and that can make
     // the window lose focus (which is a problem with mouse focus policies)
     // TODO: It seems there is, after all - XShapeGetRectangles() - but maybe this is better
-    if (!shape_helper_window.is_valid()) {
-        shape_helper_window.create(QRect(0, 0, 1, 1));
+    if (!space.shape_helper_window.is_valid()) {
+        space.shape_helper_window.create(QRect(0, 0, 1, 1));
     }
 
-    shape_helper_window.resize(render_geometry(this).size());
+    space.shape_helper_window.resize(render_geometry(this).size());
     auto const deco_margin = QPoint(left_border(this), top_border(this));
 
     auto con = connection();
@@ -211,7 +204,7 @@ void window::update_input_shape()
                       XCB_SHAPE_SO_SET,
                       XCB_SHAPE_SK_INPUT,
                       XCB_SHAPE_SK_BOUNDING,
-                      shape_helper_window,
+                      space.shape_helper_window,
                       0,
                       0,
                       frameId());
@@ -219,7 +212,7 @@ void window::update_input_shape()
                       XCB_SHAPE_SO_SUBTRACT,
                       XCB_SHAPE_SK_INPUT,
                       XCB_SHAPE_SK_BOUNDING,
-                      shape_helper_window,
+                      space.shape_helper_window,
                       deco_margin.x(),
                       deco_margin.y(),
                       xcb_window);
@@ -227,7 +220,7 @@ void window::update_input_shape()
                       XCB_SHAPE_SO_UNION,
                       XCB_SHAPE_SK_INPUT,
                       XCB_SHAPE_SK_INPUT,
-                      shape_helper_window,
+                      space.shape_helper_window,
                       deco_margin.x(),
                       deco_margin.y(),
                       xcb_window);
@@ -238,7 +231,7 @@ void window::update_input_shape()
                       frameId(),
                       0,
                       0,
-                      shape_helper_window);
+                      space.shape_helper_window);
 }
 
 QRect window::iconGeometry() const

@@ -218,8 +218,7 @@ void clear_space(Space& space)
         remove_all(space.stacking_order->pre_stack, unmanaged);
     }
 
-    window::cleanupX11();
-
+    space.shape_helper_window.reset();
     space.stacking_order->unlock();
 }
 

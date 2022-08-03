@@ -43,6 +43,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/output.h"
 #include "base/x11/atoms.h"
 #include "base/x11/event_filter.h"
+#include "base/x11/xcb/window.h"
 #include "input/redirect.h"
 #include "render/outline.h"
 #include "rules/book.h"
@@ -228,6 +229,7 @@ public:
 
     std::unique_ptr<osd_notification<input::redirect>> osd;
     std::unique_ptr<kill_window<space>> window_killer;
+    base::x11::xcb::window shape_helper_window{XCB_WINDOW_NONE};
 };
 
 }

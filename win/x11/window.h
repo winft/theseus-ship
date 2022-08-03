@@ -60,7 +60,6 @@ public:
     void checkNoBorder() override;
     bool wantsShadowToBeRendered() const override;
     QSize resizeIncrements() const override;
-    static void cleanupX11();
     QRect iconGeometry() const override;
 
     bool setupCompositing() override;
