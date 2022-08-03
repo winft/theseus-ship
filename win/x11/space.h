@@ -92,6 +92,11 @@ public:
         win::handle_desktop_resize(*this, size);
     }
 
+    void handle_desktop_changed(uint desktop) override
+    {
+        x11::popagate_desktop_change(*this, desktop);
+    }
+
     Toplevel* findInternal(QWindow* window) const override
     {
         if (!window) {
