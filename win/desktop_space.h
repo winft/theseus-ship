@@ -7,6 +7,7 @@
 
 #include "activation.h"
 #include "desktop_set.h"
+#include "focus_blocker.h"
 #include "space_areas_helpers.h"
 #include "toplevel.h"
 
@@ -63,6 +64,9 @@ void send_window_to_desktop(Space& space, Toplevel* window, int desk, bool dont_
 template<typename Space>
 void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)
 {
+    // Restore the focus on this desktop afterwards.
+    focus_blocker<Space> blocker(*space);
+
     for (auto const& toplevel : space->stacking_order->stack) {
         auto client = qobject_cast<x11::window*>(toplevel);
         if (!client || !client->control) {
@@ -107,12 +111,8 @@ void handle_current_desktop_changed(Space& space, unsigned int oldDesktop, unsig
 {
     close_active_popup(space);
 
-    ++space.block_focus;
     blocker block(space.stacking_order);
     update_client_visibility_on_desktop_change(&space, newDesktop);
-
-    // Restore the focus on this desktop
-    --space.block_focus;
 
     activate_window_on_new_desktop(space, newDesktop);
     Q_EMIT space.qobject->currentDesktopChanged(oldDesktop, space.move_resize_window);
