@@ -114,6 +114,12 @@ void init_space(Space& space)
 
                          blocker block(space.stacking_order);
                          update_client_visibility_on_desktop_change(&space, next);
+
+                         if (space.showing_desktop) {
+                             // Do this only after desktop change to avoid flicker.
+                             set_showing_desktop(space, false);
+                         }
+
                          activate_window_on_new_desktop(space, next);
                          Q_EMIT space.qobject->currentDesktopChanged(prev,
                                                                      space.move_resize_window);

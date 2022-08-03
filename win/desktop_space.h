@@ -74,11 +74,6 @@ void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)
     }
 
     space->handle_desktop_changed(newDesktop);
-
-    if (space->showing_desktop) {
-        // Do this only after desktop change to avoid flicker.
-        set_showing_desktop(*space, false);
-    }
 }
 
 template<typename Space>
