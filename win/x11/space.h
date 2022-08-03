@@ -39,6 +39,8 @@ public:
         : win::space(*base.render->compositor)
         , base{base}
     {
+        win::init_space(*this);
+
         if (base.input) {
             this->input = std::make_unique<input::x11::redirect>(*base.input, *this);
         }

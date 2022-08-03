@@ -86,6 +86,8 @@ public:
         namespace WS = Wrapland::Server;
         using wayland_window = win::wayland::window<space<Base>>;
 
+        init_space(*this);
+
         singleton_interface::set_activation_token
             = [this](auto const& appid) { return xdg_activation_set_token(*this, appid); };
 

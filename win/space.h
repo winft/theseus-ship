@@ -91,7 +91,6 @@ public:
         , virtual_desktop_manager{std::make_unique<win::virtual_desktop_manager>()}
         , session_manager{std::make_unique<win::session_manager>()}
     {
-        init_space(*this);
     }
 
     virtual ~space()
