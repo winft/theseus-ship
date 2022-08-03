@@ -401,7 +401,7 @@ public:
             if (!window->control) {
                 continue;
             }
-            if (auto x11_window = qobject_cast<x11::window*>(window)) {
+            if (auto x11_window = dynamic_cast<x11::window*>(window)) {
                 x11::update_space_areas(x11_window, desktop_area, screens_geos, areas);
             }
         }

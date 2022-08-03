@@ -45,7 +45,6 @@ enum class mapping_state {
 
 class KWIN_EXPORT window : public Toplevel
 {
-    Q_OBJECT
 public:
     using control_t = x11::control<window>;
     constexpr static bool is_toplevel{false};
@@ -281,6 +280,3 @@ public:
 };
 
 }
-
-Q_DECLARE_METATYPE(KWin::win::x11::window*)
-Q_DECLARE_METATYPE(QList<KWin::win::x11::window*>)

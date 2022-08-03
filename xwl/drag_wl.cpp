@@ -56,7 +56,7 @@ drag_event_reply wl_drag::move_filter(Toplevel* target, QPoint const& pos)
         visit.reset();
     }
 
-    if (!qobject_cast<win::x11::window*>(target)) {
+    if (!dynamic_cast<win::x11::window*>(target)) {
         // no target or wayland native target,
         // handled by input code directly
         return drag_event_reply::wayland;

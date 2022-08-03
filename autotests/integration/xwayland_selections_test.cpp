@@ -51,7 +51,6 @@ private:
 
 void XwaylandSelectionsTest::initTestCase()
 {
-    qRegisterMetaType<win::x11::window*>();
     qRegisterMetaType<QProcess::ExitStatus>();
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);

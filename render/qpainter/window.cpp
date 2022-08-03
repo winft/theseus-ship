@@ -32,7 +32,7 @@ window::~window()
 
 static bool isXwaylandClient(Toplevel* toplevel)
 {
-    auto client = qobject_cast<win::x11::window*>(toplevel);
+    auto client = dynamic_cast<win::x11::window*>(toplevel);
     if (client) {
         return true;
     }

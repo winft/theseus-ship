@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "hide.h"
 #include "netinfo.h"
 #include "window.h"
 
@@ -27,7 +28,7 @@ template<typename Space>
 void popagate_desktop_change(Space& space, uint desktop)
 {
     for (auto const& toplevel : space.stacking_order->stack) {
-        auto client = qobject_cast<x11::window*>(toplevel);
+        auto client = dynamic_cast<x11::window*>(toplevel);
         if (!client || !client->control) {
             continue;
         }
@@ -44,7 +45,7 @@ void popagate_desktop_change(Space& space, uint desktop)
 
     auto const& list = space.stacking_order->stack;
     for (int i = list.size() - 1; i >= 0; --i) {
-        auto client = qobject_cast<x11::window*>(list.at(i));
+        auto client = dynamic_cast<x11::window*>(list.at(i));
         if (!client || !client->control) {
             continue;
         }

@@ -273,7 +273,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
         if (!window->control) {
             continue;
         }
-        auto x11_client = qobject_cast<win::x11::window*>(window);
+        auto x11_client = dynamic_cast<win::x11::window*>(window);
         if (!x11_client) {
             continue;
         }
@@ -604,7 +604,7 @@ void effects_handler_impl::slotOpacityChanged(Toplevel* t, qreal oldOpacity)
 
 void effects_handler_impl::slotClientShown(KWin::Toplevel* t)
 {
-    assert(qobject_cast<win::x11::window*>(t));
+    assert(dynamic_cast<win::x11::window*>(t));
     auto c = static_cast<win::x11::window*>(t);
     disconnect(c, &Toplevel::windowShown, this, &effects_handler_impl::slotClientShown);
     setupClientConnections(c);
@@ -1927,7 +1927,7 @@ effects_window_impl::effects_window_impl(Toplevel* toplevel)
     managed = toplevel->isClient();
 
     waylandClient = toplevel->is_wayland_window();
-    x11Client = qobject_cast<KWin::win::x11::window*>(toplevel) != nullptr || toplevel->xcb_window;
+    x11Client = dynamic_cast<win::x11::window*>(toplevel) != nullptr || toplevel->xcb_window;
 }
 
 effects_window_impl::~effects_window_impl()
@@ -1981,7 +1981,7 @@ void effects_window_impl::addLayerRepaint(int x, int y, int w, int h)
 
 const EffectWindowGroup* effects_window_impl::group() const
 {
-    if (auto c = qobject_cast<win::x11::window*>(toplevel); c && c->group()) {
+    if (auto c = dynamic_cast<win::x11::window*>(toplevel); c && c->group()) {
         return c->group()->effect_group;
     }
     return nullptr; // TODO
@@ -2222,7 +2222,7 @@ CLIENT_HELPER_WIN_CONTROL(bool, isUnresponsive, unresponsive, false)
 
 QSize effects_window_impl::basicUnit() const
 {
-    if (auto client = qobject_cast<win::x11::window*>(toplevel)) {
+    if (auto client = dynamic_cast<win::x11::window*>(toplevel)) {
         return client->basicUnit();
     }
     return QSize(1, 1);
