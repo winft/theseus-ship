@@ -831,10 +831,7 @@ void window::do_set_maximize_mode(maximize_mode mode)
         }
     }
 
-    Q_EMIT clientMaximizedStateChanged(this, mode);
-    Q_EMIT clientMaximizedStateChanged(this,
-                                       flags(mode & win::maximize_mode::horizontal),
-                                       flags(mode & win::maximize_mode::vertical));
+    Q_EMIT maximize_mode_changed(this, mode);
 }
 
 void window::do_set_fullscreen(bool full)

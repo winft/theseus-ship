@@ -323,11 +323,8 @@ void effects_handler_impl::unloadAllEffects()
 void effects_handler_impl::setupAbstractClientConnections(Toplevel* window)
 {
     connect(window, &Toplevel::remnant_created, this, &effects_handler_impl::add_remnant);
-    connect(window,
-            static_cast<void (Toplevel::*)(KWin::Toplevel*, win::maximize_mode)>(
-                &Toplevel::clientMaximizedStateChanged),
-            this,
-            &effects_handler_impl::slotClientMaximized);
+    connect(
+        window, &Toplevel::maximize_mode_changed, this, &effects_handler_impl::slotClientMaximized);
     connect(window, &Toplevel::clientStartUserMovedResized, this, [this](Toplevel* c) {
         Q_EMIT windowStartUserMovedResized(c->render->effect.get());
     });

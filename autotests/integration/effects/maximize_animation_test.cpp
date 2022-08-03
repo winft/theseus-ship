@@ -142,9 +142,7 @@ void MaximizeAnimationTest::testMaximizeRestore()
     // Maximize the client.
     QSignalSpy geometryChangedSpy(client, &win::wayland::window::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
-    QSignalSpy maximizeChangedSpy(
-        client,
-        qOverload<Toplevel*, bool, bool>(&win::wayland::window::clientMaximizedStateChanged));
+    QSignalSpy maximizeChangedSpy(client, &win::wayland::window::maximize_mode_changed);
     QVERIFY(maximizeChangedSpy.isValid());
 
     win::active_window_maximize(*Test::app()->base.space);

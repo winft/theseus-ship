@@ -47,12 +47,11 @@ window::window(Toplevel* client, space* workspace)
     connect(client, &Toplevel::clientMinimized, this, [this] { Q_EMIT clientMinimized(this); });
     connect(client, &Toplevel::clientUnminimized, this, [this] { Q_EMIT clientUnminimized(this); });
 
-    connect(client,
-            qOverload<Toplevel*, bool, bool>(&Toplevel::clientMaximizedStateChanged),
-            this,
-            [this]([[maybe_unused]] Toplevel* client, bool horizontal, bool vertical) {
-                Q_EMIT clientMaximizedStateChanged(this, horizontal, vertical);
-            });
+    connect(client, &Toplevel::maximize_mode_changed, this, [this](auto /*window*/, auto mode) {
+        Q_EMIT clientMaximizedStateChanged(this,
+                                           flags(mode & win::maximize_mode::horizontal),
+                                           flags(mode & win::maximize_mode::vertical));
+    });
 
     connect(client, &Toplevel::quicktiling_changed, this, &window::quickTileModeChanged);
 

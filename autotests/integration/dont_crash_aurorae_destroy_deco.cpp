@@ -139,10 +139,7 @@ void DontCrashAuroraeDestroyDecoTest::testBorderlessMaximizedWindows()
     QVERIFY(client->ready_for_painting);
 
     // simulate click on maximize button
-    QSignalSpy maximizedStateChangedSpy(
-        client,
-        static_cast<void (Toplevel::*)(KWin::Toplevel*, win::maximize_mode)>(
-            &Toplevel::clientMaximizedStateChanged));
+    QSignalSpy maximizedStateChangedSpy(client, &Toplevel::maximize_mode_changed);
     QVERIFY(maximizedStateChangedSpy.isValid());
     quint32 timestamp = 1;
     Test::pointer_motion_absolute(client->frameGeometry().topLeft() + scenePoint.toPoint(),

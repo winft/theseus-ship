@@ -687,9 +687,7 @@ void TestXdgShellClient::testMaximizedToFullscreen()
     QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configureRequested);
     QVERIFY(configureRequestedSpy.isValid());
 
-    QSignalSpy maximize_spy(
-        client,
-        qOverload<Toplevel*, bool, bool>(&win::wayland::window::clientMaximizedStateChanged));
+    QSignalSpy maximize_spy(client, &win::wayland::window::maximize_mode_changed);
 
     QVERIFY(sizeChangeRequestedSpy.wait());
     QCOMPARE(sizeChangeRequestedSpy.count(), 1);

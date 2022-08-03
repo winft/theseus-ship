@@ -674,8 +674,7 @@ Q_SIGNALS:
     void minimizedChanged();
     void clientMinimized(KWin::Toplevel* window, bool animate);
     void clientUnminimized(KWin::Toplevel* window, bool animate);
-    void clientMaximizedStateChanged(KWin::Toplevel* window, KWin::win::maximize_mode);
-    void clientMaximizedStateChanged(KWin::Toplevel* window, bool h, bool v);
+    void maximize_mode_changed(KWin::Toplevel* window, KWin::win::maximize_mode);
     void quicktiling_changed();
     void keepAboveChanged(bool);
     void keepBelowChanged(bool);
