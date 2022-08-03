@@ -106,14 +106,14 @@ window::window(Toplevel* client, space* workspace)
 
     connect(client, &Toplevel::desktopFileNameChanged, this, &window::desktopFileNameChanged);
 
+    // For backwards compatibility of scripts connecting to the old signal. We assume no script is
+    // actually differentiating its behavior on the user parameter (if fullscreen was triggered by
+    // the user or not) and always set it to being a user change.
+    connect(client, &Toplevel::fullScreenChanged, this, [this, client] {
+        Q_EMIT clientFullScreenSet(this, client->control->fullscreen(), true);
+    });
+
     if (client->isClient()) {
-        auto x11_client = dynamic_cast<win::x11::window*>(m_client);
-        connect(x11_client,
-                &win::x11::window::client_fullscreen_set,
-                this,
-                [this]([[maybe_unused]] auto client, bool fullscreen, bool user) {
-                    Q_EMIT clientFullScreenSet(this, fullscreen, user);
-                });
         connect(client, &Toplevel::blockingCompositingChanged, this, [this] {
             Q_EMIT blockingCompositingChanged(this);
         });

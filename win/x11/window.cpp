@@ -869,12 +869,7 @@ void window::do_set_fullscreen(bool full)
 
     // Active fullscreens gets a different layer.
     update_layer(this);
-
     updateWindowRules(rules::type::fullscreen | rules::type::position | rules::type::size);
-
-    // TODO(romangg): Is it really important for scripts if the fullscreen was triggered by the app
-    //                or the user? For now just pretend that it was always the user.
-    Q_EMIT client_fullscreen_set(this, full, true);
     Q_EMIT fullScreenChanged();
 }
 

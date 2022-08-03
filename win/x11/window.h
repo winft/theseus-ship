@@ -278,9 +278,6 @@ public:
     x11::group* in_group{nullptr};
 
     xcb_colormap_t colormap{XCB_COLORMAP_NONE};
-
-Q_SIGNALS:
-    void client_fullscreen_set(KWin::win::x11::window*, bool, bool);
 };
 
 }

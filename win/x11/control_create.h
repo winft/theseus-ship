@@ -175,10 +175,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
                          [&comp](auto window) { comp.x11_integration.update_blocking(window); });
     }
 
-    QObject::connect(win,
-                     &win::x11::window::client_fullscreen_set,
-                     space.edges.get(),
-                     &screen_edger::checkBlocking);
+    QObject::connect(win, &Win::fullScreenChanged, space.edges.get(), &screen_edger::checkBlocking);
 
     // From this place on, manage() must not return false
     win->control = std::make_unique<typename Win::control_t>(win);
