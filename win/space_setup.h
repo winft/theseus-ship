@@ -105,11 +105,20 @@ void init_space(Space& space)
         &win::virtual_desktop_manager_qobject::countChanged,
         space.qobject.get(),
         [&](auto prev, auto next) { handle_desktop_count_changed(space, prev, next); });
-    QObject::connect(
-        vds->qobject.get(),
-        &win::virtual_desktop_manager_qobject::currentChanged,
-        space.qobject.get(),
-        [&](auto prev, auto next) { handle_current_desktop_changed(space, prev, next); });
+
+    QObject::connect(vds->qobject.get(),
+                     &win::virtual_desktop_manager_qobject::currentChanged,
+                     space.qobject.get(),
+                     [&](auto prev, auto next) {
+                         close_active_popup(space);
+
+                         blocker block(space.stacking_order);
+                         update_client_visibility_on_desktop_change(&space, next);
+                         activate_window_on_new_desktop(space, next);
+                         Q_EMIT space.qobject->currentDesktopChanged(prev,
+                                                                     space.move_resize_window);
+                     });
+
     vds->setNavigationWrappingAround(kwinApp()->options->qobject->isRollOverDesktops());
     QObject::connect(kwinApp()->options->qobject.get(),
                      &base::options_qobject::rollOverDesktopsChanged,

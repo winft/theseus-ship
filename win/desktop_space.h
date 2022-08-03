@@ -107,18 +107,6 @@ void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)
 }
 
 template<typename Space>
-void handle_current_desktop_changed(Space& space, unsigned int oldDesktop, unsigned int newDesktop)
-{
-    close_active_popup(space);
-
-    blocker block(space.stacking_order);
-    update_client_visibility_on_desktop_change(&space, newDesktop);
-
-    activate_window_on_new_desktop(space, newDesktop);
-    Q_EMIT space.qobject->currentDesktopChanged(oldDesktop, space.move_resize_window);
-}
-
-template<typename Space>
 void handle_desktop_count_changed(Space& space, unsigned int /*prev*/, unsigned int next)
 {
     reset_space_areas(space, next);
