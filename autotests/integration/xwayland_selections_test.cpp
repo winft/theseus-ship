@@ -51,7 +51,6 @@ private:
 
 void XwaylandSelectionsTest::initTestCase()
 {
-    qRegisterMetaType<win::wayland::window*>();
     qRegisterMetaType<win::x11::window*>();
     qRegisterMetaType<QProcess::ExitStatus>();
 

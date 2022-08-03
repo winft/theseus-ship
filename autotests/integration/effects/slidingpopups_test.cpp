@@ -58,7 +58,6 @@ private Q_SLOTS:
 void SlidingPopupsTest::initTestCase()
 {
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
-    qRegisterMetaType<win::wayland::window*>();
     qRegisterMetaType<KWin::win::x11::window*>();
     qRegisterMetaType<KWin::Effect*>();
 

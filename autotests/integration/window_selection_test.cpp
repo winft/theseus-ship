@@ -63,8 +63,6 @@ private Q_SLOTS:
 
 void TestWindowSelection::initTestCase()
 {
-    qRegisterMetaType<win::wayland::window*>();
-
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
     qputenv("XKB_DEFAULT_RULES", "evdev");

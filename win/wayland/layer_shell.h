@@ -160,7 +160,7 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
 
     QObject::connect(layer_surface, &WS::LayerSurfaceV1::got_popup, win, [win](auto popup) {
         for (auto window : win->space.windows) {
-            if (auto wayland_window = qobject_cast<win::wayland::window*>(window);
+            if (auto wayland_window = dynamic_cast<Win*>(window);
                 wayland_window && wayland_window->popup == popup) {
                 win->transient()->add_child(wayland_window);
                 break;

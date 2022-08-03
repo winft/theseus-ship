@@ -137,7 +137,6 @@ bool ScriptedEffectWithDebugSpy::load(const QString& name)
 void ScriptedEffectsTest::initTestCase()
 {
     qRegisterMetaType<KWin::Effect*>();
-    qRegisterMetaType<win::wayland::window*>();
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());

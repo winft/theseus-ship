@@ -67,7 +67,6 @@ private:
 
 void PlasmaWindowTest::initTestCase()
 {
-    qRegisterMetaType<win::wayland::window*>();
     qRegisterMetaType<KWin::win::x11::window*>();
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
@@ -271,7 +270,7 @@ void PlasmaWindowTest::testLockScreenNoPlasmaWindow()
 
     // this time we use a QSignalSpy on XdgShellClient as it'a a little bit more complex setup
     QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
-                              &win::wayland::space::qobject_t::wayland_window_added);
+                              &win::space::qobject_t::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
 
     // lock
@@ -282,7 +281,7 @@ void PlasmaWindowTest::testLockScreenNoPlasmaWindow()
     QVERIFY(clientAddedSpy.count() == static_cast<int>(outputs_count) || clientAddedSpy.wait());
     QTRY_COMPARE(clientAddedSpy.count(), outputs_count);
 
-    QVERIFY(clientAddedSpy.first().first().value<win::wayland::window*>()->isLockScreen());
+    QVERIFY(clientAddedSpy.first().first().value<Toplevel*>()->isLockScreen());
 
     // should not be sent to the client
     QVERIFY(plasmaWindowCreatedSpy.isEmpty());

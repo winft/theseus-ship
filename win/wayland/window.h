@@ -33,7 +33,6 @@ class space;
 
 class KWIN_EXPORT window : public Toplevel
 {
-    Q_OBJECT
 public:
     constexpr static bool is_toplevel{false};
 
@@ -197,5 +196,3 @@ private:
 };
 
 }
-
-Q_DECLARE_METATYPE(KWin::win::wayland::window*)

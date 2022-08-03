@@ -43,6 +43,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
+using wayland_window = win::wayland::window;
+
 class StrutsTest : public QObject
 {
     Q_OBJECT
@@ -67,7 +69,6 @@ private:
 
 void StrutsTest::initTestCase()
 {
-    qRegisterMetaType<win::wayland::window*>();
     qRegisterMetaType<KWin::win::x11::window*>();
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
@@ -225,7 +226,7 @@ void StrutsTest::testWaylandStruts()
              QRegion());
 
     struct client_holder {
-        win::wayland::window* window;
+        wayland_window* window;
         std::unique_ptr<Wrapland::Client::PlasmaShellSurface> plasma_surface;
         std::unique_ptr<Wrapland::Client::XdgShellToplevel> toplevel;
         std::unique_ptr<Wrapland::Client::Surface> surface;
@@ -340,7 +341,7 @@ void StrutsTest::testMoveWaylandPanel()
     QCOMPARE(win::space_window_area(*Test::app()->base.space, WorkArea, outputs.at(0), 1),
              QRect(0, 0, 2560, 1000));
 
-    QSignalSpy geometryChangedSpy(c, &win::wayland::window::frame_geometry_changed);
+    QSignalSpy geometryChangedSpy(c, &Toplevel::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
     plasmaSurface->setPosition(QPoint(1280, 1000));
     QVERIFY(geometryChangedSpy.wait());

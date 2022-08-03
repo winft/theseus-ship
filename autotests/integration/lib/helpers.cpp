@@ -189,7 +189,7 @@ win::wayland::window* render_and_wait_for_shown(client const& clt,
     if (!clientAddedSpy.wait(timeout)) {
         return nullptr;
     }
-    return clientAddedSpy.first().first().value<win::wayland::window*>();
+    return dynamic_cast<win::wayland::window*>(clientAddedSpy.first().first().value<Toplevel*>());
 }
 
 void flush_wayland_connection()

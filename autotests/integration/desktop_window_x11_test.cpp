@@ -48,7 +48,6 @@ private:
 
 void X11DesktopWindowTest::initTestCase()
 {
-    qRegisterMetaType<win::wayland::window*>();
     qRegisterMetaType<KWin::win::x11::window*>();
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);

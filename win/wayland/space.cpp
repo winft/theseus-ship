@@ -136,7 +136,7 @@ space::space(base::wayland::platform& base, base::wayland::server* server)
                 if (!win->control) {
                     continue;
                 }
-                if (auto wlwin = qobject_cast<wayland::window*>(win)) {
+                if (auto wlwin = dynamic_cast<wayland::window*>(win)) {
                     idle_update(*kde_idle, *wlwin);
                 }
             }
@@ -199,7 +199,7 @@ space::~space()
     stacking_order->lock();
 
     for (auto const& window : windows) {
-        if (auto win = qobject_cast<win::wayland::window*>(window); win && !win->remnant) {
+        if (auto win = dynamic_cast<win::wayland::window*>(window); win && !win->remnant) {
             destroy_window(win);
             remove_all(windows, win);
         }
@@ -215,7 +215,7 @@ window* space::find_window(Wrapland::Server::Surface* surface) const
 
     auto it = std::find_if(
         windows.cbegin(), windows.cend(), [surface](auto win) { return win->surface == surface; });
-    return it != windows.cend() ? qobject_cast<window*>(*it) : nullptr;
+    return it != windows.cend() ? dynamic_cast<window*>(*it) : nullptr;
 }
 
 void space::handle_window_added(wayland::window* window)
@@ -414,7 +414,7 @@ void space::update_space_area_from_windows(QRect const& desktop_area,
     // TODO(romangg): Combine this and above loop.
     for (auto win : windows) {
         // TODO(romangg): check on control like in the previous loop?
-        if (auto wl_win = qobject_cast<win::wayland::window*>(win)) {
+        if (auto wl_win = dynamic_cast<win::wayland::window*>(win)) {
             update_space_areas(wl_win, desktop_area, screens_geos, areas);
         }
     }

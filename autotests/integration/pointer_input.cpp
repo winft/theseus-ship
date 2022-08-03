@@ -57,6 +57,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
+using wayland_window = win::wayland::window;
+
 template<typename T>
 PlatformCursorImage loadReferenceThemeCursor(const T& shape)
 {
@@ -144,7 +146,6 @@ private:
 
 void PointerInputTest::initTestCase()
 {
-    qRegisterMetaType<win::wayland::window*>();
     qRegisterMetaType<Wrapland::Client::XdgDecoration::Mode>();
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
@@ -1314,7 +1315,8 @@ void PointerInputTest::testPopup()
     popupShellSurface->requestGrab(m_seat, 0); // FIXME: Serial.
     render(popupSurface, positioner.initialSize());
     QVERIFY(clientAddedSpy.wait());
-    auto popupClient = clientAddedSpy.last().first().value<win::wayland::window*>();
+    auto popupClient
+        = dynamic_cast<wayland_window*>(clientAddedSpy.last().first().value<Toplevel*>());
     QVERIFY(popupClient);
     QVERIFY(popupClient != window);
     QCOMPARE(window, Test::app()->base.space->active_client);
@@ -1432,7 +1434,8 @@ void PointerInputTest::testDecoCancelsPopup()
     popupShellSurface->requestGrab(m_seat, 0); // FIXME: Serial.
     render(popupSurface, positioner.initialSize());
     QVERIFY(clientAddedSpy.wait());
-    auto popupClient = clientAddedSpy.last().first().value<win::wayland::window*>();
+    auto popupClient
+        = dynamic_cast<wayland_window*>(clientAddedSpy.last().first().value<Toplevel*>());
     QVERIFY(popupClient);
     QVERIFY(popupClient != window);
     QCOMPARE(window, Test::app()->base.space->active_client);
@@ -1499,7 +1502,8 @@ void PointerInputTest::testWindowUnderCursorWhileButtonPressed()
     QVERIFY(popupShellSurface);
     render(popupSurface, positioner.initialSize());
     QVERIFY(clientAddedSpy.wait());
-    auto popupClient = clientAddedSpy.last().first().value<win::wayland::window*>();
+    auto popupClient
+        = dynamic_cast<wayland_window*>(clientAddedSpy.last().first().value<Toplevel*>());
     QVERIFY(popupClient);
     QVERIFY(popupClient != window);
     QVERIFY(window->frameGeometry().contains(Test::app()->base.input->cursor->pos()));

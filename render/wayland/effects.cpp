@@ -43,14 +43,14 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
 
     // TODO(romangg): We do this here too for every window.
     for (auto window : space->windows) {
-        auto wayland_window = qobject_cast<win::wayland::window*>(window);
-        if (!wayland_window) {
+        auto wlwin = dynamic_cast<win::wayland::window*>(window);
+        if (!wlwin) {
             continue;
         }
-        if (wayland_window->ready_for_painting) {
-            setupAbstractClientConnections(wayland_window);
+        if (wlwin->ready_for_painting) {
+            setupAbstractClientConnections(wlwin);
         } else {
-            QObject::connect(wayland_window,
+            QObject::connect(wlwin,
                              &Toplevel::windowShown,
                              this,
                              &effects_handler_impl::slotXdgShellClientShown);

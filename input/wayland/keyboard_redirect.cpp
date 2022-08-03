@@ -152,12 +152,11 @@ void keyboard_redirect::update()
             if (!t->ready_for_painting) {
                 continue;
             }
-            auto wayland_window = qobject_cast<win::wayland::window*>(t);
-            if (!wayland_window) {
+            auto wlwin = dynamic_cast<win::wayland::window*>(t);
+            if (!wlwin) {
                 continue;
             }
-            if (!wayland_window->layer_surface
-                || !wayland_window->has_exclusive_keyboard_interactivity()) {
+            if (!wlwin->layer_surface || !wlwin->has_exclusive_keyboard_interactivity()) {
                 continue;
             }
             found = t;

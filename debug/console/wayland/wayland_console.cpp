@@ -116,7 +116,7 @@ wayland_console_model::wayland_console_model(win::space& space, QObject* parent)
     : console_model(space, parent)
 {
     for (auto window : space.windows) {
-        if (auto wwin = qobject_cast<win::wayland::window*>(window); wwin && !wwin->remnant) {
+        if (auto wwin = dynamic_cast<win::wayland::window*>(window); wwin && !wwin->remnant) {
             m_shellClients.append(wwin);
         }
     }

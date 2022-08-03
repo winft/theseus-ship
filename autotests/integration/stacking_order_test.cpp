@@ -65,7 +65,6 @@ private Q_SLOTS:
 
 void StackingOrderTest::initTestCase()
 {
-    qRegisterMetaType<win::wayland::window*>();
     qRegisterMetaType<KWin::win::x11::window*>();
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
@@ -329,11 +328,11 @@ void StackingOrderTest::testDeletedTransient()
     QTRY_VERIFY(!transient2->control->active());
 
     // Close the top-most transient.
-    connect(transient2, &win::wayland::window::remnant_created, this, [](auto remnant) {
+    connect(transient2, &Toplevel::remnant_created, this, [](auto remnant) {
         remnant->remnant->ref();
     });
 
-    QSignalSpy windowClosedSpy(transient2, &win::wayland::window::remnant_created);
+    QSignalSpy windowClosedSpy(transient2, &Toplevel::remnant_created);
     QVERIFY(windowClosedSpy.isValid());
     transient2ShellSurface.reset();
     transient2Surface.reset();

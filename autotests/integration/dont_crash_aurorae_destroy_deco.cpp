@@ -52,7 +52,6 @@ void DontCrashAuroraeDestroyDecoTest::initTestCase()
 {
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
 
-    qRegisterMetaType<win::wayland::window*>();
     qRegisterMetaType<KWin::win::x11::window*>();
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);

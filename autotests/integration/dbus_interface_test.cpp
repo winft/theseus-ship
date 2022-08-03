@@ -49,6 +49,8 @@ using namespace Wrapland::Client;
 namespace KWin
 {
 
+using wayland_window = win::wayland::window;
+
 const QString s_destination{QStringLiteral("org.kde.KWin")};
 const QString s_path{QStringLiteral("/KWin")};
 const QString s_interface{QStringLiteral("org.kde.KWin")};
@@ -68,7 +70,6 @@ private Q_SLOTS:
 
 void TestDbusInterface::initTestCase()
 {
-    qRegisterMetaType<win::wayland::window*>();
     qRegisterMetaType<KWin::win::x11::window*>();
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
@@ -125,7 +126,7 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
     Test::render(surface, QSize(100, 50), Qt::blue);
     QVERIFY(clientAddedSpy.isEmpty());
     QVERIFY(clientAddedSpy.wait());
-    auto client = clientAddedSpy.first().first().value<win::wayland::window*>();
+    auto client = dynamic_cast<wayland_window*>(clientAddedSpy.first().first().value<Toplevel*>());
     QVERIFY(client);
 
     // let's get the window info
@@ -218,7 +219,7 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
 
     // finally close window
     const auto id = client->internal_id;
-    QSignalSpy windowClosedSpy(client, &win::wayland::window::closed);
+    QSignalSpy windowClosedSpy(client, &Toplevel::closed);
     QVERIFY(windowClosedSpy.isValid());
     shellSurface.reset();
     surface.reset();

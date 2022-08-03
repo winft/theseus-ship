@@ -49,8 +49,6 @@ private Q_SLOTS:
 
 void DontCrashNoBorder::initTestCase()
 {
-    qRegisterMetaType<win::wayland::window*>();
-
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
 

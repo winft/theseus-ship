@@ -92,7 +92,6 @@ private:
 
 void QuickTilingTest::initTestCase()
 {
-    qRegisterMetaType<win::wayland::window*>();
     qRegisterMetaType<KWin::win::x11::window*>();
     qRegisterMetaType<KWin::Toplevel*>();
     qRegisterMetaType<KWin::win::maximize_mode>();

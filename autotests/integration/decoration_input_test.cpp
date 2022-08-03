@@ -145,7 +145,6 @@ Toplevel* DecorationInputTest::showWindow()
 void DecorationInputTest::initTestCase()
 {
     qRegisterMetaType<win::internal_window*>();
-    qRegisterMetaType<win::wayland::window*>();
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());

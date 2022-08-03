@@ -35,6 +35,8 @@ Q_DECLARE_METATYPE(align)
 namespace KWin
 {
 
+using wayland_window = win::wayland::window;
+
 class layer_shell_test : public QObject
 {
     Q_OBJECT
@@ -52,7 +54,6 @@ private Q_SLOTS:
 
 void layer_shell_test::initTestCase()
 {
-    qRegisterMetaType<win::wayland::window*>();
     qRegisterMetaType<Clt::Output*>();
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
@@ -190,7 +191,7 @@ void layer_shell_test::test_create()
     Test::render_and_wait_for_shown(surface, render_size, Qt::blue);
     QVERIFY(!window_spy.isEmpty());
 
-    auto window = window_spy.first().first().value<win::wayland::window*>();
+    auto window = dynamic_cast<wayland_window*>(window_spy.first().first().value<Toplevel*>());
     QVERIFY(window);
     QVERIFY(window->isShown());
     QCOMPARE(window->isHiddenInternal(), false);
@@ -240,7 +241,7 @@ void layer_shell_test::test_create()
     Test::render_and_wait_for_shown(surface2, render_size, Qt::red);
     QVERIFY(!window_spy.isEmpty());
 
-    auto window2 = window_spy.first().first().value<win::wayland::window*>();
+    auto window2 = dynamic_cast<wayland_window*>(window_spy.first().first().value<Toplevel*>());
     QVERIFY(window2);
     QVERIFY(window2->isShown());
     QCOMPARE(window2->isHiddenInternal(), false);
@@ -351,7 +352,7 @@ void layer_shell_test::test_geo()
     Test::render_and_wait_for_shown(surface, render_size, Qt::blue);
     QVERIFY(!window_spy.isEmpty());
 
-    auto window = window_spy.first().first().value<win::wayland::window*>();
+    auto window = dynamic_cast<wayland_window*>(window_spy.first().first().value<Toplevel*>());
     QVERIFY(window);
 
     QFETCH(align, align_horizontal);
@@ -405,7 +406,7 @@ void layer_shell_test::test_output_change()
     Test::render_and_wait_for_shown(surface, render_size, Qt::blue);
     QVERIFY(!window_spy.isEmpty());
 
-    auto window = window_spy.first().first().value<win::wayland::window*>();
+    auto window = dynamic_cast<wayland_window*>(window_spy.first().first().value<Toplevel*>());
     QVERIFY(window);
     QVERIFY(window->isShown());
 
@@ -463,7 +464,7 @@ void layer_shell_test::test_popup()
     Test::render_and_wait_for_shown(surface, render_size, Qt::blue);
     QVERIFY(!window_spy.isEmpty());
 
-    auto window = window_spy.first().first().value<win::wayland::window*>();
+    auto window = dynamic_cast<wayland_window*>(window_spy.first().first().value<Toplevel*>());
     QVERIFY(window);
     QVERIFY(window->isShown());
 

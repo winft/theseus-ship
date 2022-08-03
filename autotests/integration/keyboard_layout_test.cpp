@@ -77,7 +77,6 @@ public:
 
     keyboard_layout_test()
     {
-        qRegisterMetaType<win::wayland::window*>();
         qRegisterMetaType<input::dbus::keyboard_v2>("input::dbus::keyboard_v2");
         qDBusRegisterMetaType<input::dbus::keyboard_v2>();
 

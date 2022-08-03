@@ -47,7 +47,6 @@ private Q_SLOTS:
 
 void DontCrashEmptyDecorationTest::initTestCase()
 {
-    qRegisterMetaType<win::wayland::window*>();
     qRegisterMetaType<KWin::win::x11::window*>();
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);

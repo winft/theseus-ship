@@ -49,7 +49,6 @@ private Q_SLOTS:
 void DontCrashReinitializeCompositorTest::initTestCase()
 {
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
-    qRegisterMetaType<win::wayland::window*>();
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
@@ -132,7 +131,7 @@ void DontCrashReinitializeCompositorTest::testReinitializeCompositor()
     QVERIFY(!effect->isActive());
 
     // Close the test client.
-    QSignalSpy windowClosedSpy(client, &win::wayland::window::closed);
+    QSignalSpy windowClosedSpy(client, &Toplevel::closed);
     QVERIFY(windowClosedSpy.isValid());
     shellSurface.reset();
     surface.reset();

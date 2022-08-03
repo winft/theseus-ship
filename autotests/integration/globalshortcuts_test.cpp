@@ -72,7 +72,6 @@ private Q_SLOTS:
 void GlobalShortcutsTest::initTestCase()
 {
     qRegisterMetaType<win::internal_window*>();
-    qRegisterMetaType<win::wayland::window*>();
     qRegisterMetaType<win::x11::window*>();
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);

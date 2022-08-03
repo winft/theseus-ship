@@ -64,7 +64,6 @@ void SceneQPainterTest::cleanup()
 
 void SceneQPainterTest::initTestCase()
 {
-    qRegisterMetaType<win::wayland::window*>();
     qRegisterMetaType<KWin::win::x11::window*>();
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
