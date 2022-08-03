@@ -259,7 +259,8 @@ console_model::console_model(win::space& space, QObject* parent)
         }
     }
     connect(space.qobject.get(), &win::space_qobject::clientAdded, this, [this](auto c) {
-        add_window(this, s_x11ClientId - 1, m_x11Clients, c);
+        auto x11win = static_cast<win::x11::window*>(c);
+        add_window(this, s_x11ClientId - 1, m_x11Clients, x11win);
     });
     connect(
         space.qobject.get(), &win::space_qobject::clientRemoved, this, [this](Toplevel* window) {

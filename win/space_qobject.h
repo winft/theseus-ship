@@ -15,20 +15,10 @@ class KStartupInfo;
 namespace KWin
 {
 
-namespace render
-{
-class compositor;
-}
-
 class Toplevel;
 
 namespace win
 {
-
-namespace x11
-{
-class window;
-}
 
 class internal_window;
 class shortcut_dialog;
@@ -46,10 +36,14 @@ public Q_SLOTS:
 Q_SIGNALS:
     void desktopPresenceChanged(KWin::Toplevel*, int);
     void currentDesktopChanged(int, KWin::Toplevel*);
-    void clientAdded(KWin::win::x11::window*);
+
+    // X11 window
+    void clientAdded(KWin::Toplevel*);
     void clientRemoved(KWin::Toplevel*);
+
     void wayland_window_added(KWin::Toplevel*);
     void wayland_window_removed(KWin::Toplevel*);
+
     void clientActivated(KWin::Toplevel*);
     void clientDemandsAttentionChanged(KWin::Toplevel*, bool);
     void clientMinimizedChanged(KWin::Toplevel*);

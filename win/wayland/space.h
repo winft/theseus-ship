@@ -189,10 +189,10 @@ public:
             });
 
         // For Xwayland windows we need to setup Plasma management too.
-        QObject::connect(qobject.get(),
-                         &space::qobject_t::clientAdded,
-                         qobject.get(),
-                         [this](auto&& win) { handle_x11_window_added(win); });
+        QObject::connect(
+            qobject.get(), &space::qobject_t::clientAdded, qobject.get(), [this](auto&& win) {
+                handle_x11_window_added(static_cast<x11::window*>(win));
+            });
 
         QObject::connect(virtual_desktop_manager->qobject.get(),
                          &virtual_desktop_manager_qobject::desktopRemoved,
