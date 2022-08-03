@@ -146,18 +146,6 @@ public:
                          qobject.get(),
                          [this](auto surface) { handle_new_plasma_shell_surface(this, surface); });
 
-        QObject::connect(
-            qobject.get(), &space::qobject_t::currentDesktopChanged, kde_idle.get(), [this] {
-                for (auto win : windows) {
-                    if (!win->control) {
-                        continue;
-                    }
-                    if (auto wlwin = dynamic_cast<wayland_window*>(win)) {
-                        idle_update(*kde_idle, *wlwin);
-                    }
-                }
-            });
-
         QObject::connect(appmenu_manager.get(),
                          &WS::AppmenuManager::appmenuCreated,
                          [this](auto appmenu) { handle_new_appmenu(this, appmenu); });
@@ -235,6 +223,15 @@ public:
     {
         // TODO(romangg): Only call with Xwayland compiled.
         x11::popagate_desktop_change(*this, desktop);
+
+        for (auto win : windows) {
+            if (!win->control) {
+                continue;
+            }
+            if (auto wlwin = dynamic_cast<wayland_window*>(win)) {
+                idle_update(*kde_idle, *wlwin);
+            }
+        }
     }
 
     Toplevel* findInternal(QWindow* window) const override
