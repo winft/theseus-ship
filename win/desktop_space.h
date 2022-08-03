@@ -169,16 +169,8 @@ void save_old_output_sizes(Space& space)
 
 /// After an output topology change.
 template<typename Space>
-void handle_desktop_resize(Space& space)
+void handle_desktop_resize(Space& space, QSize const& size)
 {
-    auto geom = QRect({}, kwinApp()->get_base().topology.size);
-    if (x11::rootInfo()) {
-        NETSize desktop_geometry;
-        desktop_geometry.width = geom.width();
-        desktop_geometry.height = geom.height();
-        x11::rootInfo()->setDesktopGeometry(desktop_geometry);
-    }
-
     update_space_areas(space);
 
     // after updateClientArea(), so that one still uses the previous one
@@ -188,7 +180,7 @@ void handle_desktop_resize(Space& space)
     space.edges->recreateEdges();
 
     if (auto& effects = space.render.effects) {
-        effects->desktopResized(geom.size());
+        effects->desktopResized(size);
     }
 }
 

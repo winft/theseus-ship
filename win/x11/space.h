@@ -7,6 +7,7 @@
 */
 #pragma once
 
+#include "desktop_space.h"
 #include "netinfo.h"
 #include "screen_edge.h"
 #include "screen_edges_filter.h"
@@ -81,6 +82,12 @@ public:
         });
 
         x11::init_space(*this);
+    }
+
+    void resize(QSize const& size) override
+    {
+        handle_desktop_resize(size);
+        win::handle_desktop_resize(*this, size);
     }
 
     Toplevel* findInternal(QWindow* window) const override

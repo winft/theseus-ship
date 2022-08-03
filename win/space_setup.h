@@ -71,7 +71,7 @@ void init_space(Space& space)
     QObject::connect(
         &base, &base::platform::topology_changed, space.qobject.get(), [&](auto old, auto topo) {
             if (old.size != topo.size) {
-                handle_desktop_resize(space);
+                space.resize(topo.size);
             }
         });
 

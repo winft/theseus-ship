@@ -33,6 +33,7 @@
 #include "win/stacking_order.h"
 #include "win/tabbox.h"
 #include "win/virtual_desktops.h"
+#include "win/x11/desktop_space.h"
 #include "win/x11/space_areas.h"
 #include "xwl/surface.h"
 
@@ -219,6 +220,13 @@ public:
                 remove_all(windows, win);
             }
         }
+    }
+
+    void resize(QSize const& size) override
+    {
+        // TODO(romangg): Only call with Xwayland compiled.
+        x11::handle_desktop_resize(size);
+        handle_desktop_resize(*this, size);
     }
 
     Toplevel* findInternal(QWindow* window) const override

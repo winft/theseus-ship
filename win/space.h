@@ -99,6 +99,8 @@ public:
         clear_space(*this);
     }
 
+    virtual void resize(QSize const& size) = 0;
+
     /**
      * @brief Finds a Toplevel for the internal window @p w.
      *
