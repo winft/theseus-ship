@@ -37,12 +37,12 @@ PlatformCursor::~PlatformCursor() = default;
 
 QPoint PlatformCursor::pos() const
 {
-    return input::singleton_interface::platform->cursor->pos();
+    return input::singleton_interface::cursor->pos();
 }
 
 void PlatformCursor::setPos(const QPoint &pos)
 {
-    input::singleton_interface::platform->cursor->set_pos(pos);
+    input::singleton_interface::cursor->set_pos(pos);
 }
 
 void PlatformCursor::changeCursor(QCursor *windowCursor, QWindow *window)

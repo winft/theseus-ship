@@ -7,14 +7,18 @@
 
 #include "kwin_export.h"
 
+#include <QObject>
+
 namespace KWin::input
 {
 
-class platform;
+class cursor;
+class platform_qobject;
 
 /// Only for exceptional use in environments without dependency injection support (e.g. Qt plugins).
 struct KWIN_EXPORT singleton_interface {
-    static input::platform* platform;
+    static input::cursor* cursor;
+    static input::platform_qobject* platform_qobject;
 };
 
 }

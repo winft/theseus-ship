@@ -40,6 +40,7 @@ class KWIN_EXPORT cursor : public QObject
     Q_OBJECT
 public:
     cursor();
+    ~cursor() override;
 
     void start_mouse_polling();
     void stop_mouse_polling();

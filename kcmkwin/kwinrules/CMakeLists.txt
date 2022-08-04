@@ -8,6 +8,7 @@ set(kwinrules_SRCS
     ../../win/rules/book_settings.cpp
     ../../input/cursor.cpp
     ../../input/cursor_shape.cpp
+    ../../input/singleton_interface.cpp
     ../../input/x11/cursor.cpp
     ../../win/rules/ruling.cpp
     ../../win/dbus/virtual_desktop_types.cpp

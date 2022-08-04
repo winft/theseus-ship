@@ -19,12 +19,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kglobalaccel_plugin.h"
 
-#include "input/platform.h"
+#include "input/platform_qobject.h"
 #include "input/singleton_interface.h"
 
 #include <QDebug>
 
-KGlobalAccelImpl::KGlobalAccelImpl(QObject *parent)
+KGlobalAccelImpl::KGlobalAccelImpl(QObject* parent)
     : KGlobalAccelInterfaceV2(parent)
 {
 }
@@ -43,16 +43,21 @@ void KGlobalAccelImpl::setEnabled(bool enabled)
     if (m_shuttingDown) {
         return;
     }
-    auto input = KWin::input::singleton_interface::platform;
+    auto input = KWin::input::singleton_interface::platform_qobject;
     if (!input) {
         qFatal("This plugin is intended to be used with KWin and this is not KWin, exiting now");
     } else {
         if (!m_inputDestroyedConnection) {
-            m_inputDestroyedConnection = connect(
-                input->qobject.get(), &QObject::destroyed, this, [this] { m_shuttingDown = true; });
+            m_inputDestroyedConnection
+                = connect(input, &QObject::destroyed, this, [this] { m_shuttingDown = true; });
         }
     }
-    input->registerGlobalAccel(enabled ? this : nullptr);
+
+    if (input->register_global_accel) {
+        input->register_global_accel(enabled ? this : nullptr);
+    } else {
+        qFatal("Input platform does not support KGlobalAccel");
+    }
 }
 
 bool KGlobalAccelImpl::checkKeyPressed(int keyQt)

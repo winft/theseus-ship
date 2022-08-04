@@ -8,6 +8,7 @@
 namespace KWin::input
 {
 
-input::platform* singleton_interface::platform{nullptr};
+input::cursor* singleton_interface::cursor{nullptr};
+input::platform_qobject* singleton_interface::platform_qobject{nullptr};
 
 }
