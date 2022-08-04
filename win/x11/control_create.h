@@ -16,6 +16,7 @@
 #include "session.h"
 #include "startup_info.h"
 #include "user_time.h"
+#include "win_info.h"
 #include "window_create.h"
 #include "xcb.h"
 
@@ -244,7 +245,8 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     win->geometry_hints.init(win->xcb_window);
     win->motif_hints.init(win->xcb_window);
 
-    win->info = new win_info(win, win->xcb_windows.client, rootWindow(), properties, properties2);
+    win->info
+        = new win_info<Win>(win, win->xcb_windows.client, rootWindow(), properties, properties2);
 
     if (is_desktop(win) && win->bit_depth == 32) {
         // force desktop windows to be opaque. It's a desktop after all, there is no window below
