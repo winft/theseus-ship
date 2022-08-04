@@ -37,7 +37,7 @@ compositor::compositor(render::platform& platform)
     : qobject{std::make_unique<compositor_qobject>(
         [this](auto te) { return handle_timer_event(te); })}
     , platform{platform}
-    , dbus{std::make_unique<dbus::compositing>(*this)}
+    , dbus{std::make_unique<dbus::compositing<compositor>>(*this)}
 {
     QObject::connect(kwinApp()->options->qobject.get(),
                      &base::options_qobject::configChanged,

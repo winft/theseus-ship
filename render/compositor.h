@@ -33,6 +33,7 @@ namespace render
 
 namespace dbus
 {
+template<typename Compositor>
 class compositing;
 }
 
@@ -133,7 +134,7 @@ public:
     QBasicTimer compositeTimer;
     qint64 m_delay{0};
     bool m_bufferSwapPending{false};
-    std::unique_ptr<dbus::compositing> dbus;
+    std::unique_ptr<dbus::compositing<compositor>> dbus;
 
     bool handle_timer_event(QTimerEvent* te);
     int refreshRate() const;

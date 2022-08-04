@@ -8,23 +8,11 @@
 
 #include "compositingadaptor.h"
 
-#include "base/platform.h"
-#include "render/compositor.h"
-#include "render/platform.h"
-#include "render/scene.h"
-
-#include <QOpenGLContext>
-
 namespace KWin::render::dbus
 {
 
-compositing::compositing(render::compositor& compositor)
-    : compositor{compositor}
+compositing_qobject::compositing_qobject()
 {
-    connect(compositor.qobject.get(),
-            &render::compositor_qobject::compositingToggled,
-            this,
-            &compositing::compositingToggled);
     new CompositingAdaptor(this);
     QDBusConnection dbus = QDBusConnection::sessionBus();
     dbus.registerObject(QStringLiteral("/Compositor"), this);
@@ -36,74 +24,56 @@ compositing::compositing(render::compositor& compositor)
                  SLOT(reinitialize()));
 }
 
-QString compositing::compositingNotPossibleReason() const
+QString compositing_qobject::compositingNotPossibleReason() const
 {
-    return compositor.platform.compositingNotPossibleReason();
+    return integration.not_possible_reason();
 }
 
-QString compositing::compositingType() const
+QString compositing_qobject::compositingType() const
 {
-    if (!compositor.scene) {
-        return QStringLiteral("none");
-    }
-
-    switch (compositor.scene->compositingType()) {
-    case XRenderCompositing:
-        return QStringLiteral("xrender");
-    case OpenGLCompositing:
-        if (QOpenGLContext::openGLModuleType() == QOpenGLContext::LibGLES) {
-            return QStringLiteral("gles");
-        } else {
-            return QStringLiteral("gl2");
-        }
-    case QPainterCompositing:
-        return QStringLiteral("qpainter");
-    case NoCompositing:
-    default:
-        return QStringLiteral("none");
-    }
+    return integration.type();
 }
 
-bool compositing::isActive() const
+bool compositing_qobject::isActive() const
 {
-    return compositor.isActive();
+    return integration.active();
 }
 
-bool compositing::isCompositingPossible() const
+bool compositing_qobject::isCompositingPossible() const
 {
-    return compositor.platform.compositingPossible();
+    return integration.possible();
 }
 
-bool compositing::isOpenGLBroken() const
+bool compositing_qobject::isOpenGLBroken() const
 {
-    return compositor.platform.openGLCompositingIsBroken();
+    return integration.opengl_broken();
 }
 
-bool compositing::platformRequiresCompositing() const
+bool compositing_qobject::platformRequiresCompositing() const
 {
-    return compositor.platform.requiresCompositing();
+    return integration.required();
 }
 
-void compositing::resume()
+void compositing_qobject::resume()
 {
     if (integration.resume) {
         integration.resume();
     }
 }
 
-void compositing::suspend()
+void compositing_qobject::suspend()
 {
     if (integration.suspend) {
         integration.suspend();
     }
 }
 
-void compositing::reinitialize()
+void compositing_qobject::reinitialize()
 {
-    compositor.reinitialize();
+    return integration.reinit();
 }
 
-QStringList compositing::supportedOpenGLPlatformInterfaces() const
+QStringList compositing_qobject::supportedOpenGLPlatformInterfaces() const
 {
     return integration.get_types();
 }

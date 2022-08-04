@@ -63,7 +63,7 @@ compositor::compositor(render::platform& platform)
     : render::compositor(platform)
     , presentation{std::make_unique<wayland::presentation>(platform.base.get_clockid())}
 {
-    dbus->integration.get_types = [] { return QStringList{"egl"}; };
+    dbus->qobject->integration.get_types = [] { return QStringList{"egl"}; };
 
     QObject::connect(kwinApp(),
                      &Application::x11ConnectionAboutToBeDestroyed,

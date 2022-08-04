@@ -51,9 +51,9 @@ compositor::compositor(render::platform& platform)
     x11_integration.is_overlay_window = [this](auto win) { return checkForOverlayWindow(win); };
     x11_integration.update_blocking
         = [this](auto win) { return updateClientCompositeBlocking(win); };
-    dbus->integration.get_types = [] { return QStringList{"glx"}; };
-    dbus->integration.resume = [this] { resume(suspend_reason::script); };
-    dbus->integration.suspend = [this] { suspend(suspend_reason::script); };
+    dbus->qobject->integration.get_types = [] { return QStringList{"glx"}; };
+    dbus->qobject->integration.resume = [this] { resume(suspend_reason::script); };
+    dbus->qobject->integration.suspend = [this] { suspend(suspend_reason::script); };
 
     if (qEnvironmentVariableIsSet("KWIN_MAX_FRAMES_TESTED")) {
         m_framesToTestForSafety = qEnvironmentVariableIntValue("KWIN_MAX_FRAMES_TESTED");

@@ -518,7 +518,7 @@ qt5_add_dbus_adaptor(kwin_SRCS base/dbus/org.kde.KWin.xml base/dbus/kwin.h KWin:
 qt5_add_dbus_adaptor(kwin_SRCS
   render/dbus/org.kde.kwin.Compositing.xml
   render/dbus/compositing.h
-  KWin::render::dbus::compositing
+  KWin::render::dbus::compositing_qobject
 )
 qt5_add_dbus_adaptor(kwin_SRCS
   render/dbus/org.kde.kwin.ColorCorrect.xml
