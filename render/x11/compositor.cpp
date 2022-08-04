@@ -34,8 +34,6 @@
 #include <stdexcept>
 #include <xcb/composite.h>
 
-Q_DECLARE_METATYPE(KWin::render::x11::compositor::SuspendReason)
-
 namespace KWin::render::x11
 {
 
@@ -46,14 +44,15 @@ constexpr auto compositor_lost_message_delay = 2000;
 
 compositor::compositor(render::platform& platform)
     : render::compositor(platform)
-    , m_suspended(kwinApp()->options->qobject->isUseCompositing() ? NoReasonSuspend : UserSuspend)
+    , m_suspended(kwinApp()->options->qobject->isUseCompositing() ? suspend_reason::none
+                                                                  : suspend_reason::user)
 {
     x11_integration.is_overlay_window = [this](auto win) { return checkForOverlayWindow(win); };
     x11_integration.update_blocking
         = [this](auto win) { return updateClientCompositeBlocking(win); };
     dbus->integration.get_types = [] { return QStringList{"glx"}; };
-    dbus->integration.resume = [this] { resume(ScriptSuspend); };
-    dbus->integration.suspend = [this] { suspend(ScriptSuspend); };
+    dbus->integration.resume = [this] { resume(suspend_reason::script); };
+    dbus->integration.suspend = [this] { suspend(suspend_reason::script); };
 
     if (qEnvironmentVariableIsSet("KWIN_MAX_FRAMES_TESTED")) {
         m_framesToTestForSafety = qEnvironmentVariableIntValue("KWIN_MAX_FRAMES_TESTED");
@@ -80,15 +79,15 @@ void compositor::start(win::space& space)
         this->space = &space;
     }
 
-    if (m_suspended) {
+    if (flags(m_suspended)) {
         QStringList reasons;
-        if (m_suspended & UserSuspend) {
+        if (flags(m_suspended & suspend_reason::user)) {
             reasons << QStringLiteral("Disabled by User");
         }
-        if (m_suspended & BlockRuleSuspend) {
+        if (flags(m_suspended & suspend_reason::rule)) {
             reasons << QStringLiteral("Disabled by Window");
         }
-        if (m_suspended & ScriptSuspend) {
+        if (flags(m_suspended & suspend_reason::script)) {
             reasons << QStringLiteral("Disabled by Script");
         }
         qCDebug(KWIN_CORE) << "Compositing is suspended, reason:" << reasons;
@@ -127,21 +126,21 @@ void compositor::schedule_repaint([[maybe_unused]] Toplevel* window)
 
 void compositor::toggleCompositing()
 {
-    if (m_suspended) {
+    if (flags(m_suspended)) {
         // Direct user call; clear all bits.
-        resume(AllReasonSuspend);
+        resume(suspend_reason::all);
     } else {
         // But only set the user one (sufficient to suspend).
-        suspend(UserSuspend);
+        suspend(suspend_reason::user);
     }
 }
 
-void compositor::suspend(compositor::SuspendReason reason)
+void compositor::suspend(suspend_reason reason)
 {
-    assert(reason != NoReasonSuspend);
+    assert(reason != suspend_reason::none);
     m_suspended |= reason;
 
-    if (reason & ScriptSuspend) {
+    if (flags(reason & suspend_reason::script)) {
         // When disabled show a shortcut how the user can get back compositing.
         const auto shortcuts = KGlobalAccel::self()->shortcut(
             space->qobject->findChild<QAction*>(QStringLiteral("Suspend Compositing")));
@@ -158,9 +157,9 @@ void compositor::suspend(compositor::SuspendReason reason)
     stop(false);
 }
 
-void compositor::resume(compositor::SuspendReason reason)
+void compositor::resume(suspend_reason reason)
 {
-    assert(reason != NoReasonSuspend);
+    assert(reason != suspend_reason::none);
     m_suspended &= ~reason;
 
     assert(space);
@@ -170,7 +169,7 @@ void compositor::resume(compositor::SuspendReason reason)
 void compositor::reinitialize()
 {
     // Resume compositing if suspended.
-    m_suspended = NoReasonSuspend;
+    m_suspended = suspend_reason::none;
     // TODO(romangg): start the release selection timer?
     render::compositor::reinitialize();
 }
@@ -186,7 +185,7 @@ void compositor::addRepaint(QRegion const& region)
 
 void compositor::configChanged()
 {
-    if (m_suspended) {
+    if (flags(m_suspended)) {
         // TODO(romangg): start the release selection timer?
         stop(false);
         return;
@@ -304,9 +303,7 @@ create_scene_impl(x11::compositor& compositor, Factory& factory, std::string con
     auto setup_hooks = [&](auto& scene) {
         scene->windowing_integration.handle_viewport_limits_alarm = [&] {
             qCDebug(KWIN_CORE) << "Suspending compositing because viewport limits are not met";
-            QTimer::singleShot(0, &compositor, [&] {
-                compositor.suspend(render::x11::compositor::AllReasonSuspend);
-            });
+            QTimer::singleShot(0, &compositor, [&] { compositor.suspend(suspend_reason::all); });
         };
     };
 
@@ -429,11 +426,11 @@ void compositor::updateClientCompositeBlocking(Toplevel* window)
     if (window) {
         if (window->isBlockingCompositing()) {
             // Do NOT attempt to call suspend(true) from within the eventchain!
-            if (!(m_suspended & BlockRuleSuspend))
+            if (!(m_suspended & suspend_reason::rule))
                 QMetaObject::invokeMethod(
-                    this, [this]() { suspend(BlockRuleSuspend); }, Qt::QueuedConnection);
+                    this, [this]() { suspend(suspend_reason::rule); }, Qt::QueuedConnection);
         }
-    } else if (m_suspended & BlockRuleSuspend) {
+    } else if (flags(m_suspended & suspend_reason::rule)) {
         // If !c we just check if we can resume in case a blocking client was lost.
         bool shouldResume = true;
 
@@ -446,7 +443,7 @@ void compositor::updateClientCompositeBlocking(Toplevel* window)
         if (shouldResume) {
             // Do NOT attempt to call suspend(false) from within the eventchain!
             QMetaObject::invokeMethod(
-                this, [this]() { resume(BlockRuleSuspend); }, Qt::QueuedConnection);
+                this, [this]() { resume(suspend_reason::rule); }, Qt::QueuedConnection);
         }
     }
 }
