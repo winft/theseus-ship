@@ -425,6 +425,7 @@ public:
     // TODO: remove boolean traps
     virtual void hideClient(bool hide) = 0;
     virtual void setFullScreen(bool set, bool user = true) = 0;
+    virtual void handle_update_fullscreen(bool full) = 0;
 
     virtual win::maximize_mode maximizeMode() const;
 

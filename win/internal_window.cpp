@@ -402,6 +402,10 @@ void internal_window::setFullScreen(bool set, bool user)
     Q_UNUSED(user)
 }
 
+void internal_window::handle_update_fullscreen(bool /*full*/)
+{
+}
+
 void internal_window::setNoBorder(bool set)
 {
     if (!userCanSetNoBorder()) {

@@ -9,11 +9,11 @@
 
 #include "win/fullscreen.h"
 
-namespace KWin::win
+namespace KWin::win::x11
 {
 
-template<>
-void update_fullscreen_impl(x11::window* win, bool full)
+template<typename Win>
+void propagate_fullscreen_update(Win* win, bool full)
 {
     if (full) {
         win->info->setState(NET::FullScreen, NET::FullScreen);

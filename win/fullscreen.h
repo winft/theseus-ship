@@ -88,16 +88,6 @@ void update_fullscreen_disable(Win* win)
 }
 
 template<typename Win>
-void update_fullscreen_impl(Win* win, bool full)
-{
-    if (full) {
-        update_fullscreen_enable(win);
-    } else {
-        update_fullscreen_disable(win);
-    }
-}
-
-template<typename Win>
 void update_fullscreen(Win* win, bool full, bool user)
 {
     full = win->control->rules().checkFullScreen(full);
@@ -120,8 +110,7 @@ void update_fullscreen(Win* win, bool full, bool user)
 
     end_move_resize(win);
     win->updateDecoration(false, false);
-
-    update_fullscreen_impl(win, full);
+    win->handle_update_fullscreen(full);
 }
 
 }

@@ -95,6 +95,7 @@ public:
     win::maximize_mode maximizeMode() const override;
     void setFullScreen(bool full, bool user = true) override;
     bool userCanSetFullScreen() const override;
+    void handle_update_fullscreen(bool full) override;
 
     bool noBorder() const override;
     void setNoBorder(bool set) override;

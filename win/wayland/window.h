@@ -555,6 +555,15 @@ public:
         update_fullscreen(this, full, user);
     }
 
+    void handle_update_fullscreen(bool full) override
+    {
+        if (full) {
+            update_fullscreen_enable(this);
+        } else {
+            update_fullscreen_disable(this);
+        }
+    }
+
     void setNoBorder(bool set) override
     {
         if (!userCanSetNoBorder()) {

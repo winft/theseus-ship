@@ -573,6 +573,11 @@ bool window::userCanSetFullScreen() const
     return win::is_normal(this) || win::is_dialog(this);
 }
 
+void window::handle_update_fullscreen(bool full)
+{
+    propagate_fullscreen_update(this, full);
+}
+
 bool window::wantsInput() const
 {
     return control->rules().checkAcceptFocus(acceptsFocus()
