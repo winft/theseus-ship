@@ -60,7 +60,6 @@ namespace win
 namespace x11
 {
 class group;
-class window;
 }
 
 class space;
@@ -358,7 +357,9 @@ protected:
     void disconnectNotify(const QMetaMethod& signal) override;
     void effectsChanged();
     void setupAbstractClientConnections(Toplevel* window);
-    void setupClientConnections(KWin::win::x11::window* c);
+
+    // For X11 windows
+    void setupClientConnections(Toplevel* c);
     void setupUnmanagedConnections(Toplevel* u);
 
     EffectWindow* find_window_by_wid(WId id) const override;

@@ -386,10 +386,10 @@ void effects_handler_impl::setupAbstractClientConnections(Toplevel* window)
     });
 }
 
-void effects_handler_impl::setupClientConnections(win::x11::window* c)
+void effects_handler_impl::setupClientConnections(Toplevel* c)
 {
     setupAbstractClientConnections(c);
-    connect(c, &win::x11::window::paddingChanged, this, &effects_handler_impl::slotPaddingChanged);
+    connect(c, &Toplevel::paddingChanged, this, &effects_handler_impl::slotPaddingChanged);
 }
 
 void effects_handler_impl::setupUnmanagedConnections(Toplevel* u)
