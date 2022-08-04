@@ -99,6 +99,7 @@ public:
 
     bool noBorder() const override;
     void setNoBorder(bool set) override;
+    void handle_update_no_border() override;
     void layoutDecorationRects(QRect& left, QRect& top, QRect& right, QRect& bottom) const override;
     void updateDecoration(bool check_workspace_pos, bool force = false) override;
 

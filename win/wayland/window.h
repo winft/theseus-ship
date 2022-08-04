@@ -580,6 +580,12 @@ public:
         updateWindowRules(rules::type::no_border);
     }
 
+    void handle_update_no_border() override
+    {
+        auto no_border = geometry_update.max_mode == maximize_mode::full;
+        setNoBorder(control->rules().checkNoBorder(no_border));
+    }
+
     void updateDecoration(bool check_workspace_pos, bool force = false) override
     {
         if ((!win::decoration(this) && noBorder()) || (win::decoration(this) && !noBorder())) {

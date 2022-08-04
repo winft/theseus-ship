@@ -418,6 +418,11 @@ void internal_window::setNoBorder(bool set)
     updateDecoration(true);
 }
 
+void internal_window::handle_update_no_border()
+{
+    setNoBorder(geometry_update.max_mode == maximize_mode::full);
+}
+
 void internal_window::updateDecoration(bool check_workspace_pos, bool force)
 {
     if (!force && (win::decoration(this) != nullptr) == !noBorder()) {

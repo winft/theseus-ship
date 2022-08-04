@@ -12,14 +12,9 @@
 namespace KWin::win
 {
 
-template<>
-void update_no_border(x11::window* win)
+template<typename Win>
+void check_set_no_border(Win* win)
 {
-    if (!kwinApp()->options->qobject->borderlessMaximizedWindows()) {
-        // If maximized windows can have borders there is no change implied.
-        return;
-    }
-
     auto app_no_border = win->app_no_border;
     auto motif_no_border = win->motif_hints.has_decoration() && win->motif_hints.no_border();
     auto max_fully = win->geometry_update.max_mode == maximize_mode::full;

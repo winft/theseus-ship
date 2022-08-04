@@ -161,6 +161,11 @@ void window::checkNoBorder()
     setNoBorder(app_no_border);
 }
 
+void window::handle_update_no_border()
+{
+    check_set_no_border(this);
+}
+
 bool window::wantsShadowToBeRendered() const
 {
     return control && !control->fullscreen() && maximizeMode() != win::maximize_mode::full;

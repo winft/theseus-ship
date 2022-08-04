@@ -431,6 +431,7 @@ public:
 
     virtual bool noBorder() const = 0;
     virtual void setNoBorder(bool set) = 0;
+    virtual void handle_update_no_border() = 0;
 
     /**
      * Returns whether the window is resizable or has a fixed size.
