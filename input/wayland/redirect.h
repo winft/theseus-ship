@@ -42,7 +42,6 @@ class touch_redirect;
 
 class KWIN_EXPORT redirect : public input::redirect
 {
-    Q_OBJECT
 public:
     redirect(input::platform& platform, win::space& space);
     ~redirect() override;
@@ -100,9 +99,6 @@ public:
     std::unique_ptr<pointer_redirect> pointer;
     std::unique_ptr<tablet_redirect> tablet;
     std::unique_ptr<touch_redirect> touch;
-
-Q_SIGNALS:
-    void has_tablet_mode_switch_changed(bool set);
 
 private:
     void setup_workspace();

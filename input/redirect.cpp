@@ -31,7 +31,8 @@ namespace KWin::input
 {
 
 redirect::redirect(input::platform& platform, win::space& space)
-    : platform{platform}
+    : qobject{std::make_unique<redirect_qobject>()}
+    , platform{platform}
     , space{space}
 {
     platform.redirect = this;

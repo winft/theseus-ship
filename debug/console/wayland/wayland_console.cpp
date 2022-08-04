@@ -45,8 +45,8 @@ wayland_console::wayland_console(wayland_space& space)
         }
         if (index == 5) {
             update_keyboard_tab();
-            QObject::connect(space.input.get(),
-                             &input::redirect::keyStateChanged,
+            QObject::connect(space.input->qobject.get(),
+                             &input::redirect_qobject::keyStateChanged,
                              this,
                              &wayland_console::update_keyboard_tab);
         }

@@ -48,7 +48,7 @@ public:
 
     void key(key_event const& event) override
     {
-        Q_EMIT redirect->keyStateChanged(event.keycode, event.state);
+        Q_EMIT redirect->qobject->keyStateChanged(event.keycode, event.state);
     }
 
 private:
@@ -77,7 +77,7 @@ public:
         if (mods == m_modifiers) {
             return;
         }
-        Q_EMIT redirect->keyboardModifiersChanged(mods, m_modifiers);
+        Q_EMIT redirect->qobject->keyboardModifiersChanged(mods, m_modifiers);
         m_modifiers = mods;
     }
 

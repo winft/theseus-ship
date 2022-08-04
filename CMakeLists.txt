@@ -400,6 +400,7 @@ set(kwin_SRCS
     input/platform.cpp
     input/pointer_redirect.cpp
     input/redirect.cpp
+    input/redirect_qobject.cpp
     input/tablet_redirect.cpp
     input/touch_redirect.cpp
     input/singleton_interface.cpp

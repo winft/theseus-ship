@@ -148,8 +148,8 @@ void TestPointerConstraints::testConfinedPointer()
     QVERIFY(confinedSpy.wait());
 
     // picking a position outside the window geometry should not move pointer
-    QSignalSpy pointerPositionChangedSpy(Test::app()->base.input->redirect,
-                                         &input::redirect::globalPointerChanged);
+    QSignalSpy pointerPositionChangedSpy(Test::app()->base.input->redirect->qobject.get(),
+                                         &input::redirect_qobject::globalPointerChanged);
     QVERIFY(pointerPositionChangedSpy.isValid());
     Test::app()->base.input->cursor->set_pos(QPoint(1280, 512));
     QVERIFY(pointerPositionChangedSpy.isEmpty());

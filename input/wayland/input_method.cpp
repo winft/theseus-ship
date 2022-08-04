@@ -148,7 +148,7 @@ void input_method::handle_keyboard_grabbed(input_method_keyboard_grab_v2* grab)
 
     QObject::connect(grab,
                      &Wrapland::Server::input_method_keyboard_grab_v2::resourceDestroyed,
-                     platform.redirect,
+                     platform.redirect->qobject.get(),
                      [this, filter] {
                          auto& wlredirect = static_cast<redirect&>(*platform.redirect);
                          wlredirect.uninstallInputEventFilter(filter);

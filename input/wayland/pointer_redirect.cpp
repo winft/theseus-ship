@@ -806,7 +806,7 @@ void pointer_redirect::update_position(const QPointF& pos)
         return;
     }
     m_pos = p;
-    Q_EMIT redirect->globalPointerChanged(m_pos);
+    Q_EMIT redirect->qobject->globalPointerChanged(m_pos);
 }
 
 void pointer_redirect::update_button(button_event const& event)
@@ -822,7 +822,7 @@ void pointer_redirect::update_button(button_event const& event)
         qt_buttons |= button_to_qt_mouse_button(it.key());
     }
 
-    Q_EMIT redirect->pointerButtonStateChanged(event.key, event.state);
+    Q_EMIT redirect->qobject->pointerButtonStateChanged(event.key, event.state);
 }
 
 void pointer_redirect::warp(QPointF const& pos)

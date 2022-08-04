@@ -9,10 +9,10 @@
 #pragma once
 
 #include "event.h"
+#include "redirect_qobject.h"
 
 #include "kwin_export.h"
 
-#include <QObject>
 #include <QPoint>
 #include <list>
 #include <memory>
@@ -46,9 +46,8 @@ class touch_redirect;
  * getting input first (e.g. screen edges) and filter the input event out if we currently have
  * a full input grab.
  */
-class KWIN_EXPORT redirect : public QObject
+class KWIN_EXPORT redirect
 {
-    Q_OBJECT
 public:
     enum TabletEventType {
         Axis,
@@ -56,7 +55,7 @@ public:
         Tip,
     };
 
-    ~redirect() override;
+    virtual ~redirect();
 
     /**
      * @return const QPointF& The current global pointer position
@@ -108,40 +107,9 @@ public:
     virtual void startInteractivePositionSelection(std::function<void(QPoint const&)> callback);
     virtual bool isSelectingWindow() const;
 
+    std::unique_ptr<redirect_qobject> qobject;
     input::platform& platform;
     win::space& space;
-
-Q_SIGNALS:
-    /**
-     * @brief Emitted when the global pointer position changed
-     *
-     * @param pos The new global pointer position.
-     */
-    void globalPointerChanged(const QPointF& pos);
-    /**
-     * @brief Emitted when the state of a pointer button changed.
-     *
-     * @param button The button which changed
-     * @param state The new button state
-     */
-    void pointerButtonStateChanged(uint32_t button, button_state state);
-    /**
-     * @brief Emitted when the modifiers changes.
-     *
-     * Only emitted for the mask which is provided by Qt::KeyboardModifiers, if other modifiers
-     * change signal is not emitted
-     *
-     * @param newMods The new modifiers state
-     * @param oldMods The previous modifiers state
-     */
-    void keyboardModifiersChanged(Qt::KeyboardModifiers newMods, Qt::KeyboardModifiers oldMods);
-    /**
-     * @brief Emitted when the state of a key changed.
-     *
-     * @param keyCode The keycode of the key which changed
-     * @param state The new key state
-     */
-    void keyStateChanged(quint32 keyCode, key_state state);
 
 protected:
     redirect(input::platform& platform, win::space& space);
@@ -151,5 +119,4 @@ private:
 };
 
 }
-
 }

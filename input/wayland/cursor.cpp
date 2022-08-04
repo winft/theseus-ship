@@ -26,11 +26,18 @@ cursor::cursor(wayland::platform* platform)
     , platform{platform}
 {
     auto redirect = platform->redirect;
-    QObject::connect(redirect, &redirect::globalPointerChanged, this, &cursor::slot_pos_changed);
-    QObject::connect(
-        redirect, &redirect::pointerButtonStateChanged, this, &cursor::slot_pointer_button_changed);
-    QObject::connect(
-        redirect, &redirect::keyboardModifiersChanged, this, &cursor::slot_modifiers_changed);
+    QObject::connect(redirect->qobject.get(),
+                     &redirect_qobject::globalPointerChanged,
+                     this,
+                     &cursor::slot_pos_changed);
+    QObject::connect(redirect->qobject.get(),
+                     &redirect_qobject::pointerButtonStateChanged,
+                     this,
+                     &cursor::slot_pointer_button_changed);
+    QObject::connect(redirect->qobject.get(),
+                     &redirect_qobject::keyboardModifiersChanged,
+                     this,
+                     &cursor::slot_modifiers_changed);
 }
 
 cursor::~cursor() = default;

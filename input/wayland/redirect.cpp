@@ -87,8 +87,10 @@ void redirect::setup_devices()
     for (auto pointer : platform.pointers) {
         handle_pointer_added(pointer);
     }
-    QObject::connect(&platform, &platform::pointer_added, this, &redirect::handle_pointer_added);
-    QObject::connect(&platform, &platform::pointer_removed, this, [this]() {
+    QObject::connect(&platform, &platform::pointer_added, qobject.get(), [this](auto pointer) {
+        handle_pointer_added(pointer);
+    });
+    QObject::connect(&platform, &platform::pointer_removed, qobject.get(), [this]() {
         if (platform.pointers.empty()) {
             auto seat = find_seat();
             unset_focus(pointer.get());
@@ -99,8 +101,10 @@ void redirect::setup_devices()
     for (auto keyboard : platform.keyboards) {
         handle_keyboard_added(keyboard);
     }
-    QObject::connect(&platform, &platform::keyboard_added, this, &redirect::handle_keyboard_added);
-    QObject::connect(&platform, &platform::keyboard_removed, this, [this]() {
+    QObject::connect(&platform, &platform::keyboard_added, qobject.get(), [this](auto keys) {
+        handle_keyboard_added(keys);
+    });
+    QObject::connect(&platform, &platform::keyboard_removed, qobject.get(), [this]() {
         if (platform.keyboards.empty()) {
             auto seat = find_seat();
             seat->setFocusedKeyboardSurface(nullptr);
@@ -111,8 +115,10 @@ void redirect::setup_devices()
     for (auto touch : platform.touchs) {
         handle_touch_added(touch);
     }
-    QObject::connect(&platform, &platform::touch_added, this, &redirect::handle_touch_added);
-    QObject::connect(&platform, &platform::touch_removed, this, [this]() {
+    QObject::connect(&platform, &platform::touch_added, qobject.get(), [this](auto touch) {
+        handle_touch_added(touch);
+    });
+    QObject::connect(&platform, &platform::touch_removed, qobject.get(), [this]() {
         if (platform.touchs.empty()) {
             auto seat = find_seat();
             unset_focus(touch.get());
@@ -123,7 +129,9 @@ void redirect::setup_devices()
     for (auto switch_dev : platform.switches) {
         handle_switch_added(switch_dev);
     }
-    QObject::connect(&platform, &platform::switch_added, this, &redirect::handle_switch_added);
+    QObject::connect(&platform, &platform::switch_added, qobject.get(), [this](auto dev) {
+        handle_switch_added(dev);
+    });
 }
 
 redirect::~redirect()
@@ -154,12 +162,14 @@ input::touch_redirect* redirect::get_touch() const
 void redirect::setup_workspace()
 {
     reconfigure();
-    QObject::connect(
-        config_watcher.data(), &KConfigWatcher::configChanged, this, [this](auto const& group) {
-            if (group.name() == QLatin1String("Keyboard")) {
-                reconfigure();
-            }
-        });
+    QObject::connect(config_watcher.data(),
+                     &KConfigWatcher::configChanged,
+                     qobject.get(),
+                     [this](auto const& group) {
+                         if (group.name() == QLatin1String("Keyboard")) {
+                             reconfigure();
+                         }
+                     });
 
     platform.cursor = std::make_unique<wayland::cursor>(&wl_plat(platform));
 
@@ -173,17 +183,17 @@ void redirect::setup_workspace()
     fake_input = waylandServer()->display->createFakeInput();
     QObject::connect(fake_input.get(),
                      &Wrapland::Server::FakeInput::deviceCreated,
-                     this,
-                     &redirect::handle_fake_input_device_added);
+                     qobject.get(),
+                     [this](auto device) { handle_fake_input_device_added(device); });
     QObject::connect(fake_input.get(),
                      &Wrapland::Server::FakeInput::device_destroyed,
-                     this,
+                     qobject.get(),
                      [this](auto device) { fake_devices.erase(device); });
 
     QObject::connect(wl_plat(platform).virtual_keyboard.get(),
                      &Wrapland::Server::virtual_keyboard_manager_v1::keyboard_created,
-                     this,
-                     &redirect::handle_virtual_keyboard_added);
+                     qobject.get(),
+                     [this](auto device) { handle_virtual_keyboard_added(device); });
 
     keyboard->init();
     pointer->init();
@@ -406,19 +416,20 @@ void redirect::handle_touch_added(input::touch* touch)
 
 void redirect::handle_switch_added(input::switch_device* switch_device)
 {
-    QObject::connect(switch_device, &switch_device::toggle, this, [this](auto const& event) {
-        if (event.type == switch_type::tablet_mode) {
-            Q_EMIT has_tablet_mode_switch_changed(event.state == switch_state::on);
-        }
-    });
+    QObject::connect(
+        switch_device, &switch_device::toggle, qobject.get(), [this](auto const& event) {
+            if (event.type == switch_type::tablet_mode) {
+                Q_EMIT qobject->has_tablet_mode_switch_changed(event.state == switch_state::on);
+            }
+        });
 }
 
 void redirect::handle_fake_input_device_added(Wrapland::Server::FakeInputDevice* device)
 {
     QObject::connect(device,
                      &Wrapland::Server::FakeInputDevice::authenticationRequested,
-                     this,
-                     [this, device](auto const& /*application*/, auto const& /*reason*/) {
+                     qobject.get(),
+                     [device](auto const& /*application*/, auto const& /*reason*/) {
                          // TODO: make secure
                          device->setAuthentication(true);
                      });
