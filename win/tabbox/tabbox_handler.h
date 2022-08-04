@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QPixmap>
 #include <QString>
 
+#include <functional>
 #include <memory>
 #include <vector>
 
@@ -40,6 +41,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 class QKeyEvent;
+class QQmlEngine;
 
 namespace KWin
 {
@@ -100,8 +102,7 @@ class tabbox_handler : public QObject
 {
     Q_OBJECT
 public:
-    // TODO(romangg): make space a reference once the tabbox mock for tests is gone.
-    tabbox_handler(win::space* space, QObject* parent);
+    tabbox_handler(std::function<QQmlEngine*(void)> qml_engine, QObject* parent);
     ~tabbox_handler() override;
 
     /**
@@ -357,7 +358,7 @@ private Q_SLOTS:
 private:
     friend class tabbox_handler_private;
     tabbox_handler_private* d;
-    win::space* space;
+    std::function<QQmlEngine*(void)> qml_engine;
 };
 
 /**

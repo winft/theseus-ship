@@ -74,7 +74,7 @@ namespace win
 {
 
 tabbox_handler_impl::tabbox_handler_impl(win::tabbox* tabbox)
-    : tabbox_handler(&tabbox->space, tabbox)
+    : tabbox_handler([tabbox] { return tabbox->space.scripting->qmlEngine(); }, tabbox)
     , m_tabbox(tabbox)
     , m_desktop_focus_chain(new tabbox_desktop_chain_manager(this))
 {
