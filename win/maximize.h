@@ -208,18 +208,12 @@ void update_maximized_impl(Win* win, maximize_mode mode)
 }
 
 template<typename Win>
-void respect_maximizing_aspect([[maybe_unused]] Win* win, [[maybe_unused]] maximize_mode& mode)
-{
-}
-
-template<typename Win>
 void update_maximized(Win* win, maximize_mode mode)
 {
     if (!win->isResizable() || is_toolbar(win)) {
         return;
     }
 
-    respect_maximizing_aspect(win, mode);
     mode = win->control->rules().checkMaximize(mode);
 
     geometry_updates_blocker blocker(win);

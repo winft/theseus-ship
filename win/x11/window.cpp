@@ -878,6 +878,10 @@ void window::do_set_fullscreen(bool full)
 
 void window::update_maximized(maximize_mode mode)
 {
+    if (!isResizable() || is_toolbar(this)) {
+        return;
+    }
+    respect_maximizing_aspect(this, mode);
     win::update_maximized(this, mode);
 }
 

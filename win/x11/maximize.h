@@ -5,11 +5,9 @@
 */
 #pragma once
 
-#include "window.h"
-
 #include "win/maximize.h"
 
-namespace KWin::win
+namespace KWin::win::x11
 {
 
 template<typename Win>
@@ -23,8 +21,8 @@ void check_set_no_border(Win* win)
     win->setNoBorder(win->control->rules().checkNoBorder(no_border));
 }
 
-template<>
-void respect_maximizing_aspect(x11::window* win, maximize_mode& mode)
+template<typename Win>
+void respect_maximizing_aspect(Win* win, maximize_mode& mode)
 {
     if (!win->geometry_hints.has_aspect()) {
         return;
