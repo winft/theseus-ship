@@ -38,7 +38,6 @@ class redirect;
 
 class KWIN_EXPORT platform : public input::platform
 {
-    Q_OBJECT
 public:
     platform(base::wayland::platform const& base);
     platform(platform const&) = delete;

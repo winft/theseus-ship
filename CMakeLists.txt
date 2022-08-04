@@ -398,6 +398,7 @@ set(kwin_SRCS
     input/keyboard.cpp
     input/keyboard_redirect.cpp
     input/platform.cpp
+    input/platform_qobject.cpp
     input/pointer_redirect.cpp
     input/redirect.cpp
     input/redirect_qobject.cpp

@@ -38,12 +38,13 @@ platform::platform(base::wayland::platform const& base)
     input_method = std::make_unique<wayland::input_method>(*this, waylandServer());
     virtual_keyboard = waylandServer()->display->create_virtual_keyboard_manager_v1();
 
-    QObject::connect(&base, &base::backend::wlroots::platform::output_added, this, [this] {
+    QObject::connect(&base, &base::backend::wlroots::platform::output_added, qobject.get(), [this] {
         base::wayland::check_outputs_on(this->base, dpms_filter);
     });
-    QObject::connect(&base, &base::backend::wlroots::platform::output_removed, this, [this] {
-        base::wayland::check_outputs_on(this->base, dpms_filter);
-    });
+    QObject::connect(&base,
+                     &base::backend::wlroots::platform::output_removed,
+                     qobject.get(),
+                     [this] { base::wayland::check_outputs_on(this->base, dpms_filter); });
 }
 
 platform::~platform() = default;
@@ -142,9 +143,9 @@ void platform::warp_pointer(QPointF const& pos, uint32_t time)
 
 void platform::setup_touchpad_shortcuts()
 {
-    auto toggle_action = new QAction(this);
-    auto on_action = new QAction(this);
-    auto off_action = new QAction(this);
+    auto toggle_action = new QAction(qobject.get());
+    auto on_action = new QAction(qobject.get());
+    auto off_action = new QAction(qobject.get());
 
     constexpr auto const component{"kcm_touchpad"};
 
@@ -167,9 +168,11 @@ void platform::setup_touchpad_shortcuts()
     registerShortcut(Qt::Key_TouchpadOn, on_action);
     registerShortcut(Qt::Key_TouchpadOff, off_action);
 
-    QObject::connect(toggle_action, &QAction::triggered, this, &platform::toggle_touchpads);
-    QObject::connect(on_action, &QAction::triggered, this, &platform::enable_touchpads);
-    QObject::connect(off_action, &QAction::triggered, this, &platform::disable_touchpads);
+    QObject::connect(
+        toggle_action, &QAction::triggered, qobject.get(), [this] { toggle_touchpads(); });
+    QObject::connect(on_action, &QAction::triggered, qobject.get(), [this] { enable_touchpads(); });
+    QObject::connect(
+        off_action, &QAction::triggered, qobject.get(), [this] { disable_touchpads(); });
 }
 
 void add_dbus(input::platform* platform)

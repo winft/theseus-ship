@@ -6,6 +6,7 @@
 #pragma once
 
 #include "keyboard.h"
+#include "platform_qobject.h"
 #include "xkb/manager.h"
 
 #include "kwin_export.h"
@@ -38,27 +39,13 @@ class redirect;
 class switch_device;
 class touch;
 
-class KWIN_EXPORT platform : public QObject
+class KWIN_EXPORT platform
 {
-    Q_OBJECT
 public:
-    std::vector<keyboard*> keyboards;
-    std::vector<pointer*> pointers;
-    std::vector<switch_device*> switches;
-    std::vector<touch*> touchs;
-
-    input::xkb::manager xkb;
-    input::redirect* redirect{nullptr};
-    std::unique_ptr<input::cursor> cursor;
-    std::unique_ptr<global_shortcuts_manager> shortcuts;
-
-    std::unique_ptr<dbus::device_manager> dbus;
-    KSharedConfigPtr config;
-
     platform();
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
-    ~platform() override;
+    virtual ~platform();
 
     void registerShortcut(QKeySequence const& shortcut, QAction* action);
     /**
@@ -131,16 +118,20 @@ public:
     virtual void start_interactive_position_selection(std::function<void(QPoint const&)> callback)
         = 0;
 
-Q_SIGNALS:
-    void keyboard_added(KWin::input::keyboard*);
-    void pointer_added(KWin::input::pointer*);
-    void switch_added(KWin::input::switch_device*);
-    void touch_added(KWin::input::touch*);
+    std::unique_ptr<platform_qobject> qobject;
 
-    void keyboard_removed(KWin::input::keyboard*);
-    void pointer_removed(KWin::input::pointer*);
-    void switch_removed(KWin::input::switch_device*);
-    void touch_removed(KWin::input::touch*);
+    std::vector<keyboard*> keyboards;
+    std::vector<pointer*> pointers;
+    std::vector<switch_device*> switches;
+    std::vector<touch*> touchs;
+
+    input::xkb::manager xkb;
+    input::redirect* redirect{nullptr};
+    std::unique_ptr<input::cursor> cursor;
+    std::unique_ptr<global_shortcuts_manager> shortcuts;
+
+    std::unique_ptr<dbus::device_manager> dbus;
+    KSharedConfigPtr config;
 };
 
 template<typename T, typename Slot>

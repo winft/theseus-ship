@@ -22,7 +22,7 @@ keyboard::~keyboard()
 {
     if (platform) {
         remove_all(platform->keyboards, this);
-        Q_EMIT platform->keyboard_removed(this);
+        Q_EMIT platform->qobject->keyboard_removed(this);
     }
 }
 

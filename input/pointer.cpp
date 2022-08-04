@@ -21,7 +21,7 @@ pointer::~pointer()
 {
     if (platform) {
         remove_all(platform->pointers, this);
-        Q_EMIT platform->pointer_removed(this);
+        Q_EMIT platform->qobject->pointer_removed(this);
     }
 }
 

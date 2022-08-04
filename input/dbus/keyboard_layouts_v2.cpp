@@ -40,12 +40,12 @@ keyboard_layouts_v2::keyboard_layouts_v2(input::platform* platform, xkb::layout_
     qDBusRegisterMetaType<keyboard_v2>();
     qDBusRegisterMetaType<QVector<keyboard_v2>>();
 
-    QObject::connect(platform,
-                     &input::platform::keyboard_added,
+    QObject::connect(platform->qobject.get(),
+                     &input::platform_qobject::keyboard_added,
                      this,
                      &keyboard_layouts_v2::handle_keyboard_added);
-    QObject::connect(platform,
-                     &input::platform::keyboard_removed,
+    QObject::connect(platform->qobject.get(),
+                     &input::platform_qobject::keyboard_removed,
                      this,
                      &keyboard_layouts_v2::handle_keyboard_removed);
 

@@ -56,7 +56,7 @@ touch::~touch()
 {
     if (platform) {
         remove_all(platform->touchs, this);
-        Q_EMIT platform->touch_removed(this);
+        Q_EMIT platform->qobject->touch_removed(this);
     }
 }
 

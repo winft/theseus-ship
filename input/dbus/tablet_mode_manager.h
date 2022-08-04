@@ -31,16 +31,22 @@ public:
         : manager(manager)
     {
         auto plat = &manager.platform;
-        QObject::connect(
-            plat, &input::platform::pointer_added, this, &tablet_mode_touchpad_removed_spy::check);
-        QObject::connect(plat,
-                         &input::platform::pointer_removed,
+        QObject::connect(plat->qobject.get(),
+                         &input::platform_qobject::pointer_added,
                          this,
                          &tablet_mode_touchpad_removed_spy::check);
-        QObject::connect(
-            plat, &input::platform::touch_added, this, &tablet_mode_touchpad_removed_spy::check);
-        QObject::connect(
-            plat, &input::platform::touch_removed, this, &tablet_mode_touchpad_removed_spy::check);
+        QObject::connect(plat->qobject.get(),
+                         &input::platform_qobject::pointer_removed,
+                         this,
+                         &tablet_mode_touchpad_removed_spy::check);
+        QObject::connect(plat->qobject.get(),
+                         &input::platform_qobject::touch_added,
+                         this,
+                         &tablet_mode_touchpad_removed_spy::check);
+        QObject::connect(plat->qobject.get(),
+                         &input::platform_qobject::touch_removed,
+                         this,
+                         &tablet_mode_touchpad_removed_spy::check);
         check();
     }
 

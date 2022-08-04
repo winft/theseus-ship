@@ -168,23 +168,35 @@ void remove_device(Dev dev, Manager manager)
 device_manager::device_manager(platform* plat)
     : plat{plat}
 {
-    QObject::connect(
-        plat, &platform::keyboard_added, this, [this](auto dev) { add_device(dev, this); });
-    QObject::connect(
-        plat, &platform::pointer_added, this, [this](auto dev) { add_device(dev, this); });
-    QObject::connect(
-        plat, &platform::switch_added, this, [this](auto dev) { add_device(dev, this); });
-    QObject::connect(
-        plat, &platform::touch_added, this, [this](auto dev) { add_device(dev, this); });
+    QObject::connect(plat->qobject.get(),
+                     &platform_qobject::keyboard_added,
+                     this,
+                     [this](auto dev) { add_device(dev, this); });
+    QObject::connect(plat->qobject.get(), &platform_qobject::pointer_added, this, [this](auto dev) {
+        add_device(dev, this);
+    });
+    QObject::connect(plat->qobject.get(), &platform_qobject::switch_added, this, [this](auto dev) {
+        add_device(dev, this);
+    });
+    QObject::connect(plat->qobject.get(), &platform_qobject::touch_added, this, [this](auto dev) {
+        add_device(dev, this);
+    });
 
-    QObject::connect(
-        plat, &platform::keyboard_removed, this, [this](auto dev) { remove_device(dev, this); });
-    QObject::connect(
-        plat, &platform::pointer_removed, this, [this](auto dev) { remove_device(dev, this); });
-    QObject::connect(
-        plat, &platform::switch_removed, this, [this](auto dev) { remove_device(dev, this); });
-    QObject::connect(
-        plat, &platform::touch_removed, this, [this](auto dev) { remove_device(dev, this); });
+    QObject::connect(plat->qobject.get(),
+                     &platform_qobject::keyboard_removed,
+                     this,
+                     [this](auto dev) { remove_device(dev, this); });
+    QObject::connect(plat->qobject.get(),
+                     &platform_qobject::pointer_removed,
+                     this,
+                     [this](auto dev) { remove_device(dev, this); });
+    QObject::connect(plat->qobject.get(),
+                     &platform_qobject::switch_removed,
+                     this,
+                     [this](auto dev) { remove_device(dev, this); });
+    QObject::connect(plat->qobject.get(), &platform_qobject::touch_removed, this, [this](auto dev) {
+        remove_device(dev, this);
+    });
 
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/org/kde/KWin/InputDevice"),
                                                  QStringLiteral("org.kde.KWin.InputDeviceManager"),

@@ -60,7 +60,10 @@ void layout_manager::init()
         add_keyboard(keyboard);
     }
 
-    QObject::connect(xkb.platform, &platform::keyboard_added, this, &layout_manager::add_keyboard);
+    QObject::connect(xkb.platform->qobject.get(),
+                     &platform_qobject::keyboard_added,
+                     this,
+                     &layout_manager::add_keyboard);
 
     init_dbus_interface_v2();
 }

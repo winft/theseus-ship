@@ -28,19 +28,19 @@ void handle_device(struct wl_listener* listener, [[maybe_unused]] void* data)
     switch (device->type) {
     case WLR_INPUT_DEVICE_KEYBOARD:
         qCDebug(KWIN_INPUT) << "Keyboard device added:" << device->name;
-        Q_EMIT input->keyboard_added(new keyboard(device, input));
+        Q_EMIT input->qobject->keyboard_added(new keyboard(device, input));
         break;
     case WLR_INPUT_DEVICE_POINTER:
         qCDebug(KWIN_INPUT) << "Pointer device added:" << device->name;
-        Q_EMIT input->pointer_added(new pointer(device, input));
+        Q_EMIT input->qobject->pointer_added(new pointer(device, input));
         break;
     case WLR_INPUT_DEVICE_SWITCH:
         qCDebug(KWIN_INPUT) << "Switch device added:" << device->name;
-        Q_EMIT input->switch_added(new switch_device(device, input));
+        Q_EMIT input->qobject->switch_added(new switch_device(device, input));
         break;
     case WLR_INPUT_DEVICE_TOUCH:
         qCDebug(KWIN_INPUT) << "Touch device added:" << device->name;
-        Q_EMIT input->touch_added(new touch(device, input));
+        Q_EMIT input->qobject->touch_added(new touch(device, input));
         break;
     default:
         // TODO(romangg): Handle other device types.

@@ -104,7 +104,7 @@ private:
     void notify()
     {
         // Queued to not modify the list of event filters while filtering.
-        QTimer::singleShot(0, &platform, [this] { platform.turn_outputs_on(); });
+        QTimer::singleShot(0, platform.qobject.get(), [this] { platform.turn_outputs_on(); });
     }
 
     QElapsedTimer m_doubleTapTimer;

@@ -18,7 +18,8 @@ namespace KWin::input
 {
 
 platform::platform()
-    : xkb{input::xkb::manager(this)}
+    : qobject{std::make_unique<platform_qobject>()}
+    , xkb{input::xkb::manager(this)}
 {
     qRegisterMetaType<button_state>();
     qRegisterMetaType<key_state>();

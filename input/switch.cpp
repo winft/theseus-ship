@@ -21,7 +21,7 @@ switch_device::~switch_device()
 {
     if (platform) {
         remove_all(platform->switches, this);
-        Q_EMIT platform->switch_removed(this);
+        Q_EMIT platform->qobject->switch_removed(this);
     }
 }
 
