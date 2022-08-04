@@ -210,6 +210,8 @@ public:
                 remove_all(windows, win);
             }
         }
+
+        clear_space(*this);
     }
 
     void resize(QSize const& size) override

@@ -86,6 +86,11 @@ public:
         x11::init_space(*this);
     }
 
+    ~space() override
+    {
+        win::clear_space(*this);
+    }
+
     void resize(QSize const& size) override
     {
         handle_desktop_resize(size);

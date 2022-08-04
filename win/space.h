@@ -94,10 +94,7 @@ public:
     {
     }
 
-    virtual ~space()
-    {
-        clear_space(*this);
-    }
+    virtual ~space() = default;
 
     virtual void resize(QSize const& size) = 0;
     virtual void handle_desktop_changed(uint desktop) = 0;
