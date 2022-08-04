@@ -12,6 +12,7 @@
 #include "input/event.h"
 #include "input/event_filter.h"
 #include "input/redirect.h"
+#include "input/window_find.h"
 #include "main.h"
 #include "win/deco.h"
 #include "win/geo.h"
@@ -57,7 +58,7 @@ public:
             return false;
         case button_state::pressed:
             auto pos = this->redirect.globalPointer();
-            auto focus_window = this->redirect.findToplevel(pos.toPoint());
+            auto focus_window = find_window(this->redirect, pos.toPoint());
             if (!focus_window || !win::belong_to_same_client(focus_window, m_popups.back())) {
                 // a press on a window (or no window) not belonging to the popup window
                 cancelPopups();

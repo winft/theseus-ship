@@ -9,6 +9,7 @@
 #pragma once
 
 #include "input/redirect.h"
+#include "input/window_find.h"
 #include "main.h"
 #include "toplevel.h"
 #include "win/geo.h"
@@ -209,7 +210,7 @@ void device_redirect_update(Dev* dev)
         if (internal_window) {
             toplevel = dev->redirect->space.findInternal(internal_window);
         } else {
-            toplevel = dev->redirect->findToplevel(pos);
+            toplevel = find_window(*dev->redirect, pos);
         }
     }
     // Always set the toplevel at the position of the input device.

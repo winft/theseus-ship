@@ -9,6 +9,7 @@
 #include "input/event_filter.h"
 #include "input/redirect.h"
 #include "input/touch_redirect.h"
+#include "input/window_find.h"
 #include "main.h"
 #include "toplevel.h"
 #include "win/activation.h"
@@ -67,7 +68,7 @@ public:
         seat->pointers().set_position(pos);
 
         // TODO: use InputDeviceHandler::at() here and check isClient()?
-        auto window = this->redirect.findManagedToplevel(pos.toPoint());
+        auto window = find_controlled_window(this->redirect, pos.toPoint());
         if (auto xwl = xwayland()) {
             const auto ret = xwl->drag_move_filter(window, pos.toPoint());
             if (ret == xwl::drag_event_reply::ignore) {
@@ -136,7 +137,7 @@ public:
 
         seat->touches().touch_move(wraplandId, event.pos);
 
-        if (auto t = this->redirect.findToplevel(event.pos.toPoint())) {
+        if (auto t = find_window(this->redirect, event.pos.toPoint())) {
             // TODO: consider decorations
             if (t->surface != seat->drags().get_target().surface) {
                 if (t->control) {

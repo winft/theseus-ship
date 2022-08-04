@@ -75,9 +75,6 @@ public:
      */
     void uninstallInputEventSpy(event_spy* spy);
 
-    Toplevel* findToplevel(const QPoint& pos);
-    Toplevel* findManagedToplevel(const QPoint& pos);
-
     /**
      * Sends an event through all input event spies.
      * The @p function is invoked on each event_spy.
