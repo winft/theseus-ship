@@ -109,7 +109,7 @@ void compositor::start(win::space& space)
         qCWarning(KWIN_CORE) << "Error: " << ex.what();
         qCWarning(KWIN_CORE) << "Compositing not possible. Continue without it.";
 
-        m_state = State::Off;
+        m_state = state::off;
         xcb_composite_unredirect_subwindows(
             kwinApp()->x11Connection(), kwinApp()->x11RootWindow(), XCB_COMPOSITE_REDIRECT_MANUAL);
         destroyCompositorSelection();
@@ -408,17 +408,17 @@ void compositor::create_opengl_safepoint(OpenGLSafePoint safepoint)
 void compositor::releaseCompositorSelection()
 {
     switch (m_state) {
-    case State::On:
+    case state::on:
         // We are compositing at the moment. Don't release.
         break;
-    case State::Off:
+    case state::off:
         if (m_selectionOwner) {
             qCDebug(KWIN_CORE) << "Releasing compositor selection";
             m_selectionOwner->disown();
         }
         break;
-    case State::Starting:
-    case State::Stopping:
+    case state::starting:
+    case state::stopping:
         // Still starting or shutting down the compositor. Starting might fail
         // or after stopping a restart might follow. So test again later on.
         m_releaseSelectionTimer.start();

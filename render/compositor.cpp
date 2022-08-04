@@ -76,11 +76,11 @@ void compositor::start_scene()
         return;
     }
 
-    if (m_state != State::Off) {
+    if (m_state != state::off) {
         return;
     }
 
-    m_state = State::Starting;
+    m_state = state::starting;
     kwinApp()->options->reloadCompositingSettings(true);
     setupX11Support();
     Q_EMIT qobject->aboutToToggleCompositing();
@@ -104,7 +104,7 @@ void compositor::start_scene()
             }
         });
 
-    m_state = State::On;
+    m_state = state::on;
     Q_EMIT qobject->compositingToggled(true);
 
     // Render at least once.
@@ -160,10 +160,10 @@ void compositor::schedule_frame_callback(Toplevel* /*window*/)
 
 void compositor::stop(bool on_shutdown)
 {
-    if (m_state == State::Off || m_state == State::Stopping) {
+    if (m_state == state::off || m_state == state::stopping) {
         return;
     }
-    m_state = State::Stopping;
+    m_state = state::stopping;
     Q_EMIT qobject->aboutToToggleCompositing();
 
     // Some effects might need access to effect windows when they are about to
@@ -198,7 +198,7 @@ void compositor::stop(bool on_shutdown)
     compositeTimer.stop();
     repaints_region = QRegion();
 
-    m_state = State::Off;
+    m_state = state::off;
     Q_EMIT qobject->compositingToggled(false);
 }
 
@@ -221,7 +221,7 @@ void compositor::removeSupportProperty(xcb_atom_t atom)
 
 void compositor::deleteUnusedSupportProperties()
 {
-    if (m_state == State::Starting || m_state == State::Stopping) {
+    if (m_state == state::starting || m_state == state::stopping) {
         // Currently still maybe restarting the compositor.
         m_unusedSupportPropertyTimer.start();
         return;
@@ -367,7 +367,7 @@ void compositor::setCompositeTimer()
 
 bool compositor::isActive()
 {
-    return m_state == State::On;
+    return m_state == state::on;
 }
 
 int compositor::refreshRate() const

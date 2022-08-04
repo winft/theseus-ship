@@ -8,6 +8,7 @@
 #pragma once
 
 #include "compositor_qobject.h"
+#include "types.h"
 
 #include "kwinglobals.h"
 
@@ -53,13 +54,6 @@ struct compositor_x11_integration {
 class KWIN_EXPORT compositor
 {
 public:
-    enum class State {
-        On = 0,
-        Off,
-        Starting,
-        Stopping,
-    };
-
     explicit compositor(render::platform& platform);
     virtual ~compositor();
 
@@ -139,7 +133,7 @@ protected:
 
     void destroyCompositorSelection();
 
-    State m_state{State::Off};
+    state m_state{state::off};
     x11::compositor_selection_owner* m_selectionOwner{nullptr};
     QRegion repaints_region;
     QBasicTimer compositeTimer;
