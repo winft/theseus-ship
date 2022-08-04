@@ -13,6 +13,7 @@
 #include "base/wayland/platform.h"
 #include "base/wayland/server.h"
 #include "render/backend/wlroots/output.h"
+#include "render/compositor_start.h"
 #include "render/cursor.h"
 #include "render/dbus/compositing.h"
 #include "render/gl/scene.h"
@@ -67,7 +68,7 @@ compositor::compositor(render::platform& platform)
     QObject::connect(kwinApp(),
                      &Application::x11ConnectionAboutToBeDestroyed,
                      qobject.get(),
-                     [this] { destroyCompositorSelection(); });
+                     [this] { compositor_destroy_selection(*this); });
 }
 
 compositor::~compositor() = default;
@@ -126,7 +127,7 @@ void compositor::start(win::space& space)
     if (!this->space) {
         // On first start setup connections.
         QObject::connect(kwinApp(), &Application::x11ConnectionChanged, qobject.get(), [this] {
-            setupX11Support();
+            compositor_setup_x11_support(*this);
         });
         QObject::connect(space.stacking_order.get(),
                          &win::stacking_order::changed,
@@ -154,7 +155,7 @@ void compositor::start(win::space& space)
     software_cursor->set_enabled(true);
 
     try {
-        render::compositor::start_scene();
+        compositor_start_scene(*this);
     } catch (std::runtime_error const& ex) {
         qCCritical(KWIN_WL) << "Error: " << ex.what();
         qCCritical(KWIN_WL) << "Wayland requires compositing. Going to quit.";

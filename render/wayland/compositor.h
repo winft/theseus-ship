@@ -51,7 +51,6 @@ public:
 
     std::unique_ptr<render::wayland::presentation> presentation;
 
-protected:
     std::unique_ptr<render::scene> create_scene() override;
     void performCompositing() override;
 

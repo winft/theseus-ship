@@ -86,7 +86,6 @@ public:
      */
     x11::overlay_window* overlay_window{nullptr};
 
-protected:
     std::unique_ptr<render::scene> create_scene() override;
     void performCompositing() override;
 

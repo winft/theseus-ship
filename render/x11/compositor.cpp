@@ -11,6 +11,7 @@
 #include "base/logging.h"
 #include "debug/perf/ftrace.h"
 #include "main.h"
+#include "render/compositor_start.h"
 #include "render/dbus/compositing.h"
 #include "render/effects.h"
 #include "render/gl/scene.h"
@@ -74,7 +75,7 @@ void compositor::start(win::space& space)
     if (!this->space) {
         // On first start setup connections.
         QObject::connect(kwinApp(), &Application::x11ConnectionChanged, qobject.get(), [this] {
-            setupX11Support();
+            compositor_setup_x11_support(*this);
         });
         QObject::connect(space.stacking_order.get(),
                          &win::stacking_order::changed,
@@ -104,7 +105,7 @@ void compositor::start(win::space& space)
     }
 
     try {
-        render::compositor::start_scene();
+        compositor_start_scene(*this);
     } catch (std::runtime_error const& ex) {
         qCWarning(KWIN_CORE) << "Error: " << ex.what();
         qCWarning(KWIN_CORE) << "Compositing not possible. Continue without it.";
@@ -112,7 +113,7 @@ void compositor::start(win::space& space)
         m_state = state::off;
         xcb_composite_unredirect_subwindows(
             kwinApp()->x11Connection(), kwinApp()->x11RootWindow(), XCB_COMPOSITE_REDIRECT_MANUAL);
-        destroyCompositorSelection();
+        compositor_destroy_selection(*this);
     }
 }
 
@@ -158,7 +159,7 @@ void compositor::suspend(suspend_reason reason)
         }
     }
     m_releaseSelectionTimer.start();
-    stop(false);
+    compositor_stop(*this, false);
 }
 
 void compositor::resume(suspend_reason reason)
@@ -191,7 +192,7 @@ void compositor::configChanged()
 {
     if (flags(m_suspended)) {
         // TODO(romangg): start the release selection timer?
-        stop(false);
+        compositor_stop(*this, false);
         return;
     }
     render::compositor::configChanged();

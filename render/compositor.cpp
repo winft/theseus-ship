@@ -6,12 +6,12 @@
 */
 #include "compositor.h"
 
+#include "compositor_start.h"
 #include "cursor.h"
 #include "dbus/compositing.h"
 #include "effects.h"
 #include "platform.h"
 #include "scene.h"
-#include "x11/compositor_selection_owner.h"
 
 #include "base/logging.h"
 #include "base/output.h"
@@ -19,10 +19,8 @@
 #include "base/wayland/server.h"
 #include "debug/perf/ftrace.h"
 #include "win/net.h"
-#include "win/remnant.h"
 #include "win/scene.h"
 #include "win/space.h"
-#include "win/space_window_release.h"
 #include "win/stacking_order.h"
 
 #include <QTimerEvent>
@@ -60,91 +58,9 @@ compositor::compositor(render::platform& platform)
 compositor::~compositor()
 {
     Q_EMIT qobject->aboutToDestroy();
-    stop(true);
+    compositor_stop(*this, true);
     deleteUnusedSupportProperties();
-    destroyCompositorSelection();
-}
-
-void compositor::start_scene()
-{
-    assert(space);
-    assert(!scene);
-
-    if (kwinApp()->isTerminating()) {
-        // Don't start while KWin is terminating. An event to restart might be lingering
-        // in the event queue due to graphics reset.
-        return;
-    }
-
-    if (m_state != state::off) {
-        return;
-    }
-
-    m_state = state::starting;
-    kwinApp()->options->reloadCompositingSettings(true);
-    setupX11Support();
-    Q_EMIT qobject->aboutToToggleCompositing();
-
-    scene = create_scene();
-    space->stacking_order->render_restack_required = true;
-
-    for (auto& client : space->windows) {
-        client->setupCompositing();
-    }
-
-    // Sets also the 'effects' pointer.
-    effects = platform.createEffectsHandler(this, scene.get());
-    QObject::connect(effects.get(), &EffectsHandler::screenGeometryChanged, qobject.get(), [this] {
-        addRepaintFull();
-    });
-    QObject::connect(
-        space->stacking_order.get(), &win::stacking_order::unlocked, qobject.get(), [this]() {
-            if (effects) {
-                effects->checkInputWindowStacking();
-            }
-        });
-
-    m_state = state::on;
-    Q_EMIT qobject->compositingToggled(true);
-
-    // Render at least once.
-    addRepaintFull();
-    performCompositing();
-}
-
-void compositor::claimCompositorSelection()
-{
-    using CompositorSelectionOwner = x11::compositor_selection_owner;
-
-    if (!m_selectionOwner) {
-        char selection_name[100];
-        sprintf(selection_name, "_NET_WM_CM_S%d", kwinApp()->x11ScreenNumber());
-        m_selectionOwner = new CompositorSelectionOwner(selection_name);
-        QObject::connect(m_selectionOwner,
-                         &CompositorSelectionOwner::lostOwnership,
-                         qobject.get(),
-                         [this] { stop(false); });
-    }
-
-    if (!m_selectionOwner) {
-        // No X11 yet.
-        return;
-    }
-
-    m_selectionOwner->own();
-}
-
-void compositor::setupX11Support()
-{
-    auto con = kwinApp()->x11Connection();
-    if (!con) {
-        delete m_selectionOwner;
-        m_selectionOwner = nullptr;
-        return;
-    }
-    claimCompositorSelection();
-    xcb_composite_redirect_subwindows(
-        con, kwinApp()->x11RootWindow(), XCB_COMPOSITE_REDIRECT_MANUAL);
+    compositor_destroy_selection(*this);
 }
 
 void compositor::schedule_repaint(Toplevel* /*window*/)
@@ -156,56 +72,6 @@ void compositor::schedule_repaint(Toplevel* /*window*/)
 void compositor::schedule_frame_callback(Toplevel* /*window*/)
 {
     // Only needed on Wayland.
-}
-
-void compositor::stop(bool on_shutdown)
-{
-    if (m_state == state::off || m_state == state::stopping) {
-        return;
-    }
-    m_state = state::stopping;
-    Q_EMIT qobject->aboutToToggleCompositing();
-
-    // Some effects might need access to effect windows when they are about to
-    // be destroyed, for example to unreference deleted windows, so we have to
-    // make sure that effect windows outlive effects.
-    effects.reset();
-
-    if (space) {
-        for (auto& c : space->windows) {
-            if (c->remnant) {
-                continue;
-            }
-            c->finishCompositing();
-        }
-
-        if (auto con = kwinApp()->x11Connection()) {
-            xcb_composite_unredirect_subwindows(
-                con, kwinApp()->x11RootWindow(), XCB_COMPOSITE_REDIRECT_MANUAL);
-        }
-        while (!win::get_remnants(*space).empty()) {
-            auto win = win::get_remnants(*space).front();
-            win->remnant->refcount = 0;
-            win::delete_window_from_space(win->space, win);
-        }
-    }
-
-    assert(scene);
-    scene.reset();
-    platform.render_stop(on_shutdown);
-
-    m_bufferSwapPending = false;
-    compositeTimer.stop();
-    repaints_region = QRegion();
-
-    m_state = state::off;
-    Q_EMIT qobject->compositingToggled(false);
-}
-
-void compositor::destroyCompositorSelection()
-{
-    delete m_selectionOwner;
-    m_selectionOwner = nullptr;
 }
 
 void compositor::keepSupportProperty(xcb_atom_t atom)
@@ -247,7 +113,7 @@ void compositor::reinitialize()
     kwinApp()->config()->reparseConfiguration();
 
     // Restart compositing
-    stop(false);
+    compositor_stop(*this, false);
 
     assert(space);
     start(*space);

@@ -118,10 +118,6 @@ public:
     render::platform& platform;
     win::space* space{nullptr};
 
-protected:
-    void stop(bool on_shutdown);
-    void start_scene();
-    void setupX11Support();
     virtual std::unique_ptr<render::scene> create_scene() = 0;
 
     virtual void performCompositing() = 0;
@@ -131,8 +127,6 @@ protected:
 
     virtual void configChanged();
 
-    void destroyCompositorSelection();
-
     state m_state{state::off};
     x11::compositor_selection_owner* m_selectionOwner{nullptr};
     QRegion repaints_region;
@@ -141,9 +135,7 @@ protected:
     bool m_bufferSwapPending{false};
     std::unique_ptr<dbus::compositing> dbus;
 
-private:
     bool handle_timer_event(QTimerEvent* te);
-    void claimCompositorSelection();
     int refreshRate() const;
 
     void deleteUnusedSupportProperties();
