@@ -60,22 +60,26 @@ compositor::compositor(render::platform& platform)
 
     m_releaseSelectionTimer.setSingleShot(true);
     m_releaseSelectionTimer.setInterval(compositor_lost_message_delay);
-    connect(
-        &m_releaseSelectionTimer, &QTimer::timeout, this, &compositor::releaseCompositorSelection);
-    QObject::connect(
-        this, &compositor::aboutToToggleCompositing, this, [this] { overlay_window = nullptr; });
+    QObject::connect(&m_releaseSelectionTimer, &QTimer::timeout, qobject.get(), [this] {
+        releaseCompositorSelection();
+    });
+    QObject::connect(qobject.get(),
+                     &compositor_qobject::aboutToToggleCompositing,
+                     qobject.get(),
+                     [this] { overlay_window = nullptr; });
 }
 
 void compositor::start(win::space& space)
 {
     if (!this->space) {
         // On first start setup connections.
-        QObject::connect(
-            kwinApp(), &Application::x11ConnectionChanged, this, &compositor::setupX11Support);
+        QObject::connect(kwinApp(), &Application::x11ConnectionChanged, qobject.get(), [this] {
+            setupX11Support();
+        });
         QObject::connect(space.stacking_order.get(),
                          &win::stacking_order::changed,
-                         this,
-                         &compositor::addRepaintFull);
+                         qobject.get(),
+                         [this] { addRepaintFull(); });
         this->space = &space;
     }
 
@@ -303,7 +307,8 @@ create_scene_impl(x11::compositor& compositor, Factory& factory, std::string con
     auto setup_hooks = [&](auto& scene) {
         scene->windowing_integration.handle_viewport_limits_alarm = [&] {
             qCDebug(KWIN_CORE) << "Suspending compositing because viewport limits are not met";
-            QTimer::singleShot(0, &compositor, [&] { compositor.suspend(suspend_reason::all); });
+            QTimer::singleShot(
+                0, compositor.qobject.get(), [&] { compositor.suspend(suspend_reason::all); });
         };
     };
 
@@ -428,7 +433,9 @@ void compositor::updateClientCompositeBlocking(Toplevel* window)
             // Do NOT attempt to call suspend(true) from within the eventchain!
             if (!(m_suspended & suspend_reason::rule))
                 QMetaObject::invokeMethod(
-                    this, [this]() { suspend(suspend_reason::rule); }, Qt::QueuedConnection);
+                    qobject.get(),
+                    [this]() { suspend(suspend_reason::rule); },
+                    Qt::QueuedConnection);
         }
     } else if (flags(m_suspended & suspend_reason::rule)) {
         // If !c we just check if we can resume in case a blocking client was lost.
@@ -443,7 +450,7 @@ void compositor::updateClientCompositeBlocking(Toplevel* window)
         if (shouldResume) {
             // Do NOT attempt to call suspend(false) from within the eventchain!
             QMetaObject::invokeMethod(
-                this, [this]() { resume(suspend_reason::rule); }, Qt::QueuedConnection);
+                qobject.get(), [this]() { resume(suspend_reason::rule); }, Qt::QueuedConnection);
         }
     }
 }

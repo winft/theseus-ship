@@ -231,7 +231,9 @@ bool overlay_window::event(xcb_generic_event_t* event)
             if (!was_visible && m_visible) {
                 // hack for #154825
                 compositor.addRepaintFull();
-                QTimer::singleShot(2000, &compositor, &render::compositor::addRepaintFull);
+                QTimer::singleShot(2000, compositor.qobject.get(), [comp = &compositor] {
+                    comp->addRepaintFull();
+                });
             }
             compositor.schedule_repaint();
         }

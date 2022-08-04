@@ -152,7 +152,7 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
     win->layer_surface = layer_surface;
     block_geometry_updates(win, true);
 
-    QObject::connect(win, &Win::needsRepaint, &win->space.render, [win] {
+    QObject::connect(win, &Win::needsRepaint, win->space.render.qobject.get(), [win] {
         win->space.render.schedule_repaint(win);
     });
     QObject::connect(

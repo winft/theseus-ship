@@ -64,10 +64,10 @@ compositor::compositor(render::platform& platform)
 {
     dbus->integration.get_types = [] { return QStringList{"egl"}; };
 
-    connect(kwinApp(),
-            &Application::x11ConnectionAboutToBeDestroyed,
-            this,
-            &compositor::destroyCompositorSelection);
+    QObject::connect(kwinApp(),
+                     &Application::x11ConnectionAboutToBeDestroyed,
+                     qobject.get(),
+                     [this] { destroyCompositorSelection(); });
 }
 
 compositor::~compositor() = default;
@@ -125,23 +125,25 @@ void compositor::start(win::space& space)
 {
     if (!this->space) {
         // On first start setup connections.
-        QObject::connect(
-            kwinApp(), &Application::x11ConnectionChanged, this, &compositor::setupX11Support);
+        QObject::connect(kwinApp(), &Application::x11ConnectionChanged, qobject.get(), [this] {
+            setupX11Support();
+        });
         QObject::connect(space.stacking_order.get(),
                          &win::stacking_order::changed,
-                         this,
-                         &compositor::addRepaintFull);
+                         qobject.get(),
+                         [this] { addRepaintFull(); });
         QObject::connect(
-            &platform.base, &base::platform::output_removed, this, [this](auto output) {
+            &platform.base, &base::platform::output_removed, qobject.get(), [this](auto output) {
                 for (auto& win : this->space->windows) {
                     remove_all(win->repaint_outputs, output);
                 }
             });
-        QObject::connect(space.qobject.get(), &win::space::qobject_t::destroyed, this, [this] {
-            for (auto& output : get_platform(this->platform.base).outputs) {
-                get_output(output)->render->delay_timer.stop();
-            }
-        });
+        QObject::connect(
+            space.qobject.get(), &win::space::qobject_t::destroyed, qobject.get(), [this] {
+                for (auto& output : get_platform(this->platform.base).outputs) {
+                    get_output(output)->render->delay_timer.stop();
+                }
+            });
         this->space = &space;
     }
 

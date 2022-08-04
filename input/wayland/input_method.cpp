@@ -191,7 +191,7 @@ void input_method::handle_popup_surface_created(input_method_popup_surface_v2* p
                      &Wrapland::Server::Surface::committed,
                      popup,
                      &wayland_window::handle_commit);
-    QObject::connect(popup, &wayland_window::needsRepaint, &space->render, [popup] {
+    QObject::connect(popup, &wayland_window::needsRepaint, space->render.qobject.get(), [popup] {
         popup->space.render.schedule_repaint(popup);
     });
     QObject::connect(

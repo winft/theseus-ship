@@ -21,8 +21,8 @@ namespace KWin::render::dbus
 compositing::compositing(render::compositor& compositor)
     : compositor{compositor}
 {
-    connect(&compositor,
-            &render::compositor::compositingToggled,
+    connect(compositor.qobject.get(),
+            &render::compositor_qobject::compositingToggled,
             this,
             &compositing::compositingToggled);
     new CompositingAdaptor(this);

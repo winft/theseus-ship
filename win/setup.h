@@ -42,7 +42,7 @@ template<typename Space, typename Win>
 void setup_space_window_connections(Space* space, Win* win)
 {
     // TODO(romangg): Move into a different function about compositor(render) <-> window setup.
-    QObject::connect(win, &Win::needsRepaint, &space->render, [win] {
+    QObject::connect(win, &Win::needsRepaint, space->render.qobject.get(), [win] {
         win->space.render.schedule_repaint(win);
     });
     QObject::connect(win,

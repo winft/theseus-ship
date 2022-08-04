@@ -45,8 +45,8 @@ void init_space(Space& space)
 
     QObject::connect(space.qobject.get(),
                      &Space::qobject_t::currentDesktopChanged,
-                     &space.render,
-                     &render::compositor::addRepaintFull);
+                     space.render.qobject.get(),
+                     [comp = &space.render] { comp->addRepaintFull(); });
 
     space.deco->init();
     QObject::connect(space.qobject.get(),

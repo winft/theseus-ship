@@ -32,7 +32,6 @@ struct presentation_data;
 
 class KWIN_EXPORT compositor : public render::compositor
 {
-    Q_OBJECT
 public:
     compositor(render::platform& platform);
     ~compositor();

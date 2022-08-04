@@ -36,29 +36,30 @@ namespace KWin::render
 constexpr auto compositor_lost_message_delay = 2000;
 
 compositor::compositor(render::platform& platform)
-    : platform{platform}
+    : qobject{std::make_unique<compositor_qobject>(
+        [this](auto te) { return handle_timer_event(te); })}
+    , platform{platform}
     , dbus{std::make_unique<dbus::compositing>(*this)}
 {
-    connect(kwinApp()->options->qobject.get(),
-            &base::options_qobject::configChanged,
-            this,
-            &compositor::configChanged);
-    connect(kwinApp()->options->qobject.get(),
-            &base::options_qobject::animationSpeedChanged,
-            this,
-            &compositor::configChanged);
+    QObject::connect(kwinApp()->options->qobject.get(),
+                     &base::options_qobject::configChanged,
+                     qobject.get(),
+                     [this] { configChanged(); });
+    QObject::connect(kwinApp()->options->qobject.get(),
+                     &base::options_qobject::animationSpeedChanged,
+                     qobject.get(),
+                     [this] { configChanged(); });
 
     m_unusedSupportPropertyTimer.setInterval(compositor_lost_message_delay);
     m_unusedSupportPropertyTimer.setSingleShot(true);
-    connect(&m_unusedSupportPropertyTimer,
-            &QTimer::timeout,
-            this,
-            &compositor::deleteUnusedSupportProperties);
+    QObject::connect(&m_unusedSupportPropertyTimer, &QTimer::timeout, qobject.get(), [this] {
+        deleteUnusedSupportProperties();
+    });
 }
 
 compositor::~compositor()
 {
-    Q_EMIT aboutToDestroy();
+    Q_EMIT qobject->aboutToDestroy();
     stop(true);
     deleteUnusedSupportProperties();
     destroyCompositorSelection();
@@ -82,7 +83,7 @@ void compositor::start_scene()
     m_state = State::Starting;
     kwinApp()->options->reloadCompositingSettings(true);
     setupX11Support();
-    Q_EMIT aboutToToggleCompositing();
+    Q_EMIT qobject->aboutToToggleCompositing();
 
     scene = create_scene();
     space->stacking_order->render_restack_required = true;
@@ -93,16 +94,18 @@ void compositor::start_scene()
 
     // Sets also the 'effects' pointer.
     effects = platform.createEffectsHandler(this, scene.get());
-    connect(
-        effects.get(), &EffectsHandler::screenGeometryChanged, this, &compositor::addRepaintFull);
-    connect(space->stacking_order.get(), &win::stacking_order::unlocked, this, [this]() {
-        if (effects) {
-            effects->checkInputWindowStacking();
-        }
+    QObject::connect(effects.get(), &EffectsHandler::screenGeometryChanged, qobject.get(), [this] {
+        addRepaintFull();
     });
+    QObject::connect(
+        space->stacking_order.get(), &win::stacking_order::unlocked, qobject.get(), [this]() {
+            if (effects) {
+                effects->checkInputWindowStacking();
+            }
+        });
 
     m_state = State::On;
-    Q_EMIT compositingToggled(true);
+    Q_EMIT qobject->compositingToggled(true);
 
     // Render at least once.
     addRepaintFull();
@@ -117,9 +120,10 @@ void compositor::claimCompositorSelection()
         char selection_name[100];
         sprintf(selection_name, "_NET_WM_CM_S%d", kwinApp()->x11ScreenNumber());
         m_selectionOwner = new CompositorSelectionOwner(selection_name);
-        connect(m_selectionOwner, &CompositorSelectionOwner::lostOwnership, this, [this] {
-            stop(false);
-        });
+        QObject::connect(m_selectionOwner,
+                         &CompositorSelectionOwner::lostOwnership,
+                         qobject.get(),
+                         [this] { stop(false); });
     }
 
     if (!m_selectionOwner) {
@@ -160,7 +164,7 @@ void compositor::stop(bool on_shutdown)
         return;
     }
     m_state = State::Stopping;
-    Q_EMIT aboutToToggleCompositing();
+    Q_EMIT qobject->aboutToToggleCompositing();
 
     // Some effects might need access to effect windows when they are about to
     // be destroyed, for example to unreference deleted windows, so we have to
@@ -195,7 +199,7 @@ void compositor::stop(bool on_shutdown)
     repaints_region = QRegion();
 
     m_state = State::Off;
-    Q_EMIT compositingToggled(false);
+    Q_EMIT qobject->compositingToggled(false);
 }
 
 void compositor::destroyCompositorSelection()
@@ -264,12 +268,13 @@ void compositor::addRepaintFull()
     addRepaint(QRegion(0, 0, space_size.width(), space_size.height()));
 }
 
-void compositor::timerEvent(QTimerEvent* te)
+bool compositor::handle_timer_event(QTimerEvent* te)
 {
-    if (te->timerId() == compositeTimer.timerId()) {
-        performCompositing();
-    } else
-        QObject::timerEvent(te);
+    if (te->timerId() != compositeTimer.timerId()) {
+        return false;
+    }
+    performCompositing();
+    return true;
 }
 
 void compositor::aboutToSwapBuffers()
@@ -357,7 +362,7 @@ void compositor::setCompositeTimer()
     Perf::Ftrace::mark(QStringLiteral("timer ") + QString::number(waitTime));
 
     // Force 4fps minimum:
-    compositeTimer.start(qMin(waitTime, 250u), this);
+    compositeTimer.start(qMin(waitTime, 250u), qobject.get());
 }
 
 bool compositor::isActive()

@@ -43,8 +43,10 @@ namespace KWin::render
 outline::outline(render::compositor& compositor)
     : compositor{compositor}
 {
-    connect(
-        &compositor, &render::compositor::compositingToggled, this, &outline::compositingChanged);
+    connect(compositor.qobject.get(),
+            &render::compositor_qobject::compositingToggled,
+            this,
+            &outline::compositingChanged);
 }
 
 outline::~outline()

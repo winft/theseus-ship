@@ -54,8 +54,8 @@ tabbox_switcher_item::tabbox_switcher_item(QObject* parent)
             &base::platform::topology_changed,
             this,
             &tabbox_switcher_item::screen_geometry_changed);
-    connect(render::singleton_interface::platform->compositor.get(),
-            &render::compositor::compositingToggled,
+    connect(render::singleton_interface::platform->compositor->qobject.get(),
+            &render::compositor_qobject::compositingToggled,
             this,
             &tabbox_switcher_item::compositing_changed);
 }

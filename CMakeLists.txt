@@ -418,6 +418,7 @@ set(kwin_SRCS
     main.cpp
     render/buffer.cpp
     render/compositor.cpp
+    render/compositor_qobject.cpp
     render/cursor.cpp
     render/dbus/compositing.cpp
     render/effect_loader.cpp
