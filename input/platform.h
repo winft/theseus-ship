@@ -27,8 +27,10 @@ class Toplevel;
 
 namespace input
 {
+
 namespace dbus
 {
+template<typename Platform>
 class device_manager;
 }
 
@@ -130,7 +132,7 @@ public:
     std::unique_ptr<input::cursor> cursor;
     std::unique_ptr<global_shortcuts_manager> shortcuts;
 
-    std::unique_ptr<dbus::device_manager> dbus;
+    std::unique_ptr<dbus::device_manager<platform>> dbus;
     KSharedConfigPtr config;
 };
 

@@ -10,6 +10,7 @@
 #include "surface_tree_model.h"
 
 #include "debug/console/model_helpers.h"
+#include "input/dbus/device_manager.h"
 #include "input/keyboard.h"
 #include "input/keyboard_redirect.h"
 #include "input/redirect.h"
@@ -34,7 +35,9 @@ wayland_console::wayland_console(wayland_space& space)
     m_ui->windowsView->setModel(new wayland_console_model(space, this));
     m_ui->surfacesView->setModel(new surface_tree_model(space, this));
 
-    m_ui->inputDevicesView->setModel(new input_device_model(*space.input->platform.dbus, this));
+    auto device_model = new input_device_model(this);
+    setup_input_device_model(*device_model, *space.input->platform.dbus);
+    m_ui->inputDevicesView->setModel(device_model);
     m_ui->inputDevicesView->setItemDelegate(new wayland_console_delegate(this));
 
     QObject::connect(m_ui->tabWidget, &QTabWidget::currentChanged, this, [this, &space](int index) {

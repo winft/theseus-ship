@@ -177,7 +177,7 @@ void platform::setup_touchpad_shortcuts()
 
 void add_dbus(input::platform* platform)
 {
-    platform->dbus = std::make_unique<dbus::device_manager>(platform);
+    platform->dbus = std::make_unique<dbus::device_manager<input::platform>>(*platform);
 }
 
 }
