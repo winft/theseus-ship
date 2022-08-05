@@ -302,6 +302,14 @@ public:
     bool handleEnterNotifiy(xcb_window_t window, QPoint const& point, QDateTime const& timestamp);
     bool remainActiveOnFullscreen() const;
 
+    void reconfigure();
+
+    /// Updates virtual desktops layout, adjusts reserved borders in case of vd switching on edges.
+    void updateLayout();
+
+    /// Recreates all edges e.g. after the screen size changes.
+    void recreateEdges();
+
     std::unique_ptr<input::gesture_recognizer> gesture_recognizer;
     KSharedConfig::Ptr config;
     win::space& space;
@@ -331,18 +339,6 @@ public:
 
     /// Minimum time between triggers
     int reactivate_threshold{0};
-
-public Q_SLOTS:
-    void reconfigure();
-    /**
-     * Updates the layout of virtual desktops and adjust the reserved borders in case of
-     * virtual desktop switching on edges.
-     */
-    void updateLayout();
-    /**
-     * Recreates all edges e.g. after the screen size changes.
-     */
-    void recreateEdges();
 
 Q_SIGNALS:
     /**
