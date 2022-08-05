@@ -459,25 +459,28 @@ void tabbox::reconfigure()
     m_desktop_list_config.set_layout_name(
         config.readEntry("DesktopListLayout", default_desktop_layout));
 
-    QList<ElectricBorder>* borders = &m_border_activate;
-    QString border_config = QStringLiteral("BorderActivate");
-    for (int i = 0; i < 2; ++i) {
-        for (auto const& border : qAsConst(*borders)) {
+    auto recreate_borders = [this, &config](auto& borders, auto const& border_config) {
+        for (auto const& border : borders) {
             space.edges->unreserve(border, this);
         }
-        borders->clear();
+
+        borders.clear();
         QStringList list = config.readEntry(border_config, QStringList());
+
         for (auto const& s : qAsConst(list)) {
             bool ok;
-            const int i = s.toInt(&ok);
-            if (!ok)
+            auto i = s.toInt(&ok);
+            if (!ok) {
                 continue;
-            borders->append(ElectricBorder(i));
-            space.edges->reserve(ElectricBorder(i), this, [this](auto eb) { return toggle(eb); });
+            }
+            auto border = static_cast<ElectricBorder>(i);
+            borders.push_back(border);
+            space.edges->reserve(border, this, [this](auto eb) { return toggle(eb); });
         }
-        borders = &m_border_alternative_activate;
-        border_config = QStringLiteral("BorderAlternativeActivate");
-    }
+    };
+
+    recreate_borders(border_activate, QStringLiteral("BorderActivate"));
+    recreate_borders(border_activate_alternative, QStringLiteral("BorderAlternativeActivate"));
 
     auto touch_config = [this, config](const QString& key,
                                        QHash<ElectricBorder, QAction*>& actions,
@@ -855,7 +858,7 @@ void tabbox::slot_walk_back_through_desktop_list()
 
 bool tabbox::toggle(ElectricBorder eb)
 {
-    if (m_border_alternative_activate.contains(eb)) {
+    if (contains(border_activate_alternative, eb)) {
         return toggle_mode(TabBoxWindowsAlternativeMode);
     } else {
         return toggle_mode(TabBoxWindowsMode);

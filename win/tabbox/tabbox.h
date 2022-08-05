@@ -350,7 +350,10 @@ private:
 
     // indicates whether the config is completely loaded
     bool m_ready{false};
-    QList<ElectricBorder> m_border_activate, m_border_alternative_activate;
+
+    std::vector<ElectricBorder> border_activate;
+    std::vector<ElectricBorder> border_activate_alternative;
+
     QHash<ElectricBorder, QAction*> m_touch_activate;
     QHash<ElectricBorder, QAction*> m_touch_alternative_activate;
     QScopedPointer<base::x11::event_filter> m_x11_event_filter;
