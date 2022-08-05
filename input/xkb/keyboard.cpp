@@ -23,8 +23,11 @@
 namespace KWin::input::xkb
 {
 
+keyboard_qobject::~keyboard_qobject() = default;
+
 keyboard::keyboard(xkb::manager& manager)
-    : manager{manager}
+    : qobject{std::make_unique<keyboard_qobject>()}
+    , manager{manager}
 {
     if (manager.compose_table) {
         compose_state = xkb_compose_state_new(manager.compose_table, XKB_COMPOSE_STATE_NO_FLAGS);
@@ -239,7 +242,7 @@ void keyboard::update_modifiers()
     }
     if (this->leds != leds) {
         this->leds = leds;
-        Q_EMIT leds_changed(leds);
+        Q_EMIT qobject->leds_changed(leds);
     }
 
     modifier_state.depressed
@@ -253,7 +256,7 @@ void keyboard::update_modifiers()
     layout = xkb_state_serialize_layout(state, XKB_STATE_LAYOUT_EFFECTIVE);
 
     if (old_layout != layout) {
-        Q_EMIT layout_changed();
+        Q_EMIT qobject->layout_changed();
     }
 }
 

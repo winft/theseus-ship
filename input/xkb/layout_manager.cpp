@@ -181,8 +181,9 @@ void layout_manager::add_keyboard(input::keyboard* keyboard)
     }
 
     auto xkb = keyboard->xkb.get();
-    QObject::connect(
-        xkb, &xkb::keyboard::layout_changed, this, [this, xkb] { handle_layout_change(xkb); });
+    QObject::connect(xkb->qobject.get(), &xkb::keyboard_qobject::layout_changed, this, [this, xkb] {
+        handle_layout_change(xkb);
+    });
 }
 
 void layout_manager::handle_layout_change(xkb::keyboard* xkb)

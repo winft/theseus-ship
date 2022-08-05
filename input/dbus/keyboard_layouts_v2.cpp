@@ -130,13 +130,15 @@ void keyboard_layouts_v2::handle_keyboard_added(input::keyboard* keyboard)
     auto xkb = keyboard->xkb.get();
     auto const index = keyboard_index++;
 
-    QObject::connect(xkb, &xkb::keyboard::layout_changed, this, [this, index] {
-        auto const& keyboard = keyboards.at(index);
-        Q_EMIT layoutChanged(keyboard.data.id, keyboard.internal->xkb->layout);
-    });
-    QObject::connect(xkb, &xkb::keyboard::layouts_changed, this, [this, index] {
-        Q_EMIT layoutListChanged(keyboards.at(index).data.id);
-    });
+    QObject::connect(
+        xkb->qobject.get(), &xkb::keyboard_qobject::layout_changed, this, [this, index] {
+            auto const& keyboard = keyboards.at(index);
+            Q_EMIT layoutChanged(keyboard.data.id, keyboard.internal->xkb->layout);
+        });
+    QObject::connect(xkb->qobject.get(),
+                     &xkb::keyboard_qobject::layouts_changed,
+                     this,
+                     [this, index] { Q_EMIT layoutListChanged(keyboards.at(index).data.id); });
 
     auto internal = keyboard_v2_internal({index,
                                           QString::fromStdString(ctrl->metadata.name),

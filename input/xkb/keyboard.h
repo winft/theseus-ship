@@ -32,12 +32,23 @@ struct modifiers {
     xkb_mod_index_t locked{0};
 };
 
-class KWIN_EXPORT keyboard : public QObject
+class KWIN_EXPORT keyboard_qobject : public QObject
 {
     Q_OBJECT
 public:
+    ~keyboard_qobject() override;
+
+Q_SIGNALS:
+    void layout_changed();
+    void layouts_changed();
+    void leds_changed(keyboard_leds leds);
+};
+
+class KWIN_EXPORT keyboard
+{
+public:
     keyboard(xkb::manager& manager);
-    ~keyboard() override;
+    ~keyboard();
 
     void install_keymap(int fd, uint32_t size);
 
@@ -77,6 +88,7 @@ public:
      */
     void forward_modifiers();
 
+    std::unique_ptr<keyboard_qobject> qobject;
     xkb_state* state{nullptr};
     std::shared_ptr<xkb::keymap> keymap;
     uint32_t layout{0};
@@ -91,11 +103,6 @@ public:
     bool startup_num_lock_done{false};
 
     std::function<void(xkb::keymap*, modifiers const&, uint32_t)> forward_modifiers_impl;
-
-Q_SIGNALS:
-    void layout_changed();
-    void layouts_changed();
-    void leds_changed(keyboard_leds leds);
 
 private:
     void update_keymap(std::shared_ptr<xkb::keymap> keymap);

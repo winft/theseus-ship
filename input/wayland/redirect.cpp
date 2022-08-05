@@ -394,12 +394,12 @@ void redirect::handle_keyboard_added(input::keyboard* keyboard)
     wl_plat(platform).update_keyboard_leds(keyboard->xkb->leds);
     waylandServer()->update_key_state(keyboard->xkb->leds);
 
-    QObject::connect(keyboard->xkb.get(),
-                     &xkb::keyboard::leds_changed,
+    QObject::connect(keyboard->xkb->qobject.get(),
+                     &xkb::keyboard_qobject::leds_changed,
                      waylandServer(),
                      &base::wayland::server::update_key_state);
-    QObject::connect(keyboard->xkb.get(),
-                     &xkb::keyboard::leds_changed,
+    QObject::connect(keyboard->xkb->qobject.get(),
+                     &xkb::keyboard_qobject::leds_changed,
                      platform.qobject.get(),
                      [this](auto leds) { wl_plat(platform).update_keyboard_leds(leds); });
 }
