@@ -655,7 +655,7 @@ bool effect::borderActivated(ElectricBorder edge)
         return false;
     }
 
-    for (auto const& callback : qAsConst(it->second)) {
+    for (auto const& callback : qAsConst(it->second.value)) {
         QJSValue(callback).call();
     }
     return true;
@@ -693,15 +693,14 @@ bool effect::registerScreenEdge(int edge, const QJSValue& callback)
 
     auto it = border_callbacks.find(edge);
     if (it != border_callbacks.end()) {
-        it->second.append(callback);
+        it->second.value.append(callback);
         return true;
     }
 
     // Not yet registered.
-    space.edges->reserve(static_cast<KWin::ElectricBorder>(edge), this, [this](auto eb) {
-        return borderActivated(eb);
-    });
-    border_callbacks.insert({edge, {callback}});
+    auto id = space.edges->reserve(static_cast<KWin::ElectricBorder>(edge),
+                                   [this](auto eb) { return borderActivated(eb); });
+    border_callbacks.insert({edge, {id, {callback}}});
     return true;
 }
 
@@ -712,7 +711,7 @@ bool effect::unregisterScreenEdge(int edge)
         // not previously registered
         return false;
     }
-    space.edges->unreserve(static_cast<KWin::ElectricBorder>(edge), this);
+    space.edges->unreserve(static_cast<KWin::ElectricBorder>(edge), it->second.id);
     border_callbacks.erase(it);
     return true;
 }

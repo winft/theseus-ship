@@ -351,8 +351,8 @@ private:
     // indicates whether the config is completely loaded
     bool m_ready{false};
 
-    std::vector<ElectricBorder> border_activate;
-    std::vector<ElectricBorder> border_activate_alternative;
+    std::unordered_map<ElectricBorder, uint32_t> border_activate;
+    std::unordered_map<ElectricBorder, uint32_t> border_activate_alternative;
 
     QHash<ElectricBorder, QAction*> m_touch_activate;
     QHash<ElectricBorder, QAction*> m_touch_alternative_activate;

@@ -32,6 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QHash>
 #include <QMouseEvent>
 #include <memory>
+#include <set>
 
 namespace Plasma
 {
@@ -420,6 +421,7 @@ private:
     std::unique_ptr<x11::property_notify_filter<effects_handler_impl, win::space>>
         x11_property_notify;
     QList<EffectScreen*> m_effectScreens;
+    std::unordered_map<Effect*, std::unordered_map<ElectricBorder, uint32_t>> reserved_borders;
 };
 
 class effect_screen_impl : public EffectScreen

@@ -460,8 +460,8 @@ void tabbox::reconfigure()
         config.readEntry("DesktopListLayout", default_desktop_layout));
 
     auto recreate_borders = [this, &config](auto& borders, auto const& border_config) {
-        for (auto const& border : borders) {
-            space.edges->unreserve(border, this);
+        for (auto const& [border, id] : borders) {
+            space.edges->unreserve(border, id);
         }
 
         borders.clear();
@@ -474,8 +474,8 @@ void tabbox::reconfigure()
                 continue;
             }
             auto border = static_cast<ElectricBorder>(i);
-            borders.push_back(border);
-            space.edges->reserve(border, this, [this](auto eb) { return toggle(eb); });
+            auto id = space.edges->reserve(border, [this](auto eb) { return toggle(eb); });
+            borders.insert({border, id});
         }
     };
 
@@ -858,7 +858,7 @@ void tabbox::slot_walk_back_through_desktop_list()
 
 bool tabbox::toggle(ElectricBorder eb)
 {
-    if (contains(border_activate_alternative, eb)) {
+    if (border_activate_alternative.find(eb) != border_activate_alternative.end()) {
         return toggle_mode(TabBoxWindowsAlternativeMode);
     } else {
         return toggle_mode(TabBoxWindowsMode);

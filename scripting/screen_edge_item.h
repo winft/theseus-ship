@@ -106,6 +106,7 @@ private:
     bool m_enabled;
     Edge m_edge;
     Mode m_mode = Mode::Pointer;
+    uint32_t reserved_id{};
     QAction* m_action;
 };
 

@@ -41,6 +41,7 @@ screen_edge_item::screen_edge_item(QObject* parent)
 
 screen_edge_item::~screen_edge_item()
 {
+    disableEdge();
 }
 
 void screen_edge_item::setEnabled(bool enabled)
@@ -72,10 +73,8 @@ void screen_edge_item::enableEdge()
     }
     switch (m_mode) {
     case Mode::Pointer:
-        win::singleton_interface::space->edges->reserve(
-            static_cast<ElectricBorder>(m_edge), this, [this](auto eb) {
-                return borderActivated(eb);
-            });
+        reserved_id = win::singleton_interface::space->edges->reserve(
+            static_cast<ElectricBorder>(m_edge), [this](auto eb) { return borderActivated(eb); });
         break;
     case Mode::Touch:
         win::singleton_interface::space->edges->reserveTouch(static_cast<ElectricBorder>(m_edge),
@@ -91,14 +90,20 @@ void screen_edge_item::disableEdge()
     if (!m_enabled || m_edge == NoEdge) {
         return;
     }
+
+    auto space = win::singleton_interface::space;
+    if (!space) {
+        // Might be after space went down due to Qt's implicit ownership.
+        return;
+    }
+
     switch (m_mode) {
     case Mode::Pointer:
-        win::singleton_interface::space->edges->unreserve(static_cast<ElectricBorder>(m_edge),
-                                                          this);
+        space->edges->unreserve(static_cast<ElectricBorder>(m_edge), reserved_id);
+        reserved_id = 0;
         break;
     case Mode::Touch:
-        win::singleton_interface::space->edges->unreserveTouch(static_cast<ElectricBorder>(m_edge),
-                                                               m_action);
+        space->edges->unreserveTouch(static_cast<ElectricBorder>(m_edge), m_action);
         break;
     default:
         Q_UNREACHABLE();

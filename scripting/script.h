@@ -232,6 +232,7 @@ private:
     QDBusMessage m_invocationContext;
     bool m_starting{false};
     QHash<int, QJSValueList> m_screenEdgeCallbacks;
+    std::unordered_map<ElectricBorder, uint32_t> reserved_borders;
     QHash<int, QAction*> m_touchScreenEdgeCallbacks;
     QJSValueList m_userActionsMenuCallbacks;
     scripting::platform& platform;

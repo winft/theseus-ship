@@ -41,6 +41,8 @@ static const int TOUCH_TARGET = 3;
 // How far the user needs to swipe before triggering an action.
 static const int MINIMUM_DELTA = 44;
 
+static uint32_t callback_id{0};
+
 screen_edge::screen_edge(screen_edger* edger)
     : QObject(edger)
     , edger(edger)
@@ -99,10 +101,15 @@ void screen_edge::reserve()
     }
 }
 
-void screen_edge::reserve_callback(QObject* object, std::function<bool(ElectricBorder)> slot)
+uint32_t screen_edge::reserve_callback(std::function<bool(ElectricBorder)> slot)
 {
-    connect(object, &QObject::destroyed, this, &screen_edge::unreserve_callback);
-    callbacks.insert(object, std::move(slot));
+    replace_callback(++callback_id, std::move(slot));
+    return callback_id;
+}
+
+void screen_edge::replace_callback(uint32_t id, std::function<bool(ElectricBorder)> slot)
+{
+    callbacks.insert(id, std::move(slot));
     reserve();
 }
 
@@ -135,10 +142,9 @@ void screen_edge::unreserve()
         deactivate();
     }
 }
-void screen_edge::unreserve_callback(QObject* object)
+void screen_edge::unreserve_callback(uint32_t id)
 {
-    if (callbacks.remove(object) > 0) {
-        disconnect(object, &QObject::destroyed, this, &screen_edge::unreserve_callback);
+    if (callbacks.remove(id) > 0) {
         unreserve();
     }
 }
@@ -1085,7 +1091,7 @@ void screen_edger::recreateEdges()
             }
             auto const& callbacks = oldEdge->callbacks;
             for (auto callback = callbacks.cbegin(); callback != callbacks.cend(); ++callback) {
-                edge->reserve_callback(callback.key(), callback.value());
+                edge->replace_callback(callback.key(), callback.value());
             }
             const auto touchCallBacks = oldEdge->touch_actions;
             for (auto a : touchCallBacks) {
@@ -1267,22 +1273,22 @@ void screen_edger::reserveDesktopSwitching(bool isToReserve, Qt::Orientations o)
     }
 }
 
-void screen_edger::reserve(ElectricBorder border,
-                           QObject* object,
-                           std::function<bool(ElectricBorder)> slot)
+uint32_t screen_edger::reserve(ElectricBorder border, std::function<bool(ElectricBorder)> slot)
 {
+    auto id = ++callback_id;
     for (auto it = edges.begin(); it != edges.end(); ++it) {
         if ((*it)->border == border) {
-            (*it)->reserve_callback(object, slot);
+            (*it)->replace_callback(id, slot);
         }
     }
+    return id;
 }
 
-void screen_edger::unreserve(ElectricBorder border, QObject* object)
+void screen_edger::unreserve(ElectricBorder border, uint32_t id)
 {
     for (auto it = edges.begin(); it != edges.end(); ++it) {
         if ((*it)->border == border) {
-            (*it)->unreserve_callback(object);
+            (*it)->unreserve_callback(id);
         }
     }
 }

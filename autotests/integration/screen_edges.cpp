@@ -120,6 +120,18 @@ void reset_edger(KSharedConfig::Ptr config)
     reset_edger();
 }
 
+void unreserve(uint32_t id, ElectricBorder border)
+{
+    Test::app()->base.space->edges->unreserve(border, id);
+}
+
+void unreserve(std::deque<uint32_t>& border_ids, ElectricBorder border)
+{
+    QVERIFY(!border_ids.empty());
+    unreserve(border_ids.front(), border);
+    border_ids.pop_front();
+}
+
 void TestScreenEdges::testInit()
 {
     reset_edger();
@@ -394,14 +406,15 @@ void TestScreenEdges::testCallback()
     QSignalSpy spy(&callback, &TestObject::gotCallback);
     QVERIFY(spy.isValid());
 
-    screenEdges->reserve(ElectricLeft, &callback, cb);
-    screenEdges->reserve(ElectricTopLeft, &callback, cb);
-    screenEdges->reserve(ElectricTop, &callback, cb);
-    screenEdges->reserve(ElectricTopRight, &callback, cb);
-    screenEdges->reserve(ElectricRight, &callback, cb);
-    screenEdges->reserve(ElectricBottomRight, &callback, cb);
-    screenEdges->reserve(ElectricBottom, &callback, cb);
-    screenEdges->reserve(ElectricBottomLeft, &callback, cb);
+    std::deque<uint32_t> border_ids;
+    border_ids.push_back(screenEdges->reserve(ElectricLeft, cb));
+    border_ids.push_back(screenEdges->reserve(ElectricTopLeft, cb));
+    border_ids.push_back(screenEdges->reserve(ElectricTop, cb));
+    border_ids.push_back(screenEdges->reserve(ElectricTopRight, cb));
+    border_ids.push_back(screenEdges->reserve(ElectricRight, cb));
+    border_ids.push_back(screenEdges->reserve(ElectricBottomRight, cb));
+    border_ids.push_back(screenEdges->reserve(ElectricBottom, cb));
+    border_ids.push_back(screenEdges->reserve(ElectricBottomLeft, cb));
 
     auto edges
         = screenEdges->findChildren<win::screen_edge*>(QString(), Qt::FindDirectChildrenOnly);
@@ -516,14 +529,14 @@ void TestScreenEdges::testCallback()
     QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(0, 100));
 
     // now let's unreserve again
-    screenEdges->unreserve(ElectricTopLeft, &callback);
-    screenEdges->unreserve(ElectricTop, &callback);
-    screenEdges->unreserve(ElectricTopRight, &callback);
-    screenEdges->unreserve(ElectricRight, &callback);
-    screenEdges->unreserve(ElectricBottomRight, &callback);
-    screenEdges->unreserve(ElectricBottom, &callback);
-    screenEdges->unreserve(ElectricBottomLeft, &callback);
-    screenEdges->unreserve(ElectricLeft, &callback);
+    unreserve(border_ids, ElectricTopLeft);
+    unreserve(border_ids, ElectricTop);
+    unreserve(border_ids, ElectricTopRight);
+    unreserve(border_ids, ElectricRight);
+    unreserve(border_ids, ElectricBottomRight);
+    unreserve(border_ids, ElectricBottom);
+    unreserve(border_ids, ElectricBottomLeft);
+    unreserve(border_ids, ElectricLeft);
 
     // Some do, some not on Wayland. Needs investigation.
 #if 0
@@ -545,7 +558,8 @@ void TestScreenEdges::testCallbackWithCheck()
     QSignalSpy spy(&callback, &TestObject::gotCallback);
     QVERIFY(spy.isValid());
 
-    screenEdges->reserve(ElectricLeft, &callback, cb);
+    std::deque<uint32_t> border_ids;
+    border_ids.push_back(screenEdges->reserve(ElectricLeft, cb));
 
     // check activating a different edge doesn't do anything
     screenEdges->check(QPoint(50, 0), QDateTime::currentDateTimeUtc(), true);
@@ -562,7 +576,7 @@ void TestScreenEdges::testCallbackWithCheck()
     QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(0, 50));
 
     // use a different edge, this time with pushback
-    screenEdges->reserve(KWin::ElectricRight, &callback, cb);
+    border_ids.push_back(screenEdges->reserve(KWin::ElectricRight, cb));
     Test::app()->base.input->cursor->set_pos(99, 50);
     screenEdges->check(QPoint(99, 50), QDateTime::currentDateTimeUtc());
 
@@ -586,6 +600,9 @@ void TestScreenEdges::testCallbackWithCheck()
     QCOMPARE(spy.last().first().value<ElectricBorder>(), ElectricRight);
     QEXPECT_FAIL("", "Follow up", Continue);
     QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(98, 50));
+
+    unreserve(border_ids, ElectricLeft);
+    unreserve(border_ids, ElectricRight);
 }
 
 void TestScreenEdges::test_overlapping_edges_data()
@@ -658,7 +675,7 @@ void TestScreenEdges::testPushBack()
     QVERIFY(spy.isValid());
 
     QFETCH(ElectricBorder, border);
-    screenEdges->reserve(border, &callback, cb);
+    auto id = screenEdges->reserve(border, cb);
 
     QFETCH(QPoint, trigger);
     Test::app()->base.input->cursor->set_pos(trigger);
@@ -675,6 +692,8 @@ void TestScreenEdges::testPushBack()
     QVERIFY(spy.isEmpty());
     QTEST(Test::app()->base.input->cursor->pos(), "expected");
 #endif
+
+    unreserve(id, border);
 }
 
 void TestScreenEdges::testFullScreenBlocking()
@@ -705,8 +724,9 @@ void TestScreenEdges::testFullScreenBlocking()
     QSignalSpy spy(&callback, &TestObject::gotCallback);
     QVERIFY(spy.isValid());
 
-    screenEdges->reserve(KWin::ElectricLeft, &callback, cb);
-    screenEdges->reserve(KWin::ElectricBottomRight, &callback, cb);
+    std::deque<uint32_t> border_ids;
+    border_ids.push_back(screenEdges->reserve(KWin::ElectricLeft, cb));
+    border_ids.push_back(screenEdges->reserve(KWin::ElectricBottomRight, cb));
 
     QAction action;
     screenEdges->reserveTouch(KWin::ElectricRight, &action);
@@ -785,6 +805,9 @@ void TestScreenEdges::testFullScreenBlocking()
     Test::app()->base.input->cursor->set_pos(99, 99);
     QVERIFY(!spy.isEmpty());
 #endif
+
+    unreserve(border_ids, ElectricLeft);
+    unreserve(border_ids, ElectricBottomRight);
 }
 
 void TestScreenEdges::testClientEdge()
