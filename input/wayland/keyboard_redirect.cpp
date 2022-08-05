@@ -100,7 +100,6 @@ void keyboard_redirect::init()
     redirect->installInputEventSpy(modifiers_spy);
 
     layout_manager = std::make_unique<xkb::layout_manager>(redirect->platform.xkb, config);
-    layout_manager->init();
 
     if (waylandServer()->has_global_shortcut_support()) {
         redirect->installInputEventSpy(new modifier_only_shortcuts_spy(*redirect));

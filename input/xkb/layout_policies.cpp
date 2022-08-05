@@ -24,14 +24,18 @@ namespace input::xkb
 {
 
 layout_policy::layout_policy(layout_manager* manager, KConfigGroup const& config)
-    : QObject(manager)
+    : QObject(manager->qobject.get())
     , manager(manager)
     , config(config)
 {
-    QObject::connect(
-        manager, &layout_manager::layoutsReconfigured, this, &layout_policy::clear_cache);
-    QObject::connect(
-        manager, &layout_manager::layoutChanged, this, &layout_policy::handle_layout_change);
+    QObject::connect(manager->qobject.get(),
+                     &layout_manager_qobject::layoutsReconfigured,
+                     this,
+                     &layout_policy::clear_cache);
+    QObject::connect(manager->qobject.get(),
+                     &layout_manager_qobject::layoutChanged,
+                     this,
+                     &layout_policy::handle_layout_change);
 }
 
 layout_policy::~layout_policy() = default;

@@ -28,7 +28,7 @@ static const QString s_keyboardService = QStringLiteral("org.kde.keyboard");
 static const QString s_keyboardObject = QStringLiteral("/Layouts");
 
 keyboard_layout::keyboard_layout(KConfigGroup const& configGroup, xkb::layout_manager* parent)
-    : QObject(parent)
+    : QObject(parent->qobject.get())
     , m_configGroup(configGroup)
     , manager(parent)
 {

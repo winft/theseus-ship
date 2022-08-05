@@ -28,7 +28,7 @@ constexpr auto dbus_object_path{"/LayoutsV2"};
 uint keyboard_index{0};
 
 keyboard_layouts_v2::keyboard_layouts_v2(input::platform* platform, xkb::layout_manager* parent)
-    : QObject(parent)
+    : QObject(parent->qobject.get())
     , layout_manager(parent)
 {
     qRegisterMetaType<QVector<layout_names_v2>>("QVector<layout_names_v2>");

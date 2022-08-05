@@ -28,15 +28,28 @@
 namespace KWin::input::xkb
 {
 
-layout_manager::layout_manager(xkb::manager& xkb, KSharedConfigPtr const& config)
-    : xkb{xkb}
-    , m_configGroup(config->group("Layout"))
+layout_manager_qobject::layout_manager_qobject(std::function<void()> reconfigure_callback)
+    : reconfigure_callback{reconfigure_callback}
 {
+    QDBusConnection::sessionBus().connect(QString(),
+                                          QStringLiteral("/Layouts"),
+                                          QStringLiteral("org.kde.keyboard"),
+                                          QStringLiteral("reloadConfig"),
+                                          this,
+                                          SLOT(reconfigure()));
 }
 
-void layout_manager::init()
+void layout_manager_qobject::reconfigure()
 {
-    QAction* switchKeyboardAction = new QAction(this);
+    reconfigure_callback();
+}
+
+layout_manager::layout_manager(xkb::manager& xkb, KSharedConfigPtr const& config)
+    : qobject{std::make_unique<layout_manager_qobject>([this] { reconfigure(); })}
+    , xkb{xkb}
+    , m_configGroup(config->group("Layout"))
+{
+    auto switchKeyboardAction = new QAction(qobject.get());
     switchKeyboardAction->setObjectName(QStringLiteral("Switch to Next Keyboard Layout"));
     switchKeyboardAction->setProperty("componentName",
                                       QStringLiteral("KDE Keyboard Layout Switcher"));
@@ -45,14 +58,7 @@ void layout_manager::init()
     KGlobalAccel::self()->setShortcut(switchKeyboardAction, QList<QKeySequence>({sequence}));
     xkb.platform->setup_action_for_global_accel(switchKeyboardAction);
     QObject::connect(
-        switchKeyboardAction, &QAction::triggered, this, &layout_manager::switchToNextLayout);
-
-    QDBusConnection::sessionBus().connect(QString(),
-                                          QStringLiteral("/Layouts"),
-                                          QStringLiteral("org.kde.keyboard"),
-                                          QStringLiteral("reloadConfig"),
-                                          this,
-                                          SLOT(reconfigure()));
+        switchKeyboardAction, &QAction::triggered, qobject.get(), [this] { switchToNextLayout(); });
 
     reconfigure();
 
@@ -62,8 +68,8 @@ void layout_manager::init()
 
     QObject::connect(xkb.platform->qobject.get(),
                      &platform_qobject::keyboard_added,
-                     this,
-                     &layout_manager::add_keyboard);
+                     qobject.get(),
+                     [this](auto keys) { add_keyboard(keys); });
 
     init_dbus_interface_v2();
 }
@@ -94,13 +100,13 @@ void layout_manager::initDBusInterface()
 
     m_dbusInterface = new dbus::keyboard_layout(m_configGroup, this);
 
-    QObject::connect(this,
-                     &layout_manager::layoutChanged,
+    QObject::connect(qobject.get(),
+                     &layout_manager_qobject::layoutChanged,
                      m_dbusInterface,
                      &dbus::keyboard_layout::layoutChanged);
     // TODO: the signal might be emitted even if the list didn't change
-    QObject::connect(this,
-                     &layout_manager::layoutsReconfigured,
+    QObject::connect(qobject.get(),
+                     &layout_manager_qobject::layoutsReconfigured,
                      m_dbusInterface,
                      &dbus::keyboard_layout::layoutListChanged);
 }
@@ -145,7 +151,7 @@ void layout_manager::reconfigure()
     load_shortcuts(xkb);
 
     initDBusInterface();
-    Q_EMIT layoutsReconfigured();
+    Q_EMIT qobject->layoutsReconfigured();
 }
 
 void layout_manager::load_shortcuts(xkb::keyboard* xkb)
@@ -164,11 +170,10 @@ void layout_manager::load_shortcuts(xkb::keyboard* xkb)
         if (shortcuts.isEmpty()) {
             continue;
         }
-        QAction* a = new QAction(this);
+        auto a = new QAction(qobject.get());
         a->setObjectName(action);
         a->setProperty("componentName", componentName);
-        QObject::connect(
-            a, &QAction::triggered, this, std::bind(&layout_manager::switchToLayout, this, i));
+        QObject::connect(a, &QAction::triggered, qobject.get(), [this, i] { switchToLayout(i); });
         KGlobalAccel::self()->setShortcut(a, shortcuts, KGlobalAccel::Autoloading);
         m_layoutShortcuts << a;
     }
@@ -181,9 +186,10 @@ void layout_manager::add_keyboard(input::keyboard* keyboard)
     }
 
     auto xkb = keyboard->xkb.get();
-    QObject::connect(xkb->qobject.get(), &xkb::keyboard_qobject::layout_changed, this, [this, xkb] {
-        handle_layout_change(xkb);
-    });
+    QObject::connect(xkb->qobject.get(),
+                     &xkb::keyboard_qobject::layout_changed,
+                     qobject.get(),
+                     [this, xkb] { handle_layout_change(xkb); });
 }
 
 void layout_manager::handle_layout_change(xkb::keyboard* xkb)
@@ -193,7 +199,7 @@ void layout_manager::handle_layout_change(xkb::keyboard* xkb)
         return;
     }
     send_layout_to_osd(xkb);
-    Q_EMIT layoutChanged(xkb->layout);
+    Q_EMIT qobject->layoutChanged(xkb->layout);
 }
 
 void layout_manager::send_layout_to_osd(xkb::keyboard* xkb)

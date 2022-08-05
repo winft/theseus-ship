@@ -43,18 +43,11 @@ inline QString translated_keyboard_layout(std::string const& layout)
     return i18nd("xkeyboard-config", layout.c_str());
 }
 
-class KWIN_EXPORT layout_manager : public QObject
+class KWIN_EXPORT layout_manager_qobject : public QObject
 {
     Q_OBJECT
 public:
-    layout_manager(xkb::manager& xkb, KSharedConfigPtr const& config);
-
-    void init();
-
-    void switchToNextLayout();
-    void switchToPreviousLayout();
-
-    xkb::manager& xkb;
+    layout_manager_qobject(std::function<void()> reconfigure_callback);
 
 Q_SIGNALS:
     void layoutChanged(uint index);
@@ -64,6 +57,22 @@ private Q_SLOTS:
     void reconfigure();
 
 private:
+    std::function<void()> reconfigure_callback;
+};
+
+class KWIN_EXPORT layout_manager
+{
+public:
+    layout_manager(xkb::manager& xkb, KSharedConfigPtr const& config);
+
+    void switchToNextLayout();
+    void switchToPreviousLayout();
+
+    std::unique_ptr<layout_manager_qobject> qobject;
+    xkb::manager& xkb;
+
+private:
+    void reconfigure();
     void initDBusInterface();
     void init_dbus_interface_v2();
     void add_keyboard(input::keyboard* keyboard);
