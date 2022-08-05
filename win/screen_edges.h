@@ -58,11 +58,19 @@ public:
     bool check(QPoint const& cursorPos, QDateTime const& triggerTime, bool forceNoPushBack = false);
     void markAsTriggered(const QPoint& cursorPos, QDateTime const& triggerTime);
 
+    void reserve();
+    void unreserve();
+
     void reserve_callback(QObject* object, const char* slot);
     void unreserve_callback(QObject* object);
 
     void reserveTouchCallBack(QAction* action);
     void unreserveTouchCallBack(QAction* action);
+
+    void setBorder(ElectricBorder border);
+    void setGeometry(QRect const& geometry);
+    void updateApproaching(QPoint const& point);
+    void checkBlocking();
 
     void startApproaching();
     void stopApproaching();
@@ -98,14 +106,6 @@ public:
     QRect approach_geometry;
 
     screen_edger* edger;
-
-public Q_SLOTS:
-    void reserve();
-    void unreserve();
-    void setBorder(ElectricBorder border);
-    void setGeometry(QRect const& geometry);
-    void updateApproaching(QPoint const& point);
-    void checkBlocking();
 
 Q_SIGNALS:
     void approaching(ElectricBorder border, qreal factor, QRect const& geometry);
