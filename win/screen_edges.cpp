@@ -99,9 +99,9 @@ void screen_edge::reserve()
     }
 }
 
-void screen_edge::reserve(QObject* object, char const* slot)
+void screen_edge::reserve_callback(QObject* object, char const* slot)
 {
-    connect(object, &QObject::destroyed, this, qOverload<QObject*>(&screen_edge::unreserve));
+    connect(object, &QObject::destroyed, this, &screen_edge::unreserve_callback);
     callbacks.insert(object, QByteArray(slot));
     reserve();
 }
@@ -135,10 +135,10 @@ void screen_edge::unreserve()
         deactivate();
     }
 }
-void screen_edge::unreserve(QObject* object)
+void screen_edge::unreserve_callback(QObject* object)
 {
     if (callbacks.remove(object) > 0) {
-        disconnect(object, &QObject::destroyed, this, qOverload<QObject*>(&screen_edge::unreserve));
+        disconnect(object, &QObject::destroyed, this, &screen_edge::unreserve_callback);
         unreserve();
     }
 }
@@ -1092,7 +1092,7 @@ void screen_edger::recreateEdges()
             for (QHash<QObject*, QByteArray>::const_iterator callback = callbacks.begin();
                  callback != callbacks.end();
                  ++callback) {
-                edge->reserve(callback.key(), callback.value().constData());
+                edge->reserve_callback(callback.key(), callback.value().constData());
             }
             const auto touchCallBacks = oldEdge->touch_actions;
             for (auto a : touchCallBacks) {
@@ -1278,7 +1278,7 @@ void screen_edger::reserve(ElectricBorder border, QObject* object, const char* s
 {
     for (auto it = edges.begin(); it != edges.end(); ++it) {
         if ((*it)->border == border) {
-            (*it)->reserve(object, slot);
+            (*it)->reserve_callback(object, slot);
         }
     }
 }
@@ -1287,7 +1287,7 @@ void screen_edger::unreserve(ElectricBorder border, QObject* object)
 {
     for (auto it = edges.begin(); it != edges.end(); ++it) {
         if ((*it)->border == border) {
-            (*it)->unreserve(object);
+            (*it)->unreserve_callback(object);
         }
     }
 }

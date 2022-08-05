@@ -58,7 +58,9 @@ public:
     bool check(QPoint const& cursorPos, QDateTime const& triggerTime, bool forceNoPushBack = false);
     void markAsTriggered(const QPoint& cursorPos, QDateTime const& triggerTime);
 
-    void reserve(QObject* object, const char* slot);
+    void reserve_callback(QObject* object, const char* slot);
+    void unreserve_callback(QObject* object);
+
     void reserveTouchCallBack(QAction* action);
     void unreserveTouchCallBack(QAction* action);
 
@@ -100,7 +102,6 @@ public:
 public Q_SLOTS:
     void reserve();
     void unreserve();
-    void unreserve(QObject* object);
     void setBorder(ElectricBorder border);
     void setGeometry(QRect const& geometry);
     void updateApproaching(QPoint const& point);
