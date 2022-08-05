@@ -73,7 +73,9 @@ void screen_edge_item::enableEdge()
     switch (m_mode) {
     case Mode::Pointer:
         win::singleton_interface::space->edges->reserve(
-            static_cast<ElectricBorder>(m_edge), this, "borderActivated");
+            static_cast<ElectricBorder>(m_edge), this, [this](auto eb) {
+                return borderActivated(eb);
+            });
         break;
     case Mode::Touch:
         win::singleton_interface::space->edges->reserveTouch(static_cast<ElectricBorder>(m_edge),

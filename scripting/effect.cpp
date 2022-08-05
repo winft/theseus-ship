@@ -691,7 +691,9 @@ bool effect::registerScreenEdge(int edge, const QJSValue& callback)
     auto it = screenEdgeCallbacks().find(edge);
     if (it == screenEdgeCallbacks().end()) {
         // not yet registered
-        space.edges->reserve(static_cast<KWin::ElectricBorder>(edge), this, "borderActivated");
+        space.edges->reserve(static_cast<KWin::ElectricBorder>(edge), this, [this](auto eb) {
+            return borderActivated(eb);
+        });
         screenEdgeCallbacks().insert(edge, QJSValueList{callback});
     } else {
         it->append(callback);

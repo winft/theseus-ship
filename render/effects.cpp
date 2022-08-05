@@ -1384,7 +1384,8 @@ QPoint effects_handler_impl::cursorPos() const
 
 void effects_handler_impl::reserveElectricBorder(ElectricBorder border, Effect* effect)
 {
-    m_compositor->space->edges->reserve(border, effect, "borderActivated");
+    m_compositor->space->edges->reserve(
+        border, effect, [effect](auto eb) { return effect->borderActivated(eb); });
 }
 
 void effects_handler_impl::unreserveElectricBorder(ElectricBorder border, Effect* effect)

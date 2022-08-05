@@ -473,7 +473,7 @@ void tabbox::reconfigure()
             if (!ok)
                 continue;
             borders->append(ElectricBorder(i));
-            space.edges->reserve(ElectricBorder(i), this, "toggle");
+            space.edges->reserve(ElectricBorder(i), this, [this](auto eb) { return toggle(eb); });
         }
         borders = &m_border_alternative_activate;
         border_config = QStringLiteral("BorderAlternativeActivate");

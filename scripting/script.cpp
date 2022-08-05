@@ -375,8 +375,9 @@ bool script::registerScreenEdge(int edge, const QJSValue& callback)
 
     QJSValueList& callbacks = m_screenEdgeCallbacks[edge];
     if (callbacks.isEmpty()) {
-        platform.space.edges->reserve(
-            static_cast<ElectricBorder>(edge), this, "slotBorderActivated");
+        platform.space.edges->reserve(static_cast<ElectricBorder>(edge), this, [this](auto eb) {
+            return slotBorderActivated(eb);
+        });
     }
 
     callbacks << callback;

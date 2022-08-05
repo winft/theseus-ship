@@ -99,10 +99,10 @@ void screen_edge::reserve()
     }
 }
 
-void screen_edge::reserve_callback(QObject* object, char const* slot)
+void screen_edge::reserve_callback(QObject* object, std::function<bool(ElectricBorder)> slot)
 {
     connect(object, &QObject::destroyed, this, &screen_edge::unreserve_callback);
-    callbacks.insert(object, QByteArray(slot));
+    callbacks.insert(object, std::move(slot));
     reserve();
 }
 
@@ -359,12 +359,7 @@ bool screen_edge::handleByCallback()
     }
 
     for (auto it = callbacks.begin(); it != callbacks.end(); ++it) {
-        bool retVal = false;
-        QMetaObject::invokeMethod(it.key(),
-                                  it.value().constData(),
-                                  Q_RETURN_ARG(bool, retVal),
-                                  Q_ARG(ElectricBorder, border));
-        if (retVal) {
+        if (it.value()(border)) {
             return true;
         }
     }
@@ -1088,11 +1083,9 @@ void screen_edger::recreateEdges()
             if (oldEdge->border != edge->border) {
                 continue;
             }
-            const QHash<QObject*, QByteArray>& callbacks = oldEdge->callbacks;
-            for (QHash<QObject*, QByteArray>::const_iterator callback = callbacks.begin();
-                 callback != callbacks.end();
-                 ++callback) {
-                edge->reserve_callback(callback.key(), callback.value().constData());
+            auto const& callbacks = oldEdge->callbacks;
+            for (auto callback = callbacks.cbegin(); callback != callbacks.cend(); ++callback) {
+                edge->reserve_callback(callback.key(), callback.value());
             }
             const auto touchCallBacks = oldEdge->touch_actions;
             for (auto a : touchCallBacks) {
@@ -1274,7 +1267,9 @@ void screen_edger::reserveDesktopSwitching(bool isToReserve, Qt::Orientations o)
     }
 }
 
-void screen_edger::reserve(ElectricBorder border, QObject* object, const char* slot)
+void screen_edger::reserve(ElectricBorder border,
+                           QObject* object,
+                           std::function<bool(ElectricBorder)> slot)
 {
     for (auto it = edges.begin(); it != edges.end(); ++it) {
         if ((*it)->border == border) {

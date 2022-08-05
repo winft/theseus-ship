@@ -61,7 +61,7 @@ public:
     void reserve();
     void unreserve();
 
-    void reserve_callback(QObject* object, const char* slot);
+    void reserve_callback(QObject* object, std::function<bool(ElectricBorder)> slot);
     void unreserve_callback(QObject* object);
 
     void reserveTouchCallBack(QAction* action);
@@ -100,7 +100,7 @@ public:
     ElectricBorder border{ElectricNone};
     std::vector<QAction*> touch_actions;
     int reserved_count{0};
-    QHash<QObject*, QByteArray> callbacks;
+    QHash<QObject*, std::function<bool(ElectricBorder)>> callbacks;
 
     bool is_approaching{false};
     QRect approach_geometry;
@@ -224,7 +224,8 @@ public:
      * @see unreserve
      * @todo: add pointer to script/effect
      */
-    void reserve(ElectricBorder border, QObject* object, char const* callback);
+    void
+    reserve(ElectricBorder border, QObject* object, std::function<bool(ElectricBorder)> callback);
     /**
      * Mark the specified screen edge as unreserved. This method is provided for external activation
      * like effects and scripts. This method is only allowed to be called if @ref reserve had been

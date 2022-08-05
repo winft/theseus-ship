@@ -387,17 +387,21 @@ void TestScreenEdges::testCallback()
 
     reset_edger();
     auto& screenEdges = Test::app()->base.space->edges;
+
     TestObject callback;
+    auto cb = [&](auto eb) { return callback.callback(eb); };
+
     QSignalSpy spy(&callback, &TestObject::gotCallback);
     QVERIFY(spy.isValid());
-    screenEdges->reserve(ElectricLeft, &callback, "callback");
-    screenEdges->reserve(ElectricTopLeft, &callback, "callback");
-    screenEdges->reserve(ElectricTop, &callback, "callback");
-    screenEdges->reserve(ElectricTopRight, &callback, "callback");
-    screenEdges->reserve(ElectricRight, &callback, "callback");
-    screenEdges->reserve(ElectricBottomRight, &callback, "callback");
-    screenEdges->reserve(ElectricBottom, &callback, "callback");
-    screenEdges->reserve(ElectricBottomLeft, &callback, "callback");
+
+    screenEdges->reserve(ElectricLeft, &callback, cb);
+    screenEdges->reserve(ElectricTopLeft, &callback, cb);
+    screenEdges->reserve(ElectricTop, &callback, cb);
+    screenEdges->reserve(ElectricTopRight, &callback, cb);
+    screenEdges->reserve(ElectricRight, &callback, cb);
+    screenEdges->reserve(ElectricBottomRight, &callback, cb);
+    screenEdges->reserve(ElectricBottom, &callback, cb);
+    screenEdges->reserve(ElectricBottomLeft, &callback, cb);
 
     auto edges
         = screenEdges->findChildren<win::screen_edge*>(QString(), Qt::FindDirectChildrenOnly);
@@ -536,9 +540,12 @@ void TestScreenEdges::testCallbackWithCheck()
     auto& screenEdges = Test::app()->base.space->edges;
 
     TestObject callback;
+    auto cb = [&](auto eb) { return callback.callback(eb); };
+
     QSignalSpy spy(&callback, &TestObject::gotCallback);
     QVERIFY(spy.isValid());
-    screenEdges->reserve(ElectricLeft, &callback, "callback");
+
+    screenEdges->reserve(ElectricLeft, &callback, cb);
 
     // check activating a different edge doesn't do anything
     screenEdges->check(QPoint(50, 0), QDateTime::currentDateTimeUtc(), true);
@@ -555,7 +562,7 @@ void TestScreenEdges::testCallbackWithCheck()
     QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(0, 50));
 
     // use a different edge, this time with pushback
-    screenEdges->reserve(KWin::ElectricRight, &callback, "callback");
+    screenEdges->reserve(KWin::ElectricRight, &callback, cb);
     Test::app()->base.input->cursor->set_pos(99, 50);
     screenEdges->check(QPoint(99, 50), QDateTime::currentDateTimeUtc());
 
@@ -643,11 +650,15 @@ void TestScreenEdges::testPushBack()
 
     reset_edger(config);
     auto& screenEdges = Test::app()->base.space->edges;
+
     TestObject callback;
+    auto cb = [&](auto eb) { return callback.callback(eb); };
+
     QSignalSpy spy(&callback, &TestObject::gotCallback);
     QVERIFY(spy.isValid());
+
     QFETCH(ElectricBorder, border);
-    screenEdges->reserve(border, &callback, "callback");
+    screenEdges->reserve(border, &callback, cb);
 
     QFETCH(QPoint, trigger);
     Test::app()->base.input->cursor->set_pos(trigger);
@@ -687,11 +698,16 @@ void TestScreenEdges::testFullScreenBlocking()
 
     reset_edger(config);
     auto& screenEdges = Test::app()->base.space->edges;
+
     TestObject callback;
+    auto cb = [&](auto eb) { return callback.callback(eb); };
+
     QSignalSpy spy(&callback, &TestObject::gotCallback);
     QVERIFY(spy.isValid());
-    screenEdges->reserve(KWin::ElectricLeft, &callback, "callback");
-    screenEdges->reserve(KWin::ElectricBottomRight, &callback, "callback");
+
+    screenEdges->reserve(KWin::ElectricLeft, &callback, cb);
+    screenEdges->reserve(KWin::ElectricBottomRight, &callback, cb);
+
     QAction action;
     screenEdges->reserveTouch(KWin::ElectricRight, &action);
 
