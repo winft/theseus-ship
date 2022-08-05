@@ -82,7 +82,6 @@ namespace KWin
 namespace win
 {
 
-class space;
 class tabbox_desktop_model;
 class tabbox_client_model;
 class tabbox_config;

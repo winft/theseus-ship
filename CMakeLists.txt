@@ -640,6 +640,7 @@ if (KWIN_BUILD_TABBOX)
     win/tabbox/tabbox_desktop_chain.cpp
     win/tabbox/tabbox_desktop_model.cpp
     win/tabbox/tabbox_handler.cpp
+    win/tabbox/tabbox_handler_impl.cpp
     win/tabbox/tabbox_logging.cpp
     win/tabbox/tabbox_switcher_item.cpp
     win/tabbox/tabbox_x11_filter.cpp
