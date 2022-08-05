@@ -182,11 +182,6 @@ public:
     Q_SCRIPTABLE bool cancel(quint64 animationId);
     Q_SCRIPTABLE bool cancel(const QList<quint64>& animationIds);
 
-    QHash<int, QJSValueList>& screenEdgeCallbacks()
-    {
-        return m_screenEdgeCallbacks;
-    }
-
     QString pluginId() const;
     bool isActiveFullScreenEffect() const;
 
@@ -215,10 +210,12 @@ private:
     QJSEngine* m_engine;
     QString m_effectName;
     QString m_scriptFile;
-    QHash<int, QJSValueList> m_screenEdgeCallbacks;
+
+    std::unordered_map<int, QJSValueList> border_callbacks;
+    std::unordered_map<int, QAction*> touch_border_callbacks;
+
     KConfigLoader* m_config{nullptr};
     int m_chainPosition{0};
-    QHash<int, QAction*> m_touchScreenEdgeCallbacks;
     Effect* m_activeFullScreenEffect = nullptr;
     win::space& space;
 };
