@@ -135,6 +135,7 @@ WindowViewEffect::WindowViewEffect()
             switch (m_status) {
             case Status::Inactive:
             case Status::Activating:
+                setMode(ModeAllDesktops);
                 partialActivate(progress);
                 break;
             case Status::Active:
