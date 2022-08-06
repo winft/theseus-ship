@@ -14,7 +14,9 @@ namespace KWin::input
 
 namespace xkb
 {
+template<typename Xkb>
 class layout_manager;
+class manager;
 }
 
 namespace wayland
@@ -42,7 +44,7 @@ public:
 private:
     QMetaObject::Connection m_activeClientSurfaceChangedConnection;
     modifiers_changed_spy* modifiers_spy{nullptr};
-    std::unique_ptr<xkb::layout_manager> layout_manager;
+    std::unique_ptr<xkb::layout_manager<xkb::manager>> layout_manager;
 };
 
 }

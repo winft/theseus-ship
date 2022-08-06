@@ -18,6 +18,7 @@
 #include "input/spies/modifier_only_shortcuts.h"
 #include "input/xkb/helpers.h"
 #include "input/xkb/layout_manager.h"
+#include "input/xkb/manager.h"
 #include "toplevel.h"
 #include "win/space.h"
 #include "win/stacking_order.h"
@@ -99,7 +100,8 @@ void keyboard_redirect::init()
     modifiers_spy = new modifiers_changed_spy(redirect);
     redirect->installInputEventSpy(modifiers_spy);
 
-    layout_manager = std::make_unique<xkb::layout_manager>(redirect->platform.xkb, config);
+    layout_manager
+        = std::make_unique<xkb::layout_manager<xkb::manager>>(redirect->platform.xkb, config);
 
     if (waylandServer()->has_global_shortcut_support()) {
         redirect->installInputEventSpy(new modifier_only_shortcuts_spy(*redirect));
