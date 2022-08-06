@@ -89,34 +89,35 @@ void layout_manager::initDBusInterface()
     auto xkb = get_keyboard(this);
 
     if (xkb->layouts_count() <= 1) {
-        if (m_dbusInterface) {
-            m_dbusInterface->deleteLater();
-            m_dbusInterface = nullptr;
+        if (dbus_interface_v1) {
+            // Emit change before reset for backwards compatibility (was done so in the past).
+            Q_EMIT dbus_interface_v1->layoutListChanged();
+            dbus_interface_v1.reset();
         }
         return;
     }
 
-    if (m_dbusInterface) {
+    if (dbus_interface_v1) {
         return;
     }
 
-    m_dbusInterface = new dbus::keyboard_layout(m_configGroup, this);
+    dbus_interface_v1 = std::make_unique<dbus::keyboard_layout>(m_configGroup, this);
 
     QObject::connect(qobject.get(),
                      &layout_manager_qobject::layoutChanged,
-                     m_dbusInterface,
+                     dbus_interface_v1.get(),
                      &dbus::keyboard_layout::layoutChanged);
     // TODO: the signal might be emitted even if the list didn't change
     QObject::connect(qobject.get(),
                      &layout_manager_qobject::layoutsReconfigured,
-                     m_dbusInterface,
+                     dbus_interface_v1.get(),
                      &dbus::keyboard_layout::layoutListChanged);
 }
 
 void layout_manager::init_dbus_interface_v2()
 {
     assert(!dbus_interface_v2);
-    dbus_interface_v2 = new dbus::keyboard_layouts_v2(xkb.platform, this);
+    dbus_interface_v2 = std::make_unique<dbus::keyboard_layouts_v2>(xkb.platform);
 }
 
 void layout_manager::switchToNextLayout()

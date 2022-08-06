@@ -27,10 +27,9 @@ namespace KWin::input::dbus
 static const QString s_keyboardService = QStringLiteral("org.kde.keyboard");
 static const QString s_keyboardObject = QStringLiteral("/Layouts");
 
-keyboard_layout::keyboard_layout(KConfigGroup const& configGroup, xkb::layout_manager* parent)
-    : QObject(parent->qobject.get())
-    , m_configGroup(configGroup)
-    , manager(parent)
+keyboard_layout::keyboard_layout(KConfigGroup const& configGroup, xkb::layout_manager* manager)
+    : m_configGroup(configGroup)
+    , manager(manager)
 {
     qRegisterMetaType<QVector<LayoutNames>>("QVector<LayoutNames>");
     qDBusRegisterMetaType<LayoutNames>();

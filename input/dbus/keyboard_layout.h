@@ -32,7 +32,7 @@ class keyboard_layout : public QObject
     Q_CLASSINFO("D-Bus Interface", "org.kde.KeyboardLayouts")
 
 public:
-    keyboard_layout(KConfigGroup const& configGroup, xkb::layout_manager* parent);
+    keyboard_layout(KConfigGroup const& configGroup, xkb::layout_manager* manager);
     ~keyboard_layout() override;
 
     struct LayoutNames {

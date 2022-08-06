@@ -15,6 +15,7 @@
 #include <QObject>
 #include <QString>
 #include <QVector>
+#include <memory>
 #include <string>
 
 typedef uint32_t xkb_layout_index_t;
@@ -85,8 +86,8 @@ private:
 
     KConfigGroup m_configGroup;
     QVector<QAction*> m_layoutShortcuts;
-    dbus::keyboard_layout* m_dbusInterface = nullptr;
-    dbus::keyboard_layouts_v2* dbus_interface_v2{nullptr};
+    std::unique_ptr<dbus::keyboard_layout> dbus_interface_v1;
+    std::unique_ptr<dbus::keyboard_layouts_v2> dbus_interface_v2;
     std::unique_ptr<xkb::layout_policy<layout_manager>> m_policy;
 };
 
