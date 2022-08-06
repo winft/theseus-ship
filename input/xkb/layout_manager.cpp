@@ -101,7 +101,8 @@ void layout_manager::initDBusInterface()
         return;
     }
 
-    dbus_interface_v1 = std::make_unique<dbus::keyboard_layout>(m_configGroup, this);
+    dbus_interface_v1 = std::make_unique<dbus::keyboard_layout>(
+        m_configGroup, [this] { return get_primary_xkb_keyboard(*this->xkb.platform); });
 
     QObject::connect(qobject.get(),
                      &layout_manager_qobject::layoutChanged,
