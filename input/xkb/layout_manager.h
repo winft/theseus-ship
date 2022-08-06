@@ -35,6 +35,7 @@ class keyboard_layouts_v2;
 namespace xkb
 {
 class keyboard;
+template<typename Manager>
 class layout_policy;
 class manager;
 
@@ -64,6 +65,7 @@ class KWIN_EXPORT layout_manager
 {
 public:
     layout_manager(xkb::manager& xkb, KSharedConfigPtr const& config);
+    ~layout_manager();
 
     void switchToNextLayout();
     void switchToPreviousLayout();
@@ -85,7 +87,7 @@ private:
     QVector<QAction*> m_layoutShortcuts;
     dbus::keyboard_layout* m_dbusInterface = nullptr;
     dbus::keyboard_layouts_v2* dbus_interface_v2{nullptr};
-    xkb::layout_policy* m_policy = nullptr;
+    std::unique_ptr<xkb::layout_policy<layout_manager>> m_policy;
 };
 
 }

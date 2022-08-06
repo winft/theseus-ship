@@ -74,6 +74,8 @@ layout_manager::layout_manager(xkb::manager& xkb, KSharedConfigPtr const& config
     init_dbus_interface_v2();
 }
 
+layout_manager::~layout_manager() = default;
+
 namespace
 {
 auto get_keyboard(layout_manager* manager)
@@ -139,8 +141,7 @@ void layout_manager::reconfigure()
         const QString policyKey = m_configGroup.readEntry("SwitchMode", QStringLiteral("Global"));
         xkb.reconfigure();
         if (!m_policy || m_policy->name() != policyKey) {
-            delete m_policy;
-            m_policy = xkb::layout_policy::create(this, m_configGroup, policyKey);
+            m_policy = create_layout_policy(this, m_configGroup, policyKey);
         }
     } else {
         xkb.reconfigure();
