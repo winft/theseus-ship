@@ -175,6 +175,7 @@ add_test(NAME kwin-testOpenGLContextAttributeBuilder COMMAND testOpenGLContextAt
 ecm_mark_as_test(testOpenGLContextAttributeBuilder)
 
 set(testXkb_SRCS
+    ../base/logging.cpp
     ../input/xkb/keyboard.cpp
     ../input/xkb/keymap.cpp
     ../input/xkb/manager.cpp

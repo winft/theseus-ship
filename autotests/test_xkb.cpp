@@ -483,8 +483,7 @@ void XkbTest::testToQtKey_data()
 
 void XkbTest::testToQtKey()
 {
-    input::xkb::manager manager(nullptr);
-    input::xkb::keyboard xkb_keyboard(manager);
+    input::xkb::keyboard xkb_keyboard(nullptr, nullptr);
     QFETCH(xkb_keysym_t, keySym);
     QTEST(xkb_keyboard.to_qt_key(keySym), "qt");
 }

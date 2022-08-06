@@ -33,12 +33,6 @@ namespace xkb
 {
 class keyboard;
 
-enum class latched_key_change {
-    off,
-    on,
-    unchanged,
-};
-
 class KWIN_EXPORT manager
 {
 public:
@@ -46,17 +40,15 @@ public:
     ~manager();
 
     void setConfig(const KSharedConfigPtr& config);
-    void setNumLockConfig(const KSharedConfigPtr& config);
-
     void reconfigure();
-
-    latched_key_change read_startup_num_lock_config();
 
     xkb_context* context;
     xkb_compose_table* compose_table{nullptr};
 
     std::unique_ptr<keyboard> default_keyboard;
     input::platform* platform;
+
+    KSharedConfigPtr numlock_config;
 
 private:
     void apply_environment_rules(xkb_rule_names&, std::vector<std::string>& layouts) const;
@@ -65,7 +57,6 @@ private:
     xkb_keymap* loadDefaultKeymap(std::vector<std::string>& layouts);
 
     KConfigGroup m_configGroup;
-    KSharedConfigPtr m_numLockConfig;
 };
 
 }

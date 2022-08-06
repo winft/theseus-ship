@@ -58,4 +58,12 @@ get_active_keyboard_modifiers_relevant_for_global_shortcuts(Platform const& plat
     return all;
 }
 
+template<typename Manager, typename Keyboard>
+void keyboard_update_from_default(Manager const& manager, Keyboard& keys)
+{
+    if (auto const& dkeys = manager.default_keyboard; dkeys->keymap) {
+        keys.update(dkeys->keymap, dkeys->layouts);
+    }
+}
+
 }

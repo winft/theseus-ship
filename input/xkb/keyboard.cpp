@@ -10,6 +10,8 @@
 
 #include "keymap.h"
 
+#include "base/logging.h"
+
 #include <KConfigGroup>
 #include <QtXkbCommonSupport/private/qxkbcommon_p.h>
 
@@ -17,20 +19,18 @@
 #include <cassert>
 #include <sys/mman.h>
 #include <unistd.h>
-#include <xkbcommon/xkbcommon-compose.h>
-#include <xkbcommon/xkbcommon-keysyms.h>
 
 namespace KWin::input::xkb
 {
 
 keyboard_qobject::~keyboard_qobject() = default;
 
-keyboard::keyboard(xkb::manager& manager)
+keyboard::keyboard(xkb_context* context, xkb_compose_table* compose_table)
     : qobject{std::make_unique<keyboard_qobject>()}
-    , manager{manager}
+    , context{context}
 {
-    if (manager.compose_table) {
-        compose_state = xkb_compose_state_new(manager.compose_table, XKB_COMPOSE_STATE_NO_FLAGS);
+    if (compose_table) {
+        compose_state = xkb_compose_state_new(compose_table, XKB_COMPOSE_STATE_NO_FLAGS);
     }
 }
 
@@ -43,19 +43,12 @@ keyboard::~keyboard()
 void keyboard::install_keymap(int fd, uint32_t size)
 {
     try {
-        auto map = std::make_shared<xkb::keymap>(fd, size, manager.context);
+        auto map = std::make_shared<xkb::keymap>(fd, size, context);
         foreign_owned = true;
         update_keymap(map);
     } catch (...) {
         // Do nothing for now.
-        qCWarning(KWIN_XKB) << "Keymap could not be installed from fd" << fd;
-    }
-}
-
-void keyboard::update_from_default()
-{
-    if (auto const& dkeys = manager.default_keyboard; dkeys->keymap) {
-        update(dkeys->keymap, dkeys->layouts);
+        qCWarning(KWIN_CORE) << "Keymap could not be installed from fd" << fd;
     }
 }
 
@@ -72,7 +65,7 @@ void keyboard::update_keymap(std::shared_ptr<xkb::keymap> keymap)
 {
     auto state = xkb_state_new(keymap->raw);
     if (!state) {
-        qCDebug(KWIN_XKB) << "Could not create XKB state";
+        qCDebug(KWIN_CORE) << "Could not create XKB state";
         return;
     }
 
@@ -102,61 +95,7 @@ void keyboard::update_keymap(std::shared_ptr<xkb::keymap> keymap)
     modifier_state.locked
         = xkb_state_serialize_mods(state, xkb_state_component(XKB_STATE_MODS_LOCKED));
 
-    evaluate_startup_num_lock();
     update_modifiers();
-}
-
-void keyboard::evaluate_startup_num_lock()
-{
-    if (startup_num_lock_done) {
-        return;
-    }
-    startup_num_lock_done = true;
-
-    if (foreign_owned || modifiers_indices.num == XKB_MOD_INVALID) {
-        return;
-    }
-
-    auto const setting = manager.read_startup_num_lock_config();
-    if (setting == latched_key_change::unchanged) {
-        // We keep the current state.
-        return;
-    }
-
-    auto num_lock_is_active
-        = xkb_state_mod_index_is_active(state, modifiers_indices.num, XKB_STATE_MODS_LOCKED);
-    if (num_lock_is_active < 0) {
-        // Index not available
-        return;
-    }
-
-    auto num_lock_current = num_lock_is_active ? latched_key_change::on : latched_key_change::off;
-
-    if (setting == num_lock_current) {
-        // Nothing to change.
-        return;
-    }
-
-    auto mask = std::bitset<sizeof(xkb_mod_mask_t) * 8>{modifier_state.locked};
-
-    if (mask.size() <= modifiers_indices.num) {
-        // Not enough space in the mask for the num lock.
-        return;
-    }
-
-    mask[modifiers_indices.num] = (setting == latched_key_change::on);
-    modifier_state.locked = mask.to_ulong();
-
-    xkb_state_update_mask(state,
-                          modifier_state.depressed,
-                          modifier_state.latched,
-                          modifier_state.locked,
-                          0,
-                          0,
-                          layout);
-
-    modifier_state.locked
-        = xkb_state_serialize_mods(state, xkb_state_component(XKB_STATE_MODS_LOCKED));
 }
 
 void keyboard::update_modifiers(uint32_t modsDepressed,

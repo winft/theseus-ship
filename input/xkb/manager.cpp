@@ -9,6 +9,7 @@
 #include "manager.h"
 
 #include "keyboard.h"
+#include "numlock.h"
 
 #include "input/keyboard.h"
 #include "input/platform.h"
@@ -86,7 +87,7 @@ manager::manager(input::platform* platform)
     compose_table = xkb_compose_table_new_from_locale(
         context, locale.constData(), XKB_COMPOSE_COMPILE_NO_FLAGS);
 
-    default_keyboard = std::make_unique<keyboard>(*this);
+    default_keyboard = std::make_unique<keyboard>(context, compose_table);
 }
 
 manager::~manager()
@@ -98,11 +99,6 @@ manager::~manager()
 void manager::setConfig(const KSharedConfigPtr& config)
 {
     m_configGroup = config->group("Layout");
-}
-
-void manager::setNumLockConfig(const KSharedConfigPtr& config)
-{
-    m_numLockConfig = config;
 }
 
 void manager::reconfigure()
@@ -125,8 +121,12 @@ void manager::reconfigure()
     default_keyboard->update(std::make_unique<xkb::keymap>(keymap), layouts);
     xkb_keymap_unref(keymap);
 
+    numlock_evaluate_startup(*this, *default_keyboard);
+    default_keyboard->update_modifiers();
+
     for (auto& keyboard : platform->keyboards) {
         keyboard->xkb->update(default_keyboard->keymap, layouts);
+        numlock_evaluate_startup(*this, *keyboard->xkb);
     }
 }
 
@@ -202,26 +202,6 @@ xkb_keymap* manager::loadDefaultKeymap(std::vector<std::string>& layouts)
     apply_environment_rules(ruleNames, layouts);
 
     return xkb_keymap_new_from_names(context, &ruleNames, XKB_KEYMAP_COMPILE_NO_FLAGS);
-}
-
-latched_key_change manager::read_startup_num_lock_config()
-{
-    if (!m_numLockConfig) {
-        return latched_key_change::unchanged;
-    }
-
-    // STATE_ON = 0,  STATE_OFF = 1, STATE_UNCHANGED = 2, see plasma-desktop/kcms/keyboard/kcmmisc.h
-    auto const config = m_numLockConfig->group("Keyboard");
-    auto setting = config.readEntry("NumLock", 2);
-
-    if (setting == 0) {
-        return latched_key_change::on;
-    }
-    if (setting == 1) {
-        return latched_key_change::off;
-    }
-
-    return latched_key_change::unchanged;
 }
 
 }

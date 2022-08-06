@@ -6,22 +6,15 @@
 #pragma once
 
 #include "keymap.h"
-#include "manager.h"
 
 #include "input/event.h"
 #include "input/types.h"
 
+#include <QObject>
 #include <functional>
-
-struct xkb_compose_state;
-struct xkb_context;
-struct xkb_keymap;
-struct xkb_state;
-
-typedef uint32_t xkb_mod_index_t;
-typedef uint32_t xkb_led_index_t;
-typedef uint32_t xkb_keysym_t;
-typedef uint32_t xkb_layout_index_t;
+#include <memory>
+#include <xkbcommon/xkbcommon-compose.h>
+#include <xkbcommon/xkbcommon-keysyms.h>
 
 namespace KWin::input::xkb
 {
@@ -47,12 +40,11 @@ Q_SIGNALS:
 class KWIN_EXPORT keyboard
 {
 public:
-    keyboard(xkb::manager& manager);
+    keyboard(xkb_context* context, xkb_compose_table* compose_table);
     ~keyboard();
 
     void install_keymap(int fd, uint32_t size);
 
-    void update_from_default();
     void update(std::shared_ptr<xkb::keymap> keymap, std::vector<std::string> const& layouts);
 
     void update_modifiers(uint32_t modsDepressed,
@@ -88,6 +80,10 @@ public:
      */
     void forward_modifiers();
 
+    void update_keymap(std::shared_ptr<xkb::keymap> keymap);
+    void update_modifiers();
+    void update_consumed_modifiers(uint32_t key);
+
     std::unique_ptr<keyboard_qobject> qobject;
     xkb_state* state{nullptr};
     std::shared_ptr<xkb::keymap> keymap;
@@ -103,13 +99,6 @@ public:
     bool startup_num_lock_done{false};
 
     std::function<void(xkb::keymap*, modifiers const&, uint32_t)> forward_modifiers_impl;
-
-private:
-    void update_keymap(std::shared_ptr<xkb::keymap> keymap);
-    void update_modifiers();
-    void update_consumed_modifiers(uint32_t key);
-
-    void evaluate_startup_num_lock();
 
     struct {
         xkb_mod_index_t shift{0};
@@ -130,7 +119,7 @@ private:
 
     Qt::KeyboardModifiers qt_modifiers_consumed{Qt::NoModifier};
     xkb_compose_state* compose_state{nullptr};
-    xkb::manager& manager;
+    xkb_context* context;
 };
 
 }

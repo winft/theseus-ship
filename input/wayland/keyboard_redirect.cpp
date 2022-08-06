@@ -92,7 +92,7 @@ void keyboard_redirect::init()
 {
     auto& xkb = redirect->platform.xkb;
     auto const config = kwinApp()->kxkbConfig();
-    xkb.setNumLockConfig(kwinApp()->inputConfig());
+    xkb.numlock_config = kwinApp()->inputConfig();
     xkb.setConfig(config);
 
     redirect->installInputEventSpy(new KeyStateChangedSpy(redirect));

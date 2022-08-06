@@ -326,7 +326,7 @@ void xinput_integration::setup_fake_devices()
     auto keyboard = fake_devices.keyboard.get();
     auto keyboard_red = platform->redirect->get_keyboard();
 
-    keyboard->xkb->update_from_default();
+    xkb::keyboard_update_from_default(platform->xkb, *keyboard->xkb);
 
     QObject::connect(
         pointer, &pointer::button_changed, pointer_red, &input::pointer_redirect::process_button);
