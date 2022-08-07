@@ -26,21 +26,7 @@ platform::platform()
     qRegisterMetaType<key_state>();
 }
 
-platform::~platform()
-{
-    for (auto keyboard : keyboards) {
-        keyboard->platform = nullptr;
-    }
-    for (auto pointer : pointers) {
-        pointer->platform = nullptr;
-    }
-    for (auto switch_device : switches) {
-        switch_device->platform = nullptr;
-    }
-    for (auto touch : touchs) {
-        touch->platform = nullptr;
-    }
-}
+platform::~platform() = default;
 
 void platform::registerShortcut(QKeySequence const& /*shortcut*/, QAction* action)
 {

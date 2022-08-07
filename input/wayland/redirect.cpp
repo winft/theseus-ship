@@ -489,7 +489,8 @@ void redirect::handle_virtual_keyboard_added(
 {
     namespace WS = Wrapland::Server;
 
-    auto keyboard = std::make_unique<input::keyboard>(&platform);
+    auto keyboard
+        = std::make_unique<input::keyboard>(platform.xkb.context, platform.xkb.compose_table);
     auto keyboard_ptr = keyboard.get();
 
     QObject::connect(virtual_keyboard,

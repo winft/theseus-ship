@@ -5,15 +5,11 @@
 */
 #include "switch.h"
 
-#include "platform.h"
 #include "utils/algorithm.h"
 
 namespace KWin::input
 {
 
-switch_device::switch_device(input::platform* platform)
-    : platform{platform}
-{
-}
+switch_device::switch_device() = default;
 
 }

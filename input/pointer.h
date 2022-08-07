@@ -15,16 +15,13 @@
 namespace KWin::input
 {
 
-class platform;
-
 class KWIN_EXPORT pointer : public QObject
 {
     Q_OBJECT
 public:
-    input::platform* platform;
     std::unique_ptr<control::pointer> control;
 
-    pointer(input::platform* platform);
+    pointer();
     pointer(pointer const&) = delete;
     pointer& operator=(pointer const&) = delete;
 

@@ -6,6 +6,7 @@
 #pragma once
 
 #include "base/utils.h"
+#include "input/platform.h"
 #include "input/touch.h"
 
 extern "C" {
@@ -26,6 +27,8 @@ public:
     touch(touch const&) = delete;
     touch& operator=(touch const&) = delete;
     ~touch() override = default;
+
+    input::platform* platform;
 
 private:
     er destroyed;

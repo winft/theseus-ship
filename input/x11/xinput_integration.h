@@ -32,8 +32,9 @@ class cursor;
 
 struct xinput_devices {
     xinput_devices(x11::platform& platform)
-        : keyboard{std::make_unique<input::keyboard>(&platform)}
-        , pointer{std::make_unique<input::pointer>(&platform)}
+        : keyboard{std::make_unique<input::keyboard>(platform.xkb.context,
+                                                     platform.xkb.compose_table)}
+        , pointer{std::make_unique<input::pointer>()}
         , platform{platform}
     {
         platform_add_keyboard(keyboard.get(), platform);

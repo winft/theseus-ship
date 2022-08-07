@@ -6,6 +6,7 @@
 #pragma once
 
 #include "base/utils.h"
+#include "input/platform.h"
 #include "input/pointer.h"
 
 extern "C" {
@@ -25,6 +26,8 @@ public:
     pointer(pointer const&) = delete;
     pointer& operator=(pointer const&) = delete;
     ~pointer() override = default;
+
+    input::platform* platform;
 
 private:
     er destroyed;

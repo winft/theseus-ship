@@ -28,6 +28,8 @@ public:
     touch& operator=(touch const&) = delete;
     ~touch() override = default;
 
+private:
+    input::platform* platform;
     Wrapland::Server::FakeInputDevice* device;
 };
 

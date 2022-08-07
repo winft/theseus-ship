@@ -74,7 +74,8 @@ static void handle_modifiers(struct wl_listener* listener, [[maybe_unused]] void
 }
 
 keyboard::keyboard(wlr_input_device* dev, input::platform* platform)
-    : input::keyboard(platform)
+    : input::keyboard(platform->xkb.context, platform->xkb.compose_table)
+    , platform{platform}
 {
 #if HAVE_WLR_BASE_INPUT_DEVICES
     backend = wlr_keyboard_from_input_device(dev);

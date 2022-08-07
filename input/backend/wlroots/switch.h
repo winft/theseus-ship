@@ -6,6 +6,7 @@
 #pragma once
 
 #include "base/utils.h"
+#include "input/platform.h"
 #include "input/switch.h"
 
 extern "C" {
@@ -26,6 +27,8 @@ public:
     switch_device(switch_device const&) = delete;
     switch_device& operator=(switch_device const&) = delete;
     ~switch_device() override = default;
+
+    input::platform* platform;
 
 private:
     er destroyed;

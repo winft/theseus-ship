@@ -25,7 +25,7 @@ static wayland_space& wlspace(win::space& space)
 }
 
 pointer::pointer(Wrapland::Server::FakeInputDevice* device, input::platform* platform)
-    : input::pointer(platform)
+    : platform{platform}
     , device{device}
 {
     QObject::connect(

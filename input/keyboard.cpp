@@ -5,15 +5,13 @@
 */
 #include "keyboard.h"
 
-#include "platform.h"
 #include "utils/algorithm.h"
 
 namespace KWin::input
 {
 
-keyboard::keyboard(input::platform* platform)
-    : platform{platform}
-    , xkb{std::make_unique<xkb::keyboard>(platform->xkb.context, platform->xkb.compose_table)}
+keyboard::keyboard(xkb_context* context, xkb_compose_table* compose_table)
+    : xkb{std::make_unique<xkb::keyboard>(context, compose_table)}
 {
 }
 

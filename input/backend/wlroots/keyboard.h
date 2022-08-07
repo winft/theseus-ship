@@ -7,6 +7,7 @@
 
 #include "base/utils.h"
 #include "input/keyboard.h"
+#include "input/platform.h"
 
 extern "C" {
 #include <wlr/types/wlr_input_device.h>
@@ -28,6 +29,8 @@ public:
     keyboard(keyboard const&) = delete;
     keyboard& operator=(keyboard const&) = delete;
     ~keyboard() override = default;
+
+    input::platform* platform;
 
 private:
     er destroyed;

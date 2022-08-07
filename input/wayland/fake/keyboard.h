@@ -23,12 +23,14 @@ class keyboard : public input::keyboard
 {
     Q_OBJECT
 public:
-    Wrapland::Server::FakeInputDevice* device;
-
     keyboard(Wrapland::Server::FakeInputDevice* device, input::platform* platform);
     keyboard(keyboard const&) = delete;
     keyboard& operator=(keyboard const&) = delete;
     ~keyboard() override = default;
+
+private:
+    input::platform* platform;
+    Wrapland::Server::FakeInputDevice* device;
 };
 
 }

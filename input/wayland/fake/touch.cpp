@@ -25,7 +25,7 @@ static wayland_space& wlspace(win::space& space)
 }
 
 touch::touch(Wrapland::Server::FakeInputDevice* device, input::platform* platform)
-    : input::touch(platform)
+    : platform{platform}
     , device{device}
 {
     QObject::connect(

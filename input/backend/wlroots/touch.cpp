@@ -121,7 +121,7 @@ static void handle_frame(struct wl_listener* listener, [[maybe_unused]] void* da
 }
 
 touch::touch(wlr_input_device* dev, input::platform* platform)
-    : input::touch(platform)
+    : platform{platform}
 {
 #if HAVE_WLR_BASE_INPUT_DEVICES
     auto backend = wlr_touch_from_input_device(dev);
