@@ -490,9 +490,9 @@ void pointer_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
     warp_xcb_on_surface_left(focusNow->surface);
 
     // TODO: why? in order to reset the cursor icon?
-    s_cursorUpdateBlocking = true;
+    cursor_update_blocking = true;
     seat->pointers().set_focused_surface(nullptr);
-    s_cursorUpdateBlocking = false;
+    cursor_update_blocking = false;
 
     seat->pointers().set_position(m_pos.toPoint());
     seat->pointers().set_focused_surface(focusNow->surface, focusNow->input_transform());

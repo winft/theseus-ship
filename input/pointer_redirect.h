@@ -28,11 +28,9 @@ void pointer_redirect_process_button_spies(Pointer& ptr, button_event const& eve
     ptr.redirect->processSpies(std::bind(&event_spy::button, std::placeholders::_1, event));
 }
 
-class KWIN_EXPORT pointer_redirect : public device_redirect
+class pointer_redirect : public device_redirect
 {
 public:
-    static bool s_cursorUpdateBlocking;
-
     explicit pointer_redirect(input::redirect* redirect)
         : device_redirect(redirect)
     {
@@ -99,6 +97,8 @@ public:
     virtual void process_frame()
     {
     }
+
+    bool cursor_update_blocking{false};
 };
 
 }

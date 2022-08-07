@@ -162,7 +162,7 @@ void cursor_image::markAsRendered()
 
 void cursor_image::update()
 {
-    if (platform.redirect->get_pointer()->s_cursorUpdateBlocking) {
+    if (platform.redirect->get_pointer()->cursor_update_blocking) {
         return;
     }
     using namespace Wrapland::Server;
