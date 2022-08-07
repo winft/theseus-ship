@@ -36,7 +36,6 @@ public:
     touch(input::platform* platform);
     touch(touch const&) = delete;
     touch& operator=(touch const&) = delete;
-    ~touch() override;
 
     // TODO(romangg): Make this a function template.
     base::wayland::output* get_output() const;

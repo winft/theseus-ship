@@ -18,6 +18,7 @@ static void handle_destroy(struct wl_listener* listener, [[maybe_unused]] void* 
 {
     er* event_receiver_struct = wl_container_of(listener, event_receiver_struct, event);
     auto switch_device = event_receiver_struct->receiver;
+    platform_remove_switch(switch_device, *switch_device->platform);
     delete switch_device;
 }
 

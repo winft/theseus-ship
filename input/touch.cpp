@@ -50,14 +50,6 @@ touch::touch(input::platform* platform)
     });
 }
 
-touch::~touch()
-{
-    if (platform) {
-        remove_all(platform->touchs, this);
-        Q_EMIT platform->qobject->touch_removed(this);
-    }
-}
-
 base::wayland::output* touch::get_output() const
 {
     if (!control) {

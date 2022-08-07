@@ -29,7 +29,6 @@ public:
     keyboard(input::platform* platform);
     keyboard(keyboard const&) = delete;
     keyboard& operator=(keyboard const&) = delete;
-    ~keyboard() override;
 
 Q_SIGNALS:
     void key_changed(key_event);

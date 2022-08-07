@@ -40,6 +40,12 @@ struct xinput_devices {
         platform_add_pointer(pointer.get(), platform);
     }
 
+    ~xinput_devices()
+    {
+        platform_remove_pointer(pointer.get(), platform);
+        platform_remove_keyboard(keyboard.get(), platform);
+    }
+
     std::unique_ptr<input::keyboard> keyboard;
     std::unique_ptr<input::pointer> pointer;
     x11::platform& platform;

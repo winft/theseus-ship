@@ -11,6 +11,7 @@
 
 #include "kwin_export.h"
 #include "kwinglobals.h"
+#include "utils/algorithm.h"
 
 #include <KSharedConfig>
 #include <QAction>
@@ -67,6 +68,34 @@ void platform_add_touch(Touch* touch, Platform& platform)
 {
     platform.touchs.push_back(touch);
     platform.qobject->touch_added(touch);
+}
+
+template<typename Keys, typename Platform>
+void platform_remove_keyboard(Keys* keys, Platform& platform)
+{
+    remove_all(platform.keyboards, keys);
+    Q_EMIT platform.qobject->keyboard_removed(keys);
+}
+
+template<typename Pointer, typename Platform>
+void platform_remove_pointer(Pointer* pointer, Platform& platform)
+{
+    remove_all(platform.pointers, pointer);
+    Q_EMIT platform.qobject->pointer_removed(pointer);
+}
+
+template<typename Switch, typename Platform>
+void platform_remove_switch(Switch* switch_dev, Platform& platform)
+{
+    remove_all(platform.switches, switch_dev);
+    Q_EMIT platform.qobject->switch_removed(switch_dev);
+}
+
+template<typename Touch, typename Platform>
+void platform_remove_touch(Touch* touch, Platform& platform)
+{
+    remove_all(platform.touchs, touch);
+    Q_EMIT platform.qobject->touch_removed(touch);
 }
 
 class KWIN_EXPORT platform

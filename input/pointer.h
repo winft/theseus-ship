@@ -27,7 +27,6 @@ public:
     pointer(input::platform* platform);
     pointer(pointer const&) = delete;
     pointer& operator=(pointer const&) = delete;
-    ~pointer() override;
 
 Q_SIGNALS:
     void motion(motion_event);

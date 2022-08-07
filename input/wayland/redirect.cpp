@@ -471,9 +471,11 @@ void redirect::handle_fake_input_device_added(Wrapland::Server::FakeInputDevice*
                          device->setAuthentication(true);
                      });
 
-    auto devices = fake_input_devices({std::make_unique<fake::pointer>(device, &platform),
-                                       std::make_unique<fake::keyboard>(device, &platform),
-                                       std::make_unique<fake::touch>(device, &platform)});
+    auto devices
+        = fake::devices<input::platform>({std::make_unique<fake::pointer>(device, &platform),
+                                          std::make_unique<fake::keyboard>(device, &platform),
+                                          std::make_unique<fake::touch>(device, &platform),
+                                          platform});
 
     platform_add_pointer(devices.pointer.get(), platform);
     platform_add_keyboard(devices.keyboard.get(), platform);
@@ -493,7 +495,12 @@ void redirect::handle_virtual_keyboard_added(
     QObject::connect(virtual_keyboard,
                      &WS::virtual_keyboard_v1::resourceDestroyed,
                      keyboard_ptr,
-                     [this, virtual_keyboard] { virtual_keyboards.erase(virtual_keyboard); });
+                     [this, virtual_keyboard] {
+                         auto it = virtual_keyboards.find(virtual_keyboard);
+                         assert(it != virtual_keyboards.end());
+                         platform_remove_keyboard(it->second.get(), platform);
+                         virtual_keyboards.erase(it);
+                     });
 
     QObject::connect(virtual_keyboard,
                      &WS::virtual_keyboard_v1::keymap,

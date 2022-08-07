@@ -17,12 +17,4 @@ keyboard::keyboard(input::platform* platform)
 {
 }
 
-keyboard::~keyboard()
-{
-    if (platform) {
-        remove_all(platform->keyboards, this);
-        Q_EMIT platform->qobject->keyboard_removed(this);
-    }
-}
-
 }

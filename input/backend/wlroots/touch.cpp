@@ -22,6 +22,7 @@ static void handle_destroy(struct wl_listener* listener, [[maybe_unused]] void* 
 {
     er* event_receiver_struct = wl_container_of(listener, event_receiver_struct, event);
     auto touch = event_receiver_struct->receiver;
+    platform_remove_touch(touch, *touch->platform);
     delete touch;
 }
 

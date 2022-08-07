@@ -27,7 +27,6 @@ public:
     switch_device(input::platform* platform);
     switch_device(switch_device const&) = delete;
     switch_device& operator=(switch_device const&) = delete;
-    ~switch_device() override;
 
 Q_SIGNALS:
     void toggle(switch_toggle_event);
