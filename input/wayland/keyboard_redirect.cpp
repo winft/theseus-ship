@@ -109,26 +109,28 @@ void keyboard_redirect::init()
     auto keyRepeatSpy = new keyboard_repeat_spy(*redirect);
     QObject::connect(keyRepeatSpy->qobject.get(),
                      &keyboard_repeat_spy_qobject::key_repeated,
-                     this,
-                     &keyboard_redirect::process_key_repeat);
+                     qobject.get(),
+                     [this](auto const& event) { process_key_repeat(event); });
     redirect->installInputEventSpy(keyRepeatSpy);
 
-    QObject::connect(
-        redirect->space.qobject.get(), &win::space::qobject_t::clientActivated, this, [this] {
-            QObject::disconnect(m_activeClientSurfaceChangedConnection);
-            if (auto c = redirect->space.active_client) {
-                m_activeClientSurfaceChangedConnection = QObject::connect(
-                    c, &Toplevel::surfaceChanged, this, &keyboard_redirect::update);
-            } else {
-                m_activeClientSurfaceChangedConnection = QMetaObject::Connection();
-            }
-            update();
-        });
+    QObject::connect(redirect->space.qobject.get(),
+                     &win::space::qobject_t::clientActivated,
+                     qobject.get(),
+                     [this] {
+                         QObject::disconnect(m_activeClientSurfaceChangedConnection);
+                         if (auto c = redirect->space.active_client) {
+                             m_activeClientSurfaceChangedConnection = QObject::connect(
+                                 c, &Toplevel::surfaceChanged, qobject.get(), [this] { update(); });
+                         } else {
+                             m_activeClientSurfaceChangedConnection = QMetaObject::Connection();
+                         }
+                         update();
+                     });
     if (waylandServer()->has_screen_locker_integration()) {
         QObject::connect(ScreenLocker::KSldApp::self(),
                          &ScreenLocker::KSldApp::lockStateChanged,
-                         this,
-                         &keyboard_redirect::update);
+                         qobject.get(),
+                         [this] { update(); });
     }
 }
 

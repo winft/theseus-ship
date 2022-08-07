@@ -6,21 +6,9 @@
 */
 #include "keyboard_redirect.h"
 
-#include "event.h"
-#include "event_filter.h"
-#include "redirect.h"
-#include "xkb/keyboard.h"
-
-#include <KGlobalAccel>
-#include <QKeyEvent>
-
 namespace KWin::input
 {
 
-keyboard_redirect::keyboard_redirect(input::redirect* redirect)
-    : QObject()
-    , redirect(redirect)
-{
-}
+keyboard_redirect_qobject::~keyboard_redirect_qobject() = default;
 
 }

@@ -370,12 +370,14 @@ void redirect::handle_keyboard_added(input::keyboard* keyboard)
 {
     auto keyboard_red = this->keyboard.get();
 
-    QObject::connect(
-        keyboard, &keyboard::key_changed, keyboard_red, &input::keyboard_redirect::process_key);
+    QObject::connect(keyboard,
+                     &keyboard::key_changed,
+                     keyboard_red->qobject.get(),
+                     [keyboard_red](auto const& event) { keyboard_red->process_key(event); });
     QObject::connect(keyboard,
                      &keyboard::modifiers_changed,
-                     keyboard_red,
-                     &input::keyboard_redirect::process_modifiers);
+                     keyboard_red->qobject.get(),
+                     [keyboard_red](auto const& event) { keyboard_red->process_modifiers(event); });
 
     auto seat = find_seat();
 

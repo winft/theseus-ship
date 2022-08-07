@@ -331,8 +331,10 @@ void xinput_integration::setup_fake_devices()
     QObject::connect(
         pointer, &pointer::button_changed, pointer_red, &input::pointer_redirect::process_button);
 
-    QObject::connect(
-        keyboard, &keyboard::key_changed, keyboard_red, &input::keyboard_redirect::process_key);
+    QObject::connect(keyboard,
+                     &keyboard::key_changed,
+                     keyboard_red->qobject.get(),
+                     [keyboard_red](auto const& event) { keyboard_red->process_key(event); });
 }
 
 }
