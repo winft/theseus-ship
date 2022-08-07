@@ -116,6 +116,7 @@ include_directories(${KWIN_SOURCE_DIR})
 # Test OnScreenNotification
 ########################################################
 set(testOnScreenNotification_SRCS
+    ../base/logging.cpp
     ../win/osd_notification.cpp
     onscreennotificationtest.cpp
 )
@@ -178,7 +179,6 @@ set(testXkb_SRCS
     ../base/logging.cpp
     ../input/xkb/keyboard.cpp
     ../input/xkb/keymap.cpp
-    ../input/xkb/manager.cpp
     test_xkb.cpp
 )
 add_executable(testXkb ${testXkb_SRCS})

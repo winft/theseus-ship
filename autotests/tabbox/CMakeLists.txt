@@ -4,6 +4,7 @@ add_definitions(-DKWIN_UNIT_TEST)
 # Test TabBox::ClientModel
 ########################################################
 set(testTabBoxClientModel_SRCS
+    ../../base/logging.cpp
     ../../win/tabbox/tabbox_client_model.cpp
     ../../win/tabbox/tabbox_desktop_model.cpp
     ../../win/tabbox/tabbox_logging.cpp
@@ -49,6 +50,7 @@ ecm_mark_as_test(testTabBoxClientModel)
 # Test TabBox::TabBoxHandler
 ########################################################
 set(testTabBoxHandler_SRCS
+    ../../base/logging.cpp
     ../../win/tabbox/tabbox_client_model.cpp
     ../../win/tabbox/tabbox_desktop_model.cpp
     ../../win/tabbox/tabbox_logging.cpp

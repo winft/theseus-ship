@@ -416,7 +416,6 @@ set(kwin_SRCS
     input/x11/redirect.cpp
     input/xkb/keyboard.cpp
     input/xkb/keymap.cpp
-    input/xkb/manager.cpp
     main.cpp
     render/buffer.cpp
     render/compositor.cpp

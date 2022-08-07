@@ -20,7 +20,7 @@ namespace KWin::input
 platform::platform()
     : qobject{std::make_unique<platform_qobject>(
         [this](auto accel) { registerGlobalAccel(accel); })}
-    , xkb{input::xkb::manager(this)}
+    , xkb{xkb::manager<platform>(this)}
 {
     qRegisterMetaType<button_state>();
     qRegisterMetaType<key_state>();

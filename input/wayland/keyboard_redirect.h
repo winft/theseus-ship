@@ -16,6 +16,7 @@ namespace xkb
 {
 template<typename Xkb>
 class layout_manager;
+template<typename Platform>
 class manager;
 }
 
@@ -44,7 +45,9 @@ public:
 private:
     QMetaObject::Connection m_activeClientSurfaceChangedConnection;
     modifiers_changed_spy* modifiers_spy{nullptr};
-    std::unique_ptr<xkb::layout_manager<xkb::manager>> layout_manager;
+
+    using layout_manager_t = xkb::layout_manager<xkb::manager<platform>>;
+    std::unique_ptr<layout_manager_t> layout_manager;
 };
 
 }

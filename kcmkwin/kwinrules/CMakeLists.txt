@@ -5,6 +5,7 @@ add_definitions(-DKCMRULES)
 include_directories(../../)
 
 set(kwinrules_SRCS
+    ../../base/logging.cpp
     ../../win/rules/book_settings.cpp
     ../../input/cursor.cpp
     ../../input/cursor_shape.cpp

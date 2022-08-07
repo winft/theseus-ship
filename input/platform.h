@@ -127,7 +127,7 @@ public:
     std::vector<switch_device*> switches;
     std::vector<touch*> touchs;
 
-    input::xkb::manager xkb;
+    input::xkb::manager<platform> xkb;
     input::redirect* redirect{nullptr};
     std::unique_ptr<input::cursor> cursor;
     std::unique_ptr<global_shortcuts_manager> shortcuts;
