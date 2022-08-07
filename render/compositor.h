@@ -23,6 +23,11 @@ namespace KWin
 {
 class Toplevel;
 
+namespace input
+{
+class platform;
+}
+
 namespace win
 {
 class space;
@@ -42,6 +47,7 @@ namespace x11
 class compositor_selection_owner;
 }
 
+template<typename Platform, typename Input>
 class cursor;
 class effects_handler_impl;
 class platform;
@@ -113,7 +119,8 @@ public:
     std::unique_ptr<render::effects_handler_impl> effects;
 
     // TODO(romangg): Only relevant for Wayland. Put in child class.
-    std::unique_ptr<cursor> software_cursor;
+    using cursor_t = cursor<render::platform, input::platform>;
+    std::unique_ptr<cursor_t> software_cursor;
     compositor_x11_integration x11_integration;
 
     render::platform& platform;
