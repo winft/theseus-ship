@@ -55,6 +55,7 @@ static QPointF confineToBoundingBox(QPointF const& pos, QRectF const& boundingBo
 pointer_redirect::pointer_redirect(wayland::redirect* redirect)
     : input::pointer_redirect(redirect)
     , redirect{redirect}
+    , motions{*this}
 {
 }
 
@@ -166,70 +167,14 @@ void pointer_redirect::processMotion(QPointF const& pos, uint32_t time, input::p
     process_motion_absolute(event);
 }
 
-class PositionUpdateBlocker
-{
-public:
-    PositionUpdateBlocker(pointer_redirect* pointer)
-        : m_pointer(pointer)
-    {
-        s_counter++;
-    }
-    ~PositionUpdateBlocker()
-    {
-        s_counter--;
-        if (s_counter == 0) {
-            if (!s_scheduledPositions.isEmpty()) {
-                auto const sched = s_scheduledPositions.takeFirst();
-                if (sched.abs) {
-                    m_pointer->process_motion_absolute({sched.pos, {nullptr, sched.time}});
-                } else {
-                    m_pointer->process_motion(
-                        {sched.delta, sched.unaccel_delta, {nullptr, sched.time}});
-                }
-            }
-        }
-    }
-
-    static bool isPositionBlocked()
-    {
-        return s_counter > 0;
-    }
-
-    static void schedule(QPointF const& pos, uint32_t time)
-    {
-        s_scheduledPositions.append({pos, {}, {}, time, true});
-    }
-    static void schedule(QPointF const& delta, QPointF const& unaccel_delta, uint32_t time)
-    {
-        s_scheduledPositions.append({{}, delta, unaccel_delta, time, false});
-    }
-
-private:
-    static int s_counter;
-    struct ScheduledPosition {
-        QPointF pos;
-        QPointF delta;
-        QPointF unaccel_delta;
-        uint32_t time;
-        bool abs;
-    };
-    static QVector<ScheduledPosition> s_scheduledPositions;
-
-    pointer_redirect* m_pointer;
-};
-
-int PositionUpdateBlocker::s_counter = 0;
-QVector<PositionUpdateBlocker::ScheduledPosition> PositionUpdateBlocker::s_scheduledPositions;
-
 void pointer_redirect::process_motion(motion_event const& event)
 {
-    if (PositionUpdateBlocker::isPositionBlocked()) {
-        PositionUpdateBlocker::schedule(event.delta, event.unaccel_delta, event.base.time_msec);
+    if (motions.is_locked()) {
+        motions.schedule(event.delta, event.unaccel_delta, event.base.time_msec);
         return;
     }
 
-    PositionUpdateBlocker blocker(this);
-
+    blocker block(&motions);
     auto const pos = this->pos() + QPointF(event.delta.x(), event.delta.y());
     update_position(pos);
     device_redirect_update(this);
@@ -243,8 +188,8 @@ void pointer_redirect::process_motion(motion_event const& event)
 
 void pointer_redirect::process_motion_absolute(motion_absolute_event const& event)
 {
-    if (PositionUpdateBlocker::isPositionBlocked()) {
-        PositionUpdateBlocker::schedule(event.pos, event.base.time_msec);
+    if (motions.is_locked()) {
+        motions.schedule(event.pos, event.base.time_msec);
         return;
     }
 
@@ -252,7 +197,7 @@ void pointer_redirect::process_motion_absolute(motion_absolute_event const& even
     auto const pos
         = QPointF(space_size.width() * event.pos.x(), space_size.height() * event.pos.y());
 
-    PositionUpdateBlocker blocker(this);
+    blocker block(&motions);
     update_position(pos);
     device_redirect_update(this);
 
