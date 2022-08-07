@@ -258,7 +258,8 @@ void ApplicationX11::start()
             ::exit(1);
         }
 
-        render->compositor = std::make_unique<render::x11::compositor>(*render);
+        render->compositor
+            = std::make_unique<render::x11::compositor<render::x11::platform>>(*render);
 
         using space_t = win::x11::space<base::x11::platform>;
         base.space = std::make_unique<space_t>(base);

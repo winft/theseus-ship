@@ -19,8 +19,10 @@ namespace KWin::render
 
 namespace x11
 {
+template<typename Platform>
 class compositor;
 class overlay_window;
+class platform;
 }
 
 namespace xrender
@@ -33,7 +35,7 @@ namespace xrender
 class backend
 {
 public:
-    explicit backend(x11::compositor& compositor);
+    explicit backend(x11::compositor<x11::platform>& compositor);
     ~backend();
 
     void present(paint_type mask, QRegion const& damage);

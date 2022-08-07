@@ -80,7 +80,7 @@ void platform::init()
 
 gl::backend* platform::get_opengl_backend(render::compositor& compositor)
 {
-    auto& x11comp = static_cast<render::x11::compositor&>(compositor);
+    auto& x11comp = static_cast<render::x11::compositor<render::x11::platform>&>(compositor);
 
     if (gl_backend) {
         start_glx_backend(m_x11Display, x11comp, *gl_backend);

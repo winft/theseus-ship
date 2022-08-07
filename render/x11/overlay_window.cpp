@@ -40,7 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin::render::x11
 {
-overlay_window::overlay_window(x11::compositor& compositor)
+overlay_window::overlay_window(x11::compositor<platform>& compositor)
     : base::x11::event_filter(QVector<int>{XCB_EXPOSE, XCB_VISIBILITY_NOTIFY})
     , m_visible(true)
     , m_shown(false)

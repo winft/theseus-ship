@@ -38,7 +38,8 @@
 namespace KWin::render::backend::x11
 {
 
-glx_backend::glx_backend(Display* display, render::x11::compositor& compositor)
+glx_backend::glx_backend(Display* display,
+                         render::x11::compositor<render::x11::platform>& compositor)
     : gl::backend()
     , compositor{compositor}
 {
