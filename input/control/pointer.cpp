@@ -190,12 +190,6 @@ pointer::pointer(platform* plat)
     config = static_cast<pointer_config*>(device::config.get());
 }
 
-void pointer::init_config()
-{
-    device::init_config();
-    load_config(this);
-}
-
 void pointer::set_tap_to_click(bool active)
 {
     if (tap_finger_count() < 1 || is_tap_to_click() == active) {

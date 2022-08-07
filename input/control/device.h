@@ -38,7 +38,7 @@ public:
     virtual bool is_enabled() const = 0;
     void set_enabled(bool enable);
 
-    virtual void init_config();
+    void init_config();
 
     std::unique_ptr<device_config> config;
 

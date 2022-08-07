@@ -36,8 +36,6 @@ class KWIN_EXPORT pointer : public device
 public:
     explicit pointer(platform* plat);
 
-    void init_config() override;
-
     virtual bool is_touchpad() const = 0;
     virtual bool supports_gesture() const = 0;
 
