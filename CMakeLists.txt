@@ -777,11 +777,7 @@ set(kwin_WAYLAND_SRCS
    debug/console/wayland/input_filter.cpp
    debug/console/wayland/surface_tree_model.cpp
    debug/console/wayland/wayland_console.cpp
-   input/backend/wlroots/keyboard.cpp
    input/backend/wlroots/platform.cpp
-   input/backend/wlroots/pointer.cpp
-   input/backend/wlroots/switch.cpp
-   input/backend/wlroots/touch.cpp
    input/backend/wlroots/control/headless/keyboard.cpp
    input/backend/wlroots/control/keyboard.cpp
    input/backend/wlroots/control/pointer.cpp
