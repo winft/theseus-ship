@@ -30,11 +30,13 @@ void pointer_redirect_process_button_spies(Pointer& ptr, button_event const& eve
 
 class KWIN_EXPORT pointer_redirect : public device_redirect
 {
-    Q_OBJECT
 public:
     static bool s_cursorUpdateBlocking;
 
-    explicit pointer_redirect(input::redirect* redirect);
+    explicit pointer_redirect(input::redirect* redirect)
+        : device_redirect(redirect)
+    {
+    }
 
     virtual QPointF pos() const
     {

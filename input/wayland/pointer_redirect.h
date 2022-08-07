@@ -30,7 +30,6 @@ class redirect;
 
 class KWIN_EXPORT pointer_redirect : public input::pointer_redirect
 {
-    Q_OBJECT
 public:
     explicit pointer_redirect(wayland::redirect* redirect);
     void init();

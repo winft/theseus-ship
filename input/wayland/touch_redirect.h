@@ -26,7 +26,6 @@ class redirect;
 
 class KWIN_EXPORT touch_redirect : public input::touch_redirect
 {
-    Q_OBJECT
 public:
     explicit touch_redirect(wayland::redirect* redirect);
 

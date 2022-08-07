@@ -328,8 +328,10 @@ void xinput_integration::setup_fake_devices()
 
     xkb::keyboard_update_from_default(platform->xkb, *keyboard->xkb);
 
-    QObject::connect(
-        pointer, &pointer::button_changed, pointer_red, &input::pointer_redirect::process_button);
+    QObject::connect(pointer,
+                     &pointer::button_changed,
+                     pointer_red->qobject.get(),
+                     [pointer_red](auto const& event) { pointer_red->process_button(event); });
 
     QObject::connect(keyboard,
                      &keyboard::key_changed,

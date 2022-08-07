@@ -33,6 +33,7 @@ set(kwin_kcm_rules_XCB_LIBS
 set(kcm_libs
     Qt::Quick
 
+    KDecoration2::KDecoration2Private
     KF5::KCMUtils
     KF5::I18n
     KF5::QuickAddons

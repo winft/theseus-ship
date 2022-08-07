@@ -15,9 +15,4 @@ namespace KWin::input
 
 bool pointer_redirect::s_cursorUpdateBlocking{false};
 
-pointer_redirect::pointer_redirect(input::redirect* redirect)
-    : device_redirect(redirect)
-{
-}
-
 }

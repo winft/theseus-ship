@@ -9,17 +9,13 @@
 #pragma once
 
 #include "kwin_export.h"
+#include "toplevel.h"
+#include "win/deco/client_impl.h"
 
 #include <QWindow>
 
 namespace KWin
 {
-class Toplevel;
-
-namespace win::deco
-{
-class client_impl;
-}
 
 namespace input
 {
@@ -44,25 +40,51 @@ struct device_redirect_focus {
     } notifiers;
 };
 
-class KWIN_EXPORT device_redirect : public QObject
+class KWIN_EXPORT device_redirect_qobject : public QObject
 {
     Q_OBJECT
 public:
-    ~device_redirect() override;
+    ~device_redirect_qobject() override;
 
-    virtual QPointF position() const;
+Q_SIGNALS:
+    void decorationChanged();
+};
 
-    virtual void cleanupInternalWindow(QWindow* old, QWindow* now);
-    virtual void cleanupDecoration(win::deco::client_impl* old, win::deco::client_impl* now);
+class device_redirect
+{
+public:
+    virtual ~device_redirect() = default;
 
-    virtual void focusUpdate(Toplevel* old, Toplevel* now);
+    virtual QPointF position() const
+    {
+        return {};
+    }
+
+    virtual void cleanupInternalWindow(QWindow* /*old*/, QWindow* /*now*/)
+    {
+    }
+
+    virtual void cleanupDecoration(win::deco::client_impl* /*old*/, win::deco::client_impl* /*now*/)
+    {
+    }
+
+    virtual void focusUpdate(Toplevel* /*old*/, Toplevel* /*now*/)
+    {
+    }
 
     /**
      * Certain input devices can be in a state of having no valid position. An example are touch
      * screens when no finger/pen is resting on the surface (no touch point).
      */
-    virtual bool positionValid() const;
-    virtual bool focusUpdatesBlocked();
+    virtual bool positionValid() const
+    {
+        return true;
+    }
+
+    virtual bool focusUpdatesBlocked()
+    {
+        return false;
+    }
 
     /**
      * Element currently at the position of the input device according to the stacking order. Might
@@ -76,13 +98,15 @@ public:
      */
     device_redirect_focus focus;
 
+    std::unique_ptr<device_redirect_qobject> qobject;
     input::redirect* redirect;
 
-Q_SIGNALS:
-    void decorationChanged();
-
 protected:
-    explicit device_redirect(input::redirect* redirect);
+    explicit device_redirect(input::redirect* redirect)
+        : qobject{std::make_unique<device_redirect_qobject>()}
+        , redirect{redirect}
+    {
+    }
 };
 
 }

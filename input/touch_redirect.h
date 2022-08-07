@@ -29,11 +29,13 @@ namespace KWin::input
 {
 class touch;
 
-class KWIN_EXPORT touch_redirect : public device_redirect
+class touch_redirect : public device_redirect
 {
-    Q_OBJECT
 public:
-    explicit touch_redirect(input::redirect* redirect);
+    explicit touch_redirect(input::redirect* redirect)
+        : device_redirect(redirect)
+    {
+    }
 
     virtual void process_down(touch_down_event const& /*event*/)
     {

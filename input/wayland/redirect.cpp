@@ -325,39 +325,57 @@ void redirect::handle_pointer_added(input::pointer* pointer)
 {
     auto pointer_red = this->pointer.get();
 
-    QObject::connect(
-        pointer, &pointer::button_changed, pointer_red, &input::pointer_redirect::process_button);
-
-    QObject::connect(
-        pointer, &pointer::motion, pointer_red, &input::pointer_redirect::process_motion);
     QObject::connect(pointer,
-                     &pointer::motion_absolute,
-                     pointer_red,
-                     &input::pointer_redirect::process_motion_absolute);
+                     &pointer::button_changed,
+                     pointer_red->qobject.get(),
+                     [pointer_red](auto const& event) { pointer_red->process_button(event); });
 
-    QObject::connect(
-        pointer, &pointer::axis_changed, pointer_red, &input::pointer_redirect::process_axis);
-
-    QObject::connect(
-        pointer, &pointer::pinch_begin, pointer_red, &input::pointer_redirect::process_pinch_begin);
     QObject::connect(pointer,
-                     &pointer::pinch_update,
-                     pointer_red,
-                     &input::pointer_redirect::process_pinch_update);
+                     &pointer::motion,
+                     pointer_red->qobject.get(),
+                     [pointer_red](auto const& event) { pointer_red->process_motion(event); });
     QObject::connect(
-        pointer, &pointer::pinch_end, pointer_red, &input::pointer_redirect::process_pinch_end);
+        pointer,
+        &pointer::motion_absolute,
+        pointer_red->qobject.get(),
+        [pointer_red](auto const& event) { pointer_red->process_motion_absolute(event); });
 
-    QObject::connect(
-        pointer, &pointer::swipe_begin, pointer_red, &input::pointer_redirect::process_swipe_begin);
     QObject::connect(pointer,
-                     &pointer::swipe_update,
-                     pointer_red,
-                     &input::pointer_redirect::process_swipe_update);
-    QObject::connect(
-        pointer, &pointer::swipe_end, pointer_red, &input::pointer_redirect::process_swipe_end);
+                     &pointer::axis_changed,
+                     pointer_red->qobject.get(),
+                     [pointer_red](auto const& event) { pointer_red->process_axis(event); });
 
+    QObject::connect(pointer,
+                     &pointer::pinch_begin,
+                     pointer_red->qobject.get(),
+                     [pointer_red](auto const& event) { pointer_red->process_pinch_begin(event); });
     QObject::connect(
-        pointer, &pointer::frame, pointer_red, &input::pointer_redirect::process_frame);
+        pointer,
+        &pointer::pinch_update,
+        pointer_red->qobject.get(),
+        [pointer_red](auto const& event) { pointer_red->process_pinch_update(event); });
+    QObject::connect(pointer,
+                     &pointer::pinch_end,
+                     pointer_red->qobject.get(),
+                     [pointer_red](auto const& event) { pointer_red->process_pinch_end(event); });
+
+    QObject::connect(pointer,
+                     &pointer::swipe_begin,
+                     pointer_red->qobject.get(),
+                     [pointer_red](auto const& event) { pointer_red->process_swipe_begin(event); });
+    QObject::connect(
+        pointer,
+        &pointer::swipe_update,
+        pointer_red->qobject.get(),
+        [pointer_red](auto const& event) { pointer_red->process_swipe_update(event); });
+    QObject::connect(pointer,
+                     &pointer::swipe_end,
+                     pointer_red->qobject.get(),
+                     [pointer_red](auto const& event) { pointer_red->process_swipe_end(event); });
+
+    QObject::connect(pointer, &pointer::frame, pointer_red->qobject.get(), [pointer_red] {
+        pointer_red->process_frame();
+    });
 
     auto seat = find_seat();
     if (!seat->hasPointer()) {
@@ -411,11 +429,20 @@ void redirect::handle_touch_added(input::touch* touch)
 {
     auto touch_red = this->touch.get();
 
-    QObject::connect(touch, &touch::down, touch_red, &input::touch_redirect::process_down);
-    QObject::connect(touch, &touch::up, touch_red, &input::touch_redirect::process_up);
-    QObject::connect(touch, &touch::motion, touch_red, &input::touch_redirect::process_motion);
-    QObject::connect(touch, &touch::cancel, touch_red, &input::touch_redirect::cancel);
-    QObject::connect(touch, &touch::frame, touch_red, &input::touch_redirect::frame);
+    QObject::connect(touch, &touch::down, touch_red->qobject.get(), [touch_red](auto const& event) {
+        touch_red->process_down(event);
+    });
+    QObject::connect(touch, &touch::up, touch_red->qobject.get(), [touch_red](auto const& event) {
+        touch_red->process_up(event);
+    });
+    QObject::connect(touch,
+                     &touch::motion,
+                     touch_red->qobject.get(),
+                     [touch_red](auto const& event) { touch_red->process_motion(event); });
+    QObject::connect(
+        touch, &touch::cancel, touch_red->qobject.get(), [touch_red] { touch_red->cancel(); });
+    QObject::connect(
+        touch, &touch::frame, touch_red->qobject.get(), [touch_red] { touch_red->frame(); });
 
     auto seat = find_seat();
     if (!seat->hasTouch()) {
