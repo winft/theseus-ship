@@ -17,11 +17,9 @@
 #include "input/pointer_redirect.h"
 #include "input/redirect.h"
 #include "input/spies/modifier_only_shortcuts.h"
-#include "platform.h"
+#include "kwinglobals.h"
 #include "win/screen_edges.h"
 #include "win/space.h"
-
-#include "kwinglobals.h"
 
 #include <X11/extensions/XI2proto.h>
 #include <X11/extensions/XInput2.h>
@@ -233,8 +231,7 @@ public:
 };
 
 xinput_integration::xinput_integration(Display* display, x11::platform* platform)
-    : fake_devices{std::make_unique<input::pointer>(platform),
-                   std::make_unique<input::keyboard>(platform)}
+    : fake_devices{*platform}
     , platform{platform}
     , m_x11Display(display)
 {

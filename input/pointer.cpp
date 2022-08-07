@@ -14,7 +14,6 @@ namespace KWin::input
 pointer::pointer(input::platform* platform)
     : platform{platform}
 {
-    platform->pointers.push_back(this);
 }
 
 pointer::~pointer()

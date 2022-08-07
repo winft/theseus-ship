@@ -475,9 +475,9 @@ void redirect::handle_fake_input_device_added(Wrapland::Server::FakeInputDevice*
                                        std::make_unique<fake::keyboard>(device, &platform),
                                        std::make_unique<fake::touch>(device, &platform)});
 
-    Q_EMIT platform.qobject->pointer_added(devices.pointer.get());
-    Q_EMIT platform.qobject->keyboard_added(devices.keyboard.get());
-    Q_EMIT platform.qobject->touch_added(devices.touch.get());
+    platform_add_pointer(devices.pointer.get(), platform);
+    platform_add_keyboard(devices.keyboard.get(), platform);
+    platform_add_touch(devices.touch.get(), platform);
 
     fake_devices.insert({device, std::move(devices)});
 }
@@ -525,7 +525,7 @@ void redirect::handle_virtual_keyboard_added(
                      });
 
     virtual_keyboards.insert({virtual_keyboard, std::move(keyboard)});
-    Q_EMIT platform.qobject->keyboard_added(keyboard_ptr);
+    platform_add_keyboard(keyboard_ptr, platform);
 }
 
 }

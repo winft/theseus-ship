@@ -6,6 +6,11 @@
 */
 #pragma once
 
+#include "platform.h"
+
+#include "input/keyboard.h"
+#include "input/pointer.h"
+
 #include <QObject>
 #include <QPointer>
 #include <QScopedPointer>
@@ -24,7 +29,21 @@ namespace x11
 class XInputEventFilter;
 class XKeyPressReleaseEventFilter;
 class cursor;
-class platform;
+
+struct xinput_devices {
+    xinput_devices(x11::platform& platform)
+        : keyboard{std::make_unique<input::keyboard>(&platform)}
+        , pointer{std::make_unique<input::pointer>(&platform)}
+        , platform{platform}
+    {
+        platform_add_keyboard(keyboard.get(), platform);
+        platform_add_pointer(pointer.get(), platform);
+    }
+
+    std::unique_ptr<input::keyboard> keyboard;
+    std::unique_ptr<input::pointer> pointer;
+    x11::platform& platform;
+};
 
 class xinput_integration : public QObject
 {
@@ -42,10 +61,7 @@ public:
     }
     void setCursor(cursor* cursor);
 
-    struct {
-        std::unique_ptr<input::pointer> pointer;
-        std::unique_ptr<input::keyboard> keyboard;
-    } fake_devices;
+    xinput_devices fake_devices;
 
     x11::platform* platform;
 

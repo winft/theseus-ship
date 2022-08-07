@@ -41,6 +41,34 @@ class redirect;
 class switch_device;
 class touch;
 
+template<typename Keys, typename Platform>
+void platform_add_keyboard(Keys* keys, Platform& platform)
+{
+    platform.keyboards.push_back(keys);
+    platform.qobject->keyboard_added(keys);
+}
+
+template<typename Pointer, typename Platform>
+void platform_add_pointer(Pointer* pointer, Platform& platform)
+{
+    platform.pointers.push_back(pointer);
+    platform.qobject->pointer_added(pointer);
+}
+
+template<typename Switch, typename Platform>
+void platform_add_switch(Switch* switch_dev, Platform& platform)
+{
+    platform.switches.push_back(switch_dev);
+    platform.qobject->switch_added(switch_dev);
+}
+
+template<typename Touch, typename Platform>
+void platform_add_touch(Touch* touch, Platform& platform)
+{
+    platform.touchs.push_back(touch);
+    platform.qobject->touch_added(touch);
+}
+
 class KWIN_EXPORT platform
 {
 public:

@@ -39,8 +39,6 @@ Qt::ScreenOrientation to_qt_orientation(base::wayland::output_transform transfor
 touch::touch(input::platform* platform)
     : platform{platform}
 {
-    platform->touchs.push_back(this);
-
     QObject::connect(&kwinApp()->get_base(), &base::platform::topology_changed, this, [this] {
         if (!control) {
             return;

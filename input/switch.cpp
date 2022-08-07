@@ -14,7 +14,6 @@ namespace KWin::input
 switch_device::switch_device(input::platform* platform)
     : platform{platform}
 {
-    platform->switches.push_back(this);
 }
 
 switch_device::~switch_device()

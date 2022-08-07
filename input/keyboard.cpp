@@ -15,7 +15,6 @@ keyboard::keyboard(input::platform* platform)
     : platform{platform}
     , xkb{std::make_unique<xkb::keyboard>(platform->xkb.context, platform->xkb.compose_table)}
 {
-    platform->keyboards.push_back(this);
 }
 
 keyboard::~keyboard()
