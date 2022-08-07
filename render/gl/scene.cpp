@@ -457,8 +457,10 @@ void scene::paintCursor()
 
         // handle shape update on case cursor image changed
         if (!sw_cursor.notifier) {
-            sw_cursor.notifier = connect(
-                cursor, &render::cursor::changed, this, [this] { sw_cursor.dirty = true; });
+            sw_cursor.notifier
+                = connect(cursor->qobject.get(), &render::cursor_qobject::changed, this, [this] {
+                      sw_cursor.dirty = true;
+                  });
         }
     }
 

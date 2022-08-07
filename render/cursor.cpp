@@ -16,11 +16,15 @@
 namespace KWin::render
 {
 
+cursor_qobject::cursor_qobject() = default;
+
 cursor::cursor(render::platform& platform, input::platform* input)
-    : platform{platform}
+    : qobject{std::make_unique<cursor_qobject>()}
+    , platform{platform}
     , input{input}
 {
-    connect(this, &cursor::changed, this, &cursor::rerender);
+    QObject::connect(
+        qobject.get(), &cursor_qobject::changed, qobject.get(), [this] { rerender(); });
 }
 
 QImage cursor::image() const
@@ -55,12 +59,14 @@ void cursor::set_enabled(bool enable)
 
     if (enable) {
         cursor->start_image_tracking();
-        connect(cursor, &input::cursor::pos_changed, this, &cursor::rerender);
-        connect(cursor, &input::cursor::image_changed, this, &cursor::changed);
+        notifiers.pos = QObject::connect(
+            cursor, &input::cursor::pos_changed, qobject.get(), [this] { rerender(); });
+        notifiers.image = QObject::connect(
+            cursor, &input::cursor::image_changed, qobject.get(), &cursor_qobject::changed);
     } else {
         cursor->stop_image_tracking();
-        disconnect(cursor, &input::cursor::pos_changed, this, &cursor::rerender);
-        disconnect(cursor, &input::cursor::image_changed, this, &cursor::changed);
+        QObject::disconnect(notifiers.pos);
+        QObject::disconnect(notifiers.image);
     }
 }
 
