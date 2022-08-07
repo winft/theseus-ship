@@ -18,8 +18,6 @@ static void handle_destroy(struct wl_listener* listener, [[maybe_unused]] void* 
 {
     er* event_receiver_struct = wl_container_of(listener, event_receiver_struct, event);
     auto switch_device = event_receiver_struct->receiver;
-
-    switch_device->backend = nullptr;
     delete switch_device;
 }
 
@@ -49,9 +47,9 @@ switch_device::switch_device(wlr_input_device* dev, input::platform* platform)
     : input::switch_device(platform)
 {
 #if HAVE_WLR_BASE_INPUT_DEVICES
-    backend = wlr_switch_from_input_device(dev);
+    auto backend = wlr_switch_from_input_device(dev);
 #else
-    backend = dev->switch_device;
+    auto backend = dev->switch_device;
 #endif
 
     if (auto libinput = get_libinput_device(dev)) {

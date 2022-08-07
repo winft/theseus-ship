@@ -22,8 +22,6 @@ class touch : public input::touch
 public:
     using er = base::event_receiver<touch>;
 
-    wlr_touch* backend{nullptr};
-
     touch(wlr_input_device* dev, input::platform* plat);
     touch(touch const&) = delete;
     touch& operator=(touch const&) = delete;

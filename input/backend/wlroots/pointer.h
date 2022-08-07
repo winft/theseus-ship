@@ -21,8 +21,6 @@ class pointer : public input::pointer
 public:
     using er = base::event_receiver<pointer>;
 
-    wlr_pointer* backend{nullptr};
-
     pointer(wlr_input_device* dev, input::platform* platform);
     pointer(pointer const&) = delete;
     pointer& operator=(pointer const&) = delete;

@@ -22,8 +22,6 @@ static void handle_destroy(struct wl_listener* listener, [[maybe_unused]] void* 
 {
     er* event_receiver_struct = wl_container_of(listener, event_receiver_struct, event);
     auto touch = event_receiver_struct->receiver;
-
-    touch->backend = nullptr;
     delete touch;
 }
 
@@ -125,9 +123,9 @@ touch::touch(wlr_input_device* dev, input::platform* platform)
     : input::touch(platform)
 {
 #if HAVE_WLR_BASE_INPUT_DEVICES
-    backend = wlr_touch_from_input_device(dev);
+    auto backend = wlr_touch_from_input_device(dev);
 #else
-    backend = dev->touch;
+    auto backend = dev->touch;
 #endif
 
     if (auto libinput = get_libinput_device(dev)) {

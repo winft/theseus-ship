@@ -22,8 +22,6 @@ class switch_device : public input::switch_device
 public:
     using er = base::event_receiver<switch_device>;
 
-    wlr_switch* backend{nullptr};
-
     switch_device(wlr_input_device* dev, input::platform* platform);
     switch_device(switch_device const&) = delete;
     switch_device& operator=(switch_device const&) = delete;
