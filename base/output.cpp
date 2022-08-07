@@ -22,37 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::base
 {
 
-void output::set_enabled(bool /*enable*/)
-{
-}
-
-bool output::is_internal() const
-{
-    return false;
-}
-
-qreal output::scale() const
-{
-    return 1;
-}
-
-QSize output::physical_size() const
-{
-    return QSize();
-}
-
-int output::gamma_ramp_size() const
-{
-    return 0;
-}
-
-bool output::set_gamma_ramp(gamma_ramp const& /*gamma*/)
-{
-    return false;
-}
-
-void output::update_dpms(dpms_mode /*mode*/)
-{
-}
+output_qobject::output_qobject() = default;
 
 }

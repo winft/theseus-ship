@@ -1923,10 +1923,20 @@ effect_screen_impl::effect_screen_impl(base::output* output, QObject* parent)
     : EffectScreen(parent)
     , m_platformOutput(output)
 {
-    connect(output, &base::output::wake_up, this, &EffectScreen::wakeUp);
-    connect(output, &base::output::about_to_turn_off, this, &EffectScreen::aboutToTurnOff);
-    connect(output, &base::output::scale_changed, this, &EffectScreen::devicePixelRatioChanged);
-    connect(output, &base::output::geometry_changed, this, &EffectScreen::geometryChanged);
+    QObject::connect(
+        output->qobject.get(), &base::output_qobject::wake_up, this, &EffectScreen::wakeUp);
+    QObject::connect(output->qobject.get(),
+                     &base::output_qobject::about_to_turn_off,
+                     this,
+                     &EffectScreen::aboutToTurnOff);
+    QObject::connect(output->qobject.get(),
+                     &base::output_qobject::scale_changed,
+                     this,
+                     &EffectScreen::devicePixelRatioChanged);
+    QObject::connect(output->qobject.get(),
+                     &base::output_qobject::geometry_changed,
+                     this,
+                     &EffectScreen::geometryChanged);
 }
 
 base::output* effect_screen_impl::platformOutput() const
