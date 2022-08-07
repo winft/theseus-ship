@@ -179,8 +179,9 @@ void pointer_redirect::process_motion(motion_event const& event)
     update_position(pos);
     device_redirect_update(this);
 
-    redirect->processSpies(std::bind(&event_spy::motion, std::placeholders::_1, event));
-    redirect->processFilters(
+    process_spies(redirect->m_spies, std::bind(&event_spy::motion, std::placeholders::_1, event));
+    process_filters(
+        redirect->m_filters,
         std::bind(&event_filter<wayland::redirect>::motion, std::placeholders::_1, event));
 
     process_frame();
@@ -203,8 +204,10 @@ void pointer_redirect::process_motion_absolute(motion_absolute_event const& even
 
     auto motion_ev = motion_event({{}, {}, event.base});
 
-    redirect->processSpies(std::bind(&event_spy::motion, std::placeholders::_1, motion_ev));
-    redirect->processFilters(
+    process_spies(redirect->m_spies,
+                  std::bind(&event_spy::motion, std::placeholders::_1, motion_ev));
+    process_filters(
+        redirect->m_filters,
         std::bind(&event_filter<wayland::redirect>::motion, std::placeholders::_1, motion_ev));
 
     process_frame();
@@ -219,7 +222,8 @@ void pointer_redirect::process_button(button_event const& event)
 
     update_button(event);
     pointer_redirect_process_button_spies(*this, event);
-    redirect->processFilters(
+    process_filters(
+        redirect->m_filters,
         std::bind(&event_filter<wayland::redirect>::button, std::placeholders::_1, event));
 
     if (event.state == button_state::released) {
@@ -234,8 +238,9 @@ void pointer_redirect::process_axis(axis_event const& event)
 {
     device_redirect_update(this);
 
-    redirect->processSpies(std::bind(&event_spy::axis, std::placeholders::_1, event));
-    redirect->processFilters(
+    process_spies(redirect->m_spies, std::bind(&event_spy::axis, std::placeholders::_1, event));
+    process_filters(
+        redirect->m_filters,
         std::bind(&event_filter<wayland::redirect>::axis, std::placeholders::_1, event));
 
     process_frame();
@@ -243,8 +248,10 @@ void pointer_redirect::process_axis(axis_event const& event)
 
 void pointer_redirect::process_swipe_begin(swipe_begin_event const& event)
 {
-    redirect->processSpies(std::bind(&event_spy::swipe_begin, std::placeholders::_1, event));
-    redirect->processFilters(
+    process_spies(redirect->m_spies,
+                  std::bind(&event_spy::swipe_begin, std::placeholders::_1, event));
+    process_filters(
+        redirect->m_filters,
         std::bind(&event_filter<wayland::redirect>::swipe_begin, std::placeholders::_1, event));
 }
 
@@ -252,8 +259,10 @@ void pointer_redirect::process_swipe_update(swipe_update_event const& event)
 {
     device_redirect_update(this);
 
-    redirect->processSpies(std::bind(&event_spy::swipe_update, std::placeholders::_1, event));
-    redirect->processFilters(
+    process_spies(redirect->m_spies,
+                  std::bind(&event_spy::swipe_update, std::placeholders::_1, event));
+    process_filters(
+        redirect->m_filters,
         std::bind(&event_filter<wayland::redirect>::swipe_update, std::placeholders::_1, event));
 }
 
@@ -261,8 +270,10 @@ void pointer_redirect::process_swipe_end(swipe_end_event const& event)
 {
     device_redirect_update(this);
 
-    redirect->processSpies(std::bind(&event_spy::swipe_end, std::placeholders::_1, event));
-    redirect->processFilters(
+    process_spies(redirect->m_spies,
+                  std::bind(&event_spy::swipe_end, std::placeholders::_1, event));
+    process_filters(
+        redirect->m_filters,
         std::bind(&event_filter<wayland::redirect>::swipe_end, std::placeholders::_1, event));
 }
 
@@ -270,8 +281,10 @@ void pointer_redirect::process_pinch_begin(pinch_begin_event const& event)
 {
     device_redirect_update(this);
 
-    redirect->processSpies(std::bind(&event_spy::pinch_begin, std::placeholders::_1, event));
-    redirect->processFilters(
+    process_spies(redirect->m_spies,
+                  std::bind(&event_spy::pinch_begin, std::placeholders::_1, event));
+    process_filters(
+        redirect->m_filters,
         std::bind(&event_filter<wayland::redirect>::pinch_begin, std::placeholders::_1, event));
 }
 
@@ -279,8 +292,10 @@ void pointer_redirect::process_pinch_update(pinch_update_event const& event)
 {
     device_redirect_update(this);
 
-    redirect->processSpies(std::bind(&event_spy::pinch_update, std::placeholders::_1, event));
-    redirect->processFilters(
+    process_spies(redirect->m_spies,
+                  std::bind(&event_spy::pinch_update, std::placeholders::_1, event));
+    process_filters(
+        redirect->m_filters,
         std::bind(&event_filter<wayland::redirect>::pinch_update, std::placeholders::_1, event));
 }
 
@@ -288,8 +303,10 @@ void pointer_redirect::process_pinch_end(pinch_end_event const& event)
 {
     device_redirect_update(this);
 
-    redirect->processSpies(std::bind(&event_spy::pinch_end, std::placeholders::_1, event));
-    redirect->processFilters(
+    process_spies(redirect->m_spies,
+                  std::bind(&event_spy::pinch_end, std::placeholders::_1, event));
+    process_filters(
+        redirect->m_filters,
         std::bind(&event_filter<wayland::redirect>::pinch_end, std::placeholders::_1, event));
 }
 

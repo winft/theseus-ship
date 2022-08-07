@@ -24,7 +24,7 @@ template<typename Keyboard>
 void keyboard_redirect_prepare_key(Keyboard& keys, key_event const& event)
 {
     event.base.dev->xkb->update_key(event.keycode, event.state);
-    keys.redirect->processSpies(std::bind(&event_spy::key, std::placeholders::_1, event));
+    process_spies(keys.redirect->m_spies, std::bind(&event_spy::key, std::placeholders::_1, event));
 }
 
 class KWIN_EXPORT keyboard_redirect_qobject : public QObject

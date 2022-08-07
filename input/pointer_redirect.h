@@ -25,7 +25,8 @@ class pointer;
 template<typename Pointer>
 void pointer_redirect_process_button_spies(Pointer& ptr, button_event const& event)
 {
-    ptr.redirect->processSpies(std::bind(&event_spy::button, std::placeholders::_1, event));
+    process_spies(ptr.redirect->m_spies,
+                  std::bind(&event_spy::button, std::placeholders::_1, event));
 }
 
 class pointer_redirect : public device_redirect

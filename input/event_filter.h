@@ -18,6 +18,26 @@ namespace KWin::input
 {
 
 /**
+ * Sends an event through all InputFilters.
+ * The method @p function is invoked on each input filter. Processing is stopped if
+ * a filter returns @c true for @p function.
+ *
+ * The UnaryPredicate is defined like the UnaryPredicate of std::any_of.
+ * The signature of the function should be equivalent to the following:
+ * @code
+ * bool function(event_filter<redirect> const* filter);
+ * @endcode
+ *
+ * The intended usage is to std::bind the method to invoke on the filter with all arguments
+ * bind.
+ */
+template<typename Filters, typename UnaryPredicate>
+void process_filters(Filters const& filters, UnaryPredicate function)
+{
+    std::any_of(filters.cbegin(), filters.cend(), function);
+}
+
+/**
  * Base class for filtering input events inside InputRedirection.
  *
  * The idea behind the event_filter is to have task oriented
