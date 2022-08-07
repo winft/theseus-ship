@@ -8,11 +8,6 @@
 namespace KWin::input::backend::wlroots::headless
 {
 
-keyboard_control::keyboard_control(input::platform* platform)
-    : input::control::keyboard(platform)
-{
-}
-
 bool keyboard_control::supports_disable_events() const
 {
     return data.supports_disable_events;

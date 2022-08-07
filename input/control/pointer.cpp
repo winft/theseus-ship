@@ -13,8 +13,8 @@
 namespace KWin::input::control
 {
 
-pointer::pointer(platform* plat)
-    : device(new pointer_config<pointer>, plat)
+pointer::pointer()
+    : device(new pointer_config<pointer>)
 {
     config = static_cast<pointer_config<pointer>*>(device::config.get());
 }

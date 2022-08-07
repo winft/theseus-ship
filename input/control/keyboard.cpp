@@ -10,8 +10,8 @@
 namespace KWin::input::control
 {
 
-keyboard::keyboard(platform* plat)
-    : device(new device_config, plat)
+keyboard::keyboard()
+    : device(new device_config)
 {
 }
 

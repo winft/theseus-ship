@@ -10,8 +10,8 @@
 namespace KWin::input::control
 {
 
-switch_device::switch_device(platform* plat)
-    : device(new device_config, plat)
+switch_device::switch_device()
+    : device(new device_config)
 {
 }
 

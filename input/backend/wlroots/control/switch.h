@@ -7,6 +7,7 @@
 
 #include "input/control/switch.h"
 
+#include <KSharedConfig>
 #include <libinput.h>
 
 namespace KWin::input::backend::wlroots
@@ -16,7 +17,7 @@ class switch_control : public input::control::switch_device
 {
     Q_OBJECT
 public:
-    switch_control(libinput_device* device, input::platform* platform);
+    switch_control(libinput_device* device, KSharedConfigPtr input_config);
     ~switch_control() override = default;
 
     bool supports_disable_events() const override;

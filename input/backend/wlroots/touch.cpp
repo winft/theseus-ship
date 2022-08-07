@@ -129,7 +129,7 @@ touch::touch(wlr_input_device* dev, input::platform* platform)
 #endif
 
     if (auto libinput = get_libinput_device(dev)) {
-        control = std::make_unique<touch_control>(libinput, platform);
+        control = std::make_unique<touch_control>(libinput, platform->config);
     }
     output = get_output();
 

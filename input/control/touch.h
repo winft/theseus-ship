@@ -14,7 +14,7 @@ class KWIN_EXPORT touch : public device
 {
     Q_OBJECT
 public:
-    explicit touch(platform* plat);
+    touch();
 
     virtual bool supports_gesture() const = 0;
     virtual QSizeF size() const = 0;

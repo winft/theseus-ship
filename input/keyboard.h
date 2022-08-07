@@ -16,6 +16,8 @@
 namespace KWin::input
 {
 
+class platform;
+
 class KWIN_EXPORT keyboard : public QObject
 {
     Q_OBJECT

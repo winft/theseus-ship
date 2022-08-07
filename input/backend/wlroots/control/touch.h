@@ -7,6 +7,7 @@
 
 #include "input/control/touch.h"
 
+#include <KSharedConfig>
 #include <QMatrix4x4>
 #include <QSizeF>
 #include <libinput.h>
@@ -19,7 +20,7 @@ class touch_control : public input::control::touch
     Q_OBJECT
 
 public:
-    touch_control(libinput_device* dev, input::platform* platform);
+    touch_control(libinput_device* dev, KSharedConfigPtr input_config);
     ~touch_control() override = default;
 
     bool supports_disable_events() const override;

@@ -12,11 +12,10 @@
 namespace KWin::input::backend::wlroots
 {
 
-pointer_control::pointer_control(libinput_device* dev, input::platform* platform)
-    : input::control::pointer(platform)
-    , dev{dev}
+pointer_control::pointer_control(libinput_device* dev, KSharedConfigPtr input_config)
+    : dev{dev}
 {
-    populate_metadata(this);
+    init_device_control(this, input_config);
 
     auto query_button = [this](auto code, auto button) {
         if (libinput_device_pointer_has_button(this->dev, code) == 1) {

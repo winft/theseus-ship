@@ -10,11 +10,10 @@
 namespace KWin::input::backend::wlroots
 {
 
-switch_control::switch_control(libinput_device* dev, input::platform* platform)
-    : input::control::switch_device(platform)
-    , dev{dev}
+switch_control::switch_control(libinput_device* dev, KSharedConfigPtr input_config)
+    : dev{dev}
 {
-    populate_metadata(this);
+    init_device_control(this, input_config);
 }
 
 bool switch_control::supports_disable_events() const

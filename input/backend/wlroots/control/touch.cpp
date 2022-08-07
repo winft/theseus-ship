@@ -10,11 +10,10 @@
 namespace KWin::input::backend::wlroots
 {
 
-touch_control::touch_control(libinput_device* dev, input::platform* platform)
-    : input::control::touch(platform)
-    , dev{dev}
+touch_control::touch_control(libinput_device* dev, KSharedConfigPtr input_config)
+    : dev{dev}
 {
-    populate_metadata(this);
+    init_device_control(this, input_config);
 }
 
 bool touch_control::supports_disable_events() const

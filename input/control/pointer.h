@@ -16,7 +16,7 @@ class KWIN_EXPORT pointer : public device
 {
     Q_OBJECT
 public:
-    explicit pointer(platform* plat);
+    pointer();
 
     virtual bool is_touchpad() const = 0;
     virtual bool supports_gesture() const = 0;

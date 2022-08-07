@@ -277,7 +277,7 @@ pointer::pointer(wlr_input_device* dev, input::platform* platform)
 #endif
 
     if (auto libinput = get_libinput_device(dev)) {
-        control = std::make_unique<pointer_control>(libinput, platform);
+        control = std::make_unique<pointer_control>(libinput, platform->config);
     }
 
     destroyed.receiver = this;

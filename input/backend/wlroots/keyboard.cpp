@@ -82,10 +82,10 @@ keyboard::keyboard(wlr_input_device* dev, input::platform* platform)
 #endif
 
     if (auto libinput = get_libinput_device(dev)) {
-        control = std::make_unique<keyboard_control>(libinput, platform);
+        control = std::make_unique<keyboard_control>(libinput, platform->config);
     } else if (base::backend::wlroots::get_headless_backend(
                    static_cast<wlroots::platform*>(platform)->base.backend)) {
-        auto headless_control = std::make_unique<headless::keyboard_control>(platform);
+        auto headless_control = std::make_unique<headless::keyboard_control>();
         headless_control->data.is_alpha_numeric_keyboard = true;
         this->control = std::move(headless_control);
     }
