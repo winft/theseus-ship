@@ -185,7 +185,7 @@ void XWaylandInputTest::testPointerEnterLeave()
     QVERIFY(!client->hasStrut());
     QVERIFY(!client->isHiddenInternal());
     QVERIFY(!client->ready_for_painting);
-    QMetaObject::invokeMethod(client, "setReadyForPainting");
+    client->setReadyForPainting();
     QVERIFY(client->ready_for_painting);
     QVERIFY(!client->surface);
     QSignalSpy surfaceChangedSpy(client, &Toplevel::surfaceChanged);

@@ -50,7 +50,8 @@ void perform_window_operation(Space& space,
         window->performMouseCommand(base::options_qobject::MouseUnrestrictedResize, cursor->pos());
         break;
     case base::options_qobject::CloseOp:
-        QMetaObject::invokeMethod(window, "closeWindow", Qt::QueuedConnection);
+        QMetaObject::invokeMethod(
+            window, [window] { window->closeWindow(); }, Qt::QueuedConnection);
         break;
     case base::options_qobject::MaximizeOp:
         maximize(window,

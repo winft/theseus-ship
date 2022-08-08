@@ -275,6 +275,16 @@ public:
 
     void setResourceClass(const QByteArray& name, const QByteArray& className = QByteArray());
 
+    /**
+     * Checks whether the screen number for this Toplevel changed and updates if needed.
+     * Any method changing the geometry of the Toplevel should call this method.
+     */
+    void checkScreen();
+    void setupCheckScreenConnection();
+    void removeCheckScreenConnection();
+
+    void setReadyForPainting();
+
     NETWinInfo* info{nullptr};
     Wrapland::Server::Surface* surface{nullptr};
     quint32 surface_id{0};
@@ -373,17 +383,6 @@ Q_SIGNALS:
     void hasApplicationMenuChanged(bool);
     void applicationMenuChanged();
     void applicationMenuActiveChanged(bool);
-
-public Q_SLOTS:
-    /**
-     * Checks whether the screen number for this Toplevel changed and updates if needed.
-     * Any method changing the geometry of the Toplevel should call this method.
-     */
-    void checkScreen();
-    void setupCheckScreenConnection();
-    void removeCheckScreenConnection();
-
-    void setReadyForPainting();
 
 protected:
     explicit Toplevel(win::space& space);
