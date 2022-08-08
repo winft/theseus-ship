@@ -493,7 +493,9 @@ class qt_script_space : public space
     Q_OBJECT
 
 public:
-    qt_script_space() = default;
+    qt_script_space();
+    ~qt_script_space() override;
+
     /**
      * List of Clients currently managed by KWin.
      */

@@ -34,7 +34,7 @@ static quint32 nextId()
 client_level::client_level(client_model* model, abstract_level* parent)
     : abstract_level(model, parent)
 {
-    auto ws_wrap = singleton_interface::platform->workspaceWrapper();
+    auto ws_wrap = singleton_interface::qt_script_space;
 
     connect(win::singleton_interface::virtual_desktops->qobject,
             &win::virtual_desktop_manager_qobject::currentChanged,
@@ -187,7 +187,7 @@ void client_level::removeClient(window* client)
 
 void client_level::init()
 {
-    auto const& clients = singleton_interface::platform->workspaceWrapper()->clientList();
+    auto const& clients = singleton_interface::qt_script_space->clientList();
     for (auto const& client : clients) {
         setupClientConnections(client);
         if (!exclude(client) && shouldAdd(client)) {
@@ -198,7 +198,7 @@ void client_level::init()
 
 void client_level::reInit()
 {
-    auto const& clients = singleton_interface::platform->workspaceWrapper()->clientList();
+    auto const& clients = singleton_interface::qt_script_space->clientList();
     for (auto const& client : clients) {
         checkClient(client);
     }
