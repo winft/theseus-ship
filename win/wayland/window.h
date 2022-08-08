@@ -21,6 +21,7 @@
 #include "win/maximize.h"
 #include "win/placement.h"
 #include "win/scene.h"
+#include "win/window_setup_base.h"
 
 #include <Wrapland/Server/buffer.h>
 #include <Wrapland/Server/client.h>
@@ -61,6 +62,8 @@ public:
         : Toplevel(space)
         , space{space}
     {
+        window_setup_geometry(*this);
+
         connect(surface, &Wrapland::Server::Surface::subsurfaceTreeChanged, this, [this] {
             discard_shape();
             win::wayland::restack_subsurfaces(this);

@@ -32,6 +32,7 @@
 #include "win/space_areas_helpers.h"
 #include "win/stacking.h"
 #include "win/stacking_order.h"
+#include "win/window_setup_base.h"
 
 #include <KDecoration2/DecoratedClient>
 
@@ -48,6 +49,8 @@ window::window(xcb_window_t xcb_win, win::space& space)
     : Toplevel(new x11::transient(this), space)
     , motif_hints(space.atoms->motif_wm_hints)
 {
+    window_setup_geometry(*this);
+
     xcb_window.reset(xcb_win, false);
     client_machine = new win::x11::client_machine;
 }

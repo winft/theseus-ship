@@ -285,6 +285,9 @@ public:
 
     void setReadyForPainting();
 
+    void handle_output_added(base::output* output);
+    void handle_output_removed(base::output* output);
+
     NETWinInfo* info{nullptr};
     Wrapland::Server::Surface* surface{nullptr};
     quint32 surface_id{0};
@@ -394,8 +397,6 @@ protected:
     void setDepth(int depth);
 
 private:
-    void handle_output_added(base::output* output);
-    void handle_output_removed(base::output* output);
     void add_repaint_outputs(QRegion const& region);
 
     mutable bool m_render_shape_valid{false};

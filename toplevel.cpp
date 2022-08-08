@@ -56,26 +56,6 @@ Toplevel::Toplevel(win::transient* transient, win::space& space)
     , m_damageReplyPending(false)
 {
     m_transient.reset(transient);
-
-    connect(this, &Toplevel::frame_geometry_changed, this, [this](auto win, auto const& old_geo) {
-        if (win::render_geometry(win).size() == win::frame_to_render_rect(win, old_geo).size()) {
-            // Size unchanged. No need to update.
-            return;
-        }
-        discard_shape();
-        Q_EMIT visible_geometry_changed();
-    });
-
-    connect(this, &Toplevel::damaged, this, &Toplevel::needsRepaint);
-
-    auto& base = kwinApp()->get_base();
-    QObject::connect(
-        &kwinApp()->get_base(), &base::platform::topology_changed, this, &Toplevel::checkScreen);
-    QObject::connect(&base, &base::platform::output_added, this, &Toplevel::handle_output_added);
-    QObject::connect(
-        &base, &base::platform::output_removed, this, &Toplevel::handle_output_removed);
-
-    setupCheckScreenConnection();
 }
 
 Toplevel::~Toplevel()
