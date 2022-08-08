@@ -198,7 +198,7 @@ bool wayland_console_model::get_property_index(int row,
 QVariant wayland_console_model::get_client_property_data(QModelIndex const& index, int role) const
 {
     if (auto window = shellClient(index)) {
-        return propertyData(window, index, role);
+        return propertyData(get_qobject(window), index, role);
     }
 
     return console_model::get_client_property_data(index, role);

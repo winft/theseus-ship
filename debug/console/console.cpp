@@ -557,14 +557,15 @@ QVariant console_model::propertyData(QObject* object, const QModelIndex& index, 
 QVariant console_model::get_client_property_data(QModelIndex const& index, int role) const
 {
     if (auto c = internalClient(index)) {
-        return propertyData(c, index, role);
+        return propertyData(get_qobject(c), index, role);
     }
     if (auto c = x11Client(index)) {
-        return propertyData(c, index, role);
+        return propertyData(get_qobject(c), index, role);
     }
     if (auto u = unmanaged(index)) {
         return propertyData(u, index, role);
     }
+
     return QVariant();
 }
 
