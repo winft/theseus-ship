@@ -21,8 +21,6 @@ namespace base
 class output;
 }
 
-class Toplevel;
-
 namespace win
 {
 
@@ -40,7 +38,6 @@ Q_SIGNALS:
     void visible_geometry_changed();
 
     void paddingChanged(QRect const& old);
-    void remnant_created(KWin::Toplevel* remnant);
     void closed();
     void windowShown();
     void windowHidden();

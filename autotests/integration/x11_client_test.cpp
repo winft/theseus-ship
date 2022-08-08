@@ -431,8 +431,8 @@ void X11ClientTest::testX11WindowId()
     QUuid deletedUuid;
     QCOMPARE(deletedUuid.isNull(), true);
 
-    connect(client->qobject.get(),
-            &Toplevel::qobject_t::remnant_created,
+    connect(client->space.qobject.get(),
+            &win::space::qobject_t::remnant_created,
             this,
             [&deletedUuid](auto remnant) { deletedUuid = remnant->internal_id; });
 
@@ -462,7 +462,8 @@ void X11ClientTest::testX11WindowId()
     // and destroy the window again
     xcb_unmap_window(c.get(), w);
     xcb_flush(c.get());
-    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::remnant_created);
+    QSignalSpy windowClosedSpy(client->space.qobject.get(),
+                               &win::space::qobject_t::remnant_created);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
 

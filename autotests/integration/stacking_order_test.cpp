@@ -328,12 +328,13 @@ void StackingOrderTest::testDeletedTransient()
     QTRY_VERIFY(!transient2->control->active());
 
     // Close the top-most transient.
-    connect(transient2->qobject.get(),
-            &Toplevel::qobject_t::remnant_created,
-            this,
+    connect(transient2->space.qobject.get(),
+            &win::space::qobject_t::remnant_created,
+            transient2->qobject.get(),
             [](auto remnant) { remnant->remnant->ref(); });
 
-    QSignalSpy windowClosedSpy(transient2->qobject.get(), &Toplevel::qobject_t::remnant_created);
+    QSignalSpy windowClosedSpy(transient2->space.qobject.get(),
+                               &win::space::qobject_t::remnant_created);
     QVERIFY(windowClosedSpy.isValid());
     transient2ShellSurface.reset();
     transient2Surface.reset();
@@ -741,12 +742,13 @@ void StackingOrderTest::testDeletedGroupTransient()
     }
 
     // Unmap the transient.
-    connect(transient->qobject.get(),
-            &Toplevel::qobject_t::remnant_created,
-            this,
+    connect(transient->space.qobject.get(),
+            &win::space::qobject_t::remnant_created,
+            transient->qobject.get(),
             [](auto remnant) { remnant->remnant->ref(); });
 
-    QSignalSpy windowClosedSpy(transient->qobject.get(), &Toplevel::qobject_t::remnant_created);
+    QSignalSpy windowClosedSpy(transient->space.qobject.get(),
+                               &win::space::qobject_t::remnant_created);
     QVERIFY(windowClosedSpy.isValid());
     xcb_unmap_window(conn.get(), transientWid);
     xcb_flush(conn.get());

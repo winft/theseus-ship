@@ -195,6 +195,12 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
                 auto eff_win = window ? window->render->effect.get() : nullptr;
                 Q_EMIT windowActivated(eff_win);
             });
+
+    QObject::connect(ws->qobject.get(),
+                     &win::space::qobject_t::remnant_created,
+                     this,
+                     &effects_handler_impl::add_remnant);
+
     connect(
         ws->qobject.get(), &win::space::qobject_t::window_deleted, this, [this](KWin::Toplevel* d) {
             assert(d->render);
@@ -333,8 +339,6 @@ void effects_handler_impl::setupAbstractClientConnections(Toplevel* window)
 {
     auto qtwin = window->qobject.get();
 
-    QObject::connect(
-        qtwin, &win::window_qobject::remnant_created, this, &effects_handler_impl::add_remnant);
     QObject::connect(qtwin,
                      &win::window_qobject::maximize_mode_changed,
                      this,
@@ -423,10 +427,6 @@ void effects_handler_impl::setupClientConnections(Toplevel* c)
 
 void effects_handler_impl::setupUnmanagedConnections(Toplevel* u)
 {
-    connect(u->qobject.get(),
-            &win::window_qobject::remnant_created,
-            this,
-            &effects_handler_impl::add_remnant);
     connect(u->qobject.get(), &win::window_qobject::opacityChanged, this, [this, u](auto old) {
         slotOpacityChanged(u, old);
     });

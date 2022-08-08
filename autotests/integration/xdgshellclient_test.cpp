@@ -193,15 +193,16 @@ void TestXdgShellClient::testMapUnmapMap()
     QUuid deletedUuid;
     QCOMPARE(deletedUuid.isNull(), true);
 
-    connect(client->qobject.get(),
-            &Toplevel::qobject_t::remnant_created,
-            this,
+    connect(client->space.qobject.get(),
+            &win::space::qobject_t::remnant_created,
+            client->qobject.get(),
             [&deletedUuid](auto remnant) { deletedUuid = remnant->internal_id; });
 
     // now unmap
     QSignalSpy hiddenSpy(client->qobject.get(), &Toplevel::qobject_t::windowHidden);
     QVERIFY(hiddenSpy.isValid());
-    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::remnant_created);
+    QSignalSpy windowClosedSpy(client->space.qobject.get(),
+                               &win::space::qobject_t::remnant_created);
     QVERIFY(windowClosedSpy.isValid());
     surface->attachBuffer(Buffer::Ptr());
     surface->commit(Surface::CommitFlag::None);

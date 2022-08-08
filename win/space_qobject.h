@@ -44,6 +44,8 @@ Q_SIGNALS:
     void wayland_window_added(KWin::Toplevel*);
     void wayland_window_removed(KWin::Toplevel*);
 
+    void remnant_created(KWin::Toplevel* remnant);
+
     void clientActivated(KWin::Toplevel*);
     void clientDemandsAttentionChanged(KWin::Toplevel*, bool);
     void clientMinimizedChanged(KWin::Toplevel*);

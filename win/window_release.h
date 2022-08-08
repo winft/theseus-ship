@@ -142,7 +142,7 @@ RemnantWin* create_remnant_window(Win& source)
     }
 
     win::add_remnant(source, *win);
-    Q_EMIT source.qobject->remnant_created(win);
+    Q_EMIT source.space.qobject->remnant_created(win);
     return win;
 }
 

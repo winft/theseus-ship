@@ -80,6 +80,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "main.h"
 #include "win/geo.h"
 #include "win/scene.h"
+#include "win/space.h"
 
 #include <kwineffects/paint_clipper.h>
 
@@ -98,6 +99,11 @@ scene::scene(render::compositor& compositor)
 {
     singleton_interface::supports_surfaceless_context
         = [this] { return supportsSurfacelessContext(); };
+
+    QObject::connect(compositor.space->qobject.get(),
+                     &win::space_qobject::remnant_created,
+                     this,
+                     [this](auto remnant) { init_remnant(*remnant); });
 }
 
 scene::~scene()
