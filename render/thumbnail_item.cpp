@@ -138,11 +138,11 @@ window_thumbnail_item::~window_thumbnail_item()
 {
 }
 
-Toplevel* find_controlled_window(QUuid const& wId)
+scripting::window* find_controlled_window(QUuid const& wId)
 {
     for (auto win : win::singleton_interface::space->windows) {
         if (win->control && win->internal_id == wId) {
-            return win;
+            return win->control->scripting.get();
         }
     }
     return nullptr;
@@ -163,14 +163,14 @@ void window_thumbnail_item::setWId(const QUuid& wId)
     Q_EMIT wIdChanged(wId);
 }
 
-void window_thumbnail_item::setClient(Toplevel* window)
+void window_thumbnail_item::setClient(scripting::window* window)
 {
     if (m_client == window) {
         return;
     }
     m_client = window;
     if (m_client) {
-        setWId(m_client->internal_id);
+        setWId(m_client->internalId());
     } else {
         setWId({});
     }
@@ -186,7 +186,7 @@ void window_thumbnail_item::paint(QPainter* painter)
     if (!client) {
         return;
     }
-    auto pixmap = client->control->icon().pixmap(boundingRect().size().toSize());
+    auto pixmap = client->icon().pixmap(boundingRect().size().toSize());
     const QSize size(boundingRect().size().toSize() - pixmap.size());
     painter->drawPixmap(
         boundingRect()

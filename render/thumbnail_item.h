@@ -28,7 +28,11 @@ namespace KWin
 {
 
 class EffectWindow;
-class Toplevel;
+
+namespace scripting
+{
+class window;
+}
 
 namespace render
 {
@@ -80,7 +84,7 @@ class window_thumbnail_item : public basic_thumbnail_item
 {
     Q_OBJECT
     Q_PROPERTY(QUuid wId READ wId WRITE setWId NOTIFY wIdChanged SCRIPTABLE true)
-    Q_PROPERTY(KWin::Toplevel* client READ client WRITE setClient NOTIFY clientChanged)
+    Q_PROPERTY(KWin::scripting::window* client READ client WRITE setClient NOTIFY clientChanged)
 public:
     explicit window_thumbnail_item(QQuickItem* parent = nullptr);
     ~window_thumbnail_item() override;
@@ -90,8 +94,8 @@ public:
         return m_wId;
     }
     void setWId(const QUuid& wId);
-    Toplevel* client() const;
-    void setClient(Toplevel* window);
+    scripting::window* client() const;
+    void setClient(scripting::window* window);
     void paint(QPainter* painter) override;
 Q_SIGNALS:
     void wIdChanged(const QUuid& wid);
@@ -101,7 +105,7 @@ protected Q_SLOTS:
 
 private:
     QUuid m_wId;
-    Toplevel* m_client;
+    scripting::window* m_client;
 };
 
 class desktop_thumbnail_item : public basic_thumbnail_item
@@ -142,7 +146,7 @@ inline QQuickItem* basic_thumbnail_item::clipTo() const
     return m_clipToItem.data();
 }
 
-inline Toplevel* window_thumbnail_item::client() const
+inline scripting::window* window_thumbnail_item::client() const
 {
     return m_client;
 }
