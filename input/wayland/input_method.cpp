@@ -179,10 +179,9 @@ void input_method::handle_popup_surface_created(input_method_popup_surface_v2* p
 
     space->windows.push_back(popup);
 
-    QObject::connect(popup->qobject.get(),
-                     &wayland_window::qobject_t::closed,
-                     this,
-                     [this](auto win) { remove_all(popups, win); });
+    QObject::connect(popup->qobject.get(), &wayland_window::qobject_t::closed, this, [this, popup] {
+        remove_all(popups, popup);
+    });
 
     QObject::connect(popup_surface,
                      &input_method_popup_surface_v2::resourceDestroyed,
@@ -200,19 +199,19 @@ void input_method::handle_popup_surface_created(input_method_popup_surface_v2* p
     QObject::connect(popup->qobject.get(),
                      &wayland_window::qobject_t::frame_geometry_changed,
                      popup->qobject.get(),
-                     [](auto win, auto old_frame_geo) {
-                         if (!win->transient()->lead()) {
+                     [popup](auto old_frame_geo) {
+                         if (!popup->transient()->lead()) {
                              return;
                          }
 
-                         auto const& old_visible_geo = win::visible_rect(win, old_frame_geo);
-                         auto const& visible_geo = win::visible_rect(win, win->frameGeometry());
+                         auto const& old_visible_geo = win::visible_rect(popup, old_frame_geo);
+                         auto const& visible_geo = win::visible_rect(popup, popup->frameGeometry());
 
-                         win::lead_of_annexed_transient(win)->addLayerRepaint(
+                         win::lead_of_annexed_transient(popup)->addLayerRepaint(
                              old_visible_geo.united(visible_geo));
 
                          if (old_visible_geo.size() != visible_geo.size()) {
-                             win->discard_quads();
+                             popup->discard_quads();
                          }
                      });
 

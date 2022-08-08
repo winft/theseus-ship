@@ -20,14 +20,14 @@ void window_setup_geometry(Win& win)
     QObject::connect(win.qobject.get(),
                      &Win::qobject_t::frame_geometry_changed,
                      win.qobject.get(),
-                     [](auto win, auto const& old_geo) {
-                         if (render_geometry(win).size()
-                             == frame_to_render_rect(win, old_geo).size()) {
+                     [&win](auto const& old_geo) {
+                         if (render_geometry(&win).size()
+                             == frame_to_render_rect(&win, old_geo).size()) {
                              // Size unchanged. No need to update.
                              return;
                          }
-                         win->discard_shape();
-                         Q_EMIT win->qobject->visible_geometry_changed();
+                         win.discard_shape();
+                         Q_EMIT win.qobject->visible_geometry_changed();
                      });
 
     QObject::connect(win.qobject.get(),

@@ -178,7 +178,7 @@ public:
         m_opacity = opacity;
 
         addRepaintFull();
-        Q_EMIT qobject->opacityChanged(this, old_opacity);
+        Q_EMIT qobject->opacityChanged(old_opacity);
     }
 
     bool isShown() const override
@@ -423,7 +423,7 @@ public:
         if (!control) {
             addLayerRepaint(visible_rect(this, old_frame_geo));
             addLayerRepaint(visible_rect(this, frame_geo));
-            Q_EMIT qobject->frame_geometry_changed(this, old_frame_geo);
+            Q_EMIT qobject->frame_geometry_changed(old_frame_geo);
             return;
         }
 
@@ -436,7 +436,7 @@ public:
         addLayerRepaint(visible_rect(this, old_frame_geo));
         addLayerRepaint(visible_rect(this, frame_geo));
 
-        Q_EMIT qobject->frame_geometry_changed(this, old_frame_geo);
+        Q_EMIT qobject->frame_geometry_changed(old_frame_geo);
 
         // Must be done after signal is emitted so the screen margins are updated.
         if (hasStrut()) {
@@ -480,7 +480,7 @@ public:
             process_window_hidden(space, this);
         }
 
-        Q_EMIT qobject->windowHidden(this);
+        Q_EMIT qobject->windowHidden();
     }
 
     void ping(ping_reason reason)
@@ -628,7 +628,7 @@ public:
                         geometry_updates_blocker geo_blocker(this);
                         auto const old_geom = frameGeometry();
                         check_workspace_position(this, old_geom);
-                        Q_EMIT qobject->frame_geometry_changed(this, old_geom);
+                        Q_EMIT qobject->frame_geometry_changed(old_geom);
                     });
             }
 
@@ -640,7 +640,7 @@ public:
             // windows)
             // TODO(romangg): use setFrameGeometry?
             do_set_geometry(QRect(old_geom.topLeft(), size() + deco_size));
-            Q_EMIT qobject->frame_geometry_changed(this, old_geom);
+            Q_EMIT qobject->frame_geometry_changed(old_geom);
         }
 
         if (xdg_deco) {
@@ -912,7 +912,7 @@ public:
         if (hide) {
             space.render.addRepaint(visible_rect(this));
             process_window_hidden(space, this);
-            Q_EMIT qobject->windowHidden(this);
+            Q_EMIT qobject->windowHidden();
         } else {
             handle_shown_and_mapped();
         }
@@ -977,7 +977,7 @@ public:
         if (control->minimized()) {
             process_window_hidden(space, this);
         } else {
-            Q_EMIT qobject->windowShown(this);
+            Q_EMIT qobject->windowShown();
         }
         propagate_minimized_to_transients(*this);
     }
@@ -1237,7 +1237,7 @@ public:
             }
         }
 
-        Q_EMIT qobject->maximize_mode_changed(this, mode);
+        Q_EMIT qobject->maximize_mode_changed(mode);
     }
 
     void do_set_fullscreen(bool full)
@@ -1355,7 +1355,7 @@ private:
         if (ready_for_painting) {
             // Was already shown in the past once. Just repaint and emit shown again.
             addRepaintFull();
-            Q_EMIT qobject->windowShown(this);
+            Q_EMIT qobject->windowShown();
             return;
         }
 

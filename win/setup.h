@@ -47,10 +47,11 @@ void setup_space_window_connections(Space* space, Win* win)
                      &window_qobject::needsRepaint,
                      space->render.qobject.get(),
                      [win] { win->space.render.schedule_repaint(win); });
-    QObject::connect(win->qobject.get(),
-                     &window_qobject::desktopPresenceChanged,
-                     space->qobject.get(),
-                     &Space::qobject_t::desktopPresenceChanged);
+    QObject::connect(
+        win->qobject.get(),
+        &window_qobject::desktopPresenceChanged,
+        space->qobject.get(),
+        [space, win](auto desktop) { space->qobject->desktopPresenceChanged(win, desktop); });
     QObject::connect(
         win->qobject.get(),
         &window_qobject::minimizedChanged,
@@ -86,34 +87,29 @@ void setup_window_control_connections(Win* win)
     });
 
     // Replace on-screen-display on size changes.
-    QObject::connect(qtwin,
-                     &window_qobject::frame_geometry_changed,
-                     qtwin,
-                     [win]([[maybe_unused]] Toplevel* toplevel, QRect const& old) {
-                         if (!is_on_screen_display(win)) {
-                             // Not an on-screen-display.
-                             return;
-                         }
-                         if (win->frameGeometry().isEmpty()) {
-                             // No current geometry to set.
-                             return;
-                         }
-                         if (old.size() == win->frameGeometry().size()) {
-                             // No change.
-                             return;
-                         }
-                         if (win->isInitialPositionSet()) {
-                             // Position (geometry?) already set.
-                             return;
-                         }
+    QObject::connect(qtwin, &window_qobject::frame_geometry_changed, qtwin, [win](auto const& old) {
+        if (!is_on_screen_display(win)) {
+            // Not an on-screen-display.
+            return;
+        }
+        if (win->frameGeometry().isEmpty()) {
+            // No current geometry to set.
+            return;
+        }
+        if (old.size() == win->frameGeometry().size()) {
+            // No change.
+            return;
+        }
+        if (win->isInitialPositionSet()) {
+            // Position (geometry?) already set.
+            return;
+        }
 
-                         geometry_updates_blocker blocker(win);
-                         auto const area = space_window_area(win->space,
-                                                             PlacementArea,
-                                                             get_current_output(win->space),
-                                                             win->desktop());
-                         win::place(win, area);
-                     });
+        geometry_updates_blocker blocker(win);
+        auto const area = space_window_area(
+            win->space, PlacementArea, get_current_output(win->space), win->desktop());
+        win::place(win, area);
+    });
 
     QObject::connect(
         win->space.appmenu.get(), &dbus::appmenu::applicationMenuEnabledChanged, qtwin, [win] {

@@ -33,17 +33,17 @@ public:
     window_qobject();
 
 Q_SIGNALS:
-    void opacityChanged(KWin::Toplevel* toplevel, qreal oldOpacity);
-    void damaged(KWin::Toplevel* toplevel, QRegion const& damage);
+    void opacityChanged(qreal oldOpacity);
+    void damaged(QRegion const& damage);
 
-    void frame_geometry_changed(KWin::Toplevel* toplevel, QRect const& old);
+    void frame_geometry_changed(QRect const& old);
     void visible_geometry_changed();
 
-    void paddingChanged(KWin::Toplevel* toplevel, QRect const& old);
+    void paddingChanged(QRect const& old);
     void remnant_created(KWin::Toplevel* remnant);
-    void closed(KWin::Toplevel* toplevel);
-    void windowShown(KWin::Toplevel* toplevel);
-    void windowHidden(KWin::Toplevel* toplevel);
+    void closed();
+    void windowShown();
+    void windowHidden();
     /**
      * Signal emitted when the window's shape state changed. That is if it did not have a shape
      * and received one or if the shape was withdrawn. Think of Chromium enabling/disabling KWin's
@@ -106,18 +106,18 @@ Q_SIGNALS:
     void demandsAttentionChanged();
 
     // to be forwarded by Workspace
-    void desktopPresenceChanged(KWin::Toplevel* window, int);
+    void desktopPresenceChanged(int);
     void desktopChanged();
     void x11DesktopIdsChanged();
 
     void minimizedChanged();
-    void clientMinimized(KWin::Toplevel* window, bool animate);
-    void clientUnminimized(KWin::Toplevel* window, bool animate);
-    void maximize_mode_changed(KWin::Toplevel* window, KWin::win::maximize_mode);
+    void clientMinimized(bool animate);
+    void clientUnminimized(bool animate);
+    void maximize_mode_changed(KWin::win::maximize_mode);
     void quicktiling_changed();
     void keepAboveChanged(bool);
     void keepBelowChanged(bool);
-    void blockingCompositingChanged(KWin::Toplevel* window);
+    void blockingCompositingChanged(bool);
 
     void fullScreenChanged();
     void skipTaskbarChanged();
@@ -130,9 +130,9 @@ Q_SIGNALS:
     void modalChanged();
     void moveResizedChanged();
     void moveResizeCursorChanged(input::cursor_shape);
-    void clientStartUserMovedResized(KWin::Toplevel* window);
-    void clientStepUserMovedResized(KWin::Toplevel* window, QRect const&);
-    void clientFinishUserMovedResized(KWin::Toplevel* window);
+    void clientStartUserMovedResized();
+    void clientStepUserMovedResized(QRect const&);
+    void clientFinishUserMovedResized();
 
     void closeableChanged(bool);
     void minimizeableChanged(bool);

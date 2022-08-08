@@ -339,7 +339,6 @@ void QuickTilingTest::testQuickMaximizing()
 
     // client is now set to maximised
     QCOMPARE(maximizeChangedSpy.count(), 1);
-    QCOMPARE(maximizeChangedSpy.first().first().value<KWin::Toplevel*>(), c);
     QCOMPARE(maximizeChangedSpy.first().last().value<KWin::win::maximize_mode>(),
              win::maximize_mode::full);
     QCOMPARE(c->maximizeMode(), win::maximize_mode::full);
@@ -369,7 +368,6 @@ void QuickTilingTest::testQuickMaximizing()
     QCOMPARE(geometryChangedSpy.count(), 2);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
     QCOMPARE(maximizeChangedSpy.count(), 2);
-    QCOMPARE(maximizeChangedSpy.last().first().value<KWin::Toplevel*>(), c);
     QCOMPARE(maximizeChangedSpy.last().last().value<KWin::win::maximize_mode>(),
              win::maximize_mode::restore);
 }

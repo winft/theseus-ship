@@ -95,7 +95,7 @@ auto update_shadow(Win* win)
     }
 
     if (old_visible_rect != visible_rect(win)) {
-        Q_EMIT win->qobject->paddingChanged(win, old_visible_rect);
+        Q_EMIT win->qobject->paddingChanged(old_visible_rect);
     }
 
     if (dirty_rect.isValid()) {

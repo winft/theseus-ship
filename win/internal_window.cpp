@@ -210,7 +210,7 @@ void internal_window::setOpacity(double opacity)
     const double oldOpacity = m_opacity;
     m_opacity = opacity;
 
-    Q_EMIT qobject->opacityChanged(this, oldOpacity);
+    Q_EMIT qobject->opacityChanged(oldOpacity);
 }
 
 void internal_window::killWindow()
@@ -374,7 +374,7 @@ void internal_window::do_set_geometry(QRect const& frame_geo)
 
     space.render.addRepaint(visible_rect(this));
 
-    Q_EMIT qobject->frame_geometry_changed(this, old_frame_geo);
+    Q_EMIT qobject->frame_geometry_changed(old_frame_geo);
 }
 
 bool internal_window::hasStrut() const
@@ -476,7 +476,7 @@ void internal_window::destroyClient()
     }
 
     auto deleted = create_remnant_window<internal_window>(*this);
-    Q_EMIT qobject->closed(this);
+    Q_EMIT qobject->closed();
 
     control->destroy_decoration();
 

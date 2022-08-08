@@ -337,7 +337,7 @@ Win* create_popup_window(Space* space, Wrapland::Server::XdgShellPopup* popup)
     QObject::connect(win->qobject.get(),
                      &Win::qobject_t::frame_geometry_changed,
                      win->qobject.get(),
-                     [](auto win, auto old_frame_geo) {
+                     [win](auto old_frame_geo) {
                          auto const old_visible_geo = visible_rect(win, old_frame_geo);
                          auto const visible_geo = visible_rect(win, win->frameGeometry());
 

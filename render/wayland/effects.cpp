@@ -40,7 +40,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
                 QObject::connect(c->qobject.get(),
                                  &Toplevel::qobject_t::windowShown,
                                  this,
-                                 &effects_handler_impl::slotXdgShellClientShown);
+                                 [this, c] { slotXdgShellClientShown(c); });
             }
         });
 
@@ -56,7 +56,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
             QObject::connect(wlwin->qobject.get(),
                              &Toplevel::qobject_t::windowShown,
                              this,
-                             &effects_handler_impl::slotXdgShellClientShown);
+                             [this, wlwin] { slotXdgShellClientShown(wlwin); });
         }
     }
 }

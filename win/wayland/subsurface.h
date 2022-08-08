@@ -71,7 +71,7 @@ void set_subsurface_parent(Win* win, Lead* lead)
             auto const old_geo = win->frameGeometry();
             // TODO(romangg): use setFrameGeometry?
             win->set_frame_geometry(QRect(win->pos(), win->surface->size()));
-            Q_EMIT win->qobject->frame_geometry_changed(win, old_geo);
+            Q_EMIT win->qobject->frame_geometry_changed(old_geo);
         }
         win->handle_commit();
     });
@@ -114,7 +114,7 @@ void set_subsurface_parent(Win* win, Lead* lead)
                 top_lead->discard_quads();
             }
 
-            Q_EMIT win->qobject->frame_geometry_changed(win, old_frame_geo);
+            Q_EMIT win->qobject->frame_geometry_changed(old_frame_geo);
         }
     };
 

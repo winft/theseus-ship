@@ -173,7 +173,9 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         QObject::connect(win->qobject.get(),
                          &Win::qobject_t::blockingCompositingChanged,
                          comp.qobject.get(),
-                         [&comp](auto window) { comp.x11_integration.update_blocking(window); });
+                         [&comp, win](auto blocks) {
+                             comp.x11_integration.update_blocking(blocks ? win : nullptr);
+                         });
     }
 
     QObject::connect(win->qobject.get(),

@@ -42,7 +42,7 @@ void idle_setup(Device& idle, Win& window)
     QObject::connect(qwin, &Win::qobject_t::clientUnminimized, qwin, update);
     QObject::connect(qwin, &Win::qobject_t::windowHidden, qwin, update);
     QObject::connect(qwin, &Win::qobject_t::windowShown, qwin, update);
-    QObject::connect(qwin, &Win::qobject_t::closed, qwin, [&idle, &window](auto) {
+    QObject::connect(qwin, &Win::qobject_t::closed, qwin, [&idle, &window] {
         if (window.inhibit_idle) {
             window.inhibit_idle = false;
             idle.uninhibit();

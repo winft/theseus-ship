@@ -296,7 +296,7 @@ bool start_move_resize(Win* win)
 
     check_unrestricted_move_resize(win);
 
-    Q_EMIT win->qobject->clientStartUserMovedResized(win);
+    Q_EMIT win->qobject->clientStartUserMovedResized();
 
     if (win->space.edges->desktop_switching.when_moving_client) {
         win->space.edges->reserveDesktopSwitching(true, Qt::Vertical | Qt::Horizontal);
@@ -315,7 +315,7 @@ void perform_move_resize(Win* win)
     }
 
     win->doPerformMoveResize();
-    Q_EMIT win->qobject->clientStepUserMovedResized(win, geom);
+    Q_EMIT win->qobject->clientStepUserMovedResized(geom);
 }
 
 template<typename Win>
@@ -770,7 +770,7 @@ void finish_move_resize(Win* win, bool cancel)
     }
 
     // FRAME    update();
-    Q_EMIT win->qobject->clientFinishUserMovedResized(win);
+    Q_EMIT win->qobject->clientFinishUserMovedResized();
 }
 
 template<typename Win>

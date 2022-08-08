@@ -278,8 +278,7 @@ void TestXdgShellClient::testDesktopPresenceChanged()
     QCOMPARE(desktopPresenceChangedEffectsSpy.count(), 1);
 
     // verify the arguments
-    QCOMPARE(desktopPresenceChangedClientSpy.first().at(0).value<Toplevel*>(), c);
-    QCOMPARE(desktopPresenceChangedClientSpy.first().at(1).toInt(), 1);
+    QCOMPARE(desktopPresenceChangedClientSpy.first().at(0).toInt(), 1);
     QCOMPARE(desktopPresenceChangedWorkspaceSpy.first().at(0).value<Toplevel*>(), c);
     QCOMPARE(desktopPresenceChangedWorkspaceSpy.first().at(1).toInt(), 1);
     QCOMPARE(desktopPresenceChangedEffectsSpy.first().at(0).value<EffectWindow*>(),

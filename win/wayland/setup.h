@@ -95,12 +95,10 @@ void setup_plasma_management(Space* space, Win* win)
     QObject::connect(qtwin, &window_qobject::minimizedChanged, plasma_win, [plasma_win, win] {
         plasma_win->setMinimized(win->control->minimized());
     });
-    QObject::connect(qtwin,
-                     &window_qobject::maximize_mode_changed,
-                     plasma_win,
-                     [plasma_win](auto /*window*/, auto mode) {
-                         plasma_win->setMaximized(mode == win::maximize_mode::full);
-                     });
+    QObject::connect(
+        qtwin, &window_qobject::maximize_mode_changed, plasma_win, [plasma_win](auto mode) {
+            plasma_win->setMaximized(mode == win::maximize_mode::full);
+        });
     QObject::connect(
         qtwin, &window_qobject::demandsAttentionChanged, plasma_win, [plasma_win, win] {
             plasma_win->setDemandsAttention(win->control->demands_attention());

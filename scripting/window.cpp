@@ -26,12 +26,9 @@ window::window(Toplevel* client, space* workspace)
     , m_workspace{workspace}
 {
     auto qtwin = client->qobject.get();
-    QObject::connect(qtwin,
-                     &win::window_qobject::opacityChanged,
-                     this,
-                     [this]([[maybe_unused]] auto toplevel, auto oldOpacity) {
-                         Q_EMIT opacityChanged(this, oldOpacity);
-                     });
+    QObject::connect(qtwin, &win::window_qobject::opacityChanged, this, [this](auto oldOpacity) {
+        Q_EMIT opacityChanged(this, oldOpacity);
+    });
 
     QObject::connect(qtwin, &win::window_qobject::activeChanged, this, &window::activeChanged);
     QObject::connect(qtwin,
@@ -41,9 +38,7 @@ window::window(Toplevel* client, space* workspace)
     QObject::connect(qtwin,
                      &win::window_qobject::desktopPresenceChanged,
                      this,
-                     [this]([[maybe_unused]] auto toplevel, auto desktop) {
-                         Q_EMIT desktopPresenceChanged(this, desktop);
-                     });
+                     [this](auto desktop) { Q_EMIT desktopPresenceChanged(this, desktop); });
     QObject::connect(qtwin, &win::window_qobject::desktopChanged, this, &window::desktopChanged);
     QObject::connect(
         qtwin, &win::window_qobject::x11DesktopIdsChanged, this, &window::x11DesktopIdsChanged);
@@ -57,15 +52,11 @@ window::window(Toplevel* client, space* workspace)
         Q_EMIT clientUnminimized(this);
     });
 
-    QObject::connect(qtwin,
-                     &win::window_qobject::maximize_mode_changed,
-                     this,
-                     [this](auto /*window*/, auto mode) {
-                         Q_EMIT clientMaximizedStateChanged(
-                             this,
-                             flags(mode & win::maximize_mode::horizontal),
-                             flags(mode & win::maximize_mode::vertical));
-                     });
+    QObject::connect(qtwin, &win::window_qobject::maximize_mode_changed, this, [this](auto mode) {
+        Q_EMIT clientMaximizedStateChanged(this,
+                                           flags(mode & win::maximize_mode::horizontal),
+                                           flags(mode & win::maximize_mode::vertical));
+    });
 
     QObject::connect(
         qtwin, &win::window_qobject::quicktiling_changed, this, &window::quickTileModeChanged);
@@ -103,9 +94,7 @@ window::window(Toplevel* client, space* workspace)
     QObject::connect(qtwin,
                      &win::window_qobject::clientStepUserMovedResized,
                      this,
-                     [this]([[maybe_unused]] auto toplevel, auto rect) {
-                         Q_EMIT clientStepUserMovedResized(this, rect);
-                     });
+                     [this](auto rect) { Q_EMIT clientStepUserMovedResized(this, rect); });
     QObject::connect(qtwin, &win::window_qobject::clientFinishUserMovedResized, this, [this] {
         Q_EMIT clientFinishUserMovedResized(this);
     });
@@ -157,9 +146,11 @@ window::window(Toplevel* client, space* workspace)
     });
 
     if (client->isClient()) {
-        QObject::connect(qtwin, &win::window_qobject::blockingCompositingChanged, this, [this] {
-            Q_EMIT blockingCompositingChanged(this);
-        });
+        QObject::connect(
+            qtwin, &win::window_qobject::blockingCompositingChanged, this, [this](auto /*block*/) {
+                // TODO(romangg): Should we emit null if block is false?
+                Q_EMIT blockingCompositingChanged(this);
+            });
     }
 }
 

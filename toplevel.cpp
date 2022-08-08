@@ -163,7 +163,7 @@ void Toplevel::setOpacity(double new_opacity)
     info->setOpacity(static_cast< unsigned long >(new_opacity * 0xffffffff));
     if (space.render.scene) {
         addRepaintFull();
-        Q_EMIT qobject->opacityChanged(this, old_opacity);
+        Q_EMIT qobject->opacityChanged(old_opacity);
     }
 }
 
@@ -214,7 +214,7 @@ void Toplevel::damageNotifyEvent()
     // Note: The region is supposed to specify the damage extents,
     //       but we don't know it at this point. No one who connects
     //       to this signal uses the rect however.
-    Q_EMIT qobject->damaged(this, {});
+    Q_EMIT qobject->damaged({});
 }
 
 bool Toplevel::resetAndFetchDamage()
@@ -307,7 +307,7 @@ void Toplevel::addDamageFull()
     repaints_region |= repaint;
     add_repaint_outputs(render_geo);
 
-    Q_EMIT qobject->damaged(this, damage_region);
+    Q_EMIT qobject->damaged(damage_region);
 }
 
 void Toplevel::resetDamage()
@@ -414,7 +414,7 @@ void Toplevel::setReadyForPainting()
         ready_for_painting = true;
         if (space.render.scene) {
             addRepaintFull();
-            Q_EMIT qobject->windowShown(this);
+            Q_EMIT qobject->windowShown();
         }
     }
 }
@@ -532,7 +532,7 @@ void Toplevel::addDamage(const QRegion &damage)
 
     m_isDamaged = true;
     damage_region += damage;
-    Q_EMIT qobject->damaged(this, damage);
+    Q_EMIT qobject->damaged(damage);
 }
 
 QByteArray Toplevel::windowRole() const

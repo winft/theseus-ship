@@ -287,7 +287,7 @@ void window::setBlockingCompositing(bool block)
         block && kwinApp()->options->qobject->windowsBlockCompositing());
 
     if (usedToBlock != blocks_compositing) {
-        Q_EMIT qobject->blockingCompositingChanged(blocks_compositing ? this : nullptr);
+        Q_EMIT qobject->blockingCompositingChanged(blocks_compositing);
     }
 }
 
@@ -798,7 +798,7 @@ void window::do_set_geometry(QRect const& frame_geo)
     addLayerRepaint(visible_rect(this, old_frame_geo));
     addLayerRepaint(visible_rect(this, frame_geo));
 
-    Q_EMIT qobject->frame_geometry_changed(this, old_frame_geo);
+    Q_EMIT qobject->frame_geometry_changed(old_frame_geo);
 
     // Must be done after signal is emitted so the screen margins are update.
     if (hasStrut()) {
@@ -845,7 +845,7 @@ void window::do_set_maximize_mode(maximize_mode mode)
     // Need to update the server geometry in case the decoration changed.
     update_server_geometry(this, geometry_update.frame);
 
-    Q_EMIT qobject->maximize_mode_changed(this, mode);
+    Q_EMIT qobject->maximize_mode_changed(mode);
 }
 
 void window::do_set_fullscreen(bool full)

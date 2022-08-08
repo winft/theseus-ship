@@ -140,7 +140,7 @@ void unmanaged_configure_event(Win* win, xcb_configure_notify_event_t* event)
         if (old.size() != win->frameGeometry().size()) {
             win->discard_buffer();
         }
-        Q_EMIT win->qobject->frame_geometry_changed(win, old);
+        Q_EMIT win->qobject->frame_geometry_changed(old);
     }
 }
 
@@ -157,7 +157,7 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* event)
     if (dirtyProperties2 & NET::WM2Opacity) {
         if (win->space.render.scene) {
             win->addRepaintFull();
-            Q_EMIT win->qobject->opacityChanged(win, old_opacity);
+            Q_EMIT win->qobject->opacityChanged(old_opacity);
         }
     }
     if (dirtyProperties2 & NET::WM2OpaqueRegion) {
@@ -215,7 +215,7 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* event)
             // In case shape change removes part of this window.
             win->space.render.addRepaint(win->frameGeometry());
 
-            Q_EMIT win->qobject->frame_geometry_changed(win, win->frameGeometry());
+            Q_EMIT win->qobject->frame_geometry_changed(win->frameGeometry());
         }
         if (eventType == base::x11::xcb::extensions::self()->damage_notify_event()) {
             win->damageNotifyEvent();

@@ -467,7 +467,7 @@ private:
             QObject::connect(window->qobject.get(),
                              &x11::window::qobject_t::windowShown,
                              qobject.get(),
-                             [this](auto window) { setup_plasma_management(this, window); });
+                             [this, window] { setup_plasma_management(this, window); });
         }
     }
 

@@ -136,7 +136,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
         if (dirtyProperties2 & NET::WM2Opacity) {
             if (win->space.render.scene) {
                 win->addRepaintFull();
-                Q_EMIT win->qobject->opacityChanged(win, old_opacity);
+                Q_EMIT win->qobject->opacityChanged(old_opacity);
             } else {
                 // forward to the frame if there's possibly another compositing manager running
                 NETWinInfo i(connection(),

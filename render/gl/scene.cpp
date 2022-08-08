@@ -623,7 +623,7 @@ std::deque<Toplevel*> scene::get_leads(std::deque<Toplevel*> const& windows)
 
             for (auto const& rect : lead_damage) {
                 // Emit for thumbnail repaint.
-                Q_EMIT lead->qobject->damaged(lead, rect);
+                Q_EMIT lead->qobject->damaged(rect);
             }
         } else {
             leads.push_back(window);
