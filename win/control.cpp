@@ -128,7 +128,7 @@ QIcon const& control::icon() const
 void control::set_icon(QIcon const& icon)
 {
     m_icon = icon;
-    Q_EMIT m_win->iconChanged();
+    Q_EMIT m_win->qobject->iconChanged();
 }
 
 bool control::has_application_menu() const
@@ -147,7 +147,7 @@ void control::set_application_menu_active(bool active)
         return;
     }
     appmenu.active = active;
-    Q_EMIT m_win->applicationMenuActiveChanged(active);
+    Q_EMIT m_win->qobject->applicationMenuActiveChanged(active);
 }
 
 appmenu control::application_menu() const
@@ -164,12 +164,12 @@ void control::update_application_menu(appmenu_address const& address)
     auto const had_menu = has_application_menu();
 
     appmenu.address = address;
-    Q_EMIT m_win->applicationMenuChanged();
+    Q_EMIT m_win->qobject->applicationMenuChanged();
 
     auto const has_menu = has_application_menu();
 
     if (had_menu != has_menu) {
-        Q_EMIT m_win->hasApplicationMenuChanged(has_menu);
+        Q_EMIT m_win->qobject->hasApplicationMenuChanged(has_menu);
     }
 }
 
@@ -232,15 +232,16 @@ void control::set_unresponsive(bool unresponsive)
         return;
     }
     m_unresponsive = unresponsive;
-    Q_EMIT m_win->unresponsiveChanged(m_unresponsive);
-    Q_EMIT m_win->captionChanged();
+    Q_EMIT m_win->qobject->unresponsiveChanged(m_unresponsive);
+    Q_EMIT m_win->qobject->captionChanged();
 }
 
 void control::start_auto_raise()
 {
     delete m_auto_raise_timer;
-    m_auto_raise_timer = new QTimer(m_win);
-    QObject::connect(m_auto_raise_timer, &QTimer::timeout, m_win, [this] { auto_raise(m_win); });
+    m_auto_raise_timer = new QTimer(m_win->qobject.get());
+    QObject::connect(
+        m_auto_raise_timer, &QTimer::timeout, m_win->qobject.get(), [this] { auto_raise(m_win); });
     m_auto_raise_timer->setSingleShot(true);
     m_auto_raise_timer->start(kwinApp()->options->qobject->autoRaiseInterval());
 }

@@ -157,7 +157,7 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
     QVERIFY(!client->isHiddenInternal());
     QTRY_VERIFY(client->ready_for_painting);
     if (!client->surface) {
-        QSignalSpy surfaceChangedSpy(client, &Toplevel::surfaceChanged);
+        QSignalSpy surfaceChangedSpy(client->qobject.get(), &Toplevel::qobject_t::surfaceChanged);
         QVERIFY(surfaceChangedSpy.isValid());
         QVERIFY(surfaceChangedSpy.wait());
     }
@@ -165,7 +165,7 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
     QCOMPARE(client->maximizeMode(), win::maximize_mode::vertical);
 
     // destroy window again
-    QSignalSpy windowClosedSpy(client, &Toplevel::closed);
+    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::closed);
     QVERIFY(windowClosedSpy.isValid());
     xcb_unmap_window(c.get(), w);
     xcb_destroy_window(c.get(), w);
@@ -235,7 +235,7 @@ void WindowRuleTest::testWindowClassChange()
     QVERIFY(!client->ready_for_painting);
     QTRY_VERIFY(client->ready_for_painting);
     if (!client->surface) {
-        QSignalSpy surfaceChangedSpy(client, &Toplevel::surfaceChanged);
+        QSignalSpy surfaceChangedSpy(client->qobject.get(), &Toplevel::qobject_t::surfaceChanged);
         QVERIFY(surfaceChangedSpy.isValid());
         QVERIFY(surfaceChangedSpy.wait());
     }
@@ -243,7 +243,8 @@ void WindowRuleTest::testWindowClassChange()
     QCOMPARE(client->control->keep_above(), false);
 
     // now change class
-    QSignalSpy windowClassChangedSpy{client, &Toplevel::windowClassChanged};
+    QSignalSpy windowClassChangedSpy{client->qobject.get(),
+                                     &Toplevel::qobject_t::windowClassChanged};
     QVERIFY(windowClassChangedSpy.isValid());
     xcb_icccm_set_wm_class(c.get(), w, 23, "org.kde.foo\0org.kde.foo");
     xcb_flush(c.get());
@@ -251,7 +252,7 @@ void WindowRuleTest::testWindowClassChange()
     QCOMPARE(client->control->keep_above(), true);
 
     // destroy window
-    QSignalSpy windowClosedSpy(client, &Toplevel::closed);
+    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::closed);
     QVERIFY(windowClosedSpy.isValid());
     xcb_unmap_window(c.get(), w);
     xcb_destroy_window(c.get(), w);

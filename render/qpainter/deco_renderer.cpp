@@ -32,8 +32,8 @@ deco_renderer::deco_renderer(win::deco::client_impl* client)
 {
     connect(this,
             &renderer::renderScheduled,
-            client->client(),
-            static_cast<void (Toplevel::*)(QRegion const&)>(&Toplevel::addRepaint));
+            client->client()->qobject.get(),
+            [win = client->client()](auto const& region) { win->addRepaint(region); });
 }
 
 deco_renderer::~deco_renderer() = default;

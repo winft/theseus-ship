@@ -139,9 +139,11 @@ void MaximizeAnimationTest::testMaximizeRestore()
     QVERIFY(!effect->isActive());
 
     // Maximize the client.
-    QSignalSpy geometryChangedSpy(client, &Toplevel::frame_geometry_changed);
+    QSignalSpy geometryChangedSpy(client->qobject.get(),
+                                  &Toplevel::qobject_t::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
-    QSignalSpy maximizeChangedSpy(client, &Toplevel::maximize_mode_changed);
+    QSignalSpy maximizeChangedSpy(client->qobject.get(),
+                                  &Toplevel::qobject_t::maximize_mode_changed);
     QVERIFY(maximizeChangedSpy.isValid());
 
     win::active_window_maximize(*Test::app()->base.space);

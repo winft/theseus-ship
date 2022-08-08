@@ -37,8 +37,8 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
             if (c->ready_for_painting) {
                 slotXdgShellClientShown(c);
             } else {
-                QObject::connect(c,
-                                 &Toplevel::windowShown,
+                QObject::connect(c->qobject.get(),
+                                 &Toplevel::qobject_t::windowShown,
                                  this,
                                  &effects_handler_impl::slotXdgShellClientShown);
             }
@@ -53,8 +53,8 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
         if (wlwin->ready_for_painting) {
             setupAbstractClientConnections(wlwin);
         } else {
-            QObject::connect(wlwin,
-                             &Toplevel::windowShown,
+            QObject::connect(wlwin->qobject.get(),
+                             &Toplevel::qobject_t::windowShown,
                              this,
                              &effects_handler_impl::slotXdgShellClientShown);
         }

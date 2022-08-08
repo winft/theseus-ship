@@ -52,7 +52,7 @@ void set_desktop_file_name(Win* win, QByteArray name)
     }
     win->control->set_desktop_file_name(name);
     win->updateWindowRules(rules::type::desktop_file);
-    Q_EMIT win->desktopFileNameChanged();
+    Q_EMIT win->qobject->desktopFileNameChanged();
 }
 
 inline QString icon_from_desktop_file(QString const& file_name)

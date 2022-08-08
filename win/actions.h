@@ -36,7 +36,7 @@ void set_keep_above(Win* win, bool keep)
     win->updateWindowRules(rules::type::above);
 
     win->doSetKeepAbove();
-    Q_EMIT win->keepAboveChanged(keep);
+    Q_EMIT win->qobject->keepAboveChanged(keep);
 }
 
 template<typename Win>
@@ -60,7 +60,7 @@ void set_keep_below(Win* win, bool keep)
     win->updateWindowRules(rules::type::below);
 
     win->doSetKeepBelow();
-    Q_EMIT win->keepBelowChanged(keep);
+    Q_EMIT win->qobject->keepBelowChanged(keep);
 }
 
 template<typename Win>
@@ -77,8 +77,8 @@ void set_minimized(Win* win, bool set, bool avoid_animation = false)
         win->space.render.addRepaint(visible_rect(win));
 
         // TODO: merge signal with s_minimized
-        Q_EMIT win->clientMinimized(win, !avoid_animation);
-        Q_EMIT win->minimizedChanged();
+        Q_EMIT win->qobject->clientMinimized(win, !avoid_animation);
+        Q_EMIT win->qobject->minimizedChanged();
     } else {
         if (!win->control->minimized()) {
             return;
@@ -91,8 +91,8 @@ void set_minimized(Win* win, bool set, bool avoid_animation = false)
         win->doMinimize();
 
         win->updateWindowRules(rules::type::minimize);
-        Q_EMIT win->clientUnminimized(win, !avoid_animation);
-        Q_EMIT win->minimizedChanged();
+        Q_EMIT win->qobject->clientUnminimized(win, !avoid_animation);
+        Q_EMIT win->qobject->minimizedChanged();
     }
 }
 

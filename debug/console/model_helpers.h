@@ -29,7 +29,7 @@ QObject* get_qobject(Win* win)
     if (win->control && win->control->scripting) {
         return win->control->scripting.get();
     }
-    return win;
+    return win->qobject.get();
 }
 
 template<typename Model, typename Container>

@@ -164,11 +164,13 @@ public:
         }
 
         if (m_client) {
-            QObject::disconnect(m_client, nullptr, qobject.get(), nullptr);
+            QObject::disconnect(m_client->qobject.get(), nullptr, qobject.get(), nullptr);
         }
         m_client = window;
-        QObject::connect(
-            m_client, &Toplevel::destroyed, qobject.get(), [this] { m_client = nullptr; });
+        QObject::connect(m_client->qobject.get(),
+                         &window_qobject::destroyed,
+                         qobject.get(),
+                         [this] { m_client = nullptr; });
 
         init();
         if (kwinApp()->shouldUseWaylandForCompositing()) {

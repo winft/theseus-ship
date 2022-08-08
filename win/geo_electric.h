@@ -60,7 +60,7 @@ void delayed_electric_maximize(Win* win)
 {
     auto timer = win->control->electric_maximizing_timer();
     if (!timer) {
-        timer = new QTimer(win);
+        timer = new QTimer(win->qobject.get());
         timer->setInterval(250);
         timer->setSingleShot(true);
         QObject::connect(timer, &QTimer::timeout, [win]() {

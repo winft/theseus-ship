@@ -91,12 +91,14 @@ void pointer_redirect::init()
         if (!c->control) {
             return;
         }
-        QObject::connect(c, &Toplevel::clientStartUserMovedResized, qobject.get(), [this] {
-            update_on_start_move_resize();
-        });
-        QObject::connect(c, &Toplevel::clientFinishUserMovedResized, qobject.get(), [this] {
-            device_redirect_update(this);
-        });
+        QObject::connect(c->qobject.get(),
+                         &Toplevel::qobject_t::clientStartUserMovedResized,
+                         qobject.get(),
+                         [this] { update_on_start_move_resize(); });
+        QObject::connect(c->qobject.get(),
+                         &Toplevel::qobject_t::clientFinishUserMovedResized,
+                         qobject.get(),
+                         [this] { device_redirect_update(this); });
     };
 
     auto const clients = redirect->space.windows;
@@ -392,7 +394,10 @@ void pointer_redirect::cleanupDecoration(win::deco::client_impl* old, win::deco:
     auto window = focus.deco->client();
 
     notifiers.decoration_geometry = QObject::connect(
-        window, &Toplevel::frame_geometry_changed, qobject.get(), [this, window] {
+        window->qobject.get(),
+        &Toplevel::qobject_t::frame_geometry_changed,
+        qobject.get(),
+        [this, window] {
             if (window->control && (win::is_move(window) || win::is_resize(window))) {
                 // Don't update while doing an interactive move or resize.
                 return;
@@ -459,24 +464,27 @@ void pointer_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
     seat->pointers().set_position(m_pos.toPoint());
     seat->pointers().set_focused_surface(focusNow->surface, focusNow->input_transform());
 
-    notifiers.focus_geometry
-        = QObject::connect(focusNow, &Toplevel::frame_geometry_changed, qobject.get(), [this] {
-              if (!focus.window) {
-                  // Might happen for Xwayland clients.
-                  return;
-              }
+    notifiers.focus_geometry = QObject::connect(
+        focusNow->qobject.get(),
+        &Toplevel::qobject_t::frame_geometry_changed,
+        qobject.get(),
+        [this] {
+            if (!focus.window) {
+                // Might happen for Xwayland clients.
+                return;
+            }
 
-              // TODO: can we check on the client instead?
-              if (redirect->space.move_resize_window) {
-                  // don't update while moving
-                  return;
-              }
-              auto seat = waylandServer()->seat();
-              if (focus.window->surface != seat->pointers().get_focus().surface) {
-                  return;
-              }
-              seat->pointers().set_focused_surface_transformation(focus.window->input_transform());
-          });
+            // TODO: can we check on the client instead?
+            if (redirect->space.move_resize_window) {
+                // don't update while moving
+                return;
+            }
+            auto seat = waylandServer()->seat();
+            if (focus.window->surface != seat->pointers().get_focus().surface) {
+                return;
+            }
+            seat->pointers().set_focused_surface_transformation(focus.window->input_transform());
+        });
 
     notifiers.constraints = QObject::connect(focusNow->surface,
                                              &Wrapland::Server::Surface::pointerConstraintsChanged,

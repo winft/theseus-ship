@@ -44,7 +44,7 @@ public:
         }
 
         auto window
-            = qobject_cast<win::internal_window*>(this->redirect.space.findInternal(internal));
+            = dynamic_cast<win::internal_window*>(this->redirect.space.findInternal(internal));
 
         if (window && win::decoration(window)) {
             // only perform mouse commands on decorated internal windows
@@ -94,7 +94,7 @@ public:
 
         if (event.orientation == axis_orientation::vertical) {
             auto window
-                = qobject_cast<win::internal_window*>(this->redirect.space.findInternal(internal));
+                = dynamic_cast<win::internal_window*>(this->redirect.space.findInternal(internal));
             if (window && win::decoration(window)) {
                 // client window action only on vertical scrolling
                 auto const action_result
@@ -132,7 +132,7 @@ public:
 
         do {
             it--;
-            auto internal = qobject_cast<win::internal_window*>(*it);
+            auto internal = dynamic_cast<win::internal_window*>(*it);
             if (!internal) {
                 continue;
             }

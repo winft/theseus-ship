@@ -66,24 +66,29 @@ void set_subsurface_parent(Win* win, Lead* lead)
     lead->transient()->add_child(win);
     restack_subsurfaces(lead);
 
-    QObject::connect(win->surface, &WS::Surface::committed, win, [win] {
+    QObject::connect(win->surface, &WS::Surface::committed, win->qobject.get(), [win] {
         if (win->surface->state().updates & Wrapland::Server::surface_change::size) {
             auto const old_geo = win->frameGeometry();
             // TODO(romangg): use setFrameGeometry?
             win->set_frame_geometry(QRect(win->pos(), win->surface->size()));
-            Q_EMIT win->frame_geometry_changed(win, old_geo);
+            Q_EMIT win->qobject->frame_geometry_changed(win, old_geo);
         }
         win->handle_commit();
     });
 
-    QObject::connect(lead, &Lead::windowShown, win, [win] { win->map(); });
-    QObject::connect(lead, &Lead::windowHidden, win, [win] { win->unmap(); });
+    QObject::connect(lead->qobject.get(), &window_qobject::windowShown, win->qobject.get(), [win] {
+        win->map();
+    });
+    QObject::connect(lead->qobject.get(), &window_qobject::windowHidden, win->qobject.get(), [win] {
+        win->unmap();
+    });
 
     // TODO(romangg): Why is that needed again? weston-subsurfaces works without it, but Firefox
     //                stops rendering without this connection.
-    QObject::connect(win, &Win::needsRepaint, win->space.render.qobject.get(), [win] {
-        win->space.render.schedule_repaint(win);
-    });
+    QObject::connect(win->qobject.get(),
+                     &window_qobject::needsRepaint,
+                     win->space.render.qobject.get(),
+                     [win] { win->space.render.schedule_repaint(win); });
 
     auto subsurface = win->surface->subsurface();
 
@@ -109,17 +114,20 @@ void set_subsurface_parent(Win* win, Lead* lead)
                 top_lead->discard_quads();
             }
 
-            Q_EMIT win->frame_geometry_changed(win, old_frame_geo);
+            Q_EMIT win->qobject->frame_geometry_changed(win, old_frame_geo);
         }
     };
 
     set_pos();
 
-    QObject::connect(subsurface, &Wrapland::Server::Subsurface::resourceDestroyed, win, [win] {
-        destroy_window(win);
-    });
-    QObject::connect(subsurface, &Wrapland::Server::Subsurface::positionChanged, win, set_pos);
-    QObject::connect(lead, &Lead::frame_geometry_changed, win, set_pos);
+    QObject::connect(subsurface,
+                     &Wrapland::Server::Subsurface::resourceDestroyed,
+                     win->qobject.get(),
+                     [win] { destroy_window(win); });
+    QObject::connect(
+        subsurface, &Wrapland::Server::Subsurface::positionChanged, win->qobject.get(), set_pos);
+    QObject::connect(
+        lead->qobject.get(), &Lead::qobject_t::frame_geometry_changed, win->qobject.get(), set_pos);
 
     win->set_layer(win::layer::unmanaged);
 

@@ -83,7 +83,7 @@ void set_caption(Win* win, QString const& _s, bool force = false)
     win->caption.normal = s;
 
     if (!force && !changed) {
-        Q_EMIT win->captionChanged();
+        Q_EMIT win->qobject->captionChanged();
         return;
     }
 
@@ -127,7 +127,7 @@ void set_caption(Win* win, QString const& _s, bool force = false)
             QString(win->iconic_caption + win->caption.suffix).toUtf8().constData());
     }
 
-    Q_EMIT win->captionChanged();
+    Q_EMIT win->qobject->captionChanged();
 }
 
 /**

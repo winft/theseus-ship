@@ -980,7 +980,7 @@ void PointerInputTest::testMouseActionActiveWindow()
 
     auto window1 = Test::app()->base.space->active_client;
     QVERIFY(window1);
-    QSignalSpy window1DestroyedSpy(window1, &QObject::destroyed);
+    QSignalSpy window1DestroyedSpy(window1->qobject.get(), &QObject::destroyed);
     QVERIFY(window1DestroyedSpy.isValid());
 
     auto surface2 = Test::create_surface();
@@ -994,7 +994,7 @@ void PointerInputTest::testMouseActionActiveWindow()
     QVERIFY(window2);
     QVERIFY(window1 != window2);
 
-    QSignalSpy window2DestroyedSpy(window2, &QObject::destroyed);
+    QSignalSpy window2DestroyedSpy(window2->qobject.get(), &QObject::destroyed);
     QVERIFY(window2DestroyedSpy.isValid());
     QCOMPARE(win::top_client_on_desktop(Test::app()->base.space.get(), 1, nullptr), window2);
 

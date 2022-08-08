@@ -153,7 +153,7 @@ void PlasmaWindowTest::testCreateDestroyX11PlasmaWindow()
     if (!client->surface) {
         // we don't have a surface yet, so focused keyboard surface if set is not ours
         QVERIFY(!waylandServer()->seat()->keyboards().get_focus().surface);
-        QSignalSpy surfaceChangedSpy(client, &Toplevel::surfaceChanged);
+        QSignalSpy surfaceChangedSpy(client->qobject.get(), &Toplevel::qobject_t::surfaceChanged);
         QVERIFY(surfaceChangedSpy.isValid());
         QVERIFY(surfaceChangedSpy.wait());
     }
@@ -178,7 +178,7 @@ void PlasmaWindowTest::testCreateDestroyX11PlasmaWindow()
     xcb_unmap_window(c.get(), w);
     xcb_flush(c.get());
 
-    QSignalSpy windowClosedSpy(client, &Toplevel::closed);
+    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::closed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
     xcb_destroy_window(c.get(), w);

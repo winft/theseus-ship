@@ -67,7 +67,7 @@ void DontCrashGlxgearsTest::testGlxgears()
 
     auto glxgearsClient = Test::app()->base.space->windows.front();
     QVERIFY(win::decoration(glxgearsClient));
-    QSignalSpy closedSpy(glxgearsClient, &Toplevel::closed);
+    QSignalSpy closedSpy(glxgearsClient->qobject.get(), &Toplevel::qobject_t::closed);
     QVERIFY(closedSpy.isValid());
 
     auto decoration = win::decoration(glxgearsClient);

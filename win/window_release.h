@@ -134,7 +134,7 @@ RemnantWin* create_remnant_window(Win& source)
 
     auto const desktops = win->desktops();
     for (auto vd : desktops) {
-        QObject::connect(vd, &QObject::destroyed, win, [=] {
+        QObject::connect(vd, &QObject::destroyed, win->qobject.get(), [=] {
             auto desks = win->desktops();
             desks.removeOne(vd);
             win->set_desktops(desks);
@@ -142,7 +142,7 @@ RemnantWin* create_remnant_window(Win& source)
     }
 
     win::add_remnant(source, *win);
-    Q_EMIT source.remnant_created(win);
+    Q_EMIT source.qobject->remnant_created(win);
     return win;
 }
 

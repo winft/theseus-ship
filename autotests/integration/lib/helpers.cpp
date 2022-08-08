@@ -325,7 +325,7 @@ void init_xdg_shell_popup(std::unique_ptr<Clt::Surface> const& surface,
 
 bool wait_for_destroyed(Toplevel* window)
 {
-    QSignalSpy destroyedSpy(window, &QObject::destroyed);
+    QSignalSpy destroyedSpy(window->qobject.get(), &QObject::destroyed);
     if (!destroyedSpy.isValid()) {
         return false;
     }

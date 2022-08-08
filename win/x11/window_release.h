@@ -122,7 +122,7 @@ void release_unmanaged(Win* win, bool on_shutdown)
     if (!on_shutdown) {
         del = create_remnant_window<Win>(*win);
     }
-    Q_EMIT win->closed(win);
+    Q_EMIT win->qobject->closed(win);
 
     // Don't affect our own windows.
     if (!QWidget::find(win->xcb_window)) {
@@ -143,7 +143,7 @@ template<typename Win>
 void destroy_unmanaged(Win* win)
 {
     auto del = create_remnant_window<Win>(*win);
-    Q_EMIT win->closed(win);
+    Q_EMIT win->qobject->closed(win);
     finish_unmanaged_removal(win, del);
 }
 
@@ -180,10 +180,10 @@ void release_window(Win* win, bool on_shutdown)
     }
 
     if (win->control->move_resize().enabled) {
-        Q_EMIT win->clientFinishUserMovedResized(win);
+        Q_EMIT win->qobject->clientFinishUserMovedResized(win);
     }
 
-    Q_EMIT win->closed(win);
+    Q_EMIT win->qobject->closed(win);
 
     // Remove ForceTemporarily rules
     win->space.rule_book->discardUsed(win, true);
@@ -296,10 +296,10 @@ void destroy_window(Win* win)
     auto del = create_remnant_window<Win>(*win);
 
     if (win->control->move_resize().enabled) {
-        Q_EMIT win->clientFinishUserMovedResized(win);
+        Q_EMIT win->qobject->clientFinishUserMovedResized(win);
     }
 
-    Q_EMIT win->closed(win);
+    Q_EMIT win->qobject->closed(win);
 
     // Remove ForceTemporarily rules
     win->space.rule_book->discardUsed(win, true);

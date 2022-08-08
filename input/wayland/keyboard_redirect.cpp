@@ -119,8 +119,11 @@ void keyboard_redirect::init()
                      [this] {
                          QObject::disconnect(m_activeClientSurfaceChangedConnection);
                          if (auto c = redirect->space.active_client) {
-                             m_activeClientSurfaceChangedConnection = QObject::connect(
-                                 c, &Toplevel::surfaceChanged, qobject.get(), [this] { update(); });
+                             m_activeClientSurfaceChangedConnection
+                                 = QObject::connect(c->qobject.get(),
+                                                    &Toplevel::qobject_t::surfaceChanged,
+                                                    qobject.get(),
+                                                    [this] { update(); });
                          } else {
                              m_activeClientSurfaceChangedConnection = QMetaObject::Connection();
                          }

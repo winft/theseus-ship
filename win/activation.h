@@ -327,7 +327,7 @@ void set_demands_attention(Win* win, bool demand)
     }
 
     Q_EMIT win->space.qobject->clientDemandsAttentionChanged(win, demand);
-    Q_EMIT win->demandsAttentionChanged();
+    Q_EMIT win->qobject->demandsAttentionChanged();
 }
 
 /**
@@ -376,7 +376,7 @@ void set_active(Win* win, bool active)
     }
 
     win->doSetActive();
-    Q_EMIT win->activeChanged();
+    Q_EMIT win->qobject->activeChanged();
     win->control->update_mouse_grab();
 }
 
@@ -817,8 +817,8 @@ void set_showing_desktop(Space& space, bool showing)
     {
         blocker block(space.stacking_order);
         for (int i = static_cast<int>(space.stacking_order->stack.size()) - 1; i > -1; --i) {
-            auto c = qobject_cast<Toplevel*>(space.stacking_order->stack.at(i));
-            if (c && c->isOnCurrentDesktop()) {
+            auto c = space.stacking_order->stack.at(i);
+            if (c->isOnCurrentDesktop()) {
                 if (is_dock(c)) {
                     update_layer(c);
                 } else if (is_desktop(c) && c->isShown()) {

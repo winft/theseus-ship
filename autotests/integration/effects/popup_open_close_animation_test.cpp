@@ -138,7 +138,7 @@ void PopupOpenCloseAnimationTest::testAnimatePopups()
     QTRY_VERIFY(!effect->isActive());
 
     // Destroy the popup, it should not be animated.
-    QSignalSpy popupClosedSpy(popup, &Toplevel::closed);
+    QSignalSpy popupClosedSpy(popup->qobject.get(), &Toplevel::qobject_t::closed);
     QVERIFY(popupClosedSpy.isValid());
     popupShellSurface.reset();
     popupSurface.reset();
@@ -253,7 +253,7 @@ void PopupOpenCloseAnimationTest::testAnimateDecorationTooltips()
     QTRY_VERIFY(!effect->isActive());
 
     // Hide the decoration tooltip.
-    QSignalSpy tooltipClosedSpy(tooltip, &win::internal_window::closed);
+    QSignalSpy tooltipClosedSpy(tooltip->qobject.get(), &win::internal_window::qobject_t::closed);
     QVERIFY(tooltipClosedSpy.isValid());
     client->control->deco().client->requestHideToolTip();
     QVERIFY(tooltipClosedSpy.wait());

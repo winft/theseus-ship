@@ -58,10 +58,10 @@ void update_allowed_actions(Win* win, bool force = false)
     if ((win->allowed_actions & relevant) != (old_allowed_actions & relevant)) {
         if ((win->allowed_actions & NET::ActionMinimize)
             != (old_allowed_actions & NET::ActionMinimize)) {
-            Q_EMIT win->minimizeableChanged(win->allowed_actions & NET::ActionMinimize);
+            Q_EMIT win->qobject->minimizeableChanged(win->allowed_actions & NET::ActionMinimize);
         }
         if ((win->allowed_actions & NET::ActionMax) != (old_allowed_actions & NET::ActionMax)) {
-            Q_EMIT win->maximizeableChanged(win->allowed_actions & NET::ActionMax);
+            Q_EMIT win->qobject->maximizeableChanged(win->allowed_actions & NET::ActionMax);
         }
     }
 }

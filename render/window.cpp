@@ -341,7 +341,7 @@ void window::create_shadow()
 
     if (shadow) {
         updateShadow(std::move(shadow));
-        Q_EMIT toplevel->shadowChanged();
+        Q_EMIT toplevel->qobject->shadowChanged();
     }
 }
 

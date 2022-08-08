@@ -115,7 +115,7 @@ void input_method_test::cleanup()
 
     toplevel.client_toplevel.reset();
     if (toplevel.window) {
-        QSignalSpy windowDeletedSpy(toplevel.window, &Toplevel::closed);
+        QSignalSpy windowDeletedSpy(toplevel.window->qobject.get(), &Toplevel::qobject_t::closed);
         QVERIFY(windowDeletedSpy.isValid());
         QVERIFY(Test::wait_for_destroyed(toplevel.window));
         QVERIFY(windowDeletedSpy.count() || windowDeletedSpy.wait());
@@ -187,10 +187,12 @@ void input_method_test::create_popup()
     popup.window = Test::app()->base.space->find_window(popup.server_popup_surface->surface());
     QVERIFY(popup.window);
 
-    popup.shown_spy = std::make_unique<QSignalSpy>(popup.window, &Toplevel::windowShown);
+    popup.shown_spy = std::make_unique<QSignalSpy>(popup.window->qobject.get(),
+                                                   &Toplevel::qobject_t::windowShown);
     QVERIFY(popup.shown_spy->isValid());
 
-    popup.hidden_spy = std::make_unique<QSignalSpy>(popup.window, &Toplevel::windowHidden);
+    popup.hidden_spy = std::make_unique<QSignalSpy>(popup.window->qobject.get(),
+                                                    &Toplevel::qobject_t::windowHidden);
     QVERIFY(popup.hidden_spy->isValid());
 
     popup.rectangle_spy = std::make_unique<QSignalSpy>(

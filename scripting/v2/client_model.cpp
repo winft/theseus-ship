@@ -65,8 +65,8 @@ void client_level::setupClientConnections(window* client)
     auto check = [this, client] { checkClient(client); };
     connect(client, &window::desktopChanged, this, check);
     connect(client, &window::screenChanged, this, check);
-    connect(client->client(), &Toplevel::windowHidden, this, check);
-    connect(client->client(), &Toplevel::windowShown, this, check);
+    connect(client->client()->qobject.get(), &win::window_qobject::windowHidden, this, check);
+    connect(client->client()->qobject.get(), &win::window_qobject::windowShown, this, check);
 }
 
 void client_level::checkClient(window* client)

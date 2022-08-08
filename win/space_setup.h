@@ -189,7 +189,7 @@ void clear_space(Space& space)
     x11::clear_space(space);
 
     for (auto const& window : space.windows) {
-        if (auto internal = qobject_cast<internal_window*>(window);
+        if (auto internal = dynamic_cast<internal_window*>(window);
             internal && !internal->remnant) {
             internal->destroyClient();
             remove_all(space.windows, internal);

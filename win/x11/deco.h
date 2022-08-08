@@ -147,30 +147,32 @@ void create_decoration(Win* win)
     if (decoration) {
         QMetaObject::invokeMethod(decoration, "update", Qt::QueuedConnection);
 
-        QObject::connect(decoration, &KDecoration2::Decoration::shadowChanged, win, [win] {
-            win::update_shadow(win);
-        });
+        QObject::connect(decoration,
+                         &KDecoration2::Decoration::shadowChanged,
+                         win->qobject.get(),
+                         [win] { win::update_shadow(win); });
         QObject::connect(decoration,
                          &KDecoration2::Decoration::resizeOnlyBordersChanged,
-                         win,
+                         win->qobject.get(),
                          [win] { update_input_window(win, win->frameGeometry()); });
 
-        QObject::connect(decoration, &KDecoration2::Decoration::bordersChanged, win, [win]() {
-            set_frame_extents(win);
+        QObject::connect(
+            decoration, &KDecoration2::Decoration::bordersChanged, win->qobject.get(), [win]() {
+                set_frame_extents(win);
 
-            update_server_geometry(win, win->frameGeometry());
-            win->geometry_update.original.deco_margins = frame_margins(win);
+                update_server_geometry(win, win->frameGeometry());
+                win->geometry_update.original.deco_margins = frame_margins(win);
 
-            win->control->deco().client->update_size();
-        });
+                win->control->deco().client->update_size();
+            });
 
         QObject::connect(win->control->deco().client->decoratedClient(),
                          &KDecoration2::DecoratedClient::widthChanged,
-                         win,
+                         win->qobject.get(),
                          [win] { update_input_window(win, win->frameGeometry()); });
         QObject::connect(win->control->deco().client->decoratedClient(),
                          &KDecoration2::DecoratedClient::heightChanged,
-                         win,
+                         win->qobject.get(),
                          [win] { update_input_window(win, win->frameGeometry()); });
     }
 
@@ -215,7 +217,7 @@ void get_motif_hints(Win* win, bool initial = false)
         update_decoration(win, true);
     }
     if (closabilityChanged) {
-        Q_EMIT win->closeableChanged(win->isCloseable());
+        Q_EMIT win->qobject->closeableChanged(win->isCloseable());
     }
 }
 

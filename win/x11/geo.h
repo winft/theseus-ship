@@ -581,7 +581,7 @@ bool configure_should_ignore(Win* win, int& value_mask)
         win->max_mode = win::maximize_mode::restore;
         if (quicktiled || maximized) {
             // TODO(romangg): not emit on maximized?
-            Q_EMIT win->quicktiling_changed();
+            Q_EMIT win->qobject->quicktiling_changed();
         }
         return false;
     }

@@ -24,7 +24,7 @@ void set_skip_pager(Win* win, bool set)
 
     win->control->set_skip_pager(set);
     win->updateWindowRules(rules::type::skip_pager);
-    Q_EMIT win->skipPagerChanged();
+    Q_EMIT win->qobject->skipPagerChanged();
 }
 
 template<typename Win>
@@ -37,7 +37,7 @@ void set_skip_switcher(Win* win, bool set)
 
     win->control->set_skip_switcher(set);
     win->updateWindowRules(rules::type::skip_switcher);
-    Q_EMIT win->skipSwitcherChanged();
+    Q_EMIT win->qobject->skipSwitcherChanged();
 }
 
 template<typename Win>
@@ -59,7 +59,7 @@ void set_skip_taskbar(Win* win, bool set)
                                                   : focus_chain_change::update);
     }
 
-    Q_EMIT win->skipTaskbarChanged();
+    Q_EMIT win->qobject->skipTaskbarChanged();
 }
 
 template<typename Win>

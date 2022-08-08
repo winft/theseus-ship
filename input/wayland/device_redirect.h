@@ -56,8 +56,10 @@ bool device_redirect_set_at(Dev* dev, Toplevel* window)
 
     dev->at.window = window;
     if (window) {
-        dev->at.notifiers.destroy = QObject::connect(
-            window, &Toplevel::destroyed, dev->qobject.get(), [dev] { dev->at.window = nullptr; });
+        dev->at.notifiers.destroy = QObject::connect(window->qobject.get(),
+                                                     &Toplevel::qobject_t::destroyed,
+                                                     dev->qobject.get(),
+                                                     [dev] { dev->at.window = nullptr; });
     }
     return true;
 }
@@ -68,10 +70,10 @@ void device_redirect_set_focus(Dev* dev, Toplevel* window)
     QObject::disconnect(dev->focus.notifiers.window_destroy);
     dev->focus.window = window;
     if (window) {
-        dev->focus.notifiers.window_destroy
-            = QObject::connect(window, &Toplevel::destroyed, dev->qobject.get(), [dev] {
-                  dev->focus.window = nullptr;
-              });
+        dev->focus.notifiers.window_destroy = QObject::connect(
+            window->qobject.get(), &Toplevel::qobject_t::destroyed, dev->qobject.get(), [dev] {
+                dev->focus.window = nullptr;
+            });
     }
 
     // TODO: call focusUpdate?
@@ -118,8 +120,8 @@ void device_redirect_update_focus(Dev* dev)
         // The surface has not yet been created (special XWayland case).
         // Therefore listen for its creation.
         if (!dev->at.notifiers.surface) {
-            dev->at.notifiers.surface = QObject::connect(dev->at.window,
-                                                         &Toplevel::surfaceChanged,
+            dev->at.notifiers.surface = QObject::connect(dev->at.window->qobject.get(),
+                                                         &Toplevel::qobject_t::surfaceChanged,
                                                          dev->qobject.get(),
                                                          [dev] { device_redirect_update(dev); });
         }
@@ -178,7 +180,7 @@ static QWindow* device_redirect_find_internal_window(std::vector<Toplevel*> cons
     auto it = windows.end();
     do {
         --it;
-        auto internal = qobject_cast<win::internal_window*>(*it);
+        auto internal = dynamic_cast<win::internal_window*>(*it);
         if (!internal) {
             continue;
         }

@@ -328,11 +328,12 @@ void StackingOrderTest::testDeletedTransient()
     QTRY_VERIFY(!transient2->control->active());
 
     // Close the top-most transient.
-    connect(transient2, &Toplevel::remnant_created, this, [](auto remnant) {
-        remnant->remnant->ref();
-    });
+    connect(transient2->qobject.get(),
+            &Toplevel::qobject_t::remnant_created,
+            this,
+            [](auto remnant) { remnant->remnant->ref(); });
 
-    QSignalSpy windowClosedSpy(transient2, &Toplevel::remnant_created);
+    QSignalSpy windowClosedSpy(transient2->qobject.get(), &Toplevel::qobject_t::remnant_created);
     QVERIFY(windowClosedSpy.isValid());
     transient2ShellSurface.reset();
     transient2Surface.reset();
@@ -734,16 +735,18 @@ void StackingOrderTest::testDeletedGroupTransient()
              (std::deque<Toplevel*>{leader, member1, member2, transient}));
 
     if (!transient->ready_for_painting) {
-        QSignalSpy window_shown_spy(transient, &Toplevel::windowShown);
+        QSignalSpy window_shown_spy(transient->qobject.get(), &Toplevel::qobject_t::windowShown);
         QVERIFY(window_shown_spy.isValid());
         QVERIFY(window_shown_spy.wait());
     }
 
     // Unmap the transient.
-    connect(
-        transient, &Toplevel::remnant_created, this, [](auto remnant) { remnant->remnant->ref(); });
+    connect(transient->qobject.get(),
+            &Toplevel::qobject_t::remnant_created,
+            this,
+            [](auto remnant) { remnant->remnant->ref(); });
 
-    QSignalSpy windowClosedSpy(transient, &Toplevel::remnant_created);
+    QSignalSpy windowClosedSpy(transient->qobject.get(), &Toplevel::qobject_t::remnant_created);
     QVERIFY(windowClosedSpy.isValid());
     xcb_unmap_window(conn.get(), transientWid);
     xcb_flush(conn.get());

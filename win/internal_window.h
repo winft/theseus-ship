@@ -21,16 +21,50 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include "singleton_interface.h"
+#include "space_areas_helpers.h"
 #include "toplevel.h"
+
+#include <NETWM>
 
 namespace KWin::win
 {
 class internal_control;
 
+constexpr char internal_skip_close_animation_name[]{"KWIN_SKIP_CLOSE_ANIMATION"};
+
+template<typename Window>
+class internal_window_qobject : public window_qobject
+{
+public:
+    internal_window_qobject(Window& window)
+        : window{window}
+    {
+    }
+
+protected:
+    bool eventFilter(QObject* watched, QEvent* event) override
+    {
+        if (watched == window.m_internalWindow && event->type() == QEvent::DynamicPropertyChange) {
+            auto pe = static_cast<QDynamicPropertyChangeEvent*>(event);
+            if (pe->propertyName() == internal_skip_close_animation_name) {
+                window.setSkipCloseAnimation(
+                    window.m_internalWindow->property(internal_skip_close_animation_name).toBool());
+            }
+            if (pe->propertyName() == "kwin_windowType") {
+                window.m_windowType = window.m_internalWindow->property("kwin_windowType")
+                                          .template value<NET::WindowType>();
+                update_space_areas(window.space);
+            }
+        }
+        return false;
+    }
+
+private:
+    Window& window;
+};
+
 class KWIN_EXPORT internal_window : public Toplevel
 {
-    Q_OBJECT
-
 public:
     constexpr static bool is_toplevel{false};
 
@@ -40,7 +74,6 @@ public:
 
     bool setupCompositing() override;
     void add_scene_window_addon() override;
-    bool eventFilter(QObject* watched, QEvent* event) override;
 
     qreal bufferScale() const override;
     void debug(QDebug& stream) const override;
@@ -98,14 +131,12 @@ public:
 
     std::unique_ptr<internal_window_singleton> singleton;
 
-protected:
     bool acceptsFocus() const override;
     bool belongsToSameApplication(Toplevel const* other,
                                   win::same_client_check checks) const override;
     void doResizeSync() override;
     void updateCaption() override;
 
-private:
     double buffer_scale_internal() const;
     void createDecoration(const QRect& rect);
     void setCaption(QString const& cap);
@@ -122,9 +153,9 @@ private:
     Qt::WindowFlags m_internalWindowFlags = Qt::WindowFlags();
     bool m_userNoBorder = false;
 
-    Q_DISABLE_COPY(internal_window)
-
     friend class internal_control;
 };
 
 }
+
+Q_DECLARE_METATYPE(KWin::win::internal_window*)

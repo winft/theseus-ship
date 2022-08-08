@@ -165,14 +165,21 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
                 Q_EMIT desktopPresenceChanged(c->render->effect.get(), old, c->desktop());
             });
     connect(ws->qobject.get(), &win::space::qobject_t::clientAdded, this, [this](auto c) {
-        if (c->ready_for_painting)
+        if (c->ready_for_painting) {
             slotClientShown(c);
-        else
-            connect(c, &Toplevel::windowShown, this, &effects_handler_impl::slotClientShown);
+        } else {
+            connect(c->qobject.get(),
+                    &win::window_qobject::windowShown,
+                    this,
+                    &effects_handler_impl::slotClientShown);
+        }
     });
     connect(ws->qobject.get(), &win::space::qobject_t::unmanagedAdded, this, [this](Toplevel* u) {
         // it's never initially ready but has synthetic 50ms delay
-        connect(u, &Toplevel::windowShown, this, &effects_handler_impl::slotUnmanagedShown);
+        connect(u->qobject.get(),
+                &win::window_qobject::windowShown,
+                this,
+                &effects_handler_impl::slotUnmanagedShown);
     });
     connect(
         ws->qobject.get(), &win::space::qobject_t::internalClientAdded, this, [this](auto client) {
@@ -286,7 +293,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
         setupUnmanagedConnections(unmanaged);
     }
     for (auto window : ws->windows) {
-        if (auto internal = qobject_cast<win::internal_window*>(window)) {
+        if (auto internal = dynamic_cast<win::internal_window*>(window)) {
             setupAbstractClientConnections(internal);
         }
     }
@@ -326,66 +333,83 @@ void effects_handler_impl::unloadAllEffects()
 
 void effects_handler_impl::setupAbstractClientConnections(Toplevel* window)
 {
-    connect(window, &Toplevel::remnant_created, this, &effects_handler_impl::add_remnant);
-    connect(
-        window, &Toplevel::maximize_mode_changed, this, &effects_handler_impl::slotClientMaximized);
-    connect(window, &Toplevel::clientStartUserMovedResized, this, [this](Toplevel* c) {
-        Q_EMIT windowStartUserMovedResized(c->render->effect.get());
+    auto qtwin = window->qobject.get();
+
+    QObject::connect(
+        qtwin, &win::window_qobject::remnant_created, this, &effects_handler_impl::add_remnant);
+    QObject::connect(qtwin,
+                     &win::window_qobject::maximize_mode_changed,
+                     this,
+                     &effects_handler_impl::slotClientMaximized);
+    QObject::connect(
+        qtwin, &win::window_qobject::clientStartUserMovedResized, this, [this](Toplevel* c) {
+            Q_EMIT windowStartUserMovedResized(c->render->effect.get());
+        });
+    QObject::connect(qtwin,
+                     &win::window_qobject::clientStepUserMovedResized,
+                     this,
+                     [this](Toplevel* c, const QRect& geometry) {
+                         Q_EMIT windowStepUserMovedResized(c->render->effect.get(), geometry);
+                     });
+    QObject::connect(
+        qtwin, &win::window_qobject::clientFinishUserMovedResized, this, [this](Toplevel* c) {
+            Q_EMIT windowFinishUserMovedResized(c->render->effect.get());
+        });
+    QObject::connect(qtwin,
+                     &win::window_qobject::opacityChanged,
+                     this,
+                     &effects_handler_impl::slotOpacityChanged);
+    QObject::connect(
+        qtwin, &win::window_qobject::clientMinimized, this, [this](Toplevel* c, bool animate) {
+            // TODO: notify effects even if it should not animate?
+            if (animate) {
+                Q_EMIT windowMinimized(c->render->effect.get());
+            }
+        });
+    QObject::connect(
+        qtwin, &win::window_qobject::clientUnminimized, this, [this](Toplevel* c, bool animate) {
+            // TODO: notify effects even if it should not animate?
+            if (animate) {
+                Q_EMIT windowUnminimized(c->render->effect.get());
+            }
+        });
+    QObject::connect(qtwin, &win::window_qobject::modalChanged, this, [this, window] {
+        slotClientModalityChanged(window);
     });
-    connect(window,
-            &Toplevel::clientStepUserMovedResized,
-            this,
-            [this](Toplevel* c, const QRect& geometry) {
-                Q_EMIT windowStepUserMovedResized(c->render->effect.get(), geometry);
-            });
-    connect(window, &Toplevel::clientFinishUserMovedResized, this, [this](Toplevel* c) {
-        Q_EMIT windowFinishUserMovedResized(c->render->effect.get());
-    });
-    connect(window, &Toplevel::opacityChanged, this, &effects_handler_impl::slotOpacityChanged);
-    connect(window, &Toplevel::clientMinimized, this, [this](Toplevel* c, bool animate) {
-        // TODO: notify effects even if it should not animate?
-        if (animate) {
-            Q_EMIT windowMinimized(c->render->effect.get());
-        }
-    });
-    connect(window, &Toplevel::clientUnminimized, this, [this](Toplevel* c, bool animate) {
-        // TODO: notify effects even if it should not animate?
-        if (animate) {
-            Q_EMIT windowUnminimized(c->render->effect.get());
-        }
-    });
-    connect(
-        window, &Toplevel::modalChanged, this, &effects_handler_impl::slotClientModalityChanged);
-    connect(window,
-            &Toplevel::frame_geometry_changed,
-            this,
-            &effects_handler_impl::slotGeometryShapeChanged);
-    connect(window,
-            &Toplevel::frame_geometry_changed,
-            this,
-            &effects_handler_impl::slotFrameGeometryChanged);
-    connect(window, &Toplevel::damaged, this, &effects_handler_impl::slotWindowDamaged);
-    connect(window, &Toplevel::unresponsiveChanged, this, [this, window](bool unresponsive) {
-        Q_EMIT windowUnresponsiveChanged(window->render->effect.get(), unresponsive);
-    });
-    connect(window, &Toplevel::windowShown, this, [this](Toplevel* c) {
+    QObject::connect(qtwin,
+                     &win::window_qobject::frame_geometry_changed,
+                     this,
+                     &effects_handler_impl::slotGeometryShapeChanged);
+    QObject::connect(qtwin,
+                     &win::window_qobject::frame_geometry_changed,
+                     this,
+                     &effects_handler_impl::slotFrameGeometryChanged);
+    QObject::connect(
+        qtwin, &win::window_qobject::damaged, this, &effects_handler_impl::slotWindowDamaged);
+    QObject::connect(
+        qtwin, &win::window_qobject::unresponsiveChanged, this, [this, window](bool unresponsive) {
+            Q_EMIT windowUnresponsiveChanged(window->render->effect.get(), unresponsive);
+        });
+    QObject::connect(qtwin, &win::window_qobject::windowShown, this, [this](Toplevel* c) {
         Q_EMIT windowShown(c->render->effect.get());
     });
-    connect(window, &Toplevel::windowHidden, this, [this](Toplevel* c) {
+    QObject::connect(qtwin, &win::window_qobject::windowHidden, this, [this](Toplevel* c) {
         Q_EMIT windowHidden(c->render->effect.get());
     });
-    connect(window, &Toplevel::keepAboveChanged, this, [this, window](bool above) {
-        Q_UNUSED(above)
-        Q_EMIT windowKeepAboveChanged(window->render->effect.get());
-    });
-    connect(window, &Toplevel::keepBelowChanged, this, [this, window](bool below) {
-        Q_UNUSED(below)
-        Q_EMIT windowKeepBelowChanged(window->render->effect.get());
-    });
-    connect(window, &Toplevel::fullScreenChanged, this, [this, window]() {
+    QObject::connect(
+        qtwin, &win::window_qobject::keepAboveChanged, this, [this, window](bool above) {
+            Q_UNUSED(above)
+            Q_EMIT windowKeepAboveChanged(window->render->effect.get());
+        });
+    QObject::connect(
+        qtwin, &win::window_qobject::keepBelowChanged, this, [this, window](bool below) {
+            Q_UNUSED(below)
+            Q_EMIT windowKeepBelowChanged(window->render->effect.get());
+        });
+    QObject::connect(qtwin, &win::window_qobject::fullScreenChanged, this, [this, window]() {
         Q_EMIT windowFullScreenChanged(window->render->effect.get());
     });
-    connect(window, &Toplevel::visible_geometry_changed, this, [this, window]() {
+    QObject::connect(qtwin, &win::window_qobject::visible_geometry_changed, this, [this, window]() {
         Q_EMIT windowExpandedGeometryChanged(window->render->effect.get());
     });
 }
@@ -393,24 +417,39 @@ void effects_handler_impl::setupAbstractClientConnections(Toplevel* window)
 void effects_handler_impl::setupClientConnections(Toplevel* c)
 {
     setupAbstractClientConnections(c);
-    connect(c, &Toplevel::paddingChanged, this, &effects_handler_impl::slotPaddingChanged);
+    connect(c->qobject.get(),
+            &win::window_qobject::paddingChanged,
+            this,
+            &effects_handler_impl::slotPaddingChanged);
 }
 
 void effects_handler_impl::setupUnmanagedConnections(Toplevel* u)
 {
-    connect(u, &Toplevel::remnant_created, this, &effects_handler_impl::add_remnant);
-    connect(u, &Toplevel::opacityChanged, this, &effects_handler_impl::slotOpacityChanged);
-    connect(u,
-            &Toplevel::frame_geometry_changed,
+    connect(u->qobject.get(),
+            &win::window_qobject::remnant_created,
+            this,
+            &effects_handler_impl::add_remnant);
+    connect(u->qobject.get(),
+            &win::window_qobject::opacityChanged,
+            this,
+            &effects_handler_impl::slotOpacityChanged);
+    connect(u->qobject.get(),
+            &win::window_qobject::frame_geometry_changed,
             this,
             &effects_handler_impl::slotGeometryShapeChanged);
-    connect(u,
-            &Toplevel::frame_geometry_changed,
+    connect(u->qobject.get(),
+            &win::window_qobject::frame_geometry_changed,
             this,
             &effects_handler_impl::slotFrameGeometryChanged);
-    connect(u, &Toplevel::paddingChanged, this, &effects_handler_impl::slotPaddingChanged);
-    connect(u, &Toplevel::damaged, this, &effects_handler_impl::slotWindowDamaged);
-    connect(u, &Toplevel::visible_geometry_changed, this, [this, u]() {
+    connect(u->qobject.get(),
+            &win::window_qobject::paddingChanged,
+            this,
+            &effects_handler_impl::slotPaddingChanged);
+    connect(u->qobject.get(),
+            &win::window_qobject::damaged,
+            this,
+            &effects_handler_impl::slotWindowDamaged);
+    connect(u->qobject.get(), &win::window_qobject::visible_geometry_changed, this, [this, u]() {
         Q_EMIT windowExpandedGeometryChanged(u->render->effect.get());
     });
 }
@@ -609,10 +648,12 @@ void effects_handler_impl::slotOpacityChanged(Toplevel* t, qreal oldOpacity)
 void effects_handler_impl::slotClientShown(KWin::Toplevel* t)
 {
     assert(dynamic_cast<win::x11::window*>(t));
-    auto c = static_cast<win::x11::window*>(t);
-    disconnect(c, &Toplevel::windowShown, this, &effects_handler_impl::slotClientShown);
-    setupClientConnections(c);
-    Q_EMIT windowAdded(c->render->effect.get());
+    disconnect(t->qobject.get(),
+               &win::window_qobject::windowShown,
+               this,
+               &effects_handler_impl::slotClientShown);
+    setupClientConnections(t);
+    Q_EMIT windowAdded(t->render->effect.get());
 }
 
 void effects_handler_impl::slotXdgShellClientShown(Toplevel* t)
@@ -635,9 +676,9 @@ void effects_handler_impl::add_remnant(Toplevel* remnant)
     Q_EMIT windowClosed(remnant->render->effect.get());
 }
 
-void effects_handler_impl::slotClientModalityChanged()
+void effects_handler_impl::slotClientModalityChanged(KWin::Toplevel* window)
 {
-    Q_EMIT windowModalityChanged(static_cast<win::x11::window*>(sender())->render->effect.get());
+    Q_EMIT windowModalityChanged(window->render->effect.get());
 }
 
 void effects_handler_impl::slotCurrentTabAboutToChange(EffectWindow* from, EffectWindow* to)
@@ -1968,7 +2009,7 @@ QRect effect_screen_impl::geometry() const
 //****************************************
 
 effects_window_impl::effects_window_impl(Toplevel* toplevel)
-    : EffectWindow(toplevel)
+    : EffectWindow(toplevel->qobject.get())
     , toplevel(toplevel)
     , sw(nullptr)
 {
@@ -2286,7 +2327,7 @@ QSize effects_window_impl::basicUnit() const
 void effects_window_impl::setWindow(Toplevel* w)
 {
     toplevel = w;
-    setParent(w);
+    setParent(w->qobject.get());
 }
 
 void effects_window_impl::setSceneWindow(render::window* w)
@@ -2349,7 +2390,7 @@ EffectWindow* effects_window_impl::transientFor()
 
 QWindow* effects_window_impl::internalWindow() const
 {
-    auto client = qobject_cast<win::internal_window*>(toplevel);
+    auto client = dynamic_cast<win::internal_window*>(toplevel);
     if (!client) {
         return nullptr;
     }

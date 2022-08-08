@@ -298,7 +298,7 @@ void StrutsTest::testWaylandStruts()
 
     // delete all surfaces
     for (auto& client : clients) {
-        QSignalSpy destroyedSpy(client.window, &QObject::destroyed);
+        QSignalSpy destroyedSpy(client.window->qobject.get(), &QObject::destroyed);
         QVERIFY(destroyedSpy.isValid());
         client = {};
         QVERIFY(destroyedSpy.wait());
@@ -340,7 +340,7 @@ void StrutsTest::testMoveWaylandPanel()
     QCOMPARE(win::space_window_area(*Test::app()->base.space, WorkArea, outputs.at(0), 1),
              QRect(0, 0, 2560, 1000));
 
-    QSignalSpy geometryChangedSpy(c, &Toplevel::frame_geometry_changed);
+    QSignalSpy geometryChangedSpy(c->qobject.get(), &Toplevel::qobject_t::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
     plasmaSurface->setPosition(QPoint(1280, 1000));
     QVERIFY(geometryChangedSpy.wait());
@@ -682,7 +682,7 @@ void StrutsTest::testX11Struts()
     xcb_flush(c.get());
     c.reset();
 
-    QSignalSpy windowClosedSpy(client, &Toplevel::closed);
+    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::closed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
 
@@ -809,7 +809,7 @@ void StrutsTest::test363804()
     xcb_flush(c.get());
     c.reset();
 
-    QSignalSpy windowClosedSpy(client, &Toplevel::closed);
+    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::closed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
 }
@@ -932,14 +932,14 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
     QCOMPARE(client2->maximizeMode(), win::maximize_mode::full);
 
     // destroy window again
-    QSignalSpy normalWindowClosedSpy(client2, &Toplevel::closed);
+    QSignalSpy normalWindowClosedSpy(client2->qobject.get(), &Toplevel::qobject_t::closed);
     QVERIFY(normalWindowClosedSpy.isValid());
     xcb_unmap_window(c.get(), w2);
     xcb_destroy_window(c.get(), w2);
     xcb_flush(c.get());
     QVERIFY(normalWindowClosedSpy.wait());
 
-    QSignalSpy windowClosedSpy(client, &Toplevel::closed);
+    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::closed);
     QVERIFY(windowClosedSpy.isValid());
 
     // and destroy the window again
@@ -1089,14 +1089,14 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
     QCOMPARE(client2->frameGeometry(), QRect(origGeo.translated(-800, 0)));
 
     // Destroy window again.
-    QSignalSpy normalWindowClosedSpy(client2, &Toplevel::closed);
+    QSignalSpy normalWindowClosedSpy(client2->qobject.get(), &Toplevel::qobject_t::closed);
     QVERIFY(normalWindowClosedSpy.isValid());
     xcb_unmap_window(c.get(), w2);
     xcb_destroy_window(c.get(), w2);
     xcb_flush(c.get());
     QVERIFY(normalWindowClosedSpy.wait());
 
-    QSignalSpy windowClosedSpy(client, &Toplevel::closed);
+    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::closed);
     QVERIFY(windowClosedSpy.isValid());
 
     // and destroy the window again

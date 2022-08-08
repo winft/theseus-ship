@@ -432,9 +432,11 @@ void DecorationInputTest::testPressToMove()
     win::move(c,
               Test::get_output(0)->geometry().center()
                   - QPoint(c->size().width() / 2, c->size().height() / 2));
-    QSignalSpy startMoveResizedSpy(c, &Toplevel::clientStartUserMovedResized);
+    QSignalSpy startMoveResizedSpy(c->qobject.get(),
+                                   &Toplevel::qobject_t::clientStartUserMovedResized);
     QVERIFY(startMoveResizedSpy.isValid());
-    QSignalSpy clientFinishUserMovedResizedSpy(c, &Toplevel::clientFinishUserMovedResized);
+    QSignalSpy clientFinishUserMovedResizedSpy(c->qobject.get(),
+                                               &Toplevel::qobject_t::clientFinishUserMovedResized);
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
     quint32 timestamp = 1;
@@ -500,9 +502,11 @@ void DecorationInputTest::testTapToMove()
     win::move(c,
               Test::get_output(0)->geometry().center()
                   - QPoint(c->size().width() / 2, c->size().height() / 2));
-    QSignalSpy startMoveResizedSpy(c, &Toplevel::clientStartUserMovedResized);
+    QSignalSpy startMoveResizedSpy(c->qobject.get(),
+                                   &Toplevel::qobject_t::clientStartUserMovedResized);
     QVERIFY(startMoveResizedSpy.isValid());
-    QSignalSpy clientFinishUserMovedResizedSpy(c, &Toplevel::clientFinishUserMovedResized);
+    QSignalSpy clientFinishUserMovedResizedSpy(c->qobject.get(),
+                                               &Toplevel::qobject_t::clientFinishUserMovedResized);
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
     quint32 timestamp = 1;
@@ -582,7 +586,8 @@ void DecorationInputTest::testResizeOutsideWindow()
                   - QPoint(c->size().width() / 2, c->size().height() / 2));
     QVERIFY(c->frameGeometry() != win::input_geometry(c));
     QVERIFY(win::input_geometry(c).contains(c->frameGeometry()));
-    QSignalSpy startMoveResizedSpy(c, &Toplevel::clientStartUserMovedResized);
+    QSignalSpy startMoveResizedSpy(c->qobject.get(),
+                                   &Toplevel::qobject_t::clientStartUserMovedResized);
     QVERIFY(startMoveResizedSpy.isValid());
 
     // go to border

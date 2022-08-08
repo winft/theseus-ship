@@ -72,20 +72,24 @@ Win* create_shell_window(Space& space, Wrapland::Server::XdgShellSurface* shell_
     auto win = new Win(surface, space);
     block_geometry_updates(win, true);
 
-    QObject::connect(
-        surface->client(), &WS::Client::disconnected, win, [win] { destroy_window(win); });
+    QObject::connect(surface->client(), &WS::Client::disconnected, win->qobject.get(), [win] {
+        destroy_window(win);
+    });
 
     win->shell_surface = shell_surface;
 
-    QObject::connect(space.xdg_shell.get(), &WS::XdgShell::pingDelayed, win, [win](auto serial) {
-        handle_ping_delayed(win, serial);
-    });
-    QObject::connect(space.xdg_shell.get(), &WS::XdgShell::pingTimeout, win, [win](auto serial) {
-        handle_ping_timeout(win, serial);
-    });
-    QObject::connect(space.xdg_shell.get(), &WS::XdgShell::pongReceived, win, [win](auto serial) {
-        handle_pong(win, serial);
-    });
+    QObject::connect(space.xdg_shell.get(),
+                     &WS::XdgShell::pingDelayed,
+                     win->qobject.get(),
+                     [win](auto serial) { handle_ping_delayed(win, serial); });
+    QObject::connect(space.xdg_shell.get(),
+                     &WS::XdgShell::pingTimeout,
+                     win->qobject.get(),
+                     [win](auto serial) { handle_ping_timeout(win, serial); });
+    QObject::connect(space.xdg_shell.get(),
+                     &WS::XdgShell::pongReceived,
+                     win->qobject.get(),
+                     [win](auto serial) { handle_pong(win, serial); });
 
     return win;
 }
@@ -105,15 +109,18 @@ void finalize_shell_window_creation(Space& space, Win* win)
     namespace WS = Wrapland::Server;
 
     auto handle_first_commit = [&space, win] {
-        QObject::disconnect(win->surface, &WS::Surface::committed, win, nullptr);
-        QObject::connect(win->surface, &WS::Surface::committed, win, &Win::handle_commit);
+        QObject::disconnect(win->surface, &WS::Surface::committed, win->qobject.get(), nullptr);
+        QObject::connect(win->surface, &WS::Surface::committed, win->qobject.get(), [win] {
+            win->handle_commit();
+        });
 
         update_shadow(win);
-        QObject::connect(win->surface, &Wrapland::Server::Surface::committed, win, [win] {
-            if (win->surface->state().updates & Wrapland::Server::surface_change::shadow) {
-                update_shadow(win);
-            }
-        });
+        QObject::connect(
+            win->surface, &Wrapland::Server::Surface::committed, win->qobject.get(), [win] {
+                if (win->surface->state().updates & Wrapland::Server::surface_change::shadow) {
+                    update_shadow(win);
+                }
+            });
 
         xdg_shell_setup_parent(space, *win);
 
@@ -180,9 +187,8 @@ void finalize_shell_window_creation(Space& space, Win* win)
         win->initialized = true;
     };
 
-    QObject::connect(win->surface, &WS::Surface::committed, win, [handle_first_commit] {
-        handle_first_commit();
-    });
+    QObject::connect(
+        win->surface, &WS::Surface::committed, win->qobject.get(), handle_first_commit);
 }
 
 template<typename Win>
@@ -220,28 +226,33 @@ Win* create_toplevel_window(Space* space, Wrapland::Server::XdgShellToplevel* to
         }
     };
 
-    QObject::connect(win, &Win::desktopFileNameChanged, win, update_icon);
+    QObject::connect(win->qobject.get(),
+                     &Win::qobject_t::desktopFileNameChanged,
+                     win->qobject.get(),
+                     update_icon);
     update_icon();
 
-    QObject::connect(
-        toplevel, &WS::XdgShellToplevel::resourceDestroyed, win, [win] { destroy_window(win); });
+    QObject::connect(toplevel, &WS::XdgShellToplevel::resourceDestroyed, win->qobject.get(), [win] {
+        destroy_window(win);
+    });
     QObject::connect(toplevel,
                      &WS::XdgShellToplevel::configureAcknowledged,
-                     win,
+                     win->qobject.get(),
                      [win](auto serial) { handle_configure_ack(win, serial); });
 
     win->caption.normal = QString::fromStdString(toplevel->title()).simplified();
-    QObject::connect(
-        toplevel, &WS::XdgShellToplevel::titleChanged, win, &Win::handle_title_changed);
-    QTimer::singleShot(0, win, &Win::updateCaption);
+    QObject::connect(toplevel, &WS::XdgShellToplevel::titleChanged, win->qobject.get(), [win] {
+        win->handle_title_changed();
+    });
+    QTimer::singleShot(0, win->qobject.get(), [win] { win->updateCaption(); });
 
     QObject::connect(toplevel,
                      &WS::XdgShellToplevel::moveRequested,
-                     win,
+                     win->qobject.get(),
                      [win](auto seat, auto serial) { handle_move_request(win, seat, serial); });
     QObject::connect(toplevel,
                      &WS::XdgShellToplevel::resizeRequested,
-                     win,
+                     win->qobject.get(),
                      [win](auto seat, auto serial, auto edges) {
                          handle_resize_request(win, seat, serial, edges);
                      });
@@ -254,30 +265,33 @@ Win* create_toplevel_window(Space* space, Wrapland::Server::XdgShellToplevel* to
     }
     win->setResourceClass(resourceName, toplevel->appId().c_str());
     set_desktop_file_name(win, toplevel->appId().c_str());
-    QObject::connect(
-        toplevel, &WS::XdgShellToplevel::appIdChanged, win, &Win::handle_class_changed);
+    QObject::connect(toplevel, &WS::XdgShellToplevel::appIdChanged, win->qobject.get(), [win] {
+        win->handle_class_changed();
+    });
 
-    QObject::connect(toplevel, &WS::XdgShellToplevel::minimizeRequested, win, [win] {
+    QObject::connect(toplevel, &WS::XdgShellToplevel::minimizeRequested, win->qobject.get(), [win] {
         handle_minimize_request(win);
     });
-    QObject::connect(toplevel, &WS::XdgShellToplevel::maximizedChanged, win, [win](auto maximized) {
-        handle_maximize_request(win, maximized);
-    });
+    QObject::connect(toplevel,
+                     &WS::XdgShellToplevel::maximizedChanged,
+                     win->qobject.get(),
+                     [win](auto maximized) { handle_maximize_request(win, maximized); });
     QObject::connect(toplevel,
                      &WS::XdgShellToplevel::fullscreenChanged,
-                     win,
+                     win->qobject.get(),
                      [win](auto fullscreen, auto output) {
                          handle_fullscreen_request(win, fullscreen, output);
                      });
     QObject::connect(toplevel,
                      &WS::XdgShellToplevel::windowMenuRequested,
-                     win,
+                     win->qobject.get(),
                      [win](auto seat, auto serial, auto surface_pos) {
                          handle_window_menu_request(win, seat, serial, surface_pos);
                      });
-    QObject::connect(toplevel, &WS::XdgShellToplevel::transientForChanged, win, [space, win] {
-        handle_parent_changed(*space, win);
-    });
+    QObject::connect(toplevel,
+                     &WS::XdgShellToplevel::transientForChanged,
+                     win->qobject.get(),
+                     [space, win] { handle_parent_changed(*space, win); });
 
     auto configure = [win, toplevel] {
         if (win->closing) {
@@ -289,9 +303,16 @@ Win* create_toplevel_window(Space* space, Wrapland::Server::XdgShellToplevel* to
         auto size = win->synced_geometry.window.size();
         toplevel->configure(xdg_surface_states(win), size);
     };
-    QObject::connect(win, &Toplevel::activeChanged, win, configure);
-    QObject::connect(win, &Toplevel::clientStartUserMovedResized, win, configure);
-    QObject::connect(win, &Toplevel::clientFinishUserMovedResized, win, configure);
+    QObject::connect(
+        win->qobject.get(), &window_qobject::activeChanged, win->qobject.get(), configure);
+    QObject::connect(win->qobject.get(),
+                     &window_qobject::clientStartUserMovedResized,
+                     win->qobject.get(),
+                     configure);
+    QObject::connect(win->qobject.get(),
+                     &window_qobject::clientFinishUserMovedResized,
+                     win->qobject.get(),
+                     configure);
 
     set_desktop(win, win->space.virtual_desktop_manager->current());
     set_color_scheme(win, QString());
@@ -309,27 +330,35 @@ Win* create_popup_window(Space* space, Wrapland::Server::XdgShellPopup* popup)
     win->popup = popup;
     win->transient()->annexed = true;
 
-    QObject::connect(win, &Win::needsRepaint, win->space.render.qobject.get(), [win] {
-        win->space.render.schedule_repaint(win);
-    });
-    QObject::connect(win, &Win::frame_geometry_changed, win, [](auto win, auto old_frame_geo) {
-        auto const old_visible_geo = visible_rect(win, old_frame_geo);
-        auto const visible_geo = visible_rect(win, win->frameGeometry());
+    QObject::connect(win->qobject.get(),
+                     &Win::qobject_t::needsRepaint,
+                     win->space.render.qobject.get(),
+                     [win] { win->space.render.schedule_repaint(win); });
+    QObject::connect(win->qobject.get(),
+                     &Win::qobject_t::frame_geometry_changed,
+                     win->qobject.get(),
+                     [](auto win, auto old_frame_geo) {
+                         auto const old_visible_geo = visible_rect(win, old_frame_geo);
+                         auto const visible_geo = visible_rect(win, win->frameGeometry());
 
-        lead_of_annexed_transient(win)->addLayerRepaint(old_visible_geo.united(visible_geo));
+                         lead_of_annexed_transient(win)->addLayerRepaint(
+                             old_visible_geo.united(visible_geo));
 
-        if (old_visible_geo.size() != visible_geo.size()) {
-            win->discard_quads();
-        }
+                         if (old_visible_geo.size() != visible_geo.size()) {
+                             win->discard_quads();
+                         }
+                     });
+    QObject::connect(popup,
+                     &WS::XdgShellPopup::configureAcknowledged,
+                     win->qobject.get(),
+                     [win](auto serial) { handle_configure_ack(win, serial); });
+    QObject::connect(popup,
+                     &WS::XdgShellPopup::grabRequested,
+                     win->qobject.get(),
+                     [win](auto seat, auto serial) { handle_grab_request(win, seat, serial); });
+    QObject::connect(popup, &WS::XdgShellPopup::resourceDestroyed, win->qobject.get(), [win] {
+        destroy_window(win);
     });
-    QObject::connect(popup, &WS::XdgShellPopup::configureAcknowledged, win, [win](auto serial) {
-        handle_configure_ack(win, serial);
-    });
-    QObject::connect(popup, &WS::XdgShellPopup::grabRequested, win, [win](auto seat, auto serial) {
-        handle_grab_request(win, seat, serial);
-    });
-    QObject::connect(
-        popup, &WS::XdgShellPopup::resourceDestroyed, win, [win] { destroy_window(win); });
 
     finalize_shell_window_creation(*space, win);
     return win;
@@ -431,8 +460,9 @@ void install_plasma_shell_surface(Win* win, Wrapland::Server::PlasmaShellSurface
 
     win->plasma_shell_surface = surface;
 
-    QObject::connect(
-        surface, &PSS::resourceDestroyed, win, [win] { win->plasma_shell_surface = nullptr; });
+    QObject::connect(surface, &PSS::resourceDestroyed, win->qobject.get(), [win] {
+        win->plasma_shell_surface = nullptr;
+    });
 
     auto update_position = [win, surface] {
         win->setFrameGeometry(QRect(surface->position(), win->geometry_update.frame.size()));
@@ -482,23 +512,26 @@ void install_plasma_shell_surface(Win* win, Wrapland::Server::PlasmaShellSurface
         update_position();
     }
 
-    QObject::connect(surface, &PSS::positionChanged, win, update_position);
-    QObject::connect(surface, &PSS::roleChanged, win, update_role);
-    QObject::connect(surface, &PSS::panelBehaviorChanged, win, [win] {
+    QObject::connect(surface, &PSS::positionChanged, win->qobject.get(), update_position);
+    QObject::connect(surface, &PSS::roleChanged, win->qobject.get(), update_role);
+    QObject::connect(surface, &PSS::panelBehaviorChanged, win->qobject.get(), [win] {
         update_screen_edge(win);
         win::update_space_areas(win->space);
     });
-    QObject::connect(win, &Win::frame_geometry_changed, win, [win] { update_screen_edge(win); });
+    QObject::connect(win->qobject.get(),
+                     &Win::qobject_t::frame_geometry_changed,
+                     win->qobject.get(),
+                     [win] { update_screen_edge(win); });
 
     if (win->control) {
-        QObject::connect(surface, &PSS::panelAutoHideHideRequested, win, [win] {
+        QObject::connect(surface, &PSS::panelAutoHideHideRequested, win->qobject.get(), [win] {
             if (win->plasma_shell_surface->panelBehavior() == PSS::PanelBehavior::AutoHide) {
                 win->hideClient(true);
                 win->plasma_shell_surface->hideAutoHidingPanel();
             }
             update_screen_edge(win);
         });
-        QObject::connect(surface, &PSS::panelAutoHideShowRequested, win, [win] {
+        QObject::connect(surface, &PSS::panelAutoHideShowRequested, win->qobject.get(), [win] {
             win->hideClient(false);
             win->space.edges->reserve(win, ElectricNone);
             win->plasma_shell_surface->showAutoHidingPanel();
@@ -507,10 +540,10 @@ void install_plasma_shell_surface(Win* win, Wrapland::Server::PlasmaShellSurface
         win::set_skip_taskbar(win, surface->skipTaskbar());
         win::set_skip_switcher(win, surface->skipSwitcher());
 
-        QObject::connect(surface, &PSS::skipTaskbarChanged, win, [win] {
+        QObject::connect(surface, &PSS::skipTaskbarChanged, win->qobject.get(), [win] {
             win::set_skip_taskbar(win, win->plasma_shell_surface->skipTaskbar());
         });
-        QObject::connect(surface, &PSS::skipSwitcherChanged, win, [win] {
+        QObject::connect(surface, &PSS::skipSwitcherChanged, win->qobject.get(), [win] {
             win::set_skip_switcher(win, win->plasma_shell_surface->skipSwitcher());
         });
     }
@@ -526,9 +559,10 @@ void install_appmenu(Win* win, Wrapland::Server::Appmenu* menu)
             {address.serviceName.toStdString(), address.objectPath.toStdString()});
     };
 
-    QObject::connect(menu, &Menu::addressChanged, win, [update](Menu::InterfaceAddress address) {
-        update(address);
-    });
+    QObject::connect(menu,
+                     &Menu::addressChanged,
+                     win->qobject.get(),
+                     [update](Menu::InterfaceAddress address) { update(address); });
     update(menu->address());
 }
 
@@ -543,8 +577,11 @@ void install_palette(Win* win, Wrapland::Server::ServerSideDecorationPalette* pa
         set_color_scheme(win, win->control->rules().checkDecoColor(palette));
     };
 
-    QObject::connect(palette, &Palette::paletteChanged, win, [update](auto name) { update(name); });
-    QObject::connect(palette, &QObject::destroyed, win, [update] { update(QString()); });
+    QObject::connect(palette, &Palette::paletteChanged, win->qobject.get(), [update](auto name) {
+        update(name);
+    });
+    QObject::connect(
+        palette, &QObject::destroyed, win->qobject.get(), [update] { update(QString()); });
 
     update(palette->palette());
 }
@@ -557,7 +594,7 @@ void install_deco(Win* win, Wrapland::Server::XdgDecoration* deco)
     assert(win->control);
     win->xdg_deco = deco;
 
-    QObject::connect(deco, &Deco::resourceDestroyed, win, [win] {
+    QObject::connect(deco, &Deco::resourceDestroyed, win->qobject.get(), [win] {
         win->xdg_deco = nullptr;
         if (win->closing) {
             return;
@@ -565,7 +602,7 @@ void install_deco(Win* win, Wrapland::Server::XdgDecoration* deco)
         win->updateDecoration(true);
     });
 
-    QObject::connect(deco, &Deco::modeRequested, win, [win]() {
+    QObject::connect(deco, &Deco::modeRequested, win->qobject.get(), [win]() {
         // Force as we must send a new configure response.
         win->updateDecoration(false, true);
     });
@@ -607,7 +644,7 @@ void handle_new_toplevel(Space* space, Wrapland::Server::XdgShellToplevel* tople
     // TODO(romangg): What does this mean?
     QObject::connect(space->xdg_foreign.get(),
                      &Wrapland::Server::XdgForeign::parentChanged,
-                     window,
+                     window->qobject.get(),
                      [space, window](auto /*parent*/, auto child) {
                          if (child == window->surface) {
                              handle_parent_changed(*space, window);
@@ -917,7 +954,7 @@ void handle_ping_timeout(Win* win, uint32_t serial)
                                << win::caption(win);
 
             // for internal windows, killing the window will delete this
-            QPointer<QObject> guard(win);
+            QPointer<QObject> guard(win->qobject.get());
             win->killWindow();
             if (!guard) {
                 return;

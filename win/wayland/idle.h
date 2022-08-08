@@ -34,15 +34,15 @@ template<typename Device, typename Win>
 void idle_setup(Device& idle, Win& window)
 {
     auto update = [&idle, &window] { idle_update(idle, window); };
+    auto qwin = window.qobject.get();
 
-    QObject::connect(
-        window.surface, &Wrapland::Server::Surface::inhibitsIdleChanged, &window, update);
-    QObject::connect(&window, &Win::desktopChanged, &window, update);
-    QObject::connect(&window, &Win::clientMinimized, &window, update);
-    QObject::connect(&window, &Win::clientUnminimized, &window, update);
-    QObject::connect(&window, &Win::windowHidden, &window, update);
-    QObject::connect(&window, &Win::windowShown, &window, update);
-    QObject::connect(&window, &Win::closed, &window, [&idle, &window](auto) {
+    QObject::connect(window.surface, &Wrapland::Server::Surface::inhibitsIdleChanged, qwin, update);
+    QObject::connect(qwin, &Win::qobject_t::desktopChanged, qwin, update);
+    QObject::connect(qwin, &Win::qobject_t::clientMinimized, qwin, update);
+    QObject::connect(qwin, &Win::qobject_t::clientUnminimized, qwin, update);
+    QObject::connect(qwin, &Win::qobject_t::windowHidden, qwin, update);
+    QObject::connect(qwin, &Win::qobject_t::windowShown, qwin, update);
+    QObject::connect(qwin, &Win::qobject_t::closed, qwin, [&idle, &window](auto) {
         if (window.inhibit_idle) {
             window.inhibit_idle = false;
             idle.uninhibit();

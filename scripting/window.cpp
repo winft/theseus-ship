@@ -25,96 +25,139 @@ window::window(Toplevel* client, space* workspace)
     : m_client{client}
     , m_workspace{workspace}
 {
-    connect(client,
-            &Toplevel::opacityChanged,
-            this,
-            [this]([[maybe_unused]] auto toplevel, auto oldOpacity) {
-                Q_EMIT opacityChanged(this, oldOpacity);
-            });
+    auto qtwin = client->qobject.get();
+    QObject::connect(qtwin,
+                     &win::window_qobject::opacityChanged,
+                     this,
+                     [this]([[maybe_unused]] auto toplevel, auto oldOpacity) {
+                         Q_EMIT opacityChanged(this, oldOpacity);
+                     });
 
-    connect(client, &Toplevel::activeChanged, this, &window::activeChanged);
-    connect(client, &Toplevel::demandsAttentionChanged, this, &window::demandsAttentionChanged);
-    connect(client,
-            &Toplevel::desktopPresenceChanged,
-            this,
-            [this]([[maybe_unused]] auto toplevel, auto desktop) {
-                Q_EMIT desktopPresenceChanged(this, desktop);
-            });
-    connect(client, &Toplevel::desktopChanged, this, &window::desktopChanged);
-    connect(client, &Toplevel::x11DesktopIdsChanged, this, &window::x11DesktopIdsChanged);
+    QObject::connect(qtwin, &win::window_qobject::activeChanged, this, &window::activeChanged);
+    QObject::connect(qtwin,
+                     &win::window_qobject::demandsAttentionChanged,
+                     this,
+                     &window::demandsAttentionChanged);
+    QObject::connect(qtwin,
+                     &win::window_qobject::desktopPresenceChanged,
+                     this,
+                     [this]([[maybe_unused]] auto toplevel, auto desktop) {
+                         Q_EMIT desktopPresenceChanged(this, desktop);
+                     });
+    QObject::connect(qtwin, &win::window_qobject::desktopChanged, this, &window::desktopChanged);
+    QObject::connect(
+        qtwin, &win::window_qobject::x11DesktopIdsChanged, this, &window::x11DesktopIdsChanged);
 
-    connect(client, &Toplevel::minimizedChanged, this, &window::minimizedChanged);
-    connect(client, &Toplevel::clientMinimized, this, [this] { Q_EMIT clientMinimized(this); });
-    connect(client, &Toplevel::clientUnminimized, this, [this] { Q_EMIT clientUnminimized(this); });
-
-    connect(client, &Toplevel::maximize_mode_changed, this, [this](auto /*window*/, auto mode) {
-        Q_EMIT clientMaximizedStateChanged(this,
-                                           flags(mode & win::maximize_mode::horizontal),
-                                           flags(mode & win::maximize_mode::vertical));
+    QObject::connect(
+        qtwin, &win::window_qobject::minimizedChanged, this, &window::minimizedChanged);
+    QObject::connect(qtwin, &win::window_qobject::clientMinimized, this, [this] {
+        Q_EMIT clientMinimized(this);
+    });
+    QObject::connect(qtwin, &win::window_qobject::clientUnminimized, this, [this] {
+        Q_EMIT clientUnminimized(this);
     });
 
-    connect(client, &Toplevel::quicktiling_changed, this, &window::quickTileModeChanged);
+    QObject::connect(qtwin,
+                     &win::window_qobject::maximize_mode_changed,
+                     this,
+                     [this](auto /*window*/, auto mode) {
+                         Q_EMIT clientMaximizedStateChanged(
+                             this,
+                             flags(mode & win::maximize_mode::horizontal),
+                             flags(mode & win::maximize_mode::vertical));
+                     });
 
-    connect(client, &Toplevel::keepAboveChanged, this, &window::keepAboveChanged);
-    connect(client, &Toplevel::keepBelowChanged, this, &window::keepBelowChanged);
+    QObject::connect(
+        qtwin, &win::window_qobject::quicktiling_changed, this, &window::quickTileModeChanged);
 
-    connect(client, &Toplevel::fullScreenChanged, this, &window::fullScreenChanged);
-    connect(client, &Toplevel::skipTaskbarChanged, this, &window::skipTaskbarChanged);
-    connect(client, &Toplevel::skipPagerChanged, this, &window::skipPagerChanged);
-    connect(client, &Toplevel::skipSwitcherChanged, this, &window::skipSwitcherChanged);
+    QObject::connect(
+        qtwin, &win::window_qobject::keepAboveChanged, this, &window::keepAboveChanged);
+    QObject::connect(
+        qtwin, &win::window_qobject::keepBelowChanged, this, &window::keepBelowChanged);
 
-    connect(client, &Toplevel::paletteChanged, this, &window::paletteChanged);
-    connect(client, &Toplevel::colorSchemeChanged, this, &window::colorSchemeChanged);
-    connect(client, &Toplevel::transientChanged, this, &window::transientChanged);
-    connect(client, &Toplevel::modalChanged, this, &window::modalChanged);
+    QObject::connect(
+        qtwin, &win::window_qobject::fullScreenChanged, this, &window::fullScreenChanged);
+    QObject::connect(
+        qtwin, &win::window_qobject::skipTaskbarChanged, this, &window::skipTaskbarChanged);
+    QObject::connect(
+        qtwin, &win::window_qobject::skipPagerChanged, this, &window::skipPagerChanged);
+    QObject::connect(
+        qtwin, &win::window_qobject::skipSwitcherChanged, this, &window::skipSwitcherChanged);
 
-    connect(client, &Toplevel::moveResizedChanged, this, &window::moveResizedChanged);
-    connect(client, &Toplevel::moveResizeCursorChanged, this, &window::moveResizeCursorChanged);
-    connect(client, &Toplevel::clientStartUserMovedResized, this, [this] {
+    QObject::connect(qtwin, &win::window_qobject::paletteChanged, this, &window::paletteChanged);
+    QObject::connect(
+        qtwin, &win::window_qobject::colorSchemeChanged, this, &window::colorSchemeChanged);
+    QObject::connect(
+        qtwin, &win::window_qobject::transientChanged, this, &window::transientChanged);
+    QObject::connect(qtwin, &win::window_qobject::modalChanged, this, &window::modalChanged);
+
+    QObject::connect(
+        qtwin, &win::window_qobject::moveResizedChanged, this, &window::moveResizedChanged);
+    QObject::connect(qtwin,
+                     &win::window_qobject::moveResizeCursorChanged,
+                     this,
+                     &window::moveResizeCursorChanged);
+    QObject::connect(qtwin, &win::window_qobject::clientStartUserMovedResized, this, [this] {
         Q_EMIT clientStartUserMovedResized(this);
     });
-    connect(client,
-            &Toplevel::clientStepUserMovedResized,
-            this,
-            [this]([[maybe_unused]] auto toplevel, auto rect) {
-                Q_EMIT clientStepUserMovedResized(this, rect);
-            });
-    connect(client, &Toplevel::clientFinishUserMovedResized, this, [this] {
+    QObject::connect(qtwin,
+                     &win::window_qobject::clientStepUserMovedResized,
+                     this,
+                     [this]([[maybe_unused]] auto toplevel, auto rect) {
+                         Q_EMIT clientStepUserMovedResized(this, rect);
+                     });
+    QObject::connect(qtwin, &win::window_qobject::clientFinishUserMovedResized, this, [this] {
         Q_EMIT clientFinishUserMovedResized(this);
     });
 
-    connect(client, &Toplevel::windowClassChanged, this, &window::windowClassChanged);
-    connect(client, &Toplevel::captionChanged, this, &window::captionChanged);
-    connect(client, &Toplevel::iconChanged, this, &window::iconChanged);
-    connect(client, &Toplevel::frame_geometry_changed, this, &window::geometryChanged);
-    connect(client, &Toplevel::hasAlphaChanged, this, &window::hasAlphaChanged);
-    connect(client, &Toplevel::central_output_changed, this, &window::screenChanged);
-    connect(client, &Toplevel::windowRoleChanged, this, &window::windowRoleChanged);
-    connect(client, &Toplevel::shapedChanged, this, &window::shapedChanged);
-    connect(client, &Toplevel::skipCloseAnimationChanged, this, &window::skipCloseAnimationChanged);
-    connect(client,
-            &Toplevel::applicationMenuActiveChanged,
-            this,
-            &window::applicationMenuActiveChanged);
-    connect(client, &Toplevel::unresponsiveChanged, this, &window::unresponsiveChanged);
-    connect(client, &Toplevel::hasApplicationMenuChanged, this, &window::hasApplicationMenuChanged);
-    connect(client, &Toplevel::surfaceIdChanged, this, &window::surfaceIdChanged);
+    QObject::connect(
+        qtwin, &win::window_qobject::windowClassChanged, this, &window::windowClassChanged);
+    QObject::connect(qtwin, &win::window_qobject::captionChanged, this, &window::captionChanged);
+    QObject::connect(qtwin, &win::window_qobject::iconChanged, this, &window::iconChanged);
+    QObject::connect(
+        qtwin, &win::window_qobject::frame_geometry_changed, this, &window::geometryChanged);
+    QObject::connect(qtwin, &win::window_qobject::hasAlphaChanged, this, &window::hasAlphaChanged);
+    QObject::connect(
+        qtwin, &win::window_qobject::central_output_changed, this, &window::screenChanged);
+    QObject::connect(
+        qtwin, &win::window_qobject::windowRoleChanged, this, &window::windowRoleChanged);
+    QObject::connect(qtwin, &win::window_qobject::shapedChanged, this, &window::shapedChanged);
+    QObject::connect(qtwin,
+                     &win::window_qobject::skipCloseAnimationChanged,
+                     this,
+                     &window::skipCloseAnimationChanged);
+    QObject::connect(qtwin,
+                     &win::window_qobject::applicationMenuActiveChanged,
+                     this,
+                     &window::applicationMenuActiveChanged);
+    QObject::connect(
+        qtwin, &win::window_qobject::unresponsiveChanged, this, &window::unresponsiveChanged);
+    QObject::connect(qtwin,
+                     &win::window_qobject::hasApplicationMenuChanged,
+                     this,
+                     &window::hasApplicationMenuChanged);
+    QObject::connect(
+        qtwin, &win::window_qobject::surfaceIdChanged, this, &window::surfaceIdChanged);
 
-    connect(client, &Toplevel::closeableChanged, this, &window::closeableChanged);
-    connect(client, &Toplevel::minimizeableChanged, this, &window::minimizeableChanged);
-    connect(client, &Toplevel::maximizeableChanged, this, &window::maximizeableChanged);
+    QObject::connect(
+        qtwin, &win::window_qobject::closeableChanged, this, &window::closeableChanged);
+    QObject::connect(
+        qtwin, &win::window_qobject::minimizeableChanged, this, &window::minimizeableChanged);
+    QObject::connect(
+        qtwin, &win::window_qobject::maximizeableChanged, this, &window::maximizeableChanged);
 
-    connect(client, &Toplevel::desktopFileNameChanged, this, &window::desktopFileNameChanged);
+    QObject::connect(
+        qtwin, &win::window_qobject::desktopFileNameChanged, this, &window::desktopFileNameChanged);
 
     // For backwards compatibility of scripts connecting to the old signal. We assume no script is
     // actually differentiating its behavior on the user parameter (if fullscreen was triggered by
     // the user or not) and always set it to being a user change.
-    connect(client, &Toplevel::fullScreenChanged, this, [this, client] {
+    QObject::connect(qtwin, &win::window_qobject::fullScreenChanged, this, [this, client] {
         Q_EMIT clientFullScreenSet(this, client->control->fullscreen(), true);
     });
 
     if (client->isClient()) {
-        connect(client, &Toplevel::blockingCompositingChanged, this, [this] {
+        QObject::connect(qtwin, &win::window_qobject::blockingCompositingChanged, this, [this] {
             Q_EMIT blockingCompositingChanged(this);
         });
     }

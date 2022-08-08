@@ -282,7 +282,7 @@ console_model::console_model(win::space& space, QObject* parent)
         remove_window(this, s_x11UnmanagedId - 1, m_unmanageds, u);
     });
     for (auto const& window : space.windows) {
-        if (auto internal = qobject_cast<win::internal_window*>(window)) {
+        if (auto internal = dynamic_cast<win::internal_window*>(window)) {
             m_internalClients.append(internal);
         }
     }
@@ -563,7 +563,7 @@ QVariant console_model::get_client_property_data(QModelIndex const& index, int r
         return propertyData(get_qobject(c), index, role);
     }
     if (auto u = unmanaged(index)) {
-        return propertyData(u, index, role);
+        return propertyData(u->qobject.get(), index, role);
     }
 
     return QVariant();

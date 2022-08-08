@@ -29,7 +29,7 @@ void destroy_window(Win* win)
 
     if (win->transient()->annexed && !lead_of_annexed_transient(win)) {
         // With the lead gone there is no way - and no need - for remnant effects. Delete directly.
-        Q_EMIT win->closed(win);
+        Q_EMIT win->qobject->closed(win);
         win->space.handle_window_removed(win);
         remove_all(win->space.windows, win);
         remove_all(win->space.stacking_order->pre_stack, win);
@@ -39,7 +39,7 @@ void destroy_window(Win* win)
     }
 
     auto remnant_window = create_remnant_window<Win>(*win);
-    Q_EMIT win->closed(win);
+    Q_EMIT win->qobject->closed(win);
 
     if (win->control) {
 #if KWIN_BUILD_TABBOX

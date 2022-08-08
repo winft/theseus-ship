@@ -410,9 +410,9 @@ bool ruling::match(Toplevel const* window) const
         // Track title changes to rematch rules.
         auto mutable_client = const_cast<Toplevel*>(window);
         QObject::connect(
-            mutable_client,
-            &Toplevel::captionChanged,
-            mutable_client,
+            mutable_client->qobject.get(),
+            &win::window_qobject::captionChanged,
+            mutable_client->qobject.get(),
             [mutable_client] { win::evaluate_rules(mutable_client); },
             // QueuedConnection, because title may change before
             // the client is ready (could segfault!)

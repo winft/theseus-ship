@@ -299,9 +299,10 @@ protected:
 
         if (it == layouts.end()) {
             layouts.insert({window, index});
-            QObject::connect(window, &Toplevel::closed, this->qobject.get(), [this, window] {
-                layouts.erase(window);
-            });
+            QObject::connect(window->qobject.get(),
+                             &Toplevel::qobject_t::closed,
+                             this->qobject.get(),
+                             [this, window] { layouts.erase(window); });
         } else {
             it->second = index;
         }
@@ -385,9 +386,10 @@ protected:
 
         if (it == layouts.end()) {
             layouts.insert({window, index});
-            QObject::connect(window, &Toplevel::closed, this->qobject.get(), [this, window] {
-                layouts.erase(window);
-            });
+            QObject::connect(window->qobject.get(),
+                             &Toplevel::qobject_t::closed,
+                             this->qobject.get(),
+                             [this, window] { layouts.erase(window); });
         } else {
             if (it->second == index) {
                 return;

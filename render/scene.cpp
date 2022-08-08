@@ -430,7 +430,10 @@ void scene::init_remnant(Toplevel& remnant)
 
     if (auto shadow = remnant.render->shadow()) {
         shadow->m_topLevel = &remnant;
-        connect(&remnant, &Toplevel::frame_geometry_changed, shadow, &shadow::geometryChanged);
+        QObject::connect(remnant.qobject.get(),
+                         &win::window_qobject::frame_geometry_changed,
+                         shadow,
+                         &shadow::geometryChanged);
     }
 }
 

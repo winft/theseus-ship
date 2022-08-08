@@ -43,12 +43,14 @@ window::window(win::remnant remnant, win::space& space)
     : Toplevel(std::move(remnant), space)
     , motif_hints{space.atoms->motif_wm_hints}
 {
+    Toplevel::qobject = std::make_unique<window_qobject>();
 }
 
 window::window(xcb_window_t xcb_win, win::space& space)
     : Toplevel(new x11::transient(this), space)
     , motif_hints(space.atoms->motif_wm_hints)
 {
+    Toplevel::qobject = std::make_unique<window_qobject>();
     window_setup_geometry(*this);
 
     xcb_window.reset(xcb_win, false);
@@ -285,7 +287,7 @@ void window::setBlockingCompositing(bool block)
         block && kwinApp()->options->qobject->windowsBlockCompositing());
 
     if (usedToBlock != blocks_compositing) {
-        Q_EMIT blockingCompositingChanged(blocks_compositing ? this : nullptr);
+        Q_EMIT qobject->blockingCompositingChanged(blocks_compositing ? this : nullptr);
     }
 }
 
@@ -625,7 +627,7 @@ void window::setShortcutInternal()
     // Workaround for kwin<->kglobalaccel deadlock, when KWin has X grab and the kded
     // kglobalaccel module tries to create the key grab. KWin should preferably grab
     // they keys itself anyway :(.
-    QTimer::singleShot(0, this, [this] { window_shortcut_updated(space, this); });
+    QTimer::singleShot(0, qobject.get(), [this] { window_shortcut_updated(space, this); });
 #endif
 }
 
@@ -686,20 +688,21 @@ void window::setFrameGeometry(QRect const& rect)
             // For as long as there are common apps out there still based on Electron 9 we use the
             // following fallback timer to cancel the wait after 1000 ms and instead set the window
             // to directly show.
-            auto fallback_timer = new QTimer(this);
+            auto fallback_timer = new QTimer(qobject.get());
             auto const serial = sync_request.update_request_number;
-            connect(fallback_timer, &QTimer::timeout, this, [this, fallback_timer, serial] {
-                delete fallback_timer;
+            QObject::connect(
+                fallback_timer, &QTimer::timeout, qobject.get(), [this, fallback_timer, serial] {
+                    delete fallback_timer;
 
-                if (pending_configures.empty()
-                    || pending_configures.front().update_request_number != serial) {
-                    return;
-                }
+                    if (pending_configures.empty()
+                        || pending_configures.front().update_request_number != serial) {
+                        return;
+                    }
 
-                pending_configures.erase(pending_configures.begin());
+                    pending_configures.erase(pending_configures.begin());
 
-                setReadyForPainting();
-            });
+                    setReadyForPainting();
+                });
             fallback_timer->setSingleShot(true);
             fallback_timer->start(1000);
         }
@@ -795,7 +798,7 @@ void window::do_set_geometry(QRect const& frame_geo)
     addLayerRepaint(visible_rect(this, old_frame_geo));
     addLayerRepaint(visible_rect(this, frame_geo));
 
-    Q_EMIT frame_geometry_changed(this, old_frame_geo);
+    Q_EMIT qobject->frame_geometry_changed(this, old_frame_geo);
 
     // Must be done after signal is emitted so the screen margins are update.
     if (hasStrut()) {
@@ -842,7 +845,7 @@ void window::do_set_maximize_mode(maximize_mode mode)
     // Need to update the server geometry in case the decoration changed.
     update_server_geometry(this, geometry_update.frame);
 
-    Q_EMIT maximize_mode_changed(this, mode);
+    Q_EMIT qobject->maximize_mode_changed(this, mode);
 }
 
 void window::do_set_fullscreen(bool full)
@@ -876,7 +879,7 @@ void window::do_set_fullscreen(bool full)
     // Active fullscreens gets a different layer.
     update_layer(this);
     updateWindowRules(rules::type::fullscreen | rules::type::position | rules::type::size);
-    Q_EMIT fullScreenChanged();
+    Q_EMIT qobject->fullScreenChanged();
 }
 
 void window::update_maximized(maximize_mode mode)
@@ -1047,7 +1050,7 @@ void window::detectShape(xcb_window_t id)
     const bool wasShape = is_shape;
     is_shape = base::x11::xcb::extensions::self()->has_shape(id);
     if (wasShape != is_shape) {
-        Q_EMIT shapedChanged();
+        Q_EMIT qobject->shapedChanged();
     }
 }
 
@@ -1086,7 +1089,7 @@ void window::clientMessageEvent(xcb_client_message_event_t* e)
 
     surface_id = e->data.data32[0];
     Q_EMIT space.qobject->surface_id_changed(this, surface_id);
-    Q_EMIT surfaceIdChanged(surface_id);
+    Q_EMIT qobject->surfaceIdChanged(surface_id);
 }
 
 bool window::resourceMatch(window const* c1, window const* c2)
@@ -1124,7 +1127,7 @@ void window::doMinimize()
 
 void window::showOnScreenEdge()
 {
-    disconnect(connections.edge_remove);
+    QObject::disconnect(connections.edge_remove);
 
     hideClient(false);
     win::set_keep_below(this, false);
@@ -1220,8 +1223,8 @@ void window::doResizeSync()
     // Resizes without sync extension support need to be retarded to not flood clients with
     // geometry changes. Some clients can't handle this (for example Steam client).
     if (!syncless_resize_retarder) {
-        syncless_resize_retarder = new QTimer(this);
-        connect(syncless_resize_retarder, &QTimer::timeout, this, [this] {
+        syncless_resize_retarder = new QTimer(qobject.get());
+        QObject::connect(syncless_resize_retarder, &QTimer::timeout, qobject.get(), [this] {
             assert(!pending_configures.empty());
             update_server_geometry(this, pending_configures.front().geometry.frame);
             apply_pending_geometry(this, 0);

@@ -64,7 +64,7 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
     win->supported_default_types = supported_default_types;
     win->set_layer(win::layer::unmanaged);
 
-    QTimer::singleShot(50, win, &Win::setReadyForPainting);
+    QTimer::singleShot(50, win->qobject.get(), [win] { win->setReadyForPainting(); });
 
     // The window is also the frame.
     base::x11::xcb::select_input(xcb_win,
@@ -108,9 +108,10 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
         effects->checkInputWindowStacking();
     }
 
-    QObject::connect(win, &Win::needsRepaint, space.render.qobject.get(), [win] {
-        win->space.render.schedule_repaint(win);
-    });
+    QObject::connect(win->qobject.get(),
+                     &Win::qobject_t::needsRepaint,
+                     space.render.qobject.get(),
+                     [win] { win->space.render.schedule_repaint(win); });
 
     space.windows.push_back(win);
     space.stacking_order->render_restack_required = true;
@@ -139,7 +140,7 @@ void unmanaged_configure_event(Win* win, xcb_configure_notify_event_t* event)
         if (old.size() != win->frameGeometry().size()) {
             win->discard_buffer();
         }
-        Q_EMIT win->frame_geometry_changed(win, old);
+        Q_EMIT win->qobject->frame_geometry_changed(win, old);
     }
 }
 
@@ -156,14 +157,14 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* event)
     if (dirtyProperties2 & NET::WM2Opacity) {
         if (win->space.render.scene) {
             win->addRepaintFull();
-            Q_EMIT win->opacityChanged(win, old_opacity);
+            Q_EMIT win->qobject->opacityChanged(win, old_opacity);
         }
     }
     if (dirtyProperties2 & NET::WM2OpaqueRegion) {
         win->getWmOpaqueRegion();
     }
     if (dirtyProperties2.testFlag(NET::WM2WindowRole)) {
-        Q_EMIT win->windowRoleChanged();
+        Q_EMIT win->qobject->windowRoleChanged();
     }
     if (dirtyProperties2.testFlag(NET::WM2WindowClass)) {
         win->getResourceClass();
@@ -194,7 +195,7 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* event)
         // It's of course still possible that we miss the destroy in which case non-fatal
         // X errors are reported to the event loop and logged by Qt.
         win->has_scheduled_release = true;
-        QTimer::singleShot(1, win, [win] { release_unmanaged(win, false); });
+        QTimer::singleShot(1, win->qobject.get(), [win] { release_unmanaged(win, false); });
         break;
     }
     case XCB_CONFIGURE_NOTIFY:
@@ -214,7 +215,7 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* event)
             // In case shape change removes part of this window.
             win->space.render.addRepaint(win->frameGeometry());
 
-            Q_EMIT win->frame_geometry_changed(win, win->frameGeometry());
+            Q_EMIT win->qobject->frame_geometry_changed(win, win->frameGeometry());
         }
         if (eventType == base::x11::xcb::extensions::self()->damage_notify_event()) {
             win->damageNotifyEvent();

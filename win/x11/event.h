@@ -136,7 +136,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
         if (dirtyProperties2 & NET::WM2Opacity) {
             if (win->space.render.scene) {
                 win->addRepaintFull();
-                Q_EMIT win->opacityChanged(win, old_opacity);
+                Q_EMIT win->qobject->opacityChanged(win, old_opacity);
             } else {
                 // forward to the frame if there's possibly another compositing manager running
                 NETWinInfo i(connection(),
@@ -151,7 +151,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
             // Property is deprecated.
         }
         if (dirtyProperties2.testFlag(NET::WM2WindowRole)) {
-            Q_EMIT win->windowRoleChanged();
+            Q_EMIT win->qobject->windowRoleChanged();
         }
         if (dirtyProperties2.testFlag(NET::WM2WindowClass)) {
             win->getResourceClass();
@@ -944,11 +944,12 @@ void focus_out_event(Win* win, xcb_focus_out_event_t* e)
     // of the Client which gained FocusIn will automatically deactivate the
     // previously active client.
     if (!win->focus_out_timer) {
-        win->focus_out_timer = new QTimer(win);
+        win->focus_out_timer = new QTimer(win->qobject.get());
         win->focus_out_timer->setSingleShot(true);
         win->focus_out_timer->setInterval(0);
-        QObject::connect(
-            win->focus_out_timer, &QTimer::timeout, [win]() { win::set_active(win, false); });
+        QObject::connect(win->focus_out_timer, &QTimer::timeout, win->qobject.get(), [win]() {
+            win::set_active(win, false);
+        });
     }
     win->focus_out_timer->start();
 }

@@ -89,21 +89,24 @@ void read_show_on_screen_edge(Win* win, base::x11::xcb::property& property)
             // request could have failed due to user kwin rules
             successfullyHidden = win->control->keep_below();
 
-            win->connections.edge_remove
-                = QObject::connect(win, &Win::keepBelowChanged, win, [win]() {
-                      if (!win->control->keep_below()) {
-                          win->space.edges->reserve(win, ElectricNone);
-                      }
-                  });
+            win->connections.edge_remove = QObject::connect(
+                win->qobject.get(), &Win::qobject_t::keepBelowChanged, win->qobject.get(), [win]() {
+                    if (!win->control->keep_below()) {
+                        win->space.edges->reserve(win, ElectricNone);
+                    }
+                });
         } else {
             win->hideClient(true);
             successfullyHidden = win->isHiddenInternal();
 
             win->connections.edge_geometry
-                = QObject::connect(win, &Win::frame_geometry_changed, win, [win, border]() {
-                      win->hideClient(true);
-                      win->space.edges->reserve(win, border);
-                  });
+                = QObject::connect(win->qobject.get(),
+                                   &Win::qobject_t::frame_geometry_changed,
+                                   win->qobject.get(),
+                                   [win, border]() {
+                                       win->hideClient(true);
+                                       win->space.edges->reserve(win, border);
+                                   });
         }
 
         if (successfullyHidden) {

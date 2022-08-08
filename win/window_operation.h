@@ -51,7 +51,7 @@ void perform_window_operation(Space& space,
         break;
     case base::options_qobject::CloseOp:
         QMetaObject::invokeMethod(
-            window, [window] { window->closeWindow(); }, Qt::QueuedConnection);
+            window->qobject.get(), [window] { window->closeWindow(); }, Qt::QueuedConnection);
         break;
     case base::options_qobject::MaximizeOp:
         maximize(window,

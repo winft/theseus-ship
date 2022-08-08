@@ -25,7 +25,8 @@ void setup_rules(Win* win, bool ignore_temporary)
     // TODO(romangg): This disconnects all connections of captionChanged to the window itself.
     //                There is only one so this works fine but it's not robustly specified.
     //                Either reshuffle later or use explicit connection object.
-    QObject::disconnect(win, &Win::captionChanged, win, nullptr);
+    QObject::disconnect(
+        win->qobject.get(), &window_qobject::captionChanged, win->qobject.get(), nullptr);
     win->control->set_rules(win->space.rule_book->find(win, ignore_temporary));
     // check only after getting the rules, because there may be a rule forcing window type
     // TODO(romangg): what does this mean?
@@ -42,16 +43,17 @@ template<typename Space, typename Win>
 void setup_space_window_connections(Space* space, Win* win)
 {
     // TODO(romangg): Move into a different function about compositor(render) <-> window setup.
-    QObject::connect(win, &Win::needsRepaint, space->render.qobject.get(), [win] {
-        win->space.render.schedule_repaint(win);
-    });
-    QObject::connect(win,
-                     &Win::desktopPresenceChanged,
+    QObject::connect(win->qobject.get(),
+                     &window_qobject::needsRepaint,
+                     space->render.qobject.get(),
+                     [win] { win->space.render.schedule_repaint(win); });
+    QObject::connect(win->qobject.get(),
+                     &window_qobject::desktopPresenceChanged,
                      space->qobject.get(),
                      &Space::qobject_t::desktopPresenceChanged);
     QObject::connect(
-        win,
-        &Win::minimizedChanged,
+        win->qobject.get(),
+        &window_qobject::minimizedChanged,
         space->qobject.get(),
         std::bind(&Space::qobject_t::clientMinimizedChanged, space->qobject.get(), win));
 }
@@ -59,23 +61,34 @@ void setup_space_window_connections(Space* space, Win* win)
 template<typename Win>
 void setup_window_control_connections(Win* win)
 {
-    QObject::connect(win, &Win::clientStartUserMovedResized, win, &Win::moveResizedChanged);
-    QObject::connect(win, &Win::clientFinishUserMovedResized, win, &Win::moveResizedChanged);
-    QObject::connect(
-        win, &Win::clientStartUserMovedResized, win, &Win::removeCheckScreenConnection);
-    QObject::connect(
-        win, &Win::clientFinishUserMovedResized, win, &Win::setupCheckScreenConnection);
+    auto qtwin = win->qobject.get();
 
-    QObject::connect(win, &Win::paletteChanged, win, [win] { trigger_decoration_repaint(win); });
+    QObject::connect(qtwin,
+                     &window_qobject::clientStartUserMovedResized,
+                     qtwin,
+                     &window_qobject::moveResizedChanged);
+    QObject::connect(qtwin,
+                     &window_qobject::clientFinishUserMovedResized,
+                     qtwin,
+                     &window_qobject::moveResizedChanged);
+    QObject::connect(qtwin, &window_qobject::clientStartUserMovedResized, qtwin, [win] {
+        win->removeCheckScreenConnection();
+    });
+    QObject::connect(qtwin, &window_qobject::clientFinishUserMovedResized, qtwin, [win] {
+        win->setupCheckScreenConnection();
+    });
 
-    QObject::connect(win->space.deco.get(), &QObject::destroyed, win, [win] {
+    QObject::connect(
+        qtwin, &window_qobject::paletteChanged, qtwin, [win] { trigger_decoration_repaint(win); });
+
+    QObject::connect(win->space.deco.get(), &QObject::destroyed, qtwin, [win] {
         win->control->destroy_decoration();
     });
 
     // Replace on-screen-display on size changes.
-    QObject::connect(win,
-                     &Win::frame_geometry_changed,
-                     win,
+    QObject::connect(qtwin,
+                     &window_qobject::frame_geometry_changed,
+                     qtwin,
                      [win]([[maybe_unused]] Toplevel* toplevel, QRect const& old) {
                          if (!is_on_screen_display(win)) {
                              // Not an on-screen-display.
@@ -103,8 +116,8 @@ void setup_window_control_connections(Win* win)
                      });
 
     QObject::connect(
-        win->space.appmenu.get(), &dbus::appmenu::applicationMenuEnabledChanged, win, [win] {
-            Q_EMIT win->hasApplicationMenuChanged(win->control->has_application_menu());
+        win->space.appmenu.get(), &dbus::appmenu::applicationMenuEnabledChanged, qtwin, [win] {
+            Q_EMIT win->qobject->hasApplicationMenuChanged(win->control->has_application_menu());
         });
 }
 

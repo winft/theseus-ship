@@ -63,27 +63,41 @@ client_impl::client_impl(Toplevel* window,
     createRenderer();
     window->control->deco().set_client(this);
 
-    QObject::connect(window, &Toplevel::activeChanged, qobject.get(), [decoratedClient, window]() {
-        Q_EMIT decoratedClient->activeChanged(window->control->active());
-    });
-    QObject::connect(
-        window, &Toplevel::frame_geometry_changed, qobject.get(), [this] { update_size(); });
-    QObject::connect(window, &Toplevel::desktopChanged, qobject.get(), [decoratedClient, window]() {
-        Q_EMIT decoratedClient->onAllDesktopsChanged(window->isOnAllDesktops());
-    });
-    QObject::connect(window, &Toplevel::captionChanged, qobject.get(), [decoratedClient, window]() {
-        Q_EMIT decoratedClient->captionChanged(win::caption(window));
-    });
-    QObject::connect(window, &Toplevel::iconChanged, qobject.get(), [decoratedClient, window]() {
-        Q_EMIT decoratedClient->iconChanged(window->control->icon());
-    });
+    QObject::connect(window->qobject.get(),
+                     &window_qobject::activeChanged,
+                     qobject.get(),
+                     [decoratedClient, window]() {
+                         Q_EMIT decoratedClient->activeChanged(window->control->active());
+                     });
+    QObject::connect(window->qobject.get(),
+                     &window_qobject::frame_geometry_changed,
+                     qobject.get(),
+                     [this] { update_size(); });
+    QObject::connect(window->qobject.get(),
+                     &window_qobject::desktopChanged,
+                     qobject.get(),
+                     [decoratedClient, window]() {
+                         Q_EMIT decoratedClient->onAllDesktopsChanged(window->isOnAllDesktops());
+                     });
+    QObject::connect(window->qobject.get(),
+                     &window_qobject::captionChanged,
+                     qobject.get(),
+                     [decoratedClient, window]() {
+                         Q_EMIT decoratedClient->captionChanged(win::caption(window));
+                     });
+    QObject::connect(window->qobject.get(),
+                     &window_qobject::iconChanged,
+                     qobject.get(),
+                     [decoratedClient, window]() {
+                         Q_EMIT decoratedClient->iconChanged(window->control->icon());
+                     });
 
-    QObject::connect(window,
-                     &Toplevel::keepAboveChanged,
+    QObject::connect(window->qobject.get(),
+                     &window_qobject::keepAboveChanged,
                      decoratedClient,
                      &KDecoration2::DecoratedClient::keepAboveChanged);
-    QObject::connect(window,
-                     &Toplevel::keepBelowChanged,
+    QObject::connect(window->qobject.get(),
+                     &window_qobject::keepBelowChanged,
                      decoratedClient,
                      &KDecoration2::DecoratedClient::keepBelowChanged);
 
@@ -106,34 +120,36 @@ client_impl::client_impl(Toplevel* window,
                          QObject::disconnect(m_compositorToggledConnection);
                          m_compositorToggledConnection = QMetaObject::Connection();
                      });
-    QObject::connect(
-        window, &Toplevel::quicktiling_changed, decoratedClient, [this, decoratedClient]() {
-            Q_EMIT decoratedClient->adjacentScreenEdgesChanged(adjacentScreenEdges());
-        });
-    QObject::connect(window,
-                     &Toplevel::closeableChanged,
+    QObject::connect(window->qobject.get(),
+                     &window_qobject::quicktiling_changed,
+                     decoratedClient,
+                     [this, decoratedClient]() {
+                         Q_EMIT decoratedClient->adjacentScreenEdgesChanged(adjacentScreenEdges());
+                     });
+    QObject::connect(window->qobject.get(),
+                     &window_qobject::closeableChanged,
                      decoratedClient,
                      &KDecoration2::DecoratedClient::closeableChanged);
-    QObject::connect(window,
-                     &Toplevel::minimizeableChanged,
+    QObject::connect(window->qobject.get(),
+                     &window_qobject::minimizeableChanged,
                      decoratedClient,
                      &KDecoration2::DecoratedClient::minimizeableChanged);
-    QObject::connect(window,
-                     &Toplevel::maximizeableChanged,
+    QObject::connect(window->qobject.get(),
+                     &window_qobject::maximizeableChanged,
                      decoratedClient,
                      &KDecoration2::DecoratedClient::maximizeableChanged);
 
-    QObject::connect(window,
-                     &Toplevel::paletteChanged,
+    QObject::connect(window->qobject.get(),
+                     &window_qobject::paletteChanged,
                      decoratedClient,
                      &KDecoration2::DecoratedClient::paletteChanged);
 
-    QObject::connect(window,
-                     &Toplevel::hasApplicationMenuChanged,
+    QObject::connect(window->qobject.get(),
+                     &window_qobject::hasApplicationMenuChanged,
                      decoratedClient,
                      &KDecoration2::DecoratedClient::hasApplicationMenuChanged);
-    QObject::connect(window,
-                     &Toplevel::applicationMenuActiveChanged,
+    QObject::connect(window->qobject.get(),
+                     &window_qobject::applicationMenuActiveChanged,
                      decoratedClient,
                      &KDecoration2::DecoratedClient::applicationMenuActiveChanged);
 
@@ -286,7 +302,8 @@ void client_impl::requestMinimize()
 
 void client_impl::requestClose()
 {
-    QMetaObject::invokeMethod(m_client, "closeWindow", Qt::QueuedConnection);
+    QMetaObject::invokeMethod(
+        m_client->qobject.get(), [win = m_client] { win->closeWindow(); }, Qt::QueuedConnection);
 }
 
 QColor client_impl::color(KDecoration2::ColorGroup group, KDecoration2::ColorRole role) const
