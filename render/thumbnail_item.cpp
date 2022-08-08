@@ -25,6 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/logging.h"
 #include "effects.h"
+#include "scripting/singleton_interface.h"
+#include "scripting/space.h"
 #include "toplevel.h"
 #include "win/control.h"
 #include "win/singleton_interface.h"
@@ -140,9 +142,10 @@ window_thumbnail_item::~window_thumbnail_item()
 
 scripting::window* find_controlled_window(QUuid const& wId)
 {
-    for (auto win : win::singleton_interface::space->windows) {
-        if (win->control && win->internal_id == wId) {
-            return win->control->scripting.get();
+    auto const windows = scripting::singleton_interface::platform->workspaceWrapper()->clientList();
+    for (auto win : windows) {
+        if (win->internalId() == wId) {
+            return win;
         }
     }
     return nullptr;
