@@ -30,7 +30,6 @@
 #include <KProcess>
 #include <QAction>
 #include <QMenu>
-#include <QPointer>
 #include <QRect>
 #include <QWindow>
 #include <QtConcurrentRun>
@@ -141,7 +140,7 @@ public:
             return;
         }
         m_menu->close();
-        m_client.clear();
+        m_client = nullptr;
     }
 
     /**
@@ -152,23 +151,25 @@ public:
      */
     void show(const QRect& pos, Toplevel* window)
     {
-        Q_ASSERT(window);
-        QPointer<Toplevel> cl(window);
-        // Presumably client will never be nullptr,
-        // but play it safe and make sure not to crash.
-        if (cl.isNull()) {
-            return;
-        }
+        assert(window);
+
         if (isShown()) { // recursion
             return;
         }
-        if (win::is_desktop(cl.data()) || win::is_dock(cl.data())) {
+        if (win::is_desktop(window) || win::is_dock(window)) {
             return;
         }
         if (!KAuthorized::authorizeAction(QStringLiteral("kwin_rmb"))) {
             return;
         }
-        m_client = cl;
+
+        if (m_client) {
+            QObject::disconnect(m_client, nullptr, qobject.get(), nullptr);
+        }
+        m_client = window;
+        QObject::connect(
+            m_client, &Toplevel::destroyed, qobject.get(), [this] { m_client = nullptr; });
+
         init();
         if (kwinApp()->shouldUseWaylandForCompositing()) {
             m_menu->popup(pos.bottomLeft());
@@ -185,7 +186,7 @@ private:
      */
     void handle_menu_about_to_show()
     {
-        if (m_client.isNull() || !m_menu)
+        if (!m_client || !m_menu)
             return;
 
         if (space.virtual_desktop_manager->count() == 1) {
@@ -225,8 +226,7 @@ private:
         delete m_scriptsMenu;
         m_scriptsMenu = nullptr;
         // ask scripts whether they want to add entries for the given Client
-        auto scriptActions
-            = space.scripting->actionsForUserActionMenu(m_client.data(), m_scriptsMenu);
+        auto scriptActions = space.scripting->actionsForUserActionMenu(m_client, m_scriptsMenu);
         if (!scriptActions.isEmpty()) {
             m_scriptsMenu = new QMenu(m_menu);
             m_scriptsMenu->setPalette(m_client->control->palette().q_palette());
@@ -409,7 +409,7 @@ private:
         if (!ok) {
             return;
         }
-        if (m_client.isNull()) {
+        if (!m_client) {
             return;
         }
 
@@ -417,14 +417,14 @@ private:
         if (desk == 0) {
             // the 'on_all_desktops' menu entry
             if (m_client) {
-                win::set_on_all_desktops(m_client.data(), !m_client->isOnAllDesktops());
+                win::set_on_all_desktops(m_client, !m_client->isOnAllDesktops());
             }
             return;
         } else if (desk > vds->count()) {
             vds->setCount(desk);
         }
 
-        send_window_to_desktop(space, m_client.data(), desk, false);
+        send_window_to_desktop(space, m_client, desk, false);
     }
 
     /**
@@ -434,7 +434,7 @@ private:
      */
     void toggle_on_desktop(QAction* action)
     {
-        if (m_client.isNull()) {
+        if (!m_client) {
             return;
         }
 
@@ -446,20 +446,20 @@ private:
         auto vds = space.virtual_desktop_manager.get();
         if (data.desktop == 0) {
             // the 'on_all_desktops' menu entry
-            win::set_on_all_desktops(m_client.data(), !m_client->isOnAllDesktops());
+            win::set_on_all_desktops(m_client, !m_client->isOnAllDesktops());
             return;
         } else if (data.desktop > vds->count()) {
             vds->setCount(data.desktop);
         }
 
         if (data.move_to_single) {
-            win::set_desktop(m_client.data(), data.desktop);
+            win::set_desktop(m_client, data.desktop);
         } else {
             auto virtualDesktop = vds->desktopForX11Id(data.desktop);
             if (m_client->desktops().contains(virtualDesktop)) {
-                win::leave_desktop(m_client.data(), virtualDesktop);
+                win::leave_desktop(m_client, virtualDesktop);
             } else {
-                win::enter_desktop(m_client.data(), virtualDesktop);
+                win::enter_desktop(m_client, virtualDesktop);
             }
         }
     }
@@ -472,7 +472,7 @@ private:
     void send_to_screen(QAction* action)
     {
         size_t const screen = action->data().toInt();
-        if (m_client.isNull()) {
+        if (!m_client) {
             return;
         }
 
@@ -481,7 +481,7 @@ private:
             return;
         }
 
-        win::send_to_screen(space, m_client.data(), *output);
+        win::send_to_screen(space, m_client, *output);
     }
 
     /**
@@ -495,9 +495,14 @@ private:
             return;
 
         auto op = static_cast<base::options_qobject::WindowOperation>(action->data().toInt());
-        auto c = m_client ? m_client : QPointer<Toplevel>(space.active_client);
-        if (c.isNull())
-            return;
+        auto c = m_client;
+        if (!c) {
+            if (!space.active_client) {
+                return;
+            }
+            c = space.active_client;
+        }
+
         QString type;
         switch (op) {
         case base::options_qobject::FullScreenOp:
@@ -825,7 +830,7 @@ private:
     QAction* m_shortcutOperation{nullptr};
 
     /// The Client for which the menu is shown.
-    QPointer<Toplevel> m_client;
+    Toplevel* m_client{nullptr};
 
     QAction* m_rulesOperation{nullptr};
     QAction* m_applicationRulesOperation{nullptr};
