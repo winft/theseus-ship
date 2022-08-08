@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "gl/backend.h"
 #include "gl/scene.h"
 #include "platform.h"
+#include "singleton_interface.h"
 #include "thumbnail_item.h"
 #include "x11/effect.h"
 #include "x11/property_notify_filter.h"
@@ -115,6 +116,8 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     , m_trackingCursorChanges(0)
 {
     qRegisterMetaType<QVector<KWin::EffectWindow*>>();
+    singleton_interface::effects = this;
+
     connect(m_effectLoader,
             &basic_effect_loader::effectLoaded,
             this,
@@ -306,6 +309,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
 effects_handler_impl::~effects_handler_impl()
 {
     unloadAllEffects();
+    singleton_interface::effects = nullptr;
 }
 
 void effects_handler_impl::unloadAllEffects()

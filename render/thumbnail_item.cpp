@@ -42,7 +42,7 @@ basic_thumbnail_item::basic_thumbnail_item(QQuickItem* parent)
     , m_saturation(1.0)
     , m_clipToItem()
 {
-    connect(singleton_interface::platform->compositor->qobject.get(),
+    connect(singleton_interface::compositor,
             &render::compositor_qobject::compositingToggled,
             this,
             &basic_thumbnail_item::compositingToggled);
@@ -57,7 +57,7 @@ basic_thumbnail_item::~basic_thumbnail_item()
 void basic_thumbnail_item::compositingToggled()
 {
     m_parent.clear();
-    auto effects = singleton_interface::platform->compositor->effects.get();
+    auto effects = singleton_interface::effects;
     if (effects) {
         connect(
             effects, &EffectsHandler::windowAdded, this, &basic_thumbnail_item::effectWindowAdded);
@@ -76,7 +76,7 @@ void basic_thumbnail_item::init()
 
 void basic_thumbnail_item::findParentEffectWindow()
 {
-    auto effects = singleton_interface::platform->compositor->effects.get();
+    auto effects = singleton_interface::effects;
     if (effects) {
         QQuickWindow* qw = window();
         if (!qw) {
@@ -179,7 +179,7 @@ void window_thumbnail_item::setClient(Toplevel* window)
 
 void window_thumbnail_item::paint(QPainter* painter)
 {
-    if (singleton_interface::platform->compositor->effects) {
+    if (singleton_interface::effects) {
         return;
     }
     auto client = find_controlled_window(m_wId);
@@ -228,7 +228,7 @@ void desktop_thumbnail_item::setDesktop(int desktop)
 void desktop_thumbnail_item::paint(QPainter* painter)
 {
     Q_UNUSED(painter)
-    if (singleton_interface::platform->compositor->effects) {
+    if (singleton_interface::effects) {
         return;
     }
     // TODO: render icon

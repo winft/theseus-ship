@@ -7,14 +7,24 @@
 
 #include <kwin_export.h>
 
-namespace KWin::render
+#include <functional>
+
+namespace KWin
 {
 
-class platform;
+class EffectsHandler;
+
+namespace render
+{
+
+class compositor_qobject;
 
 /// Only for exceptional use in environments without dependency injection support (e.g. Qt plugins).
 struct KWIN_EXPORT singleton_interface {
-    static render::platform* platform;
+    static render::compositor_qobject* compositor;
+    static EffectsHandler* effects;
+    static std::function<bool()> supports_surfaceless_context;
 };
 
+}
 }

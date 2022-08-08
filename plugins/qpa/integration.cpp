@@ -149,7 +149,8 @@ QStringList Integration::themeNames() const
 
 QPlatformOpenGLContext* Integration::createPlatformOpenGLContext(QOpenGLContext* context) const
 {
-    if (render::singleton_interface::platform->compositor->scene->supportsSurfacelessContext()) {
+    assert(render::singleton_interface::supports_surfaceless_context);
+    if (render::singleton_interface::supports_surfaceless_context()) {
         return new SharingPlatformContext(context);
     }
     return nullptr;

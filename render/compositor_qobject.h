@@ -19,6 +19,7 @@ class KWIN_EXPORT compositor_qobject : public QObject
     Q_OBJECT
 public:
     compositor_qobject(std::function<bool(QTimerEvent*)> timer_event_handler);
+    ~compositor_qobject() override;
 
 protected:
     void timerEvent(QTimerEvent* te) override;

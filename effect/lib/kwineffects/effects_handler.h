@@ -406,6 +406,8 @@ public:
     Q_SCRIPTABLE virtual void addRepaint(const QRegion& r) = 0;
     Q_SCRIPTABLE virtual void addRepaint(int x, int y, int w, int h) = 0;
 
+    Q_SCRIPTABLE virtual bool isEffectLoaded(const QString& name) const = 0;
+
     CompositingType compositingType() const;
     /**
      * @brief Whether the Compositor is OpenGL based (either GL 1 or 2).

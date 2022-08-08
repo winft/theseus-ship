@@ -70,6 +70,7 @@ class KWIN_EXPORT scene : public QObject
     Q_OBJECT
 public:
     explicit scene(render::compositor& compositor);
+    ~scene() override;
 
     virtual CompositingType compositingType() const = 0;
 

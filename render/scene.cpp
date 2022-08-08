@@ -70,6 +70,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "compositor.h"
 #include "effects.h"
 #include "shadow.h"
+#include "singleton_interface.h"
 #include "thumbnail_item.h"
 #include "window.h"
 
@@ -95,6 +96,13 @@ namespace KWin::render
 scene::scene(render::compositor& compositor)
     : compositor{compositor}
 {
+    singleton_interface::supports_surfaceless_context
+        = [this] { return supportsSurfacelessContext(); };
+}
+
+scene::~scene()
+{
+    singleton_interface::supports_surfaceless_context = {};
 }
 
 int64_t scene::paint(QRegion /*damage*/,
