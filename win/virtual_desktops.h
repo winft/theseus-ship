@@ -6,6 +6,8 @@
 */
 #pragma once
 
+#include "singleton_interface.h"
+
 #include "kwin_export.h"
 
 #include <KConfig>
@@ -117,6 +119,9 @@ private:
 class KWIN_EXPORT virtual_desktop_manager_qobject : public QObject
 {
     Q_OBJECT
+public:
+    virtual_desktop_manager_qobject();
+
 Q_SIGNALS:
     /**
      * Signal emitted whenever the number of virtual desktops changes.
@@ -185,6 +190,7 @@ class KWIN_EXPORT virtual_desktop_manager
 {
 public:
     virtual_desktop_manager();
+    ~virtual_desktop_manager();
 
     /**
      * @internal, for X11 case
@@ -460,6 +466,8 @@ private:
     NETRootInfo* m_rootInfo{nullptr};
     Wrapland::Server::PlasmaVirtualDesktopManager* m_virtualDesktopManagement = nullptr;
     KSharedConfig::Ptr m_config;
+
+    virtual_desktops_singleton singleton;
 };
 
 /**

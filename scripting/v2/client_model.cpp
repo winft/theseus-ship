@@ -36,7 +36,7 @@ client_level::client_level(client_model* model, abstract_level* parent)
 {
     auto ws_wrap = singleton_interface::platform->workspaceWrapper();
 
-    connect(win::singleton_interface::space->virtual_desktop_manager->qobject.get(),
+    connect(win::singleton_interface::virtual_desktops->qobject,
             &win::virtual_desktop_manager_qobject::currentChanged,
             this,
             &client_level::reInit);
@@ -310,8 +310,7 @@ abstract_level* abstract_level::create(const QList<client_model::LevelRestrictio
         break;
     }
     case client_model::VirtualDesktopRestriction:
-        for (uint i = 1; i <= win::singleton_interface::space->virtual_desktop_manager->count();
-             ++i) {
+        for (int i = 1; i <= win::singleton_interface::virtual_desktops->get().size(); ++i) {
             auto childLevel = create(childRestrictions, childrenRestrictions, model, currentLevel);
             if (!childLevel) {
                 continue;
@@ -375,7 +374,7 @@ fork_level::fork_level(const QList<client_model::LevelRestriction>& childRestric
     : abstract_level(model, parent)
     , m_childRestrictions(childRestrictions)
 {
-    connect(win::singleton_interface::space->virtual_desktop_manager->qobject.get(),
+    connect(win::singleton_interface::virtual_desktops->qobject,
             &win::virtual_desktop_manager_qobject::countChanged,
             this,
             &fork_level::desktopCountChanged);

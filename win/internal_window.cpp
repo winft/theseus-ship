@@ -54,6 +54,7 @@ public:
     internal_control(internal_window* client)
         : control(client)
         , m_client{client}
+
     {
     }
 
@@ -83,6 +84,10 @@ internal_window::internal_window(win::remnant remnant, win::space& space)
 
 internal_window::internal_window(QWindow* window, win::space& space)
     : Toplevel(space)
+    , singleton{std::make_unique<internal_window_singleton>(
+          [this] { destroyClient(); },
+          [this](auto fbo) { present(fbo); },
+          [this](auto const& image, auto const& damage) { present(image, damage); })}
     , m_internalWindow(window)
     , synced_geo(window->geometry())
     , m_internalWindowFlags(window->flags())

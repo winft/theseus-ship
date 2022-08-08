@@ -7,6 +7,8 @@
 */
 #include "virtual_desktops.h"
 
+#include "singleton_interface.h"
+
 #include <KConfigGroup>
 #include <KGlobalAccel>
 #include <KLocalizedString>
@@ -227,10 +229,21 @@ virtual_desktop* virtual_desktop_grid::at(const QPoint& coords) const
     return row.at(coords.x());
 }
 
+virtual_desktop_manager_qobject::virtual_desktop_manager_qobject() = default;
+
 virtual_desktop_manager::virtual_desktop_manager()
     : qobject{std::make_unique<virtual_desktop_manager_qobject>()}
     , m_grid{*this}
+    , singleton{qobject.get(),
+                [this] { return desktops(); },
+                [this](auto pos, auto const& name) { return createVirtualDesktop(pos, name); },
+                [this](auto id) { return removeVirtualDesktop(id); }}
 {
+}
+
+virtual_desktop_manager::~virtual_desktop_manager()
+{
+    singleton_interface::virtual_desktops = {};
 }
 
 void virtual_desktop_manager::setRootInfo(NETRootInfo* info)

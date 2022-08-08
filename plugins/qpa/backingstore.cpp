@@ -96,7 +96,7 @@ void BackingStore::flush(QWindow *window, const QRegion &region, const QPoint &o
 
     blitImage(m_backBuffer, m_frontBuffer, region);
 
-    client->present(m_frontBuffer, region);
+    client->present_image(m_frontBuffer, region);
 }
 
 }

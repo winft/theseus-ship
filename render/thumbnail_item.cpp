@@ -218,8 +218,7 @@ desktop_thumbnail_item::~desktop_thumbnail_item()
 
 void desktop_thumbnail_item::setDesktop(int desktop)
 {
-    desktop = qBound<int>(
-        1, desktop, win::singleton_interface::space->virtual_desktop_manager->count());
+    desktop = qBound<int>(1, desktop, win::singleton_interface::virtual_desktops->get().size());
     if (desktop == m_desktop) {
         return;
     }

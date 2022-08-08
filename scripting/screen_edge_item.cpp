@@ -20,10 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screen_edge_item.h"
 
 #include "config-kwin.h"
-
-#include "win/screen_edges.h"
 #include "win/singleton_interface.h"
-#include "win/space.h"
 
 #include <QAction>
 
@@ -73,12 +70,12 @@ void screen_edge_item::enableEdge()
     }
     switch (m_mode) {
     case Mode::Pointer:
-        reserved_id = win::singleton_interface::space->edges->reserve(
+        reserved_id = win::singleton_interface::edger->reserve(
             static_cast<ElectricBorder>(m_edge), [this](auto eb) { return borderActivated(eb); });
         break;
     case Mode::Touch:
-        win::singleton_interface::space->edges->reserveTouch(static_cast<ElectricBorder>(m_edge),
-                                                             m_action);
+        win::singleton_interface::edger->reserve_touch(static_cast<ElectricBorder>(m_edge),
+                                                       m_action);
         break;
     default:
         Q_UNREACHABLE();
@@ -91,19 +88,19 @@ void screen_edge_item::disableEdge()
         return;
     }
 
-    auto space = win::singleton_interface::space;
-    if (!space) {
+    auto edger = win::singleton_interface::edger;
+    if (!edger) {
         // Might be after space went down due to Qt's implicit ownership.
         return;
     }
 
     switch (m_mode) {
     case Mode::Pointer:
-        space->edges->unreserve(static_cast<ElectricBorder>(m_edge), reserved_id);
+        edger->unreserve(static_cast<ElectricBorder>(m_edge), reserved_id);
         reserved_id = 0;
         break;
     case Mode::Touch:
-        space->edges->unreserveTouch(static_cast<ElectricBorder>(m_edge), m_action);
+        edger->unreserve_touch(static_cast<ElectricBorder>(m_edge), m_action);
         break;
     default:
         Q_UNREACHABLE();

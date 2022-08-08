@@ -94,7 +94,10 @@ public:
     {
     }
 
-    virtual ~space() = default;
+    virtual ~space()
+    {
+        singleton_interface::get_current_output_geometry = {};
+    }
 
     virtual void resize(QSize const& size) = 0;
     virtual void handle_desktop_changed(uint desktop) = 0;

@@ -93,8 +93,7 @@ void tabbox_switcher_item::set_visible(bool visible)
 
 QRect tabbox_switcher_item::screen_geometry() const
 {
-    auto output = win::get_current_output(*singleton_interface::space);
-    return output ? output->geometry() : QRect();
+    return singleton_interface::get_current_output_geometry();
 }
 
 void tabbox_switcher_item::set_current_index(int index)

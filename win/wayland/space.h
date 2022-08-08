@@ -88,8 +88,16 @@ public:
 
         init_space(*this);
 
+        singleton_interface::get_current_output_geometry = [this] {
+            auto output = get_current_output(*this);
+            return output ? output->geometry() : QRect();
+        };
         singleton_interface::set_activation_token
             = [this](auto const& appid) { return xdg_activation_set_token(*this, appid); };
+        singleton_interface::create_internal_window = [this](auto qwindow) {
+            auto iwin = new win::internal_window(qwindow, *this);
+            return iwin->singleton.get();
+        };
 
         this->input = std::make_unique<input::wayland::redirect>(*base.input, *this);
         dbus = std::make_unique<base::dbus::kwin_impl<win::space, input::platform>>(

@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
+#include "singleton_interface.h"
 #include "toplevel.h"
 
 namespace KWin::win
@@ -94,6 +95,8 @@ public:
         std::shared_ptr<QOpenGLFramebufferObject> fbo;
         QImage image;
     } buffers;
+
+    std::unique_ptr<internal_window_singleton> singleton;
 
 protected:
     bool acceptsFocus() const override;
