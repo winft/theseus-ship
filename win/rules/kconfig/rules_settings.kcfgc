@@ -1,0 +1,7 @@
+File=rules_settings.kcfg
+IncludeFiles=\"win/rules/ruling.h\",\"win/placement.h\",\"utils/geo.h\",netwm_def.h
+NameSpace=KWin::win::rules
+ClassName=settings
+UseEnumTypes=true
+Mutators=true
+ParentInConstructor=true

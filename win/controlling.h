@@ -9,7 +9,7 @@
 #include "focus_chain_edit.h"
 #include "net.h"
 
-#include "rules/rules.h"
+#include "rules/ruling.h"
 
 namespace KWin::win
 {

@@ -440,10 +440,6 @@ set(kwin_SRCS
     render/thumbnail_item.cpp
     render/window.cpp
     render/x11/compositor_selection_owner.cpp
-    rules/rule_book.cpp
-    rules/rule_book_settings.cpp
-    rules/rules.cpp
-    rules/window_rules.cpp
     scripting/dbus_call.cpp
     scripting/js_engine_global_methods_wrapper.cpp
     scripting/screen_edge_item.cpp
@@ -474,6 +470,10 @@ set(kwin_SRCS
     win/internal_window.cpp
     win/osd_notification.cpp
     win/osd.cpp
+    win/rules/book.cpp
+    win/rules/book_settings.cpp
+    win/rules/ruling.cpp
+    win/rules/window.cpp
     win/session_manager.cpp
     win/screen_edges.cpp
     win/shortcut_dialog.cpp
@@ -512,8 +512,8 @@ qt5_add_dbus_adaptor(kwin_SRCS
 
 kconfig_add_kcfg_files(kwin_SRCS base/kconfig/options_settings.kcfgc)
 kconfig_add_kcfg_files(kwin_SRCS render/post/kconfig/color_correct_settings.kcfgc)
-kconfig_add_kcfg_files(kwin_SRCS rules/kconfig/rule_settings.kcfgc)
-kconfig_add_kcfg_files(kwin_SRCS rules/kconfig/rule_book_settings_base.kcfgc)
+kconfig_add_kcfg_files(kwin_SRCS win/rules/kconfig/rules_settings.kcfgc)
+kconfig_add_kcfg_files(kwin_SRCS win/rules/kconfig/rules_book_settings_base.kcfgc)
 
 qt5_add_dbus_adaptor(kwin_SRCS base/dbus/org.kde.KWin.xml base/dbus/kwin.h KWin::base::dbus::kwin)
 qt5_add_dbus_adaptor(kwin_SRCS

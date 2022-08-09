@@ -4,15 +4,15 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "rule_book.h"
+#include "book.h"
 
 #ifndef KCMRULES
 #include "base/logging.h"
 #include "toplevel.h"
 #include "win/control.h"
 
-#include "rule_book_settings.h"
-#include "rule_settings.h"
+#include "book_settings.h"
+#include "rules_settings.h"
 
 #include <KConfig>
 #include <KXMessages>

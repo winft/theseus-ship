@@ -4,9 +4,9 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
+#include "book_settings.h"
 
-#include "rule_book_settings.h"
-#include "rule_settings.h"
+#include "rules_settings.h"
 
 #include <QUuid>
 

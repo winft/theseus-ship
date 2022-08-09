@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/wayland/server.h"
 #include "base/x11/atoms.h"
-#include "rules/rules.h"
 #include "win/actions.h"
 #include "win/controlling.h"
 #include "win/desktop_space.h"

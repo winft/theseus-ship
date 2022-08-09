@@ -20,8 +20,8 @@
 
 #pragma once
 
-#include "rules/rule_book_settings.h"
-#include "rule_settings.h"
+#include "win/rules/book_settings.h"
+#include "rules_settings.h"
 
 #include <QAbstractListModel>
 

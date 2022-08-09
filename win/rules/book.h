@@ -8,7 +8,7 @@
 
 #ifndef KCMRULES
 
-#include "window_rules.h"
+#include "window.h"
 
 class KXMessages;
 

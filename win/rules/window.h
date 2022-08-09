@@ -12,7 +12,7 @@
 
 #include "base/options.h"
 #include "kwin_export.h"
-#include "rules.h"
+#include "ruling.h"
 #include "win/types.h"
 
 #include <functional>

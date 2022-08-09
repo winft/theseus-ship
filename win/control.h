@@ -10,7 +10,7 @@
 #include "types.h"
 
 #include "kwin_export.h"
-#include "rules/window_rules.h"
+#include "rules/window.h"
 #include "scripting/window.h"
 
 #include <QIcon>

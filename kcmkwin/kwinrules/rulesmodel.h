@@ -22,9 +22,9 @@
 #define KWIN_RULES_MODEL_H
 
 #include "ruleitem.h"
-#include "rules/rules.h"
-#include "rule_settings.h"
+#include "rules_settings.h"
 #include "win/dbus/virtual_desktop_types.h"
+#include "win/rules/ruling.h"
 
 #include <QAbstractListModel>
 #include <QSortFilterProxyModel>

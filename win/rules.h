@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "rules/rule_book.h"
+#include "rules/book.h"
 
 #include <QObject>
 #include <type_traits>

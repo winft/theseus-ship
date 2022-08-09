@@ -8,7 +8,7 @@
 #ifndef KWIN_RULES_RULE_BOOK_SETTINGS_H
 #define KWIN_RULES_RULE_BOOK_SETTINGS_H
 
-#include "rule_book_settings_base.h"
+#include "rules_book_settings_base.h"
 #include <KSharedConfig>
 
 namespace KWin::win::rules

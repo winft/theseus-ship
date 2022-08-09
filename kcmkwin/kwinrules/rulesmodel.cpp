@@ -20,9 +20,9 @@
  */
 
 #include "rulesmodel.h"
-#include "rules/rules.h"
 
 #include "utils/algorithm.h"
+#include "win/rules/ruling.h"
 
 #include <QIcon>
 #include <QQmlEngine>

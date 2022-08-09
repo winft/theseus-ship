@@ -18,9 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #include "kcmrules.h"
-#include "rule_settings.h"
+
+#include "rules_settings.h"
 
 #include "utils/algorithm.h"
 

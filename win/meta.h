@@ -9,7 +9,7 @@
 #include "net.h"
 #include "remnant.h"
 
-#include "rules/rules.h"
+#include "rules/ruling.h"
 
 #include <KDesktopFile>
 #include <klocalizedstring.h>

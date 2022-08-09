@@ -1,4 +1,4 @@
-File=rule_book_settings_base.kcfg
+File=rules_book_settings_base.kcfg
 NameSpace=KWin
 ClassName=book_settings_base
 Mutators=true

@@ -4,7 +4,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "rules.h"
+#include "ruling.h"
 
 #include "base/output.h"
 #include "base/output_helpers.h"
@@ -27,8 +27,8 @@
 #include "win/x11/client_machine.h"
 #endif
 
-#include "rule_book_settings.h"
-#include "rule_settings.h"
+#include "book_settings.h"
+#include "rules_settings.h"
 
 namespace KWin::win::rules
 {

@@ -45,7 +45,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/x11/event_filter.h"
 #include "input/redirect.h"
 #include "render/outline.h"
-#include "rules/rule_book.h"
+#include "rules/book.h"
 #include "scripting/platform.h"
 
 #include <QTimer>
