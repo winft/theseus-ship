@@ -20,6 +20,8 @@
 
 #include "optionsmodel.h"
 
+#include "utils/algorithm.h"
+
 #include <KLocalizedString>
 
 
@@ -190,7 +192,7 @@ int RulePolicy::value() const
 {
     if (m_type == RulePolicy::NoPolicy) {
         // To simplify external checks when rule has no policy
-        return win::rules::ruling::Apply;
+        return enum_index(win::rules::action::apply);
     }
     return OptionsModel::value().toInt();
 }
@@ -213,42 +215,42 @@ QString RulePolicy::policyKey(const QString &key) const
 QList<RulePolicy::Data> RulePolicy::policyOptions(RulePolicy::Type type)
 {
     static const auto stringMatchOptions = QList<RulePolicy::Data> {
-        {win::rules::ruling::UnimportantMatch, i18n("Unimportant")},
-        {win::rules::ruling::ExactMatch,       i18n("Exact Match")},
-        {win::rules::ruling::SubstringMatch,   i18n("Substring Match")},
-        {win::rules::ruling::RegExpMatch,      i18n("Regular Expression")}
+        {enum_index(win::rules::name_match::unimportant), i18n("Unimportant")},
+        {enum_index(win::rules::name_match::exact),       i18n("Exact Match")},
+        {enum_index(win::rules::name_match::substring),   i18n("Substring Match")},
+        {enum_index(win::rules::name_match::regex),      i18n("Regular Expression")}
     };
 
     static const auto setRuleOptions = QList<RulePolicy::Data> {
-        {win::rules::ruling::Apply,
+        {enum_index(win::rules::action::apply),
             i18n("Apply Initially"),
             i18n("The window property will be only set to the given value after the window is created."
                  "\nNo further changes will be affected.")},
-        {win::rules::ruling::ApplyNow,
+        {enum_index(win::rules::action::apply_now),
             i18n("Apply Now"),
             i18n("The window property will be set to the given value immediately and will not be affected later"
                  "\n(this action will be deleted afterwards).")},
-        {win::rules::ruling::Remember,
+        {enum_index(win::rules::action::remember),
             i18n("Remember"),
             i18n("The value of the window property will be remembered and, every time the window"
                  " is created, the last remembered value will be applied.")},
-        {win::rules::ruling::DontAffect,
+        {enum_index(win::rules::action::dont_affect),
             i18n("Do Not Affect"),
             i18n("The window property will not be affected and therefore the default handling for it will be used."
                  "\nSpecifying this will block more generic window settings from taking effect.")},
-        {win::rules::ruling::Force,
+        {enum_index(win::rules::action::force),
             i18n("Force"),
             i18n("The window property will be always forced to the given value.")},
-        {win::rules::ruling::ForceTemporarily,
+        {enum_index(win::rules::action::force_temporarily),
             i18n("Force Temporarily"),
             i18n("The window property will be forced to the given value until it is hidden"
                  "\n(this action will be deleted after the window is hidden).")}
     };
 
     static auto forceRuleOptions = QList<RulePolicy::Data> {
-        setRuleOptions.at(4),  // win::rules::ruling::Force
-        setRuleOptions.at(5),  // win::rules::ruling::ForceTemporarily
-        setRuleOptions.at(3),  // win::rules::ruling::DontAffect
+        setRuleOptions.at(4),  // win::rules::action::force
+        setRuleOptions.at(5),  // win::rules::action::force_temporarily
+        setRuleOptions.at(3),  // win::rules::action::dont_affect
     };
 
     switch (type) {

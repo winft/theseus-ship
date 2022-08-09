@@ -174,7 +174,7 @@ public:
     void addDamage(QRegion const& damage) override;
 
     void applyWindowRules() override;
-    void updateWindowRules(rules::ruling::Types selection) override;
+    void updateWindowRules(rules::type selection) override;
 
     bool acceptsFocus() const override;
     void updateCaption() override;

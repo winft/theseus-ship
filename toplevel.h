@@ -471,7 +471,7 @@ public:
     virtual void checkNoBorder();
 
     virtual xcb_timestamp_t userTime() const;
-    virtual void updateWindowRules(win::rules::ruling::Types selection);
+    virtual void updateWindowRules(win::rules::type selection);
 
     virtual QSize minSize() const;
     virtual QSize maxSize() const;

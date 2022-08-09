@@ -225,7 +225,7 @@ void window::setNoBorder(bool set)
 
     user_no_border = set;
     updateDecoration(true, false);
-    updateWindowRules(rules::ruling::NoBorder);
+    updateWindowRules(rules::type::no_border);
 }
 
 void window::closeWindow()
@@ -751,8 +751,7 @@ void window::do_set_geometry(QRect const& frame_geo)
         return;
     }
 
-    updateWindowRules(
-        static_cast<rules::ruling::Types>(rules::ruling::Position | rules::ruling::Size));
+    updateWindowRules(rules::type::position | rules::type::size);
 
     if (is_resize(this)) {
         perform_move_resize(this);
@@ -778,9 +777,8 @@ void window::do_set_maximize_mode(maximize_mode mode)
     auto old_mode = max_mode;
     max_mode = mode;
 
-    updateWindowRules(
-        static_cast<rules::ruling::Types>(rules::ruling::MaximizeHoriz | rules::ruling::MaximizeVert
-                                          | rules::ruling::Position | rules::ruling::Size));
+    updateWindowRules(rules::type::maximize_horiz | rules::type::maximize_vert
+                      | rules::type::position | rules::type::size);
 
     // Update decoration borders.
     if (auto deco = decoration(this); deco && deco->client()
@@ -828,8 +826,7 @@ void window::do_set_fullscreen(bool full)
     // Active fullscreens gets a different layer.
     update_layer(this);
 
-    updateWindowRules(static_cast<rules::ruling::Types>(
-        rules::ruling::Fullscreen | rules::ruling::Position | rules::ruling::Size));
+    updateWindowRules(rules::type::fullscreen | rules::type::position | rules::type::size);
     Q_EMIT fullScreenChanged();
 }
 

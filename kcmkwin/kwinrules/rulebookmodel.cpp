@@ -5,6 +5,8 @@
 */
 #include "rulebookmodel.h"
 
+#include "utils/algorithm.h"
+
 namespace KWin
 {
 
@@ -86,7 +88,7 @@ bool RuleBookModel::insertRows(int row, int count, const QModelIndex &parent)
         auto settings = m_ruleBook->insertRuleSettingsAt(row + i);
 
         // We want ExactMatch as default for new rules in the UI
-        settings->setWmclassmatch(win::rules::ruling::ExactMatch);
+        settings->setWmclassmatch(enum_index(win::rules::name_match::exact));
     }
     endInsertRows();
 

@@ -19,7 +19,7 @@ void init_rule_book(rules::book& book, Space& space)
     QObject::connect(&book, &rules::book::updates_enabled, space.qobject.get(), [&] {
         for (auto window : space.windows) {
             if (window->control) {
-                window->updateWindowRules(rules::ruling::All);
+                window->updateWindowRules(rules::type::all);
             }
         }
     });
@@ -43,7 +43,7 @@ void init_rule_book(rules::book& book, Space& space)
 template<typename Win>
 void finish_rules(Win* win)
 {
-    win->updateWindowRules(rules::ruling::All);
+    win->updateWindowRules(rules::type::all);
     win->control->set_rules(rules::window());
 }
 

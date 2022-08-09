@@ -633,7 +633,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     space.rule_book->discardUsed(win, false);
 
     // Was blocked while !control.
-    win->updateWindowRules(rules::ruling::All);
+    win->updateWindowRules(rules::type::all);
 
     win->setBlockingCompositing(win->info->isBlockingCompositing());
     read_show_on_screen_edge(win, showOnScreenEdgeCookie);

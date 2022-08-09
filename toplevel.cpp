@@ -999,12 +999,12 @@ void Toplevel::applyWindowRules()
         this, control->rules().checkDesktopFile(control->desktop_file_name()).toUtf8());
 }
 
-void Toplevel::updateWindowRules(win::rules::ruling::Types selection)
+void Toplevel::updateWindowRules(win::rules::type selection)
 {
     if (space.rule_book->areUpdatesDisabled()) {
         return;
     }
-    control->rules().update(this, selection);
+    control->rules().update(this, static_cast<int>(selection));
 }
 
 }
