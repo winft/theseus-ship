@@ -94,13 +94,20 @@ void desktop_background_item::updateWindow()
         desktop = win::singleton_interface::virtual_desktops->current();
     }
 
+    scripting::window* clientCandidate = nullptr;
+
     const auto clients = scripting::singleton_interface::qt_script_space->clientList();
     for (auto client : clients) {
         if (client->isDesktop() && client->isOnOutput(m_output) && client->isOnDesktop(desktop)) {
-            setClient(client);
-            break;
+            // In the unlikely event there are multiple desktop windows (e.g. conky's floating panel
+            // is of type "desktop") choose the one which matches the ouptut size, if possible.
+            if (!clientCandidate || client->size() == m_output->geometry().size()) {
+                clientCandidate = client;
+            }
         }
     }
+
+    setClient(clientCandidate);
 }
 
 } // namespace KWin
