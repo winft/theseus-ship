@@ -15,22 +15,26 @@ class KXMessages;
 namespace KWin
 {
 
-namespace win
-{
-class space;
-}
-
-class Rules;
 class Toplevel;
 
-class KWIN_EXPORT RuleBook : public QObject
+namespace win
+{
+
+class space;
+
+namespace rules
+{
+
+class ruling;
+
+class KWIN_EXPORT book : public QObject
 {
     Q_OBJECT
 public:
-    RuleBook();
-    ~RuleBook() override;
+    book();
+    ~book() override;
 
-    WindowRules find(Toplevel const* window, bool);
+    window find(Toplevel const* window, bool);
     void discardUsed(Toplevel* window, bool withdraw);
     void setUpdatesDisabled(bool disable);
     bool areUpdatesDisabled() const;
@@ -54,9 +58,11 @@ private:
 
     QTimer* m_updateTimer;
     bool m_updatesDisabled;
-    QList<Rules*> m_rules;
+    QList<ruling*> m_rules;
     QScopedPointer<KXMessages> m_temporaryRulesMessages;
 };
 
 #endif
+}
+}
 }

@@ -54,18 +54,18 @@ public:
     QString descriptionAt(int row) const;
     void setDescriptionAt(int row, const QString &description);
 
-    RuleSettings *ruleSettingsAt(int row) const;
-    void setRuleSettingsAt(int row, const RuleSettings &settings);
+    win::rules::settings *ruleSettingsAt(int row) const;
+    void setRuleSettingsAt(int row, win::rules::settings const& settings);
 
     void load();
     void save();
     bool isSaveNeeded();
 
     // Helper function to copy RuleSettings properties
-    static void copySettingsTo(RuleSettings *dest, const RuleSettings &source);
+    static void copySettingsTo(win::rules::settings* dest, win::rules::settings const& source);
 
 private:
-    RuleBookSettings *m_ruleBook;
+    win::rules::book_settings *m_ruleBook;
 };
 
 } // namespace

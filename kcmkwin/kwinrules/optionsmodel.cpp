@@ -189,7 +189,8 @@ RulePolicy::Type RulePolicy::type() const
 int RulePolicy::value() const
 {
     if (m_type == RulePolicy::NoPolicy) {
-        return Rules::Apply;   // To simplify external checks when rule has no policy
+        // To simplify external checks when rule has no policy
+        return win::rules::ruling::Apply;
     }
     return OptionsModel::value().toInt();
 }
@@ -212,42 +213,42 @@ QString RulePolicy::policyKey(const QString &key) const
 QList<RulePolicy::Data> RulePolicy::policyOptions(RulePolicy::Type type)
 {
     static const auto stringMatchOptions = QList<RulePolicy::Data> {
-        {Rules::UnimportantMatch, i18n("Unimportant")},
-        {Rules::ExactMatch,       i18n("Exact Match")},
-        {Rules::SubstringMatch,   i18n("Substring Match")},
-        {Rules::RegExpMatch,      i18n("Regular Expression")}
+        {win::rules::ruling::UnimportantMatch, i18n("Unimportant")},
+        {win::rules::ruling::ExactMatch,       i18n("Exact Match")},
+        {win::rules::ruling::SubstringMatch,   i18n("Substring Match")},
+        {win::rules::ruling::RegExpMatch,      i18n("Regular Expression")}
     };
 
     static const auto setRuleOptions = QList<RulePolicy::Data> {
-        {Rules::Apply,
+        {win::rules::ruling::Apply,
             i18n("Apply Initially"),
             i18n("The window property will be only set to the given value after the window is created."
                  "\nNo further changes will be affected.")},
-        {Rules::ApplyNow,
+        {win::rules::ruling::ApplyNow,
             i18n("Apply Now"),
             i18n("The window property will be set to the given value immediately and will not be affected later"
                  "\n(this action will be deleted afterwards).")},
-        {Rules::Remember,
+        {win::rules::ruling::Remember,
             i18n("Remember"),
             i18n("The value of the window property will be remembered and, every time the window"
                  " is created, the last remembered value will be applied.")},
-        {Rules::DontAffect,
+        {win::rules::ruling::DontAffect,
             i18n("Do Not Affect"),
             i18n("The window property will not be affected and therefore the default handling for it will be used."
                  "\nSpecifying this will block more generic window settings from taking effect.")},
-        {Rules::Force,
+        {win::rules::ruling::Force,
             i18n("Force"),
             i18n("The window property will be always forced to the given value.")},
-        {Rules::ForceTemporarily,
+        {win::rules::ruling::ForceTemporarily,
             i18n("Force Temporarily"),
             i18n("The window property will be forced to the given value until it is hidden"
                  "\n(this action will be deleted after the window is hidden).")}
     };
 
     static auto forceRuleOptions = QList<RulePolicy::Data> {
-        setRuleOptions.at(4),  // Rules::Force
-        setRuleOptions.at(5),  // Rules::ForceTemporarily
-        setRuleOptions.at(3),  // Rules::DontAffect
+        setRuleOptions.at(4),  // win::rules::ruling::Force
+        setRuleOptions.at(5),  // win::rules::ruling::ForceTemporarily
+        setRuleOptions.at(3),  // win::rules::ruling::DontAffect
     };
 
     switch (type) {

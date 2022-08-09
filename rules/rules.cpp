@@ -29,17 +29,17 @@
 #include "rule_book_settings.h"
 #include "rule_settings.h"
 
-namespace KWin
+namespace KWin::win::rules
 {
 
-Rules::Rules()
+ruling::ruling()
     : temporary_state(0)
     , wmclasscomplete(UnimportantMatch)
     , types(NET::AllTypesMask)
 {
 }
 
-Rules::Rules(const QString& str, bool temporary)
+ruling::ruling(QString const& str, bool temporary)
     : temporary_state(temporary ? 2 : 0)
 {
     QTemporaryFile file;
@@ -49,19 +49,19 @@ Rules::Rules(const QString& str, bool temporary)
     }
     file.flush();
     auto cfg = KSharedConfig::openConfig(file.fileName(), KConfig::SimpleConfig);
-    RuleSettings settings(cfg, QString());
+    rules::settings settings(cfg, QString());
     readFromSettings(&settings);
     if (description.isEmpty())
         description = QStringLiteral("temporary");
 }
 
-Rules::Rules(const RuleSettings* settings)
+ruling::ruling(rules::settings const* settings)
     : temporary_state(0)
 {
     readFromSettings(settings);
 }
 
-void Rules::readFromSettings(const RuleSettings* settings)
+void ruling::readFromSettings(rules::settings const* settings)
 {
     description = settings->description();
     if (description.isEmpty()) {
@@ -165,7 +165,7 @@ void Rules::readFromSettings(const RuleSettings* settings)
     }
 }
 
-void Rules::write(RuleSettings* settings) const
+void ruling::write(rules::settings* settings) const
 {
     auto write_string
         = [&settings](auto const& str, auto data_writer, auto match_writer, bool force = false) {
@@ -178,12 +178,11 @@ void Rules::write(RuleSettings* settings) const
     settings->setDescription(description);
 
     // Always write wmclass.
-    write_string(wmclass, &RuleSettings::setWmclass, &RuleSettings::setWmclassmatch, true);
+    write_string(wmclass, &settings::setWmclass, &settings::setWmclassmatch, true);
     settings->setWmclasscomplete(wmclasscomplete);
-    write_string(windowrole, &RuleSettings::setWindowrole, &RuleSettings::setWindowrolematch);
-    write_string(title, &RuleSettings::setTitle, &RuleSettings::setTitlematch);
-    write_string(
-        clientmachine, &RuleSettings::setClientmachine, &RuleSettings::setClientmachinematch);
+    write_string(windowrole, &settings::setWindowrole, &settings::setWindowrolematch);
+    write_string(title, &settings::setTitle, &settings::setTitlematch);
+    write_string(clientmachine, &settings::setClientmachine, &settings::setClientmachinematch);
 
     settings->setTypes(types);
 
@@ -194,24 +193,23 @@ void Rules::write(RuleSettings* settings) const
         }
     };
 
-    write_set(above, &RuleSettings::setAboverule, &RuleSettings::setAbove);
-    write_set(below, &RuleSettings::setBelowrule, &RuleSettings::setBelow);
-    write_set(desktop, &RuleSettings::setDesktoprule, &RuleSettings::setDesktop);
-    write_set(desktopfile, &RuleSettings::setDesktopfilerule, &RuleSettings::setDesktopfile);
-    write_set(fullscreen, &RuleSettings::setFullscreenrule, &RuleSettings::setFullscreen);
-    write_set(
-        ignoregeometry, &RuleSettings::setIgnoregeometryrule, &RuleSettings::setIgnoregeometry);
-    write_set(maximizehoriz, &RuleSettings::setMaximizehorizrule, &RuleSettings::setMaximizehoriz);
-    write_set(maximizevert, &RuleSettings::setMaximizevertrule, &RuleSettings::setMaximizevert);
-    write_set(minimize, &RuleSettings::setMinimizerule, &RuleSettings::setMinimize);
-    write_set(noborder, &RuleSettings::setNoborderrule, &RuleSettings::setNoborder);
-    write_set(position, &RuleSettings::setPositionrule, &RuleSettings::setPosition);
-    write_set(screen, &RuleSettings::setScreenrule, &RuleSettings::setScreen);
-    write_set(shortcut, &RuleSettings::setShortcutrule, &RuleSettings::setShortcut);
-    write_set(size, &RuleSettings::setSizerule, &RuleSettings::setSize);
-    write_set(skippager, &RuleSettings::setSkippagerrule, &RuleSettings::setSkippager);
-    write_set(skipswitcher, &RuleSettings::setSkipswitcherrule, &RuleSettings::setSkipswitcher);
-    write_set(skiptaskbar, &RuleSettings::setSkiptaskbarrule, &RuleSettings::setSkiptaskbar);
+    write_set(above, &settings::setAboverule, &settings::setAbove);
+    write_set(below, &settings::setBelowrule, &settings::setBelow);
+    write_set(desktop, &settings::setDesktoprule, &settings::setDesktop);
+    write_set(desktopfile, &settings::setDesktopfilerule, &settings::setDesktopfile);
+    write_set(fullscreen, &settings::setFullscreenrule, &settings::setFullscreen);
+    write_set(ignoregeometry, &settings::setIgnoregeometryrule, &settings::setIgnoregeometry);
+    write_set(maximizehoriz, &settings::setMaximizehorizrule, &settings::setMaximizehoriz);
+    write_set(maximizevert, &settings::setMaximizevertrule, &settings::setMaximizevert);
+    write_set(minimize, &settings::setMinimizerule, &settings::setMinimize);
+    write_set(noborder, &settings::setNoborderrule, &settings::setNoborder);
+    write_set(position, &settings::setPositionrule, &settings::setPosition);
+    write_set(screen, &settings::setScreenrule, &settings::setScreen);
+    write_set(shortcut, &settings::setShortcutrule, &settings::setShortcut);
+    write_set(size, &settings::setSizerule, &settings::setSize);
+    write_set(skippager, &settings::setSkippagerrule, &settings::setSkippager);
+    write_set(skipswitcher, &settings::setSkipswitcherrule, &settings::setSkipswitcher);
+    write_set(skiptaskbar, &settings::setSkiptaskbarrule, &settings::setSkiptaskbar);
 
     auto write_force = [&settings](auto const& ruler, auto rule_writer, auto data_writer) {
         std::invoke(rule_writer, settings, static_cast<int>(ruler.rule));
@@ -229,21 +227,20 @@ void Rules::write(RuleSettings* settings) const
               }
           };
 
-    write_force(acceptfocus, &RuleSettings::setAcceptfocusrule, &RuleSettings::setAcceptfocus);
-    write_force(autogroup, &RuleSettings::setAutogrouprule, &RuleSettings::setAutogroup);
-    write_force(autogroupfg, &RuleSettings::setAutogroupfgrule, &RuleSettings::setAutogroupfg);
-    write_force(autogroupid, &RuleSettings::setAutogroupidrule, &RuleSettings::setAutogroupid);
-    write_force(blockcompositing,
-                &RuleSettings::setBlockcompositingrule,
-                &RuleSettings::setBlockcompositing);
-    write_force(closeable, &RuleSettings::setCloseablerule, &RuleSettings::setCloseable);
+    write_force(acceptfocus, &settings::setAcceptfocusrule, &settings::setAcceptfocus);
+    write_force(autogroup, &settings::setAutogrouprule, &settings::setAutogroup);
+    write_force(autogroupfg, &settings::setAutogroupfgrule, &settings::setAutogroupfg);
+    write_force(autogroupid, &settings::setAutogroupidrule, &settings::setAutogroupid);
+    write_force(
+        blockcompositing, &settings::setBlockcompositingrule, &settings::setBlockcompositing);
+    write_force(closeable, &settings::setCloseablerule, &settings::setCloseable);
     write_force(disableglobalshortcuts,
-                &RuleSettings::setDisableglobalshortcutsrule,
-                &RuleSettings::setDisableglobalshortcuts);
-    write_force(fpplevel, &RuleSettings::setFpplevelrule, &RuleSettings::setFpplevel);
-    write_force(fsplevel, &RuleSettings::setFsplevelrule, &RuleSettings::setFsplevel);
+                &settings::setDisableglobalshortcutsrule,
+                &settings::setDisableglobalshortcuts);
+    write_force(fpplevel, &settings::setFpplevelrule, &settings::setFpplevel);
+    write_force(fsplevel, &settings::setFsplevelrule, &settings::setFsplevel);
 
-    auto colorToString = [](const QString& value) -> QString {
+    auto colorToString = [](auto const& value) -> QString {
         if (value.endsWith(QLatin1String(".colors"))) {
             return QFileInfo(value).baseName();
         } else {
@@ -251,22 +248,19 @@ void Rules::write(RuleSettings* settings) const
         }
     };
     convert_write_force(
-        decocolor, &RuleSettings::setDecocolorrule, &RuleSettings::setDecocolor, colorToString);
+        decocolor, &settings::setDecocolorrule, &settings::setDecocolor, colorToString);
 
-    write_force(maxsize, &RuleSettings::setMaxsizerule, &RuleSettings::setMaxsize);
-    write_force(minsize, &RuleSettings::setMinsizerule, &RuleSettings::setMinsize);
-    write_force(
-        opacityactive, &RuleSettings::setOpacityactiverule, &RuleSettings::setOpacityactive);
-    write_force(
-        opacityinactive, &RuleSettings::setOpacityinactiverule, &RuleSettings::setOpacityinactive);
-    write_force(placement, &RuleSettings::setPlacementrule, &RuleSettings::setPlacement);
-    write_force(
-        strictgeometry, &RuleSettings::setStrictgeometryrule, &RuleSettings::setStrictgeometry);
-    write_force(type, &RuleSettings::setTyperule, &RuleSettings::setType);
+    write_force(maxsize, &settings::setMaxsizerule, &settings::setMaxsize);
+    write_force(minsize, &settings::setMinsizerule, &settings::setMinsize);
+    write_force(opacityactive, &settings::setOpacityactiverule, &settings::setOpacityactive);
+    write_force(opacityinactive, &settings::setOpacityinactiverule, &settings::setOpacityinactive);
+    write_force(placement, &settings::setPlacementrule, &settings::setPlacement);
+    write_force(strictgeometry, &settings::setStrictgeometryrule, &settings::setStrictgeometry);
+    write_force(type, &settings::setTyperule, &settings::setType);
 }
 
 // returns true if it doesn't affect anything
-bool Rules::isEmpty() const
+bool ruling::isEmpty() const
 {
     auto unused_s = [](auto rule) { return rule == set_rule::unused; };
     auto unused_f = [](auto rule) { return rule == force_rule::unused; };
@@ -285,14 +279,14 @@ bool Rules::isEmpty() const
         && unused_f(placement.rule) && unused_f(type.rule);
 }
 
-force_rule Rules::convertForceRule(int v)
+force_rule ruling::convertForceRule(int v)
 {
     if (v == DontAffect || v == Force || v == ForceTemporarily)
         return static_cast<force_rule>(v);
     return force_rule::unused;
 }
 
-QString Rules::getDecoColor(const QString& themeName)
+QString ruling::getDecoColor(QString const& themeName)
 {
     if (themeName.isEmpty()) {
         return QString();
@@ -303,7 +297,7 @@ QString Rules::getDecoColor(const QString& themeName)
                                       + QLatin1String(".colors"));
 }
 
-bool Rules::matchType(NET::WindowType match_type) const
+bool ruling::matchType(NET::WindowType match_type) const
 {
     if (types != NET::AllTypesMask) {
         if (match_type == NET::Unknown)
@@ -314,7 +308,7 @@ bool Rules::matchType(NET::WindowType match_type) const
     return true;
 }
 
-bool Rules::matchWMClass(const QByteArray& match_class, const QByteArray& match_name) const
+bool ruling::matchWMClass(QByteArray const& match_class, QByteArray const& match_name) const
 {
     if (wmclass.match != UnimportantMatch) {
         // TODO optimize?
@@ -339,7 +333,7 @@ bool Rules::matchWMClass(const QByteArray& match_class, const QByteArray& match_
     return true;
 }
 
-bool Rules::matchRole(const QByteArray& match_role) const
+bool ruling::matchRole(QByteArray const& match_role) const
 {
     if (windowrole.match != UnimportantMatch) {
         if (windowrole.match == RegExpMatch
@@ -356,7 +350,7 @@ bool Rules::matchRole(const QByteArray& match_role) const
     return true;
 }
 
-bool Rules::matchTitle(const QString& match_title) const
+bool ruling::matchTitle(QString const& match_title) const
 {
     if (title.match != UnimportantMatch) {
         if (title.match == RegExpMatch
@@ -371,7 +365,7 @@ bool Rules::matchTitle(const QString& match_title) const
     return true;
 }
 
-bool Rules::matchClientMachine(const QByteArray& match_machine, bool local) const
+bool ruling::matchClientMachine(QByteArray const& match_machine, bool local) const
 {
     if (clientmachine.match != UnimportantMatch) {
         // if it's localhost, check also "localhost" before checking hostname
@@ -392,7 +386,7 @@ bool Rules::matchClientMachine(const QByteArray& match_machine, bool local) cons
 }
 
 #ifndef KCMRULES
-bool Rules::match(Toplevel const* window) const
+bool ruling::match(Toplevel const* window) const
 {
     if (!matchType(window->windowType(true))) {
         return false;
@@ -425,7 +419,7 @@ bool Rules::match(Toplevel const* window) const
     return true;
 }
 
-bool Rules::checkSetRule(set_rule rule, bool init)
+bool ruling::checkSetRule(set_rule rule, bool init)
 {
     if (rule > static_cast<set_rule>(DontAffect)) { // Unused or DontAffect
         if (rule == (set_rule)Force || rule == (set_rule)ApplyNow
@@ -435,23 +429,23 @@ bool Rules::checkSetRule(set_rule rule, bool init)
     return false;
 }
 
-bool Rules::checkForceRule(force_rule rule)
+bool ruling::checkForceRule(force_rule rule)
 {
     return rule == static_cast<force_rule>(Force)
         || rule == static_cast<force_rule>(ForceTemporarily);
 }
 
-bool Rules::checkSetStop(set_rule rule)
+bool ruling::checkSetStop(set_rule rule)
 {
     return rule != set_rule::unused;
 }
 
-bool Rules::checkForceStop(force_rule rule)
+bool ruling::checkForceStop(force_rule rule)
 {
     return rule != force_rule::unused;
 }
 
-bool Rules::update(Toplevel* window, int selection)
+bool ruling::update(Toplevel* window, int selection)
 {
     // TODO check this setting is for this client ?
     bool updated = false;
@@ -552,7 +546,7 @@ bool Rules::update(Toplevel* window, int selection)
     return updated;
 }
 
-bool Rules::applyGeometry(QRect& rect, bool init) const
+bool ruling::applyGeometry(QRect& rect, bool init) const
 {
     QPoint p = rect.topLeft();
     QSize s = rect.size();
@@ -568,7 +562,7 @@ bool Rules::applyGeometry(QRect& rect, bool init) const
     return ret;
 }
 
-bool Rules::applyPosition(QPoint& pos, bool init) const
+bool ruling::applyPosition(QPoint& pos, bool init) const
 {
     if (this->position.data != geo::invalid_point && checkSetRule(position.rule, init)) {
         pos = this->position.data;
@@ -576,7 +570,7 @@ bool Rules::applyPosition(QPoint& pos, bool init) const
     return checkSetStop(position.rule);
 }
 
-bool Rules::applySize(QSize& s, bool init) const
+bool ruling::applySize(QSize& s, bool init) const
 {
     if (this->size.data.isValid() && checkSetRule(size.rule, init)) {
         s = this->size.data;
@@ -584,72 +578,72 @@ bool Rules::applySize(QSize& s, bool init) const
     return checkSetStop(size.rule);
 }
 
-bool Rules::applyMinimize(bool& minimize, bool init) const
+bool ruling::applyMinimize(bool& minimize, bool init) const
 {
     return apply_set(minimize, this->minimize, init);
 }
 
-bool Rules::applySkipTaskbar(bool& skip, bool init) const
+bool ruling::applySkipTaskbar(bool& skip, bool init) const
 {
     return apply_set(skip, this->skiptaskbar, init);
 }
 
-bool Rules::applySkipPager(bool& skip, bool init) const
+bool ruling::applySkipPager(bool& skip, bool init) const
 {
     return apply_set(skip, this->skippager, init);
 }
 
-bool Rules::applySkipSwitcher(bool& skip, bool init) const
+bool ruling::applySkipSwitcher(bool& skip, bool init) const
 {
     return apply_set(skip, this->skipswitcher, init);
 }
 
-bool Rules::applyKeepAbove(bool& above, bool init) const
+bool ruling::applyKeepAbove(bool& above, bool init) const
 {
     return apply_set(above, this->above, init);
 }
 
-bool Rules::applyKeepBelow(bool& below, bool init) const
+bool ruling::applyKeepBelow(bool& below, bool init) const
 {
     return apply_set(below, this->below, init);
 }
 
-bool Rules::applyFullScreen(bool& fs, bool init) const
+bool ruling::applyFullScreen(bool& fs, bool init) const
 {
     return apply_set(fs, this->fullscreen, init);
 }
 
-bool Rules::applyDesktop(int& desktop, bool init) const
+bool ruling::applyDesktop(int& desktop, bool init) const
 {
     return apply_set(desktop, this->desktop, init);
 }
 
-bool Rules::applyScreen(int& screen, bool init) const
+bool ruling::applyScreen(int& screen, bool init) const
 {
     return apply_set(screen, this->screen, init);
 }
 
-bool Rules::applyNoBorder(bool& noborder, bool init) const
+bool ruling::applyNoBorder(bool& noborder, bool init) const
 {
     return apply_set(noborder, this->noborder, init);
 }
 
-bool Rules::applyShortcut(QString& shortcut, bool init) const
+bool ruling::applyShortcut(QString& shortcut, bool init) const
 {
     return apply_set(shortcut, this->shortcut, init);
 }
 
-bool Rules::applyDesktopFile(QString& desktopFile, bool init) const
+bool ruling::applyDesktopFile(QString& desktopFile, bool init) const
 {
     return apply_set(desktopFile, this->desktopfile, init);
 }
 
-bool Rules::applyIgnoreGeometry(bool& ignore, bool init) const
+bool ruling::applyIgnoreGeometry(bool& ignore, bool init) const
 {
     return apply_set(ignore, this->ignoregeometry, init);
 }
 
-bool Rules::applyPlacement(win::placement& placement) const
+bool ruling::applyPlacement(win::placement& placement) const
 {
     auto setting = static_cast<int>(placement);
     if (!apply_force(setting, this->placement)) {
@@ -665,43 +659,43 @@ bool Rules::applyPlacement(win::placement& placement) const
     return true;
 }
 
-bool Rules::applyMinSize(QSize& size) const
+bool ruling::applyMinSize(QSize& size) const
 {
     return apply_force(size, this->minsize);
 }
 
-bool Rules::applyMaxSize(QSize& size) const
+bool ruling::applyMaxSize(QSize& size) const
 {
     return apply_force(size, this->maxsize);
 }
 
-bool Rules::applyOpacityActive(int& s) const
+bool ruling::applyOpacityActive(int& s) const
 {
     return apply_force(s, this->opacityactive);
 }
 
-bool Rules::applyOpacityInactive(int& s) const
+bool ruling::applyOpacityInactive(int& s) const
 {
     return apply_force(s, this->opacityinactive);
 }
 
-bool Rules::applyType(NET::WindowType& type) const
+bool ruling::applyType(NET::WindowType& type) const
 {
     return apply_force(type, this->type);
 }
 
-bool Rules::applyDecoColor(QString& schemeFile) const
+bool ruling::applyDecoColor(QString& schemeFile) const
 {
     return apply_force(schemeFile, this->decocolor);
 }
 
-bool Rules::applyBlockCompositing(bool& block) const
+bool ruling::applyBlockCompositing(bool& block) const
 {
     return apply_force(block, this->blockcompositing);
 }
 
 template<typename T>
-bool Rules::apply_force_enum(force_ruler<int> const& ruler, T& apply, T min, T max) const
+bool ruling::apply_force_enum(force_ruler<int> const& ruler, T& apply, T min, T max) const
 {
     auto setting = static_cast<int>(apply);
     if (!apply_force(setting, ruler)) {
@@ -718,52 +712,52 @@ bool Rules::apply_force_enum(force_ruler<int> const& ruler, T& apply, T min, T m
     return true;
 }
 
-bool Rules::applyFSP(win::fsp_level& fsp) const
+bool ruling::applyFSP(win::fsp_level& fsp) const
 {
     return apply_force_enum(fsplevel, fsp, win::fsp_level::none, win::fsp_level::extreme);
 }
 
-bool Rules::applyFPP(win::fsp_level& fpp) const
+bool ruling::applyFPP(win::fsp_level& fpp) const
 {
     return apply_force_enum(fpplevel, fpp, win::fsp_level::none, win::fsp_level::extreme);
 }
 
-bool Rules::applyAcceptFocus(bool& focus) const
+bool ruling::applyAcceptFocus(bool& focus) const
 {
     return apply_force(focus, this->acceptfocus);
 }
 
-bool Rules::applyCloseable(bool& closeable) const
+bool ruling::applyCloseable(bool& closeable) const
 {
     return apply_force(closeable, this->closeable);
 }
 
-bool Rules::applyAutogrouping(bool& autogroup) const
+bool ruling::applyAutogrouping(bool& autogroup) const
 {
     return apply_force(autogroup, this->autogroup);
 }
 
-bool Rules::applyAutogroupInForeground(bool& fg) const
+bool ruling::applyAutogroupInForeground(bool& fg) const
 {
     return apply_force(fg, this->autogroupfg);
 }
 
-bool Rules::applyAutogroupById(QString& id) const
+bool ruling::applyAutogroupById(QString& id) const
 {
     return apply_force(id, this->autogroupid);
 }
 
-bool Rules::applyStrictGeometry(bool& strict) const
+bool ruling::applyStrictGeometry(bool& strict) const
 {
     return apply_force(strict, this->strictgeometry);
 }
 
-bool Rules::applyDisableGlobalShortcuts(bool& disable) const
+bool ruling::applyDisableGlobalShortcuts(bool& disable) const
 {
     return apply_force(disable, this->disableglobalshortcuts);
 }
 
-bool Rules::applyMaximizeHoriz(win::maximize_mode& mode, bool init) const
+bool ruling::applyMaximizeHoriz(win::maximize_mode& mode, bool init) const
 {
     if (checkSetRule(maximizehoriz.rule, init)) {
         if (maximizehoriz.data) {
@@ -773,7 +767,7 @@ bool Rules::applyMaximizeHoriz(win::maximize_mode& mode, bool init) const
     return checkSetStop(maximizehoriz.rule);
 }
 
-bool Rules::applyMaximizeVert(win::maximize_mode& mode, bool init) const
+bool ruling::applyMaximizeVert(win::maximize_mode& mode, bool init) const
 {
     if (checkSetRule(maximizevert.rule, init)) {
         if (maximizevert.data) {
@@ -783,12 +777,12 @@ bool Rules::applyMaximizeVert(win::maximize_mode& mode, bool init) const
     return checkSetStop(maximizevert.rule);
 }
 
-bool Rules::isTemporary() const
+bool ruling::isTemporary() const
 {
     return temporary_state > 0;
 }
 
-bool Rules::discardTemporary(bool force)
+bool ruling::discardTemporary(bool force)
 {
     if (temporary_state == 0) // not temporary
         return false;
@@ -799,7 +793,7 @@ bool Rules::discardTemporary(bool force)
     return false;
 }
 
-bool Rules::discardUsed(bool withdrawn)
+bool ruling::discardUsed(bool withdrawn)
 {
     bool changed = false;
 
@@ -862,7 +856,7 @@ bool Rules::discardUsed(bool withdrawn)
 
 #endif
 
-QDebug& operator<<(QDebug& stream, const Rules* r)
+QDebug& operator<<(QDebug& stream, ruling const* r)
 {
     return stream << "[" << r->description << ":" << r->wmclass.data << "]";
 }

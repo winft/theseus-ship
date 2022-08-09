@@ -142,11 +142,11 @@ public:
     win::palette& palette();
     void setup_color_scheme();
 
-    WindowRules& rules();
-    WindowRules const& rules() const;
-    void set_rules(WindowRules const& rules);
+    rules::window& rules();
+    rules::window const& rules() const;
+    void set_rules(rules::window const& rules);
 
-    void remove_rule(Rules* r);
+    void remove_rule(rules::ruling* r);
     void discard_temporary_rules();
 
     std::unique_ptr<scripting::window> scripting;
@@ -193,7 +193,7 @@ private:
     win::deco_impl m_deco;
     win::palette m_palette;
 
-    WindowRules m_rules;
+    rules::window m_rules;
 
     Toplevel* m_win;
 };

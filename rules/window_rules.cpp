@@ -24,33 +24,33 @@
 #include "rule_book_settings.h"
 #include "rule_settings.h"
 
-namespace KWin
+namespace KWin::win::rules
 {
 
-WindowRules::WindowRules(const QVector<Rules*>& r)
+window::window(QVector<ruling*> const& r)
     : rules(r)
 {
 }
 
-WindowRules::WindowRules()
+window::window()
 {
 }
 
-bool WindowRules::contains(const Rules* rule) const
+bool window::contains(ruling const* rule) const
 {
-    return rules.contains(const_cast<Rules*>(rule));
+    return rules.contains(const_cast<ruling*>(rule));
 }
 
-void WindowRules::remove(Rules* rule)
+void window::remove(ruling* rule)
 {
     rules.removeOne(rule);
 }
 
 #ifndef KCMRULES
-void WindowRules::discardTemporary()
+void window::discardTemporary()
 {
-    QVector<Rules*>::Iterator it2 = rules.begin();
-    for (QVector<Rules*>::Iterator it = rules.begin(); it != rules.end();) {
+    auto it2 = rules.begin();
+    for (auto it = rules.begin(); it != rules.end();) {
         if ((*it)->discardTemporary(true))
             ++it;
         else {
@@ -60,10 +60,10 @@ void WindowRules::discardTemporary()
     rules.erase(it2, rules.end());
 }
 
-void WindowRules::update(Toplevel* window, int selection)
+void window::update(Toplevel* window, int selection)
 {
     bool updated = false;
-    for (QVector<Rules*>::ConstIterator it = rules.constBegin(); it != rules.constEnd(); ++it) {
+    for (auto it = rules.constBegin(); it != rules.constEnd(); ++it) {
         if ((*it)->update(window, selection)) {
             // no short-circuiting here
             updated = true;
@@ -74,184 +74,184 @@ void WindowRules::update(Toplevel* window, int selection)
     }
 }
 
-QRect WindowRules::checkGeometry(QRect rect, bool init) const
+QRect window::checkGeometry(QRect rect, bool init) const
 {
     return QRect(checkPosition(rect.topLeft(), init), checkSize(rect.size(), init));
 }
 
-QPoint WindowRules::checkPosition(QPoint pos, bool init) const
+QPoint window::checkPosition(QPoint pos, bool init) const
 {
-    return check_set(pos, init, &Rules::applyPosition);
+    return check_set(pos, init, &ruling::applyPosition);
 }
 
-QSize WindowRules::checkSize(QSize s, bool init) const
+QSize window::checkSize(QSize s, bool init) const
 {
-    return check_set(s, init, &Rules::applySize);
+    return check_set(s, init, &ruling::applySize);
 }
 
-bool WindowRules::checkIgnoreGeometry(bool ignore, bool init) const
+bool window::checkIgnoreGeometry(bool ignore, bool init) const
 {
-    return check_set(ignore, init, &Rules::applyIgnoreGeometry);
+    return check_set(ignore, init, &ruling::applyIgnoreGeometry);
 }
 
-int WindowRules::checkDesktop(int desktop, bool init) const
+int window::checkDesktop(int desktop, bool init) const
 {
-    return check_set(desktop, init, &Rules::applyDesktop);
+    return check_set(desktop, init, &ruling::applyDesktop);
 }
 
-win::maximize_mode WindowRules::checkMaximizeVert(win::maximize_mode mode, bool init) const
+maximize_mode window::checkMaximizeVert(maximize_mode mode, bool init) const
 {
-    return check_set(mode, init, &Rules::applyMaximizeVert);
+    return check_set(mode, init, &ruling::applyMaximizeVert);
 }
 
-win::maximize_mode WindowRules::checkMaximizeHoriz(win::maximize_mode mode, bool init) const
+maximize_mode window::checkMaximizeHoriz(maximize_mode mode, bool init) const
 {
-    return check_set(mode, init, &Rules::applyMaximizeHoriz);
+    return check_set(mode, init, &ruling::applyMaximizeHoriz);
 }
 
-bool WindowRules::checkMinimize(bool minimized, bool init) const
+bool window::checkMinimize(bool minimized, bool init) const
 {
-    return check_set(minimized, init, &Rules::applyMinimize);
+    return check_set(minimized, init, &ruling::applyMinimize);
 }
 
-bool WindowRules::checkSkipTaskbar(bool skip, bool init) const
+bool window::checkSkipTaskbar(bool skip, bool init) const
 {
-    return check_set(skip, init, &Rules::applySkipTaskbar);
+    return check_set(skip, init, &ruling::applySkipTaskbar);
 }
 
-bool WindowRules::checkSkipPager(bool skip, bool init) const
+bool window::checkSkipPager(bool skip, bool init) const
 {
-    return check_set(skip, init, &Rules::applySkipPager);
+    return check_set(skip, init, &ruling::applySkipPager);
 }
 
-bool WindowRules::checkSkipSwitcher(bool skip, bool init) const
+bool window::checkSkipSwitcher(bool skip, bool init) const
 {
-    return check_set(skip, init, &Rules::applySkipSwitcher);
+    return check_set(skip, init, &ruling::applySkipSwitcher);
 }
 
-bool WindowRules::checkKeepAbove(bool above, bool init) const
+bool window::checkKeepAbove(bool above, bool init) const
 {
-    return check_set(above, init, &Rules::applyKeepAbove);
+    return check_set(above, init, &ruling::applyKeepAbove);
 }
 
-bool WindowRules::checkKeepBelow(bool below, bool init) const
+bool window::checkKeepBelow(bool below, bool init) const
 {
-    return check_set(below, init, &Rules::applyKeepBelow);
+    return check_set(below, init, &ruling::applyKeepBelow);
 }
 
-bool WindowRules::checkFullScreen(bool fs, bool init) const
+bool window::checkFullScreen(bool fs, bool init) const
 {
-    return check_set(fs, init, &Rules::applyFullScreen);
+    return check_set(fs, init, &ruling::applyFullScreen);
 }
 
-bool WindowRules::checkNoBorder(bool noborder, bool init) const
+bool window::checkNoBorder(bool noborder, bool init) const
 {
-    return check_set(noborder, init, &Rules::applyNoBorder);
+    return check_set(noborder, init, &ruling::applyNoBorder);
 }
 
-QString WindowRules::checkShortcut(QString s, bool init) const
+QString window::checkShortcut(QString s, bool init) const
 {
-    return check_set(s, init, &Rules::applyShortcut);
+    return check_set(s, init, &ruling::applyShortcut);
 }
 
-QString WindowRules::checkDesktopFile(QString desktopFile, bool init) const
+QString window::checkDesktopFile(QString desktopFile, bool init) const
 {
-    return check_set(desktopFile, init, &Rules::applyDesktopFile);
+    return check_set(desktopFile, init, &ruling::applyDesktopFile);
 }
 
-win::placement WindowRules::checkPlacement(win::placement placement) const
+placement window::checkPlacement(placement placement) const
 {
-    return check_force(placement, &Rules::applyPlacement);
+    return check_force(placement, &ruling::applyPlacement);
 }
 
-QSize WindowRules::checkMinSize(QSize s) const
+QSize window::checkMinSize(QSize s) const
 {
-    return check_force(s, &Rules::applyMinSize);
+    return check_force(s, &ruling::applyMinSize);
 }
 
-QSize WindowRules::checkMaxSize(QSize s) const
+QSize window::checkMaxSize(QSize s) const
 {
-    return check_force(s, &Rules::applyMaxSize);
+    return check_force(s, &ruling::applyMaxSize);
 }
 
-int WindowRules::checkOpacityActive(int s) const
+int window::checkOpacityActive(int s) const
 {
-    return check_force(s, &Rules::applyOpacityActive);
+    return check_force(s, &ruling::applyOpacityActive);
 }
 
-int WindowRules::checkOpacityInactive(int s) const
+int window::checkOpacityInactive(int s) const
 {
-    return check_force(s, &Rules::applyOpacityInactive);
+    return check_force(s, &ruling::applyOpacityInactive);
 }
 
-NET::WindowType WindowRules::checkType(NET::WindowType type) const
+NET::WindowType window::checkType(NET::WindowType type) const
 {
-    return check_force(type, &Rules::applyType);
+    return check_force(type, &ruling::applyType);
 }
 
-QString WindowRules::checkDecoColor(QString schemeFile) const
+QString window::checkDecoColor(QString schemeFile) const
 {
-    return check_force(schemeFile, &Rules::applyDecoColor);
+    return check_force(schemeFile, &ruling::applyDecoColor);
 }
 
-bool WindowRules::checkBlockCompositing(bool block) const
+bool window::checkBlockCompositing(bool block) const
 {
-    return check_force(block, &Rules::applyBlockCompositing);
+    return check_force(block, &ruling::applyBlockCompositing);
 }
 
-win::fsp_level WindowRules::checkFSP(win::fsp_level fsp) const
+fsp_level window::checkFSP(fsp_level fsp) const
 {
-    return check_force(fsp, &Rules::applyFSP);
+    return check_force(fsp, &ruling::applyFSP);
 }
 
-win::fsp_level WindowRules::checkFPP(win::fsp_level fpp) const
+fsp_level window::checkFPP(fsp_level fpp) const
 {
-    return check_force(fpp, &Rules::applyFPP);
+    return check_force(fpp, &ruling::applyFPP);
 }
 
-bool WindowRules::checkAcceptFocus(bool focus) const
+bool window::checkAcceptFocus(bool focus) const
 {
-    return check_force(focus, &Rules::applyAcceptFocus);
+    return check_force(focus, &ruling::applyAcceptFocus);
 }
 
-bool WindowRules::checkCloseable(bool closeable) const
+bool window::checkCloseable(bool closeable) const
 {
-    return check_force(closeable, &Rules::applyCloseable);
+    return check_force(closeable, &ruling::applyCloseable);
 }
 
-bool WindowRules::checkAutogrouping(bool autogroup) const
+bool window::checkAutogrouping(bool autogroup) const
 {
-    return check_force(autogroup, &Rules::applyAutogrouping);
+    return check_force(autogroup, &ruling::applyAutogrouping);
 }
 
-bool WindowRules::checkAutogroupInForeground(bool fg) const
+bool window::checkAutogroupInForeground(bool fg) const
 {
-    return check_force(fg, &Rules::applyAutogroupInForeground);
+    return check_force(fg, &ruling::applyAutogroupInForeground);
 }
 
-QString WindowRules::checkAutogroupById(QString id) const
+QString window::checkAutogroupById(QString id) const
 {
-    return check_force(id, &Rules::applyAutogroupById);
+    return check_force(id, &ruling::applyAutogroupById);
 }
 
-bool WindowRules::checkStrictGeometry(bool strict) const
+bool window::checkStrictGeometry(bool strict) const
 {
-    return check_force(strict, &Rules::applyStrictGeometry);
+    return check_force(strict, &ruling::applyStrictGeometry);
 }
 
-bool WindowRules::checkDisableGlobalShortcuts(bool disable) const
+bool window::checkDisableGlobalShortcuts(bool disable) const
 {
-    return check_force(disable, &Rules::applyDisableGlobalShortcuts);
+    return check_force(disable, &ruling::applyDisableGlobalShortcuts);
 }
 
-win::maximize_mode WindowRules::checkMaximize(win::maximize_mode mode, bool init) const
+maximize_mode window::checkMaximize(maximize_mode mode, bool init) const
 {
-    auto vert = checkMaximizeVert(mode, init) & win::maximize_mode::vertical;
-    auto horiz = checkMaximizeHoriz(mode, init) & win::maximize_mode::horizontal;
+    auto vert = checkMaximizeVert(mode, init) & maximize_mode::vertical;
+    auto horiz = checkMaximizeHoriz(mode, init) & maximize_mode::horizontal;
     return vert | horiz;
 }
 
-base::output const* WindowRules::checkScreen(base::output const* output, bool init) const
+base::output const* window::checkScreen(base::output const* output, bool init) const
 {
     if (rules.count() == 0) {
         return output;
@@ -260,7 +260,7 @@ base::output const* WindowRules::checkScreen(base::output const* output, bool in
     auto const& outputs = kwinApp()->get_base().get_outputs();
     int index = output ? base::get_output_index(outputs, *output) : 0;
 
-    for (QVector<Rules*>::ConstIterator it = rules.constBegin(); it != rules.constEnd(); ++it) {
+    for (auto it = rules.constBegin(); it != rules.constEnd(); ++it) {
         if ((*it)->applyScreen(index, init))
             break;
     }

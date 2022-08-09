@@ -385,22 +385,22 @@ win::palette& control::palette()
     return m_palette;
 }
 
-WindowRules& control::rules()
+rules::window& control::rules()
 {
     return m_rules;
 }
 
-WindowRules const& control::rules() const
+rules::window const& control::rules() const
 {
     return m_rules;
 }
 
-void control::set_rules(WindowRules const& rules)
+void control::set_rules(rules::window const& rules)
 {
     m_rules = rules;
 }
 
-void control::remove_rule(Rules* rule)
+void control::remove_rule(rules::ruling* rule)
 {
     m_rules.remove(rule);
 }

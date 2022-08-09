@@ -143,7 +143,7 @@ void window::setNoBorder(bool set)
 
     user_no_border = set;
     updateDecoration(true, false);
-    updateWindowRules(Rules::NoBorder);
+    updateWindowRules(rules::ruling::NoBorder);
 
     if (decoration(this)) {
         control->deco().client->update_size();
@@ -341,7 +341,7 @@ void window::applyWindowRules()
     setBlockingCompositing(info->isBlockingCompositing());
 }
 
-void window::updateWindowRules(Rules::Types selection)
+void window::updateWindowRules(rules::ruling::Types selection)
 {
     if (!control) {
         // not fully setup yet
@@ -767,7 +767,8 @@ void window::do_set_geometry(QRect const& frame_geo)
     win::set_current_output_by_window(kwinApp()->get_base(), *this);
     space.stacking_order->update_order();
 
-    updateWindowRules(static_cast<Rules::Types>(Rules::Position | Rules::Size));
+    updateWindowRules(
+        static_cast<rules::ruling::Types>(rules::ruling::Position | rules::ruling::Size));
 
     if (is_resize(this)) {
         perform_move_resize(this);
@@ -794,8 +795,9 @@ void window::do_set_maximize_mode(maximize_mode mode)
     max_mode = mode;
 
     update_allowed_actions(this);
-    updateWindowRules(static_cast<Rules::Types>(Rules::MaximizeHoriz | Rules::MaximizeVert
-                                                | Rules::Position | Rules::Size));
+    updateWindowRules(
+        static_cast<rules::ruling::Types>(rules::ruling::MaximizeHoriz | rules::ruling::MaximizeVert
+                                          | rules::ruling::Position | rules::ruling::Size));
 
     // Update decoration borders.
     if (auto deco = decoration(this); deco && deco->client()
@@ -859,7 +861,8 @@ void window::do_set_fullscreen(bool full)
     // Active fullscreens gets a different layer.
     update_layer(this);
 
-    updateWindowRules(static_cast<Rules::Types>(Rules::Fullscreen | Rules::Position | Rules::Size));
+    updateWindowRules(static_cast<rules::ruling::Types>(
+        rules::ruling::Fullscreen | rules::ruling::Position | rules::ruling::Size));
 
     // TODO(romangg): Is it really important for scripts if the fullscreen was triggered by the app
     //                or the user? For now just pretend that it was always the user.

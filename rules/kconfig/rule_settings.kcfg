@@ -21,13 +21,13 @@
     </entry>
     <entry name="wmclassmatch" type="Int">
       <label>Window class string match type</label>
-      <default code="true">Rules::UnimportantMatch</default>
-      <min code="true">Rules::FirstStringMatch</min>
-      <max code="true">Rules::LastStringMatch</max>
+      <default code="true">ruling::UnimportantMatch</default>
+      <min code="true">ruling::FirstStringMatch</min>
+      <max code="true">ruling::LastStringMatch</max>
     </entry>
     <entry name="wmclasscomplete" type="Bool">
       <label>Match whole window class</label>
-      <default code="true">Rules::UnimportantMatch</default>
+      <default code="true">ruling::UnimportantMatch</default>
     </entry>
 
     <entry name="windowrole" type="String">
@@ -35,9 +35,9 @@
     </entry>
     <entry name="windowrolematch" type="Int">
       <label>Window role string match type</label>
-      <default code="true">Rules::UnimportantMatch</default>
-      <min code="true">Rules::FirstStringMatch</min>
-      <max code="true">Rules::LastStringMatch</max>
+      <default code="true">ruling::UnimportantMatch</default>
+      <min code="true">ruling::FirstStringMatch</min>
+      <max code="true">ruling::LastStringMatch</max>
     </entry>
 
     <entry name="title" type="String">
@@ -45,9 +45,9 @@
     </entry>
     <entry name="titlematch" type="Int">
       <label>Window title string match type</label>
-      <default code="true">Rules::UnimportantMatch</default>
-      <min code="true">Rules::FirstStringMatch</min>
-      <max code="true">Rules::LastStringMatch</max>
+      <default code="true">ruling::UnimportantMatch</default>
+      <min code="true">ruling::FirstStringMatch</min>
+      <max code="true">ruling::LastStringMatch</max>
     </entry>
 
     <entry name="clientmachine" type="String">
@@ -55,9 +55,9 @@
     </entry>
     <entry name="clientmachinematch" type="Int">
       <label>Machine string match type</label>
-      <default code="true">Rules::UnimportantMatch</default>
-      <min code="true">Rules::FirstStringMatch</min>
-      <max code="true">Rules::LastStringMatch</max>
+      <default code="true">ruling::UnimportantMatch</default>
+      <min code="true">ruling::FirstStringMatch</min>
+      <max code="true">ruling::LastStringMatch</max>
     </entry>
 
     <entry name="types" type="UInt">
@@ -81,7 +81,7 @@
     <entry name="positionrule" type="Int">
       <label>Window position rule type</label>
       <min code="true">static_cast&lt;int&gt;(set_rule::unused)</min>
-      <max code="true">static_cast&lt;int&gt;(Rules::ForceTemporarily)</max>
+      <max code="true">static_cast&lt;int&gt;(ruling::ForceTemporarily)</max>
       <default code="true">static_cast&lt;int&gt;(set_rule::unused)</default>
     </entry>
 
@@ -91,7 +91,7 @@
     <entry name="sizerule" type="Int">
       <label>Window size rule type</label>
       <min code="true">static_cast&lt;int&gt;(set_rule::unused)</min>
-      <max code="true">static_cast&lt;int&gt;(Rules::ForceTemporarily)</max>
+      <max code="true">static_cast&lt;int&gt;(ruling::ForceTemporarily)</max>
       <default code="true">static_cast&lt;int&gt;(set_rule::unused)</default>
     </entry>
 
@@ -142,7 +142,7 @@
     <entry name="ignoregeometryrule" type="Int">
       <label>Ignore requested geometry rule type</label>
       <min code="true">static_cast&lt;int&gt;(set_rule::unused)</min>
-      <max code="true">static_cast&lt;int&gt;(Rules::ForceTemporarily)</max>
+      <max code="true">static_cast&lt;int&gt;(ruling::ForceTemporarily)</max>
       <default code="true">static_cast&lt;int&gt;(set_rule::unused)</default>
     </entry>
 
@@ -153,7 +153,7 @@
     <entry name="desktoprule" type="Int">
       <label>Desktop number rule type</label>
       <min code="true">static_cast&lt;int&gt;(set_rule::unused)</min>
-      <max code="true">static_cast&lt;int&gt;(Rules::ForceTemporarily)</max>
+      <max code="true">static_cast&lt;int&gt;(ruling::ForceTemporarily)</max>
       <default code="true">static_cast&lt;int&gt;(set_rule::unused)</default>
     </entry>
 
@@ -164,7 +164,7 @@
     <entry name="screenrule" type="Int">
       <label>Screen number rule type</label>
       <min code="true">static_cast&lt;int&gt;(set_rule::unused)</min>
-      <max code="true">static_cast&lt;int&gt;(Rules::ForceTemporarily)</max>
+      <max code="true">static_cast&lt;int&gt;(ruling::ForceTemporarily)</max>
       <default code="true">static_cast&lt;int&gt;(set_rule::unused)</default>
     </entry>
 
@@ -186,7 +186,7 @@
     <entry name="maximizevertrule" type="Int">
       <label>Maximized vertically rule type</label>
       <min code="true">static_cast&lt;int&gt;(set_rule::unused)</min>
-      <max code="true">static_cast&lt;int&gt;(Rules::ForceTemporarily)</max>
+      <max code="true">static_cast&lt;int&gt;(ruling::ForceTemporarily)</max>
       <default code="true">static_cast&lt;int&gt;(set_rule::unused)</default>
     </entry>
 
@@ -197,7 +197,7 @@
     <entry name="maximizehorizrule" type="Int">
       <label>Maximized horizontally rule type</label>
       <min code="true">static_cast&lt;int&gt;(set_rule::unused)</min>
-      <max code="true">static_cast&lt;int&gt;(Rules::ForceTemporarily)</max>
+      <max code="true">static_cast&lt;int&gt;(ruling::ForceTemporarily)</max>
       <default code="true">static_cast&lt;int&gt;(set_rule::unused)</default>
     </entry>
 
@@ -208,7 +208,7 @@
     <entry name="minimizerule" type="Int">
       <label>Minimized rule type</label>
       <min code="true">static_cast&lt;int&gt;(set_rule::unused)</min>
-      <max code="true">static_cast&lt;int&gt;(Rules::ForceTemporarily)</max>
+      <max code="true">static_cast&lt;int&gt;(ruling::ForceTemporarily)</max>
       <default code="true">static_cast&lt;int&gt;(set_rule::unused)</default>
     </entry>
 
@@ -219,7 +219,7 @@
     <entry name="shaderule" type="Int">
       <label>Shaded rule type</label>
       <min code="true">static_cast&lt;int&gt;(set_rule::unused)</min>
-      <max code="true">static_cast&lt;int&gt;(Rules::ForceTemporarily)</max>
+      <max code="true">static_cast&lt;int&gt;(ruling::ForceTemporarily)</max>
       <default code="true">static_cast&lt;int&gt;(set_rule::unused)</default>
     </entry>
 
@@ -230,7 +230,7 @@
     <entry name="skiptaskbarrule" type="Int">
       <label>Skip taskbar rule type</label>
       <min code="true">static_cast&lt;int&gt;(set_rule::unused)</min>
-      <max code="true">static_cast&lt;int&gt;(Rules::ForceTemporarily)</max>
+      <max code="true">static_cast&lt;int&gt;(ruling::ForceTemporarily)</max>
       <default code="true">static_cast&lt;int&gt;(set_rule::unused)</default>
     </entry>
 
@@ -241,7 +241,7 @@
     <entry name="skippagerrule" type="Int">
       <label>Skip pager rule type</label>
       <min code="true">static_cast&lt;int&gt;(set_rule::unused)</min>
-      <max code="true">static_cast&lt;int&gt;(Rules::ForceTemporarily)</max>
+      <max code="true">static_cast&lt;int&gt;(ruling::ForceTemporarily)</max>
       <default code="true">static_cast&lt;int&gt;(set_rule::unused)</default>
     </entry>
 
@@ -252,7 +252,7 @@
     <entry name="skipswitcherrule" type="Int">
       <label>Skip switcher rule type</label>
       <min code="true">static_cast&lt;int&gt;(set_rule::unused)</min>
-      <max code="true">static_cast&lt;int&gt;(Rules::ForceTemporarily)</max>
+      <max code="true">static_cast&lt;int&gt;(ruling::ForceTemporarily)</max>
       <default code="true">static_cast&lt;int&gt;(set_rule::unused)</default>
     </entry>
 
@@ -263,7 +263,7 @@
     <entry name="aboverule" type="Int">
       <label>Keep above rule type</label>
       <min code="true">static_cast&lt;int&gt;(set_rule::unused)</min>
-      <max code="true">static_cast&lt;int&gt;(Rules::ForceTemporarily)</max>
+      <max code="true">static_cast&lt;int&gt;(ruling::ForceTemporarily)</max>
       <default code="true">static_cast&lt;int&gt;(set_rule::unused)</default>
     </entry>
 
@@ -274,7 +274,7 @@
     <entry name="belowrule" type="Int">
       <label>Keep below rule type</label>
       <min code="true">static_cast&lt;int&gt;(set_rule::unused)</min>
-      <max code="true">static_cast&lt;int&gt;(Rules::ForceTemporarily)</max>
+      <max code="true">static_cast&lt;int&gt;(ruling::ForceTemporarily)</max>
       <default code="true">static_cast&lt;int&gt;(set_rule::unused)</default>
     </entry>
 
@@ -285,7 +285,7 @@
     <entry name="fullscreenrule" type="Int">
       <label>Fullscreen rule type</label>
       <min code="true">static_cast&lt;int&gt;(set_rule::unused)</min>
-      <max code="true">static_cast&lt;int&gt;(Rules::ForceTemporarily)</max>
+      <max code="true">static_cast&lt;int&gt;(ruling::ForceTemporarily)</max>
       <default code="true">static_cast&lt;int&gt;(set_rule::unused)</default>
     </entry>
 
@@ -296,7 +296,7 @@
     <entry name="noborderrule" type="Int">
       <label>No titlebar rule type</label>
       <min code="true">static_cast&lt;int&gt;(set_rule::unused)</min>
-      <max code="true">static_cast&lt;int&gt;(Rules::ForceTemporarily)</max>
+      <max code="true">static_cast&lt;int&gt;(ruling::ForceTemporarily)</max>
       <default code="true">static_cast&lt;int&gt;(set_rule::unused)</default>
     </entry>
 
@@ -398,7 +398,7 @@
     <entry name="shortcutrule" type="Int">
       <label>Shortcut rule type</label>
       <min code="true">static_cast&lt;int&gt;(set_rule::unused)</min>
-      <max code="true">static_cast&lt;int&gt;(Rules::ForceTemporarily)</max>
+      <max code="true">static_cast&lt;int&gt;(ruling::ForceTemporarily)</max>
       <default code="true">static_cast&lt;int&gt;(set_rule::unused)</default>
     </entry>
 
@@ -417,7 +417,7 @@
     <entry name="desktopfilerule" type="Int">
       <label>Desktop file name rule type</label>
       <min code="true">static_cast&lt;int&gt;(set_rule::unused)</min>
-      <max code="true">static_cast&lt;int&gt;(Rules::ForceTemporarily)</max>
+      <max code="true">static_cast&lt;int&gt;(ruling::ForceTemporarily)</max>
       <default code="true">static_cast&lt;int&gt;(set_rule::unused)</default>
     </entry>
   </group>

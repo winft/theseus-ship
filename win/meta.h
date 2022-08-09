@@ -51,7 +51,7 @@ void set_desktop_file_name(Win* win, QByteArray name)
         return;
     }
     win->control->set_desktop_file_name(name);
-    win->updateWindowRules(Rules::DesktopFile);
+    win->updateWindowRules(win::rules::ruling::DesktopFile);
     Q_EMIT win->desktopFileNameChanged();
 }
 

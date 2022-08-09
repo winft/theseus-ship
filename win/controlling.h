@@ -23,7 +23,7 @@ void set_skip_pager(Win* win, bool set)
     }
 
     win->control->set_skip_pager(set);
-    win->updateWindowRules(Rules::SkipPager);
+    win->updateWindowRules(rules::ruling::SkipPager);
     Q_EMIT win->skipPagerChanged();
 }
 
@@ -36,7 +36,7 @@ void set_skip_switcher(Win* win, bool set)
     }
 
     win->control->set_skip_switcher(set);
-    win->updateWindowRules(Rules::SkipSwitcher);
+    win->updateWindowRules(rules::ruling::SkipSwitcher);
     Q_EMIT win->skipSwitcherChanged();
 }
 
@@ -50,7 +50,7 @@ void set_skip_taskbar(Win* win, bool set)
     auto const was_wants_tab_focus = win::wants_tab_focus(win);
 
     win->control->set_skip_taskbar(set);
-    win->updateWindowRules(Rules::SkipTaskbar);
+    win->updateWindowRules(rules::ruling::SkipTaskbar);
 
     if (was_wants_tab_focus != win::wants_tab_focus(win)) {
         focus_chain_update(win->space.focus_chain,

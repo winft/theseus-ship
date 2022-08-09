@@ -28,7 +28,11 @@
 
 namespace KWin
 {
-class RuleSettings;
+
+namespace win::rules
+{
+class settings;
+}
 
 class KCMKWinRules : public KQuickAddons::ConfigModule
 {
@@ -68,7 +72,9 @@ private:
     void createRuleFromProperties();
 
     QModelIndex findRuleWithProperties(const QVariantMap &info, bool wholeApp) const;
-    void fillSettingsFromProperties(RuleSettings *settings, const QVariantMap &info, bool wholeApp) const;
+    void fillSettingsFromProperties(win::rules::settings* settings,
+                                    QVariantMap const& info,
+                                    bool wholeApp) const;
 
 private:
     RuleBookModel *m_ruleBookModel;
