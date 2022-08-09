@@ -931,5 +931,81 @@ void Toplevel::setShortcutInternal()
     win::window_shortcut_updated(space, this);
 }
 
+// Applies Force, ForceTemporarily and ApplyNow rules
+// Used e.g. after the rules have been modified using the kcm.
+void Toplevel::applyWindowRules()
+{
+    // apply force rules
+    // Placement - does need explicit update, just like some others below
+    // Geometry : setGeometry() doesn't check rules
+    auto client_rules = control->rules();
+
+    auto const orig_geom = frameGeometry();
+    auto const geom = client_rules.checkGeometry(orig_geom);
+
+    if (geom != orig_geom) {
+        setFrameGeometry(geom);
+    }
+
+    // MinSize, MaxSize handled by Geometry
+    // IgnoreGeometry
+    win::set_desktop(this, desktop());
+
+    // TODO(romangg): can central_output be null?
+    win::send_to_screen(space, this, *central_output);
+    // Type
+    win::maximize(this, maximizeMode());
+
+    // Minimize : functions don't check
+    win::set_minimized(this, client_rules.checkMinimize(control->minimized()));
+
+    win::set_original_skip_taskbar(this, control->skip_taskbar());
+    win::set_skip_pager(this, control->skip_pager());
+    win::set_skip_switcher(this, control->skip_switcher());
+    win::set_keep_above(this, control->keep_above());
+    win::set_keep_below(this, control->keep_below());
+    setFullScreen(control->fullscreen(), true);
+    setNoBorder(noBorder());
+    updateColorScheme();
+
+    // FSP
+    // AcceptFocus :
+    if (win::most_recently_activated_window(space) == this
+        && !client_rules.checkAcceptFocus(true)) {
+        win::activate_next_window(space, this);
+    }
+
+    // Closeable
+    if (auto s = size(); s != size() && s.isValid()) {
+        win::constrained_resize(this, s);
+    }
+
+    // Autogrouping : Only checked on window manage
+    // AutogroupInForeground : Only checked on window manage
+    // AutogroupById : Only checked on window manage
+    // StrictGeometry
+    win::set_shortcut(this, control->rules().checkShortcut(control->shortcut().toString()));
+
+    // see also X11Client::setActive()
+    if (control->active()) {
+        setOpacity(control->rules().checkOpacityActive(qRound(opacity() * 100.0)) / 100.0);
+        win::set_global_shortcuts_disabled(space,
+                                           control->rules().checkDisableGlobalShortcuts(false));
+    } else {
+        setOpacity(control->rules().checkOpacityInactive(qRound(opacity() * 100.0)) / 100.0);
+    }
+
+    win::set_desktop_file_name(
+        this, control->rules().checkDesktopFile(control->desktop_file_name()).toUtf8());
+}
+
+void Toplevel::updateWindowRules(Rules::Types selection)
+{
+    if (space.rule_book->areUpdatesDisabled()) {
+        return;
+    }
+    control->rules().update(this, selection);
+}
+
 }
 
