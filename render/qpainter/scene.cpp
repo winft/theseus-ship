@@ -118,8 +118,6 @@ int64_t scene::paint_output(base::output* output,
     m_backend->present(output, updateRegion);
 
     clearStackingOrder();
-    Q_EMIT frameRendered();
-
     return renderTimer.nsecsElapsed();
 }
 

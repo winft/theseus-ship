@@ -158,16 +158,12 @@ public:
 
     QRegion mapToRenderTarget(const QRegion& region) const;
 
-    render::compositor& compositor;
-    scene_windowing_integration windowing_integration;
-
-Q_SIGNALS:
-    void frameRendered();
-
-public Q_SLOTS:
     // shape/size of a window changed
     void windowGeometryShapeChanged(KWin::Toplevel* c);
     void init_remnant(KWin::Toplevel& remnant);
+
+    render::compositor& compositor;
+    scene_windowing_integration windowing_integration;
 
 protected:
     void createStackingOrder(std::deque<Toplevel*> const& toplevels);
