@@ -144,8 +144,6 @@ Toplevel* DecorationInputTest::showWindow()
 
 void DecorationInputTest::initTestCase()
 {
-    qRegisterMetaType<win::internal_window*>();
-
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
 
@@ -882,7 +880,9 @@ void DecorationInputTest::testTooltipDoesntEatKeyEvents()
     c->control->deco().client->requestShowToolTip(QStringLiteral("test"));
     // now we should get an internal window
     QVERIFY(clientAddedSpy.wait());
-    auto internal = clientAddedSpy.first().first().value<win::internal_window*>();
+    auto internal
+        = dynamic_cast<win::internal_window*>(clientAddedSpy.first().first().value<Toplevel*>());
+    QVERIFY(internal);
     QVERIFY(internal->isInternal());
     QVERIFY(internal->internalWindow()->flags().testFlag(Qt::ToolTip));
 

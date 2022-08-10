@@ -286,18 +286,20 @@ console_model::console_model(win::space& space, QObject* parent)
             m_internalClients.append(internal);
         }
     }
-    connect(space.qobject.get(),
-            &win::space_qobject::internalClientAdded,
-            this,
-            [this](win::internal_window* client) {
-                add_window(this, s_workspaceInternalId - 1, m_internalClients, client);
-            });
-    connect(space.qobject.get(),
-            &win::space_qobject::internalClientRemoved,
-            this,
-            [this](win::internal_window* client) {
-                remove_window(this, s_workspaceInternalId - 1, m_internalClients, client);
-            });
+    connect(
+        space.qobject.get(), &win::space_qobject::internalClientAdded, this, [this](auto window) {
+            add_window(this,
+                       s_workspaceInternalId - 1,
+                       m_internalClients,
+                       static_cast<win::internal_window*>(window));
+        });
+    connect(
+        space.qobject.get(), &win::space_qobject::internalClientRemoved, this, [this](auto window) {
+            remove_window(this,
+                          s_workspaceInternalId - 1,
+                          m_internalClients,
+                          static_cast<win::internal_window*>(window));
+        });
 }
 
 console_model::~console_model() = default;

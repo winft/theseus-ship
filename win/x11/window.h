@@ -281,5 +281,3 @@ public:
 };
 
 }
-
-Q_DECLARE_METATYPE(KWin::win::x11::window*)

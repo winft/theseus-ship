@@ -65,8 +65,6 @@ private Q_SLOTS:
 
 void StackingOrderTest::initTestCase()
 {
-    qRegisterMetaType<KWin::win::x11::window*>();
-
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
 

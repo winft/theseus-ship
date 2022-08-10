@@ -92,7 +92,6 @@ private:
 
 void QuickTilingTest::initTestCase()
 {
-    qRegisterMetaType<KWin::Toplevel*>();
     qRegisterMetaType<KWin::win::maximize_mode>();
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);

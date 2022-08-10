@@ -157,5 +157,3 @@ public:
 };
 
 }
-
-Q_DECLARE_METATYPE(KWin::win::internal_window*)

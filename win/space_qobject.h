@@ -20,7 +20,6 @@ class Toplevel;
 namespace win
 {
 
-class internal_window;
 class shortcut_dialog;
 class tabbox;
 
@@ -54,8 +53,8 @@ Q_SIGNALS:
     void window_deleted(KWin::Toplevel*);
     void configChanged();
     void showingDesktopChanged(bool showing);
-    void internalClientAdded(KWin::win::internal_window* client);
-    void internalClientRemoved(KWin::win::internal_window* client);
+    void internalClientAdded(KWin::Toplevel* client);
+    void internalClientRemoved(KWin::Toplevel* client);
     void surface_id_changed(KWin::Toplevel*, quint32);
 
 private:
