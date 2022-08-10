@@ -591,9 +591,7 @@ void effects_handler_impl::startPaint()
 {
     m_activeEffects.clear();
     m_activeEffects.reserve(loaded_effects.count());
-    for (QVector<KWin::EffectPair>::const_iterator it = loaded_effects.constBegin();
-         it != loaded_effects.constEnd();
-         ++it) {
+    for (auto it = loaded_effects.constBegin(); it != loaded_effects.constEnd(); ++it) {
         if (it->second->isActive()) {
             m_activeEffects << it->second;
         }
@@ -879,9 +877,7 @@ void effects_handler_impl::registerTouchpadSwipeShortcut(SwipeDirection directio
 
 void* effects_handler_impl::getProxy(QString name)
 {
-    for (QVector<EffectPair>::const_iterator it = loaded_effects.constBegin();
-         it != loaded_effects.constEnd();
-         ++it)
+    for (auto it = loaded_effects.constBegin(); it != loaded_effects.constEnd(); ++it)
         if ((*it).first == name)
             return (*it).second->proxy();
 
@@ -1571,9 +1567,7 @@ void effects_handler_impl::destroyEffect(Effect* effect)
 
 void effects_handler_impl::reconfigureEffect(const QString& name)
 {
-    for (QVector<EffectPair>::const_iterator it = loaded_effects.constBegin();
-         it != loaded_effects.constEnd();
-         ++it)
+    for (auto it = loaded_effects.constBegin(); it != loaded_effects.constEnd(); ++it)
         if ((*it).first == name) {
             kwinApp()->config()->reparseConfiguration();
             makeOpenGLContextCurrent();
@@ -1617,9 +1611,7 @@ QList<bool> effects_handler_impl::areEffectsSupported(const QStringList& names)
 void effects_handler_impl::reloadEffect(Effect* effect)
 {
     QString effectName;
-    for (QVector<EffectPair>::const_iterator it = loaded_effects.constBegin();
-         it != loaded_effects.constEnd();
-         ++it) {
+    for (auto it = loaded_effects.constBegin(); it != loaded_effects.constEnd(); ++it) {
         if ((*it).second == effect) {
             effectName = (*it).first;
             break;
@@ -1647,10 +1639,7 @@ void effects_handler_impl::effectsChanged()
 QStringList effects_handler_impl::activeEffects() const
 {
     QStringList ret;
-    for (QVector<KWin::EffectPair>::const_iterator it = loaded_effects.constBegin(),
-                                                   end = loaded_effects.constEnd();
-         it != end;
-         ++it) {
+    for (auto it = loaded_effects.constBegin(), end = loaded_effects.constEnd(); it != end; ++it) {
         if (it->second->isActive()) {
             ret << it->first;
         }
@@ -1723,9 +1712,7 @@ QString effects_handler_impl::debug(const QString& name, const QString& paramete
 {
     QString internalName = name.toLower();
     ;
-    for (QVector<EffectPair>::const_iterator it = loaded_effects.constBegin();
-         it != loaded_effects.constEnd();
-         ++it) {
+    for (auto it = loaded_effects.constBegin(); it != loaded_effects.constEnd(); ++it) {
         if ((*it).first == internalName) {
             return it->second->debug(parameter);
         }
