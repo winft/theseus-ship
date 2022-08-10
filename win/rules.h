@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "rules/rule_book.h"
+#include "rules/book.h"
 
 #include <QObject>
 #include <type_traits>
@@ -14,12 +14,12 @@ namespace KWin::win
 {
 
 template<typename Space>
-void init_rule_book(RuleBook& book, Space& space)
+void init_rule_book(rules::book& book, Space& space)
 {
-    QObject::connect(&book, &RuleBook::updates_enabled, space.qobject.get(), [&] {
+    QObject::connect(&book, &rules::book::updates_enabled, space.qobject.get(), [&] {
         for (auto window : space.windows) {
             if (window->control) {
-                window->updateWindowRules(Rules::All);
+                window->updateWindowRules(rules::type::all);
             }
         }
     });
@@ -43,8 +43,8 @@ void init_rule_book(RuleBook& book, Space& space)
 template<typename Win>
 void finish_rules(Win* win)
 {
-    win->updateWindowRules(Rules::All);
-    win->control->set_rules(WindowRules());
+    win->updateWindowRules(rules::type::all);
+    win->control->set_rules(rules::window());
 }
 
 }

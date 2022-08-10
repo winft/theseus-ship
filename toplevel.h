@@ -24,8 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/output.h"
 #include "base/x11/xcb/window.h"
 #include "input/cursor.h"
-#include "rules/rules.h"
 #include "win/remnant.h"
+#include "win/rules/ruling.h"
 #include "win/virtual_desktops.h"
 
 #include <NETWM>
@@ -471,7 +471,7 @@ public:
     virtual void checkNoBorder();
 
     virtual xcb_timestamp_t userTime() const;
-    virtual void updateWindowRules(Rules::Types selection);
+    virtual void updateWindowRules(win::rules::type selection);
 
     virtual QSize minSize() const;
     virtual QSize maxSize() const;

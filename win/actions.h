@@ -33,7 +33,7 @@ void set_keep_above(Win* win, bool keep)
         win->info->setState(keep ? NET::KeepAbove : NET::States(), NET::KeepAbove);
     }
     update_layer(win);
-    win->updateWindowRules(Rules::Above);
+    win->updateWindowRules(rules::type::above);
 
     win->doSetKeepAbove();
     Q_EMIT win->keepAboveChanged(keep);
@@ -57,7 +57,7 @@ void set_keep_below(Win* win, bool keep)
         win->info->setState(keep ? NET::KeepBelow : NET::States(), NET::KeepBelow);
     }
     update_layer(win);
-    win->updateWindowRules(Rules::Below);
+    win->updateWindowRules(rules::type::below);
 
     win->doSetKeepBelow();
     Q_EMIT win->keepBelowChanged(keep);
@@ -73,7 +73,7 @@ void set_minimized(Win* win, bool set, bool avoid_animation = false)
         win->control->set_minimized(true);
         win->doMinimize();
 
-        win->updateWindowRules(Rules::Minimize);
+        win->updateWindowRules(rules::type::minimize);
         win->space.render.addRepaint(visible_rect(win));
 
         // TODO: merge signal with s_minimized
@@ -90,7 +90,7 @@ void set_minimized(Win* win, bool set, bool avoid_animation = false)
         win->control->set_minimized(false);
         win->doMinimize();
 
-        win->updateWindowRules(Rules::Minimize);
+        win->updateWindowRules(rules::type::minimize);
         Q_EMIT win->clientUnminimized(win, !avoid_animation);
         Q_EMIT win->minimizedChanged();
     }

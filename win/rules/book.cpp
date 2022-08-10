@@ -4,15 +4,15 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "rule_book.h"
+#include "book.h"
 
 #ifndef KCMRULES
 #include "base/logging.h"
 #include "toplevel.h"
 #include "win/control.h"
 
-#include "rule_book_settings.h"
-#include "rule_settings.h"
+#include "book_settings.h"
+#include "rules_settings.h"
 
 #include <KConfig>
 #include <KXMessages>
@@ -20,28 +20,28 @@
 #include <QFile>
 #include <QFileInfo>
 
-namespace KWin
+namespace KWin::win::rules
 {
 
-RuleBook::RuleBook()
+book::book()
     : m_updateTimer(new QTimer(this))
     , m_updatesDisabled(false)
     , m_temporaryRulesMessages()
 {
     initWithX11();
-    connect(kwinApp(), &Application::x11ConnectionChanged, this, &RuleBook::initWithX11);
-    connect(m_updateTimer, &QTimer::timeout, this, &RuleBook::save);
+    connect(kwinApp(), &Application::x11ConnectionChanged, this, &book::initWithX11);
+    connect(m_updateTimer, &QTimer::timeout, this, &book::save);
     m_updateTimer->setInterval(1000);
     m_updateTimer->setSingleShot(true);
 }
 
-RuleBook::~RuleBook()
+book::~book()
 {
     save();
     deleteAll();
 }
 
-void RuleBook::initWithX11()
+void book::initWithX11()
 {
     auto c = kwinApp()->x11Connection();
     if (!c) {
@@ -53,25 +53,25 @@ void RuleBook::initWithX11()
     connect(m_temporaryRulesMessages.data(),
             &KXMessages::gotMessage,
             this,
-            &RuleBook::temporaryRulesMessage);
+            &book::temporaryRulesMessage);
 }
 
-void RuleBook::deleteAll()
+void book::deleteAll()
 {
     qDeleteAll(m_rules);
     m_rules.clear();
 }
 
-WindowRules RuleBook::find(Toplevel const* window, bool ignore_temporary)
+window book::find(Toplevel const* window, bool ignore_temporary)
 {
-    QVector<Rules*> ret;
-    for (QList<Rules*>::Iterator it = m_rules.begin(); it != m_rules.end();) {
+    QVector<ruling*> ret;
+    for (auto it = m_rules.begin(); it != m_rules.end();) {
         if (ignore_temporary && (*it)->isTemporary()) {
             ++it;
             continue;
         }
         if ((*it)->match(window)) {
-            Rules* rule = *it;
+            auto rule = *it;
             qCDebug(KWIN_CORE) << "Rule found:" << rule << ":" << window;
             if (rule->isTemporary())
                 it = m_rules.erase(it);
@@ -82,10 +82,10 @@ WindowRules RuleBook::find(Toplevel const* window, bool ignore_temporary)
         }
         ++it;
     }
-    return WindowRules(ret);
+    return rules::window(ret);
 }
 
-void RuleBook::edit(Toplevel* window, bool whole_app)
+void book::edit(Toplevel* window, bool whole_app)
 {
     save();
     QStringList args;
@@ -112,7 +112,7 @@ void RuleBook::edit(Toplevel* window, bool whole_app)
     p->start();
 }
 
-void RuleBook::load()
+void book::load()
 {
     deleteAll();
 
@@ -122,33 +122,33 @@ void RuleBook::load()
         config->reparseConfiguration();
     }
 
-    RuleBookSettings book(config);
+    book_settings book(config);
     book.load();
     m_rules = book.rules().toList();
 }
 
-void RuleBook::save()
+void book::save()
 {
     m_updateTimer->stop();
 
     if (!config) {
-        qCWarning(KWIN_CORE) << "RuleBook::save invoked without prior invocation of RuleBook::load";
+        qCWarning(KWIN_CORE) << "book::save invoked without prior invocation of book::load";
         return;
     }
 
-    QVector<Rules*> filteredRules;
+    QVector<ruling*> filteredRules;
     for (const auto& rule : qAsConst(m_rules)) {
         if (!rule->isTemporary()) {
             filteredRules.append(rule);
         }
     }
 
-    RuleBookSettings settings(config);
+    book_settings settings(config);
     settings.setRules(filteredRules);
     settings.save();
 }
 
-void RuleBook::temporaryRulesMessage(const QString& message)
+void book::temporaryRulesMessage(const QString& message)
 {
     auto was_temporary = false;
     for (auto it = m_rules.constBegin(); it != m_rules.constEnd(); ++it) {
@@ -157,17 +157,17 @@ void RuleBook::temporaryRulesMessage(const QString& message)
         }
     }
 
-    auto rule = new Rules(message, true);
+    auto rule = new ruling(message, true);
 
     // highest priority first
     m_rules.prepend(rule);
 
     if (!was_temporary) {
-        QTimer::singleShot(60000, this, &RuleBook::cleanupTemporaryRules);
+        QTimer::singleShot(60000, this, &book::cleanupTemporaryRules);
     }
 }
 
-void RuleBook::cleanupTemporaryRules()
+void book::cleanupTemporaryRules()
 {
     auto has_temporary = false;
 
@@ -188,7 +188,7 @@ void RuleBook::cleanupTemporaryRules()
     }
 }
 
-void RuleBook::discardUsed(Toplevel* window, bool withdrawn)
+void book::discardUsed(Toplevel* window, bool withdrawn)
 {
     auto updated = false;
 
@@ -199,7 +199,7 @@ void RuleBook::discardUsed(Toplevel* window, bool withdrawn)
             }
             if ((*it)->isEmpty()) {
                 window->control->remove_rule(*it);
-                Rules* r = *it;
+                auto r = *it;
                 it = m_rules.erase(it);
                 delete r;
                 continue;
@@ -213,12 +213,12 @@ void RuleBook::discardUsed(Toplevel* window, bool withdrawn)
     }
 }
 
-void RuleBook::requestDiskStorage()
+void book::requestDiskStorage()
 {
     m_updateTimer->start();
 }
 
-void RuleBook::setUpdatesDisabled(bool disable)
+void book::setUpdatesDisabled(bool disable)
 {
     m_updatesDisabled = disable;
     if (!disable) {
@@ -226,7 +226,7 @@ void RuleBook::setUpdatesDisabled(bool disable)
     }
 }
 
-bool RuleBook::areUpdatesDisabled() const
+bool book::areUpdatesDisabled() const
 {
     return m_updatesDisabled;
 }

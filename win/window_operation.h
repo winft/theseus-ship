@@ -8,7 +8,7 @@
 #include "actions.h"
 #include "desktop_set.h"
 #include "move.h"
-#include "rules/rule_book.h"
+#include "rules/book.h"
 #include "shortcut_set.h"
 #include "stacking.h"
 

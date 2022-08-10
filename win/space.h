@@ -45,7 +45,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/x11/event_filter.h"
 #include "input/redirect.h"
 #include "render/outline.h"
-#include "rules/rule_book.h"
+#include "rules/book.h"
 #include "scripting/platform.h"
 
 #include <QTimer>
@@ -95,7 +95,7 @@ public:
     std::unique_ptr<dbus::appmenu> appmenu;
     std::unique_ptr<input::redirect> input;
     std::unique_ptr<win::tabbox> tabbox;
-    std::unique_ptr<RuleBook> rule_book;
+    std::unique_ptr<rules::book> rule_book;
     std::unique_ptr<x11::color_mapper> color_mapper;
 
     std::unique_ptr<base::x11::event_filter> m_wasUserInteractionFilter;
@@ -139,7 +139,7 @@ public:
         , render{render}
         , deco{std::make_unique<deco::bridge<space>>(*this)}
         , appmenu{std::make_unique<dbus::appmenu>(dbus::create_appmenu_callbacks(*this))}
-        , rule_book{std::make_unique<RuleBook>()}
+        , rule_book{std::make_unique<rules::book>()}
         , user_actions_menu{std::make_unique<win::user_actions_menu<space>>(*this)}
         , stacking_order{std::make_unique<win::stacking_order>()}
         , focus_chain{win::focus_chain<space>(*this)}

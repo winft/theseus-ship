@@ -8,40 +8,41 @@
 #ifndef KWIN_RULES_RULE_BOOK_SETTINGS_H
 #define KWIN_RULES_RULE_BOOK_SETTINGS_H
 
-#include "rule_book_settings_base.h"
+#include "rules_book_settings_base.h"
 #include <KSharedConfig>
 
-namespace KWin
+namespace KWin::win::rules
 {
-class Rules;
-class RuleSettings;
 
-class RuleBookSettings : public RuleBookSettingsBase
+class ruling;
+class settings;
+
+class book_settings : public book_settings_base
 {
 public:
-    RuleBookSettings(KSharedConfig::Ptr config, QObject* parent = nullptr);
-    RuleBookSettings(const QString& configname, KConfig::OpenFlags, QObject* parent = nullptr);
-    RuleBookSettings(KConfig::OpenFlags, QObject* parent = nullptr);
-    RuleBookSettings(QObject* parent = nullptr);
-    ~RuleBookSettings();
+    book_settings(KSharedConfig::Ptr config, QObject* parent = nullptr);
+    book_settings(const QString& configname, KConfig::OpenFlags, QObject* parent = nullptr);
+    book_settings(KConfig::OpenFlags, QObject* parent = nullptr);
+    book_settings(QObject* parent = nullptr);
+    ~book_settings();
 
-    void setRules(const QVector<Rules*>&);
-    QVector<Rules*> rules();
+    void setRules(QVector<ruling*> const&);
+    QVector<ruling*> rules();
 
     bool usrSave() override;
     void usrRead() override;
     bool usrIsSaveNeeded() const;
 
     int ruleCount() const;
-    RuleSettings* ruleSettingsAt(int row) const;
-    RuleSettings* insertRuleSettingsAt(int row);
+    settings* ruleSettingsAt(int row) const;
+    settings* insertRuleSettingsAt(int row);
     void removeRuleSettingsAt(int row);
     void moveRuleSettings(int srcRow, int destRow);
 
 private:
     static QString generateGroupName();
 
-    QVector<RuleSettings*> m_list;
+    QVector<settings*> m_list;
     QStringList m_storedGroups;
 };
 

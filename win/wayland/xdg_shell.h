@@ -163,7 +163,7 @@ void finalize_shell_window_creation(Space& space, window* win)
                 // Remove Apply Now rules.
                 win->space.rule_book->discardUsed(win, false);
 
-                win->updateWindowRules(Rules::All);
+                win->updateWindowRules(rules::type::all);
             }
 
             if (win->geometry_update.max_mode != maximize_mode::restore

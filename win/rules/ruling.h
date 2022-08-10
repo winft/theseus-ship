@@ -4,8 +4,9 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#ifndef KWIN_RULES_H
-#define KWIN_RULES_H
+#pragma once
+
+#include "types.h"
 
 #include <QRect>
 #include <netwm_def.h>
@@ -17,8 +18,13 @@ class QDebug;
 
 namespace KWin
 {
-class RuleSettings;
+
 class Toplevel;
+
+namespace win::rules
+{
+
+class settings;
 
 enum class set_rule {
     unused = 0,
@@ -41,56 +47,14 @@ struct force_ruler {
     force_rule rule{force_rule::unused};
 };
 
-class Rules
+class ruling
 {
 public:
-    Rules();
-    explicit Rules(const RuleSettings*);
-    Rules(const QString&, bool temporary);
+    ruling();
+    explicit ruling(settings const*);
+    ruling(QString const&, bool temporary);
 
-    enum Type {
-        Position = 1 << 0,
-        Size = 1 << 1,
-        Desktop = 1 << 2,
-        MaximizeVert = 1 << 3,
-        MaximizeHoriz = 1 << 4,
-        Minimize = 1 << 5,
-        Shade = 1 << 6, // Deprecated
-        SkipTaskbar = 1 << 7,
-        SkipPager = 1 << 8,
-        SkipSwitcher = 1 << 9,
-        Above = 1 << 10,
-        Below = 1 << 11,
-        Fullscreen = 1 << 12,
-        NoBorder = 1 << 13,
-        OpacityActive = 1 << 14,
-        OpacityInactive = 1 << 15,
-        Activity = 1 << 16, // Deprecated
-        Screen = 1 << 17,
-        DesktopFile = 1 << 18,
-        All = 0xffffffff
-    };
-    Q_DECLARE_FLAGS(Types, Type)
-    // All these values are saved to the cfg file, and are also used in kstart!
-    enum {
-        Unused = 0,
-        DontAffect,      // use the default value
-        Force,           // force the given value
-        Apply,           // apply only after initial mapping
-        Remember,        // like apply, and remember the value when the window is withdrawn
-        ApplyNow,        // apply immediatelly, then forget the setting
-        ForceTemporarily // apply and force until the window is withdrawn
-    };
-    enum StringMatch {
-        FirstStringMatch,
-        UnimportantMatch = FirstStringMatch,
-        ExactMatch,
-        SubstringMatch,
-        RegExpMatch,
-        LastStringMatch = RegExpMatch
-    };
-
-    void write(RuleSettings*) const;
+    void write(settings*) const;
     bool isEmpty() const;
 
 #ifndef KCMRULES
@@ -140,13 +104,13 @@ public:
 private:
 #endif
     bool matchType(NET::WindowType match_type) const;
-    bool matchWMClass(const QByteArray& match_class, const QByteArray& match_name) const;
-    bool matchRole(const QByteArray& match_role) const;
-    bool matchTitle(const QString& match_title) const;
-    bool matchClientMachine(const QByteArray& match_machine, bool local) const;
-    void readFromSettings(const RuleSettings* settings);
+    bool matchWMClass(QByteArray const& match_class, QByteArray const& match_name) const;
+    bool matchRole(QByteArray const& match_role) const;
+    bool matchTitle(QString const& match_title) const;
+    bool matchClientMachine(QByteArray const& match_machine, bool local) const;
+    void readFromSettings(rules::settings const* settings);
     static force_rule convertForceRule(int v);
-    static QString getDecoColor(const QString& themeName);
+    static QString getDecoColor(QString const& themeName);
 #ifndef KCMRULES
     static bool checkSetRule(set_rule rule, bool init);
     static bool checkForceRule(force_rule rule);
@@ -177,11 +141,11 @@ private:
 
     struct bytes_match {
         QByteArray data;
-        StringMatch match{UnimportantMatch};
+        name_match match{name_match::unimportant};
     };
     struct string_match {
         QString data;
-        StringMatch match{UnimportantMatch};
+        name_match match{name_match::unimportant};
     };
 
     bytes_match wmclass;
@@ -230,13 +194,10 @@ private:
     force_ruler<bool> strictgeometry;
     force_ruler<NET::WindowType> type;
 
-    friend QDebug& operator<<(QDebug& stream, const Rules*);
+    friend QDebug& operator<<(QDebug& stream, ruling const*);
 };
 
-QDebug& operator<<(QDebug& stream, const Rules*);
+QDebug& operator<<(QDebug& stream, ruling const*);
 
-} // namespace
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(KWin::Rules::Types)
-
-#endif
+}
+}

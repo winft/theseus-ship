@@ -20,7 +20,10 @@
  */
 
 #include "rulesmodel.h"
-#include "rules/rules.h"
+
+#include "utils/algorithm.h"
+#include "win/rules/ruling.h"
+
 #include <QIcon>
 #include <QQmlEngine>
 #include <QtDBus>
@@ -265,7 +268,7 @@ QStringList RulesModel::warningMessages() const
 bool RulesModel::wmclassWarning() const
 {
     const bool no_wmclass = !m_rules["wmclass"]->isEnabled()
-                                || m_rules["wmclass"]->policy() == Rules::UnimportantMatch;
+                                || m_rules["wmclass"]->policy() == enum_index(win::rules::name_match::unimportant);
     const bool alltypes = !m_rules["types"]->isEnabled()
                               || (m_rules["types"]->value() == 0)
                               || (m_rules["types"]->value() == NET::AllTypesMask)
@@ -277,29 +280,29 @@ bool RulesModel::wmclassWarning() const
 bool RulesModel::geometryWarning() const
 {
     const bool ignoregeometry = m_rules["ignoregeometry"]->isEnabled()
-                                    && m_rules["ignoregeometry"]->policy() == Rules::Force
+                                    && m_rules["ignoregeometry"]->policy() == enum_index(win::rules::action::force)
                                     && m_rules["ignoregeometry"]->value() == true;
 
     const bool initialPos = m_rules["position"]->isEnabled()
-                                && (m_rules["position"]->policy() == Rules::Apply
-                                    || m_rules["position"]->policy() == Rules::Remember);
+                                && (m_rules["position"]->policy() == enum_index(win::rules::action::apply)
+                                    || m_rules["position"]->policy() == enum_index(win::rules::action::remember));
 
     const bool initialSize = m_rules["size"]->isEnabled()
-                                && (m_rules["size"]->policy() == Rules::Apply
-                                    || m_rules["size"]->policy() == Rules::Remember);
+                                && (m_rules["size"]->policy() == enum_index(win::rules::action::apply)
+                                    || m_rules["size"]->policy() == enum_index(win::rules::action::remember));
 
     const bool initialPlacement = m_rules["placement"]->isEnabled()
-                                    && m_rules["placement"]->policy() == Rules::Force;
+                                    && m_rules["placement"]->policy() == enum_index(win::rules::action::force);
 
     return (!ignoregeometry && (initialPos || initialSize || initialPlacement));
 }
 
-RuleSettings *RulesModel::settings() const
+win::rules::settings* RulesModel::settings() const
 {
     return m_settings;
 }
 
-void RulesModel::setSettings(RuleSettings *settings)
+void RulesModel::setSettings(win::rules::settings* settings)
 {
     if (m_settings == settings) {
         return;
@@ -319,7 +322,7 @@ void RulesModel::setSettings(RuleSettings *settings)
             continue;
         }
 
-        const bool isEnabled = configPolicyItem ? configPolicyItem->property() != Rules::Unused
+        const bool isEnabled = configPolicyItem ? configPolicyItem->property() != enum_index(win::rules::action::unused)
                                                 : !configItem->property().toString().isEmpty();
         rule->setEnabled(isEnabled);
 

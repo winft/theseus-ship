@@ -22,12 +22,12 @@
 #include "base/x11/grabs.h"
 #include "render/x11/buffer.h"
 #include "render/x11/shadow.h"
-#include "rules/rules.h"
 #include "utils/geo.h"
 #include "win/deco.h"
 #include "win/deco/window.h"
 #include "win/layers.h"
 #include "win/remnant.h"
+#include "win/rules/ruling.h"
 #include "win/shortcut_set.h"
 #include "win/space_areas_helpers.h"
 #include "win/stacking.h"
@@ -143,7 +143,7 @@ void window::setNoBorder(bool set)
 
     user_no_border = set;
     updateDecoration(true, false);
-    updateWindowRules(Rules::NoBorder);
+    updateWindowRules(rules::type::no_border);
 
     if (decoration(this)) {
         control->deco().client->update_size();
@@ -341,7 +341,7 @@ void window::applyWindowRules()
     setBlockingCompositing(info->isBlockingCompositing());
 }
 
-void window::updateWindowRules(Rules::Types selection)
+void window::updateWindowRules(rules::type selection)
 {
     if (!control) {
         // not fully setup yet
@@ -767,7 +767,7 @@ void window::do_set_geometry(QRect const& frame_geo)
     win::set_current_output_by_window(kwinApp()->get_base(), *this);
     space.stacking_order->update_order();
 
-    updateWindowRules(static_cast<Rules::Types>(Rules::Position | Rules::Size));
+    updateWindowRules(rules::type::position | rules::type::size);
 
     if (is_resize(this)) {
         perform_move_resize(this);
@@ -794,8 +794,8 @@ void window::do_set_maximize_mode(maximize_mode mode)
     max_mode = mode;
 
     update_allowed_actions(this);
-    updateWindowRules(static_cast<Rules::Types>(Rules::MaximizeHoriz | Rules::MaximizeVert
-                                                | Rules::Position | Rules::Size));
+    updateWindowRules(rules::type::maximize_horiz | rules::type::maximize_vert
+                      | rules::type::position | rules::type::size);
 
     // Update decoration borders.
     if (auto deco = decoration(this); deco && deco->client()
@@ -859,7 +859,7 @@ void window::do_set_fullscreen(bool full)
     // Active fullscreens gets a different layer.
     update_layer(this);
 
-    updateWindowRules(static_cast<Rules::Types>(Rules::Fullscreen | Rules::Position | Rules::Size));
+    updateWindowRules(rules::type::fullscreen | rules::type::position | rules::type::size);
 
     // TODO(romangg): Is it really important for scripts if the fullscreen was triggered by the app
     //                or the user? For now just pretend that it was always the user.

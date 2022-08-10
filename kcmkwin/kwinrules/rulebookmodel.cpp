@@ -5,12 +5,14 @@
 */
 #include "rulebookmodel.h"
 
+#include "utils/algorithm.h"
+
 namespace KWin
 {
 
 RuleBookModel::RuleBookModel(QObject *parent)
     : QAbstractListModel(parent)
-    , m_ruleBook(new RuleBookSettings(this))
+    , m_ruleBook(new win::rules::book_settings(this))
 {
 }
 
@@ -41,7 +43,7 @@ QVariant RuleBookModel::data(const QModelIndex &index, int role) const
         return QVariant();
     }
 
-    const RuleSettings *settings = m_ruleBook->ruleSettingsAt(index.row());
+    auto const* settings = m_ruleBook->ruleSettingsAt(index.row());
 
     switch (role) {
     case RuleBookModel::DescriptionRole:
@@ -57,7 +59,7 @@ bool RuleBookModel::setData(const QModelIndex &index, const QVariant &value, int
         return false;
     }
 
-    RuleSettings *settings = m_ruleBook->ruleSettingsAt(index.row());
+    auto settings = m_ruleBook->ruleSettingsAt(index.row());
 
     switch (role) {
     case RuleBookModel::DescriptionRole:
@@ -83,10 +85,10 @@ bool RuleBookModel::insertRows(int row, int count, const QModelIndex &parent)
 
     beginInsertRows(parent, row, row + count - 1);
     for (int i = 0; i < count; i++) {
-        RuleSettings *settings = m_ruleBook->insertRuleSettingsAt(row + i);
+        auto settings = m_ruleBook->insertRuleSettingsAt(row + i);
 
         // We want ExactMatch as default for new rules in the UI
-        settings->setWmclassmatch(Rules::ExactMatch);
+        settings->setWmclassmatch(enum_index(win::rules::name_match::exact));
     }
     endInsertRows();
 
@@ -138,7 +140,7 @@ QString RuleBookModel::descriptionAt(int row) const
     return m_ruleBook->ruleSettingsAt(row)->description();
 }
 
-RuleSettings *RuleBookModel::ruleSettingsAt(int row) const
+win::rules::settings *RuleBookModel::ruleSettingsAt(int row) const
 {
     Q_ASSERT(row >= 0 && row < rowCount());
     return m_ruleBook->ruleSettingsAt(row);
@@ -156,7 +158,7 @@ void RuleBookModel::setDescriptionAt(int row, const QString &description)
     Q_EMIT dataChanged(index(row), index(row), {});
 }
 
-void RuleBookModel::setRuleSettingsAt(int row, const RuleSettings &settings)
+void RuleBookModel::setRuleSettingsAt(int row, win::rules::settings const& settings)
 {
     Q_ASSERT(row >= 0 && row < rowCount());
 
@@ -184,7 +186,7 @@ bool RuleBookModel::isSaveNeeded()
     return m_ruleBook->usrIsSaveNeeded();
 }
 
-void RuleBookModel::copySettingsTo(RuleSettings *dest, const RuleSettings &source)
+void RuleBookModel::copySettingsTo(win::rules::settings *dest, win::rules::settings const& source)
 {
     dest->setDefaults();
     auto const items = source.items();

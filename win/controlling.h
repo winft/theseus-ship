@@ -9,7 +9,7 @@
 #include "focus_chain_edit.h"
 #include "net.h"
 
-#include "rules/rules.h"
+#include "rules/ruling.h"
 
 namespace KWin::win
 {
@@ -23,7 +23,7 @@ void set_skip_pager(Win* win, bool set)
     }
 
     win->control->set_skip_pager(set);
-    win->updateWindowRules(Rules::SkipPager);
+    win->updateWindowRules(rules::type::skip_pager);
     Q_EMIT win->skipPagerChanged();
 }
 
@@ -36,7 +36,7 @@ void set_skip_switcher(Win* win, bool set)
     }
 
     win->control->set_skip_switcher(set);
-    win->updateWindowRules(Rules::SkipSwitcher);
+    win->updateWindowRules(rules::type::skip_switcher);
     Q_EMIT win->skipSwitcherChanged();
 }
 
@@ -50,7 +50,7 @@ void set_skip_taskbar(Win* win, bool set)
     auto const was_wants_tab_focus = win::wants_tab_focus(win);
 
     win->control->set_skip_taskbar(set);
-    win->updateWindowRules(Rules::SkipTaskbar);
+    win->updateWindowRules(rules::type::skip_taskbar);
 
     if (was_wants_tab_focus != win::wants_tab_focus(win)) {
         focus_chain_update(win->space.focus_chain,

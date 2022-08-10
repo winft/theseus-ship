@@ -21,7 +21,7 @@
 #include "utils/algorithm.h"
 #include "utils/blocker.h"
 
-#include "rules/rules.h"
+#include "rules/ruling.h"
 
 #include <map>
 

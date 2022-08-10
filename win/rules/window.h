@@ -4,8 +4,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#ifndef KWIN_RULES_WINDOW_RULES_H
-#define KWIN_RULES_WINDOW_RULES_H
+#pragma once
 
 #include <QRect>
 #include <QVector>
@@ -13,7 +12,7 @@
 
 #include "base/options.h"
 #include "kwin_export.h"
-#include "rules.h"
+#include "ruling.h"
 #include "win/types.h"
 
 #include <functional>
@@ -30,28 +29,26 @@ namespace base
 class output;
 }
 
-class Rules;
-class RuleSettings;
 class Toplevel;
 
-namespace win
+namespace win::rules
 {
-enum class maximize_mode;
-}
+
+class ruling;
 
 #ifndef KCMRULES // only for kwin core
 
-class KWIN_EXPORT WindowRules
+class KWIN_EXPORT window
 {
 public:
-    explicit WindowRules(const QVector<Rules*>& rules);
-    WindowRules();
+    explicit window(QVector<ruling*> const& rules);
+    window();
 
     void update(Toplevel* window, int selection);
     void discardTemporary();
-    bool contains(const Rules* rule) const;
-    void remove(Rules* rule);
-    win::placement checkPlacement(win::placement placement) const;
+    bool contains(ruling const* rule) const;
+    void remove(ruling* rule);
+    placement checkPlacement(win::placement placement) const;
     QRect checkGeometry(QRect rect, bool init = false) const;
     // use 'invalidPoint' with checkPosition, unlike QSize() and QRect(), QPoint() is a valid point
     QPoint checkPosition(QPoint pos, bool init = false) const;
@@ -64,7 +61,7 @@ public:
     int checkDesktop(int desktop, bool init = false) const;
     base::output const* checkScreen(base::output const* output, bool init = false) const;
     NET::WindowType checkType(NET::WindowType type) const;
-    KWin::win::maximize_mode checkMaximize(win::maximize_mode mode, bool init = false) const;
+    maximize_mode checkMaximize(maximize_mode mode, bool init = false) const;
     bool checkMinimize(bool minimized, bool init = false) const;
     bool checkSkipTaskbar(bool skip, bool init = false) const;
     bool checkSkipPager(bool skip, bool init = false) const;
@@ -75,8 +72,8 @@ public:
     bool checkNoBorder(bool noborder, bool init = false) const;
     QString checkDecoColor(QString schemeFile) const;
     bool checkBlockCompositing(bool block) const;
-    win::fsp_level checkFSP(win::fsp_level fsp) const;
-    win::fsp_level checkFPP(win::fsp_level fpp) const;
+    fsp_level checkFSP(fsp_level fsp) const;
+    fsp_level checkFPP(fsp_level fpp) const;
     bool checkAcceptFocus(bool focus) const;
     bool checkCloseable(bool closeable) const;
     bool checkAutogrouping(bool autogroup) const;
@@ -88,8 +85,8 @@ public:
     QString checkDesktopFile(QString desktopFile, bool init = false) const;
 
 private:
-    win::maximize_mode checkMaximizeVert(win::maximize_mode mode, bool init) const;
-    win::maximize_mode checkMaximizeHoriz(win::maximize_mode mode, bool init) const;
+    maximize_mode checkMaximizeVert(maximize_mode mode, bool init) const;
+    maximize_mode checkMaximizeHoriz(maximize_mode mode, bool init) const;
 
     template<typename T, typename F>
     T check_set(T data, bool init, F apply_call) const
@@ -119,11 +116,10 @@ private:
         return data;
     }
 
-    QVector<Rules*> rules;
+    QVector<ruling*> rules;
 };
 
 #endif
 
 }
-
-#endif
+}

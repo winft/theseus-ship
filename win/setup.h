@@ -12,7 +12,7 @@
 #include "screen.h"
 
 #include "render/compositor.h"
-#include "rules/rule_book.h"
+#include "rules/book.h"
 
 #include <KDecoration2/Decoration>
 

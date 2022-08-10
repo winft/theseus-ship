@@ -22,9 +22,9 @@
 #define KWIN_RULES_MODEL_H
 
 #include "ruleitem.h"
-#include "rules/rules.h"
-#include "rule_settings.h"
+#include "rules_settings.h"
 #include "win/dbus/virtual_desktop_types.h"
+#include "win/rules/ruling.h"
 
 #include <QAbstractListModel>
 #include <QSortFilterProxyModel>
@@ -72,8 +72,8 @@ public:
     bool hasRule(const QString &key) const;
     RuleItem *ruleItem(const QString &key) const;
 
-    RuleSettings *settings() const;
-    void setSettings(RuleSettings *settings);
+    win::rules::settings* settings() const;
+    void setSettings(win::rules::settings* settings);
 
     void setSuggestedProperties(const QVariantMap &info);
 
@@ -119,7 +119,7 @@ private:
     QList<RuleItem *> m_ruleList;
     QHash<QString, RuleItem *> m_rules;
     win::dbus::virtual_desktop_data_vector m_virtualDesktops;
-    RuleSettings *m_settings{nullptr};
+    win::rules::settings* m_settings{nullptr};
 };
 
 }

@@ -9,7 +9,7 @@
 #include "net.h"
 #include "remnant.h"
 
-#include "rules/rules.h"
+#include "rules/ruling.h"
 
 #include <KDesktopFile>
 #include <klocalizedstring.h>
@@ -51,7 +51,7 @@ void set_desktop_file_name(Win* win, QByteArray name)
         return;
     }
     win->control->set_desktop_file_name(name);
-    win->updateWindowRules(Rules::DesktopFile);
+    win->updateWindowRules(rules::type::desktop_file);
     Q_EMIT win->desktopFileNameChanged();
 }
 

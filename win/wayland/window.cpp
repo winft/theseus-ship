@@ -22,13 +22,13 @@
 #include "render/platform.h"
 #include "render/wayland/buffer.h"
 #include "render/wayland/shadow.h"
-#include "rules/rules.h"
 #include "utils/blocker.h"
 #include "win/deco.h"
 #include "win/deco/window.h"
 #include "win/geo.h"
 #include "win/layers.h"
 #include "win/remnant.h"
+#include "win/rules/ruling.h"
 #include "win/space_areas_helpers.h"
 #include "win/stacking.h"
 #include "win/stacking_order.h"
@@ -225,7 +225,7 @@ void window::setNoBorder(bool set)
 
     user_no_border = set;
     updateDecoration(true, false);
-    updateWindowRules(Rules::NoBorder);
+    updateWindowRules(rules::type::no_border);
 }
 
 void window::closeWindow()
@@ -751,7 +751,7 @@ void window::do_set_geometry(QRect const& frame_geo)
         return;
     }
 
-    updateWindowRules(static_cast<Rules::Types>(Rules::Position | Rules::Size));
+    updateWindowRules(rules::type::position | rules::type::size);
 
     if (is_resize(this)) {
         perform_move_resize(this);
@@ -777,8 +777,8 @@ void window::do_set_maximize_mode(maximize_mode mode)
     auto old_mode = max_mode;
     max_mode = mode;
 
-    updateWindowRules(static_cast<Rules::Types>(Rules::MaximizeHoriz | Rules::MaximizeVert
-                                                | Rules::Position | Rules::Size));
+    updateWindowRules(rules::type::maximize_horiz | rules::type::maximize_vert
+                      | rules::type::position | rules::type::size);
 
     // Update decoration borders.
     if (auto deco = decoration(this); deco && deco->client()
@@ -826,7 +826,7 @@ void window::do_set_fullscreen(bool full)
     // Active fullscreens gets a different layer.
     update_layer(this);
 
-    updateWindowRules(static_cast<Rules::Types>(Rules::Fullscreen | Rules::Position | Rules::Size));
+    updateWindowRules(rules::type::fullscreen | rules::type::position | rules::type::size);
     Q_EMIT fullScreenChanged();
 }
 
