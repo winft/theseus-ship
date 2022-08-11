@@ -94,6 +94,11 @@ protected:
     Toplevel* unmanaged(const QModelIndex& index) const;
     virtual int topLevelRowCount() const;
 
+    static constexpr int s_x11ClientId{1};
+    static constexpr int s_x11UnmanagedId{2};
+    static constexpr int s_waylandClientId{3};
+    static constexpr int s_workspaceInternalId{4};
+
 private:
     QVector<win::internal_window*> m_internalClients;
     QVector<win::x11::window*> m_x11Clients;

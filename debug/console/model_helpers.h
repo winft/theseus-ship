@@ -17,12 +17,6 @@ constexpr uint32_t s_idDistance{10000};
 constexpr uint32_t s_propertyBitMask{0xFFFF0000};
 constexpr uint32_t s_clientBitMask{0x0000FFFF};
 
-// TODO(romangg): Put these into the model class and its subclasses.
-constexpr int s_x11ClientId{1};
-constexpr int s_x11UnmanagedId{2};
-constexpr int s_waylandClientId{3};
-constexpr int s_workspaceInternalId{4};
-
 template<typename Win>
 QObject* get_qobject(Win* win)
 {
