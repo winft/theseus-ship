@@ -277,7 +277,6 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
 
 effects_handler_impl::~effects_handler_impl()
 {
-    unloadAllEffects();
     singleton_interface::effects = nullptr;
 }
 
@@ -1484,10 +1483,6 @@ void effects_handler_impl::unloadEffect(const QString& name)
     effectsChanged();
 
     m_compositor->addRepaintFull();
-}
-
-void effects_handler_impl::handle_effect_destroy(Effect& /*effect*/)
-{
 }
 
 void effects_handler_impl::destroyEffect(Effect* effect)

@@ -372,14 +372,13 @@ protected:
      */
     virtual void doCheckInputWindowStacking();
 
+    virtual void handle_effect_destroy(Effect& effect) = 0;
+
     Effect* keyboard_grab_effect{nullptr};
     Effect* fullscreen_effect{nullptr};
     QList<EffectWindow*> elevated_windows;
     QMultiMap<int, EffectPair> effect_order;
     int next_window_quad_type{EFFECT_QUAD_TYPE_START};
-
-    // TODO(romangg): replace this function with free function templates. It's called from the dtor!
-    virtual void handle_effect_destroy(Effect& effect);
 
 private:
     void add_remnant(Toplevel* remnant);

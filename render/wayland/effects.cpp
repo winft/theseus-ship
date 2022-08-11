@@ -61,6 +61,11 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     }
 }
 
+effects_handler_impl::~effects_handler_impl()
+{
+    unloadAllEffects();
+}
+
 bool effects_handler_impl::eventFilter(QObject* watched, QEvent* event)
 {
     handle_internal_window_effect_update_event(blur, watched, event);

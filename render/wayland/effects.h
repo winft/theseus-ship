@@ -19,6 +19,7 @@ class KWIN_EXPORT effects_handler_impl : public render::effects_handler_impl
     Q_OBJECT
 public:
     effects_handler_impl(render::compositor* compositor, render::scene* scene);
+    ~effects_handler_impl();
 
     bool eventFilter(QObject* watched, QEvent* event) override;
 
