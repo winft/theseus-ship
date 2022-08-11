@@ -42,6 +42,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "main.h"
 #include "render/compositor.h"
 #include "render/cursor.h"
+#include "render/effect/window_impl.h"
 #include "render/effects.h"
 #include "render/platform.h"
 #include "win/deco/client_impl.h"

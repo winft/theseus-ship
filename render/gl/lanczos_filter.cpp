@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/platform.h"
 #include "main.h"
 #include "render/compositor.h"
-#include "render/effects.h"
+#include "render/effect/window_impl.h"
 #include "toplevel.h"
 #include "win/space.h"
 #include "win/window_area.h"

@@ -11,6 +11,7 @@
 #include "shortcut_set.h"
 
 #include <KGlobalAccel>
+#include <QRegularExpression>
 
 namespace KWin::win
 {

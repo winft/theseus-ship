@@ -9,7 +9,7 @@
 
 #include "main.h"
 #include "render/compositor.h"
-#include "render/effects.h"
+#include "render/effect/window_impl.h"
 #include "render/shadow.h"
 #include "render/window.h"
 

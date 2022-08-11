@@ -15,6 +15,7 @@
 #include "render/compositor.h"
 #include "render/compositor_start.h"
 #include "render/dbus/compositing.h"
+#include "render/effect/window_impl.h"
 #include "render/gl/scene.h"
 #include "render/platform.h"
 #include "render/xrender/scene.h"

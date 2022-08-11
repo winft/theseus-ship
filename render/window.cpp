@@ -7,6 +7,7 @@
 #include "window.h"
 
 #include "deco_shadow.h"
+#include "effect/window_impl.h"
 #include "effects.h"
 #include "shadow.h"
 

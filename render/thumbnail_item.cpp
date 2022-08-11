@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "singleton_interface.h"
 
 #include "base/logging.h"
-#include "effects.h"
+#include "effect/window_impl.h"
 #include "scripting/singleton_interface.h"
 #include "scripting/space.h"
 #include "toplevel.h"

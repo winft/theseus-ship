@@ -35,7 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/pointer_redirect.h"
 #include "input/redirect.h"
 #include "input/xkb/helpers.h"
-#include "render/effects.h"
+#include "render/effect/window_impl.h"
 #include "win/activation.h"
 #include "win/controlling.h"
 #include "win/focus_chain.h"
