@@ -393,11 +393,11 @@ private:
     EffectsIterator m_currentPaintScreenIterator;
     EffectsIterator m_currentBuildQuadsIterator;
     render::scene* m_scene;
-    bool m_desktopRendering;
-    int m_currentRenderedDesktop;
+    bool m_desktopRendering{false};
+    int m_currentRenderedDesktop{0};
     QList<Effect*> m_grabbedMouseEffects;
     effect_loader* m_effectLoader;
-    int m_trackingCursorChanges;
+    int m_trackingCursorChanges{0};
     std::unique_ptr<x11::property_notify_filter<effects_handler_impl, win::space>>
         x11_property_notify;
     QList<EffectScreen*> m_effectScreens;
