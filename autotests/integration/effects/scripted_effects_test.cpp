@@ -103,7 +103,7 @@ QList<QAction*> ScriptedEffectWithDebugSpy::actions()
 }
 
 ScriptedEffectWithDebugSpy::ScriptedEffectWithDebugSpy()
-    : scripting::effect(*Test::app()->base.space)
+    : scripting::effect(*KWin::effects)
 {
 }
 
@@ -121,7 +121,7 @@ bool ScriptedEffectWithDebugSpy::load(const QString& name)
     // inject our newly created effect to be registered with the
     // render::effects_handler_impl::loaded_effects this is private API so some horrible code is
     // used to find the internal effectloader and register ourselves
-    auto c = effects->children();
+    auto c = effects.children();
     for (auto it = c.begin(); it != c.end(); ++it) {
         if (qstrcmp((*it)->metaObject()->className(), "KWin::render::effect_loader") != 0) {
             continue;
@@ -131,7 +131,7 @@ bool ScriptedEffectWithDebugSpy::load(const QString& name)
         break;
     }
 
-    return (static_cast<render::effects_handler_impl*>(effects)->isEffectLoaded(name));
+    return effects.isEffectLoaded(name);
 }
 
 void ScriptedEffectsTest::initTestCase()
@@ -145,7 +145,7 @@ void ScriptedEffectsTest::initTestCase()
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
 
-    const auto builtinNames = render::effect_loader(*Test::app()->base.space).listOfKnownEffects();
+    const auto builtinNames = render::effect_loader(*effects).listOfKnownEffects();
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
