@@ -6,8 +6,8 @@
 #include "frame.h"
 
 #include "config-kwin.h"
-#include "render/compositor.h"
-#include "render/effects.h"
+
+#include <kwineffects/effects_handler.h>
 
 #include <QQuickItem>
 #include <QStandardPaths>
@@ -237,25 +237,26 @@ void effect_frame_quick_scene::reposition()
     setGeometry(geometry);
 }
 
-effect_frame_impl::effect_frame_impl(render::scene& scene,
+effect_frame_impl::effect_frame_impl(EffectsHandler& effects,
                                      EffectFrameStyle style,
                                      bool staticSize,
                                      QPoint position,
                                      Qt::Alignment alignment)
     : QObject(nullptr)
     , EffectFrame()
-    , scene{scene}
+    , effects{effects}
     , m_view{new effect_frame_quick_scene(style, staticSize, position, alignment, nullptr)}
 {
-    connect(
-        m_view, &EffectQuickView::repaintNeeded, this, [this] { effects->addRepaint(geometry()); });
+    connect(m_view, &EffectQuickView::repaintNeeded, this, [this] {
+        this->effects.addRepaint(geometry());
+    });
     connect(m_view,
             &EffectQuickView::geometryChanged,
             this,
             [this](const QRect& oldGeometry, const QRect& newGeometry) {
-                this->scene.compositor.effects->addRepaint(oldGeometry);
+                this->effects.addRepaint(oldGeometry);
                 m_geometry = newGeometry;
-                this->scene.compositor.effects->addRepaint(newGeometry);
+                this->effects.addRepaint(newGeometry);
             });
 }
 
@@ -348,7 +349,7 @@ void effect_frame_impl::render(const QRegion& region, double opacity, double fra
     m_view->setOpacity(opacity);
     m_view->setFrameOpacity(frameOpacity);
 
-    scene.compositor.effects->renderEffectQuickView(m_view);
+    effects.renderEffectQuickView(m_view);
 }
 
 const QString& effect_frame_impl::text() const

@@ -13,10 +13,13 @@
 #include <QFont>
 #include <QIcon>
 
-namespace KWin::render
+namespace KWin
 {
 
-class scene;
+class EffectsHandler;
+
+namespace render
+{
 
 class effect_frame_quick_scene : public EffectQuickScene
 {
@@ -100,7 +103,7 @@ class KWIN_EXPORT effect_frame_impl : public QObject, public EffectFrame
 {
     Q_OBJECT
 public:
-    explicit effect_frame_impl(render::scene& scene,
+    explicit effect_frame_impl(EffectsHandler& effects,
                                EffectFrameStyle style,
                                bool staticSize = true,
                                QPoint position = QPoint(-1, -1),
@@ -130,7 +133,7 @@ public:
     qreal crossFadeProgress() const override;
     void setCrossFadeProgress(qreal progress) override;
 
-    render::scene& scene;
+    EffectsHandler& effects;
 
 private:
     // As we need to use Qt slots we cannot copy this class.
@@ -140,4 +143,5 @@ private:
     QRect m_geometry;
 };
 
+}
 }

@@ -1624,7 +1624,8 @@ EffectFrame* effects_handler_impl::effectFrame(EffectFrameStyle style,
                                                const QPoint& position,
                                                Qt::Alignment alignment) const
 {
-    return new effect_frame_impl(*m_scene, style, staticSize, position, alignment);
+    return new effect_frame_impl(
+        const_cast<effects_handler_impl&>(*this), style, staticSize, position, alignment);
 }
 
 QVariant effects_handler_impl::kwinOption(KWinOption kwopt)
