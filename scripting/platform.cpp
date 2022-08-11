@@ -39,30 +39,20 @@
 namespace KWin::scripting
 {
 
-platform::platform(win::space& space)
-    : m_scriptsLock(new QRecursiveMutex)
-    , space{space}
-    , m_qmlEngine(new QQmlEngine(this))
-    , m_declarativeScriptSharedContext(new QQmlContext(m_qmlEngine, this))
-    , qt_space{std::make_unique<template_space<qt_script_space, win::space>>(&space)}
+platform_wrap::platform_wrap()
+    : qml_engine(new QQmlEngine(this))
+    , declarative_script_shared_context(new QQmlContext(qml_engine, this))
+    , m_scriptsLock(new QRecursiveMutex)
+
 {
-    init();
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/Scripting"),
                                                  this,
                                                  QDBusConnection::ExportScriptableContents
                                                      | QDBusConnection::ExportScriptableInvokables);
-
-    // Start the scripting platform, but first process all events.
-    // TODO(romangg): Can we also do this through a simple call?
-    QMetaObject::invokeMethod(this, "start", Qt::QueuedConnection);
 }
 
-platform::~platform()
-{
-    QDBusConnection::sessionBus().unregisterObject(QStringLiteral("/Scripting"));
-}
-
-void platform::init()
+platform::platform(win::space& space)
+    : space{space}
 {
     qmlRegisterType<render::desktop_thumbnail_item>("org.kde.kwin", 2, 0, "DesktopThumbnailItem");
     qmlRegisterType<render::window_thumbnail_item>("org.kde.kwin", 2, 0, "ThumbnailItem");
@@ -95,26 +85,36 @@ void platform::init()
         [this](QQmlEngine* qmlEngine, QJSEngine* jsEngine) -> qt_script_space* {
             Q_UNUSED(qmlEngine)
             Q_UNUSED(jsEngine)
-            return new template_space<qt_script_space, win::space>(&space);
+            return new template_space<qt_script_space, win::space>(&this->space);
         });
     qmlRegisterAnonymousType<QAbstractItemModel>("org.kde.kwin", 2);
     qmlRegisterAnonymousType<QAbstractItemModel>("org.kde.kwin", 3);
 
-    m_qmlEngine->rootContext()->setContextProperty(QStringLiteral("workspace"), qt_space.get());
-    m_qmlEngine->rootContext()->setContextProperty(QStringLiteral("options"),
-                                                   kwinApp()->options->qobject.get());
+    qt_space = std::make_unique<template_space<qt_script_space, win::space>>(&space);
+    qml_engine->rootContext()->setContextProperty(QStringLiteral("workspace"), qt_space.get());
+    qml_engine->rootContext()->setContextProperty(QStringLiteral("options"),
+                                                  kwinApp()->options->qobject.get());
 
     decl_space = std::make_unique<template_space<declarative_script_space, win::space>>(&space);
-    m_declarativeScriptSharedContext->setContextProperty(QStringLiteral("workspace"),
-                                                         decl_space.get());
+    declarative_script_shared_context->setContextProperty(QStringLiteral("workspace"),
+                                                          decl_space.get());
     // QQmlListProperty interfaces only work via properties, rebind them as functions here
-    QQmlExpression expr(m_declarativeScriptSharedContext,
+    QQmlExpression expr(declarative_script_shared_context,
                         nullptr,
                         "workspace.clientList = function() { return workspace.clients }");
     expr.evaluate();
+
+    // Start the scripting platform, but first process all events.
+    // TODO(romangg): Can we also do this through a simple call?
+    QMetaObject::invokeMethod(this, "start", Qt::QueuedConnection);
 }
 
-void platform::start()
+platform_wrap::~platform_wrap()
+{
+    QDBusConnection::sessionBus().unregisterObject(QStringLiteral("/Scripting"));
+}
+
+void platform_wrap::start()
 {
 #if 0
     // TODO make this threaded again once KConfigGroup is sufficiently thread safe, bug #305361 and friends
@@ -138,7 +138,7 @@ void platform::start()
 #endif
 }
 
-LoadScriptList platform::queryScriptsToLoad()
+LoadScriptList platform_wrap::queryScriptsToLoad()
 {
     auto config = kwinApp()->config();
 
@@ -188,7 +188,7 @@ LoadScriptList platform::queryScriptsToLoad()
     return scriptsToLoad;
 }
 
-void platform::slotScriptsQueried()
+void platform_wrap::slotScriptsQueried()
 {
     QFutureWatcher<LoadScriptList>* watcher
         = dynamic_cast<QFutureWatcher<LoadScriptList>*>(sender());
@@ -212,17 +212,17 @@ void platform::slotScriptsQueried()
     watcher->deleteLater();
 }
 
-bool platform::isScriptLoaded(const QString& pluginName) const
+bool platform_wrap::isScriptLoaded(const QString& pluginName) const
 {
     return findScript(pluginName) != nullptr;
 }
 
-qt_script_space* platform::workspaceWrapper() const
+qt_script_space* platform_wrap::workspaceWrapper() const
 {
     return qt_space.get();
 }
 
-abstract_script* platform::findScript(const QString& pluginName) const
+abstract_script* platform_wrap::findScript(const QString& pluginName) const
 {
     QMutexLocker locker(m_scriptsLock.data());
     for (auto const& script : qAsConst(scripts)) {
@@ -233,7 +233,7 @@ abstract_script* platform::findScript(const QString& pluginName) const
     return nullptr;
 }
 
-bool platform::unloadScript(const QString& pluginName)
+bool platform_wrap::unloadScript(const QString& pluginName)
 {
     QMutexLocker locker(m_scriptsLock.data());
     for (auto const& script : qAsConst(scripts)) {
@@ -245,7 +245,7 @@ bool platform::unloadScript(const QString& pluginName)
     return false;
 }
 
-void platform::runScripts()
+void platform_wrap::runScripts()
 {
     QMutexLocker locker(m_scriptsLock.data());
     for (int i = 0; i < scripts.size(); i++) {
@@ -253,13 +253,13 @@ void platform::runScripts()
     }
 }
 
-void platform::scriptDestroyed(QObject* object)
+void platform_wrap::scriptDestroyed(QObject* object)
 {
     QMutexLocker locker(m_scriptsLock.data());
     scripts.removeAll(static_cast<script*>(object));
 }
 
-int platform::loadScript(const QString& filePath, const QString& pluginName)
+int platform_wrap::loadScript(const QString& filePath, const QString& pluginName)
 {
     QMutexLocker locker(m_scriptsLock.data());
     if (isScriptLoaded(pluginName)) {
@@ -272,7 +272,7 @@ int platform::loadScript(const QString& filePath, const QString& pluginName)
     return id;
 }
 
-int platform::loadDeclarativeScript(const QString& filePath, const QString& pluginName)
+int platform_wrap::loadDeclarativeScript(const QString& filePath, const QString& pluginName)
 {
     QMutexLocker locker(m_scriptsLock.data());
     if (isScriptLoaded(pluginName)) {
@@ -280,9 +280,29 @@ int platform::loadDeclarativeScript(const QString& filePath, const QString& plug
     }
     const int id = scripts.size();
     auto script = new declarative_script(id, filePath, pluginName, *this, this);
-    connect(script, &QObject::destroyed, this, &platform::scriptDestroyed);
+    connect(script, &QObject::destroyed, this, &platform_wrap::scriptDestroyed);
     scripts.append(script);
     return id;
+}
+
+uint32_t platform::reserve(ElectricBorder border, std::function<bool(ElectricBorder)> callback)
+{
+    return space.edges->reserve(border, callback);
+}
+
+void platform::unreserve(ElectricBorder border, uint32_t id)
+{
+    space.edges->unreserve(border, id);
+}
+
+void platform::reserve_touch(ElectricBorder border, QAction* action)
+{
+    space.edges->reserveTouch(border, action);
+}
+
+void platform::register_shortcut(QKeySequence const& shortcut, QAction* action)
+{
+    space.input->platform.registerShortcut(shortcut, action);
 }
 
 QList<QAction*> platform::actionsForUserActionMenu(Toplevel* window, QMenu* parent)

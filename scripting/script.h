@@ -25,7 +25,7 @@ class KConfigGroup;
 namespace KWin::scripting
 {
 
-class platform;
+class platform_wrap;
 class window;
 
 class KWIN_EXPORT abstract_script : public QObject
@@ -85,7 +85,7 @@ public:
     script(int id,
            QString scriptName,
            QString pluginName,
-           scripting::platform& platform,
+           scripting::platform_wrap& platform,
            QObject* parent = nullptr);
     virtual ~script();
 
@@ -235,7 +235,7 @@ private:
     std::unordered_map<ElectricBorder, uint32_t> reserved_borders;
     QHash<int, QAction*> m_touchScreenEdgeCallbacks;
     QJSValueList m_userActionsMenuCallbacks;
-    scripting::platform& platform;
+    scripting::platform_wrap& platform;
 };
 
 class declarative_script : public abstract_script
@@ -245,7 +245,7 @@ public:
     explicit declarative_script(int id,
                                 QString scriptName,
                                 QString pluginName,
-                                scripting::platform& platform,
+                                scripting::platform_wrap& platform,
                                 QObject* parent = nullptr);
     ~declarative_script() override;
 
