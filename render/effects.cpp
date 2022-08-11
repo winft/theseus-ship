@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "compositor.h"
 #include "effect/frame.h"
+#include "effect/screen_impl.h"
 #include "effect/window_impl.h"
 #include "effect_loader.h"
 #include "effectsadaptor.h"
@@ -1597,6 +1598,14 @@ void effects_handler_impl::effectsChanged()
     m_activeEffects.reserve(loaded_effects.count());
 }
 
+QList<EffectWindow*> effects_handler_impl::elevatedWindows() const
+{
+    if (isScreenLocked()) {
+        return {};
+    }
+    return elevated_windows;
+}
+
 QStringList effects_handler_impl::activeEffects() const
 {
     QStringList ret;
@@ -1689,6 +1698,16 @@ bool effects_handler_impl::makeOpenGLContextCurrent()
 void effects_handler_impl::doneOpenGLContextCurrent()
 {
     m_scene->doneOpenGLContextCurrent();
+}
+
+xcb_connection_t* effects_handler_impl::xcbConnection() const
+{
+    return connection();
+}
+
+xcb_window_t effects_handler_impl::x11RootWindow() const
+{
+    return rootWindow();
 }
 
 bool effects_handler_impl::animationsSupported() const
@@ -1899,50 +1918,6 @@ QRect effects_handler_impl::renderTargetRect() const
 qreal effects_handler_impl::renderTargetScale() const
 {
     return m_scene->renderTargetScale();
-}
-
-//****************************************
-// effect_screen_impl
-//****************************************
-
-effect_screen_impl::effect_screen_impl(base::output* output, QObject* parent)
-    : EffectScreen(parent)
-    , m_platformOutput(output)
-{
-    QObject::connect(
-        output->qobject.get(), &base::output_qobject::wake_up, this, &EffectScreen::wakeUp);
-    QObject::connect(output->qobject.get(),
-                     &base::output_qobject::about_to_turn_off,
-                     this,
-                     &EffectScreen::aboutToTurnOff);
-    QObject::connect(output->qobject.get(),
-                     &base::output_qobject::scale_changed,
-                     this,
-                     &EffectScreen::devicePixelRatioChanged);
-    QObject::connect(output->qobject.get(),
-                     &base::output_qobject::geometry_changed,
-                     this,
-                     &EffectScreen::geometryChanged);
-}
-
-base::output* effect_screen_impl::platformOutput() const
-{
-    return m_platformOutput;
-}
-
-QString effect_screen_impl::name() const
-{
-    return m_platformOutput->name();
-}
-
-qreal effect_screen_impl::devicePixelRatio() const
-{
-    return m_platformOutput->scale();
-}
-
-QRect effect_screen_impl::geometry() const
-{
-    return m_platformOutput->geometry();
 }
 
 }

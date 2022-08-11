@@ -404,39 +404,5 @@ private:
     std::unordered_map<Effect*, std::unordered_map<ElectricBorder, uint32_t>> reserved_borders;
 };
 
-class effect_screen_impl : public EffectScreen
-{
-    Q_OBJECT
-
-public:
-    explicit effect_screen_impl(base::output* output, QObject* parent = nullptr);
-
-    base::output* platformOutput() const;
-
-    QString name() const override;
-    qreal devicePixelRatio() const override;
-    QRect geometry() const override;
-
-private:
-    base::output* m_platformOutput;
-};
-
-inline QList<EffectWindow*> effects_handler_impl::elevatedWindows() const
-{
-    if (isScreenLocked())
-        return QList<EffectWindow*>();
-    return elevated_windows;
-}
-
-inline xcb_window_t effects_handler_impl::x11RootWindow() const
-{
-    return rootWindow();
-}
-
-inline xcb_connection_t* effects_handler_impl::xcbConnection() const
-{
-    return connection();
-}
-
 }
 }

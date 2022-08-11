@@ -420,6 +420,7 @@ set(kwin_SRCS
     render/cursor.cpp
     render/dbus/compositing.cpp
     render/effect/frame.cpp
+    render/effect/screen_impl.cpp
     render/effect/window_impl.cpp
     render/effect_loader.cpp
     render/effects.cpp
