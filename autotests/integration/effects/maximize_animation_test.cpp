@@ -76,7 +76,7 @@ void MaximizeAnimationTest::init()
 
 void MaximizeAnimationTest::cleanup()
 {
-    auto effectsImpl = qobject_cast<render::effects_handler_impl*>(effects);
+    auto effectsImpl = dynamic_cast<render::effects_handler_impl*>(effects);
     QVERIFY(effectsImpl);
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
@@ -128,7 +128,7 @@ void MaximizeAnimationTest::testMaximizeRestore()
 
     // Load effect that will be tested.
     const QString effectName = QStringLiteral("kwin4_effect_maximize");
-    auto effectsImpl = qobject_cast<render::effects_handler_impl*>(effects);
+    auto effectsImpl = dynamic_cast<render::effects_handler_impl*>(effects);
     QVERIFY(effectsImpl);
     QVERIFY(effectsImpl->loadEffect(effectName));
     QCOMPARE(effectsImpl->loadedEffects().count(), 1);

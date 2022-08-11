@@ -84,7 +84,7 @@ void DontCrashReinitializeCompositorTest::init()
 void DontCrashReinitializeCompositorTest::cleanup()
 {
     // Unload all effects.
-    auto effectsImpl = qobject_cast<render::effects_handler_impl*>(effects);
+    auto effectsImpl = dynamic_cast<render::effects_handler_impl*>(effects);
     QVERIFY(effectsImpl);
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
@@ -108,7 +108,7 @@ void DontCrashReinitializeCompositorTest::testReinitializeCompositor()
     // a window.
 
     // Make sure that we have the right effects ptr.
-    auto effectsImpl = qobject_cast<render::effects_handler_impl*>(effects);
+    auto effectsImpl = dynamic_cast<render::effects_handler_impl*>(effects);
     QVERIFY(effectsImpl);
 
     // Create the test client.

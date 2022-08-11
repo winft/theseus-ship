@@ -121,6 +121,16 @@ effect::kscreen_integration& effects_handler_impl::get_kscreen_integration()
     return kscreen_dummy;
 }
 
+void effects_handler_impl::doStartMouseInterception(Qt::CursorShape shape)
+{
+    m_compositor->space->input->get_pointer()->setEffectsOverrideCursor(shape);
+}
+
+void effects_handler_impl::doStopMouseInterception()
+{
+    m_compositor->space->input->get_pointer()->removeEffectsOverrideCursor();
+}
+
 void effects_handler_impl::handle_effect_destroy(Effect& effect)
 {
     unreserve_borders(effect);

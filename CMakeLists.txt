@@ -527,7 +527,7 @@ qt5_add_dbus_adaptor(kwin_SRCS
   render/post/color_correct_dbus_interface.h
   KWin::render::post::color_correct_dbus_interface
 )
-qt5_add_dbus_adaptor(kwin_SRCS ${kwin_effects_dbus_xml} render/effects.h KWin::render::effects_handler_impl)
+qt5_add_dbus_adaptor(kwin_SRCS ${kwin_effects_dbus_xml} render/effects.h KWin::render::effects_handler_wrap)
 qt5_add_dbus_adaptor(kwin_SRCS
     win/dbus/org.kde.KWin.VirtualDesktopManager.xml
     win/dbus/virtual_desktop_manager.h

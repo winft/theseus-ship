@@ -36,6 +36,9 @@ public:
     slide_integration<effects_handler_impl> slide;
 
 protected:
+    void doStartMouseInterception(Qt::CursorShape shape) override;
+    void doStopMouseInterception() override;
+
     void handle_effect_destroy(Effect& effect) override;
 };
 
