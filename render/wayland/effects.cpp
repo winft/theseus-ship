@@ -123,6 +123,8 @@ effect::kscreen_integration& effects_handler_impl::get_kscreen_integration()
 
 void effects_handler_impl::handle_effect_destroy(Effect& effect)
 {
+    unreserve_borders(effect);
+
     blur.remove(effect);
     contrast.remove(effect);
     slide.remove(effect);

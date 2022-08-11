@@ -164,6 +164,8 @@ void effects_handler_impl::doCheckInputWindowStacking()
 
 void effects_handler_impl::handle_effect_destroy(Effect& effect)
 {
+    unreserve_borders(effect);
+
     blur.remove(effect);
     contrast.remove(effect);
     slide.remove(effect);

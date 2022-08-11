@@ -1485,20 +1485,27 @@ void effects_handler_impl::unloadEffect(const QString& name)
     m_compositor->addRepaintFull();
 }
 
+void effects_handler_impl::unreserve_borders(Effect& effect)
+{
+    auto it = reserved_borders.find(&effect);
+    if (it == reserved_borders.end()) {
+        return;
+    }
+
+    // Might be at shutdown with edges object already gone.
+    if (m_compositor->space->edges) {
+        for (auto& [key, id] : it->second) {
+            m_compositor->space->edges->unreserve(key, id);
+        }
+    }
+
+    reserved_borders.erase(it);
+}
+
 void effects_handler_impl::destroyEffect(Effect* effect)
 {
     assert(effect);
     makeOpenGLContextCurrent();
-
-    if (auto it = reserved_borders.find(effect); it != reserved_borders.end()) {
-        // Might be at shutdown with edges object already gone.
-        if (m_compositor->space->edges) {
-            for (auto& [key, id] : it->second) {
-                m_compositor->space->edges->unreserve(key, id);
-            }
-        }
-        reserved_borders.erase(it);
-    }
 
     if (fullscreen_effect == effect) {
         setActiveFullScreenEffect(nullptr);

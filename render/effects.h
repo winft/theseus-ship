@@ -373,6 +373,7 @@ protected:
     virtual void doCheckInputWindowStacking();
 
     virtual void handle_effect_destroy(Effect& effect) = 0;
+    void unreserve_borders(Effect& effect);
 
     Effect* keyboard_grab_effect{nullptr};
     Effect* fullscreen_effect{nullptr};
