@@ -205,14 +205,7 @@ private:
     QString m_effectName;
     QString m_scriptFile;
 
-    template<typename T>
-    struct callback {
-        uint32_t id;
-        T value;
-    };
-    using border_cb = callback<QJSValueList>;
-
-    std::unordered_map<int, border_cb> border_callbacks;
+    std::unordered_map<int, QJSValueList> border_callbacks;
     std::unordered_map<int, QAction*> touch_border_callbacks;
 
     KConfigLoader* m_config{nullptr};

@@ -14,7 +14,6 @@
 
 #include "base/options.h"
 #include "input/platform.h"
-#include "win/singleton_interface.h"
 
 #include <kwineffects/effect_window.h>
 #include <kwineffects/effects_handler.h>
@@ -652,7 +651,7 @@ bool effect::borderActivated(ElectricBorder edge)
         return false;
     }
 
-    for (auto const& callback : qAsConst(it->second.value)) {
+    for (auto const& callback : qAsConst(it->second)) {
         QJSValue(callback).call();
     }
     return true;
@@ -690,15 +689,14 @@ bool effect::registerScreenEdge(int edge, const QJSValue& callback)
 
     auto it = border_callbacks.find(edge);
     if (it != border_callbacks.end()) {
-        it->second.value.append(callback);
+        it->second.append(callback);
         return true;
     }
 
     // Not yet registered.
     // TODO(romangg): Better go here via internal types, than using the singleton interface.
-    auto id = win::singleton_interface::edger->reserve(
-        static_cast<KWin::ElectricBorder>(edge), [this](auto eb) { return borderActivated(eb); });
-    border_callbacks.insert({edge, {id, {callback}}});
+    effects.reserveElectricBorder(static_cast<ElectricBorder>(edge), this);
+    border_callbacks.insert({edge, {callback}});
     return true;
 }
 
@@ -709,8 +707,7 @@ bool effect::unregisterScreenEdge(int edge)
         // not previously registered
         return false;
     }
-    win::singleton_interface::edger->unreserve(static_cast<KWin::ElectricBorder>(edge),
-                                               it->second.id);
+    effects.unreserveElectricBorder(static_cast<ElectricBorder>(edge), this);
     border_callbacks.erase(it);
     return true;
 }
@@ -727,7 +724,7 @@ bool effect::registerTouchScreenEdge(int edge, const QJSValue& callback)
 
     auto action = new QAction(this);
     connect(action, &QAction::triggered, this, [callback]() { QJSValue(callback).call(); });
-    win::singleton_interface::edger->reserve_touch(KWin::ElectricBorder(edge), action);
+    effects.registerTouchBorder(KWin::ElectricBorder(edge), action);
     touch_border_callbacks.insert({edge, action});
     return true;
 }
