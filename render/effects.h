@@ -304,10 +304,6 @@ public:
     QHash<long, int> registered_atoms;
 
 public Q_SLOTS:
-    void slotCurrentTabAboutToChange(EffectWindow* from, EffectWindow* to);
-    void slotTabAdded(EffectWindow* from, EffectWindow* to);
-    void slotTabRemoved(EffectWindow* c, EffectWindow* newActiveWindow);
-
     // slots for D-Bus interface
     Q_SCRIPTABLE void reconfigureEffect(const QString& name);
     Q_SCRIPTABLE bool loadEffect(const QString& name);
@@ -319,7 +315,10 @@ public Q_SLOTS:
     Q_SCRIPTABLE QString supportInformation(const QString& name) const;
     Q_SCRIPTABLE QString debug(const QString& name, const QString& parameter = QString()) const;
 
-protected Q_SLOTS:
+protected:
+    void slotCurrentTabAboutToChange(EffectWindow* from, EffectWindow* to);
+    void slotTabAdded(EffectWindow* from, EffectWindow* to);
+    void slotTabRemoved(EffectWindow* c, EffectWindow* newActiveWindow);
     void slotClientShown(KWin::Toplevel*);
     void slotXdgShellClientShown(KWin::Toplevel*);
     void slotUnmanagedShown(KWin::Toplevel*);
@@ -333,7 +332,6 @@ protected Q_SLOTS:
     void slotOutputEnabled(base::output* output);
     void slotOutputDisabled(base::output* output);
 
-protected:
     void connectNotify(const QMetaMethod& signal) override;
     void disconnectNotify(const QMetaMethod& signal) override;
     void effectsChanged();
