@@ -288,8 +288,9 @@ int platform::loadDeclarativeScript(const QString& filePath, const QString& plug
 QList<QAction*> platform::actionsForUserActionMenu(Toplevel* window, QMenu* parent)
 {
     auto const w_wins = workspaceWrapper()->clientList();
-    auto window_it = std::find_if(
-        w_wins.cbegin(), w_wins.cend(), [window](auto win) { return win->client() == window; });
+    auto window_it = std::find_if(w_wins.cbegin(), w_wins.cend(), [window](auto win) {
+        return static_cast<window_impl*>(win)->client() == window;
+    });
     assert(window_it != w_wins.cend());
 
     QList<QAction*> actions;

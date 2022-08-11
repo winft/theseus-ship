@@ -646,7 +646,7 @@ public:
 
     void setActiveClient(window* win) override
     {
-        win::activate_window(*ref_space, win->client());
+        win::activate_window(*ref_space, static_cast<window_impl*>(win)->client());
     }
 
     QSize desktopGridSize() const override
@@ -669,7 +669,7 @@ public:
         if (!output) {
             return;
         }
-        win::send_to_screen(*ref_space, client->client(), *output);
+        win::send_to_screen(*ref_space, static_cast<window_impl*>(client)->client(), *output);
     }
 
     void showOutline(QRect const& geometry) override
@@ -926,12 +926,14 @@ protected:
 
     QRect client_area_impl(clientAreaOption option, window* window) const override
     {
-        return win::space_window_area(*ref_space, option, window->client());
+        return win::space_window_area(
+            *ref_space, option, static_cast<window_impl*>(window)->client());
     }
 
     QRect client_area_impl(clientAreaOption option, window const* window) const override
     {
-        return win::space_window_area(*ref_space, option, window->client());
+        return win::space_window_area(
+            *ref_space, option, static_cast<window_impl const*>(window)->client());
     }
 
     QString desktop_name_impl(int desktop) const override

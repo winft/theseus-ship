@@ -149,7 +149,7 @@ public:
     void remove_rule(rules::ruling* r);
     void discard_temporary_rules();
 
-    std::unique_ptr<scripting::window> scripting;
+    std::unique_ptr<scripting::window_impl> scripting;
     Wrapland::Server::PlasmaWindow* plasma_wayland_integration{nullptr};
 
 private:
