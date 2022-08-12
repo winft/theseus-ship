@@ -21,35 +21,26 @@
 namespace KWin::scripting
 {
 
-window::window() = default;
+window::window(win::window_qobject& qtwin)
+    : property_window(qtwin)
+{
+}
 
 window_impl::window_impl(Toplevel* client, space* workspace)
-    : m_client{client}
+    : window(*client->qobject)
+    , m_client{client}
     , m_workspace{workspace}
 {
-    auto qtwin = client->qobject.get();
+    auto qtwin = get_window_qobject();
     QObject::connect(qtwin, &win::window_qobject::opacityChanged, this, [this](auto oldOpacity) {
         Q_EMIT opacityChanged(this, oldOpacity);
     });
 
-    QObject::connect(qtwin, &win::window_qobject::activeChanged, this, &window_impl::activeChanged);
-    QObject::connect(qtwin,
-                     &win::window_qobject::demandsAttentionChanged,
-                     this,
-                     &window_impl::demandsAttentionChanged);
     QObject::connect(qtwin,
                      &win::window_qobject::desktopPresenceChanged,
                      this,
                      [this](auto desktop) { Q_EMIT desktopPresenceChanged(this, desktop); });
-    QObject::connect(
-        qtwin, &win::window_qobject::desktopChanged, this, &window_impl::desktopChanged);
-    QObject::connect(qtwin,
-                     &win::window_qobject::x11DesktopIdsChanged,
-                     this,
-                     &window_impl::x11DesktopIdsChanged);
 
-    QObject::connect(
-        qtwin, &win::window_qobject::minimizedChanged, this, &window_impl::minimizedChanged);
     QObject::connect(qtwin, &win::window_qobject::clientMinimized, this, [this] {
         Q_EMIT clientMinimized(this);
     });
@@ -67,29 +58,7 @@ window_impl::window_impl(Toplevel* client, space* workspace)
         qtwin, &win::window_qobject::quicktiling_changed, this, &window_impl::quickTileModeChanged);
 
     QObject::connect(
-        qtwin, &win::window_qobject::keepAboveChanged, this, &window_impl::keepAboveChanged);
-    QObject::connect(
-        qtwin, &win::window_qobject::keepBelowChanged, this, &window_impl::keepBelowChanged);
-
-    QObject::connect(
-        qtwin, &win::window_qobject::fullScreenChanged, this, &window_impl::fullScreenChanged);
-    QObject::connect(
-        qtwin, &win::window_qobject::skipTaskbarChanged, this, &window_impl::skipTaskbarChanged);
-    QObject::connect(
-        qtwin, &win::window_qobject::skipPagerChanged, this, &window_impl::skipPagerChanged);
-    QObject::connect(
-        qtwin, &win::window_qobject::skipSwitcherChanged, this, &window_impl::skipSwitcherChanged);
-
-    QObject::connect(
         qtwin, &win::window_qobject::paletteChanged, this, &window_impl::paletteChanged);
-    QObject::connect(
-        qtwin, &win::window_qobject::colorSchemeChanged, this, &window_impl::colorSchemeChanged);
-    QObject::connect(
-        qtwin, &win::window_qobject::transientChanged, this, &window_impl::transientChanged);
-    QObject::connect(qtwin, &win::window_qobject::modalChanged, this, &window_impl::modalChanged);
-
-    QObject::connect(
-        qtwin, &win::window_qobject::moveResizedChanged, this, &window_impl::moveResizedChanged);
     QObject::connect(qtwin,
                      &win::window_qobject::moveResizeCursorChanged,
                      this,
@@ -106,47 +75,11 @@ window_impl::window_impl(Toplevel* client, space* workspace)
     });
 
     QObject::connect(
-        qtwin, &win::window_qobject::windowClassChanged, this, &window_impl::windowClassChanged);
-    QObject::connect(
-        qtwin, &win::window_qobject::captionChanged, this, &window_impl::captionChanged);
-    QObject::connect(qtwin, &win::window_qobject::iconChanged, this, &window_impl::iconChanged);
-    QObject::connect(
-        qtwin, &win::window_qobject::frame_geometry_changed, this, &window_impl::geometryChanged);
-    QObject::connect(
-        qtwin, &win::window_qobject::hasAlphaChanged, this, &window_impl::hasAlphaChanged);
-    QObject::connect(
-        qtwin, &win::window_qobject::central_output_changed, this, &window_impl::screenChanged);
-    QObject::connect(
-        qtwin, &win::window_qobject::windowRoleChanged, this, &window_impl::windowRoleChanged);
-    QObject::connect(qtwin, &win::window_qobject::shapedChanged, this, &window_impl::shapedChanged);
-    QObject::connect(qtwin,
-                     &win::window_qobject::skipCloseAnimationChanged,
-                     this,
-                     &window_impl::skipCloseAnimationChanged);
-    QObject::connect(qtwin,
-                     &win::window_qobject::applicationMenuActiveChanged,
-                     this,
-                     &window_impl::applicationMenuActiveChanged);
-    QObject::connect(
-        qtwin, &win::window_qobject::unresponsiveChanged, this, &window_impl::unresponsiveChanged);
-    QObject::connect(qtwin,
-                     &win::window_qobject::hasApplicationMenuChanged,
-                     this,
-                     &window_impl::hasApplicationMenuChanged);
-    QObject::connect(
-        qtwin, &win::window_qobject::surfaceIdChanged, this, &window_impl::surfaceIdChanged);
-
-    QObject::connect(
         qtwin, &win::window_qobject::closeableChanged, this, &window_impl::closeableChanged);
     QObject::connect(
         qtwin, &win::window_qobject::minimizeableChanged, this, &window_impl::minimizeableChanged);
     QObject::connect(
         qtwin, &win::window_qobject::maximizeableChanged, this, &window_impl::maximizeableChanged);
-
-    QObject::connect(qtwin,
-                     &win::window_qobject::desktopFileNameChanged,
-                     this,
-                     &window_impl::desktopFileNameChanged);
 
     // For backwards compatibility of scripts connecting to the old signal. We assume no script is
     // actually differentiating its behavior on the user parameter (if fullscreen was triggered by
@@ -713,11 +646,6 @@ bool window_impl::isBlockingCompositing()
 void window_impl::setBlockingCompositing(bool block)
 {
     m_client->setBlockingCompositing(block);
-}
-
-win::window_qobject* window_impl::get_window_qobject()
-{
-    return m_client->qobject.get();
 }
 
 Toplevel* window_impl::client() const

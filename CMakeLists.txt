@@ -471,6 +471,7 @@ set(kwin_SRCS
     win/internal_window.cpp
     win/osd_notification.cpp
     win/osd.cpp
+    win/property_window.cpp
     win/rules/book.cpp
     win/rules/book_settings.cpp
     win/rules/ruling.cpp

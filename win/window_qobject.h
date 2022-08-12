@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "base/output.h"
 #include "input/cursor_shape.h"
 #include "kwin_export.h"
 #include "types.h"
@@ -13,15 +14,7 @@
 #include <QPalette>
 #include <QRegion>
 
-namespace KWin
-{
-
-namespace base
-{
-class output;
-}
-
-namespace win
+namespace KWin::win
 {
 
 class KWIN_EXPORT window_qobject : public QObject
@@ -137,5 +130,4 @@ Q_SIGNALS:
     void desktopFileNameChanged();
 };
 
-}
 }
