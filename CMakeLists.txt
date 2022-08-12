@@ -748,13 +748,13 @@ set(kwin_XWAYLAND_SRCS
    xwl/primary_selection.cpp
    xwl/sources_ext.cpp
    xwl/transfer.cpp
-   xwl/wl_visit.cpp
-   xwl/x11_visit.cpp
    xwl/xwayland.cpp
 
    # These headers need to be compiled for the helper QObjects they contain.
    xwl/selection_data.h
    xwl/sources.h
+   xwl/wl_visit.h
+   xwl/x11_visit.h
 )
 
 ecm_qt_declare_logging_category(kwin_XWAYLAND_SRCS

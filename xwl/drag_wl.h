@@ -36,7 +36,10 @@ class Toplevel;
 
 namespace xwl
 {
+
 enum class drag_event_reply;
+
+template<typename Window>
 class x11_visit;
 
 using dnd_actions = Wrapland::Server::dnd_actions;
@@ -55,7 +58,7 @@ public:
 private:
     wl_source<Wrapland::Server::data_source> const& source;
     xcb_window_t proxy_window;
-    std::unique_ptr<x11_visit> visit;
+    std::unique_ptr<x11_visit<Toplevel>> visit;
 
     Q_DISABLE_COPY(wl_drag)
 };

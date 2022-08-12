@@ -35,6 +35,7 @@ namespace xwl
 class data_source_ext;
 enum class drag_event_reply;
 
+template<typename Window>
 class wl_visit;
 
 template<typename>
@@ -56,7 +57,7 @@ public:
     void handle_transfer_finished(xcb_timestamp_t time);
 
     std::unique_ptr<data_source_ext> data_source;
-    std::unique_ptr<wl_visit> visit;
+    std::unique_ptr<wl_visit<Toplevel>> visit;
 
 private:
     void set_offers(mime_atoms const& offers);
@@ -68,7 +69,7 @@ private:
     mime_atoms offers;
     std::vector<std::pair<xcb_timestamp_t, bool>> data_requests;
 
-    std::vector<std::unique_ptr<wl_visit>> old_visits;
+    std::vector<std::unique_ptr<wl_visit<Toplevel>>> old_visits;
 
     Q_DISABLE_COPY(x11_drag)
 };
