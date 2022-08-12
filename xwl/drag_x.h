@@ -90,29 +90,19 @@ public:
     bool handle_client_message(xcb_client_message_event_t* event);
     bool leave();
 
-    Toplevel* get_target() const
-    {
-        return target;
-    }
-    xcb_window_t get_window() const
-    {
-        return window;
-    }
-    bool get_entered() const
-    {
-        return entered;
-    }
-    bool get_drop_handled() const
-    {
-        return drop_handled;
-    }
-    bool get_finished() const
-    {
-        return finished;
-    }
     void send_finished();
 
     std::unique_ptr<wl_visit_qobject> qobject;
+
+    Toplevel* target;
+    xcb_window_t window;
+
+    struct {
+        bool mapped{false};
+        bool entered{false};
+        bool drop_handled{false};
+        bool finished{false};
+    } state;
 
 private:
     bool handle_enter(xcb_client_message_event_t* event);
@@ -129,9 +119,6 @@ private:
     void do_finish();
     void unmap_proxy_window();
 
-    Toplevel* target;
-    xcb_window_t window;
-
     xcb_window_t source_window = XCB_WINDOW_NONE;
     x11_source_ext& source;
 
@@ -139,11 +126,6 @@ private:
 
     xcb_atom_t action_atom{XCB_NONE};
     dnd_action action = dnd_action::none;
-
-    bool mapped = false;
-    bool entered = false;
-    bool drop_handled = false;
-    bool finished = false;
 
     Q_DISABLE_COPY(wl_visit)
 };

@@ -67,7 +67,7 @@ x11_drag::x11_drag(x11_source_ext& source)
                 });
 
             QTimer::singleShot(2000, this, [this] {
-                if (!visit->get_entered() || !visit->get_drop_handled()) {
+                if (!visit->state.entered || !visit->state.drop_handled) {
                     // X client timed out
                     Q_EMIT finish(this);
                 } else if (data_requests.size() == 0) {
@@ -93,7 +93,7 @@ drag_event_reply x11_drag::move_filter(Toplevel* target, QPoint const& pos)
 
     auto seat = waylandServer()->seat();
 
-    if (visit && visit->get_target() == target) {
+    if (visit && visit->target == target) {
         // still same Wl target, wait for X events
         return drag_event_reply::ignore;
     }
@@ -200,7 +200,7 @@ void x11_drag::set_offers(mime_atoms const& offers)
 
 void x11_drag::set_drag_target()
 {
-    auto ac = visit->get_target();
+    auto ac = visit->target;
     win::activate_window(*source.x11.space, ac);
     waylandServer()->seat()->drags().set_target(ac->surface, ac->input_transform());
 }
@@ -213,7 +213,7 @@ bool x11_drag::check_for_finished()
         return true;
     }
 
-    if (!visit->get_finished()) {
+    if (!visit->state.finished) {
         return false;
     }
 
@@ -272,7 +272,7 @@ wl_visit::wl_visit(Toplevel* target, x11_source_ext& source)
     source.x11.space->stacking_order->update_count();
 
     xcb_flush(xcb_con);
-    mapped = true;
+    state.mapped = true;
 }
 
 wl_visit::~wl_visit()
@@ -286,7 +286,7 @@ wl_visit::~wl_visit()
 bool wl_visit::leave()
 {
     unmap_proxy_window();
-    return finished;
+    return state.finished;
 }
 
 bool wl_visit::handle_client_message(xcb_client_message_event_t* event)
@@ -315,12 +315,12 @@ static bool hasMimeName(mime_atoms const& mimes, std::string const& name)
 
 bool wl_visit::handle_enter(xcb_client_message_event_t* event)
 {
-    if (entered) {
+    if (state.entered) {
         // A drag already entered.
         return true;
     }
 
-    entered = true;
+    state.entered = true;
 
     auto data = &event->data;
     source_window = data->data32[0];
@@ -420,7 +420,7 @@ bool wl_visit::handle_position(xcb_client_message_event_t* event)
 
 bool wl_visit::handle_drop(xcb_client_message_event_t* event)
 {
-    drop_handled = true;
+    state.drop_handled = true;
 
     auto data = &event->data;
     source_window = data->data32[0];
@@ -433,14 +433,14 @@ bool wl_visit::handle_drop(xcb_client_message_event_t* event)
 
 void wl_visit::do_finish()
 {
-    finished = true;
+    state.finished = true;
     unmap_proxy_window();
     Q_EMIT qobject->finish();
 }
 
 bool wl_visit::handle_leave(xcb_client_message_event_t* event)
 {
-    entered = false;
+    state.entered = false;
     auto data = &event->data;
     source_window = data->data32[0];
     do_finish();
@@ -467,7 +467,7 @@ void wl_visit::send_status()
 
 void wl_visit::send_finished()
 {
-    auto const accepted = entered && action != dnd_action::none;
+    auto const accepted = state.entered && action != dnd_action::none;
 
     xcb_client_message_data_t data = {{0}};
     data.data32[0] = window;
@@ -489,7 +489,7 @@ bool wl_visit::target_accepts_action() const
 
 void wl_visit::unmap_proxy_window()
 {
-    if (!mapped) {
+    if (!state.mapped) {
         return;
     }
 
@@ -499,7 +499,7 @@ void wl_visit::unmap_proxy_window()
     source.x11.space->stacking_order->update_count();
 
     xcb_flush(source.x11.connection);
-    mapped = false;
+    state.mapped = false;
 }
 
 }

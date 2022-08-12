@@ -82,16 +82,15 @@ public:
     void send_position(QPointF const& globalPos);
     void leave();
 
-    bool finished() const
-    {
-        return state.finished;
-    }
-    Toplevel* get_target() const
-    {
-        return target;
-    }
-
     std::unique_ptr<x11_visit_qobject> qobject;
+
+    Toplevel* target;
+
+    struct {
+        bool entered{false};
+        bool dropped{false};
+        bool finished{false};
+    } state;
 
 private:
     bool handle_status(xcb_client_message_event_t* event);
@@ -109,7 +108,6 @@ private:
     void do_finish();
     void stop_connections();
 
-    Toplevel* target;
     wl_source<Wrapland::Server::data_source> const& source;
     xcb_window_t drag_window;
     uint32_t version = 0;
@@ -132,12 +130,6 @@ private:
         // Decided upon by the compositor.
         dnd_action proposed{dnd_action::none};
     } actions;
-
-    struct {
-        bool entered = false;
-        bool dropped = false;
-        bool finished = false;
-    } state;
 
     bool m_accepts = false;
 

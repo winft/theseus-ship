@@ -44,7 +44,7 @@ drag_event_reply wl_drag::move_filter(Toplevel* target, QPoint const& pos)
 {
     auto seat = waylandServer()->seat();
 
-    if (visit && visit->get_target() == target) {
+    if (visit && visit->target == target) {
         // no target change
         return drag_event_reply::take;
     }
@@ -81,7 +81,7 @@ bool wl_drag::handle_client_message(xcb_client_message_event_t* event)
 
 bool wl_drag::end()
 {
-    if (!visit || visit->finished()) {
+    if (!visit || visit->state.finished) {
         visit.reset();
         return true;
     }
