@@ -44,8 +44,6 @@ using x11_source_ext = x11_source<data_source_ext>;
 
 class x11_drag : public drag
 {
-    Q_OBJECT
-
 public:
     explicit x11_drag(x11_source_ext& source);
     ~x11_drag() override;
@@ -70,8 +68,6 @@ private:
     std::vector<std::pair<xcb_timestamp_t, bool>> data_requests;
 
     std::vector<std::unique_ptr<wl_visit<Toplevel>>> old_visits;
-
-    Q_DISABLE_COPY(x11_drag)
 };
 
 }

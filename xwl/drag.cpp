@@ -22,6 +22,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::xwl
 {
 
-drag::drag() = default;
+drag::drag()
+    : qobject{std::make_unique<drag_qobject>()}
+{
+}
+
+drag::~drag() = default;
 
 }

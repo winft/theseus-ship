@@ -81,10 +81,11 @@ void do_handle_xfixes_notify(drag_and_drop* sel, xcb_xfixes_selection_notify_eve
 
     sel->xdrag.reset(new x11_drag(*sel->data.x11_source));
 
-    QObject::connect(sel->data.qobject.get(),
-                     &q_selection::transfer_finished,
-                     sel->xdrag.get(),
-                     &x11_drag::handle_transfer_finished);
+    QObject::connect(
+        sel->data.qobject.get(),
+        &q_selection::transfer_finished,
+        sel->xdrag->qobject.get(),
+        [xdrag = sel->xdrag.get()](auto time) { xdrag->handle_transfer_finished(time); });
 
     // Start drag with serial of last left pointer button press.
     // This means X to Wl drags can only be executed with the left pointer button being pressed.
@@ -209,9 +210,10 @@ void drag_and_drop::end_drag()
         if (drag->end()) {
             drag.reset();
         } else {
-            QObject::connect(drag.get(), &drag::finish, data.qobject.get(), [this](auto drag) {
-                clear_old_drag(drag);
-            });
+            QObject::connect(drag->qobject.get(),
+                             &drag_qobject::finish,
+                             data.qobject.get(),
+                             [this, drag = drag.get()] { clear_old_drag(drag); });
             old_drags.emplace_back(drag.release());
         }
     };

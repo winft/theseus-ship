@@ -86,13 +86,16 @@ bool wl_drag::end()
         return true;
     }
 
-    connect(visit->qobject.get(), &x11_visit_qobject::finish, this, [this, visit = visit.get()] {
-        Q_ASSERT(this->visit.get() == visit);
-        this->visit.reset();
+    QObject::connect(visit->qobject.get(),
+                     &x11_visit_qobject::finish,
+                     qobject.get(),
+                     [this, visit = visit.get()] {
+                         Q_ASSERT(this->visit.get() == visit);
+                         this->visit.reset();
 
-        // We directly allow to delete previous visits.
-        Q_EMIT finish(this);
-    });
+                         // We directly allow to delete previous visits.
+                         Q_EMIT qobject->finish();
+                     });
     return false;
 }
 

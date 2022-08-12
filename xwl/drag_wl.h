@@ -46,8 +46,6 @@ using dnd_actions = Wrapland::Server::dnd_actions;
 
 class wl_drag : public drag
 {
-    Q_OBJECT
-
 public:
     wl_drag(wl_source<Wrapland::Server::data_source> const& source, xcb_window_t proxy_window);
 
@@ -59,8 +57,6 @@ private:
     wl_source<Wrapland::Server::data_source> const& source;
     xcb_window_t proxy_window;
     std::unique_ptr<x11_visit<Toplevel>> visit;
-
-    Q_DISABLE_COPY(wl_drag)
 };
 
 }

@@ -83,26 +83,28 @@ inline void send_client_message(xcb_connection_t* connection,
     xcb_flush(connection);
 }
 
+class drag_qobject : public QObject
+{
+    Q_OBJECT
+Q_SIGNALS:
+    void finish();
+};
+
 /**
  * An ongoing drag operation.
  */
-class drag : public QObject
+class drag
 {
-    Q_OBJECT
-
 public:
     drag();
+    virtual ~drag();
 
     virtual bool handle_client_message(xcb_client_message_event_t* event) = 0;
     virtual drag_event_reply move_filter(Toplevel* target, QPoint const& pos) = 0;
 
     virtual bool end() = 0;
 
-Q_SIGNALS:
-    void finish(drag* self);
-
-private:
-    Q_DISABLE_COPY(drag)
+    std::unique_ptr<drag_qobject> qobject;
 };
 
 }

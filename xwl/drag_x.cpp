@@ -40,41 +40,43 @@ namespace KWin::xwl
 x11_drag::x11_drag(x11_source_ext& source)
     : source{source}
 {
-    connect(source.get_qobject(),
-            &q_x11_source::transfer_ready,
-            this,
-            [this](xcb_atom_t target, qint32 fd) {
-                Q_UNUSED(target);
-                Q_UNUSED(fd);
-                data_requests.emplace_back(this->source.timestamp, false);
-            });
+    QObject::connect(source.get_qobject(),
+                     &q_x11_source::transfer_ready,
+                     qobject.get(),
+                     [this](xcb_atom_t target, qint32 fd) {
+                         Q_UNUSED(target);
+                         Q_UNUSED(fd);
+                         data_requests.emplace_back(this->source.timestamp, false);
+                     });
 
     QObject::connect(
-        source.get_source(), &data_source_ext::accepted, this, [this](auto /*mime_type*/) {
+        source.get_source(), &data_source_ext::accepted, qobject.get(), [this](auto /*mime_type*/) {
             // TODO(romangg): handle?
         });
-    QObject::connect(source.get_source(), &data_source_ext::dropped, this, [this] {
+    QObject::connect(source.get_source(), &data_source_ext::dropped, qobject.get(), [this] {
         if (visit) {
-            connect(
-                visit->qobject.get(), &wl_visit_qobject::finish, this, [this, visit = visit.get()] {
-                    Q_UNUSED(visit);
-                    check_for_finished();
-                });
+            QObject::connect(visit->qobject.get(),
+                             &wl_visit_qobject::finish,
+                             qobject.get(),
+                             [this, visit = visit.get()] {
+                                 Q_UNUSED(visit);
+                                 check_for_finished();
+                             });
 
-            QTimer::singleShot(2000, this, [this] {
+            QTimer::singleShot(2000, qobject.get(), [this] {
                 if (!visit->state.entered || !visit->state.drop_handled) {
                     // X client timed out
-                    Q_EMIT finish(this);
+                    Q_EMIT qobject->finish();
                 } else if (data_requests.size() == 0) {
                     // Wl client timed out
                     visit->send_finished();
-                    Q_EMIT finish(this);
+                    Q_EMIT qobject->finish();
                 }
             });
         }
         check_for_finished();
     });
-    QObject::connect(source.get_source(), &data_source_ext::finished, this, [this] {
+    QObject::connect(source.get_source(), &data_source_ext::finished, qobject.get(), [this] {
         // this call is not reliably initiated by Wayland clients
         check_for_finished();
     });
@@ -98,10 +100,13 @@ drag_event_reply x11_drag::move_filter(Toplevel* target, QPoint const& pos)
         if (visit->leave()) {
             visit.reset();
         } else {
-            connect(
-                visit->qobject.get(), &wl_visit_qobject::finish, this, [this, visit = visit.get()] {
-                    remove_all_if(old_visits, [visit](auto&& old) { return old.get() == visit; });
-                });
+            QObject::connect(visit->qobject.get(),
+                             &wl_visit_qobject::finish,
+                             qobject.get(),
+                             [this, visit = visit.get()] {
+                                 remove_all_if(old_visits,
+                                               [visit](auto&& old) { return old.get() == visit; });
+                             });
             old_visits.emplace_back(visit.release());
         }
     }
@@ -126,7 +131,10 @@ drag_event_reply x11_drag::move_filter(Toplevel* target, QPoint const& pos)
     // New Wl native target.
     visit.reset(new wl_visit(target, source));
 
-    connect(visit->qobject.get(), &wl_visit_qobject::offers_received, this, &x11_drag::set_offers);
+    QObject::connect(visit->qobject.get(),
+                     &wl_visit_qobject::offers_received,
+                     qobject.get(),
+                     [this](auto const& offers) { set_offers(offers); });
     return drag_event_reply::ignore;
 }
 
@@ -204,7 +212,7 @@ bool x11_drag::check_for_finished()
 {
     if (!visit) {
         // not dropped above Wl native target
-        Q_EMIT finish(this);
+        Q_EMIT qobject->finish();
         return true;
     }
 
@@ -222,7 +230,7 @@ bool x11_drag::check_for_finished()
 
     if (transfersFinished) {
         visit->send_finished();
-        Q_EMIT finish(this);
+        Q_EMIT qobject->finish();
     }
     return transfersFinished;
 }
