@@ -5,6 +5,7 @@
 */
 #include "primary_selection.h"
 
+#include "event_x11.h"
 #include "selection_wl.h"
 #include "selection_x11.h"
 #include "sources_ext.h"
@@ -38,6 +39,22 @@ Wrapland::Server::primary_selection_source* primary_selection::get_current_sourc
 void primary_selection::set_selection(Wrapland::Server::primary_selection_source* source) const
 {
     waylandServer()->seat()->setPrimarySelection(source);
+}
+
+void primary_selection::handle_x11_offer_change(std::vector<std::string> const& added,
+                                                std::vector<std::string> const& removed)
+{
+    xwl::handle_x11_offer_change(this, added, removed);
+}
+
+bool primary_selection::handle_client_message(xcb_client_message_event_t* /*event*/)
+{
+    return false;
+}
+
+void primary_selection::do_handle_xfixes_notify(xcb_xfixes_selection_notify_event_t* event)
+{
+    xwl::do_handle_xfixes_notify(this, event);
 }
 
 }

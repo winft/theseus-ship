@@ -36,7 +36,6 @@ namespace xwl
 {
 
 class data_source_ext;
-class drag_and_drop;
 enum class drag_event_reply;
 
 template<typename Window>
@@ -45,15 +44,6 @@ template<typename Window>
 class wl_drag;
 template<typename Window>
 class x11_drag;
-
-template<>
-void do_handle_xfixes_notify(drag_and_drop* sel, xcb_xfixes_selection_notify_event_t* event);
-template<>
-bool handle_client_message(drag_and_drop* sel, xcb_client_message_event_t* event);
-template<>
-void handle_x11_offer_change(drag_and_drop* sel,
-                             std::vector<std::string> const& added,
-                             std::vector<std::string> const& removed);
 
 /**
  * Represents the drag and drop mechanism, on X side this is the XDND protocol.
@@ -74,6 +64,11 @@ public:
     static uint32_t version();
 
     drag_event_reply drag_move_filter(Toplevel* target, QPoint const& pos);
+
+    void handle_x11_offer_change(std::vector<std::string> const& added,
+                                 std::vector<std::string> const& removed);
+    bool handle_client_message(xcb_client_message_event_t* event);
+    void do_handle_xfixes_notify(xcb_xfixes_selection_notify_event_t* event);
 
 private:
     // start and end Wl native client drags (Wl -> Xwl)

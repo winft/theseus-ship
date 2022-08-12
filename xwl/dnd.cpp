@@ -37,98 +37,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::xwl
 {
 
-template<>
-void do_handle_xfixes_notify(drag_and_drop* sel, xcb_xfixes_selection_notify_event_t* event)
-{
-    if (sel->xdrag) {
-        // X drag is in progress, rogue X client took over the selection.
-        return;
-    }
-    if (sel->wldrag) {
-        // Wl drag is in progress - don't overwrite by rogue X client,
-        // get it back instead!
-        own_selection(sel, true);
-        return;
-    }
-
-    sel->data.x11_source.reset();
-
-    auto const seat = waylandServer()->seat();
-    auto originSurface = seat->pointers().get_focus().surface;
-    if (!originSurface) {
-        return;
-    }
-
-    if (originSurface->client() != waylandServer()->xwayland_connection()) {
-        // focused surface client is not Xwayland - do not allow drag to start
-        // TODO: can we make this stronger (window id comparison)?
-        return;
-    }
-    if (!seat->pointers().is_button_pressed(Qt::LeftButton)) {
-        // we only allow drags to be started on (left) pointer button being
-        // pressed for now
-        return;
-    }
-
-    create_x11_source(sel, event);
-    if (!sel->data.x11_source) {
-        return;
-    }
-
-    assert(!sel->data.source_int);
-    sel->data.source_int.reset(new data_source_ext);
-    sel->data.x11_source->set_source(sel->data.source_int.get());
-
-    sel->xdrag = std::make_unique<x11_drag<Toplevel>>(*sel->data.x11_source);
-
-    QObject::connect(
-        sel->data.qobject.get(),
-        &q_selection::transfer_finished,
-        sel->xdrag->qobject.get(),
-        [xdrag = sel->xdrag.get()](auto time) { xdrag->handle_transfer_finished(time); });
-
-    // Start drag with serial of last left pointer button press.
-    // This means X to Wl drags can only be executed with the left pointer button being pressed.
-    // For touch and (maybe) other pointer button drags we have to revisit this.
-    //
-    // Until then we accept the restriction for Xwayland clients.
-    seat->drags().start(sel->data.source_int->src(),
-                        originSurface,
-                        nullptr,
-                        seat->pointers().button_serial(Qt::LeftButton));
-    seat->drags().set_source_client_movement_blocked(false);
-}
-
-template<>
-bool handle_client_message(drag_and_drop* sel, xcb_client_message_event_t* event)
-{
-    for (auto& drag : sel->old_drags) {
-        if (drag->handle_client_message(event)) {
-            return true;
-        }
-    }
-
-    auto handle = [event](auto&& drag) {
-        if (!drag) {
-            return false;
-        }
-        return drag->handle_client_message(event);
-    };
-
-    if (handle(sel->wldrag) || handle(sel->xdrag)) {
-        return true;
-    }
-    return false;
-}
-
-template<>
-void handle_x11_offer_change(drag_and_drop* /*sel*/,
-                             std::vector<std::string> const& /*added*/,
-                             std::vector<std::string> const& /*removed*/)
-{
-    // Handled internally.
-}
-
 // version of DnD support in X
 constexpr uint32_t s_version = 5;
 uint32_t drag_and_drop::version()
@@ -183,6 +91,93 @@ drag_event_reply drag_and_drop::drag_move_filter(Toplevel* target, QPoint const&
     }
     assert(false);
     return drag_event_reply();
+}
+
+void drag_and_drop::handle_x11_offer_change(std::vector<std::string> const& /*added*/,
+                                            std::vector<std::string> const& /*removed*/)
+{
+    // Handled internally.
+}
+
+bool drag_and_drop::handle_client_message(xcb_client_message_event_t* event)
+{
+    for (auto& drag : old_drags) {
+        if (drag->handle_client_message(event)) {
+            return true;
+        }
+    }
+
+    auto handle = [event](auto&& drag) {
+        if (!drag) {
+            return false;
+        }
+        return drag->handle_client_message(event);
+    };
+
+    if (handle(wldrag) || handle(xdrag)) {
+        return true;
+    }
+    return false;
+}
+
+void drag_and_drop::do_handle_xfixes_notify(xcb_xfixes_selection_notify_event_t* event)
+{
+    if (xdrag) {
+        // X drag is in progress, rogue X client took over the selection.
+        return;
+    }
+    if (wldrag) {
+        // Wl drag is in progress - don't overwrite by rogue X client,
+        // get it back instead!
+        own_selection(this, true);
+        return;
+    }
+
+    data.x11_source.reset();
+
+    auto const seat = waylandServer()->seat();
+    auto originSurface = seat->pointers().get_focus().surface;
+    if (!originSurface) {
+        return;
+    }
+
+    if (originSurface->client() != waylandServer()->xwayland_connection()) {
+        // focused surface client is not Xwayland - do not allow drag to start
+        // TODO: can we make this stronger (window id comparison)?
+        return;
+    }
+    if (!seat->pointers().is_button_pressed(Qt::LeftButton)) {
+        // we only allow drags to be started on (left) pointer button being
+        // pressed for now
+        return;
+    }
+
+    create_x11_source(this, event);
+    if (!data.x11_source) {
+        return;
+    }
+
+    assert(!data.source_int);
+    data.source_int.reset(new data_source_ext);
+    data.x11_source->set_source(data.source_int.get());
+
+    xdrag = std::make_unique<x11_drag<Toplevel>>(*data.x11_source);
+
+    QObject::connect(data.qobject.get(),
+                     &q_selection::transfer_finished,
+                     xdrag->qobject.get(),
+                     [xdrag = xdrag.get()](auto time) { xdrag->handle_transfer_finished(time); });
+
+    // Start drag with serial of last left pointer button press.
+    // This means X to Wl drags can only be executed with the left pointer button being pressed.
+    // For touch and (maybe) other pointer button drags we have to revisit this.
+    //
+    // Until then we accept the restriction for Xwayland clients.
+    seat->drags().start(data.source_int->src(),
+                        originSurface,
+                        nullptr,
+                        seat->pointers().button_serial(Qt::LeftButton));
+    seat->drags().set_source_client_movement_blocked(false);
 }
 
 void drag_and_drop::start_drag()

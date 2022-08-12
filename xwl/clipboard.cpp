@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "clipboard.h"
 
+#include "event_x11.h"
 #include "selection_wl.h"
 #include "selection_x11.h"
 #include "sources_ext.h"
@@ -51,6 +52,22 @@ Wrapland::Server::data_source* clipboard::get_current_source() const
 void clipboard::set_selection(Wrapland::Server::data_source* source) const
 {
     waylandServer()->seat()->setSelection(source);
+}
+
+void clipboard::handle_x11_offer_change(std::vector<std::string> const& added,
+                                        std::vector<std::string> const& removed)
+{
+    xwl::handle_x11_offer_change(this, added, removed);
+}
+
+bool clipboard::handle_client_message(xcb_client_message_event_t* /*event*/)
+{
+    return false;
+}
+
+void clipboard::do_handle_xfixes_notify(xcb_xfixes_selection_notify_event_t* event)
+{
+    xwl::do_handle_xfixes_notify(this, event);
 }
 
 }

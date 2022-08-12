@@ -41,7 +41,9 @@ void create_x11_source(Selection* sel, xcb_xfixes_selection_notify_event_t* even
                      &q_x11_source::offers_changed,
                      sel->data.qobject.get(),
                      [sel](auto const& added, auto const& removed) {
-                         handle_x11_offer_change(sel, added, removed);
+                         // TODO(romangg): Use C++20 require on the member function and otherwise
+                         //                call the free function.
+                         sel->handle_x11_offer_change(added, removed);
                      });
     QObject::connect(sel->data.x11_source->get_qobject(),
                      &q_x11_source::transfer_ready,

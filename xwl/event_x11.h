@@ -49,7 +49,9 @@ bool handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t* e
     }
 
     // Being here means some other X window has claimed the selection.
-    do_handle_xfixes_notify(sel, event);
+
+    // TODO(romangg): Use C++20 require on the member function and otherwise call the free function.
+    sel->do_handle_xfixes_notify(event);
     return true;
 }
 
@@ -87,13 +89,6 @@ void do_handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t
 }
 
 template<typename Selection>
-bool handle_client_message([[maybe_unused]] Selection* sel,
-                           [[maybe_unused]] xcb_client_message_event_t* event)
-{
-    return false;
-}
-
-template<typename Selection>
 bool filter_event(Selection* sel, xcb_generic_event_t* event)
 {
     if (!sel) {
@@ -112,7 +107,8 @@ bool filter_event(Selection* sel, xcb_generic_event_t* event)
         return handle_selection_request(sel,
                                         reinterpret_cast<xcb_selection_request_event_t*>(event));
     case XCB_CLIENT_MESSAGE:
-        return handle_client_message(sel, reinterpret_cast<xcb_client_message_event_t*>(event));
+        // TODO(romangg): Use C++20 require on the member function.
+        return sel->handle_client_message(reinterpret_cast<xcb_client_message_event_t*>(event));
     default:
         return false;
     }

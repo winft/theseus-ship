@@ -23,6 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <Wrapland/Server/data_source.h>
 
+struct xcb_xfixes_selection_notify_event_t;
+
 namespace KWin::xwl
 {
 class clipboard;
@@ -41,6 +43,11 @@ public:
 
     Wrapland::Server::data_source* get_current_source() const;
     void set_selection(Wrapland::Server::data_source* source) const;
+
+    void handle_x11_offer_change(std::vector<std::string> const& added,
+                                 std::vector<std::string> const& removed);
+    bool handle_client_message(xcb_client_message_event_t* event);
+    void do_handle_xfixes_notify(xcb_xfixes_selection_notify_event_t* event);
 
 private:
     Q_DISABLE_COPY(clipboard)
