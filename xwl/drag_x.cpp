@@ -60,10 +60,11 @@ x11_drag::x11_drag(x11_source_ext& source)
         });
     QObject::connect(source.get_source(), &data_source_ext::dropped, this, [this] {
         if (visit) {
-            connect(visit.get(), &wl_visit::finish, this, [this](wl_visit* visit) {
-                Q_UNUSED(visit);
-                check_for_finished();
-            });
+            connect(
+                visit->qobject.get(), &wl_visit_qobject::finish, this, [this, visit = visit.get()] {
+                    Q_UNUSED(visit);
+                    check_for_finished();
+                });
 
             QTimer::singleShot(2000, this, [this] {
                 if (!visit->get_entered() || !visit->get_drop_handled()) {
@@ -102,9 +103,10 @@ drag_event_reply x11_drag::move_filter(Toplevel* target, QPoint const& pos)
         if (visit->leave()) {
             visit.reset();
         } else {
-            connect(visit.get(), &wl_visit::finish, this, [this](wl_visit* visit) {
-                remove_all_if(old_visits, [visit](auto&& old) { return old.get() == visit; });
-            });
+            connect(
+                visit->qobject.get(), &wl_visit_qobject::finish, this, [this, visit = visit.get()] {
+                    remove_all_if(old_visits, [visit](auto&& old) { return old.get() == visit; });
+                });
             old_visits.emplace_back(visit.release());
         }
     }
@@ -129,7 +131,7 @@ drag_event_reply x11_drag::move_filter(Toplevel* target, QPoint const& pos)
     // New Wl native target.
     visit.reset(new wl_visit(target, source));
 
-    connect(visit.get(), &wl_visit::offers_received, this, &x11_drag::set_offers);
+    connect(visit->qobject.get(), &wl_visit_qobject::offers_received, this, &x11_drag::set_offers);
     return drag_event_reply::ignore;
 }
 
@@ -231,7 +233,8 @@ bool x11_drag::check_for_finished()
 }
 
 wl_visit::wl_visit(Toplevel* target, x11_source_ext& source)
-    : target{target}
+    : qobject{std::make_unique<wl_visit_qobject>()}
+    , target{target}
     , source{source}
 {
     auto xcb_con = source.x11.connection;
@@ -341,7 +344,7 @@ bool wl_visit::handle_enter(xcb_client_message_event_t* event)
         get_mimes_from_win_property(offers);
     }
 
-    Q_EMIT offers_received(offers);
+    Q_EMIT qobject->offers_received(offers);
     return true;
 }
 
@@ -432,7 +435,7 @@ void wl_visit::do_finish()
 {
     finished = true;
     unmap_proxy_window();
-    Q_EMIT finish(this);
+    Q_EMIT qobject->finish();
 }
 
 bool wl_visit::handle_leave(xcb_client_message_event_t* event)

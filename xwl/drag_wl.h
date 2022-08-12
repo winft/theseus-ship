@@ -60,11 +60,16 @@ private:
     Q_DISABLE_COPY(wl_drag)
 };
 
-/// Visit to an X window
-class x11_visit : public QObject
+class x11_visit_qobject : public QObject
 {
     Q_OBJECT
+Q_SIGNALS:
+    void finish();
+};
 
+/// Visit to an X window
+class x11_visit
+{
 public:
     // TODO: handle ask action
 
@@ -86,8 +91,7 @@ public:
         return target;
     }
 
-Q_SIGNALS:
-    void finish(x11_visit* self);
+    std::unique_ptr<x11_visit_qobject> qobject;
 
 private:
     bool handle_status(xcb_client_message_event_t* event);

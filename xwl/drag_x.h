@@ -73,13 +73,19 @@ private:
     Q_DISABLE_COPY(x11_drag)
 };
 
-class wl_visit : public QObject
+class wl_visit_qobject : public QObject
 {
     Q_OBJECT
+Q_SIGNALS:
+    void offers_received(mime_atoms const& offers);
+    void finish();
+};
 
+class wl_visit
+{
 public:
     wl_visit(Toplevel* target, x11_source_ext& source);
-    ~wl_visit() override;
+    ~wl_visit();
 
     bool handle_client_message(xcb_client_message_event_t* event);
     bool leave();
@@ -106,9 +112,7 @@ public:
     }
     void send_finished();
 
-Q_SIGNALS:
-    void offers_received(mime_atoms const& offers);
-    void finish(wl_visit* self);
+    std::unique_ptr<wl_visit_qobject> qobject;
 
 private:
     bool handle_enter(xcb_client_message_event_t* event);

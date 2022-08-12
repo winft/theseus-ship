@@ -86,7 +86,7 @@ bool wl_drag::end()
         return true;
     }
 
-    connect(visit.get(), &x11_visit::finish, this, [this](x11_visit* visit) {
+    connect(visit->qobject.get(), &x11_visit_qobject::finish, this, [this, visit = visit.get()] {
         Q_ASSERT(this->visit.get() == visit);
         this->visit.reset();
 
@@ -99,7 +99,7 @@ bool wl_drag::end()
 x11_visit::x11_visit(Toplevel* target,
                      wl_source<Wrapland::Server::data_source> const& source,
                      xcb_window_t drag_window)
-    : QObject()
+    : qobject{std::make_unique<x11_visit_qobject>()}
     , target(target)
     , source{source}
     , drag_window{drag_window}
@@ -139,14 +139,16 @@ x11_visit::x11_visit(Toplevel* target,
     // proxy drop
     receive_offer();
 
-    notifiers.drop = connect(
-        waylandServer()->seat(), &Wrapland::Server::Seat::dragEnded, this, [this](auto success) {
-            if (success) {
-                drop();
-            } else {
-                leave();
-            }
-        });
+    notifiers.drop = QObject::connect(waylandServer()->seat(),
+                                      &Wrapland::Server::Seat::dragEnded,
+                                      qobject.get(),
+                                      [this](auto success) {
+                                          if (success) {
+                                              drop();
+                                          } else {
+                                              leave();
+                                          }
+                                      });
 }
 
 bool x11_visit::handle_client_message(xcb_client_message_event_t* event)
@@ -265,10 +267,11 @@ void x11_visit::receive_offer()
     enter();
     update_actions();
 
-    notifiers.action = connect(source.server_source,
-                               &Wrapland::Server::data_source::supported_dnd_actions_changed,
-                               this,
-                               &x11_visit::update_actions);
+    notifiers.action
+        = QObject::connect(source.server_source,
+                           &Wrapland::Server::data_source::supported_dnd_actions_changed,
+                           qobject.get(),
+                           [this] { update_actions(); });
 
     send_position(waylandServer()->seat()->pointers().get_position());
 }
@@ -281,10 +284,10 @@ void x11_visit::enter()
     send_enter();
 
     // Proxy future pointer position changes.
-    notifiers.motion = connect(waylandServer()->seat(),
-                               &Wrapland::Server::Seat::pointerPosChanged,
-                               this,
-                               &x11_visit::send_position);
+    notifiers.motion = QObject::connect(waylandServer()->seat(),
+                                        &Wrapland::Server::Seat::pointerPosChanged,
+                                        qobject.get(),
+                                        [this](auto const& pos) { send_position(pos); });
 }
 
 void x11_visit::send_enter()
@@ -428,18 +431,18 @@ void x11_visit::do_finish()
     state.finished = true;
     m_pos.cached = false;
     stop_connections();
-    Q_EMIT finish(this);
+    Q_EMIT qobject->finish();
 }
 
 void x11_visit::stop_connections()
 {
     // Final outcome has been determined from Wayland side, no more updates needed.
-    disconnect(notifiers.drop);
+    QObject::disconnect(notifiers.drop);
     notifiers.drop = QMetaObject::Connection();
 
-    disconnect(notifiers.motion);
+    QObject::disconnect(notifiers.motion);
     notifiers.motion = QMetaObject::Connection();
-    disconnect(notifiers.action);
+    QObject::disconnect(notifiers.action);
     notifiers.action = QMetaObject::Connection();
 }
 }
