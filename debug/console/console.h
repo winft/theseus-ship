@@ -71,7 +71,6 @@ public:
     void begin_remove_rows(QModelIndex const& parent, int first, int last);
     void end_remove_rows();
 
-protected:
     virtual bool get_client_count(int parent_id, int& count) const;
     virtual bool get_property_count(QModelIndex const& parent, int& count) const;
 
@@ -94,7 +93,6 @@ protected:
     static constexpr int s_waylandClientId{3};
     static constexpr int s_workspaceInternalId{4};
 
-private:
     std::vector<std::unique_ptr<console_window>> m_internalClients;
     std::vector<std::unique_ptr<console_window>> m_x11Clients;
     std::vector<std::unique_ptr<console_window>> m_unmanageds;

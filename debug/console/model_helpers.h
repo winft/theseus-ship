@@ -8,7 +8,11 @@
 #include "window.h"
 
 #include "toplevel.h"
+#include "win/internal_window.h"
 #include "win/meta.h"
+#include "win/space_qobject.h"
+#include "win/x11/stacking.h"
+#include "win/x11/window.h"
 
 #include <QVector>
 
@@ -119,6 +123,61 @@ void remove_window(Model* model,
     model->begin_remove_rows(model->index(parentRow, 0, QModelIndex()), remove, remove);
     windows.erase(it);
     model->end_remove_rows();
+}
+
+template<typename Model, typename Space>
+void model_setup_connections(Model& model, Space& space)
+{
+    for (auto const& window : space.windows) {
+        if (window->control) {
+            if (dynamic_cast<win::x11::window*>(window)) {
+                model.m_x11Clients.emplace_back(std::make_unique<console_window>(window));
+            }
+        }
+    }
+    QObject::connect(
+        space.qobject.get(), &win::space_qobject::clientAdded, &model, [&model](auto c) {
+            add_window(&model, model.s_x11ClientId - 1, model.m_x11Clients, c);
+        });
+    QObject::connect(
+        space.qobject.get(), &win::space_qobject::clientRemoved, &model, [&model](auto window) {
+            // TODO(romangg): This function is also being called on Waylad windows for
+            // some reason. It works with our containers but best would be to make this
+            // symmetric with adding.
+            remove_window(&model, model.s_x11ClientId - 1, model.m_x11Clients, window);
+        });
+
+    for (auto unmanaged : win::x11::get_unmanageds<Toplevel>(space)) {
+        model.m_unmanageds.emplace_back(std::make_unique<console_window>(unmanaged));
+    }
+
+    QObject::connect(
+        space.qobject.get(), &win::space_qobject::unmanagedAdded, &model, [&model](auto u) {
+            add_window(&model, model.s_x11UnmanagedId - 1, model.m_unmanageds, u);
+        });
+    QObject::connect(
+        space.qobject.get(), &win::space_qobject::unmanagedRemoved, &model, [&model](auto u) {
+            remove_window(&model, model.s_x11UnmanagedId - 1, model.m_unmanageds, u);
+        });
+    for (auto const& window : space.windows) {
+        if (dynamic_cast<win::internal_window*>(window)) {
+            model.m_internalClients.emplace_back(std::make_unique<console_window>(window));
+        }
+    }
+    QObject::connect(
+        space.qobject.get(),
+        &win::space_qobject::internalClientAdded,
+        &model,
+        [&model](auto window) {
+            add_window(&model, model.s_workspaceInternalId - 1, model.m_internalClients, window);
+        });
+    QObject::connect(
+        space.qobject.get(),
+        &win::space_qobject::internalClientRemoved,
+        &model,
+        [&model](auto window) {
+            remove_window(&model, model.s_workspaceInternalId - 1, model.m_internalClients, window);
+        });
 }
 
 }

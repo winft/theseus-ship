@@ -7,6 +7,7 @@
 
 #include "input_device_model.h"
 #include "input_filter.h"
+#include "model_helpers.h"
 #include "surface_tree_model.h"
 
 #include "debug/console/model_helpers.h"
@@ -19,8 +20,6 @@
 #include "input/xkb/keyboard.h"
 #include "input_filter.h"
 #include "main.h"
-#include "win/wayland/space.h"
-#include "win/wayland/window.h"
 
 #include "ui_debug_console.h"
 
@@ -119,22 +118,7 @@ void wayland_console::update_keyboard_tab()
 wayland_console_model::wayland_console_model(win::space& space, QObject* parent)
     : console_model(space, parent)
 {
-    for (auto window : space.windows) {
-        if (auto wwin = dynamic_cast<wayland_window*>(window); wwin && !wwin->remnant) {
-            m_shellClients.emplace_back(std::make_unique<console_window>(window));
-        }
-    }
-
-    // TODO: that only includes windows getting shown, not those which are only created
-    QObject::connect(
-        space.qobject.get(), &win::space::qobject_t::wayland_window_added, this, [this](auto win) {
-            add_window(this, s_waylandClientId - 1, m_shellClients, win);
-        });
-    QObject::connect(
-        space.qobject.get(),
-        &win::space::qobject_t::wayland_window_removed,
-        this,
-        [this](auto win) { remove_window(this, s_waylandClientId - 1, m_shellClients, win); });
+    wayland_model_setup_connections(*this, space);
 }
 
 wayland_console_model::~wayland_console_model() = default;

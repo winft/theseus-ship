@@ -25,13 +25,12 @@ template<typename Space>
 class window;
 }
 
+using wayland_space = win::wayland::space<base::wayland::platform>;
+
 namespace debug
 {
 
 class input_filter;
-
-using wayland_space = win::wayland::space<base::wayland::platform>;
-using wayland_window = win::wayland::window<wayland_space>;
 
 class KWIN_EXPORT wayland_console : public console
 {
@@ -53,7 +52,6 @@ public:
     explicit wayland_console_model(win::space& space, QObject* parent = nullptr);
     ~wayland_console_model();
 
-protected:
     bool get_client_count(int parent_id, int& count) const override;
     bool get_property_count(QModelIndex const& parent, int& count) const override;
 
@@ -67,8 +65,6 @@ protected:
     QVariant get_client_property_data(QModelIndex const& index, int role) const override;
 
     int topLevelRowCount() const override;
-
-private:
     console_window* shellClient(QModelIndex const& index) const;
 
     std::vector<std::unique_ptr<console_window>> m_shellClients;

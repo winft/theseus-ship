@@ -26,10 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/compositor.h"
 #include "render/effects.h"
 #include "render/scene.h"
-#include "win/internal_window.h"
 #include "win/space.h"
-#include "win/x11/stacking.h"
-#include "win/x11/window.h"
 
 #include <kwingl/platform.h>
 #include <kwingl/utils.h>
@@ -252,46 +249,7 @@ console_model::console_model(win::space& space, QObject* parent)
     : QAbstractItemModel(parent)
     , space{space}
 {
-    for (auto const& window : space.windows) {
-        if (window->control) {
-            if (dynamic_cast<win::x11::window*>(window)) {
-                m_x11Clients.emplace_back(std::make_unique<console_window>(window));
-            }
-        }
-    }
-    connect(space.qobject.get(), &win::space_qobject::clientAdded, this, [this](auto c) {
-        add_window(this, s_x11ClientId - 1, m_x11Clients, c);
-    });
-    connect(
-        space.qobject.get(), &win::space_qobject::clientRemoved, this, [this](Toplevel* window) {
-            // TODO(romangg): This function is also being called on Waylad windows for some reason.
-            // It works with our containers but best would be to make this symmetric with adding.
-            remove_window(this, s_x11ClientId - 1, m_x11Clients, window);
-        });
-
-    for (auto unmanaged : win::x11::get_unmanageds<Toplevel>(space)) {
-        m_unmanageds.emplace_back(std::make_unique<console_window>(unmanaged));
-    }
-
-    connect(space.qobject.get(), &win::space_qobject::unmanagedAdded, this, [this](Toplevel* u) {
-        add_window(this, s_x11UnmanagedId - 1, m_unmanageds, u);
-    });
-    connect(space.qobject.get(), &win::space_qobject::unmanagedRemoved, this, [this](Toplevel* u) {
-        remove_window(this, s_x11UnmanagedId - 1, m_unmanageds, u);
-    });
-    for (auto const& window : space.windows) {
-        if (dynamic_cast<win::internal_window*>(window)) {
-            m_internalClients.emplace_back(std::make_unique<console_window>(window));
-        }
-    }
-    connect(
-        space.qobject.get(), &win::space_qobject::internalClientAdded, this, [this](auto window) {
-            add_window(this, s_workspaceInternalId - 1, m_internalClients, window);
-        });
-    connect(
-        space.qobject.get(), &win::space_qobject::internalClientRemoved, this, [this](auto window) {
-            remove_window(this, s_workspaceInternalId - 1, m_internalClients, window);
-        });
+    model_setup_connections(*this, space);
 }
 
 console_model::~console_model() = default;
