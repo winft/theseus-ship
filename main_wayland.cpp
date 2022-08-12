@@ -165,7 +165,8 @@ ApplicationWayland::~ApplicationWayland()
     }
 
     // Kill Xwayland before terminating its connection.
-    xwayland.reset();
+    base->xwayland.reset();
+    base->xwayland_interface = nullptr;
     waylandServer()->terminateClientConnections();
 
     if (base->render->compositor) {
@@ -275,7 +276,8 @@ void ApplicationWayland::create_xwayland()
     };
 
     try {
-        xwayland = std::make_unique<xwl::xwayland<wayland_space>>(this, *base->space, status_callback);
+        base->xwayland = std::make_unique<xwl::xwayland<wayland_space>>(this, *base->space, status_callback);
+        base->xwayland_interface = base->xwayland.get();
     } catch (std::system_error const& exc) {
         std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
         exit(exc.code().value());

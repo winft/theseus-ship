@@ -29,11 +29,6 @@ struct wlr_touch;
 
 namespace KWin
 {
-namespace xwl
-{
-template<typename Space>
-class xwayland;
-}
 
 class KWIN_EXPORT WaylandTestApplication : public Application
 {
@@ -43,7 +38,6 @@ public:
 
     std::unique_ptr<base::wayland::server> server;
     base::backend::wlroots::platform base;
-    std::unique_ptr<xwl::xwayland<wayland_space>> xwayland;
 
 #if HAVE_WLR_BASE_INPUT_DEVICES
     wlr_pointer* pointer{nullptr};

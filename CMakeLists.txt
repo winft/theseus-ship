@@ -495,7 +495,6 @@ set(kwin_SRCS
     win/x11/screen_edges_filter.cpp
     win/x11/sync_alarm_filter.cpp
     win/x11/window.cpp
-    xwl/xwayland_interface.cpp
 )
 
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")

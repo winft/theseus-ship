@@ -22,6 +22,11 @@ namespace render
 class platform;
 }
 
+namespace xwl
+{
+class xwayland_interface;
+}
+
 namespace base
 {
 
@@ -39,6 +44,7 @@ public:
 
     output_topology topology;
     std::unique_ptr<render::platform> render;
+    xwl::xwayland_interface* xwayland_interface{nullptr};
 
 private:
     Q_DISABLE_COPY(platform)
