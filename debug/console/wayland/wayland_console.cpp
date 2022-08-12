@@ -42,9 +42,9 @@ wayland_console::wayland_console(wayland_space& space)
 
     QObject::connect(m_ui->tabWidget, &QTabWidget::currentChanged, this, [this, &space](int index) {
         // delay creation of input event filter until the tab is selected
-        if (index == 2 && m_inputFilter.isNull()) {
-            m_inputFilter.reset(new input_filter(*space.input, m_ui->inputTextEdit));
-            space.input->installInputEventSpy(m_inputFilter.data());
+        if (!m_inputFilter && index == 2) {
+            m_inputFilter = std::make_unique<input_filter>(*space.input, m_ui->inputTextEdit);
+            space.input->installInputEventSpy(m_inputFilter.get());
         }
         if (index == 5) {
             update_keyboard_tab();

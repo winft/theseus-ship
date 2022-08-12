@@ -42,7 +42,7 @@ public:
 private:
     void update_keyboard_tab();
 
-    QScopedPointer<input_filter> m_inputFilter;
+    std::unique_ptr<input_filter> m_inputFilter;
 };
 
 class KWIN_EXPORT wayland_console_model : public console_model
