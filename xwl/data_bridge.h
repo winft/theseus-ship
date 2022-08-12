@@ -41,15 +41,15 @@ template<typename Window>
 class data_bridge
 {
 public:
-    data_bridge(x11_data const& x11)
-        : x11{x11}
+    data_bridge(runtime const& core)
+        : core{core}
     {
-        xcb_prefetch_extension_data(x11.connection, &xcb_xfixes_id);
-        xfixes = xcb_get_extension_data(x11.connection, &xcb_xfixes_id);
+        xcb_prefetch_extension_data(core.x11.connection, &xcb_xfixes_id);
+        xfixes = xcb_get_extension_data(core.x11.connection, &xcb_xfixes_id);
 
-        clipboard.reset(new xwl::clipboard(x11));
-        dnd.reset(new drag_and_drop<Toplevel>(x11));
-        primary_selection.reset(new xwl::primary_selection(x11));
+        clipboard.reset(new xwl::clipboard(core));
+        dnd.reset(new drag_and_drop<Toplevel>(core));
+        primary_selection.reset(new xwl::primary_selection(core));
     }
 
     bool filter_event(xcb_generic_event_t* event)
@@ -81,20 +81,20 @@ public:
 private:
     bool handle_xfixes_notify(xcb_xfixes_selection_notify_event_t* event)
     {
-        if (event->selection == x11.space->atoms->clipboard) {
+        if (event->selection == core.space->atoms->clipboard) {
             return xwl::handle_xfixes_notify(clipboard.get(), event);
         }
-        if (event->selection == x11.space->atoms->primary_selection) {
+        if (event->selection == core.space->atoms->primary_selection) {
             return xwl::handle_xfixes_notify(primary_selection.get(), event);
         }
-        if (event->selection == x11.space->atoms->xdnd_selection) {
+        if (event->selection == core.space->atoms->xdnd_selection) {
             return xwl::handle_xfixes_notify(dnd.get(), event);
         }
         return false;
     }
 
     xcb_query_extension_reply_t const* xfixes{nullptr};
-    x11_data const& x11;
+    runtime const& core;
 
     std::unique_ptr<xwl::clipboard> clipboard;
     std::unique_ptr<drag_and_drop<Window>> dnd;

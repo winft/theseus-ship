@@ -45,11 +45,11 @@ public:
         , drag_window{drag_window}
     {
         // first check supported DND version
-        auto xcb_con = source.x11.connection;
+        auto xcb_con = source.core.x11.connection;
         auto cookie = xcb_get_property(xcb_con,
                                        0,
                                        target->xcb_window,
-                                       source.x11.space->atoms->xdnd_aware,
+                                       source.core.x11.atoms->xdnd_aware,
                                        XCB_GET_PROPERTY_TYPE_ANY,
                                        0,
                                        1);
@@ -93,7 +93,7 @@ public:
 
     bool handle_client_message(xcb_client_message_event_t* event)
     {
-        auto& atoms = source.x11.space->atoms;
+        auto& atoms = source.core.x11.atoms;
         if (event->type == atoms->xdnd_status) {
             return handle_status(event);
         } else if (event->type == atoms->xdnd_finished) {
@@ -119,11 +119,11 @@ public:
         data.data32[0] = drag_window;
         data.data32[2] = (x << 16) | y;
         data.data32[3] = XCB_CURRENT_TIME;
-        data.data32[4] = client_action_to_atom(actions.proposed, *source.x11.space->atoms);
+        data.data32[4] = client_action_to_atom(actions.proposed, *source.core.x11.atoms);
 
-        send_client_message(source.x11.connection,
+        send_client_message(source.core.x11.connection,
                             target->xcb_window,
-                            source.x11.space->atoms->xdnd_position,
+                            source.core.x11.atoms->xdnd_position,
                             &data);
     }
 
@@ -170,7 +170,7 @@ private:
 
         if (!state.dropped) {
             // as long as the drop is not yet done determine requested action
-            actions.preferred = atom_to_client_action(actionAtom, *source.x11.space->atoms);
+            actions.preferred = atom_to_client_action(actionAtom, *source.core.x11.atoms);
             update_actions();
         }
 
@@ -226,7 +226,7 @@ private:
             if (totalCnt == 3) {
                 break;
             }
-            auto const atom = mime_type_to_atom(mimeName.c_str(), *source.x11.space->atoms);
+            auto const atom = mime_type_to_atom(mimeName.c_str(), *source.core.x11.atoms);
 
             if (atom != XCB_ATOM_NONE) {
                 data.data32[cnt + 2] = atom;
@@ -248,25 +248,27 @@ private:
 
             size_t cnt = 0;
             for (auto const& mimeName : mimeTypesNames) {
-                auto const atom = mime_type_to_atom(mimeName.c_str(), *source.x11.space->atoms);
+                auto const atom = mime_type_to_atom(mimeName.c_str(), *source.core.x11.atoms);
                 if (atom != XCB_ATOM_NONE) {
                     targets[cnt] = atom;
                     cnt++;
                 }
             }
 
-            xcb_change_property(source.x11.connection,
+            xcb_change_property(source.core.x11.connection,
                                 XCB_PROP_MODE_REPLACE,
                                 drag_window,
-                                source.x11.space->atoms->xdnd_type_list,
+                                source.core.x11.atoms->xdnd_type_list,
                                 XCB_ATOM_ATOM,
                                 32,
                                 cnt,
                                 targets.data());
         }
 
-        send_client_message(
-            source.x11.connection, target->xcb_window, source.x11.space->atoms->xdnd_enter, &data);
+        send_client_message(source.core.x11.connection,
+                            target->xcb_window,
+                            source.core.x11.atoms->xdnd_enter,
+                            &data);
     }
 
     void send_drop(uint32_t time)
@@ -275,8 +277,10 @@ private:
         data.data32[0] = drag_window;
         data.data32[2] = time;
 
-        send_client_message(
-            source.x11.connection, target->xcb_window, source.x11.space->atoms->xdnd_drop, &data);
+        send_client_message(source.core.x11.connection,
+                            target->xcb_window,
+                            source.core.x11.atoms->xdnd_drop,
+                            &data);
 
         if (version < 2) {
             do_finish();
@@ -288,8 +292,10 @@ private:
         xcb_client_message_data_t data = {{0}};
         data.data32[0] = drag_window;
 
-        send_client_message(
-            source.x11.connection, target->xcb_window, source.x11.space->atoms->xdnd_leave, &data);
+        send_client_message(source.core.x11.connection,
+                            target->xcb_window,
+                            source.core.x11.atoms->xdnd_leave,
+                            &data);
     }
 
     void receive_offer()

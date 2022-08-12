@@ -127,8 +127,8 @@ public:
             // Currently there is no target or target is an Xwayland window.
             // Handled here and by X directly.
             if (target && target->surface && target->control) {
-                if (source.x11.space->active_client != target) {
-                    win::activate_window(*source.x11.space, target);
+                if (source.core.space->active_client != target) {
+                    win::activate_window(*source.core.space, target);
                 }
             }
 
@@ -219,7 +219,7 @@ private:
     void set_drag_target()
     {
         auto ac = visit->target;
-        win::activate_window(*source.x11.space, ac);
+        win::activate_window(*source.core.space, ac);
         waylandServer()->seat()->drags().set_target(ac->surface, ac->input_transform());
     }
 

@@ -56,9 +56,9 @@ template<typename ServerSource>
 class wl_source
 {
 public:
-    wl_source(ServerSource* source, x11_data const& x11)
+    wl_source(ServerSource* source, runtime const& core)
         : server_source{source}
-        , x11{x11}
+        , core{core}
         , qobject{std::make_unique<q_wl_source>()}
     {
         assert(source);
@@ -79,7 +79,7 @@ public:
     }
 
     ServerSource* server_source = nullptr;
-    x11_data const& x11;
+    runtime const& core;
     std::vector<std::string> offers;
     xcb_timestamp_t timestamp{XCB_CURRENT_TIME};
 
@@ -113,8 +113,8 @@ template<typename InternalSource>
 class x11_source
 {
 public:
-    x11_source(xcb_xfixes_selection_notify_event_t* event, x11_data const& x11)
-        : x11{x11}
+    x11_source(xcb_xfixes_selection_notify_event_t* event, runtime const& core)
+        : core{core}
         , timestamp{event->timestamp}
         , qobject{std::make_unique<q_x11_source>()}
     {
@@ -156,7 +156,7 @@ public:
         return qobject.get();
     }
 
-    x11_data const& x11;
+    runtime const& core;
     mime_atoms offers;
     xcb_timestamp_t timestamp;
 

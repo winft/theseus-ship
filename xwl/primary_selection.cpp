@@ -17,11 +17,11 @@
 namespace KWin::xwl
 {
 
-primary_selection::primary_selection(x11_data const& x11)
+primary_selection::primary_selection(runtime const& core)
 {
     data = create_selection_data<Wrapland::Server::primary_selection_source,
-                                 primary_selection_source_ext>(x11.space->atoms->primary_selection,
-                                                               x11);
+                                 primary_selection_source_ext>(core.x11.atoms->primary_selection,
+                                                               core);
 
     register_x11_selection(this, QSize(10, 10));
 

@@ -263,9 +263,9 @@ x11_to_wl_transfer::x11_to_wl_transfer(xcb_atom_t selection,
                                        qint32 fd,
                                        xcb_timestamp_t timestamp,
                                        xcb_window_t parentWindow,
-                                       x11_data const& x11,
+                                       x11_runtime const& x11,
                                        QObject* parent)
-    : transfer(selection, fd, timestamp, *x11.space->atoms, parent)
+    : transfer(selection, fd, timestamp, *x11.atoms, parent)
 {
     // create transfer window
     auto xcb_con = kwinApp()->x11Connection();

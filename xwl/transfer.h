@@ -207,7 +207,7 @@ public:
                        qint32 fd,
                        xcb_timestamp_t timestamp,
                        xcb_window_t parentWindow,
-                       x11_data const& x11,
+                       x11_runtime const& x11,
                        QObject* parent = nullptr);
     ~x11_to_wl_transfer() override;
 

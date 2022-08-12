@@ -24,10 +24,15 @@ class space;
 namespace xwl
 {
 
-struct x11_data {
+struct x11_runtime {
     xcb_connection_t* connection{nullptr};
     xcb_screen_t* screen{nullptr};
+    base::x11::atoms* atoms{nullptr};
+};
+
+struct runtime {
     win::space* space{nullptr};
+    x11_runtime x11{};
 };
 
 struct mime_atom {

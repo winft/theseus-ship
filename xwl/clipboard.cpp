@@ -31,10 +31,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::xwl
 {
 
-clipboard::clipboard(x11_data const& x11)
+clipboard::clipboard(runtime const& core)
 {
     data = create_selection_data<Wrapland::Server::data_source, data_source_ext>(
-        x11.space->atoms->clipboard, x11);
+        core.space->atoms->clipboard, core);
 
     register_x11_selection(this, QSize(10, 10));
 

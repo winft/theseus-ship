@@ -65,7 +65,7 @@ struct selection_data {
 
     std::unique_ptr<internal_source> source_int;
 
-    x11_data x11;
+    runtime core;
     QMetaObject::Connection active_window_notifier;
 
     // active transfers
@@ -84,17 +84,17 @@ struct selection_data {
 };
 
 template<typename server_source, typename internal_source>
-auto create_selection_data(xcb_atom_t atom, x11_data const& x11)
+auto create_selection_data(xcb_atom_t atom, runtime const& core)
 {
     selection_data<server_source, internal_source> sel;
 
     sel.qobject.reset(new q_selection());
     sel.atom = atom;
-    sel.x11 = x11;
+    sel.core = core;
 
-    sel.window = xcb_generate_id(x11.connection);
+    sel.window = xcb_generate_id(core.x11.connection);
     sel.requestor_window = sel.window;
-    xcb_flush(x11.connection);
+    xcb_flush(core.x11.connection);
 
     return sel;
 }

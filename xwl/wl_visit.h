@@ -38,7 +38,7 @@ public:
         , target{target}
         , source{source}
     {
-        auto xcb_con = source.x11.connection;
+        auto xcb_con = source.core.x11.connection;
 
         window = xcb_generate_id(xcb_con);
         uint32_t const dndValues[]
@@ -54,22 +54,22 @@ public:
                           8192, // TODO: get current screen size and connect to changes
                           0,
                           XCB_WINDOW_CLASS_INPUT_OUTPUT,
-                          source.x11.screen->root_visual,
+                          source.core.x11.screen->root_visual,
                           XCB_CW_EVENT_MASK,
                           dndValues);
 
         xcb_change_property(xcb_con,
                             XCB_PROP_MODE_REPLACE,
                             window,
-                            source.x11.space->atoms->xdnd_aware,
+                            source.core.x11.atoms->xdnd_aware,
                             XCB_ATOM_ATOM,
                             32,
                             1,
                             &drag_and_drop_version);
 
         xcb_map_window(xcb_con, window);
-        source.x11.space->stacking_order->manual_overlays.push_back(window);
-        source.x11.space->stacking_order->update_count();
+        source.core.space->stacking_order->manual_overlays.push_back(window);
+        source.core.space->stacking_order->update_count();
 
         xcb_flush(xcb_con);
         state.mapped = true;
@@ -80,8 +80,8 @@ public:
         // TODO(romangg): Use the x11_data here. But we must ensure the Dnd object still exists at
         // this
         //                point, i.e. use explicit ownership through smart pointer only.
-        xcb_destroy_window(source.x11.connection, window);
-        xcb_flush(source.x11.connection);
+        xcb_destroy_window(source.core.x11.connection, window);
+        xcb_flush(source.core.x11.connection);
     }
 
     bool handle_client_message(xcb_client_message_event_t* event)
@@ -90,7 +90,7 @@ public:
             return false;
         }
 
-        auto& atoms = source.x11.space->atoms;
+        auto& atoms = source.core.x11.atoms;
         if (event->type == atoms->xdnd_enter) {
             return handle_enter(event);
         } else if (event->type == atoms->xdnd_position) {
@@ -119,7 +119,7 @@ public:
         data.data32[2] = accepted ? action_atom : static_cast<uint32_t>(XCB_ATOM_NONE);
 
         send_client_message(
-            source.x11.connection, source_window, source.x11.space->atoms->xdnd_finished, &data);
+            source.core.x11.connection, source_window, source.core.x11.atoms->xdnd_finished, &data);
     }
 
     std::unique_ptr<wl_visit_qobject> qobject;
@@ -160,7 +160,7 @@ private:
             // message has only max 3 types (which are directly in data)
             for (size_t i = 0; i < 3; i++) {
                 xcb_atom_t mimeAtom = data->data32[2 + i];
-                auto const mimeStrings = atom_to_mime_types(mimeAtom, *source.x11.space->atoms);
+                auto const mimeStrings = atom_to_mime_types(mimeAtom, *source.core.x11.atoms);
                 for (auto const& mime : mimeStrings) {
                     if (!hasMimeName(offers, mime)) {
                         offers.emplace_back(mime, mimeAtom);
@@ -194,7 +194,7 @@ private:
 
         source.timestamp = data->data32[3];
 
-        auto& atoms = source.x11.space->atoms;
+        auto& atoms = source.core.x11.atoms;
         xcb_atom_t actionAtom = m_version > 1 ? data->data32[4] : atoms->xdnd_action_copy;
         auto action = atom_to_client_action(actionAtom, *atoms);
 
@@ -251,20 +251,20 @@ private:
         data.data32[4] = flags & (1 << 0) ? action_atom : static_cast<uint32_t>(XCB_ATOM_NONE);
 
         send_client_message(
-            source.x11.connection, source_window, source.x11.space->atoms->xdnd_status, &data);
+            source.core.x11.connection, source_window, source.core.x11.atoms->xdnd_status, &data);
     }
 
     void get_mimes_from_win_property(mime_atoms& offers)
     {
-        auto cookie = xcb_get_property(source.x11.connection,
+        auto cookie = xcb_get_property(source.core.x11.connection,
                                        0,
                                        source_window,
-                                       source.x11.space->atoms->xdnd_type_list,
+                                       source.core.x11.atoms->xdnd_type_list,
                                        XCB_GET_PROPERTY_TYPE_ANY,
                                        0,
                                        0x1fffffff);
 
-        auto reply = xcb_get_property_reply(source.x11.connection, cookie, nullptr);
+        auto reply = xcb_get_property_reply(source.core.x11.connection, cookie, nullptr);
         if (reply == nullptr) {
             return;
         }
@@ -276,7 +276,7 @@ private:
 
         auto mimeAtoms = static_cast<xcb_atom_t*>(xcb_get_property_value(reply));
         for (size_t i = 0; i < reply->value_len; ++i) {
-            auto const mimeStrings = atom_to_mime_types(mimeAtoms[i], *source.x11.space->atoms);
+            auto const mimeStrings = atom_to_mime_types(mimeAtoms[i], *source.core.x11.atoms);
             for (auto const& mime : mimeStrings) {
                 if (!hasMimeName(offers, mime)) {
                     offers.emplace_back(mime, mimeAtoms[i]);
@@ -308,12 +308,12 @@ private:
             return;
         }
 
-        xcb_unmap_window(source.x11.connection, window);
+        xcb_unmap_window(source.core.x11.connection, window);
 
-        remove_all(source.x11.space->stacking_order->manual_overlays, window);
-        source.x11.space->stacking_order->update_count();
+        remove_all(source.core.space->stacking_order->manual_overlays, window);
+        source.core.space->stacking_order->update_count();
 
-        xcb_flush(source.x11.connection);
+        xcb_flush(source.core.x11.connection);
         state.mapped = false;
     }
 

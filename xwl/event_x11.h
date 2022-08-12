@@ -64,7 +64,7 @@ void do_handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t
 
     sel->data.x11_source.reset();
 
-    auto const& client = sel->data.x11.space->active_client;
+    auto const& client = sel->data.core.space->active_client;
     if (!dynamic_cast<win::x11::window const*>(client)) {
         // Clipboard is only allowed to be acquired when Xwayland has focus
         // TODO(romangg): can we make this stronger (window id comparison)?
@@ -78,13 +78,13 @@ void do_handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t
 
     if (auto const& source = sel->data.x11_source) {
         /* Gets X11 targets, will lead to a selection request event for the new owner. */
-        xcb_convert_selection(source->x11.connection,
+        xcb_convert_selection(source->core.x11.connection,
                               sel->data.requestor_window,
                               sel->data.atom,
-                              sel->data.x11.space->atoms->targets,
-                              sel->data.x11.space->atoms->wl_selection,
+                              sel->data.core.space->atoms->targets,
+                              sel->data.core.space->atoms->wl_selection,
                               source->timestamp);
-        xcb_flush(source->x11.connection);
+        xcb_flush(source->core.x11.connection);
     }
 }
 
@@ -121,10 +121,10 @@ bool handle_selection_request(Selection* sel, xcb_selection_request_event_t* eve
         return false;
     }
 
-    if (!dynamic_cast<win::x11::window*>(sel->data.x11.space->active_client)) {
+    if (!dynamic_cast<win::x11::window*>(sel->data.core.space->active_client)) {
         // Receiving Wayland selection not allowed when no Xwayland surface active
         // filter the event, but don't act upon it
-        send_selection_notify(sel->data.x11.connection, event, false);
+        send_selection_notify(sel->data.core.x11.connection, event, false);
         return true;
     }
 
@@ -132,7 +132,7 @@ bool handle_selection_request(Selection* sel, xcb_selection_request_event_t* eve
         if (event->time < sel->data.timestamp) {
             // cancel earlier attempts at receiving a selection
             // TODO: is this for sure without problems?
-            send_selection_notify(sel->data.x11.connection, event, false);
+            send_selection_notify(sel->data.core.x11.connection, event, false);
             return true;
         }
         return false;

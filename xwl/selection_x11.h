@@ -34,7 +34,7 @@ void create_x11_source(Selection* sel, xcb_xfixes_selection_notify_event_t* even
     sel->data.wayland_source.reset();
 
     using internal_source = std::remove_pointer_t<decltype(sel->data.source_int.get())>;
-    sel->data.x11_source.reset(new x11_source<internal_source>(event, sel->data.x11));
+    sel->data.x11_source.reset(new x11_source<internal_source>(event, sel->data.core));
 
     QObject::connect(sel->data.x11_source->get_qobject(),
                      &q_x11_source::offers_changed,
@@ -58,7 +58,7 @@ void start_transfer_to_wayland(Selection* sel, xcb_atom_t target, qint32 fd)
                                            fd,
                                            sel->data.x11_source->timestamp,
                                            sel->data.requestor_window,
-                                           sel->data.x11,
+                                           sel->data.core.x11,
                                            sel->data.qobject.get());
     sel->data.transfers.x11_to_wl.push_back(transfer);
 
@@ -125,7 +125,7 @@ void register_xfixes(Selection* sel)
 template<typename Selection>
 void register_x11_selection(Selection* sel, QSize const& window_size)
 {
-    auto xcb_con = sel->data.x11.connection;
+    auto xcb_con = sel->data.core.x11.connection;
 
     uint32_t const values[] = {XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY | XCB_EVENT_MASK_PROPERTY_CHANGE};
     xcb_create_window(xcb_con,
@@ -138,7 +138,7 @@ void register_x11_selection(Selection* sel, QSize const& window_size)
                       window_size.height(),
                       0,
                       XCB_WINDOW_CLASS_INPUT_OUTPUT,
-                      sel->data.x11.screen->root_visual,
+                      sel->data.core.x11.screen->root_visual,
                       XCB_CW_EVENT_MASK,
                       values);
     register_xfixes(sel);
@@ -149,14 +149,14 @@ template<typename Source>
 void selection_x11_handle_targets(Source&& source, xcb_window_t const requestor)
 {
     // receive targets
-    xcb_get_property_cookie_t cookie = xcb_get_property(source->x11.connection,
+    xcb_get_property_cookie_t cookie = xcb_get_property(source->core.x11.connection,
                                                         1,
                                                         requestor,
-                                                        source->x11.space->atoms->wl_selection,
+                                                        source->core.x11.atoms->wl_selection,
                                                         XCB_GET_PROPERTY_TYPE_ANY,
                                                         0,
                                                         4096);
-    auto reply = xcb_get_property_reply(source->x11.connection, cookie, nullptr);
+    auto reply = xcb_get_property_reply(source->core.x11.connection, cookie, nullptr);
     if (!reply) {
         return;
     }
@@ -177,7 +177,7 @@ void selection_x11_handle_targets(Source&& source, xcb_window_t const requestor)
             continue;
         }
 
-        auto const mimeStrings = atom_to_mime_types(value[i], *source->x11.space->atoms);
+        auto const mimeStrings = atom_to_mime_types(value[i], *source->core.x11.atoms);
         if (mimeStrings.empty()) {
             // TODO: this should never happen? assert?
             continue;
@@ -233,7 +233,7 @@ bool selection_x11_handle_notify(Source&& source, xcb_selection_notify_event_t* 
         qCWarning(KWIN_CORE) << "Incoming X selection conversion failed";
         return true;
     }
-    if (event->target == source->x11.space->atoms->targets) {
+    if (event->target == source->core.x11.atoms->targets) {
         selection_x11_handle_targets(source, event->requestor);
         return true;
     }

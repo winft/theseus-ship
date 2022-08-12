@@ -77,7 +77,7 @@ public:
      *  indicate a critical error happened at runtime.
      */
     xwayland(Application* app, Space& space, std::function<void(int code)> status_callback)
-        : basic_data{nullptr, nullptr, &space}
+        : core{&space}
         , app{app}
         , space{space}
         , status_callback{status_callback}
@@ -171,6 +171,7 @@ public:
         if (app->x11Connection()) {
             base::x11::xcb::set_input_focus(XCB_INPUT_FOCUS_POINTER_ROOT);
             space.atoms.reset();
+            core.x11.atoms = nullptr;
             Q_EMIT app->x11ConnectionAboutToBeDestroyed();
             app->setX11Connection(nullptr);
             xcb_disconnect(app->x11Connection());
@@ -196,32 +197,32 @@ private:
         auto screenNumber = 0;
 
         if (xcb_connection_fd == -1) {
-            basic_data.connection = xcb_connect(nullptr, &screenNumber);
+            core.x11.connection = xcb_connect(nullptr, &screenNumber);
         } else {
-            basic_data.connection = xcb_connect_to_fd(xcb_connection_fd, nullptr);
+            core.x11.connection = xcb_connect_to_fd(xcb_connection_fd, nullptr);
         }
 
-        if (int error = xcb_connection_has_error(basic_data.connection)) {
+        if (int error = xcb_connection_has_error(core.x11.connection)) {
             std::cerr << "FATAL ERROR connecting to Xwayland server: " << error << std::endl;
             status_callback(1);
             return;
         }
 
-        auto iter = xcb_setup_roots_iterator(xcb_get_setup(basic_data.connection));
-        basic_data.screen = iter.data;
-        assert(basic_data.screen);
+        auto iter = xcb_setup_roots_iterator(xcb_get_setup(core.x11.connection));
+        core.x11.screen = iter.data;
+        assert(core.x11.screen);
 
-        app->setX11Connection(basic_data.connection, false);
+        app->setX11Connection(core.x11.connection, false);
 
         // we don't support X11 multi-head in Wayland
         app->setX11ScreenNumber(screenNumber);
         app->setX11RootWindow(defaultScreen()->root);
 
-        xcb_read_notifier.reset(new QSocketNotifier(xcb_get_file_descriptor(basic_data.connection),
+        xcb_read_notifier.reset(new QSocketNotifier(xcb_get_file_descriptor(core.x11.connection),
                                                     QSocketNotifier::Read));
 
         auto processXcbEvents = [this] {
-            while (auto event = xcb_poll_for_event(basic_data.connection)) {
+            while (auto event = xcb_poll_for_event(core.x11.connection)) {
                 if (data_bridge->filter_event(event)) {
                     free(event);
                     continue;
@@ -231,7 +232,7 @@ private:
                     QByteArrayLiteral("xcb_generic_event_t"), event, &result);
                 free(event);
             }
-            xcb_flush(basic_data.connection);
+            xcb_flush(core.x11.connection);
         };
 
         connect(xcb_read_notifier.get(), &QSocketNotifier::activated, this, processXcbEvents);
@@ -245,10 +246,11 @@ private:
                 processXcbEvents);
 
         // create selection owner for WM_S0 - magic X display number expected by XWayland
-        KSelectionOwner owner("WM_S0", basic_data.connection, app->x11RootWindow());
+        KSelectionOwner owner("WM_S0", core.x11.connection, app->x11RootWindow());
         owner.claim(true);
 
-        space.atoms = std::make_unique<base::x11::atoms>(basic_data.connection);
+        space.atoms = std::make_unique<base::x11::atoms>(core.x11.connection);
+        core.x11.atoms = space.atoms.get();
         event_filter = std::make_unique<base::x11::xcb_event_filter<Space>>(space);
         app->installNativeEventFilter(event_filter.get());
 
@@ -297,7 +299,7 @@ private:
         // Trigger possible errors, there's still a chance to abort
         base::x11::xcb::sync();
 
-        data_bridge.reset(new xwl::data_bridge<Toplevel>(basic_data));
+        data_bridge.reset(new xwl::data_bridge<Toplevel>(core));
     }
 
     drag_event_reply drag_move_filter(Toplevel* target, QPoint const& pos) override
@@ -312,7 +314,7 @@ private:
     QProcess* xwayland_process{nullptr};
     QMetaObject::Connection xwayland_fail_notifier;
 
-    x11_data basic_data;
+    runtime core;
 
     std::unique_ptr<QSocketNotifier> xcb_read_notifier;
     std::unique_ptr<base::x11::xcb_event_filter<Space>> event_filter;
