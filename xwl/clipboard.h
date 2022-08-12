@@ -34,7 +34,7 @@ class data_source_ext;
  * Represents the X clipboard, which is on Wayland side just called
  * @e selection.
  */
-class clipboard
+class KWIN_EXPORT clipboard
 {
 public:
     selection_data<Wrapland::Server::data_source, data_source_ext> data;

@@ -16,4 +16,3 @@ kwin_scene_xrender KWin XRender based compositor scene plugin DEFAULT_SEVERITY [
 kwin_scene_qpainter KWin QPainter based compositor scene plugin DEFAULT_SEVERITY [WARNING] IDENTIFIER [KWIN_QPAINTER]
 kwin_scene_opengl KWin OpenGL based compositor scene plugins DEFAULT_SEVERITY [WARNING] IDENTIFIER [KWIN_OPENGL]
 kwin_perf KWin Performance measurement and debugging tools DEFAULT_SEVERITY [WARNING] IDENTIFIER [KWIN_PERF]
-kwin_xwl KWin Xwayland Server DEFAULT_SEVERITY [WARNING] IDENTIFIER [KWIN_XWL]

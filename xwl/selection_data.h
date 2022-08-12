@@ -27,7 +27,7 @@ class x11_source;
  * QObject attribute of a Selection.
  * This is a hack around having a template QObject.
  */
-class q_selection : public QObject
+class KWIN_EXPORT q_selection : public QObject
 {
     Q_OBJECT
 

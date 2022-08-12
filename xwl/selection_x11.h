@@ -16,7 +16,6 @@
 #include <QObject>
 #include <unistd.h>
 #include <xcb/xfixes.h>
-#include <xwayland_logging.h>
 
 namespace KWin::xwl
 {
@@ -219,7 +218,7 @@ void selection_x11_start_transfer(Source&& source, std::string const& mimeName, 
         return mime.id == mimeName;
     });
     if (mimeIt == offers.end()) {
-        qCDebug(KWIN_XWL) << "Sending X11 clipboard to Wayland failed: unsupported MIME.";
+        qCDebug(KWIN_CORE) << "Sending X11 clipboard to Wayland failed: unsupported MIME.";
         close(fd);
         return;
     }
@@ -231,7 +230,7 @@ template<typename Source>
 bool selection_x11_handle_notify(Source&& source, xcb_selection_notify_event_t* event)
 {
     if (event->property == XCB_ATOM_NONE) {
-        qCWarning(KWIN_XWL) << "Incoming X selection conversion failed";
+        qCWarning(KWIN_CORE) << "Incoming X selection conversion failed";
         return true;
     }
     if (event->target == source->x11.space->atoms->targets) {

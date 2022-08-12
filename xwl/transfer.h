@@ -38,7 +38,7 @@ namespace KWin::xwl
  * externally afterwards. For that the owner should connect to the
  * @c finished() signal.
  */
-class transfer : public QObject
+class KWIN_EXPORT transfer : public QObject
 {
     Q_OBJECT
 
@@ -110,7 +110,7 @@ private:
 /**
  * Represents a transfer from a Wayland native source to an X window.
  */
-class wl_to_x11_transfer : public transfer
+class KWIN_EXPORT wl_to_x11_transfer : public transfer
 {
     Q_OBJECT
 
@@ -197,7 +197,7 @@ public:
 /**
  * Represents a transfer from an X window to a Wayland native client.
  */
-class x11_to_wl_transfer : public transfer
+class KWIN_EXPORT x11_to_wl_transfer : public transfer
 {
     Q_OBJECT
 

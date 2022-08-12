@@ -217,7 +217,6 @@ void WaylandTestApplication::start()
         exit(exc.code().value());
     }
 
-    using wayland_space = win::wayland::space<base::wayland::platform>;
     base.space = std::make_unique<wayland_space>(base, server.get());
     input::wayland::add_dbus(base.input.get());
     win::init_shortcuts(*base.space);
@@ -292,7 +291,8 @@ void WaylandTestApplication::create_xwayland()
     };
 
     try {
-        xwayland.reset(new xwl::xwayland(this, *base.space, status_callback));
+        xwayland
+            = std::make_unique<xwl::xwayland<wayland_space>>(this, *base.space, status_callback);
     } catch (std::system_error const& exc) {
         std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
         exit(exc.code().value());

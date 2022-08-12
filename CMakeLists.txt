@@ -743,7 +743,6 @@ set(kwin_XWAYLAND_SRCS
    xwl/primary_selection.cpp
    xwl/sources_ext.cpp
    xwl/transfer.cpp
-   xwl/xwayland.cpp
 
    # These headers need to be compiled for the helper QObjects they contain.
    xwl/drag.h
@@ -751,17 +750,6 @@ set(kwin_XWAYLAND_SRCS
    xwl/sources.h
    xwl/wl_visit.h
    xwl/x11_visit.h
-)
-
-ecm_qt_declare_logging_category(kwin_XWAYLAND_SRCS
-    HEADER
-        xwayland_logging.h
-    IDENTIFIER
-        KWIN_XWL
-    CATEGORY_NAME
-        kwin_xwl
-    DEFAULT_SEVERITY
-        Critical
 )
 
 add_subdirectory(plugins)

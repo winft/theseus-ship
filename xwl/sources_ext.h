@@ -5,13 +5,15 @@
 */
 #pragma once
 
+#include "kwin_export.h"
+
 #include <Wrapland/Server/data_source.h>
 #include <Wrapland/Server/primary_selection.h>
 
 namespace KWin::xwl
 {
 
-class data_source_ext : public Wrapland::Server::data_source_ext
+class KWIN_EXPORT data_source_ext : public Wrapland::Server::data_source_ext
 {
     Q_OBJECT
 public:
@@ -35,7 +37,8 @@ Q_SIGNALS:
     void finished();
 };
 
-class primary_selection_source_ext : public Wrapland::Server::primary_selection_source_ext
+class KWIN_EXPORT primary_selection_source_ext
+    : public Wrapland::Server::primary_selection_source_ext
 {
     Q_OBJECT
 public:

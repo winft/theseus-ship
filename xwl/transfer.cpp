@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/space.h"
 
 #include <unistd.h>
-#include <xwayland_logging.h>
 
 namespace KWin::xwl
 {
@@ -172,7 +171,7 @@ void wl_to_x11_transfer::read_wl_source()
 
     ssize_t readLen = read(get_fd(), chunks.back().first.data() + oldLen, avail);
     if (readLen == -1) {
-        qCWarning(KWIN_XWL) << "Error reading in Wl data.";
+        qCWarning(KWIN_CORE) << "Error reading in Wl data.";
 
         // TODO: cleanup X side?
         end_transfer();
@@ -320,11 +319,11 @@ bool x11_to_wl_transfer::handle_selection_notify(xcb_selection_notify_event_t* e
         return false;
     }
     if (event->property == XCB_ATOM_NONE) {
-        qCWarning(KWIN_XWL) << "Incoming X selection conversion failed";
+        qCWarning(KWIN_CORE) << "Incoming X selection conversion failed";
         return true;
     }
     if (event->target == atoms.targets) {
-        qCWarning(KWIN_XWL) << "Received targets too late";
+        qCWarning(KWIN_CORE) << "Received targets too late";
         // TODO: or allow it?
         return true;
     }
@@ -354,7 +353,7 @@ void x11_to_wl_transfer::start_transfer()
 
     auto reply = xcb_get_property_reply(xcb_con, cookie, nullptr);
     if (reply == nullptr) {
-        qCWarning(KWIN_XWL) << "Can't get selection property.";
+        qCWarning(KWIN_CORE) << "Can't get selection property.";
         end_transfer();
         return;
     }
@@ -387,7 +386,7 @@ void x11_to_wl_transfer::get_incr_chunk()
 
     auto reply = xcb_get_property_reply(xcb_con, cookie, nullptr);
     if (!reply) {
-        qCWarning(KWIN_XWL) << "Can't get selection property.";
+        qCWarning(KWIN_CORE) << "Can't get selection property.";
         end_transfer();
         return;
     }
@@ -529,7 +528,7 @@ void x11_to_wl_transfer::data_source_write()
 
     auto len = write(get_fd(), property.constData(), property.size());
     if (len == -1) {
-        qCWarning(KWIN_XWL) << "X11 to Wayland write error on fd:" << get_fd();
+        qCWarning(KWIN_CORE) << "X11 to Wayland write error on fd:" << get_fd();
         end_transfer();
         return;
     }

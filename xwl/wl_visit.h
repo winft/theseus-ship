@@ -21,7 +21,7 @@ namespace KWin::xwl
 
 using x11_source_ext = x11_source<data_source_ext>;
 
-class wl_visit_qobject : public QObject
+class KWIN_EXPORT wl_visit_qobject : public QObject
 {
     Q_OBJECT
 Q_SIGNALS:

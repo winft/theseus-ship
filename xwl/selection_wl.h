@@ -17,7 +17,6 @@
 
 #include <QObject>
 #include <unistd.h>
-#include <xwayland_logging.h>
 
 namespace KWin::xwl
 {
@@ -239,7 +238,7 @@ int selection_wl_start_transfer(Source&& source, xcb_selection_request_event_t* 
 {
     auto const targets = atom_to_mime_types(event->target, *source->x11.space->atoms);
     if (targets.empty()) {
-        qCDebug(KWIN_XWL) << "Unknown selection atom. Ignoring request.";
+        qCDebug(KWIN_CORE) << "Unknown selection atom. Ignoring request.";
         return -1;
     }
 
@@ -263,7 +262,7 @@ int selection_wl_start_transfer(Source&& source, xcb_selection_request_event_t* 
 
     int p[2];
     if (pipe(p) == -1) {
-        qCWarning(KWIN_XWL) << "Pipe failed. Not sending selection.";
+        qCWarning(KWIN_CORE) << "Pipe failed. Not sending selection.";
         return -1;
     }
 

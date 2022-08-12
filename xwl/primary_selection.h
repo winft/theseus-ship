@@ -15,7 +15,7 @@ namespace KWin::xwl
 {
 class primary_selection_source_ext;
 
-class primary_selection
+class KWIN_EXPORT primary_selection
 {
 public:
     selection_data<Wrapland::Server::primary_selection_source, primary_selection_source_ext> data;

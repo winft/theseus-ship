@@ -38,6 +38,7 @@ class tablet_mode_manager;
 
 namespace xwl
 {
+template<typename Space>
 class xwayland;
 }
 
@@ -45,6 +46,8 @@ class ApplicationWayland : public Application
 {
     Q_OBJECT
 public:
+    using wayland_space = win::wayland::space<base::wayland::platform>;
+
     std::unique_ptr<base::wayland::server> server;
 
     ApplicationWayland(int &argc, char **argv);
@@ -86,7 +89,7 @@ private:
     QString m_sessionArgument;
 
     std::unique_ptr<base::backend::wlroots::platform> base;
-    std::unique_ptr<xwl::xwayland> xwayland;
+    std::unique_ptr<xwl::xwayland<wayland_space>> xwayland;
 
     std::unique_ptr<input::dbus::tablet_mode_manager<input::wayland::platform>> tablet_mode_manager;
 

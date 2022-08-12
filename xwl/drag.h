@@ -83,7 +83,7 @@ inline void send_client_message(xcb_connection_t* connection,
     xcb_flush(connection);
 }
 
-class drag_qobject : public QObject
+class KWIN_EXPORT drag_qobject : public QObject
 {
     Q_OBJECT
 Q_SIGNALS:
