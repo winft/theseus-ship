@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QAbstractItemModel>
 #include <QStyledItemDelegate>
-#include <QVector>
+#include <vector>
 
 namespace Ui
 {
@@ -100,9 +100,9 @@ protected:
     static constexpr int s_workspaceInternalId{4};
 
 private:
-    QVector<win::internal_window*> m_internalClients;
-    QVector<win::x11::window*> m_x11Clients;
-    QVector<Toplevel*> m_unmanageds;
+    std::vector<win::internal_window*> m_internalClients;
+    std::vector<win::x11::window*> m_x11Clients;
+    std::vector<Toplevel*> m_unmanageds;
     win::space& space;
 };
 

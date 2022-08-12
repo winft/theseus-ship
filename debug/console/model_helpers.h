@@ -33,7 +33,7 @@ index_for_window(Model const* model, int row, int column, Container const& windo
     if (column != 0) {
         return QModelIndex();
     }
-    if (row >= windows.count()) {
+    if (row >= static_cast<int>(windows.size())) {
         return QModelIndex();
     }
     return model->create_index(row, column, s_idDistance * id + row);
@@ -68,19 +68,19 @@ int window_property_count(Model const* model,
 }
 
 template<class Window>
-Window* window_for_index(QModelIndex const& index, QVector<Window*> const& windows, int id)
+Window* window_for_index(QModelIndex const& index, std::vector<Window*> const& windows, int id)
 {
     int32_t const row = (index.internalId() & s_clientBitMask) - (s_idDistance * id);
-    if (row < 0 || row >= windows.count()) {
+    if (row < 0 || row >= static_cast<int>(windows.size())) {
         return nullptr;
     }
     return windows.at(row);
 }
 
 template<typename Window>
-QVariant window_data(QModelIndex const& index, int role, QVector<Window*> const& windows)
+QVariant window_data(QModelIndex const& index, int role, std::vector<Window*> const& windows)
 {
-    if (index.row() >= windows.count()) {
+    if (index.row() >= static_cast<int>(windows.size())) {
         return QVariant();
     }
 
@@ -97,23 +97,26 @@ QVariant window_data(QModelIndex const& index, int role, QVector<Window*> const&
 }
 
 template<typename Model, typename Window>
-void add_window(Model* model, int parentRow, QVector<Window*>& windows, Window* window)
+void add_window(Model* model, int parentRow, std::vector<Window*>& windows, Window* window)
 {
     model->begin_insert_rows(
-        model->index(parentRow, 0, QModelIndex()), windows.count(), windows.count());
-    windows.append(window);
+        model->index(parentRow, 0, QModelIndex()), windows.size(), windows.size());
+    windows.push_back(window);
     model->end_insert_rows();
 }
 
 template<typename Model, typename Window>
-void remove_window(Model* model, int parentRow, QVector<Window*>& windows, Window* window)
+void remove_window(Model* model, int parentRow, std::vector<Window*>& windows, Window* window)
 {
-    int const remove = windows.indexOf(window);
-    if (remove == -1) {
+    auto it = std::find(windows.begin(), windows.end(), window);
+    if (it == windows.end()) {
         return;
     }
+
+    int const remove = it - windows.begin();
+
     model->begin_remove_rows(model->index(parentRow, 0, QModelIndex()), remove, remove);
-    windows.removeAt(remove);
+    windows.erase(it);
     model->end_remove_rows();
 }
 

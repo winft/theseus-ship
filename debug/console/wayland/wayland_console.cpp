@@ -120,7 +120,7 @@ wayland_console_model::wayland_console_model(win::space& space, QObject* parent)
 {
     for (auto window : space.windows) {
         if (auto wwin = dynamic_cast<wayland_window*>(window); wwin && !wwin->remnant) {
-            m_shellClients.append(wwin);
+            m_shellClients.push_back(wwin);
         }
     }
 
@@ -147,7 +147,7 @@ int wayland_console_model::topLevelRowCount() const
 bool wayland_console_model::get_client_count(int parent_id, int& count) const
 {
     if (parent_id == s_waylandClientId) {
-        count = m_shellClients.count();
+        count = m_shellClients.size();
         return true;
     }
     return console_model::get_client_count(parent_id, count);

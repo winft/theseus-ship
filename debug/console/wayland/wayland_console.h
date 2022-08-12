@@ -70,7 +70,7 @@ protected:
 private:
     wayland_window* shellClient(const QModelIndex& index) const;
 
-    QVector<wayland_window*> m_shellClients;
+    std::vector<wayland_window*> m_shellClients;
 };
 
 class KWIN_EXPORT wayland_console_delegate : public console_delegate

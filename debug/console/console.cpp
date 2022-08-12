@@ -254,7 +254,7 @@ console_model::console_model(win::space& space, QObject* parent)
     for (auto const& window : space.windows) {
         if (window->control) {
             if (auto x11_client = dynamic_cast<win::x11::window*>(window)) {
-                m_x11Clients.append(x11_client);
+                m_x11Clients.push_back(x11_client);
             }
         }
     }
@@ -272,7 +272,7 @@ console_model::console_model(win::space& space, QObject* parent)
         });
 
     for (auto unmanaged : win::x11::get_unmanageds<Toplevel>(space)) {
-        m_unmanageds.append(unmanaged);
+        m_unmanageds.push_back(unmanaged);
     }
 
     connect(space.qobject.get(), &win::space_qobject::unmanagedAdded, this, [this](Toplevel* u) {
@@ -283,7 +283,7 @@ console_model::console_model(win::space& space, QObject* parent)
     });
     for (auto const& window : space.windows) {
         if (auto internal = dynamic_cast<win::internal_window*>(window)) {
-            m_internalClients.append(internal);
+            m_internalClients.push_back(internal);
         }
     }
     connect(
@@ -319,13 +319,13 @@ bool console_model::get_client_count(int parent_id, int& count) const
 {
     switch (parent_id) {
     case s_x11ClientId:
-        count = m_x11Clients.count();
+        count = m_x11Clients.size();
         break;
     case s_x11UnmanagedId:
-        count = m_unmanageds.count();
+        count = m_unmanageds.size();
         break;
     case s_workspaceInternalId:
-        count = m_internalClients.count();
+        count = m_internalClients.size();
         break;
     default:
         return false;
@@ -577,7 +577,7 @@ QVariant console_model::get_client_data(QModelIndex const& index, int role) cons
     case s_x11ClientId:
         return window_data(index, role, m_x11Clients);
     case s_x11UnmanagedId: {
-        if (index.row() >= m_unmanageds.count()) {
+        if (index.row() >= static_cast<int>(m_unmanageds.size())) {
             return QVariant();
         }
         auto u = m_unmanageds.at(index.row());
