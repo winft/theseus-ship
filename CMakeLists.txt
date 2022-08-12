@@ -738,8 +738,6 @@ install(TARGETS kwin_x11 ${INSTALL_TARGETS_DEFAULT_ARGS})
 install(TARGETS kwin_killer_helper DESTINATION ${KDE_INSTALL_LIBEXECDIR})
 
 set(kwin_XWAYLAND_SRCS
-   xwl/clipboard.cpp
-   xwl/primary_selection.cpp
    xwl/sources_ext.cpp
    xwl/transfer.cpp
 
