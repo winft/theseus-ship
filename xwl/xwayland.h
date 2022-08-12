@@ -299,7 +299,7 @@ private:
         // Trigger possible errors, there's still a chance to abort
         base::x11::xcb::sync();
 
-        data_bridge.reset(new xwl::data_bridge<Toplevel>(core));
+        data_bridge = std::make_unique<xwl::data_bridge<Toplevel>>(core);
     }
 
     drag_event_reply drag_move_filter(Toplevel* target, QPoint const& pos) override
@@ -314,7 +314,7 @@ private:
     QProcess* xwayland_process{nullptr};
     QMetaObject::Connection xwayland_fail_notifier;
 
-    runtime core;
+    runtime<win::space> core;
 
     std::unique_ptr<QSocketNotifier> xcb_read_notifier;
     std::unique_ptr<base::x11::xcb_event_filter<Space>> event_filter;

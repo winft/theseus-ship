@@ -39,13 +39,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::xwl
 {
 
-using x11_source_ext = x11_source<data_source_ext>;
-
 template<typename Window>
 class x11_drag : public drag<Window>
 {
 public:
-    explicit x11_drag(x11_source_ext& source)
+    explicit x11_drag(x11_source<data_source_ext, Window>& source)
         : source{source}
     {
         QObject::connect(source.get_qobject(),
@@ -250,7 +248,7 @@ private:
         return transfersFinished;
     }
 
-    x11_source_ext& source;
+    x11_source<data_source_ext, Window>& source;
     mime_atoms offers;
     std::vector<std::pair<xcb_timestamp_t, bool>> data_requests;
 

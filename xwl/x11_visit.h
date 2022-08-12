@@ -37,7 +37,7 @@ public:
     // TODO: handle ask action
 
     x11_visit(Window* target,
-              wl_source<Wrapland::Server::data_source> const& source,
+              wl_source<Wrapland::Server::data_source, Window> const& source,
               xcb_window_t drag_window)
         : qobject{std::make_unique<x11_visit_qobject>()}
         , target(target)
@@ -406,7 +406,7 @@ private:
         notifiers.action = QMetaObject::Connection();
     }
 
-    wl_source<Wrapland::Server::data_source> const& source;
+    wl_source<Wrapland::Server::data_source, Window> const& source;
     xcb_window_t drag_window;
     uint32_t version = 0;
 

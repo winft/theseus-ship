@@ -8,6 +8,7 @@
 #include "drag.h"
 #include "mime.h"
 #include "sources.h"
+#include "sources_ext.h"
 #include "types.h"
 
 #include "win/space.h"
@@ -18,8 +19,6 @@
 
 namespace KWin::xwl
 {
-
-using x11_source_ext = x11_source<data_source_ext>;
 
 class KWIN_EXPORT wl_visit_qobject : public QObject
 {
@@ -33,7 +32,7 @@ template<typename Window>
 class wl_visit
 {
 public:
-    wl_visit(Window* target, x11_source_ext& source)
+    wl_visit(Window* target, x11_source<data_source_ext, Window>& source)
         : qobject{std::make_unique<wl_visit_qobject>()}
         , target{target}
         , source{source}
@@ -318,7 +317,7 @@ private:
     }
 
     xcb_window_t source_window = XCB_WINDOW_NONE;
-    x11_source_ext& source;
+    x11_source<data_source_ext, Window>& source;
 
     uint32_t m_version = 0;
 

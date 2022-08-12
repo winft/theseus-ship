@@ -13,15 +13,7 @@
 #include <vector>
 #include <xcb/xcb.h>
 
-namespace KWin
-{
-
-namespace win
-{
-class space;
-}
-
-namespace xwl
+namespace KWin::xwl
 {
 
 struct x11_runtime {
@@ -30,8 +22,9 @@ struct x11_runtime {
     base::x11::atoms* atoms{nullptr};
 };
 
+template<typename Space>
 struct runtime {
-    win::space* space{nullptr};
+    Space* space{nullptr};
     x11_runtime x11{};
 };
 
@@ -56,5 +49,4 @@ struct mime_atom {
 
 using mime_atoms = std::vector<mime_atom>;
 
-}
 }

@@ -41,15 +41,15 @@ template<typename Window>
 class data_bridge
 {
 public:
-    data_bridge(runtime const& core)
+    data_bridge(runtime<typename Window::space_t> const& core)
         : core{core}
     {
         xcb_prefetch_extension_data(core.x11.connection, &xcb_xfixes_id);
         xfixes = xcb_get_extension_data(core.x11.connection, &xcb_xfixes_id);
 
-        clipboard.reset(new xwl::clipboard(core));
-        dnd.reset(new drag_and_drop<Toplevel>(core));
-        primary_selection.reset(new xwl::primary_selection(core));
+        clipboard = std::make_unique<xwl::clipboard<Window>>(core);
+        dnd = std::make_unique<xwl::drag_and_drop<Window>>(core);
+        primary_selection = std::make_unique<xwl::primary_selection<Window>>(core);
     }
 
     bool filter_event(xcb_generic_event_t* event)
@@ -94,11 +94,11 @@ private:
     }
 
     xcb_query_extension_reply_t const* xfixes{nullptr};
-    runtime const& core;
+    runtime<typename Window::space_t> const& core;
 
-    std::unique_ptr<xwl::clipboard> clipboard;
+    std::unique_ptr<xwl::clipboard<Window>> clipboard;
     std::unique_ptr<drag_and_drop<Window>> dnd;
-    std::unique_ptr<xwl::primary_selection> primary_selection;
+    std::unique_ptr<xwl::primary_selection<Window>> primary_selection;
 };
 
 }

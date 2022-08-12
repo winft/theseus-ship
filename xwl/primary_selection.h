@@ -19,14 +19,19 @@
 namespace KWin::xwl
 {
 
+template<typename Window>
 class primary_selection
 {
 public:
-    selection_data<Wrapland::Server::primary_selection_source, primary_selection_source_ext> data;
+    using window_t = Window;
 
-    primary_selection(runtime const& core)
+    selection_data<Window, Wrapland::Server::primary_selection_source, primary_selection_source_ext>
+        data;
+
+    primary_selection(runtime<typename Window::space_t> const& core)
     {
-        data = create_selection_data<Wrapland::Server::primary_selection_source,
+        data = create_selection_data<Window,
+                                     Wrapland::Server::primary_selection_source,
                                      primary_selection_source_ext>(
             core.x11.atoms->primary_selection, core);
 

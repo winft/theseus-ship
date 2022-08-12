@@ -52,11 +52,11 @@ Q_SIGNALS:
 /**
  * Representing a Wayland native data source.
  */
-template<typename ServerSource>
+template<typename ServerSource, typename Window>
 class wl_source
 {
 public:
-    wl_source(ServerSource* source, runtime const& core)
+    wl_source(ServerSource* source, runtime<typename Window::space_t> const& core)
         : server_source{source}
         , core{core}
         , qobject{std::make_unique<q_wl_source>()}
@@ -79,7 +79,7 @@ public:
     }
 
     ServerSource* server_source = nullptr;
-    runtime const& core;
+    runtime<typename Window::space_t> const& core;
     std::vector<std::string> offers;
     xcb_timestamp_t timestamp{XCB_CURRENT_TIME};
 
@@ -109,11 +109,12 @@ Q_SIGNALS:
 /**
  * Representing an X data source.
  */
-template<typename InternalSource>
+template<typename InternalSource, typename Window>
 class x11_source
 {
 public:
-    x11_source(xcb_xfixes_selection_notify_event_t* event, runtime const& core)
+    x11_source(xcb_xfixes_selection_notify_event_t* event,
+               runtime<typename Window::space_t> const& core)
         : core{core}
         , timestamp{event->timestamp}
         , qobject{std::make_unique<q_x11_source>()}
@@ -156,7 +157,7 @@ public:
         return qobject.get();
     }
 
-    runtime const& core;
+    runtime<typename Window::space_t> const& core;
     mime_atoms offers;
     xcb_timestamp_t timestamp;
 

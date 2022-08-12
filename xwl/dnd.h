@@ -46,15 +46,17 @@ template<typename Window>
 class drag_and_drop
 {
 public:
-    selection_data<Wrapland::Server::data_source, data_source_ext> data;
+    using window_t = Window;
+
+    selection_data<Window, Wrapland::Server::data_source, data_source_ext> data;
 
     std::unique_ptr<wl_drag<Window>> wldrag;
     std::unique_ptr<x11_drag<Window>> xdrag;
     std::vector<std::unique_ptr<drag<Window>>> old_drags;
 
-    drag_and_drop(runtime const& core)
+    drag_and_drop(runtime<typename Window::space_t> const& core)
     {
-        data = create_selection_data<Wrapland::Server::data_source, data_source_ext>(
+        data = create_selection_data<Window, Wrapland::Server::data_source, data_source_ext>(
             core.x11.atoms->xdnd_selection, core);
 
         // TODO(romangg): for window size get current screen size and connect to changes.
@@ -203,7 +205,7 @@ private:
         assert(!wldrag);
 
         // New Wl to X drag, init drag and Wl source.
-        auto source = new wl_source<Wrapland::Server::data_source>(srv_src, data.core);
+        auto source = new wl_source<Wrapland::Server::data_source, Window>(srv_src, data.core);
         wldrag = std::make_unique<wl_drag<Toplevel>>(*source, data.window);
         set_wl_source(this, source);
         own_selection(this, true);

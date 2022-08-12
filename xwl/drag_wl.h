@@ -43,7 +43,8 @@ template<typename Window>
 class wl_drag : public drag<Window>
 {
 public:
-    wl_drag(wl_source<Wrapland::Server::data_source> const& source, xcb_window_t proxy_window)
+    wl_drag(wl_source<Wrapland::Server::data_source, Window> const& source,
+            xcb_window_t proxy_window)
         : source{source}
         , proxy_window{proxy_window}
     {
@@ -109,7 +110,7 @@ public:
     }
 
 private:
-    wl_source<Wrapland::Server::data_source> const& source;
+    wl_source<Wrapland::Server::data_source, Window> const& source;
     xcb_window_t proxy_window;
     std::unique_ptr<x11_visit<Toplevel>> visit;
 };

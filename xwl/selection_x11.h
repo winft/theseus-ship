@@ -34,7 +34,8 @@ void create_x11_source(Selection* sel, xcb_xfixes_selection_notify_event_t* even
     sel->data.wayland_source.reset();
 
     using internal_source = std::remove_pointer_t<decltype(sel->data.source_int.get())>;
-    sel->data.x11_source.reset(new x11_source<internal_source>(event, sel->data.core));
+    sel->data.x11_source.reset(
+        new x11_source<internal_source, typename Selection::window_t>(event, sel->data.core));
 
     QObject::connect(sel->data.x11_source->get_qobject(),
                      &q_x11_source::offers_changed,
