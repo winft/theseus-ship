@@ -23,6 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "drag_x.h"
 #include "selection_wl.h"
 #include "selection_x11.h"
+#include "wl_visit.h"
+#include "x11_visit.h"
 
 #include "base/wayland/server.h"
 
