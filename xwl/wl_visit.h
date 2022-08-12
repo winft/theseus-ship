@@ -5,7 +5,6 @@
 */
 #pragma once
 
-#include "dnd.h"
 #include "drag.h"
 #include "mime.h"
 #include "sources.h"
@@ -59,7 +58,6 @@ public:
                           XCB_CW_EVENT_MASK,
                           dndValues);
 
-        uint32_t version = drag_and_drop::version();
         xcb_change_property(xcb_con,
                             XCB_PROP_MODE_REPLACE,
                             window,
@@ -67,7 +65,7 @@ public:
                             XCB_ATOM_ATOM,
                             32,
                             1,
-                            &version);
+                            &drag_and_drop_version);
 
         xcb_map_window(xcb_con, window);
         source.x11.space->stacking_order->manual_overlays.push_back(window);

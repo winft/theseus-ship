@@ -5,7 +5,6 @@
 */
 #pragma once
 
-#include "dnd.h"
 #include "drag.h"
 #include "mime.h"
 #include "sources.h"
@@ -13,12 +12,12 @@
 #include "base/wayland/server.h"
 #include "win/space.h"
 
+#include <QObject>
+#include <QPoint>
+#include <Wrapland/Server/data_source.h>
 #include <Wrapland/Server/drag_pool.h>
 #include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
-
-#include <QObject>
-#include <QPoint>
 #include <memory>
 
 namespace KWin::xwl
@@ -68,7 +67,7 @@ public:
         }
 
         auto value = static_cast<xcb_atom_t*>(xcb_get_property_value(reply));
-        version = qMin(*value, drag_and_drop::version());
+        version = qMin(*value, drag_and_drop_version);
         if (version < 1) {
             // minimal version we accept is 1
             do_finish();

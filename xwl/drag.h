@@ -29,7 +29,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::xwl
 {
 
-class drag_and_drop;
+// version of DnD support in X
+constexpr uint32_t drag_and_drop_version = 5;
+
 enum class drag_event_reply;
 
 using dnd_action = Wrapland::Server::dnd_action;

@@ -36,6 +36,7 @@ class Toplevel;
 namespace xwl
 {
 class clipboard;
+template<typename Window>
 class drag_and_drop;
 enum class drag_event_reply;
 class primary_selection;
@@ -62,7 +63,7 @@ private:
     x11_data const& x11;
 
     std::unique_ptr<xwl::clipboard> clipboard;
-    std::unique_ptr<drag_and_drop> dnd;
+    std::unique_ptr<drag_and_drop<Toplevel>> dnd;
     std::unique_ptr<xwl::primary_selection> primary_selection;
 
     Q_DISABLE_COPY(data_bridge)

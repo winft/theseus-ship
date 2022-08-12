@@ -741,7 +741,6 @@ install(TARGETS kwin_killer_helper DESTINATION ${KDE_INSTALL_LIBEXECDIR})
 set(kwin_XWAYLAND_SRCS
    xwl/clipboard.cpp
    xwl/data_bridge.cpp
-   xwl/dnd.cpp
    xwl/primary_selection.cpp
    xwl/sources_ext.cpp
    xwl/transfer.cpp

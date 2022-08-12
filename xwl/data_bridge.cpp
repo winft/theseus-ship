@@ -33,7 +33,7 @@ data_bridge::data_bridge(x11_data const& x11)
     xfixes = xcb_get_extension_data(x11.connection, &xcb_xfixes_id);
 
     clipboard.reset(new xwl::clipboard(x11));
-    dnd.reset(new drag_and_drop(x11));
+    dnd.reset(new drag_and_drop<Toplevel>(x11));
     primary_selection.reset(new xwl::primary_selection(x11));
 }
 

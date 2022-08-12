@@ -19,10 +19,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
-#include "dnd.h"
 #include "drag.h"
 #include "mime.h"
 #include "sources.h"
+#include "sources_ext.h"
 #include "types.h"
 #include "wl_visit.h"
 
