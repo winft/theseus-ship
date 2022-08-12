@@ -32,7 +32,7 @@ wayland_console::wayland_console(wayland_space& space)
     : console(space)
 {
     m_ui->windowsView->setItemDelegate(new wayland_console_delegate(this));
-    m_ui->windowsView->setModel(new wayland_console_model(space, this));
+    m_ui->windowsView->setModel(wayland_console_model::create(space, this));
     m_ui->surfacesView->setModel(new surface_tree_model(space, this));
 
     auto device_model = new input_device_model(this);
@@ -115,13 +115,20 @@ void wayland_console::update_keyboard_tab()
         xkb->state, xkb_keymap_num_mods(keymap), modActive, &xkb_keymap_mod_get_name));
 }
 
-wayland_console_model::wayland_console_model(win::space& space, QObject* parent)
-    : console_model(space, parent)
+wayland_console_model::wayland_console_model(QObject* parent)
+    : console_model(parent)
 {
-    wayland_model_setup_connections(*this, space);
 }
 
 wayland_console_model::~wayland_console_model() = default;
+
+wayland_console_model* wayland_console_model::create(win::space& space, QObject* parent)
+{
+    auto model = new wayland_console_model(parent);
+    model_setup_connections(*model, space);
+    wayland_model_setup_connections(*model, space);
+    return model;
+}
 
 int wayland_console_model::topLevelRowCount() const
 {

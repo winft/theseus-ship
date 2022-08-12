@@ -55,8 +55,9 @@ class KWIN_EXPORT console_model : public QAbstractItemModel
 {
     Q_OBJECT
 public:
-    explicit console_model(win::space& space, QObject* parent = nullptr);
     ~console_model() override;
+
+    static console_model* create(win::space& space, QObject* parent = nullptr);
 
     int columnCount(const QModelIndex& parent) const override;
     QVariant data(const QModelIndex& index, int role) const override;
@@ -96,7 +97,9 @@ public:
     std::vector<std::unique_ptr<console_window>> m_internalClients;
     std::vector<std::unique_ptr<console_window>> m_x11Clients;
     std::vector<std::unique_ptr<console_window>> m_unmanageds;
-    win::space& space;
+
+protected:
+    explicit console_model(QObject* parent = nullptr);
 };
 
 class KWIN_EXPORT console_delegate : public QStyledItemDelegate

@@ -245,14 +245,19 @@ QString console_delegate::displayText(const QVariant& value, const QLocale& loca
     return QStyledItemDelegate::displayText(value, locale);
 }
 
-console_model::console_model(win::space& space, QObject* parent)
+console_model::console_model(QObject* parent)
     : QAbstractItemModel(parent)
-    , space{space}
 {
-    model_setup_connections(*this, space);
 }
 
 console_model::~console_model() = default;
+
+console_model* console_model::create(win::space& space, QObject* parent)
+{
+    auto model = new console_model(parent);
+    model_setup_connections(*model, space);
+    return model;
+}
 
 int console_model::columnCount(const QModelIndex& parent) const
 {

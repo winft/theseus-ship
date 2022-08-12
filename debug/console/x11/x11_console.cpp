@@ -14,7 +14,7 @@ x11_console::x11_console(win::space& space)
     : console(space)
 {
     m_ui->windowsView->setItemDelegate(new console_delegate(this));
-    m_ui->windowsView->setModel(new console_model(space, this));
+    m_ui->windowsView->setModel(console_model::create(space, this));
 
     m_ui->tabWidget->setTabEnabled(1, false);
     m_ui->tabWidget->setTabEnabled(2, false);
