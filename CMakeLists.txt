@@ -742,15 +742,13 @@ set(kwin_XWAYLAND_SRCS
    xwl/clipboard.cpp
    xwl/data_bridge.cpp
    xwl/dnd.cpp
-   xwl/drag.cpp
-   xwl/drag_wl.cpp
-   xwl/drag_x.cpp
    xwl/primary_selection.cpp
    xwl/sources_ext.cpp
    xwl/transfer.cpp
    xwl/xwayland.cpp
 
    # These headers need to be compiled for the helper QObjects they contain.
+   xwl/drag.h
    xwl/selection_data.h
    xwl/sources.h
    xwl/wl_visit.h

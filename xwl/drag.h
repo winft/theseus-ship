@@ -23,14 +23,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QPoint>
 #include <Wrapland/Server/drag_pool.h>
+#include <memory>
 #include <xcb/xcb.h>
 
-namespace KWin
+namespace KWin::xwl
 {
-class Toplevel;
 
-namespace xwl
-{
 class drag_and_drop;
 enum class drag_event_reply;
 
@@ -93,19 +91,23 @@ Q_SIGNALS:
 /**
  * An ongoing drag operation.
  */
+template<typename Window>
 class drag
 {
 public:
-    drag();
-    virtual ~drag();
+    drag()
+        : qobject{std::make_unique<drag_qobject>()}
+    {
+    }
+
+    virtual ~drag() = default;
 
     virtual bool handle_client_message(xcb_client_message_event_t* event) = 0;
-    virtual drag_event_reply move_filter(Toplevel* target, QPoint const& pos) = 0;
+    virtual drag_event_reply move_filter(Window* target, QPoint const& pos) = 0;
 
     virtual bool end() = 0;
 
     std::unique_ptr<drag_qobject> qobject;
 };
 
-}
 }

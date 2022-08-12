@@ -19,39 +19,94 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
+#include "dnd.h"
 #include "drag.h"
 #include "sources.h"
+#include "x11_visit.h"
+
+#include "base/wayland/server.h"
+#include "win/activation.h"
+#include "win/space.h"
+#include "win/x11/window.h"
 
 #include <QPoint>
-#include <memory>
+#include <Wrapland/Server/drag_pool.h>
+#include <Wrapland/Server/pointer_pool.h>
+#include <Wrapland/Server/seat.h>
 
-namespace Wrapland::Server
+namespace KWin::xwl
 {
-class data_source;
-}
-
-namespace KWin
-{
-class Toplevel;
-
-namespace xwl
-{
-
-enum class drag_event_reply;
-
-template<typename Window>
-class x11_visit;
 
 using dnd_actions = Wrapland::Server::dnd_actions;
 
-class wl_drag : public drag
+template<typename Window>
+class wl_drag : public drag<Window>
 {
 public:
-    wl_drag(wl_source<Wrapland::Server::data_source> const& source, xcb_window_t proxy_window);
+    wl_drag(wl_source<Wrapland::Server::data_source> const& source, xcb_window_t proxy_window)
+        : source{source}
+        , proxy_window{proxy_window}
+    {
+    }
 
-    drag_event_reply move_filter(Toplevel* target, QPoint const& pos) override;
-    bool handle_client_message(xcb_client_message_event_t* event) override;
-    bool end() override;
+    drag_event_reply move_filter(Toplevel* target, QPoint const& pos) override
+    {
+        auto seat = waylandServer()->seat();
+
+        if (visit && visit->target == target) {
+            // no target change
+            return drag_event_reply::take;
+        }
+
+        // Leave current target.
+        if (visit) {
+            seat->drags().set_target(nullptr);
+            visit->leave();
+            visit.reset();
+        }
+
+        if (!dynamic_cast<win::x11::window*>(target)) {
+            // no target or wayland native target,
+            // handled by input code directly
+            return drag_event_reply::wayland;
+        }
+
+        // We have a new target.
+
+        win::activate_window(*source.x11.space, target);
+        seat->drags().set_target(target->surface, pos, target->input_transform());
+
+        visit.reset(new x11_visit(target, source, proxy_window));
+        return drag_event_reply::take;
+    }
+
+    bool handle_client_message(xcb_client_message_event_t* event) override
+    {
+        if (visit && visit->handle_client_message(event)) {
+            return true;
+        }
+        return false;
+    }
+
+    bool end() override
+    {
+        if (!visit || visit->state.finished) {
+            visit.reset();
+            return true;
+        }
+
+        QObject::connect(visit->qobject.get(),
+                         &x11_visit_qobject::finish,
+                         this->qobject.get(),
+                         [this, visit = visit.get()] {
+                             Q_ASSERT(this->visit.get() == visit);
+                             this->visit.reset();
+
+                             // We directly allow to delete previous visits.
+                             Q_EMIT this->qobject->finish();
+                         });
+        return false;
+    }
 
 private:
     wl_source<Wrapland::Server::data_source> const& source;
@@ -59,5 +114,4 @@ private:
     std::unique_ptr<x11_visit<Toplevel>> visit;
 };
 
-}
 }

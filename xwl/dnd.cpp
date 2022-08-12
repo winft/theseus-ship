@@ -79,7 +79,7 @@ void do_handle_xfixes_notify(drag_and_drop* sel, xcb_xfixes_selection_notify_eve
     sel->data.source_int.reset(new data_source_ext);
     sel->data.x11_source->set_source(sel->data.source_int.get());
 
-    sel->xdrag.reset(new x11_drag(*sel->data.x11_source));
+    sel->xdrag = std::make_unique<x11_drag<Toplevel>>(*sel->data.x11_source);
 
     QObject::connect(
         sel->data.qobject.get(),
@@ -199,7 +199,7 @@ void drag_and_drop::start_drag()
 
     // New Wl to X drag, init drag and Wl source.
     auto source = new wl_source<Wrapland::Server::data_source>(srv_src, data.x11);
-    wldrag.reset(new wl_drag(*source, data.window));
+    wldrag = std::make_unique<wl_drag<Toplevel>>(*source, data.window);
     set_wl_source(this, source);
     own_selection(this, true);
 }
@@ -228,7 +228,7 @@ void drag_and_drop::end_drag()
     }
 }
 
-void drag_and_drop::clear_old_drag(xwl::drag* drag)
+void drag_and_drop::clear_old_drag(xwl::drag<Toplevel>* drag)
 {
     remove_all_if(old_drags, [drag](auto&& old) { return old.get() == drag; });
 }
