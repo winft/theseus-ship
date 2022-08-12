@@ -19,27 +19,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
+#include "clipboard.h"
+#include "dnd.h"
+#include "primary_selection.h"
 #include "types.h"
-
-#include "kwin_export.h"
 
 #include <QPoint>
 #include <memory>
 #include <xcb/xcb.h>
 
-struct xcb_xfixes_selection_notify_event_t;
-
-namespace KWin
+namespace KWin::xwl
 {
-class Toplevel;
-
-namespace xwl
-{
-class clipboard;
-template<typename Window>
-class drag_and_drop;
-enum class drag_event_reply;
-class primary_selection;
 
 /**
  * Interface class for all data sharing in the context of X selections
@@ -47,27 +37,68 @@ class primary_selection;
  *
  * Exists only once per Xwayland session.
  */
-class KWIN_EXPORT data_bridge
+template<typename Window>
+class data_bridge
 {
 public:
-    data_bridge(x11_data const& x11);
-    ~data_bridge();
+    data_bridge(x11_data const& x11)
+        : x11{x11}
+    {
+        xcb_prefetch_extension_data(x11.connection, &xcb_xfixes_id);
+        xfixes = xcb_get_extension_data(x11.connection, &xcb_xfixes_id);
 
-    bool filter_event(xcb_generic_event_t* event);
-    drag_event_reply drag_move_filter(Toplevel* target, QPoint const& pos);
+        clipboard.reset(new xwl::clipboard(x11));
+        dnd.reset(new drag_and_drop<Toplevel>(x11));
+        primary_selection.reset(new xwl::primary_selection(x11));
+    }
+
+    bool filter_event(xcb_generic_event_t* event)
+    {
+        if (xwl::filter_event(clipboard.get(), event)) {
+            return true;
+        }
+        if (xwl::filter_event(dnd.get(), event)) {
+            return true;
+        }
+        if (xwl::filter_event(primary_selection.get(), event)) {
+            return true;
+        }
+        if (event->response_type - xfixes->first_event == XCB_XFIXES_SELECTION_NOTIFY) {
+            return handle_xfixes_notify(
+                reinterpret_cast<xcb_xfixes_selection_notify_event_t*>(event));
+        }
+        return false;
+    }
+
+    drag_event_reply drag_move_filter(Window* target, QPoint const& pos)
+    {
+        if (!dnd) {
+            return drag_event_reply::wayland;
+        }
+        return dnd->drag_move_filter(target, pos);
+    }
 
 private:
-    bool handle_xfixes_notify(xcb_xfixes_selection_notify_event_t* event);
+    bool handle_xfixes_notify(xcb_xfixes_selection_notify_event_t* event)
+    {
+        if (event->selection == x11.space->atoms->clipboard) {
+            return xwl::handle_xfixes_notify(clipboard.get(), event);
+        }
+        if (event->selection == x11.space->atoms->primary_selection) {
+            return xwl::handle_xfixes_notify(primary_selection.get(), event);
+        }
+        if (event->selection == x11.space->atoms->xdnd_selection) {
+            return xwl::handle_xfixes_notify(dnd.get(), event);
+        }
+        return false;
+    }
 
     xcb_query_extension_reply_t const* xfixes{nullptr};
     x11_data const& x11;
 
     std::unique_ptr<xwl::clipboard> clipboard;
-    std::unique_ptr<drag_and_drop<Toplevel>> dnd;
+    std::unique_ptr<drag_and_drop<Window>> dnd;
     std::unique_ptr<xwl::primary_selection> primary_selection;
-
-    Q_DISABLE_COPY(data_bridge)
 };
 
-}
 }

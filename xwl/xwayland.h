@@ -56,6 +56,7 @@ namespace xwl
 
 using wayland_space = win::wayland::space<base::wayland::platform>;
 
+template<typename Window>
 class data_bridge;
 
 class KWIN_EXPORT xwayland : public xwayland_interface
@@ -69,7 +70,7 @@ public:
     xwayland(Application* app, wayland_space& space, std::function<void(int code)> status_callback);
     ~xwayland() override;
 
-    std::unique_ptr<xwl::data_bridge> data_bridge;
+    std::unique_ptr<xwl::data_bridge<Toplevel>> data_bridge;
 
 private:
     void continue_startup_with_x11();

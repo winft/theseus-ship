@@ -283,7 +283,7 @@ void xwayland::continue_startup_with_x11()
     // Trigger possible errors, there's still a chance to abort
     base::x11::xcb::sync();
 
-    data_bridge.reset(new xwl::data_bridge(basic_data));
+    data_bridge.reset(new xwl::data_bridge<Toplevel>(basic_data));
 }
 
 drag_event_reply xwayland::drag_move_filter(Toplevel* target, QPoint const& pos)
