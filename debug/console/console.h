@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QAbstractItemModel>
 #include <QStyledItemDelegate>
+#include <memory>
 #include <vector>
 
 namespace Ui
@@ -36,13 +37,8 @@ namespace KWin
 namespace win
 {
 
-class internal_window;
 class space;
 
-namespace x11
-{
-class window;
-}
 }
 
 namespace render
@@ -50,11 +46,10 @@ namespace render
 class scene;
 }
 
-class X11Client;
-class Toplevel;
-
 namespace debug
 {
+
+class console_window;
 
 class KWIN_EXPORT console_model : public QAbstractItemModel
 {
@@ -89,9 +84,9 @@ protected:
 
     QVariant propertyData(QObject* object, const QModelIndex& index, int role) const;
 
-    win::internal_window* internalClient(const QModelIndex& index) const;
-    win::x11::window* x11Client(const QModelIndex& index) const;
-    Toplevel* unmanaged(const QModelIndex& index) const;
+    console_window* internalClient(QModelIndex const& index) const;
+    console_window* x11Client(QModelIndex const& index) const;
+    console_window* unmanaged(QModelIndex const& index) const;
     virtual int topLevelRowCount() const;
 
     static constexpr int s_x11ClientId{1};
@@ -100,9 +95,9 @@ protected:
     static constexpr int s_workspaceInternalId{4};
 
 private:
-    std::vector<win::internal_window*> m_internalClients;
-    std::vector<win::x11::window*> m_x11Clients;
-    std::vector<Toplevel*> m_unmanageds;
+    std::vector<std::unique_ptr<console_window>> m_internalClients;
+    std::vector<std::unique_ptr<console_window>> m_x11Clients;
+    std::vector<std::unique_ptr<console_window>> m_unmanageds;
     win::space& space;
 };
 

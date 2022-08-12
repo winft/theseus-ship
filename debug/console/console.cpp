@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "model_helpers.h"
 #include "ui_debug_console.h"
+#include "window.h"
 
 #include "render/compositor.h"
 #include "render/effects.h"
@@ -253,26 +254,23 @@ console_model::console_model(win::space& space, QObject* parent)
 {
     for (auto const& window : space.windows) {
         if (window->control) {
-            if (auto x11_client = dynamic_cast<win::x11::window*>(window)) {
-                m_x11Clients.push_back(x11_client);
+            if (dynamic_cast<win::x11::window*>(window)) {
+                m_x11Clients.emplace_back(std::make_unique<console_window>(window));
             }
         }
     }
     connect(space.qobject.get(), &win::space_qobject::clientAdded, this, [this](auto c) {
-        auto x11win = static_cast<win::x11::window*>(c);
-        add_window(this, s_x11ClientId - 1, m_x11Clients, x11win);
+        add_window(this, s_x11ClientId - 1, m_x11Clients, c);
     });
     connect(
         space.qobject.get(), &win::space_qobject::clientRemoved, this, [this](Toplevel* window) {
-            auto c = dynamic_cast<win::x11::window*>(window);
-            if (!c) {
-                return;
-            }
-            remove_window(this, s_x11ClientId - 1, m_x11Clients, c);
+            // TODO(romangg): This function is also being called on Waylad windows for some reason.
+            // It works with our containers but best would be to make this symmetric with adding.
+            remove_window(this, s_x11ClientId - 1, m_x11Clients, window);
         });
 
     for (auto unmanaged : win::x11::get_unmanageds<Toplevel>(space)) {
-        m_unmanageds.push_back(unmanaged);
+        m_unmanageds.emplace_back(std::make_unique<console_window>(unmanaged));
     }
 
     connect(space.qobject.get(), &win::space_qobject::unmanagedAdded, this, [this](Toplevel* u) {
@@ -282,23 +280,17 @@ console_model::console_model(win::space& space, QObject* parent)
         remove_window(this, s_x11UnmanagedId - 1, m_unmanageds, u);
     });
     for (auto const& window : space.windows) {
-        if (auto internal = dynamic_cast<win::internal_window*>(window)) {
-            m_internalClients.push_back(internal);
+        if (dynamic_cast<win::internal_window*>(window)) {
+            m_internalClients.emplace_back(std::make_unique<console_window>(window));
         }
     }
     connect(
         space.qobject.get(), &win::space_qobject::internalClientAdded, this, [this](auto window) {
-            add_window(this,
-                       s_workspaceInternalId - 1,
-                       m_internalClients,
-                       static_cast<win::internal_window*>(window));
+            add_window(this, s_workspaceInternalId - 1, m_internalClients, window);
         });
     connect(
         space.qobject.get(), &win::space_qobject::internalClientRemoved, this, [this](auto window) {
-            remove_window(this,
-                          s_workspaceInternalId - 1,
-                          m_internalClients,
-                          static_cast<win::internal_window*>(window));
+            remove_window(this, s_workspaceInternalId - 1, m_internalClients, window);
         });
 }
 
@@ -559,13 +551,13 @@ QVariant console_model::propertyData(QObject* object, const QModelIndex& index, 
 QVariant console_model::get_client_property_data(QModelIndex const& index, int role) const
 {
     if (auto c = internalClient(index)) {
-        return propertyData(get_qobject(c), index, role);
+        return propertyData(c, index, role);
     }
     if (auto c = x11Client(index)) {
-        return propertyData(get_qobject(c), index, role);
+        return propertyData(c, index, role);
     }
     if (auto u = unmanaged(index)) {
-        return propertyData(u->qobject.get(), index, role);
+        return propertyData(u, index, role);
     }
 
     return QVariant();
@@ -580,9 +572,9 @@ QVariant console_model::get_client_data(QModelIndex const& index, int role) cons
         if (index.row() >= static_cast<int>(m_unmanageds.size())) {
             return QVariant();
         }
-        auto u = m_unmanageds.at(index.row());
+        auto& u = m_unmanageds.at(index.row());
         if (role == Qt::DisplayRole) {
-            return static_cast<xcb_window_t>(u->xcb_window);
+            return static_cast<xcb_window_t>(u->windowId());
         }
         return QVariant();
     }
@@ -632,17 +624,17 @@ QVariant console_model::data(const QModelIndex& index, int role) const
     return get_client_data(index, role);
 }
 
-win::internal_window* console_model::internalClient(const QModelIndex& index) const
+console_window* console_model::internalClient(QModelIndex const& index) const
 {
     return window_for_index(index, m_internalClients, s_workspaceInternalId);
 }
 
-win::x11::window* console_model::x11Client(const QModelIndex& index) const
+console_window* console_model::x11Client(QModelIndex const& index) const
 {
     return window_for_index(index, m_x11Clients, s_x11ClientId);
 }
 
-Toplevel* console_model::unmanaged(const QModelIndex& index) const
+console_window* console_model::unmanaged(QModelIndex const& index) const
 {
     return window_for_index(index, m_unmanageds, s_x11UnmanagedId);
 }

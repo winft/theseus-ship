@@ -10,6 +10,7 @@
 #include "surface_tree_model.h"
 
 #include "debug/console/model_helpers.h"
+#include "debug/console/window.h"
 #include "input/dbus/device_manager.h"
 #include "input/keyboard.h"
 #include "input/keyboard_redirect.h"
@@ -120,24 +121,23 @@ wayland_console_model::wayland_console_model(win::space& space, QObject* parent)
 {
     for (auto window : space.windows) {
         if (auto wwin = dynamic_cast<wayland_window*>(window); wwin && !wwin->remnant) {
-            m_shellClients.push_back(wwin);
+            m_shellClients.emplace_back(std::make_unique<console_window>(window));
         }
     }
 
     // TODO: that only includes windows getting shown, not those which are only created
     QObject::connect(
         space.qobject.get(), &win::space::qobject_t::wayland_window_added, this, [this](auto win) {
-            auto wayland_win = static_cast<wayland_window*>(win);
-            add_window(this, s_waylandClientId - 1, m_shellClients, wayland_win);
+            add_window(this, s_waylandClientId - 1, m_shellClients, win);
         });
-    QObject::connect(space.qobject.get(),
-                     &win::space::qobject_t::wayland_window_removed,
-                     this,
-                     [this](auto win) {
-                         auto wayland_win = static_cast<wayland_window*>(win);
-                         remove_window(this, s_waylandClientId - 1, m_shellClients, wayland_win);
-                     });
+    QObject::connect(
+        space.qobject.get(),
+        &win::space::qobject_t::wayland_window_removed,
+        this,
+        [this](auto win) { remove_window(this, s_waylandClientId - 1, m_shellClients, win); });
 }
+
+wayland_console_model::~wayland_console_model() = default;
 
 int wayland_console_model::topLevelRowCount() const
 {
@@ -198,7 +198,7 @@ bool wayland_console_model::get_property_index(int row,
 QVariant wayland_console_model::get_client_property_data(QModelIndex const& index, int role) const
 {
     if (auto window = shellClient(index)) {
-        return propertyData(get_qobject(window), index, role);
+        return propertyData(window, index, role);
     }
 
     return console_model::get_client_property_data(index, role);
@@ -213,7 +213,7 @@ QVariant wayland_console_model::get_client_data(QModelIndex const& index, int ro
     return console_model::get_client_data(index, role);
 }
 
-wayland_window* wayland_console_model::shellClient(const QModelIndex& index) const
+console_window* wayland_console_model::shellClient(QModelIndex const& index) const
 {
     return window_for_index(index, m_shellClients, s_waylandClientId);
 }

@@ -51,6 +51,7 @@ class KWIN_EXPORT wayland_console_model : public console_model
     Q_OBJECT
 public:
     explicit wayland_console_model(win::space& space, QObject* parent = nullptr);
+    ~wayland_console_model();
 
 protected:
     bool get_client_count(int parent_id, int& count) const override;
@@ -68,9 +69,9 @@ protected:
     int topLevelRowCount() const override;
 
 private:
-    wayland_window* shellClient(const QModelIndex& index) const;
+    console_window* shellClient(QModelIndex const& index) const;
 
-    std::vector<wayland_window*> m_shellClients;
+    std::vector<std::unique_ptr<console_window>> m_shellClients;
 };
 
 class KWIN_EXPORT wayland_console_delegate : public console_delegate

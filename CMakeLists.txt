@@ -393,6 +393,7 @@ set(kwin_SRCS
     render/post/night_color_manager.cpp
     render/post/suncalc.cpp
     debug/console/console.cpp
+    debug/console/window.cpp
     debug/perf/ftrace.cpp
     input/device_redirect.cpp
     input/keyboard.cpp
