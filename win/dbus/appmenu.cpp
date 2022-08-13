@@ -118,17 +118,12 @@ void appmenu::slotMenuHidden(const QString& serviceName, const QDBusObjectPath& 
     }
 }
 
-void appmenu::showApplicationMenu(const QPoint& p, Toplevel* window, int actionId)
+void appmenu::showApplicationMenu(const QPoint& p, win::appmenu const& data, int actionId)
 {
-    if (!window->control->has_application_menu()) {
-        return;
-    }
-
-    auto const menu = window->control->appmenu;
     dbus_iface->showMenu(p.x(),
                          p.y(),
-                         QString::fromStdString(menu.address.name),
-                         QDBusObjectPath(QString::fromStdString(menu.address.path)),
+                         QString::fromStdString(data.address.name),
+                         QDBusObjectPath(QString::fromStdString(data.address.path)),
                          actionId);
 }
 

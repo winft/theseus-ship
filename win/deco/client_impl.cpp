@@ -345,7 +345,10 @@ void client_impl::requestShowWindowMenu(QRect const& rect)
 
 void client_impl::requestShowApplicationMenu(const QRect& rect, int actionId)
 {
-    space.appmenu->showApplicationMenu(m_client->pos() + rect.bottomLeft(), m_client, actionId);
+    if (m_client->control->has_application_menu()) {
+        space.appmenu->showApplicationMenu(
+            m_client->pos() + rect.bottomLeft(), m_client->control->appmenu, actionId);
+    }
 }
 
 void client_impl::showApplicationMenu(int actionId)
