@@ -175,7 +175,8 @@ void get_icons(Win* win)
     // First read icons from the window itself
     auto const themedIconName = win::icon_from_desktop_file(win);
     if (!themedIconName.isEmpty()) {
-        win->control->set_icon(QIcon::fromTheme(themedIconName));
+        win->control->icon = QIcon::fromTheme(themedIconName);
+        Q_EMIT win->qobject->iconChanged();
         return;
     }
 
@@ -238,7 +239,8 @@ void get_icons(Win* win)
                                            KWindowSystem::ClassHint | KWindowSystem::XApp,
                                            win->info));
     }
-    win->control->set_icon(icon);
+    win->control->icon = icon;
+    Q_EMIT win->qobject->iconChanged();
 }
 
 // TODO(romangg): is this still relevant today, i.e. 2020?

@@ -64,8 +64,6 @@ public:
 
     std::weak_ptr<win::tabbox_client_impl> tabbox() const;
 
-    void set_icon(QIcon const& icon);
-
     bool has_application_menu() const;
     void set_application_menu_active(bool active);
 

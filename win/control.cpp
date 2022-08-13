@@ -90,12 +90,6 @@ std::weak_ptr<win::tabbox_client_impl> control::tabbox() const
     return m_tabbox;
 }
 
-void control::set_icon(QIcon const& icon)
-{
-    this->icon = icon;
-    Q_EMIT m_win->qobject->iconChanged();
-}
-
 bool control::has_application_menu() const
 {
     return m_win->space.appmenu->applicationMenuEnabled() && !appmenu.address.empty();

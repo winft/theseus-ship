@@ -221,7 +221,8 @@ Win* create_toplevel_window(Space* space, Wrapland::Server::XdgShellToplevel* to
         auto const df_icon = icon_from_desktop_file(win);
         auto const icon = df_icon.isEmpty() ? wayland_icon : df_icon;
         if (icon != win->control->icon.name()) {
-            win->control->set_icon(QIcon::fromTheme(icon));
+            win->control->icon = QIcon::fromTheme(icon);
+            Q_EMIT win->qobject->iconChanged();
         }
     };
 
