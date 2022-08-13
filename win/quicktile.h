@@ -75,7 +75,7 @@ void check_quicktile_maximization_zones(Win* win, int xroot, int yroot)
         }
         break;
     }
-    if (mode != win->control->electric()) {
+    if (mode != win->control->electric) {
         set_electric(win, mode);
         if (inner_border) {
             delayed_electric_maximize(win);
@@ -114,14 +114,14 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
     if (mode == quicktiles::maximize) {
         // Special case where we just maximize and return early.
 
-        auto const old_quicktiling = win->control->quicktiling();
-        win->control->set_quicktiling(quicktiles::none);
+        auto const old_quicktiling = win->control->quicktiling;
+        win->control->quicktiling = quicktiles::none;
 
         if (win->maximizeMode() == maximize_mode::full) {
             // TODO(romangg): When window was already maximized we now "unmaximize" it. Why?
             set_maximize(win, false, false);
         } else {
-            win->control->set_quicktiling(quicktiles::maximize);
+            win->control->quicktiling = quicktiles::maximize;
             set_maximize(win, true, true);
             auto clientArea = space_window_area(win->space, MaximizeArea, win);
 
@@ -132,7 +132,7 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
             win->restore_geometries.maximize = old_restore_geo;
         }
 
-        if (old_quicktiling != win->control->quicktiling()) {
+        if (old_quicktiling != win->control->quicktiling) {
             Q_EMIT win->qobject->quicktiling_changed();
         }
         return;
@@ -147,14 +147,14 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
     }
 
     // Used by electric_border_maximize_geometry(..).
-    win->control->set_electric(mode);
+    win->control->electric = mode;
 
     if (win->geometry_update.max_mode != maximize_mode::restore) {
         // Restore from maximized so that it is possible to tile maximized windows with one hit or
         // by dragging.
         if (mode != quicktiles::none) {
             // Temporary, so the maximize code doesn't get all confused
-            win->control->set_quicktiling(quicktiles::none);
+            win->control->quicktiling = quicktiles::none;
 
             set_maximize(win, false, false);
 
@@ -163,10 +163,10 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
 
             win->setFrameGeometry(electric_border_maximize_geometry(win, ref_pos, win->desktop()));
             // Store the mode change
-            win->control->set_quicktiling(mode);
+            win->control->quicktiling = mode;
             win->restore_geometries.maximize = old_restore_geo;
         } else {
-            win->control->set_quicktiling(mode);
+            win->control->quicktiling = mode;
             set_maximize(win, false, false);
         }
 
@@ -178,7 +178,7 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
         auto target_screen = keyboard ? pending_frame_geometry(win).center()
                                       : win->space.input->platform.cursor->pos();
 
-        if (win->control->quicktiling() == mode) {
+        if (win->control->quicktiling == mode) {
             // If trying to tile to the side that the window is already tiled to move the window to
             // the next screen if it exists, otherwise toggle the mode (set quicktiles::none)
 
@@ -245,7 +245,7 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
             // used by electric_border_maximize_geometry(.)
             set_electric(win, mode);
 
-        } else if (win->control->quicktiling() == quicktiles::none) {
+        } else if (win->control->quicktiling == quicktiles::none) {
             // Not coming out of an existing tile, not shifting monitors, we're setting a brand new
             // tile. Store geometry first, so we can go out of this tile later.
             if (!win->restore_geometries.maximize.isValid()) {
@@ -254,9 +254,9 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
         }
 
         if (mode != quicktiles::none) {
-            win->control->set_quicktiling(mode);
+            win->control->quicktiling = mode;
             // Temporary, so the maximize code doesn't get all confused
-            win->control->set_quicktiling(quicktiles::none);
+            win->control->quicktiling = quicktiles::none;
 
             // TODO(romangg): With decorations this was previously forced in order to handle borders
             //                being changed. Is it safe to do this now without that?
@@ -265,11 +265,11 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
         }
 
         // Store the mode change
-        win->control->set_quicktiling(mode);
+        win->control->quicktiling = mode;
     }
 
     if (mode == quicktiles::none) {
-        win->control->set_quicktiling(quicktiles::none);
+        win->control->quicktiling = quicktiles::none;
         win->setFrameGeometry(win->restore_geometries.maximize);
 
         // Just in case it's a different screen

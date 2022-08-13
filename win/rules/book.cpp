@@ -193,7 +193,7 @@ void book::discardUsed(Toplevel* window, bool withdrawn)
     auto updated = false;
 
     for (auto it = m_rules.begin(); it != m_rules.end();) {
-        if (window->control->rules().contains(*it)) {
+        if (window->control->rules.contains(*it)) {
             if ((*it)->discardUsed(withdrawn)) {
                 updated = true;
             }

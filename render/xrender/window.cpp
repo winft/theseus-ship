@@ -311,7 +311,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
     deco_renderer const* renderer = nullptr;
     if (client && client->control && !client->noBorder()) {
         if (win::decoration(client)) {
-            auto r = static_cast<deco_renderer*>(client->control->deco().client->renderer());
+            auto r = static_cast<deco_renderer*>(client->control->deco.client->renderer());
             if (r) {
                 r->render();
                 renderer = r;

@@ -38,17 +38,17 @@ win::remnant create_remnant(Win& source)
                                          remnant.data.decoration_right,
                                          remnant.data.decoration_bottom);
             if (win::decoration(&source)) {
-                remnant.data.decoration_renderer = source.control->deco().client->move_renderer();
+                remnant.data.decoration_renderer = source.control->deco.client->move_renderer();
             }
         }
-        remnant.data.minimized = source.control->minimized();
+        remnant.data.minimized = source.control->minimized;
 
-        remnant.data.fullscreen = source.control->fullscreen();
-        remnant.data.keep_above = source.control->keep_above();
-        remnant.data.keep_below = source.control->keep_below();
+        remnant.data.fullscreen = source.control->fullscreen;
+        remnant.data.keep_above = source.control->keep_above;
+        remnant.data.keep_below = source.control->keep_below;
         remnant.data.caption = win::caption(&source);
 
-        remnant.data.was_active = source.control->active();
+        remnant.data.was_active = source.control->active;
     }
 
     if (source.transient()->annexed) {

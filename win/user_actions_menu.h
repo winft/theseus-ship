@@ -208,21 +208,20 @@ private:
             initScreenPopup();
         }
 
-        m_menu->setPalette(m_client->control->palette().q_palette());
+        m_menu->setPalette(m_client->control->palette.q_palette());
         m_resizeOperation->setEnabled(m_client->isResizable());
         m_moveOperation->setEnabled(m_client->isMovableAcrossScreens());
         m_maximizeOperation->setEnabled(m_client->isMaximizable());
         m_maximizeOperation->setChecked(m_client->maximizeMode() == win::maximize_mode::full);
-        m_keepAboveOperation->setChecked(m_client->control->keep_above());
-        m_keepBelowOperation->setChecked(m_client->control->keep_below());
+        m_keepAboveOperation->setChecked(m_client->control->keep_above);
+        m_keepBelowOperation->setChecked(m_client->control->keep_below);
         m_fullScreenOperation->setEnabled(m_client->userCanSetFullScreen());
-        m_fullScreenOperation->setChecked(m_client->control->fullscreen());
+        m_fullScreenOperation->setChecked(m_client->control->fullscreen);
         m_noBorderOperation->setEnabled(m_client->userCanSetNoBorder());
         m_noBorderOperation->setChecked(m_client->noBorder());
         m_minimizeOperation->setEnabled(m_client->isMinimizable());
         m_closeOperation->setEnabled(m_client->isCloseable());
-        m_shortcutOperation->setEnabled(
-            m_client->control->rules().checkShortcut(QString()).isNull());
+        m_shortcutOperation->setEnabled(m_client->control->rules.checkShortcut(QString()).isNull());
 
         // drop the existing scripts menu
         delete m_scriptsMenu;
@@ -231,7 +230,7 @@ private:
         auto scriptActions = space.scripting->actionsForUserActionMenu(m_client, m_scriptsMenu);
         if (!scriptActions.isEmpty()) {
             m_scriptsMenu = new QMenu(m_menu);
-            m_scriptsMenu->setPalette(m_client->control->palette().q_palette());
+            m_scriptsMenu->setPalette(m_client->control->palette.q_palette());
             m_scriptsMenu->addActions(scriptActions);
 
             QAction* action = m_scriptsMenu->menuAction();
@@ -256,7 +255,7 @@ private:
 
         m_desktopMenu->clear();
         if (m_client) {
-            m_desktopMenu->setPalette(m_client->control->palette().q_palette());
+            m_desktopMenu->setPalette(m_client->control->palette.q_palette());
         }
         QActionGroup* group = new QActionGroup(m_desktopMenu);
         QAction* action = m_desktopMenu->addAction(i18n("&All Desktops"));
@@ -308,7 +307,7 @@ private:
 
         m_multipleDesktopsMenu->clear();
         if (m_client) {
-            m_multipleDesktopsMenu->setPalette(m_client->control->palette().q_palette());
+            m_multipleDesktopsMenu->setPalette(m_client->control->palette.q_palette());
         }
 
         QAction* action = m_multipleDesktopsMenu->addAction(i18n("&All Desktops"));
@@ -378,7 +377,7 @@ private:
             return;
         }
 
-        m_screenMenu->setPalette(m_client->control->palette().q_palette());
+        m_screenMenu->setPalette(m_client->control->palette.q_palette());
         QActionGroup* group = new QActionGroup(m_screenMenu);
         auto const& outputs = kwinApp()->get_base().get_outputs();
 
@@ -508,7 +507,7 @@ private:
         QString type;
         switch (op) {
         case base::options_qobject::FullScreenOp:
-            if (!c->control->fullscreen() && c->userCanSetFullScreen())
+            if (!c->control->fullscreen && c->userCanSetFullScreen())
                 type = QStringLiteral("fullscreenaltf3");
             break;
         case base::options_qobject::NoBorderOp:
@@ -564,7 +563,7 @@ private:
         QMenu* advancedMenu = new QMenu(m_menu);
         QObject::connect(advancedMenu, &QMenu::aboutToShow, qobject.get(), [this, advancedMenu]() {
             if (m_client) {
-                advancedMenu->setPalette(m_client->control->palette().q_palette());
+                advancedMenu->setPalette(m_client->control->palette.q_palette());
             }
         });
 

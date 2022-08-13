@@ -102,7 +102,7 @@ bool can_move(Win const* window)
 template<typename Win>
 void place(Win* window, const QRect& area)
 {
-    auto policy = window->control->rules().checkPlacement(placement::global_default);
+    auto policy = window->control->rules.checkPlacement(placement::global_default);
     if (policy != placement::global_default) {
         place(window, area, policy);
         return;
@@ -303,9 +303,9 @@ void place_smart(Win* window, const QRect& area, placement /*next*/)
                     xr = qMin(cxr, xr);
                     yt = qMax(cyt, yt);
                     yb = qMin(cyb, yb);
-                    if (client->control->keep_above()) {
+                    if (client->control->keep_above) {
                         overlap += 16 * (xr - xl) * (yb - yt);
-                    } else if (client->control->keep_below() && !is_dock(client)) {
+                    } else if (client->control->keep_below && !is_dock(client)) {
                         // ignore KeepBelow windows
                         overlap += 0; // for placement (see X11Client::belongsToLayer() for Dock)
                     } else {
@@ -564,7 +564,7 @@ void unclutter_desktop(Space& space)
     auto const& windows = space.windows;
     for (int i = windows.size() - 1; i >= 0; i--) {
         auto client = windows.at(i);
-        if (!client->control || !client->isOnCurrentDesktop() || client->control->minimized()
+        if (!client->control || !client->isOnCurrentDesktop() || client->control->minimized
             || client->isOnAllDesktops() || !client->isMovable()) {
             continue;
         }

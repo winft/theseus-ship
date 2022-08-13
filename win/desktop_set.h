@@ -80,7 +80,7 @@ void set_desktop(Win* win, int desktop)
         // Check range.
         desktop = std::max(1, std::min(desktops_count, desktop));
     }
-    desktop = std::min(desktops_count, win->control->rules().checkDesktop(desktop));
+    desktop = std::min(desktops_count, win->control->rules.checkDesktop(desktop));
 
     QVector<virtual_desktop*> desktops;
     if (desktop != NET::OnAllDesktops) {

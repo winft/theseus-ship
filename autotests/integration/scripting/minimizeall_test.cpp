@@ -112,14 +112,14 @@ void MinimizeAllScriptTest::testMinimizeUnminimize()
     std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
     auto client1 = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
     QVERIFY(client1);
-    QVERIFY(client1->control->active());
+    QVERIFY(client1->control->active);
     QVERIFY(client1->isMinimizable());
 
     std::unique_ptr<Surface> surface2(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
     auto client2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::red);
     QVERIFY(client2);
-    QVERIFY(client2->control->active());
+    QVERIFY(client2->control->active);
     QVERIFY(client2->isMinimizable());
 
     // Minimize the windows.
@@ -131,8 +131,8 @@ void MinimizeAllScriptTest::testMinimizeUnminimize()
     Test::keyboard_key_released(KEY_LEFTSHIFT, timestamp++);
     Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
 
-    QTRY_VERIFY(client1->control->minimized());
-    QTRY_VERIFY(client2->control->minimized());
+    QTRY_VERIFY(client1->control->minimized);
+    QTRY_VERIFY(client2->control->minimized);
 
     // Unminimize the windows.
     Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
@@ -142,8 +142,8 @@ void MinimizeAllScriptTest::testMinimizeUnminimize()
     Test::keyboard_key_released(KEY_LEFTSHIFT, timestamp++);
     Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
 
-    QTRY_VERIFY(!client1->control->minimized());
-    QTRY_VERIFY(!client2->control->minimized());
+    QTRY_VERIFY(!client1->control->minimized);
+    QTRY_VERIFY(!client2->control->minimized);
 
     // Destroy test clients.
     shellSurface2.reset();

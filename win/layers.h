@@ -32,7 +32,7 @@ Toplevel* most_recently_activated_window(Space const& space)
 template<typename Win>
 bool is_active_fullscreen(Win const* win)
 {
-    if (!win->control->fullscreen()) {
+    if (!win->control->fullscreen) {
         return false;
     }
 
@@ -87,13 +87,13 @@ layer belong_to_layer(Win* win)
     if (win->space.showing_desktop && win->belongsToDesktop()) {
         return win::layer::above;
     }
-    if (win->control->keep_below()) {
+    if (win->control->keep_below) {
         return win::layer::below;
     }
     if (is_active_fullscreen(win)) {
         return win::layer::active;
     }
-    if (win->control->keep_above()) {
+    if (win->control->keep_above) {
         return win::layer::above;
     }
     return win::layer::normal;

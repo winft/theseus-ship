@@ -29,7 +29,7 @@ void set_restore_geometry(Win* win, QRect const& restore_geo)
         // We keep the restore geometry for later fullscreen restoration.
         return;
     }
-    if (win->control->quicktiling() != quicktiles::none) {
+    if (win->control->quicktiling != quicktiles::none) {
         // We keep the restore geometry for later quicktile restoration.
         return;
     }
@@ -46,7 +46,7 @@ QRect get_maximizing_area(Win* win)
 {
     QRect area;
 
-    if (win->control->electric_maximizing()) {
+    if (win->control->electric_maximizing) {
         area = space_window_area(
             win->space, MaximizeArea, win->space.input->platform.cursor->pos(), win->desktop());
     } else {
@@ -130,7 +130,7 @@ void maximize_vertically(Win* win)
     auto const area = get_maximizing_area(win);
 
     auto pos = QPoint(old_frame_geo.x(), area.top());
-    pos = win->control->rules().checkPosition(pos);
+    pos = win->control->rules.checkPosition(pos);
 
     auto size = QSize(old_frame_geo.width(), area.height());
     size = win->control->adjusted_frame_size(size, size_mode::fixed_height);
@@ -156,7 +156,7 @@ void maximize_horizontally(Win* win)
     auto const area = get_maximizing_area(win);
 
     auto pos = QPoint(area.left(), old_frame_geo.y());
-    pos = win->control->rules().checkPosition(pos);
+    pos = win->control->rules.checkPosition(pos);
 
     auto size = QSize(area.width(), old_frame_geo.height());
     size = win->control->adjusted_frame_size(size, size_mode::fixed_width);
@@ -214,7 +214,7 @@ void update_maximized(Win* win, maximize_mode mode)
         return;
     }
 
-    mode = win->control->rules().checkMaximize(mode);
+    mode = win->control->rules.checkMaximize(mode);
 
     geometry_updates_blocker blocker(win);
     auto const old_mode = win->geometry_update.max_mode;
@@ -244,13 +244,13 @@ void update_maximized(Win* win, maximize_mode mode)
 
     // TODO(romangg): This quicktiling logic is ill-fitted in update_maximized(..). We need to
     //                rework the relation between quicktiling and maximization in general.
-    auto old_quicktiling = win->control->quicktiling();
+    auto old_quicktiling = win->control->quicktiling;
     if (mode == maximize_mode::full) {
-        win->control->set_quicktiling(quicktiles::maximize);
+        win->control->quicktiling = quicktiles::maximize;
     } else {
-        win->control->set_quicktiling(quicktiles::none);
+        win->control->quicktiling = quicktiles::none;
     }
-    if (old_quicktiling != win->control->quicktiling()) {
+    if (old_quicktiling != win->control->quicktiling) {
         // Send changed signal but ensure we do not override our frame geometry.
         auto const frame_geo = win->geometry_update.frame;
         Q_EMIT win->qobject->quicktiling_changed();

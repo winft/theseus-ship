@@ -267,8 +267,8 @@ void TouchInputTest::testTouchMouseAction()
     auto c2 = showWindow();
     QVERIFY(c2);
 
-    QVERIFY(!c1->control->active());
-    QVERIFY(c2->control->active());
+    QVERIFY(!c1->control->active);
+    QVERIFY(c2->control->active);
 
     // also create a sequence started spy as the touch event should be passed through
     QSignalSpy sequenceStartedSpy(touch.get(), &Touch::sequenceStarted);
@@ -276,7 +276,7 @@ void TouchInputTest::testTouchMouseAction()
 
     quint32 timestamp = 1;
     Test::touch_down(1, c1->frameGeometry().center(), timestamp++);
-    QVERIFY(c1->control->active());
+    QVERIFY(c1->control->active);
 
     QVERIFY(sequenceStartedSpy.wait());
     QCOMPARE(sequenceStartedSpy.count(), 1);

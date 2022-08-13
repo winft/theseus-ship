@@ -320,13 +320,13 @@ public:
             if (window->isInitialPositionSet()) {
                 placementDone = true;
             }
-            if (window->control->fullscreen()) {
+            if (window->control->fullscreen) {
                 placementDone = true;
             }
             if (window->maximizeMode() == maximize_mode::full) {
                 placementDone = true;
             }
-            if (window->control->rules().checkPosition(geo::invalid_point, true)
+            if (window->control->rules.checkPosition(geo::invalid_point, true)
                 != geo::invalid_point) {
                 placementDone = true;
             }
@@ -342,7 +342,7 @@ public:
         if (window->control) {
             update_space_areas(*this);
 
-            if (window->wantsInput() && !window->control->minimized()) {
+            if (window->wantsInput() && !window->control->minimized) {
                 activate_window(*this, window);
             }
 
@@ -391,7 +391,7 @@ public:
             if (window == client_keys_client) {
                 setup_window_shortcut_done(*this, false);
             }
-            if (!window->control->shortcut().isEmpty()) {
+            if (!window->control->shortcut.isEmpty()) {
                 // Remove from client_keys.
                 set_shortcut(window, QString());
             }

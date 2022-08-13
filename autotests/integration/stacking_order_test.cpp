@@ -165,7 +165,7 @@ void StackingOrderTest::testTransientIsAboveParent()
     QVERIFY(parentShellSurface);
     auto parent = Test::render_and_wait_for_shown(parentSurface, QSize(256, 256), Qt::blue);
     QVERIFY(parent);
-    QVERIFY(parent->control->active());
+    QVERIFY(parent->control->active);
     QVERIFY(!parent->transient()->lead());
 
     // Initially, the stacking order should contain only the parent window.
@@ -179,7 +179,7 @@ void StackingOrderTest::testTransientIsAboveParent()
     transientShellSurface->setTransientFor(parentShellSurface.get());
     auto transient = Test::render_and_wait_for_shown(transientSurface, QSize(128, 128), Qt::red);
     QVERIFY(transient);
-    QVERIFY(transient->control->active());
+    QVERIFY(transient->control->active);
     QVERIFY(transient->transient()->lead());
 
     // The transient should be above the parent.
@@ -188,8 +188,8 @@ void StackingOrderTest::testTransientIsAboveParent()
 
     // The transient still stays above the parent if we activate the latter.
     win::activate_window(*Test::app()->base.space, parent);
-    QTRY_VERIFY(parent->control->active());
-    QTRY_VERIFY(!transient->control->active());
+    QTRY_VERIFY(parent->control->active);
+    QTRY_VERIFY(!transient->control->active);
 
     QCOMPARE(Test::app()->base.space->stacking_order->stack,
              (std::deque<Toplevel*>{parent, transient}));
@@ -207,7 +207,7 @@ void StackingOrderTest::testRaiseTransient()
     QVERIFY(parentShellSurface);
     auto parent = Test::render_and_wait_for_shown(parentSurface, QSize(256, 256), Qt::blue);
     QVERIFY(parent);
-    QVERIFY(parent->control->active());
+    QVERIFY(parent->control->active);
     QVERIFY(!parent->transient()->lead());
 
     // Initially, the stacking order should contain only the parent window.
@@ -221,7 +221,7 @@ void StackingOrderTest::testRaiseTransient()
     transientShellSurface->setTransientFor(parentShellSurface.get());
     auto transient = Test::render_and_wait_for_shown(transientSurface, QSize(128, 128), Qt::red);
     QVERIFY(transient);
-    QTRY_VERIFY(transient->control->active());
+    QTRY_VERIFY(transient->control->active);
     QVERIFY(transient->transient()->lead());
 
     // The transient should be above the parent.
@@ -236,7 +236,7 @@ void StackingOrderTest::testRaiseTransient()
     auto anotherClient
         = Test::render_and_wait_for_shown(anotherSurface, QSize(128, 128), Qt::green);
     QVERIFY(anotherClient);
-    QVERIFY(anotherClient->control->active());
+    QVERIFY(anotherClient->control->active);
     QVERIFY(!anotherClient->transient()->lead());
 
     // The newly created surface has to be above both the parent and the transient.
@@ -245,25 +245,25 @@ void StackingOrderTest::testRaiseTransient()
 
     // If we activate the parent, the transient should be raised too.
     win::activate_window(*Test::app()->base.space, parent);
-    QTRY_VERIFY(parent->control->active());
-    QTRY_VERIFY(!transient->control->active());
-    QTRY_VERIFY(!anotherClient->control->active());
+    QTRY_VERIFY(parent->control->active);
+    QTRY_VERIFY(!transient->control->active);
+    QTRY_VERIFY(!anotherClient->control->active);
     QCOMPARE(Test::app()->base.space->stacking_order->stack,
              (std::deque<Toplevel*>{anotherClient, parent, transient}));
 
     // Go back to the initial setup.
     win::activate_window(*Test::app()->base.space, anotherClient);
-    QTRY_VERIFY(!parent->control->active());
-    QTRY_VERIFY(!transient->control->active());
-    QTRY_VERIFY(anotherClient->control->active());
+    QTRY_VERIFY(!parent->control->active);
+    QTRY_VERIFY(!transient->control->active);
+    QTRY_VERIFY(anotherClient->control->active);
     QCOMPARE(Test::app()->base.space->stacking_order->stack,
              (std::deque<Toplevel*>{parent, transient, anotherClient}));
 
     // If we activate the transient, the parent should be raised too.
     win::activate_window(*Test::app()->base.space, transient);
-    QTRY_VERIFY(!parent->control->active());
-    QTRY_VERIFY(transient->control->active());
-    QTRY_VERIFY(!anotherClient->control->active());
+    QTRY_VERIFY(!parent->control->active);
+    QTRY_VERIFY(transient->control->active);
+    QTRY_VERIFY(!anotherClient->control->active);
     QCOMPARE(Test::app()->base.space->stacking_order->stack,
              (std::deque<Toplevel*>{anotherClient, parent, transient}));
 }
@@ -280,7 +280,7 @@ void StackingOrderTest::testDeletedTransient()
     QVERIFY(parentShellSurface);
     auto parent = Test::render_and_wait_for_shown(parentSurface, QSize(256, 256), Qt::blue);
     QVERIFY(parent);
-    QVERIFY(parent->control->active());
+    QVERIFY(parent->control->active);
     QVERIFY(!parent->transient()->lead());
 
     QCOMPARE(Test::app()->base.space->stacking_order->stack, (std::deque<Toplevel*>{parent}));
@@ -293,7 +293,7 @@ void StackingOrderTest::testDeletedTransient()
     transient1ShellSurface->setTransientFor(parentShellSurface.get());
     auto transient1 = Test::render_and_wait_for_shown(transient1Surface, QSize(128, 128), Qt::red);
     QVERIFY(transient1);
-    QTRY_VERIFY(transient1->control->active());
+    QTRY_VERIFY(transient1->control->active);
     QVERIFY(transient1->transient()->lead());
     QCOMPARE(transient1->transient()->lead(), parent);
 
@@ -312,7 +312,7 @@ void StackingOrderTest::testDeletedTransient()
     auto transient2 = Test::render_and_wait_for_shown(transient2Surface, QSize(128, 128), Qt::red);
     QVERIFY(transient2);
 
-    QTRY_VERIFY(transient2->control->active());
+    QTRY_VERIFY(transient2->control->active);
     QVERIFY(transient2->transient()->lead());
     QCOMPARE(transient2->transient()->lead(), transient1);
 
@@ -321,9 +321,9 @@ void StackingOrderTest::testDeletedTransient()
 
     // Activate the parent, both transients have to be above it.
     win::activate_window(*Test::app()->base.space, parent);
-    QTRY_VERIFY(parent->control->active());
-    QTRY_VERIFY(!transient1->control->active());
-    QTRY_VERIFY(!transient2->control->active());
+    QTRY_VERIFY(parent->control->active);
+    QTRY_VERIFY(!transient1->control->active);
+    QTRY_VERIFY(!transient2->control->active);
 
     // Close the top-most transient.
     connect(transient2->space.qobject.get(),
@@ -342,8 +342,8 @@ void StackingOrderTest::testDeletedTransient()
     QVERIFY(deletedTransient);
 
     // The deleted transient still has to be above its old parent (transient1).
-    QTRY_VERIFY(parent->control->active());
-    QTRY_VERIFY(!transient1->control->active());
+    QTRY_VERIFY(parent->control->active);
+    QTRY_VERIFY(!transient1->control->active);
 
     QCOMPARE(Test::app()->base.space->stacking_order->stack,
              (std::deque<Toplevel*>{parent, transient1, deletedTransient.get()}));
@@ -375,7 +375,7 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
     auto leader
         = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
     QVERIFY(leader);
-    QVERIFY(leader->control->active());
+    QVERIFY(leader->control->active);
     QCOMPARE(leader->xcb_window, leaderWid);
     QVERIFY(!leader->transient()->lead());
 
@@ -392,7 +392,7 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
     auto member1
         = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
     QVERIFY(member1);
-    QVERIFY(member1->control->active());
+    QVERIFY(member1->control->active);
     QCOMPARE(member1->xcb_window, member1Wid);
     QCOMPARE(member1->group(), leader->group());
     QVERIFY(!member1->transient()->lead());
@@ -411,7 +411,7 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
     auto member2
         = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
     QVERIFY(member2);
-    QVERIFY(member2->control->active());
+    QVERIFY(member2->control->active);
     QCOMPARE(member2->xcb_window, member2Wid);
     QCOMPARE(member2->group(), leader->group());
     QVERIFY(!member2->transient()->lead());
@@ -451,7 +451,7 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
     auto transient
         = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
     QVERIFY(transient);
-    QVERIFY(transient->control->active());
+    QVERIFY(transient->control->active);
     QCOMPARE(transient->xcb_window, transientWid);
     QCOMPARE(transient->group(), leader->group());
     QVERIFY(transient->transient()->lead());
@@ -463,22 +463,22 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
 
     // If we activate any member of the window group, the transient will be above it.
     win::activate_window(*Test::app()->base.space, leader);
-    QTRY_VERIFY(leader->control->active());
+    QTRY_VERIFY(leader->control->active);
     QCOMPARE(Test::app()->base.space->stacking_order->stack,
              (std::deque<Toplevel*>{member1, member2, leader, transient}));
 
     win::activate_window(*Test::app()->base.space, member1);
-    QTRY_VERIFY(member1->control->active());
+    QTRY_VERIFY(member1->control->active);
     QCOMPARE(Test::app()->base.space->stacking_order->stack,
              (std::deque<Toplevel*>{member2, leader, member1, transient}));
 
     win::activate_window(*Test::app()->base.space, member2);
-    QTRY_VERIFY(member2->control->active());
+    QTRY_VERIFY(member2->control->active);
     QCOMPARE(Test::app()->base.space->stacking_order->stack,
              (std::deque<Toplevel*>{leader, member1, member2, transient}));
 
     win::activate_window(*Test::app()->base.space, transient);
-    QTRY_VERIFY(transient->control->active());
+    QTRY_VERIFY(transient->control->active);
     QCOMPARE(Test::app()->base.space->stacking_order->stack,
              (std::deque<Toplevel*>{leader, member1, member2, transient}));
 }
@@ -503,7 +503,7 @@ void StackingOrderTest::testRaiseGroupTransient()
     auto leader
         = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
     QVERIFY(leader);
-    QVERIFY(leader->control->active());
+    QVERIFY(leader->control->active);
     QCOMPARE(leader->xcb_window, leaderWid);
     QVERIFY(!leader->transient()->lead());
 
@@ -520,7 +520,7 @@ void StackingOrderTest::testRaiseGroupTransient()
     auto member1
         = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
     QVERIFY(member1);
-    QVERIFY(member1->control->active());
+    QVERIFY(member1->control->active);
     QCOMPARE(member1->xcb_window, member1Wid);
     QCOMPARE(member1->group(), leader->group());
     QVERIFY(!member1->transient()->lead());
@@ -539,7 +539,7 @@ void StackingOrderTest::testRaiseGroupTransient()
     auto member2
         = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
     QVERIFY(member2);
-    QVERIFY(member2->control->active());
+    QVERIFY(member2->control->active);
     QCOMPARE(member2->xcb_window, member2Wid);
     QCOMPARE(member2->group(), leader->group());
     QVERIFY(!member2->transient()->lead());
@@ -579,7 +579,7 @@ void StackingOrderTest::testRaiseGroupTransient()
     auto transient
         = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
     QVERIFY(transient);
-    QVERIFY(transient->control->active());
+    QVERIFY(transient->control->active);
     QCOMPARE(transient->xcb_window, transientWid);
     QCOMPARE(transient->group(), leader->group());
     QVERIFY(transient->transient()->lead());
@@ -597,7 +597,7 @@ void StackingOrderTest::testRaiseGroupTransient()
     auto anotherClient
         = Test::render_and_wait_for_shown(anotherSurface, QSize(128, 128), Qt::green);
     QVERIFY(anotherClient);
-    QVERIFY(anotherClient->control->active());
+    QVERIFY(anotherClient->control->active);
     QVERIFY(!anotherClient->transient()->lead());
 
     QCOMPARE(Test::app()->base.space->stacking_order->stack,
@@ -605,25 +605,25 @@ void StackingOrderTest::testRaiseGroupTransient()
 
     // If we activate the leader, then only it and the transient have to be raised.
     win::activate_window(*Test::app()->base.space, leader);
-    QTRY_VERIFY(leader->control->active());
+    QTRY_VERIFY(leader->control->active);
     QCOMPARE(Test::app()->base.space->stacking_order->stack,
              (std::deque<Toplevel*>{member1, member2, anotherClient, leader, transient}));
 
     // If another member of the window group is activated, then the transient will
     // be above that member and the leader.
     win::activate_window(*Test::app()->base.space, member2);
-    QTRY_VERIFY(member2->control->active());
+    QTRY_VERIFY(member2->control->active);
     QCOMPARE(Test::app()->base.space->stacking_order->stack,
              (std::deque<Toplevel*>{member1, anotherClient, leader, member2, transient}));
 
     // FIXME: If we activate the transient, only it will be raised.
     win::activate_window(*Test::app()->base.space, anotherClient);
-    QTRY_VERIFY(anotherClient->control->active());
+    QTRY_VERIFY(anotherClient->control->active);
     QCOMPARE(Test::app()->base.space->stacking_order->stack,
              (std::deque<Toplevel*>{member1, leader, member2, transient, anotherClient}));
 
     win::activate_window(*Test::app()->base.space, transient);
-    QTRY_VERIFY(transient->control->active());
+    QTRY_VERIFY(transient->control->active);
     QCOMPARE(Test::app()->base.space->stacking_order->stack,
              (std::deque<Toplevel*>{anotherClient, member1, leader, member2, transient}));
 }
@@ -650,7 +650,7 @@ void StackingOrderTest::testDeletedGroupTransient()
     auto leader
         = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
     QVERIFY(leader);
-    QVERIFY(leader->control->active());
+    QVERIFY(leader->control->active);
     QCOMPARE(leader->xcb_window, leaderWid);
     QVERIFY(!leader->transient()->lead());
 
@@ -666,7 +666,7 @@ void StackingOrderTest::testDeletedGroupTransient()
     auto member1
         = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
     QVERIFY(member1);
-    QVERIFY(member1->control->active());
+    QVERIFY(member1->control->active);
     QCOMPARE(member1->xcb_window, member1Wid);
     QCOMPARE(member1->group(), leader->group());
     QVERIFY(!member1->transient()->lead());
@@ -684,7 +684,7 @@ void StackingOrderTest::testDeletedGroupTransient()
     auto member2
         = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
     QVERIFY(member2);
-    QVERIFY(member2->control->active());
+    QVERIFY(member2->control->active);
     QCOMPARE(member2->xcb_window, member2Wid);
     QCOMPARE(member2->group(), leader->group());
     QVERIFY(!member2->transient()->lead());
@@ -723,7 +723,7 @@ void StackingOrderTest::testDeletedGroupTransient()
     auto transient
         = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
     QVERIFY(transient);
-    QVERIFY(transient->control->active());
+    QVERIFY(transient->control->active);
     QCOMPARE(transient->xcb_window, transientWid);
     QCOMPARE(transient->group(), leader->group());
     QVERIFY(transient->transient()->lead());
@@ -781,7 +781,7 @@ void StackingOrderTest::testDontKeepAboveNonModalDialogGroupTransients()
     auto leader
         = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
     QVERIFY(leader);
-    QVERIFY(leader->control->active());
+    QVERIFY(leader->control->active);
     QCOMPARE(leader->xcb_window, leaderWid);
     QVERIFY(!leader->transient()->lead());
 
@@ -797,7 +797,7 @@ void StackingOrderTest::testDontKeepAboveNonModalDialogGroupTransients()
     auto member1
         = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
     QVERIFY(member1);
-    QVERIFY(member1->control->active());
+    QVERIFY(member1->control->active);
     QCOMPARE(member1->xcb_window, member1Wid);
     QCOMPARE(member1->group(), leader->group());
     QVERIFY(!member1->transient()->lead());
@@ -815,7 +815,7 @@ void StackingOrderTest::testDontKeepAboveNonModalDialogGroupTransients()
     auto member2
         = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
     QVERIFY(member2);
-    QVERIFY(member2->control->active());
+    QVERIFY(member2->control->active);
     QCOMPARE(member2->xcb_window, member2Wid);
     QCOMPARE(member2->group(), leader->group());
     QVERIFY(!member2->transient()->lead());
@@ -834,7 +834,7 @@ void StackingOrderTest::testDontKeepAboveNonModalDialogGroupTransients()
     auto transient
         = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
     QVERIFY(transient);
-    QVERIFY(transient->control->active());
+    QVERIFY(transient->control->active);
     QCOMPARE(transient->xcb_window, transientWid);
     QCOMPARE(transient->group(), leader->group());
     QVERIFY(transient->transient()->lead());
@@ -846,22 +846,22 @@ void StackingOrderTest::testDontKeepAboveNonModalDialogGroupTransients()
              (std::deque<Toplevel*>{leader, member1, member2, transient}));
 
     win::activate_window(*Test::app()->base.space, leader);
-    QTRY_VERIFY(leader->control->active());
+    QTRY_VERIFY(leader->control->active);
     QCOMPARE(Test::app()->base.space->stacking_order->stack,
              (std::deque<Toplevel*>{member1, member2, transient, leader}));
 
     win::activate_window(*Test::app()->base.space, member1);
-    QTRY_VERIFY(member1->control->active());
+    QTRY_VERIFY(member1->control->active);
     QCOMPARE(Test::app()->base.space->stacking_order->stack,
              (std::deque<Toplevel*>{member2, transient, leader, member1}));
 
     win::activate_window(*Test::app()->base.space, member2);
-    QTRY_VERIFY(member2->control->active());
+    QTRY_VERIFY(member2->control->active);
     QCOMPARE(Test::app()->base.space->stacking_order->stack,
              (std::deque<Toplevel*>{transient, leader, member1, member2}));
 
     win::activate_window(*Test::app()->base.space, transient);
-    QTRY_VERIFY(transient->control->active());
+    QTRY_VERIFY(transient->control->active);
     QCOMPARE(Test::app()->base.space->stacking_order->stack,
              (std::deque<Toplevel*>{leader, member1, member2, transient}));
 }
@@ -877,8 +877,8 @@ void StackingOrderTest::testKeepAbove()
     QVERIFY(clientAShellSurface);
     auto clientA = Test::render_and_wait_for_shown(clientASurface, QSize(128, 128), Qt::green);
     QVERIFY(clientA);
-    QVERIFY(clientA->control->active());
-    QVERIFY(!clientA->control->keep_above());
+    QVERIFY(clientA->control->active);
+    QVERIFY(!clientA->control->keep_above);
 
     QCOMPARE(Test::app()->base.space->stacking_order->stack, (std::deque<Toplevel*>{clientA}));
 
@@ -889,15 +889,15 @@ void StackingOrderTest::testKeepAbove()
     QVERIFY(clientBShellSurface);
     auto clientB = Test::render_and_wait_for_shown(clientBSurface, QSize(128, 128), Qt::green);
     QVERIFY(clientB);
-    QVERIFY(clientB->control->active());
-    QVERIFY(!clientB->control->keep_above());
+    QVERIFY(clientB->control->active);
+    QVERIFY(!clientB->control->keep_above);
 
     QCOMPARE(Test::app()->base.space->stacking_order->stack,
              (std::deque<Toplevel*>{clientA, clientB}));
 
     // Go to the initial test position.
     win::activate_window(*Test::app()->base.space, clientA);
-    QTRY_VERIFY(clientA->control->active());
+    QTRY_VERIFY(clientA->control->active);
     QCOMPARE(Test::app()->base.space->stacking_order->stack,
              (std::deque<Toplevel*>{clientB, clientA}));
 
@@ -907,8 +907,8 @@ void StackingOrderTest::testKeepAbove()
         win::set_keep_above(clientB, true);
     }
 
-    QVERIFY(clientB->control->keep_above());
-    QVERIFY(!clientB->control->active());
+    QVERIFY(clientB->control->keep_above);
+    QVERIFY(!clientB->control->active);
     QCOMPARE(Test::app()->base.space->stacking_order->stack,
              (std::deque<Toplevel*>{clientA, clientB}));
 }
@@ -924,8 +924,8 @@ void StackingOrderTest::testKeepBelow()
     QVERIFY(clientAShellSurface);
     auto clientA = Test::render_and_wait_for_shown(clientASurface, QSize(128, 128), Qt::green);
     QVERIFY(clientA);
-    QVERIFY(clientA->control->active());
-    QVERIFY(!clientA->control->keep_below());
+    QVERIFY(clientA->control->active);
+    QVERIFY(!clientA->control->keep_below);
 
     QCOMPARE(Test::app()->base.space->stacking_order->stack, (std::deque<Toplevel*>{clientA}));
 
@@ -936,8 +936,8 @@ void StackingOrderTest::testKeepBelow()
     QVERIFY(clientBShellSurface);
     auto clientB = Test::render_and_wait_for_shown(clientBSurface, QSize(128, 128), Qt::green);
     QVERIFY(clientB);
-    QVERIFY(clientB->control->active());
-    QVERIFY(!clientB->control->keep_below());
+    QVERIFY(clientB->control->active);
+    QVERIFY(!clientB->control->keep_below);
 
     QCOMPARE(Test::app()->base.space->stacking_order->stack,
              (std::deque<Toplevel*>{clientA, clientB}));
@@ -948,8 +948,8 @@ void StackingOrderTest::testKeepBelow()
         win::set_keep_below(clientB, true);
     }
 
-    QVERIFY(clientB->control->active());
-    QVERIFY(clientB->control->keep_below());
+    QVERIFY(clientB->control->active);
+    QVERIFY(clientB->control->keep_below);
     QCOMPARE(Test::app()->base.space->stacking_order->stack,
              (std::deque<Toplevel*>{clientB, clientA}));
 }

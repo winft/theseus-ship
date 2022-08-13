@@ -139,11 +139,11 @@ bool device_redirect_update_decoration(Dev* dev)
     auto const old_deco = dev->focus.deco;
     decltype(dev->focus.deco) new_deco{nullptr};
 
-    if (auto win = dev->at.window; win && win->control && win->control->deco().client) {
+    if (auto win = dev->at.window; win && win->control && win->control->deco.client) {
         auto const client_geo = win::frame_to_client_rect(win, win->frameGeometry());
         if (!client_geo.contains(dev->position().toPoint())) {
             // input device above decoration
-            new_deco = win->control->deco().client;
+            new_deco = win->control->deco.client;
         }
     }
 

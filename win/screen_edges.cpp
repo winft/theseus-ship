@@ -414,7 +414,7 @@ void screen_edge::switchDesktop(QPoint const& cursorPos)
     }
 
     if (auto c = edger->space.move_resize_window) {
-        if (c->control->rules().checkDesktop(desktop) != int(desktop)) {
+        if (c->control->rules.checkDesktop(desktop) != int(desktop)) {
             // user attempts to move a client to another desktop where it is ruleforced to not be
             return;
         }
@@ -527,7 +527,7 @@ void screen_edge::checkBlocking()
 {
     auto window = edger->space.active_client;
     auto const newValue = !edger->remainActiveOnFullscreen() && window
-        && window->control->fullscreen() && window->frameGeometry().contains(geometry.center())
+        && window->control->fullscreen && window->frameGeometry().contains(geometry.center())
         && !(edger->space.render.effects
              && edger->space.render.effects->hasActiveFullScreenEffect());
 

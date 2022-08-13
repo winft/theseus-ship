@@ -226,7 +226,7 @@ void request_focus(Space& space, Toplevel* window, bool raise = false, bool forc
             if (!modal->isOnDesktop(window->desktop())) {
                 set_desktop(modal, window->desktop());
             }
-            if (!modal->isShown() && !modal->control->minimized()) {
+            if (!modal->isShown() && !modal->control->minimized) {
                 // forced desktop or utility window
                 // activating a minimized blocked window will unminimize its modal implicitly
                 activate_window(space, modal);
@@ -309,13 +309,13 @@ Toplevel* window_under_mouse(Space const& space, base::output const* output)
 template<typename Win>
 void set_demands_attention(Win* win, bool demand)
 {
-    if (win->control->active()) {
+    if (win->control->active) {
         demand = false;
     }
-    if (win->control->demands_attention() == demand) {
+    if (win->control->demands_attention == demand) {
         return;
     }
-    win->control->set_demands_attention(demand);
+    win->control->demands_attention = demand;
 
     if (win->info) {
         win->info->setState(demand ? NET::DemandsAttention : NET::States(), NET::DemandsAttention);
@@ -343,14 +343,14 @@ void set_demands_attention(Win* win, bool demand)
 template<typename Win>
 void set_active(Win* win, bool active)
 {
-    if (win->control->active() == active) {
+    if (win->control->active == active) {
         return;
     }
-    win->control->set_active(active);
+    win->control->active = active;
 
     auto const ruledOpacity = active
-        ? win->control->rules().checkOpacityActive(qRound(win->opacity() * 100.0))
-        : win->control->rules().checkOpacityInactive(qRound(win->opacity() * 100.0));
+        ? win->control->rules.checkOpacityActive(qRound(win->opacity() * 100.0))
+        : win->control->rules.checkOpacityInactive(qRound(win->opacity() * 100.0));
     win->setOpacity(ruledOpacity / 100.0);
 
     set_active_window(win->space, active ? win : nullptr);
@@ -369,7 +369,7 @@ void set_active(Win* win, bool active)
         if (lead->remnant) {
             continue;
         }
-        if (lead->control->fullscreen()) {
+        if (lead->control->fullscreen) {
             // Fullscreens go high even if their transient is active.
             update_layer(lead);
         }
@@ -413,7 +413,7 @@ void set_active_window(Space& space, Toplevel* window)
     }
 
     space.active_client = window;
-    assert(!window || window->control->active());
+    assert(!window || window->control->active);
 
     if (space.active_client) {
         space.last_active_client = space.active_client;
@@ -435,7 +435,7 @@ void set_active_window(Space& space, Toplevel* window)
     x11::update_tool_windows_visibility(&space, false);
     if (window) {
         set_global_shortcuts_disabled(space,
-                                      window->control->rules().checkDisableGlobalShortcuts(false));
+                                      window->control->rules.checkDisableGlobalShortcuts(false));
     } else {
         set_global_shortcuts_disabled(space, false);
     }
@@ -464,7 +464,7 @@ void activate_window_impl(Space& space, Win* window, bool force)
         focus_blocker blocker(space);
         space.virtual_desktop_manager->setCurrent(window->desktop());
     }
-    if (window->control->minimized()) {
+    if (window->control->minimized) {
         set_minimized(window, false);
     }
 
@@ -683,7 +683,7 @@ bool activate_window_direction(Space& space,
         }
 
         if (wants_tab_focus(client) && *i != c && client->isOnDesktop(d)
-            && !client->control->minimized()) {
+            && !client->control->minimized) {
             // Centre of the other window
             const QPoint other(client->pos().x() + client->size().width() / 2,
                                client->pos().y() + client->size().height() / 2);

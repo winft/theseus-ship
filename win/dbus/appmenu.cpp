@@ -124,7 +124,7 @@ void appmenu::showApplicationMenu(const QPoint& p, Toplevel* window, int actionI
         return;
     }
 
-    auto const menu = window->control->application_menu();
+    auto const menu = window->control->appmenu;
     dbus_iface->showMenu(p.x(),
                          p.y(),
                          QString::fromStdString(menu.address.name),

@@ -54,7 +54,7 @@ struct appmenu_callbacks {
 template<typename Win>
 void show_appmenu(Win& win, int actionId)
 {
-    if (auto decoration = win.control->deco().decoration) {
+    if (auto decoration = win.control->deco.decoration) {
         decoration->showApplicationMenu(actionId);
     } else {
         // No info where application menu button is, show it in the top left corner by default.

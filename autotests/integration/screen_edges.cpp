@@ -918,11 +918,11 @@ void TestScreenEdges::testClientEdge()
     client->hideClient(false);
     win::set_keep_below(client, true);
     screenEdges->reserve(client, KWin::ElectricLeft);
-    QCOMPARE(client->control->keep_below(), true);
+    QCOMPARE(client->control->keep_below, true);
     QCOMPARE(client->isHiddenInternal(), false);
 
     Test::app()->base.input->cursor->set_pos(0, 50);
-    QCOMPARE(client->control->keep_below(), false);
+    QCOMPARE(client->control->keep_below, false);
     QCOMPARE(client->isHiddenInternal(), false);
     QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(1, 50));
 }

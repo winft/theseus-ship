@@ -205,8 +205,8 @@ void get_icons(Win* win)
 
     if (icon.isNull()) {
         for (auto lead : win->transient()->leads()) {
-            if (!lead->control->icon().isNull()) {
-                icon = lead->control->icon();
+            if (!lead->control->icon.isNull()) {
+                icon = lead->control->icon;
                 break;
             }
         }
@@ -283,7 +283,7 @@ bool same_app_window_role_match(Win const* c1, Win const* c2, bool active_hack)
             // different mainwindows are always different apps
             return c1 == c2;
         }
-        if (!c1->control->active() && !c2->control->active()) {
+        if (!c1->control->active && !c2->control->active) {
             return c1 == c2;
         }
     }

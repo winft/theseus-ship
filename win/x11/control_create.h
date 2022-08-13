@@ -217,7 +217,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
                          if (win->xcb_windows.input.is_valid()) {
                              win->xcb_windows.input.define_cursor(nativeCursor);
                          }
-                         if (win->control->move_resize().enabled) {
+                         if (win->control->move_resize.enabled) {
                              // changing window attributes doesn't change cursor if there's pointer
                              // grab active
                              xcb_change_active_pointer_grab(
@@ -304,7 +304,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         desktopFileName = win->info->gtkApplicationId();
     }
     set_desktop_file_name(win,
-                          win->control->rules().checkDesktopFile(desktopFileName, true).toUtf8());
+                          win->control->rules.checkDesktopFile(desktopFileName, true).toUtf8());
     get_icons(win);
     QObject::connect(win->qobject.get(),
                      &window_qobject::desktopFileNameChanged,
@@ -344,11 +344,11 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         win->user_no_border = session->noBorder;
     }
 
-    set_shortcut(
-        win, win->control->rules().checkShortcut(session ? session->shortcut : QString(), true));
+    set_shortcut(win,
+                 win->control->rules.checkShortcut(session ? session->shortcut : QString(), true));
 
-    init_minimize = win->control->rules().checkMinimize(init_minimize, !isMapped);
-    win->user_no_border = win->control->rules().checkNoBorder(win->user_no_border, !isMapped);
+    init_minimize = win->control->rules.checkMinimize(init_minimize, !isMapped);
+    win->user_no_border = win->control->rules.checkNoBorder(win->user_no_border, !isMapped);
 
     // We setup compositing already here so a desktop presence change can access effects.
     win->setupCompositing();
@@ -412,7 +412,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         desk = is_desktop(win) ? static_cast<int>(NET::OnAllDesktops)
                                : space.virtual_desktop_manager->current();
     }
-    desk = win->control->rules().checkDesktop(desk, !isMapped);
+    desk = win->control->rules.checkDesktop(desk, !isMapped);
 
     if (desk != NET::OnAllDesktops) {
         // Do range check
@@ -522,7 +522,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
             maxmode = maxmode | maximize_mode::horizontal;
         }
 
-        auto forced_maxmode = win->control->rules().checkMaximize(maxmode, !isMapped);
+        auto forced_maxmode = win->control->rules.checkMaximize(maxmode, !isMapped);
 
         // Either hints were set to maximize, or is forced to maximize,
         // or is forced to non-maximize and hints were set to maximize
@@ -533,18 +533,18 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         // Read other initial states
         set_keep_above(
             win,
-            win->control->rules().checkKeepAbove(win->info->state() & NET::KeepAbove, !isMapped));
+            win->control->rules.checkKeepAbove(win->info->state() & NET::KeepAbove, !isMapped));
         set_keep_below(
             win,
-            win->control->rules().checkKeepBelow(win->info->state() & NET::KeepBelow, !isMapped));
-        set_original_skip_taskbar(win,
-                                  win->control->rules().checkSkipTaskbar(
-                                      win->info->state() & NET::SkipTaskbar, !isMapped));
+            win->control->rules.checkKeepBelow(win->info->state() & NET::KeepBelow, !isMapped));
+        set_original_skip_taskbar(
+            win,
+            win->control->rules.checkSkipTaskbar(win->info->state() & NET::SkipTaskbar, !isMapped));
         set_skip_pager(
             win,
-            win->control->rules().checkSkipPager(win->info->state() & NET::SkipPager, !isMapped));
+            win->control->rules.checkSkipPager(win->info->state() & NET::SkipPager, !isMapped));
         set_skip_switcher(win,
-                          win->control->rules().checkSkipSwitcher(
+                          win->control->rules.checkSkipSwitcher(
                               win->info->state() & NET::SkipSwitcher, !isMapped));
 
         if (win->info->state() & NET::DemandsAttention) {
@@ -555,7 +555,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         }
 
         win->setFullScreen(
-            win->control->rules().checkFullScreen(win->info->state() & NET::FullScreen, !isMapped),
+            win->control->rules.checkFullScreen(win->info->state() & NET::FullScreen, !isMapped),
             false);
     }
 
@@ -630,7 +630,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
     if (decoration(win)) {
         // Sync the final size.
-        win->control->deco().client->update_size();
+        win->control->deco.client->update_size();
     }
 
     if (win->user_time == XCB_TIME_CURRENT_TIME || win->user_time == -1U) {
@@ -746,7 +746,7 @@ xcb_timestamp_t read_user_time_map_timestamp(Win* win,
             }
             // don't refuse if focus stealing prevention is turned off
             if (!first_window
-                && enum_index(win->control->rules().checkFSP(
+                && enum_index(win->control->rules.checkFSP(
                        kwinApp()->options->qobject->focusStealingPreventionLevel()))
                     > 0) {
                 qCDebug(KWIN_CORE) << "User timestamp, already exists:" << 0;

@@ -44,7 +44,7 @@ template<typename Win>
 void finish_rules(Win* win)
 {
     win->updateWindowRules(rules::type::all);
-    win->control->set_rules(rules::window());
+    win->control->rules = rules::window();
 }
 
 }

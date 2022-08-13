@@ -45,7 +45,7 @@ static inline bool is_irrelevant(Win1 const* window, Win2 const* regarding, int 
 template<typename Win>
 bool is_move(Win* win)
 {
-    auto const& mov_res = win->control->move_resize();
+    auto const& mov_res = win->control->move_resize;
     return mov_res.enabled && mov_res.contact == position::center;
 }
 

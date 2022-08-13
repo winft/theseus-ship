@@ -177,7 +177,7 @@ GLTexture* window::getDecorationTexture() const
             return nullptr;
         }
         if (auto renderer
-            = static_cast<deco_renderer*>(toplevel->control->deco().client->renderer())) {
+            = static_cast<deco_renderer*>(toplevel->control->deco.client->renderer())) {
             renderer->render();
             return renderer->texture();
         }

@@ -54,7 +54,7 @@ Toplevel* find_controlled_window(Redirect const& redirect, QPoint const& pos)
             continue;
         }
         if (window->control) {
-            if (!window->isOnCurrentDesktop() || window->control->minimized()) {
+            if (!window->isOnCurrentDesktop() || window->control->minimized) {
                 continue;
             }
         }

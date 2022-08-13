@@ -74,25 +74,25 @@ void perform_window_operation(Space& space,
         set_on_all_desktops(window, !window->isOnAllDesktops());
         break;
     case base::options_qobject::FullScreenOp:
-        window->setFullScreen(!window->control->fullscreen(), true);
+        window->setFullScreen(!window->control->fullscreen, true);
         break;
     case base::options_qobject::NoBorderOp:
         window->setNoBorder(!window->noBorder());
         break;
     case base::options_qobject::KeepAboveOp: {
         blocker block(space.stacking_order);
-        bool was = window->control->keep_above();
-        set_keep_above(window, !window->control->keep_above());
-        if (was && !window->control->keep_above()) {
+        bool was = window->control->keep_above;
+        set_keep_above(window, !window->control->keep_above);
+        if (was && !window->control->keep_above) {
             raise_window(&space, window);
         }
         break;
     }
     case base::options_qobject::KeepBelowOp: {
         blocker block(space.stacking_order);
-        bool was = window->control->keep_below();
-        set_keep_below(window, !window->control->keep_below());
-        if (was && !window->control->keep_below()) {
+        bool was = window->control->keep_below;
+        set_keep_below(window, !window->control->keep_below);
+        if (was && !window->control->keep_below) {
             lower_window(&space, window);
         }
         break;

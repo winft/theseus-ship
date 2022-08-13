@@ -90,12 +90,12 @@ QIcon tabbox_client_impl::icon() const
     if (win::is_desktop(m_client)) {
         return QIcon::fromTheme(QStringLiteral("user-desktop"));
     }
-    return m_client->control->icon();
+    return m_client->control->icon;
 }
 
 bool tabbox_client_impl::is_minimized() const
 {
-    return m_client->control->minimized();
+    return m_client->control->minimized;
 }
 
 int tabbox_client_impl::x() const
@@ -130,7 +130,7 @@ void tabbox_client_impl::close()
 
 bool tabbox_client_impl::is_first_in_tabbox() const
 {
-    return m_client->control->first_in_tabbox();
+    return m_client->control->first_in_tabbox;
 }
 
 QUuid tabbox_client_impl::internal_id() const
@@ -938,8 +938,8 @@ void tabbox::cde_walk_through_windows(bool forward)
     for (int i = space.stacking_order->stack.size() - 1; i >= 0; --i) {
         auto window = space.stacking_order->stack.at(i);
         if (window->control && window->isOnCurrentDesktop() && !win::is_special_window(window)
-            && window->isShown() && win::wants_tab_focus(window) && !window->control->keep_above()
-            && !window->control->keep_below()) {
+            && window->isShown() && win::wants_tab_focus(window) && !window->control->keep_above
+            && !window->control->keep_below) {
             c = window;
             break;
         }
@@ -965,8 +965,8 @@ void tabbox::cde_walk_through_windows(bool forward)
         }
     } while (nc && nc != c
              && ((!options_traverse_all && !nc->isOnDesktop(current_desktop()))
-                 || nc->control->minimized() || !win::wants_tab_focus(nc)
-                 || nc->control->keep_above() || nc->control->keep_below()));
+                 || nc->control->minimized || !win::wants_tab_focus(nc) || nc->control->keep_above
+                 || nc->control->keep_below));
     if (nc) {
         if (c && c != nc)
             win::lower_window(&space, c);

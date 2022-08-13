@@ -93,7 +93,7 @@ void BindingsTest::testSwitchWindow()
     std::unique_ptr<XdgShellToplevel> shellSurface4(Test::create_xdg_shell_toplevel(surface4));
     auto c4 = Test::render_and_wait_for_shown(surface4, QSize(100, 50), Qt::blue);
 
-    QVERIFY(c4->control->active());
+    QVERIFY(c4->control->active);
     QVERIFY(c4 != c3);
     QVERIFY(c3 != c2);
     QVERIFY(c2 != c1);
@@ -157,7 +157,7 @@ void BindingsTest::testSwitchWindowScript()
     std::unique_ptr<XdgShellToplevel> shellSurface4(Test::create_xdg_shell_toplevel(surface4));
     auto c4 = Test::render_and_wait_for_shown(surface4, QSize(100, 50), Qt::blue);
 
-    QVERIFY(c4->control->active());
+    QVERIFY(c4->control->active);
     QVERIFY(c4 != c3);
     QVERIFY(c3 != c2);
     QVERIFY(c2 != c1);

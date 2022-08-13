@@ -134,7 +134,7 @@ void window::resetPaintingEnabled()
             disable_painting |= window_paint_disable_type::by_desktop;
     }
     if (toplevel->control) {
-        if (toplevel->control->minimized()) {
+        if (toplevel->control->minimized) {
             disable_painting |= window_paint_disable_type::by_minimize;
         }
         if (toplevel->isHiddenInternal()) {

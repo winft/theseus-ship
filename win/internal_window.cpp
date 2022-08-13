@@ -471,7 +471,7 @@ bool internal_window::belongsToDesktop() const
 
 void internal_window::destroyClient()
 {
-    if (control->move_resize().enabled) {
+    if (control->move_resize.enabled) {
         leaveMoveResize();
     }
 
@@ -556,7 +556,7 @@ bool internal_window::has_pending_repaints() const
 
 void internal_window::doResizeSync()
 {
-    requestGeometry(control->move_resize().geometry);
+    requestGeometry(control->move_resize.geometry);
 }
 
 void internal_window::updateCaption()
@@ -587,8 +587,8 @@ double internal_window::buffer_scale_internal() const
 
 void internal_window::createDecoration(const QRect& rect)
 {
-    control->deco().window = new deco::window<Toplevel>(this);
-    auto decoration = space.deco->createDecoration(control->deco().window);
+    control->deco.window = new deco::window<Toplevel>(this);
+    auto decoration = space.deco->createDecoration(control->deco.window);
 
     if (decoration) {
         QMetaObject::invokeMethod(decoration, "update", Qt::QueuedConnection);
@@ -602,11 +602,11 @@ void internal_window::createDecoration(const QRect& rect)
                 auto const old_geo = frameGeometry();
                 win::check_workspace_position(this, old_geo);
                 discard_quads();
-                control->deco().client->update_size();
+                control->deco.client->update_size();
             });
     }
 
-    control->deco().decoration = decoration;
+    control->deco.decoration = decoration;
     setFrameGeometry(win::client_to_frame_rect(this, rect));
     discard_quads();
 }
@@ -662,7 +662,7 @@ void internal_window::markAsMapped()
 
 void internal_window::updateInternalWindowGeometry()
 {
-    if (control->move_resize().enabled) {
+    if (control->move_resize.enabled) {
         return;
     }
     if (!m_internalWindow) {

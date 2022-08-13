@@ -41,7 +41,7 @@ void update_shape(Win* win)
         if (!win->app_no_border) {
             // Only when shape is detected for the first time, still let the user to override
             win->app_no_border = true;
-            win->user_no_border = win->control->rules().checkNoBorder(true);
+            win->user_no_border = win->control->rules.checkNoBorder(true);
             win->updateDecoration(true);
         }
         if (win->noBorder()) {
@@ -65,8 +65,8 @@ void update_shape(Win* win)
                        XCB_PIXMAP_NONE);
         detect_no_border(win);
         win->app_no_border = win->user_no_border;
-        win->user_no_border = win->control->rules().checkNoBorder(win->user_no_border
-                                                                  || win->motif_hints.no_border());
+        win->user_no_border = win->control->rules.checkNoBorder(win->user_no_border
+                                                                || win->motif_hints.no_border());
         win->updateDecoration(true);
     }
 
@@ -94,7 +94,7 @@ void apply_pending_geometry(Win* win, int64_t update_request_number)
 
     auto frame_geo = win->frameGeometry();
     auto max_mode = win->max_mode;
-    auto fullscreen = win->control->fullscreen();
+    auto fullscreen = win->control->fullscreen;
 
     for (auto it = win->pending_configures.begin(); it != win->pending_configures.end(); it++) {
         if (it->update_request_number > update_request_number) {
@@ -120,7 +120,7 @@ void apply_pending_geometry(Win* win, int64_t update_request_number)
         // We must adjust frame geometry because configure events carry the maximum window geometry
         // size. A client with aspect ratio can attach a buffer with smaller size than the one in
         // a configure event.
-        auto& mov_res = win->control->move_resize();
+        auto& mov_res = win->control->move_resize;
 
         switch (mov_res.contact) {
         case position::top_left:
@@ -222,13 +222,13 @@ void get_wm_normal_hints(Win* win)
         // TODO(romangg): adjust to restrictions.
         auto new_size = win->frameGeometry().size();
 
-        if (new_size != win->size() && !win->control->fullscreen()) {
+        if (new_size != win->size() && !win->control->fullscreen) {
             auto const orig_client_geo = frame_to_client_rect(win, win->frameGeometry());
 
             constrained_resize(win, new_size);
 
             if ((!win::is_special_window(win) || win::is_toolbar(win))
-                && !win->control->fullscreen()) {
+                && !win->control->fullscreen) {
                 // try to keep the window in its xinerama screen if possible,
                 // if that fails at least keep it visible somewhere
                 auto area = space_window_area(win->space, MovementArea, win);
@@ -464,7 +464,7 @@ QSize size_for_client_size(Win const* win,
 
     auto size = QSize(cl_width, cl_height);
 
-    if (win->control->rules().checkStrictGeometry(!win->control->fullscreen())) {
+    if (win->control->rules.checkStrictGeometry(!win->control->fullscreen)) {
         auto const base_adjusted_size = client_size_base_adjust(win, size);
         size = size_aspect_adjust(win, base_adjusted_size, min_size, max_size, mode);
     }
@@ -473,7 +473,7 @@ QSize size_for_client_size(Win const* win,
         size = client_to_frame_size(win, size);
     }
 
-    return win->control->rules().checkSize(size);
+    return win->control->rules.checkSize(size);
 }
 
 template<typename Win>
@@ -570,14 +570,14 @@ template<typename Win>
 bool configure_should_ignore(Win* win, int& value_mask)
 {
     // When app allows deco then (partially) ignore request when (semi-)maximized or quicktiled.
-    auto const quicktiled = win->control->quicktiling() != quicktiles::none;
+    auto const quicktiled = win->control->quicktiling != quicktiles::none;
     auto const maximized = win->maximizeMode() != maximize_mode::restore;
 
     auto ignore = !win->app_no_border && (quicktiled || maximized);
 
-    if (!win->control->rules().checkIgnoreGeometry(ignore)) {
+    if (!win->control->rules.checkIgnoreGeometry(ignore)) {
         // Not maximized, quicktiled or the user allowed the client to break it via rule.
-        win->control->set_quicktiling(win::quicktiles::none);
+        win->control->quicktiling = win::quicktiles::none;
         win->max_mode = win::maximize_mode::restore;
         if (quicktiled || maximized) {
             // TODO(romangg): not emit on maximized?
@@ -618,7 +618,7 @@ bool configure_should_ignore(Win* win, int& value_mask)
     // direction that is not maximized.
     //
     // First ask again the user if he wants to ignore such requests.
-    if (win->control->rules().checkIgnoreGeometry(false)) {
+    if (win->control->rules.checkIgnoreGeometry(false)) {
         return true;
     }
 
@@ -668,14 +668,13 @@ void configure_position_size_from_request(Win* win,
         client_size.setHeight(requested_geo.height());
     }
 
-    auto const frame_pos
-        = win->control->rules().checkPosition(client_to_frame_pos(win, client_pos));
+    auto const frame_pos = win->control->rules.checkPosition(client_to_frame_pos(win, client_pos));
     auto const frame_size = size_for_client_size(win, client_size, size_mode::any, false);
     auto const frame_rect = QRect(frame_pos, frame_size);
 
     if (auto output
         = base::get_nearest_output(kwinApp()->get_base().get_outputs(), frame_rect.center());
-        output != win->control->rules().checkScreen(output)) {
+        output != win->control->rules.checkScreen(output)) {
         // not allowed by rule
         return;
     }
@@ -686,7 +685,7 @@ void configure_position_size_from_request(Win* win,
 
     auto area = space_window_area(win->space, WorkArea, win);
 
-    if (!from_tool && (!is_special_window(win) || is_toolbar(win)) && !win->control->fullscreen()
+    if (!from_tool && (!is_special_window(win) || is_toolbar(win)) && !win->control->fullscreen
         && area.contains(frame_to_client_rect(win, frame_rect))) {
         keep_in_area(win, area, false);
     }
@@ -712,7 +711,7 @@ void configure_only_size_from_request(Win* win,
     geometry_updates_blocker blocker(win);
     resize_with_gravity(win, client_size, xcb_gravity_t(gravity));
 
-    if (from_tool || (is_special_window(win) && !is_toolbar(win)) || win->control->fullscreen()) {
+    if (from_tool || (is_special_window(win) && !is_toolbar(win)) || win->control->fullscreen) {
         // All done.
         return;
     }
@@ -898,7 +897,7 @@ bool update_server_geometry(Win* win, QRect const& frame_geo)
         return true;
     }
 
-    if (win->control->move_resize().enabled) {
+    if (win->control->move_resize.enabled) {
         if (win->space.render.scene) {
             // Defer the X server update until we leave this mode.
             win->move_needs_server_update = true;
@@ -969,7 +968,7 @@ void update_fullscreen_monitors(Win* win, NETFullscreenMonitors topology)
     }
 
     win->info->setFullscreenMonitors(topology);
-    if (win->control->fullscreen()) {
+    if (win->control->fullscreen) {
         win->setFrameGeometry(fullscreen_monitors_area(topology));
     }
 }

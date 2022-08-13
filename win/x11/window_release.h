@@ -36,7 +36,7 @@ void remove_controlled_window_from_space(Space& space, Win* win)
     if (space.client_keys_client == win) {
         setup_window_shortcut_done(space, false);
     }
-    if (!win->control->shortcut().isEmpty()) {
+    if (!win->control->shortcut.isEmpty()) {
         // Remove from client_keys.
         set_shortcut(win, QString());
 
@@ -91,7 +91,7 @@ template<typename Win>
 void reset_have_resize_effect(Win& win)
 {
     if (win.control) {
-        win.control->reset_have_resize_effect();
+        win.control->have_resize_effect = false;
     }
 }
 
@@ -179,7 +179,7 @@ void release_window(Win* win, bool on_shutdown)
         del = create_remnant_window<Win>(*win);
     }
 
-    if (win->control->move_resize().enabled) {
+    if (win->control->move_resize.enabled) {
         Q_EMIT win->qobject->clientFinishUserMovedResized();
     }
 
@@ -190,7 +190,7 @@ void release_window(Win* win, bool on_shutdown)
 
     blocker block(win->space.stacking_order);
 
-    if (win->control->move_resize().enabled) {
+    if (win->control->move_resize.enabled) {
         win->leaveMoveResize();
     }
 
@@ -295,7 +295,7 @@ void destroy_window(Win* win)
 
     auto del = create_remnant_window<Win>(*win);
 
-    if (win->control->move_resize().enabled) {
+    if (win->control->move_resize.enabled) {
         Q_EMIT win->qobject->clientFinishUserMovedResized();
     }
 
@@ -305,7 +305,7 @@ void destroy_window(Win* win)
     win->space.rule_book->discardUsed(win, true);
 
     blocker block(win->space.stacking_order);
-    if (win->control->move_resize().enabled) {
+    if (win->control->move_resize.enabled) {
         win->leaveMoveResize();
     }
 

@@ -51,7 +51,7 @@ base::output const* get_current_output(Space const& space)
 template<typename Base, typename Win>
 void set_current_output_by_window(Base& base, Win const& window)
 {
-    if (!window.control->active()) {
+    if (!window.control->active) {
         return;
     }
     if (window.central_output && !win::on_screen(&window, base.topology.current)) {

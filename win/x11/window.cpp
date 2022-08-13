@@ -69,7 +69,7 @@ window::~window()
         xcb_sync_destroy_alarm(connection(), sync_request.alarm);
     }
 
-    assert(!control || !control->move_resize().enabled);
+    assert(!control || !control->move_resize.enabled);
     assert(xcb_windows.client == XCB_WINDOW_NONE);
     assert(xcb_windows.wrapper == XCB_WINDOW_NONE);
     assert(xcb_windows.outer == XCB_WINDOW_NONE);
@@ -132,7 +132,7 @@ bool window::noBorder() const
     if (remnant) {
         return remnant->data.no_border;
     }
-    return user_no_border || control->fullscreen();
+    return user_no_border || control->fullscreen;
 }
 
 void window::setNoBorder(bool set)
@@ -141,7 +141,7 @@ void window::setNoBorder(bool set)
         return;
     }
 
-    set = control->rules().checkNoBorder(set);
+    set = control->rules.checkNoBorder(set);
     if (user_no_border == set) {
         return;
     }
@@ -151,14 +151,14 @@ void window::setNoBorder(bool set)
     updateWindowRules(rules::type::no_border);
 
     if (decoration(this)) {
-        control->deco().client->update_size();
+        control->deco.client->update_size();
     }
 }
 
 bool window::userCanSetNoBorder() const
 {
     // CSD in general allow no change by user, also not possible when fullscreen.
-    return client_frame_extents.isNull() && !control->fullscreen();
+    return client_frame_extents.isNull() && !control->fullscreen;
 }
 
 void window::checkNoBorder()
@@ -173,7 +173,7 @@ void window::handle_update_no_border()
 
 bool window::wantsShadowToBeRendered() const
 {
-    return control && !control->fullscreen() && maximizeMode() != win::maximize_mode::full;
+    return control && !control->fullscreen && maximizeMode() != win::maximize_mode::full;
 }
 
 QSize window::resizeIncrements() const
@@ -283,7 +283,7 @@ void window::finishCompositing()
 void window::setBlockingCompositing(bool block)
 {
     auto const usedToBlock = blocks_compositing;
-    blocks_compositing = control->rules().checkBlockCompositing(
+    blocks_compositing = control->rules.checkBlockCompositing(
         block && kwinApp()->options->qobject->windowsBlockCompositing());
 
     if (usedToBlock != blocks_compositing) {
@@ -374,12 +374,12 @@ void window::closeWindow()
 
 QSize window::minSize() const
 {
-    return control->rules().checkMinSize(geometry_hints.min_size());
+    return control->rules.checkMinSize(geometry_hints.min_size());
 }
 
 QSize window::maxSize() const
 {
-    return control->rules().checkMaxSize(geometry_hints.max_size());
+    return control->rules.checkMaxSize(geometry_hints.max_size());
 }
 
 QSize window::basicUnit() const
@@ -389,7 +389,7 @@ QSize window::basicUnit() const
 
 bool window::isCloseable() const
 {
-    return control->rules().checkCloseable(motif_hints.close() && !win::is_special_window(this));
+    return control->rules.checkCloseable(motif_hints.close() && !win::is_special_window(this));
 }
 
 bool window::isMaximizable() const
@@ -398,9 +398,8 @@ bool window::isMaximizable() const
         // SELI isToolbar() ?
         return false;
     }
-    if (control->rules().checkMaximize(win::maximize_mode::restore) == win::maximize_mode::restore
-        && control->rules().checkMaximize(win::maximize_mode::full)
-            != win::maximize_mode::restore) {
+    if (control->rules.checkMaximize(win::maximize_mode::restore) == win::maximize_mode::restore
+        && control->rules.checkMaximize(win::maximize_mode::full) != win::maximize_mode::restore) {
         return true;
     }
     return false;
@@ -411,7 +410,7 @@ bool window::isMinimizable() const
     if (win::is_special_window(this) && !transient()->lead()) {
         return false;
     }
-    if (!control->rules().checkMinimize(true)) {
+    if (!control->rules.checkMinimize(true)) {
         return false;
     }
 
@@ -438,14 +437,14 @@ bool window::isMovable() const
     if (!info->hasNETSupport() && !motif_hints.move()) {
         return false;
     }
-    if (control->fullscreen()) {
+    if (control->fullscreen) {
         return false;
     }
     if (win::is_special_window(this) && !win::is_splash(this) && !win::is_toolbar(this)) {
         // allow moving of splashscreens :)
         return false;
     }
-    if (control->rules().checkPosition(geo::invalid_point) != geo::invalid_point) {
+    if (control->rules.checkPosition(geo::invalid_point) != geo::invalid_point) {
         // forced position
         return false;
     }
@@ -461,7 +460,7 @@ bool window::isMovableAcrossScreens() const
         // allow moving of splashscreens :)
         return false;
     }
-    if (control->rules().checkPosition(geo::invalid_point) != geo::invalid_point) {
+    if (control->rules.checkPosition(geo::invalid_point) != geo::invalid_point) {
         // forced position
         return false;
     }
@@ -479,18 +478,18 @@ bool window::isResizable() const
     if (win::is_special_window(this) || win::is_splash(this) || win::is_toolbar(this)) {
         return false;
     }
-    if (control->rules().checkSize(QSize()).isValid()) {
+    if (control->rules.checkSize(QSize()).isValid()) {
         // forced size
         return false;
     }
 
-    auto const mode = control->move_resize().contact;
+    auto const mode = control->move_resize.contact;
 
     // TODO: we could just check with & on top and left.
     if ((mode == win::position::top || mode == win::position::top_left
          || mode == win::position::top_right || mode == win::position::left
          || mode == win::position::bottom_left)
-        && control->rules().checkPosition(geo::invalid_point) != geo::invalid_point) {
+        && control->rules.checkPosition(geo::invalid_point) != geo::invalid_point) {
         return false;
     }
 
@@ -518,7 +517,7 @@ void window::handle_activated()
 
 void window::takeFocus()
 {
-    if (control->rules().checkAcceptFocus(info->input())) {
+    if (control->rules.checkAcceptFocus(info->input())) {
         xcb_windows.client.focus();
     } else {
         // window cannot take input, at least withdraw urgency
@@ -535,7 +534,7 @@ void window::takeFocus()
     // E.g. fullscreens have different layer when active/not-active.
     space.stacking_order->update_order();
 
-    auto breakShowingDesktop = !control->keep_above();
+    auto breakShowingDesktop = !control->keep_above;
 
     if (breakShowingDesktop) {
         for (auto const& c : group()->members) {
@@ -572,7 +571,7 @@ void window::doSetActive()
 {
     // Demand attention again if it's still urgent.
     update_urgency(this);
-    info->setState(control->active() ? NET::Focused : NET::States(), NET::Focused);
+    info->setState(control->active ? NET::Focused : NET::States(), NET::Focused);
 }
 
 bool window::userCanSetFullScreen() const
@@ -590,8 +589,8 @@ void window::handle_update_fullscreen(bool full)
 
 bool window::wantsInput() const
 {
-    return control->rules().checkAcceptFocus(acceptsFocus()
-                                             || info->supportsProtocol(NET::TakeFocusProtocol));
+    return control->rules.checkAcceptFocus(acceptsFocus()
+                                           || info->supportsProtocol(NET::TakeFocusProtocol));
 }
 
 bool window::acceptsFocus() const
@@ -604,7 +603,7 @@ bool window::isShown() const
     if (!control) {
         return true;
     }
-    return !control->minimized() && !hidden;
+    return !control->minimized && !hidden;
 }
 
 bool window::isHiddenInternal() const
@@ -660,7 +659,7 @@ maximize_mode window::maximizeMode() const
 
 void window::setFrameGeometry(QRect const& rect)
 {
-    auto frame_geo = control->rules().checkGeometry(rect);
+    auto frame_geo = control->rules.checkGeometry(rect);
 
     geometry_update.frame = frame_geo;
 
@@ -839,7 +838,7 @@ void window::do_set_maximize_mode(maximize_mode mode)
 
     // TODO(romangg): Can we do this also in update_maximized? What about deco update?
     if (decoration(this)) {
-        control->deco().client->update_size();
+        control->deco.client->update_size();
     }
 
     // Need to update the server geometry in case the decoration changed.
@@ -850,9 +849,9 @@ void window::do_set_maximize_mode(maximize_mode mode)
 
 void window::do_set_fullscreen(bool full)
 {
-    full = control->rules().checkFullScreen(full);
+    full = control->rules.checkFullScreen(full);
 
-    auto const old_full = control->fullscreen();
+    auto const old_full = control->fullscreen;
     if (old_full == full) {
         return;
     }
@@ -863,7 +862,7 @@ void window::do_set_fullscreen(bool full)
         space.focusMousePos = space.input->platform.cursor->pos();
     }
 
-    control->set_fullscreen(full);
+    control->fullscreen = full;
 
     if (full) {
         raise_window(&space, this);
@@ -1157,7 +1156,7 @@ bool window::doStartMoveResize()
         XCB_GRAB_MODE_ASYNC,
         XCB_GRAB_MODE_ASYNC,
         xcb_windows.grab,
-        space.input->platform.cursor->x11_cursor(control->move_resize().cursor),
+        space.input->platform.cursor->x11_cursor(control->move_resize.cursor),
         xTime());
 
     unique_cptr<xcb_grab_pointer_reply_t> pointerGrab(
@@ -1212,7 +1211,7 @@ bool window::isWaitingForMoveResizeSync() const
 
 void window::doResizeSync()
 {
-    auto const frame_geo = control->move_resize().geometry;
+    auto const frame_geo = control->move_resize.geometry;
 
     if (sync_request.counter != XCB_NONE) {
         sync_geometry(this, frame_geo);

@@ -48,7 +48,7 @@ void destroy_window(Win* win)
             tabbox->next_prev(true);
         }
 #endif
-        if (win->control->move_resize().enabled) {
+        if (win->control->move_resize.enabled) {
             win->leaveMoveResize();
         }
 

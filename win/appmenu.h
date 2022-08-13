@@ -42,7 +42,7 @@ template<typename Space>
 Toplevel* find_window_with_appmenu(Space const& space, appmenu_address const& address)
 {
     for (auto win : space.windows) {
-        if (win->control && win->control->application_menu().address == address) {
+        if (win->control && win->control->appmenu.address == address) {
             return win;
         }
     }

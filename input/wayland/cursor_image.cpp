@@ -209,7 +209,7 @@ void cursor_image::updateDecorationCursor()
 
     auto deco = platform.redirect->get_pointer()->focus.deco;
     if (auto c = deco ? deco->client() : nullptr) {
-        loadThemeCursor(c->control->move_resize().cursor, &m_decorationCursor);
+        loadThemeCursor(c->control->move_resize.cursor, &m_decorationCursor);
         if (m_currentSource == CursorSource::Decoration) {
             Q_EMIT changed();
         }
@@ -222,7 +222,7 @@ void cursor_image::updateMoveResize()
     m_moveResizeCursor.image = QImage();
     m_moveResizeCursor.hotSpot = QPoint();
     if (auto window = platform.redirect->space.move_resize_window) {
-        loadThemeCursor(window->control->move_resize().cursor, &m_moveResizeCursor);
+        loadThemeCursor(window->control->move_resize.cursor, &m_moveResizeCursor);
         if (m_currentSource == CursorSource::MoveResize) {
             Q_EMIT changed();
         }

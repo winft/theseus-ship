@@ -61,13 +61,13 @@ client_impl::client_impl(Toplevel* window,
     , space{window->space}
 {
     createRenderer();
-    window->control->deco().set_client(this);
+    window->control->deco.set_client(this);
 
     QObject::connect(window->qobject.get(),
                      &window_qobject::activeChanged,
                      qobject.get(),
                      [decoratedClient, window]() {
-                         Q_EMIT decoratedClient->activeChanged(window->control->active());
+                         Q_EMIT decoratedClient->activeChanged(window->control->active);
                      });
     QObject::connect(window->qobject.get(),
                      &window_qobject::frame_geometry_changed,
@@ -89,7 +89,7 @@ client_impl::client_impl(Toplevel* window,
                      &window_qobject::iconChanged,
                      qobject.get(),
                      [decoratedClient, window]() {
-                         Q_EMIT decoratedClient->iconChanged(window->control->icon());
+                         Q_EMIT decoratedClient->iconChanged(window->control->icon);
                      });
 
     QObject::connect(window->qobject.get(),
@@ -202,7 +202,7 @@ std::unique_ptr<deco::renderer> client_impl::move_renderer()
 
 QPalette client_impl::palette() const
 {
-    return m_client->control->palette().q_palette();
+    return m_client->control->palette.q_palette();
 }
 
 #define DELEGATE(type, name, clientName)                                                           \
@@ -238,7 +238,7 @@ DELEGATE_WIN(QString, caption, caption)
 #define DELEGATE_WIN_CTRL(type, name, impl_name)                                                   \
     type client_impl::name() const                                                                 \
     {                                                                                              \
-        return m_client->control->impl_name();                                                     \
+        return m_client->control->impl_name;                                                       \
     }
 
 DELEGATE_WIN_CTRL(bool, isActive, active)
@@ -308,7 +308,7 @@ void client_impl::requestClose()
 
 QColor client_impl::color(KDecoration2::ColorGroup group, KDecoration2::ColorRole role) const
 {
-    auto dp = m_client->control->palette().current;
+    auto dp = m_client->control->palette.current;
     if (dp) {
         return dp->color(group, role);
     }
@@ -397,7 +397,7 @@ bool client_impl::isMaximizedHorizontally() const
 Qt::Edges client_impl::adjacentScreenEdges() const
 {
     Qt::Edges edges;
-    auto const mode = m_client->control->quicktiling();
+    auto const mode = m_client->control->quicktiling;
     if (flags(mode & win::quicktiles::left)) {
         edges |= Qt::LeftEdge;
         if (!flags(mode & (win::quicktiles::top | win::quicktiles::bottom))) {
@@ -428,7 +428,7 @@ bool client_impl::hasApplicationMenu() const
 
 bool client_impl::isApplicationMenuActive() const
 {
-    return m_client->control->application_menu_active();
+    return m_client->control->appmenu.active;
 }
 
 void client_impl::createRenderer()

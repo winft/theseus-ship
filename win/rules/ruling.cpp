@@ -463,25 +463,25 @@ bool ruling::update(Toplevel* window, int selection)
     };
 
     if (remember(above, type::above)) {
-        updated = updated || above.data != window->control->keep_above();
-        above.data = window->control->keep_above();
+        updated = updated || above.data != window->control->keep_above;
+        above.data = window->control->keep_above;
     }
     if (remember(below, type::below)) {
-        updated = updated || below.data != window->control->keep_below();
-        below.data = window->control->keep_below();
+        updated = updated || below.data != window->control->keep_below;
+        below.data = window->control->keep_below;
     }
     if (remember(desktop, type::desktop)) {
         updated = updated || desktop.data != window->desktop();
         desktop.data = window->desktop();
     }
     if (remember(desktopfile, type::desktop_file)) {
-        auto const name = window->control->desktop_file_name();
+        auto const name = window->control->desktop_file_name;
         updated = updated || desktopfile.data != name;
         desktopfile.data = name;
     }
     if (remember(fullscreen, type::fullscreen)) {
-        updated = updated || fullscreen.data != window->control->fullscreen();
-        fullscreen.data = window->control->fullscreen();
+        updated = updated || fullscreen.data != window->control->fullscreen;
+        fullscreen.data = window->control->fullscreen;
     }
 
     if (remember(maximizehoriz, type::maximize_horiz)) {
@@ -495,8 +495,8 @@ bool ruling::update(Toplevel* window, int selection)
         maximizevert.data = flags(window->maximizeMode() & win::maximize_mode::vertical);
     }
     if (remember(minimize, type::minimize)) {
-        updated = updated || minimize.data != window->control->minimized();
-        minimize.data = window->control->minimized();
+        updated = updated || minimize.data != window->control->minimized;
+        minimize.data = window->control->minimized;
     }
     if (remember(noborder, type::no_border)) {
         updated = updated || noborder.data != window->noBorder();
@@ -504,7 +504,7 @@ bool ruling::update(Toplevel* window, int selection)
     }
 
     if (remember(position, type::position)) {
-        if (!window->control->fullscreen()) {
+        if (!window->control->fullscreen) {
             QPoint new_pos = position.data;
 
             // Don't use the position in the direction which is maximized.
@@ -527,7 +527,7 @@ bool ruling::update(Toplevel* window, int selection)
         screen.data = output_index;
     }
     if (remember(size, type::size)) {
-        if (!window->control->fullscreen()) {
+        if (!window->control->fullscreen) {
             QSize new_size = size.data;
             // don't use the position in the direction which is maximized
             if (!flags(window->maximizeMode() & win::maximize_mode::horizontal))

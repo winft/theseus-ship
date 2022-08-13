@@ -23,7 +23,7 @@ namespace KWin::win::x11
 template<typename Win>
 bool position_via_hint(Win* win, QRect const& geo, bool ignore_default, QRect& place_area)
 {
-    if (win->control->rules().checkIgnoreGeometry(ignore_default, true)) {
+    if (win->control->rules.checkIgnoreGeometry(ignore_default, true)) {
         // Hint is to be ignored via rule.
         return false;
     }
@@ -42,7 +42,7 @@ bool position_via_hint(Win* win, QRect const& geo, bool ignore_default, QRect& p
 template<typename Win>
 bool move_with_force_rule(Win* win, QRect& frame_geo, bool is_inital_placement, QRect& area)
 {
-    auto forced_pos = win->control->rules().checkPosition(geo::invalid_point, is_inital_placement);
+    auto forced_pos = win->control->rules.checkPosition(geo::invalid_point, is_inital_placement);
 
     if (forced_pos == geo::invalid_point) {
         return false;
@@ -61,7 +61,7 @@ void resize_on_taking_control(Win* win, QRect& frame_geo, bool mapped)
 {
     // TODO: Is CentralGravity right here, when resizing is done after gravitating?
     auto const adj_frame_size = adjusted_frame_size(win, frame_geo.size(), size_mode::any);
-    auto const rule_checked_size = win->control->rules().checkSize(adj_frame_size, !mapped);
+    auto const rule_checked_size = win->control->rules.checkSize(adj_frame_size, !mapped);
     win->setFrameGeometry(QRect(win->pos(), rule_checked_size));
     frame_geo = pending_frame_geometry(win);
 }
@@ -296,7 +296,7 @@ QRect place_unmapped(Win* win, QRect& frame_geo, KStartupInfoData const& asn_dat
 
     QPoint center;
     if (output) {
-        output = win->control->rules().checkScreen(output, true);
+        output = win->control->rules.checkScreen(output, true);
         center = output->geometry().center();
     }
 

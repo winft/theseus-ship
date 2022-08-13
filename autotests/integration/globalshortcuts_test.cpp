@@ -256,7 +256,7 @@ void GlobalShortcutsTest::testUserActionsMenu()
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QVERIFY(c->control->active());
+    QVERIFY(c->control->active);
 
     quint32 timestamp = 0;
     QVERIFY(!Test::app()->base.space->user_actions_menu->isShown());
@@ -372,12 +372,12 @@ void GlobalShortcutsTest::testX11ClientShortcut()
     QVERIFY(client);
 
     QCOMPARE(Test::app()->base.space->active_client, client);
-    QVERIFY(client->control->active());
-    QCOMPARE(client->control->shortcut(), QKeySequence());
+    QVERIFY(client->control->active);
+    QCOMPARE(client->control->shortcut, QKeySequence());
     const QKeySequence seq(Qt::META + Qt::SHIFT + Qt::Key_Y);
     QVERIFY(win::shortcut_available(*Test::app()->base.space, seq, nullptr));
     win::set_shortcut(client, seq.toString());
-    QCOMPARE(client->control->shortcut(), seq);
+    QCOMPARE(client->control->shortcut, seq);
     QVERIFY(!win::shortcut_available(*Test::app()->base.space, seq, nullptr));
     QCOMPARE(win::caption(client), QStringLiteral(" {Meta+Shift+Y}"));
 
@@ -386,7 +386,7 @@ void GlobalShortcutsTest::testX11ClientShortcut()
 
     win::activate_window(*Test::app()->base.space, nullptr);
     QVERIFY(!Test::app()->base.space->active_client);
-    QVERIFY(!client->control->active());
+    QVERIFY(!client->control->active);
 
     // now let's trigger the shortcut
     quint32 timestamp = 0;
@@ -414,18 +414,18 @@ void GlobalShortcutsTest::testWaylandClientShortcut()
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
     QCOMPARE(Test::app()->base.space->active_client, client);
-    QVERIFY(client->control->active());
-    QCOMPARE(client->control->shortcut(), QKeySequence());
+    QVERIFY(client->control->active);
+    QCOMPARE(client->control->shortcut, QKeySequence());
     const QKeySequence seq(Qt::META + Qt::SHIFT + Qt::Key_Y);
     QVERIFY(win::shortcut_available(*Test::app()->base.space, seq, nullptr));
     win::set_shortcut(client, seq.toString());
-    QCOMPARE(client->control->shortcut(), seq);
+    QCOMPARE(client->control->shortcut, seq);
     QVERIFY(!win::shortcut_available(*Test::app()->base.space, seq, nullptr));
     QCOMPARE(win::caption(client), QStringLiteral(" {Meta+Shift+Y}"));
 
     win::activate_window(*Test::app()->base.space, nullptr);
     QVERIFY(!Test::app()->base.space->active_client);
-    QVERIFY(!client->control->active());
+    QVERIFY(!client->control->active);
 
     // now let's trigger the shortcut
     quint32 timestamp = 0;
@@ -455,8 +455,8 @@ void GlobalShortcutsTest::testSetupWindowShortcut()
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
     QCOMPARE(Test::app()->base.space->active_client, client);
-    QVERIFY(client->control->active());
-    QCOMPARE(client->control->shortcut(), QKeySequence());
+    QVERIFY(client->control->active);
+    QCOMPARE(client->control->shortcut, QKeySequence());
 
     QSignalSpy shortcutDialogAddedSpy(Test::app()->base.space->qobject.get(),
                                       &win::space::qobject_t::internalClientAdded);
@@ -489,7 +489,7 @@ void GlobalShortcutsTest::testSetupWindowShortcut()
     // now send in enter
     Test::keyboard_key_pressed(KEY_ENTER, timestamp++);
     Test::keyboard_key_released(KEY_ENTER, timestamp++);
-    QTRY_COMPARE(client->control->shortcut(), QKeySequence(Qt::META + Qt::SHIFT + Qt::Key_Y));
+    QTRY_COMPARE(client->control->shortcut, QKeySequence(Qt::META + Qt::SHIFT + Qt::Key_Y));
 }
 
 }

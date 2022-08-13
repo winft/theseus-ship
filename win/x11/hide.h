@@ -159,7 +159,7 @@ void internal_keep(Win* win)
     }
 
     win->xcb_windows.input.unmap();
-    if (win->control->active()) {
+    if (win->control->active) {
         // get rid of input focus, bug #317484
         focus_to_null(win->space);
     }
@@ -190,9 +190,9 @@ void update_visibility(Win* win)
         return;
     }
 
-    win::set_skip_taskbar(win, win->control->original_skip_taskbar());
+    win::set_skip_taskbar(win, win->control->original_skip_taskbar);
 
-    if (win->control->minimized()) {
+    if (win->control->minimized) {
         win->info->setState(NET::Hidden, NET::Hidden);
         if (win->space.render.scene
             && kwinApp()->options->qobject->hiddenPreviews() == base::HiddenPreviewsAlways) {

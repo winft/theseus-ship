@@ -740,9 +740,9 @@ void PointerInputTest::testScrollAction()
     Test::app()->base.input->cursor->set_pos(window1->frameGeometry().center());
 
     quint32 timestamp = 1;
-    QVERIFY(!window1->control->active());
+    QVERIFY(!window1->control->active);
     Test::pointer_axis_vertical(5, timestamp++, 0);
-    QVERIFY(window1->control->active());
+    QVERIFY(window1->control->active);
 
     // but also the wheel event should be passed to the window
     QVERIFY(axisSpy.wait());
@@ -808,8 +808,8 @@ void PointerInputTest::testFocusFollowsMouse()
                                        &win::stacking_order::changed);
     QVERIFY(stackingOrderChangedSpy.isValid());
 
-    QVERIFY(!window1->control->active());
-    QVERIFY(window2->control->active());
+    QVERIFY(!window1->control->active);
+    QVERIFY(window2->control->active);
 
     // move on top of first window
     QVERIFY(window1->frameGeometry().contains(10, 10));
@@ -818,7 +818,7 @@ void PointerInputTest::testFocusFollowsMouse()
     QVERIFY(stackingOrderChangedSpy.wait());
     QCOMPARE(stackingOrderChangedSpy.count(), 1);
     QCOMPARE(win::top_client_on_desktop(Test::app()->base.space.get(), 1, nullptr), window1);
-    QTRY_VERIFY(window1->control->active());
+    QTRY_VERIFY(window1->control->active);
 
     // move on second window, but move away before active window change delay hits
     Test::app()->base.input->cursor->set_pos(810, 810);
@@ -827,7 +827,7 @@ void PointerInputTest::testFocusFollowsMouse()
     QCOMPARE(win::top_client_on_desktop(Test::app()->base.space.get(), 1, nullptr), window2);
     Test::app()->base.input->cursor->set_pos(10, 10);
     QVERIFY(!activeWindowChangedSpy.wait(250));
-    QVERIFY(window1->control->active());
+    QVERIFY(window1->control->active);
     QCOMPARE(win::top_client_on_desktop(Test::app()->base.space.get(), 1, nullptr), window1);
     // as we moved back on window 1 that should been raised in the mean time
     QCOMPARE(stackingOrderChangedSpy.count(), 3);
@@ -902,8 +902,8 @@ void PointerInputTest::testMouseActionInactiveWindow()
                                        &win::stacking_order::changed);
     QVERIFY(stackingOrderChangedSpy.isValid());
 
-    QVERIFY(!window1->control->active());
-    QVERIFY(window2->control->active());
+    QVERIFY(!window1->control->active);
+    QVERIFY(window2->control->active);
 
     // Move on top of first window.
     QVERIFY(window1->frameGeometry().contains(10, 10));
@@ -914,7 +914,7 @@ void PointerInputTest::testMouseActionInactiveWindow()
     QVERIFY(!stackingOrderChangedSpy.wait(200));
     QVERIFY(stackingOrderChangedSpy.isEmpty());
     QVERIFY(activeWindowChangedSpy.isEmpty());
-    QVERIFY(window2->control->active());
+    QVERIFY(window2->control->active);
 
     // And click.
     quint32 timestamp = 1;
@@ -925,8 +925,8 @@ void PointerInputTest::testMouseActionInactiveWindow()
     QCOMPARE(stackingOrderChangedSpy.count(), 1);
     QVERIFY(!activeWindowChangedSpy.isEmpty());
     QCOMPARE(win::top_client_on_desktop(Test::app()->base.space.get(), 1, nullptr), window1);
-    QVERIFY(window1->control->active());
-    QVERIFY(!window2->control->active());
+    QVERIFY(window1->control->active);
+    QVERIFY(!window2->control->active);
 
     // Release again.
     Test::pointer_button_released(button, timestamp++);

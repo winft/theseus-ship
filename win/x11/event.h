@@ -349,7 +349,7 @@ bool map_request_event(Win* win, xcb_map_request_event_t* e)
         return true;
     }
     // also copied in clientMessage()
-    if (win->control->minimized()) {
+    if (win->control->minimized) {
         win::set_minimized(win, false);
     }
     if (!win->isOnCurrentDesktop()) {
@@ -435,7 +435,7 @@ void configure_request_event(Win* win, xcb_configure_request_event_t* e)
     if (win::is_resize(win) || win::is_move(win))
         return; // we have better things to do right now
 
-    if (win->control->fullscreen() || is_splash(win)) {
+    if (win->control->fullscreen || is_splash(win)) {
         // Refuse resizing of fullscreen windows and splashscreens.
         send_synthetic_configure_notify(win, frame_to_client_rect(win, win->frameGeometry()));
         return;
@@ -568,7 +568,7 @@ void leave_notify_event(Win* win, xcb_leave_notify_event_t* e)
         return;
     }
     if (e->mode == XCB_NOTIFY_MODE_NORMAL) {
-        auto& mov_res = win->control->move_resize();
+        auto& mov_res = win->control->move_resize;
 
         if (!mov_res.button_down) {
             mov_res.contact = win::position::center;
@@ -601,7 +601,7 @@ void leave_notify_event(Win* win, xcb_leave_notify_event_t* e)
         }
         if (kwinApp()->options->qobject->focusPolicy()
                 == base::options_qobject::FocusStrictlyUnderMouse
-            && win->control->active() && lostMouse) {
+            && win->control->active && lostMouse) {
             request_delay_focus(win->space, nullptr);
         }
         return;
@@ -628,7 +628,7 @@ bool button_press_event(Win* win,
                         int y_root,
                         xcb_timestamp_t time)
 {
-    if (win->control->move_resize().button_down) {
+    if (win->control->move_resize.button_down) {
         if (w == win->xcb_windows.wrapper)
             xcb_allow_events(
                 connection(), XCB_ALLOW_SYNC_POINTER, XCB_TIME_CURRENT_TIME); // xTime());
@@ -783,7 +783,7 @@ bool button_release_event(Win* win,
             QCoreApplication::sendEvent(win::decoration(win), &event);
             if (event.isAccepted() || !win::titlebar_positioned_under_mouse(win)) {
                 // Click was for the deco and shall not init a doubleclick.
-                win->control->deco().double_click.stop();
+                win->control->deco.double_click.stop();
             }
         }
     }
@@ -821,7 +821,7 @@ bool button_release_event(Win* win,
 template<typename Win>
 bool motion_notify_event(Win* win, xcb_window_t w, int state, int x, int y, int x_root, int y_root)
 {
-    if (w == win->frameId() && win::decoration(win) && !win->control->minimized()) {
+    if (w == win->frameId() && win::decoration(win) && !win->control->minimized) {
         // TODO Mouse move event dependent on state
         QHoverEvent event(QEvent::HoverMove, QPointF(x, y), QPointF(x, y));
         QCoreApplication::instance()->sendEvent(win::decoration(win), &event);
@@ -830,7 +830,7 @@ bool motion_notify_event(Win* win, xcb_window_t w, int state, int x, int y, int 
         return true; // care only about the whole frame
     }
 
-    if (auto& mov_res = win->control->move_resize(); !mov_res.button_down) {
+    if (auto& mov_res = win->control->move_resize; !mov_res.button_down) {
         if (w == win->xcb_windows.input) {
             int x = x_root - win->frameGeometry().x(); // + padding_left;
             int y = y_root - win->frameGeometry().y(); // + padding_top;
@@ -958,7 +958,7 @@ void focus_out_event(Win* win, xcb_focus_out_event_t* e)
 template<typename Win>
 void net_move_resize(Win* win, int x_root, int y_root, NET::Direction direction)
 {
-    auto& mov_res = win->control->move_resize();
+    auto& mov_res = win->control->move_resize;
     auto& cursor = win->space.input->platform.cursor;
 
     if (direction == NET::Move) {

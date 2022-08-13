@@ -38,7 +38,7 @@ bool allow_window_activation(Space& space,
         time = window->userTime();
     }
 
-    auto level = window->control->rules().checkFSP(
+    auto level = window->control->rules.checkFSP(
         kwinApp()->options->qobject->focusStealingPreventionLevel());
     if (space.session_manager->state() == SessionState::Saving
         && enum_index(level) <= enum_index(fsp_level::medium)) {
@@ -61,11 +61,11 @@ bool allow_window_activation(Space& space,
     }
     if (time == 0) {
         // explicitly asked not to get focus
-        if (!window->control->rules().checkAcceptFocus(false))
+        if (!window->control->rules.checkAcceptFocus(false))
             return false;
     }
 
-    auto const protection = ac ? ac->control->rules().checkFPP(fsp_level::medium) : fsp_level::none;
+    auto const protection = ac ? ac->control->rules.checkFPP(fsp_level::medium) : fsp_level::none;
 
     // stealing is unconditionally allowed (NETWM behavior)
     if (level == fsp_level::none || protection == fsp_level::none) {
@@ -142,7 +142,7 @@ bool allow_window_activation(Space& space,
 template<typename Space, typename Win>
 bool allow_full_window_raising(Space& space, Win const* window, xcb_timestamp_t time)
 {
-    auto level = window->control->rules().checkFSP(
+    auto level = window->control->rules.checkFSP(
         kwinApp()->options->qobject->focusStealingPreventionLevel());
     if (space.session_manager->state() == SessionState::Saving
         && enum_index(level) <= enum_index(fsp_level::medium)) {

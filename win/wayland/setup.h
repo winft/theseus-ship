@@ -32,21 +32,21 @@ void setup_plasma_management(Space* space, Win* win)
     auto plasma_win
         = space->plasma_window_manager->createWindow(space->plasma_window_manager.get());
     plasma_win->setTitle(win::caption(win));
-    plasma_win->setActive(win->control->active());
-    plasma_win->setFullscreen(win->control->fullscreen());
-    plasma_win->setKeepAbove(win->control->keep_above());
-    plasma_win->setKeepBelow(win->control->keep_below());
+    plasma_win->setActive(win->control->active);
+    plasma_win->setFullscreen(win->control->fullscreen);
+    plasma_win->setKeepAbove(win->control->keep_above);
+    plasma_win->setKeepBelow(win->control->keep_below);
     plasma_win->setMaximized(win->maximizeMode() == win::maximize_mode::full);
-    plasma_win->setMinimized(win->control->minimized());
+    plasma_win->setMinimized(win->control->minimized);
     plasma_win->setOnAllDesktops(win->isOnAllDesktops());
-    plasma_win->setDemandsAttention(win->control->demands_attention());
+    plasma_win->setDemandsAttention(win->control->demands_attention);
     plasma_win->setCloseable(win->isCloseable());
     plasma_win->setMaximizeable(win->isMaximizable());
     plasma_win->setMinimizeable(win->isMinimizable());
     plasma_win->setFullscreenable(win->control->can_fullscreen());
-    plasma_win->setIcon(win->control->icon());
+    plasma_win->setIcon(win->control->icon);
     auto updateAppId = [win, plasma_win] {
-        auto const name = win->control->desktop_file_name();
+        auto const name = win->control->desktop_file_name;
         plasma_win->setAppId(QString::fromUtf8(name.isEmpty() ? win->resource_class : name));
     };
     updateAppId();
@@ -55,7 +55,7 @@ void setup_plasma_management(Space* space, Win* win)
     plasma_win->setPid(win->pid());
     plasma_win->setResizable(win->isResizable());
     plasma_win->setMovable(win->isMovable());
-    auto const appmenu = win->control->application_menu();
+    auto const appmenu = win->control->appmenu;
     plasma_win->setApplicationMenuPaths(QString::fromStdString(appmenu.address.name),
                                         QString::fromStdString(appmenu.address.path));
 
@@ -79,10 +79,10 @@ void setup_plasma_management(Space* space, Win* win)
     });
 
     QObject::connect(qtwin, &window_qobject::activeChanged, plasma_win, [plasma_win, win] {
-        plasma_win->setActive(win->control->active());
+        plasma_win->setActive(win->control->active);
     });
     QObject::connect(qtwin, &window_qobject::fullScreenChanged, plasma_win, [plasma_win, win] {
-        plasma_win->setFullscreen(win->control->fullscreen());
+        plasma_win->setFullscreen(win->control->fullscreen);
     });
     QObject::connect(qtwin,
                      &window_qobject::keepAboveChanged,
@@ -93,7 +93,7 @@ void setup_plasma_management(Space* space, Win* win)
                      plasma_win,
                      &Wrapland::Server::PlasmaWindow::setKeepBelow);
     QObject::connect(qtwin, &window_qobject::minimizedChanged, plasma_win, [plasma_win, win] {
-        plasma_win->setMinimized(win->control->minimized());
+        plasma_win->setMinimized(win->control->minimized);
     });
     QObject::connect(
         qtwin, &window_qobject::maximize_mode_changed, plasma_win, [plasma_win](auto mode) {
@@ -101,10 +101,10 @@ void setup_plasma_management(Space* space, Win* win)
         });
     QObject::connect(
         qtwin, &window_qobject::demandsAttentionChanged, plasma_win, [plasma_win, win] {
-            plasma_win->setDemandsAttention(win->control->demands_attention());
+            plasma_win->setDemandsAttention(win->control->demands_attention);
         });
     QObject::connect(qtwin, &window_qobject::iconChanged, plasma_win, [plasma_win, win] {
-        plasma_win->setIcon(win->control->icon());
+        plasma_win->setIcon(win->control->icon);
     });
     QObject::connect(qtwin, &window_qobject::windowClassChanged, plasma_win, updateAppId);
     QObject::connect(qtwin, &window_qobject::desktopFileNameChanged, plasma_win, updateAppId);
@@ -117,7 +117,7 @@ void setup_plasma_management(Space* space, Win* win)
         plasma_win->setParentWindow(lead ? lead->control->plasma_wayland_integration : nullptr);
     });
     QObject::connect(qtwin, &window_qobject::applicationMenuChanged, plasma_win, [plasma_win, win] {
-        auto const appmenu = win->control->application_menu();
+        auto const appmenu = win->control->appmenu;
         plasma_win->setApplicationMenuPaths(QString::fromStdString(appmenu.address.name),
                                             QString::fromStdString(appmenu.address.path));
     });

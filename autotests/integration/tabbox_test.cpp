@@ -87,17 +87,17 @@ void TabBoxTest::testCapsLock()
     std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
     auto c1 = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
     QVERIFY(c1);
-    QVERIFY(c1->control->active());
+    QVERIFY(c1->control->active);
     std::unique_ptr<Surface> surface2(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
     auto c2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::red);
     QVERIFY(c2);
-    QVERIFY(c2->control->active());
+    QVERIFY(c2->control->active);
     std::unique_ptr<Surface> surface3(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3));
     auto c3 = Test::render_and_wait_for_shown(surface3, QSize(100, 50), Qt::red);
     QVERIFY(c3);
-    QVERIFY(c3->control->active());
+    QVERIFY(c3->control->active);
 
     QTRY_COMPARE(Test::app()->base.space->stacking_order->stack,
                  (std::deque<Toplevel*>{c1, c2, c3}));
@@ -158,17 +158,17 @@ void TabBoxTest::testMoveForward()
     std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
     auto c1 = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
     QVERIFY(c1);
-    QVERIFY(c1->control->active());
+    QVERIFY(c1->control->active);
     std::unique_ptr<Surface> surface2(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
     auto c2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::red);
     QVERIFY(c2);
-    QVERIFY(c2->control->active());
+    QVERIFY(c2->control->active);
     std::unique_ptr<Surface> surface3(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3));
     auto c3 = Test::render_and_wait_for_shown(surface3, QSize(100, 50), Qt::red);
     QVERIFY(c3);
-    QVERIFY(c3->control->active());
+    QVERIFY(c3->control->active);
 
     // Setup tabbox signal spies
     QSignalSpy tabboxAddedSpy(Test::app()->base.space->tabbox.get(), &win::tabbox::tabbox_added);
@@ -209,17 +209,17 @@ void TabBoxTest::testMoveBackward()
     std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
     auto c1 = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
     QVERIFY(c1);
-    QVERIFY(c1->control->active());
+    QVERIFY(c1->control->active);
     std::unique_ptr<Surface> surface2(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
     auto c2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::red);
     QVERIFY(c2);
-    QVERIFY(c2->control->active());
+    QVERIFY(c2->control->active);
     std::unique_ptr<Surface> surface3(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3));
     auto c3 = Test::render_and_wait_for_shown(surface3, QSize(100, 50), Qt::red);
     QVERIFY(c3);
-    QVERIFY(c3->control->active());
+    QVERIFY(c3->control->active);
 
     // Setup tabbox signal spies
     QSignalSpy tabboxAddedSpy(Test::app()->base.space->tabbox.get(), &win::tabbox::tabbox_added);

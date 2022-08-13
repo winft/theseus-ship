@@ -18,7 +18,7 @@ void check_set_no_border(Win* win)
     auto max_fully = win->geometry_update.max_mode == maximize_mode::full;
     auto no_border = app_no_border || motif_no_border || max_fully;
 
-    win->setNoBorder(win->control->rules().checkNoBorder(no_border));
+    win->setNoBorder(win->control->rules.checkNoBorder(no_border));
 }
 
 template<typename Win>
@@ -30,7 +30,7 @@ void respect_maximizing_aspect(Win* win, maximize_mode& mode)
     if (mode != maximize_mode::vertical && mode != maximize_mode::horizontal) {
         return;
     }
-    if (!win->control->rules().checkStrictGeometry(true)) {
+    if (!win->control->rules.checkStrictGeometry(true)) {
         return;
     }
 

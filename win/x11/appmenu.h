@@ -20,7 +20,7 @@ base::x11::xcb::string_property fetch_application_menu_service_name(Win* win)
 template<typename Win>
 void read_application_menu_service_name(Win* win, base::x11::xcb::string_property& property)
 {
-    auto const appmenu = win->control->application_menu();
+    auto const appmenu = win->control->appmenu;
     win->control->update_application_menu(
         {QString::fromUtf8(property).toStdString(), appmenu.address.path});
 }
@@ -42,7 +42,7 @@ base::x11::xcb::string_property fetch_application_menu_object_path(Win* win)
 template<typename Win>
 void read_application_menu_object_path(Win* win, base::x11::xcb::string_property& property)
 {
-    auto const appmenu = win->control->application_menu();
+    auto const appmenu = win->control->appmenu;
     win->control->update_application_menu(
         {appmenu.address.name, QString::fromUtf8(property).toStdString()});
 }

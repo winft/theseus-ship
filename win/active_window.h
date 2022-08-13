@@ -121,7 +121,7 @@ void active_window_lower(Space& space)
     // As this most likely makes the window no longer visible change the
     // keyboard focus to the next available window.
     // activateNextClient( c ); // Doesn't work when we lower a child window
-    if (space.active_client->control->active()
+    if (space.active_client->control->active
         && kwinApp()->options->qobject->focusPolicyIsReasonable()) {
         if (kwinApp()->options->qobject->isNextFocusPrefersMouse()) {
             auto next = window_under_mouse(space, space.active_client->central_output);

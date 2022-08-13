@@ -67,7 +67,7 @@ void check_workspace_position(Win* win,
         return;
     }
 
-    if (win->control->quicktiling() != quicktiles::none) {
+    if (win->control->quicktiling != quicktiles::none) {
         win->setFrameGeometry(electric_border_maximize_geometry(
             win, pending_frame_geometry(win).center(), win->desktop()));
         return;
@@ -466,7 +466,7 @@ QPoint adjust_window_position(Space const& space,
                 if (win == &window) {
                     continue;
                 }
-                if (win->control->minimized()) {
+                if (win->control->minimized) {
                     continue;
                 }
                 if (!win->isShown()) {
@@ -680,7 +680,7 @@ QRect adjust_window_size(Space const& space, Win const& window, QRect moveResize
             deltaY = int(snap);
             for (auto win : space.windows) {
                 if (win->control && win->isOnDesktop(space.virtual_desktop_manager->current())
-                    && !win->control->minimized() && win != &window) {
+                    && !win->control->minimized && win != &window) {
                     lx = win->pos().x() - 1;
                     ly = win->pos().y() - 1;
                     lrx = win->pos().x() + win->size().width();

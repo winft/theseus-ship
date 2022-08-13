@@ -308,7 +308,7 @@ void scene::paintSimpleScreen(paint_type orig_mask, QRegion region)
         // TODO: do we care about unmanged windows here (maybe input windows?)
         if (window->isOpaque()) {
             if (toplevel->control) {
-                opaqueFullscreen = toplevel->control->fullscreen();
+                opaqueFullscreen = toplevel->control->fullscreen;
             }
             data.clip |= win::content_render_region(toplevel).translated(toplevel->pos()
                                                                          + window->bufferOffset());

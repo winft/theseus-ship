@@ -74,7 +74,7 @@ public:
         //
         // The passive grab below is established so the window can be raised or activated when it
         // is clicked.
-        if ((kwinApp()->options->qobject->focusPolicyIsReasonable() && !active())
+        if ((kwinApp()->options->qobject->focusPolicyIsReasonable() && !active)
             || (kwinApp()->options->qobject->isClickRaise()
                 && !is_most_recently_raised(m_window))) {
             if (kwinApp()->options->qobject->commandWindow1()
@@ -136,10 +136,10 @@ public:
 
     bool can_fullscreen() const override
     {
-        if (!rules().checkFullScreen(true)) {
+        if (!rules.checkFullScreen(true)) {
             return false;
         }
-        if (rules().checkStrictGeometry(true)) {
+        if (rules.checkStrictGeometry(true)) {
             // check geometry constraints (rule to obey is set)
             const QRect fsarea = space_window_area(m_window->space, FullScreenArea, m_window);
             if (size_for_client_size(m_window, fsarea.size(), win::size_mode::any, true)

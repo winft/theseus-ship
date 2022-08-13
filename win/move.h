@@ -85,7 +85,7 @@ void set_move_resize_window(Space& space, Toplevel* window)
 template<typename Win>
 void update_cursor(Win* win)
 {
-    auto& mov_res = win->control->move_resize();
+    auto& mov_res = win->control->move_resize;
     auto contact = mov_res.contact;
 
     if (!win->isResizable()) {
@@ -138,7 +138,7 @@ void update_cursor(Win* win)
 template<typename Win>
 bool is_resize(Win* win)
 {
-    auto const& mov_res = win->control->move_resize();
+    auto const& mov_res = win->control->move_resize;
     return mov_res.enabled && mov_res.contact != position::center;
 }
 
@@ -148,7 +148,7 @@ bool is_resize(Win* win)
 template<typename Win>
 void check_unrestricted_move_resize(Win* win)
 {
-    auto& mov_res = win->control->move_resize();
+    auto& mov_res = win->control->move_resize;
     if (mov_res.unrestricted) {
         return;
     }
@@ -228,7 +228,7 @@ void maximize(Win* win, maximize_mode mode)
 template<typename Win>
 void stop_delayed_move_resize(Win* win)
 {
-    auto& mov_res = win->control->move_resize();
+    auto& mov_res = win->control->move_resize;
     delete mov_res.delay_timer;
     mov_res.delay_timer = nullptr;
 }
@@ -236,7 +236,7 @@ void stop_delayed_move_resize(Win* win)
 template<typename Win>
 bool start_move_resize(Win* win)
 {
-    auto& mov_res = win->control->move_resize();
+    auto& mov_res = win->control->move_resize;
 
     assert(!mov_res.enabled);
     assert(QWidget::keyboardGrabber() == nullptr);
@@ -248,7 +248,7 @@ bool start_move_resize(Win* win)
         // Popups have grab.
         return false;
     }
-    if (win->control->fullscreen()
+    if (win->control->fullscreen
         && (kwinApp()->get_base().get_outputs().size() < 2 || !win->isMovableAcrossScreens())) {
         return false;
     }
@@ -256,11 +256,11 @@ bool start_move_resize(Win* win)
         return false;
     }
 
-    win->control->deco().double_click.stop();
+    win->control->deco.double_click.stop();
 
     auto const mode = mov_res.contact;
     auto const was_maxed_full = win->maximizeMode() == maximize_mode::full;
-    auto const was_tiled = win->control->quicktiling() != quicktiles::none;
+    auto const was_tiled = win->control->quicktiling != quicktiles::none;
     auto const was_fullscreen = win->geometry_update.fullscreen;
 
     if (mode == position::center) {
@@ -276,7 +276,7 @@ bool start_move_resize(Win* win)
         if (was_maxed_full) {
             set_maximize(win, false, false);
         }
-        if (win->control->quicktiling() != quicktiles::none) {
+        if (win->control->quicktiling != quicktiles::none) {
             // Exit quick tile mode when the user attempts to resize a tiled window.
             set_quicktile_mode(win, quicktiles::none, false);
         }
@@ -308,7 +308,7 @@ bool start_move_resize(Win* win)
 template<typename Win>
 void perform_move_resize(Win* win)
 {
-    auto const& geom = win->control->move_resize().geometry;
+    auto const& geom = win->control->move_resize.geometry;
 
     if (is_move(win)) {
         win->setFrameGeometry(geom);
@@ -325,7 +325,7 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
         return;
     }
 
-    auto& mov_res = win->control->move_resize();
+    auto& mov_res = win->control->move_resize;
 
     auto const mode = mov_res.contact;
     if ((mode == position::center && !win->isMovableAcrossScreens())
@@ -357,7 +357,7 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
     // TODO move whole group when moving its leader or when the leader is not mapped?
 
     auto titleBarRect = [&win](bool& transposed, int& requiredPixels) -> QRect {
-        auto const& moveResizeGeom = win->control->move_resize().geometry;
+        auto const& moveResizeGeom = win->control->move_resize.geometry;
         QRect r(moveResizeGeom);
         r.moveTopLeft(QPoint(0, 0));
         r.setHeight(top_border(win));
@@ -375,7 +375,7 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
         auto sizeMode = size_mode::any;
 
         auto calculateMoveResizeGeom = [&win, &topleft, &bottomright, &orig, &sizeMode, &mode]() {
-            auto& mov_res = win->control->move_resize();
+            auto& mov_res = win->control->move_resize;
             switch (mode) {
             case position::top_left:
                 mov_res.geometry = QRect(topleft, orig.bottomRight());
@@ -544,7 +544,7 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
             // isMovableAcrossScreens() must have been true to get here
             // Special moving of maximized windows on Xinerama screens
             auto output = base::get_nearest_output(kwinApp()->get_base().get_outputs(), globalPos);
-            if (win->control->fullscreen())
+            if (win->control->fullscreen)
                 mov_res.geometry = space_window_area(win->space, FullScreenArea, output, 0);
             else {
                 auto moveResizeGeom = space_window_area(win->space, MaximizeArea, output, 0);
@@ -647,7 +647,7 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
         return;
     }
 
-    if (is_resize(win) && !win->control->have_resize_effect()) {
+    if (is_resize(win) && !win->control->have_resize_effect) {
         win->doResizeSync();
     } else {
         perform_move_resize(win);
@@ -668,11 +668,11 @@ auto move_resize(Win* win, QPoint const& local, QPoint const& global)
     move_resize_impl(win, local.x(), local.y(), global.x(), global.y());
 
     // TODO(romangg): The fullscreen check here looks out of place.
-    if (win->control->fullscreen() || !is_move(win)) {
+    if (win->control->fullscreen || !is_move(win)) {
         return;
     }
 
-    if (win->control->quicktiling() == quicktiles::none) {
+    if (win->control->quicktiling == quicktiles::none) {
         // Quicktiling not engaged at the moment. Just check the maximization zones for resizable
         // windows and return.
         if (win->isResizable()) {
@@ -693,14 +693,14 @@ auto move_resize(Win* win, QPoint const& local, QPoint const& global)
     set_quicktile_mode(win, quicktiles::none, false);
     auto const old_restore_geo = restore_geo.isValid() ? restore_geo : win->frameGeometry();
 
-    auto& mov_res = win->control->move_resize();
+    auto& mov_res = win->control->move_resize;
 
     auto x_offset = mov_res.offset.x() / double(old_geo.width()) * old_restore_geo.width();
     auto y_offset = mov_res.offset.y() / double(old_geo.height()) * old_restore_geo.height();
 
     mov_res.offset = QPoint(x_offset, y_offset);
 
-    if (!win->control->rules().checkMaximize(maximize_mode::restore)) {
+    if (!win->control->rules.checkMaximize(maximize_mode::restore)) {
         mov_res.geometry = old_restore_geo;
     }
 
@@ -719,7 +719,7 @@ void finish_move_resize(Win* win, bool cancel)
 {
     geometry_updates_blocker blocker(win);
 
-    auto& mov_res = win->control->move_resize();
+    auto& mov_res = win->control->move_resize;
 
     auto const wasResize = is_resize(win);
     mov_res.enabled = false;
@@ -759,13 +759,13 @@ void finish_move_resize(Win* win, bool cancel)
         }
     }
 
-    if (win->control->electric_maximizing()) {
-        set_quicktile_mode(win, win->control->electric(), false);
+    if (win->control->electric_maximizing) {
+        set_quicktile_mode(win, win->control->electric, false);
         set_electric_maximizing(win, false);
     }
 
     if (win->geometry_update.max_mode == maximize_mode::restore
-        && win->control->quicktiling() == quicktiles::none && !win->geometry_update.fullscreen) {
+        && win->control->quicktiling == quicktiles::none && !win->geometry_update.fullscreen) {
         win->restore_geometries.maximize = QRect();
     }
 
@@ -776,7 +776,7 @@ void finish_move_resize(Win* win, bool cancel)
 template<typename Win>
 void end_move_resize(Win* win)
 {
-    auto& mov_res = win->control->move_resize();
+    auto& mov_res = win->control->move_resize;
 
     mov_res.button_down = false;
     stop_delayed_move_resize(win);
@@ -880,13 +880,13 @@ void pack_to(Win* win, int left, int top)
 template<typename Win>
 void start_delayed_move_resize(Win* win)
 {
-    auto& mov_res = win->control->move_resize();
+    auto& mov_res = win->control->move_resize;
     assert(!mov_res.delay_timer);
 
     mov_res.delay_timer = new QTimer(win->qobject.get());
     mov_res.delay_timer->setSingleShot(true);
     QObject::connect(mov_res.delay_timer, &QTimer::timeout, win->qobject.get(), [win]() {
-        auto& mov_res = win->control->move_resize();
+        auto& mov_res = win->control->move_resize;
         assert(mov_res.button_down);
         if (!start_move_resize(win)) {
             mov_res.button_down = false;
@@ -900,14 +900,14 @@ void start_delayed_move_resize(Win* win)
 template<typename Space, typename Win, typename Output>
 void send_to_screen(Space const& space, Win* win, Output const& output)
 {
-    auto checked_output = win->control->rules().checkScreen(&output);
+    auto checked_output = win->control->rules.checkScreen(&output);
 
-    if (win->control->active()) {
+    if (win->control->active) {
         base::set_current_output(kwinApp()->get_base(), checked_output);
 
         // might impact the layer of a fullscreen window
         for (auto cc : space.windows) {
-            if (cc->control && cc->control->fullscreen() && cc->central_output == checked_output) {
+            if (cc->control && cc->control->fullscreen && cc->central_output == checked_output) {
                 update_layer(cc);
             }
         }
@@ -927,7 +927,7 @@ void send_to_screen(Space const& space, Win* win, Output const& output)
     auto frame_geo = old_restore_geo.isValid() ? old_restore_geo : old_frame_geo;
 
     auto max_mode = win->geometry_update.max_mode;
-    auto qtMode = win->control->quicktiling();
+    auto qtMode = win->control->quicktiling;
     if (max_mode != maximize_mode::restore) {
         maximize(win, win::maximize_mode::restore);
     }
@@ -980,7 +980,7 @@ void send_to_screen(Space const& space, Win* win, Output const& output)
         win->restore_geometries.maximize = restore_geo;
     }
 
-    if (qtMode != quicktiles::none && qtMode != win->control->quicktiling()) {
+    if (qtMode != quicktiles::none && qtMode != win->control->quicktiling) {
         set_quicktile_mode(win, qtMode, true);
         win->restore_geometries.maximize = restore_geo;
     }

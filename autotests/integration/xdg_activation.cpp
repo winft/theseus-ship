@@ -70,7 +70,7 @@ void xdg_activation_test::test_single_client()
     QVERIFY(window1);
     QCOMPARE(win::render_geometry(window1).size(), QSize(200, 100));
     QCOMPARE(window1->frameGeometry().size(), QSize(200, 100));
-    QVERIFY(window1->control->active());
+    QVERIFY(window1->control->active);
     QCOMPARE(Test::app()->base.space->active_client, window1);
 
     std::unique_ptr<Clt::Surface> surface2(Test::create_surface());
@@ -79,7 +79,7 @@ void xdg_activation_test::test_single_client()
     QVERIFY(window2);
     QCOMPARE(win::render_geometry(window2).size(), QSize(400, 200));
     QCOMPARE(window2->frameGeometry().size(), QSize(400, 200));
-    QVERIFY(window2->control->active());
+    QVERIFY(window2->control->active);
     QCOMPARE(Test::app()->base.space->active_client, window2);
 
     auto activation = Test::get_client().interfaces.xdg_activation.get();
@@ -121,7 +121,7 @@ void xdg_activation_test::test_single_client()
 
     QCOMPARE(xdg_activate_spy.front().front().value<std::string>(), token_string);
     QCOMPARE(xdg_activate_spy.front().back().value<Wrapland::Server::Surface*>(), window1->surface);
-    QVERIFY(window1->control->active());
+    QVERIFY(window1->control->active);
     QCOMPARE(Test::app()->base.space->active_client, window1);
 }
 
@@ -135,7 +135,7 @@ void xdg_activation_test::test_multi_client()
     QVERIFY(window1);
     QCOMPARE(win::render_geometry(window1).size(), QSize(200, 100));
     QCOMPARE(window1->frameGeometry().size(), QSize(200, 100));
-    QVERIFY(window1->control->active());
+    QVERIFY(window1->control->active);
     QCOMPARE(Test::app()->base.space->active_client, window1);
 
     // Create a second client.
@@ -149,7 +149,7 @@ void xdg_activation_test::test_multi_client()
     QVERIFY(window2);
     QCOMPARE(win::render_geometry(window2).size(), QSize(400, 200));
     QCOMPARE(window2->frameGeometry().size(), QSize(400, 200));
-    QVERIFY(window2->control->active());
+    QVERIFY(window2->control->active);
     QCOMPARE(Test::app()->base.space->active_client, window2);
 
     auto activation2 = client2.interfaces.xdg_activation.get();
@@ -192,7 +192,7 @@ void xdg_activation_test::test_multi_client()
 
     QCOMPARE(xdg_activate_spy.front().front().value<std::string>(), token_string);
     QCOMPARE(xdg_activate_spy.front().back().value<Wrapland::Server::Surface*>(), window1->surface);
-    QVERIFY(window1->control->active());
+    QVERIFY(window1->control->active);
     QCOMPARE(Test::app()->base.space->active_client, window1);
 }
 

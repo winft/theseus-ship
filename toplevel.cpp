@@ -86,7 +86,7 @@ NET::WindowType Toplevel::windowType([[maybe_unused]] bool direct,int supported_
         return wt;
     }
 
-    auto wt2 = control->rules().checkType(wt);
+    auto wt2 = control->rules.checkType(wt);
     if (wt != wt2) {
         wt = wt2;
         // force hint change
@@ -696,10 +696,10 @@ win::layer Toplevel::layer_for_dock() const
     // Slight hack for the 'allow window to cover panel' Kicker setting.
     // Don't move keepbelow docks below normal window, but only to the same
     // layer, so that both may be raised to cover the other.
-    if (control->keep_below()) {
+    if (control->keep_below) {
         return win::layer::normal;
     }
-    if (control->keep_above()) {
+    if (control->keep_above) {
         // slight hack for the autohiding panels
         return win::layer::above;
     }
@@ -747,12 +747,12 @@ xcb_timestamp_t Toplevel::userTime() const
 
 QSize Toplevel::maxSize() const
 {
-    return control->rules().checkMaxSize(QSize(INT_MAX, INT_MAX));
+    return control->rules.checkMaxSize(QSize(INT_MAX, INT_MAX));
 }
 
 QSize Toplevel::minSize() const
 {
-    return control->rules().checkMinSize(QSize(0, 0));
+    return control->rules.checkMinSize(QSize(0, 0));
 }
 
 void Toplevel::layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRect &bottom) const
@@ -831,11 +831,11 @@ void Toplevel::doPerformMoveResize()
 void Toplevel::leaveMoveResize()
 {
     win::set_move_resize_window(space, nullptr);
-    control->move_resize().enabled = false;
+    control->move_resize.enabled = false;
     if (space.edges->desktop_switching.when_moving_client) {
         space.edges->reserveDesktopSwitching(false, Qt::Vertical|Qt::Horizontal);
     }
-    if (control->electric_maximizing()) {
+    if (control->electric_maximizing) {
         space.outline->hide();
         win::elevate(this, false);
     }
@@ -921,7 +921,7 @@ void Toplevel::applyWindowRules()
     // apply force rules
     // Placement - does need explicit update, just like some others below
     // Geometry : setGeometry() doesn't check rules
-    auto client_rules = control->rules();
+    auto client_rules = control->rules;
 
     auto const orig_geom = frameGeometry();
     auto const geom = client_rules.checkGeometry(orig_geom);
@@ -940,14 +940,14 @@ void Toplevel::applyWindowRules()
     win::maximize(this, maximizeMode());
 
     // Minimize : functions don't check
-    win::set_minimized(this, client_rules.checkMinimize(control->minimized()));
+    win::set_minimized(this, client_rules.checkMinimize(control->minimized));
 
     win::set_original_skip_taskbar(this, control->skip_taskbar());
     win::set_skip_pager(this, control->skip_pager());
     win::set_skip_switcher(this, control->skip_switcher());
-    win::set_keep_above(this, control->keep_above());
-    win::set_keep_below(this, control->keep_below());
-    setFullScreen(control->fullscreen(), true);
+    win::set_keep_above(this, control->keep_above);
+    win::set_keep_below(this, control->keep_below);
+    setFullScreen(control->fullscreen, true);
     setNoBorder(noBorder());
     updateColorScheme();
 
@@ -967,19 +967,19 @@ void Toplevel::applyWindowRules()
     // AutogroupInForeground : Only checked on window manage
     // AutogroupById : Only checked on window manage
     // StrictGeometry
-    win::set_shortcut(this, control->rules().checkShortcut(control->shortcut().toString()));
+    win::set_shortcut(this, control->rules.checkShortcut(control->shortcut.toString()));
 
     // see also X11Client::setActive()
-    if (control->active()) {
-        setOpacity(control->rules().checkOpacityActive(qRound(opacity() * 100.0)) / 100.0);
+    if (control->active) {
+        setOpacity(control->rules.checkOpacityActive(qRound(opacity() * 100.0)) / 100.0);
         win::set_global_shortcuts_disabled(space,
-                                           control->rules().checkDisableGlobalShortcuts(false));
+                                           control->rules.checkDisableGlobalShortcuts(false));
     } else {
-        setOpacity(control->rules().checkOpacityInactive(qRound(opacity() * 100.0)) / 100.0);
+        setOpacity(control->rules.checkOpacityInactive(qRound(opacity() * 100.0)) / 100.0);
     }
 
     win::set_desktop_file_name(
-        this, control->rules().checkDesktopFile(control->desktop_file_name()).toUtf8());
+        this, control->rules.checkDesktopFile(control->desktop_file_name).toUtf8());
 }
 
 void Toplevel::updateWindowRules(win::rules::type selection)
@@ -987,7 +987,7 @@ void Toplevel::updateWindowRules(win::rules::type selection)
     if (space.rule_book->areUpdatesDisabled()) {
         return;
     }
-    control->rules().update(this, static_cast<int>(selection));
+    control->rules.update(this, static_cast<int>(selection));
 }
 
 }

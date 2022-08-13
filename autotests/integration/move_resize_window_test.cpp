@@ -1203,7 +1203,7 @@ void MoveResizeWindowTest::testSetFullScreenWhenMoving()
 
     client->setFullScreen(true);
 
-    QCOMPARE(client->control->fullscreen(), false);
+    QCOMPARE(client->control->fullscreen, false);
 
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
@@ -1219,7 +1219,7 @@ void MoveResizeWindowTest::testSetFullScreenWhenMoving()
     QVERIFY(fullscreen_spy.wait());
     QCOMPARE(fullscreen_spy.size(), 1);
 
-    QCOMPARE(client->control->fullscreen(), true);
+    QCOMPARE(client->control->fullscreen, true);
     QCOMPARE(win::is_move(client), false);
     QCOMPARE(Test::app()->base.space->move_resize_window, nullptr);
 

@@ -168,7 +168,7 @@ void window::renderWindowDecorations(QPainter* painter)
 
     if (ctrl && !toplevel->noBorder()) {
         if (win::decoration(toplevel)) {
-            if (auto r = static_cast<deco_renderer*>(ctrl->deco().client->renderer())) {
+            if (auto r = static_cast<deco_renderer*>(ctrl->deco.client->renderer())) {
                 r->render();
                 renderer = r;
             }
