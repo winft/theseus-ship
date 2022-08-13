@@ -78,6 +78,7 @@ class space
 {
 public:
     using qobject_t = space_qobject;
+    using window_t = Toplevel;
 
     explicit space(render::compositor& render)
         : qobject{std::make_unique<space_qobject>([this] { space_start_reconfigure_timer(*this); })}

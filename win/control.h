@@ -8,6 +8,7 @@
 #include "appmenu.h"
 #include "structs.h"
 #include "types.h"
+#include "virtual_desktops.h"
 
 #include "kwin_export.h"
 #include "rules/window.h"

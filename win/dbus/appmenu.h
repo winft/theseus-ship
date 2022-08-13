@@ -73,12 +73,12 @@ appmenu_callbacks create_appmenu_callbacks(Space const& space)
                 return;
             }
         }
-        if (auto win = find_window_with_appmenu(space, addr)) {
+        if (auto win = find_window_with_appmenu<typename Space::window_t>(space, addr)) {
             show_appmenu(*win, action_id);
         }
     };
     callbacks.visibility = [&space](appmenu_address const& addr, bool active) {
-        if (auto win = find_window_with_appmenu(space, addr)) {
+        if (auto win = find_window_with_appmenu<typename Space::window_t>(space, addr)) {
             win->control->set_application_menu_active(active);
         }
     };

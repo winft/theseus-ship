@@ -9,6 +9,7 @@
 #include "types.h"
 #include "util.h"
 
+#include "toplevel.h"
 #include "utils/algorithm.h"
 
 namespace KWin::win

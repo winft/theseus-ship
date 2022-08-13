@@ -5,8 +5,6 @@
 */
 #pragma once
 
-#include "toplevel.h"
-
 #include <string>
 
 namespace KWin::win
@@ -38,8 +36,8 @@ struct appmenu {
     appmenu_address address;
 };
 
-template<typename Space>
-Toplevel* find_window_with_appmenu(Space const& space, appmenu_address const& address)
+template<typename Win, typename Space>
+Win* find_window_with_appmenu(Space const& space, appmenu_address const& address)
 {
     for (auto win : space.windows) {
         if (win->control && win->control->appmenu.address == address) {
