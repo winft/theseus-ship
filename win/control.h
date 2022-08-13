@@ -78,7 +78,7 @@ public:
 
     virtual void update_mouse_grab();
 
-    void destroy_plasma_wayland_integration();
+    virtual void destroy_plasma_wayland_integration();
 
     void update_have_resize_effect();
 

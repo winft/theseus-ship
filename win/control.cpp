@@ -22,8 +22,6 @@
 #include "render/effects.h"
 #include "toplevel.h"
 
-#include <Wrapland/Server/plasma_window.h>
-
 #include <QObject>
 #include <QTimer>
 
@@ -159,10 +157,6 @@ void control::update_mouse_grab()
 
 void control::destroy_plasma_wayland_integration()
 {
-    if (plasma_wayland_integration) {
-        plasma_wayland_integration->unmap();
-        plasma_wayland_integration = nullptr;
-    }
 }
 
 void control::update_have_resize_effect()

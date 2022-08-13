@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "control_destroy.h"
 #include "desktop_set.h"
 
 #include "win/x11/control.h"
@@ -26,6 +27,11 @@ public:
     {
         wayland::set_desktops(*window, desktops);
         x11::control<Win>::set_desktops(desktops);
+    }
+
+    void destroy_plasma_wayland_integration() override
+    {
+        destroy_plasma_integration(*this);
     }
 
 private:
