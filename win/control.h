@@ -136,7 +136,7 @@ public:
 
     win::move_resize_op& move_resize();
 
-    win::deco_impl& deco();
+    win::deco_impl<Toplevel>& deco();
     virtual void destroy_decoration();
 
     win::palette& palette();
@@ -190,7 +190,7 @@ private:
 
     win::move_resize_op m_move_resize;
 
-    win::deco_impl m_deco;
+    win::deco_impl<Toplevel> m_deco;
     win::palette m_palette;
 
     rules::window m_rules;

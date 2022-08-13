@@ -587,7 +587,7 @@ double internal_window::buffer_scale_internal() const
 
 void internal_window::createDecoration(const QRect& rect)
 {
-    control->deco().window = new deco::window(this);
+    control->deco().window = new deco::window<Toplevel>(this);
     auto decoration = space.deco->createDecoration(control->deco().window);
 
     if (decoration) {

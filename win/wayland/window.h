@@ -615,7 +615,7 @@ public:
             control->destroy_decoration();
         } else {
             // Create decoration.
-            control->deco().window = new deco::window(this);
+            control->deco().window = new deco::window<Toplevel>(this);
             auto decoration = space.deco->createDecoration(control->deco().window);
             if (decoration) {
                 QMetaObject::invokeMethod(decoration, "update", Qt::QueuedConnection);

@@ -366,7 +366,7 @@ win::move_resize_op& control::move_resize()
     return m_move_resize;
 }
 
-win::deco_impl& control::deco()
+win::deco_impl<Toplevel>& control::deco()
 {
     return m_deco;
 }

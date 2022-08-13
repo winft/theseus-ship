@@ -6,27 +6,23 @@
 #pragma once
 
 #include <QObject>
-#include <kwin_export.h>
 
-namespace KWin
-{
-
-class Toplevel;
-
-namespace win::deco
+namespace KWin::win::deco
 {
 
 /**
  * Wrapper class for windows.
  */
-class KWIN_EXPORT window : public QObject
+template<typename RefWin>
+class window : public QObject
 {
-    Q_OBJECT
 public:
-    Toplevel* win;
+    RefWin* win;
 
-    explicit window(Toplevel* win);
+    explicit window(RefWin* win)
+        : win(win)
+    {
+    }
 };
 
-}
 }

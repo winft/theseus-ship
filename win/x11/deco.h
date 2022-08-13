@@ -141,7 +141,7 @@ void create_decoration(Win* win)
         return;
     }
 
-    win->control->deco().window = new deco::window(win);
+    win->control->deco().window = new deco::window<Toplevel>(win);
     auto decoration = win->space.deco->createDecoration(win->control->deco().window);
 
     if (decoration) {

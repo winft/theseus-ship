@@ -28,6 +28,7 @@ namespace win
 
 namespace deco
 {
+template<typename RefWin>
 class window;
 }
 
@@ -45,10 +46,11 @@ struct move_resize_op {
     QTimer* delay_timer{nullptr};
 };
 
+template<typename RefWin>
 struct deco_impl {
     QMetaObject::Connection client_destroy;
 
-    deco::window* window{nullptr};
+    deco::window<RefWin>* window{nullptr};
     KDecoration2::Decoration* decoration{nullptr};
     deco::client_impl* client{nullptr};
 

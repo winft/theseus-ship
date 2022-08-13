@@ -57,8 +57,6 @@ class Toplevel;
 namespace win::deco
 {
 
-class window;
-
 class KWIN_EXPORT bridge_qobject : public QObject
 {
     Q_OBJECT
@@ -122,7 +120,7 @@ public:
         }
     }
 
-    KDecoration2::Decoration* createDecoration(deco::window* window)
+    KDecoration2::Decoration* createDecoration(deco::window<Toplevel>* window)
     {
         if (m_noPlugin) {
             return nullptr;
@@ -146,7 +144,7 @@ public:
                  KDecoration2::Decoration* decoration) override
     {
         return std::make_unique<client_impl>(
-            static_cast<window*>(decoration->parent())->win, client, decoration);
+            static_cast<window<Toplevel>*>(decoration->parent())->win, client, decoration);
     }
 
     std::unique_ptr<KDecoration2::DecorationSettingsPrivate>
