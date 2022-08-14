@@ -6,7 +6,6 @@
 #pragma once
 
 #include "tool_windows.h"
-#include "window.h"
 #include "window_find.h"
 
 #include "base/logging.h"
@@ -142,8 +141,7 @@ void set_transient_lead(Win* win, xcb_window_t lead_id)
     x11_tr->lead_id = lead_id;
 
     if (lead_id != XCB_WINDOW_NONE && lead_id != rootWindow()) {
-        auto lead
-            = find_controlled_window<x11::window>(win->space, predicate_match::window, lead_id);
+        auto lead = find_controlled_window<Win>(win->space, predicate_match::window, lead_id);
 
         if (contains(win->transient()->children, lead)) {
             // Ensure we do not add a loop.
@@ -280,9 +278,9 @@ xcb_window_t verify_transient_for(Win* win, xcb_window_t new_transient_for, bool
     //  window and fix the transient_for property if possible.
     auto before_search = new_transient_for;
 
-    while (new_transient_for != XCB_WINDOW_NONE && new_transient_for != rootWindow()
-           && !find_controlled_window<x11::window>(
-               win->space, predicate_match::window, new_transient_for)) {
+    while (
+        new_transient_for != XCB_WINDOW_NONE && new_transient_for != rootWindow()
+        && !find_controlled_window<Win>(win->space, predicate_match::window, new_transient_for)) {
         base::x11::xcb::tree tree(new_transient_for);
         if (tree.is_null()) {
             break;
@@ -290,8 +288,8 @@ xcb_window_t verify_transient_for(Win* win, xcb_window_t new_transient_for, bool
         new_transient_for = tree->parent;
     }
 
-    if (auto new_transient_for_client = find_controlled_window<x11::window>(
-            win->space, predicate_match::window, new_transient_for)) {
+    if (auto new_transient_for_client
+        = find_controlled_window<Win>(win->space, predicate_match::window, new_transient_for)) {
         if (new_transient_for != before_search) {
             qCDebug(KWIN_CORE) << "Client " << win
                                << " has WM_TRANSIENT_FOR poiting to non-toplevel window "
@@ -313,8 +311,7 @@ xcb_window_t verify_transient_for(Win* win, xcb_window_t new_transient_for, bool
     auto loop_pos = new_transient_for;
 
     while (loop_pos != XCB_WINDOW_NONE && loop_pos != rootWindow()) {
-        auto pos
-            = find_controlled_window<x11::window>(win->space, predicate_match::window, loop_pos);
+        auto pos = find_controlled_window<Win>(win->space, predicate_match::window, loop_pos);
         if (pos == nullptr) {
             break;
         }
@@ -328,8 +325,7 @@ xcb_window_t verify_transient_for(Win* win, xcb_window_t new_transient_for, bool
     }
 
     if (new_transient_for != rootWindow()
-        && find_controlled_window<x11::window>(
-               win->space, predicate_match::window, new_transient_for)
+        && find_controlled_window<Win>(win->space, predicate_match::window, new_transient_for)
             == nullptr) {
         // it's transient for a specific window, but that window is not mapped
         new_transient_for = rootWindow();
