@@ -8,7 +8,6 @@
 #include "focus_stealing.h"
 #include "group.h"
 #include "hide.h"
-#include "netinfo.h"
 #include "window.h"
 #include "window_find.h"
 

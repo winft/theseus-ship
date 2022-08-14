@@ -60,6 +60,7 @@ template<typename Base>
 class space : public win::space
 {
 public:
+    using space_t = win::space;
     using x11_window = xwl_window<space<Base>>;
     using wayland_window = wayland::window<space<Base>>;
 

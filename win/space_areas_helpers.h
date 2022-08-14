@@ -7,7 +7,6 @@
 
 #include "move.h"
 #include "space_areas.h"
-#include "x11/netinfo.h"
 
 #include "base/platform.h"
 #include "main.h"

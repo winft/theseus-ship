@@ -8,7 +8,6 @@
 #pragma once
 
 #include "desktop_space.h"
-#include "netinfo.h"
 #include "screen_edge.h"
 #include "screen_edges_filter.h"
 #include "space_areas.h"
@@ -33,6 +32,7 @@ template<typename Base>
 class space : public win::space
 {
 public:
+    using space_t = win::space;
     using x11_window = window;
 
     space(Base& base)

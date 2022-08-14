@@ -17,7 +17,7 @@
 #include "transient.h"
 #include "user_actions_menu.h"
 #include "window_find.h"
-#include "x11/netinfo.h"
+#include "x11/netinfo_helpers.h"
 #include "x11/tool_windows.h"
 #include "x11/user_time.h"
 

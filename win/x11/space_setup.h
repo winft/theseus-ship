@@ -8,6 +8,7 @@
 #include "color_mapper.h"
 #include "control_create.h"
 #include "moving_window_filter.h"
+#include "netinfo.h"
 #include "placement.h"
 #include "space_event.h"
 #include "sync_alarm_filter.h"
@@ -82,7 +83,7 @@ void init_space(Space& space)
                                                        nullFocusValues));
     space.m_nullFocus->map();
 
-    space.root_info = x11::root_info::create(space);
+    space.root_info = x11::root_info<typename Space::space_t>::create(space);
     auto& vds = space.virtual_desktop_manager;
     vds->setRootInfo(space.root_info.get());
     space.root_info->activate();

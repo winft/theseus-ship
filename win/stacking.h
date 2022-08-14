@@ -13,7 +13,6 @@
 #include "meta.h"
 #include "stacking_order.h"
 #include "util.h"
-#include "x11/netinfo.h"
 
 #include "base/output_helpers.h"
 #include "base/platform.h"

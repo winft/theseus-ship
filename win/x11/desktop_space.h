@@ -6,7 +6,6 @@
 #pragma once
 
 #include "hide.h"
-#include "netinfo.h"
 #include "window.h"
 
 namespace KWin::win::x11
