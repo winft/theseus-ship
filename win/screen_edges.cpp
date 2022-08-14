@@ -44,7 +44,8 @@ static const int MINIMUM_DELTA = 44;
 static uint32_t callback_id{0};
 
 screen_edge::screen_edge(screen_edger* edger)
-    : edger(edger)
+    : qobject{std::make_unique<screen_edge_qobject>()}
+    , edger(edger)
     , gesture{std::make_unique<input::swipe_gesture>()}
 {
     gesture->setMinimumFingerCount(1);
@@ -53,7 +54,7 @@ screen_edge::screen_edge(screen_edger* edger)
     QObject::connect(
         gesture.get(),
         &input::gesture::triggered,
-        this,
+        qobject.get(),
         [this] {
             stopApproaching();
             if (window) {
@@ -66,27 +67,34 @@ screen_edge::screen_edge(screen_edger* edger)
         },
         Qt::QueuedConnection);
 
-    QObject::connect(
-        gesture.get(), &input::swipe_gesture::started, this, &screen_edge::startApproaching);
-    QObject::connect(
-        gesture.get(), &input::swipe_gesture::cancelled, this, &screen_edge::stopApproaching);
-    QObject::connect(gesture.get(), &input::swipe_gesture::progress, this, [this](qreal progress) {
-        int factor = progress * 256.0f;
-        if (last_approaching_factor != factor) {
-            last_approaching_factor = factor;
-            Q_EMIT approaching(border, last_approaching_factor / 256.0f, approach_geometry);
-        }
+    QObject::connect(gesture.get(), &input::swipe_gesture::started, qobject.get(), [this] {
+        startApproaching();
     });
-
-    QObject::connect(this, &screen_edge::activatesForTouchGestureChanged, this, [this] {
-        if (reserved_count > 0) {
-            if (activatesForTouchGesture()) {
-                this->edger->gesture_recognizer->registerGesture(gesture.get());
-            } else {
-                this->edger->gesture_recognizer->unregisterGesture(gesture.get());
+    QObject::connect(gesture.get(), &input::swipe_gesture::cancelled, qobject.get(), [this] {
+        stopApproaching();
+    });
+    QObject::connect(
+        gesture.get(), &input::swipe_gesture::progress, qobject.get(), [this](qreal progress) {
+            int factor = progress * 256.0f;
+            if (last_approaching_factor != factor) {
+                last_approaching_factor = factor;
+                Q_EMIT qobject->approaching(
+                    border, last_approaching_factor / 256.0f, approach_geometry);
             }
-        }
-    });
+        });
+
+    QObject::connect(qobject.get(),
+                     &screen_edge_qobject::activatesForTouchGestureChanged,
+                     qobject.get(),
+                     [this] {
+                         if (reserved_count > 0) {
+                             if (activatesForTouchGesture()) {
+                                 this->edger->gesture_recognizer->registerGesture(gesture.get());
+                             } else {
+                                 this->edger->gesture_recognizer->unregisterGesture(gesture.get());
+                             }
+                         }
+                     });
 }
 
 screen_edge::~screen_edge() = default;
@@ -117,7 +125,9 @@ void screen_edge::reserveTouchCallBack(QAction* action)
     if (contains(touch_actions, action)) {
         return;
     }
-    connect(action, &QAction::destroyed, this, [this, action] { unreserveTouchCallBack(action); });
+    QObject::connect(action, &QAction::destroyed, qobject.get(), [this, action] {
+        unreserveTouchCallBack(action);
+    });
     touch_actions.push_back(action);
     reserve();
 }
@@ -428,7 +438,7 @@ void screen_edge::switchDesktop(QPoint const& cursorPos)
         QSharedPointer<QMetaObject::Connection> me(new QMetaObject::Connection);
         *me = QObject::connect(QCoreApplication::eventDispatcher(),
                                &QAbstractEventDispatcher::aboutToBlock,
-                               this,
+                               qobject.get(),
                                [this, me]() {
                                    QObject::disconnect(*me);
                                    const_cast<QSharedPointer<QMetaObject::Connection>*>(&me)->reset(
@@ -537,7 +547,7 @@ void screen_edge::checkBlocking()
     bool const wasTouch = activatesForTouchGesture();
     is_blocked = newValue;
     if (wasTouch != activatesForTouchGesture()) {
-        Q_EMIT activatesForTouchGestureChanged();
+        Q_EMIT qobject->activatesForTouchGestureChanged();
     }
     doUpdateBlocking();
 }
@@ -580,7 +590,7 @@ void screen_edge::startApproaching()
     is_approaching = true;
     doStartApproaching();
     last_approaching_factor = 0;
-    Q_EMIT approaching(border, 0.0, approach_geometry);
+    Q_EMIT qobject->approaching(border, 0.0, approach_geometry);
 }
 
 void screen_edge::doStartApproaching()
@@ -595,7 +605,7 @@ void screen_edge::stopApproaching()
     is_approaching = false;
     doStopApproaching();
     last_approaching_factor = 0;
-    Q_EMIT approaching(border, 0.0, approach_geometry);
+    Q_EMIT qobject->approaching(border, 0.0, approach_geometry);
 }
 
 void screen_edge::doStopApproaching()
@@ -641,7 +651,8 @@ void screen_edge::updateApproaching(QPoint const& point)
         factor = 256 - factor;
         if (last_approaching_factor != factor) {
             last_approaching_factor = factor;
-            Q_EMIT approaching(border, last_approaching_factor / 256.0f, approach_geometry);
+            Q_EMIT qobject->approaching(
+                border, last_approaching_factor / 256.0f, approach_geometry);
         }
     } else {
         stopApproaching();
@@ -689,7 +700,7 @@ void screen_edge::set_touch_action(ElectricBorderAction action)
     const bool wasTouch = activatesForTouchGesture();
     touch_action = action;
     if (wasTouch != activatesForTouchGesture()) {
-        Q_EMIT activatesForTouchGestureChanged();
+        Q_EMIT qobject->activatesForTouchGestureChanged();
     }
 }
 
@@ -698,7 +709,7 @@ void screen_edge::setClient(Toplevel* window)
     const bool wasTouch = activatesForTouchGesture();
     this->window = window;
     if (wasTouch != activatesForTouchGesture()) {
-        Q_EMIT activatesForTouchGestureChanged();
+        Q_EMIT qobject->activatesForTouchGestureChanged();
     }
 }
 
@@ -1223,12 +1234,14 @@ std::unique_ptr<screen_edge> screen_edger::createEdge(ElectricBorder border,
         }
     }
 
-    QObject::connect(
-        edge.get(), &screen_edge::approaching, qobject.get(), &screen_edger_qobject::approaching);
+    QObject::connect(edge->qobject.get(),
+                     &screen_edge_qobject::approaching,
+                     qobject.get(),
+                     &screen_edger_qobject::approaching);
     QObject::connect(qobject.get(),
                      &screen_edger_qobject::checkBlocking,
-                     edge.get(),
-                     &screen_edge::checkBlocking);
+                     edge->qobject.get(),
+                     [edge = edge.get()] { edge->checkBlocking(); });
 
     return edge;
 }

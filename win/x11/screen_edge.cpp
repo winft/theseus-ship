@@ -97,8 +97,10 @@ void screen_edge::doStartApproaching()
     m_approachWindow.unmap();
     auto cursor = edger->space.input->platform.cursor.get();
 #ifndef KWIN_UNIT_TEST
-    m_cursorPollingConnection
-        = connect(cursor, &input::cursor::pos_changed, this, &screen_edge::updateApproaching);
+    m_cursorPollingConnection = QObject::connect(
+        cursor, &input::cursor::pos_changed, qobject.get(), [this](auto const& pos) {
+            updateApproaching(pos);
+        });
 #endif
     cursor->start_mouse_polling();
 }
@@ -108,7 +110,7 @@ void screen_edge::doStopApproaching()
     if (!m_cursorPollingConnection) {
         return;
     }
-    disconnect(m_cursorPollingConnection);
+    QObject::disconnect(m_cursorPollingConnection);
     m_cursorPollingConnection = QMetaObject::Connection();
     edger->space.input->platform.cursor->stop_mouse_polling();
     m_approachWindow.map();

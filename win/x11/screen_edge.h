@@ -19,7 +19,6 @@ namespace KWin::win::x11
 
 class KWIN_EXPORT screen_edge : public win::screen_edge
 {
-    Q_OBJECT
 public:
     screen_edge(win::screen_edger* edger, base::x11::atoms& atoms);
     ~screen_edge() override;

@@ -154,7 +154,6 @@ void TestScreenEdges::testInit()
     QCOMPARE(edges.size(), 8);
     for (auto& e : edges) {
         //        QVERIFY(e->isReserved());
-        QVERIFY(e->inherits("QObject"));
         QVERIFY(!e->client());
         QVERIFY(!e->is_approaching);
     }

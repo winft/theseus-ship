@@ -41,12 +41,20 @@ namespace win
 class screen_edger;
 class space;
 
-class KWIN_EXPORT screen_edge : public QObject
+class KWIN_EXPORT screen_edge_qobject : public QObject
 {
     Q_OBJECT
+
+Q_SIGNALS:
+    void approaching(ElectricBorder border, qreal factor, QRect const& geometry);
+    void activatesForTouchGestureChanged();
+};
+
+class KWIN_EXPORT screen_edge
+{
 public:
     explicit screen_edge(screen_edger* edger);
-    ~screen_edge() override;
+    virtual ~screen_edge();
 
     bool isLeft() const;
     bool isTop() const;
@@ -98,6 +106,8 @@ public:
      */
     virtual quint32 approachWindow() const;
 
+    std::unique_ptr<screen_edge_qobject> qobject;
+
     QRect geometry;
     ElectricBorder border{ElectricNone};
     std::vector<QAction*> touch_actions;
@@ -108,10 +118,6 @@ public:
     QRect approach_geometry;
 
     screen_edger* edger;
-
-Q_SIGNALS:
-    void approaching(ElectricBorder border, qreal factor, QRect const& geometry);
-    void activatesForTouchGestureChanged();
 
 protected:
     virtual void doGeometryUpdate();
