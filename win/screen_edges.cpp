@@ -844,25 +844,25 @@ void screen_edger::setActionForBorder(ElectricBorder border,
     }
     if (*oldValue == ElectricActionNone) {
         // have to reserve
-        for (auto it = edges.begin(); it != edges.end(); ++it) {
-            if ((*it)->border == border) {
-                (*it)->reserve();
+        for (auto& edge : edges) {
+            if (edge->border == border) {
+                edge->reserve();
             }
         }
     }
     if (newValue == ElectricActionNone) {
         // have to unreserve
-        for (auto it = edges.begin(); it != edges.end(); ++it) {
-            if ((*it)->border == border) {
-                (*it)->unreserve();
+        for (auto& edge : edges) {
+            if (edge->border == border) {
+                edge->unreserve();
             }
         }
     }
     *oldValue = newValue;
     // update action on all Edges for given border
-    for (auto it = edges.begin(); it != edges.end(); ++it) {
-        if ((*it)->border == border) {
-            (*it)->set_pointer_action(newValue);
+    for (auto& edge : edges) {
+        if (edge->border == border) {
+            edge->set_pointer_action(newValue);
         }
     }
 }
@@ -879,17 +879,17 @@ void screen_edger::setActionForTouchBorder(ElectricBorder border, ElectricBorder
     }
     if (oldValue == ElectricActionNone) {
         // have to reserve
-        for (auto it = edges.begin(); it != edges.end(); ++it) {
-            if ((*it)->border == border) {
-                (*it)->reserve();
+        for (auto& edge : edges) {
+            if (edge->border == border) {
+                edge->reserve();
             }
         }
     }
     if (newValue == ElectricActionNone) {
         // have to unreserve
-        for (auto it = edges.begin(); it != edges.end(); ++it) {
-            if ((*it)->border == border) {
-                (*it)->unreserve();
+        for (auto& edge : edges) {
+            if (edge->border == border) {
+                edge->unreserve();
             }
         }
 
@@ -898,9 +898,9 @@ void screen_edger::setActionForTouchBorder(ElectricBorder border, ElectricBorder
         touch_actions.insert(border, newValue);
     }
     // update action on all Edges for given border
-    for (auto it = edges.begin(); it != edges.end(); ++it) {
-        if ((*it)->border == border) {
-            (*it)->set_touch_action(newValue);
+    for (auto& edge : edges) {
+        if (edge->border == border) {
+            edge->set_touch_action(newValue);
         }
     }
 }
@@ -1271,8 +1271,7 @@ void screen_edger::reserveDesktopSwitching(bool isToReserve, Qt::Orientations o)
 {
     if (!o)
         return;
-    for (auto it = edges.begin(); it != edges.end(); ++it) {
-        auto edge = *it;
+    for (auto& edge : edges) {
         if (edge->isCorner()) {
             isToReserve ? edge->reserve() : edge->unreserve();
         } else {
@@ -1289,9 +1288,9 @@ void screen_edger::reserveDesktopSwitching(bool isToReserve, Qt::Orientations o)
 uint32_t screen_edger::reserve(ElectricBorder border, std::function<bool(ElectricBorder)> slot)
 {
     auto id = ++callback_id;
-    for (auto it = edges.begin(); it != edges.end(); ++it) {
-        if ((*it)->border == border) {
-            (*it)->replace_callback(id, slot);
+    for (auto& edge : edges) {
+        if (edge->border == border) {
+            edge->replace_callback(id, slot);
         }
     }
     return id;
@@ -1299,9 +1298,9 @@ uint32_t screen_edger::reserve(ElectricBorder border, std::function<bool(Electri
 
 void screen_edger::unreserve(ElectricBorder border, uint32_t id)
 {
-    for (auto it = edges.begin(); it != edges.end(); ++it) {
-        if ((*it)->border == border) {
-            (*it)->unreserve_callback(id);
+    for (auto& edge : edges) {
+        if (edge->border == border) {
+            edge->unreserve_callback(id);
         }
     }
 }
@@ -1331,18 +1330,18 @@ void screen_edger::reserve(Toplevel* window, ElectricBorder border)
 
 void screen_edger::reserveTouch(ElectricBorder border, QAction* action)
 {
-    for (auto it = edges.begin(); it != edges.end(); ++it) {
-        if ((*it)->border == border) {
-            (*it)->reserveTouchCallBack(action);
+    for (auto& edge : edges) {
+        if (edge->border == border) {
+            edge->reserveTouchCallBack(action);
         }
     }
 }
 
 void screen_edger::unreserveTouch(ElectricBorder border, QAction* action)
 {
-    for (auto it = edges.begin(); it != edges.end(); ++it) {
-        if ((*it)->border == border) {
-            (*it)->unreserveTouchCallBack(action);
+    for (auto& edge : edges) {
+        if (edge->border == border) {
+            edge->unreserveTouchCallBack(action);
         }
     }
 }
@@ -1442,22 +1441,22 @@ void screen_edger::check(QPoint const& pos, QDateTime const& now, bool forceNoPu
 {
     bool activatedForClient = false;
 
-    for (auto it = edges.begin(); it != edges.end(); ++it) {
-        if ((*it)->reserved_count == 0) {
+    for (auto& edge : edges) {
+        if (edge->reserved_count == 0) {
             continue;
         }
-        if (!(*it)->activatesForPointer()) {
+        if (!edge->activatesForPointer()) {
             continue;
         }
-        if ((*it)->approach_geometry.contains(pos)) {
-            (*it)->startApproaching();
+        if (edge->approach_geometry.contains(pos)) {
+            edge->startApproaching();
         }
-        if ((*it)->client() != nullptr && activatedForClient) {
-            (*it)->markAsTriggered(pos, now);
+        if (edge->client() != nullptr && activatedForClient) {
+            edge->markAsTriggered(pos, now);
             continue;
         }
-        if ((*it)->check(pos, now, forceNoPushBack)) {
-            if ((*it)->client()) {
+        if (edge->check(pos, now, forceNoPushBack)) {
+            if (edge->client()) {
                 activatedForClient = true;
             }
         }
@@ -1471,8 +1470,7 @@ bool screen_edger::isEntered(QMouseEvent* event)
     bool activated = false;
     bool activatedForClient = false;
 
-    for (auto it = edges.begin(); it != edges.end(); ++it) {
-        auto edge = *it;
+    for (auto& edge : edges) {
         if (edge->reserved_count == 0) {
             continue;
         }
@@ -1521,8 +1519,7 @@ bool screen_edger::handleEnterNotifiy(xcb_window_t window,
     bool activated = false;
     bool activatedForClient = false;
 
-    for (auto it = edges.begin(); it != edges.end(); ++it) {
-        auto edge = *it;
+    for (auto& edge : edges) {
         if (!edge || edge->window_id() == XCB_WINDOW_NONE) {
             continue;
         }
@@ -1535,7 +1532,7 @@ bool screen_edger::handleEnterNotifiy(xcb_window_t window,
 
         if (edge->window_id() == window) {
             if (edge->check(point, timestamp)) {
-                if ((*it)->client()) {
+                if (edge->client()) {
                     activatedForClient = true;
                 }
             }
@@ -1563,8 +1560,7 @@ bool screen_edger::handleEnterNotifiy(xcb_window_t window,
 
 bool screen_edger::handleDndNotify(xcb_window_t window, QPoint const& point)
 {
-    for (auto it = edges.begin(); it != edges.end(); ++it) {
-        auto edge = *it;
+    for (auto& edge : edges) {
         if (!edge || edge->window_id() == XCB_WINDOW_NONE) {
             continue;
         }
