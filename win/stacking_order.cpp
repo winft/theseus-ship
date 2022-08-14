@@ -24,6 +24,11 @@
 namespace KWin::win
 {
 
+stacking_order::stacking_order()
+    : qobject{std::make_unique<stacking_order_qobject>()}
+{
+}
+
 void stacking_order::update_order()
 {
     if (block_stacking_updates > 0) {
@@ -32,7 +37,7 @@ void stacking_order::update_order()
 
     if (sort() || restacking_required) {
         process_change();
-        Q_EMIT changed(false);
+        Q_EMIT qobject->changed(false);
     }
 }
 
@@ -45,7 +50,7 @@ void stacking_order::update_count()
 
     sort();
     process_change();
-    Q_EMIT changed(true);
+    Q_EMIT qobject->changed(true);
 }
 
 void stacking_order::process_change()

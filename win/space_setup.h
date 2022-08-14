@@ -163,8 +163,8 @@ void init_space(Space& space)
                                           SLOT(reconfigure()));
 
     space.active_client = nullptr;
-    QObject::connect(space.stacking_order.get(),
-                     &stacking_order::changed,
+    QObject::connect(space.stacking_order->qobject.get(),
+                     &stacking_order_qobject::changed,
                      space.qobject.get(),
                      [&](auto count_changed) {
                          x11::propagate_clients(space, count_changed);
@@ -172,8 +172,8 @@ void init_space(Space& space)
                              space.active_client->control->update_mouse_grab();
                          }
                      });
-    QObject::connect(space.stacking_order.get(),
-                     &stacking_order::render_restack,
+    QObject::connect(space.stacking_order->qobject.get(),
+                     &stacking_order_qobject::render_restack,
                      space.qobject.get(),
                      [&] { x11::render_stack_unmanaged_windows(space); });
 }

@@ -202,8 +202,8 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
             }
         });
 
-    connect(ws->stacking_order.get(),
-            &win::stacking_order::changed,
+    connect(ws->stacking_order->qobject.get(),
+            &win::stacking_order_qobject::changed,
             this,
             &EffectsHandler::stackingOrderChanged);
 #if KWIN_BUILD_TABBOX

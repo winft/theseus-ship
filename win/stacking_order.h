@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <deque>
+#include <memory>
 #include <vector>
 
 namespace KWin
@@ -36,7 +37,7 @@ std::deque<Toplevel*> render_stack(Order& order)
     if (order.render_restack_required) {
         order.render_restack_required = false;
         order.render_overlays = {};
-        Q_EMIT order.render_restack();
+        Q_EMIT order.qobject->render_restack();
     }
 
     auto stack = order.stack;
@@ -46,10 +47,30 @@ std::deque<Toplevel*> render_stack(Order& order)
     return stack;
 }
 
-class KWIN_EXPORT stacking_order : public QObject
+class KWIN_EXPORT stacking_order_qobject : public QObject
 {
     Q_OBJECT
+Q_SIGNALS:
+    /**
+     * This signal is emitted every time the `unlock()` method is called,
+     * most often because a StackingUpdatesBlocker goes out of scope and is destroyed.
+     * Current consumers:
+     * - EffectsHandlerImpl::checkInputWindowStacking()
+     */
+    void unlocked();
+    void render_restack();
+    /**
+     * This signal is emitted when the stacking order changed, i.e. a window is risen
+     * or lowered
+     */
+    void changed(bool window_count_changed);
+};
+
+class KWIN_EXPORT stacking_order
+{
 public:
+    stacking_order();
+
     void update_order();
     void update_count();
 
@@ -68,7 +89,7 @@ public:
             } else {
                 update_order();
             }
-            Q_EMIT unlocked();
+            Q_EMIT qobject->unlocked();
         }
     }
 
@@ -79,6 +100,8 @@ public:
         unlock();
     }
 
+    std::unique_ptr<stacking_order_qobject> qobject;
+
     /// How windows are configured in z-direction. Topmost window at back.
     std::deque<Toplevel*> stack;
     std::deque<Toplevel*> pre_stack;
@@ -88,21 +111,6 @@ public:
     std::deque<xcb_window_t> manual_overlays;
 
     bool render_restack_required{false};
-
-Q_SIGNALS:
-    /**
-     * This signal is emitted every time the `unlock()` method is called,
-     * most often because a StackingUpdatesBlocker goes out of scope and is destroyed.
-     * Current consumers:
-     * - EffectsHandlerImpl::checkInputWindowStacking()
-     */
-    void unlocked();
-    void render_restack();
-    /**
-     * This signal is emitted when the stacking order changed, i.e. a window is risen
-     * or lowered
-     */
-    void changed(bool window_count_changed);
 
 private:
     bool sort();

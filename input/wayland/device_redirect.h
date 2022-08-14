@@ -31,8 +31,8 @@ void device_redirect_update(Dev* dev);
 template<typename Dev>
 void device_redirect_init(Dev* dev)
 {
-    QObject::connect(dev->redirect->space.stacking_order.get(),
-                     &win::stacking_order::changed,
+    QObject::connect(dev->redirect->space.stacking_order->qobject.get(),
+                     &win::stacking_order_qobject::changed,
                      dev->qobject.get(),
                      [dev] { device_redirect_update(dev); });
     QObject::connect(dev->redirect->space.qobject.get(),

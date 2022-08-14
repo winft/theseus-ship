@@ -110,14 +110,17 @@ public:
         plasma_window_manager->setVirtualDesktopManager(plasma_virtual_desktop_manager.get());
         virtual_desktop_manager->setVirtualDesktopManagement(plasma_virtual_desktop_manager.get());
 
-        QObject::connect(
-            stacking_order.get(), &stacking_order::render_restack, qobject.get(), [this] {
-                for (auto win : windows) {
-                    if (auto iwin = dynamic_cast<internal_window*>(win); iwin && iwin->isShown()) {
-                        stacking_order->render_overlays.push_back(iwin);
-                    }
-                }
-            });
+        QObject::connect(stacking_order->qobject.get(),
+                         &stacking_order_qobject::render_restack,
+                         qobject.get(),
+                         [this] {
+                             for (auto win : windows) {
+                                 if (auto iwin = dynamic_cast<internal_window*>(win);
+                                     iwin && iwin->isShown()) {
+                                     stacking_order->render_overlays.push_back(iwin);
+                                 }
+                             }
+                         });
 
         QObject::connect(compositor.get(),
                          &WS::Compositor::surfaceCreated,

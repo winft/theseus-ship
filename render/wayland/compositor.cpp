@@ -129,8 +129,8 @@ void compositor::start(win::space& space)
         QObject::connect(kwinApp(), &Application::x11ConnectionChanged, qobject.get(), [this] {
             compositor_setup_x11_support(*this);
         });
-        QObject::connect(space.stacking_order.get(),
-                         &win::stacking_order::changed,
+        QObject::connect(space.stacking_order->qobject.get(),
+                         &win::stacking_order_qobject::changed,
                          qobject.get(),
                          [this] { addRepaintFull(); });
         QObject::connect(
