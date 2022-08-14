@@ -40,7 +40,7 @@ namespace KWin
 {
 
 Toplevel::Toplevel(win::space& space)
-    : Toplevel(new win::transient(this), space)
+    : Toplevel(new win::transient<Toplevel>(this), space)
 {
 }
 
@@ -50,7 +50,7 @@ Toplevel::Toplevel(win::remnant remnant, win::space& space)
     this->remnant = std::move(remnant);
 }
 
-Toplevel::Toplevel(win::transient* transient, win::space& space)
+Toplevel::Toplevel(win::transient<Toplevel>* transient, win::space& space)
     : space{space}
     , internal_id{QUuid::createUuid()}
     , m_damageReplyPending(false)
@@ -711,7 +711,7 @@ bool Toplevel::isInternal() const
     return false;
 }
 
-win::transient* Toplevel::transient() const
+win::transient<Toplevel>* Toplevel::transient() const
 {
     return m_transient.get();
 }

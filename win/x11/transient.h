@@ -23,23 +23,20 @@ template<typename Win>
 void set_transient_lead(Win* win, xcb_window_t lead_id);
 
 template<typename Win>
-class transient : public win::transient
+class transient : public win::transient<typename Win::window_t>
 {
 public:
-    Win* win;
-    using AbstractWin = typename std::remove_reference_t<decltype(win->space)>::window_t;
-
     transient(Win* win)
-        : win::transient(win)
+        : win::transient<typename Win::window_t>(win)
         , win{win}
     {
     }
 
-    void remove_lead(AbstractWin* lead) override
+    void remove_lead(typename Win::window_t* lead) override
     {
-        win::transient::remove_lead(lead);
+        win::transient<typename Win::window_t>::remove_lead(lead);
 
-        if (leads().empty()) {
+        if (this->leads().empty()) {
             // If there is no more lead, make window a group transient.
             lead_id = XCB_WINDOW_NONE;
             set_transient_lead(win, XCB_WINDOW_NONE);
@@ -48,6 +45,7 @@ public:
 
     xcb_window_t lead_id{XCB_WINDOW_NONE};
     xcb_window_t original_lead_id{XCB_WINDOW_NONE};
+    Win* win;
 };
 
 /**

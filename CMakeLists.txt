@@ -482,7 +482,6 @@ set(kwin_SRCS
     win/singleton_interface.cpp
     win/space_qobject.cpp
     win/stacking_order.cpp
-    win/transient.cpp
     win/virtual_desktops.cpp
     win/window_qobject.cpp
     win/x11/client_machine.cpp

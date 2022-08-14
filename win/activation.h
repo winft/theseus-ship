@@ -14,6 +14,7 @@
 #include "screen.h"
 #include "stacking.h"
 #include "stacking_order.h"
+#include "transient.h"
 #include "user_actions_menu.h"
 #include "window_find.h"
 #include "x11/netinfo.h"

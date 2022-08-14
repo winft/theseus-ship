@@ -67,6 +67,8 @@ class group;
 
 class control;
 class space;
+
+template<typename Window>
 class transient;
 }
 
@@ -323,7 +325,7 @@ public:
 protected:
     explicit Toplevel(win::space& space);
     Toplevel(win::remnant remnant, win::space& space);
-    Toplevel(win::transient* transient, win::space& space);
+    Toplevel(win::transient<Toplevel>* transient, win::space& space);
 
     virtual void debug(QDebug& stream) const;
     friend QDebug& operator<<(QDebug& stream, const Toplevel*);
@@ -338,13 +340,13 @@ private:
     bool m_damageReplyPending;
     xcb_xfixes_fetch_region_cookie_t m_regionCookie;
 
-    std::unique_ptr<win::transient> m_transient;
+    std::unique_ptr<win::transient<Toplevel>> m_transient;
 
 public:
     std::unique_ptr<win::control> control;
     std::optional<win::remnant> remnant;
 
-    win::transient* transient() const;
+    win::transient<Toplevel>* transient() const;
 
     /**
      * Below only for clients with control.
