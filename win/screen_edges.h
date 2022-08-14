@@ -363,6 +363,8 @@ public:
     /// Minimum time between triggers
     int reactivate_threshold{0};
 
+    uint32_t callback_id{0};
+
     std::vector<std::unique_ptr<screen_edge>> edges;
 
 private:

@@ -41,8 +41,6 @@ static const int TOUCH_TARGET = 3;
 // How far the user needs to swipe before triggering an action.
 static const int MINIMUM_DELTA = 44;
 
-static uint32_t callback_id{0};
-
 screen_edge::screen_edge(screen_edger* edger)
     : qobject{std::make_unique<screen_edge_qobject>()}
     , edger(edger)
@@ -110,8 +108,8 @@ void screen_edge::reserve()
 
 uint32_t screen_edge::reserve_callback(std::function<bool(ElectricBorder)> slot)
 {
-    replace_callback(++callback_id, std::move(slot));
-    return callback_id;
+    replace_callback(++edger->callback_id, std::move(slot));
+    return edger->callback_id;
 }
 
 void screen_edge::replace_callback(uint32_t id, std::function<bool(ElectricBorder)> slot)
