@@ -46,6 +46,7 @@ enum class mapping_state {
 class KWIN_EXPORT window : public Toplevel
 {
 public:
+    using window_t = Toplevel;
     using control_t = x11::control<window>;
     constexpr static bool is_toplevel{false};
 
