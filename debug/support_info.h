@@ -146,6 +146,10 @@ QString get_support_info(Space const& space)
 
     support.append(QStringLiteral("\nScreen Edges\n"));
     support.append(QStringLiteral("============\n"));
+
+    // TODO(romangg): The Q_PROPERTYs have been removed already for long so this won't work to get
+    //                support infos on the edges. Instead add an explicit info function?
+#if 0
     auto const metaScreenEdges = space.edges->metaObject();
     for (int i = 0; i < metaScreenEdges->propertyCount(); ++i) {
         const QMetaProperty property = metaScreenEdges->property(i);
@@ -156,6 +160,7 @@ QString get_support_info(Space const& space)
                            .arg(property.name())
                            .arg(printProperty(space.edges->property(property.name()))));
     }
+#endif
     support.append(QStringLiteral("\nScreens\n"));
     support.append(QStringLiteral("=======\n"));
     support.append(QStringLiteral("Multi-Head: "));

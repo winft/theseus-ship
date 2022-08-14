@@ -180,8 +180,8 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
     QObject::connect(win->qobject.get(),
                      &Win::qobject_t::fullScreenChanged,
-                     space.edges.get(),
-                     &screen_edger::checkBlocking);
+                     space.edges->qobject.get(),
+                     &screen_edger_qobject::checkBlocking);
 
     // From this place on, manage() must not return false
     win->control = std::make_unique<typename Win::control_t>(win);

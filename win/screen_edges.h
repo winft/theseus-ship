@@ -156,6 +156,19 @@ private:
     std::unique_ptr<input::swipe_gesture> gesture;
 };
 
+class KWIN_EXPORT screen_edger_qobject : public QObject
+{
+    Q_OBJECT
+Q_SIGNALS:
+    /**
+     * Signal emitted during approaching of mouse towards @p border. The @p factor indicates how
+     * far away the mouse is from the approaching area. The values are clamped into [0.0,1.0] with
+     * @c 0.0 meaning far away from the border, @c 1.0 in trigger distance.
+     */
+    void approaching(ElectricBorder border, qreal factor, QRect const& geometry);
+    void checkBlocking();
+};
+
 /**
  * @short Class for controlling screen edges.
  *
@@ -199,12 +212,11 @@ private:
  *
  * @todo change way how Effects/Scripts can reserve an edge and are notified.
  */
-class KWIN_EXPORT screen_edger : public QObject
+class KWIN_EXPORT screen_edger
 {
-    Q_OBJECT
 public:
     screen_edger(win::space& space);
-    ~screen_edger() override;
+    ~screen_edger();
 
     /**
      * Check, if a screen edge is entered and trigger the appropriate action
@@ -313,6 +325,8 @@ public:
     /// Recreates all edges e.g. after the screen size changes.
     void recreateEdges();
 
+    std::unique_ptr<screen_edger_qobject> qobject;
+
     std::unique_ptr<input::gesture_recognizer> gesture_recognizer;
     KSharedConfig::Ptr config;
     win::space& space;
@@ -343,14 +357,7 @@ public:
     /// Minimum time between triggers
     int reactivate_threshold{0};
 
-Q_SIGNALS:
-    /**
-     * Signal emitted during approaching of mouse towards @p border. The @p factor indicates how
-     * far away the mouse is from the approaching area. The values are clamped into [0.0,1.0] with
-     * @c 0.0 meaning far away from the border, @c 1.0 in trigger distance.
-     */
-    void approaching(ElectricBorder border, qreal factor, QRect const& geometry);
-    void checkBlocking();
+    std::vector<screen_edge*> edges;
 
 private:
     enum {
@@ -381,7 +388,6 @@ private:
     void deleteEdgeForClient(Toplevel* window);
 
     Qt::Orientations virtual_desktop_layout{};
-    std::vector<screen_edge*> edges;
 
     QMap<ElectricBorder, ElectricBorderAction> touch_actions;
     bool m_remainActiveOnFullscreen{false};

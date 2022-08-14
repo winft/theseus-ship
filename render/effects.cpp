@@ -100,7 +100,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     , m_scene(scene)
 {
     QObject::connect(this, &effects_handler_impl::hasActiveFullScreenEffectChanged, this, [this] {
-        m_compositor->space->edges->checkBlocking();
+        Q_EMIT m_compositor->space->edges->qobject->checkBlocking();
     });
 
     auto ws = compositor->space;
@@ -213,8 +213,8 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     connect(tabBox, &win::tabbox::tabbox_closed, this, &EffectsHandler::tabBoxClosed);
     connect(tabBox, &win::tabbox::tabbox_key_event, this, &EffectsHandler::tabBoxKeyEvent);
 #endif
-    connect(ws->edges.get(),
-            &win::screen_edger::approaching,
+    connect(ws->edges->qobject.get(),
+            &win::screen_edger_qobject::approaching,
             this,
             &EffectsHandler::screenEdgeApproaching);
     connect(kwinApp()->screen_locker_watcher.get(),

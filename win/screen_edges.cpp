@@ -44,7 +44,7 @@ static const int MINIMUM_DELTA = 44;
 static uint32_t callback_id{0};
 
 screen_edge::screen_edge(screen_edger* edger)
-    : QObject(edger)
+    : QObject(edger->qobject.get())
     , edger(edger)
     , gesture{std::make_unique<input::swipe_gesture>()}
 {
@@ -708,7 +708,8 @@ void screen_edge::setClient(Toplevel* window)
  *********************************************************/
 
 screen_edger::screen_edger(win::space& space)
-    : gesture_recognizer{std::make_unique<input::gesture_recognizer>()}
+    : qobject{std::make_unique<screen_edger_qobject>()}
+    , gesture_recognizer{std::make_unique<input::gesture_recognizer>()}
     , space{space}
     , singleton{
           [this](auto border, auto callback) { return reserve(border, callback); },
@@ -731,21 +732,21 @@ screen_edger::screen_edger(win::space& space)
 
     QObject::connect(kwinApp()->options->qobject.get(),
                      &base::options_qobject::configChanged,
-                     this,
-                     &win::screen_edger::reconfigure);
+                     qobject.get(),
+                     [this] { reconfigure(); });
     QObject::connect(space.virtual_desktop_manager->qobject.get(),
                      &virtual_desktop_manager_qobject::layoutChanged,
-                     this,
-                     &screen_edger::updateLayout);
+                     qobject.get(),
+                     [this] { updateLayout(); });
 
     QObject::connect(space.qobject.get(),
                      &win::space_qobject::clientActivated,
-                     this,
-                     &win::screen_edger::checkBlocking);
+                     qobject.get(),
+                     &screen_edger_qobject::checkBlocking);
     QObject::connect(space.qobject.get(),
                      &win::space_qobject::clientRemoved,
-                     this,
-                     &screen_edger::deleteEdgeForClient);
+                     qobject.get(),
+                     [this](auto window) { deleteEdgeForClient(window); });
 }
 
 screen_edger::~screen_edger()
@@ -1223,8 +1224,10 @@ screen_edge* screen_edger::createEdge(ElectricBorder border,
         }
     }
 
-    connect(edge, &screen_edge::approaching, this, &screen_edger::approaching);
-    connect(this, &screen_edger::checkBlocking, edge, &screen_edge::checkBlocking);
+    QObject::connect(
+        edge, &screen_edge::approaching, qobject.get(), &screen_edger_qobject::approaching);
+    QObject::connect(
+        qobject.get(), &screen_edger_qobject::checkBlocking, edge, &screen_edge::checkBlocking);
 
     return edge;
 }
