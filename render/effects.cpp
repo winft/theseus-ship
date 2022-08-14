@@ -206,13 +206,16 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
             &win::stacking_order_qobject::changed,
             this,
             &EffectsHandler::stackingOrderChanged);
+
 #if KWIN_BUILD_TABBOX
-    auto tabBox = ws->tabbox.get();
-    connect(tabBox, &win::tabbox::tabbox_added, this, &EffectsHandler::tabBoxAdded);
-    connect(tabBox, &win::tabbox::tabbox_updated, this, &EffectsHandler::tabBoxUpdated);
-    connect(tabBox, &win::tabbox::tabbox_closed, this, &EffectsHandler::tabBoxClosed);
-    connect(tabBox, &win::tabbox::tabbox_key_event, this, &EffectsHandler::tabBoxKeyEvent);
+    auto qt_tabbox = ws->tabbox->qobject.get();
+    connect(qt_tabbox, &win::tabbox_qobject::tabbox_added, this, &EffectsHandler::tabBoxAdded);
+    connect(qt_tabbox, &win::tabbox_qobject::tabbox_updated, this, &EffectsHandler::tabBoxUpdated);
+    connect(qt_tabbox, &win::tabbox_qobject::tabbox_closed, this, &EffectsHandler::tabBoxClosed);
+    connect(
+        qt_tabbox, &win::tabbox_qobject::tabbox_key_event, this, &EffectsHandler::tabBoxKeyEvent);
 #endif
+
     connect(ws->edges->qobject.get(),
             &win::screen_edger_qobject::approaching,
             this,

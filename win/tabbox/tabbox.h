@@ -27,11 +27,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwin_export.h"
 #include "kwinglobals.h"
 
-#include <memory>
-
 #include <QKeySequence>
 #include <QModelIndex>
 #include <QTimer>
+#include <memory>
 
 class KConfigGroup;
 class KLazyLocalizedString;
@@ -84,12 +83,21 @@ private:
     Toplevel* m_client;
 };
 
-class KWIN_EXPORT tabbox : public QObject
+class KWIN_EXPORT tabbox_qobject : public QObject
 {
     Q_OBJECT
+Q_SIGNALS:
+    void tabbox_added(int);
+    void tabbox_closed();
+    void tabbox_updated();
+    void tabbox_key_event(QKeyEvent*);
+};
+
+class KWIN_EXPORT tabbox
+{
 public:
     tabbox(win::space& space);
-    ~tabbox() override;
+    ~tabbox();
 
     /**
      * Returns the currently displayed client ( only works in TabBoxWindowsMode ).
@@ -268,13 +276,8 @@ public:
 
     bool toggle(ElectricBorder eb);
 
+    std::unique_ptr<tabbox_qobject> qobject;
     win::space& space;
-
-Q_SIGNALS:
-    void tabbox_added(int);
-    void tabbox_closed();
-    void tabbox_updated();
-    void tabbox_key_event(QKeyEvent*);
 
 private:
     void load_config(const KConfigGroup& config, tabbox_config& tabbox_config);

@@ -103,9 +103,11 @@ void TabBoxTest::testCapsLock()
                  (std::deque<Toplevel*>{c1, c2, c3}));
 
     // Setup tabbox signal spies
-    QSignalSpy tabboxAddedSpy(Test::app()->base.space->tabbox.get(), &win::tabbox::tabbox_added);
+    QSignalSpy tabboxAddedSpy(Test::app()->base.space->tabbox->qobject.get(),
+                              &win::tabbox_qobject::tabbox_added);
     QVERIFY(tabboxAddedSpy.isValid());
-    QSignalSpy tabboxClosedSpy(Test::app()->base.space->tabbox.get(), &win::tabbox::tabbox_closed);
+    QSignalSpy tabboxClosedSpy(Test::app()->base.space->tabbox->qobject.get(),
+                               &win::tabbox_qobject::tabbox_closed);
     QVERIFY(tabboxClosedSpy.isValid());
 
     // enable capslock
@@ -171,9 +173,11 @@ void TabBoxTest::testMoveForward()
     QVERIFY(c3->control->active);
 
     // Setup tabbox signal spies
-    QSignalSpy tabboxAddedSpy(Test::app()->base.space->tabbox.get(), &win::tabbox::tabbox_added);
+    QSignalSpy tabboxAddedSpy(Test::app()->base.space->tabbox->qobject.get(),
+                              &win::tabbox_qobject::tabbox_added);
     QVERIFY(tabboxAddedSpy.isValid());
-    QSignalSpy tabboxClosedSpy(Test::app()->base.space->tabbox.get(), &win::tabbox::tabbox_closed);
+    QSignalSpy tabboxClosedSpy(Test::app()->base.space->tabbox->qobject.get(),
+                               &win::tabbox_qobject::tabbox_closed);
     QVERIFY(tabboxClosedSpy.isValid());
 
     // press alt+tab
@@ -222,9 +226,11 @@ void TabBoxTest::testMoveBackward()
     QVERIFY(c3->control->active);
 
     // Setup tabbox signal spies
-    QSignalSpy tabboxAddedSpy(Test::app()->base.space->tabbox.get(), &win::tabbox::tabbox_added);
+    QSignalSpy tabboxAddedSpy(Test::app()->base.space->tabbox->qobject.get(),
+                              &win::tabbox_qobject::tabbox_added);
     QVERIFY(tabboxAddedSpy.isValid());
-    QSignalSpy tabboxClosedSpy(Test::app()->base.space->tabbox.get(), &win::tabbox::tabbox_closed);
+    QSignalSpy tabboxClosedSpy(Test::app()->base.space->tabbox->qobject.get(),
+                               &win::tabbox_qobject::tabbox_closed);
     QVERIFY(tabboxClosedSpy.isValid());
 
     // press alt+shift+tab

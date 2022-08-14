@@ -142,7 +142,8 @@ QUuid tabbox_client_impl::internal_id() const
  * TabBox
  *********************************************************/
 tabbox::tabbox(win::space& space)
-    : space{space}
+    : qobject{std::make_unique<tabbox_qobject>()}
+    , space{space}
 {
     m_default_config = tabbox_config();
     m_default_config.set_tabbox_mode(tabbox_config::ClientTabBox);
@@ -182,11 +183,14 @@ tabbox::tabbox(win::space& space)
     m_desktop_list_config.set_show_desktop_mode(tabbox_config::DoNotShowDesktopClient);
     m_desktop_list_config.set_desktop_switching_mode(tabbox_config::StaticDesktopSwitching);
     m_tabbox = new tabbox_handler_impl(this);
-    QTimer::singleShot(0, this, &tabbox::handler_ready);
+    QTimer::singleShot(0, qobject.get(), [this] { handler_ready(); });
 
     m_tabbox_mode = TabBoxDesktopMode; // init variables
-    connect(&m_delayed_show_timer, &QTimer::timeout, this, &tabbox::show);
-    connect(space.qobject.get(), &win::space_qobject::configChanged, this, &tabbox::reconfigure);
+    QObject::connect(&m_delayed_show_timer, &QTimer::timeout, qobject.get(), [this] { show(); });
+    QObject::connect(space.qobject.get(),
+                     &win::space_qobject::configChanged,
+                     qobject.get(),
+                     [this] { reconfigure(); });
 }
 
 tabbox::~tabbox() = default;
@@ -201,12 +205,12 @@ void tabbox::handler_ready()
 template<typename Slot>
 void tabbox::key(const KLazyLocalizedString& action_name, Slot slot, const QKeySequence& shortcut)
 {
-    QAction* a = new QAction(this);
+    auto a = new QAction(qobject.get());
     a->setProperty("componentName", QStringLiteral(KWIN_NAME));
     a->setObjectName(QString::fromUtf8(action_name.untranslatedText()));
     a->setText(action_name.toString());
     KGlobalAccel::self()->setGlobalShortcut(a, QList<QKeySequence>() << shortcut);
-    space.input->platform.registerShortcut(shortcut, a, this, slot);
+    space.input->platform.registerShortcut(shortcut, a, qobject.get(), slot);
     auto cuts = KGlobalAccel::self()->shortcut(a);
     global_shortcut_changed(a, cuts.isEmpty() ? QKeySequence() : cuts.first());
 }
@@ -229,27 +233,32 @@ static constexpr const auto s_desktopListRev = kli18n("Walk Through Desktop List
 
 void tabbox::init_shortcuts()
 {
-    key(s_windows, &tabbox::slot_walk_through_windows, Qt::ALT + Qt::Key_Tab);
-    key(s_windowsRev,
-        &tabbox::slot_walk_back_through_windows,
+    key(
+        s_windows, [this] { slot_walk_through_windows(); }, Qt::ALT + Qt::Key_Tab);
+    key(
+        s_windowsRev,
+        [this] { slot_walk_back_through_windows(); },
         Qt::ALT + Qt::SHIFT + Qt::Key_Backtab);
-    key(s_app, &tabbox::slot_walk_through_current_app_windows, Qt::ALT + Qt::Key_QuoteLeft);
-    key(s_appRev,
-        &tabbox::slot_walk_back_through_current_app_windows,
+    key(
+        s_app, [this] { slot_walk_through_current_app_windows(); }, Qt::ALT + Qt::Key_QuoteLeft);
+    key(
+        s_appRev,
+        [this] { slot_walk_back_through_current_app_windows(); },
         Qt::ALT + Qt::Key_AsciiTilde);
-    key(s_windowsAlt, &tabbox::slot_walk_through_windows_alternative);
-    key(s_windowsAltRev, &tabbox::slot_walk_back_through_windows_alternative);
-    key(s_appAlt, &tabbox::slot_walk_through_current_app_windows_alternative);
-    key(s_appAltRev, &tabbox::slot_walk_back_through_current_app_windows_alternative);
-    key(s_desktops, &tabbox::slot_walk_through_desktops);
-    key(s_desktopsRev, &tabbox::slot_walk_back_through_desktops);
-    key(s_desktopList, &tabbox::slot_walk_through_desktop_list);
-    key(s_desktopListRev, &tabbox::slot_walk_back_through_desktop_list);
+    key(s_windowsAlt, [this] { slot_walk_through_windows_alternative(); });
+    key(s_windowsAltRev, [this] { slot_walk_back_through_windows_alternative(); });
+    key(s_appAlt, [this] { slot_walk_through_current_app_windows_alternative(); });
+    key(s_appAltRev, [this] { slot_walk_back_through_current_app_windows_alternative(); });
+    key(s_desktops, [this] { slot_walk_through_desktops(); });
+    key(s_desktopsRev, [this] { slot_walk_back_through_desktops(); });
+    key(s_desktopList, [this] { slot_walk_through_desktop_list(); });
+    key(s_desktopListRev, [this] { slot_walk_back_through_desktop_list(); });
 
-    connect(KGlobalAccel::self(),
-            &KGlobalAccel::globalShortcutChanged,
-            this,
-            &tabbox::global_shortcut_changed);
+    QObject::connect(
+        KGlobalAccel::self(),
+        &KGlobalAccel::globalShortcutChanged,
+        qobject.get(),
+        [this](auto action, auto const& seq) { global_shortcut_changed(action, seq); });
 }
 
 void tabbox::global_shortcut_changed(QAction* action, const QKeySequence& seq)
@@ -335,13 +344,13 @@ void tabbox::reset(bool partial_reset)
         break;
     }
 
-    Q_EMIT tabbox_updated();
+    Q_EMIT qobject->tabbox_updated();
 }
 
 void tabbox::next_prev(bool next)
 {
     set_current_index(m_tabbox->next_prev(next), false);
-    Q_EMIT tabbox_updated();
+    Q_EMIT qobject->tabbox_updated();
 }
 
 Toplevel* tabbox::current_client()
@@ -400,13 +409,13 @@ void tabbox::set_current_index(QModelIndex index, bool notify_effects)
         return;
     m_tabbox->set_current_index(index);
     if (notify_effects) {
-        Q_EMIT tabbox_updated();
+        Q_EMIT qobject->tabbox_updated();
     }
 }
 
 void tabbox::show()
 {
-    Q_EMIT tabbox_added(m_tabbox_mode);
+    Q_EMIT qobject->tabbox_added(m_tabbox_mode);
     if (is_displayed()) {
         m_is_shown = false;
         return;
@@ -425,7 +434,7 @@ void tabbox::hide(bool abort)
         m_is_shown = false;
         unreference();
     }
-    Q_EMIT tabbox_closed();
+    Q_EMIT qobject->tabbox_closed();
     if (is_displayed())
         qCDebug(KWIN_TABBOX) << "Tab box was not properly closed by an effect";
     m_tabbox->hide(abort);
@@ -499,8 +508,9 @@ void tabbox::reconfigure()
             if (!ok) {
                 continue;
             }
-            QAction* a = new QAction(this);
-            connect(a, &QAction::triggered, this, std::bind(&tabbox::toggle_mode, this, mode));
+            auto a = new QAction(qobject.get());
+            QObject::connect(
+                a, &QAction::triggered, qobject.get(), [this, mode] { toggle_mode(mode); });
             space.edges->reserveTouch(ElectricBorder(i), a);
             actions.insert(ElectricBorder(i), a);
         }
@@ -602,7 +612,7 @@ bool tabbox::handle_wheel_event(QWheelEvent* event)
 
 void tabbox::grabbed_key_event(QKeyEvent* event)
 {
-    Q_EMIT tabbox_key_event(event);
+    Q_EMIT qobject->tabbox_key_event(event);
     if (!m_is_shown && is_displayed()) {
         // tabbox has been replaced, check effects
         return;
@@ -1094,7 +1104,7 @@ void tabbox::key_press(int keyQt)
                         reset();
                         next_prev(direction == Forward);
                     };
-                    QTimer::singleShot(50, this, replayWithChangedTabboxMode);
+                    QTimer::singleShot(50, qobject.get(), replayWithChangedTabboxMode);
                 }
                 break;
             } else if (++j > 2 * mode_count) { // guarding counter for invalid modes
