@@ -244,9 +244,6 @@ public:
     }
     void set_current_index(QModelIndex index, bool notify_effects = true);
 
-    win::space& space;
-
-public Q_SLOTS:
     /**
      * Notify effects that the tab box is being shown, and only display the
      * default tabbox QFrame if no effect has referenced the tabbox.
@@ -270,6 +267,8 @@ public Q_SLOTS:
     void handler_ready();
 
     bool toggle(ElectricBorder eb);
+
+    win::space& space;
 
 Q_SIGNALS:
     void tabbox_added(int);
@@ -308,11 +307,9 @@ private:
 
     bool toggle_mode(TabBoxMode mode);
 
-private Q_SLOTS:
     void reconfigure();
     void global_shortcut_changed(QAction* action, const QKeySequence& seq);
 
-private:
     TabBoxMode m_tabbox_mode;
     tabbox_handler_impl* m_tabbox;
     bool m_delay_show;
