@@ -166,7 +166,7 @@ void init_space(Space& space)
     } // End updates blocker block
 
     // TODO: only on X11?
-    Toplevel* new_active_client = nullptr;
+    typename Space::window_t* new_active_client{nullptr};
     if (!qApp->isSessionRestored()) {
         --space.block_focus;
         new_active_client = find_controlled_window<x11::window>(
@@ -200,7 +200,7 @@ void clear_space(Space& space)
     auto is_x11 = kwinApp()->operationMode() == Application::OperationModeX11;
 
     for (auto it = stack.cbegin(), end = stack.cend(); it != end; ++it) {
-        auto window = dynamic_cast<x11::window*>(const_cast<Toplevel*>(*it));
+        auto window = dynamic_cast<x11::window*>(const_cast<typename Space::window_t*>(*it));
         if (!window || window->remnant) {
             continue;
         }
@@ -212,7 +212,7 @@ void clear_space(Space& space)
         remove_all(space.windows, window);
     }
 
-    for (auto const& unmanaged : get_unmanageds<Toplevel>(space)) {
+    for (auto const& unmanaged : get_unmanageds(space)) {
         release_window(static_cast<window*>(unmanaged), is_x11);
         remove_all(space.windows, unmanaged);
         remove_all(space.stacking_order->pre_stack, unmanaged);

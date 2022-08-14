@@ -12,7 +12,6 @@
 
 #include "input/platform.h"
 #include "main.h"
-#include "toplevel.h"
 
 #include <KLocalizedString>
 

@@ -10,14 +10,16 @@
 #include "focus_blocker.h"
 #include "space_areas_helpers.h"
 
-#include "toplevel.h"
 #include "utils/blocker.h"
 
 namespace KWin::win
 {
 
 template<typename Space>
-void send_window_to_desktop(Space& space, Toplevel* window, int desk, bool dont_activate)
+void send_window_to_desktop(Space& space,
+                            typename Space::window_t* window,
+                            int desk,
+                            bool dont_activate)
 {
     if ((desk < 1 && desk != NET::OnAllDesktops)
         || desk > static_cast<int>(space.virtual_desktop_manager->count())) {

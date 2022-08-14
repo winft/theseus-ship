@@ -7,15 +7,11 @@
 
 #include "net.h"
 #include "transient.h"
+#include "types.h"
 
-#include "toplevel.h"
 #include "utils/blocker.h"
 
-namespace KWin
-{
-class Toplevel;
-
-namespace win
+namespace KWin::win
 {
 
 /**
@@ -24,7 +20,7 @@ namespace win
  * stealing prevention code.
  */
 template<typename Space>
-Toplevel* most_recently_activated_window(Space const& space)
+typename Space::window_t* most_recently_activated_window(Space const& space)
 {
     return space.should_get_focus.size() > 0 ? space.should_get_focus.back() : space.active_client;
 }
@@ -127,5 +123,4 @@ void update_layer(Win* win)
     }
 }
 
-}
 }

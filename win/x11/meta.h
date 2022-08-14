@@ -103,15 +103,17 @@ void set_caption(Win* win, QString const& _s, bool force = false)
     auto shortcut_suffix = win::shortcut_caption_suffix(win);
     win->caption.suffix = machine_suffix + shortcut_suffix;
 
+    using window_t = typename std::remove_reference_t<decltype(win->space)>::window_t;
+
     if ((!win::is_special_window(win) || win::is_toolbar(win))
-        && win::find_client_with_same_caption(static_cast<Toplevel*>(win))) {
+        && win::find_client_with_same_caption(static_cast<window_t*>(win))) {
         int i = 2;
 
         do {
             win->caption.suffix = machine_suffix + QLatin1String(" <") + QString::number(i)
                 + QLatin1Char('>') + LRM;
             i++;
-        } while (win::find_client_with_same_caption(static_cast<Toplevel*>(win)));
+        } while (win::find_client_with_same_caption(static_cast<window_t*>(win)));
 
         win->info->setVisibleName(win::caption(win).toUtf8().constData());
         reset_name = false;

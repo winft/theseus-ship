@@ -244,7 +244,7 @@ public:
         }
     }
 
-    Toplevel* findInternal(QWindow* window) const override
+    window_t* findInternal(QWindow* window) const override
     {
         if (!window) {
             return nullptr;
@@ -260,7 +260,7 @@ public:
         return nullptr;
     }
 
-    QRect get_icon_geometry(Toplevel const* win) const override
+    QRect get_icon_geometry(window_t const* win) const override
     {
         auto management = win->control->plasma_wayland_integration;
         if (!management || !waylandServer()) {
@@ -269,7 +269,7 @@ public:
         }
 
         auto min_distance = INT_MAX;
-        Toplevel* candidate_panel{nullptr};
+        window_t* candidate_panel{nullptr};
         QRect candidate_geo;
 
         for (auto i = management->minimizedGeometries().constBegin(),

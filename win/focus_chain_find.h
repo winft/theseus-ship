@@ -54,8 +54,8 @@ Win* focus_chain_get_for_activation_on_current_output(Manager& manager, uint des
     return focus_chain_get_for_activation<Win>(manager, desktop, get_current_output(manager.space));
 }
 
-template<typename Manager>
-bool focus_chain_is_usable_focus_candidate(Manager& manager, Toplevel* window, Toplevel* prev)
+template<typename Manager, typename Window>
+bool focus_chain_is_usable_focus_candidate(Manager& manager, Window* window, Window* prev)
 {
     if (window == prev) {
         return false;
@@ -82,8 +82,8 @@ bool focus_chain_is_usable_focus_candidate(Manager& manager, Toplevel* window, T
  * @param desktop The virtual desktop whose focus chain should be used
  * @return *The next usable window or @c null if none can be found.
  */
-template<typename Manager, typename Win>
-Toplevel* focus_chain_next_for_desktop(Manager& manager, Win* reference, uint desktop)
+template<typename Win, typename Manager>
+Win* focus_chain_next_for_desktop(Manager& manager, Win* reference, uint desktop)
 {
     auto desk_it = manager.chains.desktops.find(desktop);
     if (desk_it == manager.chains.desktops.end()) {

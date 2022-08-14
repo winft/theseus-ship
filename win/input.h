@@ -11,7 +11,6 @@
 #include "net.h"
 #include "screen.h"
 #include "stacking_order.h"
-#include "toplevel.h"
 #include "types.h"
 #include "user_actions_menu.h"
 #include "window_operation.h"
@@ -368,8 +367,8 @@ bool process_decoration_button_press(Win* win, QMouseEvent* event, bool ignoreMe
                 // expired -> new first click and pot. init
                 deco.double_click.start();
             } else {
-                perform_window_operation(
-                    win->space, win, kwinApp()->options->qobject->operationTitlebarDblClick());
+                perform_window_operation(win,
+                                         kwinApp()->options->qobject->operationTitlebarDblClick());
                 end_move_resize(win);
                 return false;
             }

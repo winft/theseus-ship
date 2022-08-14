@@ -262,7 +262,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
         }
         setupClientConnections(x11_client);
     }
-    for (auto unmanaged : win::x11::get_unmanageds<Toplevel>(*ws)) {
+    for (auto unmanaged : win::x11::get_unmanageds(*ws)) {
         setupUnmanagedConnections(unmanaged);
     }
     for (auto window : ws->windows) {

@@ -211,7 +211,10 @@ void cancel_delay_focus(Space& space)
  * @see activate_window
  */
 template<typename Space>
-void request_focus(Space& space, Toplevel* window, bool raise = false, bool force_focus = false)
+void request_focus(Space& space,
+                   typename Space::window_t* window,
+                   bool raise = false,
+                   bool force_focus = false)
 {
     auto take_focus = is_focus_change_allowed(space) || window == space.active_client;
 
@@ -282,7 +285,7 @@ void focus_to_null(Space& space)
 }
 
 template<typename Space>
-Toplevel* window_under_mouse(Space const& space, base::output const* output)
+typename Space::window_t* window_under_mouse(Space const& space, base::output const* output)
 {
     auto it = space.stacking_order->stack.cend();
 
@@ -389,7 +392,7 @@ void set_active(Win* win, bool active)
  * world.
  */
 template<typename Space>
-void set_active_window(Space& space, Toplevel* window)
+void set_active_window(Space& space, typename Space::window_t* window)
 {
     if (space.active_client == window)
         return;
@@ -481,7 +484,7 @@ void activate_window_impl(Space& space, Win* window, bool force)
 }
 
 template<typename Space>
-void activate_window(Space& space, Toplevel* window)
+void activate_window(Space& space, typename Space::window_t* window)
 {
     activate_window_impl(space, window, false);
 }
@@ -502,7 +505,7 @@ void activate_attention_window(Space& space)
 
 /// Deactivates 'window' and activates next one.
 template<typename Space>
-bool activate_next_window(Space& space, Toplevel* window)
+bool activate_next_window(Space& space, typename Space::window_t* window)
 {
     // If 'window' is not the active or the to-become active one, do nothing.
     if (!(window == space.active_client
@@ -531,7 +534,7 @@ bool activate_next_window(Space& space, Toplevel* window)
     if (!kwinApp()->options->qobject->focusPolicyIsReasonable())
         return false;
 
-    Toplevel* get_focus = nullptr;
+    decltype(window) get_focus = nullptr;
 
     int const desktop = space.virtual_desktop_manager->current();
 
@@ -597,7 +600,8 @@ void process_window_hidden(Space& space, Win* window)
 }
 
 template<typename Space>
-Toplevel* find_window_to_activate_on_desktop(Space& space, unsigned int desktop)
+typename Space::window_t* find_window_to_activate_on_desktop(Space& space, unsigned int desktop)
+
 {
     if (space.move_resize_window && space.active_client == space.move_resize_window
         && focus_chain_at_desktop_contains(space.focus_chain, space.active_client, desktop)
@@ -628,13 +632,14 @@ Toplevel* find_window_to_activate_on_desktop(Space& space, unsigned int desktop)
         }
     }
 
-    return focus_chain_get_for_activation_on_current_output<Toplevel>(space.focus_chain, desktop);
+    return focus_chain_get_for_activation_on_current_output<typename Space::window_t>(
+        space.focus_chain, desktop);
 }
 
 template<typename Space>
 void activate_window_on_new_desktop(Space& space, unsigned int desktop)
 {
-    Toplevel* c = nullptr;
+    typename Space::window_t* c = nullptr;
 
     if (kwinApp()->options->qobject->focusPolicyIsReasonable()) {
         c = find_window_to_activate_on_desktop(space, desktop);
@@ -667,12 +672,12 @@ void activate_window_on_new_desktop(Space& space, unsigned int desktop)
 
 template<typename Space>
 bool activate_window_direction(Space& space,
-                               Toplevel* c,
+                               typename Space::window_t* c,
                                win::direction direction,
                                QPoint curPos,
                                int d)
 {
-    Toplevel* switchTo = nullptr;
+    decltype(c) switchTo = nullptr;
     int bestScore = 0;
     auto clist = space.stacking_order->stack;
 
@@ -774,7 +779,7 @@ void delay_focus(Space& space)
 }
 
 template<typename Space>
-void request_delay_focus(Space& space, Toplevel* c)
+void request_delay_focus(Space& space, typename Space::window_t* c)
 {
     space.delayfocus_client = c;
 
@@ -810,7 +815,7 @@ void set_showing_desktop(Space& space, bool showing)
 
     space.showing_desktop = showing;
 
-    Toplevel* topDesk = nullptr;
+    typename Space::window_t* topDesk = nullptr;
 
     // for the blocker RAII
     // updateLayer & lowerClient would invalidate stacking_order
@@ -837,8 +842,9 @@ void set_showing_desktop(Space& space, bool showing)
     if (space.showing_desktop && topDesk) {
         request_focus(space, topDesk);
     } else if (!space.showing_desktop && changed) {
-        auto const window = focus_chain_get_for_activation_on_current_output<Toplevel>(
-            space.focus_chain, space.virtual_desktop_manager->current());
+        auto const window
+            = focus_chain_get_for_activation_on_current_output<typename Space::window_t>(
+                space.focus_chain, space.virtual_desktop_manager->current());
         if (window) {
             activate_window(space, window);
         }

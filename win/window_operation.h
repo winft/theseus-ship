@@ -6,6 +6,7 @@
 #pragma once
 
 #include "actions.h"
+#include "base/options.h"
 #include "desktop_set.h"
 #include "move.h"
 #include "rules/book.h"
@@ -17,15 +18,14 @@
 namespace KWin::win
 {
 
-template<typename Space>
-void perform_window_operation(Space& space,
-                              Toplevel* window,
-                              base::options_qobject::WindowOperation op)
+template<typename Win>
+void perform_window_operation(Win* window, base::options_qobject::WindowOperation op)
 {
     if (!window) {
         return;
     }
 
+    auto& space = window->space;
     auto& cursor = space.input->platform.cursor;
 
     if (op == base::options_qobject::MoveOp || op == base::options_qobject::UnrestrictedMoveOp) {

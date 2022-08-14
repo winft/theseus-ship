@@ -20,9 +20,9 @@ namespace KWin::win
 {
 
 template<typename Space>
-std::vector<Toplevel*> get_remnants(Space const& space)
+std::vector<typename Space::window_t*> get_remnants(Space const& space)
 {
-    std::vector<Toplevel*> ret;
+    std::vector<typename Space::window_t*> ret;
     for (auto const& window : space.windows) {
         if (window->remnant) {
             ret.push_back(window);

@@ -104,21 +104,19 @@ public:
     virtual void handle_desktop_changed(uint desktop) = 0;
 
     /**
-     * @brief Finds a Toplevel for the internal window @p w.
+     * @brief Finds a window for the internal window @p w.
      *
      * Internal window means a window created by KWin itself. On X11 this is an Unmanaged
      * and mapped by the window id, on Wayland a XdgShellClient mapped on the internal window id.
-     *
-     * @returns Toplevel
      */
-    virtual Toplevel* findInternal(QWindow* w) const = 0;
+    virtual window_t* findInternal(QWindow* w) const = 0;
 
     virtual win::screen_edge* create_screen_edge(win::screen_edger& edger)
     {
         return new win::screen_edge(&edger);
     }
 
-    virtual QRect get_icon_geometry(Toplevel const* /*win*/) const
+    virtual QRect get_icon_geometry(window_t const* /*win*/) const
     {
         return {};
     }
@@ -132,7 +130,7 @@ public:
 
     std::unique_ptr<qobject_t> qobject;
 
-    std::vector<Toplevel*> windows;
+    std::vector<window_t*> windows;
     std::vector<win::x11::group*> groups;
 
     win::space_areas areas;
@@ -157,15 +155,15 @@ public:
 
     int m_initialDesktop{1};
     std::unique_ptr<base::x11::xcb::window> m_nullFocus;
-    Toplevel* active_popup_client{nullptr};
+    window_t* active_popup_client{nullptr};
 
-    Toplevel* last_active_client{nullptr};
-    Toplevel* delayfocus_client{nullptr};
-    Toplevel* client_keys_client{nullptr};
+    window_t* last_active_client{nullptr};
+    window_t* delayfocus_client{nullptr};
+    window_t* client_keys_client{nullptr};
 
     // Last is most recent.
-    std::deque<Toplevel*> should_get_focus;
-    std::deque<Toplevel*> attention_chain;
+    std::deque<window_t*> should_get_focus;
+    std::deque<window_t*> attention_chain;
 
     int block_focus{0};
 
@@ -181,7 +179,7 @@ public:
     QTimer reconfigureTimer;
     QTimer updateToolWindowsTimer;
 
-    Toplevel* move_resize_window{nullptr};
+    window_t* move_resize_window{nullptr};
 
     // Array of the previous restricted areas that window cannot be moved into
     std::vector<win::strut_rects> oldrestrictedmovearea;
@@ -191,7 +189,7 @@ public:
      *
      * Accessed and modified by raise or lower client.
      */
-    Toplevel* most_recently_raised{nullptr};
+    window_t* most_recently_raised{nullptr};
 
     std::unique_ptr<win::stacking_order> stacking_order;
     win::focus_chain<space> focus_chain;
@@ -202,7 +200,7 @@ public:
     QTimer* m_quickTileCombineTimer{nullptr};
     win::quicktiles m_lastTilingMode{win::quicktiles::none};
 
-    Toplevel* active_client{nullptr};
+    window_t* active_client{nullptr};
 
     QWidget* active_popup{nullptr};
 

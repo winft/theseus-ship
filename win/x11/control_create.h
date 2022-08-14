@@ -368,7 +368,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
             auto leads = win->transient()->leads();
             bool on_current = false;
             bool on_all = false;
-            Toplevel* maincl = nullptr;
+            typename Space::window_t* maincl = nullptr;
 
             // This is slightly duplicated from win::place_on_main_window()
             for (auto const& lead : leads) {
@@ -706,7 +706,7 @@ xcb_timestamp_t read_user_time_map_timestamp(Win* win,
         if (act != nullptr
             && !belong_to_same_application(act, win, same_client_check::relaxed_for_active)) {
             bool first_window = true;
-            auto sameApplicationActiveHackPredicate = [win](Toplevel const* cl) {
+            auto sameApplicationActiveHackPredicate = [win](auto const* cl) {
                 // ignore already existing splashes, toolbars, utilities and menus,
                 // as the app may show those before the main window
                 auto x11_client = dynamic_cast<Win const*>(cl);

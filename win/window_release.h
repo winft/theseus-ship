@@ -11,8 +11,6 @@
 #include "space_window_release.h"
 #include "x11/win_info.h"
 
-#include "toplevel.h"
-
 namespace KWin::win
 {
 

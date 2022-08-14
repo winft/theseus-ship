@@ -410,8 +410,7 @@ void QuickTilingTest::testQuickTilingKeyboardMove()
     QSignalSpy quickTileChangedSpy(c->qobject.get(), &Toplevel::qobject_t::quicktiling_changed);
     QVERIFY(quickTileChangedSpy.isValid());
 
-    win::perform_window_operation(
-        *Test::app()->base.space, c, base::options_qobject::UnrestrictedMoveOp);
+    win::perform_window_operation(c, base::options_qobject::UnrestrictedMoveOp);
     QCOMPARE(c, Test::app()->base.space->move_resize_window);
     QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(49, 24));
 
@@ -494,8 +493,7 @@ void QuickTilingTest::testQuickTilingPointerMove()
     QSignalSpy quickTileChangedSpy(c->qobject.get(), &Toplevel::qobject_t::quicktiling_changed);
     QVERIFY(quickTileChangedSpy.isValid());
 
-    win::perform_window_operation(
-        *Test::app()->base.space, c, base::options_qobject::UnrestrictedMoveOp);
+    win::perform_window_operation(c, base::options_qobject::UnrestrictedMoveOp);
     QCOMPARE(c, Test::app()->base.space->move_resize_window);
     QCOMPARE(Test::app()->base.input->cursor->pos(), QPoint(49, 24));
     QVERIFY(configureRequestedSpy.wait());

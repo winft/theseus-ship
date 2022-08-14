@@ -24,7 +24,7 @@ Toplevel* find_window(Redirect const& redirect, QPoint const& pos)
             return nullptr;
         }
 
-        auto const& unmanaged = win::x11::get_unmanageds<Toplevel>(redirect.space);
+        auto const& unmanaged = win::x11::get_unmanageds(redirect.space);
         for (auto const& u : unmanaged) {
             if (win::input_geometry(u).contains(pos) && win::wayland::accepts_input(u, pos)) {
                 return u;

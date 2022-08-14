@@ -68,7 +68,8 @@ bool needs_child_restack(Win const& lead, Win const& child)
     return keep_transient_above(&lead, &child);
 }
 
-void append_children(stacking_order& order, Toplevel* window, std::deque<Toplevel*>& list)
+template<typename Win>
+void append_children(stacking_order& order, Win* window, std::deque<Win*>& list)
 {
     auto const children = window->transient()->children;
     if (!children.size()) {
@@ -76,7 +77,7 @@ void append_children(stacking_order& order, Toplevel* window, std::deque<Topleve
     }
 
     auto stacked_next = ensure_stacking_order_in_list(order.stack, children);
-    std::deque<Toplevel*> stacked;
+    std::deque<Win*> stacked;
 
     // Append children by one first-level child after the other but between them any
     // transient children of each first-level child (acts recursively).

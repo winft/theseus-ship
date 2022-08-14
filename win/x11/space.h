@@ -107,7 +107,7 @@ public:
         x11::popagate_desktop_change(*this, desktop);
     }
 
-    Toplevel* findInternal(QWindow* window) const override
+    window_t* findInternal(QWindow* window) const override
     {
         if (!window) {
             return nullptr;

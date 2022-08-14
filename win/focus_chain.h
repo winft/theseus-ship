@@ -34,12 +34,8 @@ namespace base
 class output;
 }
 
-class Toplevel;
-
 namespace win
 {
-
-using focus_chain_list = std::list<Toplevel*>;
 
 /**
  * @brief Data struct to handle the various focus chains.
@@ -58,6 +54,8 @@ template<typename Space>
 class focus_chain
 {
 public:
+    using focus_chain_list = std::list<typename Space::window_t*>;
+
     focus_chain(Space& space)
         : space{space}
     {
@@ -68,7 +66,7 @@ public:
         std::unordered_map<unsigned int, focus_chain_list> desktops;
     } chains;
 
-    Toplevel* active_window{nullptr};
+    typename Space::window_t* active_window{nullptr};
     unsigned int current_desktop{0};
 
     bool has_separate_screen_focus{false};

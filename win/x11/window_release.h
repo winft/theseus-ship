@@ -6,7 +6,6 @@
 #pragma once
 
 #include "base/x11/grabs.h"
-#include "toplevel.h"
 #include "utils/blocker.h"
 #include "win/input.h"
 #include "win/rules.h"
@@ -96,7 +95,7 @@ void reset_have_resize_effect(Win& win)
 }
 
 template<typename Win>
-void finish_unmanaged_removal(Win* win, Toplevel* remnant)
+void finish_unmanaged_removal(Win* win, Win* remnant)
 {
     auto& space = win->space;
     assert(contains(space.windows, win));
@@ -118,7 +117,7 @@ void finish_unmanaged_removal(Win* win, Toplevel* remnant)
 template<typename Win>
 void release_unmanaged(Win* win, bool on_shutdown)
 {
-    Toplevel* del = nullptr;
+    Win* del = nullptr;
     if (!on_shutdown) {
         del = create_remnant_window<Win>(*win);
     }
@@ -170,7 +169,7 @@ void release_window(Win* win, bool on_shutdown)
     destroy_damage_handle(*win);
     reset_have_resize_effect(*win);
 
-    Toplevel* del = nullptr;
+    Win* del = nullptr;
     if (on_shutdown) {
         // Move the client window to maintain its position.
         auto const offset = QPoint(left_border(win), top_border(win));

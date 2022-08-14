@@ -17,7 +17,6 @@
 #include "base/logging.h"
 #include "main.h"
 #include "scripting/platform.h"
-#include "toplevel.h"
 
 #if KWIN_BUILD_TABBOX
 #include "tabbox/tabbox.h"
@@ -36,11 +35,6 @@
 
 namespace KWin::win
 {
-
-template<typename Space>
-void perform_window_operation(Space& space,
-                              Toplevel* window,
-                              base::options_qobject::WindowOperation op);
 
 struct user_actions_menu_desktop_action_data {
     uint desktop;
@@ -126,7 +120,7 @@ public:
      * @param c The Client to compare
      * @returns Whether the Client is the one related to this Menu
      */
-    bool isMenuClient(Toplevel const* window) const
+    bool isMenuClient(typename Space::window_t const* window) const
     {
         return window && window == m_client;
     }
@@ -149,7 +143,7 @@ public:
      * @param pos The position where the menu should be shown.
      * @param client The Client for which the Menu has to be shown.
      */
-    void show(const QRect& pos, Toplevel* window)
+    void show(const QRect& pos, typename Space::window_t* window)
     {
         assert(window);
 
@@ -523,7 +517,7 @@ private:
         // user actions menu closed before we destroy the decoration. Otherwise Qt crashes
         qRegisterMetaType<base::options_qobject::WindowOperation>();
         QMetaObject::invokeMethod(space.qobject.get(), [&space = this->space, c, op] {
-            win::perform_window_operation(space, c, op);
+            win::perform_window_operation(c, op);
         });
     }
 
@@ -756,7 +750,7 @@ private:
      * @param message The message type to be shown
      * @param c The Client for which the dialog should be shown.
      */
-    void helperDialog(const QString& message, Toplevel* window)
+    void helperDialog(const QString& message, typename Space::window_t* window)
     {
         QStringList args;
         QString type;
@@ -831,7 +825,7 @@ private:
     QAction* m_shortcutOperation{nullptr};
 
     /// The Client for which the menu is shown.
-    Toplevel* m_client{nullptr};
+    typename Space::window_t* m_client{nullptr};
 
     QAction* m_rulesOperation{nullptr};
     QAction* m_applicationRulesOperation{nullptr};

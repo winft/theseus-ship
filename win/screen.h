@@ -5,10 +5,10 @@
 */
 #pragma once
 
+#include "base/options.h"
 #include "base/output_helpers.h"
 #include "base/platform.h"
 #include "main.h"
-#include "toplevel.h"
 
 namespace KWin::win
 {

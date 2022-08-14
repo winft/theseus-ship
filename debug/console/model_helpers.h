@@ -7,7 +7,6 @@
 
 #include "window.h"
 
-#include "toplevel.h"
 #include "win/internal_window.h"
 #include "win/meta.h"
 #include "win/space_qobject.h"
@@ -147,7 +146,7 @@ void model_setup_connections(Model& model, Space& space)
             remove_window(&model, model.s_x11ClientId - 1, model.m_x11Clients, window);
         });
 
-    for (auto unmanaged : win::x11::get_unmanageds<Toplevel>(space)) {
+    for (auto unmanaged : win::x11::get_unmanageds(space)) {
         model.m_unmanageds.emplace_back(std::make_unique<console_window>(unmanaged));
     }
 

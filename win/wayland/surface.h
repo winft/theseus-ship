@@ -8,7 +8,6 @@
 #include "base/platform.h"
 #include "base/wayland/server.h"
 #include "main.h"
-#include "toplevel.h"
 
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/surface.h>
@@ -48,11 +47,10 @@ void set_surface(Win* win, Wrapland::Server::Surface* surface)
     } else {
         // Need to setup this connections since setSurface was never called before or
         // the surface had been destroyed before what disconnected them.
-        win->notifiers.frame_update_outputs
-            = QObject::connect(win->qobject.get(),
-                               &Toplevel::qobject_t::frame_geometry_changed,
-                               win->qobject.get(),
-                               [win] { update_surface_outputs(win); });
+        win->notifiers.frame_update_outputs = QObject::connect(
+            win->qobject.get(), &Win::qobject_t::frame_geometry_changed, win->qobject.get(), [win] {
+                update_surface_outputs(win);
+            });
         win->notifiers.screens_update_outputs = QObject::connect(
             &win->space.base, &base::platform::topology_changed, win->qobject.get(), [win] {
                 update_surface_outputs(win);

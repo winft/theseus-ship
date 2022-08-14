@@ -91,11 +91,11 @@ namespace KWin::win
  */
 // TODO misleading name for this method, too many slightly different ways to use it
 template<typename Space>
-Toplevel* top_client_on_desktop(Space* space,
-                                int desktop,
-                                base::output const* output,
-                                bool unconstrained = false,
-                                bool only_normal = true)
+typename Space::window_t* top_client_on_desktop(Space* space,
+                                                int desktop,
+                                                base::output const* output,
+                                                bool unconstrained = false,
+                                                bool only_normal = true)
 {
     // TODO    Q_ASSERT( block_stacking_updates == 0 );
     auto const& list
@@ -190,7 +190,7 @@ void lower_window(Space* space, Window* window)
 
         for (auto it = wins.crbegin(); it != wins.crend(); it++) {
             auto gwin = *it;
-            if (gwin == static_cast<Toplevel*>(window)) {
+            if (gwin == static_cast<typename Space::window_t*>(window)) {
                 continue;
             }
 
@@ -222,7 +222,7 @@ void raise_window(Space* space, Window* window)
         }
 
         if (!is_special_window(window)) {
-            space->most_recently_raised = static_cast<Toplevel*>(window);
+            space->most_recently_raised = window;
         }
     };
 
@@ -230,7 +230,7 @@ void raise_window(Space* space, Window* window)
 
     if (window->transient()->lead()) {
         // Also raise all leads.
-        std::vector<Toplevel*> leads;
+        std::vector<typename Space::window_t*> leads;
 
         for (auto lead : window->transient()->leads()) {
             while (lead) {
@@ -263,7 +263,7 @@ void raise_or_lower_client(Space* space, Window* window)
         return;
     }
 
-    Toplevel* topmost = nullptr;
+    typename Space::window_t* topmost{nullptr};
 
     if (space->most_recently_raised
         && contains(space->stacking_order->stack, space->most_recently_raised)
@@ -286,7 +286,7 @@ void raise_or_lower_client(Space* space, Window* window)
 }
 
 template<typename Space, typename Window>
-void restack(Space* space, Window* window, Toplevel* under, bool force = false)
+void restack(Space* space, Window* window, typename Space::window_t* under, bool force = false)
 {
     assert(under);
     assert(contains(space->stacking_order->pre_stack, under));
@@ -315,7 +315,7 @@ void restack(Space* space, Window* window, Toplevel* under, bool force = false)
     space->stacking_order->pre_stack.insert(it, window);
 
     assert(contains(space->stacking_order->pre_stack, window));
-    focus_chain_move_window_after(space->focus_chain, window, under);
+    focus_chain_move_window_after<typename Space::window_t>(space->focus_chain, window, under);
     space->stacking_order->update_order();
 }
 

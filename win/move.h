@@ -67,7 +67,7 @@ position mouse_position(Win* win)
 }
 
 template<typename Space>
-void set_move_resize_window(Space& space, Toplevel* window)
+void set_move_resize_window(Space& space, typename Space::window_t* window)
 {
     // Catch attempts to move a second
     assert(!window || !space.move_resize_window);

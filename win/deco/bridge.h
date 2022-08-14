@@ -30,7 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "main.h"
 #include "render/scene.h"
-#include "toplevel.h"
 #include "win/control.h"
 #include "win/deco.h"
 
@@ -49,12 +48,7 @@ namespace KDecoration2
 class DecorationSettings;
 }
 
-namespace KWin
-{
-
-class Toplevel;
-
-namespace win::deco
+namespace KWin::win::deco
 {
 
 class KWIN_EXPORT bridge_qobject : public QObject
@@ -120,7 +114,7 @@ public:
         }
     }
 
-    KDecoration2::Decoration* createDecoration(deco::window<Toplevel>* window)
+    KDecoration2::Decoration* createDecoration(deco::window<typename Space::window_t>* window)
     {
         if (m_noPlugin) {
             return nullptr;
@@ -144,7 +138,9 @@ public:
                  KDecoration2::Decoration* decoration) override
     {
         return std::make_unique<client_impl>(
-            static_cast<window<Toplevel>*>(decoration->parent())->win, client, decoration);
+            static_cast<window<typename Space::window_t>*>(decoration->parent())->win,
+            client,
+            decoration);
     }
 
     std::unique_ptr<KDecoration2::DecorationSettingsPrivate>
@@ -354,5 +350,4 @@ private:
     Space& space;
 };
 
-}
 }

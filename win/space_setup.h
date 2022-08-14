@@ -14,7 +14,6 @@
 #include "x11/stacking.h"
 
 #include "base/platform.h"
-#include "toplevel.h"
 
 #include <QObject>
 
@@ -25,7 +24,7 @@ template<typename Space>
 void init_space(Space& space)
 {
     // For invoke methods of user_actions_menu.
-    qRegisterMetaType<Toplevel*>();
+    qRegisterMetaType<typename Space::window_t*>();
 
     space.m_quickTileCombineTimer = new QTimer(space.qobject.get());
     space.m_quickTileCombineTimer->setSingleShot(true);

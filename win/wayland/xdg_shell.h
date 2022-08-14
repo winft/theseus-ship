@@ -11,7 +11,6 @@
 
 #include "base/wayland/server.h"
 #include "render/compositor.h"
-#include "toplevel.h"
 #include "utils/geo.h"
 #include "wayland_logging.h"
 #include "win/controlling.h"

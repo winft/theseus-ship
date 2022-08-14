@@ -17,7 +17,7 @@ namespace KWin::win
 {
 
 template<typename Space>
-bool shortcut_available(Space& space, const QKeySequence& cut, Toplevel* ignore)
+bool shortcut_available(Space& space, const QKeySequence& cut, typename Space::window_t* ignore)
 {
     if (ignore && cut == ignore->control->shortcut) {
         return true;
@@ -173,7 +173,7 @@ void setup_window_shortcut(Space& space, Win* window)
 }
 
 template<typename Space>
-void window_shortcut_updated(Space& space, Toplevel* window)
+void window_shortcut_updated(Space& space, typename Space::window_t* window)
 {
     QString key = QStringLiteral("_k_session:%1").arg(window->xcb_window);
     auto action = space.qobject->template findChild<QAction*>(key);

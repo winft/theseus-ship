@@ -41,11 +41,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QPoint>
 #include <QRect>
 
-namespace KWin
-{
-class Toplevel;
-
-namespace win
+namespace KWin::win
 {
 
 template<typename Win>
@@ -484,10 +480,12 @@ void place_on_main_window(Win* window, const QRect& area, placement nextPlacemen
     if (nextPlacement == placement::maximizing) // maximize if needed
         place_maximizing(window, area, placement::no_placement);
 
-    auto leads = window->transient()->leads();
-    Toplevel* place_on = nullptr;
-    Toplevel* place_on2 = nullptr;
+    using Space = std::remove_reference_t<decltype(window->space)>;
+    typename Space::window_t* place_on{nullptr};
+    typename Space::window_t* place_on2{nullptr};
+
     int mains_count = 0;
+    auto leads = window->transient()->leads();
 
     for (auto lead : leads) {
         if (leads.size() > 1 && is_special_window(lead)) {
@@ -573,7 +571,6 @@ void unclutter_desktop(Space& space)
     }
 }
 
-}
 }
 
 #endif

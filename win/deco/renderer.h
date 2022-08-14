@@ -24,11 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <kwin_export.h>
 
-namespace KWin
-{
-class Toplevel;
-
-namespace win::deco
+namespace KWin::win::deco
 {
 
 class client_impl;
@@ -78,5 +74,4 @@ private:
     bool m_imageSizesDirty;
 };
 
-}
 }

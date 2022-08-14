@@ -141,7 +141,8 @@ void create_decoration(Win* win)
         return;
     }
 
-    win->control->deco.window = new deco::window<Toplevel>(win);
+    using Space = std::remove_reference_t<decltype(win->space)>;
+    win->control->deco.window = new deco::window<typename Space::window_t>(win);
     auto decoration = win->space.deco->createDecoration(win->control->deco.window);
 
     if (decoration) {
