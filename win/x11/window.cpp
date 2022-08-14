@@ -47,7 +47,7 @@ window::window(win::remnant remnant, win::space& space)
 }
 
 window::window(xcb_window_t xcb_win, win::space& space)
-    : Toplevel(new x11::transient(this), space)
+    : Toplevel(new x11::transient<window>(this), space)
     , motif_hints(space.atoms->motif_wm_hints)
 {
     Toplevel::qobject = std::make_unique<window_qobject>();
@@ -507,7 +507,7 @@ bool window::groupTransient() const
     //
     // [1] https://specifications.freedesktop.org/wm-spec/wm-spec-latest.html#idm45623487728576
     //
-    return static_cast<win::x11::transient*>(transient())->lead_id == rootWindow();
+    return static_cast<x11::transient<window>*>(transient())->lead_id == rootWindow();
 }
 
 void window::handle_activated()

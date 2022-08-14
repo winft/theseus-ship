@@ -23,20 +23,20 @@ namespace KWin::win::x11
 template<typename Win>
 void set_transient_lead(Win* win, xcb_window_t lead_id);
 
+template<typename Win>
 class transient : public win::transient
 {
 public:
-    xcb_window_t lead_id{XCB_WINDOW_NONE};
-    xcb_window_t original_lead_id{XCB_WINDOW_NONE};
-    window* win;
+    Win* win;
+    using AbstractWin = typename std::remove_reference_t<decltype(win->space)>::window_t;
 
-    transient(window* win)
+    transient(Win* win)
         : win::transient(win)
         , win{win}
     {
     }
 
-    void remove_lead(Toplevel* lead) override
+    void remove_lead(AbstractWin* lead) override
     {
         win::transient::remove_lead(lead);
 
@@ -46,6 +46,9 @@ public:
             set_transient_lead(win, XCB_WINDOW_NONE);
         }
     }
+
+    xcb_window_t lead_id{XCB_WINDOW_NONE};
+    xcb_window_t original_lead_id{XCB_WINDOW_NONE};
 };
 
 /**
@@ -95,9 +98,9 @@ public:
 */
 
 template<typename Win>
-transient* x11_transient(Win* win)
+transient<Win>* x11_transient(Win* win)
 {
-    return static_cast<win::x11::transient*>(win->transient());
+    return static_cast<x11::transient<Win>*>(win->transient());
 }
 
 template<typename Win>
