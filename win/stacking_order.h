@@ -151,7 +151,7 @@ private:
             return;
         }
 
-        auto stacked_next = ensure_stacking_order_in_list(order.stack, children);
+        auto stacked_next = ensure_stacking_order_in_list(order, children);
         std::deque<Win*> stacked;
 
         // Append children by one first-level child after the other but between them any
@@ -172,7 +172,7 @@ private:
 
     bool sort()
     {
-        std::vector<Window*> pre_order = sort_windows_by_layer(pre_stack);
+        auto pre_order = sort_windows_by_layer(pre_stack);
         std::deque<Window*> stack;
 
         for (auto const& window : pre_order) {

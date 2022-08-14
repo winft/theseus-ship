@@ -115,11 +115,12 @@ typename Space::window_t* top_client_on_desktop(Space* space,
     return nullptr;
 }
 
-template<class T, class R = T>
-std::deque<R*> ensure_stacking_order_in_list(std::deque<Toplevel*> const& stackingOrder,
-                                             std::vector<T*> const& list)
+template<class Order, class T, class R = T>
+std::deque<R*> ensure_stacking_order_in_list(Order const& order, std::vector<T*> const& list)
 {
-    static_assert(std::is_base_of<Toplevel, T>::value, "U must be derived from T");
+    using order_window_t = typename decltype(order.stack)::value_type;
+    static_assert(std::is_base_of<std::remove_pointer_t<order_window_t>, T>::value,
+                  "T must be derived from stacking order window type");
     // TODO    Q_ASSERT( block_stacking_updates == 0 );
 
     if (!list.size()) {
@@ -137,10 +138,10 @@ std::deque<R*> ensure_stacking_order_in_list(std::deque<Toplevel*> const& stacki
         }
     }
 
-    // Now reorder the result. For that stackingOrder should be a superset and it define the order
-    // in which windows should appear in result. We then reorder result simply by going through
-    // stackingOrder one-by-one, removing it from result and then adding it back in the end.
-    for (auto win : stackingOrder) {
+    // Now reorder the result. For that 'order' should be a superset and it define the order in
+    // which windows should appear in result. We then reorder result simply by going through order
+    // one-by-one, removing it from result and then adding it back in the end.
+    for (auto const& win : order.stack) {
         auto rwin = dynamic_cast<R*>(win);
         if (!rwin) {
             continue;
@@ -154,7 +155,7 @@ std::deque<R*> ensure_stacking_order_in_list(std::deque<Toplevel*> const& stacki
 template<class Space, class Win>
 std::deque<Win*> restacked_by_space_stacking_order(Space* space, std::vector<Win*> const& list)
 {
-    return ensure_stacking_order_in_list(space->stacking_order->stack, list);
+    return ensure_stacking_order_in_list(*space->stacking_order, list);
 }
 
 template<typename Space, typename Window>
@@ -340,15 +341,16 @@ void auto_raise(Win* win)
  * @param list container of windows to sort
  */
 template<typename Container>
-std::vector<Toplevel*> sort_windows_by_layer(Container const& list)
+std::vector<typename Container::value_type> sort_windows_by_layer(Container const& list)
 {
-    std::deque<Toplevel*> layers[enum_index(layer::count)];
+    using order_window_t = typename Container::value_type;
+    std::deque<order_window_t> layers[enum_index(layer::count)];
 
     // Build the order from layers.
 
     // This is needed as a workaround for group windows with fullscreen members, such that other
     // group members are moved per output to the active (fullscreen) level too.
-    using key = std::pair<base::output const*, Toplevel*>;
+    using key = std::pair<base::output const*, order_window_t>;
     std::map<key, layer> lead_layers;
 
     for (auto const& win : list) {
@@ -371,7 +373,7 @@ std::vector<Toplevel*> sort_windows_by_layer(Container const& list)
         layers[enum_index(lay)].push_back(win);
     }
 
-    std::vector<Toplevel*> sorted;
+    std::vector<order_window_t> sorted;
     sorted.reserve(list.size());
 
     for (auto lay = enum_index(layer::first); lay < enum_index(layer::count); ++lay) {
