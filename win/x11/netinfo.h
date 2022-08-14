@@ -29,11 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <memory>
 #include <xcb/xcb.h>
 
-namespace KWin
-{
-class Toplevel;
-
-namespace win
+namespace KWin::win
 {
 
 class space;
@@ -42,6 +38,18 @@ namespace x11
 {
 
 class root_info_filter;
+
+template<typename Info, typename Win>
+void root_info_set_active_window(Info& info, Win* window)
+{
+    auto const xcb_win
+        = window ? static_cast<xcb_window_t>(window->xcb_window) : xcb_window_t{XCB_WINDOW_NONE};
+    if (info.m_activeWindow == xcb_win) {
+        return;
+    }
+    info.m_activeWindow = xcb_win;
+    info.setActiveWindow(xcb_win);
+}
 
 /**
  * NET WM Protocol handler class
@@ -52,9 +60,8 @@ public:
     static root_info* create(win::space& space);
     static void destroy();
 
-    void setActiveClient(Toplevel* window);
-
     win::space& space;
+    xcb_window_t m_activeWindow;
 
 protected:
     void changeNumberOfDesktops(int n) override;
@@ -87,7 +94,6 @@ private:
     static root_info* s_self;
     friend root_info* rootInfo();
 
-    xcb_window_t m_activeWindow;
     std::unique_ptr<root_info_filter> m_eventFilter;
 };
 
@@ -96,6 +102,5 @@ inline root_info* rootInfo()
     return root_info::s_self;
 }
 
-}
 }
 }

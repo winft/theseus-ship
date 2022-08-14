@@ -448,7 +448,7 @@ void set_active_window(Space& space, typename Space::window_t* window)
     space.stacking_order->update_order();
 
     if (win::x11::rootInfo()) {
-        win::x11::rootInfo()->setActiveClient(space.active_client);
+        x11::root_info_set_active_window(*x11::rootInfo(), space.active_client);
     }
 
     Q_EMIT space.qobject->clientActivated(space.active_client);
