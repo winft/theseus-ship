@@ -112,9 +112,10 @@ public:
      */
     virtual window_t* findInternal(QWindow* w) const = 0;
 
-    virtual std::unique_ptr<screen_edge> create_screen_edge(win::screen_edger& edger)
+    using edger_t = screen_edger<space>;
+    virtual std::unique_ptr<screen_edge<edger_t>> create_screen_edge(edger_t& edger)
     {
-        return std::make_unique<screen_edge>(&edger);
+        return std::make_unique<screen_edge<edger_t>>(&edger);
     }
 
     virtual QRect get_icon_geometry(window_t const* /*win*/) const
@@ -138,7 +139,7 @@ public:
 
     std::unique_ptr<scripting::platform> scripting;
     std::unique_ptr<render::outline> outline;
-    std::unique_ptr<win::screen_edger> edges;
+    std::unique_ptr<edger_t> edges;
 
     render::compositor& render;
     KStartupInfo* startup{nullptr};

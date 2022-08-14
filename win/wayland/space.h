@@ -103,7 +103,7 @@ public:
         this->input = std::make_unique<input::wayland::redirect>(*base.input, *this);
         dbus = std::make_unique<base::dbus::kwin_impl<win::space, input::platform>>(
             *this, base.input.get());
-        edges = std::make_unique<screen_edger>(*this);
+        edges = std::make_unique<edger_t>(*this);
 
         plasma_window_manager->setShowingDesktopState(
             Wrapland::Server::PlasmaWindowManager::ShowingDesktopState::Disabled);

@@ -51,7 +51,7 @@ public:
         }
 
         atoms = std::make_unique<base::x11::atoms>(connection());
-        edges = std::make_unique<win::screen_edger>(*this);
+        edges = std::make_unique<edger_t>(*this);
         dbus = std::make_unique<base::dbus::kwin_impl<win::space, input::platform>>(
             *this, base.input.get());
 
@@ -115,12 +115,12 @@ public:
         return find_unmanaged<win::x11::window>(*this, window->winId());
     }
 
-    std::unique_ptr<win::screen_edge> create_screen_edge(win::screen_edger& edger) override
+    std::unique_ptr<win::screen_edge<edger_t>> create_screen_edge(edger_t& edger) override
     {
         if (!edges_filter) {
             edges_filter = std::make_unique<screen_edges_filter>(*this);
         }
-        return std::make_unique<x11::screen_edge>(&edger, *atoms);
+        return std::make_unique<x11::screen_edge<edger_t>>(&edger, *atoms);
     }
 
     void update_space_area_from_windows(QRect const& desktop_area,

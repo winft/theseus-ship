@@ -20,7 +20,6 @@
 #include "base/platform.h"
 #include "input/cursor.h"
 #include "render/outline.h"
-#include "screen_edges.h"
 
 #include <QWidget>
 

@@ -111,7 +111,8 @@ bool TestObject::callback(KWin::ElectricBorder border)
 
 void reset_edger()
 {
-    Test::app()->base.space->edges = std::make_unique<win::screen_edger>(*Test::app()->base.space);
+    Test::app()->base.space->edges
+        = std::make_unique<win::screen_edger<win::space>>(*Test::app()->base.space);
 }
 
 void reset_edger(KSharedConfig::Ptr config)
