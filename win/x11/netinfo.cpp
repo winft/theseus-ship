@@ -39,11 +39,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin::win::x11
 {
-root_info* root_info::s_self = nullptr;
 
-root_info* root_info::create(win::space& space)
+std::unique_ptr<root_info> root_info::create(win::space& space)
 {
-    Q_ASSERT(!s_self);
     xcb_window_t supportWindow = xcb_generate_id(connection());
     const uint32_t values[] = {true};
     xcb_create_window(connection(),
@@ -143,27 +141,20 @@ root_info* root_info::create(win::space& space)
         NET::ActionClose;
     // clang-format on
 
-    s_self = new root_info(space,
-                           supportWindow,
-                           "KWin",
-                           properties,
-                           types,
-                           states,
-                           properties2,
-                           actions,
-                           kwinApp()->x11ScreenNumber());
-    return s_self;
+    return std::make_unique<root_info>(space,
+                                       supportWindow,
+                                       "KWin",
+                                       properties,
+                                       types,
+                                       states,
+                                       properties2,
+                                       actions,
+                                       kwinApp()->x11ScreenNumber());
 }
 
-void root_info::destroy()
+root_info::~root_info()
 {
-    if (!s_self) {
-        return;
-    }
-    xcb_window_t supportWindow = s_self->supportWindow();
-    delete s_self;
-    s_self = nullptr;
-    xcb_destroy_window(connection(), supportWindow);
+    xcb_destroy_window(connection(), supportWindow());
 }
 
 root_info::root_info(win::space& space,

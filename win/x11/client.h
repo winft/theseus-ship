@@ -118,7 +118,7 @@ void ping(Win* win)
     win->ping_timer->start(kwinApp()->options->qobject->killPingTimeout() / 2);
 
     win->ping_timestamp = xTime();
-    rootInfo()->sendPing(win->xcb_window, win->ping_timestamp);
+    win->space.root_info->sendPing(win->xcb_window, win->ping_timestamp);
 }
 
 template<typename Win>

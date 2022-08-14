@@ -447,8 +447,8 @@ void set_active_window(Space& space, typename Space::window_t* window)
     // e.g. fullscreens have different layer when active/not-active
     space.stacking_order->update_order();
 
-    if (win::x11::rootInfo()) {
-        x11::root_info_set_active_window(*x11::rootInfo(), space.active_client);
+    if (space.root_info) {
+        x11::root_info_set_active_window(*space.root_info, space.active_client);
     }
 
     Q_EMIT space.qobject->clientActivated(space.active_client);
@@ -810,8 +810,8 @@ template<typename Space>
 void set_showing_desktop(Space& space, bool showing)
 {
     const bool changed = showing != space.showing_desktop;
-    if (x11::rootInfo() && changed) {
-        x11::rootInfo()->setShowingDesktop(showing);
+    if (space.root_info && changed) {
+        space.root_info->setShowingDesktop(showing);
     }
 
     space.showing_desktop = showing;

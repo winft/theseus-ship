@@ -12,16 +12,17 @@
 namespace KWin::win::x11
 {
 
-inline void handle_desktop_resize(QSize const& size)
+template<typename Info>
+void handle_desktop_resize(Info* info, QSize const& size)
 {
-    if (!x11::rootInfo()) {
+    if (!info) {
         return;
     }
 
     NETSize desktop_geometry;
     desktop_geometry.width = size.width();
     desktop_geometry.height = size.height();
-    x11::rootInfo()->setDesktopGeometry(desktop_geometry);
+    info->setDesktopGeometry(desktop_geometry);
 }
 
 template<typename Space>
@@ -39,8 +40,8 @@ void popagate_desktop_change(Space& space, uint desktop)
     }
 
     // Now propagate the change, after hiding, before showing.
-    if (x11::rootInfo()) {
-        x11::rootInfo()->setCurrentDesktop(space.virtual_desktop_manager->current());
+    if (space.root_info) {
+        space.root_info->setCurrentDesktop(space.virtual_desktop_manager->current());
     }
 
     auto const& list = space.stacking_order->stack;

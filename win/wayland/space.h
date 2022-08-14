@@ -225,7 +225,7 @@ public:
     void resize(QSize const& size) override
     {
         // TODO(romangg): Only call with Xwayland compiled.
-        x11::handle_desktop_resize(size);
+        x11::handle_desktop_resize(root_info.get(), size);
         handle_desktop_resize(*this, size);
     }
 

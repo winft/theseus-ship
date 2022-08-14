@@ -77,14 +77,14 @@ void update_space_areas_impl(Space& space, bool force)
         space.oldrestrictedmovearea = space.areas.restrictedmove;
         space.areas = new_areas;
 
-        if (win::x11::rootInfo()) {
+        if (space.root_info) {
             NETRect rect;
             for (int desktop = 1; desktop <= desktops_count; desktop++) {
                 rect.pos.x = space.areas.work[desktop].x();
                 rect.pos.y = space.areas.work[desktop].y();
                 rect.size.width = space.areas.work[desktop].width();
                 rect.size.height = space.areas.work[desktop].height();
-                x11::rootInfo()->setWorkArea(desktop, rect);
+                space.root_info->setWorkArea(desktop, rect);
             }
         }
 

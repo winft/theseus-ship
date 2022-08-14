@@ -98,7 +98,7 @@ public:
 
     void resize(QSize const& size) override
     {
-        handle_desktop_resize(size);
+        handle_desktop_resize(root_info.get(), size);
         win::handle_desktop_resize(*this, size);
     }
 
@@ -153,12 +153,12 @@ private:
 template<typename Space>
 void stack_screen_edges_under_override_redirect(Space* space)
 {
-    if (!rootInfo()) {
+    if (!space->root_info) {
         return;
     }
 
     std::vector<xcb_window_t> windows;
-    windows.push_back(rootInfo()->supportWindow());
+    windows.push_back(space->root_info->supportWindow());
 
     auto const edges_wins = space->edges->windows();
     windows.insert(windows.end(), edges_wins.begin(), edges_wins.end());

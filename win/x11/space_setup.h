@@ -82,10 +82,10 @@ void init_space(Space& space)
                                                        nullFocusValues));
     space.m_nullFocus->map();
 
-    auto rootInfo = win::x11::root_info::create(space);
+    space.root_info = x11::root_info::create(space);
     auto& vds = space.virtual_desktop_manager;
-    vds->setRootInfo(rootInfo);
-    rootInfo->activate();
+    vds->setRootInfo(space.root_info.get());
+    space.root_info->activate();
 
     // TODO: only in X11 mode
     // Extra NETRootInfo instance in Client mode is needed to get the values of the properties
@@ -96,7 +96,7 @@ void init_space(Space& space)
     }
 
     // TODO: better value
-    rootInfo->setActiveWindow(XCB_WINDOW_NONE);
+    space.root_info->setActiveWindow(XCB_WINDOW_NONE);
     focus_to_null(space);
 
     if (!qApp->isSessionRestored())
@@ -149,7 +149,7 @@ void init_space(Space& space)
 
         // NETWM spec says we have to set it to (0,0) if we don't support it
         NETPoint* viewports = new NETPoint[vds->count()];
-        rootInfo->setDesktopViewport(vds->count(), *viewports);
+        space.root_info->setDesktopViewport(vds->count(), *viewports);
         delete[] viewports;
         QRect geom;
 
@@ -160,7 +160,7 @@ void init_space(Space& space)
         NETSize desktop_geometry;
         desktop_geometry.width = geom.width();
         desktop_geometry.height = geom.height();
-        rootInfo->setDesktopGeometry(desktop_geometry);
+        space.root_info->setDesktopGeometry(desktop_geometry);
         set_showing_desktop(space, false);
 
     } // End updates blocker block

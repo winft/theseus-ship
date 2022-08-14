@@ -57,8 +57,18 @@ void root_info_set_active_window(Info& info, Win* window)
 class KWIN_EXPORT root_info : public NETRootInfo
 {
 public:
-    static root_info* create(win::space& space);
-    static void destroy();
+    static std::unique_ptr<root_info> create(win::space& space);
+
+    root_info(win::space& space,
+              xcb_window_t w,
+              const char* name,
+              NET::Properties properties,
+              NET::WindowTypes types,
+              NET::States states,
+              NET::Properties2 properties2,
+              NET::Actions actions,
+              int scr = -1);
+    ~root_info() override;
 
     win::space& space;
     xcb_window_t m_activeWindow;
@@ -82,25 +92,8 @@ protected:
     void changeShowingDesktop(bool showing) override;
 
 private:
-    root_info(win::space& space,
-              xcb_window_t w,
-              const char* name,
-              NET::Properties properties,
-              NET::WindowTypes types,
-              NET::States states,
-              NET::Properties2 properties2,
-              NET::Actions actions,
-              int scr = -1);
-    static root_info* s_self;
-    friend root_info* rootInfo();
-
     std::unique_ptr<root_info_filter> m_eventFilter;
 };
-
-inline root_info* rootInfo()
-{
-    return root_info::s_self;
-}
 
 }
 }

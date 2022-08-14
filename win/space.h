@@ -142,6 +142,7 @@ public:
     render::compositor& render;
     KStartupInfo* startup{nullptr};
     std::unique_ptr<base::x11::atoms> atoms;
+    std::unique_ptr<x11::root_info> root_info;
     std::unique_ptr<deco::bridge<space>> deco;
     std::unique_ptr<dbus::appmenu> appmenu;
     std::unique_ptr<input::redirect> input;

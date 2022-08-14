@@ -209,7 +209,7 @@ void clear_space(Space& space)
     space.rule_book.reset();
     kwinApp()->config()->sync();
 
-    x11::root_info::destroy();
+    space.root_info.reset();
     delete space.startup;
     delete space.client_keys_dialog;
     for (auto const& s : space.session)

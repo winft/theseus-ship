@@ -68,7 +68,7 @@ void render_stack_unmanaged_windows(Space& space)
 template<typename Space>
 void propagate_clients(Space& space, bool propagate_new_clients)
 {
-    if (!rootInfo()) {
+    if (!space.root_info) {
         return;
     }
 
@@ -83,7 +83,7 @@ void propagate_clients(Space& space, bool propagate_new_clients)
     // but it was lowered after kwin startup. Stacking all clients below
     // it ensures that no client will be ever shown above override-redirect
     // windows (e.g. popups).
-    stack.push_back(rootInfo()->supportWindow());
+    stack.push_back(space.root_info->supportWindow());
 
     auto const edges_wins = space.edges->windows();
     stack.insert(stack.end(), edges_wins.begin(), edges_wins.end());
@@ -123,7 +123,7 @@ void propagate_clients(Space& space, bool propagate_new_clients)
 
     // TODO isn't it too inefficient to restack always all clients?
     // TODO don't restack not visible windows?
-    Q_ASSERT(stack.at(0) == rootInfo()->supportWindow());
+    Q_ASSERT(stack.at(0) == space.root_info->supportWindow());
     base::x11::xcb::restack_windows(stack);
 
     if (propagate_new_clients) {
@@ -155,7 +155,7 @@ void propagate_clients(Space& space, bool propagate_new_clients)
         /// Desktop windows are always on the bottom, so copy the non-desktop windows to the
         /// end/top.
         std::copy(non_desktops.begin(), non_desktops.end(), std::back_inserter(clients));
-        rootInfo()->setClientList(clients.data(), clients.size());
+        space.root_info->setClientList(clients.data(), clients.size());
     }
 
     std::vector<xcb_window_t> stacked_clients;
@@ -169,7 +169,7 @@ void propagate_clients(Space& space, bool propagate_new_clients)
     std::copy(order.manual_overlays.begin(),
               order.manual_overlays.end(),
               std::back_inserter(stacked_clients));
-    rootInfo()->setClientListStacking(stacked_clients.data(), stacked_clients.size());
+    space.root_info->setClientListStacking(stacked_clients.data(), stacked_clients.size());
 }
 
 template<typename Space, typename Win>
