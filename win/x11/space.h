@@ -115,12 +115,12 @@ public:
         return find_unmanaged<win::x11::window>(*this, window->winId());
     }
 
-    win::screen_edge* create_screen_edge(win::screen_edger& edger) override
+    std::unique_ptr<win::screen_edge> create_screen_edge(win::screen_edger& edger) override
     {
         if (!edges_filter) {
             edges_filter = std::make_unique<screen_edges_filter>(*this);
         }
-        return new screen_edge(&edger, *atoms);
+        return std::make_unique<x11::screen_edge>(&edger, *atoms);
     }
 
     void update_space_area_from_windows(QRect const& desktop_area,

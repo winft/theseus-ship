@@ -357,7 +357,7 @@ public:
     /// Minimum time between triggers
     int reactivate_threshold{0};
 
-    std::vector<screen_edge*> edges;
+    std::vector<std::unique_ptr<screen_edge>> edges;
 
 private:
     enum {
@@ -370,20 +370,20 @@ private:
 
     void createHorizontalEdge(ElectricBorder border, QRect const& screen, QRect const& fullArea);
     void createVerticalEdge(ElectricBorder border, QRect const& screen, QRect const& fullArea);
-    screen_edge* createEdge(ElectricBorder border,
-                            int x,
-                            int y,
-                            int width,
-                            int height,
-                            bool createAction = true);
+    std::unique_ptr<screen_edge> createEdge(ElectricBorder border,
+                                            int x,
+                                            int y,
+                                            int width,
+                                            int height,
+                                            bool createAction = true);
 
     void setActionForBorder(ElectricBorder border,
                             ElectricBorderAction* oldValue,
                             ElectricBorderAction newValue);
     void setActionForTouchBorder(ElectricBorder border, ElectricBorderAction newValue);
     void setRemainActiveOnFullscreen(bool remainActive);
-    ElectricBorderAction actionForEdge(screen_edge* edge) const;
-    ElectricBorderAction actionForTouchEdge(screen_edge* edge) const;
+    ElectricBorderAction actionForEdge(screen_edge& edge) const;
+    ElectricBorderAction actionForTouchEdge(screen_edge& edge) const;
     void createEdgeForClient(Toplevel* window, ElectricBorder border);
     void deleteEdgeForClient(Toplevel* window);
 

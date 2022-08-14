@@ -44,8 +44,7 @@ static const int MINIMUM_DELTA = 44;
 static uint32_t callback_id{0};
 
 screen_edge::screen_edge(screen_edger* edger)
-    : QObject(edger->qobject.get())
-    , edger(edger)
+    : edger(edger)
     , gesture{std::make_unique<input::swipe_gesture>()}
 {
     gesture->setMinimumFingerCount(1);
@@ -1061,8 +1060,9 @@ void screen_edger::recreateEdges()
 {
     auto const& outputs = kwinApp()->get_base().get_outputs();
 
-    auto oldEdges = edges;
-    edges.clear();
+    auto oldEdges = std::move(edges);
+    assert(edges.empty());
+
     auto const fullArea = QRect({}, kwinApp()->get_base().topology.size);
     QRegion processedRegion;
     for (auto output : outputs) {
@@ -1110,7 +1110,6 @@ void screen_edger::recreateEdges()
             }
         }
     }
-    qDeleteAll(oldEdges);
 }
 
 void screen_edger::setDesktopSwitching(bool enable)
@@ -1184,12 +1183,12 @@ void screen_edger::createHorizontalEdge(ElectricBorder border,
     edges.push_back(createEdge(border, x, y, width, TOUCH_TARGET));
 }
 
-screen_edge* screen_edger::createEdge(ElectricBorder border,
-                                      int x,
-                                      int y,
-                                      int width,
-                                      int height,
-                                      bool createAction)
+std::unique_ptr<screen_edge> screen_edger::createEdge(ElectricBorder border,
+                                                      int x,
+                                                      int y,
+                                                      int width,
+                                                      int height,
+                                                      bool createAction)
 {
     auto edge = space.create_screen_edge(*this);
 
@@ -1200,12 +1199,12 @@ screen_edge* screen_edger::createEdge(ElectricBorder border,
     edge->setBorder(border);
     edge->setGeometry(QRect(x, y, width, height));
     if (createAction) {
-        ElectricBorderAction const action = actionForEdge(edge);
+        ElectricBorderAction const action = actionForEdge(*edge);
         if (action != KWin::ElectricActionNone) {
             edge->reserve();
             edge->set_pointer_action(action);
         }
-        ElectricBorderAction const touchAction = actionForTouchEdge(edge);
+        ElectricBorderAction const touchAction = actionForTouchEdge(*edge);
         if (touchAction != KWin::ElectricActionNone) {
             edge->reserve();
             edge->set_touch_action(touchAction);
@@ -1225,16 +1224,18 @@ screen_edge* screen_edger::createEdge(ElectricBorder border,
     }
 
     QObject::connect(
-        edge, &screen_edge::approaching, qobject.get(), &screen_edger_qobject::approaching);
-    QObject::connect(
-        qobject.get(), &screen_edger_qobject::checkBlocking, edge, &screen_edge::checkBlocking);
+        edge.get(), &screen_edge::approaching, qobject.get(), &screen_edger_qobject::approaching);
+    QObject::connect(qobject.get(),
+                     &screen_edger_qobject::checkBlocking,
+                     edge.get(),
+                     &screen_edge::checkBlocking);
 
     return edge;
 }
 
-ElectricBorderAction screen_edger::actionForEdge(screen_edge* edge) const
+ElectricBorderAction screen_edger::actionForEdge(screen_edge& edge) const
 {
-    switch (edge->border) {
+    switch (edge.border) {
     case ElectricTopLeft:
         return actions.top_left;
     case ElectricTop:
@@ -1258,9 +1259,9 @@ ElectricBorderAction screen_edger::actionForEdge(screen_edge* edge) const
     return ElectricActionNone;
 }
 
-ElectricBorderAction screen_edger::actionForTouchEdge(screen_edge* edge) const
+ElectricBorderAction screen_edger::actionForTouchEdge(screen_edge& edge) const
 {
-    auto it = touch_actions.find(edge->border);
+    auto it = touch_actions.find(edge.border);
     if (it != touch_actions.end()) {
         return it.value();
     }
@@ -1313,7 +1314,6 @@ void screen_edger::reserve(Toplevel* window, ElectricBorder border)
     while (it != edges.end()) {
         if ((*it)->client() == window) {
             hadBorder = true;
-            delete *it;
             it = edges.erase(it);
         } else {
             it++;
@@ -1416,8 +1416,8 @@ void screen_edger::createEdgeForClient(Toplevel* window, ElectricBorder border)
     if (width > 0 && height > 0) {
         auto edge = createEdge(border, x, y, width, height, false);
         edge->setClient(window);
-        edges.push_back(edge);
         edge->reserve();
+        edges.push_back(std::move(edge));
     } else {
         // we could not create an edge window, so don't allow the window to hide
         window->showOnScreenEdge();
@@ -1429,7 +1429,6 @@ void screen_edger::deleteEdgeForClient(Toplevel* window)
     auto it = edges.begin();
     while (it != edges.end()) {
         if ((*it)->client() == window) {
-            delete *it;
             it = edges.erase(it);
         } else {
             it++;
