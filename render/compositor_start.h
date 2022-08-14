@@ -13,6 +13,7 @@
 #include "main.h"
 #include "win/remnant.h"
 #include "win/space_window_release.h"
+#include "win/stacking_order.h"
 
 #include <xcb/composite.h>
 

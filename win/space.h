@@ -89,7 +89,7 @@ public:
         , appmenu{std::make_unique<dbus::appmenu>(dbus::create_appmenu_callbacks(*this))}
         , rule_book{std::make_unique<rules::book>()}
         , user_actions_menu{std::make_unique<win::user_actions_menu<space>>(*this)}
-        , stacking_order{std::make_unique<win::stacking_order>()}
+        , stacking_order{std::make_unique<win::stacking_order<window_t>>()}
         , focus_chain{win::focus_chain<space>(*this)}
         , virtual_desktop_manager{std::make_unique<win::virtual_desktop_manager>()}
         , session_manager{std::make_unique<win::session_manager>()}
@@ -194,7 +194,7 @@ public:
      */
     window_t* most_recently_raised{nullptr};
 
-    std::unique_ptr<win::stacking_order> stacking_order;
+    std::unique_ptr<win::stacking_order<window_t>> stacking_order;
     win::focus_chain<space> focus_chain;
     std::unique_ptr<win::virtual_desktop_manager> virtual_desktop_manager;
     std::unique_ptr<base::dbus::kwin_impl<space, input::platform>> dbus;

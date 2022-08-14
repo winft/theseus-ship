@@ -5,8 +5,6 @@
 */
 #pragma once
 
-#include "stacking_order.h"
-
 #include "utils/algorithm.h"
 
 namespace KWin::win

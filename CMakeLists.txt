@@ -481,7 +481,6 @@ set(kwin_SRCS
     win/shortcut_dialog.cpp
     win/singleton_interface.cpp
     win/space_qobject.cpp
-    win/stacking_order.cpp
     win/virtual_desktops.cpp
     win/window_qobject.cpp
     win/x11/client_machine.cpp
@@ -490,6 +489,9 @@ set(kwin_SRCS
     win/x11/screen_edges_filter.cpp
     win/x11/sync_alarm_filter.cpp
     win/x11/window.cpp
+
+    # These headers need to be compiled for the helper QObjects they contain.
+    win/stacking_order.h
 )
 
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
