@@ -23,13 +23,15 @@ namespace KWin::win::rules
 {
 
 book::book()
-    : m_updateTimer(new QTimer(this))
+    : qobject{std::make_unique<book_qobject>()}
+    , m_updateTimer(new QTimer(qobject.get()))
     , m_updatesDisabled(false)
     , m_temporaryRulesMessages()
 {
     initWithX11();
-    connect(kwinApp(), &Application::x11ConnectionChanged, this, &book::initWithX11);
-    connect(m_updateTimer, &QTimer::timeout, this, &book::save);
+    QObject::connect(
+        kwinApp(), &Application::x11ConnectionChanged, qobject.get(), [this] { initWithX11(); });
+    QObject::connect(m_updateTimer, &QTimer::timeout, qobject.get(), [this] { save(); });
     m_updateTimer->setInterval(1000);
     m_updateTimer->setSingleShot(true);
 }
@@ -49,10 +51,10 @@ void book::initWithX11()
     }
     m_temporaryRulesMessages.reset(
         new KXMessages(c, kwinApp()->x11RootWindow(), "_KDE_NET_WM_TEMPORARY_RULES", nullptr));
-    connect(m_temporaryRulesMessages.data(),
-            &KXMessages::gotMessage,
-            this,
-            &book::temporaryRulesMessage);
+    QObject::connect(m_temporaryRulesMessages.data(),
+                     &KXMessages::gotMessage,
+                     qobject.get(),
+                     [this](auto const& message) { temporaryRulesMessage(message); });
 }
 
 void book::deleteAll()
@@ -91,7 +93,7 @@ void book::edit(Toplevel* window, bool whole_app)
     args << QStringLiteral("--uuid") << window->internal_id.toString();
     if (whole_app)
         args << QStringLiteral("--whole-app");
-    auto p = new QProcess(this);
+    auto p = new QProcess(qobject.get());
     p->setArguments(args);
     p->setProcessEnvironment(kwinApp()->processStartupEnvironment());
     const QFileInfo buildDirBinary{QDir{QCoreApplication::applicationDirPath()},
@@ -99,11 +101,12 @@ void book::edit(Toplevel* window, bool whole_app)
     p->setProgram(buildDirBinary.exists() ? buildDirBinary.absoluteFilePath()
                                           : QStringLiteral(KWIN_RULES_DIALOG_BIN));
     p->setProcessChannelMode(QProcess::MergedChannels);
-    connect(p,
-            static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
-            p,
-            &QProcess::deleteLater);
-    connect(p, &QProcess::errorOccurred, this, [p](QProcess::ProcessError e) {
+    QObject::connect(
+        p,
+        static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
+        p,
+        &QProcess::deleteLater);
+    QObject::connect(p, &QProcess::errorOccurred, qobject.get(), [p](QProcess::ProcessError e) {
         if (e == QProcess::FailedToStart) {
             qCDebug(KWIN_CORE) << "Failed to start" << p->program();
         }
@@ -162,7 +165,7 @@ void book::temporaryRulesMessage(const QString& message)
     m_rules.prepend(rule);
 
     if (!was_temporary) {
-        QTimer::singleShot(60000, this, &book::cleanupTemporaryRules);
+        QTimer::singleShot(60000, qobject.get(), [this] { cleanupTemporaryRules(); });
     }
 }
 
@@ -183,7 +186,7 @@ void book::cleanupTemporaryRules()
     }
 
     if (has_temporary) {
-        QTimer::singleShot(60000, this, &book::cleanupTemporaryRules);
+        QTimer::singleShot(60000, qobject.get(), [this] { cleanupTemporaryRules(); });
     }
 }
 
@@ -221,7 +224,7 @@ void book::setUpdatesDisabled(bool disable)
 {
     m_updatesDisabled = disable;
     if (!disable) {
-        Q_EMIT updates_enabled();
+        Q_EMIT qobject->updates_enabled();
     }
 }
 

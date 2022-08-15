@@ -25,12 +25,18 @@ namespace rules
 
 class ruling;
 
-class KWIN_EXPORT book : public QObject
+class KWIN_EXPORT book_qobject : public QObject
 {
     Q_OBJECT
+Q_SIGNALS:
+    void updates_enabled();
+};
+
+class KWIN_EXPORT book
+{
 public:
     book();
-    ~book() override;
+    ~book();
 
     window find(Toplevel const* window, bool);
     void discardUsed(Toplevel* window, bool withdraw);
@@ -42,10 +48,8 @@ public:
 
     void temporaryRulesMessage(const QString&);
 
+    std::unique_ptr<book_qobject> qobject;
     KSharedConfig::Ptr config;
-
-Q_SIGNALS:
-    void updates_enabled();
 
 private:
     void initWithX11();
