@@ -163,7 +163,7 @@ void window::renderWindowDecorations(QPainter* painter)
     }
 
     bool noBorder = true;
-    deco_renderer<win::deco::client_impl> const* renderer = nullptr;
+    deco_render_data const* deco_data = nullptr;
     QRect dtr, dlr, drr, dbr;
 
     if (ctrl && !toplevel->noBorder()) {
@@ -171,7 +171,7 @@ void window::renderWindowDecorations(QPainter* painter)
             if (auto r = static_cast<deco_renderer<win::deco::client_impl>*>(
                     ctrl->deco.client->renderer())) {
                 r->render();
-                renderer = r;
+                deco_data = static_cast<deco_render_data const*>(r->data.get());
             }
         }
         toplevel->layoutDecorationRects(dlr, dtr, drr, dbr);
@@ -179,17 +179,16 @@ void window::renderWindowDecorations(QPainter* painter)
     } else if (remnant && !remnant->data.no_border) {
         noBorder = false;
         remnant->data.layout_decoration_rects(dlr, dtr, drr, dbr);
-        renderer = static_cast<deco_renderer<win::deco::client_impl> const*>(
-            remnant->data.decoration_renderer.get());
+        deco_data = static_cast<deco_render_data const*>(remnant->data.deco_render.get());
     }
-    if (noBorder || !renderer) {
+    if (noBorder || !deco_data) {
         return;
     }
 
-    painter->drawImage(dtr, renderer->image(DecorationPart::Top));
-    painter->drawImage(dlr, renderer->image(DecorationPart::Left));
-    painter->drawImage(drr, renderer->image(DecorationPart::Right));
-    painter->drawImage(dbr, renderer->image(DecorationPart::Bottom));
+    painter->drawImage(dtr, deco_data->image(DecorationPart::Top));
+    painter->drawImage(dlr, deco_data->image(DecorationPart::Left));
+    painter->drawImage(drr, deco_data->image(DecorationPart::Right));
+    painter->drawImage(dbr, deco_data->image(DecorationPart::Bottom));
 }
 
 render::buffer* window::create_buffer()

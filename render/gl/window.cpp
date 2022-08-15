@@ -182,11 +182,11 @@ GLTexture* window::getDecorationTexture() const
             return renderer->texture();
         }
     } else if (auto& remnant = toplevel->remnant) {
-        if (!remnant->data.decoration_renderer || remnant->data.no_border) {
+        if (!remnant->data.deco_render || remnant->data.no_border) {
             return nullptr;
         }
-        if (auto& renderer = remnant->data.decoration_renderer) {
-            return static_cast<deco_renderer<win::deco::client_impl>&>(*renderer).texture();
+        if (auto& renderer = remnant->data.deco_render) {
+            return static_cast<deco_render_data&>(*renderer).texture.get();
         }
     }
     return nullptr;

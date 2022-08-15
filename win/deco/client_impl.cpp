@@ -190,14 +190,13 @@ void client_impl::update_size()
     Q_EMIT deco_client->sizeChanged(m_clientSize);
 }
 
-std::unique_ptr<deco::renderer<client_impl>> client_impl::move_renderer()
+std::unique_ptr<render_data> client_impl::move_renderer()
 {
     if (!m_renderer) {
         return {};
     }
 
-    m_renderer->reparent();
-    return std::move(m_renderer);
+    return m_renderer->reparent();
 }
 
 QPalette client_impl::palette() const

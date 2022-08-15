@@ -14,6 +14,19 @@
 namespace KWin::render::backend::x11
 {
 
+class deco_render_data : public win::deco::render_data
+{
+public:
+    ~deco_render_data() override
+    {
+        if (gc != XCB_NONE) {
+            xcb_free_gc(connection(), gc);
+        }
+    }
+
+    xcb_gcontext_t gc{XCB_NONE};
+};
+
 template<typename Client>
 class deco_renderer : public win::deco::renderer<Client>
 {
@@ -21,8 +34,9 @@ public:
     explicit deco_renderer(Client* client)
         : win::deco::renderer<Client>(client)
         , m_scheduleTimer(new QTimer(this->qobject.get()))
-        , m_gc(XCB_NONE)
     {
+        this->data = std::make_unique<deco_render_data>();
+
         // delay any rendering to end of event cycle to catch multiple updates per cycle
         m_scheduleTimer->setSingleShot(true);
         m_scheduleTimer->setInterval(0);
@@ -34,14 +48,7 @@ public:
                          static_cast<void (QTimer::*)()>(&QTimer::start));
     }
 
-    ~deco_renderer() override
-    {
-        if (m_gc != XCB_NONE) {
-            xcb_free_gc(connection(), m_gc);
-        }
-    }
-
-    void reparent() override
+    std::unique_ptr<win::deco::render_data> reparent() override
     {
         if (m_scheduleTimer->isActive()) {
             m_scheduleTimer->stop();
@@ -51,7 +58,7 @@ public:
                             &win::deco::renderer_qobject::renderScheduled,
                             m_scheduleTimer,
                             static_cast<void (QTimer::*)()>(&QTimer::start));
-        win::deco::renderer<Client>::reparent();
+        return this->move_data();
     }
 
 protected:
@@ -67,10 +74,11 @@ protected:
 
         auto c = connection();
         auto window = this->client()->client();
+        auto& data = static_cast<deco_render_data&>(*this->data);
 
-        if (m_gc == XCB_NONE) {
-            m_gc = xcb_generate_id(c);
-            xcb_create_gc(c, m_gc, window->frameId(), 0, nullptr);
+        if (data.gc == XCB_NONE) {
+            data.gc = xcb_generate_id(c);
+            xcb_create_gc(c, data.gc, window->frameId(), 0, nullptr);
         }
 
         QRect left, top, right, bottom;
@@ -82,7 +90,7 @@ protected:
         right = right.intersected(geometry);
         bottom = bottom.intersected(geometry);
 
-        auto renderPart = [this, c](const QRect& geo) {
+        auto renderPart = [this, c, &data](const QRect& geo) {
             if (!geo.isValid()) {
                 return;
             }
@@ -93,7 +101,7 @@ protected:
             xcb_put_image(c,
                           XCB_IMAGE_FORMAT_Z_PIXMAP,
                           window->frameId(),
-                          m_gc,
+                          data.gc,
                           image.width(),
                           image.height(),
                           geo.x(),
@@ -115,7 +123,6 @@ protected:
 
 private:
     QTimer* m_scheduleTimer;
-    xcb_gcontext_t m_gc;
 };
 
 }

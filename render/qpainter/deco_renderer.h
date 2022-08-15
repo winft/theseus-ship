@@ -21,6 +21,18 @@ enum class DecorationPart : int {
     Count,
 };
 
+class deco_render_data : public win::deco::render_data
+{
+public:
+    QImage image(DecorationPart part) const
+    {
+        assert(part != DecorationPart::Count);
+        return images[int(part)];
+    }
+
+    QImage images[int(DecorationPart::Count)];
+};
+
 template<typename Client>
 class deco_renderer : public win::deco::renderer<Client>
 {
@@ -28,6 +40,8 @@ public:
     explicit deco_renderer(Client* client)
         : win::deco::renderer<Client>(client)
     {
+        this->data = std::make_unique<deco_render_data>();
+
         QObject::connect(this->qobject.get(),
                          &win::deco::renderer_qobject::renderScheduled,
                          client->client()->qobject.get(),
@@ -46,7 +60,8 @@ public:
         }
 
         auto imageSize = [this](DecorationPart part) {
-            return m_images[int(part)].size() / m_images[int(part)].devicePixelRatio();
+            auto& images = get_data().images;
+            return images[int(part)].size() / images[int(part)].devicePixelRatio();
         };
 
         const QRect top(QPoint(0, 0), imageSize(DecorationPart::Top));
@@ -61,10 +76,11 @@ public:
             if (rect.isEmpty()) {
                 return;
             }
-            QPainter painter(&m_images[index]);
+            auto& data = get_data();
+            QPainter painter(&data.images[index]);
             painter.setRenderHint(QPainter::Antialiasing);
             painter.setWindow(
-                QRect(partRect.topLeft(), partRect.size() * m_images[index].devicePixelRatio()));
+                QRect(partRect.topLeft(), partRect.size() * data.images[index].devicePixelRatio()));
             painter.setClipRect(rect);
             painter.save();
             // clear existing part
@@ -80,19 +96,18 @@ public:
         renderPart(bottom.intersected(geometry), bottom, int(DecorationPart::Bottom));
     }
 
-    void reparent() override
+    std::unique_ptr<win::deco::render_data> reparent() override
     {
         render();
-        win::deco::renderer<Client>::reparent();
-    }
-
-    QImage image(DecorationPart part) const
-    {
-        Q_ASSERT(part != DecorationPart::Count);
-        return m_images[int(part)];
+        return this->move_data();
     }
 
 private:
+    deco_render_data& get_data()
+    {
+        return static_cast<deco_render_data&>(*this->data);
+    }
+
     void resizeImages()
     {
         QRect left, top, right, bottom;
@@ -101,10 +116,11 @@ private:
 
         auto checkAndCreate = [this, window](int index, const QSize& size) {
             auto dpr = window->central_output ? window->central_output->scale() : 1.;
-            if (m_images[index].size() != size * dpr || m_images[index].devicePixelRatio() != dpr) {
-                m_images[index] = QImage(size * dpr, QImage::Format_ARGB32_Premultiplied);
-                m_images[index].setDevicePixelRatio(dpr);
-                m_images[index].fill(Qt::transparent);
+            auto& images = get_data().images;
+            if (images[index].size() != size * dpr || images[index].devicePixelRatio() != dpr) {
+                images[index] = QImage(size * dpr, QImage::Format_ARGB32_Premultiplied);
+                images[index].setDevicePixelRatio(dpr);
+                images[index].fill(Qt::transparent);
             }
         };
         checkAndCreate(int(DecorationPart::Left), left.size());
@@ -112,8 +128,6 @@ private:
         checkAndCreate(int(DecorationPart::Top), top.size());
         checkAndCreate(int(DecorationPart::Bottom), bottom.size());
     }
-
-    QImage m_images[int(DecorationPart::Count)];
 };
 
 }

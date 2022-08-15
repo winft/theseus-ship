@@ -43,6 +43,25 @@ inline QImage rotate_and_flip(const QImage& srcImage, const QRect& srcRect)
     return image;
 }
 
+class deco_render_data : public win::deco::render_data
+{
+public:
+    deco_render_data(gl::scene& scene)
+        : scene{scene}
+    {
+    }
+
+    ~deco_render_data() override
+    {
+        scene.makeOpenGLContextCurrent();
+    }
+
+    std::unique_ptr<GLTexture> texture;
+
+private:
+    gl::scene& scene;
+};
+
 template<typename Client>
 class deco_renderer : public win::deco::renderer<Client>
 {
@@ -57,18 +76,13 @@ public:
 
     deco_renderer(Client* client, gl::scene& scene)
         : win::deco::renderer<Client>(client)
-        , m_texture()
         , scene{scene}
     {
+        this->data = std::make_unique<deco_render_data>(scene);
         QObject::connect(this->qobject.get(),
                          &win::deco::renderer_qobject::renderScheduled,
                          client->client()->qobject.get(),
                          [win = client->client()](auto const& region) { win->addRepaint(region); });
-    }
-
-    ~deco_renderer() override
-    {
-        scene.makeOpenGLContextCurrent();
     }
 
     void render() override
@@ -83,7 +97,7 @@ public:
             this->resetImageSizesDirty();
         }
 
-        if (!m_texture) {
+        if (!get_data().texture) {
             // for invalid sizes we get no texture, see BUG 361551
             return;
         }
@@ -155,7 +169,7 @@ public:
             }
 
             const QPoint dirtyOffset = geo.topLeft() - partRect.topLeft();
-            m_texture->update(
+            get_data().texture->update(
                 image, (position + dirtyOffset - viewport.topLeft()) * image.devicePixelRatio());
         };
 
@@ -170,22 +184,27 @@ public:
         renderPart(bottom.intersected(geometry), bottom, bottomPosition);
     }
 
-    void reparent() override
+    std::unique_ptr<win::deco::render_data> reparent() override
     {
         render();
-        win::deco::renderer<Client>::reparent();
+        return this->move_data();
     }
 
     GLTexture* texture()
     {
-        return m_texture.data();
+        return get_data().texture.get();
     }
     GLTexture* texture() const
     {
-        return m_texture.data();
+        return get_data().texture.get();
     }
 
 private:
+    deco_render_data& get_data()
+    {
+        return static_cast<deco_render_data&>(*this->data);
+    }
+
     static void clamp_row(int left, int width, int right, const uint32_t* src, uint32_t* dest)
     {
         std::fill_n(dest, left, *src);
@@ -254,21 +273,23 @@ private:
 
         size *= window->central_output ? window->central_output->scale() : 1.;
 
-        if (m_texture && m_texture->size() == size) {
+        auto& data = get_data();
+
+        if (data.texture && data.texture->size() == size) {
             return;
         }
 
-        if (!size.isEmpty()) {
-            m_texture.reset(new GLTexture(GL_RGBA8, size.width(), size.height()));
-            m_texture->setYInverted(true);
-            m_texture->setWrapMode(GL_CLAMP_TO_EDGE);
-            m_texture->clear();
-        } else {
-            m_texture.reset();
+        if (size.isEmpty()) {
+            data.texture.reset();
+            return;
         }
+
+        data.texture = std::make_unique<GLTexture>(GL_RGBA8, size.width(), size.height());
+        data.texture->setYInverted(true);
+        data.texture->setWrapMode(GL_CLAMP_TO_EDGE);
+        data.texture->clear();
     }
 
-    QScopedPointer<GLTexture> m_texture;
     gl::scene& scene;
 };
 

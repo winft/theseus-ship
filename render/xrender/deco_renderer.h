@@ -22,34 +22,55 @@ enum class DecorationPart : int {
     Count,
 };
 
+class deco_render_data : public win::deco::render_data
+{
+public:
+    ~deco_render_data() override
+    {
+        for (int i = 0; i < int(DecorationPart::Count); ++i) {
+            if (pixmaps[i] != XCB_PIXMAP_NONE) {
+                xcb_free_pixmap(connection(), pixmaps[i]);
+            }
+            delete pictures[i];
+        }
+        if (gc != 0) {
+            xcb_free_gc(connection(), gc);
+        }
+    }
+
+    xcb_render_picture_t picture(DecorationPart part) const
+    {
+        assert(part != DecorationPart::Count);
+        auto picture = pictures[int(part)];
+        if (!picture) {
+            return XCB_RENDER_PICTURE_NONE;
+        }
+        return *picture;
+    }
+
+    XRenderPicture* pictures[int(DecorationPart::Count)];
+    xcb_pixmap_t pixmaps[int(DecorationPart::Count)];
+    xcb_gcontext_t gc{XCB_NONE};
+};
+
 template<typename Client>
 class deco_renderer : public win::deco::renderer<Client>
 {
 public:
     explicit deco_renderer(Client* client)
         : win::deco::renderer<Client>(client)
-        , m_gc(XCB_NONE)
     {
+        this->data = std::make_unique<deco_render_data>();
+
         QObject::connect(this->qobject.get(),
                          &win::deco::renderer_qobject::renderScheduled,
                          client->client()->qobject.get(),
                          [win = client->client()](auto const& region) { win->addRepaint(region); });
-        for (int i = 0; i < int(DecorationPart::Count); ++i) {
-            m_pixmaps[i] = XCB_PIXMAP_NONE;
-            m_pictures[i] = nullptr;
-        }
-    }
 
-    ~deco_renderer() override
-    {
+        auto& data = get_data();
         for (int i = 0; i < int(DecorationPart::Count); ++i) {
-            if (m_pixmaps[i] != XCB_PIXMAP_NONE) {
-                xcb_free_pixmap(connection(), m_pixmaps[i]);
-            }
-            delete m_pictures[i];
-        }
-        if (m_gc != 0) {
-            xcb_free_gc(connection(), m_gc);
+            data.pixmaps[i] = XCB_PIXMAP_NONE;
+            data.pictures[i] = nullptr;
         }
     }
 
@@ -74,20 +95,24 @@ public:
                            m_sizes[int(DecorationPart::Bottom)]);
 
         xcb_connection_t* c = connection();
-        if (m_gc == 0) {
-            m_gc = xcb_generate_id(connection());
-            xcb_create_gc(c, m_gc, m_pixmaps[int(DecorationPart::Top)], 0, nullptr);
+        auto& data = get_data();
+
+        if (data.gc == 0) {
+            data.gc = xcb_generate_id(connection());
+            xcb_create_gc(c, data.gc, data.pixmaps[int(DecorationPart::Top)], 0, nullptr);
         }
         auto renderPart = [this, c](const QRect& geo, const QPoint& offset, int index) {
             if (!geo.isValid()) {
                 return;
             }
+
+            auto& data = get_data();
             auto image = this->renderToImage(geo);
             Q_ASSERT(image.devicePixelRatio() == 1);
             xcb_put_image(c,
                           XCB_IMAGE_FORMAT_Z_PIXMAP,
-                          m_pixmaps[index],
-                          m_gc,
+                          data.pixmaps[index],
+                          data.gc,
                           image.width(),
                           image.height(),
                           geo.x() - offset.x(),
@@ -105,59 +130,56 @@ public:
         xcb_flush(c);
     }
 
-    void reparent() override
+    std::unique_ptr<win::deco::render_data> reparent() override
     {
         render();
-        win::deco::renderer<Client>::reparent();
-    }
-
-    xcb_render_picture_t picture(DecorationPart part) const
-    {
-        Q_ASSERT(part != DecorationPart::Count);
-        XRenderPicture* picture = m_pictures[int(part)];
-        if (!picture) {
-            return XCB_RENDER_PICTURE_NONE;
-        }
-        return *picture;
+        return this->move_data();
     }
 
 private:
+    deco_render_data& get_data()
+    {
+        return static_cast<deco_render_data&>(*this->data);
+    }
+
     void resizePixmaps()
     {
         QRect left, top, right, bottom;
         this->client()->client()->layoutDecorationRects(left, top, right, bottom);
-
         xcb_connection_t* c = connection();
+
         auto checkAndCreate = [this, c](int border, const QRect& rect) {
+            auto& data = get_data();
             const QSize size = rect.size();
+
             if (m_sizes[border] != size) {
                 m_sizes[border] = size;
-                if (m_pixmaps[border] != XCB_PIXMAP_NONE) {
-                    xcb_free_pixmap(c, m_pixmaps[border]);
+                if (data.pixmaps[border] != XCB_PIXMAP_NONE) {
+                    xcb_free_pixmap(c, data.pixmaps[border]);
                 }
-                delete m_pictures[border];
+                delete data.pictures[border];
                 if (!size.isEmpty()) {
-                    m_pixmaps[border] = xcb_generate_id(connection());
+                    data.pixmaps[border] = xcb_generate_id(connection());
                     xcb_create_pixmap(connection(),
                                       32,
-                                      m_pixmaps[border],
+                                      data.pixmaps[border],
                                       rootWindow(),
                                       size.width(),
                                       size.height());
-                    m_pictures[border] = new XRenderPicture(m_pixmaps[border], 32);
+                    data.pictures[border] = new XRenderPicture(data.pixmaps[border], 32);
                 } else {
-                    m_pixmaps[border] = XCB_PIXMAP_NONE;
-                    m_pictures[border] = nullptr;
+                    data.pixmaps[border] = XCB_PIXMAP_NONE;
+                    data.pictures[border] = nullptr;
                 }
             }
-            if (!m_pictures[border]) {
+            if (!data.pictures[border]) {
                 return;
             }
             // fill transparent
             xcb_rectangle_t r = {0, 0, uint16_t(size.width()), uint16_t(size.height())};
             xcb_render_fill_rectangles(connection(),
                                        XCB_RENDER_PICT_OP_SRC,
-                                       *m_pictures[border],
+                                       *data.pictures[border],
                                        preMultiply(Qt::transparent),
                                        1,
                                        &r);
@@ -170,9 +192,6 @@ private:
     }
 
     QSize m_sizes[int(DecorationPart::Count)];
-    xcb_pixmap_t m_pixmaps[int(DecorationPart::Count)];
-    xcb_gcontext_t m_gc;
-    XRenderPicture* m_pictures[int(DecorationPart::Count)];
 };
 
 }

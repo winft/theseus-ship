@@ -36,7 +36,7 @@ win::remnant create_remnant(Win& source)
                                          remnant.data.decoration_right,
                                          remnant.data.decoration_bottom);
             if (win::decoration(&source)) {
-                remnant.data.decoration_renderer = source.control->deco.client->move_renderer();
+                remnant.data.deco_render = source.control->deco.client->move_renderer();
             }
         }
         remnant.data.minimized = source.control->minimized;

@@ -33,6 +33,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::win::deco
 {
 
+class render_data
+{
+public:
+    virtual ~render_data() = default;
+};
+
 class KWIN_EXPORT renderer_qobject : public QObject
 {
     Q_OBJECT
@@ -55,12 +61,10 @@ public:
     }
 
     /// After this call the renderer is no longer able to render anything, client() returns null.
-    virtual void reparent()
-    {
-        m_client = nullptr;
-    }
+    virtual std::unique_ptr<render_data> reparent() = 0;
 
     std::unique_ptr<renderer_qobject> qobject;
+    std::unique_ptr<render_data> data;
 
 protected:
     explicit renderer(Client* client)
@@ -97,6 +101,12 @@ protected:
                          &KDecoration2::DecoratedClient::heightChanged,
                          qobject.get(),
                          markImageSizesDirty);
+    }
+
+    std::unique_ptr<win::deco::render_data> move_data()
+    {
+        m_client = nullptr;
+        return std::move(data);
     }
 
     /**

@@ -40,6 +40,7 @@ class space;
 namespace deco
 {
 
+class render_data;
 template<typename Client>
 class renderer;
 
@@ -130,7 +131,7 @@ public:
     {
         return m_renderer.get();
     }
-    std::unique_ptr<renderer_t> move_renderer();
+    std::unique_ptr<render_data> move_renderer();
     KDecoration2::DecoratedClient* decoratedClient()
     {
         return KDecoration2::DecoratedClientPrivate::client();
