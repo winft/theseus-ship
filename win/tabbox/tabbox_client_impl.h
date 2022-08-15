@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "tabbox_handler.h"
+#include "tabbox_client.h"
 
 namespace KWin
 {

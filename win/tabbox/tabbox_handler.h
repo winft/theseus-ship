@@ -361,42 +361,6 @@ private:
 };
 
 /**
- * This class is a wrapper around a KWin Client. It is used for accessing the
- * required client methods from inside tabbox and has to be implemented in KWin core.
- *
- * @author Martin Gräßlin <mgraesslin@kde.org>
- * @since 4.4
- */
-class tabbox_client
-{
-public:
-    tabbox_client();
-    virtual ~tabbox_client();
-
-    /**
-     * @return The caption of the client
-     */
-    virtual QString caption() const = 0;
-    /**
-     * @param size Requested size of the icon
-     * @return The icon of the client
-     */
-    virtual QIcon icon() const = 0;
-    /**
-     * @return Minimized state of the client
-     */
-    virtual bool is_minimized() const = 0;
-    virtual int x() const = 0;
-    virtual int y() const = 0;
-    virtual int width() const = 0;
-    virtual int height() const = 0;
-    virtual bool is_closeable() const = 0;
-    virtual void close() = 0;
-    virtual bool is_first_in_tabbox() const = 0;
-    virtual QUuid internal_id() const = 0;
-};
-
-/**
  * Pointer to the global tabbox_handler object.
  */
 extern tabbox_handler* tabbox_handle;

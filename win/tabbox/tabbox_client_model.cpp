@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "tabbox_client_model.h"
 // tabbox
 #include "tabbox_config.h"
-#include "tabbox_handler.h"
+#include "tabbox_client.h"
 // Qt
 #include <QIcon>
 #include <QUuid>

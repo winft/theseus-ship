@@ -647,13 +647,5 @@ bool tabbox_handler::eventFilter(QObject* watched, QEvent* e)
 
 tabbox_handler* tabbox_handle = nullptr;
 
-tabbox_client::tabbox_client()
-{
-}
-
-tabbox_client::~tabbox_client()
-{
-}
-
 } // namespace win
 } // namespace KWin
