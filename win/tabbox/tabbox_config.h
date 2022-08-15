@@ -20,6 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef TABBOXCONFIG_H
 #define TABBOXCONFIG_H
 
+#include "kwin_export.h"
+
 #include <QString>
 
 /**
@@ -47,7 +49,7 @@ class tabbox_config_private;
  * @author Martin Gräßlin <mgraesslin@kde.org>
  * @since 4.4
  */
-class tabbox_config
+class KWIN_EXPORT tabbox_config
 {
 public:
     /**

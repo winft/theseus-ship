@@ -13,10 +13,6 @@
 #include "win/meta.h"
 #include "win/move.h"
 
-#if KWIN_BUILD_TABBOX
-#include "win/tabbox/tabbox.h"
-#endif
-
 namespace KWin::win::x11
 {
 

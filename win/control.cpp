@@ -45,7 +45,7 @@ void control::setup_tabbox()
 {
     assert(!m_tabbox);
 #if KWIN_BUILD_TABBOX
-    m_tabbox = std::make_shared<win::tabbox_client_impl>(m_win);
+    m_tabbox = std::make_shared<win::tabbox_client_impl<Toplevel>>(m_win);
 #endif
 }
 
@@ -84,7 +84,7 @@ void control::set_skip_taskbar(bool set)
     m_skip_taskbar = set;
 }
 
-std::weak_ptr<win::tabbox_client_impl> control::tabbox() const
+std::weak_ptr<win::tabbox_client_impl<Toplevel>> control::tabbox() const
 {
     return m_tabbox;
 }

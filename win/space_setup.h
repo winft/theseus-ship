@@ -36,7 +36,7 @@ void init_space(Space& space)
 
 #if KWIN_BUILD_TABBOX
     // need to create the tabbox before compositing scene is setup
-    space.tabbox = std::make_unique<win::tabbox>(space);
+    space.tabbox = std::make_unique<win::tabbox<typename Space::space_t>>(space);
 #endif
 
     QObject::connect(space.qobject.get(),

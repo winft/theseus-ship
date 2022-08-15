@@ -20,9 +20,6 @@ class Toplevel;
 namespace win
 {
 
-class shortcut_dialog;
-class tabbox;
-
 class KWIN_EXPORT space_qobject : public QObject
 {
     Q_OBJECT

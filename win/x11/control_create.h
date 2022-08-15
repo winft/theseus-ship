@@ -25,10 +25,6 @@
 #include "win/layers.h"
 #include "win/session.h"
 
-#if KWIN_BUILD_TABBOX
-#include "win/tabbox/tabbox.h"
-#endif
-
 #include <KStartupInfo>
 
 namespace KWin::win::x11

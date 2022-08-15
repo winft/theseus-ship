@@ -14,10 +14,6 @@
 #include "win/tabbox.h"
 #include "win/window_release.h"
 
-#if KWIN_BUILD_TABBOX
-#include "win/tabbox/tabbox.h"
-#endif
-
 namespace KWin::win::x11
 {
 

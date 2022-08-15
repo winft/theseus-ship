@@ -42,6 +42,7 @@ namespace deco
 class palette;
 }
 
+template<typename Window>
 class tabbox_client_impl;
 
 class KWIN_EXPORT control
@@ -63,7 +64,7 @@ public:
     bool skip_taskbar() const;
     virtual void set_skip_taskbar(bool set);
 
-    std::weak_ptr<win::tabbox_client_impl> tabbox() const;
+    std::weak_ptr<win::tabbox_client_impl<Toplevel>> tabbox() const;
 
     bool has_application_menu() const;
     void set_application_menu_active(bool active);
@@ -131,7 +132,7 @@ private:
     bool m_skip_pager{false};
     bool m_skip_switcher{false};
 
-    std::shared_ptr<win::tabbox_client_impl> m_tabbox;
+    std::shared_ptr<win::tabbox_client_impl<Toplevel>> m_tabbox;
 
     QTimer* m_auto_raise_timer{nullptr};
 

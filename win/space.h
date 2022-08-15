@@ -22,6 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
+#include "config-kwin.h"
+
 #include "appmenu.h"
 #include "dbus/appmenu.h"
 #include "dbus/virtual_desktop_manager.h"
@@ -39,6 +41,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "strut_rect.h"
 #include "user_actions_menu.h"
 #include "x11/netinfo.h"
+
+#if KWIN_BUILD_TABBOX
+#include "tabbox/tabbox.h"
+#endif
 
 #include "base/dbus/kwin.h"
 #include "base/output.h"
@@ -73,7 +79,6 @@ namespace win
 {
 
 class shortcut_dialog;
-class tabbox;
 
 class space
 {
@@ -148,7 +153,7 @@ public:
     std::unique_ptr<deco::bridge<space>> deco;
     std::unique_ptr<dbus::appmenu> appmenu;
     std::unique_ptr<input::redirect> input;
-    std::unique_ptr<win::tabbox> tabbox;
+    std::unique_ptr<win::tabbox<space>> tabbox;
     std::unique_ptr<rules::book> rule_book;
     std::unique_ptr<x11::color_mapper> color_mapper;
 

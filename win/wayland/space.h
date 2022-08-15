@@ -37,10 +37,6 @@
 #include "win/x11/space_areas.h"
 #include "xwl/surface.h"
 
-#if KWIN_BUILD_TABBOX
-#include "win/tabbox/tabbox.h"
-#endif
-
 #include <Wrapland/Server/appmenu.h>
 #include <Wrapland/Server/compositor.h>
 #include <Wrapland/Server/idle_inhibit_v1.h>

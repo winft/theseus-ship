@@ -632,17 +632,16 @@ endif()
 
 if (KWIN_BUILD_TABBOX)
   target_sources(kwin PRIVATE
-    win/tabbox/tabbox.cpp
-    win/tabbox/tabbox_client_impl.cpp
     win/tabbox/tabbox_client_model.cpp
     win/tabbox/tabbox_config.cpp
     win/tabbox/tabbox_desktop_chain.cpp
     win/tabbox/tabbox_desktop_model.cpp
     win/tabbox/tabbox_handler.cpp
-    win/tabbox/tabbox_handler_impl.cpp
     win/tabbox/tabbox_logging.cpp
     win/tabbox/tabbox_switcher_item.cpp
-    win/tabbox/tabbox_x11_filter.cpp
+
+    # These headers need to be compiled for the helper QObjects they contain.
+    win/tabbox/tabbox.h
   )
   target_link_libraries(kwin Qt::GuiPrivate)
 endif()

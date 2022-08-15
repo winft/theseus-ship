@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef TABBOXHANDLER_H
 #define TABBOXHANDLER_H
 
+#include "kwin_export.h"
 #include "tabbox_config.h"
 
 #include <QModelIndex>
@@ -97,7 +98,7 @@ using tabbox_client_list = std::vector<std::weak_ptr<tabbox_client>>;
  * @author Martin Gräßlin <mgraesslin@kde.org>
  * @since 4.4
  */
-class tabbox_handler : public QObject
+class KWIN_EXPORT tabbox_handler : public QObject
 {
     Q_OBJECT
 public:
@@ -363,7 +364,7 @@ private:
 /**
  * Pointer to the global tabbox_handler object.
  */
-extern tabbox_handler* tabbox_handle;
+KWIN_EXPORT extern tabbox_handler* tabbox_handle;
 
 } // namespace win
 } // namespace KWin
