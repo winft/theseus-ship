@@ -6,7 +6,6 @@
 #pragma once
 
 #include "scene.h"
-#include "setup.h"
 #include "subsurface.h"
 #include "surface.h"
 #include "xdg_shell.h"
@@ -20,6 +19,7 @@
 #include "win/geo_block.h"
 #include "win/maximize.h"
 #include "win/placement.h"
+#include "win/rules/find.h"
 #include "win/scene.h"
 #include "win/window_setup_base.h"
 
@@ -1126,7 +1126,7 @@ public:
         auto const window_class = QByteArray(toplevel->appId().c_str());
         setResourceClass(resource_name, window_class);
         if (initialized && supportsWindowRules()) {
-            setup_rules(this, true);
+            rules::setup_rules(this, true);
             applyWindowRules();
         }
         set_desktop_file_name(this, window_class);

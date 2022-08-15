@@ -16,24 +16,10 @@
 
 class QDebug;
 
-namespace KWin
-{
-
-class Toplevel;
-
-namespace win::rules
+namespace KWin::win::rules
 {
 
 class settings;
-
-enum class set_rule {
-    unused = 0,
-    dummy = 256 // so that it's at least short int
-};
-enum class force_rule {
-    unused = 0,
-    dummy = 256 // so that it's at least short int
-};
 
 template<typename T>
 struct set_ruler {
@@ -58,8 +44,6 @@ public:
     bool isEmpty() const;
 
     bool discardUsed(bool withdrawn);
-    bool match(Toplevel const* window) const;
-    bool update(Toplevel* window, int selection);
     bool isTemporary() const;
     bool discardTemporary(bool force); // removes if temporary and forced or too old
 
@@ -106,7 +90,6 @@ public:
     bool matchTitle(QString const& match_title) const;
     bool matchClientMachine(QByteArray const& match_machine, bool local) const;
 
-private:
     void readFromSettings(rules::settings const* settings);
     static force_rule convertForceRule(int v);
     static QString getDecoColor(QString const& themeName);
@@ -196,5 +179,4 @@ private:
 
 KWIN_EXPORT QDebug& operator<<(QDebug& stream, ruling const*);
 
-}
 }

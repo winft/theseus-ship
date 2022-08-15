@@ -543,7 +543,7 @@ void TestXdgShellClientRules::testPositionApplyNow()
     QCOMPARE(client->pos(), QPoint(50, 42));
 
     // The rule should not be applied again.
-    win::evaluate_rules(client);
+    win::rules::evaluate_rules(client);
     QCOMPARE(client->pos(), QPoint(50, 42));
 
     // Destroy the client.
@@ -1080,7 +1080,7 @@ void TestXdgShellClientRules::testSizeApplyNow()
     QVERIFY(!configureRequestedSpy->wait(100));
 
     // The rule should not be applied again.
-    win::evaluate_rules(client);
+    win::rules::evaluate_rules(client);
     QVERIFY(!configureRequestedSpy->wait(100));
 
     // Destroy the client.
@@ -1650,7 +1650,7 @@ void TestXdgShellClientRules::testMaximizeApplyNow()
 
     // The rule should be discarded after it's been applied.
     const QRect oldGeometry = client->frameGeometry();
-    win::evaluate_rules(client);
+    win::rules::evaluate_rules(client);
     QVERIFY(!configureRequestedSpy->wait(100));
     QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
     QCOMPARE(client->synced_geometry.max_mode, win::maximize_mode::restore);
@@ -2002,7 +2002,7 @@ void TestXdgShellClientRules::testDesktopApplyNow()
     QCOMPARE(vd_manager->current(), 1);
 
     // The rule should not be applied again.
-    win::evaluate_rules(client);
+    win::rules::evaluate_rules(client);
     QCOMPARE(client->desktop(), 1);
     QCOMPARE(vd_manager->current(), 1);
 
@@ -2292,7 +2292,7 @@ void TestXdgShellClientRules::testMinimizeApplyNow()
     QVERIFY(!client->control->minimized);
 
     // The rule should not be applied again.
-    win::evaluate_rules(client);
+    win::rules::evaluate_rules(client);
     QVERIFY(client->isMinimizable());
     QVERIFY(!client->control->minimized);
 
@@ -2542,7 +2542,7 @@ void TestXdgShellClientRules::testSkipTaskbarApplyNow()
     QVERIFY(!client->control->skip_taskbar());
 
     // The rule should not be applied again.
-    win::evaluate_rules(client);
+    win::rules::evaluate_rules(client);
     QVERIFY(!client->control->skip_taskbar());
 
     // Destroy the client.
@@ -2793,7 +2793,7 @@ void TestXdgShellClientRules::testSkipPagerApplyNow()
     QVERIFY(!client->control->skip_pager());
 
     // The rule should not be applied again.
-    win::evaluate_rules(client);
+    win::rules::evaluate_rules(client);
     QVERIFY(!client->control->skip_pager());
 
     // Destroy the client.
@@ -3044,7 +3044,7 @@ void TestXdgShellClientRules::testSkipSwitcherApplyNow()
     QVERIFY(!client->control->skip_switcher());
 
     // The rule should not be applied again.
-    win::evaluate_rules(client);
+    win::rules::evaluate_rules(client);
     QVERIFY(!client->control->skip_switcher());
 
     // Destroy the client.
@@ -3291,7 +3291,7 @@ void TestXdgShellClientRules::testKeepAboveApplyNow()
     QVERIFY(!client->control->keep_above);
 
     // The rule should not be applied again.
-    win::evaluate_rules(client);
+    win::rules::evaluate_rules(client);
     QVERIFY(!client->control->keep_above);
 
     // Destroy the client.
@@ -3540,7 +3540,7 @@ void TestXdgShellClientRules::testKeepBelowApplyNow()
     QVERIFY(!client->control->keep_below);
 
     // The rule should not be applied again.
-    win::evaluate_rules(client);
+    win::rules::evaluate_rules(client);
     QVERIFY(!client->control->keep_below);
 
     // Destroy the client.
@@ -3916,7 +3916,7 @@ void TestXdgShellClientRules::testShortcutApplyNow()
     QVERIFY(!client->control->minimized);
 
     // The rule should not be applied again.
-    win::evaluate_rules(client);
+    win::rules::evaluate_rules(client);
     QCOMPARE(client->control->shortcut, (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_2}));
 
     // Destroy the client.

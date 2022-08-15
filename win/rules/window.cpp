@@ -21,6 +21,7 @@
 #include "book.h"
 #include "book_settings.h"
 #include "rules_settings.h"
+#include "update.h"
 
 namespace KWin::win::rules
 {
@@ -55,20 +56,6 @@ void window::discardTemporary()
         }
     }
     rules.erase(it2, rules.end());
-}
-
-void window::update(Toplevel* window, int selection)
-{
-    bool updated = false;
-    for (auto&& rule : rules) {
-        if (rule->update(window, selection)) {
-            // no short-circuiting here
-            updated = true;
-        }
-    }
-    if (updated) {
-        window->space.rule_book->requestDiskStorage();
-    }
 }
 
 QRect window::checkGeometry(QRect rect, bool init) const

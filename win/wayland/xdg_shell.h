@@ -16,6 +16,8 @@
 #include "win/controlling.h"
 #include "win/input.h"
 #include "win/meta.h"
+#include "win/rules/book_edit.h"
+#include "win/rules/find.h"
 #include "win/setup.h"
 #include "win/space_areas_helpers.h"
 #include "win/transient.h"
@@ -130,7 +132,7 @@ void finalize_shell_window_creation(Space& space, Win* win)
             if (win->supportsWindowRules()) {
                 auto const& ctrl = win->control;
 
-                setup_rules(win, false);
+                rules::setup_rules(win, false);
 
                 auto const original_geo = win->frameGeometry();
                 auto const ruled_geo = ctrl->rules.checkGeometry(original_geo, true);

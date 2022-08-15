@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "setup.h"
+#include "rules/find.h"
 #include "x11/hide.h"
 #include "x11/tool_windows.h"
 
@@ -39,7 +39,7 @@ void space_reconfigure(Space& space)
     space.rule_book->load();
     for (auto window : space.windows) {
         if (window->supportsWindowRules()) {
-            win::evaluate_rules(window);
+            rules::evaluate_rules(window);
             rules::discard_used_rules(*space.rule_book, *window, false);
         }
     }

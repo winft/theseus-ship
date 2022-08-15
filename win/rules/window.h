@@ -29,8 +29,6 @@ namespace base
 class output;
 }
 
-class Toplevel;
-
 namespace win::rules
 {
 
@@ -42,7 +40,6 @@ public:
     explicit window(std::vector<ruling*> const& rules);
     window();
 
-    void update(Toplevel* window, int selection);
     void discardTemporary();
     bool contains(ruling const* rule) const;
     void remove(ruling* rule);
@@ -82,6 +79,8 @@ public:
     bool checkDisableGlobalShortcuts(bool disable) const;
     QString checkDesktopFile(QString desktopFile, bool init = false) const;
 
+    std::vector<ruling*> rules;
+
 private:
     maximize_mode checkMaximizeVert(maximize_mode mode, bool init) const;
     maximize_mode checkMaximizeHoriz(maximize_mode mode, bool init) const;
@@ -113,8 +112,6 @@ private:
         }
         return data;
     }
-
-    std::vector<ruling*> rules;
 };
 
 }

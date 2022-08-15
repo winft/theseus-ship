@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/platform.h"
 #include "win/input.h"
 #include "win/remnant.h"
+#include "win/rules/update.h"
 #include "win/scene.h"
 #include "win/shortcut_set.h"
 #include "win/space.h"
@@ -988,7 +989,7 @@ void Toplevel::updateWindowRules(win::rules::type selection)
     if (space.rule_book->areUpdatesDisabled()) {
         return;
     }
-    control->rules.update(this, static_cast<int>(selection));
+    win::rules::update_window(control->rules, *this, static_cast<int>(selection));
 }
 
 }

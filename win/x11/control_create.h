@@ -23,6 +23,7 @@
 #include "base/logging.h"
 #include "win/input.h"
 #include "win/layers.h"
+#include "win/rules/find.h"
 #include "win/session.h"
 
 #include <KStartupInfo>
@@ -271,13 +272,13 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     // and also relies on rules already existing
     win->caption.normal = read_name(win);
 
-    setup_rules(win, false);
+    rules::setup_rules(win, false);
     set_caption(win, win->caption.normal, true);
 
     QObject::connect(win->qobject.get(),
                      &Win::qobject_t::windowClassChanged,
                      win->qobject.get(),
-                     [win] { evaluate_rules(win); });
+                     [win] { rules::evaluate_rules(win); });
 
     if (base::x11::xcb::extensions::self()->is_shape_available()) {
         xcb_shape_select_input(connection(), win->xcb_window, true);

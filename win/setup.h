@@ -12,32 +12,11 @@
 #include "screen.h"
 
 #include "render/compositor.h"
-#include "rules/find.h"
 
 #include <KDecoration2/Decoration>
 
 namespace KWin::win
 {
-
-template<typename Win>
-void setup_rules(Win* win, bool ignore_temporary)
-{
-    // TODO(romangg): This disconnects all connections of captionChanged to the window itself.
-    //                There is only one so this works fine but it's not robustly specified.
-    //                Either reshuffle later or use explicit connection object.
-    QObject::disconnect(
-        win->qobject.get(), &window_qobject::captionChanged, win->qobject.get(), nullptr);
-    win->control->rules = rules::find_window(*win->space.rule_book, *win, ignore_temporary);
-    // check only after getting the rules, because there may be a rule forcing window type
-    // TODO(romangg): what does this mean?
-}
-
-template<typename Win>
-void evaluate_rules(Win* win)
-{
-    setup_rules(win, true);
-    win->applyWindowRules();
-}
 
 template<typename Space, typename Win>
 void setup_space_window_connections(Space* space, Win* win)
