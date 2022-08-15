@@ -31,14 +31,9 @@ set(kwin_kcm_rules_XCB_LIBS
 )
 
 set(kcm_libs
-    Qt::Quick
-
-    KDecoration2::KDecoration2Private
+    kwin
     KF5::KCMUtils
-    KF5::I18n
     KF5::QuickAddons
-    KF5::WindowSystem
-    KF5::XmlGui
 )
 
 target_link_libraries(KWinRulesObjects ${kcm_libs} ${kwin_kcm_rules_XCB_LIBS})

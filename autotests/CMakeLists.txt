@@ -123,14 +123,8 @@ set(testOnScreenNotification_SRCS
 add_executable(testOnScreenNotification ${testOnScreenNotification_SRCS})
 
 target_link_libraries(testOnScreenNotification
-    Qt::DBus
-    Qt::Quick
+    kwin
     Qt::Test
-    Qt::Widgets # QAction include
-
-    KDecoration2::KDecoration2Private
-    KF5::ConfigCore
-    KF5::WindowSystem
 )
 
 add_test(NAME kwin-testOnScreenNotification COMMAND testOnScreenNotification)
