@@ -40,7 +40,7 @@ void space_reconfigure(Space& space)
     for (auto window : space.windows) {
         if (window->supportsWindowRules()) {
             win::evaluate_rules(window);
-            space.rule_book->discardUsed(window, false);
+            rules::discard_used_rules(*space.rule_book, *window, false);
         }
     }
 

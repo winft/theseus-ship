@@ -644,7 +644,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     win->control->discard_temporary_rules();
 
     // Remove ApplyNow rules
-    space.rule_book->discardUsed(win, false);
+    rules::discard_used_rules(*space.rule_book, *win, false);
 
     // Was blocked while !control.
     win->updateWindowRules(rules::type::all);

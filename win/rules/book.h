@@ -10,17 +10,7 @@
 
 class KXMessages;
 
-namespace KWin
-{
-
-class Toplevel;
-
-namespace win
-{
-
-class space;
-
-namespace rules
+namespace KWin::win::rules
 {
 
 class ruling;
@@ -38,31 +28,27 @@ public:
     book();
     ~book();
 
-    window find(Toplevel const* window, bool);
-    void discardUsed(Toplevel* window, bool withdraw);
     void setUpdatesDisabled(bool disable);
     bool areUpdatesDisabled() const;
-    void load();
-    void edit(Toplevel* window, bool whole_app);
-    void requestDiskStorage();
 
+    void load();
+    void save();
+
+    void requestDiskStorage();
     void temporaryRulesMessage(const QString&);
 
     std::unique_ptr<book_qobject> qobject;
     KSharedConfig::Ptr config;
+    QList<ruling*> m_rules;
 
 private:
     void initWithX11();
     void deleteAll();
-    void save();
     void cleanupTemporaryRules();
 
     QTimer* m_updateTimer;
     bool m_updatesDisabled;
-    QList<ruling*> m_rules;
     QScopedPointer<KXMessages> m_temporaryRulesMessages;
 };
 
-}
-}
 }

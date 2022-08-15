@@ -7,7 +7,6 @@
 #include "book.h"
 
 #include "base/logging.h"
-#include "toplevel.h"
 #include "win/control.h"
 
 #include "book_settings.h"
@@ -61,57 +60,6 @@ void book::deleteAll()
 {
     qDeleteAll(m_rules);
     m_rules.clear();
-}
-
-window book::find(Toplevel const* window, bool ignore_temporary)
-{
-    QVector<ruling*> ret;
-    for (auto it = m_rules.begin(); it != m_rules.end();) {
-        if (ignore_temporary && (*it)->isTemporary()) {
-            ++it;
-            continue;
-        }
-        if ((*it)->match(window)) {
-            auto rule = *it;
-            qCDebug(KWIN_CORE) << "Rule found:" << rule << ":" << window;
-            if (rule->isTemporary())
-                it = m_rules.erase(it);
-            else
-                ++it;
-            ret.append(rule);
-            continue;
-        }
-        ++it;
-    }
-    return rules::window(ret);
-}
-
-void book::edit(Toplevel* window, bool whole_app)
-{
-    save();
-    QStringList args;
-    args << QStringLiteral("--uuid") << window->internal_id.toString();
-    if (whole_app)
-        args << QStringLiteral("--whole-app");
-    auto p = new QProcess(qobject.get());
-    p->setArguments(args);
-    p->setProcessEnvironment(kwinApp()->processStartupEnvironment());
-    const QFileInfo buildDirBinary{QDir{QCoreApplication::applicationDirPath()},
-                                   QStringLiteral("kwin_rules_dialog")};
-    p->setProgram(buildDirBinary.exists() ? buildDirBinary.absoluteFilePath()
-                                          : QStringLiteral(KWIN_RULES_DIALOG_BIN));
-    p->setProcessChannelMode(QProcess::MergedChannels);
-    QObject::connect(
-        p,
-        static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
-        p,
-        &QProcess::deleteLater);
-    QObject::connect(p, &QProcess::errorOccurred, qobject.get(), [p](QProcess::ProcessError e) {
-        if (e == QProcess::FailedToStart) {
-            qCDebug(KWIN_CORE) << "Failed to start" << p->program();
-        }
-    });
-    p->start();
 }
 
 void book::load()
@@ -187,31 +135,6 @@ void book::cleanupTemporaryRules()
 
     if (has_temporary) {
         QTimer::singleShot(60000, qobject.get(), [this] { cleanupTemporaryRules(); });
-    }
-}
-
-void book::discardUsed(Toplevel* window, bool withdrawn)
-{
-    auto updated = false;
-
-    for (auto it = m_rules.begin(); it != m_rules.end();) {
-        if (window->control->rules.contains(*it)) {
-            if ((*it)->discardUsed(withdrawn)) {
-                updated = true;
-            }
-            if ((*it)->isEmpty()) {
-                window->control->remove_rule(*it);
-                auto r = *it;
-                it = m_rules.erase(it);
-                delete r;
-                continue;
-            }
-        }
-        ++it;
-    }
-
-    if (updated) {
-        requestDiskStorage();
     }
 }
 

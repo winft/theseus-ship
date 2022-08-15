@@ -12,7 +12,7 @@
 #include "screen.h"
 
 #include "render/compositor.h"
-#include "rules/book.h"
+#include "rules/find.h"
 
 #include <KDecoration2/Decoration>
 
@@ -27,7 +27,7 @@ void setup_rules(Win* win, bool ignore_temporary)
     //                Either reshuffle later or use explicit connection object.
     QObject::disconnect(
         win->qobject.get(), &window_qobject::captionChanged, win->qobject.get(), nullptr);
-    win->control->rules = win->space.rule_book->find(win, ignore_temporary);
+    win->control->rules = rules::find_window(*win->space.rule_book, *win, ignore_temporary);
     // check only after getting the rules, because there may be a rule forcing window type
     // TODO(romangg): what does this mean?
 }

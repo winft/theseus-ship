@@ -181,7 +181,7 @@ void release_window(Win* win, bool on_shutdown)
     Q_EMIT win->qobject->closed();
 
     // Remove ForceTemporarily rules
-    win->space.rule_book->discardUsed(win, true);
+    rules::discard_used_rules(*win->space.rule_book, *win, true);
 
     blocker block(win->space.stacking_order);
 
@@ -297,7 +297,7 @@ void destroy_window(Win* win)
     Q_EMIT win->qobject->closed();
 
     // Remove ForceTemporarily rules
-    win->space.rule_book->discardUsed(win, true);
+    rules::discard_used_rules(*win->space.rule_book, *win, true);
 
     blocker block(win->space.stacking_order);
     if (win->control->move_resize.enabled) {

@@ -164,7 +164,7 @@ void finalize_shell_window_creation(Space& space, Win* win)
                 ctrl->discard_temporary_rules();
 
                 // Remove Apply Now rules.
-                win->space.rule_book->discardUsed(win, false);
+                rules::discard_used_rules(*win->space.rule_book, *win, false);
 
                 win->updateWindowRules(rules::type::all);
             }

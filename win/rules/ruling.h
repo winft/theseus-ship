@@ -47,7 +47,7 @@ struct force_ruler {
     force_rule rule{force_rule::unused};
 };
 
-class ruling
+class KWIN_EXPORT ruling
 {
 public:
     ruling();
@@ -194,7 +194,7 @@ private:
     friend QDebug& operator<<(QDebug& stream, ruling const*);
 };
 
-QDebug& operator<<(QDebug& stream, ruling const*);
+KWIN_EXPORT QDebug& operator<<(QDebug& stream, ruling const*);
 
 }
 }

@@ -9,7 +9,7 @@
 #include "base/options.h"
 #include "desktop_set.h"
 #include "move.h"
-#include "rules/book.h"
+#include "rules/book_edit.h"
 #include "shortcut_set.h"
 #include "stacking.h"
 
@@ -98,10 +98,10 @@ void perform_window_operation(Win* window, base::options_qobject::WindowOperatio
         break;
     }
     case base::options_qobject::WindowRulesOp:
-        space.rule_book->edit(window, false);
+        rules::edit_book(*space.rule_book, *window, false);
         break;
     case base::options_qobject::ApplicationRulesOp:
-        space.rule_book->edit(window, true);
+        rules::edit_book(*space.rule_book, *window, true);
         break;
     case base::options_qobject::SetupWindowShortcutOp:
         setup_window_shortcut(space, window);

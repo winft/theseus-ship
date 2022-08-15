@@ -52,7 +52,7 @@ void destroy_window(Win* win)
             win->leaveMoveResize();
         }
 
-        win->space.rule_book->discardUsed(win, true);
+        rules::discard_used_rules(*win->space.rule_book, *win, true);
 
         win->control->destroy_plasma_wayland_integration();
         win->control->destroy_decoration();
