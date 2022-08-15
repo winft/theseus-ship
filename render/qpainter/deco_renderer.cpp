@@ -30,10 +30,10 @@ namespace KWin::render::qpainter
 deco_renderer::deco_renderer(win::deco::client_impl* client)
     : renderer(client)
 {
-    connect(this,
-            &renderer::renderScheduled,
-            client->client()->qobject.get(),
-            [win = client->client()](auto const& region) { win->addRepaint(region); });
+    QObject::connect(qobject.get(),
+                     &qobject_t::renderScheduled,
+                     client->client()->qobject.get(),
+                     [win = client->client()](auto const& region) { win->addRepaint(region); });
 }
 
 deco_renderer::~deco_renderer() = default;

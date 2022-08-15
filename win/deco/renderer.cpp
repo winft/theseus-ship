@@ -34,33 +34,39 @@ namespace KWin::win::deco
 {
 
 renderer::renderer(client_impl* client)
-    : m_client(client)
+    : qobject{std::make_unique<renderer_qobject>()}
+    , m_client(client)
     , m_imageSizesDirty(true)
 {
     auto markImageSizesDirty = [this] { m_imageSizesDirty = true; };
-    connect(client->decoration(), &KDecoration2::Decoration::damaged, this, &renderer::schedule);
-    connect(client->client()->qobject.get(),
-            &win::window_qobject::central_output_changed,
-            this,
-            [markImageSizesDirty](auto old_out, auto new_out) {
-                if (!new_out) {
-                    return;
-                }
-                if (old_out && old_out->scale() == new_out->scale()) {
-                    return;
-                }
-                markImageSizesDirty();
-            });
-    connect(
-        client->decoration(), &KDecoration2::Decoration::bordersChanged, this, markImageSizesDirty);
-    connect(client->decoratedClient(),
-            &KDecoration2::DecoratedClient::widthChanged,
-            this,
-            markImageSizesDirty);
-    connect(client->decoratedClient(),
-            &KDecoration2::DecoratedClient::heightChanged,
-            this,
-            markImageSizesDirty);
+    QObject::connect(client->decoration(),
+                     &KDecoration2::Decoration::damaged,
+                     qobject.get(),
+                     [this](auto const& rect) { schedule(rect); });
+    QObject::connect(client->client()->qobject.get(),
+                     &win::window_qobject::central_output_changed,
+                     qobject.get(),
+                     [markImageSizesDirty](auto old_out, auto new_out) {
+                         if (!new_out) {
+                             return;
+                         }
+                         if (old_out && old_out->scale() == new_out->scale()) {
+                             return;
+                         }
+                         markImageSizesDirty();
+                     });
+    QObject::connect(client->decoration(),
+                     &KDecoration2::Decoration::bordersChanged,
+                     qobject.get(),
+                     markImageSizesDirty);
+    QObject::connect(client->decoratedClient(),
+                     &KDecoration2::DecoratedClient::widthChanged,
+                     qobject.get(),
+                     markImageSizesDirty);
+    QObject::connect(client->decoratedClient(),
+                     &KDecoration2::DecoratedClient::heightChanged,
+                     qobject.get(),
+                     markImageSizesDirty);
 }
 
 renderer::~renderer() = default;
@@ -68,7 +74,7 @@ renderer::~renderer() = default;
 void renderer::schedule(const QRegion& rect)
 {
     m_scheduled = m_scheduled.united(rect);
-    Q_EMIT renderScheduled(rect);
+    Q_EMIT qobject->renderScheduled(rect);
 }
 
 QRegion renderer::getScheduled()

@@ -16,7 +16,6 @@ namespace KWin::render::backend::x11
 
 class deco_renderer : public win::deco::renderer
 {
-    Q_OBJECT
 public:
     explicit deco_renderer(win::deco::client_impl* client);
     ~deco_renderer() override;

@@ -44,10 +44,10 @@ deco_renderer::deco_renderer(win::deco::client_impl* client, gl::scene& scene)
     , m_texture()
     , scene{scene}
 {
-    connect(this,
-            &renderer::renderScheduled,
-            client->client()->qobject.get(),
-            [win = client->client()](auto const& region) { win->addRepaint(region); });
+    QObject::connect(qobject.get(),
+                     &qobject_t::renderScheduled,
+                     client->client()->qobject.get(),
+                     [win = client->client()](auto const& region) { win->addRepaint(region); });
 }
 
 deco_renderer::~deco_renderer()

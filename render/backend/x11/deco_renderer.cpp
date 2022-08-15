@@ -19,17 +19,17 @@ namespace KWin::render::backend::x11
 
 deco_renderer::deco_renderer(win::deco::client_impl* client)
     : renderer(client)
-    , m_scheduleTimer(new QTimer(this))
+    , m_scheduleTimer(new QTimer(qobject.get()))
     , m_gc(XCB_NONE)
 {
     // delay any rendering to end of event cycle to catch multiple updates per cycle
     m_scheduleTimer->setSingleShot(true);
     m_scheduleTimer->setInterval(0);
-    connect(m_scheduleTimer, &QTimer::timeout, this, &deco_renderer::render);
-    connect(this,
-            &renderer::renderScheduled,
-            m_scheduleTimer,
-            static_cast<void (QTimer::*)()>(&QTimer::start));
+    QObject::connect(m_scheduleTimer, &QTimer::timeout, qobject.get(), [this] { render(); });
+    QObject::connect(qobject.get(),
+                     &qobject_t::renderScheduled,
+                     m_scheduleTimer,
+                     static_cast<void (QTimer::*)()>(&QTimer::start));
 }
 
 deco_renderer::~deco_renderer()
@@ -44,11 +44,11 @@ void deco_renderer::reparent()
     if (m_scheduleTimer->isActive()) {
         m_scheduleTimer->stop();
     }
-    disconnect(m_scheduleTimer, &QTimer::timeout, this, &deco_renderer::render);
-    disconnect(this,
-               &renderer::renderScheduled,
-               m_scheduleTimer,
-               static_cast<void (QTimer::*)()>(&QTimer::start));
+    QObject::disconnect(m_scheduleTimer, &QTimer::timeout, qobject.get(), nullptr);
+    QObject::disconnect(qobject.get(),
+                        &qobject_t::renderScheduled,
+                        m_scheduleTimer,
+                        static_cast<void (QTimer::*)()>(&QTimer::start));
     renderer::reparent();
 }
 

@@ -19,29 +19,37 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
+#include "kwin_export.h"
+
 #include <QObject>
 #include <QRegion>
-
-#include <kwin_export.h>
+#include <memory>
 
 namespace KWin::win::deco
 {
 
 class client_impl;
 
-class KWIN_EXPORT renderer : public QObject
+class KWIN_EXPORT renderer_qobject : public QObject
 {
     Q_OBJECT
+Q_SIGNALS:
+    void renderScheduled(QRegion const& geo);
+};
+
+class KWIN_EXPORT renderer
+{
 public:
-    ~renderer() override;
+    using qobject_t = renderer_qobject;
+
+    virtual ~renderer();
 
     void schedule(const QRegion& region);
 
     /// After this call the renderer is no longer able to render anything, client() returns null.
     virtual void reparent();
 
-Q_SIGNALS:
-    void renderScheduled(const QRegion& geo);
+    std::unique_ptr<renderer_qobject> qobject;
 
 protected:
     explicit renderer(client_impl* client);

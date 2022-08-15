@@ -20,7 +20,6 @@ class scene;
 
 class deco_renderer : public win::deco::renderer
 {
-    Q_OBJECT
 public:
     enum class DecorationPart : int { Left, Top, Right, Bottom, Count };
     deco_renderer(win::deco::client_impl* client, gl::scene& scene);

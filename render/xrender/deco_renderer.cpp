@@ -27,10 +27,10 @@ deco_renderer::deco_renderer(win::deco::client_impl* client)
     : renderer(client)
     , m_gc(XCB_NONE)
 {
-    connect(this,
-            &renderer::renderScheduled,
-            client->client()->qobject.get(),
-            [win = client->client()](auto const& region) { win->addRepaint(region); });
+    QObject::connect(qobject.get(),
+                     &qobject_t::renderScheduled,
+                     client->client()->qobject.get(),
+                     [win = client->client()](auto const& region) { win->addRepaint(region); });
     for (int i = 0; i < int(DecorationPart::Count); ++i) {
         m_pixmaps[i] = XCB_PIXMAP_NONE;
         m_pictures[i] = nullptr;
