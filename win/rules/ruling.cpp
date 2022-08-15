@@ -10,8 +10,12 @@
 #include "base/output_helpers.h"
 #include "base/platform.h"
 #include "main.h"
+#include "toplevel.h"
 #include "utils/algorithm.h"
 #include "utils/geo.h"
+#include "win/setup.h"
+#include "win/space.h"
+#include "win/x11/client_machine.h"
 
 #include <QDebug>
 #include <QFile>
@@ -19,13 +23,6 @@
 #include <QRegularExpression>
 #include <QTemporaryFile>
 #include <kconfig.h>
-
-#ifndef KCMRULES
-#include "win/setup.h"
-#include "win/space.h"
-#include "win/types.h"
-#include "win/x11/client_machine.h"
-#endif
 
 #include "book_settings.h"
 #include "rules_settings.h"
@@ -389,7 +386,6 @@ bool ruling::matchClientMachine(QByteArray const& match_machine, bool local) con
     return true;
 }
 
-#ifndef KCMRULES
 bool ruling::match(Toplevel const* window) const
 {
     if (!matchType(window->windowType(true))) {
@@ -861,8 +857,6 @@ bool ruling::discardUsed(bool withdrawn)
 
     return changed;
 }
-
-#endif
 
 QDebug& operator<<(QDebug& stream, ruling const* r)
 {

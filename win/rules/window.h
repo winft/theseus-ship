@@ -36,8 +36,6 @@ namespace win::rules
 
 class ruling;
 
-#ifndef KCMRULES // only for kwin core
-
 class KWIN_EXPORT window
 {
 public:
@@ -118,8 +116,6 @@ private:
 
     QVector<ruling*> rules;
 };
-
-#endif
 
 }
 }

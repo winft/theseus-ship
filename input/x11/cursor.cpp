@@ -40,13 +40,11 @@ cursor::cursor(bool xInputSupport)
                          &cursor::about_to_block);
     }
 
-#ifndef KCMRULES
     QObject::connect(kwinApp(), &Application::startup_finished, this, [this] {
         if (base::x11::xcb::extensions::self()->is_fixes_available()) {
             m_xfixesFilter = std::make_unique<xfixes_cursor_event_filter>(this);
         }
     });
-#endif
 }
 
 PlatformCursorImage cursor::platform_image() const

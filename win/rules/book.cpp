@@ -6,7 +6,6 @@
 */
 #include "book.h"
 
-#ifndef KCMRULES
 #include "base/logging.h"
 #include "toplevel.h"
 #include "win/control.h"
@@ -231,5 +230,4 @@ bool book::areUpdatesDisabled() const
     return m_updatesDisabled;
 }
 
-#endif
 }

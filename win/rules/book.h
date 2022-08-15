@@ -6,8 +6,6 @@
 */
 #pragma once
 
-#ifndef KCMRULES
-
 #include "window.h"
 
 class KXMessages;
@@ -62,7 +60,6 @@ private:
     QScopedPointer<KXMessages> m_temporaryRulesMessages;
 };
 
-#endif
 }
 }
 }

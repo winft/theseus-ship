@@ -8,7 +8,6 @@
 
 #include <kconfig.h>
 
-#ifndef KCMRULES
 #include "win/controlling.h"
 #include "win/geo_change.h"
 #include "win/input.h"
@@ -18,7 +17,6 @@
 #include "win/space.h"
 #include "win/stacking.h"
 #include "win/x11/client_machine.h"
-#endif
 
 #include "book.h"
 #include "book_settings.h"
@@ -46,7 +44,6 @@ void window::remove(ruling* rule)
     rules.removeOne(rule);
 }
 
-#ifndef KCMRULES
 void window::discardTemporary()
 {
     auto it2 = rules.begin();
@@ -267,7 +264,5 @@ base::output const* window::checkScreen(base::output const* output, bool init) c
 
     return base::get_output(outputs, index);
 }
-
-#endif
 
 }

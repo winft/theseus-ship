@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "types.h"
 
-#ifndef KCMRULES
 #include "base/options.h"
 #include "input/cursor.h"
 #include "kwinglobals.h"
@@ -572,5 +571,3 @@ void unclutter_desktop(Space& space)
 }
 
 }
-
-#endif

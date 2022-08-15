@@ -57,7 +57,6 @@ public:
     void write(settings*) const;
     bool isEmpty() const;
 
-#ifndef KCMRULES
     bool discardUsed(bool withdrawn);
     bool match(Toplevel const* window) const;
     bool update(Toplevel* window, int selection);
@@ -101,22 +100,20 @@ public:
     bool applyDisableGlobalShortcuts(bool& disable) const;
     bool applyDesktopFile(QString& desktopFile, bool init) const;
 
-private:
-#endif
     bool matchType(NET::WindowType match_type) const;
     bool matchWMClass(QByteArray const& match_class, QByteArray const& match_name) const;
     bool matchRole(QByteArray const& match_role) const;
     bool matchTitle(QString const& match_title) const;
     bool matchClientMachine(QByteArray const& match_machine, bool local) const;
+
+private:
     void readFromSettings(rules::settings const* settings);
     static force_rule convertForceRule(int v);
     static QString getDecoColor(QString const& themeName);
-#ifndef KCMRULES
     static bool checkSetRule(set_rule rule, bool init);
     static bool checkForceRule(force_rule rule);
     static bool checkSetStop(set_rule rule);
     static bool checkForceStop(force_rule rule);
-#endif
 
     template<typename T>
     bool apply_force_enum(force_ruler<int> const& ruler, T& apply, T min, T max) const;

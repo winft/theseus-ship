@@ -1,6 +1,5 @@
 # KI18N Translation Domain for this library
 add_definitions(-DTRANSLATION_DOMAIN=\"kcm_kwinrules\")
-add_definitions(-DKCMRULES)
 
 include_directories(../../)
 
@@ -32,6 +31,7 @@ set(kwin_kcm_rules_XCB_LIBS
 
 set(kcm_libs
     kwin
+    kwin_x11_lib
     KF5::KCMUtils
     KF5::QuickAddons
 )
