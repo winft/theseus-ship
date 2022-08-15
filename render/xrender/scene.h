@@ -53,7 +53,8 @@ public:
     std::unique_ptr<render::shadow> createShadow(Toplevel* toplevel) override;
     void handle_screen_geometry_change(QSize const& size) override;
     xcb_render_picture_t xrenderBufferPicture() const override;
-    win::deco::renderer* createDecorationRenderer(win::deco::client_impl* client) override;
+    win::deco::renderer<win::deco::client_impl>*
+    createDecorationRenderer(win::deco::client_impl* client) override;
 
     bool animationsSupported() const override
     {

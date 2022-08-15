@@ -190,7 +190,7 @@ void client_impl::update_size()
     Q_EMIT deco_client->sizeChanged(m_clientSize);
 }
 
-std::unique_ptr<deco::renderer> client_impl::move_renderer()
+std::unique_ptr<deco::renderer<client_impl>> client_impl::move_renderer()
 {
     if (!m_renderer) {
         return {};

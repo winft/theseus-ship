@@ -65,7 +65,8 @@ public:
     bool makeOpenGLContextCurrent() override;
     void doneOpenGLContextCurrent() override;
     bool supportsSurfacelessContext() const override;
-    win::deco::renderer* createDecorationRenderer(win::deco::client_impl* impl) override;
+    win::deco::renderer<win::deco::client_impl>*
+    createDecorationRenderer(win::deco::client_impl* impl) override;
     void triggerFence() override;
     QMatrix4x4 projectionMatrix() const;
     QMatrix4x4 screenProjectionMatrix() const override;

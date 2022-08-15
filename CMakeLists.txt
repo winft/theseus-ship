@@ -428,7 +428,6 @@ set(kwin_SRCS
     render/gl/buffer.cpp
     render/gl/backend.cpp
     render/gl/context_attribute_builder.cpp
-    render/gl/deco_renderer.cpp
     render/gl/egl_context_attribute_builder.cpp
     render/gl/lanczos_filter.cpp
     render/gl/scene.cpp
@@ -465,7 +464,6 @@ set(kwin_SRCS
     win/deco/client_impl.cpp
     win/deco/bridge.cpp
     win/deco/palette.cpp
-    win/deco/renderer.cpp
     win/deco/decorations_logging.cpp
     win/deco/settings.cpp
     win/internal_window.cpp
@@ -491,6 +489,7 @@ set(kwin_SRCS
     win/x11/window.cpp
 
     # These headers need to be compiled for the helper QObjects they contain.
+    win/deco/renderer.h
     win/stacking_order.h
 )
 
@@ -658,7 +657,6 @@ set(kwin_X11_SRCS
    input/x11/window_selector.cpp
    input/x11/xfixes_cursor_event_filter.cpp
    input/logging.cpp
-   render/backend/x11/deco_renderer.cpp
    render/backend/x11/non_composited_outline.cpp
    render/backend/x11/platform.cpp
    render/x11/effects.cpp
@@ -671,7 +669,6 @@ if (KWIN_HAVE_XRENDER_COMPOSITING)
     ${kwin_X11_SRCS}
     render/xrender/buffer.cpp
     render/xrender/backend.cpp
-    render/xrender/deco_renderer.cpp
     render/xrender/scene.cpp
     render/xrender/shadow.cpp
     render/xrender/window.cpp
@@ -798,7 +795,6 @@ set(kwin_WAYLAND_SRCS
    input/xkb/layout_policies.cpp
    render/gl/egl_dmabuf.cpp
    render/qpainter/buffer.cpp
-   render/qpainter/deco_renderer.cpp
    render/qpainter/scene.cpp
    render/qpainter/shadow.cpp
    render/qpainter/window.cpp

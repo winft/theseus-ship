@@ -308,10 +308,12 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
     xcb_render_picture_t right = XCB_RENDER_PICTURE_NONE;
     xcb_render_picture_t bottom = XCB_RENDER_PICTURE_NONE;
     QRect dtr, dlr, drr, dbr;
-    deco_renderer const* renderer = nullptr;
+
+    deco_renderer<win::deco::client_impl> const* renderer = nullptr;
     if (client && client->control && !client->noBorder()) {
         if (win::decoration(client)) {
-            auto r = static_cast<deco_renderer*>(client->control->deco.client->renderer());
+            auto r = static_cast<deco_renderer<win::deco::client_impl>*>(
+                client->control->deco.client->renderer());
             if (r) {
                 r->render();
                 renderer = r;
@@ -320,16 +322,18 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
         noBorder = client->noBorder();
         client->layoutDecorationRects(dlr, dtr, drr, dbr);
     }
+
     if (remnant && !remnant->data.no_border) {
-        renderer = static_cast<const deco_renderer*>(remnant->data.decoration_renderer.get());
+        renderer = static_cast<deco_renderer<win::deco::client_impl> const*>(
+            remnant->data.decoration_renderer.get());
         noBorder = remnant->data.no_border;
         remnant->data.layout_decoration_rects(dlr, dtr, drr, dbr);
     }
     if (renderer) {
-        left = renderer->picture(deco_renderer::DecorationPart::Left);
-        top = renderer->picture(deco_renderer::DecorationPart::Top);
-        right = renderer->picture(deco_renderer::DecorationPart::Right);
-        bottom = renderer->picture(deco_renderer::DecorationPart::Bottom);
+        left = renderer->picture(DecorationPart::Left);
+        top = renderer->picture(DecorationPart::Top);
+        right = renderer->picture(DecorationPart::Right);
+        bottom = renderer->picture(DecorationPart::Bottom);
     }
     if (!noBorder) {
         MAP_RECT_TO_TARGET(dtr);

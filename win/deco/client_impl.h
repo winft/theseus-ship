@@ -40,6 +40,7 @@ class space;
 namespace deco
 {
 
+template<typename Client>
 class renderer;
 
 class client_impl_qobject : public QObject
@@ -52,6 +53,8 @@ public:
 class KWIN_EXPORT client_impl : public KDecoration2::ApplicationMenuEnabledDecoratedClientPrivate
 {
 public:
+    using renderer_t = deco::renderer<client_impl>;
+
     client_impl(Toplevel* window,
                 KDecoration2::DecoratedClient* decoratedClient,
                 KDecoration2::Decoration* decoration);
@@ -123,11 +126,11 @@ public:
     {
         return m_client;
     }
-    deco::renderer* renderer()
+    renderer_t* renderer()
     {
         return m_renderer.get();
     }
-    std::unique_ptr<deco::renderer> move_renderer();
+    std::unique_ptr<renderer_t> move_renderer();
     KDecoration2::DecoratedClient* decoratedClient()
     {
         return KDecoration2::DecoratedClientPrivate::client();
@@ -140,7 +143,7 @@ private:
 
     Toplevel* m_client;
     QSize m_clientSize;
-    std::unique_ptr<deco::renderer> m_renderer;
+    std::unique_ptr<renderer_t> m_renderer;
     QMetaObject::Connection m_compositorToggledConnection;
 
     QString m_toolTipText;

@@ -176,8 +176,8 @@ GLTexture* window::getDecorationTexture() const
         if (!win::decoration(toplevel)) {
             return nullptr;
         }
-        if (auto renderer
-            = static_cast<deco_renderer*>(toplevel->control->deco.client->renderer())) {
+        if (auto renderer = static_cast<deco_renderer<win::deco::client_impl>*>(
+                toplevel->control->deco.client->renderer())) {
             renderer->render();
             return renderer->texture();
         }
@@ -186,7 +186,7 @@ GLTexture* window::getDecorationTexture() const
             return nullptr;
         }
         if (auto& renderer = remnant->data.decoration_renderer) {
-            return static_cast<deco_renderer&>(*renderer).texture();
+            return static_cast<deco_renderer<win::deco::client_impl>&>(*renderer).texture();
         }
     }
     return nullptr;

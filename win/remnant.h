@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "deco/client_impl.h"
 #include "deco/renderer.h"
 
 #include "base/logging.h"
@@ -90,7 +91,7 @@ public:
 
         bool minimized{false};
 
-        std::unique_ptr<deco::renderer> decoration_renderer;
+        std::unique_ptr<deco::renderer<deco::client_impl>> decoration_renderer;
         double opacity{1};
         NET::WindowType window_type{NET::Unknown};
         QByteArray window_role;

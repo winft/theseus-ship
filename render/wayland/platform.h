@@ -54,7 +54,8 @@ public:
         return nullptr;
     }
 
-    win::deco::renderer* createDecorationRenderer(win::deco::client_impl* client) override
+    win::deco::renderer<win::deco::client_impl>*
+    createDecorationRenderer(win::deco::client_impl* client) override
     {
         if (!compositor->scene) {
             // TODO(romangg): Make this check unnecessary. No deco renderer should be created when
