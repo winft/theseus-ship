@@ -98,9 +98,9 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
     // vertical the window is matched by class and role load the rule
     QFile ruleFile(QFINDTESTDATA("./data/rules/maximize-vert-apply-initial"));
     QVERIFY(ruleFile.open(QIODevice::ReadOnly | QIODevice::Text));
-    QMetaObject::invokeMethod(Test::app()->base.space->rule_book.get(),
-                              "temporaryRulesMessage",
-                              Q_ARG(QString, QString::fromUtf8(ruleFile.readAll())));
+
+    Test::app()->base.space->rule_book->temporaryRulesMessage(
+        QString::fromUtf8(ruleFile.readAll()));
 
     // create the test window
     auto c = create_xcb_connection();

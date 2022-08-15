@@ -183,7 +183,7 @@ void book::cleanupTemporaryRules()
     }
 
     if (has_temporary) {
-        QTimer::singleShot(60000, this, SLOT(cleanupTemporaryRules()));
+        QTimer::singleShot(60000, this, &book::cleanupTemporaryRules);
     }
 }
 

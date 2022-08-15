@@ -40,19 +40,18 @@ public:
     void edit(Toplevel* window, bool whole_app);
     void requestDiskStorage();
 
+    void temporaryRulesMessage(const QString&);
+
     KSharedConfig::Ptr config;
 
 Q_SIGNALS:
     void updates_enabled();
 
-private Q_SLOTS:
-    void temporaryRulesMessage(const QString&);
-    void cleanupTemporaryRules();
-    void save();
-
 private:
-    void deleteAll();
     void initWithX11();
+    void deleteAll();
+    void save();
+    void cleanupTemporaryRules();
 
     QTimer* m_updateTimer;
     bool m_updatesDisabled;
