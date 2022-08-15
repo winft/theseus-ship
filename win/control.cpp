@@ -16,6 +16,7 @@
 
 #if KWIN_BUILD_TABBOX
 #include "tabbox/tabbox.h"
+#include "tabbox/tabbox_client_impl.h"
 #endif
 
 #include "render/compositor.h"

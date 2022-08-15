@@ -633,6 +633,7 @@ endif()
 if (KWIN_BUILD_TABBOX)
   target_sources(kwin PRIVATE
     win/tabbox/tabbox.cpp
+    win/tabbox/tabbox_client_impl.cpp
     win/tabbox/tabbox_client_model.cpp
     win/tabbox/tabbox_config.cpp
     win/tabbox/tabbox_desktop_chain.cpp

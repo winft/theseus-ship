@@ -19,10 +19,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_TABBOX_H
-#define KWIN_TABBOX_H
+#pragma once
 
-#include "tabbox_handler.h"
+#include "tabbox_config.h"
 
 #include "kwin_export.h"
 #include "kwinglobals.h"
@@ -52,36 +51,8 @@ namespace win
 {
 
 class space;
-class tabbox_desktop_chain_manager;
 class tabbox_config;
 class tabbox_handler_impl;
-
-class tabbox_client_impl : public tabbox_client
-{
-public:
-    explicit tabbox_client_impl(Toplevel* window);
-    ~tabbox_client_impl() override;
-
-    QString caption() const override;
-    QIcon icon() const override;
-    bool is_minimized() const override;
-    int x() const override;
-    int y() const override;
-    int width() const override;
-    int height() const override;
-    bool is_closeable() const override;
-    void close() override;
-    bool is_first_in_tabbox() const override;
-    QUuid internal_id() const override;
-
-    Toplevel* client() const
-    {
-        return m_client;
-    }
-
-private:
-    Toplevel* m_client;
-};
 
 class KWIN_EXPORT tabbox_qobject : public QObject
 {
@@ -359,6 +330,5 @@ private:
     QScopedPointer<base::x11::event_filter> m_x11_event_filter;
 };
 
-} // namespace win
-} // namespace
-#endif
+}
+}

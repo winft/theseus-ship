@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "tabbox_x11_filter.h"
 
 #include "tabbox.h"
+#include "tabbox_handler.h"
 
 #include "base/os/kkeyserver.h"
 #include "base/x11/xcb/proto.h"

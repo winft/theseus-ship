@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "tabbox_handler_impl.h"
 
+#include "tabbox_client_impl.h"
 #include "tabbox_client_model.h"
 #include "tabbox_config.h"
 #include "tabbox_desktop_chain.h"
