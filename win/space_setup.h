@@ -10,6 +10,7 @@
 #include "dbus/virtual_desktop_manager.h"
 #include "internal_window.h"
 #include "rules.h"
+#include "tabbox/tabbox.h"
 #include "x11/space_setup.h"
 #include "x11/stacking.h"
 

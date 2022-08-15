@@ -12,6 +12,7 @@
 #include "scene.h"
 #include "shadow.h"
 
+#include "win/deco/client_impl.h"
 #include "win/geo.h"
 #include "win/scene.h"
 #include "win/x11/window.h"
@@ -312,7 +313,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
     deco_render_data const* deco_data = nullptr;
     if (client && client->control && !client->noBorder()) {
         if (win::decoration(client)) {
-            auto r = static_cast<deco_renderer<win::deco::client_impl>*>(
+            auto r = static_cast<deco_renderer<win::deco::client_impl<Toplevel>>*>(
                 client->control->deco.client->renderer());
             if (r) {
                 r->render();

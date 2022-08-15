@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/effects.h"
 #include "shadow.h"
 
+#include "render/platform.h"
 #include "win/input.h"
 #include "win/remnant.h"
 #include "win/scene.h"

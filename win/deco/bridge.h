@@ -137,10 +137,9 @@ public:
     createClient(KDecoration2::DecoratedClient* client,
                  KDecoration2::Decoration* decoration) override
     {
-        return std::make_unique<client_impl>(
-            static_cast<window<typename Space::window_t>*>(decoration->parent())->win,
-            client,
-            decoration);
+        using window_t = typename Space::window_t;
+        return std::make_unique<client_impl<window_t>>(
+            static_cast<window<window_t>*>(decoration->parent())->win, client, decoration);
     }
 
     std::unique_ptr<KDecoration2::DecorationSettingsPrivate>

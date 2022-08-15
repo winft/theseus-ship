@@ -14,7 +14,6 @@
 #include "main.h"
 #include "render/compositor.h"
 #include "render/effects.h"
-#include "win/space.h"
 
 #include <Wrapland/Server/seat.h>
 

@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
+#include "tabbox_client_impl.h"
 #include "tabbox_config.h"
 #include "tabbox_handler_impl.h"
 #include "tabbox_logging.h"
@@ -35,6 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "main.h"
 #include "win/activation.h"
 
+#include <KGlobalAccel>
 #include <KLazyLocalizedString>
 #include <QAction>
 #include <QKeyEvent>

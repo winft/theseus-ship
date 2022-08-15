@@ -5,9 +5,6 @@
 */
 #pragma once
 
-// TODO(romangg): It's member of the templated space, so shouldn't be necessary to include.
-#include "user_actions_menu.h"
-
 #include "setup.h"
 #include "x11/hide.h"
 #include "x11/tool_windows.h"

@@ -15,7 +15,6 @@
 #include "input/xkb/helpers.h"
 #include "main.h"
 #include "win/input.h"
-#include "win/space.h"
 
 #include <Wrapland/Server/keyboard_pool.h>
 #include <Wrapland/Server/seat.h>

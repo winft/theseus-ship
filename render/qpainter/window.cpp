@@ -11,6 +11,7 @@
 #include "scene.h"
 #include "shadow.h"
 
+#include "win/deco/client_impl.h"
 #include "win/geo.h"
 #include "win/scene.h"
 #include "win/x11/window.h"
@@ -168,7 +169,7 @@ void window::renderWindowDecorations(QPainter* painter)
 
     if (ctrl && !toplevel->noBorder()) {
         if (win::decoration(toplevel)) {
-            if (auto r = static_cast<deco_renderer<win::deco::client_impl>*>(
+            if (auto r = static_cast<deco_renderer<win::deco::client_impl<Toplevel>>*>(
                     ctrl->deco.client->renderer())) {
                 r->render();
                 deco_data = static_cast<deco_render_data const*>(r->data.get());

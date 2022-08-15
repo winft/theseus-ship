@@ -18,7 +18,6 @@
 #include "input/xkb/helpers.h"
 #include "win/deco.h"
 #include "win/internal_window.h"
-#include "win/space.h"
 
 #include <QWindow>
 #include <Wrapland/Server/seat.h>

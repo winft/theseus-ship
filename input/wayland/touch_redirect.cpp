@@ -157,8 +157,8 @@ void touch_redirect::cleanupInternalWindow(QWindow* /*old*/, QWindow* /*now*/)
     // nothing to do
 }
 
-void touch_redirect::cleanupDecoration(win::deco::client_impl* /*old*/,
-                                       win::deco::client_impl* /*now*/)
+void touch_redirect::cleanupDecoration(win::deco::client_impl<Toplevel>* /*old*/,
+                                       win::deco::client_impl<Toplevel>* /*now*/)
 {
     // nothing to do
 }

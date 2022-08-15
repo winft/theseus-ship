@@ -10,7 +10,7 @@
 
 #include "debug/console/console.h"
 #include "debug/perf/ftrace.h"
-#include "win/space.h"
+#include "win/space_qobject.h"
 
 #include <QDBusServiceWatcher>
 

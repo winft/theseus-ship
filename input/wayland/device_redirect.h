@@ -79,8 +79,8 @@ void device_redirect_set_focus(Dev* dev, Toplevel* window)
     // TODO: call focusUpdate?
 }
 
-template<typename Dev>
-void device_redirect_set_decoration(Dev* dev, win::deco::client_impl* deco)
+template<typename Deco, typename Dev>
+void device_redirect_set_decoration(Dev* dev, Deco* deco)
 {
     QObject::disconnect(dev->focus.notifiers.deco_destroy);
     auto old_deco = dev->focus.deco;

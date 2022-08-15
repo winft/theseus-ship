@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "deco/client_impl.h"
+#include "deco/client_impl_qobject.h"
 #include "deco/palette.h"
 #include "types.h"
 
@@ -28,6 +28,8 @@ namespace win
 
 namespace deco
 {
+template<typename RefWin>
+class client_impl;
 template<typename RefWin>
 class window;
 }
@@ -52,7 +54,7 @@ struct deco_impl {
 
     deco::window<RefWin>* window{nullptr};
     KDecoration2::Decoration* decoration{nullptr};
-    deco::client_impl* client{nullptr};
+    deco::client_impl<RefWin>* client{nullptr};
 
     struct {
     private:
@@ -84,7 +86,7 @@ struct deco_impl {
     deco_impl(deco_impl&& source) noexcept = delete;
     deco_impl& operator=(deco_impl&& source) noexcept = delete;
 
-    void set_client(deco::client_impl* client)
+    void set_client(deco::client_impl<RefWin>* client)
     {
         assert(client);
         assert(!client_destroy);

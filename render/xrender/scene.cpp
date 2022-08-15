@@ -116,7 +116,8 @@ std::unique_ptr<render::shadow> scene::createShadow(Toplevel* toplevel)
     return std::make_unique<shadow>(toplevel);
 }
 
-win::deco::client_impl::renderer_t* scene::createDecorationRenderer(win::deco::client_impl* client)
+win::deco::client_impl<Toplevel>::renderer_t*
+scene::createDecorationRenderer(win::deco::client_impl<Toplevel>* client)
 {
     return new deco_renderer(client);
 }

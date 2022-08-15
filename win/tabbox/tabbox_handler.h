@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define TABBOXHANDLER_H
 
 #include "kwin_export.h"
+#include "tabbox_client.h"
 #include "tabbox_config.h"
 
 #include <QModelIndex>
@@ -86,7 +87,6 @@ namespace win
 class tabbox_desktop_model;
 class tabbox_client_model;
 class tabbox_config;
-class tabbox_client;
 class tabbox_handler_private;
 
 using tabbox_client_list = std::vector<std::weak_ptr<tabbox_client>>;

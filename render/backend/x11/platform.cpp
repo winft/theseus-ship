@@ -238,12 +238,12 @@ outline_visual* platform::create_non_composited_outline(render::outline* outline
     return new non_composited_outline(outline);
 }
 
-win::deco::client_impl::renderer_t*
-platform::createDecorationRenderer(win::deco::client_impl* client)
+win::deco::renderer<win::deco::client_impl<Toplevel>>*
+platform::createDecorationRenderer(win::deco::client_impl<Toplevel>* client)
 {
     if (!compositor->scene) {
         // Non-composited fallback
-        return new deco_renderer<win::deco::client_impl>(client);
+        return new deco_renderer<win::deco::client_impl<Toplevel>>(client);
     }
     return compositor->scene->createDecorationRenderer(client);
 }

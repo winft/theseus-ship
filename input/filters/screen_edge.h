@@ -12,7 +12,6 @@
 #include "input/redirect.h"
 #include "main.h"
 #include "win/screen_edges.h"
-#include "win/space.h"
 
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/touch_pool.h>

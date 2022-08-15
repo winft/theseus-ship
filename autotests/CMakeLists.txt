@@ -151,6 +151,7 @@ ecm_mark_as_test(testGestures)
 ########################################################
 add_executable(testX11TimestampUpdate test_x11_timestamp_update.cpp)
 target_link_libraries(testX11TimestampUpdate
+    kwin
     kwin_x11_lib
     Qt::Test
 )

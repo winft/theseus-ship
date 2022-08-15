@@ -144,7 +144,7 @@ void pointer_redirect::update_to_reset()
     if (auto focus_deco = focus.deco) {
         QHoverEvent event(QEvent::HoverLeave, QPointF(), QPointF());
         QCoreApplication::instance()->sendEvent(focus_deco->decoration(), &event);
-        device_redirect_set_decoration(this, nullptr);
+        device_redirect_set_decoration<win::deco::client_impl<Toplevel>>(this, nullptr);
     }
     if (auto focus_window = focus.window) {
         if (focus_window->control) {
@@ -368,7 +368,8 @@ void pointer_redirect::cleanupInternalWindow(QWindow* old, QWindow* now)
     }
 }
 
-void pointer_redirect::cleanupDecoration(win::deco::client_impl* old, win::deco::client_impl* now)
+void pointer_redirect::cleanupDecoration(win::deco::client_impl<Toplevel>* old,
+                                         win::deco::client_impl<Toplevel>* now)
 {
     QObject::disconnect(notifiers.decoration_geometry);
     notifiers.decoration_geometry = QMetaObject::Connection();

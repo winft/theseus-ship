@@ -17,6 +17,7 @@
 #include "main.h"
 #include "toplevel.h"
 #include "utils/algorithm.h"
+#include "win/deco/client_impl.h"
 #include "win/geo.h"
 
 #include <cmath>
@@ -176,7 +177,7 @@ GLTexture* window::getDecorationTexture() const
         if (!win::decoration(toplevel)) {
             return nullptr;
         }
-        if (auto renderer = static_cast<deco_renderer<win::deco::client_impl>*>(
+        if (auto renderer = static_cast<deco_renderer<win::deco::client_impl<Toplevel>>*>(
                 toplevel->control->deco.client->renderer())) {
             renderer->render();
             return renderer->texture();

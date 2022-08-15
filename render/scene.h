@@ -48,6 +48,7 @@ class output;
 
 namespace win::deco
 {
+template<typename Window>
 class client_impl;
 template<typename Client>
 class renderer;
@@ -121,8 +122,8 @@ public:
 
     virtual void triggerFence();
 
-    virtual win::deco::renderer<win::deco::client_impl>*
-    createDecorationRenderer(win::deco::client_impl*)
+    virtual win::deco::renderer<win::deco::client_impl<Toplevel>>*
+    createDecorationRenderer(win::deco::client_impl<Toplevel>*)
         = 0;
 
     /**

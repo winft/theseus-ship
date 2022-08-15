@@ -9,10 +9,12 @@
 #include "deco_shadow.h"
 #include "effect/window_impl.h"
 #include "effects.h"
+#include "platform.h"
 #include "shadow.h"
 
 #include "toplevel.h"
 #include "win/geo.h"
+#include "win/space.h"
 #include "win/transient.h"
 
 namespace KWin::render

@@ -461,7 +461,6 @@ set(kwin_SRCS
     win/dbus/appmenu.cpp
     win/dbus/virtual_desktop_manager.cpp
     win/dbus/virtual_desktop_types.cpp
-    win/deco/client_impl.cpp
     win/deco/bridge.cpp
     win/deco/palette.cpp
     win/deco/decorations_logging.cpp
@@ -489,6 +488,7 @@ set(kwin_SRCS
     win/x11/window.cpp
 
     # These headers need to be compiled for the helper QObjects they contain.
+    win/deco/client_impl_qobject.h
     win/deco/renderer.h
     win/stacking_order.h
 )
