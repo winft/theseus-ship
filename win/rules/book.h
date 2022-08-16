@@ -8,6 +8,8 @@
 
 #include "window.h"
 
+#include <deque>
+
 class KXMessages;
 
 namespace KWin::win::rules
@@ -39,7 +41,7 @@ public:
 
     std::unique_ptr<book_qobject> qobject;
     KSharedConfig::Ptr config;
-    QList<ruling*> m_rules;
+    std::deque<ruling*> m_rules;
 
 private:
     void initWithX11();
@@ -48,7 +50,7 @@ private:
 
     QTimer* m_updateTimer;
     bool m_updatesDisabled;
-    QScopedPointer<KXMessages> m_temporaryRulesMessages;
+    std::unique_ptr<KXMessages> m_temporaryRulesMessages;
 };
 
 }

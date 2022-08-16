@@ -38,14 +38,14 @@ book_settings::~book_settings()
     qDeleteAll(m_list);
 }
 
-void book_settings::setRules(QVector<ruling*> const& rules)
+void book_settings::setRules(std::vector<ruling*> const& rules)
 {
-    mCount = rules.count();
+    mCount = rules.size();
     mRuleGroupList.clear();
-    mRuleGroupList.reserve(rules.count());
+    mRuleGroupList.reserve(rules.size());
 
-    int i = 0;
-    const int list_length = m_list.length();
+    size_t i{0};
+    auto const list_length = m_list.size();
     for (const auto& rule : rules) {
         rules::settings* settings;
         if (i < list_length) {
@@ -55,7 +55,7 @@ void book_settings::setRules(QVector<ruling*> const& rules)
         } else {
             // If there are more rules than in cache
             settings = new rules::settings(this->sharedConfig(), QString::number(i + 1), this);
-            m_list.append(settings);
+            m_list.push_back(settings);
         }
 
         rule->write(settings);
@@ -64,18 +64,21 @@ void book_settings::setRules(QVector<ruling*> const& rules)
         i++;
     }
 
-    for (int j = m_list.count() - 1; j >= rules.count(); j--) {
+    if (m_list.empty()) {
+        return;
+    }
+
+    for (size_t j = m_list.size() - 1; j >= rules.size(); j--) {
         delete m_list[j];
-        m_list.removeAt(j);
+        m_list.erase(m_list.begin() + j);
     }
 }
 
-QVector<ruling*> book_settings::rules()
+std::deque<ruling*> book_settings::rules()
 {
-    QVector<ruling*> result;
-    result.reserve(m_list.count());
-    for (auto const& settings : qAsConst(m_list)) {
-        result.append(new ruling(settings));
+    std::deque<ruling*> result;
+    for (auto const& settings : m_list) {
+        result.push_back(new ruling(settings));
     }
     return result;
 }
@@ -83,7 +86,7 @@ QVector<ruling*> book_settings::rules()
 bool book_settings::usrSave()
 {
     bool result = true;
-    for (const auto& settings : qAsConst(m_list)) {
+    for (const auto& settings : m_list) {
         result &= settings->save();
     }
 
@@ -115,9 +118,8 @@ void book_settings::usrRead()
     mCount = mRuleGroupList.count();
     m_storedGroups = mRuleGroupList;
 
-    m_list.reserve(mRuleGroupList.count());
     for (const QString& groupName : qAsConst(mRuleGroupList)) {
-        m_list.append(new settings(sharedConfig(), groupName, this));
+        m_list.push_back(new settings(sharedConfig(), groupName, this));
     }
 }
 
@@ -128,47 +130,50 @@ bool book_settings::usrIsSaveNeeded() const
            });
 }
 
-int book_settings::ruleCount() const
+size_t book_settings::ruleCount() const
 {
-    return m_list.count();
+    return m_list.size();
 }
 
-settings* book_settings::ruleSettingsAt(int row) const
+settings* book_settings::ruleSettingsAt(size_t row) const
 {
-    Q_ASSERT(row >= 0 && row < m_list.count());
+    assert(row < m_list.size());
     return m_list.at(row);
 }
 
-settings* book_settings::insertRuleSettingsAt(int row)
+settings* book_settings::insertRuleSettingsAt(size_t row)
 {
-    Q_ASSERT(row >= 0 && row < m_list.count() + 1);
+    assert(row < m_list.size() + 1);
 
     const QString groupName = generateGroupName();
     auto settings = new rules::settings(sharedConfig(), groupName, this);
     settings->setDefaults();
 
-    m_list.insert(row, settings);
+    m_list.insert(m_list.begin() + row, settings);
     mRuleGroupList.insert(row, groupName);
     mCount++;
 
     return settings;
 }
 
-void book_settings::removeRuleSettingsAt(int row)
+void book_settings::removeRuleSettingsAt(size_t row)
 {
-    Q_ASSERT(row >= 0 && row < m_list.count());
+    assert(row < m_list.size());
 
     delete m_list.at(row);
-    m_list.removeAt(row);
+    m_list.erase(m_list.begin() + row);
     mRuleGroupList.removeAt(row);
     mCount--;
 }
 
-void book_settings::moveRuleSettings(int srcRow, int destRow)
+void book_settings::moveRuleSettings(size_t srcRow, size_t destRow)
 {
-    Q_ASSERT(srcRow >= 0 && srcRow < m_list.count() && destRow >= 0 && destRow < m_list.count());
+    assert(srcRow < m_list.size() && destRow < m_list.size());
 
-    m_list.insert(destRow, m_list.takeAt(srcRow));
+    auto el = m_list.at(srcRow);
+    m_list.erase(m_list.begin() + srcRow);
+
+    m_list.insert(m_list.begin() + destRow, el);
     mRuleGroupList.insert(destRow, mRuleGroupList.takeAt(srcRow));
 }
 

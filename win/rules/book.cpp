@@ -48,9 +48,9 @@ void book::initWithX11()
         m_temporaryRulesMessages.reset();
         return;
     }
-    m_temporaryRulesMessages.reset(
-        new KXMessages(c, kwinApp()->x11RootWindow(), "_KDE_NET_WM_TEMPORARY_RULES", nullptr));
-    QObject::connect(m_temporaryRulesMessages.data(),
+    m_temporaryRulesMessages = std::make_unique<KXMessages>(
+        c, kwinApp()->x11RootWindow(), "_KDE_NET_WM_TEMPORARY_RULES", nullptr);
+    QObject::connect(m_temporaryRulesMessages.get(),
                      &KXMessages::gotMessage,
                      qobject.get(),
                      [this](auto const& message) { temporaryRulesMessage(message); });
@@ -74,7 +74,7 @@ void book::load()
 
     book_settings book(config);
     book.load();
-    m_rules = book.rules().toList();
+    m_rules = book.rules();
 }
 
 void book::save()
@@ -86,10 +86,10 @@ void book::save()
         return;
     }
 
-    QVector<ruling*> filteredRules;
+    std::vector<ruling*> filteredRules;
     for (const auto& rule : qAsConst(m_rules)) {
         if (!rule->isTemporary()) {
-            filteredRules.append(rule);
+            filteredRules.push_back(rule);
         }
     }
 
@@ -101,8 +101,8 @@ void book::save()
 void book::temporaryRulesMessage(const QString& message)
 {
     auto was_temporary = false;
-    for (auto it = m_rules.constBegin(); it != m_rules.constEnd(); ++it) {
-        if ((*it)->isTemporary()) {
+    for (auto&& rule : m_rules) {
+        if (rule->isTemporary()) {
             was_temporary = true;
         }
     }
@@ -110,7 +110,7 @@ void book::temporaryRulesMessage(const QString& message)
     auto rule = new ruling(message, true);
 
     // highest priority first
-    m_rules.prepend(rule);
+    m_rules.push_front(rule);
 
     if (!was_temporary) {
         QTimer::singleShot(60000, qobject.get(), [this] { cleanupTemporaryRules(); });

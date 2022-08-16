@@ -9,7 +9,10 @@
 #define KWIN_RULES_RULE_BOOK_SETTINGS_H
 
 #include "rules_book_settings_base.h"
+
 #include <KSharedConfig>
+#include <deque>
+#include <vector>
 
 namespace KWin::win::rules
 {
@@ -26,23 +29,23 @@ public:
     book_settings(QObject* parent = nullptr);
     ~book_settings();
 
-    void setRules(QVector<ruling*> const&);
-    QVector<ruling*> rules();
+    void setRules(std::vector<ruling*> const&);
+    std::deque<ruling*> rules();
 
     bool usrSave() override;
     void usrRead() override;
     bool usrIsSaveNeeded() const;
 
-    int ruleCount() const;
-    settings* ruleSettingsAt(int row) const;
-    settings* insertRuleSettingsAt(int row);
-    void removeRuleSettingsAt(int row);
-    void moveRuleSettings(int srcRow, int destRow);
+    size_t ruleCount() const;
+    settings* ruleSettingsAt(size_t row) const;
+    settings* insertRuleSettingsAt(size_t row);
+    void removeRuleSettingsAt(size_t row);
+    void moveRuleSettings(size_t srcRow, size_t destRow);
 
 private:
     static QString generateGroupName();
 
-    QVector<settings*> m_list;
+    std::deque<settings*> m_list;
     QStringList m_storedGroups;
 };
 
