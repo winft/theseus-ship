@@ -7,7 +7,6 @@
 #pragma once
 
 #include <QRect>
-#include <QVector>
 #include <netwm_def.h>
 
 #include "base/options.h"
@@ -16,6 +15,7 @@
 #include "win/types.h"
 
 #include <functional>
+#include <vector>
 
 class QDebug;
 class KConfig;
@@ -39,7 +39,7 @@ class ruling;
 class KWIN_EXPORT window
 {
 public:
-    explicit window(QVector<ruling*> const& rules);
+    explicit window(std::vector<ruling*> const& rules);
     window();
 
     void update(Toplevel* window, int selection);
@@ -89,10 +89,10 @@ private:
     template<typename T, typename F>
     T check_set(T data, bool init, F apply_call) const
     {
-        if (rules.count() == 0) {
+        if (rules.size() == 0) {
             return data;
         }
-        for (auto rule : qAsConst(rules)) {
+        for (auto&& rule : rules) {
             if (std::invoke(apply_call, rule, data, init)) {
                 break;
             }
@@ -103,10 +103,10 @@ private:
     template<typename T, typename F>
     T check_force(T data, F apply_call) const
     {
-        if (rules.count() == 0) {
+        if (rules.size() == 0) {
             return data;
         }
-        for (auto rule : qAsConst(rules)) {
+        for (auto&& rule : rules) {
             if (std::invoke(apply_call, rule, data)) {
                 break;
             }
@@ -114,7 +114,7 @@ private:
         return data;
     }
 
-    QVector<ruling*> rules;
+    std::vector<ruling*> rules;
 };
 
 }

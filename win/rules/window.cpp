@@ -25,8 +25,8 @@
 namespace KWin::win::rules
 {
 
-window::window(QVector<ruling*> const& r)
-    : rules(r)
+window::window(std::vector<ruling*> const& rules)
+    : rules{rules}
 {
 }
 
@@ -36,12 +36,12 @@ window::window()
 
 bool window::contains(ruling const* rule) const
 {
-    return rules.contains(const_cast<ruling*>(rule));
+    return KWin::contains(rules, const_cast<ruling*>(rule));
 }
 
 void window::remove(ruling* rule)
 {
-    rules.removeOne(rule);
+    remove_all(rules, rule);
 }
 
 void window::discardTemporary()
@@ -60,8 +60,8 @@ void window::discardTemporary()
 void window::update(Toplevel* window, int selection)
 {
     bool updated = false;
-    for (auto it = rules.constBegin(); it != rules.constEnd(); ++it) {
-        if ((*it)->update(window, selection)) {
+    for (auto&& rule : rules) {
+        if (rule->update(window, selection)) {
             // no short-circuiting here
             updated = true;
         }
@@ -250,15 +250,15 @@ maximize_mode window::checkMaximize(maximize_mode mode, bool init) const
 
 base::output const* window::checkScreen(base::output const* output, bool init) const
 {
-    if (rules.count() == 0) {
+    if (rules.size() == 0) {
         return output;
     }
 
     auto const& outputs = kwinApp()->get_base().get_outputs();
     int index = output ? base::get_output_index(outputs, *output) : 0;
 
-    for (auto it = rules.constBegin(); it != rules.constEnd(); ++it) {
-        if ((*it)->applyScreen(index, init))
+    for (auto&& rule : rules) {
+        if (rule->applyScreen(index, init))
             break;
     }
 

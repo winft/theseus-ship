@@ -15,7 +15,7 @@ namespace KWin::win::rules
 template<typename Book, typename RefWin>
 window find_window(Book& book, RefWin& ref_win, bool ignore_temporary)
 {
-    QVector<ruling*> ret;
+    std::vector<ruling*> ret;
 
     for (auto it = book.m_rules.begin(); it != book.m_rules.end();) {
         if (ignore_temporary && (*it)->isTemporary()) {
@@ -31,7 +31,7 @@ window find_window(Book& book, RefWin& ref_win, bool ignore_temporary)
             } else {
                 ++it;
             }
-            ret.append(rule);
+            ret.push_back(rule);
             continue;
         }
         ++it;
