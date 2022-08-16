@@ -6,7 +6,8 @@
 */
 #pragma once
 
-#include "kwin_export.h"
+#include "osd_notification.h"
+
 #include "utils/flags.h"
 
 #include <QString>
@@ -14,21 +15,74 @@
 namespace KWin::win
 {
 
-class space;
-
-KWIN_EXPORT void
-osd_show(win::space& space, QString const& message, QString const& iconName = QString());
-KWIN_EXPORT void osd_show(win::space& space, QString const& message, int timeout);
-KWIN_EXPORT void
-osd_show(win::space& space, QString const& message, QString const& iconName, int timeout);
-
 enum class osd_hide_flags {
     none = 0x0,
     skip_close_animation = 0x1,
 };
 
-KWIN_EXPORT void osd_hide(win::space& space, osd_hide_flags hide_flags = osd_hide_flags::none);
-
 }
 
 ENUM_FLAGS(KWin::win::osd_hide_flags)
+
+namespace KWin::win
+{
+
+template<typename Space>
+void create_osd(Space& space)
+{
+    assert(!space.osd);
+    space.osd = std::make_unique<osd_notification<input::redirect>>(space.input.get());
+
+    space.osd->m_config = kwinApp()->config();
+    space.osd->m_qmlEngine = space.scripting->qml_engine;
+}
+
+template<typename Space>
+void osd_show(Space& space, QString const& message, QString const& iconName, int timeout)
+{
+    if (!kwinApp()->shouldUseWaylandForCompositing()) {
+        // FIXME: only supported on Wayland
+        return;
+    }
+
+    auto notification = get_osd(space);
+    notification->qobject->setIconName(iconName);
+    notification->qobject->setMessage(message);
+    notification->qobject->setTimeout(timeout);
+    notification->qobject->setVisible(true);
+}
+
+template<typename Space>
+osd_notification<input::redirect>* get_osd(Space& space)
+{
+    if (!space.osd) {
+        create_osd(space);
+    }
+    return space.osd.get();
+}
+
+template<typename Space>
+void osd_show(Space& space, QString const& message, QString const& iconName = QString())
+{
+    osd_show(space, message, iconName, 0);
+}
+
+template<typename Space>
+void osd_show(Space& space, QString const& message, int timeout)
+{
+    osd_show(space, message, QString(), timeout);
+}
+
+template<typename Space>
+void osd_hide(Space& space, osd_hide_flags hide_flags = osd_hide_flags::none)
+{
+    if (!kwinApp()->shouldUseWaylandForCompositing()) {
+        // FIXME: only supported on Wayland
+        return;
+    }
+
+    get_osd(space)->setSkipCloseAnimation(flags(hide_flags & osd_hide_flags::skip_close_animation));
+    get_osd(space)->qobject->setVisible(false);
+}
+
+}

@@ -466,7 +466,6 @@ set(kwin_SRCS
     win/deco/settings.cpp
     win/internal_window.cpp
     win/osd_notification.cpp
-    win/osd.cpp
     win/property_window.cpp
     win/rules/book.cpp
     win/rules/book_settings.cpp
