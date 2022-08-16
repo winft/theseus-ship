@@ -5,7 +5,6 @@
 */
 #pragma once
 
-#include "control.h"
 #include "net.h"
 #include "remnant.h"
 

@@ -6,6 +6,7 @@
 #pragma once
 
 #include "layers.h"
+#include "rules/types.h"
 #include "scene.h"
 
 namespace KWin::win

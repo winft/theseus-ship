@@ -5,7 +5,6 @@
 */
 #pragma once
 
-#include "control.h"
 #include "focus_chain_edit.h"
 #include "net.h"
 

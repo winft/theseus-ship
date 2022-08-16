@@ -46,11 +46,11 @@ Q_DECLARE_METATYPE(NET::WindowType)
 namespace KWin::win
 {
 
-class internal_control : public control
+class internal_control : public control<Toplevel>
 {
 public:
     internal_control(internal_window* client)
-        : control(client)
+        : control<Toplevel>(client)
         , m_client{client}
 
     {
@@ -67,7 +67,7 @@ public:
         }
 
         auto const client_geo = win::frame_to_client_rect(m_client, m_client->frameGeometry());
-        control::destroy_decoration();
+        control<Toplevel>::destroy_decoration();
         m_client->setFrameGeometry(client_geo);
     }
 

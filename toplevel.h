@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/output.h"
 #include "base/x11/xcb/window.h"
 #include "input/cursor.h"
+#include "win/control.h"
 #include "win/remnant.h"
 #include "win/rules/ruling.h"
 #include "win/virtual_desktops.h"
@@ -65,7 +66,6 @@ class client_machine;
 class group;
 }
 
-class control;
 class space;
 
 template<typename Window>
@@ -343,7 +343,7 @@ private:
     std::unique_ptr<win::transient<Toplevel>> m_transient;
 
 public:
-    std::unique_ptr<win::control> control;
+    std::unique_ptr<win::control<Toplevel>> control;
     std::optional<win::remnant> remnant;
 
     win::transient<Toplevel>* transient() const;

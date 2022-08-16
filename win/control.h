@@ -1,16 +1,19 @@
 /*
-    SPDX-FileCopyrightText: 2020 Roman Gilg <subdiff@gmail.com>
+    SPDX-FileCopyrightText: 2022 Roman Gilg <subdiff@gmail.com>
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #pragma once
 
 #include "appmenu.h"
+#include "config-kwin.h"
+#include "geo.h"
+#include "stacking.h"
 #include "structs.h"
 #include "types.h"
 #include "virtual_desktops.h"
 
-#include "kwin_export.h"
+#include "main.h"
 #include "rules/window.h"
 #include "scripting/window.h"
 
@@ -20,78 +23,201 @@
 
 #include <memory>
 
-namespace Wrapland
-{
-namespace Server
+namespace Wrapland::Server
 {
 class PlasmaWindow;
 }
-}
 
-class QTimer;
-
-namespace KWin
+namespace KWin::win
 {
-class Toplevel;
-
-namespace win
-{
-
-namespace deco
-{
-class palette;
-}
 
 template<typename Window>
 class tabbox_client_impl;
 
-class KWIN_EXPORT control
+template<typename Window>
+class control
 {
 public:
-    explicit control(Toplevel* win);
-    virtual ~control();
+    explicit control(Window* win)
+        : m_win{win}
+    {
+    }
 
-    void setup_tabbox();
+    virtual ~control()
+    {
+        assert(deco.decoration == nullptr);
+    }
+
+    void setup_tabbox()
+    {
+        assert(!m_tabbox);
+#if KWIN_BUILD_TABBOX
+        m_tabbox = std::make_shared<win::tabbox_client_impl<Window>>(m_win);
+#endif
+    }
 
     virtual void set_desktops(QVector<virtual_desktop*> desktops) = 0;
 
-    bool skip_pager() const;
-    virtual void set_skip_pager(bool set);
+    bool skip_pager() const
+    {
+        return m_skip_pager;
+    }
 
-    bool skip_switcher() const;
-    virtual void set_skip_switcher(bool set);
+    virtual void set_skip_pager(bool set)
+    {
+        m_skip_pager = set;
+    }
 
-    bool skip_taskbar() const;
-    virtual void set_skip_taskbar(bool set);
+    bool skip_switcher() const
+    {
+        return m_skip_switcher;
+    }
 
-    std::weak_ptr<win::tabbox_client_impl<Toplevel>> tabbox() const;
+    virtual void set_skip_switcher(bool set)
+    {
+        m_skip_switcher = set;
+    }
 
-    bool has_application_menu() const;
-    void set_application_menu_active(bool active);
+    bool skip_taskbar() const
+    {
+        return m_skip_taskbar;
+    }
 
-    void update_application_menu(appmenu_address const& address);
+    virtual void set_skip_taskbar(bool set)
+    {
+        m_skip_taskbar = set;
+    }
 
-    void set_shortcut(QString const& shortcut);
+    std::weak_ptr<win::tabbox_client_impl<Window>> tabbox() const
+    {
+        return m_tabbox;
+    }
 
-    void set_unresponsive(bool unresponsive);
+    bool has_application_menu() const
+    {
+        return m_win->space.appmenu->applicationMenuEnabled() && !appmenu.address.empty();
+    }
 
-    void start_auto_raise();
-    void cancel_auto_raise();
+    void set_application_menu_active(bool active)
+    {
+        if (appmenu.active == active) {
+            return;
+        }
+        appmenu.active = active;
+        Q_EMIT m_win->qobject->applicationMenuActiveChanged(active);
+    }
 
-    virtual void update_mouse_grab();
+    void update_application_menu(appmenu_address const& address)
+    {
+        if (address == appmenu.address) {
+            return;
+        }
 
-    virtual void destroy_plasma_wayland_integration();
+        auto const had_menu = has_application_menu();
 
-    void update_have_resize_effect();
+        appmenu.address = address;
+        Q_EMIT m_win->qobject->applicationMenuChanged();
 
-    virtual QSize adjusted_frame_size(QSize const& frame_size, size_mode mode);
-    virtual bool can_fullscreen() const;
-    virtual void destroy_decoration();
+        auto const has_menu = has_application_menu();
 
-    void setup_color_scheme();
+        if (had_menu != has_menu) {
+            Q_EMIT m_win->qobject->hasApplicationMenuChanged(has_menu);
+        }
+    }
 
-    void remove_rule(rules::ruling* r);
-    void discard_temporary_rules();
+    void set_shortcut(QString const& shortcut)
+    {
+        this->shortcut = QKeySequence::fromString(shortcut);
+    }
+
+    void set_unresponsive(bool unresponsive)
+    {
+        if (this->unresponsive == unresponsive) {
+            return;
+        }
+        this->unresponsive = unresponsive;
+        Q_EMIT m_win->qobject->unresponsiveChanged(unresponsive);
+        Q_EMIT m_win->qobject->captionChanged();
+    }
+
+    void start_auto_raise()
+    {
+        delete m_auto_raise_timer;
+        m_auto_raise_timer = new QTimer(m_win->qobject.get());
+        QObject::connect(m_auto_raise_timer, &QTimer::timeout, m_win->qobject.get(), [this] {
+            auto_raise(m_win);
+        });
+        m_auto_raise_timer->setSingleShot(true);
+        m_auto_raise_timer->start(kwinApp()->options->qobject->autoRaiseInterval());
+    }
+
+    void cancel_auto_raise()
+    {
+        delete m_auto_raise_timer;
+        m_auto_raise_timer = nullptr;
+    }
+
+    virtual void update_mouse_grab()
+    {
+    }
+
+    virtual void destroy_plasma_wayland_integration()
+    {
+    }
+
+    void update_have_resize_effect()
+    {
+        auto& effects = m_win->space.render.effects;
+        have_resize_effect = effects && effects->provides(Effect::Resize);
+    }
+
+    virtual QSize adjusted_frame_size(QSize const& frame_size, size_mode /*mode*/)
+    {
+        auto const border_size = win::frame_size(m_win);
+
+        auto const min_size = m_win->minSize() + border_size;
+        auto max_size = m_win->maxSize();
+
+        // Maximum size need to be checked for overflow.
+        if (INT_MAX - border_size.width() >= max_size.width()) {
+            max_size.setWidth(max_size.width() + border_size.width());
+        }
+        if (INT_MAX - border_size.height() >= max_size.height()) {
+            max_size.setWidth(max_size.height() + border_size.height());
+        }
+
+        return frame_size.expandedTo(min_size).boundedTo(max_size);
+    }
+
+    virtual bool can_fullscreen() const
+    {
+        return false;
+    }
+
+    virtual void destroy_decoration()
+    {
+        QObject::disconnect(deco.client_destroy);
+        delete deco.decoration;
+        deco.decoration = nullptr;
+
+        delete deco.window;
+        deco.window = nullptr;
+    }
+
+    void setup_color_scheme()
+    {
+        palette.color_scheme = QStringLiteral("kdeglobals");
+    }
+
+    void remove_rule(rules::ruling* rule)
+    {
+        rules.remove(rule);
+    }
+
+    void discard_temporary_rules()
+    {
+        rules.discardTemporary();
+    }
 
     std::unique_ptr<scripting::window_impl> scripting;
     Wrapland::Server::PlasmaWindow* plasma_wayland_integration{nullptr};
@@ -120,7 +246,7 @@ public:
     bool fullscreen{false};
     bool minimized{false};
     win::move_resize_op move_resize;
-    win::deco_impl<Toplevel> deco;
+    win::deco_impl<Window> deco;
     win::palette palette;
     rules::window rules;
 
@@ -132,12 +258,11 @@ private:
     bool m_skip_pager{false};
     bool m_skip_switcher{false};
 
-    std::shared_ptr<win::tabbox_client_impl<Toplevel>> m_tabbox;
+    std::shared_ptr<win::tabbox_client_impl<Window>> m_tabbox;
 
     QTimer* m_auto_raise_timer{nullptr};
 
-    Toplevel* m_win;
+    Window* m_win;
 };
 
-}
 }

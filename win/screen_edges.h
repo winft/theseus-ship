@@ -12,6 +12,7 @@
 
 #include "move.h"
 #include "singleton_interface.h"
+#include "virtual_desktops.h"
 
 #include "base/x11/xcb/helpers.h"
 #include "input/gestures.h"

@@ -5,7 +5,6 @@
 */
 #pragma once
 
-#include "control.h"
 #include "structs.h"
 
 #include <KDecoration2/Decoration>

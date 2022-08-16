@@ -46,6 +46,7 @@ class window : public Toplevel
 {
 public:
     constexpr static bool is_toplevel{false};
+    using window_t = Toplevel;
 
     enum class ping_reason {
         close = 0,

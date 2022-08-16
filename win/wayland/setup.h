@@ -7,7 +7,6 @@
 
 #include "win/actions.h"
 #include "win/activation.h"
-#include "win/control.h"
 #include "win/meta.h"
 #include "win/move.h"
 #include "win/screen.h"

@@ -30,7 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "main.h"
 #include "render/scene.h"
-#include "win/control.h"
 #include "win/deco.h"
 
 #include <kwineffects/effect_plugin_factory.h>
