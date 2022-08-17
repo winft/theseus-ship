@@ -63,7 +63,7 @@ template<typename Space>
 void start_window_killer(Space& space)
 {
     if (!space.window_killer) {
-        space.window_killer = std::make_unique<kill_window<Space>>(space);
+        space.window_killer = std::make_unique<kill_window<typename Space::space_t>>(space);
     }
     space.window_killer->start();
 }

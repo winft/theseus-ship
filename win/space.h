@@ -83,6 +83,7 @@ class shortcut_dialog;
 class space
 {
 public:
+    using space_t = space;
     using qobject_t = space_qobject;
     using window_t = Toplevel;
 

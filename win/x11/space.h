@@ -32,7 +32,6 @@ template<typename Base>
 class space : public win::space
 {
 public:
-    using space_t = win::space;
     using x11_window = window;
 
     space(Base& base)
