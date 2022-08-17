@@ -77,18 +77,20 @@ public:
     const QRegion& shadowRegion() const
     {
         return m_shadowRegion;
-    };
+    }
+
     /**
      * @return Cached Shadow Quads
      */
     const WindowQuadList& shadowQuads() const
     {
         return m_shadowQuads;
-    };
+    }
+
     WindowQuadList& shadowQuads()
     {
         return m_shadowQuads;
-    };
+    }
 
     /**
      * This method updates the Shadow when the property has been changed.
@@ -106,12 +108,14 @@ public:
     {
         return !m_decorationShadow.isNull();
     }
+
     QImage decorationShadowImage() const;
 
     QWeakPointer<KDecoration2::DecorationShadow> decorationShadow() const
     {
         return m_decorationShadow.toWeakRef();
     }
+
     QMargins margins() const;
 
     void updateShadowRegion();
@@ -147,25 +151,31 @@ protected:
     int topOffset() const
     {
         return m_topOffset;
-    };
+    }
+
     int rightOffset() const
     {
         return m_rightOffset;
-    };
+    }
+
     int bottomOffset() const
     {
         return m_bottomOffset;
-    };
+    }
+
     int leftOffset() const
     {
         return m_leftOffset;
-    };
+    }
+
     void setShadowRegion(const QRegion& region)
     {
         m_shadowRegion = region;
-    };
-    WindowQuadList m_shadowQuads;
+    }
+
     void setShadowElement(const QPixmap& shadow, shadow_element element);
+
+    WindowQuadList m_shadowQuads;
 
 private:
     // caches
