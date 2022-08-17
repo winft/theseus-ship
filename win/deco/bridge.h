@@ -20,8 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include <config-kwin.h>
-#include <kwin_export.h>
 
+#include "bridge_qobject.h"
 #include "client_impl.h"
 #include "decorations_logging.h"
 #include "renderer.h"
@@ -49,16 +49,6 @@ class DecorationSettings;
 
 namespace KWin::win::deco
 {
-
-class KWIN_EXPORT bridge_qobject : public QObject
-{
-    Q_OBJECT
-public:
-    ~bridge_qobject() override;
-
-Q_SIGNALS:
-    void metaDataLoaded();
-};
 
 static const QString s_aurorae = QStringLiteral("org.kde.kwin.aurorae");
 static const QString s_pluginName = QStringLiteral("org.kde.kdecoration2");
@@ -144,7 +134,7 @@ public:
     std::unique_ptr<KDecoration2::DecorationSettingsPrivate>
     settings(KDecoration2::DecorationSettings* parent) override
     {
-        return std::unique_ptr<deco::settings>(new deco::settings(space, parent));
+        return std::make_unique<deco::settings<Space>>(space, parent);
     }
 
     QString recommendedBorderSize() const
