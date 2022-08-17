@@ -6,6 +6,8 @@
 #pragma once
 
 #include "render/buffer.h"
+
+#include "render/window.h"
 #include "toplevel.h"
 
 #include <QImage>
@@ -33,13 +35,13 @@ public:
     QRegion damage() const override
     {
         if (external) {
-            if (auto surf = buffer.toplevel()->surface) {
+            if (auto surf = buffer.window->ref_win->surface) {
                 return surf->trackedDamage();
             }
             return {};
         }
         if (internal.fbo || !internal.image.isNull()) {
-            return buffer.toplevel()->damage_region;
+            return buffer.window->ref_win->damage_region;
         }
         return {};
     }

@@ -39,7 +39,7 @@ class scene;
 class KWIN_EXPORT window
 {
 public:
-    window(Toplevel* c, render::scene& scene);
+    window(Toplevel* ref_win, render::scene& scene);
     virtual ~window();
     uint32_t id() const;
 
@@ -49,10 +49,6 @@ public:
     // do any cleanup needed when the window's buffer is discarded
     void discard_buffer();
     void update_buffer();
-
-    // access to the internal window class
-    // TODO eventually get rid of this
-    Toplevel* get_window() const;
 
     // should the window be painted
     bool isPaintingEnabled() const;
@@ -67,7 +63,6 @@ public:
     bool isOpaque() const;
     QRegion decorationShape() const;
     QPoint bufferOffset() const;
-    void updateToplevel(Toplevel* c);
 
     // creates initial quad list for the window
     WindowQuadList buildQuads(bool force = false) const;
@@ -80,6 +75,8 @@ public:
     void reference_previous_buffer();
     void unreference_previous_buffer();
     void invalidateQuadsCache();
+
+    Toplevel* ref_win;
 
     std::unique_ptr<effects_window_impl> effect;
     window_win_integration win_integration;
@@ -122,7 +119,6 @@ protected:
      * that.
      */
     virtual buffer* create_buffer() = 0;
-    Toplevel* toplevel;
     image_filter_type filter;
     std::unique_ptr<render::shadow> m_shadow;
 

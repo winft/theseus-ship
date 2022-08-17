@@ -51,7 +51,7 @@ public:
         TextureCoordinateType coordinateType;
     };
 
-    window(Toplevel* toplevel, gl::scene& scene);
+    window(Toplevel* ref_win, gl::scene& scene);
     ~window() override;
 
     render::buffer* create_buffer() override;

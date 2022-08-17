@@ -107,7 +107,7 @@ public:
             auto update_helper = [&buffer]() {
                 auto& win_integrate = static_cast<render::wayland::buffer_win_integration&>(
                     *buffer.win_integration);
-                update_buffer(*buffer.toplevel(), win_integrate.external);
+                update_buffer(*buffer.window->ref_win, win_integrate.external);
             };
             win_integrate->update = update_helper;
             buffer.win_integration = std::move(win_integrate);

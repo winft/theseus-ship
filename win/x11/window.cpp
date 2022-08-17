@@ -307,7 +307,7 @@ void window::add_scene_window_addon()
         auto update_helper = [&buffer]() {
             auto& win_integrate
                 = static_cast<render::x11::buffer_win_integration&>(*buffer.win_integration);
-            create_window_buffer(buffer.toplevel(), win_integrate);
+            create_window_buffer(buffer.window->ref_win, win_integrate);
         };
         win_integrate->update = update_helper;
         buffer.win_integration = std::move(win_integrate);

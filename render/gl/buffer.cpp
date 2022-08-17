@@ -10,6 +10,7 @@
 
 #include "scene.h"
 #include "texture.h"
+#include "window.h"
 
 #include "base/logging.h"
 #include "toplevel.h"
@@ -47,7 +48,7 @@ render::gl::texture* buffer::texture() const
 bool buffer::bind()
 {
     if (!m_texture->isNull()) {
-        if (!toplevel()->damage_region.isEmpty()) {
+        if (!window->ref_win->damage_region.isEmpty()) {
             updateBuffer();
         }
         if (needs_buffer_update(this)) {
@@ -55,7 +56,7 @@ bool buffer::bind()
             // mipmaps need to be updated
             m_texture->setDirty();
         }
-        toplevel()->resetDamage();
+        window->ref_win->resetDamage();
         return true;
     }
     if (!isValid()) {
@@ -65,7 +66,7 @@ bool buffer::bind()
     bool success = m_texture->load(this);
 
     if (success) {
-        toplevel()->resetDamage();
+        window->ref_win->resetDamage();
     } else {
         qCDebug(KWIN_CORE) << "Failed to bind window";
     }

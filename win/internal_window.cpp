@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "meta.h"
 #include "remnant.h"
 #include "render/wayland/buffer.h"
+#include "render/window.h"
 #include "scene.h"
 #include "setup.h"
 #include "space.h"
@@ -158,7 +159,7 @@ void internal_window::add_scene_window_addon()
     auto setup_buffer = [this](auto& buffer) {
         auto win_integrate = std::make_unique<render::wayland::buffer_win_integration>(buffer);
         auto update_helper = [&buffer]() {
-            auto win = static_cast<internal_window*>(buffer.toplevel());
+            auto win = static_cast<internal_window*>(buffer.window->ref_win);
             auto& win_integrate
                 = static_cast<render::wayland::buffer_win_integration&>(*buffer.win_integration);
             if (win->buffers.fbo) {

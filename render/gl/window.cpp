@@ -25,8 +25,8 @@
 namespace KWin::render::gl
 {
 
-window::window(Toplevel* toplevel, gl::scene& scene)
-    : render::window(toplevel, scene)
+window::window(Toplevel* ref_win, gl::scene& scene)
+    : render::window(ref_win, scene)
 {
     scene.windows.insert({id(), this});
 }
@@ -47,7 +47,7 @@ render::gl::texture* window::bindTexture()
         return buffer->texture();
     }
 
-    if (!get_window()->damage_region.isEmpty())
+    if (!ref_win->damage_region.isEmpty())
         static_cast<gl::scene&>(scene).insertWait();
 
     if (!buffer->bind()) {
@@ -60,7 +60,7 @@ render::gl::texture* window::bindTexture()
 QMatrix4x4 window::transformation(paint_type mask, const WindowPaintData& data) const
 {
     QMatrix4x4 matrix;
-    auto const win_pos = toplevel->pos();
+    auto const win_pos = ref_win->pos();
     matrix.translate(win_pos.x(), win_pos.y());
 
     if (!(mask & paint_type::window_transformed)) {
@@ -96,7 +96,7 @@ bool window::beginRenderWindow(paint_type mask, const QRegion& region, WindowPai
         WindowQuadList quads;
         quads.reserve(data.quads.count());
 
-        auto const win_pos = toplevel->pos();
+        auto const win_pos = ref_win->pos();
         auto const filterRegion = region.translated(-win_pos.x(), -win_pos.y());
 
         // split all quads in bounding rect with the actual rects in the region
@@ -169,20 +169,20 @@ void window::endRenderWindow()
 
 GLTexture* window::getDecorationTexture() const
 {
-    if (toplevel->control) {
-        if (toplevel->noBorder()) {
+    if (ref_win->control) {
+        if (ref_win->noBorder()) {
             return nullptr;
         }
 
-        if (!win::decoration(toplevel)) {
+        if (!win::decoration(ref_win)) {
             return nullptr;
         }
         if (auto renderer = static_cast<deco_renderer<win::deco::client_impl<Toplevel>>*>(
-                toplevel->control->deco.client->renderer())) {
+                ref_win->control->deco.client->renderer())) {
             renderer->render();
             return renderer->texture();
         }
-    } else if (auto& remnant = toplevel->remnant) {
+    } else if (auto& remnant = ref_win->remnant) {
         if (!remnant->data.deco_render || remnant->data.no_border) {
             return nullptr;
         }
@@ -244,7 +244,7 @@ void window::setupLeafNodes(std::vector<LeafNode>& nodes,
         // TODO: ARGB crsoofading is atm. a hack, playing on opacities for two dumb SrcOver
         // operations Should be a shader
         if (data.crossFadeProgress() != 1.0
-            && (data.opacity() < 0.95 || window->toplevel->hasAlpha())) {
+            && (data.opacity() < 0.95 || window->ref_win->hasAlpha())) {
             const float opacity = 1.0 - data.crossFadeProgress();
             node.opacity = data.opacity() * (1 - pow(opacity, 1.0f + 2.0f * data.opacity()));
         } else {
@@ -386,7 +386,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
                 // coordinate in the Client's new content space and map it to the previous Client's
                 // content space.
                 WindowQuad newQuad(WindowQuadContents);
-                auto const content_geo = win::frame_relative_client_rect(toplevel);
+                auto const content_geo = win::frame_relative_client_rect(ref_win);
 
                 for (int i = 0; i < 4; ++i) {
                     auto const xFactor = (quad[i].textureX() - content_geo.x())
