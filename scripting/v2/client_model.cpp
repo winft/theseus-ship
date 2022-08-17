@@ -843,22 +843,23 @@ bool client_filter_model::filterAcceptsRow(int sourceRow, const QModelIndex& sou
         // we do not filter out screen, desktop and activity
         return true;
     }
-    auto client = qvariant_cast<Toplevel*>(data);
-    if (!client) {
+    auto window = qvariant_cast<scripting::window*>(data);
+    if (!window) {
         return false;
     }
-    if (win::caption(client).contains(m_filter, Qt::CaseInsensitive)) {
+
+    if (window->caption().contains(m_filter, Qt::CaseInsensitive)) {
         return true;
     }
-    const QString windowRole(QString::fromUtf8(client->windowRole()));
+    const QString windowRole(QString::fromUtf8(window->windowRole()));
     if (windowRole.contains(m_filter, Qt::CaseInsensitive)) {
         return true;
     }
-    auto const resourceName = QString::fromUtf8(client->resource_name);
+    auto const resourceName = QString::fromUtf8(window->resourceName());
     if (resourceName.contains(m_filter, Qt::CaseInsensitive)) {
         return true;
     }
-    auto const resourceClass = QString::fromUtf8(client->resource_class);
+    auto const resourceClass = QString::fromUtf8(window->resourceClass());
     if (resourceClass.contains(m_filter, Qt::CaseInsensitive)) {
         return true;
     }
