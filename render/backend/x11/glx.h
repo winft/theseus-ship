@@ -5,10 +5,6 @@
 */
 #pragma once
 
-#include "glx_context_attribute_builder.h"
-#include "glx_data.h"
-#include "glx_fb_config.h"
-
 #include "base/platform.h"
 #include "base/x11/xcb/helpers.h"
 #include "main.h"
@@ -16,6 +12,11 @@
 #include "render/x11/compositor.h"
 #include "win/space.h"
 #include "x11_logging.h"
+
+// Must be included late because of Qt.
+#include "glx_context_attribute_builder.h"
+#include "glx_data.h"
+#include "glx_fb_config.h"
 
 #include <kwineffects/effect_quick_view.h>
 #include <kwingl/platform.h>
@@ -203,7 +204,7 @@ bool init_glx_buffer(Backend& backend)
         xcb_colormap_t colormap = xcb_generate_id(c);
         xcb_create_colormap(c, false, colormap, rootWindow(), visual);
 
-        auto const& space_size = backend.compositor.platform.base.topology.size;
+        auto const& space_size = backend.platform.base.topology.size;
         backend.window = xcb_generate_id(c);
         xcb_create_window(c,
                           backend.visualDepth(visual),

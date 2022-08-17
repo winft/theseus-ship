@@ -678,7 +678,6 @@ endif()
 if (HAVE_EPOXY_GLX)
     set(kwin_X11_SRCS
         ${kwin_X11_SRCS}
-        ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/glx_backend.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/glx_context_attribute_builder.cpp
     )
 endif()
