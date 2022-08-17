@@ -24,9 +24,6 @@ namespace KWin::win
 template<typename Space>
 void init_space(Space& space)
 {
-    // For invoke methods of user_actions_menu.
-    qRegisterMetaType<typename Space::window_t*>();
-
     space.m_quickTileCombineTimer = new QTimer(space.qobject.get());
     space.m_quickTileCombineTimer->setSingleShot(true);
 

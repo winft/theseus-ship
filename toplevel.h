@@ -636,6 +636,5 @@ inline bool Toplevel::hasAlpha() const
 KWIN_EXPORT QDebug& operator<<(QDebug& stream, const Toplevel*);
 
 } // namespace
-Q_DECLARE_METATYPE(KWin::Toplevel*)
 
 #endif
