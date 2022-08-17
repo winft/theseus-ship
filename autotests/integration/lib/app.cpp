@@ -230,7 +230,8 @@ void WaylandTestApplication::set_outputs(size_t count)
     auto width = 0;
 
     for (size_t i = 0; i < count; i++) {
-        outputs.push_back({{QPoint(width, 0), size}});
+        auto const out = Test::output({QPoint(width, 0), size});
+        outputs.push_back(out);
         width += size.width();
     }
 
@@ -241,7 +242,8 @@ void WaylandTestApplication::set_outputs(std::vector<QRect> const& geometries)
 {
     auto outputs = std::vector<Test::output>();
     for (auto&& geo : geometries) {
-        outputs.push_back(geo);
+        auto const out = Test::output(geo);
+        outputs.push_back(out);
     }
     set_outputs(outputs);
 }

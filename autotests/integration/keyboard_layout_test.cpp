@@ -68,7 +68,7 @@ public:
             QSignalSpy layouts_reconfigured;
         } v2;
 
-        test_spies(keyboard_layout_test* test)
+        explicit test_spies(keyboard_layout_test* test)
             : v1{test}
             , v2{test}
         {
