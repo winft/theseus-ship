@@ -34,6 +34,7 @@ template<typename Platform>
 class egl_backend : public gl::backend
 {
 public:
+    using backend_t = gl::backend;
     using egl_output_t = egl_output<typename Platform::output_t>;
 
     egl_backend(Platform& platform)
@@ -120,7 +121,7 @@ public:
         // TODO, create new buffer?
     }
 
-    gl::texture_private* createBackendTexture(gl::texture* texture) override
+    gl::texture_private<backend_t>* createBackendTexture(gl::texture<backend_t>* texture) override
     {
         return new egl_texture(texture, this);
     }

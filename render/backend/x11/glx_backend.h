@@ -5,11 +5,13 @@
 */
 #pragma once
 
+#include "base/options.h"
 #include "render/gl/backend.h"
 #include "render/gl/texture.h"
 
 // Must be included late because of Qt.
 #include "glx_data.h"
+#include "glx_fb_config.h"
 
 #include <epoxy/glx.h>
 #include <fixx11h.h>
@@ -31,18 +33,19 @@ class platform;
 namespace backend::x11
 {
 
-class fb_config_info;
-
 /**
  * @brief OpenGL Backend using GLX over an X overlay window.
  */
 class glx_backend : public gl::backend
 {
 public:
+    using backend_t = gl::backend;
+
     glx_backend(Display* display, render::x11::compositor<render::x11::platform>& compositor);
     ~glx_backend() override;
     void screenGeometryChanged(const QSize& size) override;
-    gl::texture_private* createBackendTexture(gl::texture* texture) override;
+    gl::texture_private<gl::backend>*
+    createBackendTexture(gl::texture<gl::backend>* texture) override;
     QRegion prepareRenderingFrame() override;
     void endRenderingFrame(const QRegion& damage, const QRegion& damagedRegion) override;
     bool makeCurrent() override;
@@ -69,33 +72,6 @@ private:
     GLRenderTarget native_fbo;
     int m_bufferAge{0};
     bool m_needsCompositeTimerStart = false;
-};
-
-/**
- * @brief Texture using an GLXPixmap.
- */
-class GlxTexture : public gl::texture_private
-{
-public:
-    ~GlxTexture() override;
-    void onDamage() override;
-    bool updateTexture(render::buffer* pixmap) override;
-    gl::backend* backend() override;
-
-private:
-    friend class glx_backend;
-    GlxTexture(gl::texture* texture, glx_backend* backend);
-
-    Display* display() const
-    {
-        return m_backend->data.display;
-    }
-
-    gl::texture* q;
-    glx_backend* m_backend;
-
-    // the glx pixmap the texture is bound to
-    GLXPixmap m_glxpixmap;
 };
 
 }

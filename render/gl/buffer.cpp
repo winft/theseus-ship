@@ -40,7 +40,7 @@ static bool needs_buffer_update(gl::buffer const* buffer)
     return !buffer->win_integration->damage().isEmpty();
 }
 
-render::gl::texture* buffer::texture() const
+render::gl::texture<gl::backend>* buffer::texture() const
 {
     return m_texture.data();
 }

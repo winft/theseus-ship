@@ -17,9 +17,12 @@
 namespace KWin::render::gl
 {
 
-class scene;
-class texture;
+class backend;
 class buffer;
+class scene;
+
+template<typename Backend>
+class texture;
 
 class window final : public render::window
 {
@@ -72,7 +75,7 @@ private:
     bool beginRenderWindow(paint_type mask, const QRegion& region, WindowPaintData& data);
     void endRenderWindow();
 
-    render::gl::texture* bindTexture();
+    gl::texture<gl::backend>* bindTexture();
 
     bool m_hardwareClipping{false};
     bool m_blendingEnabled{false};

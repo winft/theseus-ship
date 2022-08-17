@@ -10,16 +10,13 @@
 #include "glx_backend.h"
 
 #include "glx.h"
+#include "glx_texture.h"
 #include "x11_logging.h"
 
-#include "base/options.h"
 #include "base/platform.h"
 #include "base/x11/xcb/helpers.h"
-#include "main.h"
 #include "render/gl/texture.h"
 #include "render/platform.h"
-#include "render/scene.h"
-#include "render/x11/buffer.h"
 #include "render/x11/overlay_window.h"
 #include "win/x11/geo.h"
 
@@ -123,9 +120,10 @@ void glx_backend::screenGeometryChanged(const QSize& size)
     m_bufferAge = 0;
 }
 
-gl::texture_private* glx_backend::createBackendTexture(gl::texture* texture)
+gl::texture_private<gl::backend>*
+glx_backend::createBackendTexture(gl::texture<gl::backend>* texture)
 {
-    return new GlxTexture(texture, this);
+    return new GlxTexture<glx_backend>(texture, this);
 }
 
 QRegion glx_backend::prepareRenderingFrame()
@@ -200,98 +198,6 @@ bool glx_backend::supportsSwapEvents() const
 bool glx_backend::hasSwapEvent() const
 {
     return !m_needsCompositeTimerStart;
-}
-
-/********************************************************
- * GlxTexture
- *******************************************************/
-GlxTexture::GlxTexture(gl::texture* texture, glx_backend* backend)
-    : gl::texture_private()
-    , q(texture)
-    , m_backend(backend)
-    , m_glxpixmap(None)
-{
-}
-
-GlxTexture::~GlxTexture()
-{
-    if (m_glxpixmap != None) {
-        if (!kwinApp()->options->qobject->isGlStrictBinding()) {
-            glXReleaseTexImageEXT(display(), m_glxpixmap, GLX_FRONT_LEFT_EXT);
-        }
-        glXDestroyPixmap(display(), m_glxpixmap);
-        m_glxpixmap = None;
-    }
-}
-
-void GlxTexture::onDamage()
-{
-    if (kwinApp()->options->qobject->isGlStrictBinding() && m_glxpixmap) {
-        glXReleaseTexImageEXT(display(), m_glxpixmap, GLX_FRONT_LEFT_EXT);
-        glXBindTexImageEXT(display(), m_glxpixmap, GLX_FRONT_LEFT_EXT, nullptr);
-    }
-    GLTexturePrivate::onDamage();
-}
-
-bool GlxTexture::updateTexture(render::buffer* buffer)
-{
-    if (m_target) {
-        return true;
-    }
-
-    auto const size = win::render_geometry(buffer->window->ref_win).size();
-    auto const visual = buffer->window->ref_win->xcb_visual;
-
-    auto const& win_integrate
-        = static_cast<render::x11::buffer_win_integration&>(*buffer->win_integration);
-    if (win_integrate.pixmap == XCB_NONE || size.isEmpty() || visual == XCB_NONE) {
-        return false;
-    }
-
-    auto const info = fb_config_info_for_visual(visual, *m_backend);
-    if (!info || info->fbconfig == nullptr)
-        return false;
-
-    if (info->texture_targets & GLX_TEXTURE_2D_BIT_EXT) {
-        m_target = GL_TEXTURE_2D;
-        m_scale.setWidth(1.0f / m_size.width());
-        m_scale.setHeight(1.0f / m_size.height());
-    } else {
-        Q_ASSERT(info->texture_targets & GLX_TEXTURE_RECTANGLE_BIT_EXT);
-
-        m_target = GL_TEXTURE_RECTANGLE;
-        m_scale.setWidth(1.0f);
-        m_scale.setHeight(1.0f);
-    }
-
-    const int attrs[] = {GLX_TEXTURE_FORMAT_EXT,
-                         info->bind_texture_format,
-                         GLX_MIPMAP_TEXTURE_EXT,
-                         false,
-                         GLX_TEXTURE_TARGET_EXT,
-                         m_target == GL_TEXTURE_2D ? GLX_TEXTURE_2D_EXT : GLX_TEXTURE_RECTANGLE_EXT,
-                         0};
-
-    m_glxpixmap = glXCreatePixmap(display(), info->fbconfig, win_integrate.pixmap, attrs);
-    m_size = size;
-    m_yInverted = info->y_inverted ? true : false;
-    m_canUseMipmaps = false;
-
-    glGenTextures(1, &m_texture);
-
-    q->setDirty();
-    q->setFilter(GL_NEAREST);
-
-    glBindTexture(m_target, m_texture);
-    glXBindTexImageEXT(display(), m_glxpixmap, GLX_FRONT_LEFT_EXT, nullptr);
-
-    updateMatrix();
-    return true;
-}
-
-gl::backend* GlxTexture::backend()
-{
-    return m_backend;
 }
 
 }

@@ -81,7 +81,7 @@ public:
      *
      * @return scene::texture*
      */
-    render::gl::texture* createTexture();
+    gl::texture<gl::backend>* createTexture();
 
     render::gl::backend* backend() const
     {

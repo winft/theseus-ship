@@ -432,7 +432,6 @@ set(kwin_SRCS
     render/gl/lanczos_filter.cpp
     render/gl/scene.cpp
     render/gl/shadow.cpp
-    render/gl/texture.cpp
     render/gl/window.cpp
     render/outline.cpp
     render/scene.cpp

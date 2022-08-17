@@ -718,7 +718,7 @@ void scene::extendPaintRegion(QRegion& region, bool opaqueFullscreen)
     }
 }
 
-render::gl::texture* scene::createTexture()
+gl::texture<gl::backend>* scene::createTexture()
 {
     return new render::gl::texture(m_backend);
 }

@@ -37,7 +37,7 @@ window::~window()
 }
 
 // Bind the buffer to an OpenGL texture.
-render::gl::texture* window::bindTexture()
+gl::texture<gl::backend>* window::bindTexture()
 {
     auto buffer = get_buffer<gl::buffer>();
     if (!buffer) {
@@ -237,7 +237,7 @@ void window::setupLeafNodes(std::vector<LeafNode>& nodes,
         nodes[DecorationLeaf].coordinateType = UnnormalizedCoordinates;
     }
 
-    auto setup_content = [&data, &nodes](int index, window* window, render::gl::texture* texture) {
+    auto setup_content = [&data, &nodes](auto index, auto window, auto texture) {
         auto& node = nodes[ContentLeaf + index];
         node.texture = texture;
         node.hasAlpha = !window->isOpaque();

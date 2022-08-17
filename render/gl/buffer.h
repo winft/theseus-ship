@@ -12,7 +12,10 @@
 namespace KWin::render::gl
 {
 
+class backend;
 class scene;
+
+template<typename Backend>
 class texture;
 
 class buffer : public render::buffer
@@ -20,12 +23,12 @@ class buffer : public render::buffer
 public:
     buffer(render::window* window, gl::scene& scene);
     ~buffer() override;
-    render::gl::texture* texture() const;
+    render::gl::texture<gl::backend>* texture() const;
     bool bind();
     bool isValid() const override;
 
 private:
-    QScopedPointer<render::gl::texture> m_texture;
+    QScopedPointer<render::gl::texture<gl::backend>> m_texture;
 };
 
 }

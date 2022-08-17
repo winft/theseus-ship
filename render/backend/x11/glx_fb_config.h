@@ -9,6 +9,7 @@
 
 #include <kwinxrender/utils.h>
 
+#include <deque>
 #include <epoxy/glx.h>
 
 namespace KWin::render::backend::x11
