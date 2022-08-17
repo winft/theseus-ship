@@ -74,7 +74,7 @@ void keyboard_keymap_test::initTestCase()
     Test::test_outputs_default();
 }
 
-test_window create_window(Test::client& client)
+test_window create_window(Test::client const& client)
 {
     test_window ret;
     ret.client_surface = Test::create_surface(client);

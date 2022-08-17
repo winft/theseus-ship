@@ -30,7 +30,7 @@ namespace KWin
 class MockTabBoxClient : public win::tabbox_client
 {
 public:
-    explicit MockTabBoxClient(QString caption);
+    explicit MockTabBoxClient(QString const& caption);
     bool is_minimized() const override
     {
         return false;

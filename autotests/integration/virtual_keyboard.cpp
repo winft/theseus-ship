@@ -88,7 +88,7 @@ std::unique_ptr<Wrapland::Client::virtual_keyboard_v1> create_virtual_keyboard(T
             client.interfaces.seat.get()));
 }
 
-test_window create_window(Test::client& client)
+test_window create_window(Test::client const& client)
 {
     test_window ret;
     ret.client_surface = Test::create_surface(client);
