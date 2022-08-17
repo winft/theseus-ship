@@ -117,7 +117,7 @@ public:
     std::unique_ptr<win::screen_edge<edger_t>> create_screen_edge(edger_t& edger) override
     {
         if (!edges_filter) {
-            edges_filter = std::make_unique<screen_edges_filter>(*this);
+            edges_filter = std::make_unique<screen_edges_filter<space<Base>>>(*this);
         }
         return std::make_unique<x11::screen_edge<edger_t>>(&edger, *atoms);
     }

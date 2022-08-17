@@ -477,10 +477,7 @@ set(kwin_SRCS
     win/virtual_desktops.cpp
     win/window_qobject.cpp
     win/x11/client_machine.cpp
-    win/x11/color_mapper.cpp
     win/x11/group.cpp
-    win/x11/screen_edges_filter.cpp
-    win/x11/sync_alarm_filter.cpp
     win/x11/window.cpp
 
     # These headers need to be compiled for the helper QObjects they contain.

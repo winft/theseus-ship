@@ -156,7 +156,7 @@ public:
     std::unique_ptr<input::redirect> input;
     std::unique_ptr<win::tabbox<space>> tabbox;
     std::unique_ptr<rules::book> rule_book;
-    std::unique_ptr<x11::color_mapper> color_mapper;
+    std::unique_ptr<x11::color_mapper<space>> color_mapper;
 
     std::unique_ptr<base::x11::event_filter> m_wasUserInteractionFilter;
     std::unique_ptr<base::x11::event_filter> m_movingClientFilter;

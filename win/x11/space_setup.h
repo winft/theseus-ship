@@ -50,11 +50,13 @@ void init_space(Space& space)
 
     // first initialize the extensions
     base::x11::xcb::extensions::self();
-    space.color_mapper = std::make_unique<color_mapper>(space);
+
+    using color_mapper_t = color_mapper<typename Space::space_t>;
+    space.color_mapper = std::make_unique<color_mapper_t>(space);
     QObject::connect(space.qobject.get(),
                      &Space::qobject_t::clientActivated,
                      space.color_mapper.get(),
-                     &color_mapper::update);
+                     &color_mapper_t::update);
 
     // Call this before XSelectInput() on the root window
     space.startup
@@ -70,7 +72,8 @@ void init_space(Space& space)
         space.m_movingClientFilter.reset(new moving_window_filter(space));
     }
     if (base::x11::xcb::extensions::self()->is_sync_available()) {
-        space.m_syncAlarmFilter.reset(new sync_alarm_filter(space));
+        space.m_syncAlarmFilter
+            = std::make_unique<sync_alarm_filter<typename Space::space_t>>(space);
     }
 
     // Needed for proper initialization of user_time in Client ctor
