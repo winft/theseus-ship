@@ -10,14 +10,7 @@
 #include <QObject>
 #include <functional>
 
-class KStartupInfo;
-
-namespace KWin
-{
-
-class Toplevel;
-
-namespace win
+namespace KWin::win
 {
 
 class KWIN_EXPORT space_qobject : public QObject
@@ -30,34 +23,32 @@ public Q_SLOTS:
     void reconfigure();
 
 Q_SIGNALS:
-    void desktopPresenceChanged(KWin::Toplevel*, int);
-    void currentDesktopChanged(int, KWin::Toplevel*);
+    void desktopPresenceChanged(quint32, int);
+    void currentDesktopChanged(int);
 
     // X11 window
-    void clientAdded(KWin::Toplevel*);
-    void clientRemoved(KWin::Toplevel*);
+    void clientAdded(quint32);
+    void clientRemoved(quint32);
 
-    void wayland_window_added(KWin::Toplevel*);
-    void wayland_window_removed(KWin::Toplevel*);
+    void wayland_window_added(quint32);
+    void wayland_window_removed(quint32);
 
-    void remnant_created(KWin::Toplevel* remnant);
+    void remnant_created(quint32 remnant);
 
-    void clientActivated(KWin::Toplevel*);
-    void clientDemandsAttentionChanged(KWin::Toplevel*, bool);
-    void clientMinimizedChanged(KWin::Toplevel*);
-    void unmanagedAdded(KWin::Toplevel*);
-    void unmanagedRemoved(KWin::Toplevel*);
-    void window_deleted(KWin::Toplevel*);
+    void clientActivated();
+    void clientDemandsAttentionChanged(quint32, bool);
+    void clientMinimizedChanged(quint32);
+    void unmanagedAdded(quint32);
+    void unmanagedRemoved(quint32);
+    void window_deleted(quint32);
     void configChanged();
     void showingDesktopChanged(bool showing);
-    void internalClientAdded(KWin::Toplevel* client);
-    void internalClientRemoved(KWin::Toplevel* client);
-    void surface_id_changed(KWin::Toplevel*, quint32);
+    void internalClientAdded(quint32 client);
+    void internalClientRemoved(quint32 client);
+    void surface_id_changed(quint32, quint32);
 
 private:
     std::function<void()> reconfigure_callback;
 };
-
-}
 
 }

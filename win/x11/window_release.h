@@ -65,7 +65,7 @@ void remove_controlled_window_from_space(Space& space, Win* win)
         cancel_delay_focus(space);
     }
 
-    Q_EMIT space.qobject->clientRemoved(win);
+    Q_EMIT space.qobject->clientRemoved(win->signal_id);
 
     space.stacking_order->update_count();
     update_space_areas(space);
@@ -99,7 +99,7 @@ void finish_unmanaged_removal(Win* win, Win* remnant)
     remove_window_from_lists(space, win);
     space.render.addRepaint(visible_rect(win));
 
-    Q_EMIT space.qobject->unmanagedRemoved(win);
+    Q_EMIT space.qobject->unmanagedRemoved(win->signal_id);
 
     if (remnant) {
         win->disownDataPassedToDeleted();

@@ -170,7 +170,9 @@ void TestXdgShellClient::testMapUnmapMap()
 
     QVERIFY(clientAddedSpy.isEmpty());
     QVERIFY(clientAddedSpy.wait());
-    auto client = dynamic_cast<wayland_window*>(clientAddedSpy.first().first().value<Toplevel*>());
+
+    auto client_id = clientAddedSpy.first().first().value<quint32>();
+    auto client = dynamic_cast<wayland_window*>(Test::app()->base.space->windows_map.at(client_id));
     QVERIFY(client);
     QVERIFY(client->isShown());
     QCOMPARE(client->isHiddenInternal(), false);
@@ -196,7 +198,10 @@ void TestXdgShellClient::testMapUnmapMap()
     connect(client->space.qobject.get(),
             &win::space::qobject_t::remnant_created,
             client->qobject.get(),
-            [&deletedUuid](auto remnant) { deletedUuid = remnant->internal_id; });
+            [&deletedUuid](auto win_id) {
+                auto remnant_win = Test::app()->base.space->windows_map.at(win_id);
+                deletedUuid = remnant_win->internal_id;
+            });
 
     // now unmap
     QSignalSpy hiddenSpy(client->qobject.get(), &Toplevel::qobject_t::windowHidden);
@@ -280,7 +285,7 @@ void TestXdgShellClient::testDesktopPresenceChanged()
 
     // verify the arguments
     QCOMPARE(desktopPresenceChangedClientSpy.first().at(0).toInt(), 1);
-    QCOMPARE(desktopPresenceChangedWorkspaceSpy.first().at(0).value<Toplevel*>(), c);
+    QCOMPARE(desktopPresenceChangedWorkspaceSpy.first().at(0).value<quint32>(), c->signal_id);
     QCOMPARE(desktopPresenceChangedWorkspaceSpy.first().at(1).toInt(), 1);
     QCOMPARE(desktopPresenceChangedEffectsSpy.first().at(0).value<EffectWindow*>(),
              c->render->effect.get());
@@ -972,7 +977,8 @@ void TestXdgShellClient::testUnresponsiveWindow()
 
     ::kill(process->processId(), SIGUSR1); // send a signal to freeze the process
 
-    killClient = shellClientAddedSpy.first().first().value<Toplevel*>();
+    auto kill_client_id = shellClientAddedSpy.first().first().value<quint32>();
+    killClient = Test::app()->base.space->windows_map.at(kill_client_id);
     QVERIFY(killClient);
     QSignalSpy unresponsiveSpy(killClient->qobject.get(),
                                &Toplevel::qobject_t::unresponsiveChanged);

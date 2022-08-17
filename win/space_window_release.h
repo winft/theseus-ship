@@ -34,7 +34,7 @@ void delete_window_from_space(Space& space, Win* win)
         update_block(nullptr);
     }
 
-    Q_EMIT space.qobject->window_deleted(win);
+    Q_EMIT space.qobject->window_deleted(win->signal_id);
     delete win;
 }
 

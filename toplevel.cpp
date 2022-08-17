@@ -55,13 +55,16 @@ Toplevel::Toplevel(win::remnant remnant, win::space& space)
 Toplevel::Toplevel(win::transient<Toplevel>* transient, win::space& space)
     : space{space}
     , internal_id{QUuid::createUuid()}
+    , signal_id{++space.window_id}
     , m_damageReplyPending(false)
 {
+    space.windows_map.insert({signal_id, this});
     m_transient.reset(transient);
 }
 
 Toplevel::~Toplevel()
 {
+    space.windows_map.erase(signal_id);
     delete client_machine;
     delete info;
 }

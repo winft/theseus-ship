@@ -104,7 +104,10 @@ scene::scene(render::compositor& compositor)
     QObject::connect(compositor.space->qobject.get(),
                      &win::space_qobject::remnant_created,
                      this,
-                     [this](auto remnant) { init_remnant(*remnant); });
+                     [this](auto win_id) {
+                         auto remnant = this->compositor.space->windows_map.at(win_id);
+                         init_remnant(*remnant);
+                     });
 }
 
 scene::~scene()

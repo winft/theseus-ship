@@ -68,6 +68,11 @@ private:
     Wrapland::Client::PlasmaShell* m_plasmaShell = nullptr;
 };
 
+win::x11::window* get_x11_window_from_id(uint32_t id)
+{
+    return dynamic_cast<win::x11::window*>(Test::app()->base.space->windows_map.at(id));
+}
+
 void StrutsTest::initTestCase()
 {
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
@@ -630,8 +635,7 @@ void StrutsTest::testX11Struts()
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
-    auto client
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto client = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QVERIFY(!win::decoration(client));
@@ -782,8 +786,7 @@ void StrutsTest::test363804()
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
-    auto client
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto client = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QVERIFY(!win::decoration(client));
@@ -875,8 +878,7 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
-    auto client
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto client = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QVERIFY(!win::decoration(client));
@@ -922,8 +924,7 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
 
     QVERIFY(windowCreatedSpy.wait());
 
-    auto client2
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.last().first().value<Toplevel*>());
+    auto client2 = get_x11_window_from_id(windowCreatedSpy.last().first().value<quint32>());
     QVERIFY(client2);
     QVERIFY(client2 != client);
     QVERIFY(win::decoration(client2));
@@ -1013,8 +1014,7 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
-    auto client
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto client = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QVERIFY(!win::decoration(client));
@@ -1061,8 +1061,7 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
     xcb_flush(c.get());
     QVERIFY(windowCreatedSpy.wait());
 
-    auto client2
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.last().first().value<Toplevel*>());
+    auto client2 = get_x11_window_from_id(windowCreatedSpy.last().first().value<quint32>());
     QVERIFY(client2);
     QVERIFY(client2 != client);
     QVERIFY(win::decoration(client2));

@@ -329,7 +329,7 @@ void set_demands_attention(Win* win, bool demand)
         win->space.attention_chain.push_front(win);
     }
 
-    Q_EMIT win->space.qobject->clientDemandsAttentionChanged(win, demand);
+    Q_EMIT win->space.qobject->clientDemandsAttentionChanged(win->signal_id, demand);
     Q_EMIT win->qobject->demandsAttentionChanged();
 }
 
@@ -450,7 +450,7 @@ void set_active_window(Space& space, typename Space::window_t* window)
         x11::root_info_set_active_window(*space.root_info, space.active_client);
     }
 
-    Q_EMIT space.qobject->clientActivated(space.active_client);
+    Q_EMIT space.qobject->clientActivated();
     --space.set_active_client_recursion;
 }
 

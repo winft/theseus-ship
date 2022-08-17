@@ -40,11 +40,13 @@ public:
     explicit popup_filter(Redirect& redirect)
         : event_filter<Redirect>(redirect)
     {
-        QObject::connect(
-            redirect.space.qobject.get(),
-            &win::space::qobject_t::wayland_window_added,
-            this,
-            [this](auto window) { handle_window_added(static_cast<wayland_window*>(window)); });
+        QObject::connect(redirect.space.qobject.get(),
+                         &win::space::qobject_t::wayland_window_added,
+                         this,
+                         [this](auto win_id) {
+                             auto win = this->redirect.space.windows_map.at(win_id);
+                             handle_window_added(static_cast<wayland_window*>(win));
+                         });
     }
 
     bool button(button_event const& event) override

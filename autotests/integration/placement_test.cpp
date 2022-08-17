@@ -153,7 +153,8 @@ PlaceWindowResult TestPlacement::createAndPlaceWindow(QSize const& defaultSize)
     Test::render(rc.surface, defaultSize, Qt::red);
     configSpy.wait();
 
-    auto window = dynamic_cast<wayland_window*>(window_spy.first().first().value<Toplevel*>());
+    auto window_id = window_spy.first().first().value<quint32>();
+    auto window = dynamic_cast<wayland_window*>(Test::app()->base.space->windows_map.at(window_id));
 
     rc.initiallyConfiguredSize = configSpy[0][0].toSize();
     rc.initiallyConfiguredStates

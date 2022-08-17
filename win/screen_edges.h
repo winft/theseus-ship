@@ -913,7 +913,10 @@ public:
         QObject::connect(space.qobject.get(),
                          &Space::qobject_t::clientRemoved,
                          qobject.get(),
-                         [this](auto window) { deleteEdgeForClient(window); });
+                         [this](auto win_id) {
+                             auto win = this->space.windows_map.at(win_id);
+                             deleteEdgeForClient(win);
+                         });
     }
 
     ~screen_edger()

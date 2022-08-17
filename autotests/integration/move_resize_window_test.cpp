@@ -85,6 +85,11 @@ private:
     Wrapland::Client::Compositor* m_compositor = nullptr;
 };
 
+win::x11::window* get_x11_window_from_id(uint32_t id)
+{
+    return dynamic_cast<win::x11::window*>(Test::app()->base.space->windows_map.at(id));
+}
+
 void MoveResizeWindowTest::initTestCase()
 {
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
@@ -737,8 +742,7 @@ void MoveResizeWindowTest::testNetMove()
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
-    auto client
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto client = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     const QRect origGeo = client->frameGeometry();
@@ -847,8 +851,7 @@ void MoveResizeWindowTest::testAdjustClientGeometryOfAutohidingX11Panel()
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
-    auto panel
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto panel = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(panel);
     QCOMPARE(panel->xcb_window, w);
     QCOMPARE(panel->frameGeometry(), panelGeometry);

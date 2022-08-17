@@ -61,6 +61,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <deque>
 #include <functional>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 class KStartupInfo;
@@ -139,6 +140,7 @@ public:
     std::unique_ptr<qobject_t> qobject;
 
     std::vector<window_t*> windows;
+    std::unordered_map<uint32_t, window_t*> windows_map;
     std::vector<win::x11::group*> groups;
 
     win::space_areas areas;
@@ -238,6 +240,8 @@ public:
     std::unique_ptr<osd_notification<input::redirect>> osd;
     std::unique_ptr<kill_window<space>> window_killer;
     base::x11::xcb::window shape_helper_window{XCB_WINDOW_NONE};
+
+    uint32_t window_id{0};
 };
 
 }

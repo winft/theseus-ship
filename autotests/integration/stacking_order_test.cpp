@@ -63,6 +63,11 @@ private Q_SLOTS:
     void testKeepBelow();
 };
 
+win::x11::window* get_x11_window_from_id(uint32_t id)
+{
+    return dynamic_cast<win::x11::window*>(Test::app()->base.space->windows_map.at(id));
+}
+
 void StackingOrderTest::initTestCase()
 {
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
@@ -329,7 +334,10 @@ void StackingOrderTest::testDeletedTransient()
     connect(transient2->space.qobject.get(),
             &win::space::qobject_t::remnant_created,
             transient2->qobject.get(),
-            [](auto remnant) { remnant->remnant->ref(); });
+            [](auto win_id) {
+                auto remnant_win = Test::app()->base.space->windows_map.at(win_id);
+                remnant_win->remnant->ref();
+            });
 
     QSignalSpy windowClosedSpy(transient2->space.qobject.get(),
                                &win::space::qobject_t::remnant_created);
@@ -338,7 +346,8 @@ void StackingOrderTest::testDeletedTransient()
     transient2Surface.reset();
     QVERIFY(windowClosedSpy.wait());
 
-    auto deletedTransient = create_deleted(windowClosedSpy.front().front().value<Toplevel*>());
+    auto del_signal_id = windowClosedSpy.front().front().value<quint32>();
+    auto deletedTransient = create_deleted(Test::app()->base.space->windows_map.at(del_signal_id));
     QVERIFY(deletedTransient);
 
     // The deleted transient still has to be above its old parent (transient1).
@@ -372,8 +381,7 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
 
     QVERIFY(windowCreatedSpy.wait());
 
-    auto leader
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto leader = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(leader);
     QVERIFY(leader->control->active);
     QCOMPARE(leader->xcb_window, leaderWid);
@@ -389,8 +397,7 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
 
     QVERIFY(windowCreatedSpy.wait());
 
-    auto member1
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto member1 = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(member1);
     QVERIFY(member1->control->active);
     QCOMPARE(member1->xcb_window, member1Wid);
@@ -408,8 +415,7 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
 
     QVERIFY(windowCreatedSpy.wait());
 
-    auto member2
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto member2 = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(member2);
     QVERIFY(member2->control->active);
     QCOMPARE(member2->xcb_window, member2Wid);
@@ -448,8 +454,7 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
 
     QVERIFY(windowCreatedSpy.wait());
 
-    auto transient
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto transient = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(transient);
     QVERIFY(transient->control->active);
     QCOMPARE(transient->xcb_window, transientWid);
@@ -500,8 +505,7 @@ void StackingOrderTest::testRaiseGroupTransient()
 
     QVERIFY(windowCreatedSpy.wait());
 
-    auto leader
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto leader = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(leader);
     QVERIFY(leader->control->active);
     QCOMPARE(leader->xcb_window, leaderWid);
@@ -517,8 +521,7 @@ void StackingOrderTest::testRaiseGroupTransient()
 
     QVERIFY(windowCreatedSpy.wait());
 
-    auto member1
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto member1 = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(member1);
     QVERIFY(member1->control->active);
     QCOMPARE(member1->xcb_window, member1Wid);
@@ -536,8 +539,7 @@ void StackingOrderTest::testRaiseGroupTransient()
 
     QVERIFY(windowCreatedSpy.wait());
 
-    auto member2
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto member2 = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(member2);
     QVERIFY(member2->control->active);
     QCOMPARE(member2->xcb_window, member2Wid);
@@ -576,8 +578,7 @@ void StackingOrderTest::testRaiseGroupTransient()
 
     QVERIFY(windowCreatedSpy.wait());
 
-    auto transient
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto transient = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(transient);
     QVERIFY(transient->control->active);
     QCOMPARE(transient->xcb_window, transientWid);
@@ -647,8 +648,7 @@ void StackingOrderTest::testDeletedGroupTransient()
     xcb_flush(conn.get());
 
     QVERIFY(windowCreatedSpy.wait());
-    auto leader
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto leader = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(leader);
     QVERIFY(leader->control->active);
     QCOMPARE(leader->xcb_window, leaderWid);
@@ -663,8 +663,7 @@ void StackingOrderTest::testDeletedGroupTransient()
     xcb_flush(conn.get());
 
     QVERIFY(windowCreatedSpy.wait());
-    auto member1
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto member1 = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(member1);
     QVERIFY(member1->control->active);
     QCOMPARE(member1->xcb_window, member1Wid);
@@ -681,8 +680,7 @@ void StackingOrderTest::testDeletedGroupTransient()
     xcb_flush(conn.get());
 
     QVERIFY(windowCreatedSpy.wait());
-    auto member2
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto member2 = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(member2);
     QVERIFY(member2->control->active);
     QCOMPARE(member2->xcb_window, member2Wid);
@@ -720,8 +718,7 @@ void StackingOrderTest::testDeletedGroupTransient()
     xcb_flush(conn.get());
 
     QVERIFY(windowCreatedSpy.wait());
-    auto transient
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto transient = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(transient);
     QVERIFY(transient->control->active);
     QCOMPARE(transient->xcb_window, transientWid);
@@ -743,7 +740,10 @@ void StackingOrderTest::testDeletedGroupTransient()
     connect(transient->space.qobject.get(),
             &win::space::qobject_t::remnant_created,
             transient->qobject.get(),
-            [](auto remnant) { remnant->remnant->ref(); });
+            [](auto win_id) {
+                auto remnant_win = Test::app()->base.space->windows_map.at(win_id);
+                remnant_win->remnant->ref();
+            });
 
     QSignalSpy windowClosedSpy(transient->space.qobject.get(),
                                &win::space::qobject_t::remnant_created);
@@ -752,7 +752,8 @@ void StackingOrderTest::testDeletedGroupTransient()
     xcb_flush(conn.get());
     QVERIFY(windowClosedSpy.wait());
 
-    auto deletedTransient = create_deleted(windowClosedSpy.front().front().value<Toplevel*>());
+    auto del_signal_id = windowClosedSpy.front().front().value<quint32>();
+    auto deletedTransient = create_deleted(Test::app()->base.space->windows_map.at(del_signal_id));
     QVERIFY(deletedTransient.get());
 
     // The transient has to be above each member of the window group.
@@ -778,8 +779,7 @@ void StackingOrderTest::testDontKeepAboveNonModalDialogGroupTransients()
     xcb_flush(conn.get());
 
     QVERIFY(windowCreatedSpy.wait());
-    auto leader
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto leader = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(leader);
     QVERIFY(leader->control->active);
     QCOMPARE(leader->xcb_window, leaderWid);
@@ -794,8 +794,7 @@ void StackingOrderTest::testDontKeepAboveNonModalDialogGroupTransients()
     xcb_flush(conn.get());
 
     QVERIFY(windowCreatedSpy.wait());
-    auto member1
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto member1 = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(member1);
     QVERIFY(member1->control->active);
     QCOMPARE(member1->xcb_window, member1Wid);
@@ -812,8 +811,7 @@ void StackingOrderTest::testDontKeepAboveNonModalDialogGroupTransients()
     xcb_flush(conn.get());
 
     QVERIFY(windowCreatedSpy.wait());
-    auto member2
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto member2 = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(member2);
     QVERIFY(member2->control->active);
     QCOMPARE(member2->xcb_window, member2Wid);
@@ -831,8 +829,7 @@ void StackingOrderTest::testDontKeepAboveNonModalDialogGroupTransients()
     xcb_flush(conn.get());
 
     QVERIFY(windowCreatedSpy.wait());
-    auto transient
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto transient = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(transient);
     QVERIFY(transient->control->active);
     QCOMPARE(transient->xcb_window, transientWid);

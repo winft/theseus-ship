@@ -484,7 +484,7 @@ void internal_window::destroyClient()
     remove_window_from_lists(space, this);
     space.stacking_order->update_count();
     update_space_areas(space);
-    Q_EMIT space.qobject->internalClientRemoved(this);
+    Q_EMIT space.qobject->internalClientRemoved(signal_id);
 
     m_internalWindow = nullptr;
 
@@ -658,7 +658,7 @@ void internal_window::markAsMapped()
     space.stacking_order->update_count();
     update_space_areas(space);
 
-    Q_EMIT space.qobject->internalClientAdded(this);
+    Q_EMIT space.qobject->internalClientAdded(signal_id);
 }
 
 void internal_window::updateInternalWindowGeometry()

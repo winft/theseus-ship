@@ -62,6 +62,11 @@ private Q_SLOTS:
     void testActivateFocusedWindow();
 };
 
+win::x11::window* get_x11_window_from_id(uint32_t id)
+{
+    return dynamic_cast<win::x11::window*>(Test::app()->base.space->windows_map.at(id));
+}
+
 void X11ClientTest::initTestCase()
 {
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
@@ -153,8 +158,7 @@ void X11ClientTest::testTrimCaption()
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
-    auto client
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto client = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QFETCH(QByteArray, expectedTitle);
@@ -209,8 +213,7 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
-    auto client
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto client = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QVERIFY(!client->control->fullscreen);
@@ -350,8 +353,7 @@ void X11ClientTest::testFocusInWithWaylandLastActiveWindow()
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
-    auto client
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto client = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QVERIFY(client->control->active);
@@ -420,8 +422,7 @@ void X11ClientTest::testX11WindowId()
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
-    auto client
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto client = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QVERIFY(client->control->active);
@@ -434,7 +435,10 @@ void X11ClientTest::testX11WindowId()
     connect(client->space.qobject.get(),
             &win::space::qobject_t::remnant_created,
             this,
-            [&deletedUuid](auto remnant) { deletedUuid = remnant->internal_id; });
+            [&deletedUuid](auto win_id) {
+                auto remnant_win = Test::app()->base.space->windows_map.at(win_id);
+                deletedUuid = remnant_win->internal_id;
+            });
 
     NETRootInfo rootInfo(c.get(), NET::WMAllProperties);
     QCOMPARE(rootInfo.activeWindow(), client->xcb_window);
@@ -508,8 +512,7 @@ void X11ClientTest::testCaptionChanges()
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
-    auto client
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto client = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QCOMPARE(win::caption(client), QStringLiteral("foo"));
@@ -591,8 +594,7 @@ void X11ClientTest::testCaptionMultipleWindows()
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
-    auto client
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto client = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QCOMPARE(win::caption(client), QStringLiteral("foo"));
@@ -623,8 +625,7 @@ void X11ClientTest::testCaptionMultipleWindows()
     windowCreatedSpy.clear();
     QVERIFY(windowCreatedSpy.wait());
 
-    auto client2
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto client2 = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(client2);
     QCOMPARE(client2->xcb_window, w2);
     QCOMPARE(win::caption(client2), QStringLiteral("foo <2>\u200E"));
@@ -701,8 +702,7 @@ void X11ClientTest::testFullscreenWindowGroups()
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
-    auto client
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto client = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QCOMPARE(client->control->active, true);
@@ -747,8 +747,7 @@ void X11ClientTest::testFullscreenWindowGroups()
 
     QVERIFY(windowCreatedSpy.wait());
 
-    auto client2
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto client2 = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(client2);
     QVERIFY(client != client2);
     QCOMPARE(client2->xcb_window, w2);
@@ -813,8 +812,7 @@ void X11ClientTest::testActivateFocusedWindow()
     xcb_flush(connection.get());
     QVERIFY(windowCreatedSpy.wait());
 
-    auto client1
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto client1 = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(client1);
     QCOMPARE(client1->xcb_window, window1);
     QCOMPARE(client1->control->active, true);
@@ -847,8 +845,7 @@ void X11ClientTest::testActivateFocusedWindow()
     xcb_flush(connection.get());
     QVERIFY(windowCreatedSpy.wait());
 
-    auto client2
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.last().first().value<Toplevel*>());
+    auto client2 = get_x11_window_from_id(windowCreatedSpy.last().first().value<quint32>());
     QVERIFY(client2);
     QCOMPARE(client2->xcb_window, window2);
     QCOMPARE(client2->control->active, true);

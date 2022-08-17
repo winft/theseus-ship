@@ -113,7 +113,8 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     connect(ws->qobject.get(),
             &win::space::qobject_t::currentDesktopChanged,
             this,
-            [this](int old, Toplevel* c) {
+            [this, space = ws](int old) {
+                auto c = space->move_resize_window;
                 int const newDesktop = m_compositor->space->virtual_desktop_manager->current();
                 if (old != 0 && newDesktop != old) {
                     assert(!c || c->render);
@@ -127,56 +128,73 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     connect(ws->qobject.get(),
             &win::space::qobject_t::desktopPresenceChanged,
             this,
-            [this](Toplevel* c, int old) {
+            [this, space = ws](auto win_id, int old) {
+                auto c = space->windows_map.at(win_id);
                 assert(c);
                 assert(c->render);
                 assert(c->render->effect);
                 Q_EMIT desktopPresenceChanged(c->render->effect.get(), old, c->desktop());
             });
-    connect(ws->qobject.get(), &win::space::qobject_t::clientAdded, this, [this](auto c) {
-        if (c->ready_for_painting) {
-            slotClientShown(c);
-        } else {
-            QObject::connect(c->qobject.get(), &win::window_qobject::windowShown, this, [this, c] {
-                slotClientShown(c);
-            });
-        }
-    });
-    connect(ws->qobject.get(), &win::space::qobject_t::unmanagedAdded, this, [this](Toplevel* u) {
-        // it's never initially ready but has synthetic 50ms delay
-        connect(u->qobject.get(), &win::window_qobject::windowShown, this, [this, u] {
-            slotUnmanagedShown(u);
-        });
-    });
-    connect(
-        ws->qobject.get(), &win::space::qobject_t::internalClientAdded, this, [this](auto client) {
-            assert(client->render);
-            assert(client->render->effect);
-            setupAbstractClientConnections(client);
-            Q_EMIT windowAdded(client->render->effect.get());
-        });
     connect(ws->qobject.get(),
-            &win::space::qobject_t::clientActivated,
+            &win::space::qobject_t::clientAdded,
             this,
-            [this](KWin::Toplevel* window) {
-                assert(!window || window->render);
-                assert(!window || window->render->effect);
-                auto eff_win = window ? window->render->effect.get() : nullptr;
-                Q_EMIT windowActivated(eff_win);
+            [this, space = ws](auto win_id) {
+                auto c = space->windows_map.at(win_id);
+                if (c->ready_for_painting) {
+                    slotClientShown(c);
+                } else {
+                    QObject::connect(c->qobject.get(),
+                                     &win::window_qobject::windowShown,
+                                     this,
+                                     [this, c] { slotClientShown(c); });
+                }
             });
+    connect(ws->qobject.get(),
+            &win::space::qobject_t::unmanagedAdded,
+            this,
+            [this, space = ws](auto win_id) {
+                // it's never initially ready but has synthetic 50ms delay
+                auto u = space->windows_map.at(win_id);
+                connect(u->qobject.get(), &win::window_qobject::windowShown, this, [this, u] {
+                    slotUnmanagedShown(u);
+                });
+            });
+    connect(ws->qobject.get(),
+            &win::space::qobject_t::internalClientAdded,
+            this,
+            [this, space = ws](auto win_id) {
+                auto client = space->windows_map.at(win_id);
+                assert(client->render);
+                assert(client->render->effect);
+                setupAbstractClientConnections(client);
+                Q_EMIT windowAdded(client->render->effect.get());
+            });
+    connect(ws->qobject.get(), &win::space::qobject_t::clientActivated, this, [this, space = ws] {
+        auto window = space->active_client;
+        assert(!window || window->render);
+        assert(!window || window->render->effect);
+        auto eff_win = window ? window->render->effect.get() : nullptr;
+        Q_EMIT windowActivated(eff_win);
+    });
 
     QObject::connect(ws->qobject.get(),
                      &win::space::qobject_t::remnant_created,
                      this,
-                     &effects_handler_impl::add_remnant);
+                     [this, space = ws](auto win_id) {
+                         auto win = space->windows_map.at(win_id);
+                         add_remnant(win);
+                     });
 
-    connect(
-        ws->qobject.get(), &win::space::qobject_t::window_deleted, this, [this](KWin::Toplevel* d) {
-            assert(d->render);
-            assert(d->render->effect);
-            Q_EMIT windowDeleted(d->render->effect.get());
-            elevated_windows.removeAll(d->render->effect.get());
-        });
+    connect(ws->qobject.get(),
+            &win::space::qobject_t::window_deleted,
+            this,
+            [this, space = ws](auto win_id) {
+                auto d = space->windows_map.at(win_id);
+                assert(d->render);
+                assert(d->render->effect);
+                Q_EMIT windowDeleted(d->render->effect.get());
+                elevated_windows.removeAll(d->render->effect.get());
+            });
     connect(ws->session_manager.get(),
             &win::session_manager::stateChanged,
             this,

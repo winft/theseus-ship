@@ -258,7 +258,9 @@ public:
         QObject::connect(manager->xkb.platform->redirect->space.qobject.get(),
                          &win::space::qobject_t::clientActivated,
                          this->qobject.get(),
-                         [this](auto window) {
+                         [this] {
+                             auto window
+                                 = this->manager->xkb.platform->redirect->space.active_client;
                              if (!window) {
                                  return;
                              }
@@ -323,7 +325,7 @@ public:
         QObject::connect(space.qobject.get(),
                          &win::space::qobject_t::clientActivated,
                          this->qobject.get(),
-                         [this](auto window) { handle_client_activated(window); });
+                         [this, &space] { handle_client_activated(space.active_client); });
 
         auto session_manager = space.session_manager.get();
         QObject::connect(

@@ -877,9 +877,11 @@ void DecorationInputTest::testTooltipDoesntEatKeyEvents()
     QVERIFY(clientAddedSpy.isValid());
     c->control->deco.client->requestShowToolTip(QStringLiteral("test"));
     // now we should get an internal window
+
     QVERIFY(clientAddedSpy.wait());
+    auto win_id = clientAddedSpy.first().first().value<quint32>();
     auto internal
-        = dynamic_cast<win::internal_window*>(clientAddedSpy.first().first().value<Toplevel*>());
+        = dynamic_cast<win::internal_window*>(Test::app()->base.space->windows_map.at(win_id));
     QVERIFY(internal);
     QVERIFY(internal->isInternal());
     QVERIFY(internal->internalWindow()->flags().testFlag(Qt::ToolTip));

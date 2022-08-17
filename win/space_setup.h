@@ -75,11 +75,14 @@ void init_space(Space& space)
     QObject::connect(space.qobject.get(),
                      &Space::qobject_t::clientRemoved,
                      space.qobject.get(),
-                     [&](auto window) { focus_chain_remove(space.focus_chain, window); });
+                     [&](auto win_id) {
+                         auto window = space.windows_map.at(win_id);
+                         focus_chain_remove(space.focus_chain, window);
+                     });
     QObject::connect(space.qobject.get(),
                      &Space::qobject_t::clientActivated,
                      space.qobject.get(),
-                     [&](auto window) { space.focus_chain.active_window = window; });
+                     [&] { space.focus_chain.active_window = space.active_client; });
     QObject::connect(
         space.virtual_desktop_manager->qobject.get(),
         &virtual_desktop_manager_qobject::countChanged,
@@ -118,8 +121,7 @@ void init_space(Space& space)
                          }
 
                          activate_window_on_new_desktop(space, next);
-                         Q_EMIT space.qobject->currentDesktopChanged(prev,
-                                                                     space.move_resize_window);
+                         Q_EMIT space.qobject->currentDesktopChanged(prev);
                      });
 
     vds->setNavigationWrappingAround(kwinApp()->options->qobject->isRollOverDesktops());
@@ -199,7 +201,7 @@ void clear_space(Space& space)
     // At this point only remnants are remaining.
     for (auto it = space.windows.begin(); it != space.windows.end();) {
         assert((*it)->remnant);
-        Q_EMIT space.qobject->window_deleted(*it);
+        Q_EMIT space.qobject->window_deleted((*it)->signal_id);
         it = space.windows.erase(it);
     }
 

@@ -32,17 +32,20 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
 
     // TODO(romangg): We do this for every window here, even for windows that are not an xdg-shell
     //                type window. Restrict that?
-    QObject::connect(
-        space->qobject.get(), &win::space::qobject_t::wayland_window_added, this, [this](auto c) {
-            if (c->ready_for_painting) {
-                slotXdgShellClientShown(c);
-            } else {
-                QObject::connect(c->qobject.get(),
-                                 &Toplevel::qobject_t::windowShown,
-                                 this,
-                                 [this, c] { slotXdgShellClientShown(c); });
-            }
-        });
+    QObject::connect(space->qobject.get(),
+                     &win::space::qobject_t::wayland_window_added,
+                     this,
+                     [this](auto win_id) {
+                         auto win = this->m_compositor->space->windows_map.at(win_id);
+                         if (win->ready_for_painting) {
+                             slotXdgShellClientShown(win);
+                         } else {
+                             QObject::connect(win->qobject.get(),
+                                              &Toplevel::qobject_t::windowShown,
+                                              this,
+                                              [this, win] { slotXdgShellClientShown(win); });
+                         }
+                     });
 
     // TODO(romangg): We do this here too for every window.
     for (auto window : space->windows) {

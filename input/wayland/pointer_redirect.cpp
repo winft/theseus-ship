@@ -87,7 +87,7 @@ void pointer_redirect::init()
         });
 
     // connect the move resize of all window
-    auto setupMoveResizeConnection = [this](Toplevel* c) {
+    auto setupMoveResizeConnection = [this](auto c) {
         if (!c->control) {
             return;
         }
@@ -100,17 +100,21 @@ void pointer_redirect::init()
                          qobject.get(),
                          [this] { device_redirect_update(this); });
     };
+    auto setup_move_resize_notify_on_signal = [this, setupMoveResizeConnection](auto win_id) {
+        auto c = this->redirect->space.windows_map.at(win_id);
+        setupMoveResizeConnection(c);
+    };
 
     auto const clients = redirect->space.windows;
     std::for_each(clients.begin(), clients.end(), setupMoveResizeConnection);
     QObject::connect(redirect->space.qobject.get(),
                      &win::space::qobject_t::clientAdded,
                      qobject.get(),
-                     setupMoveResizeConnection);
+                     setup_move_resize_notify_on_signal);
     QObject::connect(redirect->space.qobject.get(),
                      &win::space::qobject_t::wayland_window_added,
                      qobject.get(),
-                     setupMoveResizeConnection);
+                     setup_move_resize_notify_on_signal);
 
     // warp the cursor to center of screen
     warp(QRect({}, kwinApp()->get_base().topology.size).center());

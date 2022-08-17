@@ -79,7 +79,10 @@ void cursor_image::setup_theme()
     QObject::connect(platform.redirect->space.qobject.get(),
                      &win::space::qobject_t::wayland_window_added,
                      this,
-                     &cursor_image::setup_move_resize);
+                     [this](auto win_id) {
+                         auto win = platform.redirect->space.windows_map.at(win_id);
+                         setup_move_resize(win);
+                     });
 
     // TODO(romangg): can we load the fallback cursor earlier in the ctor already?
     loadThemeCursor(Qt::ArrowCursor, &m_fallbackCursor);
@@ -100,7 +103,10 @@ void cursor_image::setup_theme()
     QObject::connect(platform.redirect->space.qobject.get(),
                      &win::space::qobject_t::clientAdded,
                      this,
-                     &cursor_image::setup_move_resize);
+                     [this](auto win_id) {
+                         auto win = platform.redirect->space.windows_map.at(win_id);
+                         setup_move_resize(win);
+                     });
 
     Q_EMIT changed();
 }

@@ -188,16 +188,16 @@ public:
                          });
 
         activation = std::make_unique<wayland::xdg_activation<space>>(*this);
-        QObject::connect(
-            qobject.get(), &space::qobject_t::clientActivated, qobject.get(), [this](auto&& win) {
-                if (win) {
-                    activation->clear();
-                }
-            });
+        QObject::connect(qobject.get(), &space::qobject_t::clientActivated, qobject.get(), [this] {
+            if (active_client) {
+                activation->clear();
+            }
+        });
 
         // For Xwayland windows we need to setup Plasma management too.
         QObject::connect(
-            qobject.get(), &space::qobject_t::clientAdded, qobject.get(), [this](auto&& win) {
+            qobject.get(), &space::qobject_t::clientAdded, qobject.get(), [this](auto win_id) {
+                auto win = windows_map.at(win_id);
                 handle_x11_window_added(static_cast<x11::window*>(win));
             });
 
@@ -371,7 +371,7 @@ public:
         }
 
         adopt_transient_children(this, window);
-        Q_EMIT qobject->wayland_window_added(window);
+        Q_EMIT qobject->wayland_window_added(window->signal_id);
     }
     void handle_window_removed(wayland_window* window)
     {
@@ -395,7 +395,7 @@ public:
                 set_shortcut(window, QString());
             }
             process_window_hidden(*this, window);
-            Q_EMIT qobject->clientRemoved(window);
+            Q_EMIT qobject->clientRemoved(window->signal_id);
         }
 
         stacking_order->update_count();
@@ -405,7 +405,7 @@ public:
             update_tabbox(*this);
         }
 
-        Q_EMIT qobject->wayland_window_removed(window);
+        Q_EMIT qobject->wayland_window_removed(window->signal_id);
     }
 
     void update_space_area_from_windows(QRect const& desktop_area,

@@ -49,7 +49,8 @@ surface_tree_model::surface_tree_model(win::space& space, QObject* parent)
     QObject::connect(space.qobject.get(),
                      &win::space::qobject_t::wayland_window_added,
                      this,
-                     [this, reset](auto win) {
+                     [this, reset](auto win_id) {
+                         auto win = this->space.windows_map.at(win_id);
                          QObject::connect(win->surface,
                                           &Wrapland::Server::Surface::subsurfaceTreeChanged,
                                           this,
@@ -57,10 +58,11 @@ surface_tree_model::surface_tree_model(win::space& space, QObject* parent)
                          reset();
                      });
     QObject::connect(
-        space.qobject.get(), &win::space::qobject_t::clientAdded, this, [this, reset](auto c) {
-            if (c->surface) {
+        space.qobject.get(), &win::space::qobject_t::clientAdded, this, [this, reset](auto win_id) {
+            auto win = this->space.windows_map.at(win_id);
+            if (win->surface) {
                 QObject::connect(
-                    c->surface, &Wrapland::Server::Surface::subsurfaceTreeChanged, this, reset);
+                    win->surface, &Wrapland::Server::Surface::subsurfaceTreeChanged, this, reset);
             }
             reset();
         });
@@ -68,9 +70,10 @@ surface_tree_model::surface_tree_model(win::space& space, QObject* parent)
     QObject::connect(space.qobject.get(),
                      &win::space::qobject_t::unmanagedAdded,
                      this,
-                     [this, reset](Toplevel* window) {
-                         if (window->surface) {
-                             QObject::connect(window->surface,
+                     [this, reset](auto win_id) {
+                         auto win = this->space.windows_map.at(win_id);
+                         if (win->surface) {
+                             QObject::connect(win->surface,
                                               &Wrapland::Server::Surface::subsurfaceTreeChanged,
                                               this,
                                               reset);

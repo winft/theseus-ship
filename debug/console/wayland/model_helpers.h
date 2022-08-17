@@ -30,13 +30,15 @@ void wayland_model_setup_connections(Model& model, Space& space)
     QObject::connect(space.qobject.get(),
                      &win::space::qobject_t::wayland_window_added,
                      &model,
-                     [&model](auto win) {
+                     [&](auto win_id) {
+                         auto win = space.windows_map.at(win_id);
                          add_window(&model, model.s_waylandClientId - 1, model.m_shellClients, win);
                      });
     QObject::connect(space.qobject.get(),
                      &win::space::qobject_t::wayland_window_removed,
                      &model,
-                     [&model](auto win) {
+                     [&](auto win_id) {
+                         auto win = space.windows_map.at(win_id);
                          remove_window(
                              &model, model.s_waylandClientId - 1, model.m_shellClients, win);
                      });

@@ -519,7 +519,9 @@ void DebugConsoleTest::testClosingDebugConsole()
     console->show();
     QCOMPARE(console->windowHandle()->isVisible(), true);
     QTRY_COMPARE(clientAddedSpy.count(), 1);
-    auto c = dynamic_cast<win::internal_window*>(clientAddedSpy.first().first().value<Toplevel*>());
+
+    auto win_id = clientAddedSpy.first().first().value<quint32>();
+    auto c = dynamic_cast<win::internal_window*>(Test::app()->base.space->windows_map.at(win_id));
     QVERIFY(c->isInternal());
     QCOMPARE(c->internalWindow(), console->windowHandle());
     QVERIFY(win::decoration(c));

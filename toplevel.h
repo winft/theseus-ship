@@ -322,6 +322,9 @@ public:
     bool m_skipCloseAnimation{false};
     QVector<win::virtual_desktop*> m_desktops;
 
+    /// Being used internally when emitting signals. Access via the space windows_map.
+    uint32_t signal_id;
+
 protected:
     explicit Toplevel(win::space& space);
     Toplevel(win::remnant remnant, win::space& space);

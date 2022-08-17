@@ -242,8 +242,10 @@ void PopupOpenCloseAnimationTest::testAnimateDecorationTooltips()
     QVERIFY(tooltipAddedSpy.isValid());
     client->control->deco.client->requestShowToolTip(QStringLiteral("KWin rocks!"));
     QVERIFY(tooltipAddedSpy.wait());
+
+    auto tooltip_id = tooltipAddedSpy.first().first().value<quint32>();
     auto tooltip
-        = dynamic_cast<win::internal_window*>(tooltipAddedSpy.first().first().value<Toplevel*>());
+        = dynamic_cast<win::internal_window*>(Test::app()->base.space->windows_map.at(tooltip_id));
     QVERIFY(tooltip->isInternal());
     QVERIFY(win::is_popup(tooltip));
     QVERIFY(tooltip->internalWindow()->flags().testFlag(Qt::ToolTip));

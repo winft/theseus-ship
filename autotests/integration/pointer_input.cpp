@@ -145,6 +145,11 @@ private:
     Wrapland::Client::Seat* m_seat = nullptr;
 };
 
+wayland_window* get_wayland_window_from_id(uint32_t id)
+{
+    return dynamic_cast<wayland_window*>(Test::app()->base.space->windows_map.at(id));
+}
+
 void PointerInputTest::initTestCase()
 {
     qRegisterMetaType<Wrapland::Client::XdgDecoration::Mode>();
@@ -1316,8 +1321,7 @@ void PointerInputTest::testPopup()
     popupShellSurface->requestGrab(m_seat, 0); // FIXME: Serial.
     render(popupSurface, positioner.initialSize());
     QVERIFY(clientAddedSpy.wait());
-    auto popupClient
-        = dynamic_cast<wayland_window*>(clientAddedSpy.last().first().value<Toplevel*>());
+    auto popupClient = get_wayland_window_from_id(clientAddedSpy.last().first().value<quint32>());
     QVERIFY(popupClient);
     QVERIFY(popupClient != window);
     QCOMPARE(window, Test::app()->base.space->active_client);
@@ -1435,8 +1439,7 @@ void PointerInputTest::testDecoCancelsPopup()
     popupShellSurface->requestGrab(m_seat, 0); // FIXME: Serial.
     render(popupSurface, positioner.initialSize());
     QVERIFY(clientAddedSpy.wait());
-    auto popupClient
-        = dynamic_cast<wayland_window*>(clientAddedSpy.last().first().value<Toplevel*>());
+    auto popupClient = get_wayland_window_from_id(clientAddedSpy.last().first().value<quint32>());
     QVERIFY(popupClient);
     QVERIFY(popupClient != window);
     QCOMPARE(window, Test::app()->base.space->active_client);
@@ -1503,8 +1506,7 @@ void PointerInputTest::testWindowUnderCursorWhileButtonPressed()
     QVERIFY(popupShellSurface);
     render(popupSurface, positioner.initialSize());
     QVERIFY(clientAddedSpy.wait());
-    auto popupClient
-        = dynamic_cast<wayland_window*>(clientAddedSpy.last().first().value<Toplevel*>());
+    auto popupClient = get_wayland_window_from_id(clientAddedSpy.last().first().value<quint32>());
     QVERIFY(popupClient);
     QVERIFY(popupClient != window);
     QVERIFY(window->frameGeometry().contains(Test::app()->base.input->cursor->pos()));

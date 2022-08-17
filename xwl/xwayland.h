@@ -258,10 +258,11 @@ private:
             space.qobject.get(),
             &win::space::qobject_t::surface_id_changed,
             this,
-            [this, xwayland_connection = waylandServer()->xwayland_connection()](auto window,
+            [this, xwayland_connection = waylandServer()->xwayland_connection()](auto win_id,
                                                                                  auto id) {
                 if (auto surface = space.compositor->getSurface(id, xwayland_connection)) {
-                    auto xwl_win = dynamic_cast<win::wayland::xwl_window<Space>*>(window);
+                    auto win = space.windows_map.at(win_id);
+                    auto xwl_win = dynamic_cast<win::wayland::xwl_window<Space>*>(win);
                     assert(xwl_win);
                     win::wayland::set_surface(xwl_win, surface);
                 }

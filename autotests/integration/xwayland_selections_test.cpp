@@ -138,10 +138,12 @@ void XwaylandSelectionsTest::testSync()
     Toplevel* copyClient = nullptr;
     if (copyPlatform == QLatin1String("xcb")) {
         QVERIFY(clientAddedSpy.wait());
-        copyClient = clientAddedSpy.first().first().value<Toplevel*>();
+        auto copy_client_id = clientAddedSpy.first().first().value<quint32>();
+        copyClient = Test::app()->base.space->windows_map.at(copy_client_id);
     } else {
         QVERIFY(shellClientAddedSpy.wait());
-        copyClient = shellClientAddedSpy.first().first().value<Toplevel*>();
+        auto copy_client_id = shellClientAddedSpy.first().first().value<quint32>();
+        copyClient = Test::app()->base.space->windows_map.at(copy_client_id);
     }
     QVERIFY(copyClient);
     if (Test::app()->base.space->active_client != copyClient) {
@@ -176,10 +178,12 @@ void XwaylandSelectionsTest::testSync()
     Toplevel* pasteClient = nullptr;
     if (pastePlatform == QLatin1String("xcb")) {
         QVERIFY(clientAddedSpy.wait());
-        pasteClient = clientAddedSpy.last().first().value<Toplevel*>();
+        auto paste_client_id = clientAddedSpy.last().first().value<quint32>();
+        pasteClient = Test::app()->base.space->windows_map.at(paste_client_id);
     } else {
         QVERIFY(shellClientAddedSpy.wait());
-        pasteClient = shellClientAddedSpy.last().first().value<Toplevel*>();
+        auto paste_client_id = shellClientAddedSpy.last().first().value<quint32>();
+        pasteClient = Test::app()->base.space->windows_map.at(paste_client_id);
     }
     QCOMPARE(clientAddedSpy.count(), 1);
     QCOMPARE(shellClientAddedSpy.count(), 1);

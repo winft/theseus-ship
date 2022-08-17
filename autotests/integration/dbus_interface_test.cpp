@@ -125,7 +125,9 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
     Test::render(surface, QSize(100, 50), Qt::blue);
     QVERIFY(clientAddedSpy.isEmpty());
     QVERIFY(clientAddedSpy.wait());
-    auto client = dynamic_cast<wayland_window*>(clientAddedSpy.first().first().value<Toplevel*>());
+
+    auto client_id = clientAddedSpy.first().first().value<quint32>();
+    auto client = dynamic_cast<wayland_window*>(Test::app()->base.space->windows_map.at(client_id));
     QVERIFY(client);
 
     // let's get the window info
@@ -279,8 +281,9 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
+    auto client_id = windowCreatedSpy.first().first().value<quint32>();
     auto client
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+        = dynamic_cast<win::x11::window*>(Test::app()->base.space->windows_map.at(client_id));
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QCOMPARE(win::frame_to_client_size(client, client->size()), windowGeometry.size());
