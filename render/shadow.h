@@ -68,7 +68,6 @@ struct shadow_windowing_integration {
  */
 class KWIN_EXPORT shadow : public QObject
 {
-    Q_OBJECT
 public:
     ~shadow() override;
 
@@ -119,6 +118,8 @@ public:
     virtual bool prepareBackend() = 0;
     virtual void buildQuads();
 
+    void geometryChanged();
+
     // shadow pixmaps
     QPixmap m_shadowElements[static_cast<size_t>(shadow_element::count)];
 
@@ -132,9 +133,6 @@ public:
     QSharedPointer<KDecoration2::DecorationShadow> m_decorationShadow;
 
     render::window* window;
-
-public Q_SLOTS:
-    void geometryChanged();
 
 protected:
     shadow(render::window* window);
