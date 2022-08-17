@@ -315,9 +315,9 @@ void keyboard_layout_test::test_reconfigure()
     QCOMPARE(xkb->layout_name_from_index(0), "English (US)");
 
     // Create a new keymap.
-    auto layout_group = kwinApp()->kxkbConfig()->group("Layout");
-    layout_group.writeEntry("LayoutList", QStringLiteral("de,us"));
-    layout_group.sync();
+    auto lay_group = kwinApp()->kxkbConfig()->group("Layout");
+    lay_group.writeEntry("LayoutList", QStringLiteral("de,us"));
+    lay_group.sync();
 
     reconfigure_layouts();
 

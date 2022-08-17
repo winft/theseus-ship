@@ -468,15 +468,15 @@ void wlr_signal_emit_safe(wl_signal* signal, void* data)
 
 void pointer_motion_absolute(QPointF const& position, uint32_t time)
 {
-    auto app = Test::app();
+    auto test_app = Test::app();
 
-    QVERIFY(app->pointer);
+    QVERIFY(test_app->pointer);
 #if HAVE_WLR_BASE_INPUT_DEVICES
     wlr_pointer_motion_absolute_event event{};
-    event.pointer = app->pointer;
+    event.pointer = test_app->pointer;
 #else
     wlr_event_pointer_motion_absolute event{};
-    event.device = app->pointer;
+    event.device = test_app->pointer;
 #endif
 
     event.time_msec = time;
@@ -486,25 +486,25 @@ void pointer_motion_absolute(QPointF const& position, uint32_t time)
     event.y = position.y() / screens_size.height();
 
 #if HAVE_WLR_BASE_INPUT_DEVICES
-    wlr_signal_emit_safe(&app->pointer->events.motion_absolute, &event);
-    wlr_signal_emit_safe(&app->pointer->events.frame, app->pointer);
+    wlr_signal_emit_safe(&test_app->pointer->events.motion_absolute, &event);
+    wlr_signal_emit_safe(&test_app->pointer->events.frame, test_app->pointer);
 #else
-    wlr_signal_emit_safe(&app->pointer->pointer->events.motion_absolute, &event);
-    wlr_signal_emit_safe(&app->pointer->pointer->events.frame, app->pointer->pointer);
+    wlr_signal_emit_safe(&test_app->pointer->pointer->events.motion_absolute, &event);
+    wlr_signal_emit_safe(&test_app->pointer->pointer->events.frame, test_app->pointer->pointer);
 #endif
 }
 
 void pointer_button_impl(uint32_t button, uint32_t time, wlr_button_state state)
 {
-    auto app = Test::app();
+    auto test_app = Test::app();
 
-    QVERIFY(app->pointer);
+    QVERIFY(test_app->pointer);
 #if HAVE_WLR_BASE_INPUT_DEVICES
     wlr_pointer_button_event event{};
-    event.pointer = app->pointer;
+    event.pointer = test_app->pointer;
 #else
     wlr_event_pointer_button event{};
-    event.device = app->pointer;
+    event.device = test_app->pointer;
 #endif
 
     event.time_msec = time;
@@ -513,11 +513,11 @@ void pointer_button_impl(uint32_t button, uint32_t time, wlr_button_state state)
     event.state = state;
 
 #if HAVE_WLR_BASE_INPUT_DEVICES
-    wlr_signal_emit_safe(&app->pointer->events.button, &event);
-    wlr_signal_emit_safe(&app->pointer->events.frame, app->pointer);
+    wlr_signal_emit_safe(&test_app->pointer->events.button, &event);
+    wlr_signal_emit_safe(&test_app->pointer->events.frame, test_app->pointer);
 #else
-    wlr_signal_emit_safe(&app->pointer->pointer->events.button, &event);
-    wlr_signal_emit_safe(&app->pointer->pointer->events.frame, app->pointer->pointer);
+    wlr_signal_emit_safe(&test_app->pointer->pointer->events.button, &event);
+    wlr_signal_emit_safe(&test_app->pointer->pointer->events.frame, test_app->pointer->pointer);
 #endif
 }
 
@@ -537,15 +537,15 @@ void pointer_axis_impl(double delta,
                        wlr_axis_orientation orientation,
                        wlr_axis_source source)
 {
-    auto app = Test::app();
+    auto test_app = Test::app();
 
-    QVERIFY(app->pointer);
+    QVERIFY(test_app->pointer);
 #if HAVE_WLR_BASE_INPUT_DEVICES
     wlr_pointer_axis_event event{};
-    event.pointer = app->pointer;
+    event.pointer = test_app->pointer;
 #else
     wlr_event_pointer_axis event{};
-    event.device = app->pointer;
+    event.device = test_app->pointer;
 #endif
 
     event.time_msec = time;
@@ -556,11 +556,11 @@ void pointer_axis_impl(double delta,
     event.source = source;
 
 #if HAVE_WLR_BASE_INPUT_DEVICES
-    wlr_signal_emit_safe(&app->pointer->events.axis, &event);
-    wlr_signal_emit_safe(&app->pointer->events.frame, app->pointer);
+    wlr_signal_emit_safe(&test_app->pointer->events.axis, &event);
+    wlr_signal_emit_safe(&test_app->pointer->events.frame, test_app->pointer);
 #else
-    wlr_signal_emit_safe(&app->pointer->pointer->events.axis, &event);
-    wlr_signal_emit_safe(&app->pointer->pointer->events.frame, app->pointer->pointer);
+    wlr_signal_emit_safe(&test_app->pointer->pointer->events.axis, &event);
+    wlr_signal_emit_safe(&test_app->pointer->pointer->events.frame, test_app->pointer->pointer);
 #endif
 }
 
@@ -653,15 +653,15 @@ QPointF get_relative_touch_position(QPointF const& pos)
 
 void touch_down(int32_t id, QPointF const& position, uint32_t time)
 {
-    auto app = Test::app();
+    auto test_app = Test::app();
 
-    QVERIFY(app->touch);
+    QVERIFY(test_app->touch);
 #if HAVE_WLR_BASE_INPUT_DEVICES
     wlr_touch_down_event event{};
-    event.touch = app->touch;
+    event.touch = test_app->touch;
 #else
     wlr_event_touch_down event{};
-    event.device = app->touch;
+    event.device = test_app->touch;
 #endif
 
     event.time_msec = time;
@@ -673,23 +673,23 @@ void touch_down(int32_t id, QPointF const& position, uint32_t time)
     event.y = rel_pos.y();
 
 #if HAVE_WLR_BASE_INPUT_DEVICES
-    wlr_signal_emit_safe(&app->touch->events.down, &event);
+    wlr_signal_emit_safe(&test_app->touch->events.down, &event);
 #else
-    wlr_signal_emit_safe(&app->touch->touch->events.down, &event);
+    wlr_signal_emit_safe(&test_app->touch->touch->events.down, &event);
 #endif
 }
 
 void touch_up(int32_t id, uint32_t time)
 {
-    auto app = Test::app();
+    auto test_app = Test::app();
 
-    QVERIFY(app->touch);
+    QVERIFY(test_app->touch);
 #if HAVE_WLR_BASE_INPUT_DEVICES
     wlr_touch_up_event event{};
-    event.touch = app->touch;
+    event.touch = test_app->touch;
 #else
     wlr_event_touch_up event{};
-    event.device = app->touch;
+    event.device = test_app->touch;
 #endif
 
     event.time_msec = time;
@@ -697,23 +697,23 @@ void touch_up(int32_t id, uint32_t time)
     event.touch_id = id;
 
 #if HAVE_WLR_BASE_INPUT_DEVICES
-    wlr_signal_emit_safe(&app->touch->events.up, &event);
+    wlr_signal_emit_safe(&test_app->touch->events.up, &event);
 #else
-    wlr_signal_emit_safe(&app->touch->touch->events.up, &event);
+    wlr_signal_emit_safe(&test_app->touch->touch->events.up, &event);
 #endif
 }
 
 void touch_motion(int32_t id, QPointF const& position, uint32_t time)
 {
-    auto app = Test::app();
+    auto test_app = Test::app();
 
-    QVERIFY(app->touch);
+    QVERIFY(test_app->touch);
 #if HAVE_WLR_BASE_INPUT_DEVICES
     wlr_touch_motion_event event{};
-    event.touch = app->touch;
+    event.touch = test_app->touch;
 #else
     wlr_event_touch_motion event{};
-    event.device = app->touch;
+    event.device = test_app->touch;
 #endif
 
     event.time_msec = time;
@@ -725,27 +725,27 @@ void touch_motion(int32_t id, QPointF const& position, uint32_t time)
     event.y = rel_pos.y();
 
 #if HAVE_WLR_BASE_INPUT_DEVICES
-    wlr_signal_emit_safe(&app->touch->events.motion, &event);
+    wlr_signal_emit_safe(&test_app->touch->events.motion, &event);
 #else
-    wlr_signal_emit_safe(&app->touch->touch->events.motion, &event);
+    wlr_signal_emit_safe(&test_app->touch->touch->events.motion, &event);
 #endif
 }
 
 void touch_cancel()
 {
-    auto app = Test::app();
+    auto test_app = Test::app();
 
-    QVERIFY(app->touch);
+    QVERIFY(test_app->touch);
 #if HAVE_WLR_BASE_INPUT_DEVICES
     wlr_touch_cancel_event event{};
-    event.touch = app->touch;
+    event.touch = test_app->touch;
 
-    wlr_signal_emit_safe(&app->touch->events.cancel, &event);
+    wlr_signal_emit_safe(&test_app->touch->events.cancel, &event);
 #else
     wlr_event_touch_cancel event{};
-    event.device = app->touch;
+    event.device = test_app->touch;
 
-    wlr_signal_emit_safe(&app->touch->touch->events.cancel, &event);
+    wlr_signal_emit_safe(&test_app->touch->touch->events.cancel, &event);
 #endif
 }
 
