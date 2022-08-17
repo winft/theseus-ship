@@ -58,7 +58,7 @@ public:
                          std::deque<Toplevel*> const& windows,
                          std::chrono::milliseconds presentTime) override;
 
-    std::unique_ptr<render::shadow> createShadow(Toplevel* toplevel) override;
+    std::unique_ptr<render::shadow> createShadow(render::window* window) override;
     void handle_screen_geometry_change(QSize const& size) override;
     CompositingType compositingType() const override;
     bool hasSwapEvent() const override;

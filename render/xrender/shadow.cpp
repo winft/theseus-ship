@@ -18,8 +18,8 @@
 namespace KWin::render::xrender
 {
 
-shadow::shadow(Toplevel* toplevel)
-    : render::shadow(toplevel)
+shadow::shadow(render::window* window)
+    : render::shadow(window)
 {
     for (size_t i = 0; i < enum_index(shadow_element::count); ++i) {
         m_pictures[i] = nullptr;

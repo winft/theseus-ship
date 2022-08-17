@@ -136,7 +136,8 @@ public:
 
         render->win_integration.setup_buffer = setup_buffer;
         render->win_integration.get_viewport = get_viewport;
-        render->shadow_windowing.create = render::wayland::create_shadow<render::shadow, Toplevel>;
+        render->shadow_windowing.create
+            = render::wayland::create_shadow<render::shadow, render::window>;
         render->shadow_windowing.update = render::wayland::update_shadow<render::shadow>;
 
         setup_scale_scene_notify(*this);

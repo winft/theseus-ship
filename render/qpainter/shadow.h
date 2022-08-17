@@ -13,7 +13,7 @@ namespace KWin::render::qpainter
 class shadow : public render::shadow
 {
 public:
-    shadow(Toplevel* toplevel);
+    shadow(render::window* window);
     ~shadow() override;
 
     QImage& shadowTexture()

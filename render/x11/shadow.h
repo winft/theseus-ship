@@ -102,7 +102,7 @@ QVector<uint32_t> read_shadow_property(Win const& win, base::x11::xcb::atom cons
 template<typename Shadow>
 bool read_and_update_shadow(Shadow& impl, base::x11::xcb::atom const& shadow_atom)
 {
-    auto data = read_shadow_property(*impl.m_topLevel, shadow_atom);
+    auto data = read_shadow_property(*impl.window->ref_win, shadow_atom);
     if (data.isEmpty()) {
         return false;
     }
@@ -117,7 +117,7 @@ std::unique_ptr<Shadow> create_shadow(Win& win, base::x11::xcb::atom const& shad
         return {};
     }
 
-    auto shadow = win.space.render.scene->createShadow(&win);
+    auto shadow = win.space.render.scene->createShadow(win.render.get());
     if (!update_shadow(*shadow, data)) {
         return {};
     }

@@ -810,9 +810,9 @@ bool scene::supportsSurfacelessContext() const
     return m_backend->supportsSurfacelessContext();
 }
 
-std::unique_ptr<render::shadow> scene::createShadow(Toplevel* toplevel)
+std::unique_ptr<render::shadow> scene::createShadow(render::window* window)
 {
-    return std::make_unique<shadow>(toplevel, *this);
+    return std::make_unique<shadow>(window, *this);
 }
 
 win::deco::client_impl<Toplevel>::renderer_t*

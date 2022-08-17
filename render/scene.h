@@ -101,7 +101,7 @@ public:
      *
      * @param toplevel The Toplevel for which the Shadow needs to be created.
      */
-    virtual std::unique_ptr<shadow> createShadow(Toplevel* toplevel) = 0;
+    virtual std::unique_ptr<shadow> createShadow(render::window* window) = 0;
     /**
      * Method invoked when the screen geometry is changed.
      * Reimplementing classes should also invoke the parent method

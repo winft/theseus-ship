@@ -339,7 +339,7 @@ void window::create_shadow()
     auto shadow = create_deco_shadow<render::shadow>(*ref_win);
 
     if (!shadow && shadow_windowing.create) {
-        shadow = shadow_windowing.create(*ref_win);
+        shadow = shadow_windowing.create(*this);
     }
 
     if (shadow) {

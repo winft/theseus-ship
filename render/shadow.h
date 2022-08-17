@@ -40,18 +40,14 @@ namespace Wrapland::Server
 class Shadow;
 }
 
-namespace KWin
-{
-
-class Toplevel;
-
-namespace render
+namespace KWin::render
 {
 
 class shadow;
+class window;
 
 struct shadow_windowing_integration {
-    std::function<std::unique_ptr<shadow>(Toplevel&)> create;
+    std::function<std::unique_ptr<shadow>(window&)> create;
     std::function<bool(shadow&)> update;
 };
 
@@ -65,10 +61,10 @@ struct shadow_windowing_integration {
  * To create a Shadow instance use the static factory method createShadow which will
  * create an instance for the currently used Compositing Backend. It will read the X11 Property
  * and create the Shadow and all required data (such as WindowQuads). If there is no Shadow
- * defined for the Toplevel the factory method returns @c NULL.
+ * defined for the window the factory method returns @c NULL.
  *
  * @author Martin Gräßlin <mgraesslin@kde.org>
- * @todo React on Toplevel size changes.
+ * @todo React on window size changes.
  */
 class KWIN_EXPORT shadow : public QObject
 {
@@ -135,13 +131,13 @@ public:
     // Decoration based shadows
     QSharedPointer<KDecoration2::DecorationShadow> m_decorationShadow;
 
-    Toplevel* m_topLevel;
+    render::window* window;
 
 public Q_SLOTS:
     void geometryChanged();
 
 protected:
-    shadow(Toplevel* toplevel);
+    shadow(render::window* window);
 
     inline const QPixmap& shadowPixmap(shadow_element element) const
     {
@@ -166,10 +162,6 @@ protected:
     {
         return m_leftOffset;
     };
-    Toplevel* topLevel()
-    {
-        return m_topLevel;
-    };
     void setShadowRegion(const QRegion& region)
     {
         m_shadowRegion = region;
@@ -183,5 +175,4 @@ private:
     QSize m_cachedSize;
 };
 
-}
 }

@@ -13,18 +13,13 @@
 
 #include <QSharedPointer>
 
-namespace KWin
-{
-
-class Toplevel;
-
-namespace render::gl
+namespace KWin::render::gl
 {
 
 class shadow : public render::shadow
 {
 public:
-    shadow(Toplevel* toplevel, gl::scene& scene);
+    shadow(render::window* window, gl::scene& scene);
     ~shadow() override;
 
     GLTexture* shadowTexture()
@@ -41,5 +36,4 @@ private:
     gl::scene& scene;
 };
 
-}
 }
