@@ -51,16 +51,17 @@ int main(int argc, char* argv[])
 {
     unsetenv("XDG_RUNTIME_DIR");
 
-    auto mode = KWin::Application::OperationModeXwayland;
-#ifdef NO_XWAYLAND
-    mode = KWin::Application::OperationModeWaylandOnly;
-#endif
-
     KWin::NoXdgRuntimeDirTest tc;
 
     try {
         using namespace KWin;
         Test::prepare_app_env(argv[0]);
+#ifdef NO_XWAYLAND
+        auto mode = KWin::Application::OperationModeWaylandOnly;
+#else
+        auto mode = KWin::Application::OperationModeXwayland;
+
+#endif
         auto app = WaylandTestApplication(mode,
                                           Test::create_socket_name("KWin::NoXdgRuntimeDirTest"),
                                           base::wayland::start_options::none,

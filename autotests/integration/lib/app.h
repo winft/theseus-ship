@@ -86,13 +86,14 @@ int create_test(std::string const& test_name,
                 char* argv[])
 {
     auto const sock_name = create_socket_name(test_name);
-    auto mode = Application::OperationModeXwayland;
-#ifdef NO_XWAYLAND
-    mode = KWin::Application::OperationModeWaylandOnly;
-#endif
 
     try {
         prepare_app_env(argv[0]);
+#ifdef NO_XWAYLAND
+        auto mode = KWin::Application::OperationModeWaylandOnly;
+#else
+        auto mode = KWin::Application::OperationModeXwayland;
+#endif
         auto way_app = WaylandTestApplication(mode, sock_name, flags, argc, argv);
         prepare_sys_env(sock_name);
         Test test;
