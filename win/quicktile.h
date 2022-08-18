@@ -33,7 +33,7 @@ void check_quicktile_maximization_zones(Win* win, int xroot, int yroot)
 {
     auto mode = quicktiles::none;
     bool inner_border = false;
-    auto const& outputs = kwinApp()->get_base().get_outputs();
+    auto const& outputs = win->space.base.outputs;
 
     for (size_t i = 0; i < outputs.size(); ++i) {
         if (!outputs.at(i)->geometry().contains(QPoint(xroot, yroot))) {
@@ -184,10 +184,9 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
 
             // TODO(romangg): Once we use size_t consistently for screens identification replace
             // these (currentyl implicit casted) types with auto.
-            auto const& outputs = kwinApp()->get_base().get_outputs();
-            auto const old_screen = win->central_output
-                ? base::get_output_index(kwinApp()->get_base().get_outputs(), *win->central_output)
-                : 0;
+            auto const& outputs = win->space.base.outputs;
+            auto const old_screen
+                = win->central_output ? base::get_output_index(outputs, *win->central_output) : 0;
             auto screen = old_screen;
 
             std::vector<QRect> screens_geos(outputs.size());

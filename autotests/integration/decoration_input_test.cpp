@@ -82,7 +82,7 @@ private Q_SLOTS:
     void testTooltipDoesntEatKeyEvents();
 
 private:
-    Toplevel* showWindow();
+    Test::space::window_t* showWindow();
 
     struct {
         std::unique_ptr<Wrapland::Client::XdgShellToplevel> toplevel;
@@ -96,7 +96,7 @@ private:
 
 #define RELEASE Test::pointer_button_released(BTN_LEFT, timestamp++)
 
-Toplevel* DecorationInputTest::showWindow()
+Test::space::window_t* DecorationInputTest::showWindow()
 {
     using namespace Wrapland::Client;
 #define VERIFY(statement)                                                                          \
@@ -204,12 +204,10 @@ void DecorationInputTest::testAxis()
 
     MOTION(QPoint(c->frameGeometry().center().x(), win::frame_to_client_pos(c, QPoint()).y() / 2));
 
-    QVERIFY(Test::app()->base.input->redirect->get_pointer()->focus.deco);
-    QCOMPARE(Test::app()
-                 ->base.input->redirect->get_pointer()
-                 ->focus.deco->decoration()
-                 ->sectionUnderMouse(),
-             Qt::TitleBarArea);
+    QVERIFY(Test::app()->base.input->redirect->pointer->focus.deco);
+    QCOMPARE(
+        Test::app()->base.input->redirect->pointer->focus.deco->decoration()->sectionUnderMouse(),
+        Qt::TitleBarArea);
 
     // TODO: mouse wheel direction looks wrong to me
     // simulate wheel
@@ -227,12 +225,9 @@ void DecorationInputTest::testAxis()
     win::move(c, QPoint(0, 0));
     QFETCH(QPoint, decoPoint);
     MOTION(decoPoint);
-    QVERIFY(Test::app()->base.input->redirect->get_pointer()->focus.deco);
-    QCOMPARE(Test::app()->base.input->redirect->get_pointer()->focus.deco->client(), c);
-    QTEST(Test::app()
-              ->base.input->redirect->get_pointer()
-              ->focus.deco->decoration()
-              ->sectionUnderMouse(),
+    QVERIFY(Test::app()->base.input->redirect->pointer->focus.deco);
+    QCOMPARE(Test::app()->base.input->redirect->pointer->focus.deco->client(), c);
+    QTEST(Test::app()->base.input->redirect->pointer->focus.deco->decoration()->sectionUnderMouse(),
           "expectedSection");
     Test::pointer_axis_vertical(5.0, timestamp++, 0);
     QVERIFY(!c->control->keep_below);
@@ -279,12 +274,9 @@ void KWin::DecorationInputTest::testDoubleClick()
     win::move(c, QPoint(0, 0));
     QFETCH(QPoint, decoPoint);
     MOTION(decoPoint);
-    QVERIFY(Test::app()->base.input->redirect->get_pointer()->focus.deco);
-    QCOMPARE(Test::app()->base.input->redirect->get_pointer()->focus.deco->client(), c);
-    QTEST(Test::app()
-              ->base.input->redirect->get_pointer()
-              ->focus.deco->decoration()
-              ->sectionUnderMouse(),
+    QVERIFY(Test::app()->base.input->redirect->pointer->focus.deco);
+    QCOMPARE(Test::app()->base.input->redirect->pointer->focus.deco->client(), c);
+    QTEST(Test::app()->base.input->redirect->pointer->focus.deco->decoration()->sectionUnderMouse(),
           "expectedSection");
     // double click
     PRESS;
@@ -338,12 +330,9 @@ void KWin::DecorationInputTest::testDoubleTap()
     QFETCH(QPoint, decoPoint);
     // double click
     Test::touch_down(0, decoPoint, timestamp++);
-    QVERIFY(Test::app()->base.input->redirect->get_touch()->focus.deco);
-    QCOMPARE(Test::app()->base.input->redirect->get_touch()->focus.deco->client(), c);
-    QTEST(Test::app()
-              ->base.input->redirect->get_touch()
-              ->focus.deco->decoration()
-              ->sectionUnderMouse(),
+    QVERIFY(Test::app()->base.input->redirect->touch->focus.deco);
+    QCOMPARE(Test::app()->base.input->redirect->touch->focus.deco->client(), c);
+    QTEST(Test::app()->base.input->redirect->touch->focus.deco->decoration()->sectionUnderMouse(),
           "expectedSection");
     Test::touch_up(0, timestamp++);
     QVERIFY(!c->isOnAllDesktops());
@@ -429,10 +418,10 @@ void DecorationInputTest::testPressToMove()
               Test::get_output(0)->geometry().center()
                   - QPoint(c->size().width() / 2, c->size().height() / 2));
     QSignalSpy startMoveResizedSpy(c->qobject.get(),
-                                   &Toplevel::qobject_t::clientStartUserMovedResized);
+                                   &win::window_qobject::clientStartUserMovedResized);
     QVERIFY(startMoveResizedSpy.isValid());
     QSignalSpy clientFinishUserMovedResizedSpy(c->qobject.get(),
-                                               &Toplevel::qobject_t::clientFinishUserMovedResized);
+                                               &win::window_qobject::clientFinishUserMovedResized);
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
     quint32 timestamp = 1;
@@ -499,10 +488,10 @@ void DecorationInputTest::testTapToMove()
               Test::get_output(0)->geometry().center()
                   - QPoint(c->size().width() / 2, c->size().height() / 2));
     QSignalSpy startMoveResizedSpy(c->qobject.get(),
-                                   &Toplevel::qobject_t::clientStartUserMovedResized);
+                                   &win::window_qobject::clientStartUserMovedResized);
     QVERIFY(startMoveResizedSpy.isValid());
     QSignalSpy clientFinishUserMovedResizedSpy(c->qobject.get(),
-                                               &Toplevel::qobject_t::clientFinishUserMovedResized);
+                                               &win::window_qobject::clientFinishUserMovedResized);
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
     quint32 timestamp = 1;
@@ -512,7 +501,7 @@ void DecorationInputTest::testTapToMove()
     Test::touch_down(0, p, timestamp++);
     QVERIFY(!win::is_move(c));
     QFETCH(QPoint, offset);
-    QCOMPARE(Test::app()->base.input->redirect->get_touch()->decorationPressId(), 0);
+    QCOMPARE(Test::app()->base.input->redirect->touch->decorationPressId(), 0);
     Test::touch_motion(0, p + offset, timestamp++);
     const QPoint oldPos = c->pos();
     QVERIFY(win::is_move(c));
@@ -526,7 +515,7 @@ void DecorationInputTest::testTapToMove()
 
     // again
     Test::touch_down(1, p + offset, timestamp++);
-    QCOMPARE(Test::app()->base.input->redirect->get_touch()->decorationPressId(), 1);
+    QCOMPARE(Test::app()->base.input->redirect->touch->decorationPressId(), 1);
     QVERIFY(!win::is_move(c));
     QFETCH(QPoint, offset2);
     Test::touch_motion(1,
@@ -583,7 +572,7 @@ void DecorationInputTest::testResizeOutsideWindow()
     QVERIFY(c->frameGeometry() != win::input_geometry(c));
     QVERIFY(win::input_geometry(c).contains(c->frameGeometry()));
     QSignalSpy startMoveResizedSpy(c->qobject.get(),
-                                   &Toplevel::qobject_t::clientStartUserMovedResized);
+                                   &win::window_qobject::clientStartUserMovedResized);
     QVERIFY(startMoveResizedSpy.isValid());
 
     // go to border
@@ -827,10 +816,10 @@ void DecorationInputTest::testTouchEvents()
     const QPoint tapPoint(c->frameGeometry().center().x(),
                           win::frame_to_client_pos(c, QPoint()).y() / 2);
 
-    QVERIFY(!Test::app()->base.input->redirect->get_touch()->focus.deco);
+    QVERIFY(!Test::app()->base.input->redirect->touch->focus.deco);
     Test::touch_down(0, tapPoint, timestamp++);
-    QVERIFY(Test::app()->base.input->redirect->get_touch()->focus.deco);
-    QCOMPARE(Test::app()->base.input->redirect->get_touch()->focus.deco->decoration(),
+    QVERIFY(Test::app()->base.input->redirect->touch->focus.deco);
+    QCOMPARE(Test::app()->base.input->redirect->touch->focus.deco->decoration(),
              win::decoration(c));
     QCOMPARE(hoverMoveSpy.count(), 1);
     QCOMPARE(hoverLeaveSpy.count(), 0);
@@ -880,8 +869,8 @@ void DecorationInputTest::testTooltipDoesntEatKeyEvents()
 
     QVERIFY(clientAddedSpy.wait());
     auto win_id = clientAddedSpy.first().first().value<quint32>();
-    auto internal
-        = dynamic_cast<win::internal_window*>(Test::app()->base.space->windows_map.at(win_id));
+    auto internal = dynamic_cast<Test::space::internal_window_t*>(
+        Test::app()->base.space->windows_map.at(win_id));
     QVERIFY(internal);
     QVERIFY(internal->isInternal());
     QVERIFY(internal->internalWindow()->flags().testFlag(Qt::ToolTip));

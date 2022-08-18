@@ -21,13 +21,16 @@ namespace KWin::render::backend::wlroots
 {
 
 template<typename Base>
-class platform : public wayland::platform<Base>
+class platform : public wayland::platform<typename Base::abstract_type>
 {
 public:
-    using output_t = output<platform>;
+    using type = platform<Base>;
+    using abstract_type = wayland::platform<typename Base::abstract_type>;
+    using compositor_t = typename abstract_type::compositor_t;
+    using output_t = output<typename Base::output_t, type>;
 
     explicit platform(Base& base)
-        : wayland::platform<Base>(base)
+        : abstract_type(base)
         , base{base}
     {
     }
@@ -58,14 +61,16 @@ public:
         return OpenGLCompositing;
     }
 
-    gl::backend* get_opengl_backend(render::compositor& /*compositor*/) override
+    gl::backend<gl::scene<abstract_type>, abstract_type>*
+    get_opengl_backend(compositor_t& /*compositor*/) override
     {
         assert(egl);
         egl->make_current();
         return egl.get();
     }
 
-    qpainter::backend* get_qpainter_backend(render::compositor& /*compositor*/) override
+    qpainter::backend<qpainter::scene<abstract_type>>*
+    get_qpainter_backend(compositor_t& /*compositor*/) override
     {
         assert(qpainter);
         return qpainter.get();

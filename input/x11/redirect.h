@@ -5,29 +5,46 @@
 */
 #pragma once
 
-#include "input/redirect.h"
+#include "keyboard_redirect.h"
+#include "pointer_redirect.h"
+
+#include "input/redirect_qobject.h"
 
 namespace KWin::input::x11
 {
 
-class keyboard_redirect;
-class pointer_redirect;
-
-class KWIN_EXPORT redirect : public input::redirect
+template<typename Platform>
+class redirect
 {
 public:
-    redirect(input::platform& platform, win::space& space);
-    ~redirect();
+    using type = redirect<Platform>;
+    using space_t = typename Platform::base_t::space_t;
+    using window_t = typename space_t::window_t;
 
-    input::keyboard_redirect* get_keyboard() const override;
-    input::pointer_redirect* get_pointer() const override;
-    input::tablet_redirect* get_tablet() const override;
-    input::touch_redirect* get_touch() const override;
+    redirect(Platform& platform)
+        : qobject{std::make_unique<redirect_qobject>()}
+        , platform{platform}
+    {
+        platform.redirect = this;
+        pointer = std::make_unique<pointer_redirect<type>>(this);
+        keyboard = std::make_unique<keyboard_redirect<type>>(this);
+    }
 
-    std::unique_ptr<keyboard_redirect> keyboard;
-    std::unique_ptr<pointer_redirect> pointer;
-    std::unique_ptr<tablet_redirect> tablet;
-    std::unique_ptr<touch_redirect> touch;
+    ~redirect()
+    {
+        auto const spies = m_spies;
+        for (auto spy : spies) {
+            delete spy;
+        }
+    }
+
+    std::unique_ptr<keyboard_redirect<type>> keyboard;
+    std::unique_ptr<pointer_redirect<type>> pointer;
+
+    std::vector<event_spy<type>*> m_spies;
+
+    std::unique_ptr<redirect_qobject> qobject;
+    Platform& platform;
 };
 
 }

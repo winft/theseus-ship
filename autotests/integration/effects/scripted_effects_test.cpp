@@ -176,7 +176,7 @@ void ScriptedEffectsTest::cleanup()
 {
     Test::destroy_wayland_connection();
 
-    auto effectsImpl = static_cast<render::effects_handler_impl*>(effects);
+    auto& effectsImpl = Test::app()->base.render->compositor->effects;
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
 

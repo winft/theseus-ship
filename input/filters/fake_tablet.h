@@ -9,9 +9,7 @@
 #include "input/logging.h"
 #include "input/pointer_redirect.h"
 #include "input/qt_event.h"
-#include "input/redirect.h"
 #include "main.h"
-#include "win/wayland/space.h"
 
 #include <Wrapland/Server/kde_idle.h>
 
@@ -52,13 +50,11 @@ public:
         case QEvent::TabletLeaveProximity:
             break;
         default:
-            qCWarning(KWIN_INPUT) << "Unexpected tablet event type" << event;
+            qCWarning(KWIN_CORE) << "Unexpected tablet event type" << event;
             break;
         }
 
-        using wayland_space = win::wayland::space<base::wayland::platform>;
-        static_cast<wayland_space&>(this->redirect.space).kde_idle->simulateUserActivity();
-
+        this->redirect.platform.base.space->kde_idle->simulateUserActivity();
         return true;
     }
 };

@@ -9,6 +9,7 @@
 #include "types.h"
 
 #include "base/output.h"
+#include "base/wayland/platform.h"
 #include "base/wayland/server.h"
 #include "main.h"
 #include "win/wayland/space.h"
@@ -35,11 +36,13 @@ namespace KWin
 
 class WaylandTestApplication;
 
-class Toplevel;
-
 namespace Test
 {
+
 class client;
+
+using space = win::wayland::space<base::wayland::platform>;
+using wayland_window = win::wayland::window<space>;
 
 struct KWIN_EXPORT output {
     output(QRect const& geometry);
@@ -49,9 +52,6 @@ struct KWIN_EXPORT output {
     QRect geometry;
     double scale;
 };
-
-using wayland_space = win::wayland::space<base::wayland::platform>;
-using wayland_window = win::wayland::window<wayland_space>;
 
 KWIN_EXPORT WaylandTestApplication* app();
 
@@ -173,7 +173,15 @@ render_and_wait_for_shown(client const& clt,
 /**
  * Waits for the @p client to be destroyed.
  */
-KWIN_EXPORT bool wait_for_destroyed(KWin::Toplevel* window);
+template<typename Window>
+bool wait_for_destroyed(Window* window)
+{
+    QSignalSpy destroyedSpy(window->qobject.get(), &QObject::destroyed);
+    if (!destroyedSpy.isValid()) {
+        return false;
+    }
+    return destroyedSpy.wait();
+}
 
 /**
  * Locks the screen and waits till the screen is locked.

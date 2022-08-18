@@ -11,12 +11,9 @@
 #include "base/wayland/server.h"
 #include "input/event.h"
 #include "input/event_filter.h"
-#include "input/wayland/platform.h"
-#include "main.h"
 
 #include <Wrapland/Server/seat.h>
 
-#include <QApplication>
 #include <QElapsedTimer>
 #include <QTimer>
 

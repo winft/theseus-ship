@@ -26,15 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <list>
 #include <unordered_map>
 
-namespace KWin
-{
-
-namespace base
-{
-class output;
-}
-
-namespace win
+namespace KWin::win
 {
 
 /**
@@ -73,5 +65,4 @@ public:
     Space& space;
 };
 
-}
 }

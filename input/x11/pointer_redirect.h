@@ -5,44 +5,41 @@
 */
 #pragma once
 
+#include "input/device_redirect.h"
 #include "input/pointer_redirect.h"
 
 namespace KWin::input::x11
 {
 
-class redirect;
-
-class pointer_redirect : public input::pointer_redirect
+template<typename Redirect>
+class pointer_redirect : public device_redirect<Redirect>
 {
 public:
-    explicit pointer_redirect(x11::redirect* redirect)
-        : input::pointer_redirect(redirect)
-        , redirect{redirect}
+    explicit pointer_redirect(Redirect* redirect)
+        : device_redirect<Redirect>(redirect)
     {
     }
 
-    QPointF pos() const override
+    QPointF pos() const
     {
         return {};
     }
 
-    void setEffectsOverrideCursor(Qt::CursorShape /*shape*/) override
+    void setEffectsOverrideCursor(Qt::CursorShape /*shape*/)
     {
     }
-    void removeEffectsOverrideCursor() override
-    {
-    }
-
-    void setEnableConstraints(bool /*set*/) override
+    void removeEffectsOverrideCursor()
     {
     }
 
-    void process_button(button_event const& event) override
+    void setEnableConstraints(bool /*set*/)
+    {
+    }
+
+    void process_button(button_event const& event)
     {
         pointer_redirect_process_button_spies(*this, event);
     }
-
-    x11::redirect* redirect;
 };
 
 }

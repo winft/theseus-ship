@@ -5,8 +5,6 @@
 */
 #pragma once
 
-#include "redirect.h"
-
 #include "input/keyboard_redirect.h"
 
 #include <memory>
@@ -14,29 +12,31 @@
 namespace KWin::input::x11
 {
 
-class keyboard_redirect : public input::keyboard_redirect
+template<typename Redirect>
+class keyboard_redirect
 {
 public:
-    explicit keyboard_redirect(x11::redirect* redirect)
-        : input::keyboard_redirect(redirect)
+    explicit keyboard_redirect(Redirect* redirect)
+        : qobject{std::make_unique<keyboard_redirect_qobject>()}
         , redirect{redirect}
     {
     }
 
-    void update() override
+    void update()
     {
     }
 
-    void process_key(key_event const& event) override
+    void process_key(key_event const& event)
     {
-        keyboard_redirect_prepare_key(*this, event);
+        keyboard_redirect_prepare_key<Redirect>(*this, event);
     }
 
-    void process_modifiers(modifiers_event const& /*event*/) override
+    void process_modifiers(modifiers_event const& /*event*/)
     {
     }
 
-    x11::redirect* redirect;
+    std::unique_ptr<keyboard_redirect_qobject> qobject;
+    Redirect* redirect;
 };
 
 }

@@ -729,7 +729,9 @@ void SceneQPainterShadowTest::testShadowTextureReconstruction()
     QVERIFY(client->render);
     QVERIFY(client->render->shadow());
     auto& shadowTexture
-        = static_cast<render::qpainter::shadow*>(client->render->shadow())->shadowTexture();
+        = static_cast<render::qpainter::shadow<decltype(client->render)::element_type>*>(
+              client->render->shadow())
+              ->shadowTexture();
 
     QCOMPARE(shadowTexture, referenceShadowTexture);
 }

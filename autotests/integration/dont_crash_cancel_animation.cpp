@@ -89,8 +89,8 @@ void DontCrashCancelAnimationFromAnimationEndedTest::testScript()
                                           Q_ARG(QString, QStringLiteral("crashy"))));
         break;
     }
-    QVERIFY(static_cast<render::effects_handler_impl*>(effects)->isEffectLoaded(
-        QStringLiteral("crashy")));
+    QVERIFY(
+        Test::app()->base.render->compositor->effects->isEffectLoaded(QStringLiteral("crashy")));
 
     using namespace Wrapland::Client;
     // create a window
@@ -108,7 +108,7 @@ void DontCrashCancelAnimationFromAnimationEndedTest::testScript()
     QTest::qWait(200);
 
     // wait for the window to be passed to Deleted
-    QSignalSpy windowDeletedSpy(c->qobject.get(), &Toplevel::qobject_t::closed);
+    QSignalSpy windowDeletedSpy(c->qobject.get(), &win::window_qobject::closed);
     QVERIFY(windowDeletedSpy.isValid());
 
     surface.reset();

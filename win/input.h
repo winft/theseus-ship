@@ -6,7 +6,6 @@
 #pragma once
 
 #include "actions.h"
-#include "control.h"
 #include "desktop_space.h"
 #include "move.h"
 #include "net.h"
@@ -87,8 +86,8 @@ bool perform_mouse_command(Win& win,
                            QPoint const& globalPos)
 {
     bool replay = false;
-    auto& base = kwinApp()->get_base();
     auto& space = win.space;
+    auto& base = space.base;
 
     switch (cmd) {
     case base::options_qobject::MouseRaise:

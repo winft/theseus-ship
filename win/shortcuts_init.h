@@ -438,18 +438,18 @@ void init_shortcuts(Space& space)
     def(kli18n("Kill Window"), Qt::META | Qt::CTRL | Qt::Key_Escape, start_window_killer<Space>);
     def6(kli18n("Suspend Compositing"),
          Qt::SHIFT + Qt::ALT + Qt::Key_F12,
-         space.render.qobject.get(),
-         [render = &space.render] { render->toggleCompositing(); });
-    def6(kli18n("Invert Screen Colors"), 0, space.render.qobject.get(), [render = &space.render] {
-        render->platform.invertScreen();
-    });
+         space.base.render->compositor->qobject.get(),
+         [compositor = space.base.render->compositor.get()] { compositor->toggleCompositing(); });
+    def6(kli18n("Invert Screen Colors"),
+         0,
+         space.base.render->compositor->qobject.get(),
+         [render = space.base.render.get()] { render->invertScreen(); });
 
 #if KWIN_BUILD_TABBOX
     space.tabbox->init_shortcuts();
 #endif
     shortcuts_init_virtual_desktops(space);
-    render::post::init_night_color_shortcuts(space.input->platform,
-                                             *kwinApp()->get_base().render->night_color);
+    render::post::init_night_color_shortcuts(*space.base.input, *space.base.render->night_color);
 
     // so that it's recreated next time
     space.user_actions_menu->discard();

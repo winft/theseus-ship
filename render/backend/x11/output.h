@@ -5,15 +5,12 @@
 */
 #pragma once
 
-namespace KWin
-{
-
-namespace base::x11
+namespace KWin::base::x11
 {
 class output;
 }
 
-namespace render::backend::x11
+namespace KWin::render::backend::x11
 {
 
 class output
@@ -27,5 +24,4 @@ public:
     base::x11::output const& base;
 };
 
-}
 }

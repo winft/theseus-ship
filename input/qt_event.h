@@ -6,7 +6,9 @@
 #pragma once
 
 #include "event.h"
+#include "keyboard.h"
 #include "xkb/helpers.h"
+#include "xkb/keyboard.h"
 
 #include "kwin_export.h"
 
@@ -20,11 +22,6 @@
 
 namespace KWin::input
 {
-
-namespace xkb
-{
-class keyboard;
-}
 
 QHash<uint32_t, Qt::MouseButton> const button_map = {
     {BTN_LEFT, Qt::LeftButton},

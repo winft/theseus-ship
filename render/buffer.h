@@ -6,29 +6,17 @@
 */
 #pragma once
 
-#include "kwin_export.h"
-#include "types.h"
-
-#include <QImage>
+#include <QRect>
+#include <QRegion>
 #include <functional>
 #include <memory>
-#include <xcb/xcb.h>
-
-class QOpenGLFramebufferObject;
-
-namespace Wrapland::Server
-{
-class Surface;
-}
 
 namespace KWin::render
 {
 
-class buffer;
-class window;
-
+template<typename Buffer>
 struct buffer_win_integration {
-    buffer_win_integration(render::buffer const& buffer)
+    buffer_win_integration(Buffer const& buffer)
         : buffer{buffer}
     {
     }
@@ -56,7 +44,7 @@ struct buffer_win_integration {
     virtual QRegion damage() const = 0;
 
     std::function<void(void)> update;
-    render::buffer const& buffer;
+    Buffer const& buffer;
 };
 
 /**
@@ -76,10 +64,13 @@ struct buffer_win_integration {
  * This class is intended to be inherited for the needs of the compositor backends which need
  * further mapping from the native buffer to the respective rendering format.
  */
-class KWIN_EXPORT buffer
+template<typename Win>
+class buffer
 {
 public:
-    virtual ~buffer();
+    using buffer_t = buffer<Win>;
+
+    virtual ~buffer() = default;
     /**
      * @brief Tries to create the mapping between the window and the buffer.
      *
@@ -89,14 +80,30 @@ public:
      * Inheriting classes should re-implement this method in case they need to add further
      * functionality for mapping the native buffer to the rendering format.
      */
-    virtual void create();
+    virtual void create()
+    {
+        if (isValid() || window->ref_win->remnant) {
+            return;
+        }
+
+        updateBuffer();
+
+        // TODO(romangg): Do we need to exclude the internal image case?
+        if (win_integration->valid()) {
+            window->unreference_previous_buffer();
+        }
+    }
 
     /**
      * @return @c true if the buffer has been created and is valid, @c false otherwise
      */
-    virtual bool isValid() const;
+    virtual bool isValid() const
+    {
+        assert(win_integration);
+        return win_integration->valid();
+    }
 
-    std::unique_ptr<buffer_win_integration> win_integration;
+    std::unique_ptr<buffer_win_integration<buffer_t>> win_integration;
 
     /**
      * @brief Whether this buffer is considered as discarded. This means the window has
@@ -105,7 +112,10 @@ public:
      * @return @c true if this buffer is considered as discarded, @c false otherwise.
      * @see markAsDiscarded
      */
-    bool isDiscarded() const;
+    bool isDiscarded() const
+    {
+        return m_discarded;
+    }
 
     /**
      * @brief Marks this buffer as discarded. From now on isDiscarded will return @c true.
@@ -114,18 +124,30 @@ public:
      *
      * @see isDiscarded
      */
-    void markAsDiscarded();
+    void markAsDiscarded()
+    {
+        m_discarded = true;
+        window->reference_previous_buffer();
+    }
 
-    render::window* window;
+    Win* window;
 
 protected:
-    explicit buffer(render::window* window);
+    explicit buffer(Win* window)
+        : window{window}
+        , m_discarded{false}
+    {
+    }
 
     /**
      * Should be called by the implementing subclasses when the Wayland Buffer changed and needs
      * updating.
      */
-    virtual void updateBuffer();
+    virtual void updateBuffer()
+    {
+        assert(win_integration);
+        win_integration->update();
+    }
 
 private:
     bool m_discarded;

@@ -15,11 +15,13 @@ namespace KWin::render::qpainter
 {
 
 template<typename Window>
-class buffer : public render::buffer
+class buffer : public render::buffer<Window>
 {
 public:
+    using buffer_t = typename render::buffer<Window>::buffer_t;
+
     explicit buffer(Window* window)
-        : render::buffer(window)
+        : render::buffer<Window>(window)
     {
     }
 
@@ -28,16 +30,16 @@ public:
         if (isValid()) {
             return;
         }
-        render::buffer::create();
+        render::buffer<Window>::create();
         if (!isValid()) {
             return;
         }
 
         // For now we rely on the fact that the QPainter backend is only run on Wayland.
-        auto& win_integrate
-            = static_cast<render::wayland::buffer_win_integration&>(*win_integration);
+        auto& win_integrate = static_cast<render::wayland::buffer_win_integration<buffer_t>&>(
+            *this->win_integration);
 
-        if (!window->ref_win->surface) {
+        if (!this->window->ref_win->surface) {
             // That's an internal client.
             image = win_integrate.internal.image;
             return;
@@ -45,7 +47,7 @@ public:
 
         // performing deep copy, this could probably be improved
         image = win_integrate.external->shmImage()->createQImage().copy();
-        if (auto s = window->ref_win->surface) {
+        if (auto s = this->window->ref_win->surface) {
             s->resetTrackedDamage();
         }
     }
@@ -55,20 +57,20 @@ public:
         if (!image.isNull()) {
             return true;
         }
-        return render::buffer::isValid();
+        return render::buffer<Window>::isValid();
     }
 
     void updateBuffer() override
     {
         // For now we rely on the fact that the QPainter backend is only run on Wayland.
-        auto& win_integrate
-            = static_cast<render::wayland::buffer_win_integration&>(*win_integration);
+        auto& win_integrate = static_cast<render::wayland::buffer_win_integration<buffer_t>&>(
+            *this->win_integration);
 
         auto oldBuffer = win_integrate.external.get();
-        render::buffer::updateBuffer();
+        render::buffer<Window>::updateBuffer();
         auto b = win_integrate.external.get();
 
-        if (!window->ref_win->surface) {
+        if (!this->window->ref_win->surface) {
             // That's an internal client.
             image = win_integrate.internal.image;
             return;
@@ -83,7 +85,7 @@ public:
 
         // perform deep copy
         image = b->shmImage()->createQImage().copy();
-        if (auto surface = window->ref_win->surface) {
+        if (auto surface = this->window->ref_win->surface) {
             surface->resetTrackedDamage();
         }
     }

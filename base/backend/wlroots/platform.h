@@ -6,6 +6,7 @@
 #pragma once
 
 #include "drm_lease.h"
+#include "output.h"
 
 #include "base/utils.h"
 #include "base/wayland/platform.h"
@@ -67,6 +68,9 @@ inline wlr_backend* get_headless_backend(wlr_backend* backend)
 class KWIN_EXPORT platform : public base::wayland::platform
 {
 public:
+    using abstract_type = base::wayland::platform;
+    using output_t = wlroots::output;
+
     platform() = default;
     explicit platform(Wrapland::Server::Display* display);
     explicit platform(Wrapland::Server::Display* display, wlr_backend* backend);

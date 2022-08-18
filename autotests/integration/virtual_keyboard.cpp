@@ -39,7 +39,7 @@ struct test_window {
     {
         client_toplevel.reset();
         if (window) {
-            QSignalSpy windowDeletedSpy(window->qobject.get(), &Toplevel::qobject_t::closed);
+            QSignalSpy windowDeletedSpy(window->qobject.get(), &win::window_qobject::closed);
             QVERIFY(windowDeletedSpy.isValid());
             QVERIFY(Test::wait_for_destroyed(window));
             QCOMPARE(windowDeletedSpy.size(), 1);
@@ -174,8 +174,7 @@ void virtual_keyboard_test::test_keymap()
     Test::keyboard_key_released(KEY_Y, timestamp++);
     QVERIFY(client_keymap_spy.wait());
 
-    QSignalSpy vk_spy(static_cast<input::wayland::platform*>(Test::app()->base.input.get())
-                          ->virtual_keyboard.get(),
+    QSignalSpy vk_spy(Test::app()->base.input->virtual_keyboard.get(),
                       &Wrapland::Server::virtual_keyboard_manager_v1::keyboard_created);
     QVERIFY(vk_spy.isValid());
 
@@ -208,8 +207,7 @@ void virtual_keyboard_test::test_keymap()
  */
 void virtual_keyboard_test::test_keys()
 {
-    QSignalSpy vk_spy(static_cast<input::wayland::platform*>(Test::app()->base.input.get())
-                          ->virtual_keyboard.get(),
+    QSignalSpy vk_spy(Test::app()->base.input->virtual_keyboard.get(),
                       &Wrapland::Server::virtual_keyboard_manager_v1::keyboard_created);
     QVERIFY(vk_spy.isValid());
 

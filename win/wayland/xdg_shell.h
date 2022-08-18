@@ -7,10 +7,8 @@
 
 #include "popup_placement.h"
 #include "window_release.h"
-#include "xdg_shell_control.h"
 
 #include "base/wayland/server.h"
-#include "render/compositor.h"
 #include "utils/geo.h"
 #include "wayland_logging.h"
 #include "win/controlling.h"
@@ -189,7 +187,7 @@ Win* create_toplevel_window(Space* space, Wrapland::Server::XdgShellToplevel* to
     auto win = create_shell_window<Win>(*space, toplevel->surface());
     win->toplevel = toplevel;
 
-    win->control = std::make_unique<xdg_shell_control<Win>>(*win);
+    win->control = std::make_unique<typename Win::xdg_shell_control_t>(*win);
     win->control->setup_tabbox();
     win->control->setup_color_scheme();
 
@@ -311,8 +309,8 @@ Win* create_popup_window(Space* space, Wrapland::Server::XdgShellPopup* popup)
 
     QObject::connect(win->qobject.get(),
                      &Win::qobject_t::needsRepaint,
-                     win->space.render.qobject.get(),
-                     [win] { win->space.render.schedule_repaint(win); });
+                     win->space.base.render->compositor->qobject.get(),
+                     [win] { win->space.base.render->compositor->schedule_repaint(win); });
     QObject::connect(win->qobject.get(),
                      &Win::qobject_t::frame_geometry_changed,
                      win->qobject.get(),
@@ -374,7 +372,7 @@ void update_screen_edge(Win* win)
     Qt::Edges edges;
     auto const geometry = win->frameGeometry();
 
-    for (auto output : win->space.base.get_outputs()) {
+    for (auto output : win->space.base.outputs) {
         auto const screen_geo = output->geometry();
         if (screen_geo.left() == geometry.left()) {
             edges |= Qt::LeftEdge;

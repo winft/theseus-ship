@@ -3,8 +3,9 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-
 #pragma once
+
+#include "kwin_export.h"
 
 #include <QAbstractListModel>
 
@@ -22,7 +23,7 @@ namespace scripting::models::v3
 /**
  * The virtual_desktop_model class provides a data model for the virtual desktops.
  */
-class virtual_desktop_model : public QAbstractListModel
+class KWIN_EXPORT virtual_desktop_model : public QAbstractListModel
 {
     Q_OBJECT
 

@@ -8,21 +8,18 @@
 #include "debug/console/model_helpers.h"
 
 #include "win/space_qobject.h"
-#include "win/wayland/space.h"
-#include "win/wayland/window.h"
 
 namespace KWin::debug
 {
-
-using wayland_space = win::wayland::space<base::wayland::platform>;
-using wayland_window = win::wayland::window<wayland_space>;
 
 template<typename Model, typename Space>
 void wayland_model_setup_connections(Model& model, Space& space)
 {
     for (auto window : space.windows) {
-        if (auto wwin = dynamic_cast<wayland_window*>(window); wwin && !wwin->remnant) {
-            model.m_shellClients.emplace_back(std::make_unique<console_window>(window));
+        if (auto wwin = dynamic_cast<typename Space::wayland_window*>(window);
+            wwin && !wwin->remnant) {
+            model.m_shellClients.emplace_back(
+                std::make_unique<console_window<typename Space::window_t>>(window));
         }
     }
 

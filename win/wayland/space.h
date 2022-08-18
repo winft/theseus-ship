@@ -26,6 +26,7 @@
 #include "debug/console/wayland/wayland_console.h"
 #include "input/wayland/platform.h"
 #include "input/wayland/redirect.h"
+#include "scripting/platform.h"
 #include "win/input.h"
 #include "win/internal_window.h"
 #include "win/screen.h"
@@ -57,12 +58,31 @@ template<typename Base>
 class space : public win::space
 {
 public:
-    using x11_window = xwl_window<space<Base>>;
-    using wayland_window = wayland::window<space<Base>>;
+    using base_t = Base;
+    using type = space<base_t>;
+    using window_t = Toplevel<type>;
+    using x11_window = xwl_window<type>;
+
+    // TODO(romangg): Remove once we can rely on Space::x11_window always being the group window.
+    using x11_group_window = x11::window<type>;
+
+    using wayland_window = wayland::window<type>;
+    using internal_window_t = internal_window<type>;
+    using input_t = typename Base::input_t;
 
     space(Base& base, base::wayland::server* server)
-        : win::space(*base.render->compositor)
+        : win::space()
         , base{base}
+        , outline{render::outline::create(*base.render->compositor,
+                                          [this] {
+                                              return render::create_outline_visual(
+                                                  *this->base.render->compositor, *outline);
+                                          })}
+        , deco{std::make_unique<deco::bridge<type>>(*this)}
+        , appmenu{std::make_unique<dbus::appmenu>(dbus::create_appmenu_callbacks(*this))}
+        , stacking_order{std::make_unique<win::stacking_order<window_t>>()}
+        , focus_chain{win::focus_chain<type>(*this)}
+        , user_actions_menu{std::make_unique<win::user_actions_menu<type>>(*this)}
         , server{server}
         , compositor{server->display->createCompositor()}
         , subcompositor{server->display->createSubCompositor()}
@@ -96,9 +116,9 @@ public:
             return iwin->singleton.get();
         };
 
-        this->input = std::make_unique<input::wayland::redirect>(*base.input, *this);
-        dbus = std::make_unique<base::dbus::kwin_impl<win::space, input::platform>>(
-            *this, base.input.get());
+        input = std::make_unique<typename input_t::redirect_t>(*base.input);
+        this->dbus
+            = std::make_unique<base::dbus::kwin_impl<type, input_t>>(*this, base.input.get());
         edges = std::make_unique<edger_t>(*this);
 
         plasma_window_manager->setShowingDesktopState(
@@ -111,7 +131,7 @@ public:
                          qobject.get(),
                          [this] {
                              for (auto win : windows) {
-                                 if (auto iwin = dynamic_cast<internal_window*>(win);
+                                 if (auto iwin = dynamic_cast<internal_window_t*>(win);
                                      iwin && iwin->isShown()) {
                                      stacking_order->render_overlays.push_back(iwin);
                                  }
@@ -199,7 +219,7 @@ public:
         QObject::connect(
             qobject.get(), &space::qobject_t::clientAdded, qobject.get(), [this](auto win_id) {
                 auto win = windows_map.at(win_id);
-                handle_x11_window_added(static_cast<x11::window*>(win));
+                handle_x11_window_added(static_cast<x11_window*>(win));
             });
 
         QObject::connect(virtual_desktop_manager->qobject.get(),
@@ -244,14 +264,15 @@ public:
         }
     }
 
-    window_t* findInternal(QWindow* window) const override
+    /// Internal window means a window created by KWin itself.
+    window_t* findInternal(QWindow* window) const
     {
         if (!window) {
             return nullptr;
         }
 
         for (auto win : windows) {
-            if (auto internal = dynamic_cast<internal_window*>(win);
+            if (auto internal = dynamic_cast<internal_window_t*>(win);
                 internal && internal->internalWindow() == window) {
                 return internal;
             }
@@ -260,7 +281,13 @@ public:
         return nullptr;
     }
 
-    QRect get_icon_geometry(window_t const* win) const override
+    using edger_t = screen_edger<type>;
+    std::unique_ptr<screen_edge<edger_t>> create_screen_edge(edger_t& edger)
+    {
+        return std::make_unique<screen_edge<edger_t>>(&edger);
+    }
+
+    QRect get_icon_geometry(window_t const* win) const
     {
         auto management = win->control->plasma_wayland_integration;
         if (!management || !waylandServer()) {
@@ -417,8 +444,8 @@ public:
             if (!window->control) {
                 continue;
             }
-            if (auto x11_window = dynamic_cast<x11::window*>(window)) {
-                x11::update_space_areas(x11_window, desktop_area, screens_geos, areas);
+            if (auto x11_win = dynamic_cast<x11_window*>(window)) {
+                x11::update_space_areas(x11_win, desktop_area, screens_geos, areas);
             }
         }
 
@@ -438,6 +465,26 @@ public:
     }
 
     Base& base;
+
+    std::unique_ptr<scripting::platform<type>> scripting;
+    std::unique_ptr<render::outline> outline;
+    std::unique_ptr<edger_t> edges;
+    std::unique_ptr<deco::bridge<type>> deco;
+    std::unique_ptr<dbus::appmenu> appmenu;
+
+    std::unique_ptr<x11::root_info<type>> root_info;
+    std::unique_ptr<x11::color_mapper<type>> color_mapper;
+
+    std::unique_ptr<typename input_t::redirect_t> input;
+    std::unique_ptr<win::stacking_order<window_t>> stacking_order;
+    win::focus_chain<type> focus_chain;
+
+    std::unique_ptr<win::tabbox<type>> tabbox;
+    std::unique_ptr<osd_notification<input_t>> osd;
+    std::unique_ptr<kill_window<type>> window_killer;
+    std::unique_ptr<win::user_actions_menu<type>> user_actions_menu;
+    std::unique_ptr<base::dbus::kwin_impl<type, input_t>> dbus;
+
     base::wayland::server* server;
 
     std::unique_ptr<Wrapland::Server::Compositor> compositor;
@@ -464,14 +511,32 @@ public:
 
     QVector<Wrapland::Server::PlasmaShellSurface*> plasma_shell_surfaces;
 
+    std::vector<window_t*> windows;
+    std::unordered_map<uint32_t, window_t*> windows_map;
+    std::vector<win::x11::group<type>*> groups;
+
+    window_t* active_popup_client{nullptr};
+
+    window_t* last_active_client{nullptr};
+    window_t* delayfocus_client{nullptr};
+    window_t* client_keys_client{nullptr};
+
+    // Last is most recent.
+    std::deque<window_t*> should_get_focus;
+    std::deque<window_t*> attention_chain;
+
+    window_t* move_resize_window{nullptr};
+    window_t* most_recently_raised{nullptr};
+    window_t* active_client{nullptr};
+
 private:
-    void handle_x11_window_added(x11::window* window)
+    void handle_x11_window_added(x11_window* window)
     {
         if (window->ready_for_painting) {
             setup_plasma_management(this, window);
         } else {
             QObject::connect(window->qobject.get(),
-                             &x11::window::qobject_t::windowShown,
+                             &x11_window::qobject_t::windowShown,
                              qobject.get(),
                              [this, window] { setup_plasma_management(this, window); });
         }

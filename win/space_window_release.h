@@ -30,7 +30,8 @@ void delete_window_from_space(Space& space, Win* win)
     remove_window_from_stacking_order(space, win);
     remove_window_from_lists(space, win);
 
-    if (auto& update_block = space.render.x11_integration.update_blocking; update_block) {
+    if (auto& update_block = space.base.render->compositor->x11_integration.update_blocking;
+        update_block) {
         update_block(nullptr);
     }
 
@@ -62,8 +63,8 @@ void add_remnant(Win1& orig, Win2& remnant)
 
     QObject::connect(remnant.qobject.get(),
                      &decltype(remnant.qobject)::element_type::needsRepaint,
-                     space.render.qobject.get(),
-                     [&] { remnant.space.render.schedule_repaint(&remnant); });
+                     space.base.render->compositor->qobject.get(),
+                     [&] { remnant.space.base.render->compositor->schedule_repaint(&remnant); });
 }
 
 }

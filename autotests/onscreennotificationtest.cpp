@@ -20,7 +20,7 @@
  */
 #include "onscreennotificationtest.h"
 
-#include "input/redirect.h"
+#include "input/event_spy.h"
 #include "win/osd_notification.h"
 
 #include <KConfigGroup>
@@ -35,44 +35,49 @@ QTEST_MAIN(OnScreenNotificationTest);
 namespace KWin
 {
 
-class mock_redirect : public input::redirect
+class mock_pointer
 {
 public:
-    ~mock_redirect();
-
-    input::keyboard_redirect* get_keyboard() const override
+    QPointF pos() const
     {
-        return nullptr;
-    }
-    input::pointer_redirect* get_pointer() const override
-    {
-        return nullptr;
-    }
-    input::tablet_redirect* get_tablet() const override
-    {
-        return nullptr;
-    }
-    input::touch_redirect* get_touch() const override
-    {
-        return nullptr;
+        return {};
     }
 };
 
-void input::redirect::installInputEventSpy(input::event_spy* spy)
+class mock_redirect
 {
-    Q_UNUSED(spy);
-}
+public:
+    mock_redirect()
+        : pointer{std::make_unique<mock_pointer>()}
+    {
+    }
 
-void input::redirect::uninstallInputEventSpy(input::event_spy* spy)
+    std::vector<input::event_spy<mock_redirect>*> m_spies;
+    std::unique_ptr<mock_pointer> pointer;
+};
+
+class mock_input_platform
 {
-    Q_UNUSED(spy);
-}
+public:
+    using redirect_t = mock_redirect;
+
+    mock_input_platform()
+        : redirect{new redirect_t}
+    {
+    }
+    ~mock_input_platform()
+    {
+        delete redirect;
+    }
+
+    redirect_t* redirect;
+};
 
 }
 
 void OnScreenNotificationTest::show()
 {
-    KWin::win::osd_notification<KWin::mock_redirect> notification(nullptr);
+    KWin::win::osd_notification<KWin::mock_input_platform> notification(nullptr);
     auto config = KSharedConfig::openConfig(QString(), KSharedConfig::SimpleConfig);
     KConfigGroup group = config->group("OnScreenNotification");
     group.writeEntry(QStringLiteral("QmlPath"), QString("/does/not/exist.qml"));
@@ -113,7 +118,7 @@ void OnScreenNotificationTest::show()
 
 void OnScreenNotificationTest::timeout()
 {
-    KWin::win::osd_notification<KWin::mock_redirect> notification(nullptr);
+    KWin::win::osd_notification<KWin::mock_input_platform> notification(nullptr);
     QSignalSpy timeoutChangedSpy(notification.qobject.get(),
                                  &KWin::win::osd_notification_qobject::timeoutChanged);
     QCOMPARE(notification.qobject->timeout(), 0);
@@ -129,7 +134,7 @@ void OnScreenNotificationTest::timeout()
 
 void OnScreenNotificationTest::iconName()
 {
-    KWin::win::osd_notification<KWin::mock_redirect> notification(nullptr);
+    KWin::win::osd_notification<KWin::mock_input_platform> notification(nullptr);
     QSignalSpy iconNameChangedSpy(notification.qobject.get(),
                                   &KWin::win::osd_notification_qobject::iconNameChanged);
     QVERIFY(iconNameChangedSpy.isValid());
@@ -146,7 +151,7 @@ void OnScreenNotificationTest::iconName()
 
 void OnScreenNotificationTest::message()
 {
-    KWin::win::osd_notification<KWin::mock_redirect> notification(nullptr);
+    KWin::win::osd_notification<KWin::mock_input_platform> notification(nullptr);
     QSignalSpy messageChangedSpy(notification.qobject.get(),
                                  &KWin::win::osd_notification_qobject::messageChanged);
     QVERIFY(messageChangedSpy.isValid());

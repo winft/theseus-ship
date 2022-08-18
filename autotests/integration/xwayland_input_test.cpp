@@ -177,8 +177,8 @@ void XWaylandInputTest::testPointerEnterLeave()
     QVERIFY(windowCreatedSpy.wait());
 
     auto client_id = windowCreatedSpy.last().first().value<quint32>();
-    auto client
-        = dynamic_cast<win::x11::window*>(Test::app()->base.space->windows_map.at(client_id));
+    auto client = dynamic_cast<Test::space::x11_window*>(
+        Test::app()->base.space->windows_map.at(client_id));
     QVERIFY(client);
     QVERIFY(win::decoration(client));
     QVERIFY(!client->hasStrut());
@@ -187,7 +187,7 @@ void XWaylandInputTest::testPointerEnterLeave()
     client->setReadyForPainting();
     QVERIFY(client->ready_for_painting);
     QVERIFY(!client->surface);
-    QSignalSpy surfaceChangedSpy(client->qobject.get(), &Toplevel::qobject_t::surfaceChanged);
+    QSignalSpy surfaceChangedSpy(client->qobject.get(), &win::window_qobject::surfaceChanged);
     QVERIFY(surfaceChangedSpy.isValid());
     QVERIFY(surfaceChangedSpy.wait());
     QVERIFY(client->surface);
@@ -206,7 +206,7 @@ void XWaylandInputTest::testPointerEnterLeave()
     QVERIFY(leftSpy.wait());
 
     // destroy window again
-    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::closed);
+    QSignalSpy windowClosedSpy(client->qobject.get(), &win::window_qobject::closed);
     QVERIFY(windowClosedSpy.isValid());
     xcb_unmap_window(c.get(), w);
     xcb_destroy_window(c.get(), w);

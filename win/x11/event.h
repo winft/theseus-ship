@@ -18,6 +18,7 @@
 #include "window_release.h"
 
 #include "base/os/kkeyserver.h"
+#include "base/x11/xcb/extensions.h"
 #include "base/x11/xcb/qt_types.h"
 #include "win/activation.h"
 #include "win/deco_input.h"
@@ -134,7 +135,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
             startup_id_changed(win);
         }
         if (dirtyProperties2 & NET::WM2Opacity) {
-            if (win->space.render.scene) {
+            if (win->space.base.render->compositor->scene) {
                 win->addRepaintFull();
                 Q_EMIT win->qobject->opacityChanged(old_opacity);
             } else {
@@ -301,7 +302,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
         break;
     case XCB_EXPOSE: {
         auto event = reinterpret_cast<xcb_expose_event_t*>(e);
-        if (event->window == win->frameId() && !win->space.render.isActive()) {
+        if (event->window == win->frameId() && !win->space.base.render->compositor->isActive()) {
             // TODO: only repaint required areas
             win::trigger_decoration_repaint(win);
         }
@@ -390,7 +391,7 @@ void unmap_notify_event(Win* win, xcb_unmap_notify_event_t* e)
         release_window(win, false);
     } else {
         // the client was moved to some other parent
-        destroy_window(win);
+        x11::destroy_window(win);
     }
 }
 
@@ -400,7 +401,7 @@ void destroy_notify_event(Win* win, xcb_destroy_notify_event_t* e)
     if (e->window != win->xcb_window) {
         return;
     }
-    destroy_window(win);
+    x11::destroy_window(win);
 }
 
 /**

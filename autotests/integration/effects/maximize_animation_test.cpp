@@ -76,7 +76,7 @@ void MaximizeAnimationTest::init()
 
 void MaximizeAnimationTest::cleanup()
 {
-    auto effectsImpl = dynamic_cast<render::effects_handler_impl*>(effects);
+    auto& effectsImpl = Test::app()->base.render->compositor->effects;
     QVERIFY(effectsImpl);
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
@@ -128,7 +128,7 @@ void MaximizeAnimationTest::testMaximizeRestore()
 
     // Load effect that will be tested.
     const QString effectName = QStringLiteral("kwin4_effect_maximize");
-    auto effectsImpl = dynamic_cast<render::effects_handler_impl*>(effects);
+    auto& effectsImpl = Test::app()->base.render->compositor->effects;
     QVERIFY(effectsImpl);
     QVERIFY(effectsImpl->loadEffect(effectName));
     QCOMPARE(effectsImpl->loadedEffects().count(), 1);
@@ -139,10 +139,10 @@ void MaximizeAnimationTest::testMaximizeRestore()
 
     // Maximize the client.
     QSignalSpy geometryChangedSpy(client->qobject.get(),
-                                  &Toplevel::qobject_t::frame_geometry_changed);
+                                  &win::window_qobject::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
     QSignalSpy maximizeChangedSpy(client->qobject.get(),
-                                  &Toplevel::qobject_t::maximize_mode_changed);
+                                  &win::window_qobject::maximize_mode_changed);
     QVERIFY(maximizeChangedSpy.isValid());
 
     win::active_window_maximize(*Test::app()->base.space);

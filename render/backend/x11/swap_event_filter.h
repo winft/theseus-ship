@@ -7,7 +7,6 @@
 
 #include "base/x11/event_filter.h"
 #include "base/x11/xcb/extensions.h"
-#include "render/compositor.h"
 
 #include <xcb/glx.h>
 
@@ -31,10 +30,11 @@ typedef struct xcb_glx_buffer_swap_complete_event_t {
 namespace KWin::render::backend::x11
 {
 
+template<typename Compositor>
 class swap_event_filter : public base::x11::event_filter
 {
 public:
-    swap_event_filter(render::compositor& compositor,
+    swap_event_filter(Compositor& compositor,
                       xcb_drawable_t drawable,
                       xcb_glx_drawable_t glxDrawable)
         : base::x11::event_filter(base::x11::xcb::extensions::self()->glx_event_base()
@@ -64,7 +64,7 @@ public:
 private:
     xcb_drawable_t m_drawable;
     xcb_glx_drawable_t m_glxDrawable;
-    render::compositor& compositor;
+    Compositor& compositor;
 };
 
 }

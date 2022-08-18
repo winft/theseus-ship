@@ -25,11 +25,13 @@ namespace KWin::render::backend::x11
 
 /// Texture using an GLXPixmap.
 template<typename Backend>
-class GlxTexture : public gl::texture_private<typename Backend::backend_t>
+class GlxTexture : public gl::texture_private<typename Backend::abstract_type>
 {
 public:
-    GlxTexture(gl::texture<typename Backend::backend_t>* texture, Backend* backend)
-        : gl::texture_private<typename Backend::backend_t>()
+    using buffer_t = typename Backend::buffer_t;
+
+    GlxTexture(gl::texture<typename Backend::abstract_type>* texture, Backend* backend)
+        : gl::texture_private<typename Backend::abstract_type>()
         , q(texture)
         , m_backend(backend)
         , m_glxpixmap(None)
@@ -56,7 +58,7 @@ public:
         GLTexturePrivate::onDamage();
     }
 
-    bool updateTexture(render::buffer* buffer) override
+    bool updateTexture(buffer_t* buffer) override
     {
         if (this->m_target) {
             return true;
@@ -66,7 +68,8 @@ public:
         auto const visual = buffer->window->ref_win->xcb_visual;
 
         auto const& win_integrate
-            = static_cast<render::x11::buffer_win_integration&>(*buffer->win_integration);
+            = static_cast<render::x11::buffer_win_integration<typename buffer_t::abstract_type>&>(
+                *buffer->win_integration);
         if (win_integrate.pixmap == XCB_NONE || size.isEmpty() || visual == XCB_NONE) {
             return false;
         }
@@ -113,7 +116,7 @@ public:
         return true;
     }
 
-    gl::backend* backend() override
+    Backend* backend() override
     {
         return m_backend;
     }
@@ -124,7 +127,7 @@ private:
         return m_backend->data.display;
     }
 
-    gl::texture<typename Backend::backend_t>* q;
+    gl::texture<typename Backend::abstract_type>* q;
     Backend* m_backend;
 
     // the glx pixmap the texture is bound to

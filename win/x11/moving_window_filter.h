@@ -10,7 +10,6 @@
 #include "base/os/kkeyserver.h"
 #include "win/x11/event.h"
 #include "win/x11/stacking.h"
-#include "win/x11/window.h"
 
 #include <xcb/xcb.h>
 
@@ -30,7 +29,7 @@ public:
 
     bool event(xcb_generic_event_t* event) override
     {
-        auto mr_win = dynamic_cast<window*>(space.move_resize_window);
+        auto mr_win = dynamic_cast<typename Space::x11_window*>(space.move_resize_window);
         if (!mr_win) {
             return false;
         }

@@ -11,15 +11,12 @@
 #include "base/wayland/server.h"
 #include "input/event.h"
 #include "input/event_filter.h"
-#include "input/redirect.h"
 #include "input/window_find.h"
 #include "main.h"
 #include "win/deco.h"
 #include "win/geo.h"
 #include "win/transient.h"
 #include "win/util.h"
-#include "win/wayland/space.h"
-#include "win/wayland/window.h"
 
 #include <Wrapland/Server/keyboard.h>
 #include <Wrapland/Server/keyboard_pool.h>
@@ -34,18 +31,18 @@ template<typename Redirect>
 class popup_filter : public QObject, public event_filter<Redirect>
 {
 public:
-    using wayland_space = win::wayland::space<base::wayland::platform>;
-    using wayland_window = win::wayland::window<wayland_space>;
+    using space_t = typename Redirect::space_t;
 
     explicit popup_filter(Redirect& redirect)
         : event_filter<Redirect>(redirect)
     {
-        QObject::connect(redirect.space.qobject.get(),
-                         &win::space::qobject_t::wayland_window_added,
+        QObject::connect(redirect.platform.base.space->qobject.get(),
+                         &win::space_qobject::wayland_window_added,
                          this,
                          [this](auto win_id) {
-                             auto win = this->redirect.space.windows_map.at(win_id);
-                             handle_window_added(static_cast<wayland_window*>(win));
+                             auto win = this->redirect.platform.base.space->windows_map.at(win_id);
+                             handle_window_added(
+                                 static_cast<typename space_t::wayland_window*>(win));
                          });
     }
 
@@ -109,7 +106,7 @@ public:
     }
 
 private:
-    void handle_window_added(wayland_window* window)
+    void handle_window_added(typename space_t::wayland_window* window)
     {
         if (contains(m_popups, window)) {
             return;
@@ -118,13 +115,13 @@ private:
             // TODO: verify that the Toplevel is allowed as a popup
             connect(
                 window->qobject.get(),
-                &Toplevel::qobject_t::windowShown,
+                &win::window_qobject::windowShown,
                 this,
                 [this, window] { handle_window_added(window); },
                 Qt::UniqueConnection);
             connect(
                 window->qobject.get(),
-                &Toplevel::qobject_t::closed,
+                &win::window_qobject::closed,
                 this,
                 [this, window] { remove_all(m_popups, window); },
                 Qt::UniqueConnection);
@@ -140,7 +137,7 @@ private:
         }
     }
 
-    std::vector<wayland_window*> m_popups;
+    std::vector<typename space_t::wayland_window*> m_popups;
 };
 
 }

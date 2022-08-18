@@ -70,9 +70,11 @@ inline void read_display(int pipe)
 }
 
 template<typename Space>
-class xwayland : public xwayland_interface
+class xwayland : public xwayland_interface<Space>
 {
 public:
+    using window_t = typename Space::window_t;
+
     /** The @ref status_callback is called once with 0 code when Xwayland is ready, other codes
      *  indicate a critical error happened at runtime.
      */
@@ -130,7 +132,7 @@ public:
                                         QStringLiteral("-wm"),
                                         QString::number(fd)});
 
-        xwayland_fail_notifier = connect(
+        xwayland_fail_notifier = QObject::connect(
             xwayland_process, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) {
                 if (error == QProcess::FailedToStart) {
                     std::cerr << "FATAL ERROR: failed to start Xwayland" << std::endl;
@@ -141,7 +143,7 @@ public:
             });
 
         auto const xDisplayPipe = pipeFds[0];
-        connect(xwayland_process, &QProcess::started, this, [this, xDisplayPipe] {
+        QObject::connect(xwayland_process, &QProcess::started, this, [this, xDisplayPipe] {
             QFutureWatcher<void>* watcher = new QFutureWatcher<void>(this);
             QObject::connect(watcher,
                              &QFutureWatcher<void>::finished,
@@ -164,7 +166,7 @@ public:
     {
         data_bridge.reset();
 
-        disconnect(xwayland_fail_notifier);
+        QObject::disconnect(xwayland_fail_notifier);
 
         win::x11::clear_space(space);
 
@@ -178,7 +180,7 @@ public:
         }
 
         if (xwayland_process->state() != QProcess::NotRunning) {
-            disconnect(xwayland_process, nullptr, this, nullptr);
+            QObject::disconnect(xwayland_process, nullptr, this, nullptr);
             xwayland_process->terminate();
             xwayland_process->waitForFinished(5000);
         }
@@ -189,7 +191,15 @@ public:
         waylandServer()->destroy_xwayland_connection();
     }
 
-    std::unique_ptr<xwl::data_bridge<Toplevel>> data_bridge;
+    drag_event_reply drag_move_filter(window_t* target, QPoint const& pos) override
+    {
+        if (!data_bridge) {
+            return drag_event_reply::wayland;
+        }
+        return data_bridge->drag_move_filter(target, pos);
+    }
+
+    std::unique_ptr<xwl::data_bridge<window_t>> data_bridge;
 
 private:
     void continue_startup_with_x11()
@@ -235,15 +245,16 @@ private:
             xcb_flush(core.x11.connection);
         };
 
-        connect(xcb_read_notifier.get(), &QSocketNotifier::activated, this, processXcbEvents);
-        connect(QThread::currentThread()->eventDispatcher(),
-                &QAbstractEventDispatcher::aboutToBlock,
-                this,
-                processXcbEvents);
-        connect(QThread::currentThread()->eventDispatcher(),
-                &QAbstractEventDispatcher::awake,
-                this,
-                processXcbEvents);
+        QObject::connect(
+            xcb_read_notifier.get(), &QSocketNotifier::activated, this, processXcbEvents);
+        QObject::connect(QThread::currentThread()->eventDispatcher(),
+                         &QAbstractEventDispatcher::aboutToBlock,
+                         this,
+                         processXcbEvents);
+        QObject::connect(QThread::currentThread()->eventDispatcher(),
+                         &QAbstractEventDispatcher::awake,
+                         this,
+                         processXcbEvents);
 
         // create selection owner for WM_S0 - magic X display number expected by XWayland
         KSelectionOwner owner("WM_S0", core.x11.connection, app->x11RootWindow());
@@ -300,22 +311,14 @@ private:
         // Trigger possible errors, there's still a chance to abort
         base::x11::xcb::sync();
 
-        data_bridge = std::make_unique<xwl::data_bridge<Toplevel>>(core);
-    }
-
-    drag_event_reply drag_move_filter(Toplevel* target, QPoint const& pos) override
-    {
-        if (!data_bridge) {
-            return drag_event_reply::wayland;
-        }
-        return data_bridge->drag_move_filter(target, pos);
+        data_bridge = std::make_unique<xwl::data_bridge<window_t>>(core);
     }
 
     int xcb_connection_fd{-1};
     QProcess* xwayland_process{nullptr};
     QMetaObject::Connection xwayland_fail_notifier;
 
-    runtime<win::space> core;
+    runtime<Space> core;
 
     std::unique_ptr<QSocketNotifier> xcb_read_notifier;
     std::unique_ptr<base::x11::xcb_event_filter<Space>> event_filter;

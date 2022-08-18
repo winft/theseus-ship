@@ -19,6 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
+#include "kwin_export.h"
+
 #include <QPointer>
 #include <QQuickPaintedItem>
 #include <QUuid>
@@ -78,7 +80,7 @@ private:
     QPointer<QQuickItem> m_clipToItem;
 };
 
-class window_thumbnail_item : public basic_thumbnail_item
+class KWIN_EXPORT window_thumbnail_item : public basic_thumbnail_item
 {
     Q_OBJECT
     Q_PROPERTY(QUuid wId READ wId WRITE setWId NOTIFY wIdChanged SCRIPTABLE true)
@@ -106,7 +108,7 @@ private:
     scripting::window* m_client;
 };
 
-class desktop_thumbnail_item : public basic_thumbnail_item
+class KWIN_EXPORT desktop_thumbnail_item : public basic_thumbnail_item
 {
     Q_OBJECT
     Q_PROPERTY(int desktop READ desktop WRITE setDesktop NOTIFY desktopChanged)

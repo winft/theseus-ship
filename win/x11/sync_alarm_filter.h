@@ -7,7 +7,6 @@
 #pragma once
 
 #include "geo.h"
-#include "window.h"
 
 #include "base/x11/event_filter.h"
 #include "base/x11/xcb/extensions.h"
@@ -36,7 +35,7 @@ public:
             if (!win->control) {
                 continue;
             }
-            auto x11_win = dynamic_cast<win::x11::window*>(win);
+            auto x11_win = dynamic_cast<typename Space::x11_window*>(win);
             if (!x11_win) {
                 continue;
             }

@@ -387,21 +387,17 @@ set(kwin_SRCS
     base/x11/xcb/extensions.cpp
     base/logging.cpp
     base/options.cpp
-    base/output.cpp
     base/platform.cpp
     desktop/screen_locker_watcher.cpp
     render/post/color_correct_dbus_interface.cpp
     render/post/night_color_manager.cpp
     render/post/suncalc.cpp
     debug/console/console.cpp
-    debug/console/window.cpp
     debug/perf/ftrace.cpp
-    input/device_redirect.cpp
     input/keyboard.cpp
     input/keyboard_redirect.cpp
     input/platform.cpp
     input/platform_qobject.cpp
-    input/redirect.cpp
     input/redirect_qobject.cpp
     input/singleton_interface.cpp
     input/spies/modifier_only_shortcuts.cpp
@@ -412,33 +408,19 @@ set(kwin_SRCS
     input/global_shortcuts_manager.cpp
     input/logging.cpp
     input/pointer.cpp
-    input/x11/redirect.cpp
     input/xkb/keyboard.cpp
     input/xkb/keymap.cpp
     main.cpp
-    render/buffer.cpp
-    render/compositor.cpp
     render/compositor_qobject.cpp
-    render/cursor.cpp
     render/dbus/compositing.cpp
     render/effect/frame.cpp
-    render/effect/screen_impl.cpp
-    render/effect/window_impl.cpp
     render/effect_loader.cpp
     render/effects.cpp
-    render/gl/buffer.cpp
-    render/gl/backend.cpp
     render/gl/context_attribute_builder.cpp
     render/gl/egl_context_attribute_builder.cpp
-    render/gl/scene.cpp
-    render/gl/shadow.cpp
-    render/gl/window.cpp
     render/outline.cpp
-    render/scene.cpp
-    render/shadow.cpp
     render/singleton_interface.cpp
     render/thumbnail_item.cpp
-    render/window.cpp
     render/x11/compositor_selection_owner.cpp
     scripting/dbus_call.cpp
     scripting/js_engine_global_methods_wrapper.cpp
@@ -455,13 +437,11 @@ set(kwin_SRCS
     scripting/utils.cpp
     scripting/window.cpp
     scripting/space.cpp
-    toplevel.cpp
     win/dbus/appmenu.cpp
     win/dbus/virtual_desktop_manager.cpp
     win/dbus/virtual_desktop_types.cpp
     win/deco/palette.cpp
     win/deco/decorations_logging.cpp
-    win/internal_window.cpp
     win/osd_notification.cpp
     win/property_window.cpp
     win/rules/book.cpp
@@ -474,16 +454,17 @@ set(kwin_SRCS
     win/singleton_interface.cpp
     win/space_qobject.cpp
     win/virtual_desktops.cpp
-    win/window_qobject.cpp
     win/x11/client_machine.cpp
-    win/x11/group.cpp
-    win/x11/window.cpp
 
     # These headers need to be compiled for the helper QObjects they contain.
+    base/output.h
+    input/device_redirect.h
+    render/cursor.h
     win/deco/bridge_qobject.h
     win/deco/client_impl_qobject.h
     win/deco/renderer.h
     win/stacking_order.h
+    win/window_qobject.h
 )
 
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
@@ -644,34 +625,11 @@ set(kwin_X11_SRCS
    base/backend/x11/platform.cpp
    base/backend/x11/randr_filter.cpp
    base/x11/output.cpp
-   debug/console/x11/x11_console.cpp
    input/x11/cursor.cpp
-   input/x11/platform.cpp
-   input/x11/window_selector.cpp
    input/x11/xfixes_cursor_event_filter.cpp
    input/logging.cpp
    render/backend/x11/non_composited_outline.cpp
-   render/backend/x11/platform.cpp
-   render/x11/effects.cpp
-   render/x11/mouse_intercept_filter.cpp
 )
-
-if (KWIN_HAVE_XRENDER_COMPOSITING)
-  set(kwin_X11_SRCS
-    ${kwin_X11_SRCS}
-    render/xrender/backend.cpp
-    render/xrender/scene.cpp
-    render/xrender/shadow.cpp
-    render/xrender/window.cpp
-  )
-endif()
-
-if (HAVE_X11_XINPUT)
-    set(kwin_X11_SRCS
-        ${kwin_X11_SRCS}
-        ${CMAKE_CURRENT_SOURCE_DIR}/input/x11/xinput_integration.cpp
-    )
-endif()
 
 if (HAVE_EPOXY_GLX)
     set(kwin_X11_SRCS
@@ -742,11 +700,8 @@ set(kwin_WAYLAND_SRCS
    base/backend/wlroots/platform.cpp
    base/seat/backend/wlroots/session.cpp
    base/wayland/filtered_display.cpp
-   base/wayland/output.cpp
    base/wayland/server.cpp
    debug/console/wayland/input_device_model.cpp
-   debug/console/wayland/input_filter.cpp
-   debug/console/wayland/surface_tree_model.cpp
    debug/console/wayland/wayland_console.cpp
    input/backend/wlroots/platform.cpp
    input/backend/wlroots/control/headless/keyboard.cpp
@@ -765,32 +720,16 @@ set(kwin_WAYLAND_SRCS
    input/dbus/keyboard_layouts_v2.cpp
    input/dbus/tablet_mode_manager.cpp
    input/spies/keyboard_repeat.cpp
-   input/wayland/cursor.cpp
-   input/wayland/cursor_image.cpp
-   input/wayland/cursor_theme.cpp
-   input/wayland/fake/keyboard.cpp
-   input/wayland/fake/pointer.cpp
-   input/wayland/fake/touch.cpp
-   input/wayland/input_method.cpp
-   input/wayland/keyboard_redirect.cpp
-   input/wayland/platform.cpp
-   input/wayland/pointer_redirect.cpp
-   input/wayland/redirect.cpp
-   input/wayland/tablet_redirect.cpp
-   input/wayland/touch_redirect.cpp
    input/logging.cpp
    input/switch.cpp
-   input/touch.cpp
    input/xkb/layout_manager.cpp
    input/xkb/layout_policies.cpp
    render/gl/egl_dmabuf.cpp
-   render/qpainter/scene.cpp
-   render/qpainter/shadow.cpp
-   render/qpainter/window.cpp
-   render/wayland/compositor.cpp
-   render/wayland/effects.cpp
-   render/wayland/output.cpp
-   render/wayland/presentation.cpp
+
+   # These headers need to be compiled for the helper QObjects they contain.
+   input/touch.h
+   input/wayland/cursor_image.h
+   input/wayland/cursor_theme.h
 )
 
 if (KWIN_BUILD_TABBOX)

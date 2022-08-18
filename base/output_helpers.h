@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include <QPoint>
+#include <QRect>
 #include <algorithm>
 #include <climits>
 #include <cstddef>
@@ -71,7 +73,7 @@ void update_output_topology(Base& base)
     QRect bounding;
     double max_scale{1.};
 
-    for (auto output : base.get_outputs()) {
+    for (auto& output : base.outputs) {
         bounding = bounding.united(output->geometry());
         max_scale = qMax(max_scale, output->scale());
     }
@@ -101,7 +103,7 @@ void set_current_output(Base& base, Output* output)
 template<typename Base>
 void set_current_output_by_position(Base& base, QPoint const& pos)
 {
-    set_current_output(base, get_nearest_output(base.get_outputs(), pos));
+    set_current_output(base, get_nearest_output(base.outputs, pos));
 }
 
 template<typename Output>

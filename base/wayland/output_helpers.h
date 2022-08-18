@@ -5,8 +5,7 @@
 */
 #pragma once
 
-#include "output.h"
-
+#include "base/output.h"
 #include "base/output_helpers.h"
 #include "input/filters/dpms.h"
 #include "input/wayland/dpms.h"
@@ -20,15 +19,15 @@ namespace KWin::base::wayland
 {
 
 template<typename Base>
-base::wayland::output* find_output(Base const& base, Wrapland::Server::Output const* output)
+auto find_output(Base const& base, Wrapland::Server::Output const* output) ->
+    typename Base::output_t*
 {
     auto const& outs = base.all_outputs;
     auto it = std::find_if(outs.cbegin(), outs.cend(), [output](auto out) {
-        auto wayland_output = dynamic_cast<base::wayland::output*>(out);
-        return wayland_output->wrapland_output() == output;
+        return out->wrapland_output() == output;
     });
     if (it != outs.cend()) {
-        return dynamic_cast<base::wayland::output*>(*it);
+        return *it;
     }
     return nullptr;
 }
@@ -97,7 +96,7 @@ inline Wrapland::Server::Output::DpmsMode to_wayland_dpms_mode(base::dpms_mode m
 }
 
 template<typename Base>
-void output_set_dpms_on(base::wayland::output& output, Base& base)
+void output_set_dpms_on(typename Base::output_t& output, Base& base)
 {
     qCDebug(KWIN_WL) << "DPMS mode set for output" << output.name() << "to On.";
     output.m_dpms = base::dpms_mode::on;
@@ -110,7 +109,7 @@ void output_set_dpms_on(base::wayland::output& output, Base& base)
 }
 
 template<typename Base>
-void output_set_dmps_off(base::dpms_mode mode, base::wayland::output& output, Base& base)
+void output_set_dmps_off(base::dpms_mode mode, typename Base::output_t& output, Base& base)
 {
     qCDebug(KWIN_WL) << "DPMS mode set for output" << output.name() << "to Off.";
 

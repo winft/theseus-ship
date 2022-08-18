@@ -231,7 +231,7 @@ void BindingsTest::testWindowToDesktop()
     std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
-    QSignalSpy desktopChangedSpy(c->qobject.get(), &Toplevel::qobject_t::desktopChanged);
+    QSignalSpy desktopChangedSpy(c->qobject.get(), &win::window_qobject::desktopChanged);
     QVERIFY(desktopChangedSpy.isValid());
     QCOMPARE(Test::app()->base.space->active_client, c);
 

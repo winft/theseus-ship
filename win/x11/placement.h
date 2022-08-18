@@ -289,14 +289,13 @@ bool ignore_position_default(Win* win)
 template<typename Win>
 QRect place_unmapped(Win* win, QRect& frame_geo, KStartupInfoData const& asn_data)
 {
-    auto const& base = kwinApp()->get_base();
-    auto output = asn_data.xinerama() == -1
-        ? get_current_output(win->space)
-        : base::get_output(base.get_outputs(), asn_data.xinerama());
+    auto const& base = win->space.base;
+    auto output = asn_data.xinerama() == -1 ? get_current_output(win->space)
+                                            : base::get_output(base.outputs, asn_data.xinerama());
 
     QPoint center;
     if (output) {
-        output = win->control->rules.checkScreen(output, true);
+        output = win->control->rules.checkScreen(win->space.base, output, true);
         center = output->geometry().center();
     }
 

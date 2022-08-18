@@ -28,8 +28,8 @@ namespace KWin::win
 template<typename Space>
 void update_space_areas_impl(Space& space, bool force)
 {
-    auto&& base = kwinApp()->get_base();
-    auto const& outputs = base.get_outputs();
+    auto& base = space.base;
+    auto const& outputs = base.outputs;
     auto const screens_count = outputs.size();
     auto const desktops_count = static_cast<int>(space.virtual_desktop_manager->count());
 

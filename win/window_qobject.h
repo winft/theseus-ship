@@ -21,8 +21,6 @@ class KWIN_EXPORT window_qobject : public QObject
 {
     Q_OBJECT
 public:
-    window_qobject();
-
 Q_SIGNALS:
     void opacityChanged(qreal oldOpacity);
     void damaged(QRegion const& damage);

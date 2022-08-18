@@ -787,7 +787,7 @@ void VirtualDesktopTest::testLastDesktopRemoved()
     QVERIFY(client);
     QCOMPARE(client->desktop(), 2);
     QSignalSpy desktopPresenceChangedSpy(client->qobject.get(),
-                                         &Toplevel::qobject_t::desktopPresenceChanged);
+                                         &win::window_qobject::desktopPresenceChanged);
     QVERIFY(desktopPresenceChangedSpy.isValid());
 
     QCOMPARE(client->desktops().count(), 1u);
@@ -824,7 +824,7 @@ void VirtualDesktopTest::testWindowOnMultipleDesktops()
     QVERIFY(client);
     QCOMPARE(client->desktop(), 3u);
     QSignalSpy desktopPresenceChangedSpy(client->qobject.get(),
-                                         &Toplevel::qobject_t::desktopPresenceChanged);
+                                         &win::window_qobject::desktopPresenceChanged);
     QVERIFY(desktopPresenceChangedSpy.isValid());
 
     QCOMPARE(client->desktops().count(), 1u);
@@ -905,7 +905,7 @@ void VirtualDesktopTest::testRemoveDesktopWithWindow()
     QVERIFY(client);
     QCOMPARE(client->desktop(), 3u);
     QSignalSpy desktopPresenceChangedSpy(client->qobject.get(),
-                                         &Toplevel::qobject_t::desktopPresenceChanged);
+                                         &win::window_qobject::desktopPresenceChanged);
     QVERIFY(desktopPresenceChangedSpy.isValid());
 
     QCOMPARE(client->desktops().count(), 1u);

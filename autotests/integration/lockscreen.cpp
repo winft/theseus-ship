@@ -81,7 +81,7 @@ private Q_SLOTS:
 
 private:
     void unlock();
-    Toplevel* showWindow();
+    Test::space::window_t* showWindow();
 
     Wrapland::Client::ConnectionThread* m_connection = nullptr;
     Wrapland::Client::Compositor* m_compositor = nullptr;
@@ -168,7 +168,7 @@ void LockScreenTest::unlock()
     Q_ASSERT("Did not find 'requestUnlock' method in KSldApp. This should not happen!" == 0);
 }
 
-Toplevel* LockScreenTest::showWindow()
+Test::space::window_t* LockScreenTest::showWindow()
 {
     using namespace Wrapland::Client;
 
@@ -603,7 +603,7 @@ void LockScreenTest::testMoveWindow()
     QVERIFY(c);
 
     QSignalSpy clientStepUserMovedResizedSpy(c->qobject.get(),
-                                             &Toplevel::qobject_t::clientStepUserMovedResized);
+                                             &win::window_qobject::clientStepUserMovedResized);
     QVERIFY(clientStepUserMovedResizedSpy.isValid());
     quint32 timestamp = 1;
 

@@ -1,47 +1,22 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2006 Lubos Lunak <l.lunak@kde.org>
+    SPDX-FileCopyrightText: 2011 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2022 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 2006 Lubos Lunak <l.lunak@kde.org>
-Copyright (C) 2009, 2010, 2011 Martin Gräßlin <mgraesslin@kde.org>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
 #pragma once
+
+#include "texture.h"
+
+#include "base/output.h"
 
 #include <QElapsedTimer>
 #include <QMatrix4x4>
 #include <QRegion>
 
-#include <kwin_export.h>
-
-namespace KWin
+namespace KWin::render::gl
 {
-namespace base
-{
-class output;
-}
-
-class SceneOpenGL;
-
-namespace render::gl
-{
-
-template<typename Backend>
-class texture;
-template<typename Backend>
-class texture_private;
 
 /**
  * @brief The backend creates and holds the OpenGL context and is responsible for Texture from
@@ -58,11 +33,21 @@ class texture_private;
  *
  * @author Martin Gräßlin <mgraesslin@kde.org>
  */
-class KWIN_EXPORT backend
+template<typename Scene, typename Platform>
+class backend
 {
 public:
-    backend();
-    virtual ~backend();
+    using type = backend<Scene, Platform>;
+    using buffer_t = typename Scene::buffer_t;
+    using texture_t = texture<type>;
+    using texture_priv_t = texture_private<type>;
+
+    backend(Platform& platform)
+        : platform{platform}
+    {
+    }
+
+    virtual ~backend() = default;
 
     /**
      * @return Time passes since start of rendering current frame.
@@ -73,7 +58,7 @@ public:
         return m_renderTimer.nsecsElapsed();
     }
     virtual void screenGeometryChanged(const QSize& size) = 0;
-    virtual texture_private<backend>* createBackendTexture(gl::texture<backend>* texture) = 0;
+    virtual texture_priv_t* createBackendTexture(texture_t* texture) = 0;
 
     /**
      * @brief Backend specific code to prepare the rendering of a frame including flushing the
@@ -89,10 +74,12 @@ public:
      * @param renderedRegion The possibly larger region that has been rendered
      * @param damagedRegion The damaged region that should be posted
      */
-    virtual void endRenderingFrame(const QRegion& damage, const QRegion& damagedRegion) = 0;
-    virtual void endRenderingFrameForScreen(base::output* output,
-                                            const QRegion& damage,
-                                            const QRegion& damagedRegion);
+    virtual void endRenderingFrame(QRegion const& damage, QRegion const& damagedRegion) = 0;
+    virtual void endRenderingFrameForScreen(base::output* /*output*/,
+                                            QRegion const& /*damage*/,
+                                            QRegion const& /*damagedRegion*/)
+    {
+    }
 
     /**
      * @brief Backend specific flushing of frame to screen.
@@ -105,7 +92,11 @@ public:
     {
         return true;
     }
-    virtual QRegion prepareRenderingForScreen(base::output* output);
+    virtual QRegion prepareRenderingForScreen(base::output* output)
+    {
+        // fallback to repaint complete screen
+        return output->geometry();
+    }
 
     /**
      * @return bool Whether the scene needs to flush a frame.
@@ -141,12 +132,32 @@ public:
     /**
      * Returns the damage that has accumulated since a buffer of the given age was presented.
      */
-    QRegion accumulatedDamageHistory(int bufferAge) const;
+    QRegion accumulatedDamageHistory(int bufferAge) const
+    {
+        QRegion region;
+
+        // Note: An age of zero means the buffer contents are undefined
+        if (bufferAge > 0 && bufferAge <= m_damageHistory.count()) {
+            for (int i = 0; i < bufferAge - 1; i++)
+                region |= m_damageHistory[i];
+        } else {
+            auto const& size = platform.base.topology.size;
+            region = QRegion(0, 0, size.width(), size.height());
+        }
+
+        return region;
+    }
 
     /**
      * Saves the given region to damage history.
      */
-    void addToDamageHistory(const QRegion& region);
+    void addToDamageHistory(const QRegion& region)
+    {
+        if (m_damageHistory.count() > 10)
+            m_damageHistory.removeLast();
+
+        m_damageHistory.prepend(region);
+    }
 
     /**
      * The backend specific extensions (e.g. EGL/GLX extensions).
@@ -203,12 +214,25 @@ public:
     /**
      * Copy a region of pixels from the current read to the current draw buffer
      */
-    void copyPixels(const QRegion& region);
+    void copyPixels(const QRegion& region)
+    {
+        auto const height = platform.base.topology.size.height();
+        for (const QRect& r : region) {
+            const int x0 = r.x();
+            const int y0 = height - r.y() - r.height();
+            const int x1 = r.x() + r.width();
+            const int y1 = height - r.y();
+
+            glBlitFramebuffer(x0, y0, x1, y1, x0, y0, x1, y1, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        }
+    }
 
     /**
      * For final backend-specific corrections to the scene projection matrix. Defaults to identity.
      */
     QMatrix4x4 transformation;
+
+    Platform& platform;
 
 protected:
     /**
@@ -236,11 +260,11 @@ private:
     /**
      * @brief Whether direct rendering is used, defaults to @c false.
      */
-    bool m_directRendering;
+    bool m_directRendering{false};
     /**
      * @brief Whether the backend supports GLX_EXT_buffer_age / EGL_EXT_buffer_age.
      */
-    bool m_haveBufferAge;
+    bool m_haveBufferAge{false};
     /**
      * @brief Whether the backend supports EGL_KHR_surfaceless_context.
      */
@@ -261,5 +285,4 @@ private:
     QList<QByteArray> m_extensions;
 };
 
-}
 }

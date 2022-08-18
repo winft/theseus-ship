@@ -7,6 +7,7 @@
 
 #include "base/utils.h"
 #include "base/wayland/output.h"
+#include "base/wayland/platform.h"
 
 #include <wayland-server-core.h>
 
@@ -17,9 +18,10 @@ namespace KWin::base::backend::wlroots
 
 class platform;
 
-class KWIN_EXPORT output : public base::wayland::output
+class KWIN_EXPORT output : public base::wayland::output<base::wayland::platform>
 {
 public:
+    using abstract_type = base::wayland::output<base::wayland::platform>;
     output(wlr_output* wlr_out, wlroots::platform* platform);
     ~output() override;
 

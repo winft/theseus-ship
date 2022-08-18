@@ -7,7 +7,6 @@
 
 #include "wlr_includes.h"
 
-#include "base/backend/wlroots/output.h"
 #include "base/logging.h"
 #include "wayland_logging.h"
 

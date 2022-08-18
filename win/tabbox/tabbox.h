@@ -378,7 +378,7 @@ public:
     {
         if (!m_is_shown && is_displayed()) {
             // tabbox has been replaced, check effects
-            if (auto& effects = space.render.effects;
+            if (auto& effects = space.base.render->compositor->effects;
                 effects && effects->checkInputWindowEvent(event)) {
                 return true;
             }
@@ -409,7 +409,7 @@ public:
     {
         if (!m_is_shown && is_displayed()) {
             // tabbox has been replaced, check effects
-            if (auto& effects = space.render.effects;
+            if (auto& effects = space.base.render->compositor->effects;
                 effects && effects->checkInputWindowEvent(event)) {
                 return true;
             }
@@ -714,7 +714,7 @@ public:
             remove_tabbox_grab();
         }
         hide(abort);
-        space.input->get_pointer()->setEnableConstraints(true);
+        space.input->pointer->setEnableConstraints(true);
         m_tab_grab = false;
         m_desktop_grab = false;
         m_no_modifier_grab = false;

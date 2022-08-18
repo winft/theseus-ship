@@ -19,9 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "console.h"
 
-#include "model_helpers.h"
-#include "ui_debug_console.h"
-
 #include "render/compositor.h"
 #include "render/effects.h"
 #include "render/scene.h"
@@ -29,7 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/space.h"
 
 #include <kwingl/platform.h>
-#include <kwingl/utils.h>
 
 #include <KLocalizedString>
 #include <QMetaProperty>
@@ -41,73 +37,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin::debug
 {
-
-console::console(win::space& space)
-    : QWidget()
-    , m_ui(new Ui::debug_console)
-    , space{space}
-{
-    setAttribute(Qt::WA_ShowWithoutActivating);
-    m_ui->setupUi(this);
-
-    m_ui->quitButton->setIcon(QIcon::fromTheme(QStringLiteral("application-exit")));
-    m_ui->tabWidget->setTabIcon(0, QIcon::fromTheme(QStringLiteral("view-list-tree")));
-    m_ui->tabWidget->setTabIcon(1, QIcon::fromTheme(QStringLiteral("view-list-tree")));
-
-    connect(m_ui->quitButton, &QAbstractButton::clicked, this, &console::deleteLater);
-
-    initGLTab(*space.render.scene);
-}
-
-console::~console() = default;
-
-void console::initGLTab(render::scene& scene)
-{
-    if (!scene.compositor.effects || !scene.compositor.effects->isOpenGLCompositing()) {
-        m_ui->noOpenGLLabel->setVisible(true);
-        m_ui->glInfoScrollArea->setVisible(false);
-        return;
-    }
-    GLPlatform* gl = GLPlatform::instance();
-    m_ui->noOpenGLLabel->setVisible(false);
-    m_ui->glInfoScrollArea->setVisible(true);
-    m_ui->glVendorStringLabel->setText(QString::fromLocal8Bit(gl->glVendorString()));
-    m_ui->glRendererStringLabel->setText(QString::fromLocal8Bit(gl->glRendererString()));
-    m_ui->glVersionStringLabel->setText(QString::fromLocal8Bit(gl->glVersionString()));
-    m_ui->glslVersionStringLabel->setText(
-        QString::fromLocal8Bit(gl->glShadingLanguageVersionString()));
-    m_ui->glDriverLabel->setText(GLPlatform::driverToString(gl->driver()));
-    m_ui->glGPULabel->setText(GLPlatform::chipClassToString(gl->chipClass()));
-    m_ui->glVersionLabel->setText(GLPlatform::versionToString(gl->glVersion()));
-    m_ui->glslLabel->setText(GLPlatform::versionToString(gl->glslVersion()));
-
-    auto extensionsString = [](const auto& extensions) {
-        QString text = QStringLiteral("<ul>");
-        for (auto extension : extensions) {
-            text.append(QStringLiteral("<li>%1</li>").arg(QString::fromLocal8Bit(extension)));
-        }
-        text.append(QStringLiteral("</ul>"));
-        return text;
-    };
-
-    m_ui->platformExtensionsLabel->setText(
-        extensionsString(scene.openGLPlatformInterfaceExtensions()));
-    m_ui->openGLExtensionsLabel->setText(extensionsString(openGLExtensions()));
-}
-
-void console::showEvent(QShowEvent* event)
-{
-    QWidget::showEvent(event);
-
-    // delay the connection to the show event as in ctor the windowHandle returns null
-    connect(windowHandle(), &QWindow::visibleChanged, this, [this](bool visible) {
-        if (visible) {
-            // ignore
-            return;
-        }
-        deleteLater();
-    });
-}
 
 console_delegate::console_delegate(QObject* parent)
     : QStyledItemDelegate(parent)
@@ -251,13 +180,6 @@ console_model::console_model(QObject* parent)
 }
 
 console_model::~console_model() = default;
-
-console_model* console_model::create(win::space& space, QObject* parent)
-{
-    auto model = new console_model(parent);
-    model_setup_connections(*model, space);
-    return model;
-}
 
 int console_model::columnCount(const QModelIndex& parent) const
 {

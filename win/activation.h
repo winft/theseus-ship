@@ -268,7 +268,7 @@ void request_focus(Space& space,
     }
 
     if (!on_active_screen(window)) {
-        base::set_current_output(kwinApp()->get_base(), window->central_output);
+        base::set_current_output(space.base, window->central_output);
     }
 }
 
@@ -425,7 +425,7 @@ void set_active_window(Space& space, typename Space::window_t* window)
 
         // activating a client can cause a non active fullscreen window to loose the ActiveLayer
         // status on > 1 screens
-        if (kwinApp()->get_base().get_outputs().size() > 1) {
+        if (space.base.outputs.size() > 1) {
             for (auto win : space.windows) {
                 if (win->control && win != space.active_client && win->layer() == win::layer::active
                     && win->central_output == space.active_client->central_output) {

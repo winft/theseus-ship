@@ -7,9 +7,6 @@
 
 #include "render/buffer.h"
 
-#include "render/window.h"
-#include "toplevel.h"
-
 #include <QImage>
 #include <Wrapland/Server/buffer.h>
 #include <Wrapland/Server/surface.h>
@@ -20,10 +17,11 @@ class QOpenGLFramebufferObject;
 namespace KWin::render::wayland
 {
 
-struct buffer_win_integration : public render::buffer_win_integration {
+template<typename Buffer>
+struct buffer_win_integration : public render::buffer_win_integration<Buffer> {
 public:
-    buffer_win_integration(render::buffer const& buffer)
-        : render::buffer_win_integration(buffer)
+    buffer_win_integration(Buffer const& buffer)
+        : render::buffer_win_integration<Buffer>(buffer)
     {
     }
 
@@ -35,13 +33,13 @@ public:
     QRegion damage() const override
     {
         if (external) {
-            if (auto surf = buffer.window->ref_win->surface) {
+            if (auto surf = this->buffer.window->ref_win->surface) {
                 return surf->trackedDamage();
             }
             return {};
         }
         if (internal.fbo || !internal.image.isNull()) {
-            return buffer.window->ref_win->damage_region;
+            return this->buffer.window->ref_win->damage_region;
         }
         return {};
     }

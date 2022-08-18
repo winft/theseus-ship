@@ -35,7 +35,7 @@ struct compositing_integration {
     std::function<void(void)> reinit;
 };
 
-class compositing_qobject : public QObject
+class KWIN_EXPORT compositing_qobject : public QObject
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "org.kde.kwin.Compositing")

@@ -116,8 +116,8 @@ void window_to_prev_desktop(Win& window)
 template<typename Space>
 void save_old_output_sizes(Space& space)
 {
-    auto&& base = kwinApp()->get_base();
-    auto const& outputs = base.get_outputs();
+    auto&& base = space.base;
+    auto const& outputs = base.outputs;
 
     space.olddisplaysize = base.topology.size;
     space.oldscreensizes.clear();
@@ -139,7 +139,7 @@ void handle_desktop_resize(Space& space, QSize const& size)
     // TODO: emit a signal instead and remove the deep function calls into edges and effects
     space.edges->recreateEdges();
 
-    if (auto& effects = space.render.effects) {
+    if (auto& effects = space.base.render->compositor->effects) {
         effects->desktopResized(size);
     }
 }

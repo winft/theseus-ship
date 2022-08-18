@@ -14,20 +14,7 @@
 #include <memory>
 #include <vector>
 
-namespace KWin
-{
-
-namespace render
-{
-class platform;
-}
-
-namespace xwl
-{
-class xwayland_interface;
-}
-
-namespace base
+namespace KWin::base
 {
 
 class KWIN_EXPORT platform : public QObject
@@ -43,8 +30,6 @@ public:
     virtual std::vector<output*> get_outputs() const = 0;
 
     output_topology topology;
-    std::unique_ptr<render::platform> render;
-    xwl::xwayland_interface* xwayland_interface{nullptr};
 
 private:
     Q_DISABLE_COPY(platform)
@@ -55,5 +40,4 @@ Q_SIGNALS:
     void topology_changed(output_topology const& old_topo, output_topology const& topo);
 };
 
-}
 }

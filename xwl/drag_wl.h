@@ -26,8 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/wayland/server.h"
 #include "win/activation.h"
-#include "win/space.h"
-#include "win/x11/window.h"
 
 #include <QPoint>
 #include <Wrapland/Server/drag_pool.h>
@@ -50,7 +48,7 @@ public:
     {
     }
 
-    drag_event_reply move_filter(Toplevel* target, QPoint const& pos) override
+    drag_event_reply move_filter(Window* target, QPoint const& pos) override
     {
         auto seat = waylandServer()->seat();
 
@@ -66,7 +64,7 @@ public:
             visit.reset();
         }
 
-        if (!dynamic_cast<win::x11::window*>(target)) {
+        if (!dynamic_cast<typename Window::space_t::x11_window*>(target)) {
             // no target or wayland native target,
             // handled by input code directly
             return drag_event_reply::wayland;
@@ -112,7 +110,7 @@ public:
 private:
     wl_source<Wrapland::Server::data_source, Window> const& source;
     xcb_window_t proxy_window;
-    std::unique_ptr<x11_visit<Toplevel>> visit;
+    std::unique_ptr<x11_visit<Window>> visit;
 };
 
 }

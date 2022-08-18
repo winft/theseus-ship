@@ -50,7 +50,7 @@ private Q_SLOTS:
     void testTouchMouseAction();
 
 private:
-    Toplevel* showWindow(bool decorated = false);
+    Test::space::window_t* showWindow(bool decorated = false);
 
     std::unique_ptr<Wrapland::Client::Touch> touch;
 
@@ -94,7 +94,7 @@ void TouchInputTest::cleanup()
     Test::destroy_wayland_connection();
 }
 
-Toplevel* TouchInputTest::showWindow(bool decorated)
+Test::space::window_t* TouchInputTest::showWindow(bool decorated)
 {
     using namespace Wrapland::Client;
 #define VERIFY(statement)                                                                          \

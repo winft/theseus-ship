@@ -103,7 +103,8 @@ void DontCrashEmptyDecorationTest::testBug361551()
     QVERIFY(windowCreatedSpy.wait());
 
     auto win_id = windowCreatedSpy.first().first().value<quint32>();
-    auto client = dynamic_cast<win::x11::window*>(Test::app()->base.space->windows_map.at(win_id));
+    auto client
+        = dynamic_cast<Test::space::x11_window*>(Test::app()->base.space->windows_map.at(win_id));
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QVERIFY(win::decoration(client));
@@ -118,7 +119,7 @@ void DontCrashEmptyDecorationTest::testBug361551()
     xcb_flush(c);
     xcb_disconnect(c);
 
-    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::closed);
+    QSignalSpy windowClosedSpy(client->qobject.get(), &win::window_qobject::closed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
 }

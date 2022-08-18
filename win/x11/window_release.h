@@ -6,6 +6,7 @@
 #pragma once
 
 #include "base/x11/grabs.h"
+#include "base/x11/xcb/extensions.h"
 #include "utils/blocker.h"
 #include "win/input.h"
 #include "win/rules.h"
@@ -97,7 +98,7 @@ void finish_unmanaged_removal(Win* win, Win* remnant)
     assert(contains(space.windows, win));
 
     remove_window_from_lists(space, win);
-    space.render.addRepaint(visible_rect(win));
+    space.base.render->compositor->addRepaint(visible_rect(win));
 
     Q_EMIT space.qobject->unmanagedRemoved(win->signal_id);
 
@@ -193,7 +194,7 @@ void release_window(Win* win, bool on_shutdown)
     win->geometry_update.block++;
 
     if (win->isOnCurrentDesktop() && win->isShown()) {
-        win->space.render.addRepaint(visible_rect(win));
+        win->space.base.render->compositor->addRepaint(visible_rect(win));
     }
 
     // Grab X during the release to make removing of properties, setting to withdrawn state
@@ -308,7 +309,7 @@ void destroy_window(Win* win)
     win->geometry_update.block++;
 
     if (win->isOnCurrentDesktop() && win->isShown()) {
-        win->space.render.addRepaint(visible_rect(win));
+        win->space.base.render->compositor->addRepaint(visible_rect(win));
     }
 
     // So that it's not considered visible anymore

@@ -14,8 +14,6 @@
 #include "win/stacking.h"
 #include "win/transient.h"
 
-#include "group.h"
-
 namespace KWin::win::x11
 {
 
@@ -23,18 +21,18 @@ template<typename Win>
 void set_transient_lead(Win* win, xcb_window_t lead_id);
 
 template<typename Win>
-class transient : public win::transient<typename Win::window_t>
+class transient : public win::transient<typename Win::abstract_type>
 {
 public:
     transient(Win* win)
-        : win::transient<typename Win::window_t>(win)
+        : win::transient<typename Win::abstract_type>(win)
         , win{win}
     {
     }
 
-    void remove_lead(typename Win::window_t* lead) override
+    void remove_lead(typename Win::abstract_type* lead) override
     {
-        win::transient<typename Win::window_t>::remove_lead(lead);
+        win::transient<typename Win::abstract_type>::remove_lead(lead);
 
         if (this->leads().empty()) {
             // If there is no more lead, make window a group transient.
@@ -357,8 +355,10 @@ void check_active_modal(Space& space)
 }
 
 template<typename Win>
-void check_group(Win* win, x11::group* group)
+void check_group(Win* win, decltype(win->in_group) group)
 {
+    using group_t = std::remove_pointer_t<decltype(group)>;
+
     // First get all information about the current group.
     if (!group) {
         auto lead = win->transient()->lead();
@@ -371,12 +371,12 @@ void check_group(Win* win, x11::group* group)
             group = find_group(win->space, win->info->groupLeader());
             if (!group) {
                 // doesn't exist yet
-                group = new x11::group(win->info->groupLeader(), win->space);
+                group = new group_t(win->info->groupLeader(), win->space);
             }
         } else {
             group = find_client_leader_group(win);
             if (!group) {
-                group = new x11::group(XCB_WINDOW_NONE, win->space);
+                group = new group_t(XCB_WINDOW_NONE, win->space);
             }
         }
     }
@@ -396,7 +396,7 @@ void check_group(Win* win, x11::group* group)
 }
 
 template<typename Win>
-void change_client_leader_group(Win* win, x11::group* group)
+void change_client_leader_group(Win* win, decltype(win->in_group) group)
 {
     auto lead_id = x11_transient(win)->lead_id;
     if (lead_id != XCB_WINDOW_NONE && lead_id != rootWindow()) {
@@ -417,9 +417,10 @@ void change_client_leader_group(Win* win, x11::group* group)
  *  Tries to find a group that has member windows with the same client leader like @ref win.
  */
 template<typename Win>
-group* find_client_leader_group(Win const* win)
+auto find_client_leader_group(Win const* win) -> decltype(win->in_group)
 {
-    group* ret = nullptr;
+    using group_t = std::remove_pointer_t<decltype(win->in_group)>;
+    group_t* ret = nullptr;
 
     for (auto const& other : win->space.windows) {
         if (!other->control) {

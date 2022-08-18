@@ -7,6 +7,9 @@
 */
 #pragma once
 
+#include "texture.h"
+
+#include "base/logging.h"
 #include "render/buffer.h"
 
 #include <memory>
@@ -14,21 +17,76 @@
 namespace KWin::render::gl
 {
 
-class backend;
-class scene;
-
-template<typename Backend>
-class texture;
-
-class buffer : public render::buffer
+template<typename Window, typename Scene>
+class buffer : public render::buffer<Window>
 {
 public:
-    buffer(render::window* window, gl::scene& scene);
-    ~buffer() override;
-    bool bind();
-    bool isValid() const override;
+    using abstract_type = render::buffer<Window>;
 
-    std::unique_ptr<render::gl::texture<gl::backend>> texture;
+    buffer(Window* window, Scene& scene)
+        : render::buffer<Window>{window}
+        , texture{scene.createTexture()}
+    {
+    }
+
+    bool bind()
+    {
+        auto needs_buffer_update = [this]() {
+            if (!this->win_integration) {
+                return false;
+            }
+            // TODO(romangg): Do we need to handle X11 windows differently? Always return false like
+            // before?
+            return !this->win_integration->damage().isEmpty();
+        };
+
+        if (!texture->isNull()) {
+            if (!this->window->ref_win->damage_region.isEmpty()) {
+                this->updateBuffer();
+            }
+            if (needs_buffer_update()) {
+                texture->update_from_buffer(this);
+                // mipmaps need to be updated
+                texture->setDirty();
+            }
+            this->window->ref_win->resetDamage();
+            return true;
+        }
+        if (!isValid()) {
+            return false;
+        }
+
+        bool success = texture->load(this);
+
+        if (success) {
+            this->window->ref_win->resetDamage();
+        } else {
+            qCDebug(KWIN_CORE) << "Failed to bind window";
+        }
+        return success;
+    }
+
+    bool isValid() const override
+    {
+        if (!texture->isNull()) {
+            return true;
+        }
+        return render::buffer<Window>::isValid();
+    }
+
+    std::unique_ptr<gl::texture<typename Scene::backend_t>> texture;
+
+private:
+    bool needs_buffer_update()
+    {
+        if (!this->win_integration) {
+            return false;
+        }
+
+        // TODO(romangg): Do we need to handle X11 windows differently? Always return false like
+        // before?
+        return !this->win_integration->damage().isEmpty();
+    }
 };
 
 }

@@ -12,12 +12,12 @@
 namespace KWin::input
 {
 
-template<typename Manager>
-class tablet_mode_switch_spy : public input::event_spy
+template<typename Redirect, typename Manager>
+class tablet_mode_switch_spy : public input::event_spy<Redirect>
 {
 public:
-    tablet_mode_switch_spy(input::redirect& redirect, Manager& manager)
-        : event_spy(redirect)
+    tablet_mode_switch_spy(Redirect& redirect, Manager& manager)
+        : event_spy<Redirect>(redirect)
         , manager(manager)
     {
     }

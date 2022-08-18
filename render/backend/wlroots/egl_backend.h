@@ -31,14 +31,17 @@ namespace KWin::render::backend::wlroots
 {
 
 template<typename Platform>
-class egl_backend : public gl::backend
+class egl_backend : public gl::backend<gl::scene<typename Platform::abstract_type>,
+                                       typename Platform::abstract_type>
 {
 public:
-    using backend_t = gl::backend;
+    using type = egl_backend<Platform>;
+    using gl_scene = gl::scene<typename Platform::abstract_type>;
+    using abstract_type = gl::backend<gl_scene, typename Platform::abstract_type>;
     using egl_output_t = egl_output<typename Platform::output_t>;
 
     egl_backend(Platform& platform)
-        : gl::backend()
+        : abstract_type(platform)
         , platform{platform}
     {
         native = wlr_gles2_renderer_get_egl(platform.renderer);
@@ -57,14 +60,13 @@ public:
         platform.egl_data = &data.base;
 
         // Egl is always direct rendering.
-        setIsDirectRendering(true);
+        this->setIsDirectRendering(true);
 
         gl::init_client_extensions(*this);
         gl::init_server_extensions(*this);
 
         for (auto& out : platform.base.all_outputs) {
-            auto render = static_cast<typename Platform::output_t*>(
-                static_cast<base::wayland::output*>(out)->render.get());
+            auto render = static_cast<typename Platform::output_t*>(out->render.get());
             get_egl_out(out) = std::make_unique<egl_output_t>(*render, data);
         }
 
@@ -121,14 +123,15 @@ public:
         // TODO, create new buffer?
     }
 
-    gl::texture_private<backend_t>* createBackendTexture(gl::texture<backend_t>* texture) override
+    typename abstract_type::texture_priv_t*
+    createBackendTexture(typename abstract_type::texture_t* texture) override
     {
-        return new egl_texture(texture, this);
+        return new egl_texture<type>(texture, this);
     }
 
     QRegion prepareRenderingFrame() override
     {
-        startRenderTimer();
+        this->startRenderTimer();
         return QRegion();
     }
 
@@ -151,11 +154,11 @@ public:
 
         QMatrix4x4 flip_180;
         flip_180(1, 1) = -1;
-        transformation = flip_180;
+        this->transformation = flip_180;
 
         prepareRenderFramebuffer(*out);
 
-        if (!supportsBufferAge()) {
+        if (!this->supportsBufferAge()) {
             // If buffer age exenstion is not supported we always repaint the whole output as we
             // don't know the status of the back buffer we render to.
             return output->geometry();
@@ -224,7 +227,7 @@ public:
             return;
         }
 
-        if (supportsBufferAge()) {
+        if (this->supportsBufferAge()) {
             if (out->damageHistory.size() > 10) {
                 out->damageHistory.pop_back();
             }
@@ -239,9 +242,9 @@ public:
 
     std::unique_ptr<egl_output<typename Platform::output_t>>& get_egl_out(base::output const* out)
     {
-        return static_cast<typename Platform::output_t*>(
-                   static_cast<base::wayland::output const*>(out)->render.get())
-            ->egl;
+        using out_t = typename Platform::output_t;
+        using base_wlout_t = base::wayland::output<base::wayland::platform>;
+        return static_cast<out_t*>(static_cast<base_wlout_t const*>(out)->render.get())->egl;
     }
 
     Platform& platform;

@@ -56,7 +56,7 @@ public:
                 init();
             }
 
-            auto const screenRect = win::space_window_area(*m_scene->compositor.space,
+            auto const screenRect = win::space_window_area(*m_scene->platform.base.space,
                                                            ScreenArea,
                                                            w->window.ref_win->central_output,
                                                            w->desktop());
@@ -296,7 +296,7 @@ protected:
             m_offscreenTarget = nullptr;
             m_offscreenTex = nullptr;
 
-            for (auto win : m_scene->compositor.space->windows) {
+            for (auto win : m_scene->platform.base.space->windows) {
                 discardCacheTexture(win->render->effect.get());
             }
 

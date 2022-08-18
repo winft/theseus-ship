@@ -9,7 +9,6 @@
 #include "render/gl/kwin_eglext.h"
 #include "render/gl/window.h"
 #include "render/wayland/buffer.h"
-#include "toplevel.h"
 
 #include <kwingl/platform.h>
 
@@ -150,10 +149,8 @@ bool update_texture_from_fbo(Texture& texture, std::shared_ptr<QOpenGLFramebuffe
     return true;
 }
 
-template<typename Texture>
-bool update_texture_from_internal_image_object(
-    Texture& texture,
-    render::wayland::buffer_win_integration const& buffer)
+template<typename Texture, typename WinBuffer>
+bool update_texture_from_internal_image_object(Texture& texture, WinBuffer const& buffer)
 {
     auto const image = buffer.internal.image;
     if (image.isNull()) {
@@ -341,9 +338,8 @@ bool update_texture_from_dmabuf(Texture& texture, gl::egl_dmabuf_buffer* dmabuf)
     return true;
 }
 
-template<typename Texture>
-bool update_texture_from_shm(Texture& texture,
-                             render::wayland::buffer_win_integration const& buffer)
+template<typename Texture, typename WinBuffer>
+bool update_texture_from_shm(Texture& texture, WinBuffer const& buffer)
 {
     auto const extbuf = buffer.external.get();
     assert(extbuf && extbuf->shmBuffer());
@@ -372,9 +368,8 @@ bool update_texture_from_shm(Texture& texture,
     return true;
 }
 
-template<typename Texture>
-bool update_texture_from_external(Texture& texture,
-                                  render::wayland::buffer_win_integration const& buffer)
+template<typename Texture, typename WinBuffer>
+bool update_texture_from_external(Texture& texture, WinBuffer const& buffer)
 {
     bool ret;
     auto const extbuf = buffer.external.get();
@@ -395,8 +390,8 @@ bool update_texture_from_external(Texture& texture,
     return ret;
 }
 
-template<typename Texture>
-bool update_texture_from_internal(Texture& texture, render::wayland::buffer_win_integration& buffer)
+template<typename Texture, typename WinBuffer>
+bool update_texture_from_internal(Texture& texture, WinBuffer& buffer)
 {
     assert(!buffer.external);
 
@@ -404,11 +399,12 @@ bool update_texture_from_internal(Texture& texture, render::wayland::buffer_win_
         || update_texture_from_internal_image_object(texture, buffer);
 }
 
-template<typename Texture>
-bool update_texture_from_buffer(Texture& texture, render::buffer* buffer)
+template<typename Texture, typename Buffer>
+bool update_texture_from_buffer(Texture& texture, Buffer* buffer)
 {
     auto& win_integrate
-        = static_cast<render::wayland::buffer_win_integration&>(*buffer->win_integration);
+        = static_cast<render::wayland::buffer_win_integration<typename Buffer::abstract_type>&>(
+            *buffer->win_integration);
     if (win_integrate.external) {
         return update_texture_from_external(texture, win_integrate);
     }

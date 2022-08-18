@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include "kwin_export.h"
+
 #include <QAbstractListModel>
 #include <QSortFilterProxyModel>
 
@@ -17,7 +19,7 @@ class window;
 namespace models::v3
 {
 
-class client_model : public QAbstractListModel
+class KWIN_EXPORT client_model : public QAbstractListModel
 {
     Q_OBJECT
 
@@ -45,7 +47,7 @@ private:
     QList<window*> m_clients;
 };
 
-class client_filter_model : public QSortFilterProxyModel
+class KWIN_EXPORT client_filter_model : public QSortFilterProxyModel
 {
     Q_OBJECT
     Q_PROPERTY(

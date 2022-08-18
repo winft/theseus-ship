@@ -5,7 +5,8 @@
 */
 #pragma once
 
-#include <kwin_export.h>
+#include "input/platform_qobject.h"
+#include "kwin_export.h"
 
 #include <KConfigGroup>
 #include <KSharedConfig>
@@ -22,7 +23,6 @@ namespace KWin::input
 {
 
 class keyboard;
-class platform;
 
 namespace dbus
 {
@@ -46,13 +46,32 @@ struct layout_names_v2 {
     QString long_name;
 };
 
-class keyboard_layouts_v2 : public QObject
+class KWIN_EXPORT keyboard_layouts_v2 : public QObject
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "org.kde.KeyboardLayoutsV2")
 
 public:
-    static std::unique_ptr<keyboard_layouts_v2> create(input::platform* platform);
+    template<typename Platform>
+    static std::unique_ptr<keyboard_layouts_v2> create(Platform* platform)
+    {
+        auto layouts = std::make_unique<keyboard_layouts_v2>();
+
+        QObject::connect(platform->qobject.get(),
+                         &input::platform_qobject::keyboard_added,
+                         layouts.get(),
+                         &keyboard_layouts_v2::handle_keyboard_added);
+        QObject::connect(platform->qobject.get(),
+                         &input::platform_qobject::keyboard_removed,
+                         layouts.get(),
+                         &keyboard_layouts_v2::handle_keyboard_removed);
+
+        for (auto& keyboard : platform->keyboards) {
+            layouts->handle_keyboard_added(keyboard);
+        }
+
+        return layouts;
+    }
 
     keyboard_layouts_v2();
 

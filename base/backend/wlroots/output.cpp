@@ -20,10 +20,13 @@
 namespace KWin::base::backend::wlroots
 {
 
-using render_platform = render::backend::wlroots::platform<platform>;
-using render_output = render::backend::wlroots::output<render_platform>;
+using abstract_output_t = base::wayland::output<base::wayland::platform>;
 
-static render_output* get_render(std::unique_ptr<render::wayland::output>& output)
+using render_platform = render::backend::wlroots::platform<platform>;
+using render_output = render::backend::wlroots::output<output, render_platform>;
+
+template<typename AbstractRenderOutput>
+render_output* get_render(std::unique_ptr<AbstractRenderOutput>& output)
 {
     return static_cast<render_output*>(output.get());
 }

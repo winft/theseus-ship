@@ -14,7 +14,6 @@
 #include "geo.h"
 #include "root_info_filter.h"
 #include "stacking.h"
-#include "window.h"
 #include "window_find.h"
 
 #include "utils/memory.h"
@@ -34,6 +33,8 @@ template<typename Space>
 class root_info : public NETRootInfo
 {
 public:
+    using window_t = typename Space::x11_window;
+
     static std::unique_ptr<root_info> create(Space& space)
     {
         xcb_window_t supportWindow = xcb_generate_id(connection());
@@ -187,7 +188,7 @@ protected:
                             xcb_timestamp_t timestamp,
                             xcb_window_t active_window) override
     {
-        if (auto c = find_controlled_window<x11::window>(space, predicate_match::window, w)) {
+        if (auto c = find_controlled_window<window_t>(space, predicate_match::window, w)) {
             if (timestamp == XCB_CURRENT_TIME)
                 timestamp = c->userTime();
             if (src != NET::FromApplication && src != FromTool)
@@ -199,14 +200,14 @@ protected:
                 return; // WORKAROUND? With > 1 plasma activities, we cause this ourselves. bug
                         // #240673
             } else {    // NET::FromApplication
-                x11::window* c2;
+                window_t* c2;
                 if (allow_window_activation(space, c, timestamp, false, true)) {
                     activate_window(space, c);
                 }
 
                 // if activation of the requestor's window would be allowed, allow activation too
                 else if (active_window != XCB_WINDOW_NONE
-                         && (c2 = find_controlled_window<x11::window>(
+                         && (c2 = find_controlled_window<window_t>(
                                  space, predicate_match::window, active_window))
                              != nullptr
                          && allow_window_activation(
@@ -225,14 +226,14 @@ protected:
 
     void closeWindow(xcb_window_t w) override
     {
-        if (auto win = find_controlled_window<x11::window>(space, predicate_match::window, w)) {
+        if (auto win = find_controlled_window<window_t>(space, predicate_match::window, w)) {
             win->closeWindow();
         }
     }
 
     void moveResize(xcb_window_t w, int x_root, int y_root, unsigned long direction) override
     {
-        if (auto win = find_controlled_window<x11::window>(space, predicate_match::window, w)) {
+        if (auto win = find_controlled_window<window_t>(space, predicate_match::window, w)) {
             // otherwise grabbing may have old timestamp - this message should include timestamp
             kwinApp()->update_x11_time_from_clock();
             x11::net_move_resize(win, x_root, y_root, static_cast<Direction>(direction));
@@ -241,14 +242,14 @@ protected:
 
     void moveResizeWindow(xcb_window_t w, int flags, int x, int y, int width, int height) override
     {
-        if (auto win = find_controlled_window<x11::window>(space, predicate_match::window, w)) {
+        if (auto win = find_controlled_window<window_t>(space, predicate_match::window, w)) {
             x11::net_move_resize_window(win, flags, x, y, width, height);
         }
     }
 
     void gotPing(xcb_window_t w, xcb_timestamp_t timestamp) override
     {
-        if (auto c = find_controlled_window<x11::window>(space, predicate_match::window, w))
+        if (auto c = find_controlled_window<window_t>(space, predicate_match::window, w))
             x11::pong(c, timestamp);
     }
 
@@ -258,7 +259,7 @@ protected:
                        int detail,
                        xcb_timestamp_t timestamp) override
     {
-        if (auto c = find_controlled_window<x11::window>(space, predicate_match::window, w)) {
+        if (auto c = find_controlled_window<window_t>(space, predicate_match::window, w)) {
             if (timestamp == XCB_CURRENT_TIME) {
                 timestamp = c->userTime();
             }

@@ -6,6 +6,7 @@
 #pragma once
 
 #include "input/cursor.h"
+#include "kwin_export.h"
 
 #include <QObject>
 
@@ -25,7 +26,7 @@ class window_qobject;
 /**
  * Provides a common interface for interacting with windows via Qt's property system.
  */
-class property_window : public QObject
+class KWIN_EXPORT property_window : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(qulonglong frameId READ frameId)

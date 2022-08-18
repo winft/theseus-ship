@@ -8,8 +8,10 @@
 
 #include "helpers.h"
 
-#include "toplevel.h"
-#include "win/space.h"
+#include "win/meta.h"
+#include "win/session_manager.h"
+#include "win/space_qobject.h"
+#include "win/util.h"
 #include "win/virtual_desktops.h"
 
 #include <KConfigGroup>
@@ -29,7 +31,7 @@ uint32_t get_layout(T const& layouts, U const& reference)
     return it->second;
 }
 
-class layout_policy_qobject : public QObject
+class KWIN_EXPORT layout_policy_qobject : public QObject
 {
 public:
     ~layout_policy_qobject() override;
@@ -45,6 +47,8 @@ public:
 
     std::unique_ptr<layout_policy_qobject> qobject;
     Manager* manager;
+
+    using window_t = typename decltype(manager->xkb.platform->base.space)::element_type::window_t;
 
 protected:
     explicit layout_policy(Manager* manager, KConfigGroup const& config = KConfigGroup())
@@ -99,7 +103,7 @@ public:
     global_layout_policy(Manager* manager, KConfigGroup const& config)
         : layout_policy<Manager>(manager, config)
     {
-        auto session_manager = manager->xkb.platform->redirect->space.session_manager.get();
+        auto session_manager = manager->xkb.platform->base.space->session_manager.get();
         QObject::connect(session_manager,
                          &win::session_manager::prepareSessionSaveRequested,
                          this->qobject.get(),
@@ -150,7 +154,7 @@ public:
     virtual_desktop_layout_policy(Manager* manager, KConfigGroup const& config)
         : layout_policy<Manager>(manager, config)
     {
-        auto& space = manager->xkb.platform->redirect->space;
+        auto& space = *manager->xkb.platform->base.space;
         QObject::connect(space.virtual_desktop_manager->qobject.get(),
                          &win::virtual_desktop_manager_qobject::currentChanged,
                          this->qobject.get(),
@@ -181,8 +185,8 @@ public:
             this->qobject.get(),
             [this] {
                 if (this->get_keyboard()->layouts_count() > 1) {
-                    auto const& desktops = this->manager->xkb.platform->redirect->space
-                                               .virtual_desktop_manager->desktops();
+                    auto const& desktops = this->manager->xkb.platform->base.space
+                                               ->virtual_desktop_manager->desktops();
 
                     for (auto const desktop : desktops) {
                         uint const layout = this->config.readEntry(
@@ -217,8 +221,8 @@ protected:
 
     void handle_layout_change(uint index) override
     {
-        auto desktop = this->manager->xkb.platform->redirect->space.virtual_desktop_manager
-                           ->currentDesktop();
+        auto desktop
+            = this->manager->xkb.platform->base.space->virtual_desktop_manager->currentDesktop();
         if (!desktop) {
             return;
         }
@@ -239,8 +243,8 @@ protected:
 private:
     void handle_desktop_change()
     {
-        if (auto desktop = this->manager->xkb.platform->redirect->space.virtual_desktop_manager
-                               ->currentDesktop()) {
+        if (auto desktop
+            = this->manager->xkb.platform->base.space->virtual_desktop_manager->currentDesktop()) {
             this->set_layout(get_layout(layouts, desktop));
         }
     }
@@ -252,15 +256,16 @@ template<typename Manager>
 class window_layout_policy : public layout_policy<Manager>
 {
 public:
+    using window_t = typename layout_policy<Manager>::window_t;
+
     explicit window_layout_policy(Manager* manager)
         : layout_policy<Manager>(manager)
     {
-        QObject::connect(manager->xkb.platform->redirect->space.qobject.get(),
-                         &win::space::qobject_t::clientActivated,
+        QObject::connect(manager->xkb.platform->base.space->qobject.get(),
+                         &win::space_qobject::clientActivated,
                          this->qobject.get(),
                          [this] {
-                             auto window
-                                 = this->manager->xkb.platform->redirect->space.active_client;
+                             auto window = this->manager->xkb.platform->base.space->active_client;
                              if (!window) {
                                  return;
                              }
@@ -287,7 +292,7 @@ protected:
 
     void handle_layout_change(uint index) override
     {
-        auto window = this->manager->xkb.platform->redirect->space.active_client;
+        auto window = this->manager->xkb.platform->base.space->active_client;
         if (!window) {
             return;
         }
@@ -302,7 +307,7 @@ protected:
         if (it == layouts.end()) {
             layouts.insert({window, index});
             QObject::connect(window->qobject.get(),
-                             &Toplevel::qobject_t::closed,
+                             &window_t::qobject_t::closed,
                              this->qobject.get(),
                              [this, window] { layouts.erase(window); });
         } else {
@@ -311,19 +316,21 @@ protected:
     }
 
 private:
-    std::unordered_map<Toplevel*, uint32_t> layouts;
+    std::unordered_map<window_t*, uint32_t> layouts;
 };
 
 template<typename Manager>
 class application_layout_policy : public layout_policy<Manager>
 {
 public:
+    using window_t = typename layout_policy<Manager>::window_t;
+
     application_layout_policy(Manager* manager, KConfigGroup const& config)
         : layout_policy<Manager>(manager, config)
     {
-        auto& space = manager->xkb.platform->redirect->space;
+        auto& space = *manager->xkb.platform->base.space;
         QObject::connect(space.qobject.get(),
-                         &win::space::qobject_t::clientActivated,
+                         &win::space_qobject::clientActivated,
                          this->qobject.get(),
                          [this, &space] { handle_client_activated(space.active_client); });
 
@@ -374,7 +381,7 @@ protected:
 
     void handle_layout_change(uint index) override
     {
-        auto window = this->manager->xkb.platform->redirect->space.active_client;
+        auto window = this->manager->xkb.platform->base.space->active_client;
         if (!window) {
             return;
         }
@@ -389,7 +396,7 @@ protected:
         if (it == layouts.end()) {
             layouts.insert({window, index});
             QObject::connect(window->qobject.get(),
-                             &Toplevel::qobject_t::closed,
+                             &window_t::qobject_t::closed,
                              this->qobject.get(),
                              [this, window] { layouts.erase(window); });
         } else {
@@ -408,7 +415,7 @@ protected:
     }
 
 private:
-    void handle_client_activated(Toplevel* window)
+    void handle_client_activated(window_t* window)
     {
         if (!window) {
             return;
@@ -448,7 +455,7 @@ private:
         }
     }
 
-    std::unordered_map<Toplevel*, uint32_t> layouts;
+    std::unordered_map<window_t*, uint32_t> layouts;
     std::unordered_map<QByteArray, uint32_t> restored_layouts;
 };
 

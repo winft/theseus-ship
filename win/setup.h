@@ -11,8 +11,6 @@
 #include "placement.h"
 #include "screen.h"
 
-#include "render/compositor.h"
-
 #include <KDecoration2/Decoration>
 
 namespace KWin::win
@@ -24,8 +22,8 @@ void setup_space_window_connections(Space* space, Win* win)
     // TODO(romangg): Move into a different function about compositor(render) <-> window setup.
     QObject::connect(win->qobject.get(),
                      &window_qobject::needsRepaint,
-                     space->render.qobject.get(),
-                     [win] { win->space.render.schedule_repaint(win); });
+                     space->base.render->compositor->qobject.get(),
+                     [win] { win->space.base.render->compositor->schedule_repaint(win); });
     QObject::connect(win->qobject.get(),
                      &window_qobject::desktopPresenceChanged,
                      space->qobject.get(),

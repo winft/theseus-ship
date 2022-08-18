@@ -8,7 +8,6 @@
 #include "transient.h"
 #include "window_release.h"
 
-#include "render/compositor.h"
 #include "win/transient.h"
 
 #include <Wrapland/Server/subcompositor.h>
@@ -87,8 +86,8 @@ void set_subsurface_parent(Win* win, Lead* lead)
     //                stops rendering without this connection.
     QObject::connect(win->qobject.get(),
                      &window_qobject::needsRepaint,
-                     win->space.render.qobject.get(),
-                     [win] { win->space.render.schedule_repaint(win); });
+                     win->space.base.render->compositor->qobject.get(),
+                     [win] { win->space.base.render->compositor->schedule_repaint(win); });
 
     auto subsurface = win->surface->subsurface();
 

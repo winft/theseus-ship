@@ -86,7 +86,7 @@ void MinimizeAnimationTest::init()
 
 void MinimizeAnimationTest::cleanup()
 {
-    auto effectsImpl = dynamic_cast<render::effects_handler_impl*>(effects);
+    auto& effectsImpl = Test::app()->base.render->compositor->effects;
     QVERIFY(effectsImpl);
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
@@ -154,7 +154,7 @@ void MinimizeAnimationTest::testMinimizeUnminimize()
 
     // Load effect that will be tested.
     QFETCH(QString, effectName);
-    auto effectsImpl = dynamic_cast<render::effects_handler_impl*>(effects);
+    auto& effectsImpl = Test::app()->base.render->compositor->effects;
     QVERIFY(effectsImpl);
     QVERIFY(effectsImpl->loadEffect(effectName));
     QCOMPARE(effectsImpl->loadedEffects().count(), 1);

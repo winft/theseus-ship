@@ -165,13 +165,12 @@ ApplicationWayland::~ApplicationWayland()
 
     // Kill Xwayland before terminating its connection.
     base->xwayland.reset();
-    base->xwayland_interface = nullptr;
     waylandServer()->terminateClientConnections();
 
     if (base->render->compositor) {
         // Block compositor to prevent further compositing from crashing with a null workspace.
         // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
-        static_cast<render::wayland::compositor*>(base->render->compositor.get())->lock();
+        base->render->compositor->lock();
     }
 
     base->space.reset();
@@ -204,11 +203,11 @@ void ApplicationWayland::start()
         setOperationMode(OperationModeXwayland);
     }
 
-    base = std::make_unique<base::backend::wlroots::platform>(waylandServer()->display.get());
+    using base_t = base::backend::wlroots::platform;
+    base = std::make_unique<base_t>(waylandServer()->display.get());
 
-    using render_t = render::backend::wlroots::platform<base::backend::wlroots::platform>;
+    using render_t = render::backend::wlroots::platform<base_t>;
     base->render = std::make_unique<render_t>(*base);
-    auto render = static_cast<render_t*>(base->render.get());
 
     createOptions();
 
@@ -217,32 +216,32 @@ void ApplicationWayland::start()
     session->take_control();
 
     base->input = std::make_unique<input::backend::wlroots::platform>(*base);
-    static_cast<input::wayland::platform&>(*base->input).install_shortcuts();
+    base->input->install_shortcuts();
 
     try {
-        render->init();
+        static_cast<render_t&>(*base->render).init();
     } catch (std::exception const&) {
         std::cerr << "FATAL ERROR: backend failed to initialize, exiting now" << std::endl;
         QCoreApplication::exit(1);
     }
 
     try {
-        render->compositor = std::make_unique<render::wayland::compositor>(*render);
+        base->render->compositor = std::make_unique<render_t::compositor_t>(*base->render);
     } catch(std::system_error const& exc) {
         std::cerr << "FATAL ERROR: compositor creation failed: " << exc.what() << std::endl;
         exit(exc.code().value());
     }
 
-    base->space = std::make_unique<wayland_space>(*base, server.get());
+    base->space = std::make_unique<base_t::space_t>(*base, server.get());
+    base->space->input->setup_workspace();
 
     input::wayland::add_dbus(base->input.get());
     win::init_shortcuts(*base->space);
     tablet_mode_manager
-        = std::make_unique<input::dbus::tablet_mode_manager<input::wayland::platform>>(
-            static_cast<input::wayland::platform&>(*base->input));
-    base->space->scripting = std::make_unique<scripting::platform>(*base->space);
+        = std::make_unique<input::dbus::tablet_mode_manager<base::wayland::platform::input_t>>(*base->input);
+    base->space->scripting = std::make_unique<scripting::platform<base_t::space_t>>(*base->space);
 
-    render->compositor->start(*base->space);
+    base->render->compositor->start(*base->space);
 
     waylandServer()->create_addons([this] { handle_server_addons_created(); });
     kwinApp()->screen_locker_watcher->initialize();
@@ -271,7 +270,6 @@ void ApplicationWayland::create_xwayland()
 
     try {
         base->xwayland = std::make_unique<xwl::xwayland<wayland_space>>(this, *base->space, status_callback);
-        base->xwayland_interface = base->xwayland.get();
     } catch (std::system_error const& exc) {
         std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
         exit(exc.code().value());

@@ -6,7 +6,6 @@
 #pragma once
 
 #include "main.h"
-#include "toplevel.h"
 #include "win/geo.h"
 #include "win/wayland/input.h"
 #include "win/x11/stacking.h"
@@ -15,16 +14,17 @@ namespace KWin::input
 {
 
 template<typename Redirect>
-Toplevel* find_window(Redirect const& redirect, QPoint const& pos)
+auto find_window(Redirect const& redirect, QPoint const& pos) -> typename Redirect::window_t*
 {
     // TODO: check whether the unmanaged wants input events at all
     if (!kwinApp()->is_screen_locked()) {
         // if an effect overrides the cursor we don't have a window to focus
-        if (redirect.space.render.effects && redirect.space.render.effects->isMouseInterception()) {
+        if (redirect.platform.base.render->compositor->effects
+            && redirect.platform.base.render->compositor->effects->isMouseInterception()) {
             return nullptr;
         }
 
-        auto const& unmanaged = win::x11::get_unmanageds(redirect.space);
+        auto const& unmanaged = win::x11::get_unmanageds(*redirect.platform.base.space);
         for (auto const& u : unmanaged) {
             if (win::input_geometry(u).contains(pos) && win::wayland::accepts_input(u, pos)) {
                 return u;
@@ -36,10 +36,11 @@ Toplevel* find_window(Redirect const& redirect, QPoint const& pos)
 }
 
 template<typename Redirect>
-Toplevel* find_controlled_window(Redirect const& redirect, QPoint const& pos)
+auto find_controlled_window(Redirect const& redirect, QPoint const& pos) ->
+    typename Redirect::window_t*
 {
     auto const isScreenLocked = kwinApp()->is_screen_locked();
-    auto const& stacking = redirect.space.stacking_order->stack;
+    auto const& stacking = redirect.platform.base.space->stacking_order->stack;
     if (stacking.empty()) {
         return nullptr;
     }

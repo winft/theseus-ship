@@ -9,10 +9,6 @@
 #include "window_qobject.h"
 
 #include "main.h"
-#include "render/compositor.h"
-#include "render/effect/window_impl.h"
-#include "render/shadow.h"
-#include "render/window.h"
 
 #include <cassert>
 #include <xcb/damage.h>
@@ -121,7 +117,8 @@ void add_scene_window(Scene& scene, Win& win)
     assert(!win.render);
 
     win.render = scene.createWindow(&win);
-    win.render->effect = std::make_unique<render::effects_window_impl>(*win.render);
+    win.render->effect
+        = std::make_unique<typename decltype(win.render->effect)::element_type>(*win.render);
 
     QObject::connect(win.qobject.get(),
                      &window_qobject::central_output_changed,
@@ -151,7 +148,7 @@ bool setup_compositing(Win& win, bool add_full_damage)
     static_assert(!Win::is_toplevel);
     assert(!win.remnant);
 
-    if (!win.space.render.scene) {
+    if (!win.space.base.render->compositor->scene) {
         return false;
     }
 
@@ -169,7 +166,7 @@ bool setup_compositing(Win& win, bool add_full_damage)
     win.discard_shape();
     win.damage_region = QRegion(QRect(QPoint(), win.size()));
 
-    add_scene_window(*win.space.render.scene, win);
+    add_scene_window(*win.space.base.render->compositor->scene, win);
 
     if (add_full_damage) {
         // With unmanaged windows there is a race condition between the client painting the window
@@ -195,7 +192,7 @@ void elevate(Win* win, bool elevate)
     }
 
     win->render->effect->elevate(elevate);
-    win->space.render.addRepaint(visible_rect(win));
+    win->space.base.render->compositor->addRepaint(visible_rect(win));
 }
 
 }

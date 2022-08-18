@@ -9,7 +9,6 @@
 #include "debug/support_info.h"
 #include "input/platform.h"
 #include "kwin_export.h"
-#include "toplevel.h"
 #include "win/kill_window.h"
 #include "win/placement.h"
 
@@ -187,7 +186,7 @@ public:
         m_replyQueryWindowInfo = message();
         setDelayedReply(true);
 
-        input->start_interactive_window_selection([this](Toplevel* t) {
+        input->start_interactive_window_selection([this](auto t) {
             if (!t) {
                 QDBusConnection::sessionBus().send(m_replyQueryWindowInfo.createErrorReply(
                     QStringLiteral("org.kde.KWin.Error.UserCancel"),
@@ -223,7 +222,7 @@ public:
     }
 
 private:
-    QVariantMap window_to_variant_map(Toplevel const* c)
+    QVariantMap window_to_variant_map(typename Space::window_t const* c)
     {
         return {{QStringLiteral("resourceClass"), c->resource_class},
                 {QStringLiteral("resourceName"), c->resource_name},

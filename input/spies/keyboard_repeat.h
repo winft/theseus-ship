@@ -12,6 +12,7 @@
 #include "input/event_spy.h"
 #include "input/keyboard.h"
 #include "input/xkb/keyboard.h"
+#include "main.h"
 
 #include <Wrapland/Server/keyboard_pool.h>
 #include <Wrapland/Server/seat.h>
@@ -23,7 +24,7 @@
 namespace KWin::input
 {
 
-class keyboard_repeat_spy_qobject : public QObject
+class KWIN_EXPORT keyboard_repeat_spy_qobject : public QObject
 {
     Q_OBJECT
 public:
@@ -33,11 +34,12 @@ Q_SIGNALS:
     void key_repeated(key_event const& event);
 };
 
-class keyboard_repeat_spy : public input::event_spy
+template<typename Redirect>
+class keyboard_repeat_spy : public input::event_spy<Redirect>
 {
 public:
-    keyboard_repeat_spy(input::redirect& redirect)
-        : event_spy(redirect)
+    keyboard_repeat_spy(Redirect& redirect)
+        : event_spy<Redirect>(redirect)
         , qobject{std::make_unique<keyboard_repeat_spy_qobject>()}
         , m_timer{std::make_unique<QTimer>()}
     {

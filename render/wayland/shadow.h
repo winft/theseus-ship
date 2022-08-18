@@ -6,8 +6,6 @@
 */
 #pragma once
 
-#include "render/compositor.h"
-#include "render/scene.h"
 #include "render/types.h"
 #include "utils/algorithm.h"
 
@@ -81,7 +79,7 @@ std::unique_ptr<Shadow> create_shadow(Win& win)
         return {};
     }
 
-    auto shadow = win.ref_win->space.render.scene->createShadow(&win);
+    auto shadow = win.ref_win->space.base.render->compositor->scene->createShadow(&win);
     if (!update_shadow(*shadow)) {
         return {};
     }

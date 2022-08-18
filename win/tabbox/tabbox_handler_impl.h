@@ -45,7 +45,7 @@ public:
         if (!output) {
             return 0;
         }
-        return base::get_output_index(kwinApp()->get_base().get_outputs(), *output);
+        return base::get_output_index(m_tabbox->space.base.outputs, *output);
     }
 
     std::weak_ptr<tabbox_client> active_client() const override
@@ -81,7 +81,7 @@ public:
 
     bool is_kwin_compositing() const override
     {
-        return static_cast<bool>(m_tabbox->space.render.scene);
+        return static_cast<bool>(m_tabbox->space.base.render->compositor->scene);
     }
 
     std::weak_ptr<tabbox_client> next_client_focus_chain(tabbox_client* client) const override
@@ -205,7 +205,7 @@ public:
 
     void highlight_windows(tabbox_client* client = nullptr, QWindow* controller = nullptr) override
     {
-        auto& effects = m_tabbox->space.render.effects;
+        auto& effects = m_tabbox->space.base.render->compositor->effects;
         if (!effects) {
             return;
         }

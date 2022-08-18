@@ -10,7 +10,6 @@
 #include "qpainter_output.h"
 #include "wlr_includes.h"
 
-#include "base/backend/wlroots/output.h"
 #include "base/utils.h"
 #include "base/wayland/server.h"
 #include "main.h"
@@ -27,17 +26,21 @@
 namespace KWin::render::backend::wlroots
 {
 
-template<typename Platform>
-class output : public wayland::output
+template<typename Base, typename Platform>
+class output
+    : public wayland::output<typename Base::abstract_type, typename Platform::abstract_type>
 {
 public:
-    using egl_output_t = egl_output<output<Platform>>;
-    using qpainter_output_t = qpainter_output<output<Platform>>;
+    using type = output<Base, Platform>;
+    using abstract_type
+        = wayland::output<typename Base::abstract_type, typename Platform::abstract_type>;
+    using egl_output_t = egl_output<type>;
+    using qpainter_output_t = qpainter_output<type>;
 
     output(base::backend::wlroots::output& base, Platform& platform)
-        : wayland::output(base, platform)
+        : abstract_type(base, platform)
     {
-        swap_pending = base.native->frame_pending;
+        this->swap_pending = base.native->frame_pending;
 
         if (platform.egl) {
             egl = std::make_unique<egl_output_t>(*this, platform.egl->data);
@@ -60,13 +63,13 @@ public:
 
     void reset()
     {
-        platform.compositor->addRepaint(base.geometry());
+        this->platform.compositor->addRepaint(this->base.geometry());
     }
 
     void disable()
     {
-        delay_timer.stop();
-        frame_timer.stop();
+        this->delay_timer.stop();
+        this->frame_timer.stop();
     }
 
     std::unique_ptr<egl_output_t> egl;

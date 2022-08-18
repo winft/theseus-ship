@@ -368,8 +368,8 @@ void GlobalShortcutsTest::testX11ClientShortcut()
     QVERIFY(windowCreatedSpy.wait());
 
     auto client_id = windowCreatedSpy.last().first().value<quint32>();
-    auto client
-        = dynamic_cast<win::x11::window*>(Test::app()->base.space->windows_map.at(client_id));
+    auto client = dynamic_cast<Test::space::x11_window*>(
+        Test::app()->base.space->windows_map.at(client_id));
     QVERIFY(client);
 
     QCOMPARE(Test::app()->base.space->active_client, client);
@@ -400,7 +400,7 @@ void GlobalShortcutsTest::testX11ClientShortcut()
     Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
 
     // destroy window again
-    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::closed);
+    QSignalSpy windowClosedSpy(client->qobject.get(), &win::window_qobject::closed);
     QVERIFY(windowClosedSpy.isValid());
     xcb_unmap_window(c.get(), w);
     xcb_destroy_window(c.get(), w);
@@ -466,7 +466,7 @@ void GlobalShortcutsTest::testSetupWindowShortcut()
     QTRY_COMPARE(shortcutDialogAddedSpy.count(), 1);
 
     auto dialog_signal_id = shortcutDialogAddedSpy.first().first().value<quint32>();
-    auto dialog = dynamic_cast<win::internal_window*>(
+    auto dialog = dynamic_cast<Test::space::internal_window_t*>(
         Test::app()->base.space->windows_map.at(dialog_signal_id));
     QVERIFY(dialog);
     QVERIFY(dialog->isInternal());

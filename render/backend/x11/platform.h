@@ -6,64 +6,299 @@
 */
 #pragma once
 
+#include "deco_renderer.h"
+#include "glx.h"
+#include "non_composited_outline.h"
+
+#if HAVE_EPOXY_GLX
+#include "glx_backend.h"
+#endif
+
+#include "base/x11/xcb/randr.h"
 #include "render/x11/platform.h"
 
-#include "base/x11/platform.h"
-
-#include "kwin_export.h"
-
+#include <KCrash>
 #include <QObject>
+#include <memory>
 
 #include <X11/Xlib-xcb.h>
 #include <fixx11h.h>
-#include <memory>
 
-namespace KWin
+namespace KWin::render::backend::x11
 {
 
-namespace base::x11
-{
-class event_filter;
-}
-
-namespace render::backend::x11
-{
-template<typename Compositor>
-class glx_backend;
-class output;
-
-class KWIN_EXPORT platform : public render::x11::platform
+template<typename Base>
+class platform : public render::x11::platform<Base>
 {
 public:
-    platform(base::x11::platform& base);
-    ~platform() override;
+    using type = platform<Base>;
+    using abstract_type = render::x11::platform<Base>;
+    using scene_t = typename abstract_type::scene_t;
+    using compositor_t = typename abstract_type::compositor_t;
+    using window_t = typename scene_t::window_t;
 
-    void init();
+    platform(Base& base)
+        : render::x11::platform<Base>(base)
+        , m_x11Display(QX11Info::display())
+    {
+    }
 
-    gl::backend* get_opengl_backend(render::compositor& compositor) override;
-    void render_stop(bool on_shutdown) override;
+    ~platform() override
+    {
+        if (m_openGLFreezeProtectionThread) {
+            m_openGLFreezeProtectionThread->quit();
+            m_openGLFreezeProtectionThread->wait();
+            m_openGLFreezeProtectionThread.reset();
+        }
+        XRenderUtils::cleanup();
+    }
 
-    bool compositingPossible() const override;
-    QString compositingNotPossibleReason() const override;
-    void createOpenGLSafePoint(OpenGLSafePoint safePoint) override;
+    void init()
+    {
+        if (!QX11Info::isPlatformX11()) {
+            throw std::exception();
+        }
 
-    outline_visual* create_non_composited_outline(render::outline* outline) override;
-    win::deco::renderer<win::deco::client_impl<Toplevel>>*
-    createDecorationRenderer(win::deco::client_impl<Toplevel>* client) override;
+        XRenderUtils::init(kwinApp()->x11Connection(), kwinApp()->x11RootWindow());
+    }
 
-    void invertScreen() override;
+    gl::backend<gl::scene<abstract_type>, abstract_type>*
+    get_opengl_backend(compositor_t& compositor) override
+    {
+        if (gl_backend) {
+            start_glx_backend(m_x11Display, compositor, *gl_backend);
+            return gl_backend.get();
+        }
 
-    CompositingType selected_compositor() const override;
+        if (kwinApp()->options->qobject->glPlatformInterface() == EglPlatformInterface) {
+            qCWarning(KWIN_CORE) << "Requested EGL on X11 backend, but support has been removed. "
+                                    "Trying GLX instead.";
+        }
 
-    base::x11::platform& base;
+#if HAVE_EPOXY_GLX
+        if (has_glx()) {
+            gl_backend = std::make_unique<glx_backend<type>>(m_x11Display, *this);
+            return gl_backend.get();
+        }
+#endif
+        throw std::runtime_error("GLX backend not available.");
+    }
+
+    void render_stop(bool on_shutdown) override
+    {
+        if (gl_backend) {
+            tear_down_glx_backend(*gl_backend);
+            gl_backend.reset();
+        }
+    }
+
+    bool compositingPossible() const override
+    {
+        // first off, check whether we figured that we'll crash on detection because of a buggy
+        // driver
+        KConfigGroup gl_workaround_group(kwinApp()->config(), "Compositing");
+        const QString unsafeKey = QLatin1String("OpenGLIsUnsafe");
+        if (gl_workaround_group.readEntry("Backend", "OpenGL") == QLatin1String("OpenGL")
+            && gl_workaround_group.readEntry(unsafeKey, false))
+            return false;
+
+        if (!base::x11::xcb::extensions::self()->is_composite_available()) {
+            qCDebug(KWIN_CORE) << "No composite extension available";
+            return false;
+        }
+        if (!base::x11::xcb::extensions::self()->is_damage_available()) {
+            qCDebug(KWIN_CORE) << "No damage extension available";
+            return false;
+        }
+        if (has_glx())
+            return true;
+#ifdef KWIN_HAVE_XRENDER_COMPOSITING
+        if (base::x11::xcb::extensions::self()->is_render_available()
+            && base::x11::xcb::extensions::self()->is_fixes_available()) {
+            return true;
+        }
+#endif
+        if (QOpenGLContext::openGLModuleType() == QOpenGLContext::LibGLES) {
+            return true;
+        } else if (qstrcmp(qgetenv("KWIN_COMPOSE"), "O2ES") == 0) {
+            return true;
+        }
+        qCDebug(KWIN_CORE) << "No OpenGL or XRender/XFixes support";
+        return false;
+    }
+
+    QString compositingNotPossibleReason() const override
+    {
+        // first off, check whether we figured that we'll crash on detection because of a buggy
+        // driver
+        KConfigGroup gl_workaround_group(kwinApp()->config(), "Compositing");
+        const QString unsafeKey = QLatin1String("OpenGLIsUnsafe");
+        if (gl_workaround_group.readEntry("Backend", "OpenGL") == QLatin1String("OpenGL")
+            && gl_workaround_group.readEntry(unsafeKey, false))
+            return i18n(
+                "<b>OpenGL compositing (the default) has crashed KWin in the past.</b><br>"
+                "This was most likely due to a driver bug."
+                "<p>If you think that you have meanwhile upgraded to a stable driver,<br>"
+                "you can reset this protection but <b>be aware that this might result in an "
+                "immediate "
+                "crash!</b></p>"
+                "<p>Alternatively, you might want to use the XRender backend instead.</p>");
+
+        if (!base::x11::xcb::extensions::self()->is_composite_available()
+            || !base::x11::xcb::extensions::self()->is_damage_available()) {
+            return i18n("Required X extensions (XComposite and XDamage) are not available.");
+        }
+#if !defined(KWIN_HAVE_XRENDER_COMPOSITING)
+        if (!has_glx())
+            return i18n("GLX/OpenGL are not available and only OpenGL support is compiled.");
+#else
+        if (!(has_glx()
+              || (base::x11::xcb::extensions::self()->is_render_available()
+                  && base::x11::xcb::extensions::self()->is_fixes_available()))) {
+            return i18n("GLX/OpenGL and XRender/XFixes are not available.");
+        }
+#endif
+        return QString();
+    }
+
+    void createOpenGLSafePoint(OpenGLSafePoint safePoint) override
+    {
+        const QString unsafeKey = QLatin1String("OpenGLIsUnsafe");
+        auto group = KConfigGroup(kwinApp()->config(), "Compositing");
+        switch (safePoint) {
+        case OpenGLSafePoint::PreInit:
+            group.writeEntry(unsafeKey, true);
+            group.sync();
+            // Deliberately continue with PreFrame
+            Q_FALLTHROUGH();
+        case OpenGLSafePoint::PreFrame:
+            if (!m_openGLFreezeProtectionThread) {
+                Q_ASSERT(m_openGLFreezeProtection == nullptr);
+                m_openGLFreezeProtectionThread = std::make_unique<QThread>();
+                m_openGLFreezeProtectionThread->setObjectName("FreezeDetector");
+                m_openGLFreezeProtectionThread->start();
+                m_openGLFreezeProtection = new QTimer;
+                m_openGLFreezeProtection->setInterval(15000);
+                m_openGLFreezeProtection->setSingleShot(true);
+                m_openGLFreezeProtection->start();
+                const QString configName = kwinApp()->config()->name();
+                m_openGLFreezeProtection->moveToThread(m_openGLFreezeProtectionThread.get());
+                QObject::connect(
+                    m_openGLFreezeProtection,
+                    &QTimer::timeout,
+                    m_openGLFreezeProtection,
+                    [configName] {
+                        const QString unsafeKey = QLatin1String("OpenGLIsUnsafe");
+                        auto group
+                            = KConfigGroup(KSharedConfig::openConfig(configName), "Compositing");
+                        group.writeEntry(unsafeKey, true);
+                        group.sync();
+                        KCrash::setDrKonqiEnabled(false);
+                        qFatal("Freeze in OpenGL initialization detected");
+                    },
+                    Qt::DirectConnection);
+            } else {
+                Q_ASSERT(m_openGLFreezeProtection);
+                QMetaObject::invokeMethod(m_openGLFreezeProtection, "start", Qt::QueuedConnection);
+            }
+            break;
+        case OpenGLSafePoint::PostInit:
+            group.writeEntry(unsafeKey, false);
+            group.sync();
+            // Deliberately continue with PostFrame
+            Q_FALLTHROUGH();
+        case OpenGLSafePoint::PostFrame:
+            QMetaObject::invokeMethod(m_openGLFreezeProtection, "stop", Qt::QueuedConnection);
+            break;
+        case OpenGLSafePoint::PostLastGuardedFrame:
+            m_openGLFreezeProtection->deleteLater();
+            m_openGLFreezeProtection = nullptr;
+            m_openGLFreezeProtectionThread->quit();
+            m_openGLFreezeProtectionThread->wait();
+            m_openGLFreezeProtectionThread.reset();
+            break;
+        }
+    }
+
+    outline_visual* create_non_composited_outline(render::outline* outline) override
+    {
+        return new non_composited_outline(outline);
+    }
+
+    win::deco::renderer<win::deco::client_impl<typename window_t::ref_t>>*
+    createDecorationRenderer(win::deco::client_impl<typename window_t::ref_t>* client) override
+    {
+        if (!this->compositor->scene) {
+            // Non-composited fallback
+            return new deco_renderer<win::deco::client_impl<typename window_t::ref_t>>(client);
+        }
+        return this->compositor->scene->createDecorationRenderer(client);
+    }
+
+    void invertScreen() override
+    {
+        // We prefer inversion via effects.
+        if (this->compositor->effects && this->compositor->effects->invert_screen()) {
+            return;
+        }
+
+        if (!base::x11::xcb::extensions::self()->is_randr_available()) {
+            return;
+        }
+
+        base::x11::xcb::randr::screen_resources res(rootWindow());
+        if (res.is_null()) {
+            return;
+        }
+
+        for (int j = 0; j < res->num_crtcs; ++j) {
+            auto crtc = res.crtcs()[j];
+            base::x11::xcb::randr::crtc_gamma gamma(crtc);
+            if (gamma.is_null()) {
+                continue;
+            }
+            if (gamma->size) {
+                qCDebug(KWIN_CORE) << "inverting screen using xcb_randr_set_crtc_gamma";
+                const int half = gamma->size / 2 + 1;
+
+                uint16_t* red = gamma.red();
+                uint16_t* green = gamma.green();
+                uint16_t* blue = gamma.blue();
+                for (int i = 0; i < half; ++i) {
+                    auto invert = [&gamma, i](uint16_t* ramp) {
+                        qSwap(ramp[i], ramp[gamma->size - 1 - i]);
+                    };
+                    invert(red);
+                    invert(green);
+                    invert(blue);
+                }
+                xcb_randr_set_crtc_gamma(connection(), crtc, gamma->size, red, green, blue);
+            }
+        }
+    }
+
+    CompositingType selected_compositor() const override
+    {
+        if (gl_backend) {
+            return OpenGLCompositing;
+        }
+#ifdef KWIN_HAVE_XRENDER_COMPOSITING
+        return XRenderCompositing;
+#endif
+        return NoCompositing;
+    }
 
 private:
+    static bool has_glx()
+    {
+        return base::x11::xcb::extensions::self()->has_glx();
+    }
+
     std::unique_ptr<QThread> m_openGLFreezeProtectionThread;
     QTimer* m_openGLFreezeProtection = nullptr;
     Display* m_x11Display;
 
-    std::unique_ptr<glx_backend<platform>> gl_backend;
+    std::unique_ptr<glx_backend<type>> gl_backend;
 };
 
-}
 }

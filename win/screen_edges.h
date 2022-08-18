@@ -336,8 +336,8 @@ public:
         doGeometryUpdate();
 
         if (isScreenEdge()) {
-            auto const& base = kwinApp()->get_base();
-            auto output = base::get_nearest_output(base.get_outputs(), this->geometry.center());
+            auto output
+                = base::get_nearest_output(edger->space.base.outputs, this->geometry.center());
             assert(output);
             gesture->setStartGeometry(this->geometry);
             gesture->setMinimumDelta(QSizeF(MINIMUM_DELTA, MINIMUM_DELTA) / output->scale());
@@ -396,8 +396,8 @@ public:
         auto window = edger->space.active_client;
         auto const newValue = !edger->remainActiveOnFullscreen() && window
             && window->control->fullscreen && window->frameGeometry().contains(geometry.center())
-            && !(edger->space.render.effects
-                 && edger->space.render.effects->hasActiveFullScreenEffect());
+            && !(edger->space.base.render->compositor->effects
+                 && edger->space.base.render->compositor->effects->hasActiveFullScreenEffect());
 
         if (newValue == is_blocked) {
             return;
@@ -1343,7 +1343,7 @@ public:
     /// Recreates all edges e.g. after the screen size changes.
     void recreateEdges()
     {
-        auto const& outputs = kwinApp()->get_base().get_outputs();
+        auto const& outputs = space.base.outputs;
 
         auto oldEdges = std::move(edges);
         assert(edges.empty());
@@ -1680,7 +1680,7 @@ private:
         int width = 0;
         int height = 0;
 
-        auto const& outputs = kwinApp()->get_base().get_outputs();
+        auto const& outputs = space.base.outputs;
         QRect const geo = window->frameGeometry();
         auto const fullArea = space_window_area(space, FullArea, 0, 1);
 
@@ -1778,9 +1778,9 @@ private:
         return ElectricActionNone;
     }
 
-    static bool isLeftScreen(QRect const& screen, QRect const& fullArea)
+    bool isLeftScreen(QRect const& screen, QRect const& fullArea) const
     {
-        auto const& outputs = kwinApp()->get_base().get_outputs();
+        auto const& outputs = space.base.outputs;
 
         if (outputs.size() == 1) {
             return true;
@@ -1809,9 +1809,9 @@ private:
         return true;
     }
 
-    static bool isRightScreen(QRect const& screen, QRect const& fullArea)
+    bool isRightScreen(QRect const& screen, QRect const& fullArea) const
     {
-        auto const& outputs = kwinApp()->get_base().get_outputs();
+        auto const& outputs = space.base.outputs;
 
         if (outputs.size() == 1) {
             return true;
@@ -1840,9 +1840,9 @@ private:
         return true;
     }
 
-    static bool isTopScreen(QRect const& screen, QRect const& fullArea)
+    bool isTopScreen(QRect const& screen, QRect const& fullArea) const
     {
-        auto const& outputs = kwinApp()->get_base().get_outputs();
+        auto const& outputs = space.base.outputs;
 
         if (outputs.size() == 1) {
             return true;
@@ -1871,9 +1871,9 @@ private:
         return true;
     }
 
-    static bool isBottomScreen(QRect const& screen, QRect const& fullArea)
+    bool isBottomScreen(QRect const& screen, QRect const& fullArea) const
     {
-        auto const& outputs = kwinApp()->get_base().get_outputs();
+        auto const& outputs = space.base.outputs;
 
         if (outputs.size() == 1) {
             return true;

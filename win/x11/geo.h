@@ -78,7 +78,7 @@ void update_shape(Win* win)
         win->addRepaintFull();
 
         // In case shape change removes part of this window
-        win->space.render.addRepaint(visible_rect(win));
+        win->space.base.render->compositor->addRepaint(visible_rect(win));
     }
 
     win->discard_shape();
@@ -672,9 +672,8 @@ void configure_position_size_from_request(Win* win,
     auto const frame_size = size_for_client_size(win, client_size, size_mode::any, false);
     auto const frame_rect = QRect(frame_pos, frame_size);
 
-    if (auto output
-        = base::get_nearest_output(kwinApp()->get_base().get_outputs(), frame_rect.center());
-        output != win->control->rules.checkScreen(output)) {
+    if (auto output = base::get_nearest_output(win->space.base.outputs, frame_rect.center());
+        output != win->control->rules.checkScreen(win->space.base, output)) {
         // not allowed by rule
         return;
     }
@@ -898,7 +897,7 @@ bool update_server_geometry(Win* win, QRect const& frame_geo)
     }
 
     if (win->control->move_resize.enabled) {
-        if (win->space.render.scene) {
+        if (win->space.base.render->compositor->scene) {
             // Defer the X server update until we leave this mode.
             win->move_needs_server_update = true;
         } else {
@@ -936,10 +935,11 @@ void sync_geometry(Win* win, QRect const& frame_geo)
  * Calculates the bounding rectangle defined by the 4 monitor indices indicating the
  * top, bottom, left, and right edges of the window when the fullscreen state is enabled.
  */
-inline QRect fullscreen_monitors_area(NETFullscreenMonitors requestedTopology)
+template<typename Win>
+QRect fullscreen_monitors_area(Win* win, NETFullscreenMonitors requestedTopology)
 {
     QRect top, bottom, left, right, total;
-    auto const& outputs = kwinApp()->get_base().get_outputs();
+    auto const& outputs = win->space.base.outputs;
 
     auto get_rect = [&outputs](auto index) -> QRect {
         auto output = base::get_output(outputs, index);
@@ -958,7 +958,7 @@ inline QRect fullscreen_monitors_area(NETFullscreenMonitors requestedTopology)
 template<typename Win>
 void update_fullscreen_monitors(Win* win, NETFullscreenMonitors topology)
 {
-    auto count = static_cast<int>(kwinApp()->get_base().get_outputs().size());
+    auto count = static_cast<int>(win->space.base.outputs.size());
 
     if (topology.top >= count || topology.bottom >= count || topology.left >= count
         || topology.right >= count) {
@@ -969,7 +969,7 @@ void update_fullscreen_monitors(Win* win, NETFullscreenMonitors topology)
 
     win->info->setFullscreenMonitors(topology);
     if (win->control->fullscreen) {
-        win->setFrameGeometry(fullscreen_monitors_area(topology));
+        win->setFrameGeometry(fullscreen_monitors_area(win, topology));
     }
 }
 
@@ -1135,7 +1135,7 @@ bool has_offscreen_xinerama_strut(Win const* win)
     region += get_strut_rect(win, strut_area::bottom);
     region += get_strut_rect(win, strut_area::left);
 
-    auto const& outputs = kwinApp()->get_base().get_outputs();
+    auto const& outputs = win->space.base.outputs;
 
     // Remove all visible areas so that only the invisible remain
     for (auto output : outputs) {

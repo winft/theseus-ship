@@ -31,15 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class QOpenGLFramebufferObject;
 
-namespace KWin
-{
-
-namespace win
-{
-class internal_window;
-}
-
-namespace QPA
+namespace KWin::QPA
 {
 
 class Window : public QPlatformWindow
@@ -72,7 +64,6 @@ private:
     int m_scale = 1;
 };
 
-}
 }
 
 #endif

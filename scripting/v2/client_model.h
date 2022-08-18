@@ -19,6 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
+#include "kwin_export.h"
+
 #include <QAbstractItemModel>
 #include <QList>
 #include <QSortFilterProxyModel>
@@ -36,7 +38,7 @@ namespace models::v2
 
 class abstract_level;
 
-class client_model : public QAbstractItemModel
+class KWIN_EXPORT client_model : public QAbstractItemModel
 {
     Q_OBJECT
     Q_ENUMS(Exclude)
@@ -229,7 +231,7 @@ private:
  * The Clients in this group are not sorted in any particular way. It's a simple list which only
  * gets added to. If some sorting should be applied, use a QSortFilterProxyModel.
  */
-class client_level : public abstract_level
+class KWIN_EXPORT client_level : public abstract_level
 {
     Q_OBJECT
 public:
@@ -263,7 +265,7 @@ private:
     QMap<quint32, window*> m_clients;
 };
 
-class simple_client_model : public client_model
+class KWIN_EXPORT simple_client_model : public client_model
 {
     Q_OBJECT
 public:
@@ -271,7 +273,7 @@ public:
     ~simple_client_model() override;
 };
 
-class client_model_by_screen : public client_model
+class KWIN_EXPORT client_model_by_screen : public client_model
 {
     Q_OBJECT
 public:
@@ -279,7 +281,7 @@ public:
     ~client_model_by_screen() override;
 };
 
-class client_model_by_screen_and_desktop : public client_model
+class KWIN_EXPORT client_model_by_screen_and_desktop : public client_model
 {
     Q_OBJECT
 public:
@@ -287,7 +289,7 @@ public:
     ~client_model_by_screen_and_desktop() override;
 };
 
-class client_model_by_screen_and_activity : public client_model
+class KWIN_EXPORT client_model_by_screen_and_activity : public client_model
 {
     Q_OBJECT
 public:
@@ -298,7 +300,7 @@ public:
 /**
  * @brief Custom QSortFilterProxyModel to filter on Client caption, role and class.
  */
-class client_filter_model : public QSortFilterProxyModel
+class KWIN_EXPORT client_filter_model : public QSortFilterProxyModel
 {
     Q_OBJECT
     Q_PROPERTY(KWin::scripting::models::v2::client_model* clientModel READ clientModel WRITE

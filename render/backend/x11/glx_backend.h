@@ -30,14 +30,17 @@ namespace KWin::render::backend::x11
 
 /// OpenGL Backend using GLX over an X overlay window.
 template<typename Platform>
-class glx_backend : public gl::backend
+class glx_backend : public gl::backend<gl::scene<typename Platform::abstract_type>,
+                                       typename Platform::abstract_type>
 {
 public:
-    using backend_t = gl::backend;
-    using x11_compositor_t = render::x11::compositor<render::x11::platform>;
+    using type = glx_backend<Platform>;
+    using gl_scene = gl::scene<typename Platform::abstract_type>;
+    using abstract_type = gl::backend<gl_scene, typename Platform::abstract_type>;
+    using x11_compositor_t = typename Platform::compositor_t;
 
     glx_backend(Display* display, Platform& platform)
-        : gl::backend()
+        : abstract_type(platform)
         , platform{platform}
     {
         start_glx_backend(display, static_cast<x11_compositor_t&>(*platform.compositor), *this);
@@ -68,20 +71,21 @@ public:
         m_bufferAge = 0;
     }
 
-    gl::texture_private<gl::backend>*
-    createBackendTexture(gl::texture<gl::backend>* texture) override
+    typename abstract_type::texture_priv_t*
+    createBackendTexture(typename abstract_type::texture_t* texture) override
     {
-        return new GlxTexture<glx_backend>(texture, this);
+        return new GlxTexture<type>(texture, this);
     }
 
     QRegion prepareRenderingFrame() override
     {
         QRegion repaint;
 
-        if (supportsBufferAge())
-            repaint = accumulatedDamageHistory(m_bufferAge);
+        if (this->supportsBufferAge()) {
+            repaint = this->accumulatedDamageHistory(m_bufferAge);
+        }
 
-        startRenderTimer();
+        this->startRenderTimer();
 
         native_fbo = GLRenderTarget(0, QRect({}, platform.base.topology.size));
         GLRenderTarget::pushRenderTarget(&native_fbo);
@@ -94,7 +98,7 @@ public:
         GLRenderTarget::popRenderTarget();
 
         if (damagedRegion.isEmpty()) {
-            setLastDamage(QRegion());
+            this->setLastDamage(QRegion());
 
             // If the damaged region of a window is fully occluded, the only
             // rendering done, if any, will have been to repair a reused back
@@ -110,7 +114,7 @@ public:
             return;
         }
 
-        setLastDamage(renderedRegion);
+        this->setLastDamage(renderedRegion);
         present();
 
         // Show the window only after the first pass, since that pass may take long.
@@ -119,8 +123,8 @@ public:
         }
 
         // Save the damaged region to history
-        if (supportsBufferAge())
-            addToDamageHistory(damagedRegion);
+        if (this->supportsBufferAge())
+            this->addToDamageHistory(damagedRegion);
     }
 
     bool makeCurrent() override
@@ -152,8 +156,8 @@ public:
     glx_data data;
 
     Window window{None};
-    std::unique_ptr<x11_compositor_t::overlay_window_t> overlay_window;
-    std::unique_ptr<swap_event_filter> swap_filter;
+    std::unique_ptr<typename x11_compositor_t::overlay_window_t> overlay_window;
+    std::unique_ptr<swap_event_filter<x11_compositor_t>> swap_filter;
     std::unordered_map<xcb_visualid_t, fb_config_info*> fb_configs;
     std::unordered_map<xcb_visualid_t, int> visual_depth_hash;
 
@@ -162,13 +166,14 @@ public:
 protected:
     void present() override
     {
-        if (lastDamage().isEmpty()) {
+        if (this->lastDamage().isEmpty()) {
             return;
         }
 
         auto const& space_size = platform.base.topology.size;
         QRegion const displayRegion(0, 0, space_size.width(), space_size.height());
-        const bool canSwapBuffers = supportsBufferAge() || (lastDamage() == displayRegion);
+        const bool canSwapBuffers
+            = this->supportsBufferAge() || (this->lastDamage() == displayRegion);
 
         m_needsCompositeTimerStart = true;
 
@@ -180,14 +185,14 @@ protected:
 
             glXSwapBuffers(data.display, data.window);
 
-            if (supportsBufferAge()) {
+            if (this->supportsBufferAge()) {
                 glXQueryDrawable(data.display,
                                  data.window,
                                  GLX_BACK_BUFFER_AGE_EXT,
                                  reinterpret_cast<GLuint*>(&m_bufferAge));
             }
         } else if (data.extensions.mesa_copy_sub_buffer) {
-            for (const QRect& r : lastDamage()) {
+            for (const QRect& r : this->lastDamage()) {
                 // convert to OpenGL coordinates
                 int y = space_size.height() - r.y() - r.height();
                 glXCopySubBufferMESA(data.display, data.window, r.x(), y, r.width(), r.height());
@@ -195,12 +200,12 @@ protected:
         } else {
             // Copy Pixels (horribly slow on Mesa).
             glDrawBuffer(GL_FRONT);
-            copyPixels(lastDamage());
+            this->copyPixels(this->lastDamage());
             glDrawBuffer(GL_BACK);
         }
 
-        setLastDamage(QRegion());
-        if (!supportsBufferAge()) {
+        this->setLastDamage(QRegion());
+        if (!this->supportsBufferAge()) {
             glXWaitGL();
             XFlush(data.display);
         }

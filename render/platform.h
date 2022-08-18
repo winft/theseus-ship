@@ -6,62 +6,28 @@
 */
 #pragma once
 
-#include "compositor.h"
-#include "effects.h"
 #include "gl/egl_data.h"
 #include "post/night_color_manager.h"
 #include "singleton_interface.h"
 
+#include "kwinglobals.h"
+
 #include <memory>
 
-namespace KWin
+namespace KWin::render
 {
 
-namespace base
-{
-class platform;
-}
-
-namespace win::deco
-{
-template<typename Window>
-class client_impl;
-template<typename Client>
-class renderer;
-}
-
-namespace render
-{
-
-namespace gl
-{
-class backend;
-}
-namespace qpainter
-{
-class backend;
-}
-
-class outline;
-class outline_visual;
-class scene;
-
+template<typename Base>
 class platform
 {
 public:
+    using base_t = Base;
+    using platform_t = platform<base_t>;
+    using space_t = typename base_t::space_t;
+
     virtual ~platform()
     {
         singleton_interface::get_egl_data = {};
-    }
-
-    virtual render::gl::backend* get_opengl_backend(render::compositor& /*compositor*/)
-    {
-        return nullptr;
-    }
-
-    virtual render::qpainter::backend* get_qpainter_backend(render::compositor& /*compositor*/)
-    {
-        return nullptr;
     }
 
     // TODO(romangg): Remove the boolean trap.
@@ -73,13 +39,6 @@ public:
     virtual bool openGLCompositingIsBroken() const = 0;
     virtual void createOpenGLSafePoint(OpenGLSafePoint safePoint) = 0;
 
-    virtual render::outline_visual* create_non_composited_outline(render::outline* outline) = 0;
-    virtual win::deco::renderer<win::deco::client_impl<Toplevel>>*
-    createDecorationRenderer(win::deco::client_impl<Toplevel>* client)
-        = 0;
-    virtual std::unique_ptr<effects_handler_impl>
-    createEffectsHandler(render::compositor* compositor, render::scene* scene) = 0;
-
     /**
      * Platform specific way to invert the screen.
      * Default implementation invokes the invert effect
@@ -89,13 +48,12 @@ public:
     virtual CompositingType selected_compositor() const = 0;
 
     std::unique_ptr<render::post::night_color_manager> night_color;
-    std::unique_ptr<render::compositor> compositor;
-    base::platform& base;
+    Base& base;
 
     gl::egl_data* egl_data{nullptr};
 
 protected:
-    platform(base::platform& base)
+    platform(Base& base)
         : night_color{std::make_unique<render::post::night_color_manager>()}
         , base{base}
     {
@@ -103,5 +61,4 @@ protected:
     }
 };
 
-}
 }

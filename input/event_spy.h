@@ -8,9 +8,7 @@
 
 #include "event.h"
 
-#include "main.h"
-#include "platform.h"
-#include "redirect.h"
+#include "utils/algorithm.h"
 
 #include <QSet>
 
@@ -48,17 +46,18 @@ void process_spies(Spies const& spies, UnaryFunction function)
  * Deleting an instance of event_spy automatically uninstalls it from
  * InputRedirection.
  */
+template<typename Redirect>
 class event_spy
 {
 public:
-    event_spy(input::redirect& redirect)
+    event_spy(Redirect& redirect)
         : redirect{redirect}
     {
     }
 
     virtual ~event_spy()
     {
-        redirect.uninstallInputEventSpy(this);
+        remove_all(redirect.m_spies, this);
     }
 
     virtual void button(button_event const& /*event*/)
@@ -141,7 +140,7 @@ public:
     {
     }
 
-    input::redirect& redirect;
+    Redirect& redirect;
 };
 
 }

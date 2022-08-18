@@ -14,7 +14,7 @@
 namespace KWin::debug
 {
 
-class input_device_model : public QAbstractItemModel
+class KWIN_EXPORT input_device_model : public QAbstractItemModel
 {
     Q_OBJECT
 public:

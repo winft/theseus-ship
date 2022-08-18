@@ -6,20 +6,18 @@
 #pragma once
 
 #include "win/types.h"
-#include "win/x11/group.h"
 
 #include <kwineffects/effect_window.h>
-
-#include <QHash>
 
 namespace KWin::render
 {
 
+template<typename Group>
 class effect_window_group_impl : public EffectWindowGroup
 {
 public:
-    explicit effect_window_group_impl(win::x11::group* g)
-        : group(g)
+    explicit effect_window_group_impl(Group* group)
+        : group(group)
     {
     }
 
@@ -36,7 +34,7 @@ public:
     }
 
 private:
-    win::x11::group* group;
+    Group* group;
 };
 
 }

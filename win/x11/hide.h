@@ -7,7 +7,7 @@
 
 #include "client.h"
 #include "input.h"
-#include "window.h"
+#include "types.h"
 
 #include "base/options.h"
 #include "win/activation.h"
@@ -26,7 +26,7 @@ void map(Win* win)
     // XComposite invalidates backing pixmaps on unmap (minimize, different
     // virtual desktop, etc.).  We kept the last known good pixmap around
     // for use in effects, but now we want to have access to the new pixmap
-    if (win->space.render.scene) {
+    if (win->space.base.render->compositor->scene) {
         win->discard_buffer();
     }
 
@@ -137,7 +137,7 @@ void internal_hide(Win* win)
         update_hidden_preview(win);
     }
 
-    win->space.render.addRepaint(visible_rect(win));
+    win->space.base.render->compositor->addRepaint(visible_rect(win));
     process_window_hidden(win->space, win);
     Q_EMIT win->qobject->windowHidden();
 }
@@ -145,7 +145,7 @@ void internal_hide(Win* win)
 template<typename Win>
 void internal_keep(Win* win)
 {
-    assert(win->space.render.scene);
+    assert(win->space.base.render->compositor->scene);
 
     if (win->mapping == mapping_state::kept) {
         return;
@@ -165,7 +165,7 @@ void internal_keep(Win* win)
     }
 
     update_hidden_preview(win);
-    win->space.render.addRepaint(visible_rect(win));
+    win->space.base.render->compositor->addRepaint(visible_rect(win));
     process_window_hidden(win->space, win);
 }
 
@@ -181,7 +181,7 @@ void update_visibility(Win* win)
     if (win->hidden) {
         win->info->setState(NET::Hidden, NET::Hidden);
         win::set_skip_taskbar(win, true);
-        if (win->space.render.scene
+        if (win->space.base.render->compositor->scene
             && kwinApp()->options->qobject->hiddenPreviews() == base::HiddenPreviewsAlways) {
             internal_keep(win);
         } else {
@@ -194,7 +194,7 @@ void update_visibility(Win* win)
 
     if (win->control->minimized) {
         win->info->setState(NET::Hidden, NET::Hidden);
-        if (win->space.render.scene
+        if (win->space.base.render->compositor->scene
             && kwinApp()->options->qobject->hiddenPreviews() == base::HiddenPreviewsAlways) {
             internal_keep(win);
         } else {
@@ -205,7 +205,7 @@ void update_visibility(Win* win)
 
     win->info->setState(NET::States(), NET::Hidden);
     if (!win->isOnCurrentDesktop()) {
-        if (win->space.render.scene
+        if (win->space.base.render->compositor->scene
             && kwinApp()->options->qobject->hiddenPreviews() != base::HiddenPreviewsNever) {
             internal_keep(win);
         } else {

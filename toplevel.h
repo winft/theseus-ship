@@ -1,87 +1,52 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2006 Lubos Lunak <l.lunak@kde.org>
+    SPDX-FileCopyrightText: 2022 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 2006 Lubos Lunak <l.lunak@kde.org>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
-
-#ifndef KWIN_TOPLEVEL_H
-#define KWIN_TOPLEVEL_H
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
+#pragma once
 
 #include "base/output.h"
 #include "base/x11/xcb/window.h"
 #include "input/cursor.h"
+#include "render/window.h"
+#include "win/activation.h"
 #include "win/control.h"
 #include "win/remnant.h"
 #include "win/rules/ruling.h"
+#include "win/rules/update.h"
+#include "win/shortcut_set.h"
 #include "win/virtual_desktops.h"
 #include "win/window_qobject.h"
+#include "win/x11/client_machine.h"
+#include "win/x11/group.h"
 
 #include <NETWM>
-// Qt
 #include <QMatrix4x4>
 #include <QUuid>
-// xcb
-#include <xcb/damage.h>
-#include <xcb/xfixes.h>
-// c++
 #include <functional>
 #include <memory>
 #include <optional>
-
-class QOpenGLFramebufferObject;
-
-namespace Wrapland::Server
-{
-class Surface;
-}
+#include <xcb/damage.h>
+#include <xcb/xfixes.h>
 
 namespace KWin
 {
 
-namespace render
-{
-class effects_window_impl;
-class window;
-}
-
-namespace win
-{
-namespace x11
-{
-class client_machine;
-class group;
-}
-
-class space;
-
-template<typename Window>
-class transient;
-}
-
-class KWIN_EXPORT Toplevel
+template<typename Space>
+class Toplevel
 {
 public:
     constexpr static bool is_toplevel{true};
 
-    using space_t = win::space;
+    using space_t = Space;
+    using type = Toplevel<space_t>;
     using qobject_t = win::window_qobject;
-    std::unique_ptr<win::window_qobject> qobject;
+    using render_t = render::window<type>;
+    using output_t = typename space_t::base_t::output_t;
 
-    std::unique_ptr<render::window> render;
+    std::unique_ptr<qobject_t> qobject;
+    std::unique_ptr<render_t> render;
 
     struct {
         QString normal;
@@ -136,31 +101,108 @@ public:
     /// Area to be opaque. Only provides valuable information if hasAlpha is @c true.
     QRegion opaque_region;
 
-    base::output const* central_output{nullptr};
+    output_t const* central_output{nullptr};
 
     /**
      * Records all outputs that still need to be repainted for the current repaint regions.
      */
-    std::vector<base::output*> repaint_outputs;
-    win::space& space;
+    std::vector<output_t*> repaint_outputs;
+    Space& space;
 
-    virtual ~Toplevel();
+    virtual ~Toplevel()
+    {
+        space.windows_map.erase(signal_id);
+        delete client_machine;
+        delete info;
+    }
 
-    virtual xcb_window_t frameId() const;
+    virtual xcb_window_t frameId() const
+    {
+        if (remnant) {
+            return remnant->data.frame;
+        }
+        return xcb_window;
+    }
 
-    QRegion render_region() const;
-    void discard_shape();
-    void discard_quads();
+    QRegion render_region() const
+    {
+        if (remnant) {
+            return remnant->data.render_region;
+        }
+
+        auto const render_geo = win::render_geometry(this);
+
+        if (is_shape) {
+            if (m_render_shape_valid) {
+                return m_render_shape;
+            }
+            m_render_shape_valid = true;
+            m_render_shape = QRegion();
+
+            auto cookie = xcb_shape_get_rectangles_unchecked(
+                connection(), frameId(), XCB_SHAPE_SK_BOUNDING);
+            unique_cptr<xcb_shape_get_rectangles_reply_t> reply(
+                xcb_shape_get_rectangles_reply(connection(), cookie, nullptr));
+            if (!reply) {
+                return QRegion();
+            }
+
+            auto const rects = xcb_shape_get_rectangles_rectangles(reply.get());
+            auto const rect_count = xcb_shape_get_rectangles_rectangles_length(reply.get());
+            for (int i = 0; i < rect_count; ++i) {
+                m_render_shape += QRegion(rects[i].x, rects[i].y, rects[i].width, rects[i].height);
+            }
+
+            // make sure the shape is sane (X is async, maybe even XShape is broken)
+            m_render_shape &= QRegion(0, 0, render_geo.width(), render_geo.height());
+            return m_render_shape;
+        }
+
+        return QRegion(0, 0, render_geo.width(), render_geo.height());
+    }
+
+    void discard_shape()
+    {
+        m_render_shape_valid = false;
+        discard_quads();
+    }
+
+    void discard_quads()
+    {
+        if (render) {
+            render->invalidateQuadsCache();
+            addRepaintFull();
+        }
+        if (transient()->annexed) {
+            for (auto lead : transient()->leads()) {
+                lead->discard_quads();
+            }
+        }
+    }
 
     /**
      * Returns the geometry of the Toplevel, excluding invisible portions, e.g.
      * server-side and client-side drop shadows, etc.
      */
-    QRect frameGeometry() const;
-    void set_frame_geometry(QRect const& rect);
+    QRect frameGeometry() const
+    {
+        return m_frameGeometry;
+    }
 
-    QSize size() const;
-    QPoint pos() const;
+    void set_frame_geometry(QRect const& rect)
+    {
+        m_frameGeometry = rect;
+    }
+
+    QSize size() const
+    {
+        return m_frameGeometry.size();
+    }
+
+    QPoint pos() const
+    {
+        return m_frameGeometry.topLeft();
+    }
 
     /**
      * Returns the ratio between physical pixels and device-independent pixels for
@@ -168,18 +210,69 @@ public:
      *
      * For X11 clients, this method always returns 1.
      */
-    virtual qreal bufferScale() const;
+    virtual qreal bufferScale() const
+    {
+        return remnant ? remnant->data.buffer_scale : 1.;
+    }
 
-    virtual bool is_wayland_window() const;
-    virtual bool isClient() const;
+    virtual bool is_wayland_window() const
+    {
+        return false;
+    }
+
+    virtual bool isClient() const
+    {
+        return false;
+    }
 
     // prefer isXXX() instead
     // 0 for supported types means default for managed/unmanaged types
-    virtual NET::WindowType windowType(bool direct = false, int supported_types = 0) const;
+    virtual NET::WindowType windowType(bool direct = false, int supported_types = 0) const
+    {
+        if (remnant) {
+            return remnant->data.window_type;
+        }
+        if (supported_types == 0) {
+            supported_types = supported_default_types;
+        }
 
-    virtual bool isLockScreen() const;
-    virtual bool isInputMethod() const;
-    virtual bool isOutline() const;
+        auto wt = info->windowType(NET::WindowTypes(supported_types));
+        if (direct || !control) {
+            return wt;
+        }
+
+        auto wt2 = control->rules.checkType(wt);
+        if (wt != wt2) {
+            wt = wt2;
+            // force hint change
+            info->setWindowType(wt);
+        }
+
+        // hacks here
+        if (wt == NET::Unknown) {
+            // this is more or less suggested in NETWM spec
+            wt = transient()->lead() ? NET::Dialog : NET::Normal;
+        }
+        return wt;
+    }
+
+    virtual bool isLockScreen() const
+    {
+        return false;
+    }
+
+    virtual bool isInputMethod() const
+    {
+        return false;
+    }
+
+    virtual bool isOutline() const
+    {
+        if (remnant) {
+            return remnant->data.was_outline;
+        }
+        return is_outline;
+    }
 
     /**
      * Returns the virtual desktop within the workspace() the client window
@@ -187,48 +280,272 @@ public:
      * or NET::OnAllDesktops. Do not use desktop() directly, use
      * isOnDesktop() instead.
      */
-    virtual int desktop() const;
-    QVector<win::virtual_desktop*> desktops() const;
-    void set_desktops(QVector<win::virtual_desktop*> const& desktops);
+    virtual int desktop() const
+    {
+        // TODO: for remnant special case?
+        return m_desktops.isEmpty() ? static_cast<int>(NET::OnAllDesktops)
+                                    : m_desktops.last()->x11DesktopNumber();
+    }
 
-    bool isOnDesktop(int d) const;
-    bool isOnCurrentDesktop() const;
-    bool isOnAllDesktops() const;
+    QVector<win::virtual_desktop*> desktops() const
+    {
+        return m_desktops;
+    }
 
-    virtual QByteArray windowRole() const;
-    QByteArray wmClientMachine(bool use_localhost) const;
-    virtual bool isLocalhost() const;
-    xcb_window_t wmClientLeader() const;
-    virtual pid_t pid() const;
+    void set_desktops(QVector<win::virtual_desktop*> const& desktops)
+    {
+        m_desktops = desktops;
+    }
 
-    virtual void setOpacity(double opacity);
-    virtual double opacity() const;
-    bool hasAlpha() const;
-    virtual bool setupCompositing();
-    virtual void add_scene_window_addon();
-    virtual void finishCompositing();
+    bool isOnDesktop(int d) const
+    {
+        return win::on_desktop(this, d);
+    }
 
-    Q_INVOKABLE void addRepaint(QRegion const& region);
-    Q_INVOKABLE void addLayerRepaint(QRegion const& r);
+    bool isOnCurrentDesktop() const
+    {
+        return win::on_current_desktop(this);
+    }
 
-    Q_INVOKABLE virtual void addRepaintFull();
+    bool isOnAllDesktops() const
+    {
+        return win::on_all_desktops(this);
+    }
 
-    virtual bool has_pending_repaints() const;
-    QRegion repaints() const;
-    void resetRepaints(base::output* output);
+    virtual QByteArray windowRole() const
+    {
+        if (remnant) {
+            return remnant->data.window_role;
+        }
+        return QByteArray(info->windowRole());
+    }
 
-    void resetDamage();
-    void addDamageFull();
-    virtual void addDamage(const QRegion& damage);
+    QByteArray wmClientMachine(bool use_localhost) const
+    {
+        if (!client_machine) {
+            return QByteArray();
+        }
+        if (use_localhost && client_machine->is_local()) {
+            // special name for the local machine (localhost)
+            return win::x11::client_machine::localhost();
+        }
+        return client_machine->hostname();
+    }
+
+    virtual bool isLocalhost() const
+    {
+        if (!client_machine) {
+            return true;
+        }
+        return client_machine->is_local();
+    }
+
+    xcb_window_t wmClientLeader() const
+    {
+        if (m_wmClientLeader != XCB_WINDOW_NONE) {
+            return m_wmClientLeader;
+        }
+        return xcb_window;
+    }
+
+    virtual pid_t pid() const
+    {
+        return info->pid();
+    }
+
+    virtual double opacity() const
+    {
+        if (remnant) {
+            return remnant->data.opacity;
+        }
+        if (info->opacity() == 0xffffffff)
+            return 1.0;
+        return info->opacity() * 1.0 / 0xffffffff;
+    }
+
+    virtual void setOpacity(double new_opacity)
+    {
+        double old_opacity = opacity();
+        new_opacity = qBound(0.0, new_opacity, 1.0);
+        if (old_opacity == new_opacity)
+            return;
+        info->setOpacity(static_cast<unsigned long>(new_opacity * 0xffffffff));
+        if (space.base.render->compositor->scene) {
+            addRepaintFull();
+            Q_EMIT qobject->opacityChanged(old_opacity);
+        }
+    }
+
+    bool hasAlpha() const
+    {
+        return bit_depth == 32;
+    }
+
+    virtual bool setupCompositing()
+    {
+        // Should never be called, always through the child classes instead.
+        assert(false);
+        return false;
+    }
+
+    virtual void add_scene_window_addon()
+    {
+    }
+
+    virtual void finishCompositing()
+    {
+        assert(!remnant);
+
+        if (render) {
+            discard_buffer();
+            render.reset();
+        }
+
+        damage_region = QRegion();
+        repaints_region = QRegion();
+    }
+
+    void addRepaint(QRegion const& region)
+    {
+        if (!space.base.render->compositor->scene) {
+            return;
+        }
+        repaints_region += region;
+        add_repaint_outputs(region.translated(pos()));
+        Q_EMIT qobject->needsRepaint();
+    }
+
+    void addLayerRepaint(QRegion const& region)
+    {
+        if (!space.base.render->compositor->scene) {
+            return;
+        }
+        layer_repaints_region += region;
+        add_repaint_outputs(region);
+        Q_EMIT qobject->needsRepaint();
+    }
+
+    virtual void addRepaintFull()
+    {
+        auto const region = win::visible_rect(this);
+        repaints_region = region.translated(-pos());
+        for (auto child : transient()->children) {
+            if (child->transient()->annexed) {
+                child->addRepaintFull();
+            }
+        }
+        add_repaint_outputs(region);
+        Q_EMIT qobject->needsRepaint();
+    }
+
+    virtual bool has_pending_repaints() const
+    {
+        return !repaints().isEmpty();
+    }
+
+    QRegion repaints() const
+    {
+        return repaints_region.translated(pos()) | layer_repaints_region;
+    }
+
+    void resetRepaints(output_t* output)
+    {
+        auto reset_all = [this] {
+            repaints_region = QRegion();
+            layer_repaints_region = QRegion();
+        };
+
+        if (!output) {
+            assert(!repaint_outputs.size());
+            reset_all();
+            return;
+        }
+
+        remove_all(repaint_outputs, output);
+
+        if (!repaint_outputs.size()) {
+            reset_all();
+            return;
+        }
+
+        auto reset_region = QRegion(output->geometry());
+
+        for (auto out : repaint_outputs) {
+            reset_region = reset_region.subtracted(out->geometry());
+        }
+
+        repaints_region.translate(pos());
+        repaints_region = repaints_region.subtracted(reset_region);
+        repaints_region.translate(-pos());
+
+        layer_repaints_region = layer_repaints_region.subtracted(reset_region);
+    }
+
+    void resetDamage()
+    {
+        damage_region = QRegion();
+    }
+
+    void addDamageFull()
+    {
+        if (!space.base.render->compositor->scene) {
+            return;
+        }
+
+        auto const render_geo = win::frame_to_render_rect(this, frameGeometry());
+
+        auto const damage = QRect(QPoint(), render_geo.size());
+        damage_region = damage;
+
+        auto repaint = damage;
+        if (has_in_content_deco) {
+            repaint.translate(-QPoint(win::left_border(this), win::top_border(this)));
+        }
+        repaints_region |= repaint;
+        add_repaint_outputs(render_geo);
+
+        Q_EMIT qobject->damaged(damage_region);
+    }
+
+    // TODO(romangg): * This function is only called on Wayland and the damage translation is not
+    //                  the usual way. Unify that.
+    //                * Should we return early on the added damage being empty?
+    virtual void addDamage(const QRegion& damage)
+    {
+        auto const render_region = win::render_geometry(this);
+        repaints_region += damage.translated(render_region.topLeft() - pos());
+        add_repaint_outputs(render_region);
+
+        m_isDamaged = true;
+        damage_region += damage;
+        Q_EMIT qobject->damaged(damage);
+    }
 
     /**
      * Whether the Toplevel currently wants the shadow to be rendered. Default
      * implementation always returns @c true.
      */
-    virtual bool wantsShadowToBeRendered() const;
+    virtual bool wantsShadowToBeRendered() const
+    {
+        return true;
+    }
 
-    win::layer layer() const;
-    void set_layer(win::layer layer);
+    win::layer layer() const
+    {
+        if (transient()->lead() && transient()->annexed) {
+            return transient()->lead()->layer();
+        }
+        if (m_layer == win::layer::unknown) {
+            const_cast<type*>(this)->m_layer = win::belong_to_layer(this);
+        }
+        return m_layer;
+    }
+
+    void set_layer(win::layer layer)
+    {
+        m_layer = layer;
+        ;
+    }
 
     /**
      * Resets the damage state and sends a request for the damage region.
@@ -237,29 +554,137 @@ public:
      *
      * Returns true if the window was damaged, and false otherwise.
      */
-    bool resetAndFetchDamage();
+    bool resetAndFetchDamage()
+    {
+        if (!m_isDamaged)
+            return false;
+
+        if (damage_handle == XCB_NONE) {
+            m_isDamaged = false;
+            return true;
+        }
+
+        xcb_connection_t* conn = connection();
+
+        // Create a new region and copy the damage region to it,
+        // resetting the damaged state.
+        xcb_xfixes_region_t region = xcb_generate_id(conn);
+        xcb_xfixes_create_region(conn, region, 0, nullptr);
+        xcb_damage_subtract(conn, damage_handle, 0, region);
+
+        // Send a fetch-region request and destroy the region
+        m_regionCookie = xcb_xfixes_fetch_region_unchecked(conn, region);
+        xcb_xfixes_destroy_region(conn, region);
+
+        m_isDamaged = false;
+        m_damageReplyPending = true;
+
+        return m_damageReplyPending;
+    }
 
     /**
      * Gets the reply from a previous call to resetAndFetchDamage().
      * Calling this function is a no-op if there is no pending reply.
      * Call damage() to return the fetched region.
      */
-    void getDamageRegionReply();
+    void getDamageRegionReply()
+    {
+        if (!m_damageReplyPending) {
+            return;
+        }
 
-    bool skipsCloseAnimation() const;
-    void setSkipCloseAnimation(bool set);
+        m_damageReplyPending = false;
+
+        // Get the fetch-region reply
+        auto reply = xcb_xfixes_fetch_region_reply(connection(), m_regionCookie, nullptr);
+        if (!reply) {
+            return;
+        }
+
+        // Convert the reply to a QRegion. The region is relative to the content geometry.
+        auto count = xcb_xfixes_fetch_region_rectangles_length(reply);
+        QRegion region;
+
+        if (count > 1 && count < 16) {
+            auto rects = xcb_xfixes_fetch_region_rectangles(reply);
+
+            QVector<QRect> qrects;
+            qrects.reserve(count);
+
+            for (int i = 0; i < count; i++) {
+                qrects << QRect(rects[i].x, rects[i].y, rects[i].width, rects[i].height);
+            }
+            region.setRects(qrects.constData(), count);
+        } else {
+            region += QRect(
+                reply->extents.x, reply->extents.y, reply->extents.width, reply->extents.height);
+        }
+
+        region.translate(-QPoint(client_frame_extents.left(), client_frame_extents.top()));
+        repaints_region |= region;
+
+        if (has_in_content_deco) {
+            region.translate(-QPoint(win::left_border(this), win::top_border(this)));
+        }
+        damage_region |= region;
+
+        free(reply);
+    }
+
+    bool skipsCloseAnimation() const
+    {
+        return m_skipCloseAnimation;
+    }
+
+    void setSkipCloseAnimation(bool set)
+    {
+        if (set == m_skipCloseAnimation) {
+            return;
+        }
+        m_skipCloseAnimation = set;
+        Q_EMIT qobject->skipCloseAnimationChanged();
+    }
 
     /**
      * Maps from global to window coordinates.
      */
-    QMatrix4x4 input_transform() const;
+    QMatrix4x4 input_transform() const
+    {
+        QMatrix4x4 transform;
+
+        auto const render_pos = win::frame_to_render_pos(this, pos());
+        transform.translate(-render_pos.x(), -render_pos.y());
+
+        return transform;
+    }
 
     /**
      * Can be implemented by child classes to add additional checks to the ones in win::is_popup.
      */
-    virtual bool is_popup_end() const;
+    virtual bool is_popup_end() const
+    {
+        if (remnant) {
+            return remnant->data.was_popup_window;
+        }
+        return false;
+    }
 
-    virtual win::layer layer_for_dock() const;
+    virtual win::layer layer_for_dock() const
+    {
+        assert(control);
+
+        // Slight hack for the 'allow window to cover panel' Kicker setting.
+        // Don't move keepbelow docks below normal window, but only to the same
+        // layer, so that both may be raised to cover the other.
+        if (control->keep_below) {
+            return win::layer::normal;
+        }
+        if (control->keep_above) {
+            // slight hack for the autohiding panels
+            return win::layer::above;
+        }
+        return win::layer::dock;
+    }
 
     /**
      * Returns whether this is an internal client.
@@ -269,29 +694,107 @@ public:
      *
      * Default implementation returns @c false.
      */
-    virtual bool isInternal() const;
+    virtual bool isInternal() const
+    {
+        return false;
+    }
+
     virtual bool belongsToDesktop() const = 0;
-    virtual void checkTransient(Toplevel* window) = 0;
+    virtual void checkTransient(type* window) = 0;
 
-    void disownDataPassedToDeleted();
+    // before being deleted, remove references to everything that's now
+    // owner by Deleted
+    void disownDataPassedToDeleted()
+    {
+        client_machine = nullptr;
+        info = nullptr;
+    }
 
-    virtual void damageNotifyEvent();
-    void discard_buffer();
+    virtual void damageNotifyEvent()
+    {
+        m_isDamaged = true;
 
-    void setResourceClass(const QByteArray& name, const QByteArray& className = QByteArray());
+        // Note: The region is supposed to specify the damage extents,
+        //       but we don't know it at this point. No one who connects
+        //       to this signal uses the rect however.
+        Q_EMIT qobject->damaged({});
+    }
+
+    void discard_buffer()
+    {
+        addDamageFull();
+        if (render) {
+            render->discard_buffer();
+        }
+    }
+
+    void setResourceClass(const QByteArray& name, const QByteArray& className = QByteArray())
+    {
+        resource_name = name;
+        resource_class = className;
+        Q_EMIT qobject->windowClassChanged();
+    }
 
     /**
      * Checks whether the screen number for this Toplevel changed and updates if needed.
      * Any method changing the geometry of the Toplevel should call this method.
      */
-    void checkScreen();
-    void setupCheckScreenConnection();
-    void removeCheckScreenConnection();
+    void checkScreen()
+    {
+        auto const& outputs = space.base.outputs;
+        auto output = base::get_nearest_output(outputs, frameGeometry().center());
+        if (central_output != output) {
+            auto old_out = central_output;
+            central_output = output;
+            Q_EMIT qobject->central_output_changed(old_out, output);
+        }
+    }
 
-    void setReadyForPainting();
+    void setupCheckScreenConnection()
+    {
+        notifiers.check_screen = QObject::connect(qobject.get(),
+                                                  &win::window_qobject::frame_geometry_changed,
+                                                  qobject.get(),
+                                                  [this] { checkScreen(); });
+        checkScreen();
+    }
 
-    void handle_output_added(base::output* output);
-    void handle_output_removed(base::output* output);
+    void removeCheckScreenConnection()
+    {
+        QObject::disconnect(notifiers.check_screen);
+    }
+
+    void setReadyForPainting()
+    {
+        if (!ready_for_painting) {
+            ready_for_painting = true;
+            if (space.base.render->compositor->scene) {
+                addRepaintFull();
+                Q_EMIT qobject->windowShown();
+            }
+        }
+    }
+
+    void handle_output_added(output_t* output)
+    {
+        if (!central_output) {
+            central_output = output;
+            Q_EMIT qobject->central_output_changed(nullptr, output);
+            return;
+        }
+
+        checkScreen();
+    }
+
+    void handle_output_removed(output_t* output)
+    {
+        if (central_output != output) {
+            return;
+        }
+        auto const& outputs = space.base.outputs;
+        central_output = base::get_nearest_output(outputs, frameGeometry().center());
+        Q_EMIT qobject->central_output_changed(output, central_output);
+    }
 
     NETWinInfo* info{nullptr};
     Wrapland::Server::Surface* surface{nullptr};
@@ -325,17 +828,65 @@ public:
     /// Being used internally when emitting signals. Access via the space windows_map.
     uint32_t signal_id;
 
-protected:
-    explicit Toplevel(win::space& space);
-    Toplevel(win::remnant remnant, win::space& space);
-    Toplevel(win::transient<Toplevel>* transient, win::space& space);
+    explicit Toplevel(Space& space)
+        : type(new win::transient<type>(this), space)
+    {
+    }
 
-    virtual void debug(QDebug& stream) const;
-    friend QDebug& operator<<(QDebug& stream, const Toplevel*);
-    void setDepth(int depth);
+    Toplevel(win::remnant remnant, Space& space)
+        : type(space)
+    {
+        this->remnant = std::move(remnant);
+    }
+
+    Toplevel(win::transient<type>* transient, Space& space)
+        : space{space}
+        , internal_id{QUuid::createUuid()}
+        , signal_id{++space.window_id}
+        , m_damageReplyPending(false)
+    {
+        space.windows_map.insert({signal_id, this});
+        m_transient.reset(transient);
+    }
+
+    virtual void debug(QDebug& stream) const
+    {
+        if (remnant) {
+            stream << "\'REMNANT:" << reinterpret_cast<void const*>(this) << "\'";
+        } else {
+            stream << "\'ID:" << reinterpret_cast<void const*>(this) << xcb_window << "\'";
+        }
+    }
+
+    void setDepth(int depth)
+    {
+        if (bit_depth == depth) {
+            return;
+        }
+        const bool oldAlpha = hasAlpha();
+        bit_depth = depth;
+        if (oldAlpha != hasAlpha()) {
+            Q_EMIT qobject->hasAlphaChanged();
+        }
+    }
 
 private:
-    void add_repaint_outputs(QRegion const& region);
+    void add_repaint_outputs(QRegion const& region)
+    {
+        if (kwinApp()->operationMode() == Application::OperationModeX11) {
+            // On X11 we do not paint per output.
+            return;
+        }
+        for (auto& out : space.base.outputs) {
+            if (contains(repaint_outputs, out)) {
+                continue;
+            }
+            if (region.intersected(out->geometry()).isEmpty()) {
+                continue;
+            }
+            repaint_outputs.push_back(out);
+        }
+    }
 
     mutable bool m_render_shape_valid{false};
     mutable QRegion m_render_shape;
@@ -343,13 +894,16 @@ private:
     bool m_damageReplyPending;
     xcb_xfixes_fetch_region_cookie_t m_regionCookie;
 
-    std::unique_ptr<win::transient<Toplevel>> m_transient;
+    std::unique_ptr<win::transient<type>> m_transient;
 
 public:
-    std::unique_ptr<win::control<Toplevel>> control;
+    std::unique_ptr<win::control<type>> control;
     std::optional<win::remnant> remnant;
 
-    win::transient<Toplevel>* transient() const;
+    win::transient<type>* transient() const
+    {
+        return m_transient.get();
+    }
 
     /**
      * Below only for clients with control.
@@ -365,7 +919,10 @@ public:
     virtual void setFullScreen(bool set, bool user = true) = 0;
     virtual void handle_update_fullscreen(bool full) = 0;
 
-    virtual win::maximize_mode maximizeMode() const;
+    virtual win::maximize_mode maximizeMode() const
+    {
+        return win::maximize_mode::restore;
+    }
 
     virtual bool noBorder() const = 0;
     virtual void setNoBorder(bool set) = 0;
@@ -384,9 +941,15 @@ public:
      */
     virtual bool isMovableAcrossScreens() const = 0;
 
-    virtual void handle_activated();
+    virtual void handle_activated()
+    {
+    }
+
     virtual void takeFocus() = 0;
-    virtual bool wantsInput() const;
+    virtual bool wantsInput() const
+    {
+        return false;
+    }
 
     /**
      * Whether a dock window wants input.
@@ -399,7 +962,10 @@ public:
      *
      * The default implementation returns @c false.
      */
-    virtual bool dockWantsInput() const;
+    virtual bool dockWantsInput() const
+    {
+        return false;
+    }
 
     /**
      * Returns whether the window is maximizable or not.
@@ -408,13 +974,33 @@ public:
     virtual bool isMinimizable() const = 0;
     virtual bool userCanSetFullScreen() const = 0;
     virtual bool userCanSetNoBorder() const = 0;
-    virtual void checkNoBorder();
+    virtual void checkNoBorder()
+    {
+        setNoBorder(false);
+    }
 
-    virtual xcb_timestamp_t userTime() const;
-    virtual void updateWindowRules(win::rules::type selection);
+    virtual xcb_timestamp_t userTime() const
+    {
+        return XCB_TIME_CURRENT_TIME;
+    }
 
-    virtual QSize minSize() const;
-    virtual QSize maxSize() const;
+    virtual void updateWindowRules(win::rules::type selection)
+    {
+        if (space.rule_book->areUpdatesDisabled()) {
+            return;
+        }
+        win::rules::update_window(control->rules, *this, static_cast<int>(selection));
+    }
+
+    virtual QSize minSize() const
+    {
+        return control->rules.checkMinSize(QSize(0, 0));
+    }
+
+    virtual QSize maxSize() const
+    {
+        return control->rules.checkMaxSize(QSize(INT_MAX, INT_MAX));
+    }
 
     virtual void setFrameGeometry(QRect const& rect) = 0;
     virtual void apply_restore_geometry(QRect const& restore_geo) = 0;
@@ -424,7 +1010,13 @@ public:
 
     // TODO: fix boolean traps
     virtual void updateDecoration(bool check_workspace_pos, bool force = false) = 0;
-    virtual void layoutDecorationRects(QRect& left, QRect& top, QRect& right, QRect& bottom) const;
+    virtual void layoutDecorationRects(QRect& left, QRect& top, QRect& right, QRect& bottom) const
+    {
+        if (remnant) {
+            return remnant->data.layout_decoration_rects(left, top, right, bottom);
+        }
+        win::layout_decoration_rects(this, left, top, right, bottom);
+    }
 
     /**
      * Returns whether the window provides context help or not. If it does,
@@ -434,7 +1026,10 @@ public:
      * Default implementation returns @c false.
      * @see showContextHelp;
      */
-    virtual bool providesContextHelp() const;
+    virtual bool providesContextHelp() const
+    {
+        return false;
+    }
 
     /**
      * Invokes context help on the window. Only works if the window
@@ -444,55 +1039,88 @@ public:
      *
      * @see providesContextHelp()
      */
-    virtual void showContextHelp();
+    virtual void showContextHelp()
+    {
+    }
 
     /**
      * Restores the AbstractClient after it had been hidden due to show on screen edge
-     * functionality. The AbstractClient also gets raised (e.g. Panel mode windows can cover) and
-     * the AbstractClient gets informed in a window specific way that it is shown and raised again.
+     * functionality. The AbstractClient also gets raised (e.g. Panel mode windows can cover)
+     * and the AbstractClient gets informed in a window specific way that it is shown and raised
+     * again.
      */
-    virtual void showOnScreenEdge();
+    virtual void showOnScreenEdge()
+    {
+    }
 
     /**
      * Tries to terminate the process of this AbstractClient.
      *
      * Implementing subclasses can perform a windowing system solution for terminating.
      */
-    virtual void killWindow();
+    virtual void killWindow()
+    {
+    }
 
-    virtual bool isInitialPositionSet() const;
+    virtual bool isInitialPositionSet() const
+    {
+        return false;
+    }
 
     /**
      * Default implementation returns @c null.
      * Mostly intended for X11 clients, from EWMH:
      * @verbatim
      * If the WM_TRANSIENT_FOR property is set to None or Root window, the window should be
-     * treated as a transient for all other windows in the same group. It has been noted that this
-     * is a slight ICCCM violation, but as this behavior is pretty standard for many toolkits and
-     * window managers, and is extremely unlikely to break anything, it seems reasonable to document
-     * it as standard.
+     * treated as a transient for all other windows in the same group. It has been noted that
+     * this is a slight ICCCM violation, but as this behavior is pretty standard for many
+     * toolkits and window managers, and is extremely unlikely to break anything, it seems
+     * reasonable to document it as standard.
      * @endverbatim
      */
-    virtual bool groupTransient() const;
+    virtual bool groupTransient() const
+    {
+        return false;
+    }
+
     /**
      * Default implementation returns @c null.
      *
      * Mostly for X11 clients, holds the client group
      */
-    virtual win::x11::group const* group() const;
+    virtual win::x11::group<space_t> const* group() const
+    {
+        return nullptr;
+    }
+
     /**
      * Default implementation returns @c null.
      *
      * Mostly for X11 clients, holds the client group
      */
-    virtual win::x11::group* group();
+    virtual win::x11::group<space_t>* group()
+    {
+        return nullptr;
+    }
 
-    virtual bool supportsWindowRules() const;
+    virtual bool supportsWindowRules() const
+    {
+        return control != nullptr;
+    }
 
-    virtual QSize basicUnit() const;
+    virtual QSize basicUnit() const
+    {
+        return QSize(1, 1);
+    }
 
-    virtual void setBlockingCompositing(bool block);
-    virtual bool isBlockingCompositing();
+    virtual void setBlockingCompositing(bool /*block*/)
+    {
+    }
+
+    virtual bool isBlockingCompositing()
+    {
+        return false;
+    }
 
     /**
      * Called from win::start_move_resize.
@@ -502,7 +1130,10 @@ public:
      *
      * Base implementation returns @c true.
      */
-    virtual bool doStartMoveResize();
+    virtual bool doStartMoveResize()
+    {
+        return true;
+    }
 
     /**
      * Called from win::perform_move_resize() after actually performing the change of geometry.
@@ -510,7 +1141,9 @@ public:
      *
      * Default implementation does nothing.
      */
-    virtual void doPerformMoveResize();
+    virtual void doPerformMoveResize()
+    {
+    }
 
     /**
      * Leaves the move resize mode.
@@ -518,7 +1151,18 @@ public:
      * Inheriting classes must invoke the base implementation which
      * ensures that the internal mode is properly ended.
      */
-    virtual void leaveMoveResize();
+    virtual void leaveMoveResize()
+    {
+        win::set_move_resize_window(space, nullptr);
+        control->move_resize.enabled = false;
+        if (space.edges->desktop_switching.when_moving_client) {
+            space.edges->reserveDesktopSwitching(false, Qt::Vertical | Qt::Horizontal);
+        }
+        if (control->electric_maximizing) {
+            space.outline->hide();
+            win::elevate(this, false);
+        }
+    }
 
     /**
      * Called during handling a resize. Implementing subclasses can use this
@@ -526,36 +1170,48 @@ public:
      *
      * Default implementation does nothing.
      */
-    virtual void doResizeSync();
+    virtual void doResizeSync()
+    {
+    }
 
     /**
      * Whether a sync request is still pending.
      * Default implementation returns @c false.
      */
-    virtual bool isWaitingForMoveResizeSync() const;
+    virtual bool isWaitingForMoveResizeSync() const
+    {
+        return false;
+    }
 
     /**
-     * Called from win::set_active once the active value got updated, but before the changed signal
-     * is emitted.
+     * Called from win::set_active once the active value got updated, but before the changed
+     * signal is emitted.
      *
      * Default implementation does nothing.
      */
-    virtual void doSetActive();
+    virtual void doSetActive()
+    {
+    }
 
     /**
-     * Called from setKeepAbove once the keepBelow value got updated, but before the changed signal
-     * is emitted.
+     * Called from setKeepAbove once the keepBelow value got updated, but before the changed
+     * signal is emitted.
      *
      * Default implementation does nothing.
      */
-    virtual void doSetKeepAbove();
+    virtual void doSetKeepAbove()
+    {
+    }
+
     /**
-     * Called from setKeepBelow once the keepBelow value got updated, but before the changed signal
-     * is emitted.
+     * Called from setKeepBelow once the keepBelow value got updated, but before the changed
+     * signal is emitted.
      *
      * Default implementation does nothing.
      */
-    virtual void doSetKeepBelow();
+    virtual void doSetKeepBelow()
+    {
+    }
 
     /**
      * Called from @ref minimize and @ref unminimize once the minimized value got updated, but
@@ -563,22 +1219,34 @@ public:
      *
      * Default implementation does nothig.
      */
-    virtual void doMinimize();
+    virtual void doMinimize()
+    {
+    }
 
     /**
-     * Called from set_desktops once the desktop value got updated, but before the changed signal
-     * is emitted.
+     * Called from set_desktops once the desktop value got updated, but before the changed
+     * signal is emitted.
      *
      * Default implementation does nothing.
      * @param desktop The new desktop the Client is on
      * @param was_desk The desktop the Client was on before
      */
-    virtual void doSetDesktop(int desktop, int was_desk);
+    virtual void doSetDesktop(int /*desktop*/, int /*was_desk*/)
+    {
+    }
 
-    virtual QSize resizeIncrements() const;
+    virtual QSize resizeIncrements() const
+    {
+        return QSize(1, 1);
+    }
 
-    virtual void updateColorScheme();
-    virtual void updateCaption();
+    virtual void updateColorScheme()
+    {
+    }
+
+    virtual void updateCaption()
+    {
+    }
 
     /**
      * Whether the window accepts focus.
@@ -587,54 +1255,117 @@ public:
      */
     virtual bool acceptsFocus() const = 0;
 
-    virtual void update_maximized(win::maximize_mode mode);
+    virtual void update_maximized(win::maximize_mode /*mode*/)
+    {
+    }
 
-    Q_INVOKABLE virtual void closeWindow() = 0;
+    virtual void closeWindow() = 0;
 
-    virtual bool performMouseCommand(base::options_qobject::MouseCommand, const QPoint& globalPos);
+    virtual bool performMouseCommand(base::options_qobject::MouseCommand cmd,
+                                     const QPoint& globalPos)
+    {
+        return win::perform_mouse_command(*this, cmd, globalPos);
+    }
 
-    virtual Toplevel* findModal();
+    virtual type* findModal()
+    {
+        return nullptr;
+    }
 
-    virtual bool belongsToSameApplication(Toplevel const* other,
-                                          win::same_client_check checks) const;
+    virtual bool belongsToSameApplication(type const* /*other*/,
+                                          win::same_client_check /*checks*/) const
+    {
+        return false;
+    }
 
-    virtual QRect iconGeometry() const;
-    virtual void setShortcutInternal();
-    virtual void applyWindowRules();
+    virtual QRect iconGeometry() const
+    {
+        return space.get_icon_geometry(this);
+    }
+
+    virtual void setShortcutInternal()
+    {
+        updateCaption();
+        win::window_shortcut_updated(space, this);
+    }
+
+    // Applies Force, ForceTemporarily and ApplyNow rules
+    // Used e.g. after the rules have been modified using the kcm.
+    virtual void applyWindowRules()
+    {
+        // apply force rules
+        // Placement - does need explicit update, just like some others below
+        // Geometry : setGeometry() doesn't check rules
+        auto client_rules = control->rules;
+
+        auto const orig_geom = frameGeometry();
+        auto const geom = client_rules.checkGeometry(orig_geom);
+
+        if (geom != orig_geom) {
+            setFrameGeometry(geom);
+        }
+
+        // MinSize, MaxSize handled by Geometry
+        // IgnoreGeometry
+        win::set_desktop(this, desktop());
+
+        // TODO(romangg): can central_output be null?
+        win::send_to_screen(space, this, *central_output);
+        // Type
+        win::maximize(this, maximizeMode());
+
+        // Minimize : functions don't check
+        win::set_minimized(this, client_rules.checkMinimize(control->minimized));
+
+        win::set_original_skip_taskbar(this, control->skip_taskbar());
+        win::set_skip_pager(this, control->skip_pager());
+        win::set_skip_switcher(this, control->skip_switcher());
+        win::set_keep_above(this, control->keep_above);
+        win::set_keep_below(this, control->keep_below);
+        setFullScreen(control->fullscreen, true);
+        setNoBorder(noBorder());
+        updateColorScheme();
+
+        // FSP
+        // AcceptFocus :
+        if (win::most_recently_activated_window(space) == this
+            && !client_rules.checkAcceptFocus(true)) {
+            win::activate_next_window(space, this);
+        }
+
+        // Closeable
+        if (auto s = size(); s != size() && s.isValid()) {
+            win::constrained_resize(this, s);
+        }
+
+        // Autogrouping : Only checked on window manage
+        // AutogroupInForeground : Only checked on window manage
+        // AutogroupById : Only checked on window manage
+        // StrictGeometry
+        win::set_shortcut(this, control->rules.checkShortcut(control->shortcut.toString()));
+
+        // see also X11Client::setActive()
+        if (control->active) {
+            setOpacity(control->rules.checkOpacityActive(qRound(opacity() * 100.0)) / 100.0);
+            win::set_global_shortcuts_disabled(space,
+                                               control->rules.checkDisableGlobalShortcuts(false));
+        } else {
+            setOpacity(control->rules.checkOpacityInactive(qRound(opacity() * 100.0)) / 100.0);
+        }
+
+        win::set_desktop_file_name(
+            this, control->rules.checkDesktopFile(control->desktop_file_name).toUtf8());
+    }
 };
 
-inline QRect Toplevel::frameGeometry() const
+template<typename Space>
+QDebug& operator<<(QDebug& stream, Toplevel<Space> const* win)
 {
-    return m_frameGeometry;
+    if (!win) {
+        return stream << "\'NULL\'";
+    }
+    win->debug(stream);
+    return stream;
 }
 
-inline QSize Toplevel::size() const
-{
-    return m_frameGeometry.size();
 }
-
-inline QPoint Toplevel::pos() const
-{
-    return m_frameGeometry.topLeft();
-}
-
-inline bool Toplevel::isLockScreen() const
-{
-    return false;
-}
-
-inline bool Toplevel::isInputMethod() const
-{
-    return false;
-}
-
-inline bool Toplevel::hasAlpha() const
-{
-    return bit_depth == 32;
-}
-
-KWIN_EXPORT QDebug& operator<<(QDebug& stream, const Toplevel*);
-
-} // namespace
-
-#endif

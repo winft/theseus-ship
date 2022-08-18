@@ -28,15 +28,14 @@ inline libinput_device* get_libinput_device(Dev dev)
     return nullptr;
 }
 
-class KWIN_EXPORT platform : public input::wayland::platform
+class KWIN_EXPORT platform : public input::wayland::platform<base::wayland::platform>
 {
 public:
-    platform(base::wayland::platform const& base);
+    platform(base::wayland::platform& base);
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
-    ~platform() override = default;
 
-    base::backend::wlroots::platform const& base;
+    base::backend::wlroots::platform& base;
 
 private:
     base::event_receiver<platform> add_device;
