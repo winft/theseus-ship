@@ -34,10 +34,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <xcb/composite.h>
 #include <xcb/shape.h>
 
-#if XCB_COMPOSITE_MAJOR_VERSION > 0 || XCB_COMPOSITE_MINOR_VERSION >= 3
-#define KWIN_HAVE_XCOMPOSITE_OVERLAY
-#endif
-
 namespace KWin::render::x11
 {
 overlay_window::overlay_window(x11::compositor<platform>& compositor)
@@ -65,7 +61,6 @@ bool overlay_window::create()
         return false;
     }
 
-#ifdef KWIN_HAVE_XCOMPOSITE_OVERLAY
     base::x11::xcb::overlay_window overlay(rootWindow());
     if (overlay.is_null()) {
         return false;
@@ -75,9 +70,6 @@ bool overlay_window::create()
         return false;
     resize(kwinApp()->get_base().topology.size);
     return true;
-#else
-    return false;
-#endif
 }
 
 void overlay_window::setup(xcb_window_t window)
@@ -201,9 +193,7 @@ void overlay_window::destroy()
                          0,
                          1,
                          &rec);
-#ifdef KWIN_HAVE_XCOMPOSITE_OVERLAY
     xcb_composite_release_overlay_window(connection(), m_window);
-#endif
     m_window = XCB_WINDOW_NONE;
     m_shown = false;
 }
