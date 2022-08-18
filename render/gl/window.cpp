@@ -44,7 +44,7 @@ gl::texture<gl::backend>* window::bindTexture()
         return nullptr;
     }
     if (buffer->isDiscarded()) {
-        return buffer->texture();
+        return buffer->texture.get();
     }
 
     if (!ref_win->damage_region.isEmpty())
@@ -53,8 +53,7 @@ gl::texture<gl::backend>* window::bindTexture()
     if (!buffer->bind()) {
         return nullptr;
     }
-    return buffer->texture();
-    ;
+    return buffer->texture.get();
 }
 
 QMatrix4x4 window::transformation(paint_type mask, const WindowPaintData& data) const
@@ -253,7 +252,7 @@ void window::setupLeafNodes(std::vector<LeafNode>& nodes,
         node.coordinateType = UnnormalizedCoordinates;
     };
 
-    setup_content(0, this, get_buffer<buffer>()->texture());
+    setup_content(0, this, get_buffer<buffer>()->texture.get());
 
     int contents_count = quads.size() - ContentLeaf;
     if (has_previous_content) {
@@ -276,7 +275,7 @@ void window::setupLeafNodes(std::vector<LeafNode>& nodes,
     if (has_previous_content) {
         auto previous = previous_buffer<buffer>();
         auto const last = quads.size() - 1;
-        nodes[last].texture = previous ? previous->texture() : nullptr;
+        nodes[last].texture = previous ? previous->texture.get() : nullptr;
         nodes[last].hasAlpha = !isOpaque();
         nodes[last].opacity = data.opacity() * (1.0 - data.crossFadeProgress());
         nodes[last].coordinateType = NormalizedCoordinates;

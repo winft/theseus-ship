@@ -9,6 +9,8 @@
 
 #include "render/buffer.h"
 
+#include <memory>
+
 namespace KWin::render::gl
 {
 
@@ -23,12 +25,10 @@ class buffer : public render::buffer
 public:
     buffer(render::window* window, gl::scene& scene);
     ~buffer() override;
-    render::gl::texture<gl::backend>* texture() const;
     bool bind();
     bool isValid() const override;
 
-private:
-    QScopedPointer<render::gl::texture<gl::backend>> m_texture;
+    std::unique_ptr<render::gl::texture<gl::backend>> texture;
 };
 
 }
