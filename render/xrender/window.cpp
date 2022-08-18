@@ -159,11 +159,11 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
 
     if (region.isEmpty())
         return;
-    auto pixmap = get_buffer<buffer>();
+    auto pixmap = get_buffer<buffer<render::window>>();
     if (!pixmap || !pixmap->isValid()) {
         return;
     }
-    xcb_render_picture_t pic = pixmap->picture();
+    xcb_render_picture_t pic = pixmap->picture;
     if (pic == XCB_RENDER_PICTURE_NONE) // The render format can be null for GL and/or Xv visuals
         return;
     ref_win->resetDamage();
@@ -431,7 +431,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
                              dr.width(),
                              dr.height());
         if (data.crossFadeProgress() < 1.0 && data.crossFadeProgress() > 0.0) {
-            auto previous = previous_buffer<buffer>();
+            auto previous = previous_buffer<buffer<render::window>>();
             if (previous && previous != pixmap) {
                 static xcb_render_color_t cFadeColor = {0, 0, 0, 0};
                 cFadeColor.alpha = uint16_t((1.0 - data.crossFadeProgress()) * 0xffff);
@@ -463,12 +463,12 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
                            DOUBLE_TO_FIXED(0),
                            DOUBLE_TO_FIXED(0),
                            DOUBLE_TO_FIXED(1)};
-                    xcb_render_set_picture_transform(connection(), previous->picture(), xform2);
+                    xcb_render_set_picture_transform(connection(), previous->picture, xform2);
                 }
 
                 xcb_render_composite(connection(),
                                      opaque ? XCB_RENDER_PICT_OP_OVER : XCB_RENDER_PICT_OP_ATOP,
-                                     previous->picture(),
+                                     previous->picture,
                                      *s_fadeAlphaPicture,
                                      renderTarget,
                                      cr.x(),
@@ -481,7 +481,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
                                      dr.height());
 
                 if (previous_size != current_size) {
-                    xcb_render_set_picture_transform(connection(), previous->picture(), identity);
+                    xcb_render_set_picture_transform(connection(), previous->picture, identity);
                 }
             }
         }
@@ -592,7 +592,7 @@ void window::setPictureFilter(xcb_render_picture_t pic, image_filter_type filter
 
 render::buffer* window::create_buffer()
 {
-    return new buffer(this, format);
+    return new buffer<render::window>(this, format);
 }
 
 void scene::handle_screen_geometry_change(QSize const& size)

@@ -50,7 +50,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
 
     if (region.isEmpty())
         return;
-    auto buffer = get_buffer<qpainter::buffer>();
+    auto buffer = get_buffer<qpainter::buffer<render::window>>();
     if (!buffer || !buffer->isValid()) {
         return;
     }
@@ -110,11 +110,11 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
             source = QRectF(viewportRectangle.topLeft() * imageScale,
                             viewportRectangle.bottomRight() * imageScale);
         } else {
-            source = buffer->image().rect();
+            source = buffer->image.rect();
         }
         target = win::render_geometry(ref_win).translated(-ref_win->pos());
     }
-    painter->drawImage(target, buffer->image(), source);
+    painter->drawImage(target, buffer->image, source);
 
     if (!opaque) {
         tempPainter.restore();
@@ -194,7 +194,7 @@ void window::renderWindowDecorations(QPainter* painter)
 
 render::buffer* window::create_buffer()
 {
-    return new buffer(this);
+    return new buffer<render::window>(this);
 }
 
 }

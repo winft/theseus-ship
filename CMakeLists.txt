@@ -660,7 +660,6 @@ set(kwin_X11_SRCS
 if (KWIN_HAVE_XRENDER_COMPOSITING)
   set(kwin_X11_SRCS
     ${kwin_X11_SRCS}
-    render/xrender/buffer.cpp
     render/xrender/backend.cpp
     render/xrender/scene.cpp
     render/xrender/shadow.cpp
@@ -786,7 +785,6 @@ set(kwin_WAYLAND_SRCS
    input/xkb/layout_manager.cpp
    input/xkb/layout_policies.cpp
    render/gl/egl_dmabuf.cpp
-   render/qpainter/buffer.cpp
    render/qpainter/scene.cpp
    render/qpainter/shadow.cpp
    render/qpainter/window.cpp
