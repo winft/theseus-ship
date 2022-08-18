@@ -653,7 +653,6 @@ set(kwin_X11_SRCS
    render/backend/x11/platform.cpp
    render/x11/effects.cpp
    render/x11/mouse_intercept_filter.cpp
-   render/x11/overlay_window.cpp
 )
 
 if (KWIN_HAVE_XRENDER_COMPOSITING)

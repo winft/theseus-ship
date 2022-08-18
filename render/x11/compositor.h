@@ -67,6 +67,8 @@ template<typename Platform>
 class compositor : public render::compositor
 {
 public:
+    using overlay_window_t = x11::overlay_window<x11::compositor<x11::platform>>;
+
     compositor(Platform& platform)
         : render::compositor(platform)
         , m_suspended(kwinApp()->options->qobject->isUseCompositing() ? suspend_reason::none
@@ -297,7 +299,7 @@ public:
     /**
      * @brief The overlay window used by the backend, if any.
      */
-    x11::overlay_window* overlay_window{nullptr};
+    overlay_window_t* overlay_window{nullptr};
 
     std::unique_ptr<render::scene> create_scene() override
     {
@@ -389,7 +391,7 @@ private:
     {
         compositeTimer.stop();
 
-        if (overlay_window && !overlay_window->isVisible()) {
+        if (overlay_window && !overlay_window->visible) {
             // Abort since nothing is visible.
             return false;
         }

@@ -15,15 +15,7 @@ namespace base
 class output;
 }
 
-namespace render
-{
-
-namespace x11
-{
-class overlay_window;
-}
-
-namespace qpainter
+namespace render::qpainter
 {
 
 class backend
@@ -39,6 +31,5 @@ public:
     virtual bool needsFullRepaint() const = 0;
 };
 
-}
 }
 }

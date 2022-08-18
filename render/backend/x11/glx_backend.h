@@ -33,13 +33,13 @@ class glx_backend : public gl::backend
 {
 public:
     using backend_t = gl::backend;
+    using x11_compositor_t = render::x11::compositor<render::x11::platform>;
 
     glx_backend(Display* display, Platform& platform)
         : gl::backend()
         , platform{platform}
     {
-        using x11comp_t = render::x11::compositor<render::x11::platform>;
-        start_glx_backend(display, static_cast<x11comp_t&>(*platform.compositor), *this);
+        start_glx_backend(display, static_cast<x11_compositor_t&>(*platform.compositor), *this);
     }
 
     ~glx_backend() override
@@ -151,7 +151,7 @@ public:
     glx_data data;
 
     Window window{None};
-    std::unique_ptr<render::x11::overlay_window> overlay_window;
+    std::unique_ptr<x11_compositor_t::overlay_window_t> overlay_window;
     std::unordered_map<xcb_visualid_t, fb_config_info*> fb_configs;
     std::unordered_map<xcb_visualid_t, int> visual_depth_hash;
 

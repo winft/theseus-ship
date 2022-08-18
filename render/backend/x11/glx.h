@@ -362,7 +362,7 @@ template<typename Compositor, typename Backend>
 void start_glx_backend(Display* display, Compositor& compositor, Backend& backend)
 {
     backend.data.display = display;
-    backend.overlay_window = std::make_unique<render::x11::overlay_window>(compositor);
+    backend.overlay_window = std::make_unique<typename Compositor::overlay_window_t>(compositor);
     compositor.overlay_window = backend.overlay_window.get();
 
     // Force initialization of GLX integration in the Qt's xcb backend
