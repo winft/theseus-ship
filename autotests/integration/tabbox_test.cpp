@@ -85,16 +85,25 @@ void TabBoxTest::testCapsLock()
     // first create three windows
     std::unique_ptr<Surface> surface1(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
+    QVERIFY(surface1);
+    QVERIFY(shellSurface1);
+
     auto c1 = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
     QVERIFY(c1);
     QVERIFY(c1->control->active);
     std::unique_ptr<Surface> surface2(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
+    QVERIFY(surface2);
+    QVERIFY(shellSurface2);
+
     auto c2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::red);
     QVERIFY(c2);
     QVERIFY(c2->control->active);
     std::unique_ptr<Surface> surface3(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3));
+    QVERIFY(surface3);
+    QVERIFY(shellSurface3);
+
     auto c3 = Test::render_and_wait_for_shown(surface3, QSize(100, 50), Qt::red);
     QVERIFY(c3);
     QVERIFY(c3->control->active);
@@ -159,16 +168,25 @@ void TabBoxTest::testMoveForward()
     // first create three windows
     std::unique_ptr<Surface> surface1(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
+    QVERIFY(surface1);
+    QVERIFY(shellSurface1);
+
     auto c1 = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
     QVERIFY(c1);
     QVERIFY(c1->control->active);
     std::unique_ptr<Surface> surface2(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
+    QVERIFY(surface2);
+    QVERIFY(shellSurface2);
+
     auto c2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::red);
     QVERIFY(c2);
     QVERIFY(c2->control->active);
     std::unique_ptr<Surface> surface3(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3));
+    QVERIFY(surface3);
+    QVERIFY(shellSurface3);
+
     auto c3 = Test::render_and_wait_for_shown(surface3, QSize(100, 50), Qt::red);
     QVERIFY(c3);
     QVERIFY(c3->control->active);
@@ -212,16 +230,25 @@ void TabBoxTest::testMoveBackward()
     // first create three windows
     std::unique_ptr<Surface> surface1(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
+    QVERIFY(surface1);
+    QVERIFY(shellSurface1);
+
     auto c1 = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
     QVERIFY(c1);
     QVERIFY(c1->control->active);
     std::unique_ptr<Surface> surface2(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
+    QVERIFY(surface2);
+    QVERIFY(shellSurface2);
+
     auto c2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::red);
     QVERIFY(c2);
     QVERIFY(c2->control->active);
     std::unique_ptr<Surface> surface3(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3));
+    QVERIFY(surface3);
+    QVERIFY(shellSurface3);
+
     auto c3 = Test::render_and_wait_for_shown(surface3, QSize(100, 50), Qt::red);
     QVERIFY(c3);
     QVERIFY(c3->control->active);

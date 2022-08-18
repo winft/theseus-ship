@@ -214,6 +214,9 @@ void TestPlacement::testPlaceMaximized()
     // add a top panel
     std::unique_ptr<Surface> panelSurface(Test::create_surface());
     std::unique_ptr<QObject> panelShellSurface(Test::create_xdg_shell_toplevel(panelSurface));
+    QVERIFY(panelSurface);
+    QVERIFY(panelShellSurface);
+
     std::unique_ptr<PlasmaShellSurface> plasmaSurface(
         Test::get_client().interfaces.plasma_shell->createSurface(panelSurface.get()));
     plasmaSurface->setRole(PlasmaShellSurface::Role::Panel);
@@ -238,6 +241,8 @@ void TestPlacement::testPlaceMaximizedLeavesFullscreen()
     // add a top panel
     std::unique_ptr<Surface> panelSurface(Test::create_surface());
     std::unique_ptr<QObject> panelShellSurface(Test::create_xdg_shell_toplevel(panelSurface));
+    QVERIFY(panelSurface);
+    QVERIFY(panelShellSurface);
     std::unique_ptr<PlasmaShellSurface> plasmaSurface(
         Test::get_client().interfaces.plasma_shell->createSurface(panelSurface.get()));
     plasmaSurface->setRole(PlasmaShellSurface::Role::Panel);

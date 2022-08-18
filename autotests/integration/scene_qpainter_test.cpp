@@ -187,6 +187,9 @@ void SceneQPainterTest::testWindow()
     QVERIFY(Test::wait_for_wayland_pointer());
     std::unique_ptr<Surface> s(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> ss(Test::create_xdg_shell_toplevel(s));
+    QVERIFY(s);
+    QVERIFY(ss);
+
     std::unique_ptr<Pointer> p(Test::get_client().interfaces.seat->createPointer());
 
     QSignalSpy frameRenderedSpy(s.get(), &Wrapland::Client::Surface::frameRendered);
@@ -242,6 +245,9 @@ void SceneQPainterTest::testWindowScaled()
 
     std::unique_ptr<Surface> s(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> ss(Test::create_xdg_shell_toplevel(s));
+    QVERIFY(s);
+    QVERIFY(ss);
+
     std::unique_ptr<Pointer> p(Test::get_client().interfaces.seat->createPointer());
 
     QSignalSpy frameRenderedSpy(s.get(), &Wrapland::Client::Surface::frameRendered);
@@ -295,6 +301,8 @@ void SceneQPainterTest::testCompositorRestart()
     using namespace Wrapland::Client;
     std::unique_ptr<Surface> s(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> ss(Test::create_xdg_shell_toplevel(s));
+    QVERIFY(s);
+    QVERIFY(ss);
     QVERIFY(Test::render_and_wait_for_shown(s, QSize(200, 300), Qt::blue));
     s->commit();
 

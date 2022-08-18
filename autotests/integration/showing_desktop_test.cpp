@@ -68,9 +68,15 @@ void ShowingDesktopTest::testRestoreFocus()
 {
     std::unique_ptr<Surface> surface1(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
+    QVERIFY(surface1);
+    QVERIFY(shellSurface1);
+
     auto client1 = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
     std::unique_ptr<Surface> surface2(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
+    QVERIFY(surface2);
+    QVERIFY(shellSurface2);
+
     auto client2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::blue);
     QVERIFY(client1 != client2);
 
@@ -92,7 +98,7 @@ void ShowingDesktopTest::testRestoreFocusWithDesktopWindow()
     QVERIFY(desktopSurface);
     std::unique_ptr<XdgShellToplevel> desktopShellSurface(
         Test::create_xdg_shell_toplevel(desktopSurface));
-    QVERIFY(desktopSurface);
+    QVERIFY(desktopShellSurface);
     std::unique_ptr<PlasmaShellSurface> plasmaSurface(
         Test::get_client().interfaces.plasma_shell->createSurface(desktopSurface.get()));
     QVERIFY(plasmaSurface);
@@ -105,9 +111,15 @@ void ShowingDesktopTest::testRestoreFocusWithDesktopWindow()
     // now create some windows
     std::unique_ptr<Surface> surface1(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
+    QVERIFY(surface1);
+    QVERIFY(shellSurface1);
+
     auto client1 = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
     std::unique_ptr<Surface> surface2(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
+    QVERIFY(surface2);
+    QVERIFY(shellSurface2);
+
     auto client2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::blue);
     QVERIFY(client1 != client2);
 

@@ -733,6 +733,9 @@ void keyboard_layout_test::test_window_policy()
     std::unique_ptr<Wrapland::Client::Surface> surface(Test::create_surface());
     std::unique_ptr<Wrapland::Client::XdgShellToplevel> shellSurface(
         Test::create_xdg_shell_toplevel(surface));
+    QVERIFY(surface);
+    QVERIFY(shellSurface);
+
     auto c1 = Test::render_and_wait_for_shown(surface, QSize(100, 100), Qt::blue);
     QVERIFY(c1);
 
@@ -745,6 +748,9 @@ void keyboard_layout_test::test_window_policy()
     std::unique_ptr<Wrapland::Client::Surface> surface2(Test::create_surface());
     std::unique_ptr<Wrapland::Client::XdgShellToplevel> shellSurface2(
         Test::create_xdg_shell_toplevel(surface2));
+    QVERIFY(surface2);
+    QVERIFY(shellSurface2);
+
     auto c2 = Test::render_and_wait_for_shown(surface2, QSize(100, 100), Qt::red);
     QVERIFY(c2);
 

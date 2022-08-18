@@ -648,6 +648,9 @@ void SceneQPainterShadowTest::testShadowTextureReconstruction()
     // Create a surface.
     std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    QVERIFY(surface);
+    QVERIFY(shellSurface);
+
     auto client = Test::render_and_wait_for_shown(surface, QSize(512, 512), Qt::blue);
     QVERIFY(client);
     QVERIFY(!win::decoration(client));

@@ -410,6 +410,7 @@ void TransientPlacementTest::testXdgPopupWithPanel()
 
     transientShellSurface
         = Test::create_xdg_shell_popup(transientSurface, parentShellSurface, positioner2);
+    QVERIFY(transientShellSurface);
     transient
         = Test::render_and_wait_for_shown(transientSurface, positioner2.initialSize(), Qt::red);
     QVERIFY(transient);
