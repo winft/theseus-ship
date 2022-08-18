@@ -20,14 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "outline.h"
 
-#include "compositor.h"
-#include "platform.h"
-
 #include "base/logging.h"
-#include "base/platform.h"
 #include "main.h"
-#include "scripting/platform.h"
-#include "win/space.h"
 
 #include <KConfigGroup>
 #include <QQmlComponent>
@@ -40,13 +34,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::render
 {
 
-outline::outline(render::compositor& compositor)
-    : compositor{compositor}
+outline::outline(outline_visual_factory visual_factory)
+    : visual_factory{visual_factory}
 {
-    connect(compositor.qobject.get(),
-            &render::compositor_qobject::compositingToggled,
-            this,
-            &outline::compositingChanged);
 }
 
 outline::~outline()
@@ -56,7 +46,7 @@ outline::~outline()
 void outline::show()
 {
     if (!m_visual) {
-        createHelper();
+        m_visual = visual_factory();
     }
     if (!m_visual) {
         // something went wrong
@@ -115,20 +105,6 @@ void outline::setVisualParentGeometry(const QRect& visualParentGeometry)
 QRect outline::unifiedGeometry() const
 {
     return m_outlineGeometry | m_visualParentGeometry;
-}
-
-void outline::createHelper()
-{
-    if (m_visual) {
-        return;
-    }
-
-    if (compositor.isActive()) {
-        m_visual = std::make_unique<composited_outline_visual>(
-            this, *compositor.space->scripting->qml_engine);
-    } else {
-        m_visual.reset(compositor.platform.create_non_composited_outline(this));
-    }
 }
 
 void outline::compositingChanged()

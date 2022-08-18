@@ -33,8 +33,8 @@ class QQmlEngine;
 namespace KWin::render
 {
 
-class compositor;
 class outline_visual;
+using outline_visual_factory = std::function<std::unique_ptr<outline_visual>()>;
 
 /**
  * @short This class is used to show the outline of a given geometry.
@@ -56,7 +56,20 @@ class KWIN_EXPORT outline : public QObject
     Q_PROPERTY(QRect unifiedGeometry READ unifiedGeometry NOTIFY unifiedGeometryChanged)
     Q_PROPERTY(bool active READ isActive NOTIFY activeChanged)
 public:
-    outline(render::compositor& compositor);
+    template<typename Compositor>
+    static std::unique_ptr<outline> create(Compositor& compositor,
+                                           outline_visual_factory visual_factory)
+
+    {
+        auto outline = std::make_unique<render::outline>(visual_factory);
+        connect(compositor.qobject.get(),
+                &decltype(compositor.qobject)::element_type::compositingToggled,
+                outline.get(),
+                &outline::compositingChanged);
+        return outline;
+    }
+
+    outline(outline_visual_factory visual_factory);
     ~outline() override;
 
     /**
@@ -125,13 +138,11 @@ Q_SIGNALS:
     void visualParentGeometryChanged();
 
 private:
-    void createHelper();
-
     std::unique_ptr<outline_visual> m_visual;
     QRect m_outlineGeometry;
     QRect m_visualParentGeometry;
     bool m_active{false};
-    render::compositor& compositor;
+    outline_visual_factory visual_factory;
 };
 
 class KWIN_EXPORT outline_visual
@@ -150,7 +161,7 @@ private:
     render::outline* m_outline;
 };
 
-class composited_outline_visual : public outline_visual
+class KWIN_EXPORT composited_outline_visual : public outline_visual
 {
 public:
     composited_outline_visual(render::outline* outline, QQmlEngine& engine);
@@ -188,6 +199,18 @@ inline outline* outline_visual::get_outline()
 inline const outline* outline_visual::get_outline() const
 {
     return m_outline;
+}
+
+template<typename Compositor, typename Outline>
+std::unique_ptr<outline_visual> create_outline_visual(Compositor& compositor, Outline& outline)
+{
+    if (compositor.isActive()) {
+        return std::make_unique<composited_outline_visual>(
+            &outline, *compositor.space->scripting->qml_engine);
+    } else {
+        return std::unique_ptr<outline_visual>(
+            compositor.platform.create_non_composited_outline(&outline));
+    }
 }
 
 }
