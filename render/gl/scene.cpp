@@ -943,7 +943,7 @@ void scene::performPaintWindow(effects_window_impl* w,
 {
     if (flags(mask & paint_type::window_lanczos)) {
         if (!lanczos) {
-            lanczos = new lanczos_filter(this);
+            lanczos = new lanczos_filter<scene>(this);
         }
         lanczos->performPaint(w, mask, region, data);
     } else

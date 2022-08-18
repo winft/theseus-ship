@@ -38,6 +38,7 @@ class compositor;
 namespace gl
 {
 class backend;
+template<typename Scene>
 class lanczos_filter;
 class SyncManager;
 class SyncObject;
@@ -132,7 +133,7 @@ private:
     SyncManager* m_syncManager{nullptr};
     SyncObject* m_currentFence{nullptr};
 
-    lanczos_filter* lanczos{nullptr};
+    lanczos_filter<gl::scene>* lanczos{nullptr};
 
     struct {
         std::unique_ptr<GLTexture> texture;

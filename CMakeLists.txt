@@ -429,7 +429,6 @@ set(kwin_SRCS
     render/gl/backend.cpp
     render/gl/context_attribute_builder.cpp
     render/gl/egl_context_attribute_builder.cpp
-    render/gl/lanczos_filter.cpp
     render/gl/scene.cpp
     render/gl/shadow.cpp
     render/gl/window.cpp
