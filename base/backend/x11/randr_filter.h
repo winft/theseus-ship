@@ -6,6 +6,8 @@
 #pragma once
 
 #include "base/x11/event_filter.h"
+#include <QTimer>
+#include <memory>
 
 class QTimer;
 
@@ -22,7 +24,7 @@ public:
 
 private:
     x11::platform* platform;
-    QTimer* m_changedTimer;
+    std::unique_ptr<QTimer> changed_timer;
 };
 
 }
