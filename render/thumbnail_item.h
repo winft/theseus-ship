@@ -74,7 +74,7 @@ private Q_SLOTS:
 
 private:
     void findParentEffectWindow();
-    QPointer<render::effects_window_impl> m_parent;
+    render::effects_window_impl* m_parent{nullptr};
     qreal m_brightness;
     qreal m_saturation;
     QPointer<QQuickItem> m_clipToItem;
