@@ -37,7 +37,6 @@ class window_thumbnail_item;
 
 class KWIN_EXPORT effects_window_impl : public EffectWindow
 {
-    Q_OBJECT
 public:
     explicit effects_window_impl(Toplevel* toplevel);
     ~effects_window_impl() override;
@@ -194,13 +193,12 @@ public:
         return m_desktopThumbnails;
     }
 
-private Q_SLOTS:
+private:
     void thumbnailDestroyed(QObject* object);
     void thumbnailTargetChanged();
     void desktopThumbnailDestroyed(QObject* object);
-
-private:
     void insertThumbnail(window_thumbnail_item* item);
+
     Toplevel* toplevel;
     render::window* sw; // This one is used only during paint pass.
     QHash<int, QVariant> dataMap;
