@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include <algorithm>
 #include <string>
 
 namespace KWin::win
@@ -12,7 +13,7 @@ namespace KWin::win
 
 struct appmenu_address {
     appmenu_address() = default;
-    appmenu_address(std::string name, std::string path)
+    appmenu_address(std::string const& name, std::string const& path)
         : name{name}
         , path{path}
     {
@@ -39,11 +40,14 @@ struct appmenu {
 template<typename Win, typename Space>
 Win* find_window_with_appmenu(Space const& space, appmenu_address const& address)
 {
-    for (auto win : space.windows) {
-        if (win->control && win->control->appmenu.address == address) {
-            return win;
-        }
+    auto it = std::find_if(space.windows.begin(), space.windows.end(), [address](auto win) {
+        return win->control && win->control->appmenu.address == address;
+    });
+
+    if (it != space.windows.end()) {
+        return *it;
     }
+
     return nullptr;
 }
 
