@@ -74,9 +74,7 @@ void basic_thumbnail_item::ensure_parent_effect_window()
     }
 
     auto effects = singleton_interface::effects;
-    if (!effects) {
-        return;
-    }
+    assert(effects);
 
     auto qw = window();
     if (!qw) {
