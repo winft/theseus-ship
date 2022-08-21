@@ -109,6 +109,8 @@ platform::platform(win::space& space)
     QMetaObject::invokeMethod(this, "start", Qt::QueuedConnection);
 }
 
+platform::~platform() = default;
+
 platform_wrap::~platform_wrap()
 {
     QDBusConnection::sessionBus().unregisterObject(QStringLiteral("/Scripting"));
@@ -217,11 +219,6 @@ bool platform_wrap::isScriptLoaded(const QString& pluginName) const
     return findScript(pluginName) != nullptr;
 }
 
-qt_script_space* platform_wrap::workspaceWrapper() const
-{
-    return qt_space.get();
-}
-
 abstract_script* platform_wrap::findScript(const QString& pluginName) const
 {
     QMutexLocker locker(m_scriptsLock.data());
@@ -283,6 +280,11 @@ int platform_wrap::loadDeclarativeScript(const QString& filePath, const QString&
     connect(script, &QObject::destroyed, this, &platform_wrap::scriptDestroyed);
     scripts.append(script);
     return id;
+}
+
+qt_script_space* platform::workspaceWrapper() const
+{
+    return qt_space.get();
 }
 
 uint32_t platform::reserve(ElectricBorder border, std::function<bool(ElectricBorder)> callback)

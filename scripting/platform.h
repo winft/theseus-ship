@@ -51,6 +51,7 @@ class KWIN_EXPORT platform_wrap : public QObject
 public:
     platform_wrap();
     ~platform_wrap() override;
+
     Q_SCRIPTABLE Q_INVOKABLE int loadScript(const QString& filePath,
                                             const QString& pluginName = QString());
     Q_SCRIPTABLE Q_INVOKABLE int loadDeclarativeScript(const QString& filePath,
@@ -58,7 +59,7 @@ public:
     Q_SCRIPTABLE Q_INVOKABLE bool isScriptLoaded(const QString& pluginName) const;
     Q_SCRIPTABLE Q_INVOKABLE bool unloadScript(const QString& pluginName);
 
-    qt_script_space* workspaceWrapper() const;
+    virtual qt_script_space* workspaceWrapper() const = 0;
 
     abstract_script* findScript(const QString& pluginName) const;
 
@@ -79,8 +80,6 @@ private Q_SLOTS:
     void slotScriptsQueried();
 
 protected:
-    std::unique_ptr<template_space<qt_script_space, win::space>> qt_space;
-    std::unique_ptr<template_space<declarative_script_space, win::space>> decl_space;
     QList<abstract_script*> scripts;
 
 private:
@@ -100,6 +99,9 @@ class KWIN_EXPORT platform : public platform_wrap
 {
 public:
     platform(win::space& space);
+    ~platform() override;
+
+    qt_script_space* workspaceWrapper() const override;
 
     uint32_t reserve(ElectricBorder border, std::function<bool(ElectricBorder)> callback) override;
     void unreserve(ElectricBorder border, uint32_t id) override;
@@ -116,6 +118,10 @@ public:
     QList<QAction*> actionsForUserActionMenu(Toplevel* window, QMenu* parent);
 
     win::space& space;
+
+private:
+    std::unique_ptr<template_space<qt_script_space, win::space>> qt_space;
+    std::unique_ptr<template_space<declarative_script_space, win::space>> decl_space;
 };
 
 }
