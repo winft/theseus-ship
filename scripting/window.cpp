@@ -570,7 +570,9 @@ window* window_impl::transientFor() const
     if (!parent) {
         return nullptr;
     }
-    return m_workspace->get_window(parent);
+
+    assert(parent->control);
+    return parent->control->scripting.get();
 }
 
 bool window_impl::isModal() const

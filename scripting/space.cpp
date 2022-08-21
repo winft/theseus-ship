@@ -31,40 +31,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::scripting
 {
 
-void space::handle_client_added(Toplevel* client)
-{
-    if (!client->control) {
-        // Only windows with control are made available to the scripting system.
-        return;
-    }
-    client->control->scripting = std::make_unique<window_impl>(client, this);
-    auto scr_win = client->control->scripting.get();
-
-    setupAbstractClientConnections(scr_win);
-    if (client->isClient()) {
-        setupClientConnections(scr_win);
-    }
-
-    windows_count++;
-    Q_EMIT clientAdded(scr_win);
-}
-
-void space::handle_client_removed(Toplevel* client)
-{
-    if (client->control) {
-        windows_count--;
-        Q_EMIT clientRemoved(client->control->scripting.get());
-    }
-}
-
-window* space::get_window(Toplevel* client) const
-{
-    if (!client || !client->control) {
-        return nullptr;
-    }
-    return client->control->scripting.get();
-}
-
 QStringList space::activityList() const
 {
     return {};
