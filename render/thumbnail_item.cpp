@@ -48,8 +48,7 @@ basic_thumbnail_item::basic_thumbnail_item(QQuickItem* parent)
             &render::compositor_qobject::compositingToggled,
             this,
             &basic_thumbnail_item::compositingToggled);
-    compositingToggled();
-    QTimer::singleShot(0, this, &basic_thumbnail_item::init);
+    QTimer::singleShot(0, this, &basic_thumbnail_item::compositingToggled);
 }
 
 basic_thumbnail_item::~basic_thumbnail_item()
@@ -65,14 +64,6 @@ void basic_thumbnail_item::compositingToggled()
             effects, &EffectsHandler::windowAdded, this, &basic_thumbnail_item::effectWindowAdded);
         connect(effects, &EffectsHandler::windowDamaged, this, &basic_thumbnail_item::repaint);
         effectWindowAdded();
-    }
-}
-
-void basic_thumbnail_item::init()
-{
-    findParentEffectWindow();
-    if (m_parent) {
-        m_parent->registerThumbnail(this);
     }
 }
 

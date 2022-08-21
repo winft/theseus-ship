@@ -68,7 +68,6 @@ protected Q_SLOTS:
     virtual void repaint(KWin::EffectWindow* w) = 0;
 
 private Q_SLOTS:
-    void init();
     void effectWindowAdded();
     void compositingToggled();
 
