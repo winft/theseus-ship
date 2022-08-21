@@ -59,12 +59,14 @@ void basic_thumbnail_item::compositingToggled()
 {
     m_parent = nullptr;
     auto effects = singleton_interface::effects;
-    if (effects) {
-        connect(
-            effects, &EffectsHandler::windowAdded, this, &basic_thumbnail_item::effectWindowAdded);
-        connect(effects, &EffectsHandler::windowDamaged, this, &basic_thumbnail_item::repaint);
-        effectWindowAdded();
+    if (!effects) {
+        // Nothing more to do.
+        return;
     }
+
+    connect(effects, &EffectsHandler::windowAdded, this, &basic_thumbnail_item::effectWindowAdded);
+    connect(effects, &EffectsHandler::windowDamaged, this, &basic_thumbnail_item::repaint);
+    effectWindowAdded();
 }
 
 void basic_thumbnail_item::ensure_parent_effect_window()
