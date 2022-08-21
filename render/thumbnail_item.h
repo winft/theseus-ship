@@ -72,7 +72,8 @@ private Q_SLOTS:
     void compositingToggled();
 
 private:
-    void findParentEffectWindow();
+    void ensure_parent_effect_window();
+
     render::effects_window_impl* m_parent{nullptr};
     qreal m_brightness;
     qreal m_saturation;
