@@ -99,6 +99,11 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     , m_compositor(compositor)
     , m_scene(scene)
 {
+    singleton_interface::register_thumbnail = [this](auto& eff_win, auto& thumbnail) {
+        auto& impl_win = static_cast<render::effects_window_impl&>(eff_win);
+        impl_win.registerThumbnail(&thumbnail);
+    };
+
     QObject::connect(this, &effects_handler_impl::hasActiveFullScreenEffectChanged, this, [this] {
         Q_EMIT m_compositor->space->edges->qobject->checkBlocking();
     });
@@ -307,7 +312,10 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     }
 }
 
-effects_handler_impl::~effects_handler_impl() = default;
+effects_handler_impl::~effects_handler_impl()
+{
+    singleton_interface::register_thumbnail = {};
+}
 
 effects_handler_wrap::~effects_handler_wrap()
 {

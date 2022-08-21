@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "singleton_interface.h"
 
 #include "base/logging.h"
-#include "effect/window_impl.h"
 #include "scripting/singleton_interface.h"
 #include "scripting/space.h"
 #include "toplevel.h"
@@ -83,8 +82,8 @@ void basic_thumbnail_item::ensure_parent_effect_window()
         qCDebug(KWIN_CORE) << "No QQuickWindow assigned yet";
         return;
     }
-    if (auto w = static_cast<render::effects_window_impl*>(effects->findWindow(qw))) {
-        w->registerThumbnail(this);
+    if (auto w = effects->findWindow(qw)) {
+        singleton_interface::register_thumbnail(*w, *this);
         m_parent = w;
     }
 }
