@@ -139,7 +139,7 @@ bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
     // Move elevated windows to the top of the stacking order
     auto const elevated_windows = platform.compositor->effects->elevatedWindows();
     for (auto effect_window : elevated_windows) {
-        auto window = static_cast<effects_window_impl*>(effect_window)->window();
+        auto window = static_cast<effects_window_impl*>(effect_window)->window.ref_win;
         if (!move_to_back(windows, window)) {
             windows.push_back(window);
         }

@@ -642,11 +642,11 @@ void scene::finalDrawWindow(effects_window_impl* w,
                             QRegion region,
                             WindowPaintData& data)
 {
-    if (kwinApp()->is_screen_locked() && !w->window()->isLockScreen()
-        && !w->window()->isInputMethod()) {
+    if (kwinApp()->is_screen_locked() && !w->window.ref_win->isLockScreen()
+        && !w->window.ref_win->isInputMethod()) {
         return;
     }
-    w->sceneWindow()->performPaint(mask, region, data);
+    w->window.performPaint(mask, region, data);
 }
 
 void scene::extendPaintRegion(QRegion& region, bool opaqueFullscreen)

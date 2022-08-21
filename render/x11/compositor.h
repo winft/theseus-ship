@@ -438,7 +438,7 @@ private:
         auto const elevated_win_list = effects->elevatedWindows();
 
         for (auto c : elevated_win_list) {
-            auto t = static_cast<effects_window_impl*>(c)->window();
+            auto t = static_cast<effects_window_impl*>(c)->window.ref_win;
             if (!move_to_back(windows, t)) {
                 windows.push_back(t);
             }

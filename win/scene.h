@@ -121,7 +121,7 @@ void add_scene_window(Scene& scene, Win& win)
     assert(!win.render);
 
     win.render = scene.createWindow(&win);
-    win.render->effect = std::make_unique<render::effects_window_impl>(&win);
+    win.render->effect = std::make_unique<render::effects_window_impl>(*win.render);
 
     QObject::connect(win.qobject.get(),
                      &window_qobject::central_output_changed,
@@ -137,7 +137,6 @@ void add_scene_window(Scene& scene, Win& win)
                      });
 
     auto scn_win = win.render.get();
-    win.render->effect->setSceneWindow(scn_win);
     win.add_scene_window_addon();
 
     win::update_shadow(&win);

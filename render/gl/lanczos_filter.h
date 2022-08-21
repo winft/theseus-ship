@@ -56,8 +56,10 @@ public:
                 init();
             }
 
-            auto const screenRect = win::space_window_area(
-                *m_scene->compositor.space, ScreenArea, w->window()->central_output, w->desktop());
+            auto const screenRect = win::space_window_area(*m_scene->compositor.space,
+                                                           ScreenArea,
+                                                           w->window.ref_win->central_output,
+                                                           w->desktop());
 
             // window geometry may not be bigger than screen geometry to fit into the FBO
             QRect winGeo(w->expandedGeometry());
@@ -148,7 +150,7 @@ public:
 
                 glClearColor(0.0, 0.0, 0.0, 0.0);
                 glClear(GL_COLOR_BUFFER_BIT);
-                w->sceneWindow()->performPaint(mask, infiniteRegion(), thumbData);
+                w->window.performPaint(mask, infiniteRegion(), thumbData);
 
                 // Create a scratch texture and copy the rendered window into it
                 GLTexture tex(GL_RGBA8, sw, sh);
@@ -278,7 +280,7 @@ public:
                 return;
             }
         } // if ( effects->compositingType() == KWin::OpenGLCompositing )
-        w->sceneWindow()->performPaint(mask, region, data);
+        w->window.performPaint(mask, region, data);
     }
 
 protected:

@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "render/window.h"
 #include "win/types.h"
 
 #include <kwineffects/effect_window.h>
@@ -29,8 +30,6 @@ class Toplevel;
 namespace render
 {
 
-class window;
-
 class basic_thumbnail_item;
 class desktop_thumbnail_item;
 class window_thumbnail_item;
@@ -38,7 +37,7 @@ class window_thumbnail_item;
 class KWIN_EXPORT effects_window_impl : public EffectWindow
 {
 public:
-    explicit effects_window_impl(Toplevel* toplevel);
+    explicit effects_window_impl(render::window& window);
     ~effects_window_impl() override;
 
     void enablePainting(int reason) override;
@@ -155,29 +154,6 @@ public:
 
     QWindow* internalWindow() const override;
 
-    Toplevel const* window() const
-    {
-        return toplevel;
-    }
-
-    Toplevel* window()
-    {
-        return toplevel;
-    }
-
-    void setWindow(Toplevel* w);            // internal
-    void setSceneWindow(render::window* w); // internal
-
-    const render::window* sceneWindow() const
-    {
-        return sw;
-    }
-
-    render::window* sceneWindow()
-    {
-        return sw;
-    }
-
     void elevate(bool elevate);
 
     void setData(int role, const QVariant& data) override;
@@ -193,14 +169,14 @@ public:
         return m_desktopThumbnails;
     }
 
+    render::window& window;
+
 private:
     void thumbnailDestroyed(QObject* object);
     void thumbnailTargetChanged();
     void desktopThumbnailDestroyed(QObject* object);
     void insertThumbnail(window_thumbnail_item* item);
 
-    Toplevel* toplevel;
-    render::window* sw; // This one is used only during paint pass.
     QHash<int, QVariant> dataMap;
     QHash<window_thumbnail_item*, QPointer<effects_window_impl>> m_thumbnails;
     QList<desktop_thumbnail_item*> m_desktopThumbnails;

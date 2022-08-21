@@ -193,7 +193,7 @@ void window_thumbnail_item::paint(QPainter* painter)
 
 void window_thumbnail_item::repaint(KWin::EffectWindow* w)
 {
-    if (static_cast<KWin::render::effects_window_impl*>(w)->window()->internal_id == m_wId) {
+    if (static_cast<KWin::render::effects_window_impl*>(w)->window.ref_win->internal_id == m_wId) {
         update();
     }
 }
