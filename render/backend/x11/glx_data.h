@@ -5,8 +5,6 @@
 */
 #pragma once
 
-#include "swap_event_filter.h"
-
 #include <epoxy/glx.h>
 #include <memory>
 
@@ -18,8 +16,6 @@ struct glx_data {
     GLXWindow window{None};
     GLXContext context{nullptr};
     GLXFBConfig fbconfig{nullptr};
-
-    std::unique_ptr<swap_event_filter> swap_filter;
 
     using swap_interval_mesa_func = int (*)(unsigned int interval);
     swap_interval_mesa_func swap_interval_mesa{nullptr};

@@ -17,6 +17,7 @@
 #include "glx_data.h"
 #include "glx_fb_config.h"
 #include "glx_texture.h"
+#include "swap_event_filter.h"
 
 #include <epoxy/glx.h>
 #include <fixx11h.h>
@@ -152,6 +153,7 @@ public:
 
     Window window{None};
     std::unique_ptr<x11_compositor_t::overlay_window_t> overlay_window;
+    std::unique_ptr<swap_event_filter> swap_filter;
     std::unordered_map<xcb_visualid_t, fb_config_info*> fb_configs;
     std::unordered_map<xcb_visualid_t, int> visual_depth_hash;
 
@@ -207,7 +209,7 @@ protected:
 private:
     bool supportsSwapEvents() const
     {
-        return data.swap_filter != nullptr;
+        return static_cast<bool>(swap_filter);
     }
 
     GLRenderTarget native_fbo;

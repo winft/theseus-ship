@@ -17,6 +17,7 @@
 #include "glx_context_attribute_builder.h"
 #include "glx_data.h"
 #include "glx_fb_config.h"
+#include "swap_event_filter.h"
 
 #include <kwineffects/effect_quick_view.h>
 #include <kwingl/platform.h>
@@ -403,7 +404,7 @@ void start_glx_backend(Display* display, Compositor& compositor, Backend& backen
     // See BUG 342582.
     if (backend.hasExtension(QByteArrayLiteral("GLX_INTEL_swap_event"))
         && qgetenv("KWIN_USE_INTEL_SWAP_EVENT") != QByteArrayLiteral("0")) {
-        backend.data.swap_filter
+        backend.swap_filter
             = std::make_unique<swap_event_filter>(compositor, backend.window, backend.data.window);
         glXSelectEvent(display, backend.data.window, GLX_BUFFER_SWAP_COMPLETE_INTEL_MASK);
     }
