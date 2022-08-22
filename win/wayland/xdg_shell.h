@@ -5,9 +5,9 @@
 */
 #pragma once
 
-#include "control.h"
 #include "popup_placement.h"
 #include "window_release.h"
+#include "xdg_shell_control.h"
 
 #include "base/wayland/server.h"
 #include "render/compositor.h"
@@ -40,28 +40,6 @@
 
 namespace KWin::win::wayland
 {
-
-template<typename Win>
-class xdg_shell_control : public wayland::control<Win>
-{
-public:
-    xdg_shell_control(Win& win)
-        : wayland::control<Win>(win)
-        , m_window{win}
-    {
-    }
-
-    bool can_fullscreen() const override
-    {
-        if (!this->rules.checkFullScreen(true)) {
-            return false;
-        }
-        return !is_special_window(&m_window);
-    }
-
-private:
-    Win& m_window;
-};
 
 template<typename Win, typename Space>
 Win* create_shell_window(Space& space, Wrapland::Server::XdgShellSurface* shell_surface)
