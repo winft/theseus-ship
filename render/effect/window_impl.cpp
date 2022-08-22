@@ -5,6 +5,8 @@
 */
 #include "window_impl.h"
 
+#include "window_group_impl.h"
+
 #include "main.h"
 #include "render/thumbnail_item.h"
 #include "render/x11/effect.h"
@@ -540,27 +542,6 @@ bool effects_window_impl::isWaylandClient() const
 bool effects_window_impl::isX11Client() const
 {
     return x11Client;
-}
-
-//****************************************
-// effect_window_group_impl
-//****************************************
-
-effect_window_group_impl::effect_window_group_impl(win::x11::group* g)
-    : group(g)
-{
-}
-
-EffectWindowList effect_window_group_impl::members() const
-{
-    const auto memberList = group->members;
-    EffectWindowList ret;
-    ret.reserve(memberList.size());
-    std::transform(std::cbegin(memberList),
-                   std::cend(memberList),
-                   std::back_inserter(ret),
-                   [](auto toplevel) { return toplevel->render->effect.get(); });
-    return ret;
 }
 
 }

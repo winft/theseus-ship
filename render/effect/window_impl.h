@@ -15,16 +15,6 @@
 namespace KWin
 {
 
-namespace win
-{
-
-namespace x11
-{
-class group;
-}
-
-}
-
 class Toplevel;
 
 namespace render
@@ -183,16 +173,6 @@ private:
     bool managed = false;
     bool waylandClient;
     bool x11Client;
-};
-
-class effect_window_group_impl : public EffectWindowGroup
-{
-public:
-    explicit effect_window_group_impl(win::x11::group* g);
-    EffectWindowList members() const override;
-
-private:
-    win::x11::group* group;
 };
 
 }
