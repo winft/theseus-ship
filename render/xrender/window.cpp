@@ -25,10 +25,6 @@ namespace KWin::render::xrender
 #define DOUBLE_TO_FIXED(d) ((xcb_render_fixed_t)((d)*65536))
 #define FIXED_TO_DOUBLE(f) ((double)((f) / 65536.0))
 
-XRenderPicture* window::s_tempPicture = nullptr;
-QRect window::temp_visibleRect;
-XRenderPicture* window::s_fadeAlphaPicture = nullptr;
-
 window::window(Toplevel* c, xrender::scene& scene)
     : render::window(c, scene)
     , format(XRenderUtils::findPictFormat(c->xcb_visual))
@@ -37,14 +33,6 @@ window::window(Toplevel* c, xrender::scene& scene)
 
 window::~window()
 {
-}
-
-void window::cleanup()
-{
-    delete s_tempPicture;
-    s_tempPicture = nullptr;
-    delete s_fadeAlphaPicture;
-    s_fadeAlphaPicture = nullptr;
 }
 
 // Maps window coordinates to screen coordinates
@@ -111,6 +99,9 @@ QRegion window::bufferToWindowRegion(const QRegion& region) const
 
 void window::prepareTempPixmap()
 {
+    auto& temp_visibleRect = static_cast<xrender::scene&>(scene).temp_visible_rect;
+    auto& s_tempPicture = static_cast<xrender::scene&>(scene).temp_picture;
+
     const QSize oldSize = temp_visibleRect.size();
     temp_visibleRect = win::visible_rect(ref_win).translated(-ref_win->pos());
     if (s_tempPicture
@@ -142,6 +133,10 @@ void window::prepareTempPixmap()
 // paint the window
 void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
 {
+    auto& temp_visibleRect = static_cast<xrender::scene&>(scene).temp_visible_rect;
+    auto& s_tempPicture = static_cast<xrender::scene&>(scene).temp_picture;
+    auto& s_fadeAlphaPicture = static_cast<xrender::scene&>(scene).fade_alpha_picture;
+
     setTransformedShape(QRegion()); // maybe nothing will be painted
     // check if there is something to paint
     bool opaque = isOpaque() && qFuzzyCompare(data.opacity(), 1.0);

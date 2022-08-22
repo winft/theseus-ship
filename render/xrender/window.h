@@ -30,8 +30,6 @@ public:
     QRegion transformedShape() const;
     void setTransformedShape(QRegion const& shape);
 
-    static void cleanup();
-
 protected:
     render::buffer* create_buffer() override;
 
@@ -47,11 +45,6 @@ private:
 
     xcb_render_pictformat_t format;
     QRegion transformed_shape;
-
-    static QRect temp_visibleRect;
-
-    static XRenderPicture* s_tempPicture;
-    static XRenderPicture* s_fadeAlphaPicture;
 };
 
 }

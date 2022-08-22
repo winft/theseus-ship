@@ -21,6 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "render/scene.h"
 
+#include <kwinxrender/utils.h>
+
 namespace KWin::render
 {
 
@@ -62,6 +64,10 @@ public:
     }
 
     static ScreenPaintData screen_paint;
+
+    QRect temp_visible_rect;
+    XRenderPicture* temp_picture{nullptr};
+    XRenderPicture* fade_alpha_picture{nullptr};
 
 protected:
     std::unique_ptr<render::window> createWindow(Toplevel* toplevel) override;

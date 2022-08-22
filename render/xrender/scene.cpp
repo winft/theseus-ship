@@ -54,7 +54,10 @@ scene::scene(x11::compositor<x11::platform>& compositor)
 
 scene::~scene()
 {
-    window::cleanup();
+    delete temp_picture;
+    temp_picture = nullptr;
+    delete fade_alpha_picture;
+    fade_alpha_picture = nullptr;
 }
 
 // the entry point for painting
