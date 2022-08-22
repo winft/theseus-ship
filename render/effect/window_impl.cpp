@@ -215,6 +215,16 @@ CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, isFullScreen, fullscreen, false)
 
 #undef CLIENT_HELPER_WITH_DELETED_WIN_CTRL
 
+qlonglong effects_window_impl::windowId() const
+{
+    return window.ref_win->xcb_window;
+}
+
+QUuid effects_window_impl::internalId() const
+{
+    return window.ref_win->internal_id;
+}
+
 bool effects_window_impl::isDeleted() const
 {
     return static_cast<bool>(window.ref_win->remnant);
