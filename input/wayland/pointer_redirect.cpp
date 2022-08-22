@@ -124,8 +124,8 @@ void pointer_redirect::init()
     assert(wayland_cursor);
     QObject::connect(qobject.get(),
                      &device_redirect_qobject::decorationChanged,
-                     wayland_cursor->cursor_image.get(),
-                     &wayland::cursor_image::updateDecoration);
+                     wayland_cursor->cursor_image->qobject.get(),
+                     [img = wayland_cursor->cursor_image.get()] { img->updateDecoration(); });
 }
 
 void pointer_redirect::update_on_start_move_resize()
