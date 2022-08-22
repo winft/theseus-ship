@@ -44,8 +44,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::render::xrender
 {
 
-ScreenPaintData scene::screen_paint;
-
 scene::scene(x11::compositor<x11::platform>& compositor)
     : render::scene(compositor)
     , m_backend{std::make_unique<xrender::backend>(compositor)}

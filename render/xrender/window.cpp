@@ -54,10 +54,11 @@ QRect window::mapToScreen(paint_type mask, const WindowPaintData& data, const QR
 
     if (flags(mask & paint_type::screen_transformed)) {
         // Apply the screen transformation
-        r.moveTo(r.x() * scene::screen_paint.xScale() + scene::screen_paint.xTranslation(),
-                 r.y() * scene::screen_paint.yScale() + scene::screen_paint.yTranslation());
-        r.setWidth(r.width() * scene::screen_paint.xScale());
-        r.setHeight(r.height() * scene::screen_paint.yScale());
+        auto& screen_paint = static_cast<xrender::scene&>(scene).screen_paint;
+        r.moveTo(r.x() * screen_paint.xScale() + screen_paint.xTranslation(),
+                 r.y() * screen_paint.yScale() + screen_paint.yTranslation());
+        r.setWidth(r.width() * screen_paint.xScale());
+        r.setHeight(r.height() * screen_paint.yScale());
     }
 
     return r;
@@ -80,8 +81,9 @@ QPoint window::mapToScreen(paint_type mask, const WindowPaintData& data, const Q
 
     if (flags(mask & paint_type::screen_transformed)) {
         // Apply the screen transformation
-        pt.rx() = pt.x() * scene::screen_paint.xScale() + scene::screen_paint.xTranslation();
-        pt.ry() = pt.y() * scene::screen_paint.yScale() + scene::screen_paint.yTranslation();
+        auto& screen_paint = static_cast<xrender::scene&>(scene).screen_paint;
+        pt.rx() = pt.x() * screen_paint.xScale() + screen_paint.xTranslation();
+        pt.ry() = pt.y() * screen_paint.yScale() + screen_paint.yTranslation();
     }
 
     return pt;
@@ -219,8 +221,9 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
         yscale = data.yScale();
     }
     if (flags(mask & paint_type::screen_transformed)) {
-        xscale *= scene::screen_paint.xScale();
-        yscale *= scene::screen_paint.yScale();
+        auto& screen_paint = static_cast<xrender::scene&>(scene).screen_paint;
+        xscale *= screen_paint.xScale();
+        yscale *= screen_paint.yScale();
     }
     if (!qFuzzyCompare(xscale, 1.0) || !qFuzzyCompare(yscale, 1.0)) {
         scaled = true;

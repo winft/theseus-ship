@@ -63,8 +63,7 @@ public:
         return true;
     }
 
-    static ScreenPaintData screen_paint;
-
+    ScreenPaintData screen_paint;
     QRect temp_visible_rect;
     XRenderPicture* temp_picture{nullptr};
     XRenderPicture* fade_alpha_picture{nullptr};
