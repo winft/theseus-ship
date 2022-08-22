@@ -379,6 +379,7 @@ set(kwin_SRCS
     base/os/clock/skew_notifier_engine.cpp
     base/seat/session.cpp
     base/seat/backend/logind/session.cpp
+    base/singleton_interface.cpp
     base/x11/event_filter.cpp
     base/x11/event_filter_container.cpp
     base/x11/event_filter_manager.cpp
