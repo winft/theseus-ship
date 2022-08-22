@@ -90,14 +90,17 @@ void cursor_image::setup_theme()
     // TODO(romangg): can we load the fallback cursor earlier in the ctor already?
     loadThemeCursor(Qt::ArrowCursor, &m_fallbackCursor);
     if (m_cursorTheme) {
-        QObject::connect(m_cursorTheme.get(), &cursor_theme::themeChanged, qobject.get(), [this] {
-            m_cursors.clear();
-            m_cursorsByName.clear();
-            loadThemeCursor(Qt::ArrowCursor, &m_fallbackCursor);
-            updateDecorationCursor();
-            updateMoveResize();
-            // TODO: update effects
-        });
+        QObject::connect(m_cursorTheme->qobject.get(),
+                         &cursor_theme_qobject::themeChanged,
+                         qobject.get(),
+                         [this] {
+                             m_cursors.clear();
+                             m_cursorsByName.clear();
+                             loadThemeCursor(Qt::ArrowCursor, &m_fallbackCursor);
+                             updateDecorationCursor();
+                             updateMoveResize();
+                             // TODO: update effects
+                         });
     }
 
     auto const clients = platform.redirect->space.windows;

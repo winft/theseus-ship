@@ -25,12 +25,13 @@ namespace KWin::input::wayland
 {
 
 cursor_theme::cursor_theme(wayland::cursor& cursor, Wrapland::Client::ShmPool* shm)
-    : cursor{cursor}
+    : qobject{std::make_unique<cursor_theme_qobject>()}
+    , cursor{cursor}
     , m_shm{shm}
 {
     QObject::connect(&kwinApp()->get_base(),
                      &base::platform::topology_changed,
-                     this,
+                     qobject.get(),
                      [this](auto old, auto topo) {
                          if (old.max_scale != topo.max_scale) {
                              loadTheme();
@@ -63,12 +64,12 @@ void cursor_theme::loadTheme()
             // so far the theme had not been created, this means we need to start tracking theme
             // changes
             QObject::connect(
-                &cursor, &input::cursor::theme_changed, this, &cursor_theme::loadTheme);
+                &cursor, &input::cursor::theme_changed, qobject.get(), [this] { loadTheme(); });
         } else {
             destroyTheme();
         }
         m_theme = theme;
-        Q_EMIT themeChanged();
+        Q_EMIT qobject->themeChanged();
     }
 }
 

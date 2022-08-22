@@ -11,6 +11,7 @@
 #include "kwin_export.h"
 
 #include <QObject>
+#include <memory>
 
 struct wl_cursor_image;
 struct wl_cursor_theme;
@@ -25,19 +26,23 @@ namespace KWin::input::wayland
 
 class cursor;
 
-// Exported for integration tests.
-class KWIN_EXPORT cursor_theme : public QObject
+class KWIN_EXPORT cursor_theme_qobject : public QObject
 {
     Q_OBJECT
+Q_SIGNALS:
+    void themeChanged();
+};
+
+class KWIN_EXPORT cursor_theme
+{
 public:
     cursor_theme(wayland::cursor& cursor, Wrapland::Client::ShmPool* shm);
-    ~cursor_theme() override;
+    ~cursor_theme();
 
     wl_cursor_image* get(input::cursor_shape shape);
     wl_cursor_image* get(const QByteArray& name);
 
-Q_SIGNALS:
-    void themeChanged();
+    std::unique_ptr<cursor_theme_qobject> qobject;
 
 private:
     void loadTheme();
