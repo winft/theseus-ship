@@ -156,7 +156,7 @@ private:
     void init_dbus_interface_v2()
     {
         assert(!dbus_interface_v2);
-        dbus_interface_v2 = std::make_unique<dbus::keyboard_layouts_v2>(xkb.platform);
+        dbus_interface_v2 = dbus::keyboard_layouts_v2::create(xkb.platform);
     }
 
     void add_keyboard(input::keyboard* keyboard)
