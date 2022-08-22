@@ -18,6 +18,11 @@ class EffectWindow;
 namespace render
 {
 
+namespace gl
+{
+struct egl_data;
+}
+
 class basic_thumbnail_item;
 class compositor_qobject;
 
@@ -26,6 +31,7 @@ struct KWIN_EXPORT singleton_interface {
     static render::compositor_qobject* compositor;
     static EffectsHandler* effects;
     static std::function<bool()> supports_surfaceless_context;
+    static std::function<gl::egl_data*()> get_egl_data;
     static std::function<void(EffectWindow&, basic_thumbnail_item&)> register_thumbnail;
 };
 

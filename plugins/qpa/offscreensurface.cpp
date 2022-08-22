@@ -19,10 +19,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "offscreensurface.h"
 
-#include "base/platform.h"
 #include "eglhelpers.h"
-#include "main.h"
-#include "render/platform.h"
+
+#include "render/gl/egl_data.h"
+#include "render/singleton_interface.h"
 
 #include <QOffscreenSurface>
 
@@ -33,7 +33,7 @@ namespace QPA
 
 OffscreenSurface::OffscreenSurface(QOffscreenSurface *surface)
     : QPlatformOffscreenSurface(surface)
-    , m_eglDisplay(kwinApp()->get_base().render->egl_data->display)
+    , m_eglDisplay(render::singleton_interface::get_egl_data()->display)
 {
     const QSize size = surface->size();
 

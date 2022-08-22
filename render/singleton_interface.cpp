@@ -11,6 +11,7 @@ namespace KWin::render
 render::compositor_qobject* singleton_interface::compositor{nullptr};
 EffectsHandler* singleton_interface::effects{nullptr};
 std::function<bool()> singleton_interface::supports_surfaceless_context{};
+std::function<gl::egl_data*()> singleton_interface::get_egl_data{};
 std::function<void(EffectWindow&, basic_thumbnail_item&)> singleton_interface::register_thumbnail{};
 
 }

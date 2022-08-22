@@ -10,6 +10,7 @@
 #include "effects.h"
 #include "gl/egl_data.h"
 #include "post/night_color_manager.h"
+#include "singleton_interface.h"
 
 #include <memory>
 
@@ -48,7 +49,10 @@ class scene;
 class platform
 {
 public:
-    virtual ~platform() = default;
+    virtual ~platform()
+    {
+        singleton_interface::get_egl_data = {};
+    }
 
     virtual render::gl::backend* get_opengl_backend(render::compositor& /*compositor*/)
     {
@@ -95,6 +99,7 @@ protected:
         : night_color{std::make_unique<render::post::night_color_manager>()}
         , base{base}
     {
+        singleton_interface::get_egl_data = [this] { return egl_data; };
     }
 };
 
