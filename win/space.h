@@ -139,6 +139,8 @@ public:
         // Can't be pure virtual because the function might be called from the ctor.
     }
 
+    virtual void show_debug_console() = 0;
+
     std::unique_ptr<qobject_t> qobject;
 
     std::vector<window_t*> windows;

@@ -15,6 +15,7 @@
 #include "window.h"
 
 #include "base/x11/xcb/helpers.h"
+#include "debug/console/x11/x11_console.h"
 #include "input/x11/platform.h"
 #include "input/x11/redirect.h"
 #include "utils/blocker.h"
@@ -134,6 +135,12 @@ public:
                 update_space_areas(x11_window, desktop_area, screens_geos, areas);
             }
         }
+    }
+
+    void show_debug_console() override
+    {
+        auto console = new debug::x11_console(*this);
+        console->show();
     }
 
     Base& base;

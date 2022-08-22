@@ -30,7 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/backend/x11/platform.h"
 #include "base/x11/grabs.h"
-#include "debug/console/x11/x11_console.h"
 #include "main.h"
 #include "render/backend/x11/platform.h"
 #include "render/x11/compositor.h"
@@ -47,7 +46,6 @@ public:
     ~X11TestApplication() override;
 
     base::platform& get_base() override;
-    debug::console* create_debug_console() override;
 
     void start();
 
@@ -78,11 +76,6 @@ X11TestApplication::~X11TestApplication()
 base::platform& X11TestApplication::get_base()
 {
     return base;
-}
-
-debug::console* X11TestApplication::create_debug_console()
-{
-    return new debug::x11_console(*workspace);
 }
 
 void X11TestApplication::start()

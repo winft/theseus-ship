@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/backend/wlroots/platform.h"
 #include "base/seat/backend/wlroots/session.h"
 #include "base/wayland/server.h"
-#include "debug/console/wayland/wayland_console.h"
 #include "desktop/screen_locker_watcher.h"
 #include "render/backend/wlroots/platform.h"
 #include "render/effects.h"
@@ -195,11 +194,6 @@ base::platform& ApplicationWayland::get_base()
 base::wayland::server* ApplicationWayland::get_wayland_server()
 {
     return server.get();
-}
-
-debug::console* ApplicationWayland::create_debug_console()
-{
-    return new debug::wayland_console(*base->space);
 }
 
 void ApplicationWayland::start()
