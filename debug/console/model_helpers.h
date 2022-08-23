@@ -63,9 +63,10 @@ int window_property_count(Model const* model,
     return window->metaObject()->propertyCount();
 }
 
-inline console_window* window_for_index(QModelIndex const& index,
-                                        std::vector<std::unique_ptr<console_window>> const& windows,
-                                        int id)
+inline win::property_window*
+window_for_index(QModelIndex const& index,
+                 std::vector<std::unique_ptr<win::property_window>> const& windows,
+                 int id)
 {
     int32_t const row = (index.internalId() & s_clientBitMask) - (s_idDistance * id);
     if (row < 0 || row >= static_cast<int>(windows.size())) {
@@ -76,7 +77,7 @@ inline console_window* window_for_index(QModelIndex const& index,
 
 inline QVariant window_data(QModelIndex const& index,
                             int role,
-                            std::vector<std::unique_ptr<console_window>> const& windows)
+                            std::vector<std::unique_ptr<win::property_window>> const& windows)
 {
     if (index.row() >= static_cast<int>(windows.size())) {
         return QVariant();
@@ -95,7 +96,7 @@ inline QVariant window_data(QModelIndex const& index,
 template<typename Model, typename Window>
 void add_window(Model* model,
                 int parentRow,
-                std::vector<std::unique_ptr<console_window>>& windows,
+                std::vector<std::unique_ptr<win::property_window>>& windows,
                 Window* window)
 {
     model->begin_insert_rows(
@@ -107,11 +108,12 @@ void add_window(Model* model,
 template<typename Model, typename Window>
 void remove_window(Model* model,
                    int parentRow,
-                   std::vector<std::unique_ptr<console_window>>& windows,
+                   std::vector<std::unique_ptr<win::property_window>>& windows,
                    Window* window)
 {
-    auto it = std::find_if(
-        windows.begin(), windows.end(), [window](auto& win) { return win->ref_win == window; });
+    auto it = std::find_if(windows.begin(), windows.end(), [window](auto& win) {
+        return win->internalId() == window->internal_id;
+    });
 
     if (it == windows.end()) {
         return;

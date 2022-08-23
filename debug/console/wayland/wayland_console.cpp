@@ -204,7 +204,7 @@ QVariant wayland_console_model::get_client_data(QModelIndex const& index, int ro
     return console_model::get_client_data(index, role);
 }
 
-console_window* wayland_console_model::shellClient(QModelIndex const& index) const
+win::property_window* wayland_console_model::shellClient(QModelIndex const& index) const
 {
     return window_for_index(index, m_shellClients, s_waylandClientId);
 }

@@ -37,6 +37,7 @@ namespace KWin
 namespace win
 {
 
+class property_window;
 class space;
 
 }
@@ -48,8 +49,6 @@ class scene;
 
 namespace debug
 {
-
-class console_window;
 
 class KWIN_EXPORT console_model : public QAbstractItemModel
 {
@@ -84,9 +83,9 @@ public:
 
     QVariant propertyData(QObject* object, const QModelIndex& index, int role) const;
 
-    console_window* internalClient(QModelIndex const& index) const;
-    console_window* x11Client(QModelIndex const& index) const;
-    console_window* unmanaged(QModelIndex const& index) const;
+    win::property_window* internalClient(QModelIndex const& index) const;
+    win::property_window* x11Client(QModelIndex const& index) const;
+    win::property_window* unmanaged(QModelIndex const& index) const;
     virtual int topLevelRowCount() const;
 
     static constexpr int s_x11ClientId{1};
@@ -94,9 +93,9 @@ public:
     static constexpr int s_waylandClientId{3};
     static constexpr int s_workspaceInternalId{4};
 
-    std::vector<std::unique_ptr<console_window>> m_internalClients;
-    std::vector<std::unique_ptr<console_window>> m_x11Clients;
-    std::vector<std::unique_ptr<console_window>> m_unmanageds;
+    std::vector<std::unique_ptr<win::property_window>> m_internalClients;
+    std::vector<std::unique_ptr<win::property_window>> m_x11Clients;
+    std::vector<std::unique_ptr<win::property_window>> m_unmanageds;
 
 protected:
     explicit console_model(QObject* parent = nullptr);

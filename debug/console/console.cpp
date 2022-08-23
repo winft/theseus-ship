@@ -21,11 +21,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "model_helpers.h"
 #include "ui_debug_console.h"
-#include "window.h"
 
 #include "render/compositor.h"
 #include "render/effects.h"
 #include "render/scene.h"
+#include "win/property_window.h"
 #include "win/space.h"
 
 #include <kwingl/platform.h>
@@ -587,17 +587,17 @@ QVariant console_model::data(const QModelIndex& index, int role) const
     return get_client_data(index, role);
 }
 
-console_window* console_model::internalClient(QModelIndex const& index) const
+win::property_window* console_model::internalClient(QModelIndex const& index) const
 {
     return window_for_index(index, m_internalClients, s_workspaceInternalId);
 }
 
-console_window* console_model::x11Client(QModelIndex const& index) const
+win::property_window* console_model::x11Client(QModelIndex const& index) const
 {
     return window_for_index(index, m_x11Clients, s_x11ClientId);
 }
 
-console_window* console_model::unmanaged(QModelIndex const& index) const
+win::property_window* console_model::unmanaged(QModelIndex const& index) const
 {
     return window_for_index(index, m_unmanageds, s_x11UnmanagedId);
 }

@@ -66,9 +66,9 @@ public:
     QVariant get_client_property_data(QModelIndex const& index, int role) const override;
 
     int topLevelRowCount() const override;
-    console_window* shellClient(QModelIndex const& index) const;
+    win::property_window* shellClient(QModelIndex const& index) const;
 
-    std::vector<std::unique_ptr<console_window>> m_shellClients;
+    std::vector<std::unique_ptr<win::property_window>> m_shellClients;
 
 private:
     explicit wayland_console_model(QObject* parent = nullptr);
