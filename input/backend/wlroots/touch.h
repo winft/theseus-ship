@@ -55,7 +55,7 @@ void handle_down(struct wl_listener* listener, void* data)
         },
     };
 
-    Q_EMIT touch->down(event);
+    Q_EMIT touch->qobject->down(event);
 }
 
 template<typename Platform>
@@ -78,7 +78,7 @@ void handle_up(struct wl_listener* listener, void* data)
         },
     };
 
-    Q_EMIT touch->up(event);
+    Q_EMIT touch->qobject->up(event);
 }
 
 template<typename Platform>
@@ -102,7 +102,7 @@ void touch_handle_motion(struct wl_listener* listener, void* data)
         },
     };
 
-    Q_EMIT touch->motion(event);
+    Q_EMIT touch->qobject->motion(event);
 }
 
 template<typename Platform>
@@ -125,7 +125,7 @@ void handle_cancel(struct wl_listener* listener, void* data)
         },
     };
 
-    Q_EMIT touch->cancel(event);
+    Q_EMIT touch->qobject->cancel(event);
 }
 
 template<typename Platform>
@@ -135,7 +135,7 @@ void touch_handle_frame(struct wl_listener* listener, void* /*data*/)
         = wl_container_of(listener, event_receiver_struct, event);
     auto touch = event_receiver_struct->receiver;
 
-    Q_EMIT touch->frame();
+    Q_EMIT touch->qobject->frame();
 }
 
 template<typename Platform>

@@ -36,16 +36,18 @@ Qt::ScreenOrientation to_qt_orientation(base::wayland::output_transform transfor
 }
 
 touch::touch()
+    : qobject{std::make_unique<touch_qobject>()}
 {
-    QObject::connect(&kwinApp()->get_base(), &base::platform::topology_changed, this, [this] {
-        if (!control) {
-            return;
-        }
-        output = get_output();
-        if (output) {
-            control->set_orientation(to_qt_orientation(output->transform()));
-        }
-    });
+    QObject::connect(
+        &kwinApp()->get_base(), &base::platform::topology_changed, qobject.get(), [this] {
+            if (!control) {
+                return;
+            }
+            output = get_output();
+            if (output) {
+                control->set_orientation(to_qt_orientation(output->transform()));
+            }
+        });
 }
 
 base::wayland::output* touch::get_output() const
