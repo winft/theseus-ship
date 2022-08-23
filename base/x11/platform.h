@@ -19,17 +19,23 @@ namespace KWin::base::x11
 class platform : public base::platform
 {
 public:
-    std::vector<std::unique_ptr<output>> outputs;
+    ~platform() override
+    {
+        for (auto out : outputs) {
+            delete out;
+        }
+    }
 
     std::vector<base::output*> get_outputs() const override
     {
         std::vector<base::output*> vec;
         for (auto&& output : outputs) {
-            vec.push_back(output.get());
+            vec.push_back(output);
         }
         return vec;
     }
 
+    std::vector<output*> outputs;
     std::unique_ptr<input::x11::platform> input;
     std::unique_ptr<win::x11::space<platform>> space;
 };
