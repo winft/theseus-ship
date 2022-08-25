@@ -31,13 +31,14 @@ enum HiddenPreviews {
     HiddenPreviewsAlways
 };
 
+KWIN_EXPORT OpenGLPlatformInterface defaultGlPlatformInterface();
+
 class Settings;
 
-class KWIN_EXPORT options : public QObject
+class KWIN_EXPORT options_qobject : public QObject
 {
     Q_OBJECT
     Q_ENUMS(FocusPolicy)
-    Q_ENUMS(GlSwapStrategy)
     Q_ENUMS(MouseCommand)
     Q_ENUMS(MouseWheelCommand)
     Q_ENUMS(WindowOperation)
@@ -108,16 +109,16 @@ class KWIN_EXPORT options : public QObject
      */
     Q_PROPERTY(win::fsp_level focusStealingPreventionLevel READ focusStealingPreventionLevel WRITE
                    setFocusStealingPreventionLevel NOTIFY focusStealingPreventionLevelChanged)
-    Q_PROPERTY(KWin::base::options::WindowOperation operationTitlebarDblClick READ
+    Q_PROPERTY(KWin::base::options_qobject::WindowOperation operationTitlebarDblClick READ
                    operationTitlebarDblClick WRITE setOperationTitlebarDblClick NOTIFY
                        operationTitlebarDblClickChanged)
-    Q_PROPERTY(KWin::base::options::WindowOperation operationMaxButtonLeftClick READ
+    Q_PROPERTY(KWin::base::options_qobject::WindowOperation operationMaxButtonLeftClick READ
                    operationMaxButtonLeftClick WRITE setOperationMaxButtonLeftClick NOTIFY
                        operationMaxButtonLeftClickChanged)
-    Q_PROPERTY(KWin::base::options::WindowOperation operationMaxButtonMiddleClick READ
+    Q_PROPERTY(KWin::base::options_qobject::WindowOperation operationMaxButtonMiddleClick READ
                    operationMaxButtonMiddleClick WRITE setOperationMaxButtonMiddleClick NOTIFY
                        operationMaxButtonMiddleClickChanged)
-    Q_PROPERTY(KWin::base::options::WindowOperation operationMaxButtonRightClick READ
+    Q_PROPERTY(KWin::base::options_qobject::WindowOperation operationMaxButtonRightClick READ
                    operationMaxButtonRightClick WRITE setOperationMaxButtonRightClick NOTIFY
                        operationMaxButtonRightClickChanged)
     Q_PROPERTY(MouseCommand commandActiveTitlebar1 READ commandActiveTitlebar1 WRITE
@@ -201,16 +202,13 @@ class KWIN_EXPORT options : public QObject
      */
     Q_PROPERTY(bool glStrictBindingFollowsDriver READ isGlStrictBindingFollowsDriver WRITE
                    setGlStrictBindingFollowsDriver NOTIFY glStrictBindingFollowsDriverChanged)
+
+    /// Deprecated
     Q_PROPERTY(KWin::OpenGLPlatformInterface glPlatformInterface READ glPlatformInterface WRITE
                    setGlPlatformInterface NOTIFY glPlatformInterfaceChanged)
     Q_PROPERTY(bool windowsBlockCompositing READ windowsBlockCompositing WRITE
                    setWindowsBlockCompositing NOTIFY windowsBlockCompositingChanged)
 public:
-    options();
-    ~options() override;
-
-    void updateSettings();
-
     /**
      * This enum type is used to specify the focus policy.
      *
@@ -297,8 +295,6 @@ public:
     {
         return m_separateScreenFocus;
     }
-
-    bool get_current_output_follows_mouse() const;
 
     win::placement placement() const
     {
@@ -449,15 +445,6 @@ public:
         MouseWheelNothing
     };
 
-    MouseCommand operationTitlebarMouseWheel(int delta) const
-    {
-        return wheelToMouseCommand(CmdTitlebarWheel, delta);
-    }
-    MouseCommand operationWindowMouseWheel(int delta) const
-    {
-        return wheelToMouseCommand(CmdAllWheel, delta);
-    }
-
     MouseCommand commandActiveTitlebar1() const
     {
         return CmdActiveTitlebar1;
@@ -530,10 +517,6 @@ public:
         }
     }
 
-    static WindowOperation windowOperation(const QString& name, bool restricted);
-    static MouseCommand mouseCommand(const QString& name, bool restricted);
-    static MouseWheelCommand mouseWheelCommand(const QString& name);
-
     /**
      * Returns whether the user prefers his caption clean.
      */
@@ -584,14 +567,8 @@ public:
         return m_hideUtilityWindowsForInactive;
     }
 
-    /**
-     * Returns the animation time factor for desktop effects.
-     */
-    double animationTimeFactor() const;
-
     //----------------------
     // Compositing settings
-    void reloadCompositingSettings(bool force = false);
     CompositingType compositingMode() const
     {
         return m_compositingMode;
@@ -630,9 +607,11 @@ public:
     {
         return m_glStrictBindingFollowsDriver;
     }
+
+    /// Deprecated
     OpenGLPlatformInterface glPlatformInterface() const
     {
-        return m_glPlatformInterface;
+        return defaultGlPlatformInterface();
     }
 
     bool windowsBlockCompositing() const
@@ -644,8 +623,6 @@ public:
     {
         return m_animationCurve;
     }
-
-    QStringList modifierOnlyDBusShortcut(Qt::KeyboardModifier mod) const;
 
     // setters
     void setFocusPolicy(FocusPolicy focusPolicy);
@@ -695,7 +672,11 @@ public:
     void setVBlankTime(qint64 vBlankTime);
     void setGlStrictBinding(bool glStrictBinding);
     void setGlStrictBindingFollowsDriver(bool glStrictBindingFollowsDriver);
-    void setGlPlatformInterface(OpenGLPlatformInterface interface);
+
+    /// Deprecated
+    void setGlPlatformInterface(OpenGLPlatformInterface /*interface*/)
+    {
+    }
     void setWindowsBlockCompositing(bool set);
     void setAnimationCurve(AnimationCurve curve);
 
@@ -816,17 +797,6 @@ public:
     {
         return true;
     }
-    /**
-     * Performs loading all settings except compositing related.
-     */
-    void loadConfig();
-    /**
-     * Performs loading of compositing settings which do not depend on OpenGL.
-     */
-    bool loadCompositingConfig(bool force);
-    void reparseConfiguration();
-
-    static int currentRefreshRate();
 
     //----------------------
 Q_SIGNALS:
@@ -879,6 +849,8 @@ Q_SIGNALS:
     void vBlankTimeChanged();
     void glStrictBindingChanged();
     void glStrictBindingFollowsDriverChanged();
+
+    /// Deprecated
     void glPlatformInterfaceChanged();
     void windowsBlockCompositingChanged();
     void animationSpeedChanged();
@@ -887,81 +859,127 @@ Q_SIGNALS:
     void configChanged();
 
 private:
-    void setElectricBorders(int borders);
+    FocusPolicy m_focusPolicy{ClickToFocus};
+    bool m_nextFocusPrefersMouse{false};
+    bool m_clickRaise{false};
+    bool m_autoRaise{false};
+    int m_autoRaiseInterval{0};
+    int m_delayFocusInterval{0};
+
+    bool m_separateScreenFocus{false};
+
+    win::placement m_placement{win::placement::no_placement};
+    int m_borderSnapZone{0};
+    int m_windowSnapZone{0};
+    int m_centerSnapZone{0};
+    bool m_snapOnlyWhenOverlapping{false};
+    bool m_rollOverDesktops{false};
+    win::fsp_level m_focusStealingPreventionLevel{win::fsp_level::none};
+    int m_killPingTimeout{0};
+    bool m_hideUtilityWindowsForInactive{false};
+
+    CompositingType m_compositingMode{defaultCompositingMode()};
+    bool m_useCompositing{defaultUseCompositing()};
+    HiddenPreviews m_hiddenPreviews{defaultHiddenPreviews()};
+    qint64 m_maxFpsInterval{defaultMaxFpsInterval()};
+    // Settings that should be auto-detected
+    uint m_refreshRate{defaultRefreshRate()};
+    qint64 m_vBlankTime{defaultVBlankTime()};
+    bool m_glStrictBinding{defaultGlStrictBinding()};
+    bool m_glStrictBindingFollowsDriver{defaultGlStrictBindingFollowsDriver()};
+    bool m_windowsBlockCompositing{true};
+    AnimationCurve m_animationCurve{AnimationCurve::Linear};
+
+    WindowOperation OpTitlebarDblClick{defaultOperationTitlebarDblClick()};
+    WindowOperation opMaxButtonRightClick{defaultOperationMaxButtonRightClick()};
+    WindowOperation opMaxButtonMiddleClick{defaultOperationMaxButtonMiddleClick()};
+    WindowOperation opMaxButtonLeftClick{defaultOperationMaxButtonRightClick()};
+
+    // mouse bindings
+    MouseCommand CmdActiveTitlebar1{defaultCommandActiveTitlebar1()};
+    MouseCommand CmdActiveTitlebar2{defaultCommandActiveTitlebar2()};
+    MouseCommand CmdActiveTitlebar3{defaultCommandActiveTitlebar3()};
+    MouseCommand CmdInactiveTitlebar1{defaultCommandInactiveTitlebar1()};
+    MouseCommand CmdInactiveTitlebar2{defaultCommandInactiveTitlebar2()};
+    MouseCommand CmdInactiveTitlebar3{defaultCommandInactiveTitlebar3()};
+    MouseWheelCommand CmdTitlebarWheel{defaultCommandTitlebarWheel()};
+    MouseCommand CmdWindow1{defaultCommandWindow1()};
+    MouseCommand CmdWindow2{defaultCommandWindow2()};
+    MouseCommand CmdWindow3{defaultCommandWindow3()};
+    MouseCommand CmdWindowWheel{defaultCommandWindowWheel()};
+    MouseCommand CmdAll1{defaultCommandAll1()};
+    MouseCommand CmdAll2{defaultCommandAll2()};
+    MouseCommand CmdAll3{defaultCommandAll3()};
+    MouseWheelCommand CmdAllWheel{defaultCommandAllWheel()};
+    uint CmdAllModKey{defaultKeyCmdAllModKey()};
+
+    bool electric_border_maximize{false};
+    bool electric_border_tiling{false};
+    float electric_border_corner_ratio{0.};
+    bool borderless_maximized_windows{false};
+    bool condensed_title{false};
+
+    friend class options;
+};
+
+class KWIN_EXPORT options
+{
+public:
+    options();
+    ~options();
+
+    void updateSettings();
+
+    void reloadCompositingSettings(bool force = false);
+
+    /**
+     * Performs loading all settings except compositing related.
+     */
+    void loadConfig();
+    /**
+     * Performs loading of compositing settings which do not depend on OpenGL.
+     */
+    bool loadCompositingConfig(bool force);
+
+    /**
+     * Returns the animation time factor for desktop effects.
+     */
+    double animationTimeFactor() const;
+
+    bool get_current_output_follows_mouse() const;
+    QStringList modifierOnlyDBusShortcut(Qt::KeyboardModifier mod) const;
+
+    static options_qobject::WindowOperation windowOperation(const QString& name, bool restricted);
+    static options_qobject::MouseCommand mouseCommand(const QString& name, bool restricted);
+    static options_qobject::MouseWheelCommand mouseWheelCommand(const QString& name);
+
+    options_qobject::MouseCommand operationTitlebarMouseWheel(int delta) const
+    {
+        return wheelToMouseCommand(qobject->CmdTitlebarWheel, delta);
+    }
+    options_qobject::MouseCommand operationWindowMouseWheel(int delta) const
+    {
+        return wheelToMouseCommand(qobject->CmdAllWheel, delta);
+    }
+
+    std::unique_ptr<options_qobject> qobject;
+
+private:
     void syncFromKcfgc();
+
+    options_qobject::MouseCommand wheelToMouseCommand(options_qobject::MouseWheelCommand com,
+                                                      int delta) const;
+
     QScopedPointer<Settings> m_settings;
     KConfigWatcher::Ptr m_configWatcher;
 
-    FocusPolicy m_focusPolicy;
-    bool m_nextFocusPrefersMouse;
-    bool m_clickRaise;
-    bool m_autoRaise;
-    int m_autoRaiseInterval;
-    int m_delayFocusInterval;
-
-    bool m_separateScreenFocus;
     bool current_output_follows_mouse{false};
-
-    win::placement m_placement;
-    int m_borderSnapZone;
-    int m_windowSnapZone;
-    int m_centerSnapZone;
-    bool m_snapOnlyWhenOverlapping;
-    bool m_rollOverDesktops;
-    win::fsp_level m_focusStealingPreventionLevel{win::fsp_level::none};
-    int m_killPingTimeout;
-    bool m_hideUtilityWindowsForInactive;
-
-    CompositingType m_compositingMode;
-    bool m_useCompositing;
-    HiddenPreviews m_hiddenPreviews;
-    qint64 m_maxFpsInterval;
-    // Settings that should be auto-detected
-    uint m_refreshRate;
-    qint64 m_vBlankTime;
-    bool m_glStrictBinding;
-    bool m_glStrictBindingFollowsDriver;
-    OpenGLPlatformInterface m_glPlatformInterface;
-    bool m_windowsBlockCompositing;
-    AnimationCurve m_animationCurve;
-
-    WindowOperation OpTitlebarDblClick;
-    WindowOperation opMaxButtonRightClick = defaultOperationMaxButtonRightClick();
-    WindowOperation opMaxButtonMiddleClick = defaultOperationMaxButtonMiddleClick();
-    WindowOperation opMaxButtonLeftClick = defaultOperationMaxButtonRightClick();
-
-    // mouse bindings
-    MouseCommand CmdActiveTitlebar1;
-    MouseCommand CmdActiveTitlebar2;
-    MouseCommand CmdActiveTitlebar3;
-    MouseCommand CmdInactiveTitlebar1;
-    MouseCommand CmdInactiveTitlebar2;
-    MouseCommand CmdInactiveTitlebar3;
-    MouseWheelCommand CmdTitlebarWheel;
-    MouseCommand CmdWindow1;
-    MouseCommand CmdWindow2;
-    MouseCommand CmdWindow3;
-    MouseCommand CmdWindowWheel;
-    MouseCommand CmdAll1;
-    MouseCommand CmdAll2;
-    MouseCommand CmdAll3;
-    MouseWheelCommand CmdAllWheel;
-    uint CmdAllModKey;
-
-    bool electric_border_maximize;
-    bool electric_border_tiling;
-    float electric_border_corner_ratio;
-    bool borderless_maximized_windows;
-    bool condensed_title;
-
     QHash<Qt::KeyboardModifier, QStringList> m_modifierOnlyShortcuts;
-
-    MouseCommand wheelToMouseCommand(MouseWheelCommand com, int delta) const;
 };
 
 }
 
-Q_DECLARE_METATYPE(KWin::base::options::WindowOperation)
+Q_DECLARE_METATYPE(KWin::base::options_qobject::WindowOperation)
 Q_DECLARE_METATYPE(KWin::OpenGLPlatformInterface)
 Q_DECLARE_METATYPE(KWin::win::fsp_level)
 Q_DECLARE_METATYPE(KWin::win::placement)

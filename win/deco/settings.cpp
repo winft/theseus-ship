@@ -69,7 +69,7 @@ settings::~settings() = default;
 
 bool settings::isAlphaChannelSupported() const
 {
-    return space.render.compositing();
+    return space.render.isActive();
 }
 
 bool settings::isOnAllDesktopsAvailable() const

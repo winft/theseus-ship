@@ -22,6 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "egl_data.h"
 
+#include "kwin_export.h"
+
 #include <QVector>
 #include <Wrapland/Server/linux_dmabuf_v1.h>
 #include <cassert>
@@ -31,7 +33,7 @@ namespace KWin::render::gl
 {
 class egl_dmabuf;
 
-class egl_dmabuf_buffer : public Wrapland::Server::linux_dmabuf_buffer_v1
+class KWIN_EXPORT egl_dmabuf_buffer : public Wrapland::Server::linux_dmabuf_buffer_v1
 {
 public:
     using Plane = Wrapland::Server::linux_dmabuf_plane_v1;
@@ -83,7 +85,7 @@ struct egl_dmabuf_data {
     query_modifiers_ext_func query_modifiers_ext{nullptr};
 };
 
-class egl_dmabuf
+class KWIN_EXPORT egl_dmabuf
 {
 public:
     using Plane = Wrapland::Server::linux_dmabuf_plane_v1;

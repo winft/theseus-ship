@@ -74,18 +74,23 @@ public:
         //
         // The passive grab below is established so the window can be raised or activated when it
         // is clicked.
-        if ((kwinApp()->options->focusPolicyIsReasonable() && !active())
-            || (kwinApp()->options->isClickRaise() && !is_most_recently_raised(m_window))) {
-            if (kwinApp()->options->commandWindow1() != base::options::MouseNothing) {
+        if ((kwinApp()->options->qobject->focusPolicyIsReasonable() && !active())
+            || (kwinApp()->options->qobject->isClickRaise()
+                && !is_most_recently_raised(m_window))) {
+            if (kwinApp()->options->qobject->commandWindow1()
+                != base::options_qobject::MouseNothing) {
                 establish_command_window_grab(m_window, XCB_BUTTON_INDEX_1);
             }
-            if (kwinApp()->options->commandWindow2() != base::options::MouseNothing) {
+            if (kwinApp()->options->qobject->commandWindow2()
+                != base::options_qobject::MouseNothing) {
                 establish_command_window_grab(m_window, XCB_BUTTON_INDEX_2);
             }
-            if (kwinApp()->options->commandWindow3() != base::options::MouseNothing) {
+            if (kwinApp()->options->qobject->commandWindow3()
+                != base::options_qobject::MouseNothing) {
                 establish_command_window_grab(m_window, XCB_BUTTON_INDEX_3);
             }
-            if (kwinApp()->options->commandWindowWheel() != base::options::MouseNothing) {
+            if (kwinApp()->options->qobject->commandWindowWheel()
+                != base::options_qobject::MouseNothing) {
                 establish_command_window_grab(m_window, XCB_BUTTON_INDEX_4);
                 establish_command_window_grab(m_window, XCB_BUTTON_INDEX_5);
             }
@@ -96,16 +101,17 @@ public:
         // we can do about it, unfortunately.
 
         if (!m_window->space.global_shortcuts_disabled) {
-            if (kwinApp()->options->commandAll1() != base::options::MouseNothing) {
+            if (kwinApp()->options->qobject->commandAll1() != base::options_qobject::MouseNothing) {
                 establish_command_all_grab(m_window, XCB_BUTTON_INDEX_1);
             }
-            if (kwinApp()->options->commandAll2() != base::options::MouseNothing) {
+            if (kwinApp()->options->qobject->commandAll2() != base::options_qobject::MouseNothing) {
                 establish_command_all_grab(m_window, XCB_BUTTON_INDEX_2);
             }
-            if (kwinApp()->options->commandAll3() != base::options::MouseNothing) {
+            if (kwinApp()->options->qobject->commandAll3() != base::options_qobject::MouseNothing) {
                 establish_command_all_grab(m_window, XCB_BUTTON_INDEX_3);
             }
-            if (kwinApp()->options->commandAllWheel() != base::options::MouseWheelNothing) {
+            if (kwinApp()->options->qobject->commandAllWheel()
+                != base::options_qobject::MouseWheelNothing) {
                 establish_command_all_grab(m_window, XCB_BUTTON_INDEX_4);
                 establish_command_all_grab(m_window, XCB_BUTTON_INDEX_5);
             }

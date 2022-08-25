@@ -10,7 +10,6 @@
 #include "render/gl/window.h"
 #include "render/wayland/buffer.h"
 #include "toplevel.h"
-#include "wayland_logging.h"
 
 #include <kwingl/platform.h>
 
@@ -34,7 +33,7 @@ void attach_buffer_to_khr_image(Texture& texture, Wrapland::Server::Buffer* buff
         egl_data.base.display, buffer->resource(), EGL_TEXTURE_FORMAT, &format);
 
     if (format != EGL_TEXTURE_RGB && format != EGL_TEXTURE_RGBA) {
-        qCDebug(KWIN_WL) << "Unsupported texture format: " << format;
+        qCDebug(KWIN_CORE) << "Unsupported texture format: " << format;
         return;
     }
 
@@ -190,7 +189,7 @@ bool update_texture_from_egl(Texture& texture, Wrapland::Server::Buffer* buffer)
     attach_buffer_to_khr_image(texture, buffer);
 
     if (texture.m_image == EGL_NO_IMAGE_KHR) {
-        qCDebug(KWIN_WL) << "Failed to update texture via EGL/wl_drm";
+        qCDebug(KWIN_CORE) << "Failed to update texture via EGL/wl_drm";
         texture.q->discard();
         return false;
     }
@@ -311,7 +310,7 @@ bool update_texture_from_dmabuf(Texture& texture, gl::egl_dmabuf_buffer* dmabuf)
     assert(texture.m_image == EGL_NO_IMAGE_KHR);
 
     if (dmabuf->images().empty() || dmabuf->images().at(0) == EGL_NO_IMAGE_KHR) {
-        qCritical(KWIN_WL) << "Invalid dmabuf-based wl_buffer";
+        qCritical(KWIN_CORE) << "Invalid dmabuf-based wl_buffer";
         texture.q->discard();
         return false;
     }

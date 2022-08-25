@@ -194,11 +194,12 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
     QObject::connect(
         win->client_machine, &client_machine::localhostChanged, win, &window::updateCaption);
-    QObject::connect(kwinApp()->options.get(), &base::options::configChanged, win, [win] {
-        win->control->update_mouse_grab();
-    });
-    QObject::connect(kwinApp()->options.get(),
-                     &base::options::condensedTitleChanged,
+    QObject::connect(kwinApp()->options->qobject.get(),
+                     &base::options_qobject::configChanged,
+                     win,
+                     [win] { win->control->update_mouse_grab(); });
+    QObject::connect(kwinApp()->options->qobject.get(),
+                     &base::options_qobject::condensedTitleChanged,
                      win,
                      &window::updateCaption);
 
@@ -593,7 +594,8 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         if (!isMapped) {
             if (allow && win->isOnCurrentDesktop()) {
                 if (!is_special_window(win)) {
-                    if (kwinApp()->options->focusPolicyIsReasonable() && wants_tab_focus(win)) {
+                    if (kwinApp()->options->qobject->focusPolicyIsReasonable()
+                        && wants_tab_focus(win)) {
                         request_focus(space, win);
                     }
                 }
@@ -726,7 +728,7 @@ xcb_timestamp_t read_user_time_map_timestamp(Win* win,
             // don't refuse if focus stealing prevention is turned off
             if (!first_window
                 && enum_index(win->control->rules().checkFSP(
-                       kwinApp()->options->focusStealingPreventionLevel()))
+                       kwinApp()->options->qobject->focusStealingPreventionLevel()))
                     > 0) {
                 qCDebug(KWIN_CORE) << "User timestamp, already exists:" << 0;
                 return 0; // refuse activation

@@ -118,7 +118,7 @@ QString get_support_info(Space const& space)
     support.append(QStringLiteral("Options\n"));
     support.append(QStringLiteral("=======\n"));
 
-    auto const metaOptions = kwinApp()->options->metaObject();
+    auto const metaOptions = kwinApp()->options->qobject->metaObject();
     auto printProperty = [](const QVariant& variant) {
         if (variant.type() == QVariant::Size) {
             const QSize& s = variant.toSize();
@@ -128,7 +128,7 @@ QString get_support_info(Space const& space)
         }
         if (QLatin1String(variant.typeName()) == QLatin1String("KWin::OpenGLPlatformInterface")
             || QLatin1String(variant.typeName())
-                == QLatin1String("KWin::base::options::WindowOperation")) {
+                == QLatin1String("KWin::base::options_qobject::WindowOperation")) {
             return QString::number(variant.toInt());
         }
         return variant.toString();
@@ -138,9 +138,10 @@ QString get_support_info(Space const& space)
         if (QLatin1String(property.name()) == QLatin1String("objectName")) {
             continue;
         }
-        support.append(QStringLiteral("%1: %2\n")
-                           .arg(property.name())
-                           .arg(printProperty(kwinApp()->options->property(property.name()))));
+        support.append(
+            QStringLiteral("%1: %2\n")
+                .arg(property.name())
+                .arg(printProperty(kwinApp()->options->qobject->property(property.name()))));
     }
 
     support.append(QStringLiteral("\nScreen Edges\n"));

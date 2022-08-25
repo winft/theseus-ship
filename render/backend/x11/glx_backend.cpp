@@ -215,7 +215,7 @@ GlxTexture::GlxTexture(gl::texture* texture, glx_backend* backend)
 GlxTexture::~GlxTexture()
 {
     if (m_glxpixmap != None) {
-        if (!kwinApp()->options->isGlStrictBinding()) {
+        if (!kwinApp()->options->qobject->isGlStrictBinding()) {
             glXReleaseTexImageEXT(display(), m_glxpixmap, GLX_FRONT_LEFT_EXT);
         }
         glXDestroyPixmap(display(), m_glxpixmap);
@@ -225,7 +225,7 @@ GlxTexture::~GlxTexture()
 
 void GlxTexture::onDamage()
 {
-    if (kwinApp()->options->isGlStrictBinding() && m_glxpixmap) {
+    if (kwinApp()->options->qobject->isGlStrictBinding() && m_glxpixmap) {
         glXReleaseTexImageEXT(display(), m_glxpixmap, GLX_FRONT_LEFT_EXT);
         glXBindTexImageEXT(display(), m_glxpixmap, GLX_FRONT_LEFT_EXT, nullptr);
     }

@@ -129,7 +129,7 @@ void tabbox_switcher_item::set_no_modifier_grab(bool set)
 
 bool tabbox_switcher_item::compositing()
 {
-    return render::compositor::compositing();
+    return render::singleton_interface::platform->compositor->isActive();
 }
 
 }

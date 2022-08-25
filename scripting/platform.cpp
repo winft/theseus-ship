@@ -105,7 +105,7 @@ void platform::init()
 
     m_qmlEngine->rootContext()->setContextProperty(QStringLiteral("workspace"), qt_space.get());
     m_qmlEngine->rootContext()->setContextProperty(QStringLiteral("options"),
-                                                   kwinApp()->options.get());
+                                                   kwinApp()->options->qobject.get());
 
     decl_space = std::make_unique<template_space<declarative_script_space, win::space>>(&space);
     m_declarativeScriptSharedContext->setContextProperty(QStringLiteral("workspace"),

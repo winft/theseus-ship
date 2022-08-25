@@ -125,7 +125,7 @@ void outline::createHelper()
         m_visual = std::make_unique<composited_outline_visual>(
             this, *compositor.space->scripting->qmlEngine());
     } else {
-        m_visual.reset(kwinApp()->get_base().render->create_non_composited_outline(this));
+        m_visual.reset(compositor.platform.create_non_composited_outline(this));
     }
 }
 

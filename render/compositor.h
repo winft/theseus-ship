@@ -108,8 +108,6 @@ public:
      */
     bool isActive();
 
-    static bool compositing();
-
     // for delayed supportproperty management of effects
     void keepSupportProperty(xcb_atom_t atom);
     void removeSupportProperty(xcb_atom_t atom);

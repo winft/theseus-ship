@@ -298,8 +298,8 @@ scene::scene(render::compositor& compositor)
     GLPlatform* glPlatform = GLPlatform::instance();
 
     // set strict binding
-    if (kwinApp()->options->isGlStrictBindingFollowsDriver()) {
-        kwinApp()->options->setGlStrictBinding(!glPlatform->supports(LooseBinding));
+    if (kwinApp()->options->qobject->isGlStrictBindingFollowsDriver()) {
+        kwinApp()->options->qobject->setGlStrictBinding(!glPlatform->supports(LooseBinding));
     }
 
     bool haveSyncObjects = glPlatform->isGLES()

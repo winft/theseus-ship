@@ -345,8 +345,8 @@ QPoint adjust_window_position(Space const& space,
                               bool unrestricted,
                               double snapAdjust = 1.0)
 {
-    QSize borderSnapZone(kwinApp()->options->borderSnapZone(),
-                         kwinApp()->options->borderSnapZone());
+    QSize borderSnapZone(kwinApp()->options->qobject->borderSnapZone(),
+                         kwinApp()->options->qobject->borderSnapZone());
     QRect maxRect;
     auto guideMaximized = maximize_mode::restore;
 
@@ -366,10 +366,10 @@ QPoint adjust_window_position(Space const& space,
         }
     }
 
-    if (kwinApp()->options->windowSnapZone() || !borderSnapZone.isNull()
-        || kwinApp()->options->centerSnapZone()) {
+    if (kwinApp()->options->qobject->windowSnapZone() || !borderSnapZone.isNull()
+        || kwinApp()->options->qobject->centerSnapZone()) {
         auto const& outputs = kwinApp()->get_base().get_outputs();
-        const bool sOWO = kwinApp()->options->isSnapOnlyWhenOverlapping();
+        const bool sOWO = kwinApp()->options->qobject->isSnapOnlyWhenOverlapping();
         auto output
             = base::get_nearest_output(outputs, pos + QRect(QPoint(), window.size()).center());
 
@@ -456,7 +456,7 @@ QPoint adjust_window_position(Space const& space,
         }
 
         // windows snap
-        int snap = kwinApp()->options->windowSnapZone() * snapAdjust;
+        int snap = kwinApp()->options->qobject->windowSnapZone() * snapAdjust;
         if (snap) {
             for (auto win : space.windows) {
                 if (!win->control) {
@@ -547,7 +547,7 @@ QPoint adjust_window_position(Space const& space,
         }
 
         // center snap
-        snap = kwinApp()->options->centerSnapZone() * snapAdjust; // snap trigger
+        snap = kwinApp()->options->qobject->centerSnapZone() * snapAdjust; // snap trigger
         if (snap) {
             int diffX = qAbs((xmin + xmax) / 2 - (cx + cw / 2));
             int diffY = qAbs((ymin + ymax) / 2 - (cy + ch / 2));
@@ -555,7 +555,7 @@ QPoint adjust_window_position(Space const& space,
                 // Snap to center of screen
                 nx = (xmin + xmax) / 2 - cw / 2;
                 ny = (ymin + ymax) / 2 - ch / 2;
-            } else if (kwinApp()->options->borderSnapZone()) {
+            } else if (kwinApp()->options->qobject->borderSnapZone()) {
                 // Enhance border snap
                 if ((nx == xmin || nx == xmax - cw) && diffY < snap && diffY < deltaY) {
                     // Snap to vertical center on screen edge
@@ -579,9 +579,10 @@ QRect adjust_window_size(Space const& space, Win const& window, QRect moveResize
     // adapted from adjustClientPosition on 29May2004
     // this function is called when resizing a window and will modify
     // the new dimensions to snap to other windows/borders if appropriate
-    if (kwinApp()->options->windowSnapZone()
-        || kwinApp()->options->borderSnapZone()) { // || kwinApp()->options->centerSnapZone )
-        const bool sOWO = kwinApp()->options->isSnapOnlyWhenOverlapping();
+    if (kwinApp()->options->qobject->windowSnapZone()
+        || kwinApp()
+               ->options->qobject->borderSnapZone()) { // || kwinApp()->options->centerSnapZone )
+        const bool sOWO = kwinApp()->options->qobject->isSnapOnlyWhenOverlapping();
 
         auto const maxRect = space_window_area(
             space, MovementArea, QRect(QPoint(0, 0), window.size()).center(), window.desktop());
@@ -603,7 +604,8 @@ QRect adjust_window_size(Space const& space, Win const& window, QRect moveResize
         int lx, ly, lrx, lry; // coords and size for the comparison client, l
 
         // border snap
-        int snap = kwinApp()->options->borderSnapZone(); // snap trigger
+        // snap trigger
+        int snap = kwinApp()->options->qobject->borderSnapZone();
         if (snap) {
             deltaX = int(snap);
             deltaY = int(snap);
@@ -672,7 +674,7 @@ QRect adjust_window_size(Space const& space, Win const& window, QRect moveResize
         }
 
         // windows snap
-        snap = kwinApp()->options->windowSnapZone();
+        snap = kwinApp()->options->qobject->windowSnapZone();
         if (snap) {
             deltaX = int(snap);
             deltaY = int(snap);

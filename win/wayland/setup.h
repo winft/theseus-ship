@@ -126,12 +126,12 @@ void setup_plasma_management(Space* space, Win* win)
     QObject::connect(plasma_win, &Wrapland::Server::PlasmaWindow::moveRequested, win, [win] {
         auto& cursor = win->space.input->platform.cursor;
         cursor->set_pos(win->frameGeometry().center());
-        win->performMouseCommand(base::options::MouseMove, cursor->pos());
+        win->performMouseCommand(base::options_qobject::MouseMove, cursor->pos());
     });
     QObject::connect(plasma_win, &Wrapland::Server::PlasmaWindow::resizeRequested, win, [win] {
         auto& cursor = win->space.input->platform.cursor;
         cursor->set_pos(win->frameGeometry().bottomRight());
-        win->performMouseCommand(base::options::MouseResize, cursor->pos());
+        win->performMouseCommand(base::options_qobject::MouseResize, cursor->pos());
     });
     QObject::connect(plasma_win,
                      &Wrapland::Server::PlasmaWindow::fullscreenRequested,

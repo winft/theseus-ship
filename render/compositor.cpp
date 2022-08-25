@@ -35,20 +35,16 @@ namespace KWin::render
 // 2 sec which should be enough to restart the compositor.
 constexpr auto compositor_lost_message_delay = 2000;
 
-bool compositor::compositing()
-{
-    auto const& compositor = kwinApp()->get_base().render->compositor;
-    return compositor && compositor->isActive();
-}
-
 compositor::compositor(render::platform& platform)
     : platform{platform}
     , dbus{std::make_unique<dbus::compositing>(*this)}
 {
-    connect(
-        kwinApp()->options.get(), &base::options::configChanged, this, &compositor::configChanged);
-    connect(kwinApp()->options.get(),
-            &base::options::animationSpeedChanged,
+    connect(kwinApp()->options->qobject.get(),
+            &base::options_qobject::configChanged,
+            this,
+            &compositor::configChanged);
+    connect(kwinApp()->options->qobject.get(),
+            &base::options_qobject::animationSpeedChanged,
             this,
             &compositor::configChanged);
 

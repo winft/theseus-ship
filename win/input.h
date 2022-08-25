@@ -84,21 +84,23 @@ void key_press_event(Win* win, uint key_code)
 }
 
 template<typename Win>
-bool perform_mouse_command(Win& win, base::options::MouseCommand cmd, QPoint const& globalPos)
+bool perform_mouse_command(Win& win,
+                           base::options_qobject::MouseCommand cmd,
+                           QPoint const& globalPos)
 {
     bool replay = false;
     auto& base = kwinApp()->get_base();
     auto& space = win.space;
 
     switch (cmd) {
-    case base::options::MouseRaise:
+    case base::options_qobject::MouseRaise:
         raise_window(&space, &win);
         break;
-    case base::options::MouseLower: {
+    case base::options_qobject::MouseLower: {
         lower_window(&space, &win);
         // Used to be activateNextClient(win), then topClientOnDesktop
-        // since win is a mouseOp it's however safe to use the client under the mouse instead.
-        if (win.control->active() && kwinApp()->options->focusPolicyIsReasonable()) {
+        // since win is a mouseOp it's however safe to use the client under the mouse  instead.
+        if (win.control->active() && kwinApp()->options->qobject->focusPolicyIsReasonable()) {
             auto next = window_under_mouse(space, win.central_output);
             if (next && next != &win) {
                 request_focus(space, next);
@@ -106,16 +108,16 @@ bool perform_mouse_command(Win& win, base::options::MouseCommand cmd, QPoint con
         }
         break;
     }
-    case base::options::MouseOperationsMenu:
-        if (win.control->active() && kwinApp()->options->isClickRaise()) {
+    case base::options_qobject::MouseOperationsMenu:
+        if (win.control->active() && kwinApp()->options->qobject->isClickRaise()) {
             auto_raise(&win);
         }
         space.user_actions_menu->show(QRect(globalPos, globalPos), &win);
         break;
-    case base::options::MouseToggleRaiseAndLower:
+    case base::options_qobject::MouseToggleRaiseAndLower:
         raise_or_lower_client(&space, &win);
         break;
-    case base::options::MouseActivateAndRaise: {
+    case base::options_qobject::MouseActivateAndRaise: {
         // For clickraise mode.
         replay = win.control->active();
         bool mustReplay = !win.control->rules().checkAcceptFocus(win.acceptsFocus());
@@ -141,39 +143,39 @@ bool perform_mouse_command(Win& win, base::options::MouseCommand cmd, QPoint con
         replay = replay || mustReplay;
         break;
     }
-    case base::options::MouseActivateAndLower:
+    case base::options_qobject::MouseActivateAndLower:
         request_focus(space, &win);
         lower_window(&space, &win);
         base::set_current_output_by_position(base, globalPos);
         replay = replay || !win.control->rules().checkAcceptFocus(win.acceptsFocus());
         break;
-    case base::options::MouseActivate:
+    case base::options_qobject::MouseActivate:
         // For clickraise mode.
         replay = win.control->active();
         request_focus(space, &win);
         base::set_current_output_by_position(base, globalPos);
         replay = replay || !win.control->rules().checkAcceptFocus(win.acceptsFocus());
         break;
-    case base::options::MouseActivateRaiseAndPassClick:
+    case base::options_qobject::MouseActivateRaiseAndPassClick:
         request_focus(space, &win, true);
         base::set_current_output_by_position(base, globalPos);
         replay = true;
         break;
-    case base::options::MouseActivateAndPassClick:
+    case base::options_qobject::MouseActivateAndPassClick:
         request_focus(space, &win);
         base::set_current_output_by_position(base, globalPos);
         replay = true;
         break;
-    case base::options::MouseMaximize:
+    case base::options_qobject::MouseMaximize:
         maximize(&win, maximize_mode::full);
         break;
-    case base::options::MouseRestore:
+    case base::options_qobject::MouseRestore:
         maximize(&win, maximize_mode::restore);
         break;
-    case base::options::MouseMinimize:
+    case base::options_qobject::MouseMinimize:
         set_minimized(&win, true);
         break;
-    case base::options::MouseAbove: {
+    case base::options_qobject::MouseAbove: {
         blocker block(space.stacking_order);
         if (win.control->keep_below()) {
             set_keep_below(&win, false);
@@ -182,7 +184,7 @@ bool perform_mouse_command(Win& win, base::options::MouseCommand cmd, QPoint con
         }
         break;
     }
-    case base::options::MouseBelow: {
+    case base::options_qobject::MouseBelow: {
         blocker block(space.stacking_order);
         if (win.control->keep_above()) {
             set_keep_above(&win, false);
@@ -191,34 +193,34 @@ bool perform_mouse_command(Win& win, base::options::MouseCommand cmd, QPoint con
         }
         break;
     }
-    case base::options::MousePreviousDesktop:
+    case base::options_qobject::MousePreviousDesktop:
         window_to_prev_desktop(win);
         break;
-    case base::options::MouseNextDesktop:
+    case base::options_qobject::MouseNextDesktop:
         window_to_next_desktop(win);
         break;
-    case base::options::MouseOpacityMore:
+    case base::options_qobject::MouseOpacityMore:
         // No point in changing the opacity of the desktop.
         if (!is_desktop(&win)) {
             win.setOpacity(qMin(win.opacity() + 0.1, 1.0));
         }
         break;
-    case base::options::MouseOpacityLess:
+    case base::options_qobject::MouseOpacityLess:
         if (!is_desktop(&win)) {
             win.setOpacity(qMax(win.opacity() - 0.1, 0.1));
         }
         break;
-    case base::options::MouseClose:
+    case base::options_qobject::MouseClose:
         win.closeWindow();
         break;
-    case base::options::MouseActivateRaiseAndMove:
-    case base::options::MouseActivateRaiseAndUnrestrictedMove:
+    case base::options_qobject::MouseActivateRaiseAndMove:
+    case base::options_qobject::MouseActivateRaiseAndUnrestrictedMove:
         raise_window(&space, &win);
         request_focus(space, &win);
         base::set_current_output_by_position(base, globalPos);
         // Fallthrough
-    case base::options::MouseMove:
-    case base::options::MouseUnrestrictedMove: {
+    case base::options_qobject::MouseMove:
+    case base::options_qobject::MouseUnrestrictedMove: {
         if (!win.isMovableAcrossScreens()) {
             break;
         }
@@ -235,16 +237,16 @@ bool perform_mouse_command(Win& win, base::options::MouseCommand cmd, QPoint con
 
         mov_res.inverted_offset
             = QPoint(win.size().width() - 1, win.size().height() - 1) - mov_res.offset;
-        mov_res.unrestricted = (cmd == base::options::MouseActivateRaiseAndUnrestrictedMove
-                                || cmd == base::options::MouseUnrestrictedMove);
+        mov_res.unrestricted = (cmd == base::options_qobject::MouseActivateRaiseAndUnrestrictedMove
+                                || cmd == base::options_qobject::MouseUnrestrictedMove);
         if (!start_move_resize(&win)) {
             mov_res.button_down = false;
         }
         update_cursor(&win);
         break;
     }
-    case base::options::MouseResize:
-    case base::options::MouseUnrestrictedResize: {
+    case base::options_qobject::MouseResize:
+    case base::options_qobject::MouseUnrestrictedResize: {
         if (!win.isResizable()) {
             break;
         }
@@ -278,7 +280,7 @@ bool perform_mouse_command(Win& win, base::options::MouseCommand cmd, QPoint con
         mov_res.contact = mode;
         mov_res.inverted_offset
             = QPoint(win.size().width() - 1, win.size().height() - 1) - moveOffset;
-        mov_res.unrestricted = cmd == base::options::MouseUnrestrictedResize;
+        mov_res.unrestricted = cmd == base::options_qobject::MouseUnrestrictedResize;
         if (!start_move_resize(&win)) {
             mov_res.button_down = false;
         }
@@ -286,7 +288,7 @@ bool perform_mouse_command(Win& win, base::options::MouseCommand cmd, QPoint con
         break;
     }
 
-    case base::options::MouseNothing:
+    case base::options_qobject::MouseNothing:
     default:
         replay = true;
         break;
@@ -299,17 +301,17 @@ void enter_event(Win* win, const QPoint& globalPos)
 {
     auto space = &win->space;
 
-    if (kwinApp()->options->focusPolicy() == base::options::ClickToFocus
+    if (kwinApp()->options->qobject->focusPolicy() == base::options_qobject::ClickToFocus
         || space->user_actions_menu->isShown()) {
         return;
     }
 
-    if (kwinApp()->options->isAutoRaise() && !win::is_desktop(win) && !win::is_dock(win)
+    if (kwinApp()->options->qobject->isAutoRaise() && !win::is_desktop(win) && !win::is_dock(win)
         && is_focus_change_allowed(*space) && globalPos != space->focusMousePos
-        && top_client_on_desktop(space,
-                                 win->space.virtual_desktop_manager->current(),
-                                 kwinApp()->options->isSeparateScreenFocus() ? win->central_output
-                                                                             : nullptr)
+        && top_client_on_desktop(
+               space,
+               win->space.virtual_desktop_manager->current(),
+               kwinApp()->options->qobject->isSeparateScreenFocus() ? win->central_output : nullptr)
             != win) {
         win->control->start_auto_raise();
     }
@@ -320,7 +322,7 @@ void enter_event(Win* win, const QPoint& globalPos)
 
     // For FocusFollowsMouse, change focus only if the mouse has actually been moved, not if the
     // focus change came because of window changes (e.g. closing a window) - #92290
-    if (kwinApp()->options->focusPolicy() != base::options::FocusFollowsMouse
+    if (kwinApp()->options->qobject->focusPolicy() != base::options_qobject::FocusFollowsMouse
         || globalPos != space->focusMousePos) {
         request_delay_focus(*space, win);
     }
@@ -332,7 +334,7 @@ void leave_event(Win* win)
     win->control->cancel_auto_raise();
     cancel_delay_focus(win->space);
     // TODO: send hover leave to deco
-    // TODO: handle base::options::FocusStrictlyUnderMouse
+    // TODO: handle base::options_qobject::FocusStrictlyUnderMouse
 }
 
 template<typename Win>
@@ -350,7 +352,7 @@ bool titlebar_positioned_under_mouse(Win* win)
 template<typename Win>
 bool process_decoration_button_press(Win* win, QMouseEvent* event, bool ignoreMenu)
 {
-    auto com = base::options::MouseNothing;
+    auto com = base::options_qobject::MouseNothing;
     bool active = win->control->active();
 
     if (!win->wantsInput()) {
@@ -368,7 +370,7 @@ bool process_decoration_button_press(Win* win, QMouseEvent* event, bool ignoreMe
                 deco.double_click.start();
             } else {
                 perform_window_operation(
-                    win->space, win, kwinApp()->options->operationTitlebarDblClick());
+                    win->space, win, kwinApp()->options->qobject->operationTitlebarDblClick());
                 end_move_resize(win);
                 return false;
             }
@@ -379,20 +381,20 @@ bool process_decoration_button_press(Win* win, QMouseEvent* event, bool ignoreMe
     }
 
     if (event->button() == Qt::LeftButton) {
-        com = active ? kwinApp()->options->commandActiveTitlebar1()
-                     : kwinApp()->options->commandInactiveTitlebar1();
+        com = active ? kwinApp()->options->qobject->commandActiveTitlebar1()
+                     : kwinApp()->options->qobject->commandInactiveTitlebar1();
     } else if (event->button() == Qt::MiddleButton) {
-        com = active ? kwinApp()->options->commandActiveTitlebar2()
-                     : kwinApp()->options->commandInactiveTitlebar2();
+        com = active ? kwinApp()->options->qobject->commandActiveTitlebar2()
+                     : kwinApp()->options->qobject->commandInactiveTitlebar2();
     } else if (event->button() == Qt::RightButton) {
-        com = active ? kwinApp()->options->commandActiveTitlebar3()
-                     : kwinApp()->options->commandInactiveTitlebar3();
+        com = active ? kwinApp()->options->qobject->commandActiveTitlebar3()
+                     : kwinApp()->options->qobject->commandInactiveTitlebar3();
     }
 
     // Operations menu is for actions where it's not possible to get the matching and
     // mouse minimize for mouse release event.
-    if (event->button() == Qt::LeftButton && com != base::options::MouseOperationsMenu
-        && com != base::options::MouseMinimize) {
+    if (event->button() == Qt::LeftButton && com != base::options_qobject::MouseOperationsMenu
+        && com != base::options_qobject::MouseMinimize) {
         auto& mov_res = win->control->move_resize();
 
         mov_res.contact = win::mouse_position(win);
@@ -408,16 +410,18 @@ bool process_decoration_button_press(Win* win, QMouseEvent* event, bool ignoreMe
     }
     // In the new API the decoration may process the menu action to display an inactive tab's menu.
     // If the event is unhandled then the core will create one for the active window in the group.
-    if (!ignoreMenu || com != base::options::MouseOperationsMenu) {
+    if (!ignoreMenu || com != base::options_qobject::MouseOperationsMenu) {
         win->performMouseCommand(com, event->globalPos());
     }
 
     // Return events that should be passed to the decoration in the new API.
-    return !(com == base::options::MouseRaise || com == base::options::MouseOperationsMenu
-             || com == base::options::MouseActivateAndRaise || com == base::options::MouseActivate
-             || com == base::options::MouseActivateRaiseAndPassClick
-             || com == base::options::MouseActivateAndPassClick
-             || com == base::options::MouseNothing);
+    return !(com == base::options_qobject::MouseRaise
+             || com == base::options_qobject::MouseOperationsMenu
+             || com == base::options_qobject::MouseActivateAndRaise
+             || com == base::options_qobject::MouseActivate
+             || com == base::options_qobject::MouseActivateRaiseAndPassClick
+             || com == base::options_qobject::MouseActivateAndPassClick
+             || com == base::options_qobject::MouseNothing);
 }
 
 template<typename Win>
@@ -468,46 +472,48 @@ void process_decoration_button_release(Win* win, QMouseEvent* event)
  * passed to @p win or being filtered out.
  */
 template<typename Win>
-base::options::MouseCommand get_mouse_command(Win* win, Qt::MouseButton button, bool* handled)
+base::options_qobject::MouseCommand
+get_mouse_command(Win* win, Qt::MouseButton button, bool* handled)
 {
     *handled = false;
     if (button == Qt::NoButton) {
-        return base::options::MouseNothing;
+        return base::options_qobject::MouseNothing;
     }
     if (win->control->active()) {
-        if (kwinApp()->options->isClickRaise() && !is_most_recently_raised(win)) {
+        if (kwinApp()->options->qobject->isClickRaise() && !is_most_recently_raised(win)) {
             *handled = true;
-            return base::options::MouseActivateRaiseAndPassClick;
+            return base::options_qobject::MouseActivateRaiseAndPassClick;
         }
     } else {
         *handled = true;
         switch (button) {
         case Qt::LeftButton:
-            return kwinApp()->options->commandWindow1();
+            return kwinApp()->options->qobject->commandWindow1();
         case Qt::MiddleButton:
-            return kwinApp()->options->commandWindow2();
+            return kwinApp()->options->qobject->commandWindow2();
         case Qt::RightButton:
-            return kwinApp()->options->commandWindow3();
+            return kwinApp()->options->qobject->commandWindow3();
         default:
             // all other buttons pass Activate & Pass Client
-            return base::options::MouseActivateAndPassClick;
+            return base::options_qobject::MouseActivateAndPassClick;
         }
     }
-    return base::options::MouseNothing;
+    return base::options_qobject::MouseNothing;
 }
 
 template<typename Win>
-base::options::MouseCommand get_wheel_command(Win* win, Qt::Orientation orientation, bool* handled)
+base::options_qobject::MouseCommand
+get_wheel_command(Win* win, Qt::Orientation orientation, bool* handled)
 {
     *handled = false;
     if (orientation != Qt::Vertical) {
-        return base::options::MouseNothing;
+        return base::options_qobject::MouseNothing;
     }
     if (!win->control->active()) {
         *handled = true;
-        return kwinApp()->options->commandWindowWheel();
+        return kwinApp()->options->qobject->commandWindowWheel();
     }
-    return base::options::MouseNothing;
+    return base::options_qobject::MouseNothing;
 }
 
 template<typename Space>

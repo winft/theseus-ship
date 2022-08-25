@@ -9,6 +9,7 @@
 
 #include "base/wayland/output_helpers.h"
 #include "render/backend/wlroots/output.h"
+#include "render/backend/wlroots/platform.h"
 #include "render/wayland/compositor.h"
 #include "render/wayland/presentation.h"
 #include "utils/gamma_ramp.h"
@@ -19,10 +20,12 @@
 namespace KWin::base::backend::wlroots
 {
 
-static render::backend::wlroots::output*
-get_render(std::unique_ptr<render::wayland::output>& output)
+using render_platform = render::backend::wlroots::platform<platform>;
+using render_output = render::backend::wlroots::output<render_platform>;
+
+static render_output* get_render(std::unique_ptr<render::wayland::output>& output)
 {
-    return static_cast<render::backend::wlroots::output*>(output.get());
+    return static_cast<render_output*>(output.get());
 }
 
 static void handle_destroy(wl_listener* listener, void* /*data*/)
@@ -94,7 +97,8 @@ output::output(wlr_output* wlr_out, wlroots::platform* platform)
                     QSize(wlr_out->phys_width, wlr_out->phys_height),
                     modes,
                     current_mode.id != -1 ? &current_mode : nullptr);
-    render = std::make_unique<render::backend::wlroots::output>(*this, *platform->render);
+    render
+        = std::make_unique<render_output>(*this, static_cast<render_platform&>(*platform->render));
 }
 
 output::~output()

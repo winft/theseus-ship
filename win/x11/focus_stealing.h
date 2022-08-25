@@ -38,8 +38,8 @@ bool allow_window_activation(Space& space,
         time = window->userTime();
     }
 
-    auto level
-        = window->control->rules().checkFSP(kwinApp()->options->focusStealingPreventionLevel());
+    auto level = window->control->rules().checkFSP(
+        kwinApp()->options->qobject->focusStealingPreventionLevel());
     if (space.session_manager->state() == SessionState::Saving
         && enum_index(level) <= enum_index(fsp_level::medium)) {
         // <= normal
@@ -142,8 +142,8 @@ bool allow_window_activation(Space& space,
 template<typename Space, typename Win>
 bool allow_full_window_raising(Space& space, Win const* window, xcb_timestamp_t time)
 {
-    auto level
-        = window->control->rules().checkFSP(kwinApp()->options->focusStealingPreventionLevel());
+    auto level = window->control->rules().checkFSP(
+        kwinApp()->options->qobject->focusStealingPreventionLevel());
     if (space.session_manager->state() == SessionState::Saving
         && enum_index(level) <= enum_index(fsp_level::medium)) {
         // <= normal

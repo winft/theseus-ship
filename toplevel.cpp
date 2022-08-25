@@ -904,7 +904,7 @@ void Toplevel::update_maximized([[maybe_unused]] win::maximize_mode mode)
 {
 }
 
-bool Toplevel::performMouseCommand(base::options::MouseCommand cmd, const QPoint &globalPos)
+bool Toplevel::performMouseCommand(base::options_qobject::MouseCommand cmd, const QPoint &globalPos)
 {
     return win::perform_mouse_command(*this, cmd, globalPos);
 }

@@ -281,7 +281,7 @@ void window::setBlockingCompositing(bool block)
 {
     auto const usedToBlock = blocks_compositing;
     blocks_compositing = control->rules().checkBlockCompositing(
-        block && kwinApp()->options->windowsBlockCompositing());
+        block && kwinApp()->options->qobject->windowsBlockCompositing());
 
     if (usedToBlock != blocks_compositing) {
         Q_EMIT blockingCompositingChanged(blocks_compositing ? this : nullptr);
@@ -604,7 +604,8 @@ bool window::isHiddenInternal() const
     return hidden;
 }
 
-bool window::performMouseCommand(base::options::MouseCommand command, QPoint const& globalPos)
+bool window::performMouseCommand(base::options_qobject::MouseCommand command,
+                                 QPoint const& globalPos)
 {
     return x11::perform_mouse_command(this, command, globalPos);
 }
@@ -799,7 +800,8 @@ void window::do_set_maximize_mode(maximize_mode mode)
 
     // Update decoration borders.
     if (auto deco = decoration(this); deco && deco->client()
-        && !(kwinApp()->options->borderlessMaximizedWindows() && mode == maximize_mode::full)) {
+        && !(kwinApp()->options->qobject->borderlessMaximizedWindows()
+             && mode == maximize_mode::full)) {
         auto const deco_client = decoration(this)->client().toStrongRef().data();
 
         if ((mode & maximize_mode::vertical) != (old_mode & maximize_mode::vertical)) {

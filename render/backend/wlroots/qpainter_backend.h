@@ -5,28 +5,72 @@
 */
 #pragma once
 
+#include "qpainter_output.h"
+#include "wlr_includes.h"
+
 #include "render/qpainter/backend.h"
+#include "wayland_logging.h"
 
 namespace KWin::render::backend::wlroots
 {
 
-class platform;
-
+template<typename Platform>
 class qpainter_backend : public qpainter::backend
 {
 public:
-    qpainter_backend(wlroots::platform& platform);
-    ~qpainter_backend() override;
+    using qpainter_output_t = qpainter_output<typename Platform::output_t>;
 
-    void begin_render(base::output& output) override;
-    void present(base::output* output, QRegion const& damage) override;
+    qpainter_backend(Platform& platform)
+        : qpainter::backend()
+        , platform{platform}
+    {
+        for (auto& out : platform.base.all_outputs) {
+            auto render = static_cast<typename Platform::output_t*>(
+                static_cast<base::wayland::output*>(out)->render.get());
+            get_qpainter_output(*out)
+                = std::make_unique<qpainter_output_t>(*render, platform.renderer);
+        }
+    }
 
-    QImage* bufferForScreen(base::output* output) override;
+    ~qpainter_backend() override
+    {
+        tear_down();
+    }
 
-    bool needsFullRepaint() const override;
-    void tear_down();
+    void begin_render(base::output& output) override
+    {
+        get_qpainter_output(output)->begin_render();
+    }
 
-    wlroots::platform& platform;
+    void present(base::output* output, QRegion const& damage) override
+    {
+        wlr_renderer_end(platform.renderer);
+        get_qpainter_output(*output)->present(damage);
+    }
+
+    QImage* bufferForScreen(base::output* output) override
+    {
+        return get_qpainter_output(*output)->buffer.get();
+    }
+
+    bool needsFullRepaint() const override
+    {
+        return false;
+    }
+
+    void tear_down()
+    {
+    }
+
+    Platform& platform;
+
+private:
+    static std::unique_ptr<qpainter_output_t>& get_qpainter_output(base::output& output)
+    {
+        auto&& wayland_output = static_cast<base::wayland::output&&>(output);
+        auto& backend_output = static_cast<typename Platform::output_t&>(*wayland_output.render);
+        return backend_output.qpainter;
+    }
 };
 
 }

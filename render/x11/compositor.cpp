@@ -46,7 +46,7 @@ constexpr auto compositor_lost_message_delay = 2000;
 
 compositor::compositor(render::platform& platform)
     : render::compositor(platform)
-    , m_suspended(kwinApp()->options->isUseCompositing() ? NoReasonSuspend : UserSuspend)
+    , m_suspended(kwinApp()->options->qobject->isUseCompositing() ? NoReasonSuspend : UserSuspend)
 {
     x11_integration.is_overlay_window = [this](auto win) { return checkForOverlayWindow(win); };
     x11_integration.update_blocking
@@ -329,7 +329,7 @@ std::unique_ptr<render::scene> compositor::create_scene()
     std::deque<Factory> factories;
     factories.push_back(gl::create_scene);
 
-    auto const req_mode = kwinApp()->options->compositingMode();
+    auto const req_mode = kwinApp()->options->qobject->compositingMode();
 
 #ifdef KWIN_HAVE_XRENDER_COMPOSITING
     if (req_mode == XRenderCompositing) {

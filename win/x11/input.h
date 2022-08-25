@@ -82,7 +82,9 @@ void update_input_window(Win* win, QRect const& frame_geo)
 }
 
 template<typename Win>
-bool perform_mouse_command(Win* win, base::options::MouseCommand command, QPoint const& globalPos)
+bool perform_mouse_command(Win* win,
+                           base::options_qobject::MouseCommand command,
+                           QPoint const& globalPos)
 {
     return static_cast<Toplevel*>(win)->Toplevel::performMouseCommand(command, globalPos);
 }

@@ -433,7 +433,6 @@ set(kwin_SRCS
     render/gl/texture.cpp
     render/gl/window.cpp
     render/outline.cpp
-    render/platform.cpp
     render/scene.cpp
     render/shadow.cpp
     render/singleton_interface.cpp
@@ -823,13 +822,6 @@ set(kwin_WAYLAND_SRCS
    render/qpainter/scene.cpp
    render/qpainter/shadow.cpp
    render/qpainter/window.cpp
-   render/backend/wlroots/platform.cpp
-   render/backend/wlroots/egl_backend.cpp
-   render/backend/wlroots/egl_output.cpp
-   render/backend/wlroots/egl_texture.cpp
-   render/backend/wlroots/output.cpp
-   render/backend/wlroots/qpainter_backend.cpp
-   render/backend/wlroots/qpainter_output.cpp
    render/wayland/compositor.cpp
    render/wayland/effects.cpp
    render/wayland/output.cpp

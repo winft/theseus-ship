@@ -211,8 +211,9 @@ void ApplicationWayland::start()
 
     base = std::make_unique<base::backend::wlroots::platform>(waylandServer()->display.get());
 
-    base->render = std::make_unique<render::backend::wlroots::platform>(*base);
-    auto render = static_cast<render::backend::wlroots::platform*>(base->render.get());
+    using render_t = render::backend::wlroots::platform<base::backend::wlroots::platform>;
+    base->render = std::make_unique<render_t>(*base);
+    auto render = static_cast<render_t*>(base->render.get());
 
     createOptions();
 

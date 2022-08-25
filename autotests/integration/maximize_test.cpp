@@ -93,7 +93,7 @@ void TestMaximized::cleanup()
     group.writeEntry("BorderlessMaximizedWindows", false);
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);
-    QCOMPARE(kwinApp()->options->borderlessMaximizedWindows(), false);
+    QCOMPARE(kwinApp()->options->qobject->borderlessMaximizedWindows(), false);
 }
 
 void TestMaximized::testMaximizedPassedToDeco()
@@ -224,7 +224,7 @@ void TestMaximized::testInitiallyMaximizedBorderless()
     group.writeEntry("BorderlessMaximizedWindows", true);
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);
-    QCOMPARE(kwinApp()->options->borderlessMaximizedWindows(), true);
+    QCOMPARE(kwinApp()->options->qobject->borderlessMaximizedWindows(), true);
 
     // Create the test client.
     std::unique_ptr<Surface> surface(Test::create_surface());
@@ -278,7 +278,7 @@ void TestMaximized::testBorderlessMaximizedWindow()
     group.writeEntry("BorderlessMaximizedWindows", true);
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);
-    QCOMPARE(kwinApp()->options->borderlessMaximizedWindows(), true);
+    QCOMPARE(kwinApp()->options->qobject->borderlessMaximizedWindows(), true);
 
     // Create the test client.
     std::unique_ptr<Surface> surface(Test::create_surface());
@@ -370,7 +370,7 @@ void TestMaximized::testBorderlessMaximizedWindowNoClientSideDecoration()
     group.writeEntry("BorderlessMaximizedWindows", true);
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);
-    QCOMPARE(kwinApp()->options->borderlessMaximizedWindows(), true);
+    QCOMPARE(kwinApp()->options->qobject->borderlessMaximizedWindows(), true);
 
     std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> xdgShellToplevel(Test::create_xdg_shell_toplevel(surface));

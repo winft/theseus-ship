@@ -53,7 +53,7 @@ static bool has_glx()
 }
 
 platform::platform(base::x11::platform& base)
-    : render::platform(base)
+    : render::x11::platform(base)
     , m_x11Display(QX11Info::display())
     , base{base}
 {
@@ -64,7 +64,7 @@ platform::~platform()
     if (m_openGLFreezeProtectionThread) {
         m_openGLFreezeProtectionThread->quit();
         m_openGLFreezeProtectionThread->wait();
-        delete m_openGLFreezeProtectionThread;
+        m_openGLFreezeProtectionThread.reset();
     }
     XRenderUtils::cleanup();
 }
@@ -87,7 +87,7 @@ gl::backend* platform::get_opengl_backend(render::compositor& compositor)
         return gl_backend.get();
     }
 
-    if (kwinApp()->options->glPlatformInterface() == EglPlatformInterface) {
+    if (kwinApp()->options->qobject->glPlatformInterface() == EglPlatformInterface) {
         qCWarning(KWIN_CORE)
             << "Requested EGL on X11 backend, but support has been removed. Trying GLX instead.";
     }
@@ -107,17 +107,6 @@ void platform::render_stop(bool /*on_shutdown*/)
         tear_down_glx_backend(*gl_backend);
         gl_backend.reset();
     }
-}
-
-bool platform::requiresCompositing() const
-{
-    return false;
-}
-
-bool platform::openGLCompositingIsBroken() const
-{
-    const QString unsafeKey = QLatin1String("OpenGLIsUnsafe");
-    return KConfigGroup(kwinApp()->config(), "Compositing").readEntry(unsafeKey, false);
 }
 
 QString platform::compositingNotPossibleReason() const
@@ -197,9 +186,9 @@ void platform::createOpenGLSafePoint(OpenGLSafePoint safePoint)
         // Deliberately continue with PreFrame
         Q_FALLTHROUGH();
     case OpenGLSafePoint::PreFrame:
-        if (m_openGLFreezeProtectionThread == nullptr) {
+        if (!m_openGLFreezeProtectionThread) {
             Q_ASSERT(m_openGLFreezeProtection == nullptr);
-            m_openGLFreezeProtectionThread = new QThread(this);
+            m_openGLFreezeProtectionThread = std::make_unique<QThread>();
             m_openGLFreezeProtectionThread->setObjectName("FreezeDetector");
             m_openGLFreezeProtectionThread->start();
             m_openGLFreezeProtection = new QTimer;
@@ -207,8 +196,8 @@ void platform::createOpenGLSafePoint(OpenGLSafePoint safePoint)
             m_openGLFreezeProtection->setSingleShot(true);
             m_openGLFreezeProtection->start();
             const QString configName = kwinApp()->config()->name();
-            m_openGLFreezeProtection->moveToThread(m_openGLFreezeProtectionThread);
-            connect(
+            m_openGLFreezeProtection->moveToThread(m_openGLFreezeProtectionThread.get());
+            QObject::connect(
                 m_openGLFreezeProtection,
                 &QTimer::timeout,
                 m_openGLFreezeProtection,
@@ -239,8 +228,7 @@ void platform::createOpenGLSafePoint(OpenGLSafePoint safePoint)
         m_openGLFreezeProtection = nullptr;
         m_openGLFreezeProtectionThread->quit();
         m_openGLFreezeProtectionThread->wait();
-        delete m_openGLFreezeProtectionThread;
-        m_openGLFreezeProtectionThread = nullptr;
+        m_openGLFreezeProtectionThread.reset();
         break;
     }
 }
@@ -252,11 +240,11 @@ outline_visual* platform::create_non_composited_outline(render::outline* outline
 
 win::deco::renderer* platform::createDecorationRenderer(win::deco::client_impl* client)
 {
-    auto renderer = render::platform::createDecorationRenderer(client);
-    if (!renderer) {
-        renderer = new deco_renderer(client);
+    if (!compositor->scene) {
+        // Non-composited fallback
+        return new deco_renderer(client);
     }
-    return renderer;
+    return compositor->scene->createDecorationRenderer(client);
 }
 
 void platform::invertScreen()
@@ -298,12 +286,6 @@ void platform::invertScreen()
             xcb_randr_set_crtc_gamma(connection(), crtc, gamma->size, red, green, blue);
         }
     }
-}
-
-std::unique_ptr<render::effects_handler_impl>
-platform::createEffectsHandler(render::compositor* compositor, render::scene* scene)
-{
-    return std::make_unique<render::x11::effects_handler_impl>(compositor, scene);
 }
 
 CompositingType platform::selected_compositor() const

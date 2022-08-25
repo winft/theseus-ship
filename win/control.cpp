@@ -242,7 +242,7 @@ void control::start_auto_raise()
     m_auto_raise_timer = new QTimer(m_win);
     QObject::connect(m_auto_raise_timer, &QTimer::timeout, m_win, [this] { auto_raise(m_win); });
     m_auto_raise_timer->setSingleShot(true);
-    m_auto_raise_timer->start(kwinApp()->options->autoRaiseInterval());
+    m_auto_raise_timer->start(kwinApp()->options->qobject->autoRaiseInterval());
 }
 
 void control::cancel_auto_raise()

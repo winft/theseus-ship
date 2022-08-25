@@ -5,6 +5,14 @@
 */
 #pragma once
 
+#include "egl_helpers.h"
+#include "wlr_includes.h"
+
+#include "base/backend/wlroots/output.h"
+#include "base/logging.h"
+#include "render/wayland/egl_data.h"
+#include "wayland_logging.h"
+
 #include <kwingl/texture.h>
 #include <kwingl/utils.h>
 
@@ -17,29 +25,113 @@
 namespace KWin::render::backend::wlroots
 {
 
-class egl_backend;
-class output;
-
+template<typename Output>
 class egl_output
 {
 public:
-    egl_output(output& out, egl_backend* egl_back);
+    egl_output(Output& out, wayland::egl_data egl_data)
+        : out{&out}
+        , egl_data{egl_data}
+    {
+        reset();
+    }
+
     egl_output(egl_output const&) = delete;
     egl_output& operator=(egl_output const&) = delete;
-    egl_output(egl_output&& other) noexcept;
-    egl_output& operator=(egl_output&& other) noexcept;
-    ~egl_output();
 
-    bool reset();
-    bool reset_framebuffer();
-    void cleanup_framebuffer();
+    egl_output(egl_output&& other) noexcept
+    {
+        *this = std::move(other);
+    }
 
-    void make_current() const;
-    bool present();
+    egl_output& operator=(egl_output&& other) noexcept
+    {
+        out = other.out;
+        bufferAge = other.bufferAge;
+        egl_data = std::move(other.egl_data);
+        damageHistory = std::move(other.damageHistory);
 
-    output* out;
+        render = std::move(other.render);
+        other.render = {};
+
+        return *this;
+    }
+
+    ~egl_output()
+    {
+        cleanup_framebuffer();
+    }
+
+    bool reset()
+    {
+        reset_framebuffer();
+        return true;
+    }
+
+    bool reset_framebuffer()
+    {
+        cleanup_framebuffer();
+
+        auto const view_geo = out->base.view_geometry();
+        auto const centered_view
+            = out->base.mode_size() != view_geo.size() || !view_geo.topLeft().isNull();
+
+        if (out->base.transform() == base::wayland::output_transform::normal && !centered_view) {
+            // No need to create intermediate framebuffer.
+            return true;
+        }
+
+        // TODO(romangg): Also return in case wlroots can rotate in hardware.
+
+        make_current();
+
+        auto const texSize = view_geo.size();
+        render.texture = GLTexture(GL_TEXTURE_2D, texSize.width(), texSize.height());
+        render.fbo = GLRenderTarget(render.texture.value());
+        return render.fbo.valid();
+    }
+
+    void cleanup_framebuffer()
+    {
+        if (!render.fbo.valid()) {
+            return;
+        }
+        make_current();
+        render.texture = {};
+        render.fbo = {};
+    }
+
+    void make_current() const
+    {
+        make_context_current(egl_data);
+    }
+
+    bool present()
+    {
+        auto& base = static_cast<base::backend::wlroots::output&>(out->base);
+        out->swap_pending = true;
+
+        if (!base.native->enabled) {
+            wlr_output_enable(base.native, true);
+        }
+
+        if (!wlr_output_test(base.native)) {
+            qCWarning(KWIN_CORE) << "Atomic output test failed on present.";
+            wlr_output_rollback(base.native);
+            reset();
+            return false;
+        }
+        if (!wlr_output_commit(base.native)) {
+            qCWarning(KWIN_CORE) << "Atomic output commit failed on present.";
+            reset();
+            return false;
+        }
+        return true;
+    }
+
+    Output* out;
     int bufferAge{0};
-    egl_backend* egl_back;
+    wayland::egl_data egl_data;
 
     /** Damage history for the past 10 frames. */
     std::deque<QRegion> damageHistory;

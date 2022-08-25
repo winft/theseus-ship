@@ -473,7 +473,7 @@ void activate_window_impl(Space& space, Win* window, bool force)
     window->hideClient(false);
 
     // TODO force should perhaps allow this only if the window already contains the mouse
-    if (kwinApp()->options->focusPolicyIsReasonable() || force) {
+    if (kwinApp()->options->qobject->focusPolicyIsReasonable() || force) {
         request_focus(space, window, false, force);
     }
 
@@ -528,7 +528,7 @@ bool activate_next_window(Space& space, Toplevel* window)
         return true;
     }
 
-    if (!kwinApp()->options->focusPolicyIsReasonable())
+    if (!kwinApp()->options->qobject->focusPolicyIsReasonable())
         return false;
 
     Toplevel* get_focus = nullptr;
@@ -540,7 +540,7 @@ bool activate_next_window(Space& space, Toplevel* window)
         get_focus = find_desktop(&space, true, desktop);
     }
 
-    if (!get_focus && kwinApp()->options->isNextFocusPrefersMouse()) {
+    if (!get_focus && kwinApp()->options->qobject->isNextFocusPrefersMouse()) {
         get_focus = window_under_mouse(space,
                                        window ? window->central_output : get_current_output(space));
         if (get_focus && (get_focus == window || is_desktop(get_focus))) {
@@ -607,7 +607,7 @@ Toplevel* find_window_to_activate_on_desktop(Space& space, unsigned int desktop)
     }
 
     // from actiavtion.cpp
-    if (kwinApp()->options->isNextFocusPrefersMouse()) {
+    if (kwinApp()->options->qobject->isNextFocusPrefersMouse()) {
         auto it = space.stacking_order->stack.cend();
         while (it != space.stacking_order->stack.cbegin()) {
             auto window = *(--it);
@@ -636,7 +636,7 @@ void activate_window_on_new_desktop(Space& space, unsigned int desktop)
 {
     Toplevel* c = nullptr;
 
-    if (kwinApp()->options->focusPolicyIsReasonable()) {
+    if (kwinApp()->options->qobject->focusPolicyIsReasonable()) {
         c = find_window_to_activate_on_desktop(space, desktop);
     }
 
@@ -785,7 +785,7 @@ void request_delay_focus(Space& space, Toplevel* c)
         delay_focus(space);
     });
     space.delayFocusTimer->setSingleShot(true);
-    space.delayFocusTimer->start(kwinApp()->options->delayFocusInterval());
+    space.delayFocusTimer->start(kwinApp()->options->qobject->delayFocusInterval());
 }
 
 template<typename Space>

@@ -251,7 +251,7 @@ DELEGATE(WId, decorationId, frameId)
 #define DELEGATE(name, op)                                                                         \
     void client_impl::name()                                                                       \
     {                                                                                              \
-        win::perform_window_operation(space, m_client, base::options::op);                         \
+        win::perform_window_operation(space, m_client, base::options_qobject::op);                 \
     }
 
 DELEGATE(requestToggleOnAllDesktops, OnAllDesktopsOp)
@@ -338,7 +338,7 @@ void client_impl::requestToggleMaximization(Qt::MouseButtons buttons)
         qobject.get(),
         [this, buttons] {
             perform_window_operation(
-                space, m_client, kwinApp()->options->operationMaxButtonClick(buttons));
+                space, m_client, kwinApp()->options->qobject->operationMaxButtonClick(buttons));
         },
         Qt::QueuedConnection);
 }
@@ -412,7 +412,7 @@ bool client_impl::isApplicationMenuActive() const
 
 void client_impl::createRenderer()
 {
-    m_renderer.reset(kwinApp()->get_base().render->createDecorationRenderer(this));
+    m_renderer.reset(space.render.platform.createDecorationRenderer(this));
 }
 
 }
