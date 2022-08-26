@@ -7,30 +7,19 @@
 #include "device.h"
 
 #include "config.h"
-#include "input/platform.h"
 
 #include "config-kwin.h"
 
 namespace KWin::input::control
 {
 
-device::device(device_config* config, input::platform* plat)
+device::device(device_config* config)
     : QObject(nullptr)
-    , plat{plat}
 {
     this->config.reset(config);
 }
 
 device::~device() = default;
-
-void device::init_config()
-{
-    config->group = plat->config->group("Libinput")
-                        .group(QString::number(metadata.vendor_id))
-                        .group(QString::number(metadata.product_id))
-                        .group(metadata.name.c_str());
-    load_config(this);
-}
 
 void device::set_enabled(bool enable)
 {

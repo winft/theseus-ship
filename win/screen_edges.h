@@ -58,9 +58,20 @@ public:
     bool check(QPoint const& cursorPos, QDateTime const& triggerTime, bool forceNoPushBack = false);
     void markAsTriggered(const QPoint& cursorPos, QDateTime const& triggerTime);
 
-    void reserve(QObject* object, const char* slot);
+    void reserve();
+    void unreserve();
+
+    uint32_t reserve_callback(std::function<bool(ElectricBorder)> slot);
+    void replace_callback(uint32_t id, std::function<bool(ElectricBorder)> slot);
+    void unreserve_callback(uint32_t id);
+
     void reserveTouchCallBack(QAction* action);
     void unreserveTouchCallBack(QAction* action);
+
+    void setBorder(ElectricBorder border);
+    void setGeometry(QRect const& geometry);
+    void updateApproaching(QPoint const& point);
+    void checkBlocking();
 
     void startApproaching();
     void stopApproaching();
@@ -90,21 +101,12 @@ public:
     ElectricBorder border{ElectricNone};
     std::vector<QAction*> touch_actions;
     int reserved_count{0};
-    QHash<QObject*, QByteArray> callbacks;
+    QHash<uint32_t, std::function<bool(ElectricBorder)>> callbacks;
 
     bool is_approaching{false};
     QRect approach_geometry;
 
     screen_edger* edger;
-
-public Q_SLOTS:
-    void reserve();
-    void unreserve();
-    void unreserve(QObject* object);
-    void setBorder(ElectricBorder border);
-    void setGeometry(QRect const& geometry);
-    void updateApproaching(QPoint const& point);
-    void checkBlocking();
 
 Q_SIGNALS:
     void approaching(ElectricBorder border, qreal factor, QRect const& geometry);
@@ -223,7 +225,7 @@ public:
      * @see unreserve
      * @todo: add pointer to script/effect
      */
-    void reserve(ElectricBorder border, QObject* object, char const* callback);
+    uint32_t reserve(ElectricBorder border, std::function<bool(ElectricBorder)> callback);
     /**
      * Mark the specified screen edge as unreserved. This method is provided for external activation
      * like effects and scripts. This method is only allowed to be called if @ref reserve had been
@@ -234,7 +236,7 @@ public:
      * @see reserve
      * @todo: add pointer to script/effect
      */
-    void unreserve(ElectricBorder border, QObject* object);
+    void unreserve(ElectricBorder border, uint32_t id);
     /**
      * Reserves an edge for the @p client. The idea behind this is to show the @p client if the
      * screen edge which the @p client borders gets triggered.
@@ -302,6 +304,14 @@ public:
     bool handleEnterNotifiy(xcb_window_t window, QPoint const& point, QDateTime const& timestamp);
     bool remainActiveOnFullscreen() const;
 
+    void reconfigure();
+
+    /// Updates virtual desktops layout, adjusts reserved borders in case of vd switching on edges.
+    void updateLayout();
+
+    /// Recreates all edges e.g. after the screen size changes.
+    void recreateEdges();
+
     std::unique_ptr<input::gesture_recognizer> gesture_recognizer;
     KSharedConfig::Ptr config;
     win::space& space;
@@ -331,18 +341,6 @@ public:
 
     /// Minimum time between triggers
     int reactivate_threshold{0};
-
-public Q_SLOTS:
-    void reconfigure();
-    /**
-     * Updates the layout of virtual desktops and adjust the reserved borders in case of
-     * virtual desktop switching on edges.
-     */
-    void updateLayout();
-    /**
-     * Recreates all edges e.g. after the screen size changes.
-     */
-    void recreateEdges();
 
 Q_SIGNALS:
     /**

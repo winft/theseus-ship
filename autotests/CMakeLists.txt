@@ -116,6 +116,7 @@ include_directories(${KWIN_SOURCE_DIR})
 # Test OnScreenNotification
 ########################################################
 set(testOnScreenNotification_SRCS
+    ../base/logging.cpp
     ../win/osd_notification.cpp
     onscreennotificationtest.cpp
 )
@@ -127,7 +128,9 @@ target_link_libraries(testOnScreenNotification
     Qt::Test
     Qt::Widgets # QAction include
 
+    KDecoration2::KDecoration2Private
     KF5::ConfigCore
+    KF5::WindowSystem
 )
 
 add_test(NAME kwin-testOnScreenNotification COMMAND testOnScreenNotification)
@@ -175,9 +178,9 @@ add_test(NAME kwin-testOpenGLContextAttributeBuilder COMMAND testOpenGLContextAt
 ecm_mark_as_test(testOpenGLContextAttributeBuilder)
 
 set(testXkb_SRCS
+    ../base/logging.cpp
     ../input/xkb/keyboard.cpp
     ../input/xkb/keymap.cpp
-    ../input/xkb/manager.cpp
     test_xkb.cpp
 )
 add_executable(testXkb ${testXkb_SRCS})

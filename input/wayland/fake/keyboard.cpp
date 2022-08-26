@@ -24,7 +24,8 @@ static wayland_space& wlspace(win::space& space)
 }
 
 keyboard::keyboard(Wrapland::Server::FakeInputDevice* device, input::platform* platform)
-    : input::keyboard(platform)
+    : input::keyboard(platform->xkb.context, platform->xkb.compose_table)
+    , platform{platform}
     , device{device}
 {
     QObject::connect(

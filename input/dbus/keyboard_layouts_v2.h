@@ -19,10 +19,6 @@ class QDBusArgument;
 
 namespace KWin::input
 {
-namespace xkb
-{
-class layout_manager;
-}
 
 class keyboard;
 class platform;
@@ -55,7 +51,7 @@ class keyboard_layouts_v2 : public QObject
     Q_CLASSINFO("D-Bus Interface", "org.kde.KeyboardLayoutsV2")
 
 public:
-    keyboard_layouts_v2(input::platform* platform, xkb::layout_manager* parent);
+    keyboard_layouts_v2(input::platform* platform);
 
 public Q_SLOTS:
     void switchToNextLayout(uint keyboard);
@@ -77,7 +73,6 @@ private:
 
     keyboard_v2_internal const* get_internal_keyboard(uint keyboard) const;
 
-    xkb::layout_manager* layout_manager;
     std::unordered_map<uint, keyboard_v2_internal> keyboards;
 };
 

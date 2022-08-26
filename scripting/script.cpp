@@ -114,6 +114,9 @@ script::script(int id,
 
 script::~script()
 {
+    for (auto& [border, id] : reserved_borders) {
+        platform.space.edges->unreserve(border, id);
+    }
 }
 
 void script::run()
@@ -375,8 +378,10 @@ bool script::registerScreenEdge(int edge, const QJSValue& callback)
 
     QJSValueList& callbacks = m_screenEdgeCallbacks[edge];
     if (callbacks.isEmpty()) {
-        platform.space.edges->reserve(
-            static_cast<ElectricBorder>(edge), this, "slotBorderActivated");
+        auto border = static_cast<ElectricBorder>(edge);
+        auto id = platform.space.edges->reserve(
+            border, [this](auto eb) { return slotBorderActivated(eb); });
+        reserved_borders.insert({border, id});
     }
 
     callbacks << callback;
@@ -391,9 +396,13 @@ bool script::unregisterScreenEdge(int edge)
         return false;
     }
 
-    platform.space.edges->unreserve(static_cast<ElectricBorder>(edge), this);
-    m_screenEdgeCallbacks.erase(it);
+    auto border = static_cast<ElectricBorder>(edge);
+    if (auto it = reserved_borders.find(border); it != reserved_borders.end()) {
+        platform.space.edges->unreserve(border, it->second);
+        reserved_borders.erase(it);
+    }
 
+    m_screenEdgeCallbacks.erase(it);
     return true;
 }
 

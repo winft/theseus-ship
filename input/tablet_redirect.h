@@ -31,11 +31,13 @@ class Toplevel;
 namespace input
 {
 
-class KWIN_EXPORT tablet_redirect : public device_redirect
+class tablet_redirect : public device_redirect
 {
-    Q_OBJECT
 public:
-    explicit tablet_redirect(input::redirect* redirect);
+    explicit tablet_redirect(input::redirect* redirect)
+        : device_redirect(redirect)
+    {
+    }
 
     virtual void tabletToolEvent(redirect::TabletEventType /*type*/,
                                  QPointF const& /*pos*/,

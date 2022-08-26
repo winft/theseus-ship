@@ -5,25 +5,14 @@
 */
 #include "keyboard.h"
 
-#include "platform.h"
 #include "utils/algorithm.h"
 
 namespace KWin::input
 {
 
-keyboard::keyboard(input::platform* platform)
-    : platform{platform}
-    , xkb{std::make_unique<xkb::keyboard>(platform->xkb)}
+keyboard::keyboard(xkb_context* context, xkb_compose_table* compose_table)
+    : xkb{std::make_unique<xkb::keyboard>(context, compose_table)}
 {
-    platform->keyboards.push_back(this);
-}
-
-keyboard::~keyboard()
-{
-    if (platform) {
-        remove_all(platform->keyboards, this);
-        Q_EMIT platform->keyboard_removed(this);
-    }
 }
 
 }

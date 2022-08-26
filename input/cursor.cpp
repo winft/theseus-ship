@@ -9,6 +9,7 @@
 #include "main.h"
 #include "platform.h"
 #include "pointer_redirect.h"
+#include "singleton_interface.h"
 
 #include <KConfig>
 #include <KConfigGroup>
@@ -26,6 +27,7 @@ cursor::cursor()
     , m_themeName("default")
     , m_themeSize(24)
 {
+    singleton_interface::cursor = this;
     load_theme_settings();
     QDBusConnection::sessionBus().connect(QString(),
                                           QStringLiteral("/KGlobalSettings"),
@@ -33,6 +35,11 @@ cursor::cursor()
                                           QStringLiteral("notifyChange"),
                                           this,
                                           SLOT(kglobal_settings_notify_change(int, int)));
+}
+
+cursor::~cursor()
+{
+    singleton_interface::cursor = nullptr;
 }
 
 void cursor::load_theme_settings()

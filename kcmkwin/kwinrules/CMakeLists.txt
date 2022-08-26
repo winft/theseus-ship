@@ -5,13 +5,14 @@ add_definitions(-DKCMRULES)
 include_directories(../../)
 
 set(kwinrules_SRCS
+    ../../base/logging.cpp
     ../../win/rules/book_settings.cpp
     ../../input/cursor.cpp
     ../../input/cursor_shape.cpp
+    ../../input/singleton_interface.cpp
     ../../input/x11/cursor.cpp
     ../../win/rules/ruling.cpp
     ../../win/dbus/virtual_desktop_types.cpp
-    kwinsrc.cpp
     optionsmodel.cpp
     ruleitem.cpp
     rulesmodel.cpp
@@ -32,6 +33,7 @@ set(kwin_kcm_rules_XCB_LIBS
 set(kcm_libs
     Qt::Quick
 
+    KDecoration2::KDecoration2Private
     KF5::KCMUtils
     KF5::I18n
     KF5::QuickAddons

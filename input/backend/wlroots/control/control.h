@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include "input/control/config.h"
+
 #include <QSizeF>
 #include <libinput.h>
 
@@ -19,7 +21,19 @@ void populate_metadata(Dev dev)
     data.sys_name = libinput_device_get_sysname(dev->dev);
     data.vendor_id = libinput_device_get_id_vendor(dev->dev);
     data.product_id = libinput_device_get_id_product(dev->dev);
-    dev->init_config();
+}
+
+template<typename Dev>
+void init_device_control(Dev* dev, KSharedConfigPtr input_config)
+{
+    populate_metadata(dev);
+
+    dev->config->group = input_config->group("Libinput")
+                             .group(QString::number(dev->metadata.vendor_id))
+                             .group(QString::number(dev->metadata.product_id))
+                             .group(dev->metadata.name.c_str());
+
+    control::load_config(dev);
 }
 
 template<typename Dev>

@@ -398,10 +398,9 @@ set(kwin_SRCS
     input/keyboard.cpp
     input/keyboard_redirect.cpp
     input/platform.cpp
-    input/pointer_redirect.cpp
+    input/platform_qobject.cpp
     input/redirect.cpp
-    input/tablet_redirect.cpp
-    input/touch_redirect.cpp
+    input/redirect_qobject.cpp
     input/singleton_interface.cpp
     input/spies/modifier_only_shortcuts.cpp
     input/cursor.cpp
@@ -414,7 +413,6 @@ set(kwin_SRCS
     input/x11/redirect.cpp
     input/xkb/keyboard.cpp
     input/xkb/keymap.cpp
-    input/xkb/manager.cpp
     main.cpp
     render/buffer.cpp
     render/compositor.cpp
@@ -638,6 +636,7 @@ if (KWIN_BUILD_TABBOX)
     win/tabbox/tabbox_desktop_chain.cpp
     win/tabbox/tabbox_desktop_model.cpp
     win/tabbox/tabbox_handler.cpp
+    win/tabbox/tabbox_handler_impl.cpp
     win/tabbox/tabbox_logging.cpp
     win/tabbox/tabbox_switcher_item.cpp
     win/tabbox/tabbox_x11_filter.cpp
@@ -777,11 +776,7 @@ set(kwin_WAYLAND_SRCS
    debug/console/wayland/input_filter.cpp
    debug/console/wayland/surface_tree_model.cpp
    debug/console/wayland/wayland_console.cpp
-   input/backend/wlroots/keyboard.cpp
    input/backend/wlroots/platform.cpp
-   input/backend/wlroots/pointer.cpp
-   input/backend/wlroots/switch.cpp
-   input/backend/wlroots/touch.cpp
    input/backend/wlroots/control/headless/keyboard.cpp
    input/backend/wlroots/control/keyboard.cpp
    input/backend/wlroots/control/pointer.cpp

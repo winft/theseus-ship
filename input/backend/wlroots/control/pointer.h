@@ -7,6 +7,7 @@
 
 #include "input/control/pointer.h"
 
+#include <KSharedConfig>
 #include <QSizeF>
 #include <libinput.h>
 
@@ -18,7 +19,7 @@ class pointer_control : public input::control::pointer
     Q_OBJECT
 
 public:
-    pointer_control(libinput_device* dev, input::platform* platform);
+    pointer_control(libinput_device* dev, KSharedConfigPtr input_config);
     ~pointer_control() override = default;
 
     bool supports_disable_events() const override;

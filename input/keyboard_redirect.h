@@ -27,17 +27,28 @@ void keyboard_redirect_prepare_key(Keyboard& keys, key_event const& event)
     keys.redirect->processSpies(std::bind(&event_spy::key, std::placeholders::_1, event));
 }
 
-class KWIN_EXPORT keyboard_redirect : public QObject
+class KWIN_EXPORT keyboard_redirect_qobject : public QObject
 {
 public:
-    explicit keyboard_redirect(input::redirect* parent);
+    ~keyboard_redirect_qobject() override;
+};
+
+class keyboard_redirect
+{
+public:
+    explicit keyboard_redirect(input::redirect* redirect)
+        : qobject{std::make_unique<keyboard_redirect_qobject>()}
+        , redirect(redirect)
+    {
+    }
+
+    virtual ~keyboard_redirect() = default;
 
     virtual void update() = 0;
-
     virtual void process_key(key_event const& event) = 0;
-
     virtual void process_modifiers(modifiers_event const& event) = 0;
 
+    std::unique_ptr<keyboard_redirect_qobject> qobject;
     input::redirect* redirect;
 };
 

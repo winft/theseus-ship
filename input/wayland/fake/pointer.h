@@ -28,6 +28,8 @@ public:
     pointer& operator=(pointer const&) = delete;
     ~pointer() override = default;
 
+private:
+    input::platform* platform;
     Wrapland::Server::FakeInputDevice* device;
 };
 

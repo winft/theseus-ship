@@ -18,6 +18,7 @@
 #include "input/spies/modifier_only_shortcuts.h"
 #include "input/xkb/helpers.h"
 #include "input/xkb/layout_manager.h"
+#include "input/xkb/manager.h"
 #include "toplevel.h"
 #include "win/space.h"
 #include "win/stacking_order.h"
@@ -48,7 +49,7 @@ public:
 
     void key(key_event const& event) override
     {
-        Q_EMIT redirect->keyStateChanged(event.keycode, event.state);
+        Q_EMIT redirect->qobject->keyStateChanged(event.keycode, event.state);
     }
 
 private:
@@ -77,7 +78,7 @@ public:
         if (mods == m_modifiers) {
             return;
         }
-        Q_EMIT redirect->keyboardModifiersChanged(mods, m_modifiers);
+        Q_EMIT redirect->qobject->keyboardModifiersChanged(mods, m_modifiers);
         m_modifiers = mods;
     }
 
@@ -92,15 +93,14 @@ void keyboard_redirect::init()
 {
     auto& xkb = redirect->platform.xkb;
     auto const config = kwinApp()->kxkbConfig();
-    xkb.setNumLockConfig(kwinApp()->inputConfig());
+    xkb.numlock_config = kwinApp()->inputConfig();
     xkb.setConfig(config);
 
     redirect->installInputEventSpy(new KeyStateChangedSpy(redirect));
     modifiers_spy = new modifiers_changed_spy(redirect);
     redirect->installInputEventSpy(modifiers_spy);
 
-    layout_manager = std::make_unique<xkb::layout_manager>(redirect->platform.xkb, config);
-    layout_manager->init();
+    layout_manager = std::make_unique<layout_manager_t>(redirect->platform.xkb, config);
 
     if (waylandServer()->has_global_shortcut_support()) {
         redirect->installInputEventSpy(new modifier_only_shortcuts_spy(*redirect));
@@ -109,26 +109,28 @@ void keyboard_redirect::init()
     auto keyRepeatSpy = new keyboard_repeat_spy(*redirect);
     QObject::connect(keyRepeatSpy->qobject.get(),
                      &keyboard_repeat_spy_qobject::key_repeated,
-                     this,
-                     &keyboard_redirect::process_key_repeat);
+                     qobject.get(),
+                     [this](auto const& event) { process_key_repeat(event); });
     redirect->installInputEventSpy(keyRepeatSpy);
 
-    QObject::connect(
-        redirect->space.qobject.get(), &win::space::qobject_t::clientActivated, this, [this] {
-            QObject::disconnect(m_activeClientSurfaceChangedConnection);
-            if (auto c = redirect->space.active_client) {
-                m_activeClientSurfaceChangedConnection = QObject::connect(
-                    c, &Toplevel::surfaceChanged, this, &keyboard_redirect::update);
-            } else {
-                m_activeClientSurfaceChangedConnection = QMetaObject::Connection();
-            }
-            update();
-        });
+    QObject::connect(redirect->space.qobject.get(),
+                     &win::space::qobject_t::clientActivated,
+                     qobject.get(),
+                     [this] {
+                         QObject::disconnect(m_activeClientSurfaceChangedConnection);
+                         if (auto c = redirect->space.active_client) {
+                             m_activeClientSurfaceChangedConnection = QObject::connect(
+                                 c, &Toplevel::surfaceChanged, qobject.get(), [this] { update(); });
+                         } else {
+                             m_activeClientSurfaceChangedConnection = QMetaObject::Connection();
+                         }
+                         update();
+                     });
     if (waylandServer()->has_screen_locker_integration()) {
         QObject::connect(ScreenLocker::KSldApp::self(),
                          &ScreenLocker::KSldApp::lockStateChanged,
-                         this,
-                         &keyboard_redirect::update);
+                         qobject.get(),
+                         [this] { update(); });
     }
 }
 

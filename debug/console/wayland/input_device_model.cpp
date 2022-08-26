@@ -6,9 +6,6 @@
 */
 #include "input_device_model.h"
 
-#include "input/dbus/device.h"
-#include "input/dbus/device_manager.h"
-
 #include <QMetaProperty>
 
 namespace KWin::debug
@@ -17,49 +14,9 @@ namespace KWin::debug
 static const quint32 s_propertyBitMask = 0xFFFF0000;
 static const quint32 s_clientBitMask = 0x0000FFFF;
 
-input_device_model::input_device_model(input::dbus::device_manager& dbus, QObject* parent)
+input_device_model::input_device_model(QObject* parent)
     : QAbstractItemModel(parent)
 {
-    for (auto& dev : dbus.devices) {
-        m_devices.push_back(dev);
-    }
-
-    for (auto& dev : m_devices) {
-        setupDeviceConnections(dev);
-    }
-
-    QObject::connect(&dbus,
-                     &input::dbus::device_manager::deviceAdded,
-                     this,
-                     [&dbus, this](auto const& sys_name) {
-                         for (auto& dev : dbus.devices) {
-                             if (dev->sysName() != sys_name) {
-                                 continue;
-                             }
-                             beginInsertRows(QModelIndex(), m_devices.count(), m_devices.count());
-                             m_devices << dev;
-                             setupDeviceConnections(dev);
-                             endInsertRows();
-                             return;
-                         }
-                     });
-
-    QObject::connect(
-        &dbus, &input::dbus::device_manager::deviceRemoved, this, [this](auto const& sys_name) {
-            int index{-1};
-            for (int i = 0; i < m_devices.size(); i++) {
-                if (m_devices.at(i)->sysName() == sys_name) {
-                    index = i;
-                    break;
-                }
-            }
-            if (index == -1) {
-                return;
-            }
-            beginRemoveRows(QModelIndex(), index, index);
-            m_devices.removeAt(index);
-            endRemoveRows();
-        });
 }
 
 int input_device_model::columnCount(const QModelIndex& parent) const
@@ -134,6 +91,25 @@ QModelIndex input_device_model::parent(const QModelIndex& child) const
         return createIndex(parentId - 1, 0, parentId);
     }
     return QModelIndex();
+}
+
+void input_device_model::begin_insert_rows(QModelIndex const& parent, int first, int last)
+{
+    beginInsertRows(parent, first, last);
+}
+void input_device_model::end_insert_rows()
+{
+    endInsertRows();
+}
+
+void input_device_model::begin_remove_rows(QModelIndex const& parent, int first, int last)
+{
+    beginRemoveRows(parent, first, last);
+}
+
+void input_device_model::end_remove_rows()
+{
+    endRemoveRows();
 }
 
 void input_device_model::setupDeviceConnections(input::dbus::device* device)

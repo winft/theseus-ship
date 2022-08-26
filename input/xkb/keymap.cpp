@@ -7,6 +7,8 @@
 
 #include "manager.h"
 
+#include "base/logging.h"
+
 #include <sys/mman.h>
 #include <xkbcommon/xkbcommon.h>
 
@@ -24,7 +26,7 @@ keymap::keymap(int fd, uint32_t size, xkb_context* context)
 {
     auto map = reinterpret_cast<char*>(mmap(nullptr, size, PROT_READ, MAP_SHARED, fd, 0));
     if (map == MAP_FAILED) {
-        qCDebug(KWIN_XKB) << "Could not map keymap from fd" << fd;
+        qCDebug(KWIN_CORE) << "Could not map keymap from fd" << fd;
         // TODO(romangg): Throw specific error
         throw std::exception();
     }
@@ -34,7 +36,7 @@ keymap::keymap(int fd, uint32_t size, xkb_context* context)
     munmap(map, size);
 
     if (!keymap) {
-        qCDebug(KWIN_XKB) << "Could not get new keymap string from map.";
+        qCDebug(KWIN_CORE) << "Could not get new keymap string from map.";
         // TODO(romangg): Throw specific error
         throw std::exception();
     }

@@ -27,10 +27,10 @@ namespace KWin::input::dbus
 static const QString s_keyboardService = QStringLiteral("org.kde.keyboard");
 static const QString s_keyboardObject = QStringLiteral("/Layouts");
 
-keyboard_layout::keyboard_layout(KConfigGroup const& configGroup, xkb::layout_manager* parent)
-    : QObject(parent)
-    , m_configGroup(configGroup)
-    , manager(parent)
+keyboard_layout::keyboard_layout(KConfigGroup const& configGroup,
+                                 std::function<xkb::keyboard*()> xkb_getter)
+    : m_configGroup(configGroup)
+    , xkb_getter{xkb_getter}
 {
     qRegisterMetaType<QVector<LayoutNames>>("QVector<LayoutNames>");
     qDBusRegisterMetaType<LayoutNames>();
@@ -50,17 +50,17 @@ keyboard_layout::~keyboard_layout()
 
 void keyboard_layout::switchToNextLayout()
 {
-    manager->switchToNextLayout();
+    Q_EMIT next_layout_requested();
 }
 
 void keyboard_layout::switchToPreviousLayout()
 {
-    manager->switchToPreviousLayout();
+    Q_EMIT previous_layout_requested();
 }
 
 bool keyboard_layout::setLayout(uint index)
 {
-    auto xkb = xkb::get_primary_xkb_keyboard(*manager->xkb.platform);
+    auto xkb = xkb_getter();
 
     if (!xkb->switch_to_layout(index)) {
         return false;
@@ -71,12 +71,12 @@ bool keyboard_layout::setLayout(uint index)
 
 uint keyboard_layout::getLayout() const
 {
-    return xkb::get_primary_xkb_keyboard(*manager->xkb.platform)->layout;
+    return xkb_getter()->layout;
 }
 
 QVector<keyboard_layout::LayoutNames> keyboard_layout::getLayoutsList() const
 {
-    auto xkb = xkb::get_primary_xkb_keyboard(*manager->xkb.platform);
+    auto xkb = xkb_getter();
 
     // TODO: - should be handled by layout applet itself, it has nothing to do with KWin
     auto const display_names = m_configGroup.readEntry("DisplayNames", QStringList());

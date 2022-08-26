@@ -12,8 +12,8 @@
 namespace KWin::input::control
 {
 
-touch::touch(platform* plat)
-    : device(new device_config, plat)
+touch::touch()
+    : device(new device_config)
 {
 }
 

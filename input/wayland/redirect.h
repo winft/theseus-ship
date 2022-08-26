@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include "fake/devices.h"
+
 #include "input/redirect.h"
 
 #include <KConfigWatcher>
@@ -42,7 +44,6 @@ class touch_redirect;
 
 class KWIN_EXPORT redirect : public input::redirect
 {
-    Q_OBJECT
 public:
     redirect(input::platform& platform, win::space& space);
     ~redirect() override;
@@ -101,9 +102,6 @@ public:
     std::unique_ptr<tablet_redirect> tablet;
     std::unique_ptr<touch_redirect> touch;
 
-Q_SIGNALS:
-    void has_tablet_mode_switch_changed(bool set);
-
 private:
     void setup_workspace();
     void setup_devices();
@@ -120,13 +118,8 @@ private:
     KConfigWatcher::Ptr config_watcher;
     std::unique_ptr<Wrapland::Server::FakeInput> fake_input;
 
-    struct fake_input_devices {
-        std::unique_ptr<fake::pointer> pointer;
-        std::unique_ptr<fake::keyboard> keyboard;
-        std::unique_ptr<fake::touch> touch;
-    };
-
-    std::unordered_map<Wrapland::Server::FakeInputDevice*, fake_input_devices> fake_devices;
+    std::unordered_map<Wrapland::Server::FakeInputDevice*, fake::devices<input::platform>>
+        fake_devices;
     std::unordered_map<Wrapland::Server::virtual_keyboard_v1*, std::unique_ptr<input::keyboard>>
         virtual_keyboards;
 

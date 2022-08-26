@@ -14,7 +14,10 @@ namespace KWin::input
 
 namespace xkb
 {
+template<typename Xkb>
 class layout_manager;
+template<typename Platform>
+class manager;
 }
 
 namespace wayland
@@ -24,7 +27,6 @@ class redirect;
 
 class KWIN_EXPORT keyboard_redirect : public input::keyboard_redirect
 {
-    Q_OBJECT
 public:
     explicit keyboard_redirect(wayland::redirect* redirect);
     ~keyboard_redirect() override;
@@ -42,7 +44,9 @@ public:
 private:
     QMetaObject::Connection m_activeClientSurfaceChangedConnection;
     modifiers_changed_spy* modifiers_spy{nullptr};
-    std::unique_ptr<xkb::layout_manager> layout_manager;
+
+    using layout_manager_t = xkb::layout_manager<xkb::manager<platform>>;
+    std::unique_ptr<layout_manager_t> layout_manager;
 };
 
 }

@@ -6,37 +6,17 @@
 #pragma once
 
 #include "device.h"
+#include "pointer_config.h"
+#include "pointer_types.h"
 
 namespace KWin::input::control
 {
-class pointer_config;
-
-enum class accel_profile {
-    none,
-    flat,
-    adaptive,
-};
-
-enum class scroll {
-    none,
-    two_finger,
-    edge,
-    on_button_down,
-};
-
-enum class clicks {
-    none,
-    button_areas,
-    finger_count,
-};
 
 class KWIN_EXPORT pointer : public device
 {
     Q_OBJECT
 public:
-    explicit pointer(platform* plat);
-
-    void init_config() override;
+    pointer();
 
     virtual bool is_touchpad() const = 0;
     virtual bool supports_gesture() const = 0;
@@ -115,7 +95,7 @@ public:
     virtual clicks click_method() const = 0;
     void set_click_method(clicks method);
 
-    pointer_config* config;
+    pointer_config<pointer>* config;
 
 protected:
     virtual bool set_tap_to_click_impl(bool active) = 0;

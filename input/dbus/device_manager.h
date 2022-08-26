@@ -5,34 +5,27 @@
 */
 #pragma once
 
+#include "device_helpers.h"
+
 #include "kwin_export.h"
 
 #include <QObject>
 #include <QStringList>
-
-#include <memory>
 #include <vector>
 
-namespace KWin::input
-{
-class platform;
-
-namespace dbus
+namespace KWin::input::dbus
 {
 class device;
 
-class KWIN_EXPORT device_manager : public QObject
+class KWIN_EXPORT device_manager_qobject : public QObject
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "org.kde.KWin.InputDeviceManager")
     Q_PROPERTY(QStringList devicesSysNames READ devicesSysNames CONSTANT)
 
-private:
-    platform* plat;
-
 public:
-    explicit device_manager(platform* plat);
-    ~device_manager() override;
+    device_manager_qobject();
+    ~device_manager_qobject() override;
 
     QStringList devicesSysNames();
 
@@ -43,5 +36,53 @@ Q_SIGNALS:
     void deviceRemoved(QString sysName);
 };
 
-}
+template<typename Platform>
+class device_manager
+{
+public:
+    explicit device_manager(Platform& platform)
+        : qobject{std::make_unique<device_manager_qobject>()}
+        , platform{platform}
+    {
+        QObject::connect(platform.qobject.get(),
+                         &platform_qobject::keyboard_added,
+                         qobject.get(),
+                         [this](auto dev) { add_device(dev, this); });
+        QObject::connect(platform.qobject.get(),
+                         &platform_qobject::pointer_added,
+                         qobject.get(),
+                         [this](auto dev) { add_device(dev, this); });
+        QObject::connect(platform.qobject.get(),
+                         &platform_qobject::switch_added,
+                         qobject.get(),
+                         [this](auto dev) { add_device(dev, this); });
+        QObject::connect(platform.qobject.get(),
+                         &platform_qobject::touch_added,
+                         qobject.get(),
+                         [this](auto dev) { add_device(dev, this); });
+
+        QObject::connect(platform.qobject.get(),
+                         &platform_qobject::keyboard_removed,
+                         qobject.get(),
+                         [this](auto dev) { remove_device(dev, this); });
+        QObject::connect(platform.qobject.get(),
+                         &platform_qobject::pointer_removed,
+                         qobject.get(),
+                         [this](auto dev) { remove_device(dev, this); });
+        QObject::connect(platform.qobject.get(),
+                         &platform_qobject::switch_removed,
+                         qobject.get(),
+                         [this](auto dev) { remove_device(dev, this); });
+        QObject::connect(platform.qobject.get(),
+                         &platform_qobject::touch_removed,
+                         qobject.get(),
+                         [this](auto dev) { remove_device(dev, this); });
+    }
+
+    std::unique_ptr<device_manager_qobject> qobject;
+
+private:
+    Platform& platform;
+};
+
 }

@@ -27,9 +27,7 @@ constexpr auto dbus_object_path{"/LayoutsV2"};
 
 uint keyboard_index{0};
 
-keyboard_layouts_v2::keyboard_layouts_v2(input::platform* platform, xkb::layout_manager* parent)
-    : QObject(parent)
-    , layout_manager(parent)
+keyboard_layouts_v2::keyboard_layouts_v2(input::platform* platform)
 {
     qRegisterMetaType<QVector<layout_names_v2>>("QVector<layout_names_v2>");
     qDBusRegisterMetaType<layout_names_v2>();
@@ -40,12 +38,12 @@ keyboard_layouts_v2::keyboard_layouts_v2(input::platform* platform, xkb::layout_
     qDBusRegisterMetaType<keyboard_v2>();
     qDBusRegisterMetaType<QVector<keyboard_v2>>();
 
-    QObject::connect(platform,
-                     &input::platform::keyboard_added,
+    QObject::connect(platform->qobject.get(),
+                     &input::platform_qobject::keyboard_added,
                      this,
                      &keyboard_layouts_v2::handle_keyboard_added);
-    QObject::connect(platform,
-                     &input::platform::keyboard_removed,
+    QObject::connect(platform->qobject.get(),
+                     &input::platform_qobject::keyboard_removed,
                      this,
                      &keyboard_layouts_v2::handle_keyboard_removed);
 
@@ -130,13 +128,15 @@ void keyboard_layouts_v2::handle_keyboard_added(input::keyboard* keyboard)
     auto xkb = keyboard->xkb.get();
     auto const index = keyboard_index++;
 
-    QObject::connect(xkb, &xkb::keyboard::layout_changed, this, [this, index] {
-        auto const& keyboard = keyboards.at(index);
-        Q_EMIT layoutChanged(keyboard.data.id, keyboard.internal->xkb->layout);
-    });
-    QObject::connect(xkb, &xkb::keyboard::layouts_changed, this, [this, index] {
-        Q_EMIT layoutListChanged(keyboards.at(index).data.id);
-    });
+    QObject::connect(
+        xkb->qobject.get(), &xkb::keyboard_qobject::layout_changed, this, [this, index] {
+            auto const& keyboard = keyboards.at(index);
+            Q_EMIT layoutChanged(keyboard.data.id, keyboard.internal->xkb->layout);
+        });
+    QObject::connect(xkb->qobject.get(),
+                     &xkb::keyboard_qobject::layouts_changed,
+                     this,
+                     [this, index] { Q_EMIT layoutListChanged(keyboards.at(index).data.id); });
 
     auto internal = keyboard_v2_internal({index,
                                           QString::fromStdString(ctrl->metadata.name),

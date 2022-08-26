@@ -64,34 +64,36 @@ void pointer_redirect::init()
 
     QObject::connect(&kwinApp()->get_base(),
                      &base::platform::topology_changed,
-                     this,
-                     &pointer_redirect::updateAfterScreenChange);
+                     qobject.get(),
+                     [this] { updateAfterScreenChange(); });
     if (waylandServer()->has_screen_locker_integration()) {
-        QObject::connect(
-            ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::lockStateChanged, this, [this] {
-                waylandServer()->seat()->pointers().cancel_pinch_gesture();
-                waylandServer()->seat()->pointers().cancel_swipe_gesture();
-                device_redirect_update(this);
-            });
+        QObject::connect(ScreenLocker::KSldApp::self(),
+                         &ScreenLocker::KSldApp::lockStateChanged,
+                         qobject.get(),
+                         [this] {
+                             waylandServer()->seat()->pointers().cancel_pinch_gesture();
+                             waylandServer()->seat()->pointers().cancel_swipe_gesture();
+                             device_redirect_update(this);
+                         });
     }
 
-    QObject::connect(waylandServer()->seat(), &Wrapland::Server::Seat::dragEnded, this, [this] {
-        // need to force a focused pointer change
-        waylandServer()->seat()->pointers().set_focused_surface(nullptr);
-        device_redirect_set_focus(this, nullptr);
-        device_redirect_update(this);
-    });
+    QObject::connect(
+        waylandServer()->seat(), &Wrapland::Server::Seat::dragEnded, qobject.get(), [this] {
+            // need to force a focused pointer change
+            waylandServer()->seat()->pointers().set_focused_surface(nullptr);
+            device_redirect_set_focus(this, nullptr);
+            device_redirect_update(this);
+        });
 
     // connect the move resize of all window
     auto setupMoveResizeConnection = [this](Toplevel* c) {
         if (!c->control) {
             return;
         }
-        QObject::connect(c,
-                         &Toplevel::clientStartUserMovedResized,
-                         this,
-                         &pointer_redirect::update_on_start_move_resize);
-        QObject::connect(c, &Toplevel::clientFinishUserMovedResized, this, [this] {
+        QObject::connect(c, &Toplevel::clientStartUserMovedResized, qobject.get(), [this] {
+            update_on_start_move_resize();
+        });
+        QObject::connect(c, &Toplevel::clientFinishUserMovedResized, qobject.get(), [this] {
             device_redirect_update(this);
         });
     };
@@ -100,11 +102,11 @@ void pointer_redirect::init()
     std::for_each(clients.begin(), clients.end(), setupMoveResizeConnection);
     QObject::connect(redirect->space.qobject.get(),
                      &win::space::qobject_t::clientAdded,
-                     this,
+                     qobject.get(),
                      setupMoveResizeConnection);
     QObject::connect(redirect->space.qobject.get(),
                      &win::space::qobject_t::wayland_window_added,
-                     this,
+                     qobject.get(),
                      setupMoveResizeConnection);
 
     // warp the cursor to center of screen
@@ -113,8 +115,8 @@ void pointer_redirect::init()
 
     auto wayland_cursor = dynamic_cast<wayland::cursor*>(redirect->platform.cursor.get());
     assert(wayland_cursor);
-    QObject::connect(this,
-                     &pointer_redirect::decorationChanged,
+    QObject::connect(qobject.get(),
+                     &device_redirect_qobject::decorationChanged,
                      wayland_cursor->cursor_image.get(),
                      &wayland::cursor_image::updateDecoration);
 }
@@ -394,7 +396,7 @@ void pointer_redirect::cleanupInternalWindow(QWindow* old, QWindow* now)
 
     if (now) {
         notifiers.internal_window = QObject::connect(
-            focus.internal_window, &QWindow::visibleChanged, this, [this](bool visible) {
+            focus.internal_window, &QWindow::visibleChanged, qobject.get(), [this](bool visible) {
                 if (!visible) {
                     device_redirect_update(this);
                 }
@@ -427,25 +429,25 @@ void pointer_redirect::cleanupDecoration(win::deco::client_impl* old, win::deco:
 
     auto window = focus.deco->client();
 
-    notifiers.decoration_geometry
-        = QObject::connect(window, &Toplevel::frame_geometry_changed, this, [this, window] {
-              if (window->control && (win::is_move(window) || win::is_resize(window))) {
-                  // Don't update while doing an interactive move or resize.
-                  return;
-              }
-              // ensure maximize button gets the leave event when maximizing/restore a window, see
-              // BUG 385140
-              auto const old_deco = focus.deco;
-              device_redirect_update(this);
-              auto deco = focus.deco;
-              if (old_deco && old_deco == deco && !win::is_move(deco->client())
-                  && !win::is_resize(deco->client()) && !areButtonsPressed()) {
-                  // position of window did not change, we need to send HoverMotion manually
-                  QPointF const p = m_pos - deco->client()->pos();
-                  QHoverEvent event(QEvent::HoverMove, p, p);
-                  QCoreApplication::instance()->sendEvent(deco->decoration(), &event);
-              }
-          });
+    notifiers.decoration_geometry = QObject::connect(
+        window, &Toplevel::frame_geometry_changed, qobject.get(), [this, window] {
+            if (window->control && (win::is_move(window) || win::is_resize(window))) {
+                // Don't update while doing an interactive move or resize.
+                return;
+            }
+            // ensure maximize button gets the leave event when maximizing/restore a window, see
+            // BUG 385140
+            auto const old_deco = focus.deco;
+            device_redirect_update(this);
+            auto deco = focus.deco;
+            if (old_deco && old_deco == deco && !win::is_move(deco->client())
+                && !win::is_resize(deco->client()) && !areButtonsPressed()) {
+                // position of window did not change, we need to send HoverMotion manually
+                QPointF const p = m_pos - deco->client()->pos();
+                QHoverEvent event(QEvent::HoverMove, p, p);
+                QCoreApplication::instance()->sendEvent(deco->decoration(), &event);
+            }
+        });
 }
 
 void pointer_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
@@ -488,15 +490,15 @@ void pointer_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
     warp_xcb_on_surface_left(focusNow->surface);
 
     // TODO: why? in order to reset the cursor icon?
-    s_cursorUpdateBlocking = true;
+    cursor_update_blocking = true;
     seat->pointers().set_focused_surface(nullptr);
-    s_cursorUpdateBlocking = false;
+    cursor_update_blocking = false;
 
     seat->pointers().set_position(m_pos.toPoint());
     seat->pointers().set_focused_surface(focusNow->surface, focusNow->input_transform());
 
     notifiers.focus_geometry
-        = QObject::connect(focusNow, &Toplevel::frame_geometry_changed, this, [this] {
+        = QObject::connect(focusNow, &Toplevel::frame_geometry_changed, qobject.get(), [this] {
               if (!focus.window) {
                   // Might happen for Xwayland clients.
                   return;
@@ -516,12 +518,12 @@ void pointer_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
 
     notifiers.constraints = QObject::connect(focusNow->surface,
                                              &Wrapland::Server::Surface::pointerConstraintsChanged,
-                                             this,
-                                             &pointer_redirect::updatePointerConstraints);
+                                             qobject.get(),
+                                             [this] { updatePointerConstraints(); });
     notifiers.constraints_activated = QObject::connect(redirect->space.qobject.get(),
                                                        &win::space::qobject_t::clientActivated,
-                                                       this,
-                                                       &pointer_redirect::updatePointerConstraints);
+                                                       qobject.get(),
+                                                       [this] { updatePointerConstraints(); });
     updatePointerConstraints();
 }
 
@@ -637,7 +639,10 @@ void pointer_redirect::updatePointerConstraints()
             cf->setConfined(true);
             constraints.confined = true;
             notifiers.confined_pointer_region = QObject::connect(
-                cf.data(), &Wrapland::Server::ConfinedPointerV1::regionChanged, this, [this] {
+                cf.data(),
+                &Wrapland::Server::ConfinedPointerV1::regionChanged,
+                qobject.get(),
+                [this] {
                     if (!focus.window) {
                         return;
                     }
@@ -692,7 +697,7 @@ void pointer_redirect::updatePointerConstraints()
             notifiers.locked_pointer_destroyed = QObject::connect(
                 lock.data(),
                 &Wrapland::Server::LockedPointerV1::resourceDestroyed,
-                this,
+                qobject.get(),
                 [this, lock]() {
                     const auto hint = lock->cursorPositionHint();
                     if (hint.x() < 0 || hint.y() < 0 || !focus.window) {
@@ -806,7 +811,7 @@ void pointer_redirect::update_position(const QPointF& pos)
         return;
     }
     m_pos = p;
-    Q_EMIT redirect->globalPointerChanged(m_pos);
+    Q_EMIT redirect->qobject->globalPointerChanged(m_pos);
 }
 
 void pointer_redirect::update_button(button_event const& event)
@@ -822,7 +827,7 @@ void pointer_redirect::update_button(button_event const& event)
         qt_buttons |= button_to_qt_mouse_button(it.key());
     }
 
-    Q_EMIT redirect->pointerButtonStateChanged(event.key, event.state);
+    Q_EMIT redirect->qobject->pointerButtonStateChanged(event.key, event.state);
 }
 
 void pointer_redirect::warp(QPointF const& pos)

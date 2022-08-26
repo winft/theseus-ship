@@ -6,10 +6,12 @@
 #pragma once
 
 #include "keyboard.h"
+#include "platform_qobject.h"
 #include "xkb/manager.h"
 
 #include "kwin_export.h"
 #include "kwinglobals.h"
+#include "utils/algorithm.h"
 
 #include <KSharedConfig>
 #include <QAction>
@@ -26,8 +28,10 @@ class Toplevel;
 
 namespace input
 {
+
 namespace dbus
 {
+template<typename Platform>
 class device_manager;
 }
 
@@ -38,27 +42,69 @@ class redirect;
 class switch_device;
 class touch;
 
-class KWIN_EXPORT platform : public QObject
+template<typename Keys, typename Platform>
+void platform_add_keyboard(Keys* keys, Platform& platform)
 {
-    Q_OBJECT
+    platform.keyboards.push_back(keys);
+    platform.qobject->keyboard_added(keys);
+}
+
+template<typename Pointer, typename Platform>
+void platform_add_pointer(Pointer* pointer, Platform& platform)
+{
+    platform.pointers.push_back(pointer);
+    platform.qobject->pointer_added(pointer);
+}
+
+template<typename Switch, typename Platform>
+void platform_add_switch(Switch* switch_dev, Platform& platform)
+{
+    platform.switches.push_back(switch_dev);
+    platform.qobject->switch_added(switch_dev);
+}
+
+template<typename Touch, typename Platform>
+void platform_add_touch(Touch* touch, Platform& platform)
+{
+    platform.touchs.push_back(touch);
+    platform.qobject->touch_added(touch);
+}
+
+template<typename Keys, typename Platform>
+void platform_remove_keyboard(Keys* keys, Platform& platform)
+{
+    remove_all(platform.keyboards, keys);
+    Q_EMIT platform.qobject->keyboard_removed(keys);
+}
+
+template<typename Pointer, typename Platform>
+void platform_remove_pointer(Pointer* pointer, Platform& platform)
+{
+    remove_all(platform.pointers, pointer);
+    Q_EMIT platform.qobject->pointer_removed(pointer);
+}
+
+template<typename Switch, typename Platform>
+void platform_remove_switch(Switch* switch_dev, Platform& platform)
+{
+    remove_all(platform.switches, switch_dev);
+    Q_EMIT platform.qobject->switch_removed(switch_dev);
+}
+
+template<typename Touch, typename Platform>
+void platform_remove_touch(Touch* touch, Platform& platform)
+{
+    remove_all(platform.touchs, touch);
+    Q_EMIT platform.qobject->touch_removed(touch);
+}
+
+class KWIN_EXPORT platform
+{
 public:
-    std::vector<keyboard*> keyboards;
-    std::vector<pointer*> pointers;
-    std::vector<switch_device*> switches;
-    std::vector<touch*> touchs;
-
-    input::xkb::manager xkb;
-    input::redirect* redirect{nullptr};
-    std::unique_ptr<input::cursor> cursor;
-    std::unique_ptr<global_shortcuts_manager> shortcuts;
-
-    std::unique_ptr<dbus::device_manager> dbus;
-    KSharedConfigPtr config;
-
     platform();
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
-    ~platform() override;
+    virtual ~platform();
 
     void registerShortcut(QKeySequence const& shortcut, QAction* action);
     /**
@@ -131,16 +177,20 @@ public:
     virtual void start_interactive_position_selection(std::function<void(QPoint const&)> callback)
         = 0;
 
-Q_SIGNALS:
-    void keyboard_added(KWin::input::keyboard*);
-    void pointer_added(KWin::input::pointer*);
-    void switch_added(KWin::input::switch_device*);
-    void touch_added(KWin::input::touch*);
+    std::unique_ptr<platform_qobject> qobject;
 
-    void keyboard_removed(KWin::input::keyboard*);
-    void pointer_removed(KWin::input::pointer*);
-    void switch_removed(KWin::input::switch_device*);
-    void touch_removed(KWin::input::touch*);
+    std::vector<keyboard*> keyboards;
+    std::vector<pointer*> pointers;
+    std::vector<switch_device*> switches;
+    std::vector<touch*> touchs;
+
+    input::xkb::manager<platform> xkb;
+    input::redirect* redirect{nullptr};
+    std::unique_ptr<input::cursor> cursor;
+    std::unique_ptr<global_shortcuts_manager> shortcuts;
+
+    std::unique_ptr<dbus::device_manager<platform>> dbus;
+    KSharedConfigPtr config;
 };
 
 template<typename T, typename Slot>

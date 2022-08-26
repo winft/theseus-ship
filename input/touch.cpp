@@ -5,7 +5,6 @@
 */
 #include "touch.h"
 
-#include "base/platform.h"
 #include "base/wayland/output.h"
 #include "main.h"
 #include "utils/algorithm.h"
@@ -36,11 +35,8 @@ Qt::ScreenOrientation to_qt_orientation(base::wayland::output_transform transfor
     }
 }
 
-touch::touch(input::platform* platform)
-    : platform{platform}
+touch::touch()
 {
-    platform->touchs.push_back(this);
-
     QObject::connect(&kwinApp()->get_base(), &base::platform::topology_changed, this, [this] {
         if (!control) {
             return;
@@ -50,14 +46,6 @@ touch::touch(input::platform* platform)
             control->set_orientation(to_qt_orientation(output->transform()));
         }
     });
-}
-
-touch::~touch()
-{
-    if (platform) {
-        remove_all(platform->touchs, this);
-        Q_EMIT platform->touch_removed(this);
-    }
 }
 
 base::wayland::output* touch::get_output() const

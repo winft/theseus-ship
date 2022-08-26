@@ -23,9 +23,6 @@ class keyboard_control : public input::control::keyboard
     Q_OBJECT
 
 public:
-    keyboard_control(input::platform* platform);
-    ~keyboard_control() override = default;
-
     bool supports_disable_events() const override;
     bool is_enabled() const override;
     bool set_enabled_impl(bool enabled) override;

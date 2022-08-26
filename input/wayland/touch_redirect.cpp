@@ -40,15 +40,17 @@ void touch_redirect::init()
     device_redirect_init(this);
 
     if (waylandServer()->has_screen_locker_integration()) {
-        QObject::connect(
-            ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::lockStateChanged, this, [this] {
-                if (!waylandServer()->seat()->hasTouch()) {
-                    return;
-                }
-                cancel();
-                // position doesn't matter
-                device_redirect_update(this);
-            });
+        QObject::connect(ScreenLocker::KSldApp::self(),
+                         &ScreenLocker::KSldApp::lockStateChanged,
+                         qobject.get(),
+                         [this] {
+                             if (!waylandServer()->seat()->hasTouch()) {
+                                 return;
+                             }
+                             cancel();
+                             // position doesn't matter
+                             device_redirect_update(this);
+                         });
     }
 }
 
@@ -133,7 +135,7 @@ void touch_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
     seat->touches().set_focused_surface(
         focusNow->surface, -1 * focusNow->input_transform().map(focusNow->pos()) + focusNow->pos());
     focus_geometry_notifier
-        = QObject::connect(focusNow, &Toplevel::frame_geometry_changed, this, [this] {
+        = QObject::connect(focusNow, &Toplevel::frame_geometry_changed, qobject.get(), [this] {
               auto focus_win = focus.window;
               if (!focus_win) {
                   return;

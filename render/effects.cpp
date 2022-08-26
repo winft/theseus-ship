@@ -1382,14 +1382,45 @@ QPoint effects_handler_impl::cursorPos() const
     return m_compositor->space->input->platform.cursor->pos();
 }
 
+void insert_border(std::unordered_map<ElectricBorder, uint32_t>& map,
+                   ElectricBorder border,
+                   uint32_t id)
+{
+    auto it = map.find(border);
+    if (it == map.end()) {
+        map.insert({border, id});
+        return;
+    }
+
+    it->second = id;
+}
+
 void effects_handler_impl::reserveElectricBorder(ElectricBorder border, Effect* effect)
 {
-    m_compositor->space->edges->reserve(border, effect, "borderActivated");
+    auto id = m_compositor->space->edges->reserve(
+        border, [effect](auto eb) { return effect->borderActivated(eb); });
+
+    auto it = reserved_borders.find(effect);
+    if (it == reserved_borders.end()) {
+        it = reserved_borders.insert({effect, {}}).first;
+    }
+
+    insert_border(it->second, border, id);
 }
 
 void effects_handler_impl::unreserveElectricBorder(ElectricBorder border, Effect* effect)
 {
-    m_compositor->space->edges->unreserve(border, effect);
+    auto it = reserved_borders.find(effect);
+    if (it == reserved_borders.end()) {
+        return;
+    }
+
+    auto it2 = it->second.find(border);
+    if (it2 == it->second.end()) {
+        return;
+    }
+
+    m_compositor->space->edges->unreserve(border, it2->second);
 }
 
 void effects_handler_impl::registerTouchBorder(ElectricBorder border, QAction* action)
@@ -1470,6 +1501,16 @@ void effects_handler_impl::destroyEffect(Effect* effect)
 {
     assert(effect);
     makeOpenGLContextCurrent();
+
+    if (auto it = reserved_borders.find(effect); it != reserved_borders.end()) {
+        // Might be at shutdown with edges object already gone.
+        if (m_compositor->space->edges) {
+            for (auto& [key, id] : it->second) {
+                m_compositor->space->edges->unreserve(key, id);
+            }
+        }
+        reserved_borders.erase(it);
+    }
 
     if (fullscreen_effect == effect) {
         setActiveFullScreenEffect(nullptr);

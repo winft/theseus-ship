@@ -18,31 +18,15 @@ namespace KWin::input
 {
 
 platform::platform()
-    : xkb{input::xkb::manager(this)}
+    : qobject{std::make_unique<platform_qobject>(
+        [this](auto accel) { registerGlobalAccel(accel); })}
+    , xkb{xkb::manager<platform>(this)}
 {
     qRegisterMetaType<button_state>();
     qRegisterMetaType<key_state>();
-
-    singleton_interface::platform = this;
 }
 
-platform::~platform()
-{
-    for (auto keyboard : keyboards) {
-        keyboard->platform = nullptr;
-    }
-    for (auto pointer : pointers) {
-        pointer->platform = nullptr;
-    }
-    for (auto switch_device : switches) {
-        switch_device->platform = nullptr;
-    }
-    for (auto touch : touchs) {
-        touch->platform = nullptr;
-    }
-
-    singleton_interface::platform = nullptr;
-}
+platform::~platform() = default;
 
 void platform::registerShortcut(QKeySequence const& /*shortcut*/, QAction* action)
 {

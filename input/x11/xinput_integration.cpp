@@ -17,11 +17,9 @@
 #include "input/pointer_redirect.h"
 #include "input/redirect.h"
 #include "input/spies/modifier_only_shortcuts.h"
-#include "platform.h"
+#include "kwinglobals.h"
 #include "win/screen_edges.h"
 #include "win/space.h"
-
-#include "kwinglobals.h"
 
 #include <X11/extensions/XI2proto.h>
 #include <X11/extensions/XInput2.h>
@@ -233,8 +231,7 @@ public:
 };
 
 xinput_integration::xinput_integration(Display* display, x11::platform* platform)
-    : fake_devices{std::make_unique<input::pointer>(platform),
-                   std::make_unique<input::keyboard>(platform)}
+    : fake_devices{*platform}
     , platform{platform}
     , m_x11Display(display)
 {
@@ -326,13 +323,17 @@ void xinput_integration::setup_fake_devices()
     auto keyboard = fake_devices.keyboard.get();
     auto keyboard_red = platform->redirect->get_keyboard();
 
-    keyboard->xkb->update_from_default();
+    xkb::keyboard_update_from_default(platform->xkb, *keyboard->xkb);
 
-    QObject::connect(
-        pointer, &pointer::button_changed, pointer_red, &input::pointer_redirect::process_button);
+    QObject::connect(pointer,
+                     &pointer::button_changed,
+                     pointer_red->qobject.get(),
+                     [pointer_red](auto const& event) { pointer_red->process_button(event); });
 
-    QObject::connect(
-        keyboard, &keyboard::key_changed, keyboard_red, &input::keyboard_redirect::process_key);
+    QObject::connect(keyboard,
+                     &keyboard::key_changed,
+                     keyboard_red->qobject.get(),
+                     [keyboard_red](auto const& event) { keyboard_red->process_key(event); });
 }
 
 }

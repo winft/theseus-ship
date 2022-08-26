@@ -20,14 +20,12 @@ class KWIN_EXPORT keyboard : public QObject
 {
     Q_OBJECT
 public:
-    input::platform* platform;
     std::unique_ptr<control::keyboard> control;
     std::unique_ptr<xkb::keyboard> xkb;
 
-    keyboard(input::platform* platform);
+    keyboard(xkb_context* context, xkb_compose_table* compose_table);
     keyboard(keyboard const&) = delete;
     keyboard& operator=(keyboard const&) = delete;
-    ~keyboard() override;
 
 Q_SIGNALS:
     void key_changed(key_event);

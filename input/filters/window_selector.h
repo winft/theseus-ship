@@ -16,6 +16,7 @@
 #include "input/qt_event.h"
 #include "input/redirect.h"
 #include "input/wayland/platform.h"
+#include "input/window_find.h"
 #include "input/xkb/keyboard.h"
 #include "main.h"
 
@@ -202,7 +203,7 @@ private:
     {
         if (m_callback) {
             // TODO: this ignores shaped windows
-            m_callback(this->redirect.findToplevel(pos));
+            m_callback(find_window(this->redirect, pos));
         }
         if (m_pointSelectionFallback) {
             m_pointSelectionFallback(pos);

@@ -650,11 +650,13 @@ void effect::registerShortcut(const QString& objectName,
 
 bool effect::borderActivated(ElectricBorder edge)
 {
-    auto it = screenEdgeCallbacks().constFind(edge);
-    if (it != screenEdgeCallbacks().constEnd()) {
-        for (const QJSValue& callback : it.value()) {
-            QJSValue(callback).call();
-        }
+    auto it = border_callbacks.find(edge);
+    if (it == border_callbacks.end()) {
+        return false;
+    }
+
+    for (auto const& callback : qAsConst(it->second.value)) {
+        QJSValue(callback).call();
     }
     return true;
 }
@@ -688,53 +690,57 @@ bool effect::registerScreenEdge(int edge, const QJSValue& callback)
         m_engine->throwError(QStringLiteral("Screen edge handler must be callable"));
         return false;
     }
-    auto it = screenEdgeCallbacks().find(edge);
-    if (it == screenEdgeCallbacks().end()) {
-        // not yet registered
-        space.edges->reserve(static_cast<KWin::ElectricBorder>(edge), this, "borderActivated");
-        screenEdgeCallbacks().insert(edge, QJSValueList{callback});
-    } else {
-        it->append(callback);
+
+    auto it = border_callbacks.find(edge);
+    if (it != border_callbacks.end()) {
+        it->second.value.append(callback);
+        return true;
     }
+
+    // Not yet registered.
+    auto id = space.edges->reserve(static_cast<KWin::ElectricBorder>(edge),
+                                   [this](auto eb) { return borderActivated(eb); });
+    border_callbacks.insert({edge, {id, {callback}}});
     return true;
 }
 
 bool effect::unregisterScreenEdge(int edge)
 {
-    auto it = screenEdgeCallbacks().find(edge);
-    if (it == screenEdgeCallbacks().end()) {
+    auto it = border_callbacks.find(edge);
+    if (it == border_callbacks.end()) {
         // not previously registered
         return false;
     }
-    space.edges->unreserve(static_cast<KWin::ElectricBorder>(edge), this);
-    screenEdgeCallbacks().erase(it);
+    space.edges->unreserve(static_cast<KWin::ElectricBorder>(edge), it->second.id);
+    border_callbacks.erase(it);
     return true;
 }
 
 bool effect::registerTouchScreenEdge(int edge, const QJSValue& callback)
 {
-    if (m_touchScreenEdgeCallbacks.constFind(edge) != m_touchScreenEdgeCallbacks.constEnd()) {
+    if (touch_border_callbacks.find(edge) != touch_border_callbacks.end()) {
         return false;
     }
     if (!callback.isCallable()) {
         m_engine->throwError(QStringLiteral("Touch screen edge handler must be callable"));
         return false;
     }
-    QAction* action = new QAction(this);
+
+    auto action = new QAction(this);
     connect(action, &QAction::triggered, this, [callback]() { QJSValue(callback).call(); });
     space.edges->reserveTouch(KWin::ElectricBorder(edge), action);
-    m_touchScreenEdgeCallbacks.insert(edge, action);
+    touch_border_callbacks.insert({edge, action});
     return true;
 }
 
 bool effect::unregisterTouchScreenEdge(int edge)
 {
-    auto it = m_touchScreenEdgeCallbacks.find(edge);
-    if (it == m_touchScreenEdgeCallbacks.end()) {
+    auto it = touch_border_callbacks.find(edge);
+    if (it == touch_border_callbacks.end()) {
         return false;
     }
-    delete it.value();
-    m_touchScreenEdgeCallbacks.erase(it);
+    delete it->second;
+    touch_border_callbacks.erase(it);
     return true;
 }
 

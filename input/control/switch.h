@@ -14,7 +14,7 @@ class KWIN_EXPORT switch_device : public device
 {
     Q_OBJECT
 public:
-    explicit switch_device(platform* plat);
+    switch_device();
 
     virtual bool is_lid_switch() const = 0;
     virtual bool is_tablet_mode_switch() const = 0;

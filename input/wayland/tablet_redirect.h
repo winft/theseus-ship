@@ -22,7 +22,6 @@ namespace input::wayland
 
 class KWIN_EXPORT tablet_redirect : public input::tablet_redirect
 {
-    Q_OBJECT
 public:
     explicit tablet_redirect(wayland::redirect* redirect);
 

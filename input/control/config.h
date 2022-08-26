@@ -8,7 +8,7 @@
 #include "device.h"
 
 #include <KConfigGroup>
-
+#include <KSharedConfig>
 #include <functional>
 #include <string>
 #include <unordered_map>

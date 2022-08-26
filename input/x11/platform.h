@@ -19,7 +19,6 @@ class xinput_integration;
 
 class platform : public input::platform
 {
-    Q_OBJECT
 public:
     platform();
     platform(platform const&) = delete;

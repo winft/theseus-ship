@@ -23,20 +23,16 @@ class output;
 namespace input
 {
 
-class platform;
-
 class KWIN_EXPORT touch : public QObject
 {
     Q_OBJECT
 public:
-    input::platform* platform;
     std::unique_ptr<control::touch> control;
     base::wayland::output* output{nullptr};
 
-    touch(input::platform* platform);
+    touch();
     touch(touch const&) = delete;
     touch& operator=(touch const&) = delete;
-    ~touch() override;
 
     // TODO(romangg): Make this a function template.
     base::wayland::output* get_output() const;

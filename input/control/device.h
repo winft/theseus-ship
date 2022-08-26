@@ -13,7 +13,6 @@
 
 namespace KWin::input
 {
-class platform;
 
 namespace control
 {
@@ -38,19 +37,14 @@ public:
     virtual bool is_enabled() const = 0;
     void set_enabled(bool enable);
 
-    virtual void init_config();
-
     std::unique_ptr<device_config> config;
 
 Q_SIGNALS:
     void enabled_changed();
 
 protected:
-    explicit device(device_config* config, input::platform* plat);
+    explicit device(device_config* config);
     virtual bool set_enabled_impl(bool enable) = 0;
-
-private:
-    input::platform* plat;
 };
 
 }

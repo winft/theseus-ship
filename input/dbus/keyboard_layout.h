@@ -11,6 +11,7 @@
 #include <KSharedConfig>
 #include <QObject>
 #include <QVector>
+#include <functional>
 
 class QAction;
 class QDBusArgument;
@@ -20,7 +21,7 @@ namespace KWin::input
 
 namespace xkb
 {
-class layout_manager;
+class keyboard;
 }
 
 namespace dbus
@@ -32,7 +33,7 @@ class keyboard_layout : public QObject
     Q_CLASSINFO("D-Bus Interface", "org.kde.KeyboardLayouts")
 
 public:
-    keyboard_layout(KConfigGroup const& configGroup, xkb::layout_manager* parent);
+    keyboard_layout(KConfigGroup const& configGroup, std::function<xkb::keyboard*()> xkb_getter);
     ~keyboard_layout() override;
 
     struct LayoutNames {
@@ -51,10 +52,12 @@ public Q_SLOTS:
 Q_SIGNALS:
     void layoutChanged(uint index);
     void layoutListChanged();
+    void next_layout_requested();
+    void previous_layout_requested();
 
 private:
     KConfigGroup const& m_configGroup;
-    xkb::layout_manager* manager;
+    std::function<xkb::keyboard*()> xkb_getter;
 };
 
 QDBusArgument& operator<<(QDBusArgument& argument, const keyboard_layout::LayoutNames& layoutNames);
