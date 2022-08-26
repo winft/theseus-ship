@@ -51,7 +51,6 @@ void MaximizeAnimationTest::initTestCase()
 {
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
     qRegisterMetaType<KWin::Toplevel*>();
-    qRegisterMetaType<win::wayland::window*>();
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
@@ -140,11 +139,9 @@ void MaximizeAnimationTest::testMaximizeRestore()
     QVERIFY(!effect->isActive());
 
     // Maximize the client.
-    QSignalSpy geometryChangedSpy(client, &win::wayland::window::frame_geometry_changed);
+    QSignalSpy geometryChangedSpy(client, &Toplevel::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
-    QSignalSpy maximizeChangedSpy(
-        client,
-        qOverload<Toplevel*, bool, bool>(&win::wayland::window::clientMaximizedStateChanged));
+    QSignalSpy maximizeChangedSpy(client, &Toplevel::maximize_mode_changed);
     QVERIFY(maximizeChangedSpy.isValid());
 
     win::active_window_maximize(*Test::app()->base.space);

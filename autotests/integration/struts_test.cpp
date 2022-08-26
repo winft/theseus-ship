@@ -43,6 +43,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
+using wayland_space = win::wayland::space<base::wayland::platform>;
+using wayland_window = win::wayland::window<wayland_space>;
+
 class StrutsTest : public QObject
 {
     Q_OBJECT
@@ -67,9 +70,6 @@ private:
 
 void StrutsTest::initTestCase()
 {
-    qRegisterMetaType<win::wayland::window*>();
-    qRegisterMetaType<KWin::win::x11::window*>();
-
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
 
@@ -225,7 +225,7 @@ void StrutsTest::testWaylandStruts()
              QRegion());
 
     struct client_holder {
-        win::wayland::window* window;
+        wayland_window* window;
         std::unique_ptr<Wrapland::Client::PlasmaShellSurface> plasma_surface;
         std::unique_ptr<Wrapland::Client::XdgShellToplevel> toplevel;
         std::unique_ptr<Wrapland::Client::Surface> surface;
@@ -340,7 +340,7 @@ void StrutsTest::testMoveWaylandPanel()
     QCOMPARE(win::space_window_area(*Test::app()->base.space, WorkArea, outputs.at(0), 1),
              QRect(0, 0, 2560, 1000));
 
-    QSignalSpy geometryChangedSpy(c, &win::wayland::window::frame_geometry_changed);
+    QSignalSpy geometryChangedSpy(c, &Toplevel::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
     plasmaSurface->setPosition(QPoint(1280, 1000));
     QVERIFY(geometryChangedSpy.wait());
@@ -629,7 +629,9 @@ void StrutsTest::testX11Struts()
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
-    auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
+
+    auto client
+        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QVERIFY(!win::decoration(client));
@@ -680,7 +682,7 @@ void StrutsTest::testX11Struts()
     xcb_flush(c.get());
     c.reset();
 
-    QSignalSpy windowClosedSpy(client, &win::x11::window::closed);
+    QSignalSpy windowClosedSpy(client, &Toplevel::closed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
 
@@ -779,7 +781,9 @@ void StrutsTest::test363804()
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
-    auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
+
+    auto client
+        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QVERIFY(!win::decoration(client));
@@ -805,7 +809,7 @@ void StrutsTest::test363804()
     xcb_flush(c.get());
     c.reset();
 
-    QSignalSpy windowClosedSpy(client, &win::x11::window::closed);
+    QSignalSpy windowClosedSpy(client, &Toplevel::closed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
 }
@@ -870,7 +874,9 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
-    auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
+
+    auto client
+        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QVERIFY(!win::decoration(client));
@@ -916,7 +922,8 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
 
     QVERIFY(windowCreatedSpy.wait());
 
-    auto client2 = windowCreatedSpy.last().first().value<win::x11::window*>();
+    auto client2
+        = dynamic_cast<win::x11::window*>(windowCreatedSpy.last().first().value<Toplevel*>());
     QVERIFY(client2);
     QVERIFY(client2 != client);
     QVERIFY(win::decoration(client2));
@@ -925,14 +932,14 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
     QCOMPARE(client2->maximizeMode(), win::maximize_mode::full);
 
     // destroy window again
-    QSignalSpy normalWindowClosedSpy(client2, &win::x11::window::closed);
+    QSignalSpy normalWindowClosedSpy(client2, &Toplevel::closed);
     QVERIFY(normalWindowClosedSpy.isValid());
     xcb_unmap_window(c.get(), w2);
     xcb_destroy_window(c.get(), w2);
     xcb_flush(c.get());
     QVERIFY(normalWindowClosedSpy.wait());
 
-    QSignalSpy windowClosedSpy(client, &win::x11::window::closed);
+    QSignalSpy windowClosedSpy(client, &Toplevel::closed);
     QVERIFY(windowClosedSpy.isValid());
 
     // and destroy the window again
@@ -1005,7 +1012,9 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
-    auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
+
+    auto client
+        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QVERIFY(!win::decoration(client));
@@ -1052,7 +1061,8 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
     xcb_flush(c.get());
     QVERIFY(windowCreatedSpy.wait());
 
-    auto client2 = windowCreatedSpy.last().first().value<win::x11::window*>();
+    auto client2
+        = dynamic_cast<win::x11::window*>(windowCreatedSpy.last().first().value<Toplevel*>());
     QVERIFY(client2);
     QVERIFY(client2 != client);
     QVERIFY(win::decoration(client2));
@@ -1079,14 +1089,14 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
     QCOMPARE(client2->frameGeometry(), QRect(origGeo.translated(-800, 0)));
 
     // Destroy window again.
-    QSignalSpy normalWindowClosedSpy(client2, &win::x11::window::closed);
+    QSignalSpy normalWindowClosedSpy(client2, &Toplevel::closed);
     QVERIFY(normalWindowClosedSpy.isValid());
     xcb_unmap_window(c.get(), w2);
     xcb_destroy_window(c.get(), w2);
     xcb_flush(c.get());
     QVERIFY(normalWindowClosedSpy.wait());
 
-    QSignalSpy windowClosedSpy(client, &win::x11::window::closed);
+    QSignalSpy windowClosedSpy(client, &Toplevel::closed);
     QVERIFY(windowClosedSpy.isValid());
 
     // and destroy the window again

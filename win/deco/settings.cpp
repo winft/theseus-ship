@@ -45,8 +45,8 @@ settings::settings(win::space& space, KDecoration2::DecorationSettings* parent)
 {
     readSettings();
 
-    auto c = connect(&space.render,
-                     &render::compositor::compositingToggled,
+    auto c = connect(space.render.qobject.get(),
+                     &render::compositor_qobject::compositingToggled,
                      parent,
                      &KDecoration2::DecorationSettings::alphaChannelSupportedChanged);
     connect(space.virtual_desktop_manager->qobject.get(),
@@ -59,7 +59,9 @@ settings::settings(win::space& space, KDecoration2::DecorationSettings* parent)
                 Q_EMIT parent->onAllDesktopsAvailableChanged(current > 1);
             });
     // prevent changes in Decoration due to compositor being destroyed
-    connect(&space.render, &render::compositor::aboutToDestroy, this, [c] { disconnect(c); });
+    connect(space.render.qobject.get(), &render::compositor_qobject::aboutToDestroy, this, [c] {
+        disconnect(c);
+    });
     connect(space.qobject.get(), &win::space_qobject::configChanged, this, &settings::readSettings);
     connect(
         space.deco->qobject.get(), &bridge_qobject::metaDataLoaded, this, &settings::readSettings);

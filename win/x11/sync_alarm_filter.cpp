@@ -44,7 +44,7 @@ bool sync_alarm_filter::event(xcb_generic_event_t* event)
         if (!win->control) {
             continue;
         }
-        auto x11_win = qobject_cast<win::x11::window*>(win);
+        auto x11_win = dynamic_cast<win::x11::window*>(win);
         if (!x11_win) {
             continue;
         }

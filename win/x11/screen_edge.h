@@ -11,12 +11,13 @@
 
 #include "base/x11/atoms.h"
 #include "base/x11/xcb/window.h"
+#include "kwin_export.h"
 #include "win/screen_edges.h"
 
 namespace KWin::win::x11
 {
 
-class screen_edge : public win::screen_edge
+class KWIN_EXPORT screen_edge : public win::screen_edge
 {
     Q_OBJECT
 public:

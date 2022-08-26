@@ -7,9 +7,10 @@
 
 #include "activation.h"
 #include "desktop_set.h"
+#include "focus_blocker.h"
 #include "space_areas_helpers.h"
-#include "toplevel.h"
 
+#include "toplevel.h"
 #include "utils/blocker.h"
 
 namespace KWin::win
@@ -63,21 +64,8 @@ void send_window_to_desktop(Space& space, Toplevel* window, int desk, bool dont_
 template<typename Space>
 void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)
 {
-    for (auto const& toplevel : space->stacking_order->stack) {
-        auto client = qobject_cast<x11::window*>(toplevel);
-        if (!client || !client->control) {
-            continue;
-        }
-
-        if (!client->isOnDesktop(newDesktop) && client != space->move_resize_window) {
-            update_visibility(client);
-        }
-    }
-
-    // Now propagate the change, after hiding, before showing.
-    if (x11::rootInfo()) {
-        x11::rootInfo()->setCurrentDesktop(space->virtual_desktop_manager->current());
-    }
+    // Restore the focus on this desktop afterwards.
+    focus_blocker<Space> blocker(*space);
 
     if (auto move_resize_client = space->move_resize_window) {
         if (!move_resize_client->isOnDesktop(newDesktop)) {
@@ -85,37 +73,7 @@ void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)
         }
     }
 
-    auto const& list = space->stacking_order->stack;
-    for (int i = list.size() - 1; i >= 0; --i) {
-        auto client = qobject_cast<x11::window*>(list.at(i));
-        if (!client || !client->control) {
-            continue;
-        }
-        if (client->isOnDesktop(newDesktop)) {
-            update_visibility(client);
-        }
-    }
-
-    if (space->showing_desktop) {
-        // Do this only after desktop change to avoid flicker.
-        set_showing_desktop(*space, false);
-    }
-}
-
-template<typename Space>
-void handle_current_desktop_changed(Space& space, unsigned int oldDesktop, unsigned int newDesktop)
-{
-    close_active_popup(space);
-
-    ++space.block_focus;
-    blocker block(space.stacking_order);
-    update_client_visibility_on_desktop_change(&space, newDesktop);
-
-    // Restore the focus on this desktop
-    --space.block_focus;
-
-    activate_window_on_new_desktop(space, newDesktop);
-    Q_EMIT space.qobject->currentDesktopChanged(oldDesktop, space.move_resize_window);
+    space->handle_desktop_changed(newDesktop);
 }
 
 template<typename Space>
@@ -169,16 +127,8 @@ void save_old_output_sizes(Space& space)
 
 /// After an output topology change.
 template<typename Space>
-void handle_desktop_resize(Space& space)
+void handle_desktop_resize(Space& space, QSize const& size)
 {
-    auto geom = QRect({}, kwinApp()->get_base().topology.size);
-    if (x11::rootInfo()) {
-        NETSize desktop_geometry;
-        desktop_geometry.width = geom.width();
-        desktop_geometry.height = geom.height();
-        x11::rootInfo()->setDesktopGeometry(desktop_geometry);
-    }
-
     update_space_areas(space);
 
     // after updateClientArea(), so that one still uses the previous one
@@ -188,7 +138,7 @@ void handle_desktop_resize(Space& space)
     space.edges->recreateEdges();
 
     if (auto& effects = space.render.effects) {
-        effects->desktopResized(geom.size());
+        effects->desktopResized(size);
     }
 }
 

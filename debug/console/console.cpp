@@ -253,17 +253,18 @@ console_model::console_model(win::space& space, QObject* parent)
 {
     for (auto const& window : space.windows) {
         if (window->control) {
-            if (auto x11_client = qobject_cast<win::x11::window*>(window)) {
+            if (auto x11_client = dynamic_cast<win::x11::window*>(window)) {
                 m_x11Clients.append(x11_client);
             }
         }
     }
     connect(space.qobject.get(), &win::space_qobject::clientAdded, this, [this](auto c) {
-        add_window(this, s_x11ClientId - 1, m_x11Clients, c);
+        auto x11win = static_cast<win::x11::window*>(c);
+        add_window(this, s_x11ClientId - 1, m_x11Clients, x11win);
     });
     connect(
         space.qobject.get(), &win::space_qobject::clientRemoved, this, [this](Toplevel* window) {
-            auto c = qobject_cast<win::x11::window*>(window);
+            auto c = dynamic_cast<win::x11::window*>(window);
             if (!c) {
                 return;
             }

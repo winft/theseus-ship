@@ -440,9 +440,9 @@ void init_shortcuts(Space& space)
         start_window_killer<win::space>);
     def6(kli18n("Suspend Compositing"),
          Qt::SHIFT + Qt::ALT + Qt::Key_F12,
-         &space.render,
+         space.render.qobject.get(),
          [render = &space.render] { render->toggleCompositing(); });
-    def6(kli18n("Invert Screen Colors"), 0, &space.render, [render = &space.render] {
+    def6(kli18n("Invert Screen Colors"), 0, space.render.qobject.get(), [render = &space.render] {
         render->platform.invertScreen();
     });
 

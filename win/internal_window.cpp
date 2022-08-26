@@ -24,7 +24,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "deco/bridge.h"
 #include "deco/window.h"
 #include "desktop_set.h"
+#include "fullscreen.h"
 #include "geo.h"
+#include "maximize.h"
 #include "meta.h"
 #include "remnant.h"
 #include "render/wayland/buffer.h"
@@ -347,6 +349,15 @@ void internal_window::setFrameGeometry(QRect const& rect)
     do_set_geometry(rect);
 }
 
+void internal_window::apply_restore_geometry(QRect const& restore_geo)
+{
+    setFrameGeometry(rectify_restore_geometry(this, restore_geo));
+}
+
+void internal_window::restore_geometry_from_fullscreen()
+{
+}
+
 void internal_window::do_set_geometry(QRect const& frame_geo)
 {
     auto const old_frame_geo = frameGeometry();
@@ -391,6 +402,10 @@ void internal_window::setFullScreen(bool set, bool user)
     Q_UNUSED(user)
 }
 
+void internal_window::handle_update_fullscreen(bool /*full*/)
+{
+}
+
 void internal_window::setNoBorder(bool set)
 {
     if (!userCanSetNoBorder()) {
@@ -401,6 +416,11 @@ void internal_window::setNoBorder(bool set)
     }
     m_userNoBorder = set;
     updateDecoration(true);
+}
+
+void internal_window::handle_update_no_border()
+{
+    setNoBorder(geometry_update.max_mode == maximize_mode::full);
 }
 
 void internal_window::updateDecoration(bool check_workspace_pos, bool force)

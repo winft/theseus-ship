@@ -9,5 +9,6 @@ namespace KWin::win
 {
 
 win::space* singleton_interface::space{nullptr};
+std::function<std::string(std::string const&)> singleton_interface::set_activation_token{};
 
 }

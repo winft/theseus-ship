@@ -25,11 +25,15 @@ namespace KWin
 
 namespace base::wayland
 {
+class platform;
 class server;
 }
 
 namespace win::wayland
 {
+template<typename Base>
+class space;
+template<typename Space>
 class window;
 }
 
@@ -47,6 +51,9 @@ class redirect;
 
 using im_keyboard_grab_v2
     = keyboard_grab<wayland::redirect, Wrapland::Server::input_method_keyboard_grab_v2>;
+
+using wayland_space = win::wayland::space<base::wayland::platform>;
+using wayland_window = win::wayland::window<wayland_space>;
 
 class KWIN_EXPORT input_method : public QObject
 {
@@ -70,7 +77,7 @@ private:
         QMetaObject::Connection keyboard_grabbed;
     } notifiers;
 
-    std::vector<win::wayland::window*> popups;
+    std::vector<wayland_window*> popups;
     std::vector<std::unique_ptr<im_keyboard_grab_v2>> filters;
 
     std::unique_ptr<Wrapland::Server::text_input_manager_v3> text_input_manager_v3;

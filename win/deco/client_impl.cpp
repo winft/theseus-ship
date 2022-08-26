@@ -87,21 +87,25 @@ client_impl::client_impl(Toplevel* window,
                      decoratedClient,
                      &KDecoration2::DecoratedClient::keepBelowChanged);
 
-    QObject::connect(&space.render,
-                     &render::compositor::aboutToToggleCompositing,
+    QObject::connect(space.render.qobject.get(),
+                     &render::compositor_qobject::aboutToToggleCompositing,
                      qobject.get(),
                      [this] { m_renderer.reset(); });
-    m_compositorToggledConnection = QObject::connect(&space.render,
-                                                     &render::compositor::compositingToggled,
-                                                     qobject.get(),
-                                                     [this, decoration]() {
-                                                         createRenderer();
-                                                         decoration->update();
-                                                     });
-    QObject::connect(&space.render, &render::compositor::aboutToDestroy, qobject.get(), [this] {
-        QObject::disconnect(m_compositorToggledConnection);
-        m_compositorToggledConnection = QMetaObject::Connection();
-    });
+    m_compositorToggledConnection
+        = QObject::connect(space.render.qobject.get(),
+                           &render::compositor_qobject::compositingToggled,
+                           qobject.get(),
+                           [this, decoration]() {
+                               createRenderer();
+                               decoration->update();
+                           });
+    QObject::connect(space.render.qobject.get(),
+                     &render::compositor_qobject::aboutToDestroy,
+                     qobject.get(),
+                     [this] {
+                         QObject::disconnect(m_compositorToggledConnection);
+                         m_compositorToggledConnection = QMetaObject::Connection();
+                     });
     QObject::connect(
         window, &Toplevel::quicktiling_changed, decoratedClient, [this, decoratedClient]() {
             Q_EMIT decoratedClient->adjacentScreenEdgesChanged(adjacentScreenEdges());

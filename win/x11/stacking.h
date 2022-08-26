@@ -95,7 +95,7 @@ void propagate_clients(Space& space, bool propagate_new_clients)
     // TODO use ranges::view and ranges::transform in c++20
     std::vector<xcb_window_t> hidden_windows;
     std::for_each(order.stack.rbegin(), order.stack.rend(), [&stack, &hidden_windows](auto window) {
-        auto x11_window = qobject_cast<x11::window*>(window);
+        auto x11_window = dynamic_cast<x11::window*>(window);
         if (!x11_window) {
             return;
         }
@@ -140,7 +140,7 @@ void propagate_clients(Space& space, bool propagate_new_clients)
                 continue;
             }
 
-            auto x11_window = qobject_cast<x11::window*>(window);
+            auto x11_window = dynamic_cast<x11::window*>(window);
             if (!x11_window) {
                 continue;
             }
@@ -161,7 +161,7 @@ void propagate_clients(Space& space, bool propagate_new_clients)
     std::vector<xcb_window_t> stacked_clients;
 
     for (auto window : order.stack) {
-        if (auto x11_window = qobject_cast<x11::window*>(window)) {
+        if (auto x11_window = dynamic_cast<x11::window*>(window)) {
             stacked_clients.push_back(x11_window->xcb_window);
         }
     }
@@ -331,7 +331,7 @@ void restack_window(Win* win,
                 src = NET::FromTool;
                 break;
             }
-            auto c = qobject_cast<Win*>(*it);
+            auto c = dynamic_cast<Win*>(*it);
 
             if (!c
                 || !(is_normal(*it) && c->isShown() && (*it)->isOnCurrentDesktop()
@@ -344,7 +344,7 @@ void restack_window(Win* win,
         }
 
         if (it != begin && (*(it - 1) == other)) {
-            other = qobject_cast<Win*>(*it);
+            other = dynamic_cast<Win*>(*it);
         } else {
             other = nullptr;
         }

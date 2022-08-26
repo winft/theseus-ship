@@ -40,6 +40,9 @@ private Q_SLOTS:
     void test_late_popup_window();
 
 private:
+    using wayland_space = win::wayland::space<base::wayland::platform>;
+    using wayland_window = win::wayland::window<wayland_space>;
+
     Test::client ti_client;
     Test::client im_client;
 
@@ -49,14 +52,14 @@ private:
     struct {
         std::unique_ptr<Wrapland::Client::Surface> client_surface;
         std::unique_ptr<Wrapland::Client::XdgShellToplevel> client_toplevel;
-        win::wayland::window* window{nullptr};
+        wayland_window* window{nullptr};
     } toplevel;
 
     struct {
         std::unique_ptr<Wrapland::Client::Surface> client_surface;
         Wrapland::Client::input_popup_surface_v2* client_popup_surface;
         Wrapland::Server::input_method_popup_surface_v2* server_popup_surface;
-        win::wayland::window* window{nullptr};
+        wayland_window* window{nullptr};
         QRect text_area;
         std::unique_ptr<QSignalSpy> shown_spy;
         std::unique_ptr<QSignalSpy> hidden_spy;
@@ -184,12 +187,10 @@ void input_method_test::create_popup()
     popup.window = Test::app()->base.space->find_window(popup.server_popup_surface->surface());
     QVERIFY(popup.window);
 
-    popup.shown_spy
-        = std::make_unique<QSignalSpy>(popup.window, &win::wayland::window::windowShown);
+    popup.shown_spy = std::make_unique<QSignalSpy>(popup.window, &Toplevel::windowShown);
     QVERIFY(popup.shown_spy->isValid());
 
-    popup.hidden_spy
-        = std::make_unique<QSignalSpy>(popup.window, &win::wayland::window::windowHidden);
+    popup.hidden_spy = std::make_unique<QSignalSpy>(popup.window, &Toplevel::windowHidden);
     QVERIFY(popup.hidden_spy->isValid());
 
     popup.rectangle_spy = std::make_unique<QSignalSpy>(
@@ -242,7 +243,8 @@ void input_method_test::test_early_popup_window()
     // Try to render one more time. This used to crash at some point in the past.
     render_popup();
 
-    QCOMPARE(popup.window, window_added_spy.back().front().value<win::wayland::window*>());
+    QCOMPARE(popup.window,
+             dynamic_cast<wayland_window*>(window_added_spy.back().front().value<Toplevel*>()));
 
     QVERIFY(popup.window->isInputMethod());
     QVERIFY(!popup.text_area.intersects(popup.window->frameGeometry()));
@@ -308,7 +310,8 @@ void input_method_test::test_late_popup_window()
     // Try to render one more time. This used to crash at some point in the past.
     render_popup();
 
-    QCOMPARE(popup.window, window_added_spy.back().front().value<win::wayland::window*>());
+    QCOMPARE(popup.window,
+             dynamic_cast<wayland_window*>(window_added_spy.back().front().value<Toplevel*>()));
 
     QVERIFY(popup.window->isInputMethod());
     QVERIFY(!popup.text_area.intersects(popup.window->frameGeometry()));

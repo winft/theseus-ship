@@ -67,9 +67,7 @@ static void readDisplay(int pipe)
 namespace KWin::xwl
 {
 
-xwayland::xwayland(Application* app,
-                   win::wayland::space& space,
-                   std::function<void(int)> status_callback)
+xwayland::xwayland(Application* app, wayland_space& space, std::function<void(int)> status_callback)
     : basic_data{nullptr, nullptr, &space}
     , app{app}
     , space{space}
@@ -239,7 +237,7 @@ void xwayland::continue_startup_with_x11()
     owner.claim(true);
 
     space.atoms = std::make_unique<base::x11::atoms>(basic_data.connection);
-    event_filter = std::make_unique<base::x11::xcb_event_filter<win::wayland::space>>(space);
+    event_filter = std::make_unique<base::x11::xcb_event_filter<wayland_space>>(space);
     app->installNativeEventFilter(event_filter.get());
 
     QObject::connect(
@@ -248,7 +246,9 @@ void xwayland::continue_startup_with_x11()
         this,
         [this, xwayland_connection = waylandServer()->xwayland_connection()](auto window, auto id) {
             if (auto surface = space.compositor->getSurface(id, xwayland_connection)) {
-                win::wayland::set_surface(window, surface);
+                auto xwl_win = dynamic_cast<win::wayland::xwl_window<wayland_space>*>(window);
+                assert(xwl_win);
+                win::wayland::set_surface(xwl_win, surface);
             }
         });
 

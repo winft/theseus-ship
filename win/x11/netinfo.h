@@ -40,8 +40,8 @@ class space;
 
 namespace x11
 {
+
 class root_info_filter;
-class window;
 
 /**
  * NET WM Protocol handler class
@@ -95,26 +95,6 @@ inline root_info* rootInfo()
 {
     return root_info::s_self;
 }
-
-/**
- * NET WM Protocol handler class
- */
-class KWIN_EXPORT win_info : public NETWinInfo
-{
-public:
-    win_info(win::x11::window* c,
-             xcb_window_t window,
-             xcb_window_t rwin,
-             NET::Properties properties,
-             NET::Properties2 properties2);
-    void changeDesktop(int desktop) override;
-    void changeFullscreenMonitors(NETFullscreenMonitors topology) override;
-    void changeState(NET::States state, NET::States mask) override;
-    void disable();
-
-private:
-    win::x11::window* m_client;
-};
 
 }
 }

@@ -33,15 +33,17 @@ template<typename Redirect>
 class popup_filter : public QObject, public event_filter<Redirect>
 {
 public:
+    using wayland_space = win::wayland::space<base::wayland::platform>;
+    using wayland_window = win::wayland::window<wayland_space>;
+
     explicit popup_filter(Redirect& redirect)
         : event_filter<Redirect>(redirect)
     {
-        QObject::connect(redirect.space.qobject.get(),
-                         &win::space::qobject_t::wayland_window_added,
-                         this,
-                         [this](auto window) {
-                             handle_window_added(static_cast<win::wayland::window*>(window));
-                         });
+        QObject::connect(
+            redirect.space.qobject.get(),
+            &win::space::qobject_t::wayland_window_added,
+            this,
+            [this](auto window) { handle_window_added(static_cast<wayland_window*>(window)); });
     }
 
     bool button(button_event const& event) override
@@ -104,7 +106,7 @@ public:
     }
 
 private:
-    void handle_window_added(win::wayland::window* window)
+    void handle_window_added(wayland_window* window)
     {
         if (contains(m_popups, window)) {
             return;
@@ -135,7 +137,7 @@ private:
         }
     }
 
-    std::vector<win::wayland::window*> m_popups;
+    std::vector<wayland_window*> m_popups;
 };
 
 }

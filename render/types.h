@@ -81,5 +81,12 @@ enum class shadow_element {
     count,
 };
 
+enum class state {
+    on = 0,
+    off,
+    starting,
+    stopping,
+};
+
 ENUM_FLAGS(KWin::render::paint_type)
 ENUM_FLAGS(KWin::render::window_paint_disable_type)

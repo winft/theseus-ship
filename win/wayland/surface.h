@@ -5,8 +5,6 @@
 */
 #pragma once
 
-#include "space.h"
-
 #include "base/platform.h"
 #include "base/wayland/server.h"
 #include "main.h"
@@ -52,10 +50,10 @@ void set_surface(Win* win, Wrapland::Server::Surface* surface)
         // the surface had been destroyed before what disconnected them.
         win->notifiers.frame_update_outputs = QObject::connect(
             win, &Toplevel::frame_geometry_changed, win, [win] { update_surface_outputs(win); });
-        win->notifiers.screens_update_outputs = QObject::connect(
-            &kwinApp()->get_base(), &base::platform::topology_changed, win, [win] {
-                update_surface_outputs(win);
-            });
+        win->notifiers.screens_update_outputs
+            = QObject::connect(&win->space.base, &base::platform::topology_changed, win, [win] {
+                  update_surface_outputs(win);
+              });
     }
 
     win->surface = surface;

@@ -67,9 +67,6 @@ private:
 
 void PlasmaWindowTest::initTestCase()
 {
-    qRegisterMetaType<win::wayland::window*>();
-    qRegisterMetaType<KWin::win::x11::window*>();
-
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
 
@@ -145,7 +142,9 @@ void PlasmaWindowTest::testCreateDestroyX11PlasmaWindow()
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
-    auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
+
+    auto client
+        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QVERIFY(win::decoration(client));
@@ -179,7 +178,7 @@ void PlasmaWindowTest::testCreateDestroyX11PlasmaWindow()
     xcb_unmap_window(c.get(), w);
     xcb_flush(c.get());
 
-    QSignalSpy windowClosedSpy(client, &win::x11::window::closed);
+    QSignalSpy windowClosedSpy(client, &Toplevel::closed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
     xcb_destroy_window(c.get(), w);
@@ -271,7 +270,7 @@ void PlasmaWindowTest::testLockScreenNoPlasmaWindow()
 
     // this time we use a QSignalSpy on XdgShellClient as it'a a little bit more complex setup
     QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
-                              &win::wayland::space::qobject_t::wayland_window_added);
+                              &win::space::qobject_t::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
 
     // lock
@@ -282,7 +281,7 @@ void PlasmaWindowTest::testLockScreenNoPlasmaWindow()
     QVERIFY(clientAddedSpy.count() == static_cast<int>(outputs_count) || clientAddedSpy.wait());
     QTRY_COMPARE(clientAddedSpy.count(), outputs_count);
 
-    QVERIFY(clientAddedSpy.first().first().value<win::wayland::window*>()->isLockScreen());
+    QVERIFY(clientAddedSpy.first().first().value<Toplevel*>()->isLockScreen());
 
     // should not be sent to the client
     QVERIFY(plasmaWindowCreatedSpy.isEmpty());

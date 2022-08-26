@@ -6,6 +6,7 @@
 #pragma once
 
 #include "win/wayland/surface.h"
+#include "win/wayland/xwl_window.h"
 
 #include <Wrapland/Server/surface.h>
 
@@ -25,7 +26,9 @@ void handle_new_surface(Space* space, Wrapland::Server::Surface* surface)
         // Match on surface id and exclude windows already having a surface. This way we only find
         // Xwayland windows. Wayland native windows always have a surface.
         if (!win->remnant && win->surface_id == surface->id() && !win->surface) {
-            win::wayland::set_surface(win, surface);
+            auto xwl_win = dynamic_cast<win::wayland::xwl_window<Space>*>(win);
+            assert(xwl_win);
+            win::wayland::set_surface(xwl_win, surface);
             break;
         }
     }

@@ -47,12 +47,11 @@ window::window(Toplevel* client, space* workspace)
     connect(client, &Toplevel::clientMinimized, this, [this] { Q_EMIT clientMinimized(this); });
     connect(client, &Toplevel::clientUnminimized, this, [this] { Q_EMIT clientUnminimized(this); });
 
-    connect(client,
-            qOverload<Toplevel*, bool, bool>(&Toplevel::clientMaximizedStateChanged),
-            this,
-            [this]([[maybe_unused]] Toplevel* client, bool horizontal, bool vertical) {
-                Q_EMIT clientMaximizedStateChanged(this, horizontal, vertical);
-            });
+    connect(client, &Toplevel::maximize_mode_changed, this, [this](auto /*window*/, auto mode) {
+        Q_EMIT clientMaximizedStateChanged(this,
+                                           flags(mode & win::maximize_mode::horizontal),
+                                           flags(mode & win::maximize_mode::vertical));
+    });
 
     connect(client, &Toplevel::quicktiling_changed, this, &window::quickTileModeChanged);
 
@@ -107,14 +106,14 @@ window::window(Toplevel* client, space* workspace)
 
     connect(client, &Toplevel::desktopFileNameChanged, this, &window::desktopFileNameChanged);
 
+    // For backwards compatibility of scripts connecting to the old signal. We assume no script is
+    // actually differentiating its behavior on the user parameter (if fullscreen was triggered by
+    // the user or not) and always set it to being a user change.
+    connect(client, &Toplevel::fullScreenChanged, this, [this, client] {
+        Q_EMIT clientFullScreenSet(this, client->control->fullscreen(), true);
+    });
+
     if (client->isClient()) {
-        auto x11_client = dynamic_cast<win::x11::window*>(m_client);
-        connect(x11_client,
-                &win::x11::window::client_fullscreen_set,
-                this,
-                [this]([[maybe_unused]] auto client, bool fullscreen, bool user) {
-                    Q_EMIT clientFullScreenSet(this, fullscreen, user);
-                });
         connect(client, &Toplevel::blockingCompositingChanged, this, [this] {
             Q_EMIT blockingCompositingChanged(this);
         });

@@ -6,7 +6,6 @@
 #pragma once
 
 #include "control.h"
-#include "space.h"
 #include "window_release.h"
 
 #include "win/activation.h"
@@ -16,9 +15,9 @@
 #include "win/stacking.h"
 #include "win/transient.h"
 
+#include "base/platform.h"
 #include "base/wayland/output.h"
 #include "base/wayland/output_helpers.h"
-#include "base/wayland/platform.h"
 #include "base/wayland/server.h"
 #include "input/keyboard_redirect.h"
 #include "input/redirect.h"
@@ -153,15 +152,15 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
     win->layer_surface = layer_surface;
     block_geometry_updates(win, true);
 
-    QObject::connect(win, &window::needsRepaint, &win->space.render, [win] {
+    QObject::connect(win, &Win::needsRepaint, win->space.render.qobject.get(), [win] {
         win->space.render.schedule_repaint(win);
     });
     QObject::connect(
         layer_surface, &WS::LayerSurfaceV1::resourceDestroyed, win, [win] { destroy_window(win); });
 
     QObject::connect(layer_surface, &WS::LayerSurfaceV1::got_popup, win, [win](auto popup) {
-        for (auto window : static_cast<win::wayland::space&>(win->space).windows) {
-            if (auto wayland_window = qobject_cast<win::wayland::window*>(window);
+        for (auto window : win->space.windows) {
+            if (auto wayland_window = dynamic_cast<Win*>(window);
                 wayland_window && wayland_window->popup == popup) {
                 win->transient()->add_child(wayland_window);
                 break;
@@ -176,7 +175,7 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
 
     auto handle_first_commit = [win] {
         QObject::disconnect(win->surface, &WS::Surface::committed, win, nullptr);
-        QObject::connect(win->surface, &WS::Surface::committed, win, &window::handle_commit);
+        QObject::connect(win->surface, &WS::Surface::committed, win, &Win::handle_commit);
 
         block_geometry_updates(win, false);
 
@@ -187,15 +186,13 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
             }
         }
 
-        if (!base::wayland::find_output(
-                static_cast<base::wayland::platform&>(kwinApp()->get_base()),
-                win->layer_surface->output())) {
+        if (!base::wayland::find_output(win->space.base, win->layer_surface->output())) {
             // Output not found. Close surface and ignore.
             win->layer_surface->close();
             return;
         }
 
-        QObject::connect(&kwinApp()->get_base(), &base::platform::topology_changed, win, [win] {
+        QObject::connect(&win->space.base, &base::platform::topology_changed, win, [win] {
             auto geo = layer_surface_recommended_geometry(win);
             if (win->geometry_update.frame != geo) {
                 win->setFrameGeometry(geo);

@@ -17,9 +17,11 @@
 namespace KWin::input::wayland::fake
 {
 
-static win::wayland::space& wlspace(win::space& space)
+using wayland_space = win::wayland::space<base::wayland::platform>;
+
+static wayland_space& wlspace(win::space& space)
 {
-    return static_cast<win::wayland::space&>(space);
+    return static_cast<wayland_space&>(space);
 }
 
 touch::touch(Wrapland::Server::FakeInputDevice* device, input::platform* platform)

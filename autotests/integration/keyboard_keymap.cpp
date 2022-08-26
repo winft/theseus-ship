@@ -24,6 +24,9 @@
 namespace KWin
 {
 
+using wayland_space = win::wayland::space<base::wayland::platform>;
+using wayland_window = win::wayland::window<wayland_space>;
+
 struct test_window {
     test_window() = default;
     test_window(test_window const&) = delete;
@@ -42,7 +45,7 @@ struct test_window {
     }
     std::unique_ptr<Wrapland::Client::Surface> client_surface;
     std::unique_ptr<Wrapland::Client::XdgShellToplevel> client_toplevel;
-    win::wayland::window* window{nullptr};
+    wayland_window* window{nullptr};
 };
 
 class keyboard_keymap_test : public QObject
@@ -59,7 +62,6 @@ private Q_SLOTS:
 void keyboard_keymap_test::initTestCase()
 {
     qRegisterMetaType<Toplevel*>();
-    qRegisterMetaType<win::wayland::window*>();
     qRegisterMetaType<Wrapland::Client::Output*>();
     qRegisterMetaType<Wrapland::Client::Keyboard::KeyState>();
 

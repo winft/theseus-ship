@@ -7,8 +7,6 @@
 
 #include "control.h"
 #include "popup_placement.h"
-#include "space.h"
-#include "window.h"
 #include "window_release.h"
 
 #include "base/wayland/server.h"
@@ -61,17 +59,17 @@ public:
     }
 
 private:
-    wayland::window& m_window;
+    Win& m_window;
 };
 
-template<typename Space>
-inline window* create_shell_window(Space& space, Wrapland::Server::XdgShellSurface* shell_surface)
+template<typename Win, typename Space>
+Win* create_shell_window(Space& space, Wrapland::Server::XdgShellSurface* shell_surface)
 {
     namespace WS = Wrapland::Server;
 
     auto const surface = shell_surface->surface();
 
-    auto win = new window(surface, space);
+    auto win = new Win(surface, space);
     block_geometry_updates(win, true);
 
     QObject::connect(
@@ -101,14 +99,14 @@ void handle_maximize_request(Win* win, bool maximized);
 template<typename Win>
 Wrapland::Server::XdgShellSurface::States xdg_surface_states(Win* win);
 
-template<typename Space>
-void finalize_shell_window_creation(Space& space, window* win)
+template<typename Space, typename Win>
+void finalize_shell_window_creation(Space& space, Win* win)
 {
     namespace WS = Wrapland::Server;
 
     auto handle_first_commit = [&space, win] {
         QObject::disconnect(win->surface, &WS::Surface::committed, win, nullptr);
-        QObject::connect(win->surface, &WS::Surface::committed, win, &window::handle_commit);
+        QObject::connect(win->surface, &WS::Surface::committed, win, &Win::handle_commit);
 
         update_shadow(win);
         QObject::connect(win->surface, &Wrapland::Server::Surface::committed, win, [win] {
@@ -199,15 +197,15 @@ void update_icon(Win* win)
     win->control->set_icon(QIcon::fromTheme(icon));
 }
 
-template<typename Space>
-window* create_toplevel_window(Space* space, Wrapland::Server::XdgShellToplevel* toplevel)
+template<typename Win, typename Space>
+Win* create_toplevel_window(Space* space, Wrapland::Server::XdgShellToplevel* toplevel)
 {
     namespace WS = Wrapland::Server;
 
-    auto win = create_shell_window(*space, toplevel->surface());
+    auto win = create_shell_window<Win>(*space, toplevel->surface());
     win->toplevel = toplevel;
 
-    win->control = std::make_unique<xdg_shell_control<window>>(*win);
+    win->control = std::make_unique<xdg_shell_control<Win>>(*win);
     win->control->setup_tabbox();
     win->control->setup_color_scheme();
 
@@ -222,7 +220,7 @@ window* create_toplevel_window(Space* space, Wrapland::Server::XdgShellToplevel*
         }
     };
 
-    QObject::connect(win, &window::desktopFileNameChanged, win, update_icon);
+    QObject::connect(win, &Win::desktopFileNameChanged, win, update_icon);
     update_icon();
 
     QObject::connect(
@@ -234,8 +232,8 @@ window* create_toplevel_window(Space* space, Wrapland::Server::XdgShellToplevel*
 
     win->caption.normal = QString::fromStdString(toplevel->title()).simplified();
     QObject::connect(
-        toplevel, &WS::XdgShellToplevel::titleChanged, win, &window::handle_title_changed);
-    QTimer::singleShot(0, win, &window::updateCaption);
+        toplevel, &WS::XdgShellToplevel::titleChanged, win, &Win::handle_title_changed);
+    QTimer::singleShot(0, win, &Win::updateCaption);
 
     QObject::connect(toplevel,
                      &WS::XdgShellToplevel::moveRequested,
@@ -257,7 +255,7 @@ window* create_toplevel_window(Space* space, Wrapland::Server::XdgShellToplevel*
     win->setResourceClass(resourceName, toplevel->appId().c_str());
     set_desktop_file_name(win, toplevel->appId().c_str());
     QObject::connect(
-        toplevel, &WS::XdgShellToplevel::appIdChanged, win, &window::handle_class_changed);
+        toplevel, &WS::XdgShellToplevel::appIdChanged, win, &Win::handle_class_changed);
 
     QObject::connect(toplevel, &WS::XdgShellToplevel::minimizeRequested, win, [win] {
         handle_minimize_request(win);
@@ -302,19 +300,19 @@ window* create_toplevel_window(Space* space, Wrapland::Server::XdgShellToplevel*
     return win;
 }
 
-template<typename Space>
-window* create_popup_window(Space* space, Wrapland::Server::XdgShellPopup* popup)
+template<typename Win, typename Space>
+Win* create_popup_window(Space* space, Wrapland::Server::XdgShellPopup* popup)
 {
     namespace WS = Wrapland::Server;
 
-    auto win = create_shell_window(*space, popup->surface());
+    auto win = create_shell_window<Win>(*space, popup->surface());
     win->popup = popup;
     win->transient()->annexed = true;
 
-    QObject::connect(win, &window::needsRepaint, &win->space.render, [win] {
+    QObject::connect(win, &Win::needsRepaint, win->space.render.qobject.get(), [win] {
         win->space.render.schedule_repaint(win);
     });
-    QObject::connect(win, &window::frame_geometry_changed, win, [](auto win, auto old_frame_geo) {
+    QObject::connect(win, &Win::frame_geometry_changed, win, [](auto win, auto old_frame_geo) {
         auto const old_visible_geo = visible_rect(win, old_frame_geo);
         auto const visible_geo = visible_rect(win, win->frameGeometry());
 
@@ -368,7 +366,7 @@ void update_screen_edge(Win* win)
     Qt::Edges edges;
     auto const geometry = win->frameGeometry();
 
-    for (auto output : kwinApp()->get_base().get_outputs()) {
+    for (auto output : win->space.base.get_outputs()) {
         auto const screen_geo = output->geometry();
         if (screen_geo.left() == geometry.left()) {
             edges |= Qt::LeftEdge;
@@ -490,7 +488,7 @@ void install_plasma_shell_surface(Win* win, Wrapland::Server::PlasmaShellSurface
         update_screen_edge(win);
         win::update_space_areas(win->space);
     });
-    QObject::connect(win, &window::frame_geometry_changed, win, [win] { update_screen_edge(win); });
+    QObject::connect(win, &Win::frame_geometry_changed, win, [win] { update_screen_edge(win); });
 
     if (win->control) {
         QObject::connect(surface, &PSS::panelAutoHideHideRequested, win, [win] {
@@ -579,7 +577,7 @@ void handle_new_toplevel(Space* space, Wrapland::Server::XdgShellToplevel* tople
     if (toplevel->client() == space->server->screen_locker_client_connection) {
         ScreenLocker::KSldApp::self()->lockScreenShown();
     }
-    auto window = win::wayland::create_toplevel_window(space, toplevel);
+    auto window = win::wayland::create_toplevel_window<Window>(space, toplevel);
 
     // TODO(romangg): Also relevant for popups?
     auto it = std::find_if(
@@ -620,7 +618,7 @@ void handle_new_toplevel(Space* space, Wrapland::Server::XdgShellToplevel* tople
 template<typename Window, typename Space>
 void handle_new_popup(Space* space, Wrapland::Server::XdgShellPopup* popup)
 {
-    auto window = win::wayland::create_popup_window(space, popup);
+    auto window = win::wayland::create_popup_window<Window>(space, popup);
     space->windows.push_back(window);
 
     if (window->ready_for_painting) {
@@ -722,7 +720,7 @@ void reposition_annexed_children(Win* win)
         if (!child->transient()->annexed) {
             continue;
         }
-        auto wl_child = static_cast<window*>(child);
+        auto wl_child = static_cast<Win*>(child);
         if (wl_child->popup) {
             reposition_annexed_children(wl_child);
         }
@@ -904,7 +902,7 @@ void handle_ping_delayed(Win* win, uint32_t serial)
 {
     auto it = win->pings.find(serial);
     if (it != win->pings.end()) {
-        qCDebug(KWIN_WL) << "First ping timeout:" << caption(win);
+        qCDebug(KWIN_CORE) << "First ping timeout:" << caption(win);
         win->control->set_unresponsive(true);
     }
 }
@@ -914,9 +912,9 @@ void handle_ping_timeout(Win* win, uint32_t serial)
 {
     auto it = win->pings.find(serial);
     if (it != win->pings.end()) {
-        if (it->second == window::ping_reason::close) {
-            qCDebug(KWIN_WL) << "Final ping timeout on a close attempt, asking to kill:"
-                             << win::caption(win);
+        if (it->second == Win::ping_reason::close) {
+            qCDebug(KWIN_CORE) << "Final ping timeout on a close attempt, asking to kill:"
+                               << win::caption(win);
 
             // for internal windows, killing the window will delete this
             QPointer<QObject> guard(win);

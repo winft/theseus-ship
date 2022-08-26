@@ -74,8 +74,6 @@ private:
 
 void VirtualDesktopTest::initTestCase()
 {
-    qRegisterMetaType<win::wayland::window*>();
-
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
 
@@ -788,7 +786,7 @@ void VirtualDesktopTest::testLastDesktopRemoved()
 
     QVERIFY(client);
     QCOMPARE(client->desktop(), 2);
-    QSignalSpy desktopPresenceChangedSpy(client, &win::wayland::window::desktopPresenceChanged);
+    QSignalSpy desktopPresenceChangedSpy(client, &Toplevel::desktopPresenceChanged);
     QVERIFY(desktopPresenceChangedSpy.isValid());
 
     QCOMPARE(client->desktops().count(), 1u);
@@ -824,7 +822,7 @@ void VirtualDesktopTest::testWindowOnMultipleDesktops()
 
     QVERIFY(client);
     QCOMPARE(client->desktop(), 3u);
-    QSignalSpy desktopPresenceChangedSpy(client, &win::wayland::window::desktopPresenceChanged);
+    QSignalSpy desktopPresenceChangedSpy(client, &Toplevel::desktopPresenceChanged);
     QVERIFY(desktopPresenceChangedSpy.isValid());
 
     QCOMPARE(client->desktops().count(), 1u);
@@ -904,7 +902,7 @@ void VirtualDesktopTest::testRemoveDesktopWithWindow()
 
     QVERIFY(client);
     QCOMPARE(client->desktop(), 3u);
-    QSignalSpy desktopPresenceChangedSpy(client, &win::wayland::window::desktopPresenceChanged);
+    QSignalSpy desktopPresenceChangedSpy(client, &Toplevel::desktopPresenceChanged);
     QVERIFY(desktopPresenceChangedSpy.isValid());
 
     QCOMPARE(client->desktops().count(), 1u);

@@ -106,9 +106,6 @@ inline WindowQuad makeShadowQuad(const QRectF& geo, qreal tx1, qreal ty1, qreal 
 void SceneOpenGLShadowTest::initTestCase()
 {
     // Copied from generic_scene_opengl_test.cpp
-
-    qRegisterMetaType<win::wayland::window*>();
-
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
 

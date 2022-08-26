@@ -67,12 +67,16 @@ public:
     bool isHiddenInternal() const override;
     void hideClient(bool hide) override;
     void setFrameGeometry(QRect const& rect) override;
+    void apply_restore_geometry(QRect const& restore_geo) override;
+    void restore_geometry_from_fullscreen() override;
     bool hasStrut() const override;
     bool supportsWindowRules() const override;
     void takeFocus() override;
     bool userCanSetFullScreen() const override;
     void setFullScreen(bool set, bool user = true) override;
+    void handle_update_fullscreen(bool full) override;
     void setNoBorder(bool set) override;
+    void handle_update_no_border() override;
     void updateDecoration(bool check_workspace_pos, bool force = false) override;
     void updateColorScheme() override;
     void showOnScreenEdge() override;

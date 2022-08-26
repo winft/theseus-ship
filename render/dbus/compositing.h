@@ -8,25 +8,34 @@
 
 #include "kwinglobals.h"
 
+#include "render/compositor_qobject.h"
+
 #include <QObject>
 #include <QtDBus>
 #include <functional>
 
-namespace KWin::render
-{
+#include <epoxy/gl.h>
+// Must be included before.
+#include <QOpenGLContext>
 
-class compositor;
-
-namespace dbus
+namespace KWin::render::dbus
 {
 
 struct compositing_integration {
+    std::function<bool(void)> active;
+    std::function<bool(void)> required;
+    std::function<bool(void)> possible;
+    std::function<QString(void)> not_possible_reason;
+    std::function<bool(void)> opengl_broken;
+    std::function<QString(void)> type;
+
     std::function<QStringList(void)> get_types;
     std::function<void(void)> resume;
     std::function<void(void)> suspend;
+    std::function<void(void)> reinit;
 };
 
-class compositing : public QObject
+class compositing_qobject : public QObject
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "org.kde.kwin.Compositing")
@@ -71,8 +80,8 @@ class compositing : public QObject
     Q_PROPERTY(bool platformRequiresCompositing READ platformRequiresCompositing)
 
 public:
-    explicit compositing(render::compositor& compositor);
-    ~compositing() override = default;
+    compositing_qobject();
+    ~compositing_qobject() = default;
 
     bool isActive() const;
     bool isCompositingPossible() const;
@@ -123,10 +132,58 @@ public Q_SLOTS:
 
 Q_SIGNALS:
     void compositingToggled(bool active);
-
-private:
-    render::compositor& compositor;
 };
 
-}
+template<typename Compositor>
+class compositing
+{
+public:
+    explicit compositing(Compositor& comp)
+        : qobject{std::make_unique<compositing_qobject>()}
+        , compositor{comp}
+    {
+        qobject->integration.active = [this] { return compositor.isActive(); };
+        qobject->integration.required
+            = [this] { return compositor.platform.requiresCompositing(); };
+        qobject->integration.possible
+            = [this] { return compositor.platform.compositingPossible(); };
+        qobject->integration.not_possible_reason
+            = [this] { return compositor.platform.compositingNotPossibleReason(); };
+        qobject->integration.opengl_broken
+            = [this] { return compositor.platform.openGLCompositingIsBroken(); };
+        qobject->integration.type = [this] {
+            if (!compositor.scene) {
+                return QStringLiteral("none");
+            }
+
+            switch (compositor.scene->compositingType()) {
+            case XRenderCompositing:
+                return QStringLiteral("xrender");
+            case OpenGLCompositing:
+                if (QOpenGLContext::openGLModuleType() == QOpenGLContext::LibGLES) {
+                    return QStringLiteral("gles");
+                } else {
+                    return QStringLiteral("gl2");
+                }
+            case QPainterCompositing:
+                return QStringLiteral("qpainter");
+            case NoCompositing:
+            default:
+                return QStringLiteral("none");
+            }
+        };
+        qobject->integration.reinit = [this] { return compositor.reinitialize(); };
+
+        QObject::connect(compositor.qobject.get(),
+                         &render::compositor_qobject::compositingToggled,
+                         qobject.get(),
+                         &compositing_qobject::compositingToggled);
+    }
+
+    std::unique_ptr<compositing_qobject> qobject;
+
+private:
+    Compositor& compositor;
+};
+
 }

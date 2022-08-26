@@ -9,6 +9,7 @@
 #include "platform.h"
 #include "redirect.h"
 
+#include "base/wayland/platform.h"
 #include "base/wayland/server.h"
 #include "input/filters/keyboard_grab.h"
 #include "input/redirect.h"
@@ -169,10 +170,8 @@ void input_method::activate_filters()
 
 void input_method::handle_popup_surface_created(input_method_popup_surface_v2* popup_surface)
 {
-    using win::wayland::window;
-
-    auto space = static_cast<win::wayland::space*>(&platform.redirect->space);
-    auto popup = popups.emplace_back(new window(popup_surface->surface(), *space));
+    auto space = static_cast<wayland_space*>(&platform.redirect->space);
+    auto popup = popups.emplace_back(new wayland_window(popup_surface->surface(), *space));
     popup->input_method_popup = popup_surface;
     popup->transient()->annexed = true;
     popup->hidden = true;
@@ -180,20 +179,23 @@ void input_method::handle_popup_surface_created(input_method_popup_surface_v2* p
 
     space->windows.push_back(popup);
 
-    QObject::connect(popup, &window::closed, this, [this](auto win) { remove_all(popups, win); });
+    QObject::connect(
+        popup, &wayland_window::closed, this, [this](auto win) { remove_all(popups, win); });
 
     QObject::connect(popup_surface,
                      &input_method_popup_surface_v2::resourceDestroyed,
                      popup,
                      [popup] { win::wayland::destroy_window(popup); });
 
-    QObject::connect(
-        popup->surface, &Wrapland::Server::Surface::committed, popup, &window::handle_commit);
-    QObject::connect(popup, &window::needsRepaint, &space->render, [popup] {
+    QObject::connect(popup->surface,
+                     &Wrapland::Server::Surface::committed,
+                     popup,
+                     &wayland_window::handle_commit);
+    QObject::connect(popup, &wayland_window::needsRepaint, space->render.qobject.get(), [popup] {
         popup->space.render.schedule_repaint(popup);
     });
     QObject::connect(
-        popup, &window::frame_geometry_changed, popup, [](auto win, auto old_frame_geo) {
+        popup, &wayland_window::frame_geometry_changed, popup, [](auto win, auto old_frame_geo) {
             if (!win->transient()->lead()) {
                 return;
             }

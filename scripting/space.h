@@ -32,7 +32,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/output_space.h"
 #include "win/screen.h"
 #include "win/virtual_desktops.h"
-#include "win/wayland/window.h"
 #include "win/x11/window.h"
 
 #include <QObject>

@@ -45,7 +45,6 @@ enum class mapping_state {
 
 class KWIN_EXPORT window : public Toplevel
 {
-    Q_OBJECT
 public:
     using control_t = x11::control<window>;
     constexpr static bool is_toplevel{false};
@@ -53,6 +52,131 @@ public:
     window(win::remnant remnant, win::space& space);
     window(xcb_window_t xcb_win, win::space& space);
     ~window();
+
+    bool isClient() const override;
+    xcb_window_t frameId() const override;
+    bool providesContextHelp() const override;
+    void showContextHelp() override;
+    void checkNoBorder() override;
+    bool wantsShadowToBeRendered() const override;
+    QSize resizeIncrements() const override;
+    QRect iconGeometry() const override;
+
+    bool setupCompositing() override;
+    void finishCompositing() override;
+    void setBlockingCompositing(bool block) override;
+    void add_scene_window_addon() override;
+
+    void damageNotifyEvent() override;
+    void addDamage(QRegion const& damage) override;
+
+    void applyWindowRules() override;
+    void updateWindowRules(rules::type selection) override;
+
+    bool acceptsFocus() const override;
+    void updateCaption() override;
+
+    bool isShown() const override;
+    bool isHiddenInternal() const override;
+
+    QSize minSize() const override;
+    QSize maxSize() const override;
+    QSize basicUnit() const override;
+
+    // TODO: remove
+    x11::group const* group() const override;
+    x11::group* group() override;
+
+    // When another window is created, checks if this window is a child for it.
+    void checkTransient(Toplevel* window) override;
+    bool groupTransient() const override;
+    Toplevel* findModal() override;
+
+    win::maximize_mode maximizeMode() const override;
+    void setFullScreen(bool full, bool user = true) override;
+    bool userCanSetFullScreen() const override;
+    void handle_update_fullscreen(bool full) override;
+
+    bool noBorder() const override;
+    void setNoBorder(bool set) override;
+    void handle_update_no_border() override;
+    void layoutDecorationRects(QRect& left, QRect& top, QRect& right, QRect& bottom) const override;
+    void updateDecoration(bool check_workspace_pos, bool force = false) override;
+
+    void handle_activated() override;
+    void takeFocus() override;
+    bool userCanSetNoBorder() const override;
+    bool wantsInput() const override;
+
+    bool performMouseCommand(base::options_qobject::MouseCommand command,
+                             QPoint const& globalPos) override;
+    void setShortcutInternal() override;
+
+    bool hasStrut() const override;
+    void showOnScreenEdge() override;
+
+    void closeWindow() override;
+    bool isCloseable() const override;
+    bool isMaximizable() const override;
+    bool isMinimizable() const override;
+    bool isMovable() const override;
+    bool isMovableAcrossScreens() const override;
+    bool isResizable() const override;
+    void hideClient(bool hide) override;
+
+    void update_maximized(maximize_mode mode) override;
+
+    bool doStartMoveResize() override;
+    void leaveMoveResize() override;
+    void doResizeSync() override;
+    bool isWaitingForMoveResizeSync() const override;
+
+    bool belongsToSameApplication(Toplevel const* other,
+                                  win::same_client_check checks) const override;
+    bool belongsToDesktop() const override;
+    void doSetDesktop(int desktop, int was_desk) override;
+
+    bool isBlockingCompositing() override;
+
+    xcb_timestamp_t userTime() const override;
+    void doSetActive() override;
+    void doMinimize() override;
+
+    void setFrameGeometry(QRect const& rect) override;
+    void apply_restore_geometry(QRect const& restore_geo) override;
+    void restore_geometry_from_fullscreen() override;
+    void do_set_geometry(QRect const& frame_geo);
+    void do_set_maximize_mode(win::maximize_mode mode);
+    void do_set_fullscreen(bool full);
+
+    void updateColorScheme() override;
+    void killWindow() override;
+
+    void getResourceClass();
+    void getWmClientMachine();
+
+    base::x11::xcb::property fetchWmClientLeader() const;
+    void readWmClientLeader(base::x11::xcb::property& p);
+    void getWmClientLeader();
+
+    /**
+     * This function fetches the opaque region from this Toplevel.
+     * Will only be called on corresponding property changes and for initialization.
+     */
+    void getWmOpaqueRegion();
+    void getSkipCloseAnimation();
+
+    void detectShape(xcb_window_t id);
+    void update_input_shape();
+
+    QByteArray sessionId() const;
+    QByteArray wmCommand();
+
+    // TODO(romangg): only required with Xwayland, move it to the child class.
+    void clientMessageEvent(xcb_client_message_event_t* e);
+
+    static bool resourceMatch(window const* c1, window const* c2);
+    void debug(QDebug& stream) const override;
 
     QString iconic_caption;
 
@@ -154,134 +278,6 @@ public:
     x11::group* in_group{nullptr};
 
     xcb_colormap_t colormap{XCB_COLORMAP_NONE};
-
-    bool isClient() const override;
-    xcb_window_t frameId() const override;
-    bool providesContextHelp() const override;
-    void showContextHelp() override;
-    void checkNoBorder() override;
-    bool wantsShadowToBeRendered() const override;
-    QSize resizeIncrements() const override;
-    static void cleanupX11();
-    QRect iconGeometry() const override;
-
-    bool setupCompositing() override;
-    void finishCompositing() override;
-    void setBlockingCompositing(bool block) override;
-    void add_scene_window_addon() override;
-
-    void damageNotifyEvent() override;
-    void addDamage(QRegion const& damage) override;
-
-    void applyWindowRules() override;
-    void updateWindowRules(rules::type selection) override;
-
-    bool acceptsFocus() const override;
-    void updateCaption() override;
-
-    bool isShown() const override;
-    bool isHiddenInternal() const override;
-
-    QSize minSize() const override;
-    QSize maxSize() const override;
-    QSize basicUnit() const override;
-
-    // TODO: remove
-    x11::group const* group() const override;
-    x11::group* group() override;
-
-    // When another window is created, checks if this window is a child for it.
-    void checkTransient(Toplevel* window) override;
-    bool groupTransient() const override;
-    Toplevel* findModal() override;
-
-    win::maximize_mode maximizeMode() const override;
-    void setFullScreen(bool full, bool user = true) override;
-    bool userCanSetFullScreen() const override;
-
-    bool noBorder() const override;
-    void setNoBorder(bool set) override;
-    void layoutDecorationRects(QRect& left, QRect& top, QRect& right, QRect& bottom) const override;
-    void updateDecoration(bool check_workspace_pos, bool force = false) override;
-
-    void handle_activated() override;
-    void takeFocus() override;
-    bool userCanSetNoBorder() const override;
-    bool wantsInput() const override;
-
-    bool performMouseCommand(base::options_qobject::MouseCommand command,
-                             QPoint const& globalPos) override;
-    void setShortcutInternal() override;
-
-    bool hasStrut() const override;
-    void showOnScreenEdge() override;
-
-    void closeWindow() override;
-    bool isCloseable() const override;
-    bool isMaximizable() const override;
-    bool isMinimizable() const override;
-    bool isMovable() const override;
-    bool isMovableAcrossScreens() const override;
-    bool isResizable() const override;
-    void hideClient(bool hide) override;
-
-    void update_maximized(maximize_mode mode) override;
-
-    bool doStartMoveResize() override;
-    void leaveMoveResize() override;
-    void doResizeSync() override;
-    bool isWaitingForMoveResizeSync() const override;
-
-    bool belongsToSameApplication(Toplevel const* other,
-                                  win::same_client_check checks) const override;
-    bool belongsToDesktop() const override;
-    void doSetDesktop(int desktop, int was_desk) override;
-
-    bool isBlockingCompositing() override;
-
-    xcb_timestamp_t userTime() const override;
-    void doSetActive() override;
-    void doMinimize() override;
-
-    void setFrameGeometry(QRect const& rect) override;
-    void do_set_geometry(QRect const& frame_geo);
-    void do_set_maximize_mode(win::maximize_mode mode);
-    void do_set_fullscreen(bool full);
-
-    void updateColorScheme() override;
-    void killWindow() override;
-
-    void getResourceClass();
-    void getWmClientMachine();
-
-    base::x11::xcb::property fetchWmClientLeader() const;
-    void readWmClientLeader(base::x11::xcb::property& p);
-    void getWmClientLeader();
-
-    /**
-     * This function fetches the opaque region from this Toplevel.
-     * Will only be called on corresponding property changes and for initialization.
-     */
-    void getWmOpaqueRegion();
-    void getSkipCloseAnimation();
-
-    void detectShape(xcb_window_t id);
-    void update_input_shape();
-
-    QByteArray sessionId() const;
-    QByteArray wmCommand();
-
-    // TODO(romangg): only required with Xwayland, move it to the child class.
-    void clientMessageEvent(xcb_client_message_event_t* e);
-
-    static bool resourceMatch(window const* c1, window const* c2);
-    void debug(QDebug& stream) const override;
-
-Q_SIGNALS:
-    void client_fullscreen_set(KWin::win::x11::window*, bool, bool);
 };
 
 }
-
-Q_DECLARE_METATYPE(KWin::win::x11::window*)
-Q_DECLARE_METATYPE(QList<KWin::win::x11::window*>)

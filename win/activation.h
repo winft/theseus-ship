@@ -7,6 +7,7 @@
 
 #include "actions.h"
 #include "desktop_set.h"
+#include "focus_blocker.h"
 #include "focus_chain_find.h"
 #include "input.h"
 #include "layers.h"
@@ -460,9 +461,8 @@ void activate_window_impl(Space& space, Win* window, bool force)
     }
     raise_window(&space, window);
     if (!window->isOnCurrentDesktop()) {
-        ++space.block_focus;
+        focus_blocker blocker(space);
         space.virtual_desktop_manager->setCurrent(window->desktop());
-        --space.block_focus;
     }
     if (window->control->minimized()) {
         set_minimized(window, false);

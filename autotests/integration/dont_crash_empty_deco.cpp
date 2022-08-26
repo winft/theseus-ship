@@ -47,9 +47,6 @@ private Q_SLOTS:
 
 void DontCrashEmptyDecorationTest::initTestCase()
 {
-    qRegisterMetaType<win::wayland::window*>();
-    qRegisterMetaType<KWin::win::x11::window*>();
-
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
 
@@ -104,7 +101,9 @@ void DontCrashEmptyDecorationTest::testBug361551()
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
-    auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
+
+    auto client
+        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QVERIFY(win::decoration(client));
@@ -119,7 +118,7 @@ void DontCrashEmptyDecorationTest::testBug361551()
     xcb_flush(c);
     xcb_disconnect(c);
 
-    QSignalSpy windowClosedSpy(client, &win::x11::window::closed);
+    QSignalSpy windowClosedSpy(client, &Toplevel::closed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
 }

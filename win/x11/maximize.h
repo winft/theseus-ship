@@ -5,21 +5,14 @@
 */
 #pragma once
 
-#include "window.h"
-
 #include "win/maximize.h"
 
-namespace KWin::win
+namespace KWin::win::x11
 {
 
-template<>
-void update_no_border(x11::window* win)
+template<typename Win>
+void check_set_no_border(Win* win)
 {
-    if (!kwinApp()->options->qobject->borderlessMaximizedWindows()) {
-        // If maximized windows can have borders there is no change implied.
-        return;
-    }
-
     auto app_no_border = win->app_no_border;
     auto motif_no_border = win->motif_hints.has_decoration() && win->motif_hints.no_border();
     auto max_fully = win->geometry_update.max_mode == maximize_mode::full;
@@ -28,8 +21,8 @@ void update_no_border(x11::window* win)
     win->setNoBorder(win->control->rules().checkNoBorder(no_border));
 }
 
-template<>
-void respect_maximizing_aspect(x11::window* win, maximize_mode& mode)
+template<typename Win>
+void respect_maximizing_aspect(Win* win, maximize_mode& mode)
 {
     if (!win->geometry_hints.has_aspect()) {
         return;

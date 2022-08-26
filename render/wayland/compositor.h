@@ -32,7 +32,6 @@ struct presentation_data;
 
 class KWIN_EXPORT compositor : public render::compositor
 {
-    Q_OBJECT
 public:
     compositor(render::platform& platform);
     ~compositor();
@@ -52,7 +51,6 @@ public:
 
     std::unique_ptr<render::wayland::presentation> presentation;
 
-protected:
     std::unique_ptr<render::scene> create_scene() override;
     void performCompositing() override;
 

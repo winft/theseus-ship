@@ -44,6 +44,9 @@ using namespace Wrapland::Client;
 namespace KWin
 {
 
+using wayland_space = win::wayland::space<base::wayland::platform>;
+using wayland_window = win::wayland::window<wayland_space>;
+
 class TestXdgShellClientRules : public QObject
 {
     Q_OBJECT
@@ -150,8 +153,6 @@ private Q_SLOTS:
 
 void TestXdgShellClientRules::initTestCase()
 {
-    qRegisterMetaType<win::wayland::window*>();
-
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
 
@@ -183,7 +184,7 @@ void TestXdgShellClientRules::cleanup()
     QCOMPARE(vd_manager->count(), 1u);
 }
 
-std::tuple<win::wayland::window*, std::unique_ptr<Surface>, std::unique_ptr<XdgShellToplevel>>
+std::tuple<wayland_window*, std::unique_ptr<Surface>, std::unique_ptr<XdgShellToplevel>>
 createWindow(const QByteArray& appId, int timeout = 5000)
 {
     // Create an xdg surface.
@@ -206,11 +207,11 @@ createWindow(const QByteArray& appId, int timeout = 5000)
     return {client, std::move(surface), std::move(shellSurface)};
 }
 
-win::wayland::window* get_toplevel_window(QSignalSpy const& spy)
+wayland_window* get_toplevel_window(QSignalSpy const& spy)
 {
     auto xdg_toplevel = spy.last().at(0).value<Wrapland::Server::XdgShellToplevel*>();
     for (auto win : Test::app()->base.space->windows) {
-        if (auto wl_win = qobject_cast<win::wayland::window*>(win);
+        if (auto wl_win = dynamic_cast<wayland_window*>(win);
             wl_win && wl_win->toplevel == xdg_toplevel) {
             return wl_win;
         }
@@ -234,7 +235,7 @@ void TestXdgShellClientRules::testPositionDontAffect()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -269,7 +270,7 @@ void TestXdgShellClientRules::testPositionApply()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -345,7 +346,7 @@ void TestXdgShellClientRules::testPositionRemember()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -421,7 +422,7 @@ void TestXdgShellClientRules::testPositionForce()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -465,7 +466,7 @@ void TestXdgShellClientRules::testPositionForce()
 void TestXdgShellClientRules::testPositionApplyNow()
 {
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -556,7 +557,7 @@ void TestXdgShellClientRules::testPositionForceTemporarily()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -1757,7 +1758,7 @@ void TestXdgShellClientRules::testDesktopDontAffect()
     QCOMPARE(vd_manager->current(), 1);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -1796,7 +1797,7 @@ void TestXdgShellClientRules::testDesktopApply()
     QCOMPARE(vd_manager->current(), 1);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -1851,7 +1852,7 @@ void TestXdgShellClientRules::testDesktopRemember()
     QCOMPARE(vd_manager->current(), 1);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -1902,7 +1903,7 @@ void TestXdgShellClientRules::testDesktopForce()
     QCOMPARE(vd_manager->current(), 1);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -1944,7 +1945,7 @@ void TestXdgShellClientRules::testDesktopApplyNow()
     QCOMPARE(vd_manager->current(), 1);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -2008,7 +2009,7 @@ void TestXdgShellClientRules::testDesktopForceTemporarily()
     QCOMPARE(vd_manager->current(), 1);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -2064,7 +2065,7 @@ void TestXdgShellClientRules::testMinimizeDontAffect()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -2096,7 +2097,7 @@ void TestXdgShellClientRules::testMinimizeApply()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     QSignalSpy toplevel_created_Spy(Test::app()->base.space->xdg_shell.get(),
@@ -2152,7 +2153,7 @@ void TestXdgShellClientRules::testMinimizeRemember()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -2203,7 +2204,7 @@ void TestXdgShellClientRules::testMinimizeForce()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -2235,7 +2236,7 @@ void TestXdgShellClientRules::testMinimizeForce()
 void TestXdgShellClientRules::testMinimizeApplyNow()
 {
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -2291,7 +2292,7 @@ void TestXdgShellClientRules::testMinimizeForceTemporarily()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -2336,7 +2337,7 @@ void TestXdgShellClientRules::testSkipTaskbarDontAffect()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -2367,7 +2368,7 @@ void TestXdgShellClientRules::testSkipTaskbarApply()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -2410,7 +2411,7 @@ void TestXdgShellClientRules::testSkipTaskbarRemember()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -2455,7 +2456,7 @@ void TestXdgShellClientRules::testSkipTaskbarForce()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -2487,7 +2488,7 @@ void TestXdgShellClientRules::testSkipTaskbarForce()
 void TestXdgShellClientRules::testSkipTaskbarApplyNow()
 {
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -2540,7 +2541,7 @@ void TestXdgShellClientRules::testSkipTaskbarForceTemporarily()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -2587,7 +2588,7 @@ void TestXdgShellClientRules::testSkipPagerDontAffect()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -2618,7 +2619,7 @@ void TestXdgShellClientRules::testSkipPagerApply()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -2661,7 +2662,7 @@ void TestXdgShellClientRules::testSkipPagerRemember()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -2706,7 +2707,7 @@ void TestXdgShellClientRules::testSkipPagerForce()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -2738,7 +2739,7 @@ void TestXdgShellClientRules::testSkipPagerForce()
 void TestXdgShellClientRules::testSkipPagerApplyNow()
 {
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -2791,7 +2792,7 @@ void TestXdgShellClientRules::testSkipPagerForceTemporarily()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -2838,7 +2839,7 @@ void TestXdgShellClientRules::testSkipSwitcherDontAffect()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -2869,7 +2870,7 @@ void TestXdgShellClientRules::testSkipSwitcherApply()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -2912,7 +2913,7 @@ void TestXdgShellClientRules::testSkipSwitcherRemember()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -2957,7 +2958,7 @@ void TestXdgShellClientRules::testSkipSwitcherForce()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -2989,7 +2990,7 @@ void TestXdgShellClientRules::testSkipSwitcherForce()
 void TestXdgShellClientRules::testSkipSwitcherApplyNow()
 {
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -3042,7 +3043,7 @@ void TestXdgShellClientRules::testSkipSwitcherForceTemporarily()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -3089,7 +3090,7 @@ void TestXdgShellClientRules::testKeepAboveDontAffect()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -3120,7 +3121,7 @@ void TestXdgShellClientRules::testKeepAboveApply()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -3163,7 +3164,7 @@ void TestXdgShellClientRules::testKeepAboveRemember()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -3206,7 +3207,7 @@ void TestXdgShellClientRules::testKeepAboveForce()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -3236,7 +3237,7 @@ void TestXdgShellClientRules::testKeepAboveForce()
 void TestXdgShellClientRules::testKeepAboveApplyNow()
 {
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -3289,7 +3290,7 @@ void TestXdgShellClientRules::testKeepAboveForceTemporarily()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -3338,7 +3339,7 @@ void TestXdgShellClientRules::testKeepBelowDontAffect()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -3369,7 +3370,7 @@ void TestXdgShellClientRules::testKeepBelowApply()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -3412,7 +3413,7 @@ void TestXdgShellClientRules::testKeepBelowRemember()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -3455,7 +3456,7 @@ void TestXdgShellClientRules::testKeepBelowForce()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -3485,7 +3486,7 @@ void TestXdgShellClientRules::testKeepBelowForce()
 void TestXdgShellClientRules::testKeepBelowApplyNow()
 {
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -3538,7 +3539,7 @@ void TestXdgShellClientRules::testKeepBelowForceTemporarily()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -3587,7 +3588,7 @@ void TestXdgShellClientRules::testShortcutDontAffect()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -3631,7 +3632,7 @@ void TestXdgShellClientRules::testShortcutApply()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -3713,7 +3714,7 @@ void TestXdgShellClientRules::testShortcutRemember()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -3783,7 +3784,7 @@ void TestXdgShellClientRules::testShortcutForce()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -3838,7 +3839,7 @@ void TestXdgShellClientRules::testShortcutForce()
 void TestXdgShellClientRules::testShortcutApplyNow()
 {
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -3916,7 +3917,7 @@ void TestXdgShellClientRules::testShortcutForceTemporarily()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -4030,7 +4031,7 @@ void TestXdgShellClientRules::testActiveOpacityDontAffect()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -4062,7 +4063,7 @@ void TestXdgShellClientRules::testActiveOpacityForce()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -4092,7 +4093,7 @@ void TestXdgShellClientRules::testActiveOpacityForceTemporarily()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -4131,7 +4132,7 @@ void TestXdgShellClientRules::testInactiveOpacityDontAffect()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -4167,7 +4168,7 @@ void TestXdgShellClientRules::testInactiveOpacityForce()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
@@ -4204,7 +4205,7 @@ void TestXdgShellClientRules::testInactiveOpacityForceTemporarily()
     win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
-    win::wayland::window* client;
+    wayland_window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");

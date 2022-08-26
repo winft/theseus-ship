@@ -8,6 +8,8 @@
 #pragma once
 
 #include "overlay_window.h"
+#include "types.h"
+
 #include "render/compositor.h"
 
 #include <QObject>
@@ -26,21 +28,8 @@ namespace render::x11
 
 class KWIN_EXPORT compositor : public render::compositor
 {
-    Q_OBJECT
 public:
-    enum SuspendReason {
-        NoReasonSuspend = 0,
-        UserSuspend = 1 << 0,
-        BlockRuleSuspend = 1 << 1,
-        ScriptSuspend = 1 << 2,
-        AllReasonSuspend = 0xff,
-    };
-    Q_DECLARE_FLAGS(SuspendReasons, SuspendReason)
-    Q_ENUM(SuspendReason)
-    Q_FLAG(SuspendReasons)
-
     compositor(render::platform& platform);
-    static compositor* self();
 
     void start(win::space& space) override;
 
@@ -59,7 +48,7 @@ public:
      * @see resume
      * @see isActive
      */
-    void suspend(SuspendReason reason);
+    void suspend(suspend_reason reason);
 
     /**
      * @brief Resumes the Compositor if it is currently suspended.
@@ -78,7 +67,7 @@ public:
      * @see isCompositingPossible
      * @see isOpenGLBroken
      */
-    void resume(SuspendReason reason);
+    void resume(suspend_reason reason);
 
     void reinitialize() override;
 
@@ -97,7 +86,6 @@ public:
      */
     x11::overlay_window* overlay_window{nullptr};
 
-protected:
     std::unique_ptr<render::scene> create_scene() override;
     void performCompositing() override;
 
@@ -109,7 +97,7 @@ private:
     /**
      * Whether the Compositor is currently suspended, 8 bits encoding the reason
      */
-    SuspendReasons m_suspended;
+    suspend_reason m_suspended;
     QTimer m_releaseSelectionTimer;
     int m_framesToTestForSafety{3};
 };

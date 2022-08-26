@@ -6,7 +6,6 @@
 #pragma once
 
 #include "transient.h"
-#include "window.h"
 #include "window_release.h"
 
 #include "render/compositor.h"
@@ -27,7 +26,8 @@ void assign_subsurface_role(Win* win)
     win->transient()->annexed = true;
 }
 
-inline void restack_subsurfaces(Toplevel* window)
+template<typename Win>
+void restack_subsurfaces(Win* window)
 {
     auto subsurface_stacker = [&window](std::vector<Toplevel*>& children) {
         auto const& subsurfaces = window->surface->state().children;
@@ -81,7 +81,7 @@ void set_subsurface_parent(Win* win, Lead* lead)
 
     // TODO(romangg): Why is that needed again? weston-subsurfaces works without it, but Firefox
     //                stops rendering without this connection.
-    QObject::connect(win, &Win::needsRepaint, &win->space.render, [win] {
+    QObject::connect(win, &Win::needsRepaint, win->space.render.qobject.get(), [win] {
         win->space.render.schedule_repaint(win);
     });
 

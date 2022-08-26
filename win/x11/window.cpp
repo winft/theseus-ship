@@ -161,6 +161,11 @@ void window::checkNoBorder()
     setNoBorder(app_no_border);
 }
 
+void window::handle_update_no_border()
+{
+    check_set_no_border(this);
+}
+
 bool window::wantsShadowToBeRendered() const
 {
     return control && !control->fullscreen() && maximizeMode() != win::maximize_mode::full;
@@ -169,13 +174,6 @@ bool window::wantsShadowToBeRendered() const
 QSize window::resizeIncrements() const
 {
     return geometry_hints.resize_increments();
-}
-
-static base::x11::xcb::window shape_helper_window(XCB_WINDOW_NONE);
-
-void window::cleanupX11()
-{
-    shape_helper_window.reset();
 }
 
 void window::update_input_shape()
@@ -198,11 +196,11 @@ void window::update_input_shape()
     // until the real shape of the client is added and that can make
     // the window lose focus (which is a problem with mouse focus policies)
     // TODO: It seems there is, after all - XShapeGetRectangles() - but maybe this is better
-    if (!shape_helper_window.is_valid()) {
-        shape_helper_window.create(QRect(0, 0, 1, 1));
+    if (!space.shape_helper_window.is_valid()) {
+        space.shape_helper_window.create(QRect(0, 0, 1, 1));
     }
 
-    shape_helper_window.resize(render_geometry(this).size());
+    space.shape_helper_window.resize(render_geometry(this).size());
     auto const deco_margin = QPoint(left_border(this), top_border(this));
 
     auto con = connection();
@@ -211,7 +209,7 @@ void window::update_input_shape()
                       XCB_SHAPE_SO_SET,
                       XCB_SHAPE_SK_INPUT,
                       XCB_SHAPE_SK_BOUNDING,
-                      shape_helper_window,
+                      space.shape_helper_window,
                       0,
                       0,
                       frameId());
@@ -219,7 +217,7 @@ void window::update_input_shape()
                       XCB_SHAPE_SO_SUBTRACT,
                       XCB_SHAPE_SK_INPUT,
                       XCB_SHAPE_SK_BOUNDING,
-                      shape_helper_window,
+                      space.shape_helper_window,
                       deco_margin.x(),
                       deco_margin.y(),
                       xcb_window);
@@ -227,7 +225,7 @@ void window::update_input_shape()
                       XCB_SHAPE_SO_UNION,
                       XCB_SHAPE_SK_INPUT,
                       XCB_SHAPE_SK_INPUT,
-                      shape_helper_window,
+                      space.shape_helper_window,
                       deco_margin.x(),
                       deco_margin.y(),
                       xcb_window);
@@ -238,7 +236,7 @@ void window::update_input_shape()
                       frameId(),
                       0,
                       0,
-                      shape_helper_window);
+                      space.shape_helper_window);
 }
 
 QRect window::iconGeometry() const
@@ -580,6 +578,11 @@ bool window::userCanSetFullScreen() const
     return win::is_normal(this) || win::is_dialog(this);
 }
 
+void window::handle_update_fullscreen(bool full)
+{
+    propagate_fullscreen_update(this, full);
+}
+
 bool window::wantsInput() const
 {
     return control->rules().checkAcceptFocus(acceptsFocus()
@@ -747,6 +750,18 @@ void window::setFrameGeometry(QRect const& rect)
     send_synthetic_configure_notify(this, client_geo);
 }
 
+void window::apply_restore_geometry(QRect const& restore_geo)
+{
+    setFrameGeometry(rectify_restore_geometry(this, restore_geo));
+}
+
+void window::restore_geometry_from_fullscreen()
+{
+    assert(!has_special_geometry_mode_besides_fullscreen(this));
+    setFrameGeometry(rectify_fullscreen_restore_geometry(this));
+    restore_geometries.maximize = {};
+}
+
 void window::do_set_geometry(QRect const& frame_geo)
 {
     assert(control);
@@ -824,10 +839,7 @@ void window::do_set_maximize_mode(maximize_mode mode)
     // Need to update the server geometry in case the decoration changed.
     update_server_geometry(this, geometry_update.frame);
 
-    Q_EMIT clientMaximizedStateChanged(this, mode);
-    Q_EMIT clientMaximizedStateChanged(this,
-                                       flags(mode & win::maximize_mode::horizontal),
-                                       flags(mode & win::maximize_mode::vertical));
+    Q_EMIT maximize_mode_changed(this, mode);
 }
 
 void window::do_set_fullscreen(bool full)
@@ -860,17 +872,16 @@ void window::do_set_fullscreen(bool full)
 
     // Active fullscreens gets a different layer.
     update_layer(this);
-
     updateWindowRules(rules::type::fullscreen | rules::type::position | rules::type::size);
-
-    // TODO(romangg): Is it really important for scripts if the fullscreen was triggered by the app
-    //                or the user? For now just pretend that it was always the user.
-    Q_EMIT client_fullscreen_set(this, full, true);
     Q_EMIT fullScreenChanged();
 }
 
 void window::update_maximized(maximize_mode mode)
 {
+    if (!isResizable() || is_toolbar(this)) {
+        return;
+    }
+    respect_maximizing_aspect(this, mode);
     win::update_maximized(this, mode);
 }
 

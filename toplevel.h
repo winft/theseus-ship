@@ -425,11 +425,13 @@ public:
     // TODO: remove boolean traps
     virtual void hideClient(bool hide) = 0;
     virtual void setFullScreen(bool set, bool user = true) = 0;
+    virtual void handle_update_fullscreen(bool full) = 0;
 
     virtual win::maximize_mode maximizeMode() const;
 
     virtual bool noBorder() const = 0;
     virtual void setNoBorder(bool set) = 0;
+    virtual void handle_update_no_border() = 0;
 
     /**
      * Returns whether the window is resizable or has a fixed size.
@@ -477,6 +479,8 @@ public:
     virtual QSize maxSize() const;
 
     virtual void setFrameGeometry(QRect const& rect) = 0;
+    virtual void apply_restore_geometry(QRect const& restore_geo) = 0;
+    virtual void restore_geometry_from_fullscreen() = 0;
 
     virtual bool hasStrut() const = 0;
 
@@ -672,8 +676,7 @@ Q_SIGNALS:
     void minimizedChanged();
     void clientMinimized(KWin::Toplevel* window, bool animate);
     void clientUnminimized(KWin::Toplevel* window, bool animate);
-    void clientMaximizedStateChanged(KWin::Toplevel* window, KWin::win::maximize_mode);
-    void clientMaximizedStateChanged(KWin::Toplevel* window, bool h, bool v);
+    void maximize_mode_changed(KWin::Toplevel* window, KWin::win::maximize_mode);
     void quicktiling_changed();
     void keepAboveChanged(bool);
     void keepBelowChanged(bool);

@@ -54,7 +54,6 @@ private Q_SLOTS:
 void ToplevelOpenCloseAnimationTest::initTestCase()
 {
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
-    qRegisterMetaType<win::wayland::window*>();
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
@@ -136,7 +135,7 @@ void ToplevelOpenCloseAnimationTest::testAnimateToplevels()
 
     // Close the test client, the effect should start animating the disappearing
     // of the client.
-    QSignalSpy windowClosedSpy(client, &win::wayland::window::closed);
+    QSignalSpy windowClosedSpy(client, &Toplevel::closed);
     QVERIFY(windowClosedSpy.isValid());
     shellSurface.reset();
     surface.reset();
@@ -200,7 +199,7 @@ void ToplevelOpenCloseAnimationTest::testDontAnimatePopups()
     QVERIFY(!effect->isActive());
 
     // Destroy the popup, it should not be animated.
-    QSignalSpy popupClosedSpy(popup, &win::wayland::window::closed);
+    QSignalSpy popupClosedSpy(popup, &Toplevel::closed);
     QVERIFY(popupClosedSpy.isValid());
     popupShellSurface.reset();
     popupSurface.reset();

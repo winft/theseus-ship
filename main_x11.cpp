@@ -260,10 +260,11 @@ void ApplicationX11::start()
 
         render->compositor = std::make_unique<render::x11::compositor>(*render);
 
-        base.space = std::make_unique<win::x11::space>(*render->compositor, base.input.get());
+        using space_t = win::x11::space<base::x11::platform>;
+        base.space = std::make_unique<space_t>(base);
         win::init_shortcuts(*base.space);
 
-        event_filter = std::make_unique<base::x11::xcb_event_filter<win::x11::space>>(*base.space);
+        event_filter = std::make_unique<base::x11::xcb_event_filter<space_t>>(*base.space);
         installNativeEventFilter(event_filter.get());
 
         base.space->scripting = std::make_unique<scripting::platform>(*base.space);

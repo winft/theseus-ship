@@ -21,7 +21,7 @@ Win* find_controlled_window(Space& space, predicate_match predicate, xcb_window_
             if (!win->control) {
                 continue;
             }
-            if (auto x11_win = qobject_cast<Win*>(win); x11_win && func(x11_win)) {
+            if (auto x11_win = dynamic_cast<Win*>(win); x11_win && func(x11_win)) {
                 return x11_win;
             }
         }

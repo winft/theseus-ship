@@ -58,7 +58,6 @@ void PopupOpenCloseAnimationTest::initTestCase()
 {
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
     qRegisterMetaType<win::internal_window*>();
-    qRegisterMetaType<win::wayland::window*>();
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
@@ -139,7 +138,7 @@ void PopupOpenCloseAnimationTest::testAnimatePopups()
     QTRY_VERIFY(!effect->isActive());
 
     // Destroy the popup, it should not be animated.
-    QSignalSpy popupClosedSpy(popup, &win::wayland::window::closed);
+    QSignalSpy popupClosedSpy(popup, &Toplevel::closed);
     QVERIFY(popupClosedSpy.isValid());
     popupShellSurface.reset();
     popupSurface.reset();

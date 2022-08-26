@@ -55,8 +55,6 @@ private Q_SLOTS:
 
 void TestIdleInhibition::initTestCase()
 {
-    qRegisterMetaType<win::wayland::window*>();
-
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
 
@@ -261,7 +259,7 @@ void TestIdleInhibition::testDontInhibitWhenUnmapped()
     QCOMPARE(inhibitedSpy.count(), 1);
 
     // Unmap the client.
-    QSignalSpy hiddenSpy(c, &win::wayland::window::windowHidden);
+    QSignalSpy hiddenSpy(c, &Toplevel::windowHidden);
     QVERIFY(hiddenSpy.isValid());
     surface->attachBuffer(Buffer::Ptr());
     surface->commit(Surface::CommitFlag::None);
@@ -273,7 +271,7 @@ void TestIdleInhibition::testDontInhibitWhenUnmapped()
     QCOMPARE(inhibitedSpy.count(), 2);
 
     // Map the client.
-    QSignalSpy windowShownSpy(c, &win::wayland::window::windowShown);
+    QSignalSpy windowShownSpy(c, &Toplevel::windowShown);
     QVERIFY(windowShownSpy.isValid());
     Test::render(surface, QSize(100, 50), Qt::blue);
     QVERIFY(windowShownSpy.wait());

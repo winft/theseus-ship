@@ -42,8 +42,8 @@ basic_thumbnail_item::basic_thumbnail_item(QQuickItem* parent)
     , m_saturation(1.0)
     , m_clipToItem()
 {
-    connect(singleton_interface::platform->compositor.get(),
-            &render::compositor::compositingToggled,
+    connect(singleton_interface::platform->compositor->qobject.get(),
+            &render::compositor_qobject::compositingToggled,
             this,
             &basic_thumbnail_item::compositingToggled);
     compositingToggled();

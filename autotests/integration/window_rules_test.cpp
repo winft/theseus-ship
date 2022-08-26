@@ -51,8 +51,6 @@ private Q_SLOTS:
 
 void WindowRuleTest::initTestCase()
 {
-    qRegisterMetaType<KWin::win::x11::window*>();
-
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
 
@@ -150,7 +148,9 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
-    auto client = windowCreatedSpy.last().first().value<win::x11::window*>();
+
+    auto client
+        = dynamic_cast<win::x11::window*>(windowCreatedSpy.last().first().value<Toplevel*>());
     QVERIFY(client);
     QVERIFY(win::decoration(client));
     QVERIFY(!client->hasStrut());
@@ -165,7 +165,7 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
     QCOMPARE(client->maximizeMode(), win::maximize_mode::vertical);
 
     // destroy window again
-    QSignalSpy windowClosedSpy(client, &win::x11::window::closed);
+    QSignalSpy windowClosedSpy(client, &Toplevel::closed);
     QVERIFY(windowClosedSpy.isValid());
     xcb_unmap_window(c.get(), w);
     xcb_destroy_window(c.get(), w);
@@ -225,7 +225,9 @@ void WindowRuleTest::testWindowClassChange()
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
-    auto client = windowCreatedSpy.last().first().value<win::x11::window*>();
+
+    auto client
+        = dynamic_cast<win::x11::window*>(windowCreatedSpy.last().first().value<Toplevel*>());
     QVERIFY(client);
     QVERIFY(win::decoration(client));
     QVERIFY(!client->hasStrut());
@@ -241,7 +243,7 @@ void WindowRuleTest::testWindowClassChange()
     QCOMPARE(client->control->keep_above(), false);
 
     // now change class
-    QSignalSpy windowClassChangedSpy{client, &win::x11::window::windowClassChanged};
+    QSignalSpy windowClassChangedSpy{client, &Toplevel::windowClassChanged};
     QVERIFY(windowClassChangedSpy.isValid());
     xcb_icccm_set_wm_class(c.get(), w, 23, "org.kde.foo\0org.kde.foo");
     xcb_flush(c.get());
@@ -249,7 +251,7 @@ void WindowRuleTest::testWindowClassChange()
     QCOMPARE(client->control->keep_above(), true);
 
     // destroy window
-    QSignalSpy windowClosedSpy(client, &win::x11::window::closed);
+    QSignalSpy windowClosedSpy(client, &Toplevel::closed);
     QVERIFY(windowClosedSpy.isValid());
     xcb_unmap_window(c.get(), w);
     xcb_destroy_window(c.get(), w);

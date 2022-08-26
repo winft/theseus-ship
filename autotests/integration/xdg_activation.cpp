@@ -40,7 +40,6 @@ private Q_SLOTS:
 
 void xdg_activation_test::initTestCase()
 {
-    qRegisterMetaType<win::wayland::window*>();
     qRegisterMetaType<std::string>();
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);

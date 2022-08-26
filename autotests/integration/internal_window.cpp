@@ -186,7 +186,6 @@ void HelperWindow::keyReleaseEvent(QKeyEvent* event)
 void InternalWindowTest::initTestCase()
 {
     qRegisterMetaType<KWin::win::internal_window*>();
-    qRegisterMetaType<win::wayland::window*>();
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());

@@ -10,8 +10,18 @@
 namespace KWin
 {
 
+namespace base::wayland
+{
+class platform;
+}
+
 namespace win::wayland
 {
+
+template<typename Base>
+class space;
+
+template<typename Space>
 class window;
 }
 
@@ -20,11 +30,14 @@ namespace debug
 
 class input_filter;
 
+using wayland_space = win::wayland::space<base::wayland::platform>;
+using wayland_window = win::wayland::window<wayland_space>;
+
 class KWIN_EXPORT wayland_console : public console
 {
     Q_OBJECT
 public:
-    wayland_console(win::space& space);
+    wayland_console(wayland_space& space);
     ~wayland_console();
 
 private:
@@ -55,9 +68,9 @@ protected:
     int topLevelRowCount() const override;
 
 private:
-    win::wayland::window* shellClient(const QModelIndex& index) const;
+    wayland_window* shellClient(const QModelIndex& index) const;
 
-    QVector<win::wayland::window*> m_shellClients;
+    QVector<wayland_window*> m_shellClients;
 };
 
 class KWIN_EXPORT wayland_console_delegate : public console_delegate

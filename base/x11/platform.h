@@ -31,7 +31,7 @@ public:
     }
 
     std::unique_ptr<input::x11::platform> input;
-    std::unique_ptr<win::x11::space> space;
+    std::unique_ptr<win::x11::space<platform>> space;
 };
 
 }

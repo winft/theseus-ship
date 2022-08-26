@@ -16,13 +16,10 @@ namespace KWin::win
 template<typename Win>
 void update_no_border(Win* win)
 {
-    if (!kwinApp()->options->qobject->borderlessMaximizedWindows()) {
-        // If maximized windows can have borders there is no change implied.
-        return;
+    // Only if maximized windows are without borders a change might be implied.
+    if (kwinApp()->options->qobject->borderlessMaximizedWindows()) {
+        win->handle_update_no_border();
     }
-
-    auto no_border = win->geometry_update.max_mode == maximize_mode::full;
-    win->setNoBorder(win->control->rules().checkNoBorder(no_border));
 }
 
 template<typename Win>
@@ -98,12 +95,6 @@ QRect rectify_restore_geometry(Win* win, QRect restore_geo)
 }
 
 template<typename Win>
-void update_frame_from_restore_geometry(Win* win, QRect const& restore_geo)
-{
-    win->setFrameGeometry(rectify_restore_geometry(win, restore_geo));
-}
-
-template<typename Win>
 void maximize_restore(Win* win)
 {
     auto const old_mode = win->geometry_update.max_mode;
@@ -120,7 +111,7 @@ void maximize_restore(Win* win)
     }
 
     geometry_updates_blocker blocker(win);
-    update_frame_from_restore_geometry(win, final_restore_geo);
+    win->apply_restore_geometry(final_restore_geo);
 
     if (win->info) {
         // TODO(romangg): That is x11::window only. Put it in a template specialization?
@@ -217,18 +208,12 @@ void update_maximized_impl(Win* win, maximize_mode mode)
 }
 
 template<typename Win>
-void respect_maximizing_aspect([[maybe_unused]] Win* win, [[maybe_unused]] maximize_mode& mode)
-{
-}
-
-template<typename Win>
 void update_maximized(Win* win, maximize_mode mode)
 {
     if (!win->isResizable() || is_toolbar(win)) {
         return;
     }
 
-    respect_maximizing_aspect(win, mode);
     mode = win->control->rules().checkMaximize(mode);
 
     geometry_updates_blocker blocker(win);

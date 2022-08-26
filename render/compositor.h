@@ -7,10 +7,12 @@
 */
 #pragma once
 
+#include "compositor_qobject.h"
+#include "types.h"
+
 #include "kwinglobals.h"
 
 #include <QBasicTimer>
-#include <QObject>
 #include <QRegion>
 #include <QTimer>
 #include <deque>
@@ -31,6 +33,7 @@ namespace render
 
 namespace dbus
 {
+template<typename Compositor>
 class compositing;
 }
 
@@ -49,19 +52,11 @@ struct compositor_x11_integration {
     std::function<void(Toplevel*)> update_blocking;
 };
 
-class KWIN_EXPORT compositor : public QObject
+class KWIN_EXPORT compositor
 {
-    Q_OBJECT
 public:
-    enum class State {
-        On = 0,
-        Off,
-        Starting,
-        Stopping,
-    };
-
     explicit compositor(render::platform& platform);
-    ~compositor() override;
+    virtual ~compositor();
 
     virtual void start(win::space& space) = 0;
 
@@ -112,6 +107,8 @@ public:
     void keepSupportProperty(xcb_atom_t atom);
     void removeSupportProperty(xcb_atom_t atom);
 
+    std::unique_ptr<compositor_qobject> qobject;
+
     std::unique_ptr<render::scene> scene;
     std::unique_ptr<render::effects_handler_impl> effects;
 
@@ -122,16 +119,6 @@ public:
     render::platform& platform;
     win::space* space{nullptr};
 
-Q_SIGNALS:
-    void compositingToggled(bool active);
-    void aboutToDestroy();
-    void aboutToToggleCompositing();
-
-protected:
-    void timerEvent(QTimerEvent* te) override;
-    void stop(bool on_shutdown);
-    void start_scene();
-    void setupX11Support();
     virtual std::unique_ptr<render::scene> create_scene() = 0;
 
     virtual void performCompositing() = 0;
@@ -141,18 +128,15 @@ protected:
 
     virtual void configChanged();
 
-    void destroyCompositorSelection();
-
-    State m_state{State::Off};
+    state m_state{state::off};
     x11::compositor_selection_owner* m_selectionOwner{nullptr};
     QRegion repaints_region;
     QBasicTimer compositeTimer;
     qint64 m_delay{0};
     bool m_bufferSwapPending{false};
-    std::unique_ptr<dbus::compositing> dbus;
+    std::unique_ptr<dbus::compositing<compositor>> dbus;
 
-private:
-    void claimCompositorSelection();
+    bool handle_timer_event(QTimerEvent* te);
     int refreshRate() const;
 
     void deleteUnusedSupportProperties();

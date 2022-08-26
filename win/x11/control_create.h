@@ -16,6 +16,7 @@
 #include "session.h"
 #include "startup_info.h"
 #include "user_time.h"
+#include "win_info.h"
 #include "window_create.h"
 #include "xcb.h"
 
@@ -171,14 +172,11 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     if (auto& comp = space.render; comp.x11_integration.update_blocking) {
         QObject::connect(win,
                          &win::x11::window::blockingCompositingChanged,
-                         &comp,
+                         comp.qobject.get(),
                          [&comp](auto window) { comp.x11_integration.update_blocking(window); });
     }
 
-    QObject::connect(win,
-                     &win::x11::window::client_fullscreen_set,
-                     space.edges.get(),
-                     &screen_edger::checkBlocking);
+    QObject::connect(win, &Win::fullScreenChanged, space.edges.get(), &screen_edger::checkBlocking);
 
     // From this place on, manage() must not return false
     win->control = std::make_unique<typename Win::control_t>(win);
@@ -247,7 +245,8 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     win->geometry_hints.init(win->xcb_window);
     win->motif_hints.init(win->xcb_window);
 
-    win->info = new win_info(win, win->xcb_windows.client, rootWindow(), properties, properties2);
+    win->info
+        = new win_info<Win>(win, win->xcb_windows.client, rootWindow(), properties, properties2);
 
     if (is_desktop(win) && win->bit_depth == 32) {
         // force desktop windows to be opaque. It's a desktop after all, there is no window below
@@ -642,7 +641,10 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
     // Forward all opacity values to the frame in case there'll be other CM running.
     QObject::connect(
-        &win->space.render, &render::compositor::compositingToggled, win, [win](bool active) {
+        win->space.render.qobject.get(),
+        &render::compositor_qobject::compositingToggled,
+        win,
+        [win](bool active) {
             if (active) {
                 return;
             }
@@ -690,7 +692,7 @@ xcb_timestamp_t read_user_time_map_timestamp(Win* win,
             auto sameApplicationActiveHackPredicate = [win](Toplevel const* cl) {
                 // ignore already existing splashes, toolbars, utilities and menus,
                 // as the app may show those before the main window
-                auto x11_client = qobject_cast<Win const*>(cl);
+                auto x11_client = dynamic_cast<Win const*>(cl);
                 return x11_client && !is_splash(x11_client) && !is_toolbar(x11_client)
                     && !is_utility(x11_client) && !is_menu(x11_client) && x11_client != win
                     && belong_to_same_application(

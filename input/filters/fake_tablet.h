@@ -55,7 +55,9 @@ public:
             qCWarning(KWIN_INPUT) << "Unexpected tablet event type" << event;
             break;
         }
-        static_cast<win::wayland::space&>(this->redirect.space).kde_idle->simulateUserActivity();
+
+        using wayland_space = win::wayland::space<base::wayland::platform>;
+        static_cast<wayland_space&>(this->redirect.space).kde_idle->simulateUserActivity();
 
         return true;
     }

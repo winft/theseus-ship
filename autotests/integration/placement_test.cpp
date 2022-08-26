@@ -40,6 +40,9 @@ using namespace Wrapland::Client;
 namespace KWin
 {
 
+using wayland_space = win::wayland::space<base::wayland::platform>;
+using wayland_window = win::wayland::window<wayland_space>;
+
 struct PlaceWindowResult {
     QSize initiallyConfiguredSize;
     Wrapland::Client::XdgShellToplevel::States initiallyConfiguredStates;
@@ -106,8 +109,6 @@ void TestPlacement::cleanup()
 
 void TestPlacement::initTestCase()
 {
-    qRegisterMetaType<win::wayland::window*>();
-
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
     kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
@@ -152,7 +153,7 @@ PlaceWindowResult TestPlacement::createAndPlaceWindow(QSize const& defaultSize)
     Test::render(rc.surface, defaultSize, Qt::red);
     configSpy.wait();
 
-    auto window = window_spy.first().first().value<win::wayland::window*>();
+    auto window = dynamic_cast<wayland_window*>(window_spy.first().first().value<Toplevel*>());
 
     rc.initiallyConfiguredSize = configSpy[0][0].toSize();
     rc.initiallyConfiguredStates

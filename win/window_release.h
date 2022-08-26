@@ -6,9 +6,10 @@
 #pragma once
 
 #include "geo.h"
+#include "meta.h"
 #include "remnant.h"
 #include "space_window_release.h"
-#include "x11/netinfo.h"
+#include "x11/win_info.h"
 
 #include "toplevel.h"
 
@@ -85,7 +86,7 @@ RemnantWin* create_remnant_window(Win& source)
     win->bit_depth = source.bit_depth;
 
     win->info = source.info;
-    if (auto winfo = dynamic_cast<win::x11::win_info*>(win->info)) {
+    if (auto winfo = dynamic_cast<win::x11::win_info<Win>*>(win->info)) {
         winfo->disable();
     }
 

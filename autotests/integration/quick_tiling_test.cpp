@@ -92,8 +92,6 @@ private:
 
 void QuickTilingTest::initTestCase()
 {
-    qRegisterMetaType<win::wayland::window*>();
-    qRegisterMetaType<KWin::win::x11::window*>();
     qRegisterMetaType<KWin::Toplevel*>();
     qRegisterMetaType<KWin::win::maximize_mode>();
 
@@ -310,12 +308,8 @@ void QuickTilingTest::testQuickMaximizing()
     QVERIFY(quickTileChangedSpy.isValid());
     QSignalSpy geometryChangedSpy(c, &Toplevel::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
-    QSignalSpy maximizeChangedSpy1(
-        c, qOverload<Toplevel*, win::maximize_mode>(&Toplevel::clientMaximizedStateChanged));
-    QVERIFY(maximizeChangedSpy1.isValid());
-    QSignalSpy maximizeChangedSpy2(
-        c, qOverload<Toplevel*, bool, bool>(&Toplevel::clientMaximizedStateChanged));
-    QVERIFY(maximizeChangedSpy2.isValid());
+    QSignalSpy maximizeChangedSpy(c, &Toplevel::maximize_mode_changed);
+    QVERIFY(maximizeChangedSpy.isValid());
 
     // Now quicktile-maximize.
     win::set_quicktile_mode(c, win::quicktiles::maximize, true);
@@ -344,14 +338,10 @@ void QuickTilingTest::testQuickMaximizing()
     QCOMPARE(c->restore_geometries.maximize, QRect(0, 0, 100, 50));
 
     // client is now set to maximised
-    QCOMPARE(maximizeChangedSpy1.count(), 1);
-    QCOMPARE(maximizeChangedSpy1.first().first().value<KWin::Toplevel*>(), c);
-    QCOMPARE(maximizeChangedSpy1.first().last().value<KWin::win::maximize_mode>(),
+    QCOMPARE(maximizeChangedSpy.count(), 1);
+    QCOMPARE(maximizeChangedSpy.first().first().value<KWin::Toplevel*>(), c);
+    QCOMPARE(maximizeChangedSpy.first().last().value<KWin::win::maximize_mode>(),
              win::maximize_mode::full);
-    QCOMPARE(maximizeChangedSpy2.count(), 1);
-    QCOMPARE(maximizeChangedSpy2.first().first().value<KWin::Toplevel*>(), c);
-    QCOMPARE(maximizeChangedSpy2.first().at(1).toBool(), true);
-    QCOMPARE(maximizeChangedSpy2.first().at(2).toBool(), true);
     QCOMPARE(c->maximizeMode(), win::maximize_mode::full);
 
     // go back to quick tile none
@@ -378,14 +368,10 @@ void QuickTilingTest::testQuickMaximizing()
     QVERIFY(geometryChangedSpy.wait());
     QCOMPARE(geometryChangedSpy.count(), 2);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
-    QCOMPARE(maximizeChangedSpy1.count(), 2);
-    QCOMPARE(maximizeChangedSpy1.last().first().value<KWin::Toplevel*>(), c);
-    QCOMPARE(maximizeChangedSpy1.last().last().value<KWin::win::maximize_mode>(),
+    QCOMPARE(maximizeChangedSpy.count(), 2);
+    QCOMPARE(maximizeChangedSpy.last().first().value<KWin::Toplevel*>(), c);
+    QCOMPARE(maximizeChangedSpy.last().last().value<KWin::win::maximize_mode>(),
              win::maximize_mode::restore);
-    QCOMPARE(maximizeChangedSpy2.count(), 2);
-    QCOMPARE(maximizeChangedSpy2.last().first().value<KWin::Toplevel*>(), c);
-    QCOMPARE(maximizeChangedSpy2.last().at(1).toBool(), false);
-    QCOMPARE(maximizeChangedSpy2.last().at(2).toBool(), false);
 }
 
 void QuickTilingTest::testQuickTilingKeyboardMove_data()
@@ -692,7 +678,9 @@ void QuickTilingTest::testX11QuickTiling()
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
-    auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
+
+    auto client
+        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
 
@@ -730,7 +718,7 @@ void QuickTilingTest::testX11QuickTiling()
     xcb_flush(c.get());
     c.reset();
 
-    QSignalSpy windowClosedSpy(client, &win::x11::window::closed);
+    QSignalSpy windowClosedSpy(client, &Toplevel::closed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
 }
@@ -789,7 +777,9 @@ void QuickTilingTest::testX11QuickTilingAfterVertMaximize()
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
-    auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
+
+    auto client
+        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
 
@@ -816,7 +806,7 @@ void QuickTilingTest::testX11QuickTilingAfterVertMaximize()
     xcb_flush(c.get());
     c.reset();
 
-    QSignalSpy windowClosedSpy(client, &win::x11::window::closed);
+    QSignalSpy windowClosedSpy(client, &Toplevel::closed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
 }

@@ -64,9 +64,6 @@ void SceneQPainterTest::cleanup()
 
 void SceneQPainterTest::initTestCase()
 {
-    qRegisterMetaType<win::wayland::window*>();
-    qRegisterMetaType<KWin::win::x11::window*>();
-
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
 
@@ -366,7 +363,8 @@ void SceneQPainterTest::testX11Window()
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
-    auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
+    auto client
+        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QCOMPARE(win::frame_to_client_size(client, client->size()), QSize(100, 200));
@@ -422,7 +420,7 @@ void SceneQPainterTest::testX11Window()
     xcb_unmap_window(c.data(), w);
     xcb_flush(c.data());
 
-    QSignalSpy windowClosedSpy(client, &win::x11::window::closed);
+    QSignalSpy windowClosedSpy(client, &Toplevel::closed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
     xcb_destroy_window(c.data(), w);

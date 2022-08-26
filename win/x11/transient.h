@@ -343,12 +343,12 @@ template<typename Win, typename Space>
 void check_active_modal(Space& space)
 {
     // If the active window got new modal transient, activate it.
-    auto win = qobject_cast<Win*>(most_recently_activated_window(space));
+    auto win = dynamic_cast<Win*>(most_recently_activated_window(space));
     if (!win) {
         return;
     }
 
-    auto new_modal = qobject_cast<Win*>(win->findModal());
+    auto new_modal = dynamic_cast<Win*>(win->findModal());
 
     if (new_modal && new_modal != win) {
         if (!new_modal->control) {

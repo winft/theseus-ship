@@ -63,8 +63,6 @@ private Q_SLOTS:
 
 void TestMaximized::initTestCase()
 {
-    qRegisterMetaType<win::wayland::window*>();
-
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
 
@@ -383,7 +381,7 @@ void TestMaximized::testBorderlessMaximizedWindowNoClientSideDecoration()
 
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
-    QSignalSpy geometryChangedSpy(client, &win::wayland::window::frame_geometry_changed);
+    QSignalSpy geometryChangedSpy(client, &Toplevel::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
     QSignalSpy sizeChangeRequestedSpy(xdgShellToplevel.get(), &XdgShellToplevel::sizeChanged);
     QVERIFY(sizeChangeRequestedSpy.isValid());

@@ -200,7 +200,7 @@ void clear_space(Space& space)
     auto is_x11 = kwinApp()->operationMode() == Application::OperationModeX11;
 
     for (auto it = stack.cbegin(), end = stack.cend(); it != end; ++it) {
-        auto window = qobject_cast<x11::window*>(const_cast<Toplevel*>(*it));
+        auto window = dynamic_cast<x11::window*>(const_cast<Toplevel*>(*it));
         if (!window || window->remnant) {
             continue;
         }
@@ -218,8 +218,7 @@ void clear_space(Space& space)
         remove_all(space.stacking_order->pre_stack, unmanaged);
     }
 
-    window::cleanupX11();
-
+    space.shape_helper_window.reset();
     space.stacking_order->unlock();
 }
 

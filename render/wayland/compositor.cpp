@@ -13,6 +13,7 @@
 #include "base/wayland/platform.h"
 #include "base/wayland/server.h"
 #include "render/backend/wlroots/output.h"
+#include "render/compositor_start.h"
 #include "render/cursor.h"
 #include "render/dbus/compositing.h"
 #include "render/gl/scene.h"
@@ -62,12 +63,12 @@ compositor::compositor(render::platform& platform)
     : render::compositor(platform)
     , presentation{std::make_unique<wayland::presentation>(platform.base.get_clockid())}
 {
-    dbus->integration.get_types = [] { return QStringList{"egl"}; };
+    dbus->qobject->integration.get_types = [] { return QStringList{"egl"}; };
 
-    connect(kwinApp(),
-            &Application::x11ConnectionAboutToBeDestroyed,
-            this,
-            &compositor::destroyCompositorSelection);
+    QObject::connect(kwinApp(),
+                     &Application::x11ConnectionAboutToBeDestroyed,
+                     qobject.get(),
+                     [this] { compositor_destroy_selection(*this); });
 }
 
 compositor::~compositor() = default;
@@ -125,23 +126,25 @@ void compositor::start(win::space& space)
 {
     if (!this->space) {
         // On first start setup connections.
-        QObject::connect(
-            kwinApp(), &Application::x11ConnectionChanged, this, &compositor::setupX11Support);
+        QObject::connect(kwinApp(), &Application::x11ConnectionChanged, qobject.get(), [this] {
+            compositor_setup_x11_support(*this);
+        });
         QObject::connect(space.stacking_order.get(),
                          &win::stacking_order::changed,
-                         this,
-                         &compositor::addRepaintFull);
+                         qobject.get(),
+                         [this] { addRepaintFull(); });
         QObject::connect(
-            &platform.base, &base::platform::output_removed, this, [this](auto output) {
+            &platform.base, &base::platform::output_removed, qobject.get(), [this](auto output) {
                 for (auto& win : this->space->windows) {
                     remove_all(win->repaint_outputs, output);
                 }
             });
-        QObject::connect(space.qobject.get(), &win::space::qobject_t::destroyed, this, [this] {
-            for (auto& output : get_platform(this->platform.base).outputs) {
-                get_output(output)->render->delay_timer.stop();
-            }
-        });
+        QObject::connect(
+            space.qobject.get(), &win::space::qobject_t::destroyed, qobject.get(), [this] {
+                for (auto& output : get_platform(this->platform.base).outputs) {
+                    get_output(output)->render->delay_timer.stop();
+                }
+            });
         this->space = &space;
     }
 
@@ -152,7 +155,7 @@ void compositor::start(win::space& space)
     software_cursor->set_enabled(true);
 
     try {
-        render::compositor::start_scene();
+        compositor_start_scene(*this);
     } catch (std::runtime_error const& ex) {
         qCCritical(KWIN_WL) << "Error: " << ex.what();
         qCCritical(KWIN_WL) << "Wayland requires compositing. Going to quit.";

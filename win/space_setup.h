@@ -45,8 +45,8 @@ void init_space(Space& space)
 
     QObject::connect(space.qobject.get(),
                      &Space::qobject_t::currentDesktopChanged,
-                     &space.render,
-                     &render::compositor::addRepaintFull);
+                     space.render.qobject.get(),
+                     [comp = &space.render] { comp->addRepaintFull(); });
 
     space.deco->init();
     QObject::connect(space.qobject.get(),
@@ -71,7 +71,7 @@ void init_space(Space& space)
     QObject::connect(
         &base, &base::platform::topology_changed, space.qobject.get(), [&](auto old, auto topo) {
             if (old.size != topo.size) {
-                handle_desktop_resize(space);
+                space.resize(topo.size);
             }
         });
 
@@ -105,11 +105,26 @@ void init_space(Space& space)
         &win::virtual_desktop_manager_qobject::countChanged,
         space.qobject.get(),
         [&](auto prev, auto next) { handle_desktop_count_changed(space, prev, next); });
-    QObject::connect(
-        vds->qobject.get(),
-        &win::virtual_desktop_manager_qobject::currentChanged,
-        space.qobject.get(),
-        [&](auto prev, auto next) { handle_current_desktop_changed(space, prev, next); });
+
+    QObject::connect(vds->qobject.get(),
+                     &win::virtual_desktop_manager_qobject::currentChanged,
+                     space.qobject.get(),
+                     [&](auto prev, auto next) {
+                         close_active_popup(space);
+
+                         blocker block(space.stacking_order);
+                         update_client_visibility_on_desktop_change(&space, next);
+
+                         if (space.showing_desktop) {
+                             // Do this only after desktop change to avoid flicker.
+                             set_showing_desktop(space, false);
+                         }
+
+                         activate_window_on_new_desktop(space, next);
+                         Q_EMIT space.qobject->currentDesktopChanged(prev,
+                                                                     space.move_resize_window);
+                     });
+
     vds->setNavigationWrappingAround(kwinApp()->options->qobject->isRollOverDesktops());
     QObject::connect(kwinApp()->options->qobject.get(),
                      &base::options_qobject::rollOverDesktopsChanged,

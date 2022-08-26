@@ -418,6 +418,7 @@ set(kwin_SRCS
     main.cpp
     render/buffer.cpp
     render/compositor.cpp
+    render/compositor_qobject.cpp
     render/cursor.cpp
     render/dbus/compositing.cpp
     render/effect_loader.cpp
@@ -488,7 +489,6 @@ set(kwin_SRCS
     win/x11/root_info_filter.cpp
     win/x11/screen_edge.cpp
     win/x11/screen_edges_filter.cpp
-    win/x11/space.cpp
     win/x11/sync_alarm_filter.cpp
     win/x11/window.cpp
     xwl/xwayland_interface.cpp
@@ -518,7 +518,7 @@ qt5_add_dbus_adaptor(kwin_SRCS base/dbus/org.kde.KWin.xml base/dbus/kwin.h KWin:
 qt5_add_dbus_adaptor(kwin_SRCS
   render/dbus/org.kde.kwin.Compositing.xml
   render/dbus/compositing.h
-  KWin::render::dbus::compositing
+  KWin::render::dbus::compositing_qobject
 )
 qt5_add_dbus_adaptor(kwin_SRCS
   render/dbus/org.kde.kwin.ColorCorrect.xml
@@ -826,9 +826,6 @@ set(kwin_WAYLAND_SRCS
    render/wayland/effects.cpp
    render/wayland/output.cpp
    render/wayland/presentation.cpp
-   win/wayland/space.cpp
-   win/wayland/window.cpp
-   win/wayland/xwl_window.cpp
 )
 
 if (KWIN_BUILD_TABBOX)
