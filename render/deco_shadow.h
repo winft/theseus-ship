@@ -27,15 +27,15 @@ bool update_deco_shadow(Shadow& impl, KDecoration2::Decoration* decoration)
         // disconnect previous connections
         QObject::disconnect(impl.m_decorationShadow.data(),
                             &KDecoration2::DecorationShadow::innerShadowRectChanged,
-                            impl.m_topLevel,
+                            impl.m_topLevel->qobject.get(),
                             nullptr);
         QObject::disconnect(impl.m_decorationShadow.data(),
                             &KDecoration2::DecorationShadow::shadowChanged,
-                            impl.m_topLevel,
+                            impl.m_topLevel->qobject.get(),
                             nullptr);
         QObject::disconnect(impl.m_decorationShadow.data(),
                             &KDecoration2::DecorationShadow::paddingChanged,
-                            impl.m_topLevel,
+                            impl.m_topLevel->qobject.get(),
                             nullptr);
     }
 
@@ -49,15 +49,15 @@ bool update_deco_shadow(Shadow& impl, KDecoration2::Decoration* decoration)
 
     QObject::connect(impl.m_decorationShadow.data(),
                      &KDecoration2::DecorationShadow::innerShadowRectChanged,
-                     impl.m_topLevel,
+                     impl.m_topLevel->qobject.get(),
                      update_shadow);
     QObject::connect(impl.m_decorationShadow.data(),
                      &KDecoration2::DecorationShadow::shadowChanged,
-                     impl.m_topLevel,
+                     impl.m_topLevel->qobject.get(),
                      update_shadow);
     QObject::connect(impl.m_decorationShadow.data(),
                      &KDecoration2::DecorationShadow::paddingChanged,
-                     impl.m_topLevel,
+                     impl.m_topLevel->qobject.get(),
                      update_shadow);
 
     auto const& p = impl.m_decorationShadow->padding();

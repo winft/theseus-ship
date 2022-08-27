@@ -134,19 +134,22 @@ void touch_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
     // TODO(romangg): Add input transformation API to Wrapland::Server::Seat for touch input.
     seat->touches().set_focused_surface(
         focusNow->surface, -1 * focusNow->input_transform().map(focusNow->pos()) + focusNow->pos());
-    focus_geometry_notifier
-        = QObject::connect(focusNow, &Toplevel::frame_geometry_changed, qobject.get(), [this] {
-              auto focus_win = focus.window;
-              if (!focus_win) {
-                  return;
-              }
-              auto seat = waylandServer()->seat();
-              if (focus_win->surface != seat->touches().get_focus().surface) {
-                  return;
-              }
-              seat->touches().set_focused_surface_position(
-                  -1 * focus_win->input_transform().map(focus_win->pos()) + focus_win->pos());
-          });
+    focus_geometry_notifier = QObject::connect(
+        focusNow->qobject.get(),
+        &Toplevel::qobject_t::frame_geometry_changed,
+        qobject.get(),
+        [this] {
+            auto focus_win = focus.window;
+            if (!focus_win) {
+                return;
+            }
+            auto seat = waylandServer()->seat();
+            if (focus_win->surface != seat->touches().get_focus().surface) {
+                return;
+            }
+            seat->touches().set_focused_surface_position(
+                -1 * focus_win->input_transform().map(focus_win->pos()) + focus_win->pos());
+        });
 }
 
 void touch_redirect::cleanupInternalWindow(QWindow* /*old*/, QWindow* /*now*/)
@@ -207,9 +210,12 @@ void touch_redirect::process_down(touch_down_event const& event)
     if (m_touches == 1) {
         device_redirect_update(this);
     }
-    redirect->processSpies(std::bind(&event_spy::touch_down, std::placeholders::_1, event_abs));
-    redirect->processFilters(std::bind(
-        &input::event_filter<wayland::redirect>::touch_down, std::placeholders::_1, event_abs));
+    process_spies(redirect->m_spies,
+                  std::bind(&event_spy::touch_down, std::placeholders::_1, event_abs));
+    process_filters(redirect->m_filters,
+                    std::bind(&input::event_filter<wayland::redirect>::touch_down,
+                              std::placeholders::_1,
+                              event_abs));
     window_already_updated_this_cycle = false;
 }
 
@@ -217,8 +223,9 @@ void touch_redirect::process_up(touch_up_event const& event)
 {
     window_already_updated_this_cycle = false;
 
-    redirect->processSpies(std::bind(&event_spy::touch_up, std::placeholders::_1, event));
-    redirect->processFilters(
+    process_spies(redirect->m_spies, std::bind(&event_spy::touch_up, std::placeholders::_1, event));
+    process_filters(
+        redirect->m_filters,
         std::bind(&input::event_filter<wayland::redirect>::touch_up, std::placeholders::_1, event));
 
     window_already_updated_this_cycle = false;
@@ -237,9 +244,12 @@ void touch_redirect::process_motion(touch_motion_event const& event)
     m_lastPosition = event_abs.pos;
     window_already_updated_this_cycle = false;
 
-    redirect->processSpies(std::bind(&event_spy::touch_motion, std::placeholders::_1, event_abs));
-    redirect->processFilters(std::bind(
-        &input::event_filter<wayland::redirect>::touch_motion, std::placeholders::_1, event_abs));
+    process_spies(redirect->m_spies,
+                  std::bind(&event_spy::touch_motion, std::placeholders::_1, event_abs));
+    process_filters(redirect->m_filters,
+                    std::bind(&input::event_filter<wayland::redirect>::touch_motion,
+                              std::placeholders::_1,
+                              event_abs));
 
     window_already_updated_this_cycle = false;
 }

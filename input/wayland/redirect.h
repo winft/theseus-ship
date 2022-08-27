@@ -72,26 +72,6 @@ public:
     void prependInputEventFilter(event_filter<redirect>* filter);
     void uninstallInputEventFilter(event_filter<redirect>* filter);
 
-    /**
-     * Sends an event through all InputFilters.
-     * The method @p function is invoked on each input filter. Processing is stopped if
-     * a filter returns @c true for @p function.
-     *
-     * The UnaryPredicate is defined like the UnaryPredicate of std::any_of.
-     * The signature of the function should be equivalent to the following:
-     * @code
-     * bool function(event_filter<redirect> const* filter);
-     * @endcode
-     *
-     * The intended usage is to std::bind the method to invoke on the filter with all arguments
-     * bind.
-     */
-    template<class UnaryPredicate>
-    void processFilters(UnaryPredicate function)
-    {
-        std::any_of(m_filters.cbegin(), m_filters.cend(), function);
-    }
-
     input::keyboard_redirect* get_keyboard() const override;
     input::pointer_redirect* get_pointer() const override;
     input::tablet_redirect* get_tablet() const override;
@@ -101,6 +81,8 @@ public:
     std::unique_ptr<pointer_redirect> pointer;
     std::unique_ptr<tablet_redirect> tablet;
     std::unique_ptr<touch_redirect> touch;
+
+    std::list<event_filter<redirect>*> m_filters;
 
 private:
     void setup_workspace();
@@ -123,7 +105,6 @@ private:
     std::unordered_map<Wrapland::Server::virtual_keyboard_v1*, std::unique_ptr<input::keyboard>>
         virtual_keyboards;
 
-    std::list<event_filter<redirect>*> m_filters;
     std::list<event_filter<redirect>*>::const_iterator m_filters_install_iterator;
 
     window_selector_filter<redirect>* window_selector{nullptr};

@@ -92,7 +92,6 @@ private:
 
 void QuickTilingTest::initTestCase()
 {
-    qRegisterMetaType<KWin::Toplevel*>();
     qRegisterMetaType<KWin::win::maximize_mode>();
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
@@ -218,9 +217,9 @@ void QuickTilingTest::testQuickTiling()
 
     QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configureRequested);
     QVERIFY(configureRequestedSpy.isValid());
-    QSignalSpy quickTileChangedSpy(c, &Toplevel::quicktiling_changed);
+    QSignalSpy quickTileChangedSpy(c->qobject.get(), &Toplevel::qobject_t::quicktiling_changed);
     QVERIFY(quickTileChangedSpy.isValid());
-    QSignalSpy geometryChangedSpy(c, &Toplevel::frame_geometry_changed);
+    QSignalSpy geometryChangedSpy(c->qobject.get(), &Toplevel::qobject_t::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
 
     // We have to receive a configure event when the client becomes active.
@@ -304,11 +303,11 @@ void QuickTilingTest::testQuickMaximizing()
     QCOMPARE(configureRequestedSpy.last().at(1).value<XdgShellToplevel::States>(),
              XdgShellToplevel::State::Activated);
 
-    QSignalSpy quickTileChangedSpy(c, &Toplevel::quicktiling_changed);
+    QSignalSpy quickTileChangedSpy(c->qobject.get(), &Toplevel::qobject_t::quicktiling_changed);
     QVERIFY(quickTileChangedSpy.isValid());
-    QSignalSpy geometryChangedSpy(c, &Toplevel::frame_geometry_changed);
+    QSignalSpy geometryChangedSpy(c->qobject.get(), &Toplevel::qobject_t::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
-    QSignalSpy maximizeChangedSpy(c, &Toplevel::maximize_mode_changed);
+    QSignalSpy maximizeChangedSpy(c->qobject.get(), &Toplevel::qobject_t::maximize_mode_changed);
     QVERIFY(maximizeChangedSpy.isValid());
 
     // Now quicktile-maximize.
@@ -339,7 +338,6 @@ void QuickTilingTest::testQuickMaximizing()
 
     // client is now set to maximised
     QCOMPARE(maximizeChangedSpy.count(), 1);
-    QCOMPARE(maximizeChangedSpy.first().first().value<KWin::Toplevel*>(), c);
     QCOMPARE(maximizeChangedSpy.first().last().value<KWin::win::maximize_mode>(),
              win::maximize_mode::full);
     QCOMPARE(c->maximizeMode(), win::maximize_mode::full);
@@ -369,7 +367,6 @@ void QuickTilingTest::testQuickMaximizing()
     QCOMPARE(geometryChangedSpy.count(), 2);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
     QCOMPARE(maximizeChangedSpy.count(), 2);
-    QCOMPARE(maximizeChangedSpy.last().first().value<KWin::Toplevel*>(), c);
     QCOMPARE(maximizeChangedSpy.last().last().value<KWin::win::maximize_mode>(),
              win::maximize_mode::restore);
 }
@@ -410,7 +407,7 @@ void QuickTilingTest::testQuickTilingKeyboardMove()
     QCOMPARE(c->control->quicktiling(), win::quicktiles::none);
     QCOMPARE(c->maximizeMode(), win::maximize_mode::restore);
 
-    QSignalSpy quickTileChangedSpy(c, &Toplevel::quicktiling_changed);
+    QSignalSpy quickTileChangedSpy(c->qobject.get(), &Toplevel::qobject_t::quicktiling_changed);
     QVERIFY(quickTileChangedSpy.isValid());
 
     win::perform_window_operation(
@@ -494,7 +491,7 @@ void QuickTilingTest::testQuickTilingPointerMove()
     QVERIFY(configureRequestedSpy.wait());
     QTRY_COMPARE(configureRequestedSpy.count(), 2);
 
-    QSignalSpy quickTileChangedSpy(c, &Toplevel::quicktiling_changed);
+    QSignalSpy quickTileChangedSpy(c->qobject.get(), &Toplevel::qobject_t::quicktiling_changed);
     QVERIFY(quickTileChangedSpy.isValid());
 
     win::perform_window_operation(
@@ -583,7 +580,7 @@ void QuickTilingTest::testQuickTilingTouchMove()
     QVERIFY(configureRequestedSpy.wait());
     QTRY_COMPARE(configureRequestedSpy.count(), 2);
 
-    QSignalSpy quickTileChangedSpy(c, &Toplevel::quicktiling_changed);
+    QSignalSpy quickTileChangedSpy(c->qobject.get(), &Toplevel::qobject_t::quicktiling_changed);
     QVERIFY(quickTileChangedSpy.isValid());
 
     quint32 timestamp = 1;
@@ -687,7 +684,8 @@ void QuickTilingTest::testX11QuickTiling()
     auto const origGeo = client->frameGeometry();
 
     // now quick tile
-    QSignalSpy quickTileChangedSpy(client, &Toplevel::quicktiling_changed);
+    QSignalSpy quickTileChangedSpy(client->qobject.get(),
+                                   &Toplevel::qobject_t::quicktiling_changed);
     QVERIFY(quickTileChangedSpy.isValid());
 
     QFETCH(win::quicktiles, mode);
@@ -718,7 +716,7 @@ void QuickTilingTest::testX11QuickTiling()
     xcb_flush(c.get());
     c.reset();
 
-    QSignalSpy windowClosedSpy(client, &Toplevel::closed);
+    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::closed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
 }
@@ -792,7 +790,8 @@ void QuickTilingTest::testX11QuickTilingAfterVertMaximize()
     QCOMPARE(client->restore_geometries.maximize, origGeo);
 
     // now quick tile
-    QSignalSpy quickTileChangedSpy(client, &Toplevel::quicktiling_changed);
+    QSignalSpy quickTileChangedSpy(client->qobject.get(),
+                                   &Toplevel::qobject_t::quicktiling_changed);
     QVERIFY(quickTileChangedSpy.isValid());
     QFETCH(win::quicktiles, mode);
     win::set_quicktile_mode(client, mode, true);
@@ -806,7 +805,7 @@ void QuickTilingTest::testX11QuickTilingAfterVertMaximize()
     xcb_flush(c.get());
     c.reset();
 
-    QSignalSpy windowClosedSpy(client, &Toplevel::closed);
+    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::closed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
 }
@@ -900,7 +899,7 @@ void QuickTilingTest::testShortcut()
         QDBusConnection::sessionBus().asyncCall(msg);
     }
 
-    QSignalSpy quickTileChangedSpy(c, &Toplevel::quicktiling_changed);
+    QSignalSpy quickTileChangedSpy(c->qobject.get(), &Toplevel::qobject_t::quicktiling_changed);
     QVERIFY(quickTileChangedSpy.isValid());
     QTRY_COMPARE(quickTileChangedSpy.count(), numberOfQuickTileActions);
     // at this point the geometry did not yet change
@@ -913,7 +912,7 @@ void QuickTilingTest::testShortcut()
     QCOMPARE(configureRequestedSpy.last().at(0).toSize(), expectedGeometry.size());
 
     // attach a new image
-    QSignalSpy geometryChangedSpy(c, &Toplevel::frame_geometry_changed);
+    QSignalSpy geometryChangedSpy(c->qobject.get(), &Toplevel::qobject_t::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
     Test::render(surface, expectedGeometry.size(), Qt::red);
@@ -974,9 +973,9 @@ void QuickTilingTest::testScript()
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 1);
 
-    QSignalSpy quickTileChangedSpy(c, &Toplevel::quicktiling_changed);
+    QSignalSpy quickTileChangedSpy(c->qobject.get(), &Toplevel::qobject_t::quicktiling_changed);
     QVERIFY(quickTileChangedSpy.isValid());
-    QSignalSpy geometryChangedSpy(c, &Toplevel::frame_geometry_changed);
+    QSignalSpy geometryChangedSpy(c->qobject.get(), &Toplevel::qobject_t::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
 
     QVERIFY(Test::app()->base.space->scripting);

@@ -24,7 +24,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "singleton_interface.h"
 
 #include "base/logging.h"
-#include "effects.h"
+#include "effect/window_impl.h"
+#include "scripting/singleton_interface.h"
+#include "scripting/space.h"
 #include "toplevel.h"
 #include "win/control.h"
 #include "win/singleton_interface.h"
@@ -42,7 +44,7 @@ basic_thumbnail_item::basic_thumbnail_item(QQuickItem* parent)
     , m_saturation(1.0)
     , m_clipToItem()
 {
-    connect(singleton_interface::platform->compositor->qobject.get(),
+    connect(singleton_interface::compositor,
             &render::compositor_qobject::compositingToggled,
             this,
             &basic_thumbnail_item::compositingToggled);
@@ -57,7 +59,7 @@ basic_thumbnail_item::~basic_thumbnail_item()
 void basic_thumbnail_item::compositingToggled()
 {
     m_parent.clear();
-    auto effects = singleton_interface::platform->compositor->effects.get();
+    auto effects = singleton_interface::effects;
     if (effects) {
         connect(
             effects, &EffectsHandler::windowAdded, this, &basic_thumbnail_item::effectWindowAdded);
@@ -76,7 +78,7 @@ void basic_thumbnail_item::init()
 
 void basic_thumbnail_item::findParentEffectWindow()
 {
-    auto effects = singleton_interface::platform->compositor->effects.get();
+    auto effects = singleton_interface::effects;
     if (effects) {
         QQuickWindow* qw = window();
         if (!qw) {
@@ -138,10 +140,11 @@ window_thumbnail_item::~window_thumbnail_item()
 {
 }
 
-Toplevel* find_controlled_window(QUuid const& wId)
+scripting::window* find_controlled_window(QUuid const& wId)
 {
-    for (auto win : win::singleton_interface::space->windows) {
-        if (win->control && win->internal_id == wId) {
+    auto const windows = scripting::singleton_interface::qt_script_space->clientList();
+    for (auto win : windows) {
+        if (win->internalId() == wId) {
             return win;
         }
     }
@@ -163,14 +166,14 @@ void window_thumbnail_item::setWId(const QUuid& wId)
     Q_EMIT wIdChanged(wId);
 }
 
-void window_thumbnail_item::setClient(Toplevel* window)
+void window_thumbnail_item::setClient(scripting::window* window)
 {
     if (m_client == window) {
         return;
     }
     m_client = window;
     if (m_client) {
-        setWId(m_client->internal_id);
+        setWId(m_client->internalId());
     } else {
         setWId({});
     }
@@ -179,14 +182,14 @@ void window_thumbnail_item::setClient(Toplevel* window)
 
 void window_thumbnail_item::paint(QPainter* painter)
 {
-    if (singleton_interface::platform->compositor->effects) {
+    if (singleton_interface::effects) {
         return;
     }
     auto client = find_controlled_window(m_wId);
     if (!client) {
         return;
     }
-    auto pixmap = client->control->icon().pixmap(boundingRect().size().toSize());
+    auto pixmap = client->icon().pixmap(boundingRect().size().toSize());
     const QSize size(boundingRect().size().toSize() - pixmap.size());
     painter->drawPixmap(
         boundingRect()
@@ -215,8 +218,7 @@ desktop_thumbnail_item::~desktop_thumbnail_item()
 
 void desktop_thumbnail_item::setDesktop(int desktop)
 {
-    desktop = qBound<int>(
-        1, desktop, win::singleton_interface::space->virtual_desktop_manager->count());
+    desktop = qBound<int>(1, desktop, win::singleton_interface::virtual_desktops->get().size());
     if (desktop == m_desktop) {
         return;
     }
@@ -228,7 +230,7 @@ void desktop_thumbnail_item::setDesktop(int desktop)
 void desktop_thumbnail_item::paint(QPainter* painter)
 {
     Q_UNUSED(painter)
-    if (singleton_interface::platform->compositor->effects) {
+    if (singleton_interface::effects) {
         return;
     }
     // TODO: render icon

@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "base/x11/xcb/property.h"
 #include "main.h"
 #include "render/compositor.h"
 #include "utils/memory.h"
@@ -15,6 +16,31 @@
 
 namespace KWin::render::x11
 {
+
+inline QByteArray
+read_window_property(xcb_window_t win, xcb_atom_t atom, xcb_atom_t type, int format)
+{
+    if (win == XCB_WINDOW_NONE) {
+        return QByteArray();
+    }
+
+    uint32_t len = 32768;
+
+    for (;;) {
+        base::x11::xcb::property prop(false, win, atom, XCB_ATOM_ANY, 0, len);
+        if (prop.is_null()) {
+            // get property failed
+            return QByteArray();
+        }
+
+        if (prop->bytes_after > 0) {
+            len *= 2;
+            continue;
+        }
+
+        return prop.to_byte_array(format, type);
+    }
+}
 
 inline static xcb_atom_t register_support_property(QByteArray const& name)
 {

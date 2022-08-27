@@ -9,7 +9,7 @@
 
 #include "main.h"
 #include "render/compositor.h"
-#include "render/effects.h"
+#include "render/effect/window_impl.h"
 #include "render/shadow.h"
 #include "render/window.h"
 
@@ -85,7 +85,7 @@ auto update_shadow(Win* win)
         if (!shdw->updateShadow()) {
             win->render->updateShadow(nullptr);
         }
-        Q_EMIT win->shadowChanged();
+        Q_EMIT win->qobject->shadowChanged();
     } else if (win->render) {
         win->render->create_shadow();
     }
@@ -95,7 +95,7 @@ auto update_shadow(Win* win)
     }
 
     if (old_visible_rect != visible_rect(win)) {
-        Q_EMIT win->paddingChanged(win, old_visible_rect);
+        Q_EMIT win->qobject->paddingChanged(old_visible_rect);
     }
 
     if (dirty_rect.isValid()) {
@@ -121,26 +121,27 @@ void add_scene_window(Scene& scene, Win& win)
     win.render = scene.createWindow(&win);
     win.render->effect = std::make_unique<render::effects_window_impl>(&win);
 
-    QObject::connect(&win, &Win::remnant_created, &scene, [scene_ptr = &scene](auto remnant) {
-        scene_ptr->init_remnant(*remnant);
-    });
-    QObject::connect(&win, &Win::central_output_changed, &scene, [&](auto old_out, auto new_out) {
-        if (!new_out) {
-            return;
-        }
-        if (old_out && old_out->scale() == new_out->scale()) {
-            return;
-        }
-        scene.windowGeometryShapeChanged(&win);
-    });
+    QObject::connect(win.qobject.get(),
+                     &window_qobject::central_output_changed,
+                     &scene,
+                     [&](auto old_out, auto new_out) {
+                         if (!new_out) {
+                             return;
+                         }
+                         if (old_out && old_out->scale() == new_out->scale()) {
+                             return;
+                         }
+                         scene.windowGeometryShapeChanged(&win);
+                     });
 
     auto scn_win = win.render.get();
     win.render->effect->setSceneWindow(scn_win);
     win.add_scene_window_addon();
 
     win::update_shadow(&win);
-    QObject::connect(
-        &win, &Win::shadowChanged, &scene, [scn_win] { scn_win->invalidateQuadsCache(); });
+    QObject::connect(win.qobject.get(), &window_qobject::shadowChanged, &scene, [scn_win] {
+        scn_win->invalidateQuadsCache();
+    });
 }
 
 template<typename Win>

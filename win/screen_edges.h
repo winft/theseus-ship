@@ -11,6 +11,7 @@
 #pragma once
 
 #include "kwinglobals.h"
+#include "singleton_interface.h"
 
 #include <KSharedConfig>
 #include <QDateTime>
@@ -384,6 +385,8 @@ private:
 
     QMap<ElectricBorder, ElectricBorderAction> touch_actions;
     bool m_remainActiveOnFullscreen{false};
+
+    screen_edger_singleton singleton;
 };
 
 /**********************************************************

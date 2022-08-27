@@ -84,9 +84,12 @@ void tablet_redirect::tabletToolEvent(redirect::TabletEventType type,
                     button,
                     button);
 
-    redirect->processSpies(std::bind(&event_spy::tabletToolEvent, std::placeholders::_1, &ev));
-    redirect->processFilters(std::bind(
-        &input::event_filter<wayland::redirect>::tabletToolEvent, std::placeholders::_1, &ev));
+    process_spies(redirect->m_spies,
+                  std::bind(&event_spy::tabletToolEvent, std::placeholders::_1, &ev));
+    process_filters(redirect->m_filters,
+                    std::bind(&input::event_filter<wayland::redirect>::tabletToolEvent,
+                              std::placeholders::_1,
+                              &ev));
 
     tip.down = tip_down;
     tip.near = tip_near;
@@ -100,12 +103,13 @@ void tablet_redirect::tabletToolButtonEvent(uint button, bool isPressed)
         pressed_buttons.tool.remove(button);
     }
 
-    redirect->processSpies(
+    process_spies(
+        redirect->m_spies,
         std::bind(&event_spy::tabletToolButtonEvent, std::placeholders::_1, pressed_buttons.tool));
-    redirect->processFilters(
-        std::bind(&input::event_filter<wayland::redirect>::tabletToolButtonEvent,
-                  std::placeholders::_1,
-                  pressed_buttons.tool));
+    process_filters(redirect->m_filters,
+                    std::bind(&input::event_filter<wayland::redirect>::tabletToolButtonEvent,
+                              std::placeholders::_1,
+                              pressed_buttons.tool));
 }
 
 void tablet_redirect::tabletPadButtonEvent(uint button, bool isPressed)
@@ -116,34 +120,41 @@ void tablet_redirect::tabletPadButtonEvent(uint button, bool isPressed)
         pressed_buttons.pad.remove(button);
     }
 
-    redirect->processSpies(
+    process_spies(
+        redirect->m_spies,
         std::bind(&event_spy::tabletPadButtonEvent, std::placeholders::_1, pressed_buttons.pad));
-    redirect->processFilters(
-        std::bind(&input::event_filter<wayland::redirect>::tabletPadButtonEvent,
-                  std::placeholders::_1,
-                  pressed_buttons.pad));
+    process_filters(redirect->m_filters,
+                    std::bind(&input::event_filter<wayland::redirect>::tabletPadButtonEvent,
+                              std::placeholders::_1,
+                              pressed_buttons.pad));
 }
 
 void tablet_redirect::tabletPadStripEvent(int number, int position, bool is_finger)
 {
-    redirect->processSpies(std::bind(
-        &event_spy::tabletPadStripEvent, std::placeholders::_1, number, position, is_finger));
-    redirect->processFilters(std::bind(&input::event_filter<wayland::redirect>::tabletPadStripEvent,
-                                       std::placeholders::_1,
-                                       number,
-                                       position,
-                                       is_finger));
+    process_spies(
+        redirect->m_spies,
+        std::bind(
+            &event_spy::tabletPadStripEvent, std::placeholders::_1, number, position, is_finger));
+    process_filters(redirect->m_filters,
+                    std::bind(&input::event_filter<wayland::redirect>::tabletPadStripEvent,
+                              std::placeholders::_1,
+                              number,
+                              position,
+                              is_finger));
 }
 
 void tablet_redirect::tabletPadRingEvent(int number, int position, bool is_finger)
 {
-    redirect->processSpies(std::bind(
-        &event_spy::tabletPadRingEvent, std::placeholders::_1, number, position, is_finger));
-    redirect->processFilters(std::bind(&input::event_filter<wayland::redirect>::tabletPadRingEvent,
-                                       std::placeholders::_1,
-                                       number,
-                                       position,
-                                       is_finger));
+    process_spies(
+        redirect->m_spies,
+        std::bind(
+            &event_spy::tabletPadRingEvent, std::placeholders::_1, number, position, is_finger));
+    process_filters(redirect->m_filters,
+                    std::bind(&input::event_filter<wayland::redirect>::tabletPadRingEvent,
+                              std::placeholders::_1,
+                              number,
+                              position,
+                              is_finger));
 }
 
 void tablet_redirect::cleanupDecoration(win::deco::client_impl* /*old*/,

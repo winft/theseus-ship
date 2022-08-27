@@ -710,7 +710,14 @@ void screen_edge::setClient(Toplevel* window)
 screen_edger::screen_edger(win::space& space)
     : gesture_recognizer{std::make_unique<input::gesture_recognizer>()}
     , space{space}
+    , singleton{
+          [this](auto border, auto callback) { return reserve(border, callback); },
+          [this](auto border, auto id) { return unreserve(border, id); },
+          [this](auto border, auto action) { return reserveTouch(border, action); },
+          [this](auto border, auto action) { return unreserveTouch(border, action); },
+      }
 {
+    singleton_interface::edger = &singleton;
     int const gridUnit = QFontMetrics(QFontDatabase::systemFont(QFontDatabase::GeneralFont))
                              .boundingRect(QLatin1Char('M'))
                              .height();
@@ -741,7 +748,10 @@ screen_edger::screen_edger(win::space& space)
                      &screen_edger::deleteEdgeForClient);
 }
 
-screen_edger::~screen_edger() = default;
+screen_edger::~screen_edger()
+{
+    singleton_interface::edger = nullptr;
+}
 
 static ElectricBorderAction electricBorderAction(const QString& name)
 {

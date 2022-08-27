@@ -16,7 +16,7 @@ namespace KWin::scripting::models::v3
 client_model::client_model(QObject* parent)
     : QAbstractListModel(parent)
 {
-    auto ws_wrap = singleton_interface::platform->workspaceWrapper();
+    auto ws_wrap = singleton_interface::qt_script_space;
 
     connect(ws_wrap, &space::clientAdded, this, &client_model::handleClientAdded);
     connect(ws_wrap, &space::clientRemoved, this, &client_model::handleClientRemoved);

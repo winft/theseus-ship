@@ -134,11 +134,12 @@ void DontCrashAuroraeDestroyDecoTest::testBorderlessMaximizedWindows()
     const QPointF scenePoint = item->mapToScene(QPoint(0, 0));
 
     // mark the window as ready for painting, otherwise it doesn't get input events
-    QMetaObject::invokeMethod(client, "setReadyForPainting");
+    client->setReadyForPainting();
     QVERIFY(client->ready_for_painting);
 
     // simulate click on maximize button
-    QSignalSpy maximizedStateChangedSpy(client, &Toplevel::maximize_mode_changed);
+    QSignalSpy maximizedStateChangedSpy(client->qobject.get(),
+                                        &Toplevel::qobject_t::maximize_mode_changed);
     QVERIFY(maximizedStateChangedSpy.isValid());
     quint32 timestamp = 1;
     Test::pointer_motion_absolute(client->frameGeometry().topLeft() + scenePoint.toPoint(),
@@ -155,7 +156,7 @@ void DontCrashAuroraeDestroyDecoTest::testBorderlessMaximizedWindows()
     xcb_flush(c);
     xcb_disconnect(c);
 
-    QSignalSpy windowClosedSpy(client, &Toplevel::closed);
+    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::closed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
 }

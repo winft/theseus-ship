@@ -33,13 +33,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
+
 class Effect;
 class EffectPluginFactory;
-
-namespace win
-{
-class space;
-}
+class EffectsHandler;
 
 namespace render
 {
@@ -292,7 +289,7 @@ class KWIN_EXPORT scripted_effect_loader : public basic_effect_loader
 {
     Q_OBJECT
 public:
-    explicit scripted_effect_loader(win::space& space, QObject* parent = nullptr);
+    explicit scripted_effect_loader(EffectsHandler& effects, QObject* parent = nullptr);
     ~scripted_effect_loader() override;
 
     bool hasEffect(const QString& name) const override;
@@ -310,7 +307,7 @@ private:
     QStringList m_loadedEffects;
     effect_load_queue<scripted_effect_loader, KPluginMetaData>* m_queue;
     QMetaObject::Connection m_queryConnection;
-    win::space& space;
+    EffectsHandler& effects;
 };
 
 class plugin_effect_loader : public basic_effect_loader
@@ -343,7 +340,7 @@ class KWIN_EXPORT effect_loader : public basic_effect_loader
 {
     Q_OBJECT
 public:
-    explicit effect_loader(win::space& space, QObject* parent = nullptr);
+    explicit effect_loader(EffectsHandler& effects, QObject* parent = nullptr);
     ~effect_loader() override;
     bool hasEffect(const QString& name) const override;
     bool isEffectSupported(const QString& name) const override;

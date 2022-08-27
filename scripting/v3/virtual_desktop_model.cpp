@@ -15,29 +15,28 @@ namespace KWin::scripting::models::v3
 virtual_desktop_model::virtual_desktop_model(QObject* parent)
     : QAbstractListModel(parent)
 {
-    auto vds = win::singleton_interface::space->virtual_desktop_manager.get();
-    connect(vds->qobject.get(),
+    auto vds = win::singleton_interface::virtual_desktops->qobject;
+    connect(vds,
             &win::virtual_desktop_manager_qobject::desktopCreated,
             this,
             &virtual_desktop_model::handleVirtualDesktopAdded);
-    connect(vds->qobject.get(),
+    connect(vds,
             &win::virtual_desktop_manager_qobject::desktopRemoved,
             this,
             &virtual_desktop_model::handleVirtualDesktopRemoved);
 
-    m_virtualDesktops = vds->desktops();
+    m_virtualDesktops = win::singleton_interface::virtual_desktops->get();
 }
 
 void virtual_desktop_model::create(uint position, const QString& name)
 {
-    win::singleton_interface::space->virtual_desktop_manager->createVirtualDesktop(position, name);
+    win::singleton_interface::virtual_desktops->create(position, name);
 }
 
 void virtual_desktop_model::remove(uint position)
 {
     if (static_cast<int>(position) < m_virtualDesktops.count()) {
-        win::singleton_interface::space->virtual_desktop_manager->removeVirtualDesktop(
-            m_virtualDesktops[position]);
+        win::singleton_interface::virtual_desktops->remove(m_virtualDesktops[position]->id());
     }
 }
 

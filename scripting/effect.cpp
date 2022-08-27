@@ -14,8 +14,6 @@
 
 #include "base/options.h"
 #include "input/platform.h"
-#include "win/screen_edges.h"
-#include "win/space.h"
 
 #include <kwineffects/effect_window.h>
 #include <kwineffects/effects_handler.h>
@@ -150,7 +148,7 @@ static KWin::FPx2 fpx2FromScriptValue(const QJSValue& value)
     return FPx2();
 }
 
-effect* effect::create(const KPluginMetaData& effect, win::space& space)
+effect* effect::create(const KPluginMetaData& effect, EffectsHandler& effects)
 {
     const QString name = effect.pluginId();
     const QString scriptName = effect.value(QStringLiteral("X-Plasma-MainScript"));
@@ -166,15 +164,15 @@ effect* effect::create(const KPluginMetaData& effect, win::space& space)
         return nullptr;
     }
     return effect::create(
-        name, scriptFile, effect.value(QStringLiteral("X-KDE-Ordering")).toInt(), space);
+        name, scriptFile, effect.value(QStringLiteral("X-KDE-Ordering")).toInt(), effects);
 }
 
 effect* effect::create(const QString& effectName,
                        const QString& pathToScript,
                        int chainPosition,
-                       win::space& space)
+                       EffectsHandler& effects)
 {
-    auto effect = new scripting::effect(space);
+    auto effect = new scripting::effect(effects);
     if (!effect->init(effectName, pathToScript)) {
         delete effect;
         return nullptr;
@@ -183,29 +181,27 @@ effect* effect::create(const QString& effectName,
     return effect;
 }
 
-bool effect::supported(render::effects_handler_impl& effects)
+bool effect::supported(EffectsHandler& effects)
 {
     return effects.animationsSupported();
 }
 
-effect::effect(win::space& space)
+effect::effect(EffectsHandler& effects)
     : AnimationEffect()
+    , effects{effects}
     , m_engine(new QJSEngine(this))
     , m_scriptFile(QString())
-    , space{space}
 {
-    assert(space.render.effects);
-    connect(
-        space.render.effects.get(), &EffectsHandler::activeFullScreenEffectChanged, this, [this]() {
-            auto fullScreenEffect = this->space.render.effects->activeFullScreenEffect();
-            if (fullScreenEffect == m_activeFullScreenEffect) {
-                return;
-            }
-            if (m_activeFullScreenEffect == this || fullScreenEffect == this) {
-                Q_EMIT isActiveFullScreenEffectChanged();
-            }
-            m_activeFullScreenEffect = fullScreenEffect;
-        });
+    connect(&effects, &EffectsHandler::activeFullScreenEffectChanged, this, [this]() {
+        auto fullScreenEffect = this->effects.activeFullScreenEffect();
+        if (fullScreenEffect == m_activeFullScreenEffect) {
+            return;
+        }
+        if (m_activeFullScreenEffect == this || fullScreenEffect == this) {
+            Q_EMIT isActiveFullScreenEffectChanged();
+        }
+        m_activeFullScreenEffect = fullScreenEffect;
+    });
 }
 
 effect::~effect()
@@ -243,8 +239,8 @@ bool effect::init(const QString& effectName, const QString& pathToScript)
 
     QJSValue globalObject = m_engine->globalObject();
 
-    QJSValue effectsObject = m_engine->newQObject(space.render.effects.get());
-    QQmlEngine::setObjectOwnership(space.render.effects.get(), QQmlEngine::CppOwnership);
+    QJSValue effectsObject = m_engine->newQObject(&effects);
+    QQmlEngine::setObjectOwnership(&effects, QQmlEngine::CppOwnership);
     globalObject.setProperty(QStringLiteral("effects"), effectsObject);
 
     QJSValue selfObject = m_engine->newQObject(this);
@@ -317,7 +313,7 @@ QString effect::pluginId() const
 
 bool effect::isActiveFullScreenEffect() const
 {
-    return space.render.effects->activeFullScreenEffect() == this;
+    return effects.activeFullScreenEffect() == this;
 }
 
 QJSValue effect::animate_helper(const QJSValue& object, AnimationType animationType)
@@ -640,7 +636,7 @@ void effect::registerShortcut(const QString& objectName,
     action->setText(text);
     const QKeySequence shortcut = QKeySequence(keySequence);
     KGlobalAccel::self()->setShortcut(action, QList<QKeySequence>() << shortcut);
-    space.input->platform.registerShortcut(shortcut, action);
+    effects.registerGlobalShortcut(shortcut, action);
     connect(action, &QAction::triggered, this, [this, action, callback]() {
         QJSValue actionObject = m_engine->newQObject(action);
         QQmlEngine::setObjectOwnership(action, QQmlEngine::CppOwnership);
@@ -655,7 +651,7 @@ bool effect::borderActivated(ElectricBorder edge)
         return false;
     }
 
-    for (auto const& callback : qAsConst(it->second.value)) {
+    for (auto const& callback : qAsConst(it->second)) {
         QJSValue(callback).call();
     }
     return true;
@@ -693,14 +689,14 @@ bool effect::registerScreenEdge(int edge, const QJSValue& callback)
 
     auto it = border_callbacks.find(edge);
     if (it != border_callbacks.end()) {
-        it->second.value.append(callback);
+        it->second.append(callback);
         return true;
     }
 
     // Not yet registered.
-    auto id = space.edges->reserve(static_cast<KWin::ElectricBorder>(edge),
-                                   [this](auto eb) { return borderActivated(eb); });
-    border_callbacks.insert({edge, {id, {callback}}});
+    // TODO(romangg): Better go here via internal types, than using the singleton interface.
+    effects.reserveElectricBorder(static_cast<ElectricBorder>(edge), this);
+    border_callbacks.insert({edge, {callback}});
     return true;
 }
 
@@ -711,7 +707,7 @@ bool effect::unregisterScreenEdge(int edge)
         // not previously registered
         return false;
     }
-    space.edges->unreserve(static_cast<KWin::ElectricBorder>(edge), it->second.id);
+    effects.unreserveElectricBorder(static_cast<ElectricBorder>(edge), this);
     border_callbacks.erase(it);
     return true;
 }
@@ -728,7 +724,7 @@ bool effect::registerTouchScreenEdge(int edge, const QJSValue& callback)
 
     auto action = new QAction(this);
     connect(action, &QAction::triggered, this, [callback]() { QJSValue(callback).call(); });
-    space.edges->reserveTouch(KWin::ElectricBorder(edge), action);
+    effects.registerTouchBorder(KWin::ElectricBorder(edge), action);
     touch_border_callbacks.insert({edge, action});
     return true;
 }

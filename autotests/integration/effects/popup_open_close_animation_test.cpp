@@ -57,14 +57,13 @@ private Q_SLOTS:
 void PopupOpenCloseAnimationTest::initTestCase()
 {
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
-    qRegisterMetaType<win::internal_window*>();
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
 
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    const auto builtinNames = render::effect_loader(*Test::app()->base.space).listOfKnownEffects();
+    const auto builtinNames = render::effect_loader(*effects).listOfKnownEffects();
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
@@ -84,7 +83,7 @@ void PopupOpenCloseAnimationTest::init()
 
 void PopupOpenCloseAnimationTest::cleanup()
 {
-    auto effectsImpl = qobject_cast<render::effects_handler_impl*>(effects);
+    auto effectsImpl = dynamic_cast<render::effects_handler_impl*>(effects);
     QVERIFY(effectsImpl);
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
@@ -98,7 +97,7 @@ void PopupOpenCloseAnimationTest::testAnimatePopups()
     // to animate popups(e.g. popup menus, tooltips, etc).
 
     // Make sure that we have the right effects ptr.
-    auto effectsImpl = qobject_cast<render::effects_handler_impl*>(effects);
+    auto effectsImpl = dynamic_cast<render::effects_handler_impl*>(effects);
     QVERIFY(effectsImpl);
 
     // Create the main window.
@@ -138,7 +137,7 @@ void PopupOpenCloseAnimationTest::testAnimatePopups()
     QTRY_VERIFY(!effect->isActive());
 
     // Destroy the popup, it should not be animated.
-    QSignalSpy popupClosedSpy(popup, &Toplevel::closed);
+    QSignalSpy popupClosedSpy(popup->qobject.get(), &Toplevel::qobject_t::closed);
     QVERIFY(popupClosedSpy.isValid());
     popupShellSurface.reset();
     popupSurface.reset();
@@ -159,7 +158,7 @@ void PopupOpenCloseAnimationTest::testAnimateUserActionsPopup()
     // to animate the user actions popup.
 
     // Make sure that we have the right effects ptr.
-    auto effectsImpl = qobject_cast<render::effects_handler_impl*>(effects);
+    auto effectsImpl = dynamic_cast<render::effects_handler_impl*>(effects);
     QVERIFY(effectsImpl);
 
     // Create the test client.
@@ -211,7 +210,7 @@ void PopupOpenCloseAnimationTest::testAnimateDecorationTooltips()
     // to animate decoration tooltips.
 
     // Make sure that we have the right effects ptr.
-    auto effectsImpl = qobject_cast<render::effects_handler_impl*>(effects);
+    auto effectsImpl = dynamic_cast<render::effects_handler_impl*>(effects);
     QVERIFY(effectsImpl);
 
     // Create the test client.
@@ -243,7 +242,8 @@ void PopupOpenCloseAnimationTest::testAnimateDecorationTooltips()
     QVERIFY(tooltipAddedSpy.isValid());
     client->control->deco().client->requestShowToolTip(QStringLiteral("KWin rocks!"));
     QVERIFY(tooltipAddedSpy.wait());
-    auto tooltip = tooltipAddedSpy.first().first().value<win::internal_window*>();
+    auto tooltip
+        = dynamic_cast<win::internal_window*>(tooltipAddedSpy.first().first().value<Toplevel*>());
     QVERIFY(tooltip->isInternal());
     QVERIFY(win::is_popup(tooltip));
     QVERIFY(tooltip->internalWindow()->flags().testFlag(Qt::ToolTip));
@@ -253,7 +253,7 @@ void PopupOpenCloseAnimationTest::testAnimateDecorationTooltips()
     QTRY_VERIFY(!effect->isActive());
 
     // Hide the decoration tooltip.
-    QSignalSpy tooltipClosedSpy(tooltip, &win::internal_window::closed);
+    QSignalSpy tooltipClosedSpy(tooltip->qobject.get(), &win::internal_window::qobject_t::closed);
     QVERIFY(tooltipClosedSpy.isValid());
     client->control->deco().client->requestHideToolTip();
     QVERIFY(tooltipClosedSpy.wait());

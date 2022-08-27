@@ -60,7 +60,7 @@ void ToplevelOpenCloseAnimationTest::initTestCase()
 
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    const auto builtinNames = render::effect_loader(*Test::app()->base.space).listOfKnownEffects();
+    const auto builtinNames = render::effect_loader(*effects).listOfKnownEffects();
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
@@ -85,7 +85,7 @@ void ToplevelOpenCloseAnimationTest::init()
 
 void ToplevelOpenCloseAnimationTest::cleanup()
 {
-    auto effectsImpl = qobject_cast<render::effects_handler_impl*>(effects);
+    auto effectsImpl = dynamic_cast<render::effects_handler_impl*>(effects);
     QVERIFY(effectsImpl);
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
@@ -108,7 +108,7 @@ void ToplevelOpenCloseAnimationTest::testAnimateToplevels()
     // animate the appearing and the disappearing of toplevel windows.
 
     // Make sure that we have the right effects ptr.
-    auto effectsImpl = qobject_cast<render::effects_handler_impl*>(effects);
+    auto effectsImpl = dynamic_cast<render::effects_handler_impl*>(effects);
     QVERIFY(effectsImpl);
 
     // Load effect that will be tested.
@@ -135,7 +135,7 @@ void ToplevelOpenCloseAnimationTest::testAnimateToplevels()
 
     // Close the test client, the effect should start animating the disappearing
     // of the client.
-    QSignalSpy windowClosedSpy(client, &Toplevel::closed);
+    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::closed);
     QVERIFY(windowClosedSpy.isValid());
     shellSurface.reset();
     surface.reset();
@@ -161,7 +161,7 @@ void ToplevelOpenCloseAnimationTest::testDontAnimatePopups()
     // to animate popups(e.g. popup menus, tooltips, etc).
 
     // Make sure that we have the right effects ptr.
-    auto effectsImpl = qobject_cast<render::effects_handler_impl*>(effects);
+    auto effectsImpl = dynamic_cast<render::effects_handler_impl*>(effects);
     QVERIFY(effectsImpl);
 
     // Create the main window.
@@ -199,7 +199,7 @@ void ToplevelOpenCloseAnimationTest::testDontAnimatePopups()
     QVERIFY(!effect->isActive());
 
     // Destroy the popup, it should not be animated.
-    QSignalSpy popupClosedSpy(popup, &Toplevel::closed);
+    QSignalSpy popupClosedSpy(popup->qobject.get(), &Toplevel::qobject_t::closed);
     QVERIFY(popupClosedSpy.isValid());
     popupShellSurface.reset();
     popupSurface.reset();

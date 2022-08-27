@@ -18,7 +18,6 @@ class platform;
 
 class KWIN_EXPORT output : public base::output
 {
-    Q_OBJECT
 public:
     output(x11::platform& platform);
     QString name() const override;

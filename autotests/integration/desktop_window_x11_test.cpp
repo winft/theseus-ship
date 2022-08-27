@@ -171,7 +171,7 @@ void X11DesktopWindowTest::testDesktopWindow()
     xcb_flush(c.get());
     c.reset();
 
-    QSignalSpy windowClosedSpy(client, &Toplevel::closed);
+    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::closed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
 }

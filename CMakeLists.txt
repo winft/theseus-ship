@@ -419,6 +419,9 @@ set(kwin_SRCS
     render/compositor_qobject.cpp
     render/cursor.cpp
     render/dbus/compositing.cpp
+    render/effect/frame.cpp
+    render/effect/screen_impl.cpp
+    render/effect/window_impl.cpp
     render/effect_loader.cpp
     render/effects.cpp
     render/gl/buffer.cpp
@@ -480,6 +483,7 @@ set(kwin_SRCS
     win/stacking_order.cpp
     win/transient.cpp
     win/virtual_desktops.cpp
+    win/window_qobject.cpp
     win/x11/client_machine.cpp
     win/x11/color_mapper.cpp
     win/x11/group.cpp
@@ -523,7 +527,7 @@ qt5_add_dbus_adaptor(kwin_SRCS
   render/post/color_correct_dbus_interface.h
   KWin::render::post::color_correct_dbus_interface
 )
-qt5_add_dbus_adaptor(kwin_SRCS ${kwin_effects_dbus_xml} render/effects.h KWin::render::effects_handler_impl)
+qt5_add_dbus_adaptor(kwin_SRCS ${kwin_effects_dbus_xml} render/effects.h KWin::render::effects_handler_wrap)
 qt5_add_dbus_adaptor(kwin_SRCS
     win/dbus/org.kde.KWin.VirtualDesktopManager.xml
     win/dbus/virtual_desktop_manager.h
@@ -659,7 +663,6 @@ set(kwin_X11_SRCS
    render/backend/x11/deco_renderer.cpp
    render/backend/x11/non_composited_outline.cpp
    render/backend/x11/platform.cpp
-   render/x11/compositor.cpp
    render/x11/effects.cpp
    render/x11/mouse_intercept_filter.cpp
    render/x11/overlay_window.cpp

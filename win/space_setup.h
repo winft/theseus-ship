@@ -10,7 +10,6 @@
 #include "dbus/virtual_desktop_manager.h"
 #include "internal_window.h"
 #include "rules.h"
-#include "singleton_interface.h"
 #include "x11/space_setup.h"
 #include "x11/stacking.h"
 
@@ -27,8 +26,6 @@ void init_space(Space& space)
 {
     // For invoke methods of user_actions_menu.
     qRegisterMetaType<Toplevel*>();
-
-    singleton_interface::space = &space;
 
     space.m_quickTileCombineTimer = new QTimer(space.qobject.get());
     space.m_quickTileCombineTimer->setSingleShot(true);
@@ -192,7 +189,7 @@ void clear_space(Space& space)
     x11::clear_space(space);
 
     for (auto const& window : space.windows) {
-        if (auto internal = qobject_cast<internal_window*>(window);
+        if (auto internal = dynamic_cast<internal_window*>(window);
             internal && !internal->remnant) {
             internal->destroyClient();
             remove_all(space.windows, internal);
@@ -222,7 +219,6 @@ void clear_space(Space& space)
     // TODO: ungrabXServer();
 
     base::x11::xcb::extensions::destroy();
-    singleton_interface::space = nullptr;
 }
 
 }

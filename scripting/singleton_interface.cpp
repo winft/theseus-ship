@@ -8,6 +8,6 @@
 namespace KWin::scripting
 {
 
-scripting::platform* singleton_interface::platform{nullptr};
+scripting::qt_script_space* singleton_interface::qt_script_space{nullptr};
 
 }

@@ -68,8 +68,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "scene.h"
 
 #include "compositor.h"
+#include "effect/window_impl.h"
 #include "effects.h"
 #include "shadow.h"
+#include "singleton_interface.h"
 #include "thumbnail_item.h"
 #include "window.h"
 
@@ -79,6 +81,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "main.h"
 #include "win/geo.h"
 #include "win/scene.h"
+#include "win/space.h"
 
 #include <kwineffects/paint_clipper.h>
 
@@ -95,6 +98,18 @@ namespace KWin::render
 scene::scene(render::compositor& compositor)
     : compositor{compositor}
 {
+    singleton_interface::supports_surfaceless_context
+        = [this] { return supportsSurfacelessContext(); };
+
+    QObject::connect(compositor.space->qobject.get(),
+                     &win::space_qobject::remnant_created,
+                     this,
+                     [this](auto remnant) { init_remnant(*remnant); });
+}
+
+scene::~scene()
+{
+    singleton_interface::supports_surfaceless_context = {};
 }
 
 int64_t scene::paint(QRegion /*damage*/,
@@ -422,7 +437,10 @@ void scene::init_remnant(Toplevel& remnant)
 
     if (auto shadow = remnant.render->shadow()) {
         shadow->m_topLevel = &remnant;
-        connect(&remnant, &Toplevel::frame_geometry_changed, shadow, &shadow::geometryChanged);
+        QObject::connect(remnant.qobject.get(),
+                         &win::window_qobject::frame_geometry_changed,
+                         shadow,
+                         &shadow::geometryChanged);
     }
 }
 

@@ -75,7 +75,7 @@ void DontCrashCancelAnimationFromAnimationEndedTest::testScript()
     auto effect = scripting::effect::create(QStringLiteral("crashy"),
                                             QFINDTESTDATA("data/anim-data-delete-effect/effect.js"),
                                             10,
-                                            *Test::app()->base.space);
+                                            *effects);
     QVERIFY(effect);
 
     const auto children = effects->children();
@@ -108,7 +108,7 @@ void DontCrashCancelAnimationFromAnimationEndedTest::testScript()
     QTest::qWait(200);
 
     // wait for the window to be passed to Deleted
-    QSignalSpy windowDeletedSpy(c, &Toplevel::closed);
+    QSignalSpy windowDeletedSpy(c->qobject.get(), &Toplevel::qobject_t::closed);
     QVERIFY(windowDeletedSpy.isValid());
 
     surface.reset();

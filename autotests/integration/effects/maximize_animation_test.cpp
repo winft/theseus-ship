@@ -50,14 +50,13 @@ private Q_SLOTS:
 void MaximizeAnimationTest::initTestCase()
 {
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
-    qRegisterMetaType<KWin::Toplevel*>();
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
 
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    const auto builtinNames = render::effect_loader(*Test::app()->base.space).listOfKnownEffects();
+    const auto builtinNames = render::effect_loader(*effects).listOfKnownEffects();
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
@@ -77,7 +76,7 @@ void MaximizeAnimationTest::init()
 
 void MaximizeAnimationTest::cleanup()
 {
-    auto effectsImpl = qobject_cast<render::effects_handler_impl*>(effects);
+    auto effectsImpl = dynamic_cast<render::effects_handler_impl*>(effects);
     QVERIFY(effectsImpl);
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
@@ -129,7 +128,7 @@ void MaximizeAnimationTest::testMaximizeRestore()
 
     // Load effect that will be tested.
     const QString effectName = QStringLiteral("kwin4_effect_maximize");
-    auto effectsImpl = qobject_cast<render::effects_handler_impl*>(effects);
+    auto effectsImpl = dynamic_cast<render::effects_handler_impl*>(effects);
     QVERIFY(effectsImpl);
     QVERIFY(effectsImpl->loadEffect(effectName));
     QCOMPARE(effectsImpl->loadedEffects().count(), 1);
@@ -139,9 +138,11 @@ void MaximizeAnimationTest::testMaximizeRestore()
     QVERIFY(!effect->isActive());
 
     // Maximize the client.
-    QSignalSpy geometryChangedSpy(client, &Toplevel::frame_geometry_changed);
+    QSignalSpy geometryChangedSpy(client->qobject.get(),
+                                  &Toplevel::qobject_t::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
-    QSignalSpy maximizeChangedSpy(client, &Toplevel::maximize_mode_changed);
+    QSignalSpy maximizeChangedSpy(client->qobject.get(),
+                                  &Toplevel::qobject_t::maximize_mode_changed);
     QVERIFY(maximizeChangedSpy.isValid());
 
     win::active_window_maximize(*Test::app()->base.space);

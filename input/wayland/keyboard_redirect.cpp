@@ -119,8 +119,11 @@ void keyboard_redirect::init()
                      [this] {
                          QObject::disconnect(m_activeClientSurfaceChangedConnection);
                          if (auto c = redirect->space.active_client) {
-                             m_activeClientSurfaceChangedConnection = QObject::connect(
-                                 c, &Toplevel::surfaceChanged, qobject.get(), [this] { update(); });
+                             m_activeClientSurfaceChangedConnection
+                                 = QObject::connect(c->qobject.get(),
+                                                    &Toplevel::qobject_t::surfaceChanged,
+                                                    qobject.get(),
+                                                    [this] { update(); });
                          } else {
                              m_activeClientSurfaceChangedConnection = QMetaObject::Connection();
                          }
@@ -189,15 +192,17 @@ void keyboard_redirect::process_key(key_event const& event)
 
     keyboard_redirect_prepare_key(*this, event);
 
-    redirect->processFilters(
-        std::bind(&event_filter<wayland::redirect>::key, std::placeholders::_1, event));
+    process_filters(redirect->m_filters,
+                    std::bind(&event_filter<wayland::redirect>::key, std::placeholders::_1, event));
     xkb->forward_modifiers();
 }
 
 void keyboard_redirect::process_key_repeat(const key_event& event)
 {
-    redirect->processSpies(std::bind(&event_spy::key_repeat, std::placeholders::_1, event));
-    redirect->processFilters(
+    process_spies(redirect->m_spies,
+                  std::bind(&event_spy::key_repeat, std::placeholders::_1, event));
+    process_filters(
+        redirect->m_filters,
         std::bind(&event_filter<wayland::redirect>::key_repeat, std::placeholders::_1, event));
 }
 

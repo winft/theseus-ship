@@ -39,8 +39,8 @@ renderer::renderer(client_impl* client)
 {
     auto markImageSizesDirty = [this] { m_imageSizesDirty = true; };
     connect(client->decoration(), &KDecoration2::Decoration::damaged, this, &renderer::schedule);
-    connect(client->client(),
-            &Toplevel::central_output_changed,
+    connect(client->client()->qobject.get(),
+            &win::window_qobject::central_output_changed,
             this,
             [markImageSizesDirty](auto old_out, auto new_out) {
                 if (!new_out) {

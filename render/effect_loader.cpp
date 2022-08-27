@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/logging.h"
 #include "render/compositor.h"
 #include "scripting/effect.h"
-#include "win/space.h"
 
 #include "config-kwin.h"
 #include "kwineffects/effect_plugin_factory.h"
@@ -78,10 +77,10 @@ static const QString s_nameProperty = QStringLiteral("X-KDE-PluginInfo-Name");
 static const QString s_jsConstraint = QStringLiteral("[X-Plasma-API] == 'javascript'");
 static const QString s_serviceType = QStringLiteral("KWin/Effect");
 
-scripted_effect_loader::scripted_effect_loader(win::space& space, QObject* parent)
+scripted_effect_loader::scripted_effect_loader(EffectsHandler& effects, QObject* parent)
     : basic_effect_loader(parent)
     , m_queue(new effect_load_queue<scripted_effect_loader, KPluginMetaData>(this))
-    , space{space}
+    , effects{effects}
 {
 }
 
@@ -97,7 +96,7 @@ bool scripted_effect_loader::hasEffect(const QString& name) const
 bool scripted_effect_loader::isEffectSupported(const QString& name) const
 {
     // scripted effects are in general supported
-    if (!scripting::effect::supported(*space.render.effects)) {
+    if (!scripting::effect::supported(effects)) {
         return false;
     }
     return hasEffect(name);
@@ -134,12 +133,12 @@ bool scripted_effect_loader::loadEffect(const KPluginMetaData& effect, load_effe
         return false;
     }
 
-    if (!scripting::effect::supported(*space.render.effects)) {
+    if (!scripting::effect::supported(effects)) {
         qCDebug(KWIN_CORE) << "Effect is not supported: " << name;
         return false;
     }
 
-    auto e = scripting::effect::create(effect, space);
+    auto e = scripting::effect::create(effect, effects);
     if (!e) {
         qCDebug(KWIN_CORE) << "Could not initialize scripted effect: " << name;
         return false;
@@ -362,10 +361,10 @@ void plugin_effect_loader::clear()
 {
 }
 
-effect_loader::effect_loader(win::space& space, QObject* parent)
+effect_loader::effect_loader(EffectsHandler& effects, QObject* parent)
     : basic_effect_loader(parent)
 {
-    m_loaders << new scripted_effect_loader(space, this) << new plugin_effect_loader(this);
+    m_loaders << new scripted_effect_loader(effects, this) << new plugin_effect_loader(this);
     for (auto it = m_loaders.constBegin(); it != m_loaders.constEnd(); ++it) {
         connect(*it, &basic_effect_loader::effectLoaded, this, &basic_effect_loader::effectLoaded);
     }

@@ -23,6 +23,15 @@ constexpr int s_x11UnmanagedId{2};
 constexpr int s_waylandClientId{3};
 constexpr int s_workspaceInternalId{4};
 
+template<typename Win>
+QObject* get_qobject(Win* win)
+{
+    if (win->control && win->control->scripting) {
+        return win->control->scripting.get();
+    }
+    return win->qobject.get();
+}
+
 template<typename Model, typename Container>
 QModelIndex
 index_for_window(Model const* model, int row, int column, Container const& windows, int id)
@@ -44,7 +53,7 @@ QModelIndex index_for_property(Model const* model,
                                Window* (Model::*filter)(QModelIndex const&) const)
 {
     if (auto window = (model->*filter)(parent)) {
-        if (row >= window->metaObject()->propertyCount()) {
+        if (row >= get_qobject(window)->metaObject()->propertyCount()) {
             return QModelIndex();
         }
         return model->create_index(row, column, quint32(row + 1) << 16 | parent.internalId());
@@ -57,10 +66,11 @@ int window_property_count(Model const* model,
                           QModelIndex const& parent,
                           Window* (Model::*filter)(QModelIndex const&) const)
 {
-    if (auto window = (model->*filter)(parent)) {
-        return window->metaObject()->propertyCount();
+    auto window = (model->*filter)(parent);
+    if (!window) {
+        return 0;
     }
-    return 0;
+    return get_qobject(window)->metaObject()->propertyCount();
 }
 
 template<class Window>

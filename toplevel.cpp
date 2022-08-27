@@ -56,26 +56,6 @@ Toplevel::Toplevel(win::transient* transient, win::space& space)
     , m_damageReplyPending(false)
 {
     m_transient.reset(transient);
-
-    connect(this, &Toplevel::frame_geometry_changed, this, [this](auto win, auto const& old_geo) {
-        if (win::render_geometry(win).size() == win::frame_to_render_rect(win, old_geo).size()) {
-            // Size unchanged. No need to update.
-            return;
-        }
-        discard_shape();
-        Q_EMIT visible_geometry_changed();
-    });
-
-    connect(this, &Toplevel::damaged, this, &Toplevel::needsRepaint);
-
-    auto& base = kwinApp()->get_base();
-    QObject::connect(
-        &kwinApp()->get_base(), &base::platform::topology_changed, this, &Toplevel::checkScreen);
-    QObject::connect(&base, &base::platform::output_added, this, &Toplevel::handle_output_added);
-    QObject::connect(
-        &base, &base::platform::output_removed, this, &Toplevel::handle_output_removed);
-
-    setupCheckScreenConnection();
 }
 
 Toplevel::~Toplevel()
@@ -161,7 +141,7 @@ void Toplevel::setResourceClass(const QByteArray &name, const QByteArray &classN
 {
     resource_name  = name;
     resource_class = className;
-    Q_EMIT windowClassChanged();
+    Q_EMIT qobject->windowClassChanged();
 }
 
 double Toplevel::opacity() const
@@ -183,7 +163,7 @@ void Toplevel::setOpacity(double new_opacity)
     info->setOpacity(static_cast< unsigned long >(new_opacity * 0xffffffff));
     if (space.render.scene) {
         addRepaintFull();
-        Q_EMIT opacityChanged(this, old_opacity);
+        Q_EMIT qobject->opacityChanged(old_opacity);
     }
 }
 
@@ -234,7 +214,7 @@ void Toplevel::damageNotifyEvent()
     // Note: The region is supposed to specify the damage extents,
     //       but we don't know it at this point. No one who connects
     //       to this signal uses the rect however.
-    Q_EMIT damaged(this, {});
+    Q_EMIT qobject->damaged({});
 }
 
 bool Toplevel::resetAndFetchDamage()
@@ -327,7 +307,7 @@ void Toplevel::addDamageFull()
     repaints_region |= repaint;
     add_repaint_outputs(render_geo);
 
-    Q_EMIT damaged(this, damage_region);
+    Q_EMIT qobject->damaged(damage_region);
 }
 
 void Toplevel::resetDamage()
@@ -342,7 +322,7 @@ void Toplevel::addRepaint(QRegion const& region)
     }
     repaints_region += region;
     add_repaint_outputs(region.translated(pos()));
-    Q_EMIT needsRepaint();
+    Q_EMIT qobject->needsRepaint();
 }
 
 void Toplevel::addLayerRepaint(QRegion const& region)
@@ -352,7 +332,7 @@ void Toplevel::addLayerRepaint(QRegion const& region)
     }
     layer_repaints_region += region;
     add_repaint_outputs(region);
-    Q_EMIT needsRepaint();
+    Q_EMIT qobject->needsRepaint();
 }
 
 void Toplevel::addRepaintFull()
@@ -365,7 +345,7 @@ void Toplevel::addRepaintFull()
         }
     }
     add_repaint_outputs(region);
-    Q_EMIT needsRepaint();
+    Q_EMIT qobject->needsRepaint();
 }
 
 bool Toplevel::has_pending_repaints() const
@@ -434,7 +414,7 @@ void Toplevel::setReadyForPainting()
         ready_for_painting = true;
         if (space.render.scene) {
             addRepaintFull();
-            Q_EMIT windowShown(this);
+            Q_EMIT qobject->windowShown();
         }
     }
 }
@@ -446,26 +426,29 @@ void Toplevel::checkScreen()
     if (central_output != output) {
         auto old_out = central_output;
         central_output = output;
-        Q_EMIT central_output_changed(old_out, output);
+        Q_EMIT qobject->central_output_changed(old_out, output);
     }
 }
 
 void Toplevel::setupCheckScreenConnection()
 {
-    connect(this, &Toplevel::frame_geometry_changed, this, &Toplevel::checkScreen);
+    notifiers.check_screen = QObject::connect(qobject.get(),
+                                              &win::window_qobject::frame_geometry_changed,
+                                              qobject.get(),
+                                              [this] { checkScreen(); });
     checkScreen();
 }
 
 void Toplevel::removeCheckScreenConnection()
 {
-    disconnect(this, &Toplevel::frame_geometry_changed, this, &Toplevel::checkScreen);
+    QObject::disconnect(notifiers.check_screen);
 }
 
 void Toplevel::handle_output_added(base::output* output)
 {
     if (!central_output) {
         central_output = output;
-        Q_EMIT central_output_changed(nullptr, output);
+        Q_EMIT qobject->central_output_changed(nullptr, output);
         return;
     }
 
@@ -479,7 +462,7 @@ void Toplevel::handle_output_removed(base::output* output)
     }
     auto const& outputs = kwinApp()->get_base().get_outputs();
     central_output = base::get_nearest_output(outputs, frameGeometry().center());
-    Q_EMIT central_output_changed(output, central_output);
+    Q_EMIT qobject->central_output_changed(output, central_output);
 }
 
 qreal Toplevel::bufferScale() const
@@ -535,7 +518,7 @@ void Toplevel::setSkipCloseAnimation(bool set)
         return;
     }
     m_skipCloseAnimation = set;
-    Q_EMIT skipCloseAnimationChanged();
+    Q_EMIT qobject->skipCloseAnimationChanged();
 }
 
 // TODO(romangg): * This function is only called on Wayland and the damage translation is not the
@@ -549,7 +532,7 @@ void Toplevel::addDamage(const QRegion &damage)
 
     m_isDamaged = true;
     damage_region += damage;
-    Q_EMIT damaged(this, damage);
+    Q_EMIT qobject->damaged(damage);
 }
 
 QByteArray Toplevel::windowRole() const
@@ -568,7 +551,7 @@ void Toplevel::setDepth(int depth)
     const bool oldAlpha = hasAlpha();
     bit_depth = depth;
     if (oldAlpha != hasAlpha()) {
-        Q_EMIT hasAlphaChanged();
+        Q_EMIT qobject->hasAlphaChanged();
     }
 }
 

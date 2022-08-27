@@ -46,9 +46,9 @@ namespace KWin::render::xrender
 
 ScreenPaintData scene::screen_paint;
 
-scene::scene(render::compositor& compositor)
+scene::scene(x11::compositor<x11::platform>& compositor)
     : render::scene(compositor)
-    , m_backend{std::make_unique<xrender::backend>(static_cast<x11::compositor&>(compositor))}
+    , m_backend{std::make_unique<xrender::backend>(compositor)}
 {
 }
 
@@ -121,7 +121,7 @@ win::deco::renderer* scene::createDecorationRenderer(win::deco::client_impl* cli
     return new deco_renderer(client);
 }
 
-std::unique_ptr<render::scene> create_scene(x11::compositor& compositor)
+std::unique_ptr<render::scene> create_scene(x11::compositor<x11::platform>& compositor)
 {
     qCDebug(KWIN_CORE) << "Creating XRender scene.";
     return std::make_unique<xrender::scene>(compositor);

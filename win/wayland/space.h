@@ -88,8 +88,16 @@ public:
 
         init_space(*this);
 
+        singleton_interface::get_current_output_geometry = [this] {
+            auto output = get_current_output(*this);
+            return output ? output->geometry() : QRect();
+        };
         singleton_interface::set_activation_token
             = [this](auto const& appid) { return xdg_activation_set_token(*this, appid); };
+        singleton_interface::create_internal_window = [this](auto qwindow) {
+            auto iwin = new win::internal_window(qwindow, *this);
+            return iwin->singleton.get();
+        };
 
         this->input = std::make_unique<input::wayland::redirect>(*base.input, *this);
         dbus = std::make_unique<base::dbus::kwin_impl<win::space, input::platform>>(
@@ -104,7 +112,7 @@ public:
         QObject::connect(
             stacking_order.get(), &stacking_order::render_restack, qobject.get(), [this] {
                 for (auto win : windows) {
-                    if (auto iwin = qobject_cast<internal_window*>(win); iwin && iwin->isShown()) {
+                    if (auto iwin = dynamic_cast<internal_window*>(win); iwin && iwin->isShown()) {
                         stacking_order->render_overlays.push_back(iwin);
                     }
                 }
@@ -243,7 +251,7 @@ public:
         }
 
         for (auto win : windows) {
-            if (auto internal = qobject_cast<internal_window*>(win);
+            if (auto internal = dynamic_cast<internal_window*>(win);
                 internal && internal->internalWindow() == window) {
                 return internal;
             }
@@ -340,19 +348,25 @@ public:
 
             update_tabbox(*this);
 
-            QObject::connect(window, &wayland_window::windowShown, qobject.get(), [this, window] {
-                update_layer(window);
-                stacking_order->update_count();
-                update_space_areas(*this);
-                if (window->wantsInput()) {
-                    activate_window(*this, window);
-                }
-            });
-            QObject::connect(window, &wayland_window::windowHidden, qobject.get(), [this] {
-                // TODO: update tabbox if it's displayed
-                stacking_order->update_count();
-                update_space_areas(*this);
-            });
+            QObject::connect(window->qobject.get(),
+                             &wayland_window::qobject_t::windowShown,
+                             qobject.get(),
+                             [this, window] {
+                                 update_layer(window);
+                                 stacking_order->update_count();
+                                 update_space_areas(*this);
+                                 if (window->wantsInput()) {
+                                     activate_window(*this, window);
+                                 }
+                             });
+            QObject::connect(window->qobject.get(),
+                             &wayland_window::qobject_t::windowHidden,
+                             qobject.get(),
+                             [this] {
+                                 // TODO: update tabbox if it's displayed
+                                 stacking_order->update_count();
+                                 update_space_areas(*this);
+                             });
 
             idle_setup(*kde_idle, *window);
         }
@@ -450,9 +464,10 @@ private:
         if (window->ready_for_painting) {
             setup_plasma_management(this, window);
         } else {
-            QObject::connect(window, &x11::window::windowShown, qobject.get(), [this](auto window) {
-                setup_plasma_management(this, window);
-            });
+            QObject::connect(window->qobject.get(),
+                             &x11::window::qobject_t::windowShown,
+                             qobject.get(),
+                             [this, window] { setup_plasma_management(this, window); });
         }
     }
 

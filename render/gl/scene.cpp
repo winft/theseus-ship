@@ -42,6 +42,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "main.h"
 #include "render/compositor.h"
 #include "render/cursor.h"
+#include "render/effect/window_impl.h"
 #include "render/effects.h"
 #include "render/platform.h"
 #include "win/deco/client_impl.h"
@@ -457,8 +458,10 @@ void scene::paintCursor()
 
         // handle shape update on case cursor image changed
         if (!sw_cursor.notifier) {
-            sw_cursor.notifier = connect(
-                cursor, &render::cursor::changed, this, [this] { sw_cursor.dirty = true; });
+            sw_cursor.notifier
+                = connect(cursor->qobject.get(), &render::cursor_qobject::changed, this, [this] {
+                      sw_cursor.dirty = true;
+                  });
         }
     }
 
@@ -621,7 +624,7 @@ std::deque<Toplevel*> scene::get_leads(std::deque<Toplevel*> const& windows)
 
             for (auto const& rect : lead_damage) {
                 // Emit for thumbnail repaint.
-                Q_EMIT lead->damaged(lead, rect);
+                Q_EMIT lead->qobject->damaged(rect);
             }
         } else {
             leads.push_back(window);

@@ -28,7 +28,7 @@ base::wayland::output* find_output(Base const& base, Wrapland::Server::Output co
         return wayland_output->wrapland_output() == output;
     });
     if (it != outs.cend()) {
-        return qobject_cast<base::wayland::output*>(*it);
+        return dynamic_cast<base::wayland::output*>(*it);
     }
     return nullptr;
 }

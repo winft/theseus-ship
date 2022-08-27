@@ -8,6 +8,8 @@
 namespace KWin::render
 {
 
-render::platform* singleton_interface::platform{nullptr};
+render::compositor_qobject* singleton_interface::compositor{nullptr};
+EffectsHandler* singleton_interface::effects{nullptr};
+std::function<bool()> singleton_interface::supports_surfaceless_context{};
 
 }

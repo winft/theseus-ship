@@ -22,8 +22,10 @@ namespace KWin::render
 
 namespace x11
 {
+template<typename Platform>
 class compositor;
 class overlay_window;
+class platform;
 }
 
 namespace backend::x11
@@ -37,7 +39,7 @@ class fb_config_info;
 class glx_backend : public gl::backend
 {
 public:
-    glx_backend(Display* display, render::x11::compositor& compositor);
+    glx_backend(Display* display, render::x11::compositor<render::x11::platform>& compositor);
     ~glx_backend() override;
     void screenGeometryChanged(const QSize& size) override;
     gl::texture_private* createBackendTexture(gl::texture* texture) override;
@@ -56,7 +58,7 @@ public:
     std::unordered_map<xcb_visualid_t, fb_config_info*> fb_configs;
     std::unordered_map<xcb_visualid_t, int> visual_depth_hash;
 
-    render::x11::compositor& compositor;
+    render::x11::compositor<render::x11::platform>& compositor;
 
 protected:
     void present() override;

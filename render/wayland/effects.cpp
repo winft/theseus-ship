@@ -37,10 +37,10 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
             if (c->ready_for_painting) {
                 slotXdgShellClientShown(c);
             } else {
-                QObject::connect(c,
-                                 &Toplevel::windowShown,
+                QObject::connect(c->qobject.get(),
+                                 &Toplevel::qobject_t::windowShown,
                                  this,
-                                 &effects_handler_impl::slotXdgShellClientShown);
+                                 [this, c] { slotXdgShellClientShown(c); });
             }
         });
 
@@ -53,12 +53,17 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
         if (wlwin->ready_for_painting) {
             setupAbstractClientConnections(wlwin);
         } else {
-            QObject::connect(wlwin,
-                             &Toplevel::windowShown,
+            QObject::connect(wlwin->qobject.get(),
+                             &Toplevel::qobject_t::windowShown,
                              this,
-                             &effects_handler_impl::slotXdgShellClientShown);
+                             [this, wlwin] { slotXdgShellClientShown(wlwin); });
         }
     }
+}
+
+effects_handler_impl::~effects_handler_impl()
+{
+    unloadAllEffects();
 }
 
 bool effects_handler_impl::eventFilter(QObject* watched, QEvent* event)
@@ -116,8 +121,20 @@ effect::kscreen_integration& effects_handler_impl::get_kscreen_integration()
     return kscreen_dummy;
 }
 
+void effects_handler_impl::doStartMouseInterception(Qt::CursorShape shape)
+{
+    m_compositor->space->input->get_pointer()->setEffectsOverrideCursor(shape);
+}
+
+void effects_handler_impl::doStopMouseInterception()
+{
+    m_compositor->space->input->get_pointer()->removeEffectsOverrideCursor();
+}
+
 void effects_handler_impl::handle_effect_destroy(Effect& effect)
 {
+    unreserve_borders(effect);
+
     blur.remove(effect);
     contrast.remove(effect);
     slide.remove(effect);

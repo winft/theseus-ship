@@ -357,15 +357,12 @@ static glXFuncPtr getProcAddress(const char* name)
     return ret;
 }
 
-template<typename Backend>
-void start_glx_backend(Display* display, render::x11::compositor& compositor, Backend& backend)
+template<typename Compositor, typename Backend>
+void start_glx_backend(Display* display, Compositor& compositor, Backend& backend)
 {
     backend.data.display = display;
     backend.overlay_window = std::make_unique<render::x11::overlay_window>(compositor);
-
-    auto x11_compositor = dynamic_cast<render::x11::compositor*>(&compositor);
-    assert(x11_compositor);
-    x11_compositor->overlay_window = backend.overlay_window.get();
+    compositor.overlay_window = backend.overlay_window.get();
 
     // Force initialization of GLX integration in the Qt's xcb backend
     // to make it call XESetWireToEvent callbacks, which is required

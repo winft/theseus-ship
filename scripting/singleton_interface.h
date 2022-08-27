@@ -8,11 +8,11 @@
 namespace KWin::scripting
 {
 
-class platform;
+class qt_script_space;
 
 /// Only for exceptional use in environments without dependency injection support (e.g. Qt plugins).
 struct singleton_interface {
-    static scripting::platform* platform;
+    static scripting::qt_script_space* qt_script_space;
 };
 
 }

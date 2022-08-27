@@ -21,6 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_QPA_WINDOW_H
 #define KWIN_QPA_WINDOW_H
 
+#include "win/singleton_interface.h"
+
 #include <epoxy/gl.h>
 
 #include <QPointer>
@@ -56,14 +58,14 @@ public:
     std::shared_ptr<QOpenGLFramebufferObject> const& contentFBO() const;
     std::shared_ptr<QOpenGLFramebufferObject> swapFBO();
 
-    win::internal_window *client() const;
+    win::internal_window_singleton* client() const;
 
 private:
     void createFBO();
     void map();
     void unmap();
 
-    QPointer<win::internal_window> m_handle;
+    QPointer<win::internal_window_singleton> m_handle;
     std::shared_ptr<QOpenGLFramebufferObject> m_contentFBO;
     quint32 m_windowId;
     bool m_resized = false;

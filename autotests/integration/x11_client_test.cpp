@@ -164,7 +164,7 @@ void X11ClientTest::testTrimCaption()
     xcb_unmap_window(c.get(), w);
     xcb_flush(c.get());
 
-    QSignalSpy windowClosedSpy(client, &Toplevel::closed);
+    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::closed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
     xcb_destroy_window(c.get(), w);
@@ -284,7 +284,7 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
     NETRootInfo rootInfo(c.get(), NET::Properties());
     rootInfo.setActiveWindow(w, NET::FromApplication, XCB_CURRENT_TIME, XCB_WINDOW_NONE);
 
-    QSignalSpy fullscreen_spy(client, &Toplevel::fullScreenChanged);
+    QSignalSpy fullscreen_spy(client->qobject.get(), &Toplevel::qobject_t::fullScreenChanged);
     QVERIFY(fullscreen_spy.isValid());
 
     xcb_flush(c.get());
@@ -431,9 +431,10 @@ void X11ClientTest::testX11WindowId()
     QUuid deletedUuid;
     QCOMPARE(deletedUuid.isNull(), true);
 
-    connect(client, &Toplevel::remnant_created, this, [&deletedUuid](auto remnant) {
-        deletedUuid = remnant->internal_id;
-    });
+    connect(client->space.qobject.get(),
+            &win::space::qobject_t::remnant_created,
+            this,
+            [&deletedUuid](auto remnant) { deletedUuid = remnant->internal_id; });
 
     NETRootInfo rootInfo(c.get(), NET::WMAllProperties);
     QCOMPARE(rootInfo.activeWindow(), client->xcb_window);
@@ -461,7 +462,8 @@ void X11ClientTest::testX11WindowId()
     // and destroy the window again
     xcb_unmap_window(c.get(), w);
     xcb_flush(c.get());
-    QSignalSpy windowClosedSpy(client, &Toplevel::remnant_created);
+    QSignalSpy windowClosedSpy(client->space.qobject.get(),
+                               &win::space::qobject_t::remnant_created);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
 
@@ -512,7 +514,7 @@ void X11ClientTest::testCaptionChanges()
     QCOMPARE(client->xcb_window, w);
     QCOMPARE(win::caption(client), QStringLiteral("foo"));
 
-    QSignalSpy captionChangedSpy(client, &Toplevel::captionChanged);
+    QSignalSpy captionChangedSpy(client->qobject.get(), &Toplevel::qobject_t::captionChanged);
     QVERIFY(captionChangedSpy.isValid());
     info.setName("bar");
     xcb_flush(c.get());
@@ -520,7 +522,7 @@ void X11ClientTest::testCaptionChanges()
     QCOMPARE(win::caption(client), QStringLiteral("bar"));
 
     // and destroy the window again
-    QSignalSpy windowClosedSpy(client, &Toplevel::closed);
+    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::closed);
     QVERIFY(windowClosedSpy.isValid());
     xcb_unmap_window(c.get(), w);
     xcb_flush(c.get());
@@ -634,7 +636,7 @@ void X11ClientTest::testCaptionMultipleWindows()
     QCOMPARE(QByteArray(info3.visibleName()), QByteArrayLiteral("foo <2>\u200E"));
     QCOMPARE(QByteArray(info3.visibleIconName()), QByteArrayLiteral("foo <2>\u200E"));
 
-    QSignalSpy captionChangedSpy(client2, &Toplevel::captionChanged);
+    QSignalSpy captionChangedSpy(client2->qobject.get(), &Toplevel::qobject_t::captionChanged);
     QVERIFY(captionChangedSpy.isValid());
 
     NETWinInfo info4(

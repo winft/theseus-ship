@@ -173,7 +173,7 @@ void output::apply_changes(Wrapland::Server::OutputChangesetV1 const* changeset)
     }
 
     if (emitModeChanged) {
-        Q_EMIT mode_changed();
+        Q_EMIT qobject->mode_changed();
     }
 
     m_output->done();
@@ -257,15 +257,15 @@ void output::init_interfaces(std::string const& name,
     m_output->set_dpms_supported(m_supports_dpms);
     // set to last known mode
     m_output->set_dpms_mode(to_wayland_dpms_mode(m_dpms));
-    connect(m_output.get(),
-            &Wrapland::Server::Output::dpms_mode_requested,
-            this,
-            [this](Wrapland::Server::Output::DpmsMode mode) {
-                if (!is_enabled()) {
-                    return;
-                }
-                update_dpms(from_wayland_dpms_mode(mode));
-            });
+    QObject::connect(m_output.get(),
+                     &Wrapland::Server::Output::dpms_mode_requested,
+                     qobject.get(),
+                     [this](Wrapland::Server::Output::DpmsMode mode) {
+                         if (!is_enabled()) {
+                             return;
+                         }
+                         update_dpms(from_wayland_dpms_mode(mode));
+                     });
 
     m_output->set_enabled(true);
     m_output->done();
@@ -285,7 +285,7 @@ QSize output::orientate_size(QSize const& size) const
 void output::set_transform(base::wayland::output_transform transform)
 {
     m_output->set_transform(to_wayland_transform(transform));
-    Q_EMIT mode_changed();
+    Q_EMIT qobject->mode_changed();
 }
 
 base::wayland::output_transform output::transform() const

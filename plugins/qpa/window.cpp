@@ -22,8 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/platform.h"
 #include "main.h"
-#include "win/internal_window.h"
-#include "win/singleton_interface.h"
 #include "win/space.h"
 
 #include <logging.h>
@@ -122,7 +120,7 @@ std::shared_ptr<QOpenGLFramebufferObject> Window::swapFBO()
     return fbo;
 }
 
-win::internal_window *Window::client() const
+win::internal_window_singleton* Window::client() const
 {
     return m_handle;
 }
@@ -147,7 +145,7 @@ void Window::map()
         return;
     }
 
-    m_handle = new win::internal_window(window(), *win::singleton_interface::space);
+    m_handle = win::singleton_interface::create_internal_window(window());
 }
 
 void Window::unmap()
@@ -156,7 +154,7 @@ void Window::unmap()
         return;
     }
 
-    m_handle->destroyClient();
+    m_handle->destroy();
     m_handle = nullptr;
 
     m_contentFBO = nullptr;

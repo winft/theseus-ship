@@ -49,8 +49,6 @@ private Q_SLOTS:
 
 void XWaylandInputTest::initTestCase()
 {
-    qRegisterMetaType<KWin::win::x11::window*>();
-
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
 
@@ -185,10 +183,10 @@ void XWaylandInputTest::testPointerEnterLeave()
     QVERIFY(!client->hasStrut());
     QVERIFY(!client->isHiddenInternal());
     QVERIFY(!client->ready_for_painting);
-    QMetaObject::invokeMethod(client, "setReadyForPainting");
+    client->setReadyForPainting();
     QVERIFY(client->ready_for_painting);
     QVERIFY(!client->surface);
-    QSignalSpy surfaceChangedSpy(client, &Toplevel::surfaceChanged);
+    QSignalSpy surfaceChangedSpy(client->qobject.get(), &Toplevel::qobject_t::surfaceChanged);
     QVERIFY(surfaceChangedSpy.isValid());
     QVERIFY(surfaceChangedSpy.wait());
     QVERIFY(client->surface);
@@ -207,7 +205,7 @@ void XWaylandInputTest::testPointerEnterLeave()
     QVERIFY(leftSpy.wait());
 
     // destroy window again
-    QSignalSpy windowClosedSpy(client, &Toplevel::closed);
+    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::closed);
     QVERIFY(windowClosedSpy.isValid());
     xcb_unmap_window(c.get(), w);
     xcb_destroy_window(c.get(), w);

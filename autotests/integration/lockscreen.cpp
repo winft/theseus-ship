@@ -600,7 +600,8 @@ void LockScreenTest::testMoveWindow()
     auto c = showWindow();
     QVERIFY(c);
 
-    QSignalSpy clientStepUserMovedResizedSpy(c, &Toplevel::clientStepUserMovedResized);
+    QSignalSpy clientStepUserMovedResizedSpy(c->qobject.get(),
+                                             &Toplevel::qobject_t::clientStepUserMovedResized);
     QVERIFY(clientStepUserMovedResizedSpy.isValid());
     quint32 timestamp = 1;
 

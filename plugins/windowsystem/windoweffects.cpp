@@ -57,7 +57,7 @@ QWindow *findWindow(WId win)
 
 bool WindowEffects::isEffectAvailable(KWindowEffects::Effect effect)
 {
-    auto& effects = render::singleton_interface::platform->compositor->effects;
+    auto& effects = render::singleton_interface::effects;
     if (!effects) {
         return false;
     }

@@ -26,7 +26,9 @@ namespace KWin::render
 
 namespace x11
 {
+template<typename Platform>
 class compositor;
+class platform;
 }
 
 namespace xrender
@@ -38,7 +40,7 @@ class scene : public render::scene
 {
     Q_OBJECT
 public:
-    explicit scene(render::compositor& compositor);
+    explicit scene(x11::compositor<x11::platform>& compositor);
     ~scene() override;
 
     CompositingType compositingType() const override
@@ -75,7 +77,7 @@ private:
     std::unique_ptr<xrender::backend> m_backend;
 };
 
-KWIN_EXPORT std::unique_ptr<render::scene> create_scene(x11::compositor& compositor);
+KWIN_EXPORT std::unique_ptr<render::scene> create_scene(x11::compositor<x11::platform>& compositor);
 
 }
 }

@@ -85,7 +85,7 @@ void SharingPlatformContext::swapBuffers(QPlatformSurface *surface)
         }
         context()->makeCurrent(surface->surface());
         glFlush();
-        client->present(window->swapFBO());
+        client->present_fbo(window->swapFBO());
         window->bindContentFBO();
     }
 }

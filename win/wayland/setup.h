@@ -66,42 +66,49 @@ void setup_plasma_management(Space* space, Win* win)
     plasma_win->setParentWindow(transient_lead ? transient_lead->control->plasma_wayland_integration
                                                : nullptr);
     plasma_win->setGeometry(win->frameGeometry());
-    QObject::connect(win, &Win::skipTaskbarChanged, plasma_win, [plasma_win, win] {
+
+    auto qtwin = win->qobject.get();
+    QObject::connect(qtwin, &window_qobject::skipTaskbarChanged, plasma_win, [plasma_win, win] {
         plasma_win->setSkipTaskbar(win->control->skip_taskbar());
     });
-    QObject::connect(win, &Win::skipSwitcherChanged, plasma_win, [plasma_win, win] {
+    QObject::connect(qtwin, &window_qobject::skipSwitcherChanged, plasma_win, [plasma_win, win] {
         plasma_win->setSkipSwitcher(win->control->skip_switcher());
     });
-    QObject::connect(win, &Win::captionChanged, plasma_win, [plasma_win, win] {
+    QObject::connect(qtwin, &window_qobject::captionChanged, plasma_win, [plasma_win, win] {
         plasma_win->setTitle(caption(win));
     });
 
-    QObject::connect(win, &Win::activeChanged, plasma_win, [plasma_win, win] {
+    QObject::connect(qtwin, &window_qobject::activeChanged, plasma_win, [plasma_win, win] {
         plasma_win->setActive(win->control->active());
     });
-    QObject::connect(win, &Win::fullScreenChanged, plasma_win, [plasma_win, win] {
+    QObject::connect(qtwin, &window_qobject::fullScreenChanged, plasma_win, [plasma_win, win] {
         plasma_win->setFullscreen(win->control->fullscreen());
     });
-    QObject::connect(
-        win, &Win::keepAboveChanged, plasma_win, &Wrapland::Server::PlasmaWindow::setKeepAbove);
-    QObject::connect(
-        win, &Win::keepBelowChanged, plasma_win, &Wrapland::Server::PlasmaWindow::setKeepBelow);
-    QObject::connect(win, &Win::minimizedChanged, plasma_win, [plasma_win, win] {
+    QObject::connect(qtwin,
+                     &window_qobject::keepAboveChanged,
+                     plasma_win,
+                     &Wrapland::Server::PlasmaWindow::setKeepAbove);
+    QObject::connect(qtwin,
+                     &window_qobject::keepBelowChanged,
+                     plasma_win,
+                     &Wrapland::Server::PlasmaWindow::setKeepBelow);
+    QObject::connect(qtwin, &window_qobject::minimizedChanged, plasma_win, [plasma_win, win] {
         plasma_win->setMinimized(win->control->minimized());
     });
     QObject::connect(
-        win, &Win::maximize_mode_changed, plasma_win, [plasma_win](auto /*window*/, auto mode) {
+        qtwin, &window_qobject::maximize_mode_changed, plasma_win, [plasma_win](auto mode) {
             plasma_win->setMaximized(mode == win::maximize_mode::full);
         });
-    QObject::connect(win, &Win::demandsAttentionChanged, plasma_win, [plasma_win, win] {
-        plasma_win->setDemandsAttention(win->control->demands_attention());
-    });
-    QObject::connect(win, &Win::iconChanged, plasma_win, [plasma_win, win] {
+    QObject::connect(
+        qtwin, &window_qobject::demandsAttentionChanged, plasma_win, [plasma_win, win] {
+            plasma_win->setDemandsAttention(win->control->demands_attention());
+        });
+    QObject::connect(qtwin, &window_qobject::iconChanged, plasma_win, [plasma_win, win] {
         plasma_win->setIcon(win->control->icon());
     });
-    QObject::connect(win, &Win::windowClassChanged, plasma_win, updateAppId);
-    QObject::connect(win, &Win::desktopFileNameChanged, plasma_win, updateAppId);
-    QObject::connect(win, &Win::transientChanged, plasma_win, [plasma_win, win] {
+    QObject::connect(qtwin, &window_qobject::windowClassChanged, plasma_win, updateAppId);
+    QObject::connect(qtwin, &window_qobject::desktopFileNameChanged, plasma_win, updateAppId);
+    QObject::connect(qtwin, &window_qobject::transientChanged, plasma_win, [plasma_win, win] {
         auto lead = win->transient()->lead();
         if (lead && !lead->control) {
             // When lead becomes remnant.
@@ -109,33 +116,33 @@ void setup_plasma_management(Space* space, Win* win)
         }
         plasma_win->setParentWindow(lead ? lead->control->plasma_wayland_integration : nullptr);
     });
-    QObject::connect(win, &Win::applicationMenuChanged, plasma_win, [plasma_win, win] {
+    QObject::connect(qtwin, &window_qobject::applicationMenuChanged, plasma_win, [plasma_win, win] {
         auto const appmenu = win->control->application_menu();
         plasma_win->setApplicationMenuPaths(QString::fromStdString(appmenu.address.name),
                                             QString::fromStdString(appmenu.address.path));
     });
-    QObject::connect(win, &Win::frame_geometry_changed, plasma_win, [plasma_win, win] {
+    QObject::connect(qtwin, &window_qobject::frame_geometry_changed, plasma_win, [plasma_win, win] {
         plasma_win->setGeometry(win->frameGeometry());
     });
-    QObject::connect(plasma_win, &Wrapland::Server::PlasmaWindow::closeRequested, win, [win] {
+    QObject::connect(plasma_win, &Wrapland::Server::PlasmaWindow::closeRequested, qtwin, [win] {
         win->closeWindow();
     });
-    QObject::connect(plasma_win, &Wrapland::Server::PlasmaWindow::moveRequested, win, [win] {
+    QObject::connect(plasma_win, &Wrapland::Server::PlasmaWindow::moveRequested, qtwin, [win] {
         auto& cursor = win->space.input->platform.cursor;
         cursor->set_pos(win->frameGeometry().center());
         win->performMouseCommand(base::options_qobject::MouseMove, cursor->pos());
     });
-    QObject::connect(plasma_win, &Wrapland::Server::PlasmaWindow::resizeRequested, win, [win] {
+    QObject::connect(plasma_win, &Wrapland::Server::PlasmaWindow::resizeRequested, qtwin, [win] {
         auto& cursor = win->space.input->platform.cursor;
         cursor->set_pos(win->frameGeometry().bottomRight());
         win->performMouseCommand(base::options_qobject::MouseResize, cursor->pos());
     });
     QObject::connect(plasma_win,
                      &Wrapland::Server::PlasmaWindow::fullscreenRequested,
-                     win,
+                     win->qobject.get(),
                      [win](bool set) { win->setFullScreen(set, false); });
     QObject::connect(
-        plasma_win, &Wrapland::Server::PlasmaWindow::minimizedRequested, win, [win](bool set) {
+        plasma_win, &Wrapland::Server::PlasmaWindow::minimizedRequested, qtwin, [win](bool set) {
             if (set) {
                 set_minimized(win, true);
             } else {
@@ -143,23 +150,23 @@ void setup_plasma_management(Space* space, Win* win)
             }
         });
     QObject::connect(
-        plasma_win, &Wrapland::Server::PlasmaWindow::maximizedRequested, win, [win](bool set) {
+        plasma_win, &Wrapland::Server::PlasmaWindow::maximizedRequested, qtwin, [win](bool set) {
             win::maximize(win, set ? win::maximize_mode::full : win::maximize_mode::restore);
         });
     QObject::connect(plasma_win,
                      &Wrapland::Server::PlasmaWindow::keepAboveRequested,
-                     win,
+                     qtwin,
                      [win](bool set) { win::set_keep_above(win, set); });
     QObject::connect(plasma_win,
                      &Wrapland::Server::PlasmaWindow::keepBelowRequested,
-                     win,
+                     qtwin,
                      [win](bool set) { win::set_keep_below(win, set); });
     QObject::connect(plasma_win,
                      &Wrapland::Server::PlasmaWindow::demandsAttentionRequested,
-                     win,
+                     qtwin,
                      [win](bool set) { win::set_demands_attention(win, set); });
     QObject::connect(
-        plasma_win, &Wrapland::Server::PlasmaWindow::activeRequested, win, [win](bool set) {
+        plasma_win, &Wrapland::Server::PlasmaWindow::activeRequested, qtwin, [win](bool set) {
             if (set) {
                 force_activate_window(win->space, win);
             }
@@ -170,7 +177,7 @@ void setup_plasma_management(Space* space, Win* win)
     }
 
     // Only for the legacy mechanism.
-    QObject::connect(win, &Win::desktopChanged, plasma_win, [plasma_win, win] {
+    QObject::connect(qtwin, &window_qobject::desktopChanged, plasma_win, [plasma_win, win] {
         if (win->isOnAllDesktops()) {
             plasma_win->setOnAllDesktops(true);
             return;
@@ -182,7 +189,7 @@ void setup_plasma_management(Space* space, Win* win)
     // show/hide when the window enters/exits from desktop
     QObject::connect(plasma_win,
                      &Wrapland::Server::PlasmaWindow::enterPlasmaVirtualDesktopRequested,
-                     win,
+                     qtwin,
                      [win](const QString& desktopId) {
                          auto vd
                              = win->space.virtual_desktop_manager->desktopForId(desktopId.toUtf8());
@@ -192,7 +199,7 @@ void setup_plasma_management(Space* space, Win* win)
                      });
     QObject::connect(plasma_win,
                      &Wrapland::Server::PlasmaWindow::enterNewPlasmaVirtualDesktopRequested,
-                     win,
+                     qtwin,
                      [win]() {
                          auto& vds = win->space.virtual_desktop_manager;
                          vds->setCount(vds->count() + 1);
@@ -200,7 +207,7 @@ void setup_plasma_management(Space* space, Win* win)
                      });
     QObject::connect(plasma_win,
                      &Wrapland::Server::PlasmaWindow::leavePlasmaVirtualDesktopRequested,
-                     win,
+                     qtwin,
                      [win](const QString& desktopId) {
                          auto vd
                              = win->space.virtual_desktop_manager->desktopForId(desktopId.toUtf8());

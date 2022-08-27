@@ -56,7 +56,6 @@ namespace base::wayland
  */
 class KWIN_EXPORT output : public base::output
 {
-    Q_OBJECT
 public:
     ~output();
 
@@ -139,9 +138,6 @@ public:
     std::unique_ptr<render::wayland::output> render;
     std::unique_ptr<Wrapland::Server::Output> m_output;
     base::dpms_mode m_dpms{base::dpms_mode::on};
-
-Q_SIGNALS:
-    void mode_changed();
 
 protected:
     void init_interfaces(std::string const& name,

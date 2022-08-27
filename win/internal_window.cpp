@@ -43,8 +43,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Q_DECLARE_METATYPE(NET::WindowType)
 
-static const QByteArray s_skipClosePropertyName = QByteArrayLiteral("KWIN_SKIP_CLOSE_ANIMATION");
-
 namespace KWin::win
 {
 
@@ -54,6 +52,7 @@ public:
     internal_control(internal_window* client)
         : control(client)
         , m_client{client}
+
     {
     }
 
@@ -79,33 +78,49 @@ private:
 internal_window::internal_window(win::remnant remnant, win::space& space)
     : Toplevel(std::move(remnant), space)
 {
+    Toplevel::qobject = std::make_unique<window_qobject>();
 }
 
 internal_window::internal_window(QWindow* window, win::space& space)
     : Toplevel(space)
+    , singleton{std::make_unique<internal_window_singleton>(
+          [this] { destroyClient(); },
+          [this](auto fbo) { present(fbo); },
+          [this](auto const& image, auto const& damage) { present(image, damage); })}
     , m_internalWindow(window)
     , synced_geo(window->geometry())
     , m_internalWindowFlags(window->flags())
 {
+    Toplevel::qobject = std::make_unique<internal_window_qobject<internal_window>>(*this);
+
     control = std::make_unique<internal_control>(this);
 
-    connect(
-        m_internalWindow, &QWindow::xChanged, this, &internal_window::updateInternalWindowGeometry);
-    connect(
-        m_internalWindow, &QWindow::yChanged, this, &internal_window::updateInternalWindowGeometry);
-    connect(m_internalWindow,
-            &QWindow::widthChanged,
-            this,
-            &internal_window::updateInternalWindowGeometry);
-    connect(m_internalWindow,
-            &QWindow::heightChanged,
-            this,
-            &internal_window::updateInternalWindowGeometry);
-    connect(m_internalWindow, &QWindow::windowTitleChanged, this, &internal_window::setCaption);
-    connect(m_internalWindow, &QWindow::opacityChanged, this, &internal_window::setOpacity);
-    connect(m_internalWindow, &QWindow::destroyed, this, &internal_window::destroyClient);
+    QObject::connect(m_internalWindow, &QWindow::xChanged, qobject.get(), [this] {
+        updateInternalWindowGeometry();
+    });
+    QObject::connect(m_internalWindow, &QWindow::yChanged, qobject.get(), [this] {
+        updateInternalWindowGeometry();
+    });
+    QObject::connect(m_internalWindow, &QWindow::widthChanged, qobject.get(), [this] {
+        updateInternalWindowGeometry();
+    });
+    QObject::connect(m_internalWindow, &QWindow::heightChanged, qobject.get(), [this] {
+        updateInternalWindowGeometry();
+    });
+    QObject::connect(m_internalWindow,
+                     &QWindow::windowTitleChanged,
+                     qobject.get(),
+                     [this](auto const& cap) { setCaption(cap); });
+    QObject::connect(m_internalWindow,
+                     &QWindow::opacityChanged,
+                     qobject.get(),
+                     [this](auto opacity) { setOpacity(opacity); });
+    QObject::connect(
+        m_internalWindow, &QWindow::destroyed, qobject.get(), [this] { destroyClient(); });
 
-    connect(this, &internal_window::opacityChanged, this, &internal_window::addRepaintFull);
+    QObject::connect(qobject.get(), &window_qobject::opacityChanged, qobject.get(), [this] {
+        addRepaintFull();
+    });
 
     const QVariant windowType = m_internalWindow->property("kwin_windowType");
     if (!windowType.isNull()) {
@@ -116,7 +131,7 @@ internal_window::internal_window(QWindow* window, win::space& space)
     control->set_icon(QIcon::fromTheme(QStringLiteral("kwin")));
     win::set_on_all_desktops(this, true);
     setOpacity(m_internalWindow->opacity());
-    setSkipCloseAnimation(m_internalWindow->property(s_skipClosePropertyName).toBool());
+    setSkipCloseAnimation(m_internalWindow->property(internal_skip_close_animation_name).toBool());
 
     setupCompositing();
     updateColorScheme();
@@ -127,7 +142,7 @@ internal_window::internal_window(QWindow* window, win::space& space)
     restore_geometries.maximize = frameGeometry();
     win::block_geometry_updates(this, false);
 
-    m_internalWindow->installEventFilter(this);
+    m_internalWindow->installEventFilter(qobject.get());
 }
 
 internal_window::~internal_window() = default;
@@ -158,21 +173,6 @@ void internal_window::add_scene_window_addon()
     };
 
     render->win_integration.setup_buffer = setup_buffer;
-}
-
-bool internal_window::eventFilter(QObject* watched, QEvent* event)
-{
-    if (watched == m_internalWindow && event->type() == QEvent::DynamicPropertyChange) {
-        QDynamicPropertyChangeEvent* pe = static_cast<QDynamicPropertyChangeEvent*>(event);
-        if (pe->propertyName() == s_skipClosePropertyName) {
-            setSkipCloseAnimation(m_internalWindow->property(s_skipClosePropertyName).toBool());
-        }
-        if (pe->propertyName() == "kwin_windowType") {
-            m_windowType = m_internalWindow->property("kwin_windowType").value<NET::WindowType>();
-            update_space_areas(space);
-        }
-    }
-    return false;
 }
 
 qreal internal_window::bufferScale() const
@@ -210,7 +210,7 @@ void internal_window::setOpacity(double opacity)
     const double oldOpacity = m_opacity;
     m_opacity = opacity;
 
-    Q_EMIT opacityChanged(this, oldOpacity);
+    Q_EMIT qobject->opacityChanged(oldOpacity);
 }
 
 void internal_window::killWindow()
@@ -374,7 +374,7 @@ void internal_window::do_set_geometry(QRect const& frame_geo)
 
     space.render.addRepaint(visible_rect(this));
 
-    Q_EMIT frame_geometry_changed(this, old_frame_geo);
+    Q_EMIT qobject->frame_geometry_changed(old_frame_geo);
 }
 
 bool internal_window::hasStrut() const
@@ -476,7 +476,7 @@ void internal_window::destroyClient()
     }
 
     auto deleted = create_remnant_window<internal_window>(*this);
-    Q_EMIT closed(this);
+    Q_EMIT qobject->closed();
 
     control->destroy_decoration();
 
@@ -546,7 +546,7 @@ bool internal_window::acceptsFocus() const
 bool internal_window::belongsToSameApplication(Toplevel const* other,
                                                [[maybe_unused]] win::same_client_check checks) const
 {
-    return qobject_cast<internal_window const*>(other) != nullptr;
+    return dynamic_cast<internal_window const*>(other) != nullptr;
 }
 
 bool internal_window::has_pending_repaints() const
@@ -573,7 +573,7 @@ void internal_window::updateCaption()
         } while (win::find_client_with_same_caption(static_cast<Toplevel*>(this)));
     }
     if (caption.suffix != oldSuffix) {
-        Q_EMIT captionChanged();
+        Q_EMIT qobject->captionChanged();
     }
 }
 
@@ -592,16 +592,18 @@ void internal_window::createDecoration(const QRect& rect)
 
     if (decoration) {
         QMetaObject::invokeMethod(decoration, "update", Qt::QueuedConnection);
-        connect(decoration, &KDecoration2::Decoration::shadowChanged, this, [this] {
-            win::update_shadow(this);
-        });
-        connect(decoration, &KDecoration2::Decoration::bordersChanged, this, [this]() {
-            win::geometry_updates_blocker blocker(this);
-            auto const old_geo = frameGeometry();
-            win::check_workspace_position(this, old_geo);
-            discard_quads();
-            control->deco().client->update_size();
-        });
+        QObject::connect(decoration,
+                         &KDecoration2::Decoration::shadowChanged,
+                         qobject.get(),
+                         [this] { win::update_shadow(this); });
+        QObject::connect(
+            decoration, &KDecoration2::Decoration::bordersChanged, qobject.get(), [this]() {
+                win::geometry_updates_blocker blocker(this);
+                auto const old_geo = frameGeometry();
+                win::check_workspace_position(this, old_geo);
+                discard_quads();
+                control->deco().client->update_size();
+            });
     }
 
     control->deco().decoration = decoration;
@@ -629,7 +631,7 @@ void internal_window::setCaption(QString const& cap)
     updateCaption();
 
     if (caption.suffix == oldCaptionSuffix) {
-        Q_EMIT captionChanged();
+        Q_EMIT qobject->captionChanged();
     }
 }
 

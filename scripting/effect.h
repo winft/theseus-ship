@@ -20,15 +20,7 @@ class KPluginMetaData;
 namespace KWin
 {
 
-namespace render
-{
-class effects_handler_impl;
-}
-
-namespace win
-{
-class space;
-}
+class EffectsHandler;
 
 namespace scripting
 {
@@ -83,10 +75,10 @@ public:
     static effect* create(const QString& effectName,
                           const QString& pathToScript,
                           int chainPosition,
-                          win::space& space);
-    static effect* create(const KPluginMetaData& effect, win::space& space);
+                          EffectsHandler& effects);
+    static effect* create(const KPluginMetaData& effect, EffectsHandler& effects);
 
-    static bool supported(render::effects_handler_impl& effects);
+    static bool supported(EffectsHandler& effects);
     ~effect() override;
     /**
      * Whether another effect has grabbed the @p w with the given @p grabRole.
@@ -197,10 +189,12 @@ Q_SIGNALS:
     void isActiveFullScreenEffectChanged();
 
 protected:
-    effect(win::space& space);
+    effect(EffectsHandler& effects);
     QJSEngine* engine() const;
     bool init(const QString& effectName, const QString& pathToScript);
     void animationEnded(KWin::EffectWindow* w, Attribute a, uint meta) override;
+
+    EffectsHandler& effects;
 
 private:
     enum class AnimationType { Animate, Set };
@@ -211,20 +205,12 @@ private:
     QString m_effectName;
     QString m_scriptFile;
 
-    template<typename T>
-    struct callback {
-        uint32_t id;
-        T value;
-    };
-    using border_cb = callback<QJSValueList>;
-
-    std::unordered_map<int, border_cb> border_callbacks;
+    std::unordered_map<int, QJSValueList> border_callbacks;
     std::unordered_map<int, QAction*> touch_border_callbacks;
 
     KConfigLoader* m_config{nullptr};
     int m_chainPosition{0};
     Effect* m_activeFullScreenEffect = nullptr;
-    win::space& space;
 };
 
 }

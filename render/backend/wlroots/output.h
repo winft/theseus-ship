@@ -41,7 +41,7 @@ public:
 
         if (platform.egl) {
             egl = std::make_unique<egl_output_t>(*this, platform.egl->data);
-            QObject::connect(&base, &base::backend::wlroots::output::mode_changed, this, [this] {
+            QObject::connect(base.qobject.get(), &base::output_qobject::mode_changed, this, [this] {
                 egl->reset();
             });
         } else {

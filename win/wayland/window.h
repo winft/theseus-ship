@@ -21,6 +21,7 @@
 #include "win/maximize.h"
 #include "win/placement.h"
 #include "win/scene.h"
+#include "win/window_setup_base.h"
 
 #include <Wrapland/Server/buffer.h>
 #include <Wrapland/Server/client.h>
@@ -55,18 +56,24 @@ public:
         : Toplevel(std::move(remnant), space)
         , space{space}
     {
+        Toplevel::qobject = std::make_unique<window_qobject>();
     }
 
     window(Wrapland::Server::Surface* surface, Space& space)
         : Toplevel(space)
         , space{space}
     {
-        connect(surface, &Wrapland::Server::Surface::subsurfaceTreeChanged, this, [this] {
-            discard_shape();
-            win::wayland::restack_subsurfaces(this);
+        Toplevel::qobject = std::make_unique<window_qobject>();
+        window_setup_geometry(*this);
+
+        QObject::connect(
+            surface, &Wrapland::Server::Surface::subsurfaceTreeChanged, qobject.get(), [this] {
+                discard_shape();
+                win::wayland::restack_subsurfaces(this);
+            });
+        QObject::connect(surface, &Wrapland::Server::Surface::destroyed, qobject.get(), [this] {
+            destroy_window(this);
         });
-        connect(
-            surface, &Wrapland::Server::Surface::destroyed, this, [this] { destroy_window(this); });
 
         set_surface(this, surface);
         setupCompositing();
@@ -171,7 +178,7 @@ public:
         m_opacity = opacity;
 
         addRepaintFull();
-        Q_EMIT opacityChanged(this, old_opacity);
+        Q_EMIT qobject->opacityChanged(old_opacity);
     }
 
     bool isShown() const override
@@ -416,7 +423,7 @@ public:
         if (!control) {
             addLayerRepaint(visible_rect(this, old_frame_geo));
             addLayerRepaint(visible_rect(this, frame_geo));
-            Q_EMIT frame_geometry_changed(this, old_frame_geo);
+            Q_EMIT qobject->frame_geometry_changed(old_frame_geo);
             return;
         }
 
@@ -429,7 +436,7 @@ public:
         addLayerRepaint(visible_rect(this, old_frame_geo));
         addLayerRepaint(visible_rect(this, frame_geo));
 
-        Q_EMIT frame_geometry_changed(this, old_frame_geo);
+        Q_EMIT qobject->frame_geometry_changed(old_frame_geo);
 
         // Must be done after signal is emitted so the screen margins are updated.
         if (hasStrut()) {
@@ -473,7 +480,7 @@ public:
             process_window_hidden(space, this);
         }
 
-        Q_EMIT windowHidden(this);
+        Q_EMIT qobject->windowHidden();
     }
 
     void ping(ping_reason reason)
@@ -612,15 +619,17 @@ public:
             auto decoration = space.deco->createDecoration(control->deco().window);
             if (decoration) {
                 QMetaObject::invokeMethod(decoration, "update", Qt::QueuedConnection);
-                connect(decoration, &KDecoration2::Decoration::shadowChanged, this, [this] {
-                    update_shadow(this);
-                });
-                connect(decoration, &KDecoration2::Decoration::bordersChanged, this, [this]() {
-                    geometry_updates_blocker geo_blocker(this);
-                    auto const old_geom = frameGeometry();
-                    check_workspace_position(this, old_geom);
-                    Q_EMIT frame_geometry_changed(this, old_geom);
-                });
+                QObject::connect(decoration,
+                                 &KDecoration2::Decoration::shadowChanged,
+                                 qobject.get(),
+                                 [this] { update_shadow(this); });
+                QObject::connect(
+                    decoration, &KDecoration2::Decoration::bordersChanged, qobject.get(), [this]() {
+                        geometry_updates_blocker geo_blocker(this);
+                        auto const old_geom = frameGeometry();
+                        check_workspace_position(this, old_geom);
+                        Q_EMIT qobject->frame_geometry_changed(old_geom);
+                    });
             }
 
             control->deco().decoration = decoration;
@@ -631,7 +640,7 @@ public:
             // windows)
             // TODO(romangg): use setFrameGeometry?
             do_set_geometry(QRect(old_geom.topLeft(), size() + deco_size));
-            Q_EMIT frame_geometry_changed(this, old_geom);
+            Q_EMIT qobject->frame_geometry_changed(old_geom);
         }
 
         if (xdg_deco) {
@@ -903,7 +912,7 @@ public:
         if (hide) {
             space.render.addRepaint(visible_rect(this));
             process_window_hidden(space, this);
-            Q_EMIT windowHidden(this);
+            Q_EMIT qobject->windowHidden();
         } else {
             handle_shown_and_mapped();
         }
@@ -968,7 +977,7 @@ public:
         if (control->minimized()) {
             process_window_hidden(space, this);
         } else {
-            Q_EMIT windowShown(this);
+            Q_EMIT qobject->windowShown();
         }
         propagate_minimized_to_transients(*this);
     }
@@ -1132,7 +1141,7 @@ public:
 
         if (caption.suffix == old_suffix) {
             // Don't emit caption change twice it already got emitted by the changing suffix.
-            Q_EMIT captionChanged();
+            Q_EMIT qobject->captionChanged();
         }
     }
 
@@ -1228,7 +1237,7 @@ public:
             }
         }
 
-        Q_EMIT maximize_mode_changed(this, mode);
+        Q_EMIT qobject->maximize_mode_changed(mode);
     }
 
     void do_set_fullscreen(bool full)
@@ -1256,7 +1265,7 @@ public:
         update_layer(this);
 
         updateWindowRules(rules::type::fullscreen | rules::type::position | rules::type::size);
-        Q_EMIT fullScreenChanged();
+        Q_EMIT qobject->fullScreenChanged();
     }
 
     bool acceptsFocus() const override
@@ -1297,7 +1306,7 @@ public:
             } while (find_client_with_same_caption(static_cast<Toplevel*>(this)));
         }
         if (caption.suffix != old_suffix) {
-            Q_EMIT captionChanged();
+            Q_EMIT qobject->captionChanged();
         }
     }
 
@@ -1346,7 +1355,7 @@ private:
         if (ready_for_painting) {
             // Was already shown in the past once. Just repaint and emit shown again.
             addRepaintFull();
-            Q_EMIT windowShown(this);
+            Q_EMIT qobject->windowShown();
             return;
         }
 

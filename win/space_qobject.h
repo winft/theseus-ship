@@ -20,7 +20,6 @@ class Toplevel;
 namespace win
 {
 
-class internal_window;
 class shortcut_dialog;
 class tabbox;
 
@@ -44,6 +43,8 @@ Q_SIGNALS:
     void wayland_window_added(KWin::Toplevel*);
     void wayland_window_removed(KWin::Toplevel*);
 
+    void remnant_created(KWin::Toplevel* remnant);
+
     void clientActivated(KWin::Toplevel*);
     void clientDemandsAttentionChanged(KWin::Toplevel*, bool);
     void clientMinimizedChanged(KWin::Toplevel*);
@@ -52,8 +53,8 @@ Q_SIGNALS:
     void window_deleted(KWin::Toplevel*);
     void configChanged();
     void showingDesktopChanged(bool showing);
-    void internalClientAdded(KWin::win::internal_window* client);
-    void internalClientRemoved(KWin::win::internal_window* client);
+    void internalClientAdded(KWin::Toplevel* client);
+    void internalClientRemoved(KWin::Toplevel* client);
     void surface_id_changed(KWin::Toplevel*, quint32);
 
 private:

@@ -282,22 +282,24 @@ console_model::console_model(win::space& space, QObject* parent)
         remove_window(this, s_x11UnmanagedId - 1, m_unmanageds, u);
     });
     for (auto const& window : space.windows) {
-        if (auto internal = qobject_cast<win::internal_window*>(window)) {
+        if (auto internal = dynamic_cast<win::internal_window*>(window)) {
             m_internalClients.append(internal);
         }
     }
-    connect(space.qobject.get(),
-            &win::space_qobject::internalClientAdded,
-            this,
-            [this](win::internal_window* client) {
-                add_window(this, s_workspaceInternalId - 1, m_internalClients, client);
-            });
-    connect(space.qobject.get(),
-            &win::space_qobject::internalClientRemoved,
-            this,
-            [this](win::internal_window* client) {
-                remove_window(this, s_workspaceInternalId - 1, m_internalClients, client);
-            });
+    connect(
+        space.qobject.get(), &win::space_qobject::internalClientAdded, this, [this](auto window) {
+            add_window(this,
+                       s_workspaceInternalId - 1,
+                       m_internalClients,
+                       static_cast<win::internal_window*>(window));
+        });
+    connect(
+        space.qobject.get(), &win::space_qobject::internalClientRemoved, this, [this](auto window) {
+            remove_window(this,
+                          s_workspaceInternalId - 1,
+                          m_internalClients,
+                          static_cast<win::internal_window*>(window));
+        });
 }
 
 console_model::~console_model() = default;
@@ -557,14 +559,15 @@ QVariant console_model::propertyData(QObject* object, const QModelIndex& index, 
 QVariant console_model::get_client_property_data(QModelIndex const& index, int role) const
 {
     if (auto c = internalClient(index)) {
-        return propertyData(c, index, role);
+        return propertyData(get_qobject(c), index, role);
     }
     if (auto c = x11Client(index)) {
-        return propertyData(c, index, role);
+        return propertyData(get_qobject(c), index, role);
     }
     if (auto u = unmanaged(index)) {
-        return propertyData(u, index, role);
+        return propertyData(u->qobject.get(), index, role);
     }
+
     return QVariant();
 }
 

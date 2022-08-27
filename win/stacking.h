@@ -128,13 +128,13 @@ std::deque<R*> ensure_stacking_order_in_list(std::deque<Toplevel*> const& stacki
         return std::deque<R*>();
     }
     if (list.size() < 2) {
-        return std::deque<R*>({qobject_cast<R*>(list.at(0))});
+        return std::deque<R*>({dynamic_cast<R*>(list.at(0))});
     }
 
     // TODO is this worth optimizing?
     std::deque<R*> result;
     for (auto win : list) {
-        if (auto rwin = qobject_cast<R*>(win)) {
+        if (auto rwin = dynamic_cast<R*>(win)) {
             result.push_back(rwin);
         }
     }
@@ -143,7 +143,7 @@ std::deque<R*> ensure_stacking_order_in_list(std::deque<Toplevel*> const& stacki
     // in which windows should appear in result. We then reorder result simply by going through
     // stackingOrder one-by-one, removing it from result and then adding it back in the end.
     for (auto win : stackingOrder) {
-        auto rwin = qobject_cast<R*>(win);
+        auto rwin = dynamic_cast<R*>(win);
         if (!rwin) {
             continue;
         }

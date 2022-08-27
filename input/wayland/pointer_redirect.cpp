@@ -55,6 +55,7 @@ static QPointF confineToBoundingBox(QPointF const& pos, QRectF const& boundingBo
 pointer_redirect::pointer_redirect(wayland::redirect* redirect)
     : input::pointer_redirect(redirect)
     , redirect{redirect}
+    , motions{*this}
 {
 }
 
@@ -90,12 +91,14 @@ void pointer_redirect::init()
         if (!c->control) {
             return;
         }
-        QObject::connect(c, &Toplevel::clientStartUserMovedResized, qobject.get(), [this] {
-            update_on_start_move_resize();
-        });
-        QObject::connect(c, &Toplevel::clientFinishUserMovedResized, qobject.get(), [this] {
-            device_redirect_update(this);
-        });
+        QObject::connect(c->qobject.get(),
+                         &Toplevel::qobject_t::clientStartUserMovedResized,
+                         qobject.get(),
+                         [this] { update_on_start_move_resize(); });
+        QObject::connect(c->qobject.get(),
+                         &Toplevel::qobject_t::clientFinishUserMovedResized,
+                         qobject.get(),
+                         [this] { device_redirect_update(this); });
     };
 
     auto const clients = redirect->space.windows;
@@ -166,76 +169,21 @@ void pointer_redirect::processMotion(QPointF const& pos, uint32_t time, input::p
     process_motion_absolute(event);
 }
 
-class PositionUpdateBlocker
-{
-public:
-    PositionUpdateBlocker(pointer_redirect* pointer)
-        : m_pointer(pointer)
-    {
-        s_counter++;
-    }
-    ~PositionUpdateBlocker()
-    {
-        s_counter--;
-        if (s_counter == 0) {
-            if (!s_scheduledPositions.isEmpty()) {
-                auto const sched = s_scheduledPositions.takeFirst();
-                if (sched.abs) {
-                    m_pointer->process_motion_absolute({sched.pos, {nullptr, sched.time}});
-                } else {
-                    m_pointer->process_motion(
-                        {sched.delta, sched.unaccel_delta, {nullptr, sched.time}});
-                }
-            }
-        }
-    }
-
-    static bool isPositionBlocked()
-    {
-        return s_counter > 0;
-    }
-
-    static void schedule(QPointF const& pos, uint32_t time)
-    {
-        s_scheduledPositions.append({pos, {}, {}, time, true});
-    }
-    static void schedule(QPointF const& delta, QPointF const& unaccel_delta, uint32_t time)
-    {
-        s_scheduledPositions.append({{}, delta, unaccel_delta, time, false});
-    }
-
-private:
-    static int s_counter;
-    struct ScheduledPosition {
-        QPointF pos;
-        QPointF delta;
-        QPointF unaccel_delta;
-        uint32_t time;
-        bool abs;
-    };
-    static QVector<ScheduledPosition> s_scheduledPositions;
-
-    pointer_redirect* m_pointer;
-};
-
-int PositionUpdateBlocker::s_counter = 0;
-QVector<PositionUpdateBlocker::ScheduledPosition> PositionUpdateBlocker::s_scheduledPositions;
-
 void pointer_redirect::process_motion(motion_event const& event)
 {
-    if (PositionUpdateBlocker::isPositionBlocked()) {
-        PositionUpdateBlocker::schedule(event.delta, event.unaccel_delta, event.base.time_msec);
+    if (motions.is_locked()) {
+        motions.schedule(event.delta, event.unaccel_delta, event.base.time_msec);
         return;
     }
 
-    PositionUpdateBlocker blocker(this);
-
+    blocker block(&motions);
     auto const pos = this->pos() + QPointF(event.delta.x(), event.delta.y());
     update_position(pos);
     device_redirect_update(this);
 
-    redirect->processSpies(std::bind(&event_spy::motion, std::placeholders::_1, event));
-    redirect->processFilters(
+    process_spies(redirect->m_spies, std::bind(&event_spy::motion, std::placeholders::_1, event));
+    process_filters(
+        redirect->m_filters,
         std::bind(&event_filter<wayland::redirect>::motion, std::placeholders::_1, event));
 
     process_frame();
@@ -243,8 +191,8 @@ void pointer_redirect::process_motion(motion_event const& event)
 
 void pointer_redirect::process_motion_absolute(motion_absolute_event const& event)
 {
-    if (PositionUpdateBlocker::isPositionBlocked()) {
-        PositionUpdateBlocker::schedule(event.pos, event.base.time_msec);
+    if (motions.is_locked()) {
+        motions.schedule(event.pos, event.base.time_msec);
         return;
     }
 
@@ -252,14 +200,16 @@ void pointer_redirect::process_motion_absolute(motion_absolute_event const& even
     auto const pos
         = QPointF(space_size.width() * event.pos.x(), space_size.height() * event.pos.y());
 
-    PositionUpdateBlocker blocker(this);
+    blocker block(&motions);
     update_position(pos);
     device_redirect_update(this);
 
     auto motion_ev = motion_event({{}, {}, event.base});
 
-    redirect->processSpies(std::bind(&event_spy::motion, std::placeholders::_1, motion_ev));
-    redirect->processFilters(
+    process_spies(redirect->m_spies,
+                  std::bind(&event_spy::motion, std::placeholders::_1, motion_ev));
+    process_filters(
+        redirect->m_filters,
         std::bind(&event_filter<wayland::redirect>::motion, std::placeholders::_1, motion_ev));
 
     process_frame();
@@ -274,7 +224,8 @@ void pointer_redirect::process_button(button_event const& event)
 
     update_button(event);
     pointer_redirect_process_button_spies(*this, event);
-    redirect->processFilters(
+    process_filters(
+        redirect->m_filters,
         std::bind(&event_filter<wayland::redirect>::button, std::placeholders::_1, event));
 
     if (event.state == button_state::released) {
@@ -289,8 +240,9 @@ void pointer_redirect::process_axis(axis_event const& event)
 {
     device_redirect_update(this);
 
-    redirect->processSpies(std::bind(&event_spy::axis, std::placeholders::_1, event));
-    redirect->processFilters(
+    process_spies(redirect->m_spies, std::bind(&event_spy::axis, std::placeholders::_1, event));
+    process_filters(
+        redirect->m_filters,
         std::bind(&event_filter<wayland::redirect>::axis, std::placeholders::_1, event));
 
     process_frame();
@@ -298,8 +250,10 @@ void pointer_redirect::process_axis(axis_event const& event)
 
 void pointer_redirect::process_swipe_begin(swipe_begin_event const& event)
 {
-    redirect->processSpies(std::bind(&event_spy::swipe_begin, std::placeholders::_1, event));
-    redirect->processFilters(
+    process_spies(redirect->m_spies,
+                  std::bind(&event_spy::swipe_begin, std::placeholders::_1, event));
+    process_filters(
+        redirect->m_filters,
         std::bind(&event_filter<wayland::redirect>::swipe_begin, std::placeholders::_1, event));
 }
 
@@ -307,8 +261,10 @@ void pointer_redirect::process_swipe_update(swipe_update_event const& event)
 {
     device_redirect_update(this);
 
-    redirect->processSpies(std::bind(&event_spy::swipe_update, std::placeholders::_1, event));
-    redirect->processFilters(
+    process_spies(redirect->m_spies,
+                  std::bind(&event_spy::swipe_update, std::placeholders::_1, event));
+    process_filters(
+        redirect->m_filters,
         std::bind(&event_filter<wayland::redirect>::swipe_update, std::placeholders::_1, event));
 }
 
@@ -316,8 +272,10 @@ void pointer_redirect::process_swipe_end(swipe_end_event const& event)
 {
     device_redirect_update(this);
 
-    redirect->processSpies(std::bind(&event_spy::swipe_end, std::placeholders::_1, event));
-    redirect->processFilters(
+    process_spies(redirect->m_spies,
+                  std::bind(&event_spy::swipe_end, std::placeholders::_1, event));
+    process_filters(
+        redirect->m_filters,
         std::bind(&event_filter<wayland::redirect>::swipe_end, std::placeholders::_1, event));
 }
 
@@ -325,8 +283,10 @@ void pointer_redirect::process_pinch_begin(pinch_begin_event const& event)
 {
     device_redirect_update(this);
 
-    redirect->processSpies(std::bind(&event_spy::pinch_begin, std::placeholders::_1, event));
-    redirect->processFilters(
+    process_spies(redirect->m_spies,
+                  std::bind(&event_spy::pinch_begin, std::placeholders::_1, event));
+    process_filters(
+        redirect->m_filters,
         std::bind(&event_filter<wayland::redirect>::pinch_begin, std::placeholders::_1, event));
 }
 
@@ -334,8 +294,10 @@ void pointer_redirect::process_pinch_update(pinch_update_event const& event)
 {
     device_redirect_update(this);
 
-    redirect->processSpies(std::bind(&event_spy::pinch_update, std::placeholders::_1, event));
-    redirect->processFilters(
+    process_spies(redirect->m_spies,
+                  std::bind(&event_spy::pinch_update, std::placeholders::_1, event));
+    process_filters(
+        redirect->m_filters,
         std::bind(&event_filter<wayland::redirect>::pinch_update, std::placeholders::_1, event));
 }
 
@@ -343,8 +305,10 @@ void pointer_redirect::process_pinch_end(pinch_end_event const& event)
 {
     device_redirect_update(this);
 
-    redirect->processSpies(std::bind(&event_spy::pinch_end, std::placeholders::_1, event));
-    redirect->processFilters(
+    process_spies(redirect->m_spies,
+                  std::bind(&event_spy::pinch_end, std::placeholders::_1, event));
+    process_filters(
+        redirect->m_filters,
         std::bind(&event_filter<wayland::redirect>::pinch_end, std::placeholders::_1, event));
 }
 
@@ -430,7 +394,10 @@ void pointer_redirect::cleanupDecoration(win::deco::client_impl* old, win::deco:
     auto window = focus.deco->client();
 
     notifiers.decoration_geometry = QObject::connect(
-        window, &Toplevel::frame_geometry_changed, qobject.get(), [this, window] {
+        window->qobject.get(),
+        &Toplevel::qobject_t::frame_geometry_changed,
+        qobject.get(),
+        [this, window] {
             if (window->control && (win::is_move(window) || win::is_resize(window))) {
                 // Don't update while doing an interactive move or resize.
                 return;
@@ -497,24 +464,27 @@ void pointer_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
     seat->pointers().set_position(m_pos.toPoint());
     seat->pointers().set_focused_surface(focusNow->surface, focusNow->input_transform());
 
-    notifiers.focus_geometry
-        = QObject::connect(focusNow, &Toplevel::frame_geometry_changed, qobject.get(), [this] {
-              if (!focus.window) {
-                  // Might happen for Xwayland clients.
-                  return;
-              }
+    notifiers.focus_geometry = QObject::connect(
+        focusNow->qobject.get(),
+        &Toplevel::qobject_t::frame_geometry_changed,
+        qobject.get(),
+        [this] {
+            if (!focus.window) {
+                // Might happen for Xwayland clients.
+                return;
+            }
 
-              // TODO: can we check on the client instead?
-              if (redirect->space.move_resize_window) {
-                  // don't update while moving
-                  return;
-              }
-              auto seat = waylandServer()->seat();
-              if (focus.window->surface != seat->pointers().get_focus().surface) {
-                  return;
-              }
-              seat->pointers().set_focused_surface_transformation(focus.window->input_transform());
-          });
+            // TODO: can we check on the client instead?
+            if (redirect->space.move_resize_window) {
+                // don't update while moving
+                return;
+            }
+            auto seat = waylandServer()->seat();
+            if (focus.window->surface != seat->pointers().get_focus().surface) {
+                return;
+            }
+            seat->pointers().set_focused_surface_transformation(focus.window->input_transform());
+        });
 
     notifiers.constraints = QObject::connect(focusNow->surface,
                                              &Wrapland::Server::Surface::pointerConstraintsChanged,

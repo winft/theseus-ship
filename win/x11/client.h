@@ -94,9 +94,9 @@ void ping(Win* win)
         return;
     }
 
-    win->ping_timer = new QTimer(win);
+    win->ping_timer = new QTimer(win->qobject.get());
 
-    QObject::connect(win->ping_timer, &QTimer::timeout, win, [win]() {
+    QObject::connect(win->ping_timer, &QTimer::timeout, win->qobject.get(), [win]() {
         if (win->control->unresponsive()) {
             qCDebug(KWIN_CORE) << "Final ping timeout, asking to kill:" << win::caption(win);
             win->ping_timer->deleteLater();

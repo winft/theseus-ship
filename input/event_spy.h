@@ -20,6 +20,25 @@ namespace KWin::input
 {
 
 /**
+ * Sends an event through all input event spies.
+ * The @p function is invoked on each event_spy.
+ *
+ * The UnaryFunction is defined like the UnaryFunction of std::for_each.
+ * The signature of the function should be equivalent to the following:
+ * @code
+ * void function(event_spy const* spy);
+ * @endcode
+ *
+ * The intended usage is to std::bind the method to invoke on the spies with all arguments
+ * bind.
+ */
+template<typename Spies, typename UnaryFunction>
+void process_spies(Spies const& spies, UnaryFunction function)
+{
+    std::for_each(spies.cbegin(), spies.cend(), function);
+}
+
+/**
  * Base class for spying on input events inside InputRedirection.
  *
  * This class is quite similar to InputEventFilter, except that it does not

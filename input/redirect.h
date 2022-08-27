@@ -75,25 +75,6 @@ public:
      */
     void uninstallInputEventSpy(event_spy* spy);
 
-    /**
-     * Sends an event through all input event spies.
-     * The @p function is invoked on each event_spy.
-     *
-     * The UnaryFunction is defined like the UnaryFunction of std::for_each.
-     * The signature of the function should be equivalent to the following:
-     * @code
-     * void function(event_spy const* spy);
-     * @endcode
-     *
-     * The intended usage is to std::bind the method to invoke on the spies with all arguments
-     * bind.
-     */
-    template<class UnaryFunction>
-    void processSpies(UnaryFunction function)
-    {
-        std::for_each(m_spies.cbegin(), m_spies.cend(), function);
-    }
-
     virtual keyboard_redirect* get_keyboard() const = 0;
     virtual pointer_redirect* get_pointer() const = 0;
     virtual tablet_redirect* get_tablet() const = 0;
@@ -108,11 +89,10 @@ public:
     input::platform& platform;
     win::space& space;
 
+    std::vector<event_spy*> m_spies;
+
 protected:
     redirect(input::platform& platform, win::space& space);
-
-private:
-    std::vector<event_spy*> m_spies;
 };
 
 }

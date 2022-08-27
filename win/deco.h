@@ -109,7 +109,8 @@ void set_color_scheme(Win* win, QString const& path)
     palette.color_scheme = scheme;
 
     if (palette.current) {
-        QObject::disconnect(palette.current.get(), &win::palette::dp::changed, win, nullptr);
+        QObject::disconnect(
+            palette.current.get(), &win::palette::dp::changed, win->qobject.get(), nullptr);
     }
 
     auto it = palette.palettes_registry.find(scheme);
@@ -137,12 +138,13 @@ void set_color_scheme(Win* win, QString const& path)
         palette.current = it->lock();
     }
 
-    QObject::connect(palette.current.get(), &win::palette::dp::changed, win, [win]() {
-        Q_EMIT win->paletteChanged(win->control->palette().q_palette());
-    });
+    QObject::connect(
+        palette.current.get(), &win::palette::dp::changed, win->qobject.get(), [win]() {
+            Q_EMIT win->qobject->paletteChanged(win->control->palette().q_palette());
+        });
 
-    Q_EMIT win->paletteChanged(palette.q_palette());
-    Q_EMIT win->colorSchemeChanged();
+    Q_EMIT win->qobject->paletteChanged(palette.q_palette());
+    Q_EMIT win->qobject->colorSchemeChanged();
 }
 
 }

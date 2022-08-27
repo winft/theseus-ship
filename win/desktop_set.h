@@ -62,11 +62,11 @@ void set_desktops(Win* win, QVector<virtual_desktop*> desktops)
     focus_chain_update(win->space.focus_chain, win, focus_chain_change::make_first);
     win->updateWindowRules(rules::type::desktop);
 
-    Q_EMIT win->desktopChanged();
+    Q_EMIT win->qobject->desktopChanged();
     if (wasOnCurrentDesktop != on_current_desktop(win)) {
-        Q_EMIT win->desktopPresenceChanged(win, was_desk);
+        Q_EMIT win->qobject->desktopPresenceChanged(was_desk);
     }
-    Q_EMIT win->x11DesktopIdsChanged();
+    Q_EMIT win->qobject->x11DesktopIdsChanged();
 }
 
 /**

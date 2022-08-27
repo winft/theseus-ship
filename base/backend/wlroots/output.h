@@ -19,7 +19,6 @@ class platform;
 
 class KWIN_EXPORT output : public base::wayland::output
 {
-    Q_OBJECT
 public:
     output(wlr_output* wlr_out, wlroots::platform* platform);
     ~output() override;

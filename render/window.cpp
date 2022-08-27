@@ -7,6 +7,7 @@
 #include "window.h"
 
 #include "deco_shadow.h"
+#include "effect/window_impl.h"
 #include "effects.h"
 #include "shadow.h"
 
@@ -341,7 +342,7 @@ void window::create_shadow()
 
     if (shadow) {
         updateShadow(std::move(shadow));
-        Q_EMIT toplevel->shadowChanged();
+        Q_EMIT toplevel->qobject->shadowChanged();
     }
 }
 

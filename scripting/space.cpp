@@ -20,6 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "space.h"
 
+#include "singleton_interface.h"
+
 #include "base/logging.h"
 #include "render/outline.h"
 
@@ -143,6 +145,16 @@ QRect space::virtualScreenGeometry() const
 QSize space::virtualScreenSize() const
 {
     return kwinApp()->get_base().topology.size;
+}
+
+qt_script_space::qt_script_space()
+{
+    singleton_interface::qt_script_space = this;
+}
+
+qt_script_space::~qt_script_space()
+{
+    singleton_interface::qt_script_space = nullptr;
 }
 
 QList<window*> qt_script_space::clientList() const

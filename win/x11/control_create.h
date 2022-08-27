@@ -170,13 +170,18 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     setup_space_window_connections(&space, win);
 
     if (auto& comp = space.render; comp.x11_integration.update_blocking) {
-        QObject::connect(win,
-                         &win::x11::window::blockingCompositingChanged,
+        QObject::connect(win->qobject.get(),
+                         &Win::qobject_t::blockingCompositingChanged,
                          comp.qobject.get(),
-                         [&comp](auto window) { comp.x11_integration.update_blocking(window); });
+                         [&comp, win](auto blocks) {
+                             comp.x11_integration.update_blocking(blocks ? win : nullptr);
+                         });
     }
 
-    QObject::connect(win, &Win::fullScreenChanged, space.edges.get(), &screen_edger::checkBlocking);
+    QObject::connect(win->qobject.get(),
+                     &Win::qobject_t::fullScreenChanged,
+                     space.edges.get(),
+                     &screen_edger::checkBlocking);
 
     // From this place on, manage() must not return false
     win->control = std::make_unique<typename Win::control_t>(win);
@@ -190,34 +195,40 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     win->control->setup_tabbox();
     win->control->setup_color_scheme();
 
-    QObject::connect(
-        win->client_machine, &client_machine::localhostChanged, win, &window::updateCaption);
+    QObject::connect(win->client_machine,
+                     &client_machine::localhostChanged,
+                     win->qobject.get(),
+                     [win] { win->updateCaption(); });
     QObject::connect(kwinApp()->options->qobject.get(),
                      &base::options_qobject::configChanged,
-                     win,
+                     win->qobject.get(),
                      [win] { win->control->update_mouse_grab(); });
     QObject::connect(kwinApp()->options->qobject.get(),
                      &base::options_qobject::condensedTitleChanged,
-                     win,
-                     &window::updateCaption);
+                     win->qobject.get(),
+                     [win] { win->updateCaption(); });
 
-    QObject::connect(win, &window::moveResizeCursorChanged, win, [win](input::cursor_shape cursor) {
-        auto nativeCursor = win->space.input->platform.cursor->x11_cursor(cursor);
-        win->xcb_windows.outer.define_cursor(nativeCursor);
-        if (win->xcb_windows.input.is_valid()) {
-            win->xcb_windows.input.define_cursor(nativeCursor);
-        }
-        if (win->control->move_resize().enabled) {
-            // changing window attributes doesn't change cursor if there's pointer grab active
-            xcb_change_active_pointer_grab(
-                connection(),
-                nativeCursor,
-                xTime(),
-                XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE
-                    | XCB_EVENT_MASK_POINTER_MOTION | XCB_EVENT_MASK_ENTER_WINDOW
-                    | XCB_EVENT_MASK_LEAVE_WINDOW);
-        }
-    });
+    QObject::connect(win->qobject.get(),
+                     &window_qobject::moveResizeCursorChanged,
+                     win->qobject.get(),
+                     [win](input::cursor_shape cursor) {
+                         auto nativeCursor = win->space.input->platform.cursor->x11_cursor(cursor);
+                         win->xcb_windows.outer.define_cursor(nativeCursor);
+                         if (win->xcb_windows.input.is_valid()) {
+                             win->xcb_windows.input.define_cursor(nativeCursor);
+                         }
+                         if (win->control->move_resize().enabled) {
+                             // changing window attributes doesn't change cursor if there's pointer
+                             // grab active
+                             xcb_change_active_pointer_grab(
+                                 connection(),
+                                 nativeCursor,
+                                 xTime(),
+                                 XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE
+                                     | XCB_EVENT_MASK_POINTER_MOTION | XCB_EVENT_MASK_ENTER_WINDOW
+                                     | XCB_EVENT_MASK_LEAVE_WINDOW);
+                         }
+                     });
 
     block_geometry_updates(win, true);
 
@@ -267,7 +278,10 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     setup_rules(win, false);
     set_caption(win, win->caption.normal, true);
 
-    QObject::connect(win, &Win::windowClassChanged, win, [win] { evaluate_rules(win); });
+    QObject::connect(win->qobject.get(),
+                     &Win::qobject_t::windowClassChanged,
+                     win->qobject.get(),
+                     [win] { evaluate_rules(win); });
 
     if (base::x11::xcb::extensions::self()->is_shape_available()) {
         xcb_shape_select_input(connection(), win->xcb_window, true);
@@ -292,7 +306,10 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     set_desktop_file_name(win,
                           win->control->rules().checkDesktopFile(desktopFileName, true).toUtf8());
     get_icons(win);
-    QObject::connect(win, &window::desktopFileNameChanged, win, [win] { get_icons(win); });
+    QObject::connect(win->qobject.get(),
+                     &window_qobject::desktopFileNameChanged,
+                     win->qobject.get(),
+                     [win] { get_icons(win); });
 
     win->geometry_hints.read();
     get_motif_hints(win, true);
@@ -643,7 +660,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     QObject::connect(
         win->space.render.qobject.get(),
         &render::compositor_qobject::compositingToggled,
-        win,
+        win->qobject.get(),
         [win](bool active) {
             if (active) {
                 return;

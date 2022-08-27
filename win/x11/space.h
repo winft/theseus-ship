@@ -41,6 +41,11 @@ public:
     {
         win::init_space(*this);
 
+        singleton_interface::get_current_output_geometry = [this] {
+            auto output = get_current_output(*this);
+            return output ? output->geometry() : QRect();
+        };
+
         if (base.input) {
             this->input = std::make_unique<input::x11::redirect>(*base.input, *this);
         }

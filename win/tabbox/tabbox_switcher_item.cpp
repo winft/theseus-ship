@@ -54,7 +54,7 @@ tabbox_switcher_item::tabbox_switcher_item(QObject* parent)
             &base::platform::topology_changed,
             this,
             &tabbox_switcher_item::screen_geometry_changed);
-    connect(render::singleton_interface::platform->compositor->qobject.get(),
+    connect(render::singleton_interface::compositor,
             &render::compositor_qobject::compositingToggled,
             this,
             &tabbox_switcher_item::compositing_changed);
@@ -93,8 +93,7 @@ void tabbox_switcher_item::set_visible(bool visible)
 
 QRect tabbox_switcher_item::screen_geometry() const
 {
-    auto output = win::get_current_output(*singleton_interface::space);
-    return output ? output->geometry() : QRect();
+    return singleton_interface::get_current_output_geometry();
 }
 
 void tabbox_switcher_item::set_current_index(int index)
@@ -129,7 +128,7 @@ void tabbox_switcher_item::set_no_modifier_grab(bool set)
 
 bool tabbox_switcher_item::compositing()
 {
-    return render::singleton_interface::platform->compositor->isActive();
+    return render::singleton_interface::effects;
 }
 
 }

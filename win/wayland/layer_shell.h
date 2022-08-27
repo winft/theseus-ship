@@ -152,30 +152,36 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
     win->layer_surface = layer_surface;
     block_geometry_updates(win, true);
 
-    QObject::connect(win, &Win::needsRepaint, win->space.render.qobject.get(), [win] {
-        win->space.render.schedule_repaint(win);
-    });
-    QObject::connect(
-        layer_surface, &WS::LayerSurfaceV1::resourceDestroyed, win, [win] { destroy_window(win); });
+    QObject::connect(win->qobject.get(),
+                     &Win::qobject_t::needsRepaint,
+                     win->space.render.qobject.get(),
+                     [win] { win->space.render.schedule_repaint(win); });
+    QObject::connect(layer_surface,
+                     &WS::LayerSurfaceV1::resourceDestroyed,
+                     win->qobject.get(),
+                     [win] { destroy_window(win); });
 
-    QObject::connect(layer_surface, &WS::LayerSurfaceV1::got_popup, win, [win](auto popup) {
-        for (auto window : win->space.windows) {
-            if (auto wayland_window = dynamic_cast<Win*>(window);
-                wayland_window && wayland_window->popup == popup) {
-                win->transient()->add_child(wayland_window);
-                break;
+    QObject::connect(
+        layer_surface, &WS::LayerSurfaceV1::got_popup, win->qobject.get(), [win](auto popup) {
+            for (auto window : win->space.windows) {
+                if (auto wayland_window = dynamic_cast<Win*>(window);
+                    wayland_window && wayland_window->popup == popup) {
+                    win->transient()->add_child(wayland_window);
+                    break;
+                }
             }
-        }
-    });
+        });
 
     QObject::connect(layer_surface,
                      &WS::LayerSurfaceV1::configure_acknowledged,
-                     win,
+                     win->qobject.get(),
                      [win](auto serial) { win->acked_configure = serial; });
 
     auto handle_first_commit = [win] {
-        QObject::disconnect(win->surface, &WS::Surface::committed, win, nullptr);
-        QObject::connect(win->surface, &WS::Surface::committed, win, &Win::handle_commit);
+        QObject::disconnect(win->surface, &WS::Surface::committed, win->qobject.get(), nullptr);
+        QObject::connect(win->surface, &WS::Surface::committed, win->qobject.get(), [win] {
+            win->handle_commit();
+        });
 
         block_geometry_updates(win, false);
 
@@ -192,12 +198,13 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
             return;
         }
 
-        QObject::connect(&win->space.base, &base::platform::topology_changed, win, [win] {
-            auto geo = layer_surface_recommended_geometry(win);
-            if (win->geometry_update.frame != geo) {
-                win->setFrameGeometry(geo);
-            }
-        });
+        QObject::connect(
+            &win->space.base, &base::platform::topology_changed, win->qobject.get(), [win] {
+                auto geo = layer_surface_recommended_geometry(win);
+                if (win->geometry_update.frame != geo) {
+                    win->setFrameGeometry(geo);
+                }
+            });
 
         if (win->pending_configures.empty()) {
             // wlr-layer-shell protocol stipulates a single configure event on first commit.
@@ -207,9 +214,8 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
         win->initialized = true;
     };
 
-    QObject::connect(win->surface, &WS::Surface::committed, win, [handle_first_commit] {
-        handle_first_commit();
-    });
+    QObject::connect(
+        win->surface, &WS::Surface::committed, win->qobject.get(), handle_first_commit);
 }
 
 template<typename Window, typename Space>

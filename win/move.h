@@ -129,7 +129,7 @@ void update_cursor(Win* win)
         return;
     }
     mov_res.cursor = shape;
-    Q_EMIT win->moveResizeCursorChanged(shape);
+    Q_EMIT win->qobject->moveResizeCursorChanged(shape);
 }
 
 /**
@@ -296,7 +296,7 @@ bool start_move_resize(Win* win)
 
     check_unrestricted_move_resize(win);
 
-    Q_EMIT win->clientStartUserMovedResized(win);
+    Q_EMIT win->qobject->clientStartUserMovedResized();
 
     if (win->space.edges->desktop_switching.when_moving_client) {
         win->space.edges->reserveDesktopSwitching(true, Qt::Vertical | Qt::Horizontal);
@@ -315,7 +315,7 @@ void perform_move_resize(Win* win)
     }
 
     win->doPerformMoveResize();
-    Q_EMIT win->clientStepUserMovedResized(win, geom);
+    Q_EMIT win->qobject->clientStepUserMovedResized(geom);
 }
 
 template<typename Win>
@@ -770,7 +770,7 @@ void finish_move_resize(Win* win, bool cancel)
     }
 
     // FRAME    update();
-    Q_EMIT win->clientFinishUserMovedResized(win);
+    Q_EMIT win->qobject->clientFinishUserMovedResized();
 }
 
 template<typename Win>
@@ -883,9 +883,9 @@ void start_delayed_move_resize(Win* win)
     auto& mov_res = win->control->move_resize();
     assert(!mov_res.delay_timer);
 
-    mov_res.delay_timer = new QTimer(win);
+    mov_res.delay_timer = new QTimer(win->qobject.get());
     mov_res.delay_timer->setSingleShot(true);
-    QObject::connect(mov_res.delay_timer, &QTimer::timeout, win, [win]() {
+    QObject::connect(mov_res.delay_timer, &QTimer::timeout, win->qobject.get(), [win]() {
         auto& mov_res = win->control->move_resize();
         assert(mov_res.button_down);
         if (!start_move_resize(win)) {

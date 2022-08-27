@@ -67,14 +67,14 @@ void transient::add_lead(Toplevel* lead)
         m_window->remnant->ref();
     }
     m_leads.push_back(lead);
-    Q_EMIT m_window->transientChanged();
+    Q_EMIT m_window->qobject->transientChanged();
 }
 
 void transient::remove_lead(Toplevel* lead)
 {
     assert(contains(m_leads, lead));
     remove_all(m_leads, lead);
-    Q_EMIT m_window->transientChanged();
+    Q_EMIT m_window->qobject->transientChanged();
 
     if (m_window->remnant && annexed) {
         m_window->remnant->unref();
@@ -141,7 +141,7 @@ void transient::set_modal(bool modal)
         return;
     }
     m_modal = modal;
-    Q_EMIT m_window->modalChanged();
+    Q_EMIT m_window->qobject->modalChanged();
 }
 
 }

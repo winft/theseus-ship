@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include "motion_scheduler.h"
+
 #include "input/pointer_redirect.h"
 
 class QWindow;
@@ -112,6 +114,8 @@ private:
         bool locked{false};
         bool enabled{true};
     } constraints;
+
+    motion_scheduler<pointer_redirect> motions;
 };
 
 }

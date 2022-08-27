@@ -253,7 +253,7 @@ void update_maximized(Win* win, maximize_mode mode)
     if (old_quicktiling != win->control->quicktiling()) {
         // Send changed signal but ensure we do not override our frame geometry.
         auto const frame_geo = win->geometry_update.frame;
-        Q_EMIT win->quicktiling_changed();
+        Q_EMIT win->qobject->quicktiling_changed();
         win->setFrameGeometry(frame_geo);
     }
 }

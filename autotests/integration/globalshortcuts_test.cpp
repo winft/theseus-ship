@@ -71,8 +71,6 @@ private Q_SLOTS:
 
 void GlobalShortcutsTest::initTestCase()
 {
-    qRegisterMetaType<win::internal_window*>();
-
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
 
@@ -401,7 +399,7 @@ void GlobalShortcutsTest::testX11ClientShortcut()
     Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
 
     // destroy window again
-    QSignalSpy windowClosedSpy(client, &Toplevel::closed);
+    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::closed);
     QVERIFY(windowClosedSpy.isValid());
     xcb_unmap_window(c.get(), w);
     xcb_destroy_window(c.get(), w);
@@ -465,7 +463,8 @@ void GlobalShortcutsTest::testSetupWindowShortcut()
     QVERIFY(shortcutDialogAddedSpy.isValid());
     win::active_window_setup_window_shortcut(*Test::app()->base.space);
     QTRY_COMPARE(shortcutDialogAddedSpy.count(), 1);
-    auto dialog = shortcutDialogAddedSpy.first().first().value<win::internal_window*>();
+    auto dialog = dynamic_cast<win::internal_window*>(
+        shortcutDialogAddedSpy.first().first().value<Toplevel*>());
     QVERIFY(dialog);
     QVERIFY(dialog->isInternal());
     auto sequenceEdit = Test::app()->base.space->client_keys_dialog->findChild<QKeySequenceEdit*>();

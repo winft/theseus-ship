@@ -133,7 +133,7 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
         }
 
         if (old_quicktiling != win->control->quicktiling()) {
-            Q_EMIT win->quicktiling_changed();
+            Q_EMIT win->qobject->quicktiling_changed();
         }
         return;
     }
@@ -170,7 +170,7 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
             set_maximize(win, false, false);
         }
 
-        Q_EMIT win->quicktiling_changed();
+        Q_EMIT win->qobject->quicktiling_changed();
         return;
     }
 
@@ -280,7 +280,7 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
         win->restore_geometries.maximize = QRect();
     }
 
-    Q_EMIT win->quicktiling_changed();
+    Q_EMIT win->qobject->quicktiling_changed();
 }
 
 }

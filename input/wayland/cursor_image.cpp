@@ -110,9 +110,14 @@ void cursor_image::setup_move_resize(Toplevel* window)
     if (!window->control) {
         return;
     }
-    QObject::connect(window, &Toplevel::moveResizedChanged, this, &cursor_image::updateMoveResize);
-    QObject::connect(
-        window, &Toplevel::moveResizeCursorChanged, this, &cursor_image::updateMoveResize);
+    QObject::connect(window->qobject.get(),
+                     &Toplevel::qobject_t::moveResizedChanged,
+                     this,
+                     &cursor_image::updateMoveResize);
+    QObject::connect(window->qobject.get(),
+                     &Toplevel::qobject_t::moveResizeCursorChanged,
+                     this,
+                     &cursor_image::updateMoveResize);
 }
 
 void cursor_image::markAsRendered()
@@ -187,8 +192,10 @@ void cursor_image::updateDecoration()
     auto deco = platform.redirect->get_pointer()->focus.deco;
     auto c = deco ? deco->client() : nullptr;
     if (c) {
-        m_decorationConnection = QObject::connect(
-            c, &Toplevel::moveResizeCursorChanged, this, &cursor_image::updateDecorationCursor);
+        m_decorationConnection = QObject::connect(c->qobject.get(),
+                                                  &Toplevel::qobject_t::moveResizeCursorChanged,
+                                                  this,
+                                                  &cursor_image::updateDecorationCursor);
     } else {
         m_decorationConnection = QMetaObject::Connection();
     }

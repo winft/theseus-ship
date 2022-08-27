@@ -27,11 +27,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/remnant.h"
 #include "win/rules/ruling.h"
 #include "win/virtual_desktops.h"
+#include "win/window_qobject.h"
 
 #include <NETWM>
 // Qt
 #include <QMatrix4x4>
-#include <QObject>
 #include <QUuid>
 // xcb
 #include <xcb/damage.h>
@@ -70,12 +70,13 @@ class space;
 class transient;
 }
 
-class KWIN_EXPORT Toplevel : public QObject
+class KWIN_EXPORT Toplevel
 {
-    Q_OBJECT
-
 public:
     constexpr static bool is_toplevel{true};
+
+    using qobject_t = win::window_qobject;
+    std::unique_ptr<win::window_qobject> qobject;
 
     std::unique_ptr<render::window> render;
 
@@ -106,6 +107,7 @@ public:
     struct {
         QMetaObject::Connection frame_update_outputs;
         QMetaObject::Connection screens_update_outputs;
+        QMetaObject::Connection check_screen;
     } notifiers;
 
     /**
@@ -139,7 +141,7 @@ public:
     std::vector<base::output*> repaint_outputs;
     win::space& space;
 
-    ~Toplevel() override;
+    virtual ~Toplevel();
 
     virtual xcb_window_t frameId() const;
 
@@ -275,6 +277,19 @@ public:
 
     void setResourceClass(const QByteArray& name, const QByteArray& className = QByteArray());
 
+    /**
+     * Checks whether the screen number for this Toplevel changed and updates if needed.
+     * Any method changing the geometry of the Toplevel should call this method.
+     */
+    void checkScreen();
+    void setupCheckScreenConnection();
+    void removeCheckScreenConnection();
+
+    void setReadyForPainting();
+
+    void handle_output_added(base::output* output);
+    void handle_output_removed(base::output* output);
+
     NETWinInfo* info{nullptr};
     Wrapland::Server::Surface* surface{nullptr};
     quint32 surface_id{0};
@@ -304,87 +319,6 @@ public:
     bool m_skipCloseAnimation{false};
     QVector<win::virtual_desktop*> m_desktops;
 
-Q_SIGNALS:
-    void opacityChanged(KWin::Toplevel* toplevel, qreal oldOpacity);
-    void damaged(KWin::Toplevel* toplevel, QRegion const& damage);
-
-    void frame_geometry_changed(KWin::Toplevel* toplevel, QRect const& old);
-    void visible_geometry_changed();
-
-    void paddingChanged(KWin::Toplevel* toplevel, const QRect& old);
-    void remnant_created(KWin::Toplevel* remnant);
-    void closed(KWin::Toplevel* toplevel);
-    void windowShown(KWin::Toplevel* toplevel);
-    void windowHidden(KWin::Toplevel* toplevel);
-    /**
-     * Signal emitted when the window's shape state changed. That is if it did not have a shape
-     * and received one or if the shape was withdrawn. Think of Chromium enabling/disabling KWin's
-     * decoration.
-     */
-    void shapedChanged();
-    /**
-     * Emitted whenever the state changes in a way, that the Compositor should
-     * schedule a repaint of the scene.
-     */
-    void needsRepaint();
-    /**
-     * Emitted whenever the Toplevel's output changes. This can happen either in consequence to
-     * an output being removed/added or if the Toplevel's geometry changes.
-     */
-    void central_output_changed(base::output const* old_out, base::output const* new_out);
-    void skipCloseAnimationChanged();
-    /**
-     * Emitted whenever the window role of the window changes.
-     * @since 5.0
-     */
-    void windowRoleChanged();
-    /**
-     * Emitted whenever the window class name or resource name of the window changes.
-     * @since 5.0
-     */
-    void windowClassChanged();
-    /**
-     * Emitted when a Wayland Surface gets associated with this Toplevel.
-     * @since 5.3
-     */
-    void surfaceIdChanged(quint32);
-    /**
-     * @since 5.4
-     */
-    void hasAlphaChanged();
-
-    /**
-     * Emitted whenever the Surface for this Toplevel changes.
-     */
-    void surfaceChanged();
-
-    /**
-     * Emitted whenever the client's shadow changes.
-     * @since 5.15
-     */
-    void shadowChanged();
-
-    /**
-     * Below signals only relevant for toplevels with control.
-     */
-    void iconChanged();
-    void unresponsiveChanged(bool);
-    void captionChanged();
-    void hasApplicationMenuChanged(bool);
-    void applicationMenuChanged();
-    void applicationMenuActiveChanged(bool);
-
-public Q_SLOTS:
-    /**
-     * Checks whether the screen number for this Toplevel changed and updates if needed.
-     * Any method changing the geometry of the Toplevel should call this method.
-     */
-    void checkScreen();
-    void setupCheckScreenConnection();
-    void removeCheckScreenConnection();
-
-    void setReadyForPainting();
-
 protected:
     explicit Toplevel(win::space& space);
     Toplevel(win::remnant remnant, win::space& space);
@@ -395,8 +329,6 @@ protected:
     void setDepth(int depth);
 
 private:
-    void handle_output_added(base::output* output);
-    void handle_output_removed(base::output* output);
     void add_repaint_outputs(QRegion const& region);
 
     mutable bool m_render_shape_valid{false};
@@ -663,44 +595,6 @@ public:
     virtual QRect iconGeometry() const;
     virtual void setShortcutInternal();
     virtual void applyWindowRules();
-
-Q_SIGNALS:
-    void activeChanged();
-    void demandsAttentionChanged();
-
-    // to be forwarded by Workspace
-    void desktopPresenceChanged(KWin::Toplevel* window, int);
-    void desktopChanged();
-    void x11DesktopIdsChanged();
-
-    void minimizedChanged();
-    void clientMinimized(KWin::Toplevel* window, bool animate);
-    void clientUnminimized(KWin::Toplevel* window, bool animate);
-    void maximize_mode_changed(KWin::Toplevel* window, KWin::win::maximize_mode);
-    void quicktiling_changed();
-    void keepAboveChanged(bool);
-    void keepBelowChanged(bool);
-    void blockingCompositingChanged(KWin::Toplevel* window);
-
-    void fullScreenChanged();
-    void skipTaskbarChanged();
-    void skipPagerChanged();
-    void skipSwitcherChanged();
-
-    void paletteChanged(const QPalette& p);
-    void colorSchemeChanged();
-    void transientChanged();
-    void modalChanged();
-    void moveResizedChanged();
-    void moveResizeCursorChanged(input::cursor_shape);
-    void clientStartUserMovedResized(KWin::Toplevel* window);
-    void clientStepUserMovedResized(KWin::Toplevel* window, const QRect&);
-    void clientFinishUserMovedResized(KWin::Toplevel* window);
-
-    void closeableChanged(bool);
-    void minimizeableChanged(bool);
-    void maximizeableChanged(bool);
-    void desktopFileNameChanged();
 };
 
 inline QRect Toplevel::frameGeometry() const

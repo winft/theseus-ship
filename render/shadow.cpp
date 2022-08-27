@@ -38,7 +38,10 @@ shadow::shadow(Toplevel* toplevel)
     : m_topLevel(toplevel)
     , m_cachedSize(toplevel->size())
 {
-    QObject::connect(m_topLevel, &Toplevel::frame_geometry_changed, this, &shadow::geometryChanged);
+    QObject::connect(m_topLevel->qobject.get(),
+                     &win::window_qobject::frame_geometry_changed,
+                     this,
+                     &shadow::geometryChanged);
 }
 
 shadow::~shadow()
