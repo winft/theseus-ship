@@ -290,6 +290,9 @@ private:
     DateTimes prev_transition = DateTimes();
     DateTimes next_transition = DateTimes();
 
+    // whether it is currently day or night
+    bool m_daylight = true;
+
     // manual times from config
     QTime morning_time{QTime(6, 0)};
     QTime evening_time{QTime(18, 0)};
