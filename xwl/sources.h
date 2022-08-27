@@ -38,7 +38,7 @@ namespace KWin::xwl
  * QObject attribute of a wl_source.
  * This is a hack around having a template QObject.
  */
-class q_wl_source : public QObject
+class KWIN_EXPORT q_wl_source : public QObject
 {
     Q_OBJECT
 
@@ -52,13 +52,13 @@ Q_SIGNALS:
 /**
  * Representing a Wayland native data source.
  */
-template<typename ServerSource>
+template<typename ServerSource, typename Window>
 class wl_source
 {
 public:
-    wl_source(ServerSource* source, x11_data const& x11)
+    wl_source(ServerSource* source, runtime<typename Window::space_t> const& core)
         : server_source{source}
-        , x11{x11}
+        , core{core}
         , qobject{std::make_unique<q_wl_source>()}
     {
         assert(source);
@@ -79,7 +79,7 @@ public:
     }
 
     ServerSource* server_source = nullptr;
-    x11_data const& x11;
+    runtime<typename Window::space_t> const& core;
     std::vector<std::string> offers;
     xcb_timestamp_t timestamp{XCB_CURRENT_TIME};
 
@@ -93,7 +93,7 @@ private:
  * QObject attribute of a x11_source.
  * This is a hack around having a template QObject.
  */
-class q_x11_source : public QObject
+class KWIN_EXPORT q_x11_source : public QObject
 {
     Q_OBJECT
 
@@ -109,12 +109,13 @@ Q_SIGNALS:
 /**
  * Representing an X data source.
  */
-template<typename InternalSource>
+template<typename InternalSource, typename Window>
 class x11_source
 {
 public:
-    x11_source(xcb_xfixes_selection_notify_event_t* event, x11_data const& x11)
-        : x11{x11}
+    x11_source(xcb_xfixes_selection_notify_event_t* event,
+               runtime<typename Window::space_t> const& core)
+        : core{core}
         , timestamp{event->timestamp}
         , qobject{std::make_unique<q_x11_source>()}
     {
@@ -156,7 +157,7 @@ public:
         return qobject.get();
     }
 
-    x11_data const& x11;
+    runtime<typename Window::space_t> const& core;
     mime_atoms offers;
     xcb_timestamp_t timestamp;
 

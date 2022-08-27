@@ -11,10 +11,6 @@
 #include "script.h"
 #include "scripting_logging.h"
 
-#include "input/redirect.h"
-#include "main.h"
-#include "win/space.h"
-
 #include <KConfigGroup>
 #include <KGlobalAccel>
 #include <QAction>
@@ -25,8 +21,9 @@
 namespace KWin::scripting
 {
 
-js_engine_global_methods_wrapper::js_engine_global_methods_wrapper(scripting::platform& platform,
-                                                                   declarative_script* parent)
+js_engine_global_methods_wrapper::js_engine_global_methods_wrapper(
+    scripting::platform_wrap& platform,
+    declarative_script* parent)
     : QObject(parent)
     , m_script(parent)
     , platform{platform}
@@ -72,11 +69,11 @@ bool js_engine_global_methods_wrapper::registerShortcut(const QString& name,
     a->setText(text);
     const QKeySequence shortcut = QKeySequence(keys);
     KGlobalAccel::self()->setShortcut(a, QList<QKeySequence>{shortcut});
-    platform.space.input->platform.registerShortcut(shortcut, a);
+    platform.register_shortcut(shortcut, a);
 
     connect(a, &QAction::triggered, this, [=]() mutable {
         QJSValueList arguments;
-        arguments << platform.qmlEngine()->toScriptValue(a);
+        arguments << platform.qml_engine->toScriptValue(a);
         function.call(arguments);
     });
     return true;

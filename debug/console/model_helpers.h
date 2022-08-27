@@ -5,8 +5,14 @@
 */
 #pragma once
 
+#include "window.h"
+
 #include "toplevel.h"
+#include "win/internal_window.h"
 #include "win/meta.h"
+#include "win/space_qobject.h"
+#include "win/x11/stacking.h"
+#include "win/x11/window.h"
 
 #include <QVector>
 
@@ -17,21 +23,6 @@ constexpr uint32_t s_idDistance{10000};
 constexpr uint32_t s_propertyBitMask{0xFFFF0000};
 constexpr uint32_t s_clientBitMask{0x0000FFFF};
 
-// TODO(romangg): Put these into the model class and its subclasses.
-constexpr int s_x11ClientId{1};
-constexpr int s_x11UnmanagedId{2};
-constexpr int s_waylandClientId{3};
-constexpr int s_workspaceInternalId{4};
-
-template<typename Win>
-QObject* get_qobject(Win* win)
-{
-    if (win->control && win->control->scripting) {
-        return win->control->scripting.get();
-    }
-    return win->qobject.get();
-}
-
 template<typename Model, typename Container>
 QModelIndex
 index_for_window(Model const* model, int row, int column, Container const& windows, int id)
@@ -39,7 +30,7 @@ index_for_window(Model const* model, int row, int column, Container const& windo
     if (column != 0) {
         return QModelIndex();
     }
-    if (row >= windows.count()) {
+    if (row >= static_cast<int>(windows.size())) {
         return QModelIndex();
     }
     return model->create_index(row, column, s_idDistance * id + row);
@@ -53,7 +44,7 @@ QModelIndex index_for_property(Model const* model,
                                Window* (Model::*filter)(QModelIndex const&) const)
 {
     if (auto window = (model->*filter)(parent)) {
-        if (row >= get_qobject(window)->metaObject()->propertyCount()) {
+        if (row >= window->metaObject()->propertyCount()) {
             return QModelIndex();
         }
         return model->create_index(row, column, quint32(row + 1) << 16 | parent.internalId());
@@ -70,57 +61,123 @@ int window_property_count(Model const* model,
     if (!window) {
         return 0;
     }
-    return get_qobject(window)->metaObject()->propertyCount();
+    return window->metaObject()->propertyCount();
 }
 
-template<class Window>
-Window* window_for_index(QModelIndex const& index, QVector<Window*> const& windows, int id)
+inline console_window* window_for_index(QModelIndex const& index,
+                                        std::vector<std::unique_ptr<console_window>> const& windows,
+                                        int id)
 {
     int32_t const row = (index.internalId() & s_clientBitMask) - (s_idDistance * id);
-    if (row < 0 || row >= windows.count()) {
+    if (row < 0 || row >= static_cast<int>(windows.size())) {
         return nullptr;
     }
-    return windows.at(row);
+    return windows.at(row).get();
 }
 
-template<typename Window>
-QVariant window_data(QModelIndex const& index, int role, QVector<Window*> const& windows)
+inline QVariant window_data(QModelIndex const& index,
+                            int role,
+                            std::vector<std::unique_ptr<console_window>> const& windows)
 {
-    if (index.row() >= windows.count()) {
+    if (index.row() >= static_cast<int>(windows.size())) {
         return QVariant();
     }
 
-    auto window = windows.at(index.row());
+    auto& window = windows.at(index.row());
     if (role == Qt::DisplayRole) {
-        return QStringLiteral("%1: %2")
-            .arg(static_cast<Toplevel*>(window)->xcb_window)
-            .arg(win::caption(window));
+        return QStringLiteral("%1: %2").arg(window->windowId()).arg(window->caption());
     } else if (role == Qt::DecorationRole) {
-        return window->control->icon();
+        return window->icon();
     }
 
     return QVariant();
 }
 
 template<typename Model, typename Window>
-void add_window(Model* model, int parentRow, QVector<Window*>& windows, Window* window)
+void add_window(Model* model,
+                int parentRow,
+                std::vector<std::unique_ptr<console_window>>& windows,
+                Window* window)
 {
     model->begin_insert_rows(
-        model->index(parentRow, 0, QModelIndex()), windows.count(), windows.count());
-    windows.append(window);
+        model->index(parentRow, 0, QModelIndex()), windows.size(), windows.size());
+    windows.emplace_back(std::make_unique<console_window>(window));
     model->end_insert_rows();
 }
 
 template<typename Model, typename Window>
-void remove_window(Model* model, int parentRow, QVector<Window*>& windows, Window* window)
+void remove_window(Model* model,
+                   int parentRow,
+                   std::vector<std::unique_ptr<console_window>>& windows,
+                   Window* window)
 {
-    int const remove = windows.indexOf(window);
-    if (remove == -1) {
+    auto it = std::find_if(
+        windows.begin(), windows.end(), [window](auto& win) { return win->ref_win == window; });
+
+    if (it == windows.end()) {
         return;
     }
+
+    int const remove = it - windows.begin();
+
     model->begin_remove_rows(model->index(parentRow, 0, QModelIndex()), remove, remove);
-    windows.removeAt(remove);
+    windows.erase(it);
     model->end_remove_rows();
+}
+
+template<typename Model, typename Space>
+void model_setup_connections(Model& model, Space& space)
+{
+    for (auto const& window : space.windows) {
+        if (window->control) {
+            if (dynamic_cast<win::x11::window*>(window)) {
+                model.m_x11Clients.emplace_back(std::make_unique<console_window>(window));
+            }
+        }
+    }
+    QObject::connect(
+        space.qobject.get(), &win::space_qobject::clientAdded, &model, [&model](auto c) {
+            add_window(&model, model.s_x11ClientId - 1, model.m_x11Clients, c);
+        });
+    QObject::connect(
+        space.qobject.get(), &win::space_qobject::clientRemoved, &model, [&model](auto window) {
+            // TODO(romangg): This function is also being called on Waylad windows for
+            // some reason. It works with our containers but best would be to make this
+            // symmetric with adding.
+            remove_window(&model, model.s_x11ClientId - 1, model.m_x11Clients, window);
+        });
+
+    for (auto unmanaged : win::x11::get_unmanageds<Toplevel>(space)) {
+        model.m_unmanageds.emplace_back(std::make_unique<console_window>(unmanaged));
+    }
+
+    QObject::connect(
+        space.qobject.get(), &win::space_qobject::unmanagedAdded, &model, [&model](auto u) {
+            add_window(&model, model.s_x11UnmanagedId - 1, model.m_unmanageds, u);
+        });
+    QObject::connect(
+        space.qobject.get(), &win::space_qobject::unmanagedRemoved, &model, [&model](auto u) {
+            remove_window(&model, model.s_x11UnmanagedId - 1, model.m_unmanageds, u);
+        });
+    for (auto const& window : space.windows) {
+        if (dynamic_cast<win::internal_window*>(window)) {
+            model.m_internalClients.emplace_back(std::make_unique<console_window>(window));
+        }
+    }
+    QObject::connect(
+        space.qobject.get(),
+        &win::space_qobject::internalClientAdded,
+        &model,
+        [&model](auto window) {
+            add_window(&model, model.s_workspaceInternalId - 1, model.m_internalClients, window);
+        });
+    QObject::connect(
+        space.qobject.get(),
+        &win::space_qobject::internalClientRemoved,
+        &model,
+        [&model](auto window) {
+            remove_window(&model, model.s_workspaceInternalId - 1, model.m_internalClients, window);
+        });
 }
 
 }

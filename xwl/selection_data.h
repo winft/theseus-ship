@@ -18,16 +18,16 @@ namespace KWin::xwl
 class wl_to_x11_transfer;
 class x11_to_wl_transfer;
 
-template<typename>
+template<typename, typename>
 class wl_source;
-template<typename>
+template<typename, typename>
 class x11_source;
 
 /*
  * QObject attribute of a Selection.
  * This is a hack around having a template QObject.
  */
-class q_selection : public QObject
+class KWIN_EXPORT q_selection : public QObject
 {
     Q_OBJECT
 
@@ -47,7 +47,7 @@ Q_SIGNALS:
  * This class can be specialized to support the core Wayland protocol
  * (clipboard and dnd) as well as primary selection.
  */
-template<typename server_source, typename internal_source>
+template<typename Window, typename server_source, typename internal_source>
 struct selection_data {
     std::unique_ptr<q_selection> qobject;
 
@@ -60,12 +60,12 @@ struct selection_data {
 
     // Active source, if any. Only one of them at max can exist
     // at the same time.
-    std::unique_ptr<wl_source<server_source>> wayland_source;
-    std::unique_ptr<xwl::x11_source<internal_source>> x11_source;
+    std::unique_ptr<wl_source<server_source, Window>> wayland_source;
+    std::unique_ptr<xwl::x11_source<internal_source, Window>> x11_source;
 
     std::unique_ptr<internal_source> source_int;
 
-    x11_data x11;
+    runtime<typename Window::space_t> core;
     QMetaObject::Connection active_window_notifier;
 
     // active transfers
@@ -83,18 +83,18 @@ struct selection_data {
     ~selection_data() = default;
 };
 
-template<typename server_source, typename internal_source>
-auto create_selection_data(xcb_atom_t atom, x11_data const& x11)
+template<typename Window, typename server_source, typename internal_source>
+auto create_selection_data(xcb_atom_t atom, runtime<typename Window::space_t> const& core)
 {
-    selection_data<server_source, internal_source> sel;
+    selection_data<Window, server_source, internal_source> sel;
 
     sel.qobject.reset(new q_selection());
     sel.atom = atom;
-    sel.x11 = x11;
+    sel.core = core;
 
-    sel.window = xcb_generate_id(x11.connection);
+    sel.window = xcb_generate_id(core.x11.connection);
     sel.requestor_window = sel.window;
-    xcb_flush(x11.connection);
+    xcb_flush(core.x11.connection);
 
     return sel;
 }

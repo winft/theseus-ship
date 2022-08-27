@@ -23,15 +23,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QPoint>
 #include <Wrapland/Server/drag_pool.h>
+#include <memory>
 #include <xcb/xcb.h>
 
-namespace KWin
+namespace KWin::xwl
 {
-class Toplevel;
 
-namespace xwl
-{
-class drag_and_drop;
+// version of DnD support in X
+constexpr uint32_t drag_and_drop_version = 5;
+
 enum class drag_event_reply;
 
 using dnd_action = Wrapland::Server::dnd_action;
@@ -83,27 +83,33 @@ inline void send_client_message(xcb_connection_t* connection,
     xcb_flush(connection);
 }
 
+class KWIN_EXPORT drag_qobject : public QObject
+{
+    Q_OBJECT
+Q_SIGNALS:
+    void finish();
+};
+
 /**
  * An ongoing drag operation.
  */
-class drag : public QObject
+template<typename Window>
+class drag
 {
-    Q_OBJECT
-
 public:
-    drag();
+    drag()
+        : qobject{std::make_unique<drag_qobject>()}
+    {
+    }
+
+    virtual ~drag() = default;
 
     virtual bool handle_client_message(xcb_client_message_event_t* event) = 0;
-    virtual drag_event_reply move_filter(Toplevel* target, QPoint const& pos) = 0;
+    virtual drag_event_reply move_filter(Window* target, QPoint const& pos) = 0;
 
     virtual bool end() = 0;
 
-Q_SIGNALS:
-    void finish(drag* self);
-
-private:
-    Q_DISABLE_COPY(drag)
+    std::unique_ptr<drag_qobject> qobject;
 };
 
-}
 }

@@ -75,6 +75,7 @@ class KWIN_EXPORT Toplevel
 public:
     constexpr static bool is_toplevel{true};
 
+    using space_t = win::space;
     using qobject_t = win::window_qobject;
     std::unique_ptr<win::window_qobject> qobject;
 

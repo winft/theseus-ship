@@ -125,7 +125,7 @@ void outline::createHelper()
 
     if (compositor.isActive()) {
         m_visual = std::make_unique<composited_outline_visual>(
-            this, *compositor.space->scripting->qmlEngine());
+            this, *compositor.space->scripting->qml_engine);
     } else {
         m_visual.reset(compositor.platform.create_non_composited_outline(this));
     }

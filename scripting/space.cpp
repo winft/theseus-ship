@@ -37,7 +37,7 @@ void space::handle_client_added(Toplevel* client)
         // Only windows with control are made available to the scripting system.
         return;
     }
-    client->control->scripting = std::make_unique<window>(client, this);
+    client->control->scripting = std::make_unique<window_impl>(client, this);
     auto scr_win = client->control->scripting.get();
 
     setupAbstractClientConnections(scr_win);

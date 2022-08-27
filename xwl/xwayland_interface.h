@@ -39,28 +39,12 @@ enum class drag_event_reply {
     wayland,
 };
 
-class KWIN_EXPORT xwayland_interface : public QObject
+class xwayland_interface : public QObject
 {
-    Q_OBJECT
-
 public:
-    static xwayland_interface* self();
-
     virtual drag_event_reply drag_move_filter(Toplevel* target, QPoint const& pos) = 0;
-
-protected:
-    xwayland_interface();
-    ~xwayland_interface() override;
-
-private:
-    Q_DISABLE_COPY(xwayland_interface)
 };
 
-}
-
-inline xwl::xwayland_interface* xwayland()
-{
-    return xwl::xwayland_interface::self();
 }
 
 }

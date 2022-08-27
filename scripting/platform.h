@@ -43,30 +43,68 @@ class template_space;
 /**
  * The heart of Scripting. Infinite power lies beyond
  */
-class KWIN_EXPORT platform : public QObject
+class KWIN_EXPORT platform_wrap : public QObject
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "org.kde.kwin.Scripting")
-private:
-    QStringList scriptList;
-    QList<abstract_script*> scripts;
-    /**
-     * Lock to protect the scripts member variable.
-     */
-    QScopedPointer<QRecursiveMutex> m_scriptsLock;
-
-    // Preferably call ONLY at load time
-    void runScripts();
 
 public:
-    platform(win::space& space);
-    ~platform() override;
+    platform_wrap();
+    ~platform_wrap() override;
     Q_SCRIPTABLE Q_INVOKABLE int loadScript(const QString& filePath,
                                             const QString& pluginName = QString());
     Q_SCRIPTABLE Q_INVOKABLE int loadDeclarativeScript(const QString& filePath,
                                                        const QString& pluginName = QString());
     Q_SCRIPTABLE Q_INVOKABLE bool isScriptLoaded(const QString& pluginName) const;
     Q_SCRIPTABLE Q_INVOKABLE bool unloadScript(const QString& pluginName);
+
+    qt_script_space* workspaceWrapper() const;
+
+    abstract_script* findScript(const QString& pluginName) const;
+
+    virtual uint32_t reserve(ElectricBorder border, std::function<bool(ElectricBorder)> callback)
+        = 0;
+    virtual void unreserve(ElectricBorder border, uint32_t id) = 0;
+    virtual void reserve_touch(ElectricBorder border, QAction* action) = 0;
+    virtual void register_shortcut(QKeySequence const& shortcut, QAction* action) = 0;
+
+    QQmlEngine* qml_engine;
+    QQmlContext* declarative_script_shared_context;
+
+public Q_SLOTS:
+    void scriptDestroyed(QObject* object);
+    Q_SCRIPTABLE void start();
+
+private Q_SLOTS:
+    void slotScriptsQueried();
+
+protected:
+    std::unique_ptr<template_space<qt_script_space, win::space>> qt_space;
+    std::unique_ptr<template_space<declarative_script_space, win::space>> decl_space;
+    QList<abstract_script*> scripts;
+
+private:
+    LoadScriptList queryScriptsToLoad();
+
+    // Preferably call ONLY at load time
+    void runScripts();
+
+    // Lock to protect the scripts member variable.
+    QScopedPointer<QRecursiveMutex> m_scriptsLock;
+
+    QStringList scriptList;
+    bool is_running{false};
+};
+
+class KWIN_EXPORT platform : public platform_wrap
+{
+public:
+    platform(win::space& space);
+
+    uint32_t reserve(ElectricBorder border, std::function<bool(ElectricBorder)> callback) override;
+    void unreserve(ElectricBorder border, uint32_t id) override;
+    void reserve_touch(ElectricBorder border, QAction* action) override;
+    void register_shortcut(QKeySequence const& shortcut, QAction* action) override;
 
     /**
      * @brief Invokes all registered callbacks to add actions to the UserActionsMenu.
@@ -77,55 +115,8 @@ public:
      */
     QList<QAction*> actionsForUserActionMenu(Toplevel* window, QMenu* parent);
 
-    QQmlEngine* qmlEngine() const;
-    QQmlEngine* qmlEngine();
-    QQmlContext* declarativeScriptSharedContext() const;
-    QQmlContext* declarativeScriptSharedContext();
-    qt_script_space* workspaceWrapper() const;
-
-    abstract_script* findScript(const QString& pluginName) const;
-
     win::space& space;
-
-public Q_SLOTS:
-    void scriptDestroyed(QObject* object);
-    Q_SCRIPTABLE void start();
-
-private Q_SLOTS:
-    void slotScriptsQueried();
-
-private:
-    void init();
-    LoadScriptList queryScriptsToLoad();
-
-    QQmlEngine* m_qmlEngine;
-    QQmlContext* m_declarativeScriptSharedContext;
-
-    std::unique_ptr<template_space<qt_script_space, win::space>> qt_space;
-    std::unique_ptr<template_space<declarative_script_space, win::space>> decl_space;
-
-    bool is_running{false};
 };
-
-inline QQmlEngine* platform::qmlEngine() const
-{
-    return m_qmlEngine;
-}
-
-inline QQmlEngine* platform::qmlEngine()
-{
-    return m_qmlEngine;
-}
-
-inline QQmlContext* platform::declarativeScriptSharedContext() const
-{
-    return m_declarativeScriptSharedContext;
-}
-
-inline QQmlContext* platform::declarativeScriptSharedContext()
-{
-    return m_declarativeScriptSharedContext;
-}
 
 }
 }

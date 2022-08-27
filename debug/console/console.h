@@ -23,7 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QAbstractItemModel>
 #include <QStyledItemDelegate>
-#include <QVector>
+#include <memory>
+#include <vector>
 
 namespace Ui
 {
@@ -36,13 +37,8 @@ namespace KWin
 namespace win
 {
 
-class internal_window;
 class space;
 
-namespace x11
-{
-class window;
-}
 }
 
 namespace render
@@ -50,18 +46,18 @@ namespace render
 class scene;
 }
 
-class X11Client;
-class Toplevel;
-
 namespace debug
 {
+
+class console_window;
 
 class KWIN_EXPORT console_model : public QAbstractItemModel
 {
     Q_OBJECT
 public:
-    explicit console_model(win::space& space, QObject* parent = nullptr);
     ~console_model() override;
+
+    static console_model* create(win::space& space, QObject* parent = nullptr);
 
     int columnCount(const QModelIndex& parent) const override;
     QVariant data(const QModelIndex& index, int role) const override;
@@ -76,7 +72,6 @@ public:
     void begin_remove_rows(QModelIndex const& parent, int first, int last);
     void end_remove_rows();
 
-protected:
     virtual bool get_client_count(int parent_id, int& count) const;
     virtual bool get_property_count(QModelIndex const& parent, int& count) const;
 
@@ -89,16 +84,22 @@ protected:
 
     QVariant propertyData(QObject* object, const QModelIndex& index, int role) const;
 
-    win::internal_window* internalClient(const QModelIndex& index) const;
-    win::x11::window* x11Client(const QModelIndex& index) const;
-    Toplevel* unmanaged(const QModelIndex& index) const;
+    console_window* internalClient(QModelIndex const& index) const;
+    console_window* x11Client(QModelIndex const& index) const;
+    console_window* unmanaged(QModelIndex const& index) const;
     virtual int topLevelRowCount() const;
 
-private:
-    QVector<win::internal_window*> m_internalClients;
-    QVector<win::x11::window*> m_x11Clients;
-    QVector<Toplevel*> m_unmanageds;
-    win::space& space;
+    static constexpr int s_x11ClientId{1};
+    static constexpr int s_x11UnmanagedId{2};
+    static constexpr int s_waylandClientId{3};
+    static constexpr int s_workspaceInternalId{4};
+
+    std::vector<std::unique_ptr<console_window>> m_internalClients;
+    std::vector<std::unique_ptr<console_window>> m_x11Clients;
+    std::vector<std::unique_ptr<console_window>> m_unmanageds;
+
+protected:
+    explicit console_model(QObject* parent = nullptr);
 };
 
 class KWIN_EXPORT console_delegate : public QStyledItemDelegate

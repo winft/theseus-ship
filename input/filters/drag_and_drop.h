@@ -69,7 +69,7 @@ public:
 
         // TODO: use InputDeviceHandler::at() here and check isClient()?
         auto window = find_controlled_window(this->redirect, pos.toPoint());
-        if (auto xwl = xwayland()) {
+        if (auto xwl = kwinApp()->get_base().xwayland_interface) {
             const auto ret = xwl->drag_move_filter(window, pos.toPoint());
             if (ret == xwl::drag_event_reply::ignore) {
                 return false;

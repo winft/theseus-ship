@@ -17,7 +17,6 @@
 
 #include <QObject>
 #include <unistd.h>
-#include <xwayland_logging.h>
 
 namespace KWin::xwl
 {
@@ -47,7 +46,7 @@ inline void send_selection_notify(xcb_connection_t* connection,
 template<typename Selection>
 void own_selection(Selection* sel, bool own)
 {
-    auto xcb_con = sel->data.x11.connection;
+    auto xcb_con = sel->data.core.x11.connection;
 
     if (own) {
         xcb_set_selection_owner(xcb_con, sel->data.window, sel->data.atom, XCB_TIME_CURRENT_TIME);
@@ -61,7 +60,7 @@ void own_selection(Selection* sel, bool own)
 
 // sets the current provider of the selection
 template<typename Selection, typename server_source>
-void set_wl_source(Selection* sel, wl_source<server_source>* source)
+void set_wl_source(Selection* sel, wl_source<server_source, typename Selection::window_t>* source)
 {
     sel->data.wayland_source.reset();
     sel->data.x11_source.reset();
@@ -79,12 +78,12 @@ template<typename Selection>
 void start_transfer_to_x11(Selection* sel, xcb_selection_request_event_t* event, qint32 fd)
 {
     auto transfer = new wl_to_x11_transfer(
-        sel->data.atom, event, fd, *sel->data.x11.space->atoms, sel->data.qobject.get());
+        sel->data.atom, event, fd, *sel->data.core.x11.atoms, sel->data.qobject.get());
 
     QObject::connect(transfer,
                      &wl_to_x11_transfer::selection_notify,
                      sel->data.qobject.get(),
-                     [con = sel->data.x11.connection](auto event, auto success) {
+                     [con = sel->data.core.x11.connection](auto event, auto success) {
                          send_selection_notify(con, event, success);
                      });
     QObject::connect(
@@ -120,7 +119,7 @@ void handle_wl_selection_client_change(Selection* sel)
 {
     auto srv_src = sel->get_current_source();
 
-    if (!dynamic_cast<win::x11::window*>(sel->data.x11.space->active_client)) {
+    if (!dynamic_cast<win::x11::window*>(sel->data.core.space->active_client)) {
         // No active client or active client is Wayland native.
         if (sel->data.wayland_source) {
             cleanup_wl_to_x11_source(sel);
@@ -136,7 +135,7 @@ void handle_wl_selection_client_change(Selection* sel)
     }
 
     using server_source = std::remove_pointer_t<decltype(srv_src)>;
-    auto wls = new wl_source<server_source>(srv_src, sel->data.x11);
+    auto wls = new wl_source<server_source, typename Selection::window_t>(srv_src, sel->data.core);
 
     set_wl_source(sel, wls);
     own_selection(sel, true);
@@ -179,7 +178,7 @@ void handle_wl_selection_change(Selection* sel)
     // Wayland native client provides new selection.
     if (!sel->data.active_window_notifier) {
         sel->data.active_window_notifier
-            = QObject::connect(sel->data.x11.space->qobject.get(),
+            = QObject::connect(sel->data.core.space->qobject.get(),
                                &win::space::qobject_t::clientActivated,
                                sel->data.qobject.get(),
                                [sel] { handle_wl_selection_client_change(sel); });
@@ -190,7 +189,7 @@ void handle_wl_selection_change(Selection* sel)
     handle_wl_selection_client_change(sel);
 }
 
-inline void send_wl_selection_timestamp(x11_data const& x11,
+inline void send_wl_selection_timestamp(x11_runtime const& x11,
                                         xcb_selection_request_event_t* event,
                                         xcb_timestamp_t time)
 {
@@ -206,18 +205,18 @@ inline void send_wl_selection_timestamp(x11_data const& x11,
     send_selection_notify(x11.connection, event, true);
 }
 
-inline void send_wl_selection_targets(x11_data const& x11,
+inline void send_wl_selection_targets(x11_runtime const& x11,
                                       xcb_selection_request_event_t* event,
                                       std::vector<std::string> const& offers)
 {
     std::vector<xcb_atom_t> targets;
     targets.resize(offers.size() + 2);
-    targets[0] = x11.space->atoms->timestamp;
-    targets[1] = x11.space->atoms->targets;
+    targets[0] = x11.atoms->timestamp;
+    targets[1] = x11.atoms->targets;
 
     size_t cnt = 2;
     for (auto const& mime : offers) {
-        targets[cnt] = mime_type_to_atom(mime, *x11.space->atoms);
+        targets[cnt] = mime_type_to_atom(mime, *x11.atoms);
         cnt++;
     }
 
@@ -237,9 +236,9 @@ inline void send_wl_selection_targets(x11_data const& x11,
 template<typename Source>
 int selection_wl_start_transfer(Source&& source, xcb_selection_request_event_t* event)
 {
-    auto const targets = atom_to_mime_types(event->target, *source->x11.space->atoms);
+    auto const targets = atom_to_mime_types(event->target, *source->core.x11.atoms);
     if (targets.empty()) {
-        qCDebug(KWIN_XWL) << "Unknown selection atom. Ignoring request.";
+        qCDebug(KWIN_CORE) << "Unknown selection atom. Ignoring request.";
         return -1;
     }
 
@@ -263,7 +262,7 @@ int selection_wl_start_transfer(Source&& source, xcb_selection_request_event_t* 
 
     int p[2];
     if (pipe(p) == -1) {
-        qCWarning(KWIN_XWL) << "Pipe failed. Not sending selection.";
+        qCWarning(KWIN_CORE) << "Pipe failed. Not sending selection.";
         return -1;
     }
 
@@ -274,13 +273,13 @@ int selection_wl_start_transfer(Source&& source, xcb_selection_request_event_t* 
 template<typename Source>
 bool selection_wl_handle_request(Source&& source, xcb_selection_request_event_t* event)
 {
-    auto& x11 = source->x11;
+    auto& x11 = source->core.x11;
 
-    if (event->target == x11.space->atoms->targets) {
+    if (event->target == x11.atoms->targets) {
         send_wl_selection_targets(x11, event, source->offers);
-    } else if (event->target == x11.space->atoms->timestamp) {
+    } else if (event->target == x11.atoms->timestamp) {
         send_wl_selection_timestamp(x11, event, source->timestamp);
-    } else if (event->target == x11.space->atoms->delete_atom) {
+    } else if (event->target == x11.atoms->delete_atom) {
         send_selection_notify(x11.connection, event, true);
     } else {
         // try to send mime data

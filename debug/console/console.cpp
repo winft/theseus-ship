@@ -21,14 +21,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "model_helpers.h"
 #include "ui_debug_console.h"
+#include "window.h"
 
 #include "render/compositor.h"
 #include "render/effects.h"
 #include "render/scene.h"
-#include "win/internal_window.h"
 #include "win/space.h"
-#include "win/x11/stacking.h"
-#include "win/x11/window.h"
 
 #include <kwingl/platform.h>
 #include <kwingl/utils.h>
@@ -247,62 +245,19 @@ QString console_delegate::displayText(const QVariant& value, const QLocale& loca
     return QStyledItemDelegate::displayText(value, locale);
 }
 
-console_model::console_model(win::space& space, QObject* parent)
+console_model::console_model(QObject* parent)
     : QAbstractItemModel(parent)
-    , space{space}
 {
-    for (auto const& window : space.windows) {
-        if (window->control) {
-            if (auto x11_client = dynamic_cast<win::x11::window*>(window)) {
-                m_x11Clients.append(x11_client);
-            }
-        }
-    }
-    connect(space.qobject.get(), &win::space_qobject::clientAdded, this, [this](auto c) {
-        auto x11win = static_cast<win::x11::window*>(c);
-        add_window(this, s_x11ClientId - 1, m_x11Clients, x11win);
-    });
-    connect(
-        space.qobject.get(), &win::space_qobject::clientRemoved, this, [this](Toplevel* window) {
-            auto c = dynamic_cast<win::x11::window*>(window);
-            if (!c) {
-                return;
-            }
-            remove_window(this, s_x11ClientId - 1, m_x11Clients, c);
-        });
-
-    for (auto unmanaged : win::x11::get_unmanageds<Toplevel>(space)) {
-        m_unmanageds.append(unmanaged);
-    }
-
-    connect(space.qobject.get(), &win::space_qobject::unmanagedAdded, this, [this](Toplevel* u) {
-        add_window(this, s_x11UnmanagedId - 1, m_unmanageds, u);
-    });
-    connect(space.qobject.get(), &win::space_qobject::unmanagedRemoved, this, [this](Toplevel* u) {
-        remove_window(this, s_x11UnmanagedId - 1, m_unmanageds, u);
-    });
-    for (auto const& window : space.windows) {
-        if (auto internal = dynamic_cast<win::internal_window*>(window)) {
-            m_internalClients.append(internal);
-        }
-    }
-    connect(
-        space.qobject.get(), &win::space_qobject::internalClientAdded, this, [this](auto window) {
-            add_window(this,
-                       s_workspaceInternalId - 1,
-                       m_internalClients,
-                       static_cast<win::internal_window*>(window));
-        });
-    connect(
-        space.qobject.get(), &win::space_qobject::internalClientRemoved, this, [this](auto window) {
-            remove_window(this,
-                          s_workspaceInternalId - 1,
-                          m_internalClients,
-                          static_cast<win::internal_window*>(window));
-        });
 }
 
 console_model::~console_model() = default;
+
+console_model* console_model::create(win::space& space, QObject* parent)
+{
+    auto model = new console_model(parent);
+    model_setup_connections(*model, space);
+    return model;
+}
 
 int console_model::columnCount(const QModelIndex& parent) const
 {
@@ -319,13 +274,13 @@ bool console_model::get_client_count(int parent_id, int& count) const
 {
     switch (parent_id) {
     case s_x11ClientId:
-        count = m_x11Clients.count();
+        count = m_x11Clients.size();
         break;
     case s_x11UnmanagedId:
-        count = m_unmanageds.count();
+        count = m_unmanageds.size();
         break;
     case s_workspaceInternalId:
-        count = m_internalClients.count();
+        count = m_internalClients.size();
         break;
     default:
         return false;
@@ -559,13 +514,13 @@ QVariant console_model::propertyData(QObject* object, const QModelIndex& index, 
 QVariant console_model::get_client_property_data(QModelIndex const& index, int role) const
 {
     if (auto c = internalClient(index)) {
-        return propertyData(get_qobject(c), index, role);
+        return propertyData(c, index, role);
     }
     if (auto c = x11Client(index)) {
-        return propertyData(get_qobject(c), index, role);
+        return propertyData(c, index, role);
     }
     if (auto u = unmanaged(index)) {
-        return propertyData(u->qobject.get(), index, role);
+        return propertyData(u, index, role);
     }
 
     return QVariant();
@@ -577,12 +532,12 @@ QVariant console_model::get_client_data(QModelIndex const& index, int role) cons
     case s_x11ClientId:
         return window_data(index, role, m_x11Clients);
     case s_x11UnmanagedId: {
-        if (index.row() >= m_unmanageds.count()) {
+        if (index.row() >= static_cast<int>(m_unmanageds.size())) {
             return QVariant();
         }
-        auto u = m_unmanageds.at(index.row());
+        auto& u = m_unmanageds.at(index.row());
         if (role == Qt::DisplayRole) {
-            return static_cast<xcb_window_t>(u->xcb_window);
+            return static_cast<xcb_window_t>(u->windowId());
         }
         return QVariant();
     }
@@ -632,17 +587,17 @@ QVariant console_model::data(const QModelIndex& index, int role) const
     return get_client_data(index, role);
 }
 
-win::internal_window* console_model::internalClient(const QModelIndex& index) const
+console_window* console_model::internalClient(QModelIndex const& index) const
 {
     return window_for_index(index, m_internalClients, s_workspaceInternalId);
 }
 
-win::x11::window* console_model::x11Client(const QModelIndex& index) const
+console_window* console_model::x11Client(QModelIndex const& index) const
 {
     return window_for_index(index, m_x11Clients, s_x11ClientId);
 }
 
-Toplevel* console_model::unmanaged(const QModelIndex& index) const
+console_window* console_model::unmanaged(QModelIndex const& index) const
 {
     return window_for_index(index, m_unmanageds, s_x11UnmanagedId);
 }

@@ -49,7 +49,9 @@ bool handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t* e
     }
 
     // Being here means some other X window has claimed the selection.
-    do_handle_xfixes_notify(sel, event);
+
+    // TODO(romangg): Use C++20 require on the member function and otherwise call the free function.
+    sel->do_handle_xfixes_notify(event);
     return true;
 }
 
@@ -62,7 +64,7 @@ void do_handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t
 
     sel->data.x11_source.reset();
 
-    auto const& client = sel->data.x11.space->active_client;
+    auto const& client = sel->data.core.space->active_client;
     if (!dynamic_cast<win::x11::window const*>(client)) {
         // Clipboard is only allowed to be acquired when Xwayland has focus
         // TODO(romangg): can we make this stronger (window id comparison)?
@@ -76,21 +78,14 @@ void do_handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t
 
     if (auto const& source = sel->data.x11_source) {
         /* Gets X11 targets, will lead to a selection request event for the new owner. */
-        xcb_convert_selection(source->x11.connection,
+        xcb_convert_selection(source->core.x11.connection,
                               sel->data.requestor_window,
                               sel->data.atom,
-                              sel->data.x11.space->atoms->targets,
-                              sel->data.x11.space->atoms->wl_selection,
+                              sel->data.core.space->atoms->targets,
+                              sel->data.core.space->atoms->wl_selection,
                               source->timestamp);
-        xcb_flush(source->x11.connection);
+        xcb_flush(source->core.x11.connection);
     }
-}
-
-template<typename Selection>
-bool handle_client_message([[maybe_unused]] Selection* sel,
-                           [[maybe_unused]] xcb_client_message_event_t* event)
-{
-    return false;
 }
 
 template<typename Selection>
@@ -112,7 +107,8 @@ bool filter_event(Selection* sel, xcb_generic_event_t* event)
         return handle_selection_request(sel,
                                         reinterpret_cast<xcb_selection_request_event_t*>(event));
     case XCB_CLIENT_MESSAGE:
-        return handle_client_message(sel, reinterpret_cast<xcb_client_message_event_t*>(event));
+        // TODO(romangg): Use C++20 require on the member function.
+        return sel->handle_client_message(reinterpret_cast<xcb_client_message_event_t*>(event));
     default:
         return false;
     }
@@ -125,10 +121,10 @@ bool handle_selection_request(Selection* sel, xcb_selection_request_event_t* eve
         return false;
     }
 
-    if (!dynamic_cast<win::x11::window*>(sel->data.x11.space->active_client)) {
+    if (!dynamic_cast<win::x11::window*>(sel->data.core.space->active_client)) {
         // Receiving Wayland selection not allowed when no Xwayland surface active
         // filter the event, but don't act upon it
-        send_selection_notify(sel->data.x11.connection, event, false);
+        send_selection_notify(sel->data.core.x11.connection, event, false);
         return true;
     }
 
@@ -136,7 +132,7 @@ bool handle_selection_request(Selection* sel, xcb_selection_request_event_t* eve
         if (event->time < sel->data.timestamp) {
             // cancel earlier attempts at receiving a selection
             // TODO: is this for sure without problems?
-            send_selection_notify(sel->data.x11.connection, event, false);
+            send_selection_notify(sel->data.core.x11.connection, event, false);
             return true;
         }
         return false;

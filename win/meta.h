@@ -27,7 +27,7 @@ QString caption(Win* win)
         return win->remnant->data.caption;
     }
     QString cap = win->caption.normal + win->caption.suffix;
-    if (win->control->unresponsive()) {
+    if (win->control && win->control->unresponsive()) {
         cap += QLatin1String(" ");
         cap += i18nc("Application is not responding, appended to window title", "(Not Responding)");
     }

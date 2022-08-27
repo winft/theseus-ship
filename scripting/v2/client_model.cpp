@@ -12,10 +12,10 @@
 
 #include "base/wayland/server.h"
 #include "config-kwin.h"
-#include "toplevel.h"
 #include "win/singleton_interface.h"
 #include "win/space.h"
 #include "win/virtual_desktops.h"
+#include "win/window_qobject.h"
 
 #include "win/meta.h"
 #include "win/net.h"
@@ -65,8 +65,8 @@ void client_level::setupClientConnections(window* client)
     auto check = [this, client] { checkClient(client); };
     connect(client, &window::desktopChanged, this, check);
     connect(client, &window::screenChanged, this, check);
-    connect(client->client()->qobject.get(), &win::window_qobject::windowHidden, this, check);
-    connect(client->client()->qobject.get(), &win::window_qobject::windowShown, this, check);
+    connect(client->get_window_qobject(), &win::window_qobject::windowHidden, this, check);
+    connect(client->get_window_qobject(), &win::window_qobject::windowShown, this, check);
 }
 
 void client_level::checkClient(window* client)
@@ -123,7 +123,7 @@ bool client_level::exclude(window* client) const
         }
     }
     if (exclusions & client_model::OtherDesktopsExclusion) {
-        if (!client->client()->isOnCurrentDesktop()) {
+        if (!client->isOnCurrentDesktop()) {
             return true;
         }
     }
@@ -146,7 +146,7 @@ bool client_level::shouldAdd(window* client) const
         return true;
     }
     if (restrictions() & client_model::VirtualDesktopRestriction) {
-        if (!client->client()->isOnDesktop(virtualDesktop())) {
+        if (!client->isOnDesktop(virtualDesktop())) {
             return false;
         }
     }

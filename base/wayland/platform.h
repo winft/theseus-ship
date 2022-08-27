@@ -11,6 +11,7 @@
 #include "input/wayland/platform.h"
 #include "utils/algorithm.h"
 #include "win/wayland/space.h"
+#include "xwl/xwayland.h"
 
 #include <cassert>
 #include <memory>
@@ -61,6 +62,7 @@ public:
 
     std::unique_ptr<input::wayland::platform> input;
     std::unique_ptr<win::wayland::space<platform>> space;
+    std::unique_ptr<xwl::xwayland<win::wayland::space<platform>>> xwayland;
 };
 
 }

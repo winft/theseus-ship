@@ -23,7 +23,7 @@ static void create_osd(win::space& space)
     space.osd = std::make_unique<osd_notification<input::redirect>>(space.input.get());
 
     space.osd->m_config = kwinApp()->config();
-    space.osd->m_qmlEngine = space.scripting->qmlEngine();
+    space.osd->m_qmlEngine = space.scripting->qml_engine;
 }
 
 static osd_notification<input::redirect>* get_osd(win::space& space)

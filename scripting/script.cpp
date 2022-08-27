@@ -17,9 +17,6 @@
 #include "window.h"
 
 #include "base/options.h"
-#include "input/platform.h"
-#include "win/screen_edges.h"
-#include "win/space.h"
 
 #include <KConfigGroup>
 #include <KGlobalAccel>
@@ -92,7 +89,7 @@ void abstract_script::stop()
 script::script(int id,
                QString scriptName,
                QString pluginName,
-               scripting::platform& platform,
+               scripting::platform_wrap& platform,
                QObject* parent)
     : abstract_script(id, scriptName, pluginName, parent)
     , m_engine(new QJSEngine(this))
@@ -115,7 +112,7 @@ script::script(int id,
 script::~script()
 {
     for (auto& [border, id] : reserved_borders) {
-        platform.space.edges->unreserve(border, id);
+        platform.unreserve(border, id);
     }
 }
 
@@ -360,7 +357,7 @@ bool script::registerShortcut(const QString& objectName,
 
     const QKeySequence shortcut = keySequence;
     KGlobalAccel::self()->setShortcut(action, {shortcut});
-    platform.space.input->platform.registerShortcut(shortcut, action);
+    platform.register_shortcut(shortcut, action);
 
     connect(action, &QAction::triggered, this, [this, action, callback]() {
         QJSValue(callback).call({m_engine->toScriptValue(action)});
@@ -379,8 +376,7 @@ bool script::registerScreenEdge(int edge, const QJSValue& callback)
     QJSValueList& callbacks = m_screenEdgeCallbacks[edge];
     if (callbacks.isEmpty()) {
         auto border = static_cast<ElectricBorder>(edge);
-        auto id = platform.space.edges->reserve(
-            border, [this](auto eb) { return slotBorderActivated(eb); });
+        auto id = platform.reserve(border, [this](auto eb) { return slotBorderActivated(eb); });
         reserved_borders.insert({border, id});
     }
 
@@ -398,7 +394,7 @@ bool script::unregisterScreenEdge(int edge)
 
     auto border = static_cast<ElectricBorder>(edge);
     if (auto it = reserved_borders.find(border); it != reserved_borders.end()) {
-        platform.space.edges->unreserve(border, it->second);
+        platform.unreserve(border, it->second);
         reserved_borders.erase(it);
     }
 
@@ -417,7 +413,7 @@ bool script::registerTouchScreenEdge(int edge, const QJSValue& callback)
     }
 
     QAction* action = new QAction(this);
-    platform.space.edges->reserveTouch(ElectricBorder(edge), action);
+    platform.reserve_touch(ElectricBorder(edge), action);
     m_touchScreenEdgeCallbacks.insert(edge, action);
 
     connect(action, &QAction::triggered, this, [callback]() { QJSValue(callback).call(); });
@@ -543,11 +539,11 @@ QAction* script::createMenu(const QString& title, const QJSValue& items, QMenu* 
 declarative_script::declarative_script(int id,
                                        QString scriptName,
                                        QString pluginName,
-                                       scripting::platform& platform,
+                                       scripting::platform_wrap& platform,
                                        QObject* parent)
     : abstract_script(id, scriptName, pluginName, parent)
-    , m_context(new QQmlContext(platform.declarativeScriptSharedContext(), this))
-    , m_component(new QQmlComponent(platform.qmlEngine(), this))
+    , m_context(new QQmlContext(platform.declarative_script_shared_context, this))
+    , m_component(new QQmlComponent(platform.qml_engine, this))
 {
     m_context->setContextProperty(QStringLiteral("KWin"),
                                   new js_engine_global_methods_wrapper(platform, this));

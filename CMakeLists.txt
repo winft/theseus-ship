@@ -393,6 +393,7 @@ set(kwin_SRCS
     render/post/night_color_manager.cpp
     render/post/suncalc.cpp
     debug/console/console.cpp
+    debug/console/window.cpp
     debug/perf/ftrace.cpp
     input/device_redirect.cpp
     input/keyboard.cpp
@@ -471,6 +472,7 @@ set(kwin_SRCS
     win/internal_window.cpp
     win/osd_notification.cpp
     win/osd.cpp
+    win/property_window.cpp
     win/rules/book.cpp
     win/rules/book_settings.cpp
     win/rules/ruling.cpp
@@ -493,7 +495,6 @@ set(kwin_SRCS
     win/x11/screen_edges_filter.cpp
     win/x11/sync_alarm_filter.cpp
     win/x11/window.cpp
-    xwl/xwayland_interface.cpp
 )
 
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
@@ -737,31 +738,15 @@ install(TARGETS kwin_x11 ${INSTALL_TARGETS_DEFAULT_ARGS})
 install(TARGETS kwin_killer_helper DESTINATION ${KDE_INSTALL_LIBEXECDIR})
 
 set(kwin_XWAYLAND_SRCS
-   xwl/clipboard.cpp
-   xwl/data_bridge.cpp
-   xwl/dnd.cpp
-   xwl/drag.cpp
-   xwl/drag_wl.cpp
-   xwl/drag_x.cpp
-   xwl/primary_selection.cpp
    xwl/sources_ext.cpp
    xwl/transfer.cpp
-   xwl/xwayland.cpp
 
    # These headers need to be compiled for the helper QObjects they contain.
+   xwl/drag.h
    xwl/selection_data.h
    xwl/sources.h
-)
-
-ecm_qt_declare_logging_category(kwin_XWAYLAND_SRCS
-    HEADER
-        xwayland_logging.h
-    IDENTIFIER
-        KWIN_XWL
-    CATEGORY_NAME
-        kwin_xwl
-    DEFAULT_SEVERITY
-        Critical
+   xwl/wl_visit.h
+   xwl/x11_visit.h
 )
 
 add_subdirectory(plugins)
