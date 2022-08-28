@@ -23,11 +23,8 @@
 #include "base/logging.h"
 #include "win/input.h"
 #include "win/layers.h"
+#include "win/rules/find.h"
 #include "win/session.h"
-
-#if KWIN_BUILD_TABBOX
-#include "win/tabbox/tabbox.h"
-#endif
 
 #include <KStartupInfo>
 
@@ -180,8 +177,8 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
     QObject::connect(win->qobject.get(),
                      &Win::qobject_t::fullScreenChanged,
-                     space.edges.get(),
-                     &screen_edger::checkBlocking);
+                     space.edges->qobject.get(),
+                     &screen_edger_qobject::checkBlocking);
 
     // From this place on, manage() must not return false
     win->control = std::make_unique<typename Win::control_t>(win);
@@ -217,7 +214,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
                          if (win->xcb_windows.input.is_valid()) {
                              win->xcb_windows.input.define_cursor(nativeCursor);
                          }
-                         if (win->control->move_resize().enabled) {
+                         if (win->control->move_resize.enabled) {
                              // changing window attributes doesn't change cursor if there's pointer
                              // grab active
                              xcb_change_active_pointer_grab(
@@ -275,13 +272,13 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     // and also relies on rules already existing
     win->caption.normal = read_name(win);
 
-    setup_rules(win, false);
+    rules::setup_rules(win, false);
     set_caption(win, win->caption.normal, true);
 
     QObject::connect(win->qobject.get(),
                      &Win::qobject_t::windowClassChanged,
                      win->qobject.get(),
-                     [win] { evaluate_rules(win); });
+                     [win] { rules::evaluate_rules(win); });
 
     if (base::x11::xcb::extensions::self()->is_shape_available()) {
         xcb_shape_select_input(connection(), win->xcb_window, true);
@@ -304,7 +301,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         desktopFileName = win->info->gtkApplicationId();
     }
     set_desktop_file_name(win,
-                          win->control->rules().checkDesktopFile(desktopFileName, true).toUtf8());
+                          win->control->rules.checkDesktopFile(desktopFileName, true).toUtf8());
     get_icons(win);
     QObject::connect(win->qobject.get(),
                      &window_qobject::desktopFileNameChanged,
@@ -344,11 +341,11 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         win->user_no_border = session->noBorder;
     }
 
-    set_shortcut(
-        win, win->control->rules().checkShortcut(session ? session->shortcut : QString(), true));
+    set_shortcut(win,
+                 win->control->rules.checkShortcut(session ? session->shortcut : QString(), true));
 
-    init_minimize = win->control->rules().checkMinimize(init_minimize, !isMapped);
-    win->user_no_border = win->control->rules().checkNoBorder(win->user_no_border, !isMapped);
+    init_minimize = win->control->rules.checkMinimize(init_minimize, !isMapped);
+    win->user_no_border = win->control->rules.checkNoBorder(win->user_no_border, !isMapped);
 
     // We setup compositing already here so a desktop presence change can access effects.
     win->setupCompositing();
@@ -368,7 +365,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
             auto leads = win->transient()->leads();
             bool on_current = false;
             bool on_all = false;
-            Toplevel* maincl = nullptr;
+            typename Space::window_t* maincl = nullptr;
 
             // This is slightly duplicated from win::place_on_main_window()
             for (auto const& lead : leads) {
@@ -412,7 +409,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         desk = is_desktop(win) ? static_cast<int>(NET::OnAllDesktops)
                                : space.virtual_desktop_manager->current();
     }
-    desk = win->control->rules().checkDesktop(desk, !isMapped);
+    desk = win->control->rules.checkDesktop(desk, !isMapped);
 
     if (desk != NET::OnAllDesktops) {
         // Do range check
@@ -522,7 +519,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
             maxmode = maxmode | maximize_mode::horizontal;
         }
 
-        auto forced_maxmode = win->control->rules().checkMaximize(maxmode, !isMapped);
+        auto forced_maxmode = win->control->rules.checkMaximize(maxmode, !isMapped);
 
         // Either hints were set to maximize, or is forced to maximize,
         // or is forced to non-maximize and hints were set to maximize
@@ -533,18 +530,18 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         // Read other initial states
         set_keep_above(
             win,
-            win->control->rules().checkKeepAbove(win->info->state() & NET::KeepAbove, !isMapped));
+            win->control->rules.checkKeepAbove(win->info->state() & NET::KeepAbove, !isMapped));
         set_keep_below(
             win,
-            win->control->rules().checkKeepBelow(win->info->state() & NET::KeepBelow, !isMapped));
-        set_original_skip_taskbar(win,
-                                  win->control->rules().checkSkipTaskbar(
-                                      win->info->state() & NET::SkipTaskbar, !isMapped));
+            win->control->rules.checkKeepBelow(win->info->state() & NET::KeepBelow, !isMapped));
+        set_original_skip_taskbar(
+            win,
+            win->control->rules.checkSkipTaskbar(win->info->state() & NET::SkipTaskbar, !isMapped));
         set_skip_pager(
             win,
-            win->control->rules().checkSkipPager(win->info->state() & NET::SkipPager, !isMapped));
+            win->control->rules.checkSkipPager(win->info->state() & NET::SkipPager, !isMapped));
         set_skip_switcher(win,
-                          win->control->rules().checkSkipSwitcher(
+                          win->control->rules.checkSkipSwitcher(
                               win->info->state() & NET::SkipSwitcher, !isMapped));
 
         if (win->info->state() & NET::DemandsAttention) {
@@ -555,7 +552,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         }
 
         win->setFullScreen(
-            win->control->rules().checkFullScreen(win->info->state() & NET::FullScreen, !isMapped),
+            win->control->rules.checkFullScreen(win->info->state() & NET::FullScreen, !isMapped),
             false);
     }
 
@@ -630,7 +627,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
     if (decoration(win)) {
         // Sync the final size.
-        win->control->deco().client->update_size();
+        win->control->deco.client->update_size();
     }
 
     if (win->user_time == XCB_TIME_CURRENT_TIME || win->user_time == -1U) {
@@ -648,7 +645,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     win->control->discard_temporary_rules();
 
     // Remove ApplyNow rules
-    space.rule_book->discardUsed(win, false);
+    rules::discard_used_rules(*space.rule_book, *win, false);
 
     // Was blocked while !control.
     win->updateWindowRules(rules::type::all);
@@ -706,7 +703,7 @@ xcb_timestamp_t read_user_time_map_timestamp(Win* win,
         if (act != nullptr
             && !belong_to_same_application(act, win, same_client_check::relaxed_for_active)) {
             bool first_window = true;
-            auto sameApplicationActiveHackPredicate = [win](Toplevel const* cl) {
+            auto sameApplicationActiveHackPredicate = [win](auto const* cl) {
                 // ignore already existing splashes, toolbars, utilities and menus,
                 // as the app may show those before the main window
                 auto x11_client = dynamic_cast<Win const*>(cl);
@@ -746,7 +743,7 @@ xcb_timestamp_t read_user_time_map_timestamp(Win* win,
             }
             // don't refuse if focus stealing prevention is turned off
             if (!first_window
-                && enum_index(win->control->rules().checkFSP(
+                && enum_index(win->control->rules.checkFSP(
                        kwinApp()->options->qobject->focusStealingPreventionLevel()))
                     > 0) {
                 qCDebug(KWIN_CORE) << "User timestamp, already exists:" << 0;

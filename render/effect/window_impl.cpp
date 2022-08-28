@@ -200,7 +200,7 @@ CLIENT_HELPER_WITH_DELETED_WIN(QVector<uint>, desktops, x11_desktop_ids, QVector
     rettype effects_window_impl::prototype() const                                                 \
     {                                                                                              \
         if (toplevel->control) {                                                                   \
-            return toplevel->control->propertyname();                                              \
+            return toplevel->control->propertyname;                                                \
         }                                                                                          \
         if (auto& remnant = toplevel->remnant) {                                                   \
             return remnant->data.propertyname;                                                     \
@@ -323,12 +323,12 @@ CLIENT_HELPER_WIN(bool, decorationHasAlpha, decoration_has_alpha, false)
     rettype effects_window_impl::prototype() const                                                 \
     {                                                                                              \
         if (toplevel->control) {                                                                   \
-            return toplevel->control->function();                                                  \
+            return toplevel->control->function;                                                    \
         }                                                                                          \
         return default_value;                                                                      \
     }
 
-CLIENT_HELPER_WIN_CONTROL(bool, isSkipSwitcher, skip_switcher, false)
+CLIENT_HELPER_WIN_CONTROL(bool, isSkipSwitcher, skip_switcher(), false)
 CLIENT_HELPER_WIN_CONTROL(QIcon, icon, icon, QIcon())
 CLIENT_HELPER_WIN_CONTROL(bool, isUnresponsive, unresponsive, false)
 

@@ -1,15 +1,19 @@
 /*
-    SPDX-FileCopyrightText: 2020 Roman Gilg <subdiff@gmail.com>
+    SPDX-FileCopyrightText: 2022 Roman Gilg <subdiff@gmail.com>
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #pragma once
 
 #include "appmenu.h"
+#include "config-kwin.h"
+#include "geo.h"
+#include "stacking.h"
 #include "structs.h"
 #include "types.h"
+#include "virtual_desktops.h"
 
-#include "kwin_export.h"
+#include "main.h"
 #include "rules/window.h"
 #include "scripting/window.h"
 
@@ -19,184 +23,246 @@
 
 #include <memory>
 
-namespace Wrapland
-{
-namespace Server
+namespace Wrapland::Server
 {
 class PlasmaWindow;
 }
-}
 
-class QTimer;
-
-namespace KWin
-{
-class Toplevel;
-
-namespace win
+namespace KWin::win
 {
 
-namespace deco
-{
-class palette;
-}
-
+template<typename Window>
 class tabbox_client_impl;
 
-class KWIN_EXPORT control
+template<typename Window>
+class control
 {
 public:
-    explicit control(Toplevel* win);
-    virtual ~control();
+    explicit control(Window* win)
+        : m_win{win}
+    {
+    }
 
-    void setup_tabbox();
+    virtual ~control()
+    {
+        assert(deco.decoration == nullptr);
+    }
+
+    void setup_tabbox()
+    {
+        assert(!m_tabbox);
+#if KWIN_BUILD_TABBOX
+        m_tabbox = std::make_shared<win::tabbox_client_impl<Window>>(m_win);
+#endif
+    }
 
     virtual void set_desktops(QVector<virtual_desktop*> desktops) = 0;
 
-    bool skip_pager() const;
-    virtual void set_skip_pager(bool set);
+    bool skip_pager() const
+    {
+        return m_skip_pager;
+    }
 
-    bool skip_switcher() const;
-    virtual void set_skip_switcher(bool set);
+    virtual void set_skip_pager(bool set)
+    {
+        m_skip_pager = set;
+    }
 
-    bool skip_taskbar() const;
-    virtual void set_skip_taskbar(bool set);
+    bool skip_switcher() const
+    {
+        return m_skip_switcher;
+    }
 
-    bool original_skip_taskbar() const;
-    void set_original_skip_taskbar(bool set);
+    virtual void set_skip_switcher(bool set)
+    {
+        m_skip_switcher = set;
+    }
 
-    std::weak_ptr<win::tabbox_client_impl> tabbox() const;
+    bool skip_taskbar() const
+    {
+        return m_skip_taskbar;
+    }
 
-    bool first_in_tabbox() const;
-    void set_first_in_tabbox(bool is_first);
+    virtual void set_skip_taskbar(bool set)
+    {
+        m_skip_taskbar = set;
+    }
 
-    QByteArray desktop_file_name() const;
-    void set_desktop_file_name(QByteArray const& name);
+    std::weak_ptr<win::tabbox_client_impl<Window>> tabbox() const
+    {
+        return m_tabbox;
+    }
 
-    QIcon const& icon() const;
-    void set_icon(QIcon const& icon);
+    bool has_application_menu() const
+    {
+        return m_win->space.appmenu->applicationMenuEnabled() && !appmenu.address.empty();
+    }
 
-    bool has_application_menu() const;
+    void set_application_menu_active(bool active)
+    {
+        if (appmenu.active == active) {
+            return;
+        }
+        appmenu.active = active;
+        Q_EMIT m_win->qobject->applicationMenuActiveChanged(active);
+    }
 
-    bool application_menu_active() const;
-    void set_application_menu_active(bool active);
+    void update_application_menu(appmenu_address const& address)
+    {
+        if (address == appmenu.address) {
+            return;
+        }
 
-    win::appmenu application_menu() const;
+        auto const had_menu = has_application_menu();
 
-    void update_application_menu(appmenu_address const& address);
+        appmenu.address = address;
+        Q_EMIT m_win->qobject->applicationMenuChanged();
 
-    QKeySequence const& shortcut() const;
-    void set_shortcut(QString const& shortcut);
+        auto const has_menu = has_application_menu();
 
-    bool active() const;
-    void set_active(bool active);
+        if (had_menu != has_menu) {
+            Q_EMIT m_win->qobject->hasApplicationMenuChanged(has_menu);
+        }
+    }
 
-    bool keep_above() const;
-    void set_keep_above(bool keep);
+    void set_shortcut(QString const& shortcut)
+    {
+        this->shortcut = QKeySequence::fromString(shortcut);
+    }
 
-    bool keep_below() const;
-    void set_keep_below(bool keep);
+    void set_unresponsive(bool unresponsive)
+    {
+        if (this->unresponsive == unresponsive) {
+            return;
+        }
+        this->unresponsive = unresponsive;
+        Q_EMIT m_win->qobject->unresponsiveChanged(unresponsive);
+        Q_EMIT m_win->qobject->captionChanged();
+    }
 
-    void set_demands_attention(bool set);
-    bool demands_attention() const;
+    void start_auto_raise()
+    {
+        delete m_auto_raise_timer;
+        m_auto_raise_timer = new QTimer(m_win->qobject.get());
+        QObject::connect(m_auto_raise_timer, &QTimer::timeout, m_win->qobject.get(), [this] {
+            auto_raise(m_win);
+        });
+        m_auto_raise_timer->setSingleShot(true);
+        m_auto_raise_timer->start(kwinApp()->options->qobject->autoRaiseInterval());
+    }
 
-    bool unresponsive() const;
-    void set_unresponsive(bool unresponsive);
+    void cancel_auto_raise()
+    {
+        delete m_auto_raise_timer;
+        m_auto_raise_timer = nullptr;
+    }
 
-    void start_auto_raise();
-    void cancel_auto_raise();
+    virtual void update_mouse_grab()
+    {
+    }
 
-    bool minimized() const;
-    void set_minimized(bool minimize);
+    virtual void destroy_plasma_wayland_integration()
+    {
+    }
 
-    virtual void update_mouse_grab();
+    void update_have_resize_effect()
+    {
+        auto& effects = m_win->space.render.effects;
+        have_resize_effect = effects && effects->provides(Effect::Resize);
+    }
 
-    void destroy_plasma_wayland_integration();
+    virtual QSize adjusted_frame_size(QSize const& frame_size, size_mode /*mode*/)
+    {
+        auto const border_size = win::frame_size(m_win);
 
-    bool have_resize_effect() const;
-    void update_have_resize_effect();
-    void reset_have_resize_effect();
+        auto const min_size = m_win->minSize() + border_size;
+        auto max_size = m_win->maxSize();
 
-    virtual QSize adjusted_frame_size(QSize const& frame_size, size_mode mode);
+        // Maximum size need to be checked for overflow.
+        if (INT_MAX - border_size.width() >= max_size.width()) {
+            max_size.setWidth(max_size.width() + border_size.width());
+        }
+        if (INT_MAX - border_size.height() >= max_size.height()) {
+            max_size.setWidth(max_size.height() + border_size.height());
+        }
 
-    quicktiles electric() const;
-    void set_electric(quicktiles tiles);
-    bool electric_maximizing() const;
-    void set_electric_maximizing(bool maximizing);
+        return frame_size.expandedTo(min_size).boundedTo(max_size);
+    }
 
-    QTimer* electric_maximizing_timer() const;
-    void set_electric_maximizing_timer(QTimer* timer);
+    virtual bool can_fullscreen() const
+    {
+        return false;
+    }
 
-    quicktiles quicktiling() const;
-    void set_quicktiling(quicktiles tiles);
+    virtual void destroy_decoration()
+    {
+        QObject::disconnect(deco.client_destroy);
+        delete deco.decoration;
+        deco.decoration = nullptr;
 
-    virtual bool can_fullscreen() const;
-    bool fullscreen() const;
-    void set_fullscreen(bool fullscreen);
+        delete deco.window;
+        deco.window = nullptr;
+    }
 
-    win::move_resize_op& move_resize();
+    void setup_color_scheme()
+    {
+        palette.color_scheme = QStringLiteral("kdeglobals");
+    }
 
-    win::deco_impl& deco();
-    virtual void destroy_decoration();
+    void remove_rule(rules::ruling* rule)
+    {
+        rules.remove(rule);
+    }
 
-    win::palette& palette();
-    void setup_color_scheme();
-
-    rules::window& rules();
-    rules::window const& rules() const;
-    void set_rules(rules::window const& rules);
-
-    void remove_rule(rules::ruling* r);
-    void discard_temporary_rules();
+    void discard_temporary_rules()
+    {
+        rules.discardTemporary();
+    }
 
     std::unique_ptr<scripting::window_impl> scripting;
     Wrapland::Server::PlasmaWindow* plasma_wayland_integration{nullptr};
+
+    bool active{false};
+    bool keep_above{false};
+    bool keep_below{false};
+    bool demands_attention{false};
+    bool unresponsive{false};
+    bool original_skip_taskbar{false};
+
+    win::appmenu appmenu;
+    QKeySequence shortcut;
+    QIcon icon;
+
+    quicktiles quicktiling{quicktiles::none};
+    quicktiles electric{quicktiles::none};
+    bool electric_maximizing{false};
+    QTimer* electric_maximizing_delay{nullptr};
+
+    bool have_resize_effect{false};
+
+    bool first_in_tabbox{false};
+    QByteArray desktop_file_name;
+
+    bool fullscreen{false};
+    bool minimized{false};
+    win::move_resize_op move_resize;
+    win::deco_impl<Window> deco;
+    win::palette palette;
+    rules::window rules;
 
 private:
     void minimize(bool avoid_animation);
     void unminimize(bool avoid_animation);
 
     bool m_skip_taskbar{false};
-    bool m_original_skip_taskbar{false};
     bool m_skip_pager{false};
     bool m_skip_switcher{false};
 
-    std::shared_ptr<win::tabbox_client_impl> m_tabbox;
-    bool m_first_in_tabbox{false};
-
-    QByteArray m_desktop_file_name;
-    QIcon m_icon;
-
-    win::appmenu appmenu;
-    QKeySequence m_shortcut;
-
-    bool m_active{false};
-    bool m_keep_above{false};
-    bool m_keep_below{false};
-    bool m_demands_attention{false};
-    bool m_unresponsive{false};
+    std::shared_ptr<win::tabbox_client_impl<Window>> m_tabbox;
 
     QTimer* m_auto_raise_timer{nullptr};
-    bool m_minimized{false};
 
-    bool m_have_resize_effect{false};
-
-    quicktiles m_quicktiling{quicktiles::none};
-    quicktiles m_electric{quicktiles::none};
-    bool m_electric_maximizing{false};
-    QTimer* m_electric_maximizing_delay{nullptr};
-
-    bool m_fullscreen{false};
-
-    win::move_resize_op m_move_resize;
-
-    win::deco_impl m_deco;
-    win::palette m_palette;
-
-    rules::window m_rules;
-
-    Toplevel* m_win;
+    Window* m_win;
 };
 
-}
 }

@@ -8,7 +8,6 @@
 #pragma once
 
 #include "desktop_space.h"
-#include "netinfo.h"
 #include "screen_edge.h"
 #include "screen_edges_filter.h"
 #include "space_areas.h"
@@ -51,7 +50,7 @@ public:
         }
 
         atoms = std::make_unique<base::x11::atoms>(connection());
-        edges = std::make_unique<win::screen_edger>(*this);
+        edges = std::make_unique<edger_t>(*this);
         dbus = std::make_unique<base::dbus::kwin_impl<win::space, input::platform>>(
             *this, base.input.get());
 
@@ -98,7 +97,7 @@ public:
 
     void resize(QSize const& size) override
     {
-        handle_desktop_resize(size);
+        handle_desktop_resize(root_info.get(), size);
         win::handle_desktop_resize(*this, size);
     }
 
@@ -107,7 +106,7 @@ public:
         x11::popagate_desktop_change(*this, desktop);
     }
 
-    Toplevel* findInternal(QWindow* window) const override
+    window_t* findInternal(QWindow* window) const override
     {
         if (!window) {
             return nullptr;
@@ -115,12 +114,12 @@ public:
         return find_unmanaged<win::x11::window>(*this, window->winId());
     }
 
-    win::screen_edge* create_screen_edge(win::screen_edger& edger) override
+    std::unique_ptr<win::screen_edge<edger_t>> create_screen_edge(edger_t& edger) override
     {
         if (!edges_filter) {
-            edges_filter = std::make_unique<screen_edges_filter>(*this);
+            edges_filter = std::make_unique<screen_edges_filter<space<Base>>>(*this);
         }
-        return new screen_edge(&edger, *atoms);
+        return std::make_unique<x11::screen_edge<edger_t>>(&edger, *atoms);
     }
 
     void update_space_area_from_windows(QRect const& desktop_area,
@@ -153,12 +152,12 @@ private:
 template<typename Space>
 void stack_screen_edges_under_override_redirect(Space* space)
 {
-    if (!rootInfo()) {
+    if (!space->root_info) {
         return;
     }
 
     std::vector<xcb_window_t> windows;
-    windows.push_back(rootInfo()->supportWindow());
+    windows.push_back(space->root_info->supportWindow());
 
     auto const edges_wins = space->edges->windows();
     windows.insert(windows.end(), edges_wins.begin(), edges_wins.end());

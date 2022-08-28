@@ -327,9 +327,9 @@ void process_layer_surface_commit(Win* win)
     win->window_type = layer_surface_type(win);
 
     if (win->layer_surface->layer() == Wrapland::Server::LayerSurfaceV1::Layer::Bottom) {
-        win->control->set_keep_below(true);
+        win->control->keep_below = true;
     } else {
-        win->control->set_keep_below(false);
+        win->control->keep_below = false;
     }
 
     if (win->window_type == NET::Desktop || win->window_type == NET::OnScreenDisplay

@@ -6,7 +6,6 @@
 #pragma once
 
 #include "scene.h"
-#include "setup.h"
 #include "subsurface.h"
 #include "surface.h"
 #include "xdg_shell.h"
@@ -20,6 +19,7 @@
 #include "win/geo_block.h"
 #include "win/maximize.h"
 #include "win/placement.h"
+#include "win/rules/find.h"
 #include "win/scene.h"
 #include "win/window_setup_base.h"
 
@@ -46,6 +46,7 @@ class window : public Toplevel
 {
 public:
     constexpr static bool is_toplevel{false};
+    using window_t = Toplevel;
 
     enum class ping_reason {
         close = 0,
@@ -195,7 +196,7 @@ public:
                 return false;
             }
         }
-        if (control && control->minimized()) {
+        if (control && control->minimized) {
             return false;
         }
         return surface->state().buffer.get();
@@ -216,12 +217,12 @@ public:
 
     QSize minSize() const override
     {
-        return control->rules().checkMinSize(toplevel->minimumSize());
+        return control->rules.checkMinSize(toplevel->minimumSize());
     }
 
     QSize maxSize() const override
     {
-        return control->rules().checkMaxSize(toplevel->maximumSize());
+        return control->rules.checkMaxSize(toplevel->maximumSize());
     }
 
     /// Ask client to provide buffer adapted to new geometry @param rect (in global coordinates).
@@ -247,10 +248,10 @@ public:
             auto parent = transient()->lead();
             if (parent) {
                 auto const top_lead = lead_of_annexed_transient(this);
-                auto const bounds = space_window_area(
-                    space,
-                    top_lead->control->fullscreen() ? FullScreenArea : PlacementArea,
-                    top_lead);
+                auto const bounds = space_window_area(space,
+                                                      top_lead->control->fullscreen ? FullScreenArea
+                                                                                    : PlacementArea,
+                                                      top_lead);
 
                 serial = popup->configure(
                     get_xdg_shell_popup_placement(this, bounds).translated(-top_lead->pos()));
@@ -275,7 +276,7 @@ public:
         auto frame_geo = frameGeometry();
         auto position = pos();
         auto max_mode = this->max_mode;
-        auto fullscreen = control ? control->fullscreen() : false;
+        auto fullscreen = control ? control->fullscreen : false;
 
         auto serial_match{false};
 
@@ -331,7 +332,7 @@ public:
             }
 
             auto const screen_bounds = space_window_area(
-                space, toplevel->control->fullscreen() ? FullScreenArea : PlacementArea, toplevel);
+                space, toplevel->control->fullscreen ? FullScreenArea : PlacementArea, toplevel);
 
             // Need to set that for get_xdg_shell_popup_placement(..) call.
             // TODO(romangg): make this less akward, i.e. if possible include it in the call.
@@ -355,7 +356,7 @@ public:
             // We must adjust frame geometry because configure events carry the maximum window
             // geometry size. A client with aspect ratio can attach a buffer with smaller size than
             // the one in a configure event.
-            auto& mov_res = control->move_resize();
+            auto& mov_res = control->move_resize;
 
             switch (mov_res.contact) {
             case position::top_left:
@@ -468,7 +469,7 @@ public:
         }
 
         if (control) {
-            if (control->move_resize().enabled) {
+            if (control->move_resize.enabled) {
                 leaveMoveResize();
             }
             control->destroy_plasma_wayland_integration();
@@ -577,7 +578,7 @@ public:
             return;
         }
 
-        set = control->rules().checkNoBorder(set);
+        set = control->rules.checkNoBorder(set);
         if (user_no_border == set) {
             return;
         }
@@ -590,7 +591,7 @@ public:
     void handle_update_no_border() override
     {
         auto no_border = geometry_update.max_mode == maximize_mode::full;
-        setNoBorder(control->rules().checkNoBorder(no_border));
+        setNoBorder(control->rules.checkNoBorder(no_border));
     }
 
     void updateDecoration(bool check_workspace_pos, bool force = false) override
@@ -615,8 +616,8 @@ public:
             control->destroy_decoration();
         } else {
             // Create decoration.
-            control->deco().window = new deco::window(this);
-            auto decoration = space.deco->createDecoration(control->deco().window);
+            control->deco.window = new deco::window<Toplevel>(this);
+            auto decoration = space.deco->createDecoration(control->deco.window);
             if (decoration) {
                 QMetaObject::invokeMethod(decoration, "update", Qt::QueuedConnection);
                 QObject::connect(decoration,
@@ -632,7 +633,7 @@ public:
                     });
             }
 
-            control->deco().decoration = decoration;
+            control->deco.decoration = decoration;
             auto const deco_size = QSize(left_border(this) + right_border(this),
                                          bottom_border(this) + top_border(this));
 
@@ -663,14 +664,14 @@ public:
     {
         assert(control);
 
-        if (control->rules().checkAcceptFocus(wantsInput())) {
+        if (control->rules.checkAcceptFocus(wantsInput())) {
             if (toplevel) {
                 ping(ping_reason::focus);
             }
             set_active(this, true);
         }
 
-        if (!control->keep_above() && !is_on_screen_display(this) && !belongsToDesktop()) {
+        if (!control->keep_above && !is_on_screen_display(this) && !belongsToDesktop()) {
             set_showing_desktop(space, false);
         }
     }
@@ -689,7 +690,7 @@ public:
             || xdg_deco->requestedMode() == Wrapland::Server::XdgDecoration::Mode::ClientSide) {
             return false;
         }
-        return !control->fullscreen();
+        return !control->fullscreen;
     }
 
     bool wantsInput() const override
@@ -700,7 +701,7 @@ public:
             return layer_surface->keyboard_interactivity()
                 == Wrapland::Server::LayerSurfaceV1::KeyboardInteractivity::OnDemand;
         }
-        return control->rules().checkAcceptFocus(acceptsFocus());
+        return control->rules.checkAcceptFocus(acceptsFocus());
     }
 
     bool dockWantsInput() const override
@@ -810,8 +811,8 @@ public:
             return false;
         }
 
-        return control->rules().checkMaximize(maximize_mode::restore) == maximize_mode::restore
-            && control->rules().checkMaximize(maximize_mode::full) == maximize_mode::full;
+        return control->rules.checkMaximize(maximize_mode::restore) == maximize_mode::restore
+            && control->rules.checkMaximize(maximize_mode::full) == maximize_mode::full;
     }
 
     bool isMinimizable() const override
@@ -822,7 +823,7 @@ public:
         if (layer_surface) {
             return false;
         }
-        if (!control->rules().checkMinimize(true)) {
+        if (!control->rules.checkMinimize(true)) {
             return false;
         }
         return (!plasma_shell_surface
@@ -841,7 +842,7 @@ public:
         if (geometry_update.fullscreen) {
             return false;
         }
-        if (control->rules().checkPosition(geo::invalid_point) != geo::invalid_point) {
+        if (control->rules.checkPosition(geo::invalid_point) != geo::invalid_point) {
             return false;
         }
         if (plasma_shell_surface) {
@@ -859,7 +860,7 @@ public:
         if (layer_surface) {
             return false;
         }
-        if (control->rules().checkPosition(geo::invalid_point) != geo::invalid_point) {
+        if (control->rules.checkPosition(geo::invalid_point) != geo::invalid_point) {
             return false;
         }
         if (plasma_shell_surface) {
@@ -880,7 +881,7 @@ public:
         if (geometry_update.fullscreen) {
             return false;
         }
-        if (control->rules().checkSize(QSize()).isValid()) {
+        if (control->rules.checkSize(QSize()).isValid()) {
             return false;
         }
         if (plasma_shell_surface) {
@@ -932,14 +933,14 @@ public:
 
     void doResizeSync() override
     {
-        configure_geometry(control->move_resize().geometry);
+        configure_geometry(control->move_resize.geometry);
     }
 
     bool belongsToSameApplication(Toplevel const* other,
                                   win::same_client_check checks) const override
     {
         if (flags(checks & win::same_client_check::allow_cross_process)) {
-            if (other->control->desktop_file_name() == control->desktop_file_name()) {
+            if (other->control->desktop_file_name == control->desktop_file_name) {
                 return true;
             }
         }
@@ -965,7 +966,7 @@ public:
     {
         assert(control);
 
-        if (!control->active()) {
+        if (!control->active) {
             return;
         }
         blocker block(space.stacking_order);
@@ -974,7 +975,7 @@ public:
 
     void doMinimize() override
     {
-        if (control->minimized()) {
+        if (control->minimized) {
             process_window_hidden(space, this);
         } else {
             Q_EMIT qobject->windowShown();
@@ -984,7 +985,7 @@ public:
 
     void setFrameGeometry(QRect const& rect) override
     {
-        auto const frame_geo = control ? control->rules().checkGeometry(rect) : rect;
+        auto const frame_geo = control ? control->rules.checkGeometry(rect) : rect;
 
         geometry_update.frame = frame_geo;
 
@@ -1086,9 +1087,9 @@ public:
         assert(control);
 
         if (palette) {
-            set_color_scheme(this, control->rules().checkDecoColor(palette->palette()));
+            set_color_scheme(this, control->rules.checkDecoColor(palette->palette()));
         } else {
-            set_color_scheme(this, control->rules().checkDecoColor(QString()));
+            set_color_scheme(this, control->rules.checkDecoColor(QString()));
         }
     }
 
@@ -1126,7 +1127,7 @@ public:
         auto const window_class = QByteArray(toplevel->appId().c_str());
         setResourceClass(resource_name, window_class);
         if (initialized && supportsWindowRules()) {
-            setup_rules(this, true);
+            rules::setup_rules(this, true);
             applyWindowRules();
         }
         set_desktop_file_name(this, window_class);
@@ -1242,9 +1243,9 @@ public:
 
     void do_set_fullscreen(bool full)
     {
-        full = control->rules().checkFullScreen(full);
+        full = control->rules.checkFullScreen(full);
 
-        auto const old_full = control->fullscreen();
+        auto const old_full = control->fullscreen;
         if (old_full == full) {
             return;
         }
@@ -1255,7 +1256,7 @@ public:
             space.focusMousePos = space.input->platform.cursor->pos();
         }
 
-        control->set_fullscreen(full);
+        control->fullscreen = full;
 
         if (full) {
             raise_window(&space, this);

@@ -104,7 +104,10 @@ scene::scene(render::compositor& compositor)
     QObject::connect(compositor.space->qobject.get(),
                      &win::space_qobject::remnant_created,
                      this,
-                     [this](auto remnant) { init_remnant(*remnant); });
+                     [this](auto win_id) {
+                         auto remnant = this->compositor.space->windows_map.at(win_id);
+                         init_remnant(*remnant);
+                     });
 }
 
 scene::~scene()
@@ -308,7 +311,7 @@ void scene::paintSimpleScreen(paint_type orig_mask, QRegion region)
         // TODO: do we care about unmanged windows here (maybe input windows?)
         if (window->isOpaque()) {
             if (toplevel->control) {
-                opaqueFullscreen = toplevel->control->fullscreen();
+                opaqueFullscreen = toplevel->control->fullscreen;
             }
             data.clip |= win::content_render_region(toplevel).translated(toplevel->pos()
                                                                          + window->bufferOffset());

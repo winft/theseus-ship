@@ -11,6 +11,7 @@
 #include "scene.h"
 #include "shadow.h"
 
+#include "win/deco/client_impl.h"
 #include "win/geo.h"
 #include "win/scene.h"
 #include "win/x11/window.h"
@@ -163,14 +164,15 @@ void window::renderWindowDecorations(QPainter* painter)
     }
 
     bool noBorder = true;
-    deco_renderer const* renderer = nullptr;
+    deco_render_data const* deco_data = nullptr;
     QRect dtr, dlr, drr, dbr;
 
     if (ctrl && !toplevel->noBorder()) {
         if (win::decoration(toplevel)) {
-            if (auto r = static_cast<deco_renderer*>(ctrl->deco().client->renderer())) {
+            if (auto r = static_cast<deco_renderer<win::deco::client_impl<Toplevel>>*>(
+                    ctrl->deco.client->renderer())) {
                 r->render();
-                renderer = r;
+                deco_data = static_cast<deco_render_data const*>(r->data.get());
             }
         }
         toplevel->layoutDecorationRects(dlr, dtr, drr, dbr);
@@ -178,16 +180,16 @@ void window::renderWindowDecorations(QPainter* painter)
     } else if (remnant && !remnant->data.no_border) {
         noBorder = false;
         remnant->data.layout_decoration_rects(dlr, dtr, drr, dbr);
-        renderer = static_cast<const deco_renderer*>(remnant->data.decoration_renderer.get());
+        deco_data = static_cast<deco_render_data const*>(remnant->data.deco_render.get());
     }
-    if (noBorder || !renderer) {
+    if (noBorder || !deco_data) {
         return;
     }
 
-    painter->drawImage(dtr, renderer->image(deco_renderer::DecorationPart::Top));
-    painter->drawImage(dlr, renderer->image(deco_renderer::DecorationPart::Left));
-    painter->drawImage(drr, renderer->image(deco_renderer::DecorationPart::Right));
-    painter->drawImage(dbr, renderer->image(deco_renderer::DecorationPart::Bottom));
+    painter->drawImage(dtr, deco_data->image(DecorationPart::Top));
+    painter->drawImage(dlr, deco_data->image(DecorationPart::Left));
+    painter->drawImage(drr, deco_data->image(DecorationPart::Right));
+    painter->drawImage(dbr, deco_data->image(DecorationPart::Bottom));
 }
 
 render::buffer* window::create_buffer()

@@ -8,7 +8,6 @@
 
 #include <kconfig.h>
 
-#ifndef KCMRULES
 #include "win/controlling.h"
 #include "win/geo_change.h"
 #include "win/input.h"
@@ -18,17 +17,17 @@
 #include "win/space.h"
 #include "win/stacking.h"
 #include "win/x11/client_machine.h"
-#endif
 
 #include "book.h"
 #include "book_settings.h"
 #include "rules_settings.h"
+#include "update.h"
 
 namespace KWin::win::rules
 {
 
-window::window(QVector<ruling*> const& r)
-    : rules(r)
+window::window(std::vector<ruling*> const& rules)
+    : rules{rules}
 {
 }
 
@@ -38,15 +37,14 @@ window::window()
 
 bool window::contains(ruling const* rule) const
 {
-    return rules.contains(const_cast<ruling*>(rule));
+    return KWin::contains(rules, const_cast<ruling*>(rule));
 }
 
 void window::remove(ruling* rule)
 {
-    rules.removeOne(rule);
+    remove_all(rules, rule);
 }
 
-#ifndef KCMRULES
 void window::discardTemporary()
 {
     auto it2 = rules.begin();
@@ -58,20 +56,6 @@ void window::discardTemporary()
         }
     }
     rules.erase(it2, rules.end());
-}
-
-void window::update(Toplevel* window, int selection)
-{
-    bool updated = false;
-    for (auto it = rules.constBegin(); it != rules.constEnd(); ++it) {
-        if ((*it)->update(window, selection)) {
-            // no short-circuiting here
-            updated = true;
-        }
-    }
-    if (updated) {
-        window->space.rule_book->requestDiskStorage();
-    }
 }
 
 QRect window::checkGeometry(QRect rect, bool init) const
@@ -253,21 +237,19 @@ maximize_mode window::checkMaximize(maximize_mode mode, bool init) const
 
 base::output const* window::checkScreen(base::output const* output, bool init) const
 {
-    if (rules.count() == 0) {
+    if (rules.size() == 0) {
         return output;
     }
 
     auto const& outputs = kwinApp()->get_base().get_outputs();
     int index = output ? base::get_output_index(outputs, *output) : 0;
 
-    for (auto it = rules.constBegin(); it != rules.constEnd(); ++it) {
-        if ((*it)->applyScreen(index, init))
+    for (auto&& rule : rules) {
+        if (rule->applyScreen(index, init))
             break;
     }
 
     return base::get_output(outputs, index);
 }
-
-#endif
 
 }

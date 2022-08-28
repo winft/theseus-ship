@@ -12,32 +12,11 @@
 #include "screen.h"
 
 #include "render/compositor.h"
-#include "rules/book.h"
 
 #include <KDecoration2/Decoration>
 
 namespace KWin::win
 {
-
-template<typename Win>
-void setup_rules(Win* win, bool ignore_temporary)
-{
-    // TODO(romangg): This disconnects all connections of captionChanged to the window itself.
-    //                There is only one so this works fine but it's not robustly specified.
-    //                Either reshuffle later or use explicit connection object.
-    QObject::disconnect(
-        win->qobject.get(), &window_qobject::captionChanged, win->qobject.get(), nullptr);
-    win->control->set_rules(win->space.rule_book->find(win, ignore_temporary));
-    // check only after getting the rules, because there may be a rule forcing window type
-    // TODO(romangg): what does this mean?
-}
-
-template<typename Win>
-void evaluate_rules(Win* win)
-{
-    setup_rules(win, true);
-    win->applyWindowRules();
-}
 
 template<typename Space, typename Win>
 void setup_space_window_connections(Space* space, Win* win)
@@ -47,16 +26,16 @@ void setup_space_window_connections(Space* space, Win* win)
                      &window_qobject::needsRepaint,
                      space->render.qobject.get(),
                      [win] { win->space.render.schedule_repaint(win); });
+    QObject::connect(win->qobject.get(),
+                     &window_qobject::desktopPresenceChanged,
+                     space->qobject.get(),
+                     [space, win](auto desktop) {
+                         Q_EMIT space->qobject->desktopPresenceChanged(win->signal_id, desktop);
+                     });
     QObject::connect(
-        win->qobject.get(),
-        &window_qobject::desktopPresenceChanged,
-        space->qobject.get(),
-        [space, win](auto desktop) { space->qobject->desktopPresenceChanged(win, desktop); });
-    QObject::connect(
-        win->qobject.get(),
-        &window_qobject::minimizedChanged,
-        space->qobject.get(),
-        std::bind(&Space::qobject_t::clientMinimizedChanged, space->qobject.get(), win));
+        win->qobject.get(), &window_qobject::minimizedChanged, space->qobject.get(), [space, win] {
+            Q_EMIT space->qobject->clientMinimizedChanged(win->signal_id);
+        });
 }
 
 template<typename Win>

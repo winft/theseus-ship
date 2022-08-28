@@ -245,8 +245,9 @@ void input_method_test::test_early_popup_window()
     // Try to render one more time. This used to crash at some point in the past.
     render_popup();
 
+    auto signal_id = window_added_spy.back().front().value<quint32>();
     QCOMPARE(popup.window,
-             dynamic_cast<wayland_window*>(window_added_spy.back().front().value<Toplevel*>()));
+             dynamic_cast<wayland_window*>(Test::app()->base.space->windows_map.at(signal_id)));
 
     QVERIFY(popup.window->isInputMethod());
     QVERIFY(!popup.text_area.intersects(popup.window->frameGeometry()));
@@ -312,8 +313,9 @@ void input_method_test::test_late_popup_window()
     // Try to render one more time. This used to crash at some point in the past.
     render_popup();
 
+    auto signal_id = window_added_spy.back().front().value<quint32>();
     QCOMPARE(popup.window,
-             dynamic_cast<wayland_window*>(window_added_spy.back().front().value<Toplevel*>()));
+             dynamic_cast<wayland_window*>(Test::app()->base.space->windows_map.at(signal_id)));
 
     QVERIFY(popup.window->isInputMethod());
     QVERIFY(!popup.text_area.intersects(popup.window->frameGeometry()));

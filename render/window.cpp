@@ -9,10 +9,12 @@
 #include "deco_shadow.h"
 #include "effect/window_impl.h"
 #include "effects.h"
+#include "platform.h"
 #include "shadow.h"
 
 #include "toplevel.h"
 #include "win/geo.h"
+#include "win/space.h"
 #include "win/transient.h"
 
 namespace KWin::render
@@ -134,7 +136,7 @@ void window::resetPaintingEnabled()
             disable_painting |= window_paint_disable_type::by_desktop;
     }
     if (toplevel->control) {
-        if (toplevel->control->minimized()) {
+        if (toplevel->control->minimized) {
             disable_painting |= window_paint_disable_type::by_minimize;
         }
         if (toplevel->isHiddenInternal()) {

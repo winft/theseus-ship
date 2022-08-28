@@ -61,7 +61,6 @@ private Q_SLOTS:
 
 void keyboard_keymap_test::initTestCase()
 {
-    qRegisterMetaType<Toplevel*>();
     qRegisterMetaType<Wrapland::Client::Output*>();
     qRegisterMetaType<Wrapland::Client::Keyboard::KeyState>();
 

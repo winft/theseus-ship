@@ -17,7 +17,7 @@ template<typename Win>
 bool has_special_geometry_mode_besides_fullscreen(Win* win)
 {
     return win->geometry_update.max_mode != maximize_mode::restore
-        || win->control->quicktiling() != quicktiles::none || is_move(win);
+        || win->control->quicktiling != quicktiles::none || is_move(win);
 }
 
 template<typename Win>
@@ -50,8 +50,8 @@ void fullscreen_restore_special_mode(Win* win)
     // Window is still in some special geometry mode and we need to adapt the geometry for that.
     if (win->geometry_update.max_mode != maximize_mode::restore) {
         win->update_maximized(win->geometry_update.max_mode);
-    } else if (win->control->quicktiling() != quicktiles::none) {
-        auto const old_quicktiling = win->control->quicktiling();
+    } else if (win->control->quicktiling != quicktiles::none) {
+        auto const old_quicktiling = win->control->quicktiling;
         auto const old_restore_geo = win->restore_geometries.maximize;
         set_quicktile_mode(win, quicktiles::none, false);
         set_quicktile_mode(win, old_quicktiling, false);
@@ -90,7 +90,7 @@ void update_fullscreen_disable(Win* win)
 template<typename Win>
 void update_fullscreen(Win* win, bool full, bool user)
 {
-    full = win->control->rules().checkFullScreen(full);
+    full = win->control->rules.checkFullScreen(full);
 
     auto const was_fullscreen = win->geometry_update.fullscreen;
 

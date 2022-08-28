@@ -87,7 +87,9 @@ QRect space_window_area(Space const& space, clientAreaOption opt, QPoint const& 
 }
 
 template<typename Space>
-QRect space_window_area(Space const& space, clientAreaOption opt, Toplevel const* window)
+QRect space_window_area(Space const& space,
+                        clientAreaOption opt,
+                        typename Space::window_t const* window)
 {
     return space_window_area(
         space, opt, pending_frame_geometry(window).center(), window->desktop());

@@ -16,24 +16,10 @@
 
 class QDebug;
 
-namespace KWin
-{
-
-class Toplevel;
-
-namespace win::rules
+namespace KWin::win::rules
 {
 
 class settings;
-
-enum class set_rule {
-    unused = 0,
-    dummy = 256 // so that it's at least short int
-};
-enum class force_rule {
-    unused = 0,
-    dummy = 256 // so that it's at least short int
-};
 
 template<typename T>
 struct set_ruler {
@@ -47,7 +33,7 @@ struct force_ruler {
     force_rule rule{force_rule::unused};
 };
 
-class ruling
+class KWIN_EXPORT ruling
 {
 public:
     ruling();
@@ -57,10 +43,7 @@ public:
     void write(settings*) const;
     bool isEmpty() const;
 
-#ifndef KCMRULES
     bool discardUsed(bool withdrawn);
-    bool match(Toplevel const* window) const;
-    bool update(Toplevel* window, int selection);
     bool isTemporary() const;
     bool discardTemporary(bool force); // removes if temporary and forced or too old
 
@@ -101,22 +84,19 @@ public:
     bool applyDisableGlobalShortcuts(bool& disable) const;
     bool applyDesktopFile(QString& desktopFile, bool init) const;
 
-private:
-#endif
     bool matchType(NET::WindowType match_type) const;
     bool matchWMClass(QByteArray const& match_class, QByteArray const& match_name) const;
     bool matchRole(QByteArray const& match_role) const;
     bool matchTitle(QString const& match_title) const;
     bool matchClientMachine(QByteArray const& match_machine, bool local) const;
+
     void readFromSettings(rules::settings const* settings);
     static force_rule convertForceRule(int v);
     static QString getDecoColor(QString const& themeName);
-#ifndef KCMRULES
     static bool checkSetRule(set_rule rule, bool init);
     static bool checkForceRule(force_rule rule);
     static bool checkSetStop(set_rule rule);
     static bool checkForceStop(force_rule rule);
-#endif
 
     template<typename T>
     bool apply_force_enum(force_ruler<int> const& ruler, T& apply, T min, T max) const;
@@ -197,7 +177,6 @@ private:
     friend QDebug& operator<<(QDebug& stream, ruling const*);
 };
 
-QDebug& operator<<(QDebug& stream, ruling const*);
+KWIN_EXPORT QDebug& operator<<(QDebug& stream, ruling const*);
 
-}
 }

@@ -141,8 +141,9 @@ void create_decoration(Win* win)
         return;
     }
 
-    win->control->deco().window = new deco::window(win);
-    auto decoration = win->space.deco->createDecoration(win->control->deco().window);
+    using Space = std::remove_reference_t<decltype(win->space)>;
+    win->control->deco.window = new deco::window<typename Space::window_t>(win);
+    auto decoration = win->space.deco->createDecoration(win->control->deco.window);
 
     if (decoration) {
         QMetaObject::invokeMethod(decoration, "update", Qt::QueuedConnection);
@@ -163,20 +164,20 @@ void create_decoration(Win* win)
                 update_server_geometry(win, win->frameGeometry());
                 win->geometry_update.original.deco_margins = frame_margins(win);
 
-                win->control->deco().client->update_size();
+                win->control->deco.client->update_size();
             });
 
-        QObject::connect(win->control->deco().client->decoratedClient(),
+        QObject::connect(win->control->deco.client->decoratedClient(),
                          &KDecoration2::DecoratedClient::widthChanged,
                          win->qobject.get(),
                          [win] { update_input_window(win, win->frameGeometry()); });
-        QObject::connect(win->control->deco().client->decoratedClient(),
+        QObject::connect(win->control->deco.client->decoratedClient(),
                          &KDecoration2::DecoratedClient::heightChanged,
                          win->qobject.get(),
                          [win] { update_input_window(win, win->frameGeometry()); });
     }
 
-    win->control->deco().decoration = decoration;
+    win->control->deco.decoration = decoration;
     win->geometry_update.original.deco_margins = frame_margins(win);
 
     if (win->space.render.isActive()) {
@@ -201,9 +202,9 @@ void get_motif_hints(Win* win, bool initial = false)
         // If we just got a hint telling us to hide decorations, we do so but only do so if the app
         // didn't instruct us to hide decorations in some other way.
         if (win->motif_hints.no_border()) {
-            win->user_no_border = win->control->rules().checkNoBorder(true);
+            win->user_no_border = win->control->rules.checkNoBorder(true);
         } else if (!win->app_no_border) {
-            win->user_no_border = win->control->rules().checkNoBorder(false);
+            win->user_no_border = win->control->rules.checkNoBorder(false);
         }
     }
 
@@ -231,7 +232,7 @@ base::x11::xcb::string_property fetch_color_scheme(Win* win)
 template<typename Win>
 void read_color_scheme(Win* win, base::x11::xcb::string_property& property)
 {
-    win::set_color_scheme(win, win->control->rules().checkDecoColor(QString::fromUtf8(property)));
+    win::set_color_scheme(win, win->control->rules.checkDecoColor(QString::fromUtf8(property)));
 }
 
 template<typename Win>

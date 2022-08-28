@@ -20,6 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef TABBOXHANDLER_H
 #define TABBOXHANDLER_H
 
+#include "kwin_export.h"
+#include "tabbox_client.h"
 #include "tabbox_config.h"
 
 #include <QModelIndex>
@@ -85,7 +87,6 @@ namespace win
 class tabbox_desktop_model;
 class tabbox_client_model;
 class tabbox_config;
-class tabbox_client;
 class tabbox_handler_private;
 
 using tabbox_client_list = std::vector<std::weak_ptr<tabbox_client>>;
@@ -97,7 +98,7 @@ using tabbox_client_list = std::vector<std::weak_ptr<tabbox_client>>;
  * @author Martin Gräßlin <mgraesslin@kde.org>
  * @since 4.4
  */
-class tabbox_handler : public QObject
+class KWIN_EXPORT tabbox_handler : public QObject
 {
     Q_OBJECT
 public:
@@ -361,45 +362,9 @@ private:
 };
 
 /**
- * This class is a wrapper around a KWin Client. It is used for accessing the
- * required client methods from inside tabbox and has to be implemented in KWin core.
- *
- * @author Martin Gräßlin <mgraesslin@kde.org>
- * @since 4.4
- */
-class tabbox_client
-{
-public:
-    tabbox_client();
-    virtual ~tabbox_client();
-
-    /**
-     * @return The caption of the client
-     */
-    virtual QString caption() const = 0;
-    /**
-     * @param size Requested size of the icon
-     * @return The icon of the client
-     */
-    virtual QIcon icon() const = 0;
-    /**
-     * @return Minimized state of the client
-     */
-    virtual bool is_minimized() const = 0;
-    virtual int x() const = 0;
-    virtual int y() const = 0;
-    virtual int width() const = 0;
-    virtual int height() const = 0;
-    virtual bool is_closeable() const = 0;
-    virtual void close() = 0;
-    virtual bool is_first_in_tabbox() const = 0;
-    virtual QUuid internal_id() const = 0;
-};
-
-/**
  * Pointer to the global tabbox_handler object.
  */
-extern tabbox_handler* tabbox_handle;
+KWIN_EXPORT extern tabbox_handler* tabbox_handle;
 
 } // namespace win
 } // namespace KWin

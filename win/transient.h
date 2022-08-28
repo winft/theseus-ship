@@ -5,20 +5,18 @@
 */
 #pragma once
 
-#include "kwin_export.h"
+#include "scene.h"
+
 #include "utils/algorithm.h"
 
+#include <cassert>
 #include <vector>
 
-namespace KWin
-{
-class Toplevel;
-
-namespace win
+namespace KWin::win
 {
 
 template<typename Win>
-Toplevel* get_top_lead(Win* win)
+auto get_top_lead(Win* win) -> decltype(win->transient()->lead())
 {
     if (auto lead = win->transient()->lead()) {
         return get_top_lead(lead);
@@ -27,9 +25,9 @@ Toplevel* get_top_lead(Win* win)
 }
 
 template<typename Win>
-std::vector<Toplevel*> get_transient_descendants(Win* win)
+auto get_transient_descendants(Win* win) -> decltype(win->transient()->children)
 {
-    std::vector<Toplevel*> descendants;
+    decltype(win->transient()->children) descendants;
 
     for (auto child : win->transient()->children) {
         descendants.push_back(child);
@@ -44,7 +42,7 @@ std::vector<Toplevel*> get_transient_descendants(Win* win)
 }
 
 template<typename Win>
-std::vector<Toplevel*> get_transient_family(Win* win)
+auto get_transient_family(Win* win)
 {
     auto top_lead = get_top_lead(win);
     auto relatives = get_transient_descendants(top_lead);
@@ -53,7 +51,7 @@ std::vector<Toplevel*> get_transient_family(Win* win)
 }
 
 template<typename Win>
-Toplevel* lead_of_annexed_transient(Win* win)
+auto lead_of_annexed_transient(Win* win) -> decltype(win->transient()->lead())
 {
     if (win && win->transient()->annexed) {
         return lead_of_annexed_transient(win->transient()->lead());
@@ -61,44 +59,154 @@ Toplevel* lead_of_annexed_transient(Win* win)
     return win;
 }
 
-class KWIN_EXPORT transient
+template<typename Window>
+class transient
 {
-private:
-    std::vector<Toplevel*> m_leads;
-    bool m_modal{false};
-
-    Toplevel* m_window;
-
-    void add_lead(Toplevel* lead);
-
 public:
-    std::vector<Toplevel*> children;
-    bool annexed{false};
-    bool input_grab{false};
+    explicit transient(Window* win)
+        : m_window{win}
+    {
+    }
 
-    explicit transient(Toplevel* win);
-    virtual ~transient();
+    virtual ~transient()
+    {
+        auto top_lead = lead_of_annexed_transient(m_window);
+
+        for (auto const& lead : m_leads) {
+            remove_all(lead->transient()->children, m_window);
+            if (annexed) {
+                assert(top_lead);
+                top_lead->discard_quads();
+                top_lead->addLayerRepaint(visible_rect(m_window, m_window->frameGeometry()));
+            }
+        }
+        m_leads.clear();
+
+        auto const children_copy = children;
+        for (auto const& child : children_copy) {
+            if (annexed && top_lead) {
+                top_lead->discard_quads();
+                top_lead->addLayerRepaint(visible_rect(child, child->frameGeometry()));
+            }
+            remove_child(child);
+        }
+    }
 
     /**
      * The transient lead at first position or nullptr when not a child.
      */
-    Toplevel* lead() const;
-    std::vector<Toplevel*> const& leads() const;
+    Window* lead() const
+    {
+        if (m_leads.size() == 0) {
+            return nullptr;
+        }
+        return m_leads.front();
+    }
 
-    void add_child(Toplevel* window);
-    void remove_child(Toplevel* window);
+    std::vector<Window*> const& leads() const
+    {
+        return m_leads;
+    }
+
+    void add_child(Window* window)
+    {
+        assert(m_window != window);
+
+        // TODO(romangg): Instead of a silent fail we should add an assert. Consumers then must
+        //                ensure to add a child only once. X11 code must be adapted for that though.
+        if (contains(children, window)) {
+            return;
+        }
+
+        children.push_back(window);
+        window->transient()->add_lead(m_window);
+
+        if (window->transient()->annexed) {
+            m_window->discard_quads();
+        }
+    }
+
+    void remove_child(Window* window)
+    {
+        assert(contains(children, window));
+        remove_all(children, window);
+        window->transient()->remove_lead(m_window);
+
+        if (window->transient()->annexed) {
+            // Need to check that a top-lead exists since this might be called on destroy of a lead.
+            if (auto top_lead = lead_of_annexed_transient(m_window)) {
+                top_lead->discard_quads();
+                top_lead->addLayerRepaint(visible_rect(window, window->frameGeometry()));
+            }
+        }
+    }
 
     /**
      * Returns true when window is a lead for this directly or through a chain of leads indirectly.
      */
-    bool is_follower_of(Toplevel const* window);
+    bool is_follower_of(Window const* window)
+    {
+        for (auto const& child : window->transient()->children) {
+            if (child == m_window) {
+                return true;
+            }
+        }
 
-    bool modal() const;
-    void set_modal(bool modal);
+        for (auto const& lead : m_leads) {
+            if (lead->transient()->is_follower_of(window)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool modal() const
+    {
+        return m_modal;
+    }
+
+    void set_modal(bool modal)
+    {
+        if (m_modal == modal) {
+            return;
+        }
+        m_modal = modal;
+        Q_EMIT m_window->qobject->modalChanged();
+    }
+
+    std::vector<Window*> children;
+    bool annexed{false};
+    bool input_grab{false};
 
 protected:
-    virtual void remove_lead(Toplevel* lead);
+    virtual void remove_lead(Window* lead)
+    {
+        assert(contains(m_leads, lead));
+        remove_all(m_leads, lead);
+        Q_EMIT m_window->qobject->transientChanged();
+
+        if (m_window->remnant && annexed) {
+            m_window->remnant->unref();
+        }
+    }
+
+private:
+    void add_lead(Window* lead)
+    {
+        assert(m_window != lead);
+        assert(!contains(m_leads, lead));
+
+        if (m_window->remnant && annexed) {
+            m_window->remnant->ref();
+        }
+        m_leads.push_back(lead);
+        Q_EMIT m_window->qobject->transientChanged();
+    }
+
+    std::vector<Window*> m_leads;
+    bool m_modal{false};
+
+    Window* m_window;
 };
 
-}
 }

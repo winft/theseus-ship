@@ -7,7 +7,6 @@
 
 #include "geo.h"
 #include "input.h"
-#include "netinfo.h"
 #include "window.h"
 
 #include "base/logging.h"
@@ -97,7 +96,7 @@ void ping(Win* win)
     win->ping_timer = new QTimer(win->qobject.get());
 
     QObject::connect(win->ping_timer, &QTimer::timeout, win->qobject.get(), [win]() {
-        if (win->control->unresponsive()) {
+        if (win->control->unresponsive) {
             qCDebug(KWIN_CORE) << "Final ping timeout, asking to kill:" << win::caption(win);
             win->ping_timer->deleteLater();
             win->ping_timer = nullptr;
@@ -118,7 +117,7 @@ void ping(Win* win)
     win->ping_timer->start(kwinApp()->options->qobject->killPingTimeout() / 2);
 
     win->ping_timestamp = xTime();
-    rootInfo()->sendPing(win->xcb_window, win->ping_timestamp);
+    win->space.root_info->sendPing(win->xcb_window, win->ping_timestamp);
 }
 
 template<typename Win>
@@ -338,7 +337,7 @@ void send_synthetic_configure_notify(Win* win, QRect const& client_geo)
         return QSize();
     };
 
-    if (win->control->fullscreen()) {
+    if (win->control->fullscreen) {
         // Workaround for XWayland clients setting fullscreen
         auto const emulatedSize = getEmulatedXWaylandSize();
 

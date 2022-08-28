@@ -49,6 +49,11 @@ private Q_SLOTS:
     void testWindowClassChange();
 };
 
+win::x11::window* get_x11_window_from_id(uint32_t id)
+{
+    return dynamic_cast<win::x11::window*>(Test::app()->base.space->windows_map.at(id));
+}
+
 void WindowRuleTest::initTestCase()
 {
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
@@ -98,9 +103,9 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
     // vertical the window is matched by class and role load the rule
     QFile ruleFile(QFINDTESTDATA("./data/rules/maximize-vert-apply-initial"));
     QVERIFY(ruleFile.open(QIODevice::ReadOnly | QIODevice::Text));
-    QMetaObject::invokeMethod(Test::app()->base.space->rule_book.get(),
-                              "temporaryRulesMessage",
-                              Q_ARG(QString, QString::fromUtf8(ruleFile.readAll())));
+
+    Test::app()->base.space->rule_book->temporaryRulesMessage(
+        QString::fromUtf8(ruleFile.readAll()));
 
     // create the test window
     auto c = create_xcb_connection();
@@ -149,8 +154,7 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
-    auto client
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.last().first().value<Toplevel*>());
+    auto client = get_x11_window_from_id(windowCreatedSpy.last().first().value<quint32>());
     QVERIFY(client);
     QVERIFY(win::decoration(client));
     QVERIFY(!client->hasStrut());
@@ -226,8 +230,7 @@ void WindowRuleTest::testWindowClassChange()
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
-    auto client
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.last().first().value<Toplevel*>());
+    auto client = get_x11_window_from_id(windowCreatedSpy.last().first().value<quint32>());
     QVERIFY(client);
     QVERIFY(win::decoration(client));
     QVERIFY(!client->hasStrut());
@@ -240,7 +243,7 @@ void WindowRuleTest::testWindowClassChange()
         QVERIFY(surfaceChangedSpy.wait());
     }
     QVERIFY(client->surface);
-    QCOMPARE(client->control->keep_above(), false);
+    QCOMPARE(client->control->keep_above, false);
 
     // now change class
     QSignalSpy windowClassChangedSpy{client->qobject.get(),
@@ -249,7 +252,7 @@ void WindowRuleTest::testWindowClassChange()
     xcb_icccm_set_wm_class(c.get(), w, 23, "org.kde.foo\0org.kde.foo");
     xcb_flush(c.get());
     QVERIFY(windowClassChangedSpy.wait());
-    QCOMPARE(client->control->keep_above(), true);
+    QCOMPARE(client->control->keep_above, true);
 
     // destroy window
     QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::closed);

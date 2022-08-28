@@ -17,7 +17,6 @@
 #include "base/logging.h"
 #include "main.h"
 #include "scripting/platform.h"
-#include "toplevel.h"
 
 #if KWIN_BUILD_TABBOX
 #include "tabbox/tabbox.h"
@@ -36,11 +35,6 @@
 
 namespace KWin::win
 {
-
-template<typename Space>
-void perform_window_operation(Space& space,
-                              Toplevel* window,
-                              base::options_qobject::WindowOperation op);
 
 struct user_actions_menu_desktop_action_data {
     uint desktop;
@@ -126,7 +120,7 @@ public:
      * @param c The Client to compare
      * @returns Whether the Client is the one related to this Menu
      */
-    bool isMenuClient(Toplevel const* window) const
+    bool isMenuClient(typename Space::window_t const* window) const
     {
         return window && window == m_client;
     }
@@ -149,7 +143,7 @@ public:
      * @param pos The position where the menu should be shown.
      * @param client The Client for which the Menu has to be shown.
      */
-    void show(const QRect& pos, Toplevel* window)
+    void show(const QRect& pos, typename Space::window_t* window)
     {
         assert(window);
 
@@ -208,21 +202,20 @@ private:
             initScreenPopup();
         }
 
-        m_menu->setPalette(m_client->control->palette().q_palette());
+        m_menu->setPalette(m_client->control->palette.q_palette());
         m_resizeOperation->setEnabled(m_client->isResizable());
         m_moveOperation->setEnabled(m_client->isMovableAcrossScreens());
         m_maximizeOperation->setEnabled(m_client->isMaximizable());
         m_maximizeOperation->setChecked(m_client->maximizeMode() == win::maximize_mode::full);
-        m_keepAboveOperation->setChecked(m_client->control->keep_above());
-        m_keepBelowOperation->setChecked(m_client->control->keep_below());
+        m_keepAboveOperation->setChecked(m_client->control->keep_above);
+        m_keepBelowOperation->setChecked(m_client->control->keep_below);
         m_fullScreenOperation->setEnabled(m_client->userCanSetFullScreen());
-        m_fullScreenOperation->setChecked(m_client->control->fullscreen());
+        m_fullScreenOperation->setChecked(m_client->control->fullscreen);
         m_noBorderOperation->setEnabled(m_client->userCanSetNoBorder());
         m_noBorderOperation->setChecked(m_client->noBorder());
         m_minimizeOperation->setEnabled(m_client->isMinimizable());
         m_closeOperation->setEnabled(m_client->isCloseable());
-        m_shortcutOperation->setEnabled(
-            m_client->control->rules().checkShortcut(QString()).isNull());
+        m_shortcutOperation->setEnabled(m_client->control->rules.checkShortcut(QString()).isNull());
 
         // drop the existing scripts menu
         delete m_scriptsMenu;
@@ -231,7 +224,7 @@ private:
         auto scriptActions = space.scripting->actionsForUserActionMenu(m_client, m_scriptsMenu);
         if (!scriptActions.isEmpty()) {
             m_scriptsMenu = new QMenu(m_menu);
-            m_scriptsMenu->setPalette(m_client->control->palette().q_palette());
+            m_scriptsMenu->setPalette(m_client->control->palette.q_palette());
             m_scriptsMenu->addActions(scriptActions);
 
             QAction* action = m_scriptsMenu->menuAction();
@@ -256,7 +249,7 @@ private:
 
         m_desktopMenu->clear();
         if (m_client) {
-            m_desktopMenu->setPalette(m_client->control->palette().q_palette());
+            m_desktopMenu->setPalette(m_client->control->palette.q_palette());
         }
         QActionGroup* group = new QActionGroup(m_desktopMenu);
         QAction* action = m_desktopMenu->addAction(i18n("&All Desktops"));
@@ -308,7 +301,7 @@ private:
 
         m_multipleDesktopsMenu->clear();
         if (m_client) {
-            m_multipleDesktopsMenu->setPalette(m_client->control->palette().q_palette());
+            m_multipleDesktopsMenu->setPalette(m_client->control->palette.q_palette());
         }
 
         QAction* action = m_multipleDesktopsMenu->addAction(i18n("&All Desktops"));
@@ -378,7 +371,7 @@ private:
             return;
         }
 
-        m_screenMenu->setPalette(m_client->control->palette().q_palette());
+        m_screenMenu->setPalette(m_client->control->palette.q_palette());
         QActionGroup* group = new QActionGroup(m_screenMenu);
         auto const& outputs = kwinApp()->get_base().get_outputs();
 
@@ -508,7 +501,7 @@ private:
         QString type;
         switch (op) {
         case base::options_qobject::FullScreenOp:
-            if (!c->control->fullscreen() && c->userCanSetFullScreen())
+            if (!c->control->fullscreen && c->userCanSetFullScreen())
                 type = QStringLiteral("fullscreenaltf3");
             break;
         case base::options_qobject::NoBorderOp:
@@ -524,7 +517,7 @@ private:
         // user actions menu closed before we destroy the decoration. Otherwise Qt crashes
         qRegisterMetaType<base::options_qobject::WindowOperation>();
         QMetaObject::invokeMethod(space.qobject.get(), [&space = this->space, c, op] {
-            win::perform_window_operation(space, c, op);
+            win::perform_window_operation(c, op);
         });
     }
 
@@ -564,7 +557,7 @@ private:
         QMenu* advancedMenu = new QMenu(m_menu);
         QObject::connect(advancedMenu, &QMenu::aboutToShow, qobject.get(), [this, advancedMenu]() {
             if (m_client) {
-                advancedMenu->setPalette(m_client->control->palette().q_palette());
+                advancedMenu->setPalette(m_client->control->palette.q_palette());
             }
         });
 
@@ -757,7 +750,7 @@ private:
      * @param message The message type to be shown
      * @param c The Client for which the dialog should be shown.
      */
-    void helperDialog(const QString& message, Toplevel* window)
+    void helperDialog(const QString& message, typename Space::window_t* window)
     {
         QStringList args;
         QString type;
@@ -832,7 +825,7 @@ private:
     QAction* m_shortcutOperation{nullptr};
 
     /// The Client for which the menu is shown.
-    Toplevel* m_client{nullptr};
+    typename Space::window_t* m_client{nullptr};
 
     QAction* m_rulesOperation{nullptr};
     QAction* m_applicationRulesOperation{nullptr};

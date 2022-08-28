@@ -530,43 +530,49 @@ public:
         QObject::connect(ref_space->qobject.get(),
                          &space_qobject::desktopPresenceChanged,
                          this,
-                         [this](auto client, auto desktop) {
-                             auto window = Space::get_window(client);
+                         [this](auto win_id, auto desktop) {
+                             auto ref_win = this->ref_space->windows_map.at(win_id);
+                             auto window = Space::get_window(ref_win);
                              Q_EMIT Space::desktopPresenceChanged(window, desktop);
                          });
 
         QObject::connect(ref_space->qobject.get(),
                          &space_qobject::currentDesktopChanged,
                          this,
-                         [this](auto desktop, auto client) {
-                             auto window = Space::get_window(client);
+                         [this](auto desktop) {
+                             auto window = Space::get_window(this->ref_space->move_resize_window);
                              Q_EMIT Space::currentDesktopChanged(desktop, window);
                          });
 
-        QObject::connect(ref_space->qobject.get(),
-                         &space_qobject::clientAdded,
-                         this,
-                         &Space::handle_client_added);
-        QObject::connect(ref_space->qobject.get(),
-                         &space_qobject::clientRemoved,
-                         this,
-                         &Space::handle_client_removed);
+        QObject::connect(
+            ref_space->qobject.get(), &space_qobject::clientAdded, this, [this](auto win_id) {
+                auto ref_win = this->ref_space->windows_map.at(win_id);
+                this->handle_client_added(ref_win);
+            });
+        QObject::connect(
+            ref_space->qobject.get(), &space_qobject::clientRemoved, this, [this](auto win_id) {
+                auto ref_win = this->ref_space->windows_map.at(win_id);
+                this->handle_client_removed(ref_win);
+            });
         QObject::connect(ref_space->qobject.get(),
                          &space_qobject::wayland_window_added,
                          this,
-                         &Space::handle_client_added);
+                         [this](auto win_id) {
+                             auto ref_win = this->ref_space->windows_map.at(win_id);
+                             this->handle_client_added(ref_win);
+                         });
 
-        QObject::connect(
-            ref_space->qobject.get(), &space_qobject::clientActivated, this, [this](auto client) {
-                auto window = Space::get_window(client);
-                Q_EMIT Space::clientActivated(window);
-            });
+        QObject::connect(ref_space->qobject.get(), &space_qobject::clientActivated, this, [this] {
+            auto window = Space::get_window(this->ref_space->active_client);
+            Q_EMIT Space::clientActivated(window);
+        });
 
         QObject::connect(ref_space->qobject.get(),
                          &space_qobject::clientDemandsAttentionChanged,
                          this,
-                         [this](auto client, auto set) {
-                             auto window = Space::get_window(client);
+                         [this](auto win_id, auto set) {
+                             auto ref_win = this->ref_space->windows_map.at(win_id);
+                             auto window = Space::get_window(ref_win);
                              Q_EMIT Space::clientDemandsAttentionChanged(window, set);
                          });
 

@@ -47,7 +47,8 @@ public:
     void createOpenGLSafePoint(OpenGLSafePoint safePoint) override;
 
     outline_visual* create_non_composited_outline(render::outline* outline) override;
-    win::deco::renderer* createDecorationRenderer(win::deco::client_impl* client) override;
+    win::deco::renderer<win::deco::client_impl<Toplevel>>*
+    createDecorationRenderer(win::deco::client_impl<Toplevel>* client) override;
 
     void invertScreen() override;
 

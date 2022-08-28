@@ -14,9 +14,9 @@
 #include "screen.h"
 #include "stacking.h"
 #include "stacking_order.h"
-#include "user_actions_menu.h"
+#include "transient.h"
 #include "window_find.h"
-#include "x11/netinfo.h"
+#include "x11/netinfo_helpers.h"
 #include "x11/tool_windows.h"
 #include "x11/user_time.h"
 
@@ -211,7 +211,10 @@ void cancel_delay_focus(Space& space)
  * @see activate_window
  */
 template<typename Space>
-void request_focus(Space& space, Toplevel* window, bool raise = false, bool force_focus = false)
+void request_focus(Space& space,
+                   typename Space::window_t* window,
+                   bool raise = false,
+                   bool force_focus = false)
 {
     auto take_focus = is_focus_change_allowed(space) || window == space.active_client;
 
@@ -226,7 +229,7 @@ void request_focus(Space& space, Toplevel* window, bool raise = false, bool forc
             if (!modal->isOnDesktop(window->desktop())) {
                 set_desktop(modal, window->desktop());
             }
-            if (!modal->isShown() && !modal->control->minimized()) {
+            if (!modal->isShown() && !modal->control->minimized) {
                 // forced desktop or utility window
                 // activating a minimized blocked window will unminimize its modal implicitly
                 activate_window(space, modal);
@@ -282,7 +285,7 @@ void focus_to_null(Space& space)
 }
 
 template<typename Space>
-Toplevel* window_under_mouse(Space const& space, base::output const* output)
+typename Space::window_t* window_under_mouse(Space const& space, base::output const* output)
 {
     auto it = space.stacking_order->stack.cend();
 
@@ -309,13 +312,13 @@ Toplevel* window_under_mouse(Space const& space, base::output const* output)
 template<typename Win>
 void set_demands_attention(Win* win, bool demand)
 {
-    if (win->control->active()) {
+    if (win->control->active) {
         demand = false;
     }
-    if (win->control->demands_attention() == demand) {
+    if (win->control->demands_attention == demand) {
         return;
     }
-    win->control->set_demands_attention(demand);
+    win->control->demands_attention = demand;
 
     if (win->info) {
         win->info->setState(demand ? NET::DemandsAttention : NET::States(), NET::DemandsAttention);
@@ -326,7 +329,7 @@ void set_demands_attention(Win* win, bool demand)
         win->space.attention_chain.push_front(win);
     }
 
-    Q_EMIT win->space.qobject->clientDemandsAttentionChanged(win, demand);
+    Q_EMIT win->space.qobject->clientDemandsAttentionChanged(win->signal_id, demand);
     Q_EMIT win->qobject->demandsAttentionChanged();
 }
 
@@ -343,14 +346,14 @@ void set_demands_attention(Win* win, bool demand)
 template<typename Win>
 void set_active(Win* win, bool active)
 {
-    if (win->control->active() == active) {
+    if (win->control->active == active) {
         return;
     }
-    win->control->set_active(active);
+    win->control->active = active;
 
     auto const ruledOpacity = active
-        ? win->control->rules().checkOpacityActive(qRound(win->opacity() * 100.0))
-        : win->control->rules().checkOpacityInactive(qRound(win->opacity() * 100.0));
+        ? win->control->rules.checkOpacityActive(qRound(win->opacity() * 100.0))
+        : win->control->rules.checkOpacityInactive(qRound(win->opacity() * 100.0));
     win->setOpacity(ruledOpacity / 100.0);
 
     set_active_window(win->space, active ? win : nullptr);
@@ -369,7 +372,7 @@ void set_active(Win* win, bool active)
         if (lead->remnant) {
             continue;
         }
-        if (lead->control->fullscreen()) {
+        if (lead->control->fullscreen) {
             // Fullscreens go high even if their transient is active.
             update_layer(lead);
         }
@@ -389,7 +392,7 @@ void set_active(Win* win, bool active)
  * world.
  */
 template<typename Space>
-void set_active_window(Space& space, Toplevel* window)
+void set_active_window(Space& space, typename Space::window_t* window)
 {
     if (space.active_client == window)
         return;
@@ -413,7 +416,7 @@ void set_active_window(Space& space, Toplevel* window)
     }
 
     space.active_client = window;
-    assert(!window || window->control->active());
+    assert(!window || window->control->active);
 
     if (space.active_client) {
         space.last_active_client = space.active_client;
@@ -435,7 +438,7 @@ void set_active_window(Space& space, Toplevel* window)
     x11::update_tool_windows_visibility(&space, false);
     if (window) {
         set_global_shortcuts_disabled(space,
-                                      window->control->rules().checkDisableGlobalShortcuts(false));
+                                      window->control->rules.checkDisableGlobalShortcuts(false));
     } else {
         set_global_shortcuts_disabled(space, false);
     }
@@ -443,11 +446,11 @@ void set_active_window(Space& space, Toplevel* window)
     // e.g. fullscreens have different layer when active/not-active
     space.stacking_order->update_order();
 
-    if (win::x11::rootInfo()) {
-        win::x11::rootInfo()->setActiveClient(space.active_client);
+    if (space.root_info) {
+        x11::root_info_set_active_window(*space.root_info, space.active_client);
     }
 
-    Q_EMIT space.qobject->clientActivated(space.active_client);
+    Q_EMIT space.qobject->clientActivated();
     --space.set_active_client_recursion;
 }
 
@@ -464,7 +467,7 @@ void activate_window_impl(Space& space, Win* window, bool force)
         focus_blocker blocker(space);
         space.virtual_desktop_manager->setCurrent(window->desktop());
     }
-    if (window->control->minimized()) {
+    if (window->control->minimized) {
         set_minimized(window, false);
     }
 
@@ -481,7 +484,7 @@ void activate_window_impl(Space& space, Win* window, bool force)
 }
 
 template<typename Space>
-void activate_window(Space& space, Toplevel* window)
+void activate_window(Space& space, typename Space::window_t* window)
 {
     activate_window_impl(space, window, false);
 }
@@ -502,7 +505,7 @@ void activate_attention_window(Space& space)
 
 /// Deactivates 'window' and activates next one.
 template<typename Space>
-bool activate_next_window(Space& space, Toplevel* window)
+bool activate_next_window(Space& space, typename Space::window_t* window)
 {
     // If 'window' is not the active or the to-become active one, do nothing.
     if (!(window == space.active_client
@@ -531,7 +534,7 @@ bool activate_next_window(Space& space, Toplevel* window)
     if (!kwinApp()->options->qobject->focusPolicyIsReasonable())
         return false;
 
-    Toplevel* get_focus = nullptr;
+    decltype(window) get_focus = nullptr;
 
     int const desktop = space.virtual_desktop_manager->current();
 
@@ -597,7 +600,8 @@ void process_window_hidden(Space& space, Win* window)
 }
 
 template<typename Space>
-Toplevel* find_window_to_activate_on_desktop(Space& space, unsigned int desktop)
+typename Space::window_t* find_window_to_activate_on_desktop(Space& space, unsigned int desktop)
+
 {
     if (space.move_resize_window && space.active_client == space.move_resize_window
         && focus_chain_at_desktop_contains(space.focus_chain, space.active_client, desktop)
@@ -628,13 +632,14 @@ Toplevel* find_window_to_activate_on_desktop(Space& space, unsigned int desktop)
         }
     }
 
-    return focus_chain_get_for_activation_on_current_output<Toplevel>(space.focus_chain, desktop);
+    return focus_chain_get_for_activation_on_current_output<typename Space::window_t>(
+        space.focus_chain, desktop);
 }
 
 template<typename Space>
 void activate_window_on_new_desktop(Space& space, unsigned int desktop)
 {
-    Toplevel* c = nullptr;
+    typename Space::window_t* c = nullptr;
 
     if (kwinApp()->options->qobject->focusPolicyIsReasonable()) {
         c = find_window_to_activate_on_desktop(space, desktop);
@@ -667,12 +672,12 @@ void activate_window_on_new_desktop(Space& space, unsigned int desktop)
 
 template<typename Space>
 bool activate_window_direction(Space& space,
-                               Toplevel* c,
+                               typename Space::window_t* c,
                                win::direction direction,
                                QPoint curPos,
                                int d)
 {
-    Toplevel* switchTo = nullptr;
+    decltype(c) switchTo = nullptr;
     int bestScore = 0;
     auto clist = space.stacking_order->stack;
 
@@ -683,7 +688,7 @@ bool activate_window_direction(Space& space,
         }
 
         if (wants_tab_focus(client) && *i != c && client->isOnDesktop(d)
-            && !client->control->minimized()) {
+            && !client->control->minimized) {
             // Centre of the other window
             const QPoint other(client->pos().x() + client->size().width() / 2,
                                client->pos().y() + client->size().height() / 2);
@@ -774,7 +779,7 @@ void delay_focus(Space& space)
 }
 
 template<typename Space>
-void request_delay_focus(Space& space, Toplevel* c)
+void request_delay_focus(Space& space, typename Space::window_t* c)
 {
     space.delayfocus_client = c;
 
@@ -804,13 +809,13 @@ template<typename Space>
 void set_showing_desktop(Space& space, bool showing)
 {
     const bool changed = showing != space.showing_desktop;
-    if (x11::rootInfo() && changed) {
-        x11::rootInfo()->setShowingDesktop(showing);
+    if (space.root_info && changed) {
+        space.root_info->setShowingDesktop(showing);
     }
 
     space.showing_desktop = showing;
 
-    Toplevel* topDesk = nullptr;
+    typename Space::window_t* topDesk = nullptr;
 
     // for the blocker RAII
     // updateLayer & lowerClient would invalidate stacking_order
@@ -837,8 +842,9 @@ void set_showing_desktop(Space& space, bool showing)
     if (space.showing_desktop && topDesk) {
         request_focus(space, topDesk);
     } else if (!space.showing_desktop && changed) {
-        auto const window = focus_chain_get_for_activation_on_current_output<Toplevel>(
-            space.focus_chain, space.virtual_desktop_manager->current());
+        auto const window
+            = focus_chain_get_for_activation_on_current_output<typename Space::window_t>(
+                space.focus_chain, space.virtual_desktop_manager->current());
         if (window) {
             activate_window(space, window);
         }

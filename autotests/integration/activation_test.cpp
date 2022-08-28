@@ -93,13 +93,13 @@ void ActivationTest::testSwitchToWindowToLeft()
     std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
     auto client1 = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
     QVERIFY(client1);
-    QVERIFY(client1->control->active());
+    QVERIFY(client1->control->active);
 
     std::unique_ptr<Surface> surface2(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
     auto client2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::blue);
     QVERIFY(client2);
-    QVERIFY(client2->control->active());
+    QVERIFY(client2->control->active);
 
     win::move(client1, QPoint(300, 200));
     win::move(client2, QPoint(500, 200));
@@ -109,32 +109,32 @@ void ActivationTest::testSwitchToWindowToLeft()
     std::unique_ptr<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3));
     auto client3 = Test::render_and_wait_for_shown(surface3, QSize(100, 50), Qt::blue);
     QVERIFY(client3);
-    QVERIFY(client3->control->active());
+    QVERIFY(client3->control->active);
 
     std::unique_ptr<Surface> surface4(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface4(Test::create_xdg_shell_toplevel(surface4));
     auto client4 = Test::render_and_wait_for_shown(surface4, QSize(100, 50), Qt::blue);
     QVERIFY(client4);
-    QVERIFY(client4->control->active());
+    QVERIFY(client4->control->active);
 
     win::move(client3, QPoint(1380, 200));
     win::move(client4, QPoint(1580, 200));
 
     // Switch to window to the left.
     win::activate_window_direction(*Test::app()->base.space, win::direction::west);
-    QVERIFY(client3->control->active());
+    QVERIFY(client3->control->active);
 
     // Switch to window to the left.
     win::activate_window_direction(*Test::app()->base.space, win::direction::west);
-    QVERIFY(client2->control->active());
+    QVERIFY(client2->control->active);
 
     // Switch to window to the left.
     win::activate_window_direction(*Test::app()->base.space, win::direction::west);
-    QVERIFY(client1->control->active());
+    QVERIFY(client1->control->active);
 
     // Switch to window to the left.
     win::activate_window_direction(*Test::app()->base.space, win::direction::west);
-    QVERIFY(client4->control->active());
+    QVERIFY(client4->control->active);
 
     // Destroy all clients.
     shellSurface1.reset();
@@ -161,13 +161,13 @@ void ActivationTest::testSwitchToWindowToRight()
     std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
     auto client1 = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
     QVERIFY(client1);
-    QVERIFY(client1->control->active());
+    QVERIFY(client1->control->active);
 
     std::unique_ptr<Surface> surface2(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
     auto client2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::blue);
     QVERIFY(client2);
-    QVERIFY(client2->control->active());
+    QVERIFY(client2->control->active);
 
     win::move(client1, QPoint(300, 200));
     win::move(client2, QPoint(500, 200));
@@ -177,32 +177,32 @@ void ActivationTest::testSwitchToWindowToRight()
     std::unique_ptr<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3));
     auto client3 = Test::render_and_wait_for_shown(surface3, QSize(100, 50), Qt::blue);
     QVERIFY(client3);
-    QVERIFY(client3->control->active());
+    QVERIFY(client3->control->active);
 
     std::unique_ptr<Surface> surface4(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface4(Test::create_xdg_shell_toplevel(surface4));
     auto client4 = Test::render_and_wait_for_shown(surface4, QSize(100, 50), Qt::blue);
     QVERIFY(client4);
-    QVERIFY(client4->control->active());
+    QVERIFY(client4->control->active);
 
     win::move(client3, QPoint(1380, 200));
     win::move(client4, QPoint(1580, 200));
 
     // Switch to window to the right.
     win::activate_window_direction(*Test::app()->base.space, win::direction::east);
-    QVERIFY(client1->control->active());
+    QVERIFY(client1->control->active);
 
     // Switch to window to the right.
     win::activate_window_direction(*Test::app()->base.space, win::direction::east);
-    QVERIFY(client2->control->active());
+    QVERIFY(client2->control->active);
 
     // Switch to window to the right.
     win::activate_window_direction(*Test::app()->base.space, win::direction::east);
-    QVERIFY(client3->control->active());
+    QVERIFY(client3->control->active);
 
     // Switch to window to the right.
     win::activate_window_direction(*Test::app()->base.space, win::direction::east);
-    QVERIFY(client4->control->active());
+    QVERIFY(client4->control->active);
 
     // Destroy all clients.
     shellSurface1.reset();
@@ -229,13 +229,13 @@ void ActivationTest::testSwitchToWindowAbove()
     std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
     auto client1 = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
     QVERIFY(client1);
-    QVERIFY(client1->control->active());
+    QVERIFY(client1->control->active);
 
     std::unique_ptr<Surface> surface2(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
     auto client2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::blue);
     QVERIFY(client2);
-    QVERIFY(client2->control->active());
+    QVERIFY(client2->control->active);
 
     win::move(client1, QPoint(200, 300));
     win::move(client2, QPoint(200, 500));
@@ -245,32 +245,32 @@ void ActivationTest::testSwitchToWindowAbove()
     std::unique_ptr<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3));
     auto client3 = Test::render_and_wait_for_shown(surface3, QSize(100, 50), Qt::blue);
     QVERIFY(client3);
-    QVERIFY(client3->control->active());
+    QVERIFY(client3->control->active);
 
     std::unique_ptr<Surface> surface4(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface4(Test::create_xdg_shell_toplevel(surface4));
     auto client4 = Test::render_and_wait_for_shown(surface4, QSize(100, 50), Qt::blue);
     QVERIFY(client4);
-    QVERIFY(client4->control->active());
+    QVERIFY(client4->control->active);
 
     win::move(client3, QPoint(200, 1224));
     win::move(client4, QPoint(200, 1424));
 
     // Switch to window above.
     win::activate_window_direction(*Test::app()->base.space, win::direction::north);
-    QVERIFY(client3->control->active());
+    QVERIFY(client3->control->active);
 
     // Switch to window above.
     win::activate_window_direction(*Test::app()->base.space, win::direction::north);
-    QVERIFY(client2->control->active());
+    QVERIFY(client2->control->active);
 
     // Switch to window above.
     win::activate_window_direction(*Test::app()->base.space, win::direction::north);
-    QVERIFY(client1->control->active());
+    QVERIFY(client1->control->active);
 
     // Switch to window above.
     win::activate_window_direction(*Test::app()->base.space, win::direction::north);
-    QVERIFY(client4->control->active());
+    QVERIFY(client4->control->active);
 
     // Destroy all clients.
     shellSurface1.reset();
@@ -297,13 +297,13 @@ void ActivationTest::testSwitchToWindowBelow()
     std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
     auto client1 = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
     QVERIFY(client1);
-    QVERIFY(client1->control->active());
+    QVERIFY(client1->control->active);
 
     std::unique_ptr<Surface> surface2(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
     auto client2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::blue);
     QVERIFY(client2);
-    QVERIFY(client2->control->active());
+    QVERIFY(client2->control->active);
 
     win::move(client1, QPoint(200, 300));
     win::move(client2, QPoint(200, 500));
@@ -313,32 +313,32 @@ void ActivationTest::testSwitchToWindowBelow()
     std::unique_ptr<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3));
     auto client3 = Test::render_and_wait_for_shown(surface3, QSize(100, 50), Qt::blue);
     QVERIFY(client3);
-    QVERIFY(client3->control->active());
+    QVERIFY(client3->control->active);
 
     std::unique_ptr<Surface> surface4(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface4(Test::create_xdg_shell_toplevel(surface4));
     auto client4 = Test::render_and_wait_for_shown(surface4, QSize(100, 50), Qt::blue);
     QVERIFY(client4);
-    QVERIFY(client4->control->active());
+    QVERIFY(client4->control->active);
 
     win::move(client3, QPoint(200, 1224));
     win::move(client4, QPoint(200, 1424));
 
     // Switch to window below.
     win::activate_window_direction(*Test::app()->base.space, win::direction::south);
-    QVERIFY(client1->control->active());
+    QVERIFY(client1->control->active);
 
     // Switch to window below.
     win::activate_window_direction(*Test::app()->base.space, win::direction::south);
-    QVERIFY(client2->control->active());
+    QVERIFY(client2->control->active);
 
     // Switch to window below.
     win::activate_window_direction(*Test::app()->base.space, win::direction::south);
-    QVERIFY(client3->control->active());
+    QVERIFY(client3->control->active);
 
     // Switch to window below.
     win::activate_window_direction(*Test::app()->base.space, win::direction::south);
-    QVERIFY(client4->control->active());
+    QVERIFY(client4->control->active);
 
     // Destroy all clients.
     shellSurface1.reset();
@@ -366,7 +366,7 @@ void ActivationTest::testSwitchToWindowMaximized()
     std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
     auto client1 = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
     QVERIFY(client1);
-    QVERIFY(client1->control->active());
+    QVERIFY(client1->control->active);
     QSignalSpy configureRequestedSpy1(shellSurface1.get(), &XdgShellToplevel::configureRequested);
     QVERIFY(configureRequestedSpy1.wait());
     win::active_window_maximize(*Test::app()->base.space);
@@ -383,7 +383,7 @@ void ActivationTest::testSwitchToWindowMaximized()
     std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
     auto client2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::blue);
     QVERIFY(client2);
-    QVERIFY(client2->control->active());
+    QVERIFY(client2->control->active);
     QSignalSpy configureRequestedSpy2(shellSurface2.get(), &XdgShellToplevel::configureRequested);
     QVERIFY(configureRequestedSpy2.wait());
     win::active_window_maximize(*Test::app()->base.space);
@@ -405,28 +405,28 @@ void ActivationTest::testSwitchToWindowMaximized()
     std::unique_ptr<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3));
     auto client3 = Test::render_and_wait_for_shown(surface3, QSize(100, 50), Qt::blue);
     QVERIFY(client3);
-    QVERIFY(client3->control->active());
+    QVERIFY(client3->control->active);
 
     std::unique_ptr<Surface> surface4(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface4(Test::create_xdg_shell_toplevel(surface4));
     auto client4 = Test::render_and_wait_for_shown(surface4, QSize(100, 50), Qt::blue);
     QVERIFY(client4);
-    QVERIFY(client4->control->active());
+    QVERIFY(client4->control->active);
 
     win::move(client3, QPoint(1380, 200));
     win::move(client4, QPoint(1580, 200));
 
     // Switch to window to the left.
     win::activate_window_direction(*Test::app()->base.space, win::direction::west);
-    QVERIFY(client3->control->active());
+    QVERIFY(client3->control->active);
 
     // Switch to window to the left.
     win::activate_window_direction(*Test::app()->base.space, win::direction::west);
-    QVERIFY(client2->control->active());
+    QVERIFY(client2->control->active);
 
     // Switch to window to the left.
     win::activate_window_direction(*Test::app()->base.space, win::direction::west);
-    QVERIFY(client4->control->active());
+    QVERIFY(client4->control->active);
 
     // Destroy all clients.
     shellSurface1.reset();
@@ -454,7 +454,7 @@ void ActivationTest::testSwitchToWindowFullScreen()
     std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
     auto client1 = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
     QVERIFY(client1);
-    QVERIFY(client1->control->active());
+    QVERIFY(client1->control->active);
     QSignalSpy configureRequestedSpy1(shellSurface1.get(), &XdgShellToplevel::configureRequested);
     QVERIFY(configureRequestedSpy1.wait());
     win::active_window_set_fullscreen(*Test::app()->base.space);
@@ -470,7 +470,7 @@ void ActivationTest::testSwitchToWindowFullScreen()
     std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
     auto client2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::blue);
     QVERIFY(client2);
-    QVERIFY(client2->control->active());
+    QVERIFY(client2->control->active);
     QSignalSpy configureRequestedSpy2(shellSurface2.get(), &XdgShellToplevel::configureRequested);
     QVERIFY(configureRequestedSpy2.wait());
     win::active_window_set_fullscreen(*Test::app()->base.space);
@@ -484,36 +484,36 @@ void ActivationTest::testSwitchToWindowFullScreen()
 
     auto const stackingOrder = Test::app()->base.space->stacking_order->stack;
     QVERIFY(index_of(stackingOrder, client1) < index_of(stackingOrder, client2));
-    QVERIFY(client1->control->fullscreen());
-    QVERIFY(client2->control->fullscreen());
+    QVERIFY(client1->control->fullscreen);
+    QVERIFY(client2->control->fullscreen);
 
     // Create several clients on the bottom screen.
     std::unique_ptr<Surface> surface3(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3));
     auto client3 = Test::render_and_wait_for_shown(surface3, QSize(100, 50), Qt::blue);
     QVERIFY(client3);
-    QVERIFY(client3->control->active());
+    QVERIFY(client3->control->active);
 
     std::unique_ptr<Surface> surface4(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface4(Test::create_xdg_shell_toplevel(surface4));
     auto client4 = Test::render_and_wait_for_shown(surface4, QSize(100, 50), Qt::blue);
     QVERIFY(client4);
-    QVERIFY(client4->control->active());
+    QVERIFY(client4->control->active);
 
     win::move(client3, QPoint(200, 1224));
     win::move(client4, QPoint(200, 1424));
 
     // Switch to window above.
     win::activate_window_direction(*Test::app()->base.space, win::direction::north);
-    QVERIFY(client3->control->active());
+    QVERIFY(client3->control->active);
 
     // Switch to window above.
     win::activate_window_direction(*Test::app()->base.space, win::direction::north);
-    QVERIFY(client2->control->active());
+    QVERIFY(client2->control->active);
 
     // Switch to window above.
     win::activate_window_direction(*Test::app()->base.space, win::direction::north);
-    QVERIFY(client4->control->active());
+    QVERIFY(client4->control->active);
 
     // Destroy all clients.
     shellSurface1.reset();

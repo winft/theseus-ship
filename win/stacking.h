@@ -11,9 +11,7 @@
 #include "geo.h"
 #include "layers.h"
 #include "meta.h"
-#include "stacking_order.h"
 #include "util.h"
-#include "x11/netinfo.h"
 
 #include "base/output_helpers.h"
 #include "base/platform.h"
@@ -91,11 +89,11 @@ namespace KWin::win
  */
 // TODO misleading name for this method, too many slightly different ways to use it
 template<typename Space>
-Toplevel* top_client_on_desktop(Space* space,
-                                int desktop,
-                                base::output const* output,
-                                bool unconstrained = false,
-                                bool only_normal = true)
+typename Space::window_t* top_client_on_desktop(Space* space,
+                                                int desktop,
+                                                base::output const* output,
+                                                bool unconstrained = false,
+                                                bool only_normal = true)
 {
     // TODO    Q_ASSERT( block_stacking_updates == 0 );
     auto const& list
@@ -117,11 +115,12 @@ Toplevel* top_client_on_desktop(Space* space,
     return nullptr;
 }
 
-template<class T, class R = T>
-std::deque<R*> ensure_stacking_order_in_list(std::deque<Toplevel*> const& stackingOrder,
-                                             std::vector<T*> const& list)
+template<class Order, class T, class R = T>
+std::deque<R*> ensure_stacking_order_in_list(Order const& order, std::vector<T*> const& list)
 {
-    static_assert(std::is_base_of<Toplevel, T>::value, "U must be derived from T");
+    using order_window_t = typename decltype(order.stack)::value_type;
+    static_assert(std::is_base_of<std::remove_pointer_t<order_window_t>, T>::value,
+                  "T must be derived from stacking order window type");
     // TODO    Q_ASSERT( block_stacking_updates == 0 );
 
     if (!list.size()) {
@@ -139,10 +138,10 @@ std::deque<R*> ensure_stacking_order_in_list(std::deque<Toplevel*> const& stacki
         }
     }
 
-    // Now reorder the result. For that stackingOrder should be a superset and it define the order
-    // in which windows should appear in result. We then reorder result simply by going through
-    // stackingOrder one-by-one, removing it from result and then adding it back in the end.
-    for (auto win : stackingOrder) {
+    // Now reorder the result. For that 'order' should be a superset and it define the order in
+    // which windows should appear in result. We then reorder result simply by going through order
+    // one-by-one, removing it from result and then adding it back in the end.
+    for (auto const& win : order.stack) {
         auto rwin = dynamic_cast<R*>(win);
         if (!rwin) {
             continue;
@@ -156,7 +155,7 @@ std::deque<R*> ensure_stacking_order_in_list(std::deque<Toplevel*> const& stacki
 template<class Space, class Win>
 std::deque<Win*> restacked_by_space_stacking_order(Space* space, std::vector<Win*> const& list)
 {
-    return ensure_stacking_order_in_list(space->stacking_order->stack, list);
+    return ensure_stacking_order_in_list(*space->stacking_order, list);
 }
 
 template<typename Space, typename Window>
@@ -190,7 +189,7 @@ void lower_window(Space* space, Window* window)
 
         for (auto it = wins.crbegin(); it != wins.crend(); it++) {
             auto gwin = *it;
-            if (gwin == static_cast<Toplevel*>(window)) {
+            if (gwin == static_cast<typename Space::window_t*>(window)) {
                 continue;
             }
 
@@ -222,7 +221,7 @@ void raise_window(Space* space, Window* window)
         }
 
         if (!is_special_window(window)) {
-            space->most_recently_raised = static_cast<Toplevel*>(window);
+            space->most_recently_raised = window;
         }
     };
 
@@ -230,7 +229,7 @@ void raise_window(Space* space, Window* window)
 
     if (window->transient()->lead()) {
         // Also raise all leads.
-        std::vector<Toplevel*> leads;
+        std::vector<typename Space::window_t*> leads;
 
         for (auto lead : window->transient()->leads()) {
             while (lead) {
@@ -263,7 +262,7 @@ void raise_or_lower_client(Space* space, Window* window)
         return;
     }
 
-    Toplevel* topmost = nullptr;
+    typename Space::window_t* topmost{nullptr};
 
     if (space->most_recently_raised
         && contains(space->stacking_order->stack, space->most_recently_raised)
@@ -286,7 +285,7 @@ void raise_or_lower_client(Space* space, Window* window)
 }
 
 template<typename Space, typename Window>
-void restack(Space* space, Window* window, Toplevel* under, bool force = false)
+void restack(Space* space, Window* window, typename Space::window_t* under, bool force = false)
 {
     assert(under);
     assert(contains(space->stacking_order->pre_stack, under));
@@ -315,7 +314,7 @@ void restack(Space* space, Window* window, Toplevel* under, bool force = false)
     space->stacking_order->pre_stack.insert(it, window);
 
     assert(contains(space->stacking_order->pre_stack, window));
-    focus_chain_move_window_after(space->focus_chain, window, under);
+    focus_chain_move_window_after<typename Space::window_t>(space->focus_chain, window, under);
     space->stacking_order->update_order();
 }
 
@@ -342,15 +341,16 @@ void auto_raise(Win* win)
  * @param list container of windows to sort
  */
 template<typename Container>
-std::vector<Toplevel*> sort_windows_by_layer(Container const& list)
+std::vector<typename Container::value_type> sort_windows_by_layer(Container const& list)
 {
-    std::deque<Toplevel*> layers[enum_index(layer::count)];
+    using order_window_t = typename Container::value_type;
+    std::deque<order_window_t> layers[enum_index(layer::count)];
 
     // Build the order from layers.
 
     // This is needed as a workaround for group windows with fullscreen members, such that other
     // group members are moved per output to the active (fullscreen) level too.
-    using key = std::pair<base::output const*, Toplevel*>;
+    using key = std::pair<base::output const*, order_window_t>;
     std::map<key, layer> lead_layers;
 
     for (auto const& win : list) {
@@ -373,7 +373,7 @@ std::vector<Toplevel*> sort_windows_by_layer(Container const& list)
         layers[enum_index(lay)].push_back(win);
     }
 
-    std::vector<Toplevel*> sorted;
+    std::vector<order_window_t> sorted;
     sorted.reserve(list.size());
 
     for (auto lay = enum_index(layer::first); lay < enum_index(layer::count); ++lay) {

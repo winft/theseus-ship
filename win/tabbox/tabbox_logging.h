@@ -20,8 +20,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_TABBOX_LOGGING_H
 #define KWIN_TABBOX_LOGGING_H
 
+#include "kwin_export.h"
+
 #include <QDebug>
 #include <QLoggingCategory>
-Q_DECLARE_LOGGING_CATEGORY(KWIN_TABBOX)
+KWIN_EXPORT Q_DECLARE_LOGGING_CATEGORY(KWIN_TABBOX)
 
 #endif

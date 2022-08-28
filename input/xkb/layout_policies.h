@@ -258,7 +258,9 @@ public:
         QObject::connect(manager->xkb.platform->redirect->space.qobject.get(),
                          &win::space::qobject_t::clientActivated,
                          this->qobject.get(),
-                         [this](auto window) {
+                         [this] {
+                             auto window
+                                 = this->manager->xkb.platform->redirect->space.active_client;
                              if (!window) {
                                  return;
                              }
@@ -323,7 +325,7 @@ public:
         QObject::connect(space.qobject.get(),
                          &win::space::qobject_t::clientActivated,
                          this->qobject.get(),
-                         [this](auto window) { handle_client_activated(window); });
+                         [this, &space] { handle_client_activated(space.active_client); });
 
         auto session_manager = space.session_manager.get();
         QObject::connect(
@@ -337,7 +339,7 @@ public:
                     if (!layout) {
                         continue;
                     }
-                    if (auto const name = win->control->desktop_file_name(); !name.isEmpty()) {
+                    if (auto const name = win->control->desktop_file_name; !name.isEmpty()) {
                         this->config.writeEntry(
                             this->default_layout_entry_key() % QLatin1String(name), layout);
                     }
@@ -433,7 +435,7 @@ private:
 
         auto restored_layout = 0;
 
-        if (auto restored_it = restored_layouts.find(window->control->desktop_file_name());
+        if (auto restored_it = restored_layouts.find(window->control->desktop_file_name);
             restored_it != restored_layouts.end()) {
             restored_layout = restored_it->second;
             restored_layouts.erase(restored_it);

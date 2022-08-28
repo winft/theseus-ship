@@ -47,7 +47,8 @@ public:
     void tabletPadStripEvent(int number, int position, bool is_finger) override;
     void tabletPadRingEvent(int number, int position, bool is_finger) override;
 
-    void cleanupDecoration(win::deco::client_impl* old, win::deco::client_impl* now) override;
+    void cleanupDecoration(win::deco::client_impl<Toplevel>* old,
+                           win::deco::client_impl<Toplevel>* now) override;
     void cleanupInternalWindow(QWindow* old, QWindow* now) override;
     void focusUpdate(KWin::Toplevel* old, KWin::Toplevel* now) override;
 

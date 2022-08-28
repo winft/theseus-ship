@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "types.h"
 
-#ifndef KCMRULES
 #include "base/options.h"
 #include "input/cursor.h"
 #include "kwinglobals.h"
@@ -41,11 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QPoint>
 #include <QRect>
 
-namespace KWin
-{
-class Toplevel;
-
-namespace win
+namespace KWin::win
 {
 
 template<typename Win>
@@ -102,7 +97,7 @@ bool can_move(Win const* window)
 template<typename Win>
 void place(Win* window, const QRect& area)
 {
-    auto policy = window->control->rules().checkPlacement(placement::global_default);
+    auto policy = window->control->rules.checkPlacement(placement::global_default);
     if (policy != placement::global_default) {
         place(window, area, policy);
         return;
@@ -303,9 +298,9 @@ void place_smart(Win* window, const QRect& area, placement /*next*/)
                     xr = qMin(cxr, xr);
                     yt = qMax(cyt, yt);
                     yb = qMin(cyb, yb);
-                    if (client->control->keep_above()) {
+                    if (client->control->keep_above) {
                         overlap += 16 * (xr - xl) * (yb - yt);
-                    } else if (client->control->keep_below() && !is_dock(client)) {
+                    } else if (client->control->keep_below && !is_dock(client)) {
                         // ignore KeepBelow windows
                         overlap += 0; // for placement (see X11Client::belongsToLayer() for Dock)
                     } else {
@@ -484,10 +479,12 @@ void place_on_main_window(Win* window, const QRect& area, placement nextPlacemen
     if (nextPlacement == placement::maximizing) // maximize if needed
         place_maximizing(window, area, placement::no_placement);
 
-    auto leads = window->transient()->leads();
-    Toplevel* place_on = nullptr;
-    Toplevel* place_on2 = nullptr;
+    using Space = std::remove_reference_t<decltype(window->space)>;
+    typename Space::window_t* place_on{nullptr};
+    typename Space::window_t* place_on2{nullptr};
+
     int mains_count = 0;
+    auto leads = window->transient()->leads();
 
     for (auto lead : leads) {
         if (leads.size() > 1 && is_special_window(lead)) {
@@ -564,7 +561,7 @@ void unclutter_desktop(Space& space)
     auto const& windows = space.windows;
     for (int i = windows.size() - 1; i >= 0; i--) {
         auto client = windows.at(i);
-        if (!client->control || !client->isOnCurrentDesktop() || client->control->minimized()
+        if (!client->control || !client->isOnCurrentDesktop() || client->control->minimized
             || client->isOnAllDesktops() || !client->isMovable()) {
             continue;
         }
@@ -574,6 +571,3 @@ void unclutter_desktop(Space& space)
 }
 
 }
-}
-
-#endif

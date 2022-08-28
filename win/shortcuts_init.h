@@ -435,9 +435,7 @@ void init_shortcuts(Space& space)
     def(kli18n("Switch to Next Screen"), 0, switch_to_next_output<Space>);
     def(kli18n("Switch to Previous Screen"), 0, switch_to_prev_output<Space>);
 
-    def(kli18n("Kill Window"),
-        Qt::META | Qt::CTRL | Qt::Key_Escape,
-        start_window_killer<win::space>);
+    def(kli18n("Kill Window"), Qt::META | Qt::CTRL | Qt::Key_Escape, start_window_killer<Space>);
     def6(kli18n("Suspend Compositing"),
          Qt::SHIFT + Qt::ALT + Qt::Key_F12,
          space.render.qobject.get(),

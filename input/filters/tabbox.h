@@ -15,8 +15,6 @@
 #include "input/redirect.h"
 #include "input/xkb/helpers.h"
 #include "main.h"
-#include "win/space.h"
-#include "win/tabbox/tabbox.h"
 
 #include <Wrapland/Server/seat.h>
 

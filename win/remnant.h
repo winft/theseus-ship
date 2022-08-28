@@ -20,9 +20,9 @@ namespace KWin::win
 {
 
 template<typename Space>
-std::vector<Toplevel*> get_remnants(Space const& space)
+std::vector<typename Space::window_t*> get_remnants(Space const& space)
 {
-    std::vector<Toplevel*> ret;
+    std::vector<typename Space::window_t*> ret;
     for (auto const& window : space.windows) {
         if (window->remnant) {
             ret.push_back(window);
@@ -90,7 +90,7 @@ public:
 
         bool minimized{false};
 
-        std::unique_ptr<deco::renderer> decoration_renderer;
+        std::unique_ptr<deco::render_data> deco_render;
         double opacity{1};
         NET::WindowType window_type{NET::Unknown};
         QByteArray window_role;

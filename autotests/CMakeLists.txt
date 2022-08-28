@@ -123,14 +123,8 @@ set(testOnScreenNotification_SRCS
 add_executable(testOnScreenNotification ${testOnScreenNotification_SRCS})
 
 target_link_libraries(testOnScreenNotification
-    Qt::DBus
-    Qt::Quick
+    kwin
     Qt::Test
-    Qt::Widgets # QAction include
-
-    KDecoration2::KDecoration2Private
-    KF5::ConfigCore
-    KF5::WindowSystem
 )
 
 add_test(NAME kwin-testOnScreenNotification COMMAND testOnScreenNotification)
@@ -157,6 +151,7 @@ ecm_mark_as_test(testGestures)
 ########################################################
 add_executable(testX11TimestampUpdate test_x11_timestamp_update.cpp)
 target_link_libraries(testX11TimestampUpdate
+    kwin
     kwin_x11_lib
     Qt::Test
 )

@@ -14,7 +14,6 @@
 #include "input/xkb/helpers.h"
 #include "win/input.h"
 #include "win/move.h"
-#include "win/space.h"
 
 namespace KWin::input
 {

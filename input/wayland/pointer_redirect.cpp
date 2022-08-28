@@ -87,7 +87,7 @@ void pointer_redirect::init()
         });
 
     // connect the move resize of all window
-    auto setupMoveResizeConnection = [this](Toplevel* c) {
+    auto setupMoveResizeConnection = [this](auto c) {
         if (!c->control) {
             return;
         }
@@ -100,17 +100,21 @@ void pointer_redirect::init()
                          qobject.get(),
                          [this] { device_redirect_update(this); });
     };
+    auto setup_move_resize_notify_on_signal = [this, setupMoveResizeConnection](auto win_id) {
+        auto c = this->redirect->space.windows_map.at(win_id);
+        setupMoveResizeConnection(c);
+    };
 
     auto const clients = redirect->space.windows;
     std::for_each(clients.begin(), clients.end(), setupMoveResizeConnection);
     QObject::connect(redirect->space.qobject.get(),
                      &win::space::qobject_t::clientAdded,
                      qobject.get(),
-                     setupMoveResizeConnection);
+                     setup_move_resize_notify_on_signal);
     QObject::connect(redirect->space.qobject.get(),
                      &win::space::qobject_t::wayland_window_added,
                      qobject.get(),
-                     setupMoveResizeConnection);
+                     setup_move_resize_notify_on_signal);
 
     // warp the cursor to center of screen
     warp(QRect({}, kwinApp()->get_base().topology.size).center());
@@ -144,7 +148,7 @@ void pointer_redirect::update_to_reset()
     if (auto focus_deco = focus.deco) {
         QHoverEvent event(QEvent::HoverLeave, QPointF(), QPointF());
         QCoreApplication::instance()->sendEvent(focus_deco->decoration(), &event);
-        device_redirect_set_decoration(this, nullptr);
+        device_redirect_set_decoration<win::deco::client_impl<Toplevel>>(this, nullptr);
     }
     if (auto focus_window = focus.window) {
         if (focus_window->control) {
@@ -368,7 +372,8 @@ void pointer_redirect::cleanupInternalWindow(QWindow* old, QWindow* now)
     }
 }
 
-void pointer_redirect::cleanupDecoration(win::deco::client_impl* old, win::deco::client_impl* now)
+void pointer_redirect::cleanupDecoration(win::deco::client_impl<Toplevel>* old,
+                                         win::deco::client_impl<Toplevel>* now)
 {
     QObject::disconnect(notifiers.decoration_geometry);
     notifiers.decoration_geometry = QMetaObject::Connection();

@@ -68,6 +68,11 @@ private:
     Wrapland::Client::PlasmaShell* m_plasmaShell = nullptr;
 };
 
+win::x11::window* get_x11_window_from_id(uint32_t id)
+{
+    return dynamic_cast<win::x11::window*>(Test::app()->base.space->windows_map.at(id));
+}
+
 void StrutsTest::initTestCase()
 {
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
@@ -251,7 +256,7 @@ void StrutsTest::testWaylandStruts()
             surface, windowGeometry.size(), Qt::red, QImage::Format_RGB32);
 
         QVERIFY(c);
-        QVERIFY(!c->control->active());
+        QVERIFY(!c->control->active);
         QCOMPARE(c->frameGeometry(), windowGeometry);
         QVERIFY(win::is_dock(c));
         QVERIFY(c->hasStrut());
@@ -323,7 +328,7 @@ void StrutsTest::testMoveWaylandPanel()
     auto c = Test::render_and_wait_for_shown(
         surface, windowGeometry.size(), Qt::red, QImage::Format_RGB32);
     QVERIFY(c);
-    QVERIFY(!c->control->active());
+    QVERIFY(!c->control->active);
     QCOMPARE(c->frameGeometry(), windowGeometry);
     QVERIFY(win::is_dock(c));
     QVERIFY(c->hasStrut());
@@ -380,7 +385,7 @@ void StrutsTest::testWaylandMobilePanel()
     auto c = Test::render_and_wait_for_shown(
         surface, windowGeometry.size(), Qt::red, QImage::Format_RGB32);
     QVERIFY(c);
-    QVERIFY(!c->control->active());
+    QVERIFY(!c->control->active);
     QCOMPARE(c->frameGeometry(), windowGeometry);
     QVERIFY(win::is_dock(c));
     QVERIFY(c->hasStrut());
@@ -412,7 +417,7 @@ void StrutsTest::testWaylandMobilePanel()
         surface2, windowGeometry2.size(), Qt::blue, QImage::Format_RGB32);
 
     QVERIFY(c1);
-    QVERIFY(!c1->control->active());
+    QVERIFY(!c1->control->active);
     QCOMPARE(c1->frameGeometry(), windowGeometry2);
     QVERIFY(win::is_dock(c1));
     QVERIFY(c1->hasStrut());
@@ -630,8 +635,7 @@ void StrutsTest::testX11Struts()
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
-    auto client
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto client = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QVERIFY(!win::decoration(client));
@@ -782,8 +786,7 @@ void StrutsTest::test363804()
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
-    auto client
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto client = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QVERIFY(!win::decoration(client));
@@ -875,8 +878,7 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
-    auto client
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto client = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QVERIFY(!win::decoration(client));
@@ -922,8 +924,7 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
 
     QVERIFY(windowCreatedSpy.wait());
 
-    auto client2
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.last().first().value<Toplevel*>());
+    auto client2 = get_x11_window_from_id(windowCreatedSpy.last().first().value<quint32>());
     QVERIFY(client2);
     QVERIFY(client2 != client);
     QVERIFY(win::decoration(client2));
@@ -1013,8 +1014,7 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
-    auto client
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto client = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QVERIFY(!win::decoration(client));
@@ -1061,8 +1061,7 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
     xcb_flush(c.get());
     QVERIFY(windowCreatedSpy.wait());
 
-    auto client2
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.last().first().value<Toplevel*>());
+    auto client2 = get_x11_window_from_id(windowCreatedSpy.last().first().value<quint32>());
     QVERIFY(client2);
     QVERIFY(client2 != client);
     QVERIFY(win::decoration(client2));
@@ -1072,7 +1071,7 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
 
     const QRect origGeo = client2->frameGeometry();
     Test::app()->base.input->cursor->set_pos(origGeo.center());
-    win::perform_window_operation(*Test::app()->base.space, client2, base::options_qobject::MoveOp);
+    win::perform_window_operation(client2, base::options_qobject::MoveOp);
 
     QTRY_COMPARE(Test::app()->base.space->move_resize_window, client2);
     QVERIFY(win::is_move(client2));

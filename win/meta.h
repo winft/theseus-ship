@@ -5,7 +5,6 @@
 */
 #pragma once
 
-#include "control.h"
 #include "net.h"
 #include "remnant.h"
 
@@ -27,7 +26,7 @@ QString caption(Win* win)
         return win->remnant->data.caption;
     }
     QString cap = win->caption.normal + win->caption.suffix;
-    if (win->control && win->control->unresponsive()) {
+    if (win->control && win->control->unresponsive) {
         cap += QLatin1String(" ");
         cap += i18nc("Application is not responding, appended to window title", "(Not Responding)");
     }
@@ -37,20 +36,20 @@ QString caption(Win* win)
 template<typename Win>
 QString shortcut_caption_suffix(Win* win)
 {
-    if (win->control->shortcut().isEmpty()) {
+    if (win->control->shortcut.isEmpty()) {
         return QString();
     }
-    return QLatin1String(" {") + win->control->shortcut().toString() + QLatin1Char('}');
+    return QLatin1String(" {") + win->control->shortcut.toString() + QLatin1Char('}');
 }
 
 template<typename Win>
 void set_desktop_file_name(Win* win, QByteArray name)
 {
-    name = win->control->rules().checkDesktopFile(name).toUtf8();
-    if (name == win->control->desktop_file_name()) {
+    name = win->control->rules.checkDesktopFile(name).toUtf8();
+    if (name == win->control->desktop_file_name) {
         return;
     }
-    win->control->set_desktop_file_name(name);
+    win->control->desktop_file_name = name;
     win->updateWindowRules(rules::type::desktop_file);
     Q_EMIT win->qobject->desktopFileNameChanged();
 }
@@ -78,7 +77,7 @@ inline QString icon_from_desktop_file(QString const& file_name)
 template<typename Win>
 QString icon_from_desktop_file(Win* win)
 {
-    return icon_from_desktop_file(QString::fromUtf8(win->control->desktop_file_name()));
+    return icon_from_desktop_file(QString::fromUtf8(win->control->desktop_file_name));
 }
 
 /**

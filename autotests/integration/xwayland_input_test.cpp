@@ -176,8 +176,9 @@ void XWaylandInputTest::testPointerEnterLeave()
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
+    auto client_id = windowCreatedSpy.last().first().value<quint32>();
     auto client
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.last().first().value<Toplevel*>());
+        = dynamic_cast<win::x11::window*>(Test::app()->base.space->windows_map.at(client_id));
     QVERIFY(client);
     QVERIFY(win::decoration(client));
     QVERIFY(!client->hasStrut());

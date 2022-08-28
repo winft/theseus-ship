@@ -14,7 +14,10 @@ namespace KWin::win
 {
 
 template<typename Space>
-int get_pack_position_left(Space const& space, Toplevel const* window, int oldX, bool leftEdge)
+int get_pack_position_left(Space const& space,
+                           typename Space::window_t const* window,
+                           int oldX,
+                           bool leftEdge)
 {
     int newX = space_window_area(space, MaximizeArea, window).left();
     if (oldX <= newX) {
@@ -58,7 +61,10 @@ int get_pack_position_left(Space const& space, Toplevel const* window, int oldX,
 }
 
 template<typename Space>
-int get_pack_position_right(Space const& space, Toplevel const* window, int oldX, bool rightEdge)
+int get_pack_position_right(Space const& space,
+                            typename Space::window_t const* window,
+                            int oldX,
+                            bool rightEdge)
 {
     int newX = space_window_area(space, MaximizeArea, window).right();
 
@@ -103,7 +109,10 @@ int get_pack_position_right(Space const& space, Toplevel const* window, int oldX
 }
 
 template<typename Space>
-int get_pack_position_up(Space const& space, Toplevel const* window, int oldY, bool topEdge)
+int get_pack_position_up(Space const& space,
+                         typename Space::window_t const* window,
+                         int oldY,
+                         bool topEdge)
 {
     int newY = space_window_area(space, MaximizeArea, window).top();
     if (oldY <= newY) {
@@ -140,7 +149,10 @@ int get_pack_position_up(Space const& space, Toplevel const* window, int oldY, b
 }
 
 template<typename Space>
-int get_pack_position_down(Space const& space, Toplevel const* window, int oldY, bool bottomEdge)
+int get_pack_position_down(Space const& space,
+                           typename Space::window_t const* window,
+                           int oldY,
+                           bool bottomEdge)
 {
     int newY = space_window_area(space, MaximizeArea, window).bottom();
     if (oldY >= newY) { // try another Xinerama screen

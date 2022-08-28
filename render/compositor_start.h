@@ -13,6 +13,7 @@
 #include "main.h"
 #include "win/remnant.h"
 #include "win/space_window_release.h"
+#include "win/stacking_order.h"
 
 #include <xcb/composite.h>
 
@@ -98,8 +99,8 @@ void compositor_start_scene(Compositor& comp)
                      &EffectsHandler::screenGeometryChanged,
                      comp.qobject.get(),
                      [&comp] { comp.addRepaintFull(); });
-    QObject::connect(comp.space->stacking_order.get(),
-                     &win::stacking_order::unlocked,
+    QObject::connect(comp.space->stacking_order->qobject.get(),
+                     &win::stacking_order_qobject::unlocked,
                      comp.qobject.get(),
                      [&comp]() {
                          if (comp.effects) {

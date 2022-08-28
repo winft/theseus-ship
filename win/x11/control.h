@@ -13,19 +13,17 @@
 #include "win/meta.h"
 #include "win/move.h"
 
-#if KWIN_BUILD_TABBOX
-#include "win/tabbox/tabbox.h"
-#endif
-
 namespace KWin::win::x11
 {
 
 template<typename Win>
-class control : public win::control
+class control : public win::control<typename Win::window_t>
 {
 public:
+    using control_t = typename win::control<typename Win::window_t>;
+
     control(Win* window)
-        : win::control(window)
+        : control_t(window)
         , m_window{window}
     {
     }
@@ -38,21 +36,22 @@ public:
 
     void set_skip_pager(bool set) override
     {
-        win::control::set_skip_pager(set);
-        m_window->info->setState(skip_pager() ? NET::SkipPager : NET::States(), NET::SkipPager);
+        control_t::set_skip_pager(set);
+        m_window->info->setState(this->skip_pager() ? NET::SkipPager : NET::States(),
+                                 NET::SkipPager);
     }
 
     void set_skip_switcher(bool set) override
     {
-        win::control::set_skip_switcher(set);
-        m_window->info->setState(skip_switcher() ? NET::SkipSwitcher : NET::States(),
+        control_t::set_skip_switcher(set);
+        m_window->info->setState(this->skip_switcher() ? NET::SkipSwitcher : NET::States(),
                                  NET::SkipSwitcher);
     }
 
     void set_skip_taskbar(bool set) override
     {
-        win::control::set_skip_taskbar(set);
-        m_window->info->setState(skip_taskbar() ? NET::SkipTaskbar : NET::States(),
+        control_t::set_skip_taskbar(set);
+        m_window->info->setState(this->skip_taskbar() ? NET::SkipTaskbar : NET::States(),
                                  NET::SkipTaskbar);
     }
 
@@ -74,7 +73,7 @@ public:
         //
         // The passive grab below is established so the window can be raised or activated when it
         // is clicked.
-        if ((kwinApp()->options->qobject->focusPolicyIsReasonable() && !active())
+        if ((kwinApp()->options->qobject->focusPolicyIsReasonable() && !this->active)
             || (kwinApp()->options->qobject->isClickRaise()
                 && !is_most_recently_raised(m_window))) {
             if (kwinApp()->options->qobject->commandWindow1()
@@ -122,7 +121,7 @@ public:
     {
         if (decoration(m_window)) {
             auto const grav = calculate_gravitation(m_window, true);
-            win::control::destroy_decoration();
+            control_t::destroy_decoration();
             move(m_window, grav);
         }
         m_window->xcb_windows.input.reset();
@@ -136,10 +135,10 @@ public:
 
     bool can_fullscreen() const override
     {
-        if (!rules().checkFullScreen(true)) {
+        if (!this->rules.checkFullScreen(true)) {
             return false;
         }
-        if (rules().checkStrictGeometry(true)) {
+        if (this->rules.checkStrictGeometry(true)) {
             // check geometry constraints (rule to obey is set)
             const QRect fsarea = space_window_area(m_window->space, FullScreenArea, m_window);
             if (size_for_client_size(m_window, fsarea.size(), win::size_mode::any, true)

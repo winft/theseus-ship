@@ -29,13 +29,13 @@ void assign_subsurface_role(Win* win)
 template<typename Win>
 void restack_subsurfaces(Win* window)
 {
-    auto subsurface_stacker = [&window](std::vector<Toplevel*>& children) {
+    auto subsurface_stacker = [&window](auto& children) {
         auto const& subsurfaces = window->surface->state().children;
-        std::vector<Toplevel*> stacking;
+        std::remove_reference_t<decltype(children)> stacking;
 
         for (auto const& subsurface : subsurfaces) {
             auto surface = subsurface->surface();
-            auto it = std::find_if(children.begin(), children.end(), [&surface](Toplevel* child) {
+            auto it = std::find_if(children.begin(), children.end(), [&surface](auto child) {
                 return child->surface == surface;
             });
             if (it == children.end()) {

@@ -48,11 +48,11 @@ void destroy_window(Win* win)
             tabbox->next_prev(true);
         }
 #endif
-        if (win->control->move_resize().enabled) {
+        if (win->control->move_resize.enabled) {
             win->leaveMoveResize();
         }
 
-        win->space.rule_book->discardUsed(win, true);
+        rules::discard_used_rules(*win->space.rule_book, *win, true);
 
         win->control->destroy_plasma_wayland_integration();
         win->control->destroy_decoration();

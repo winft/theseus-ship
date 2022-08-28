@@ -53,7 +53,7 @@ QIcon console_window::icon() const
     if (!ref_win->control) {
         return {};
     }
-    return ref_win->control->icon();
+    return ref_win->control->icon;
 }
 
 QRect console_window::iconGeometry() const
@@ -192,7 +192,7 @@ bool console_window::isFullScreen() const
     if (!ref_win->control) {
         return false;
     }
-    return ref_win->control->fullscreen();
+    return ref_win->control->fullscreen;
 }
 
 void console_window::setFullScreen(bool set)
@@ -410,7 +410,7 @@ bool console_window::keepAbove() const
     if (!ref_win->control) {
         return false;
     }
-    return ref_win->control->keep_above();
+    return ref_win->control->keep_above;
 }
 
 void console_window::setKeepAbove(bool set)
@@ -425,7 +425,7 @@ bool console_window::keepBelow() const
     if (!ref_win->control) {
         return false;
     }
-    return ref_win->control->keep_below();
+    return ref_win->control->keep_below;
 }
 
 void console_window::setKeepBelow(bool set)
@@ -440,7 +440,7 @@ bool console_window::isMinimized() const
     if (!ref_win->control) {
         return false;
     }
-    return ref_win->control->minimized();
+    return ref_win->control->minimized;
 }
 
 void console_window::setMinimized(bool set)
@@ -512,7 +512,7 @@ bool console_window::isActive() const
     if (!ref_win->control) {
         return false;
     }
-    return ref_win->control->active();
+    return ref_win->control->active;
 }
 
 bool console_window::isDemandingAttention() const
@@ -520,7 +520,7 @@ bool console_window::isDemandingAttention() const
     if (!ref_win->control) {
         return false;
     }
-    return ref_win->control->demands_attention();
+    return ref_win->control->demands_attention;
 }
 
 void console_window::demandAttention(bool set)
@@ -543,7 +543,7 @@ bool console_window::applicationMenuActive() const
     if (!ref_win->control) {
         return false;
     }
-    return ref_win->control->application_menu_active();
+    return ref_win->control->appmenu.active;
 }
 
 bool console_window::unresponsive() const
@@ -551,7 +551,7 @@ bool console_window::unresponsive() const
     if (!ref_win->control) {
         return false;
     }
-    return ref_win->control->unresponsive();
+    return ref_win->control->unresponsive;
 }
 
 bool console_window::isTransient() const
@@ -595,7 +595,7 @@ QString console_window::colorScheme() const
     if (!ref_win->control) {
         return {};
     }
-    return ref_win->control->palette().color_scheme;
+    return ref_win->control->palette.color_scheme;
 }
 
 QByteArray console_window::desktopFileName() const
@@ -603,7 +603,7 @@ QByteArray console_window::desktopFileName() const
     if (!ref_win->control) {
         return {};
     }
-    return ref_win->control->desktop_file_name();
+    return ref_win->control->desktop_file_name;
 }
 
 bool console_window::hasApplicationMenu() const

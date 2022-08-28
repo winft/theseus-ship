@@ -14,7 +14,6 @@
 #include "config-kwin.h"
 #include "render/platform.h"
 
-#ifndef KCMRULES
 #include "main.h"
 #include "options_settings.h"
 #include "utils/algorithm.h"
@@ -23,12 +22,9 @@
 
 #include <QOpenGLContext>
 #include <QProcess>
-#endif
 
 namespace KWin::base
 {
-
-#ifndef KCMRULES
 
 OpenGLPlatformInterface defaultGlPlatformInterface()
 {
@@ -859,7 +855,6 @@ options_qobject::MouseCommand options::wheelToMouseCommand(options_qobject::Mous
         return options_qobject::MouseNothing;
     }
 }
-#endif
 
 double options::animationTimeFactor() const
 {

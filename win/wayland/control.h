@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "control_destroy.h"
 #include "desktop_set.h"
 
 #include "win/control.h"
@@ -13,11 +14,11 @@ namespace KWin::win::wayland
 {
 
 template<typename Win>
-class control : public win::control
+class control : public win::control<typename Win::window_t>
 {
 public:
     control(Win& window)
-        : win::control(&window)
+        : win::control<typename Win::window_t>(&window)
         , window{window}
     {
     }
@@ -25,6 +26,11 @@ public:
     void set_desktops(QVector<virtual_desktop*> desktops) override
     {
         wayland::set_desktops(window, desktops);
+    }
+
+    void destroy_plasma_wayland_integration() override
+    {
+        destroy_plasma_integration(*this);
     }
 
 private:

@@ -6,7 +6,6 @@
 #pragma once
 
 #include "base/x11/grabs.h"
-#include "toplevel.h"
 #include "utils/blocker.h"
 #include "win/input.h"
 #include "win/rules.h"
@@ -14,10 +13,6 @@
 #include "win/space_areas_helpers.h"
 #include "win/tabbox.h"
 #include "win/window_release.h"
-
-#if KWIN_BUILD_TABBOX
-#include "win/tabbox/tabbox.h"
-#endif
 
 namespace KWin::win::x11
 {
@@ -36,7 +31,7 @@ void remove_controlled_window_from_space(Space& space, Win* win)
     if (space.client_keys_client == win) {
         setup_window_shortcut_done(space, false);
     }
-    if (!win->control->shortcut().isEmpty()) {
+    if (!win->control->shortcut.isEmpty()) {
         // Remove from client_keys.
         set_shortcut(win, QString());
 
@@ -70,7 +65,7 @@ void remove_controlled_window_from_space(Space& space, Win* win)
         cancel_delay_focus(space);
     }
 
-    Q_EMIT space.qobject->clientRemoved(win);
+    Q_EMIT space.qobject->clientRemoved(win->signal_id);
 
     space.stacking_order->update_count();
     update_space_areas(space);
@@ -91,12 +86,12 @@ template<typename Win>
 void reset_have_resize_effect(Win& win)
 {
     if (win.control) {
-        win.control->reset_have_resize_effect();
+        win.control->have_resize_effect = false;
     }
 }
 
 template<typename Win>
-void finish_unmanaged_removal(Win* win, Toplevel* remnant)
+void finish_unmanaged_removal(Win* win, Win* remnant)
 {
     auto& space = win->space;
     assert(contains(space.windows, win));
@@ -104,7 +99,7 @@ void finish_unmanaged_removal(Win* win, Toplevel* remnant)
     remove_window_from_lists(space, win);
     space.render.addRepaint(visible_rect(win));
 
-    Q_EMIT space.qobject->unmanagedRemoved(win);
+    Q_EMIT space.qobject->unmanagedRemoved(win->signal_id);
 
     if (remnant) {
         win->disownDataPassedToDeleted();
@@ -118,7 +113,7 @@ void finish_unmanaged_removal(Win* win, Toplevel* remnant)
 template<typename Win>
 void release_unmanaged(Win* win, bool on_shutdown)
 {
-    Toplevel* del = nullptr;
+    Win* del = nullptr;
     if (!on_shutdown) {
         del = create_remnant_window<Win>(*win);
     }
@@ -170,7 +165,7 @@ void release_window(Win* win, bool on_shutdown)
     destroy_damage_handle(*win);
     reset_have_resize_effect(*win);
 
-    Toplevel* del = nullptr;
+    Win* del = nullptr;
     if (on_shutdown) {
         // Move the client window to maintain its position.
         auto const offset = QPoint(left_border(win), top_border(win));
@@ -179,18 +174,18 @@ void release_window(Win* win, bool on_shutdown)
         del = create_remnant_window<Win>(*win);
     }
 
-    if (win->control->move_resize().enabled) {
+    if (win->control->move_resize.enabled) {
         Q_EMIT win->qobject->clientFinishUserMovedResized();
     }
 
     Q_EMIT win->qobject->closed();
 
     // Remove ForceTemporarily rules
-    win->space.rule_book->discardUsed(win, true);
+    rules::discard_used_rules(*win->space.rule_book, *win, true);
 
     blocker block(win->space.stacking_order);
 
-    if (win->control->move_resize().enabled) {
+    if (win->control->move_resize.enabled) {
         win->leaveMoveResize();
     }
 
@@ -295,17 +290,17 @@ void destroy_window(Win* win)
 
     auto del = create_remnant_window<Win>(*win);
 
-    if (win->control->move_resize().enabled) {
+    if (win->control->move_resize.enabled) {
         Q_EMIT win->qobject->clientFinishUserMovedResized();
     }
 
     Q_EMIT win->qobject->closed();
 
     // Remove ForceTemporarily rules
-    win->space.rule_book->discardUsed(win, true);
+    rules::discard_used_rules(*win->space.rule_book, *win, true);
 
     blocker block(win->space.stacking_order);
-    if (win->control->move_resize().enabled) {
+    if (win->control->move_resize.enabled) {
         win->leaveMoveResize();
     }
 

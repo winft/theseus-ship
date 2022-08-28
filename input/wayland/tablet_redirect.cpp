@@ -157,8 +157,8 @@ void tablet_redirect::tabletPadRingEvent(int number, int position, bool is_finge
                               is_finger));
 }
 
-void tablet_redirect::cleanupDecoration(win::deco::client_impl* /*old*/,
-                                        win::deco::client_impl* /*now*/)
+void tablet_redirect::cleanupDecoration(win::deco::client_impl<Toplevel>* /*old*/,
+                                        win::deco::client_impl<Toplevel>* /*now*/)
 {
 }
 

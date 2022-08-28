@@ -7,7 +7,6 @@
 
 #include "window.h"
 
-#include "toplevel.h"
 #include "win/internal_window.h"
 #include "win/meta.h"
 #include "win/space_qobject.h"
@@ -136,27 +135,31 @@ void model_setup_connections(Model& model, Space& space)
         }
     }
     QObject::connect(
-        space.qobject.get(), &win::space_qobject::clientAdded, &model, [&model](auto c) {
+        space.qobject.get(), &win::space_qobject::clientAdded, &model, [&](auto win_id) {
+            auto c = space.windows_map.at(win_id);
             add_window(&model, model.s_x11ClientId - 1, model.m_x11Clients, c);
         });
     QObject::connect(
-        space.qobject.get(), &win::space_qobject::clientRemoved, &model, [&model](auto window) {
+        space.qobject.get(), &win::space_qobject::clientRemoved, &model, [&](auto win_id) {
             // TODO(romangg): This function is also being called on Waylad windows for
             // some reason. It works with our containers but best would be to make this
             // symmetric with adding.
+            auto window = space.windows_map.at(win_id);
             remove_window(&model, model.s_x11ClientId - 1, model.m_x11Clients, window);
         });
 
-    for (auto unmanaged : win::x11::get_unmanageds<Toplevel>(space)) {
+    for (auto unmanaged : win::x11::get_unmanageds(space)) {
         model.m_unmanageds.emplace_back(std::make_unique<console_window>(unmanaged));
     }
 
     QObject::connect(
-        space.qobject.get(), &win::space_qobject::unmanagedAdded, &model, [&model](auto u) {
+        space.qobject.get(), &win::space_qobject::unmanagedAdded, &model, [&](auto win_id) {
+            auto u = space.windows_map.at(win_id);
             add_window(&model, model.s_x11UnmanagedId - 1, model.m_unmanageds, u);
         });
     QObject::connect(
-        space.qobject.get(), &win::space_qobject::unmanagedRemoved, &model, [&model](auto u) {
+        space.qobject.get(), &win::space_qobject::unmanagedRemoved, &model, [&](auto win_id) {
+            auto u = space.windows_map.at(win_id);
             remove_window(&model, model.s_x11UnmanagedId - 1, model.m_unmanageds, u);
         });
     for (auto const& window : space.windows) {
@@ -165,17 +168,13 @@ void model_setup_connections(Model& model, Space& space)
         }
     }
     QObject::connect(
-        space.qobject.get(),
-        &win::space_qobject::internalClientAdded,
-        &model,
-        [&model](auto window) {
+        space.qobject.get(), &win::space_qobject::internalClientAdded, &model, [&](auto win_id) {
+            auto window = space.windows_map.at(win_id);
             add_window(&model, model.s_workspaceInternalId - 1, model.m_internalClients, window);
         });
     QObject::connect(
-        space.qobject.get(),
-        &win::space_qobject::internalClientRemoved,
-        &model,
-        [&model](auto window) {
+        space.qobject.get(), &win::space_qobject::internalClientRemoved, &model, [&](auto win_id) {
+            auto window = space.windows_map.at(win_id);
             remove_window(&model, model.s_workspaceInternalId - 1, model.m_internalClients, window);
         });
 }

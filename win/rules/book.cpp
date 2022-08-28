@@ -6,9 +6,7 @@
 */
 #include "book.h"
 
-#ifndef KCMRULES
 #include "base/logging.h"
-#include "toplevel.h"
 #include "win/control.h"
 
 #include "book_settings.h"
@@ -24,13 +22,15 @@ namespace KWin::win::rules
 {
 
 book::book()
-    : m_updateTimer(new QTimer(this))
+    : qobject{std::make_unique<book_qobject>()}
+    , m_updateTimer(new QTimer(qobject.get()))
     , m_updatesDisabled(false)
     , m_temporaryRulesMessages()
 {
     initWithX11();
-    connect(kwinApp(), &Application::x11ConnectionChanged, this, &book::initWithX11);
-    connect(m_updateTimer, &QTimer::timeout, this, &book::save);
+    QObject::connect(
+        kwinApp(), &Application::x11ConnectionChanged, qobject.get(), [this] { initWithX11(); });
+    QObject::connect(m_updateTimer, &QTimer::timeout, qobject.get(), [this] { save(); });
     m_updateTimer->setInterval(1000);
     m_updateTimer->setSingleShot(true);
 }
@@ -48,68 +48,18 @@ void book::initWithX11()
         m_temporaryRulesMessages.reset();
         return;
     }
-    m_temporaryRulesMessages.reset(
-        new KXMessages(c, kwinApp()->x11RootWindow(), "_KDE_NET_WM_TEMPORARY_RULES", nullptr));
-    connect(m_temporaryRulesMessages.data(),
-            &KXMessages::gotMessage,
-            this,
-            &book::temporaryRulesMessage);
+    m_temporaryRulesMessages = std::make_unique<KXMessages>(
+        c, kwinApp()->x11RootWindow(), "_KDE_NET_WM_TEMPORARY_RULES", nullptr);
+    QObject::connect(m_temporaryRulesMessages.get(),
+                     &KXMessages::gotMessage,
+                     qobject.get(),
+                     [this](auto const& message) { temporaryRulesMessage(message); });
 }
 
 void book::deleteAll()
 {
     qDeleteAll(m_rules);
     m_rules.clear();
-}
-
-window book::find(Toplevel const* window, bool ignore_temporary)
-{
-    QVector<ruling*> ret;
-    for (auto it = m_rules.begin(); it != m_rules.end();) {
-        if (ignore_temporary && (*it)->isTemporary()) {
-            ++it;
-            continue;
-        }
-        if ((*it)->match(window)) {
-            auto rule = *it;
-            qCDebug(KWIN_CORE) << "Rule found:" << rule << ":" << window;
-            if (rule->isTemporary())
-                it = m_rules.erase(it);
-            else
-                ++it;
-            ret.append(rule);
-            continue;
-        }
-        ++it;
-    }
-    return rules::window(ret);
-}
-
-void book::edit(Toplevel* window, bool whole_app)
-{
-    save();
-    QStringList args;
-    args << QStringLiteral("--uuid") << window->internal_id.toString();
-    if (whole_app)
-        args << QStringLiteral("--whole-app");
-    auto p = new QProcess(this);
-    p->setArguments(args);
-    p->setProcessEnvironment(kwinApp()->processStartupEnvironment());
-    const QFileInfo buildDirBinary{QDir{QCoreApplication::applicationDirPath()},
-                                   QStringLiteral("kwin_rules_dialog")};
-    p->setProgram(buildDirBinary.exists() ? buildDirBinary.absoluteFilePath()
-                                          : QStringLiteral(KWIN_RULES_DIALOG_BIN));
-    p->setProcessChannelMode(QProcess::MergedChannels);
-    connect(p,
-            static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
-            p,
-            &QProcess::deleteLater);
-    connect(p, &QProcess::errorOccurred, this, [p](QProcess::ProcessError e) {
-        if (e == QProcess::FailedToStart) {
-            qCDebug(KWIN_CORE) << "Failed to start" << p->program();
-        }
-    });
-    p->start();
 }
 
 void book::load()
@@ -124,7 +74,7 @@ void book::load()
 
     book_settings book(config);
     book.load();
-    m_rules = book.rules().toList();
+    m_rules = book.rules();
 }
 
 void book::save()
@@ -136,10 +86,10 @@ void book::save()
         return;
     }
 
-    QVector<ruling*> filteredRules;
+    std::vector<ruling*> filteredRules;
     for (const auto& rule : qAsConst(m_rules)) {
         if (!rule->isTemporary()) {
-            filteredRules.append(rule);
+            filteredRules.push_back(rule);
         }
     }
 
@@ -151,8 +101,8 @@ void book::save()
 void book::temporaryRulesMessage(const QString& message)
 {
     auto was_temporary = false;
-    for (auto it = m_rules.constBegin(); it != m_rules.constEnd(); ++it) {
-        if ((*it)->isTemporary()) {
+    for (auto&& rule : m_rules) {
+        if (rule->isTemporary()) {
             was_temporary = true;
         }
     }
@@ -160,10 +110,10 @@ void book::temporaryRulesMessage(const QString& message)
     auto rule = new ruling(message, true);
 
     // highest priority first
-    m_rules.prepend(rule);
+    m_rules.push_front(rule);
 
     if (!was_temporary) {
-        QTimer::singleShot(60000, this, &book::cleanupTemporaryRules);
+        QTimer::singleShot(60000, qobject.get(), [this] { cleanupTemporaryRules(); });
     }
 }
 
@@ -184,32 +134,7 @@ void book::cleanupTemporaryRules()
     }
 
     if (has_temporary) {
-        QTimer::singleShot(60000, this, SLOT(cleanupTemporaryRules()));
-    }
-}
-
-void book::discardUsed(Toplevel* window, bool withdrawn)
-{
-    auto updated = false;
-
-    for (auto it = m_rules.begin(); it != m_rules.end();) {
-        if (window->control->rules().contains(*it)) {
-            if ((*it)->discardUsed(withdrawn)) {
-                updated = true;
-            }
-            if ((*it)->isEmpty()) {
-                window->control->remove_rule(*it);
-                auto r = *it;
-                it = m_rules.erase(it);
-                delete r;
-                continue;
-            }
-        }
-        ++it;
-    }
-
-    if (updated) {
-        requestDiskStorage();
+        QTimer::singleShot(60000, qobject.get(), [this] { cleanupTemporaryRules(); });
     }
 }
 
@@ -222,7 +147,7 @@ void book::setUpdatesDisabled(bool disable)
 {
     m_updatesDisabled = disable;
     if (!disable) {
-        Q_EMIT updates_enabled();
+        Q_EMIT qobject->updates_enabled();
     }
 }
 
@@ -231,5 +156,4 @@ bool book::areUpdatesDisabled() const
     return m_updatesDisabled;
 }
 
-#endif
 }

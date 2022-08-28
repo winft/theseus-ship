@@ -143,12 +143,13 @@ void PlasmaWindowTest::testCreateDestroyX11PlasmaWindow()
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
+    auto client_id = windowCreatedSpy.first().first().value<quint32>();
     auto client
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+        = dynamic_cast<win::x11::window*>(Test::app()->base.space->windows_map.at(client_id));
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QVERIFY(win::decoration(client));
-    QVERIFY(client->control->active());
+    QVERIFY(client->control->active);
     // verify that it gets the keyboard focus
     if (!client->surface) {
         // we don't have a surface yet, so focused keyboard surface if set is not ours
@@ -281,7 +282,9 @@ void PlasmaWindowTest::testLockScreenNoPlasmaWindow()
     QVERIFY(clientAddedSpy.count() == static_cast<int>(outputs_count) || clientAddedSpy.wait());
     QTRY_COMPARE(clientAddedSpy.count(), outputs_count);
 
-    QVERIFY(clientAddedSpy.first().first().value<Toplevel*>()->isLockScreen());
+    QVERIFY(Test::app()
+                ->base.space->windows_map.at(clientAddedSpy.first().first().value<quint32>())
+                ->isLockScreen());
 
     // should not be sent to the client
     QVERIFY(plasmaWindowCreatedSpy.isEmpty());

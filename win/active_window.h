@@ -74,7 +74,7 @@ template<typename Space>
 void active_window_maximize(Space& space)
 {
     if (has_usable_active_window(space)) {
-        perform_window_operation(space, space.active_client, base::options_qobject::MaximizeOp);
+        perform_window_operation(space.active_client, base::options_qobject::MaximizeOp);
     }
 }
 
@@ -82,7 +82,7 @@ template<typename Space>
 void active_window_maximize_vertical(Space& space)
 {
     if (has_usable_active_window(space)) {
-        perform_window_operation(space, space.active_client, base::options_qobject::VMaximizeOp);
+        perform_window_operation(space.active_client, base::options_qobject::VMaximizeOp);
     }
 }
 
@@ -90,7 +90,7 @@ template<typename Space>
 void active_window_maximize_horizontal(Space& space)
 {
     if (has_usable_active_window(space)) {
-        perform_window_operation(space, space.active_client, base::options_qobject::HMaximizeOp);
+        perform_window_operation(space.active_client, base::options_qobject::HMaximizeOp);
     }
 }
 
@@ -98,7 +98,7 @@ template<typename Space>
 void active_window_minimize(Space& space)
 {
     if (has_usable_active_window(space)) {
-        perform_window_operation(space, space.active_client, base::options_qobject::MinimizeOp);
+        perform_window_operation(space.active_client, base::options_qobject::MinimizeOp);
     }
 }
 
@@ -121,7 +121,7 @@ void active_window_lower(Space& space)
     // As this most likely makes the window no longer visible change the
     // keyboard focus to the next available window.
     // activateNextClient( c ); // Doesn't work when we lower a child window
-    if (space.active_client->control->active()
+    if (space.active_client->control->active
         && kwinApp()->options->qobject->focusPolicyIsReasonable()) {
         if (kwinApp()->options->qobject->isNextFocusPrefersMouse()) {
             auto next = window_under_mouse(space, space.active_client->central_output);
@@ -155,7 +155,7 @@ template<typename Space>
 void active_window_set_fullscreen(Space& space)
 {
     if (has_usable_active_window(space)) {
-        perform_window_operation(space, space.active_client, base::options_qobject::FullScreenOp);
+        perform_window_operation(space.active_client, base::options_qobject::FullScreenOp);
     }
 }
 
@@ -163,7 +163,7 @@ template<typename Space>
 void active_window_set_no_border(Space& space)
 {
     if (has_usable_active_window(space)) {
-        perform_window_operation(space, space.active_client, base::options_qobject::NoBorderOp);
+        perform_window_operation(space.active_client, base::options_qobject::NoBorderOp);
     }
 }
 
@@ -171,7 +171,7 @@ template<typename Space>
 void active_window_set_keep_above(Space& space)
 {
     if (has_usable_active_window(space)) {
-        perform_window_operation(space, space.active_client, base::options_qobject::KeepAboveOp);
+        perform_window_operation(space.active_client, base::options_qobject::KeepAboveOp);
     }
 }
 
@@ -179,7 +179,7 @@ template<typename Space>
 void active_window_set_keep_below(Space& space)
 {
     if (has_usable_active_window(space)) {
-        perform_window_operation(space, space.active_client, base::options_qobject::KeepBelowOp);
+        perform_window_operation(space.active_client, base::options_qobject::KeepBelowOp);
     }
 }
 
@@ -187,8 +187,7 @@ template<typename Space>
 void active_window_setup_window_shortcut(Space& space)
 {
     if (has_usable_active_window(space)) {
-        perform_window_operation(
-            space, space.active_client, base::options_qobject::SetupWindowShortcutOp);
+        perform_window_operation(space.active_client, base::options_qobject::SetupWindowShortcutOp);
     }
 }
 
@@ -196,7 +195,7 @@ template<typename Space>
 void active_window_close(Space& space)
 {
     if (has_usable_active_window(space)) {
-        perform_window_operation(space, space.active_client, base::options_qobject::CloseOp);
+        perform_window_operation(space.active_client, base::options_qobject::CloseOp);
     }
 }
 
@@ -204,8 +203,7 @@ template<typename Space>
 void active_window_move(Space& space)
 {
     if (has_usable_active_window(space)) {
-        perform_window_operation(
-            space, space.active_client, base::options_qobject::UnrestrictedMoveOp);
+        perform_window_operation(space.active_client, base::options_qobject::UnrestrictedMoveOp);
     }
 }
 
@@ -213,8 +211,7 @@ template<typename Space>
 void active_window_resize(Space& space)
 {
     if (has_usable_active_window(space)) {
-        perform_window_operation(
-            space, space.active_client, base::options_qobject::UnrestrictedResizeOp);
+        perform_window_operation(space.active_client, base::options_qobject::UnrestrictedResizeOp);
     }
 }
 

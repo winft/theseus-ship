@@ -12,6 +12,9 @@
 #include "main.h"
 #include "utils/algorithm.h"
 #include "utils/geo.h"
+#include "win/setup.h"
+#include "win/space.h"
+#include "win/x11/client_machine.h"
 
 #include <QDebug>
 #include <QFile>
@@ -19,13 +22,6 @@
 #include <QRegularExpression>
 #include <QTemporaryFile>
 #include <kconfig.h>
-
-#ifndef KCMRULES
-#include "win/setup.h"
-#include "win/space.h"
-#include "win/types.h"
-#include "win/x11/client_machine.h"
-#endif
 
 #include "book_settings.h"
 #include "rules_settings.h"
@@ -389,40 +385,6 @@ bool ruling::matchClientMachine(QByteArray const& match_machine, bool local) con
     return true;
 }
 
-#ifndef KCMRULES
-bool ruling::match(Toplevel const* window) const
-{
-    if (!matchType(window->windowType(true))) {
-        return false;
-    }
-    if (!matchWMClass(window->resource_class, window->resource_name)) {
-        return false;
-    }
-    if (!matchRole(window->windowRole().toLower())) {
-        return false;
-    }
-    if (auto& cm = window->client_machine;
-        cm && !matchClientMachine(cm->hostname(), cm->is_local())) {
-        return false;
-    }
-
-    if (title.match != name_match::unimportant) {
-        // Track title changes to rematch rules.
-        auto mutable_client = const_cast<Toplevel*>(window);
-        QObject::connect(
-            mutable_client->qobject.get(),
-            &win::window_qobject::captionChanged,
-            mutable_client->qobject.get(),
-            [mutable_client] { win::evaluate_rules(mutable_client); },
-            // QueuedConnection, because title may change before
-            // the client is ready (could segfault!)
-            static_cast<Qt::ConnectionType>(Qt::QueuedConnection | Qt::UniqueConnection));
-    }
-    if (!matchTitle(window->caption.normal))
-        return false;
-    return true;
-}
-
 bool ruling::checkSetRule(set_rule rule, bool init)
 {
     if (rule > static_cast<set_rule>(action::dont_affect)) {
@@ -450,108 +412,6 @@ bool ruling::checkSetStop(set_rule rule)
 bool ruling::checkForceStop(force_rule rule)
 {
     return rule != force_rule::unused;
-}
-
-bool ruling::update(Toplevel* window, int selection)
-{
-    // TODO check this setting is for this client ?
-    bool updated = false;
-
-    auto remember = [selection](auto const& ruler, auto type) {
-        return (selection & enum_index(type))
-            && ruler.rule == static_cast<set_rule>(action::remember);
-    };
-
-    if (remember(above, type::above)) {
-        updated = updated || above.data != window->control->keep_above();
-        above.data = window->control->keep_above();
-    }
-    if (remember(below, type::below)) {
-        updated = updated || below.data != window->control->keep_below();
-        below.data = window->control->keep_below();
-    }
-    if (remember(desktop, type::desktop)) {
-        updated = updated || desktop.data != window->desktop();
-        desktop.data = window->desktop();
-    }
-    if (remember(desktopfile, type::desktop_file)) {
-        auto const name = window->control->desktop_file_name();
-        updated = updated || desktopfile.data != name;
-        desktopfile.data = name;
-    }
-    if (remember(fullscreen, type::fullscreen)) {
-        updated = updated || fullscreen.data != window->control->fullscreen();
-        fullscreen.data = window->control->fullscreen();
-    }
-
-    if (remember(maximizehoriz, type::maximize_horiz)) {
-        updated = updated
-            || maximizehoriz.data != flags(window->maximizeMode() & win::maximize_mode::horizontal);
-        maximizehoriz.data = flags(window->maximizeMode() & win::maximize_mode::horizontal);
-    }
-    if (remember(maximizevert, type::maximize_vert)) {
-        updated = updated
-            || maximizevert.data != bool(window->maximizeMode() & win::maximize_mode::vertical);
-        maximizevert.data = flags(window->maximizeMode() & win::maximize_mode::vertical);
-    }
-    if (remember(minimize, type::minimize)) {
-        updated = updated || minimize.data != window->control->minimized();
-        minimize.data = window->control->minimized();
-    }
-    if (remember(noborder, type::no_border)) {
-        updated = updated || noborder.data != window->noBorder();
-        noborder.data = window->noBorder();
-    }
-
-    if (remember(position, type::position)) {
-        if (!window->control->fullscreen()) {
-            QPoint new_pos = position.data;
-
-            // Don't use the position in the direction which is maximized.
-            if (!flags(window->maximizeMode() & win::maximize_mode::horizontal)) {
-                new_pos.setX(window->pos().x());
-            }
-            if (!flags(window->maximizeMode() & win::maximize_mode::vertical)) {
-                new_pos.setY(window->pos().y());
-            }
-            updated = updated || position.data != new_pos;
-            position.data = new_pos;
-        }
-    }
-
-    if (remember(screen, type::screen)) {
-        int output_index = window->central_output
-            ? base::get_output_index(kwinApp()->get_base().get_outputs(), *window->central_output)
-            : 0;
-        updated = updated || screen.data != output_index;
-        screen.data = output_index;
-    }
-    if (remember(size, type::size)) {
-        if (!window->control->fullscreen()) {
-            QSize new_size = size.data;
-            // don't use the position in the direction which is maximized
-            if (!flags(window->maximizeMode() & win::maximize_mode::horizontal))
-                new_size.setWidth(window->size().width());
-            if (!flags(window->maximizeMode() & win::maximize_mode::vertical))
-                new_size.setHeight(window->size().height());
-            updated = updated || size.data != new_size;
-            size.data = new_size;
-        }
-    }
-    if (remember(skippager, type::skip_pager)) {
-        updated = updated || skippager.data != window->control->skip_pager();
-        skippager.data = window->control->skip_pager();
-    }
-    if (remember(skipswitcher, type::skip_switcher)) {
-        updated = updated || skipswitcher.data != window->control->skip_switcher();
-        skipswitcher.data = window->control->skip_switcher();
-    }
-    if (remember(skiptaskbar, type::skip_taskbar)) {
-        updated = updated || skiptaskbar.data != window->control->skip_taskbar();
-        skiptaskbar.data = window->control->skip_taskbar();
-    }
-
-    return updated;
 }
 
 bool ruling::applyGeometry(QRect& rect, bool init) const
@@ -861,8 +721,6 @@ bool ruling::discardUsed(bool withdrawn)
 
     return changed;
 }
-
-#endif
 
 QDebug& operator<<(QDebug& stream, ruling const* r)
 {

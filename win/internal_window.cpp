@@ -46,11 +46,11 @@ Q_DECLARE_METATYPE(NET::WindowType)
 namespace KWin::win
 {
 
-class internal_control : public control
+class internal_control : public control<Toplevel>
 {
 public:
     internal_control(internal_window* client)
-        : control(client)
+        : control<Toplevel>(client)
         , m_client{client}
 
     {
@@ -67,7 +67,7 @@ public:
         }
 
         auto const client_geo = win::frame_to_client_rect(m_client, m_client->frameGeometry());
-        control::destroy_decoration();
+        control<Toplevel>::destroy_decoration();
         m_client->setFrameGeometry(client_geo);
     }
 
@@ -128,7 +128,8 @@ internal_window::internal_window(QWindow* window, win::space& space)
     }
 
     setCaption(m_internalWindow->title());
-    control->set_icon(QIcon::fromTheme(QStringLiteral("kwin")));
+    control->icon = QIcon::fromTheme(QStringLiteral("kwin"));
+
     win::set_on_all_desktops(this, true);
     setOpacity(m_internalWindow->opacity());
     setSkipCloseAnimation(m_internalWindow->property(internal_skip_close_animation_name).toBool());
@@ -471,7 +472,7 @@ bool internal_window::belongsToDesktop() const
 
 void internal_window::destroyClient()
 {
-    if (control->move_resize().enabled) {
+    if (control->move_resize.enabled) {
         leaveMoveResize();
     }
 
@@ -483,7 +484,7 @@ void internal_window::destroyClient()
     remove_window_from_lists(space, this);
     space.stacking_order->update_count();
     update_space_areas(space);
-    Q_EMIT space.qobject->internalClientRemoved(this);
+    Q_EMIT space.qobject->internalClientRemoved(signal_id);
 
     m_internalWindow = nullptr;
 
@@ -556,7 +557,7 @@ bool internal_window::has_pending_repaints() const
 
 void internal_window::doResizeSync()
 {
-    requestGeometry(control->move_resize().geometry);
+    requestGeometry(control->move_resize.geometry);
 }
 
 void internal_window::updateCaption()
@@ -587,8 +588,8 @@ double internal_window::buffer_scale_internal() const
 
 void internal_window::createDecoration(const QRect& rect)
 {
-    control->deco().window = new deco::window(this);
-    auto decoration = space.deco->createDecoration(control->deco().window);
+    control->deco.window = new deco::window<Toplevel>(this);
+    auto decoration = space.deco->createDecoration(control->deco.window);
 
     if (decoration) {
         QMetaObject::invokeMethod(decoration, "update", Qt::QueuedConnection);
@@ -602,11 +603,11 @@ void internal_window::createDecoration(const QRect& rect)
                 auto const old_geo = frameGeometry();
                 win::check_workspace_position(this, old_geo);
                 discard_quads();
-                control->deco().client->update_size();
+                control->deco.client->update_size();
             });
     }
 
-    control->deco().decoration = decoration;
+    control->deco.decoration = decoration;
     setFrameGeometry(win::client_to_frame_rect(this, rect));
     discard_quads();
 }
@@ -657,12 +658,12 @@ void internal_window::markAsMapped()
     space.stacking_order->update_count();
     update_space_areas(space);
 
-    Q_EMIT space.qobject->internalClientAdded(this);
+    Q_EMIT space.qobject->internalClientAdded(signal_id);
 }
 
 void internal_window::updateInternalWindowGeometry()
 {
-    if (control->move_resize().enabled) {
+    if (control->move_resize.enabled) {
         return;
     }
     if (!m_internalWindow) {

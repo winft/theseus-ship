@@ -48,7 +48,9 @@ class output;
 
 namespace win::deco
 {
+template<typename Window>
 class client_impl;
+template<typename Client>
 class renderer;
 }
 
@@ -120,7 +122,9 @@ public:
 
     virtual void triggerFence();
 
-    virtual win::deco::renderer* createDecorationRenderer(win::deco::client_impl*) = 0;
+    virtual win::deco::renderer<win::deco::client_impl<Toplevel>>*
+    createDecorationRenderer(win::deco::client_impl<Toplevel>*)
+        = 0;
 
     /**
      * Whether the scene is able to drive animations.

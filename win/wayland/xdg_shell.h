@@ -11,12 +11,13 @@
 
 #include "base/wayland/server.h"
 #include "render/compositor.h"
-#include "toplevel.h"
 #include "utils/geo.h"
 #include "wayland_logging.h"
 #include "win/controlling.h"
 #include "win/input.h"
 #include "win/meta.h"
+#include "win/rules/book_edit.h"
+#include "win/rules/find.h"
 #include "win/setup.h"
 #include "win/space_areas_helpers.h"
 #include "win/transient.h"
@@ -52,7 +53,7 @@ public:
 
     bool can_fullscreen() const override
     {
-        if (!this->rules().checkFullScreen(true)) {
+        if (!this->rules.checkFullScreen(true)) {
             return false;
         }
         return !is_special_window(&m_window);
@@ -131,42 +132,41 @@ void finalize_shell_window_creation(Space& space, Win* win)
             if (win->supportsWindowRules()) {
                 auto const& ctrl = win->control;
 
-                setup_rules(win, false);
+                rules::setup_rules(win, false);
 
                 auto const original_geo = win->frameGeometry();
-                auto const ruled_geo = ctrl->rules().checkGeometry(original_geo, true);
+                auto const ruled_geo = ctrl->rules.checkGeometry(original_geo, true);
 
                 if (original_geo != ruled_geo) {
                     win->setFrameGeometry(ruled_geo);
                 }
 
-                maximize(win, ctrl->rules().checkMaximize(win->geometry_update.max_mode, true));
+                maximize(win, ctrl->rules.checkMaximize(win->geometry_update.max_mode, true));
 
-                set_desktop(win, ctrl->rules().checkDesktop(win->desktop(), true));
+                set_desktop(win, ctrl->rules.checkDesktop(win->desktop(), true));
                 set_desktop_file_name(
-                    win, ctrl->rules().checkDesktopFile(ctrl->desktop_file_name(), true).toUtf8());
-                if (ctrl->rules().checkMinimize(ctrl->minimized(), true)) {
+                    win, ctrl->rules.checkDesktopFile(ctrl->desktop_file_name, true).toUtf8());
+                if (ctrl->rules.checkMinimize(ctrl->minimized, true)) {
                     // No animation.
                     set_minimized(win, true, true);
                 }
-                set_skip_taskbar(win, ctrl->rules().checkSkipTaskbar(ctrl->skip_taskbar(), true));
-                set_skip_pager(win, ctrl->rules().checkSkipPager(ctrl->skip_pager(), true));
-                set_skip_switcher(win,
-                                  ctrl->rules().checkSkipSwitcher(ctrl->skip_switcher(), true));
-                set_keep_above(win, ctrl->rules().checkKeepAbove(ctrl->keep_above(), true));
-                set_keep_below(win, ctrl->rules().checkKeepBelow(ctrl->keep_below(), true));
-                set_shortcut(win, ctrl->rules().checkShortcut(ctrl->shortcut().toString(), true));
+                set_skip_taskbar(win, ctrl->rules.checkSkipTaskbar(ctrl->skip_taskbar(), true));
+                set_skip_pager(win, ctrl->rules.checkSkipPager(ctrl->skip_pager(), true));
+                set_skip_switcher(win, ctrl->rules.checkSkipSwitcher(ctrl->skip_switcher(), true));
+                set_keep_above(win, ctrl->rules.checkKeepAbove(ctrl->keep_above, true));
+                set_keep_below(win, ctrl->rules.checkKeepBelow(ctrl->keep_below, true));
+                set_shortcut(win, ctrl->rules.checkShortcut(ctrl->shortcut.toString(), true));
                 win->updateColorScheme();
 
                 // Don't place the client if its position is set by a rule.
-                if (ctrl->rules().checkPosition(geo::invalid_point, true) != geo::invalid_point) {
+                if (ctrl->rules.checkPosition(geo::invalid_point, true) != geo::invalid_point) {
                     win->must_place = false;
                 }
 
                 ctrl->discard_temporary_rules();
 
                 // Remove Apply Now rules.
-                win->space.rule_book->discardUsed(win, false);
+                rules::discard_used_rules(*win->space.rule_book, *win, false);
 
                 win->updateWindowRules(rules::type::all);
             }
@@ -197,7 +197,7 @@ void update_icon(Win* win)
     QString const wayland_icon = QStringLiteral("wayland");
     auto const df_icon = icon_from_desktop_file(win);
     auto const icon = df_icon.isEmpty() ? wayland_icon : df_icon;
-    if (icon == win->control->icon().name()) {
+    if (icon == win->control->icon.name()) {
         return;
     }
     win->control->set_icon(QIcon::fromTheme(icon));
@@ -221,8 +221,9 @@ Win* create_toplevel_window(Space* space, Wrapland::Server::XdgShellToplevel* to
         QString const wayland_icon = QStringLiteral("wayland");
         auto const df_icon = icon_from_desktop_file(win);
         auto const icon = df_icon.isEmpty() ? wayland_icon : df_icon;
-        if (icon != win->control->icon().name()) {
-            win->control->set_icon(QIcon::fromTheme(icon));
+        if (icon != win->control->icon.name()) {
+            win->control->icon = QIcon::fromTheme(icon);
+            Q_EMIT win->qobject->iconChanged();
         }
     };
 
@@ -574,7 +575,7 @@ void install_palette(Win* win, Wrapland::Server::ServerSideDecorationPalette* pa
     win->palette = palette;
 
     auto update = [win](auto const& palette) {
-        set_color_scheme(win, win->control->rules().checkDecoColor(palette));
+        set_color_scheme(win, win->control->rules.checkDecoColor(palette));
     };
 
     QObject::connect(palette, &Palette::paletteChanged, win->qobject.get(), [update](auto name) {
@@ -670,7 +671,7 @@ Wrapland::Server::XdgShellSurface::States xdg_surface_states(Win* win)
 
     XSS::States states;
 
-    if (win->control->active()) {
+    if (win->control->active) {
         states |= XSS::State::Activated;
     }
     if (win->synced_geometry.fullscreen) {
@@ -682,16 +683,16 @@ Wrapland::Server::XdgShellSurface::States xdg_surface_states(Win* win)
     if (is_resize(win)) {
         states |= XSS::State::Resizing;
     }
-    if (flags(win->control->quicktiling() & quicktiles::left)) {
+    if (flags(win->control->quicktiling & quicktiles::left)) {
         states |= XSS::State::TiledLeft;
     }
-    if (flags(win->control->quicktiling() & quicktiles::right)) {
+    if (flags(win->control->quicktiling & quicktiles::right)) {
         states |= XSS::State::TiledRight;
     }
-    if (flags(win->control->quicktiling() & quicktiles::top)) {
+    if (flags(win->control->quicktiling & quicktiles::top)) {
         states |= XSS::State::TiledTop;
     }
-    if (flags(win->control->quicktiling() & quicktiles::bottom)) {
+    if (flags(win->control->quicktiling & quicktiles::bottom)) {
         states |= XSS::State::TiledBottom;
     }
     return states;
@@ -841,11 +842,11 @@ void handle_resize_request(Win* win, Wrapland::Server::Seat* seat, quint32 seria
     if (!win->isResizable()) {
         return;
     }
-    if (win->control->move_resize().enabled) {
+    if (win->control->move_resize.enabled) {
         finish_move_resize(win, false);
     }
 
-    auto& mov_res = win->control->move_resize();
+    auto& mov_res = win->control->move_resize;
     mov_res.button_down = true;
     mov_res.unrestricted = false;
 

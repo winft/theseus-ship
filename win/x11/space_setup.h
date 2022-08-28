@@ -8,6 +8,7 @@
 #include "color_mapper.h"
 #include "control_create.h"
 #include "moving_window_filter.h"
+#include "netinfo.h"
 #include "placement.h"
 #include "space_event.h"
 #include "sync_alarm_filter.h"
@@ -49,11 +50,13 @@ void init_space(Space& space)
 
     // first initialize the extensions
     base::x11::xcb::extensions::self();
-    space.color_mapper = std::make_unique<color_mapper>(space);
+
+    using color_mapper_t = color_mapper<typename Space::space_t>;
+    space.color_mapper = std::make_unique<color_mapper_t>(space);
     QObject::connect(space.qobject.get(),
                      &Space::qobject_t::clientActivated,
                      space.color_mapper.get(),
-                     &color_mapper::update);
+                     &color_mapper_t::update);
 
     // Call this before XSelectInput() on the root window
     space.startup
@@ -69,7 +72,8 @@ void init_space(Space& space)
         space.m_movingClientFilter.reset(new moving_window_filter(space));
     }
     if (base::x11::xcb::extensions::self()->is_sync_available()) {
-        space.m_syncAlarmFilter.reset(new sync_alarm_filter(space));
+        space.m_syncAlarmFilter
+            = std::make_unique<sync_alarm_filter<typename Space::space_t>>(space);
     }
 
     // Needed for proper initialization of user_time in Client ctor
@@ -82,10 +86,10 @@ void init_space(Space& space)
                                                        nullFocusValues));
     space.m_nullFocus->map();
 
-    auto rootInfo = win::x11::root_info::create(space);
+    space.root_info = x11::root_info<typename Space::space_t>::create(space);
     auto& vds = space.virtual_desktop_manager;
-    vds->setRootInfo(rootInfo);
-    rootInfo->activate();
+    vds->setRootInfo(space.root_info.get());
+    space.root_info->activate();
 
     // TODO: only in X11 mode
     // Extra NETRootInfo instance in Client mode is needed to get the values of the properties
@@ -96,7 +100,7 @@ void init_space(Space& space)
     }
 
     // TODO: better value
-    rootInfo->setActiveWindow(XCB_WINDOW_NONE);
+    space.root_info->setActiveWindow(XCB_WINDOW_NONE);
     focus_to_null(space);
 
     if (!qApp->isSessionRestored())
@@ -149,7 +153,7 @@ void init_space(Space& space)
 
         // NETWM spec says we have to set it to (0,0) if we don't support it
         NETPoint* viewports = new NETPoint[vds->count()];
-        rootInfo->setDesktopViewport(vds->count(), *viewports);
+        space.root_info->setDesktopViewport(vds->count(), *viewports);
         delete[] viewports;
         QRect geom;
 
@@ -160,13 +164,13 @@ void init_space(Space& space)
         NETSize desktop_geometry;
         desktop_geometry.width = geom.width();
         desktop_geometry.height = geom.height();
-        rootInfo->setDesktopGeometry(desktop_geometry);
+        space.root_info->setDesktopGeometry(desktop_geometry);
         set_showing_desktop(space, false);
 
     } // End updates blocker block
 
     // TODO: only on X11?
-    Toplevel* new_active_client = nullptr;
+    typename Space::window_t* new_active_client{nullptr};
     if (!qApp->isSessionRestored()) {
         --space.block_focus;
         new_active_client = find_controlled_window<x11::window>(
@@ -200,7 +204,7 @@ void clear_space(Space& space)
     auto is_x11 = kwinApp()->operationMode() == Application::OperationModeX11;
 
     for (auto it = stack.cbegin(), end = stack.cend(); it != end; ++it) {
-        auto window = dynamic_cast<x11::window*>(const_cast<Toplevel*>(*it));
+        auto window = dynamic_cast<x11::window*>(const_cast<typename Space::window_t*>(*it));
         if (!window || window->remnant) {
             continue;
         }
@@ -212,7 +216,7 @@ void clear_space(Space& space)
         remove_all(space.windows, window);
     }
 
-    for (auto const& unmanaged : get_unmanageds<Toplevel>(space)) {
+    for (auto const& unmanaged : get_unmanageds(space)) {
         release_window(static_cast<window*>(unmanaged), is_x11);
         remove_all(space.windows, unmanaged);
         remove_all(space.stacking_order->pre_stack, unmanaged);

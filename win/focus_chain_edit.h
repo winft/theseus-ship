@@ -250,8 +250,8 @@ void focus_chain_move_window_after_in_chain(Chain& chain, Win* window, Win* refe
  * @param reference The Client behind which the @p client should be moved
  * @return void
  */
-template<typename Manager>
-void focus_chain_move_window_after(Manager& manager, Toplevel* window, Toplevel* reference)
+template<typename Win, typename Manager>
+void focus_chain_move_window_after(Manager& manager, Win* window, Win* reference)
 {
     if (!wants_tab_focus(window)) {
         return;

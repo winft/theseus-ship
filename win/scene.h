@@ -6,6 +6,7 @@
 #pragma once
 
 #include "deco.h"
+#include "window_qobject.h"
 
 #include "main.h"
 #include "render/compositor.h"
@@ -14,6 +15,7 @@
 #include "render/window.h"
 
 #include <cassert>
+#include <xcb/damage.h>
 
 namespace KWin::win
 {

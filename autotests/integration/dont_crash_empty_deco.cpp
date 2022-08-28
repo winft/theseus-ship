@@ -102,8 +102,8 @@ void DontCrashEmptyDecorationTest::testBug361551()
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
-    auto client
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+    auto win_id = windowCreatedSpy.first().first().value<quint32>();
+    auto client = dynamic_cast<win::x11::window*>(Test::app()->base.space->windows_map.at(win_id));
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QVERIFY(win::decoration(client));

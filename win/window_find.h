@@ -5,13 +5,13 @@
 */
 #pragma once
 
-#include "toplevel.h"
+#include "meta.h"
 
 namespace KWin::win
 {
 
 template<typename Space>
-Toplevel* find_desktop(Space* space, bool topmost, int desktop)
+auto find_desktop(Space* space, bool topmost, int desktop) -> typename Space::window_t*
 {
     // TODO(fsorr): use C++20 std::ranges::reverse_view
     auto const& list = space->stacking_order->stack;

@@ -19,7 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #ifndef KWIN_TABBOX_DESKTOP_CHAIN_H
 #define KWIN_TABBOX_DESKTOP_CHAIN_H
-// Qt
+
+#include "kwin_export.h"
+
 #include <QHash>
 #include <QObject>
 #include <QVector>
@@ -83,7 +85,7 @@ private:
  * This manager keeps track of multiple desktop chains which have a given identifier.
  * A common usage for this is to have a different desktop chain for each Activity.
  */
-class tabbox_desktop_chain_manager : public QObject
+class KWIN_EXPORT tabbox_desktop_chain_manager : public QObject
 {
     Q_OBJECT
 

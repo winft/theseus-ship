@@ -17,9 +17,9 @@ namespace KWin::win
 {
 
 template<typename Space>
-bool shortcut_available(Space& space, const QKeySequence& cut, Toplevel* ignore)
+bool shortcut_available(Space& space, const QKeySequence& cut, typename Space::window_t* ignore)
 {
-    if (ignore && cut == ignore->control->shortcut()) {
+    if (ignore && cut == ignore->control->shortcut) {
         return true;
     }
 
@@ -35,7 +35,7 @@ bool shortcut_available(Space& space, const QKeySequence& cut, Toplevel* ignore)
 
     // Check now conflicts with activation shortcuts for current clients.
     for (auto const win : space.windows) {
-        if (win != ignore && win->control && win->control->shortcut() == cut) {
+        if (win != ignore && win->control && win->control->shortcut == cut) {
             return false;
         }
     }
@@ -47,19 +47,19 @@ template<typename Win>
 void set_shortcut(Win* win, QString const& shortcut)
 {
     auto update_shortcut = [&win](QKeySequence const& cut = QKeySequence()) {
-        if (win->control->shortcut() == cut) {
+        if (win->control->shortcut == cut) {
             return;
         }
         win->control->set_shortcut(cut.toString());
         win->setShortcutInternal();
     };
 
-    auto cut = win->control->rules().checkShortcut(shortcut);
+    auto cut = win->control->rules.checkShortcut(shortcut);
     if (cut.isEmpty()) {
         update_shortcut();
         return;
     }
-    if (cut == win->control->shortcut().toString()) {
+    if (cut == win->control->shortcut.toString()) {
         // No change
         return;
     }
@@ -103,7 +103,7 @@ void set_shortcut(Win* win, QString const& shortcut)
     }
 
     for (auto it = keys.constBegin(); it != keys.constEnd(); ++it) {
-        if (win->control->shortcut() == *it) {
+        if (win->control->shortcut == *it) {
             // Current one is in the list.
             return;
         }
@@ -147,7 +147,7 @@ void setup_window_shortcut(Space& space, Win* window)
     // keys->setEnabled( false );
     // disable_shortcuts_keys->setEnabled( false );
     // client_keys->setEnabled( false );
-    space.client_keys_dialog = new shortcut_dialog(window->control->shortcut());
+    space.client_keys_dialog = new shortcut_dialog(window->control->shortcut);
     space.client_keys_client = window;
 
     QObject::connect(space.client_keys_dialog,
@@ -173,12 +173,12 @@ void setup_window_shortcut(Space& space, Win* window)
 }
 
 template<typename Space>
-void window_shortcut_updated(Space& space, Toplevel* window)
+void window_shortcut_updated(Space& space, typename Space::window_t* window)
 {
     QString key = QStringLiteral("_k_session:%1").arg(window->xcb_window);
     auto action = space.qobject->template findChild<QAction*>(key);
 
-    if (!window->control->shortcut().isEmpty()) {
+    if (!window->control->shortcut.isEmpty()) {
         if (action == nullptr) {
             // new shortcut
             action = new QAction(space.qobject.get());
@@ -194,7 +194,7 @@ void window_shortcut_updated(Space& space, Toplevel* window)
         // no autoloading, since it's configured explicitly here and is not meant to be reused
         // (the key is the window id anyway, which is kind of random)
         KGlobalAccel::self()->setShortcut(action,
-                                          QList<QKeySequence>() << window->control->shortcut(),
+                                          QList<QKeySequence>() << window->control->shortcut,
                                           KGlobalAccel::NoAutoloading);
         action->setEnabled(true);
     } else {

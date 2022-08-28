@@ -428,7 +428,6 @@ set(kwin_SRCS
     render/gl/buffer.cpp
     render/gl/backend.cpp
     render/gl/context_attribute_builder.cpp
-    render/gl/deco_renderer.cpp
     render/gl/egl_context_attribute_builder.cpp
     render/gl/lanczos_filter.cpp
     render/gl/scene.cpp
@@ -458,20 +457,13 @@ set(kwin_SRCS
     scripting/window.cpp
     scripting/space.cpp
     toplevel.cpp
-    win/control.cpp
     win/dbus/appmenu.cpp
     win/dbus/virtual_desktop_manager.cpp
     win/dbus/virtual_desktop_types.cpp
-    win/deco/client_impl.cpp
-    win/deco/bridge.cpp
     win/deco/palette.cpp
-    win/deco/renderer.cpp
     win/deco/decorations_logging.cpp
-    win/deco/settings.cpp
-    win/deco/window.cpp
     win/internal_window.cpp
     win/osd_notification.cpp
-    win/osd.cpp
     win/property_window.cpp
     win/rules/book.cpp
     win/rules/book_settings.cpp
@@ -482,19 +474,17 @@ set(kwin_SRCS
     win/shortcut_dialog.cpp
     win/singleton_interface.cpp
     win/space_qobject.cpp
-    win/stacking_order.cpp
-    win/transient.cpp
     win/virtual_desktops.cpp
     win/window_qobject.cpp
     win/x11/client_machine.cpp
-    win/x11/color_mapper.cpp
     win/x11/group.cpp
-    win/x11/netinfo.cpp
-    win/x11/root_info_filter.cpp
-    win/x11/screen_edge.cpp
-    win/x11/screen_edges_filter.cpp
-    win/x11/sync_alarm_filter.cpp
     win/x11/window.cpp
+
+    # These headers need to be compiled for the helper QObjects they contain.
+    win/deco/bridge_qobject.h
+    win/deco/client_impl_qobject.h
+    win/deco/renderer.h
+    win/stacking_order.h
 )
 
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
@@ -635,16 +625,16 @@ endif()
 
 if (KWIN_BUILD_TABBOX)
   target_sources(kwin PRIVATE
-    win/tabbox/tabbox.cpp
     win/tabbox/tabbox_client_model.cpp
     win/tabbox/tabbox_config.cpp
     win/tabbox/tabbox_desktop_chain.cpp
     win/tabbox/tabbox_desktop_model.cpp
     win/tabbox/tabbox_handler.cpp
-    win/tabbox/tabbox_handler_impl.cpp
     win/tabbox/tabbox_logging.cpp
     win/tabbox/tabbox_switcher_item.cpp
-    win/tabbox/tabbox_x11_filter.cpp
+
+    # These headers need to be compiled for the helper QObjects they contain.
+    win/tabbox/tabbox.h
   )
   target_link_libraries(kwin Qt::GuiPrivate)
 endif()
@@ -661,7 +651,6 @@ set(kwin_X11_SRCS
    input/x11/window_selector.cpp
    input/x11/xfixes_cursor_event_filter.cpp
    input/logging.cpp
-   render/backend/x11/deco_renderer.cpp
    render/backend/x11/non_composited_outline.cpp
    render/backend/x11/platform.cpp
    render/x11/effects.cpp
@@ -674,7 +663,6 @@ if (KWIN_HAVE_XRENDER_COMPOSITING)
     ${kwin_X11_SRCS}
     render/xrender/buffer.cpp
     render/xrender/backend.cpp
-    render/xrender/deco_renderer.cpp
     render/xrender/scene.cpp
     render/xrender/shadow.cpp
     render/xrender/window.cpp
@@ -801,7 +789,6 @@ set(kwin_WAYLAND_SRCS
    input/xkb/layout_policies.cpp
    render/gl/egl_dmabuf.cpp
    render/qpainter/buffer.cpp
-   render/qpainter/deco_renderer.cpp
    render/qpainter/scene.cpp
    render/qpainter/shadow.cpp
    render/qpainter/window.cpp

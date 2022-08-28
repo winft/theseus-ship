@@ -85,7 +85,7 @@ window_impl::window_impl(Toplevel* client, space* workspace)
     // actually differentiating its behavior on the user parameter (if fullscreen was triggered by
     // the user or not) and always set it to being a user change.
     QObject::connect(qtwin, &win::window_qobject::fullScreenChanged, this, [this, client] {
-        Q_EMIT clientFullScreenSet(this, client->control->fullscreen(), true);
+        Q_EMIT clientFullScreenSet(this, client->control->fullscreen, true);
     });
 
     if (client->isClient()) {
@@ -124,7 +124,7 @@ QString window_impl::caption() const
 
 QIcon window_impl::icon() const
 {
-    return m_client->control->icon();
+    return m_client->control->icon;
 }
 
 QRect window_impl::iconGeometry() const
@@ -244,7 +244,7 @@ void window_impl::setOpacity(qreal opacity)
 
 bool window_impl::isFullScreen() const
 {
-    return m_client->control->fullscreen();
+    return m_client->control->fullscreen;
 }
 
 void window_impl::setFullScreen(bool set)
@@ -461,7 +461,7 @@ void window::setShade(bool /*set*/)
 
 bool window_impl::keepAbove() const
 {
-    return m_client->control->keep_above();
+    return m_client->control->keep_above;
 }
 
 void window_impl::setKeepAbove(bool set)
@@ -471,7 +471,7 @@ void window_impl::setKeepAbove(bool set)
 
 bool window_impl::keepBelow() const
 {
-    return m_client->control->keep_below();
+    return m_client->control->keep_below;
 }
 
 void window_impl::setKeepBelow(bool set)
@@ -481,7 +481,7 @@ void window_impl::setKeepBelow(bool set)
 
 bool window_impl::isMinimized() const
 {
-    return m_client->control->minimized();
+    return m_client->control->minimized;
 }
 
 void window_impl::setMinimized(bool set)
@@ -531,12 +531,12 @@ void window_impl::setSkipCloseAnimation(bool set)
 
 bool window_impl::isActive() const
 {
-    return m_client->control->active();
+    return m_client->control->active;
 }
 
 bool window_impl::isDemandingAttention() const
 {
-    return m_client->control->demands_attention();
+    return m_client->control->demands_attention;
 }
 
 void window_impl::demandAttention(bool set)
@@ -551,12 +551,12 @@ bool window_impl::wantsInput() const
 
 bool window_impl::applicationMenuActive() const
 {
-    return m_client->control->application_menu_active();
+    return m_client->control->appmenu.active;
 }
 
 bool window_impl::unresponsive() const
 {
-    return m_client->control->unresponsive();
+    return m_client->control->unresponsive;
 }
 
 bool window_impl::isTransient() const
@@ -595,12 +595,12 @@ void window_impl::setNoBorder(bool set)
 
 QString window_impl::colorScheme() const
 {
-    return m_client->control->palette().color_scheme;
+    return m_client->control->palette.color_scheme;
 }
 
 QByteArray window_impl::desktopFileName() const
 {
-    return m_client->control->desktop_file_name();
+    return m_client->control->desktop_file_name;
 }
 
 bool window_impl::hasApplicationMenu() const

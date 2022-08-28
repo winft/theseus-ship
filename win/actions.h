@@ -6,6 +6,7 @@
 #pragma once
 
 #include "layers.h"
+#include "rules/types.h"
 #include "scene.h"
 
 namespace KWin::win
@@ -17,18 +18,18 @@ void set_keep_below(Win* win, bool keep);
 template<typename Win>
 void set_keep_above(Win* win, bool keep)
 {
-    keep = win->control->rules().checkKeepAbove(keep);
-    if (keep && !win->control->rules().checkKeepBelow(false)) {
+    keep = win->control->rules.checkKeepAbove(keep);
+    if (keep && !win->control->rules.checkKeepBelow(false)) {
         set_keep_below(win, false);
     }
-    if (keep == win->control->keep_above()) {
+    if (keep == win->control->keep_above) {
         // force hint change if different
         if (win->info && bool(win->info->state() & NET::KeepAbove) != keep) {
             win->info->setState(keep ? NET::KeepAbove : NET::States(), NET::KeepAbove);
         }
         return;
     }
-    win->control->set_keep_above(keep);
+    win->control->keep_above = keep;
     if (win->info) {
         win->info->setState(keep ? NET::KeepAbove : NET::States(), NET::KeepAbove);
     }
@@ -42,17 +43,17 @@ void set_keep_above(Win* win, bool keep)
 template<typename Win>
 void set_keep_below(Win* win, bool keep)
 {
-    keep = win->control->rules().checkKeepBelow(keep);
-    if (keep && !win->control->rules().checkKeepAbove(false)) {
+    keep = win->control->rules.checkKeepBelow(keep);
+    if (keep && !win->control->rules.checkKeepAbove(false)) {
         set_keep_above(win, false);
     }
-    if (keep == win->control->keep_below()) {
+    if (keep == win->control->keep_below) {
         // force hint change if different
         if (win->info && bool(win->info->state() & NET::KeepBelow) != keep)
             win->info->setState(keep ? NET::KeepBelow : NET::States(), NET::KeepBelow);
         return;
     }
-    win->control->set_keep_below(keep);
+    win->control->keep_below = keep;
     if (win->info) {
         win->info->setState(keep ? NET::KeepBelow : NET::States(), NET::KeepBelow);
     }
@@ -67,10 +68,10 @@ template<typename Win>
 void set_minimized(Win* win, bool set, bool avoid_animation = false)
 {
     if (set) {
-        if (!win->isMinimizable() || win->control->minimized())
+        if (!win->isMinimizable() || win->control->minimized)
             return;
 
-        win->control->set_minimized(true);
+        win->control->minimized = true;
         win->doMinimize();
 
         win->updateWindowRules(rules::type::minimize);
@@ -80,14 +81,14 @@ void set_minimized(Win* win, bool set, bool avoid_animation = false)
         Q_EMIT win->qobject->clientMinimized(!avoid_animation);
         Q_EMIT win->qobject->minimizedChanged();
     } else {
-        if (!win->control->minimized()) {
+        if (!win->control->minimized) {
             return;
         }
-        if (win->control->rules().checkMinimize(false)) {
+        if (win->control->rules.checkMinimize(false)) {
             return;
         }
 
-        win->control->set_minimized(false);
+        win->control->minimized = false;
         win->doMinimize();
 
         win->updateWindowRules(rules::type::minimize);
@@ -99,7 +100,7 @@ void set_minimized(Win* win, bool set, bool avoid_animation = false)
 template<typename Win>
 void propagate_minimized_to_transients(Win& window)
 {
-    if (window.control->minimized()) {
+    if (window.control->minimized) {
         for (auto win : window.transient()->children) {
             if (!win->control) {
                 continue;
@@ -109,7 +110,7 @@ void propagate_minimized_to_transients(Win& window)
                 continue;
             }
             // ... but to keep them to eg. watch progress or whatever.
-            if (!win->control->minimized()) {
+            if (!win->control->minimized) {
                 set_minimized(win, true);
                 propagate_minimized_to_transients(*win);
             }
@@ -125,7 +126,7 @@ void propagate_minimized_to_transients(Win& window)
             if (!win->control) {
                 continue;
             }
-            if (win->control->minimized()) {
+            if (win->control->minimized) {
                 set_minimized(win, false);
                 propagate_minimized_to_transients(*win);
             }

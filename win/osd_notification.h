@@ -27,12 +27,6 @@
 #include <functional>
 #include <memory>
 
-class QPropertyAnimation;
-class QTimer;
-class QQmlComponent;
-class QQmlContext;
-class QQmlEngine;
-
 namespace KWin::win
 {
 
@@ -56,7 +50,7 @@ private:
     Osd& osd;
 };
 
-class osd_notification_qobject : public QObject
+class KWIN_EXPORT osd_notification_qobject : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(bool visible READ isVisible WRITE setVisible NOTIFY visibleChanged)

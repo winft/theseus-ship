@@ -103,15 +103,17 @@ void set_caption(Win* win, QString const& _s, bool force = false)
     auto shortcut_suffix = win::shortcut_caption_suffix(win);
     win->caption.suffix = machine_suffix + shortcut_suffix;
 
+    using window_t = typename std::remove_reference_t<decltype(win->space)>::window_t;
+
     if ((!win::is_special_window(win) || win::is_toolbar(win))
-        && win::find_client_with_same_caption(static_cast<Toplevel*>(win))) {
+        && win::find_client_with_same_caption(static_cast<window_t*>(win))) {
         int i = 2;
 
         do {
             win->caption.suffix = machine_suffix + QLatin1String(" <") + QString::number(i)
                 + QLatin1Char('>') + LRM;
             i++;
-        } while (win::find_client_with_same_caption(static_cast<Toplevel*>(win)));
+        } while (win::find_client_with_same_caption(static_cast<window_t*>(win)));
 
         win->info->setVisibleName(win::caption(win).toUtf8().constData());
         reset_name = false;
@@ -175,7 +177,8 @@ void get_icons(Win* win)
     // First read icons from the window itself
     auto const themedIconName = win::icon_from_desktop_file(win);
     if (!themedIconName.isEmpty()) {
-        win->control->set_icon(QIcon::fromTheme(themedIconName));
+        win->control->icon = QIcon::fromTheme(themedIconName);
+        Q_EMIT win->qobject->iconChanged();
         return;
     }
 
@@ -205,8 +208,8 @@ void get_icons(Win* win)
 
     if (icon.isNull()) {
         for (auto lead : win->transient()->leads()) {
-            if (!lead->control->icon().isNull()) {
-                icon = lead->control->icon();
+            if (!lead->control->icon.isNull()) {
+                icon = lead->control->icon;
                 break;
             }
         }
@@ -238,7 +241,8 @@ void get_icons(Win* win)
                                            KWindowSystem::ClassHint | KWindowSystem::XApp,
                                            win->info));
     }
-    win->control->set_icon(icon);
+    win->control->icon = icon;
+    Q_EMIT win->qobject->iconChanged();
 }
 
 // TODO(romangg): is this still relevant today, i.e. 2020?
@@ -283,7 +287,7 @@ bool same_app_window_role_match(Win const* c1, Win const* c2, bool active_hack)
             // different mainwindows are always different apps
             return c1 == c2;
         }
-        if (!c1->control->active() && !c2->control->active()) {
+        if (!c1->control->active && !c2->control->active) {
             return c1 == c2;
         }
     }

@@ -23,7 +23,9 @@ class platform;
 
 namespace win::deco
 {
+template<typename Window>
 class client_impl;
+template<typename Client>
 class renderer;
 }
 
@@ -68,7 +70,9 @@ public:
     virtual void createOpenGLSafePoint(OpenGLSafePoint safePoint) = 0;
 
     virtual render::outline_visual* create_non_composited_outline(render::outline* outline) = 0;
-    virtual win::deco::renderer* createDecorationRenderer(win::deco::client_impl* client) = 0;
+    virtual win::deco::renderer<win::deco::client_impl<Toplevel>>*
+    createDecorationRenderer(win::deco::client_impl<Toplevel>* client)
+        = 0;
     virtual std::unique_ptr<effects_handler_impl>
     createEffectsHandler(render::compositor* compositor, render::scene* scene) = 0;
 

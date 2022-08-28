@@ -8,7 +8,6 @@
 #include "focus_stealing.h"
 #include "group.h"
 #include "hide.h"
-#include "netinfo.h"
 #include "window.h"
 #include "window_find.h"
 
@@ -23,10 +22,10 @@
 namespace KWin::win::x11
 {
 
-template<typename Win, typename Space>
-std::vector<Win*> get_unmanageds(Space const& space)
+template<typename Space>
+auto get_unmanageds(Space const& space) -> std::vector<typename Space::window_t*>
 {
-    std::vector<Win*> ret;
+    std::vector<typename Space::window_t*> ret;
     for (auto const& window : space.windows) {
         if (window->xcb_window && !window->control && !window->remnant) {
             ret.push_back(window);
@@ -52,7 +51,7 @@ void render_stack_unmanaged_windows(Space& space)
     // create an vector of references instead of making a copy of each element into the vector.
     std::vector<std::reference_wrapper<xcb_window_t>> windows(
         xcbtree->children(), xcbtree->children() + xcbtree->data()->children_len);
-    auto const& unmanaged_list = get_unmanageds<Toplevel>(space);
+    auto const& unmanaged_list = get_unmanageds(space);
 
     for (auto const& win : windows) {
         auto unmanaged = std::find_if(unmanaged_list.cbegin(),
@@ -68,7 +67,7 @@ void render_stack_unmanaged_windows(Space& space)
 template<typename Space>
 void propagate_clients(Space& space, bool propagate_new_clients)
 {
-    if (!rootInfo()) {
+    if (!space.root_info) {
         return;
     }
 
@@ -83,7 +82,7 @@ void propagate_clients(Space& space, bool propagate_new_clients)
     // but it was lowered after kwin startup. Stacking all clients below
     // it ensures that no client will be ever shown above override-redirect
     // windows (e.g. popups).
-    stack.push_back(rootInfo()->supportWindow());
+    stack.push_back(space.root_info->supportWindow());
 
     auto const edges_wins = space.edges->windows();
     stack.insert(stack.end(), edges_wins.begin(), edges_wins.end());
@@ -123,7 +122,7 @@ void propagate_clients(Space& space, bool propagate_new_clients)
 
     // TODO isn't it too inefficient to restack always all clients?
     // TODO don't restack not visible windows?
-    Q_ASSERT(stack.at(0) == rootInfo()->supportWindow());
+    Q_ASSERT(stack.at(0) == space.root_info->supportWindow());
     base::x11::xcb::restack_windows(stack);
 
     if (propagate_new_clients) {
@@ -155,7 +154,7 @@ void propagate_clients(Space& space, bool propagate_new_clients)
         /// Desktop windows are always on the bottom, so copy the non-desktop windows to the
         /// end/top.
         std::copy(non_desktops.begin(), non_desktops.end(), std::back_inserter(clients));
-        rootInfo()->setClientList(clients.data(), clients.size());
+        space.root_info->setClientList(clients.data(), clients.size());
     }
 
     std::vector<xcb_window_t> stacked_clients;
@@ -169,7 +168,7 @@ void propagate_clients(Space& space, bool propagate_new_clients)
     std::copy(order.manual_overlays.begin(),
               order.manual_overlays.end(),
               std::back_inserter(stacked_clients));
-    rootInfo()->setClientListStacking(stacked_clients.data(), stacked_clients.size());
+    space.root_info->setClientListStacking(stacked_clients.data(), stacked_clients.size());
 }
 
 template<typename Space, typename Win>

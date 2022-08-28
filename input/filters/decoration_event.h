@@ -18,7 +18,6 @@
 #include "main.h"
 #include "win/deco.h"
 #include "win/input.h"
-#include "win/space.h"
 
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/touch_pool.h>

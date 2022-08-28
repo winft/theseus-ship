@@ -7,7 +7,6 @@
 #pragma once
 
 #include <QRect>
-#include <QVector>
 #include <netwm_def.h>
 
 #include "base/options.h"
@@ -16,6 +15,7 @@
 #include "win/types.h"
 
 #include <functional>
+#include <vector>
 
 class QDebug;
 class KConfig;
@@ -29,22 +29,17 @@ namespace base
 class output;
 }
 
-class Toplevel;
-
 namespace win::rules
 {
 
 class ruling;
 
-#ifndef KCMRULES // only for kwin core
-
 class KWIN_EXPORT window
 {
 public:
-    explicit window(QVector<ruling*> const& rules);
+    explicit window(std::vector<ruling*> const& rules);
     window();
 
-    void update(Toplevel* window, int selection);
     void discardTemporary();
     bool contains(ruling const* rule) const;
     void remove(ruling* rule);
@@ -84,6 +79,8 @@ public:
     bool checkDisableGlobalShortcuts(bool disable) const;
     QString checkDesktopFile(QString desktopFile, bool init = false) const;
 
+    std::vector<ruling*> rules;
+
 private:
     maximize_mode checkMaximizeVert(maximize_mode mode, bool init) const;
     maximize_mode checkMaximizeHoriz(maximize_mode mode, bool init) const;
@@ -91,10 +88,10 @@ private:
     template<typename T, typename F>
     T check_set(T data, bool init, F apply_call) const
     {
-        if (rules.count() == 0) {
+        if (rules.size() == 0) {
             return data;
         }
-        for (auto rule : qAsConst(rules)) {
+        for (auto&& rule : rules) {
             if (std::invoke(apply_call, rule, data, init)) {
                 break;
             }
@@ -105,21 +102,17 @@ private:
     template<typename T, typename F>
     T check_force(T data, F apply_call) const
     {
-        if (rules.count() == 0) {
+        if (rules.size() == 0) {
             return data;
         }
-        for (auto rule : qAsConst(rules)) {
+        for (auto&& rule : rules) {
             if (std::invoke(apply_call, rule, data)) {
                 break;
             }
         }
         return data;
     }
-
-    QVector<ruling*> rules;
 };
-
-#endif
 
 }
 }

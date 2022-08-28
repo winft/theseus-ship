@@ -31,7 +31,7 @@ struct device_redirect_at {
 
 struct device_redirect_focus {
     Toplevel* window{nullptr};
-    win::deco::client_impl* deco{nullptr};
+    win::deco::client_impl<Toplevel>* deco{nullptr};
     QWindow* internal_window{nullptr};
     struct {
         QMetaObject::Connection window_destroy;
@@ -64,7 +64,8 @@ public:
     {
     }
 
-    virtual void cleanupDecoration(win::deco::client_impl* /*old*/, win::deco::client_impl* /*now*/)
+    virtual void cleanupDecoration(win::deco::client_impl<Toplevel>* /*old*/,
+                                   win::deco::client_impl<Toplevel>* /*now*/)
     {
     }
 

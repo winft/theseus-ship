@@ -22,26 +22,8 @@ ki18n_wrap_ui(testTabBoxClientModel_SRCS
 add_executable(testTabBoxClientModel ${testTabBoxClientModel_SRCS})
 set_target_properties(testTabBoxClientModel PROPERTIES COMPILE_DEFINITIONS "NO_NONE_WINDOW")
 target_link_libraries(testTabBoxClientModel
-    Qt::Core
-    Qt::Concurrent
-    Qt::DBus
-    Qt::Quick
+    kwin
     Qt::Test
-    Qt::Widgets
-    Qt::X11Extras
-    Qt::GuiPrivate
-
-    KF5::ConfigCore
-    KF5::ConfigWidgets
-    KF5::GlobalAccel
-    KF5::I18n
-    KF5::Package
-    KF5::Service
-    KF5::WindowSystem
-
-    KDecoration2::KDecoration
-
-    XCB::XCB
 )
 add_test(NAME kwin-testTabBoxClientModel COMMAND testTabBoxClientModel)
 ecm_mark_as_test(testTabBoxClientModel)
@@ -68,26 +50,8 @@ ki18n_wrap_ui(testTabBoxHandler_SRCS
 add_executable(testTabBoxHandler ${testTabBoxHandler_SRCS})
 set_target_properties(testTabBoxHandler PROPERTIES COMPILE_DEFINITIONS "NO_NONE_WINDOW")
 target_link_libraries(testTabBoxHandler
-    Qt::Core
-    Qt::Concurrent
-    Qt::DBus
-    Qt::Quick
+    kwin
     Qt::Test
-    Qt::Widgets
-    Qt::X11Extras
-    Qt::GuiPrivate
-
-    KF5::ConfigCore
-    KF5::ConfigWidgets
-    KF5::GlobalAccel
-    KF5::I18n
-    KF5::Package
-    KF5::Service
-    KF5::WindowSystem
-
-    KDecoration2::KDecoration
-
-    XCB::XCB
 )
 add_test(NAME kwin-testTabBoxHandler COMMAND testTabBoxHandler)
 ecm_mark_as_test(testTabBoxHandler)

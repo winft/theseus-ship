@@ -197,8 +197,8 @@ void DecorationInputTest::testAxis()
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
-    QVERIFY(!c->control->keep_above());
-    QVERIFY(!c->control->keep_below());
+    QVERIFY(!c->control->keep_above);
+    QVERIFY(!c->control->keep_below);
 
     quint32 timestamp = 1;
 
@@ -214,14 +214,14 @@ void DecorationInputTest::testAxis()
     // TODO: mouse wheel direction looks wrong to me
     // simulate wheel
     Test::pointer_axis_vertical(5.0, timestamp++, 0);
-    QVERIFY(c->control->keep_below());
-    QVERIFY(!c->control->keep_above());
+    QVERIFY(c->control->keep_below);
+    QVERIFY(!c->control->keep_above);
     Test::pointer_axis_vertical(-5.0, timestamp++, 0);
-    QVERIFY(!c->control->keep_below());
-    QVERIFY(!c->control->keep_above());
+    QVERIFY(!c->control->keep_below);
+    QVERIFY(!c->control->keep_above);
     Test::pointer_axis_vertical(-5.0, timestamp++, 0);
-    QVERIFY(!c->control->keep_below());
-    QVERIFY(c->control->keep_above());
+    QVERIFY(!c->control->keep_below);
+    QVERIFY(c->control->keep_above);
 
     // test top most deco pixel, BUG: 362860
     win::move(c, QPoint(0, 0));
@@ -235,10 +235,10 @@ void DecorationInputTest::testAxis()
               ->sectionUnderMouse(),
           "expectedSection");
     Test::pointer_axis_vertical(5.0, timestamp++, 0);
-    QVERIFY(!c->control->keep_below());
+    QVERIFY(!c->control->keep_below);
 
     QEXPECT_FAIL("topLeft|xdgWmBase", "Button at (0,0;24x24) filters out the event", Continue);
-    QVERIFY(!c->control->keep_above());
+    QVERIFY(!c->control->keep_above);
 }
 
 void DecorationInputTest::testDoubleClick_data()
@@ -364,7 +364,7 @@ void DecorationInputTest::testHover()
 
     quint32 timestamp = 1;
     MOTION(QPoint(c->frameGeometry().center().x(), win::frame_to_client_pos(c, QPoint()).y() / 2));
-    QCOMPARE(c->control->move_resize().cursor, input::cursor_shape(Qt::ArrowCursor));
+    QCOMPARE(c->control->move_resize.cursor, input::cursor_shape(Qt::ArrowCursor));
 
     // There is a mismatch of the cursor key positions between windows
     // with and without borders (with borders one can move inside a bit and still
@@ -377,36 +377,34 @@ void DecorationInputTest::testHover()
     auto deviation = [hasBorders] { return hasBorders ? -1 : 0; };
 
     MOTION(QPoint(c->frameGeometry().x(), 0));
-    QCOMPARE(c->control->move_resize().cursor,
+    QCOMPARE(c->control->move_resize.cursor,
              input::cursor_shape(input::extended_cursor::SizeNorthWest));
     MOTION(QPoint(c->frameGeometry().x() + c->frameGeometry().width() / 2, 0));
-    QCOMPARE(c->control->move_resize().cursor,
+    QCOMPARE(c->control->move_resize.cursor,
              input::cursor_shape(input::extended_cursor::SizeNorth));
     MOTION(QPoint(c->frameGeometry().x() + c->frameGeometry().width() - 1, 0));
-    QCOMPARE(c->control->move_resize().cursor,
+    QCOMPARE(c->control->move_resize.cursor,
              input::cursor_shape(input::extended_cursor::SizeNorthEast));
     MOTION(QPoint(c->frameGeometry().x() + c->frameGeometry().width() + deviation(),
                   c->size().height() / 2));
-    QCOMPARE(c->control->move_resize().cursor,
-             input::cursor_shape(input::extended_cursor::SizeEast));
+    QCOMPARE(c->control->move_resize.cursor, input::cursor_shape(input::extended_cursor::SizeEast));
     MOTION(QPoint(c->frameGeometry().x() + c->frameGeometry().width() + deviation(),
                   c->size().height() - 1));
-    QCOMPARE(c->control->move_resize().cursor,
+    QCOMPARE(c->control->move_resize.cursor,
              input::cursor_shape(input::extended_cursor::SizeSouthEast));
     MOTION(QPoint(c->frameGeometry().x() + c->frameGeometry().width() / 2,
                   c->size().height() + deviation()));
-    QCOMPARE(c->control->move_resize().cursor,
+    QCOMPARE(c->control->move_resize.cursor,
              input::cursor_shape(input::extended_cursor::SizeSouth));
     MOTION(QPoint(c->frameGeometry().x(), c->size().height() + deviation()));
-    QCOMPARE(c->control->move_resize().cursor,
+    QCOMPARE(c->control->move_resize.cursor,
              input::cursor_shape(input::extended_cursor::SizeSouthWest));
     MOTION(QPoint(c->frameGeometry().x() - 1, c->size().height() / 2));
-    QCOMPARE(c->control->move_resize().cursor,
-             input::cursor_shape(input::extended_cursor::SizeWest));
+    QCOMPARE(c->control->move_resize.cursor, input::cursor_shape(input::extended_cursor::SizeWest));
 
     MOTION(c->frameGeometry().center());
     QEXPECT_FAIL("", "Cursor not set back on leave", Continue);
-    QCOMPARE(c->control->move_resize().cursor, input::cursor_shape(Qt::ArrowCursor));
+    QCOMPARE(c->control->move_resize.cursor, input::cursor_shape(Qt::ArrowCursor));
 }
 
 void DecorationInputTest::testPressToMove_data()
@@ -440,7 +438,7 @@ void DecorationInputTest::testPressToMove()
     quint32 timestamp = 1;
     MOTION(QPoint(c->frameGeometry().center().x(),
                   c->pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2));
-    QCOMPARE(c->control->move_resize().cursor, input::cursor_shape(Qt::ArrowCursor));
+    QCOMPARE(c->control->move_resize.cursor, input::cursor_shape(Qt::ArrowCursor));
 
     PRESS;
     QVERIFY(!win::is_move(c));
@@ -877,11 +875,13 @@ void DecorationInputTest::testTooltipDoesntEatKeyEvents()
     QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
                               &win::space::qobject_t::internalClientAdded);
     QVERIFY(clientAddedSpy.isValid());
-    c->control->deco().client->requestShowToolTip(QStringLiteral("test"));
+    c->control->deco.client->requestShowToolTip(QStringLiteral("test"));
     // now we should get an internal window
+
     QVERIFY(clientAddedSpy.wait());
+    auto win_id = clientAddedSpy.first().first().value<quint32>();
     auto internal
-        = dynamic_cast<win::internal_window*>(clientAddedSpy.first().first().value<Toplevel*>());
+        = dynamic_cast<win::internal_window*>(Test::app()->base.space->windows_map.at(win_id));
     QVERIFY(internal);
     QVERIFY(internal->isInternal());
     QVERIFY(internal->internalWindow()->flags().testFlag(Qt::ToolTip));
@@ -893,7 +893,7 @@ void DecorationInputTest::testTooltipDoesntEatKeyEvents()
     Test::keyboard_key_released(KEY_A, timestamp++);
     QVERIFY(keyEvent.wait());
 
-    c->control->deco().client->requestHideToolTip();
+    c->control->deco.client->requestHideToolTip();
     Test::wait_for_destroyed(internal);
 }
 

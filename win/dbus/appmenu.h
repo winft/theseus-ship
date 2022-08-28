@@ -35,11 +35,7 @@ class OrgKdeKappmenuInterface;
 class QDBusObjectPath;
 class QDBusServiceWatcher;
 
-namespace KWin
-{
-class Toplevel;
-
-namespace win::dbus
+namespace KWin::win::dbus
 {
 
 struct appmenu_callbacks {
@@ -54,11 +50,11 @@ struct appmenu_callbacks {
 template<typename Win>
 void show_appmenu(Win& win, int actionId)
 {
-    if (auto decoration = win.control->deco().decoration) {
+    if (auto decoration = win.control->deco.decoration) {
         decoration->showApplicationMenu(actionId);
-    } else {
+    } else if (win.control->has_application_menu()) {
         // No info where application menu button is, show it in the top left corner by default.
-        win.space.appmenu->showApplicationMenu(win.pos(), &win, actionId);
+        win.space.appmenu->showApplicationMenu(win.pos(), win.control->appmenu, actionId);
     }
 }
 
@@ -77,12 +73,12 @@ appmenu_callbacks create_appmenu_callbacks(Space const& space)
                 return;
             }
         }
-        if (auto win = find_window_with_appmenu(space, addr)) {
+        if (auto win = find_window_with_appmenu<typename Space::window_t>(space, addr)) {
             show_appmenu(*win, action_id);
         }
     };
     callbacks.visibility = [&space](appmenu_address const& addr, bool active) {
-        if (auto win = find_window_with_appmenu(space, addr)) {
+        if (auto win = find_window_with_appmenu<typename Space::window_t>(space, addr)) {
             win->control->set_application_menu_active(active);
         }
     };
@@ -98,10 +94,8 @@ public:
     explicit appmenu(appmenu_callbacks callbacks);
     ~appmenu();
 
-    void showApplicationMenu(const QPoint& pos, Toplevel* window, int actionId);
-
+    void showApplicationMenu(const QPoint& pos, win::appmenu const& data, int actionId);
     bool applicationMenuEnabled() const;
-
     void setViewEnabled(bool enabled);
 
 Q_SIGNALS:
@@ -122,5 +116,4 @@ private:
     appmenu_callbacks callbacks;
 };
 
-}
 }

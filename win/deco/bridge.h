@@ -20,8 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include <config-kwin.h>
-#include <kwin_export.h>
 
+#include "bridge_qobject.h"
 #include "client_impl.h"
 #include "decorations_logging.h"
 #include "renderer.h"
@@ -30,8 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "main.h"
 #include "render/scene.h"
-#include "toplevel.h"
-#include "win/control.h"
 #include "win/deco.h"
 
 #include <kwineffects/effect_plugin_factory.h>
@@ -49,25 +47,8 @@ namespace KDecoration2
 class DecorationSettings;
 }
 
-namespace KWin
+namespace KWin::win::deco
 {
-
-class Toplevel;
-
-namespace win::deco
-{
-
-class window;
-
-class KWIN_EXPORT bridge_qobject : public QObject
-{
-    Q_OBJECT
-public:
-    ~bridge_qobject() override;
-
-Q_SIGNALS:
-    void metaDataLoaded();
-};
 
 static const QString s_aurorae = QStringLiteral("org.kde.kwin.aurorae");
 static const QString s_pluginName = QStringLiteral("org.kde.kdecoration2");
@@ -122,7 +103,7 @@ public:
         }
     }
 
-    KDecoration2::Decoration* createDecoration(deco::window* window)
+    KDecoration2::Decoration* createDecoration(deco::window<typename Space::window_t>* window)
     {
         if (m_noPlugin) {
             return nullptr;
@@ -145,14 +126,15 @@ public:
     createClient(KDecoration2::DecoratedClient* client,
                  KDecoration2::Decoration* decoration) override
     {
-        return std::make_unique<client_impl>(
-            static_cast<window*>(decoration->parent())->win, client, decoration);
+        using window_t = typename Space::window_t;
+        return std::make_unique<client_impl<window_t>>(
+            static_cast<window<window_t>*>(decoration->parent())->win, client, decoration);
     }
 
     std::unique_ptr<KDecoration2::DecorationSettingsPrivate>
     settings(KDecoration2::DecorationSettings* parent) override
     {
-        return std::unique_ptr<deco::settings>(new deco::settings(space, parent));
+        return std::make_unique<deco::settings<Space>>(space, parent);
     }
 
     QString recommendedBorderSize() const
@@ -356,5 +338,4 @@ private:
     Space& space;
 };
 
-}
 }

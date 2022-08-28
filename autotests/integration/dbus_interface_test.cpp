@@ -125,7 +125,9 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
     Test::render(surface, QSize(100, 50), Qt::blue);
     QVERIFY(clientAddedSpy.isEmpty());
     QVERIFY(clientAddedSpy.wait());
-    auto client = dynamic_cast<wayland_window*>(clientAddedSpy.first().first().value<Toplevel*>());
+
+    auto client_id = clientAddedSpy.first().first().value<quint32>();
+    auto client = dynamic_cast<wayland_window*>(Test::app()->base.space->windows_map.at(client_id));
     QVERIFY(client);
 
     // let's get the window info
@@ -169,19 +171,19 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
         return reply.value().value(name).toBool();
     };
 
-    QVERIFY(!client->control->minimized());
+    QVERIFY(!client->control->minimized);
     win::set_minimized(client, true);
-    QVERIFY(client->control->minimized());
+    QVERIFY(client->control->minimized);
     QCOMPARE(verifyProperty(QStringLiteral("minimized")), true);
 
-    QVERIFY(!client->control->keep_above());
+    QVERIFY(!client->control->keep_above);
     win::set_keep_above(client, true);
-    QVERIFY(client->control->keep_above());
+    QVERIFY(client->control->keep_above);
     QCOMPARE(verifyProperty(QStringLiteral("keepAbove")), true);
 
-    QVERIFY(!client->control->keep_below());
+    QVERIFY(!client->control->keep_below);
     win::set_keep_below(client, true);
-    QVERIFY(client->control->keep_below());
+    QVERIFY(client->control->keep_below);
     QCOMPARE(verifyProperty(QStringLiteral("keepBelow")), true);
 
     QVERIFY(!client->control->skip_taskbar());
@@ -279,8 +281,9 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
+    auto client_id = windowCreatedSpy.first().first().value<quint32>();
     auto client
-        = dynamic_cast<win::x11::window*>(windowCreatedSpy.first().first().value<Toplevel*>());
+        = dynamic_cast<win::x11::window*>(Test::app()->base.space->windows_map.at(client_id));
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QCOMPARE(win::frame_to_client_size(client, client->size()), windowGeometry.size());
@@ -326,19 +329,19 @@ void TestDbusInterface::testGetWindowInfoX11Client()
         return reply.value().value(name).toBool();
     };
 
-    QVERIFY(!client->control->minimized());
+    QVERIFY(!client->control->minimized);
     win::set_minimized(client, true);
-    QVERIFY(client->control->minimized());
+    QVERIFY(client->control->minimized);
     QCOMPARE(verifyProperty(QStringLiteral("minimized")), true);
 
-    QVERIFY(!client->control->keep_above());
+    QVERIFY(!client->control->keep_above);
     win::set_keep_above(client, true);
-    QVERIFY(client->control->keep_above());
+    QVERIFY(client->control->keep_above);
     QCOMPARE(verifyProperty(QStringLiteral("keepAbove")), true);
 
-    QVERIFY(!client->control->keep_below());
+    QVERIFY(!client->control->keep_below);
     win::set_keep_below(client, true);
-    QVERIFY(client->control->keep_below());
+    QVERIFY(client->control->keep_below);
     QCOMPARE(verifyProperty(QStringLiteral("keepBelow")), true);
 
     QVERIFY(!client->control->skip_taskbar());
@@ -363,9 +366,9 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     client->setNoBorder(false);
     QVERIFY(!client->noBorder());
 
-    QVERIFY(!client->control->fullscreen());
+    QVERIFY(!client->control->fullscreen);
     client->setFullScreen(true);
-    QVERIFY(client->control->fullscreen());
+    QVERIFY(client->control->fullscreen);
     QVERIFY(win::frame_to_client_size(client, client->size()) != windowGeometry.size());
     QCOMPARE(verifyProperty(QStringLiteral("fullscreen")), true);
     reply = getWindowInfo(client->internal_id);
@@ -374,7 +377,7 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     QCOMPARE(reply.value().value(QStringLiteral("height")).toInt(), client->size().height());
 
     client->setFullScreen(false);
-    QVERIFY(!client->control->fullscreen());
+    QVERIFY(!client->control->fullscreen);
     QCOMPARE(verifyProperty(QStringLiteral("fullscreen")), false);
 
     // maximize

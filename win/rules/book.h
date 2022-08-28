@@ -6,63 +6,51 @@
 */
 #pragma once
 
-#ifndef KCMRULES
-
 #include "window.h"
+
+#include <deque>
 
 class KXMessages;
 
-namespace KWin
-{
-
-class Toplevel;
-
-namespace win
-{
-
-class space;
-
-namespace rules
+namespace KWin::win::rules
 {
 
 class ruling;
 
-class KWIN_EXPORT book : public QObject
+class KWIN_EXPORT book_qobject : public QObject
 {
     Q_OBJECT
-public:
-    book();
-    ~book() override;
-
-    window find(Toplevel const* window, bool);
-    void discardUsed(Toplevel* window, bool withdraw);
-    void setUpdatesDisabled(bool disable);
-    bool areUpdatesDisabled() const;
-    void load();
-    void edit(Toplevel* window, bool whole_app);
-    void requestDiskStorage();
-
-    KSharedConfig::Ptr config;
-
 Q_SIGNALS:
     void updates_enabled();
+};
 
-private Q_SLOTS:
-    void temporaryRulesMessage(const QString&);
-    void cleanupTemporaryRules();
+class KWIN_EXPORT book
+{
+public:
+    book();
+    ~book();
+
+    void setUpdatesDisabled(bool disable);
+    bool areUpdatesDisabled() const;
+
+    void load();
     void save();
 
+    void requestDiskStorage();
+    void temporaryRulesMessage(const QString&);
+
+    std::unique_ptr<book_qobject> qobject;
+    KSharedConfig::Ptr config;
+    std::deque<ruling*> m_rules;
+
 private:
-    void deleteAll();
     void initWithX11();
+    void deleteAll();
+    void cleanupTemporaryRules();
 
     QTimer* m_updateTimer;
     bool m_updatesDisabled;
-    QList<ruling*> m_rules;
-    QScopedPointer<KXMessages> m_temporaryRulesMessages;
+    std::unique_ptr<KXMessages> m_temporaryRulesMessages;
 };
 
-#endif
-}
-}
 }

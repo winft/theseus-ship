@@ -68,7 +68,6 @@ private:
 
 void virtual_keyboard_test::initTestCase()
 {
-    qRegisterMetaType<Toplevel*>();
     qRegisterMetaType<Wrapland::Client::Output*>();
     qRegisterMetaType<Wrapland::Client::Keyboard::KeyState>();
 

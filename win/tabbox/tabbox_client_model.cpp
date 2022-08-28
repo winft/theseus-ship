@@ -20,8 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // own
 #include "tabbox_client_model.h"
 // tabbox
+#include "tabbox_client.h"
 #include "tabbox_config.h"
-#include "tabbox_handler.h"
 // Qt
 #include <QIcon>
 #include <QUuid>

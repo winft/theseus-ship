@@ -37,10 +37,6 @@
 #include "win/x11/space_areas.h"
 #include "xwl/surface.h"
 
-#if KWIN_BUILD_TABBOX
-#include "win/tabbox/tabbox.h"
-#endif
-
 #include <Wrapland/Server/appmenu.h>
 #include <Wrapland/Server/compositor.h>
 #include <Wrapland/Server/idle_inhibit_v1.h>
@@ -102,21 +98,24 @@ public:
         this->input = std::make_unique<input::wayland::redirect>(*base.input, *this);
         dbus = std::make_unique<base::dbus::kwin_impl<win::space, input::platform>>(
             *this, base.input.get());
-        edges = std::make_unique<screen_edger>(*this);
+        edges = std::make_unique<edger_t>(*this);
 
         plasma_window_manager->setShowingDesktopState(
             Wrapland::Server::PlasmaWindowManager::ShowingDesktopState::Disabled);
         plasma_window_manager->setVirtualDesktopManager(plasma_virtual_desktop_manager.get());
         virtual_desktop_manager->setVirtualDesktopManagement(plasma_virtual_desktop_manager.get());
 
-        QObject::connect(
-            stacking_order.get(), &stacking_order::render_restack, qobject.get(), [this] {
-                for (auto win : windows) {
-                    if (auto iwin = dynamic_cast<internal_window*>(win); iwin && iwin->isShown()) {
-                        stacking_order->render_overlays.push_back(iwin);
-                    }
-                }
-            });
+        QObject::connect(stacking_order->qobject.get(),
+                         &stacking_order_qobject::render_restack,
+                         qobject.get(),
+                         [this] {
+                             for (auto win : windows) {
+                                 if (auto iwin = dynamic_cast<internal_window*>(win);
+                                     iwin && iwin->isShown()) {
+                                     stacking_order->render_overlays.push_back(iwin);
+                                 }
+                             }
+                         });
 
         QObject::connect(compositor.get(),
                          &WS::Compositor::surfaceCreated,
@@ -189,16 +188,16 @@ public:
                          });
 
         activation = std::make_unique<wayland::xdg_activation<space>>(*this);
-        QObject::connect(
-            qobject.get(), &space::qobject_t::clientActivated, qobject.get(), [this](auto&& win) {
-                if (win) {
-                    activation->clear();
-                }
-            });
+        QObject::connect(qobject.get(), &space::qobject_t::clientActivated, qobject.get(), [this] {
+            if (active_client) {
+                activation->clear();
+            }
+        });
 
         // For Xwayland windows we need to setup Plasma management too.
         QObject::connect(
-            qobject.get(), &space::qobject_t::clientAdded, qobject.get(), [this](auto&& win) {
+            qobject.get(), &space::qobject_t::clientAdded, qobject.get(), [this](auto win_id) {
+                auto win = windows_map.at(win_id);
                 handle_x11_window_added(static_cast<x11::window*>(win));
             });
 
@@ -225,7 +224,7 @@ public:
     void resize(QSize const& size) override
     {
         // TODO(romangg): Only call with Xwayland compiled.
-        x11::handle_desktop_resize(size);
+        x11::handle_desktop_resize(root_info.get(), size);
         handle_desktop_resize(*this, size);
     }
 
@@ -244,7 +243,7 @@ public:
         }
     }
 
-    Toplevel* findInternal(QWindow* window) const override
+    window_t* findInternal(QWindow* window) const override
     {
         if (!window) {
             return nullptr;
@@ -260,7 +259,7 @@ public:
         return nullptr;
     }
 
-    QRect get_icon_geometry(Toplevel const* win) const override
+    QRect get_icon_geometry(window_t const* win) const override
     {
         auto management = win->control->plasma_wayland_integration;
         if (!management || !waylandServer()) {
@@ -269,7 +268,7 @@ public:
         }
 
         auto min_distance = INT_MAX;
-        Toplevel* candidate_panel{nullptr};
+        window_t* candidate_panel{nullptr};
         QRect candidate_geo;
 
         for (auto i = management->minimizedGeometries().constBegin(),
@@ -320,13 +319,13 @@ public:
             if (window->isInitialPositionSet()) {
                 placementDone = true;
             }
-            if (window->control->fullscreen()) {
+            if (window->control->fullscreen) {
                 placementDone = true;
             }
             if (window->maximizeMode() == maximize_mode::full) {
                 placementDone = true;
             }
-            if (window->control->rules().checkPosition(geo::invalid_point, true)
+            if (window->control->rules.checkPosition(geo::invalid_point, true)
                 != geo::invalid_point) {
                 placementDone = true;
             }
@@ -342,7 +341,7 @@ public:
         if (window->control) {
             update_space_areas(*this);
 
-            if (window->wantsInput() && !window->control->minimized()) {
+            if (window->wantsInput() && !window->control->minimized) {
                 activate_window(*this, window);
             }
 
@@ -372,7 +371,7 @@ public:
         }
 
         adopt_transient_children(this, window);
-        Q_EMIT qobject->wayland_window_added(window);
+        Q_EMIT qobject->wayland_window_added(window->signal_id);
     }
     void handle_window_removed(wayland_window* window)
     {
@@ -391,12 +390,12 @@ public:
             if (window == client_keys_client) {
                 setup_window_shortcut_done(*this, false);
             }
-            if (!window->control->shortcut().isEmpty()) {
+            if (!window->control->shortcut.isEmpty()) {
                 // Remove from client_keys.
                 set_shortcut(window, QString());
             }
             process_window_hidden(*this, window);
-            Q_EMIT qobject->clientRemoved(window);
+            Q_EMIT qobject->clientRemoved(window->signal_id);
         }
 
         stacking_order->update_count();
@@ -406,7 +405,7 @@ public:
             update_tabbox(*this);
         }
 
-        Q_EMIT qobject->wayland_window_removed(window);
+        Q_EMIT qobject->wayland_window_removed(window->signal_id);
     }
 
     void update_space_area_from_windows(QRect const& desktop_area,

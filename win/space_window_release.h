@@ -5,8 +5,6 @@
 */
 #pragma once
 
-#include "stacking_order.h"
-
 #include "utils/algorithm.h"
 
 namespace KWin::win
@@ -36,7 +34,7 @@ void delete_window_from_space(Space& space, Win* win)
         update_block(nullptr);
     }
 
-    Q_EMIT space.qobject->window_deleted(win);
+    Q_EMIT space.qobject->window_deleted(win->signal_id);
     delete win;
 }
 

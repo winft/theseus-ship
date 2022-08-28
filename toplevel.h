@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/output.h"
 #include "base/x11/xcb/window.h"
 #include "input/cursor.h"
+#include "win/control.h"
 #include "win/remnant.h"
 #include "win/rules/ruling.h"
 #include "win/virtual_desktops.h"
@@ -65,8 +66,9 @@ class client_machine;
 class group;
 }
 
-class control;
 class space;
+
+template<typename Window>
 class transient;
 }
 
@@ -320,10 +322,13 @@ public:
     bool m_skipCloseAnimation{false};
     QVector<win::virtual_desktop*> m_desktops;
 
+    /// Being used internally when emitting signals. Access via the space windows_map.
+    uint32_t signal_id;
+
 protected:
     explicit Toplevel(win::space& space);
     Toplevel(win::remnant remnant, win::space& space);
-    Toplevel(win::transient* transient, win::space& space);
+    Toplevel(win::transient<Toplevel>* transient, win::space& space);
 
     virtual void debug(QDebug& stream) const;
     friend QDebug& operator<<(QDebug& stream, const Toplevel*);
@@ -338,13 +343,13 @@ private:
     bool m_damageReplyPending;
     xcb_xfixes_fetch_region_cookie_t m_regionCookie;
 
-    std::unique_ptr<win::transient> m_transient;
+    std::unique_ptr<win::transient<Toplevel>> m_transient;
 
 public:
-    std::unique_ptr<win::control> control;
+    std::unique_ptr<win::control<Toplevel>> control;
     std::optional<win::remnant> remnant;
 
-    win::transient* transient() const;
+    win::transient<Toplevel>* transient() const;
 
     /**
      * Below only for clients with control.
@@ -631,6 +636,5 @@ inline bool Toplevel::hasAlpha() const
 KWIN_EXPORT QDebug& operator<<(QDebug& stream, const Toplevel*);
 
 } // namespace
-Q_DECLARE_METATYPE(KWin::Toplevel*)
 
 #endif

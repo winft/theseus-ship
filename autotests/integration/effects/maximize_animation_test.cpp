@@ -116,7 +116,7 @@ void MaximizeAnimationTest::testMaximizeRestore()
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
-    QVERIFY(client->control->active());
+    QVERIFY(client->control->active);
     QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
 
     // We should receive a configure event when the client becomes active.

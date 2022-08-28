@@ -86,7 +86,7 @@ bool perform_mouse_command(Win* win,
                            base::options_qobject::MouseCommand command,
                            QPoint const& globalPos)
 {
-    return static_cast<Toplevel*>(win)->Toplevel::performMouseCommand(command, globalPos);
+    return win->Win::window_t::performMouseCommand(command, globalPos);
 }
 
 template<typename Space>

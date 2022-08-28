@@ -19,44 +19,109 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
+#include "decorations_logging.h"
+
+#include "kwin_export.h"
+
+#include <KDecoration2/DecoratedClient>
+#include <KDecoration2/Decoration>
 #include <QObject>
+#include <QPainter>
 #include <QRegion>
+#include <memory>
 
-#include <kwin_export.h>
-
-namespace KWin
-{
-class Toplevel;
-
-namespace win::deco
+namespace KWin::win::deco
 {
 
-class client_impl;
+class render_data
+{
+public:
+    virtual ~render_data() = default;
+};
 
-class KWIN_EXPORT renderer : public QObject
+class KWIN_EXPORT renderer_qobject : public QObject
 {
     Q_OBJECT
-public:
-    ~renderer() override;
+Q_SIGNALS:
+    void renderScheduled(QRegion const& geo);
+};
 
-    void schedule(const QRegion& region);
+template<typename Client>
+class renderer
+{
+public:
+    using qobject_t = renderer_qobject;
+
+    virtual ~renderer() = default;
+
+    void schedule(const QRegion& region)
+    {
+        m_scheduled = m_scheduled.united(region);
+        Q_EMIT qobject->renderScheduled(region);
+    }
 
     /// After this call the renderer is no longer able to render anything, client() returns null.
-    virtual void reparent();
+    virtual std::unique_ptr<render_data> reparent() = 0;
 
-Q_SIGNALS:
-    void renderScheduled(const QRegion& geo);
+    std::unique_ptr<renderer_qobject> qobject;
+    std::unique_ptr<render_data> data;
 
 protected:
-    explicit renderer(client_impl* client);
+    explicit renderer(Client* client)
+        : qobject{std::make_unique<renderer_qobject>()}
+        , m_client(client)
+        , m_imageSizesDirty(true)
+    {
+        auto markImageSizesDirty = [this] { m_imageSizesDirty = true; };
+        QObject::connect(client->decoration(),
+                         &KDecoration2::Decoration::damaged,
+                         qobject.get(),
+                         [this](auto const& rect) { schedule(rect); });
+        QObject::connect(client->client()->qobject.get(),
+                         &decltype(client->client()->qobject)::element_type::central_output_changed,
+                         qobject.get(),
+                         [markImageSizesDirty](auto old_out, auto new_out) {
+                             if (!new_out) {
+                                 return;
+                             }
+                             if (old_out && old_out->scale() == new_out->scale()) {
+                                 return;
+                             }
+                             markImageSizesDirty();
+                         });
+        QObject::connect(client->decoration(),
+                         &KDecoration2::Decoration::bordersChanged,
+                         qobject.get(),
+                         markImageSizesDirty);
+        QObject::connect(client->decoratedClient(),
+                         &KDecoration2::DecoratedClient::widthChanged,
+                         qobject.get(),
+                         markImageSizesDirty);
+        QObject::connect(client->decoratedClient(),
+                         &KDecoration2::DecoratedClient::heightChanged,
+                         qobject.get(),
+                         markImageSizesDirty);
+    }
+
+    std::unique_ptr<win::deco::render_data> move_data()
+    {
+        m_client = nullptr;
+        return std::move(data);
+    }
+
     /**
      * @returns the scheduled paint region and resets
      */
-    QRegion getScheduled();
+    QRegion getScheduled()
+    {
+        QRegion region = m_scheduled;
+        m_scheduled = QRegion();
+        return region;
+    }
 
     virtual void render() = 0;
 
-    client_impl* client()
+    Client* client()
     {
         return m_client;
     }
@@ -69,14 +134,49 @@ protected:
     {
         m_imageSizesDirty = false;
     }
-    QImage renderToImage(const QRect& geo);
-    void renderToPainter(QPainter* painter, const QRect& rect);
+    QImage renderToImage(const QRect& geo)
+    {
+        Q_ASSERT(m_client);
+        auto window = m_client->client();
+        auto dpr = window->central_output ? window->central_output->scale() : 1.;
+
+        // Guess the pixel format of the X pixmap into which the QImage will be copied.
+        QImage::Format format;
+        const int depth = window->bit_depth;
+        switch (depth) {
+        case 30:
+            format = QImage::Format_A2RGB30_Premultiplied;
+            break;
+        case 24:
+        case 32:
+            format = QImage::Format_ARGB32_Premultiplied;
+            break;
+        default:
+            qCCritical(KWIN_DECORATIONS) << "Unsupported client depth" << depth;
+            format = QImage::Format_ARGB32_Premultiplied;
+            break;
+        };
+
+        QImage image(geo.width() * dpr, geo.height() * dpr, format);
+        image.setDevicePixelRatio(dpr);
+        image.fill(Qt::transparent);
+        QPainter p(&image);
+        p.setRenderHint(QPainter::Antialiasing);
+        p.setWindow(QRect(geo.topLeft(), geo.size() * dpr));
+        p.setClipRect(geo);
+        renderToPainter(&p, geo);
+        return image;
+    }
+
+    void renderToPainter(QPainter* painter, const QRect& rect)
+    {
+        m_client->decoration()->paint(painter, rect);
+    }
 
 private:
-    client_impl* m_client;
+    Client* m_client;
     QRegion m_scheduled;
     bool m_imageSizesDirty;
 };
 
-}
 }

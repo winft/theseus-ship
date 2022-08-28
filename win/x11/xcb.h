@@ -33,8 +33,8 @@ base::x11::xcb::property fetch_first_in_tabbox(Win* win)
 template<typename Win>
 void read_first_in_tabbox(Win* win, base::x11::xcb::property& property)
 {
-    win->control->set_first_in_tabbox(
-        property.to_bool(32, win->space.atoms->kde_first_in_window_list));
+    win->control->first_in_tabbox
+        = property.to_bool(32, win->space.atoms->kde_first_in_window_list);
 }
 
 template<typename Win>
@@ -87,11 +87,11 @@ void read_show_on_screen_edge(Win* win, base::x11::xcb::property& property)
             set_keep_below(win, true);
 
             // request could have failed due to user kwin rules
-            successfullyHidden = win->control->keep_below();
+            successfullyHidden = win->control->keep_below;
 
             win->connections.edge_remove = QObject::connect(
                 win->qobject.get(), &Win::qobject_t::keepBelowChanged, win->qobject.get(), [win]() {
-                    if (!win->control->keep_below()) {
+                    if (!win->control->keep_below) {
                         win->space.edges->reserve(win, ElectricNone);
                     }
                 });

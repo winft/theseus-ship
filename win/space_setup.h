@@ -10,11 +10,11 @@
 #include "dbus/virtual_desktop_manager.h"
 #include "internal_window.h"
 #include "rules.h"
+#include "tabbox/tabbox.h"
 #include "x11/space_setup.h"
 #include "x11/stacking.h"
 
 #include "base/platform.h"
-#include "toplevel.h"
 
 #include <QObject>
 
@@ -24,9 +24,6 @@ namespace KWin::win
 template<typename Space>
 void init_space(Space& space)
 {
-    // For invoke methods of user_actions_menu.
-    qRegisterMetaType<Toplevel*>();
-
     space.m_quickTileCombineTimer = new QTimer(space.qobject.get());
     space.m_quickTileCombineTimer->setSingleShot(true);
 
@@ -37,7 +34,7 @@ void init_space(Space& space)
 
 #if KWIN_BUILD_TABBOX
     // need to create the tabbox before compositing scene is setup
-    space.tabbox = std::make_unique<win::tabbox>(space);
+    space.tabbox = std::make_unique<win::tabbox<typename Space::space_t>>(space);
 #endif
 
     QObject::connect(space.qobject.get(),
@@ -75,11 +72,14 @@ void init_space(Space& space)
     QObject::connect(space.qobject.get(),
                      &Space::qobject_t::clientRemoved,
                      space.qobject.get(),
-                     [&](auto window) { focus_chain_remove(space.focus_chain, window); });
+                     [&](auto win_id) {
+                         auto window = space.windows_map.at(win_id);
+                         focus_chain_remove(space.focus_chain, window);
+                     });
     QObject::connect(space.qobject.get(),
                      &Space::qobject_t::clientActivated,
                      space.qobject.get(),
-                     [&](auto window) { space.focus_chain.active_window = window; });
+                     [&] { space.focus_chain.active_window = space.active_client; });
     QObject::connect(
         space.virtual_desktop_manager->qobject.get(),
         &virtual_desktop_manager_qobject::countChanged,
@@ -118,8 +118,7 @@ void init_space(Space& space)
                          }
 
                          activate_window_on_new_desktop(space, next);
-                         Q_EMIT space.qobject->currentDesktopChanged(prev,
-                                                                     space.move_resize_window);
+                         Q_EMIT space.qobject->currentDesktopChanged(prev);
                      });
 
     vds->setNavigationWrappingAround(kwinApp()->options->qobject->isRollOverDesktops());
@@ -164,8 +163,8 @@ void init_space(Space& space)
                                           SLOT(reconfigure()));
 
     space.active_client = nullptr;
-    QObject::connect(space.stacking_order.get(),
-                     &stacking_order::changed,
+    QObject::connect(space.stacking_order->qobject.get(),
+                     &stacking_order_qobject::changed,
                      space.qobject.get(),
                      [&](auto count_changed) {
                          x11::propagate_clients(space, count_changed);
@@ -173,8 +172,8 @@ void init_space(Space& space)
                              space.active_client->control->update_mouse_grab();
                          }
                      });
-    QObject::connect(space.stacking_order.get(),
-                     &stacking_order::render_restack,
+    QObject::connect(space.stacking_order->qobject.get(),
+                     &stacking_order_qobject::render_restack,
                      space.qobject.get(),
                      [&] { x11::render_stack_unmanaged_windows(space); });
 }
@@ -199,7 +198,7 @@ void clear_space(Space& space)
     // At this point only remnants are remaining.
     for (auto it = space.windows.begin(); it != space.windows.end();) {
         assert((*it)->remnant);
-        Q_EMIT space.qobject->window_deleted(*it);
+        Q_EMIT space.qobject->window_deleted((*it)->signal_id);
         it = space.windows.erase(it);
     }
 
@@ -210,7 +209,7 @@ void clear_space(Space& space)
     space.rule_book.reset();
     kwinApp()->config()->sync();
 
-    x11::root_info::destroy();
+    space.root_info.reset();
     delete space.startup;
     delete space.client_keys_dialog;
     for (auto const& s : space.session)

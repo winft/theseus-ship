@@ -253,7 +253,7 @@ void TestMaximized::testInitiallyMaximizedBorderless()
     auto client = Test::render_and_wait_for_shown(surface, QSize(1280, 1024), Qt::blue);
     QVERIFY(client);
     QVERIFY(!win::decoration(client));
-    QVERIFY(client->control->active());
+    QVERIFY(client->control->active);
     QVERIFY(client->isMaximizable());
     QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
     QCOMPARE(client->synced_geometry.max_mode, win::maximize_mode::full);
@@ -305,7 +305,7 @@ void TestMaximized::testBorderlessMaximizedWindow()
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
-    QVERIFY(client->control->active());
+    QVERIFY(client->control->active);
     QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
     QCOMPARE(client->synced_geometry.max_mode, win::maximize_mode::restore);
     QVERIFY(win::decoration(client));

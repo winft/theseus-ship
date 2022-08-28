@@ -7,19 +7,38 @@
 
 #include "base/x11/event_filter.h"
 
+#include <NETWM>
+
 namespace KWin::win::x11
 {
-class root_info;
 
+template<typename Info>
 class root_info_filter : public base::x11::event_filter
 {
 public:
-    explicit root_info_filter(root_info* info);
+    explicit root_info_filter(Info* info)
+        : base::x11::event_filter(QVector<int>{XCB_PROPERTY_NOTIFY, XCB_CLIENT_MESSAGE})
+        , info{info}
+    {
+    }
 
-    bool event(xcb_generic_event_t* event) override;
+    bool event(xcb_generic_event_t* event) override
+    {
+        NET::Properties dirtyProtocols;
+        NET::Properties2 dirtyProtocols2;
+        info->event(event, &dirtyProtocols, &dirtyProtocols2);
+
+        if (dirtyProtocols & NET::DesktopNames) {
+            info->space.virtual_desktop_manager->save();
+        }
+        if (dirtyProtocols2 & NET::WM2DesktopLayout) {
+            info->space.virtual_desktop_manager->updateLayout();
+        }
+        return false;
+    }
 
 private:
-    root_info* info;
+    Info* info;
 };
 
 }

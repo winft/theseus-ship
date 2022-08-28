@@ -17,7 +17,7 @@
 namespace KWin::input
 {
 
-class gesture : public QObject
+class KWIN_EXPORT gesture : public QObject
 {
     Q_OBJECT
 public:
@@ -40,7 +40,7 @@ Q_SIGNALS:
     void cancelled();
 };
 
-class swipe_gesture : public gesture
+class KWIN_EXPORT swipe_gesture : public gesture
 {
     Q_OBJECT
 public:

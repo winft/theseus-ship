@@ -55,6 +55,16 @@ enum class name_match {
     last = regex,
 };
 
+enum class set_rule {
+    unused = 0,
+    dummy = 256 // so that it's at least short int
+};
+
+enum class force_rule {
+    unused = 0,
+    dummy = 256 // so that it's at least short int
+};
+
 }
 
 ENUM_FLAGS(KWin::win::rules::type)

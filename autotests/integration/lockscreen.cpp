@@ -245,7 +245,8 @@ void LockScreenTest::testStackingOrder()
 
     LOCK QVERIFY(clientAddedSpy.wait());
 
-    auto client = clientAddedSpy.first().first().value<Toplevel*>();
+    auto window_id = clientAddedSpy.first().first().value<quint32>();
+    auto client = Test::app()->base.space->windows_map.at(window_id);
     QVERIFY(client);
     QVERIFY(client->isLockScreen());
     QCOMPARE(client->layer(), win::layer::unmanaged);
@@ -451,7 +452,8 @@ void LockScreenTest::testKeyboard()
 
 void LockScreenTest::testScreenEdge()
 {
-    QSignalSpy screenEdgeSpy(Test::app()->base.space->edges.get(), &win::screen_edger::approaching);
+    QSignalSpy screenEdgeSpy(Test::app()->base.space->edges->qobject.get(),
+                             &win::screen_edger_qobject::approaching);
     QVERIFY(screenEdgeSpy.isValid());
     QCOMPARE(screenEdgeSpy.count(), 0);
 

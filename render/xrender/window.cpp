@@ -12,6 +12,7 @@
 #include "scene.h"
 #include "shadow.h"
 
+#include "win/deco/client_impl.h"
 #include "win/geo.h"
 #include "win/scene.h"
 #include "win/x11/window.h"
@@ -308,28 +309,31 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
     xcb_render_picture_t right = XCB_RENDER_PICTURE_NONE;
     xcb_render_picture_t bottom = XCB_RENDER_PICTURE_NONE;
     QRect dtr, dlr, drr, dbr;
-    deco_renderer const* renderer = nullptr;
+
+    deco_render_data const* deco_data = nullptr;
     if (client && client->control && !client->noBorder()) {
         if (win::decoration(client)) {
-            auto r = static_cast<deco_renderer*>(client->control->deco().client->renderer());
+            auto r = static_cast<deco_renderer<win::deco::client_impl<Toplevel>>*>(
+                client->control->deco.client->renderer());
             if (r) {
                 r->render();
-                renderer = r;
+                deco_data = static_cast<deco_render_data const*>(r->data.get());
             }
         }
         noBorder = client->noBorder();
         client->layoutDecorationRects(dlr, dtr, drr, dbr);
     }
+
     if (remnant && !remnant->data.no_border) {
-        renderer = static_cast<const deco_renderer*>(remnant->data.decoration_renderer.get());
+        deco_data = static_cast<deco_render_data const*>(remnant->data.deco_render.get());
         noBorder = remnant->data.no_border;
         remnant->data.layout_decoration_rects(dlr, dtr, drr, dbr);
     }
-    if (renderer) {
-        left = renderer->picture(deco_renderer::DecorationPart::Left);
-        top = renderer->picture(deco_renderer::DecorationPart::Top);
-        right = renderer->picture(deco_renderer::DecorationPart::Right);
-        bottom = renderer->picture(deco_renderer::DecorationPart::Bottom);
+    if (deco_data) {
+        left = deco_data->picture(DecorationPart::Left);
+        top = deco_data->picture(DecorationPart::Top);
+        right = deco_data->picture(DecorationPart::Right);
+        bottom = deco_data->picture(DecorationPart::Bottom);
     }
     if (!noBorder) {
         MAP_RECT_TO_TARGET(dtr);

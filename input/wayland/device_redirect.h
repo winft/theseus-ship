@@ -31,8 +31,8 @@ void device_redirect_update(Dev* dev);
 template<typename Dev>
 void device_redirect_init(Dev* dev)
 {
-    QObject::connect(dev->redirect->space.stacking_order.get(),
-                     &win::stacking_order::changed,
+    QObject::connect(dev->redirect->space.stacking_order->qobject.get(),
+                     &win::stacking_order_qobject::changed,
                      dev->qobject.get(),
                      [dev] { device_redirect_update(dev); });
     QObject::connect(dev->redirect->space.qobject.get(),
@@ -79,8 +79,8 @@ void device_redirect_set_focus(Dev* dev, Toplevel* window)
     // TODO: call focusUpdate?
 }
 
-template<typename Dev>
-void device_redirect_set_decoration(Dev* dev, win::deco::client_impl* deco)
+template<typename Deco, typename Dev>
+void device_redirect_set_decoration(Dev* dev, Deco* deco)
 {
     QObject::disconnect(dev->focus.notifiers.deco_destroy);
     auto old_deco = dev->focus.deco;
@@ -139,11 +139,11 @@ bool device_redirect_update_decoration(Dev* dev)
     auto const old_deco = dev->focus.deco;
     decltype(dev->focus.deco) new_deco{nullptr};
 
-    if (auto win = dev->at.window; win && win->control && win->control->deco().client) {
+    if (auto win = dev->at.window; win && win->control && win->control->deco.client) {
         auto const client_geo = win::frame_to_client_rect(win, win->frameGeometry());
         if (!client_geo.contains(dev->position().toPoint())) {
             // input device above decoration
-            new_deco = win->control->deco().client;
+            new_deco = win->control->deco.client;
         }
     }
 

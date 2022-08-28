@@ -22,6 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
+#include "config-kwin.h"
+
 #include "appmenu.h"
 #include "dbus/appmenu.h"
 #include "dbus/virtual_desktop_manager.h"
@@ -38,6 +40,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "stacking_order.h"
 #include "strut_rect.h"
 #include "user_actions_menu.h"
+#include "x11/netinfo.h"
+
+#if KWIN_BUILD_TABBOX
+#include "tabbox/tabbox.h"
+#endif
 
 #include "base/dbus/kwin.h"
 #include "base/output.h"
@@ -54,6 +61,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <deque>
 #include <functional>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 class KStartupInfo;
@@ -72,12 +80,13 @@ namespace win
 {
 
 class shortcut_dialog;
-class tabbox;
 
 class space
 {
 public:
+    using space_t = space;
     using qobject_t = space_qobject;
+    using window_t = Toplevel;
 
     explicit space(render::compositor& render)
         : qobject{std::make_unique<space_qobject>([this] { space_start_reconfigure_timer(*this); })}
@@ -87,7 +96,7 @@ public:
         , appmenu{std::make_unique<dbus::appmenu>(dbus::create_appmenu_callbacks(*this))}
         , rule_book{std::make_unique<rules::book>()}
         , user_actions_menu{std::make_unique<win::user_actions_menu<space>>(*this)}
-        , stacking_order{std::make_unique<win::stacking_order>()}
+        , stacking_order{std::make_unique<win::stacking_order<window_t>>()}
         , focus_chain{win::focus_chain<space>(*this)}
         , virtual_desktop_manager{std::make_unique<win::virtual_desktop_manager>()}
         , session_manager{std::make_unique<win::session_manager>()}
@@ -103,21 +112,20 @@ public:
     virtual void handle_desktop_changed(uint desktop) = 0;
 
     /**
-     * @brief Finds a Toplevel for the internal window @p w.
+     * @brief Finds a window for the internal window @p w.
      *
      * Internal window means a window created by KWin itself. On X11 this is an Unmanaged
      * and mapped by the window id, on Wayland a XdgShellClient mapped on the internal window id.
-     *
-     * @returns Toplevel
      */
-    virtual Toplevel* findInternal(QWindow* w) const = 0;
+    virtual window_t* findInternal(QWindow* w) const = 0;
 
-    virtual win::screen_edge* create_screen_edge(win::screen_edger& edger)
+    using edger_t = screen_edger<space>;
+    virtual std::unique_ptr<screen_edge<edger_t>> create_screen_edge(edger_t& edger)
     {
-        return new win::screen_edge(&edger);
+        return std::make_unique<screen_edge<edger_t>>(&edger);
     }
 
-    virtual QRect get_icon_geometry(Toplevel const* /*win*/) const
+    virtual QRect get_icon_geometry(window_t const* /*win*/) const
     {
         return {};
     }
@@ -131,24 +139,26 @@ public:
 
     std::unique_ptr<qobject_t> qobject;
 
-    std::vector<Toplevel*> windows;
+    std::vector<window_t*> windows;
+    std::unordered_map<uint32_t, window_t*> windows_map;
     std::vector<win::x11::group*> groups;
 
     win::space_areas areas;
 
     std::unique_ptr<scripting::platform> scripting;
     std::unique_ptr<render::outline> outline;
-    std::unique_ptr<win::screen_edger> edges;
+    std::unique_ptr<edger_t> edges;
 
     render::compositor& render;
     KStartupInfo* startup{nullptr};
     std::unique_ptr<base::x11::atoms> atoms;
+    std::unique_ptr<x11::root_info<space>> root_info;
     std::unique_ptr<deco::bridge<space>> deco;
     std::unique_ptr<dbus::appmenu> appmenu;
     std::unique_ptr<input::redirect> input;
-    std::unique_ptr<win::tabbox> tabbox;
+    std::unique_ptr<win::tabbox<space>> tabbox;
     std::unique_ptr<rules::book> rule_book;
-    std::unique_ptr<x11::color_mapper> color_mapper;
+    std::unique_ptr<x11::color_mapper<space>> color_mapper;
 
     std::unique_ptr<base::x11::event_filter> m_wasUserInteractionFilter;
     std::unique_ptr<base::x11::event_filter> m_movingClientFilter;
@@ -156,15 +166,15 @@ public:
 
     int m_initialDesktop{1};
     std::unique_ptr<base::x11::xcb::window> m_nullFocus;
-    Toplevel* active_popup_client{nullptr};
+    window_t* active_popup_client{nullptr};
 
-    Toplevel* last_active_client{nullptr};
-    Toplevel* delayfocus_client{nullptr};
-    Toplevel* client_keys_client{nullptr};
+    window_t* last_active_client{nullptr};
+    window_t* delayfocus_client{nullptr};
+    window_t* client_keys_client{nullptr};
 
     // Last is most recent.
-    std::deque<Toplevel*> should_get_focus;
-    std::deque<Toplevel*> attention_chain;
+    std::deque<window_t*> should_get_focus;
+    std::deque<window_t*> attention_chain;
 
     int block_focus{0};
 
@@ -180,7 +190,7 @@ public:
     QTimer reconfigureTimer;
     QTimer updateToolWindowsTimer;
 
-    Toplevel* move_resize_window{nullptr};
+    window_t* move_resize_window{nullptr};
 
     // Array of the previous restricted areas that window cannot be moved into
     std::vector<win::strut_rects> oldrestrictedmovearea;
@@ -190,9 +200,9 @@ public:
      *
      * Accessed and modified by raise or lower client.
      */
-    Toplevel* most_recently_raised{nullptr};
+    window_t* most_recently_raised{nullptr};
 
-    std::unique_ptr<win::stacking_order> stacking_order;
+    std::unique_ptr<win::stacking_order<window_t>> stacking_order;
     win::focus_chain<space> focus_chain;
     std::unique_ptr<win::virtual_desktop_manager> virtual_desktop_manager;
     std::unique_ptr<base::dbus::kwin_impl<space, input::platform>> dbus;
@@ -201,7 +211,7 @@ public:
     QTimer* m_quickTileCombineTimer{nullptr};
     win::quicktiles m_lastTilingMode{win::quicktiles::none};
 
-    Toplevel* active_client{nullptr};
+    window_t* active_client{nullptr};
 
     QWidget* active_popup{nullptr};
 
@@ -230,6 +240,8 @@ public:
     std::unique_ptr<osd_notification<input::redirect>> osd;
     std::unique_ptr<kill_window<space>> window_killer;
     base::x11::xcb::window shape_helper_window{XCB_WINDOW_NONE};
+
+    uint32_t window_id{0};
 };
 
 }

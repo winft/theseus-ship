@@ -31,7 +31,7 @@ surface_tree_model::surface_tree_model(win::space& space, QObject* parent)
         endResetModel();
     };
 
-    auto const unmangeds = win::x11::get_unmanageds<Toplevel>(space);
+    auto const unmangeds = win::x11::get_unmanageds(space);
     for (auto u : unmangeds) {
         if (!u->surface) {
             continue;
@@ -49,7 +49,8 @@ surface_tree_model::surface_tree_model(win::space& space, QObject* parent)
     QObject::connect(space.qobject.get(),
                      &win::space::qobject_t::wayland_window_added,
                      this,
-                     [this, reset](auto win) {
+                     [this, reset](auto win_id) {
+                         auto win = this->space.windows_map.at(win_id);
                          QObject::connect(win->surface,
                                           &Wrapland::Server::Surface::subsurfaceTreeChanged,
                                           this,
@@ -57,10 +58,11 @@ surface_tree_model::surface_tree_model(win::space& space, QObject* parent)
                          reset();
                      });
     QObject::connect(
-        space.qobject.get(), &win::space::qobject_t::clientAdded, this, [this, reset](auto c) {
-            if (c->surface) {
+        space.qobject.get(), &win::space::qobject_t::clientAdded, this, [this, reset](auto win_id) {
+            auto win = this->space.windows_map.at(win_id);
+            if (win->surface) {
                 QObject::connect(
-                    c->surface, &Wrapland::Server::Surface::subsurfaceTreeChanged, this, reset);
+                    win->surface, &Wrapland::Server::Surface::subsurfaceTreeChanged, this, reset);
             }
             reset();
         });
@@ -68,9 +70,10 @@ surface_tree_model::surface_tree_model(win::space& space, QObject* parent)
     QObject::connect(space.qobject.get(),
                      &win::space::qobject_t::unmanagedAdded,
                      this,
-                     [this, reset](Toplevel* window) {
-                         if (window->surface) {
-                             QObject::connect(window->surface,
+                     [this, reset](auto win_id) {
+                         auto win = this->space.windows_map.at(win_id);
+                         if (win->surface) {
+                             QObject::connect(win->surface,
                                               &Wrapland::Server::Surface::subsurfaceTreeChanged,
                                               this,
                                               reset);
@@ -108,8 +111,7 @@ int surface_tree_model::rowCount(const QModelIndex& parent) const
     }
 
     // toplevel are all windows
-    return get_windows_with_control(space.windows).size()
-        + win::x11::get_unmanageds<Toplevel>(space).size();
+    return get_windows_with_control(space.windows).size() + win::x11::get_unmanageds(space).size();
 }
 
 QModelIndex surface_tree_model::index(int row, int column, const QModelIndex& parent) const
@@ -139,7 +141,7 @@ QModelIndex surface_tree_model::index(int row, int column, const QModelIndex& pa
     }
 
     int reference = allClients.size();
-    const auto& unmanaged = win::x11::get_unmanageds<Toplevel>(space);
+    const auto& unmanaged = win::x11::get_unmanageds(space);
     if (row_u < reference + unmanaged.size()) {
         return createIndex(row_u, column, unmanaged.at(row_u - reference)->surface);
     }
@@ -186,7 +188,7 @@ QModelIndex surface_tree_model::parent(const QModelIndex& child) const
             }
         }
         row = allClients.size();
-        const auto& unmanaged = win::x11::get_unmanageds<Toplevel>(space);
+        const auto& unmanaged = win::x11::get_unmanageds(space);
         for (size_t i = 0; i < unmanaged.size(); i++) {
             if (unmanaged.at(i)->surface == parent) {
                 return createIndex(row + i, 0, parent);

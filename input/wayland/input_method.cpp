@@ -59,7 +59,7 @@ QRect get_input_popup_placement(input::wayland::platform& platform,
     auto const toplevel = win::lead_of_annexed_transient(parent_window);
     auto const& screen_bounds
         = win::space_window_area(platform.redirect->space,
-                                 toplevel->control->fullscreen() ? FullScreenArea : PlacementArea,
+                                 toplevel->control->fullscreen ? FullScreenArea : PlacementArea,
                                  toplevel);
 
     auto const& text_area = cursor_rectangle.isValid() ? cursor_rectangle : QRect(0, 0, 0, 0);

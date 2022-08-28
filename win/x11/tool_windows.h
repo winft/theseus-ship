@@ -9,7 +9,6 @@
 
 #include "base/options.h"
 #include "main.h"
-#include "toplevel.h"
 #include "win/meta.h"
 
 namespace KWin::win::x11
@@ -57,8 +56,9 @@ void update_tool_windows_visibility(Space* space, bool also_hide)
 
     // TODO(SELI): But maybe it should - what if a new window has been added that's not in stacking
     // order yet?
-    std::vector<Toplevel*> to_show;
-    std::vector<Toplevel*> to_hide;
+    using window_t = typename Space::window_t;
+    std::vector<window_t*> to_show;
+    std::vector<window_t*> to_hide;
 
     for (auto const& window : space->stacking_order->stack) {
         if (!window->control) {
@@ -86,7 +86,7 @@ void update_tool_windows_visibility(Space* space, bool also_hide)
             auto const& leads = window->transient()->leads();
             // Don't hide utility windows which are standalone(?) or have e.g. kicker as lead.
             show = leads.empty()
-                || std::any_of(leads.cbegin(), leads.cend(), is_special_window<Toplevel>);
+                || std::any_of(leads.cbegin(), leads.cend(), is_special_window<window_t>);
             if (!show) {
                 to_hide.push_back(window);
             }
