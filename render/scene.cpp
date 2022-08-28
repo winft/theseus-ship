@@ -238,7 +238,7 @@ void scene::paintGenericScreen(paint_type orig_mask, ScreenPaintData)
     phase2.reserve(stacking_order.size());
     for (auto const& w : stacking_order) {
         // bottom to top
-        auto topw = w->get_window();
+        auto topw = w->ref_win;
 
         // Reset the repaint_region.
         // This has to be done here because many effects schedule a repaint for
@@ -292,7 +292,7 @@ void scene::paintSimpleScreen(paint_type orig_mask, QRegion region)
 
     // Traverse the scene windows from bottom to top.
     for (auto&& window : stacking_order) {
-        auto toplevel = window->get_window();
+        auto toplevel = window->ref_win;
         WindowPrePaintData data;
         data.mask = static_cast<int>(
             orig_mask
@@ -436,10 +436,9 @@ void scene::paintSimpleScreen(paint_type orig_mask, QRegion region)
 void scene::init_remnant(Toplevel& remnant)
 {
     assert(remnant.render);
-    remnant.render->updateToplevel(&remnant);
+    remnant.render->ref_win = &remnant;
 
     if (auto shadow = remnant.render->shadow()) {
-        shadow->m_topLevel = &remnant;
         QObject::connect(remnant.qobject.get(),
                          &win::window_qobject::frame_geometry_changed,
                          shadow,
@@ -556,7 +555,7 @@ void scene::paintWindowThumbnails(window* w,
         }
 
         const QPointF point = item->mapToScene(QPointF(0, 0));
-        auto const win_pos = w->get_window()->pos();
+        auto const win_pos = w->ref_win->pos();
         qreal x = point.x() + win_pos.x() + (item->width() - size.width()) / 2;
         qreal y = point.y() + win_pos.y() + (item->height() - size.height()) / 2;
         x -= thumb->x();
@@ -606,7 +605,7 @@ void scene::paintDesktopThumbnails(window* w)
                           size.height() / double(space_size.height()));
 
         const QPointF point = item->mapToScene(item->position());
-        auto const win_pos = w->get_window()->pos();
+        auto const win_pos = w->ref_win->pos();
         const qreal x = point.x() + win_pos.x() + (item->width() - size.width()) / 2;
         const qreal y = point.y() + win_pos.y() + (item->height() - size.height()) / 2;
         const QRect region = QRect(x, y, item->width(), item->height());
@@ -643,11 +642,11 @@ void scene::finalDrawWindow(effects_window_impl* w,
                             QRegion region,
                             WindowPaintData& data)
 {
-    if (kwinApp()->is_screen_locked() && !w->window()->isLockScreen()
-        && !w->window()->isInputMethod()) {
+    if (kwinApp()->is_screen_locked() && !w->window.ref_win->isLockScreen()
+        && !w->window.ref_win->isInputMethod()) {
         return;
     }
-    w->sceneWindow()->performPaint(mask, region, data);
+    w->window.performPaint(mask, region, data);
 }
 
 void scene::extendPaintRegion(QRegion& region, bool opaqueFullscreen)

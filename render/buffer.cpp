@@ -15,7 +15,7 @@ namespace KWin::render
 {
 
 buffer::buffer(render::window* window)
-    : m_window(window)
+    : window{window}
     , m_discarded(false)
 {
 }
@@ -26,7 +26,7 @@ buffer::~buffer()
 
 void buffer::create()
 {
-    if (isValid() || toplevel()->remnant) {
+    if (isValid() || window->ref_win->remnant) {
         return;
     }
 
@@ -34,7 +34,7 @@ void buffer::create()
 
     // TODO(romangg): Do we need to exclude the internal image case?
     if (win_integration->valid()) {
-        m_window->unreference_previous_buffer();
+        window->unreference_previous_buffer();
     }
 }
 
@@ -50,11 +50,6 @@ void buffer::updateBuffer()
     win_integration->update();
 }
 
-Toplevel* buffer::toplevel() const
-{
-    return m_window->get_window();
-}
-
 bool buffer::isDiscarded() const
 {
     return m_discarded;
@@ -63,7 +58,7 @@ bool buffer::isDiscarded() const
 void buffer::markAsDiscarded()
 {
     m_discarded = true;
-    m_window->reference_previous_buffer();
+    window->reference_previous_buffer();
 }
 
 }

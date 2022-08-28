@@ -12,6 +12,7 @@
 #include <QObject>
 #include <QString>
 #include <QVector>
+#include <memory>
 #include <unordered_map>
 
 class QAction;
@@ -51,7 +52,9 @@ class keyboard_layouts_v2 : public QObject
     Q_CLASSINFO("D-Bus Interface", "org.kde.KeyboardLayoutsV2")
 
 public:
-    keyboard_layouts_v2(input::platform* platform);
+    static std::unique_ptr<keyboard_layouts_v2> create(input::platform* platform);
+
+    keyboard_layouts_v2();
 
 public Q_SLOTS:
     void switchToNextLayout(uint keyboard);

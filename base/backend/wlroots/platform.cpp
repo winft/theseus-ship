@@ -8,6 +8,7 @@
 #include "non_desktop_output.h"
 #include "output.h"
 
+#include "base/singleton_interface.h"
 #include "render/backend/wlroots/output.h"
 #include "render/backend/wlroots/platform.h"
 #include "wayland_logging.h"
@@ -95,6 +96,7 @@ platform::platform(Wrapland::Server::Display* display, wlr_backend* backend)
     , destroyed{std::make_unique<event_receiver<platform>>()}
     , new_output{std::make_unique<event_receiver<platform>>()}
 {
+    singleton_interface::platform = this;
     align_horizontal = qgetenv("KWIN_WLR_OUTPUT_ALIGN_HORIZONTAL") == QByteArrayLiteral("1");
 
     // TODO(romangg): Make this dependent on KWIN_WL debug verbosity.
@@ -126,6 +128,7 @@ platform& platform::operator=(platform&& other) noexcept
     new_output = std::move(other.new_output);
     new_output->receiver = this;
     other.backend = nullptr;
+    singleton_interface::platform = this;
     return *this;
 }
 
@@ -141,6 +144,9 @@ platform::~platform()
     }
     if (backend) {
         wlr_backend_destroy(backend);
+    }
+    if (singleton_interface::platform == this) {
+        singleton_interface::platform = nullptr;
     }
 }
 

@@ -40,18 +40,14 @@ namespace Wrapland::Server
 class Shadow;
 }
 
-namespace KWin
-{
-
-class Toplevel;
-
-namespace render
+namespace KWin::render
 {
 
 class shadow;
+class window;
 
 struct shadow_windowing_integration {
-    std::function<std::unique_ptr<shadow>(Toplevel&)> create;
+    std::function<std::unique_ptr<shadow>(window&)> create;
     std::function<bool(shadow&)> update;
 };
 
@@ -65,14 +61,13 @@ struct shadow_windowing_integration {
  * To create a Shadow instance use the static factory method createShadow which will
  * create an instance for the currently used Compositing Backend. It will read the X11 Property
  * and create the Shadow and all required data (such as WindowQuads). If there is no Shadow
- * defined for the Toplevel the factory method returns @c NULL.
+ * defined for the window the factory method returns @c NULL.
  *
  * @author Martin Gräßlin <mgraesslin@kde.org>
- * @todo React on Toplevel size changes.
+ * @todo React on window size changes.
  */
 class KWIN_EXPORT shadow : public QObject
 {
-    Q_OBJECT
 public:
     ~shadow() override;
 
@@ -82,18 +77,20 @@ public:
     const QRegion& shadowRegion() const
     {
         return m_shadowRegion;
-    };
+    }
+
     /**
      * @return Cached Shadow Quads
      */
     const WindowQuadList& shadowQuads() const
     {
         return m_shadowQuads;
-    };
+    }
+
     WindowQuadList& shadowQuads()
     {
         return m_shadowQuads;
-    };
+    }
 
     /**
      * This method updates the Shadow when the property has been changed.
@@ -111,17 +108,21 @@ public:
     {
         return !m_decorationShadow.isNull();
     }
+
     QImage decorationShadowImage() const;
 
     QWeakPointer<KDecoration2::DecorationShadow> decorationShadow() const
     {
         return m_decorationShadow.toWeakRef();
     }
+
     QMargins margins() const;
 
     void updateShadowRegion();
     virtual bool prepareBackend() = 0;
     virtual void buildQuads();
+
+    void geometryChanged();
 
     // shadow pixmaps
     QPixmap m_shadowElements[static_cast<size_t>(shadow_element::count)];
@@ -135,13 +136,10 @@ public:
     // Decoration based shadows
     QSharedPointer<KDecoration2::DecorationShadow> m_decorationShadow;
 
-    Toplevel* m_topLevel;
-
-public Q_SLOTS:
-    void geometryChanged();
+    render::window* window;
 
 protected:
-    shadow(Toplevel* toplevel);
+    shadow(render::window* window);
 
     inline const QPixmap& shadowPixmap(shadow_element element) const
     {
@@ -153,29 +151,31 @@ protected:
     int topOffset() const
     {
         return m_topOffset;
-    };
+    }
+
     int rightOffset() const
     {
         return m_rightOffset;
-    };
+    }
+
     int bottomOffset() const
     {
         return m_bottomOffset;
-    };
+    }
+
     int leftOffset() const
     {
         return m_leftOffset;
-    };
-    Toplevel* topLevel()
-    {
-        return m_topLevel;
-    };
+    }
+
     void setShadowRegion(const QRegion& region)
     {
         m_shadowRegion = region;
-    };
-    WindowQuadList m_shadowQuads;
+    }
+
     void setShadowElement(const QPixmap& shadow, shadow_element element);
+
+    WindowQuadList m_shadowQuads;
 
 private:
     // caches
@@ -183,5 +183,4 @@ private:
     QSize m_cachedSize;
 };
 
-}
 }

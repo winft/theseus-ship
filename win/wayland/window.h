@@ -107,7 +107,7 @@ public:
             auto update_helper = [&buffer]() {
                 auto& win_integrate = static_cast<render::wayland::buffer_win_integration&>(
                     *buffer.win_integration);
-                update_buffer(*buffer.toplevel(), win_integrate.external);
+                update_buffer(*buffer.window->ref_win, win_integrate.external);
             };
             win_integrate->update = update_helper;
             buffer.win_integration = std::move(win_integrate);
@@ -136,7 +136,8 @@ public:
 
         render->win_integration.setup_buffer = setup_buffer;
         render->win_integration.get_viewport = get_viewport;
-        render->shadow_windowing.create = render::wayland::create_shadow<render::shadow, Toplevel>;
+        render->shadow_windowing.create
+            = render::wayland::create_shadow<render::shadow, render::window>;
         render->shadow_windowing.update = render::wayland::update_shadow<render::shadow>;
 
         setup_scale_scene_notify(*this);

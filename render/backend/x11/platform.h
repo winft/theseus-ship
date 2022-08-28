@@ -28,6 +28,7 @@ class event_filter;
 
 namespace render::backend::x11
 {
+template<typename Compositor>
 class glx_backend;
 class output;
 
@@ -54,14 +55,14 @@ public:
 
     CompositingType selected_compositor() const override;
 
+    base::x11::platform& base;
+
 private:
     std::unique_ptr<QThread> m_openGLFreezeProtectionThread;
     QTimer* m_openGLFreezeProtection = nullptr;
-
     Display* m_x11Display;
-    base::x11::platform& base;
 
-    std::unique_ptr<glx_backend> gl_backend;
+    std::unique_ptr<glx_backend<platform>> gl_backend;
 };
 
 }

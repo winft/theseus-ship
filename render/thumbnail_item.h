@@ -37,8 +37,6 @@ class window;
 namespace render
 {
 
-class effects_window_impl;
-
 class basic_thumbnail_item : public QQuickPaintedItem
 {
     Q_OBJECT
@@ -68,13 +66,13 @@ protected Q_SLOTS:
     virtual void repaint(KWin::EffectWindow* w) = 0;
 
 private Q_SLOTS:
-    void init();
     void effectWindowAdded();
     void compositingToggled();
 
 private:
-    void findParentEffectWindow();
-    QPointer<render::effects_window_impl> m_parent;
+    void ensure_parent_effect_window();
+
+    EffectWindow* m_parent{nullptr};
     qreal m_brightness;
     qreal m_saturation;
     QPointer<QQuickItem> m_clipToItem;

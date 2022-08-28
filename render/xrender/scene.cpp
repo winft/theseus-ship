@@ -44,8 +44,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::render::xrender
 {
 
-ScreenPaintData scene::screen_paint;
-
 scene::scene(x11::compositor<x11::platform>& compositor)
     : render::scene(compositor)
     , m_backend{std::make_unique<xrender::backend>(compositor)}
@@ -54,7 +52,10 @@ scene::scene(x11::compositor<x11::platform>& compositor)
 
 scene::~scene()
 {
-    window::cleanup();
+    delete temp_picture;
+    temp_picture = nullptr;
+    delete fade_alpha_picture;
+    fade_alpha_picture = nullptr;
 }
 
 // the entry point for painting
@@ -111,9 +112,9 @@ std::unique_ptr<render::window> scene::createWindow(Toplevel* toplevel)
     return std::make_unique<window>(toplevel, *this);
 }
 
-std::unique_ptr<render::shadow> scene::createShadow(Toplevel* toplevel)
+std::unique_ptr<render::shadow> scene::createShadow(render::window* window)
 {
-    return std::make_unique<shadow>(toplevel);
+    return std::make_unique<shadow>(window);
 }
 
 win::deco::client_impl<Toplevel>::renderer_t*

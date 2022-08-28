@@ -718,7 +718,7 @@ void scene::extendPaintRegion(QRegion& region, bool opaqueFullscreen)
     }
 }
 
-render::gl::texture* scene::createTexture()
+gl::texture<gl::backend>* scene::createTexture()
 {
     return new render::gl::texture(m_backend);
 }
@@ -810,9 +810,9 @@ bool scene::supportsSurfacelessContext() const
     return m_backend->supportsSurfacelessContext();
 }
 
-std::unique_ptr<render::shadow> scene::createShadow(Toplevel* toplevel)
+std::unique_ptr<render::shadow> scene::createShadow(render::window* window)
 {
-    return std::make_unique<shadow>(toplevel, *this);
+    return std::make_unique<shadow>(window, *this);
 }
 
 win::deco::client_impl<Toplevel>::renderer_t*
@@ -929,8 +929,8 @@ void scene::finalDrawWindow(effects_window_impl* w,
                             QRegion region,
                             WindowPaintData& data)
 {
-    if (kwinApp()->is_screen_locked() && !w->window()->isLockScreen()
-        && !w->window()->isInputMethod()) {
+    if (kwinApp()->is_screen_locked() && !w->window.ref_win->isLockScreen()
+        && !w->window.ref_win->isInputMethod()) {
         return;
     }
     performPaintWindow(w, mask, region, data);
@@ -943,11 +943,11 @@ void scene::performPaintWindow(effects_window_impl* w,
 {
     if (flags(mask & paint_type::window_lanczos)) {
         if (!lanczos) {
-            lanczos = new lanczos_filter(this);
+            lanczos = new lanczos_filter<scene>(this);
         }
         lanczos->performPaint(w, mask, region, data);
     } else
-        w->sceneWindow()->performPaint(mask, region, data);
+        w->window.performPaint(mask, region, data);
 }
 
 std::unique_ptr<render::scene> create_scene(render::compositor& compositor)

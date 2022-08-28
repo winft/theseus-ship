@@ -27,7 +27,27 @@ constexpr auto dbus_object_path{"/LayoutsV2"};
 
 uint keyboard_index{0};
 
-keyboard_layouts_v2::keyboard_layouts_v2(input::platform* platform)
+std::unique_ptr<keyboard_layouts_v2> keyboard_layouts_v2::create(input::platform* platform)
+{
+    auto layouts = std::make_unique<keyboard_layouts_v2>();
+
+    QObject::connect(platform->qobject.get(),
+                     &input::platform_qobject::keyboard_added,
+                     layouts.get(),
+                     &keyboard_layouts_v2::handle_keyboard_added);
+    QObject::connect(platform->qobject.get(),
+                     &input::platform_qobject::keyboard_removed,
+                     layouts.get(),
+                     &keyboard_layouts_v2::handle_keyboard_removed);
+
+    for (auto& keyboard : platform->keyboards) {
+        layouts->handle_keyboard_added(keyboard);
+    }
+
+    return layouts;
+}
+
+keyboard_layouts_v2::keyboard_layouts_v2()
 {
     qRegisterMetaType<QVector<layout_names_v2>>("QVector<layout_names_v2>");
     qDBusRegisterMetaType<layout_names_v2>();
@@ -37,19 +57,6 @@ keyboard_layouts_v2::keyboard_layouts_v2(input::platform* platform)
     qRegisterMetaType<QVector<keyboard_v2>>("QVector<keyboard_v2>");
     qDBusRegisterMetaType<keyboard_v2>();
     qDBusRegisterMetaType<QVector<keyboard_v2>>();
-
-    QObject::connect(platform->qobject.get(),
-                     &input::platform_qobject::keyboard_added,
-                     this,
-                     &keyboard_layouts_v2::handle_keyboard_added);
-    QObject::connect(platform->qobject.get(),
-                     &input::platform_qobject::keyboard_removed,
-                     this,
-                     &keyboard_layouts_v2::handle_keyboard_removed);
-
-    for (auto& keyboard : platform->keyboards) {
-        handle_keyboard_added(keyboard);
-    }
 
     QDBusConnection::sessionBus().registerObject(dbus_object_path,
                                                  this,

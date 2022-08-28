@@ -23,6 +23,7 @@
 #include "xwl_window.h"
 
 #include "base/wayland/server.h"
+#include "debug/console/wayland/wayland_console.h"
 #include "input/wayland/platform.h"
 #include "input/wayland/redirect.h"
 #include "win/input.h"
@@ -428,6 +429,12 @@ public:
                 update_space_areas(wl_win, desktop_area, screens_geos, areas);
             }
         }
+    }
+
+    void show_debug_console() override
+    {
+        auto console = new debug::wayland_console(*this);
+        console->show();
     }
 
     Base& base;

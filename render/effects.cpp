@@ -99,6 +99,11 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     , m_compositor(compositor)
     , m_scene(scene)
 {
+    singleton_interface::register_thumbnail = [this](auto& eff_win, auto& thumbnail) {
+        auto& impl_win = static_cast<render::effects_window_impl&>(eff_win);
+        impl_win.registerThumbnail(&thumbnail);
+    };
+
     QObject::connect(this, &effects_handler_impl::hasActiveFullScreenEffectChanged, this, [this] {
         Q_EMIT m_compositor->space->edges->qobject->checkBlocking();
     });
@@ -307,7 +312,10 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     }
 }
 
-effects_handler_impl::~effects_handler_impl() = default;
+effects_handler_impl::~effects_handler_impl()
+{
+    singleton_interface::register_thumbnail = {};
+}
 
 effects_handler_wrap::~effects_handler_wrap()
 {
@@ -930,7 +938,7 @@ QByteArray effects_handler_impl::readRootProperty(long atom, long type, int form
 
 void effects_handler_impl::activateWindow(EffectWindow* c)
 {
-    auto window = static_cast<effects_window_impl*>(c)->window();
+    auto window = static_cast<effects_window_impl*>(c)->window.ref_win;
     if (window && window->control) {
         win::force_activate_window(*m_compositor->space, window);
     }
@@ -947,7 +955,7 @@ void effects_handler_impl::moveWindow(EffectWindow* w,
                                       bool snap,
                                       double snapAdjust)
 {
-    auto window = static_cast<effects_window_impl*>(w)->window();
+    auto window = static_cast<effects_window_impl*>(w)->window.ref_win;
     if (!window || !window->isMovable()) {
         return;
     }
@@ -963,7 +971,7 @@ void effects_handler_impl::moveWindow(EffectWindow* w,
 
 void effects_handler_impl::windowToDesktop(EffectWindow* w, int desktop)
 {
-    auto window = static_cast<effects_window_impl*>(w)->window();
+    auto window = static_cast<effects_window_impl*>(w)->window.ref_win;
     if (window && window->control && !win::is_desktop(window) && !win::is_dock(window)) {
         win::send_window_to_desktop(*m_compositor->space, window, desktop, true);
     }
@@ -971,7 +979,7 @@ void effects_handler_impl::windowToDesktop(EffectWindow* w, int desktop)
 
 void effects_handler_impl::windowToDesktops(EffectWindow* w, const QVector<uint>& desktopIds)
 {
-    auto window = static_cast<effects_window_impl*>(w)->window();
+    auto window = static_cast<effects_window_impl*>(w)->window.ref_win;
     if (!window || !window->control || win::is_desktop(window) || win::is_dock(window)) {
         return;
     }
@@ -994,7 +1002,7 @@ void effects_handler_impl::windowToDesktops(EffectWindow* w, const QVector<uint>
 void effects_handler_impl::windowToScreen(EffectWindow* w, int screen)
 {
     auto output = base::get_output(kwinApp()->get_base().get_outputs(), screen);
-    auto window = static_cast<effects_window_impl*>(w)->window();
+    auto window = static_cast<effects_window_impl*>(w)->window.ref_win;
 
     if (output && window && window->control && !win::is_desktop(window) && !win::is_dock(window)) {
         win::send_to_screen(*m_compositor->space, window, *output);
@@ -1181,7 +1189,7 @@ void effects_handler_wrap::setElevatedWindow(KWin::EffectWindow* w, bool set)
 void effects_handler_impl::setTabBoxWindow(EffectWindow* w)
 {
 #if KWIN_BUILD_TABBOX
-    auto window = static_cast<effects_window_impl*>(w)->window();
+    auto window = static_cast<effects_window_impl*>(w)->window.ref_win;
     if (window->control) {
         m_compositor->space->tabbox->set_current_client(window);
     }
@@ -1315,7 +1323,7 @@ QRect effects_handler_impl::clientArea(clientAreaOption opt, int screen, int des
 
 QRect effects_handler_impl::clientArea(clientAreaOption opt, const EffectWindow* c) const
 {
-    auto window = static_cast<effects_window_impl const*>(c)->window();
+    auto window = static_cast<effects_window_impl const*>(c)->window.ref_win;
     auto space = m_compositor->space;
 
     if (window->control) {

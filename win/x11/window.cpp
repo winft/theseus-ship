@@ -294,8 +294,9 @@ void window::setBlockingCompositing(bool block)
 void window::add_scene_window_addon()
 {
     auto& atoms = space.atoms;
-    render->shadow_windowing.create = [&](auto&& win) {
-        return render::x11::create_shadow<render::shadow, Toplevel>(win, atoms->kde_net_wm_shadow);
+    render->shadow_windowing.create = [&](auto&& render_win) {
+        return render::x11::create_shadow<render::shadow, Toplevel>(*render_win.ref_win,
+                                                                    atoms->kde_net_wm_shadow);
     };
     render->shadow_windowing.update = [&](auto&& shadow) {
         return render::x11::read_and_update_shadow<render::shadow>(shadow,
@@ -307,7 +308,7 @@ void window::add_scene_window_addon()
         auto update_helper = [&buffer]() {
             auto& win_integrate
                 = static_cast<render::x11::buffer_win_integration&>(*buffer.win_integration);
-            create_window_buffer(buffer.toplevel(), win_integrate);
+            create_window_buffer(buffer.window->ref_win, win_integrate);
         };
         win_integrate->update = update_helper;
         buffer.win_integration = std::move(win_integrate);

@@ -379,6 +379,7 @@ set(kwin_SRCS
     base/os/clock/skew_notifier_engine.cpp
     base/seat/session.cpp
     base/seat/backend/logind/session.cpp
+    base/singleton_interface.cpp
     base/x11/event_filter.cpp
     base/x11/event_filter_container.cpp
     base/x11/event_filter_manager.cpp
@@ -429,10 +430,8 @@ set(kwin_SRCS
     render/gl/backend.cpp
     render/gl/context_attribute_builder.cpp
     render/gl/egl_context_attribute_builder.cpp
-    render/gl/lanczos_filter.cpp
     render/gl/scene.cpp
     render/gl/shadow.cpp
-    render/gl/texture.cpp
     render/gl/window.cpp
     render/outline.cpp
     render/scene.cpp
@@ -655,13 +654,11 @@ set(kwin_X11_SRCS
    render/backend/x11/platform.cpp
    render/x11/effects.cpp
    render/x11/mouse_intercept_filter.cpp
-   render/x11/overlay_window.cpp
 )
 
 if (KWIN_HAVE_XRENDER_COMPOSITING)
   set(kwin_X11_SRCS
     ${kwin_X11_SRCS}
-    render/xrender/buffer.cpp
     render/xrender/backend.cpp
     render/xrender/scene.cpp
     render/xrender/shadow.cpp
@@ -679,7 +676,6 @@ endif()
 if (HAVE_EPOXY_GLX)
     set(kwin_X11_SRCS
         ${kwin_X11_SRCS}
-        ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/glx_backend.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/glx_context_attribute_builder.cpp
     )
 endif()
@@ -788,7 +784,6 @@ set(kwin_WAYLAND_SRCS
    input/xkb/layout_manager.cpp
    input/xkb/layout_policies.cpp
    render/gl/egl_dmabuf.cpp
-   render/qpainter/buffer.cpp
    render/qpainter/scene.cpp
    render/qpainter/shadow.cpp
    render/qpainter/window.cpp

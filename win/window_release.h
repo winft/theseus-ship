@@ -97,9 +97,6 @@ RemnantWin* create_remnant_window(Win& source)
     win->is_shape = source.is_shape;
 
     win->render = std::move(source.render);
-    if (win->render) {
-        win->render->effect->setWindow(win);
-    }
 
     win->resource_name = source.resource_name;
     win->resource_class = source.resource_class;

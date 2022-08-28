@@ -5,6 +5,8 @@
 */
 #include "window_impl.h"
 
+#include "window_group_impl.h"
+
 #include "main.h"
 #include "render/thumbnail_item.h"
 #include "render/x11/effect.h"
@@ -26,10 +28,8 @@ static void deleteWindowProperty(xcb_window_t win, long int atom)
     xcb_delete_property(kwinApp()->x11Connection(), win, atom);
 }
 
-effects_window_impl::effects_window_impl(Toplevel* toplevel)
-    : EffectWindow(toplevel->qobject.get())
-    , toplevel(toplevel)
-    , sw(nullptr)
+effects_window_impl::effects_window_impl(render::window& window)
+    : window{window}
 {
     // Deleted windows are not managed. So, when windowClosed signal is
     // emitted, effects can't distinguish managed windows from unmanaged
@@ -38,10 +38,10 @@ effects_window_impl::effects_window_impl(Toplevel* toplevel)
     // parent can be Client, XdgShellClient, or Unmanaged. So, later on, when
     // an instance of Deleted becomes parent of the EffectWindow, effects
     // can still figure out whether it is/was a managed window.
-    managed = toplevel->isClient();
+    managed = window.ref_win->isClient();
 
-    waylandClient = toplevel->is_wayland_window();
-    x11Client = dynamic_cast<win::x11::window*>(toplevel) != nullptr || toplevel->xcb_window;
+    waylandClient = window.ref_win->is_wayland_window();
+    x11Client = dynamic_cast<win::x11::window*>(window.ref_win) || window.ref_win->xcb_window;
 }
 
 effects_window_impl::~effects_window_impl()
@@ -55,22 +55,22 @@ effects_window_impl::~effects_window_impl()
 
 bool effects_window_impl::isPaintingEnabled()
 {
-    return sceneWindow()->isPaintingEnabled();
+    return window.isPaintingEnabled();
 }
 
 void effects_window_impl::enablePainting(int reason)
 {
-    sceneWindow()->enablePainting(static_cast<render::window_paint_disable_type>(reason));
+    window.enablePainting(static_cast<render::window_paint_disable_type>(reason));
 }
 
 void effects_window_impl::disablePainting(int reason)
 {
-    sceneWindow()->disablePainting(static_cast<render::window_paint_disable_type>(reason));
+    window.disablePainting(static_cast<render::window_paint_disable_type>(reason));
 }
 
 void effects_window_impl::addRepaint(const QRect& r)
 {
-    toplevel->addRepaint(r);
+    window.ref_win->addRepaint(r);
 }
 
 void effects_window_impl::addRepaint(int x, int y, int w, int h)
@@ -80,12 +80,12 @@ void effects_window_impl::addRepaint(int x, int y, int w, int h)
 
 void effects_window_impl::addRepaintFull()
 {
-    toplevel->addRepaintFull();
+    window.ref_win->addRepaintFull();
 }
 
 void effects_window_impl::addLayerRepaint(const QRect& r)
 {
-    toplevel->addLayerRepaint(r);
+    window.ref_win->addLayerRepaint(r);
 }
 
 void effects_window_impl::addLayerRepaint(int x, int y, int w, int h)
@@ -95,7 +95,7 @@ void effects_window_impl::addLayerRepaint(int x, int y, int w, int h)
 
 const EffectWindowGroup* effects_window_impl::group() const
 {
-    if (auto c = dynamic_cast<win::x11::window*>(toplevel); c && c->group()) {
+    if (auto c = dynamic_cast<win::x11::window*>(window.ref_win); c && c->group()) {
         return c->group()->effect_group;
     }
     return nullptr; // TODO
@@ -103,10 +103,10 @@ const EffectWindowGroup* effects_window_impl::group() const
 
 void effects_window_impl::refWindow()
 {
-    if (toplevel->transient()->annexed) {
+    if (window.ref_win->transient()->annexed) {
         return;
     }
-    if (auto& remnant = toplevel->remnant) {
+    if (auto& remnant = window.ref_win->remnant) {
         return remnant->ref();
     }
     abort(); // TODO
@@ -114,10 +114,10 @@ void effects_window_impl::refWindow()
 
 void effects_window_impl::unrefWindow()
 {
-    if (toplevel->transient()->annexed) {
+    if (window.ref_win->transient()->annexed) {
         return;
     }
-    if (auto& remnant = toplevel->remnant) {
+    if (auto& remnant = window.ref_win->remnant) {
         // delays deletion in case
         return remnant->unref();
     }
@@ -126,13 +126,13 @@ void effects_window_impl::unrefWindow()
 
 QRect effects_window_impl::rect() const
 {
-    return QRect(QPoint(), toplevel->size());
+    return QRect(QPoint(), window.ref_win->size());
 }
 
 #define TOPLEVEL_HELPER(rettype, prototype, toplevelPrototype)                                     \
     rettype effects_window_impl::prototype() const                                                 \
     {                                                                                              \
-        return toplevel->toplevelPrototype();                                                      \
+        return window.ref_win->toplevelPrototype();                                                \
     }
 
 TOPLEVEL_HELPER(double, opacity, opacity)
@@ -158,7 +158,7 @@ TOPLEVEL_HELPER(bool, isModal, transient()->modal)
 #define TOPLEVEL_HELPER_WIN(rettype, prototype, function)                                          \
     rettype effects_window_impl::prototype() const                                                 \
     {                                                                                              \
-        return win::function(toplevel);                                                            \
+        return win::function(window.ref_win);                                                      \
     }
 
 TOPLEVEL_HELPER_WIN(bool, isComboBox, is_combo_box)
@@ -185,8 +185,8 @@ TOPLEVEL_HELPER_WIN(QRect, bufferGeometry, render_geometry)
 #define CLIENT_HELPER_WITH_DELETED_WIN(rettype, prototype, propertyname, defaultValue)             \
     rettype effects_window_impl::prototype() const                                                 \
     {                                                                                              \
-        if (toplevel->control || toplevel->remnant) {                                              \
-            return win::propertyname(toplevel);                                                    \
+        if (window.ref_win->control || window.ref_win->remnant) {                                  \
+            return win::propertyname(window.ref_win);                                              \
         }                                                                                          \
         return defaultValue;                                                                       \
     }
@@ -199,10 +199,10 @@ CLIENT_HELPER_WITH_DELETED_WIN(QVector<uint>, desktops, x11_desktop_ids, QVector
 #define CLIENT_HELPER_WITH_DELETED_WIN_CTRL(rettype, prototype, propertyname, defaultValue)        \
     rettype effects_window_impl::prototype() const                                                 \
     {                                                                                              \
-        if (toplevel->control) {                                                                   \
-            return toplevel->control->propertyname;                                                \
+        if (window.ref_win->control) {                                                             \
+            return window.ref_win->control->propertyname;                                          \
         }                                                                                          \
-        if (auto& remnant = toplevel->remnant) {                                                   \
+        if (auto& remnant = window.ref_win->remnant) {                                             \
             return remnant->data.propertyname;                                                     \
         }                                                                                          \
         return defaultValue;                                                                       \
@@ -215,14 +215,24 @@ CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, isFullScreen, fullscreen, false)
 
 #undef CLIENT_HELPER_WITH_DELETED_WIN_CTRL
 
+qlonglong effects_window_impl::windowId() const
+{
+    return window.ref_win->xcb_window;
+}
+
+QUuid effects_window_impl::internalId() const
+{
+    return window.ref_win->internal_id;
+}
+
 bool effects_window_impl::isDeleted() const
 {
-    return static_cast<bool>(toplevel->remnant);
+    return static_cast<bool>(window.ref_win->remnant);
 }
 
 Wrapland::Server::Surface* effects_window_impl::surface() const
 {
-    return toplevel->surface;
+    return window.ref_win->surface;
 }
 
 QStringList effects_window_impl::activities() const
@@ -233,15 +243,16 @@ QStringList effects_window_impl::activities() const
 
 int effects_window_impl::screen() const
 {
-    if (!toplevel->central_output) {
+    if (!window.ref_win->central_output) {
         return 0;
     }
-    return base::get_output_index(kwinApp()->get_base().get_outputs(), *toplevel->central_output);
+    return base::get_output_index(kwinApp()->get_base().get_outputs(),
+                                  *window.ref_win->central_output);
 }
 
 QRect effects_window_impl::clientGeometry() const
 {
-    return win::frame_to_client_rect(toplevel, toplevel->frameGeometry());
+    return win::frame_to_client_rect(window.ref_win, window.ref_win->frameGeometry());
 }
 
 QRect expanded_geometry_recursion(Toplevel* window)
@@ -257,7 +268,7 @@ QRect expanded_geometry_recursion(Toplevel* window)
 
 QRect effects_window_impl::expandedGeometry() const
 {
-    return expanded_geometry_recursion(toplevel);
+    return expanded_geometry_recursion(window.ref_win);
 }
 
 // legacy from tab groups, can be removed when no effects use this any more.
@@ -268,7 +279,7 @@ bool effects_window_impl::isCurrentTab() const
 
 QString effects_window_impl::windowClass() const
 {
-    return toplevel->resource_name + QLatin1Char(' ') + toplevel->resource_class;
+    return window.ref_win->resource_name + QLatin1Char(' ') + window.ref_win->resource_class;
 }
 
 QRect effects_window_impl::contentsRect() const
@@ -276,22 +287,23 @@ QRect effects_window_impl::contentsRect() const
     // TODO(romangg): This feels kind of wrong. Why are the frame extents not part of it (i.e. just
     //                using frame_to_client_rect)? But some clients rely on the current version,
     //                for example Latte for its behind-dock blur.
-    auto const deco_offset = QPoint(win::left_border(toplevel), win::top_border(toplevel));
-    auto const client_size = win::frame_relative_client_rect(toplevel).size();
+    auto const deco_offset
+        = QPoint(win::left_border(window.ref_win), win::top_border(window.ref_win));
+    auto const client_size = win::frame_relative_client_rect(window.ref_win).size();
 
     return QRect(deco_offset, client_size);
 }
 
 NET::WindowType effects_window_impl::windowType() const
 {
-    return toplevel->windowType();
+    return window.ref_win->windowType();
 }
 
 #define CLIENT_HELPER(rettype, prototype, propertyname, defaultValue)                              \
     rettype effects_window_impl::prototype() const                                                 \
     {                                                                                              \
-        if (toplevel->control) {                                                                   \
-            return toplevel->propertyname();                                                       \
+        if (window.ref_win->control) {                                                             \
+            return window.ref_win->propertyname();                                                 \
         }                                                                                          \
         return defaultValue;                                                                       \
     }
@@ -306,8 +318,8 @@ CLIENT_HELPER(bool, acceptsFocus, wantsInput, true) // We don't actually know...
 #define CLIENT_HELPER_WIN(rettype, prototype, function, default_value)                             \
     rettype effects_window_impl::prototype() const                                                 \
     {                                                                                              \
-        if (toplevel->control) {                                                                   \
-            return win::function(toplevel);                                                        \
+        if (window.ref_win->control) {                                                             \
+            return win::function(window.ref_win);                                                  \
         }                                                                                          \
         return default_value;                                                                      \
     }
@@ -322,8 +334,8 @@ CLIENT_HELPER_WIN(bool, decorationHasAlpha, decoration_has_alpha, false)
 #define CLIENT_HELPER_WIN_CONTROL(rettype, prototype, function, default_value)                     \
     rettype effects_window_impl::prototype() const                                                 \
     {                                                                                              \
-        if (toplevel->control) {                                                                   \
-            return toplevel->control->function;                                                    \
+        if (window.ref_win->control) {                                                             \
+            return window.ref_win->control->function;                                              \
         }                                                                                          \
         return default_value;                                                                      \
     }
@@ -336,21 +348,10 @@ CLIENT_HELPER_WIN_CONTROL(bool, isUnresponsive, unresponsive, false)
 
 QSize effects_window_impl::basicUnit() const
 {
-    if (auto client = dynamic_cast<win::x11::window*>(toplevel)) {
+    if (auto client = dynamic_cast<win::x11::window*>(window.ref_win)) {
         return client->basicUnit();
     }
     return QSize(1, 1);
-}
-
-void effects_window_impl::setWindow(Toplevel* w)
-{
-    toplevel = w;
-    setParent(w->qobject.get());
-}
-
-void effects_window_impl::setSceneWindow(render::window* w)
-{
-    sw = w;
 }
 
 QRect effects_window_impl::decorationInnerRect() const
@@ -360,7 +361,7 @@ QRect effects_window_impl::decorationInnerRect() const
 
 KDecoration2::Decoration* effects_window_impl::decoration() const
 {
-    return win::decoration(toplevel);
+    return win::decoration(window.ref_win);
 }
 
 QByteArray effects_window_impl::readProperty(long atom, long type, int format) const
@@ -368,23 +369,23 @@ QByteArray effects_window_impl::readProperty(long atom, long type, int format) c
     if (!kwinApp()->x11Connection()) {
         return QByteArray();
     }
-    return render::x11::read_window_property(window()->xcb_window, atom, type, format);
+    return render::x11::read_window_property(window.ref_win->xcb_window, atom, type, format);
 }
 
 void effects_window_impl::deleteProperty(long int atom) const
 {
     if (kwinApp()->x11Connection()) {
-        deleteWindowProperty(window()->xcb_window, atom);
+        deleteWindowProperty(window.ref_win->xcb_window, atom);
     }
 }
 
 EffectWindow* effects_window_impl::findModal()
 {
-    if (!toplevel->control) {
+    if (!window.ref_win->control) {
         return nullptr;
     }
 
-    auto modal = toplevel->findModal();
+    auto modal = window.ref_win->findModal();
     if (modal) {
         return modal->render->effect.get();
     }
@@ -394,11 +395,11 @@ EffectWindow* effects_window_impl::findModal()
 
 EffectWindow* effects_window_impl::transientFor()
 {
-    if (!toplevel->control) {
+    if (!window.ref_win->control) {
         return nullptr;
     }
 
-    auto transientFor = toplevel->transient()->lead();
+    auto transientFor = window.ref_win->transient()->lead();
     if (transientFor) {
         return transientFor->render->effect.get();
     }
@@ -408,7 +409,7 @@ EffectWindow* effects_window_impl::transientFor()
 
 QWindow* effects_window_impl::internalWindow() const
 {
-    auto client = dynamic_cast<win::internal_window*>(toplevel);
+    auto client = dynamic_cast<win::internal_window*>(window.ref_win);
     if (!client) {
         return nullptr;
     }
@@ -429,15 +430,15 @@ EffectWindowList getMainWindows(T* c)
 
 EffectWindowList effects_window_impl::mainWindows() const
 {
-    if (toplevel->control || toplevel->remnant) {
-        return getMainWindows(toplevel);
+    if (window.ref_win->control || window.ref_win->remnant) {
+        return getMainWindows(window.ref_win);
     }
     return {};
 }
 
 WindowQuadList effects_window_impl::buildQuads(bool force) const
 {
-    return sceneWindow()->buildQuads(force);
+    return window.buildQuads(force);
 }
 
 void effects_window_impl::setData(int role, const QVariant& data)
@@ -509,37 +510,33 @@ void effects_window_impl::desktopThumbnailDestroyed(QObject* object)
 
 void effects_window_impl::minimize()
 {
-    if (toplevel->control) {
-        win::set_minimized(toplevel, true);
+    if (window.ref_win->control) {
+        win::set_minimized(window.ref_win, true);
     }
 }
 
 void effects_window_impl::unminimize()
 {
-    if (toplevel->control) {
-        win::set_minimized(toplevel, false);
+    if (window.ref_win->control) {
+        win::set_minimized(window.ref_win, false);
     }
 }
 
 void effects_window_impl::closeWindow()
 {
-    if (toplevel->control) {
-        toplevel->closeWindow();
+    if (window.ref_win->control) {
+        window.ref_win->closeWindow();
     }
 }
 
 void effects_window_impl::referencePreviousWindowPixmap()
 {
-    if (sw) {
-        sw->reference_previous_buffer();
-    }
+    window.reference_previous_buffer();
 }
 
 void effects_window_impl::unreferencePreviousWindowPixmap()
 {
-    if (sw) {
-        sw->unreference_previous_buffer();
-    }
+    window.unreference_previous_buffer();
 }
 
 bool effects_window_impl::isManaged() const
@@ -555,27 +552,6 @@ bool effects_window_impl::isWaylandClient() const
 bool effects_window_impl::isX11Client() const
 {
     return x11Client;
-}
-
-//****************************************
-// effect_window_group_impl
-//****************************************
-
-effect_window_group_impl::effect_window_group_impl(win::x11::group* g)
-    : group(g)
-{
-}
-
-EffectWindowList effect_window_group_impl::members() const
-{
-    const auto memberList = group->members;
-    EffectWindowList ret;
-    ret.reserve(memberList.size());
-    std::transform(std::cbegin(memberList),
-                   std::cend(memberList),
-                   std::back_inserter(ret),
-                   [](auto toplevel) { return toplevel->render->effect.get(); });
-    return ret;
 }
 
 }

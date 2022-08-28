@@ -21,6 +21,7 @@ namespace x11
 {
 template<typename Platform>
 class compositor;
+template<typename Compositor>
 class overlay_window;
 class platform;
 }
@@ -35,7 +36,9 @@ namespace xrender
 class backend
 {
 public:
-    explicit backend(x11::compositor<x11::platform>& compositor);
+    using x11_compositor_t = x11::compositor<x11::platform>;
+
+    explicit backend(x11_compositor_t& compositor);
     ~backend();
 
     void present(paint_type mask, QRegion const& damage);
@@ -68,7 +71,7 @@ public:
         return m_buffer;
     }
 
-    std::unique_ptr<x11::overlay_window> overlay_window;
+    std::unique_ptr<x11::overlay_window<x11::compositor<x11::platform>>> overlay_window;
 
 private:
     /**

@@ -21,8 +21,8 @@
 namespace KWin::render::xrender
 {
 
-backend::backend(x11::compositor<x11::platform>& compositor)
-    : overlay_window{std::make_unique<render::x11::overlay_window>(compositor)}
+backend::backend(x11_compositor_t& compositor)
+    : overlay_window{std::make_unique<x11_compositor_t::overlay_window_t>(compositor)}
 {
     if (!base::x11::xcb::extensions::self()->is_render_available()) {
         throw std::runtime_error("No XRender extension available");

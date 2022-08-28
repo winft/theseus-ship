@@ -34,11 +34,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::render
 {
 
-shadow::shadow(Toplevel* toplevel)
-    : m_topLevel(toplevel)
-    , m_cachedSize(toplevel->size())
+shadow::shadow(render::window* window)
+    : window{window}
+    , m_cachedSize(window->ref_win->size())
 {
-    QObject::connect(m_topLevel->qobject.get(),
+    QObject::connect(window->ref_win->qobject.get(),
                      &win::window_qobject::frame_geometry_changed,
                      this,
                      &shadow::geometryChanged);
@@ -50,7 +50,7 @@ shadow::~shadow()
 
 void shadow::updateShadowRegion()
 {
-    auto const size = m_topLevel->size();
+    auto const size = window->ref_win->size();
     const QRect top(0, -m_topOffset, size.width(), m_topOffset);
     const QRect right(
         size.width(), -m_topOffset, m_rightOffset, size.height() + m_topOffset + m_bottomOffset);
@@ -65,7 +65,7 @@ void shadow::buildQuads()
     // prepare window quads
     m_shadowQuads.clear();
 
-    auto const size = m_topLevel->size();
+    auto const size = window->ref_win->size();
     const QSize top(m_shadowElements[enum_index(shadow_element::top)].size());
     const QSize topRight(m_shadowElements[enum_index(shadow_element::top_right)].size());
     const QSize right(m_shadowElements[enum_index(shadow_element::right)].size());
@@ -165,11 +165,11 @@ void shadow::buildQuads()
 
 bool shadow::updateShadow()
 {
-    assert(m_topLevel);
+    assert(window);
 
     if (m_decorationShadow) {
-        if (m_topLevel->control) {
-            if (auto deco = win::decoration(m_topLevel)) {
+        if (window->ref_win->control) {
+            if (auto deco = win::decoration(window->ref_win)) {
                 if (update_deco_shadow(*this, deco)) {
                     return true;
                 }
@@ -178,7 +178,7 @@ bool shadow::updateShadow()
         return false;
     }
 
-    if (auto& win_update = m_topLevel->render->shadow_windowing.update; win_update) {
+    if (auto& win_update = window->shadow_windowing.update; win_update) {
         return win_update(*this);
     }
 
@@ -187,10 +187,10 @@ bool shadow::updateShadow()
 
 void shadow::geometryChanged()
 {
-    if (m_cachedSize == m_topLevel->size()) {
+    if (m_cachedSize == window->ref_win->size()) {
         return;
     }
-    m_cachedSize = m_topLevel->size();
+    m_cachedSize = window->ref_win->size();
     updateShadowRegion();
     buildQuads();
 }

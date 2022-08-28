@@ -345,6 +345,14 @@ public:
     {
         return 0;
     }
+    qlonglong windowId() const override
+    {
+        return {};
+    }
+    QUuid internalId() const override
+    {
+        return {};
+    }
 
 private:
     qreal m_opacity = 1.0;

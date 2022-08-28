@@ -38,7 +38,6 @@ public:
     ~ApplicationX11() override;
 
     base::platform& get_base() override;
-    debug::console* create_debug_console() override;
 
     void start();
 

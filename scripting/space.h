@@ -369,11 +369,6 @@ public Q_SLOTS:
      */
     virtual void hideOutline() = 0;
 
-    window* get_window(Toplevel* client) const;
-
-    void handle_client_added(Toplevel* client);
-    void handle_client_removed(Toplevel* client);
-
 Q_SIGNALS:
     void desktopPresenceChanged(KWin::scripting::window* client, int desktop);
     void currentDesktopChanged(int desktop, KWin::scripting::window* client);
@@ -481,11 +476,12 @@ protected:
     std::vector<std::unique_ptr<window>> m_windows;
     int windows_count{0};
 
-private:
-    Q_DISABLE_COPY(space)
-
+protected:
     void setupAbstractClientConnections(window* window);
     void setupClientConnections(window* window);
+
+private:
+    Q_DISABLE_COPY(space)
 };
 
 class qt_script_space : public space
@@ -532,7 +528,7 @@ public:
                          this,
                          [this](auto win_id, auto desktop) {
                              auto ref_win = this->ref_space->windows_map.at(win_id);
-                             auto window = Space::get_window(ref_win);
+                             auto window = get_window(ref_win);
                              Q_EMIT Space::desktopPresenceChanged(window, desktop);
                          });
 
@@ -540,14 +536,14 @@ public:
                          &space_qobject::currentDesktopChanged,
                          this,
                          [this](auto desktop) {
-                             auto window = Space::get_window(this->ref_space->move_resize_window);
+                             auto window = get_window(this->ref_space->move_resize_window);
                              Q_EMIT Space::currentDesktopChanged(desktop, window);
                          });
 
         QObject::connect(
             ref_space->qobject.get(), &space_qobject::clientAdded, this, [this](auto win_id) {
                 auto ref_win = this->ref_space->windows_map.at(win_id);
-                this->handle_client_added(ref_win);
+                handle_client_added(ref_win);
             });
         QObject::connect(
             ref_space->qobject.get(), &space_qobject::clientRemoved, this, [this](auto win_id) {
@@ -559,11 +555,11 @@ public:
                          this,
                          [this](auto win_id) {
                              auto ref_win = this->ref_space->windows_map.at(win_id);
-                             this->handle_client_added(ref_win);
+                             handle_client_added(ref_win);
                          });
 
         QObject::connect(ref_space->qobject.get(), &space_qobject::clientActivated, this, [this] {
-            auto window = Space::get_window(this->ref_space->active_client);
+            auto window = get_window(this->ref_space->active_client);
             Q_EMIT Space::clientActivated(window);
         });
 
@@ -572,7 +568,7 @@ public:
                          this,
                          [this](auto win_id, auto set) {
                              auto ref_win = this->ref_space->windows_map.at(win_id);
-                             auto window = Space::get_window(ref_win);
+                             auto window = get_window(ref_win);
                              Q_EMIT Space::clientDemandsAttentionChanged(window, set);
                          });
 
@@ -605,7 +601,7 @@ public:
 
         for (auto window : ref_space->windows) {
             if (window->control) {
-                Space::handle_client_added(window);
+                handle_client_added(window);
             }
         }
     }
@@ -647,7 +643,7 @@ public:
         if (!active_client) {
             return nullptr;
         }
-        return Space::get_window(active_client);
+        return get_window(active_client);
     }
 
     void setActiveClient(window* win) override
@@ -1001,6 +997,41 @@ protected:
             }
         }
         return nullptr;
+    }
+
+    window* get_window(Toplevel* client) const
+    {
+        if (!client || !client->control) {
+            return nullptr;
+        }
+        return client->control->scripting.get();
+    }
+
+    void handle_client_added(Toplevel* client)
+    {
+        if (!client->control) {
+            // Only windows with control are made available to the scripting system.
+            return;
+        }
+
+        client->control->scripting = std::make_unique<window_impl>(client, this);
+        auto scr_win = client->control->scripting.get();
+
+        Space::setupAbstractClientConnections(scr_win);
+        if (client->isClient()) {
+            Space::setupClientConnections(scr_win);
+        }
+
+        Space::windows_count++;
+        Q_EMIT Space::clientAdded(scr_win);
+    }
+
+    void handle_client_removed(Toplevel* client)
+    {
+        if (client->control) {
+            Space::windows_count--;
+            Q_EMIT Space::clientRemoved(client->control->scripting.get());
+        }
     }
 
     RefSpace* ref_space;

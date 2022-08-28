@@ -13,7 +13,6 @@
 #include "base/seat/backend/logind/session.h"
 #include "base/x11/xcb/helpers.h"
 #include "base/x11/xcb_event_filter.h"
-#include "debug/console/x11/x11_console.h"
 #include "desktop/screen_locker_watcher.h"
 #include "input/global_shortcuts_manager.h"
 #include "input/x11/platform.h"
@@ -205,11 +204,6 @@ void ApplicationX11::lostSelection()
 base::platform& ApplicationX11::get_base()
 {
     return base;
-}
-
-debug::console* ApplicationX11::create_debug_console()
-{
-    return new debug::x11_console(*base.space);
 }
 
 void ApplicationX11::start()

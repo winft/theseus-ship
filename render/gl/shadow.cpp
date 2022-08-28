@@ -90,8 +90,8 @@ QSharedPointer<GLTexture> DecorationShadowTextureCache::getTexture(gl::shadow* s
     return d.texture;
 }
 
-shadow::shadow(Toplevel* toplevel, gl::scene& scene)
-    : render::shadow(toplevel)
+shadow::shadow(render::window* window, gl::scene& scene)
+    : render::shadow(window)
     , scene{scene}
 {
 }
@@ -127,9 +127,11 @@ static inline void distributeVertically(QRectF& topRect, QRectF& bottomRect)
 
 void shadow::buildQuads()
 {
+    auto const& window_size = window->ref_win->size();
+
     // Do not draw shadows if window width or window height is less than
     // 5 px. 5 is an arbitrary choice.
-    if (topLevel()->size().width() < 5 || topLevel()->size().height() < 5) {
+    if (window_size.width() < 5 || window_size.height() < 5) {
         m_shadowQuads.clear();
         setShadowRegion(QRegion());
         return;
@@ -150,9 +152,9 @@ void shadow::buildQuads()
         std::max({topRight.width(), right.width(), bottomRight.width()}),
         std::max({bottomRight.height(), bottom.height(), bottomLeft.height()}));
 
-    const QRectF outerRect(QPointF(-leftOffset(), -topOffset()),
-                           QPointF(topLevel()->size().width() + rightOffset(),
-                                   topLevel()->size().height() + bottomOffset()));
+    const QRectF outerRect(
+        QPointF(-leftOffset(), -topOffset()),
+        QPointF(window_size.width() + rightOffset(), window_size.height() + bottomOffset()));
 
     const int width
         = shadowMargins.left() + std::max(top.width(), bottom.width()) + shadowMargins.right();

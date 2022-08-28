@@ -80,12 +80,6 @@ bool kwin::stopActivity(const QString& /*in0*/)
     return false;
 }
 
-void kwin::showDebugConsole()
-{
-    auto console = kwinApp()->create_debug_console();
-    console->show();
-}
-
 void kwin::enableFtrace(bool enable)
 {
     if (Perf::Ftrace::setEnabled(enable)) {

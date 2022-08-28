@@ -5,10 +5,6 @@
 */
 #pragma once
 
-#include "glx_context_attribute_builder.h"
-#include "glx_data.h"
-#include "glx_fb_config.h"
-
 #include "base/platform.h"
 #include "base/x11/xcb/helpers.h"
 #include "main.h"
@@ -16,6 +12,12 @@
 #include "render/x11/compositor.h"
 #include "win/space.h"
 #include "x11_logging.h"
+
+// Must be included late because of Qt.
+#include "glx_context_attribute_builder.h"
+#include "glx_data.h"
+#include "glx_fb_config.h"
+#include "swap_event_filter.h"
 
 #include <kwineffects/effect_quick_view.h>
 #include <kwingl/platform.h>
@@ -203,7 +205,7 @@ bool init_glx_buffer(Backend& backend)
         xcb_colormap_t colormap = xcb_generate_id(c);
         xcb_create_colormap(c, false, colormap, rootWindow(), visual);
 
-        auto const& space_size = backend.compositor.platform.base.topology.size;
+        auto const& space_size = backend.platform.base.topology.size;
         backend.window = xcb_generate_id(c);
         xcb_create_window(c,
                           backend.visualDepth(visual),
@@ -361,7 +363,7 @@ template<typename Compositor, typename Backend>
 void start_glx_backend(Display* display, Compositor& compositor, Backend& backend)
 {
     backend.data.display = display;
-    backend.overlay_window = std::make_unique<render::x11::overlay_window>(compositor);
+    backend.overlay_window = std::make_unique<typename Compositor::overlay_window_t>(compositor);
     compositor.overlay_window = backend.overlay_window.get();
 
     // Force initialization of GLX integration in the Qt's xcb backend
@@ -402,7 +404,7 @@ void start_glx_backend(Display* display, Compositor& compositor, Backend& backen
     // See BUG 342582.
     if (backend.hasExtension(QByteArrayLiteral("GLX_INTEL_swap_event"))
         && qgetenv("KWIN_USE_INTEL_SWAP_EVENT") != QByteArrayLiteral("0")) {
-        backend.data.swap_filter
+        backend.swap_filter
             = std::make_unique<swap_event_filter>(compositor, backend.window, backend.data.window);
         glXSelectEvent(display, backend.data.window, GLX_BUFFER_SWAP_COMPLETE_INTEL_MASK);
     }

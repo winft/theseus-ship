@@ -87,7 +87,11 @@ public Q_SLOTS:
         unclutter_desktop_impl();
     }
 
-    Q_NOREPLY void showDebugConsole();
+    Q_NOREPLY void showDebugConsole()
+    {
+        show_debug_console_impl();
+    }
+
     void enableFtrace(bool enable);
 
     QVariantMap queryWindowInfo()
@@ -114,6 +118,7 @@ protected:
     virtual QString support_information_impl() = 0;
     virtual void unclutter_desktop_impl() = 0;
 
+    virtual void show_debug_console_impl() = 0;
     virtual QVariantMap query_window_info_impl() = 0;
     virtual QVariantMap get_window_info_impl(QString const& uuid) = 0;
 
@@ -166,6 +171,11 @@ public:
     void previous_desktop_impl() override
     {
         space.virtual_desktop_manager->template moveTo<win::virtual_desktop_previous>();
+    }
+
+    void show_debug_console_impl() override
+    {
+        space.show_debug_console();
     }
 
     QVariantMap query_window_info_impl() override

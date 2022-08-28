@@ -62,11 +62,6 @@ class platform;
 
 }
 
-namespace debug
-{
-class console;
-}
-
 namespace desktop
 {
 class screen_locker_watcher;
@@ -227,7 +222,6 @@ public:
     virtual bool is_screen_locked() const;
 
     virtual base::wayland::server* get_wayland_server();
-    virtual debug::console* create_debug_console() = 0;
 
     std::unique_ptr<base::options> options;
     std::unique_ptr<base::seat::session> session;

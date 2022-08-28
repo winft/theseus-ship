@@ -429,20 +429,26 @@ void redirect::handle_touch_added(input::touch* touch)
 {
     auto touch_red = this->touch.get();
 
-    QObject::connect(touch, &touch::down, touch_red->qobject.get(), [touch_red](auto const& event) {
-        touch_red->process_down(event);
-    });
-    QObject::connect(touch, &touch::up, touch_red->qobject.get(), [touch_red](auto const& event) {
-        touch_red->process_up(event);
-    });
-    QObject::connect(touch,
-                     &touch::motion,
+    QObject::connect(touch->qobject.get(),
+                     &touch_qobject::down,
+                     touch_red->qobject.get(),
+                     [touch_red](auto const& event) { touch_red->process_down(event); });
+    QObject::connect(touch->qobject.get(),
+                     &touch_qobject::up,
+                     touch_red->qobject.get(),
+                     [touch_red](auto const& event) { touch_red->process_up(event); });
+    QObject::connect(touch->qobject.get(),
+                     &touch_qobject::motion,
                      touch_red->qobject.get(),
                      [touch_red](auto const& event) { touch_red->process_motion(event); });
-    QObject::connect(
-        touch, &touch::cancel, touch_red->qobject.get(), [touch_red] { touch_red->cancel(); });
-    QObject::connect(
-        touch, &touch::frame, touch_red->qobject.get(), [touch_red] { touch_red->frame(); });
+    QObject::connect(touch->qobject.get(),
+                     &touch_qobject::cancel,
+                     touch_red->qobject.get(),
+                     [touch_red] { touch_red->cancel(); });
+    QObject::connect(touch->qobject.get(),
+                     &touch_qobject::frame,
+                     touch_red->qobject.get(),
+                     [touch_red] { touch_red->frame(); });
 
     auto seat = find_seat();
     if (!seat->hasTouch()) {

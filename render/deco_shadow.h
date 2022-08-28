@@ -22,19 +22,21 @@ namespace KWin::render
 template<typename Shadow>
 bool update_deco_shadow(Shadow& impl, KDecoration2::Decoration* decoration)
 {
+    auto ref_win = impl.window->ref_win;
+
     if (impl.m_decorationShadow) {
         // disconnect previous connections
         QObject::disconnect(impl.m_decorationShadow.data(),
                             &KDecoration2::DecorationShadow::innerShadowRectChanged,
-                            impl.m_topLevel->qobject.get(),
+                            ref_win->qobject.get(),
                             nullptr);
         QObject::disconnect(impl.m_decorationShadow.data(),
                             &KDecoration2::DecorationShadow::shadowChanged,
-                            impl.m_topLevel->qobject.get(),
+                            ref_win->qobject.get(),
                             nullptr);
         QObject::disconnect(impl.m_decorationShadow.data(),
                             &KDecoration2::DecorationShadow::paddingChanged,
-                            impl.m_topLevel->qobject.get(),
+                            ref_win->qobject.get(),
                             nullptr);
     }
 
@@ -44,19 +46,19 @@ bool update_deco_shadow(Shadow& impl, KDecoration2::Decoration* decoration)
     }
 
     // Setup connections - all just mapped to recreate.
-    auto update_shadow = [toplevel = impl.m_topLevel]() { win::update_shadow(toplevel); };
+    auto update_shadow = [ref_win]() { win::update_shadow(ref_win); };
 
     QObject::connect(impl.m_decorationShadow.data(),
                      &KDecoration2::DecorationShadow::innerShadowRectChanged,
-                     impl.m_topLevel->qobject.get(),
+                     ref_win->qobject.get(),
                      update_shadow);
     QObject::connect(impl.m_decorationShadow.data(),
                      &KDecoration2::DecorationShadow::shadowChanged,
-                     impl.m_topLevel->qobject.get(),
+                     ref_win->qobject.get(),
                      update_shadow);
     QObject::connect(impl.m_decorationShadow.data(),
                      &KDecoration2::DecorationShadow::paddingChanged,
-                     impl.m_topLevel->qobject.get(),
+                     ref_win->qobject.get(),
                      update_shadow);
 
     auto const& p = impl.m_decorationShadow->padding();
@@ -85,7 +87,7 @@ std::unique_ptr<Shadow> create_deco_shadow(Win& win)
         return {};
     }
 
-    auto shadow = win.space.render.scene->createShadow(&win);
+    auto shadow = win.space.render.scene->createShadow(win.render.get());
     if (!update_deco_shadow(*shadow, deco)) {
         return {};
     }

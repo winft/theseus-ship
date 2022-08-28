@@ -54,8 +54,8 @@ static bool has_glx()
 
 platform::platform(base::x11::platform& base)
     : render::x11::platform(base)
-    , m_x11Display(QX11Info::display())
     , base{base}
+    , m_x11Display(QX11Info::display())
 {
 }
 
@@ -80,7 +80,8 @@ void platform::init()
 
 gl::backend* platform::get_opengl_backend(render::compositor& compositor)
 {
-    auto& x11comp = static_cast<render::x11::compositor<render::x11::platform>&>(compositor);
+    using x11comp_t = render::x11::compositor<render::x11::platform>;
+    auto& x11comp = static_cast<x11comp_t&>(compositor);
 
     if (gl_backend) {
         start_glx_backend(m_x11Display, x11comp, *gl_backend);
@@ -94,7 +95,7 @@ gl::backend* platform::get_opengl_backend(render::compositor& compositor)
 
 #if HAVE_EPOXY_GLX
     if (has_glx()) {
-        gl_backend = std::make_unique<glx_backend>(m_x11Display, x11comp);
+        gl_backend = std::make_unique<glx_backend<platform>>(m_x11Display, *this);
         return gl_backend.get();
     }
 #endif

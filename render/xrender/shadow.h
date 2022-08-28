@@ -22,7 +22,7 @@ namespace xrender
 class shadow : public render::shadow
 {
 public:
-    explicit shadow(Toplevel* toplevel);
+    explicit shadow(render::window* window);
     ~shadow() override;
 
     void layoutShadowRects(QRect& top,

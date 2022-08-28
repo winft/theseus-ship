@@ -21,17 +21,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "integration.h"
 
 #include "base/platform.h"
+#include "base/singleton_interface.h"
 #include "backingstore.h"
 #include "offscreensurface.h"
-#include "render/platform.h"
 #include "render/singleton_interface.h"
 #include "screen.h"
 #include "sharingplatformcontext.h"
 #include "window.h"
 #include "../../main.h"
-#include "../../render/compositor.h"
-#include "../../render/scene.h"
-#include "win/space.h"
 
 #include <QCoreApplication>
 #include <QtConcurrentRun>
@@ -96,10 +93,11 @@ void Integration::initialize()
 {
     // We can only update the Screens later on when the Platform has been created. For now just
     // connect to the startup_finished signal. At this point everything has been created.
-    connect(kwinApp(), &Application::startup_finished, this,
-        [this] {
-            QObject::connect(&kwinApp()->get_base(), &base::platform::topology_changed,
-                             this, &Integration::initScreens);
+    connect(kwinApp(), &Application::startup_finished, this, [this] {
+        QObject::connect(base::singleton_interface::platform,
+                         &base::platform::topology_changed,
+                         this,
+                         &Integration::initScreens);
             initScreens();
         }
     );
@@ -158,7 +156,7 @@ QPlatformOpenGLContext* Integration::createPlatformOpenGLContext(QOpenGLContext*
 
 void Integration::initScreens()
 {
-    auto const outputs = kwinApp()->get_base().get_outputs();
+    auto const outputs = base::singleton_interface::platform->get_outputs();
     QVector<Screen*> newScreens;
 
     newScreens.reserve(std::max<size_t>(outputs.size(), 1));

@@ -21,12 +21,7 @@ namespace Wrapland::Server
 class Surface;
 }
 
-namespace KWin
-{
-
-class Toplevel;
-
-namespace render
+namespace KWin::render
 {
 
 class buffer;
@@ -121,12 +116,7 @@ public:
      */
     void markAsDiscarded();
 
-    /**
-     * @brief Returns the Toplevel this buffer belongs to.
-     * Note: the Toplevel can change over the lifetime of the buffer in case the Toplevel is
-     * copied to Deleted.
-     */
-    Toplevel* toplevel() const;
+    render::window* window;
 
 protected:
     explicit buffer(render::window* window);
@@ -138,9 +128,7 @@ protected:
     virtual void updateBuffer();
 
 private:
-    render::window* m_window;
     bool m_discarded;
 };
 
-}
 }

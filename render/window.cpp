@@ -22,9 +22,9 @@ namespace KWin::render
 
 uint32_t window_id{0};
 
-window::window(Toplevel* c, render::scene& scene)
-    : scene{scene}
-    , toplevel(c)
+window::window(Toplevel* ref_win, render::scene& scene)
+    : ref_win{ref_win}
+    , scene{scene}
     , filter(image_filter_type::fast)
     , cached_quad_list(nullptr)
     , m_id{window_id++}
@@ -88,32 +88,32 @@ void window::update_buffer()
 
 QRegion window::decorationShape() const
 {
-    if (!win::decoration(toplevel)) {
+    if (!win::decoration(ref_win)) {
         return QRegion();
     }
-    return QRegion(QRect(QPoint(), toplevel->size())) - win::frame_relative_client_rect(toplevel);
+    return QRegion(QRect(QPoint(), ref_win->size())) - win::frame_relative_client_rect(ref_win);
 }
 
 QPoint window::bufferOffset() const
 {
-    return win::render_geometry(toplevel).topLeft() - toplevel->pos();
+    return win::render_geometry(ref_win).topLeft() - ref_win->pos();
 }
 
 bool window::isVisible() const
 {
-    if (toplevel->remnant)
+    if (ref_win->remnant)
         return false;
-    if (!toplevel->isOnCurrentDesktop())
+    if (!ref_win->isOnCurrentDesktop())
         return false;
-    if (toplevel->control) {
-        return toplevel->isShown();
+    if (ref_win->control) {
+        return ref_win->isShown();
     }
     return true; // Unmanaged is always visible
 }
 
 bool window::isOpaque() const
 {
-    return toplevel->opacity() == 1.0 && !toplevel->hasAlpha();
+    return ref_win->opacity() == 1.0 && !ref_win->hasAlpha();
 }
 
 bool window::isPaintingEnabled() const
@@ -124,22 +124,22 @@ bool window::isPaintingEnabled() const
 void window::resetPaintingEnabled()
 {
     disable_painting = window_paint_disable_type::none;
-    if (toplevel->remnant) {
+    if (ref_win->remnant) {
         disable_painting |= window_paint_disable_type::by_delete;
     }
     if (scene.compositor.effects->isDesktopRendering()) {
-        if (!toplevel->isOnDesktop(scene.compositor.effects->currentRenderedDesktop())) {
+        if (!ref_win->isOnDesktop(scene.compositor.effects->currentRenderedDesktop())) {
             disable_painting |= window_paint_disable_type::by_desktop;
         }
     } else {
-        if (!toplevel->isOnCurrentDesktop())
+        if (!ref_win->isOnCurrentDesktop())
             disable_painting |= window_paint_disable_type::by_desktop;
     }
-    if (toplevel->control) {
-        if (toplevel->control->minimized) {
+    if (ref_win->control) {
+        if (ref_win->control->minimized) {
             disable_painting |= window_paint_disable_type::by_minimize;
         }
-        if (toplevel->isHiddenInternal()) {
+        if (ref_win->isHiddenInternal()) {
             disable_painting |= window_paint_disable_type::unspecified;
         }
     }
@@ -162,21 +162,21 @@ WindowQuadList window::buildQuads(bool force) const
 
     auto ret = makeContentsQuads(id());
 
-    if (!win::frame_margins(toplevel).isNull()) {
+    if (!win::frame_margins(ref_win).isNull()) {
         qreal decorationScale = 1.0;
 
         QRect rects[4];
 
-        if (toplevel->control) {
-            toplevel->layoutDecorationRects(rects[0], rects[1], rects[2], rects[3]);
-            decorationScale = toplevel->central_output ? toplevel->central_output->scale() : 1.;
+        if (ref_win->control) {
+            ref_win->layoutDecorationRects(rects[0], rects[1], rects[2], rects[3]);
+            decorationScale = ref_win->central_output ? ref_win->central_output->scale() : 1.;
         }
 
         auto const decoration_region = decorationShape();
         ret += makeDecorationQuads(rects, decoration_region, decorationScale);
     }
 
-    if (m_shadow && toplevel->wantsShadowToBeRendered()) {
+    if (m_shadow && ref_win->wantsShadowToBeRendered()) {
         ret << m_shadow->shadowQuads();
     }
 
@@ -256,13 +256,13 @@ window::makeDecorationQuads(const QRect* rects, const QRegion& region, qreal tex
 
 WindowQuadList window::makeContentsQuads(int id, QPoint const& offset) const
 {
-    auto const contentsRegion = win::content_render_region(toplevel);
+    auto const contentsRegion = win::content_render_region(ref_win);
     if (contentsRegion.isEmpty()) {
         return WindowQuadList();
     }
 
     auto const geometryOffset = offset + bufferOffset();
-    const qreal textureScale = toplevel->bufferScale();
+    const qreal textureScale = ref_win->bufferScale();
 
     WindowQuadList quads;
     quads.reserve(contentsRegion.rectCount());
@@ -294,7 +294,7 @@ WindowQuadList window::makeContentsQuads(int id, QPoint const& offset) const
         QRectF sourceRect(contentsRect.topLeft() * textureScale,
                           contentsRect.bottomRight() * textureScale);
         if (auto& vp_getter = win_integration.get_viewport) {
-            if (auto vp = vp_getter(toplevel, contentsRect); vp.isValid()) {
+            if (auto vp = vp_getter(ref_win, contentsRect); vp.isValid()) {
                 sourceRect = vp;
             }
         }
@@ -307,12 +307,12 @@ WindowQuadList window::makeContentsQuads(int id, QPoint const& offset) const
         }
     }
 
-    for (auto child : toplevel->transient()->children) {
+    for (auto child : ref_win->transient()->children) {
         if (!child->transient()->annexed) {
             continue;
         }
-        if (child->remnant && !toplevel->remnant) {
-            // When the child is a remnant but the parent not there is no guarentee the toplevel
+        if (child->remnant && !ref_win->remnant) {
+            // When the child is a remnant but the parent not there is no guarentee the ref_win
             // will become one too what can cause artficats before the child cleanup timer fires.
             continue;
         }
@@ -323,7 +323,7 @@ WindowQuadList window::makeContentsQuads(int id, QPoint const& offset) const
         if (auto const buf = sw->get_buffer<buffer>(); !buf || !buf->isValid()) {
             continue;
         }
-        quads << sw->makeContentsQuads(sw->id(), offset + child->pos() - toplevel->pos());
+        quads << sw->makeContentsQuads(sw->id(), offset + child->pos() - ref_win->pos());
     }
 
     return quads;
@@ -336,31 +336,21 @@ void window::invalidateQuadsCache()
 
 void window::create_shadow()
 {
-    auto shadow = create_deco_shadow<render::shadow>(*toplevel);
+    auto shadow = create_deco_shadow<render::shadow>(*ref_win);
 
     if (!shadow && shadow_windowing.create) {
-        shadow = shadow_windowing.create(*toplevel);
+        shadow = shadow_windowing.create(*this);
     }
 
     if (shadow) {
         updateShadow(std::move(shadow));
-        Q_EMIT toplevel->qobject->shadowChanged();
+        Q_EMIT ref_win->qobject->shadowChanged();
     }
 }
 
 void window::updateShadow(std::unique_ptr<render::shadow> shadow)
 {
     m_shadow = std::move(shadow);
-}
-
-Toplevel* window::get_window() const
-{
-    return toplevel;
-}
-
-void window::updateToplevel(Toplevel* c)
-{
-    toplevel = c;
 }
 
 render::shadow const* window::shadow() const

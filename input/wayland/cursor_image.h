@@ -31,12 +31,18 @@ namespace wayland
 class cursor_theme;
 class platform;
 
-class KWIN_EXPORT cursor_image : public QObject
+class KWIN_EXPORT cursor_image_qobject : public QObject
 {
     Q_OBJECT
+Q_SIGNALS:
+    void changed();
+};
+
+class KWIN_EXPORT cursor_image
+{
 public:
     cursor_image(wayland::platform& platform);
-    ~cursor_image() override;
+    ~cursor_image();
 
     void setEffectsOverrideCursor(Qt::CursorShape shape);
     void removeEffectsOverrideCursor();
@@ -49,8 +55,7 @@ public:
 
     void updateDecoration();
 
-Q_SIGNALS:
-    void changed();
+    std::unique_ptr<cursor_image_qobject> qobject;
 
 private:
     void setup_theme();

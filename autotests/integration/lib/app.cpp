@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/seat/backend/wlroots/session.h"
 #include "base/wayland/output.h"
-#include "debug/console/wayland/wayland_console.h"
 #include "desktop/screen_locker_watcher.h"
 #include "input/backend/wlroots/platform.h"
 #include "input/wayland/cursor.h"
@@ -156,11 +155,6 @@ base::platform& WaylandTestApplication::get_base()
 base::wayland::server* WaylandTestApplication::get_wayland_server()
 {
     return server.get();
-}
-
-debug::console* WaylandTestApplication::create_debug_console()
-{
-    return new debug::wayland_console(*base.space);
 }
 
 void WaylandTestApplication::start()

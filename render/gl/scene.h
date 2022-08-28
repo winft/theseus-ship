@@ -38,6 +38,7 @@ class compositor;
 namespace gl
 {
 class backend;
+template<typename Scene>
 class lanczos_filter;
 class SyncManager;
 class SyncObject;
@@ -58,7 +59,7 @@ public:
                          std::deque<Toplevel*> const& windows,
                          std::chrono::milliseconds presentTime) override;
 
-    std::unique_ptr<render::shadow> createShadow(Toplevel* toplevel) override;
+    std::unique_ptr<render::shadow> createShadow(render::window* window) override;
     void handle_screen_geometry_change(QSize const& size) override;
     CompositingType compositingType() const override;
     bool hasSwapEvent() const override;
@@ -81,7 +82,7 @@ public:
      *
      * @return scene::texture*
      */
-    render::gl::texture* createTexture();
+    gl::texture<gl::backend>* createTexture();
 
     render::gl::backend* backend() const
     {
@@ -132,7 +133,7 @@ private:
     SyncManager* m_syncManager{nullptr};
     SyncObject* m_currentFence{nullptr};
 
-    lanczos_filter* lanczos{nullptr};
+    lanczos_filter<gl::scene>* lanczos{nullptr};
 
     struct {
         std::unique_ptr<GLTexture> texture;

@@ -10,6 +10,7 @@
 
 #include "scene.h"
 #include "texture.h"
+#include "window.h"
 
 #include "base/logging.h"
 #include "toplevel.h"
@@ -21,7 +22,7 @@ namespace KWin::render::gl
 
 buffer::buffer(render::window* window, gl::scene& scene)
     : render::buffer(window)
-    , m_texture(scene.createTexture())
+    , texture{scene.createTexture()}
 {
 }
 
@@ -39,33 +40,28 @@ static bool needs_buffer_update(gl::buffer const* buffer)
     return !buffer->win_integration->damage().isEmpty();
 }
 
-render::gl::texture* buffer::texture() const
-{
-    return m_texture.data();
-}
-
 bool buffer::bind()
 {
-    if (!m_texture->isNull()) {
-        if (!toplevel()->damage_region.isEmpty()) {
+    if (!texture->isNull()) {
+        if (!window->ref_win->damage_region.isEmpty()) {
             updateBuffer();
         }
         if (needs_buffer_update(this)) {
-            m_texture->update_from_buffer(this);
+            texture->update_from_buffer(this);
             // mipmaps need to be updated
-            m_texture->setDirty();
+            texture->setDirty();
         }
-        toplevel()->resetDamage();
+        window->ref_win->resetDamage();
         return true;
     }
     if (!isValid()) {
         return false;
     }
 
-    bool success = m_texture->load(this);
+    bool success = texture->load(this);
 
     if (success) {
-        toplevel()->resetDamage();
+        window->ref_win->resetDamage();
     } else {
         qCDebug(KWIN_CORE) << "Failed to bind window";
     }
@@ -74,7 +70,7 @@ bool buffer::bind()
 
 bool buffer::isValid() const
 {
-    if (!m_texture->isNull()) {
+    if (!texture->isNull()) {
         return true;
     }
     return render::buffer::isValid();

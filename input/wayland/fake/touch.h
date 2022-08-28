@@ -21,12 +21,10 @@ namespace wayland::fake
 
 class touch : public input::touch
 {
-    Q_OBJECT
 public:
     touch(Wrapland::Server::FakeInputDevice* device, input::platform* platform);
     touch(touch const&) = delete;
     touch& operator=(touch const&) = delete;
-    ~touch() override = default;
 
 private:
     input::platform* platform;

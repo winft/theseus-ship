@@ -25,10 +25,6 @@ namespace KWin::render::xrender
 #define DOUBLE_TO_FIXED(d) ((xcb_render_fixed_t)((d)*65536))
 #define FIXED_TO_DOUBLE(f) ((double)((f) / 65536.0))
 
-XRenderPicture* window::s_tempPicture = nullptr;
-QRect window::temp_visibleRect;
-XRenderPicture* window::s_fadeAlphaPicture = nullptr;
-
 window::window(Toplevel* c, xrender::scene& scene)
     : render::window(c, scene)
     , format(XRenderUtils::findPictFormat(c->xcb_visual))
@@ -37,14 +33,6 @@ window::window(Toplevel* c, xrender::scene& scene)
 
 window::~window()
 {
-}
-
-void window::cleanup()
-{
-    delete s_tempPicture;
-    s_tempPicture = nullptr;
-    delete s_fadeAlphaPicture;
-    s_fadeAlphaPicture = nullptr;
 }
 
 // Maps window coordinates to screen coordinates
@@ -61,15 +49,16 @@ QRect window::mapToScreen(paint_type mask, const WindowPaintData& data, const QR
     }
 
     // Move the rectangle to the screen position
-    auto const win_pos = toplevel->pos();
+    auto const win_pos = ref_win->pos();
     r.translate(win_pos.x(), win_pos.y());
 
     if (flags(mask & paint_type::screen_transformed)) {
         // Apply the screen transformation
-        r.moveTo(r.x() * scene::screen_paint.xScale() + scene::screen_paint.xTranslation(),
-                 r.y() * scene::screen_paint.yScale() + scene::screen_paint.yTranslation());
-        r.setWidth(r.width() * scene::screen_paint.xScale());
-        r.setHeight(r.height() * scene::screen_paint.yScale());
+        auto& screen_paint = static_cast<xrender::scene&>(scene).screen_paint;
+        r.moveTo(r.x() * screen_paint.xScale() + screen_paint.xTranslation(),
+                 r.y() * screen_paint.yScale() + screen_paint.yTranslation());
+        r.setWidth(r.width() * screen_paint.xScale());
+        r.setHeight(r.height() * screen_paint.yScale());
     }
 
     return r;
@@ -87,13 +76,14 @@ QPoint window::mapToScreen(paint_type mask, const WindowPaintData& data, const Q
     }
 
     // Move the point to the screen position
-    auto const win_pos = toplevel->pos();
+    auto const win_pos = ref_win->pos();
     pt += QPoint(win_pos.x(), win_pos.y());
 
     if (flags(mask & paint_type::screen_transformed)) {
         // Apply the screen transformation
-        pt.rx() = pt.x() * scene::screen_paint.xScale() + scene::screen_paint.xTranslation();
-        pt.ry() = pt.y() * scene::screen_paint.yScale() + scene::screen_paint.yTranslation();
+        auto& screen_paint = static_cast<xrender::scene&>(scene).screen_paint;
+        pt.rx() = pt.x() * screen_paint.xScale() + screen_paint.xTranslation();
+        pt.ry() = pt.y() * screen_paint.yScale() + screen_paint.yTranslation();
     }
 
     return pt;
@@ -111,8 +101,11 @@ QRegion window::bufferToWindowRegion(const QRegion& region) const
 
 void window::prepareTempPixmap()
 {
+    auto& temp_visibleRect = static_cast<xrender::scene&>(scene).temp_visible_rect;
+    auto& s_tempPicture = static_cast<xrender::scene&>(scene).temp_picture;
+
     const QSize oldSize = temp_visibleRect.size();
-    temp_visibleRect = win::visible_rect(toplevel).translated(-toplevel->pos());
+    temp_visibleRect = win::visible_rect(ref_win).translated(-ref_win->pos());
     if (s_tempPicture
         && (oldSize.width() < temp_visibleRect.width()
             || oldSize.height() < temp_visibleRect.height())) {
@@ -142,6 +135,10 @@ void window::prepareTempPixmap()
 // paint the window
 void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
 {
+    auto& temp_visibleRect = static_cast<xrender::scene&>(scene).temp_visible_rect;
+    auto& s_tempPicture = static_cast<xrender::scene&>(scene).temp_picture;
+    auto& s_fadeAlphaPicture = static_cast<xrender::scene&>(scene).fade_alpha_picture;
+
     setTransformedShape(QRegion()); // maybe nothing will be painted
     // check if there is something to paint
     bool opaque = isOpaque() && qFuzzyCompare(data.opacity(), 1.0);
@@ -155,48 +152,48 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
         }*/
     // Intersect the clip region with the rectangle the window occupies on the screen
     if (!(mask & (paint_type::window_transformed | paint_type::screen_transformed)))
-        region &= win::visible_rect(toplevel);
+        region &= win::visible_rect(ref_win);
 
     if (region.isEmpty())
         return;
-    auto pixmap = get_buffer<buffer>();
+    auto pixmap = get_buffer<buffer<render::window>>();
     if (!pixmap || !pixmap->isValid()) {
         return;
     }
-    xcb_render_picture_t pic = pixmap->picture();
+    xcb_render_picture_t pic = pixmap->picture;
     if (pic == XCB_RENDER_PICTURE_NONE) // The render format can be null for GL and/or Xv visuals
         return;
-    toplevel->resetDamage();
+    ref_win->resetDamage();
 
     // set picture filter
     filter = image_filter_type::fast;
 
     // do required transformations
-    auto const win_size = toplevel->size();
+    auto const win_size = ref_win->size();
     auto const wr = mapToScreen(mask, data, QRect(0, 0, win_size.width(), win_size.height()));
 
     // Content rect (in the buffer)
-    auto cr = win::frame_relative_client_rect(toplevel);
+    auto cr = win::frame_relative_client_rect(ref_win);
     qreal xscale = 1;
     qreal yscale = 1;
     bool scaled = false;
 
-    auto client = dynamic_cast<win::x11::window*>(toplevel);
-    auto& remnant = toplevel->remnant;
-    auto const decorationRect = QRect(QPoint(), toplevel->size());
+    auto client = dynamic_cast<win::x11::window*>(ref_win);
+    auto& remnant = ref_win->remnant;
+    auto const decorationRect = QRect(QPoint(), ref_win->size());
     if ((client && client->control && !client->noBorder())
         || (remnant && !remnant->data.no_border)) {
         // decorated client
         transformed_shape = decorationRect;
-        if (toplevel->is_shape) {
+        if (ref_win->is_shape) {
             // "xeyes" + decoration
             transformed_shape -= bufferToWindowRect(cr);
-            transformed_shape += bufferToWindowRegion(get_window()->render_region());
+            transformed_shape += bufferToWindowRegion(ref_win->render_region());
         }
     } else {
-        transformed_shape = bufferToWindowRegion(get_window()->render_region());
+        transformed_shape = bufferToWindowRegion(ref_win->render_region());
     }
-    if (auto shadow = win::shadow(toplevel)) {
+    if (auto shadow = win::shadow(ref_win)) {
         transformed_shape |= shadow->shadowRegion();
     }
 
@@ -224,8 +221,9 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
         yscale = data.yScale();
     }
     if (flags(mask & paint_type::screen_transformed)) {
-        xscale *= scene::screen_paint.xScale();
-        yscale *= scene::screen_paint.yScale();
+        auto& screen_paint = static_cast<xrender::scene&>(scene).screen_paint;
+        xscale *= screen_paint.xScale();
+        yscale *= screen_paint.yScale();
     }
     if (!qFuzzyCompare(xscale, 1.0) || !qFuzzyCompare(yscale, 1.0)) {
         scaled = true;
@@ -267,7 +265,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
     auto renderTarget = static_cast<xrender::scene&>(scene).xrenderBufferPicture();
     if (blitInTempPixmap) {
         if (scene_xRenderOffscreenTarget()) {
-            temp_visibleRect = win::visible_rect(toplevel).translated(-toplevel->pos());
+            temp_visibleRect = win::visible_rect(ref_win).translated(-ref_win->pos());
             renderTarget = *scene_xRenderOffscreenTarget();
         } else {
             prepareTempPixmap();
@@ -290,7 +288,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
         // transformation matrix, and doesn't have an alpha channel.
         // Since we only scale the picture, we can work around this by setting
         // the repeat mode to RepeatPad.
-        if (!get_window()->hasAlpha()) {
+        if (!ref_win->hasAlpha()) {
             const uint32_t values[] = {XCB_RENDER_REPEAT_PAD};
             xcb_render_change_picture(connection(), pic, XCB_RENDER_CP_REPEAT, values);
         }
@@ -431,7 +429,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
                              dr.width(),
                              dr.height());
         if (data.crossFadeProgress() < 1.0 && data.crossFadeProgress() > 0.0) {
-            auto previous = previous_buffer<buffer>();
+            auto previous = previous_buffer<buffer<render::window>>();
             if (previous && previous != pixmap) {
                 static xcb_render_color_t cFadeColor = {0, 0, 0, 0};
                 cFadeColor.alpha = uint16_t((1.0 - data.crossFadeProgress()) * 0xffff);
@@ -463,12 +461,12 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
                            DOUBLE_TO_FIXED(0),
                            DOUBLE_TO_FIXED(0),
                            DOUBLE_TO_FIXED(1)};
-                    xcb_render_set_picture_transform(connection(), previous->picture(), xform2);
+                    xcb_render_set_picture_transform(connection(), previous->picture, xform2);
                 }
 
                 xcb_render_composite(connection(),
                                      opaque ? XCB_RENDER_PICT_OP_OVER : XCB_RENDER_PICT_OP_ATOP,
-                                     previous->picture(),
+                                     previous->picture,
                                      *s_fadeAlphaPicture,
                                      renderTarget,
                                      cr.x(),
@@ -481,7 +479,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
                                      dr.height());
 
                 if (previous_size != current_size) {
-                    xcb_render_set_picture_transform(connection(), previous->picture(), identity);
+                    xcb_render_set_picture_transform(connection(), previous->picture, identity);
                 }
             }
         }
@@ -524,7 +522,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
             if (blitInTempPixmap) {
                 rect.x = -temp_visibleRect.left();
                 rect.y = -temp_visibleRect.top();
-                auto const size = toplevel->size();
+                auto const size = ref_win->size();
                 rect.width = size.width();
                 rect.height = size.height();
             } else {
@@ -566,7 +564,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
         xcb_render_set_picture_transform(connection(), pic, identity);
         if (filter == image_filter_type::good)
             setPictureFilter(pic, image_filter_type::fast);
-        if (!get_window()->hasAlpha()) {
+        if (!ref_win->hasAlpha()) {
             const uint32_t values[] = {XCB_RENDER_REPEAT_NONE};
             xcb_render_change_picture(connection(), pic, XCB_RENDER_CP_REPEAT, values);
         }
@@ -592,7 +590,7 @@ void window::setPictureFilter(xcb_render_picture_t pic, image_filter_type filter
 
 render::buffer* window::create_buffer()
 {
-    return new buffer(this, format);
+    return new buffer<render::window>(this, format);
 }
 
 void scene::handle_screen_geometry_change(QSize const& size)

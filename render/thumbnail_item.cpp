@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "singleton_interface.h"
 
 #include "base/logging.h"
-#include "effect/window_impl.h"
 #include "scripting/singleton_interface.h"
 #include "scripting/space.h"
 #include "toplevel.h"
@@ -48,8 +47,7 @@ basic_thumbnail_item::basic_thumbnail_item(QQuickItem* parent)
             &render::compositor_qobject::compositingToggled,
             this,
             &basic_thumbnail_item::compositingToggled);
-    compositingToggled();
-    QTimer::singleShot(0, this, &basic_thumbnail_item::init);
+    QTimer::singleShot(0, this, &basic_thumbnail_item::compositingToggled);
 }
 
 basic_thumbnail_item::~basic_thumbnail_item()
@@ -58,36 +56,35 @@ basic_thumbnail_item::~basic_thumbnail_item()
 
 void basic_thumbnail_item::compositingToggled()
 {
-    m_parent.clear();
+    m_parent = nullptr;
     auto effects = singleton_interface::effects;
-    if (effects) {
-        connect(
-            effects, &EffectsHandler::windowAdded, this, &basic_thumbnail_item::effectWindowAdded);
-        connect(effects, &EffectsHandler::windowDamaged, this, &basic_thumbnail_item::repaint);
-        effectWindowAdded();
+    if (!effects) {
+        // Nothing more to do.
+        return;
     }
+
+    connect(effects, &EffectsHandler::windowAdded, this, &basic_thumbnail_item::effectWindowAdded);
+    connect(effects, &EffectsHandler::windowDamaged, this, &basic_thumbnail_item::repaint);
+    effectWindowAdded();
 }
 
-void basic_thumbnail_item::init()
+void basic_thumbnail_item::ensure_parent_effect_window()
 {
-    findParentEffectWindow();
     if (m_parent) {
-        m_parent->registerThumbnail(this);
+        return;
     }
-}
 
-void basic_thumbnail_item::findParentEffectWindow()
-{
     auto effects = singleton_interface::effects;
-    if (effects) {
-        QQuickWindow* qw = window();
-        if (!qw) {
-            qCDebug(KWIN_CORE) << "No QQuickWindow assigned yet";
-            return;
-        }
-        if (auto w = static_cast<render::effects_window_impl*>(effects->findWindow(qw))) {
-            m_parent = QPointer<render::effects_window_impl>(w);
-        }
+    assert(effects);
+
+    auto qw = window();
+    if (!qw) {
+        qCDebug(KWIN_CORE) << "No QQuickWindow assigned yet";
+        return;
+    }
+    if (auto w = effects->findWindow(qw)) {
+        singleton_interface::register_thumbnail(*w, *this);
+        m_parent = w;
     }
 }
 
@@ -95,12 +92,7 @@ void basic_thumbnail_item::effectWindowAdded()
 {
     // the window might be added before the EffectWindow is created
     // by using this slot we can register the thumbnail when it is finally created
-    if (m_parent.isNull()) {
-        findParentEffectWindow();
-        if (m_parent) {
-            m_parent->registerThumbnail(this);
-        }
-    }
+    ensure_parent_effect_window();
 }
 
 void basic_thumbnail_item::setBrightness(qreal brightness)
@@ -201,7 +193,7 @@ void window_thumbnail_item::paint(QPainter* painter)
 
 void window_thumbnail_item::repaint(KWin::EffectWindow* w)
 {
-    if (static_cast<KWin::render::effects_window_impl*>(w)->window()->internal_id == m_wId) {
+    if (w->internalId() == m_wId) {
         update();
     }
 }

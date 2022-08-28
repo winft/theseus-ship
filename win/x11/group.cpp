@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "window_find.h"
 
 #include "main.h"
+#include "render/effect/window_group_impl.h"
 #include "render/effects.h"
 #include "win/control.h"
 #include "win/space.h"

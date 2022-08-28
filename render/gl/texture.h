@@ -20,63 +20,74 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
-#include "kwin_export.h"
-#include "kwingl/texture_p.h"
+#include "buffer.h"
 
+#include <kwingl/texture_p.h>
 #include <kwingl/utils.h>
 
-namespace KWin::render
+namespace KWin::render::gl
 {
-class buffer;
 
-namespace gl
-{
-class backend;
-class texture_private;
-
-class KWIN_EXPORT texture : public GLTexture
+template<typename Backend>
+class texture_private : public GLTexturePrivate
 {
 public:
-    explicit texture(gl::backend* backend);
-    ~texture() override;
+    virtual bool updateTexture(render::buffer* buffer) = 0;
+    virtual Backend* backend() = 0;
+};
 
-    texture& operator=(texture const& tex);
+template<typename Backend>
+class texture : public GLTexture
+{
+public:
+    explicit texture(Backend* backend)
+        : GLTexture(*backend->createBackendTexture(this))
+    {
+    }
 
-    void discard() override final;
+    texture& operator=(texture const& tex)
+    {
+        d_ptr = tex.d_ptr;
+        return *this;
+    }
+
+    void discard() override final
+    {
+        d_ptr = d_func()->backend()->createBackendTexture(this);
+    }
 
 private:
-    texture(texture_private& dd);
+    texture(texture_private<Backend>& dd);
 
-    bool load(render::buffer* buffer);
-    void update_from_buffer(render::buffer* buffer);
-
-    inline texture_private* d_func()
+    bool load(render::buffer* buffer)
     {
-        return reinterpret_cast<texture_private*>(qGetPtrHelper(d_ptr));
-    }
-    inline const texture_private* d_func() const
-    {
-        return reinterpret_cast<texture_private const*>(qGetPtrHelper(d_ptr));
+        if (!buffer->isValid()) {
+            return false;
+        }
+
+        // decrease the reference counter for the old texture
+        // new texture_private();
+        d_ptr = d_func()->backend()->createBackendTexture(this);
+
+        return d_func()->updateTexture(buffer);
     }
 
-    friend class texture_private;
+    void update_from_buffer(render::buffer* buffer)
+    {
+        d_func()->updateTexture(buffer);
+    }
+
+    inline texture_private<Backend>* d_func()
+    {
+        return reinterpret_cast<texture_private<Backend>*>(qGetPtrHelper(d_ptr));
+    }
+    inline const texture_private<Backend>* d_func() const
+    {
+        return reinterpret_cast<texture_private<Backend> const*>(qGetPtrHelper(d_ptr));
+    }
+
+    friend class texture_private<Backend>;
     friend class buffer;
 };
 
-class KWIN_EXPORT texture_private : public GLTexturePrivate
-{
-public:
-    ~texture_private() override;
-
-    virtual bool updateTexture(render::buffer* buffer) = 0;
-    virtual gl::backend* backend() = 0;
-
-protected:
-    texture_private();
-
-private:
-    Q_DISABLE_COPY(texture_private)
-};
-
-}
 }

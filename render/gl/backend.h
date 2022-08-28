@@ -38,7 +38,9 @@ class SceneOpenGL;
 namespace render::gl
 {
 
+template<typename Backend>
 class texture;
+template<typename Backend>
 class texture_private;
 
 /**
@@ -71,7 +73,7 @@ public:
         return m_renderTimer.nsecsElapsed();
     }
     virtual void screenGeometryChanged(const QSize& size) = 0;
-    virtual texture_private* createBackendTexture(gl::texture* texture) = 0;
+    virtual texture_private<backend>* createBackendTexture(gl::texture<backend>* texture) = 0;
 
     /**
      * @brief Backend specific code to prepare the rendering of a frame including flushing the

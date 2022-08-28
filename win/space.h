@@ -90,7 +90,9 @@ public:
 
     explicit space(render::compositor& render)
         : qobject{std::make_unique<space_qobject>([this] { space_start_reconfigure_timer(*this); })}
-        , outline{std::make_unique<render::outline>(render)}
+        , outline{render::outline::create(
+              render,
+              [this] { return render::create_outline_visual(this->render, *outline); })}
         , render{render}
         , deco{std::make_unique<deco::bridge<space>>(*this)}
         , appmenu{std::make_unique<dbus::appmenu>(dbus::create_appmenu_callbacks(*this))}
@@ -136,6 +138,8 @@ public:
     {
         // Can't be pure virtual because the function might be called from the ctor.
     }
+
+    virtual void show_debug_console() = 0;
 
     std::unique_ptr<qobject_t> qobject;
 

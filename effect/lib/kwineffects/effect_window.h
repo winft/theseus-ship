@@ -701,6 +701,10 @@ public:
      */
     virtual pid_t pid() const = 0;
 
+    /// Well defined only on X11.
+    virtual qlonglong windowId() const = 0;
+    virtual QUuid internalId() const = 0;
+
     /**
      * Can be used to by effects to store arbitrary data in the EffectWindow.
      *
