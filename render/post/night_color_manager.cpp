@@ -536,14 +536,16 @@ void night_color_manager::update_transition_timings(bool force)
 
     if (!force) {
         // first try by only switching the timings
-        if (daylight) {
-            // next is morning
-            prev_transition = next_transition;
-            next_transition = get_sun_timings(todayNow.addDays(1), lat, lng, true);
-        } else {
+        if (prev_transition.first.date() == next_transition.first.date()) {
             // next is evening
+            daylight = true;
             prev_transition = next_transition;
             next_transition = get_sun_timings(todayNow, lat, lng, false);
+        } else {
+            // next is morning
+            daylight = false;
+            prev_transition = next_transition;
+            next_transition = get_sun_timings(todayNow.addDays(1), lat, lng, true);
         }
     }
 
