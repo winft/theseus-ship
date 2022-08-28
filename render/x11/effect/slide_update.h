@@ -44,7 +44,7 @@ effect::anim_update get_slide_update(EffectIntegrator& effi, EffectWindow& windo
 
     if (value.isEmpty()) {
         // We inform that the property was removed by sending an invalid update on the window.
-        return {&window, false, {}, {}, {}, {}, {}};
+        return {{&window, false}, {}, {}, {}, {}, {}};
     }
 
     // Offset and location are required.
@@ -94,7 +94,7 @@ effect::anim_update get_slide_update(EffectIntegrator& effi, EffectWindow& windo
         distance = value_data[4];
     }
 
-    return {&window, true, pos, in, out, offset, distance};
+    return {{&window, true}, pos, in, out, offset, distance};
 }
 
 }

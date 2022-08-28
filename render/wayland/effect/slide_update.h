@@ -53,8 +53,7 @@ effect::anim_update get_slide_update(EffectIntegrator& effi, EffectWindow& windo
     // Per convention offset might be -1 to indicate the effect should choose. So first cast to int.
     auto offset_as_int = static_cast<int>(slide->offset());
 
-    return {&window,
-            true,
+    return {{&window, true},
             get_slide_position(slide->location()),
             {},
             {},

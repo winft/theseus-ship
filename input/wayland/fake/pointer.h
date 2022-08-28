@@ -39,7 +39,7 @@ public:
                          [this](auto const& pos) {
                              auto redirect = this->platform->redirect;
                              // TODO: Fix time
-                             redirect->pointer->process_motion_absolute({pos, this, 0});
+                             redirect->pointer->process_motion_absolute({pos, {this, 0}});
                              redirect->platform.base.space->kde_idle->simulateUserActivity();
                          });
 
@@ -50,7 +50,7 @@ public:
             [this](auto button) {
                 auto redirect = this->platform->redirect;
                 // TODO: Fix time
-                redirect->pointer->process_button({button, button_state::pressed, this, 0});
+                redirect->pointer->process_button({button, button_state::pressed, {this, 0}});
                 redirect->platform.base.space->kde_idle->simulateUserActivity();
             });
         QObject::connect(
@@ -60,7 +60,7 @@ public:
             [this](auto button) {
                 auto redirect = this->platform->redirect;
                 // TODO: Fix time
-                redirect->pointer->process_button({button, button_state::released, this, 0});
+                redirect->pointer->process_button({button, button_state::released, {this, 0}});
                 redirect->platform.base.space->kde_idle->simulateUserActivity();
             });
         QObject::connect(
@@ -73,7 +73,7 @@ public:
                 auto axis = (orientation == Qt::Horizontal) ? axis_orientation::horizontal
                                                             : axis_orientation::vertical;
                 // TODO: Fix time
-                redirect->pointer->process_axis({axis_source::unknown, axis, delta, 0, this, 0});
+                redirect->pointer->process_axis({axis_source::unknown, axis, delta, 0, {this, 0}});
                 redirect->platform.base.space->kde_idle->simulateUserActivity();
             });
     }

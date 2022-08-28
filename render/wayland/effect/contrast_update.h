@@ -35,8 +35,7 @@ effect::color_update get_contrast_update(EffectIntegrator& effi, EffectWindow& w
         return {};
     }
 
-    return {&window,
-            true,
+    return {{&window, true},
             contrast->region(),
             get_contrast_color_matrix(
                 contrast->contrast(), contrast->intensity(), contrast->saturation())};

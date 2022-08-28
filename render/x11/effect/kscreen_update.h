@@ -18,13 +18,13 @@ template<typename EffectIntegrator>
 effect::fade_update get_kscreen_update(EffectIntegrator& effi)
 {
     if (effi.atom == XCB_ATOM_NONE) {
-        return {nullptr, false, 0};
+        return {{nullptr, false}, 0};
     }
 
     auto const value = effi.effects.readRootProperty(effi.atom, XCB_ATOM_CARDINAL, 32);
     if (value.isEmpty()) {
         // Property was deleted. Screen should be faded in.
-        return {nullptr, true, 1};
+        return {{nullptr, true}, 1};
     }
 
     auto data = reinterpret_cast<const uint32_t*>(value.data());
@@ -50,10 +50,10 @@ effect::fade_update get_kscreen_update(EffectIntegrator& effi)
     default:
         qCDebug(KWIN_CORE)
             << "Incorrect KScreen effect integration Property state, immediate stop: " << data;
-        return {nullptr, true, 1};
+        return {{nullptr, true}, 1};
     }
 
-    return {nullptr, true, state};
+    return {{nullptr, true}, state};
 }
 
 template<typename EffectIntegrator>

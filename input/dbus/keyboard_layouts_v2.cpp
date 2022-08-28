@@ -125,11 +125,11 @@ void keyboard_layouts_v2::handle_keyboard_added(input::keyboard* keyboard)
                      this,
                      [this, index] { Q_EMIT layoutListChanged(keyboards.at(index).data.id); });
 
-    auto internal = keyboard_v2_internal({index,
-                                          QString::fromStdString(ctrl->metadata.name),
-                                          QString::fromStdString(ctrl->metadata.sys_name),
-                                          ctrl->metadata.vendor_id,
-                                          ctrl->metadata.product_id,
+    auto internal = keyboard_v2_internal({{index,
+                                           QString::fromStdString(ctrl->metadata.name),
+                                           QString::fromStdString(ctrl->metadata.sys_name),
+                                           ctrl->metadata.vendor_id,
+                                           ctrl->metadata.product_id},
                                           keyboard});
 
     keyboards.insert({index, internal});
