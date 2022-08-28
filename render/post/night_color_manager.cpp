@@ -269,7 +269,8 @@ void night_color_manager::read_config()
         break;
     }
 
-    night_target_temp = qBound(MIN_TEMPERATURE, s->nightTemperature(), NEUTRAL_TEMPERATURE);
+    day_target_temp = qBound(MIN_TEMPERATURE, s->dayTemperature(), DEFAULT_DAY_TEMPERATURE);
+    night_target_temp = qBound(MIN_TEMPERATURE, s->nightTemperature(), DEFAULT_DAY_TEMPERATURE);
 
     double lat, lng;
     auto correctReadin = [&lat, &lng]() {
@@ -616,7 +617,7 @@ bool night_color_manager::check_automatic_sun_timings() const
 int night_color_manager::current_target_temp() const
 {
     if (!m_running) {
-        return NEUTRAL_TEMPERATURE;
+        return DEFAULT_DAY_TEMPERATURE;
     }
 
     if (m_mode == night_color_mode::constant) {

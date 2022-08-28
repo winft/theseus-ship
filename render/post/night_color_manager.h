@@ -311,9 +311,9 @@ private:
     QTimer* slow_update_timer{nullptr};
     QTimer* quick_adjust_timer{nullptr};
 
-    int current_temp{NEUTRAL_TEMPERATURE};
-    int target_temp{NEUTRAL_TEMPERATURE};
-    int day_target_temp{NEUTRAL_TEMPERATURE};
+    int current_temp{DEFAULT_DAY_TEMPERATURE};
+    int target_temp{DEFAULT_DAY_TEMPERATURE};
+    int day_target_temp{DEFAULT_DAY_TEMPERATURE};
     int night_target_temp{DEFAULT_NIGHT_TEMPERATURE};
 
     int failed_commit_attempts{0};

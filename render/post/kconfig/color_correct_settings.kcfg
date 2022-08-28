@@ -26,6 +26,9 @@
         <entry name="NightTemperatureEnabled" type="Bool">
             <default>true</default>
         </entry>
+        <entry name="DayTemperature" type="Int">
+            <default>6500</default>
+        </entry>
         <entry name="NightTemperature" type="Int">
             <default>4500</default>
         </entry>
