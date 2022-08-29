@@ -14,11 +14,11 @@ namespace KWin::render::xrender
 {
 
 template<typename Window>
-class buffer : public render::buffer
+class buffer : public render::buffer<Window>
 {
 public:
     buffer(Window* window, xcb_render_pictformat_t format)
-        : render::buffer(window)
+        : render::buffer<Window>(window)
         , picture{XCB_RENDER_PICTURE_NONE}
         , format{format}
     {
@@ -33,16 +33,18 @@ public:
 
     void create() override
     {
-        if (isValid()) {
+        if (this->isValid()) {
             return;
         }
-        render::buffer::create();
-        if (!isValid()) {
+        render::buffer<Window>::create();
+        if (!this->isValid()) {
             return;
         }
+
         picture = xcb_generate_id(connection());
         auto const& win_integrate
-            = static_cast<render::x11::buffer_win_integration&>(*win_integration);
+            = static_cast<render::x11::buffer_win_integration<render::buffer<Window>>&>(
+                *this->win_integration);
         xcb_render_create_picture(connection(), picture, win_integrate.pixmap, format, 0, nullptr);
     }
 

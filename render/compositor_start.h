@@ -5,7 +5,6 @@
 */
 #pragma once
 
-#include "effects.h"
 #include "types.h"
 #include "x11/compositor_selection_owner.h"
 
@@ -14,6 +13,8 @@
 #include "win/remnant.h"
 #include "win/space_window_release.h"
 #include "win/stacking_order.h"
+
+#include <kwineffects/effects_handler.h>
 
 #include <xcb/composite.h>
 
@@ -94,7 +95,7 @@ void compositor_start_scene(Compositor& comp)
     }
 
     // Sets also the 'effects' pointer.
-    comp.effects = comp.platform.createEffectsHandler(&comp, comp.scene.get());
+    comp.effects = comp.platform.createEffectsHandler();
     QObject::connect(comp.effects.get(),
                      &EffectsHandler::screenGeometryChanged,
                      comp.qobject.get(),
@@ -159,6 +160,28 @@ void compositor_stop(Compositor& comp, bool on_shutdown)
 
     comp.m_state = state::off;
     Q_EMIT comp.qobject->compositingToggled(false);
+}
+
+/**
+ * Re-initializes the Compositor completely.
+ * Connected to the D-Bus signal org.kde.KWin /KWin reinitCompositing
+ */
+template<typename Compositor>
+void reinitialize_compositor(Compositor& comp)
+{
+    // Reparse config. Config options will be reloaded by start()
+    kwinApp()->config()->reparseConfiguration();
+
+    // Restart compositing
+    compositor_stop(comp, false);
+
+    assert(comp.space);
+    comp.start(*comp.space);
+
+    if (comp.effects) {
+        // start() may fail
+        comp.effects->reconfigure();
+    }
 }
 
 }

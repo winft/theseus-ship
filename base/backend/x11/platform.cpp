@@ -36,7 +36,7 @@ void platform::update_outputs_impl()
 
     // First check for removed outputs (we go backwards through the outputs, LIFO).
     for (auto old_it = this->outputs.rbegin(); old_it != this->outputs.rend();) {
-        auto x11_old_out = static_cast<base::x11::output*>(old_it->get());
+        auto x11_old_out = static_cast<base::x11::output*>(*old_it);
 
         auto is_in_new_outputs = [x11_old_out, &res_outs] {
             auto it
@@ -54,23 +54,24 @@ void platform::update_outputs_impl()
         }
 
         qCDebug(KWIN_X11) << "  removed:" << x11_old_out->name();
-        auto old_out = std::move(*old_it);
+        auto old_out = *old_it;
         old_it = static_cast<decltype(old_it)>(this->outputs.erase(std::next(old_it).base()));
-        Q_EMIT output_removed(old_out.get());
+        Q_EMIT output_removed(old_out);
+        delete old_out;
     }
 
     // Second check for added outputs.
     for (auto& out : res_outs) {
         auto it
             = std::find_if(this->outputs.begin(), this->outputs.end(), [&out](auto const& old_out) {
-                  auto old_x11_out = static_cast<base::x11::output*>(old_out.get());
+                  auto old_x11_out = static_cast<base::x11::output*>(old_out);
                   return old_x11_out->data.crtc == out->data.crtc
                       && old_x11_out->data.name == out->data.name;
               });
         if (it == this->outputs.end()) {
             qCDebug(KWIN_X11) << "  added:" << out->name();
-            this->outputs.push_back(std::move(out));
-            Q_EMIT output_added(this->outputs.back().get());
+            this->outputs.push_back(out.release());
+            Q_EMIT output_added(this->outputs.back());
         }
     }
 

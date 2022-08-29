@@ -6,6 +6,7 @@
 #pragma once
 
 #include "focus_stealing.h"
+#include "startup_notify.h"
 
 #include "base/output_helpers.h"
 #include "main.h"
@@ -15,15 +16,6 @@
 
 namespace KWin::win::x11
 {
-
-template<typename Space>
-bool check_startup_notification(Space& space,
-                                xcb_window_t w,
-                                KStartupInfoId& id,
-                                KStartupInfoData& data)
-{
-    return space.startup->checkStartup(w, id, data) == KStartupInfo::Match;
-}
 
 template<typename Win>
 void startup_id_changed(Win* win)
@@ -45,7 +37,7 @@ void startup_id_changed(Win* win)
         send_window_to_desktop(win->space, win, desktop, true);
     }
     if (asn_data.xinerama() != -1) {
-        auto output = base::get_output(kwinApp()->get_base().get_outputs(), asn_data.xinerama());
+        auto output = base::get_output(win->space.base.outputs, asn_data.xinerama());
         if (output) {
             send_to_screen(win->space, win, *output);
         }

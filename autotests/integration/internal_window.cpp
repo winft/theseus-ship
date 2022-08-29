@@ -43,8 +43,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace Wrapland::Client;
 
-Q_DECLARE_METATYPE(NET::WindowType);
-
 namespace KWin
 {
 
@@ -78,9 +76,10 @@ private Q_SLOTS:
     void testEffectWindow();
 };
 
-win::internal_window* get_internal_window_from_id(uint32_t id)
+Test::space::internal_window_t* get_internal_window_from_id(uint32_t id)
 {
-    return dynamic_cast<win::internal_window*>(Test::app()->base.space->windows_map.at(id));
+    return dynamic_cast<Test::space::internal_window_t*>(
+        Test::app()->base.space->windows_map.at(id));
 }
 
 class HelperWindow : public QRasterWindow
@@ -532,7 +531,7 @@ void InternalWindowTest::testOpacity()
     QCOMPARE(internalClient->opacity(), 0.5);
 
     QSignalSpy opacityChangedSpy(internalClient->qobject.get(),
-                                 &Toplevel::qobject_t::opacityChanged);
+                                 &win::window_qobject::opacityChanged);
     QVERIFY(opacityChangedSpy.isValid());
     win.setOpacity(0.75);
     QCOMPARE(opacityChangedSpy.count(), 1);
@@ -599,7 +598,7 @@ void InternalWindowTest::testSkipCloseAnimation()
     QVERIFY(internalClient);
     QCOMPARE(internalClient->skipsCloseAnimation(), initial);
     QSignalSpy skipCloseChangedSpy(internalClient->qobject.get(),
-                                   &Toplevel::qobject_t::skipCloseAnimationChanged);
+                                   &win::window_qobject::skipCloseAnimationChanged);
     QVERIFY(skipCloseChangedSpy.isValid());
     win.setProperty("KWIN_SKIP_CLOSE_ANIMATION", !initial);
     QCOMPARE(skipCloseChangedSpy.count(), 1);

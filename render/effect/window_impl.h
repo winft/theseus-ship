@@ -5,153 +5,673 @@
 */
 #pragma once
 
-#include "render/window.h"
+#include "base/output_helpers.h"
+#include "render/thumbnail_item.h"
+#include "render/types.h"
+#include "render/x11/effect.h"
+#include "win/actions.h"
+#include "win/desktop_get.h"
+#include "win/geo.h"
+#include "win/meta.h"
+#include "win/move.h"
+#include "win/scene.h"
 #include "win/types.h"
 
 #include <kwineffects/effect_window.h>
+#include <kwineffects/effects_handler.h>
+#include <kwineffects/window_quad.h>
+#include <kwingl/texture.h>
 
 #include <QHash>
 
-namespace KWin
+namespace KWin::render
 {
 
-class Toplevel;
-
-namespace render
-{
-
-class basic_thumbnail_item;
-class desktop_thumbnail_item;
-class window_thumbnail_item;
-
-class KWIN_EXPORT effects_window_impl : public EffectWindow
+template<typename Window>
+class effects_window_impl : public EffectWindow
 {
 public:
-    explicit effects_window_impl(render::window& window);
-    ~effects_window_impl() override;
+    using space_t = typename Window::ref_t::space_t;
 
-    void enablePainting(int reason) override;
-    void disablePainting(int reason) override;
-    bool isPaintingEnabled() override;
+    explicit effects_window_impl(Window& window)
+        : window{window}
+    {
+        // Deleted windows are not managed. So, when windowClosed signal is
+        // emitted, effects can't distinguish managed windows from unmanaged
+        // windows(e.g. combo box popups, popup menus, etc). Save value of the
+        // managed property during construction of EffectWindow. At that time,
+        // parent can be Client, XdgShellClient, or Unmanaged. So, later on, when
+        // an instance of Deleted becomes parent of the EffectWindow, effects
+        // can still figure out whether it is/was a managed window.
+        managed = window.ref_win->isClient();
 
-    void addRepaint(const QRect& r) override;
-    void addRepaint(int x, int y, int w, int h) override;
-    void addRepaintFull() override;
-    void addLayerRepaint(const QRect& r) override;
-    void addLayerRepaint(int x, int y, int w, int h) override;
+        waylandClient = window.ref_win->is_wayland_window();
+        x11Client = dynamic_cast<typename space_t::x11_window*>(window.ref_win)
+            || window.ref_win->xcb_window;
+    }
 
-    void refWindow() override;
-    void unrefWindow() override;
+    ~effects_window_impl() override
+    {
+        QVariant cachedTextureVariant = data(LanczosCacheRole);
+        if (cachedTextureVariant.isValid()) {
+            auto cachedTexture = static_cast<GLTexture*>(cachedTextureVariant.value<void*>());
+            delete cachedTexture;
+        }
+    }
 
-    const EffectWindowGroup* group() const override;
+    void enablePainting(int reason) override
+    {
+        window.enablePainting(static_cast<window_paint_disable_type>(reason));
+    }
 
-    bool isDeleted() const override;
-    bool isMinimized() const override;
-    double opacity() const override;
-    bool hasAlpha() const override;
+    void disablePainting(int reason) override
+    {
+        window.disablePainting(static_cast<window_paint_disable_type>(reason));
+    }
 
-    QStringList activities() const override;
-    int desktop() const override;
-    QVector<uint> desktops() const override;
-    int x() const override;
-    int y() const override;
-    int width() const override;
-    int height() const override;
+    bool isPaintingEnabled() override
+    {
+        return window.isPaintingEnabled();
+    }
 
-    QSize basicUnit() const override;
-    QRect geometry() const override;
-    QRect frameGeometry() const override;
-    QRect bufferGeometry() const override;
-    QRect clientGeometry() const override;
+    void addRepaint(const QRect& r) override
+    {
+        window.ref_win->addRepaint(r);
+    }
 
-    QString caption() const override;
+    void addRepaint(int x, int y, int w, int h) override
+    {
+        addRepaint(QRect(x, y, w, h));
+    }
 
-    QRect expandedGeometry() const override;
-    int screen() const override;
-    QPoint pos() const override;
-    QSize size() const override;
-    QRect rect() const override;
+    void addRepaintFull() override
+    {
+        window.ref_win->addRepaintFull();
+    }
 
-    bool isMovable() const override;
-    bool isMovableAcrossScreens() const override;
-    bool isUserMove() const override;
-    bool isUserResize() const override;
-    QRect iconGeometry() const override;
+    void addLayerRepaint(const QRect& r) override
+    {
+        window.ref_win->addLayerRepaint(r);
+    }
 
-    bool isDesktop() const override;
-    bool isDock() const override;
-    bool isToolbar() const override;
-    bool isMenu() const override;
-    bool isNormalWindow() const override;
-    bool isSpecialWindow() const override;
-    bool isDialog() const override;
-    bool isSplash() const override;
-    bool isUtility() const override;
-    bool isDropdownMenu() const override;
-    bool isPopupMenu() const override;
-    bool isTooltip() const override;
-    bool isNotification() const override;
-    bool isCriticalNotification() const override;
-    bool isOnScreenDisplay() const override;
-    bool isComboBox() const override;
-    bool isDNDIcon() const override;
-    bool skipsCloseAnimation() const override;
+    void addLayerRepaint(int x, int y, int w, int h) override
+    {
+        addLayerRepaint(QRect(x, y, w, h));
+    }
 
-    bool acceptsFocus() const override;
-    bool keepAbove() const override;
-    bool keepBelow() const override;
-    bool isModal() const override;
-    bool isPopupWindow() const override;
-    bool isOutline() const override;
-    bool isLockScreen() const override;
+    void refWindow() override
+    {
+        if (window.ref_win->transient()->annexed) {
+            return;
+        }
+        if (auto& remnant = window.ref_win->remnant) {
+            return remnant->ref();
+        }
+        abort(); // TODO
+    }
 
-    Wrapland::Server::Surface* surface() const override;
-    bool isFullScreen() const override;
-    bool isUnresponsive() const override;
+    void unrefWindow() override
+    {
+        if (window.ref_win->transient()->annexed) {
+            return;
+        }
+        if (auto& remnant = window.ref_win->remnant) {
+            // delays deletion in case
+            return remnant->unref();
+        }
+        abort(); // TODO
+    }
 
-    QRect contentsRect() const override;
-    bool decorationHasAlpha() const override;
-    QIcon icon() const override;
-    QString windowClass() const override;
-    NET::WindowType windowType() const override;
-    bool isSkipSwitcher() const override;
-    bool isCurrentTab() const override;
-    QString windowRole() const override;
+    const EffectWindowGroup* group() const override
+    {
+        if (auto c = dynamic_cast<typename space_t::x11_window*>(window.ref_win); c && c->group()) {
+            return c->group()->effect_group;
+        }
+        return nullptr; // TODO
+    }
 
-    bool isManaged() const override;
-    bool isWaylandClient() const override;
-    bool isX11Client() const override;
+    bool isDeleted() const override
+    {
+        return static_cast<bool>(window.ref_win->remnant);
+    }
 
-    pid_t pid() const override;
-    qlonglong windowId() const override;
-    QUuid internalId() const override;
+    bool isMinimized() const override
+    {
+        if (window.ref_win->control) {
+            return window.ref_win->control->minimized;
+        }
+        if (auto& remnant = window.ref_win->remnant) {
+            return remnant->data.minimized;
+        }
+        return false;
+    }
 
-    QRect decorationInnerRect() const override;
-    KDecoration2::Decoration* decoration() const override;
-    QByteArray readProperty(long atom, long type, int format) const override;
-    void deleteProperty(long atom) const override;
+    double opacity() const override
+    {
+        return window.ref_win->opacity();
+    }
 
-    EffectWindow* findModal() override;
-    EffectWindow* transientFor() override;
-    EffectWindowList mainWindows() const override;
+    bool hasAlpha() const override
+    {
+        return window.ref_win->hasAlpha();
+    }
 
-    WindowQuadList buildQuads(bool force = false) const override;
+    QStringList activities() const override
+    {
+        // No support for Activities.
+        return {};
+    }
 
-    void minimize() override;
-    void unminimize() override;
-    void closeWindow() override;
+    int desktop() const override
+    {
+        return window.ref_win->desktop();
+    }
 
-    void referencePreviousWindowPixmap() override;
-    void unreferencePreviousWindowPixmap() override;
+    QVector<uint> desktops() const override
+    {
+        if (window.ref_win->control || window.ref_win->remnant) {
+            return win::x11_desktop_ids(window.ref_win);
+        }
+        return {};
+    }
 
-    QWindow* internalWindow() const override;
+    int x() const override
+    {
+        return window.ref_win->pos().x();
+    }
 
-    void elevate(bool elevate);
+    int y() const override
+    {
+        return window.ref_win->pos().y();
+    }
 
-    void setData(int role, const QVariant& data) override;
-    QVariant data(int role) const override;
+    int width() const override
+    {
+        return window.ref_win->size().width();
+    }
 
-    void registerThumbnail(basic_thumbnail_item* item);
+    int height() const override
+    {
+        return window.ref_win->size().height();
+    }
+
+    QSize basicUnit() const override
+    {
+        if (auto client = dynamic_cast<typename space_t::x11_window*>(window.ref_win)) {
+            return client->basicUnit();
+        }
+        return QSize(1, 1);
+    }
+
+    QRect geometry() const override
+    {
+        return frameGeometry();
+    }
+
+    QRect frameGeometry() const override
+    {
+        return window.ref_win->frameGeometry();
+    }
+
+    QRect bufferGeometry() const override
+    {
+        return win::render_geometry(window.ref_win);
+    }
+
+    QRect clientGeometry() const override
+    {
+        return win::frame_to_client_rect(window.ref_win, window.ref_win->frameGeometry());
+    }
+
+    QString caption() const override
+    {
+        if (window.ref_win->control || window.ref_win->remnant) {
+            return win::caption(window.ref_win);
+        }
+        return {};
+    }
+
+    QRect expandedGeometry() const override
+    {
+        return expanded_geometry_recursion(window.ref_win);
+    }
+
+    int screen() const override
+    {
+        if (!window.ref_win->central_output) {
+            return 0;
+        }
+        return base::get_output_index(window.ref_win->space.base.outputs,
+                                      *window.ref_win->central_output);
+    }
+
+    QPoint pos() const override
+    {
+        return window.ref_win->pos();
+    }
+
+    QSize size() const override
+    {
+        return window.ref_win->size();
+    }
+
+    QRect rect() const override
+    {
+        return QRect(QPoint(), window.ref_win->size());
+    }
+
+    bool isMovable() const override
+    {
+        return window.ref_win->control ? window.ref_win->isMovable() : false;
+    }
+
+    bool isMovableAcrossScreens() const override
+    {
+        return window.ref_win->control ? window.ref_win->isMovableAcrossScreens() : false;
+    }
+
+    bool isUserMove() const override
+    {
+        return window.ref_win->control ? win::is_move(window.ref_win) : false;
+    }
+
+    bool isUserResize() const override
+    {
+        return window.ref_win->control ? win::is_resize(window.ref_win) : false;
+    }
+
+    QRect iconGeometry() const override
+    {
+        return window.ref_win->control ? window.ref_win->iconGeometry() : QRect();
+    }
+
+    bool isDesktop() const override
+    {
+        return win::is_desktop(window.ref_win);
+    }
+
+    bool isDock() const override
+    {
+        return win::is_dock(window.ref_win);
+    }
+
+    bool isToolbar() const override
+    {
+        return win::is_toolbar(window.ref_win);
+    }
+
+    bool isMenu() const override
+    {
+        return win::is_menu(window.ref_win);
+    }
+
+    bool isNormalWindow() const override
+    {
+        return win::is_normal(window.ref_win);
+    }
+
+    bool isSpecialWindow() const override
+    {
+        return window.ref_win->control ? win::is_special_window(window.ref_win) : true;
+    }
+
+    bool isDialog() const override
+    {
+        return win::is_dialog(window.ref_win);
+    }
+
+    bool isSplash() const override
+    {
+        return win::is_splash(window.ref_win);
+    }
+
+    bool isUtility() const override
+    {
+        return win::is_utility(window.ref_win);
+    }
+
+    bool isDropdownMenu() const override
+    {
+        return win::is_dropdown_menu(window.ref_win);
+    }
+
+    bool isPopupMenu() const override
+    {
+        return win::is_popup_menu(window.ref_win);
+    }
+
+    bool isTooltip() const override
+    {
+        return win::is_tooltip(window.ref_win);
+    }
+
+    bool isNotification() const override
+    {
+        return win::is_notification(window.ref_win);
+    }
+
+    bool isCriticalNotification() const override
+    {
+        return win::is_critical_notification(window.ref_win);
+    }
+
+    bool isOnScreenDisplay() const override
+    {
+        return win::is_on_screen_display(window.ref_win);
+    }
+
+    bool isComboBox() const override
+    {
+        return win::is_combo_box(window.ref_win);
+    }
+
+    bool isDNDIcon() const override
+    {
+        return win::is_dnd_icon(window.ref_win);
+    }
+
+    bool skipsCloseAnimation() const override
+    {
+        return window.ref_win->skipsCloseAnimation();
+    }
+
+    bool acceptsFocus() const override
+    {
+        return window.ref_win->control ? window.ref_win->wantsInput() : true;
+    }
+
+    bool keepAbove() const override
+    {
+        if (window.ref_win->control) {
+            return window.ref_win->control->keep_above;
+        }
+        if (auto& remnant = window.ref_win->remnant) {
+            return remnant->data.keep_above;
+        }
+        return false;
+    }
+
+    bool keepBelow() const override
+    {
+        if (window.ref_win->control) {
+            return window.ref_win->control->keep_below;
+        }
+        if (auto& remnant = window.ref_win->remnant) {
+            return remnant->data.keep_below;
+        }
+        return false;
+    }
+
+    bool isModal() const override
+    {
+        return window.ref_win->transient()->modal();
+    }
+
+    bool isPopupWindow() const override
+    {
+        return win::is_popup(window.ref_win);
+    }
+
+    bool isOutline() const override
+    {
+        return window.ref_win->isOutline();
+    }
+
+    bool isLockScreen() const override
+    {
+        return window.ref_win->isLockScreen();
+    }
+
+    Wrapland::Server::Surface* surface() const override
+    {
+        return window.ref_win->surface;
+    }
+
+    bool isFullScreen() const override
+    {
+        if (window.ref_win->control) {
+            return window.ref_win->control->fullscreen;
+        }
+        if (auto& remnant = window.ref_win->remnant) {
+            return remnant->data.fullscreen;
+        }
+        return false;
+    }
+
+    bool isUnresponsive() const override
+    {
+        return window.ref_win->control ? window.ref_win->control->unresponsive : false;
+    }
+
+    QRect contentsRect() const override
+    {
+        // TODO(romangg): This feels kind of wrong. Why are the frame extents not part of it (i.e.
+        // just
+        //                using frame_to_client_rect)? But some clients rely on the current version,
+        //                for example Latte for its behind-dock blur.
+        auto const deco_offset
+            = QPoint(win::left_border(window.ref_win), win::top_border(window.ref_win));
+        auto const client_size = win::frame_relative_client_rect(window.ref_win).size();
+
+        return QRect(deco_offset, client_size);
+    }
+
+    bool decorationHasAlpha() const override
+    {
+        return window.ref_win->control ? win::decoration_has_alpha(window.ref_win) : false;
+    }
+
+    QIcon icon() const override
+    {
+        return window.ref_win->control ? window.ref_win->control->icon : QIcon();
+    }
+
+    QString windowClass() const override
+    {
+        return window.ref_win->resource_name + QLatin1Char(' ') + window.ref_win->resource_class;
+    }
+
+    NET::WindowType windowType() const override
+    {
+        return window.ref_win->windowType();
+    }
+
+    bool isSkipSwitcher() const override
+    {
+        return window.ref_win->control ? window.ref_win->control->skip_switcher() : false;
+    }
+
+    // legacy from tab groups, can be removed when no effects use this any more.
+    bool isCurrentTab() const override
+    {
+        return true;
+    }
+
+    QString windowRole() const override
+    {
+        return window.ref_win->windowRole();
+    }
+
+    bool isManaged() const override
+    {
+        return managed;
+    }
+
+    bool isWaylandClient() const override
+    {
+        return waylandClient;
+    }
+
+    bool isX11Client() const override
+    {
+        return x11Client;
+    }
+
+    pid_t pid() const override
+    {
+        return window.ref_win->pid();
+    }
+
+    qlonglong windowId() const override
+    {
+        return window.ref_win->xcb_window;
+    }
+
+    QUuid internalId() const override
+    {
+        return window.ref_win->internal_id;
+    }
+
+    QRect decorationInnerRect() const override
+    {
+        return contentsRect();
+    }
+
+    KDecoration2::Decoration* decoration() const override
+    {
+        return win::decoration(window.ref_win);
+    }
+
+    QByteArray readProperty(long atom, long type, int format) const override
+    {
+        if (!kwinApp()->x11Connection()) {
+            return QByteArray();
+        }
+        return x11::read_window_property(window.ref_win->xcb_window, atom, type, format);
+    }
+
+    void deleteProperty(long atom) const override
+    {
+        auto deleteWindowProperty = [](xcb_window_t win, long int atom) {
+            if (win == XCB_WINDOW_NONE) {
+                return;
+            }
+            xcb_delete_property(kwinApp()->x11Connection(), win, atom);
+        };
+
+        if (kwinApp()->x11Connection()) {
+            deleteWindowProperty(window.ref_win->xcb_window, atom);
+        }
+    }
+
+    EffectWindow* findModal() override
+    {
+        if (!window.ref_win->control) {
+            return nullptr;
+        }
+
+        auto modal = window.ref_win->findModal();
+        if (modal) {
+            return modal->render->effect.get();
+        }
+
+        return nullptr;
+    }
+
+    EffectWindow* transientFor() override
+    {
+        if (!window.ref_win->control) {
+            return nullptr;
+        }
+
+        auto transientFor = window.ref_win->transient()->lead();
+        if (transientFor) {
+            return transientFor->render->effect.get();
+        }
+
+        return nullptr;
+    }
+
+    EffectWindowList mainWindows() const override
+    {
+        if (window.ref_win->control || window.ref_win->remnant) {
+            return getMainWindows(window.ref_win);
+        }
+        return {};
+    }
+
+    WindowQuadList buildQuads(bool force = false) const override
+    {
+        return window.buildQuads(force);
+    }
+
+    void minimize() override
+    {
+        if (window.ref_win->control) {
+            win::set_minimized(window.ref_win, true);
+        }
+    }
+
+    void unminimize() override
+    {
+        if (window.ref_win->control) {
+            win::set_minimized(window.ref_win, false);
+        }
+    }
+
+    void closeWindow() override
+    {
+        if (window.ref_win->control) {
+            window.ref_win->closeWindow();
+        }
+    }
+
+    void referencePreviousWindowPixmap() override
+    {
+        window.reference_previous_buffer();
+    }
+
+    void unreferencePreviousWindowPixmap() override
+    {
+        window.unreference_previous_buffer();
+    }
+
+    QWindow* internalWindow() const override
+    {
+        auto client = dynamic_cast<typename space_t::internal_window_t*>(window.ref_win);
+        if (!client) {
+            return nullptr;
+        }
+        return client->internalWindow();
+    }
+
+    void elevate(bool elevate)
+    {
+        effects->setElevatedWindow(this, elevate);
+    }
+
+    void setData(int role, const QVariant& data) override
+    {
+        if (!data.isNull())
+            dataMap[role] = data;
+        else
+            dataMap.remove(role);
+        Q_EMIT effects->windowDataChanged(this, role);
+    }
+
+    QVariant data(int role) const override
+    {
+        return dataMap.value(role);
+    }
+
+    void registerThumbnail(basic_thumbnail_item* item)
+    {
+        if (auto thumb = qobject_cast<window_thumbnail_item*>(item)) {
+            insertThumbnail(thumb);
+            connect(thumb, &QObject::destroyed, this, &effects_window_impl::thumbnailDestroyed);
+            connect(thumb,
+                    &window_thumbnail_item::wIdChanged,
+                    this,
+                    &effects_window_impl::thumbnailTargetChanged);
+        } else if (auto desktopThumb = qobject_cast<desktop_thumbnail_item*>(item)) {
+            m_desktopThumbnails.append(desktopThumb);
+            connect(desktopThumb,
+                    &QObject::destroyed,
+                    this,
+                    &effects_window_impl::desktopThumbnailDestroyed);
+        }
+    }
+
     QHash<window_thumbnail_item*, QPointer<effects_window_impl>> const& thumbnails() const
     {
         return m_thumbnails;
@@ -161,13 +681,62 @@ public:
         return m_desktopThumbnails;
     }
 
-    render::window& window;
+    Window& window;
 
 private:
-    void thumbnailDestroyed(QObject* object);
-    void thumbnailTargetChanged();
-    void desktopThumbnailDestroyed(QObject* object);
-    void insertThumbnail(window_thumbnail_item* item);
+    template<typename T>
+    EffectWindowList getMainWindows(T* c) const
+    {
+        const auto leads = c->transient()->leads();
+        EffectWindowList ret;
+        ret.reserve(leads.size());
+        std::transform(std::cbegin(leads),
+                       std::cend(leads),
+                       std::back_inserter(ret),
+                       [](auto client) { return client->render->effect.get(); });
+        return ret;
+    }
+
+    QRect expanded_geometry_recursion(typename Window::ref_t* window) const
+    {
+        QRect geo;
+        for (auto child : window->transient()->children) {
+            if (child->transient()->annexed) {
+                geo |= expanded_geometry_recursion(child);
+            }
+        }
+        return geo |= win::visible_rect(window);
+    }
+
+    void thumbnailDestroyed(QObject* object)
+    {
+        // we know it is a window_thumbnail_item
+        m_thumbnails.remove(static_cast<window_thumbnail_item*>(object));
+    }
+
+    void thumbnailTargetChanged()
+    {
+        if (auto item = qobject_cast<window_thumbnail_item*>(sender())) {
+            insertThumbnail(item);
+        }
+    }
+
+    void desktopThumbnailDestroyed(QObject* object)
+    {
+        // we know it is a desktop_thumbnail_item
+        m_desktopThumbnails.removeAll(static_cast<desktop_thumbnail_item*>(object));
+    }
+
+    void insertThumbnail(window_thumbnail_item* item)
+    {
+        auto w = effects->findWindow(item->wId());
+        if (w) {
+            m_thumbnails.insert(
+                item, QPointer<effects_window_impl>(static_cast<effects_window_impl*>(w)));
+        } else {
+            m_thumbnails.insert(item, QPointer<effects_window_impl>());
+        }
+    }
 
     QHash<int, QVariant> dataMap;
     QHash<window_thumbnail_item*, QPointer<effects_window_impl>> m_thumbnails;
@@ -177,5 +746,4 @@ private:
     bool x11Client;
 };
 
-}
 }

@@ -6,19 +6,17 @@
 */
 #pragma once
 
-#include "input/cursor.h"
 #include "input/event_spy.h"
-#include "input/platform.h"
-#include "main.h"
 
 namespace KWin::input
 {
 
-class touch_hide_cursor_spy : public event_spy
+template<typename Redirect>
+class touch_hide_cursor_spy : public event_spy<Redirect>
 {
 public:
-    explicit touch_hide_cursor_spy(input::redirect& redirect)
-        : event_spy(redirect)
+    explicit touch_hide_cursor_spy(Redirect& redirect)
+        : event_spy<Redirect>(redirect)
     {
     }
 
@@ -49,7 +47,7 @@ private:
             return;
         }
         m_cursorHidden = false;
-        redirect.platform.cursor->show();
+        this->redirect.platform.cursor->show();
     }
 
     void hideCursor()
@@ -58,7 +56,7 @@ private:
             return;
         }
         m_cursorHidden = true;
-        redirect.platform.cursor->hide();
+        this->redirect.platform.cursor->hide();
     }
 
     bool m_cursorHidden = false;

@@ -6,7 +6,6 @@
 #pragma once
 
 #include "hide.h"
-#include "window.h"
 
 namespace KWin::win::x11
 {
@@ -27,8 +26,10 @@ void handle_desktop_resize(Info* info, QSize const& size)
 template<typename Space>
 void popagate_desktop_change(Space& space, uint desktop)
 {
+    using window_t = typename Space::x11_window;
+
     for (auto const& toplevel : space.stacking_order->stack) {
-        auto client = dynamic_cast<x11::window*>(toplevel);
+        auto client = dynamic_cast<window_t*>(toplevel);
         if (!client || !client->control) {
             continue;
         }
@@ -45,7 +46,7 @@ void popagate_desktop_change(Space& space, uint desktop)
 
     auto const& list = space.stacking_order->stack;
     for (int i = list.size() - 1; i >= 0; --i) {
-        auto client = dynamic_cast<x11::window*>(list.at(i));
+        auto client = dynamic_cast<window_t*>(list.at(i));
         if (!client || !client->control) {
             continue;
         }

@@ -98,7 +98,7 @@ void SlidingPopupsTest::init()
 void SlidingPopupsTest::cleanup()
 {
     Test::destroy_wayland_connection();
-    auto e = static_cast<render::effects_handler_impl*>(effects);
+    auto& e = Test::app()->base.render->compositor->effects;
     while (!e->loadedEffects().isEmpty()) {
         const QString effect = e->loadedEffects().constFirst();
         e->unloadEffect(effect);
@@ -152,7 +152,7 @@ void SlidingPopupsTest::testWithOtherEffect()
     // this test verifies that slidingpopups effect grabs the window added role
     // independently of the sequence how the effects are loaded.
     // see BUG 336866
-    auto e = static_cast<render::effects_handler_impl*>(effects);
+    auto& e = Test::app()->base.render->compositor->effects;
     // find the effectsloader
     auto effectloader = e->findChild<render::basic_effect_loader*>();
     QVERIFY(effectloader);
@@ -237,8 +237,8 @@ void SlidingPopupsTest::testWithOtherEffect()
     QVERIFY(windowCreatedSpy.wait());
 
     auto client_id = windowCreatedSpy.first().first().value<quint32>();
-    auto client
-        = dynamic_cast<win::x11::window*>(Test::app()->base.space->windows_map.at(client_id));
+    auto client = dynamic_cast<Test::space::x11_window*>(
+        Test::app()->base.space->windows_map.at(client_id));
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QVERIFY(win::is_normal(client));
@@ -257,7 +257,7 @@ void SlidingPopupsTest::testWithOtherEffect()
     xcb_unmap_window(c.get(), w);
     xcb_flush(c.get());
 
-    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::closed);
+    QSignalSpy windowClosedSpy(client->qobject.get(), &win::window_qobject::closed);
     QVERIFY(windowClosedSpy.isValid());
 
     QSignalSpy windowDeletedSpy(effects, &EffectsHandler::windowDeleted);
@@ -311,7 +311,7 @@ void SlidingPopupsTest::testWithOtherEffectWayland()
     // independently of the sequence how the effects are loaded.
     // see BUG 336866
     // the test is like testWithOtherEffect, but simulates using a Wayland window
-    auto e = static_cast<render::effects_handler_impl*>(effects);
+    auto& e = Test::app()->base.render->compositor->effects;
     // find the effectsloader
     auto effectloader = e->findChild<render::basic_effect_loader*>();
     QVERIFY(effectloader);
@@ -385,7 +385,7 @@ void SlidingPopupsTest::testWithOtherEffectWayland()
     shellSurface.reset();
     surface.reset();
 
-    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::closed);
+    QSignalSpy windowClosedSpy(client->qobject.get(), &win::window_qobject::closed);
     QVERIFY(windowClosedSpy.isValid());
 
     QSignalSpy windowDeletedSpy(effects, &EffectsHandler::windowDeleted);

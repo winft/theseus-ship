@@ -6,6 +6,7 @@
 #pragma once
 
 #include "control/touch.h"
+#include "platform.h"
 
 #include "base/utils.h"
 #include "config-kwin.h"
@@ -139,13 +140,14 @@ void touch_handle_frame(struct wl_listener* listener, void* /*data*/)
 }
 
 template<typename Platform>
-class touch : public input::touch
+class touch : public input::touch_impl<typename Platform::base_t>
 {
 public:
     using er = base::event_receiver<touch<Platform>>;
 
     touch(wlr_input_device* dev, Platform* platform)
-        : platform{platform}
+        : touch_impl<typename Platform::base_t>(platform->base)
+        , platform{platform}
     {
 #if HAVE_WLR_BASE_INPUT_DEVICES
         auto backend = wlr_touch_from_input_device(dev);
@@ -154,9 +156,9 @@ public:
 #endif
 
         if (auto libinput = get_libinput_device(dev)) {
-            control = std::make_unique<touch_control>(libinput, platform->config);
+            this->control = std::make_unique<touch_control>(libinput, platform->config);
         }
-        output = get_output();
+        this->output = this->get_output();
 
         destroyed.receiver = this;
         destroyed.event.notify = touch_handle_destroy<Platform>;
@@ -182,10 +184,6 @@ public:
         frame_rec.event.notify = touch_handle_frame<Platform>;
         wl_signal_add(&backend->events.frame, &frame_rec.event);
     }
-
-    touch(touch const&) = delete;
-    touch& operator=(touch const&) = delete;
-    ~touch() override = default;
 
     Platform* platform;
 

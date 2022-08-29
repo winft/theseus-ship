@@ -5,21 +5,15 @@
 */
 #pragma once
 
-#include "base/output.h"
-#include "base/platform.h"
-#include "main.h"
 #include "win/scene.h"
 
-namespace KWin
-{
-
-namespace render::wayland
+namespace KWin::render::wayland
 {
 
 template<typename Win>
-base::output* max_coverage_output(Win* window)
+auto max_coverage_output(Win* window) -> typename Win::space_t::base_t::output_t*
 {
-    auto const enabled_outputs = kwinApp()->get_base().get_outputs();
+    auto const enabled_outputs = window->space.base.outputs;
     if (enabled_outputs.empty()) {
         return nullptr;
     }
@@ -42,5 +36,4 @@ base::output* max_coverage_output(Win* window)
     return max_out;
 }
 
-}
 }

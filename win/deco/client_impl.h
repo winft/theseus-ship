@@ -96,19 +96,19 @@ public:
                          decoratedClient,
                          &KDecoration2::DecoratedClient::keepBelowChanged);
 
-        QObject::connect(m_client->space.render.qobject.get(),
+        QObject::connect(m_client->space.base.render->compositor->qobject.get(),
                          &render::compositor_qobject::aboutToToggleCompositing,
                          qobject.get(),
                          [this] { m_renderer.reset(); });
         m_compositorToggledConnection
-            = QObject::connect(m_client->space.render.qobject.get(),
+            = QObject::connect(m_client->space.base.render->compositor->qobject.get(),
                                &render::compositor_qobject::compositingToggled,
                                qobject.get(),
                                [this, decoration]() {
                                    createRenderer();
                                    decoration->update();
                                });
-        QObject::connect(m_client->space.render.qobject.get(),
+        QObject::connect(m_client->space.base.render->compositor->qobject.get(),
                          &render::compositor_qobject::aboutToDestroy,
                          qobject.get(),
                          [this] {
@@ -477,7 +477,7 @@ public:
 private:
     void createRenderer()
     {
-        m_renderer.reset(m_client->space.render.platform.createDecorationRenderer(this));
+        m_renderer.reset(m_client->space.base.render->createDecorationRenderer(this));
     }
 
     Window* m_client;

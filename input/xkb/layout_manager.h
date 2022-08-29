@@ -12,6 +12,7 @@
 
 #include "input/dbus/keyboard_layout.h"
 #include "input/dbus/keyboard_layouts_v2.h"
+#include "input/keyboard.h"
 #include "kwin_export.h"
 
 #include <KConfigGroup>
@@ -19,11 +20,15 @@
 #include <KLocalizedString>
 #include <KSharedConfig>
 #include <QAction>
+#include <QDBusConnection>
+#include <QDBusMessage>
+#include <QDBusPendingCall>
 #include <QObject>
 #include <QString>
 #include <QVector>
 #include <memory>
 #include <string>
+#include <xkbcommon/xkbcommon.h>
 
 namespace KWin::input::xkb
 {

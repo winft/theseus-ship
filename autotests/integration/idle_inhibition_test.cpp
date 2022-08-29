@@ -259,7 +259,7 @@ void TestIdleInhibition::testDontInhibitWhenUnmapped()
     QCOMPARE(inhibitedSpy.count(), 1);
 
     // Unmap the client.
-    QSignalSpy hiddenSpy(c->qobject.get(), &Toplevel::qobject_t::windowHidden);
+    QSignalSpy hiddenSpy(c->qobject.get(), &win::window_qobject::windowHidden);
     QVERIFY(hiddenSpy.isValid());
     surface->attachBuffer(Buffer::Ptr());
     surface->commit(Surface::CommitFlag::None);
@@ -271,7 +271,7 @@ void TestIdleInhibition::testDontInhibitWhenUnmapped()
     QCOMPARE(inhibitedSpy.count(), 2);
 
     // Map the client.
-    QSignalSpy windowShownSpy(c->qobject.get(), &Toplevel::qobject_t::windowShown);
+    QSignalSpy windowShownSpy(c->qobject.get(), &win::window_qobject::windowShown);
     QVERIFY(windowShownSpy.isValid());
     Test::render(surface, QSize(100, 50), Qt::blue);
     QVERIFY(windowShownSpy.wait());

@@ -17,10 +17,10 @@ namespace KWin::win::x11
 {
 
 template<typename Win>
-class control : public win::control<typename Win::window_t>
+class control : public win::control<typename Win::abstract_type>
 {
 public:
-    using control_t = typename win::control<typename Win::window_t>;
+    using control_t = typename win::control<typename Win::abstract_type>;
 
     control(Win* window)
         : control_t(window)

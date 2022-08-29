@@ -8,8 +8,6 @@
 
 #include "selection_data.h"
 
-#include "win/x11/window.h"
-
 #include <QObject>
 #include <QTimer>
 

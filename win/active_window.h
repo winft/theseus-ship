@@ -41,7 +41,7 @@ void active_window_to_output(Space& space, QAction* action)
 {
     if (has_usable_active_window(space)) {
         int const screen = get_action_data_as_uint(action);
-        auto output = base::get_output(kwinApp()->get_base().get_outputs(), screen);
+        auto output = base::get_output(space.base.outputs, screen);
         if (output) {
             send_to_screen(space, space.active_client, *output);
         }
@@ -54,7 +54,7 @@ void active_window_to_next_output(Space& space)
     if (!has_usable_active_window(space)) {
         return;
     }
-    if (auto output = get_derivated_output(space.active_client->central_output, 1)) {
+    if (auto output = get_derivated_output(space.base, space.active_client->central_output, 1)) {
         send_to_screen(space, space.active_client, *output);
     }
 }
@@ -65,7 +65,7 @@ void active_window_to_prev_output(Space& space)
     if (!has_usable_active_window(space)) {
         return;
     }
-    if (auto output = get_derivated_output(space.active_client->central_output, -1)) {
+    if (auto output = get_derivated_output(space.base, space.active_client->central_output, -1)) {
         send_to_screen(space, space.active_client, *output);
     }
 }

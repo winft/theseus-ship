@@ -1,5 +1,5 @@
 /*
-    SPDX-FileCopyrightText: 2021 Roman Gilg <subdiff@gmail.com>
+    SPDX-FileCopyrightText: 2022 Roman Gilg <subdiff@gmail.com>
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
@@ -9,18 +9,15 @@
 
 #include "base/platform.h"
 #include "input/wayland/platform.h"
+#include "render/wayland/platform.h"
 #include "utils/algorithm.h"
 #include "win/wayland/space.h"
 #include "xwl/xwayland.h"
 
+#include <Wrapland/Server/drm_lease_v1.h>
 #include <cassert>
 #include <memory>
 #include <vector>
-
-namespace Wrapland::Server
-{
-class drm_lease_device_v1;
-}
 
 namespace KWin::base::wayland
 {
@@ -28,20 +25,25 @@ namespace KWin::base::wayland
 class platform : public base::platform
 {
 public:
+    using output_t = output<platform>;
+    using render_t = render::wayland::platform<platform>;
+    using input_t = input::wayland::platform<platform>;
+    using space_t = win::wayland::space<platform>;
+
     // All outputs, including disabled ones.
-    std::vector<output*> all_outputs;
+    std::vector<output_t*> all_outputs;
 
     // Enabled outputs only, so outputs that are relevant for our compositing.
-    std::vector<output*> outputs;
+    std::vector<output_t*> outputs;
 
-    void enable_output(base::wayland::output* output)
+    void enable_output(output_t* output)
     {
         assert(!contains(outputs, output));
         outputs.push_back(output);
         Q_EMIT output_added(output);
     }
 
-    void disable_output(base::wayland::output* output)
+    void disable_output(output_t* output)
     {
         assert(contains(outputs, output));
         remove_all(outputs, output);
@@ -60,8 +62,9 @@ public:
     // A Wayland DRM node
     std::unique_ptr<Wrapland::Server::drm_lease_device_v1> drm_lease_device;
 
-    std::unique_ptr<input::wayland::platform> input;
-    std::unique_ptr<win::wayland::space<platform>> space;
+    std::unique_ptr<render_t> render;
+    std::unique_ptr<input_t> input;
+    std::unique_ptr<space_t> space;
     std::unique_ptr<xwl::xwayland<win::wayland::space<platform>>> xwayland;
 };
 

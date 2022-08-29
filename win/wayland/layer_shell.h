@@ -5,7 +5,6 @@
 */
 #pragma once
 
-#include "control.h"
 #include "window_release.h"
 
 #include "win/activation.h"
@@ -20,8 +19,6 @@
 #include "base/wayland/output_helpers.h"
 #include "base/wayland/server.h"
 #include "input/keyboard_redirect.h"
-#include "input/redirect.h"
-#include "render/compositor.h"
 
 #include <KScreenLocker/KsldApp>
 #include <Wrapland/Server/layer_shell_v1.h>
@@ -148,14 +145,14 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
     assert(win->surface);
     assert(layer_surface->surface() == win->surface);
 
-    win->control.reset(new wayland::control(*win));
+    win->control = std::make_unique<typename Win::layer_control_t>(*win);
     win->layer_surface = layer_surface;
     block_geometry_updates(win, true);
 
     QObject::connect(win->qobject.get(),
                      &Win::qobject_t::needsRepaint,
-                     win->space.render.qobject.get(),
-                     [win] { win->space.render.schedule_repaint(win); });
+                     win->space.base.render->compositor->qobject.get(),
+                     [win] { win->space.base.render->compositor->schedule_repaint(win); });
     QObject::connect(layer_surface,
                      &WS::LayerSurfaceV1::resourceDestroyed,
                      win->qobject.get(),
@@ -187,8 +184,7 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
 
         if (!win->layer_surface->output()) {
             if (auto output = get_current_output(win->space)) {
-                win->layer_surface->set_output(
-                    static_cast<base::wayland::output const*>(output)->wrapland_output());
+                win->layer_surface->set_output(output->wrapland_output());
             }
         }
 
@@ -249,7 +245,7 @@ void layer_surface_handle_keyboard_interactivity(Win* win)
         // With interactivity None or Exclusive just reset control.
         activate_next_window(win->space, win);
     }
-    win->space.input->get_keyboard()->update();
+    win->space.input->keyboard->update();
 }
 
 template<typename Win>

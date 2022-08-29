@@ -68,9 +68,9 @@ private:
     Wrapland::Client::PlasmaShell* m_plasmaShell = nullptr;
 };
 
-win::x11::window* get_x11_window_from_id(uint32_t id)
+Test::space::x11_window* get_x11_window_from_id(uint32_t id)
 {
-    return dynamic_cast<win::x11::window*>(Test::app()->base.space->windows_map.at(id));
+    return dynamic_cast<Test::space::x11_window*>(Test::app()->base.space->windows_map.at(id));
 }
 
 void StrutsTest::initTestCase()
@@ -193,7 +193,7 @@ void StrutsTest::testWaylandStruts()
     // this test verifies that struts on Wayland panels are handled correctly
     using namespace Wrapland::Client;
 
-    auto const& outputs = Test::app()->base.get_outputs();
+    auto const& outputs = Test::app()->base.outputs;
     QCOMPARE(win::space_window_area(*Test::app()->base.space, PlacementArea, outputs.at(0), 1),
              QRect(0, 0, 1280, 1024));
     QCOMPARE(win::space_window_area(*Test::app()->base.space, MovementArea, outputs.at(0), 1),
@@ -333,7 +333,7 @@ void StrutsTest::testMoveWaylandPanel()
     QVERIFY(win::is_dock(c));
     QVERIFY(c->hasStrut());
 
-    auto const& outputs = Test::app()->base.get_outputs();
+    auto const& outputs = Test::app()->base.outputs;
     QCOMPARE(win::space_window_area(*Test::app()->base.space, PlacementArea, outputs.at(0), 1),
              QRect(0, 0, 1280, 1000));
     QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeArea, outputs.at(0), 1),
@@ -345,7 +345,7 @@ void StrutsTest::testMoveWaylandPanel()
     QCOMPARE(win::space_window_area(*Test::app()->base.space, WorkArea, outputs.at(0), 1),
              QRect(0, 0, 2560, 1000));
 
-    QSignalSpy geometryChangedSpy(c->qobject.get(), &Toplevel::qobject_t::frame_geometry_changed);
+    QSignalSpy geometryChangedSpy(c->qobject.get(), &win::window_qobject::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
     plasmaSurface->setPosition(QPoint(1280, 1000));
     QVERIFY(geometryChangedSpy.wait());
@@ -390,7 +390,7 @@ void StrutsTest::testWaylandMobilePanel()
     QVERIFY(win::is_dock(c));
     QVERIFY(c->hasStrut());
 
-    auto const& outputs = Test::app()->base.get_outputs();
+    auto const& outputs = Test::app()->base.outputs;
     QCOMPARE(win::space_window_area(*Test::app()->base.space, PlacementArea, outputs.at(0), 1),
              QRect(0, 60, 1280, 964));
     QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeArea, outputs.at(0), 1),
@@ -537,7 +537,7 @@ void StrutsTest::testX11Struts()
     // this test verifies that struts are applied correctly for X11 windows
 
     // no, struts yet
-    auto const& outputs = Test::app()->base.get_outputs();
+    auto const& outputs = Test::app()->base.outputs;
     QCOMPARE(win::space_window_area(*Test::app()->base.space, PlacementArea, outputs.at(0), 1),
              QRect(0, 0, 1280, 1024));
     QCOMPARE(win::space_window_area(*Test::app()->base.space, MovementArea, outputs.at(0), 1),
@@ -686,7 +686,7 @@ void StrutsTest::testX11Struts()
     xcb_flush(c.get());
     c.reset();
 
-    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::closed);
+    QSignalSpy windowClosedSpy(client->qobject.get(), &win::window_qobject::closed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
 
@@ -794,7 +794,7 @@ void StrutsTest::test363804()
     QCOMPARE(client->frameGeometry(), windowGeometry);
 
     // now verify the actual updated client areas
-    auto const& outputs = Test::app()->base.get_outputs();
+    auto const& outputs = Test::app()->base.outputs;
     QCOMPARE(win::space_window_area(*Test::app()->base.space, PlacementArea, outputs.at(0), 1),
              geometries.at(0));
     QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeArea, outputs.at(0), 1),
@@ -812,7 +812,7 @@ void StrutsTest::test363804()
     xcb_flush(c.get());
     c.reset();
 
-    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::closed);
+    QSignalSpy windowClosedSpy(client->qobject.get(), &win::window_qobject::closed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
 }
@@ -886,7 +886,7 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
     QCOMPARE(client->frameGeometry(), windowGeometry);
 
     // now verify the actual updated client areas
-    auto const& outputs = Test::app()->base.get_outputs();
+    auto const& outputs = Test::app()->base.outputs;
     QCOMPARE(win::space_window_area(*Test::app()->base.space, PlacementArea, outputs.at(0), 1),
              QRect(0, 306, 1366, 744));
     QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeArea, outputs.at(0), 1),
@@ -933,14 +933,14 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
     QCOMPARE(client2->maximizeMode(), win::maximize_mode::full);
 
     // destroy window again
-    QSignalSpy normalWindowClosedSpy(client2->qobject.get(), &Toplevel::qobject_t::closed);
+    QSignalSpy normalWindowClosedSpy(client2->qobject.get(), &win::window_qobject::closed);
     QVERIFY(normalWindowClosedSpy.isValid());
     xcb_unmap_window(c.get(), w2);
     xcb_destroy_window(c.get(), w2);
     xcb_flush(c.get());
     QVERIFY(normalWindowClosedSpy.wait());
 
-    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::closed);
+    QSignalSpy windowClosedSpy(client->qobject.get(), &win::window_qobject::closed);
     QVERIFY(windowClosedSpy.isValid());
 
     // and destroy the window again
@@ -1022,7 +1022,7 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
     QCOMPARE(client->frameGeometry(), windowGeometry);
 
     // now verify the actual updated client areas
-    auto const& outputs = Test::app()->base.get_outputs();
+    auto const& outputs = Test::app()->base.outputs;
     QCOMPARE(win::space_window_area(*Test::app()->base.space, PlacementArea, outputs.at(0), 1),
              QRect(0, 282, 1366, 768));
     QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeArea, outputs.at(0), 1),
@@ -1088,14 +1088,14 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
     QCOMPARE(client2->frameGeometry(), QRect(origGeo.translated(-800, 0)));
 
     // Destroy window again.
-    QSignalSpy normalWindowClosedSpy(client2->qobject.get(), &Toplevel::qobject_t::closed);
+    QSignalSpy normalWindowClosedSpy(client2->qobject.get(), &win::window_qobject::closed);
     QVERIFY(normalWindowClosedSpy.isValid());
     xcb_unmap_window(c.get(), w2);
     xcb_destroy_window(c.get(), w2);
     xcb_flush(c.get());
     QVERIFY(normalWindowClosedSpy.wait());
 
-    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::closed);
+    QSignalSpy windowClosedSpy(client->qobject.get(), &win::window_qobject::closed);
     QVERIFY(windowClosedSpy.isValid());
 
     // and destroy the window again

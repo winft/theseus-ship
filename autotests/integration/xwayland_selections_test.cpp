@@ -135,7 +135,7 @@ void XwaylandSelectionsTest::testSync()
     m_copyProcess->start();
     QVERIFY(m_copyProcess->waitForStarted());
 
-    Toplevel* copyClient = nullptr;
+    Test::space::window_t* copyClient = nullptr;
     if (copyPlatform == QLatin1String("xcb")) {
         QVERIFY(clientAddedSpy.wait());
         auto copy_client_id = clientAddedSpy.first().first().value<quint32>();
@@ -175,7 +175,7 @@ void XwaylandSelectionsTest::testSync()
     m_pasteProcess->start();
     QVERIFY(m_pasteProcess->waitForStarted());
 
-    Toplevel* pasteClient = nullptr;
+    Test::space::window_t* pasteClient = nullptr;
     if (pastePlatform == QLatin1String("xcb")) {
         QVERIFY(clientAddedSpy.wait());
         auto paste_client_id = clientAddedSpy.last().first().value<quint32>();

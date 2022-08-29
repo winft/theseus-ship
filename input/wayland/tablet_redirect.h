@@ -5,32 +5,45 @@
 */
 #pragma once
 
-#include "redirect.h"
+#include "device_redirect.h"
 
-#include "input/tablet_redirect.h"
+#include "input/device_redirect.h"
+#include "input/event_filter.h"
+#include "input/event_spy.h"
 
 #include <QPointF>
 #include <QSet>
 
-namespace KWin
+namespace KWin::input::wayland
 {
 
-class Toplevel;
-
-namespace input::wayland
-{
-
-class KWIN_EXPORT tablet_redirect : public input::tablet_redirect
+template<typename Redirect>
+class tablet_redirect : public device_redirect<Redirect>
 {
 public:
-    explicit tablet_redirect(wayland::redirect* redirect);
+    using space_t = typename Redirect::platform_t::base_t::space_t;
 
-    void init();
+    explicit tablet_redirect(Redirect* redirect)
+        : device_redirect<Redirect>(redirect)
+    {
+    }
 
-    QPointF position() const override;
-    bool positionValid() const override;
+    void init()
+    {
+        device_redirect_init(this);
+    }
 
-    void tabletToolEvent(redirect::TabletEventType type,
+    QPointF position() const override
+    {
+        return last_position;
+    }
+
+    bool positionValid() const override
+    {
+        return !last_position.isNull();
+    }
+
+    void tabletToolEvent(TabletEventType type,
                          QPointF const& pos,
                          qreal pressure,
                          int x_tilt,
@@ -39,20 +52,132 @@ public:
                          bool tip_down,
                          bool tip_near,
                          quint64 serial_id,
-                         quint64 toolId,
-                         void* device) override;
-    void tabletToolButtonEvent(uint button, bool isPressed) override;
+                         quint64 /*toolId*/,
+                         void* /*device*/)
+    {
+        last_position = pos;
 
-    void tabletPadButtonEvent(uint button, bool isPressed) override;
-    void tabletPadStripEvent(int number, int position, bool is_finger) override;
-    void tabletPadRingEvent(int number, int position, bool is_finger) override;
+        auto t = QEvent::None;
+        switch (type) {
+        case TabletEventType::Axis:
+            t = QEvent::TabletMove;
+            break;
+        case TabletEventType::Tip:
+            t = tip_down ? QEvent::TabletPress : QEvent::TabletRelease;
+            break;
+        case TabletEventType::Proximity:
+            t = tip_near ? QEvent::TabletEnterProximity : QEvent::TabletLeaveProximity;
+            break;
+        }
 
-    void cleanupDecoration(win::deco::client_impl<Toplevel>* old,
-                           win::deco::client_impl<Toplevel>* now) override;
-    void cleanupInternalWindow(QWindow* old, QWindow* now) override;
-    void focusUpdate(KWin::Toplevel* old, KWin::Toplevel* now) override;
+        auto const button = tip.down ? Qt::LeftButton : Qt::NoButton;
+        QTabletEvent ev(t,
+                        pos,
+                        pos,
+                        QTabletEvent::Stylus,
+                        QTabletEvent::Pen,
+                        pressure,
+                        x_tilt,
+                        y_tilt,
+                        0, // tangentialPressure
+                        rotation,
+                        0, // z
+                        Qt::NoModifier,
+                        serial_id,
+                        button,
+                        button);
 
-    wayland::redirect* redirect;
+        process_spies(this->redirect->m_spies,
+                      std::bind(&event_spy<Redirect>::tabletToolEvent, std::placeholders::_1, &ev));
+        process_filters(
+            this->redirect->m_filters,
+            std::bind(&input::event_filter<Redirect>::tabletToolEvent, std::placeholders::_1, &ev));
+
+        tip.down = tip_down;
+        tip.near = tip_near;
+    }
+
+    void tabletToolButtonEvent(uint button, bool isPressed)
+    {
+        if (isPressed) {
+            pressed_buttons.tool.insert(button);
+        } else {
+            pressed_buttons.tool.remove(button);
+        }
+
+        process_spies(this->redirect->m_spies,
+                      std::bind(&event_spy<Redirect>::tabletToolButtonEvent,
+                                std::placeholders::_1,
+                                pressed_buttons.tool));
+        process_filters(this->redirect->m_filters,
+                        std::bind(&input::event_filter<Redirect>::tabletToolButtonEvent,
+                                  std::placeholders::_1,
+                                  pressed_buttons.tool));
+    }
+
+    void tabletPadButtonEvent(uint button, bool isPressed)
+    {
+        if (isPressed) {
+            pressed_buttons.pad.insert(button);
+        } else {
+            pressed_buttons.pad.remove(button);
+        }
+
+        process_spies(this->redirect->m_spies,
+                      std::bind(&event_spy<Redirect>::tabletPadButtonEvent,
+                                std::placeholders::_1,
+                                pressed_buttons.pad));
+        process_filters(this->redirect->m_filters,
+                        std::bind(&input::event_filter<Redirect>::tabletPadButtonEvent,
+                                  std::placeholders::_1,
+                                  pressed_buttons.pad));
+    }
+
+    void tabletPadStripEvent(int number, int position, bool is_finger)
+    {
+        process_spies(this->redirect->m_spies,
+                      std::bind(&event_spy<Redirect>::tabletPadStripEvent,
+                                std::placeholders::_1,
+                                number,
+                                position,
+                                is_finger));
+        process_filters(this->redirect->m_filters,
+                        std::bind(&input::event_filter<Redirect>::tabletPadStripEvent,
+                                  std::placeholders::_1,
+                                  number,
+                                  position,
+                                  is_finger));
+    }
+
+    void tabletPadRingEvent(int number, int position, bool is_finger)
+    {
+        process_spies(this->redirect->m_spies,
+                      std::bind(&event_spy<Redirect>::tabletPadRingEvent,
+                                std::placeholders::_1,
+                                number,
+                                position,
+                                is_finger));
+        process_filters(this->redirect->m_filters,
+                        std::bind(&input::event_filter<Redirect>::tabletPadRingEvent,
+                                  std::placeholders::_1,
+                                  number,
+                                  position,
+                                  is_finger));
+    }
+
+    void cleanupDecoration(win::deco::client_impl<typename space_t::window_t>* /*old*/,
+                           win::deco::client_impl<typename space_t::window_t>* /*now*/) override
+    {
+    }
+
+    void cleanupInternalWindow(QWindow* /*old*/, QWindow* /*now*/) override
+    {
+    }
+
+    void focusUpdate(typename space_t::window_t* /*old*/,
+                     typename space_t::window_t* /*now*/) override
+    {
+    }
 
 private:
     struct {
@@ -68,5 +193,4 @@ private:
     } pressed_buttons;
 };
 
-}
 }

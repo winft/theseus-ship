@@ -9,7 +9,6 @@
 
 #include "base/utils.h"
 #include "config-kwin.h"
-#include "input/platform.h"
 #include "input/pointer.h"
 
 extern "C" {
@@ -369,7 +368,7 @@ public:
     pointer& operator=(pointer const&) = delete;
     ~pointer() override = default;
 
-    input::platform* platform;
+    Platform* platform;
 
 private:
     er destroyed;

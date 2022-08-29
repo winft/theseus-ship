@@ -21,6 +21,7 @@
 
 #include "rules/ruling.h"
 
+#include <deque>
 #include <map>
 
 /**

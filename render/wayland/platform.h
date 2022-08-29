@@ -8,7 +8,6 @@
 #include "compositor.h"
 #include "effects.h"
 
-#include "base/wayland/platform.h"
 #include "render/platform.h"
 
 #include <memory>
@@ -17,11 +16,17 @@ namespace KWin::render::wayland
 {
 
 template<typename Base>
-class platform : public render::platform
+class platform : public render::platform<Base>
 {
 public:
+    using type = platform<Base>;
+    using base_t = Base;
+    using compositor_t = typename wayland::compositor<platform<Base>>;
+    using scene_t = typename compositor_t::scene_t;
+    using space_t = typename Base::space_t;
+
     platform(Base& base)
-        : render::platform(base)
+        : render::platform<Base>(base)
     {
     }
 
@@ -49,13 +54,18 @@ public:
     {
     }
 
-    outline_visual* create_non_composited_outline(render::outline* /*outline*/) override
+    render::outline_visual* create_non_composited_outline(render::outline* /*outline*/)
     {
+        // Not possible on Wayland.
         return nullptr;
     }
 
-    win::deco::renderer<win::deco::client_impl<Toplevel>>*
-    createDecorationRenderer(win::deco::client_impl<Toplevel>* client) override
+    virtual gl::backend<gl::scene<type>, type>* get_opengl_backend(compositor_t& compositor) = 0;
+    virtual qpainter::backend<qpainter::scene<type>>* get_qpainter_backend(compositor_t& compositor)
+        = 0;
+
+    win::deco::renderer<win::deco::client_impl<typename space_t::window_t>>*
+    createDecorationRenderer(win::deco::client_impl<typename space_t::window_t>* client)
     {
         if (!compositor->scene) {
             // TODO(romangg): Make this check unnecessary. No deco renderer should be created when
@@ -71,11 +81,14 @@ public:
         compositor->effects->invert_screen();
     }
 
-    std::unique_ptr<render::effects_handler_impl>
-    createEffectsHandler(render::compositor* compositor, render::scene* scene) override
+    std::unique_ptr<render::effects_handler_impl<compositor_t>> createEffectsHandler()
     {
-        return std::make_unique<wayland::effects_handler_impl>(compositor, scene);
+        return std::make_unique<wayland::effects_handler_impl<compositor_t>>(*compositor);
     }
+
+    std::unique_ptr<compositor_t> compositor;
+
+    int output_index{0};
 };
 
 }

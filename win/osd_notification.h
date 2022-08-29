@@ -6,10 +6,10 @@
 */
 #pragma once
 
+#include "config-kwin.h"
 #include "input/event.h"
 #include "input/event_spy.h"
-#include "input/pointer_redirect.h"
-#include "input/redirect.h"
+#include "kwin_export.h"
 
 #include <epoxy/gl.h>
 
@@ -31,18 +31,18 @@ namespace KWin::win
 {
 
 template<typename Osd>
-class osd_notification_input_spy : public input::event_spy
+class osd_notification_input_spy : public input::event_spy<typename Osd::redirect_t>
 {
 public:
     explicit osd_notification_input_spy(Osd& osd)
-        : event_spy(*osd.input_redirect)
+        : input::event_spy<typename Osd::redirect_t>(*osd.input->redirect)
         , osd{osd}
     {
     }
 
     void motion(input::motion_event const& /*event*/) override
     {
-        auto const pos = redirect.get_pointer()->pos();
+        auto const pos = this->redirect.pointer->pos();
         osd.setContainsPointer(osd.geometry().contains(pos.toPoint()));
     }
 
@@ -85,14 +85,17 @@ private:
     QTimer& timer;
 };
 
-template<typename Redirect>
+template<typename Input>
 class osd_notification
 {
 public:
-    osd_notification(Redirect* input_redirect)
+    using type = osd_notification<Input>;
+    using redirect_t = typename Input::redirect_t;
+
+    osd_notification(Input* input)
         : timer{std::make_unique<QTimer>()}
         , qobject{std::make_unique<osd_notification_qobject>(*timer)}
-        , input_redirect{input_redirect}
+        , input{input}
     {
         timer->setSingleShot(true);
         QObject::connect(
@@ -148,13 +151,13 @@ public:
 
     std::unique_ptr<QTimer> timer;
     std::unique_ptr<osd_notification_qobject> qobject;
-    Redirect* input_redirect{nullptr};
+    Input* input{nullptr};
 
     KSharedConfigPtr m_config;
     QQmlEngine* m_qmlEngine{nullptr};
 
 private:
-    using input_spy = osd_notification_input_spy<osd_notification<Redirect>>;
+    using input_spy = osd_notification_input_spy<type>;
 
     void show()
     {
@@ -221,7 +224,7 @@ private:
         }
 
         m_spy = std::make_unique<input_spy>(*this);
-        input_redirect->installInputEventSpy(m_spy.get());
+        input->redirect->m_spies.push_back(m_spy.get());
 
         if (!m_animation) {
             m_animation = new QPropertyAnimation(win, "opacity", qobject.get());

@@ -9,29 +9,26 @@
 #pragma once
 
 #include "kwin_export.h"
-#include "toplevel.h"
 #include "win/deco/client_impl.h"
 
 #include <QWindow>
 
-namespace KWin
+namespace KWin::input
 {
 
-namespace input
-{
-class redirect;
-
+template<typename Window>
 struct device_redirect_at {
-    Toplevel* window{nullptr};
+    Window* window{nullptr};
     struct {
         QMetaObject::Connection surface;
         QMetaObject::Connection destroy;
     } notifiers;
 };
 
+template<typename Window>
 struct device_redirect_focus {
-    Toplevel* window{nullptr};
-    win::deco::client_impl<Toplevel>* deco{nullptr};
+    Window* window{nullptr};
+    win::deco::client_impl<Window>* deco{nullptr};
     QWindow* internal_window{nullptr};
     struct {
         QMetaObject::Connection window_destroy;
@@ -43,16 +40,20 @@ struct device_redirect_focus {
 class KWIN_EXPORT device_redirect_qobject : public QObject
 {
     Q_OBJECT
-public:
-    ~device_redirect_qobject() override;
-
 Q_SIGNALS:
     void decorationChanged();
 };
 
+template<typename Redirect>
 class device_redirect
 {
 public:
+    std::unique_ptr<device_redirect_qobject> qobject;
+    Redirect* redirect;
+
+    using space_t = typename std::remove_reference_t<decltype(redirect->platform.base)>::space_t;
+    using window_t = typename space_t::window_t;
+
     virtual ~device_redirect() = default;
 
     virtual QPointF position() const
@@ -64,12 +65,12 @@ public:
     {
     }
 
-    virtual void cleanupDecoration(win::deco::client_impl<Toplevel>* /*old*/,
-                                   win::deco::client_impl<Toplevel>* /*now*/)
+    virtual void cleanupDecoration(win::deco::client_impl<window_t>* /*old*/,
+                                   win::deco::client_impl<window_t>* /*now*/)
     {
     }
 
-    virtual void focusUpdate(Toplevel* /*old*/, Toplevel* /*now*/)
+    virtual void focusUpdate(window_t* /*old*/, window_t* /*now*/)
     {
     }
 
@@ -91,24 +92,20 @@ public:
      * Element currently at the position of the input device according to the stacking order. Might
      * be null if no element is at the position.
      */
-    device_redirect_at at;
+    device_redirect_at<window_t> at;
 
     /**
      * Element currently having pointer input focus (this might be different from the window
      * at the position of the pointer). Might be null if no element has focus.
      */
-    device_redirect_focus focus;
-
-    std::unique_ptr<device_redirect_qobject> qobject;
-    input::redirect* redirect;
+    device_redirect_focus<window_t> focus;
 
 protected:
-    explicit device_redirect(input::redirect* redirect)
+    explicit device_redirect(Redirect* redirect)
         : qobject{std::make_unique<device_redirect_qobject>()}
         , redirect{redirect}
     {
     }
 };
 
-}
 }

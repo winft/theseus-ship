@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/output_helpers.h"
 #include "base/platform.h"
 #include "debug/support_info.h"
+#include "kwin_export.h"
 #include "main.h"
 #include "win/activation.h"
 #include "win/active_window.h"
@@ -32,7 +33,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/output_space.h"
 #include "win/screen.h"
 #include "win/virtual_desktops.h"
-#include "win/x11/window.h"
 
 #include <QObject>
 #include <QQmlListProperty>
@@ -48,7 +48,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::scripting
 {
 
-class space : public QObject
+class KWIN_EXPORT space : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(
@@ -484,7 +484,7 @@ private:
     Q_DISABLE_COPY(space)
 };
 
-class qt_script_space : public space
+class KWIN_EXPORT qt_script_space : public space
 {
     Q_OBJECT
 
@@ -498,7 +498,7 @@ public:
     Q_INVOKABLE QList<KWin::scripting::window*> clientList() const;
 };
 
-class declarative_script_space : public space
+class KWIN_EXPORT declarative_script_space : public space
 {
     Q_OBJECT
     Q_PROPERTY(QQmlListProperty<KWin::scripting::window> clients READ clients)
@@ -512,12 +512,14 @@ public:
 };
 
 // TODO Plasma 6: Remove it.
-void connect_legacy_screen_resize(space* receiver);
+KWIN_EXPORT void connect_legacy_screen_resize(space* receiver);
 
 template<typename Space, typename RefSpace>
 class template_space : public Space
 {
 public:
+    using window_t = window_impl<typename RefSpace::window_t>;
+
     template_space(RefSpace* ref_space)
         : ref_space{ref_space}
     {
@@ -591,10 +593,10 @@ public:
                 }
             });
         QObject::connect(&base, &base::platform::output_added, this, [this, &base] {
-            Q_EMIT Space::numberScreensChanged(base.get_outputs().size());
+            Q_EMIT Space::numberScreensChanged(this->ref_space->base.outputs.size());
         });
         QObject::connect(&base, &base::platform::output_removed, this, [this, &base] {
-            Q_EMIT Space::numberScreensChanged(base.get_outputs().size());
+            Q_EMIT Space::numberScreensChanged(this->ref_space->base.outputs.size());
         });
 
         connect_legacy_screen_resize(this);
@@ -648,7 +650,7 @@ public:
 
     void setActiveClient(window* win) override
     {
-        win::activate_window(*ref_space, static_cast<window_impl*>(win)->client());
+        win::activate_window(*ref_space, static_cast<window_t*>(win)->client());
     }
 
     QSize desktopGridSize() const override
@@ -662,16 +664,16 @@ public:
         if (!output) {
             return 0;
         }
-        return base::get_output_index(kwinApp()->get_base().get_outputs(), *output);
+        return base::get_output_index(ref_space->base.outputs, *output);
     }
 
     void sendClientToScreen(KWin::scripting::window* client, int screen) override
     {
-        auto output = base::get_output(kwinApp()->get_base().get_outputs(), screen);
+        auto output = base::get_output(ref_space->base.outputs, screen);
         if (!output) {
             return;
         }
-        win::send_to_screen(*ref_space, static_cast<window_impl*>(client)->client(), *output);
+        win::send_to_screen(*ref_space, static_cast<window_t*>(client)->client(), *output);
     }
 
     void showOutline(QRect const& geometry) override
@@ -917,7 +919,7 @@ public:
 protected:
     QRect client_area_impl(clientAreaOption option, int screen, int desktop) const override
     {
-        auto output = base::get_output(kwinApp()->get_base().get_outputs(), screen);
+        auto output = base::get_output(ref_space->base.outputs, screen);
         return win::space_window_area(*ref_space, option, output, desktop);
     }
 
@@ -926,16 +928,15 @@ protected:
         return win::space_window_area(*ref_space, option, point, desktop);
     }
 
-    QRect client_area_impl(clientAreaOption option, window* window) const override
+    QRect client_area_impl(clientAreaOption option, scripting::window* window) const override
     {
-        return win::space_window_area(
-            *ref_space, option, static_cast<window_impl*>(window)->client());
+        return win::space_window_area(*ref_space, option, static_cast<window_t*>(window)->client());
     }
 
-    QRect client_area_impl(clientAreaOption option, window const* window) const override
+    QRect client_area_impl(clientAreaOption option, scripting::window const* window) const override
     {
         return win::space_window_area(
-            *ref_space, option, static_cast<window_impl const*>(window)->client());
+            *ref_space, option, static_cast<window_t const*>(window)->client());
     }
 
     QString desktop_name_impl(int desktop) const override
@@ -999,7 +1000,7 @@ protected:
         return nullptr;
     }
 
-    window* get_window(Toplevel* client) const
+    window* get_window(typename RefSpace::window_t* client) const
     {
         if (!client || !client->control) {
             return nullptr;
@@ -1007,14 +1008,14 @@ protected:
         return client->control->scripting.get();
     }
 
-    void handle_client_added(Toplevel* client)
+    void handle_client_added(typename RefSpace::window_t* client)
     {
         if (!client->control) {
             // Only windows with control are made available to the scripting system.
             return;
         }
 
-        client->control->scripting = std::make_unique<window_impl>(client, this);
+        client->control->scripting = std::make_unique<window_t>(client);
         auto scr_win = client->control->scripting.get();
 
         Space::setupAbstractClientConnections(scr_win);
@@ -1026,7 +1027,7 @@ protected:
         Q_EMIT Space::clientAdded(scr_win);
     }
 
-    void handle_client_removed(Toplevel* client)
+    void handle_client_removed(typename RefSpace::window_t* client)
     {
         if (client->control) {
             Space::windows_count--;

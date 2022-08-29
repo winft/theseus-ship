@@ -5,10 +5,11 @@
 */
 #pragma once
 
-#include "window.h"
-
+#include "base/options.h"
 #include "base/x11/xcb/extensions.h"
+#include "base/x11/xcb/helpers.h"
 #include "win/deco.h"
+#include "win/x11/types.h"
 
 namespace KWin::win::x11
 {
@@ -86,7 +87,7 @@ bool perform_mouse_command(Win* win,
                            base::options_qobject::MouseCommand command,
                            QPoint const& globalPos)
 {
-    return win->Win::window_t::performMouseCommand(command, globalPos);
+    return win->Win::type::performMouseCommand(command, globalPos);
 }
 
 template<typename Space>

@@ -248,7 +248,7 @@ bool start_move_resize(Win* win)
         return false;
     }
     if (win->control->fullscreen
-        && (kwinApp()->get_base().get_outputs().size() < 2 || !win->isMovableAcrossScreens())) {
+        && (win->space.base.outputs.size() < 2 || !win->isMovableAcrossScreens())) {
         return false;
     }
     if (!win->doStartMoveResize()) {
@@ -290,7 +290,7 @@ bool start_move_resize(Win* win)
     mov_res.initial_geometry = pending_frame_geometry(win);
     mov_res.geometry = mov_res.initial_geometry;
     mov_res.start_screen = win->central_output
-        ? base::get_output_index(kwinApp()->get_base().get_outputs(), *win->central_output)
+        ? base::get_output_index(win->space.base.outputs, *win->central_output)
         : 0;
 
     check_unrestricted_move_resize(win);
@@ -542,7 +542,7 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
         if (!win->isMovable()) {
             // isMovableAcrossScreens() must have been true to get here
             // Special moving of maximized windows on Xinerama screens
-            auto output = base::get_nearest_output(kwinApp()->get_base().get_outputs(), globalPos);
+            auto output = base::get_nearest_output(win->space.base.outputs, globalPos);
             if (win->control->fullscreen)
                 mov_res.geometry = space_window_area(win->space, FullScreenArea, output, 0);
             else {
@@ -600,7 +600,7 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
                     // break by moving the window slightly downwards, but it won't stuck) see bug
                     // #274466 and bug #301805 for why we can't just match the titlearea against the
                     // screen
-                    if (kwinApp()->get_base().get_outputs().size() > 1) {
+                    if (win->space.base.outputs.size() > 1) {
                         // TODO: could be useful on partial screen struts (half-width panels etc.)
                         int newTitleTop = -1;
                         for (auto const& r : strut) {
@@ -746,7 +746,7 @@ void finish_move_resize(Win* win, bool cancel)
     win->checkScreen();
 
     int output_index = win->central_output
-        ? base::get_output_index(kwinApp()->get_base().get_outputs(), *win->central_output)
+        ? base::get_output_index(win->space.base.outputs, *win->central_output)
         : 0;
     if (output_index != mov_res.start_screen) {
         // Checks rule validity
@@ -899,10 +899,10 @@ void start_delayed_move_resize(Win* win)
 template<typename Space, typename Win, typename Output>
 void send_to_screen(Space const& space, Win* win, Output const& output)
 {
-    auto checked_output = win->control->rules.checkScreen(&output);
+    auto checked_output = win->control->rules.checkScreen(space.base, &output);
 
     if (win->control->active) {
-        base::set_current_output(kwinApp()->get_base(), checked_output);
+        base::set_current_output(space.base, checked_output);
 
         // might impact the layer of a fullscreen window
         for (auto cc : space.windows) {

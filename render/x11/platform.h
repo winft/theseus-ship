@@ -8,7 +8,7 @@
 #include "compositor.h"
 #include "effects.h"
 
-#include "base/x11/platform.h"
+#include "render/gl/backend.h"
 #include "render/platform.h"
 
 #include <KConfigGroup>
@@ -17,13 +17,26 @@
 namespace KWin::render::x11
 {
 
-class platform : public render::platform
+template<typename Base>
+class platform : public render::platform<Base>
 {
 public:
-    platform(base::x11::platform& base)
-        : render::platform(base)
+    using base_t = Base;
+    using type = platform<base_t>;
+    using space_t = typename base_t::space_t;
+    using compositor_t = typename x11::compositor<type>;
+    using scene_t = typename compositor_t::scene_t;
+
+    platform(Base& base)
+        : render::platform<Base>(base)
     {
     }
+
+    virtual gl::backend<gl::scene<type>, type>* get_opengl_backend(compositor_t& compositor) = 0;
+    virtual render::outline_visual* create_non_composited_outline(render::outline* outline) = 0;
+    virtual win::deco::renderer<win::deco::client_impl<typename space_t::window_t>>*
+    createDecorationRenderer(win::deco::client_impl<typename space_t::window_t>* client)
+        = 0;
 
     bool requiresCompositing() const override
     {
@@ -36,11 +49,12 @@ public:
         return KConfigGroup(kwinApp()->config(), "Compositing").readEntry(unsafeKey, false);
     }
 
-    std::unique_ptr<render::effects_handler_impl>
-    createEffectsHandler(render::compositor* compositor, render::scene* scene) override
+    std::unique_ptr<render::effects_handler_impl<compositor_t>> createEffectsHandler()
     {
-        return std::make_unique<x11::effects_handler_impl>(compositor, scene);
+        return std::make_unique<x11::effects_handler_impl<compositor_t>>(*compositor);
     }
+
+    std::unique_ptr<compositor_t> compositor;
 };
 
 }

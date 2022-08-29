@@ -7,6 +7,7 @@
 
 #include "device_helpers.h"
 
+#include "input/platform_qobject.h"
 #include "kwin_export.h"
 
 #include <QObject>

@@ -7,11 +7,9 @@
 
 #include "window.h"
 
-#include "win/internal_window.h"
 #include "win/meta.h"
 #include "win/space_qobject.h"
 #include "win/x11/stacking.h"
-#include "win/x11/window.h"
 
 #include <QVector>
 
@@ -63,9 +61,10 @@ int window_property_count(Model const* model,
     return window->metaObject()->propertyCount();
 }
 
-inline console_window* window_for_index(QModelIndex const& index,
-                                        std::vector<std::unique_ptr<console_window>> const& windows,
-                                        int id)
+inline win::property_window*
+window_for_index(QModelIndex const& index,
+                 std::vector<std::unique_ptr<win::property_window>> const& windows,
+                 int id)
 {
     int32_t const row = (index.internalId() & s_clientBitMask) - (s_idDistance * id);
     if (row < 0 || row >= static_cast<int>(windows.size())) {
@@ -76,7 +75,7 @@ inline console_window* window_for_index(QModelIndex const& index,
 
 inline QVariant window_data(QModelIndex const& index,
                             int role,
-                            std::vector<std::unique_ptr<console_window>> const& windows)
+                            std::vector<std::unique_ptr<win::property_window>> const& windows)
 {
     if (index.row() >= static_cast<int>(windows.size())) {
         return QVariant();
@@ -95,23 +94,24 @@ inline QVariant window_data(QModelIndex const& index,
 template<typename Model, typename Window>
 void add_window(Model* model,
                 int parentRow,
-                std::vector<std::unique_ptr<console_window>>& windows,
+                std::vector<std::unique_ptr<win::property_window>>& windows,
                 Window* window)
 {
     model->begin_insert_rows(
         model->index(parentRow, 0, QModelIndex()), windows.size(), windows.size());
-    windows.emplace_back(std::make_unique<console_window>(window));
+    windows.emplace_back(std::make_unique<console_window<Window>>(window));
     model->end_insert_rows();
 }
 
 template<typename Model, typename Window>
 void remove_window(Model* model,
                    int parentRow,
-                   std::vector<std::unique_ptr<console_window>>& windows,
+                   std::vector<std::unique_ptr<win::property_window>>& windows,
                    Window* window)
 {
-    auto it = std::find_if(
-        windows.begin(), windows.end(), [window](auto& win) { return win->ref_win == window; });
+    auto it = std::find_if(windows.begin(), windows.end(), [window](auto& win) {
+        return win->internalId() == window->internal_id;
+    });
 
     if (it == windows.end()) {
         return;
@@ -127,10 +127,12 @@ void remove_window(Model* model,
 template<typename Model, typename Space>
 void model_setup_connections(Model& model, Space& space)
 {
+    using window_t = typename Space::window_t;
+
     for (auto const& window : space.windows) {
         if (window->control) {
-            if (dynamic_cast<win::x11::window*>(window)) {
-                model.m_x11Clients.emplace_back(std::make_unique<console_window>(window));
+            if (dynamic_cast<typename Space::x11_window*>(window)) {
+                model.m_x11Clients.emplace_back(std::make_unique<console_window<window_t>>(window));
             }
         }
     }
@@ -149,7 +151,7 @@ void model_setup_connections(Model& model, Space& space)
         });
 
     for (auto unmanaged : win::x11::get_unmanageds(space)) {
-        model.m_unmanageds.emplace_back(std::make_unique<console_window>(unmanaged));
+        model.m_unmanageds.emplace_back(std::make_unique<console_window<window_t>>(unmanaged));
     }
 
     QObject::connect(
@@ -163,8 +165,9 @@ void model_setup_connections(Model& model, Space& space)
             remove_window(&model, model.s_x11UnmanagedId - 1, model.m_unmanageds, u);
         });
     for (auto const& window : space.windows) {
-        if (dynamic_cast<win::internal_window*>(window)) {
-            model.m_internalClients.emplace_back(std::make_unique<console_window>(window));
+        if (dynamic_cast<typename Space::internal_window_t*>(window)) {
+            model.m_internalClients.emplace_back(
+                std::make_unique<console_window<window_t>>(window));
         }
     }
     QObject::connect(

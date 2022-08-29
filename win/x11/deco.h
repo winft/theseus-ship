@@ -7,9 +7,7 @@
 
 #include "geo.h"
 #include "input.h"
-#include "window.h"
 
-#include "render/compositor.h"
 #include "win/deco/bridge.h"
 #include "win/deco/window.h"
 #include "win/move.h"
@@ -180,7 +178,7 @@ void create_decoration(Win* win)
     win->control->deco.decoration = decoration;
     win->geometry_update.original.deco_margins = frame_margins(win);
 
-    if (win->space.render.isActive()) {
+    if (win->space.base.render->compositor->isActive()) {
         win->discard_buffer();
     }
 }

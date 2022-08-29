@@ -99,7 +99,7 @@ void store_session(Space& space, QString const& sessionName, sm_save_phase phase
         if (!window->control) {
             continue;
         }
-        auto x11_client = dynamic_cast<x11::window*>(window);
+        auto x11_client = dynamic_cast<typename Space::x11_window*>(window);
         if (!x11_client) {
             continue;
         }
@@ -206,7 +206,7 @@ void store_subsession(Space const& space, QString const& name, QSet<QByteArray> 
             continue;
         }
 
-        auto x11_client = dynamic_cast<win::x11::window*>(window);
+        auto x11_client = dynamic_cast<typename Space::x11_window*>(window);
         if (!x11_client) {
             continue;
         }

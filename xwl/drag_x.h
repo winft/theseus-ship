@@ -27,7 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wl_visit.h"
 
 #include "base/wayland/server.h"
-#include "toplevel.h"
 #include "win/activation.h"
 #include "win/space.h"
 
@@ -182,7 +181,7 @@ public:
     }
 
     std::unique_ptr<data_source_ext> data_source;
-    std::unique_ptr<wl_visit<Toplevel>> visit;
+    std::unique_ptr<wl_visit<Window>> visit;
 
 private:
     void set_offers(mime_atoms const& offers)

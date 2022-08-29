@@ -67,10 +67,9 @@ PlatformCursorImage loadReferenceThemeCursor(const T& shape)
         return PlatformCursorImage();
     }
 
-    std::unique_ptr<input::wayland::cursor_theme> cursorTheme;
-    cursorTheme.reset(new input::wayland::cursor_theme(
-        static_cast<input::wayland::cursor&>(*Test::app()->base.input->cursor),
-        waylandServer()->internal_connection.shm));
+    using cursor_t = typename decltype(Test::app()->base.input->cursor)::element_type;
+    auto cursorTheme = std::make_unique<input::wayland::cursor_theme<cursor_t>>(
+        *Test::app()->base.input->cursor, waylandServer()->internal_connection.shm);
 
     wl_cursor_image* cursor = cursorTheme->get(shape);
     if (!cursor) {
@@ -327,7 +326,7 @@ void PointerInputTest::testWarpingDuringFilter()
     QVERIFY(window->frameGeometry().contains(Test::app()->base.input->cursor->pos()));
 
     // is PresentWindows effect for top left screen edge loaded
-    QVERIFY(static_cast<render::effects_handler_impl*>(effects)->isEffectLoaded("presentwindows"));
+    QVERIFY(Test::app()->base.render->compositor->effects->isEffectLoaded("presentwindows"));
     QVERIFY(movedSpy.isEmpty());
     quint32 timestamp = 0;
     Test::pointer_motion_absolute(QPoint(0, 0), timestamp++);
@@ -1060,7 +1059,7 @@ void PointerInputTest::testCursorImage()
 
     // Move cursor somewhere the new window won't open.
     Test::app()->base.input->cursor->set_pos(800, 800);
-    auto p = Test::app()->base.input->redirect->get_pointer();
+    auto& p = Test::app()->base.input->redirect->pointer;
 
     // At the moment it should be the fallback cursor.
     auto const fallback_cursor = Test::app()->base.input->cursor->image();
@@ -1611,8 +1610,7 @@ void PointerInputTest::testConfineToScreenGeometry()
 
     // unload the Present Windows effect because it pushes back
     // pointer if it's at (0, 0)
-    static_cast<render::effects_handler_impl*>(effects)->unloadEffect(
-        QStringLiteral("presentwindows"));
+    Test::app()->base.render->compositor->effects->unloadEffect(QStringLiteral("presentwindows"));
 
     // setup screen layout
     auto const geometries = std::vector<QRect>{

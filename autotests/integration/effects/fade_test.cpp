@@ -81,7 +81,7 @@ void FadeTest::init()
     Test::setup_wayland_connection();
 
     // load the translucency effect
-    auto e = static_cast<render::effects_handler_impl*>(effects);
+    auto& e = Test::app()->base.render->compositor->effects;
     // find the effectsloader
     auto effectloader = e->findChild<render::basic_effect_loader*>();
     QVERIFY(effectloader);
@@ -100,7 +100,7 @@ void FadeTest::init()
 void FadeTest::cleanup()
 {
     Test::destroy_wayland_connection();
-    auto e = static_cast<render::effects_handler_impl*>(effects);
+    auto& e = Test::app()->base.render->compositor->effects;
     if (e->isEffectLoaded(QStringLiteral("kwin4_effect_fade"))) {
         e->unloadEffect(QStringLiteral("kwin4_effect_fade"));
     }

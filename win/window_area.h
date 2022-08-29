@@ -32,10 +32,10 @@ bool in_update_window_area(Space const& space)
 template<typename Space>
 QRect space_window_area(Space const& space,
                         clientAreaOption opt,
-                        base::output const* output,
+                        typename Space::base_t::output_t const* output,
                         int desktop)
 {
-    auto const& outputs = kwinApp()->get_base().get_outputs();
+    auto const& outputs = space.base.outputs;
 
     if (desktop == NETWinInfo::OnAllDesktops || desktop == 0) {
         desktop = space.virtual_desktop_manager->current();
@@ -82,8 +82,7 @@ QRect space_window_area(Space const& space,
 template<typename Space>
 QRect space_window_area(Space const& space, clientAreaOption opt, QPoint const& p, int desktop)
 {
-    return space_window_area(
-        space, opt, base::get_nearest_output(kwinApp()->get_base().get_outputs(), p), desktop);
+    return space_window_area(space, opt, base::get_nearest_output(space.base.outputs, p), desktop);
 }
 
 template<typename Space>

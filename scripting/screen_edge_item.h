@@ -19,6 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
+#include "kwin_export.h"
+
 #include <QObject>
 #include <kwinglobals.h>
 
@@ -42,7 +44,7 @@ namespace KWin::scripting
  * }
  * @endcode
  */
-class screen_edge_item : public QObject
+class KWIN_EXPORT screen_edge_item : public QObject
 {
     Q_OBJECT
     /**

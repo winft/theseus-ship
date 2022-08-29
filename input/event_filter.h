@@ -9,7 +9,6 @@
 #include "event.h"
 
 #include "main.h"
-#include "redirect.h"
 
 #include <QSet>
 #include <QTabletEvent>

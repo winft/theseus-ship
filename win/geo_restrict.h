@@ -44,7 +44,7 @@ void check_workspace_position(Win* win,
         return;
     }
 
-    if (kwinApp()->get_base().get_outputs().empty()) {
+    if (win->space.base.outputs.empty()) {
         return;
     }
 
@@ -277,7 +277,7 @@ void check_workspace_position(Win* win,
         padding[1] = padding[3] = 0;
     }
 
-    auto const& outputs = kwinApp()->get_base().get_outputs();
+    auto const& outputs = win->space.base.outputs;
 
     if (save[Left] || keep[Left]) {
         frame_geo.moveLeft(std::max(left_max, screenArea.x()) - padding[0]);
@@ -368,7 +368,7 @@ QPoint adjust_window_position(Space const& space,
 
     if (kwinApp()->options->qobject->windowSnapZone() || !borderSnapZone.isNull()
         || kwinApp()->options->qobject->centerSnapZone()) {
-        auto const& outputs = kwinApp()->get_base().get_outputs();
+        auto const& outputs = space.base.outputs;
         const bool sOWO = kwinApp()->options->qobject->isSnapOnlyWhenOverlapping();
         auto output
             = base::get_nearest_output(outputs, pos + QRect(QPoint(), window.size()).center());

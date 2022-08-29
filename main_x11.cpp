@@ -211,7 +211,8 @@ void ApplicationX11::start()
     prepare_start();
     kwinApp()->screen_locker_watcher->initialize();
 
-    base.render = std::make_unique<render::backend::x11::platform>(base);
+    using base_t = base::x11::platform;
+    base.render = std::make_unique<render::backend::x11::platform<base_t>>(base);
 
     crashChecking();
     Application::setX11ScreenNumber(QX11Info::appScreen());
@@ -239,12 +240,12 @@ void ApplicationX11::start()
 
         session.reset(new base::seat::backend::logind::session());
 
-        base.input = std::make_unique<input::x11::platform>();
+        base.input = std::make_unique<input::x11::platform<base_t>>(base);
         base.input->shortcuts = std::make_unique<input::global_shortcuts_manager>();
         base.input->shortcuts->init();
 
         base.update_outputs();
-        auto render = static_cast<render::backend::x11::platform*>(base.render.get());
+        auto render = static_cast<render::backend::x11::platform<base_t>*>(base.render.get());
         try {
             render->init();
         } catch (std::exception const&) {
@@ -252,17 +253,15 @@ void ApplicationX11::start()
             ::exit(1);
         }
 
-        render->compositor
-            = std::make_unique<render::x11::compositor<render::x11::platform>>(*render);
+        render->compositor = std::make_unique<base_t::render_t::compositor_t>(*render);
 
-        using space_t = win::x11::space<base::x11::platform>;
-        base.space = std::make_unique<space_t>(base);
+        base.space = std::make_unique<base_t::space_t>(base);
         win::init_shortcuts(*base.space);
 
-        event_filter = std::make_unique<base::x11::xcb_event_filter<space_t>>(*base.space);
+        event_filter = std::make_unique<base::x11::xcb_event_filter<base_t::space_t>>(*base.space);
         installNativeEventFilter(event_filter.get());
 
-        base.space->scripting = std::make_unique<scripting::platform>(*base.space);
+        base.space->scripting = std::make_unique<scripting::platform<base_t::space_t>>(*base.space);
 
         render->compositor->start(*base.space);
 

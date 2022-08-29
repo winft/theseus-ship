@@ -20,26 +20,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include "device_redirect.h"
-#include "redirect.h"
 
 #include <QPointF>
 
-namespace KWin
-{
-class Toplevel;
-
-namespace input
+namespace KWin::input
 {
 
+template<typename Redirect>
 class tablet_redirect : public device_redirect
 {
 public:
-    explicit tablet_redirect(input::redirect* redirect)
+    explicit tablet_redirect(Redirect* redirect)
         : device_redirect(redirect)
     {
     }
 
-    virtual void tabletToolEvent(redirect::TabletEventType /*type*/,
+    virtual void tabletToolEvent(TabletEventType /*type*/,
                                  QPointF const& /*pos*/,
                                  qreal /*pressure*/,
                                  int /*xTilt*/,
@@ -66,5 +62,4 @@ public:
     }
 };
 
-}
 }

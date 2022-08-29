@@ -393,7 +393,7 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     QVERIFY(fullscreenSpy.wait());
     parentShellSurface->ackConfigure(fullscreenSpy.first().at(2).value<quint32>());
     QSignalSpy geometryShapeChangedSpy{parent->qobject.get(),
-                                       &Toplevel::qobject_t::frame_geometry_changed};
+                                       &win::window_qobject::frame_geometry_changed};
     QVERIFY(geometryShapeChangedSpy.isValid());
     Test::render(parentSurface, fullscreenSpy.first().at(0).toSize(), Qt::red);
     QVERIFY(geometryShapeChangedSpy.wait());

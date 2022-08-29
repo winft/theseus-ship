@@ -120,8 +120,8 @@ void DontCrashAuroraeDestroyDecoTest::testBorderlessMaximizedWindows()
     QVERIFY(windowCreatedSpy.wait());
 
     auto client_id = windowCreatedSpy.first().first().value<quint32>();
-    auto client
-        = dynamic_cast<win::x11::window*>(Test::app()->base.space->windows_map.at(client_id));
+    auto client = dynamic_cast<Test::space::x11_window*>(
+        Test::app()->base.space->windows_map.at(client_id));
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QVERIFY(win::decoration(client) != nullptr);
@@ -140,7 +140,7 @@ void DontCrashAuroraeDestroyDecoTest::testBorderlessMaximizedWindows()
 
     // simulate click on maximize button
     QSignalSpy maximizedStateChangedSpy(client->qobject.get(),
-                                        &Toplevel::qobject_t::maximize_mode_changed);
+                                        &win::window_qobject::maximize_mode_changed);
     QVERIFY(maximizedStateChangedSpy.isValid());
     quint32 timestamp = 1;
     Test::pointer_motion_absolute(client->frameGeometry().topLeft() + scenePoint.toPoint(),
@@ -157,7 +157,7 @@ void DontCrashAuroraeDestroyDecoTest::testBorderlessMaximizedWindows()
     xcb_flush(c);
     xcb_disconnect(c);
 
-    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::closed);
+    QSignalSpy windowClosedSpy(client->qobject.get(), &win::window_qobject::closed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
 }

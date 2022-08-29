@@ -5,10 +5,12 @@
 */
 #pragma once
 
+#include "control.h"
 #include "scene.h"
 #include "subsurface.h"
 #include "surface.h"
 #include "xdg_shell.h"
+#include "xdg_shell_control.h"
 
 #include "render/platform.h"
 #include "render/wayland/buffer.h"
@@ -17,6 +19,7 @@
 #include "utils/geo.h"
 #include "win/fullscreen.h"
 #include "win/geo_block.h"
+#include "win/geo_restrict.h"
 #include "win/maximize.h"
 #include "win/placement.h"
 #include "win/rules/find.h"
@@ -42,11 +45,13 @@ namespace KWin::win::wayland
 {
 
 template<typename Space>
-class window : public Toplevel
+class window : public Toplevel<Space>
 {
 public:
+    using abstract_type = Toplevel<Space>;
+    using xdg_shell_control_t = xdg_shell_control<window<Space>>;
+    using layer_control_t = wayland::control<window<Space>>;
     constexpr static bool is_toplevel{false};
-    using window_t = Toplevel;
 
     enum class ping_reason {
         close = 0,
@@ -54,27 +59,28 @@ public:
     };
 
     window(win::remnant remnant, Space& space)
-        : Toplevel(std::move(remnant), space)
-        , space{space}
+        : Toplevel<Space>(std::move(remnant), space)
     {
-        Toplevel::qobject = std::make_unique<window_qobject>();
+        Toplevel<Space>::qobject = std::make_unique<window_qobject>();
     }
 
     window(Wrapland::Server::Surface* surface, Space& space)
-        : Toplevel(space)
-        , space{space}
+        : Toplevel<Space>(space)
     {
-        Toplevel::qobject = std::make_unique<window_qobject>();
+        Toplevel<Space>::qobject = std::make_unique<window_qobject>();
         window_setup_geometry(*this);
 
-        QObject::connect(
-            surface, &Wrapland::Server::Surface::subsurfaceTreeChanged, qobject.get(), [this] {
-                discard_shape();
-                win::wayland::restack_subsurfaces(this);
-            });
-        QObject::connect(surface, &Wrapland::Server::Surface::destroyed, qobject.get(), [this] {
-            destroy_window(this);
-        });
+        QObject::connect(surface,
+                         &Wrapland::Server::Surface::subsurfaceTreeChanged,
+                         this->qobject.get(),
+                         [this] {
+                             this->discard_shape();
+                             win::wayland::restack_subsurfaces(this);
+                         });
+        QObject::connect(surface,
+                         &Wrapland::Server::Surface::destroyed,
+                         this->qobject.get(),
+                         [this] { destroy_window(this); });
 
         set_surface(this, surface);
         setupCompositing();
@@ -82,10 +88,10 @@ public:
 
     qreal bufferScale() const override
     {
-        if (remnant) {
-            return remnant->data.buffer_scale;
+        if (this->remnant) {
+            return this->remnant->data.buffer_scale;
         }
-        return surface->state().scale;
+        return this->surface->state().scale;
     }
 
     bool is_wayland_window() const override
@@ -100,13 +106,17 @@ public:
 
     void add_scene_window_addon() override
     {
-        assert(surface);
+        assert(this->surface);
+        using scene_t = typename Space::base_t::render_t::compositor_t::scene_t;
+        using shadow_t = render::shadow<typename scene_t::window_t>;
 
-        auto setup_buffer = [this](auto& buffer) {
-            auto win_integrate = std::make_unique<render::wayland::buffer_win_integration>(buffer);
+        auto setup_buffer = [](auto& buffer) {
+            using buffer_integration_t
+                = render::wayland::buffer_win_integration<typename scene_t::buffer_t>;
+
+            auto win_integrate = std::make_unique<buffer_integration_t>(buffer);
             auto update_helper = [&buffer]() {
-                auto& win_integrate = static_cast<render::wayland::buffer_win_integration&>(
-                    *buffer.win_integration);
+                auto& win_integrate = static_cast<buffer_integration_t&>(*buffer.win_integration);
                 update_buffer(*buffer.window->ref_win, win_integrate.external);
             };
             win_integrate->update = update_helper;
@@ -134,19 +144,19 @@ public:
             return QRectF();
         };
 
-        render->win_integration.setup_buffer = setup_buffer;
-        render->win_integration.get_viewport = get_viewport;
-        render->shadow_windowing.create
-            = render::wayland::create_shadow<render::shadow, render::window>;
-        render->shadow_windowing.update = render::wayland::update_shadow<render::shadow>;
+        this->render->win_integration.setup_buffer = setup_buffer;
+        this->render->win_integration.get_viewport = get_viewport;
+        this->render->shadow_windowing.create
+            = render::wayland::create_shadow<shadow_t, typename scene_t::window_t>;
+        this->render->shadow_windowing.update = render::wayland::update_shadow<shadow_t>;
 
         setup_scale_scene_notify(*this);
     }
 
     NET::WindowType windowType(bool /*direct*/ = false, int /*supported_types*/ = 0) const override
     {
-        if (remnant) {
-            return remnant->data.window_type;
+        if (this->remnant) {
+            return this->remnant->data.window_type;
         }
         return window_type;
     }
@@ -158,18 +168,18 @@ public:
 
     double opacity() const override
     {
-        if (remnant) {
-            return remnant->data.opacity;
+        if (this->remnant) {
+            return this->remnant->data.opacity;
         }
-        if (transient()->lead() && transient()->annexed) {
-            return transient()->lead()->opacity();
+        if (this->transient()->lead() && this->transient()->annexed) {
+            return this->transient()->lead()->opacity();
         }
         return m_opacity;
     }
 
     void setOpacity(double opacity) override
     {
-        assert(control);
+        assert(this->control);
 
         opacity = qBound(0.0, opacity, 1.0);
         if (opacity == m_opacity) {
@@ -179,51 +189,51 @@ public:
         auto const old_opacity = m_opacity;
         m_opacity = opacity;
 
-        addRepaintFull();
-        Q_EMIT qobject->opacityChanged(old_opacity);
+        this->addRepaintFull();
+        Q_EMIT this->qobject->opacityChanged(old_opacity);
     }
 
     bool isShown() const override
     {
-        if (closing || hidden || remnant) {
+        if (closing || hidden || this->remnant) {
             return false;
         }
-        if (!control && !transient()->lead()) {
+        if (!this->control && !this->transient()->lead()) {
             return false;
         }
 
-        if (auto lead = transient()->lead()) {
+        if (auto lead = this->transient()->lead()) {
             if (!lead->isShown()) {
                 return false;
             }
         }
-        if (control && control->minimized) {
+        if (this->control && this->control->minimized) {
             return false;
         }
-        return surface->state().buffer.get();
+        return this->surface->state().buffer.get();
     }
 
     bool isHiddenInternal() const override
     {
-        if (remnant) {
+        if (this->remnant) {
             return false;
         }
-        if (auto lead = transient()->lead()) {
+        if (auto lead = this->transient()->lead()) {
             if (!lead->isHiddenInternal()) {
                 return false;
             }
         }
-        return hidden || !surface->state().buffer;
+        return hidden || !this->surface->state().buffer;
     }
 
     QSize minSize() const override
     {
-        return control->rules.checkMinSize(toplevel->minimumSize());
+        return this->control->rules.checkMinSize(toplevel->minimumSize());
     }
 
     QSize maxSize() const override
     {
-        return control->rules.checkMaxSize(toplevel->maximumSize());
+        return this->control->rules.checkMaxSize(toplevel->maximumSize());
     }
 
     /// Ask client to provide buffer adapted to new geometry @param rect (in global coordinates).
@@ -237,8 +247,8 @@ public:
         }
 
         synced_geometry.window = window_geo;
-        synced_geometry.max_mode = geometry_update.max_mode;
-        synced_geometry.fullscreen = geometry_update.fullscreen;
+        synced_geometry.max_mode = this->geometry_update.max_mode;
+        synced_geometry.fullscreen = this->geometry_update.fullscreen;
 
         uint64_t serial = 0;
 
@@ -246,10 +256,10 @@ public:
             serial = toplevel->configure(xdg_surface_states(this), window_geo.size());
         }
         if (popup) {
-            auto parent = transient()->lead();
+            auto parent = this->transient()->lead();
             if (parent) {
                 auto const top_lead = lead_of_annexed_transient(this);
-                auto const bounds = space_window_area(space,
+                auto const bounds = space_window_area(this->space,
                                                       top_lead->control->fullscreen ? FullScreenArea
                                                                                     : PlacementArea,
                                                       top_lead);
@@ -274,10 +284,10 @@ public:
     {
         assert(toplevel || popup || layer_surface);
 
-        auto frame_geo = frameGeometry();
-        auto position = pos();
+        auto frame_geo = this->frameGeometry();
+        auto position = this->pos();
         auto max_mode = this->max_mode;
-        auto fullscreen = control ? control->fullscreen : false;
+        auto fullscreen = this->control ? this->control->fullscreen : false;
 
         auto serial_match{false};
 
@@ -309,18 +319,18 @@ public:
         auto const ref_geo = shell_surface->window_geometry();
         frame_geo = QRect(position, ref_geo.size() + frame_size(this));
 
-        if (frame_geo == frameGeometry() && !serial_match
-            && client_frame_extents == shell_surface->window_margins()) {
+        if (frame_geo == this->frameGeometry() && !serial_match
+            && this->client_frame_extents == shell_surface->window_margins()) {
             return;
         }
 
         if (!synced_geometry.window.isValid()) {
             // On first commit.
             synced_geometry.window = ref_geo;
-            geometry_update.frame = frame_geo;
+            this->geometry_update.frame = frame_geo;
         }
 
-        client_frame_extents = shell_surface->window_margins();
+        this->client_frame_extents = shell_surface->window_margins();
 
         if (popup) {
             auto const toplevel = lead_of_annexed_transient(this);
@@ -332,19 +342,21 @@ public:
                 return;
             }
 
-            auto const screen_bounds = space_window_area(
-                space, toplevel->control->fullscreen ? FullScreenArea : PlacementArea, toplevel);
+            auto const screen_bounds
+                = space_window_area(this->space,
+                                    toplevel->control->fullscreen ? FullScreenArea : PlacementArea,
+                                    toplevel);
 
             // Need to set that for get_xdg_shell_popup_placement(..) call.
             // TODO(romangg): make this less akward, i.e. if possible include it in the call.
-            if (geometry_update.pending == pending_geometry::none) {
-                geometry_update.frame = frame_geo;
+            if (this->geometry_update.pending == pending_geometry::none) {
+                this->geometry_update.frame = frame_geo;
             }
 
             auto const frame_geo = get_xdg_shell_popup_placement(this, screen_bounds);
 
-            if (geometry_update.pending == win::pending_geometry::none) {
-                geometry_update.frame = frame_geo;
+            if (this->geometry_update.pending == win::pending_geometry::none) {
+                this->geometry_update.frame = frame_geo;
             }
             do_set_geometry(frame_geo);
 
@@ -357,7 +369,7 @@ public:
             // We must adjust frame geometry because configure events carry the maximum window
             // geometry size. A client with aspect ratio can attach a buffer with smaller size than
             // the one in a configure event.
-            auto& mov_res = control->move_resize;
+            auto& mov_res = this->control->move_resize;
 
             switch (mov_res.contact) {
             case position::top_left:
@@ -392,27 +404,27 @@ public:
 
     void do_set_geometry(QRect const& frame_geo)
     {
-        auto const old_frame_geo = frameGeometry();
+        auto const old_frame_geo = this->frameGeometry();
 
         if (old_frame_geo == frame_geo) {
             return;
         }
 
-        set_frame_geometry(frame_geo);
+        this->set_frame_geometry(frame_geo);
 
-        if (geometry_update.pending == win::pending_geometry::none) {
-            geometry_update.frame.setSize(frame_geo.size());
+        if (this->geometry_update.pending == win::pending_geometry::none) {
+            this->geometry_update.frame.setSize(frame_geo.size());
         }
 
         // TODO(romangg): When we have support for explicit/implicit popup repositioning combine.
         if (old_frame_geo.size() == frame_geo.size()) {
             move_annexed_children(this, frame_geo.topLeft() - old_frame_geo.topLeft());
-        } else if (!transient()->annexed) {
+        } else if (!this->transient()->annexed) {
             reposition_annexed_children(this);
         }
 
         if (old_frame_geo.size() != frame_geo.size()) {
-            discard_quads();
+            this->discard_quads();
         }
         if (plasma_shell_surface && popup) {
             // Plasma-shell surfaces can be xdg-shell popups at the same time. So their geometry
@@ -422,27 +434,27 @@ public:
             lead->discard_quads();
         }
 
-        if (!control) {
-            addLayerRepaint(visible_rect(this, old_frame_geo));
-            addLayerRepaint(visible_rect(this, frame_geo));
-            Q_EMIT qobject->frame_geometry_changed(old_frame_geo);
+        if (!this->control) {
+            this->addLayerRepaint(visible_rect(this, old_frame_geo));
+            this->addLayerRepaint(visible_rect(this, frame_geo));
+            Q_EMIT this->qobject->frame_geometry_changed(old_frame_geo);
             return;
         }
 
-        updateWindowRules(rules::type::position | rules::type::size);
+        this->updateWindowRules(rules::type::position | rules::type::size);
 
         if (is_resize(this)) {
             perform_move_resize(this);
         }
 
-        addLayerRepaint(visible_rect(this, old_frame_geo));
-        addLayerRepaint(visible_rect(this, frame_geo));
+        this->addLayerRepaint(visible_rect(this, old_frame_geo));
+        this->addLayerRepaint(visible_rect(this, frame_geo));
 
-        Q_EMIT qobject->frame_geometry_changed(old_frame_geo);
+        Q_EMIT this->qobject->frame_geometry_changed(old_frame_geo);
 
         // Must be done after signal is emitted so the screen margins are updated.
         if (hasStrut()) {
-            update_space_areas(space);
+            update_space_areas(this->space);
         }
     }
 
@@ -465,49 +477,49 @@ public:
 
         mapped = false;
 
-        if (transient()->annexed) {
-            discard_quads();
+        if (this->transient()->annexed) {
+            this->discard_quads();
         }
 
-        if (control) {
-            if (control->move_resize.enabled) {
-                leaveMoveResize();
+        if (this->control) {
+            if (this->control->move_resize.enabled) {
+                this->leaveMoveResize();
             }
-            control->destroy_plasma_wayland_integration();
+            this->control->destroy_plasma_wayland_integration();
         }
 
-        space.render.addRepaint(visible_rect(this));
+        this->space.base.render->compositor->addRepaint(visible_rect(this));
 
-        if (control) {
-            process_window_hidden(space, this);
+        if (this->control) {
+            process_window_hidden(this->space, this);
         }
 
-        Q_EMIT qobject->windowHidden();
+        Q_EMIT this->qobject->windowHidden();
     }
 
     void ping(ping_reason reason)
     {
         assert(toplevel);
 
-        auto serial = space.xdg_shell->ping(toplevel->client());
+        auto serial = this->space.xdg_shell->ping(toplevel->client());
         pings.insert({serial, reason});
     }
 
     // When another window is created, checks if this window is a subsurface for it.
-    void checkTransient(Toplevel* window) override
+    void checkTransient(Toplevel<Space>* window) override
     {
-        if (remnant) {
+        if (this->remnant) {
             return;
         }
-        if (transient()->lead()) {
+        if (this->transient()->lead()) {
             // This already has a parent set, we can only set one once.
             return;
         }
-        if (!surface->subsurface()) {
+        if (!this->surface->subsurface()) {
             // This is not a subsurface.
             return;
         }
-        if (surface->subsurface()->parentSurface() != window->surface) {
+        if (this->surface->subsurface()->parentSurface() != window->surface) {
             // This has a parent different to window.
             return;
         }
@@ -520,15 +532,15 @@ public:
 
     void debug(QDebug& stream) const override
     {
-        if (remnant) {
+        if (this->remnant) {
             stream << "\'REMNANT:" << reinterpret_cast<void const*>(this) << "\'";
             return;
         }
 
         std::string type = "role unknown";
-        if (control) {
+        if (this->control) {
             type = "toplevel";
-        } else if (transient()->lead()) {
+        } else if (this->transient()->lead()) {
             type = popup ? "popup" : "subsurface";
         }
         if (input_method_popup) {
@@ -537,7 +549,7 @@ public:
 
         stream.nospace();
         stream << "\'wayland::window"
-               << "(" << QString::fromStdString(type) << "):" << surface << ";"
+               << "(" << QString::fromStdString(type) << "):" << this->surface << ";"
                << static_cast<void const*>(this) << "\'";
     }
 
@@ -548,13 +560,14 @@ public:
 
     bool noBorder() const override
     {
-        if (remnant) {
-            return remnant->data.no_border;
+        if (this->remnant) {
+            return this->remnant->data.no_border;
         }
 
         if (xdg_deco
             && xdg_deco->requestedMode() != Wrapland::Server::XdgDecoration::Mode::ClientSide) {
-            return !space.deco->hasPlugin() || user_no_border || geometry_update.fullscreen;
+            return !this->space.deco->hasPlugin() || user_no_border
+                || this->geometry_update.fullscreen;
         }
         return true;
     }
@@ -579,20 +592,20 @@ public:
             return;
         }
 
-        set = control->rules.checkNoBorder(set);
+        set = this->control->rules.checkNoBorder(set);
         if (user_no_border == set) {
             return;
         }
 
         user_no_border = set;
         updateDecoration(true, false);
-        updateWindowRules(rules::type::no_border);
+        this->updateWindowRules(rules::type::no_border);
     }
 
     void handle_update_no_border() override
     {
-        auto no_border = geometry_update.max_mode == maximize_mode::full;
-        setNoBorder(control->rules.checkNoBorder(no_border));
+        auto no_border = this->geometry_update.max_mode == maximize_mode::full;
+        setNoBorder(this->control->rules.checkNoBorder(no_border));
     }
 
     void updateDecoration(bool check_workspace_pos, bool force = false) override
@@ -603,46 +616,48 @@ public:
             }
         }
 
-        auto const old_geom = frameGeometry();
+        auto const old_geom = this->frameGeometry();
         auto const old_content_geom = old_geom.adjusted(
             left_border(this), top_border(this), -right_border(this), -bottom_border(this));
 
         block_geometry_updates(this, true);
 
         if (force) {
-            control->destroy_decoration();
+            this->control->destroy_decoration();
         }
 
         if (noBorder()) {
-            control->destroy_decoration();
+            this->control->destroy_decoration();
         } else {
             // Create decoration.
-            control->deco.window = new deco::window<Toplevel>(this);
-            auto decoration = space.deco->createDecoration(control->deco.window);
+            this->control->deco.window = new deco::window<Toplevel<Space>>(this);
+            auto decoration = this->space.deco->createDecoration(this->control->deco.window);
             if (decoration) {
                 QMetaObject::invokeMethod(decoration, "update", Qt::QueuedConnection);
                 QObject::connect(decoration,
                                  &KDecoration2::Decoration::shadowChanged,
-                                 qobject.get(),
+                                 this->qobject.get(),
                                  [this] { update_shadow(this); });
-                QObject::connect(
-                    decoration, &KDecoration2::Decoration::bordersChanged, qobject.get(), [this]() {
-                        geometry_updates_blocker geo_blocker(this);
-                        auto const old_geom = frameGeometry();
-                        check_workspace_position(this, old_geom);
-                        Q_EMIT qobject->frame_geometry_changed(old_geom);
-                    });
+                QObject::connect(decoration,
+                                 &KDecoration2::Decoration::bordersChanged,
+                                 this->qobject.get(),
+                                 [this]() {
+                                     geometry_updates_blocker geo_blocker(this);
+                                     auto const old_geom = this->frameGeometry();
+                                     check_workspace_position(this, old_geom);
+                                     Q_EMIT this->qobject->frame_geometry_changed(old_geom);
+                                 });
             }
 
-            control->deco.decoration = decoration;
+            this->control->deco.decoration = decoration;
             auto const deco_size = QSize(left_border(this) + right_border(this),
                                          bottom_border(this) + top_border(this));
 
             // TODO: ensure the new geometry still fits into the client area (e.g. maximized
             // windows)
             // TODO(romangg): use setFrameGeometry?
-            do_set_geometry(QRect(old_geom.topLeft(), size() + deco_size));
-            Q_EMIT qobject->frame_geometry_changed(old_geom);
+            do_set_geometry(QRect(old_geom.topLeft(), this->size() + deco_size));
+            Q_EMIT this->qobject->frame_geometry_changed(old_geom);
         }
 
         if (xdg_deco) {
@@ -663,46 +678,46 @@ public:
 
     void takeFocus() override
     {
-        assert(control);
+        assert(this->control);
 
-        if (control->rules.checkAcceptFocus(wantsInput())) {
+        if (this->control->rules.checkAcceptFocus(wantsInput())) {
             if (toplevel) {
                 ping(ping_reason::focus);
             }
             set_active(this, true);
         }
 
-        if (!control->keep_above && !is_on_screen_display(this) && !belongsToDesktop()) {
-            set_showing_desktop(space, false);
+        if (!this->control->keep_above && !is_on_screen_display(this) && !belongsToDesktop()) {
+            set_showing_desktop(this->space, false);
         }
     }
 
     bool userCanSetFullScreen() const override
     {
-        return control.get();
+        return this->control.get();
     }
 
     bool userCanSetNoBorder() const override
     {
-        if (!space.deco->hasPlugin()) {
+        if (!this->space.deco->hasPlugin()) {
             return false;
         }
         if (!xdg_deco
             || xdg_deco->requestedMode() == Wrapland::Server::XdgDecoration::Mode::ClientSide) {
             return false;
         }
-        return !control->fullscreen;
+        return !this->control->fullscreen;
     }
 
     bool wantsInput() const override
     {
-        assert(control);
+        assert(this->control);
 
         if (layer_surface) {
             return layer_surface->keyboard_interactivity()
                 == Wrapland::Server::LayerSurfaceV1::KeyboardInteractivity::OnDemand;
         }
-        return control->rules.checkAcceptFocus(acceptsFocus());
+        return this->control->rules.checkAcceptFocus(acceptsFocus());
     }
 
     bool dockWantsInput() const override
@@ -744,10 +759,10 @@ public:
 
     pid_t pid() const override
     {
-        if (remnant || !surface->client()) {
+        if (this->remnant || !this->surface->client()) {
             return 0;
         }
-        return surface->client()->processId();
+        return this->surface->client()->processId();
     }
 
     bool isLocalhost() const override
@@ -757,7 +772,8 @@ public:
 
     bool isLockScreen() const override
     {
-        return !remnant && surface->client() == waylandServer()->screen_locker_client_connection;
+        return !this->remnant
+            && this->surface->client() == waylandServer()->screen_locker_client_connection;
     }
 
     bool isInitialPositionSet() const override
@@ -775,7 +791,7 @@ public:
         }
 
         hideClient(false);
-        raise_window(&space, this);
+        raise_window(&this->space, this);
 
         if (plasma_shell_surface->panelBehavior()
             == Wrapland::Server::PlasmaShellSurface::PanelBehavior::AutoHide) {
@@ -812,19 +828,19 @@ public:
             return false;
         }
 
-        return control->rules.checkMaximize(maximize_mode::restore) == maximize_mode::restore
-            && control->rules.checkMaximize(maximize_mode::full) == maximize_mode::full;
+        return this->control->rules.checkMaximize(maximize_mode::restore) == maximize_mode::restore
+            && this->control->rules.checkMaximize(maximize_mode::full) == maximize_mode::full;
     }
 
     bool isMinimizable() const override
     {
-        if (!control) {
+        if (!this->control) {
             return false;
         }
         if (layer_surface) {
             return false;
         }
-        if (!control->rules.checkMinimize(true)) {
+        if (!this->control->rules.checkMinimize(true)) {
             return false;
         }
         return (!plasma_shell_surface
@@ -834,16 +850,16 @@ public:
 
     bool isMovable() const override
     {
-        if (!control) {
+        if (!this->control) {
             return false;
         }
         if (layer_surface) {
             return false;
         }
-        if (geometry_update.fullscreen) {
+        if (this->geometry_update.fullscreen) {
             return false;
         }
-        if (control->rules.checkPosition(geo::invalid_point) != geo::invalid_point) {
+        if (this->control->rules.checkPosition(geo::invalid_point) != geo::invalid_point) {
             return false;
         }
         if (plasma_shell_surface) {
@@ -855,13 +871,13 @@ public:
 
     bool isMovableAcrossScreens() const override
     {
-        if (!control) {
+        if (!this->control) {
             return false;
         }
         if (layer_surface) {
             return false;
         }
-        if (control->rules.checkPosition(geo::invalid_point) != geo::invalid_point) {
+        if (this->control->rules.checkPosition(geo::invalid_point) != geo::invalid_point) {
             return false;
         }
         if (plasma_shell_surface) {
@@ -873,16 +889,16 @@ public:
 
     bool isResizable() const override
     {
-        if (!control) {
+        if (!this->control) {
             return false;
         }
         if (layer_surface) {
             return false;
         }
-        if (geometry_update.fullscreen) {
+        if (this->geometry_update.fullscreen) {
             return false;
         }
-        if (control->rules.checkSize(QSize()).isValid()) {
+        if (this->control->rules.checkSize(QSize()).isValid()) {
             return false;
         }
         if (plasma_shell_surface) {
@@ -912,9 +928,9 @@ public:
         }
 
         if (hide) {
-            space.render.addRepaint(visible_rect(this));
-            process_window_hidden(space, this);
-            Q_EMIT qobject->windowHidden();
+            this->space.base.render->compositor->addRepaint(visible_rect(this));
+            process_window_hidden(this->space, this);
+            Q_EMIT this->qobject->windowHidden();
         } else {
             handle_shown_and_mapped();
         }
@@ -934,26 +950,26 @@ public:
 
     void doResizeSync() override
     {
-        configure_geometry(control->move_resize.geometry);
+        configure_geometry(this->control->move_resize.geometry);
     }
 
-    bool belongsToSameApplication(Toplevel const* other,
+    bool belongsToSameApplication(Toplevel<Space> const* other,
                                   win::same_client_check checks) const override
     {
         if (flags(checks & win::same_client_check::allow_cross_process)) {
-            if (other->control->desktop_file_name == control->desktop_file_name) {
+            if (other->control->desktop_file_name == this->control->desktop_file_name) {
                 return true;
             }
         }
         if (auto s = other->surface) {
-            return s->client() == surface->client();
+            return s->client() == this->surface->client();
         }
         return false;
     }
 
     bool belongsToDesktop() const override
     {
-        auto const windows = space.windows;
+        auto const windows = this->space.windows;
 
         return std::any_of(windows.cbegin(), windows.cend(), [this](auto const& win) {
             if (belongsToSameApplication(win, flags<same_client_check>())) {
@@ -965,51 +981,51 @@ public:
 
     void doSetActive() override
     {
-        assert(control);
+        assert(this->control);
 
-        if (!control->active) {
+        if (!this->control->active) {
             return;
         }
-        blocker block(space.stacking_order);
-        focus_to_null(space);
+        blocker block(this->space.stacking_order);
+        focus_to_null(this->space);
     }
 
     void doMinimize() override
     {
-        if (control->minimized) {
-            process_window_hidden(space, this);
+        if (this->control->minimized) {
+            process_window_hidden(this->space, this);
         } else {
-            Q_EMIT qobject->windowShown();
+            Q_EMIT this->qobject->windowShown();
         }
         propagate_minimized_to_transients(*this);
     }
 
     void setFrameGeometry(QRect const& rect) override
     {
-        auto const frame_geo = control ? control->rules.checkGeometry(rect) : rect;
+        auto const frame_geo = this->control ? this->control->rules.checkGeometry(rect) : rect;
 
-        geometry_update.frame = frame_geo;
+        this->geometry_update.frame = frame_geo;
 
-        if (geometry_update.block) {
-            geometry_update.pending = win::pending_geometry::normal;
+        if (this->geometry_update.block) {
+            this->geometry_update.pending = win::pending_geometry::normal;
             return;
         }
 
-        geometry_update.pending = pending_geometry::none;
+        this->geometry_update.pending = pending_geometry::none;
 
         if (needs_configure(this)) {
             if (plasma_shell_surface) {
                 if (!pending_configures.empty()) {
                     pending_configures.back().geometry.frame.moveTo(frame_geo.topLeft());
                 }
-                do_set_geometry(QRect(frame_geo.topLeft(), size()));
+                do_set_geometry(QRect(frame_geo.topLeft(), this->size()));
             }
             configure_geometry(frame_geo);
             return;
         }
 
-        assert(synced_geometry.max_mode == geometry_update.max_mode);
-        assert(synced_geometry.fullscreen == geometry_update.fullscreen);
+        assert(synced_geometry.max_mode == this->geometry_update.max_mode);
+        assert(synced_geometry.fullscreen == this->geometry_update.fullscreen);
 
         if (!pending_configures.empty()) {
             // We might be here with a new position but a size not yet acked by the client.
@@ -1043,21 +1059,21 @@ public:
         // In case the restore geometry is invalid, use the placement from the rectify function.
         auto restore_geo = rectify_fullscreen_restore_geometry(this);
 
-        if (!restore_geometries.maximize.isValid()) {
+        if (!this->restore_geometries.maximize.isValid()) {
             // We let the client decide on a size.
             restore_geo.setSize(QSize(0, 0));
         }
 
         setFrameGeometry(restore_geo);
-        restore_geometries.maximize = {};
+        this->restore_geometries.maximize = {};
     }
 
     win::layer layer_for_dock() const override
     {
-        assert(control);
+        assert(this->control);
 
         if (!plasma_shell_surface) {
-            return Toplevel::layer_for_dock();
+            return Toplevel<Space>::layer_for_dock();
         }
 
         using PSS = Wrapland::Server::PlasmaShellSurface;
@@ -1080,17 +1096,17 @@ public:
 
     bool has_pending_repaints() const override
     {
-        return ready_for_painting && Toplevel::has_pending_repaints();
+        return this->ready_for_painting && Toplevel<Space>::has_pending_repaints();
     }
 
     void updateColorScheme() override
     {
-        assert(control);
+        assert(this->control);
 
         if (palette) {
-            set_color_scheme(this, control->rules.checkDecoColor(palette->palette()));
+            set_color_scheme(this, this->control->rules.checkDecoColor(palette->palette()));
         } else {
-            set_color_scheme(this, control->rules.checkDecoColor(QString()));
+            set_color_scheme(this, this->control->rules.checkDecoColor(QString()));
         }
     }
 
@@ -1101,12 +1117,12 @@ public:
 
     bool is_popup_end() const override
     {
-        return remnant ? remnant->data.was_popup_window : static_cast<bool>(popup);
+        return this->remnant ? this->remnant->data.was_popup_window : static_cast<bool>(popup);
     }
 
     void killWindow() override
     {
-        auto client = surface->client();
+        auto client = this->surface->client();
         if (client->processId() == getpid() || client->processId() == 0) {
             client->destroy();
             return;
@@ -1126,24 +1142,24 @@ public:
     void handle_class_changed()
     {
         auto const window_class = QByteArray(toplevel->appId().c_str());
-        setResourceClass(resource_name, window_class);
+        this->setResourceClass(this->resource_name, window_class);
         if (initialized && supportsWindowRules()) {
             rules::setup_rules(this, true);
-            applyWindowRules();
+            this->applyWindowRules();
         }
         set_desktop_file_name(this, window_class);
     }
 
     void handle_title_changed()
     {
-        auto const old_suffix = caption.suffix;
+        auto const old_suffix = this->caption.suffix;
 
-        caption.normal = QString::fromStdString(toplevel->title()).simplified();
+        this->caption.normal = QString::fromStdString(toplevel->title()).simplified();
         updateCaption();
 
-        if (caption.suffix == old_suffix) {
+        if (this->caption.suffix == old_suffix) {
             // Don't emit caption change twice it already got emitted by the changing suffix.
-            Q_EMIT qobject->captionChanged();
+            Q_EMIT this->qobject->captionChanged();
         }
     }
 
@@ -1172,19 +1188,19 @@ public:
 
     void handle_commit()
     {
-        if (!surface->state().buffer) {
+        if (!this->surface->state().buffer) {
             unmap();
             return;
         }
 
-        if (surface->state().updates & Wrapland::Server::surface_change::size) {
-            discard_buffer();
+        if (this->surface->state().updates & Wrapland::Server::surface_change::size) {
+            this->discard_buffer();
         }
 
-        if (!surface->state().damage.isEmpty()) {
-            addDamage(surface->state().damage);
-        } else if (surface->state().updates & Wrapland::Server::surface_change::frame) {
-            space.base.render->compositor->schedule_frame_callback(this);
+        if (!this->surface->state().damage.isEmpty()) {
+            this->addDamage(this->surface->state().damage);
+        } else if (this->surface->state().updates & Wrapland::Server::surface_change::frame) {
+            this->space.base.render->compositor->schedule_frame_callback(this);
         }
 
         if (toplevel || popup) {
@@ -1193,19 +1209,20 @@ public:
             // Plasma surfaces might set position late. So check again initial position being set.
             if (must_place && !isInitialPositionSet()) {
                 must_place = false;
-                auto const area
-                    = space_window_area(space, PlacementArea, get_current_output(space), desktop());
+                auto const area = space_window_area(
+                    this->space, PlacementArea, get_current_output(this->space), this->desktop());
                 placeIn(area);
             }
         } else if (layer_surface) {
             handle_layer_surface_commit(this);
             apply_pending_geometry();
-        } else if (auto cur_size = client_to_frame_size(this, surface->size());
-                   size() != cur_size) {
-            do_set_geometry(QRect(pos(), cur_size));
+        } else if (auto cur_size = client_to_frame_size(this, this->surface->size());
+                   this->size() != cur_size) {
+            do_set_geometry(QRect(this->pos(), cur_size));
         }
 
-        setDepth((surface->state().buffer->hasAlphaChannel() && !is_desktop(this)) ? 32 : 24);
+        this->setDepth(
+            (this->surface->state().buffer->hasAlphaChannel() && !is_desktop(this)) ? 32 : 24);
         map();
     }
 
@@ -1218,8 +1235,8 @@ public:
         auto old_mode = max_mode;
         max_mode = mode;
 
-        updateWindowRules(rules::type::maximize_horiz | rules::type::maximize_vert
-                          | rules::type::position | rules::type::size);
+        this->updateWindowRules(rules::type::maximize_horiz | rules::type::maximize_vert
+                                | rules::type::position | rules::type::size);
 
         // Update decoration borders.
         if (auto deco = decoration(this); deco && deco->client()
@@ -1239,14 +1256,14 @@ public:
             }
         }
 
-        Q_EMIT qobject->maximize_mode_changed(mode);
+        Q_EMIT this->qobject->maximize_mode_changed(mode);
     }
 
     void do_set_fullscreen(bool full)
     {
-        full = control->rules.checkFullScreen(full);
+        full = this->control->rules.checkFullScreen(full);
 
-        auto const old_full = control->fullscreen;
+        auto const old_full = this->control->fullscreen;
         if (old_full == full) {
             return;
         }
@@ -1254,25 +1271,26 @@ public:
         if (old_full) {
             // May cause focus leave.
             // TODO: Must always be done when fullscreening to other output allowed.
-            space.focusMousePos = space.input->platform.cursor->pos();
+            this->space.focusMousePos = this->space.input->platform.cursor->pos();
         }
 
-        control->fullscreen = full;
+        this->control->fullscreen = full;
 
         if (full) {
-            raise_window(&space, this);
+            raise_window(&this->space, this);
         }
 
         // Active fullscreens gets a different layer.
         update_layer(this);
 
-        updateWindowRules(rules::type::fullscreen | rules::type::position | rules::type::size);
-        Q_EMIT qobject->fullScreenChanged();
+        this->updateWindowRules(rules::type::fullscreen | rules::type::position
+                                | rules::type::size);
+        Q_EMIT this->qobject->fullScreenChanged();
     }
 
     bool acceptsFocus() const override
     {
-        assert(control);
+        assert(this->control);
 
         using PSS = Wrapland::Server::PlasmaShellSurface;
 
@@ -1295,20 +1313,20 @@ public:
 
     void updateCaption() override
     {
-        auto const old_suffix = caption.suffix;
+        auto const old_suffix = this->caption.suffix;
         auto const shortcut = shortcut_caption_suffix(this);
-        caption.suffix = shortcut;
+        this->caption.suffix = shortcut;
         if ((!is_special_window(this) || is_toolbar(this))
-            && find_client_with_same_caption(static_cast<Toplevel*>(this))) {
+            && find_client_with_same_caption(static_cast<Toplevel<Space>*>(this))) {
             int i = 2;
             do {
-                caption.suffix
+                this->caption.suffix
                     = shortcut + QLatin1String(" <") + QString::number(i) + QLatin1Char('>');
                 i++;
-            } while (find_client_with_same_caption(static_cast<Toplevel*>(this)));
+            } while (find_client_with_same_caption(static_cast<Toplevel<Space>*>(this)));
         }
-        if (caption.suffix != old_suffix) {
-            Q_EMIT qobject->captionChanged();
+        if (this->caption.suffix != old_suffix) {
+            Q_EMIT this->qobject->captionChanged();
         }
     }
 
@@ -1336,34 +1354,32 @@ public:
     bool must_place{false};
     bool inhibit_idle{false};
 
-    Space& space;
-
 private:
     void handle_shown_and_mapped()
     {
         mapped = true;
 
-        if (transient()->annexed) {
-            discard_quads();
+        if (this->transient()->annexed) {
+            this->discard_quads();
         }
 
-        if (control) {
+        if (this->control) {
             if (!isLockScreen()) {
-                setup_plasma_management(&space, this);
+                setup_plasma_management(&this->space, this);
             }
             update_screen_edge(this);
         }
 
-        if (ready_for_painting) {
+        if (this->ready_for_painting) {
             // Was already shown in the past once. Just repaint and emit shown again.
-            addRepaintFull();
-            Q_EMIT qobject->windowShown();
+            this->addRepaintFull();
+            Q_EMIT this->qobject->windowShown();
             return;
         }
 
         // First time shown. Must be added to space.
-        setReadyForPainting();
-        space.handle_window_added(this);
+        this->setReadyForPainting();
+        this->space.handle_window_added(this);
     }
 };
 

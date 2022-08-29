@@ -20,67 +20,186 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include "backend.h"
+#include "buffer.h"
+#include "shadow.h"
+#include "window.h"
 
 #include "render/scene.h"
 
-namespace KWin::render
+#include <QElapsedTimer>
+
+namespace KWin::render::qpainter
 {
 
-class shadow;
-
-namespace qpainter
+template<typename Platform>
+class scene : public render::scene<Platform>
 {
-
-class KWIN_EXPORT scene : public render::scene
-{
-    Q_OBJECT
-
 public:
-    explicit scene(render::compositor& compositor);
-    ~scene() override;
+    using type = scene<Platform>;
+    using abstract_type = render::scene<Platform>;
 
-    int64_t paint_output(base::output* output,
+    using window_t = typename abstract_type::window_t;
+    using qpainter_window_t = qpainter::window<typename window_t::ref_t, type>;
+
+    using buffer_t = buffer<window_t>;
+
+    using output_t = typename abstract_type::output_t;
+
+    explicit scene(Platform& platform)
+        : render::scene<Platform>(platform)
+        , m_backend{platform.get_qpainter_backend(*platform.compositor)}
+        , m_painter(new QPainter())
+    {
+        QQuickWindow::setSceneGraphBackend(QSGRendererInterface::Software);
+    }
+
+    int64_t paint_output(output_t* output,
                          QRegion damage,
-                         std::deque<Toplevel*> const& windows,
-                         std::chrono::milliseconds presentTime) override;
+                         std::deque<typename window_t::ref_t*> const& windows,
+                         std::chrono::milliseconds presentTime) override
+    {
+        QElapsedTimer renderTimer;
+        renderTimer.start();
 
-    void paintGenericScreen(paint_type mask, ScreenPaintData data) override;
+        this->createStackingOrder(windows);
 
-    CompositingType compositingType() const override;
-    std::unique_ptr<render::shadow> createShadow(render::window* window) override;
-    win::deco::renderer<win::deco::client_impl<Toplevel>>*
-    createDecorationRenderer(win::deco::client_impl<Toplevel>* impl) override;
-    void handle_screen_geometry_change(QSize const& size) override;
+        auto mask = paint_type::none;
+        m_backend->begin_render(*output);
+
+        auto const needsFullRepaint = m_backend->needsFullRepaint();
+        if (needsFullRepaint) {
+            mask |= render::paint_type::screen_background_first;
+            damage = QRect({}, kwinApp()->get_base().topology.size);
+        }
+
+        auto const geometry = output->geometry();
+
+        auto buffer = m_backend->bufferForScreen(output);
+        if (!buffer || buffer->isNull()) {
+            return renderTimer.nsecsElapsed();
+        }
+
+        m_painter->begin(buffer);
+        m_painter->save();
+        m_painter->setWindow(geometry);
+
+        this->repaint_output = output;
+        QRegion updateRegion, validRegion;
+
+        this->paintScreen(mask,
+                          damage.intersected(geometry),
+                          QRegion(),
+                          &updateRegion,
+                          &validRegion,
+                          presentTime);
+        paintCursor();
+
+        m_painter->restore();
+        m_painter->end();
+
+        m_backend->present(output, updateRegion);
+
+        this->clearStackingOrder();
+        return renderTimer.nsecsElapsed();
+    }
+
+    void paintGenericScreen(paint_type mask, ScreenPaintData data) override
+    {
+        m_painter->save();
+        m_painter->translate(data.xTranslation(), data.yTranslation());
+        m_painter->scale(data.xScale(), data.yScale());
+        render::scene<Platform>::paintGenericScreen(mask, data);
+        m_painter->restore();
+    }
+
+    CompositingType compositingType() const override
+    {
+        return QPainterCompositing;
+    }
+
+    std::unique_ptr<render::shadow<window_t>> createShadow(window_t* window) override
+    {
+        return std::make_unique<shadow<window_t>>(window);
+    }
+
+    win::deco::renderer<win::deco::client_impl<typename window_t::ref_t>>*
+    createDecorationRenderer(win::deco::client_impl<typename window_t::ref_t>* impl) override
+    {
+        return new deco_renderer(impl);
+    }
+
+    void handle_screen_geometry_change(QSize const& /*size*/) override
+    {
+    }
 
     bool animationsSupported() const override
     {
         return false;
     }
 
-    QPainter* scenePainter() const override;
+    QPainter* scenePainter() const override
+    {
+        return m_painter.data();
+    }
 
-    qpainter::backend* backend() const
+    qpainter::backend<type>* backend() const
     {
         return m_backend;
     }
 
 protected:
-    void paintBackground(QRegion region) override;
-    std::unique_ptr<render::window> createWindow(Toplevel* toplevel) override;
-    void paintCursor() override;
-    void paintEffectQuickView(EffectQuickView* w) override;
+    void paintBackground(QRegion region) override
+    {
+        m_painter->setBrush(Qt::black);
+        for (const QRect& rect : region) {
+            m_painter->drawRect(rect);
+        }
+    }
+
+    std::unique_ptr<window_t> createWindow(typename window_t::ref_t* ref_win) override
+    {
+        return std::make_unique<qpainter_window_t>(ref_win, *this);
+    }
+
+    void paintCursor() override
+    {
+        auto cursor = this->platform.compositor->software_cursor.get();
+        if (!cursor->enabled) {
+            return;
+        }
+        auto const img = cursor->image();
+        if (img.isNull()) {
+            return;
+        }
+        auto const cursorPos = this->platform.base.space->input->platform.cursor->pos();
+        auto const hotspot = cursor->hotspot();
+        m_painter->drawImage(cursorPos - hotspot, img);
+        cursor->mark_as_rendered();
+    }
+
+    void paintEffectQuickView(EffectQuickView* w) override
+    {
+        auto painter = this->platform.compositor->effects->scenePainter();
+        const QImage buffer = w->bufferAsImage();
+        if (buffer.isNull()) {
+            return;
+        }
+        painter->save();
+        painter->setOpacity(w->opacity());
+        painter->drawImage(w->geometry(), buffer);
+        painter->restore();
+    }
 
 private:
-    qpainter::backend* m_backend;
+    qpainter::backend<type>* m_backend;
     QScopedPointer<QPainter> m_painter;
 };
 
-KWIN_EXPORT std::unique_ptr<render::scene> create_scene(render::compositor& compositor);
-
-inline QPainter* scene::scenePainter() const
+template<typename Platform>
+std::unique_ptr<render::scene<Platform>> create_scene(Platform& platform)
 {
-    return m_painter.data();
+    qCDebug(KWIN_CORE) << "Creating QPainter scene.";
+    return std::make_unique<qpainter::scene<Platform>>(platform);
 }
 
-}
 }

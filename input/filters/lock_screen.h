@@ -11,12 +11,8 @@
 #include "input/event_filter.h"
 #include "input/keyboard_redirect.h"
 #include "input/qt_event.h"
-#include "input/redirect.h"
 #include "input/touch_redirect.h"
 #include "main.h"
-#include "toplevel.h"
-#include "win/wayland/space.h"
-#include "win/wayland/window.h"
 
 #include <KScreenLocker/KsldApp>
 #include <Wrapland/Server/keyboard_pool.h>
@@ -211,12 +207,10 @@ public:
 
 private:
     template<typename Pool>
-    static bool is_surface_allowed(input::redirect& redirect, Pool const& device_pool)
+    bool is_surface_allowed(Pool const& device_pool) const
     {
-        using wayland_space = win::wayland::space<base::wayland::platform>;
-
         if (auto surface = device_pool.get_focus().surface) {
-            if (auto win = static_cast<wayland_space*>(&redirect.space)->find_window(surface)) {
+            if (auto win = this->redirect.platform.base.space->find_window(surface)) {
                 return win->isLockScreen() || win->isInputMethod();
             }
             return false;
@@ -226,17 +220,17 @@ private:
 
     bool pointerSurfaceAllowed() const
     {
-        return is_surface_allowed(this->redirect, waylandServer()->seat()->pointers());
+        return is_surface_allowed(waylandServer()->seat()->pointers());
     }
 
     bool keyboardSurfaceAllowed() const
     {
-        return is_surface_allowed(this->redirect, waylandServer()->seat()->keyboards());
+        return is_surface_allowed(waylandServer()->seat()->keyboards());
     }
 
     bool touchSurfaceAllowed() const
     {
-        return is_surface_allowed(this->redirect, waylandServer()->seat()->touches());
+        return is_surface_allowed(waylandServer()->seat()->touches());
     }
 };
 

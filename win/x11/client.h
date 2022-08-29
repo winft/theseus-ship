@@ -7,7 +7,6 @@
 
 #include "geo.h"
 #include "input.h"
-#include "window.h"
 
 #include "base/logging.h"
 #include "win/meta.h"

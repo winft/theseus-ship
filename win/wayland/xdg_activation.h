@@ -61,7 +61,8 @@ struct xdg_activation {
             return;
         }
 
-        Q_EMIT space.render.effects->startupRemoved(QString::fromStdString(token));
+        Q_EMIT space.base.render->compositor->effects->startupRemoved(
+            QString::fromStdString(token));
         token.clear();
     }
 
@@ -86,7 +87,7 @@ std::string xdg_activation_set_token(Space& space, std::string const& appid)
     if (!appid.empty()) {
         auto const icon = QIcon::fromTheme(icon_from_desktop_file(QString::fromStdString(appid)),
                                            QIcon::fromTheme(QStringLiteral("system-run")));
-        Q_EMIT space.render.effects->startupAdded(token_str, icon);
+        Q_EMIT space.base.render->compositor->effects->startupAdded(token_str, icon);
     }
     return token_str;
 }

@@ -9,7 +9,6 @@
 #include "activation.h"
 #include "appmenu.h"
 #include "client_machine.h"
-#include "control.h"
 #include "deco.h"
 #include "focus_stealing.h"
 #include "placement.h"
@@ -166,12 +165,12 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
     setup_space_window_connections(&space, win);
 
-    if (auto& comp = space.render; comp.x11_integration.update_blocking) {
+    if (auto comp = space.base.render->compositor.get(); comp->x11_integration.update_blocking) {
         QObject::connect(win->qobject.get(),
                          &Win::qobject_t::blockingCompositingChanged,
-                         comp.qobject.get(),
-                         [&comp, win](auto blocks) {
-                             comp.x11_integration.update_blocking(blocks ? win : nullptr);
+                         comp->qobject.get(),
+                         [comp, win](auto blocks) {
+                             comp->x11_integration.update_blocking(blocks ? win : nullptr);
                          });
     }
 
@@ -574,7 +573,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         restore_session_stacking_order(&space, win);
     }
 
-    if (!win->space.render.scene) {
+    if (!win->space.base.render->compositor->scene) {
         // set to true in case compositing is turned on later. bug #160393
         win->ready_for_painting = true;
     }
@@ -655,7 +654,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
     // Forward all opacity values to the frame in case there'll be other CM running.
     QObject::connect(
-        win->space.render.qobject.get(),
+        win->space.base.render->compositor->qobject.get(),
         &render::compositor_qobject::compositingToggled,
         win->qobject.get(),
         [win](bool active) {

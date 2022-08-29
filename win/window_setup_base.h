@@ -39,12 +39,12 @@ void window_setup_geometry(Win& win)
     QObject::connect(
         &base, &base::platform::topology_changed, win.qobject.get(), [&win] { win.checkScreen(); });
     QObject::connect(&base, &base::platform::output_added, win.qobject.get(), [&win](auto output) {
-        win.handle_output_added(output);
+        win.handle_output_added(static_cast<typename Win::output_t*>(output));
     });
-    QObject::connect(&base,
-                     &base::platform::output_removed,
-                     win.qobject.get(),
-                     [&win](auto output) { win.handle_output_removed(output); });
+    QObject::connect(
+        &base, &base::platform::output_removed, win.qobject.get(), [&win](auto output) {
+            win.handle_output_removed(static_cast<typename Win::output_t*>(output));
+        });
 
     win.setupCheckScreenConnection();
 }

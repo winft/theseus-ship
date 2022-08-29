@@ -19,6 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
+#include "kwin_export.h"
+
 #include <QObject>
 #include <QString>
 
@@ -71,7 +73,7 @@ namespace KWin::scripting
  *  }
  * @endcode
  */
-class dbus_call : public QObject
+class KWIN_EXPORT dbus_call : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString service READ service WRITE setService NOTIFY serviceChanged)

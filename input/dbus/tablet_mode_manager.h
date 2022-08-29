@@ -97,13 +97,11 @@ public:
         : qobject{std::make_unique<tablet_mode_manager_qobject>()}
         , platform{platform}
     {
-        auto redirect = static_cast<input::wayland::redirect*>(platform.redirect);
-
-        if (redirect->has_tablet_mode_switch()) {
-            redirect->installInputEventSpy(
+        if (platform.redirect->has_tablet_mode_switch()) {
+            platform.redirect->m_spies.push_back(
                 new tablet_mode_switch_spy(*platform.redirect, *qobject));
         } else {
-            Q_EMIT redirect->qobject->has_tablet_mode_switch_changed(false);
+            Q_EMIT platform.redirect->qobject->has_tablet_mode_switch_changed(false);
         }
 
         QDBusConnection::sessionBus().registerObject(
@@ -112,7 +110,7 @@ public:
             qobject.get(),
             QDBusConnection::ExportAllProperties | QDBusConnection::ExportAllSignals);
 
-        QObject::connect(redirect->qobject.get(),
+        QObject::connect(platform.redirect->qobject.get(),
                          &input::redirect_qobject::has_tablet_mode_switch_changed,
                          qobject.get(),
                          [this](auto set) { hasTabletModeInputChanged(set); });
@@ -120,7 +118,7 @@ public:
 
     ~tablet_mode_manager()
     {
-        platform.redirect->uninstallInputEventSpy(spy);
+        remove_all(platform.redirect->m_spies, spy);
     }
 
     std::unique_ptr<tablet_mode_manager_qobject> qobject;
@@ -128,13 +126,15 @@ public:
 
 private:
     using removed_spy_t = tablet_mode_touchpad_removed_spy<tablet_mode_manager>;
+    using mode_switch_spy_t
+        = tablet_mode_switch_spy<typename Platform::redirect_t, tablet_mode_manager_qobject>;
 
     void hasTabletModeInputChanged(bool set)
     {
         if (set) {
             if (!spy) {
-                spy = new tablet_mode_switch_spy(*platform.redirect, *qobject);
-                platform.redirect->installInputEventSpy(spy);
+                spy = new mode_switch_spy_t(*platform.redirect, *qobject);
+                platform.redirect->m_spies.push_back(spy);
             }
             qobject->setTabletModeAvailable(true);
         } else {
@@ -152,7 +152,7 @@ private:
         }
     }
 
-    tablet_mode_switch_spy<tablet_mode_manager_qobject>* spy{nullptr};
+    mode_switch_spy_t* spy{nullptr};
     std::unique_ptr<removed_spy_t> removed_spy;
 };
 

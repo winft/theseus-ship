@@ -170,7 +170,7 @@ public:
         data.source_int.reset(new data_source_ext);
         data.x11_source->set_source(data.source_int.get());
 
-        xdrag = std::make_unique<x11_drag<Toplevel>>(*data.x11_source);
+        xdrag = std::make_unique<x11_drag<Window>>(*data.x11_source);
 
         QObject::connect(
             data.qobject.get(),
@@ -206,7 +206,7 @@ private:
 
         // New Wl to X drag, init drag and Wl source.
         auto source = new wl_source<Wrapland::Server::data_source, Window>(srv_src, data.core);
-        wldrag = std::make_unique<wl_drag<Toplevel>>(*source, data.window);
+        wldrag = std::make_unique<wl_drag<Window>>(*source, data.window);
         set_wl_source(this, source);
         own_selection(this, true);
     }

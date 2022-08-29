@@ -7,9 +7,10 @@
 */
 #pragma once
 
-#include "scene.h"
-
 #include "win/deco/renderer.h"
+
+// Must be included before.
+#include <epoxy/gl.h>
 
 #include <kwingl/utils.h>
 
@@ -43,10 +44,11 @@ inline QImage rotate_and_flip(const QImage& srcImage, const QRect& srcRect)
     return image;
 }
 
+template<typename Scene>
 class deco_render_data : public win::deco::render_data
 {
 public:
-    deco_render_data(gl::scene& scene)
+    deco_render_data(Scene& scene)
         : scene{scene}
     {
     }
@@ -59,10 +61,10 @@ public:
     std::unique_ptr<GLTexture> texture;
 
 private:
-    gl::scene& scene;
+    Scene& scene;
 };
 
-template<typename Client>
+template<typename Client, typename Scene>
 class deco_renderer : public win::deco::renderer<Client>
 {
 public:
@@ -74,11 +76,11 @@ public:
         Count,
     };
 
-    deco_renderer(Client* client, gl::scene& scene)
+    deco_renderer(Client* client, Scene& scene)
         : win::deco::renderer<Client>(client)
         , scene{scene}
     {
-        this->data = std::make_unique<deco_render_data>(scene);
+        this->data = std::make_unique<deco_render_data<Scene>>(scene);
         QObject::connect(this->qobject.get(),
                          &win::deco::renderer_qobject::renderScheduled,
                          client->client()->qobject.get(),
@@ -200,9 +202,9 @@ public:
     }
 
 private:
-    deco_render_data& get_data()
+    deco_render_data<Scene>& get_data()
     {
-        return static_cast<deco_render_data&>(*this->data);
+        return static_cast<deco_render_data<Scene>&>(*this->data);
     }
 
     static void clamp_row(int left, int width, int right, const uint32_t* src, uint32_t* dest)
@@ -290,7 +292,7 @@ private:
         data.texture->clear();
     }
 
-    gl::scene& scene;
+    Scene& scene;
 };
 
 }

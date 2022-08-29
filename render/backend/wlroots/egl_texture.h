@@ -16,11 +16,13 @@ namespace KWin::render::backend::wlroots
 {
 
 template<typename Backend>
-class egl_texture : public gl::texture_private<typename Backend::backend_t>
+class egl_texture : public gl::texture_private<typename Backend::abstract_type>
 {
 public:
-    egl_texture(gl::texture<typename Backend::backend_t>* texture, Backend* backend)
-        : gl::texture_private<typename Backend::backend_t>()
+    using buffer_t = typename Backend::buffer_t;
+
+    egl_texture(gl::texture<typename Backend::abstract_type>* texture, Backend* backend)
+        : gl::texture_private<typename Backend::abstract_type>()
         , q(texture)
         , m_backend(backend)
     {
@@ -35,17 +37,17 @@ public:
         }
     }
 
-    bool updateTexture(render::buffer* buffer) override
+    bool updateTexture(buffer_t* buffer) override
     {
         return update_texture_from_buffer(*this, buffer);
     }
 
-    gl::backend* backend() override
+    Backend* backend() override
     {
         return m_backend;
     }
 
-    gl::texture<typename Backend::backend_t>* q;
+    gl::texture<typename Backend::abstract_type>* q;
     EGLImageKHR m_image{EGL_NO_IMAGE_KHR};
     bool m_hasSubImageUnpack{false};
 

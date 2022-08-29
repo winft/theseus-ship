@@ -27,13 +27,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin::input
 {
-class touch;
 
-class touch_redirect : public device_redirect
+template<typename Redirect>
+class touch_redirect : public device_redirect<Redirect>
 {
 public:
-    explicit touch_redirect(input::redirect* redirect)
-        : device_redirect(redirect)
+    explicit touch_redirect(Redirect* redirect)
+        : device_redirect<Redirect>(redirect)
     {
     }
 

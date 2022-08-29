@@ -235,21 +235,4 @@ maximize_mode window::checkMaximize(maximize_mode mode, bool init) const
     return vert | horiz;
 }
 
-base::output const* window::checkScreen(base::output const* output, bool init) const
-{
-    if (rules.size() == 0) {
-        return output;
-    }
-
-    auto const& outputs = kwinApp()->get_base().get_outputs();
-    int index = output ? base::get_output_index(outputs, *output) : 0;
-
-    for (auto&& rule : rules) {
-        if (rule->applyScreen(index, init))
-            break;
-    }
-
-    return base::get_output(outputs, index);
-}
-
 }

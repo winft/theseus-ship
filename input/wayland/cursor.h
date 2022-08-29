@@ -6,44 +6,125 @@
 */
 #pragma once
 
+#include "cursor_image.h"
+
 #include "input/cursor.h"
+#include "input/redirect_qobject.h"
+#include "input/xkb/helpers.h"
 
 #include <QPointF>
+#include <Wrapland/Server/seat.h>
 #include <memory>
 
 namespace KWin::input::wayland
 {
-class cursor_image;
-class platform;
 
-class KWIN_EXPORT cursor : public input::cursor
+template<typename Platform>
+class cursor : public input::cursor
 {
-    Q_OBJECT
 public:
-    std::unique_ptr<wayland::cursor_image> cursor_image;
+    using type = cursor<Platform>;
+    using cursor_image_t = wayland::cursor_image<type, Platform>;
 
-    cursor(wayland::platform* platform);
-    ~cursor() override;
+    cursor(Platform* platform)
+        : cursor_image{std::make_unique<cursor_image_t>(*platform)}
+        , platform{platform}
+    {
+        auto redirect = platform->redirect;
+        QObject::connect(redirect->qobject.get(),
+                         &redirect_qobject::globalPointerChanged,
+                         this,
+                         &type::slot_pos_changed);
+        QObject::connect(redirect->qobject.get(),
+                         &redirect_qobject::pointerButtonStateChanged,
+                         this,
+                         &type::slot_pointer_button_changed);
+        QObject::connect(redirect->qobject.get(),
+                         &redirect_qobject::keyboardModifiersChanged,
+                         this,
+                         &type::slot_modifiers_changed);
+    }
 
-    QImage image() const override;
-    QPoint hotspot() const override;
-    void mark_as_rendered() override;
+    QImage image() const override
+    {
+        return cursor_image->image();
+    }
 
-    PlatformCursorImage platform_image() const override;
+    QPoint hotspot() const override
+    {
+        return cursor_image->hotSpot();
+    }
+
+    void mark_as_rendered() override
+    {
+        cursor_image->markAsRendered();
+    }
+
+    PlatformCursorImage platform_image() const override
+    {
+        return PlatformCursorImage(image(), hotspot());
+    }
+
+    std::unique_ptr<cursor_image_t> cursor_image;
 
 protected:
-    void do_set_pos() override;
+    void do_set_pos() override
+    {
+        platform->warp_pointer(current_pos(), waylandServer()->seat()->timestamp());
+        slot_pos_changed(platform->redirect->globalPointer());
+        Q_EMIT pos_changed(current_pos());
+    }
 
-    void do_start_image_tracking() override;
-    void do_stop_image_tracking() override;
+    void do_start_image_tracking() override
+    {
+        QObject::connect(cursor_image->qobject.get(),
+                         &cursor_image_qobject::changed,
+                         this,
+                         &cursor::image_changed);
+    }
+
+    void do_stop_image_tracking() override
+    {
+        QObject::disconnect(cursor_image->qobject.get(),
+                            &cursor_image_qobject::changed,
+                            this,
+                            &cursor::image_changed);
+    }
 
 private:
-    void slot_pos_changed(const QPointF& pos);
-    void slot_pointer_button_changed();
-    void slot_modifiers_changed(Qt::KeyboardModifiers mods, Qt::KeyboardModifiers oldMods);
+    Qt::KeyboardModifiers get_keyboard_modifiers()
+    {
+        return xkb::get_active_keyboard_modifiers(*platform);
+    }
+
+    void slot_pos_changed(const QPointF& pos)
+    {
+        auto const oldPos = current_pos();
+        update_pos(pos.toPoint());
+
+        auto mods = get_keyboard_modifiers();
+        Q_EMIT mouse_changed(pos.toPoint(), oldPos, m_currentButtons, m_currentButtons, mods, mods);
+    }
+
+    void slot_pointer_button_changed()
+    {
+        Qt::MouseButtons const oldButtons = m_currentButtons;
+        m_currentButtons = platform->redirect->qtButtonStates();
+
+        auto const pos = current_pos();
+        auto mods = get_keyboard_modifiers();
+
+        Q_EMIT mouse_changed(pos, pos, m_currentButtons, oldButtons, mods, mods);
+    }
+
+    void slot_modifiers_changed(Qt::KeyboardModifiers mods, Qt::KeyboardModifiers oldMods)
+    {
+        Q_EMIT mouse_changed(
+            current_pos(), current_pos(), m_currentButtons, m_currentButtons, mods, oldMods);
+    }
 
     Qt::MouseButtons m_currentButtons{Qt::NoButton};
-    wayland::platform* platform;
+    Platform* platform;
 };
 
 }

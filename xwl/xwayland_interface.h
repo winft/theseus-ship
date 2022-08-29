@@ -24,12 +24,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QObject>
 #include <QPoint>
 
-namespace KWin
+namespace KWin::xwl
 {
-class Toplevel;
 
-namespace xwl
-{
 enum class drag_event_reply {
     // event should be ignored by the filter
     ignore,
@@ -39,12 +36,12 @@ enum class drag_event_reply {
     wayland,
 };
 
+template<typename Space>
 class xwayland_interface : public QObject
 {
 public:
-    virtual drag_event_reply drag_move_filter(Toplevel* target, QPoint const& pos) = 0;
+    using window_t = typename Space::window_t;
+    virtual drag_event_reply drag_move_filter(window_t* target, QPoint const& pos) = 0;
 };
-
-}
 
 }

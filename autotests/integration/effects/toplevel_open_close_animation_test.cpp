@@ -85,7 +85,7 @@ void ToplevelOpenCloseAnimationTest::init()
 
 void ToplevelOpenCloseAnimationTest::cleanup()
 {
-    auto effectsImpl = dynamic_cast<render::effects_handler_impl*>(effects);
+    auto& effectsImpl = Test::app()->base.render->compositor->effects;
     QVERIFY(effectsImpl);
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
@@ -108,7 +108,7 @@ void ToplevelOpenCloseAnimationTest::testAnimateToplevels()
     // animate the appearing and the disappearing of toplevel windows.
 
     // Make sure that we have the right effects ptr.
-    auto effectsImpl = dynamic_cast<render::effects_handler_impl*>(effects);
+    auto& effectsImpl = Test::app()->base.render->compositor->effects;
     QVERIFY(effectsImpl);
 
     // Load effect that will be tested.
@@ -135,7 +135,7 @@ void ToplevelOpenCloseAnimationTest::testAnimateToplevels()
 
     // Close the test client, the effect should start animating the disappearing
     // of the client.
-    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::closed);
+    QSignalSpy windowClosedSpy(client->qobject.get(), &win::window_qobject::closed);
     QVERIFY(windowClosedSpy.isValid());
     shellSurface.reset();
     surface.reset();
@@ -161,7 +161,7 @@ void ToplevelOpenCloseAnimationTest::testDontAnimatePopups()
     // to animate popups(e.g. popup menus, tooltips, etc).
 
     // Make sure that we have the right effects ptr.
-    auto effectsImpl = dynamic_cast<render::effects_handler_impl*>(effects);
+    auto& effectsImpl = Test::app()->base.render->compositor->effects;
     QVERIFY(effectsImpl);
 
     // Create the main window.
@@ -199,7 +199,7 @@ void ToplevelOpenCloseAnimationTest::testDontAnimatePopups()
     QVERIFY(!effect->isActive());
 
     // Destroy the popup, it should not be animated.
-    QSignalSpy popupClosedSpy(popup->qobject.get(), &Toplevel::qobject_t::closed);
+    QSignalSpy popupClosedSpy(popup->qobject.get(), &win::window_qobject::closed);
     QVERIFY(popupClosedSpy.isValid());
     popupShellSurface.reset();
     popupSurface.reset();

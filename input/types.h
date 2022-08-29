@@ -19,6 +19,12 @@ enum class keyboard_leds {
     scroll_lock = 1 << 2,
 };
 
+enum class TabletEventType {
+    Axis,
+    Proximity,
+    Tip,
+};
+
 }
 
 ENUM_FLAGS(KWin::input::keyboard_leds)

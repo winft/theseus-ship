@@ -278,9 +278,9 @@ void TestScreens::testCurrent()
 
     QFETCH(int, current);
     Test::set_current_output(current);
-    QCOMPARE(base::get_output_index(base.get_outputs(),
-                                    *win::get_current_output(*Test::app()->base.space)),
-             current);
+    QCOMPARE(
+        base::get_output_index(base.outputs, *win::get_current_output(*Test::app()->base.space)),
+        current);
     QTEST(!current_changed_spy.isEmpty(), "signal");
 }
 

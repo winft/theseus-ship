@@ -13,11 +13,9 @@
 #include "input/keyboard_redirect.h"
 #include "input/pointer_redirect.h"
 #include "input/qt_event.h"
-#include "input/redirect.h"
 #include "input/touch_redirect.h"
 #include "input/xkb/helpers.h"
 #include "win/deco.h"
-#include "win/internal_window.h"
 
 #include <QWindow>
 #include <Wrapland/Server/seat.h>
@@ -30,6 +28,8 @@ template<typename Redirect>
 class internal_window_filter : public event_filter<Redirect>
 {
 public:
+    using internal_window_t = typename Redirect::space_t::internal_window_t;
+
     explicit internal_window_filter(Redirect& redirect)
         : event_filter<Redirect>(redirect)
     {
@@ -42,8 +42,8 @@ public:
             return false;
         }
 
-        auto window
-            = dynamic_cast<win::internal_window*>(this->redirect.space.findInternal(internal));
+        auto window = dynamic_cast<internal_window_t*>(
+            this->redirect.platform.base.space->findInternal(internal));
 
         if (window && win::decoration(window)) {
             // only perform mouse commands on decorated internal windows
@@ -92,8 +92,8 @@ public:
         }
 
         if (event.orientation == axis_orientation::vertical) {
-            auto window
-                = dynamic_cast<win::internal_window*>(this->redirect.space.findInternal(internal));
+            auto window = dynamic_cast<internal_window_t*>(
+                this->redirect.platform.base.space->findInternal(internal));
             if (window && win::decoration(window)) {
                 // client window action only on vertical scrolling
                 auto const action_result
@@ -119,7 +119,7 @@ public:
         return adapted_qt_event.isAccepted();
     }
 
-    QWindow* get_internal_window(std::vector<Toplevel*> const& windows)
+    QWindow* get_internal_window(std::vector<typename Redirect::window_t*> const& windows)
     {
         if (windows.empty()) {
             return nullptr;
@@ -131,7 +131,7 @@ public:
 
         do {
             it--;
-            auto internal = dynamic_cast<win::internal_window*>(*it);
+            auto internal = dynamic_cast<internal_window_t*>(*it);
             if (!internal) {
                 continue;
             }
@@ -183,7 +183,7 @@ public:
 
     bool key(key_event const& event) override
     {
-        auto window = get_internal_window(this->redirect.space.windows);
+        auto window = get_internal_window(this->redirect.platform.base.space->windows);
         if (!window) {
             return false;
         }
@@ -199,7 +199,7 @@ public:
 
     bool key_repeat(key_event const& event) override
     {
-        auto window = get_internal_window(this->redirect.space.windows);
+        auto window = get_internal_window(this->redirect.platform.base.space->windows);
         if (!window) {
             return false;
         }

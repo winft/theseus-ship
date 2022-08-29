@@ -14,6 +14,7 @@
 #include "sync_alarm_filter.h"
 
 #include "base/x11/user_interaction_filter.h"
+#include "base/x11/xcb/window.h"
 #include "main.h"
 #include "utils/blocker.h"
 #include "win/desktop_space.h"
@@ -51,7 +52,7 @@ void init_space(Space& space)
     // first initialize the extensions
     base::x11::xcb::extensions::self();
 
-    using color_mapper_t = color_mapper<typename Space::space_t>;
+    using color_mapper_t = color_mapper<Space>;
     space.color_mapper = std::make_unique<color_mapper_t>(space);
     QObject::connect(space.qobject.get(),
                      &Space::qobject_t::clientActivated,
@@ -72,8 +73,7 @@ void init_space(Space& space)
         space.m_movingClientFilter.reset(new moving_window_filter(space));
     }
     if (base::x11::xcb::extensions::self()->is_sync_available()) {
-        space.m_syncAlarmFilter
-            = std::make_unique<sync_alarm_filter<typename Space::space_t>>(space);
+        space.m_syncAlarmFilter = std::make_unique<sync_alarm_filter<Space>>(space);
     }
 
     // Needed for proper initialization of user_time in Client ctor
@@ -86,7 +86,7 @@ void init_space(Space& space)
                                                        nullFocusValues));
     space.m_nullFocus->map();
 
-    space.root_info = x11::root_info<typename Space::space_t>::create(space);
+    space.root_info = x11::root_info<Space>::create(space);
     auto& vds = space.virtual_desktop_manager;
     vds->setRootInfo(space.root_info.get());
     space.root_info->activate();
@@ -157,7 +157,7 @@ void init_space(Space& space)
         delete[] viewports;
         QRect geom;
 
-        for (auto output : kwinApp()->get_base().get_outputs()) {
+        for (auto output : space.base.outputs) {
             geom |= output->geometry();
         }
 
@@ -173,7 +173,7 @@ void init_space(Space& space)
     typename Space::window_t* new_active_client{nullptr};
     if (!qApp->isSessionRestored()) {
         --space.block_focus;
-        new_active_client = find_controlled_window<x11::window>(
+        new_active_client = find_controlled_window<typename Space::x11_window>(
             space, predicate_match::window, client_info.activeWindow());
     }
     if (!new_active_client && !space.active_client && space.should_get_focus.size() == 0) {
@@ -204,7 +204,8 @@ void clear_space(Space& space)
     auto is_x11 = kwinApp()->operationMode() == Application::OperationModeX11;
 
     for (auto it = stack.cbegin(), end = stack.cend(); it != end; ++it) {
-        auto window = dynamic_cast<x11::window*>(const_cast<typename Space::window_t*>(*it));
+        auto window
+            = dynamic_cast<typename Space::x11_window*>(const_cast<typename Space::window_t*>(*it));
         if (!window || window->remnant) {
             continue;
         }
@@ -217,7 +218,7 @@ void clear_space(Space& space)
     }
 
     for (auto const& unmanaged : get_unmanageds(space)) {
-        release_window(static_cast<window*>(unmanaged), is_x11);
+        release_window(static_cast<typename Space::x11_window*>(unmanaged), is_x11);
         remove_all(space.windows, unmanaged);
         remove_all(space.stacking_order->pre_stack, unmanaged);
     }

@@ -20,8 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
-#include "buffer.h"
-
 #include <kwingl/texture_p.h>
 #include <kwingl/utils.h>
 
@@ -32,7 +30,7 @@ template<typename Backend>
 class texture_private : public GLTexturePrivate
 {
 public:
-    virtual bool updateTexture(render::buffer* buffer) = 0;
+    virtual bool updateTexture(typename Backend::buffer_t* buffer) = 0;
     virtual Backend* backend() = 0;
 };
 
@@ -40,6 +38,9 @@ template<typename Backend>
 class texture : public GLTexture
 {
 public:
+    using buffer_t = typename Backend::buffer_t;
+    using private_t = texture_private<Backend>;
+
     explicit texture(Backend* backend)
         : GLTexture(*backend->createBackendTexture(this))
     {
@@ -56,10 +57,7 @@ public:
         d_ptr = d_func()->backend()->createBackendTexture(this);
     }
 
-private:
-    texture(texture_private<Backend>& dd);
-
-    bool load(render::buffer* buffer)
+    bool load(buffer_t* buffer)
     {
         if (!buffer->isValid()) {
             return false;
@@ -72,22 +70,19 @@ private:
         return d_func()->updateTexture(buffer);
     }
 
-    void update_from_buffer(render::buffer* buffer)
+    void update_from_buffer(buffer_t* buffer)
     {
         d_func()->updateTexture(buffer);
     }
 
-    inline texture_private<Backend>* d_func()
+    inline private_t* d_func()
     {
-        return reinterpret_cast<texture_private<Backend>*>(qGetPtrHelper(d_ptr));
+        return reinterpret_cast<private_t*>(qGetPtrHelper(d_ptr));
     }
-    inline const texture_private<Backend>* d_func() const
+    inline const private_t* d_func() const
     {
-        return reinterpret_cast<texture_private<Backend> const*>(qGetPtrHelper(d_ptr));
+        return reinterpret_cast<private_t const*>(qGetPtrHelper(d_ptr));
     }
-
-    friend class texture_private<Backend>;
-    friend class buffer;
 };
 
 }

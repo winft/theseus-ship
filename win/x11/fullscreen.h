@@ -19,7 +19,7 @@ void propagate_fullscreen_update(Win* win, bool full)
         win->info->setState(NET::FullScreen, NET::FullScreen);
         update_fullscreen_enable(win);
         if (win->info->fullscreenMonitors().isSet()) {
-            win->setFrameGeometry(x11::fullscreen_monitors_area(win->info->fullscreenMonitors()));
+            win->setFrameGeometry(fullscreen_monitors_area(win, win->info->fullscreenMonitors()));
         }
     } else {
         win->info->setState(NET::States(), NET::FullScreen);

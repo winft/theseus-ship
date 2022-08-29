@@ -7,31 +7,50 @@
 
 #include "input/keyboard.h"
 
-namespace Wrapland::Server
-{
-class FakeInputDevice;
-}
+#include <Wrapland/Server/fake_input.h>
+#include <Wrapland/Server/kde_idle.h>
 
-namespace KWin::input
-{
-class platform;
-
-namespace wayland::fake
+namespace KWin::input::wayland::fake
 {
 
+template<typename Platform>
 class keyboard : public input::keyboard
 {
-    Q_OBJECT
 public:
-    keyboard(Wrapland::Server::FakeInputDevice* device, input::platform* platform);
+    keyboard(Wrapland::Server::FakeInputDevice* device, Platform* platform)
+        : input::keyboard(platform->xkb.context, platform->xkb.compose_table)
+        , platform{platform}
+        , device{device}
+    {
+        QObject::connect(
+            device,
+            &Wrapland::Server::FakeInputDevice::keyboardKeyPressRequested,
+            this,
+            [this](auto button) {
+                auto redirect = this->platform->redirect;
+                // TODO: Fix time
+                redirect->keyboard->process_key({button, key_state::pressed, false, this, 0});
+                redirect->platform.base.space->kde_idle->simulateUserActivity();
+            });
+        QObject::connect(
+            device,
+            &Wrapland::Server::FakeInputDevice::keyboardKeyReleaseRequested,
+            this,
+            [this](auto button) {
+                auto redirect = this->platform->redirect;
+                // TODO: Fix time
+                redirect->keyboard->process_key({button, key_state::released, false, this, 0});
+                redirect->platform.base.space->kde_idle->simulateUserActivity();
+            });
+    }
+
     keyboard(keyboard const&) = delete;
     keyboard& operator=(keyboard const&) = delete;
     ~keyboard() override = default;
 
 private:
-    input::platform* platform;
+    Platform* platform;
     Wrapland::Server::FakeInputDevice* device;
 };
 
-}
 }

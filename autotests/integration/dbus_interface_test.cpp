@@ -220,7 +220,7 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
 
     // finally close window
     const auto id = client->internal_id;
-    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::closed);
+    QSignalSpy windowClosedSpy(client->qobject.get(), &win::window_qobject::closed);
     QVERIFY(windowClosedSpy.isValid());
     shellSurface.reset();
     surface.reset();
@@ -282,8 +282,8 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     QVERIFY(windowCreatedSpy.wait());
 
     auto client_id = windowCreatedSpy.first().first().value<quint32>();
-    auto client
-        = dynamic_cast<win::x11::window*>(Test::app()->base.space->windows_map.at(client_id));
+    auto client = dynamic_cast<Test::space::x11_window*>(
+        Test::app()->base.space->windows_map.at(client_id));
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QCOMPARE(win::frame_to_client_size(client, client->size()), windowGeometry.size());
@@ -388,7 +388,7 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     QCOMPARE(verifyProperty(QStringLiteral("maximizeVertical")), false);
     QCOMPARE(verifyProperty(QStringLiteral("maximizeHorizontal")), true);
 
-    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::closed);
+    QSignalSpy windowClosedSpy(client->qobject.get(), &win::window_qobject::closed);
     QVERIFY(windowClosedSpy.isValid());
 
     const auto id = client->internal_id;

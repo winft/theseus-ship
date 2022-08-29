@@ -38,11 +38,6 @@ namespace base::os::clock
 class skew_notifier;
 }
 
-namespace win
-{
-class space;
-}
-
 namespace render::post
 {
 

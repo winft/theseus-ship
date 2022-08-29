@@ -325,15 +325,6 @@ void init_xdg_shell_popup(std::unique_ptr<Clt::Surface> const& surface,
     popup->ackConfigure(configureRequestedSpy.last()[1].toInt());
 }
 
-bool wait_for_destroyed(Toplevel* window)
-{
-    QSignalSpy destroyedSpy(window->qobject.get(), &QObject::destroyed);
-    if (!destroyedSpy.isValid()) {
-        return false;
-    }
-    return destroyedSpy.wait();
-}
-
 void lock_screen()
 {
     QVERIFY(!kwinApp()->is_screen_locked());

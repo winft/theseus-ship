@@ -10,12 +10,15 @@
 #include "geo.h"
 #include "stacking.h"
 #include "structs.h"
+#include "tabbox/tabbox_client_impl.h"
 #include "types.h"
 #include "virtual_desktops.h"
 
 #include "main.h"
 #include "rules/window.h"
 #include "scripting/window.h"
+
+#include <kwineffects/effect.h>
 
 #include <QIcon>
 #include <QKeySequence>
@@ -30,9 +33,6 @@ class PlasmaWindow;
 
 namespace KWin::win
 {
-
-template<typename Window>
-class tabbox_client_impl;
 
 template<typename Window>
 class control
@@ -167,7 +167,7 @@ public:
 
     void update_have_resize_effect()
     {
-        auto& effects = m_win->space.render.effects;
+        auto& effects = m_win->space.base.render->compositor->effects;
         have_resize_effect = effects && effects->provides(Effect::Resize);
     }
 
@@ -219,7 +219,8 @@ public:
         rules.discardTemporary();
     }
 
-    std::unique_ptr<scripting::window_impl> scripting;
+    using scripting_t = scripting::window_impl<Window>;
+    std::unique_ptr<scripting_t> scripting;
     Wrapland::Server::PlasmaWindow* plasma_wayland_integration{nullptr};
 
     bool active{false};

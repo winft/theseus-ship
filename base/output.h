@@ -26,9 +26,6 @@ enum class dpms_mode {
 class KWIN_EXPORT output_qobject : public QObject
 {
     Q_OBJECT
-public:
-    output_qobject();
-
 Q_SIGNALS:
     void mode_changed();
     /**

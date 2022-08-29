@@ -134,7 +134,8 @@ bool space_event(Space& space, xcb_generic_event_t* event)
         }
     }
 
-    if (auto& effects = space.render.effects; effects && effects->hasKeyboardGrab()
+    if (auto& effects = space.base.render->compositor->effects; effects
+        && effects->hasKeyboardGrab()
         && (event_type == XCB_KEY_PRESS || event_type == XCB_KEY_RELEASE))
         return false; // let Qt process it, it'll be intercepted again in eventFilter()
 
@@ -147,29 +148,31 @@ bool space_event(Space& space, xcb_generic_event_t* event)
         break;
     };
 
+    using x11_window = typename Space::x11_window;
+
     auto const event_window = win::x11::find_event_window(event);
     if (event_window != XCB_WINDOW_NONE) {
         if (auto c
-            = find_controlled_window<x11::window>(space, predicate_match::window, event_window)) {
+            = find_controlled_window<x11_window>(space, predicate_match::window, event_window)) {
             if (win::x11::window_event(c, event)) {
                 return true;
             }
-        } else if (auto c = find_controlled_window<x11::window>(
+        } else if (auto c = find_controlled_window<x11_window>(
                        space, predicate_match::wrapper_id, event_window)) {
             if (win::x11::window_event(c, event)) {
                 return true;
             }
-        } else if (auto c = find_controlled_window<x11::window>(
+        } else if (auto c = find_controlled_window<x11_window>(
                        space, predicate_match::frame_id, event_window)) {
             if (win::x11::window_event(c, event)) {
                 return true;
             }
-        } else if (auto c = find_controlled_window<x11::window>(
+        } else if (auto c = find_controlled_window<x11_window>(
                        space, predicate_match::input_id, event_window)) {
             if (win::x11::window_event(c, event)) {
                 return true;
             }
-        } else if (auto unmanaged = find_unmanaged<win::x11::window>(space, event_window)) {
+        } else if (auto unmanaged = find_unmanaged<x11_window>(space, event_window)) {
             if (win::x11::unmanaged_event(unmanaged, event)) {
                 return true;
             }
@@ -213,7 +216,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
         kwinApp()->update_x11_time_from_clock();
         auto map_req_event = reinterpret_cast<xcb_map_request_event_t*>(event);
 
-        if (auto c = find_controlled_window<x11::window>(
+        if (auto c = find_controlled_window<x11_window>(
                 space, predicate_match::window, map_req_event->window)) {
             // event->xmaprequest.window is different from event->xany.window
             // TODO this shouldn't be necessary now
@@ -242,7 +245,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
         auto map_event = reinterpret_cast<xcb_map_notify_event_t*>(event);
 
         if (map_event->override_redirect) {
-            auto c = find_unmanaged<win::x11::window>(space, map_event->window);
+            auto c = find_unmanaged<x11_window>(space, map_event->window);
             if (c == nullptr) {
                 c = create_unmanaged_window(map_event->window, space);
             }
@@ -347,10 +350,12 @@ bool space_event(Space& space, xcb_generic_event_t* event)
 template<typename Space>
 bool space_qt_event(Space& space, QEvent* event)
 {
+    auto& effects = space.base.render->compositor->effects;
+
     auto is_key_event = event->type() == QEvent::KeyPress || event->type() == QEvent::KeyRelease
         || event->type() == QEvent::ShortcutOverride;
-    if (is_key_event && space.render.effects && space.render.effects->hasKeyboardGrab()) {
-        space.render.effects->grabbedKeyboardEvent(static_cast<QKeyEvent*>(event));
+    if (is_key_event && effects && effects->hasKeyboardGrab()) {
+        effects->grabbedKeyboardEvent(static_cast<QKeyEvent*>(event));
         return true;
     }
     return false;

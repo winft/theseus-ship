@@ -155,8 +155,8 @@ void X11DesktopWindowTest::testDesktopWindow()
     QVERIFY(windowCreatedSpy.wait());
 
     auto client_id = windowCreatedSpy.first().first().value<quint32>();
-    auto client
-        = dynamic_cast<win::x11::window*>(Test::app()->base.space->windows_map.at(client_id));
+    auto client = dynamic_cast<Test::space::x11_window*>(
+        Test::app()->base.space->windows_map.at(client_id));
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QVERIFY(!win::decoration(client));
@@ -172,7 +172,7 @@ void X11DesktopWindowTest::testDesktopWindow()
     xcb_flush(c.get());
     c.reset();
 
-    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::closed);
+    QSignalSpy windowClosedSpy(client->qobject.get(), &win::window_qobject::closed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
 }

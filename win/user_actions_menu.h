@@ -16,7 +16,6 @@
 
 #include "base/logging.h"
 #include "main.h"
-#include "scripting/platform.h"
 
 #if KWIN_BUILD_TABBOX
 #include "tabbox/tabbox.h"
@@ -194,7 +193,7 @@ private:
             initDesktopPopup();
         }
 
-        if (kwinApp()->get_base().get_outputs().size() == 1
+        if (space.base.outputs.size() == 1
             || (!m_client->isMovable() && !m_client->isMovableAcrossScreens())) {
             delete m_screenMenu;
             m_screenMenu = nullptr;
@@ -373,7 +372,7 @@ private:
 
         m_screenMenu->setPalette(m_client->control->palette.q_palette());
         QActionGroup* group = new QActionGroup(m_screenMenu);
-        auto const& outputs = kwinApp()->get_base().get_outputs();
+        auto const& outputs = space.base.outputs;
 
         for (size_t i = 0; i < outputs.size(); ++i) {
             // assumption: there are not more than 9 screens attached.
@@ -471,7 +470,7 @@ private:
             return;
         }
 
-        auto output = base::get_output(kwinApp()->get_base().get_outputs(), screen);
+        auto output = base::get_output(space.base.outputs, screen);
         if (!output) {
             return;
         }
@@ -516,9 +515,8 @@ private:
         // need to delay performing the window operation as we need to have the
         // user actions menu closed before we destroy the decoration. Otherwise Qt crashes
         qRegisterMetaType<base::options_qobject::WindowOperation>();
-        QMetaObject::invokeMethod(space.qobject.get(), [&space = this->space, c, op] {
-            win::perform_window_operation(c, op);
-        });
+        QMetaObject::invokeMethod(space.qobject.get(),
+                                  [c, op] { win::perform_window_operation(c, op); });
     }
 
     /// Creates the menu if not already created.

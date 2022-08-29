@@ -34,9 +34,9 @@ public:
         }
     }
 
-    std::unique_ptr<fake::pointer> pointer;
-    std::unique_ptr<fake::keyboard> keyboard;
-    std::unique_ptr<fake::touch> touch;
+    std::unique_ptr<fake::pointer<Platform>> pointer;
+    std::unique_ptr<fake::keyboard<Platform>> keyboard;
+    std::unique_ptr<fake::touch<Platform>> touch;
     Platform& platform;
 };
 

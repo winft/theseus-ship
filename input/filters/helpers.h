@@ -11,7 +11,6 @@
 #include "input/keyboard_redirect.h"
 #include "input/pointer_redirect.h"
 #include "input/qt_event.h"
-#include "input/redirect.h"
 #include "input/xkb/helpers.h"
 #include "main.h"
 #include "win/input.h"
@@ -41,10 +40,10 @@ bool get_modifier_command(Redirect& redirect,
         != kwinApp()->options->qobject->commandAllModifier()) {
         return false;
     }
-    if (redirect.get_pointer()->isConstrained()) {
+    if (redirect.pointer->isConstrained()) {
         return false;
     }
-    if (redirect.space.global_shortcuts_disabled) {
+    if (redirect.platform.base.space->global_shortcuts_disabled) {
         return false;
     }
     auto qt_key = button_to_qt_mouse_button(key);
@@ -65,18 +64,18 @@ bool get_modifier_command(Redirect& redirect,
     return true;
 }
 
-template<typename Redirect>
+template<typename Redirect, typename Window>
 std::pair<bool, bool> do_perform_mouse_action(Redirect& redirect,
                                               base::options_qobject::MouseCommand command,
-                                              Toplevel* window)
+                                              Window* window)
 {
-    return std::make_pair(
-        true, !window->performMouseCommand(command, redirect.get_pointer()->pos().toPoint()));
+    return std::make_pair(true,
+                          !window->performMouseCommand(command, redirect.pointer->pos().toPoint()));
 }
 
-template<typename Redirect>
+template<typename Redirect, typename Window>
 std::pair<bool, bool>
-perform_mouse_modifier_action(Redirect& redirect, button_event const& event, Toplevel* window)
+perform_mouse_modifier_action(Redirect& redirect, button_event const& event, Window* window)
 {
     auto command = base::options_qobject::MouseNothing;
     auto was_action = get_modifier_command(redirect, event.key, command);
@@ -85,10 +84,10 @@ perform_mouse_modifier_action(Redirect& redirect, button_event const& event, Top
                       : std::make_pair(false, false);
 }
 
-template<typename Redirect>
+template<typename Redirect, typename Window>
 std::pair<bool, bool> perform_mouse_modifier_and_window_action(Redirect& redirect,
                                                                button_event const& event,
-                                                               Toplevel* window)
+                                                               Window* window)
 {
     auto command = base::options_qobject::MouseNothing;
     auto was_action = get_modifier_command(redirect, event.key, command);
@@ -111,10 +110,10 @@ bool get_wheel_modifier_command(Redirect& redirect,
         != kwinApp()->options->qobject->commandAllModifier()) {
         return false;
     }
-    if (redirect.get_pointer()->isConstrained()) {
+    if (redirect.pointer->isConstrained()) {
         return false;
     }
-    if (redirect.space.global_shortcuts_disabled) {
+    if (redirect.platform.base.space->global_shortcuts_disabled) {
         return false;
     }
 
@@ -124,9 +123,9 @@ bool get_wheel_modifier_command(Redirect& redirect,
     return true;
 }
 
-template<typename Redirect>
+template<typename Redirect, typename Window>
 std::pair<bool, bool>
-perform_wheel_action(Redirect& redirect, axis_event const& event, Toplevel* window)
+perform_wheel_action(Redirect& redirect, axis_event const& event, Window* window)
 {
     auto command = base::options_qobject::MouseNothing;
     auto was_action = get_wheel_modifier_command(redirect, event.orientation, event.delta, command);
@@ -135,9 +134,9 @@ perform_wheel_action(Redirect& redirect, axis_event const& event, Toplevel* wind
                       : std::make_pair(false, false);
 }
 
-template<typename Redirect>
+template<typename Redirect, typename Window>
 std::pair<bool, bool>
-perform_wheel_and_window_action(Redirect& redirect, axis_event const& event, Toplevel* window)
+perform_wheel_and_window_action(Redirect& redirect, axis_event const& event, Window* window)
 {
     auto command = base::options_qobject::MouseNothing;
     auto was_action = get_wheel_modifier_command(redirect, event.orientation, event.delta, command);

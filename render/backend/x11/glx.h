@@ -334,7 +334,7 @@ GLXContext create_glx_context(Backend const& backend)
     return ctx;
 }
 
-static void check_glx_version(Display* display)
+static inline void check_glx_version(Display* display)
 {
     int major, minor;
     glXQueryVersion(display, &major, &minor);
@@ -345,7 +345,7 @@ static void check_glx_version(Display* display)
 
 typedef void (*glXFuncPtr)();
 
-static glXFuncPtr getProcAddress(const char* name)
+static inline glXFuncPtr getProcAddress(const char* name)
 {
     glXFuncPtr ret = nullptr;
 #if HAVE_EPOXY_GLX
@@ -404,8 +404,8 @@ void start_glx_backend(Display* display, Compositor& compositor, Backend& backen
     // See BUG 342582.
     if (backend.hasExtension(QByteArrayLiteral("GLX_INTEL_swap_event"))
         && qgetenv("KWIN_USE_INTEL_SWAP_EVENT") != QByteArrayLiteral("0")) {
-        backend.swap_filter
-            = std::make_unique<swap_event_filter>(compositor, backend.window, backend.data.window);
+        backend.swap_filter = std::make_unique<swap_event_filter<Compositor>>(
+            compositor, backend.window, backend.data.window);
         glXSelectEvent(display, backend.data.window, GLX_BUFFER_SWAP_COMPLETE_INTEL_MASK);
     }
 

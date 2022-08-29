@@ -49,9 +49,8 @@ public:
 
     void start();
 
-    base::backend::x11::platform base;
-    std::unique_ptr<render::x11::compositor<render::x11::platform>> compositor;
-    std::unique_ptr<win::x11::space<base::x11::platform>> workspace;
+    using base_t = base::backend::x11::platform;
+    base_t base;
 };
 
 X11TestApplication::X11TestApplication(int& argc, char** argv)
@@ -66,7 +65,7 @@ X11TestApplication::X11TestApplication(int& argc, char** argv)
     removeLibraryPath(ownPath);
     addLibraryPath(ownPath);
 
-    base.render = std::make_unique<render::backend::x11::platform>(base);
+    base.render = std::make_unique<render::backend::x11::platform<base::x11::platform>>(base);
 }
 
 X11TestApplication::~X11TestApplication()
@@ -81,10 +80,9 @@ base::platform& X11TestApplication::get_base()
 void X11TestApplication::start()
 {
     prepare_start();
-    compositor = std::make_unique<render::x11::compositor<render::x11::platform>>(
-        static_cast<render::x11::platform&>(*base.render));
-    workspace = std::make_unique<win::x11::space<base::x11::platform>>(base);
-    compositor->start(*workspace);
+    base.render->compositor = std::make_unique<base_t::render_t::compositor_t>(*base.render);
+    base.space = std::make_unique<base_t::space_t>(base);
+    base.render->compositor->start(*base.space);
 }
 
 }

@@ -12,10 +12,7 @@
 #include "main.h"
 #include "render/platform.h"
 
-#include <QDBusConnection>
-#include <QDBusMessage>
 #include <QDBusMetaType>
-#include <QDBusPendingCall>
 #include <cassert>
 
 namespace KWin::input::xkb

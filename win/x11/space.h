@@ -18,8 +18,10 @@
 #include "debug/console/x11/x11_console.h"
 #include "input/x11/platform.h"
 #include "input/x11/redirect.h"
+#include "scripting/platform.h"
 #include "utils/blocker.h"
 #include "win/desktop_space.h"
+#include "win/internal_window.h"
 #include "win/screen_edges.h"
 #include "win/space.h"
 #include "win/stacking_order.h"
@@ -33,11 +35,31 @@ template<typename Base>
 class space : public win::space
 {
 public:
-    using x11_window = window;
+    using base_t = Base;
+    using type = space<Base>;
+    using window_t = Toplevel<type>;
+    using x11_window = window<type>;
+
+    // TODO(romangg): Remove once we can rely on Space::x11_window always being the group window.
+    using x11_group_window = x11_window;
+    using input_t = typename Base::input_t;
+
+    // Not used on X11.
+    // TODO(romangg): Make our function templates independent of this type and remove it.
+    using internal_window_t = win::internal_window<type>;
 
     space(Base& base)
-        : win::space(*base.render->compositor)
-        , base{base}
+        : base{base}
+        , outline{render::outline::create(*base.render->compositor,
+                                          [this] {
+                                              return render::create_outline_visual(
+                                                  *this->base.render->compositor, *outline);
+                                          })}
+        , deco{std::make_unique<deco::bridge<type>>(*this)}
+        , appmenu{std::make_unique<dbus::appmenu>(dbus::create_appmenu_callbacks(*this))}
+        , stacking_order{std::make_unique<win::stacking_order<window_t>>()}
+        , focus_chain{win::focus_chain<type>(*this)}
+        , user_actions_menu{std::make_unique<win::user_actions_menu<type>>(*this)}
     {
         win::init_space(*this);
 
@@ -47,13 +69,12 @@ public:
         };
 
         if (base.input) {
-            this->input = std::make_unique<input::x11::redirect>(*base.input, *this);
+            this->input = std::make_unique<typename input_t::redirect_t>(*base.input);
         }
 
         atoms = std::make_unique<base::x11::atoms>(connection());
         edges = std::make_unique<edger_t>(*this);
-        dbus = std::make_unique<base::dbus::kwin_impl<win::space, input::platform>>(
-            *this, base.input.get());
+        dbus = std::make_unique<base::dbus::kwin_impl<type, input_t>>(*this, base.input.get());
 
         QObject::connect(virtual_desktop_manager->qobject.get(),
                          &virtual_desktop_manager_qobject::desktopRemoved,
@@ -76,7 +97,8 @@ public:
                          });
 
         QObject::connect(&base, &base::platform::topology_changed, qobject.get(), [this] {
-            if (!this->render.scene) {
+            auto& comp = this->base.render->compositor;
+            if (!comp->scene) {
                 return;
             }
             // desktopResized() should take care of when the size or
@@ -85,7 +107,7 @@ public:
             //
             // TODO: is this still necessary since we get the maximal refresh rate now
             // dynamically?
-            this->render.reinitialize();
+            comp->reinitialize();
         });
 
         x11::init_space(*this);
@@ -107,15 +129,22 @@ public:
         x11::popagate_desktop_change(*this, desktop);
     }
 
-    window_t* findInternal(QWindow* window) const override
+    /// On X11 an internal window is an unmanaged and mapped by the window id.
+    window_t* findInternal(QWindow* window) const
     {
         if (!window) {
             return nullptr;
         }
-        return find_unmanaged<win::x11::window>(*this, window->winId());
+        return find_unmanaged<x11_window>(*this, window->winId());
     }
 
-    std::unique_ptr<win::screen_edge<edger_t>> create_screen_edge(edger_t& edger) override
+    QRect get_icon_geometry(window_t const* /*win*/) const
+    {
+        return {};
+    }
+
+    using edger_t = screen_edger<type>;
+    std::unique_ptr<win::screen_edge<edger_t>> create_screen_edge(edger_t& edger)
     {
         if (!edges_filter) {
             edges_filter = std::make_unique<screen_edges_filter<space<Base>>>(*this);
@@ -131,8 +160,8 @@ public:
             if (!window->control) {
                 continue;
             }
-            if (auto x11_window = dynamic_cast<win::x11::window*>(window)) {
-                update_space_areas(x11_window, desktop_area, screens_geos, areas);
+            if (auto x11_win = dynamic_cast<x11_window*>(window)) {
+                update_space_areas(x11_win, desktop_area, screens_geos, areas);
             }
         }
     }
@@ -144,6 +173,42 @@ public:
     }
 
     Base& base;
+
+    std::unique_ptr<scripting::platform<type>> scripting;
+    std::unique_ptr<render::outline> outline;
+    std::unique_ptr<edger_t> edges;
+    std::unique_ptr<deco::bridge<type>> deco;
+    std::unique_ptr<dbus::appmenu> appmenu;
+    std::unique_ptr<x11::root_info<space>> root_info;
+    std::unique_ptr<x11::color_mapper<type>> color_mapper;
+
+    std::unique_ptr<typename input_t::redirect_t> input;
+    std::unique_ptr<win::stacking_order<window_t>> stacking_order;
+    win::focus_chain<type> focus_chain;
+
+    std::unique_ptr<win::tabbox<type>> tabbox;
+    std::unique_ptr<osd_notification<input_t>> osd;
+    std::unique_ptr<kill_window<type>> window_killer;
+    std::unique_ptr<win::user_actions_menu<type>> user_actions_menu;
+    std::unique_ptr<base::dbus::kwin_impl<type, input_t>> dbus;
+
+    std::vector<window_t*> windows;
+    std::unordered_map<uint32_t, window_t*> windows_map;
+    std::vector<win::x11::group<type>*> groups;
+
+    window_t* active_popup_client{nullptr};
+
+    window_t* last_active_client{nullptr};
+    window_t* delayfocus_client{nullptr};
+    window_t* client_keys_client{nullptr};
+
+    // Last is most recent.
+    std::deque<window_t*> should_get_focus;
+    std::deque<window_t*> attention_chain;
+
+    window_t* move_resize_window{nullptr};
+    window_t* most_recently_raised{nullptr};
+    window_t* active_client{nullptr};
 
 private:
     std::unique_ptr<base::x11::event_filter> edges_filter;

@@ -10,6 +10,7 @@
 #include <netwm_def.h>
 
 #include "base/options.h"
+#include "base/output_helpers.h"
 #include "kwin_export.h"
 #include "ruling.h"
 #include "win/types.h"
@@ -54,7 +55,25 @@ public:
     int checkOpacityInactive(int s) const;
     bool checkIgnoreGeometry(bool ignore, bool init = false) const;
     int checkDesktop(int desktop, bool init = false) const;
-    base::output const* checkScreen(base::output const* output, bool init = false) const;
+
+    template<typename Base, typename Output>
+    Output const* checkScreen(Base& base, Output const* output, bool init = false) const
+    {
+        if (rules.size() == 0) {
+            return output;
+        }
+
+        auto const& outputs = base.outputs;
+        int index = output ? base::get_output_index(outputs, *output) : 0;
+
+        for (auto&& rule : rules) {
+            if (rule->applyScreen(index, init))
+                break;
+        }
+
+        return base::get_output(outputs, index);
+    }
+
     NET::WindowType checkType(NET::WindowType type) const;
     maximize_mode checkMaximize(maximize_mode mode, bool init = false) const;
     bool checkMinimize(bool minimized, bool init = false) const;

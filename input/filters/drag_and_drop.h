@@ -7,11 +7,9 @@
 
 #include "base/wayland/server.h"
 #include "input/event_filter.h"
-#include "input/redirect.h"
 #include "input/touch_redirect.h"
 #include "input/window_find.h"
 #include "main.h"
-#include "toplevel.h"
 #include "win/activation.h"
 #include "xwl/xwayland_interface.h"
 
@@ -68,7 +66,7 @@ public:
 
         // TODO: use InputDeviceHandler::at() here and check isClient()?
         auto window = find_controlled_window(this->redirect, pos.toPoint());
-        if (auto xwl = kwinApp()->get_base().xwayland_interface) {
+        if (auto& xwl = this->redirect.platform.base.xwayland) {
             const auto ret = xwl->drag_move_filter(window, pos.toPoint());
             if (ret == xwl::drag_event_reply::ignore) {
                 return false;
@@ -81,7 +79,7 @@ public:
             // TODO: consider decorations
             if (window->surface != seat->drags().get_target().surface) {
                 if (window->control) {
-                    win::activate_window(this->redirect.space, window);
+                    win::activate_window(*this->redirect.platform.base.space, window);
                 }
                 seat->drags().set_target(window->surface, window->input_transform());
             }
@@ -140,7 +138,7 @@ public:
             // TODO: consider decorations
             if (t->surface != seat->drags().get_target().surface) {
                 if (t->control) {
-                    win::activate_window(this->redirect.space, t);
+                    win::activate_window(*this->redirect.platform.base.space, t);
                 }
                 seat->drags().set_target(t->surface, event.pos, t->input_transform());
             }

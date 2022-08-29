@@ -18,29 +18,36 @@ namespace KWin::win::wayland
 {
 
 template<typename Space>
-class xwl_window : public x11::window
+class xwl_window : public x11::window<Space>
 {
 public:
     using control_t = xwl_control<xwl_window>;
 
+    xwl_window(win::remnant remnant, Space& space)
+        : x11::window<Space>(std::move(remnant), space)
+    {
+    }
+
     xwl_window(xcb_window_t xcb_win, Space& space)
-        : window(xcb_win, space)
-        , space{space}
+        : x11::window<Space>(xcb_win, space)
     {
     }
 
     qreal bufferScale() const override
     {
-        return surface ? surface->state().scale : 1;
+        return this->surface ? this->surface->state().scale : 1;
     }
 
     void add_scene_window_addon() override
     {
         auto setup_buffer = [this](auto& buffer) {
-            auto win_integrate = std::make_unique<render::wayland::buffer_win_integration>(buffer);
+            using scene_t = typename Space::base_t::render_t::compositor_t::scene_t;
+            using buffer_integration_t
+                = render::wayland::buffer_win_integration<typename scene_t::buffer_t>;
+
+            auto win_integrate = std::make_unique<buffer_integration_t>(buffer);
             auto update_helper = [&buffer]() {
-                auto& win_integrate = static_cast<render::wayland::buffer_win_integration&>(
-                    *buffer.win_integration);
+                auto& win_integrate = static_cast<buffer_integration_t&>(*buffer.win_integration);
                 update_buffer(*buffer.window->ref_win, win_integrate.external);
             };
             win_integrate->update = update_helper;
@@ -52,15 +59,13 @@ public:
             return window->surface ? get_scaled_source_rectangle(*window) : QRectF();
         };
 
-        render->win_integration.setup_buffer = setup_buffer;
-        render->win_integration.get_viewport = get_viewport;
+        this->render->win_integration.setup_buffer = setup_buffer;
+        this->render->win_integration.get_viewport = get_viewport;
 
-        if (surface) {
+        if (this->surface) {
             setup_scale_scene_notify(*this);
         }
     }
-
-    Space& space;
 };
 
 }

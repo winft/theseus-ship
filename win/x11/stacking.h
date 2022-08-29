@@ -6,15 +6,11 @@
 #pragma once
 
 #include "focus_stealing.h"
-#include "group.h"
 #include "hide.h"
-#include "window.h"
 #include "window_find.h"
 
 #include "base/output_helpers.h"
-#include "base/platform.h"
 #include "main.h"
-#include "toplevel.h"
 #include "win/activation.h"
 
 #include <deque>
@@ -67,6 +63,8 @@ void render_stack_unmanaged_windows(Space& space)
 template<typename Space>
 void propagate_clients(Space& space, bool propagate_new_clients)
 {
+    using x11_window_t = typename Space::x11_window;
+
     if (!space.root_info) {
         return;
     }
@@ -94,7 +92,7 @@ void propagate_clients(Space& space, bool propagate_new_clients)
     // TODO use ranges::view and ranges::transform in c++20
     std::vector<xcb_window_t> hidden_windows;
     std::for_each(order.stack.rbegin(), order.stack.rend(), [&stack, &hidden_windows](auto window) {
-        auto x11_window = dynamic_cast<x11::window*>(window);
+        auto x11_window = dynamic_cast<x11_window_t*>(window);
         if (!x11_window) {
             return;
         }
@@ -139,7 +137,7 @@ void propagate_clients(Space& space, bool propagate_new_clients)
                 continue;
             }
 
-            auto x11_window = dynamic_cast<x11::window*>(window);
+            auto x11_window = dynamic_cast<x11_window_t*>(window);
             if (!x11_window) {
                 continue;
             }
@@ -160,7 +158,7 @@ void propagate_clients(Space& space, bool propagate_new_clients)
     std::vector<xcb_window_t> stacked_clients;
 
     for (auto window : order.stack) {
-        if (auto x11_window = dynamic_cast<x11::window*>(window)) {
+        if (auto x11_window = dynamic_cast<x11_window_t*>(window)) {
             stacked_clients.push_back(x11_window->xcb_window);
         }
     }
@@ -276,10 +274,11 @@ void restack_window(Win* win,
                     xcb_timestamp_t timestamp,
                     bool send_event = false)
 {
+    using x11_window = typename Win::space_t::x11_window;
+
     Win* other = nullptr;
     if (detail == XCB_STACK_MODE_OPPOSITE) {
-        other
-            = find_controlled_window<win::x11::window>(win->space, predicate_match::window, above);
+        other = find_controlled_window<x11_window>(win->space, predicate_match::window, above);
         if (!other) {
             raise_or_lower_client(&win->space, win);
             return;
@@ -299,15 +298,13 @@ void restack_window(Win* win,
             ++it;
         }
     } else if (detail == XCB_STACK_MODE_TOP_IF) {
-        other
-            = find_controlled_window<win::x11::window>(win->space, predicate_match::window, above);
+        other = find_controlled_window<x11_window>(win->space, predicate_match::window, above);
         if (other && other->frameGeometry().intersects(win->frameGeometry())) {
             raise_client_request(&win->space, win, src, timestamp);
         }
         return;
     } else if (detail == XCB_STACK_MODE_BOTTOM_IF) {
-        other
-            = find_controlled_window<win::x11::window>(win->space, predicate_match::window, above);
+        other = find_controlled_window<x11_window>(win->space, predicate_match::window, above);
         if (other && other->frameGeometry().intersects(win->frameGeometry())) {
             lower_client_request(&win->space, win, src, timestamp);
         }
@@ -315,8 +312,7 @@ void restack_window(Win* win,
     }
 
     if (!other)
-        other
-            = find_controlled_window<win::x11::window>(win->space, predicate_match::window, above);
+        other = find_controlled_window<x11_window>(win->space, predicate_match::window, above);
 
     if (other && detail == XCB_STACK_MODE_ABOVE) {
         auto it = win->space.stacking_order->stack.cend();

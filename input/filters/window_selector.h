@@ -14,8 +14,6 @@
 #include "input/keyboard_redirect.h"
 #include "input/pointer_redirect.h"
 #include "input/qt_event.h"
-#include "input/redirect.h"
-#include "input/wayland/platform.h"
 #include "input/window_find.h"
 #include "input/xkb/keyboard.h"
 #include "main.h"
@@ -105,8 +103,7 @@ public:
             }
 
             auto const pos = this->redirect.globalPointer() + QPointF(mx, my);
-            static_cast<wayland::platform&>(this->redirect.platform)
-                .warp_pointer(pos, event.base.time_msec);
+            this->redirect.platform.warp_pointer(pos, event.base.time_msec);
         }
         // filter out while selecting a window
         return true;
@@ -159,7 +156,7 @@ public:
         return m_active;
     }
 
-    void start(std::function<void(KWin::Toplevel*)> callback)
+    void start(std::function<void(typename Redirect::window_t*)> callback)
     {
         Q_ASSERT(!m_active);
         m_active = true;
@@ -181,7 +178,7 @@ private:
     void deactivate()
     {
         m_active = false;
-        m_callback = std::function<void(KWin::Toplevel*)>();
+        m_callback = std::function<void(typename Redirect::window_t*)>();
         m_pointSelectionFallback = std::function<void(const QPoint&)>();
         this->redirect.pointer->removeWindowSelectionCursor();
         this->redirect.keyboard->update();
@@ -217,7 +214,7 @@ private:
     }
 
     bool m_active = false;
-    std::function<void(KWin::Toplevel*)> m_callback;
+    std::function<void(typename Redirect::window_t*)> m_callback;
     std::function<void(const QPoint&)> m_pointSelectionFallback;
     QMap<quint32, QPointF> m_touchPoints;
 };

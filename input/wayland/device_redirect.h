@@ -8,13 +8,10 @@
 */
 #pragma once
 
-#include "input/redirect.h"
 #include "input/window_find.h"
 #include "main.h"
-#include "toplevel.h"
 #include "win/geo.h"
-#include "win/internal_window.h"
-#include "win/space.h"
+#include "win/space_qobject.h"
 #include "win/stacking_order.h"
 #include "win/virtual_desktops.h"
 
@@ -31,22 +28,23 @@ void device_redirect_update(Dev* dev);
 template<typename Dev>
 void device_redirect_init(Dev* dev)
 {
-    QObject::connect(dev->redirect->space.stacking_order->qobject.get(),
+    auto& space = dev->redirect->platform.base.space;
+    QObject::connect(space->stacking_order->qobject.get(),
                      &win::stacking_order_qobject::changed,
                      dev->qobject.get(),
                      [dev] { device_redirect_update(dev); });
-    QObject::connect(dev->redirect->space.qobject.get(),
-                     &win::space::qobject_t::clientMinimizedChanged,
+    QObject::connect(space->qobject.get(),
+                     &win::space_qobject::clientMinimizedChanged,
                      dev->qobject.get(),
                      [dev] { device_redirect_update(dev); });
-    QObject::connect(dev->redirect->space.virtual_desktop_manager->qobject.get(),
+    QObject::connect(space->virtual_desktop_manager->qobject.get(),
                      &win::virtual_desktop_manager_qobject::currentChanged,
                      dev->qobject.get(),
                      [dev] { device_redirect_update(dev); });
 }
 
 template<typename Dev>
-bool device_redirect_set_at(Dev* dev, Toplevel* window)
+bool device_redirect_set_at(Dev* dev, decltype(dev->at.window) window)
 {
     if (dev->at.window == window) {
         return false;
@@ -57,7 +55,7 @@ bool device_redirect_set_at(Dev* dev, Toplevel* window)
     dev->at.window = window;
     if (window) {
         dev->at.notifiers.destroy = QObject::connect(window->qobject.get(),
-                                                     &Toplevel::qobject_t::destroyed,
+                                                     &win::window_qobject::destroyed,
                                                      dev->qobject.get(),
                                                      [dev] { dev->at.window = nullptr; });
     }
@@ -65,13 +63,13 @@ bool device_redirect_set_at(Dev* dev, Toplevel* window)
 }
 
 template<typename Dev>
-void device_redirect_set_focus(Dev* dev, Toplevel* window)
+void device_redirect_set_focus(Dev* dev, decltype(dev->focus.window) window)
 {
     QObject::disconnect(dev->focus.notifiers.window_destroy);
     dev->focus.window = window;
     if (window) {
         dev->focus.notifiers.window_destroy = QObject::connect(
-            window->qobject.get(), &Toplevel::qobject_t::destroyed, dev->qobject.get(), [dev] {
+            window->qobject.get(), &win::window_qobject::destroyed, dev->qobject.get(), [dev] {
                 dev->focus.window = nullptr;
             });
     }
@@ -79,8 +77,8 @@ void device_redirect_set_focus(Dev* dev, Toplevel* window)
     // TODO: call focusUpdate?
 }
 
-template<typename Deco, typename Dev>
-void device_redirect_set_decoration(Dev* dev, Deco* deco)
+template<typename Dev>
+void device_redirect_set_decoration(Dev* dev, decltype(dev->focus.deco) deco)
 {
     QObject::disconnect(dev->focus.notifiers.deco_destroy);
     auto old_deco = dev->focus.deco;
@@ -121,11 +119,11 @@ void device_redirect_update_focus(Dev* dev)
         // Therefore listen for its creation.
         if (!dev->at.notifiers.surface) {
             dev->at.notifiers.surface = QObject::connect(dev->at.window->qobject.get(),
-                                                         &Toplevel::qobject_t::surfaceChanged,
+                                                         &win::window_qobject::surfaceChanged,
                                                          dev->qobject.get(),
                                                          [dev] { device_redirect_update(dev); });
         }
-        device_redirect_set_focus(dev, nullptr);
+        device_redirect_set_focus(dev, static_cast<decltype(dev->focus.window)>(nullptr));
     } else {
         device_redirect_set_focus(dev, dev->at.window);
     }
@@ -167,9 +165,12 @@ void device_redirect_update_internal_window(Dev* dev, QWindow* window)
     dev->cleanupInternalWindow(old_internal, window);
 }
 
-static QWindow* device_redirect_find_internal_window(std::vector<Toplevel*> const& windows,
-                                                     QPoint const& pos)
+template<typename Window>
+QWindow* device_redirect_find_internal_window(std::vector<Window*> const& windows,
+                                              QPoint const& pos)
 {
+    using space_t = typename Window::space_t;
+
     if (windows.empty()) {
         return nullptr;
     }
@@ -180,7 +181,7 @@ static QWindow* device_redirect_find_internal_window(std::vector<Toplevel*> cons
     auto it = windows.end();
     do {
         --it;
-        auto internal = dynamic_cast<win::internal_window*>(*it);
+        auto internal = dynamic_cast<typename space_t::internal_window_t*>(*it);
         if (!internal) {
             continue;
         }
@@ -208,14 +209,17 @@ static QWindow* device_redirect_find_internal_window(std::vector<Toplevel*> cons
 template<typename Dev>
 void device_redirect_update(Dev* dev)
 {
-    Toplevel* toplevel = nullptr;
+    using space_t = typename std::remove_pointer_t<decltype(dev->redirect)>::space_t;
+
+    typename space_t::window_t* toplevel = nullptr;
     QWindow* internal_window = nullptr;
 
     if (dev->positionValid()) {
         auto const pos = dev->position().toPoint();
-        internal_window = device_redirect_find_internal_window(dev->redirect->space.windows, pos);
+        auto& space = dev->redirect->platform.base.space;
+        internal_window = device_redirect_find_internal_window(space->windows, pos);
         if (internal_window) {
-            toplevel = dev->redirect->space.findInternal(internal_window);
+            toplevel = space->findInternal(internal_window);
         } else {
             toplevel = find_window(*dev->redirect, pos);
         }

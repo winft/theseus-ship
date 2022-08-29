@@ -8,8 +8,6 @@
 
 #include "base/x11/xcb/atom.h"
 #include "base/x11/xcb/proto.h"
-#include "render/compositor.h"
-#include "render/scene.h"
 #include "render/shadow.h"
 
 #include <QVector>
@@ -112,12 +110,12 @@ bool read_and_update_shadow(Shadow& impl, base::x11::xcb::atom const& shadow_ato
 template<typename Shadow, typename Win>
 std::unique_ptr<Shadow> create_shadow(Win& win, base::x11::xcb::atom const& shadow_atom)
 {
-    auto data = read_shadow_property(win, shadow_atom);
+    auto data = read_shadow_property(*win.ref_win, shadow_atom);
     if (data.isEmpty()) {
         return {};
     }
 
-    auto shadow = win.space.render.scene->createShadow(win.render.get());
+    auto shadow = win.ref_win->space.base.render->compositor->scene->createShadow(&win);
     if (!update_shadow(*shadow, data)) {
         return {};
     }

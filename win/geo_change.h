@@ -33,8 +33,7 @@ int get_pack_position_left(Space const& space,
     auto const right = newX - win::frame_margins(window).left();
     auto frameGeometry = window->geometry_update.frame;
     frameGeometry.moveRight(right);
-    if (base::get_intersecting_outputs(kwinApp()->get_base().get_outputs(), frameGeometry).size()
-        < 2) {
+    if (base::get_intersecting_outputs(space.base.outputs, frameGeometry).size() < 2) {
         newX = right;
     }
 
@@ -81,8 +80,7 @@ int get_pack_position_right(Space const& space,
     auto const right = newX + win::frame_margins(window).right();
     auto frameGeometry = window->geometry_update.frame;
     frameGeometry.moveRight(right);
-    if (base::get_intersecting_outputs(kwinApp()->get_base().get_outputs(), frameGeometry).size()
-        < 2) {
+    if (base::get_intersecting_outputs(space.base.outputs, frameGeometry).size() < 2) {
         newX = right;
     }
 
@@ -167,8 +165,7 @@ int get_pack_position_down(Space const& space,
     auto const bottom = newY + win::frame_margins(window).bottom();
     auto frameGeometry = window->geometry_update.frame;
     frameGeometry.moveBottom(bottom);
-    if (base::get_intersecting_outputs(kwinApp()->get_base().get_outputs(), frameGeometry).size()
-        < 2) {
+    if (base::get_intersecting_outputs(space.base.outputs, frameGeometry).size() < 2) {
         newY = bottom;
     }
 

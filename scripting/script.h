@@ -78,7 +78,7 @@ private:
 };
 
 // TODO(romangg): Give it a more specific name.
-class script : public abstract_script, QDBusContext
+class KWIN_EXPORT script : public abstract_script, QDBusContext
 {
     Q_OBJECT
 public:

@@ -57,7 +57,7 @@ void set_current_output(Space& space, base::output const& output)
         request_focus(space, get_focus);
     }
 
-    base::set_current_output(kwinApp()->get_base(), &output);
+    base::set_current_output(space.base, &output);
 }
 
 template<typename Space>
@@ -68,25 +68,26 @@ void switch_to_output(Space& space, QAction* action)
     }
 
     int const screen = get_action_data_as_uint(action);
-    auto output = base::get_output(kwinApp()->get_base().get_outputs(), screen);
+    auto output = base::get_output(space.base.outputs, screen);
 
     if (output) {
         set_current_output(space, *output);
     }
 }
 
-static inline base::output const* get_derivated_output(base::output const* output, int drift)
+template<typename Base>
+typename Base::output_t const*
+get_derivated_output(Base const& base, typename Base::output_t const* output, int drift)
 {
-    auto const& outputs = kwinApp()->get_base().get_outputs();
-    auto index = output ? base::get_output_index(outputs, *output) : 0;
+    auto index = output ? base::get_output_index(base.outputs, *output) : 0;
     index += drift;
-    return base::get_output(outputs, index % outputs.size());
+    return base::get_output(base.outputs, index % base.outputs.size());
 }
 
 template<typename Space>
-base::output const* get_derivated_output(Space& space, int drift)
+typename Space::base_t::output_t const* get_derivated_output_from_current(Space& space, int drift)
 {
-    return get_derivated_output(get_current_output(space), drift);
+    return get_derivated_output(space.base, get_current_output(space), drift);
 }
 
 template<typename Space>
@@ -95,7 +96,7 @@ void switch_to_next_output(Space& space)
     if (is_output_switch_impossible()) {
         return;
     }
-    if (auto output = get_derivated_output(space, 1)) {
+    if (auto output = get_derivated_output_from_current(space, 1)) {
         set_current_output(space, *output);
     }
 }
@@ -106,7 +107,7 @@ void switch_to_prev_output(Space& space)
     if (is_output_switch_impossible()) {
         return;
     }
-    if (auto output = get_derivated_output(space, -1)) {
+    if (auto output = get_derivated_output_from_current(space, -1)) {
         set_current_output(space, *output);
     }
 }

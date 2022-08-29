@@ -14,10 +14,11 @@
 namespace KWin::render::x11
 {
 
-struct buffer_win_integration : public render::buffer_win_integration {
+template<typename Buffer>
+struct buffer_win_integration : public render::buffer_win_integration<Buffer> {
 public:
-    buffer_win_integration(render::buffer const& buffer)
-        : render::buffer_win_integration(buffer)
+    buffer_win_integration(Buffer const& buffer)
+        : render::buffer_win_integration<Buffer>(buffer)
     {
     }
     ~buffer_win_integration() override

@@ -67,7 +67,7 @@ win::remnant create_remnant(Win& source)
 template<typename RemnantWin, typename Win>
 RemnantWin* create_remnant_window(Win& source)
 {
-    if (!source.space.render.scene) {
+    if (!source.space.base.render->compositor->scene) {
         // Don't create effect remnants when we don't render.
         return nullptr;
     }

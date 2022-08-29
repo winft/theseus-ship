@@ -25,7 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/event_spy.h"
 #include "input/keyboard.h"
 #include "input/qt_event.h"
-#include "input/redirect.h"
 #include "input/xkb/helpers.h"
 #include "kwin_export.h"
 #include "win/space.h"
@@ -46,13 +45,13 @@ public:
     ~modifier_only_shortcuts_spy_qobject();
 };
 
-class modifier_only_shortcuts_spy : public event_spy
+template<typename Redirect>
+class modifier_only_shortcuts_spy : public event_spy<Redirect>
 {
 public:
-    explicit modifier_only_shortcuts_spy(input::redirect& redirect)
-        : event_spy(redirect)
+    explicit modifier_only_shortcuts_spy(Redirect& redirect)
+        : event_spy<Redirect>(redirect)
         , qobject{std::make_unique<modifier_only_shortcuts_spy_qobject>()}
-        , redirect{redirect}
     {
         QObject::connect(kwinApp()->screen_locker_watcher.get(),
                          &desktop::screen_locker_watcher::locked,
@@ -64,7 +63,7 @@ public:
 
     void key(key_event const& event) override
     {
-        auto mods = xkb::get_active_keyboard_modifiers(redirect.platform);
+        auto mods = xkb::get_active_keyboard_modifiers(this->redirect.platform);
 
         if (event.state == key_state::pressed) {
             const bool wasEmpty = m_pressedKeys.isEmpty();
@@ -79,7 +78,7 @@ public:
         } else if (!m_pressedKeys.isEmpty()) {
             m_pressedKeys.remove(event.keycode);
             if (m_pressedKeys.isEmpty() && mods == Qt::NoModifier
-                && !redirect.space.global_shortcuts_disabled) {
+                && !this->redirect.platform.base.space->global_shortcuts_disabled) {
                 if (m_modifier != Qt::NoModifier) {
                     const auto list = kwinApp()->options->modifierOnlyDBusShortcut(m_modifier);
                     if (list.size() >= 4) {
@@ -99,8 +98,8 @@ public:
             m_modifier = Qt::NoModifier;
         }
 
-        m_cachedMods
-            = xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(redirect.platform);
+        m_cachedMods = xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(
+            this->redirect.platform);
     }
 
     void button(button_event const& event) override
@@ -130,7 +129,6 @@ private:
     QSet<quint32> m_pressedKeys;
 
     std::unique_ptr<modifier_only_shortcuts_spy_qobject> qobject;
-    input::redirect& redirect;
 };
 
 }

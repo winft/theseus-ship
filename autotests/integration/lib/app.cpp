@@ -123,17 +123,16 @@ WaylandTestApplication::~WaylandTestApplication()
     // need to unload all effects prior to destroying X connection as they might do X calls
     // also before destroy Workspace, as effects might call into Workspace
     if (effects) {
-        static_cast<render::effects_handler_impl*>(effects)->unloadAllEffects();
+        base.render->compositor->effects->unloadAllEffects();
     }
 
     // Kill Xwayland before terminating its connection.
     base.xwayland.reset();
-    base.xwayland_interface = nullptr;
     waylandServer()->terminateClientConnections();
 
     // Block compositor to prevent further compositing from crashing with a null workspace.
     // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
-    static_cast<render::wayland::compositor*>(base.render->compositor.get())->lock();
+    base.render->compositor->lock();
 
     base.space.reset();
     base.render->compositor.reset();
@@ -184,7 +183,7 @@ void WaylandTestApplication::start()
     assert(touch);
 
     try {
-        static_cast<render::backend::wlroots::platform<decltype(base)>*>(base.render.get())->init();
+        static_cast<render::backend::wlroots::platform<decltype(base)>&>(*base.render).init();
     } catch (std::exception const&) {
         std::cerr << "FATAL ERROR: backend failed to initialize, exiting now" << std::endl;
         ::exit(1);
@@ -206,16 +205,17 @@ void WaylandTestApplication::start()
     out->wrapland_output()->set_physical_size(QSize(1280, 1024));
 
     try {
-        base.render->compositor = std::make_unique<render::wayland::compositor>(*base.render);
+        base.render->compositor = std::make_unique<base_t::render_t::compositor_t>(*base.render);
     } catch (std::system_error const& exc) {
         std::cerr << "FATAL ERROR: compositor creation failed: " << exc.what() << std::endl;
         exit(exc.code().value());
     }
 
-    base.space = std::make_unique<wayland_space>(base, server.get());
+    base.space = std::make_unique<base_t::space_t>(base, server.get());
+    base.space->input->setup_workspace();
     input::wayland::add_dbus(base.input.get());
     win::init_shortcuts(*base.space);
-    base.space->scripting = std::make_unique<scripting::platform>(*base.space);
+    base.space->scripting = std::make_unique<scripting::platform<base_t::space_t>>(*base.space);
 
     base.render->compositor->start(*base.space);
 
@@ -288,7 +288,6 @@ void WaylandTestApplication::create_xwayland()
     try {
         base.xwayland
             = std::make_unique<xwl::xwayland<wayland_space>>(this, *base.space, status_callback);
-        base.xwayland_interface = base.xwayland.get();
     } catch (std::system_error const& exc) {
         std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
         exit(exc.code().value());

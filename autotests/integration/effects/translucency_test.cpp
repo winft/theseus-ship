@@ -83,7 +83,7 @@ void TranslucencyTest::initTestCase()
 void TranslucencyTest::init()
 {
     // load the translucency effect
-    auto e = static_cast<render::effects_handler_impl*>(effects);
+    auto& e = Test::app()->base.render->compositor->effects;
     // find the effectsloader
     auto effectloader = e->findChild<render::basic_effect_loader*>();
     QVERIFY(effectloader);
@@ -101,7 +101,7 @@ void TranslucencyTest::init()
 
 void TranslucencyTest::cleanup()
 {
-    auto e = static_cast<render::effects_handler_impl*>(effects);
+    auto& e = Test::app()->base.render->compositor->effects;
     if (e->isEffectLoaded(QStringLiteral("kwin4_effect_translucency"))) {
         e->unloadEffect(QStringLiteral("kwin4_effect_translucency"));
     }
@@ -162,8 +162,8 @@ void TranslucencyTest::testMoveAfterDesktopChange()
     QVERIFY(windowCreatedSpy.wait());
 
     auto client_id = windowCreatedSpy.first().first().value<quint32>();
-    auto client
-        = dynamic_cast<win::x11::window*>(Test::app()->base.space->windows_map.at(client_id));
+    auto client = dynamic_cast<Test::space::x11_window*>(
+        Test::app()->base.space->windows_map.at(client_id));
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QVERIFY(win::decoration(client));
@@ -193,7 +193,7 @@ void TranslucencyTest::testMoveAfterDesktopChange()
     xcb_unmap_window(c.get(), w);
     xcb_flush(c.get());
 
-    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::closed);
+    QSignalSpy windowClosedSpy(client->qobject.get(), &win::window_qobject::closed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
     xcb_destroy_window(c.get(), w);
@@ -244,8 +244,8 @@ void TranslucencyTest::testDialogClose()
     QVERIFY(windowCreatedSpy.wait());
 
     auto client_id = windowCreatedSpy.first().first().value<quint32>();
-    auto client
-        = dynamic_cast<win::x11::window*>(Test::app()->base.space->windows_map.at(client_id));
+    auto client = dynamic_cast<Test::space::x11_window*>(
+        Test::app()->base.space->windows_map.at(client_id));
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QVERIFY(win::decoration(client));
@@ -257,7 +257,7 @@ void TranslucencyTest::testDialogClose()
     xcb_unmap_window(c.get(), w);
     xcb_flush(c.get());
 
-    QSignalSpy windowClosedSpy(client->qobject.get(), &Toplevel::qobject_t::closed);
+    QSignalSpy windowClosedSpy(client->qobject.get(), &win::window_qobject::closed);
     QVERIFY(windowClosedSpy.isValid());
 
     QSignalSpy windowDeletedSpy(effects, &EffectsHandler::windowDeleted);

@@ -8,7 +8,6 @@
 #include <config-kwin.h>
 
 #include "dbus/virtual_desktop_manager.h"
-#include "internal_window.h"
 #include "rules.h"
 #include "tabbox/tabbox.h"
 #include "x11/space_setup.h"
@@ -34,13 +33,13 @@ void init_space(Space& space)
 
 #if KWIN_BUILD_TABBOX
     // need to create the tabbox before compositing scene is setup
-    space.tabbox = std::make_unique<win::tabbox<typename Space::space_t>>(space);
+    space.tabbox = std::make_unique<win::tabbox<Space>>(space);
 #endif
 
     QObject::connect(space.qobject.get(),
                      &Space::qobject_t::currentDesktopChanged,
-                     space.render.qobject.get(),
-                     [comp = &space.render] { comp->addRepaintFull(); });
+                     space.base.render->compositor->qobject.get(),
+                     [comp = space.base.render->compositor.get()] { comp->addRepaintFull(); });
 
     space.deco->init();
     QObject::connect(space.qobject.get(),
@@ -188,7 +187,7 @@ void clear_space(Space& space)
     x11::clear_space(space);
 
     for (auto const& window : space.windows) {
-        if (auto internal = dynamic_cast<internal_window*>(window);
+        if (auto internal = dynamic_cast<typename Space::internal_window_t*>(window);
             internal && !internal->remnant) {
             internal->destroyClient();
             remove_all(space.windows, internal);
