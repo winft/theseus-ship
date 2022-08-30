@@ -21,6 +21,17 @@ public:
     devices(devices&&) noexcept = default;
     devices& operator=(devices&&) noexcept = default;
 
+    explicit devices(Platform& platform, Wrapland::Server::FakeInputDevice* device)
+        : platform{platform}
+        , pointer{std::make_unique<fake::pointer<Platform>>(device, &platform)}
+        , keyboard{std::make_unique<fake::keyboard<Platform>>(device, &platform)}
+        , touch{std::make_unique<fake::touch<Platform>>(device, &platform)}
+    {
+        platform_add_pointer(pointer.get(), platform);
+        platform_add_keyboard(keyboard.get(), platform);
+        platform_add_touch(touch.get(), platform);
+    }
+
     ~devices()
     {
         if (pointer) {

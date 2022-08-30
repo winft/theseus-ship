@@ -503,16 +503,7 @@ private:
                              device->setAuthentication(true);
                          });
 
-        auto devices = fake::devices<Platform>(
-            {std::make_unique<fake::pointer<Platform>>(device, &platform),
-             std::make_unique<fake::keyboard<Platform>>(device, &platform),
-             std::make_unique<fake::touch<Platform>>(device, &platform),
-             platform});
-
-        platform_add_pointer(devices.pointer.get(), platform);
-        platform_add_keyboard(devices.keyboard.get(), platform);
-        platform_add_touch(devices.touch.get(), platform);
-
+        auto devices = fake::devices<Platform>(platform, device);
         fake_devices.insert({device, std::move(devices)});
     }
 
