@@ -119,6 +119,8 @@ public:
         , space{space}
     {
         setAttribute(Qt::WA_ShowWithoutActivating);
+        this->setWindowTitle("kwin_debugconsole");
+
         m_ui->setupUi(this);
 
         m_ui->quitButton->setIcon(QIcon::fromTheme(QStringLiteral("application-exit")));

@@ -84,6 +84,9 @@ void TestDontCrashUseractionsMenu::testShowHideShowUseractionsMenu()
     // this test creates the condition of BUG 382063
     std::unique_ptr<Surface> surface1(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
+    QVERIFY(surface1);
+    QVERIFY(shellSurface1);
+
     auto client = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
     QVERIFY(client);
 

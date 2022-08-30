@@ -39,7 +39,7 @@ void trigger_decoration_repaint(Win* win)
 template<typename Win>
 int left_border(Win* win)
 {
-    if (auto const& deco = decoration(win)) {
+    if (auto const deco = decoration(win)) {
         return deco->borderLeft();
     }
     return 0;
@@ -48,7 +48,7 @@ int left_border(Win* win)
 template<typename Win>
 int right_border(Win* win)
 {
-    if (auto const& deco = decoration(win)) {
+    if (auto const deco = decoration(win)) {
         return deco->borderRight();
     }
     return 0;
@@ -57,7 +57,7 @@ int right_border(Win* win)
 template<typename Win>
 int top_border(Win* win)
 {
-    if (auto const& deco = decoration(win)) {
+    if (auto const deco = decoration(win)) {
         return deco->borderTop();
     }
     return 0;
@@ -66,7 +66,7 @@ int top_border(Win* win)
 template<typename Win>
 int bottom_border(Win* win)
 {
-    if (auto const& deco = decoration(win)) {
+    if (auto const deco = decoration(win)) {
         return deco->borderBottom();
     }
     return 0;

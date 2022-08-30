@@ -87,7 +87,7 @@ private:
             m_timer->setInterval(1000 / rate);
         }
         // TODO: better time
-        Q_EMIT qobject->key_repeated({m_key, key_state::pressed, false, keyboard, m_time});
+        Q_EMIT qobject->key_repeated({m_key, key_state::pressed, false, {keyboard, m_time}});
     }
 
     std::unique_ptr<QTimer> m_timer;

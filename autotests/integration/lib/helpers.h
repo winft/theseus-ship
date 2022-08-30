@@ -45,7 +45,7 @@ using space = win::wayland::space<base::wayland::platform>;
 using wayland_window = win::wayland::window<space>;
 
 struct KWIN_EXPORT output {
-    output(QRect const& geometry);
+    explicit output(QRect const& geometry);
     output(QRect const& geometry, double scale);
 
     // Geometry in logical space.

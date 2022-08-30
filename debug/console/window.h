@@ -62,6 +62,12 @@ public:
 
     QRect iconGeometry() const override
     {
+        if (!ref_win->control) {
+            return QRect();
+        }
+        if (ref_win->control->icon.isNull()) {
+            return QRect();
+        }
         return ref_win->iconGeometry();
     }
 
@@ -72,6 +78,9 @@ public:
 
     pid_t pid() const override
     {
+        if (!ref_win->info) {
+            return 0;
+        }
         return ref_win->pid();
     }
 

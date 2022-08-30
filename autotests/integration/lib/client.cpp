@@ -215,9 +215,11 @@ void client::connect_outputs()
             output_removals.push_back(output_removal_connection(output.get()));
             interfaces.outputs.push_back(std::move(output));
         });
-    for (auto& output : interfaces.outputs) {
-        output_removals.push_back(output_removal_connection(output.get()));
-    }
+
+    std::transform(interfaces.outputs.begin(),
+                   interfaces.outputs.end(),
+                   std::back_inserter(output_removals),
+                   [this](auto const& output) { return output_removal_connection(output.get()); });
 }
 
 QMetaObject::Connection client::output_removal_connection(Wrapland::Client::Output* output)

@@ -254,6 +254,9 @@ void GlobalShortcutsTest::testUserActionsMenu()
     // first create a window
     std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    QVERIFY(surface);
+    QVERIFY(shellSurface);
+
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QVERIFY(c->control->active);
@@ -453,6 +456,9 @@ void GlobalShortcutsTest::testSetupWindowShortcut()
 
     std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    QVERIFY(surface);
+    QVERIFY(shellSurface);
+
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
     QCOMPARE(Test::app()->base.space->active_client, client);

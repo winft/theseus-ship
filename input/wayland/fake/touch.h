@@ -28,7 +28,7 @@ public:
             [this](auto id, auto const& pos) {
                 auto redirect = this->platform->redirect;
                 // TODO: Fix time
-                redirect->touch->process_down({static_cast<int32_t>(id), pos, nullptr, 0});
+                redirect->touch->process_down({static_cast<int32_t>(id), pos, {nullptr, 0}});
                 redirect->platform.base.space->kde_idle->simulateUserActivity();
             });
         QObject::connect(
@@ -38,7 +38,7 @@ public:
             [this](auto id, auto const& pos) {
                 auto redirect = this->platform->redirect;
                 // TODO: Fix time
-                redirect->touch->process_motion({static_cast<int32_t>(id), pos, nullptr, 0});
+                redirect->touch->process_motion({static_cast<int32_t>(id), pos, {nullptr, 0}});
                 redirect->platform.base.space->kde_idle->simulateUserActivity();
             });
         QObject::connect(device,

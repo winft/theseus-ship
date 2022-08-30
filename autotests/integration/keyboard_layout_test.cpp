@@ -68,7 +68,7 @@ public:
             QSignalSpy layouts_reconfigured;
         } v2;
 
-        test_spies(keyboard_layout_test* test)
+        explicit test_spies(keyboard_layout_test* test)
             : v1{test}
             , v2{test}
         {
@@ -315,9 +315,9 @@ void keyboard_layout_test::test_reconfigure()
     QCOMPARE(xkb->layout_name_from_index(0), "English (US)");
 
     // Create a new keymap.
-    auto layout_group = kwinApp()->kxkbConfig()->group("Layout");
-    layout_group.writeEntry("LayoutList", QStringLiteral("de,us"));
-    layout_group.sync();
+    auto lay_group = kwinApp()->kxkbConfig()->group("Layout");
+    lay_group.writeEntry("LayoutList", QStringLiteral("de,us"));
+    lay_group.sync();
 
     reconfigure_layouts();
 
@@ -733,6 +733,9 @@ void keyboard_layout_test::test_window_policy()
     std::unique_ptr<Wrapland::Client::Surface> surface(Test::create_surface());
     std::unique_ptr<Wrapland::Client::XdgShellToplevel> shellSurface(
         Test::create_xdg_shell_toplevel(surface));
+    QVERIFY(surface);
+    QVERIFY(shellSurface);
+
     auto c1 = Test::render_and_wait_for_shown(surface, QSize(100, 100), Qt::blue);
     QVERIFY(c1);
 
@@ -745,6 +748,9 @@ void keyboard_layout_test::test_window_policy()
     std::unique_ptr<Wrapland::Client::Surface> surface2(Test::create_surface());
     std::unique_ptr<Wrapland::Client::XdgShellToplevel> shellSurface2(
         Test::create_xdg_shell_toplevel(surface2));
+    QVERIFY(surface2);
+    QVERIFY(shellSurface2);
+
     auto c2 = Test::render_and_wait_for_shown(surface2, QSize(100, 100), Qt::red);
     QVERIFY(c2);
 

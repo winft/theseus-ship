@@ -263,6 +263,9 @@ void TestXdgShellClient::testDesktopPresenceChanged()
     // this test verifies that the desktop presence changed signals are properly emitted
     std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    QVERIFY(surface);
+    QVERIFY(shellSurface);
+
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(c->desktop(), 1);
@@ -309,6 +312,9 @@ void TestXdgShellClient::testTransientPositionAfterRemap()
     std::unique_ptr<Surface> transientSurface(Test::create_surface());
     std::unique_ptr<XdgShellPopup> transientShellSurface(
         Test::create_xdg_shell_popup(transientSurface, shellSurface, positioner));
+    QVERIFY(transientSurface);
+    QVERIFY(transientShellSurface);
+
     auto transient
         = Test::render_and_wait_for_shown(transientSurface, positioner.initialSize(), Qt::blue);
     QVERIFY(transient);
@@ -339,6 +345,9 @@ void TestXdgShellClient::testWindowOutputs()
 {
     std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    QVERIFY(surface);
+    QVERIFY(shellSurface);
+
     auto size = QSize(200, 200);
 
     QSignalSpy outputEnteredSpy(surface.get(), &Surface::outputEntered);
@@ -377,6 +386,9 @@ void TestXdgShellClient::testMinimizeActiveWindow()
     // this test verifies that when minimizing the active window it gets deactivated
     std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<QObject> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    QVERIFY(surface);
+    QVERIFY(shellSurface);
+
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QVERIFY(c->control->active);
@@ -554,6 +566,9 @@ void TestXdgShellClient::testUserCanSetFullscreen()
 {
     std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    QVERIFY(surface);
+    QVERIFY(shellSurface);
+
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QVERIFY(c->control->active);
@@ -800,6 +815,9 @@ void TestXdgShellClient::testHidden()
     // this test verifies that when hiding window it doesn't get shown
     std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<QObject> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    QVERIFY(surface);
+    QVERIFY(shellSurface);
+
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QVERIFY(c->control->active);
@@ -1025,6 +1043,9 @@ void TestXdgShellClient::testAppMenu()
 
     std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    QVERIFY(surface);
+    QVERIFY(shellSurface);
+
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     std::unique_ptr<AppMenu> menu(Test::get_client().interfaces.app_menu->create(surface.get()));
@@ -1192,6 +1213,8 @@ void TestXdgShellClient::testXdgNeverCommitted()
     std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface(
         Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly));
+    QVERIFY(surface);
+    QVERIFY(shellSurface);
 }
 
 void TestXdgShellClient::testXdgInitialState()
@@ -1325,6 +1348,9 @@ void TestXdgShellClient::testXdgWindowGeometryIsntSet()
 
     std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    QVERIFY(surface);
+    QVERIFY(shellSurface);
+
     auto client = Test::render_and_wait_for_shown(surface, QSize(200, 100), Qt::red);
     QVERIFY(client);
     QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
@@ -1432,6 +1458,8 @@ void TestXdgShellClient::testSendToScreen()
     std::unique_ptr<Surface> popup_surface(Test::create_surface());
     std::unique_ptr<XdgShellPopup> popup_shell_surface(
         Test::create_xdg_shell_popup(popup_surface, shell_surface, positioner));
+    QVERIFY(popup_surface);
+    QVERIFY(popup_shell_surface);
 
     auto popup = Test::render_and_wait_for_shown(popup_surface, positioner.initialSize(), Qt::blue);
     QVERIFY(popup);

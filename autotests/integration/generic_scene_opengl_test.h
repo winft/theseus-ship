@@ -33,7 +33,7 @@ public:
     ~GenericSceneOpenGLTest() override;
 
 protected:
-    GenericSceneOpenGLTest(const QByteArray& envVariable);
+    explicit GenericSceneOpenGLTest(const QByteArray& envVariable);
 private Q_SLOTS:
     void initTestCase();
     void cleanup();

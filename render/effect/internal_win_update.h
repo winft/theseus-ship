@@ -94,7 +94,7 @@ inline effect::region_update get_internal_window_region_update(internal_region_p
     if (!ok) {
         return {};
     }
-    return {&window, true, val};
+    return {{&window, true}, val};
 }
 
 template<typename EffectIntegrator>
@@ -172,7 +172,7 @@ effect::anim_update get_internal_window_slide_update(EffectIntegrator& effi, Eff
     auto offset = get_internal_window_prop_val_or_default(
         std::get<internal_int_property>(effi.internal_properties.at(1)), *internal, -1);
 
-    return {&window, true, pos, {}, {}, static_cast<double>(offset), 0};
+    return {{&window, true}, pos, {}, {}, static_cast<double>(offset), 0};
 }
 
 }

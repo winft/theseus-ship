@@ -19,11 +19,11 @@ namespace KWin::base::backend::x11
 RandrFilter::RandrFilter(x11::platform* platform)
     : base::x11::event_filter(base::x11::xcb::extensions::self()->randr_notify_event())
     , platform(platform)
-    , m_changedTimer(new QTimer(platform))
+    , changed_timer(std::make_unique<QTimer>())
 {
-    m_changedTimer->setSingleShot(true);
-    m_changedTimer->setInterval(100);
-    QObject::connect(m_changedTimer, &QTimer::timeout, platform, &platform::update_outputs);
+    changed_timer->setSingleShot(true);
+    changed_timer->setInterval(100);
+    QObject::connect(changed_timer.get(), &QTimer::timeout, platform, &platform::update_outputs);
 }
 
 bool RandrFilter::event(xcb_generic_event_t* event)
@@ -47,7 +47,7 @@ bool RandrFilter::event(xcb_generic_event_t* event)
     }
 
     // Let's try to gather a few XRandR events, unlikely that there is just one.
-    m_changedTimer->start();
+    changed_timer->start();
 
     return false;
 }

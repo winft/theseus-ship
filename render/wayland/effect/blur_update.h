@@ -27,7 +27,7 @@ effect::region_update get_blur_update(EffectIntegrator& effi, EffectWindow& wind
         return {};
     }
 
-    return {&window, true, surface->state().blur->region()};
+    return {{&window, true}, surface->state().blur->region()};
 }
 
 }

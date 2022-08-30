@@ -66,6 +66,9 @@ void xdg_activation_test::test_single_client()
 
     std::unique_ptr<Clt::Surface> surface1(Test::create_surface());
     auto shell_surface1 = Test::create_xdg_shell_toplevel(surface1);
+    QVERIFY(surface1);
+    QVERIFY(shell_surface1);
+
     auto window1 = Test::render_and_wait_for_shown(surface1, QSize(200, 100), Qt::red);
     QVERIFY(window1);
     QCOMPARE(win::render_geometry(window1).size(), QSize(200, 100));
@@ -75,6 +78,9 @@ void xdg_activation_test::test_single_client()
 
     std::unique_ptr<Clt::Surface> surface2(Test::create_surface());
     auto shell_surface2 = Test::create_xdg_shell_toplevel(surface2);
+    QVERIFY(surface2);
+    QVERIFY(shell_surface2);
+
     auto window2 = Test::render_and_wait_for_shown(surface2, QSize(400, 200), Qt::blue);
     QVERIFY(window2);
     QCOMPARE(win::render_geometry(window2).size(), QSize(400, 200));
@@ -131,6 +137,9 @@ void xdg_activation_test::test_multi_client()
 
     std::unique_ptr<Clt::Surface> surface1(Test::create_surface());
     auto shell_surface1 = Test::create_xdg_shell_toplevel(surface1);
+    QVERIFY(surface1);
+    QVERIFY(shell_surface1);
+
     auto window1 = Test::render_and_wait_for_shown(surface1, QSize(200, 100), Qt::red);
     QVERIFY(window1);
     QCOMPARE(win::render_geometry(window1).size(), QSize(200, 100));
@@ -145,6 +154,9 @@ void xdg_activation_test::test_multi_client()
 
     std::unique_ptr<Clt::Surface> surface2(Test::create_surface(client2));
     auto shell_surface2 = Test::create_xdg_shell_toplevel(client2, surface2);
+    QVERIFY(surface2);
+    QVERIFY(shell_surface2);
+
     auto window2 = Test::render_and_wait_for_shown(client2, surface2, QSize(400, 200), Qt::blue);
     QVERIFY(window2);
     QCOMPARE(win::render_geometry(window2).size(), QSize(400, 200));

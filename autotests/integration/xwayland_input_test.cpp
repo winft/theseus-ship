@@ -81,7 +81,7 @@ class X11EventReaderHelper : public QObject
 {
     Q_OBJECT
 public:
-    X11EventReaderHelper(xcb_connection_t* c);
+    explicit X11EventReaderHelper(xcb_connection_t* c);
 
 Q_SIGNALS:
     void entered();

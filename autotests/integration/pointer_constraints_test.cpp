@@ -295,6 +295,9 @@ void TestPointerConstraints::testLockedPointer()
     // the various ways to unlock are not tested as that's already verified by testConfinedPointer
     std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    QVERIFY(surface);
+    QVERIFY(shellSurface);
+
     std::unique_ptr<Pointer> pointer(Test::get_client().interfaces.seat->createPointer());
     std::unique_ptr<LockedPointer> lockedPointer(
         Test::get_client().interfaces.pointer_constraints->lockPointer(

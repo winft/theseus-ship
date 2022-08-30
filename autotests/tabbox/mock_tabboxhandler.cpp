@@ -51,11 +51,13 @@ std::weak_ptr<win::tabbox_client>
 MockTabBoxHandler::client_to_add_to_list(win::tabbox_client* client, int desktop) const
 {
     Q_UNUSED(desktop)
-    for (auto const& window : m_windows) {
-        if (window.get() == client) {
-            return window;
-        }
+    auto const window = std::find_if(
+        m_windows.begin(), m_windows.end(), [client](auto win) { return win.get() == client; });
+
+    if (window != m_windows.end()) {
+        return *window;
     }
+
     return std::weak_ptr<win::tabbox_client>();
 }
 
@@ -92,12 +94,10 @@ bool MockTabBoxHandler::is_in_focus_chain(win::tabbox_client* client) const
     if (!client) {
         return false;
     }
-    for (auto const& window : m_windows) {
-        if (window.get() == client) {
-            return true;
-        }
-    }
-    return false;
+    auto const is_in_chain = std::any_of(
+        m_windows.begin(), m_windows.end(), [client](auto win) { return win.get() == client; });
+
+    return is_in_chain;
 }
 
 std::weak_ptr<win::tabbox_client> MockTabBoxHandler::createMockWindow(const QString& caption)

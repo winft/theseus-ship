@@ -118,7 +118,7 @@ void XwaylandSelectionsTest::testSync()
             return QSignalSpy(waylandServer()->seat(),
                               &Wrapland::Server::Seat::primarySelectionChanged);
         }
-        throw;
+        std::terminate();
     }();
     QVERIFY(clipboardChangedSpy.isValid());
 

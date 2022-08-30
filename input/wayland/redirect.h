@@ -550,8 +550,7 @@ private:
                                       ? key_state::pressed
                                       : key_state::released,
                                   false,
-                                  keyboard_ptr,
-                                  time});
+                                  {keyboard_ptr, time}});
                          });
 
         QObject::connect(virtual_keyboard,
@@ -559,7 +558,7 @@ private:
                          keyboard_ptr,
                          [keyboard_ptr](auto depressed, auto latched, auto locked, auto group) {
                              Q_EMIT keyboard_ptr->modifiers_changed(
-                                 {depressed, latched, locked, group, keyboard_ptr});
+                                 {depressed, latched, locked, group, {keyboard_ptr}});
                          });
 
         virtual_keyboards.insert({virtual_keyboard, std::move(keyboard)});
