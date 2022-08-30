@@ -468,7 +468,7 @@ void EffectsModel::load(LoadOptions options)
 
         QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(interface.areEffectsSupported(effectNames), this);
         connect(watcher, &QDBusPendingCallWatcher::finished, this,
-            [=](QDBusPendingCallWatcher *self) {
+            [=, this](QDBusPendingCallWatcher *self) {
                 self->deleteLater();
 
                 if (m_lastSerial != serial) {

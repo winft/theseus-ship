@@ -114,10 +114,10 @@ public:
         // We pad each part in the decoration atlas in order to avoid texture bleeding.
         const int padding = 1;
 
-        auto renderPart = [=](const QRect& geo,
-                              const QRect& partRect,
-                              const QPoint& position,
-                              bool rotated = false) {
+        auto renderPart = [=, this](const QRect& geo,
+                                    const QRect& partRect,
+                                    const QPoint& position,
+                                    bool rotated = false) {
             if (!geo.isValid()) {
                 return;
             }
