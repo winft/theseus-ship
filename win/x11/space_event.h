@@ -34,25 +34,12 @@ namespace KWin::win::x11
 {
 
 // TODO(romangg): make this constexpr with C++20.
-static std::vector<std::string> xcb_errors({"Success",
-                                            "BadRequest",
-                                            "BadValue",
-                                            "BadWindow",
-                                            "BadPixmap",
-                                            "BadAtom",
-                                            "BadCursor",
-                                            "BadFont",
-                                            "BadMatch",
-                                            "BadDrawable",
-                                            "BadAccess",
-                                            "BadAlloc",
-                                            "BadColor",
-                                            "BadGC",
-                                            "BadIDChoice",
-                                            "BadName",
-                                            "BadLength",
-                                            "BadImplementation",
-                                            "Unknown"});
+static std::vector<std::string> xcb_errors({
+    "Success",   "BadRequest", "BadValue",          "BadWindow", "BadPixmap",
+    "BadAtom",   "BadCursor",  "BadFont",           "BadMatch",  "BadDrawable",
+    "BadAccess", "BadAlloc",   "BadColor",          "BadGC",     "BadIDChoice",
+    "BadName",   "BadLength",  "BadImplementation", "Unknown",
+});
 
 template<typename Space>
 bool space_event(Space& space, xcb_generic_event_t* event)
