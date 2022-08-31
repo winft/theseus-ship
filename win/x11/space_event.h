@@ -33,8 +33,7 @@ typedef struct xcb_ge_generic_event_t {
 namespace KWin::win::x11
 {
 
-// TODO(romangg): make this constexpr with C++20.
-static std::vector<std::string> xcb_errors({
+static std::vector<std::string> const xcb_errors({
     "Success",   "BadRequest", "BadValue",          "BadWindow", "BadPixmap",
     "BadAtom",   "BadCursor",  "BadFont",           "BadMatch",  "BadDrawable",
     "BadAccess", "BadAlloc",   "BadColor",          "BadGC",     "BadIDChoice",
