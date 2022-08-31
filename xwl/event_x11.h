@@ -17,6 +17,39 @@
 namespace KWin::xwl
 {
 
+template<typename Selection>
+void do_handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t* event)
+{
+    // In case we had an X11 source, we need to delete it directly if there is no new one.
+    // But if there is a new one don't delete it, as this might trigger data-control clients.
+    auto had_x11_source = static_cast<bool>(sel->data.x11_source);
+
+    sel->data.x11_source.reset();
+
+    auto const& client = sel->data.core.space->active_client;
+    if (!dynamic_cast<typename Selection::window_t::space_t::x11_window const*>(client)) {
+        // Clipboard is only allowed to be acquired when Xwayland has focus
+        // TODO(romangg): can we make this stronger (window id comparison)?
+        if (had_x11_source) {
+            sel->data.source_int.reset();
+        }
+        return;
+    }
+
+    create_x11_source(sel, event);
+
+    if (auto const& source = sel->data.x11_source) {
+        /* Gets X11 targets, will lead to a selection request event for the new owner. */
+        xcb_convert_selection(source->core.x11.connection,
+                              sel->data.requestor_window,
+                              sel->data.atom,
+                              sel->data.core.space->atoms->targets,
+                              sel->data.core.space->atoms->wl_selection,
+                              source->timestamp);
+        xcb_flush(source->core.x11.connection);
+    }
+}
+
 // on selection owner changes by X clients (Xwl -> Wl)
 template<typename Selection>
 bool handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t* event)
@@ -50,39 +83,6 @@ bool handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t* e
     // TODO(romangg): Use C++20 require on the member function and otherwise call the free function.
     sel->do_handle_xfixes_notify(event);
     return true;
-}
-
-template<typename Selection>
-void do_handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t* event)
-{
-    // In case we had an X11 source, we need to delete it directly if there is no new one.
-    // But if there is a new one don't delete it, as this might trigger data-control clients.
-    auto had_x11_source = static_cast<bool>(sel->data.x11_source);
-
-    sel->data.x11_source.reset();
-
-    auto const& client = sel->data.core.space->active_client;
-    if (!dynamic_cast<typename Selection::window_t::space_t::x11_window const*>(client)) {
-        // Clipboard is only allowed to be acquired when Xwayland has focus
-        // TODO(romangg): can we make this stronger (window id comparison)?
-        if (had_x11_source) {
-            sel->data.source_int.reset();
-        }
-        return;
-    }
-
-    create_x11_source(sel, event);
-
-    if (auto const& source = sel->data.x11_source) {
-        /* Gets X11 targets, will lead to a selection request event for the new owner. */
-        xcb_convert_selection(source->core.x11.connection,
-                              sel->data.requestor_window,
-                              sel->data.atom,
-                              sel->data.core.space->atoms->targets,
-                              sel->data.core.space->atoms->wl_selection,
-                              source->timestamp);
-        xcb_flush(source->core.x11.connection);
-    }
 }
 
 template<typename Selection>
