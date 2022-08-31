@@ -58,16 +58,6 @@ public:
     {
         xwl::handle_x11_offer_change(this, added, removed);
     }
-
-    bool handle_client_message(xcb_client_message_event_t* /*event*/)
-    {
-        return false;
-    }
-
-    void do_handle_xfixes_notify(xcb_xfixes_selection_notify_event_t* event)
-    {
-        xwl::do_handle_xfixes_notify(this, event);
-    }
 };
 
 }
