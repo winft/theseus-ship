@@ -102,12 +102,6 @@ public:
         return drag_event_reply();
     }
 
-    void handle_x11_offer_change(std::vector<std::string> const& /*added*/,
-                                 std::vector<std::string> const& /*removed*/)
-    {
-        // Handled internally.
-    }
-
     bool handle_client_message(xcb_client_message_event_t* event)
     {
         for (auto& drag : old_drags) {

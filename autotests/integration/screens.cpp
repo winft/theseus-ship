@@ -18,9 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#define private public
 #include "base/options.h"
-#undef private
 
 #include "base/wayland/server.h"
 #include "input/cursor.h"
@@ -378,8 +376,10 @@ void TestScreens::testCurrentWithFollowsMouse()
     QSignalSpy changedSpy(&Test::app()->base, &base::platform::topology_changed);
     QVERIFY(changedSpy.isValid());
 
-    auto& options = Test::app()->options;
-    options->current_output_follows_mouse = true;
+    auto group = kwinApp()->config()->group("Windows");
+    group.writeEntry("ActiveMouseScreen", true);
+    group.sync();
+    win::space_reconfigure(*Test::app()->base.space);
 
     Test::pointer_motion_absolute(QPointF(0, 0), 1);
 
@@ -423,8 +423,10 @@ void TestScreens::testCurrentPoint()
     QSignalSpy changedSpy(&Test::app()->base, &base::platform::topology_changed);
     QVERIFY(changedSpy.isValid());
 
-    auto& options = Test::app()->options;
-    options->current_output_follows_mouse = false;
+    auto group = kwinApp()->config()->group("Windows");
+    group.writeEntry("ActiveMouseScreen", false);
+    group.sync();
+    win::space_reconfigure(*Test::app()->base.space);
 
     QFETCH(QList<QRect>, geometries);
     Test::app()->set_outputs(to_vector(geometries));

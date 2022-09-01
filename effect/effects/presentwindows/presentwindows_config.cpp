@@ -64,22 +64,28 @@ PresentWindowsEffectConfig::PresentWindowsEffectConfig(QWidget* parent, const QV
     QAction* a = m_actionCollection->addAction(QStringLiteral("ExposeAll"));
     a->setText(i18n("Toggle Present Windows (All desktops)"));
     a->setProperty("isConfigurationAction", true);
-    KGlobalAccel::self()->setDefaultShortcut(
-        a, QList<QKeySequence>() << Qt::CTRL + Qt::Key_F10 << Qt::Key_LaunchC);
-    KGlobalAccel::self()->setShortcut(
-        a, QList<QKeySequence>() << Qt::CTRL + Qt::Key_F10 << Qt::Key_LaunchC);
+    KGlobalAccel::self()->setDefaultShortcut(a,
+                                             QList<QKeySequence>() << static_cast<Qt::Key>(Qt::CTRL)
+                                                     + Qt::Key_F10 << Qt::Key_LaunchC);
+    KGlobalAccel::self()->setShortcut(a,
+                                      QList<QKeySequence>() << static_cast<Qt::Key>(Qt::CTRL)
+                                              + Qt::Key_F10 << Qt::Key_LaunchC);
 
     QAction* b = m_actionCollection->addAction(QStringLiteral("Expose"));
     b->setText(i18n("Toggle Present Windows (Current desktop)"));
     b->setProperty("isConfigurationAction", true);
-    KGlobalAccel::self()->setDefaultShortcut(b, QList<QKeySequence>() << Qt::CTRL + Qt::Key_F9);
-    KGlobalAccel::self()->setShortcut(b, QList<QKeySequence>() << Qt::CTRL + Qt::Key_F9);
+    KGlobalAccel::self()->setDefaultShortcut(
+        b, QList<QKeySequence>() << static_cast<Qt::Key>(Qt::CTRL) + Qt::Key_F9);
+    KGlobalAccel::self()->setShortcut(
+        b, QList<QKeySequence>() << static_cast<Qt::Key>(Qt::CTRL) + Qt::Key_F9);
 
     QAction* c = m_actionCollection->addAction(QStringLiteral("ExposeClass"));
     c->setText(i18n("Toggle Present Windows (Window class)"));
     c->setProperty("isConfigurationAction", true);
-    KGlobalAccel::self()->setDefaultShortcut(c, QList<QKeySequence>() << Qt::CTRL + Qt::Key_F7);
-    KGlobalAccel::self()->setShortcut(c, QList<QKeySequence>() << Qt::CTRL + Qt::Key_F7);
+    KGlobalAccel::self()->setDefaultShortcut(
+        c, QList<QKeySequence>() << static_cast<Qt::Key>(Qt::CTRL) + Qt::Key_F7);
+    KGlobalAccel::self()->setShortcut(
+        c, QList<QKeySequence>() << static_cast<Qt::Key>(Qt::CTRL) + Qt::Key_F7);
 
     m_ui->shortcutEditor->addCollection(m_actionCollection);
 

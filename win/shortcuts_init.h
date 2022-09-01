@@ -80,28 +80,28 @@ void shortcuts_init_switch_to_virtual_desktop(Space& space)
                                toDesktop,
                                toDesktopLabel,
                                1,
-                               QKeySequence(Qt::CTRL + Qt::Key_F1),
+                               QKeySequence(static_cast<Qt::Key>(Qt::CTRL) + Qt::Key_F1),
                                [manager](auto& action) { manager->slotSwitchTo(action); });
     add_virtual_desktop_action(*manager,
                                input,
                                toDesktop,
                                toDesktopLabel,
                                2,
-                               QKeySequence(Qt::CTRL + Qt::Key_F2),
+                               QKeySequence(static_cast<Qt::Key>(Qt::CTRL) + Qt::Key_F2),
                                [manager](auto& action) { manager->slotSwitchTo(action); });
     add_virtual_desktop_action(*manager,
                                input,
                                toDesktop,
                                toDesktopLabel,
                                3,
-                               QKeySequence(Qt::CTRL + Qt::Key_F3),
+                               QKeySequence(static_cast<Qt::Key>(Qt::CTRL) + Qt::Key_F3),
                                [manager](auto& action) { manager->slotSwitchTo(action); });
     add_virtual_desktop_action(*manager,
                                input,
                                toDesktop,
                                toDesktopLabel,
                                4,
-                               QKeySequence(Qt::CTRL + Qt::Key_F4),
+                               QKeySequence(static_cast<Qt::Key>(Qt::CTRL) + Qt::Key_F4),
                                [manager](auto& action) { manager->slotSwitchTo(action); });
 
     for (uint i = 5; i <= manager->maximum(); ++i) {
@@ -281,12 +281,15 @@ void init_shortcuts(Space& space)
     };
 
     def(kli18n("Window Operations Menu"),
-        Qt::ALT + Qt::Key_F3,
+        static_cast<Qt::Key>(Qt::ALT) + Qt::Key_F3,
         active_window_show_operations_popup<Space>);
-    def2("Window Close", kli18n("Close Window"), Qt::ALT + Qt::Key_F4, active_window_close<Space>);
+    def2("Window Close",
+         kli18n("Close Window"),
+         static_cast<Qt::Key>(Qt::ALT) + Qt::Key_F4,
+         active_window_close<Space>);
     def2("Window Maximize",
          kli18n("Maximize Window"),
-         Qt::META + Qt::Key_PageUp,
+         static_cast<Qt::Key>(Qt::META) + Qt::Key_PageUp,
          active_window_maximize<Space>);
     def2("Window Maximize Vertical",
          kli18n("Maximize Window Vertically"),
@@ -298,7 +301,7 @@ void init_shortcuts(Space& space)
          active_window_maximize_horizontal<Space>);
     def2("Window Minimize",
          kli18n("Minimize Window"),
-         Qt::META + Qt::Key_PageDown,
+         static_cast<Qt::Key>(Qt::META) + Qt::Key_PageDown,
          active_window_minimize<Space>);
     def2("Window Move", kli18n("Move Window"), 0, active_window_move<Space>);
     def2("Window Resize", kli18n("Resize Window"), 0, active_window_resize<Space>);
@@ -320,7 +323,7 @@ void init_shortcuts(Space& space)
          active_window_set_keep_below<Space>);
 
     def(kli18n("Activate Window Demanding Attention"),
-        Qt::META | Qt::CTRL | Qt::Key_A,
+        static_cast<Qt::Key>(Qt::CTRL + Qt::ALT) + Qt::Key_A,
         activate_attention_window<Space>);
     def(kli18n("Setup Window Shortcut"), 0, active_window_setup_window_shortcut<Space>);
     def2("Window Pack Right",
@@ -348,19 +351,19 @@ void init_shortcuts(Space& space)
          active_window_shrink_vertical<Space>);
     def4("Window Quick Tile Left",
          kli18n("Quick Tile Window to the Left"),
-         Qt::META + Qt::Key_Left,
+         static_cast<Qt::Key>(Qt::META) + Qt::Key_Left,
          [&space] { active_window_quicktile(space, quicktiles::left); });
     def4("Window Quick Tile Right",
          kli18n("Quick Tile Window to the Right"),
-         Qt::META + Qt::Key_Right,
+         static_cast<Qt::Key>(Qt::META) + Qt::Key_Right,
          [&space] { active_window_quicktile(space, quicktiles::right); });
     def4("Window Quick Tile Top",
          kli18n("Quick Tile Window to the Top"),
-         Qt::META + Qt::Key_Up,
+         static_cast<Qt::Key>(Qt::META) + Qt::Key_Up,
          [&space] { active_window_quicktile(space, quicktiles::top); });
     def4("Window Quick Tile Bottom",
          kli18n("Quick Tile Window to the Bottom"),
-         Qt::META + Qt::Key_Down,
+         static_cast<Qt::Key>(Qt::META) + Qt::Key_Down,
          [&space] { active_window_quicktile(space, quicktiles::bottom); });
     def4("Window Quick Tile Top Left", kli18n("Quick Tile Window to the Top Left"), 0, [&space] {
         active_window_quicktile(space, quicktiles::top | quicktiles::left);
@@ -378,19 +381,19 @@ void init_shortcuts(Space& space)
          [&space] { active_window_quicktile(space, quicktiles::bottom | quicktiles::right); });
     def4("Switch Window Up",
          kli18n("Switch to Window Above"),
-         Qt::META + Qt::ALT + Qt::Key_Up,
+         static_cast<Qt::Key>(Qt::META + Qt::ALT) + Qt::Key_Up,
          [&space] { activate_window_direction(space, direction::north); });
     def4("Switch Window Down",
          kli18n("Switch to Window Below"),
-         Qt::META + Qt::ALT + Qt::Key_Down,
+         static_cast<Qt::Key>(Qt::META + Qt::ALT) + Qt::Key_Down,
          [&space] { activate_window_direction(space, direction::south); });
     def4("Switch Window Right",
          kli18n("Switch to Window to the Right"),
-         Qt::META + Qt::ALT + Qt::Key_Right,
+         static_cast<Qt::Key>(Qt::META + Qt::ALT) + Qt::Key_Right,
          [&space] { activate_window_direction(space, direction::east); });
     def4("Switch Window Left",
          kli18n("Switch to Window to the Left"),
-         Qt::META + Qt::ALT + Qt::Key_Left,
+         static_cast<Qt::Key>(Qt::META + Qt::ALT) + Qt::Key_Left,
          [&space] { activate_window_direction(space, direction::west); });
     def2("Increase Opacity",
          kli18n("Increase Opacity of Active Window by 5 %"),
@@ -426,7 +429,9 @@ void init_shortcuts(Space& space)
     }
     def(kli18n("Window to Next Screen"), 0, active_window_to_next_output<Space>);
     def(kli18n("Window to Previous Screen"), 0, active_window_to_prev_output<Space>);
-    def(kli18n("Show Desktop"), Qt::META + Qt::Key_D, toggle_show_desktop<Space>);
+    def(kli18n("Show Desktop"),
+        static_cast<Qt::Key>(Qt::META) + Qt::Key_D,
+        toggle_show_desktop<Space>);
 
     for (int i = 0; i < 8; ++i) {
         def3(kli18n("Switch to Screen %1"), 0, switch_to_output<Space>, i);
@@ -435,9 +440,11 @@ void init_shortcuts(Space& space)
     def(kli18n("Switch to Next Screen"), 0, switch_to_next_output<Space>);
     def(kli18n("Switch to Previous Screen"), 0, switch_to_prev_output<Space>);
 
-    def(kli18n("Kill Window"), Qt::META | Qt::CTRL | Qt::Key_Escape, start_window_killer<Space>);
+    def(kli18n("Kill Window"),
+        static_cast<Qt::Key>(Qt::CTRL + Qt::ALT) + Qt::Key_Escape,
+        start_window_killer<Space>);
     def6(kli18n("Suspend Compositing"),
-         Qt::SHIFT + Qt::ALT + Qt::Key_F12,
+         static_cast<Qt::Key>(Qt::SHIFT + Qt::ALT) + Qt::Key_F12,
          space.base.render->compositor->qobject.get(),
          [compositor = space.base.render->compositor.get()] { compositor->toggleCompositing(); });
     def6(kli18n("Invert Screen Colors"),

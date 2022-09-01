@@ -17,41 +17,6 @@
 namespace KWin::xwl
 {
 
-// on selection owner changes by X clients (Xwl -> Wl)
-template<typename Selection>
-bool handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t* event)
-{
-    if (!sel) {
-        return false;
-    }
-    if (event->window != sel->data.window) {
-        return false;
-    }
-    if (event->selection != sel->data.atom) {
-        return false;
-    }
-
-    if (sel->data.disown_pending) {
-        // notify of our own disown - ignore it
-        sel->data.disown_pending = false;
-        return true;
-    }
-    if (event->owner == sel->data.window && sel->data.wayland_source) {
-        // When we claim a selection we must use XCB_TIME_CURRENT,
-        // grab the actual timestamp here to answer TIMESTAMP requests
-        // correctly
-        sel->data.wayland_source->timestamp = event->timestamp;
-        sel->data.timestamp = event->timestamp;
-        return true;
-    }
-
-    // Being here means some other X window has claimed the selection.
-
-    // TODO(romangg): Use C++20 require on the member function and otherwise call the free function.
-    sel->do_handle_xfixes_notify(event);
-    return true;
-}
-
 template<typename Selection>
 void do_handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t* event)
 {
@@ -85,6 +50,43 @@ void do_handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t
     }
 }
 
+// on selection owner changes by X clients (Xwl -> Wl)
+template<typename Selection>
+bool handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t* event)
+{
+    if (!sel) {
+        return false;
+    }
+    if (event->window != sel->data.window) {
+        return false;
+    }
+    if (event->selection != sel->data.atom) {
+        return false;
+    }
+
+    if (sel->data.disown_pending) {
+        // notify of our own disown - ignore it
+        sel->data.disown_pending = false;
+        return true;
+    }
+    if (event->owner == sel->data.window && sel->data.wayland_source) {
+        // When we claim a selection we must use XCB_TIME_CURRENT,
+        // grab the actual timestamp here to answer TIMESTAMP requests
+        // correctly
+        sel->data.wayland_source->timestamp = event->timestamp;
+        sel->data.timestamp = event->timestamp;
+        return true;
+    }
+
+    // Being here means some other X window has claimed the selection.
+    if constexpr (requires(Selection & sel) { sel.do_handle_xfixes_notify(event); }) {
+        sel->do_handle_xfixes_notify(event);
+    } else {
+        do_handle_xfixes_notify(sel, event);
+    }
+    return true;
+}
+
 template<typename Selection>
 bool filter_event(Selection* sel, xcb_generic_event_t* event)
 {
@@ -104,8 +106,9 @@ bool filter_event(Selection* sel, xcb_generic_event_t* event)
         return handle_selection_request(sel,
                                         reinterpret_cast<xcb_selection_request_event_t*>(event));
     case XCB_CLIENT_MESSAGE:
-        // TODO(romangg): Use C++20 require on the member function.
-        return sel->handle_client_message(reinterpret_cast<xcb_client_message_event_t*>(event));
+        if constexpr (requires(Selection & sel) { sel.handle_client_message(event); }) {
+            return sel->handle_client_message(reinterpret_cast<xcb_client_message_event_t*>(event));
+        }
     default:
         return false;
     }
@@ -175,5 +178,4 @@ bool handle_property_notify(Selection* sel, xcb_property_notify_event_t* event)
 
     return false;
 }
-
 }

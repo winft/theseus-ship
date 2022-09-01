@@ -449,19 +449,21 @@ public:
     void init_shortcuts()
     {
         key(
-            s_windows, [this] { slot_walk_through_windows(); }, Qt::ALT + Qt::Key_Tab);
+            s_windows,
+            [this] { slot_walk_through_windows(); },
+            static_cast<Qt::Key>(Qt::ALT) + Qt::Key_Tab);
         key(
             s_windowsRev,
             [this] { slot_walk_back_through_windows(); },
-            Qt::ALT + Qt::SHIFT + Qt::Key_Backtab);
+            static_cast<Qt::Key>(Qt::ALT + Qt::SHIFT) + Qt::Key_Backtab);
         key(
             s_app,
             [this] { slot_walk_through_current_app_windows(); },
-            Qt::ALT + Qt::Key_QuoteLeft);
+            static_cast<Qt::Key>(Qt::ALT) + Qt::Key_QuoteLeft);
         key(
             s_appRev,
             [this] { slot_walk_back_through_current_app_windows(); },
-            Qt::ALT + Qt::Key_AsciiTilde);
+            static_cast<Qt::Key>(Qt::ALT) + Qt::Key_AsciiTilde);
         key(s_windowsAlt, [this] { slot_walk_through_windows_alternative(); });
         key(s_windowsAltRev, [this] { slot_walk_back_through_windows_alternative(); });
         key(s_appAlt, [this] { slot_walk_through_current_app_windows_alternative(); });

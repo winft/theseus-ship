@@ -37,14 +37,21 @@ void create_x11_source(Selection* sel, xcb_xfixes_selection_notify_event_t* even
     sel->data.x11_source.reset(
         new x11_source<internal_source, typename Selection::window_t>(event, sel->data.core));
 
-    QObject::connect(sel->data.x11_source->get_qobject(),
-                     &q_x11_source::offers_changed,
-                     sel->data.qobject.get(),
-                     [sel](auto const& added, auto const& removed) {
-                         // TODO(romangg): Use C++20 require on the member function and otherwise
-                         //                call the free function.
-                         sel->handle_x11_offer_change(added, removed);
-                     });
+    // Not all selections handle X11 offer changes this way. Drags set the offers on the enter
+    // events of their X11 helper window.
+    if constexpr (requires(Selection & sel,
+                           std::vector<std::string> const& added,
+                           std::vector<std::string> const& removed) {
+                      sel.handle_x11_offer_change(added, removed);
+                  }) {
+        QObject::connect(sel->data.x11_source->get_qobject(),
+                         &q_x11_source::offers_changed,
+                         sel->data.qobject.get(),
+                         [sel](auto const& added, auto const& removed) {
+                             sel->handle_x11_offer_change(added, removed);
+                         });
+    }
+
     QObject::connect(sel->data.x11_source->get_qobject(),
                      &q_x11_source::transfer_ready,
                      sel->data.qobject.get(),
@@ -240,5 +247,4 @@ bool selection_x11_handle_notify(Source&& source, xcb_selection_notify_event_t* 
     }
     return false;
 }
-
 }

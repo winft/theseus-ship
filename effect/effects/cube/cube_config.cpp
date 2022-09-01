@@ -67,9 +67,10 @@ CubeEffectConfig::CubeEffectConfig(QWidget* parent, const QVariantList& args)
     QAction* cubeAction = m_actionCollection->addAction(QStringLiteral("Cube"));
     cubeAction->setText(i18n("Desktop Cube"));
     cubeAction->setProperty("isConfigurationAction", true);
-    KGlobalAccel::self()->setDefaultShortcut(cubeAction,
-                                             QList<QKeySequence>() << Qt::CTRL + Qt::Key_F11);
-    KGlobalAccel::self()->setShortcut(cubeAction, QList<QKeySequence>() << Qt::CTRL + Qt::Key_F11);
+    KGlobalAccel::self()->setDefaultShortcut(
+        cubeAction, QList<QKeySequence>() << static_cast<Qt::Key>(Qt::CTRL) + Qt::Key_F11);
+    KGlobalAccel::self()->setShortcut(
+        cubeAction, QList<QKeySequence>() << static_cast<Qt::Key>(Qt::CTRL) + Qt::Key_F11);
     QAction* cylinderAction = m_actionCollection->addAction(QStringLiteral("Cylinder"));
     cylinderAction->setText(i18n("Desktop Cylinder"));
     cylinderAction->setProperty("isConfigurationAction", true);

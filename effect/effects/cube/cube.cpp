@@ -212,11 +212,11 @@ void CubeEffect::reconfigure(ReconfigureFlags)
         QAction* cubeAction = m_cubeAction;
         cubeAction->setObjectName(QStringLiteral("Cube"));
         cubeAction->setText(i18n("Desktop Cube"));
-        KGlobalAccel::self()->setDefaultShortcut(cubeAction,
-                                                 QList<QKeySequence>() << Qt::CTRL + Qt::Key_F11);
-        KGlobalAccel::self()->setShortcut(cubeAction,
-                                          QList<QKeySequence>() << Qt::CTRL + Qt::Key_F11);
-        effects->registerGlobalShortcut(Qt::CTRL + Qt::Key_F11, cubeAction);
+        KGlobalAccel::self()->setDefaultShortcut(
+            cubeAction, QList<QKeySequence>() << static_cast<Qt::Key>(Qt::CTRL) + Qt::Key_F11);
+        KGlobalAccel::self()->setShortcut(
+            cubeAction, QList<QKeySequence>() << static_cast<Qt::Key>(Qt::CTRL) + Qt::Key_F11);
+        effects->registerGlobalShortcut(static_cast<Qt::Key>(Qt::CTRL) + Qt::Key_F11, cubeAction);
         effects->registerPointerShortcut(
             Qt::ControlModifier | Qt::AltModifier, Qt::LeftButton, cubeAction);
         cubeShortcut = KGlobalAccel::self()->shortcut(cubeAction);
