@@ -28,25 +28,19 @@ void assign_subsurface_role(Win* win)
 template<typename Win>
 void restack_subsurfaces(Win* window)
 {
-    auto subsurface_stacker = [&window](auto& children) {
-        auto const& subsurfaces = window->surface->state().children;
-        std::remove_reference_t<decltype(children)> stacking;
+    auto const& subsurfaces = window->surface->state().children;
+    auto& children = window->transient()->children;
 
-        for (auto const& subsurface : subsurfaces) {
-            auto surface = subsurface->surface();
-            auto it = std::find_if(children.begin(), children.end(), [&surface](auto child) {
-                return child->surface == surface;
-            });
-            if (it == children.end()) {
-                continue;
-            }
-            stacking.push_back(*it);
-            children.erase(it);
+    for (auto const& subsurface : subsurfaces) {
+        auto it = std::find_if(children.begin(), children.end(), [&subsurface](auto child) {
+            return child->surface == subsurface->surface();
+        });
+        if (it == children.end()) {
+            continue;
         }
 
-        children.insert(children.end(), stacking.begin(), stacking.end());
-    };
-    subsurface_stacker(window->transient()->children);
+        move_to_back(children, *it);
+    }
 
     // Optimize and do that only for the first window up the chain not being annexed.
     if (!window->transient()->annexed) {
