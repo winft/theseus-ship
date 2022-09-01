@@ -71,7 +71,7 @@ bool js_engine_global_methods_wrapper::registerShortcut(const QString& name,
     KGlobalAccel::self()->setShortcut(a, QList<QKeySequence>{shortcut});
     platform.register_shortcut(shortcut, a);
 
-    connect(a, &QAction::triggered, this, [=]() mutable {
+    connect(a, &QAction::triggered, this, [=, this]() mutable {
         QJSValueList arguments;
         arguments << platform.qml_engine->toScriptValue(a);
         function.call(arguments);
