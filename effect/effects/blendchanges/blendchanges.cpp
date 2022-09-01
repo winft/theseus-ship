@@ -81,7 +81,7 @@ void BlendChanges::deform(EffectWindow* window,
     Q_UNUSED(window)
     Q_UNUSED(mask)
     Q_UNUSED(quads)
-    data.setOpacity(1.0 - m_timeline.value());
+    data.setOpacity(1.0 - m_timeline.value() * data.opacity());
 }
 
 bool BlendChanges::isActive() const
