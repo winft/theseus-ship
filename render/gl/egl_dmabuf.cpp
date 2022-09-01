@@ -24,9 +24,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/wayland/server.h"
 #include "main.h"
-#include "render/extern/drm_fourcc.h"
 
 #include <Wrapland/Server/globals.h>
+#include <drm_fourcc.h>
 #include <unistd.h>
 
 namespace KWin::render::gl
