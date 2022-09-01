@@ -355,6 +355,11 @@ public:
         return win::is_critical_notification(window.ref_win);
     }
 
+    bool isAppletPopup() const override
+    {
+        return win::is_applet_popup(window.ref_win);
+    }
+
     bool isOnScreenDisplay() const override
     {
         return win::is_on_screen_display(window.ref_win);

@@ -878,6 +878,10 @@ public:
         if (layer_surface) {
             return false;
         }
+        if (is_special_window(this) && !is_splash(this) && !is_toolbar(this)
+            && !is_applet_popup(this)) {
+            return false;
+        }
         if (this->control->rules.checkPosition(geo::invalid_point) != geo::invalid_point) {
             return false;
         }
@@ -903,8 +907,9 @@ public:
             return false;
         }
         if (plasma_shell_surface) {
-            return plasma_shell_surface->role()
-                == Wrapland::Server::PlasmaShellSurface::Role::Normal;
+            using Role = Wrapland::Server::PlasmaShellSurface::Role;
+            auto role = plasma_shell_surface->role();
+            return role == Role::Normal || role == Role::AppletPopup;
         }
 
         assert(toplevel);

@@ -103,6 +103,12 @@ bool is_critical_notification(Win* win)
 }
 
 template<typename Win>
+bool is_applet_popup(Win* win)
+{
+    return win->windowType() == NET::AppletPopup;
+}
+
+template<typename Win>
 bool is_on_screen_display(Win* win)
 {
     return win->windowType() == NET::OnScreenDisplay;
@@ -123,7 +129,7 @@ bool is_dnd_icon(Win* win)
 template<typename Win>
 bool wants_tab_focus(Win* win)
 {
-    auto const suitable_type = is_normal(win) || is_dialog(win);
+    auto const suitable_type = is_normal(win) || is_dialog(win) || is_applet_popup(win);
     return suitable_type && win->wantsInput();
 }
 

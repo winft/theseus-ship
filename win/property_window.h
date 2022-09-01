@@ -91,6 +91,7 @@ class KWIN_EXPORT property_window : public QObject
     Q_PROPERTY(bool tooltip READ isTooltip)
     Q_PROPERTY(bool notification READ isNotification)
     Q_PROPERTY(bool criticalNotification READ isCriticalNotification)
+    Q_PROPERTY(bool appletPopup READ isAppletPopup)
     Q_PROPERTY(bool onScreenDisplay READ isOnScreenDisplay)
     Q_PROPERTY(bool comboBox READ isComboBox)
     Q_PROPERTY(bool dndIcon READ isDNDIcon)
@@ -219,6 +220,7 @@ public:
     virtual bool isTooltip() const = 0;
     virtual bool isNotification() const = 0;
     virtual bool isCriticalNotification() const = 0;
+    virtual bool isAppletPopup() const = 0;
     virtual bool isOnScreenDisplay() const = 0;
     virtual bool isComboBox() const = 0;
     virtual bool isDNDIcon() const = 0;

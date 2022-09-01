@@ -98,6 +98,9 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
     if (!win->isResizable()) {
         return;
     }
+    if (is_applet_popup(win)) {
+        return;
+    }
 
     win->space.focusMousePos = win->space.input->platform.cursor->pos();
 

@@ -59,6 +59,7 @@ void detect_no_border(Win* win)
     case NET::Notification:
     case NET::OnScreenDisplay:
     case NET::CriticalNotification:
+    case NET::AppletPopup:
         win->user_no_border = true;
         win->app_no_border = true;
         break;
