@@ -523,6 +523,9 @@ void install_plasma_shell_surface(Win* win, Wrapland::Server::PlasmaShellSurface
         QObject::connect(surface, &PSS::skipSwitcherChanged, win->qobject.get(), [win] {
             win::set_skip_switcher(win, win->plasma_shell_surface->skipSwitcher());
         });
+        QObject::connect(surface, &PSS::open_under_cursor_requested, win->qobject.get(), [win] {
+            win->must_place = true;
+        });
     }
 }
 

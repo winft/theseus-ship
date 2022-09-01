@@ -781,7 +781,8 @@ public:
         if (layer_surface) {
             return true;
         }
-        return plasma_shell_surface && plasma_shell_surface->isPositionSet();
+        return plasma_shell_surface
+            && (plasma_shell_surface->isPositionSet() || plasma_shell_surface->open_under_cursor());
     }
 
     void showOnScreenEdge() override
@@ -1207,11 +1208,26 @@ public:
             apply_pending_geometry();
 
             // Plasma surfaces might set position late. So check again initial position being set.
-            if (must_place && !isInitialPositionSet()) {
-                must_place = false;
-                auto const area = space_window_area(
-                    this->space, PlacementArea, get_current_output(this->space), this->desktop());
-                placeIn(area);
+            if (must_place) {
+                if (!isInitialPositionSet()) {
+                    must_place = false;
+                    auto const area = space_window_area(this->space,
+                                                        PlacementArea,
+                                                        get_current_output(this->space),
+                                                        this->desktop());
+                    placeIn(area);
+                } else if (plasma_shell_surface && plasma_shell_surface->open_under_cursor()) {
+                    must_place = false;
+                    auto const area = space_window_area(this->space,
+                                                        PlacementArea,
+                                                        this->space.input->platform.cursor->pos(),
+                                                        this->desktop());
+                    auto size = this->size();
+                    auto pos = this->space.input->platform.cursor->pos()
+                        - QPoint(size.width(), size.height()) / 2;
+                    win::move(this, pos);
+                    win::keep_in_area(this, area, false);
+                }
             }
         } else if (layer_surface) {
             handle_layer_surface_commit(this);
