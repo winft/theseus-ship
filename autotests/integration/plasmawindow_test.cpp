@@ -136,6 +136,7 @@ void PlasmaWindowTest::testCreateDestroyX11PlasmaWindow()
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
+    xcb_icccm_set_wm_class(c.get(), w, 51, "org.kwinft.wm_class.name\0org.kwinft.wm_class.class");
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 
@@ -167,10 +168,20 @@ void PlasmaWindowTest::testCreateDestroyX11PlasmaWindow()
     QVERIFY(plasmaWindowCreatedSpy.wait());
     QCOMPARE(plasmaWindowCreatedSpy.count(), 1);
     QCOMPARE(m_windowManagement->windows().count(), 1);
+
     auto pw = m_windowManagement->windows().constFirst();
     QCOMPARE(pw->geometry(), client->frameGeometry());
-    QSignalSpy geometryChangedSpy(pw, &PlasmaWindow::geometryChanged);
-    QVERIFY(geometryChangedSpy.isValid());
+    QCOMPARE(pw->resource_name(), "org.kwinft.wm_class.name");
+
+    QSignalSpy res_name_spy(pw, &Wrapland::Client::PlasmaWindow::resource_name_changed);
+    QVERIFY(res_name_spy.isValid());
+
+    xcb_icccm_set_wm_class(c.get(), w, 53, "org.kwinft.wm_class.name2\0org.kwinft.wm_class.class2");
+    xcb_map_window(c.get(), w);
+    xcb_flush(c.get());
+
+    QVERIFY(res_name_spy.wait());
+    QCOMPARE(pw->resource_name(), "org.kwinft.wm_class.name2");
 
     QSignalSpy unmappedSpy(m_windowManagement->windows().constFirst(), &PlasmaWindow::unmapped);
     QVERIFY(unmappedSpy.isValid());

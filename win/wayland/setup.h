@@ -47,6 +47,7 @@ void setup_plasma_management(Space* space, Win* win)
     auto updateAppId = [win, plasma_win] {
         auto const name = win->control->desktop_file_name;
         plasma_win->setAppId(QString::fromUtf8(name.isEmpty() ? win->resource_class : name));
+        plasma_win->set_resource_name(win->resource_name.toStdString());
     };
     updateAppId();
     plasma_win->setSkipTaskbar(win->control->skip_taskbar());
