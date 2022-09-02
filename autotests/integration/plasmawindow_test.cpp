@@ -59,8 +59,10 @@ private Q_SLOTS:
     void testPopupWindowNoPlasmaWindow();
     void testLockScreenNoPlasmaWindow();
     void testDestroyedButNotUnmapped();
+    void test_send_to_output();
+    void test_stacking_order();
 
-private:
+public:
     PlasmaWindowManagement* m_windowManagement = nullptr;
     Wrapland::Client::Compositor* m_compositor = nullptr;
 };
@@ -331,6 +333,271 @@ void PlasmaWindowTest::testDestroyedButNotUnmapped()
     parentShellSurface.reset();
     parentSurface.reset();
     QVERIFY(destroyedSpy.wait());
+}
+
+template<typename Win>
+std::string get_internal_id(Win& win)
+{
+    return win.server.window->internal_id.toString().toStdString();
+}
+
+struct wayland_test_window {
+    wayland_test_window(PlasmaWindowTest* test, QSize const& size, QColor const& color)
+    {
+        client.surface = Test::create_surface();
+        client.toplevel = Test::create_xdg_shell_toplevel(client.surface);
+
+        server.window = Test::render_and_wait_for_shown(client.surface, size, color);
+        QVERIFY(server.window);
+
+        QSignalSpy plasma_window_spy(test->m_windowManagement,
+                                     &Wrapland::Client::PlasmaWindowManagement::windowCreated);
+        QVERIFY(plasma_window_spy.isValid());
+        QVERIFY(plasma_window_spy.wait());
+        QCOMPARE(plasma_window_spy.size(), 1);
+
+        client.plasma = plasma_window_spy.first().first().value<Wrapland::Client::PlasmaWindow*>();
+        QVERIFY(client.plasma);
+    }
+
+    wayland_test_window(PlasmaWindowTest* test)
+        : wayland_test_window(test, QSize(100, 50), Qt::blue)
+    {
+    }
+
+    struct {
+        std::unique_ptr<Wrapland::Client::Surface> surface;
+        std::unique_ptr<Wrapland::Client::XdgShellToplevel> toplevel;
+        Wrapland::Client::PlasmaWindow* plasma{nullptr};
+    } client;
+
+    struct {
+        Test::wayland_window* window{nullptr};
+    } server;
+};
+
+struct x11_test_window {
+    x11_test_window(PlasmaWindowTest* test, QSize const& size)
+    {
+        client.connection = xcb_connect(nullptr, nullptr);
+        QVERIFY(!xcb_connection_has_error(client.connection));
+
+        auto const geo = QRect({0, 0}, size);
+        client.window = xcb_generate_id(client.connection);
+        xcb_create_window(client.connection,
+                          XCB_COPY_FROM_PARENT,
+                          client.window,
+                          rootWindow(),
+                          geo.x(),
+                          geo.y(),
+                          geo.width(),
+                          geo.height(),
+                          0,
+                          XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                          XCB_COPY_FROM_PARENT,
+                          0,
+                          nullptr);
+
+        xcb_size_hints_t hints;
+        memset(&hints, 0, sizeof(hints));
+        xcb_icccm_size_hints_set_position(&hints, 1, geo.x(), geo.y());
+        xcb_icccm_size_hints_set_size(&hints, 1, geo.width(), geo.height());
+        xcb_icccm_set_wm_normal_hints(client.connection, client.window, &hints);
+        xcb_map_window(client.connection, client.window);
+        xcb_flush(client.connection);
+
+        QSignalSpy window_spy(Test::app()->base.space->qobject.get(),
+                              &win::space::qobject_t::clientAdded);
+        QVERIFY(window_spy.isValid());
+        QVERIFY(window_spy.wait());
+
+        auto window_id = window_spy.first().first().value<quint32>();
+        server.window = dynamic_cast<Test::space::x11_window*>(
+            Test::app()->base.space->windows_map.at(window_id));
+        QVERIFY(server.window);
+        QCOMPARE(server.window->xcb_window, client.window);
+        QVERIFY(win::decoration(server.window));
+        QVERIFY(server.window->control->active);
+
+        if (!server.window->surface) {
+            QVERIFY(!waylandServer()->seat()->keyboards().get_focus().surface);
+            QSignalSpy surface_spy(server.window->qobject.get(),
+                                   &win::window_qobject::surfaceChanged);
+            QVERIFY(surface_spy.isValid());
+            QVERIFY(surface_spy.wait());
+        }
+        QVERIFY(server.window->surface);
+
+        QSignalSpy plasma_window_spy(test->m_windowManagement,
+                                     &Wrapland::Client::PlasmaWindowManagement::windowCreated);
+        QVERIFY(plasma_window_spy.isValid());
+        QVERIFY(plasma_window_spy.wait());
+        QCOMPARE(plasma_window_spy.size(), 1);
+
+        client.plasma = plasma_window_spy.first().first().value<Wrapland::Client::PlasmaWindow*>();
+        QVERIFY(client.plasma);
+    }
+
+    x11_test_window(PlasmaWindowTest* test)
+        : x11_test_window(test, QSize(100, 50))
+    {
+    }
+
+    x11_test_window(x11_test_window&& other) noexcept
+    {
+        *this = std::move(other);
+    }
+
+    x11_test_window& operator=(x11_test_window&& other) noexcept
+    {
+        client = other.client;
+        server = other.server;
+
+        other.client = {};
+        other.server = {};
+        return *this;
+    }
+
+    ~x11_test_window()
+    {
+        if (client.window) {
+            assert(client.connection);
+            xcb_destroy_window(client.connection, client.window);
+        }
+        if (client.connection) {
+            xcb_disconnect(client.connection);
+        }
+    }
+
+    struct {
+        xcb_connection_t* connection{nullptr};
+        xcb_window_t window{XCB_WINDOW_NONE};
+        Wrapland::Client::PlasmaWindow* plasma{nullptr};
+    } client;
+
+    struct {
+        win::x11::window<Test::space>* window{nullptr};
+    } server;
+};
+
+void PlasmaWindowTest::test_send_to_output()
+{
+    qRegisterMetaType<Wrapland::Server::Output*>();
+
+    wayland_test_window test_window(this);
+
+    auto& outputs = Test::app()->base.outputs;
+    QCOMPARE(outputs.size(), 2);
+
+    QCOMPARE(Test::get_output(0), test_window.server.window->central_output);
+
+    auto& client_outputs = Test::get_client().interfaces.outputs;
+    QCOMPARE(client_outputs.size(), 2);
+    QCOMPARE(test_window.client.surface->outputs().size(), 1);
+
+    auto old_client_output = client_outputs.at(0).get();
+    QCOMPARE(old_client_output, test_window.client.surface->outputs().at(0));
+
+    QSignalSpy output_entered_spy(test_window.client.surface.get(),
+                                  &Wrapland::Client::Surface::outputEntered);
+    QVERIFY(output_entered_spy.isValid());
+
+    auto target_client_output = client_outputs.at(1).get();
+    QVERIFY(target_client_output != old_client_output);
+
+    test_window.client.plasma->request_send_to_output(target_client_output);
+    QVERIFY(output_entered_spy.wait());
+
+    QCOMPARE(test_window.client.surface->outputs().size(), 1);
+    QCOMPARE(target_client_output, test_window.client.surface->outputs().at(0));
+    QCOMPARE(Test::get_output(1), test_window.server.window->central_output);
+}
+
+void PlasmaWindowTest::test_stacking_order()
+{
+    QSignalSpy stacking_spy(m_windowManagement,
+                            &Wrapland::Client::PlasmaWindowManagement::stacking_order_uuid_changed);
+    QVERIFY(stacking_spy.isValid());
+
+    std::vector<std::variant<wayland_test_window, x11_test_window>> windows;
+
+    // Create first window.
+    windows.emplace_back(wayland_test_window(this));
+
+    auto compare_stacks = [&, this]() {
+        auto const& plasma_stack = m_windowManagement->stacking_order_uuid();
+        auto const& unfiltered_stack = Test::app()->base.space->stacking_order->stack;
+        auto stack = std::decay_t<decltype(unfiltered_stack)>();
+
+        std::copy_if(unfiltered_stack.begin(),
+                     unfiltered_stack.end(),
+                     std::back_inserter(stack),
+                     [](auto win) { return !win->remnant; });
+        QCOMPARE(plasma_stack.size(), stack.size());
+
+        for (size_t index = 0; index < windows.size(); ++index) {
+            QCOMPARE(plasma_stack.at(index), stack.at(index)->internal_id.toString().toStdString());
+        }
+    };
+
+    QCOMPARE(stacking_spy.size(), 1);
+    QCOMPARE(m_windowManagement->stacking_order_uuid().size(), 1);
+    QCOMPARE(m_windowManagement->stacking_order_uuid().back(),
+             get_internal_id(std::get<wayland_test_window>(windows.back())));
+    compare_stacks();
+
+    // Create second window (Xwayland).
+    windows.emplace_back(x11_test_window(this));
+
+    QCOMPARE(stacking_spy.size(), 2);
+    QCOMPARE(m_windowManagement->stacking_order_uuid().size(), 2);
+    QCOMPARE(m_windowManagement->stacking_order_uuid().back(),
+             get_internal_id(std::get<x11_test_window>(windows.back())));
+    compare_stacks();
+
+    // Create third window.
+    windows.emplace_back(wayland_test_window(this));
+
+    QCOMPARE(stacking_spy.size(), 3);
+    QCOMPARE(m_windowManagement->stacking_order_uuid().size(), 3);
+    QCOMPARE(m_windowManagement->stacking_order_uuid().back(),
+             get_internal_id(std::get<wayland_test_window>(windows.back())));
+    compare_stacks();
+
+    // Now raise the Xwayland window.
+    win::raise_window(Test::app()->base.space.get(),
+                      std::get<x11_test_window>(windows.at(1)).server.window);
+
+    QVERIFY(stacking_spy.wait());
+    QCOMPARE(stacking_spy.size(), 4);
+    QCOMPARE(m_windowManagement->stacking_order_uuid().size(), 3);
+    QCOMPARE(m_windowManagement->stacking_order_uuid().back(),
+             get_internal_id(std::get<x11_test_window>(windows.at(1))));
+    compare_stacks();
+
+    // Close the first window.
+    windows.erase(windows.begin());
+
+    QVERIFY(stacking_spy.wait());
+    QCOMPARE(stacking_spy.size(), 5);
+    QCOMPARE(m_windowManagement->stacking_order_uuid().size(), 2);
+    QCOMPARE(m_windowManagement->stacking_order_uuid().front(),
+             get_internal_id(std::get<wayland_test_window>(windows.back())));
+    QCOMPARE(m_windowManagement->stacking_order_uuid().back(),
+             get_internal_id(std::get<x11_test_window>(windows.front())));
+    compare_stacks();
+
+    // Close both remaining windows.
+    windows.clear();
+    QVERIFY(stacking_spy.wait());
+    if (!m_windowManagement->stacking_order_uuid().empty()) {
+        // Wait a bit longer for the second signal. We should get two signals at different point
+        // in times due to Wayland and and X11 windows being closed through respective protocols.
+        QVERIFY(stacking_spy.wait());
+    }
+    QCOMPARE(stacking_spy.size(), 7);
+    QVERIFY(m_windowManagement->stacking_order_uuid().empty());
+    compare_stacks();
 }
 
 }

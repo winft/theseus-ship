@@ -195,6 +195,10 @@ public:
                              plasma_window_manager->setShowingDesktopState(
                                  set ? ShowingState::Enabled : ShowingState::Disabled);
                          });
+        QObject::connect(stacking_order->qobject.get(),
+                         &stacking_order_qobject::changed,
+                         plasma_window_manager.get(),
+                         [this] { plasma_manage_update_stacking_order(*this); });
 
         QObject::connect(
             subcompositor.get(),
@@ -532,13 +536,25 @@ public:
 private:
     void handle_x11_window_added(x11_window* window)
     {
-        if (window->ready_for_painting) {
+        auto setup_plasma_management_for_x11 = [this, window] {
             setup_plasma_management(this, window);
+
+            // X11 windows can be added to the stacking order before they are ready to be painted.
+            // The stacking order changed update comes too early because of that. As a workaround
+            // update the stacking order explicitly one more time here.
+            // TODO(romangg): Can we add an X11 window late to the stacking order, i.e. once it's
+            //                ready to be painted? This way we would not need this additional call.
+            plasma_manage_update_stacking_order(*this);
+        };
+
+        if (window->ready_for_painting) {
+            setup_plasma_management_for_x11();
         } else {
-            QObject::connect(window->qobject.get(),
-                             &x11_window::qobject_t::windowShown,
-                             qobject.get(),
-                             [this, window] { setup_plasma_management(this, window); });
+            QObject::connect(
+                window->qobject.get(),
+                &x11_window::qobject_t::windowShown,
+                qobject.get(),
+                [setup_plasma_management_for_x11] { setup_plasma_management_for_x11(); });
         }
     }
 
