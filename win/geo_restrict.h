@@ -476,7 +476,7 @@ QPoint adjust_window_position(Space const& space,
                     // wrong virtual desktop
                     continue;
                 }
-                if (is_desktop(win) || is_splash(win)) {
+                if (is_desktop(win) || is_splash(win) || is_applet_popup(win)) {
                     continue;
                 }
 

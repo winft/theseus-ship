@@ -465,6 +465,9 @@ void install_plasma_shell_surface(Win* win, Wrapland::Server::PlasmaShellSurface
         case PSS::Role::CriticalNotification:
             type = NET::CriticalNotification;
             break;
+        case PSS::Role::AppletPopup:
+            type = NET::AppletPopup;
+            break;
         case PSS::Role::Normal:
         default:
             type = NET::Normal;
@@ -474,7 +477,7 @@ void install_plasma_shell_surface(Win* win, Wrapland::Server::PlasmaShellSurface
             win->window_type = type;
             if (type == NET::Desktop || type == NET::Dock || type == NET::OnScreenDisplay
                 || type == NET::Notification || type == NET::Tooltip
-                || type == NET::CriticalNotification) {
+                || type == NET::CriticalNotification || type == NET::AppletPopup) {
                 set_on_all_desktops(win, true);
             }
             win::update_space_areas(win->space);
@@ -522,6 +525,9 @@ void install_plasma_shell_surface(Win* win, Wrapland::Server::PlasmaShellSurface
         });
         QObject::connect(surface, &PSS::skipSwitcherChanged, win->qobject.get(), [win] {
             win::set_skip_switcher(win, win->plasma_shell_surface->skipSwitcher());
+        });
+        QObject::connect(surface, &PSS::open_under_cursor_requested, win->qobject.get(), [win] {
+            win->must_place = true;
         });
     }
 }

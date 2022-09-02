@@ -233,6 +233,10 @@ public:
     {
         return false;
     }
+    bool isAppletPopup() const override
+    {
+        return false;
+    }
     bool isOnScreenDisplay() const override
     {
         return false;

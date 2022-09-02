@@ -40,6 +40,6 @@ constexpr NET::WindowTypes supported_managed_window_types_mask = NET::NormalMask
     | NET::DockMask | NET::ToolbarMask | NET::MenuMask
     | NET::DialogMask /*| NET::OverrideMask*/ | NET::TopMenuMask | NET::UtilityMask
     | NET::SplashMask | NET::NotificationMask | NET::OnScreenDisplayMask
-    | NET::CriticalNotificationMask;
+    | NET::CriticalNotificationMask | NET::AppletPopupMask;
 
 }

@@ -65,7 +65,7 @@ layer belong_to_layer(Win* win)
     if (is_popup(win)) {
         return win::layer::popup;
     }
-    if (is_dock(win)) {
+    if (is_dock(win) || is_applet_popup(win)) {
         if (win->space.showing_desktop) {
             return win::layer::notification;
         }

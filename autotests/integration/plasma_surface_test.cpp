@@ -64,6 +64,8 @@ private Q_SLOTS:
     void testPanelTypeHasStrut();
     void testPanelActivate_data();
     void testPanelActivate();
+    void test_open_under_cursor_data();
+    void test_open_under_cursor();
 
 private:
     Wrapland::Client::Compositor* m_compositor = nullptr;
@@ -106,6 +108,7 @@ void PlasmaSurfaceTest::testRoleOnAllDesktops_data()
     QTest::newRow("Notification") << PlasmaShellSurface::Role::Notification << true;
     QTest::newRow("ToolTip") << PlasmaShellSurface::Role::ToolTip << true;
     QTest::newRow("CriticalNotification") << PlasmaShellSurface::Role::CriticalNotification << true;
+    QTest::newRow("AppletPopup") << PlasmaShellSurface::Role::AppletPopup << true;
 }
 
 void PlasmaSurfaceTest::testRoleOnAllDesktops()
@@ -166,6 +169,7 @@ void PlasmaSurfaceTest::testAcceptsFocus_data()
     QTest::newRow("ToolTip") << PlasmaShellSurface::Role::ToolTip << false << false;
     QTest::newRow("CriticalNotification")
         << PlasmaShellSurface::Role::CriticalNotification << false << false;
+    QTest::newRow("AppletPopup") << PlasmaShellSurface::Role::AppletPopup << true << true;
 }
 
 void PlasmaSurfaceTest::testAcceptsFocus()
@@ -435,6 +439,39 @@ void PlasmaSurfaceTest::testPanelActivate()
     QFETCH(bool, active);
     QCOMPARE(panel->dockWantsInput(), active);
     QCOMPARE(panel->control->active, active);
+}
+
+void PlasmaSurfaceTest::test_open_under_cursor_data()
+{
+    QTest::addColumn<QPoint>("cursor_pos");
+    QTest::addColumn<QRect>("expected_place");
+
+    QTest::newRow("origin") << QPoint(0, 0) << QRect(0, 0, 100, 50);
+    QTest::newRow("offset-small") << QPoint(50, 50) << QRect(0, 25, 100, 50);
+    QTest::newRow("offset-large") << QPoint(500, 400) << QRect(450, 375, 100, 50);
+}
+
+void PlasmaSurfaceTest::test_open_under_cursor()
+{
+    QFETCH(QPoint, cursor_pos);
+    Test::app()->base.input->cursor->set_pos(cursor_pos);
+
+    auto surface = Test::create_surface();
+    QVERIFY(surface);
+
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+    QVERIFY(shellSurface);
+
+    auto plasmaSurface
+        = std::unique_ptr<PlasmaShellSurface>(m_plasmaShell->createSurface(surface.get()));
+    QVERIFY(plasmaSurface);
+    plasmaSurface->request_open_under_cursor();
+
+    QFETCH(QRect, expected_place);
+    auto c = Test::render_and_wait_for_shown(surface, expected_place.size(), Qt::blue);
+
+    QVERIFY(c);
+    QCOMPARE(c->frameGeometry(), expected_place);
 }
 
 }

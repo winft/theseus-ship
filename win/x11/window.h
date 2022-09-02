@@ -540,7 +540,7 @@ public:
 
     bool isMaximizable() const override
     {
-        if (!isResizable() || win::is_toolbar(this)) {
+        if (!isResizable() || win::is_toolbar(this) || win::is_applet_popup(this)) {
             // SELI isToolbar() ?
             return false;
         }
@@ -556,6 +556,9 @@ public:
     bool isMinimizable() const override
     {
         if (win::is_special_window(this) && !this->transient()->lead()) {
+            return false;
+        }
+        if (win::is_applet_popup(this)) {
             return false;
         }
         if (!this->control->rules.checkMinimize(true)) {
