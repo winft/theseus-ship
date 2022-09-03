@@ -185,8 +185,8 @@ void PlasmaWindowTest::testCreateDestroyX11PlasmaWindow()
     xcb_destroy_window(c.get(), w);
     c.reset();
 
-    QVERIFY(unmappedSpy.count() > 1 || unmappedSpy.wait());
-    QCOMPARE(unmappedSpy.count(), 2);
+    QVERIFY(!unmappedSpy.empty() || unmappedSpy.wait());
+    QCOMPARE(unmappedSpy.size(), 1);
 
     QVERIFY(destroyedSpy.wait());
 }

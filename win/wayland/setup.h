@@ -28,8 +28,7 @@ void setup_plasma_management(Space* space, Win* win)
     if (!win->surface) {
         return;
     }
-    auto plasma_win
-        = space->plasma_window_manager->createWindow(space->plasma_window_manager.get());
+    auto plasma_win = space->plasma_window_manager->createWindow();
     plasma_win->setTitle(win::caption(win));
     plasma_win->setActive(win->control->active);
     plasma_win->setFullscreen(win->control->fullscreen);

@@ -14,10 +14,7 @@ template<typename Control>
 void destroy_plasma_integration(Control& control)
 {
     auto& pwi = control.plasma_wayland_integration;
-    if (!pwi) {
-        return;
-    }
-    pwi->unmap();
+    delete pwi;
     pwi = nullptr;
 }
 
