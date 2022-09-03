@@ -369,8 +369,8 @@ class KWINGLUTILS_EXPORT GLRenderTarget
 {
 public:
     GLRenderTarget() = default;
-    GLRenderTarget(GLRenderTarget&& other) noexcept = default;
-    GLRenderTarget& operator=(GLRenderTarget&& other) noexcept = default;
+    GLRenderTarget(GLRenderTarget&& other) noexcept;
+    GLRenderTarget& operator=(GLRenderTarget&& other) noexcept;
     explicit GLRenderTarget(GLuint framebuffer, QRect const& viewport);
     explicit GLRenderTarget(GLTexture const& texture);
 
