@@ -1019,6 +1019,23 @@ GLRenderTarget::GLRenderTarget(GLTexture const& texture)
         qCCritical(LIBKWINGLUTILS) << "Render targets aren't supported!";
 }
 
+GLRenderTarget::GLRenderTarget(GLRenderTarget&& other) noexcept
+{
+    *this = std::move(other);
+}
+
+GLRenderTarget& GLRenderTarget::operator=(GLRenderTarget&& other) noexcept
+{
+    mTexture = other.mTexture;
+    mFramebuffer = other.mFramebuffer;
+    mViewport = other.mViewport;
+    mValid = other.mValid;
+    mForeign = other.mForeign;
+
+    other.mValid = false;
+    return *this;
+}
+
 GLRenderTarget::~GLRenderTarget()
 {
     if (mValid && !mForeign) {
