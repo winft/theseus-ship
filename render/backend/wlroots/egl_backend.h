@@ -152,10 +152,6 @@ public:
                                     get_viewport(*out));
         GLRenderTarget::pushRenderTarget(&native_fbo);
 
-        QMatrix4x4 flip_180;
-        flip_180(1, 1) = -1;
-        this->transformation = flip_180;
-
         prepareRenderFramebuffer(*out);
 
         if (!this->supportsBufferAge()) {
@@ -349,6 +345,7 @@ private:
         auto shader = ShaderManager::instance()->pushShader(ShaderTrait::MapTexture);
 
         QMatrix4x4 rotationMatrix;
+        rotationMatrix.flipCoordinates();
         rotationMatrix.rotate(
             rotation_in_degree(static_cast<base::backend::wlroots::output&>(egl_out.out->base)),
             0,
