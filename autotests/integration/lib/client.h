@@ -16,6 +16,7 @@
 #include <Wrapland/Client/input_method_v2.h>
 #include <Wrapland/Client/layer_shell_v1.h>
 #include <Wrapland/Client/output.h>
+#include <Wrapland/Client/plasma_activation_feedback.h>
 #include <Wrapland/Client/plasmashell.h>
 #include <Wrapland/Client/plasmawindowmanagement.h>
 #include <Wrapland/Client/pointerconstraints.h>
@@ -52,6 +53,7 @@ public:
         std::unique_ptr<Wrapland::Client::XdgShell> xdg_shell;
         std::unique_ptr<Wrapland::Client::ShmPool> shm;
         std::unique_ptr<Wrapland::Client::Seat> seat;
+        std::unique_ptr<Wrapland::Client::plasma_activation_feedback> plasma_activation_feedback;
         std::unique_ptr<Wrapland::Client::PlasmaShell> plasma_shell;
         std::unique_ptr<Wrapland::Client::PlasmaWindowManagement> window_management;
         std::unique_ptr<Wrapland::Client::PointerConstraints> pointer_constraints;

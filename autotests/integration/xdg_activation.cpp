@@ -23,8 +23,6 @@ namespace Clt = Wrapland::Client;
 namespace KWin
 {
 
-constexpr char socket_name[] = "wayland-xdg-activation-test-0";
-
 class xdg_activation_test : public QObject
 {
     Q_OBJECT
@@ -36,6 +34,7 @@ private Q_SLOTS:
 
     void test_single_client();
     void test_multi_client();
+    void test_plasma_activation_feedback();
 };
 
 void xdg_activation_test::initTestCase()
@@ -206,6 +205,93 @@ void xdg_activation_test::test_multi_client()
     QCOMPARE(xdg_activate_spy.front().back().value<Wrapland::Server::Surface*>(), window1->surface);
     QVERIFY(window1->control->active);
     QCOMPARE(Test::app()->base.space->active_client, window1);
+}
+
+void xdg_activation_test::test_plasma_activation_feedback()
+{
+    // Check that Plasma activation feedback works together with xdg activation.
+
+    std::unique_ptr<Clt::Surface> surface1(Test::create_surface());
+    auto shell_surface1 = Test::create_xdg_shell_toplevel(surface1);
+    QVERIFY(surface1);
+    QVERIFY(shell_surface1);
+
+    auto window1 = Test::render_and_wait_for_shown(surface1, QSize(200, 100), Qt::red);
+    QVERIFY(window1);
+    QCOMPARE(win::render_geometry(window1).size(), QSize(200, 100));
+    QCOMPARE(window1->frameGeometry().size(), QSize(200, 100));
+    QVERIFY(window1->control->active);
+    QCOMPARE(Test::app()->base.space->active_client, window1);
+
+    std::unique_ptr<Clt::Surface> surface2(Test::create_surface());
+    auto shell_surface2 = Test::create_xdg_shell_toplevel(surface2);
+    QVERIFY(surface2);
+    QVERIFY(shell_surface2);
+
+    auto window2 = Test::render_and_wait_for_shown(surface2, QSize(400, 200), Qt::blue);
+    QVERIFY(window2);
+    QCOMPARE(win::render_geometry(window2).size(), QSize(400, 200));
+    QCOMPARE(window2->frameGeometry().size(), QSize(400, 200));
+    QVERIFY(window2->control->active);
+    QCOMPARE(Test::app()->base.space->active_client, window2);
+
+    QSignalSpy plasma_activation_spy(Test::get_client().interfaces.plasma_activation_feedback.get(),
+                                     &Wrapland::Client::plasma_activation_feedback::activation);
+    QVERIFY(plasma_activation_spy.isValid());
+
+    auto activation = Test::get_client().interfaces.xdg_activation.get();
+    QVERIFY(activation);
+
+    auto server_activation = Test::app()->base.space->xdg_activation.get();
+    QVERIFY(server_activation);
+    QSignalSpy token_spy(server_activation, &Wrapland::Server::XdgActivationV1::token_requested);
+    QVERIFY(token_spy.isValid());
+
+    auto token = std::unique_ptr<Clt::XdgActivationTokenV1>(activation->create_token());
+    auto const appid = std::string("testclient1");
+    token->set_serial(0, Test::get_client().interfaces.seat.get());
+    token->set_surface(surface2.get());
+    token->set_app_id(appid);
+    token->commit();
+
+    QSignalSpy done_spy(token.get(), &Clt::XdgActivationTokenV1::done);
+    QVERIFY(done_spy.isValid());
+
+    QVERIFY(token_spy.wait());
+
+    auto server_token = token_spy.front().front().value<Wrapland::Server::XdgActivationTokenV1*>();
+    QCOMPARE(server_token->app_id(), appid);
+
+    auto const token_string = Test::app()->base.space->activation->token;
+
+    QVERIFY(plasma_activation_spy.wait());
+    QCOMPARE(plasma_activation_spy.size(), 1);
+    QVERIFY(!done_spy.empty());
+    QCOMPARE(done_spy.front().front().value<std::string>(), token_string);
+
+    auto plasma_activation
+        = plasma_activation_spy.front().front().value<Wrapland::Client::plasma_activation*>();
+
+    QSignalSpy plasma_activation_appid_spy(plasma_activation,
+                                           &Wrapland::Client::plasma_activation::app_id_changed);
+    QSignalSpy plasma_activation_finished_spy(plasma_activation,
+                                              &Wrapland::Client::plasma_activation::finished);
+    QVERIFY(plasma_activation_appid_spy.isValid());
+    QVERIFY(plasma_activation_finished_spy.isValid());
+
+    if (plasma_activation->app_id().empty()) {
+        QVERIFY(plasma_activation_appid_spy.wait());
+    }
+    QCOMPARE(plasma_activation->app_id(), appid);
+
+    activation->activate(token_string, surface1.get());
+    QVERIFY(plasma_activation_finished_spy.wait());
+
+    QVERIFY(window1->control->active);
+    QCOMPARE(Test::app()->base.space->active_client, window1);
+
+    QVERIFY(plasma_activation->is_finished());
+    delete plasma_activation;
 }
 
 }

@@ -143,6 +143,11 @@ client::client(global_selection globals)
             registry->interface(Clt::Registry::Interface::XdgActivationV1).name,
             registry->interface(Clt::Registry::Interface::XdgActivationV1).version));
         QVERIFY(interfaces.xdg_activation->isValid());
+
+        interfaces.plasma_activation_feedback.reset(registry->createPlasmaActivationFeedback(
+            registry->interface(Clt::Registry::Interface::PlasmaActivationFeedback).name,
+            registry->interface(Clt::Registry::Interface::PlasmaActivationFeedback).version));
+        QVERIFY(interfaces.plasma_activation_feedback->isValid());
     }
 
     if (flags(globals & global_selection::xdg_decoration)) {

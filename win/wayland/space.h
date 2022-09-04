@@ -43,6 +43,7 @@
 #include <Wrapland/Server/compositor.h>
 #include <Wrapland/Server/idle_inhibit_v1.h>
 #include <Wrapland/Server/kde_idle.h>
+#include <Wrapland/Server/plasma_activation_feedback.h>
 #include <Wrapland/Server/plasma_shell.h>
 #include <Wrapland/Server/server_decoration_palette.h>
 #include <Wrapland/Server/subcompositor.h>
@@ -91,6 +92,7 @@ public:
         , xdg_decoration_manager{server->display->createXdgDecorationManager(xdg_shell.get())}
         , xdg_activation{server->display->createXdgActivationV1()}
         , xdg_foreign{server->display->createXdgForeign()}
+        , plasma_activation_feedback{server->display->create_plasma_activation_feedback()}
         , plasma_shell{server->display->createPlasmaShell()}
         , plasma_window_manager{server->display->createPlasmaWindowManager()}
         , plasma_virtual_desktop_manager{server->display->createPlasmaVirtualDesktopManager()}
@@ -500,6 +502,7 @@ public:
     std::unique_ptr<Wrapland::Server::XdgActivationV1> xdg_activation;
     std::unique_ptr<Wrapland::Server::XdgForeign> xdg_foreign;
 
+    std::unique_ptr<Wrapland::Server::plasma_activation_feedback> plasma_activation_feedback;
     std::unique_ptr<Wrapland::Server::PlasmaShell> plasma_shell;
     std::unique_ptr<Wrapland::Server::PlasmaWindowManager> plasma_window_manager;
     std::unique_ptr<Wrapland::Server::PlasmaVirtualDesktopManager> plasma_virtual_desktop_manager;
