@@ -29,7 +29,7 @@ void setup_plasma_management(Space* space, Win* win)
         return;
     }
     auto plasma_win
-        = space->plasma_window_manager->createWindow(space->plasma_window_manager.get());
+        = space->plasma_window_manager->createWindow(win->internal_id.toString().toStdString());
     plasma_win->setTitle(win::caption(win));
     plasma_win->setActive(win->control->active);
     plasma_win->setFullscreen(win->control->fullscreen);
@@ -47,6 +47,7 @@ void setup_plasma_management(Space* space, Win* win)
     auto updateAppId = [win, plasma_win] {
         auto const name = win->control->desktop_file_name;
         plasma_win->setAppId(QString::fromUtf8(name.isEmpty() ? win->resource_class : name));
+        plasma_win->set_resource_name(win->resource_name.toStdString());
     };
     updateAppId();
     plasma_win->setSkipTaskbar(win->control->skip_taskbar());
@@ -214,8 +215,41 @@ void setup_plasma_management(Space* space, Win* win)
                              leave_desktop(win, vd);
                          }
                      });
+    QObject::connect(plasma_win,
+                     &Wrapland::Server::PlasmaWindow::sendToOutputRequested,
+                     qtwin,
+                     [space, win](auto output) {
+                         for (auto& out : win->space.base.outputs) {
+                             if (out->wrapland_output() == output) {
+                                 send_to_screen(*space, win, *out);
+                                 break;
+                             }
+                         }
+                     });
 
     win->control->plasma_wayland_integration = plasma_win;
+}
+
+template<typename Space>
+void plasma_manage_update_stacking_order(Space& space)
+{
+    std::vector<uint32_t> ids;
+    std::vector<std::string> uuids;
+
+    for (auto win : space.stacking_order->stack) {
+        if (!win->control) {
+            continue;
+        }
+        auto manage = win->control->plasma_wayland_integration;
+        if (!manage) {
+            continue;
+        }
+        ids.push_back(manage->id());
+        uuids.push_back(manage->uuid());
+    }
+
+    space.plasma_window_manager->set_stacking_order(ids);
+    space.plasma_window_manager->set_stacking_order_uuids(uuids);
 }
 
 }

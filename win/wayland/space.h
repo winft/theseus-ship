@@ -43,6 +43,7 @@
 #include <Wrapland/Server/compositor.h>
 #include <Wrapland/Server/idle_inhibit_v1.h>
 #include <Wrapland/Server/kde_idle.h>
+#include <Wrapland/Server/plasma_activation_feedback.h>
 #include <Wrapland/Server/plasma_shell.h>
 #include <Wrapland/Server/server_decoration_palette.h>
 #include <Wrapland/Server/subcompositor.h>
@@ -91,6 +92,7 @@ public:
         , xdg_decoration_manager{server->display->createXdgDecorationManager(xdg_shell.get())}
         , xdg_activation{server->display->createXdgActivationV1()}
         , xdg_foreign{server->display->createXdgForeign()}
+        , plasma_activation_feedback{server->display->create_plasma_activation_feedback()}
         , plasma_shell{server->display->createPlasmaShell()}
         , plasma_window_manager{server->display->createPlasmaWindowManager()}
         , plasma_virtual_desktop_manager{server->display->createPlasmaVirtualDesktopManager()}
@@ -195,6 +197,10 @@ public:
                              plasma_window_manager->setShowingDesktopState(
                                  set ? ShowingState::Enabled : ShowingState::Disabled);
                          });
+        QObject::connect(stacking_order->qobject.get(),
+                         &stacking_order_qobject::changed,
+                         plasma_window_manager.get(),
+                         [this] { plasma_manage_update_stacking_order(*this); });
 
         QObject::connect(
             subcompositor.get(),
@@ -496,6 +502,7 @@ public:
     std::unique_ptr<Wrapland::Server::XdgActivationV1> xdg_activation;
     std::unique_ptr<Wrapland::Server::XdgForeign> xdg_foreign;
 
+    std::unique_ptr<Wrapland::Server::plasma_activation_feedback> plasma_activation_feedback;
     std::unique_ptr<Wrapland::Server::PlasmaShell> plasma_shell;
     std::unique_ptr<Wrapland::Server::PlasmaWindowManager> plasma_window_manager;
     std::unique_ptr<Wrapland::Server::PlasmaVirtualDesktopManager> plasma_virtual_desktop_manager;
@@ -532,13 +539,25 @@ public:
 private:
     void handle_x11_window_added(x11_window* window)
     {
-        if (window->ready_for_painting) {
+        auto setup_plasma_management_for_x11 = [this, window] {
             setup_plasma_management(this, window);
+
+            // X11 windows can be added to the stacking order before they are ready to be painted.
+            // The stacking order changed update comes too early because of that. As a workaround
+            // update the stacking order explicitly one more time here.
+            // TODO(romangg): Can we add an X11 window late to the stacking order, i.e. once it's
+            //                ready to be painted? This way we would not need this additional call.
+            plasma_manage_update_stacking_order(*this);
+        };
+
+        if (window->ready_for_painting) {
+            setup_plasma_management_for_x11();
         } else {
-            QObject::connect(window->qobject.get(),
-                             &x11_window::qobject_t::windowShown,
-                             qobject.get(),
-                             [this, window] { setup_plasma_management(this, window); });
+            QObject::connect(
+                window->qobject.get(),
+                &x11_window::qobject_t::windowShown,
+                qobject.get(),
+                [setup_plasma_management_for_x11] { setup_plasma_management_for_x11(); });
         }
     }
 
