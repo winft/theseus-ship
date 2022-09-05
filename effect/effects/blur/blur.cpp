@@ -179,8 +179,8 @@ void BlurEffect::updateTexture()
     // Copysample
     m_renderTargetStack.push(m_renderTargets[0]);
 
-    // Generate the noise helper texture
-    generateNoiseTexture();
+    // Invalidate noise texture
+    m_noiseTexture = {};
 }
 
 void BlurEffect::initBlurStrengthValues()
@@ -711,6 +711,10 @@ void BlurEffect::applyNoise(GLVertexBuffer* vbo,
                             const QMatrix4x4& screenProjection,
                             QPoint windowPosition)
 {
+    if (m_noiseTexture.isNull()) {
+        generateNoiseTexture();
+    }
+
     m_shader->bind(BlurShader::NoiseSampleType);
     m_shader->setTargetTextureSize(m_renderTextures[0].size() * effects->renderTargetScale());
     m_shader->setNoiseTextureSize(m_noiseTexture.size() * effects->renderTargetScale());
