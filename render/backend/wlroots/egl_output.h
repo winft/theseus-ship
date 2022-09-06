@@ -72,20 +72,11 @@ public:
     {
         cleanup_framebuffer();
 
-        auto const view_geo = out->base.view_geometry();
-        auto const centered_view
-            = out->base.mode_size() != view_geo.size() || !view_geo.topLeft().isNull();
-
-        if (out->base.transform() == base::wayland::output_transform::normal && !centered_view) {
-            // No need to create intermediate framebuffer.
-            return true;
-        }
-
         // TODO(romangg): Also return in case wlroots can rotate in hardware.
 
         make_current();
 
-        auto const texSize = view_geo.size();
+        auto const texSize = out->base.view_geometry().size();
         render.texture = GLTexture(GL_TEXTURE_2D, texSize.width(), texSize.height());
         render.fbo = GLRenderTarget(render.texture.value());
         return render.fbo.valid();

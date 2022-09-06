@@ -761,6 +761,11 @@ QImage effects_handler_wrap::blit_from_framebuffer(QRect const& geometry, double
     }
 
     image.setDevicePixelRatio(scale);
+
+    if (waylandDisplay()) {
+        return image.mirrored();
+    }
+
     return image;
 }
 
