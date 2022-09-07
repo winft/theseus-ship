@@ -12,8 +12,6 @@
 #include "debug/perf/ftrace.h"
 #include "win/space_qobject.h"
 
-#include <QDBusServiceWatcher>
-
 namespace KWin::base::dbus
 {
 
@@ -31,29 +29,13 @@ kwin::kwin(win::space_qobject& space)
         m_serviceName = m_serviceName + QLatin1Char('.') + dBusSuffix;
     }
 
-    if (!dbus.registerService(m_serviceName)) {
-        QDBusServiceWatcher* dog = new QDBusServiceWatcher(
-            m_serviceName, dbus, QDBusServiceWatcher::WatchForUnregistration, this);
-        connect(dog, &QDBusServiceWatcher::serviceUnregistered, this, &kwin::becomeKWinService);
-    }
-
+    dbus.registerService(m_serviceName);
     dbus.connect(QString(),
                  QStringLiteral("/KWin"),
                  QStringLiteral("org.kde.KWin"),
                  QStringLiteral("reloadConfig"),
                  &space,
                  SLOT(reconfigure()));
-}
-
-void kwin::becomeKWinService(const QString& service)
-{
-    // TODO: this watchdog exists to make really safe that we at some point get the service
-    // but it's probably no longer needed since we explicitly unregister the service with the
-    // deconstructor
-    if (service == m_serviceName && QDBusConnection::sessionBus().registerService(m_serviceName)
-        && sender()) {
-        sender()->deleteLater();
-    }
 }
 
 kwin::~kwin()

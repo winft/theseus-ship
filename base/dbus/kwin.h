@@ -102,9 +102,6 @@ public Q_SLOTS:
         return get_window_info_impl(uuid);
     }
 
-private Q_SLOTS:
-    void becomeKWinService(const QString& service);
-
 protected:
     virtual int current_desktop_impl() = 0;
     virtual void kill_window_impl() = 0;
