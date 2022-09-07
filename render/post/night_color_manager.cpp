@@ -426,7 +426,7 @@ void night_color_manager::reset_slow_update_timer()
     slow_update_timer = nullptr;
 
     const QDateTime now = QDateTime::currentDateTime();
-    const bool isDay = daylight();
+    const bool isDay = daylight;
     const int targetTemp = isDay ? day_target_temp : night_target_temp;
 
     // We've reached the target color temperature or the transition time is zero.
@@ -480,7 +480,7 @@ void night_color_manager::slow_update(int targetTemp)
 void night_color_manager::update_target_temperature()
 {
     const int targetTemperature
-        = mode() != night_color_mode::constant && daylight() ? day_target_temp : night_target_temp;
+        = mode() != night_color_mode::constant && daylight ? day_target_temp : night_target_temp;
 
     if (target_temp == targetTemperature) {
         return;
@@ -512,11 +512,11 @@ void night_color_manager::update_transition_timings(bool force)
         const QDateTime nextEveE = nextEveB.addSecs(transition_time * 60);
 
         if (nextEveB < nextMorB) {
-            m_daylight = true;
+            daylight = true;
             next_transition = DateTimes(nextEveB, nextEveE);
             prev_transition = DateTimes(nextMorB.addDays(-1), nextMorE.addDays(-1));
         } else {
-            m_daylight = false;
+            daylight = false;
             next_transition = DateTimes(nextMorB, nextMorE);
             prev_transition = DateTimes(nextEveB.addDays(-1), nextEveE.addDays(-1));
         }
@@ -536,7 +536,7 @@ void night_color_manager::update_transition_timings(bool force)
 
     if (!force) {
         // first try by only switching the timings
-        if (daylight()) {
+        if (daylight) {
             // next is morning
             prev_transition = next_transition;
             next_transition = get_sun_timings(todayNow.addDays(1), lat, lng, true);
@@ -551,17 +551,17 @@ void night_color_manager::update_transition_timings(bool force)
         // in case this fails, reset them
         DateTimes morning = get_sun_timings(todayNow, lat, lng, true);
         if (todayNow < morning.first) {
-            m_daylight = false;
+            daylight = false;
             prev_transition = get_sun_timings(todayNow.addDays(-1), lat, lng, false);
             next_transition = morning;
         } else {
             DateTimes evening = get_sun_timings(todayNow, lat, lng, false);
             if (todayNow < evening.first) {
-                m_daylight = true;
+                daylight = true;
                 prev_transition = morning;
                 next_transition = evening;
             } else {
-                m_daylight = false;
+                daylight = false;
                 prev_transition = evening;
                 next_transition = get_sun_timings(todayNow.addDays(1), lat, lng, true);
             }
@@ -611,11 +611,6 @@ bool night_color_manager::check_automatic_sun_timings() const
     return false;
 }
 
-bool night_color_manager::daylight() const
-{
-    return m_daylight;
-}
-
 int night_color_manager::current_target_temp() const
 {
     if (!m_running) {
@@ -643,7 +638,7 @@ int night_color_manager::current_target_temp() const
         }
     };
 
-    if (daylight()) {
+    if (daylight) {
         return f(night_target_temp, day_target_temp);
     } else {
         return f(day_target_temp, night_target_temp);

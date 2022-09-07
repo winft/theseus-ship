@@ -263,7 +263,6 @@ private:
                               double longitude,
                               bool at_morning) const;
     bool check_automatic_sun_timings() const;
-    bool daylight() const;
 
     void commit_gamma_ramps(int temperature);
 
@@ -291,7 +290,7 @@ private:
     DateTimes next_transition = DateTimes();
 
     // whether it is currently day or night
-    bool m_daylight = true;
+    bool daylight{true};
 
     // manual times from config
     QTime morning_time{QTime(6, 0)};
