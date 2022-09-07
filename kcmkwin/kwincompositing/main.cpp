@@ -121,9 +121,8 @@ void KWinCompositingKCM::init()
     m_form.animationDurationFactor->setMaximum(s_animationMultipliers.size() - 1);
     connect(m_form.animationDurationFactor, &QSlider::valueChanged, this, [this]() {
         updateUnmanagedItemStatus();
+        m_settings->setAnimationDurationFactor(s_animationMultipliers[m_form.animationDurationFactor->value()]);
     });
-
-    m_settings->setAnimationDurationFactor(s_animationMultipliers[m_form.animationDurationFactor->value()]);
 
     if (isRunningPlasma()) {
         m_form.animationSpeedLabel->hide();
