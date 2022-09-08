@@ -202,7 +202,7 @@ void SlideEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& 
 bool SlideEffect::isTranslated(const EffectWindow* w) const
 {
     if (w->isOnAllDesktops()) {
-        if (w->isDock()) {
+        if (w->isDock() || w->isAppletPopup()) {
             return m_slideDocks;
         }
         if (w->isDesktop()) {

@@ -308,8 +308,8 @@ void GlobalShortcutsTest::testComponseKey()
     QSignalSpy triggeredSpy(action.get(), &QAction::triggered);
     QVERIFY(triggeredSpy.isValid());
     KGlobalAccel::self()->setShortcut(
-        action.get(), QList<QKeySequence>{Qt::UNICODE_ACCEL}, KGlobalAccel::NoAutoloading);
-    Test::app()->base.input->registerShortcut(Qt::UNICODE_ACCEL, action.get());
+        action.get(), QList<QKeySequence>{Qt::NoModifier}, KGlobalAccel::NoAutoloading);
+    Test::app()->base.input->registerShortcut(Qt::NoModifier, action.get());
 
     // press & release `
     quint32 timestamp = 0;

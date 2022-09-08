@@ -263,7 +263,6 @@ private:
                               double longitude,
                               bool at_morning) const;
     bool check_automatic_sun_timings() const;
-    bool daylight() const;
 
     void commit_gamma_ramps(int temperature);
 
@@ -290,6 +289,9 @@ private:
     DateTimes prev_transition = DateTimes();
     DateTimes next_transition = DateTimes();
 
+    // whether it is currently day or night
+    bool daylight{true};
+
     // manual times from config
     QTime morning_time{QTime(6, 0)};
     QTime evening_time{QTime(18, 0)};
@@ -309,9 +311,9 @@ private:
     QTimer* slow_update_timer{nullptr};
     QTimer* quick_adjust_timer{nullptr};
 
-    int current_temp{NEUTRAL_TEMPERATURE};
-    int target_temp{NEUTRAL_TEMPERATURE};
-    int day_target_temp{NEUTRAL_TEMPERATURE};
+    int current_temp{DEFAULT_DAY_TEMPERATURE};
+    int target_temp{DEFAULT_DAY_TEMPERATURE};
+    int day_target_temp{DEFAULT_DAY_TEMPERATURE};
     int night_target_temp{DEFAULT_NIGHT_TEMPERATURE};
 
     int failed_commit_attempts{0};

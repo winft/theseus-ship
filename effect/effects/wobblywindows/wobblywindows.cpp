@@ -211,7 +211,7 @@ void WobblyWindowsEffect::reconfigure(ReconfigureFlags)
 
 bool WobblyWindowsEffect::supported()
 {
-    return DeformEffect::supported() && effects->animationsSupported();
+    return OffscreenEffect::supported() && effects->animationsSupported();
 }
 
 void WobblyWindowsEffect::setParameterSet(const ParameterSet& pset)
@@ -291,10 +291,10 @@ void WobblyWindowsEffect::prePaintWindow(EffectWindow* w,
     effects->prePaintWindow(w, data, presentTime);
 }
 
-void WobblyWindowsEffect::deform(EffectWindow* w,
-                                 int mask,
-                                 WindowPaintData& data,
-                                 WindowQuadList& quads)
+void WobblyWindowsEffect::apply(EffectWindow* w,
+                                int mask,
+                                WindowPaintData& data,
+                                WindowQuadList& quads)
 {
     if (!(mask & PAINT_SCREEN_TRANSFORMED) && windows.contains(w)) {
         quads = quads.makeRegularGrid(m_xTesselation, m_yTesselation);

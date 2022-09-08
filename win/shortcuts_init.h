@@ -323,7 +323,7 @@ void init_shortcuts(Space& space)
          active_window_set_keep_below<Space>);
 
     def(kli18n("Activate Window Demanding Attention"),
-        static_cast<Qt::Key>(Qt::CTRL + Qt::ALT) + Qt::Key_A,
+        static_cast<Qt::Key>(Qt::META + Qt::CTRL) + Qt::Key_A,
         activate_attention_window<Space>);
     def(kli18n("Setup Window Shortcut"), 0, active_window_setup_window_shortcut<Space>);
     def2("Window Pack Right",
@@ -441,7 +441,7 @@ void init_shortcuts(Space& space)
     def(kli18n("Switch to Previous Screen"), 0, switch_to_prev_output<Space>);
 
     def(kli18n("Kill Window"),
-        static_cast<Qt::Key>(Qt::CTRL + Qt::ALT) + Qt::Key_Escape,
+        static_cast<Qt::Key>(Qt::META + Qt::CTRL) + Qt::Key_Escape,
         start_window_killer<Space>);
     def6(kli18n("Suspend Compositing"),
          static_cast<Qt::Key>(Qt::SHIFT + Qt::ALT) + Qt::Key_F12,

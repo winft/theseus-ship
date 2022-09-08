@@ -269,7 +269,8 @@ void night_color_manager::read_config()
         break;
     }
 
-    night_target_temp = qBound(MIN_TEMPERATURE, s->nightTemperature(), NEUTRAL_TEMPERATURE);
+    day_target_temp = qBound(MIN_TEMPERATURE, s->dayTemperature(), DEFAULT_DAY_TEMPERATURE);
+    night_target_temp = qBound(MIN_TEMPERATURE, s->nightTemperature(), DEFAULT_DAY_TEMPERATURE);
 
     double lat, lng;
     auto correctReadin = [&lat, &lng]() {
@@ -296,13 +297,7 @@ void night_color_manager::read_config()
     QTime mrB = QTime::fromString(s->morningBeginFixed(), "hhmm");
     QTime evB = QTime::fromString(s->eveningBeginFixed(), "hhmm");
 
-    int diffME = mrB.msecsTo(evB);
-    if (diffME <= 0) {
-        // morning not strictly before evening - use defaults
-        mrB = QTime(6, 0);
-        evB = QTime(18, 0);
-        diffME = mrB.msecsTo(evB);
-    }
+    int diffME = evB > mrB ? mrB.msecsTo(evB) : evB.msecsTo(mrB);
     int diffMin = qMin(diffME, MSC_DAY - diffME);
 
     int trTime = s->transitionTime() * 1000 * 60;
@@ -432,7 +427,7 @@ void night_color_manager::reset_slow_update_timer()
     slow_update_timer = nullptr;
 
     const QDateTime now = QDateTime::currentDateTime();
-    const bool isDay = daylight();
+    const bool isDay = daylight;
     const int targetTemp = isDay ? day_target_temp : night_target_temp;
 
     // We've reached the target color temperature or the transition time is zero.
@@ -486,7 +481,7 @@ void night_color_manager::slow_update(int targetTemp)
 void night_color_manager::update_target_temperature()
 {
     const int targetTemperature
-        = mode() != night_color_mode::constant && daylight() ? day_target_temp : night_target_temp;
+        = mode() != night_color_mode::constant && daylight ? day_target_temp : night_target_temp;
 
     if (target_temp == targetTemperature) {
         return;
@@ -510,20 +505,21 @@ void night_color_manager::update_transition_timings(bool force)
     const QDateTime todayNow = QDateTime::currentDateTime();
 
     if (m_mode == night_color_mode::timings) {
-        const QDateTime morB = QDateTime(todayNow.date(), morning_time);
-        const QDateTime morE = morB.addSecs(transition_time * 60);
-        const QDateTime eveB = QDateTime(todayNow.date(), evening_time);
-        const QDateTime eveE = eveB.addSecs(transition_time * 60);
+        const QDateTime nextMorB
+            = QDateTime(todayNow.date().addDays(morning_time < todayNow.time()), morning_time);
+        const QDateTime nextMorE = nextMorB.addSecs(transition_time * 60);
+        const QDateTime nextEveB
+            = QDateTime(todayNow.date().addDays(evening_time < todayNow.time()), evening_time);
+        const QDateTime nextEveE = nextEveB.addSecs(transition_time * 60);
 
-        if (morB <= todayNow && todayNow < eveB) {
-            next_transition = DateTimes(eveB, eveE);
-            prev_transition = DateTimes(morB, morE);
-        } else if (todayNow < morB) {
-            next_transition = DateTimes(morB, morE);
-            prev_transition = DateTimes(eveB.addDays(-1), eveE.addDays(-1));
+        if (nextEveB < nextMorB) {
+            daylight = true;
+            next_transition = DateTimes(nextEveB, nextEveE);
+            prev_transition = DateTimes(nextMorB.addDays(-1), nextMorE.addDays(-1));
         } else {
-            next_transition = DateTimes(morB.addDays(1), morE.addDays(1));
-            prev_transition = DateTimes(eveB, eveE);
+            daylight = false;
+            next_transition = DateTimes(nextMorB, nextMorE);
+            prev_transition = DateTimes(nextEveB.addDays(-1), nextEveE.addDays(-1));
         }
         Q_EMIT previous_transition_timings_changed();
         Q_EMIT scheduled_transition_timings_changed();
@@ -541,14 +537,16 @@ void night_color_manager::update_transition_timings(bool force)
 
     if (!force) {
         // first try by only switching the timings
-        if (daylight()) {
-            // next is morning
-            prev_transition = next_transition;
-            next_transition = get_sun_timings(todayNow.addDays(1), lat, lng, true);
-        } else {
+        if (prev_transition.first.date() == next_transition.first.date()) {
             // next is evening
+            daylight = true;
             prev_transition = next_transition;
             next_transition = get_sun_timings(todayNow, lat, lng, false);
+        } else {
+            // next is morning
+            daylight = false;
+            prev_transition = next_transition;
+            next_transition = get_sun_timings(todayNow.addDays(1), lat, lng, true);
         }
     }
 
@@ -556,14 +554,17 @@ void night_color_manager::update_transition_timings(bool force)
         // in case this fails, reset them
         DateTimes morning = get_sun_timings(todayNow, lat, lng, true);
         if (todayNow < morning.first) {
+            daylight = false;
             prev_transition = get_sun_timings(todayNow.addDays(-1), lat, lng, false);
             next_transition = morning;
         } else {
             DateTimes evening = get_sun_timings(todayNow, lat, lng, false);
             if (todayNow < evening.first) {
+                daylight = true;
                 prev_transition = morning;
                 next_transition = evening;
             } else {
+                daylight = false;
                 prev_transition = evening;
                 next_transition = get_sun_timings(todayNow.addDays(1), lat, lng, true);
             }
@@ -613,15 +614,10 @@ bool night_color_manager::check_automatic_sun_timings() const
     return false;
 }
 
-bool night_color_manager::daylight() const
-{
-    return prev_transition.first.date() == next_transition.first.date();
-}
-
 int night_color_manager::current_target_temp() const
 {
     if (!m_running) {
-        return NEUTRAL_TEMPERATURE;
+        return DEFAULT_DAY_TEMPERATURE;
     }
 
     if (m_mode == night_color_mode::constant) {
@@ -645,7 +641,7 @@ int night_color_manager::current_target_temp() const
         }
     };
 
-    if (daylight()) {
+    if (daylight) {
         return f(night_target_temp, day_target_temp);
     } else {
         return f(day_target_temp, night_target_temp);

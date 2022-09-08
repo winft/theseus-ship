@@ -6,13 +6,13 @@
 #pragma once
 
 #include <chrono>
-#include <kwineffects/deform_effect.h>
+#include <kwineffects/offscreen_effect.h>
 #include <kwineffects/time_line.h>
 
 namespace KWin
 {
 
-class BlendChanges : public DeformEffect
+class BlendChanges : public OffscreenEffect
 {
     Q_OBJECT
 
@@ -30,7 +30,7 @@ public:
                     const QRegion& region,
                     WindowPaintData& data) override;
     void
-    deform(EffectWindow* window, int mask, WindowPaintData& data, WindowQuadList& quads) override;
+    apply(EffectWindow* window, int mask, WindowPaintData& data, WindowQuadList& quads) override;
     bool isActive() const override;
 
 public Q_SLOTS:

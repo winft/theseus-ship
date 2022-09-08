@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_MAGICLAMP_H
 #define KWIN_MAGICLAMP_H
 
-#include <kwineffects/deform_effect.h>
+#include <kwineffects/offscreen_effect.h>
 #include <kwineffects/time_line.h>
 
 namespace KWin
@@ -30,7 +30,7 @@ struct MagicLampAnimation {
     TimeLine timeLine;
 };
 
-class MagicLampEffect : public DeformEffect
+class MagicLampEffect : public OffscreenEffect
 {
     Q_OBJECT
 
@@ -54,7 +54,7 @@ public:
 
 protected:
     void
-    deform(EffectWindow* window, int mask, WindowPaintData& data, WindowQuadList& quads) override;
+    apply(EffectWindow* window, int mask, WindowPaintData& data, WindowQuadList& quads) override;
 
 public Q_SLOTS:
     void slotWindowDeleted(KWin::EffectWindow* w);

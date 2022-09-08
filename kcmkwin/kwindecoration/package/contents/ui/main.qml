@@ -16,14 +16,14 @@
    Boston, MA 02110-1301, USA.
 */
 
-import QtQuick 2.7
-import QtQuick.Layouts 1.3
-import QtQuick.Controls 2.4 as QQC2
+import QtQuick 2.15
+import QtQuick.Layouts 1.15
+import QtQuick.Controls 2.15 as QQC2
 
-import org.kde.kcm 1.5 as KCM
-import org.kde.kconfig 1.0 // for KAuthorized
-import org.kde.kirigami 2.4 as Kirigami
-import org.kde.newstuff 1.62 as NewStuff
+import org.kde.kcm 1.6 as KCM
+import org.kde.kconfig 1.0
+import org.kde.kirigami 2.20 as Kirigami
+import org.kde.newstuff 1.85 as NewStuff
 
 Kirigami.Page {
     id: root
@@ -109,11 +109,9 @@ Kirigami.Page {
                             id: borderSizeComboBox
                             model: kcm.borderSizesModel
                             currentIndex: kcm.borderIndex
-                            onActivated: {
-                                kcm.borderIndex = currentIndex
-                            }
+                            onActivated: kcm.borderIndex = currentIndex;
                             KCM.SettingHighlighter {
-                                highlight: kcm.borderIndex != 0
+                                highlight: kcm.borderIndex !== 0
                             }
                         }
 
@@ -127,11 +125,11 @@ Kirigami.Page {
                             icon.name: "get-hot-new-stuff"
                             visible: KAuthorized.authorize("ghns")
                             configFile: "window-decorations.knsrc"
-                            onEntryEvent: function (entry, event) {
-                                if (event == 1) { // StatusChangedEvent
-                                    kcm.reloadKWinSettings()
-                                } else if (event == 2) { // EntryAdoptedEvent
-                                    kcm.load()
+                            onEntryEvent: (entry, event) => {
+                                if (event === NewStuff.Engine.StatusChangedEvent) {
+                                    kcm.reloadKWinSettings();
+                                } else if (event === NewStuff.Engine.EntryAdoptedEvent) {
+                                    kcm.load();
                                 }
                             }
                         }
@@ -155,8 +153,8 @@ Kirigami.Page {
                             text: i18nc("checkbox label", "Close windows by double clicking the menu button")
                             checked: kcm.settings.closeOnDoubleClickOnMenu
                             onToggled: {
-                                kcm.settings.closeOnDoubleClickOnMenu = checked
-                                infoLabel.visible = checked
+                                kcm.settings.closeOnDoubleClickOnMenu = checked;
+                                infoLabel.visible = checked;
                             }
 
                             KCM.SettingStateBinding {

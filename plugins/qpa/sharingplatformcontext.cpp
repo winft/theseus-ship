@@ -81,10 +81,10 @@ void SharingPlatformContext::swapBuffers(QPlatformSurface *surface)
         if (!client) {
             return;
         }
-        context()->makeCurrent(surface->surface());
         glFlush();
-        client->present_fbo(window->swapFBO());
+        auto fbo = window->swapFBO();
         window->bindContentFBO();
+        client->present_fbo(fbo);
     }
 }
 

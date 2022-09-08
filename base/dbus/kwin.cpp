@@ -12,8 +12,6 @@
 #include "debug/perf/ftrace.h"
 #include "win/space_qobject.h"
 
-#include <QDBusServiceWatcher>
-
 namespace KWin::base::dbus
 {
 
@@ -31,12 +29,7 @@ kwin::kwin(win::space_qobject& space)
         m_serviceName = m_serviceName + QLatin1Char('.') + dBusSuffix;
     }
 
-    if (!dbus.registerService(m_serviceName)) {
-        QDBusServiceWatcher* dog = new QDBusServiceWatcher(
-            m_serviceName, dbus, QDBusServiceWatcher::WatchForUnregistration, this);
-        connect(dog, &QDBusServiceWatcher::serviceUnregistered, this, &kwin::becomeKWinService);
-    }
-
+    dbus.registerService(m_serviceName);
     dbus.connect(QString(),
                  QStringLiteral("/KWin"),
                  QStringLiteral("org.kde.KWin"),
@@ -45,24 +38,46 @@ kwin::kwin(win::space_qobject& space)
                  SLOT(reconfigure()));
 }
 
-void kwin::becomeKWinService(const QString& service)
-{
-    // TODO: this watchdog exists to make really safe that we at some point get the service
-    // but it's probably no longer needed since we explicitly unregister the service with the
-    // deconstructor
-    if (service == m_serviceName && QDBusConnection::sessionBus().registerService(m_serviceName)
-        && sender()) {
-        sender()->deleteLater();
-    }
-}
-
 kwin::~kwin()
 {
     QDBusConnection::sessionBus().unregisterService(m_serviceName);
+}
 
-    // KApplication automatically also grabs org.kde.kwin, so it's often been used externally -
-    // ensure to free it as well
-    QDBusConnection::sessionBus().unregisterService(QStringLiteral("org.kde.kwin"));
+void kwin::showDesktop(bool show)
+{
+    show_desktop_impl(show);
+
+    auto msg = message();
+    if (msg.service().isEmpty()) {
+        return;
+    }
+
+    // Keep track of whatever D-Bus client asked to show the desktop. If
+    // they disappear from the bus, cancel the show desktop state so we do
+    // not end up in a state where we are stuck showing the desktop.
+    static QPointer<QDBusServiceWatcher> watcher;
+
+    if (show) {
+        if (watcher) {
+            // If we get a second call to `showDesktop(true)`, drop the previous
+            // watcher and watch the new client. That way, we simply always
+            // track the last state.
+            watcher->deleteLater();
+        }
+
+        watcher = new QDBusServiceWatcher(msg.service(),
+                                          QDBusConnection::sessionBus(),
+                                          QDBusServiceWatcher::WatchForUnregistration,
+                                          this);
+        connect(watcher, &QDBusServiceWatcher::serviceUnregistered, [this] {
+            show_desktop_impl(false);
+            watcher->deleteLater();
+        });
+    } else if (watcher) {
+        // Someone cancelled showing the desktop, so there's no more need to
+        // watch to cancel the show desktop state.
+        watcher->deleteLater();
+    }
 }
 
 void kwin::reconfigure()
