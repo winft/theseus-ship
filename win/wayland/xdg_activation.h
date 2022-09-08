@@ -11,6 +11,7 @@
 #include "win/activation.h"
 #include "win/stacking.h"
 
+#include <Wrapland/Server/xdg_activation_v1.h>
 #include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -51,8 +52,21 @@ inline bool generate_token(char out[token_strlen])
 template<typename Space>
 struct xdg_activation {
     xdg_activation(Space& space)
-        : space{space}
+        : interface {
+        space.base.server->display->createXdgActivationV1()
+    }, space{space}
     {
+        QObject::connect(
+            interface.get(),
+            &Wrapland::Server::XdgActivationV1::token_requested,
+            space.qobject.get(),
+            [this](auto token) { xdg_activation_handle_token_request(this->space, *token); });
+        QObject::connect(interface.get(),
+                         &Wrapland::Server::XdgActivationV1::activate,
+                         space.qobject.get(),
+                         [this](auto const& token, auto surface) {
+                             handle_xdg_activation_activate(&this->space, token, surface);
+                         });
     }
 
     void clear()
@@ -74,6 +88,8 @@ struct xdg_activation {
     std::string token;
     std::string appid;
 
+    std::unique_ptr<Wrapland::Server::XdgActivationV1> interface;
+
 private:
     Space& space;
 };
@@ -87,9 +103,9 @@ std::string xdg_activation_set_token(Space& space, std::string const& appid)
         return {};
     }
 
-    space.activation->clear();
-    space.activation->token = token_str;
-    space.activation->appid = appid;
+    space.xdg_activation->clear();
+    space.xdg_activation->token = token_str;
+    space.xdg_activation->appid = appid;
 
     if (!appid.empty()) {
         space.plasma_activation_feedback->app_id(appid);
@@ -146,20 +162,20 @@ void xdg_activation_activate(Space* space, Window* win, std::string const& token
 {
     assert(win);
 
-    if (space->activation->token.empty()) {
+    if (space->xdg_activation->token.empty()) {
         qCDebug(KWIN_CORE) << "Empty token provided on XDG Activation of" << win;
         set_demands_attention(win, true);
         return;
     }
-    if (space->activation->token != token) {
+    if (space->xdg_activation->token != token) {
         qCDebug(KWIN_CORE) << "Token mismatch on XDG Activation of" << win;
         qCDebug(KWIN_CORE).nospace() << "Provided: '" << token.c_str() << "', match: '"
-                                     << space->activation->token.c_str() << "'";
+                                     << space->xdg_activation->token.c_str() << "'";
         set_demands_attention(win, true);
         return;
     }
 
-    space->activation->clear();
+    space->xdg_activation->clear();
     activate_window(*space, win);
 }
 

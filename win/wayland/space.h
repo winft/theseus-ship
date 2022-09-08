@@ -47,7 +47,6 @@
 #include <Wrapland/Server/plasma_shell.h>
 #include <Wrapland/Server/server_decoration_palette.h>
 #include <Wrapland/Server/subcompositor.h>
-#include <Wrapland/Server/xdg_activation_v1.h>
 #include <Wrapland/Server/xdg_shell.h>
 
 #include <memory>
@@ -90,7 +89,6 @@ public:
         , xdg_shell{server->display->createXdgShell()}
         , layer_shell{server->display->createLayerShellV1()}
         , xdg_decoration_manager{server->display->createXdgDecorationManager(xdg_shell.get())}
-        , xdg_activation{server->display->createXdgActivationV1()}
         , xdg_foreign{server->display->createXdgForeign()}
         , plasma_activation_feedback{server->display->create_plasma_activation_feedback()}
         , plasma_shell{server->display->createPlasmaShell()}
@@ -159,17 +157,12 @@ public:
                          qobject.get(),
                          [this](auto deco) { handle_new_xdg_deco(this, deco); });
 
-        QObject::connect(
-            xdg_activation.get(),
-            &WS::XdgActivationV1::token_requested,
-            qobject.get(),
-            [this](auto token) { xdg_activation_handle_token_request(*this, *token); });
-        QObject::connect(xdg_activation.get(),
-                         &WS::XdgActivationV1::activate,
-                         qobject.get(),
-                         [this](auto const& token, auto surface) {
-                             handle_xdg_activation_activate(this, token, surface);
-                         });
+        xdg_activation = std::make_unique<wayland::xdg_activation<space>>(*this);
+        QObject::connect(qobject.get(), &space::qobject_t::clientActivated, qobject.get(), [this] {
+            if (active_client) {
+                xdg_activation->clear();
+            }
+        });
 
         QObject::connect(plasma_shell.get(),
                          &WS::PlasmaShell::surfaceCreated,
@@ -213,13 +206,6 @@ public:
                          [this](auto layer_surface) {
                              handle_new_layer_surface<wayland_window>(this, layer_surface);
                          });
-
-        activation = std::make_unique<wayland::xdg_activation<space>>(*this);
-        QObject::connect(qobject.get(), &space::qobject_t::clientActivated, qobject.get(), [this] {
-            if (active_client) {
-                activation->clear();
-            }
-        });
 
         // For Xwayland windows we need to setup Plasma management too.
         QObject::connect(
@@ -499,7 +485,6 @@ public:
     std::unique_ptr<Wrapland::Server::LayerShellV1> layer_shell;
 
     std::unique_ptr<Wrapland::Server::XdgDecorationManager> xdg_decoration_manager;
-    std::unique_ptr<Wrapland::Server::XdgActivationV1> xdg_activation;
     std::unique_ptr<Wrapland::Server::XdgForeign> xdg_foreign;
 
     std::unique_ptr<Wrapland::Server::plasma_activation_feedback> plasma_activation_feedback;
@@ -514,7 +499,7 @@ public:
     std::unique_ptr<Wrapland::Server::ServerSideDecorationPaletteManager>
         server_side_decoration_palette_manager;
 
-    std::unique_ptr<wayland::xdg_activation<space>> activation;
+    std::unique_ptr<wayland::xdg_activation<space>> xdg_activation;
 
     QVector<Wrapland::Server::PlasmaShellSurface*> plasma_shell_surfaces;
 
