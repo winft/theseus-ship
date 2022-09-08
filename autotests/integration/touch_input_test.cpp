@@ -126,7 +126,7 @@ Test::space::window_t* TouchInputTest::showWindow(bool decorated)
     auto c = Test::render_and_wait_for_shown(client.surface, QSize(100, 50), Qt::blue);
 
     VERIFY(c);
-    COMPARE(Test::app()->base.space->active_client, c);
+    COMPARE(Test::app()->base.space->stacking.active, c);
 
 #undef VERIFY
 #undef COMPARE

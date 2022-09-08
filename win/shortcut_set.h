@@ -133,8 +133,8 @@ void setup_window_shortcut_done(Space& space, bool ok)
     space.client_keys_dialog = nullptr;
     space.client_keys_client = nullptr;
 
-    if (space.active_client) {
-        space.active_client->takeFocus();
+    if (space.stacking.active) {
+        space.stacking.active->takeFocus();
     }
 }
 

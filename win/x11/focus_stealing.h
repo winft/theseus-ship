@@ -49,16 +49,16 @@ bool allow_window_activation(Space& space,
 
     auto ac = most_recently_activated_window(space);
     if (focus_in) {
-        if (std::find(space.should_get_focus.cbegin(),
-                      space.should_get_focus.cend(),
+        if (std::find(space.stacking.should_get_focus.cbegin(),
+                      space.stacking.should_get_focus.cend(),
                       const_cast<Win*>(window))
-            != space.should_get_focus.cend()) {
+            != space.stacking.should_get_focus.cend()) {
             // FocusIn was result of KWin's action
             return true;
         }
         // Before getting FocusIn, the active Client already
         // got FocusOut, and therefore got deactivated.
-        ac = space.last_active_client;
+        ac = space.stacking.last_active;
     }
     if (time == 0) {
         // explicitly asked not to get focus

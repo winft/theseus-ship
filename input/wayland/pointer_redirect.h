@@ -224,7 +224,7 @@ public:
             return;
         }
         auto const canConstrain = constraints.enabled
-            && this->focus.window == this->redirect->platform.base.space->active_client;
+            && this->focus.window == this->redirect->platform.base.space->stacking.active;
         auto const cf = s->confinedPointer();
 
         if (cf) {

@@ -116,7 +116,7 @@ void InputStackingOrderTest::testPointerFocusUpdatesOnStackingOrderChange()
     QVERIFY(shellSurface1);
     render(surface1);
     QVERIFY(clientAddedSpy.wait());
-    auto window1 = Test::app()->base.space->active_client;
+    auto window1 = Test::app()->base.space->stacking.active;
     QVERIFY(window1);
 
     auto surface2 = Test::create_surface();
@@ -126,7 +126,7 @@ void InputStackingOrderTest::testPointerFocusUpdatesOnStackingOrderChange()
     render(surface2);
     QVERIFY(clientAddedSpy.wait());
 
-    auto window2 = Test::app()->base.space->active_client;
+    auto window2 = Test::app()->base.space->stacking.active;
     QVERIFY(window2);
     QVERIFY(window1 != window2);
 

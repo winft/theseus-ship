@@ -14,7 +14,7 @@ template<typename Space>
 auto find_desktop(Space* space, bool topmost, int desktop) -> typename Space::window_t*
 {
     // TODO(fsorr): use C++20 std::ranges::reverse_view
-    auto const& list = space->stacking_order.stack;
+    auto const& list = space->stacking.order.stack;
     auto is_desktop = [desktop](auto window) {
         return window->control && window->isOnDesktop(desktop) && win::is_desktop(window)
             && window->isShown();

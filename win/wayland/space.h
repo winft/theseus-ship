@@ -124,14 +124,14 @@ public:
         plasma_window_manager->setVirtualDesktopManager(plasma_virtual_desktop_manager.get());
         virtual_desktop_manager->setVirtualDesktopManagement(plasma_virtual_desktop_manager.get());
 
-        QObject::connect(stacking_order.qobject.get(),
+        QObject::connect(stacking.order.qobject.get(),
                          &stacking_order_qobject::render_restack,
                          qobject.get(),
                          [this] {
                              for (auto win : windows) {
                                  if (auto iwin = dynamic_cast<internal_window_t*>(win);
                                      iwin && iwin->isShown()) {
-                                     stacking_order.render_overlays.push_back(iwin);
+                                     stacking.order.render_overlays.push_back(iwin);
                                  }
                              }
                          });
@@ -157,7 +157,7 @@ public:
 
         xdg_activation = std::make_unique<wayland::xdg_activation<space>>(*this);
         QObject::connect(qobject.get(), &space::qobject_t::clientActivated, qobject.get(), [this] {
-            if (active_client) {
+            if (stacking.active) {
                 xdg_activation->clear();
             }
         });
@@ -188,7 +188,7 @@ public:
                              plasma_window_manager->setShowingDesktopState(
                                  set ? ShowingState::Enabled : ShowingState::Disabled);
                          });
-        QObject::connect(stacking_order.qobject.get(),
+        QObject::connect(stacking.order.qobject.get(),
                          &stacking_order_qobject::changed,
                          plasma_window_manager.get(),
                          [this] { plasma_manage_update_stacking_order(*this); });
@@ -220,7 +220,7 @@ public:
 
     ~space() override
     {
-        stacking_order.lock();
+        stacking.order.lock();
 
         for (auto const& window : windows) {
             if (auto win = dynamic_cast<wayland_window*>(window); win && !win->remnant) {
@@ -352,9 +352,9 @@ public:
             }
         }
 
-        assert(!contains(stacking_order.pre_stack, window));
-        stacking_order.pre_stack.push_back(window);
-        stacking_order.update_order();
+        assert(!contains(stacking.order.pre_stack, window));
+        stacking.order.pre_stack.push_back(window);
+        stacking.order.update_order();
 
         if (window->control) {
             update_space_areas(*this);
@@ -370,7 +370,7 @@ public:
                              qobject.get(),
                              [this, window] {
                                  update_layer(window);
-                                 stacking_order.update_count();
+                                 stacking.order.update_count();
                                  update_space_areas(*this);
                                  if (window->wantsInput()) {
                                      activate_window(*this, window);
@@ -381,7 +381,7 @@ public:
                              qobject.get(),
                              [this] {
                                  // TODO: update tabbox if it's displayed
-                                 stacking_order.update_count();
+                                 stacking.order.update_count();
                                  update_space_areas(*this);
                              });
 
@@ -396,14 +396,14 @@ public:
         remove_all(windows, window);
 
         if (window->control) {
-            if (window == most_recently_raised) {
-                most_recently_raised = nullptr;
+            if (window == stacking.most_recently_raised) {
+                stacking.most_recently_raised = nullptr;
             }
-            if (window == delayfocus_client) {
+            if (window == stacking.delayfocus_window) {
                 cancel_delay_focus(*this);
             }
-            if (window == last_active_client) {
-                last_active_client = nullptr;
+            if (window == stacking.last_active) {
+                stacking.last_active = nullptr;
             }
             if (window == client_keys_client) {
                 setup_window_shortcut_done(*this, false);
@@ -416,7 +416,7 @@ public:
             Q_EMIT qobject->clientRemoved(window->signal_id);
         }
 
-        stacking_order.update_count();
+        stacking.order.update_count();
 
         if (window->control) {
             update_space_areas(*this);
@@ -466,8 +466,6 @@ public:
     std::unique_ptr<x11::color_mapper<type>> color_mapper;
 
     std::unique_ptr<typename input_t::redirect_t> input;
-    win::stacking_order<window_t> stacking_order;
-    win::focus_chain<window_t> focus_chain;
 
     std::unique_ptr<win::tabbox<type>> tabbox;
     std::unique_ptr<osd_notification<input_t>> osd;
@@ -505,19 +503,11 @@ public:
     std::unordered_map<uint32_t, window_t*> windows_map;
     std::vector<win::x11::group<type>*> groups;
 
+    stacking_state<window_t> stacking;
+
     window_t* active_popup_client{nullptr};
-
-    window_t* last_active_client{nullptr};
-    window_t* delayfocus_client{nullptr};
     window_t* client_keys_client{nullptr};
-
-    // Last is most recent.
-    std::deque<window_t*> should_get_focus;
-    std::deque<window_t*> attention_chain;
-
     window_t* move_resize_window{nullptr};
-    window_t* most_recently_raised{nullptr};
-    window_t* active_client{nullptr};
 
 private:
     void handle_x11_window_added(x11_window* window)

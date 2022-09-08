@@ -216,7 +216,7 @@ void QuickTilingTest::testQuickTiling()
     // Map the client.
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->base.space->active_client, c);
+    QCOMPARE(Test::app()->base.space->stacking.active, c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
     QCOMPARE(c->control->quicktiling, win::quicktiles::none);
 
@@ -295,7 +295,7 @@ void QuickTilingTest::testQuickMaximizing()
     // Map the client.
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->base.space->active_client, c);
+    QCOMPARE(Test::app()->base.space->stacking.active, c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
     QCOMPARE(c->control->quicktiling, win::quicktiles::none);
     QCOMPARE(c->maximizeMode(), win::maximize_mode::restore);
@@ -407,7 +407,7 @@ void QuickTilingTest::testQuickTilingKeyboardMove()
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(c);
-    QCOMPARE(Test::app()->base.space->active_client, c);
+    QCOMPARE(Test::app()->base.space->stacking.active, c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
     QCOMPARE(c->control->quicktiling, win::quicktiles::none);
     QCOMPARE(c->maximizeMode(), win::maximize_mode::restore);
@@ -486,7 +486,7 @@ void QuickTilingTest::testQuickTilingPointerMove()
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(c);
-    QCOMPARE(Test::app()->base.space->active_client, c);
+    QCOMPARE(Test::app()->base.space->stacking.active, c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
     QCOMPARE(c->control->quicktiling, win::quicktiles::none);
     QCOMPARE(c->maximizeMode(), win::maximize_mode::restore);
@@ -570,7 +570,7 @@ void QuickTilingTest::testQuickTilingTouchMove()
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     auto const decoration = win::decoration(c);
-    QCOMPARE(Test::app()->base.space->active_client, c);
+    QCOMPARE(Test::app()->base.space->stacking.active, c);
     QCOMPARE(c->frameGeometry(),
              QRect(-decoration->borderLeft(),
                    0,
@@ -871,7 +871,7 @@ void QuickTilingTest::testShortcut()
     // Map the client.
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->base.space->active_client, c);
+    QCOMPARE(Test::app()->base.space->stacking.active, c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
     QCOMPARE(c->control->quicktiling, win::quicktiles::none);
 
@@ -964,7 +964,7 @@ void QuickTilingTest::testScript()
     // Map the client.
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->base.space->active_client, c);
+    QCOMPARE(Test::app()->base.space->stacking.active, c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
     QCOMPARE(c->control->quicktiling, win::quicktiles::none);
 

@@ -141,7 +141,7 @@ void xdg_activation_handle_token_request(Space& space, TokenRequest& token)
             return false;
         }
 
-        if (win != space.active_client) {
+        if (win != space.stacking.active) {
             qCDebug(KWIN_CORE) << "Requesting window" << win << "currently not active.";
             return false;
         }

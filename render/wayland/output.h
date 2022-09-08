@@ -212,7 +212,7 @@ public:
 
     void dry_run()
     {
-        auto windows = win::render_stack(platform.compositor->space->stacking_order);
+        auto windows = win::render_stack(platform.compositor->space->stacking.order);
         std::deque<typename space_t::window_t*> frame_windows;
 
         for (auto win : windows) {
@@ -301,7 +301,7 @@ private:
         }
 
         // Create a list of all windows in the stacking order
-        windows = win::render_stack(platform.compositor->space->stacking_order);
+        windows = win::render_stack(platform.compositor->space->stacking.order);
         bool has_window_repaints{false};
         std::deque<typename space_t::window_t*> frame_windows;
 

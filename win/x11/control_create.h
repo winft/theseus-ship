@@ -150,7 +150,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 {
     using Win = typename Space::x11_window;
 
-    blocker block(space.stacking_order);
+    blocker block(space.stacking.order);
 
     base::x11::xcb::window_attributes attr(xcb_win);
     base::x11::xcb::geometry windowGeometry(xcb_win);
@@ -579,11 +579,12 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     }
 
     if (win->isShown()) {
-        bool allow;
+        auto allow{false};
         if (session) {
-            allow = session->active
-                && (!space.was_user_interaction || !space.active_client
-                    || is_desktop(space.active_client));
+            if (session->active) {
+                allow = !space.was_user_interaction || !space.stacking.active
+                    || is_desktop(space.stacking.active);
+            }
         } else {
             allow = allow_window_activation(space, win, win->userTime(), false);
         }

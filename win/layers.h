@@ -22,7 +22,8 @@ namespace KWin::win
 template<typename Space>
 typename Space::window_t* most_recently_activated_window(Space const& space)
 {
-    return space.should_get_focus.size() > 0 ? space.should_get_focus.back() : space.active_client;
+    auto const& candidates = space.stacking.should_get_focus;
+    return candidates.size() > 0 ? candidates.back() : space.stacking.active;
 }
 
 template<typename Win>
@@ -111,7 +112,7 @@ void update_layer(Win* win)
         return;
     }
 
-    blocker block(win->space.stacking_order);
+    blocker block(win->space.stacking.order);
 
     // Invalidate, will be updated when doing restacking.
     invalidate_layer(win);

@@ -93,7 +93,7 @@ void PlasmaSurfaceTest::init()
 void PlasmaSurfaceTest::cleanup()
 {
     Test::destroy_wayland_connection();
-    QTRY_VERIFY(Test::app()->base.space->stacking_order.stack.empty());
+    QTRY_VERIFY(Test::app()->base.space->stacking.order.stack.empty());
 }
 
 void PlasmaSurfaceTest::testRoleOnAllDesktops_data()
@@ -124,7 +124,7 @@ void PlasmaSurfaceTest::testRoleOnAllDesktops()
     // now render to map the window
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->base.space->active_client, c);
+    QCOMPARE(Test::app()->base.space->stacking.active, c);
 
     // currently the role is not yet set, so the window should not be on all desktops
     QCOMPARE(c->isOnAllDesktops(), false);
@@ -392,19 +392,19 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
     win::move(c, windowGeometry.topLeft());
     QCOMPARE(c->frameGeometry(), windowGeometry);
 
-    auto stackingOrder = Test::app()->base.space->stacking_order.stack;
+    auto stackingOrder = Test::app()->base.space->stacking.order.stack;
     QCOMPARE(stackingOrder.size(), 2);
     QCOMPARE(stackingOrder.front(), panel);
     QCOMPARE(stackingOrder.back(), c);
 
-    QSignalSpy stackingOrderChangedSpy(Test::app()->base.space->stacking_order.qobject.get(),
+    QSignalSpy stackingOrderChangedSpy(Test::app()->base.space->stacking.order.qobject.get(),
                                        &win::stacking_order_qobject::changed);
     QVERIFY(stackingOrderChangedSpy.isValid());
     // trigger screenedge
     QFETCH(QPoint, triggerPoint);
     Test::app()->base.input->cursor->set_pos(triggerPoint);
     QCOMPARE(stackingOrderChangedSpy.count(), 1);
-    stackingOrder = Test::app()->base.space->stacking_order.stack;
+    stackingOrder = Test::app()->base.space->stacking.order.stack;
     QCOMPARE(stackingOrder.size(), 2);
     QCOMPARE(stackingOrder.front(), c);
     QCOMPARE(stackingOrder.back(), panel);

@@ -80,7 +80,7 @@ void perform_window_operation(Win* window, base::options_qobject::WindowOperatio
         window->setNoBorder(!window->noBorder());
         break;
     case base::options_qobject::KeepAboveOp: {
-        blocker block(space.stacking_order);
+        blocker block(space.stacking.order);
         bool was = window->control->keep_above;
         set_keep_above(window, !window->control->keep_above);
         if (was && !window->control->keep_above) {
@@ -89,7 +89,7 @@ void perform_window_operation(Win* window, base::options_qobject::WindowOperatio
         break;
     }
     case base::options_qobject::KeepBelowOp: {
-        blocker block(space.stacking_order);
+        blocker block(space.stacking.order);
         bool was = window->control->keep_below;
         set_keep_below(window, !window->control->keep_below);
         if (was && !window->control->keep_below) {

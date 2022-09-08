@@ -265,7 +265,7 @@ public:
                          &win::space_qobject::clientActivated,
                          this->qobject.get(),
                          [this] {
-                             auto window = this->manager->xkb.platform->base.space->active_client;
+                             auto window = this->manager->xkb.platform->base.space->stacking.active;
                              if (!window) {
                                  return;
                              }
@@ -292,7 +292,7 @@ protected:
 
     void handle_layout_change(uint index) override
     {
-        auto window = this->manager->xkb.platform->base.space->active_client;
+        auto window = this->manager->xkb.platform->base.space->stacking.active;
         if (!window) {
             return;
         }
@@ -332,7 +332,7 @@ public:
         QObject::connect(space.qobject.get(),
                          &win::space_qobject::clientActivated,
                          this->qobject.get(),
-                         [this, &space] { handle_client_activated(space.active_client); });
+                         [this, &space] { handle_client_activated(space.stacking.active); });
 
         auto session_manager = space.session_manager.get();
         QObject::connect(
@@ -381,7 +381,7 @@ protected:
 
     void handle_layout_change(uint index) override
     {
-        auto window = this->manager->xkb.platform->base.space->active_client;
+        auto window = this->manager->xkb.platform->base.space->stacking.active;
         if (!window) {
             return;
         }

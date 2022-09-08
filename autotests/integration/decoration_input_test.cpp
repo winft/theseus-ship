@@ -132,7 +132,7 @@ Test::space::window_t* DecorationInputTest::showWindow()
     // let's render
     auto c = Test::render_and_wait_for_shown(client.surface, QSize(500, 50), Qt::blue);
     VERIFY(c);
-    COMPARE(Test::app()->base.space->active_client, c);
+    COMPARE(Test::app()->base.space->stacking.active, c);
     COMPARE(c->userCanSetNoBorder(), true);
     COMPARE(win::decoration(c) != nullptr, true);
 

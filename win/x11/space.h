@@ -181,8 +181,6 @@ public:
     std::unique_ptr<x11::color_mapper<type>> color_mapper;
 
     std::unique_ptr<typename input_t::redirect_t> input;
-    win::stacking_order<window_t> stacking_order;
-    win::focus_chain<window_t> focus_chain;
 
     std::unique_ptr<win::tabbox<type>> tabbox;
     std::unique_ptr<osd_notification<input_t>> osd;
@@ -194,19 +192,11 @@ public:
     std::unordered_map<uint32_t, window_t*> windows_map;
     std::vector<win::x11::group<type>*> groups;
 
+    stacking_state<window_t> stacking;
+
     window_t* active_popup_client{nullptr};
-
-    window_t* last_active_client{nullptr};
-    window_t* delayfocus_client{nullptr};
     window_t* client_keys_client{nullptr};
-
-    // Last is most recent.
-    std::deque<window_t*> should_get_focus;
-    std::deque<window_t*> attention_chain;
-
     window_t* move_resize_window{nullptr};
-    window_t* most_recently_raised{nullptr};
-    window_t* active_client{nullptr};
 
 private:
     std::unique_ptr<base::x11::event_filter> edges_filter;

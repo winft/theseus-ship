@@ -352,7 +352,7 @@ public:
                     Q_EMIT windowAdded(client->render->effect.get());
                 });
         connect(ws->qobject.get(), &win::space_qobject::clientActivated, this, [this, space = ws] {
-            auto window = space->active_client;
+            auto window = space->stacking.active;
             assert(!window || window->render);
             assert(!window || window->render->effect);
             auto eff_win = window ? window->render->effect.get() : nullptr;
@@ -402,7 +402,7 @@ public:
                 }
             });
 
-        connect(ws->stacking_order.qobject.get(),
+        connect(ws->stacking.order.qobject.get(),
                 &win::stacking_order_qobject::changed,
                 this,
                 &EffectsHandler::stackingOrderChanged);
@@ -586,7 +586,7 @@ public:
 
     EffectWindow* activeWindow() const override
     {
-        auto ac = compositor.space->active_client;
+        auto ac = compositor.space->stacking.active;
         return ac ? ac->render->effect.get() : nullptr;
     }
 
@@ -925,7 +925,7 @@ public:
 
     EffectWindowList stackingOrder() const override
     {
-        auto list = win::render_stack(compositor.space->stacking_order);
+        auto list = win::render_stack(compositor.space->stacking.order);
         EffectWindowList ret;
         for (auto t : list) {
             if (auto eff_win = t->render->effect.get()) {

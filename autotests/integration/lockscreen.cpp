@@ -188,7 +188,7 @@ Test::space::window_t* LockScreenTest::showWindow()
     auto c = Test::render_and_wait_for_shown(surface_holder, QSize(100, 50), Qt::blue);
 
     VERIFY(c);
-    COMPARE(Test::app()->base.space->active_client, c);
+    COMPARE(Test::app()->base.space->stacking.active, c);
 
 #undef VERIFY
 #undef COMPARE

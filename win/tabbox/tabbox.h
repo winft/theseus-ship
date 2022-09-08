@@ -249,8 +249,8 @@ public:
         case tabbox_config::ClientTabBox:
             m_tabbox->create_model(partial_reset);
             if (!partial_reset) {
-                if (space.active_client) {
-                    set_current_client(space.active_client);
+                if (space.stacking.active) {
+                    set_current_client(space.stacking.active);
                 }
 
                 // it's possible that the active client is not part of the model
@@ -1078,8 +1078,8 @@ private:
         // policies - the topmost one, with some exceptions (can't be keepabove/below,
         // otherwise it gets stuck on them)
         //     Q_ASSERT(space.block_stacking_updates == 0);
-        for (int i = space.stacking_order.stack.size() - 1; i >= 0; --i) {
-            auto window = space.stacking_order.stack.at(i);
+        for (int i = space.stacking.order.stack.size() - 1; i >= 0; --i) {
+            auto window = space.stacking.order.stack.at(i);
             if (window->control && window->isOnCurrentDesktop() && !win::is_special_window(window)
                 && window->isShown() && win::wants_tab_focus(window) && !window->control->keep_above
                 && !window->control->keep_below) {
@@ -1176,8 +1176,8 @@ private:
         // the active client, which may not have it.
         Q_ASSERT(!m_forced_global_mouse_grab);
         m_forced_global_mouse_grab = true;
-        if (space.active_client) {
-            space.active_client->control->update_mouse_grab();
+        if (space.stacking.active) {
+            space.stacking.active->control->update_mouse_grab();
         }
         m_x11_event_filter.reset(new tabbox_x11_filter<tabbox<Space>>(*this));
         return true;
@@ -1193,8 +1193,8 @@ private:
         base::x11::ungrab_keyboard();
         Q_ASSERT(m_forced_global_mouse_grab);
         m_forced_global_mouse_grab = false;
-        if (space.active_client) {
-            space.active_client->control->update_mouse_grab();
+        if (space.stacking.active) {
+            space.stacking.active->control->update_mouse_grab();
         }
         m_x11_event_filter.reset();
     }

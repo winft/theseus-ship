@@ -26,7 +26,7 @@ template<typename Space>
 auto focus_chain_get_for_activation(Space& space, uint desktop, base::output const* output) ->
     typename Space::window_t*
 {
-    auto& manager = space.focus_chain;
+    auto& manager = space.stacking.focus_chain;
 
     auto desk_it = manager.chains.desktops.find(desktop);
     if (desk_it == manager.chains.desktops.end()) {
@@ -70,7 +70,7 @@ bool focus_chain_is_usable_focus_candidate(Space& space,
         return false;
     }
 
-    if (!space.focus_chain.has_separate_screen_focus) {
+    if (!space.stacking.focus_chain.has_separate_screen_focus) {
         return true;
     }
 
@@ -92,7 +92,7 @@ template<typename Space>
 auto focus_chain_next_for_desktop(Space& space, typename Space::window_t* reference, uint desktop)
     -> typename Space::window_t*
 {
-    auto& manager = space.focus_chain;
+    auto& manager = space.stacking.focus_chain;
 
     auto desk_it = manager.chains.desktops.find(desktop);
     if (desk_it == manager.chains.desktops.end()) {

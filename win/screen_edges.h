@@ -393,7 +393,7 @@ public:
 
     void checkBlocking()
     {
-        auto window = edger->space.active_client;
+        auto window = edger->space.stacking.active;
         auto const newValue = !edger->remainActiveOnFullscreen() && window
             && window->control->fullscreen && window->frameGeometry().contains(geometry.center())
             && !(edger->space.base.render->compositor->effects

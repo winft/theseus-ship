@@ -206,7 +206,7 @@ void layer_shell_test::test_create()
     QVERIFY(window->hasAlpha());
 
     // By default layer surfaces have keyboard interactivity set to none.
-    QCOMPARE(Test::app()->base.space->active_client, nullptr);
+    QCOMPARE(Test::app()->base.space->stacking.active, nullptr);
 
     QVERIFY(!window->isMaximizable());
     QVERIFY(!window->isMovable());
@@ -252,7 +252,7 @@ void layer_shell_test::test_create()
     QVERIFY(window2->isShown());
     QCOMPARE(window2->isHiddenInternal(), false);
     QCOMPARE(window2->ready_for_painting, true);
-    QCOMPARE(Test::app()->base.space->active_client, window2);
+    QCOMPARE(Test::app()->base.space->stacking.active, window2);
 
     // Surface is centered.
     QCOMPARE(window2->frameGeometry(),

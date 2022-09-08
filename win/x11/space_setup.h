@@ -108,7 +108,7 @@ void init_space(Space& space)
 
     {
         // Begin updates blocker block
-        blocker block(space.stacking_order);
+        blocker block(space.stacking.order);
 
         base::x11::xcb::tree tree(rootWindow());
         xcb_window_t* wins = xcb_query_tree_children(tree.data());
@@ -146,7 +146,7 @@ void init_space(Space& space)
         }
 
         // Propagate clients, will really happen at the end of the updates blocker block
-        space.stacking_order.update_count();
+        space.stacking.order.update_count();
 
         save_old_output_sizes(space);
         update_space_areas(space);
@@ -176,7 +176,7 @@ void init_space(Space& space)
         new_active_client = find_controlled_window<typename Space::x11_window>(
             space, predicate_match::window, client_info.activeWindow());
     }
-    if (!new_active_client && !space.active_client && space.should_get_focus.size() == 0) {
+    if (!new_active_client && !space.stacking.active && space.stacking.should_get_focus.empty()) {
         // No client activated in manage()
         if (new_active_client == nullptr)
             new_active_client = win::top_client_on_desktop(&space, vds->current(), nullptr);
@@ -191,14 +191,14 @@ void init_space(Space& space)
 template<typename Space>
 void clear_space(Space& space)
 {
-    space.stacking_order.lock();
+    space.stacking.order.lock();
 
-    // Use stacking_order, so that kwin --replace keeps stacking order
-    auto const stack = space.stacking_order.stack;
+    // Use stacking.order, so that kwin --replace keeps stacking order
+    auto const stack = space.stacking.order.stack;
 
     // "mutex" the stackingorder, since anything trying to access it from now on will find
     // many dangeling pointers and crash
-    space.stacking_order.stack.clear();
+    space.stacking.order.stack.clear();
 
     // Only release windows on X11.
     auto is_x11 = kwinApp()->operationMode() == Application::OperationModeX11;
@@ -220,11 +220,11 @@ void clear_space(Space& space)
     for (auto const& unmanaged : get_unmanageds(space)) {
         release_window(static_cast<typename Space::x11_window*>(unmanaged), is_x11);
         remove_all(space.windows, unmanaged);
-        remove_all(space.stacking_order.pre_stack, unmanaged);
+        remove_all(space.stacking.order.pre_stack, unmanaged);
     }
 
     space.shape_helper_window.reset();
-    space.stacking_order.unlock();
+    space.stacking.order.unlock();
 }
 
 }

@@ -537,7 +537,7 @@ void PlasmaWindowTest::test_stacking_order()
 
     auto compare_stacks = [&, this]() {
         auto const& plasma_stack = m_windowManagement->stacking_order_uuid();
-        auto const& unfiltered_stack = Test::app()->base.space->stacking_order.stack;
+        auto const& unfiltered_stack = Test::app()->base.space->stacking.order.stack;
         auto stack = std::decay_t<decltype(unfiltered_stack)>();
 
         std::copy_if(unfiltered_stack.begin(),

@@ -26,7 +26,7 @@ void do_handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t
 
     sel->data.x11_source.reset();
 
-    auto const& client = sel->data.core.space->active_client;
+    auto const& client = sel->data.core.space->stacking.active;
     if (!dynamic_cast<typename Selection::window_t::space_t::x11_window const*>(client)) {
         // Clipboard is only allowed to be acquired when Xwayland has focus
         // TODO(romangg): can we make this stronger (window id comparison)?
@@ -122,7 +122,7 @@ bool handle_selection_request(Selection* sel, xcb_selection_request_event_t* eve
     }
 
     if (!dynamic_cast<typename Selection::window_t::space_t::x11_window*>(
-            sel->data.core.space->active_client)) {
+            sel->data.core.space->stacking.active)) {
         // Receiving Wayland selection not allowed when no Xwayland surface active
         // filter the event, but don't act upon it
         send_selection_notify(sel->data.core.x11.connection, event, false);

@@ -304,13 +304,13 @@ void TestScreens::testCurrentClient()
     Test::render(surface, QSize(100, 50), Qt::blue);
     Test::flush_wayland_connection();
     QVERIFY(clientAddedSpy.wait());
-    auto client = Test::app()->base.space->active_client;
+    auto client = Test::app()->base.space->stacking.active;
     QVERIFY(client);
 
     win::move(client, QPoint(101, 0));
-    QCOMPARE(Test::app()->base.space->active_client, client);
+    QCOMPARE(Test::app()->base.space->stacking.active, client);
     win::set_active_window(*Test::app()->base.space, nullptr);
-    QCOMPARE(Test::app()->base.space->active_client, nullptr);
+    QCOMPARE(Test::app()->base.space->stacking.active, nullptr);
 
     QCOMPARE(win::get_current_output(*Test::app()->base.space),
              base::get_output(Test::app()->base.get_outputs(), 0));

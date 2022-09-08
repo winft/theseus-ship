@@ -561,7 +561,7 @@ public:
                          });
 
         QObject::connect(ref_space->qobject.get(), &space_qobject::clientActivated, this, [this] {
-            auto window = get_window(this->ref_space->active_client);
+            auto window = get_window(this->ref_space->stacking.active);
             Q_EMIT Space::clientActivated(window);
         });
 
@@ -641,7 +641,7 @@ public:
 
     window* activeClient() const override
     {
-        auto active_client = ref_space->active_client;
+        auto active_client = ref_space->stacking.active;
         if (!active_client) {
             return nullptr;
         }

@@ -146,10 +146,10 @@ void XwaylandSelectionsTest::testSync()
         copyClient = Test::app()->base.space->windows_map.at(copy_client_id);
     }
     QVERIFY(copyClient);
-    if (Test::app()->base.space->active_client != copyClient) {
+    if (Test::app()->base.space->stacking.active != copyClient) {
         win::activate_window(*Test::app()->base.space, copyClient);
     }
-    QCOMPARE(Test::app()->base.space->active_client, copyClient);
+    QCOMPARE(Test::app()->base.space->stacking.active, copyClient);
     if (copyPlatform == QLatin1String("xcb")) {
         QVERIFY(clipboardChangedSpy.isEmpty());
         QVERIFY(clipboardChangedSpy.wait());
@@ -189,14 +189,14 @@ void XwaylandSelectionsTest::testSync()
     QCOMPARE(shellClientAddedSpy.count(), 1);
     QVERIFY(pasteClient);
 
-    if (Test::app()->base.space->active_client != pasteClient) {
+    if (Test::app()->base.space->stacking.active != pasteClient) {
         QSignalSpy clientActivatedSpy(Test::app()->base.space->qobject.get(),
                                       &win::space::qobject_t::clientActivated);
         QVERIFY(clientActivatedSpy.isValid());
         win::activate_window(*Test::app()->base.space, pasteClient);
         QVERIFY(clientActivatedSpy.wait());
     }
-    QTRY_COMPARE(Test::app()->base.space->active_client, pasteClient);
+    QTRY_COMPARE(Test::app()->base.space->stacking.active, pasteClient);
     QVERIFY(finishedSpy.wait());
     QCOMPARE(finishedSpy.first().first().toInt(), 0);
     delete m_pasteProcess;

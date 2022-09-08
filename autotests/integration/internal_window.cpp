@@ -224,7 +224,7 @@ void InternalWindowTest::testEnterLeave()
     win.show();
 
     QTRY_COMPARE(clientAddedSpy.count(), 1);
-    QVERIFY(!Test::app()->base.space->active_client);
+    QVERIFY(!Test::app()->base.space->stacking.active);
     auto c = get_internal_window_from_id(clientAddedSpy.first().first().value<quint32>());
     QVERIFY(c);
     QVERIFY(c->isInternal());
@@ -232,7 +232,7 @@ void InternalWindowTest::testEnterLeave()
     QCOMPARE(Test::app()->base.space->findInternal(&win), c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 100));
     QVERIFY(c->isShown());
-    QVERIFY(contains(win::render_stack(Test::app()->base.space->stacking_order), c));
+    QVERIFY(contains(win::render_stack(Test::app()->base.space->stacking.order), c));
 
     QSignalSpy enterSpy(&win, &HelperWindow::entered);
     QVERIFY(enterSpy.isValid());

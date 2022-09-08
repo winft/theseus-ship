@@ -40,7 +40,7 @@ auto find_controlled_window(Redirect const& redirect, QPoint const& pos) ->
     typename Redirect::window_t*
 {
     auto const isScreenLocked = kwinApp()->is_screen_locked();
-    auto const& stacking = redirect.platform.base.space->stacking_order.stack;
+    auto const& stacking = redirect.platform.base.space->stacking.order.stack;
     if (stacking.empty()) {
         return nullptr;
     }

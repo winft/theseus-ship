@@ -128,7 +128,7 @@ void MoveResizeWindowTest::testMove()
 
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->base.space->active_client, c);
+    QCOMPARE(Test::app()->base.space->stacking.active, c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
 
     QSignalSpy geometryChangedSpy(c->qobject.get(), &win::window_qobject::frame_geometry_changed);
@@ -241,7 +241,7 @@ void MoveResizeWindowTest::testResize()
     QCOMPARE(surfaceSizeChangedSpy.count(), 1);
 
     QVERIFY(c);
-    QCOMPARE(Test::app()->base.space->active_client, c);
+    QCOMPARE(Test::app()->base.space->stacking.active, c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
     QSignalSpy geometryChangedSpy(c->qobject.get(), &win::window_qobject::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
@@ -374,7 +374,7 @@ void MoveResizeWindowTest::testPackTo()
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(c);
-    QCOMPARE(Test::app()->base.space->active_client, c);
+    QCOMPARE(Test::app()->base.space->stacking.active, c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
 
     // let's place it centered
@@ -428,7 +428,7 @@ void MoveResizeWindowTest::testPackAgainstClient()
         auto c = Test::render_and_wait_for_shown(surface, QSize(10, 10), Qt::blue);
 
         QVERIFY(c);
-        QCOMPARE(Test::app()->base.space->active_client, c);
+        QCOMPARE(Test::app()->base.space->stacking.active, c);
         QCOMPARE(c->frameGeometry().size(), QSize(10, 10));
         // let's place it centered
         win::place_centered(c, QRect(0, 0, 1280, 1024));
@@ -448,7 +448,7 @@ void MoveResizeWindowTest::testPackAgainstClient()
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(c);
-    QCOMPARE(Test::app()->base.space->active_client, c);
+    QCOMPARE(Test::app()->base.space->stacking.active, c);
     // let's place it centered
     win::place_centered(c, QRect(0, 0, 1280, 1024));
     QCOMPARE(c->frameGeometry(), QRect(590, 487, 100, 50));
@@ -509,7 +509,7 @@ void MoveResizeWindowTest::testGrowShrink()
 
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->base.space->active_client, c);
+    QCOMPARE(Test::app()->base.space->stacking.active, c);
 
     // Configure event due to activation.
     QVERIFY(configure_spy.wait());
@@ -569,7 +569,7 @@ void MoveResizeWindowTest::testPointerMoveEnd()
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(c);
-    QCOMPARE(c, Test::app()->base.space->active_client);
+    QCOMPARE(c, Test::app()->base.space->stacking.active);
     QVERIFY(!win::is_move(c));
 
     // let's trigger the left button

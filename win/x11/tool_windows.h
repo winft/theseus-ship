@@ -36,7 +36,7 @@ void update_tool_windows_visibility(Space* space, bool also_hide)
     }
 
     x11::group<Space> const* active_group = nullptr;
-    auto active_window = space->active_client;
+    auto active_window = space->stacking.active;
 
     // Go up in transiency hiearchy, if the top is found, only tool transients for the top
     // window will be shown; if a group transient is group, all tools in the group will be shown.
@@ -60,7 +60,7 @@ void update_tool_windows_visibility(Space* space, bool also_hide)
     std::vector<window_t*> to_show;
     std::vector<window_t*> to_hide;
 
-    for (auto const& window : space->stacking_order.stack) {
+    for (auto const& window : space->stacking.order.stack) {
         if (!window->control) {
             continue;
         }

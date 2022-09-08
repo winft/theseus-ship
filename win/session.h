@@ -190,7 +190,7 @@ void store_window(Space const& space, KConfigGroup& cg, int num, Win* c)
     cg.writeEntry(QLatin1String("windowType") + n, window_type_to_txt(c->windowType()));
     cg.writeEntry(QLatin1String("shortcut") + n, c->control->shortcut.toString());
     cg.writeEntry(QLatin1String("stackingOrder") + n,
-                  static_cast<int>(index_of(space.stacking_order.pre_stack, c)));
+                  static_cast<int>(index_of(space.stacking.order.pre_stack, c)));
 }
 
 template<typename Space>

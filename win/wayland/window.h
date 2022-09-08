@@ -992,7 +992,7 @@ public:
         if (!this->control->active) {
             return;
         }
-        blocker block(this->space.stacking_order);
+        blocker block(this->space.stacking.order);
         focus_to_null(this->space);
     }
 

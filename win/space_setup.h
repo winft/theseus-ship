@@ -73,26 +73,28 @@ void init_space(Space& space)
                      space.qobject.get(),
                      [&](auto win_id) {
                          auto window = space.windows_map.at(win_id);
-                         focus_chain_remove(space.focus_chain, window);
+                         focus_chain_remove(space.stacking.focus_chain, window);
                      });
     QObject::connect(space.qobject.get(),
                      &Space::qobject_t::clientActivated,
                      space.qobject.get(),
-                     [&] { space.focus_chain.active_window = space.active_client; });
+                     [&] { space.stacking.focus_chain.active_window = space.stacking.active; });
     QObject::connect(
         space.virtual_desktop_manager->qobject.get(),
         &virtual_desktop_manager_qobject::countChanged,
         space.qobject.get(),
-        [&](auto prev, auto next) { focus_chain_resize(space.focus_chain, prev, next); });
-    QObject::connect(space.virtual_desktop_manager->qobject.get(),
-                     &win::virtual_desktop_manager_qobject::currentChanged,
-                     space.qobject.get(),
-                     [&](auto /*prev*/, auto next) { space.focus_chain.current_desktop = next; });
-    QObject::connect(kwinApp()->options->qobject.get(),
-                     &base::options_qobject::separateScreenFocusChanged,
-                     space.qobject.get(),
-                     [&](auto enable) { space.focus_chain.has_separate_screen_focus = enable; });
-    space.focus_chain.has_separate_screen_focus
+        [&](auto prev, auto next) { focus_chain_resize(space.stacking.focus_chain, prev, next); });
+    QObject::connect(
+        space.virtual_desktop_manager->qobject.get(),
+        &win::virtual_desktop_manager_qobject::currentChanged,
+        space.qobject.get(),
+        [&](auto /*prev*/, auto next) { space.stacking.focus_chain.current_desktop = next; });
+    QObject::connect(
+        kwinApp()->options->qobject.get(),
+        &base::options_qobject::separateScreenFocusChanged,
+        space.qobject.get(),
+        [&](auto enable) { space.stacking.focus_chain.has_separate_screen_focus = enable; });
+    space.stacking.focus_chain.has_separate_screen_focus
         = kwinApp()->options->qobject->isSeparateScreenFocus();
 
     auto& vds = space.virtual_desktop_manager;
@@ -108,7 +110,7 @@ void init_space(Space& space)
                      [&](auto prev, auto next) {
                          close_active_popup(space);
 
-                         blocker block(space.stacking_order);
+                         blocker block(space.stacking.order);
                          update_client_visibility_on_desktop_change(&space, next);
 
                          if (space.showing_desktop) {
@@ -161,17 +163,17 @@ void init_space(Space& space)
                                           space.qobject.get(),
                                           SLOT(reconfigure()));
 
-    space.active_client = nullptr;
-    QObject::connect(space.stacking_order.qobject.get(),
+    space.stacking.active = nullptr;
+    QObject::connect(space.stacking.order.qobject.get(),
                      &stacking_order_qobject::changed,
                      space.qobject.get(),
                      [&](auto count_changed) {
                          x11::propagate_clients(space, count_changed);
-                         if (space.active_client) {
-                             space.active_client->control->update_mouse_grab();
+                         if (space.stacking.active) {
+                             space.stacking.active->control->update_mouse_grab();
                          }
                      });
-    QObject::connect(space.stacking_order.qobject.get(),
+    QObject::connect(space.stacking.order.qobject.get(),
                      &stacking_order_qobject::render_restack,
                      space.qobject.get(),
                      [&] { x11::render_stack_unmanaged_windows(space); });
@@ -180,7 +182,7 @@ void init_space(Space& space)
 template<typename Space>
 void clear_space(Space& space)
 {
-    space.stacking_order.lock();
+    space.stacking.order.lock();
 
     // TODO: grabXServer();
 
