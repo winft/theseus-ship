@@ -11,7 +11,7 @@
 #include "input/window_find.h"
 #include "main.h"
 #include "win/activation.h"
-#include "xwl/xwayland_interface.h"
+#include "xwl/types.h"
 
 #include <Wrapland/Server/drag_pool.h>
 #include <Wrapland/Server/pointer_pool.h>
