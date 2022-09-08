@@ -5,8 +5,6 @@
 */
 #pragma once
 
-#include "xwayland_interface.h"
-
 #include "base/x11/atoms.h"
 
 #include <string>
@@ -15,6 +13,15 @@
 
 namespace KWin::xwl
 {
+
+enum class drag_event_reply {
+    // event should be ignored by the filter
+    ignore,
+    // event is filtered out
+    take,
+    // event should be handled as a Wayland native one
+    wayland,
+};
 
 struct x11_runtime {
     xcb_connection_t* connection{nullptr};

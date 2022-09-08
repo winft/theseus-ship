@@ -36,6 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QAbstractEventDispatcher>
 #include <QFile>
 #include <QFutureWatcher>
+#include <QObject>
 #include <QProcess>
 #include <QSocketNotifier>
 #include <QThread>
@@ -70,7 +71,7 @@ inline void read_display(int pipe)
 }
 
 template<typename Space>
-class xwayland : public xwayland_interface<Space>
+class xwayland : public QObject
 {
 public:
     using window_t = typename Space::window_t;
@@ -191,7 +192,7 @@ public:
         waylandServer()->destroy_xwayland_connection();
     }
 
-    drag_event_reply drag_move_filter(window_t* target, QPoint const& pos) override
+    drag_event_reply drag_move_filter(window_t* target, QPoint const& pos)
     {
         if (!data_bridge) {
             return drag_event_reply::wayland;
