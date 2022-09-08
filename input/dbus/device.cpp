@@ -588,6 +588,26 @@ void device::setClickMethodClickfinger(bool set)
     }
 }
 
+bool device::supportsOutputArea() const
+{
+    return false;
+}
+
+QRectF device::defaultOutputArea() const
+{
+    return {0, 0, 1, 1};
+}
+
+QRectF device::outputArea() const
+{
+    return {};
+}
+
+void device::setOutputArea(QRectF const& /*area*/)
+{
+    // Implement once we support tablet tool devices.
+}
+
 bool device::isEnabled() const
 {
     return dev->is_enabled();

@@ -149,6 +149,10 @@ class KWIN_EXPORT device : public QObject
     Q_PROPERTY(bool clickMethodClickfinger READ isClickMethodClickfinger WRITE
                    setClickMethodClickfinger NOTIFY clickMethodChanged)
 
+    Q_PROPERTY(bool supportsOutputArea READ supportsOutputArea CONSTANT)
+    Q_PROPERTY(QRectF defaultOutputArea READ defaultOutputArea CONSTANT)
+    Q_PROPERTY(QRectF outputArea READ outputArea WRITE setOutputArea NOTIFY outputAreaChanged)
+
 public:
     explicit device(input::control::keyboard* control, QObject* parent);
     explicit device(input::control::pointer* control, QObject* parent);
@@ -253,6 +257,11 @@ public:
     void setClickMethodAreas(bool set);
     void setClickMethodClickfinger(bool set);
 
+    QRectF defaultOutputArea() const;
+    bool supportsOutputArea() const;
+    QRectF outputArea() const;
+    void setOutputArea(const QRectF& outputArea);
+
     bool isEnabled() const;
     void setEnabled(bool enabled);
 
@@ -286,6 +295,7 @@ Q_SIGNALS:
     void scrollButtonChanged();
     void scrollFactorChanged();
     void clickMethodChanged();
+    void outputAreaChanged();
 };
 
 }
