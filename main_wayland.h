@@ -52,7 +52,10 @@ public:
     base::platform& get_base() override;
     base::wayland::server* get_wayland_server() override;
 
-    void start(OperationMode mode);
+    void start(OperationMode mode,
+               std::string const& socket_name,
+               base::wayland::start_options flags,
+               QProcessEnvironment environment);
 
     void setApplicationsToStart(const QStringList &applications) {
         m_applicationsToStart = applications;

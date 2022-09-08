@@ -195,10 +195,17 @@ base::wayland::server* ApplicationWayland::get_wayland_server()
     return server.get();
 }
 
-void ApplicationWayland::start(OperationMode mode)
+void ApplicationWayland::start(OperationMode mode,
+                               std::string const& socket_name,
+                               base::wayland::start_options flags,
+                               QProcessEnvironment environment)
 {
+    assert(mode != OperationModeX11);
     setOperationMode(mode);
+
     prepare_start();
+
+    server = std::make_unique<KWin::base::wayland::server>(socket_name, flags);
 
     using base_t = base::backend::wlroots::platform;
     base = std::make_unique<base_t>(waylandServer()->display.get());
@@ -239,6 +246,12 @@ void ApplicationWayland::start(OperationMode mode)
     base->space->scripting = std::make_unique<scripting::platform<base_t::space_t>>(*base->space);
 
     base->render->compositor->start(*base->space);
+
+    if (auto const& name = server->display->socket_name(); !name.empty()) {
+        environment.insert(QStringLiteral("WAYLAND_DISPLAY"), name.c_str());
+    }
+
+    setProcessStartupEnvironment(environment);
 
     waylandServer()->create_addons([this] { handle_server_addons_created(); });
     kwinApp()->screen_locker_watcher->initialize();
@@ -462,24 +475,11 @@ int main(int argc, char * argv[])
         flags |= KWin::base::wayland::start_options::no_global_shortcuts;
     }
 
-    try {
-        auto const socket_name = parser.value(waylandSocketOption).toStdString();
-        a.server.reset(new KWin::base::wayland::server(socket_name, flags));
-    } catch (std::exception const&) {
-        std::cerr << "FATAL ERROR: could not create Wayland server" << std::endl;
-        return 1;
-    }
-
-    if (auto const& name = a.server->display->socket_name(); !name.empty()) {
-        environment.insert(QStringLiteral("WAYLAND_DISPLAY"), name.c_str());
-    }
-
     auto op_mode = parser.isSet(xwaylandOption) ? KWin::Application::OperationModeXwayland
                                                 : KWin::Application::OperationModeWaylandOnly;
 
-    a.setProcessStartupEnvironment(environment);
     a.setApplicationsToStart(parser.positionalArguments());
-    a.start(op_mode);
+    a.start(op_mode, parser.value(waylandSocketOption).toStdString(), flags, environment);
 
     return a.exec();
 }
