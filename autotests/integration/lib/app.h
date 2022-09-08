@@ -37,7 +37,6 @@ public:
     using wayland_space = win::wayland::space<base::wayland::platform>;
 
     using base_t = base::backend::wlroots::platform;
-    std::unique_ptr<base::wayland::server> server;
     base_t base;
 
 #if HAVE_WLR_BASE_INPUT_DEVICES

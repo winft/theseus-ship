@@ -42,8 +42,6 @@ class ApplicationWayland : public Application
 public:
     using wayland_space = win::wayland::space<base::wayland::platform>;
 
-    std::unique_ptr<base::wayland::server> server;
-
     ApplicationWayland(int &argc, char **argv);
     ~ApplicationWayland() override;
 

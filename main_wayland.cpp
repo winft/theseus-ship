@@ -147,7 +147,7 @@ ApplicationWayland::ApplicationWayland(int &argc, char **argv)
 ApplicationWayland::~ApplicationWayland()
 {
     setTerminating();
-    if (!waylandServer()) {
+    if (!base->server) {
         return;
     }
 
@@ -165,7 +165,7 @@ ApplicationWayland::~ApplicationWayland()
 
     // Kill Xwayland before terminating its connection.
     base->xwayland.reset();
-    waylandServer()->terminateClientConnections();
+    base->server->terminateClientConnections();
 
     if (base->render->compositor) {
         // Block compositor to prevent further compositing from crashing with a null workspace.
@@ -179,10 +179,7 @@ ApplicationWayland::~ApplicationWayland()
 
 bool ApplicationWayland::is_screen_locked() const
 {
-    if (!server) {
-        return false;
-    }
-    return server->is_screen_locked();
+    return base->server && base->server->is_screen_locked();
 }
 
 base::platform& ApplicationWayland::get_base()
@@ -192,7 +189,7 @@ base::platform& ApplicationWayland::get_base()
 
 base::wayland::server* ApplicationWayland::get_wayland_server()
 {
-    return server.get();
+    return base->server.get();
 }
 
 void ApplicationWayland::start(OperationMode mode,
@@ -205,10 +202,8 @@ void ApplicationWayland::start(OperationMode mode,
 
     prepare_start();
 
-    server = std::make_unique<KWin::base::wayland::server>(socket_name, flags);
-
     using base_t = base::backend::wlroots::platform;
-    base = std::make_unique<base_t>(waylandServer()->display.get());
+    base = std::make_unique<base_t>(socket_name, flags, wlr_backend_autocreate);
 
     using render_t = render::backend::wlroots::platform<base_t>;
     base->render = std::make_unique<render_t>(*base);
@@ -236,7 +231,7 @@ void ApplicationWayland::start(OperationMode mode,
         exit(exc.code().value());
     }
 
-    base->space = std::make_unique<base_t::space_t>(*base, server.get());
+    base->space = std::make_unique<base_t::space_t>(*base, base->server.get());
     base->space->input->setup_workspace();
 
     input::wayland::add_dbus(base->input.get());
@@ -247,13 +242,13 @@ void ApplicationWayland::start(OperationMode mode,
 
     base->render->compositor->start(*base->space);
 
-    if (auto const& name = server->display->socket_name(); !name.empty()) {
+    if (auto const& name = base->server->display->socket_name(); !name.empty()) {
         environment.insert(QStringLiteral("WAYLAND_DISPLAY"), name.c_str());
     }
 
     setProcessStartupEnvironment(environment);
 
-    waylandServer()->create_addons([this] { handle_server_addons_created(); });
+    base->server->create_addons([this] { handle_server_addons_created(); });
     kwinApp()->screen_locker_watcher->initialize();
 }
 

@@ -96,10 +96,7 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode,
     removeLibraryPath(ownPath);
     addLibraryPath(ownPath);
 
-    server.reset(new base::wayland::server(socket_name, flags));
-    base = base::backend::wlroots::platform(server->display.get(),
-                                            wlr_headless_backend_create(server->display->native()));
-
+    base = base::backend::wlroots::platform(socket_name, flags, wlr_headless_backend_create);
     base.render = std::make_unique<render::backend::wlroots::platform<decltype(base)>>(base);
 
     auto environment = QProcessEnvironment::systemEnvironment();
@@ -140,10 +137,7 @@ WaylandTestApplication::~WaylandTestApplication()
 
 bool WaylandTestApplication::is_screen_locked() const
 {
-    if (!server) {
-        return false;
-    }
-    return server->is_screen_locked();
+    return base.server && base.server->is_screen_locked();
 }
 
 base::platform& WaylandTestApplication::get_base()
@@ -153,7 +147,7 @@ base::platform& WaylandTestApplication::get_base()
 
 base::wayland::server* WaylandTestApplication::get_wayland_server()
 {
-    return server.get();
+    return base.server.get();
 }
 
 void WaylandTestApplication::start()
@@ -211,7 +205,7 @@ void WaylandTestApplication::start()
         exit(exc.code().value());
     }
 
-    base.space = std::make_unique<base_t::space_t>(base, server.get());
+    base.space = std::make_unique<base_t::space_t>(base, base.server.get());
     base.space->input->setup_workspace();
     input::wayland::add_dbus(base.input.get());
     win::init_shortcuts(*base.space);
