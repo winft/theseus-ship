@@ -52,11 +52,8 @@ public:
     base::platform& get_base() override;
     base::wayland::server* get_wayland_server() override;
 
-    void start();
+    void start(OperationMode mode);
 
-    void setStartXwayland(bool start) {
-        m_startXWayland = start;
-    }
     void setApplicationsToStart(const QStringList &applications) {
         m_applicationsToStart = applications;
     }
@@ -76,7 +73,6 @@ private:
     void create_xwayland();
     void startSession();
 
-    bool m_startXWayland = false;
     QStringList m_applicationsToStart;
     QProcessEnvironment m_environment;
     QString m_sessionArgument;

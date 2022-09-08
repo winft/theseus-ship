@@ -195,13 +195,10 @@ base::wayland::server* ApplicationWayland::get_wayland_server()
     return server.get();
 }
 
-void ApplicationWayland::start()
+void ApplicationWayland::start(OperationMode mode)
 {
+    setOperationMode(mode);
     prepare_start();
-
-    if (m_startXWayland) {
-        setOperationMode(OperationModeXwayland);
-    }
 
     using base_t = base::backend::wlroots::platform;
     base = std::make_unique<base_t>(waylandServer()->display.get());
@@ -477,10 +474,12 @@ int main(int argc, char * argv[])
         environment.insert(QStringLiteral("WAYLAND_DISPLAY"), name.c_str());
     }
 
+    auto op_mode = parser.isSet(xwaylandOption) ? KWin::Application::OperationModeXwayland
+                                                : KWin::Application::OperationModeWaylandOnly;
+
     a.setProcessStartupEnvironment(environment);
-    a.setStartXwayland(parser.isSet(xwaylandOption));
     a.setApplicationsToStart(parser.positionalArguments());
-    a.start();
+    a.start(op_mode);
 
     return a.exec();
 }
