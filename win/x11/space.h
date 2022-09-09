@@ -57,7 +57,6 @@ public:
                                           })}
         , deco{std::make_unique<deco::bridge<type>>(*this)}
         , appmenu{std::make_unique<dbus::appmenu>(dbus::create_appmenu_callbacks(*this))}
-        , stacking_order{std::make_unique<win::stacking_order<window_t>>()}
         , focus_chain{win::focus_chain<type>(*this)}
         , user_actions_menu{std::make_unique<win::user_actions_menu<type>>(*this)}
     {
@@ -183,7 +182,7 @@ public:
     std::unique_ptr<x11::color_mapper<type>> color_mapper;
 
     std::unique_ptr<typename input_t::redirect_t> input;
-    std::unique_ptr<win::stacking_order<window_t>> stacking_order;
+    win::stacking_order<window_t> stacking_order;
     win::focus_chain<type> focus_chain;
 
     std::unique_ptr<win::tabbox<type>> tabbox;

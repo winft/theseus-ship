@@ -287,9 +287,9 @@ void focus_to_null(Space& space)
 template<typename Space>
 typename Space::window_t* window_under_mouse(Space const& space, base::output const* output)
 {
-    auto it = space.stacking_order->stack.cend();
+    auto it = space.stacking_order.stack.cend();
 
-    while (it != space.stacking_order->stack.cbegin()) {
+    while (it != space.stacking_order.stack.cbegin()) {
         auto window = *(--it);
         if (!window->control) {
             continue;
@@ -444,7 +444,7 @@ void set_active_window(Space& space, typename Space::window_t* window)
     }
 
     // e.g. fullscreens have different layer when active/not-active
-    space.stacking_order->update_order();
+    space.stacking_order.update_order();
 
     if (space.root_info) {
         x11::root_info_set_active_window(*space.root_info, space.active_client);
@@ -612,8 +612,8 @@ typename Space::window_t* find_window_to_activate_on_desktop(Space& space, unsig
 
     // from actiavtion.cpp
     if (kwinApp()->options->qobject->isNextFocusPrefersMouse()) {
-        auto it = space.stacking_order->stack.cend();
-        while (it != space.stacking_order->stack.cbegin()) {
+        auto it = space.stacking_order.stack.cend();
+        while (it != space.stacking_order.stack.cbegin()) {
             auto window = *(--it);
             if (!window->control) {
                 continue;
@@ -679,7 +679,7 @@ bool activate_window_direction(Space& space,
 {
     decltype(c) switchTo = nullptr;
     int bestScore = 0;
-    auto clist = space.stacking_order->stack;
+    auto clist = space.stacking_order.stack;
 
     for (auto i = clist.rbegin(); i != clist.rend(); ++i) {
         auto client = *i;
@@ -821,8 +821,8 @@ void set_showing_desktop(Space& space, bool showing)
     // updateLayer & lowerClient would invalidate stacking_order
     {
         blocker block(space.stacking_order);
-        for (int i = static_cast<int>(space.stacking_order->stack.size()) - 1; i > -1; --i) {
-            auto c = space.stacking_order->stack.at(i);
+        for (int i = static_cast<int>(space.stacking_order.stack.size()) - 1; i > -1; --i) {
+            auto c = space.stacking_order.stack.at(i);
             if (c->isOnCurrentDesktop()) {
                 if (is_dock(c)) {
                     update_layer(c);

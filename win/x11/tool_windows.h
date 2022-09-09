@@ -60,7 +60,7 @@ void update_tool_windows_visibility(Space* space, bool also_hide)
     std::vector<window_t*> to_show;
     std::vector<window_t*> to_hide;
 
-    for (auto const& window : space->stacking_order->stack) {
+    for (auto const& window : space->stacking_order.stack) {
         if (!window->control) {
             continue;
         }

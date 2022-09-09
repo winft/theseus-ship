@@ -495,7 +495,7 @@ public:
         this->control->destroy_decoration();
 
         remove_window_from_lists(this->space, this);
-        this->space.stacking_order->update_count();
+        this->space.stacking_order.update_count();
         update_space_areas(this->space);
         Q_EMIT this->space.qobject->internalClientRemoved(this->signal_id);
 
@@ -670,7 +670,7 @@ public:
             place(this, area);
         }
 
-        this->space.stacking_order->update_count();
+        this->space.stacking_order.update_count();
         update_space_areas(this->space);
 
         Q_EMIT this->space.qobject->internalClientAdded(this->signal_id);

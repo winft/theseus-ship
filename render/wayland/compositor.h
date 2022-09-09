@@ -65,7 +65,7 @@ public:
                              &Application::x11ConnectionChanged,
                              this->qobject.get(),
                              [this] { compositor_setup_x11_support(*this); });
-            QObject::connect(space.stacking_order->qobject.get(),
+            QObject::connect(space.stacking_order.qobject.get(),
                              &win::stacking_order_qobject::changed,
                              this->qobject.get(),
                              [this] { this->addRepaintFull(); });

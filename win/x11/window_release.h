@@ -68,7 +68,7 @@ void remove_controlled_window_from_space(Space& space, Win* win)
 
     Q_EMIT space.qobject->clientRemoved(win->signal_id);
 
-    space.stacking_order->update_count();
+    space.stacking_order.update_count();
     update_space_areas(space);
     update_tabbox(space);
 }

@@ -236,7 +236,7 @@ void plasma_manage_update_stacking_order(Space& space)
     std::vector<uint32_t> ids;
     std::vector<std::string> uuids;
 
-    for (auto win : space.stacking_order->stack) {
+    for (auto win : space.stacking_order.stack) {
         if (!win->control) {
             continue;
         }

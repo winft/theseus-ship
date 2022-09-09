@@ -80,7 +80,6 @@ public:
                                           })}
         , deco{std::make_unique<deco::bridge<type>>(*this)}
         , appmenu{std::make_unique<dbus::appmenu>(dbus::create_appmenu_callbacks(*this))}
-        , stacking_order{std::make_unique<win::stacking_order<window_t>>()}
         , focus_chain{win::focus_chain<type>(*this)}
         , user_actions_menu{std::make_unique<win::user_actions_menu<type>>(*this)}
         , server{server}
@@ -126,14 +125,14 @@ public:
         plasma_window_manager->setVirtualDesktopManager(plasma_virtual_desktop_manager.get());
         virtual_desktop_manager->setVirtualDesktopManagement(plasma_virtual_desktop_manager.get());
 
-        QObject::connect(stacking_order->qobject.get(),
+        QObject::connect(stacking_order.qobject.get(),
                          &stacking_order_qobject::render_restack,
                          qobject.get(),
                          [this] {
                              for (auto win : windows) {
                                  if (auto iwin = dynamic_cast<internal_window_t*>(win);
                                      iwin && iwin->isShown()) {
-                                     stacking_order->render_overlays.push_back(iwin);
+                                     stacking_order.render_overlays.push_back(iwin);
                                  }
                              }
                          });
@@ -190,7 +189,7 @@ public:
                              plasma_window_manager->setShowingDesktopState(
                                  set ? ShowingState::Enabled : ShowingState::Disabled);
                          });
-        QObject::connect(stacking_order->qobject.get(),
+        QObject::connect(stacking_order.qobject.get(),
                          &stacking_order_qobject::changed,
                          plasma_window_manager.get(),
                          [this] { plasma_manage_update_stacking_order(*this); });
@@ -222,7 +221,7 @@ public:
 
     ~space() override
     {
-        stacking_order->lock();
+        stacking_order.lock();
 
         for (auto const& window : windows) {
             if (auto win = dynamic_cast<wayland_window*>(window); win && !win->remnant) {
@@ -354,9 +353,9 @@ public:
             }
         }
 
-        assert(!contains(stacking_order->pre_stack, window));
-        stacking_order->pre_stack.push_back(window);
-        stacking_order->update_order();
+        assert(!contains(stacking_order.pre_stack, window));
+        stacking_order.pre_stack.push_back(window);
+        stacking_order.update_order();
 
         if (window->control) {
             update_space_areas(*this);
@@ -372,7 +371,7 @@ public:
                              qobject.get(),
                              [this, window] {
                                  update_layer(window);
-                                 stacking_order->update_count();
+                                 stacking_order.update_count();
                                  update_space_areas(*this);
                                  if (window->wantsInput()) {
                                      activate_window(*this, window);
@@ -383,7 +382,7 @@ public:
                              qobject.get(),
                              [this] {
                                  // TODO: update tabbox if it's displayed
-                                 stacking_order->update_count();
+                                 stacking_order.update_count();
                                  update_space_areas(*this);
                              });
 
@@ -418,7 +417,7 @@ public:
             Q_EMIT qobject->clientRemoved(window->signal_id);
         }
 
-        stacking_order->update_count();
+        stacking_order.update_count();
 
         if (window->control) {
             update_space_areas(*this);
@@ -468,7 +467,7 @@ public:
     std::unique_ptr<x11::color_mapper<type>> color_mapper;
 
     std::unique_ptr<typename input_t::redirect_t> input;
-    std::unique_ptr<win::stacking_order<window_t>> stacking_order;
+    win::stacking_order<window_t> stacking_order;
     win::focus_chain<type> focus_chain;
 
     std::unique_ptr<win::tabbox<type>> tabbox;

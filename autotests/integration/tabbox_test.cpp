@@ -108,7 +108,7 @@ void TabBoxTest::testCapsLock()
     QVERIFY(c3);
     QVERIFY(c3->control->active);
 
-    QTRY_COMPARE(Test::app()->base.space->stacking_order->stack,
+    QTRY_COMPARE(Test::app()->base.space->stacking_order.stack,
                  (std::deque<Test::space::window_t*>{c1, c2, c3}));
 
     // Setup tabbox signal spies
@@ -150,7 +150,7 @@ void TabBoxTest::testCapsLock()
 
     // Has walked backwards to the previously lowest client in the stacking order.
     QCOMPARE(Test::app()->base.space->active_client, c1);
-    QCOMPARE(Test::app()->base.space->stacking_order->stack,
+    QCOMPARE(Test::app()->base.space->stacking_order.stack,
              (std::deque<Test::space::window_t*>{c2, c3, c1}));
 
     surface3.reset();

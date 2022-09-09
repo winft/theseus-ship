@@ -32,8 +32,8 @@ void destroy_window(Win* win)
         Q_EMIT win->qobject->closed();
         win->space.handle_window_removed(win);
         remove_all(win->space.windows, win);
-        remove_all(win->space.stacking_order->pre_stack, win);
-        remove_all(win->space.stacking_order->stack, win);
+        remove_all(win->space.stacking_order.pre_stack, win);
+        remove_all(win->space.stacking_order.stack, win);
         delete win;
         return;
     }

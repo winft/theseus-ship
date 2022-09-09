@@ -129,7 +129,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
     switch (event_type) {
     case XCB_CONFIGURE_NOTIFY:
         if (reinterpret_cast<xcb_configure_notify_event_t*>(event)->event == rootWindow()) {
-            space.stacking_order->render_restack_required = true;
+            space.stacking_order.render_restack_required = true;
         }
         break;
     };

@@ -1078,8 +1078,8 @@ private:
         // policies - the topmost one, with some exceptions (can't be keepabove/below,
         // otherwise it gets stuck on them)
         //     Q_ASSERT(space.block_stacking_updates == 0);
-        for (int i = space.stacking_order->stack.size() - 1; i >= 0; --i) {
-            auto window = space.stacking_order->stack.at(i);
+        for (int i = space.stacking_order.stack.size() - 1; i >= 0; --i) {
+            auto window = space.stacking_order.stack.at(i);
             if (window->control && window->isOnCurrentDesktop() && !win::is_special_window(window)
                 && window->isShown() && win::wants_tab_focus(window) && !window->control->keep_above
                 && !window->control->keep_below) {

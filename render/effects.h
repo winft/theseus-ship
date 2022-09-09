@@ -402,7 +402,7 @@ public:
                 }
             });
 
-        connect(ws->stacking_order->qobject.get(),
+        connect(ws->stacking_order.qobject.get(),
                 &win::stacking_order_qobject::changed,
                 this,
                 &EffectsHandler::stackingOrderChanged);
@@ -925,7 +925,7 @@ public:
 
     EffectWindowList stackingOrder() const override
     {
-        auto list = win::render_stack(*compositor.space->stacking_order);
+        auto list = win::render_stack(compositor.space->stacking_order);
         EffectWindowList ret;
         for (auto t : list) {
             if (auto eff_win = t->render->effect.get()) {

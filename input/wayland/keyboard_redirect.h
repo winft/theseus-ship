@@ -136,7 +136,7 @@ public:
 
         // TODO: this needs better integration
         window_t* found = nullptr;
-        auto const& stacking = redirect->platform.base.space->stacking_order->stack;
+        auto const& stacking = redirect->platform.base.space->stacking_order.stack;
         if (!stacking.empty()) {
             auto it = stacking.end();
             do {

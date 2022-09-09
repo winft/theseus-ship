@@ -120,8 +120,8 @@ bool perform_mouse_command(Win& win,
         bool mustReplay = !win.control->rules.checkAcceptFocus(win.acceptsFocus());
 
         if (mustReplay) {
-            auto it = space.stacking_order->stack.cend();
-            auto begin = space.stacking_order->stack.cbegin();
+            auto it = space.stacking_order.stack.cend();
+            auto begin = space.stacking_order.stack.cbegin();
             while (mustReplay && --it != begin && *it != &win) {
                 auto window = *it;
                 if (!window->control || (window->control->keep_above && !win.control->keep_above)

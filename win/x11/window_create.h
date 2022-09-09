@@ -35,13 +35,13 @@ void add_controlled_window_to_space(Space& space, Win* win)
         focus_chain_update(space.focus_chain, win, focus_chain_change::update);
     }
 
-    if (!contains(space.stacking_order->pre_stack, win)) {
+    if (!contains(space.stacking_order.pre_stack, win)) {
         // Raise if it hasn't got any stacking position yet
-        space.stacking_order->pre_stack.push_back(win);
+        space.stacking_order.pre_stack.push_back(win);
     }
-    if (!contains(space.stacking_order->stack, win)) {
+    if (!contains(space.stacking_order.stack, win)) {
         // It'll be updated later, and updateToolWindows() requires c to be in stacking_order.
-        space.stacking_order->stack.push_back(win);
+        space.stacking_order.stack.push_back(win);
     }
 
     // This cannot be in manage(), because the client got added only now
@@ -63,7 +63,7 @@ void add_controlled_window_to_space(Space& space, Win* win)
     }
 
     // Propagate new client
-    space.stacking_order->update_count();
+    space.stacking_order.update_count();
 
     if (is_utility(win) || is_menu(win) || is_toolbar(win)) {
         update_tool_windows_visibility(&space, true);

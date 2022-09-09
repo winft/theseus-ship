@@ -28,6 +28,11 @@ public:
     {
         p->lock();
     }
+    explicit blocker(BasicLockable& lock)
+        : p(&lock)
+    {
+        p->lock();
+    }
     blocker(blocker const& other)
     {
         p = other.p;

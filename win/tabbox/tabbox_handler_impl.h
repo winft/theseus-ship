@@ -125,7 +125,7 @@ public:
 
     tabbox_client_list stacking_order() const override
     {
-        auto const stacking = m_tabbox->space.stacking_order->stack;
+        auto const stacking = m_tabbox->space.stacking_order.stack;
         tabbox_client_list ret;
         for (auto const& toplevel : stacking) {
             if (toplevel->control) {
@@ -189,7 +189,7 @@ public:
 
     std::weak_ptr<tabbox_client> desktop_client() const override
     {
-        for (auto const& window : m_tabbox->space.stacking_order->stack) {
+        for (auto const& window : m_tabbox->space.stacking_order.stack) {
             if (window->control && win::is_desktop(window) && window->isOnCurrentDesktop()
                 && window->central_output == win::get_current_output(m_tabbox->space)) {
                 return window->control->tabbox();

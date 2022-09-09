@@ -232,7 +232,7 @@ void InternalWindowTest::testEnterLeave()
     QCOMPARE(Test::app()->base.space->findInternal(&win), c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 100));
     QVERIFY(c->isShown());
-    QVERIFY(contains(win::render_stack(*Test::app()->base.space->stacking_order), c));
+    QVERIFY(contains(win::render_stack(Test::app()->base.space->stacking_order), c));
 
     QSignalSpy enterSpy(&win, &HelperWindow::entered);
     QVERIFY(enterSpy.isValid());

@@ -162,7 +162,7 @@ void init_space(Space& space)
                                           SLOT(reconfigure()));
 
     space.active_client = nullptr;
-    QObject::connect(space.stacking_order->qobject.get(),
+    QObject::connect(space.stacking_order.qobject.get(),
                      &stacking_order_qobject::changed,
                      space.qobject.get(),
                      [&](auto count_changed) {
@@ -171,7 +171,7 @@ void init_space(Space& space)
                              space.active_client->control->update_mouse_grab();
                          }
                      });
-    QObject::connect(space.stacking_order->qobject.get(),
+    QObject::connect(space.stacking_order.qobject.get(),
                      &stacking_order_qobject::render_restack,
                      space.qobject.get(),
                      [&] { x11::render_stack_unmanaged_windows(space); });
@@ -180,7 +180,7 @@ void init_space(Space& space)
 template<typename Space>
 void clear_space(Space& space)
 {
-    space.stacking_order->lock();
+    space.stacking_order.lock();
 
     // TODO: grabXServer();
 
@@ -202,8 +202,6 @@ void clear_space(Space& space)
     }
 
     assert(space.windows.empty());
-
-    space.stacking_order.reset();
 
     space.rule_book.reset();
     kwinApp()->config()->sync();
