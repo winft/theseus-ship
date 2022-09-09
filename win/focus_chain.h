@@ -42,27 +42,21 @@ namespace KWin::win
  * In addition there is one chain for each virtual desktop which is used to determine which Client
  * should get activated when the user switches to another virtual desktop.
  */
-template<typename Space>
+template<typename Window>
 class focus_chain
 {
 public:
-    using focus_chain_list = std::list<typename Space::window_t*>;
-
-    focus_chain(Space& space)
-        : space{space}
-    {
-    }
+    using focus_chain_list = std::list<Window*>;
 
     struct {
         focus_chain_list latest_use;
         std::unordered_map<unsigned int, focus_chain_list> desktops;
     } chains;
 
-    typename Space::window_t* active_window{nullptr};
+    Window* active_window{nullptr};
     unsigned int current_desktop{0};
 
     bool has_separate_screen_focus{false};
-    Space& space;
 };
 
 }

@@ -46,8 +46,7 @@ void set_current_output(Space& space, base::output const& output)
     close_active_popup(space);
 
     int const desktop = space.virtual_desktop_manager->current();
-    auto get_focus = focus_chain_get_for_activation<typename Space::window_t>(
-        space.focus_chain, desktop, &output);
+    auto get_focus = focus_chain_get_for_activation(space, desktop, &output);
 
     if (get_focus == nullptr) {
         get_focus = find_desktop(&space, true, desktop);

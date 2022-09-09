@@ -22,9 +22,12 @@ namespace KWin::win
  * @param output The output to constrain the search on with separate output focus
  * @return The window which could be activated or @c null if there is none.
  */
-template<typename Win, typename Manager>
-Win* focus_chain_get_for_activation(Manager& manager, uint desktop, base::output const* output)
+template<typename Space>
+auto focus_chain_get_for_activation(Space& space, uint desktop, base::output const* output) ->
+    typename Space::window_t*
 {
+    auto& manager = space.focus_chain;
+
     auto desk_it = manager.chains.desktops.find(desktop);
     if (desk_it == manager.chains.desktops.end()) {
         return nullptr;
@@ -48,14 +51,17 @@ Win* focus_chain_get_for_activation(Manager& manager, uint desktop, base::output
     return nullptr;
 }
 
-template<typename Win, typename Manager>
-Win* focus_chain_get_for_activation_on_current_output(Manager& manager, uint desktop)
+template<typename Space>
+auto focus_chain_get_for_activation_on_current_output(Space& space, uint desktop) ->
+    typename Space::window_t*
 {
-    return focus_chain_get_for_activation<Win>(manager, desktop, get_current_output(manager.space));
+    return focus_chain_get_for_activation(space, desktop, get_current_output(space));
 }
 
-template<typename Manager, typename Window>
-bool focus_chain_is_usable_focus_candidate(Manager& manager, Window* window, Window* prev)
+template<typename Space>
+bool focus_chain_is_usable_focus_candidate(Space& space,
+                                           typename Space::window_t* window,
+                                           typename Space::window_t* prev)
 {
     if (window == prev) {
         return false;
@@ -64,11 +70,11 @@ bool focus_chain_is_usable_focus_candidate(Manager& manager, Window* window, Win
         return false;
     }
 
-    if (!manager.has_separate_screen_focus) {
+    if (!space.focus_chain.has_separate_screen_focus) {
         return true;
     }
 
-    return on_screen(window, prev ? prev->central_output : get_current_output(manager.space));
+    return on_screen(window, prev ? prev->central_output : get_current_output(space));
 }
 
 /**
@@ -82,9 +88,12 @@ bool focus_chain_is_usable_focus_candidate(Manager& manager, Window* window, Win
  * @param desktop The virtual desktop whose focus chain should be used
  * @return *The next usable window or @c null if none can be found.
  */
-template<typename Win, typename Manager>
-Win* focus_chain_next_for_desktop(Manager& manager, Win* reference, uint desktop)
+template<typename Space>
+auto focus_chain_next_for_desktop(Space& space, typename Space::window_t* reference, uint desktop)
+    -> typename Space::window_t*
 {
+    auto& manager = space.focus_chain;
+
     auto desk_it = manager.chains.desktops.find(desktop);
     if (desk_it == manager.chains.desktops.end()) {
         return nullptr;
@@ -94,7 +103,7 @@ Win* focus_chain_next_for_desktop(Manager& manager, Win* reference, uint desktop
 
     // TODO(romangg): reverse-range with C++20
     for (auto it = chain.rbegin(); it != chain.rend(); ++it) {
-        if (focus_chain_is_usable_focus_candidate(manager, *it, reference)) {
+        if (focus_chain_is_usable_focus_candidate(space, *it, reference)) {
             return *it;
         }
     }

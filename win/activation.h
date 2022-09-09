@@ -558,8 +558,7 @@ bool activate_next_window(Space& space, typename Space::window_t* window)
         if (window && window->transient()->lead()) {
             auto leaders = window->transient()->leads();
             if (leaders.size() == 1
-                && focus_chain_is_usable_focus_candidate(
-                    space.focus_chain, leaders.at(0), window)) {
+                && focus_chain_is_usable_focus_candidate(space, leaders.at(0), window)) {
                 get_focus = leaders.at(0);
 
                 // also raise - we don't know where it came from
@@ -568,7 +567,7 @@ bool activate_next_window(Space& space, typename Space::window_t* window)
         }
         if (!get_focus) {
             // nope, ask the focus chain for the next candidate
-            get_focus = focus_chain_next_for_desktop(space.focus_chain, window, desktop);
+            get_focus = focus_chain_next_for_desktop(space, window, desktop);
         }
     }
 
@@ -632,8 +631,7 @@ typename Space::window_t* find_window_to_activate_on_desktop(Space& space, unsig
         }
     }
 
-    return focus_chain_get_for_activation_on_current_output<typename Space::window_t>(
-        space.focus_chain, desktop);
+    return focus_chain_get_for_activation_on_current_output(space, desktop);
 }
 
 template<typename Space>
@@ -842,9 +840,8 @@ void set_showing_desktop(Space& space, bool showing)
     if (space.showing_desktop && topDesk) {
         request_focus(space, topDesk);
     } else if (!space.showing_desktop && changed) {
-        auto const window
-            = focus_chain_get_for_activation_on_current_output<typename Space::window_t>(
-                space.focus_chain, space.virtual_desktop_manager->current());
+        auto const window = focus_chain_get_for_activation_on_current_output(
+            space, space.virtual_desktop_manager->current());
         if (window) {
             activate_window(space, window);
         }

@@ -80,7 +80,6 @@ public:
                                           })}
         , deco{std::make_unique<deco::bridge<type>>(*this)}
         , appmenu{std::make_unique<dbus::appmenu>(dbus::create_appmenu_callbacks(*this))}
-        , focus_chain{win::focus_chain<type>(*this)}
         , user_actions_menu{std::make_unique<win::user_actions_menu<type>>(*this)}
         , server{server}
         , compositor{server->display->createCompositor()}
@@ -468,7 +467,7 @@ public:
 
     std::unique_ptr<typename input_t::redirect_t> input;
     win::stacking_order<window_t> stacking_order;
-    win::focus_chain<type> focus_chain;
+    win::focus_chain<window_t> focus_chain;
 
     std::unique_ptr<win::tabbox<type>> tabbox;
     std::unique_ptr<osd_notification<input_t>> osd;
