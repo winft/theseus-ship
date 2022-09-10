@@ -19,11 +19,13 @@ void idle_update(Device& idle, Win& window)
         if (!window.inhibit_idle) {
             window.inhibit_idle = true;
             idle.inhibit();
+            window.space.base.input->idle.inhibit();
         }
     } else {
         if (window.inhibit_idle) {
             window.inhibit_idle = false;
             idle.uninhibit();
+            window.space.base.input->idle.uninhibit();
         }
     }
 }
@@ -46,6 +48,7 @@ void idle_setup(Device& idle, Win& window)
         if (window.inhibit_idle) {
             window.inhibit_idle = false;
             idle.uninhibit();
+            window.space.base.input->idle.uninhibit();
         }
     });
 

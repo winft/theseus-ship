@@ -3,6 +3,7 @@
  This file is part of the KDE project.
 
 Copyright (C) 2015 Martin Gräßlin <mgraesslin@kde.org>
+Copyright (C) 2022 Roman Gilg <subdiff@gmail.com>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -19,30 +20,39 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "poller.h"
 
-#include "../../base/wayland/server.h"
-#include "../../main.h"
+#include "input/idle.h"
+#include "input/singleton_interface.h"
 
-#include <Wrapland/Client/idle.h>
-#include <Wrapland/Client/registry.h>
-#include <Wrapland/Client/seat.h>
+#include <algorithm>
 
 KWinIdleTimePoller::KWinIdleTimePoller(QObject *parent)
     : AbstractSystemPoller(parent)
 {
-    QObject::connect(KWin::waylandServer(),
-                     &KWin::base::wayland::server::terminating_internal_client_connection,
-                     this,
-                     [this] {
-                         qDeleteAll(m_timeouts);
-                         m_timeouts.clear();
-                         delete m_seat;
-                         m_seat = nullptr;
-                         delete m_idle;
-                         m_idle = nullptr;
-                     });
 }
 
-KWinIdleTimePoller::~KWinIdleTimePoller() = default;
+KWinIdleTimePoller::~KWinIdleTimePoller()
+{
+    cleanup();
+}
+
+void KWinIdleTimePoller::cleanup()
+{
+    if (auto idle_interface = KWin::input::singleton_interface::idle_qobject) {
+        for (auto& listener : qAsConst(m_timeouts)) {
+            idle_interface->unregister_listener(*listener);
+        }
+        if (m_catchResumeTimeout) {
+            idle_interface->unregister_listener(*m_catchResumeTimeout);
+        }
+    }
+
+    qDeleteAll(m_timeouts);
+    m_timeouts.clear();
+
+    delete m_catchResumeTimeout;
+    m_catchResumeTimeout = nullptr;
+
+}
 
 bool KWinIdleTimePoller::isAvailable()
 {
@@ -51,39 +61,41 @@ bool KWinIdleTimePoller::isAvailable()
 
 bool KWinIdleTimePoller::setUpPoller()
 {
-    auto registry = KWin::waylandServer()->internal_connection.registry;
-    if (!m_seat) {
-        const auto iface = registry->interface(Wrapland::Client::Registry::Interface::Seat);
-        m_seat = registry->createSeat(iface.name, iface.version, this);
+    auto idle_interface = KWin::input::singleton_interface::idle_qobject;
+    if (!idle_interface) {
+        return false;
     }
-    if (!m_idle) {
-        const auto iface = registry->interface(Wrapland::Client::Registry::Interface::Idle);
-        m_idle = registry->createIdle(iface.name, iface.version, this);
-    }
-    return m_seat->isValid() && m_idle->isValid();
+
+    QObject::connect(idle_interface, &QObject::destroyed, this, &KWinIdleTimePoller::cleanup);
+    return true;
 }
 
 void KWinIdleTimePoller::unloadPoller()
 {
+    cleanup();
 }
 
 void KWinIdleTimePoller::addTimeout(int nextTimeout)
 {
+    using namespace KWin;
+
+    nextTimeout = std::max(0, nextTimeout);
     if (m_timeouts.contains(nextTimeout)) {
         return;
     }
-    if (!m_idle) {
+
+    auto idle_interface = input::singleton_interface::idle_qobject;
+    if (!idle_interface) {
         return;
     }
-    auto timeout = m_idle->getTimeout(nextTimeout, m_seat, this);
-    m_timeouts.insert(nextTimeout, timeout);
-    connect(timeout, &Wrapland::Client::IdleTimeout::idle, this,
-        [this, nextTimeout] {
-            Q_EMIT timeoutReached(nextTimeout);
-        }
-    );
-    connect(timeout, &Wrapland::Client::IdleTimeout::resumeFromIdle,
-            this, &KWinIdleTimePoller::resumingFromIdle);
+
+    auto listener
+        = new input::idle_listener({std::chrono::milliseconds(nextTimeout),
+                                    [this, nextTimeout] { Q_EMIT timeoutReached(nextTimeout); },
+                                    [this] { Q_EMIT resumingFromIdle(); }});
+
+    idle_interface->register_listener(*listener);
+    m_timeouts.insert(nextTimeout, listener);
 }
 
 void KWinIdleTimePoller::removeTimeout(int nextTimeout)
@@ -92,6 +104,11 @@ void KWinIdleTimePoller::removeTimeout(int nextTimeout)
     if (it == m_timeouts.end()) {
         return;
     }
+
+    if (auto idle_interface = KWin::input::singleton_interface::idle_qobject) {
+        idle_interface->unregister_listener(*it.value());
+    }
+
     delete it.value();
     m_timeouts.erase(it);
 }
@@ -107,20 +124,25 @@ void KWinIdleTimePoller::catchIdleEvent()
         // already setup
         return;
     }
-    if (!m_idle) {
+
+    auto idle_interface = KWin::input::singleton_interface::idle_qobject;
+    if (!idle_interface) {
         return;
     }
-    m_catchResumeTimeout = m_idle->getTimeout(0, m_seat, this);
-    connect(m_catchResumeTimeout, &Wrapland::Client::IdleTimeout::resumeFromIdle, this,
-        [this] {
-            stopCatchingIdleEvents();
-            Q_EMIT resumingFromIdle();
-        }
-    );
+
+    m_catchResumeTimeout = new KWin::input::idle_listener({{}, {}, [this] {
+                                                               stopCatchingIdleEvents();
+                                                               Q_EMIT resumingFromIdle();
+                                                           }});
+
+    idle_interface->register_listener(*m_catchResumeTimeout);
 }
 
 void KWinIdleTimePoller::stopCatchingIdleEvents()
 {
+    if (auto idle_interface = KWin::input::singleton_interface::idle_qobject) {
+        idle_interface->unregister_listener(*m_catchResumeTimeout);
+    }
     delete m_catchResumeTimeout;
     m_catchResumeTimeout = nullptr;
 }
@@ -132,7 +154,7 @@ int KWinIdleTimePoller::forcePollRequest()
 
 void KWinIdleTimePoller::simulateUserActivity()
 {
-    for (auto it = m_timeouts.constBegin(); it != m_timeouts.constEnd(); ++it) {
-        it.value()->simulateUserActivity();
+    if (auto idle_interface = KWin::input::singleton_interface::idle_qobject) {
+        idle_interface->simulate_activity();
     }
 }

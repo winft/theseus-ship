@@ -24,14 +24,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QHash>
 
-namespace Wrapland
+namespace KWin::input
 {
-namespace Client
-{
-class Seat;
-class Idle;
-class IdleTimeout;
-}
+struct idle_listener;
 }
 
 class KWinIdleTimePoller : public AbstractSystemPoller
@@ -58,10 +53,10 @@ public Q_SLOTS:
     void simulateUserActivity() override;
 
 private:
-    Wrapland::Client::Seat *m_seat = nullptr;
-    Wrapland::Client::Idle *m_idle = nullptr;
-    Wrapland::Client::IdleTimeout *m_catchResumeTimeout = nullptr;
-    QHash<int, Wrapland::Client::IdleTimeout*> m_timeouts;
+    void cleanup();
+
+    KWin::input::idle_listener* m_catchResumeTimeout{nullptr};
+    QHash<int, KWin::input::idle_listener*> m_timeouts;
 };
 
 #endif

@@ -34,6 +34,7 @@
 #include "input/filters/window_action.h"
 #include "input/filters/window_selector.h"
 #include "input/redirect_qobject.h"
+#include "input/spies/activity.h"
 #include "input/spies/touch_hide_cursor.h"
 
 #include <KConfigWatcher>
@@ -348,6 +349,7 @@ private:
             m_filters.emplace_back(new virtual_terminal_filter<type>(*this));
         }
 
+        m_spies.push_back(new activity_spy(*this));
         m_spies.push_back(new touch_hide_cursor_spy(*this));
         if (has_global_shortcuts) {
             m_filters.emplace_back(new terminate_server_filter<type>(*this));

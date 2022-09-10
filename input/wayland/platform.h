@@ -8,6 +8,7 @@
 #include "base/wayland/server.h"
 #include "input/dbus/dbus.h"
 #include "input/global_shortcuts_manager.h"
+#include "input/idle.h"
 #include "input/platform.h"
 #include "input/types.h"
 
@@ -122,6 +123,7 @@ public:
 
     input::xkb::manager<type> xkb;
     std::unique_ptr<dbus::device_manager<type>> dbus;
+    input::idle idle;
 
 private:
     void setup_touchpad_shortcuts()
