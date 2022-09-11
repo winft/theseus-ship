@@ -28,7 +28,7 @@ public:
 
     bool button(button_event const& /*event*/) override
     {
-        auto window = this->redirect.platform.base.space->move_resize_window;
+        auto window = this->redirect.space.move_resize_window;
         if (!window) {
             return false;
         }
@@ -40,7 +40,7 @@ public:
 
     bool motion(motion_event const& /*event*/) override
     {
-        auto window = this->redirect.platform.base.space->move_resize_window;
+        auto window = this->redirect.space.move_resize_window;
         if (!window) {
             return false;
         }
@@ -51,7 +51,7 @@ public:
 
     bool axis(axis_event const& /*event*/) override
     {
-        return this->redirect.platform.base.space->move_resize_window != nullptr;
+        return this->redirect.space.move_resize_window != nullptr;
     }
 
     void process_key_press(typename Redirect::window_t* window, key_event const& event)
@@ -68,7 +68,7 @@ public:
 
     bool key(key_event const& event) override
     {
-        auto window = this->redirect.platform.base.space->move_resize_window;
+        auto window = this->redirect.space.move_resize_window;
         if (!window) {
             return false;
         }
@@ -81,7 +81,7 @@ public:
 
     bool key_repeat(key_event const& event) override
     {
-        auto window = this->redirect.platform.base.space->move_resize_window;
+        auto window = this->redirect.space.move_resize_window;
         if (!window) {
             return false;
         }
@@ -92,7 +92,7 @@ public:
 
     bool touch_down(touch_down_event const& /*event*/) override
     {
-        auto c = this->redirect.platform.base.space->move_resize_window;
+        auto c = this->redirect.space.move_resize_window;
         if (!c) {
             return false;
         }
@@ -102,7 +102,7 @@ public:
     bool touch_motion(touch_motion_event const& event) override
     {
         Q_UNUSED(time)
-        auto c = this->redirect.platform.base.space->move_resize_window;
+        auto c = this->redirect.space.move_resize_window;
         if (!c) {
             return false;
         }
@@ -118,7 +118,7 @@ public:
 
     bool touch_up(touch_up_event const& event) override
     {
-        auto c = this->redirect.platform.base.space->move_resize_window;
+        auto c = this->redirect.space.move_resize_window;
         if (!c) {
             return false;
         }

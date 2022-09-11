@@ -232,8 +232,6 @@ void ApplicationWayland::start(OperationMode mode,
     }
 
     base->space = std::make_unique<base_t::space_t>(*base, base->server.get());
-    base->space->input->setup_workspace();
-
     input::wayland::add_dbus(base->input.get());
     win::init_shortcuts(*base->space);
     tablet_mode_manager

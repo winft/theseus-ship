@@ -210,7 +210,7 @@ private:
     bool is_surface_allowed(Pool const& device_pool) const
     {
         if (auto surface = device_pool.get_focus().surface) {
-            if (auto win = this->redirect.platform.base.space->find_window(surface)) {
+            if (auto win = this->redirect.space.find_window(surface)) {
                 return win->isLockScreen() || win->isInputMethod();
             }
             return false;

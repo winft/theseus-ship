@@ -42,8 +42,7 @@ public:
             return false;
         }
 
-        auto window = dynamic_cast<internal_window_t*>(
-            this->redirect.platform.base.space->findInternal(internal));
+        auto window = dynamic_cast<internal_window_t*>(this->redirect.space.findInternal(internal));
 
         if (window && win::decoration(window)) {
             // only perform mouse commands on decorated internal windows
@@ -92,8 +91,8 @@ public:
         }
 
         if (event.orientation == axis_orientation::vertical) {
-            auto window = dynamic_cast<internal_window_t*>(
-                this->redirect.platform.base.space->findInternal(internal));
+            auto window
+                = dynamic_cast<internal_window_t*>(this->redirect.space.findInternal(internal));
             if (window && win::decoration(window)) {
                 // client window action only on vertical scrolling
                 auto const action_result
@@ -183,7 +182,7 @@ public:
 
     bool key(key_event const& event) override
     {
-        auto window = get_internal_window(this->redirect.platform.base.space->windows);
+        auto window = get_internal_window(this->redirect.space.windows);
         if (!window) {
             return false;
         }
@@ -199,7 +198,7 @@ public:
 
     bool key_repeat(key_event const& event) override
     {
-        auto window = get_internal_window(this->redirect.platform.base.space->windows);
+        auto window = get_internal_window(this->redirect.space.windows);
         if (!window) {
             return false;
         }

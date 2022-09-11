@@ -206,7 +206,6 @@ void WaylandTestApplication::start()
     }
 
     base.space = std::make_unique<base_t::space_t>(base, base.server.get());
-    base.space->input->setup_workspace();
     input::wayland::add_dbus(base.input.get());
     win::init_shortcuts(*base.space);
     base.space->scripting = std::make_unique<scripting::platform<base_t::space_t>>(*base.space);

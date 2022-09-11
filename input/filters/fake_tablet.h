@@ -54,7 +54,7 @@ public:
             break;
         }
 
-        this->redirect.platform.base.space->kde_idle->simulateUserActivity();
+        this->redirect.space.kde_idle->simulateUserActivity();
         return true;
     }
 };

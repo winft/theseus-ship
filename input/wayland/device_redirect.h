@@ -216,10 +216,10 @@ void device_redirect_update(Dev* dev)
 
     if (dev->positionValid()) {
         auto const pos = dev->position().toPoint();
-        auto& space = dev->redirect->platform.base.space;
-        internal_window = device_redirect_find_internal_window(space->windows, pos);
+        auto& space = dev->redirect->space;
+        internal_window = device_redirect_find_internal_window(space.windows, pos);
         if (internal_window) {
-            toplevel = space->findInternal(internal_window);
+            toplevel = space.findInternal(internal_window);
         } else {
             toplevel = find_window(*dev->redirect, pos);
         }

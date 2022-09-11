@@ -79,7 +79,7 @@ public:
             // TODO: consider decorations
             if (window->surface != seat->drags().get_target().surface) {
                 if (window->control) {
-                    win::activate_window(*this->redirect.platform.base.space, window);
+                    win::activate_window(this->redirect.space, window);
                 }
                 seat->drags().set_target(window->surface, window->input_transform());
             }
@@ -138,7 +138,7 @@ public:
             // TODO: consider decorations
             if (t->surface != seat->drags().get_target().surface) {
                 if (t->control) {
-                    win::activate_window(*this->redirect.platform.base.space, t);
+                    win::activate_window(this->redirect.space, t);
                 }
                 seat->drags().set_target(t->surface, event.pos, t->input_transform());
             }

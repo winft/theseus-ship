@@ -78,7 +78,7 @@ public:
         } else if (!m_pressedKeys.isEmpty()) {
             m_pressedKeys.remove(event.keycode);
             if (m_pressedKeys.isEmpty() && mods == Qt::NoModifier
-                && !this->redirect.platform.base.space->global_shortcuts_disabled) {
+                && !this->redirect.space.global_shortcuts_disabled) {
                 if (m_modifier != Qt::NoModifier) {
                     const auto list = kwinApp()->options->modifierOnlyDBusShortcut(m_modifier);
                     if (list.size() >= 4) {

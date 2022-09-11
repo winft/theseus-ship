@@ -62,6 +62,7 @@ public:
         , config_watcher{KConfigWatcher::create(kwinApp()->inputConfig())}
     {
         platform.redirect = this;
+        setup_workspace();
     }
 
     ~redirect()
@@ -75,52 +76,6 @@ public:
         for (auto spy : spies) {
             delete spy;
         }
-    }
-
-    // TODO(romangg): Make this called from ctor. But for that we need the space being available in
-    //                base already.
-    void setup_workspace()
-    {
-        reconfigure();
-        QObject::connect(config_watcher.data(),
-                         &KConfigWatcher::configChanged,
-                         qobject.get(),
-                         [this](auto const& group) {
-                             if (group.name() == QLatin1String("Keyboard")) {
-                                 reconfigure();
-                             }
-                         });
-
-        cursor = std::make_unique<wayland::cursor<type>>(*this);
-
-        pointer = std::make_unique<wayland::pointer_redirect<type>>(this);
-        keyboard = std::make_unique<wayland::keyboard_redirect<type>>(this);
-        touch = std::make_unique<wayland::touch_redirect<type>>(this);
-        tablet = std::make_unique<wayland::tablet_redirect<type>>(this);
-
-        setup_devices();
-
-        fake_input = waylandServer()->display->createFakeInput();
-        QObject::connect(fake_input.get(),
-                         &Wrapland::Server::FakeInput::deviceCreated,
-                         qobject.get(),
-                         [this](auto device) { handle_fake_input_device_added(device); });
-        QObject::connect(fake_input.get(),
-                         &Wrapland::Server::FakeInput::device_destroyed,
-                         qobject.get(),
-                         [this](auto device) { fake_devices.erase(device); });
-
-        QObject::connect(platform.virtual_keyboard.get(),
-                         &Wrapland::Server::virtual_keyboard_manager_v1::keyboard_created,
-                         qobject.get(),
-                         [this](auto device) { handle_virtual_keyboard_added(device); });
-
-        keyboard->init();
-        pointer->init();
-        touch->init();
-        tablet->init();
-
-        setup_filters();
     }
 
     /**
@@ -225,6 +180,50 @@ private:
     static void unset_focus(Dev&& dev)
     {
         dev->focusUpdate(dev->focus.window, nullptr);
+    }
+
+    void setup_workspace()
+    {
+        reconfigure();
+        QObject::connect(config_watcher.data(),
+                         &KConfigWatcher::configChanged,
+                         qobject.get(),
+                         [this](auto const& group) {
+                             if (group.name() == QLatin1String("Keyboard")) {
+                                 reconfigure();
+                             }
+                         });
+
+        cursor = std::make_unique<wayland::cursor<type>>(*this);
+
+        pointer = std::make_unique<wayland::pointer_redirect<type>>(this);
+        keyboard = std::make_unique<wayland::keyboard_redirect<type>>(this);
+        touch = std::make_unique<wayland::touch_redirect<type>>(this);
+        tablet = std::make_unique<wayland::tablet_redirect<type>>(this);
+
+        setup_devices();
+
+        fake_input = waylandServer()->display->createFakeInput();
+        QObject::connect(fake_input.get(),
+                         &Wrapland::Server::FakeInput::deviceCreated,
+                         qobject.get(),
+                         [this](auto device) { handle_fake_input_device_added(device); });
+        QObject::connect(fake_input.get(),
+                         &Wrapland::Server::FakeInput::device_destroyed,
+                         qobject.get(),
+                         [this](auto device) { fake_devices.erase(device); });
+
+        QObject::connect(platform.virtual_keyboard.get(),
+                         &Wrapland::Server::virtual_keyboard_manager_v1::keyboard_created,
+                         qobject.get(),
+                         [this](auto device) { handle_virtual_keyboard_added(device); });
+
+        keyboard->init();
+        pointer->init();
+        touch->init();
+        tablet->init();
+
+        setup_filters();
     }
 
     void setup_devices()

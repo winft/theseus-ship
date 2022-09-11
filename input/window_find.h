@@ -24,7 +24,7 @@ auto find_window(Redirect const& redirect, QPoint const& pos) -> typename Redire
             return nullptr;
         }
 
-        auto const& unmanaged = win::x11::get_unmanageds(*redirect.platform.base.space);
+        auto const& unmanaged = win::x11::get_unmanageds(redirect.space);
         for (auto const& u : unmanaged) {
             if (win::input_geometry(u).contains(pos) && win::wayland::accepts_input(u, pos)) {
                 return u;
@@ -40,7 +40,7 @@ auto find_controlled_window(Redirect const& redirect, QPoint const& pos) ->
     typename Redirect::window_t*
 {
     auto const isScreenLocked = kwinApp()->is_screen_locked();
-    auto const& stacking = redirect.platform.base.space->stacking.order.stack;
+    auto const& stacking = redirect.space.stacking.order.stack;
     if (stacking.empty()) {
         return nullptr;
     }
