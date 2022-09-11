@@ -71,7 +71,7 @@ public:
     using platform_t = typename Redirect::platform_t;
     using space_t = typename platform_t::base_t::space_t;
     using window_t = typename space_t::window_t;
-    using layout_manager_t = xkb::layout_manager<xkb::manager<platform_t>>;
+    using layout_manager_t = xkb::layout_manager<Redirect>;
 
     explicit keyboard_redirect(Redirect* redirect)
         : qobject{std::make_unique<keyboard_redirect_qobject>()}
@@ -90,7 +90,7 @@ public:
         modifiers_spy = new modifiers_changed_spy(*redirect);
         redirect->m_spies.push_back(modifiers_spy);
 
-        layout_manager = std::make_unique<layout_manager_t>(redirect->platform.xkb, config);
+        layout_manager = std::make_unique<layout_manager_t>(*redirect, config);
 
         if (waylandServer()->has_global_shortcut_support()) {
             redirect->m_spies.push_back(new modifier_only_shortcuts_spy(*redirect));

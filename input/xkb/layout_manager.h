@@ -55,13 +55,13 @@ private:
     std::function<void()> reconfigure_callback;
 };
 
-template<typename Xkb>
+template<typename Redirect>
 class layout_manager
 {
 public:
-    layout_manager(Xkb& xkb, KSharedConfigPtr const& config)
+    layout_manager(Redirect& redirect, KSharedConfigPtr const& config)
         : qobject{std::make_unique<layout_manager_qobject>([this] { reconfigure(); })}
-        , xkb{xkb}
+        , redirect{redirect}
         , m_configGroup(config->group("Layout"))
     {
         auto switchKeyboardAction = new QAction(qobject.get());
@@ -72,18 +72,18 @@ public:
         KGlobalAccel::self()->setDefaultShortcut(switchKeyboardAction,
                                                  QList<QKeySequence>({sequence}));
         KGlobalAccel::self()->setShortcut(switchKeyboardAction, QList<QKeySequence>({sequence}));
-        xkb.platform->setup_action_for_global_accel(switchKeyboardAction);
+        redirect.platform.setup_action_for_global_accel(switchKeyboardAction);
         QObject::connect(switchKeyboardAction, &QAction::triggered, qobject.get(), [this] {
             switchToNextLayout();
         });
 
         reconfigure();
 
-        for (auto keyboard : xkb.platform->keyboards) {
+        for (auto keyboard : redirect.platform.keyboards) {
             add_keyboard(keyboard);
         }
 
-        QObject::connect(xkb.platform->qobject.get(),
+        QObject::connect(redirect.platform.qobject.get(),
                          &platform_qobject::keyboard_added,
                          qobject.get(),
                          [this](auto keys) { add_keyboard(keys); });
@@ -102,7 +102,7 @@ public:
     }
 
     std::unique_ptr<layout_manager_qobject> qobject;
-    Xkb& xkb;
+    Redirect& redirect;
 
 private:
     void reconfigure()
@@ -111,12 +111,12 @@ private:
             m_configGroup.config()->reparseConfiguration();
             const QString policyKey
                 = m_configGroup.readEntry("SwitchMode", QStringLiteral("Global"));
-            xkb.reconfigure();
+            redirect.platform.xkb.reconfigure();
             if (!m_policy || m_policy->name() != policyKey) {
                 m_policy = create_layout_policy(this, m_configGroup, policyKey);
             }
         } else {
-            xkb.reconfigure();
+            redirect.platform.xkb.reconfigure();
         }
 
         auto xkb = get_keyboard();
@@ -145,7 +145,7 @@ private:
         }
 
         dbus_interface_v1 = std::make_unique<dbus::keyboard_layout>(
-            m_configGroup, [this] { return get_primary_xkb_keyboard(*this->xkb.platform); });
+            m_configGroup, [this] { return get_primary_xkb_keyboard(this->redirect.platform); });
 
         QObject::connect(qobject.get(),
                          &layout_manager_qobject::layoutChanged,
@@ -161,7 +161,7 @@ private:
     void init_dbus_interface_v2()
     {
         assert(!dbus_interface_v2);
-        dbus_interface_v2 = dbus::keyboard_layouts_v2::create(xkb.platform);
+        dbus_interface_v2 = dbus::keyboard_layouts_v2::create(&redirect.platform);
     }
 
     void add_keyboard(input::keyboard* keyboard)
@@ -231,7 +231,7 @@ private:
 
     auto get_keyboard()
     {
-        return get_primary_xkb_keyboard(*xkb.platform);
+        return get_primary_xkb_keyboard(redirect.platform);
     }
 
     KConfigGroup m_configGroup;
