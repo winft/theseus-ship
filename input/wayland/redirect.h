@@ -560,7 +560,7 @@ private:
                              device->setAuthentication(true);
                          });
 
-        auto devices = fake::devices<Platform>(platform, device);
+        auto devices = fake::devices<type>(*this, device);
         fake_devices.insert({device, std::move(devices)});
     }
 
@@ -623,7 +623,7 @@ private:
     std::unique_ptr<wayland::input_method<type>> input_method;
     std::unique_ptr<Wrapland::Server::FakeInput> fake_input;
 
-    std::unordered_map<Wrapland::Server::FakeInputDevice*, fake::devices<Platform>> fake_devices;
+    std::unordered_map<Wrapland::Server::FakeInputDevice*, fake::devices<type>> fake_devices;
     std::unordered_map<Wrapland::Server::virtual_keyboard_v1*, std::unique_ptr<input::keyboard>>
         virtual_keyboards;
 
