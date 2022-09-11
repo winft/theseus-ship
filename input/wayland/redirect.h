@@ -91,6 +91,14 @@ public:
         return pointer->buttons();
     }
 
+    void warp_pointer(QPointF const& pos, uint32_t time)
+    {
+        if (platform.pointers.empty()) {
+            return;
+        }
+        pointer->processMotion(pos, time, platform.pointers.front());
+    }
+
     void cancelTouch()
     {
         touch->cancel();

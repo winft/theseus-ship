@@ -186,15 +186,6 @@ public:
         base::wayland::turn_outputs_on(this->base, dpms_filter);
     }
 
-    void warp_pointer(QPointF const& pos, uint32_t time)
-    {
-        if (this->pointers.empty()) {
-            return;
-        }
-
-        redirect->pointer->processMotion(pos, time, this->pointers.front());
-    }
-
     std::unique_ptr<wayland::input_method<type>> input_method;
     std::unique_ptr<Wrapland::Server::virtual_keyboard_manager_v1> virtual_keyboard;
     std::unique_ptr<input::dpms_filter<type, redirect_t>> dpms_filter;

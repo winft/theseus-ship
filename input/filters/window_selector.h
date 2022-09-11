@@ -103,7 +103,7 @@ public:
             }
 
             auto const pos = this->redirect.globalPointer() + QPointF(mx, my);
-            this->redirect.platform.warp_pointer(pos, event.base.time_msec);
+            this->redirect.warp_pointer(pos, event.base.time_msec);
         }
         // filter out while selecting a window
         return true;
