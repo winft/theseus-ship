@@ -39,7 +39,6 @@ public:
 #if HAVE_X11_XINPUT
         if (!qEnvironmentVariableIsSet("KWIN_NO_XI2")) {
             xinput = std::make_unique<xinput_integration<type>>(QX11Info::display(), *this);
-            xinput->init();
             if (!xinput->hasXinput()) {
                 xinput.reset();
             } else {

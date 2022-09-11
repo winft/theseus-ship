@@ -264,25 +264,20 @@ public:
         , redirect{redirect}
         , m_x11Display(display)
     {
-    }
-
-    void init()
-    {
-        Display* dpy = display();
         int xi_opcode, event, error;
         // init XInput extension
-        if (!XQueryExtension(dpy, "XInputExtension", &xi_opcode, &event, &error)) {
+        if (!XQueryExtension(display, "XInputExtension", &xi_opcode, &event, &error)) {
             qCDebug(KWIN_CORE) << "XInputExtension not present";
             return;
         }
 
         // verify that the XInput extension is at at least version 2.0
         int major = 2, minor = 2;
-        int result = XIQueryVersion(dpy, &major, &minor);
+        int result = XIQueryVersion(display, &major, &minor);
         if (result != Success) {
             qCDebug(KWIN_CORE) << "Failed to init XInput 2.2, trying 2.0";
             minor = 0;
-            if (XIQueryVersion(dpy, &major, &minor) != Success) {
+            if (XIQueryVersion(display, &major, &minor) != Success) {
                 qCDebug(KWIN_CORE) << "Failed to init XInput";
                 return;
             }
