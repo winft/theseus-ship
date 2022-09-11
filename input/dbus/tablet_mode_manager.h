@@ -9,11 +9,9 @@
 
 #include "kwin_export.h"
 
-#include "input/platform.h"
-#include "input/pointer.h"
+#include "input/platform_qobject.h"
+#include "input/redirect_qobject.h"
 #include "input/spies/tablet_mode_switch.h"
-#include "input/touch.h"
-#include "input/wayland/redirect.h"
 
 #include <QDBusConnection>
 #include <QObject>
@@ -30,20 +28,20 @@ public:
     explicit tablet_mode_touchpad_removed_spy(Manager& manager)
         : manager(manager)
     {
-        auto plat = &manager.platform;
-        QObject::connect(plat->qobject.get(),
+        auto q_platform = manager.redirect.platform.qobject.get();
+        QObject::connect(q_platform,
                          &input::platform_qobject::pointer_added,
                          this,
                          &tablet_mode_touchpad_removed_spy::check);
-        QObject::connect(plat->qobject.get(),
+        QObject::connect(q_platform,
                          &input::platform_qobject::pointer_removed,
                          this,
                          &tablet_mode_touchpad_removed_spy::check);
-        QObject::connect(plat->qobject.get(),
+        QObject::connect(q_platform,
                          &input::platform_qobject::touch_added,
                          this,
                          &tablet_mode_touchpad_removed_spy::check);
-        QObject::connect(plat->qobject.get(),
+        QObject::connect(q_platform,
                          &input::platform_qobject::touch_removed,
                          this,
                          &tablet_mode_touchpad_removed_spy::check);
@@ -52,8 +50,8 @@ public:
 
     void check()
     {
-        auto has_touch = !manager.platform.touchs.empty();
-        auto has_pointer = !manager.platform.pointers.empty();
+        auto has_touch = !manager.redirect.platform.touchs.empty();
+        auto has_pointer = !manager.redirect.platform.pointers.empty();
         manager.qobject->setTabletModeAvailable(has_touch);
         manager.qobject->setIsTablet(has_touch && !has_pointer);
     }
@@ -89,19 +87,18 @@ private:
     bool m_detecting{false};
 };
 
-template<typename Platform>
+template<typename Redirect>
 class tablet_mode_manager
 {
 public:
-    tablet_mode_manager(Platform& platform)
+    tablet_mode_manager(Redirect& redirect)
         : qobject{std::make_unique<tablet_mode_manager_qobject>()}
-        , platform{platform}
+        , redirect{redirect}
     {
-        if (platform.redirect->has_tablet_mode_switch()) {
-            platform.redirect->m_spies.push_back(
-                new tablet_mode_switch_spy(*platform.redirect, *qobject));
+        if (redirect.has_tablet_mode_switch()) {
+            redirect.m_spies.push_back(new tablet_mode_switch_spy(redirect, *qobject));
         } else {
-            Q_EMIT platform.redirect->qobject->has_tablet_mode_switch_changed(false);
+            Q_EMIT redirect.qobject->has_tablet_mode_switch_changed(false);
         }
 
         QDBusConnection::sessionBus().registerObject(
@@ -110,7 +107,7 @@ public:
             qobject.get(),
             QDBusConnection::ExportAllProperties | QDBusConnection::ExportAllSignals);
 
-        QObject::connect(platform.redirect->qobject.get(),
+        QObject::connect(redirect.qobject.get(),
                          &input::redirect_qobject::has_tablet_mode_switch_changed,
                          qobject.get(),
                          [this](auto set) { hasTabletModeInputChanged(set); });
@@ -118,29 +115,28 @@ public:
 
     ~tablet_mode_manager()
     {
-        remove_all(platform.redirect->m_spies, spy);
+        remove_all(redirect.m_spies, spy);
     }
 
     std::unique_ptr<tablet_mode_manager_qobject> qobject;
-    Platform& platform;
+    Redirect& redirect;
 
 private:
     using removed_spy_t = tablet_mode_touchpad_removed_spy<tablet_mode_manager>;
-    using mode_switch_spy_t
-        = tablet_mode_switch_spy<typename Platform::redirect_t, tablet_mode_manager_qobject>;
+    using mode_switch_spy_t = tablet_mode_switch_spy<Redirect, tablet_mode_manager_qobject>;
 
     void hasTabletModeInputChanged(bool set)
     {
         if (set) {
             if (!spy) {
-                spy = new mode_switch_spy_t(*platform.redirect, *qobject);
-                platform.redirect->m_spies.push_back(spy);
+                spy = new mode_switch_spy_t(redirect, *qobject);
+                redirect.m_spies.push_back(spy);
             }
             qobject->setTabletModeAvailable(true);
         } else {
             auto setupDetector = [this] {
                 removed_spy = std::make_unique<removed_spy_t>(*this);
-                QObject::connect(platform.redirect->qobject.get(),
+                QObject::connect(redirect.qobject.get(),
                                  &input::redirect_qobject::has_tablet_mode_switch_changed,
                                  removed_spy.get(),
                                  [this](bool set) {

@@ -17,6 +17,7 @@
 #include "input/filters/tabbox.h"
 
 #include "base/wayland/output_helpers.h"
+#include "input/dbus/tablet_mode_manager.h"
 #include "input/filters/decoration_event.h"
 #include "input/filters/drag_and_drop.h"
 #include "input/filters/effects.h"
@@ -63,6 +64,7 @@ public:
         , space{space}
         , config_watcher{KConfigWatcher::create(kwinApp()->inputConfig())}
         , input_method{std::make_unique<wayland::input_method<type>>(*this, waylandServer())}
+        , tablet_mode_manager{std::make_unique<dbus::tablet_mode_manager<type>>(*this)}
     {
         platform.redirect = this;
         setup_workspace();
@@ -621,6 +623,7 @@ private:
     KConfigWatcher::Ptr config_watcher;
 
     std::unique_ptr<wayland::input_method<type>> input_method;
+    std::unique_ptr<dbus::tablet_mode_manager<type>> tablet_mode_manager;
     std::unique_ptr<Wrapland::Server::FakeInput> fake_input;
 
     std::unordered_map<Wrapland::Server::FakeInputDevice*, fake::devices<type>> fake_devices;

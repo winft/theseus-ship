@@ -32,7 +32,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/wayland/cursor.h"
 #include "input/wayland/platform.h"
 #include "input/wayland/redirect.h"
-#include "input/dbus/tablet_mode_manager.h"
 #include "scripting/platform.h"
 #include "win/shortcuts_init.h"
 #include "win/wayland/space.h"
@@ -234,8 +233,6 @@ void ApplicationWayland::start(OperationMode mode,
     base->space = std::make_unique<base_t::space_t>(*base, base->server.get());
     input::wayland::add_dbus(base->input.get());
     win::init_shortcuts(*base->space);
-    tablet_mode_manager
-        = std::make_unique<input::dbus::tablet_mode_manager<base::wayland::platform::input_t>>(*base->input);
     base->space->scripting = std::make_unique<scripting::platform<base_t::space_t>>(*base->space);
 
     base->render->compositor->start(*base->space);
