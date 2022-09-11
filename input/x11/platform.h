@@ -11,12 +11,7 @@
 #include "input/platform.h"
 #include "main.h"
 
-#if HAVE_X11_XINPUT
-#include "input/x11/xinput_integration.h"
-#endif
-
 #include <KGlobalAccel>
-#include <QX11Info>
 #include <memory>
 
 namespace KWin::input::x11
@@ -34,20 +29,6 @@ public:
         : input::platform<Base>(base)
         , xkb{xkb::manager<type>(this)}
     {
-#if HAVE_X11_XINPUT
-        if (!qEnvironmentVariableIsSet("KWIN_NO_XI2")) {
-            xinput.reset(new xinput_integration<type>(QX11Info::display(), this));
-            xinput->init();
-            if (!xinput->hasXinput()) {
-                xinput.reset();
-            } else {
-                QObject::connect(kwinApp(),
-                                 &Application::startup_finished,
-                                 xinput.get(),
-                                 &xinput_integration<type>::startListening);
-            }
-        }
-#endif
     }
 
     platform(platform const&) = delete;
@@ -108,10 +89,6 @@ public:
     }
 
     redirect_t* redirect{nullptr};
-
-#if HAVE_X11_XINPUT
-    std::unique_ptr<xinput_integration<type>> xinput;
-#endif
 
     input::xkb::manager<type> xkb;
     std::unique_ptr<dbus::device_manager<type>> dbus;

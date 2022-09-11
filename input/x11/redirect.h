@@ -13,6 +13,12 @@
 
 #include "input/redirect_qobject.h"
 
+#if HAVE_X11_XINPUT
+#include "xinput_integration.h"
+#endif
+
+#include <QX11Info>
+
 namespace KWin::input::x11
 {
 
@@ -30,6 +36,21 @@ public:
         , platform{platform}
         , space{space}
     {
+#if HAVE_X11_XINPUT
+        if (!qEnvironmentVariableIsSet("KWIN_NO_XI2")) {
+            xinput = std::make_unique<xinput_integration<type>>(QX11Info::display(), *this);
+            xinput->init();
+            if (!xinput->hasXinput()) {
+                xinput.reset();
+            } else {
+                QObject::connect(kwinApp(),
+                                 &Application::startup_finished,
+                                 xinput.get(),
+                                 &xinput_integration<type>::startListening);
+            }
+        }
+#endif
+
         platform.redirect = this;
         create_cursor();
         pointer = std::make_unique<pointer_redirect<type>>(this);
@@ -76,16 +97,18 @@ private:
 #if HAVE_X11_XINPUT
     void create_cursor()
     {
-        auto const is_xinput_avail = platform.xinput != nullptr;
+        auto const is_xinput_avail = xinput != nullptr;
         this->cursor = std::make_unique<x11::cursor>(is_xinput_avail);
 
         if (is_xinput_avail) {
-            platform.xinput->setCursor(static_cast<x11::cursor*>(this->cursor.get()));
+            xinput->setCursor(static_cast<x11::cursor*>(this->cursor.get()));
 
             platform.xkb.setConfig(kwinApp()->kxkbConfig());
             platform.xkb.reconfigure();
         }
     }
+
+    std::unique_ptr<xinput_integration<type>> xinput;
 #else
     void create_cursor()
     {

@@ -136,7 +136,7 @@ public:
                 = QPointF(fixed1616ToReal(e->event_x), fixed1616ToReal(e->event_y));
             if (e->detail == m_trackingTouchId) {
                 const auto last = m_lastTouchPositions.value(e->detail);
-                xinput->platform->base.space->edges->gesture_recognizer->updateSwipeGesture(
+                xinput->redirect.space.edges->gesture_recognizer->updateSwipeGesture(
                     QSizeF(touchPosition.x() - last.x(), touchPosition.y() - last.y()));
             }
             m_lastTouchPositions.insert(e->detail, touchPosition);
@@ -145,7 +145,7 @@ public:
         case XI_TouchEnd: {
             auto e = reinterpret_cast<xXIDeviceEvent*>(event);
             if (e->detail == m_trackingTouchId) {
-                xinput->platform->base.space->edges->gesture_recognizer->endSwipeGesture();
+                xinput->redirect.space.edges->gesture_recognizer->endSwipeGesture();
             }
             m_lastTouchPositions.remove(e->detail);
             m_trackingTouchId = 0;
@@ -157,8 +157,7 @@ public:
             if (it == m_lastTouchPositions.constEnd()) {
                 XIAllowTouchEvents(display(), e->deviceid, e->sourceid, e->touchid, XIRejectTouch);
             } else {
-                if (xinput->platform->base.space->edges->gesture_recognizer->startSwipeGesture(
-                        it.value())
+                if (xinput->redirect.space.edges->gesture_recognizer->startSwipeGesture(it.value())
                     > 0) {
                     m_trackingTouchId = e->touchid;
                 }
@@ -254,15 +253,15 @@ struct xinput_devices {
     Platform& platform;
 };
 
-template<typename Platform>
+template<typename Redirect>
 class xinput_integration : public QObject
 {
 public:
-    using type = xinput_integration<Platform>;
+    using type = xinput_integration<Redirect>;
 
-    explicit xinput_integration(Display* display, Platform* platform)
-        : fake_devices{*platform}
-        , platform{platform}
+    explicit xinput_integration(Display* display, Redirect& redirect)
+        : fake_devices{redirect.platform}
+        , redirect{redirect}
         , m_x11Display(display)
     {
     }
@@ -334,8 +333,7 @@ public:
         m_keyReleaseFilter.reset(new XKeyPressReleaseEventFilter(XCB_KEY_RELEASE, this));
 
         // install the input event spies also relevant for X11 platform
-        auto redirect = platform->redirect;
-        redirect->m_spies.push_back(new input::modifier_only_shortcuts_spy(*redirect));
+        redirect.m_spies.push_back(new input::modifier_only_shortcuts_spy(redirect));
     }
 
     bool hasXinput() const
@@ -348,20 +346,20 @@ public:
         m_x11Cursor = QPointer<x11::cursor>(cursor);
     }
 
-    xinput_devices<Platform> fake_devices;
+    xinput_devices<typename Redirect::platform_t> fake_devices;
 
-    Platform* platform;
+    Redirect& redirect;
 
 private:
     void setup_fake_devices()
     {
         auto pointer = fake_devices.pointer.get();
-        auto pointer_red = platform->redirect->pointer.get();
+        auto pointer_red = redirect.pointer.get();
 
         auto keyboard = fake_devices.keyboard.get();
-        auto keyboard_red = platform->redirect->keyboard.get();
+        auto keyboard_red = redirect.keyboard.get();
 
-        xkb::keyboard_update_from_default(platform->xkb, *keyboard->xkb);
+        xkb::keyboard_update_from_default(redirect.platform.xkb, *keyboard->xkb);
 
         QObject::connect(pointer,
                          &pointer::button_changed,
