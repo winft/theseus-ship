@@ -72,7 +72,7 @@ public:
 
         atoms = std::make_unique<base::x11::atoms>(connection());
         edges = std::make_unique<edger_t>(*this);
-        dbus = std::make_unique<base::dbus::kwin_impl<type, input_t>>(*this, base.input.get());
+        dbus = std::make_unique<base::dbus::kwin_impl<type>>(*this);
 
         QObject::connect(virtual_desktop_manager->qobject.get(),
                          &virtual_desktop_manager_qobject::desktopRemoved,
@@ -186,7 +186,7 @@ public:
     std::unique_ptr<osd_notification<input_t>> osd;
     std::unique_ptr<kill_window<type>> window_killer;
     std::unique_ptr<win::user_actions_menu<type>> user_actions_menu;
-    std::unique_ptr<base::dbus::kwin_impl<type, input_t>> dbus;
+    std::unique_ptr<base::dbus::kwin_impl<type>> dbus;
 
     std::vector<window_t*> windows;
     std::unordered_map<uint32_t, window_t*> windows_map;

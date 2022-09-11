@@ -9,6 +9,7 @@
 #include "cursor.h"
 #include "keyboard_redirect.h"
 #include "pointer_redirect.h"
+#include "window_selector.h"
 
 #include "input/redirect_qobject.h"
 
@@ -43,6 +44,24 @@ public:
         }
     }
 
+    void
+    start_interactive_window_selection(std::function<void(typename space_t::window_t*)> callback,
+                                       QByteArray const& cursorName = QByteArray())
+    {
+        if (!window_sel) {
+            window_sel = std::make_unique<window_selector<type>>(*this);
+        }
+        window_sel->start(callback, cursorName);
+    }
+
+    void start_interactive_position_selection(std::function<void(QPoint const&)> callback)
+    {
+        if (!window_sel) {
+            window_sel = std::make_unique<window_selector<type>>(*this);
+        }
+        window_sel->start(callback);
+    }
+
     std::unique_ptr<x11::cursor> cursor;
     std::unique_ptr<keyboard_redirect<type>> keyboard;
     std::unique_ptr<pointer_redirect<type>> pointer;
@@ -73,6 +92,7 @@ private:
         cursor = std::make_unique<x11::cursor>(false);
     }
 #endif
+    std::unique_ptr<window_selector<type>> window_sel;
 };
 
 }

@@ -697,7 +697,7 @@ public:
 
     void startInteractiveWindowSelection(std::function<void(KWin::EffectWindow*)> callback) override
     {
-        compositor.space->input->platform.start_interactive_window_selection([callback](auto t) {
+        compositor.space->input->start_interactive_window_selection([callback](auto t) {
             if (t) {
                 assert(t->render);
                 assert(t->render->effect);
@@ -710,7 +710,7 @@ public:
 
     void startInteractivePositionSelection(std::function<void(const QPoint&)> callback) override
     {
-        compositor.space->input->platform.start_interactive_position_selection(callback);
+        compositor.space->input->start_interactive_position_selection(callback);
     }
 
     void showOnScreenMessage(const QString& message, const QString& iconName = QString()) override

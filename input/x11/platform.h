@@ -6,7 +6,6 @@
 #pragma once
 
 #include "redirect.h"
-#include "window_selector.h"
 
 #include "config-kwin.h"
 #include "input/platform.h"
@@ -108,30 +107,11 @@ public:
         QObject::connect(action, &QAction::triggered, receiver, slot);
     }
 
-    void
-    start_interactive_window_selection(std::function<void(typename space_t::window_t*)> callback,
-                                       QByteArray const& cursorName = QByteArray())
-    {
-        if (!window_sel) {
-            window_sel.reset(new window_selector(*this));
-        }
-        window_sel->start(callback, cursorName);
-    }
-
-    void start_interactive_position_selection(std::function<void(QPoint const&)> callback)
-    {
-        if (!window_sel) {
-            window_sel.reset(new window_selector(*this));
-        }
-        window_sel->start(callback);
-    }
-
     redirect_t* redirect{nullptr};
 
 #if HAVE_X11_XINPUT
     std::unique_ptr<xinput_integration<type>> xinput;
 #endif
-    std::unique_ptr<window_selector<type>> window_sel;
 
     input::xkb::manager<type> xkb;
     std::unique_ptr<dbus::device_manager<type>> dbus;
