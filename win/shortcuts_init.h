@@ -70,7 +70,7 @@ template<typename Space>
 void shortcuts_init_switch_to_virtual_desktop(Space& space)
 {
     auto manager = space.virtual_desktop_manager.get();
-    auto& input = space.input->platform;
+    auto& input = *space.base.input;
 
     auto const toDesktop = QStringLiteral("Switch to Desktop %1");
     KLocalizedString const toDesktopLabel = ki18n("Switch to Desktop %1");
@@ -116,7 +116,7 @@ template<typename Space>
 void shortcuts_init_virtual_desktops(Space& space)
 {
     auto manager = space.virtual_desktop_manager.get();
-    auto& input = space.input->platform;
+    auto& input = *space.base.input;
 
     shortcuts_init_switch_to_virtual_desktop(space);
 
@@ -197,7 +197,7 @@ void init_shortcut(Space& space,
                    const QVariant& data = QVariant())
 {
     auto action = prepare_shortcut_action(space, actionName, description, shortcut, data);
-    space.input->platform.registerShortcut(shortcut, action, receiver, slot);
+    space.base.input->registerShortcut(shortcut, action, receiver, slot);
 }
 
 template<typename Space, typename Slot>
@@ -221,7 +221,7 @@ void init_shortcut_with_action_arg(Space& space,
                                    QVariant const& data)
 {
     auto action = prepare_shortcut_action(space, actionName, description, shortcut, data);
-    space.input->platform.registerShortcut(
+    space.base.input->registerShortcut(
         shortcut, action, receiver, [action, &slot] { slot(action); });
 }
 

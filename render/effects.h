@@ -598,27 +598,26 @@ public:
 
     void registerGlobalShortcut(const QKeySequence& shortcut, QAction* action) override
     {
-        compositor.space->input->platform.registerShortcut(shortcut, action);
+        compositor.platform.base.input->registerShortcut(shortcut, action);
     }
 
     void registerPointerShortcut(Qt::KeyboardModifiers modifiers,
                                  Qt::MouseButton pointerButtons,
                                  QAction* action) override
     {
-        compositor.space->input->platform.registerPointerShortcut(
-            modifiers, pointerButtons, action);
+        compositor.platform.base.input->registerPointerShortcut(modifiers, pointerButtons, action);
     }
 
     void registerAxisShortcut(Qt::KeyboardModifiers modifiers,
                               PointerAxisDirection axis,
                               QAction* action) override
     {
-        compositor.space->input->platform.registerAxisShortcut(modifiers, axis, action);
+        compositor.platform.base.input->registerAxisShortcut(modifiers, axis, action);
     }
 
     void registerTouchpadSwipeShortcut(SwipeDirection direction, QAction* action) override
     {
-        compositor.space->input->platform.registerTouchpadSwipeShortcut(direction, action);
+        compositor.platform.base.input->registerTouchpadSwipeShortcut(direction, action);
     }
 
     void startMousePolling() override

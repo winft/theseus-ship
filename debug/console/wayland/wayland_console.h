@@ -73,7 +73,7 @@ public:
         this->m_ui->surfacesView->setModel(new surface_tree_model(space, this));
 
         auto device_model = new input_device_model(this);
-        setup_input_device_model(*device_model, *space.input->platform.dbus);
+        setup_input_device_model(*device_model, *space.base.input->dbus);
         this->m_ui->inputDevicesView->setModel(device_model);
         this->m_ui->inputDevicesView->setItemDelegate(new wayland_console_delegate(this));
 

@@ -739,7 +739,7 @@ public:
         if (!m_ready || is_grabbed()) {
             return;
         }
-        if (areModKeysDepressed(space.input->platform, m_cut_walk_through_desktops)) {
+        if (areModKeysDepressed(*space.base.input, m_cut_walk_through_desktops)) {
             if (start_walk_through_desktops())
                 walk_through_desktops(true);
         } else {
@@ -752,7 +752,7 @@ public:
         if (!m_ready || is_grabbed()) {
             return;
         }
-        if (areModKeysDepressed(space.input->platform, m_cut_walk_through_desktops_reverse)) {
+        if (areModKeysDepressed(*space.base.input, m_cut_walk_through_desktops_reverse)) {
             if (start_walk_through_desktops())
                 walk_through_desktops(false);
         } else {
@@ -765,7 +765,7 @@ public:
         if (!m_ready || is_grabbed()) {
             return;
         }
-        if (areModKeysDepressed(space.input->platform, m_cut_walk_through_desktop_list)) {
+        if (areModKeysDepressed(*space.base.input, m_cut_walk_through_desktop_list)) {
             if (start_walk_through_desktop_list())
                 walk_through_desktops(true);
         } else {
@@ -778,7 +778,7 @@ public:
         if (!m_ready || is_grabbed()) {
             return;
         }
-        if (areModKeysDepressed(space.input->platform, m_cut_walk_through_desktop_list_reverse)) {
+        if (areModKeysDepressed(*space.base.input, m_cut_walk_through_desktop_list_reverse)) {
             if (start_walk_through_desktop_list())
                 walk_through_desktops(false);
         } else {
@@ -1055,7 +1055,7 @@ private:
             //  CDE style raise / lower
             cde_walk_through_windows(forward);
         } else {
-            if (areModKeysDepressed(space.input->platform, shortcut)) {
+            if (areModKeysDepressed(*space.base.input, shortcut)) {
                 if (start_kde_walk_through_windows(mode))
                     kde_walk_through_windows(forward);
             } else
@@ -1209,7 +1209,7 @@ private:
         a->setObjectName(QString::fromUtf8(action_name.untranslatedText()));
         a->setText(action_name.toString());
         KGlobalAccel::self()->setGlobalShortcut(a, QList<QKeySequence>() << shortcut);
-        space.input->platform.registerShortcut(shortcut, a, qobject.get(), slot);
+        space.base.input->registerShortcut(shortcut, a, qobject.get(), slot);
         auto cuts = KGlobalAccel::self()->shortcut(a);
         global_shortcut_changed(a, cuts.isEmpty() ? QKeySequence() : cuts.first());
     }
