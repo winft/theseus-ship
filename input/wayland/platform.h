@@ -9,8 +9,6 @@
 #include "input_method.h"
 #include "redirect.h"
 
-#include "base/platform.h"
-#include "base/wayland/output_helpers.h"
 #include "base/wayland/server.h"
 #include "input/dbus/dbus.h"
 #include "input/global_shortcuts_manager.h"
@@ -39,13 +37,6 @@ public:
 
         input_method = std::make_unique<wayland::input_method<type>>(*this, waylandServer());
         virtual_keyboard = waylandServer()->display->create_virtual_keyboard_manager_v1();
-
-        QObject::connect(&base, &Base::output_added, this->qobject.get(), [this] {
-            base::wayland::check_outputs_on(this->base, dpms_filter);
-        });
-        QObject::connect(&base, &Base::output_removed, this->qobject.get(), [this] {
-            base::wayland::check_outputs_on(this->base, dpms_filter);
-        });
     }
 
     platform(platform const&) = delete;
@@ -133,14 +124,8 @@ public:
         toggle_touchpads();
     }
 
-    void turn_outputs_on()
-    {
-        base::wayland::turn_outputs_on(this->base, dpms_filter);
-    }
-
     std::unique_ptr<wayland::input_method<type>> input_method;
     std::unique_ptr<Wrapland::Server::virtual_keyboard_manager_v1> virtual_keyboard;
-    std::unique_ptr<input::dpms_filter<type, redirect_t>> dpms_filter;
 
     redirect_t* redirect{nullptr};
 

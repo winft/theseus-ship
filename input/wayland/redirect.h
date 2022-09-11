@@ -15,6 +15,7 @@
 // TODO(romangg): should only be included when KWIN_BUILD_TABBOX is defined.
 #include "input/filters/tabbox.h"
 
+#include "base/wayland/output_helpers.h"
 #include "input/filters/decoration_event.h"
 #include "input/filters/drag_and_drop.h"
 #include "input/filters/effects.h"
@@ -63,6 +64,14 @@ public:
     {
         platform.redirect = this;
         setup_workspace();
+
+        using base_t = std::decay_t<decltype(platform.base)>;
+        QObject::connect(&platform.base, &base_t::output_added, this->qobject.get(), [this] {
+            base::wayland::check_outputs_on(this->platform.base);
+        });
+        QObject::connect(&platform.base, &base_t::output_removed, this->qobject.get(), [this] {
+            base::wayland::check_outputs_on(this->platform.base);
+        });
     }
 
     ~redirect()
@@ -89,6 +98,11 @@ public:
     Qt::MouseButtons qtButtonStates() const
     {
         return pointer->buttons();
+    }
+
+    void turn_outputs_on()
+    {
+        base::wayland::turn_outputs_on(platform.base, dpms_filter);
     }
 
     void warp_pointer(QPointF const& pos, uint32_t time)
@@ -206,6 +220,8 @@ public:
 
     std::list<event_filter<type>*> m_filters;
     std::vector<event_spy<type>*> m_spies;
+
+    std::unique_ptr<input::dpms_filter<type>> dpms_filter;
 
     std::unique_ptr<redirect_qobject> qobject;
     Platform& platform;

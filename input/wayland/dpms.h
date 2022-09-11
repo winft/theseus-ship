@@ -12,17 +12,16 @@
 namespace KWin::input::wayland
 {
 
-template<typename Input>
-void create_dpms_filter(Input* input)
+template<typename Redirect>
+void create_dpms_filter(Redirect& redirect)
 {
-    if (input->dpms_filter) {
+    if (redirect.dpms_filter) {
         // Already another output is off.
         return;
     }
 
-    input->dpms_filter = std::make_unique<dpms_filter<Input, typename Input::redirect_t>>(
-        *input, *input->redirect);
-    input->redirect->prependInputEventFilter(input->dpms_filter.get());
+    redirect.dpms_filter = std::make_unique<dpms_filter<Redirect>>(redirect);
+    redirect.prependInputEventFilter(redirect.dpms_filter.get());
 }
 
 }
