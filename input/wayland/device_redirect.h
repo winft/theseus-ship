@@ -28,16 +28,16 @@ void device_redirect_update(Dev* dev);
 template<typename Dev>
 void device_redirect_init(Dev* dev)
 {
-    auto& space = dev->redirect->platform.base.space;
-    QObject::connect(space->stacking.order.qobject.get(),
+    auto& space = dev->redirect->space;
+    QObject::connect(space.stacking.order.qobject.get(),
                      &win::stacking_order_qobject::changed,
                      dev->qobject.get(),
                      [dev] { device_redirect_update(dev); });
-    QObject::connect(space->qobject.get(),
+    QObject::connect(space.qobject.get(),
                      &win::space_qobject::clientMinimizedChanged,
                      dev->qobject.get(),
                      [dev] { device_redirect_update(dev); });
-    QObject::connect(space->virtual_desktop_manager->qobject.get(),
+    QObject::connect(space.virtual_desktop_manager->qobject.get(),
                      &win::virtual_desktop_manager_qobject::currentChanged,
                      dev->qobject.get(),
                      [dev] { device_redirect_update(dev); });

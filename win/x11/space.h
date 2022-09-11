@@ -67,7 +67,7 @@ public:
         };
 
         if (base.input) {
-            this->input = std::make_unique<typename input_t::redirect_t>(*base.input);
+            this->input = std::make_unique<typename input_t::redirect_t>(*base.input, *this);
         }
 
         atoms = std::make_unique<base::x11::atoms>(connection());

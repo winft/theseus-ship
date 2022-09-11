@@ -104,17 +104,17 @@ public:
                              [this] { device_redirect_update(this); });
         };
         auto setup_move_resize_notify_on_signal = [this, setupMoveResizeConnection](auto win_id) {
-            auto c = this->redirect->platform.base.space->windows_map.at(win_id);
+            auto c = this->redirect->space.windows_map.at(win_id);
             setupMoveResizeConnection(c);
         };
 
-        auto const clients = this->redirect->platform.base.space->windows;
+        auto const clients = this->redirect->space.windows;
         std::for_each(clients.begin(), clients.end(), setupMoveResizeConnection);
-        QObject::connect(this->redirect->platform.base.space->qobject.get(),
+        QObject::connect(this->redirect->space.qobject.get(),
                          &win::space_qobject::clientAdded,
                          this->qobject.get(),
                          setup_move_resize_notify_on_signal);
-        QObject::connect(this->redirect->platform.base.space->qobject.get(),
+        QObject::connect(this->redirect->space.qobject.get(),
                          &win::space_qobject::wayland_window_added,
                          this->qobject.get(),
                          setup_move_resize_notify_on_signal);
@@ -223,8 +223,8 @@ public:
         if (s != seat->pointers().get_focus().surface) {
             return;
         }
-        auto const canConstrain = constraints.enabled
-            && this->focus.window == this->redirect->platform.base.space->stacking.active;
+        auto const canConstrain
+            = constraints.enabled && this->focus.window == this->redirect->space.stacking.active;
         auto const cf = s->confinedPointer();
 
         if (cf) {
@@ -543,7 +543,7 @@ public:
     {
         QObject::disconnect(notifiers.decoration_geometry);
         notifiers.decoration_geometry = QMetaObject::Connection();
-        this->redirect->platform.base.space->focusMousePos = position().toPoint();
+        this->redirect->space.focusMousePos = position().toPoint();
 
         if (old) {
             // send leave event to old decoration
@@ -606,7 +606,7 @@ public:
             if (auto lead = win::lead_of_annexed_transient(focusNow)) {
                 win::enter_event(lead, m_pos.toPoint());
             }
-            this->redirect->platform.base.space->focusMousePos = m_pos.toPoint();
+            this->redirect->space.focusMousePos = m_pos.toPoint();
         }
 
         if (auto focus_internal = this->focus.internal_window) {
@@ -647,7 +647,7 @@ public:
                 }
 
                 // TODO: can we check on the client instead?
-                if (this->redirect->platform.base.space->move_resize_window) {
+                if (this->redirect->space.move_resize_window) {
                     // don't update while moving
                     return;
                 }
@@ -664,11 +664,10 @@ public:
                                &Wrapland::Server::Surface::pointerConstraintsChanged,
                                this->qobject.get(),
                                [this] { updatePointerConstraints(); });
-        notifiers.constraints_activated
-            = QObject::connect(this->redirect->platform.base.space->qobject.get(),
-                               &win::space_qobject::clientActivated,
-                               this->qobject.get(),
-                               [this] { updatePointerConstraints(); });
+        notifiers.constraints_activated = QObject::connect(this->redirect->space.qobject.get(),
+                                                           &win::space_qobject::clientActivated,
+                                                           this->qobject.get(),
+                                                           [this] { updatePointerConstraints(); });
         updatePointerConstraints();
     }
 

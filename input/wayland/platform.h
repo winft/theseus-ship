@@ -28,8 +28,8 @@ class platform : public input::platform<Base>
 {
 public:
     using type = platform<Base>;
-    using redirect_t = wayland::redirect<type>;
     using space_t = typename Base::space_t;
+    using redirect_t = wayland::redirect<type, space_t>;
 
     platform(Base& base)
         : input::platform<Base>(base)

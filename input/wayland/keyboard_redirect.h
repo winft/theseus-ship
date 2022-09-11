@@ -103,12 +103,12 @@ public:
                          [this](auto const& event) { process_key_repeat(event); });
         redirect->m_spies.push_back(keyRepeatSpy);
 
-        QObject::connect(redirect->platform.base.space->qobject.get(),
+        QObject::connect(redirect->space.qobject.get(),
                          &win::space::qobject_t::clientActivated,
                          qobject.get(),
                          [this] {
                              QObject::disconnect(m_activeClientSurfaceChangedConnection);
-                             if (auto c = redirect->platform.base.space->stacking.active) {
+                             if (auto c = redirect->space.stacking.active) {
                                  m_activeClientSurfaceChangedConnection
                                      = QObject::connect(c->qobject.get(),
                                                         &win::window_qobject::surfaceChanged,
@@ -136,7 +136,7 @@ public:
 
         // TODO: this needs better integration
         window_t* found = nullptr;
-        auto const& stacking = redirect->platform.base.space->stacking.order.stack;
+        auto const& stacking = redirect->space.stacking.order.stack;
         if (!stacking.empty()) {
             auto it = stacking.end();
             do {
@@ -162,7 +162,7 @@ public:
         }
 
         if (!found && !redirect->isSelectingWindow()) {
-            found = redirect->platform.base.space->stacking.active;
+            found = redirect->space.stacking.active;
         }
         if (found && found->surface) {
             if (found->surface != seat->keyboards().get_focus().surface) {

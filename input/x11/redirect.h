@@ -13,17 +13,19 @@
 namespace KWin::input::x11
 {
 
-template<typename Platform>
+template<typename Platform, typename Space>
 class redirect
 {
 public:
-    using type = redirect<Platform>;
-    using space_t = typename Platform::base_t::space_t;
+    using type = redirect<Platform, Space>;
+    using platform_t = Platform;
+    using space_t = Space;
     using window_t = typename space_t::window_t;
 
-    redirect(Platform& platform)
+    redirect(Platform& platform, Space& space)
         : qobject{std::make_unique<redirect_qobject>()}
         , platform{platform}
+        , space{space}
     {
         platform.redirect = this;
         pointer = std::make_unique<pointer_redirect<type>>(this);
@@ -45,6 +47,7 @@ public:
 
     std::unique_ptr<redirect_qobject> qobject;
     Platform& platform;
+    Space& space;
 };
 
 }

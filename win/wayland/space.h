@@ -114,7 +114,7 @@ public:
             return iwin->singleton.get();
         };
 
-        input = std::make_unique<typename input_t::redirect_t>(*base.input);
+        input = std::make_unique<typename input_t::redirect_t>(*base.input, *this);
         this->dbus
             = std::make_unique<base::dbus::kwin_impl<type, input_t>>(*this, base.input.get());
         edges = std::make_unique<edger_t>(*this);

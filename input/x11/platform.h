@@ -29,9 +29,8 @@ class platform : public input::platform<Base>
 {
 public:
     using type = platform<Base>;
-    using redirect_t = x11::redirect<type>;
-    using abstract_type = input::platform<Base>;
-    using space_t = typename abstract_type::base_t::space_t;
+    using space_t = typename Base::space_t;
+    using redirect_t = x11::redirect<type, space_t>;
 
     platform(Base& base)
         : input::platform<Base>(base)
