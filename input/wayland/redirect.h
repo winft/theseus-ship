@@ -7,6 +7,7 @@
 
 #include "cursor.h"
 #include "fake/devices.h"
+#include "input_method.h"
 #include "keyboard_redirect.h"
 #include "pointer_redirect.h"
 #include "tablet_redirect.h"
@@ -61,6 +62,7 @@ public:
         , platform{platform}
         , space{space}
         , config_watcher{KConfigWatcher::create(kwinApp()->inputConfig())}
+        , input_method{std::make_unique<wayland::input_method<type>>(*this, waylandServer())}
     {
         platform.redirect = this;
         setup_workspace();
@@ -618,6 +620,7 @@ private:
 
     KConfigWatcher::Ptr config_watcher;
 
+    std::unique_ptr<wayland::input_method<type>> input_method;
     std::unique_ptr<Wrapland::Server::FakeInput> fake_input;
 
     std::unordered_map<Wrapland::Server::FakeInputDevice*, fake::devices<Platform>> fake_devices;

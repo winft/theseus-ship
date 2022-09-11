@@ -6,7 +6,6 @@
 #pragma once
 
 #include "cursor.h"
-#include "input_method.h"
 #include "redirect.h"
 
 #include "base/wayland/server.h"
@@ -35,7 +34,6 @@ public:
     {
         this->config = kwinApp()->inputConfig();
 
-        input_method = std::make_unique<wayland::input_method<type>>(*this, waylandServer());
         virtual_keyboard = waylandServer()->display->create_virtual_keyboard_manager_v1();
     }
 
@@ -124,7 +122,6 @@ public:
         toggle_touchpads();
     }
 
-    std::unique_ptr<wayland::input_method<type>> input_method;
     std::unique_ptr<Wrapland::Server::virtual_keyboard_manager_v1> virtual_keyboard;
 
     redirect_t* redirect{nullptr};
