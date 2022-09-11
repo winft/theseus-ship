@@ -692,7 +692,7 @@ public:
             XCB_GRAB_MODE_ASYNC,
             XCB_GRAB_MODE_ASYNC,
             xcb_windows.grab,
-            this->space.input->platform.cursor->x11_cursor(this->control->move_resize.cursor),
+            this->space.input->cursor->x11_cursor(this->control->move_resize.cursor),
             xTime());
 
         unique_cptr<xcb_grab_pointer_reply_t> pointerGrab(
@@ -1050,7 +1050,7 @@ public:
         if (old_full) {
             // May cause focus leave.
             // TODO: Must always be done when fullscreening to other output allowed.
-            this->space.focusMousePos = this->space.input->platform.cursor->pos();
+            this->space.focusMousePos = this->space.input->cursor->pos();
         }
 
         this->control->fullscreen = full;

@@ -91,7 +91,7 @@ public:
                              }
                          });
 
-        platform.cursor = std::make_unique<wayland::cursor<Platform>>(&platform);
+        cursor = std::make_unique<wayland::cursor<type>>(*this);
 
         pointer = std::make_unique<wayland::pointer_redirect<type>>(this);
         keyboard = std::make_unique<wayland::keyboard_redirect<type>>(this);
@@ -210,6 +210,8 @@ public:
     std::unique_ptr<pointer_redirect<type>> pointer;
     std::unique_ptr<tablet_redirect<type>> tablet;
     std::unique_ptr<touch_redirect<type>> touch;
+
+    std::unique_ptr<wayland::cursor<type>> cursor;
 
     std::list<event_filter<type>*> m_filters;
     std::vector<event_spy<type>*> m_spies;
@@ -564,6 +566,7 @@ private:
     }
 
     KConfigWatcher::Ptr config_watcher;
+
     std::unique_ptr<Wrapland::Server::FakeInput> fake_input;
 
     std::unordered_map<Wrapland::Server::FakeInputDevice*, fake::devices<Platform>> fake_devices;

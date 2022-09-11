@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include "config-kwin.h"
+#include "cursor.h"
 #include "keyboard_redirect.h"
 #include "pointer_redirect.h"
 
@@ -28,6 +30,7 @@ public:
         , space{space}
     {
         platform.redirect = this;
+        create_cursor();
         pointer = std::make_unique<pointer_redirect<type>>(this);
         keyboard = std::make_unique<keyboard_redirect<type>>(this);
     }
@@ -40,6 +43,7 @@ public:
         }
     }
 
+    std::unique_ptr<x11::cursor> cursor;
     std::unique_ptr<keyboard_redirect<type>> keyboard;
     std::unique_ptr<pointer_redirect<type>> pointer;
 
@@ -48,6 +52,27 @@ public:
     std::unique_ptr<redirect_qobject> qobject;
     Platform& platform;
     Space& space;
+
+private:
+#if HAVE_X11_XINPUT
+    void create_cursor()
+    {
+        auto const is_xinput_avail = platform.xinput != nullptr;
+        this->cursor = std::make_unique<x11::cursor>(is_xinput_avail);
+
+        if (is_xinput_avail) {
+            platform.xinput->setCursor(static_cast<x11::cursor*>(this->cursor.get()));
+
+            platform.xkb.setConfig(kwinApp()->kxkbConfig());
+            platform.xkb.reconfigure();
+        }
+    }
+#else
+    void create_cursor()
+    {
+        cursor = std::make_unique<x11::cursor>(false);
+    }
+#endif
 };
 
 }

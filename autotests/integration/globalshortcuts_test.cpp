@@ -86,7 +86,7 @@ void GlobalShortcutsTest::initTestCase()
 void GlobalShortcutsTest::init()
 {
     Test::setup_wayland_connection();
-    Test::app()->base.input->cursor->set_pos(QPoint(640, 512));
+    Test::cursor()->set_pos(QPoint(640, 512));
 
     input::xkb::get_primary_xkb_keyboard(*Test::app()->base.input)->switch_to_layout(0);
 }

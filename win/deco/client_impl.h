@@ -155,7 +155,7 @@ public:
                 = QApplication::style()->styleHint(QStyle::SH_ToolTip_FallAsleepDelay);
             m_toolTipFallAsleep.setRemainingTime(fallAsleepDelay);
 
-            QToolTip::showText(m_client->space.input->platform.cursor->pos(), m_toolTipText);
+            QToolTip::showText(m_client->space.input->cursor->pos(), m_toolTipText);
             m_toolTipShowing = true;
         });
     }

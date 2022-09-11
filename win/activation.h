@@ -301,7 +301,7 @@ typename Space::window_t* window_under_mouse(Space const& space, base::output co
         if (!(window->isShown() && window->isOnCurrentDesktop() && on_screen(window, output)))
             continue;
 
-        if (window->frameGeometry().contains(space.input->platform.cursor->pos())) {
+        if (window->frameGeometry().contains(space.input->cursor->pos())) {
             return window;
         }
     }
@@ -411,7 +411,7 @@ void set_active_window(Space& space, typename Space::window_t* window)
 
     blocker block(stacking.order);
     ++space.set_active_client_recursion;
-    space.focusMousePos = space.input->platform.cursor->pos();
+    space.focusMousePos = space.input->cursor->pos();
 
     if (stacking.active != nullptr) {
         // note that this may call setActiveClient( NULL ), therefore the recursion counter
@@ -625,7 +625,7 @@ typename Space::window_t* find_window_to_activate_on_desktop(Space& space, unsig
             if (!(window->isShown() && window->isOnDesktop(desktop) && on_active_screen(window)))
                 continue;
 
-            if (window->frameGeometry().contains(space.input->platform.cursor->pos())) {
+            if (window->frameGeometry().contains(space.input->cursor->pos())) {
                 if (!is_desktop(window)) {
                     return window;
                 }

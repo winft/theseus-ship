@@ -385,7 +385,7 @@ public:
                 &win::virtual_desktop_manager_qobject::countChanged,
                 this,
                 &EffectsHandler::numberDesktopsChanged);
-        QObject::connect(ws->input->platform.cursor.get(),
+        QObject::connect(ws->input->cursor.get(),
                          &input::cursor::mouse_changed,
                          this,
                          &EffectsHandler::mouseChanged);
@@ -623,21 +623,21 @@ public:
 
     void startMousePolling() override
     {
-        if (auto& cursor = compositor.space->input->platform.cursor) {
+        if (auto& cursor = compositor.space->input->cursor) {
             cursor->start_mouse_polling();
         }
     }
 
     void stopMousePolling() override
     {
-        if (auto& cursor = compositor.space->input->platform.cursor) {
+        if (auto& cursor = compositor.space->input->cursor) {
             cursor->stop_mouse_polling();
         }
     }
 
     QPoint cursorPos() const override
     {
-        return compositor.space->input->platform.cursor->pos();
+        return compositor.space->input->cursor->pos();
     }
 
     void defineCursor(Qt::CursorShape shape) override
@@ -649,11 +649,11 @@ public:
     {
         if (signal == QMetaMethod::fromSignal(&EffectsHandler::cursorShapeChanged)) {
             if (!m_trackingCursorChanges) {
-                QObject::connect(compositor.space->input->platform.cursor.get(),
+                QObject::connect(compositor.space->input->cursor.get(),
                                  &input::cursor::image_changed,
                                  this,
                                  &EffectsHandler::cursorShapeChanged);
-                compositor.space->input->platform.cursor->start_image_tracking();
+                compositor.space->input->cursor->start_image_tracking();
             }
             ++m_trackingCursorChanges;
         }
@@ -665,8 +665,8 @@ public:
         if (signal == QMetaMethod::fromSignal(&EffectsHandler::cursorShapeChanged)) {
             Q_ASSERT(m_trackingCursorChanges > 0);
             if (!--m_trackingCursorChanges) {
-                compositor.space->input->platform.cursor->stop_image_tracking();
-                QObject::disconnect(compositor.space->input->platform.cursor.get(),
+                compositor.space->input->cursor->stop_image_tracking();
+                QObject::disconnect(compositor.space->input->cursor.get(),
                                     &input::cursor::image_changed,
                                     this,
                                     &EffectsHandler::cursorShapeChanged);
@@ -677,22 +677,22 @@ public:
 
     PlatformCursorImage cursorImage() const override
     {
-        return compositor.space->input->platform.cursor->platform_image();
+        return compositor.space->input->cursor->platform_image();
     }
 
     bool isCursorHidden() const override
     {
-        return compositor.space->input->platform.cursor->is_hidden();
+        return compositor.space->input->cursor->is_hidden();
     }
 
     void hideCursor() override
     {
-        compositor.space->input->platform.cursor->hide();
+        compositor.space->input->cursor->hide();
     }
 
     void showCursor() override
     {
-        compositor.space->input->platform.cursor->show();
+        compositor.space->input->cursor->show();
     }
 
     void startInteractiveWindowSelection(std::function<void(KWin::EffectWindow*)> callback) override

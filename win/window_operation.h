@@ -26,7 +26,7 @@ void perform_window_operation(Win* window, base::options_qobject::WindowOperatio
     }
 
     auto& space = window->space;
-    auto& cursor = space.input->platform.cursor;
+    auto& cursor = space.input->cursor;
 
     if (op == base::options_qobject::MoveOp || op == base::options_qobject::UnrestrictedMoveOp) {
         cursor->set_pos(window->frameGeometry().center());

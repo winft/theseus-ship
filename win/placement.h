@@ -464,7 +464,7 @@ void place_under_mouse(Win* window, const QRect& area, placement /*next*/)
     Q_ASSERT(area.isValid());
 
     auto geom = window->geometry_update.frame;
-    geom.moveCenter(window->space.input->platform.cursor->pos());
+    geom.moveCenter(window->space.input->cursor->pos());
     move(window, geom.topLeft());
     keep_in_area(window, area, false); // make sure it's kept inside workarea
 }

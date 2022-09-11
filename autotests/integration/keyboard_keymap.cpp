@@ -113,7 +113,7 @@ std::string create_keymap()
 
 void keyboard_keymap_test::init()
 {
-    Test::app()->base.input->cursor->set_pos(QPoint(512, 512));
+    Test::cursor()->set_pos(QPoint(512, 512));
 }
 
 void keyboard_keymap_test::cleanup()

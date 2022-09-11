@@ -5,7 +5,6 @@
 */
 #pragma once
 
-#include "cursor.h"
 #include "redirect.h"
 #include "window_selector.h"
 
@@ -50,7 +49,6 @@ public:
             }
         }
 #endif
-        create_cursor();
     }
 
     platform(platform const&) = delete;
@@ -133,32 +131,10 @@ public:
 #if HAVE_X11_XINPUT
     std::unique_ptr<xinput_integration<type>> xinput;
 #endif
-    std::unique_ptr<x11::cursor> cursor;
     std::unique_ptr<window_selector<type>> window_sel;
 
     input::xkb::manager<type> xkb;
     std::unique_ptr<dbus::device_manager<type>> dbus;
-
-private:
-#if HAVE_X11_XINPUT
-    void create_cursor()
-    {
-        auto const is_xinput_avail = xinput != nullptr;
-        this->cursor = std::make_unique<x11::cursor>(is_xinput_avail);
-
-        if (is_xinput_avail) {
-            xinput->setCursor(static_cast<x11::cursor*>(this->cursor.get()));
-
-            xkb.setConfig(kwinApp()->kxkbConfig());
-            xkb.reconfigure();
-        }
-    }
-#else
-    void create_cursor()
-    {
-        cursor = std::make_unique<x11::cursor>(false);
-    }
-#endif
 };
 
 }

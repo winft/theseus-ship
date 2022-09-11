@@ -112,9 +112,9 @@ private:
     xcb_cursor_t createCursor(QByteArray const& cursorName)
     {
         if (cursorName.isEmpty()) {
-            return platform.cursor->x11_cursor(Qt::CrossCursor);
+            return platform.redirect->cursor->x11_cursor(Qt::CrossCursor);
         }
-        auto cursor = platform.cursor->x11_cursor(cursorName);
+        auto cursor = platform.redirect->cursor->x11_cursor(cursorName);
         if (cursor != XCB_CURSOR_NONE) {
             return cursor;
         }
@@ -189,7 +189,7 @@ private:
             my /= 10;
         }
 
-        auto& cursor = platform.cursor;
+        auto& cursor = platform.redirect->cursor;
         cursor->set_pos(cursor->pos() + QPoint(mx, my));
 
         if (returnPressed) {
@@ -220,7 +220,7 @@ private:
             if (m_callback) {
                 selectWindowId(window);
             } else if (m_pointSelectionFallback) {
-                m_pointSelectionFallback(platform.cursor->pos());
+                m_pointSelectionFallback(platform.redirect->cursor->pos());
             }
             release();
             return;

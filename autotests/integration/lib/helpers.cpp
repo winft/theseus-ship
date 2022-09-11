@@ -44,6 +44,11 @@ WaylandTestApplication* app()
     return static_cast<WaylandTestApplication*>(kwinApp());
 }
 
+input::wayland::cursor<space::input_t::redirect_t>* cursor()
+{
+    return app()->base.space->input->cursor.get();
+}
+
 void setup_wayland_connection(global_selection globals)
 {
     get_all_clients().emplace_back(globals);

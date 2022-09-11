@@ -19,27 +19,26 @@
 namespace KWin::input::wayland
 {
 
-template<typename Platform>
+template<typename Redirect>
 class cursor : public input::cursor
 {
 public:
-    using type = cursor<Platform>;
-    using cursor_image_t = wayland::cursor_image<type, Platform>;
+    using type = cursor<Redirect>;
+    using cursor_image_t = wayland::cursor_image<type, Redirect>;
 
-    cursor(Platform* platform)
-        : cursor_image{std::make_unique<cursor_image_t>(*platform)}
-        , platform{platform}
+    cursor(Redirect& redirect)
+        : cursor_image{std::make_unique<cursor_image_t>(redirect)}
+        , redirect{redirect}
     {
-        auto redirect = platform->redirect;
-        QObject::connect(redirect->qobject.get(),
+        QObject::connect(redirect.qobject.get(),
                          &redirect_qobject::globalPointerChanged,
                          this,
                          &type::slot_pos_changed);
-        QObject::connect(redirect->qobject.get(),
+        QObject::connect(redirect.qobject.get(),
                          &redirect_qobject::pointerButtonStateChanged,
                          this,
                          &type::slot_pointer_button_changed);
-        QObject::connect(redirect->qobject.get(),
+        QObject::connect(redirect.qobject.get(),
                          &redirect_qobject::keyboardModifiersChanged,
                          this,
                          &type::slot_modifiers_changed);
@@ -70,8 +69,8 @@ public:
 protected:
     void do_set_pos() override
     {
-        platform->warp_pointer(current_pos(), waylandServer()->seat()->timestamp());
-        slot_pos_changed(platform->redirect->globalPointer());
+        redirect.platform.warp_pointer(current_pos(), waylandServer()->seat()->timestamp());
+        slot_pos_changed(redirect.globalPointer());
         Q_EMIT pos_changed(current_pos());
     }
 
@@ -94,7 +93,7 @@ protected:
 private:
     Qt::KeyboardModifiers get_keyboard_modifiers()
     {
-        return xkb::get_active_keyboard_modifiers(*platform);
+        return xkb::get_active_keyboard_modifiers(redirect.platform);
     }
 
     void slot_pos_changed(const QPointF& pos)
@@ -109,7 +108,7 @@ private:
     void slot_pointer_button_changed()
     {
         Qt::MouseButtons const oldButtons = m_currentButtons;
-        m_currentButtons = platform->redirect->qtButtonStates();
+        m_currentButtons = redirect.qtButtonStates();
 
         auto const pos = current_pos();
         auto mods = get_keyboard_modifiers();
@@ -124,7 +123,7 @@ private:
     }
 
     Qt::MouseButtons m_currentButtons{Qt::NoButton};
-    Platform* platform;
+    Redirect& redirect;
 };
 
 }

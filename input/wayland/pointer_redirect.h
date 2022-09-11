@@ -123,7 +123,7 @@ public:
         warp(QRect({}, kwinApp()->get_base().topology.size).center());
         updateAfterScreenChange();
 
-        auto wayland_cursor = this->redirect->platform.cursor.get();
+        auto wayland_cursor = this->redirect->cursor.get();
         assert(wayland_cursor);
         QObject::connect(this->qobject.get(),
                          &device_redirect_qobject::decorationChanged,
@@ -180,7 +180,7 @@ public:
     {
         // current pointer focus window should get a leave event
         device_redirect_update(this);
-        auto wayland_cursor = this->redirect->platform.cursor.get();
+        auto wayland_cursor = this->redirect->cursor.get();
         wayland_cursor->cursor_image->setEffectsOverrideCursor(shape);
     }
 
@@ -188,20 +188,20 @@ public:
     {
         // cursor position might have changed while there was an effect in place
         device_redirect_update(this);
-        this->redirect->platform.cursor->cursor_image->removeEffectsOverrideCursor();
+        this->redirect->cursor->cursor_image->removeEffectsOverrideCursor();
     }
 
     void setWindowSelectionCursor(QByteArray const& shape)
     {
         // send leave to current pointer focus window
         update_to_reset();
-        this->redirect->platform.cursor->cursor_image->setWindowSelectionCursor(shape);
+        this->redirect->cursor->cursor_image->setWindowSelectionCursor(shape);
     }
 
     void removeWindowSelectionCursor()
     {
         device_redirect_update(this);
-        this->redirect->platform.cursor->cursor_image->removeWindowSelectionCursor();
+        this->redirect->cursor->cursor_image->removeWindowSelectionCursor();
     }
 
     void updatePointerConstraints()

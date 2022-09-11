@@ -87,7 +87,7 @@ void PlasmaSurfaceTest::init()
     m_compositor = Test::get_client().interfaces.compositor.get();
     m_plasmaShell = Test::get_client().interfaces.plasma_shell.get();
 
-    Test::app()->base.input->cursor->set_pos(640, 512);
+    Test::cursor()->set_pos(640, 512);
 }
 
 void PlasmaSurfaceTest::cleanup()
@@ -402,7 +402,7 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
     QVERIFY(stackingOrderChangedSpy.isValid());
     // trigger screenedge
     QFETCH(QPoint, triggerPoint);
-    Test::app()->base.input->cursor->set_pos(triggerPoint);
+    Test::cursor()->set_pos(triggerPoint);
     QCOMPARE(stackingOrderChangedSpy.count(), 1);
     stackingOrder = Test::app()->base.space->stacking.order.stack;
     QCOMPARE(stackingOrder.size(), 2);
@@ -454,7 +454,7 @@ void PlasmaSurfaceTest::test_open_under_cursor_data()
 void PlasmaSurfaceTest::test_open_under_cursor()
 {
     QFETCH(QPoint, cursor_pos);
-    Test::app()->base.input->cursor->set_pos(cursor_pos);
+    Test::cursor()->set_pos(cursor_pos);
 
     auto surface = Test::create_surface();
     QVERIFY(surface);

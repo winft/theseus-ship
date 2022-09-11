@@ -119,7 +119,7 @@ void SceneQPainterTest::testStartFrame()
     auto const cursorImage = sw_cursor->image();
 
     QVERIFY(!cursorImage.isNull());
-    p.drawImage(Test::app()->base.input->cursor->pos() - sw_cursor->hotspot(), cursorImage);
+    p.drawImage(Test::cursor()->pos() - sw_cursor->hotspot(), cursorImage);
     QCOMPARE(referenceImage, *scene->backend()->bufferForScreen(Test::app()->base.outputs.at(0)));
 }
 
@@ -139,7 +139,7 @@ void SceneQPainterTest::testCursorMoving()
     surface->commit();
     QVERIFY(frameRenderedSpy.wait());
 
-    auto& cursor = Test::app()->base.input->cursor;
+    auto cursor = Test::cursor();
 
     cursor->set_pos(0, 0);
     surface->commit();
@@ -179,7 +179,7 @@ void SceneQPainterTest::testCursorMoving()
 
 void SceneQPainterTest::testWindow()
 {
-    auto& cursor = Test::app()->base.input->cursor;
+    auto cursor = Test::cursor();
     cursor->set_pos(45, 45);
     // this test verifies that a window is rendered correctly
     using namespace Wrapland::Client;
@@ -240,7 +240,7 @@ void SceneQPainterTest::testWindowScaled()
     // this test verifies that a window is rendered correctly
     using namespace Wrapland::Client;
 
-    Test::app()->base.input->cursor->set_pos(10, 10);
+    Test::cursor()->set_pos(10, 10);
     QVERIFY(Test::wait_for_wayland_pointer());
 
     std::unique_ptr<Surface> s(Test::create_surface());
@@ -295,7 +295,7 @@ void SceneQPainterTest::testCompositorRestart()
 {
     // this test verifies that the compositor/SceneQPainter survive a restart of the compositor and
     // still render correctly
-    Test::app()->base.input->cursor->set_pos(400, 400);
+    Test::cursor()->set_pos(400, 400);
 
     // first create a window
     using namespace Wrapland::Client;

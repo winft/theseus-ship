@@ -128,12 +128,12 @@ void setup_plasma_management(Space* space, Win* win)
         win->closeWindow();
     });
     QObject::connect(plasma_win, &Wrapland::Server::PlasmaWindow::moveRequested, qtwin, [win] {
-        auto& cursor = win->space.input->platform.cursor;
+        auto& cursor = win->space.input->cursor;
         cursor->set_pos(win->frameGeometry().center());
         win->performMouseCommand(base::options_qobject::MouseMove, cursor->pos());
     });
     QObject::connect(plasma_win, &Wrapland::Server::PlasmaWindow::resizeRequested, qtwin, [win] {
-        auto& cursor = win->space.input->platform.cursor;
+        auto& cursor = win->space.input->cursor;
         cursor->set_pos(win->frameGeometry().bottomRight());
         win->performMouseCommand(base::options_qobject::MouseResize, cursor->pos());
     });

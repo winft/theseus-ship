@@ -47,7 +47,7 @@ private:
             return;
         }
         m_cursorHidden = false;
-        this->redirect.platform.cursor->show();
+        this->redirect.cursor->show();
     }
 
     void hideCursor()
@@ -56,7 +56,7 @@ private:
             return;
         }
         m_cursorHidden = true;
-        this->redirect.platform.cursor->hide();
+        this->redirect.cursor->hide();
     }
 
     bool m_cursorHidden = false;

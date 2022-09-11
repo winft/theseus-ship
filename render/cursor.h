@@ -44,8 +44,8 @@ public:
         }
 
         enabled = enable;
-        auto cursor = platform.base.input->cursor.get();
-        using cursor_t = typename decltype(platform.base.input->cursor)::element_type;
+        auto cursor = platform.base.space->input->cursor.get();
+        using cursor_t = typename decltype(platform.base.space->input->cursor)::element_type;
 
         if (enable) {
             cursor->start_image_tracking();
@@ -62,21 +62,21 @@ public:
 
     QImage image() const
     {
-        return platform.base.input->cursor->image();
+        return platform.base.space->input->cursor->image();
     }
 
     QPoint hotspot() const
     {
-        return platform.base.input->cursor->hotspot();
+        return platform.base.space->input->cursor->hotspot();
     }
 
     void mark_as_rendered()
     {
         if (enabled) {
             last_rendered_geometry
-                = QRect(platform.base.input->cursor->pos() - hotspot(), image().size());
+                = QRect(platform.base.space->input->cursor->pos() - hotspot(), image().size());
         }
-        platform.base.input->cursor->mark_as_rendered();
+        platform.base.space->input->cursor->mark_as_rendered();
     }
 
     std::unique_ptr<cursor_qobject> qobject;
@@ -88,7 +88,7 @@ private:
         auto& compositor = platform.compositor;
         compositor->addRepaint(last_rendered_geometry);
         compositor->addRepaint(
-            QRect(platform.base.input->cursor->pos() - hotspot(), image().size()));
+            QRect(platform.base.space->input->cursor->pos() - hotspot(), image().size()));
     }
 
     Platform& platform;
