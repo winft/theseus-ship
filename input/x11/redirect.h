@@ -10,12 +10,9 @@
 #include "keyboard_redirect.h"
 #include "pointer_redirect.h"
 #include "window_selector.h"
+#include "xinput_integration.h"
 
 #include "input/redirect_qobject.h"
-
-#if HAVE_X11_XINPUT
-#include "xinput_integration.h"
-#endif
 
 #include <QX11Info>
 
@@ -36,7 +33,6 @@ public:
         , platform{platform}
         , space{space}
     {
-#if HAVE_X11_XINPUT
         if (!qEnvironmentVariableIsSet("KWIN_NO_XI2")) {
             xinput = std::make_unique<xinput_integration<type>>(QX11Info::display(), *this);
             if (!xinput->hasXinput()) {
@@ -48,7 +44,6 @@ public:
                                  &xinput_integration<type>::startListening);
             }
         }
-#endif
 
         platform.redirect = this;
         create_cursor();
@@ -93,7 +88,6 @@ public:
     Space& space;
 
 private:
-#if HAVE_X11_XINPUT
     void create_cursor()
     {
         auto const is_xinput_avail = xinput != nullptr;
@@ -106,12 +100,6 @@ private:
     }
 
     std::unique_ptr<xinput_integration<type>> xinput;
-#else
-    void create_cursor()
-    {
-        cursor = std::make_unique<x11::cursor>(false);
-    }
-#endif
     std::unique_ptr<window_selector<type>> window_sel;
 };
 

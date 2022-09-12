@@ -201,8 +201,6 @@ set_package_properties(X11 PROPERTIES
     URL "https://www.x.org"
     TYPE REQUIRED
 )
-add_feature_info("XInput" X11_Xinput_FOUND "Required for poll-free mouse cursor updates")
-set(HAVE_X11_XINPUT ${X11_Xinput_FOUND})
 
 # All the required XCB components
 find_package(XCB 1.10 REQUIRED COMPONENTS
@@ -660,11 +658,9 @@ PUBLIC
     KF5::Crash
 PRIVATE
     Qt::X11Extras
+    X11::Xi
 )
 
-if (HAVE_X11_XINPUT)
-    target_link_libraries(kwin_x11_lib PRIVATE ${X11_Xinput_LIB})
-endif()
 if (HAVE_DL_LIBRARY)
     target_link_libraries(kwin_x11_lib PRIVATE ${DL_LIBRARY})
 endif()
