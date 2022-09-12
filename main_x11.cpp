@@ -255,7 +255,13 @@ void ApplicationX11::start()
 
         render->compositor = std::make_unique<base_t::render_t::compositor_t>(*render);
 
-        base.space = std::make_unique<base_t::space_t>(base);
+        try {
+            base.space = std::make_unique<base_t::space_t>(base);
+        } catch(std::exception& ex) {
+            qCCritical(KWIN_CORE) << "Abort since space creation fails with:" << ex.what();
+            exit(1);
+        }
+
         win::init_shortcuts(*base.space);
 
         event_filter = std::make_unique<base::x11::xcb_event_filter<base_t::space_t>>(*base.space);

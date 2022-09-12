@@ -249,8 +249,7 @@ public:
         int xi_opcode, event, error;
         // init XInput extension
         if (!XQueryExtension(display, "XInputExtension", &xi_opcode, &event, &error)) {
-            qCDebug(KWIN_CORE) << "XInputExtension not present";
-            return;
+            throw std::runtime_error("XInputExtension not present");
         }
 
         // verify that the XInput extension is at at least version 2.0
@@ -260,11 +259,9 @@ public:
             qCDebug(KWIN_CORE) << "Failed to init XInput 2.2, trying 2.0";
             minor = 0;
             if (XIQueryVersion(display, &major, &minor) != Success) {
-                qCDebug(KWIN_CORE) << "Failed to init XInput";
-                return;
+                throw std::runtime_error("XInput version too low");
             }
         }
-        m_hasXInput = true;
         m_xiOpcode = xi_opcode;
         m_majorVersion = major;
         m_minorVersion = minor;
@@ -311,11 +308,6 @@ public:
         redirect.m_spies.push_back(new input::modifier_only_shortcuts_spy(redirect));
     }
 
-    bool hasXinput() const
-    {
-        return m_hasXInput;
-    }
-
     xinput_devices<typename Redirect::platform_t> fake_devices;
     Redirect& redirect;
     Display* display;
@@ -342,7 +334,6 @@ private:
                          [keyboard_red](auto const& event) { keyboard_red->process_key(event); });
     }
 
-    bool m_hasXInput = false;
     int m_xiOpcode = 0;
     int m_majorVersion = 0;
     int m_minorVersion = 0;

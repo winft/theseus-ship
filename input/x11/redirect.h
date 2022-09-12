@@ -33,14 +33,10 @@ public:
         , space{space}
     {
         xinput = std::make_unique<xinput_integration<type>>(QX11Info::display(), *this);
-        if (!xinput->hasXinput()) {
-            xinput.reset();
-        } else {
-            QObject::connect(kwinApp(),
-                             &Application::startup_finished,
-                             xinput.get(),
-                             &xinput_integration<type>::startListening);
-        }
+        QObject::connect(kwinApp(),
+                         &Application::startup_finished,
+                         xinput.get(),
+                         &xinput_integration<type>::startListening);
 
         platform.redirect = this;
         create_cursor();
