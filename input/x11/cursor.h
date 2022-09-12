@@ -18,7 +18,7 @@ class KWIN_EXPORT cursor : public input::cursor
 {
     Q_OBJECT
 public:
-    cursor(bool xInputSupport = false);
+    cursor();
     ~cursor() override;
 
     PlatformCursorImage platform_image() const override;
@@ -39,9 +39,6 @@ protected:
     void do_set_pos() override;
     void do_get_pos() override;
 
-    void do_start_mouse_polling() override;
-    void do_stop_mouse_polling() override;
-
     void do_start_image_tracking() override;
     void do_stop_image_tracking() override;
 
@@ -61,8 +58,6 @@ private:
     xcb_timestamp_t m_timeStamp;
     uint16_t m_buttonMask;
     QTimer* m_resetTimeStampTimer;
-    QTimer* m_mousePollingTimer;
-    bool m_hasXInput;
     bool m_needsPoll;
 
     std::unique_ptr<xfixes_cursor_event_filter> m_xfixesFilter;

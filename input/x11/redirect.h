@@ -31,7 +31,7 @@ public:
         : qobject{std::make_unique<redirect_qobject>()}
         , keyboard{std::make_unique<keyboard_redirect<type>>(this)}
         , pointer{std::make_unique<pointer_redirect<type>>(this)}
-        , cursor{std::make_unique<x11::cursor>(true)}
+        , cursor{std::make_unique<x11::cursor>()}
         , platform{platform}
         , space{space}
         , xinput{std::make_unique<xinput_integration<type>>(QX11Info::display(), *this)}

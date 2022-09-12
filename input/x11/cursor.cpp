@@ -18,28 +18,20 @@
 namespace KWin::input::x11
 {
 
-cursor::cursor(bool xInputSupport)
+cursor::cursor()
     : input::cursor()
     , m_timeStamp(XCB_TIME_CURRENT_TIME)
     , m_buttonMask(0)
     , m_resetTimeStampTimer(new QTimer(this))
-    , m_mousePollingTimer(new QTimer(this))
-    , m_hasXInput(xInputSupport)
     , m_needsPoll(false)
 {
     m_resetTimeStampTimer->setSingleShot(true);
     QObject::connect(m_resetTimeStampTimer, &QTimer::timeout, this, &cursor::reset_time_stamp);
-    // TODO: How often do we really need to poll?
-    m_mousePollingTimer->setInterval(50);
-    QObject::connect(m_mousePollingTimer, &QTimer::timeout, this, &cursor::mouse_polled);
 
-    if (m_hasXInput) {
-        QObject::connect(qApp->eventDispatcher(),
-                         &QAbstractEventDispatcher::aboutToBlock,
-                         this,
-                         &cursor::about_to_block);
-    }
-
+    QObject::connect(qApp->eventDispatcher(),
+                     &QAbstractEventDispatcher::aboutToBlock,
+                     this,
+                     &cursor::about_to_block);
     QObject::connect(kwinApp(), &Application::startup_finished, this, [this] {
         if (base::x11::xcb::extensions::self()->is_fixes_available()) {
             m_xfixesFilter = std::make_unique<xfixes_cursor_event_filter>(this);
@@ -105,20 +97,6 @@ void cursor::about_to_block()
     if (m_needsPoll) {
         mouse_polled();
         m_needsPoll = false;
-    }
-}
-
-void cursor::do_start_mouse_polling()
-{
-    if (!m_hasXInput) {
-        m_mousePollingTimer->start();
-    }
-}
-
-void cursor::do_stop_mouse_polling()
-{
-    if (!m_hasXInput) {
-        m_mousePollingTimer->stop();
     }
 }
 

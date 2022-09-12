@@ -25,15 +25,14 @@ namespace KWin::input
  * provides the possibility to get an X11 cursor for a Qt::CursorShape - a functionality lost in Qt
  * 5's QCursor implementation.
  *
- * In addition the class provides a mouse polling facility as required by e.g. Effects and
- * ScreenEdges and emits signals when the mouse position changes. In opposite to QCursor this class
- * is a QObject and cannot be constructed. Instead it provides a singleton getter, though the most
- * important methods are wrapped in a static method, just like QCursor.
+ * In addition the class emits signals when the mouse position changes. In opposite to QCursor this
+ * class is a QObject and cannot be constructed. Instead it provides a singleton getter, though the
+ * most important methods are wrapped in a static method, just like QCursor.
  *
  * The actual implementation is split into two parts: a system independent interface and a windowing
  * system specific subclass. So far only an X11 backend is implemented which uses query pointer to
- * fetch the position and warp pointer to set the position. It uses a timer based mouse polling and
- * can provide X11 cursors through the XCursor library.
+ * fetch the position and warp pointer to set the position. It can provide X11 cursors through the
+ * XCursor library.
  */
 class KWIN_EXPORT cursor : public QObject
 {
@@ -41,9 +40,6 @@ class KWIN_EXPORT cursor : public QObject
 public:
     cursor();
     ~cursor() override;
-
-    void start_mouse_polling();
-    void stop_mouse_polling();
 
     /**
      * @brief Enables tracking changes of cursor images.
@@ -152,17 +148,6 @@ protected:
      */
     virtual void do_set_pos();
 
-    /**
-     * Called from start_mouse_polling when the mouse polling gets activated. Base implementation
-     * does nothing, inheriting classes can overwrite to e.g. start a timer.
-     */
-    virtual void do_start_mouse_polling();
-    /**
-     * Called from stop_mouse_polling when the mouse polling gets deactivated. Base implementation
-     * does nothing, inheriting classes can overwrite to e.g. stop a timer.
-     */
-    virtual void do_stop_mouse_polling();
-
     bool is_image_tracking() const;
     /**
      * Called from start_image_tracking when cursor image tracking gets activated. Inheriting class
@@ -201,7 +186,6 @@ private:
 
     QHash<QByteArray, xcb_cursor_t> m_cursors;
     QPoint m_pos;
-    int m_mousePollingCounter;
     int m_cursorTrackingCounter;
     QString m_themeName;
     int m_themeSize;

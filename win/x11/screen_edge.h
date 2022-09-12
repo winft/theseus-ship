@@ -77,7 +77,6 @@ protected:
                 this->updateApproaching(pos);
             });
 #endif
-        cursor->start_mouse_polling();
     }
 
     void doStopApproaching() override
@@ -87,7 +86,6 @@ protected:
         }
         QObject::disconnect(m_cursorPollingConnection);
         m_cursorPollingConnection = QMetaObject::Connection();
-        this->edger->space.input->cursor->stop_mouse_polling();
         m_approachWindow.map();
     }
 

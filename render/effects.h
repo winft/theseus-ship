@@ -623,16 +623,12 @@ public:
 
     void startMousePolling() override
     {
-        if (auto& cursor = compositor.space->input->cursor) {
-            cursor->start_mouse_polling();
-        }
+        // Don't need to start/stop polling manually anymore nowadays. On X11 we use XInput to
+        // receive data throughout, on Wayland we are doing it anyway as the Wayland server.
     }
 
     void stopMousePolling() override
     {
-        if (auto& cursor = compositor.space->input->cursor) {
-            cursor->stop_mouse_polling();
-        }
     }
 
     QPoint cursorPos() const override
