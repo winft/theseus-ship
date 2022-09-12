@@ -8,7 +8,6 @@
 #include "input/pointer.h"
 
 #include <Wrapland/Server/fake_input.h>
-#include <Wrapland/Server/kde_idle.h>
 
 namespace KWin::input::wayland::fake
 {
@@ -30,7 +29,6 @@ public:
                 this->redirect.pointer->process_motion_absolute(
                     {this->redirect.globalPointer() + QPointF(delta.width(), delta.height()),
                      {this, 0}});
-                this->redirect.space.kde_idle->simulateUserActivity();
             });
         QObject::connect(device,
                          &Wrapland::Server::FakeInputDevice::pointerMotionAbsoluteRequested,
@@ -38,7 +36,6 @@ public:
                          [this](auto const& pos) {
                              // TODO: Fix time
                              this->redirect.pointer->process_motion_absolute({pos, {this, 0}});
-                             this->redirect.space.kde_idle->simulateUserActivity();
                          });
 
         QObject::connect(
@@ -48,7 +45,6 @@ public:
             [this](auto button) {
                 // TODO: Fix time
                 this->redirect.pointer->process_button({button, button_state::pressed, {this, 0}});
-                this->redirect.space.kde_idle->simulateUserActivity();
             });
         QObject::connect(
             device,
@@ -57,7 +53,6 @@ public:
             [this](auto button) {
                 // TODO: Fix time
                 this->redirect.pointer->process_button({button, button_state::released, {this, 0}});
-                this->redirect.space.kde_idle->simulateUserActivity();
             });
         QObject::connect(device,
                          &Wrapland::Server::FakeInputDevice::pointerAxisRequested,
@@ -70,7 +65,6 @@ public:
                              // TODO: Fix time
                              this->redirect.pointer->process_axis(
                                  {axis_source::unknown, axis, delta, 0, {this, 0}});
-                             this->redirect.space.kde_idle->simulateUserActivity();
                          });
     }
 

@@ -5,10 +5,11 @@
 */
 #pragma once
 
+#include "idle.h"
+
 #include "base/wayland/server.h"
 #include "input/dbus/dbus.h"
 #include "input/global_shortcuts_manager.h"
-#include "input/idle.h"
 #include "input/platform.h"
 #include "input/types.h"
 
@@ -28,10 +29,16 @@ public:
     platform(Base& base)
         : input::platform<Base>(base)
         , xkb{xkb::manager<type>(this)}
+        , kde_idle{base.server->display->create_kde_idle()}
     {
         this->config = kwinApp()->inputConfig();
 
         virtual_keyboard = waylandServer()->display->create_virtual_keyboard_manager_v1();
+
+        QObject::connect(kde_idle.get(),
+                         &Wrapland::Server::kde_idle::timeout_created,
+                         this->qobject.get(),
+                         [this](auto timeout) { idle_setup_kde_device(idle, timeout); });
     }
 
     platform(platform const&) = delete;
@@ -124,6 +131,7 @@ public:
     input::xkb::manager<type> xkb;
     std::unique_ptr<dbus::device_manager<type>> dbus;
     input::idle idle;
+    std::unique_ptr<Wrapland::Server::kde_idle> kde_idle;
 
 private:
     void setup_touchpad_shortcuts()

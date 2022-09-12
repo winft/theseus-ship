@@ -8,7 +8,6 @@
 #include "input/touch.h"
 
 #include <Wrapland/Server/fake_input.h>
-#include <Wrapland/Server/kde_idle.h>
 
 namespace KWin::input::wayland::fake
 {
@@ -28,7 +27,6 @@ public:
             [this](auto id, auto const& pos) {
                 // TODO: Fix time
                 this->redirect.touch->process_down({static_cast<int32_t>(id), pos, {nullptr, 0}});
-                this->redirect.space.kde_idle->simulateUserActivity();
             });
         QObject::connect(
             device,
@@ -37,7 +35,6 @@ public:
             [this](auto id, auto const& pos) {
                 // TODO: Fix time
                 this->redirect.touch->process_motion({static_cast<int32_t>(id), pos, {nullptr, 0}});
-                this->redirect.space.kde_idle->simulateUserActivity();
             });
         QObject::connect(
             device,
@@ -46,7 +43,6 @@ public:
             [this](auto id) {
                 // TODO: Fix time
                 this->redirect.touch->process_up({static_cast<int32_t>(id), {nullptr, 0}});
-                this->redirect.space.kde_idle->simulateUserActivity();
             });
         QObject::connect(device,
                          &Wrapland::Server::FakeInputDevice::touchCancelRequested,

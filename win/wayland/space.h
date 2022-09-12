@@ -42,7 +42,6 @@
 #include <Wrapland/Server/appmenu.h>
 #include <Wrapland/Server/compositor.h>
 #include <Wrapland/Server/idle_inhibit_v1.h>
-#include <Wrapland/Server/kde_idle.h>
 #include <Wrapland/Server/plasma_activation_feedback.h>
 #include <Wrapland/Server/plasma_shell.h>
 #include <Wrapland/Server/server_decoration_palette.h>
@@ -92,7 +91,6 @@ public:
         , plasma_shell{server->display->createPlasmaShell()}
         , plasma_window_manager{server->display->createPlasmaWindowManager()}
         , plasma_virtual_desktop_manager{server->display->createPlasmaVirtualDesktopManager()}
-        , kde_idle{server->display->createIdle()}
         , idle_inhibit_manager_v1{server->display->createIdleInhibitManager()}
         , appmenu_manager{server->display->createAppmenuManager()}
         , server_side_decoration_palette_manager{
@@ -248,7 +246,7 @@ public:
                 continue;
             }
             if (auto wlwin = dynamic_cast<wayland_window*>(win)) {
-                idle_update(*kde_idle, *wlwin);
+                idle_update(*wlwin);
             }
         }
     }
@@ -384,7 +382,7 @@ public:
                                  update_space_areas(*this);
                              });
 
-            idle_setup(*kde_idle, *window);
+            idle_setup(*window);
         }
 
         adopt_transient_children(this, window);
@@ -487,7 +485,6 @@ public:
     std::unique_ptr<Wrapland::Server::PlasmaWindowManager> plasma_window_manager;
     std::unique_ptr<Wrapland::Server::PlasmaVirtualDesktopManager> plasma_virtual_desktop_manager;
 
-    std::unique_ptr<Wrapland::Server::KdeIdle> kde_idle;
     std::unique_ptr<Wrapland::Server::IdleInhibitManagerV1> idle_inhibit_manager_v1;
 
     std::unique_ptr<Wrapland::Server::AppmenuManager> appmenu_manager;

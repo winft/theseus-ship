@@ -15,6 +15,7 @@
 #include <map>
 #include <memory>
 #include <set>
+#include <unordered_set>
 
 namespace KWin::input
 {
@@ -122,6 +123,12 @@ public:
         }
     }
 
+    void add_listener(std::unique_ptr<idle_listener> listener)
+    {
+        auto pair = listeners.owned.insert(std::move(listener));
+        add_listener(**pair.first);
+    }
+
     void add_listener(idle_listener& listener)
     {
         assert(listener.time_to_idle >= std::chrono::milliseconds::zero());
@@ -161,6 +168,13 @@ public:
         }
 
         listener_map_set_remove(listener, listeners.waiting);
+
+        auto owned_it = std::find_if(listeners.owned.begin(),
+                                     listeners.owned.end(),
+                                     [&](auto& owned) { return owned.get() == &listener; });
+        if (owned_it != listeners.owned.end()) {
+            listeners.owned.erase(owned_it);
+        }
 
         if (listeners.waiting.empty()) {
             countdown->stop();
@@ -297,6 +311,7 @@ private:
         std::set<idle_listener*> splice;
         listeners_map_set waiting;
         std::set<idle_listener*> served;
+        std::unordered_set<std::unique_ptr<idle_listener>> owned;
     } listeners;
 
     std::unique_ptr<QTimer> countdown;
