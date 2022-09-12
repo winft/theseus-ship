@@ -100,8 +100,6 @@ private:
         this->cursor = std::make_unique<x11::cursor>(is_xinput_avail);
 
         if (is_xinput_avail) {
-            xinput->setCursor(static_cast<x11::cursor*>(this->cursor.get()));
-
             platform.xkb.setConfig(kwinApp()->kxkbConfig());
             platform.xkb.reconfigure();
         }

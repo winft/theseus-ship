@@ -6,7 +6,6 @@
 */
 #pragma once
 
-#include "cursor.h"
 #include "ge_event_mem_mover.h"
 #include "xinput_helpers.h"
 
@@ -16,7 +15,6 @@
 #include "input/xkb/helpers.h"
 
 #include <QObject>
-#include <QPointer>
 #include <QScopedPointer>
 #include <X11/extensions/XI2proto.h>
 #include <X11/extensions/XInput2.h>
@@ -92,8 +90,8 @@ public:
                 // TODO: further buttons, horizontal scrolling?
             }
         }
-            if (m_x11Cursor) {
-                m_x11Cursor->schedule_poll();
+            if (xinput.redirect.cursor) {
+                xinput.redirect.cursor->schedule_poll();
             }
             break;
         case XI_RawButtonRelease: {
@@ -120,8 +118,8 @@ public:
                 // TODO: further buttons, horizontal scrolling?
             }
         }
-            if (m_x11Cursor) {
-                m_x11Cursor->schedule_poll();
+            if (xinput.redirect.cursor) {
+                xinput.redirect.cursor->schedule_poll();
             }
             break;
         case XI_TouchBegin: {
@@ -170,18 +168,14 @@ public:
             break;
         }
         default:
-            if (m_x11Cursor) {
-                m_x11Cursor->schedule_poll();
+            if (xinput.redirect.cursor) {
+                xinput.redirect.cursor->schedule_poll();
             }
             break;
         }
         return false;
     }
 
-    void setCursor(const QPointer<cursor>& cursor)
-    {
-        m_x11Cursor = cursor;
-    }
     void setDisplay(Display* display)
     {
         m_x11Display = display;
@@ -193,7 +187,6 @@ private:
         return m_x11Display;
     }
 
-    QPointer<cursor> m_x11Cursor;
     Display* m_x11Display = nullptr;
     uint32_t m_trackingTouchId = 0;
     QHash<uint32_t, QPointF> m_lastTouchPositions;
@@ -322,7 +315,6 @@ public:
         setup_fake_devices();
 
         m_xiEventFilter.reset(new XInputEventFilter(m_xiOpcode, *this));
-        m_xiEventFilter->setCursor(m_x11Cursor);
         m_xiEventFilter->setDisplay(display());
         m_keyPressFilter.reset(new XKeyPressReleaseEventFilter(XCB_KEY_PRESS, *this));
         m_keyReleaseFilter.reset(new XKeyPressReleaseEventFilter(XCB_KEY_RELEASE, *this));
@@ -336,13 +328,7 @@ public:
         return m_hasXInput;
     }
 
-    void setCursor(cursor* cursor)
-    {
-        m_x11Cursor = QPointer<x11::cursor>(cursor);
-    }
-
     xinput_devices<typename Redirect::platform_t> fake_devices;
-
     Redirect& redirect;
 
 private:
@@ -376,7 +362,6 @@ private:
     int m_xiOpcode = 0;
     int m_majorVersion = 0;
     int m_minorVersion = 0;
-    QPointer<cursor> m_x11Cursor;
     Display* m_x11Display;
 
     QScopedPointer<XInputEventFilter<type>> m_xiEventFilter;
