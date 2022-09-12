@@ -29,19 +29,22 @@ public:
 
     redirect(Platform& platform, Space& space)
         : qobject{std::make_unique<redirect_qobject>()}
+        , keyboard{std::make_unique<keyboard_redirect<type>>(this)}
+        , pointer{std::make_unique<pointer_redirect<type>>(this)}
+        , cursor{std::make_unique<x11::cursor>(true)}
         , platform{platform}
         , space{space}
+        , xinput{std::make_unique<xinput_integration<type>>(QX11Info::display(), *this)}
     {
-        xinput = std::make_unique<xinput_integration<type>>(QX11Info::display(), *this);
+        platform.redirect = this;
+
         QObject::connect(kwinApp(),
                          &Application::startup_finished,
                          xinput.get(),
                          &xinput_integration<type>::startListening);
 
-        platform.redirect = this;
-        create_cursor();
-        pointer = std::make_unique<pointer_redirect<type>>(this);
-        keyboard = std::make_unique<keyboard_redirect<type>>(this);
+        platform.xkb.setConfig(kwinApp()->kxkbConfig());
+        platform.xkb.reconfigure();
     }
 
     ~redirect()
@@ -70,28 +73,18 @@ public:
         window_sel->start(callback);
     }
 
-    std::unique_ptr<x11::cursor> cursor;
+    std::unique_ptr<redirect_qobject> qobject;
+
     std::unique_ptr<keyboard_redirect<type>> keyboard;
     std::unique_ptr<pointer_redirect<type>> pointer;
+    std::unique_ptr<x11::cursor> cursor;
 
     std::vector<event_spy<type>*> m_spies;
 
-    std::unique_ptr<redirect_qobject> qobject;
     Platform& platform;
     Space& space;
 
 private:
-    void create_cursor()
-    {
-        auto const is_xinput_avail = xinput != nullptr;
-        this->cursor = std::make_unique<x11::cursor>(is_xinput_avail);
-
-        if (is_xinput_avail) {
-            platform.xkb.setConfig(kwinApp()->kxkbConfig());
-            platform.xkb.reconfigure();
-        }
-    }
-
     std::unique_ptr<xinput_integration<type>> xinput;
     std::unique_ptr<window_selector<type>> window_sel;
 };
