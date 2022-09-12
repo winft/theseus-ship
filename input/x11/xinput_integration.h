@@ -15,7 +15,6 @@
 #include "input/xkb/helpers.h"
 
 #include <QObject>
-#include <QScopedPointer>
 #include <X11/extensions/XI2proto.h>
 #include <X11/extensions/XInput2.h>
 #include <linux/input.h>
@@ -32,10 +31,10 @@ static inline qreal fixed1616ToReal(FP1616 val)
 }
 
 template<typename Xinput>
-class XInputEventFilter : public base::x11::event_filter
+class xinput_event_filter : public base::x11::event_filter
 {
 public:
-    XInputEventFilter(int xi_opcode, Xinput& xinput)
+    xinput_event_filter(int xi_opcode, Xinput& xinput)
         : base::x11::event_filter(XCB_GE_GENERIC,
                                   xi_opcode,
                                   QVector<int>{XI_RawMotion,
@@ -185,15 +184,15 @@ private:
 };
 
 template<typename Xinput>
-class XKeyPressReleaseEventFilter : public base::x11::event_filter
+class xinput_key_filter : public base::x11::event_filter
 {
 public:
-    XKeyPressReleaseEventFilter(uint32_t type, Xinput& xinput)
+    xinput_key_filter(uint32_t type, Xinput& xinput)
         : base::x11::event_filter(type)
         , xinput{xinput}
     {
     }
-    ~XKeyPressReleaseEventFilter() override = default;
+    ~xinput_key_filter() override = default;
 
     bool event(xcb_generic_event_t* event) override
     {
@@ -304,9 +303,9 @@ public:
 
         setup_fake_devices();
 
-        m_xiEventFilter.reset(new XInputEventFilter(m_xiOpcode, *this));
-        m_keyPressFilter.reset(new XKeyPressReleaseEventFilter(XCB_KEY_PRESS, *this));
-        m_keyReleaseFilter.reset(new XKeyPressReleaseEventFilter(XCB_KEY_RELEASE, *this));
+        filter.event = std::make_unique<xinput_event_filter<type>>(m_xiOpcode, *this);
+        filter.key_press = std::make_unique<xinput_key_filter<type>>(XCB_KEY_PRESS, *this);
+        filter.key_release = std::make_unique<xinput_key_filter<type>>(XCB_KEY_RELEASE, *this);
 
         // install the input event spies also relevant for X11 platform
         redirect.m_spies.push_back(new input::modifier_only_shortcuts_spy(redirect));
@@ -348,9 +347,11 @@ private:
     int m_majorVersion = 0;
     int m_minorVersion = 0;
 
-    QScopedPointer<XInputEventFilter<type>> m_xiEventFilter;
-    QScopedPointer<XKeyPressReleaseEventFilter<type>> m_keyPressFilter;
-    QScopedPointer<XKeyPressReleaseEventFilter<type>> m_keyReleaseFilter;
+    struct {
+        std::unique_ptr<xinput_event_filter<type>> event;
+        std::unique_ptr<xinput_key_filter<type>> key_press;
+        std::unique_ptr<xinput_key_filter<type>> key_release;
+    } filter;
 };
 
 }
