@@ -31,11 +31,11 @@ namespace KWin::win
 {
 
 template<typename Osd>
-class osd_notification_input_spy : public input::event_spy<typename Osd::redirect_t>
+class osd_notification_input_spy : public input::event_spy<typename Osd::input_t>
 {
 public:
     explicit osd_notification_input_spy(Osd& osd)
-        : input::event_spy<typename Osd::redirect_t>(*osd.input->redirect)
+        : input::event_spy<typename Osd::input_t>(osd.input)
         , osd{osd}
     {
     }
@@ -90,9 +90,9 @@ class osd_notification
 {
 public:
     using type = osd_notification<Input>;
-    using redirect_t = typename Input::redirect_t;
+    using input_t = Input;
 
-    osd_notification(Input* input)
+    osd_notification(Input& input)
         : timer{std::make_unique<QTimer>()}
         , qobject{std::make_unique<osd_notification_qobject>(*timer)}
         , input{input}
@@ -151,7 +151,7 @@ public:
 
     std::unique_ptr<QTimer> timer;
     std::unique_ptr<osd_notification_qobject> qobject;
-    Input* input{nullptr};
+    Input& input;
 
     KSharedConfigPtr m_config;
     QQmlEngine* m_qmlEngine{nullptr};
@@ -224,7 +224,7 @@ private:
         }
 
         m_spy = std::make_unique<input_spy>(*this);
-        input->redirect->m_spies.push_back(m_spy.get());
+        input.m_spies.push_back(m_spy.get());
 
         if (!m_animation) {
             m_animation = new QPropertyAnimation(win, "opacity", qobject.get());
