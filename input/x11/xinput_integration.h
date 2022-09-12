@@ -37,7 +37,7 @@ template<typename Xinput>
 class XInputEventFilter : public base::x11::event_filter
 {
 public:
-    XInputEventFilter(int xi_opcode, Xinput* xinput)
+    XInputEventFilter(int xi_opcode, Xinput& xinput)
         : base::x11::event_filter(XCB_GE_GENERIC,
                                   xi_opcode,
                                   QVector<int>{XI_RawMotion,
@@ -55,8 +55,8 @@ public:
 
     bool event(xcb_generic_event_t* event) override
     {
-        auto pointer_device = xinput->fake_devices.pointer.get();
-        auto keyboard_device = xinput->fake_devices.keyboard.get();
+        auto pointer_device = xinput.fake_devices.pointer.get();
+        auto keyboard_device = xinput.fake_devices.keyboard.get();
 
         GeEventMemMover ge(event);
         switch (ge->event_type) {
@@ -136,7 +136,7 @@ public:
                 = QPointF(fixed1616ToReal(e->event_x), fixed1616ToReal(e->event_y));
             if (e->detail == m_trackingTouchId) {
                 const auto last = m_lastTouchPositions.value(e->detail);
-                xinput->redirect.space.edges->gesture_recognizer->updateSwipeGesture(
+                xinput.redirect.space.edges->gesture_recognizer->updateSwipeGesture(
                     QSizeF(touchPosition.x() - last.x(), touchPosition.y() - last.y()));
             }
             m_lastTouchPositions.insert(e->detail, touchPosition);
@@ -145,7 +145,7 @@ public:
         case XI_TouchEnd: {
             auto e = reinterpret_cast<xXIDeviceEvent*>(event);
             if (e->detail == m_trackingTouchId) {
-                xinput->redirect.space.edges->gesture_recognizer->endSwipeGesture();
+                xinput.redirect.space.edges->gesture_recognizer->endSwipeGesture();
             }
             m_lastTouchPositions.remove(e->detail);
             m_trackingTouchId = 0;
@@ -157,7 +157,7 @@ public:
             if (it == m_lastTouchPositions.constEnd()) {
                 XIAllowTouchEvents(display(), e->deviceid, e->sourceid, e->touchid, XIRejectTouch);
             } else {
-                if (xinput->redirect.space.edges->gesture_recognizer->startSwipeGesture(it.value())
+                if (xinput.redirect.space.edges->gesture_recognizer->startSwipeGesture(it.value())
                     > 0) {
                     m_trackingTouchId = e->touchid;
                 }
@@ -198,14 +198,14 @@ private:
     uint32_t m_trackingTouchId = 0;
     QHash<uint32_t, QPointF> m_lastTouchPositions;
 
-    Xinput* xinput;
+    Xinput& xinput;
 };
 
 template<typename Xinput>
 class XKeyPressReleaseEventFilter : public base::x11::event_filter
 {
 public:
-    XKeyPressReleaseEventFilter(uint32_t type, Xinput* xinput)
+    XKeyPressReleaseEventFilter(uint32_t type, Xinput& xinput)
         : base::x11::event_filter(type)
         , xinput{xinput}
     {
@@ -217,7 +217,7 @@ public:
         xcb_key_press_event_t* ke = reinterpret_cast<xcb_key_press_event_t*>(event);
         if (ke->event == ke->root) {
             const uint8_t eventType = event->response_type & ~0x80;
-            auto keyboard_device = xinput->fake_devices.keyboard.get();
+            auto keyboard_device = xinput.fake_devices.keyboard.get();
             if (eventType == XCB_KEY_PRESS) {
                 keyboard_key_pressed(ke->detail - 8, ke->time, keyboard_device);
             } else {
@@ -227,7 +227,7 @@ public:
         return false;
     }
 
-    Xinput* xinput;
+    Xinput& xinput;
 };
 
 template<typename Platform>
@@ -321,11 +321,11 @@ public:
 
         setup_fake_devices();
 
-        m_xiEventFilter.reset(new XInputEventFilter(m_xiOpcode, this));
+        m_xiEventFilter.reset(new XInputEventFilter(m_xiOpcode, *this));
         m_xiEventFilter->setCursor(m_x11Cursor);
         m_xiEventFilter->setDisplay(display());
-        m_keyPressFilter.reset(new XKeyPressReleaseEventFilter(XCB_KEY_PRESS, this));
-        m_keyReleaseFilter.reset(new XKeyPressReleaseEventFilter(XCB_KEY_RELEASE, this));
+        m_keyPressFilter.reset(new XKeyPressReleaseEventFilter(XCB_KEY_PRESS, *this));
+        m_keyReleaseFilter.reset(new XKeyPressReleaseEventFilter(XCB_KEY_RELEASE, *this));
 
         // install the input event spies also relevant for X11 platform
         redirect.m_spies.push_back(new input::modifier_only_shortcuts_spy(redirect));
