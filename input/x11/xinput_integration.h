@@ -153,13 +153,14 @@ public:
             auto e = reinterpret_cast<xXITouchOwnershipEvent*>(event);
             auto it = m_lastTouchPositions.constFind(e->touchid);
             if (it == m_lastTouchPositions.constEnd()) {
-                XIAllowTouchEvents(display(), e->deviceid, e->sourceid, e->touchid, XIRejectTouch);
+                XIAllowTouchEvents(
+                    xinput.display, e->deviceid, e->sourceid, e->touchid, XIRejectTouch);
             } else {
                 if (xinput.redirect.space.edges->gesture_recognizer->startSwipeGesture(it.value())
                     > 0) {
                     m_trackingTouchId = e->touchid;
                 }
-                XIAllowTouchEvents(display(),
+                XIAllowTouchEvents(xinput.display,
                                    e->deviceid,
                                    e->sourceid,
                                    e->touchid,
@@ -176,18 +177,7 @@ public:
         return false;
     }
 
-    void setDisplay(Display* display)
-    {
-        m_x11Display = display;
-    }
-
 private:
-    Display* display() const
-    {
-        return m_x11Display;
-    }
-
-    Display* m_x11Display = nullptr;
     uint32_t m_trackingTouchId = 0;
     QHash<uint32_t, QPointF> m_lastTouchPositions;
 
@@ -255,7 +245,7 @@ public:
     explicit xinput_integration(Display* display, Redirect& redirect)
         : fake_devices{redirect.platform}
         , redirect{redirect}
-        , m_x11Display(display)
+        , display{display}
     {
         int xi_opcode, event, error;
         // init XInput extension
@@ -310,12 +300,11 @@ public:
         evmasks[0].deviceid = XIAllMasterDevices;
         evmasks[0].mask_len = sizeof(mask1);
         evmasks[0].mask = mask1;
-        XISelectEvents(display(), rootWindow(), evmasks, 1);
+        XISelectEvents(display, rootWindow(), evmasks, 1);
 
         setup_fake_devices();
 
         m_xiEventFilter.reset(new XInputEventFilter(m_xiOpcode, *this));
-        m_xiEventFilter->setDisplay(display());
         m_keyPressFilter.reset(new XKeyPressReleaseEventFilter(XCB_KEY_PRESS, *this));
         m_keyReleaseFilter.reset(new XKeyPressReleaseEventFilter(XCB_KEY_RELEASE, *this));
 
@@ -330,6 +319,7 @@ public:
 
     xinput_devices<typename Redirect::platform_t> fake_devices;
     Redirect& redirect;
+    Display* display;
 
 private:
     void setup_fake_devices()
@@ -353,16 +343,10 @@ private:
                          [keyboard_red](auto const& event) { keyboard_red->process_key(event); });
     }
 
-    Display* display() const
-    {
-        return m_x11Display;
-    }
-
     bool m_hasXInput = false;
     int m_xiOpcode = 0;
     int m_majorVersion = 0;
     int m_minorVersion = 0;
-    Display* m_x11Display;
 
     QScopedPointer<XInputEventFilter<type>> m_xiEventFilter;
     QScopedPointer<XKeyPressReleaseEventFilter<type>> m_keyPressFilter;
