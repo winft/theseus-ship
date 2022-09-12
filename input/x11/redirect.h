@@ -5,7 +5,6 @@
 */
 #pragma once
 
-#include "config-kwin.h"
 #include "cursor.h"
 #include "keyboard_redirect.h"
 #include "pointer_redirect.h"
@@ -33,16 +32,14 @@ public:
         , platform{platform}
         , space{space}
     {
-        if (!qEnvironmentVariableIsSet("KWIN_NO_XI2")) {
-            xinput = std::make_unique<xinput_integration<type>>(QX11Info::display(), *this);
-            if (!xinput->hasXinput()) {
-                xinput.reset();
-            } else {
-                QObject::connect(kwinApp(),
-                                 &Application::startup_finished,
-                                 xinput.get(),
-                                 &xinput_integration<type>::startListening);
-            }
+        xinput = std::make_unique<xinput_integration<type>>(QX11Info::display(), *this);
+        if (!xinput->hasXinput()) {
+            xinput.reset();
+        } else {
+            QObject::connect(kwinApp(),
+                             &Application::startup_finished,
+                             xinput.get(),
+                             &xinput_integration<type>::startListening);
         }
 
         platform.redirect = this;
