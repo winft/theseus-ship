@@ -44,7 +44,7 @@ WaylandTestApplication* app()
     return static_cast<WaylandTestApplication*>(kwinApp());
 }
 
-input::wayland::cursor<space::input_t::redirect_t>* cursor()
+input::wayland::cursor<space::input_t>* cursor()
 {
     return app()->base.space->input->cursor.get();
 }

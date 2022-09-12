@@ -1059,7 +1059,7 @@ void PointerInputTest::testCursorImage()
 
     // Move cursor somewhere the new window won't open.
     Test::cursor()->set_pos(800, 800);
-    auto& p = Test::app()->base.input->redirect->pointer;
+    auto& p = Test::app()->base.space->input->pointer;
 
     // At the moment it should be the fallback cursor.
     auto const fallback_cursor = Test::cursor()->image();

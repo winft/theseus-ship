@@ -66,7 +66,6 @@ public:
         , input_method{std::make_unique<wayland::input_method<type>>(*this, waylandServer())}
         , tablet_mode_manager{std::make_unique<dbus::tablet_mode_manager<type>>(*this)}
     {
-        platform.redirect = this;
         setup_workspace();
 
         using base_t = std::decay_t<decltype(platform.base)>;

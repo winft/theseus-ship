@@ -42,7 +42,7 @@ public:
 
     // TODO(romangg): Remove once we can rely on Space::x11_window always being the group window.
     using x11_group_window = x11_window;
-    using input_t = typename Base::input_t;
+    using input_t = input::x11::redirect<typename Base::input_t, type>;
 
     // Not used on X11.
     // TODO(romangg): Make our function templates independent of this type and remove it.
@@ -67,7 +67,7 @@ public:
         };
 
         if (base.input) {
-            this->input = std::make_unique<typename input_t::redirect_t>(*base.input, *this);
+            this->input = std::make_unique<input_t>(*base.input, *this);
         }
 
         atoms = std::make_unique<base::x11::atoms>(connection());
@@ -180,10 +180,10 @@ public:
     std::unique_ptr<x11::root_info<space>> root_info;
     std::unique_ptr<x11::color_mapper<type>> color_mapper;
 
-    std::unique_ptr<typename input_t::redirect_t> input;
+    std::unique_ptr<input_t> input;
 
     std::unique_ptr<win::tabbox<type>> tabbox;
-    std::unique_ptr<osd_notification<typename input_t::redirect_t>> osd;
+    std::unique_ptr<osd_notification<input_t>> osd;
     std::unique_ptr<kill_window<type>> window_killer;
     std::unique_ptr<win::user_actions_menu<type>> user_actions_menu;
     std::unique_ptr<base::dbus::kwin_impl<type>> dbus;

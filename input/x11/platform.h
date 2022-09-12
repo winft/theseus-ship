@@ -5,8 +5,6 @@
 */
 #pragma once
 
-#include "redirect.h"
-
 #include "config-kwin.h"
 #include "input/platform.h"
 #include "main.h"
@@ -23,7 +21,6 @@ class platform : public input::platform<Base>
 public:
     using type = platform<Base>;
     using space_t = typename Base::space_t;
-    using redirect_t = x11::redirect<type, space_t>;
 
     platform(Base& base)
         : input::platform<Base>(base)
@@ -87,8 +84,6 @@ public:
         registerShortcut(shortcut, action);
         QObject::connect(action, &QAction::triggered, receiver, slot);
     }
-
-    redirect_t* redirect{nullptr};
 
     input::xkb::manager<type> xkb;
     std::unique_ptr<dbus::device_manager<type>> dbus;

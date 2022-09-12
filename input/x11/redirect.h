@@ -36,8 +36,6 @@ public:
         , space{space}
         , xinput{std::make_unique<xinput_integration<type>>(QX11Info::display(), *this)}
     {
-        platform.redirect = this;
-
         platform.xkb.setConfig(kwinApp()->kxkbConfig());
         platform.xkb.reconfigure();
     }

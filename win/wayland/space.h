@@ -68,7 +68,7 @@ public:
 
     using wayland_window = wayland::window<type>;
     using internal_window_t = internal_window<type>;
-    using input_t = typename Base::input_t;
+    using input_t = input::wayland::redirect<typename Base::input_t, type>;
 
     space(Base& base, base::wayland::server* server)
         : win::space()
@@ -114,7 +114,7 @@ public:
             return iwin->singleton.get();
         };
 
-        input = std::make_unique<typename input_t::redirect_t>(*base.input, *this);
+        input = std::make_unique<input_t>(*base.input, *this);
         this->dbus = std::make_unique<base::dbus::kwin_impl<type>>(*this);
         edges = std::make_unique<edger_t>(*this);
 
@@ -464,10 +464,10 @@ public:
     std::unique_ptr<x11::root_info<type>> root_info;
     std::unique_ptr<x11::color_mapper<type>> color_mapper;
 
-    std::unique_ptr<typename input_t::redirect_t> input;
+    std::unique_ptr<input_t> input;
 
     std::unique_ptr<win::tabbox<type>> tabbox;
-    std::unique_ptr<osd_notification<typename input_t::redirect_t>> osd;
+    std::unique_ptr<osd_notification<input_t>> osd;
     std::unique_ptr<kill_window<type>> window_killer;
     std::unique_ptr<win::user_actions_menu<type>> user_actions_menu;
     std::unique_ptr<base::dbus::kwin_impl<type>> dbus;

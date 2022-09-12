@@ -5,9 +5,6 @@
 */
 #pragma once
 
-#include "cursor.h"
-#include "redirect.h"
-
 #include "base/wayland/server.h"
 #include "input/dbus/dbus.h"
 #include "input/global_shortcuts_manager.h"
@@ -26,7 +23,6 @@ class platform : public input::platform<Base>
 public:
     using type = platform<Base>;
     using space_t = typename Base::space_t;
-    using redirect_t = wayland::redirect<type, space_t>;
 
     platform(Base& base)
         : input::platform<Base>(base)
@@ -123,8 +119,6 @@ public:
     }
 
     std::unique_ptr<Wrapland::Server::virtual_keyboard_manager_v1> virtual_keyboard;
-
-    redirect_t* redirect{nullptr};
 
     input::xkb::manager<type> xkb;
     std::unique_ptr<dbus::device_manager<type>> dbus;
