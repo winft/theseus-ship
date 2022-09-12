@@ -266,10 +266,7 @@ public:
         m_majorVersion = major;
         m_minorVersion = minor;
         qCDebug(KWIN_CORE) << "Has XInput support" << m_majorVersion << "." << m_minorVersion;
-    }
 
-    void startListening()
-    {
         // this assumes KWin is the only one setting events on the root window
         // given Qt's source code this seems to be true. If it breaks, we need to change
         XIEventMask evmasks[1];

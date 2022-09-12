@@ -38,11 +38,6 @@ public:
     {
         platform.redirect = this;
 
-        QObject::connect(kwinApp(),
-                         &Application::startup_finished,
-                         xinput.get(),
-                         &xinput_integration<type>::startListening);
-
         platform.xkb.setConfig(kwinApp()->kxkbConfig());
         platform.xkb.reconfigure();
     }
