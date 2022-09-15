@@ -64,18 +64,18 @@ void turn_outputs_on(Base const& base, Filter& filter)
     }
 }
 
-template<typename Base, typename Filter>
-void check_outputs_on(Base const& base, Filter& filter)
+template<typename Base>
+void check_outputs_on(Base const& base)
 {
-    if (!filter) {
-        // Already disabled, all outputs are on.
+    if (!base.space || !base.space->input || !base.space->input->dpms_filter) {
+        // No DPMS filter exists, all outputs are on.
         return;
     }
 
     auto const& outs = base.outputs;
     if (std::all_of(outs.cbegin(), outs.cend(), [](auto&& out) { return out->is_dpms_on(); })) {
         // All outputs are on, disable the filter.
-        filter.reset();
+        base.space->input->dpms_filter.reset();
     }
 }
 
@@ -105,7 +105,7 @@ void output_set_dpms_on(typename Base::output_t& output, Base& base)
         output.m_output->set_dpms_mode(Wrapland::Server::Output::DpmsMode::On);
     }
 
-    check_outputs_on(base, base.input->dpms_filter);
+    check_outputs_on(base);
 }
 
 template<typename Base>
@@ -113,11 +113,16 @@ void output_set_dmps_off(base::dpms_mode mode, typename Base::output_t& output, 
 {
     qCDebug(KWIN_WL) << "DPMS mode set for output" << output.name() << "to Off.";
 
+    if (!base.space || !base.space->input) {
+        qCWarning(KWIN_WL) << "Abort setting DPMS. Can't create filter to set DPMS to on again.";
+        return;
+    }
+
     output.m_dpms = mode;
 
     if (output.is_enabled()) {
         output.m_output->set_dpms_mode(to_wayland_dpms_mode(mode));
-        input::wayland::create_dpms_filter(base.input.get());
+        input::wayland::create_dpms_filter(*base.space->input);
     }
 }
 

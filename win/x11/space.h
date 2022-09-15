@@ -42,7 +42,7 @@ public:
 
     // TODO(romangg): Remove once we can rely on Space::x11_window always being the group window.
     using x11_group_window = x11_window;
-    using input_t = typename Base::input_t;
+    using input_t = input::x11::redirect<typename Base::input_t, type>;
 
     // Not used on X11.
     // TODO(romangg): Make our function templates independent of this type and remove it.
@@ -57,8 +57,6 @@ public:
                                           })}
         , deco{std::make_unique<deco::bridge<type>>(*this)}
         , appmenu{std::make_unique<dbus::appmenu>(dbus::create_appmenu_callbacks(*this))}
-        , stacking_order{std::make_unique<win::stacking_order<window_t>>()}
-        , focus_chain{win::focus_chain<type>(*this)}
         , user_actions_menu{std::make_unique<win::user_actions_menu<type>>(*this)}
     {
         win::init_space(*this);
@@ -69,12 +67,12 @@ public:
         };
 
         if (base.input) {
-            this->input = std::make_unique<typename input_t::redirect_t>(*base.input);
+            this->input = std::make_unique<input_t>(*base.input, *this);
         }
 
         atoms = std::make_unique<base::x11::atoms>(connection());
         edges = std::make_unique<edger_t>(*this);
-        dbus = std::make_unique<base::dbus::kwin_impl<type, input_t>>(*this, base.input.get());
+        dbus = std::make_unique<base::dbus::kwin_impl<type>>(*this);
 
         QObject::connect(virtual_desktop_manager->qobject.get(),
                          &virtual_desktop_manager_qobject::desktopRemoved,
@@ -182,33 +180,23 @@ public:
     std::unique_ptr<x11::root_info<space>> root_info;
     std::unique_ptr<x11::color_mapper<type>> color_mapper;
 
-    std::unique_ptr<typename input_t::redirect_t> input;
-    std::unique_ptr<win::stacking_order<window_t>> stacking_order;
-    win::focus_chain<type> focus_chain;
+    std::unique_ptr<input_t> input;
 
     std::unique_ptr<win::tabbox<type>> tabbox;
     std::unique_ptr<osd_notification<input_t>> osd;
     std::unique_ptr<kill_window<type>> window_killer;
     std::unique_ptr<win::user_actions_menu<type>> user_actions_menu;
-    std::unique_ptr<base::dbus::kwin_impl<type, input_t>> dbus;
+    std::unique_ptr<base::dbus::kwin_impl<type>> dbus;
 
     std::vector<window_t*> windows;
     std::unordered_map<uint32_t, window_t*> windows_map;
     std::vector<win::x11::group<type>*> groups;
 
+    stacking_state<window_t> stacking;
+
     window_t* active_popup_client{nullptr};
-
-    window_t* last_active_client{nullptr};
-    window_t* delayfocus_client{nullptr};
     window_t* client_keys_client{nullptr};
-
-    // Last is most recent.
-    std::deque<window_t*> should_get_focus;
-    std::deque<window_t*> attention_chain;
-
     window_t* move_resize_window{nullptr};
-    window_t* most_recently_raised{nullptr};
-    window_t* active_client{nullptr};
 
 private:
     std::unique_ptr<base::x11::event_filter> edges_filter;

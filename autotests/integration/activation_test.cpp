@@ -69,7 +69,7 @@ void ActivationTest::initTestCase()
 void ActivationTest::init()
 {
     Test::setup_wayland_connection();
-    Test::app()->base.input->cursor->set_pos(QPoint(640, 512));
+    Test::cursor()->set_pos(QPoint(640, 512));
 }
 
 void ActivationTest::cleanup()
@@ -395,7 +395,7 @@ void ActivationTest::testSwitchToWindowMaximized()
     Test::render(surface2, configureRequestedSpy2.last().at(0).toSize(), Qt::red);
     QVERIFY(geometryChangedSpy2.wait());
 
-    auto const stackingOrder = Test::app()->base.space->stacking_order->stack;
+    auto const stackingOrder = Test::app()->base.space->stacking.order.stack;
     QVERIFY(index_of(stackingOrder, client1) < index_of(stackingOrder, client2));
     QCOMPARE(client1->maximizeMode(), win::maximize_mode::full);
     QCOMPARE(client2->maximizeMode(), win::maximize_mode::full);
@@ -482,7 +482,7 @@ void ActivationTest::testSwitchToWindowFullScreen()
     Test::render(surface2, configureRequestedSpy2.last().at(0).toSize(), Qt::red);
     QVERIFY(geometryChangedSpy2.wait());
 
-    auto const stackingOrder = Test::app()->base.space->stacking_order->stack;
+    auto const stackingOrder = Test::app()->base.space->stacking.order.stack;
     QVERIFY(index_of(stackingOrder, client1) < index_of(stackingOrder, client2));
     QVERIFY(client1->control->fullscreen);
     QVERIFY(client2->control->fullscreen);

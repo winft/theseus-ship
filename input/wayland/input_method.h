@@ -28,17 +28,17 @@
 namespace KWin::input::wayland
 {
 
-template<typename Platform>
+template<typename Redirect>
 class input_method : public QObject
 {
 public:
-    using space_t = typename Platform::base_t::space_t;
+    using space_t = typename Redirect::space_t;
     using window_t = typename space_t::window_t;
-    using im_keyboard_grab_v2 = keyboard_grab<typename Platform::redirect_t,
-                                              Wrapland::Server::input_method_keyboard_grab_v2>;
+    using im_keyboard_grab_v2
+        = keyboard_grab<Redirect, Wrapland::Server::input_method_keyboard_grab_v2>;
 
-    input_method(Platform& platform, base::wayland::server* server)
-        : platform{platform}
+    input_method(Redirect& redirect, base::wayland::server* server)
+        : redirect{redirect}
     {
         auto seat = server->seat();
 
@@ -63,11 +63,11 @@ public:
     }
 
 private:
-    window_t* get_window(Platform& platform, Wrapland::Server::text_input_v3* text_input)
+    window_t* get_window(Wrapland::Server::text_input_v3* text_input)
     {
         auto input_surface = text_input->entered_surface();
 
-        for (auto win : platform.base.space->windows) {
+        for (auto win : redirect.space.windows) {
             if (win->control && win->surface == input_surface) {
                 return win;
             }
@@ -78,14 +78,13 @@ private:
     }
 
     template<typename Win>
-    QRect
-    get_input_popup_placement(Platform& platform, Win* parent_window, QRect const& cursor_rectangle)
+    QRect get_input_popup_placement(Win* parent_window, QRect const& cursor_rectangle)
     {
         using constraint_adjust = Wrapland::Server::XdgShellSurface::ConstraintAdjustment;
 
         auto const toplevel = win::lead_of_annexed_transient(parent_window);
         auto const& screen_bounds
-            = win::space_window_area(*platform.base.space,
+            = win::space_window_area(redirect.space,
                                      toplevel->control->fullscreen ? FullScreenArea : PlacementArea,
                                      toplevel);
 
@@ -135,39 +134,36 @@ private:
 
     void handle_keyboard_grabbed(Wrapland::Server::input_method_keyboard_grab_v2* grab)
     {
-        auto xkb = xkb::get_primary_xkb_keyboard(platform);
+        auto xkb = xkb::get_primary_xkb_keyboard(redirect.platform);
         auto filter
-            = filters
-                  .emplace_back(new im_keyboard_grab_v2(*platform.redirect, grab, xkb->keymap->raw))
-                  .get();
+            = filters.emplace_back(new im_keyboard_grab_v2(redirect, grab, xkb->keymap->raw)).get();
 
         QObject::connect(grab,
                          &Wrapland::Server::input_method_keyboard_grab_v2::resourceDestroyed,
-                         platform.redirect->qobject.get(),
+                         redirect.qobject.get(),
                          [this, filter] {
-                             platform.redirect->uninstallInputEventFilter(filter);
+                             redirect.uninstallInputEventFilter(filter);
                              remove_all_if(filters,
                                            [filter](auto&& f) { return f.get() == filter; });
                          });
 
         if (auto ti3 = waylandServer()->seat()->text_inputs().v3.text_input;
             ti3 && ti3->state().enabled) {
-            platform.redirect->append_filter(filter);
+            redirect.append_filter(filter);
         }
     }
 
     void
     handle_popup_surface_created(Wrapland::Server::input_method_popup_surface_v2* popup_surface)
     {
-        auto space = platform.base.space.get();
         auto popup = popups.emplace_back(
-            new typename space_t::wayland_window(popup_surface->surface(), *space));
+            new typename space_t::wayland_window(popup_surface->surface(), redirect.space));
         popup->input_method_popup = popup_surface;
         popup->transient()->annexed = true;
         popup->hidden = true;
         popup->set_layer(win::layer::notification);
 
-        space->windows.push_back(popup);
+        redirect.space.windows.push_back(popup);
 
         QObject::connect(popup->qobject.get(), &window_t::qobject_t::closed, this, [this, popup] {
             remove_all(popups, popup);
@@ -185,7 +181,7 @@ private:
         QObject::connect(
             popup->qobject.get(),
             &window_t::qobject_t::needsRepaint,
-            space->base.render->compositor->qobject.get(),
+            redirect.platform.base.render->compositor->qobject.get(),
             [popup] { popup->space.base.render->compositor->schedule_repaint(popup); });
         QObject::connect(popup->qobject.get(),
                          &window_t::qobject_t::frame_geometry_changed,
@@ -208,14 +204,14 @@ private:
                          });
 
         if (popup->ready_for_painting) {
-            space->handle_window_added(popup);
+            redirect.space.handle_window_added(popup);
         }
 
         if (auto text_input = waylandServer()->seat()->text_inputs().v3.text_input) {
             if (text_input->state().enabled) {
-                auto parent_window = get_window(platform, text_input);
+                auto parent_window = get_window(text_input);
                 auto const& placement = get_input_popup_placement(
-                    platform, parent_window, text_input->state().cursor_rectangle);
+                    parent_window, text_input->state().cursor_rectangle);
 
                 parent_window->transient()->add_child(popup);
                 popup->setFrameGeometry(placement);
@@ -227,7 +223,7 @@ private:
     void activate_filters()
     {
         for (auto const& filter : filters) {
-            platform.redirect->append_filter(filter.get());
+            redirect.append_filter(filter.get());
         }
     }
 
@@ -238,9 +234,9 @@ private:
         }
 
         auto text_input = waylandServer()->seat()->text_inputs().v3.text_input;
-        auto parent_window = get_window(platform, text_input);
-        auto const placement = get_input_popup_placement(
-            platform, parent_window, text_input->state().cursor_rectangle);
+        auto parent_window = get_window(text_input);
+        auto const placement
+            = get_input_popup_placement(parent_window, text_input->state().cursor_rectangle);
 
         for (auto const& popup : popups) {
             parent_window->transient()->add_child(popup);
@@ -252,7 +248,7 @@ private:
     void deactivate()
     {
         for (auto const& filter : filters) {
-            platform.redirect->uninstallInputEventFilter(filter.get());
+            redirect.uninstallInputEventFilter(filter.get());
         }
         for (auto const& popup : popups) {
             popup->hideClient(true);
@@ -271,7 +267,7 @@ private:
     std::unique_ptr<Wrapland::Server::text_input_manager_v3> text_input_manager_v3;
     std::unique_ptr<Wrapland::Server::input_method_manager_v2> input_method_manager_v2;
 
-    Platform& platform;
+    Redirect& redirect;
 };
 
 }

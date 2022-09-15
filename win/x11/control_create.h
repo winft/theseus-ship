@@ -57,7 +57,7 @@ void embed_client(Win* win, xcb_visualid_t visualid, xcb_colormap_t colormap, ui
         0,        // back_pixmap
         0,        // border_pixel
         colormap, // colormap
-        win->space.input->platform.cursor->x11_cursor(Qt::ArrowCursor),
+        win->space.input->cursor->x11_cursor(Qt::ArrowCursor),
     };
 
     auto const cw_mask = XCB_CW_BACK_PIXMAP | XCB_CW_BORDER_PIXEL | XCB_CW_COLORMAP | XCB_CW_CURSOR;
@@ -150,7 +150,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 {
     using Win = typename Space::x11_window;
 
-    blocker block(space.stacking_order);
+    blocker block(space.stacking.order);
 
     base::x11::xcb::window_attributes attr(xcb_win);
     base::x11::xcb::geometry windowGeometry(xcb_win);
@@ -208,7 +208,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
                      &window_qobject::moveResizeCursorChanged,
                      win->qobject.get(),
                      [win](input::cursor_shape cursor) {
-                         auto nativeCursor = win->space.input->platform.cursor->x11_cursor(cursor);
+                         auto nativeCursor = win->space.input->cursor->x11_cursor(cursor);
                          win->xcb_windows.outer.define_cursor(nativeCursor);
                          if (win->xcb_windows.input.is_valid()) {
                              win->xcb_windows.input.define_cursor(nativeCursor);
@@ -579,11 +579,12 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     }
 
     if (win->isShown()) {
-        bool allow;
+        auto allow{false};
         if (session) {
-            allow = session->active
-                && (!space.was_user_interaction || !space.active_client
-                    || is_desktop(space.active_client));
+            if (session->active) {
+                allow = !space.was_user_interaction || !space.stacking.active
+                    || is_desktop(space.stacking.active);
+            }
         } else {
             allow = allow_window_activation(space, win, win->userTime(), false);
         }

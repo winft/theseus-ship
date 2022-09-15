@@ -224,7 +224,7 @@ public:
 
         if (focusNow && focusNow->control) {
             win::enter_event(focusNow, m_lastPosition.toPoint());
-            this->redirect->platform.base.space->focusMousePos = m_lastPosition.toPoint();
+            this->redirect->space.focusMousePos = m_lastPosition.toPoint();
         }
 
         auto seat = waylandServer()->seat();

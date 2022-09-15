@@ -44,31 +44,31 @@ void remove_controlled_window_from_space(Space& space, Win* win)
 
     // TODO: if marked client is removed, notify the marked list
     remove_window_from_lists(space, win);
-    remove_all(space.attention_chain, win);
+    remove_all(space.stacking.attention_chain, win);
 
     auto group = find_group(space, win->xcb_window);
     if (group) {
         group->lostLeader();
     }
 
-    if (win == space.most_recently_raised) {
-        space.most_recently_raised = nullptr;
+    if (win == space.stacking.most_recently_raised) {
+        space.stacking.most_recently_raised = nullptr;
     }
 
-    remove_all(space.should_get_focus, win);
+    remove_all(space.stacking.should_get_focus, win);
 
-    assert(win != space.active_client);
+    assert(win != space.stacking.active);
 
-    if (win == space.last_active_client) {
-        space.last_active_client = nullptr;
+    if (win == space.stacking.last_active) {
+        space.stacking.last_active = nullptr;
     }
-    if (win == space.delayfocus_client) {
+    if (win == space.stacking.delayfocus_window) {
         cancel_delay_focus(space);
     }
 
     Q_EMIT space.qobject->clientRemoved(win->signal_id);
 
-    space.stacking_order->update_count();
+    space.stacking.order.update_count();
     update_space_areas(space);
     update_tabbox(space);
 }
@@ -184,7 +184,7 @@ void release_window(Win* win, bool on_shutdown)
     // Remove ForceTemporarily rules
     rules::discard_used_rules(*win->space.rule_book, *win, true);
 
-    blocker block(win->space.stacking_order);
+    blocker block(win->space.stacking.order);
 
     if (win->control->move_resize.enabled) {
         win->leaveMoveResize();
@@ -300,7 +300,7 @@ void destroy_window(Win* win)
     // Remove ForceTemporarily rules
     rules::discard_used_rules(*win->space.rule_book, *win, true);
 
-    blocker block(win->space.stacking_order);
+    blocker block(win->space.stacking.order);
     if (win->control->move_resize.enabled) {
         win->leaveMoveResize();
     }

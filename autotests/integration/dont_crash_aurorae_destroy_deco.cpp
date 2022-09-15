@@ -76,7 +76,7 @@ void DontCrashAuroraeDestroyDecoTest::initTestCase()
 
 void DontCrashAuroraeDestroyDecoTest::init()
 {
-    Test::app()->base.input->cursor->set_pos(QPoint(640, 512));
+    Test::cursor()->set_pos(QPoint(640, 512));
 }
 
 void DontCrashAuroraeDestroyDecoTest::testBorderlessMaximizedWindows()

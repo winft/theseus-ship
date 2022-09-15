@@ -72,8 +72,9 @@ public:
     using output_t = wlroots::output;
 
     platform() = default;
-    explicit platform(Wrapland::Server::Display* display);
-    explicit platform(Wrapland::Server::Display* display, wlr_backend* backend);
+    platform(std::string const& socket_name,
+             base::wayland::start_options flags,
+             std::function<wlr_backend*(wl_display*)> backend_factory);
 
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
@@ -89,6 +90,7 @@ public:
     wlr_backend* backend{nullptr};
 
 private:
+    void init();
     void setup_drm_leasing(Wrapland::Server::Display* display, wlr_backend* drm_backend);
 
     std::unique_ptr<event_receiver<platform>> destroyed;

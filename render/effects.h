@@ -352,7 +352,7 @@ public:
                     Q_EMIT windowAdded(client->render->effect.get());
                 });
         connect(ws->qobject.get(), &win::space_qobject::clientActivated, this, [this, space = ws] {
-            auto window = space->active_client;
+            auto window = space->stacking.active;
             assert(!window || window->render);
             assert(!window || window->render->effect);
             auto eff_win = window ? window->render->effect.get() : nullptr;
@@ -385,7 +385,7 @@ public:
                 &win::virtual_desktop_manager_qobject::countChanged,
                 this,
                 &EffectsHandler::numberDesktopsChanged);
-        QObject::connect(ws->input->platform.cursor.get(),
+        QObject::connect(ws->input->cursor.get(),
                          &input::cursor::mouse_changed,
                          this,
                          &EffectsHandler::mouseChanged);
@@ -402,7 +402,7 @@ public:
                 }
             });
 
-        connect(ws->stacking_order->qobject.get(),
+        connect(ws->stacking.order.qobject.get(),
                 &win::stacking_order_qobject::changed,
                 this,
                 &EffectsHandler::stackingOrderChanged);
@@ -586,7 +586,7 @@ public:
 
     EffectWindow* activeWindow() const override
     {
-        auto ac = compositor.space->active_client;
+        auto ac = compositor.space->stacking.active;
         return ac ? ac->render->effect.get() : nullptr;
     }
 
@@ -598,46 +598,41 @@ public:
 
     void registerGlobalShortcut(const QKeySequence& shortcut, QAction* action) override
     {
-        compositor.space->input->platform.registerShortcut(shortcut, action);
+        compositor.platform.base.input->registerShortcut(shortcut, action);
     }
 
     void registerPointerShortcut(Qt::KeyboardModifiers modifiers,
                                  Qt::MouseButton pointerButtons,
                                  QAction* action) override
     {
-        compositor.space->input->platform.registerPointerShortcut(
-            modifiers, pointerButtons, action);
+        compositor.platform.base.input->registerPointerShortcut(modifiers, pointerButtons, action);
     }
 
     void registerAxisShortcut(Qt::KeyboardModifiers modifiers,
                               PointerAxisDirection axis,
                               QAction* action) override
     {
-        compositor.space->input->platform.registerAxisShortcut(modifiers, axis, action);
+        compositor.platform.base.input->registerAxisShortcut(modifiers, axis, action);
     }
 
     void registerTouchpadSwipeShortcut(SwipeDirection direction, QAction* action) override
     {
-        compositor.space->input->platform.registerTouchpadSwipeShortcut(direction, action);
+        compositor.platform.base.input->registerTouchpadSwipeShortcut(direction, action);
     }
 
     void startMousePolling() override
     {
-        if (auto& cursor = compositor.space->input->platform.cursor) {
-            cursor->start_mouse_polling();
-        }
+        // Don't need to start/stop polling manually anymore nowadays. On X11 we use XInput to
+        // receive data throughout, on Wayland we are doing it anyway as the Wayland server.
     }
 
     void stopMousePolling() override
     {
-        if (auto& cursor = compositor.space->input->platform.cursor) {
-            cursor->stop_mouse_polling();
-        }
     }
 
     QPoint cursorPos() const override
     {
-        return compositor.space->input->platform.cursor->pos();
+        return compositor.space->input->cursor->pos();
     }
 
     void defineCursor(Qt::CursorShape shape) override
@@ -649,11 +644,11 @@ public:
     {
         if (signal == QMetaMethod::fromSignal(&EffectsHandler::cursorShapeChanged)) {
             if (!m_trackingCursorChanges) {
-                QObject::connect(compositor.space->input->platform.cursor.get(),
+                QObject::connect(compositor.space->input->cursor.get(),
                                  &input::cursor::image_changed,
                                  this,
                                  &EffectsHandler::cursorShapeChanged);
-                compositor.space->input->platform.cursor->start_image_tracking();
+                compositor.space->input->cursor->start_image_tracking();
             }
             ++m_trackingCursorChanges;
         }
@@ -665,8 +660,8 @@ public:
         if (signal == QMetaMethod::fromSignal(&EffectsHandler::cursorShapeChanged)) {
             Q_ASSERT(m_trackingCursorChanges > 0);
             if (!--m_trackingCursorChanges) {
-                compositor.space->input->platform.cursor->stop_image_tracking();
-                QObject::disconnect(compositor.space->input->platform.cursor.get(),
+                compositor.space->input->cursor->stop_image_tracking();
+                QObject::disconnect(compositor.space->input->cursor.get(),
                                     &input::cursor::image_changed,
                                     this,
                                     &EffectsHandler::cursorShapeChanged);
@@ -677,27 +672,27 @@ public:
 
     PlatformCursorImage cursorImage() const override
     {
-        return compositor.space->input->platform.cursor->platform_image();
+        return compositor.space->input->cursor->platform_image();
     }
 
     bool isCursorHidden() const override
     {
-        return compositor.space->input->platform.cursor->is_hidden();
+        return compositor.space->input->cursor->is_hidden();
     }
 
     void hideCursor() override
     {
-        compositor.space->input->platform.cursor->hide();
+        compositor.space->input->cursor->hide();
     }
 
     void showCursor() override
     {
-        compositor.space->input->platform.cursor->show();
+        compositor.space->input->cursor->show();
     }
 
     void startInteractiveWindowSelection(std::function<void(KWin::EffectWindow*)> callback) override
     {
-        compositor.space->input->platform.start_interactive_window_selection([callback](auto t) {
+        compositor.space->input->start_interactive_window_selection([callback](auto t) {
             if (t) {
                 assert(t->render);
                 assert(t->render->effect);
@@ -710,7 +705,7 @@ public:
 
     void startInteractivePositionSelection(std::function<void(const QPoint&)> callback) override
     {
-        compositor.space->input->platform.start_interactive_position_selection(callback);
+        compositor.space->input->start_interactive_position_selection(callback);
     }
 
     void showOnScreenMessage(const QString& message, const QString& iconName = QString()) override
@@ -925,7 +920,7 @@ public:
 
     EffectWindowList stackingOrder() const override
     {
-        auto list = win::render_stack(*compositor.space->stacking_order);
+        auto list = win::render_stack(compositor.space->stacking.order);
         EffectWindowList ret;
         for (auto t : list) {
             if (auto eff_win = t->render->effect.get()) {

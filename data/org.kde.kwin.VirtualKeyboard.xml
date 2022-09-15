@@ -5,6 +5,7 @@
     <property name="enabled" type="b" access="readwrite"/>
     <property name="active" type="b" access="readwrite"/>
     <property name="visible" type="b" access="read"/>
+    <property name="activeClientSupportsTextInput" type="b" access="read"/>
     <signal name="enabledChanged">
     </signal>
     <signal name="activeChanged">
@@ -13,5 +14,12 @@
     </signal>
     <signal name="availableChanged">
     </signal>
+    <signal name="activeClientSupportsTextInputChanged">
+    </signal>
+    <method name="willShowOnActive">
+      <arg type="b" direction="out"/>
+    </method>
+    <method name="forceActivate">
+    </method>
   </interface>
 </node>

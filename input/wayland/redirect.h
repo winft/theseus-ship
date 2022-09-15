@@ -7,6 +7,7 @@
 
 #include "cursor.h"
 #include "fake/devices.h"
+#include "input_method.h"
 #include "keyboard_redirect.h"
 #include "pointer_redirect.h"
 #include "tablet_redirect.h"
@@ -15,6 +16,8 @@
 // TODO(romangg): should only be included when KWIN_BUILD_TABBOX is defined.
 #include "input/filters/tabbox.h"
 
+#include "base/wayland/output_helpers.h"
+#include "input/dbus/tablet_mode_manager.h"
 #include "input/filters/decoration_event.h"
 #include "input/filters/drag_and_drop.h"
 #include "input/filters/effects.h"
@@ -31,6 +34,7 @@
 #include "input/filters/window_action.h"
 #include "input/filters/window_selector.h"
 #include "input/redirect_qobject.h"
+#include "input/spies/activity.h"
 #include "input/spies/touch_hide_cursor.h"
 
 #include <KConfigWatcher>
@@ -46,21 +50,32 @@
 namespace KWin::input::wayland
 {
 
-template<typename Platform>
+template<typename Platform, typename Space>
 class redirect
 {
 public:
+    using type = redirect<Platform, Space>;
     using platform_t = Platform;
-    using type = redirect<Platform>;
-    using space_t = typename Platform::base_t::space_t;
+    using space_t = Space;
     using window_t = typename space_t::window_t;
 
-    redirect(Platform& platform)
+    redirect(Platform& platform, Space& space)
         : qobject{std::make_unique<redirect_qobject>()}
         , platform{platform}
+        , space{space}
         , config_watcher{KConfigWatcher::create(kwinApp()->inputConfig())}
+        , input_method{std::make_unique<wayland::input_method<type>>(*this, waylandServer())}
+        , tablet_mode_manager{std::make_unique<dbus::tablet_mode_manager<type>>(*this)}
     {
-        platform.redirect = this;
+        setup_workspace();
+
+        using base_t = std::decay_t<decltype(platform.base)>;
+        QObject::connect(&platform.base, &base_t::output_added, this->qobject.get(), [this] {
+            base::wayland::check_outputs_on(this->platform.base);
+        });
+        QObject::connect(&platform.base, &base_t::output_removed, this->qobject.get(), [this] {
+            base::wayland::check_outputs_on(this->platform.base);
+        });
     }
 
     ~redirect()
@@ -76,52 +91,6 @@ public:
         }
     }
 
-    // TODO(romangg): Make this called from ctor. But for that we need the space being available in
-    //                base already.
-    void setup_workspace()
-    {
-        reconfigure();
-        QObject::connect(config_watcher.data(),
-                         &KConfigWatcher::configChanged,
-                         qobject.get(),
-                         [this](auto const& group) {
-                             if (group.name() == QLatin1String("Keyboard")) {
-                                 reconfigure();
-                             }
-                         });
-
-        platform.cursor = std::make_unique<wayland::cursor<Platform>>(&platform);
-
-        pointer = std::make_unique<wayland::pointer_redirect<type>>(this);
-        keyboard = std::make_unique<wayland::keyboard_redirect<type>>(this);
-        touch = std::make_unique<wayland::touch_redirect<type>>(this);
-        tablet = std::make_unique<wayland::tablet_redirect<type>>(this);
-
-        setup_devices();
-
-        fake_input = waylandServer()->display->createFakeInput();
-        QObject::connect(fake_input.get(),
-                         &Wrapland::Server::FakeInput::deviceCreated,
-                         qobject.get(),
-                         [this](auto device) { handle_fake_input_device_added(device); });
-        QObject::connect(fake_input.get(),
-                         &Wrapland::Server::FakeInput::device_destroyed,
-                         qobject.get(),
-                         [this](auto device) { fake_devices.erase(device); });
-
-        QObject::connect(platform.virtual_keyboard.get(),
-                         &Wrapland::Server::virtual_keyboard_manager_v1::keyboard_created,
-                         qobject.get(),
-                         [this](auto device) { handle_virtual_keyboard_added(device); });
-
-        keyboard->init();
-        pointer->init();
-        touch->init();
-        tablet->init();
-
-        setup_filters();
-    }
-
     /**
      * @return const QPointF& The current global pointer position
      */
@@ -133,6 +102,19 @@ public:
     Qt::MouseButtons qtButtonStates() const
     {
         return pointer->buttons();
+    }
+
+    void turn_outputs_on()
+    {
+        base::wayland::turn_outputs_on(platform.base, dpms_filter);
+    }
+
+    void warp_pointer(QPointF const& pos, uint32_t time)
+    {
+        if (platform.pointers.empty()) {
+            return;
+        }
+        pointer->processMotion(pos, time, platform.pointers.front());
     }
 
     void cancelTouch()
@@ -147,8 +129,24 @@ public:
         });
     }
 
-    void startInteractiveWindowSelection(std::function<void(window_t*)> callback,
-                                         QByteArray const& cursorName)
+    /**
+     * Starts an interactive window selection process.
+     *
+     * Once the user selected a window the @p callback is invoked with the selected Toplevel as
+     * argument. In case the user cancels the interactive window selection or selecting a window is
+     * currently not possible (e.g. screen locked) the @p callback is invoked with a @c nullptr
+     * argument.
+     *
+     * During the interactive window selection the cursor is turned into a crosshair cursor unless
+     * @p cursorName is provided. The argument @p cursorName is a QByteArray instead of
+     * Qt::CursorShape to support the "pirate" cursor for kill window which is not wrapped by
+     * Qt::CursorShape.
+     *
+     * @param callback The function to invoke once the interactive window selection ends
+     * @param cursorName The optional name of the cursor shape to use, default is crosshair
+     */
+    void start_interactive_window_selection(std::function<void(window_t*)> callback,
+                                            QByteArray const& cursorName = {})
     {
         if (window_selector->isActive()) {
             callback(nullptr);
@@ -158,7 +156,19 @@ public:
         pointer->setWindowSelectionCursor(cursorName);
     }
 
-    void startInteractivePositionSelection(std::function<void(QPoint const&)> callback)
+    /**
+     * Starts an interactive position selection process.
+     *
+     * Once the user selected a position on the screen the @p callback is invoked with
+     * the selected point as argument. In case the user cancels the interactive position selection
+     * or selecting a position is currently not possible (e.g. screen locked) the @p callback
+     * is invoked with a point at @c -1 as x and y argument.
+     *
+     * During the interactive window selection the cursor is turned into a crosshair cursor.
+     *
+     * @param callback The function to invoke once the interactive position selection ends
+     */
+    void start_interactive_position_selection(std::function<void(QPoint const&)> callback)
     {
         if (window_selector->isActive()) {
             callback(QPoint(-1, -1));
@@ -210,17 +220,66 @@ public:
     std::unique_ptr<tablet_redirect<type>> tablet;
     std::unique_ptr<touch_redirect<type>> touch;
 
+    std::unique_ptr<wayland::cursor<type>> cursor;
+
     std::list<event_filter<type>*> m_filters;
     std::vector<event_spy<type>*> m_spies;
 
+    std::unique_ptr<input::dpms_filter<type>> dpms_filter;
+
     std::unique_ptr<redirect_qobject> qobject;
     Platform& platform;
+    Space& space;
 
 private:
     template<typename Dev>
     static void unset_focus(Dev&& dev)
     {
         dev->focusUpdate(dev->focus.window, nullptr);
+    }
+
+    void setup_workspace()
+    {
+        reconfigure();
+        QObject::connect(config_watcher.data(),
+                         &KConfigWatcher::configChanged,
+                         qobject.get(),
+                         [this](auto const& group) {
+                             if (group.name() == QLatin1String("Keyboard")) {
+                                 reconfigure();
+                             }
+                         });
+
+        cursor = std::make_unique<wayland::cursor<type>>(*this);
+
+        pointer = std::make_unique<wayland::pointer_redirect<type>>(this);
+        keyboard = std::make_unique<wayland::keyboard_redirect<type>>(this);
+        touch = std::make_unique<wayland::touch_redirect<type>>(this);
+        tablet = std::make_unique<wayland::tablet_redirect<type>>(this);
+
+        setup_devices();
+
+        fake_input = waylandServer()->display->createFakeInput();
+        QObject::connect(fake_input.get(),
+                         &Wrapland::Server::FakeInput::deviceCreated,
+                         qobject.get(),
+                         [this](auto device) { handle_fake_input_device_added(device); });
+        QObject::connect(fake_input.get(),
+                         &Wrapland::Server::FakeInput::device_destroyed,
+                         qobject.get(),
+                         [this](auto device) { fake_devices.erase(device); });
+
+        QObject::connect(platform.virtual_keyboard.get(),
+                         &Wrapland::Server::virtual_keyboard_manager_v1::keyboard_created,
+                         qobject.get(),
+                         [this](auto device) { handle_virtual_keyboard_added(device); });
+
+        keyboard->init();
+        pointer->init();
+        touch->init();
+        tablet->init();
+
+        setup_filters();
     }
 
     void setup_devices()
@@ -290,6 +349,7 @@ private:
             m_filters.emplace_back(new virtual_terminal_filter<type>(*this));
         }
 
+        m_spies.push_back(new activity_spy(*this));
         m_spies.push_back(new touch_hide_cursor_spy(*this));
         if (has_global_shortcuts) {
             m_filters.emplace_back(new terminate_server_filter<type>(*this));
@@ -503,7 +563,7 @@ private:
                              device->setAuthentication(true);
                          });
 
-        auto devices = fake::devices<Platform>(platform, device);
+        auto devices = fake::devices<type>(*this, device);
         fake_devices.insert({device, std::move(devices)});
     }
 
@@ -562,9 +622,12 @@ private:
     }
 
     KConfigWatcher::Ptr config_watcher;
+
+    std::unique_ptr<wayland::input_method<type>> input_method;
+    std::unique_ptr<dbus::tablet_mode_manager<type>> tablet_mode_manager;
     std::unique_ptr<Wrapland::Server::FakeInput> fake_input;
 
-    std::unordered_map<Wrapland::Server::FakeInputDevice*, fake::devices<Platform>> fake_devices;
+    std::unordered_map<Wrapland::Server::FakeInputDevice*, fake::devices<type>> fake_devices;
     std::unordered_map<Wrapland::Server::virtual_keyboard_v1*, std::unique_ptr<input::keyboard>>
         virtual_keyboards;
 

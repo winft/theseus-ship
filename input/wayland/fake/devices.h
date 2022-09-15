@@ -14,41 +14,41 @@
 namespace KWin::input::wayland::fake
 {
 
-template<typename Platform>
+template<typename Redirect>
 class devices
 {
 public:
     devices(devices&&) noexcept = default;
     devices& operator=(devices&&) noexcept = default;
 
-    explicit devices(Platform& platform, Wrapland::Server::FakeInputDevice* device)
-        : platform{platform}
-        , pointer{std::make_unique<fake::pointer<Platform>>(device, &platform)}
-        , keyboard{std::make_unique<fake::keyboard<Platform>>(device, &platform)}
-        , touch{std::make_unique<fake::touch<Platform>>(device, &platform)}
+    explicit devices(Redirect& redirect, Wrapland::Server::FakeInputDevice* device)
+        : redirect{redirect}
+        , pointer{std::make_unique<fake::pointer<Redirect>>(device, redirect)}
+        , keyboard{std::make_unique<fake::keyboard<Redirect>>(device, redirect)}
+        , touch{std::make_unique<fake::touch<Redirect>>(device, redirect)}
     {
-        platform_add_pointer(pointer.get(), platform);
-        platform_add_keyboard(keyboard.get(), platform);
-        platform_add_touch(touch.get(), platform);
+        platform_add_pointer(pointer.get(), redirect.platform);
+        platform_add_keyboard(keyboard.get(), redirect.platform);
+        platform_add_touch(touch.get(), redirect.platform);
     }
 
     ~devices()
     {
         if (pointer) {
-            platform_remove_pointer(pointer.get(), platform);
+            platform_remove_pointer(pointer.get(), redirect.platform);
         }
         if (keyboard) {
-            platform_remove_keyboard(keyboard.get(), platform);
+            platform_remove_keyboard(keyboard.get(), redirect.platform);
         }
         if (touch) {
-            platform_remove_touch(touch.get(), platform);
+            platform_remove_touch(touch.get(), redirect.platform);
         }
     }
 
-    std::unique_ptr<fake::pointer<Platform>> pointer;
-    std::unique_ptr<fake::keyboard<Platform>> keyboard;
-    std::unique_ptr<fake::touch<Platform>> touch;
-    Platform& platform;
+    Redirect& redirect;
+    std::unique_ptr<fake::pointer<Redirect>> pointer;
+    std::unique_ptr<fake::keyboard<Redirect>> keyboard;
+    std::unique_ptr<fake::touch<Redirect>> touch;
 };
 
 }

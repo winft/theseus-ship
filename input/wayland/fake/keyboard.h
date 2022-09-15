@@ -8,40 +8,35 @@
 #include "input/keyboard.h"
 
 #include <Wrapland/Server/fake_input.h>
-#include <Wrapland/Server/kde_idle.h>
 
 namespace KWin::input::wayland::fake
 {
 
-template<typename Platform>
+template<typename Redirect>
 class keyboard : public input::keyboard
 {
 public:
-    keyboard(Wrapland::Server::FakeInputDevice* device, Platform* platform)
-        : input::keyboard(platform->xkb.context, platform->xkb.compose_table)
-        , platform{platform}
+    keyboard(Wrapland::Server::FakeInputDevice* device, Redirect& redirect)
+        : input::keyboard(redirect.platform.xkb.context, redirect.platform.xkb.compose_table)
+        , redirect{redirect}
         , device{device}
     {
-        QObject::connect(
-            device,
-            &Wrapland::Server::FakeInputDevice::keyboardKeyPressRequested,
-            this,
-            [this](auto button) {
-                auto redirect = this->platform->redirect;
-                // TODO: Fix time
-                redirect->keyboard->process_key({button, key_state::pressed, false, {this, 0}});
-                redirect->platform.base.space->kde_idle->simulateUserActivity();
-            });
-        QObject::connect(
-            device,
-            &Wrapland::Server::FakeInputDevice::keyboardKeyReleaseRequested,
-            this,
-            [this](auto button) {
-                auto redirect = this->platform->redirect;
-                // TODO: Fix time
-                redirect->keyboard->process_key({button, key_state::released, false, {this, 0}});
-                redirect->platform.base.space->kde_idle->simulateUserActivity();
-            });
+        QObject::connect(device,
+                         &Wrapland::Server::FakeInputDevice::keyboardKeyPressRequested,
+                         this,
+                         [this](auto button) {
+                             // TODO: Fix time
+                             this->redirect.keyboard->process_key(
+                                 {button, key_state::pressed, false, {this, 0}});
+                         });
+        QObject::connect(device,
+                         &Wrapland::Server::FakeInputDevice::keyboardKeyReleaseRequested,
+                         this,
+                         [this](auto button) {
+                             // TODO: Fix time
+                             this->redirect.keyboard->process_key(
+                                 {button, key_state::released, false, {this, 0}});
+                         });
     }
 
     keyboard(keyboard const&) = delete;
@@ -49,7 +44,7 @@ public:
     ~keyboard() override = default;
 
 private:
-    Platform* platform;
+    Redirect& redirect;
     Wrapland::Server::FakeInputDevice* device;
 };
 

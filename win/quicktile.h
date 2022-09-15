@@ -102,7 +102,7 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
         return;
     }
 
-    win->space.focusMousePos = win->space.input->platform.cursor->pos();
+    win->space.focusMousePos = win->space.input->cursor->pos();
 
     geometry_updates_blocker blocker(win);
 
@@ -161,8 +161,8 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
 
             set_maximize(win, false, false);
 
-            auto ref_pos = keyboard ? pending_frame_geometry(win).center()
-                                    : win->space.input->platform.cursor->pos();
+            auto ref_pos
+                = keyboard ? pending_frame_geometry(win).center() : win->space.input->cursor->pos();
 
             win->setFrameGeometry(electric_border_maximize_geometry(win, ref_pos, win->desktop()));
             // Store the mode change
@@ -178,8 +178,8 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
     }
 
     if (mode != quicktiles::none) {
-        auto target_screen = keyboard ? pending_frame_geometry(win).center()
-                                      : win->space.input->platform.cursor->pos();
+        auto target_screen
+            = keyboard ? pending_frame_geometry(win).center() : win->space.input->cursor->pos();
 
         if (win->control->quicktiling == mode) {
             // If trying to tile to the side that the window is already tiled to move the window to

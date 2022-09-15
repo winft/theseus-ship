@@ -48,7 +48,7 @@ public:
     std::unique_ptr<layout_policy_qobject> qobject;
     Manager* manager;
 
-    using window_t = typename decltype(manager->xkb.platform->base.space)::element_type::window_t;
+    using window_t = typename std::decay_t<decltype(manager->redirect.space)>::window_t;
 
 protected:
     explicit layout_policy(Manager* manager, KConfigGroup const& config = KConfigGroup())
@@ -89,7 +89,7 @@ protected:
 
     auto get_keyboard()
     {
-        return xkb::get_primary_xkb_keyboard(*this->manager->xkb.platform);
+        return xkb::get_primary_xkb_keyboard(this->manager->redirect.platform);
     }
 
     KConfigGroup config;
@@ -103,7 +103,7 @@ public:
     global_layout_policy(Manager* manager, KConfigGroup const& config)
         : layout_policy<Manager>(manager, config)
     {
-        auto session_manager = manager->xkb.platform->base.space->session_manager.get();
+        auto session_manager = manager->redirect.space.session_manager.get();
         QObject::connect(session_manager,
                          &win::session_manager::prepareSessionSaveRequested,
                          this->qobject.get(),
@@ -154,7 +154,7 @@ public:
     virtual_desktop_layout_policy(Manager* manager, KConfigGroup const& config)
         : layout_policy<Manager>(manager, config)
     {
-        auto& space = *manager->xkb.platform->base.space;
+        auto& space = manager->redirect.space;
         QObject::connect(space.virtual_desktop_manager->qobject.get(),
                          &win::virtual_desktop_manager_qobject::currentChanged,
                          this->qobject.get(),
@@ -185,8 +185,8 @@ public:
             this->qobject.get(),
             [this] {
                 if (this->get_keyboard()->layouts_count() > 1) {
-                    auto const& desktops = this->manager->xkb.platform->base.space
-                                               ->virtual_desktop_manager->desktops();
+                    auto const& desktops
+                        = this->manager->redirect.space.virtual_desktop_manager->desktops();
 
                     for (auto const desktop : desktops) {
                         uint const layout = this->config.readEntry(
@@ -221,8 +221,7 @@ protected:
 
     void handle_layout_change(uint index) override
     {
-        auto desktop
-            = this->manager->xkb.platform->base.space->virtual_desktop_manager->currentDesktop();
+        auto desktop = this->manager->redirect.space.virtual_desktop_manager->currentDesktop();
         if (!desktop) {
             return;
         }
@@ -244,7 +243,7 @@ private:
     void handle_desktop_change()
     {
         if (auto desktop
-            = this->manager->xkb.platform->base.space->virtual_desktop_manager->currentDesktop()) {
+            = this->manager->redirect.space.virtual_desktop_manager->currentDesktop()) {
             this->set_layout(get_layout(layouts, desktop));
         }
     }
@@ -261,11 +260,11 @@ public:
     explicit window_layout_policy(Manager* manager)
         : layout_policy<Manager>(manager)
     {
-        QObject::connect(manager->xkb.platform->base.space->qobject.get(),
+        QObject::connect(manager->redirect.space.qobject.get(),
                          &win::space_qobject::clientActivated,
                          this->qobject.get(),
                          [this] {
-                             auto window = this->manager->xkb.platform->base.space->active_client;
+                             auto window = this->manager->redirect.space.stacking.active;
                              if (!window) {
                                  return;
                              }
@@ -292,7 +291,7 @@ protected:
 
     void handle_layout_change(uint index) override
     {
-        auto window = this->manager->xkb.platform->base.space->active_client;
+        auto window = this->manager->redirect.space.stacking.active;
         if (!window) {
             return;
         }
@@ -328,11 +327,11 @@ public:
     application_layout_policy(Manager* manager, KConfigGroup const& config)
         : layout_policy<Manager>(manager, config)
     {
-        auto& space = *manager->xkb.platform->base.space;
+        auto& space = manager->redirect.space;
         QObject::connect(space.qobject.get(),
                          &win::space_qobject::clientActivated,
                          this->qobject.get(),
-                         [this, &space] { handle_client_activated(space.active_client); });
+                         [this, &space] { handle_client_activated(space.stacking.active); });
 
         auto session_manager = space.session_manager.get();
         QObject::connect(
@@ -381,7 +380,7 @@ protected:
 
     void handle_layout_change(uint index) override
     {
-        auto window = this->manager->xkb.platform->base.space->active_client;
+        auto window = this->manager->redirect.space.stacking.active;
         if (!window) {
             return;
         }

@@ -88,7 +88,7 @@ void compositor_start_scene(Compositor& comp)
     Q_EMIT comp.qobject->aboutToToggleCompositing();
 
     comp.scene = comp.create_scene();
-    comp.space->stacking_order->render_restack_required = true;
+    comp.space->stacking.order.render_restack_required = true;
 
     for (auto& client : comp.space->windows) {
         client->setupCompositing();
@@ -100,7 +100,7 @@ void compositor_start_scene(Compositor& comp)
                      &EffectsHandler::screenGeometryChanged,
                      comp.qobject.get(),
                      [&comp] { comp.addRepaintFull(); });
-    QObject::connect(comp.space->stacking_order->qobject.get(),
+    QObject::connect(comp.space->stacking.order.qobject.get(),
                      &win::stacking_order_qobject::unlocked,
                      comp.qobject.get(),
                      [&comp]() {

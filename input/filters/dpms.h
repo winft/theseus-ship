@@ -20,13 +20,13 @@
 namespace KWin::input
 {
 
-template<typename Platform, typename Redirect>
+template<typename Redirect>
 class dpms_filter : public event_filter<Redirect>
 {
 public:
-    explicit dpms_filter(Platform& platform, Redirect& redirect)
+    explicit dpms_filter(Redirect& redirect)
         : event_filter<Redirect>(redirect)
-        , platform{platform}
+        , redirect{redirect}
     {
     }
 
@@ -101,13 +101,15 @@ private:
     void notify()
     {
         // Queued to not modify the list of event filters while filtering.
-        QTimer::singleShot(0, platform.qobject.get(), [this] { platform.turn_outputs_on(); });
+        QTimer::singleShot(0, redirect.qobject.get(), [redirect_ptr = &redirect] {
+            redirect_ptr->turn_outputs_on();
+        });
     }
 
     QElapsedTimer m_doubleTapTimer;
     QVector<int32_t> m_touchPoints;
     bool m_secondTap = false;
-    Platform& platform;
+    Redirect& redirect;
 };
 
 }

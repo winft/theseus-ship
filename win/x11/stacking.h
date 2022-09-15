@@ -55,7 +55,7 @@ void render_stack_unmanaged_windows(Space& space)
                                       [&win](auto u) { return win.get() == u->xcb_window; });
 
         if (unmanaged != std::cend(unmanaged_list)) {
-            space.stacking_order->render_overlays.push_back(*unmanaged);
+            space.stacking.order.render_overlays.push_back(*unmanaged);
         }
     }
 }
@@ -69,7 +69,7 @@ void propagate_clients(Space& space, bool propagate_new_clients)
         return;
     }
 
-    auto& order = *space.stacking_order;
+    auto& order = space.stacking.order;
 
     // restack the windows according to the stacking order
     // supportWindow > electric borders > clients > hidden clients
@@ -178,27 +178,27 @@ void lower_client_within_application(Space* space, Win* window)
 
     window->control->cancel_auto_raise();
 
-    blocker block(space->stacking_order);
+    blocker block(space->stacking.order);
 
-    remove_all(space->stacking_order->pre_stack, window);
+    remove_all(space->stacking.order.pre_stack, window);
 
     bool lowered = false;
     // first try to put it below the bottom-most window of the application
-    for (auto it = space->stacking_order->pre_stack.begin();
-         it != space->stacking_order->pre_stack.end();
+    for (auto it = space->stacking.order.pre_stack.begin();
+         it != space->stacking.order.pre_stack.end();
          ++it) {
         auto const& client = *it;
         if (!client) {
             continue;
         }
         if (win::belong_to_same_client(client, window)) {
-            space->stacking_order->pre_stack.insert(it, window);
+            space->stacking.order.pre_stack.insert(it, window);
             lowered = true;
             break;
         }
     }
     if (!lowered)
-        space->stacking_order->pre_stack.push_front(window);
+        space->stacking.order.pre_stack.push_front(window);
     // ignore mainwindows
 }
 
@@ -211,12 +211,12 @@ void raise_client_within_application(Space* space, Win* window)
 
     window->control->cancel_auto_raise();
 
-    blocker block(space->stacking_order);
+    blocker block(space->stacking.order);
     // ignore mainwindows
 
     // first try to put it above the top-most window of the application
-    for (int i = space->stacking_order->pre_stack.size() - 1; i > -1; --i) {
-        auto other = space->stacking_order->pre_stack.at(i);
+    for (int i = space->stacking.order.pre_stack.size() - 1; i > -1; --i) {
+        auto other = space->stacking.order.pre_stack.at(i);
         if (!other) {
             continue;
         }
@@ -225,11 +225,11 @@ void raise_client_within_application(Space* space, Win* window)
             return;
         }
         if (belong_to_same_client(other, window)) {
-            remove_all(space->stacking_order->pre_stack, window);
-            auto it = find(space->stacking_order->pre_stack, other);
-            assert(it != space->stacking_order->pre_stack.end());
+            remove_all(space->stacking.order.pre_stack, window);
+            auto it = find(space->stacking.order.pre_stack, other);
+            assert(it != space->stacking.order.pre_stack.end());
             // Insert after the found one.
-            space->stacking_order->pre_stack.insert(it + 1, window);
+            space->stacking.order.pre_stack.insert(it + 1, window);
             break;
         }
     }
@@ -284,8 +284,8 @@ void restack_window(Win* win,
             return;
         }
 
-        auto it = win->space.stacking_order->stack.cbegin();
-        auto end = win->space.stacking_order->stack.cend();
+        auto it = win->space.stacking.order.stack.cbegin();
+        auto end = win->space.stacking.order.stack.cend();
 
         while (it != end) {
             if (*it == win) {
@@ -315,8 +315,8 @@ void restack_window(Win* win,
         other = find_controlled_window<x11_window>(win->space, predicate_match::window, above);
 
     if (other && detail == XCB_STACK_MODE_ABOVE) {
-        auto it = win->space.stacking_order->stack.cend();
-        auto begin = win->space.stacking_order->stack.cbegin();
+        auto it = win->space.stacking.order.stack.cend();
+        auto begin = win->space.stacking.order.stack.cbegin();
 
         while (--it != begin) {
             if (*it == other) {

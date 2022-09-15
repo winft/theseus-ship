@@ -78,7 +78,7 @@ void TransientPlacementTest::init()
     Test::setup_wayland_connection(Test::global_selection::xdg_decoration
                                    | Test::global_selection::plasma_shell);
 
-    Test::app()->base.input->cursor->set_pos(QPoint(640, 512));
+    Test::cursor()->set_pos(QPoint(640, 512));
 }
 
 void TransientPlacementTest::cleanup()

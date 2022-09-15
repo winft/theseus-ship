@@ -70,7 +70,7 @@ public:
 
     void defineCursor(Qt::CursorShape shape) override
     {
-        auto const c = this->compositor.platform.base.input->cursor->x11_cursor(shape);
+        auto const c = this->compositor.platform.base.space->input->cursor->x11_cursor(shape);
         if (c != XCB_CURSOR_NONE) {
             mouse_intercept.window.define_cursor(c);
         }

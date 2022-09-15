@@ -11,9 +11,6 @@
 #include "sources_ext.h"
 #include "types.h"
 
-#include "win/space.h"
-#include "win/stacking_order.h"
-
 #include <QObject>
 #include <memory>
 
@@ -67,8 +64,8 @@ public:
                             &drag_and_drop_version);
 
         xcb_map_window(xcb_con, window);
-        source.core.space->stacking_order->manual_overlays.push_back(window);
-        source.core.space->stacking_order->update_count();
+        source.core.space->stacking.order.manual_overlays.push_back(window);
+        source.core.space->stacking.order.update_count();
 
         xcb_flush(xcb_con);
         state.mapped = true;
@@ -309,8 +306,8 @@ private:
 
         xcb_unmap_window(source.core.x11.connection, window);
 
-        remove_all(source.core.space->stacking_order->manual_overlays, window);
-        source.core.space->stacking_order->update_count();
+        remove_all(source.core.space->stacking.order.manual_overlays, window);
+        source.core.space->stacking.order.update_count();
 
         xcb_flush(source.core.x11.connection);
         state.mapped = false;

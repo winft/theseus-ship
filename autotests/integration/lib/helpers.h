@@ -54,6 +54,7 @@ struct KWIN_EXPORT output {
 };
 
 KWIN_EXPORT WaylandTestApplication* app();
+KWIN_EXPORT input::wayland::cursor<space::input_t>* cursor();
 
 /**
  * Creates a Wayland Connection in a dedicated thread and creates various

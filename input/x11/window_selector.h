@@ -31,14 +31,14 @@
 namespace KWin::input::x11
 {
 
-template<typename Platform>
+template<typename Redirect>
 class window_selector : public base::x11::event_filter
 {
 public:
-    using window_t = typename Platform::base_t::space_t::window_t;
-    using x11_window_t = typename Platform::base_t::space_t::x11_window;
+    using window_t = typename Redirect::space_t::window_t;
+    using x11_window_t = typename Redirect::space_t::x11_window;
 
-    window_selector(Platform& platform)
+    window_selector(Redirect& redirect)
         : base::x11::event_filter(QVector<int>{XCB_BUTTON_PRESS,
                                                XCB_BUTTON_RELEASE,
                                                XCB_MOTION_NOTIFY,
@@ -48,7 +48,7 @@ public:
                                                XCB_KEY_RELEASE,
                                                XCB_FOCUS_IN,
                                                XCB_FOCUS_OUT})
-        , platform{platform}
+        , redirect{redirect}
     {
     }
 
@@ -112,9 +112,9 @@ private:
     xcb_cursor_t createCursor(QByteArray const& cursorName)
     {
         if (cursorName.isEmpty()) {
-            return platform.cursor->x11_cursor(Qt::CrossCursor);
+            return redirect.cursor->x11_cursor(Qt::CrossCursor);
         }
-        auto cursor = platform.cursor->x11_cursor(cursorName);
+        auto cursor = redirect.cursor->x11_cursor(cursorName);
         if (cursor != XCB_CURSOR_NONE) {
             return cursor;
         }
@@ -189,7 +189,7 @@ private:
             my /= 10;
         }
 
-        auto& cursor = platform.cursor;
+        auto& cursor = redirect.cursor;
         cursor->set_pos(cursor->pos() + QPoint(mx, my));
 
         if (returnPressed) {
@@ -220,7 +220,7 @@ private:
             if (m_callback) {
                 selectWindowId(window);
             } else if (m_pointSelectionFallback) {
-                m_pointSelectionFallback(platform.cursor->pos());
+                m_pointSelectionFallback(redirect.cursor->pos());
             }
             release();
             return;
@@ -239,7 +239,7 @@ private:
 
         while (true) {
             client = win::x11::find_controlled_window<x11_window_t>(
-                *platform.base.space, win::x11::predicate_match::frame_id, window);
+                redirect.space, win::x11::predicate_match::frame_id, window);
             if (client) {
                 break; // Found the client
             }
@@ -253,8 +253,7 @@ private:
         if (client) {
             m_callback(client);
         } else {
-            m_callback(
-                win::x11::find_unmanaged<x11_window_t>(*platform.base.space, window_to_select));
+            m_callback(win::x11::find_unmanaged<x11_window_t>(redirect.space, window_to_select));
         }
     }
 
@@ -302,7 +301,7 @@ private:
     bool m_active{false};
     std::function<void(window_t*)> m_callback;
     std::function<void(const QPoint&)> m_pointSelectionFallback;
-    Platform& platform;
+    Redirect& redirect;
 };
 
 }

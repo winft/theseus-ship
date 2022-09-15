@@ -11,8 +11,6 @@
 #include "input/qt_event.h"
 #include "main.h"
 
-#include <Wrapland/Server/kde_idle.h>
-
 namespace KWin::input
 {
 
@@ -54,7 +52,6 @@ public:
             break;
         }
 
-        this->redirect.platform.base.space->kde_idle->simulateUserActivity();
         return true;
     }
 };

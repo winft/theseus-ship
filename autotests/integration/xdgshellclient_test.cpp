@@ -143,7 +143,7 @@ void TestXdgShellClient::init()
                                    | Test::global_selection::appmenu);
 
     Test::set_current_output(0);
-    Test::app()->base.input->cursor->set_pos(QPoint(1280, 512));
+    Test::cursor()->set_pos(QPoint(1280, 512));
 }
 
 void TestXdgShellClient::cleanup()
@@ -180,7 +180,7 @@ void TestXdgShellClient::testMapUnmapMap()
     QCOMPARE(client->bit_depth, 32);
     QVERIFY(client->hasAlpha());
     QCOMPARE(client->control->icon.name(), QStringLiteral("wayland"));
-    QCOMPARE(Test::app()->base.space->active_client, client);
+    QCOMPARE(Test::app()->base.space->stacking.active, client);
     QVERIFY(effectsWindowShownSpy.isEmpty());
     QVERIFY(client->isMaximizable());
     QVERIFY(client->isMovable());
@@ -215,7 +215,7 @@ void TestXdgShellClient::testMapUnmapMap()
     QCOMPARE(client->ready_for_painting, true);
     QCOMPARE(client->isHiddenInternal(), true);
     QVERIFY(windowClosedSpy.isEmpty());
-    QVERIFY(!Test::app()->base.space->active_client);
+    QVERIFY(!Test::app()->base.space->stacking.active);
     QCOMPARE(effectsWindowHiddenSpy.count(), 1);
     QCOMPARE(effectsWindowHiddenSpy.first().first().value<EffectWindow*>(),
              client->render->effect.get());
@@ -231,7 +231,7 @@ void TestXdgShellClient::testMapUnmapMap()
     QCOMPARE(client->isHiddenInternal(), false);
     QCOMPARE(client->bit_depth, 24);
     QVERIFY(!client->hasAlpha());
-    QCOMPARE(Test::app()->base.space->active_client, client);
+    QCOMPARE(Test::app()->base.space->stacking.active, client);
     QCOMPARE(effectsWindowShownSpy.count(), 1);
     QCOMPARE(effectsWindowShownSpy.first().first().value<EffectWindow*>(),
              client->render->effect.get());
@@ -392,7 +392,7 @@ void TestXdgShellClient::testMinimizeActiveWindow()
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QVERIFY(c->control->active);
-    QCOMPARE(Test::app()->base.space->active_client, c);
+    QCOMPARE(Test::app()->base.space->stacking.active, c);
     QVERIFY(c->wantsInput());
     QVERIFY(win::wants_tab_focus(c));
     QVERIFY(c->isShown());
@@ -402,7 +402,7 @@ void TestXdgShellClient::testMinimizeActiveWindow()
     QVERIFY(c->wantsInput());
     QVERIFY(win::wants_tab_focus(c));
     QVERIFY(!c->control->active);
-    QVERIFY(!Test::app()->base.space->active_client);
+    QVERIFY(!Test::app()->base.space->stacking.active);
     QVERIFY(c->control->minimized);
 
     // unminimize again
@@ -412,7 +412,7 @@ void TestXdgShellClient::testMinimizeActiveWindow()
     QVERIFY(c->wantsInput());
     QVERIFY(win::wants_tab_focus(c));
     QVERIFY(c->isShown());
-    QCOMPARE(Test::app()->base.space->active_client, c);
+    QCOMPARE(Test::app()->base.space->stacking.active, c);
 }
 
 void TestXdgShellClient::testFullscreen_data()
@@ -821,7 +821,7 @@ void TestXdgShellClient::testHidden()
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QVERIFY(c->control->active);
-    QCOMPARE(Test::app()->base.space->active_client, c);
+    QCOMPARE(Test::app()->base.space->stacking.active, c);
     QVERIFY(c->wantsInput());
     QVERIFY(win::wants_tab_focus(c));
     QVERIFY(c->isShown());
@@ -838,7 +838,7 @@ void TestXdgShellClient::testHidden()
     QVERIFY(c->wantsInput());
     QVERIFY(win::wants_tab_focus(c));
 
-    // QCOMPARE(Test::app()->base.space->active_client, c);
+    // QCOMPARE(Test::app()->base.space->stacking.active, c);
 }
 
 void TestXdgShellClient::testDesktopFileName()
@@ -1103,7 +1103,7 @@ void TestXdgShellClient::testSendClientWithTransientToDesktop()
 
     auto transient = Test::render_and_wait_for_shown(transientSurface, QSize(100, 50), Qt::blue);
     QVERIFY(transient);
-    QCOMPARE(Test::app()->base.space->active_client, transient);
+    QCOMPARE(Test::app()->base.space->stacking.active, transient);
     QCOMPARE(transient->transient()->lead(), c);
     QVERIFY(contains(c->transient()->children, transient));
 
@@ -1118,7 +1118,7 @@ void TestXdgShellClient::testSendClientWithTransientToDesktop()
 
     // activate c
     win::activate_window(*Test::app()->base.space, c);
-    QCOMPARE(Test::app()->base.space->active_client, c);
+    QCOMPARE(Test::app()->base.space->stacking.active, c);
     QVERIFY(c->control->active);
 
     // and send it to the desktop it's already on
@@ -1448,7 +1448,7 @@ void TestXdgShellClient::testSendToScreen()
 
     auto window = Test::render_and_wait_for_shown(surface, QSize(200, 100), Qt::red);
     QVERIFY(window);
-    QCOMPARE(Test::app()->base.space->active_client, window);
+    QCOMPARE(Test::app()->base.space->stacking.active, window);
     QCOMPARE(window->frameGeometry().size(), QSize(200, 100));
 
     XdgPositioner positioner(QSize(50, 40), QRect(0, 0, 5, 10));
@@ -1592,10 +1592,10 @@ void TestXdgShellClient::testXdgWindowGeometryInteractiveResize()
     QVERIFY(states.testFlag(XdgShellToplevel::State::Resizing));
 
     // Go right.
-    auto cursorPos = Test::app()->base.input->cursor->pos();
+    auto cursorPos = Test::cursor()->pos();
     win::key_press_event(client, Qt::Key_Right);
-    win::update_move_resize(client, Test::app()->base.input->cursor->pos());
-    QCOMPARE(Test::app()->base.input->cursor->pos(), cursorPos + QPoint(8, 0));
+    win::update_move_resize(client, Test::cursor()->pos());
+    QCOMPARE(Test::cursor()->pos(), cursorPos + QPoint(8, 0));
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
     states = configureRequestedSpy.last().at(1).value<XdgShellToplevel::States>();
@@ -1610,10 +1610,10 @@ void TestXdgShellClient::testXdgWindowGeometryInteractiveResize()
     QCOMPARE(client->frameGeometry().size(), QSize(188, 80));
 
     // Go down.
-    cursorPos = Test::app()->base.input->cursor->pos();
+    cursorPos = Test::cursor()->pos();
     win::key_press_event(client, Qt::Key_Down);
-    win::update_move_resize(client, Test::app()->base.input->cursor->pos());
-    QCOMPARE(Test::app()->base.input->cursor->pos(), cursorPos + QPoint(0, 8));
+    win::update_move_resize(client, Test::cursor()->pos());
+    QCOMPARE(Test::cursor()->pos(), cursorPos + QPoint(0, 8));
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 4);
     states = configureRequestedSpy.last().at(1).value<XdgShellToplevel::States>();

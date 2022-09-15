@@ -22,7 +22,6 @@ namespace KWin::input
 
 cursor::cursor()
     : QObject()
-    , m_mousePollingCounter(0)
     , m_cursorTrackingCounter(0)
     , m_themeName("default")
     , m_themeSize(24)
@@ -231,32 +230,6 @@ void cursor::update_pos(QPoint const& pos)
 void cursor::update_pos(int x, int y)
 {
     update_pos(QPoint(x, y));
-}
-
-void cursor::start_mouse_polling()
-{
-    ++m_mousePollingCounter;
-    if (m_mousePollingCounter == 1) {
-        do_start_mouse_polling();
-    }
-}
-
-void cursor::stop_mouse_polling()
-{
-    assert(m_mousePollingCounter > 0);
-    --m_mousePollingCounter;
-
-    if (m_mousePollingCounter == 0) {
-        do_stop_mouse_polling();
-    }
-}
-
-void cursor::do_start_mouse_polling()
-{
-}
-
-void cursor::do_stop_mouse_polling()
-{
 }
 
 bool cursor::is_image_tracking() const

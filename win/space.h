@@ -68,6 +68,22 @@ class KStartupInfo;
 namespace KWin::win
 {
 
+template<typename Window>
+struct stacking_state {
+    win::stacking_order<Window> order;
+    win::focus_chain<Window> focus_chain;
+
+    // Last is most recent.
+    std::deque<Window*> should_get_focus;
+    std::deque<Window*> attention_chain;
+
+    Window* active{nullptr};
+    Window* last_active{nullptr};
+    Window* most_recently_raised{nullptr};
+
+    Window* delayfocus_window{nullptr};
+};
+
 class space
 {
 public:

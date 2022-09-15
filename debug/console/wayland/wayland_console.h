@@ -73,7 +73,7 @@ public:
         this->m_ui->surfacesView->setModel(new surface_tree_model(space, this));
 
         auto device_model = new input_device_model(this);
-        setup_input_device_model(*device_model, *space.input->platform.dbus);
+        setup_input_device_model(*device_model, *space.base.input->dbus);
         this->m_ui->inputDevicesView->setModel(device_model);
         this->m_ui->inputDevicesView->setItemDelegate(new wayland_console_delegate(this));
 
@@ -81,9 +81,8 @@ public:
             this->m_ui->tabWidget, &QTabWidget::currentChanged, this, [this, &space](int index) {
                 // delay creation of input event filter until the tab is selected
                 if (!m_inputFilter && index == 2) {
-                    m_inputFilter
-                        = std::make_unique<input_filter<typename Space::input_t::redirect_t>>(
-                            *space.input, this->m_ui->inputTextEdit);
+                    m_inputFilter = std::make_unique<input_filter<typename Space::input_t>>(
+                        *space.input, this->m_ui->inputTextEdit);
                     space.input->m_spies.push_back(m_inputFilter.get());
                 }
                 if (index == 5) {
@@ -155,7 +154,7 @@ private:
             xkb->state, xkb_keymap_num_mods(keymap), modActive, &xkb_keymap_mod_get_name));
     }
 
-    std::unique_ptr<input_filter<typename Space::input_t::redirect_t>> m_inputFilter;
+    std::unique_ptr<input_filter<typename Space::input_t>> m_inputFilter;
 };
 
 }

@@ -492,10 +492,10 @@ private:
         auto op = static_cast<base::options_qobject::WindowOperation>(action->data().toInt());
         auto c = m_client;
         if (!c) {
-            if (!space.active_client) {
+            if (!space.stacking.active) {
                 return;
             }
-            c = space.active_client;
+            c = space.stacking.active;
         }
 
         QString type;

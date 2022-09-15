@@ -30,19 +30,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-namespace input::dbus
-{
-template<typename Platform>
-class tablet_mode_manager;
-}
-
 class ApplicationWayland : public Application
 {
     Q_OBJECT
 public:
     using wayland_space = win::wayland::space<base::wayland::platform>;
-
-    std::unique_ptr<base::wayland::server> server;
 
     ApplicationWayland(int &argc, char **argv);
     ~ApplicationWayland() override;
@@ -52,11 +44,11 @@ public:
     base::platform& get_base() override;
     base::wayland::server* get_wayland_server() override;
 
-    void start();
+    void start(OperationMode mode,
+               std::string const& socket_name,
+               base::wayland::start_options flags,
+               QProcessEnvironment environment);
 
-    void setStartXwayland(bool start) {
-        m_startXWayland = start;
-    }
     void setApplicationsToStart(const QStringList &applications) {
         m_applicationsToStart = applications;
     }
@@ -76,14 +68,11 @@ private:
     void create_xwayland();
     void startSession();
 
-    bool m_startXWayland = false;
     QStringList m_applicationsToStart;
     QProcessEnvironment m_environment;
     QString m_sessionArgument;
 
     std::unique_ptr<base::backend::wlroots::platform> base;
-
-    std::unique_ptr<input::dbus::tablet_mode_manager<base::wayland::platform::input_t>> tablet_mode_manager;
 
     QProcess* exit_with_process{nullptr};
 };

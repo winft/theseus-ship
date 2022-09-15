@@ -296,7 +296,7 @@ private:
             return;
         }
 
-        if (auto& cursor = space.input->platform.cursor) {
+        if (auto& cursor = space.input->cursor) {
             base::x11::xcb::define_cursor(app->x11RootWindow(),
                                           cursor->x11_cursor(Qt::ArrowCursor));
         }

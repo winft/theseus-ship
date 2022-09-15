@@ -36,11 +36,11 @@ public:
     explicit popup_filter(Redirect& redirect)
         : event_filter<Redirect>(redirect)
     {
-        QObject::connect(redirect.platform.base.space->qobject.get(),
+        QObject::connect(redirect.space.qobject.get(),
                          &win::space_qobject::wayland_window_added,
                          this,
                          [this](auto win_id) {
-                             auto win = this->redirect.platform.base.space->windows_map.at(win_id);
+                             auto win = this->redirect.space.windows_map.at(win_id);
                              handle_window_added(
                                  static_cast<typename space_t::wayland_window*>(win));
                          });

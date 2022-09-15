@@ -438,10 +438,10 @@ public:
                                 this->space.atoms->wm_take_focus);
         }
 
-        this->space.should_get_focus.push_back(this);
+        this->space.stacking.should_get_focus.push_back(this);
 
         // E.g. fullscreens have different layer when active/not-active.
-        this->space.stacking_order->update_order();
+        this->space.stacking.order.update_order();
 
         auto breakShowingDesktop = !this->control->keep_above;
 
@@ -692,7 +692,7 @@ public:
             XCB_GRAB_MODE_ASYNC,
             XCB_GRAB_MODE_ASYNC,
             xcb_windows.grab,
-            this->space.input->platform.cursor->x11_cursor(this->control->move_resize.cursor),
+            this->space.input->cursor->x11_cursor(this->control->move_resize.cursor),
             xTime());
 
         unique_cptr<xcb_grab_pointer_reply_t> pointerGrab(
@@ -976,7 +976,7 @@ public:
 
         // TODO(romangg): Remove?
         win::set_current_output_by_window(this->space.base, *this);
-        this->space.stacking_order->update_order();
+        this->space.stacking.order.update_order();
 
         updateWindowRules(rules::type::position | rules::type::size);
 
@@ -1050,7 +1050,7 @@ public:
         if (old_full) {
             // May cause focus leave.
             // TODO: Must always be done when fullscreening to other output allowed.
-            this->space.focusMousePos = this->space.input->platform.cursor->pos();
+            this->space.focusMousePos = this->space.input->cursor->pos();
         }
 
         this->control->fullscreen = full;

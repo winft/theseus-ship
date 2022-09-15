@@ -140,14 +140,13 @@ private:
     win::space_qobject& space;
 };
 
-template<typename Space, typename Input>
+template<typename Space>
 class kwin_impl : public kwin
 {
 public:
-    kwin_impl(Space& space, Input* input)
+    kwin_impl(Space& space)
         : kwin(*space.qobject)
         , space{space}
-        , input{input}
     {
         QObject::connect(space.qobject.get(),
                          &win::space_qobject::showingDesktopChanged,
@@ -216,14 +215,14 @@ public:
 
     QVariantMap query_window_info_impl() override
     {
-        if (!input) {
+        if (!space.input) {
             return {};
         }
 
         m_replyQueryWindowInfo = message();
         setDelayedReply(true);
 
-        input->start_interactive_window_selection([this](auto t) {
+        space.input->start_interactive_window_selection([this](auto t) {
             if (!t) {
                 QDBusConnection::sessionBus().send(m_replyQueryWindowInfo.createErrorReply(
                     QStringLiteral("org.kde.KWin.Error.UserCancel"),
@@ -291,7 +290,6 @@ private:
 
     QDBusMessage m_replyQueryWindowInfo;
     Space& space;
-    Input* input;
 };
 
 }

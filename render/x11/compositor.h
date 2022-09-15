@@ -117,7 +117,7 @@ public:
                              &Application::x11ConnectionChanged,
                              this->qobject.get(),
                              [this] { compositor_setup_x11_support(*this); });
-            QObject::connect(space.stacking_order->qobject.get(),
+            QObject::connect(space.stacking.order.qobject.get(),
                              &win::stacking_order_qobject::changed,
                              this->qobject.get(),
                              [this] { this->addRepaintFull(); });
@@ -426,7 +426,7 @@ private:
         // TODO? This cannot be used so carelessly - needs protections against broken clients, the
         // window should not get focus before it's displayed, handle unredirected windows properly
         // and so on.
-        auto const& render_stack = win::render_stack(*this->space->stacking_order);
+        auto const& render_stack = win::render_stack(this->space->stacking.order);
         std::copy_if(render_stack.begin(),
                      render_stack.end(),
                      std::back_inserter(windows),

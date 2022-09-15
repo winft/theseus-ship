@@ -56,28 +56,12 @@ public:
     std::unique_ptr<mock_pointer> pointer;
 };
 
-class mock_input_platform
-{
-public:
-    using redirect_t = mock_redirect;
-
-    mock_input_platform()
-        : redirect{new redirect_t}
-    {
-    }
-    ~mock_input_platform()
-    {
-        delete redirect;
-    }
-
-    redirect_t* redirect;
-};
-
 }
 
 void OnScreenNotificationTest::show()
 {
-    KWin::win::osd_notification<KWin::mock_input_platform> notification(nullptr);
+    KWin::mock_redirect redirect;
+    KWin::win::osd_notification<KWin::mock_redirect> notification(redirect);
     auto config = KSharedConfig::openConfig(QString(), KSharedConfig::SimpleConfig);
     KConfigGroup group = config->group("OnScreenNotification");
     group.writeEntry(QStringLiteral("QmlPath"), QString("/does/not/exist.qml"));
@@ -118,7 +102,8 @@ void OnScreenNotificationTest::show()
 
 void OnScreenNotificationTest::timeout()
 {
-    KWin::win::osd_notification<KWin::mock_input_platform> notification(nullptr);
+    KWin::mock_redirect redirect;
+    KWin::win::osd_notification<KWin::mock_redirect> notification(redirect);
     QSignalSpy timeoutChangedSpy(notification.qobject.get(),
                                  &KWin::win::osd_notification_qobject::timeoutChanged);
     QCOMPARE(notification.qobject->timeout(), 0);
@@ -134,7 +119,8 @@ void OnScreenNotificationTest::timeout()
 
 void OnScreenNotificationTest::iconName()
 {
-    KWin::win::osd_notification<KWin::mock_input_platform> notification(nullptr);
+    KWin::mock_redirect redirect;
+    KWin::win::osd_notification<KWin::mock_redirect> notification(redirect);
     QSignalSpy iconNameChangedSpy(notification.qobject.get(),
                                   &KWin::win::osd_notification_qobject::iconNameChanged);
     QVERIFY(iconNameChangedSpy.isValid());
@@ -151,7 +137,8 @@ void OnScreenNotificationTest::iconName()
 
 void OnScreenNotificationTest::message()
 {
-    KWin::win::osd_notification<KWin::mock_input_platform> notification(nullptr);
+    KWin::mock_redirect redirect;
+    KWin::win::osd_notification<KWin::mock_redirect> notification(redirect);
     QSignalSpy messageChangedSpy(notification.qobject.get(),
                                  &KWin::win::osd_notification_qobject::messageChanged);
     QVERIFY(messageChangedSpy.isValid());

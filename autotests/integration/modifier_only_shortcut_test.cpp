@@ -106,7 +106,7 @@ void ModifierOnlyShortcutTest::initTestCase()
 void ModifierOnlyShortcutTest::init()
 {
     Test::setup_wayland_connection();
-    Test::app()->base.input->cursor->set_pos(QPoint(640, 512));
+    Test::cursor()->set_pos(QPoint(640, 512));
 }
 
 void ModifierOnlyShortcutTest::cleanup()
@@ -245,32 +245,32 @@ void ModifierOnlyShortcutTest::testTrigger()
 
     // mouse button pressed before clicking modifier
     Test::pointer_button_pressed(BTN_LEFT, timestamp++);
-    QTRY_COMPARE(Test::app()->base.input->redirect->qtButtonStates(), Qt::LeftButton);
+    QTRY_COMPARE(Test::app()->base.space->input->qtButtonStates(), Qt::LeftButton);
 
     Test::keyboard_key_pressed(modifier, timestamp++);
     Test::keyboard_key_released(modifier, timestamp++);
     Test::pointer_button_released(BTN_LEFT, timestamp++);
-    QTRY_COMPARE(Test::app()->base.input->redirect->qtButtonStates(), Qt::NoButton);
+    QTRY_COMPARE(Test::app()->base.space->input->qtButtonStates(), Qt::NoButton);
     QCOMPARE(triggeredSpy.count(), 2);
 
     // mouse button press before mod press, release before mod release
     Test::pointer_button_pressed(BTN_LEFT, timestamp++);
-    QTRY_COMPARE(Test::app()->base.input->redirect->qtButtonStates(), Qt::LeftButton);
+    QTRY_COMPARE(Test::app()->base.space->input->qtButtonStates(), Qt::LeftButton);
 
     Test::keyboard_key_pressed(modifier, timestamp++);
     Test::pointer_button_released(BTN_LEFT, timestamp++);
     Test::keyboard_key_released(modifier, timestamp++);
-    QTRY_COMPARE(Test::app()->base.input->redirect->qtButtonStates(), Qt::NoButton);
+    QTRY_COMPARE(Test::app()->base.space->input->qtButtonStates(), Qt::NoButton);
     QCOMPARE(triggeredSpy.count(), 2);
 
     // mouse button click while mod is pressed
     Test::keyboard_key_pressed(modifier, timestamp++);
     Test::pointer_button_pressed(BTN_LEFT, timestamp++);
-    QTRY_COMPARE(Test::app()->base.input->redirect->qtButtonStates(), Qt::LeftButton);
+    QTRY_COMPARE(Test::app()->base.space->input->qtButtonStates(), Qt::LeftButton);
 
     Test::pointer_button_released(BTN_LEFT, timestamp++);
     Test::keyboard_key_released(modifier, timestamp++);
-    QTRY_COMPARE(Test::app()->base.input->redirect->qtButtonStates(), Qt::NoButton);
+    QTRY_COMPARE(Test::app()->base.space->input->qtButtonStates(), Qt::NoButton);
     QCOMPARE(triggeredSpy.count(), 2);
 
     // scroll while mod is pressed

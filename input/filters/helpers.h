@@ -43,7 +43,7 @@ bool get_modifier_command(Redirect& redirect,
     if (redirect.pointer->isConstrained()) {
         return false;
     }
-    if (redirect.platform.base.space->global_shortcuts_disabled) {
+    if (redirect.space.global_shortcuts_disabled) {
         return false;
     }
     auto qt_key = button_to_qt_mouse_button(key);
@@ -113,7 +113,7 @@ bool get_wheel_modifier_command(Redirect& redirect,
     if (redirect.pointer->isConstrained()) {
         return false;
     }
-    if (redirect.platform.base.space->global_shortcuts_disabled) {
+    if (redirect.space.global_shortcuts_disabled) {
         return false;
     }
 

@@ -50,7 +50,7 @@ public:
 
     std::weak_ptr<tabbox_client> active_client() const override
     {
-        if (auto win = m_tabbox->space.active_client) {
+        if (auto win = m_tabbox->space.stacking.active) {
             return win->control->tabbox();
         } else {
             return std::weak_ptr<tabbox_client>();
@@ -87,7 +87,8 @@ public:
     std::weak_ptr<tabbox_client> next_client_focus_chain(tabbox_client* client) const override
     {
         if (auto c = get_client_impl(client)) {
-            auto next = focus_chain_next_latest_use(m_tabbox->space.focus_chain, c->client());
+            auto next
+                = focus_chain_next_latest_use(m_tabbox->space.stacking.focus_chain, c->client());
             if (next) {
                 return next->control->tabbox();
             }
@@ -98,7 +99,7 @@ public:
     std::weak_ptr<tabbox_client> first_client_focus_chain() const override
     {
         if (auto c = focus_chain_first_latest_use<typename Tabbox::window_t>(
-                m_tabbox->space.focus_chain)) {
+                m_tabbox->space.stacking.focus_chain)) {
             return c->control->tabbox();
         } else {
             return std::weak_ptr<tabbox_client>();
@@ -108,7 +109,7 @@ public:
     bool is_in_focus_chain(tabbox_client* client) const override
     {
         if (auto c = get_client_impl(client)) {
-            return contains(m_tabbox->space.focus_chain.chains.latest_use, c->client());
+            return contains(m_tabbox->space.stacking.focus_chain.chains.latest_use, c->client());
         }
         return false;
     }
@@ -125,7 +126,7 @@ public:
 
     tabbox_client_list stacking_order() const override
     {
-        auto const stacking = m_tabbox->space.stacking_order->stack;
+        auto const stacking = m_tabbox->space.stacking.order.stack;
         tabbox_client_list ret;
         for (auto const& toplevel : stacking) {
             if (toplevel->control) {
@@ -189,7 +190,7 @@ public:
 
     std::weak_ptr<tabbox_client> desktop_client() const override
     {
-        for (auto const& window : m_tabbox->space.stacking_order->stack) {
+        for (auto const& window : m_tabbox->space.stacking.order.stack) {
             if (window->control && win::is_desktop(window) && window->isOnCurrentDesktop()
                 && window->central_output == win::get_current_output(m_tabbox->space)) {
                 return window->control->tabbox();

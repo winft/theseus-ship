@@ -80,7 +80,7 @@ template<typename Win>
 void update_hidden_preview(Win* win)
 {
     if (hidden_preview(win)) {
-        win->space.stacking_order->force_restacking();
+        win->space.stacking.order.force_restacking();
         if (base::x11::xcb::extensions::self()->is_shape_input_available()) {
             xcb_shape_rectangles(connection(),
                                  XCB_SHAPE_SO_SET,
@@ -93,7 +93,7 @@ void update_hidden_preview(Win* win)
                                  nullptr);
         }
     } else {
-        win->space.stacking_order->force_restacking();
+        win->space.stacking.order.force_restacking();
         win->update_input_shape();
     }
 }

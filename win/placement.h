@@ -283,7 +283,7 @@ void place_smart(Win* window, const QRect& area, placement /*next*/)
             cxr = x + cw;
             cyt = y;
             cyb = y + ch;
-            for (auto const& client : window->space.stacking_order->stack) {
+            for (auto const& client : window->space.stacking.order.stack) {
                 if (is_irrelevant(client, window, desktop)) {
                     continue;
                 }
@@ -336,7 +336,7 @@ void place_smart(Win* window, const QRect& area, placement /*next*/)
                 possible -= cw;
 
             // compare to the position of each client on the same desk
-            for (auto const& client : window->space.stacking_order->stack) {
+            for (auto const& client : window->space.stacking.order.stack) {
                 if (is_irrelevant(client, window, desktop)) {
                     continue;
                 }
@@ -370,7 +370,7 @@ void place_smart(Win* window, const QRect& area, placement /*next*/)
                 possible -= ch;
 
             // test the position of each window on the desk
-            for (auto const& client : window->space.stacking_order->stack) {
+            for (auto const& client : window->space.stacking.order.stack) {
                 if (is_irrelevant(client, window, desktop)) {
                     continue;
                 }
@@ -464,7 +464,7 @@ void place_under_mouse(Win* window, const QRect& area, placement /*next*/)
     Q_ASSERT(area.isValid());
 
     auto geom = window->geometry_update.frame;
-    geom.moveCenter(window->space.input->platform.cursor->pos());
+    geom.moveCenter(window->space.input->cursor->pos());
     move(window, geom.topLeft());
     keep_in_area(window, area, false); // make sure it's kept inside workarea
 }

@@ -155,7 +155,7 @@ void apply_pending_geometry(Win* win, int64_t update_request_number)
     update_window_buffer(win);
 
     if (resizing) {
-        update_move_resize(win, win->space.input->platform.cursor->pos());
+        update_move_resize(win, win->space.input->cursor->pos());
     }
 }
 

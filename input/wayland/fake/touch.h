@@ -8,17 +8,16 @@
 #include "input/touch.h"
 
 #include <Wrapland/Server/fake_input.h>
-#include <Wrapland/Server/kde_idle.h>
 
 namespace KWin::input::wayland::fake
 {
 
-template<typename Platform>
+template<typename Redirect>
 class touch : public input::touch
 {
 public:
-    touch(Wrapland::Server::FakeInputDevice* device, Platform* platform)
-        : platform{platform}
+    touch(Wrapland::Server::FakeInputDevice* device, Redirect& redirect)
+        : redirect{redirect}
         , device{device}
     {
         QObject::connect(
@@ -26,45 +25,40 @@ public:
             &Wrapland::Server::FakeInputDevice::touchDownRequested,
             this->qobject.get(),
             [this](auto id, auto const& pos) {
-                auto redirect = this->platform->redirect;
                 // TODO: Fix time
-                redirect->touch->process_down({static_cast<int32_t>(id), pos, {nullptr, 0}});
-                redirect->platform.base.space->kde_idle->simulateUserActivity();
+                this->redirect.touch->process_down({static_cast<int32_t>(id), pos, {nullptr, 0}});
             });
         QObject::connect(
             device,
             &Wrapland::Server::FakeInputDevice::touchMotionRequested,
             this->qobject.get(),
             [this](auto id, auto const& pos) {
-                auto redirect = this->platform->redirect;
                 // TODO: Fix time
-                redirect->touch->process_motion({static_cast<int32_t>(id), pos, {nullptr, 0}});
-                redirect->platform.base.space->kde_idle->simulateUserActivity();
+                this->redirect.touch->process_motion({static_cast<int32_t>(id), pos, {nullptr, 0}});
             });
-        QObject::connect(device,
-                         &Wrapland::Server::FakeInputDevice::touchUpRequested,
-                         this->qobject.get(),
-                         [this](auto id) {
-                             auto redirect = this->platform->redirect;
-                             // TODO: Fix time
-                             redirect->touch->process_up({static_cast<int32_t>(id), {nullptr, 0}});
-                             redirect->platform.base.space->kde_idle->simulateUserActivity();
-                         });
+        QObject::connect(
+            device,
+            &Wrapland::Server::FakeInputDevice::touchUpRequested,
+            this->qobject.get(),
+            [this](auto id) {
+                // TODO: Fix time
+                this->redirect.touch->process_up({static_cast<int32_t>(id), {nullptr, 0}});
+            });
         QObject::connect(device,
                          &Wrapland::Server::FakeInputDevice::touchCancelRequested,
                          this->qobject.get(),
-                         [this]() { this->platform->redirect->touch->cancel(); });
+                         [this]() { this->redirect.touch->cancel(); });
         QObject::connect(device,
                          &Wrapland::Server::FakeInputDevice::touchFrameRequested,
                          this->qobject.get(),
-                         [this]() { this->platform->redirect->touch->frame(); });
+                         [this]() { this->redirect.touch->frame(); });
     }
 
     touch(touch const&) = delete;
     touch& operator=(touch const&) = delete;
 
 private:
-    Platform* platform;
+    Redirect& redirect;
     Wrapland::Server::FakeInputDevice* device;
 };
 

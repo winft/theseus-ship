@@ -8,7 +8,6 @@
 #include "non_desktop_output.h"
 #include "output.h"
 
-#include "base/singleton_interface.h"
 #include "render/backend/wlroots/output.h"
 #include "render/backend/wlroots/platform.h"
 #include "wayland_logging.h"
@@ -86,15 +85,14 @@ void handle_new_output(struct wl_listener* listener, void* data)
     }
 }
 
-platform::platform(Wrapland::Server::Display* display)
-    : platform(display, wlr_backend_autocreate(display->native()))
-{
-}
-
-platform::platform(Wrapland::Server::Display* display, wlr_backend* backend)
-    : backend{backend}
+platform::platform(std::string const& socket_name,
+                   base::wayland::start_options flags,
+                   std::function<wlr_backend*(wl_display*)> backend_factory)
+    : wayland::platform(socket_name, flags)
+    , backend{backend_factory(server->display->native())}
     , destroyed{std::make_unique<event_receiver<platform>>()}
     , new_output{std::make_unique<event_receiver<platform>>()}
+
 {
     singleton_interface::platform = this;
     align_horizontal = qgetenv("KWIN_WLR_OUTPUT_ALIGN_HORIZONTAL") == QByteArrayLiteral("1");
@@ -111,7 +109,7 @@ platform::platform(Wrapland::Server::Display* display, wlr_backend* backend)
     wl_signal_add(&backend->events.new_output, &new_output->event);
 
     if (auto drm = get_drm_backend(backend)) {
-        setup_drm_leasing(display, drm);
+        setup_drm_leasing(server->display.get(), drm);
     }
 }
 
@@ -123,12 +121,20 @@ platform::platform(platform&& other) noexcept
 platform& platform::operator=(platform&& other) noexcept
 {
     backend = other.backend;
+    other.backend = nullptr;
+
     destroyed = std::move(other.destroyed);
     destroyed->receiver = this;
+
     new_output = std::move(other.new_output);
     new_output->receiver = this;
-    other.backend = nullptr;
+
+    leases = std::move(other.leases);
+    non_desktop_outputs = std::move(other.non_desktop_outputs);
+
     singleton_interface::platform = this;
+    wayland::platform::operator=(std::move(other));
+
     return *this;
 }
 
@@ -142,9 +148,11 @@ platform::~platform()
         output->platform = nullptr;
         delete output;
     }
+
     if (backend) {
         wlr_backend_destroy(backend);
     }
+
     if (singleton_interface::platform == this) {
         singleton_interface::platform = nullptr;
     }

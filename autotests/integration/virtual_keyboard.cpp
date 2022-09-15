@@ -163,7 +163,7 @@ void virtual_keyboard_test::test_keymap()
     QVERIFY(client_keymap_spy.isValid());
 
     auto window = create_window(focus_client);
-    QCOMPARE(Test::app()->base.space->active_client, window.window);
+    QCOMPARE(Test::app()->base.space->stacking.active, window.window);
 
     // After focus we don't yet get the current keymap as none was set yet.
     QVERIFY(!client_keymap_spy.wait(500));
@@ -238,7 +238,7 @@ void virtual_keyboard_test::test_keys()
     QVERIFY(key_spy.isValid());
 
     auto window = create_window(focus_client);
-    QCOMPARE(Test::app()->base.space->active_client, window.window);
+    QCOMPARE(Test::app()->base.space->stacking.active, window.window);
 
     // Now we press on the virtual keyboard and we should get the new new keymap.
     uint32_t timestamp{0};

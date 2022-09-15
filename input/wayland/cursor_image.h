@@ -42,15 +42,15 @@ Q_SIGNALS:
     void changed();
 };
 
-template<typename Cursor, typename Platform>
+template<typename Cursor, typename Redirect>
 class cursor_image
 {
 public:
-    using window_t = typename Platform::base_t::space_t::window_t;
+    using window_t = typename Redirect::platform_t::base_t::space_t::window_t;
 
-    cursor_image(Platform& platform)
+    cursor_image(Redirect& redirect)
         : qobject{std::make_unique<cursor_image_qobject>()}
-        , platform{platform}
+        , redirect{redirect}
     {
         QObject::connect(waylandServer()->seat(),
                          &Wrapland::Server::Seat::focusedPointerChanged,
@@ -210,7 +210,7 @@ public:
     void updateDecoration()
     {
         QObject::disconnect(m_decorationConnection);
-        auto deco = platform.redirect->pointer->focus.deco;
+        auto deco = redirect.pointer->focus.deco;
         auto c = deco ? deco->client() : nullptr;
         if (c) {
             m_decorationConnection = QObject::connect(c->qobject.get(),
@@ -228,11 +228,11 @@ public:
 private:
     void setup_theme()
     {
-        QObject::connect(platform.base.space->qobject.get(),
+        QObject::connect(redirect.space.qobject.get(),
                          &win::space_qobject::wayland_window_added,
                          qobject.get(),
                          [this](auto win_id) {
-                             auto win = platform.base.space->windows_map.at(win_id);
+                             auto win = redirect.space.windows_map.at(win_id);
                              setup_move_resize(win);
                          });
 
@@ -252,14 +252,14 @@ private:
                              });
         }
 
-        auto const clients = platform.base.space->windows;
+        auto const clients = redirect.space.windows;
         std::for_each(clients.begin(), clients.end(), [this](auto win) { setup_move_resize(win); });
 
-        QObject::connect(platform.base.space->qobject.get(),
+        QObject::connect(redirect.space.qobject.get(),
                          &win::space_qobject::clientAdded,
                          qobject.get(),
                          [this](auto win_id) {
-                             auto win = platform.base.space->windows_map.at(win_id);
+                             auto win = redirect.space.windows_map.at(win_id);
                              setup_move_resize(win);
                          });
 
@@ -292,24 +292,24 @@ private:
             setSource(CursorSource::LockScreen);
             return;
         }
-        if (platform.redirect->isSelectingWindow()) {
+        if (redirect.isSelectingWindow()) {
             setSource(CursorSource::WindowSelector);
             return;
         }
-        if (auto& effects = platform.base.render->compositor->effects;
+        if (auto& effects = redirect.platform.base.render->compositor->effects;
             effects && effects->isMouseInterception()) {
             setSource(CursorSource::EffectsOverride);
             return;
         }
-        if (platform.base.space->move_resize_window) {
+        if (redirect.space.move_resize_window) {
             setSource(CursorSource::MoveResize);
             return;
         }
-        if (platform.redirect->pointer->focus.deco) {
+        if (redirect.pointer->focus.deco) {
             setSource(CursorSource::Decoration);
             return;
         }
-        if (platform.redirect->pointer->focus.window
+        if (redirect.pointer->focus.window
             && !waylandServer()->seat()->pointers().get_focus().devices.empty()) {
             setSource(CursorSource::PointerSurface);
             return;
@@ -319,7 +319,7 @@ private:
 
     void update()
     {
-        if (platform.redirect->pointer->cursor_update_blocking) {
+        if (redirect.pointer->cursor_update_blocking) {
             return;
         }
         using namespace Wrapland::Server;
@@ -396,7 +396,7 @@ private:
         m_decorationCursor.image = QImage();
         m_decorationCursor.hotSpot = QPoint();
 
-        auto deco = platform.redirect->pointer->focus.deco;
+        auto deco = redirect.pointer->focus.deco;
         if (auto c = deco ? deco->client() : nullptr) {
             loadThemeCursor(c->control->move_resize.cursor, &m_decorationCursor);
             if (m_currentSource == CursorSource::Decoration) {
@@ -410,7 +410,7 @@ private:
     {
         m_moveResizeCursor.image = QImage();
         m_moveResizeCursor.hotSpot = QPoint();
-        if (auto window = platform.base.space->move_resize_window) {
+        if (auto window = redirect.space.move_resize_window) {
             loadThemeCursor(window->control->move_resize.cursor, &m_moveResizeCursor);
             if (m_currentSource == CursorSource::MoveResize) {
                 Q_EMIT qobject->changed();
@@ -521,7 +521,7 @@ private:
         // check whether we can create it
         if (waylandServer()->internal_connection.shm) {
             m_cursorTheme = std::make_unique<cursor_theme<Cursor>>(
-                static_cast<Cursor&>(*platform.cursor), waylandServer()->internal_connection.shm);
+                static_cast<Cursor&>(*redirect.cursor), waylandServer()->internal_connection.shm);
             QObject::connect(waylandServer(),
                              &base::wayland::server::terminating_internal_client_connection,
                              qobject.get(),
@@ -574,7 +574,7 @@ private:
             if (!buffer) {
                 return;
             }
-            auto scale = platform.base.topology.max_scale;
+            auto scale = redirect.platform.base.topology.max_scale;
             int hotSpotX = qRound(cursor->hotspot_x / scale);
             int hotSpotY = qRound(cursor->hotspot_y / scale);
             QImage img = buffer->shmImage()->createQImage().copy();
@@ -629,7 +629,7 @@ private:
         QMetaObject::Connection connection;
     } m_drag;
 
-    Platform& platform;
+    Redirect& redirect;
 };
 
 }

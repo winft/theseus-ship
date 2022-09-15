@@ -28,7 +28,7 @@ void popagate_desktop_change(Space& space, uint desktop)
 {
     using window_t = typename Space::x11_window;
 
-    for (auto const& toplevel : space.stacking_order->stack) {
+    for (auto const& toplevel : space.stacking.order.stack) {
         auto client = dynamic_cast<window_t*>(toplevel);
         if (!client || !client->control) {
             continue;
@@ -44,7 +44,7 @@ void popagate_desktop_change(Space& space, uint desktop)
         space.root_info->setCurrentDesktop(space.virtual_desktop_manager->current());
     }
 
-    auto const& list = space.stacking_order->stack;
+    auto const& list = space.stacking.order.stack;
     for (int i = list.size() - 1; i >= 0; --i) {
         auto client = dynamic_cast<window_t*>(list.at(i));
         if (!client || !client->control) {

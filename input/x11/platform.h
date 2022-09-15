@@ -5,20 +5,11 @@
 */
 #pragma once
 
-#include "cursor.h"
-#include "redirect.h"
-#include "window_selector.h"
-
 #include "config-kwin.h"
 #include "input/platform.h"
 #include "main.h"
 
-#if HAVE_X11_XINPUT
-#include "input/x11/xinput_integration.h"
-#endif
-
 #include <KGlobalAccel>
-#include <QX11Info>
 #include <memory>
 
 namespace KWin::input::x11
@@ -29,29 +20,12 @@ class platform : public input::platform<Base>
 {
 public:
     using type = platform<Base>;
-    using redirect_t = x11::redirect<type>;
-    using abstract_type = input::platform<Base>;
-    using space_t = typename abstract_type::base_t::space_t;
+    using space_t = typename Base::space_t;
 
     platform(Base& base)
         : input::platform<Base>(base)
         , xkb{xkb::manager<type>(this)}
     {
-#if HAVE_X11_XINPUT
-        if (!qEnvironmentVariableIsSet("KWIN_NO_XI2")) {
-            xinput.reset(new xinput_integration<type>(QX11Info::display(), this));
-            xinput->init();
-            if (!xinput->hasXinput()) {
-                xinput.reset();
-            } else {
-                QObject::connect(kwinApp(),
-                                 &Application::startup_finished,
-                                 xinput.get(),
-                                 &xinput_integration<type>::startListening);
-            }
-        }
-#endif
-        create_cursor();
     }
 
     platform(platform const&) = delete;
@@ -111,55 +85,8 @@ public:
         QObject::connect(action, &QAction::triggered, receiver, slot);
     }
 
-    void
-    start_interactive_window_selection(std::function<void(typename space_t::window_t*)> callback,
-                                       QByteArray const& cursorName = QByteArray())
-    {
-        if (!window_sel) {
-            window_sel.reset(new window_selector(*this));
-        }
-        window_sel->start(callback, cursorName);
-    }
-
-    void start_interactive_position_selection(std::function<void(QPoint const&)> callback)
-    {
-        if (!window_sel) {
-            window_sel.reset(new window_selector(*this));
-        }
-        window_sel->start(callback);
-    }
-
-    redirect_t* redirect{nullptr};
-
-#if HAVE_X11_XINPUT
-    std::unique_ptr<xinput_integration<type>> xinput;
-#endif
-    std::unique_ptr<x11::cursor> cursor;
-    std::unique_ptr<window_selector<type>> window_sel;
-
     input::xkb::manager<type> xkb;
     std::unique_ptr<dbus::device_manager<type>> dbus;
-
-private:
-#if HAVE_X11_XINPUT
-    void create_cursor()
-    {
-        auto const is_xinput_avail = xinput != nullptr;
-        this->cursor = std::make_unique<x11::cursor>(is_xinput_avail);
-
-        if (is_xinput_avail) {
-            xinput->setCursor(static_cast<x11::cursor*>(this->cursor.get()));
-
-            xkb.setConfig(kwinApp()->kxkbConfig());
-            xkb.reconfigure();
-        }
-    }
-#else
-    void create_cursor()
-    {
-        cursor = std::make_unique<x11::cursor>(false);
-    }
-#endif
 };
 
 }

@@ -992,7 +992,7 @@ public:
         if (!this->control->active) {
             return;
         }
-        blocker block(this->space.stacking_order);
+        blocker block(this->space.stacking.order);
         focus_to_null(this->space);
     }
 
@@ -1225,10 +1225,10 @@ public:
                     must_place = false;
                     auto const area = space_window_area(this->space,
                                                         PlacementArea,
-                                                        this->space.input->platform.cursor->pos(),
+                                                        this->space.input->cursor->pos(),
                                                         this->desktop());
                     auto size = this->size();
-                    auto pos = this->space.input->platform.cursor->pos()
+                    auto pos = this->space.input->cursor->pos()
                         - QPoint(size.width(), size.height()) / 2;
                     win::move(this, pos);
                     win::keep_in_area(this, area, false);
@@ -1292,7 +1292,7 @@ public:
         if (old_full) {
             // May cause focus leave.
             // TODO: Must always be done when fullscreening to other output allowed.
-            this->space.focusMousePos = this->space.input->platform.cursor->pos();
+            this->space.focusMousePos = this->space.input->cursor->pos();
         }
 
         this->control->fullscreen = full;

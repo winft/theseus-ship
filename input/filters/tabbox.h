@@ -31,7 +31,7 @@ public:
 
     bool button(button_event const& event) override
     {
-        auto& tabbox = this->redirect.platform.base.space->tabbox;
+        auto& tabbox = this->redirect.space.tabbox;
         if (!tabbox || !tabbox->is_grabbed()) {
             return false;
         }
@@ -42,7 +42,7 @@ public:
 
     bool motion(motion_event const& event) override
     {
-        auto& tabbox = this->redirect.platform.base.space->tabbox;
+        auto& tabbox = this->redirect.space.tabbox;
 
         if (!tabbox || !tabbox->is_grabbed()) {
             return false;
@@ -54,7 +54,7 @@ public:
 
     bool key(key_event const& event) override
     {
-        auto& tabbox = this->redirect.platform.base.space->tabbox;
+        auto& tabbox = this->redirect.space.tabbox;
 
         if (!tabbox || !tabbox->is_grabbed()) {
             return false;
@@ -82,7 +82,7 @@ public:
 
     bool key_repeat(key_event const& event) override
     {
-        auto& tabbox = this->redirect.platform.base.space->tabbox;
+        auto& tabbox = this->redirect.space.tabbox;
 
         if (!tabbox || !tabbox->is_grabbed()) {
             return false;
@@ -95,7 +95,7 @@ public:
 
     bool axis(axis_event const& event) override
     {
-        auto& tabbox = this->redirect.platform.base.space->tabbox;
+        auto& tabbox = this->redirect.space.tabbox;
 
         if (!tabbox || !tabbox->is_grabbed()) {
             return false;

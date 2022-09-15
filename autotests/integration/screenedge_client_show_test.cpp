@@ -69,7 +69,7 @@ void ScreenEdgeClientShowTest::initTestCase()
 
 void ScreenEdgeClientShowTest::init()
 {
-    Test::app()->base.input->cursor->set_pos(QPoint(640, 512));
+    Test::cursor()->set_pos(QPoint(640, 512));
 }
 
 void xcb_connection_deleter(xcb_connection_t* pointer)
@@ -177,7 +177,7 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowHideX11()
     QSignalSpy effectsWindowShownSpy(effects, &EffectsHandler::windowShown);
     QVERIFY(effectsWindowShownSpy.isValid());
     QFETCH(QPoint, triggerPos);
-    Test::app()->base.input->cursor->set_pos(triggerPos);
+    Test::cursor()->set_pos(triggerPos);
     QVERIFY(!client->isHiddenInternal());
     QCOMPARE(effectsWindowShownSpy.count(), 1);
 
@@ -185,7 +185,7 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowHideX11()
     QTest::qWait(1);
 
     // hide window again
-    Test::app()->base.input->cursor->set_pos(QPoint(640, 512));
+    Test::cursor()->set_pos(QPoint(640, 512));
     xcb_change_property(
         c.get(), XCB_PROP_MODE_REPLACE, w, atom, XCB_ATOM_CARDINAL, 32, 1, &location);
     xcb_flush(c.get());
@@ -195,7 +195,7 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowHideX11()
     // resizewhile hidden
     client->setFrameGeometry(resizedWindowGeometry);
     // triggerPos shouldn't be valid anymore
-    Test::app()->base.input->cursor->set_pos(triggerPos);
+    Test::cursor()->set_pos(triggerPos);
     QVERIFY(client->isHiddenInternal());
 
     // destroy window again

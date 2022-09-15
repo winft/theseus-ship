@@ -124,7 +124,7 @@ public:
             // Currently there is no target or target is an Xwayland window.
             // Handled here and by X directly.
             if (target && target->surface && target->control) {
-                if (source.core.space->active_client != target) {
+                if (source.core.space->stacking.active != target) {
                     win::activate_window(*source.core.space, target);
                 }
             }

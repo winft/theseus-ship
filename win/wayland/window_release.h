@@ -24,7 +24,7 @@ namespace KWin::win::wayland
 template<typename Win>
 void destroy_window(Win* win)
 {
-    blocker block(win->space.stacking_order);
+    blocker block(win->space.stacking.order);
     win->closing = true;
 
     if (win->transient()->annexed && !lead_of_annexed_transient(win)) {
@@ -32,8 +32,8 @@ void destroy_window(Win* win)
         Q_EMIT win->qobject->closed();
         win->space.handle_window_removed(win);
         remove_all(win->space.windows, win);
-        remove_all(win->space.stacking_order->pre_stack, win);
-        remove_all(win->space.stacking_order->stack, win);
+        remove_all(win->space.stacking.order.pre_stack, win);
+        remove_all(win->space.stacking.order.stack, win);
         delete win;
         return;
     }

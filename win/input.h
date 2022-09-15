@@ -47,7 +47,7 @@ void key_press_event(Win* win, uint key_code)
     key_code = key_code & ~Qt::KeyboardModifierMask;
 
     auto delta = is_control ? 1 : is_alt ? 32 : 8;
-    auto pos = win->space.input->platform.cursor->pos();
+    auto pos = win->space.input->cursor->pos();
 
     switch (key_code) {
     case Qt::Key_Left:
@@ -77,7 +77,7 @@ void key_press_event(Win* win, uint key_code)
     default:
         return;
     }
-    win->space.input->platform.cursor->set_pos(pos);
+    win->space.input->cursor->set_pos(pos);
 }
 
 template<typename Win>
@@ -120,8 +120,8 @@ bool perform_mouse_command(Win& win,
         bool mustReplay = !win.control->rules.checkAcceptFocus(win.acceptsFocus());
 
         if (mustReplay) {
-            auto it = space.stacking_order->stack.cend();
-            auto begin = space.stacking_order->stack.cbegin();
+            auto it = space.stacking.order.stack.cend();
+            auto begin = space.stacking.order.stack.cbegin();
             while (mustReplay && --it != begin && *it != &win) {
                 auto window = *it;
                 if (!window->control || (window->control->keep_above && !win.control->keep_above)
@@ -172,7 +172,7 @@ bool perform_mouse_command(Win& win,
         set_minimized(&win, true);
         break;
     case base::options_qobject::MouseAbove: {
-        blocker block(space.stacking_order);
+        blocker block(space.stacking.order);
         if (win.control->keep_below) {
             set_keep_below(&win, false);
         } else {
@@ -181,7 +181,7 @@ bool perform_mouse_command(Win& win,
         break;
     }
     case base::options_qobject::MouseBelow: {
-        blocker block(space.stacking_order);
+        blocker block(space.stacking.order);
         if (win.control->keep_above) {
             set_keep_above(&win, false);
         } else {

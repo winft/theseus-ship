@@ -393,7 +393,7 @@ public:
 
     void checkBlocking()
     {
-        auto window = edger->space.active_client;
+        auto window = edger->space.stacking.active;
         auto const newValue = !edger->remainActiveOnFullscreen() && window
             && window->control->fullscreen && window->frameGeometry().contains(geometry.center())
             && !(edger->space.base.render->compositor->effects
@@ -761,7 +761,7 @@ private:
 
         if (vds->current() != oldDesktop) {
             push_back_is_blocked = true;
-            edger->space.input->platform.cursor->set_pos(pos);
+            edger->space.input->cursor->set_pos(pos);
 
             QSharedPointer<QMetaObject::Connection> me(new QMetaObject::Connection);
             *me = QObject::connect(
@@ -800,7 +800,7 @@ private:
             y -= distance.height();
         }
 
-        edger->space.input->platform.cursor->set_pos(x, y);
+        edger->space.input->cursor->set_pos(x, y);
     }
 
     ElectricBorderAction pointer_action{ElectricActionNone};

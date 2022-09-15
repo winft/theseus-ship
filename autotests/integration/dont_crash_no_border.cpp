@@ -74,7 +74,7 @@ void DontCrashNoBorder::initTestCase()
 void DontCrashNoBorder::init()
 {
     Test::setup_wayland_connection(Test::global_selection::xdg_decoration);
-    Test::app()->base.input->cursor->set_pos(QPoint(640, 512));
+    Test::cursor()->set_pos(QPoint(640, 512));
 }
 
 void DontCrashNoBorder::cleanup()
@@ -107,7 +107,7 @@ void DontCrashNoBorder::testCreateWindow()
     // let's render
     auto c = Test::render_and_wait_for_shown(surface, QSize(500, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->base.space->active_client, c);
+    QCOMPARE(Test::app()->base.space->stacking.active, c);
     QVERIFY(!win::decoration(c));
 }
 

@@ -113,7 +113,7 @@ std::string create_keymap()
 
 void keyboard_keymap_test::init()
 {
-    Test::app()->base.input->cursor->set_pos(QPoint(512, 512));
+    Test::cursor()->set_pos(QPoint(512, 512));
 }
 
 void keyboard_keymap_test::cleanup()
@@ -146,7 +146,7 @@ void keyboard_keymap_test::test_focus()
     QVERIFY(client1_keymap_spy.isValid());
 
     auto window1 = create_window(focus_client1);
-    QCOMPARE(Test::app()->base.space->active_client, window1.window);
+    QCOMPARE(Test::app()->base.space->stacking.active, window1.window);
 
     // After focus we don't yet get the current keymap as none was set yet.
     QVERIFY(!client1_keymap_spy.wait(500));
@@ -162,7 +162,7 @@ void keyboard_keymap_test::test_focus()
     // On a second window with focus we now directly get the current keymap.
     auto focus_client2 = create_focus_client();
     auto window2 = create_window(focus_client2);
-    QCOMPARE(Test::app()->base.space->active_client, window2.window);
+    QCOMPARE(Test::app()->base.space->stacking.active, window2.window);
 
     auto keyboard2 = std::unique_ptr<Wrapland::Client::Keyboard>(
         focus_client2.interfaces.seat->createKeyboard());
@@ -175,7 +175,7 @@ void keyboard_keymap_test::test_focus()
 
     // We switch back and don't get a new keymap.
     win::activate_window(*Test::app()->base.space, window1.window);
-    QCOMPARE(Test::app()->base.space->active_client, window1.window);
+    QCOMPARE(Test::app()->base.space->stacking.active, window1.window);
 
     QVERIFY(!client1_keymap_spy.wait(500));
     QCOMPARE(client1_keymap_spy.size(), 1);

@@ -27,7 +27,7 @@ public:
     void update()
     {
         auto cmap = m_default;
-        if (auto window = dynamic_cast<typename Space::x11_window*>(space.active_client)) {
+        if (auto window = dynamic_cast<typename Space::x11_window*>(space.stacking.active)) {
             if (window->colormap != XCB_COLORMAP_NONE) {
                 cmap = window->colormap;
             }

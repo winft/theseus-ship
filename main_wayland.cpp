@@ -32,7 +32,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/wayland/cursor.h"
 #include "input/wayland/platform.h"
 #include "input/wayland/redirect.h"
-#include "input/dbus/tablet_mode_manager.h"
 #include "scripting/platform.h"
 #include "win/shortcuts_init.h"
 #include "win/wayland/space.h"
@@ -147,7 +146,7 @@ ApplicationWayland::ApplicationWayland(int &argc, char **argv)
 ApplicationWayland::~ApplicationWayland()
 {
     setTerminating();
-    if (!waylandServer()) {
+    if (!base->server) {
         return;
     }
 
@@ -165,7 +164,7 @@ ApplicationWayland::~ApplicationWayland()
 
     // Kill Xwayland before terminating its connection.
     base->xwayland.reset();
-    waylandServer()->terminateClientConnections();
+    base->server->terminateClientConnections();
 
     if (base->render->compositor) {
         // Block compositor to prevent further compositing from crashing with a null workspace.
@@ -179,10 +178,7 @@ ApplicationWayland::~ApplicationWayland()
 
 bool ApplicationWayland::is_screen_locked() const
 {
-    if (!server) {
-        return false;
-    }
-    return server->is_screen_locked();
+    return base->server && base->server->is_screen_locked();
 }
 
 base::platform& ApplicationWayland::get_base()
@@ -192,19 +188,21 @@ base::platform& ApplicationWayland::get_base()
 
 base::wayland::server* ApplicationWayland::get_wayland_server()
 {
-    return server.get();
+    return base->server.get();
 }
 
-void ApplicationWayland::start()
+void ApplicationWayland::start(OperationMode mode,
+                               std::string const& socket_name,
+                               base::wayland::start_options flags,
+                               QProcessEnvironment environment)
 {
+    assert(mode != OperationModeX11);
+    setOperationMode(mode);
+
     prepare_start();
 
-    if (m_startXWayland) {
-        setOperationMode(OperationModeXwayland);
-    }
-
     using base_t = base::backend::wlroots::platform;
-    base = std::make_unique<base_t>(waylandServer()->display.get());
+    base = std::make_unique<base_t>(socket_name, flags, wlr_backend_autocreate);
 
     using render_t = render::backend::wlroots::platform<base_t>;
     base->render = std::make_unique<render_t>(*base);
@@ -232,18 +230,20 @@ void ApplicationWayland::start()
         exit(exc.code().value());
     }
 
-    base->space = std::make_unique<base_t::space_t>(*base, server.get());
-    base->space->input->setup_workspace();
-
+    base->space = std::make_unique<base_t::space_t>(*base, base->server.get());
     input::wayland::add_dbus(base->input.get());
     win::init_shortcuts(*base->space);
-    tablet_mode_manager
-        = std::make_unique<input::dbus::tablet_mode_manager<base::wayland::platform::input_t>>(*base->input);
     base->space->scripting = std::make_unique<scripting::platform<base_t::space_t>>(*base->space);
 
     base->render->compositor->start(*base->space);
 
-    waylandServer()->create_addons([this] { handle_server_addons_created(); });
+    if (auto const& name = base->server->display->socket_name(); !name.empty()) {
+        environment.insert(QStringLiteral("WAYLAND_DISPLAY"), name.c_str());
+    }
+
+    setProcessStartupEnvironment(environment);
+
+    base->server->create_addons([this] { handle_server_addons_created(); });
     kwinApp()->screen_locker_watcher->initialize();
 }
 
@@ -465,22 +465,11 @@ int main(int argc, char * argv[])
         flags |= KWin::base::wayland::start_options::no_global_shortcuts;
     }
 
-    try {
-        auto const socket_name = parser.value(waylandSocketOption).toStdString();
-        a.server.reset(new KWin::base::wayland::server(socket_name, flags));
-    } catch (std::exception const&) {
-        std::cerr << "FATAL ERROR: could not create Wayland server" << std::endl;
-        return 1;
-    }
+    auto op_mode = parser.isSet(xwaylandOption) ? KWin::Application::OperationModeXwayland
+                                                : KWin::Application::OperationModeWaylandOnly;
 
-    if (auto const& name = a.server->display->socket_name(); !name.empty()) {
-        environment.insert(QStringLiteral("WAYLAND_DISPLAY"), name.c_str());
-    }
-
-    a.setProcessStartupEnvironment(environment);
-    a.setStartXwayland(parser.isSet(xwaylandOption));
     a.setApplicationsToStart(parser.positionalArguments());
-    a.start();
+    a.start(op_mode, parser.value(waylandSocketOption).toStdString(), flags, environment);
 
     return a.exec();
 }

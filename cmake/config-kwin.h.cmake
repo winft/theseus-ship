@@ -7,7 +7,6 @@
 #define XCB_VERSION_STRING "${XCB_VERSION}"
 #define KWIN_KILLER_BIN "${CMAKE_INSTALL_FULL_LIBEXECDIR}/kwin_killer_helper"
 #define KWIN_RULES_DIALOG_BIN "${CMAKE_INSTALL_FULL_LIBEXECDIR}/kwin_rules_dialog"
-#cmakedefine01 HAVE_X11_XINPUT
 #cmakedefine01 HAVE_PERF
 #cmakedefine01 HAVE_BREEZE_DECO
 #cmakedefine01 HAVE_SCHED_RESET_ON_FORK

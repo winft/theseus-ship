@@ -610,7 +610,7 @@ protected:
         auto cursor = this->platform.compositor->software_cursor.get();
 
         // don't paint if we use hardware cursor or the cursor is hidden
-        if (!cursor->enabled || this->platform.base.input->cursor->is_hidden()
+        if (!cursor->enabled || this->platform.base.space->input->cursor->is_hidden()
             || cursor->image().isNull()) {
             return;
         }
@@ -639,7 +639,7 @@ protected:
         }
 
         // get cursor position in projection coordinates
-        auto const cursorPos = this->platform.base.input->cursor->pos() - cursor->hotspot();
+        auto const cursorPos = this->platform.base.space->input->cursor->pos() - cursor->hotspot();
         auto const cursorRect
             = QRect(0, 0, sw_cursor.texture->width(), sw_cursor.texture->height());
         QMatrix4x4 mvp = m_projectionMatrix;

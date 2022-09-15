@@ -178,7 +178,7 @@ public:
 
     void register_shortcut(QKeySequence const& shortcut, QAction* action) override
     {
-        space.input->platform.registerShortcut(shortcut, action);
+        space.base.input->registerShortcut(shortcut, action);
     }
 
     /**

@@ -38,12 +38,12 @@ typename Space::base_t::output_t const* get_current_output(Space const& space)
     auto const& base = space.base;
 
     if (kwinApp()->options->get_current_output_follows_mouse()) {
-        return base::get_nearest_output(base.outputs, space.input->platform.cursor->pos());
+        return base::get_nearest_output(base.outputs, space.input->cursor->pos());
     }
 
     auto const cur = static_cast<typename Space::base_t::output_t const*>(base.topology.current);
-    if (auto client = space.active_client; client && !win::on_screen(client, cur)) {
-        return client->central_output;
+    if (auto act_win = space.stacking.active; act_win && !win::on_screen(act_win, cur)) {
+        return act_win->central_output;
     }
     return cur;
 }

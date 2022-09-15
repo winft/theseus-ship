@@ -86,7 +86,7 @@ void PlasmaWindowTest::init()
     m_windowManagement = Test::get_client().interfaces.window_management.get();
     m_compositor = Test::get_client().interfaces.compositor.get();
 
-    Test::app()->base.input->cursor->set_pos(QPoint(640, 512));
+    Test::cursor()->set_pos(QPoint(640, 512));
 }
 
 void PlasmaWindowTest::cleanup()
@@ -537,7 +537,7 @@ void PlasmaWindowTest::test_stacking_order()
 
     auto compare_stacks = [&, this]() {
         auto const& plasma_stack = m_windowManagement->stacking_order_uuid();
-        auto const& unfiltered_stack = Test::app()->base.space->stacking_order->stack;
+        auto const& unfiltered_stack = Test::app()->base.space->stacking.order.stack;
         auto stack = std::decay_t<decltype(unfiltered_stack)>();
 
         std::copy_if(unfiltered_stack.begin(),

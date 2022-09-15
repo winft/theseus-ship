@@ -86,7 +86,7 @@ void GlobalShortcutsTest::initTestCase()
 void GlobalShortcutsTest::init()
 {
     Test::setup_wayland_connection();
-    Test::app()->base.input->cursor->set_pos(QPoint(640, 512));
+    Test::cursor()->set_pos(QPoint(640, 512));
 
     input::xkb::get_primary_xkb_keyboard(*Test::app()->base.input)->switch_to_layout(0);
 }
@@ -375,7 +375,7 @@ void GlobalShortcutsTest::testX11ClientShortcut()
         Test::app()->base.space->windows_map.at(client_id));
     QVERIFY(client);
 
-    QCOMPARE(Test::app()->base.space->active_client, client);
+    QCOMPARE(Test::app()->base.space->stacking.active, client);
     QVERIFY(client->control->active);
     QCOMPARE(client->control->shortcut, QKeySequence());
     const QKeySequence seq(Qt::META + Qt::SHIFT + Qt::Key_Y);
@@ -389,7 +389,7 @@ void GlobalShortcutsTest::testX11ClientShortcut()
     QCoreApplication::processEvents();
 
     win::activate_window(*Test::app()->base.space, nullptr);
-    QVERIFY(!Test::app()->base.space->active_client);
+    QVERIFY(!Test::app()->base.space->stacking.active);
     QVERIFY(!client->control->active);
 
     // now let's trigger the shortcut
@@ -397,7 +397,7 @@ void GlobalShortcutsTest::testX11ClientShortcut()
     Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
     Test::keyboard_key_pressed(KEY_LEFTSHIFT, timestamp++);
     Test::keyboard_key_pressed(KEY_Y, timestamp++);
-    QTRY_COMPARE(Test::app()->base.space->active_client, client);
+    QTRY_COMPARE(Test::app()->base.space->stacking.active, client);
     Test::keyboard_key_released(KEY_Y, timestamp++);
     Test::keyboard_key_released(KEY_LEFTSHIFT, timestamp++);
     Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
@@ -417,7 +417,7 @@ void GlobalShortcutsTest::testWaylandClientShortcut()
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
-    QCOMPARE(Test::app()->base.space->active_client, client);
+    QCOMPARE(Test::app()->base.space->stacking.active, client);
     QVERIFY(client->control->active);
     QCOMPARE(client->control->shortcut, QKeySequence());
     const QKeySequence seq(Qt::META + Qt::SHIFT + Qt::Key_Y);
@@ -428,7 +428,7 @@ void GlobalShortcutsTest::testWaylandClientShortcut()
     QCOMPARE(win::caption(client), QStringLiteral(" {Meta+Shift+Y}"));
 
     win::activate_window(*Test::app()->base.space, nullptr);
-    QVERIFY(!Test::app()->base.space->active_client);
+    QVERIFY(!Test::app()->base.space->stacking.active);
     QVERIFY(!client->control->active);
 
     // now let's trigger the shortcut
@@ -436,7 +436,7 @@ void GlobalShortcutsTest::testWaylandClientShortcut()
     Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
     Test::keyboard_key_pressed(KEY_LEFTSHIFT, timestamp++);
     Test::keyboard_key_pressed(KEY_Y, timestamp++);
-    QTRY_COMPARE(Test::app()->base.space->active_client, client);
+    QTRY_COMPARE(Test::app()->base.space->stacking.active, client);
     Test::keyboard_key_released(KEY_Y, timestamp++);
     Test::keyboard_key_released(KEY_LEFTSHIFT, timestamp++);
     Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
@@ -461,7 +461,7 @@ void GlobalShortcutsTest::testSetupWindowShortcut()
 
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
-    QCOMPARE(Test::app()->base.space->active_client, client);
+    QCOMPARE(Test::app()->base.space->stacking.active, client);
     QVERIFY(client->control->active);
     QCOMPARE(client->control->shortcut, QKeySequence());
 

@@ -42,12 +42,10 @@
 #include <Wrapland/Server/appmenu.h>
 #include <Wrapland/Server/compositor.h>
 #include <Wrapland/Server/idle_inhibit_v1.h>
-#include <Wrapland/Server/kde_idle.h>
 #include <Wrapland/Server/plasma_activation_feedback.h>
 #include <Wrapland/Server/plasma_shell.h>
 #include <Wrapland/Server/server_decoration_palette.h>
 #include <Wrapland/Server/subcompositor.h>
-#include <Wrapland/Server/xdg_activation_v1.h>
 #include <Wrapland/Server/xdg_shell.h>
 
 #include <memory>
@@ -69,7 +67,7 @@ public:
 
     using wayland_window = wayland::window<type>;
     using internal_window_t = internal_window<type>;
-    using input_t = typename Base::input_t;
+    using input_t = input::wayland::redirect<typename Base::input_t, type>;
 
     space(Base& base, base::wayland::server* server)
         : win::space()
@@ -81,8 +79,6 @@ public:
                                           })}
         , deco{std::make_unique<deco::bridge<type>>(*this)}
         , appmenu{std::make_unique<dbus::appmenu>(dbus::create_appmenu_callbacks(*this))}
-        , stacking_order{std::make_unique<win::stacking_order<window_t>>()}
-        , focus_chain{win::focus_chain<type>(*this)}
         , user_actions_menu{std::make_unique<win::user_actions_menu<type>>(*this)}
         , server{server}
         , compositor{server->display->createCompositor()}
@@ -90,13 +86,11 @@ public:
         , xdg_shell{server->display->createXdgShell()}
         , layer_shell{server->display->createLayerShellV1()}
         , xdg_decoration_manager{server->display->createXdgDecorationManager(xdg_shell.get())}
-        , xdg_activation{server->display->createXdgActivationV1()}
         , xdg_foreign{server->display->createXdgForeign()}
         , plasma_activation_feedback{server->display->create_plasma_activation_feedback()}
         , plasma_shell{server->display->createPlasmaShell()}
         , plasma_window_manager{server->display->createPlasmaWindowManager()}
         , plasma_virtual_desktop_manager{server->display->createPlasmaVirtualDesktopManager()}
-        , kde_idle{server->display->createIdle()}
         , idle_inhibit_manager_v1{server->display->createIdleInhibitManager()}
         , appmenu_manager{server->display->createAppmenuManager()}
         , server_side_decoration_palette_manager{
@@ -118,9 +112,8 @@ public:
             return iwin->singleton.get();
         };
 
-        input = std::make_unique<typename input_t::redirect_t>(*base.input);
-        this->dbus
-            = std::make_unique<base::dbus::kwin_impl<type, input_t>>(*this, base.input.get());
+        input = std::make_unique<input_t>(*base.input, *this);
+        this->dbus = std::make_unique<base::dbus::kwin_impl<type>>(*this);
         edges = std::make_unique<edger_t>(*this);
 
         plasma_window_manager->setShowingDesktopState(
@@ -128,14 +121,14 @@ public:
         plasma_window_manager->setVirtualDesktopManager(plasma_virtual_desktop_manager.get());
         virtual_desktop_manager->setVirtualDesktopManagement(plasma_virtual_desktop_manager.get());
 
-        QObject::connect(stacking_order->qobject.get(),
+        QObject::connect(stacking.order.qobject.get(),
                          &stacking_order_qobject::render_restack,
                          qobject.get(),
                          [this] {
                              for (auto win : windows) {
                                  if (auto iwin = dynamic_cast<internal_window_t*>(win);
                                      iwin && iwin->isShown()) {
-                                     stacking_order->render_overlays.push_back(iwin);
+                                     stacking.order.render_overlays.push_back(iwin);
                                  }
                              }
                          });
@@ -159,17 +152,12 @@ public:
                          qobject.get(),
                          [this](auto deco) { handle_new_xdg_deco(this, deco); });
 
-        QObject::connect(
-            xdg_activation.get(),
-            &WS::XdgActivationV1::token_requested,
-            qobject.get(),
-            [this](auto token) { xdg_activation_handle_token_request(*this, *token); });
-        QObject::connect(xdg_activation.get(),
-                         &WS::XdgActivationV1::activate,
-                         qobject.get(),
-                         [this](auto const& token, auto surface) {
-                             handle_xdg_activation_activate(this, token, surface);
-                         });
+        xdg_activation = std::make_unique<wayland::xdg_activation<space>>(*this);
+        QObject::connect(qobject.get(), &space::qobject_t::clientActivated, qobject.get(), [this] {
+            if (stacking.active) {
+                xdg_activation->clear();
+            }
+        });
 
         QObject::connect(plasma_shell.get(),
                          &WS::PlasmaShell::surfaceCreated,
@@ -197,7 +185,7 @@ public:
                              plasma_window_manager->setShowingDesktopState(
                                  set ? ShowingState::Enabled : ShowingState::Disabled);
                          });
-        QObject::connect(stacking_order->qobject.get(),
+        QObject::connect(stacking.order.qobject.get(),
                          &stacking_order_qobject::changed,
                          plasma_window_manager.get(),
                          [this] { plasma_manage_update_stacking_order(*this); });
@@ -214,13 +202,6 @@ public:
                              handle_new_layer_surface<wayland_window>(this, layer_surface);
                          });
 
-        activation = std::make_unique<wayland::xdg_activation<space>>(*this);
-        QObject::connect(qobject.get(), &space::qobject_t::clientActivated, qobject.get(), [this] {
-            if (active_client) {
-                activation->clear();
-            }
-        });
-
         // For Xwayland windows we need to setup Plasma management too.
         QObject::connect(
             qobject.get(), &space::qobject_t::clientAdded, qobject.get(), [this](auto win_id) {
@@ -236,7 +217,7 @@ public:
 
     ~space() override
     {
-        stacking_order->lock();
+        stacking.order.lock();
 
         for (auto const& window : windows) {
             if (auto win = dynamic_cast<wayland_window*>(window); win && !win->remnant) {
@@ -265,7 +246,7 @@ public:
                 continue;
             }
             if (auto wlwin = dynamic_cast<wayland_window*>(win)) {
-                idle_update(*kde_idle, *wlwin);
+                idle_update(*wlwin);
             }
         }
     }
@@ -368,9 +349,9 @@ public:
             }
         }
 
-        assert(!contains(stacking_order->pre_stack, window));
-        stacking_order->pre_stack.push_back(window);
-        stacking_order->update_order();
+        assert(!contains(stacking.order.pre_stack, window));
+        stacking.order.pre_stack.push_back(window);
+        stacking.order.update_order();
 
         if (window->control) {
             update_space_areas(*this);
@@ -386,7 +367,7 @@ public:
                              qobject.get(),
                              [this, window] {
                                  update_layer(window);
-                                 stacking_order->update_count();
+                                 stacking.order.update_count();
                                  update_space_areas(*this);
                                  if (window->wantsInput()) {
                                      activate_window(*this, window);
@@ -397,11 +378,11 @@ public:
                              qobject.get(),
                              [this] {
                                  // TODO: update tabbox if it's displayed
-                                 stacking_order->update_count();
+                                 stacking.order.update_count();
                                  update_space_areas(*this);
                              });
 
-            idle_setup(*kde_idle, *window);
+            idle_setup(*window);
         }
 
         adopt_transient_children(this, window);
@@ -412,14 +393,14 @@ public:
         remove_all(windows, window);
 
         if (window->control) {
-            if (window == most_recently_raised) {
-                most_recently_raised = nullptr;
+            if (window == stacking.most_recently_raised) {
+                stacking.most_recently_raised = nullptr;
             }
-            if (window == delayfocus_client) {
+            if (window == stacking.delayfocus_window) {
                 cancel_delay_focus(*this);
             }
-            if (window == last_active_client) {
-                last_active_client = nullptr;
+            if (window == stacking.last_active) {
+                stacking.last_active = nullptr;
             }
             if (window == client_keys_client) {
                 setup_window_shortcut_done(*this, false);
@@ -432,7 +413,7 @@ public:
             Q_EMIT qobject->clientRemoved(window->signal_id);
         }
 
-        stacking_order->update_count();
+        stacking.order.update_count();
 
         if (window->control) {
             update_space_areas(*this);
@@ -481,15 +462,13 @@ public:
     std::unique_ptr<x11::root_info<type>> root_info;
     std::unique_ptr<x11::color_mapper<type>> color_mapper;
 
-    std::unique_ptr<typename input_t::redirect_t> input;
-    std::unique_ptr<win::stacking_order<window_t>> stacking_order;
-    win::focus_chain<type> focus_chain;
+    std::unique_ptr<input_t> input;
 
     std::unique_ptr<win::tabbox<type>> tabbox;
     std::unique_ptr<osd_notification<input_t>> osd;
     std::unique_ptr<kill_window<type>> window_killer;
     std::unique_ptr<win::user_actions_menu<type>> user_actions_menu;
-    std::unique_ptr<base::dbus::kwin_impl<type, input_t>> dbus;
+    std::unique_ptr<base::dbus::kwin_impl<type>> dbus;
 
     base::wayland::server* server;
 
@@ -499,7 +478,6 @@ public:
     std::unique_ptr<Wrapland::Server::LayerShellV1> layer_shell;
 
     std::unique_ptr<Wrapland::Server::XdgDecorationManager> xdg_decoration_manager;
-    std::unique_ptr<Wrapland::Server::XdgActivationV1> xdg_activation;
     std::unique_ptr<Wrapland::Server::XdgForeign> xdg_foreign;
 
     std::unique_ptr<Wrapland::Server::plasma_activation_feedback> plasma_activation_feedback;
@@ -507,14 +485,13 @@ public:
     std::unique_ptr<Wrapland::Server::PlasmaWindowManager> plasma_window_manager;
     std::unique_ptr<Wrapland::Server::PlasmaVirtualDesktopManager> plasma_virtual_desktop_manager;
 
-    std::unique_ptr<Wrapland::Server::KdeIdle> kde_idle;
     std::unique_ptr<Wrapland::Server::IdleInhibitManagerV1> idle_inhibit_manager_v1;
 
     std::unique_ptr<Wrapland::Server::AppmenuManager> appmenu_manager;
     std::unique_ptr<Wrapland::Server::ServerSideDecorationPaletteManager>
         server_side_decoration_palette_manager;
 
-    std::unique_ptr<wayland::xdg_activation<space>> activation;
+    std::unique_ptr<wayland::xdg_activation<space>> xdg_activation;
 
     QVector<Wrapland::Server::PlasmaShellSurface*> plasma_shell_surfaces;
 
@@ -522,19 +499,11 @@ public:
     std::unordered_map<uint32_t, window_t*> windows_map;
     std::vector<win::x11::group<type>*> groups;
 
+    stacking_state<window_t> stacking;
+
     window_t* active_popup_client{nullptr};
-
-    window_t* last_active_client{nullptr};
-    window_t* delayfocus_client{nullptr};
     window_t* client_keys_client{nullptr};
-
-    // Last is most recent.
-    std::deque<window_t*> should_get_focus;
-    std::deque<window_t*> attention_chain;
-
     window_t* move_resize_window{nullptr};
-    window_t* most_recently_raised{nullptr};
-    window_t* active_client{nullptr};
 
 private:
     void handle_x11_window_added(x11_window* window)
