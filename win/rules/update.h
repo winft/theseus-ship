@@ -7,6 +7,7 @@
 
 #include "types.h"
 
+#include "win/desktop_get.h"
 #include "win/types.h"
 #include "win/window_qobject.h"
 
@@ -32,9 +33,9 @@ bool update_rule(Ruling& ruling, RefWin const& ref_win, int selection)
         updated = updated || ruling.below.data != ref_win.control->keep_below;
         ruling.below.data = ref_win.control->keep_below;
     }
-    if (remember(ruling.desktop, type::desktop)) {
-        updated = updated || ruling.desktop.data != ref_win.desktop();
-        ruling.desktop.data = ref_win.desktop();
+    if (remember(ruling.desktops, type::desktops)) {
+        updated = updated || ruling.desktops.data != win::desktop_ids(&ref_win);
+        ruling.desktops.data = win::desktop_ids(&ref_win);
     }
     if (remember(ruling.desktopfile, type::desktop_file)) {
         auto const name = ref_win.control->desktop_file_name;

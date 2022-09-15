@@ -56,16 +56,16 @@ public:
     int checkOpacityInactive(int s) const;
     bool checkIgnoreGeometry(bool ignore, bool init = false) const;
     QVector<win::virtual_desktop*> checkDesktops(virtual_desktop_manager const& manager,
-                                                 QVector<virtual_desktop*> desktops,
+                                                 QVector<virtual_desktop*> vds,
                                                  bool init = false) const
     {
         for (auto&& rule : rules) {
-            if (rule->applyDesktops(manager, desktops, init)) {
+            if (rule->applyDesktops(manager, vds, init)) {
                 break;
             }
         }
 
-        return desktops;
+        return vds;
     }
 
     template<typename Base, typename Output>

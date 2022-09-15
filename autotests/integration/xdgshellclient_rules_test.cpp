@@ -1763,25 +1763,25 @@ void TestXdgShellClientRules::testMaximizeForceTemporarily()
 
 void TestXdgShellClientRules::testDesktopDontAffect()
 {
-    // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
-    group.writeEntry("desktop", 2);
-    group.writeEntry("desktoprule", enum_index(win::rules::action::dont_affect));
-    group.writeEntry("wmclass", "org.kde.foo");
-    group.writeEntry("wmclasscomplete", false);
-    group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
-    group.sync();
-    Test::app()->base.space->rule_book->config = config;
-    win::space_reconfigure(*Test::app()->base.space);
-
     // We need at least two virtual desktop for this test.
     auto& vd_manager = Test::app()->base.space->virtual_desktop_manager;
     vd_manager->setCount(2);
     QCOMPARE(vd_manager->count(), 2u);
     vd_manager->setCurrent(1);
     QCOMPARE(vd_manager->current(), 1);
+
+    // Initialize RuleBook with the test rule.
+    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
+    config->group("General").writeEntry("count", 1);
+    KConfigGroup group = config->group("1");
+    group.writeEntry("desktops", QStringList{vd_manager->desktopForX11Id(2)->id()});
+    group.writeEntry("desktopsrule", enum_index(win::rules::action::dont_affect));
+    group.writeEntry("wmclass", "org.kde.foo");
+    group.writeEntry("wmclasscomplete", false);
+    group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
+    group.sync();
+    Test::app()->base.space->rule_book->config = config;
+    win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
     wayland_window* client;
@@ -1802,25 +1802,25 @@ void TestXdgShellClientRules::testDesktopDontAffect()
 
 void TestXdgShellClientRules::testDesktopApply()
 {
-    // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
-    group.writeEntry("desktop", 2);
-    group.writeEntry("desktoprule", enum_index(win::rules::action::apply));
-    group.writeEntry("wmclass", "org.kde.foo");
-    group.writeEntry("wmclasscomplete", false);
-    group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
-    group.sync();
-    Test::app()->base.space->rule_book->config = config;
-    win::space_reconfigure(*Test::app()->base.space);
-
     // We need at least two virtual desktop for this test.
     auto& vd_manager = Test::app()->base.space->virtual_desktop_manager;
     vd_manager->setCount(2);
     QCOMPARE(vd_manager->count(), 2u);
     vd_manager->setCurrent(1);
     QCOMPARE(vd_manager->current(), 1);
+
+    // Initialize RuleBook with the test rule.
+    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
+    config->group("General").writeEntry("count", 1);
+    KConfigGroup group = config->group("1");
+    group.writeEntry("desktops", QStringList{vd_manager->desktopForX11Id(2)->id()});
+    group.writeEntry("desktopsrule", enum_index(win::rules::action::apply));
+    group.writeEntry("wmclass", "org.kde.foo");
+    group.writeEntry("wmclasscomplete", false);
+    group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
+    group.sync();
+    Test::app()->base.space->rule_book->config = config;
+    win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
     wayland_window* client;
@@ -1857,25 +1857,25 @@ void TestXdgShellClientRules::testDesktopApply()
 
 void TestXdgShellClientRules::testDesktopRemember()
 {
-    // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
-    group.writeEntry("desktop", 2);
-    group.writeEntry("desktoprule", enum_index(win::rules::action::remember));
-    group.writeEntry("wmclass", "org.kde.foo");
-    group.writeEntry("wmclasscomplete", false);
-    group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
-    group.sync();
-    Test::app()->base.space->rule_book->config = config;
-    win::space_reconfigure(*Test::app()->base.space);
-
     // We need at least two virtual desktop for this test.
     auto& vd_manager = Test::app()->base.space->virtual_desktop_manager;
     vd_manager->setCount(2);
     QCOMPARE(vd_manager->count(), 2u);
     vd_manager->setCurrent(1);
     QCOMPARE(vd_manager->current(), 1);
+
+    // Initialize RuleBook with the test rule.
+    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
+    config->group("General").writeEntry("count", 1);
+    KConfigGroup group = config->group("1");
+    group.writeEntry("desktops", QStringList{vd_manager->desktopForX11Id(2)->id()});
+    group.writeEntry("desktopsrule", enum_index(win::rules::action::remember));
+    group.writeEntry("wmclass", "org.kde.foo");
+    group.writeEntry("wmclasscomplete", false);
+    group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
+    group.sync();
+    Test::app()->base.space->rule_book->config = config;
+    win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
     wayland_window* client;
@@ -1908,25 +1908,25 @@ void TestXdgShellClientRules::testDesktopRemember()
 
 void TestXdgShellClientRules::testDesktopForce()
 {
-    // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
-    group.writeEntry("desktop", 2);
-    group.writeEntry("desktoprule", enum_index(win::rules::action::force));
-    group.writeEntry("wmclass", "org.kde.foo");
-    group.writeEntry("wmclasscomplete", false);
-    group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
-    group.sync();
-    Test::app()->base.space->rule_book->config = config;
-    win::space_reconfigure(*Test::app()->base.space);
-
     // We need at least two virtual desktop for this test.
     auto& vd_manager = Test::app()->base.space->virtual_desktop_manager;
     vd_manager->setCount(2);
     QCOMPARE(vd_manager->count(), 2u);
     vd_manager->setCurrent(1);
     QCOMPARE(vd_manager->current(), 1);
+
+    // Initialize RuleBook with the test rule.
+    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
+    config->group("General").writeEntry("count", 1);
+    KConfigGroup group = config->group("1");
+    group.writeEntry("desktops", QStringList{vd_manager->desktopForX11Id(2)->id()});
+    group.writeEntry("desktopsrule", enum_index(win::rules::action::force));
+    group.writeEntry("wmclass", "org.kde.foo");
+    group.writeEntry("wmclasscomplete", false);
+    group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
+    group.sync();
+    Test::app()->base.space->rule_book->config = config;
+    win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
     wayland_window* client;
@@ -1983,8 +1983,8 @@ void TestXdgShellClientRules::testDesktopApplyNow()
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     config->group("General").writeEntry("count", 1);
     KConfigGroup group = config->group("1");
-    group.writeEntry("desktop", 2);
-    group.writeEntry("desktoprule", enum_index(win::rules::action::apply_now));
+    group.writeEntry("desktops", QStringList{vd_manager->desktopForX11Id(2)->id()});
+    group.writeEntry("desktopsrule", enum_index(win::rules::action::apply_now));
     group.writeEntry("wmclass", "org.kde.foo");
     group.writeEntry("wmclasscomplete", false);
     group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
@@ -2014,25 +2014,25 @@ void TestXdgShellClientRules::testDesktopApplyNow()
 
 void TestXdgShellClientRules::testDesktopForceTemporarily()
 {
-    // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
-    group.writeEntry("desktop", 2);
-    group.writeEntry("desktoprule", enum_index(win::rules::action::force_temporarily));
-    group.writeEntry("wmclass", "org.kde.foo");
-    group.writeEntry("wmclasscomplete", false);
-    group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
-    group.sync();
-    Test::app()->base.space->rule_book->config = config;
-    win::space_reconfigure(*Test::app()->base.space);
-
     // We need at least two virtual desktop for this test.
     auto& vd_manager = Test::app()->base.space->virtual_desktop_manager;
     vd_manager->setCount(2);
     QCOMPARE(vd_manager->count(), 2u);
     vd_manager->setCurrent(1);
     QCOMPARE(vd_manager->current(), 1);
+
+    // Initialize RuleBook with the test rule.
+    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
+    config->group("General").writeEntry("count", 1);
+    KConfigGroup group = config->group("1");
+    group.writeEntry("desktops", QStringList{vd_manager->desktopForX11Id(2)->id()});
+    group.writeEntry("desktopsrule", enum_index(win::rules::action::force_temporarily));
+    group.writeEntry("wmclass", "org.kde.foo");
+    group.writeEntry("wmclasscomplete", false);
+    group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
+    group.sync();
+    Test::app()->base.space->rule_book->config = config;
+    win::space_reconfigure(*Test::app()->base.space);
 
     // Create the test client.
     wayland_window* client;

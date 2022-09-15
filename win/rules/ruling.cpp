@@ -96,7 +96,7 @@ void ruling::readFromSettings(rules::settings const* settings)
 
     above = read_set_rule(settings->above(), settings->aboverule());
     below = read_set_rule(settings->below(), settings->belowrule());
-    desktop = read_set_rule(settings->desktop(), settings->desktoprule());
+    desktops = read_set_rule(settings->desktops(), settings->desktopsrule());
     desktopfile = read_set_rule(settings->desktopfile(), settings->desktopfilerule());
     fullscreen = read_set_rule(settings->fullscreen(), settings->fullscreenrule());
     ignoregeometry = read_set_rule(settings->ignoregeometry(), settings->ignoregeometryrule());
@@ -192,7 +192,7 @@ void ruling::write(rules::settings* settings) const
 
     write_set(above, &settings::setAboverule, &settings::setAbove);
     write_set(below, &settings::setBelowrule, &settings::setBelow);
-    write_set(desktop, &settings::setDesktoprule, &settings::setDesktop);
+    write_set(desktops, &settings::setDesktopsrule, &settings::setDesktops);
     write_set(desktopfile, &settings::setDesktopfilerule, &settings::setDesktopfile);
     write_set(fullscreen, &settings::setFullscreenrule, &settings::setFullscreen);
     write_set(ignoregeometry, &settings::setIgnoregeometryrule, &settings::setIgnoregeometry);
@@ -263,7 +263,7 @@ bool ruling::isEmpty() const
     auto unused_f = [](auto rule) { return rule == force_rule::unused; };
 
     return unused_s(position.rule) && unused_s(size.rule) && unused_s(desktopfile.rule)
-        && unused_s(ignoregeometry.rule) && unused_s(desktop.rule) && unused_s(screen.rule)
+        && unused_s(ignoregeometry.rule) && unused_s(desktops.rule) && unused_s(screen.rule)
         && unused_s(maximizevert.rule) && unused_s(maximizehoriz.rule) && unused_s(minimize.rule)
         && unused_s(skiptaskbar.rule) && unused_s(skippager.rule) && unused_s(skipswitcher.rule)
         && unused_s(above.rule) && unused_s(below.rule) && unused_s(fullscreen.rule)
@@ -482,21 +482,19 @@ bool ruling::applyFullScreen(bool& fs, bool init) const
 }
 
 bool ruling::applyDesktops(virtual_desktop_manager const& manager,
-                           QVector<virtual_desktop*>& desktops,
+                           QVector<virtual_desktop*>& vds,
                            bool init) const
 {
-    if (checkSetRule(desktop.rule, init)) {
-        if (desktop.data == static_cast<int>(NET::OnAllDesktops)) {
-            desktops = {};
-        } else {
-            if (auto vd = manager.desktopForX11Id(static_cast<uint>(desktop.data))) {
-                desktops = {vd};
-            } else {
-                desktops = {manager.currentDesktop()};
+    if (checkSetRule(desktops.rule, init)) {
+        vds.clear();
+
+        for (auto id : desktops.data) {
+            if (auto vd = manager.desktopForId(id)) {
+                vds << vd;
             }
         }
     }
-    return checkSetStop(desktop.rule);
+    return checkSetStop(desktops.rule);
 }
 
 bool ruling::applyScreen(int& screen, bool init) const
@@ -583,7 +581,8 @@ bool ruling::apply_force_enum(force_ruler<int> const& ruler, T& apply, T min, T 
         return false;
     }
 
-    // Note: this does include the max item, so doesn't work for enums with "count" as last element.
+    // Note: this does include the max item, so doesn't work for enums with "count" as last
+    // element.
     if (setting < enum_index(min) || setting > enum_index(max)) {
         // Loaded value is out of bounds.
         return false;
@@ -690,7 +689,7 @@ bool ruling::discardUsed(bool withdrawn)
 
     discard_used_set(above);
     discard_used_set(below);
-    discard_used_set(desktop);
+    discard_used_set(desktops);
     discard_used_set(desktopfile);
     discard_used_set(fullscreen);
     discard_used_set(ignoregeometry);

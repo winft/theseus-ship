@@ -15,3 +15,5 @@ install(PROGRAMS kwinrules-5.19-placement.pl
         DESTINATION ${KDE_INSTALL_KCONFUPDATEDIR})
 install(PROGRAMS kwinrules-5.23-placement.pl
         DESTINATION ${KDE_INSTALL_KCONFUPDATEDIR})
+install(PROGRAMS kwinrules-5.23-virtual-desktop-ids.py
+        DESTINATION ${KDE_INSTALL_KCONFUPDATEDIR})

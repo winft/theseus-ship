@@ -662,7 +662,7 @@ const QHash<QString, QString> RulesModel::x11PropertyHash()
         { "skipSwitcher",       "skipswitcher"  },
         { "type",               "type"          },
         { "desktopFile",        "desktopfile"   },
-        { "desktops",           "desktop"       },
+        { "desktops",           "desktops"       },
     };
     return propertyToRule;
 };
