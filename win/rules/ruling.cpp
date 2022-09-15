@@ -481,9 +481,22 @@ bool ruling::applyFullScreen(bool& fs, bool init) const
     return apply_set(fs, this->fullscreen, init);
 }
 
-bool ruling::applyDesktop(int& desktop, bool init) const
+bool ruling::applyDesktops(virtual_desktop_manager const& manager,
+                           QVector<virtual_desktop*>& desktops,
+                           bool init) const
 {
-    return apply_set(desktop, this->desktop, init);
+    if (checkSetRule(desktop.rule, init)) {
+        if (desktop.data == static_cast<int>(NET::OnAllDesktops)) {
+            desktops = {};
+        } else {
+            if (auto vd = manager.desktopForX11Id(static_cast<uint>(desktop.data))) {
+                desktops = {vd};
+            } else {
+                desktops = {manager.currentDesktop()};
+            }
+        }
+    }
+    return checkSetStop(desktop.rule);
 }
 
 bool ruling::applyScreen(int& screen, bool init) const

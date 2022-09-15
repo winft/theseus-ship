@@ -721,36 +721,38 @@ private:
     {
         QPoint pos(cursorPos);
         auto& vds = edger->space.virtual_desktop_manager;
-        uint const oldDesktop = vds->current();
-        uint desktop = oldDesktop;
+        auto const oldDesktop = vds->currentDesktop();
+        auto desktop = oldDesktop;
         int const OFFSET = 2;
 
         if (isLeft()) {
-            const uint interimDesktop = desktop;
+            auto const interimDesktop = desktop;
             desktop = vds->toLeft(desktop, vds->isNavigationWrappingAround());
             if (desktop != interimDesktop)
                 pos.setX(kwinApp()->get_base().topology.size.width() - 1 - OFFSET);
         } else if (isRight()) {
-            const uint interimDesktop = desktop;
+            auto const interimDesktop = desktop;
             desktop = vds->toRight(desktop, vds->isNavigationWrappingAround());
             if (desktop != interimDesktop)
                 pos.setX(OFFSET);
         }
 
         if (isTop()) {
-            const uint interimDesktop = desktop;
+            auto const interimDesktop = desktop;
             desktop = vds->above(desktop, vds->isNavigationWrappingAround());
             if (desktop != interimDesktop)
                 pos.setY(kwinApp()->get_base().topology.size.height() - 1 - OFFSET);
         } else if (isBottom()) {
-            const uint interimDesktop = desktop;
+            auto const interimDesktop = desktop;
             desktop = vds->below(desktop, vds->isNavigationWrappingAround());
             if (desktop != interimDesktop)
                 pos.setY(OFFSET);
         }
 
         if (auto c = edger->space.move_resize_window) {
-            if (c->control->rules.checkDesktop(desktop) != int(desktop)) {
+            QVector<virtual_desktop*> desktops{desktop};
+            if (c->control->rules.checkDesktops(*edger->space.virtual_desktop_manager, desktops)
+                != desktops) {
                 // user attempts to move a client to another desktop where it is ruleforced to not
                 // be
                 return;
@@ -759,7 +761,7 @@ private:
 
         vds->setCurrent(desktop);
 
-        if (vds->current() != oldDesktop) {
+        if (vds->currentDesktop() != oldDesktop) {
             push_back_is_blocked = true;
             edger->space.input->cursor->set_pos(pos);
 

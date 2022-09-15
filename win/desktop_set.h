@@ -25,6 +25,8 @@ void set_desktops(Win* win, QVector<virtual_desktop*> desktops)
         desktops = QVector<virtual_desktop*>({desktops.last()});
     }
 
+    desktops = win->control->rules.checkDesktops(*win->space.virtual_desktop_manager, desktops);
+
     if (desktops == win->topo.desktops) {
         return;
     }
@@ -79,7 +81,6 @@ void set_desktop(Win* win, int desktop)
         // Check range.
         desktop = std::max(1, std::min(desktops_count, desktop));
     }
-    desktop = std::min(desktops_count, win->control->rules.checkDesktop(desktop));
 
     QVector<virtual_desktop*> desktops;
     if (desktop != NET::OnAllDesktops) {
@@ -96,9 +97,9 @@ void set_on_all_desktops(Win* win, bool set)
     }
 
     if (set) {
-        set_desktop(win, NET::OnAllDesktops);
+        set_desktops(win, {});
     } else {
-        set_desktop(win, win->space.virtual_desktop_manager->current());
+        set_desktops(win, {win->space.virtual_desktop_manager->currentDesktop()});
     }
 }
 
