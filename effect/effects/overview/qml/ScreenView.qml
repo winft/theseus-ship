@@ -198,13 +198,11 @@ FocusScope {
                 width: parent.width
                 height: searchField.height + 2 * PlasmaCore.Units.largeSpacing
 
-                PC3.TextField {
+                PlasmaExtras.SearchField {
                     id: searchField
                     anchors.centerIn: parent
                     width: Math.min(parent.width, 20 * PlasmaCore.Units.gridUnit)
                     focus: true
-                    placeholderText: i18nd("kwin_effects", "Search...")
-                    clearButtonShown: true
                     Keys.priority: Keys.BeforeItem
                     Keys.forwardTo: text && heap.count === 0 ? searchResults : heap
                     onTextChanged: {
