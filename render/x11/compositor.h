@@ -407,6 +407,7 @@ private:
 
     bool prepare_composition(QRegion& repaints, std::deque<typename space_t::window_t*>& windows)
     {
+        assert(windows.empty());
         this->compositeTimer.stop();
 
         if (overlay_window && !overlay_window->visible) {
@@ -421,31 +422,29 @@ private:
         }
 
         // Create a list of all windows in the stacking order
-        // Skip windows that are not yet ready for being painted.
-        //
-        // TODO? This cannot be used so carelessly - needs protections against broken clients, the
-        // window should not get focus before it's displayed, handle unredirected windows properly
-        // and so on.
-        auto const& render_stack = win::render_stack(this->space->stacking.order);
-        std::copy_if(render_stack.begin(),
-                     render_stack.end(),
-                     std::back_inserter(windows),
-                     [](auto const& win) { return win->ready_for_painting; });
+        std::deque<typename space_t::window_t*> damaged_windows;
+        auto has_pending_repaints{false};
 
-        // Create a list of damaged windows and reset the damage state of each window and fetch the
-        // damage region without waiting for a reply
-        std::vector<typename space_t::window_t*> damaged;
+        for (auto win : win::render_stack(this->space->stacking.order)) {
+            // Skip windows that are not yet ready for being painted.
+            if (!win->ready_for_painting) {
+                continue;
+            }
 
-        // Reserve a size for damaged to reduce reallocations when copying, its a bit larger then
-        // needed but the exact size required us unknown beforehand.
-        damaged.reserve(windows.size());
+            has_pending_repaints |= win->has_pending_repaints();
 
-        std::copy_if(windows.begin(),
-                     windows.end(),
-                     std::back_inserter(damaged),
-                     [](auto const& win) { return win->resetAndFetchDamage(); });
+            // Create a list of damaged windows and reset the damage state of each window and fetch
+            // the damage region without waiting for a reply
+            if (win->resetAndFetchDamage()) {
+                damaged_windows.push_back(win);
+            }
 
-        if (damaged.size() > 0) {
+            windows.push_back(win);
+        }
+
+        // If a window is damaged, trigger fence this prevents damaged windows from being composited
+        // by kwin before the rendering that triggered the damage events have finished on the GPU.
+        if (damaged_windows.size() > 0) {
             this->scene->triggerFence();
             if (auto c = kwinApp()->x11Connection()) {
                 xcb_flush(c);
@@ -462,7 +461,6 @@ private:
             }
         }
 
-        // Discard the lanczos texture
         auto discard_lanczos_texture = [](auto window) {
             assert(window->render);
             assert(window->render->effect);
@@ -474,16 +472,17 @@ private:
             }
         };
 
-        // Get the replies
-        for (auto win : damaged) {
+        // Get the damage region replies if there are any damaged windows, and discard the lanczos
+        // texture
+        for (auto win : damaged_windows) {
             discard_lanczos_texture(win);
             win->getDamageRegionReply();
+            has_pending_repaints |= win->has_pending_repaints();
         }
 
-        if (auto const& wins = this->space->windows; this->repaints_region.isEmpty()
-            && !std::any_of(wins.cbegin(), wins.cend(), [](auto const& win) {
-                                                         return win->has_pending_repaints();
-                                                     })) {
+        // If no repaint regions got added and no window has pending repaints, return and skip this
+        // paint cycle
+        if (this->repaints_region.isEmpty() && !has_pending_repaints) {
             this->scene->idle();
 
             // This means the next time we composite it is done without timer delay.
@@ -493,7 +492,7 @@ private:
 
         repaints = this->repaints_region;
 
-        // clear all repaints, so that post-pass can add repaints for the next repaint
+        // Clear all repaints, so that post-pass can add repaints for the next repaint
         this->repaints_region = QRegion();
 
         return true;
