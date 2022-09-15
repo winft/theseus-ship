@@ -305,8 +305,6 @@ private:
     QList<KPluginMetaData> findAllEffects() const;
     KPluginMetaData findEffect(const QString& name) const;
     QStringList m_loadedEffects;
-    effect_load_queue<scripted_effect_loader, KPluginMetaData>* m_queue;
-    QMetaObject::Connection m_queryConnection;
     EffectsHandler& effects;
 };
 
