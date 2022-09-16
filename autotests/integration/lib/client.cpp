@@ -124,10 +124,10 @@ client::client(global_selection globals)
         QVERIFY(interfaces.pointer_constraints->isValid());
     }
 
-    interfaces.idle.reset(
-        registry->createIdle(registry->interface(Clt::Registry::Interface::Idle).name,
-                             registry->interface(Clt::Registry::Interface::Idle).version));
-    QVERIFY(interfaces.idle->isValid());
+    interfaces.idle_notifier.reset(registry->createIdleNotifierV1(
+        registry->interface(Clt::Registry::Interface::IdleNotifierV1).name,
+        registry->interface(Clt::Registry::Interface::IdleNotifierV1).version));
+    QVERIFY(interfaces.idle_notifier->isValid());
 
     if (flags(globals & global_selection::idle_inhibition)) {
         interfaces.idle_inhibit.reset(registry->createIdleInhibitManager(

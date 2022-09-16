@@ -5,12 +5,12 @@
 */
 #include "lib/app.h"
 
-#include <Wrapland/Client/idle.h>
+#include <Wrapland/Client/idle_notify_v1.h>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdg_shell.h>
 
 #include <Wrapland/Server/display.h>
-#include <Wrapland/Server/kde_idle.h>
+#include <Wrapland/Server/idle_notify_v1.h>
 
 namespace KWin
 {
@@ -56,13 +56,13 @@ void idle_test::test_idle()
     QCOMPARE(idle.inhibit_count, 0);
 
     auto& client = Test::get_client();
-    auto timeout = std::unique_ptr<Wrapland::Client::IdleTimeout>(
-        client.interfaces.idle->getTimeout(1000, client.interfaces.seat.get()));
-    QVERIFY(timeout->isValid());
+    auto notification = std::unique_ptr<Wrapland::Client::idle_notification_v1>(
+        client.interfaces.idle_notifier->get_notification(1000, client.interfaces.seat.get()));
+    QVERIFY(notification->isValid());
 
-    QSignalSpy idle_spy(timeout.get(), &Wrapland::Client::IdleTimeout::idle);
+    QSignalSpy idle_spy(notification.get(), &Wrapland::Client::idle_notification_v1::idled);
     QVERIFY(idle_spy.isValid());
-    QSignalSpy resume_spy(timeout.get(), &Wrapland::Client::IdleTimeout::resumeFromIdle);
+    QSignalSpy resume_spy(notification.get(), &Wrapland::Client::idle_notification_v1::resumed);
     QVERIFY(resume_spy.isValid());
 
     // Wait for idle.
@@ -88,13 +88,13 @@ void idle_test::test_activity()
     QCOMPARE(idle.inhibit_count, 0);
 
     auto& client = Test::get_client();
-    auto timeout = std::unique_ptr<Wrapland::Client::IdleTimeout>(
-        client.interfaces.idle->getTimeout(2000, client.interfaces.seat.get()));
-    QVERIFY(timeout->isValid());
+    auto notification = std::unique_ptr<Wrapland::Client::idle_notification_v1>(
+        client.interfaces.idle_notifier->get_notification(2000, client.interfaces.seat.get()));
+    QVERIFY(notification->isValid());
 
-    QSignalSpy idle_spy(timeout.get(), &Wrapland::Client::IdleTimeout::idle);
+    QSignalSpy idle_spy(notification.get(), &Wrapland::Client::idle_notification_v1::idled);
     QVERIFY(idle_spy.isValid());
-    QSignalSpy resume_spy(timeout.get(), &Wrapland::Client::IdleTimeout::resumeFromIdle);
+    QSignalSpy resume_spy(notification.get(), &Wrapland::Client::idle_notification_v1::resumed);
     QVERIFY(resume_spy.isValid());
 
     // Fake user activity so that idle is never fired. We choose 3*500+1000=2500 > 2000ms.
@@ -126,13 +126,14 @@ void idle_test::test_activity()
     QCOMPARE(idle_spy.size(), 1);
 }
 
-struct timeout_wrap {
-    timeout_wrap(uint32_t duration)
+struct notification_wrap {
+    notification_wrap(uint32_t duration)
         : interface {
-        Test::get_client().interfaces.idle->getTimeout(duration,
-                                                       Test::get_client().interfaces.seat.get())
-    }, idle_spy{interface.get(), &Wrapland::Client::IdleTimeout::idle},
-        resume_spy{interface.get(), &Wrapland::Client::IdleTimeout::resumeFromIdle}
+        Test::get_client().interfaces.idle_notifier->get_notification(
+            duration,
+            Test::get_client().interfaces.seat.get())
+    }, idle_spy{interface.get(), &Wrapland::Client::idle_notification_v1::idled},
+        resume_spy{interface.get(), &Wrapland::Client::idle_notification_v1::resumed}
     {
     }
 
@@ -142,7 +143,7 @@ struct timeout_wrap {
         resume_spy.clear();
     }
 
-    std::unique_ptr<Wrapland::Client::IdleTimeout> interface;
+    std::unique_ptr<Wrapland::Client::idle_notification_v1> interface;
     QSignalSpy idle_spy;
     QSignalSpy resume_spy;
 };
@@ -167,13 +168,13 @@ void idle_test::test_splice()
     QCOMPARE(idle.inhibit_count, 0);
 
     QFETCH(int, duration1);
-    timeout_wrap timeout1(duration1);
+    notification_wrap notification1(duration1);
 
     QFETCH(int, pause);
-    QCOMPARE(timeout1.idle_spy.wait(pause), pause > duration1);
+    QCOMPARE(notification1.idle_spy.wait(pause), pause > duration1);
 
     QFETCH(int, duration2);
-    timeout_wrap timeout2(duration2);
+    notification_wrap notification2(duration2);
 
     // For this test we only allow different values.
     QVERIFY(duration1 != pause + duration2);
@@ -181,50 +182,50 @@ void idle_test::test_splice()
     // We chose the durations far enough apart from each other to assure these spy properties.
     if (duration1 < pause + duration2) {
         if (duration1 > pause) {
-            QVERIFY(timeout1.idle_spy.wait());
+            QVERIFY(notification1.idle_spy.wait());
         } else {
-            QVERIFY(!timeout1.idle_spy.empty());
+            QVERIFY(!notification1.idle_spy.empty());
         }
-        QVERIFY(timeout2.idle_spy.empty());
-        QVERIFY(timeout2.idle_spy.wait());
+        QVERIFY(notification2.idle_spy.empty());
+        QVERIFY(notification2.idle_spy.wait());
     } else {
-        QVERIFY(timeout2.idle_spy.wait());
-        QVERIFY(timeout1.idle_spy.empty());
-        QVERIFY(timeout1.idle_spy.wait());
+        QVERIFY(notification2.idle_spy.wait());
+        QVERIFY(notification1.idle_spy.empty());
+        QVERIFY(notification1.idle_spy.wait());
     }
 
-    QCOMPARE(timeout1.idle_spy.size(), 1);
-    QCOMPARE(timeout2.idle_spy.size(), 1);
-    QVERIFY(timeout1.resume_spy.empty());
-    QVERIFY(timeout2.resume_spy.empty());
+    QCOMPARE(notification1.idle_spy.size(), 1);
+    QCOMPARE(notification2.idle_spy.size(), 1);
+    QVERIFY(notification1.resume_spy.empty());
+    QVERIFY(notification2.resume_spy.empty());
 
-    timeout1.clear_spies();
-    timeout2.clear_spies();
+    notification1.clear_spies();
+    notification2.clear_spies();
 
     uint32_t time{};
     Test::pointer_button_pressed(BTN_LEFT, ++time);
     Test::pointer_button_released(BTN_LEFT, ++time);
 
-    QVERIFY(timeout1.resume_spy.wait());
-    QVERIFY(!timeout2.resume_spy.empty() || timeout2.resume_spy.wait());
-    QCOMPARE(timeout1.resume_spy.size(), 1);
-    QCOMPARE(timeout2.resume_spy.size(), 1);
+    QVERIFY(notification1.resume_spy.wait());
+    QVERIFY(!notification2.resume_spy.empty() || notification2.resume_spy.wait());
+    QCOMPARE(notification1.resume_spy.size(), 1);
+    QCOMPARE(notification2.resume_spy.size(), 1);
 
     QVERIFY(duration1 != duration2);
 
     if (duration1 < duration2) {
-        QVERIFY(timeout1.idle_spy.wait());
-        QVERIFY(timeout2.idle_spy.empty());
-        QVERIFY(timeout2.idle_spy.wait());
+        QVERIFY(notification1.idle_spy.wait());
+        QVERIFY(notification2.idle_spy.empty());
+        QVERIFY(notification2.idle_spy.wait());
     } else {
         // Might already have fired with duration 0.
-        QVERIFY(!timeout2.idle_spy.empty() || timeout2.idle_spy.wait());
-        QVERIFY(timeout1.idle_spy.empty());
-        QVERIFY(timeout1.idle_spy.wait());
+        QVERIFY(!notification2.idle_spy.empty() || notification2.idle_spy.wait());
+        QVERIFY(notification1.idle_spy.empty());
+        QVERIFY(notification1.idle_spy.wait());
     }
 
-    QCOMPARE(timeout1.idle_spy.size(), 1);
-    QCOMPARE(timeout2.idle_spy.size(), 1);
+    QCOMPARE(notification1.idle_spy.size(), 1);
+    QCOMPARE(notification2.idle_spy.size(), 1);
 }
 
 }
