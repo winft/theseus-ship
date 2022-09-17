@@ -168,6 +168,7 @@ public:
         setOpacity(m_internalWindow->opacity());
         this->setSkipCloseAnimation(
             m_internalWindow->property(internal_skip_close_animation_name).toBool());
+        this->is_outline = m_internalWindow->property("__kwin_outline").toBool();
 
         setupCompositing();
         updateColorScheme();
@@ -336,17 +337,6 @@ public:
     {
         if (m_internalWindow) {
             return m_internalWindow->property("org_kde_ksld_emergency").toBool();
-        }
-        return false;
-    }
-
-    bool isOutline() const override
-    {
-        if (this->remnant) {
-            return this->remnant->data.was_outline;
-        }
-        if (m_internalWindow) {
-            return m_internalWindow->property("__kwin_outline").toBool();
         }
         return false;
     }

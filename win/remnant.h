@@ -105,7 +105,6 @@ public:
 
         bool was_group_transient{false};
         bool was_popup_window{false};
-        bool was_outline{false};
         bool was_lock_screen{false};
 
         double buffer_scale{1};

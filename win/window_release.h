@@ -57,7 +57,6 @@ win::remnant create_remnant(Win& source)
     remnant.data.was_wayland_client = source.is_wayland_window();
     remnant.data.was_x11_client = source.isClient();
     remnant.data.was_popup_window = win::is_popup(&source);
-    remnant.data.was_outline = source.isOutline();
     remnant.data.was_lock_screen = source.isLockScreen();
 
     return remnant;
@@ -84,6 +83,7 @@ void transfer_remnant_data(Win& source, Win& dest)
     dest.repaints_region = source.repaints_region;
     dest.layer_repaints_region = source.layer_repaints_region;
     dest.is_shape = source.is_shape;
+    dest.is_outline = source.is_outline;
 
     dest.render = std::move(source.render);
 

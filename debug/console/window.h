@@ -415,7 +415,7 @@ public:
 
     bool isOutline() const override
     {
-        return ref_win->isOutline();
+        return ref_win->is_outline;
     }
 
     bool isShape() const override

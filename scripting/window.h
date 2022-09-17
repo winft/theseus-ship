@@ -525,7 +525,7 @@ public:
 
     bool isOutline() const override
     {
-        return m_client->isOutline();
+        return m_client->is_outline;
     }
 
     bool isShape() const override

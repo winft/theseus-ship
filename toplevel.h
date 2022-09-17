@@ -245,14 +245,6 @@ public:
         return false;
     }
 
-    virtual bool isOutline() const
-    {
-        if (remnant) {
-            return remnant->data.was_outline;
-        }
-        return is_outline;
-    }
-
     /**
      * Returns the virtual desktop within the workspace() the client window
      * is located in, 0 if it isn't located on any special desktop (not mapped yet),

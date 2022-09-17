@@ -419,7 +419,7 @@ public:
 
     bool isOutline() const override
     {
-        return window.ref_win->isOutline();
+        return window.ref_win->is_outline;
     }
 
     bool isLockScreen() const override
