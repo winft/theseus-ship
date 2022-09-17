@@ -128,7 +128,7 @@ void virtual_desktop_manager::setCurrent(const QString& id)
         return;
     }
 
-    auto vd = m_manager->desktopForId(id.toUtf8());
+    auto vd = m_manager->desktopForId(id);
     if (vd) {
         m_manager->setCurrent(vd);
     }
@@ -175,7 +175,7 @@ void virtual_desktop_manager::createDesktop(uint position, const QString& name)
 
 void virtual_desktop_manager::setDesktopName(const QString& id, const QString& name)
 {
-    auto vd = m_manager->desktopForId(id.toUtf8());
+    auto vd = m_manager->desktopForId(id);
     if (!vd) {
         return;
     }
@@ -189,7 +189,7 @@ void virtual_desktop_manager::setDesktopName(const QString& id, const QString& n
 
 void virtual_desktop_manager::removeDesktop(const QString& id)
 {
-    m_manager->removeVirtualDesktop(id.toUtf8());
+    m_manager->removeVirtualDesktop(id);
 }
 
 }

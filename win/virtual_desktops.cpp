@@ -23,9 +23,9 @@ namespace KWin::win
 
 static bool s_loadingDesktopSettings = false;
 
-static QByteArray generateDesktopId()
+static QString generateDesktopId()
 {
-    return QUuid::createUuid().toString(QUuid::WithoutBraces).toUtf8();
+    return QUuid::createUuid().toString(QUuid::WithoutBraces);
 }
 
 virtual_desktop::virtual_desktop(QObject* parent)
@@ -120,7 +120,7 @@ void virtual_desktop_manager::setVirtualDesktopManagement(
                      });
 }
 
-void virtual_desktop::setId(QByteArray const& id)
+void virtual_desktop::setId(QString const& id)
 {
     Q_ASSERT(m_id.isEmpty());
     m_id = id;
@@ -475,7 +475,7 @@ virtual_desktop* virtual_desktop_manager::desktopForX11Id(uint id) const
     return m_desktops.at(id - 1);
 }
 
-virtual_desktop* virtual_desktop_manager::desktopForId(QByteArray const& id) const
+virtual_desktop* virtual_desktop_manager::desktopForId(QString const& id) const
 {
     auto desk = std::find_if(m_desktops.constBegin(), m_desktops.constEnd(), [id](auto desk) {
         return desk->id() == id;
@@ -536,7 +536,7 @@ virtual_desktop* virtual_desktop_manager::createVirtualDesktop(uint position, QS
     return vd;
 }
 
-void virtual_desktop_manager::removeVirtualDesktop(QByteArray const& id)
+void virtual_desktop_manager::removeVirtualDesktop(QString const& id)
 {
     auto desktop = desktopForId(id);
     if (desktop) {
@@ -770,14 +770,14 @@ void virtual_desktop_manager::load()
         if (m_rootInfo) {
             m_rootInfo->setDesktopName(i, s.toUtf8().data());
         }
-        m_desktops[i - 1]->setName(s.toUtf8().data());
+        m_desktops[i - 1]->setName(s);
 
         auto const sId = group.readEntry(QStringLiteral("Id_%1").arg(i), QString());
 
         if (m_desktops[i - 1]->id().isEmpty()) {
-            m_desktops[i - 1]->setId(sId.isEmpty() ? generateDesktopId() : sId.toUtf8());
+            m_desktops[i - 1]->setId(sId.isEmpty() ? generateDesktopId() : sId);
         } else {
-            Q_ASSERT(sId.isEmpty() || m_desktops[i - 1]->id() == sId.toUtf8().data());
+            Q_ASSERT(sId.isEmpty() || m_desktops[i - 1]->id() == sId);
         }
 
         // TODO: update desktop focus chain, why?
