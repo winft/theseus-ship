@@ -34,8 +34,9 @@ public:
 
     window(RefWin* c, Scene& /*scene*/)
         : render::window<RefWin>(c)
-        , format(XRenderUtils::findPictFormat(c->xcb_visual))
     {
+        using x11_window_t = typename std::decay_t<decltype(c->space)>::x11_window;
+        format = XRenderUtils::findPictFormat(static_cast<x11_window_t*>(c)->xcb_visual);
     }
 
     void performPaint(paint_type mask, QRegion region, WindowPaintData data) override

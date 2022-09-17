@@ -64,8 +64,11 @@ public:
             return true;
         }
 
-        auto const size = win::render_geometry(buffer->window->ref_win).size();
-        auto const visual = buffer->window->ref_win->xcb_visual;
+        auto ref_win = buffer->window->ref_win;
+        using x11_window_t = typename std::decay_t<decltype(ref_win->space)>::x11_window;
+
+        auto const size = win::render_geometry(ref_win).size();
+        auto const visual = static_cast<x11_window_t*>(ref_win)->xcb_visual;
 
         auto const& win_integrate
             = static_cast<render::x11::buffer_win_integration<typename buffer_t::abstract_type>&>(

@@ -1364,6 +1364,7 @@ public:
 
     bool blocks_compositing{false};
     uint deleting{0};
+    bool has_scheduled_release{false};
 
     // True when X11 Server must be informed about the final location of a move on leaving the move.
     bool move_needs_server_update{false};
@@ -1442,6 +1443,7 @@ public:
 
     x11::group<Space>* in_group{nullptr};
 
+    xcb_visualid_t xcb_visual{XCB_NONE};
     xcb_colormap_t colormap{XCB_COLORMAP_NONE};
 
     // Only used as a cache for window as a remnant.

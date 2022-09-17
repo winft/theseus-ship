@@ -757,11 +757,7 @@ public:
     QUuid internal_id;
     base::x11::xcb::window xcb_window{};
 
-    // TODO: These are Unmanaged-only properties.
     bool is_outline{false};
-    bool has_scheduled_release{false};
-    xcb_visualid_t xcb_visual{XCB_NONE};
-    // End of X11-only properties.
 
     bool has_in_content_deco{false};
 

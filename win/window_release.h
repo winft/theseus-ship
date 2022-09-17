@@ -67,7 +67,6 @@ void transfer_remnant_data(Win& source, Win& dest)
 {
     dest.internal_id = source.internal_id;
     dest.m_frameGeometry = source.m_frameGeometry;
-    dest.xcb_visual = source.xcb_visual;
     dest.bit_depth = source.bit_depth;
 
     dest.window_type = source.windowType();
