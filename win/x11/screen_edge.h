@@ -70,13 +70,12 @@ protected:
             return;
         }
         m_approachWindow.unmap();
+
         auto cursor = this->edger->space.input->cursor.get();
-#ifndef KWIN_UNIT_TEST
         m_cursorPollingConnection = QObject::connect(
             cursor, &input::cursor::pos_changed, this->qobject.get(), [this](auto const& pos) {
                 this->updateApproaching(pos);
             });
-#endif
     }
 
     void doStopApproaching() override

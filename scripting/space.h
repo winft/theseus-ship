@@ -592,10 +592,10 @@ public:
                     Q_EMIT this->virtualScreenGeometryChanged();
                 }
             });
-        QObject::connect(&base, &base::platform::output_added, this, [this, &base] {
+        QObject::connect(&base, &base::platform::output_added, this, [this] {
             Q_EMIT Space::numberScreensChanged(this->ref_space->base.outputs.size());
         });
-        QObject::connect(&base, &base::platform::output_removed, this, [this, &base] {
+        QObject::connect(&base, &base::platform::output_removed, this, [this] {
             Q_EMIT Space::numberScreensChanged(this->ref_space->base.outputs.size());
         });
 

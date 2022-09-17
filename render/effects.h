@@ -274,7 +274,7 @@ public:
         : effects_handler_wrap(compositor.scene->compositingType())
         , compositor{compositor}
     {
-        singleton_interface::register_thumbnail = [this](auto& eff_win, auto& thumbnail) {
+        singleton_interface::register_thumbnail = [](auto& eff_win, auto& thumbnail) {
             auto& impl_win = static_cast<effect_window_t&>(eff_win);
             impl_win.registerThumbnail(&thumbnail);
         };

@@ -426,8 +426,7 @@ void TestScreenEdges::testCallback()
     });
     QVERIFY(it != edges.cend());
 
-    int time = 0;
-    auto setPos = [&time](const QPoint& pos) {
+    auto setPos = [](const QPoint& pos) {
         Test::pointer_motion_absolute(pos, QDateTime::currentMSecsSinceEpoch());
     };
 

@@ -88,7 +88,7 @@ protected:
             }
             if (pe->propertyName() == "kwin_windowType") {
                 window.window_type = window.m_internalWindow->property("kwin_windowType")
-                                          .template value<NET::WindowType>();
+                                         .template value<NET::WindowType>();
                 update_space_areas(window.space);
             }
         }
@@ -188,7 +188,7 @@ public:
 
     void add_scene_window_addon() override
     {
-        auto setup_buffer = [this](auto& buffer) {
+        auto setup_buffer = [](auto& buffer) {
             using scene_t = typename Space::base_t::render_t::compositor_t::scene_t;
             using buffer_integration_t
                 = render::wayland::buffer_win_integration<typename scene_t::buffer_t>;

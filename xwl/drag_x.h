@@ -57,7 +57,7 @@ public:
         QObject::connect(source.get_source(),
                          &data_source_ext::accepted,
                          this->qobject.get(),
-                         [this](auto /*mime_type*/) {
+                         [](auto /*mime_type*/) {
                              // TODO(romangg): handle?
                          });
         QObject::connect(

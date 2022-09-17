@@ -84,7 +84,7 @@ public:
         throw std::runtime_error("GLX backend not available.");
     }
 
-    void render_stop(bool on_shutdown) override
+    void render_stop(bool /*on_shutdown*/) override
     {
         if (gl_backend) {
             tear_down_glx_backend(*gl_backend);

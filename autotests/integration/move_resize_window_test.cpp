@@ -421,9 +421,9 @@ void MoveResizeWindowTest::testPackAgainstClient()
     QVERIFY(shellSurface3);
     std::unique_ptr<XdgShellToplevel> shellSurface4(Test::create_xdg_shell_toplevel(surface4));
     QVERIFY(shellSurface4);
-    auto renderWindow = [this](std::unique_ptr<Surface> const& surface,
-                               std::function<void(Test::space&)> const& method_call,
-                               const QRect& expectedGeometry) {
+    auto renderWindow = [](std::unique_ptr<Surface> const& surface,
+                           std::function<void(Test::space&)> const& method_call,
+                           const QRect& expectedGeometry) {
         // let's render
         auto c = Test::render_and_wait_for_shown(surface, QSize(10, 10), Qt::blue);
 

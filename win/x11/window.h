@@ -253,7 +253,7 @@ public:
             return render::x11::read_and_update_shadow<shadow_t>(shadow, atoms->kde_net_wm_shadow);
         };
 
-        auto setup_buffer = [this](auto& buffer) {
+        auto setup_buffer = [](auto& buffer) {
             using buffer_integration_t
                 = render::x11::buffer_win_integration<typename scene_t::buffer_t>;
 

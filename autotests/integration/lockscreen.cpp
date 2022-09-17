@@ -87,7 +87,6 @@ private:
     Wrapland::Client::Compositor* m_compositor = nullptr;
     Wrapland::Client::Seat* m_seat = nullptr;
     Wrapland::Client::ShmPool* m_shm = nullptr;
-    Wrapland::Client::Shell* m_shell = nullptr;
 
     std::unique_ptr<Wrapland::Client::Surface> surface_holder;
     std::unique_ptr<Wrapland::Client::XdgShellToplevel> toplevel_holder;

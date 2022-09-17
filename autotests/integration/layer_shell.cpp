@@ -18,7 +18,6 @@
 
 namespace Clt = Wrapland::Client;
 
-constexpr auto socket_name = "wayland_test_kwin_xdgshellclient-0";
 constexpr auto output_count = 2;
 
 Q_DECLARE_METATYPE(QMargins)

@@ -65,7 +65,7 @@ public:
                          });
     }
 
-    void registerShortcut(QKeySequence const& shortcut, QAction* action)
+    void registerShortcut(QKeySequence const& /*shortcut*/, QAction* action)
     {
         setup_action_for_global_accel(action);
     }
