@@ -147,6 +147,33 @@ public:
         return client_machine->is_local();
     }
 
+    double opacity() const override
+    {
+        if (this->remnant) {
+            return this->remnant->data.opacity;
+        }
+        if (this->info->opacity() == 0xffffffff) {
+            return 1.0;
+        }
+        return this->info->opacity() * 1.0 / 0xffffffff;
+    }
+
+    void setOpacity(double new_opacity) override
+    {
+        double old_opacity = opacity();
+        new_opacity = qBound(0.0, new_opacity, 1.0);
+        if (old_opacity == new_opacity) {
+            return;
+        }
+
+        this->info->setOpacity(static_cast<unsigned long>(new_opacity * 0xffffffff));
+
+        if (this->space.base.render->compositor->scene) {
+            this->addRepaintFull();
+            Q_EMIT this->qobject->opacityChanged(old_opacity);
+        }
+    }
+
     xcb_window_t frameId() const override
     {
         if (this->remnant) {

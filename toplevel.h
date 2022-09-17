@@ -307,28 +307,8 @@ public:
         return info->pid();
     }
 
-    virtual double opacity() const
-    {
-        if (remnant) {
-            return remnant->data.opacity;
-        }
-        if (info->opacity() == 0xffffffff)
-            return 1.0;
-        return info->opacity() * 1.0 / 0xffffffff;
-    }
-
-    virtual void setOpacity(double new_opacity)
-    {
-        double old_opacity = opacity();
-        new_opacity = qBound(0.0, new_opacity, 1.0);
-        if (old_opacity == new_opacity)
-            return;
-        info->setOpacity(static_cast<unsigned long>(new_opacity * 0xffffffff));
-        if (space.base.render->compositor->scene) {
-            addRepaintFull();
-            Q_EMIT qobject->opacityChanged(old_opacity);
-        }
-    }
+    virtual double opacity() const = 0;
+    virtual void setOpacity(double new_opacity) = 0;
 
     bool hasAlpha() const
     {
