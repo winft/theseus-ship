@@ -234,7 +234,7 @@ public:
             return remnant->data.window_type;
         }
 
-        auto wt = info->windowType(NET::WindowTypes(supported_default_types));
+        auto wt = info->windowType(supported_default_types);
         if (direct || !control) {
             return wt;
         }
@@ -779,7 +779,7 @@ public:
 
     // TODO: These are X11-only properties, should go into a separate struct once we use class
     //       templates only.
-    int supported_default_types{0};
+    NET::WindowTypes supported_default_types{};
     int bit_depth{24};
     QMargins client_frame_extents;
 
