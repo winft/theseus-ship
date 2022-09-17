@@ -74,7 +74,7 @@ void set_surface(Win* win, Wrapland::Server::Surface* surface)
                     // Also apparently needed for unmanaged Xwayland clients (compare Kate's
                     // open-file dialog when type-forward list is changing size).
                     // TODO(romangg): can this be put in a less hot path?
-                    win->discard_quads();
+                    win->discard_shape();
                 }
             });
     }

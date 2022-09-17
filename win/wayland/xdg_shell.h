@@ -322,7 +322,7 @@ Win* create_popup_window(Space* space, Wrapland::Server::XdgShellPopup* popup)
                              old_visible_geo.united(visible_geo));
 
                          if (old_visible_geo.size() != visible_geo.size()) {
-                             win->discard_quads();
+                             win->discard_shape();
                          }
                      });
     QObject::connect(popup,

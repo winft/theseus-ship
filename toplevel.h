@@ -167,18 +167,14 @@ public:
     void discard_shape()
     {
         m_render_shape_valid = false;
-        discard_quads();
-    }
 
-    void discard_quads()
-    {
         if (render) {
             render->invalidateQuadsCache();
             addRepaintFull();
         }
         if (transient()->annexed) {
             for (auto lead : transient()->leads()) {
-                lead->discard_quads();
+                lead->discard_shape();
             }
         }
     }
