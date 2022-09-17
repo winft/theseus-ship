@@ -37,7 +37,6 @@ void setup_plasma_management(Space* space, Win* win)
     plasma_win->setKeepBelow(win->control->keep_below);
     plasma_win->setMaximized(win->maximizeMode() == win::maximize_mode::full);
     plasma_win->setMinimized(win->control->minimized);
-    plasma_win->setOnAllDesktops(on_all_desktops(win));
     plasma_win->setDemandsAttention(win->control->demands_attention);
     plasma_win->setCloseable(win->isCloseable());
     plasma_win->setMaximizeable(win->isMaximizable());
@@ -176,6 +175,11 @@ void setup_plasma_management(Space* space, Win* win)
     for (auto const vd : win->topo.desktops) {
         plasma_win->addPlasmaVirtualDesktop(vd->id().toStdString());
     }
+
+    // We need to set `OnAllDesktops` after the actual VD list has been added.
+    // Otherwise it will unconditionally add the current desktop to the interface
+    // which may not be the case, for example, when using rules
+    plasma_win->setOnAllDesktops(on_all_desktops(win));
 
     // Only for the legacy mechanism.
     QObject::connect(qtwin, &window_qobject::desktopChanged, plasma_win, [plasma_win, win] {
