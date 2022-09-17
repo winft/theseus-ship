@@ -153,7 +153,7 @@ public:
         setup_scale_scene_notify(*this);
     }
 
-    NET::WindowType windowType(bool /*direct*/ = false, int /*supported_types*/ = 0) const override
+    NET::WindowType windowType(bool /*direct*/ = false) const override
     {
         if (this->remnant) {
             return this->remnant->data.window_type;

@@ -228,18 +228,13 @@ public:
         return false;
     }
 
-    // prefer isXXX() instead
-    // 0 for supported types means default for managed/unmanaged types
-    virtual NET::WindowType windowType(bool direct = false, int supported_types = 0) const
+    virtual NET::WindowType windowType(bool direct = false) const
     {
         if (remnant) {
             return remnant->data.window_type;
         }
-        if (supported_types == 0) {
-            supported_types = supported_default_types;
-        }
 
-        auto wt = info->windowType(NET::WindowTypes(supported_types));
+        auto wt = info->windowType(NET::WindowTypes(supported_default_types));
         if (direct || !control) {
             return wt;
         }
