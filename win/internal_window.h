@@ -87,7 +87,7 @@ protected:
                     window.m_internalWindow->property(internal_skip_close_animation_name).toBool());
             }
             if (pe->propertyName() == "kwin_windowType") {
-                window.m_windowType = window.m_internalWindow->property("kwin_windowType")
+                window.window_type = window.m_internalWindow->property("kwin_windowType")
                                           .template value<NET::WindowType>();
                 update_space_areas(window.space);
             }
@@ -158,7 +158,7 @@ public:
 
         const QVariant windowType = m_internalWindow->property("kwin_windowType");
         if (!windowType.isNull()) {
-            m_windowType = windowType.value<NET::WindowType>();
+            window_type = windowType.value<NET::WindowType>();
         }
 
         setCaption(m_internalWindow->title());
@@ -228,7 +228,7 @@ public:
 
     NET::WindowType windowType(bool /*direct*/ = false) const override
     {
-        return this->remnant ? this->remnant->data.window_type : m_windowType;
+        return window_type;
     }
 
     double opacity() const override
@@ -724,7 +724,7 @@ public:
     QWindow* m_internalWindow = nullptr;
     QRect synced_geo;
     double m_opacity = 1.0;
-    NET::WindowType m_windowType = NET::Normal;
+    NET::WindowType window_type{NET::Normal};
     Qt::WindowFlags m_internalWindowFlags = Qt::WindowFlags();
     bool m_userNoBorder = false;
 };

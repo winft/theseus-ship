@@ -25,7 +25,6 @@ win::remnant create_remnant(Win& source)
     remnant.data.desk = source.desktop();
     remnant.data.frame = source.frameId();
     remnant.data.opacity = source.opacity();
-    remnant.data.window_type = source.windowType();
     remnant.data.window_role = source.windowRole();
 
     if (source.control) {
@@ -72,6 +71,7 @@ void transfer_remnant_data(Win& source, Win& dest)
     dest.xcb_visual = source.xcb_visual;
     dest.bit_depth = source.bit_depth;
 
+    dest.window_type = source.windowType();
     dest.info = source.info;
     if (auto winfo = dynamic_cast<x11::win_info<Win>*>(dest.info)) {
         winfo->disable();

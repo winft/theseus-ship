@@ -92,7 +92,6 @@ public:
 
         std::unique_ptr<deco::render_data> deco_render;
         double opacity{1};
-        NET::WindowType window_type{NET::Unknown};
         QByteArray window_role;
         QString caption;
 

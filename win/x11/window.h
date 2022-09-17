@@ -88,7 +88,7 @@ public:
     NET::WindowType windowType(bool direct = false) const override
     {
         if (this->remnant) {
-            return this->remnant->data.window_type;
+            return window_type;
         }
 
         auto wt = this->info->windowType(this->supported_default_types);
@@ -1437,6 +1437,9 @@ public:
     x11::group<Space>* in_group{nullptr};
 
     xcb_colormap_t colormap{XCB_COLORMAP_NONE};
+
+    // Only used as a cache for window as a remnant.
+    NET::WindowType window_type{NET::Normal};
 };
 
 }

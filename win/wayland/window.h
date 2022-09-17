@@ -155,9 +155,6 @@ public:
 
     NET::WindowType windowType(bool /*direct*/ = false) const override
     {
-        if (this->remnant) {
-            return this->remnant->data.window_type;
-        }
         return window_type;
     }
 
