@@ -205,7 +205,7 @@ public:
     virtual void setOnAllDesktops(bool set) = 0;
 
     virtual QByteArray windowRole() const = 0;
-    virtual NET::WindowType windowType(bool direct = false, int supported_types = 0) const = 0;
+    virtual NET::WindowType windowType() const = 0;
 
     virtual bool isDesktop() const = 0;
     virtual bool isDock() const = 0;
