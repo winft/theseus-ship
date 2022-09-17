@@ -140,9 +140,7 @@ Win* create_remnant_window(Win& source)
 
     auto win = new Win(create_remnant(source), source.space);
     transfer_remnant_data(source, *win);
-
-    win::add_remnant(source, *win);
-    Q_EMIT source.space.qobject->remnant_created(win->signal_id);
+    space_add_remnant(source, *win);
     return win;
 }
 
