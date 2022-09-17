@@ -45,7 +45,7 @@ bool match_rule(Ruling& ruling, RefWin const& ref_win)
         return false;
     }
 
-    if (auto& cm = ref_win.client_machine;
+    if (auto cm = ref_win.get_client_machine();
         cm && !ruling.matchClientMachine(cm->hostname(), cm->is_local())) {
         return false;
     }

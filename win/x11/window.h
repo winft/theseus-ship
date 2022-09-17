@@ -51,13 +51,13 @@ public:
 
     window(xcb_window_t xcb_win, Space& space)
         : Toplevel<Space>(new x11::transient<window>(this), space)
+        , client_machine{new win::x11::client_machine}
         , motif_hints(space.atoms->motif_wm_hints)
     {
         Toplevel<Space>::qobject = std::make_unique<window_qobject>();
         window_setup_geometry(*this);
 
         this->xcb_window.reset(xcb_win, false);
-        this->client_machine = new win::x11::client_machine;
     }
 
     ~window()
@@ -76,11 +76,43 @@ public:
         assert(xcb_windows.client == XCB_WINDOW_NONE);
         assert(xcb_windows.wrapper == XCB_WINDOW_NONE);
         assert(xcb_windows.outer == XCB_WINDOW_NONE);
+
+        delete client_machine;
     }
 
     bool isClient() const override
     {
         return static_cast<bool>(this->control);
+    }
+
+    x11::client_machine* get_client_machine() const override
+    {
+        return client_machine;
+    }
+
+    QByteArray wmClientMachine(bool use_localhost) const override
+    {
+        assert(client_machine);
+
+        if (use_localhost && client_machine->is_local()) {
+            // Special name for the local machine (localhost).
+            return client_machine::localhost();
+        }
+        return client_machine->hostname();
+    }
+
+    xcb_window_t wmClientLeader() const
+    {
+        if (m_wmClientLeader != XCB_WINDOW_NONE) {
+            return m_wmClientLeader;
+        }
+        return this->xcb_window;
+    }
+
+    bool isLocalhost() const override
+    {
+        assert(client_machine);
+        return client_machine->is_local();
     }
 
     xcb_window_t frameId() const override
@@ -1294,6 +1326,9 @@ public:
         // For move-resize operations.
         base::x11::xcb::window grab{};
     } xcb_windows;
+
+    x11::client_machine* client_machine{nullptr};
+    xcb_window_t m_wmClientLeader{XCB_WINDOW_NONE};
 
     bool blocks_compositing{false};
     uint deleting{0};

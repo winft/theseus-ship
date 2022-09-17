@@ -765,11 +765,6 @@ public:
         return this->surface->client()->processId();
     }
 
-    bool isLocalhost() const override
-    {
-        return true;
-    }
-
     bool isLockScreen() const override
     {
         return !this->remnant

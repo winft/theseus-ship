@@ -429,7 +429,14 @@ auto find_client_leader_group(Win const* win) -> decltype(win->in_group)
         if (other == win) {
             continue;
         }
-        if (other->wmClientLeader() != win->wmClientLeader()) {
+
+        auto other_casted = dynamic_cast<Win*>(other);
+        if (!other_casted) {
+            // Different type of window. Can't share group.
+            continue;
+        }
+
+        if (other_casted->wmClientLeader() != win->wmClientLeader()) {
             continue;
         }
 

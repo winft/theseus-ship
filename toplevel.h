@@ -18,7 +18,6 @@
 #include "win/shortcut_set.h"
 #include "win/virtual_desktops.h"
 #include "win/window_qobject.h"
-#include "win/x11/client_machine.h"
 #include "win/x11/group.h"
 
 #include <NETWM>
@@ -32,6 +31,11 @@
 
 namespace KWin
 {
+
+namespace win::x11
+{
+class client_machine;
+}
 
 template<typename Space>
 class Toplevel
@@ -112,7 +116,6 @@ public:
     virtual ~Toplevel()
     {
         space.windows_map.erase(signal_id);
-        delete client_machine;
         delete info;
     }
 
@@ -320,32 +323,19 @@ public:
         return QByteArray(info->windowRole());
     }
 
-    QByteArray wmClientMachine(bool use_localhost) const
+    virtual win::x11::client_machine* get_client_machine() const
     {
-        if (!client_machine) {
-            return QByteArray();
-        }
-        if (use_localhost && client_machine->is_local()) {
-            // special name for the local machine (localhost)
-            return win::x11::client_machine::localhost();
-        }
-        return client_machine->hostname();
+        return {};
+    }
+
+    virtual QByteArray wmClientMachine(bool /*use_localhost*/) const
+    {
+        return {};
     }
 
     virtual bool isLocalhost() const
     {
-        if (!client_machine) {
-            return true;
-        }
-        return client_machine->is_local();
-    }
-
-    xcb_window_t wmClientLeader() const
-    {
-        if (m_wmClientLeader != XCB_WINDOW_NONE) {
-            return m_wmClientLeader;
-        }
-        return xcb_window;
+        return true;
     }
 
     virtual pid_t pid() const
@@ -797,7 +787,6 @@ public:
     int supported_default_types{0};
     int bit_depth{24};
     QMargins client_frame_extents;
-    win::x11::client_machine* client_machine{nullptr};
 
     // A UUID to uniquely identify this Toplevel independent of windowing system.
     QUuid internal_id;
@@ -811,7 +800,6 @@ public:
 
     bool has_in_content_deco{false};
 
-    xcb_window_t m_wmClientLeader{XCB_WINDOW_NONE};
     QRect m_frameGeometry;
     win::layer m_layer{win::layer::unknown};
     bool m_skipCloseAnimation{false};

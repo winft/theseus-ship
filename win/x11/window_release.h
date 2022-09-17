@@ -128,6 +128,10 @@ Win* create_remnant_window(Win& source)
     }
 
     transfer_remnant_data(source, *win);
+
+    win->client_machine = source.client_machine;
+    win->m_wmClientLeader = source.wmClientLeader();
+
     space_add_remnant(source, *win);
     return win;
 }

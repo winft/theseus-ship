@@ -90,9 +90,6 @@ void transfer_remnant_data(Win& source, Win& dest)
     dest.resource_name = source.resource_name;
     dest.resource_class = source.resource_class;
 
-    dest.client_machine = source.client_machine;
-    dest.m_wmClientLeader = source.wmClientLeader();
-
     dest.opaque_region = source.opaque_region;
     dest.central_output = source.central_output;
     dest.m_skipCloseAnimation = source.m_skipCloseAnimation;
