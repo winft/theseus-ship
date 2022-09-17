@@ -228,31 +228,7 @@ public:
         return false;
     }
 
-    virtual NET::WindowType windowType(bool direct = false) const
-    {
-        if (remnant) {
-            return remnant->data.window_type;
-        }
-
-        auto wt = info->windowType(supported_default_types);
-        if (direct || !control) {
-            return wt;
-        }
-
-        auto wt2 = control->rules.checkType(wt);
-        if (wt != wt2) {
-            wt = wt2;
-            // force hint change
-            info->setWindowType(wt);
-        }
-
-        // hacks here
-        if (wt == NET::Unknown) {
-            // this is more or less suggested in NETWM spec
-            wt = transient()->lead() ? NET::Dialog : NET::Normal;
-        }
-        return wt;
-    }
+    virtual NET::WindowType windowType(bool direct = false) const = 0;
 
     virtual bool isLockScreen() const
     {
@@ -777,9 +753,6 @@ public:
     Wrapland::Server::Surface* surface{nullptr};
     quint32 surface_id{0};
 
-    // TODO: These are X11-only properties, should go into a separate struct once we use class
-    //       templates only.
-    NET::WindowTypes supported_default_types{};
     int bit_depth{24};
     QMargins client_frame_extents;
 

@@ -85,6 +85,32 @@ public:
         return static_cast<bool>(this->control);
     }
 
+    NET::WindowType windowType(bool direct = false) const override
+    {
+        if (this->remnant) {
+            return this->remnant->data.window_type;
+        }
+
+        auto wt = this->info->windowType(this->supported_default_types);
+        if (direct || !this->control) {
+            return wt;
+        }
+
+        auto wt2 = this->control->rules.checkType(wt);
+        if (wt != wt2) {
+            wt = wt2;
+            // force hint change
+            this->info->setWindowType(wt);
+        }
+
+        // hacks here
+        if (wt == NET::Unknown) {
+            // this is more or less suggested in NETWM spec
+            wt = this->transient()->lead() ? NET::Dialog : NET::Normal;
+        }
+        return wt;
+    }
+
     x11::client_machine* get_client_machine() const override
     {
         return client_machine;
@@ -1337,6 +1363,7 @@ public:
     bool move_needs_server_update{false};
     bool move_resize_has_keyboard_grab{false};
 
+    NET::WindowTypes supported_default_types{};
     NET::Actions allowed_actions{};
 
     uint user_no_border{0};
