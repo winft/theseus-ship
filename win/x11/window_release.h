@@ -18,6 +18,14 @@
 namespace KWin::win::x11
 {
 
+// before being deleted, remove references to everything that's now owner by the remnant
+template<typename Win>
+void disown_data_passed_to_remnant(Win& win)
+{
+    win.client_machine = nullptr;
+    win.info = nullptr;
+}
+
 template<typename Space, typename Win>
 void remove_controlled_window_from_space(Space& space, Win* win)
 {
@@ -103,7 +111,7 @@ void finish_unmanaged_removal(Win* win, Win* remnant)
     Q_EMIT space.qobject->unmanagedRemoved(win->signal_id);
 
     if (remnant) {
-        win->disownDataPassedToDeleted();
+        disown_data_passed_to_remnant(*win);
         remnant->remnant->unref();
         delete win;
     } else {
@@ -255,7 +263,7 @@ void release_window(Win* win, bool on_shutdown)
     win->geometry_update.block--;
 
     if (del) {
-        win->disownDataPassedToDeleted();
+        disown_data_passed_to_remnant(*win);
         del->remnant->unref();
         delete win;
     } else {
@@ -329,7 +337,7 @@ void destroy_window(Win* win)
     win->geometry_update.block--;
 
     if (del) {
-        win->disownDataPassedToDeleted();
+        disown_data_passed_to_remnant(*win);
         del->remnant->unref();
         delete win;
     } else {

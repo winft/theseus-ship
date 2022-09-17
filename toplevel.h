@@ -702,14 +702,6 @@ public:
     virtual bool belongsToDesktop() const = 0;
     virtual void checkTransient(type* window) = 0;
 
-    // before being deleted, remove references to everything that's now
-    // owner by Deleted
-    void disownDataPassedToDeleted()
-    {
-        client_machine = nullptr;
-        info = nullptr;
-    }
-
     virtual void damageNotifyEvent()
     {
         m_isDamaged = true;
