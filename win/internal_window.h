@@ -489,7 +489,11 @@ public:
             this->leaveMoveResize();
         }
 
-        auto deleted = create_remnant_window<internal_window>(*this);
+        auto deleted = win::create_remnant_window<internal_window>(*this);
+        if (deleted) {
+            transfer_remnant_data(*this, *deleted);
+            space_add_remnant(*this, *deleted);
+        }
         Q_EMIT this->qobject->closed();
 
         this->control->destroy_decoration();

@@ -138,10 +138,7 @@ Win* create_remnant_window(Win& source)
         return nullptr;
     }
 
-    auto win = new Win(create_remnant(source), source.space);
-    transfer_remnant_data(source, *win);
-    space_add_remnant(source, *win);
-    return win;
+    return new Win(create_remnant(source), source.space);
 }
 
 }
