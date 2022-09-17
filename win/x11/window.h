@@ -85,16 +85,22 @@ public:
         return static_cast<bool>(this->control);
     }
 
-    NET::WindowType windowType(bool direct = false) const override
+    NET::WindowType get_window_type_direct() const override
     {
         if (this->remnant) {
             return window_type;
         }
+        return this->info->windowType(this->supported_default_types);
+    }
 
-        auto wt = this->info->windowType(this->supported_default_types);
-        if (direct || !this->control) {
+    NET::WindowType windowType() const override
+    {
+        auto wt = get_window_type_direct();
+        if (!this->control) {
             return wt;
         }
+
+        assert(!this->remnant);
 
         auto wt2 = this->control->rules.checkType(wt);
         if (wt != wt2) {

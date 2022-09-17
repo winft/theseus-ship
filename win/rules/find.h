@@ -35,7 +35,7 @@ void evaluate_rules(Win* win)
 template<typename Ruling, typename RefWin>
 bool match_rule(Ruling& ruling, RefWin const& ref_win)
 {
-    if (!ruling.matchType(ref_win.windowType(true))) {
+    if (!ruling.matchType(ref_win.get_window_type_direct())) {
         return false;
     }
     if (!ruling.matchWMClass(ref_win.resource_class, ref_win.resource_name)) {

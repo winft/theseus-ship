@@ -228,7 +228,12 @@ public:
         return false;
     }
 
-    virtual NET::WindowType windowType(bool direct = false) const = 0;
+    virtual NET::WindowType get_window_type_direct() const
+    {
+        return windowType();
+    }
+
+    virtual NET::WindowType windowType() const = 0;
 
     virtual bool isLockScreen() const
     {

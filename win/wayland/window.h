@@ -153,7 +153,7 @@ public:
         setup_scale_scene_notify(*this);
     }
 
-    NET::WindowType windowType(bool /*direct*/ = false) const override
+    NET::WindowType windowType() const override
     {
         return window_type;
     }

@@ -226,7 +226,7 @@ public:
         stream.nospace() << "\'internal_window:" << m_internalWindow << "\'";
     }
 
-    NET::WindowType windowType(bool /*direct*/ = false) const override
+    NET::WindowType windowType() const override
     {
         return window_type;
     }
