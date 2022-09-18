@@ -66,6 +66,23 @@ public:
             setup_scale_scene_notify(*this);
         }
     }
+
+    void setupCompositing() override
+    {
+        assert(!this->remnant);
+        assert(this->space.base.render->compositor->scene);
+        assert(this->damage_handle == XCB_NONE);
+
+        this->discard_shape();
+        this->damage_region = QRect({}, this->size());
+
+        add_scene_window(*this->space.base.render->compositor->scene, *this);
+
+        if (this->control) {
+            // for internalKeep()
+            update_visibility(this);
+        }
+    }
 };
 
 }

@@ -60,4 +60,17 @@ void setup_scale_scene_notify(Win& win)
         });
 }
 
+template<typename Win>
+void setup_compositing(Win& win)
+{
+    static_assert(!Win::is_toplevel);
+    assert(!win.remnant);
+    assert(win.space.base.render->compositor->scene);
+
+    win.discard_shape();
+    win.damage_region = QRect(QPoint(), win.size());
+
+    add_scene_window(*win.space.base.render->compositor->scene, win);
+}
+
 }

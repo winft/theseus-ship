@@ -129,6 +129,7 @@ Win* create_remnant_window(Win& source)
 
     transfer_remnant_data(source, *win);
 
+    assert(win->damage_handle == XCB_NONE);
     win->xcb_visual = source.xcb_visual;
     win->client_machine = source.client_machine;
     win->m_wmClientLeader = source.wmClientLeader();

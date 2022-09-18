@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "geo_block.h"
 #include "singleton_interface.h"
 #include "space_areas_helpers.h"
+#include "wayland/scene.h"
 #include "window_release.h"
 
 #include "render/wayland/buffer.h"
@@ -182,9 +183,9 @@ public:
         m_internalWindow->installEventFilter(qwin.get());
     }
 
-    bool setupCompositing() override
+    void setupCompositing() override
     {
-        return win::setup_compositing(*this, false);
+        wayland::setup_compositing(*this);
     }
 
     void add_scene_window_addon() override

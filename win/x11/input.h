@@ -11,6 +11,8 @@
 #include "win/deco.h"
 #include "win/x11/types.h"
 
+#include <xcb/shape.h>
+
 namespace KWin::win::x11
 {
 

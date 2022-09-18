@@ -25,11 +25,14 @@
 #include "utils/geo.h"
 #include "win/fullscreen.h"
 #include "win/meta.h"
+#include "win/scene.h"
 #include "win/window_setup_base.h"
 
 #include <csignal>
 #include <memory>
 #include <vector>
+#include <xcb/damage.h>
+#include <xcb/xfixes.h>
 
 namespace KWin::win::x11
 {
@@ -240,9 +243,35 @@ public:
         return Toplevel<Space>::iconGeometry();
     }
 
-    bool setupCompositing() override
+    void setupCompositing() override
     {
-        return x11::setup_compositing(*this);
+        assert(!this->remnant);
+        assert(damage_handle == XCB_NONE);
+
+        if (!this->space.base.render->compositor->scene) {
+            return;
+        }
+
+        damage_handle = xcb_generate_id(connection());
+        xcb_damage_create(
+            connection(), damage_handle, this->frameId(), XCB_DAMAGE_REPORT_LEVEL_NON_EMPTY);
+
+        this->discard_shape();
+        this->damage_region = QRect({}, this->size());
+
+        add_scene_window(*this->space.base.render->compositor->scene, *this);
+
+        if (this->control) {
+            // for internalKeep()
+            update_visibility(this);
+        } else {
+            // With unmanaged windows there is a race condition between the client painting the
+            // window and us setting up damage tracking.  If the client wins we won't get a damage
+            // event even though the window has been painted.  To avoid this we mark the whole
+            // window as damaged and schedule a repaint immediately after creating the damage
+            // object.
+            this->addDamageFull();
+        }
     }
 
     void finishCompositing() override
@@ -329,6 +358,89 @@ public:
             }
         }
         Toplevel<Space>::addDamage(damage);
+    }
+
+    /**
+     * Resets the damage state and sends a request for the damage region.
+     * A call to this function must be followed by a call to getDamageRegionReply(),
+     * or the reply will be leaked.
+     *
+     * Returns true if the window was damaged, and false otherwise.
+     */
+    bool resetAndFetchDamage()
+    {
+        if (!this->is_damaged) {
+            return false;
+        }
+
+        assert(damage_handle != XCB_NONE);
+
+        xcb_connection_t* conn = connection();
+
+        // Create a new region and copy the damage region to it,
+        // resetting the damaged state.
+        xcb_xfixes_region_t region = xcb_generate_id(conn);
+        xcb_xfixes_create_region(conn, region, 0, nullptr);
+        xcb_damage_subtract(conn, this->damage_handle, 0, region);
+
+        // Send a fetch-region request and destroy the region
+        damage_region_cookie = xcb_xfixes_fetch_region_unchecked(conn, region);
+        xcb_xfixes_destroy_region(conn, region);
+
+        this->is_damaged = false;
+        is_damage_reply_pending = true;
+
+        return is_damage_reply_pending;
+    }
+
+    /**
+     * Gets the reply from a previous call to resetAndFetchDamage().
+     * Calling this function is a no-op if there is no pending reply.
+     * Call damage() to return the fetched region.
+     */
+    void getDamageRegionReply()
+    {
+        if (!is_damage_reply_pending) {
+            return;
+        }
+
+        is_damage_reply_pending = false;
+
+        // Get the fetch-region reply
+        auto reply = xcb_xfixes_fetch_region_reply(connection(), damage_region_cookie, nullptr);
+        if (!reply) {
+            return;
+        }
+
+        // Convert the reply to a QRegion. The region is relative to the content geometry.
+        auto count = xcb_xfixes_fetch_region_rectangles_length(reply);
+        QRegion region;
+
+        if (count > 1 && count < 16) {
+            auto rects = xcb_xfixes_fetch_region_rectangles(reply);
+
+            QVector<QRect> qrects;
+            qrects.reserve(count);
+
+            for (int i = 0; i < count; i++) {
+                qrects << QRect(rects[i].x, rects[i].y, rects[i].width, rects[i].height);
+            }
+            region.setRects(qrects.constData(), count);
+        } else {
+            region += QRect(
+                reply->extents.x, reply->extents.y, reply->extents.width, reply->extents.height);
+        }
+
+        region.translate(
+            -QPoint(this->client_frame_extents.left(), this->client_frame_extents.top()));
+        this->repaints_region |= region;
+
+        if (this->has_in_content_deco) {
+            region.translate(-QPoint(left_border(this), top_border(this)));
+        }
+        this->damage_region |= region;
+
+        free(reply);
     }
 
     void applyWindowRules() override
@@ -1460,6 +1572,10 @@ public:
 
     base::x11::xcb::geometry_hints geometry_hints;
     base::x11::xcb::motif_hints motif_hints;
+
+    xcb_damage_damage_t damage_handle{XCB_NONE};
+    bool is_damage_reply_pending{false};
+    xcb_xfixes_fetch_region_cookie_t damage_region_cookie;
 
     QTimer* focus_out_timer{nullptr};
     QTimer* ping_timer{nullptr};

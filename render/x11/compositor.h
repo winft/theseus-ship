@@ -69,6 +69,7 @@ public:
     using effects_t = effects_handler_impl<type>;
     using overlay_window_t = x11::overlay_window<type>;
     using space_t = typename abstract_type::space_t;
+    using x11_ref_window_t = typename space_t::x11_window;
     using window_t = typename space_t::window_t::render_t;
     using effect_window_t = typename window_t::effect_window_t;
 
@@ -435,7 +436,7 @@ private:
 
             // Create a list of damaged windows and reset the damage state of each window and fetch
             // the damage region without waiting for a reply
-            if (win->resetAndFetchDamage()) {
+            if (static_cast<x11_ref_window_t*>(win)->resetAndFetchDamage()) {
                 damaged_windows.push_back(win);
             }
 
@@ -476,7 +477,7 @@ private:
         // texture
         for (auto win : damaged_windows) {
             discard_lanczos_texture(win);
-            win->getDamageRegionReply();
+            static_cast<x11_ref_window_t*>(win)->getDamageRegionReply();
             has_pending_repaints |= win->has_pending_repaints();
         }
 

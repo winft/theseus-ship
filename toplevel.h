@@ -27,8 +27,6 @@
 #include <functional>
 #include <memory>
 #include <optional>
-#include <xcb/damage.h>
-#include <xcb/xfixes.h>
 
 namespace KWin
 {
@@ -94,7 +92,6 @@ public:
 
     // Relative to client geometry.
     QRegion damage_region;
-    xcb_damage_damage_t damage_handle{XCB_NONE};
 
     // Relative to frame geometry.
     QRegion repaints_region;
@@ -316,12 +313,7 @@ public:
         return bit_depth == 32;
     }
 
-    virtual bool setupCompositing()
-    {
-        // Should never be called, always through the child classes instead.
-        assert(false);
-        return false;
-    }
+    virtual void setupCompositing() = 0;
 
     virtual void add_scene_window_addon()
     {
@@ -480,88 +472,6 @@ public:
     {
         m_layer = layer;
         ;
-    }
-
-    /**
-     * Resets the damage state and sends a request for the damage region.
-     * A call to this function must be followed by a call to getDamageRegionReply(),
-     * or the reply will be leaked.
-     *
-     * Returns true if the window was damaged, and false otherwise.
-     */
-    bool resetAndFetchDamage()
-    {
-        if (!is_damaged) {
-            return false;
-        }
-
-        assert(damage_handle != XCB_NONE);
-
-        xcb_connection_t* conn = connection();
-
-        // Create a new region and copy the damage region to it,
-        // resetting the damaged state.
-        xcb_xfixes_region_t region = xcb_generate_id(conn);
-        xcb_xfixes_create_region(conn, region, 0, nullptr);
-        xcb_damage_subtract(conn, damage_handle, 0, region);
-
-        // Send a fetch-region request and destroy the region
-        m_regionCookie = xcb_xfixes_fetch_region_unchecked(conn, region);
-        xcb_xfixes_destroy_region(conn, region);
-
-        is_damaged = false;
-        m_damageReplyPending = true;
-
-        return m_damageReplyPending;
-    }
-
-    /**
-     * Gets the reply from a previous call to resetAndFetchDamage().
-     * Calling this function is a no-op if there is no pending reply.
-     * Call damage() to return the fetched region.
-     */
-    void getDamageRegionReply()
-    {
-        if (!m_damageReplyPending) {
-            return;
-        }
-
-        m_damageReplyPending = false;
-
-        // Get the fetch-region reply
-        auto reply = xcb_xfixes_fetch_region_reply(connection(), m_regionCookie, nullptr);
-        if (!reply) {
-            return;
-        }
-
-        // Convert the reply to a QRegion. The region is relative to the content geometry.
-        auto count = xcb_xfixes_fetch_region_rectangles_length(reply);
-        QRegion region;
-
-        if (count > 1 && count < 16) {
-            auto rects = xcb_xfixes_fetch_region_rectangles(reply);
-
-            QVector<QRect> qrects;
-            qrects.reserve(count);
-
-            for (int i = 0; i < count; i++) {
-                qrects << QRect(rects[i].x, rects[i].y, rects[i].width, rects[i].height);
-            }
-            region.setRects(qrects.constData(), count);
-        } else {
-            region += QRect(
-                reply->extents.x, reply->extents.y, reply->extents.width, reply->extents.height);
-        }
-
-        region.translate(-QPoint(client_frame_extents.left(), client_frame_extents.top()));
-        repaints_region |= region;
-
-        if (has_in_content_deco) {
-            region.translate(-QPoint(win::left_border(this), win::top_border(this)));
-        }
-        damage_region |= region;
-
-        free(reply);
     }
 
     bool skipsCloseAnimation() const
@@ -759,7 +669,6 @@ public:
         : space{space}
         , internal_id{QUuid::createUuid()}
         , signal_id{++space.window_id}
-        , m_damageReplyPending(false)
     {
         space.windows_map.insert({signal_id, this});
         m_transient.reset(transient);
@@ -806,9 +715,6 @@ private:
 
     mutable bool m_render_shape_valid{false};
     mutable QRegion m_render_shape;
-
-    bool m_damageReplyPending;
-    xcb_xfixes_fetch_region_cookie_t m_regionCookie;
 
     std::unique_ptr<win::transient<type>> m_transient;
 

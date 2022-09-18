@@ -99,9 +99,9 @@ public:
         return true;
     }
 
-    bool setupCompositing() override
+    void setupCompositing() override
     {
-        return win::setup_compositing(*this, false);
+        setup_compositing(*this);
     }
 
     void add_scene_window_addon() override

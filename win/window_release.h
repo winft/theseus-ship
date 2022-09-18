@@ -77,7 +77,6 @@ void transfer_remnant_data(Win& source, Win& dest)
 
     dest.xcb_window.reset(source.xcb_window, false);
     dest.ready_for_painting = source.ready_for_painting;
-    dest.damage_handle = XCB_NONE;
     dest.damage_region = source.damage_region;
     dest.repaints_region = source.repaints_region;
     dest.layer_repaints_region = source.layer_repaints_region;

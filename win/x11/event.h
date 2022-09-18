@@ -25,6 +25,8 @@
 #include "win/desktop_space.h"
 #include "win/meta.h"
 
+#include <xcb/damage.h>
+
 namespace KWin::win::x11
 {
 
