@@ -303,7 +303,7 @@ public:
         }
 
         if (isWaitingForMoveResizeSync()) {
-            this->m_isDamaged = true;
+            this->is_damaged = true;
             return;
         }
 

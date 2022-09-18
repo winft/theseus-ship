@@ -23,6 +23,7 @@
 #include <NETWM>
 #include <QMatrix4x4>
 #include <QUuid>
+#include <cassert>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -99,7 +100,7 @@ public:
     QRegion repaints_region;
     QRegion layer_repaints_region;
     bool ready_for_painting{false};
-    bool m_isDamaged{false};
+    bool is_damaged{false};
     bool is_shape{false};
 
     /// Area to be opaque. Only provides valuable information if hasAlpha is @c true.
@@ -450,7 +451,7 @@ public:
         repaints_region += damage.translated(render_region.topLeft() - pos());
         add_repaint_outputs(render_region);
 
-        m_isDamaged = true;
+        is_damaged = true;
         damage_region += damage;
         Q_EMIT qobject->damaged(damage);
     }
@@ -490,13 +491,11 @@ public:
      */
     bool resetAndFetchDamage()
     {
-        if (!m_isDamaged)
+        if (!is_damaged) {
             return false;
-
-        if (damage_handle == XCB_NONE) {
-            m_isDamaged = false;
-            return true;
         }
+
+        assert(damage_handle != XCB_NONE);
 
         xcb_connection_t* conn = connection();
 
@@ -510,7 +509,7 @@ public:
         m_regionCookie = xcb_xfixes_fetch_region_unchecked(conn, region);
         xcb_xfixes_destroy_region(conn, region);
 
-        m_isDamaged = false;
+        is_damaged = false;
         m_damageReplyPending = true;
 
         return m_damageReplyPending;
@@ -638,7 +637,7 @@ public:
 
     virtual void damageNotifyEvent()
     {
-        m_isDamaged = true;
+        is_damaged = true;
 
         // Note: The region is supposed to specify the damage extents,
         //       but we don't know it at this point. No one who connects

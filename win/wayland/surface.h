@@ -84,7 +84,7 @@ void set_surface(Win* win, Wrapland::Server::Surface* surface)
             // TODO improve to only update actual visual area
             if (win->ready_for_painting) {
                 win->addDamageFull();
-                win->m_isDamaged = true;
+                win->is_damaged = true;
             }
         });
     QObject::connect(

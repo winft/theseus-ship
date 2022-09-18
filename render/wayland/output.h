@@ -318,6 +318,7 @@ private:
                     continue;
                 }
             }
+
             window_it++;
 
             if (prepare_repaint(win)) {
@@ -328,13 +329,18 @@ private:
                        && max_coverage_output(win) == &base) {
                 frame_windows.push_back(win);
             }
-            if (win->resetAndFetchDamage()) {
+
+            if (win->is_damaged) {
+                assert(win->render);
+                assert(win->render->effect);
+
+                win->is_damaged = false;
+
                 // Discard the cached lanczos texture
                 if (win->transient()->annexed) {
                     win = win::lead_of_annexed_transient(win);
                 }
-                assert(win->render);
-                assert(win->render->effect);
+
                 auto const texture = win->render->effect->data(LanczosCacheRole);
                 if (texture.isValid()) {
                     delete static_cast<GLTexture*>(texture.template value<void*>());
