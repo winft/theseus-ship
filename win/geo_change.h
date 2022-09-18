@@ -41,7 +41,7 @@ int get_pack_position_left(Space const& space,
         return oldX;
     }
 
-    const int desktop = window->desktop() == 0 || window->isOnAllDesktops()
+    const int desktop = window->desktop() == 0 || on_all_desktops(window)
         ? space.virtual_desktop_manager->current()
         : window->desktop();
     for (auto win : space.windows) {
@@ -88,7 +88,7 @@ int get_pack_position_right(Space const& space,
         return oldX;
     }
 
-    int const desktop = window->desktop() == 0 || window->isOnAllDesktops()
+    int const desktop = window->desktop() == 0 || on_all_desktops(window)
         ? space.virtual_desktop_manager->current()
         : window->desktop();
     for (auto win : space.windows) {
@@ -127,7 +127,7 @@ int get_pack_position_up(Space const& space,
         return oldY;
     }
 
-    int const desktop = window->desktop() == 0 || window->isOnAllDesktops()
+    int const desktop = window->desktop() == 0 || on_all_desktops(window)
         ? space.virtual_desktop_manager->current()
         : window->desktop();
     for (auto win : space.windows) {
@@ -172,7 +172,7 @@ int get_pack_position_down(Space const& space,
     if (oldY >= newY) {
         return oldY;
     }
-    int const desktop = window->desktop() == 0 || window->isOnAllDesktops()
+    int const desktop = window->desktop() == 0 || on_all_desktops(window)
         ? space.virtual_desktop_manager->current()
         : window->desktop();
     for (auto win : space.windows) {

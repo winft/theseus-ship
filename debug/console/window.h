@@ -242,7 +242,7 @@ public:
 
     bool isOnAllDesktops() const override
     {
-        return ref_win->isOnAllDesktops();
+        return win::on_all_desktops(ref_win);
     }
 
     void setOnAllDesktops(bool set) override

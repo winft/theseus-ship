@@ -249,7 +249,7 @@ void place_smart(Win* window, const QRect& area, placement /*next*/)
     long int overlap, min_overlap = 0;
     int x_optimal, y_optimal;
     int possible;
-    int desktop = window->desktop() == 0 || window->isOnAllDesktops()
+    int desktop = window->desktop() == 0 || on_all_desktops(window)
         ? window->space.virtual_desktop_manager->current()
         : window->desktop();
 
@@ -495,7 +495,7 @@ void place_on_main_window(Win* window, const QRect& area, placement nextPlacemen
         ++mains_count;
         place_on2 = lead;
 
-        if (lead->isOnCurrentDesktop()) {
+        if (on_current_desktop(lead)) {
             if (place_on == nullptr) {
                 place_on = lead;
             } else {
@@ -561,8 +561,8 @@ void unclutter_desktop(Space& space)
     auto const& windows = space.windows;
     for (int i = windows.size() - 1; i >= 0; i--) {
         auto client = windows.at(i);
-        if (!client->control || !client->isOnCurrentDesktop() || client->control->minimized
-            || client->isOnAllDesktops() || !client->isMovable()) {
+        if (!client->control || !on_current_desktop(client) || client->control->minimized
+            || on_all_desktops(client) || !client->isMovable()) {
             continue;
         }
         auto const placementArea = space_window_area(space, PlacementArea, client);

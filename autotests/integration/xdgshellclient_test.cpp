@@ -1108,9 +1108,9 @@ void TestXdgShellClient::testSendClientWithTransientToDesktop()
     QVERIFY(contains(c->transient()->children, transient));
 
     QCOMPARE(c->desktop(), 1);
-    QVERIFY(!c->isOnAllDesktops());
+    QVERIFY(!win::on_all_desktops(c));
     QCOMPARE(transient->desktop(), 1);
-    QVERIFY(!transient->isOnAllDesktops());
+    QVERIFY(!win::on_all_desktops(transient));
     win::active_window_to_desktop(*Test::app()->base.space, 2);
 
     QCOMPARE(c->desktop(), 1);

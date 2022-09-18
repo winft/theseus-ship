@@ -129,7 +129,7 @@ bool perform_mouse_command(Win& win,
                     // Can never raise above "it".
                     continue;
                 }
-                mustReplay = !(window->isOnCurrentDesktop()
+                mustReplay = !(on_current_desktop(window)
                                && window->frameGeometry().intersects(win.frameGeometry()));
             }
         }

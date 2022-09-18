@@ -33,7 +33,7 @@ void startup_id_changed(Win* win)
     int desktop = win->space.virtual_desktop_manager->current();
     if (asn_data.desktop() != 0)
         desktop = asn_data.desktop();
-    if (!win->isOnAllDesktops()) {
+    if (!on_all_desktops(win)) {
         send_window_to_desktop(win->space, win, desktop, true);
     }
     if (asn_data.xinerama() != -1) {
@@ -45,7 +45,7 @@ void startup_id_changed(Win* win)
     auto const timestamp = asn_id.timestamp();
     if (timestamp != 0) {
         auto activate = allow_window_activation(win->space, win, timestamp);
-        if (asn_data.desktop() != 0 && !win->isOnCurrentDesktop()) {
+        if (asn_data.desktop() != 0 && !on_current_desktop(win)) {
             // it was started on different desktop than current one
             activate = false;
         }

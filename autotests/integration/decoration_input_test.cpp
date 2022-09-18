@@ -251,7 +251,7 @@ void KWin::DecorationInputTest::testDoubleClick()
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
-    QVERIFY(!c->isOnAllDesktops());
+    QVERIFY(!win::on_all_desktops(c));
     quint32 timestamp = 1;
     MOTION(QPoint(c->frameGeometry().center().x(), win::frame_to_client_pos(c, QPoint()).y() / 2));
 
@@ -260,14 +260,14 @@ void KWin::DecorationInputTest::testDoubleClick()
     RELEASE;
     PRESS;
     RELEASE;
-    QVERIFY(c->isOnAllDesktops());
+    QVERIFY(win::on_all_desktops(c));
     // double click again
     PRESS;
     RELEASE;
-    QVERIFY(c->isOnAllDesktops());
+    QVERIFY(win::on_all_desktops(c));
     PRESS;
     RELEASE;
-    QVERIFY(!c->isOnAllDesktops());
+    QVERIFY(!win::on_all_desktops(c));
 
     // test top most deco pixel, BUG: 362860
     win::move(c, QPoint(0, 0));
@@ -280,10 +280,10 @@ void KWin::DecorationInputTest::testDoubleClick()
     // double click
     PRESS;
     RELEASE;
-    QVERIFY(!c->isOnAllDesktops());
+    QVERIFY(!win::on_all_desktops(c));
     PRESS;
     RELEASE;
-    QVERIFY(c->isOnAllDesktops());
+    QVERIFY(win::on_all_desktops(c));
 }
 
 void DecorationInputTest::testDoubleTap_data()
@@ -302,7 +302,7 @@ void KWin::DecorationInputTest::testDoubleTap()
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
-    QVERIFY(!c->isOnAllDesktops());
+    QVERIFY(!win::on_all_desktops(c));
     quint32 timestamp = 1;
     const QPoint tapPoint(c->frameGeometry().center().x(),
                           win::frame_to_client_pos(c, QPoint()).y() / 2);
@@ -312,14 +312,14 @@ void KWin::DecorationInputTest::testDoubleTap()
     Test::touch_up(0, timestamp++);
     Test::touch_down(0, tapPoint, timestamp++);
     Test::touch_up(0, timestamp++);
-    QVERIFY(c->isOnAllDesktops());
+    QVERIFY(win::on_all_desktops(c));
     // double tap again
     Test::touch_down(0, tapPoint, timestamp++);
     Test::touch_up(0, timestamp++);
-    QVERIFY(c->isOnAllDesktops());
+    QVERIFY(win::on_all_desktops(c));
     Test::touch_down(0, tapPoint, timestamp++);
     Test::touch_up(0, timestamp++);
-    QVERIFY(!c->isOnAllDesktops());
+    QVERIFY(!win::on_all_desktops(c));
 
     // test top most deco pixel, BUG: 362860
     //
@@ -334,10 +334,10 @@ void KWin::DecorationInputTest::testDoubleTap()
     QTEST(Test::app()->base.space->input->touch->focus.deco->decoration()->sectionUnderMouse(),
           "expectedSection");
     Test::touch_up(0, timestamp++);
-    QVERIFY(!c->isOnAllDesktops());
+    QVERIFY(!win::on_all_desktops(c));
     Test::touch_down(0, decoPoint, timestamp++);
     Test::touch_up(0, timestamp++);
-    QVERIFY(c->isOnAllDesktops());
+    QVERIFY(win::on_all_desktops(c));
 }
 
 void DecorationInputTest::testHover()

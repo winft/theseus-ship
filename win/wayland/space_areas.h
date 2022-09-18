@@ -6,6 +6,7 @@
 #pragma once
 
 #include "base/output_helpers.h"
+#include "win/desktop_get.h"
 #include "win/space_areas.h"
 #include "win/virtual_desktops.h"
 
@@ -74,7 +75,7 @@ void update_space_areas(Window* win,
         = strut_rects{strut_rect(win->frameGeometry(), margins_to_strut_area(strut))};
     auto rect = desktop_area - margins(QRect({}, win->space.base.topology.size));
 
-    if (win->isOnAllDesktops()) {
+    if (on_all_desktops(win)) {
         for (int desktop = 1; desktop <= desktops_count; ++desktop) {
             areas.work[desktop] = areas.work[desktop].intersected(rect);
 

@@ -204,7 +204,7 @@ void update_visibility(Win* win)
     }
 
     win->info->setState(NET::States(), NET::Hidden);
-    if (!win->isOnCurrentDesktop()) {
+    if (!on_current_desktop(win)) {
         if (win->space.base.render->compositor->scene
             && kwinApp()->options->qobject->hiddenPreviews() != base::HiddenPreviewsNever) {
             internal_keep(win);

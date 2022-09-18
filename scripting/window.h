@@ -365,7 +365,7 @@ public:
 
     bool isOnAllDesktops() const override
     {
-        return m_client->isOnAllDesktops();
+        return win::on_all_desktops(m_client);
     }
 
     void setOnAllDesktops(bool set) override
@@ -375,12 +375,12 @@ public:
 
     bool isOnDesktop(unsigned int desktop) const override
     {
-        return m_client->isOnDesktop(desktop);
+        return win::on_desktop(m_client, desktop);
     }
 
     bool isOnCurrentDesktop() const override
     {
-        return m_client->isOnCurrentDesktop();
+        return win::on_current_desktop(m_client);
     }
 
     QByteArray windowRole() const override

@@ -127,7 +127,7 @@ void PlasmaSurfaceTest::testRoleOnAllDesktops()
     QCOMPARE(Test::app()->base.space->stacking.active, c);
 
     // currently the role is not yet set, so the window should not be on all desktops
-    QCOMPARE(c->isOnAllDesktops(), false);
+    QCOMPARE(win::on_all_desktops(c), false);
 
     // now let's try to change that
     QSignalSpy onAllDesktopsSpy(c->qobject.get(), &win::window_qobject::desktopChanged);
@@ -136,7 +136,7 @@ void PlasmaSurfaceTest::testRoleOnAllDesktops()
     plasmaSurface->setRole(role);
     QFETCH(bool, expectedOnAllDesktops);
     QCOMPARE(onAllDesktopsSpy.wait(500), expectedOnAllDesktops);
-    QCOMPARE(c->isOnAllDesktops(), expectedOnAllDesktops);
+    QCOMPARE(win::on_all_desktops(c), expectedOnAllDesktops);
 
     // let's create a second window where we init a little bit different
     // first creating the PlasmaSurface then the Shell Surface
@@ -152,7 +152,7 @@ void PlasmaSurfaceTest::testRoleOnAllDesktops()
     QVERIFY(c2);
     QVERIFY(c != c2);
 
-    QCOMPARE(c2->isOnAllDesktops(), expectedOnAllDesktops);
+    QCOMPARE(win::on_all_desktops(c2), expectedOnAllDesktops);
 }
 
 void PlasmaSurfaceTest::testAcceptsFocus_data()

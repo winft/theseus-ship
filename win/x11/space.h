@@ -84,7 +84,7 @@ public:
                                  if (!window->control) {
                                      continue;
                                  }
-                                 if (window->isOnAllDesktops()) {
+                                 if (on_all_desktops(window)) {
                                      continue;
                                  }
                                  if (window->desktop() <= desktop_count) {

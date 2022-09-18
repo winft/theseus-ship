@@ -329,7 +329,7 @@ void restack_window(Win* win,
             auto c = dynamic_cast<Win*>(*it);
 
             if (!c
-                || !(is_normal(*it) && c->isShown() && (*it)->isOnCurrentDesktop()
+                || !(is_normal(*it) && c->isShown() && on_current_desktop(*it)
                      && on_screen(*it, win->central_output))) {
                 continue;
             }

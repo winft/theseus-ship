@@ -71,7 +71,7 @@ void perform_window_operation(Win* window, base::options_qobject::WindowOperatio
         set_minimized(window, true);
         break;
     case base::options_qobject::OnAllDesktopsOp:
-        set_on_all_desktops(window, !window->isOnAllDesktops());
+        set_on_all_desktops(window, !on_all_desktops(window));
         break;
     case base::options_qobject::FullScreenOp:
         window->setFullScreen(!window->control->fullscreen, true);

@@ -226,7 +226,7 @@ void request_focus(Space& space,
     if (take_focus) {
         auto modal = window->findModal();
         if (modal && modal->control && modal != window) {
-            if (!modal->isOnDesktop(window->desktop())) {
+            if (!on_desktop(modal, window->desktop())) {
                 set_desktop(modal, window->desktop());
             }
             if (!modal->isShown() && !modal->control->minimized) {
@@ -298,7 +298,7 @@ typename Space::window_t* window_under_mouse(Space const& space, base::output co
         // Rule out windows which are not really visible.
         // The screen test is rather superfluous for xrandr & twinview since the geometry would
         // differ. -> TODO: might be dropped
-        if (!(window->isShown() && window->isOnCurrentDesktop() && on_screen(window, output)))
+        if (!(window->isShown() && on_current_desktop(window) && on_screen(window, output)))
             continue;
 
         if (window->frameGeometry().contains(space.input->cursor->pos())) {
@@ -466,7 +466,7 @@ void activate_window_impl(Space& space, Win* window, bool force)
         return;
     }
     raise_window(&space, window);
-    if (!window->isOnCurrentDesktop()) {
+    if (!on_current_desktop(window)) {
         focus_blocker blocker(space);
         space.virtual_desktop_manager->setCurrent(window->desktop());
     }
@@ -596,7 +596,7 @@ bool activate_next_window(Space& space, typename Space::window_t* window)
 template<typename Space, typename Win>
 void process_window_hidden(Space& space, Win* window)
 {
-    assert(!window->isShown() || !window->isOnCurrentDesktop());
+    assert(!window->isShown() || !on_current_desktop(window));
     activate_next_window(space, window);
 }
 
@@ -608,7 +608,7 @@ typename Space::window_t* find_window_to_activate_on_desktop(Space& space, unsig
 
     if (space.move_resize_window && stacking.active == space.move_resize_window
         && focus_chain_at_desktop_contains(stacking.focus_chain, stacking.active, desktop)
-        && stacking.active->isShown() && stacking.active->isOnCurrentDesktop()) {
+        && stacking.active->isShown() && on_current_desktop(stacking.active)) {
         // A requestFocus call will fail, as the client is already active
         return stacking.active;
     }
@@ -622,7 +622,7 @@ typename Space::window_t* find_window_to_activate_on_desktop(Space& space, unsig
                 continue;
             }
 
-            if (!(window->isShown() && window->isOnDesktop(desktop) && on_active_screen(window)))
+            if (!(window->isShown() && on_desktop(window, desktop) && on_active_screen(window)))
                 continue;
 
             if (window->frameGeometry().contains(space.input->cursor->pos())) {
@@ -648,7 +648,7 @@ void activate_window_on_new_desktop(Space& space, unsigned int desktop)
     if (kwinApp()->options->qobject->focusPolicyIsReasonable()) {
         c = find_window_to_activate_on_desktop(space, desktop);
     } else if (stacking.active && stacking.active->isShown()
-               && stacking.active->isOnCurrentDesktop()) {
+               && on_current_desktop(stacking.active)) {
         // If "unreasonable focus policy" and stacking.active is on_all_desktops and
         // under mouse (Hence == stacking.last_active), conserve focus.
         // (Thanks to Volker Schatz <V.Schatz at thphys.uni-heidelberg.de>)
@@ -689,7 +689,7 @@ bool activate_window_direction(Space& space,
             continue;
         }
 
-        if (wants_tab_focus(client) && *i != c && client->isOnDesktop(d)
+        if (wants_tab_focus(client) && *i != c && on_desktop(client, d)
             && !client->control->minimized) {
             // Centre of the other window
             const QPoint other(client->pos().x() + client->size().width() / 2,
@@ -748,7 +748,7 @@ void activate_window_direction(Space& space, win::direction direction)
 
     auto c = space.stacking.active;
     int desktopNumber
-        = c->isOnAllDesktops() ? space.virtual_desktop_manager->current() : c->desktop();
+        = on_all_desktops(c) ? space.virtual_desktop_manager->current() : c->desktop();
 
     // Centre of the active window
     QPoint curPos(c->pos().x() + c->size().width() / 2, c->pos().y() + c->size().height() / 2);
@@ -824,7 +824,7 @@ void set_showing_desktop(Space& space, bool showing)
         blocker block(space.stacking.order);
         for (int i = static_cast<int>(space.stacking.order.stack.size()) - 1; i > -1; --i) {
             auto c = space.stacking.order.stack.at(i);
-            if (c->isOnCurrentDesktop()) {
+            if (on_current_desktop(c)) {
                 if (is_dock(c)) {
                     update_layer(c);
                 } else if (is_desktop(c) && c->isShown()) {

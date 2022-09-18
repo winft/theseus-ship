@@ -220,7 +220,7 @@ void release_window(Win* win, bool on_shutdown)
     finish_rules(win);
     win->geometry_update.block++;
 
-    if (win->isOnCurrentDesktop() && win->isShown()) {
+    if (on_current_desktop(win) && win->isShown()) {
         win->space.base.render->compositor->addRepaint(visible_rect(win));
     }
 
@@ -335,7 +335,7 @@ void destroy_window(Win* win)
     finish_rules(win);
     win->geometry_update.block++;
 
-    if (win->isOnCurrentDesktop() && win->isShown()) {
+    if (on_current_desktop(win) && win->isShown()) {
         win->space.base.render->compositor->addRepaint(visible_rect(win));
     }
 

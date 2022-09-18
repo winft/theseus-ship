@@ -101,7 +101,7 @@ typename Space::window_t* top_client_on_desktop(Space* space,
         = unconstrained ? space->stacking.order.pre_stack : space->stacking.order.stack;
     for (auto it = std::crbegin(list); it != std::crend(list); it++) {
         auto c = *it;
-        if (c && c->isOnDesktop(desktop) && c->isShown()) {
+        if (c && on_desktop(c, desktop) && c->isShown()) {
             if (output && c->central_output != output) {
                 continue;
             }
@@ -267,13 +267,12 @@ void raise_or_lower_client(Space* space, Window* window)
 
     if (space->stacking.most_recently_raised
         && contains(space->stacking.order.stack, space->stacking.most_recently_raised)
-        && space->stacking.most_recently_raised->isShown() && window->isOnCurrentDesktop()) {
+        && space->stacking.most_recently_raised->isShown() && on_current_desktop(window)) {
         topmost = space->stacking.most_recently_raised;
     } else {
         topmost = top_client_on_desktop(
             space,
-            window->isOnAllDesktops() ? space->virtual_desktop_manager->current()
-                                      : window->desktop(),
+            on_all_desktops(window) ? space->virtual_desktop_manager->current() : window->desktop(),
             kwinApp()->options->qobject->isSeparateScreenFocus() ? window->central_output
                                                                  : nullptr);
     }

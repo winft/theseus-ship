@@ -11,8 +11,6 @@
 #include "transient.h"
 #include "virtual_desktops.h"
 
-#include "main.h"
-
 namespace KWin::win
 {
 
@@ -136,9 +134,11 @@ void leave_desktop(Win* win, virtual_desktop* virtualDesktop)
 template<typename Win>
 void propagate_on_all_desktops_to_children(Win& window)
 {
-    for (auto const& transient : window.transient()->children) {
-        if (transient->isOnAllDesktops() != window.isOnAllDesktops()) {
-            set_on_all_desktops(transient, window.isOnAllDesktops());
+    auto all_desk = on_all_desktops(&window);
+
+    for (auto const& child : window.transient()->children) {
+        if (on_all_desktops(child) != all_desk) {
+            set_on_all_desktops(child, all_desk);
         }
     }
 }

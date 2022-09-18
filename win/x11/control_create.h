@@ -376,10 +376,10 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
                 }
 
                 maincl = lead;
-                if (lead->isOnCurrentDesktop()) {
+                if (on_current_desktop(lead)) {
                     on_current = true;
                 }
-                if (lead->isOnAllDesktops()) {
+                if (on_all_desktops(lead)) {
                     on_all = true;
                 }
             }
@@ -593,11 +593,11 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
         // If session saving, force showing new windows (i.e. "save file?" dialogs etc.)
         // also force if activation is allowed
-        if (!win->isOnCurrentDesktop() && !isMapped && !session && (allow || isSessionSaving)) {
+        if (!on_current_desktop(win) && !isMapped && !session && (allow || isSessionSaving)) {
             space.virtual_desktop_manager->setCurrent(win->desktop());
         }
 
-        if (win->isOnCurrentDesktop() && !isMapped && !allow
+        if (on_current_desktop(win) && !isMapped && !allow
             && (!session || session->stackingOrder < 0)) {
             restack_client_under_active(&win->space, win);
         }
@@ -605,7 +605,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         update_visibility(win);
 
         if (!isMapped) {
-            if (allow && win->isOnCurrentDesktop()) {
+            if (allow && on_current_desktop(win)) {
                 if (!is_special_window(win)) {
                     if (kwinApp()->options->qobject->focusPolicyIsReasonable()
                         && wants_tab_focus(win)) {

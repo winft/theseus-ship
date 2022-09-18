@@ -6,6 +6,7 @@
 #pragma once
 
 #include "deco.h"
+#include "desktop_get.h"
 #include "net.h"
 #include "types.h"
 
@@ -30,7 +31,7 @@ static inline bool is_irrelevant(Win1 const* window, Win2 const* regarding, int 
     if (!window->isShown()) {
         return true;
     }
-    if (!window->isOnDesktop(desktop)) {
+    if (!on_desktop(window, desktop)) {
         return true;
     }
     if (is_desktop(window)) {

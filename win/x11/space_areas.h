@@ -54,7 +54,7 @@ void update_space_areas(Window* win,
     // or having some content appear offscreen (Relatively rare compared to other).
     auto has_offscreen_xinerama_strut = win::x11::has_offscreen_xinerama_strut(win);
 
-    if (win->isOnAllDesktops()) {
+    if (on_all_desktops(win)) {
         for (int desktop = 1; desktop <= desktops_count; ++desktop) {
             if (!has_offscreen_xinerama_strut) {
                 areas.work[desktop] = areas.work[desktop].intersected(client_area);

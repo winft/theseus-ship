@@ -147,7 +147,7 @@ template<typename Space>
 void active_window_set_on_all_desktops(Space& space)
 {
     if (has_usable_active_window(space)) {
-        set_on_all_desktops(space.stacking.active, !space.stacking.active->isOnAllDesktops());
+        set_on_all_desktops(space.stacking.active, !on_all_desktops(space.stacking.active));
     }
 }
 

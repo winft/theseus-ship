@@ -355,7 +355,7 @@ bool map_request_event(Win* win, xcb_map_request_event_t* e)
     if (win->control->minimized) {
         win::set_minimized(win, false);
     }
-    if (!win->isOnCurrentDesktop()) {
+    if (!on_current_desktop(win)) {
         if (allow_window_activation(win->space, win)) {
             activate_window(win->space, win);
         } else {
@@ -872,7 +872,7 @@ void focus_in_event(Win* win, xcb_focus_in_event_t* e)
     if (e->detail == XCB_NOTIFY_DETAIL_POINTER) {
         return;
     }
-    if (!win->isShown() || !win->isOnCurrentDesktop()) {
+    if (!win->isShown() || !on_current_desktop(win)) {
         // we unmapped it, but it got focus meanwhile ->
         // activateNextClient() already transferred focus elsewhere
         return;

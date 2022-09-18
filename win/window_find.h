@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "desktop_get.h"
 #include "meta.h"
 
 namespace KWin::win
@@ -16,7 +17,7 @@ auto find_desktop(Space* space, bool topmost, int desktop) -> typename Space::wi
     // TODO(fsorr): use C++20 std::ranges::reverse_view
     auto const& list = space->stacking.order.stack;
     auto is_desktop = [desktop](auto window) {
-        return window->control && window->isOnDesktop(desktop) && win::is_desktop(window)
+        return window->control && on_desktop(window, desktop) && win::is_desktop(window)
             && window->isShown();
     };
 

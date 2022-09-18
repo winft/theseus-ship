@@ -1080,7 +1080,7 @@ private:
         //     Q_ASSERT(space.block_stacking_updates == 0);
         for (int i = space.stacking.order.stack.size() - 1; i >= 0; --i) {
             auto window = space.stacking.order.stack.at(i);
-            if (window->control && window->isOnCurrentDesktop() && !win::is_special_window(window)
+            if (window->control && on_current_desktop(window) && !win::is_special_window(window)
                 && window->isShown() && win::wants_tab_focus(window) && !window->control->keep_above
                 && !window->control->keep_below) {
                 c = window;
@@ -1107,7 +1107,7 @@ private:
                 break;
             }
         } while (nc && nc != c
-                 && ((!options_traverse_all && !nc->isOnDesktop(current_desktop()))
+                 && ((!options_traverse_all && !on_desktop(nc, current_desktop()))
                      || nc->control->minimized || !win::wants_tab_focus(nc)
                      || nc->control->keep_above || nc->control->keep_below));
         if (nc) {
@@ -1116,7 +1116,7 @@ private:
             if (kwinApp()->options->qobject->focusPolicyIsReasonable()) {
                 activate_window(space, nc);
             } else {
-                if (!nc->isOnDesktop(current_desktop()))
+                if (!on_desktop(nc, current_desktop()))
                     set_current_desktop(nc->desktop());
                 win::raise_window(&space, nc);
             }

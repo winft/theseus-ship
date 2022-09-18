@@ -235,21 +235,6 @@ public:
         m_desktops = desktops;
     }
 
-    bool isOnDesktop(int d) const
-    {
-        return win::on_desktop(this, d);
-    }
-
-    bool isOnCurrentDesktop() const
-    {
-        return win::on_current_desktop(this);
-    }
-
-    bool isOnAllDesktops() const
-    {
-        return win::on_all_desktops(this);
-    }
-
     virtual QByteArray windowRole() const
     {
         if (remnant) {

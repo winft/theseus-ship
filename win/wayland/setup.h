@@ -37,7 +37,7 @@ void setup_plasma_management(Space* space, Win* win)
     plasma_win->setKeepBelow(win->control->keep_below);
     plasma_win->setMaximized(win->maximizeMode() == win::maximize_mode::full);
     plasma_win->setMinimized(win->control->minimized);
-    plasma_win->setOnAllDesktops(win->isOnAllDesktops());
+    plasma_win->setOnAllDesktops(on_all_desktops(win));
     plasma_win->setDemandsAttention(win->control->demands_attention);
     plasma_win->setCloseable(win->isCloseable());
     plasma_win->setMaximizeable(win->isMaximizable());
@@ -178,7 +178,7 @@ void setup_plasma_management(Space* space, Win* win)
 
     // Only for the legacy mechanism.
     QObject::connect(qtwin, &window_qobject::desktopChanged, plasma_win, [plasma_win, win] {
-        if (win->isOnAllDesktops()) {
+        if (on_all_desktops(win)) {
             plasma_win->setOnAllDesktops(true);
             return;
         }

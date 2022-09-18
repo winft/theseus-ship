@@ -256,7 +256,7 @@ private:
         action->setCheckable(true);
         group->addAction(action);
 
-        if (m_client && m_client->isOnAllDesktops()) {
+        if (m_client && on_all_desktops(m_client)) {
             action->setChecked(true);
         }
         m_desktopMenu->addSeparator();
@@ -274,7 +274,7 @@ private:
             action->setCheckable(true);
             group->addAction(action);
 
-            if (m_client && !m_client->isOnAllDesktops() && m_client->isOnDesktop(i)) {
+            if (m_client && !on_all_desktops(m_client) && on_desktop(m_client, i)) {
                 action->setChecked(true);
             }
         }
@@ -307,7 +307,7 @@ private:
         QAction* action = m_multipleDesktopsMenu->addAction(i18n("&All Desktops"));
         action->setData(QVariant::fromValue(user_actions_menu_desktop_action_data{0, false}));
         action->setCheckable(true);
-        if (m_client && m_client->isOnAllDesktops()) {
+        if (m_client && on_all_desktops(m_client)) {
             action->setChecked(true);
         }
 
@@ -325,7 +325,7 @@ private:
                 vds->name(i).replace(QLatin1Char('&'), QStringLiteral("&&"))));
             action->setData(QVariant::fromValue(user_actions_menu_desktop_action_data{i, false}));
             action->setCheckable(true);
-            if (m_client && !m_client->isOnAllDesktops() && m_client->isOnDesktop(i)) {
+            if (m_client && !on_all_desktops(m_client) && on_desktop(m_client, i)) {
                 action->setChecked(true);
             }
         }
@@ -412,7 +412,7 @@ private:
         if (desk == 0) {
             // the 'on_all_desktops' menu entry
             if (m_client) {
-                win::set_on_all_desktops(m_client, !m_client->isOnAllDesktops());
+                set_on_all_desktops(m_client, !on_all_desktops(m_client));
             }
             return;
         } else if (desk > vds->count()) {
@@ -441,7 +441,7 @@ private:
         auto vds = space.virtual_desktop_manager.get();
         if (data.desktop == 0) {
             // the 'on_all_desktops' menu entry
-            win::set_on_all_desktops(m_client, !m_client->isOnAllDesktops());
+            set_on_all_desktops(m_client, !on_all_desktops(m_client));
             return;
         } else if (data.desktop > vds->count()) {
             vds->setCount(data.desktop);

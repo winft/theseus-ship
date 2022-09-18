@@ -12,6 +12,7 @@
 #include "shadow.h"
 #include "types.h"
 
+#include "win/desktop_get.h"
 #include "win/geo.h"
 
 #include <kwineffects/paint_data.h>
@@ -99,12 +100,12 @@ public:
             disable_painting |= window_paint_disable_type::by_delete;
         }
         if (scene.platform.compositor->effects->isDesktopRendering()) {
-            if (!ref_win->isOnDesktop(
-                    scene.platform.compositor->effects->currentRenderedDesktop())) {
+            if (!win::on_desktop(ref_win,
+                                 scene.platform.compositor->effects->currentRenderedDesktop())) {
                 disable_painting |= window_paint_disable_type::by_desktop;
             }
         } else {
-            if (!ref_win->isOnCurrentDesktop())
+            if (!win::on_current_desktop(ref_win))
                 disable_painting |= window_paint_disable_type::by_desktop;
         }
         if (ref_win->control) {
@@ -132,7 +133,7 @@ public:
     {
         if (ref_win->remnant)
             return false;
-        if (!ref_win->isOnCurrentDesktop())
+        if (!win::on_current_desktop(ref_win))
             return false;
         if (ref_win->control) {
             return ref_win->isShown();

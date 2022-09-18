@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "desktop_get.h"
 #include "screen.h"
 
 namespace KWin::win
@@ -66,7 +67,7 @@ bool focus_chain_is_usable_focus_candidate(Space& space,
     if (window == prev) {
         return false;
     }
-    if (!window->isShown() || !window->isOnCurrentDesktop()) {
+    if (!window->isShown() || !on_current_desktop(window)) {
         return false;
     }
 

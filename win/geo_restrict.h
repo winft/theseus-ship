@@ -6,6 +6,7 @@
 #pragma once
 
 #include "deco.h"
+#include "desktop_get.h"
 #include "geo.h"
 #include "window_area.h"
 
@@ -472,7 +473,7 @@ QPoint adjust_window_position(Space const& space,
                 if (!win->isShown()) {
                     continue;
                 }
-                if (!win->isOnDesktop(window.desktop()) && !window.isOnDesktop(win->desktop())) {
+                if (!on_desktop(win, window.desktop()) && !on_desktop(&window, win->desktop())) {
                     // wrong virtual desktop
                     continue;
                 }
@@ -679,7 +680,7 @@ QRect adjust_window_size(Space const& space, Win const& window, QRect moveResize
             deltaX = int(snap);
             deltaY = int(snap);
             for (auto win : space.windows) {
-                if (win->control && win->isOnDesktop(space.virtual_desktop_manager->current())
+                if (win->control && on_desktop(win, space.virtual_desktop_manager->current())
                     && !win->control->minimized && win != &window) {
                     lx = win->pos().x() - 1;
                     ly = win->pos().y() - 1;
