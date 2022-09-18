@@ -545,16 +545,6 @@ public:
     virtual bool belongsToDesktop() const = 0;
     virtual void checkTransient(type* window) = 0;
 
-    virtual void damageNotifyEvent()
-    {
-        is_damaged = true;
-
-        // Note: The region is supposed to specify the damage extents,
-        //       but we don't know it at this point. No one who connects
-        //       to this signal uses the rect however.
-        Q_EMIT qobject->damaged({});
-    }
-
     void discard_buffer()
     {
         addDamageFull();

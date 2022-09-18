@@ -324,15 +324,18 @@ public:
         this->render->win_integration.setup_buffer = setup_buffer;
     }
 
-    void damageNotifyEvent() override
+    void damageNotifyEvent()
     {
+        this->is_damaged = true;
+
         if (!this->control) {
-            Toplevel<Space>::damageNotifyEvent();
+            // Note: The region is supposed to specify the damage extents, but we don't know it at
+            //       this point. No one who connects to this signal uses the rect however.
+            Q_EMIT this->qobject->damaged({});
             return;
         }
 
         if (isWaitingForMoveResizeSync()) {
-            this->is_damaged = true;
             return;
         }
 
@@ -344,7 +347,7 @@ public:
             }
         }
 
-        Toplevel<Space>::damageNotifyEvent();
+        Q_EMIT this->qobject->damaged({});
     }
 
     void addDamage(QRegion const& damage) override
