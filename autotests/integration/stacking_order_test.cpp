@@ -405,7 +405,7 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
     QVERIFY(member1);
     QVERIFY(member1->control->active);
     QCOMPARE(member1->xcb_window, member1Wid);
-    QCOMPARE(member1->group(), leader->group());
+    QCOMPARE(member1->group, leader->group);
     QVERIFY(!member1->transient()->lead());
 
     QCOMPARE(Test::app()->base.space->stacking.order.stack,
@@ -423,7 +423,7 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
     QVERIFY(member2);
     QVERIFY(member2->control->active);
     QCOMPARE(member2->xcb_window, member2Wid);
-    QCOMPARE(member2->group(), leader->group());
+    QCOMPARE(member2->group, leader->group);
     QVERIFY(!member2->transient()->lead());
 
     QCOMPARE(Test::app()->base.space->stacking.order.stack,
@@ -462,7 +462,7 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
     QVERIFY(transient);
     QVERIFY(transient->control->active);
     QCOMPARE(transient->xcb_window, transientWid);
-    QCOMPARE(transient->group(), leader->group());
+    QCOMPARE(transient->group, leader->group);
     QVERIFY(transient->transient()->lead());
     QVERIFY(transient->groupTransient());
     QVERIFY(!win::is_dialog(transient)); // See above why
@@ -530,7 +530,7 @@ void StackingOrderTest::testRaiseGroupTransient()
     QVERIFY(member1);
     QVERIFY(member1->control->active);
     QCOMPARE(member1->xcb_window, member1Wid);
-    QCOMPARE(member1->group(), leader->group());
+    QCOMPARE(member1->group, leader->group);
     QVERIFY(!member1->transient()->lead());
 
     QCOMPARE(Test::app()->base.space->stacking.order.stack,
@@ -548,7 +548,7 @@ void StackingOrderTest::testRaiseGroupTransient()
     QVERIFY(member2);
     QVERIFY(member2->control->active);
     QCOMPARE(member2->xcb_window, member2Wid);
-    QCOMPARE(member2->group(), leader->group());
+    QCOMPARE(member2->group, leader->group);
     QVERIFY(!member2->transient()->lead());
 
     QCOMPARE(Test::app()->base.space->stacking.order.stack,
@@ -587,7 +587,7 @@ void StackingOrderTest::testRaiseGroupTransient()
     QVERIFY(transient);
     QVERIFY(transient->control->active);
     QCOMPARE(transient->xcb_window, transientWid);
-    QCOMPARE(transient->group(), leader->group());
+    QCOMPARE(transient->group, leader->group);
     QVERIFY(transient->transient()->lead());
     QVERIFY(transient->groupTransient());
     QVERIFY(!win::is_dialog(transient)); // See above why
@@ -678,7 +678,7 @@ void StackingOrderTest::testDeletedGroupTransient()
     QVERIFY(member1);
     QVERIFY(member1->control->active);
     QCOMPARE(member1->xcb_window, member1Wid);
-    QCOMPARE(member1->group(), leader->group());
+    QCOMPARE(member1->group, leader->group);
     QVERIFY(!member1->transient()->lead());
 
     QCOMPARE(Test::app()->base.space->stacking.order.stack,
@@ -695,7 +695,7 @@ void StackingOrderTest::testDeletedGroupTransient()
     QVERIFY(member2);
     QVERIFY(member2->control->active);
     QCOMPARE(member2->xcb_window, member2Wid);
-    QCOMPARE(member2->group(), leader->group());
+    QCOMPARE(member2->group, leader->group);
     QVERIFY(!member2->transient()->lead());
 
     QCOMPARE(Test::app()->base.space->stacking.order.stack,
@@ -733,7 +733,7 @@ void StackingOrderTest::testDeletedGroupTransient()
     QVERIFY(transient);
     QVERIFY(transient->control->active);
     QCOMPARE(transient->xcb_window, transientWid);
-    QCOMPARE(transient->group(), leader->group());
+    QCOMPARE(transient->group, leader->group);
     QVERIFY(transient->transient()->lead());
     QVERIFY(transient->groupTransient());
     QVERIFY(!win::is_dialog(transient)); // See above why
@@ -811,7 +811,7 @@ void StackingOrderTest::testDontKeepAboveNonModalDialogGroupTransients()
     QVERIFY(member1);
     QVERIFY(member1->control->active);
     QCOMPARE(member1->xcb_window, member1Wid);
-    QCOMPARE(member1->group(), leader->group());
+    QCOMPARE(member1->group, leader->group);
     QVERIFY(!member1->transient()->lead());
 
     QCOMPARE(Test::app()->base.space->stacking.order.stack,
@@ -828,7 +828,7 @@ void StackingOrderTest::testDontKeepAboveNonModalDialogGroupTransients()
     QVERIFY(member2);
     QVERIFY(member2->control->active);
     QCOMPARE(member2->xcb_window, member2Wid);
-    QCOMPARE(member2->group(), leader->group());
+    QCOMPARE(member2->group, leader->group);
     QVERIFY(!member2->transient()->lead());
 
     QCOMPARE(Test::app()->base.space->stacking.order.stack,
@@ -846,7 +846,7 @@ void StackingOrderTest::testDontKeepAboveNonModalDialogGroupTransients()
     QVERIFY(transient);
     QVERIFY(transient->control->active);
     QCOMPARE(transient->xcb_window, transientWid);
-    QCOMPARE(transient->group(), leader->group());
+    QCOMPARE(transient->group, leader->group);
     QVERIFY(transient->transient()->lead());
     QVERIFY(transient->groupTransient());
     QVERIFY(win::is_dialog(transient));

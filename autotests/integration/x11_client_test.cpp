@@ -752,7 +752,7 @@ void X11ClientTest::testFullscreenWindowGroups()
     QVERIFY(client != client2);
     QCOMPARE(client2->xcb_window, w2);
     QCOMPARE(client2->control->active, true);
-    QCOMPARE(client2->group(), client->group());
+    QCOMPARE(client2->group, client->group);
     // first client should be moved back to normal layer
     QCOMPARE(client->control->active, false);
     QCOMPARE(client->control->fullscreen, true);

@@ -203,7 +203,7 @@ void get_icons(Win* win)
 
     if (icon.isNull()) {
         // Then try window group
-        icon = win->group()->icon();
+        icon = win->group->icon();
     }
 
     if (icon.isNull()) {
@@ -265,7 +265,7 @@ bool same_app_window_role_match(Win const* c1, Win const* c2, bool active_hack)
             c1 = t;
         }
         if (c1->groupTransient()) {
-            return c1->group() == c2->group();
+            return c1->group == c2->group;
         }
     }
 
@@ -274,7 +274,7 @@ bool same_app_window_role_match(Win const* c1, Win const* c2, bool active_hack)
             c2 = t;
         }
         if (c2->groupTransient()) {
-            return c1->group() == c2->group();
+            return c1->group == c2->group;
         }
     }
 
@@ -308,7 +308,7 @@ bool belong_to_same_application(Win const* c1, Win const* c2, win::same_client_c
     } else if (c2->transient()->lead() && c2->transient()->is_follower_of(c1)) {
         // c2 has c1 as mainwindow
         same_app = true;
-    } else if (c1->group() == c2->group()) {
+    } else if (c1->group == c2->group) {
         // same group
         same_app = true;
     } else if (c1->wmClientLeader() == c2->wmClientLeader()

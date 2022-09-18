@@ -167,18 +167,18 @@ void clean_grouping(Win* win)
 template<typename Win>
 void update_group(Win* win, bool add)
 {
-    assert(win->in_group);
+    assert(win->group);
 
     if (add) {
-        if (!contains(win->in_group->members, win)) {
-            win->in_group->addMember(win);
+        if (!contains(win->group->members, win)) {
+            win->group->addMember(win);
         }
         auto const win_is_group_tr = win->groupTransient();
         auto const win_is_normal_tr = !win_is_group_tr && win->transient()->lead();
 
         // This added window must be set as transient child for all windows that have no direct
         // or indirect transient relation with it (that way we ensure there are no cycles).
-        for (auto member : win->in_group->members) {
+        for (auto member : win->group->members) {
             if (member == win) {
                 continue;
             }
@@ -201,10 +201,10 @@ void update_group(Win* win, bool add)
             }
         }
     } else {
-        win->in_group->ref();
-        win->in_group->removeMember(win);
+        win->group->ref();
+        win->group->removeMember(win);
 
-        for (auto member : win->in_group->members) {
+        for (auto member : win->group->members) {
             if (x11_transient(win)->lead_id == member->xcb_window) {
                 if (!contains(member->transient()->children, win)) {
                     member->transient()->add_child(win);
@@ -216,12 +216,12 @@ void update_group(Win* win, bool add)
 
         // Restore indirect group transient relations between members that have been cut off because
         // off the removal of this.
-        for (auto& member : win->in_group->members) {
+        for (auto& member : win->group->members) {
             if (!member->groupTransient()) {
                 continue;
             }
 
-            for (auto lead : win->in_group->members) {
+            for (auto lead : win->group->members) {
                 if (lead == member) {
                     continue;
                 }
@@ -235,8 +235,8 @@ void update_group(Win* win, bool add)
             }
         }
 
-        win->in_group->deref();
-        win->in_group = nullptr;
+        win->group->deref();
+        win->group = nullptr;
     }
 }
 
@@ -355,18 +355,18 @@ void check_active_modal(Space& space)
 }
 
 template<typename Win>
-void check_group(Win* win, decltype(win->in_group) group)
+void check_group(Win* win, decltype(win->group) group)
 {
     using group_t = std::remove_pointer_t<decltype(group)>;
 
     // First get all information about the current group.
     if (!group) {
-        auto lead = win->transient()->lead();
+        auto lead = static_cast<Win*>(win->transient()->lead());
 
         if (lead) {
             // Move the window to the right group (e.g. a dialog provided
             // by this app, but transient for another, so make it part of that group).
-            group = lead->group();
+            group = lead->group;
         } else if (win->info->groupLeader() != XCB_WINDOW_NONE) {
             group = find_group(win->space, win->info->groupLeader());
             if (!group) {
@@ -381,13 +381,13 @@ void check_group(Win* win, decltype(win->in_group) group)
         }
     }
 
-    if (win->in_group && win->in_group != group) {
+    if (win->group && win->group != group) {
         update_group(win, false);
     }
 
-    win->in_group = group;
+    win->group = group;
 
-    if (win->in_group) {
+    if (win->group) {
         update_group(win, true);
     }
 
@@ -396,7 +396,7 @@ void check_group(Win* win, decltype(win->in_group) group)
 }
 
 template<typename Win>
-void change_client_leader_group(Win* win, decltype(win->in_group) group)
+void change_client_leader_group(Win* win, decltype(win->group) group)
 {
     auto lead_id = x11_transient(win)->lead_id;
     if (lead_id != XCB_WINDOW_NONE && lead_id != rootWindow()) {
@@ -417,9 +417,9 @@ void change_client_leader_group(Win* win, decltype(win->in_group) group)
  *  Tries to find a group that has member windows with the same client leader like @ref win.
  */
 template<typename Win>
-auto find_client_leader_group(Win const* win) -> decltype(win->in_group)
+auto find_client_leader_group(Win const* win) -> decltype(win->group)
 {
-    using group_t = std::remove_pointer_t<decltype(win->in_group)>;
+    using group_t = std::remove_pointer_t<decltype(win->group)>;
     group_t* ret = nullptr;
 
     for (auto const& other : win->space.windows) {
@@ -440,9 +440,9 @@ auto find_client_leader_group(Win const* win) -> decltype(win->in_group)
             continue;
         }
 
-        if (!ret || ret != other->group()) {
+        if (!ret || ret != other_casted->group) {
             // Found new group.
-            ret = other->group();
+            ret = other_casted->group;
             continue;
         }
 
@@ -450,7 +450,7 @@ auto find_client_leader_group(Win const* win) -> decltype(win->in_group)
         // This most probably means the app uses group transients without
         // setting group for its windows. Merging the two groups is a bad
         // hack, but there's no really good solution for this case.
-        auto old_group_members = other->group()->members;
+        auto old_group_members = other_casted->group->members;
 
         // The old group auto-deletes when being empty.
         for (size_t pos = 0; pos < old_group_members.size(); ++pos) {

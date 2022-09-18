@@ -562,7 +562,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         win, asn_valid ? &asn_id : nullptr, asn_valid ? &asn_data : nullptr, session);
 
     // And do what Win::updateUserTime() does
-    win->group()->updateUserTime(win->user_time);
+    win->group->updateUserTime(win->user_time);
 
     // This should avoid flicker, because real restacking is done
     // only after manage() finishes because of blocking, but the window is shown sooner

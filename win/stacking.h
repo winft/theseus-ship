@@ -184,13 +184,14 @@ void lower_window(Space* space, Window* window)
 
     auto block = do_lower(window);
 
-    if (window->transient()->lead() && window->group()) {
+    if (auto x11_win = dynamic_cast<typename Space::x11_window*>(window);
+        x11_win && x11_win->transient()->lead() && x11_win->group) {
         // Lower also all windows in the group, in reversed stacking order.
-        auto const wins = restacked_by_space_stacking_order(space, get_transient_family(window));
+        auto const wins = restacked_by_space_stacking_order(space, get_transient_family(x11_win));
 
         for (auto it = wins.crbegin(); it != wins.crend(); it++) {
             auto gwin = *it;
-            if (gwin == static_cast<typename Space::window_t*>(window)) {
+            if (gwin == x11_win) {
                 continue;
             }
 

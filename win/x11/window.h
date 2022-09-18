@@ -11,6 +11,7 @@
 #include "deco.h"
 #include "fullscreen.h"
 #include "geo.h"
+#include "group.h"
 #include "maximize.h"
 #include "transient.h"
 #include "types.h"
@@ -531,17 +532,6 @@ public:
         return geometry_hints.resize_increments();
     }
 
-    // TODO: remove
-    x11::group<Space> const* group() const override
-    {
-        return in_group;
-    }
-
-    x11::group<Space>* group() override
-    {
-        return in_group;
-    }
-
     // When another window is created, checks if this window is a child for it.
     void checkTransient(abstract_type* window) override
     {
@@ -684,7 +674,7 @@ public:
         auto breakShowingDesktop = !this->control->keep_above;
 
         if (breakShowingDesktop) {
-            for (auto const& c : group()->members) {
+            for (auto const& c : group->members) {
                 if (win::is_desktop(c)) {
                     breakShowingDesktop = false;
                     break;
@@ -1031,7 +1021,7 @@ public:
 
     bool belongsToDesktop() const override
     {
-        for (auto const& member : group()->members) {
+        for (auto const& member : group->members) {
             if (win::is_desktop(member)) {
                 return true;
             }
@@ -1057,11 +1047,11 @@ public:
             return 0;
         }
 
-        assert(group() != nullptr);
+        assert(group != nullptr);
 
         if (time == -1U
-            || (group()->user_time != -1U && NET::timestampCompare(group()->user_time, time) > 0)) {
-            time = group()->user_time;
+            || (group->user_time != -1U && NET::timestampCompare(group->user_time, time) > 0)) {
+            time = group->user_time;
         }
         return time;
     }
@@ -1620,7 +1610,7 @@ public:
 
     int sm_stacking_order{-1};
 
-    x11::group<Space>* in_group{nullptr};
+    x11::group<Space>* group{nullptr};
 
     xcb_visualid_t xcb_visual{XCB_NONE};
     xcb_colormap_t colormap{XCB_COLORMAP_NONE};

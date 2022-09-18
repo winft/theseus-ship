@@ -18,7 +18,6 @@
 #include "win/shortcut_set.h"
 #include "win/virtual_desktops.h"
 #include "win/window_qobject.h"
-#include "win/x11/group.h"
 
 #include <NETWM>
 #include <QMatrix4x4>
@@ -835,26 +834,6 @@ public:
     virtual bool groupTransient() const
     {
         return false;
-    }
-
-    /**
-     * Default implementation returns @c null.
-     *
-     * Mostly for X11 clients, holds the client group
-     */
-    virtual win::x11::group<space_t> const* group() const
-    {
-        return nullptr;
-    }
-
-    /**
-     * Default implementation returns @c null.
-     *
-     * Mostly for X11 clients, holds the client group
-     */
-    virtual win::x11::group<space_t>* group()
-    {
-        return nullptr;
     }
 
     virtual bool supportsWindowRules() const

@@ -124,8 +124,9 @@ public:
 
     const EffectWindowGroup* group() const override
     {
-        if (auto c = dynamic_cast<typename space_t::x11_window*>(window.ref_win); c && c->group()) {
-            return c->group()->effect_group;
+        if (auto x11_win = dynamic_cast<typename space_t::x11_window*>(window.ref_win);
+            x11_win && x11_win->group) {
+            return x11_win->group->effect_group;
         }
         return nullptr; // TODO
     }
