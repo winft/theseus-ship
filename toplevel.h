@@ -392,20 +392,6 @@ public:
         Q_EMIT qobject->damaged(damage_region);
     }
 
-    // TODO(romangg): * This function is only called on Wayland and the damage translation is not
-    //                  the usual way. Unify that.
-    //                * Should we return early on the added damage being empty?
-    virtual void addDamage(const QRegion& damage)
-    {
-        auto const render_region = win::render_geometry(this);
-        repaints_region += damage.translated(render_region.topLeft() - pos());
-        add_repaint_outputs(render_region);
-
-        is_damaged = true;
-        damage_region += damage;
-        Q_EMIT qobject->damaged(damage);
-    }
-
     /**
      * Whether the Toplevel currently wants the shadow to be rendered. Default
      * implementation always returns @c true.
@@ -644,7 +630,6 @@ public:
         }
     }
 
-private:
     void add_repaint_outputs(QRegion const& region)
     {
         if (kwinApp()->operationMode() == Application::OperationModeX11) {
@@ -662,6 +647,7 @@ private:
         }
     }
 
+private:
     std::unique_ptr<win::transient<type>> m_transient;
 
 public:

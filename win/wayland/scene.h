@@ -5,13 +5,28 @@
 */
 #pragma once
 
-#include "render/scene.h"
+#include "win/geo.h"
+#include "win/scene.h"
 
 #include <Wrapland/Server/surface.h>
 #include <cassert>
 
 namespace KWin::win::wayland
 {
+
+template<typename Win>
+void handle_surface_damage(Win& win, QRegion const& damage)
+{
+    assert(!damage.isEmpty());
+
+    auto const render_region = render_geometry(&win);
+    win.repaints_region += damage.translated(render_region.topLeft() - win.pos());
+    win.add_repaint_outputs(render_region);
+
+    win.is_damaged = true;
+    win.damage_region += damage;
+    Q_EMIT win.qobject->damaged(damage);
+}
 
 template<typename Win>
 void update_buffer(Win& win, std::shared_ptr<Wrapland::Server::Buffer>& target)

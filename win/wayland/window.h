@@ -1195,8 +1195,8 @@ public:
             this->discard_buffer();
         }
 
-        if (!this->surface->state().damage.isEmpty()) {
-            this->addDamage(this->surface->state().damage);
+        if (auto const& damage = this->surface->state().damage; !damage.isEmpty()) {
+            handle_surface_damage(*this, damage);
         } else if (this->surface->state().updates & Wrapland::Server::surface_change::frame) {
             this->space.base.render->compositor->schedule_frame_callback(this);
         }

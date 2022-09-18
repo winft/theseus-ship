@@ -20,7 +20,7 @@ void set_surface(Win& win, Wrapland::Server::Surface* surface)
         surface, &Wrapland::Server::Surface::committed, win.qobject.get(), [win_ptr = &win] {
             auto const& state = win_ptr->surface->state();
             if (!state.damage.isEmpty()) {
-                win_ptr->addDamage(state.damage);
+                win_ptr->handle_surface_damage(state.damage);
             }
             if (state.updates & Wrapland::Server::surface_change::size) {
                 win_ptr->discard_buffer();

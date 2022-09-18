@@ -8,6 +8,7 @@
 #include "base/platform.h"
 #include "base/wayland/server.h"
 #include "main.h"
+#include "win/scene.h"
 
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/surface.h>
@@ -35,6 +36,7 @@ void update_surface_outputs(Win* win)
 template<typename Win>
 void set_surface(Win* win, Wrapland::Server::Surface* surface)
 {
+    static_assert(!Win::is_toplevel);
     assert(surface);
 
     if (win->surface) {

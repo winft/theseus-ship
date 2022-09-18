@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "singleton_interface.h"
 #include "space_areas_helpers.h"
 #include "wayland/scene.h"
+#include "wayland/surface.h"
 #include "window_release.h"
 
 #include "render/wayland/buffer.h"
@@ -539,7 +540,7 @@ public:
         buffers.image = image;
 
         this->setDepth(32);
-        this->addDamage(damage);
+        wayland::handle_surface_damage(*this, damage);
     }
 
     QWindow* internalWindow() const

@@ -9,6 +9,7 @@
 
 #include "render/wayland/buffer.h"
 #include "scene.h"
+#include "surface.h"
 #include "win/x11/scene.h"
 #include "win/x11/window.h"
 
@@ -36,6 +37,19 @@ public:
     qreal bufferScale() const override
     {
         return this->surface ? this->surface->state().scale : 1;
+    }
+
+    void handle_surface_damage(QRegion const& damage)
+    {
+        if (!this->ready_for_painting) {
+            // avoid "setReadyForPainting()" function calling overhead
+            if (this->sync_request.counter == XCB_NONE) {
+                // cannot detect complete redraw, consider done now
+                this->first_geo_synced = true;
+                this->setReadyForPainting();
+            }
+        }
+        wayland::handle_surface_damage(*this, damage);
     }
 
     void add_scene_window_addon() override

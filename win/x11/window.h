@@ -395,19 +395,6 @@ public:
         Q_EMIT this->qobject->damaged({});
     }
 
-    void addDamage(QRegion const& damage) override
-    {
-        if (!this->ready_for_painting) {
-            // avoid "setReadyForPainting()" function calling overhead
-            if (sync_request.counter == XCB_NONE) {
-                // cannot detect complete redraw, consider done now
-                first_geo_synced = true;
-                this->setReadyForPainting();
-            }
-        }
-        Toplevel<Space>::addDamage(damage);
-    }
-
     /**
      * Resets the damage state and sends a request for the damage region.
      * A call to this function must be followed by a call to getDamageRegionReply(),
