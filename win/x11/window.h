@@ -188,6 +188,51 @@ public:
         return xcb_windows.outer;
     }
 
+    QRegion shape_render_region() const
+    {
+        assert(this->is_shape);
+
+        if (this->is_render_shape_valid) {
+            return render_shape;
+        }
+
+        this->is_render_shape_valid = true;
+        render_shape = {};
+
+        auto cookie
+            = xcb_shape_get_rectangles_unchecked(connection(), frameId(), XCB_SHAPE_SK_BOUNDING);
+        unique_cptr<xcb_shape_get_rectangles_reply_t> reply(
+            xcb_shape_get_rectangles_reply(connection(), cookie, nullptr));
+        if (!reply) {
+            return {};
+        }
+
+        auto const rects = xcb_shape_get_rectangles_rectangles(reply.get());
+        auto const rect_count = xcb_shape_get_rectangles_rectangles_length(reply.get());
+        for (int i = 0; i < rect_count; ++i) {
+            render_shape += QRegion(rects[i].x, rects[i].y, rects[i].width, rects[i].height);
+        }
+
+        // make sure the shape is sane (X is async, maybe even XShape is broken)
+        auto const render_geo = render_geometry(this);
+        render_shape &= QRegion(0, 0, render_geo.width(), render_geo.height());
+        return render_shape;
+    }
+
+    QRegion render_region() const override
+    {
+        if (this->remnant) {
+            return this->remnant->data.render_region;
+        }
+
+        if (this->is_shape) {
+            return shape_render_region();
+        }
+
+        auto const render_geo = win::render_geometry(this);
+        return QRegion(0, 0, render_geo.width(), render_geo.height());
+    }
+
     /**
      * Returns whether the window provides context help or not. If it does, you should show a help
      * menu item or a help button like '?' and call contextHelp() if this is invoked.
@@ -1584,6 +1629,7 @@ public:
     QTimer* ping_timer{nullptr};
 
     QPoint input_offset;
+    mutable QRegion render_shape;
 
     int sm_stacking_order{-1};
 

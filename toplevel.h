@@ -125,46 +125,19 @@ public:
         return xcb_window;
     }
 
-    QRegion render_region() const
+    virtual QRegion render_region() const
     {
         if (remnant) {
             return remnant->data.render_region;
         }
 
         auto const render_geo = win::render_geometry(this);
-
-        if (is_shape) {
-            if (m_render_shape_valid) {
-                return m_render_shape;
-            }
-            m_render_shape_valid = true;
-            m_render_shape = QRegion();
-
-            auto cookie = xcb_shape_get_rectangles_unchecked(
-                connection(), frameId(), XCB_SHAPE_SK_BOUNDING);
-            unique_cptr<xcb_shape_get_rectangles_reply_t> reply(
-                xcb_shape_get_rectangles_reply(connection(), cookie, nullptr));
-            if (!reply) {
-                return QRegion();
-            }
-
-            auto const rects = xcb_shape_get_rectangles_rectangles(reply.get());
-            auto const rect_count = xcb_shape_get_rectangles_rectangles_length(reply.get());
-            for (int i = 0; i < rect_count; ++i) {
-                m_render_shape += QRegion(rects[i].x, rects[i].y, rects[i].width, rects[i].height);
-            }
-
-            // make sure the shape is sane (X is async, maybe even XShape is broken)
-            m_render_shape &= QRegion(0, 0, render_geo.width(), render_geo.height());
-            return m_render_shape;
-        }
-
         return QRegion(0, 0, render_geo.width(), render_geo.height());
     }
 
     void discard_shape()
     {
-        m_render_shape_valid = false;
+        is_render_shape_valid = false;
 
         if (render) {
             render->invalidateQuadsCache();
@@ -635,6 +608,7 @@ public:
     bool is_outline{false};
 
     bool has_in_content_deco{false};
+    mutable bool is_render_shape_valid{false};
 
     QRect m_frameGeometry;
     win::layer m_layer{win::layer::unknown};
@@ -702,9 +676,6 @@ private:
             repaint_outputs.push_back(out);
         }
     }
-
-    mutable bool m_render_shape_valid{false};
-    mutable QRegion m_render_shape;
 
     std::unique_ptr<win::transient<type>> m_transient;
 
