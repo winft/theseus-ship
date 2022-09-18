@@ -177,7 +177,10 @@ public:
         if (last_trigger_time.isValid()
             && last_trigger_time.msecsTo(triggerTime)
                 < edger->reactivate_threshold - edger->time_threshold) {
-            // still in cooldown
+            // Still in cooldown. reset the time, so the user has to actually keep the mouse still
+            // for this long to retrigger
+            last_trigger_time = triggerTime;
+
             return false;
         }
 
