@@ -59,26 +59,6 @@ void set_surface(Win* win, Wrapland::Server::Surface* surface)
 
     win->surface = surface;
 
-    if (surface->client() == waylandServer()->xwayland_connection()) {
-        QObject::connect(
-            win->surface, &Wrapland::Server::Surface::committed, win->qobject.get(), [win] {
-                if (!win->surface->state().damage.isEmpty()) {
-                    win->addDamage(win->surface->state().damage);
-                }
-            });
-        QObject::connect(
-            win->surface, &Wrapland::Server::Surface::committed, win->qobject.get(), [win] {
-                if (win->surface->state().updates & Wrapland::Server::surface_change::size) {
-                    win->discard_buffer();
-                    // Quads for Xwayland clients need for size emulation.
-                    // Also apparently needed for unmanaged Xwayland clients (compare Kate's
-                    // open-file dialog when type-forward list is changing size).
-                    // TODO(romangg): can this be put in a less hot path?
-                    win->discard_shape();
-                }
-            });
-    }
-
     QObject::connect(
         win->surface, &Wrapland::Server::Surface::subsurfaceTreeChanged, win->qobject.get(), [win] {
             // TODO improve to only update actual visual area

@@ -13,6 +13,28 @@
 namespace KWin::xwl
 {
 
+template<typename Win>
+void set_surface(Win& win, Wrapland::Server::Surface* surface)
+{
+    QObject::connect(
+        surface, &Wrapland::Server::Surface::committed, win.qobject.get(), [win_ptr = &win] {
+            auto const& state = win_ptr->surface->state();
+            if (!state.damage.isEmpty()) {
+                win_ptr->addDamage(state.damage);
+            }
+            if (state.updates & Wrapland::Server::surface_change::size) {
+                win_ptr->discard_buffer();
+                // Quads for Xwayland clients need for size emulation. Also seems needed for
+                // unmanaged Xwayland clients (compare Kate's open-file dialog when type-forward
+                // list is changing size).
+                // TODO(romangg): can this be put in a less hot path?
+                win_ptr->discard_shape();
+            }
+        });
+
+    win::wayland::set_surface(&win, surface);
+}
+
 /// Find X11 window with the surface's id, so we may associate it with the surface.
 template<typename Space>
 void handle_new_surface(Space* space, Wrapland::Server::Surface* surface)
@@ -28,7 +50,7 @@ void handle_new_surface(Space* space, Wrapland::Server::Surface* surface)
         if (!win->remnant && win->surface_id == surface->id() && !win->surface) {
             auto xwl_win = dynamic_cast<win::wayland::xwl_window<Space>*>(win);
             assert(xwl_win);
-            win::wayland::set_surface(xwl_win, surface);
+            set_surface(*xwl_win, surface);
             break;
         }
     }
