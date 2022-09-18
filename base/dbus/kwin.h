@@ -260,8 +260,8 @@ public:
 private:
     QVariantMap window_to_variant_map(typename Space::window_t const* win)
     {
-        return {{QStringLiteral("resourceClass"), win->resource_class},
-                {QStringLiteral("resourceName"), win->resource_name},
+        return {{QStringLiteral("resourceClass"), win->wm_class.res_class},
+                {QStringLiteral("resourceName"), win->wm_class.res_name},
                 {QStringLiteral("desktopFile"), win->control->desktop_file_name},
                 {QStringLiteral("role"), win->windowRole()},
                 {QStringLiteral("caption"), win->caption.normal},

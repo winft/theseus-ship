@@ -197,12 +197,12 @@ public:
 
     QByteArray resourceName() const override
     {
-        return m_client->resource_name;
+        return m_client->wm_class.res_name;
     }
 
     QByteArray resourceClass() const override
     {
-        return m_client->resource_class;
+        return m_client->wm_class.res_class;
     }
 
     QString caption() const override

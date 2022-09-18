@@ -1318,8 +1318,9 @@ public:
 
     void getResourceClass()
     {
-        this->setResourceClass(QByteArray(this->info->windowClassName()).toLower(),
-                               QByteArray(this->info->windowClassClass()).toLower());
+        set_wm_class(*this,
+                     QByteArray(this->info->windowClassName()).toLower(),
+                     QByteArray(this->info->windowClassClass()).toLower());
     }
 
     void getWmClientMachine()
@@ -1479,7 +1480,7 @@ public:
 
     static bool resourceMatch(window const* c1, window const* c2)
     {
-        return c1->resource_class == c2->resource_class;
+        return c1->wm_class.res_class == c2->wm_class.res_class;
     }
 
     void debug(QDebug& stream) const override
@@ -1499,7 +1500,7 @@ public:
         stream.nospace();
         stream << "\'x11::window"
                << "(" << QString::fromStdString(type) << "):" << this->xcb_window << ";"
-               << ";WMCLASS:" << this->resource_class << ":" << this->resource_name
+               << ";WMCLASS:" << this->wm_class.res_class << ":" << this->wm_class.res_name
                << ";Caption:" << QString::fromStdString(caption) << "\'";
     }
 

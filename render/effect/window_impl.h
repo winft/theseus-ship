@@ -474,7 +474,8 @@ public:
 
     QString windowClass() const override
     {
-        return window.ref_win->resource_name + QLatin1Char(' ') + window.ref_win->resource_class;
+        return window.ref_win->wm_class.res_name + QLatin1Char(' ')
+            + window.ref_win->wm_class.res_class;
     }
 
     NET::WindowType windowType() const override

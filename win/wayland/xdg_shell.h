@@ -240,7 +240,7 @@ Win* create_toplevel_window(Space* space, Wrapland::Server::XdgShellToplevel* to
     if (info.exists()) {
         resourceName = info.fileName().toUtf8();
     }
-    win->setResourceClass(resourceName, toplevel->appId().c_str());
+    set_wm_class(*win, resourceName, toplevel->appId().c_str());
     set_desktop_file_name(win, toplevel->appId().c_str());
     QObject::connect(toplevel, &WS::XdgShellToplevel::appIdChanged, win->qobject.get(), [win] {
         win->handle_class_changed();

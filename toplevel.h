@@ -56,9 +56,11 @@ public:
         QString suffix;
     } caption;
 
-    // Always lowercase
-    QByteArray resource_name;
-    QByteArray resource_class;
+    struct {
+        // Always lowercase
+        QByteArray res_name;
+        QByteArray res_class;
+    } wm_class;
 
     struct {
         int block{0};
@@ -494,13 +496,6 @@ public:
         if (render) {
             render->discard_buffer();
         }
-    }
-
-    void setResourceClass(const QByteArray& name, const QByteArray& className = QByteArray())
-    {
-        resource_name = name;
-        resource_class = className;
-        Q_EMIT qobject->windowClassChanged();
     }
 
     /**

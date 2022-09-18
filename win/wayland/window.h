@@ -1140,7 +1140,7 @@ public:
     void handle_class_changed()
     {
         auto const window_class = QByteArray(toplevel->appId().c_str());
-        this->setResourceClass(this->resource_name, window_class);
+        set_wm_class(*this, this->wm_class.res_name, window_class);
         if (initialized && supportsWindowRules()) {
             rules::setup_rules(this, true);
             this->applyWindowRules();

@@ -39,12 +39,12 @@ public:
 
     QByteArray resourceName() const override
     {
-        return ref_win->resource_name;
+        return ref_win->wm_class.res_name;
     }
 
     QByteArray resourceClass() const override
     {
-        return ref_win->resource_class;
+        return ref_win->wm_class.res_class;
     }
 
     QString caption() const override

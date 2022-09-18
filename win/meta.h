@@ -6,9 +6,7 @@
 #pragma once
 
 #include "net.h"
-#include "remnant.h"
-
-#include "rules/ruling.h"
+#include "rules/types.h"
 
 #include <KDesktopFile>
 #include <klocalizedstring.h>
@@ -112,6 +110,14 @@ Win* find_client_with_same_caption(Win const* win)
         return candidate;
     }
     return nullptr;
+}
+
+template<typename Win>
+void set_wm_class(Win& win, QByteArray const& res_name, QByteArray const& res_class)
+{
+    win.wm_class.res_name = res_name;
+    win.wm_class.res_class = res_class;
+    Q_EMIT win.qobject->windowClassChanged();
 }
 
 }

@@ -85,9 +85,7 @@ void transfer_remnant_data(Win& source, Win& dest)
 
     dest.render = std::move(source.render);
 
-    dest.resource_name = source.resource_name;
-    dest.resource_class = source.resource_class;
-
+    dest.wm_class = source.wm_class;
     dest.opaque_region = source.opaque_region;
     dest.central_output = source.central_output;
     dest.m_skipCloseAnimation = source.m_skipCloseAnimation;
