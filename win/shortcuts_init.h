@@ -395,7 +395,7 @@ void init_shortcuts(Space& space)
          kli18n("Make Window Fullscreen"),
          0,
          active_window_set_fullscreen<Space>);
-    def2("Window No Border", kli18n("Hide Window Border"), 0, active_window_set_no_border<Space>);
+    def2("Window No Border", kli18n("Toggle Window Border"), 0, active_window_set_no_border<Space>);
     def2("Window Above Other Windows",
          kli18n("Keep Window Above Others"),
          0,
