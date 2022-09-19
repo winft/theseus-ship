@@ -133,7 +133,7 @@ private:
     static bool needs_child_restack(Win const& lead, Win const& child)
     {
         // Tells if a transient child should be restacked directly above its lead.
-        if (lead.layer() < child.layer()) {
+        if (get_layer(lead) < get_layer(child)) {
             // Child will be in a layer above the lead and should not be pulled down from that.
             return false;
         }

@@ -430,7 +430,7 @@ void set_active_window(Space& space, typename Space::window_t* window)
         // status on > 1 screens
         if (space.base.outputs.size() > 1) {
             for (auto win : space.windows) {
-                if (win->control && win != stacking.active && win->layer() == win::layer::active
+                if (win->control && win != stacking.active && get_layer(*win) == win::layer::active
                     && win->central_output == stacking.active->central_output) {
                     update_layer(win);
                 }

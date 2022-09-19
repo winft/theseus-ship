@@ -248,7 +248,7 @@ void LockScreenTest::testStackingOrder()
     auto client = Test::app()->base.space->windows_map.at(window_id);
     QVERIFY(client);
     QVERIFY(client->isLockScreen());
-    QCOMPARE(client->layer(), win::layer::unmanaged);
+    QCOMPARE(win::get_layer(*client), win::layer::unmanaged);
 
     UNLOCK
 }

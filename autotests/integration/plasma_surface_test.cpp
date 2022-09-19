@@ -314,7 +314,7 @@ void PlasmaSurfaceTest::testPanelTypeHasStrut()
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
     QTEST(c->hasStrut(), "expectedStrut");
     QTEST(win::space_window_area(*Test::app()->base.space, MaximizeArea, 0, 0), "expectedMaxArea");
-    QTEST(c->layer(), "expectedLayer");
+    QTEST(win::get_layer(*c), "expectedLayer");
 }
 
 void PlasmaSurfaceTest::testPanelWindowsCanCover_data()
@@ -374,7 +374,7 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
     QCOMPARE(panel->hasStrut(), false);
     QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeArea, 0, 0),
              QRect(0, 0, 1280, 1024));
-    QCOMPARE(panel->layer(), KWin::win::layer::normal);
+    QCOMPARE(win::get_layer(*panel), KWin::win::layer::normal);
 
     // create a Window
     std::unique_ptr<Surface> surface2(Test::create_surface());
@@ -388,7 +388,7 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
     QVERIFY(c);
     QCOMPARE(c->windowType(), NET::Normal);
     QVERIFY(c->control->active);
-    QCOMPARE(c->layer(), KWin::win::layer::normal);
+    QCOMPARE(win::get_layer(*c), KWin::win::layer::normal);
     win::move(c, windowGeometry.topLeft());
     QCOMPARE(c->frameGeometry(), windowGeometry);
 

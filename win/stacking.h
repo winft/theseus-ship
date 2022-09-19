@@ -297,7 +297,7 @@ void restack(Space* space, Window* window, typename Space::window_t* under, bool
              it != space->stacking.order.pre_stack.crend();
              it++) {
             auto other = *it;
-            if (other->control && other->layer() == window->layer()
+            if (other->control && get_layer(*other) == get_layer(*window)
                 && belong_to_same_client(under, other)) {
                 // window doesn't belong to the same client as under, as we checked above, but other
                 // does, so window can't be other.
@@ -324,7 +324,7 @@ template<typename Space, typename Win>
 void restack_client_under_active(Space* space, Win* window)
 {
     if (!space->stacking.active || space->stacking.active == window
-        || space->stacking.active->layer() != window->layer()) {
+        || get_layer(*space->stacking.active) != get_layer(*window)) {
         raise_window(space, window);
         return;
     }
@@ -356,7 +356,7 @@ std::vector<typename Container::value_type> sort_windows_by_layer(Container cons
     std::map<key, layer> lead_layers;
 
     for (auto const& win : list) {
-        auto lay = win->layer();
+        auto lay = get_layer(*win);
         auto lead = get_top_lead(win);
         auto search = lead_layers.find({win->central_output, lead});
 

@@ -392,23 +392,6 @@ public:
         return true;
     }
 
-    win::layer layer() const
-    {
-        if (transient()->lead() && transient()->annexed) {
-            return transient()->lead()->layer();
-        }
-        if (m_layer == win::layer::unknown) {
-            const_cast<type*>(this)->m_layer = win::belong_to_layer(this);
-        }
-        return m_layer;
-    }
-
-    void set_layer(win::layer layer)
-    {
-        m_layer = layer;
-        ;
-    }
-
     bool skipsCloseAnimation() const
     {
         return m_skipCloseAnimation;
@@ -566,7 +549,7 @@ public:
     mutable bool is_render_shape_valid{false};
 
     QRect m_frameGeometry;
-    win::layer m_layer{win::layer::unknown};
+    win::layer layer{win::layer::unknown};
     bool m_skipCloseAnimation{false};
     QVector<win::virtual_desktop*> desktops;
 

@@ -90,7 +90,7 @@ void transfer_remnant_data(Win& source, Win& dest)
     dest.central_output = source.central_output;
     dest.m_skipCloseAnimation = source.m_skipCloseAnimation;
     dest.desktops = source.desktops;
-    dest.m_layer = source.layer();
+    dest.layer = get_layer(source);
     dest.has_in_content_deco = source.has_in_content_deco;
     dest.client_frame_extents = source.client_frame_extents;
 
