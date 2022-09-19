@@ -318,8 +318,8 @@ Win* create_popup_window(Space* space, Wrapland::Server::XdgShellPopup* popup)
                          auto const old_visible_geo = visible_rect(win, old_frame_geo);
                          auto const visible_geo = visible_rect(win, win->frameGeometry());
 
-                         lead_of_annexed_transient(win)->addLayerRepaint(
-                             old_visible_geo.united(visible_geo));
+                         add_layer_repaint(*lead_of_annexed_transient(win),
+                                           old_visible_geo.united(visible_geo));
 
                          if (old_visible_geo.size() != visible_geo.size()) {
                              discard_shape(*win);

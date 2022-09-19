@@ -155,7 +155,7 @@ public:
             m_internalWindow, &QWindow::destroyed, qwin.get(), [this] { destroyClient(); });
 
         QObject::connect(qwin.get(), &window_qobject::opacityChanged, qwin.get(), [this] {
-            this->addRepaintFull();
+            add_full_repaint(*this);
         });
 
         const QVariant windowType = m_internalWindow->property("kwin_windowType");
@@ -515,13 +515,13 @@ public:
         markAsMapped();
 
         if (buffers.fbo != fbo) {
-            this->discard_buffer();
+            discard_buffer(*this);
             buffers.fbo = fbo;
         }
 
         this->setDepth(32);
-        this->addDamageFull();
-        this->addRepaintFull();
+        add_full_damage(*this);
+        add_full_repaint(*this);
     }
 
     void present(const QImage& image, const QRegion& damage)
@@ -534,7 +534,7 @@ public:
         markAsMapped();
 
         if (buffers.image.size() != image.size()) {
-            this->discard_buffer();
+            discard_buffer(*this);
         }
 
         buffers.image = image;
@@ -653,7 +653,7 @@ public:
             return;
         }
 
-        this->setReadyForPainting();
+        set_ready_for_painting(*this);
 
         this->space.windows.push_back(this);
 

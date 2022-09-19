@@ -173,7 +173,7 @@ public:
         this->info->setOpacity(static_cast<unsigned long>(new_opacity * 0xffffffff));
 
         if (this->space.base.render->compositor->scene) {
-            this->addRepaintFull();
+            add_full_repaint(*this);
             Q_EMIT this->qobject->opacityChanged(old_opacity);
         }
     }
@@ -316,7 +316,7 @@ public:
             // event even though the window has been painted.  To avoid this we mark the whole
             // window as damaged and schedule a repaint immediately after creating the damage
             // object.
-            this->addDamageFull();
+            add_full_damage(*this);
         }
     }
 
@@ -389,7 +389,7 @@ public:
             // avoid "setReadyForPainting()" function calling overhead
             if (sync_request.counter == XCB_NONE) {
                 // cannot detect complete redraw, consider done now
-                this->setReadyForPainting();
+                set_ready_for_painting(*this);
             }
         }
 
@@ -1115,7 +1115,7 @@ public:
 
                                      pending_configures.erase(pending_configures.begin());
 
-                                     this->setReadyForPainting();
+                                     set_ready_for_painting(*this);
                                  });
                 fallback_timer->setSingleShot(true);
                 fallback_timer->start(1000);
@@ -1199,7 +1199,7 @@ public:
 
         if (frame_to_render_rect(this, old_frame_geo).size()
             != frame_to_render_rect(this, frame_geo).size()) {
-            this->discard_buffer();
+            discard_buffer(*this);
         }
 
         // TODO(romangg): Remove?
@@ -1212,8 +1212,8 @@ public:
             perform_move_resize(this);
         }
 
-        this->addLayerRepaint(visible_rect(this, old_frame_geo));
-        this->addLayerRepaint(visible_rect(this, frame_geo));
+        add_layer_repaint(*this, visible_rect(this, old_frame_geo));
+        add_layer_repaint(*this, visible_rect(this, frame_geo));
 
         Q_EMIT this->qobject->frame_geometry_changed(old_frame_geo);
 

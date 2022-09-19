@@ -46,7 +46,7 @@ public:
             if (this->sync_request.counter == XCB_NONE) {
                 // cannot detect complete redraw, consider done now
                 this->first_geo_synced = true;
-                this->setReadyForPainting();
+                set_ready_for_painting(*this);
             }
         }
         wayland::handle_surface_damage(*this, damage);

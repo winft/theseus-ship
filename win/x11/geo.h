@@ -75,7 +75,7 @@ void update_shape(Win* win)
     win->update_input_shape();
 
     if (win->render) {
-        win->addRepaintFull();
+        add_full_repaint(*win);
 
         // In case shape change removes part of this window
         win->space.base.render->compositor->addRepaint(visible_rect(win));
@@ -195,8 +195,7 @@ void handle_sync(Win* win, xcb_sync_int64_t counter_value)
         return;
     }
 
-    win->setReadyForPainting();
-
+    set_ready_for_painting(*win);
     apply_pending_geometry(win, update_request_number);
 }
 

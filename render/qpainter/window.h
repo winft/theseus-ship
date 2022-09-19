@@ -53,7 +53,7 @@ public:
         }
         if (!this->ref_win->damage_region.isEmpty()) {
             buffer->updateBuffer();
-            this->ref_win->resetDamage();
+            this->ref_win->damage_region = {};
         }
 
         auto scenePainter = static_cast<Scene&>(this->scene).scenePainter();

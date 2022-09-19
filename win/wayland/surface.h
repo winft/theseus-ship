@@ -65,7 +65,7 @@ void set_surface(Win* win, Wrapland::Server::Surface* surface)
         win->surface, &Wrapland::Server::Surface::subsurfaceTreeChanged, win->qobject.get(), [win] {
             // TODO improve to only update actual visual area
             if (win->ready_for_painting) {
-                win->addDamageFull();
+                add_full_damage(*win);
                 win->is_damaged = true;
             }
         });

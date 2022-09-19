@@ -267,7 +267,7 @@ private:
             return false;
         }
 
-        auto const repaints = win->repaints();
+        auto const repaints = win::repaints(*win);
         if (repaints.intersected(base.geometry()).isEmpty()) {
             // TODO(romangg): Remove win from windows list?
             return false;

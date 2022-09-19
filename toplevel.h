@@ -6,6 +6,7 @@
 */
 #pragma once
 
+#include "win/damage.h"
 #include "base/output.h"
 #include "base/x11/xcb/window.h"
 #include "input/cursor.h"
@@ -258,7 +259,7 @@ public:
         assert(!remnant);
 
         if (render) {
-            discard_buffer();
+            win::discard_buffer(*this);
             render.reset();
         }
 
@@ -266,106 +267,9 @@ public:
         repaints_region = QRegion();
     }
 
-    void addRepaint(QRegion const& region)
-    {
-        if (!space.base.render->compositor->scene) {
-            return;
-        }
-        repaints_region += region;
-        add_repaint_outputs(region.translated(pos()));
-        Q_EMIT qobject->needsRepaint();
-    }
-
-    void addLayerRepaint(QRegion const& region)
-    {
-        if (!space.base.render->compositor->scene) {
-            return;
-        }
-        layer_repaints_region += region;
-        add_repaint_outputs(region);
-        Q_EMIT qobject->needsRepaint();
-    }
-
-    virtual void addRepaintFull()
-    {
-        auto const region = win::visible_rect(this);
-        repaints_region = region.translated(-pos());
-        for (auto child : transient()->children) {
-            if (child->transient()->annexed) {
-                child->addRepaintFull();
-            }
-        }
-        add_repaint_outputs(region);
-        Q_EMIT qobject->needsRepaint();
-    }
-
     virtual bool has_pending_repaints() const
     {
-        return !repaints().isEmpty();
-    }
-
-    QRegion repaints() const
-    {
-        return repaints_region.translated(pos()) | layer_repaints_region;
-    }
-
-    void resetRepaints(output_t* output)
-    {
-        auto reset_all = [this] {
-            repaints_region = QRegion();
-            layer_repaints_region = QRegion();
-        };
-
-        if (!output) {
-            assert(!repaint_outputs.size());
-            reset_all();
-            return;
-        }
-
-        remove_all(repaint_outputs, output);
-
-        if (!repaint_outputs.size()) {
-            reset_all();
-            return;
-        }
-
-        auto reset_region = QRegion(output->geometry());
-
-        for (auto out : repaint_outputs) {
-            reset_region = reset_region.subtracted(out->geometry());
-        }
-
-        repaints_region.translate(pos());
-        repaints_region = repaints_region.subtracted(reset_region);
-        repaints_region.translate(-pos());
-
-        layer_repaints_region = layer_repaints_region.subtracted(reset_region);
-    }
-
-    void resetDamage()
-    {
-        damage_region = QRegion();
-    }
-
-    void addDamageFull()
-    {
-        if (!space.base.render->compositor->scene) {
-            return;
-        }
-
-        auto const render_geo = win::frame_to_render_rect(this, frameGeometry());
-
-        auto const damage = QRect(QPoint(), render_geo.size());
-        damage_region = damage;
-
-        auto repaint = damage;
-        if (has_in_content_deco) {
-            repaint.translate(-QPoint(win::left_border(this), win::top_border(this)));
-        }
-        repaints_region |= repaint;
-        add_repaint_outputs(render_geo);
-
-        Q_EMIT qobject->damaged(damage_region);
+        return !win::repaints(*this).isEmpty();
     }
 
     /**
@@ -448,14 +352,6 @@ public:
     virtual bool belongsToDesktop() const = 0;
     virtual void checkTransient(type* window) = 0;
 
-    void discard_buffer()
-    {
-        addDamageFull();
-        if (render) {
-            render->discard_buffer();
-        }
-    }
-
     /**
      * Checks whether the screen number for this Toplevel changed and updates if needed.
      * Any method changing the geometry of the Toplevel should call this method.
@@ -483,17 +379,6 @@ public:
     void removeCheckScreenConnection()
     {
         QObject::disconnect(notifiers.check_screen);
-    }
-
-    void setReadyForPainting()
-    {
-        if (!ready_for_painting) {
-            ready_for_painting = true;
-            if (space.base.render->compositor->scene) {
-                addRepaintFull();
-                Q_EMIT qobject->windowShown();
-            }
-        }
     }
 
     void handle_output_added(output_t* output)
@@ -579,23 +464,6 @@ public:
         bit_depth = depth;
         if (oldAlpha != hasAlpha()) {
             Q_EMIT qobject->hasAlphaChanged();
-        }
-    }
-
-    void add_repaint_outputs(QRegion const& region)
-    {
-        if (kwinApp()->operationMode() == Application::OperationModeX11) {
-            // On X11 we do not paint per output.
-            return;
-        }
-        for (auto& out : space.base.outputs) {
-            if (contains(repaint_outputs, out)) {
-                continue;
-            }
-            if (region.intersected(out->geometry()).isEmpty()) {
-                continue;
-            }
-            repaint_outputs.push_back(out);
         }
     }
 

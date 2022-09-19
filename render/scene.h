@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "types.h"
 #include "win/deco/renderer.h"
 
+#include "win/damage.h"
 #include "win/geo.h"
 #include "win/space_qobject.h"
 
@@ -412,7 +413,7 @@ public:
             // Reset the repaint_region.
             // This has to be done here because many effects schedule a repaint for
             // the next frame within Effects::prePaintWindow.
-            topw->resetRepaints(repaint_output);
+            win::reset_repaints(*topw, repaint_output);
 
             WindowPrePaintData data;
             data.mask = static_cast<int>(
@@ -468,12 +469,12 @@ public:
                                                                : paint_type::window_translucent));
             window->resetPaintingEnabled();
             data.paint = region;
-            data.paint |= toplevel->repaints();
+            data.paint |= win::repaints(*toplevel);
 
             // Reset the repaint_region.
             // This has to be done here because many effects schedule a repaint for
             // the next frame within Effects::prePaintWindow.
-            toplevel->resetRepaints(repaint_output);
+            win::reset_repaints(*toplevel, repaint_output);
 
             opaqueFullscreen = false;
 

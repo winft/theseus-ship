@@ -180,7 +180,7 @@ void create_decoration(Win* win)
     win->geometry_update.original.deco_margins = frame_margins(win);
 
     if (win->space.base.render->compositor->isActive()) {
-        win->discard_buffer();
+        discard_buffer(*win);
     }
 }
 

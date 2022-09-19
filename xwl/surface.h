@@ -23,7 +23,7 @@ void set_surface(Win& win, Wrapland::Server::Surface* surface)
                 win_ptr->handle_surface_damage(state.damage);
             }
             if (state.updates & Wrapland::Server::surface_change::size) {
-                win_ptr->discard_buffer();
+                discard_buffer(*win_ptr);
                 // Quads for Xwayland clients need for size emulation. Also seems needed for
                 // unmanaged Xwayland clients (compare Kate's open-file dialog when type-forward
                 // list is changing size).

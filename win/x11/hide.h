@@ -12,6 +12,7 @@
 #include "base/options.h"
 #include "win/activation.h"
 #include "win/controlling.h"
+#include "win/damage.h"
 #include "win/scene.h"
 #include "win/stacking_order.h"
 
@@ -27,7 +28,7 @@ void map(Win* win)
     // virtual desktop, etc.).  We kept the last known good pixmap around
     // for use in effects, but now we want to have access to the new pixmap
     if (win->space.base.render->compositor->scene) {
-        win->discard_buffer();
+        discard_buffer(*win);
     }
 
     win->xcb_windows.outer.map();
@@ -36,7 +37,7 @@ void map(Win* win)
     win->xcb_windows.input.map();
 
     export_mapping_state(win, XCB_ICCCM_WM_STATE_NORMAL);
-    win->addLayerRepaint(win::visible_rect(win));
+    add_layer_repaint(*win, visible_rect(win));
 }
 
 template<typename Win>

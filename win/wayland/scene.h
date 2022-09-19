@@ -21,7 +21,7 @@ void handle_surface_damage(Win& win, QRegion const& damage)
 
     auto const render_region = render_geometry(&win);
     win.repaints_region += damage.translated(render_region.topLeft() - win.pos());
-    win.add_repaint_outputs(render_region);
+    acquire_repaint_outputs(win, render_region);
 
     win.is_damaged = true;
     win.damage_region += damage;

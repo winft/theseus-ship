@@ -10,6 +10,7 @@
 #include "render/types.h"
 #include "render/x11/effect.h"
 #include "win/actions.h"
+#include "win/damage.h"
 #include "win/desktop_get.h"
 #include "win/geo.h"
 #include "win/meta.h"
@@ -76,7 +77,7 @@ public:
 
     void addRepaint(const QRect& r) override
     {
-        window.ref_win->addRepaint(r);
+        win::add_repaint(*window.ref_win, r);
     }
 
     void addRepaint(int x, int y, int w, int h) override
@@ -86,12 +87,12 @@ public:
 
     void addRepaintFull() override
     {
-        window.ref_win->addRepaintFull();
+        win::add_full_repaint(*window.ref_win);
     }
 
     void addLayerRepaint(const QRect& r) override
     {
-        window.ref_win->addLayerRepaint(r);
+        win::add_layer_repaint(*window.ref_win, r);
     }
 
     void addLayerRepaint(int x, int y, int w, int h) override

@@ -103,7 +103,7 @@ void set_subsurface_parent(Win* win, Lead* lead)
             //                when destroying while iterating over windows.
             auto top_lead = lead_of_annexed_transient(win);
             if (top_lead) {
-                top_lead->addLayerRepaint(old_frame_geo.united(frame_geo));
+                add_layer_repaint(*top_lead, old_frame_geo.united(frame_geo));
                 discard_shape(*top_lead);
             }
 

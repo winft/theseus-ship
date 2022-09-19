@@ -64,7 +64,7 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
     win->supported_default_types = supported_default_types;
     win->layer = win::layer::unmanaged;
 
-    QTimer::singleShot(50, win->qobject.get(), [win] { win->setReadyForPainting(); });
+    QTimer::singleShot(50, win->qobject.get(), [win] { set_ready_for_painting(*win); });
 
     // The window is also the frame.
     base::x11::xcb::select_input(xcb_win,
@@ -135,10 +135,10 @@ void unmanaged_configure_event(Win* win, xcb_configure_notify_event_t* event)
         auto const old = win->frameGeometry();
         win->set_frame_geometry(newgeom);
 
-        win->addRepaintFull();
+        add_full_repaint(*win);
 
         if (old.size() != win->frameGeometry().size()) {
-            win->discard_buffer();
+            discard_buffer(*win);
         }
         Q_EMIT win->qobject->frame_geometry_changed(old);
     }
@@ -156,7 +156,7 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* event)
 
     if (dirtyProperties2 & NET::WM2Opacity) {
         if (win->space.base.render->compositor->scene) {
-            win->addRepaintFull();
+            add_full_repaint(*win);
             Q_EMIT win->qobject->opacityChanged(old_opacity);
         }
     }
@@ -210,7 +210,7 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* event)
     default: {
         if (eventType == base::x11::xcb::extensions::self()->shape_notify_event()) {
             win->detectShape(win->xcb_window);
-            win->addRepaintFull();
+            add_full_repaint(*win);
 
             // In case shape change removes part of this window.
             win->space.base.render->compositor->addRepaint(win->frameGeometry());

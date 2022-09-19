@@ -186,7 +186,7 @@ public:
         auto const old_opacity = m_opacity;
         m_opacity = opacity;
 
-        this->addRepaintFull();
+        add_full_repaint(*this);
         Q_EMIT this->qobject->opacityChanged(old_opacity);
     }
 
@@ -432,8 +432,8 @@ public:
         }
 
         if (!this->control) {
-            this->addLayerRepaint(visible_rect(this, old_frame_geo));
-            this->addLayerRepaint(visible_rect(this, frame_geo));
+            add_layer_repaint(*this, visible_rect(this, old_frame_geo));
+            add_layer_repaint(*this, visible_rect(this, frame_geo));
             Q_EMIT this->qobject->frame_geometry_changed(old_frame_geo);
             return;
         }
@@ -444,8 +444,8 @@ public:
             perform_move_resize(this);
         }
 
-        this->addLayerRepaint(visible_rect(this, old_frame_geo));
-        this->addLayerRepaint(visible_rect(this, frame_geo));
+        add_layer_repaint(*this, visible_rect(this, old_frame_geo));
+        add_layer_repaint(*this, visible_rect(this, frame_geo));
 
         Q_EMIT this->qobject->frame_geometry_changed(old_frame_geo);
 
@@ -1192,7 +1192,7 @@ public:
         }
 
         if (this->surface->state().updates & Wrapland::Server::surface_change::size) {
-            this->discard_buffer();
+            discard_buffer(*this);
         }
 
         if (auto const& damage = this->surface->state().damage; !damage.isEmpty()) {
@@ -1385,13 +1385,13 @@ private:
 
         if (this->ready_for_painting) {
             // Was already shown in the past once. Just repaint and emit shown again.
-            this->addRepaintFull();
+            add_full_repaint(*this);
             Q_EMIT this->qobject->windowShown();
             return;
         }
 
         // First time shown. Must be added to space.
-        this->setReadyForPainting();
+        set_ready_for_painting(*this);
         this->space.handle_window_added(this);
     }
 };

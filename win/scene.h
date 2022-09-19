@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "damage.h"
 #include "deco.h"
 #include "window_qobject.h"
 
@@ -53,7 +54,7 @@ void discard_shape(Win& win)
 
     if (win.render) {
         win.render->invalidateQuadsCache();
-        win.addRepaintFull();
+        add_full_repaint(win);
     }
     if (win.transient()->annexed) {
         for (auto lead : win.transient()->leads()) {
@@ -111,7 +112,7 @@ auto update_shadow(Win* win)
 
     if (dirty_rect.isValid()) {
         dirty_rect.translate(win->pos());
-        win->addLayerRepaint(dirty_rect);
+        add_layer_repaint(*win, dirty_rect);
     }
 }
 

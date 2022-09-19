@@ -195,8 +195,8 @@ private:
                              auto const& visible_geo
                                  = win::visible_rect(popup, popup->frameGeometry());
 
-                             win::lead_of_annexed_transient(popup)->addLayerRepaint(
-                                 old_visible_geo.united(visible_geo));
+                             win::add_layer_repaint(*win::lead_of_annexed_transient(popup),
+                                                    old_visible_geo.united(visible_geo));
 
                              if (old_visible_geo.size() != visible_geo.size()) {
                                  win::discard_shape(*popup);

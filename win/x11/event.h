@@ -138,7 +138,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
         }
         if (dirtyProperties2 & NET::WM2Opacity) {
             if (win->space.base.render->compositor->scene) {
-                win->addRepaintFull();
+                add_full_repaint(*win);
                 Q_EMIT win->qobject->opacityChanged(old_opacity);
             } else {
                 // forward to the frame if there's possibly another compositing manager running
@@ -190,7 +190,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
                 // The frame geometry stays the same so we just update our server geometry and use
                 // the latest synced frame geometry.
                 update_server_geometry(win, win->synced_geometry.frame);
-                win->discard_buffer();
+                discard_buffer(*win);
             }
         }
     }

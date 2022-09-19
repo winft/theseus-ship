@@ -7,6 +7,7 @@
 */
 #pragma once
 
+#include "win/damage.h"
 #include "win/deco/renderer.h"
 
 // Must be included before.
@@ -81,10 +82,11 @@ public:
         , scene{scene}
     {
         this->data = std::make_unique<deco_render_data<Scene>>(scene);
-        QObject::connect(this->qobject.get(),
-                         &win::deco::renderer_qobject::renderScheduled,
-                         client->client()->qobject.get(),
-                         [win = client->client()](auto const& region) { win->addRepaint(region); });
+        QObject::connect(
+            this->qobject.get(),
+            &win::deco::renderer_qobject::renderScheduled,
+            client->client()->qobject.get(),
+            [win = client->client()](auto const& region) { win::add_repaint(*win, region); });
     }
 
     void render() override
