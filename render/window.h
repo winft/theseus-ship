@@ -144,7 +144,7 @@ public:
     // is the window fully opaque
     bool isOpaque() const
     {
-        return ref_win->opacity() == 1.0 && !ref_win->hasAlpha();
+        return ref_win->opacity() == 1.0 && !win::has_alpha(*ref_win);
     }
 
     QRegion decorationShape() const

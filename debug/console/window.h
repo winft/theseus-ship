@@ -185,7 +185,7 @@ public:
 
     bool hasAlpha() const override
     {
-        return ref_win->hasAlpha();
+        return win::has_alpha(*ref_win);
     }
 
     qreal opacity() const override

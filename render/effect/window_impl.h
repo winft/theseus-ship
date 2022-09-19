@@ -155,7 +155,7 @@ public:
 
     bool hasAlpha() const override
     {
-        return window.ref_win->hasAlpha();
+        return win::has_alpha(*window.ref_win);
     }
 
     QStringList activities() const override

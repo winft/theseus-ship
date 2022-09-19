@@ -317,7 +317,7 @@ public:
 
     bool hasAlpha() const override
     {
-        return m_client->hasAlpha();
+        return win::has_alpha(*m_client);
     }
 
     qreal opacity() const override

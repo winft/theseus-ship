@@ -209,7 +209,7 @@ void PlasmaSurfaceTest::testDesktopIsOpaque()
     QCOMPARE(c->windowType(), NET::Desktop);
     QVERIFY(win::is_desktop(c));
 
-    QVERIFY(!c->hasAlpha());
+    QVERIFY(!win::has_alpha(*c));
     QCOMPARE(c->bit_depth, 24);
 }
 

@@ -178,7 +178,7 @@ void TestXdgShellClient::testMapUnmapMap()
     QCOMPARE(client->isHiddenInternal(), false);
     QCOMPARE(client->ready_for_painting, true);
     QCOMPARE(client->bit_depth, 32);
-    QVERIFY(client->hasAlpha());
+    QVERIFY(win::has_alpha(*client));
     QCOMPARE(client->control->icon.name(), QStringLiteral("wayland"));
     QCOMPARE(Test::app()->base.space->stacking.active, client);
     QVERIFY(effectsWindowShownSpy.isEmpty());
@@ -230,7 +230,7 @@ void TestXdgShellClient::testMapUnmapMap()
     QCOMPARE(client->ready_for_painting, true);
     QCOMPARE(client->isHiddenInternal(), false);
     QCOMPARE(client->bit_depth, 24);
-    QVERIFY(!client->hasAlpha());
+    QVERIFY(!win::has_alpha(*client));
     QCOMPARE(Test::app()->base.space->stacking.active, client);
     QCOMPARE(effectsWindowShownSpy.count(), 1);
     QCOMPARE(effectsWindowShownSpy.first().first().value<EffectWindow*>(),

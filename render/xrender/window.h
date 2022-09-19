@@ -197,7 +197,7 @@ public:
             // transformation matrix, and doesn't have an alpha channel.
             // Since we only scale the picture, we can work around this by setting
             // the repeat mode to RepeatPad.
-            if (!this->ref_win->hasAlpha()) {
+            if (!win::has_alpha(*this->ref_win)) {
                 const uint32_t values[] = {XCB_RENDER_REPEAT_PAD};
                 xcb_render_change_picture(connection(), pic, XCB_RENDER_CP_REPEAT, values);
             }
@@ -473,7 +473,7 @@ public:
             xcb_render_set_picture_transform(connection(), pic, identity);
             if (this->filter == image_filter_type::good)
                 setPictureFilter(pic, image_filter_type::fast);
-            if (!this->ref_win->hasAlpha()) {
+            if (!win::has_alpha(*this->ref_win)) {
                 const uint32_t values[] = {XCB_RENDER_REPEAT_NONE};
                 xcb_render_change_picture(connection(), pic, XCB_RENDER_CP_REPEAT, values);
             }

@@ -14,6 +14,27 @@
 namespace KWin::win
 {
 
+template<typename Win>
+bool has_alpha(Win& win)
+{
+    return win.bit_depth == 32;
+}
+
+template<typename Win>
+void set_bit_depth(Win& win, int depth)
+{
+    if (win.bit_depth == depth) {
+        return;
+    }
+
+    auto const old_alpha = has_alpha(win);
+    win.bit_depth = depth;
+
+    if (old_alpha != has_alpha(win)) {
+        Q_EMIT win.qobject->hasAlphaChanged();
+    }
+}
+
 /**
  * Returns the pointer to the window's shadow. A shadow is only available if Compositing is enabled
  * and on X11 if the corresponding X window has the shadow property set.

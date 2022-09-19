@@ -520,7 +520,7 @@ public:
             buffers.fbo = fbo;
         }
 
-        this->setDepth(32);
+        set_bit_depth(*this, 32);
         add_full_damage(*this);
         add_full_repaint(*this);
     }
@@ -540,7 +540,7 @@ public:
 
         buffers.image = image;
 
-        this->setDepth(32);
+        set_bit_depth(*this, 32);
         wayland::handle_surface_damage(*this, damage);
     }
 

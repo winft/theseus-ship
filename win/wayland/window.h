@@ -1234,8 +1234,9 @@ public:
             do_set_geometry(QRect(this->pos(), cur_size));
         }
 
-        this->setDepth(
-            (this->surface->state().buffer->hasAlphaChannel() && !is_desktop(this)) ? 32 : 24);
+        auto bit_depth
+            = (this->surface->state().buffer->hasAlphaChannel() && !is_desktop(this)) ? 32 : 24;
+        set_bit_depth(*this, bit_depth);
         map();
     }
 

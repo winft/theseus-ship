@@ -485,7 +485,7 @@ public:
                 }
                 data.clip |= win::content_render_region(toplevel).translated(
                     toplevel->pos() + window->bufferOffset());
-            } else if (toplevel->hasAlpha() && toplevel->opacity() == 1.0) {
+            } else if (win::has_alpha(*toplevel) && toplevel->opacity() == 1.0) {
                 auto const clientShape = win::content_render_region(toplevel).translated(
                     win::frame_to_render_pos(toplevel, toplevel->pos()));
                 auto const opaqueShape = toplevel->opaque_region.translated(

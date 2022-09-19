@@ -243,11 +243,6 @@ public:
     virtual double opacity() const = 0;
     virtual void setOpacity(double new_opacity) = 0;
 
-    bool hasAlpha() const
-    {
-        return bit_depth == 32;
-    }
-
     virtual void setupCompositing() = 0;
 
     virtual void add_scene_window_addon()
@@ -375,18 +370,6 @@ public:
             stream << "\'REMNANT:" << reinterpret_cast<void const*>(this) << "\'";
         } else {
             stream << "\'ID:" << reinterpret_cast<void const*>(this) << xcb_window << "\'";
-        }
-    }
-
-    void setDepth(int depth)
-    {
-        if (bit_depth == depth) {
-            return;
-        }
-        const bool oldAlpha = hasAlpha();
-        bit_depth = depth;
-        if (oldAlpha != hasAlpha()) {
-            Q_EMIT qobject->hasAlphaChanged();
         }
     }
 

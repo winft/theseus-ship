@@ -164,7 +164,7 @@ void X11DesktopWindowTest::testDesktopWindow()
     QCOMPARE(client->frameGeometry(), windowGeometry);
     QVERIFY(win::is_desktop(client));
     QCOMPARE(client->bit_depth, 24);
-    QVERIFY(!client->hasAlpha());
+    QVERIFY(!win::has_alpha(*client));
 
     // and destroy the window again
     xcb_unmap_window(c.get(), w);
