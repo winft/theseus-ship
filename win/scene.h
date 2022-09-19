@@ -192,4 +192,18 @@ void elevate(Win* win, bool elevate)
     win->space.base.render->compositor->addRepaint(visible_rect(win));
 }
 
+template<typename Win>
+void finish_compositing(Win& win)
+{
+    assert(!win.remnant);
+
+    if (win.render) {
+        discard_buffer(win);
+        win.render.reset();
+    }
+
+    win.damage_region = {};
+    win.repaints_region = {};
+}
+
 }

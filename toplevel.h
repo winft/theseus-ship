@@ -6,14 +6,15 @@
 */
 #pragma once
 
-#include "win/damage.h"
 #include "base/output.h"
 #include "base/x11/xcb/window.h"
 #include "input/cursor.h"
 #include "render/window.h"
 #include "win/activation.h"
 #include "win/control.h"
+#include "win/damage.h"
 #include "win/remnant.h"
+#include "win/rules.h"
 #include "win/rules/ruling.h"
 #include "win/rules/update.h"
 #include "win/shortcut_set.h"
@@ -209,7 +210,7 @@ public:
     {
         // TODO: for remnant special case?
         return desktops.isEmpty() ? static_cast<int>(NET::OnAllDesktops)
-                                    : desktops.last()->x11DesktopNumber();
+                                  : desktops.last()->x11DesktopNumber();
     }
 
     virtual QByteArray windowRole() const
@@ -251,15 +252,7 @@ public:
 
     virtual void finishCompositing()
     {
-        assert(!remnant);
-
-        if (render) {
-            win::discard_buffer(*this);
-            render.reset();
-        }
-
-        damage_region = QRegion();
-        repaints_region = QRegion();
+        win::finish_compositing(*this);
     }
 
     virtual bool has_pending_repaints() const
@@ -289,19 +282,7 @@ public:
 
     virtual win::layer layer_for_dock() const
     {
-        assert(control);
-
-        // Slight hack for the 'allow window to cover panel' Kicker setting.
-        // Don't move keepbelow docks below normal window, but only to the same
-        // layer, so that both may be raised to cover the other.
-        if (control->keep_below) {
-            return win::layer::normal;
-        }
-        if (control->keep_above) {
-            // slight hack for the autohiding panels
-            return win::layer::above;
-        }
-        return win::layer::dock;
+        return win::layer_for_dock(*this);
     }
 
     /**
@@ -599,23 +580,9 @@ public:
     {
     }
 
-    /**
-     * Leaves the move resize mode.
-     *
-     * Inheriting classes must invoke the base implementation which
-     * ensures that the internal mode is properly ended.
-     */
     virtual void leaveMoveResize()
     {
-        win::set_move_resize_window(space, nullptr);
-        control->move_resize.enabled = false;
-        if (space.edges->desktop_switching.when_moving_client) {
-            space.edges->reserveDesktopSwitching(false, Qt::Vertical | Qt::Horizontal);
-        }
-        if (control->electric_maximizing) {
-            space.outline->hide();
-            win::elevate(this, false);
-        }
+        win::leave_move_resize(*this);
     }
 
     /**
@@ -743,72 +710,9 @@ public:
         win::window_shortcut_updated(space, this);
     }
 
-    // Applies Force, ForceTemporarily and ApplyNow rules
-    // Used e.g. after the rules have been modified using the kcm.
     virtual void applyWindowRules()
     {
-        // apply force rules
-        // Placement - does need explicit update, just like some others below
-        // Geometry : setGeometry() doesn't check rules
-        auto client_rules = control->rules;
-
-        auto const orig_geom = frameGeometry();
-        auto const geom = client_rules.checkGeometry(orig_geom);
-
-        if (geom != orig_geom) {
-            setFrameGeometry(geom);
-        }
-
-        // MinSize, MaxSize handled by Geometry
-        // IgnoreGeometry
-        win::set_desktop(this, desktop());
-
-        // TODO(romangg): can central_output be null?
-        win::send_to_screen(space, this, *central_output);
-        // Type
-        win::maximize(this, maximizeMode());
-
-        // Minimize : functions don't check
-        win::set_minimized(this, client_rules.checkMinimize(control->minimized));
-
-        win::set_original_skip_taskbar(this, control->skip_taskbar());
-        win::set_skip_pager(this, control->skip_pager());
-        win::set_skip_switcher(this, control->skip_switcher());
-        win::set_keep_above(this, control->keep_above);
-        win::set_keep_below(this, control->keep_below);
-        setFullScreen(control->fullscreen, true);
-        setNoBorder(noBorder());
-        updateColorScheme();
-
-        // FSP
-        // AcceptFocus :
-        if (win::most_recently_activated_window(space) == this
-            && !client_rules.checkAcceptFocus(true)) {
-            win::activate_next_window(space, this);
-        }
-
-        // Closeable
-        if (auto s = size(); s != size() && s.isValid()) {
-            win::constrained_resize(this, s);
-        }
-
-        // Autogrouping : Only checked on window manage
-        // AutogroupInForeground : Only checked on window manage
-        // AutogroupById : Only checked on window manage
-        // StrictGeometry
-        win::set_shortcut(this, control->rules.checkShortcut(control->shortcut.toString()));
-
-        // see also X11Client::setActive()
-        if (control->active) {
-            setOpacity(control->rules.checkOpacityActive(qRound(opacity() * 100.0)) / 100.0);
-            win::set_global_shortcuts_disabled(space,
-                                               control->rules.checkDisableGlobalShortcuts(false));
-        } else {
-            setOpacity(control->rules.checkOpacityInactive(qRound(opacity() * 100.0)) / 100.0);
-        }
-
-        win::set_desktop_file_name(
-            this, control->rules.checkDesktopFile(control->desktop_file_name).toUtf8());
+        win::apply_window_rules(*this);
     }
 };
 

@@ -12,6 +12,7 @@
 #include "geo_move.h"
 #include "net.h"
 #include "quicktile.h"
+#include "scene.h"
 #include "stacking.h"
 #include "types.h"
 #include "window_area.h"
@@ -786,6 +787,22 @@ void end_move_resize(Win* win)
     }
 
     update_cursor(win);
+}
+
+// TODO(romangg): We have 3 different functions to finish/end/leave a move-resize operation. There
+//                should be only a single one!
+template<typename Win>
+void leave_move_resize(Win& win)
+{
+    set_move_resize_window(win.space, nullptr);
+    win.control->move_resize.enabled = false;
+    if (win.space.edges->desktop_switching.when_moving_client) {
+        win.space.edges->reserveDesktopSwitching(false, Qt::Vertical | Qt::Horizontal);
+    }
+    if (win.control->electric_maximizing) {
+        win.space.outline->hide();
+        elevate(&win, false);
+    }
 }
 
 template<typename Win>

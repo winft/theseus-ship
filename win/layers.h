@@ -44,6 +44,24 @@ bool is_active_fullscreen(Win const* win)
 }
 
 template<typename Win>
+layer layer_for_dock(Win const& win)
+{
+    assert(win.control);
+
+    // Slight hack for the 'allow window to cover panel' Kicker setting.
+    // Don't move keepbelow docks below normal window, but only to the same
+    // layer, so that both may be raised to cover the other.
+    if (win.control->keep_below) {
+        return win::layer::normal;
+    }
+    if (win.control->keep_above) {
+        // slight hack for the autohiding panels
+        return win::layer::above;
+    }
+    return win::layer::dock;
+}
+
+template<typename Win>
 layer belong_to_layer(Win* win)
 {
     // NOTICE while showingDesktop, desktops move to the AboveLayer

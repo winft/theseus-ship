@@ -1071,7 +1071,7 @@ public:
         assert(this->control);
 
         if (!plasma_shell_surface) {
-            return Toplevel<Space>::layer_for_dock();
+            return win::layer_for_dock(*this);
         }
 
         using PSS = Wrapland::Server::PlasmaShellSurface;

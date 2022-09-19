@@ -322,7 +322,7 @@ public:
 
     void finishCompositing() override
     {
-        Toplevel<Space>::finishCompositing();
+        finish_compositing(*this);
         destroy_damage_handle(*this);
 
         // For safety in case KWin is just resizing the window.
@@ -481,7 +481,7 @@ public:
 
     void applyWindowRules() override
     {
-        Toplevel<Space>::applyWindowRules();
+        apply_window_rules(*this);
         setBlockingCompositing(this->info->isBlockingCompositing());
     }
 
@@ -965,7 +965,7 @@ public:
         xcb_ungrab_pointer(connection(), xTime());
         xcb_windows.grab.reset();
 
-        Toplevel<Space>::leaveMoveResize();
+        leave_move_resize(*this);
     }
 
     void doResizeSync() override
