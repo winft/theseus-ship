@@ -88,7 +88,7 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
     }
     win->detectShape(xcb_win);
     win->getWmOpaqueRegion();
-    win->getSkipCloseAnimation();
+    win->fetch_and_set_skip_close_animation();
     win->setupCompositing();
 
     auto find_internal_window = [&win]() -> QWindow* {

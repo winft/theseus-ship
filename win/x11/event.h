@@ -485,7 +485,7 @@ void property_notify_event_prepare(Win& win, xcb_property_notify_event_t* event)
     } else if (event->atom == atoms->kde_net_wm_shadow) {
         win::update_shadow(&win);
     } else if (event->atom == atoms->kde_skip_close_animation) {
-        win.getSkipCloseAnimation();
+        win.fetch_and_set_skip_close_animation();
     }
 }
 

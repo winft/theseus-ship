@@ -88,7 +88,7 @@ void transfer_remnant_data(Win& source, Win& dest)
     dest.wm_class = source.wm_class;
     dest.opaque_region = source.opaque_region;
     dest.central_output = source.central_output;
-    dest.m_skipCloseAnimation = source.m_skipCloseAnimation;
+    dest.skip_close_animation = source.skip_close_animation;
     dest.desktops = source.desktops;
     dest.layer = get_layer(source);
     dest.has_in_content_deco = source.has_in_content_deco;

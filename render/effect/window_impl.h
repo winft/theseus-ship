@@ -379,7 +379,7 @@ public:
 
     bool skipsCloseAnimation() const override
     {
-        return window.ref_win->skipsCloseAnimation();
+        return window.ref_win->skip_close_animation;
     }
 
     bool acceptsFocus() const override

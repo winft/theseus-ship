@@ -1364,9 +1364,9 @@ public:
         this->opaque_region = new_opaque_region;
     }
 
-    void getSkipCloseAnimation()
+    void fetch_and_set_skip_close_animation()
     {
-        this->setSkipCloseAnimation(fetch_skip_close_animation(*this).to_bool());
+        set_skip_close_animation(*this, fetch_skip_close_animation(*this).to_bool());
     }
 
     void detectShape(xcb_window_t id)

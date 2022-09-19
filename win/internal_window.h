@@ -85,7 +85,8 @@ protected:
         if (watched == window.m_internalWindow && event->type() == QEvent::DynamicPropertyChange) {
             auto pe = static_cast<QDynamicPropertyChangeEvent*>(event);
             if (pe->propertyName() == internal_skip_close_animation_name) {
-                window.setSkipCloseAnimation(
+                set_skip_close_animation(
+                    window,
                     window.m_internalWindow->property(internal_skip_close_animation_name).toBool());
             }
             if (pe->propertyName() == "kwin_windowType") {
@@ -168,8 +169,8 @@ public:
 
         set_on_all_desktops(this, true);
         setOpacity(m_internalWindow->opacity());
-        this->setSkipCloseAnimation(
-            m_internalWindow->property(internal_skip_close_animation_name).toBool());
+        set_skip_close_animation(
+            *this, m_internalWindow->property(internal_skip_close_animation_name).toBool());
         this->is_outline = m_internalWindow->property("__kwin_outline").toBool();
 
         setupCompositing();

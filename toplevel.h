@@ -281,20 +281,6 @@ public:
         return true;
     }
 
-    bool skipsCloseAnimation() const
-    {
-        return m_skipCloseAnimation;
-    }
-
-    void setSkipCloseAnimation(bool set)
-    {
-        if (set == m_skipCloseAnimation) {
-            return;
-        }
-        m_skipCloseAnimation = set;
-        Q_EMIT qobject->skipCloseAnimationChanged();
-    }
-
     /**
      * Can be implemented by child classes to add additional checks to the ones in win::is_popup.
      */
@@ -357,7 +343,7 @@ public:
 
     QRect m_frameGeometry;
     win::layer layer{win::layer::unknown};
-    bool m_skipCloseAnimation{false};
+    bool skip_close_animation{false};
     QVector<win::virtual_desktop*> desktops;
 
     /// Being used internally when emitting signals. Access via the space windows_map.

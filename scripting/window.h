@@ -595,12 +595,12 @@ public:
 
     bool skipsCloseAnimation() const override
     {
-        return m_client->skipsCloseAnimation();
+        return m_client->skip_close_animation;
     }
 
     void setSkipCloseAnimation(bool set) override
     {
-        m_client->setSkipCloseAnimation(set);
+        win::set_skip_close_animation(*m_client, set);
     }
 
     bool isActive() const override

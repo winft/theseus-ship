@@ -515,13 +515,13 @@ public:
 
     bool skipsCloseAnimation() const override
     {
-        return ref_win->skipsCloseAnimation();
+        return ref_win->skip_close_animation;
     }
 
     void setSkipCloseAnimation(bool set) override
     {
         if (ref_win->control) {
-            ref_win->setSkipCloseAnimation(set);
+            win::set_skip_close_animation(*ref_win, set);
         }
     }
 

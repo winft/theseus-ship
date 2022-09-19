@@ -310,7 +310,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     win->geometry_hints.read();
     get_motif_hints(win, true);
     win->getWmOpaqueRegion();
-    win->setSkipCloseAnimation(skipCloseAnimationCookie.to_bool());
+    set_skip_close_animation(*win, skipCloseAnimationCookie.to_bool());
 
     // TODO: Try to obey all state information from info->state()
 
