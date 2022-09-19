@@ -50,10 +50,10 @@ void setup_window_control_connections(Win* win)
                      qtwin,
                      &window_qobject::moveResizedChanged);
     QObject::connect(qtwin, &window_qobject::clientStartUserMovedResized, qtwin, [win] {
-        win->removeCheckScreenConnection();
+        QObject::disconnect(win->notifiers.check_screen);
     });
     QObject::connect(qtwin, &window_qobject::clientFinishUserMovedResized, qtwin, [win] {
-        win->setupCheckScreenConnection();
+        setup_check_screen(*win);
     });
 
     QObject::connect(

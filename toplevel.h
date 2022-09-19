@@ -339,56 +339,6 @@ public:
     virtual bool belongsToDesktop() const = 0;
     virtual void checkTransient(type* window) = 0;
 
-    /**
-     * Checks whether the screen number for this Toplevel changed and updates if needed.
-     * Any method changing the geometry of the Toplevel should call this method.
-     */
-    void checkScreen()
-    {
-        auto const& outputs = space.base.outputs;
-        auto output = base::get_nearest_output(outputs, frameGeometry().center());
-        if (central_output != output) {
-            auto old_out = central_output;
-            central_output = output;
-            Q_EMIT qobject->central_output_changed(old_out, output);
-        }
-    }
-
-    void setupCheckScreenConnection()
-    {
-        notifiers.check_screen = QObject::connect(qobject.get(),
-                                                  &win::window_qobject::frame_geometry_changed,
-                                                  qobject.get(),
-                                                  [this] { checkScreen(); });
-        checkScreen();
-    }
-
-    void removeCheckScreenConnection()
-    {
-        QObject::disconnect(notifiers.check_screen);
-    }
-
-    void handle_output_added(output_t* output)
-    {
-        if (!central_output) {
-            central_output = output;
-            Q_EMIT qobject->central_output_changed(nullptr, output);
-            return;
-        }
-
-        checkScreen();
-    }
-
-    void handle_output_removed(output_t* output)
-    {
-        if (central_output != output) {
-            return;
-        }
-        auto const& outputs = space.base.outputs;
-        central_output = base::get_nearest_output(outputs, frameGeometry().center());
-        Q_EMIT qobject->central_output_changed(output, central_output);
-    }
-
     NETWinInfo* info{nullptr};
     Wrapland::Server::Surface* surface{nullptr};
     quint32 surface_id{0};

@@ -743,7 +743,7 @@ void finish_move_resize(Win* win, bool cancel)
 
     // Needs to be done because clientFinishUserMovedResized has not yet re-activated online
     // alignment.
-    win->checkScreen();
+    check_screen(*win);
 
     int output_index = win->central_output
         ? base::get_output_index(win->space.base.outputs, *win->central_output)

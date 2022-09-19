@@ -71,7 +71,7 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
                                  attr->your_event_mask | XCB_EVENT_MASK_STRUCTURE_NOTIFY
                                      | XCB_EVENT_MASK_PROPERTY_CHANGE);
     win->set_frame_geometry(geo.rect());
-    win->checkScreen();
+    check_screen(*win);
     win->xcb_visual = attr->visual;
     win->bit_depth = geo->depth;
     win->info = new NETWinInfo(connection(),
