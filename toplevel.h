@@ -430,7 +430,7 @@ public:
         , signal_id{++space.window_id}
     {
         space.windows_map.insert({signal_id, this});
-        m_transient.reset(transient);
+        this->transient.reset(transient);
     }
 
     virtual void debug(QDebug& stream) const
@@ -454,17 +454,11 @@ public:
         }
     }
 
-private:
-    std::unique_ptr<win::transient<type>> m_transient;
+    std::unique_ptr<win::transient<type>> transient;
 
 public:
     std::unique_ptr<win::control<type>> control;
     std::optional<win::remnant> remnant;
-
-    win::transient<type>* transient() const
-    {
-        return m_transient.get();
-    }
 
     /**
      * Below only for clients with control.

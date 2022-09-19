@@ -17,24 +17,24 @@ namespace KWin::win
 {
 
 template<typename Win>
-auto get_top_lead(Win* win) -> decltype(win->transient()->lead())
+auto get_top_lead(Win* win) -> decltype(win->transient->lead())
 {
-    if (auto lead = win->transient()->lead()) {
+    if (auto lead = win->transient->lead()) {
         return get_top_lead(lead);
     }
     return win;
 }
 
 template<typename Win>
-auto get_transient_descendants(Win* win) -> decltype(win->transient()->children)
+auto get_transient_descendants(Win* win) -> decltype(win->transient->children)
 {
-    decltype(win->transient()->children) descendants;
+    decltype(win->transient->children) descendants;
 
-    for (auto child : win->transient()->children) {
+    for (auto child : win->transient->children) {
         descendants.push_back(child);
     }
 
-    for (auto child : win->transient()->children) {
+    for (auto child : win->transient->children) {
         auto const child_desc = get_transient_descendants(child);
         descendants.insert(descendants.end(), child_desc.begin(), child_desc.end());
     }
@@ -52,10 +52,10 @@ auto get_transient_family(Win* win)
 }
 
 template<typename Win>
-auto lead_of_annexed_transient(Win* win) -> decltype(win->transient()->lead())
+auto lead_of_annexed_transient(Win* win) -> decltype(win->transient->lead())
 {
-    if (win && win->transient()->annexed) {
-        return lead_of_annexed_transient(win->transient()->lead());
+    if (win && win->transient->annexed) {
+        return lead_of_annexed_transient(win->transient->lead());
     }
     return win;
 }
@@ -74,7 +74,7 @@ public:
         auto top_lead = lead_of_annexed_transient(m_window);
 
         for (auto const& lead : m_leads) {
-            remove_all(lead->transient()->children, m_window);
+            remove_all(lead->transient->children, m_window);
             if (annexed) {
                 assert(top_lead);
                 discard_shape(*top_lead);
@@ -120,9 +120,9 @@ public:
         }
 
         children.push_back(window);
-        window->transient()->add_lead(m_window);
+        window->transient->add_lead(m_window);
 
-        if (window->transient()->annexed) {
+        if (window->transient->annexed) {
             discard_shape(*m_window);
         }
     }
@@ -131,9 +131,9 @@ public:
     {
         assert(contains(children, window));
         remove_all(children, window);
-        window->transient()->remove_lead(m_window);
+        window->transient->remove_lead(m_window);
 
-        if (window->transient()->annexed) {
+        if (window->transient->annexed) {
             // Need to check that a top-lead exists since this might be called on destroy of a lead.
             if (auto top_lead = lead_of_annexed_transient(m_window)) {
                 discard_shape(*top_lead);
@@ -147,14 +147,14 @@ public:
      */
     bool is_follower_of(Window const* window)
     {
-        for (auto const& child : window->transient()->children) {
+        for (auto const& child : window->transient->children) {
             if (child == m_window) {
                 return true;
             }
         }
 
         for (auto const& lead : m_leads) {
-            if (lead->transient()->is_follower_of(window)) {
+            if (lead->transient->is_follower_of(window)) {
                 return true;
             }
         }

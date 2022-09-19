@@ -367,7 +367,7 @@ void set_active(Win* win, bool active)
     // active windows may get different layer
     update_layer(win);
 
-    auto leads = win->transient()->leads();
+    auto leads = win->transient->leads();
     for (auto lead : leads) {
         if (lead->remnant) {
             continue;
@@ -557,8 +557,8 @@ bool activate_next_window(Space& space, typename Space::window_t* window)
 
     if (!get_focus) { // no suitable window under the mouse -> find sth. else
         // first try to pass the focus to the (former) active clients leader
-        if (window && window->transient()->lead()) {
-            auto leaders = window->transient()->leads();
+        if (window && window->transient->lead()) {
+            auto leaders = window->transient->leads();
             if (leaders.size() == 1
                 && focus_chain_is_usable_focus_candidate(space, leaders.at(0), window)) {
                 get_focus = leaders.at(0);

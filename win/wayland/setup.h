@@ -62,7 +62,7 @@ void setup_plasma_management(Space* space, Win* win)
     // FIXME Matches X11Client::actionSupported(), but both should be implemented.
     plasma_win->setVirtualDesktopChangeable(true);
 
-    auto transient_lead = win->transient()->lead();
+    auto transient_lead = win->transient->lead();
     plasma_win->setParentWindow(transient_lead ? transient_lead->control->plasma_wayland_integration
                                                : nullptr);
     plasma_win->setGeometry(win->frameGeometry());
@@ -109,7 +109,7 @@ void setup_plasma_management(Space* space, Win* win)
     QObject::connect(qtwin, &window_qobject::windowClassChanged, plasma_win, updateAppId);
     QObject::connect(qtwin, &window_qobject::desktopFileNameChanged, plasma_win, updateAppId);
     QObject::connect(qtwin, &window_qobject::transientChanged, plasma_win, [plasma_win, win] {
-        auto lead = win->transient()->lead();
+        auto lead = win->transient->lead();
         if (lead && !lead->control) {
             // When lead becomes remnant.
             lead = nullptr;

@@ -292,7 +292,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
     update_allowed_actions(win);
 
-    win->transient()->set_modal((win->info->state() & NET::Modal) != 0);
+    win->transient->set_modal((win->info->state() & NET::Modal) != 0);
     read_transient_property(win, transientCookie);
 
     QByteArray desktopFileName{win->info->desktopFileName()};
@@ -360,8 +360,8 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         // If this window is transient, ensure that it is opened on the
         // same window as its parent.  this is necessary when an application
         // starts up on a different desktop than is currently displayed.
-        if (win->transient()->lead()) {
-            auto leads = win->transient()->leads();
+        if (win->transient->lead()) {
+            auto leads = win->transient->leads();
             bool on_current = false;
             bool on_all = false;
             typename Space::window_t* maincl = nullptr;
@@ -452,7 +452,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     // if client has initial state set to Iconic and is transient with a parent
     // window that is not Iconic, set init_state to Normal
     if (init_minimize) {
-        auto leads = win->transient()->leads();
+        auto leads = win->transient->leads();
         for (auto lead : leads) {
             if (lead->isShown()) {
                 // SELI TODO: Even e.g. for NET::Utility?
@@ -462,11 +462,11 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     }
 
     // If a dialog is shown for minimized window, minimize it too
-    if (!init_minimize && win->transient()->lead()
+    if (!init_minimize && win->transient->lead()
         && space.session_manager->state() != SessionState::Saving) {
         bool visible_parent = false;
 
-        for (auto const& lead : win->transient()->leads()) {
+        for (auto const& lead : win->transient->leads()) {
             if (lead->isShown()) {
                 visible_parent = true;
             }
@@ -547,7 +547,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
             set_demands_attention(win, true);
         }
         if (win->info->state() & NET::Modal) {
-            win->transient()->set_modal(true);
+            win->transient->set_modal(true);
         }
 
         win->setFullScreen(
@@ -712,10 +712,10 @@ xcb_timestamp_t read_user_time_map_timestamp(Win* win,
                     && belong_to_same_application(
                            x11_client, win, same_client_check::relaxed_for_active);
             };
-            if (win->transient()->lead()) {
+            if (win->transient->lead()) {
                 auto clientMainClients = [win]() {
                     std::vector<Win*> ret;
-                    const auto mcs = win->transient()->leads();
+                    const auto mcs = win->transient->leads();
                     for (auto mc : mcs) {
                         if (auto c = dynamic_cast<Win*>(mc)) {
                             ret.push_back(c);
@@ -723,7 +723,7 @@ xcb_timestamp_t read_user_time_map_timestamp(Win* win,
                     }
                     return ret;
                 };
-                if (win->transient()->is_follower_of(act))
+                if (win->transient->is_follower_of(act))
                     ; // is transient for currently active window, even though it's not
                 // the same app (e.g. kcookiejar dialog) -> allow activation
                 else if (win->groupTransient()

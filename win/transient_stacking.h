@@ -13,14 +13,14 @@ namespace KWin::win
 // check whether a transient should be actually kept above its mainwindow
 // there may be some special cases where this rule shouldn't be enfored
 template<typename Win1, typename Win2>
-bool keep_transient_above(Win1 const* mainwindow, Win2 const* transient)
+bool keep_transient_above(Win1 const* mainwindow, Win2 const* child)
 {
-    if (transient->transient()->annexed) {
+    if (child->transient->annexed) {
         return true;
     }
 
     // #93832 - don't keep splashscreens above dialogs
-    if (win::is_splash(transient) && win::is_dialog(mainwindow)) {
+    if (win::is_splash(child) && win::is_dialog(mainwindow)) {
         return false;
     }
 
@@ -28,8 +28,7 @@ bool keep_transient_above(Win1 const* mainwindow, Win2 const* transient)
     // the mainwindow, but only if they're group transient (since only such dialogs
     // have taskbar entry in Kicker). A proper way of doing this (both kwin and kicker)
     // needs to be found.
-    if (win::is_dialog(transient) && !transient->transient()->modal()
-        && transient->groupTransient()) {
+    if (win::is_dialog(child) && !child->transient->modal() && child->groupTransient()) {
         return false;
     }
 
@@ -44,20 +43,20 @@ bool keep_transient_above(Win1 const* mainwindow, Win2 const* transient)
 }
 
 template<typename Win1, typename Win2>
-bool keep_deleted_transient_above(Win1 const* mainWindow, Win2 const* transient)
+bool keep_deleted_transient_above(Win1 const* mainWindow, Win2 const* child)
 {
-    assert(transient->remnant);
+    assert(child->remnant);
 
     // #93832 - Don't keep splashscreens above dialogs.
-    if (win::is_splash(transient) && win::is_dialog(mainWindow)) {
+    if (win::is_splash(child) && win::is_dialog(mainWindow)) {
         return false;
     }
 
-    if (transient->remnant->data.was_x11_client) {
+    if (child->remnant->data.was_x11_client) {
         // If a group transient was active, we should keep it above no matter
         // what, because at the time when the transient was closed, it was above
         // the main window.
-        if (transient->remnant->data.was_group_transient && transient->remnant->data.was_active) {
+        if (child->remnant->data.was_group_transient && child->remnant->data.was_active) {
             return true;
         }
 
@@ -65,8 +64,8 @@ bool keep_deleted_transient_above(Win1 const* mainWindow, Win2 const* transient)
         // the mainwindow, but only if they're group transient (since only such
         // dialogs have taskbar entry in Kicker). A proper way of doing this
         // (both kwin and kicker) needs to be found.
-        if (transient->remnant->data.was_group_transient && win::is_dialog(transient)
-            && !transient->transient()->modal()) {
+        if (child->remnant->data.was_group_transient && win::is_dialog(child)
+            && !child->transient->modal()) {
             return false;
         }
 

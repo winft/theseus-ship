@@ -42,14 +42,14 @@ void update_tool_windows_visibility(Space* space, bool also_hide)
     // Go up in transiency hiearchy, if the top is found, only tool transients for the top
     // window will be shown; if a group transient is group, all tools in the group will be shown.
     while (active_window) {
-        if (!active_window->transient()->lead()) {
+        if (!active_window->transient->lead()) {
             break;
         }
         if (active_window->groupTransient()) {
             active_group = active_window->group;
             break;
         }
-        active_window = static_cast<x11_window_t*>(active_window->transient()->lead());
+        active_window = static_cast<x11_window_t*>(active_window->transient->lead());
     }
 
     // Use stacking order only to reduce flicker, it doesn't matter if block_stacking_updates == 0,
@@ -76,10 +76,10 @@ void update_tool_windows_visibility(Space* space, bool also_hide)
 
         auto show{true};
 
-        if (x11_win->transient()->lead()) {
+        if (x11_win->transient->lead()) {
             auto const in_active_group = active_group && x11_win->group == active_group;
             auto const has_active_lead
-                = active_window && x11_win->transient()->is_follower_of(active_window);
+                = active_window && x11_win->transient->is_follower_of(active_window);
             show = in_active_group || has_active_lead;
         } else {
             auto const is_individual = !x11_win->group || x11_win->group->members.size() == 1;
@@ -88,7 +88,7 @@ void update_tool_windows_visibility(Space* space, bool also_hide)
         }
 
         if (!show && also_hide) {
-            auto const& leads = x11_win->transient()->leads();
+            auto const& leads = x11_win->transient->leads();
             // Don't hide utility windows which are standalone(?) or have e.g. kicker as lead.
             show = leads.empty()
                 || std::any_of(

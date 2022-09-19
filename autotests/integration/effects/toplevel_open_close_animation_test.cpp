@@ -195,7 +195,7 @@ void ToplevelOpenCloseAnimationTest::testDontAnimatePopups()
     auto popup = Test::render_and_wait_for_shown(popupSurface, positioner.initialSize(), Qt::red);
     QVERIFY(popup);
     QVERIFY(win::is_popup(popup));
-    QCOMPARE(popup->transient()->lead(), mainWindow);
+    QCOMPARE(popup->transient->lead(), mainWindow);
     QVERIFY(!effect->isActive());
 
     // Destroy the popup, it should not be animated.

@@ -873,7 +873,7 @@ private:
         std::deque<typename window_t::ref_t*> leads;
 
         for (auto const& window : windows) {
-            if (window->transient()->lead() && window->transient()->annexed) {
+            if (window->transient->lead() && window->transient->annexed) {
                 auto const damage = window->damage_region;
                 if (damage.isEmpty()) {
                     continue;

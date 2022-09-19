@@ -102,7 +102,7 @@ public:
 
     void refWindow() override
     {
-        if (window.ref_win->transient()->annexed) {
+        if (window.ref_win->transient->annexed) {
             return;
         }
         if (auto& remnant = window.ref_win->remnant) {
@@ -113,7 +113,7 @@ public:
 
     void unrefWindow() override
     {
-        if (window.ref_win->transient()->annexed) {
+        if (window.ref_win->transient->annexed) {
             return;
         }
         if (auto& remnant = window.ref_win->remnant) {
@@ -411,7 +411,7 @@ public:
 
     bool isModal() const override
     {
-        return window.ref_win->transient()->modal();
+        return window.ref_win->transient->modal();
     }
 
     bool isPopupWindow() const override
@@ -582,7 +582,7 @@ public:
             return nullptr;
         }
 
-        auto transientFor = window.ref_win->transient()->lead();
+        auto transientFor = window.ref_win->transient->lead();
         if (transientFor) {
             return transientFor->render->effect.get();
         }
@@ -695,7 +695,7 @@ private:
     template<typename T>
     EffectWindowList getMainWindows(T* c) const
     {
-        const auto leads = c->transient()->leads();
+        const auto leads = c->transient->leads();
         EffectWindowList ret;
         ret.reserve(leads.size());
         std::transform(std::cbegin(leads),
@@ -708,8 +708,8 @@ private:
     QRect expanded_geometry_recursion(typename Window::ref_t* window) const
     {
         QRect geo;
-        for (auto child : window->transient()->children) {
-            if (child->transient()->annexed) {
+        for (auto child : window->transient->children) {
+            if (child->transient->annexed) {
                 geo |= expanded_geometry_recursion(child);
             }
         }

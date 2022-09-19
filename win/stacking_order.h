@@ -146,7 +146,7 @@ private:
     template<typename Win>
     static void append_children(stacking_order& order, Win* window, std::deque<Win*>& list)
     {
-        auto const children = window->transient()->children;
+        auto const children = window->transient->children;
         if (!children.size()) {
             return;
         }
@@ -176,7 +176,7 @@ private:
         std::deque<Window*> stack;
 
         for (auto const& window : pre_order) {
-            if (auto const leads = window->transient()->leads();
+            if (auto const leads = window->transient->leads();
                 std::find_if(leads.cbegin(),
                              leads.cend(),
                              [window](auto lead) { return needs_child_restack(*lead, *window); })

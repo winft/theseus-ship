@@ -309,7 +309,7 @@ private:
         while (window_it != windows.end()) {
             auto win = *window_it;
 
-            if (win->remnant && win->transient()->annexed) {
+            if (win->remnant && win->transient->annexed) {
                 if (auto lead = win::lead_of_annexed_transient(win); !lead || !lead->remnant) {
                     // TODO(romangg): Add repaint to compositor?
                     win->remnant->refcount = 0;
@@ -337,7 +337,7 @@ private:
                 win->is_damaged = false;
 
                 // Discard the cached lanczos texture
-                if (win->transient()->annexed) {
+                if (win->transient->annexed) {
                     win = win::lead_of_annexed_transient(win);
                 }
 

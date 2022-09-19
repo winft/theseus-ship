@@ -116,7 +116,7 @@ public:
         // hacks here
         if (wt == NET::Unknown) {
             // this is more or less suggested in NETWM spec
-            wt = this->transient()->lead() ? NET::Dialog : NET::Normal;
+            wt = this->transient->lead() ? NET::Dialog : NET::Normal;
         }
         return wt;
     }
@@ -278,7 +278,7 @@ public:
         }
 
         // Check all mainwindows of this window (recursively)
-        for (auto mc : this->transient()->leads()) {
+        for (auto mc : this->transient->leads()) {
             geom = mc->iconGeometry();
             if (geom.isValid()) {
                 return geom;
@@ -552,22 +552,22 @@ public:
         //
         // [1] https://specifications.freedesktop.org/wm-spec/wm-spec-latest.html#idm45623487728576
         //
-        return static_cast<x11::transient<window>*>(this->transient())->lead_id == rootWindow();
+        return static_cast<x11::transient<window>*>(this->transient.get())->lead_id == rootWindow();
     }
 
     abstract_type* find_modal_recursive(abstract_type* win)
     {
-        for (auto child : win->transient()->children) {
+        for (auto child : win->transient->children) {
             if (auto ret = find_modal_recursive(child)) {
                 return ret;
             }
         }
-        return win->transient()->modal() ? win : nullptr;
+        return win->transient->modal() ? win : nullptr;
     }
 
     abstract_type* findModal() override
     {
-        for (auto child : this->transient()->children) {
+        for (auto child : this->transient->children) {
             if (auto modal = find_modal_recursive(child)) {
                 return modal;
             }
@@ -783,7 +783,7 @@ public:
 
     bool isMinimizable() const override
     {
-        if (win::is_special_window(this) && !this->transient()->lead()) {
+        if (win::is_special_window(this) && !this->transient->lead()) {
             return false;
         }
         if (win::is_applet_popup(this)) {
@@ -793,10 +793,10 @@ public:
             return false;
         }
 
-        if (this->transient()->lead()) {
+        if (this->transient->lead()) {
             // #66868 - Let other xmms windows be minimized when the mainwindow is minimized
             auto shown_main_window = false;
-            for (auto const& lead : this->transient()->leads())
+            for (auto const& lead : this->transient->leads())
                 if (lead->isShown()) {
                     shown_main_window = true;
                 }

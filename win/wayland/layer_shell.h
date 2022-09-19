@@ -163,7 +163,7 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
             for (auto window : win->space.windows) {
                 if (auto wayland_window = dynamic_cast<Win*>(window);
                     wayland_window && wayland_window->popup == popup) {
-                    win->transient()->add_child(wayland_window);
+                    win->transient->add_child(wayland_window);
                     break;
                 }
             }

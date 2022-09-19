@@ -40,7 +40,7 @@ bool is_active_fullscreen(Win const* win)
     // _NET_WM_STATE_FULLSCREEN" to be on the highest layer. Also take the screen into account.
     return ac
         && (ac == win || ac->central_output != win->central_output
-            || contains(ac->transient()->leads(), win));
+            || contains(ac->transient->leads(), win));
 }
 
 template<typename Win>
@@ -101,8 +101,8 @@ layer belong_to_layer(Win* win)
 template<typename Win>
 layer get_layer(Win const& win)
 {
-    if (win.transient()->lead() && win.transient()->annexed) {
-        return get_layer(*win.transient()->lead());
+    if (win.transient->lead() && win.transient->annexed) {
+        return get_layer(*win.transient->lead());
     }
     if (win.layer == layer::unknown) {
         const_cast<Win&>(win).layer = belong_to_layer(&win);
@@ -131,8 +131,8 @@ void update_layer(Win* win)
     // Invalidate, will be updated when doing restacking.
     invalidate_layer(win);
 
-    for (auto const& child : win->transient()->children) {
-        if (!child->transient()->annexed) {
+    for (auto const& child : win->transient->children) {
+        if (!child->transient->annexed) {
             update_layer(child);
         }
     }

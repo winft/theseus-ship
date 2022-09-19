@@ -56,8 +56,8 @@ void discard_shape(Win& win)
         win.render->invalidateQuadsCache();
         add_full_repaint(win);
     }
-    if (win.transient()->annexed) {
-        for (auto lead : win.transient()->leads()) {
+    if (win.transient->annexed) {
+        for (auto lead : win.transient->leads()) {
             discard_shape(*lead);
         }
     }

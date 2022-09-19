@@ -238,7 +238,7 @@ public:
 
     bool isModal() const override
     {
-        return m_client->transient()->modal();
+        return m_client->transient->modal();
     }
 
     bool isMoveable() const override

@@ -66,8 +66,8 @@ void add_full_repaint(Win& win)
     auto const region = visible_rect(&win);
     win.repaints_region = region.translated(-win.pos());
 
-    for (auto child : win.transient()->children) {
-        if (child->transient()->annexed) {
+    for (auto child : win.transient->children) {
+        if (child->transient->annexed) {
             add_full_repaint(*child);
         }
     }

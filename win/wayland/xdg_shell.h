@@ -305,7 +305,7 @@ Win* create_popup_window(Space* space, Wrapland::Server::XdgShellPopup* popup)
 
     auto win = create_shell_window<Win>(*space, popup->surface());
     win->popup = popup;
-    win->transient()->annexed = true;
+    win->transient->annexed = true;
 
     QObject::connect(win->qobject.get(),
                      &Win::qobject_t::needsRepaint,
@@ -685,7 +685,7 @@ QRect get_xdg_shell_popup_placement(Win const* win, QRect const& bounds)
 {
     // Note: Currently Qt clients don't seem to set any constraint adjustments at all.
 
-    auto transient_lead = win->transient()->lead();
+    auto transient_lead = win->transient->lead();
     assert(transient_lead);
 
     auto get = get_popup_placement<std::remove_pointer_t<decltype(transient_lead)>>;
@@ -720,8 +720,8 @@ bool needs_configure(Win* win)
 template<typename Win>
 void move_annexed_children(Win* win, QPoint const& frame_pos_offset)
 {
-    for (auto child : win->transient()->children) {
-        if (!child->transient()->annexed) {
+    for (auto child : win->transient->children) {
+        if (!child->transient->annexed) {
             continue;
         }
         auto pos = child->geometry_update.frame.topLeft() + frame_pos_offset;
@@ -736,8 +736,8 @@ void reposition_annexed_children(Win* win)
     // TODO(romangg): We currently don't yet have support for implicit or explicit popup
     //                repositioning introduced with xdg-shell v3.
 
-    for (auto child : win->transient()->children) {
-        if (!child->transient()->annexed) {
+    for (auto child : win->transient->children) {
+        if (!child->transient->annexed) {
             continue;
         }
         auto wl_child = static_cast<Win*>(child);
@@ -776,13 +776,13 @@ Win* xdg_shell_find_parent(Space& space, Win& win)
 template<typename Space, typename Win>
 void xdg_shell_setup_parent(Space& space, Win& win)
 {
-    if (win.transient()->lead()) {
+    if (win.transient->lead()) {
         // Parent already set by other protocol (for example layer shell).
         return;
     }
 
     if (auto parent = xdg_shell_find_parent(space, win)) {
-        parent->transient()->add_child(&win);
+        parent->transient->add_child(&win);
     }
 }
 
@@ -791,13 +791,13 @@ void handle_parent_changed(Space& space, Win* win)
 {
     auto parent = xdg_shell_find_parent(space, *win);
 
-    if (auto lead = win->transient()->lead(); parent != lead) {
+    if (auto lead = win->transient->lead(); parent != lead) {
         // Remove from main client.
         if (lead) {
-            lead->transient()->remove_child(win);
+            lead->transient->remove_child(win);
         }
         if (parent) {
-            parent->transient()->add_child(win);
+            parent->transient->add_child(win);
         }
     }
 }
@@ -912,7 +912,7 @@ void handle_grab_request(Win* win,
 {
     // FIXME: Check the seat and serial as well whether the parent had focus.
 
-    win->transient()->input_grab = true;
+    win->transient->input_grab = true;
 }
 
 template<typename Win>

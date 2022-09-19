@@ -53,7 +53,7 @@ void send_window_to_desktop(Space& space,
     check_workspace_position(window, QRect(), old_desktop);
 
     auto const transients_stacking_order
-        = restacked_by_space_stacking_order(&space, window->transient()->children);
+        = restacked_by_space_stacking_order(&space, window->transient->children);
     for (auto const& transient : transients_stacking_order) {
         if (transient->control) {
             send_window_to_desktop(space, transient, desk, dont_activate);

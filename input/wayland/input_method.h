@@ -159,7 +159,7 @@ private:
         auto popup = popups.emplace_back(
             new typename space_t::wayland_window(popup_surface->surface(), redirect.space));
         popup->input_method_popup = popup_surface;
-        popup->transient()->annexed = true;
+        popup->transient->annexed = true;
         popup->hidden = true;
         popup->layer = win::layer::notification;
 
@@ -187,7 +187,7 @@ private:
                          &window_t::qobject_t::frame_geometry_changed,
                          popup->qobject.get(),
                          [popup](auto old_frame_geo) {
-                             if (!popup->transient()->lead()) {
+                             if (!popup->transient->lead()) {
                                  return;
                              }
 
@@ -213,7 +213,7 @@ private:
                 auto const& placement = get_input_popup_placement(
                     parent_window, text_input->state().cursor_rectangle);
 
-                parent_window->transient()->add_child(popup);
+                parent_window->transient->add_child(popup);
                 popup->setFrameGeometry(placement);
                 popup->hideClient(false);
             }
@@ -239,7 +239,7 @@ private:
             = get_input_popup_placement(parent_window, text_input->state().cursor_rectangle);
 
         for (auto const& popup : popups) {
-            parent_window->transient()->add_child(popup);
+            parent_window->transient->add_child(popup);
             popup->setFrameGeometry(placement);
             popup->hideClient(false);
         }
@@ -252,7 +252,7 @@ private:
         }
         for (auto const& popup : popups) {
             popup->hideClient(true);
-            popup->transient()->lead()->transient()->remove_child(popup);
+            popup->transient->lead()->transient->remove_child(popup);
         }
     }
 

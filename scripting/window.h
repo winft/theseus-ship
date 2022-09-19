@@ -635,12 +635,12 @@ public:
 
     bool isTransient() const override
     {
-        return m_client->transient()->lead();
+        return m_client->transient->lead();
     }
 
     window* transientFor() const override
     {
-        auto parent = m_client->transient()->lead();
+        auto parent = m_client->transient->lead();
         if (!parent) {
             return nullptr;
         }
@@ -651,7 +651,7 @@ public:
 
     bool isModal() const override
     {
-        return m_client->transient()->modal();
+        return m_client->transient->modal();
     }
 
     bool decorationHasAlpha() const override

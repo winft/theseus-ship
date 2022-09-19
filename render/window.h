@@ -375,8 +375,8 @@ protected:
             }
         }
 
-        for (auto child : ref_win->transient()->children) {
-            if (!child->transient()->annexed) {
+        for (auto child : ref_win->transient->children) {
+            if (!child->transient->annexed) {
                 continue;
             }
             if (child->remnant && !ref_win->remnant) {

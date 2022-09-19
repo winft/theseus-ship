@@ -48,8 +48,8 @@ win::remnant create_remnant(Win& source)
         remnant.data.was_active = source.control->active;
     }
 
-    if (source.transient()->annexed) {
-        remnant.refcount += source.transient()->leads().size();
+    if (source.transient->annexed) {
+        remnant.refcount += source.transient->leads().size();
     }
 
     remnant.data.was_group_transient = source.groupTransient();
@@ -94,19 +94,19 @@ void transfer_remnant_data(Win& source, Win& dest)
     dest.has_in_content_deco = source.has_in_content_deco;
     dest.client_frame_extents = source.client_frame_extents;
 
-    dest.transient()->annexed = source.transient()->annexed;
-    dest.transient()->set_modal(source.transient()->modal());
+    dest.transient->annexed = source.transient->annexed;
+    dest.transient->set_modal(source.transient->modal());
 
-    auto const leads = source.transient()->leads();
+    auto const leads = source.transient->leads();
     for (auto const& lead : leads) {
-        lead->transient()->add_child(&dest);
-        lead->transient()->remove_child(&source);
+        lead->transient->add_child(&dest);
+        lead->transient->remove_child(&source);
     }
 
-    auto const children = source.transient()->children;
+    auto const children = source.transient->children;
     for (auto const& child : children) {
-        dest.transient()->add_child(child);
-        source.transient()->remove_child(child);
+        dest.transient->add_child(child);
+        source.transient->remove_child(child);
     }
 
     auto const desktops = dest.desktops;

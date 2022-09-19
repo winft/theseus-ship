@@ -265,7 +265,7 @@ template<typename Win>
 bool ignore_position_default(Win* win)
 {
     // TODO(romangg): This function flow can surely be radically simplified.
-    if (win->transient()->lead()) {
+    if (win->transient->lead()) {
         if (!is_utility(win) && !is_dialog(win) && !is_splash(win)) {
             return false;
         }

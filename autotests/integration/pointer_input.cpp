@@ -1284,7 +1284,7 @@ void PointerInputTest::testPopup()
     QVERIFY(clientAddedSpy.wait());
     auto window = Test::app()->base.space->stacking.active;
     QVERIFY(window);
-    QCOMPARE(window->transient()->input_grab, false);
+    QCOMPARE(window->transient->input_grab, false);
     // move pointer into window
     QVERIFY(!window->frameGeometry().contains(QPoint(800, 800)));
     Test::cursor()->set_pos(window->frameGeometry().center());
@@ -1324,9 +1324,9 @@ void PointerInputTest::testPopup()
     QVERIFY(popupClient);
     QVERIFY(popupClient != window);
     QCOMPARE(window, Test::app()->base.space->stacking.active);
-    QCOMPARE(popupClient->transient()->lead(), window);
+    QCOMPARE(popupClient->transient->lead(), window);
     QCOMPARE(popupClient->pos(), window->pos() + QPoint(80, 20));
-    QCOMPARE(popupClient->transient()->input_grab, true);
+    QCOMPARE(popupClient->transient->input_grab, true);
     QVERIFY(popupClient->mapped);
 
     // Let's move the pointer into the center of the window.
@@ -1411,7 +1411,7 @@ void PointerInputTest::testDecoCancelsPopup()
     QVERIFY(clientAddedSpy.wait());
     auto window = Test::app()->base.space->stacking.active;
     QVERIFY(window);
-    QCOMPARE(window->transient()->input_grab, false);
+    QCOMPARE(window->transient->input_grab, false);
     QVERIFY(win::decoration(window));
 
     // move pointer into window
@@ -1441,9 +1441,9 @@ void PointerInputTest::testDecoCancelsPopup()
     QVERIFY(popupClient);
     QVERIFY(popupClient != window);
     QCOMPARE(window, Test::app()->base.space->stacking.active);
-    QCOMPARE(popupClient->transient()->lead(), window);
+    QCOMPARE(popupClient->transient->lead(), window);
     QCOMPARE(popupClient->pos(), win::frame_to_client_pos(window, window->pos()) + QPoint(80, 20));
-    QCOMPARE(popupClient->transient()->input_grab, true);
+    QCOMPARE(popupClient->transient->input_grab, true);
 
     // let's move the pointer into the center of the deco
     Test::cursor()->set_pos(

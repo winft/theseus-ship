@@ -168,8 +168,8 @@ public:
         if (this->remnant) {
             return this->remnant->data.opacity;
         }
-        if (this->transient()->lead() && this->transient()->annexed) {
-            return this->transient()->lead()->opacity();
+        if (this->transient->lead() && this->transient->annexed) {
+            return this->transient->lead()->opacity();
         }
         return m_opacity;
     }
@@ -195,11 +195,11 @@ public:
         if (closing || hidden || this->remnant) {
             return false;
         }
-        if (!this->control && !this->transient()->lead()) {
+        if (!this->control && !this->transient->lead()) {
             return false;
         }
 
-        if (auto lead = this->transient()->lead()) {
+        if (auto lead = this->transient->lead()) {
             if (!lead->isShown()) {
                 return false;
             }
@@ -215,7 +215,7 @@ public:
         if (this->remnant) {
             return false;
         }
-        if (auto lead = this->transient()->lead()) {
+        if (auto lead = this->transient->lead()) {
             if (!lead->isHiddenInternal()) {
                 return false;
             }
@@ -253,7 +253,7 @@ public:
             serial = toplevel->configure(xdg_surface_states(this), window_geo.size());
         }
         if (popup) {
-            auto parent = this->transient()->lead();
+            auto parent = this->transient->lead();
             if (parent) {
                 auto const top_lead = lead_of_annexed_transient(this);
                 auto const bounds = space_window_area(this->space,
@@ -416,7 +416,7 @@ public:
         // TODO(romangg): When we have support for explicit/implicit popup repositioning combine.
         if (old_frame_geo.size() == frame_geo.size()) {
             move_annexed_children(this, frame_geo.topLeft() - old_frame_geo.topLeft());
-        } else if (!this->transient()->annexed) {
+        } else if (!this->transient->annexed) {
             reposition_annexed_children(this);
         }
 
@@ -474,7 +474,7 @@ public:
 
         mapped = false;
 
-        if (this->transient()->annexed) {
+        if (this->transient->annexed) {
             discard_shape(*this);
         }
 
@@ -508,7 +508,7 @@ public:
         if (this->remnant) {
             return;
         }
-        if (this->transient()->lead()) {
+        if (this->transient->lead()) {
             // This already has a parent set, we can only set one once.
             return;
         }
@@ -537,7 +537,7 @@ public:
         std::string type = "role unknown";
         if (this->control) {
             type = "toplevel";
-        } else if (this->transient()->lead()) {
+        } else if (this->transient->lead()) {
             type = popup ? "popup" : "subsurface";
         }
         if (input_method_popup) {
@@ -1372,7 +1372,7 @@ private:
     {
         mapped = true;
 
-        if (this->transient()->annexed) {
+        if (this->transient->annexed) {
             discard_shape(*this);
         }
 

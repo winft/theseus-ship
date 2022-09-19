@@ -111,7 +111,7 @@ private:
         if (contains(m_popups, window)) {
             return;
         }
-        if (window->transient()->input_grab) {
+        if (window->transient->input_grab) {
             // TODO: verify that the Toplevel is allowed as a popup
             connect(
                 window->qobject.get(),

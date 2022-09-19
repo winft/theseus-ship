@@ -574,7 +574,7 @@ public:
 
     bool isTransient() const override
     {
-        return ref_win->transient()->lead();
+        return ref_win->transient->lead();
     }
 
     console_window* transientFor() const override
@@ -585,7 +585,7 @@ public:
 
     bool isModal() const override
     {
-        return ref_win->transient()->modal();
+        return ref_win->transient->modal();
     }
 
     bool decorationHasAlpha() const override

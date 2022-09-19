@@ -41,17 +41,17 @@ void set_desktops(Win* win, QVector<virtual_desktop*> desktops)
     }
 
     auto transients_stacking_order
-        = restacked_by_space_stacking_order(&win->space, win->transient()->children);
+        = restacked_by_space_stacking_order(&win->space, win->transient->children);
     for (auto const& child : transients_stacking_order) {
-        if (!child->transient()->annexed) {
+        if (!child->transient->annexed) {
             set_desktops(child, desktops);
         }
     }
 
-    if (win->transient()->modal()) {
+    if (win->transient->modal()) {
         // When a modal dialog is moved move the parent window with it as otherwise the just moved
         // modal dialog will return to the parent window with the next desktop change.
-        for (auto client : win->transient()->leads()) {
+        for (auto client : win->transient->leads()) {
             set_desktops(client, desktops);
         }
     }
@@ -136,7 +136,7 @@ void propagate_on_all_desktops_to_children(Win& window)
 {
     auto all_desk = on_all_desktops(&window);
 
-    for (auto const& child : window.transient()->children) {
+    for (auto const& child : window.transient->children) {
         if (on_all_desktops(child) != all_desk) {
             set_on_all_desktops(child, all_desk);
         }

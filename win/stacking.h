@@ -185,7 +185,7 @@ void lower_window(Space* space, Window* window)
     auto block = do_lower(window);
 
     if (auto x11_win = dynamic_cast<typename Space::x11_window*>(window);
-        x11_win && x11_win->transient()->lead() && x11_win->group) {
+        x11_win && x11_win->transient->lead() && x11_win->group) {
         // Lower also all windows in the group, in reversed stacking order.
         auto const wins = restacked_by_space_stacking_order(space, get_transient_family(x11_win));
 
@@ -229,16 +229,16 @@ void raise_window(Space* space, Window* window)
 
     auto block = prepare(window);
 
-    if (window->transient()->lead()) {
+    if (window->transient->lead()) {
         // Also raise all leads.
         std::vector<typename Space::window_t*> leads;
 
-        for (auto lead : window->transient()->leads()) {
+        for (auto lead : window->transient->leads()) {
             while (lead) {
                 if (!contains(leads, lead)) {
                     leads.push_back(lead);
                 }
-                lead = lead->transient()->lead();
+                lead = lead->transient->lead();
             }
         }
 

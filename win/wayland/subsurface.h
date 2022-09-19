@@ -22,14 +22,14 @@ void assign_subsurface_role(Win* win)
     assert(win->surface);
     assert(win->surface->subsurface());
 
-    win->transient()->annexed = true;
+    win->transient->annexed = true;
 }
 
 template<typename Win>
 void restack_subsurfaces(Win* window)
 {
     auto const& subsurfaces = window->surface->state().children;
-    auto& children = window->transient()->children;
+    auto& children = window->transient->children;
 
     for (auto const& subsurface : subsurfaces) {
         auto it = std::find_if(children.begin(), children.end(), [&subsurface](auto child) {
@@ -43,7 +43,7 @@ void restack_subsurfaces(Win* window)
     }
 
     // Optimize and do that only for the first window up the chain not being annexed.
-    if (!window->transient()->annexed) {
+    if (!window->transient->annexed) {
         window->space.stacking.order.update_order();
     }
 }
@@ -53,10 +53,10 @@ void set_subsurface_parent(Win* win, Lead* lead)
 {
     namespace WS = Wrapland::Server;
 
-    assert(!win->transient()->lead());
-    assert(!contains(lead->transient()->children, win));
+    assert(!win->transient->lead());
+    assert(!contains(lead->transient->children, win));
 
-    lead->transient()->add_child(win);
+    lead->transient->add_child(win);
     restack_subsurfaces(lead);
 
     QObject::connect(win->surface, &WS::Surface::committed, win->qobject.get(), [win] {
