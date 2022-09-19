@@ -634,7 +634,8 @@ public:
         cursor_update_blocking = false;
 
         seat->pointers().set_position(m_pos.toPoint());
-        seat->pointers().set_focused_surface(focusNow->surface, focusNow->input_transform());
+        seat->pointers().set_focused_surface(focusNow->surface,
+                                             win::get_input_transform(*focusNow));
 
         notifiers.focus_geometry = QObject::connect(
             focusNow->qobject.get(),
@@ -656,7 +657,7 @@ public:
                     return;
                 }
                 seat->pointers().set_focused_surface_transformation(
-                    this->focus.window->input_transform());
+                    win::get_input_transform(*this->focus.window));
             });
 
         notifiers.constraints

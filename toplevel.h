@@ -296,19 +296,6 @@ public:
     }
 
     /**
-     * Maps from global to window coordinates.
-     */
-    QMatrix4x4 input_transform() const
-    {
-        QMatrix4x4 transform;
-
-        auto const render_pos = win::frame_to_render_pos(this, pos());
-        transform.translate(-render_pos.x(), -render_pos.y());
-
-        return transform;
-    }
-
-    /**
      * Can be implemented by child classes to add additional checks to the ones in win::is_popup.
      */
     virtual bool is_popup_end() const

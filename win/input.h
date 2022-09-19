@@ -19,11 +19,24 @@
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDBusPendingCall>
+#include <QMatrix4x4>
 #include <QMouseEvent>
 #include <QStyleHints>
 
 namespace KWin::win
 {
+
+/// Maps from global to window coordinates.
+template<typename Win>
+QMatrix4x4 get_input_transform(Win& win)
+{
+    QMatrix4x4 transform;
+
+    auto const render_pos = frame_to_render_pos(&win, win.pos());
+    transform.translate(-render_pos.x(), -render_pos.y());
+
+    return transform;
+}
 
 template<typename Win>
 bool is_most_recently_raised(Win* win)
