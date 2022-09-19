@@ -451,7 +451,7 @@ private:
             win::set_desktop(m_client, data.desktop);
         } else {
             auto virtualDesktop = vds->desktopForX11Id(data.desktop);
-            if (m_client->desktops().contains(virtualDesktop)) {
+            if (m_client->desktops.contains(virtualDesktop)) {
                 win::leave_desktop(m_client, virtualDesktop);
             } else {
                 win::enter_desktop(m_client, virtualDesktop);

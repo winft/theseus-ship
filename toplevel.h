@@ -222,18 +222,8 @@ public:
     virtual int desktop() const
     {
         // TODO: for remnant special case?
-        return m_desktops.isEmpty() ? static_cast<int>(NET::OnAllDesktops)
-                                    : m_desktops.last()->x11DesktopNumber();
-    }
-
-    QVector<win::virtual_desktop*> desktops() const
-    {
-        return m_desktops;
-    }
-
-    void set_desktops(QVector<win::virtual_desktop*> const& desktops)
-    {
-        m_desktops = desktops;
+        return desktops.isEmpty() ? static_cast<int>(NET::OnAllDesktops)
+                                    : desktops.last()->x11DesktopNumber();
     }
 
     virtual QByteArray windowRole() const
@@ -578,7 +568,7 @@ public:
     QRect m_frameGeometry;
     win::layer m_layer{win::layer::unknown};
     bool m_skipCloseAnimation{false};
-    QVector<win::virtual_desktop*> m_desktops;
+    QVector<win::virtual_desktop*> desktops;
 
     /// Being used internally when emitting signals. Access via the space windows_map.
     uint32_t signal_id;

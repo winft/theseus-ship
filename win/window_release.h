@@ -89,7 +89,7 @@ void transfer_remnant_data(Win& source, Win& dest)
     dest.opaque_region = source.opaque_region;
     dest.central_output = source.central_output;
     dest.m_skipCloseAnimation = source.m_skipCloseAnimation;
-    dest.m_desktops = source.desktops();
+    dest.desktops = source.desktops;
     dest.m_layer = source.layer();
     dest.has_in_content_deco = source.has_in_content_deco;
     dest.client_frame_extents = source.client_frame_extents;
@@ -109,12 +109,12 @@ void transfer_remnant_data(Win& source, Win& dest)
         source.transient()->remove_child(child);
     }
 
-    auto const desktops = dest.desktops();
+    auto const desktops = dest.desktops;
     for (auto vd : desktops) {
         QObject::connect(vd, &QObject::destroyed, dest.qobject.get(), [vd, dest_ptr = &dest] {
-            auto desks = dest_ptr->desktops();
+            auto desks = dest_ptr->desktops;
             desks.removeOne(vd);
-            dest_ptr->set_desktops(desks);
+            dest_ptr->desktops = desks;
         });
     }
 }
