@@ -136,21 +136,6 @@ public:
         return QRegion(0, 0, render_geo.width(), render_geo.height());
     }
 
-    void discard_shape()
-    {
-        is_render_shape_valid = false;
-
-        if (render) {
-            render->invalidateQuadsCache();
-            addRepaintFull();
-        }
-        if (transient()->annexed) {
-            for (auto lead : transient()->leads()) {
-                lead->discard_shape();
-            }
-        }
-    }
-
     /**
      * Returns the geometry of the Toplevel, excluding invisible portions, e.g.
      * server-side and client-side drop shadows, etc.

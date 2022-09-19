@@ -6,6 +6,7 @@
 #pragma once
 
 #include "geo.h"
+#include "scene.h"
 
 #include "base/output.h"
 #include "base/output_helpers.h"
@@ -26,7 +27,7 @@ void window_setup_geometry(Win& win)
                              // Size unchanged. No need to update.
                              return;
                          }
-                         win.discard_shape();
+                         discard_shape(win);
                          Q_EMIT win.qobject->visible_geometry_changed();
                      });
 

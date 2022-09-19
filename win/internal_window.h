@@ -621,14 +621,14 @@ public:
                                  win::geometry_updates_blocker blocker(this);
                                  auto const old_geo = this->frameGeometry();
                                  win::check_workspace_position(this, old_geo);
-                                 this->discard_shape();
+                                 discard_shape(*this);
                                  this->control->deco.client->update_size();
                              });
         }
 
         this->control->deco.decoration = decoration;
         this->setFrameGeometry(win::client_to_frame_rect(this, rect));
-        this->discard_shape();
+        discard_shape(*this);
     }
 
     void setCaption(QString const& cap)

@@ -302,7 +302,7 @@ public:
         xcb_damage_create(
             connection(), damage_handle, this->frameId(), XCB_DAMAGE_REPORT_LEVEL_NON_EMPTY);
 
-        this->discard_shape();
+        discard_shape(*this);
         this->damage_region = QRect({}, this->size());
 
         add_scene_window(*this->space.base.render->compositor->scene, *this);

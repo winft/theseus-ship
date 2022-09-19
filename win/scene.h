@@ -47,6 +47,22 @@ QRect visible_rect(Win* win)
 }
 
 template<typename Win>
+void discard_shape(Win& win)
+{
+    win.is_render_shape_valid = false;
+
+    if (win.render) {
+        win.render->invalidateQuadsCache();
+        win.addRepaintFull();
+    }
+    if (win.transient()->annexed) {
+        for (auto lead : win.transient()->leads()) {
+            discard_shape(*lead);
+        }
+    }
+}
+
+template<typename Win>
 QRegion content_render_region(Win* win)
 {
     auto const shape = win->render_region();

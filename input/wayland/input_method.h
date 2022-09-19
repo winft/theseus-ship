@@ -199,7 +199,7 @@ private:
                                  old_visible_geo.united(visible_geo));
 
                              if (old_visible_geo.size() != visible_geo.size()) {
-                                 popup->discard_shape();
+                                 win::discard_shape(*popup);
                              }
                          });
 

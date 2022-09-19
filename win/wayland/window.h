@@ -74,7 +74,7 @@ public:
                          &Wrapland::Server::Surface::subsurfaceTreeChanged,
                          this->qobject.get(),
                          [this] {
-                             this->discard_shape();
+                             discard_shape(*this);
                              win::wayland::restack_subsurfaces(this);
                          });
         QObject::connect(surface,
@@ -335,7 +335,7 @@ public:
             if (plasma_shell_surface && isInitialPositionSet()) {
                 // Sets position explicitly.
                 do_set_geometry(frame_geo);
-                toplevel->discard_shape();
+                discard_shape(*toplevel);
                 return;
             }
 
@@ -357,7 +357,7 @@ public:
             }
             do_set_geometry(frame_geo);
 
-            toplevel->discard_shape();
+            discard_shape(*toplevel);
             return;
         }
 
@@ -421,14 +421,14 @@ public:
         }
 
         if (old_frame_geo.size() != frame_geo.size()) {
-            this->discard_shape();
+            discard_shape(*this);
         }
         if (plasma_shell_surface && popup) {
             // Plasma-shell surfaces can be xdg-shell popups at the same time. So their geometry
             // might change but they are also annexed. We have to discard the parent window's quads
             // here.
             auto lead = lead_of_annexed_transient(this);
-            lead->discard_shape();
+            discard_shape(*lead);
         }
 
         if (!this->control) {
@@ -475,7 +475,7 @@ public:
         mapped = false;
 
         if (this->transient()->annexed) {
-            this->discard_shape();
+            discard_shape(*this);
         }
 
         if (this->control) {
@@ -1373,7 +1373,7 @@ private:
         mapped = true;
 
         if (this->transient()->annexed) {
-            this->discard_shape();
+            discard_shape(*this);
         }
 
         if (this->control) {

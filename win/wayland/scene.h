@@ -82,7 +82,7 @@ void setup_compositing(Win& win)
     assert(!win.remnant);
     assert(win.space.base.render->compositor->scene);
 
-    win.discard_shape();
+    discard_shape(win);
     win.damage_region = QRect(QPoint(), win.size());
 
     add_scene_window(*win.space.base.render->compositor->scene, win);

@@ -81,7 +81,7 @@ void update_shape(Win* win)
         win->space.base.render->compositor->addRepaint(visible_rect(win));
     }
 
-    win->discard_shape();
+    discard_shape(*win);
 }
 
 template<typename Win>
