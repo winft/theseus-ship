@@ -65,6 +65,8 @@ public:
 
     void reset();
 
+    QMap<EffectWindow const*, QRegion> blurRegions;
+
 private:
     QRect expand(const QRect& rect) const;
     QRegion expand(const QRegion& region) const;

@@ -52,14 +52,10 @@ void update_function(BlurEffect& effect, KWin::effect::region_update const& upda
         return;
     }
 
-    // If the specified blur region is empty, enable blur for the whole window.
-    if (update.value.isEmpty() && update.base.valid) {
-        // Set the data to a dummy value.
-        // This is needed to be able to distinguish between the value not
-        // being set, and being set to an empty region.
-        update.base.window->setData(WindowBlurBehindRole, 1);
+    if (update.base.valid) {
+        effect.blurRegions[update.base.window] = update.value;
     } else {
-        update.base.window->setData(WindowBlurBehindRole, update.value);
+        effect.blurRegions.remove(update.base.window);
     }
 }
 
@@ -337,9 +333,8 @@ QRegion BlurEffect::blurRegion(const EffectWindow* w) const
 {
     QRegion region;
 
-    const QVariant value = w->data(WindowBlurBehindRole);
-    if (value.isValid()) {
-        const QRegion appRegion = qvariant_cast<QRegion>(value);
+    if (auto it = blurRegions.find(w); it != blurRegions.end()) {
+        const QRegion& appRegion = *it;
         if (!appRegion.isEmpty()) {
             if (w->decorationHasAlpha() && decorationSupportsBlurBehind(w)) {
                 region = decorationBlurRegion(w);
