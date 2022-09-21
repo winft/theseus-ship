@@ -67,8 +67,6 @@ enum class window_paint_disable_type {
     by_activity = 1 << 5, /// Deprecated
 };
 
-}
-
 enum class shadow_element {
     top,
     top_right,
@@ -87,6 +85,8 @@ enum class state {
     starting,
     stopping,
 };
+
+}
 
 ENUM_FLAGS(KWin::render::paint_type)
 ENUM_FLAGS(KWin::render::window_paint_disable_type)
