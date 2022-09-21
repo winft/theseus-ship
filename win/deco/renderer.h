@@ -138,7 +138,7 @@ protected:
     {
         Q_ASSERT(m_client);
         auto window = m_client->client();
-        auto dpr = window->central_output ? window->central_output->scale() : 1.;
+        auto dpr = window->topo.central_output ? window->topo.central_output->scale() : 1.;
 
         // Guess the pixel format of the X pixmap into which the QImage will be copied.
         QImage::Format format;

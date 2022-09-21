@@ -145,7 +145,7 @@ public:
 
             QRect viewport = geo.translated(-rect.x(), -rect.y());
             auto const devicePixelRatio
-                = window->central_output ? window->central_output->scale() : 1.;
+                = window->topo.central_output ? window->topo.central_output->scale() : 1.;
 
             QImage image(rect.size() * devicePixelRatio, QImage::Format_ARGB32_Premultiplied);
             image.setDevicePixelRatio(devicePixelRatio);
@@ -275,7 +275,7 @@ private:
 
         size.rwidth() = align(size.width(), 128);
 
-        size *= window->central_output ? window->central_output->scale() : 1.;
+        size *= window->topo.central_output ? window->topo.central_output->scale() : 1.;
 
         auto& data = get_data();
 

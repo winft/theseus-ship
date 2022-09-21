@@ -62,7 +62,7 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
     auto win = new Win(xcb_win, space);
 
     win->supported_default_types = supported_default_types;
-    win->layer = win::layer::unmanaged;
+    win->topo.layer = layer::unmanaged;
 
     QTimer::singleShot(50, win->qobject.get(), [win] { set_ready_for_painting(*win); });
 

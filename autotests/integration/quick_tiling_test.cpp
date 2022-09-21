@@ -259,12 +259,12 @@ void QuickTilingTest::testQuickTiling()
     QCOMPARE(c->geo.frame, expectedGeometry);
 
     // send window to other screen
-    QCOMPARE(c->central_output, Test::app()->base.outputs.at(0));
+    QCOMPARE(c->topo.central_output, Test::app()->base.outputs.at(0));
 
     auto output = base::get_output(Test::app()->base.outputs, 1);
     QVERIFY(output);
     win::send_to_screen(*Test::app()->base.space, c, *output);
-    QCOMPARE(c->central_output, Test::app()->base.outputs.at(1));
+    QCOMPARE(c->topo.central_output, Test::app()->base.outputs.at(1));
 
     // quick tile should not be changed
     QCOMPARE(c->control->quicktiling, mode);
@@ -698,13 +698,13 @@ void QuickTilingTest::testX11QuickTiling()
     QCOMPARE(client->geo.restore.max, origGeo);
     QCOMPARE(quickTileChangedSpy.count(), 1);
 
-    QCOMPARE(client->central_output, Test::app()->base.outputs.at(0));
+    QCOMPARE(client->topo.central_output, Test::app()->base.outputs.at(0));
     QFETCH(win::quicktiles, modeAfterToggle);
 
     // quick tile to same edge again should also act like send to screen
     win::set_quicktile_mode(client, mode, true);
     QTEST(static_cast<int>(
-              base::get_output_index(Test::app()->base.outputs, *client->central_output)),
+              base::get_output_index(Test::app()->base.outputs, *client->topo.central_output)),
           "screen");
     QCOMPARE(client->control->quicktiling, modeAfterToggle);
     QCOMPARE(client->geo.restore.max.isValid(), modeAfterToggle != win::quicktiles::none);
@@ -785,7 +785,7 @@ void QuickTilingTest::testX11QuickTilingAfterVertMaximize()
     // vertically maximize the window
     win::maximize(client, flags(client->maximizeMode() ^ win::maximize_mode::vertical));
     QCOMPARE(client->geo.frame.width(), origGeo.width());
-    QCOMPARE(client->geo.size().height(), client->central_output->geometry().height());
+    QCOMPARE(client->geo.size().height(), client->topo.central_output->geometry().height());
     QCOMPARE(client->geo.restore.max, origGeo);
 
     // now quick tile

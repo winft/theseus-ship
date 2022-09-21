@@ -78,7 +78,7 @@ void apply_window_rules(Win& win)
     set_desktop(&win, win.desktop());
 
     // TODO(romangg): can central_output be null?
-    send_to_screen(win.space, &win, *win.central_output);
+    send_to_screen(win.space, &win, *win.topo.central_output);
     // Type
     maximize(&win, win.maximizeMode());
 

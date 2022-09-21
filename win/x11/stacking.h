@@ -330,7 +330,7 @@ void restack_window(Win* win,
 
             if (!c
                 || !(is_normal(*it) && c->isShown() && on_current_desktop(*it)
-                     && on_screen(*it, win->central_output))) {
+                     && on_screen(*it, win->topo.central_output))) {
                 continue;
             }
 

@@ -18,11 +18,11 @@
 #include "win/rules/ruling.h"
 #include "win/rules/update.h"
 #include "win/shortcut_set.h"
-#include "win/virtual_desktops.h"
 #include "win/window_geometry.h"
 #include "win/window_metadata.h"
 #include "win/window_qobject.h"
 #include "win/window_render_data.h"
+#include "win/window_topology.h"
 
 #include <NETWM>
 #include <QMatrix4x4>
@@ -55,6 +55,7 @@ public:
 
     win::window_metadata meta;
     win::window_geometry geo;
+    win::window_topology<output_t> topo;
     win::window_render_data<output_t> render_data;
 
     std::unique_ptr<render_t> render;
@@ -66,8 +67,6 @@ public:
     } notifiers;
 
     bool is_shape{false};
-
-    output_t const* central_output{nullptr};
 
     Space& space;
 
@@ -142,8 +141,8 @@ public:
     virtual int desktop() const
     {
         // TODO: for remnant special case?
-        return desktops.isEmpty() ? static_cast<int>(NET::OnAllDesktops)
-                                  : desktops.last()->x11DesktopNumber();
+        return topo.desktops.isEmpty() ? static_cast<int>(NET::OnAllDesktops)
+                                       : topo.desktops.last()->x11DesktopNumber();
     }
 
     virtual QByteArray windowRole() const
@@ -244,9 +243,7 @@ public:
 
     mutable bool is_render_shape_valid{false};
 
-    win::layer layer{win::layer::unknown};
     bool skip_close_animation{false};
-    QVector<win::virtual_desktop*> desktops;
 
     explicit Toplevel(Space& space)
         : type(new win::transient<type>(this), space)

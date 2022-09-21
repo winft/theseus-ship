@@ -25,14 +25,14 @@ void set_desktops(Win* win, QVector<virtual_desktop*> desktops)
         desktops = QVector<virtual_desktop*>({desktops.last()});
     }
 
-    if (desktops == win->desktops) {
+    if (desktops == win->topo.desktops) {
         return;
     }
 
     auto was_desk = win->desktop();
     auto const wasOnCurrentDesktop = on_current_desktop(win) && was_desk >= 0;
 
-    win->desktops = desktops;
+    win->topo.desktops = desktops;
     win->control->set_desktops(desktops);
 
     if ((was_desk == NET::OnAllDesktops) != (win->desktop() == NET::OnAllDesktops)) {
@@ -105,10 +105,10 @@ void set_on_all_desktops(Win* win, bool set)
 template<typename Win>
 void enter_desktop(Win* win, virtual_desktop* virtualDesktop)
 {
-    if (win->desktops.contains(virtualDesktop)) {
+    if (win->topo.desktops.contains(virtualDesktop)) {
         return;
     }
-    auto desktops = win->desktops;
+    auto desktops = win->topo.desktops;
     desktops.append(virtualDesktop);
     set_desktops(win, desktops);
 }
@@ -117,10 +117,10 @@ template<typename Win>
 void leave_desktop(Win* win, virtual_desktop* virtualDesktop)
 {
     QVector<virtual_desktop*> currentDesktops;
-    if (win->desktops.isEmpty()) {
+    if (win->topo.desktops.isEmpty()) {
         currentDesktops = win->space.virtual_desktop_manager->desktops();
     } else {
-        currentDesktops = win->desktops;
+        currentDesktops = win->topo.desktops;
     }
 
     if (!currentDesktops.contains(virtualDesktop)) {

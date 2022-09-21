@@ -1467,14 +1467,14 @@ void TestXdgShellClient::testSendToScreen()
     QVERIFY(geometryChangedSpy.isValid());
 
     auto const& outputs = Test::app()->base.outputs;
-    QCOMPARE(window->central_output, outputs.at(0));
-    QCOMPARE(popup->central_output, outputs.at(0));
+    QCOMPARE(window->topo.central_output, outputs.at(0));
+    QCOMPARE(popup->topo.central_output, outputs.at(0));
 
     auto output = base::get_output(outputs, 1);
     QVERIFY(output);
     win::send_to_screen(*Test::app()->base.space, window, *output);
-    QCOMPARE(window->central_output, outputs.at(1));
-    QCOMPARE(popup->central_output, outputs.at(1));
+    QCOMPARE(window->topo.central_output, outputs.at(1));
+    QCOMPARE(popup->topo.central_output, outputs.at(1));
 
     QCOMPARE(popup->geo.frame, QRect(window->geo.frame.topLeft() + QPoint(5, 10), QSize(50, 40)));
 }

@@ -192,7 +192,7 @@ public:
     {
         for (auto const& window : m_tabbox->space.stacking.order.stack) {
             if (window->control && win::is_desktop(window) && on_current_desktop(window)
-                && window->central_output == win::get_current_output(m_tabbox->space)) {
+                && window->topo.central_output == win::get_current_output(m_tabbox->space)) {
                 return window->control->tabbox();
             }
         }
@@ -308,9 +308,9 @@ private:
         case tabbox_config::IgnoreMultiScreen:
             return true;
         case tabbox_config::ExcludeCurrentScreenClients:
-            return current_window->central_output != current_output;
+            return current_window->topo.central_output != current_output;
         default: // tabbox_config::OnlyCurrentScreenClients
-            return current_window->central_output == current_output;
+            return current_window->topo.central_output == current_output;
         }
     }
 

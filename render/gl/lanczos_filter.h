@@ -58,7 +58,7 @@ public:
 
             auto const screenRect = win::space_window_area(*m_scene->platform.base.space,
                                                            ScreenArea,
-                                                           w->window.ref_win->central_output,
+                                                           w->window.ref_win->topo.central_output,
                                                            w->desktop());
 
             // window geometry may not be bigger than screen geometry to fit into the FBO

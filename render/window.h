@@ -176,7 +176,8 @@ public:
 
             if (ref_win->control) {
                 ref_win->layoutDecorationRects(rects[0], rects[1], rects[2], rects[3]);
-                decorationScale = ref_win->central_output ? ref_win->central_output->scale() : 1.;
+                decorationScale
+                    = ref_win->topo.central_output ? ref_win->topo.central_output->scale() : 1.;
             }
 
             auto const decoration_region = decorationShape();

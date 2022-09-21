@@ -217,10 +217,10 @@ public:
 
     int screen() const override
     {
-        if (!ref_win->central_output) {
+        if (!ref_win->topo.central_output) {
             return 0;
         }
-        return base::get_output_index(ref_win->space.base.outputs, *ref_win->central_output);
+        return base::get_output_index(ref_win->space.base.outputs, *ref_win->topo.central_output);
     }
 
     int desktop() const override

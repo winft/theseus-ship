@@ -54,7 +54,8 @@ void active_window_to_next_output(Space& space)
     if (!has_usable_active_window(space)) {
         return;
     }
-    if (auto output = get_derivated_output(space.base, space.stacking.active->central_output, 1)) {
+    if (auto output
+        = get_derivated_output(space.base, space.stacking.active->topo.central_output, 1)) {
         send_to_screen(space, space.stacking.active, *output);
     }
 }
@@ -65,7 +66,8 @@ void active_window_to_prev_output(Space& space)
     if (!has_usable_active_window(space)) {
         return;
     }
-    if (auto output = get_derivated_output(space.base, space.stacking.active->central_output, -1)) {
+    if (auto output
+        = get_derivated_output(space.base, space.stacking.active->topo.central_output, -1)) {
         send_to_screen(space, space.stacking.active, *output);
     }
 }
@@ -124,7 +126,7 @@ void active_window_lower(Space& space)
     if (space.stacking.active->control->active
         && kwinApp()->options->qobject->focusPolicyIsReasonable()) {
         if (kwinApp()->options->qobject->isNextFocusPrefersMouse()) {
-            auto next = window_under_mouse(space, space.stacking.active->central_output);
+            auto next = window_under_mouse(space, space.stacking.active->topo.central_output);
             if (next && next != space.stacking.active)
                 request_focus(space, next);
         } else {

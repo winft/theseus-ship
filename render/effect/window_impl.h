@@ -240,11 +240,11 @@ public:
 
     int screen() const override
     {
-        if (!window.ref_win->central_output) {
+        if (!window.ref_win->topo.central_output) {
             return 0;
         }
         return base::get_output_index(window.ref_win->space.base.outputs,
-                                      *window.ref_win->central_output);
+                                      *window.ref_win->topo.central_output);
     }
 
     QPoint pos() const override

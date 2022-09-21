@@ -161,7 +161,7 @@ private:
         popup->input_method_popup = popup_surface;
         popup->transient->annexed = true;
         popup->hidden = true;
-        popup->layer = win::layer::notification;
+        popup->topo.layer = win::layer::notification;
 
         redirect.space.windows.push_back(popup);
 

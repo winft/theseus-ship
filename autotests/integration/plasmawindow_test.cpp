@@ -500,7 +500,7 @@ void PlasmaWindowTest::test_send_to_output()
     auto& outputs = Test::app()->base.outputs;
     QCOMPARE(outputs.size(), 2);
 
-    QCOMPARE(Test::get_output(0), test_window.server.window->central_output);
+    QCOMPARE(Test::get_output(0), test_window.server.window->topo.central_output);
 
     auto& client_outputs = Test::get_client().interfaces.outputs;
     QCOMPARE(client_outputs.size(), 2);
@@ -521,7 +521,7 @@ void PlasmaWindowTest::test_send_to_output()
 
     QCOMPARE(test_window.client.surface->outputs().size(), 1);
     QCOMPARE(target_client_output, test_window.client.surface->outputs().at(0));
-    QCOMPARE(Test::get_output(1), test_window.server.window->central_output);
+    QCOMPARE(Test::get_output(1), test_window.server.window->topo.central_output);
 }
 
 void PlasmaWindowTest::test_stacking_order()

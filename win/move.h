@@ -290,8 +290,8 @@ bool start_move_resize(Win* win)
 
     mov_res.initial_geometry = pending_frame_geometry(win);
     mov_res.geometry = mov_res.initial_geometry;
-    mov_res.start_screen = win->central_output
-        ? base::get_output_index(win->space.base.outputs, *win->central_output)
+    mov_res.start_screen = win->topo.central_output
+        ? base::get_output_index(win->space.base.outputs, *win->topo.central_output)
         : 0;
 
     check_unrestricted_move_resize(win);
@@ -746,13 +746,13 @@ void finish_move_resize(Win* win, bool cancel)
     // alignment.
     check_screen(*win);
 
-    int output_index = win->central_output
-        ? base::get_output_index(win->space.base.outputs, *win->central_output)
+    int output_index = win->topo.central_output
+        ? base::get_output_index(win->space.base.outputs, *win->topo.central_output)
         : 0;
     if (output_index != mov_res.start_screen) {
         // Checks rule validity
-        if (win->central_output) {
-            send_to_screen(win->space, win, *win->central_output);
+        if (win->topo.central_output) {
+            send_to_screen(win->space, win, *win->topo.central_output);
         }
         if (win->geo.update.max_mode != maximize_mode::restore) {
             check_workspace_position(win);
@@ -877,13 +877,13 @@ void pack_to(Win* win, int left, int top)
     // May cause leave event.
     win->space.focusMousePos = win->space.input->cursor->pos();
 
-    auto const old_screen = win->central_output;
+    auto const old_screen = win->topo.central_output;
     move(win, QPoint(left, top));
-    assert(win->central_output);
+    assert(win->topo.central_output);
 
-    if (win->central_output != old_screen) {
+    if (win->topo.central_output != old_screen) {
         // Checks rule validity.
-        send_to_screen(win->space, win, *win->central_output);
+        send_to_screen(win->space, win, *win->topo.central_output);
         if (win->maximizeMode() != win::maximize_mode::restore) {
             check_workspace_position(win);
         }
@@ -923,13 +923,14 @@ void send_to_screen(Space const& space, Win* win, Output const& output)
 
         // might impact the layer of a fullscreen window
         for (auto cc : space.windows) {
-            if (cc->control && cc->control->fullscreen && cc->central_output == checked_output) {
+            if (cc->control && cc->control->fullscreen
+                && cc->topo.central_output == checked_output) {
                 update_layer(cc);
             }
         }
     }
 
-    if (win->central_output == checked_output) {
+    if (win->topo.central_output == checked_output) {
         // Don't use isOnScreen(), that's true even when only partially.
         return;
     }

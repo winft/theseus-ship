@@ -268,7 +268,7 @@ void request_focus(Space& space,
     }
 
     if (!on_active_screen(window)) {
-        base::set_current_output(space.base, window->central_output);
+        base::set_current_output(space.base, window->topo.central_output);
     }
 }
 
@@ -431,7 +431,7 @@ void set_active_window(Space& space, typename Space::window_t* window)
         if (space.base.outputs.size() > 1) {
             for (auto win : space.windows) {
                 if (win->control && win != stacking.active && get_layer(*win) == win::layer::active
-                    && win->central_output == stacking.active->central_output) {
+                    && win->topo.central_output == stacking.active->topo.central_output) {
                     update_layer(win);
                 }
             }
@@ -546,8 +546,8 @@ bool activate_next_window(Space& space, typename Space::window_t* window)
     }
 
     if (!get_focus && kwinApp()->options->qobject->isNextFocusPrefersMouse()) {
-        get_focus = window_under_mouse(space,
-                                       window ? window->central_output : get_current_output(space));
+        get_focus = window_under_mouse(
+            space, window ? window->topo.central_output : get_current_output(space));
         if (get_focus && (get_focus == window || is_desktop(get_focus))) {
             // should rather not happen, but it cannot get the focus. rest of usability is tested
             // above

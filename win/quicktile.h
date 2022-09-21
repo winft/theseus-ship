@@ -188,8 +188,9 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
             // TODO(romangg): Once we use size_t consistently for screens identification replace
             // these (currentyl implicit casted) types with auto.
             auto const& outputs = win->space.base.outputs;
-            auto const old_screen
-                = win->central_output ? base::get_output_index(outputs, *win->central_output) : 0;
+            auto const old_screen = win->topo.central_output
+                ? base::get_output_index(outputs, *win->topo.central_output)
+                : 0;
             auto screen = old_screen;
 
             std::vector<QRect> screens_geos(outputs.size());

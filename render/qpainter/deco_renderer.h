@@ -117,7 +117,7 @@ private:
         window->layoutDecorationRects(left, top, right, bottom);
 
         auto checkAndCreate = [this, window](int index, const QSize& size) {
-            auto dpr = window->central_output ? window->central_output->scale() : 1.;
+            auto dpr = window->topo.central_output ? window->topo.central_output->scale() : 1.;
             auto& images = get_data().images;
             if (images[index].size() != size * dpr || images[index].devicePixelRatio() != dpr) {
                 images[index] = QImage(size * dpr, QImage::Format_ARGB32_Premultiplied);

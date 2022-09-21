@@ -173,7 +173,7 @@ void setup_plasma_management(Space* space, Win* win)
             }
         });
 
-    for (auto const vd : win->desktops) {
+    for (auto const vd : win->topo.desktops) {
         plasma_win->addPlasmaVirtualDesktop(vd->id().toStdString());
     }
 

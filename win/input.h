@@ -111,7 +111,7 @@ bool perform_mouse_command(Win& win,
         // Used to be activateNextClient(win), then topClientOnDesktop
         // since win is a mouseOp it's however safe to use the client under the mouse  instead.
         if (win.control->active && kwinApp()->options->qobject->focusPolicyIsReasonable()) {
-            auto next = window_under_mouse(space, win.central_output);
+            auto next = window_under_mouse(space, win.topo.central_output);
             if (next && next != &win) {
                 request_focus(space, next);
             }
@@ -318,10 +318,11 @@ void enter_event(Win* win, const QPoint& globalPos)
 
     if (kwinApp()->options->qobject->isAutoRaise() && !win::is_desktop(win) && !win::is_dock(win)
         && is_focus_change_allowed(*space) && globalPos != space->focusMousePos
-        && top_client_on_desktop(
-               space,
-               win->space.virtual_desktop_manager->current(),
-               kwinApp()->options->qobject->isSeparateScreenFocus() ? win->central_output : nullptr)
+        && top_client_on_desktop(space,
+                                 win->space.virtual_desktop_manager->current(),
+                                 kwinApp()->options->qobject->isSeparateScreenFocus()
+                                     ? win->topo.central_output
+                                     : nullptr)
             != win) {
         win->control->start_auto_raise();
     }

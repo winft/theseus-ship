@@ -342,10 +342,10 @@ public:
 
     int screen() const override
     {
-        if (!m_client->central_output) {
+        if (!m_client->topo.central_output) {
             return 0;
         }
-        return base::get_output_index(m_client->space.base.outputs, *m_client->central_output);
+        return base::get_output_index(m_client->space.base.outputs, *m_client->topo.central_output);
     }
 
     int desktop() const override

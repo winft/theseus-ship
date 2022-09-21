@@ -39,7 +39,7 @@ bool is_active_fullscreen(Win const* win)
     // According to NETWM spec implementation notes suggests "focused windows having state
     // _NET_WM_STATE_FULLSCREEN" to be on the highest layer. Also take the screen into account.
     return ac
-        && (ac == win || ac->central_output != win->central_output
+        && (ac == win || ac->topo.central_output != win->topo.central_output
             || contains(ac->transient->leads(), win));
 }
 
@@ -122,16 +122,16 @@ layer get_layer(Win const& win)
     if (win.transient->lead() && win.transient->annexed) {
         return get_layer(*win.transient->lead());
     }
-    if (win.layer == layer::unknown) {
-        const_cast<Win&>(win).layer = belong_to_layer(&win);
+    if (win.topo.layer == layer::unknown) {
+        const_cast<Win&>(win).topo.layer = belong_to_layer(&win);
     }
-    return win.layer;
+    return win.topo.layer;
 }
 
 template<typename Win>
 void invalidate_layer(Win* win)
 {
-    win->layer = layer::unknown;
+    win->topo.layer = layer::unknown;
 }
 
 template<typename Win>

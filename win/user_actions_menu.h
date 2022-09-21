@@ -385,7 +385,7 @@ private:
                       outputs.at(i)->name()));
             action->setData(static_cast<int>(i));
             action->setCheckable(true);
-            if (m_client && outputs.at(i) == m_client->central_output) {
+            if (m_client && outputs.at(i) == m_client->topo.central_output) {
                 action->setChecked(true);
             }
             group->addAction(action);
@@ -451,7 +451,7 @@ private:
             win::set_desktop(m_client, data.desktop);
         } else {
             auto virtualDesktop = vds->desktopForX11Id(data.desktop);
-            if (m_client->desktops.contains(virtualDesktop)) {
+            if (m_client->topo.desktops.contains(virtualDesktop)) {
                 win::leave_desktop(m_client, virtualDesktop);
             } else {
                 win::enter_desktop(m_client, virtualDesktop);

@@ -172,8 +172,8 @@ void TestIdleInhibition::testDontInhibitWhenNotOnCurrentDesktop()
     QVERIFY(c);
 
     // The test client should be only on the first virtual desktop.
-    QCOMPARE(c->desktops.count(), 1);
-    QCOMPARE(c->desktops.constFirst(), vd_manager->desktops().first());
+    QCOMPARE(c->topo.desktops.count(), 1);
+    QCOMPARE(c->topo.desktops.constFirst(), vd_manager->desktops().first());
 
     // This should inhibit our server object.
     QCOMPARE(idle.inhibit_count, 1);
@@ -322,8 +322,8 @@ void TestIdleInhibition::testDontInhibitWhenLeftCurrentDesktop()
     QVERIFY(c);
 
     // The test client should be only on the first virtual desktop.
-    QCOMPARE(c->desktops.count(), 1);
-    QCOMPARE(c->desktops.constFirst(), vd_manager->desktops().first());
+    QCOMPARE(c->topo.desktops.count(), 1);
+    QCOMPARE(c->topo.desktops.constFirst(), vd_manager->desktops().first());
 
     // This should inhibit our server object.
     QCOMPARE(idle.inhibit_count, 1);

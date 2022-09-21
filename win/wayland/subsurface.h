@@ -122,8 +122,7 @@ void set_subsurface_parent(Win* win, Lead* lead)
     QObject::connect(
         lead->qobject.get(), &Lead::qobject_t::frame_geometry_changed, win->qobject.get(), set_pos);
 
-    win->layer = win::layer::unmanaged;
-
+    win->topo.layer = layer::unmanaged;
     win->map();
 }
 

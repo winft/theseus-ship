@@ -87,10 +87,10 @@ void transfer_remnant_data(Win& source, Win& dest)
 
     dest.meta.wm_class = source.meta.wm_class;
     dest.render_data.opaque_region = source.render_data.opaque_region;
-    dest.central_output = source.central_output;
+    dest.topo.central_output = source.topo.central_output;
     dest.skip_close_animation = source.skip_close_animation;
-    dest.desktops = source.desktops;
-    dest.layer = get_layer(source);
+    dest.topo.desktops = source.topo.desktops;
+    dest.topo.layer = get_layer(source);
     dest.geo.has_in_content_deco = source.geo.has_in_content_deco;
     dest.geo.client_frame_extents = source.geo.client_frame_extents;
 
@@ -109,12 +109,12 @@ void transfer_remnant_data(Win& source, Win& dest)
         source.transient->remove_child(child);
     }
 
-    auto const desktops = dest.desktops;
+    auto const desktops = dest.topo.desktops;
     for (auto vd : desktops) {
         QObject::connect(vd, &QObject::destroyed, dest.qobject.get(), [vd, dest_ptr = &dest] {
-            auto desks = dest_ptr->desktops;
+            auto desks = dest_ptr->topo.desktops;
             desks.removeOne(vd);
-            dest_ptr->desktops = desks;
+            dest_ptr->topo.desktops = desks;
         });
     }
 }

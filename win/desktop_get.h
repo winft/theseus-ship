@@ -18,7 +18,7 @@ bool on_all_desktops(Win* win)
     return kwinApp()->operationMode() == Application::OperationModeWaylandOnly
             || kwinApp()->operationMode() == Application::OperationModeXwayland
         // Wayland
-        ? win->desktops.isEmpty()
+        ? win->topo.desktops.isEmpty()
         // X11
         : win->desktop() == NET::OnAllDesktops;
 }
@@ -28,7 +28,8 @@ bool on_desktop(Win* win, int d)
 {
     return (kwinApp()->operationMode() == Application::OperationModeWaylandOnly
                     || kwinApp()->operationMode() == Application::OperationModeXwayland
-                ? win->desktops.contains(win->space.virtual_desktop_manager->desktopForX11Id(d))
+                ? win->topo.desktops.contains(
+                    win->space.virtual_desktop_manager->desktopForX11Id(d))
                 : win->desktop() == d)
         || on_all_desktops(win);
 }
@@ -42,7 +43,7 @@ bool on_current_desktop(Win* win)
 template<typename Win>
 QVector<unsigned int> x11_desktop_ids(Win* win)
 {
-    auto const& desks = win->desktops;
+    auto const& desks = win->topo.desktops;
     QVector<unsigned int> x11_ids;
     x11_ids.reserve(desks.count());
     std::transform(desks.constBegin(), desks.constEnd(), std::back_inserter(x11_ids), [](auto vd) {

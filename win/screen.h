@@ -45,7 +45,7 @@ typename Space::base_t::output_t const* get_current_output(Space const& space)
 
     auto const cur = static_cast<typename Space::base_t::output_t const*>(base.topology.current);
     if (auto act_win = space.stacking.active; act_win && !win::on_screen(act_win, cur)) {
-        return act_win->central_output;
+        return act_win->topo.central_output;
     }
     return cur;
 }
@@ -56,8 +56,8 @@ void set_current_output_by_window(Base& base, Win const& window)
     if (!window.control->active) {
         return;
     }
-    if (window.central_output && !win::on_screen(&window, base.topology.current)) {
-        base::set_current_output(base, window.central_output);
+    if (window.topo.central_output && !win::on_screen(&window, base.topology.current)) {
+        base::set_current_output(base, window.topo.central_output);
     }
 }
 
@@ -76,13 +76,13 @@ void check_screen(Win& win)
 {
     auto const& outputs = win.space.base.outputs;
     auto output = base::get_nearest_output(outputs, win.geo.frame.center());
-    auto old_output = win.central_output;
+    auto old_output = win.topo.central_output;
 
     if (old_output == output) {
         return;
     }
 
-    win.central_output = output;
+    win.topo.central_output = output;
     Q_EMIT win.qobject->central_output_changed(old_output, output);
 }
 
@@ -99,8 +99,8 @@ void setup_check_screen(Win& win)
 template<typename Win, typename Output>
 void handle_output_added(Win& win, Output* output)
 {
-    if (!win.central_output) {
-        win.central_output = output;
+    if (!win.topo.central_output) {
+        win.topo.central_output = output;
         Q_EMIT win.qobject->central_output_changed(nullptr, output);
         return;
     }
@@ -111,12 +111,12 @@ void handle_output_added(Win& win, Output* output)
 template<typename Win, typename Output>
 void handle_output_removed(Win& win, Output* output)
 {
-    if (win.central_output != output) {
+    if (win.topo.central_output != output) {
         return;
     }
     auto const& outputs = win.space.base.outputs;
-    win.central_output = base::get_nearest_output(outputs, win.geo.frame.center());
-    Q_EMIT win.qobject->central_output_changed(output, win.central_output);
+    win.topo.central_output = base::get_nearest_output(outputs, win.geo.frame.center());
+    Q_EMIT win.qobject->central_output_changed(output, win.topo.central_output);
 }
 
 }

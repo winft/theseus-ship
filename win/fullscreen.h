@@ -74,7 +74,7 @@ void update_fullscreen_enable(Win* win)
 template<typename Win>
 void update_fullscreen_disable(Win* win)
 {
-    auto const old_output = win->central_output;
+    auto const old_output = win->topo.central_output;
 
     if (has_special_geometry_mode_besides_fullscreen(win)) {
         fullscreen_restore_special_mode(win);
@@ -82,7 +82,7 @@ void update_fullscreen_disable(Win* win)
         win->restore_geometry_from_fullscreen();
     }
 
-    if (old_output && old_output != win->central_output) {
+    if (old_output && old_output != win->topo.central_output) {
         send_to_screen(win->space, win, *old_output);
     }
 }

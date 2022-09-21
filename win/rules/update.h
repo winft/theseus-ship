@@ -83,8 +83,8 @@ bool update_rule(Ruling& ruling, RefWin const& ref_win, int selection)
     }
 
     if (remember(ruling.screen, type::screen)) {
-        int output_index = ref_win.central_output
-            ? base::get_output_index(ref_win.space.base.outputs, *ref_win.central_output)
+        int output_index = ref_win.topo.central_output
+            ? base::get_output_index(ref_win.space.base.outputs, *ref_win.topo.central_output)
             : 0;
         updated = updated || ruling.screen.data != output_index;
         ruling.screen.data = output_index;

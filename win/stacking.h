@@ -102,7 +102,7 @@ typename Space::window_t* top_client_on_desktop(Space* space,
     for (auto it = std::crbegin(list); it != std::crend(list); it++) {
         auto c = *it;
         if (c && on_desktop(c, desktop) && c->isShown()) {
-            if (output && c->central_output != output) {
+            if (output && c->topo.central_output != output) {
                 continue;
             }
             if (!only_normal) {
@@ -274,7 +274,7 @@ void raise_or_lower_client(Space* space, Window* window)
         topmost = top_client_on_desktop(
             space,
             on_all_desktops(window) ? space->virtual_desktop_manager->current() : window->desktop(),
-            kwinApp()->options->qobject->isSeparateScreenFocus() ? window->central_output
+            kwinApp()->options->qobject->isSeparateScreenFocus() ? window->topo.central_output
                                                                  : nullptr);
     }
 
@@ -358,7 +358,7 @@ std::vector<typename Container::value_type> sort_windows_by_layer(Container cons
     for (auto const& win : list) {
         auto lay = get_layer(*win);
         auto lead = get_top_lead(win);
-        auto search = lead_layers.find({win->central_output, lead});
+        auto search = lead_layers.find({win->topo.central_output, lead});
 
         if (search != lead_layers.end()) {
             // If a window is raised above some other window in the same window group
@@ -369,7 +369,7 @@ std::vector<typename Container::value_type> sort_windows_by_layer(Container cons
             }
             search->second = lay;
         } else {
-            lead_layers[{win->central_output, lead}] = lay;
+            lead_layers[{win->topo.central_output, lead}] = lay;
         }
 
         layers[enum_index(lay)].push_back(win);

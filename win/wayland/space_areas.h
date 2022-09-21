@@ -70,7 +70,8 @@ void update_space_areas(Window* win,
         return strut_area::invalid;
     };
 
-    auto const strut = margins(win->central_output ? win->central_output->geometry() : QRect());
+    auto const strut
+        = margins(win->topo.central_output ? win->topo.central_output->geometry() : QRect());
     auto const strut_region = strut_rects{strut_rect(win->geo.frame, margins_to_strut_area(strut))};
     auto rect = desktop_area - margins(QRect({}, win->space.base.topology.size));
 

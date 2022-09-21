@@ -536,11 +536,11 @@ private:
             if (!client->control) {
                 continue;
             }
-            if (!client->desktops.contains(desktop)) {
+            if (!client->topo.desktops.contains(desktop)) {
                 continue;
             }
 
-            if (client->desktops.count() > 1) {
+            if (client->topo.desktops.count() > 1) {
                 leave_desktop(client, desktop);
             } else {
                 send_window_to_desktop(
