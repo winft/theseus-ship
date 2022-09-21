@@ -40,30 +40,33 @@ public:
             return !this->win_integration->damage().isEmpty();
         };
 
-        if (!texture->isNull()) {
-            if (!this->window->ref_win->render_data.damage_region.isEmpty()) {
-                this->updateBuffer();
-            }
-            if (needs_buffer_update()) {
-                texture->update_from_buffer(this);
-                // mipmaps need to be updated
-                texture->setDirty();
-            }
-            this->window->ref_win->render_data.damage_region = {};
-            return true;
-        }
-        if (!isValid()) {
-            return false;
-        }
+        return std::visit(overload{[&](auto&& ref_win) {
+                              if (!texture->isNull()) {
+                                  if (!ref_win->render_data.damage_region.isEmpty()) {
+                                      this->updateBuffer();
+                                  }
+                                  if (needs_buffer_update()) {
+                                      texture->update_from_buffer(this);
+                                      // mipmaps need to be updated
+                                      texture->setDirty();
+                                  }
+                                  ref_win->render_data.damage_region = {};
+                                  return true;
+                              }
+                              if (!isValid()) {
+                                  return false;
+                              }
 
-        bool success = texture->load(this);
+                              bool success = texture->load(this);
 
-        if (success) {
-            this->window->ref_win->render_data.damage_region = {};
-        } else {
-            qCDebug(KWIN_CORE) << "Failed to bind window";
-        }
-        return success;
+                              if (success) {
+                                  ref_win->render_data.damage_region = {};
+                              } else {
+                                  qCDebug(KWIN_CORE) << "Failed to bind window";
+                              }
+                              return success;
+                          }},
+                          *this->window->ref_win);
     }
 
     bool isValid() const override

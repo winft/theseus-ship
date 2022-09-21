@@ -37,10 +37,10 @@ namespace KWin::win
 {
 
 template<typename Window>
-class internal_control : public control<typename Window::abstract_type>
+class internal_control : public control<Window>
 {
 public:
-    using control_t = win::control<typename Window::abstract_type>;
+    using control_t = win::control<Window>;
 
     internal_control(Window* client)
         : control_t(client)
@@ -49,11 +49,11 @@ public:
     {
     }
 
-    void set_desktops(QVector<virtual_desktop*> /*desktops*/) override
+    void set_desktops(QVector<virtual_desktop*> /*desktops*/)
     {
     }
 
-    void destroy_decoration() override
+    void destroy_decoration()
     {
         if (!win::decoration(m_client)) {
             return;
@@ -80,7 +80,7 @@ public:
     }
 
 protected:
-    bool eventFilter(QObject* watched, QEvent* event) override
+    bool eventFilter(QObject* watched, QEvent* event)
     {
         if (watched == window.m_internalWindow && event->type() == QEvent::DynamicPropertyChange) {
             auto pe = static_cast<QDynamicPropertyChangeEvent*>(event);
@@ -107,13 +107,16 @@ class internal_window : public Toplevel<Space>
 {
 public:
     using type = internal_window<Space>;
-    using abstract_type = Toplevel<Space>;
+    using render_t
+        = render::window<typename Space::window_t, typename Space::base_t::render_t::compositor_t>;
 
     constexpr static bool is_toplevel{false};
 
     internal_window(win::remnant remnant, Space& space)
         : Toplevel<Space>(std::move(remnant), space)
+        , transient{std::make_unique<win::transient<type>>(this)}
     {
+        this->space.windows_map.insert({this->meta.signal_id, this});
         this->qobject = std::make_unique<window_qobject>();
     }
 
@@ -123,10 +126,12 @@ public:
               [this] { destroyClient(); },
               [this](auto fbo) { present(fbo); },
               [this](auto const& image, auto const& damage) { present(image, damage); })}
+        , transient{std::make_unique<win::transient<type>>(this)}
         , m_internalWindow(window)
         , synced_geo(window->geometry())
         , m_internalWindowFlags(window->flags())
     {
+        this->space.windows_map.insert({this->meta.signal_id, this});
         auto& qwin = this->qobject;
         qwin = std::make_unique<internal_window_qobject<type>>(*this);
 
@@ -185,12 +190,17 @@ public:
         m_internalWindow->installEventFilter(qwin.get());
     }
 
-    void setupCompositing() override
+    ~internal_window()
+    {
+        this->space.windows_map.erase(this->meta.signal_id);
+    }
+
+    void setupCompositing()
     {
         wayland::setup_compositing(*this);
     }
 
-    void add_scene_window_addon() override
+    void add_scene_window_addon()
     {
         auto setup_buffer = [](auto& buffer) {
             using scene_t = typename Space::base_t::render_t::compositor_t::scene_t;
@@ -199,7 +209,7 @@ public:
 
             auto win_integrate = std::make_unique<buffer_integration_t>(buffer);
             auto update_helper = [&buffer]() {
-                auto win = static_cast<internal_window*>(buffer.window->ref_win);
+                auto win = std::get<type*>(*buffer.window->ref_win);
                 auto& win_integrate = static_cast<buffer_integration_t&>(*buffer.win_integration);
                 if (win->buffers.fbo) {
                     win_integrate.internal.fbo = win->buffers.fbo;
@@ -216,12 +226,17 @@ public:
         this->render->win_integration.setup_buffer = setup_buffer;
     }
 
-    qreal bufferScale() const override
+    qreal bufferScale() const
     {
         return this->remnant ? this->remnant->data.buffer_scale : buffer_scale_internal();
     }
 
-    void debug(QDebug& stream) const override
+    QSize resizeIncrements() const
+    {
+        return {1, 1};
+    }
+
+    void debug(QDebug& stream) const
     {
         if (this->remnant) {
             stream << "\'REMNANT:" << reinterpret_cast<void const*>(this) << "\'";
@@ -230,17 +245,33 @@ public:
         stream.nospace() << "\'internal_window:" << m_internalWindow << "\'";
     }
 
-    NET::WindowType windowType() const override
+    NET::WindowType windowType() const
     {
         return window_type;
     }
 
-    double opacity() const override
+    NET::WindowType get_window_type_direct() const
+    {
+        return window_type;
+    }
+
+    // TODO(romangg): Remove
+    xcb_timestamp_t userTime() const
+    {
+        return XCB_TIME_CURRENT_TIME;
+    }
+
+    pid_t pid() const
+    {
+        return 0;
+    }
+
+    double opacity() const
     {
         return this->remnant ? this->remnant->data.opacity : m_opacity;
     }
 
-    void setOpacity(double opacity) override
+    void setOpacity(double opacity)
     {
         if (m_opacity == opacity) {
             return;
@@ -252,55 +283,93 @@ public:
         Q_EMIT this->qobject->opacityChanged(oldOpacity);
     }
 
-    void killWindow() override
+    QSize basicUnit() const
+    {
+        return {1, 1};
+    }
+
+    void layoutDecorationRects(QRect& left, QRect& top, QRect& right, QRect& bottom) const
+    {
+        if (this->remnant) {
+            return this->remnant->data.layout_decoration_rects(left, top, right, bottom);
+        }
+        win::layout_decoration_rects(this, left, top, right, bottom);
+    }
+
+    QRegion render_region() const
+    {
+        if (this->remnant) {
+            return this->remnant->data.render_region;
+        }
+
+        auto const render_geo = win::render_geometry(this);
+        return QRegion(0, 0, render_geo.width(), render_geo.height());
+    }
+
+    bool providesContextHelp() const
+    {
+        return false;
+    }
+
+    void killWindow()
     {
         // We don't kill our internal windows.
     }
 
-    bool is_popup_end() const override
+    bool is_popup_end() const
     {
         return this->remnant ? this->remnant->data.was_popup_window
                              : m_internalWindowFlags.testFlag(Qt::Popup);
     }
 
-    QByteArray windowRole() const override
+    layer layer_for_dock() const
+    {
+        return win::layer_for_dock(*this);
+    }
+
+    QByteArray windowRole() const
     {
         return {};
     }
 
-    void closeWindow() override
+    xcb_window_t frameId() const
+    {
+        return XCB_WINDOW_NONE;
+    }
+
+    void closeWindow()
     {
         if (m_internalWindow) {
             m_internalWindow->hide();
         }
     }
 
-    bool isCloseable() const override
+    bool isCloseable() const
     {
         return true;
     }
 
-    bool isMaximizable() const override
+    bool isMaximizable() const
     {
         return false;
     }
 
-    bool isMinimizable() const override
+    bool isMinimizable() const
     {
         return false;
     }
 
-    bool isMovable() const override
+    bool isMovable() const
     {
         return true;
     }
 
-    bool isMovableAcrossScreens() const override
+    bool isMovableAcrossScreens() const
     {
         return true;
     }
 
-    bool isResizable() const override
+    bool isResizable() const
     {
         return true;
     }
@@ -311,7 +380,42 @@ public:
             && !m_internalWindowFlags.testFlag(Qt::Popup);
     }
 
-    bool noBorder() const override
+    // TODO(romangg): Only a default value, but it is needed in several functions. Remove somehow?
+    win::maximize_mode maximizeMode() const
+    {
+        return win::maximize_mode::restore;
+    }
+
+    // TODO(romangg): Only a noop, but it is needed in several functions. Remove somehow?
+    void update_maximized(win::maximize_mode /*mode*/)
+    {
+    }
+
+    void setShortcutInternal()
+    {
+        updateCaption();
+        win::window_shortcut_updated(this->space, this);
+    }
+
+    void updateWindowRules(win::rules::type selection)
+    {
+        if (this->space.rule_book->areUpdatesDisabled()) {
+            return;
+        }
+        win::rules::update_window(control->rules, *this, static_cast<int>(selection));
+    }
+
+    QSize minSize() const
+    {
+        return control->rules.checkMinSize(QSize(0, 0));
+    }
+
+    QSize maxSize() const
+    {
+        return control->rules.checkMaxSize(QSize(INT_MAX, INT_MAX));
+    }
+
+    bool noBorder() const
     {
         if (this->remnant) {
             return this->remnant->data.no_border;
@@ -320,23 +424,23 @@ public:
             || m_internalWindowFlags.testFlag(Qt::Popup);
     }
 
-    bool userCanSetNoBorder() const override
+    bool userCanSetNoBorder() const
     {
         return !m_internalWindowFlags.testFlag(Qt::FramelessWindowHint)
             || m_internalWindowFlags.testFlag(Qt::Popup);
     }
 
-    bool wantsInput() const override
+    bool wantsInput() const
     {
         return false;
     }
 
-    bool isInternal() const override
+    bool isInternal() const
     {
         return true;
     }
 
-    bool isLockScreen() const override
+    bool isLockScreen() const
     {
         if (m_internalWindow) {
             return m_internalWindow->property("org_kde_ksld_emergency").toBool();
@@ -344,21 +448,26 @@ public:
         return false;
     }
 
-    bool isShown() const override
+    bool isShown() const
     {
         return this->render_data.ready_for_painting;
     }
 
-    bool isHiddenInternal() const override
+    bool isHiddenInternal() const
     {
         return false;
     }
 
-    void hideClient(bool /*hide*/) override
+    void hideClient(bool /*hide*/)
     {
     }
 
-    void setFrameGeometry(QRect const& rect) override
+    void leaveMoveResize()
+    {
+        win::leave_move_resize(*this);
+    }
+
+    void setFrameGeometry(QRect const& rect)
     {
         this->geo.update.frame = rect;
 
@@ -377,43 +486,43 @@ public:
         do_set_geometry(rect);
     }
 
-    void apply_restore_geometry(QRect const& restore_geo) override
+    void apply_restore_geometry(QRect const& restore_geo)
     {
         setFrameGeometry(rectify_restore_geometry(this, restore_geo));
     }
 
-    void restore_geometry_from_fullscreen() override
+    void restore_geometry_from_fullscreen()
     {
     }
 
-    bool hasStrut() const override
-    {
-        return false;
-    }
-
-    bool supportsWindowRules() const override
+    bool hasStrut() const
     {
         return false;
     }
 
-    void takeFocus() override
-    {
-    }
-
-    bool userCanSetFullScreen() const override
+    bool supportsWindowRules() const
     {
         return false;
     }
 
-    void setFullScreen(bool /*set*/, bool /*user*/ = true) override
+    void takeFocus()
     {
     }
 
-    void handle_update_fullscreen(bool /*full*/) override
+    bool userCanSetFullScreen() const
+    {
+        return false;
+    }
+
+    void setFullScreen(bool /*set*/, bool /*user*/ = true)
     {
     }
 
-    void setNoBorder(bool set) override
+    void handle_update_fullscreen(bool /*full*/)
+    {
+    }
+
+    void setNoBorder(bool set)
     {
         if (!userCanSetNoBorder()) {
             return;
@@ -425,12 +534,17 @@ public:
         updateDecoration(true);
     }
 
-    void handle_update_no_border() override
+    void checkNoBorder()
+    {
+        setNoBorder(false);
+    }
+
+    void handle_update_no_border()
     {
         setNoBorder(this->geo.update.max_mode == maximize_mode::full);
     }
 
-    void updateDecoration(bool check_workspace_pos, bool force = false) override
+    void updateDecoration(bool check_workspace_pos, bool force = false)
     {
         if (!force && (win::decoration(this) != nullptr) == !noBorder()) {
             return;
@@ -458,20 +572,20 @@ public:
         }
     }
 
-    void updateColorScheme() override
+    void updateColorScheme()
     {
         win::set_color_scheme(this, QString());
     }
 
-    void showOnScreenEdge() override
+    void showOnScreenEdge()
     {
     }
 
-    void checkTransient(Toplevel<Space>* /*window*/) override
+    void checkTransient(type* /*window*/)
     {
     }
 
-    bool belongsToDesktop() const override
+    bool belongsToDesktop() const
     {
         return false;
     }
@@ -503,7 +617,7 @@ public:
             deleted->remnant->unref();
             delete this;
         } else {
-            delete_window_from_space(this->space, this);
+            delete_window_from_space(this->space, *this);
         }
     }
 
@@ -550,9 +664,9 @@ public:
         return m_internalWindow;
     }
 
-    bool has_pending_repaints() const override
+    bool has_pending_repaints() const
     {
-        return this->isShown() && Toplevel<Space>::has_pending_repaints();
+        return this->isShown() && !repaints(*this).isEmpty();
     }
 
     struct {
@@ -562,35 +676,34 @@ public:
 
     std::unique_ptr<internal_window_singleton> singleton;
 
-    bool acceptsFocus() const override
+    bool acceptsFocus() const
     {
         return false;
     }
 
-    bool belongsToSameApplication(Toplevel<Space> const* other,
-                                  win::same_client_check /*checks*/) const override
+    bool belongsToSameApplication(type const* other, win::same_client_check /*checks*/) const
     {
-        return dynamic_cast<internal_window const*>(other) != nullptr;
+        return other != nullptr;
     }
 
-    void doResizeSync() override
+    void doResizeSync()
     {
         requestGeometry(this->control->move_resize.geometry);
     }
 
-    void updateCaption() override
+    void updateCaption()
     {
         auto const oldSuffix = this->meta.caption.suffix;
         const auto shortcut = win::shortcut_caption_suffix(this);
         this->meta.caption.suffix = shortcut;
         if ((!win::is_special_window(this) || win::is_toolbar(this))
-            && win::find_client_with_same_caption(static_cast<Toplevel<Space>*>(this))) {
+            && win::find_client_with_same_caption(this)) {
             int i = 2;
             do {
                 this->meta.caption.suffix
                     = shortcut + QLatin1String(" <") + QString::number(i) + QLatin1Char('>');
                 i++;
-            } while (win::find_client_with_same_caption(static_cast<Toplevel<Space>*>(this)));
+            } while (win::find_client_with_same_caption(this));
         }
         if (this->meta.caption.suffix != oldSuffix) {
             Q_EMIT this->qobject->captionChanged();
@@ -607,7 +720,7 @@ public:
 
     void createDecoration(const QRect& rect)
     {
-        this->control->deco.window = new deco::window<Toplevel<Space>>(this);
+        this->control->deco.window = new deco::window<typename Space::window_t>(this);
         auto decoration = this->space.deco->createDecoration(this->control->deco.window);
 
         if (decoration) {
@@ -714,6 +827,10 @@ public:
 
         do_set_geometry(win::client_to_frame_rect(this, m_internalWindow->geometry()));
     }
+
+    std::unique_ptr<win::transient<type>> transient;
+    std::unique_ptr<win::control<type>> control;
+    std::unique_ptr<render_t> render;
 
     QWindow* m_internalWindow = nullptr;
     QRect synced_geo;

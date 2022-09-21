@@ -35,6 +35,7 @@ public:
     using scene_t = render::scene<Platform>;
     using effects_t = effects_handler_impl<type>;
     using space_t = typename Platform::base_t::space_t;
+    using window_t = render::window<typename space_t::window_t, type>;
 
     compositor(Platform& platform)
         : qobject{std::make_unique<compositor_qobject>([this](auto /*te*/) { return false; })}
@@ -77,7 +78,11 @@ public:
                              this->qobject.get(),
                              [this](auto output) {
                                  for (auto& win : this->space->windows) {
-                                     remove_all(win->render_data.repaint_outputs, output);
+                                     std::visit(overload{[&](auto&& win) {
+                                                    remove_all(win->render_data.repaint_outputs,
+                                                               output);
+                                                }},
+                                                win);
                                  }
                              });
             QObject::connect(
@@ -115,7 +120,8 @@ public:
         full_repaint(*this);
     }
 
-    void schedule_repaint(typename space_t::window_t* window)
+    template<typename Win>
+    void schedule_repaint(Win* window)
     {
         if (locked) {
             return;
@@ -128,7 +134,8 @@ public:
         }
     }
 
-    void schedule_frame_callback(typename space_t::window_t* window)
+    template<typename Win>
+    void schedule_frame_callback(Win* window)
     {
         if (locked) {
             return;

@@ -653,6 +653,8 @@ bool motion_notify_event(Win* win, xcb_window_t w, int state, int x, int y, int 
 template<typename Win>
 void focus_in_event(Win* win, xcb_focus_in_event_t* e)
 {
+    using var_win = typename Win::space_t::window_t;
+
     if (e->event != win->xcb_window) {
         return;
     }
@@ -669,19 +671,17 @@ void focus_in_event(Win* win, xcb_focus_in_event_t* e)
     }
 
     for (auto win : win->space.windows) {
-        if (auto x11_win = dynamic_cast<Win*>(win)) {
-            cancel_focus_out_timer(x11_win);
-        }
+        std::visit(overload{[&](Win* win) { cancel_focus_out_timer(win); }, [](auto&&) {}}, win);
     }
 
     // check if this client is in should_get_focus list or if activation is allowed
     bool activate = allow_window_activation(win->space, win, -1U, true);
 
     // Remove from should_get_focus list.
-    if (auto& sgf = win->space.stacking.should_get_focus; contains(sgf, win)) {
+    if (auto& sgf = win->space.stacking.should_get_focus; contains(sgf, var_win(win))) {
         // Remove also all sooner elements that should have got FocusIn, but didn't for some reason
         // (and also won't anymore, because they were sooner).
-        while (sgf.front() != win) {
+        while (sgf.front() != var_win(win)) {
             sgf.pop_front();
         }
 
@@ -699,9 +699,9 @@ void focus_in_event(Win* win, xcb_focus_in_event_t* e)
         kwinApp()->update_x11_time_from_clock();
 
         if (auto& sgf = win->space.stacking.should_get_focus; !sgf.empty()) {
-            request_focus(win->space, *sgf.back());
+            std::visit(overload{[](auto&& fc) { request_focus(fc->space, *fc); }}, sgf.back());
         } else if (auto last = win->space.stacking.last_active) {
-            request_focus(win->space, *last);
+            std::visit(overload{[](auto&& last) { request_focus(last->space, *last); }}, *last);
         }
 
         win::set_demands_attention(win, true);

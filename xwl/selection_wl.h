@@ -116,8 +116,8 @@ void handle_wl_selection_client_change(Selection* sel)
 {
     auto srv_src = sel->get_current_source();
 
-    if (!dynamic_cast<typename Selection::space_t::x11_window*>(
-            sel->data.core.space->stacking.active)) {
+    if (auto& act = sel->data.core.space->stacking.active;
+        !act || !std::holds_alternative<typename Selection::space_t::x11_window*>(*act)) {
         // No active client or active client is Wayland native.
         if (sel->data.wayland_source) {
             cleanup_wl_to_x11_source(sel);

@@ -12,16 +12,19 @@
 
 #include "utils/algorithm.h"
 
+#include <optional>
+
 namespace KWin::win
 {
 
 template<typename Manager, typename Win>
 void focus_chain_remove(Manager& manager, Win* window)
 {
+    using var_win = typename Win::space_t::window_t;
     for (auto& [key, chain] : manager.chains.desktops) {
-        remove_all(chain, window);
+        remove_all(chain, var_win(window));
     }
-    remove_all(manager.chains.latest_use, window);
+    remove_all(manager.chains.latest_use, var_win(window));
 }
 
 /**
@@ -49,8 +52,8 @@ void focus_chain_resize(Manager& manager, unsigned int prev_size, unsigned int n
  * Checks whether the focus chain for the given @p desktop contains the given @p window.
  * Does not consider the most recently used focus chain.
  */
-template<typename Manager, typename Win>
-bool focus_chain_at_desktop_contains(Manager& manager, Win* window, unsigned int desktop)
+template<typename Manager, typename VarWin>
+bool focus_chain_at_desktop_contains(Manager& manager, VarWin window, unsigned int desktop)
 {
     auto it = manager.chains.desktops.find(desktop);
     if (it == manager.chains.desktops.end()) {
@@ -59,15 +62,15 @@ bool focus_chain_at_desktop_contains(Manager& manager, Win* window, unsigned int
     return contains(it->second, window);
 }
 
-template<typename Win, typename ActWin, typename Chain>
-void focus_chain_insert_window_into_chain(Win* window, Chain& chain, ActWin const* active_window)
+template<typename Win, typename VarWin, typename Chain>
+void focus_chain_insert_window_into_chain(Win* window, Chain& chain, VarWin const& active_window)
 {
-    if (contains(chain, window)) {
+    if (contains(chain, VarWin(window))) {
         // TODO(romangg): better assert?
         return;
     }
-    if (active_window && active_window != window && !chain.empty()
-        && chain.back() == active_window) {
+    if (active_window && active_window != VarWin(window) && !chain.empty()
+        && VarWin(chain.back()) == active_window) {
         // Add it after the active client
         chain.insert(std::prev(chain.end()), window);
     } else {
@@ -79,22 +82,24 @@ void focus_chain_insert_window_into_chain(Win* window, Chain& chain, ActWin cons
 template<typename Win, typename Chain>
 void focus_chain_make_first_in_chain(Win* window, Chain& chain)
 {
-    remove_all(chain, window);
-    chain.push_back(window);
+    using var_win = typename Win::space_t::window_t;
+    remove_all(chain, var_win(window));
+    chain.push_back(var_win(window));
 }
 
 template<typename Win, typename Chain>
 void focus_chain_make_last_in_chain(Win* window, Chain& chain)
 {
-    remove_all(chain, window);
-    chain.push_front(window);
+    using var_win = typename Win::space_t::window_t;
+    remove_all(chain, var_win(window));
+    chain.push_front(var_win(window));
 }
 
-template<typename Win, typename ActWin, typename Chain>
+template<typename Win, typename VarWin, typename Chain>
 void focus_chain_update_window_in_chain(Win* window,
                                         focus_chain_change change,
                                         Chain& chain,
-                                        ActWin const* active_window)
+                                        VarWin const& active_window)
 {
     if (change == focus_chain_change::make_first) {
         focus_chain_make_first_in_chain(window, chain);
@@ -130,6 +135,8 @@ void focus_chain_update_window_in_chain(Win* window,
 template<typename Manager, typename Win>
 void focus_chain_update(Manager& manager, Win* window, focus_chain_change change)
 {
+    using var_win = typename Win::space_t::window_t;
+
     if (!wants_tab_focus(window)) {
         // Doesn't want tab focus, remove.
         focus_chain_remove(manager, window);
@@ -158,7 +165,7 @@ void focus_chain_update(Manager& manager, Win* window, focus_chain_change change
             if (on_desktop(window, key)) {
                 focus_chain_update_window_in_chain(window, change, chain, manager.active_window);
             } else {
-                remove_all(chain, window);
+                remove_all(chain, var_win(window));
             }
         }
     }
@@ -175,11 +182,11 @@ void focus_chain_update(Manager& manager, Win* window, focus_chain_change change
  * @return The first window in the most recently used chain.
  */
 template<typename Win, typename Manager>
-Win* focus_chain_first_latest_use(Manager& manager)
+Win focus_chain_first_latest_use(Manager& manager)
 {
     auto& latest_chain = manager.chains.latest_use;
     if (latest_chain.empty()) {
-        return nullptr;
+        return {};
     }
 
     return latest_chain.front();
@@ -198,12 +205,12 @@ Win* focus_chain_first_latest_use(Manager& manager)
  * @param reference The start point in the focus chain to search
  * @return The relatively next window in the most recently used chain.
  */
-template<typename Manager, typename Win>
-Win* focus_chain_next_latest_use(Manager& manager, Win* reference)
+template<typename Manager, typename VarWin>
+std::optional<VarWin> focus_chain_next_latest_use(Manager& manager, VarWin const& reference)
 {
     auto& latest_chain = manager.chains.latest_use;
     if (latest_chain.empty()) {
-        return nullptr;
+        return {};
     }
 
     auto it = find(latest_chain, reference);
@@ -218,28 +225,36 @@ Win* focus_chain_next_latest_use(Manager& manager, Win* reference)
     return *std::prev(it);
 }
 
-template<typename Chain, typename Win>
-void focus_chain_move_window_after_in_chain(Chain& chain, Win* window, Win* reference)
+template<typename Chain, typename Win, typename RefWin>
+void focus_chain_move_window_after_in_chain(Chain& chain, Win* window, RefWin* reference)
 {
-    if (!contains(chain, reference)) {
+    using var_win = typename Win::space_t::window_t;
+
+    if (!contains(chain, var_win(reference))) {
         // TODO(romangg): better assert?
         return;
     }
 
-    remove_all(chain, window);
+    remove_all(chain, var_win(window));
 
     if (belong_to_same_client(reference, window)) {
         // Simple case, just put it directly behind the reference window of the same client.
         // TODO(romangg): can this special case be explained better?
-        auto it = find(chain, reference);
+        auto it = find(chain, var_win(reference));
         chain.insert(it, window);
         return;
     }
 
     for (auto it = chain.rbegin(); it != chain.rend(); ++it) {
-        if (belong_to_same_client(reference, *it)) {
-            chain.insert(std::next(it).base(), window);
-            return;
+        if (std::visit(overload{[&](auto&& win) {
+                           if (belong_to_same_client(reference, win)) {
+                               chain.insert(std::next(it).base(), window);
+                               return true;
+                           }
+                           return false;
+                       }},
+                       *it)) {
+            break;
         }
     }
 }
@@ -251,8 +266,8 @@ void focus_chain_move_window_after_in_chain(Chain& chain, Win* window, Win* refe
  * @param reference The Client behind which the @p client should be moved
  * @return void
  */
-template<typename Win, typename Manager>
-void focus_chain_move_window_after(Manager& manager, Win* window, Win* reference)
+template<typename Manager, typename Win, typename RefWin>
+void focus_chain_move_window_after(Manager& manager, Win* window, RefWin* reference)
 {
     if (!wants_tab_focus(window)) {
         return;

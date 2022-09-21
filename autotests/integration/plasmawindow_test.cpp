@@ -147,8 +147,7 @@ void PlasmaWindowTest::testCreateDestroyX11PlasmaWindow()
     QVERIFY(windowCreatedSpy.wait());
 
     auto client_id = windowCreatedSpy.first().first().value<quint32>();
-    auto client = dynamic_cast<Test::space::x11_window*>(
-        Test::app()->base.space->windows_map.at(client_id));
+    auto client = Test::get_x11_window(Test::app()->base.space->windows_map.at(client_id));
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QVERIFY(win::decoration(client));
@@ -296,8 +295,8 @@ void PlasmaWindowTest::testLockScreenNoPlasmaWindow()
     QVERIFY(clientAddedSpy.count() == static_cast<int>(outputs_count) || clientAddedSpy.wait());
     QCOMPARE(clientAddedSpy.count(), outputs_count);
 
-    QVERIFY(Test::app()
-                ->base.space->windows_map.at(clientAddedSpy.first().first().value<quint32>())
+    QVERIFY(Test::get_wayland_window(Test::app()->base.space->windows_map.at(
+                                         clientAddedSpy.first().first().value<quint32>()))
                 ->isLockScreen());
 
     // should not be sent to the client
@@ -425,8 +424,7 @@ struct x11_test_window {
         QVERIFY(window_spy.wait());
 
         auto window_id = window_spy.first().first().value<quint32>();
-        server.window = dynamic_cast<Test::space::x11_window*>(
-            Test::app()->base.space->windows_map.at(window_id));
+        server.window = Test::get_x11_window(Test::app()->base.space->windows_map.at(window_id));
         QVERIFY(server.window);
         QCOMPARE(server.window->xcb_window, client.window);
         QVERIFY(win::decoration(server.window));
@@ -545,12 +543,18 @@ void PlasmaWindowTest::test_stacking_order()
         std::copy_if(unfiltered_stack.begin(),
                      unfiltered_stack.end(),
                      std::back_inserter(stack),
-                     [](auto win) { return !win->remnant; });
+                     [](auto win) {
+                         return std::visit(overload{[&](auto&& win) { return !win->remnant; }},
+                                           win);
+                     });
         QCOMPARE(plasma_stack.size(), stack.size());
 
         for (size_t index = 0; index < windows.size(); ++index) {
             QCOMPARE(plasma_stack.at(index),
-                     stack.at(index)->meta.internal_id.toString().toStdString());
+                     std::visit(overload{[&](auto&& win) {
+                                    return win->meta.internal_id.toString().toStdString();
+                                }},
+                                stack.at(index)));
         }
     };
 

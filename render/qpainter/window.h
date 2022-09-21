@@ -22,9 +22,9 @@ class window : public Scene::window_t
 public:
     using window_t = typename Scene::window_t;
     using buffer_t = typename Scene::buffer_t;
-    using space_t = typename window_t::ref_t::space_t;
+    using space_t = typename Scene::space_t;
 
-    window(RefWin* ref_win, Scene& scene)
+    window(RefWin ref_win, Scene& scene)
         : window_t(ref_win, *scene.platform.compositor)
         , scene{scene}
     {
@@ -32,7 +32,8 @@ public:
 
     void performPaint(paint_type mask, QRegion region, WindowPaintData data) override
     {
-        perform_paint(*this->ref_win, mask, region, data);
+        std::visit(overload{[&](auto&& win) { perform_paint(*win, mask, region, data); }},
+                   *this->ref_win);
     }
 
 protected:
@@ -45,16 +46,6 @@ private:
     template<typename Win>
     void perform_paint(Win& win, paint_type mask, QRegion region, WindowPaintData data)
     {
-        auto isXwaylandClient = [](auto&& win) {
-            if (dynamic_cast<typename space_t::x11_window*>(&win)) {
-                return true;
-            }
-            if (auto& remnant = win.remnant) {
-                return remnant->data.was_x11_client;
-            }
-            return false;
-        };
-
         if (!(mask & (paint_type::window_transformed | paint_type::screen_transformed))) {
             region &= win::visible_rect(&win);
         }
@@ -113,7 +104,7 @@ private:
             viewportRectangle = win.surface->state().source_rectangle;
         }
 
-        if (isXwaylandClient(win)) {
+        if constexpr (std::is_same_v<Win, typename space_t::x11_window>) {
             // special case for XWayland windows
             if (viewportRectangle.isValid()) {
                 source = viewportRectangle;

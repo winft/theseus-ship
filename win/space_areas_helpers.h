@@ -88,9 +88,12 @@ void update_space_areas_impl(Space& space, bool force)
         }
 
         for (auto win : space.windows) {
-            if (win->control) {
-                check_workspace_position(win);
-            }
+            std::visit(overload{[&](auto&& win) {
+                           if (win->control) {
+                               check_workspace_position(win);
+                           }
+                       }},
+                       win);
         }
 
         // Reset, no longer valid or needed.

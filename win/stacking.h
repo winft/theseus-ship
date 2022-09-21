@@ -90,63 +90,60 @@ namespace KWin::win
  */
 // TODO misleading name for this method, too many slightly different ways to use it
 template<typename Space>
-typename Space::window_t* top_client_on_desktop(Space& space,
-                                                int desktop,
-                                                base::output const* output,
-                                                bool unconstrained = false,
-                                                bool only_normal = true)
+std::optional<typename Space::window_t> top_client_on_desktop(Space& space,
+                                                              int desktop,
+                                                              base::output const* output,
+                                                              bool unconstrained = false,
+                                                              bool only_normal = true)
 {
-    // TODO    Q_ASSERT( block_stacking_updates == 0 );
     auto const& list = unconstrained ? space.stacking.order.pre_stack : space.stacking.order.stack;
     for (auto it = std::crbegin(list); it != std::crend(list); it++) {
-        auto c = *it;
-        if (c && on_desktop(c, desktop) && c->isShown()) {
-            if (output && c->topo.central_output != output) {
-                continue;
-            }
-            if (!only_normal) {
-                return c;
-            }
-            if (wants_tab_focus(c) && !is_special_window(c)) {
-                return c;
-            }
+        if (std::visit(overload{[&](auto&& win) {
+                           if (!on_desktop(win, desktop)) {
+                               return false;
+                           }
+                           if (!win->isShown()) {
+                               return false;
+                           }
+                           if (output && win->topo.central_output != output) {
+                               return false;
+                           }
+                           if (!only_normal) {
+                               return true;
+                           }
+                           if (wants_tab_focus(win) && !is_special_window(win)) {
+                               return true;
+                           }
+                           return false;
+                       }},
+                       *it)) {
+            return *it;
         }
     }
-    return nullptr;
+    return {};
 }
 
 template<class Order, class T, class R = T>
-std::deque<R*> ensure_stacking_order_in_list(Order const& order, std::vector<T*> const& list)
+std::deque<T*> ensure_stacking_order_in_list(Order const& order, std::vector<T*> const& list)
 {
-    using order_window_t = typename decltype(order.stack)::value_type;
-    static_assert(std::is_base_of<std::remove_pointer_t<order_window_t>, T>::value,
-                  "T must be derived from stacking order window type");
-    // TODO    Q_ASSERT( block_stacking_updates == 0 );
-
-    if (!list.size()) {
-        return std::deque<R*>();
+    if (list.empty()) {
+        return {};
     }
     if (list.size() < 2) {
-        return std::deque<R*>({dynamic_cast<R*>(list.at(0))});
+        return {list.front()};
     }
 
     // TODO is this worth optimizing?
-    std::deque<R*> result;
-    for (auto win : list) {
-        if (auto rwin = dynamic_cast<R*>(win)) {
-            result.push_back(rwin);
-        }
-    }
+    std::deque<T*> result;
+    std::copy(begin(list), end(list), back_inserter(result));
 
     // Now reorder the result. For that 'order' should be a superset and it define the order in
     // which windows should appear in result. We then reorder result simply by going through order
     // one-by-one, removing it from result and then adding it back in the end.
     for (auto const& win : order.stack) {
-        auto rwin = dynamic_cast<R*>(win);
-        if (!rwin) {
-            continue;
+        if (std::holds_alternative<T*>(win)) {
+            move_to_back(result, std::get<T*>(win));
         }
-        move_to_back(result, rwin);
     }
 
     return result;
@@ -161,6 +158,8 @@ std::deque<Win*> restacked_by_space_stacking_order(Space& space, std::vector<Win
 template<typename Space, typename Window>
 void lower_window(Space& space, Window* window)
 {
+    using var_win = typename Space::window_t;
+
     assert(window->control);
 
     auto do_lower = [&space](auto win) {
@@ -169,34 +168,37 @@ void lower_window(Space& space, Window* window)
         blocker block(space.stacking.order);
 
         auto& pre_stack = space.stacking.order.pre_stack;
-        if (!move_to_front(pre_stack, win)) {
+        if (!move_to_front(pre_stack, var_win(win))) {
             pre_stack.push_front(win);
         }
 
         return block;
     };
     auto cleanup = [&space](auto win) {
-        if (win == space.stacking.most_recently_raised) {
-            space.stacking.most_recently_raised = nullptr;
+        if (var_win(win) == space.stacking.most_recently_raised) {
+            space.stacking.most_recently_raised = {};
         }
     };
 
     auto block = do_lower(window);
 
-    if (auto x11_win = dynamic_cast<typename Space::x11_window*>(window);
-        x11_win && x11_win->transient->lead() && x11_win->group) {
-        // Lower also all windows in the group, in reversed stacking order.
-        auto const wins = restacked_by_space_stacking_order(space, get_transient_family(x11_win));
+    // TODO(romangg): Factor this out in separatge function.
+    if constexpr (std::is_same_v<typename Space::x11_window, Window>) {
+        if (window->transient->lead() && window->group) {
+            // Lower also all windows in the group, in reversed stacking order.
+            auto const wins
+                = restacked_by_space_stacking_order(space, get_transient_family(window));
 
-        for (auto it = wins.crbegin(); it != wins.crend(); it++) {
-            auto gwin = *it;
-            if (gwin == x11_win) {
-                continue;
+            for (auto it = wins.crbegin(); it != wins.crend(); it++) {
+                auto gwin = *it;
+                if (gwin == window) {
+                    continue;
+                }
+
+                assert(gwin->control);
+                do_lower(gwin);
+                cleanup(gwin);
             }
-
-            assert(gwin->control);
-            do_lower(gwin);
-            cleanup(gwin);
         }
     }
 
@@ -206,6 +208,8 @@ void lower_window(Space& space, Window* window)
 template<typename Space, typename Window>
 void raise_window(Space& space, Window* window)
 {
+    using var_win = typename Space::window_t;
+
     if (!window) {
         return;
     }
@@ -216,7 +220,7 @@ void raise_window(Space& space, Window* window)
         return blocker(space.stacking.order);
     };
     auto do_raise = [&space](auto window) {
-        if (!move_to_back(space.stacking.order.pre_stack, window)) {
+        if (!move_to_back(space.stacking.order.pre_stack, var_win(window))) {
             // Window not yet in pre-stack. Can happen on creation. It will be raised once shown.
             return;
         }
@@ -230,7 +234,7 @@ void raise_window(Space& space, Window* window)
 
     if (window->transient->lead()) {
         // Also raise all leads.
-        std::vector<typename Space::window_t*> leads;
+        std::vector<Window*> leads;
 
         for (auto lead : window->transient->leads()) {
             while (lead) {
@@ -241,9 +245,7 @@ void raise_window(Space& space, Window* window)
             }
         }
 
-        auto stacked_leads = restacked_by_space_stacking_order(space, leads);
-
-        for (auto lead : stacked_leads) {
+        for (auto lead : restacked_by_space_stacking_order(space, leads)) {
             if (!lead->control) {
                 // Might be without control, at least on X11 this can happen (latte-dock settings).
                 continue;
@@ -259,15 +261,19 @@ void raise_window(Space& space, Window* window)
 template<typename Space, typename Window>
 void raise_or_lower_client(Space& space, Window* window)
 {
+    using var_win = typename Space::window_t;
+
     if (!window) {
         return;
     }
 
-    typename Space::window_t* topmost{nullptr};
+    std::optional<var_win> topmost;
 
     if (space.stacking.most_recently_raised
         && contains(space.stacking.order.stack, space.stacking.most_recently_raised)
-        && space.stacking.most_recently_raised->isShown() && on_current_desktop(window)) {
+        && std::visit(overload{[](auto&& win) { return win->isShown(); }},
+                      *space.stacking.most_recently_raised)
+        && on_current_desktop(window)) {
         topmost = space.stacking.most_recently_raised;
     } else {
         topmost = top_client_on_desktop(
@@ -278,31 +284,40 @@ void raise_or_lower_client(Space& space, Window* window)
                                                                  : nullptr);
     }
 
-    if (window == topmost) {
+    if (topmost && var_win(window) == *topmost) {
         lower_window(space, window);
     } else {
         raise_window(space, window);
     }
 }
 
-template<typename Space, typename Window>
-void restack(Space& space, Window* window, typename Space::window_t* under, bool force = false)
+template<typename Space, typename Win, typename UnderWin>
+void restack(Space& space, Win* window, UnderWin* under, bool force = false)
 {
-    assert(under);
-    assert(contains(space.stacking.order.pre_stack, under));
+    using var_win = typename Space::window_t;
+
+    assert(contains(space.stacking.order.pre_stack, var_win(under)));
 
     if (!force && !belong_to_same_client(under, window)) {
         // put in the stacking order below _all_ windows belonging to the active application
         for (auto it = space.stacking.order.pre_stack.crbegin();
              it != space.stacking.order.pre_stack.crend();
              it++) {
-            auto other = *it;
-            if (other->control && get_layer(*other) == get_layer(*window)
-                && belong_to_same_client(under, other)) {
-                // window doesn't belong to the same client as under, as we checked above, but other
-                // does, so window can't be other.
-                assert(window != other);
-                under = other;
+            if (std::visit(overload{[&](UnderWin* other) {
+                                        if (!other->control
+                                            || get_layer(*other) != get_layer(*window)
+                                            || !belong_to_same_client(under, other)) {
+                                            return false;
+                                        }
+
+                                        // window doesn't belong to the same client as under, as we
+                                        // checked above, but other does, so window can't be other.
+                                        assert(var_win(window) != var_win(other));
+                                        under = other;
+                                        return true;
+                                    },
+                                    [&](auto&& /*win*/) { return false; }},
+                           *it)) {
                 break;
             }
         }
@@ -310,32 +325,39 @@ void restack(Space& space, Window* window, typename Space::window_t* under, bool
 
     assert(under);
 
-    remove_all(space.stacking.order.pre_stack, window);
-    auto it = find(space.stacking.order.pre_stack, under);
-    space.stacking.order.pre_stack.insert(it, window);
+    remove_all(space.stacking.order.pre_stack, var_win(window));
+    auto it = find(space.stacking.order.pre_stack, var_win(under));
+    space.stacking.order.pre_stack.insert(it, var_win(window));
 
-    assert(contains(space.stacking.order.pre_stack, window));
-    focus_chain_move_window_after<typename Space::window_t>(
-        space.stacking.focus_chain, window, under);
+    focus_chain_move_window_after(space.stacking.focus_chain, window, under);
     space.stacking.order.update_order();
 }
 
 template<typename Space, typename Win>
-void restack_client_under_active(Space& space, Win* window)
+void restack_client_under_active(Space& space, Win& win)
 {
-    if (!space.stacking.active || space.stacking.active == window
-        || get_layer(*space.stacking.active) != get_layer(*window)) {
-        raise_window(space, window);
+    using var_win = typename Space::window_t;
+
+    if (!space.stacking.active || space.stacking.active == var_win(&win)) {
+        raise_window(space, &win);
         return;
     }
-    restack(space, window, space.stacking.active);
+
+    std::visit(overload{[&](auto&& act_win) {
+                   if (get_layer(*act_win) != get_layer(win)) {
+                       raise_window(space, &win);
+                       return;
+                   }
+                   restack(space, &win, act_win);
+               }},
+               *space.stacking.active);
 }
 
 template<typename Win>
-void auto_raise(Win* win)
+void auto_raise(Win& win)
 {
-    raise_window(win->space, win);
-    win->control->cancel_auto_raise();
+    raise_window(win.space, &win);
+    win.control->cancel_auto_raise();
 }
 
 /**
@@ -355,24 +377,29 @@ std::vector<typename Container::value_type> sort_windows_by_layer(Container cons
     using key = std::pair<base::output const*, order_window_t>;
     std::map<key, layer> lead_layers;
 
-    for (auto const& win : list) {
-        auto lay = get_layer(*win);
-        auto lead = get_top_lead(win);
-        auto search = lead_layers.find({win->topo.central_output, lead});
+    for (auto const& window : list) {
+        layer lay;
+        std::visit(overload{[&](auto&& win) {
+                       lay = get_layer(*win);
+                       auto lead = get_top_lead(win);
+                       auto search = lead_layers.find({win->topo.central_output, lead});
 
-        if (search != lead_layers.end()) {
-            // If a window is raised above some other window in the same window group
-            // which is in the ActiveLayer (i.e. it's fulscreened), make sure it stays
-            // above that window (see #95731).
-            if (search->second == layer::active && (enum_index(lay) > enum_index(layer::below))) {
-                lay = layer::active;
-            }
-            search->second = lay;
-        } else {
-            lead_layers[{win->topo.central_output, lead}] = lay;
-        }
+                       if (search != lead_layers.end()) {
+                           // If a window is raised above some other window in the same window group
+                           // which is in the ActiveLayer (i.e. it's fulscreened), make sure it
+                           // stays above that window (see #95731).
+                           if (search->second == layer::active
+                               && (enum_index(lay) > enum_index(layer::below))) {
+                               lay = layer::active;
+                           }
+                           search->second = lay;
+                       } else {
+                           lead_layers[{win->topo.central_output, lead}] = lay;
+                       }
+                   }},
+                   window);
 
-        layers[enum_index(lay)].push_back(win);
+        layers[enum_index(lay)].push_back(window);
     }
 
     std::vector<order_window_t> sorted;

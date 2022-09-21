@@ -33,13 +33,17 @@ public:
     QRegion damage() const override
     {
         if (external) {
-            if (auto surf = this->buffer.window->ref_win->surface) {
-                return surf->trackedDamage();
-            }
-            return {};
+            return std::visit(overload{[&](auto&& win) -> QRegion {
+                                  if (!win->surface) {
+                                      return {};
+                                  }
+                                  return win->surface->trackedDamage();
+                              }},
+                              *this->buffer.window->ref_win);
         }
         if (internal.fbo || !internal.image.isNull()) {
-            return this->buffer.window->ref_win->render_data.damage_region;
+            return std::visit(overload{[&](auto&& win) { return win->render_data.damage_region; }},
+                              *this->buffer.window->ref_win);
         }
         return {};
     }

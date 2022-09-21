@@ -36,7 +36,10 @@ void set_keep_above(Win* win, bool keep)
     update_layer(win);
     win->updateWindowRules(rules::type::above);
 
-    win->doSetKeepAbove();
+    if constexpr (requires(Win * win) { win->doSetKeepAbove(); }) {
+        win->doSetKeepAbove();
+    }
+
     Q_EMIT win->qobject->keepAboveChanged(keep);
 }
 
@@ -60,7 +63,10 @@ void set_keep_below(Win* win, bool keep)
     update_layer(win);
     win->updateWindowRules(rules::type::below);
 
-    win->doSetKeepBelow();
+    if constexpr (requires(Win * win) { win->doSetKeepBelow(); }) {
+        win->doSetKeepBelow();
+    }
+
     Q_EMIT win->qobject->keepBelowChanged(keep);
 }
 
@@ -72,7 +78,9 @@ void set_minimized(Win* win, bool set, bool avoid_animation = false)
             return;
 
         win->control->minimized = true;
-        win->doMinimize();
+        if constexpr (requires(Win win) { win.doMinimize(); }) {
+            win->doMinimize();
+        }
 
         win->updateWindowRules(rules::type::minimize);
         win->space.base.render->compositor->addRepaint(visible_rect(win));
@@ -89,7 +97,9 @@ void set_minimized(Win* win, bool set, bool avoid_animation = false)
         }
 
         win->control->minimized = false;
-        win->doMinimize();
+        if constexpr (requires(Win win) { win.doMinimize(); }) {
+            win->doMinimize();
+        }
 
         win->updateWindowRules(rules::type::minimize);
         Q_EMIT win->qobject->clientUnminimized(!avoid_animation);

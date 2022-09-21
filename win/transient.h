@@ -17,6 +17,24 @@ namespace KWin::win
 {
 
 template<typename Win>
+Win* find_modal(Win& win)
+{
+    if constexpr (requires(Win win) { win.findModal(); }) {
+        return win.findModal();
+    }
+    return nullptr;
+}
+
+template<typename Win>
+auto is_group_transient(Win const& win)
+{
+    if constexpr (requires(Win win) { win.groupTransient(); }) {
+        return win.groupTransient();
+    }
+    return false;
+}
+
+template<typename Win>
 auto get_top_lead(Win* win) -> decltype(win->transient->lead())
 {
     if (auto lead = win->transient->lead()) {

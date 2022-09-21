@@ -51,7 +51,7 @@ class output : public QObject
 {
 public:
     using space_t = typename Platform::space_t;
-    using window_t = typename space_t::window_t::render_t;
+    using window_t = typename Platform::compositor_t::window_t;
 
     output(Base& base, Platform& platform)
         : platform{platform}
@@ -152,15 +152,17 @@ public:
         delay_timer.start(std::min(wait_time, std::chrono::milliseconds(250)).count(), this);
     }
 
-    void request_frame(typename space_t::window_t* window)
+    template<typename Win>
+    void request_frame(Win* window)
     {
+        using var_win = typename Win::space_t::window_t;
+
         if (output_waiting_for_event(*this) || frame_timer.isActive()) {
             // Frame will be received when timer runs out.
             return;
         }
 
-        platform.compositor->presentation->template frame<typename space_t::window_t>(this,
-                                                                                      {window});
+        platform.compositor->presentation->template frame<var_win>(this, {var_win(window)});
         frame_timer.start(
             std::chrono::duration_cast<std::chrono::milliseconds>(refresh_length()).count(), this);
     }
@@ -168,7 +170,7 @@ public:
     void run()
     {
         QRegion repaints;
-        std::deque<typename space_t::window_t*> windows;
+        std::deque<typename space_t::window_t> windows;
 
         QElapsedTimer test_timer;
         test_timer.start();
@@ -202,9 +204,12 @@ public:
         }
 
         for (auto win : windows) {
-            if (win->remnant && !win->remnant->refcount) {
-                win::delete_window_from_space(win->space, win);
-            }
+            std::visit(overload{[&](auto&& win) {
+                           if (win->remnant && !win->remnant->refcount) {
+                               win::delete_window_from_space(win->space, *win);
+                           }
+                       }},
+                       win);
         }
 
         Perf::Ftrace::end(ftrace_identifier, msc);
@@ -213,16 +218,22 @@ public:
     void dry_run()
     {
         auto windows = win::render_stack(platform.compositor->space->stacking.order);
-        std::deque<typename space_t::window_t*> frame_windows;
+        std::deque<typename space_t::window_t> frame_windows;
 
         for (auto win : windows) {
-            if (!win->surface || win->surface->client() == waylandServer()->xwayland_connection()) {
-                continue;
-            }
-            if (!(win->surface->state().updates & Wrapland::Server::surface_change::frame)) {
-                continue;
-            }
-            frame_windows.push_back(win);
+            std::visit(overload{[&](auto&& win) {
+                           if (!win->surface
+                               || win->surface->client()
+                                   == waylandServer()->xwayland_connection()) {
+                               return;
+                           }
+                           if (!(win->surface->state().updates
+                                 & Wrapland::Server::surface_change::frame)) {
+                               return;
+                           }
+                           frame_windows.push_back(win);
+                       }},
+                       win);
         }
         platform.compositor->presentation->frame(this, frame_windows);
     }
@@ -261,7 +272,8 @@ public:
     std::vector<render::gl::timer_query> last_timer_queries;
 
 private:
-    bool prepare_repaint(typename space_t::window_t* win)
+    template<typename Win>
+    bool prepare_repaint(Win* win)
     {
         if (!win->has_pending_repaints()) {
             return false;
@@ -286,7 +298,7 @@ private:
         return true;
     }
 
-    bool prepare_run(QRegion& repaints, std::deque<typename space_t::window_t*>& windows)
+    bool prepare_run(QRegion& repaints, std::deque<typename space_t::window_t>& windows)
     {
         delay_timer.stop();
         frame_timer.stop();
@@ -303,50 +315,54 @@ private:
         // Create a list of all windows in the stacking order
         windows = win::render_stack(platform.compositor->space->stacking.order);
         bool has_window_repaints{false};
-        std::deque<typename space_t::window_t*> frame_windows;
+        std::deque<typename space_t::window_t> frame_windows;
 
         auto window_it = windows.begin();
         while (window_it != windows.end()) {
-            auto win = *window_it;
+            std::visit(overload{[&](auto&& win) {
+                           if (win->remnant && win->transient->annexed) {
+                               if (auto lead = win::lead_of_annexed_transient(win);
+                                   !lead || !lead->remnant) {
+                                   // TODO(romangg): Add repaint to compositor?
+                                   win->remnant->refcount = 0;
+                                   win::delete_window_from_space(win->space, *win);
+                                   window_it = windows.erase(window_it);
+                                   return;
+                               }
+                           }
 
-            if (win->remnant && win->transient->annexed) {
-                if (auto lead = win::lead_of_annexed_transient(win); !lead || !lead->remnant) {
-                    // TODO(romangg): Add repaint to compositor?
-                    win->remnant->refcount = 0;
-                    win::delete_window_from_space(win->space, win);
-                    window_it = windows.erase(window_it);
-                    continue;
-                }
-            }
+                           window_it++;
 
-            window_it++;
+                           if (prepare_repaint(win)) {
+                               has_window_repaints = true;
+                           } else if (win->surface
+                                      && win->surface->client()
+                                          != waylandServer()->xwayland_connection()
+                                      && (win->surface->state().updates
+                                          & Wrapland::Server::surface_change::frame)
+                                      && max_coverage_output(win) == &base) {
+                               frame_windows.push_back(win);
+                           }
 
-            if (prepare_repaint(win)) {
-                has_window_repaints = true;
-            } else if (win->surface
-                       && win->surface->client() != waylandServer()->xwayland_connection()
-                       && (win->surface->state().updates & Wrapland::Server::surface_change::frame)
-                       && max_coverage_output(win) == &base) {
-                frame_windows.push_back(win);
-            }
+                           if (win->render_data.is_damaged) {
+                               assert(win->render);
+                               assert(win->render->effect);
 
-            if (win->render_data.is_damaged) {
-                assert(win->render);
-                assert(win->render->effect);
+                               win->render_data.is_damaged = false;
 
-                win->render_data.is_damaged = false;
+                               // Discard the cached lanczos texture
+                               if (win->transient->annexed) {
+                                   win = win::lead_of_annexed_transient(win);
+                               }
 
-                // Discard the cached lanczos texture
-                if (win->transient->annexed) {
-                    win = win::lead_of_annexed_transient(win);
-                }
-
-                auto const texture = win->render->effect->data(LanczosCacheRole);
-                if (texture.isValid()) {
-                    delete static_cast<GLTexture*>(texture.template value<void*>());
-                    win->render->effect->setData(LanczosCacheRole, QVariant());
-                }
-            }
+                               auto const texture = win->render->effect->data(LanczosCacheRole);
+                               if (texture.isValid()) {
+                                   delete static_cast<GLTexture*>(texture.template value<void*>());
+                                   win->render->effect->setData(LanczosCacheRole, QVariant());
+                               }
+                           }
+                       }},
+                       *window_it);
         }
 
         // Move elevated windows to the top of the stacking order
@@ -354,8 +370,8 @@ private:
         for (auto effect_window : elevated_windows) {
             auto window
                 = static_cast<effects_window_impl<window_t>*>(effect_window)->window.ref_win;
-            if (!move_to_back(windows, window)) {
-                windows.push_back(window);
+            if (!move_to_back(windows, *window)) {
+                windows.push_back(*window);
             }
         }
 
@@ -382,10 +398,21 @@ private:
         // window should not get focus before it's displayed, handle unredirected windows properly
         // and so on.
         remove_all_if(windows, [](auto& win) {
-            auto screen_lock_filtered
-                = kwinApp()->is_screen_locked() && !win->isLockScreen() && !win->isInputMethod();
+            return std::visit(
+                overload{[&](auto&& win) {
+                    auto screen_lock_filtered = kwinApp()->is_screen_locked();
+                    if (screen_lock_filtered) {
+                        if constexpr (requires(decltype(win) win) { win->isLockScreen(); }) {
+                            screen_lock_filtered &= !win->isLockScreen();
+                        }
+                        if constexpr (requires(decltype(win) win) { win->isInputMethod(); }) {
+                            screen_lock_filtered &= !win->isInputMethod();
+                        }
+                    }
 
-            return !win->render_data.ready_for_painting || screen_lock_filtered;
+                    return !win->render_data.ready_for_painting || screen_lock_filtered;
+                }},
+                win);
         });
 
         // Submit pending output repaints and clear the pending field, so that post-pass can add new

@@ -170,28 +170,34 @@ void init_space(Space& space)
     } // End updates blocker block
 
     // TODO: only on X11?
-    typename Space::window_t* new_active_client{nullptr};
+    std::optional<typename Space::window_t> new_active_win;
     if (!qApp->isSessionRestored()) {
         --space.block_focus;
-        new_active_client = find_controlled_window<typename Space::x11_window>(
-            space, predicate_match::window, client_info.activeWindow());
-    }
-    if (!new_active_client && !space.stacking.active && space.stacking.should_get_focus.empty()) {
-        // No client activated in manage()
-        if (new_active_client == nullptr)
-            new_active_client = win::top_client_on_desktop(space, vds->current(), nullptr);
-        if (new_active_client == nullptr) {
-            new_active_client = win::find_desktop(&space, true, vds->current());
+        if (auto win = find_controlled_window<typename Space::x11_window>(
+                space, predicate_match::window, client_info.activeWindow())) {
+            new_active_win = win;
         }
     }
-    if (new_active_client) {
-        activate_window(space, *new_active_client);
+
+    if (!new_active_win && !space.stacking.active && space.stacking.should_get_focus.empty()) {
+        // No client activated in manage()
+        if (!new_active_win) {
+            new_active_win = win::top_client_on_desktop(space, vds->current(), nullptr);
+        }
+        if (!new_active_win) {
+            new_active_win = win::find_desktop(&space, true, vds->current());
+        }
+    }
+    if (new_active_win) {
+        std::visit(overload{[&](auto&& win) { activate_window(space, *win); }}, *new_active_win);
     }
 }
 
 template<typename Space>
 void clear_space(Space& space)
 {
+    using var_win = typename Space::window_t;
+
     space.stacking.order.lock();
 
     // Use stacking.order, so that kwin --replace keeps stacking order
@@ -205,21 +211,28 @@ void clear_space(Space& space)
     auto is_x11 = kwinApp()->operationMode() == Application::OperationModeX11;
 
     for (auto it = stack.cbegin(), end = stack.cend(); it != end; ++it) {
-        auto window
-            = dynamic_cast<typename Space::x11_window*>(const_cast<typename Space::window_t*>(*it));
-        if (!window || window->remnant) {
-            continue;
-        }
+        std::visit(overload{[&](typename Space::x11_window* win) {
+                                if (win->remnant) {
+                                    return;
+                                }
 
-        release_window(window, is_x11);
+                                release_window(win, is_x11);
 
-        // No removeClient() is called, it does more than just removing.
-        // However, remove from some lists to e.g. prevent performTransiencyCheck() from crashing.
-        remove_all(space.windows, window);
+                                // No removeClient() is called, it does more than just removing.
+                                // However, remove from some lists to e.g. prevent
+                                // performTransiencyCheck() from crashing.
+                                remove_all(space.windows, var_win(win));
+                            },
+                            [](auto&&) {}},
+                   *it);
     }
 
     for (auto const& unmanaged : get_unmanageds(space)) {
-        release_window(static_cast<typename Space::x11_window*>(unmanaged), is_x11);
+        std::visit(overload{[&](typename Space::x11_window* unmanaged) {
+                                release_window(unmanaged, is_x11);
+                            },
+                            [](auto&&) {}},
+                   unmanaged);
         remove_all(space.windows, unmanaged);
         remove_all(space.stacking.order.pre_stack, unmanaged);
     }

@@ -70,7 +70,8 @@ public:
         return false;
     }
 
-    drag_event_reply drag_move_filter(typename Space::window_t* target, QPoint const& pos)
+    drag_event_reply drag_move_filter(std::optional<typename Space::window_t> target,
+                                      QPoint const& pos)
     {
         if (!dnd) {
             return drag_event_reply::wayland;

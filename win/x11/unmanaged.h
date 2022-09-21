@@ -22,11 +22,20 @@ namespace KWin::win::x11
 template<typename Win, typename Space>
 Win* find_unmanaged(Space&& space, xcb_window_t xcb_win)
 {
-    for (auto win : space.windows) {
-        if (!win->remnant && !win->control && win->xcb_window == xcb_win) {
-            return static_cast<Win*>(win);
+    for (auto& var_win : space.windows) {
+        if (auto win = std::visit(overload{[xcb_win](Win* win) -> Win* {
+                                               if (win->remnant || win->control
+                                                   || win->xcb_window != xcb_win) {
+                                                   return nullptr;
+                                               }
+                                               return win;
+                                           },
+                                           [](auto&& /*win*/) -> Win* { return nullptr; }},
+                                  var_win)) {
+            return win;
         }
     }
+
     return nullptr;
 }
 

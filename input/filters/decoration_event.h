@@ -34,99 +34,115 @@ public:
 
     bool button(button_event const& event) override
     {
-        auto decoration = this->redirect.pointer->focus.deco;
+        auto decoration = this->redirect.pointer->focus.deco.client;
         if (!decoration) {
             return false;
         }
 
-        auto const action_result
-            = perform_mouse_modifier_action(this->redirect, event, decoration->client());
-        if (action_result.first) {
-            return action_result.second;
-        }
+        assert(this->redirect.pointer->focus.deco.window);
 
-        auto const global_pos = this->redirect.globalPointer();
-        auto const local_pos = global_pos - decoration->client()->geo.pos();
+        return std::visit(overload{[&](auto&& win) {
+                              auto const action_result
+                                  = perform_mouse_modifier_action(this->redirect, event, win);
+                              if (action_result.first) {
+                                  return action_result.second;
+                              }
 
-        auto qt_type = event.state == button_state::pressed ? QEvent::MouseButtonPress
-                                                            : QEvent::MouseButtonRelease;
-        auto qt_event = QMouseEvent(qt_type,
-                                    local_pos,
-                                    global_pos,
-                                    button_to_qt_mouse_button(event.key),
-                                    this->redirect.pointer->buttons(),
-                                    xkb::get_active_keyboard_modifiers(this->redirect.platform));
-        qt_event.setAccepted(false);
+                              auto const global_pos = this->redirect.globalPointer();
+                              auto const local_pos = global_pos - win->geo.pos();
 
-        QCoreApplication::sendEvent(decoration->decoration(), &qt_event);
-        if (!qt_event.isAccepted() && event.state == button_state::pressed) {
-            win::process_decoration_button_press(decoration->client(), &qt_event, false);
-        }
-        if (event.state == button_state::released) {
-            win::process_decoration_button_release(decoration->client(), &qt_event);
-        }
-        return true;
+                              auto qt_type = event.state == button_state::pressed
+                                  ? QEvent::MouseButtonPress
+                                  : QEvent::MouseButtonRelease;
+                              auto qt_event = QMouseEvent(
+                                  qt_type,
+                                  local_pos,
+                                  global_pos,
+                                  button_to_qt_mouse_button(event.key),
+                                  this->redirect.pointer->buttons(),
+                                  xkb::get_active_keyboard_modifiers(this->redirect.platform));
+                              qt_event.setAccepted(false);
+
+                              QCoreApplication::sendEvent(decoration->decoration(), &qt_event);
+                              if (!qt_event.isAccepted() && event.state == button_state::pressed) {
+                                  win::process_decoration_button_press(win, &qt_event, false);
+                              }
+                              if (event.state == button_state::released) {
+                                  win::process_decoration_button_release(win, &qt_event);
+                              }
+                              return true;
+                          }},
+                          *this->redirect.pointer->focus.deco.window);
     }
 
     bool motion(motion_event const& /*event*/) override
     {
-        auto decoration = this->redirect.pointer->focus.deco;
+        auto decoration = this->redirect.pointer->focus.deco.client;
         if (!decoration) {
             return false;
         }
 
-        auto const global_pos = this->redirect.globalPointer();
-        auto const local_pos = global_pos - decoration->client()->geo.pos();
+        assert(this->redirect.pointer->focus.deco.window);
 
-        auto qt_event = QHoverEvent(QEvent::HoverMove, local_pos, local_pos);
-        QCoreApplication::instance()->sendEvent(decoration->decoration(), &qt_event);
-        win::process_decoration_move(
-            decoration->client(), local_pos.toPoint(), global_pos.toPoint());
-        return true;
+        return std::visit(
+            overload{[&](auto&& win) {
+                auto const global_pos = this->redirect.globalPointer();
+                auto const local_pos = global_pos - win->geo.pos();
+
+                auto qt_event = QHoverEvent(QEvent::HoverMove, local_pos, local_pos);
+                QCoreApplication::instance()->sendEvent(decoration->decoration(), &qt_event);
+                win::process_decoration_move(win, local_pos.toPoint(), global_pos.toPoint());
+                return true;
+            }},
+            *this->redirect.pointer->focus.deco.window);
     }
 
     bool axis(axis_event const& event) override
     {
-        auto decoration = this->redirect.pointer->focus.deco;
+        auto decoration = this->redirect.pointer->focus.deco.client;
         if (!decoration) {
             return false;
         }
 
-        auto window = decoration->client();
+        assert(this->redirect.pointer->focus.deco.window);
 
-        if (event.orientation == axis_orientation::vertical) {
-            // client window action only on vertical scrolling
-            auto const actionResult = perform_wheel_action(this->redirect, event, window);
-            if (actionResult.first) {
-                return actionResult.second;
-            }
-        }
+        return std::visit(
+            overload{[&](auto&& window) {
+                if (event.orientation == axis_orientation::vertical) {
+                    // client window action only on vertical scrolling
+                    auto const actionResult = perform_wheel_action(this->redirect, event, window);
+                    if (actionResult.first) {
+                        return actionResult.second;
+                    }
+                }
 
-        auto qt_event = axis_to_qt_event(*this->redirect.pointer, event);
-        auto adapted_qt_event = QWheelEvent(qt_event.pos() - window->geo.pos(),
-                                            qt_event.pos(),
-                                            QPoint(),
-                                            qt_event.angleDelta(),
-                                            qt_event.delta(),
-                                            qt_event.orientation(),
-                                            qt_event.buttons(),
-                                            qt_event.modifiers());
+                auto qt_event = axis_to_qt_event(*this->redirect.pointer, event);
+                auto adapted_qt_event = QWheelEvent(qt_event.pos() - window->geo.pos(),
+                                                    qt_event.pos(),
+                                                    QPoint(),
+                                                    qt_event.angleDelta(),
+                                                    qt_event.delta(),
+                                                    qt_event.orientation(),
+                                                    qt_event.buttons(),
+                                                    qt_event.modifiers());
 
-        adapted_qt_event.setAccepted(false);
-        QCoreApplication::sendEvent(decoration->decoration(), &adapted_qt_event);
+                adapted_qt_event.setAccepted(false);
+                QCoreApplication::sendEvent(decoration->decoration(), &adapted_qt_event);
 
-        if (adapted_qt_event.isAccepted()) {
-            return true;
-        }
+                if (adapted_qt_event.isAccepted()) {
+                    return true;
+                }
 
-        if ((event.orientation == axis_orientation::vertical)
-            && win::titlebar_positioned_under_mouse(window)) {
-            win::perform_mouse_command(
-                *window,
-                kwinApp()->options->operationTitlebarMouseWheel(event.delta * -1),
-                this->redirect.pointer->pos().toPoint());
-        }
-        return true;
+                if ((event.orientation == axis_orientation::vertical)
+                    && win::titlebar_positioned_under_mouse(window)) {
+                    win::perform_mouse_command(
+                        *window,
+                        kwinApp()->options->operationTitlebarMouseWheel(event.delta * -1),
+                        this->redirect.pointer->pos().toPoint());
+                }
+                return true;
+            }},
+            *this->redirect.pointer->focus.deco.window);
     }
 
     bool touch_down(touch_down_event const& event) override
@@ -140,39 +156,48 @@ public:
             return true;
         }
         seat->setTimestamp(event.base.time_msec);
-        auto decoration = this->redirect.touch->focus.deco;
+        auto decoration = this->redirect.touch->focus.deco.client;
         if (!decoration) {
             return false;
         }
 
-        this->redirect.touch->setDecorationPressId(event.id);
-        m_lastGlobalTouchPos = event.pos;
-        m_lastLocalTouchPos = event.pos - decoration->client()->geo.pos();
+        assert(this->redirect.touch->focus.deco.window);
 
-        QHoverEvent hoverEvent(QEvent::HoverMove, m_lastLocalTouchPos, m_lastLocalTouchPos);
-        QCoreApplication::sendEvent(decoration->decoration(), &hoverEvent);
+        return std::visit(
+            overload{[&](auto&& win) {
+                this->redirect.touch->setDecorationPressId(event.id);
+                m_lastGlobalTouchPos = event.pos;
+                m_lastLocalTouchPos = event.pos - win->geo.pos();
 
-        QMouseEvent e(QEvent::MouseButtonPress,
-                      m_lastLocalTouchPos,
-                      event.pos,
-                      Qt::LeftButton,
-                      Qt::LeftButton,
-                      xkb::get_active_keyboard_modifiers(this->redirect.platform));
-        e.setAccepted(false);
-        QCoreApplication::sendEvent(decoration->decoration(), &e);
-        if (!e.isAccepted()) {
-            win::process_decoration_button_press(decoration->client(), &e, false);
-        }
-        return true;
+                QHoverEvent hoverEvent(QEvent::HoverMove, m_lastLocalTouchPos, m_lastLocalTouchPos);
+                QCoreApplication::sendEvent(decoration->decoration(), &hoverEvent);
+
+                QMouseEvent e(QEvent::MouseButtonPress,
+                              m_lastLocalTouchPos,
+                              event.pos,
+                              Qt::LeftButton,
+                              Qt::LeftButton,
+                              xkb::get_active_keyboard_modifiers(this->redirect.platform));
+                e.setAccepted(false);
+                QCoreApplication::sendEvent(decoration->decoration(), &e);
+                if (!e.isAccepted()) {
+                    win::process_decoration_button_press(win, &e, false);
+                }
+                return true;
+            }},
+            *this->redirect.touch->focus.deco.window);
     }
 
     bool touch_motion(touch_motion_event const& event) override
     {
         Q_UNUSED(time)
-        auto decoration = this->redirect.touch->focus.deco;
+        auto decoration = this->redirect.touch->focus.deco.client;
         if (!decoration) {
             return false;
         }
+
+        assert(this->redirect.touch->focus.deco.window);
+
         if (this->redirect.touch->decorationPressId() == -1) {
             return false;
         }
@@ -180,23 +205,31 @@ public:
             // ignore, but filter out
             return true;
         }
-        m_lastGlobalTouchPos = event.pos;
-        m_lastLocalTouchPos = event.pos - decoration->client()->geo.pos();
 
-        QHoverEvent e(QEvent::HoverMove, m_lastLocalTouchPos, m_lastLocalTouchPos);
-        QCoreApplication::instance()->sendEvent(decoration->decoration(), &e);
-        win::process_decoration_move(
-            decoration->client(), m_lastLocalTouchPos.toPoint(), event.pos.toPoint());
-        return true;
+        return std::visit(overload{[&](auto&& win) {
+                              m_lastGlobalTouchPos = event.pos;
+                              m_lastLocalTouchPos = event.pos - win->geo.pos();
+
+                              QHoverEvent e(
+                                  QEvent::HoverMove, m_lastLocalTouchPos, m_lastLocalTouchPos);
+                              QCoreApplication::instance()->sendEvent(decoration->decoration(), &e);
+                              win::process_decoration_move(
+                                  win, m_lastLocalTouchPos.toPoint(), event.pos.toPoint());
+                              return true;
+                          }},
+                          *this->redirect.touch->focus.deco.window);
     }
 
     bool touch_up(touch_up_event const& event) override
     {
         Q_UNUSED(time);
-        auto decoration = this->redirect.touch->focus.deco;
+        auto decoration = this->redirect.touch->focus.deco.client;
         if (!decoration) {
             return false;
         }
+
+        assert(this->redirect.touch->focus.deco.window);
+
         if (this->redirect.touch->decorationPressId() == -1) {
             return false;
         }
@@ -214,7 +247,9 @@ public:
                       xkb::get_active_keyboard_modifiers(this->redirect.platform));
         e.setAccepted(false);
         QCoreApplication::sendEvent(decoration->decoration(), &e);
-        win::process_decoration_button_release(decoration->client(), &e);
+
+        std::visit(overload{[&](auto&& win) { win::process_decoration_button_release(win, &e); }},
+                   *this->redirect.touch->focus.deco.window);
 
         QHoverEvent leaveEvent(QEvent::HoverLeave, QPointF(), QPointF());
         QCoreApplication::sendEvent(decoration->decoration(), &leaveEvent);

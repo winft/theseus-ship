@@ -16,19 +16,26 @@
 #include "win/activation.h"
 
 #include <deque>
+#include <variant>
 
 namespace KWin::win::x11
 {
 
 template<typename Space>
-auto get_unmanageds(Space const& space) -> std::vector<typename Space::window_t*>
+auto get_unmanageds(Space const& space) -> std::vector<typename Space::window_t>
 {
-    std::vector<typename Space::window_t*> ret;
+    using var_win = typename Space::window_t;
+    std::vector<var_win> ret;
+
     for (auto const& window : space.windows) {
-        if (window->xcb_window && !window->control && !window->remnant) {
-            ret.push_back(window);
-        }
+        std::visit(overload{[&](auto&& win) {
+                       if (win->xcb_window && !win->control && !win->remnant) {
+                           ret.push_back(var_win(win));
+                       }
+                   }},
+                   window);
     }
+
     return ret;
 }
 
@@ -52,9 +59,11 @@ void render_stack_unmanaged_windows(Space& space)
     auto const& unmanaged_list = get_unmanageds(space);
 
     for (auto const& win : windows) {
-        auto unmanaged = std::find_if(unmanaged_list.cbegin(),
-                                      unmanaged_list.cend(),
-                                      [&win](auto u) { return win.get() == u->xcb_window; });
+        auto unmanaged
+            = std::find_if(unmanaged_list.cbegin(), unmanaged_list.cend(), [&win](auto u) {
+                  return std::visit(overload{[&](auto&& u) { return win.get() == u->xcb_window; }},
+                                    u);
+              });
 
         if (unmanaged != std::cend(unmanaged_list)) {
             space.stacking.order.render_overlays.push_back(*unmanaged);
@@ -93,26 +102,25 @@ void propagate_clients(Space& space, bool propagate_new_clients)
 
     // TODO use ranges::view and ranges::transform in c++20
     std::vector<xcb_window_t> hidden_windows;
-    std::for_each(order.stack.rbegin(), order.stack.rend(), [&stack, &hidden_windows](auto window) {
-        auto x11_window = dynamic_cast<x11_window_t*>(window);
-        if (!x11_window) {
-            return;
-        }
+    std::for_each(order.stack.rbegin(), order.stack.rend(), [&stack, &hidden_windows](auto win) {
+        std::visit(overload{[&](x11_window_t* win) {
+                                // Hidden windows with preview are windows that should be unmapped
+                                // but is kept for compositing ensure they are stacked below
+                                // everything else (as far as pure X stacking order is concerned).
+                                if (hidden_preview(win)) {
+                                    hidden_windows.push_back(win->frameId());
+                                    return;
+                                }
 
-        // Hidden windows with preview are windows that should be unmapped but is kept
-        // for compositing ensure they are stacked below everything else (as far as
-        // pure X stacking order is concerned).
-        if (hidden_preview(x11_window)) {
-            hidden_windows.push_back(x11_window->frameId());
-            return;
-        }
+                                // Stack the input window above the frame
+                                if (win->xcb_windows.input) {
+                                    stack.push_back(win->xcb_windows.input);
+                                }
 
-        // Stack the input window above the frame
-        if (x11_window->xcb_windows.input) {
-            stack.push_back(x11_window->xcb_windows.input);
-        }
-
-        stack.push_back(x11_window->frameId());
+                                stack.push_back(win->frameId());
+                            },
+                            [](auto&&) {}},
+                   win);
     });
 
     // when having hidden previews, stack hidden windows below everything else
@@ -134,21 +142,20 @@ void propagate_clients(Space& space, bool propagate_new_clients)
                   order.manual_overlays.end(),
                   std::back_inserter(clients));
 
-        for (auto const& window : space.windows) {
-            if (!window->control) {
-                continue;
-            }
+        for (auto const& win : space.windows) {
+            std::visit(overload{[&](x11_window_t* win) {
+                                    if (!win->control) {
+                                        return;
+                                    }
 
-            auto x11_window = dynamic_cast<x11_window_t*>(window);
-            if (!x11_window) {
-                continue;
-            }
-
-            if (is_desktop(x11_window)) {
-                clients.push_back(x11_window->xcb_window);
-            } else {
-                non_desktops.push_back(x11_window->xcb_window);
-            }
+                                    if (is_desktop(win)) {
+                                        clients.push_back(win->xcb_window);
+                                    } else {
+                                        non_desktops.push_back(win->xcb_window);
+                                    }
+                                },
+                                [](auto&&) {}},
+                       win);
         }
 
         /// Desktop windows are always on the bottom, so copy the non-desktop windows to the
@@ -159,10 +166,10 @@ void propagate_clients(Space& space, bool propagate_new_clients)
 
     std::vector<xcb_window_t> stacked_clients;
 
-    for (auto window : order.stack) {
-        if (auto x11_window = dynamic_cast<x11_window_t*>(window)) {
-            stacked_clients.push_back(x11_window->xcb_window);
-        }
+    for (auto win : order.stack) {
+        std::visit(overload{[&](x11_window_t* win) { stacked_clients.push_back(win->xcb_window); },
+                            [](auto&&) {}},
+                   win);
     }
 
     std::copy(order.manual_overlays.begin(),
@@ -174,6 +181,8 @@ void propagate_clients(Space& space, bool propagate_new_clients)
 template<typename Space, typename Win>
 void lower_client_within_application(Space& space, Win* window)
 {
+    using var_win = typename Space::window_t;
+
     if (!window) {
         return;
     }
@@ -182,20 +191,22 @@ void lower_client_within_application(Space& space, Win* window)
 
     blocker block(space.stacking.order);
 
-    remove_all(space.stacking.order.pre_stack, window);
+    remove_all(space.stacking.order.pre_stack, var_win(window));
 
     bool lowered = false;
     // first try to put it below the bottom-most window of the application
     for (auto it = space.stacking.order.pre_stack.begin();
          it != space.stacking.order.pre_stack.end();
          ++it) {
-        auto const& client = *it;
-        if (!client) {
-            continue;
-        }
-        if (win::belong_to_same_client(client, window)) {
-            space.stacking.order.pre_stack.insert(it, window);
-            lowered = true;
+        if (std::visit(overload{[&](auto&& win) {
+                           if (win::belong_to_same_client(win, window)) {
+                               space.stacking.order.pre_stack.insert(it, window);
+                               lowered = true;
+                               return true;
+                           }
+                           return false;
+                       }},
+                       *it)) {
             break;
         }
     }
@@ -207,6 +218,8 @@ void lower_client_within_application(Space& space, Win* window)
 template<typename Space, typename Win>
 void raise_client_within_application(Space& space, Win* window)
 {
+    using var_win = typename Space::window_t;
+
     if (!window) {
         return;
     }
@@ -218,20 +231,24 @@ void raise_client_within_application(Space& space, Win* window)
 
     // first try to put it above the top-most window of the application
     for (int i = space.stacking.order.pre_stack.size() - 1; i > -1; --i) {
-        auto other = space.stacking.order.pre_stack.at(i);
-        if (!other) {
-            continue;
-        }
-        if (other == window) {
-            // Don't lower it just because it asked to be raised.
-            return;
-        }
-        if (belong_to_same_client(other, window)) {
-            remove_all(space.stacking.order.pre_stack, window);
-            auto it = find(space.stacking.order.pre_stack, other);
-            assert(it != space.stacking.order.pre_stack.end());
-            // Insert after the found one.
-            space.stacking.order.pre_stack.insert(it + 1, window);
+        if (std::visit(overload{[&](Win* win) {
+                                    if (win == window) {
+                                        // Don't lower it just because it asked to be raised.
+                                        return true;
+                                    }
+                                    if (belong_to_same_client(win, window)) {
+                                        remove_all(space.stacking.order.pre_stack, var_win(window));
+                                        auto it
+                                            = find(space.stacking.order.pre_stack, var_win(win));
+                                        assert(it != space.stacking.order.pre_stack.end());
+                                        // Insert after the found one.
+                                        space.stacking.order.pre_stack.insert(it + 1, window);
+                                        return true;
+                                    }
+                                    return false;
+                                },
+                                [](auto&&) { return false; }},
+                       space.stacking.order.pre_stack.at(i))) {
             break;
         }
     }
@@ -277,6 +294,7 @@ void restack_window(Win* win,
                     bool send_event = false)
 {
     using x11_window = typename Win::space_t::x11_window;
+    using var_win = typename Win::space_t::window_t;
 
     Win* other = nullptr;
     if (detail == XCB_STACK_MODE_OPPOSITE) {
@@ -290,10 +308,10 @@ void restack_window(Win* win,
         auto end = win->space.stacking.order.stack.cend();
 
         while (it != end) {
-            if (*it == win) {
+            if (*it == var_win(win)) {
                 detail = XCB_STACK_MODE_ABOVE;
                 break;
-            } else if (*it == other) {
+            } else if (*it == var_win(other)) {
                 detail = XCB_STACK_MODE_BELOW;
                 break;
             }
@@ -313,35 +331,42 @@ void restack_window(Win* win,
         return;
     }
 
-    if (!other)
+    if (!other) {
         other = find_controlled_window<x11_window>(win->space, predicate_match::window, above);
+    }
 
     if (other && detail == XCB_STACK_MODE_ABOVE) {
         auto it = win->space.stacking.order.stack.cend();
         auto begin = win->space.stacking.order.stack.cbegin();
 
         while (--it != begin) {
-            if (*it == other) {
+            if (*it == var_win(other)) {
                 // the other one is top on stack
                 // invalidate and force
                 it = begin;
                 src = NET::FromTool;
                 break;
             }
-            auto c = dynamic_cast<Win*>(*it);
 
-            if (!c
-                || !(is_normal(*it) && c->isShown() && on_current_desktop(*it)
-                     && on_screen(*it, win->topo.central_output))) {
+            if (!std::holds_alternative<Win*>(*it)) {
                 continue;
             }
 
-            if (*(it - 1) == other)
-                break; // "it" is the one above the target one, stack below "it"
+            auto above_win = std::get<Win*>(*it);
+
+            if (!(is_normal(above_win) && above_win->isShown() && on_current_desktop(above_win)
+                  && on_screen(above_win, win->topo.central_output))) {
+                continue;
+            }
+
+            if (*(it - 1) == var_win(other)) {
+                // "it" is the one above the target one, stack below "it"
+                break;
+            }
         }
 
-        if (it != begin && (*(it - 1) == other)) {
-            other = dynamic_cast<Win*>(*it);
+        if (it != begin && (*(it - 1) == var_win(other))) {
+            other = std::get<Win*>(*it);
         } else {
             other = nullptr;
         }

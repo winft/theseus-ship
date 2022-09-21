@@ -55,7 +55,7 @@ public:
 
     int64_t paint_output(output_t* output,
                          QRegion damage,
-                         std::deque<typename window_t::ref_t*> const& ref_wins,
+                         std::deque<typename window_t::ref_t> const& ref_wins,
                          std::chrono::milliseconds presentTime) override
     {
         QElapsedTimer renderTimer;
@@ -156,7 +156,7 @@ protected:
         }
     }
 
-    std::unique_ptr<window_t> createWindow(typename window_t::ref_t* ref_win) override
+    std::unique_ptr<window_t> createWindow(typename window_t::ref_t ref_win) override
     {
         return std::make_unique<qpainter_window_t>(ref_win, *this);
     }

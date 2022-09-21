@@ -95,8 +95,8 @@ void compositor_start_scene(Compositor& comp)
     comp.scene = comp.create_scene();
     comp.space->stacking.order.render_restack_required = true;
 
-    for (auto& client : comp.space->windows) {
-        client->setupCompositing();
+    for (auto& win : comp.space->windows) {
+        std::visit(overload{[](auto&& win) { win->setupCompositing(); }}, win);
     }
 
     // Sets also the 'effects' pointer.
@@ -137,11 +137,19 @@ void compositor_stop(Compositor& comp, bool on_shutdown)
     comp.effects.reset();
 
     if (comp.space) {
-        for (auto& c : comp.space->windows) {
-            if (c->remnant) {
-                continue;
-            }
-            c->finishCompositing();
+        for (auto& var_win : comp.space->windows) {
+            std::visit(
+                overload{[](auto&& win) {
+                    if (win->remnant) {
+                        return;
+                    }
+                    if constexpr (requires(decltype(win) win) { win->finishCompositing(); }) {
+                        win->finishCompositing();
+                    } else {
+                        finish_compositing(*win);
+                    }
+                }},
+                var_win);
         }
 
         if (auto con = kwinApp()->x11Connection()) {
@@ -150,8 +158,11 @@ void compositor_stop(Compositor& comp, bool on_shutdown)
         }
         while (!win::get_remnants(*comp.space).empty()) {
             auto win = win::get_remnants(*comp.space).front();
-            win->remnant->refcount = 0;
-            win::delete_window_from_space(*comp.space, win);
+            std::visit(overload{[&comp](auto&& win) {
+                           win->remnant->refcount = 0;
+                           win::delete_window_from_space(*comp.space, *win);
+                       }},
+                       win);
         }
     }
 

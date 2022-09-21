@@ -20,7 +20,7 @@ namespace KWin::win
  * stealing prevention code.
  */
 template<typename Space>
-typename Space::window_t* most_recently_activated_window(Space const& space)
+std::optional<typename Space::window_t> most_recently_activated_window(Space const& space)
 {
     auto const& candidates = space.stacking.should_get_focus;
     return candidates.size() > 0 ? candidates.back() : space.stacking.active;
@@ -33,14 +33,20 @@ bool is_active_fullscreen(Win const* win)
         return false;
     }
 
-    // Instead of activeClient() - avoids flicker.
-    auto const ac = most_recently_activated_window(win->space);
+    auto const act_win_opt = most_recently_activated_window(win->space);
+    if (!act_win_opt) {
+        return false;
+    }
 
-    // According to NETWM spec implementation notes suggests "focused windows having state
-    // _NET_WM_STATE_FULLSCREEN" to be on the highest layer. Also take the screen into account.
-    return ac
-        && (ac == win || ac->topo.central_output != win->topo.central_output
-            || contains(ac->transient->leads(), win));
+    return std::visit(overload{[win](auto const* act_win) {
+                                   return act_win->topo.central_output != win->topo.central_output;
+                               },
+                               [win](Win const* act_win) {
+                                   return act_win == win
+                                       || act_win->topo.central_output != win->topo.central_output
+                                       || contains(act_win->transient->leads(), win);
+                               }},
+                      *act_win_opt);
 }
 
 template<typename Win>
@@ -69,11 +75,13 @@ layer belong_to_layer(Win* win)
     // and the docks move into the NotificationLayer (which is between Above- and
     // ActiveLayer, so that active fullscreen windows will still cover everything)
     // Since the desktop is also activated, nothing should be in the ActiveLayer, though
-    if (win->isInternal()) {
+    if constexpr (requires(Win win) { win.isInternal(); }) {
         return win::layer::unmanaged;
     }
-    if (win->isLockScreen()) {
-        return win::layer::unmanaged;
+    if constexpr (requires(Win win) { win.isLockScreen(); }) {
+        if (win->isLockScreen()) {
+            return win::layer::unmanaged;
+        }
     }
     if (is_desktop(win)) {
         return win->space.showing_desktop ? win::layer::above : win::layer::desktop;
@@ -155,5 +163,4 @@ void update_layer(Win* win)
         }
     }
 }
-
 }

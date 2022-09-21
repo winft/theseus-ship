@@ -7,6 +7,8 @@
 
 #include "types.h"
 
+#include "utils/algorithm.h"
+
 #include <QObject>
 #include <xcb/xcb.h>
 
@@ -17,12 +19,13 @@ template<typename Win, typename Space>
 Win* find_controlled_window(Space& space, predicate_match predicate, xcb_window_t w)
 {
     auto find_window = [&](std::function<bool(Win const*)> const& func) -> Win* {
-        for (auto win : space.windows) {
-            if (!win->control) {
-                continue;
-            }
-            if (auto x11_win = dynamic_cast<Win*>(win); x11_win && func(x11_win)) {
-                return x11_win;
+        for (auto& var_win : space.windows) {
+            if (auto win = std::visit(overload{[&](Win* win) -> Win* {
+                                                   return win->control && func(win) ? win : nullptr;
+                                               },
+                                               [&](auto&& /*win*/) -> Win* { return nullptr; }},
+                                      var_win)) {
+                return win;
             }
         }
         return nullptr;

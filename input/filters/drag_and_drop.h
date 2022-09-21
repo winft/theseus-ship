@@ -74,18 +74,22 @@ public:
             }
         }
 
-        if (window) {
-            // TODO: consider decorations
-            if (window->surface != seat->drags().get_target().surface) {
-                if (window->control) {
-                    win::activate_window(this->redirect.space, *window);
-                }
-                seat->drags().set_target(window->surface, win::get_input_transform(*window));
-            }
-        } else {
+        if (!window) {
             // No window at that place, if we have a surface we need to reset.
             seat->drags().set_target(nullptr);
+            return true;
         }
+
+        std::visit(overload{[&](auto&& win) {
+                       // TODO: consider decorations
+                       if (win->surface != seat->drags().get_target().surface) {
+                           if (win->control) {
+                               win::activate_window(this->redirect.space, *win);
+                           }
+                           seat->drags().set_target(win->surface, win::get_input_transform(*win));
+                       }
+                   }},
+                   *window);
 
         return true;
     }
@@ -133,18 +137,25 @@ public:
 
         seat->touches().touch_move(wraplandId, event.pos);
 
-        if (auto t = find_window(this->redirect, event.pos.toPoint())) {
-            // TODO: consider decorations
-            if (t->surface != seat->drags().get_target().surface) {
-                if (t->control) {
-                    win::activate_window(this->redirect.space, *t);
-                }
-                seat->drags().set_target(t->surface, event.pos, win::get_input_transform(*t));
-            }
-        } else {
+        auto win = find_window(this->redirect, event.pos.toPoint());
+        if (!win) {
             // no window at that place, if we have a surface we need to reset
             seat->drags().set_target(nullptr);
+            return true;
         }
+
+        // TODO: consider decorations
+        std::visit(overload{[&](auto&& win) {
+                       if (win->surface == seat->drags().get_target().surface) {
+                           return;
+                       }
+                       if (win->control) {
+                           win::activate_window(this->redirect.space, *win);
+                       }
+                       seat->drags().set_target(
+                           win->surface, event.pos, win::get_input_transform(*win));
+                   }},
+                   *win);
         return true;
     }
 

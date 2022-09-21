@@ -306,8 +306,10 @@ bool space_event(Space& space, xcb_generic_event_t* event)
                     || currentInput->focus == XCB_INPUT_FOCUS_POINTER_ROOT
                     || lostFocusPointerToRoot)) {
                 // kWarning( 1212 ) << "X focus set to None/PointerRoot, reseting focus" ;
-                if (auto window = most_recently_activated_window(space)) {
-                    request_focus(space, *window, false, true);
+                if (auto act = most_recently_activated_window(space)) {
+                    std::visit(
+                        overload{[&](auto&& act) { request_focus(space, *act, false, true); }},
+                        *act);
                 } else if (!activate_next_window(space)) {
                     focus_to_null(space);
                 }

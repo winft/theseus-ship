@@ -43,7 +43,7 @@ public:
     using compositor_t = typename Platform::compositor_t;
 
     using window_t = typename abstract_type::window_t;
-    using xrender_window_t = xrender::window<typename abstract_type::space_t::window_t, type>;
+    using xrender_window_t = xrender::window<typename window_t::ref_t, type>;
     using buffer_t = buffer<window_t>;
 
     using space_t = typename abstract_type::space_t;
@@ -67,7 +67,7 @@ public:
         return XRenderCompositing;
     }
     int64_t paint(QRegion damage,
-                  std::deque<typename space_t::window_t*> const& windows,
+                  std::deque<typename space_t::window_t> const& windows,
                   std::chrono::milliseconds presentTime) override
     {
         QElapsedTimer renderTimer;
@@ -120,7 +120,7 @@ public:
     XRenderPicture* fade_alpha_picture{nullptr};
 
 protected:
-    std::unique_ptr<window_t> createWindow(typename space_t::window_t* ref_win) override
+    std::unique_ptr<window_t> createWindow(typename space_t::window_t ref_win) override
     {
         return std::make_unique<xrender_window_t>(ref_win, *this);
     }

@@ -22,18 +22,18 @@ template<typename Win>
 void set_transient_lead(Win* win, xcb_window_t lead_id);
 
 template<typename Win>
-class transient : public win::transient<typename Win::abstract_type>
+class transient : public win::transient<Win>
 {
 public:
     transient(Win* win)
-        : win::transient<typename Win::abstract_type>(win)
+        : win::transient<Win>(win)
         , win{win}
     {
     }
 
-    void remove_lead(typename Win::abstract_type* lead) override
+    void remove_lead(Win* lead) override
     {
-        win::transient<typename Win::abstract_type>::remove_lead(lead);
+        win::transient<Win>::remove_lead(lead);
 
         if (this->leads().empty()) {
             // If there is no more lead, make window a group transient.
@@ -291,20 +291,23 @@ template<typename Win, typename Space>
 void check_active_modal(Space& space)
 {
     // If the active window got new modal transient, activate it.
-    auto win = dynamic_cast<Win*>(most_recently_activated_window(space));
-    if (!win) {
+    auto mraw = most_recently_activated_window(space);
+    if (!mraw) {
         return;
     }
+    std::visit(overload{[&](Win* win) {
+                            auto new_modal = win->findModal();
 
-    auto new_modal = dynamic_cast<Win*>(win->findModal());
-
-    if (new_modal && new_modal != win) {
-        if (!new_modal->control) {
-            // postpone check until end of manage()
-            return;
-        }
-        activate_window(space, *new_modal);
-    }
+                            if (new_modal && new_modal != win) {
+                                if (!new_modal->control) {
+                                    // postpone check until end of manage()
+                                    return;
+                                }
+                                activate_window(space, *new_modal);
+                            }
+                        },
+                        [](auto&&) {}},
+               *mraw);
 }
 
 template<typename Win>
@@ -335,44 +338,42 @@ auto find_client_leader_group(Win const* win) -> decltype(win->group)
     group_t* ret = nullptr;
 
     for (auto const& other : win->space.windows) {
-        if (!other->control) {
-            continue;
-        }
-        if (other == win) {
-            continue;
-        }
+        std::visit(overload{[&](Win* other) {
+                                if (!other->control) {
+                                    return;
+                                }
+                                if (other == win) {
+                                    return;
+                                }
 
-        auto other_casted = dynamic_cast<Win*>(other);
-        if (!other_casted) {
-            // Different type of window. Can't share group.
-            continue;
-        }
+                                if (get_wm_client_leader(*other) != get_wm_client_leader(*win)) {
+                                    return;
+                                }
 
-        if (get_wm_client_leader(*other_casted) != get_wm_client_leader(*win)) {
-            continue;
-        }
+                                if (!ret || ret != other->group) {
+                                    // Found new group.
+                                    ret = other->group;
+                                    return;
+                                }
 
-        if (!ret || ret != other_casted->group) {
-            // Found new group.
-            ret = other_casted->group;
-            continue;
-        }
+                                // There are already two groups with the same client leader.
+                                // This most probably means the app uses group transients without
+                                // setting group for its windows. Merging the two groups is a bad
+                                // hack, but there's no really good solution for this case.
+                                auto old_group_members = other->group->members;
 
-        // There are already two groups with the same client leader.
-        // This most probably means the app uses group transients without
-        // setting group for its windows. Merging the two groups is a bad
-        // hack, but there's no really good solution for this case.
-        auto old_group_members = other_casted->group->members;
-
-        // The old group auto-deletes when being empty.
-        for (size_t pos = 0; pos < old_group_members.size(); ++pos) {
-            auto member = old_group_members[pos];
-            if (member == win) {
-                // 'win' will be removed from this group after we return.
-                continue;
-            }
-            change_client_leader_group(member, ret);
-        }
+                                // The old group auto-deletes when being empty.
+                                for (size_t pos = 0; pos < old_group_members.size(); ++pos) {
+                                    auto member = old_group_members[pos];
+                                    if (member == win) {
+                                        // 'win' will be removed from this group after we return.
+                                        continue;
+                                    }
+                                    change_client_leader_group(member, ret);
+                                }
+                            },
+                            [](auto&&) {}},
+                   other);
     }
 
     return ret;
@@ -462,7 +463,7 @@ Win* find_modal_recursive(Win& win)
 }
 
 template<typename Win>
-typename Win::abstract_type* transient_find_modal(Win const& win)
+Win* transient_find_modal(Win const& win)
 {
     for (auto child : win.transient->children) {
         if (auto modal = find_modal_recursive(*child)) {

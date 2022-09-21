@@ -44,22 +44,26 @@ void device_redirect_init(Dev* dev)
 }
 
 template<typename Dev>
-bool device_redirect_set_at(Dev* dev, decltype(dev->at.window) window)
+void device_redirect_set_at(Dev* dev, decltype(dev->at.window) window)
 {
     if (dev->at.window == window) {
-        return false;
+        return;
     }
+
     QObject::disconnect(dev->at.notifiers.surface);
     QObject::disconnect(dev->at.notifiers.destroy);
 
     dev->at.window = window;
+
     if (window) {
-        dev->at.notifiers.destroy = QObject::connect(window->qobject.get(),
-                                                     &win::window_qobject::destroyed,
-                                                     dev->qobject.get(),
-                                                     [dev] { dev->at.window = nullptr; });
+        std::visit(overload{[dev](auto&& win) {
+                       dev->at.notifiers.destroy = QObject::connect(win->qobject.get(),
+                                                                    &win::window_qobject::destroyed,
+                                                                    dev->qobject.get(),
+                                                                    [dev] { dev->at.window = {}; });
+                   }},
+                   *window);
     }
-    return true;
 }
 
 template<typename Dev>
@@ -78,7 +82,7 @@ void device_redirect_set_focus(Dev* dev, Win& window)
     dev->focus.notifiers.window_destroy = QObject::connect(window.qobject.get(),
                                                            &win::window_qobject::destroyed,
                                                            dev->qobject.get(),
-                                                           [dev] { dev->focus.window = nullptr; });
+                                                           [dev] { dev->focus.window = {}; });
     // TODO: call focusUpdate?
 }
 
@@ -103,20 +107,24 @@ void device_redirect_update_focus(Dev* dev)
     auto oldFocus = dev->focus.window;
 
     if (dev->at.window) {
-        if (dev->at.window->surface) {
-            device_redirect_set_focus(dev, *dev->at.window);
-        } else {
-            // The surface has not yet been created (special XWayland case).
-            // Therefore listen for its creation.
-            if (!dev->at.notifiers.surface) {
-                dev->at.notifiers.surface
-                    = QObject::connect(dev->at.window->qobject.get(),
-                                       &win::window_qobject::surfaceChanged,
-                                       dev->qobject.get(),
-                                       [dev] { device_redirect_update(dev); });
-            }
-            device_redirect_unset_focus(dev);
-        }
+        std::visit(overload{[&](auto&& win) {
+                       if (win->surface) {
+                           device_redirect_set_focus(dev, *win);
+                           return;
+                       }
+
+                       // The surface has not yet been created (special XWayland case).
+                       // Therefore listen for its creation.
+                       if (!dev->at.notifiers.surface) {
+                           dev->at.notifiers.surface
+                               = QObject::connect(win->qobject.get(),
+                                                  &win::window_qobject::surfaceChanged,
+                                                  dev->qobject.get(),
+                                                  [dev] { device_redirect_update(dev); });
+                       }
+                       device_redirect_unset_focus(dev);
+                   }},
+                   *dev->at.window);
     } else {
         device_redirect_unset_focus(dev);
     }
@@ -131,19 +139,18 @@ void device_redirect_unset_deco(Dev* dev)
     QObject::disconnect(dev->focus.notifiers.deco_destroy);
 
     if constexpr (requires(Dev dev) { dev.unset_deco(); }) {
-        if (dev->focus.deco) {
+        if (dev->focus.deco.client) {
             dev->unset_deco();
         }
     }
 
-    dev->focus.deco = nullptr;
+    dev->focus.deco = {};
 }
 
 template<typename Dev>
 bool device_redirect_update_decoration(Dev* dev)
 {
-    auto const old_deco = dev->focus.deco;
-    decltype(dev->focus.deco) new_deco{nullptr};
+    auto const old_deco = dev->focus.deco.client;
 
     if (!dev->at.window) {
         if (!old_deco) {
@@ -154,33 +161,38 @@ bool device_redirect_update_decoration(Dev* dev)
         return true;
     }
 
-    if (auto win = dev->at.window; win->control && win->control->deco.client) {
-        auto const client_geo = win::frame_to_client_rect(win, win->geo.frame);
-        if (!client_geo.contains(dev->position().toPoint())) {
-            // input device above decoration
-            new_deco = win->control->deco.client;
-        }
-    }
+    return std::visit(overload{[&](auto&& win) {
+                          decltype(win->control->deco.client) new_deco{nullptr};
+                          if (win->control && win->control->deco.client) {
+                              auto const geo = win::frame_to_client_rect(win, win->geo.frame);
+                              if (!geo.contains(dev->position().toPoint())) {
+                                  // input device above decoration
+                                  new_deco = win->control->deco.client;
+                              }
+                          }
 
-    if (new_deco == old_deco) {
-        return false;
-    }
+                          if (new_deco == old_deco) {
+                              return false;
+                          }
 
-    device_redirect_unset_deco(dev);
+                          device_redirect_unset_deco(dev);
 
-    if (new_deco) {
-        dev->focus.notifiers.deco_destroy
-            = QObject::connect(new_deco->qobject.get(),
-                               &win::deco::client_impl_qobject::destroyed,
-                               dev->qobject.get(),
-                               [dev] { dev->focus.deco = nullptr; });
-        if constexpr (requires(Dev dev) { dev.unset_deco(); }) {
-            dev->set_deco(*new_deco);
-        }
-    }
+                          if (new_deco) {
+                              dev->focus.notifiers.deco_destroy
+                                  = QObject::connect(new_deco->qobject.get(),
+                                                     &win::deco::client_impl_qobject::destroyed,
+                                                     dev->qobject.get(),
+                                                     [dev] { dev->focus.deco = {}; });
+                              if constexpr (requires(Dev dev) { dev.unset_deco(); }) {
+                                  dev->set_deco(*new_deco);
+                              }
+                          }
 
-    dev->focus.deco = new_deco;
-    return true;
+                          dev->focus.deco.client = new_deco;
+                          dev->focus.deco.window = win;
+                          return true;
+                      }},
+                      *dev->at.window);
 }
 
 template<typename Dev>
@@ -195,33 +207,37 @@ void device_redirect_update_internal_window(Dev* dev, QWindow* window)
     dev->cleanupInternalWindow(old_internal, window);
 }
 
-template<typename Window>
-QWindow* device_redirect_find_internal_window(std::vector<Window*> const& windows,
-                                              QPoint const& pos)
+template<typename Space>
+QWindow* device_redirect_find_internal_window(Space& space, QPoint const& pos)
 {
-    using space_t = typename Window::space_t;
+    using int_win = typename Space::internal_window_t;
 
-    if (windows.empty()) {
+    if (space.windows.empty()) {
         return nullptr;
     }
     if (kwinApp()->is_screen_locked()) {
         return nullptr;
     }
 
-    auto it = windows.end();
+    auto it = space.windows.end();
+
     do {
         --it;
-        auto internal = dynamic_cast<typename space_t::internal_window_t*>(*it);
-        if (!internal) {
+
+        if (!std::holds_alternative<int_win*>(*it)) {
             continue;
         }
+
+        auto internal = std::get<int_win*>(*it);
         auto w = internal->internalWindow();
         if (!w || !w->isVisible()) {
             continue;
         }
+
         if (!internal->geo.frame.contains(pos)) {
             continue;
         }
+
         // check input mask
         auto const mask = w->mask().translated(w->geometry().topLeft());
         if (!mask.isEmpty() && !mask.contains(pos)) {
@@ -231,7 +247,7 @@ QWindow* device_redirect_find_internal_window(std::vector<Window*> const& window
             continue;
         }
         return w;
-    } while (it != windows.begin());
+    } while (it != space.windows.begin());
 
     return nullptr;
 }
@@ -241,7 +257,7 @@ void device_redirect_update(Dev* dev)
 {
     using space_t = typename std::remove_pointer_t<decltype(dev->redirect)>::space_t;
 
-    typename space_t::window_t* toplevel = nullptr;
+    std::optional<typename space_t::window_t> toplevel;
     QWindow* internal_window = nullptr;
 
     auto position_valid{true};
@@ -251,13 +267,14 @@ void device_redirect_update(Dev* dev)
     if (position_valid) {
         auto const pos = dev->position().toPoint();
         auto& space = dev->redirect->space;
-        internal_window = device_redirect_find_internal_window(space.windows, pos);
+        internal_window = device_redirect_find_internal_window(space, pos);
         if (internal_window) {
             toplevel = space.findInternal(internal_window);
         } else {
             toplevel = find_window(*dev->redirect, pos);
         }
     }
+
     // Always set the toplevel at the position of the input device.
     device_redirect_set_at(dev, toplevel);
 

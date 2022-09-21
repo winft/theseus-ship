@@ -12,13 +12,17 @@ namespace KWin::win
 {
 
 template<typename Space>
-auto find_desktop(Space* space, bool topmost, int desktop) -> typename Space::window_t*
+auto find_desktop(Space* space, bool topmost, int desktop)
+    -> std::optional<typename Space::window_t>
 {
     // TODO(fsorr): use C++20 std::ranges::reverse_view
     auto const& list = space->stacking.order.stack;
     auto is_desktop = [desktop](auto window) {
-        return window->control && on_desktop(window, desktop) && win::is_desktop(window)
-            && window->isShown();
+        return std::visit(overload{[desktop](auto&& window) {
+                              return window->control && on_desktop(window, desktop)
+                                  && win::is_desktop(window) && window->isShown();
+                          }},
+                          window);
     };
 
     if (topmost) {
@@ -34,7 +38,7 @@ auto find_desktop(Space* space, bool topmost, int desktop) -> typename Space::wi
         }
     }
 
-    return nullptr;
+    return {};
 }
 
 }

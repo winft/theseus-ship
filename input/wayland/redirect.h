@@ -145,11 +145,11 @@ public:
      * @param callback The function to invoke once the interactive window selection ends
      * @param cursorName The optional name of the cursor shape to use, default is crosshair
      */
-    void start_interactive_window_selection(std::function<void(window_t*)> callback,
+    void start_interactive_window_selection(std::function<void(std::optional<window_t>)> callback,
                                             QByteArray const& cursorName = {})
     {
         if (window_selector->isActive()) {
-            callback(nullptr);
+            callback({});
             return;
         }
         window_selector->start(callback);
@@ -235,7 +235,7 @@ private:
     template<typename Dev>
     static void unset_focus(Dev&& dev)
     {
-        dev->focusUpdate(dev->focus.window, nullptr);
+        dev->focusUpdate(dev->focus.window, {});
     }
 
     void setup_workspace()

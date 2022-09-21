@@ -72,7 +72,7 @@ public:
     using overlay_window_t = x11::overlay_window<type>;
     using space_t = typename Platform::base_t::space_t;
     using x11_ref_window_t = typename space_t::x11_window;
-    using window_t = typename space_t::window_t::render_t;
+    using window_t = render::window<typename space_t::window_t, type>;
     using effect_window_t = typename window_t::effect_window_t;
 
     compositor(Platform& platform)
@@ -168,7 +168,8 @@ public:
         }
     }
 
-    void schedule_repaint(typename space_t::window_t* /*window*/)
+    template<typename Win>
+    void schedule_repaint(Win* /*window*/)
     {
         schedule_repaint();
     }
@@ -336,7 +337,8 @@ public:
         return w == overlay_window->window();
     }
 
-    void update_blocking(typename space_t::window_t* window)
+    template<typename Win>
+    void update_blocking(Win* window)
     {
         if (window) {
             if (window->isBlockingCompositing()) {
@@ -351,8 +353,9 @@ public:
             // If !c we just check if we can resume in case a blocking client was lost.
             bool shouldResume = true;
 
-            for (auto const& client : this->space->windows) {
-                if (client->isBlockingCompositing()) {
+            for (auto const& win : this->space->windows) {
+                if (std::visit(overload{[&](auto&& win) { return win->isBlockingCompositing(); }},
+                               win)) {
                     shouldResume = false;
                     break;
                 }
@@ -408,7 +411,7 @@ public:
     void performCompositing()
     {
         QRegion repaints;
-        std::deque<typename space_t::window_t*> windows;
+        std::deque<typename space_t::window_t> windows;
 
         if (!prepare_composition(repaints, windows)) {
             return;
@@ -428,9 +431,12 @@ public:
         this->retard_next_composition();
 
         for (auto win : windows) {
-            if (win->remnant && !win->remnant->refcount) {
-                win::delete_window_from_space(win->space, win);
-            }
+            std::visit(overload{[](auto&& win) {
+                           if (win->remnant && !win->remnant->refcount) {
+                               win::delete_window_from_space(win->space, *win);
+                           }
+                       }},
+                       win);
         }
 
         Perf::Ftrace::end(QStringLiteral("Paint"), s_msc);
@@ -498,7 +504,7 @@ private:
         }
     }
 
-    bool prepare_composition(QRegion& repaints, std::deque<typename space_t::window_t*>& windows)
+    bool prepare_composition(QRegion& repaints, std::deque<typename space_t::window_t>& windows)
     {
         assert(windows.empty());
         this->compositeTimer.stop();
@@ -515,24 +521,33 @@ private:
         }
 
         // Create a list of all windows in the stacking order
-        std::deque<typename space_t::window_t*> damaged_windows;
+        std::deque<typename space_t::window_t> damaged_windows;
         auto has_pending_repaints{false};
 
         for (auto win : win::render_stack(this->space->stacking.order)) {
-            // Skip windows that are not yet ready for being painted.
-            if (!win->render_data.ready_for_painting) {
-                continue;
-            }
+            std::visit(overload{[&](x11_ref_window_t* win) {
+                                    // Skip windows that are not yet ready for being painted.
+                                    if (!win->render_data.ready_for_painting) {
+                                        return;
+                                    }
 
-            has_pending_repaints |= win->has_pending_repaints();
+                                    has_pending_repaints |= win->has_pending_repaints();
 
-            // Create a list of damaged windows and reset the damage state of each window and fetch
-            // the damage region without waiting for a reply
-            if (win::x11::damage_reset_and_fetch(static_cast<x11_ref_window_t&>(*win))) {
-                damaged_windows.push_back(win);
-            }
+                                    // Doesn't wait for replies.
+                                    if (win::x11::damage_reset_and_fetch(*win)) {
+                                        damaged_windows.push_back(win);
+                                    }
 
-            windows.push_back(win);
+                                    windows.push_back(win);
+                                },
+                                [&](auto&& win) {
+                                    if (!win->render_data.ready_for_painting) {
+                                        return;
+                                    }
+                                    has_pending_repaints |= win->has_pending_repaints();
+                                    windows.push_back(win);
+                                }},
+                       win);
         }
 
         // If a window is damaged, trigger fence this prevents damaged windows from being composited
@@ -549,8 +564,8 @@ private:
 
         for (auto c : elevated_win_list) {
             auto t = static_cast<effect_window_t*>(c)->window.ref_win;
-            if (!move_to_back(windows, t)) {
-                windows.push_back(t);
+            if (!move_to_back(windows, *t)) {
+                windows.push_back(*t);
             }
         }
 
@@ -567,9 +582,10 @@ private:
 
         // Get the damage region replies if there are any damaged windows, and discard the lanczos
         // texture
-        for (auto win : damaged_windows) {
+        for (auto vwin : damaged_windows) {
+            auto win = std::get<x11_ref_window_t*>(vwin);
             discard_lanczos_texture(win);
-            win::x11::damage_fetch_region_reply(static_cast<x11_ref_window_t&>(*win));
+            win::x11::damage_fetch_region_reply(*win);
             has_pending_repaints |= win->has_pending_repaints();
         }
 

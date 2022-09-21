@@ -48,12 +48,12 @@ void set_current_output(Space& space, base::output const& output)
     int const desktop = space.virtual_desktop_manager->current();
     auto get_focus = focus_chain_get_for_activation(space, desktop, &output);
 
-    if (get_focus == nullptr) {
+    if (!get_focus) {
         get_focus = find_desktop(&space, true, desktop);
     }
 
-    if (get_focus != nullptr && get_focus != most_recently_activated_window(space)) {
-        request_focus(space, *get_focus);
+    if (get_focus && get_focus != most_recently_activated_window(space)) {
+        std::visit(overload{[&](auto&& win) { request_focus(space, *win); }}, *get_focus);
     }
 
     base::set_current_output(space.base, &output);

@@ -14,20 +14,25 @@ namespace KWin::input
 {
 
 template<typename Redirect>
-auto find_window(Redirect const& redirect, QPoint const& pos) -> typename Redirect::window_t*
+auto find_window(Redirect const& redirect, QPoint const& pos)
+    -> std::optional<typename Redirect::window_t>
 {
     // TODO: check whether the unmanaged wants input events at all
     if (!kwinApp()->is_screen_locked()) {
         // if an effect overrides the cursor we don't have a window to focus
         if (redirect.platform.base.render->compositor->effects
             && redirect.platform.base.render->compositor->effects->isMouseInterception()) {
-            return nullptr;
+            return {};
         }
 
         auto const& unmanaged = win::x11::get_unmanageds(redirect.space);
-        for (auto const& u : unmanaged) {
-            if (win::input_geometry(u).contains(pos) && win::wayland::accepts_input(u, pos)) {
-                return u;
+        for (auto const& win : unmanaged) {
+            if (std::visit(overload{[&](auto&& win) {
+                               return win::input_geometry(win).contains(pos)
+                                   && win::wayland::accepts_input(win, pos);
+                           }},
+                           win)) {
+                return win;
             }
         }
     }
@@ -36,46 +41,58 @@ auto find_window(Redirect const& redirect, QPoint const& pos) -> typename Redire
 }
 
 template<typename Redirect>
-auto find_controlled_window(Redirect const& redirect, QPoint const& pos) ->
-    typename Redirect::window_t*
+auto find_controlled_window(Redirect const& redirect, QPoint const& pos)
+    -> std::optional<typename Redirect::window_t>
 {
     auto const isScreenLocked = kwinApp()->is_screen_locked();
     auto const& stacking = redirect.space.stacking.order.stack;
     if (stacking.empty()) {
-        return nullptr;
+        return {};
     }
 
     auto it = stacking.end();
 
     do {
         --it;
-        auto window = *it;
-        if (window->remnant) {
-            // a deleted window doesn't get mouse events
-            continue;
-        }
-        if (window->control) {
-            if (!win::on_current_desktop(window) || window->control->minimized) {
-                continue;
-            }
-        }
-        if (window->isHiddenInternal()) {
-            continue;
-        }
-        if (!window->render_data.ready_for_painting) {
-            continue;
-        }
-        if (isScreenLocked) {
-            if (!window->isLockScreen() && !window->isInputMethod()) {
-                continue;
-            }
-        }
-        if (win::input_geometry(window).contains(pos) && win::wayland::accepts_input(window, pos)) {
-            return window;
+
+        if (std::visit(overload{[&](auto&& win) {
+                           if (win->remnant) {
+                               // a deleted window doesn't get mouse events
+                               return false;
+                           }
+                           if (win->control) {
+                               if (!win::on_current_desktop(win) || win->control->minimized) {
+                                   return false;
+                               }
+                           }
+                           if (win->isHiddenInternal()) {
+                               return false;
+                           }
+                           if (!win->render_data.ready_for_painting) {
+                               return false;
+                           }
+                           if (isScreenLocked) {
+                               auto show{false};
+                               using win_t = decltype(win);
+
+                               if constexpr (requires(win_t win) { win->isLockScreen(); }) {
+                                   show |= win->isLockScreen();
+                               }
+                               if constexpr (requires(win_t win) { win->isInputMethod(); }) {
+                                   show |= win->isInputMethod();
+                               }
+                               if (!show) {
+                                   return false;
+                               }
+                           }
+                           return win::input_geometry(win).contains(pos)
+                               && win::wayland::accepts_input(win, pos);
+                       }},
+                       *it)) {
+            return *it;
         }
     } while (it != stacking.begin());
 
-    return nullptr;
+    return {};
 }
-
 }

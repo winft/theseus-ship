@@ -48,9 +48,11 @@ template<typename Space>
 class window : public Toplevel<Space>
 {
 public:
-    using abstract_type = Toplevel<Space>;
+    using type = window<Space>;
     using xdg_shell_control_t = xdg_shell_control<window<Space>>;
     using layer_control_t = wayland::control<window<Space>>;
+    using render_t
+        = render::window<typename Space::window_t, typename Space::base_t::render_t::compositor_t>;
     constexpr static bool is_toplevel{false};
 
     enum class ping_reason {
@@ -60,13 +62,17 @@ public:
 
     window(win::remnant remnant, Space& space)
         : Toplevel<Space>(std::move(remnant), space)
+        , transient{std::make_unique<win::transient<type>>(this)}
     {
+        this->space.windows_map.insert({this->meta.signal_id, this});
         Toplevel<Space>::qobject = std::make_unique<window_qobject>();
     }
 
     window(Wrapland::Server::Surface* surface, Space& space)
         : Toplevel<Space>(space)
+        , transient{std::make_unique<win::transient<type>>(this)}
     {
+        this->space.windows_map.insert({this->meta.signal_id, this});
         Toplevel<Space>::qobject = std::make_unique<window_qobject>();
         window_setup_geometry(*this);
 
@@ -86,7 +92,12 @@ public:
         setupCompositing();
     }
 
-    qreal bufferScale() const override
+    ~window()
+    {
+        this->space.windows_map.erase(this->meta.signal_id);
+    }
+
+    qreal bufferScale() const
     {
         if (this->remnant) {
             return this->remnant->data.buffer_scale;
@@ -94,17 +105,22 @@ public:
         return this->surface->state().scale;
     }
 
-    bool is_wayland_window() const override
+    QSize resizeIncrements() const
+    {
+        return {1, 1};
+    }
+
+    bool is_wayland_window() const
     {
         return true;
     }
 
-    void setupCompositing() override
+    void setupCompositing()
     {
         setup_compositing(*this);
     }
 
-    void add_scene_window_addon() override
+    void add_scene_window_addon()
     {
         assert(this->surface);
         using scene_t = typename Space::base_t::render_t::compositor_t::scene_t;
@@ -117,12 +133,13 @@ public:
             auto win_integrate = std::make_unique<buffer_integration_t>(buffer);
             auto update_helper = [&buffer]() {
                 auto& win_integrate = static_cast<buffer_integration_t&>(*buffer.win_integration);
-                update_buffer(*buffer.window->ref_win, win_integrate.external);
+                update_buffer(*std::get<type*>(*buffer.window->ref_win), win_integrate.external);
             };
             win_integrate->update = update_helper;
             buffer.win_integration = std::move(win_integrate);
         };
-        auto get_viewport = [](auto window, auto contentsRect) {
+        auto get_viewport = [](auto var_win, auto contentsRect) {
+            auto window = std::get<type*>(var_win);
             if (!window->surface) {
                 // Can happen on remnant.
                 return QRectF();
@@ -153,17 +170,33 @@ public:
         setup_scale_scene_notify(*this);
     }
 
-    NET::WindowType windowType() const override
+    NET::WindowType windowType() const
     {
         return window_type;
     }
 
-    QByteArray windowRole() const override
+    NET::WindowType get_window_type_direct() const
+    {
+        return window_type;
+    }
+
+    QByteArray windowRole() const
     {
         return QByteArray();
     }
 
-    double opacity() const override
+    xcb_window_t frameId() const
+    {
+        return XCB_WINDOW_NONE;
+    }
+
+    // TODO(romangg): Remove
+    xcb_timestamp_t userTime() const
+    {
+        return XCB_TIME_CURRENT_TIME;
+    }
+
+    double opacity() const
     {
         if (this->remnant) {
             return this->remnant->data.opacity;
@@ -174,7 +207,7 @@ public:
         return m_opacity;
     }
 
-    void setOpacity(double opacity) override
+    void setOpacity(double opacity)
     {
         assert(this->control);
 
@@ -190,7 +223,12 @@ public:
         Q_EMIT this->qobject->opacityChanged(old_opacity);
     }
 
-    bool isShown() const override
+    QSize basicUnit() const
+    {
+        return {1, 1};
+    }
+
+    bool isShown() const
     {
         if (closing || hidden || this->remnant) {
             return false;
@@ -210,7 +248,7 @@ public:
         return this->surface->state().buffer.get();
     }
 
-    bool isHiddenInternal() const override
+    bool isHiddenInternal() const
     {
         if (this->remnant) {
             return false;
@@ -223,12 +261,12 @@ public:
         return hidden || !this->surface->state().buffer;
     }
 
-    QSize minSize() const override
+    QSize minSize() const
     {
         return this->control->rules.checkMinSize(toplevel->minimumSize());
     }
 
-    QSize maxSize() const override
+    QSize maxSize() const
     {
         return this->control->rules.checkMaxSize(toplevel->maximumSize());
     }
@@ -438,7 +476,7 @@ public:
             return;
         }
 
-        this->updateWindowRules(rules::type::position | rules::type::size);
+        updateWindowRules(rules::type::position | rules::type::size);
 
         if (is_resize(this)) {
             perform_move_resize(this);
@@ -480,7 +518,7 @@ public:
 
         if (this->control) {
             if (this->control->move_resize.enabled) {
-                this->leaveMoveResize();
+                win::leave_move_resize(*this);
             }
             this->control->destroy_plasma_wayland_integration();
         }
@@ -503,7 +541,7 @@ public:
     }
 
     // When another window is created, checks if this window is a subsurface for it.
-    void checkTransient(Toplevel<Space>* window) override
+    void checkTransient(type* window)
     {
         if (this->remnant) {
             return;
@@ -527,7 +565,25 @@ public:
         map();
     }
 
-    void debug(QDebug& stream) const override
+    void layoutDecorationRects(QRect& left, QRect& top, QRect& right, QRect& bottom) const
+    {
+        if (this->remnant) {
+            return this->remnant->data.layout_decoration_rects(left, top, right, bottom);
+        }
+        win::layout_decoration_rects(this, left, top, right, bottom);
+    }
+
+    QRegion render_region() const
+    {
+        if (this->remnant) {
+            return this->remnant->data.render_region;
+        }
+
+        auto const render_geo = win::render_geometry(this);
+        return QRegion(0, 0, render_geo.width(), render_geo.height());
+    }
+
+    void debug(QDebug& stream) const
     {
         if (this->remnant) {
             stream << "\'REMNANT:" << reinterpret_cast<void const*>(this) << "\'";
@@ -550,12 +606,12 @@ public:
                << static_cast<void const*>(this) << "\'";
     }
 
-    win::maximize_mode maximizeMode() const override
+    win::maximize_mode maximizeMode() const
     {
         return max_mode;
     }
 
-    bool noBorder() const override
+    bool noBorder() const
     {
         if (this->remnant) {
             return this->remnant->data.no_border;
@@ -568,12 +624,12 @@ public:
         return true;
     }
 
-    void setFullScreen(bool full, bool user = true) override
+    void setFullScreen(bool full, bool user = true)
     {
         update_fullscreen(this, full, user);
     }
 
-    void handle_update_fullscreen(bool full) override
+    void handle_update_fullscreen(bool full)
     {
         if (full) {
             update_fullscreen_enable(this);
@@ -582,7 +638,14 @@ public:
         }
     }
 
-    void setNoBorder(bool set) override
+    void updateWindowRules(win::rules::type selection)
+    {
+        if (!this->space.rule_book->areUpdatesDisabled()) {
+            rules::update_window(control->rules, *this, static_cast<int>(selection));
+        }
+    }
+
+    void setNoBorder(bool set)
     {
         if (!userCanSetNoBorder()) {
             return;
@@ -595,16 +658,21 @@ public:
 
         user_no_border = set;
         updateDecoration(true, false);
-        this->updateWindowRules(rules::type::no_border);
+        updateWindowRules(rules::type::no_border);
     }
 
-    void handle_update_no_border() override
+    void checkNoBorder()
+    {
+        setNoBorder(false);
+    }
+
+    void handle_update_no_border()
     {
         auto no_border = this->geo.update.max_mode == maximize_mode::full;
         setNoBorder(this->control->rules.checkNoBorder(no_border));
     }
 
-    void updateDecoration(bool check_workspace_pos, bool force = false) override
+    void updateDecoration(bool check_workspace_pos, bool force = false)
     {
         if ((!win::decoration(this) && noBorder()) || (win::decoration(this) && !noBorder())) {
             if (!force) {
@@ -626,7 +694,8 @@ public:
             this->control->destroy_decoration();
         } else {
             // Create decoration.
-            this->control->deco.window = new deco::window<Toplevel<Space>>(this);
+            using var_win = typename Space::window_t;
+            this->control->deco.window = new deco::window<var_win>(var_win(this));
             auto decoration = this->space.deco->createDecoration(this->control->deco.window);
             if (decoration) {
                 QMetaObject::invokeMethod(decoration, "update", Qt::QueuedConnection);
@@ -672,7 +741,7 @@ public:
         block_geometry_updates(this, false);
     }
 
-    void takeFocus() override
+    void takeFocus()
     {
         assert(this->control);
 
@@ -688,12 +757,12 @@ public:
         }
     }
 
-    bool userCanSetFullScreen() const override
+    bool userCanSetFullScreen() const
     {
         return this->control.get();
     }
 
-    bool userCanSetNoBorder() const override
+    bool userCanSetNoBorder() const
     {
         if (!this->space.deco->hasPlugin()) {
             return false;
@@ -705,7 +774,7 @@ public:
         return !this->control->fullscreen;
     }
 
-    bool wantsInput() const override
+    bool wantsInput() const
     {
         assert(this->control);
 
@@ -716,7 +785,7 @@ public:
         return this->control->rules.checkAcceptFocus(acceptsFocus());
     }
 
-    bool dockWantsInput() const override
+    bool dockWantsInput() const
     {
         if (plasma_shell_surface
             && plasma_shell_surface->role() == Wrapland::Server::PlasmaShellSurface::Role::Panel) {
@@ -737,7 +806,7 @@ public:
             == Wrapland::Server::LayerSurfaceV1::KeyboardInteractivity::Exclusive;
     }
 
-    bool hasStrut() const override
+    bool hasStrut() const
     {
         if (!isShown()) {
             return false;
@@ -753,7 +822,7 @@ public:
         return false;
     }
 
-    pid_t pid() const override
+    pid_t pid() const
     {
         if (this->remnant || !this->surface->client()) {
             return 0;
@@ -761,13 +830,13 @@ public:
         return this->surface->client()->processId();
     }
 
-    bool isLockScreen() const override
+    bool isLockScreen() const
     {
         return !this->remnant
             && this->surface->client() == waylandServer()->screen_locker_client_connection;
     }
 
-    bool isInitialPositionSet() const override
+    bool isInitialPositionSet() const
     {
         if (layer_surface) {
             return true;
@@ -776,7 +845,7 @@ public:
             && (plasma_shell_surface->isPositionSet() || plasma_shell_surface->open_under_cursor());
     }
 
-    void showOnScreenEdge() override
+    void showOnScreenEdge()
     {
         if (!plasma_shell_surface || !mapped) {
             return;
@@ -799,7 +868,7 @@ public:
         }
     }
 
-    void closeWindow() override
+    void closeWindow()
     {
         assert(isCloseable());
 
@@ -809,12 +878,12 @@ public:
         }
     }
 
-    bool isCloseable() const override
+    bool isCloseable() const
     {
         return toplevel && window_type != NET::Desktop && window_type != NET::Dock;
     }
 
-    bool isMaximizable() const override
+    bool isMaximizable() const
     {
         if (!isResizable()) {
             return false;
@@ -824,7 +893,7 @@ public:
             && this->control->rules.checkMaximize(maximize_mode::full) == maximize_mode::full;
     }
 
-    bool isMinimizable() const override
+    bool isMinimizable() const
     {
         if (!this->control) {
             return false;
@@ -840,7 +909,7 @@ public:
                     == Wrapland::Server::PlasmaShellSurface::Role::Normal);
     }
 
-    bool isMovable() const override
+    bool isMovable() const
     {
         if (!this->control) {
             return false;
@@ -861,7 +930,7 @@ public:
         return true;
     }
 
-    bool isMovableAcrossScreens() const override
+    bool isMovableAcrossScreens() const
     {
         if (!this->control) {
             return false;
@@ -883,7 +952,7 @@ public:
         return true;
     }
 
-    bool isResizable() const override
+    bool isResizable() const
     {
         if (!this->control) {
             return false;
@@ -910,7 +979,7 @@ public:
         return min.width() < max.width() || min.height() < max.height();
     }
 
-    void hideClient(bool hide) override
+    void hideClient(bool hide)
     {
         auto const was_shown = isShown();
 
@@ -938,20 +1007,30 @@ public:
         win::place(this, area);
     }
 
-    void update_maximized(maximize_mode mode) override
+    void update_maximized(maximize_mode mode)
     {
         // TODO(romangg): If this window is fullscreen it should still be possible to set it
         //                maximized, but without changing the geometry just right now.
         win::update_maximized(this, mode);
     }
 
-    void doResizeSync() override
+    void doResizeSync()
     {
         configure_geometry(this->control->move_resize.geometry);
     }
 
-    bool belongsToSameApplication(Toplevel<Space> const* other,
-                                  win::same_client_check checks) const override
+    void setShortcutInternal()
+    {
+        updateCaption();
+        win::window_shortcut_updated(this->space, this);
+    }
+
+    bool providesContextHelp() const
+    {
+        return false;
+    }
+
+    bool belongsToSameApplication(type const* other, win::same_client_check checks) const
     {
         if (flags(checks & win::same_client_check::allow_cross_process)) {
             if (other->control->desktop_file_name == this->control->desktop_file_name) {
@@ -964,19 +1043,22 @@ public:
         return false;
     }
 
-    bool belongsToDesktop() const override
+    bool belongsToDesktop() const
     {
         auto const windows = this->space.windows;
 
         return std::any_of(windows.cbegin(), windows.cend(), [this](auto const& win) {
-            if (belongsToSameApplication(win, flags<same_client_check>())) {
-                return is_desktop(win);
-            }
-            return false;
+            return std::visit(overload{[this](type* win) {
+                                           return belongsToSameApplication(
+                                                      win, flags<same_client_check>())
+                                               && is_desktop(win);
+                                       },
+                                       [&](auto&& /*win*/) { return false; }},
+                              win);
         });
     }
 
-    void doSetActive() override
+    void doSetActive()
     {
         assert(this->control);
 
@@ -987,7 +1069,7 @@ public:
         focus_to_null(this->space);
     }
 
-    void doMinimize() override
+    void doMinimize()
     {
         if (this->control->minimized) {
             process_window_hidden(this->space, *this);
@@ -997,7 +1079,7 @@ public:
         propagate_minimized_to_transients(*this);
     }
 
-    void setFrameGeometry(QRect const& rect) override
+    void setFrameGeometry(QRect const& rect)
     {
         auto const frame_geo = this->control ? this->control->rules.checkGeometry(rect) : rect;
 
@@ -1034,7 +1116,7 @@ public:
         do_set_geometry(frame_geo);
     }
 
-    void apply_restore_geometry(QRect const& restore_geo) override
+    void apply_restore_geometry(QRect const& restore_geo)
     {
         auto rectified_geo = rectify_restore_geometry(this, restore_geo);
 
@@ -1049,7 +1131,7 @@ public:
         setFrameGeometry(rectified_geo);
     }
 
-    void restore_geometry_from_fullscreen() override
+    void restore_geometry_from_fullscreen()
     {
         assert(!has_special_geometry_mode_besides_fullscreen(this));
 
@@ -1065,7 +1147,7 @@ public:
         this->geo.restore.max = {};
     }
 
-    win::layer layer_for_dock() const override
+    win::layer layer_for_dock() const
     {
         assert(this->control);
 
@@ -1091,12 +1173,12 @@ public:
         return layer::unknown;
     }
 
-    bool has_pending_repaints() const override
+    bool has_pending_repaints() const
     {
-        return this->render_data.ready_for_painting && Toplevel<Space>::has_pending_repaints();
+        return this->render_data.ready_for_painting && !repaints(*this).isEmpty();
     }
 
-    void updateColorScheme() override
+    void updateColorScheme()
     {
         assert(this->control);
 
@@ -1107,17 +1189,17 @@ public:
         }
     }
 
-    bool isInputMethod() const override
+    bool isInputMethod() const
     {
         return input_method_popup;
     }
 
-    bool is_popup_end() const override
+    bool is_popup_end() const
     {
         return this->remnant ? this->remnant->data.was_popup_window : static_cast<bool>(popup);
     }
 
-    void killWindow() override
+    void killWindow()
     {
         auto client = this->surface->client();
         if (client->processId() == getpid() || client->processId() == 0) {
@@ -1131,7 +1213,7 @@ public:
         QTimer::singleShot(5000, client, &Wrapland::Server::Client::destroy);
     }
 
-    bool supportsWindowRules() const override
+    bool supportsWindowRules() const
     {
         return toplevel && !plasma_shell_surface;
     }
@@ -1142,7 +1224,7 @@ public:
         set_wm_class(*this, this->meta.wm_class.res_name, window_class);
         if (initialized && supportsWindowRules()) {
             rules::setup_rules(this, true);
-            this->applyWindowRules();
+            apply_window_rules(*this);
         }
         set_desktop_file_name(this, window_class);
     }
@@ -1301,7 +1383,7 @@ public:
         Q_EMIT this->qobject->fullScreenChanged();
     }
 
-    bool acceptsFocus() const override
+    bool acceptsFocus() const
     {
         assert(this->control);
 
@@ -1324,24 +1406,27 @@ public:
         return true;
     }
 
-    void updateCaption() override
+    void updateCaption()
     {
         auto const old_suffix = this->meta.caption.suffix;
         auto const shortcut = shortcut_caption_suffix(this);
         this->meta.caption.suffix = shortcut;
-        if ((!is_special_window(this) || is_toolbar(this))
-            && find_client_with_same_caption(static_cast<Toplevel<Space>*>(this))) {
+        if ((!is_special_window(this) || is_toolbar(this)) && find_client_with_same_caption(this)) {
             int i = 2;
             do {
                 this->meta.caption.suffix
                     = shortcut + QLatin1String(" <") + QString::number(i) + QLatin1Char('>');
                 i++;
-            } while (find_client_with_same_caption(static_cast<Toplevel<Space>*>(this)));
+            } while (find_client_with_same_caption(this));
         }
         if (this->meta.caption.suffix != old_suffix) {
             Q_EMIT this->qobject->captionChanged();
         }
     }
+
+    std::unique_ptr<win::transient<type>> transient;
+    std::unique_ptr<win::control<type>> control;
+    std::unique_ptr<render_t> render;
 
     maximize_mode max_mode{maximize_mode::restore};
 

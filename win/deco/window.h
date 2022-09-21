@@ -13,16 +13,16 @@ namespace KWin::win::deco
 /**
  * Wrapper class for windows.
  */
-template<typename RefWin>
+template<typename VarWin>
 class window : public QObject
 {
 public:
-    RefWin* win;
-
-    explicit window(RefWin* win)
+    explicit window(VarWin win)
         : win(win)
     {
     }
+
+    VarWin win;
 };
 
 }

@@ -108,12 +108,16 @@ public:
                          qobject.get(),
                          [this] {
                              QObject::disconnect(m_activeClientSurfaceChangedConnection);
-                             if (auto c = redirect->space.stacking.active) {
-                                 m_activeClientSurfaceChangedConnection
-                                     = QObject::connect(c->qobject.get(),
+                             if (auto act = redirect->space.stacking.active) {
+                                 std::visit(overload{[this](auto&& win) {
+                                                m_activeClientSurfaceChangedConnection
+                                                    = QObject::connect(
+                                                        win->qobject.get(),
                                                         &win::window_qobject::surfaceChanged,
                                                         qobject.get(),
                                                         [this] { update(); });
+                                            }},
+                                            *act);
                              } else {
                                  m_activeClientSurfaceChangedConnection = QMetaObject::Connection();
                              }
@@ -135,42 +139,52 @@ public:
         }
 
         // TODO: this needs better integration
-        window_t* found = nullptr;
+        std::optional<window_t> found;
         auto const& stacking = redirect->space.stacking.order.stack;
         if (!stacking.empty()) {
             auto it = stacking.end();
             do {
                 --it;
-                auto t = (*it);
-                if (t->remnant) {
-                    // a deleted window doesn't get mouse events
-                    continue;
+                if (std::visit(overload{[&](typename space_t::wayland_window* win) {
+                                            if (win->remnant) {
+                                                // a deleted window doesn't get mouse events
+                                                return false;
+                                            }
+                                            if (!win->render_data.ready_for_painting) {
+                                                return false;
+                                            }
+                                            if (!win->layer_surface
+                                                || !win->has_exclusive_keyboard_interactivity()) {
+                                                return false;
+                                            }
+                                            found = win;
+                                            return true;
+                                        },
+                                        [&](auto&&) { return false; }},
+                               *it)) {
+                    break;
                 }
-                if (!t->render_data.ready_for_painting) {
-                    continue;
-                }
-                auto wlwin = dynamic_cast<typename space_t::wayland_window*>(t);
-                if (!wlwin) {
-                    continue;
-                }
-                if (!wlwin->layer_surface || !wlwin->has_exclusive_keyboard_interactivity()) {
-                    continue;
-                }
-                found = t;
-                break;
             } while (it != stacking.begin());
         }
 
         if (!found && !redirect->isSelectingWindow()) {
             found = redirect->space.stacking.active;
         }
-        if (found && found->surface) {
-            if (found->surface != seat->keyboards().get_focus().surface) {
-                seat->setFocusedKeyboardSurface(found->surface);
-            }
-        } else {
+        if (!found) {
             seat->setFocusedKeyboardSurface(nullptr);
+            return;
         }
+
+        std::visit(overload{[&](auto&& found) {
+                       if (!found->surface) {
+                           seat->setFocusedKeyboardSurface(nullptr);
+                           return;
+                       }
+                       if (found->surface != seat->keyboards().get_focus().surface) {
+                           seat->setFocusedKeyboardSurface(found->surface);
+                       }
+                   }},
+                   *found);
     }
 
     void process_key(key_event const& event)

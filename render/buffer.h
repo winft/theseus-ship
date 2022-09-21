@@ -82,7 +82,9 @@ public:
      */
     virtual void create()
     {
-        if (isValid() || window->ref_win->remnant) {
+        if (isValid()
+            || std::visit(overload{[&](auto&& win) { return win->remnant.has_value(); }},
+                          *window->ref_win)) {
             return;
         }
 

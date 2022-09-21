@@ -70,7 +70,7 @@ private:
 
 Test::space::x11_window* get_x11_window_from_id(uint32_t id)
 {
-    return dynamic_cast<Test::space::x11_window*>(Test::app()->base.space->windows_map.at(id));
+    return Test::get_x11_window(Test::app()->base.space->windows_map.at(id));
 }
 
 void StrutsTest::initTestCase()
@@ -1073,7 +1073,7 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
     Test::cursor()->set_pos(origGeo.center());
     win::perform_window_operation(client2, base::options_qobject::MoveOp);
 
-    QTRY_COMPARE(Test::app()->base.space->move_resize_window, client2);
+    QTRY_COMPARE(Test::get_x11_window(Test::app()->base.space->move_resize_window), client2);
     QVERIFY(win::is_move(client2));
 
     // move to next screen - step is 8 pixel, so 800 pixel
@@ -1084,7 +1084,7 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
 
     win::key_press_event(client2, Qt::Key_Enter);
     QCOMPARE(win::is_move(client2), false);
-    QVERIFY(Test::app()->base.space->move_resize_window == nullptr);
+    QVERIFY(!Test::app()->base.space->move_resize_window);
     QCOMPARE(client2->geo.frame, QRect(origGeo.translated(-800, 0)));
 
     // Destroy window again.

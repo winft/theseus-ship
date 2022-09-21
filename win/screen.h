@@ -44,8 +44,18 @@ typename Space::base_t::output_t const* get_current_output(Space const& space)
     }
 
     auto const cur = static_cast<typename Space::base_t::output_t const*>(base.topology.current);
-    if (auto act_win = space.stacking.active; act_win && !win::on_screen(act_win, cur)) {
-        return act_win->topo.central_output;
+
+    if (auto act_win = space.stacking.active) {
+        return std::visit(overload{[&](auto&& act_win) {
+                              if (win::on_screen(act_win, cur)) {
+                                  // Prioritize small overlaps with the current topology output.
+                                  // TODO(romangg): Does this make sense or should we always return
+                                  //                the central output?
+                                  return cur;
+                              }
+                              return act_win->topo.central_output;
+                          }},
+                          *act_win);
     }
     return cur;
 }

@@ -231,4 +231,21 @@ void scene_add_remnant(Win& win)
     }
 }
 
+template<typename Win>
+bool is_blocking_compositing(Win& win)
+{
+    if constexpr (requires(Win win) { win.isBlockingCompositing(); }) {
+        return win.isBlockingCompositing();
+    }
+    return false;
+}
+
+template<typename Win>
+void set_blocking_compositing(Win& win, bool block)
+{
+    if constexpr (requires(Win win) { win.setBlockingCompositing(); }) {
+        return win.setBlockingCompositing(block);
+    }
+}
+
 }

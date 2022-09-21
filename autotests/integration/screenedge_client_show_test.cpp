@@ -147,8 +147,7 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowHideX11()
     QVERIFY(windowCreatedSpy.wait());
 
     auto client_id = windowCreatedSpy.first().first().value<quint32>();
-    auto client = dynamic_cast<Test::space::x11_window*>(
-        Test::app()->base.space->windows_map.at(client_id));
+    auto client = Test::get_x11_window(Test::app()->base.space->windows_map.at(client_id));
     QVERIFY(client);
     QVERIFY(!win::decoration(client));
     QCOMPARE(client->geo.frame, windowGeometry);
@@ -268,8 +267,7 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowX11Touch()
     QVERIFY(windowCreatedSpy.wait());
 
     auto client_id = windowCreatedSpy.last().first().value<quint32>();
-    auto client = dynamic_cast<Test::space::x11_window*>(
-        Test::app()->base.space->windows_map.at(client_id));
+    auto client = Test::get_x11_window(Test::app()->base.space->windows_map.at(client_id));
     QVERIFY(client);
     QVERIFY(!win::decoration(client));
     QCOMPARE(client->geo.frame, windowGeometry);

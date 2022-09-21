@@ -107,7 +107,7 @@ void DontCrashNoBorder::testCreateWindow()
     // let's render
     auto c = Test::render_and_wait_for_shown(surface, QSize(500, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->base.space->stacking.active, c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
     QVERIFY(!win::decoration(c));
 }
 

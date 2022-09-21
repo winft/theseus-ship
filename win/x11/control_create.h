@@ -140,8 +140,8 @@ void prepare_decoration(Win* win)
     win->updateDecoration(false);
 }
 
-template<typename Win, typename ActWin>
-bool created_window_may_activate(Win& win, ActWin& act_win)
+template<typename Win>
+bool created_window_may_activate(Win& win, Win& act_win)
 {
     if (enum_index(win.control->rules.checkFSP(
             kwinApp()->options->qobject->focusStealingPreventionLevel()))
@@ -155,13 +155,12 @@ bool created_window_may_activate(Win& win, ActWin& act_win)
         return true;
     }
 
-    auto sameApplicationActiveHackPredicate = [&win](auto const* cl) {
-        // ignore already existing splashes, toolbars, utilities and menus,
-        // as the app may show those before the main window
-        auto x11_client = dynamic_cast<Win const*>(cl);
-        return x11_client && !is_splash(x11_client) && !is_toolbar(x11_client)
-            && !is_utility(x11_client) && !is_menu(x11_client) && x11_client != &win
-            && belong_to_same_application(x11_client, &win, same_client_check::relaxed_for_active);
+    auto sameApplicationActiveHackPredicate = [&win](Win const* other) {
+        // Ignore already existing splashes, toolbars, utilities and menus, as the app may show
+        // those before the main window.
+        return !is_splash(other) && !is_toolbar(other) && !is_utility(other) && !is_menu(other)
+            && other != &win
+            && belong_to_same_application(other, &win, same_client_check::relaxed_for_active);
     };
 
     if (win.transient->lead()) {
@@ -169,9 +168,7 @@ bool created_window_may_activate(Win& win, ActWin& act_win)
             std::vector<Win*> ret;
             const auto mcs = win.transient->leads();
             for (auto mc : mcs) {
-                if (auto c = dynamic_cast<Win*>(mc)) {
-                    ret.push_back(c);
-                }
+                ret.push_back(mc);
             }
             return ret;
         };
@@ -192,7 +189,12 @@ bool created_window_may_activate(Win& win, ActWin& act_win)
     }
 
     for (auto other : win.space.windows) {
-        if (other->control && sameApplicationActiveHackPredicate(other)) {
+        if (std::visit(overload{[&](Win* other) {
+                                    return other->control
+                                        && sameApplicationActiveHackPredicate(other);
+                                },
+                                [](auto&&) { return false; }},
+                       other)) {
             return false;
         }
     }
@@ -204,11 +206,13 @@ template<typename Win>
 xcb_timestamp_t query_timestamp(Win& win)
 {
     // If it's the first window for its application (i.e. there's no other window from the same
-    // app), use the _KDE_NET_WM_USER_CREATION_TIME trick. Otherwise, refuse activation of a window
-    // from already running application if this application is not the active one (unless focus
-    // stealing prevention is turned off).
-    if (auto act = dynamic_cast<Win*>(most_recently_activated_window(win.space))) {
-        if (!created_window_may_activate(win, *act)) {
+    // app), use the _KDE_NET_WM_USER_CREATION_TIME trick. Otherwise, refuse activation of a
+    // window from already running application if this application is not the active one (unless
+    // focus stealing prevention is turned off).
+    if (auto act = most_recently_activated_window(win.space)) {
+        if (!std::visit(overload{[&](Win* act) { return created_window_may_activate(win, *act); },
+                                 [](auto&&) { return true; }},
+                        *act)) {
             return 0;
         }
     }
@@ -224,8 +228,8 @@ xcb_timestamp_t read_user_time_map_timestamp(Win* win,
 {
     xcb_timestamp_t time = win->info->userTime();
 
-    // Newer ASN timestamp always replaces user timestamp, unless user timestamp is 0. Helps e.g.
-    // with konqy reusing.
+    // Newer ASN timestamp always replaces user timestamp, unless user timestamp is 0. Helps
+    // e.g. with konqy reusing.
     if (asn_data && time && asn_id->timestamp()) {
         if (time == -1U || NET::timestampCompare(asn_id->timestamp(), time) > 0) {
             time = asn_id->timestamp();
@@ -237,10 +241,11 @@ xcb_timestamp_t read_user_time_map_timestamp(Win* win,
     }
 
     // Creation time would just mess things up during session startup, as possibly many apps are
-    // started up at the same time. If there's no active window yet, no timestamp will be needed, as
-    // plain allow_window_activation() will return true in such case. And if there's already active
-    // window, it's better not to activate the new one. Unless it was the active window at the time
-    // of session saving and there was no user interaction yet, this check will be done in manage().
+    // started up at the same time. If there's no active window yet, no timestamp will be
+    // needed, as plain allow_window_activation() will return true in such case. And if there's
+    // already active window, it's better not to activate the new one. Unless it was the active
+    // window at the time of session saving and there was no user interaction yet, this check
+    // will be done in manage().
     if (session) {
         return -1U;
     }
@@ -324,8 +329,8 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
                              win->xcb_windows.input.define_cursor(nativeCursor);
                          }
                          if (win->control->move_resize.enabled) {
-                             // changing window attributes doesn't change cursor if there's pointer
-                             // grab active
+                             // changing window attributes doesn't change cursor if there's
+                             // pointer grab active
                              xcb_change_active_pointer_grab(
                                  connection(),
                                  nativeCursor,
@@ -366,7 +371,8 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         = new win_info<Win>(win, win->xcb_windows.client, rootWindow(), properties, properties2);
 
     if (is_desktop(win) && win->render_data.bit_depth == 32) {
-        // force desktop windows to be opaque. It's a desktop after all, there is no window below
+        // force desktop windows to be opaque. It's a desktop after all, there is no window
+        // below
         win->render_data.bit_depth = 24;
     }
     win->colormap = attr->colormap;
@@ -477,7 +483,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
             auto leads = win->transient->leads();
             bool on_current = false;
             bool on_all = false;
-            typename Space::window_t* maincl = nullptr;
+            Win* maincl = nullptr;
 
             // This is slightly duplicated from win::place_on_main_window()
             for (auto const& lead : leads) {
@@ -700,7 +706,9 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         if (session) {
             if (session->active) {
                 allow = !space.was_user_interaction || !space.stacking.active
-                    || is_desktop(space.stacking.active);
+                    || (space.stacking.active
+                        && std::visit(overload{[&](auto&& win) { return is_desktop(win); }},
+                                      *space.stacking.active));
             }
         } else {
             allow = allow_window_activation(space, win, win->userTime(), false);
@@ -716,7 +724,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
         if (on_current_desktop(win) && !isMapped && !allow
             && (!session || session->stackingOrder < 0)) {
-            restack_client_under_active(win->space, win);
+            restack_client_under_active(win->space, *win);
         }
 
         update_visibility(win);
@@ -790,5 +798,4 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     add_controlled_window_to_space(space, win);
     return win;
 }
-
 }

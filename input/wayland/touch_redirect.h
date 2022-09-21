@@ -207,24 +207,39 @@ public:
         // nothing to do
     }
 
-    void focusUpdate(typename space_t::window_t* focusOld, typename space_t::window_t* focusNow)
+    void focusUpdate(std::optional<window_t> focusOld, std::optional<window_t> focusNow)
     {
         // TODO: handle pointer grab aka popups
 
-        if (focusOld && focusOld->control) {
-            win::leave_event(focusOld);
+        auto seat = waylandServer()->seat();
+        Wrapland::Server::Surface* now_surface{nullptr};
+        win::window_qobject* now_qobject{nullptr};
+
+        if (focusOld) {
+            std::visit(overload{[&](auto&& win) {
+                           if (win->control) {
+                               win::leave_event(win);
+                           }
+                       }},
+                       *focusOld);
         }
 
         QObject::disconnect(focus_geometry_notifier);
         focus_geometry_notifier = QMetaObject::Connection();
 
-        if (focusNow && focusNow->control) {
-            win::enter_event(focusNow, m_lastPosition.toPoint());
-            redirect->space.focusMousePos = m_lastPosition.toPoint();
+        if (focusNow) {
+            std::visit(overload{[&](auto&& win) {
+                           now_surface = win->surface;
+                           now_qobject = win->qobject.get();
+                           if (win->control) {
+                               win::enter_event(win, m_lastPosition.toPoint());
+                               redirect->space.focusMousePos = m_lastPosition.toPoint();
+                           }
+                       }},
+                       *focusNow);
         }
 
-        auto seat = waylandServer()->seat();
-        if (!focusNow || !focusNow->surface || focus.deco) {
+        if (!focusNow || !now_surface || focus.deco.client) {
             // no new surface or internal window or on decoration -> cleanup
             seat->touches().set_focused_surface(nullptr);
             return;
@@ -233,26 +248,30 @@ public:
         // TODO(romangg): Invalidate pointer focus?
 
         // TODO(romangg): Add input transformation API to Wrapland::Server::Seat for touch input.
-        seat->touches().set_focused_surface(
-            focusNow->surface,
-            -1 * win::get_input_transform(*focusNow).map(focusNow->geo.pos())
-                + focusNow->geo.pos());
+        std::visit(overload{[&](auto&& win) {
+                       seat->touches().set_focused_surface(
+                           now_surface,
+                           -1 * win::get_input_transform(*win).map(win->geo.pos())
+                               + win->geo.pos());
+                   }},
+                   *focusNow);
         focus_geometry_notifier = QObject::connect(
-            focusNow->qobject.get(),
-            &win::window_qobject::frame_geometry_changed,
-            qobject.get(),
-            [this] {
+            now_qobject, &win::window_qobject::frame_geometry_changed, qobject.get(), [this] {
                 auto focus_win = focus.window;
                 if (!focus_win) {
                     return;
                 }
-                auto seat = waylandServer()->seat();
-                if (focus_win->surface != seat->touches().get_focus().surface) {
-                    return;
-                }
-                seat->touches().set_focused_surface_position(
-                    -1 * win::get_input_transform(*focus_win).map(focus_win->geo.pos())
-                    + focus_win->geo.pos());
+
+                std::visit(overload{[&](auto&& win) {
+                               auto seat = waylandServer()->seat();
+                               if (win->surface != seat->touches().get_focus().surface) {
+                                   return;
+                               }
+                               seat->touches().set_focused_surface_position(
+                                   -1 * win::get_input_transform(*win).map(win->geo.pos())
+                                   + win->geo.pos());
+                           }},
+                           *focus_win);
             });
     }
 

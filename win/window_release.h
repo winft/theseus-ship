@@ -9,6 +9,7 @@
 #include "meta.h"
 #include "remnant.h"
 #include "space_window_release.h"
+#include "transient.h"
 
 namespace KWin::win
 {
@@ -26,7 +27,11 @@ win::remnant create_remnant(Win& source)
 
     remnant.data.frame_margins = win::frame_margins(&source);
     remnant.data.render_region = source.render_region();
-    remnant.data.buffer_scale = source.bufferScale();
+
+    if constexpr (requires(Win win) { win.bufferScale(); }) {
+        remnant.data.buffer_scale = source.bufferScale();
+    }
+
     remnant.data.desk = get_desktop(source);
     remnant.data.frame = source.frameId();
     remnant.data.opacity = source.opacity();
@@ -57,12 +62,19 @@ win::remnant create_remnant(Win& source)
         remnant.refcount += source.transient->leads().size();
     }
 
-    remnant.data.was_group_transient = source.groupTransient();
+    remnant.data.was_group_transient = is_group_transient(source);
 
-    remnant.data.was_wayland_client = source.is_wayland_window();
-    remnant.data.was_x11_client = source.isClient();
+    if constexpr (requires(Win win) { win.is_wayland_window(); }) {
+        remnant.data.was_wayland_client = source.is_wayland_window();
+    }
+    if constexpr (requires(Win win) { win.isClient(); }) {
+        remnant.data.was_x11_client = source.isClient();
+    }
+    if constexpr (requires(Win win) { win.isLockScreen(); }) {
+        remnant.data.was_lock_screen = source.isLockScreen();
+    }
+
     remnant.data.was_popup_window = win::is_popup(&source);
-    remnant.data.was_lock_screen = source.isLockScreen();
 
     return remnant;
 }

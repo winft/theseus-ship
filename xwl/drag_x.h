@@ -91,13 +91,14 @@ public:
             });
     }
 
-    drag_event_reply move_filter(typename Space::window_t* target, QPoint const& pos) override
+    drag_event_reply move_filter(std::optional<typename Space::window_t> target,
+                                 QPoint const& pos) override
     {
         Q_UNUSED(pos);
 
         auto seat = waylandServer()->seat();
 
-        if (visit && visit->target == target) {
+        if (visit && typename Space::window_t(visit->target) == target) {
             // still same Wl target, wait for X events
             return drag_event_reply::ignore;
         }
@@ -124,32 +125,35 @@ public:
                 // Last received enter event is now void. Wait for the next one.
                 seat->drags().set_target(nullptr);
             }
-            return drag_event_reply::ignore;
         };
 
-        if (!target || !target->surface) {
-            // Currently there is no target or target is an internal window.
-            return unset_target();
+        if (!target) {
+            unset_target();
+            return drag_event_reply::ignore;
         }
 
-        auto wl_win = dynamic_cast<typename Space::wayland_window*>(target);
-        if (!wl_win) {
-            // Target is an Xwayland window. Handled here and by X directly.
-            if (target->control) {
-                if (source.core.space->stacking.active != target) {
-                    win::activate_window(*source.core.space, *target);
-                }
-            }
-            return unset_target();
-        }
+        std::visit(overload{[&](typename Space::wayland_window* win) {
+                                // New Wl native target.
+                                visit.reset(new wl_visit(win, source));
 
-        // New Wl native target.
-        visit.reset(new wl_visit(wl_win, source));
+                                QObject::connect(
+                                    visit->qobject.get(),
+                                    &wl_visit_qobject::offers_received,
+                                    this->qobject.get(),
+                                    [this](auto const& offers) { set_offers(offers); });
+                            },
+                            [&](typename Space::x11_window* win) {
+                                // Target is an Xwayland window. Handled here and by X directly.
+                                if (win->control) {
+                                    if (source.core.space->stacking.active != target) {
+                                        win::activate_window(*source.core.space, *win);
+                                    }
+                                }
+                                unset_target();
+                            },
+                            [&](typename Space::internal_window_t* /*win*/) { unset_target(); }},
+                   *target);
 
-        QObject::connect(visit->qobject.get(),
-                         &wl_visit_qobject::offers_received,
-                         this->qobject.get(),
-                         [this](auto const& offers) { set_offers(offers); });
         return drag_event_reply::ignore;
     }
 

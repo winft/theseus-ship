@@ -172,7 +172,7 @@ public:
     {
     }
 
-    void focusUpdate(typename space_t::window_t* /*old*/, typename space_t::window_t* /*now*/)
+    void focusUpdate(std::optional<window_t> /*old*/, std::optional<window_t> /*now*/)
     {
     }
 

@@ -68,7 +68,7 @@ public:
         if (ref_win->control->icon.isNull()) {
             return QRect();
         }
-        return ref_win->iconGeometry();
+        return win::get_icon_geometry(*ref_win);
     }
 
     QUuid internalId() const override
@@ -659,13 +659,13 @@ public:
 
     bool isBlockingCompositing() override
     {
-        return ref_win->isBlockingCompositing();
+        return win::is_blocking_compositing(*ref_win);
     }
 
     void setBlockingCompositing(bool block) override
     {
         if (ref_win->control) {
-            ref_win->setBlockingCompositing(block);
+            win::set_blocking_compositing(*ref_win, block);
         }
     }
 

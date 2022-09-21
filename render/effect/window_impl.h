@@ -44,11 +44,18 @@ public:
         // parent can be Client, XdgShellClient, or Unmanaged. So, later on, when
         // an instance of Deleted becomes parent of the EffectWindow, effects
         // can still figure out whether it is/was a managed window.
-        managed = window.ref_win->isClient();
-
-        waylandClient = window.ref_win->is_wayland_window();
-        x11Client = dynamic_cast<typename space_t::x11_window*>(window.ref_win)
-            || window.ref_win->xcb_window;
+        std::visit(overload{[this](typename space_t::x11_window* ref_win) {
+                                managed = ref_win->isClient();
+                                x11Client = true;
+                            },
+                            [this](auto&& ref_win) {
+                                if constexpr (requires(decltype(ref_win) win) {
+                                                  win->is_wayland_window();
+                                              }) {
+                                    waylandClient = ref_win->is_wayland_window();
+                                }
+                            }},
+                   *window.ref_win);
     }
 
     ~effects_window_impl() override
@@ -75,9 +82,10 @@ public:
         return window.isPaintingEnabled();
     }
 
-    void addRepaint(const QRect& r) override
+    void addRepaint(QRect const& rect) override
     {
-        win::add_repaint(*window.ref_win, r);
+        std::visit(overload{[&](auto&& ref_win) { win::add_repaint(*ref_win, rect); }},
+                   *window.ref_win);
     }
 
     void addRepaint(int x, int y, int w, int h) override
@@ -87,12 +95,14 @@ public:
 
     void addRepaintFull() override
     {
-        win::add_full_repaint(*window.ref_win);
+        std::visit(overload{[](auto&& ref_win) { win::add_full_repaint(*ref_win); }},
+                   *window.ref_win);
     }
 
-    void addLayerRepaint(const QRect& r) override
+    void addLayerRepaint(QRect const& rect) override
     {
-        win::add_layer_repaint(*window.ref_win, r);
+        std::visit(overload{[&](auto&& ref_win) { win::add_layer_repaint(*ref_win, rect); }},
+                   *window.ref_win);
     }
 
     void addLayerRepaint(int x, int y, int w, int h) override
@@ -102,60 +112,78 @@ public:
 
     void refWindow() override
     {
-        if (window.ref_win->transient->annexed) {
-            return;
-        }
-        if (auto& remnant = window.ref_win->remnant) {
-            return remnant->ref();
-        }
-        abort(); // TODO
+        std::visit(overload{[](auto&& ref_win) {
+                       if (ref_win->transient->annexed) {
+                           return;
+                       }
+                       if (auto& remnant = ref_win->remnant) {
+                           return remnant->ref();
+                       }
+
+                       // TODO
+                       abort();
+                   }},
+                   *window.ref_win);
     }
 
     void unrefWindow() override
     {
-        if (window.ref_win->transient->annexed) {
-            return;
-        }
-        if (auto& remnant = window.ref_win->remnant) {
-            // delays deletion in case
-            return remnant->unref();
-        }
-        abort(); // TODO
+        std::visit(overload{[](auto&& ref_win) {
+                       if (ref_win->transient->annexed) {
+                           return;
+                       }
+                       if (auto& remnant = ref_win->remnant) {
+                           // delays deletion in case
+                           return remnant->unref();
+                       }
+
+                       // TODO
+                       abort();
+                   }},
+                   *window.ref_win);
     }
 
     const EffectWindowGroup* group() const override
     {
-        if (auto x11_win = dynamic_cast<typename space_t::x11_window*>(window.ref_win);
-            x11_win && x11_win->group) {
-            return x11_win->group->effect_group;
-        }
-        return nullptr; // TODO
+        using x11_win = typename space_t::x11_window;
+        return std::visit(
+            overload{
+                [](x11_win* ref_win) -> EffectWindowGroup* { return ref_win->group->effect_group; },
+                [](auto&& /*ref_win*/) -> EffectWindowGroup* { return nullptr; }},
+            *window.ref_win);
     }
 
     bool isDeleted() const override
     {
-        return static_cast<bool>(window.ref_win->remnant);
+        return std::visit(
+            overload{[](auto&& ref_win) { return static_cast<bool>(ref_win->remnant); }},
+            *window.ref_win);
     }
 
     bool isMinimized() const override
     {
-        if (window.ref_win->control) {
-            return window.ref_win->control->minimized;
-        }
-        if (auto& remnant = window.ref_win->remnant) {
-            return remnant->data.minimized;
-        }
-        return false;
+        return std::visit(overload{[](auto&& ref_win) {
+                              if (ref_win->control) {
+                                  return ref_win->control->minimized;
+                              }
+                              if (auto& remnant = ref_win->remnant) {
+                                  return remnant->data.minimized;
+                              }
+                              return false;
+                          }},
+                          *window.ref_win);
     }
 
     double opacity() const override
     {
-        return window.ref_win->opacity();
+        return std::visit(overload{[](auto&& ref_win) { return ref_win->opacity(); }},
+                          *window.ref_win);
     }
 
     bool hasAlpha() const override
     {
-        return win::has_alpha(*window.ref_win);
+        return std::visit(overload{[](auto&& ref_win) { return win::has_alpha(*ref_win); }},
+                          *window.ref_win);
     }
 
     QStringList activities() const override
@@ -166,43 +194,54 @@ public:
 
     int desktop() const override
     {
-        return win::get_desktop(*window.ref_win);
+        return std::visit(overload{[](auto&& ref_win) { return win::get_desktop(*ref_win); }},
+                          *window.ref_win);
     }
 
     QVector<uint> desktops() const override
     {
-        if (window.ref_win->control || window.ref_win->remnant) {
-            return win::x11_desktop_ids(window.ref_win);
-        }
-        return {};
+        return std::visit(overload{[](auto&& ref_win) -> QVector<uint> {
+                              if (ref_win->control || ref_win->remnant) {
+                                  return win::x11_desktop_ids(ref_win);
+                              }
+                              return {};
+                          }},
+                          *window.ref_win);
     }
 
     int x() const override
     {
-        return window.ref_win->geo.pos().x();
+        return std::visit(overload{[](auto&& ref_win) { return ref_win->geo.pos().x(); }},
+                          *window.ref_win);
     }
 
     int y() const override
     {
-        return window.ref_win->geo.pos().y();
+        return std::visit(overload{[](auto&& ref_win) { return ref_win->geo.pos().y(); }},
+                          *window.ref_win);
     }
 
     int width() const override
     {
-        return window.ref_win->geo.size().width();
+        return std::visit(overload{[](auto&& ref_win) { return ref_win->geo.size().width(); }},
+                          *window.ref_win);
     }
 
     int height() const override
     {
-        return window.ref_win->geo.size().height();
+        return std::visit(overload{[](auto&& ref_win) { return ref_win->geo.size().height(); }},
+                          *window.ref_win);
     }
 
     QSize basicUnit() const override
     {
-        if (auto client = dynamic_cast<typename space_t::x11_window*>(window.ref_win)) {
-            return client->basicUnit();
-        }
-        return QSize(1, 1);
+        return std::visit(overload{[](auto&& ref_win) {
+                              if constexpr (requires(decltype(ref_win) win) { win->basicUnit(); }) {
+                                  return ref_win->basicUnit();
+                              }
+                              return QSize(1, 1);
+                          }},
+                          *window.ref_win);
     }
 
     QRect geometry() const override
@@ -212,242 +251,332 @@ public:
 
     QRect frameGeometry() const override
     {
-        return window.ref_win->geo.frame;
+        return std::visit(overload{[](auto&& ref_win) { return ref_win->geo.frame; }},
+                          *window.ref_win);
     }
 
     QRect bufferGeometry() const override
     {
-        return win::render_geometry(window.ref_win);
+        return std::visit(overload{[](auto&& ref_win) { return win::render_geometry(ref_win); }},
+                          *window.ref_win);
     }
 
     QRect clientGeometry() const override
     {
-        return win::frame_to_client_rect(window.ref_win, window.ref_win->geo.frame);
+        return std::visit(overload{[](auto&& ref_win) {
+                              return win::frame_to_client_rect(ref_win, ref_win->geo.frame);
+                          }},
+                          *window.ref_win);
     }
 
     QString caption() const override
     {
-        if (window.ref_win->control || window.ref_win->remnant) {
-            return win::caption(window.ref_win);
-        }
-        return {};
+        return std::visit(overload{[](auto&& ref_win) -> QString {
+                              if (ref_win->control || ref_win->remnant) {
+                                  return win::caption(ref_win);
+                              }
+                              return {};
+                          }},
+                          *window.ref_win);
     }
 
     QRect expandedGeometry() const override
     {
-        return expanded_geometry_recursion(window.ref_win);
+        return std::visit(
+            overload{[](auto&& ref_win) { return expanded_geometry_recursion(ref_win); }},
+            *window.ref_win);
     }
 
     int screen() const override
     {
-        if (!window.ref_win->topo.central_output) {
-            return 0;
-        }
-        return base::get_output_index(window.ref_win->space.base.outputs,
-                                      *window.ref_win->topo.central_output);
+        return std::visit(overload{[](auto&& ref_win) -> size_t {
+                              if (!ref_win->topo.central_output) {
+                                  return 0;
+                              }
+                              return base::get_output_index(ref_win->space.base.outputs,
+                                                            *ref_win->topo.central_output);
+                          }},
+                          *window.ref_win);
     }
 
     QPoint pos() const override
     {
-        return window.ref_win->geo.pos();
+        return std::visit(overload{[](auto&& ref_win) { return ref_win->geo.pos(); }},
+                          *window.ref_win);
     }
 
     QSize size() const override
     {
-        return window.ref_win->geo.size();
+        return std::visit(overload{[](auto&& ref_win) { return ref_win->geo.size(); }},
+                          *window.ref_win);
     }
 
     QRect rect() const override
     {
-        return QRect({}, window.ref_win->geo.size());
+        return std::visit(overload{[](auto&& ref_win) { return QRect({}, ref_win->geo.size()); }},
+                          *window.ref_win);
     }
 
     bool isMovable() const override
     {
-        return window.ref_win->control ? window.ref_win->isMovable() : false;
+        return std::visit(overload{[](auto&& ref_win) {
+                              return ref_win->control ? ref_win->isMovable() : false;
+                          }},
+                          *window.ref_win);
     }
 
     bool isMovableAcrossScreens() const override
     {
-        return window.ref_win->control ? window.ref_win->isMovableAcrossScreens() : false;
+        return std::visit(overload{[](auto&& ref_win) {
+                              return ref_win->control ? ref_win->isMovableAcrossScreens() : false;
+                          }},
+                          *window.ref_win);
     }
 
     bool isUserMove() const override
     {
-        return window.ref_win->control ? win::is_move(window.ref_win) : false;
+        return std::visit(overload{[](auto&& ref_win) {
+                              return ref_win->control ? win::is_move(ref_win) : false;
+                          }},
+                          *window.ref_win);
     }
 
     bool isUserResize() const override
     {
-        return window.ref_win->control ? win::is_resize(window.ref_win) : false;
+        return std::visit(overload{[](auto&& ref_win) {
+                              return ref_win->control ? win::is_resize(ref_win) : false;
+                          }},
+                          *window.ref_win);
     }
 
     QRect iconGeometry() const override
     {
-        return window.ref_win->control ? window.ref_win->iconGeometry() : QRect();
+        return std::visit(
+            overload{[](auto&& ref_win) {
+                if (!ref_win->control) {
+                    return QRect();
+                }
+
+                if constexpr (requires(decltype(ref_win) win) { win->iconGeometry(); }) {
+                    return ref_win->iconGeometry();
+                } else {
+                    return ref_win->space.get_icon_geometry(ref_win);
+                }
+            }},
+            *window.ref_win);
     }
 
     bool isDesktop() const override
     {
-        return win::is_desktop(window.ref_win);
+        return std::visit(overload{[](auto&& ref_win) { return win::is_desktop(ref_win); }},
+                          *window.ref_win);
     }
 
     bool isDock() const override
     {
-        return win::is_dock(window.ref_win);
+        return std::visit(overload{[](auto&& ref_win) { return win::is_dock(ref_win); }},
+                          *window.ref_win);
     }
 
     bool isToolbar() const override
     {
-        return win::is_toolbar(window.ref_win);
+        return std::visit(overload{[](auto&& ref_win) { return win::is_toolbar(ref_win); }},
+                          *window.ref_win);
     }
 
     bool isMenu() const override
     {
-        return win::is_menu(window.ref_win);
+        return std::visit(overload{[](auto&& ref_win) { return win::is_menu(ref_win); }},
+                          *window.ref_win);
     }
 
     bool isNormalWindow() const override
     {
-        return win::is_normal(window.ref_win);
+        return std::visit(overload{[](auto&& ref_win) { return win::is_normal(ref_win); }},
+                          *window.ref_win);
     }
 
     bool isSpecialWindow() const override
     {
-        return window.ref_win->control ? win::is_special_window(window.ref_win) : true;
+        return std::visit(overload{[](auto&& ref_win) {
+                              return ref_win->control ? win::is_special_window(ref_win) : true;
+                          }},
+                          *window.ref_win);
     }
 
     bool isDialog() const override
     {
-        return win::is_dialog(window.ref_win);
+        return std::visit(overload{[](auto&& ref_win) { return win::is_dialog(ref_win); }},
+                          *window.ref_win);
     }
 
     bool isSplash() const override
     {
-        return win::is_splash(window.ref_win);
+        return std::visit(overload{[](auto&& ref_win) { return win::is_splash(ref_win); }},
+                          *window.ref_win);
     }
 
     bool isUtility() const override
     {
-        return win::is_utility(window.ref_win);
+        return std::visit(overload{[](auto&& ref_win) { return win::is_utility(ref_win); }},
+                          *window.ref_win);
     }
 
     bool isDropdownMenu() const override
     {
-        return win::is_dropdown_menu(window.ref_win);
+        return std::visit(overload{[](auto&& ref_win) { return win::is_dropdown_menu(ref_win); }},
+                          *window.ref_win);
     }
 
     bool isPopupMenu() const override
     {
-        return win::is_popup_menu(window.ref_win);
+        return std::visit(overload{[](auto&& ref_win) { return win::is_popup_menu(ref_win); }},
+                          *window.ref_win);
     }
 
     bool isTooltip() const override
     {
-        return win::is_tooltip(window.ref_win);
+        return std::visit(overload{[](auto&& ref_win) { return win::is_tooltip(ref_win); }},
+                          *window.ref_win);
     }
 
     bool isNotification() const override
     {
-        return win::is_notification(window.ref_win);
+        return std::visit(overload{[](auto&& ref_win) { return win::is_notification(ref_win); }},
+                          *window.ref_win);
     }
 
     bool isCriticalNotification() const override
     {
-        return win::is_critical_notification(window.ref_win);
+        return std::visit(
+            overload{[](auto&& ref_win) { return win::is_critical_notification(ref_win); }},
+            *window.ref_win);
     }
 
     bool isAppletPopup() const override
     {
-        return win::is_applet_popup(window.ref_win);
+        return std::visit(overload{[](auto&& ref_win) { return win::is_applet_popup(ref_win); }},
+                          *window.ref_win);
     }
 
     bool isOnScreenDisplay() const override
     {
-        return win::is_on_screen_display(window.ref_win);
+        return std::visit(
+            overload{[](auto&& ref_win) { return win::is_on_screen_display(ref_win); }},
+            *window.ref_win);
     }
 
     bool isComboBox() const override
     {
-        return win::is_combo_box(window.ref_win);
+        return std::visit(overload{[](auto&& ref_win) { return win::is_combo_box(ref_win); }},
+                          *window.ref_win);
     }
 
     bool isDNDIcon() const override
     {
-        return win::is_dnd_icon(window.ref_win);
+        return std::visit(overload{[](auto&& ref_win) { return win::is_dnd_icon(ref_win); }},
+                          *window.ref_win);
     }
 
     bool skipsCloseAnimation() const override
     {
-        return window.ref_win->skip_close_animation;
+        return std::visit(overload{[](auto&& ref_win) { return ref_win->skip_close_animation; }},
+                          *window.ref_win);
     }
 
     bool acceptsFocus() const override
     {
-        return window.ref_win->control ? window.ref_win->wantsInput() : true;
+        return std::visit(overload{[](auto&& ref_win) {
+                              return ref_win->control ? ref_win->wantsInput() : true;
+                          }},
+                          *window.ref_win);
     }
 
     bool keepAbove() const override
     {
-        if (window.ref_win->control) {
-            return window.ref_win->control->keep_above;
-        }
-        if (auto& remnant = window.ref_win->remnant) {
-            return remnant->data.keep_above;
-        }
-        return false;
+        return std::visit(overload{[](auto&& ref_win) {
+                              if (ref_win->control) {
+                                  return ref_win->control->keep_above;
+                              }
+                              if (auto& remnant = ref_win->remnant) {
+                                  return remnant->data.keep_above;
+                              }
+                              return false;
+                          }},
+                          *window.ref_win);
     }
 
     bool keepBelow() const override
     {
-        if (window.ref_win->control) {
-            return window.ref_win->control->keep_below;
-        }
-        if (auto& remnant = window.ref_win->remnant) {
-            return remnant->data.keep_below;
-        }
-        return false;
+        return std::visit(overload{[](auto&& ref_win) {
+                              if (ref_win->control) {
+                                  return ref_win->control->keep_below;
+                              }
+                              if (auto& remnant = ref_win->remnant) {
+                                  return remnant->data.keep_below;
+                              }
+                              return false;
+                          }},
+                          *window.ref_win);
     }
 
     bool isModal() const override
     {
-        return window.ref_win->transient->modal();
+        return std::visit(overload{[](auto&& ref_win) { return ref_win->transient->modal(); }},
+                          *window.ref_win);
     }
 
     bool isPopupWindow() const override
     {
-        return win::is_popup(window.ref_win);
+        return std::visit(overload{[](auto&& ref_win) { return win::is_popup(ref_win); }},
+                          *window.ref_win);
     }
 
     bool isOutline() const override
     {
-        return window.ref_win->is_outline;
+        return std::visit(overload{[](auto&& ref_win) { return ref_win->is_outline; }},
+                          *window.ref_win);
     }
 
     bool isLockScreen() const override
     {
-        return window.ref_win->isLockScreen();
+        return std::visit(
+            overload{[](auto&& ref_win) {
+                if constexpr (requires(decltype(ref_win) win) { win->isLockScreen(); }) {
+                    return ref_win->isLockScreen();
+                } else {
+                    return false;
+                }
+            }},
+            *window.ref_win);
     }
 
     Wrapland::Server::Surface* surface() const override
     {
-        return window.ref_win->surface;
+        return std::visit(overload{[](auto&& ref_win) { return ref_win->surface; }},
+                          *window.ref_win);
     }
 
     bool isFullScreen() const override
     {
-        if (window.ref_win->control) {
-            return window.ref_win->control->fullscreen;
-        }
-        if (auto& remnant = window.ref_win->remnant) {
-            return remnant->data.fullscreen;
-        }
-        return false;
+        return std::visit(overload{[](auto&& ref_win) {
+                              if (ref_win->control) {
+                                  return ref_win->control->fullscreen;
+                              }
+                              if (auto& remnant = ref_win->remnant) {
+                                  return remnant->data.fullscreen;
+                              }
+                              return false;
+                          }},
+                          *window.ref_win);
     }
 
     bool isUnresponsive() const override
     {
-        return window.ref_win->control ? window.ref_win->control->unresponsive : false;
+        return std::visit(overload{[](auto&& ref_win) {
+                              return ref_win->control ? ref_win->control->unresponsive : false;
+                          }},
+                          *window.ref_win);
     }
 
     QRect contentsRect() const override
@@ -456,37 +585,54 @@ public:
         // just
         //                using frame_to_client_rect)? But some clients rely on the current version,
         //                for example Latte for its behind-dock blur.
-        auto const deco_offset
-            = QPoint(win::left_border(window.ref_win), win::top_border(window.ref_win));
-        auto const client_size = win::frame_relative_client_rect(window.ref_win).size();
+        return std::visit(overload{[](auto&& ref_win) {
+                              auto const deco_offset
+                                  = QPoint(win::left_border(ref_win), win::top_border(ref_win));
+                              auto const client_size
+                                  = win::frame_relative_client_rect(ref_win).size();
 
-        return QRect(deco_offset, client_size);
+                              return QRect(deco_offset, client_size);
+                          }},
+                          *window.ref_win);
     }
 
     bool decorationHasAlpha() const override
     {
-        return window.ref_win->control ? win::decoration_has_alpha(window.ref_win) : false;
+        return std::visit(overload{[](auto&& ref_win) {
+                              return ref_win->control ? win::decoration_has_alpha(ref_win) : false;
+                          }},
+                          *window.ref_win);
     }
 
     QIcon icon() const override
     {
-        return window.ref_win->control ? window.ref_win->control->icon : QIcon();
+        return std::visit(overload{[](auto&& ref_win) {
+                              return ref_win->control ? ref_win->control->icon : QIcon();
+                          }},
+                          *window.ref_win);
     }
 
     QString windowClass() const override
     {
-        return window.ref_win->meta.wm_class.res_name + QLatin1Char(' ')
-            + window.ref_win->meta.wm_class.res_class;
+        return std::visit(overload{[](auto&& ref_win) -> QString {
+                              return ref_win->meta.wm_class.res_name + QLatin1Char(' ')
+                                  + ref_win->meta.wm_class.res_class;
+                          }},
+                          *window.ref_win);
     }
 
     NET::WindowType windowType() const override
     {
-        return window.ref_win->windowType();
+        return std::visit(overload{[](auto&& ref_win) { return ref_win->windowType(); }},
+                          *window.ref_win);
     }
 
     bool isSkipSwitcher() const override
     {
-        return window.ref_win->control ? window.ref_win->control->skip_switcher() : false;
+        return std::visit(overload{[](auto&& ref_win) {
+                              return ref_win->control ? ref_win->control->skip_switcher() : false;
+                          }},
+                          *window.ref_win);
     }
 
     // legacy from tab groups, can be removed when no effects use this any more.
@@ -497,7 +643,8 @@ public:
 
     QString windowRole() const override
     {
-        return window.ref_win->windowRole();
+        return std::visit(overload{[](auto&& ref_win) { return ref_win->windowRole(); }},
+                          *window.ref_win);
     }
 
     bool isManaged() const override
@@ -517,17 +664,25 @@ public:
 
     pid_t pid() const override
     {
-        return window.ref_win->pid();
+        return std::visit(overload{[](auto&& ref_win) { return ref_win->pid(); }}, *window.ref_win);
     }
 
     qlonglong windowId() const override
     {
-        return window.ref_win->xcb_window;
+        return std::visit(overload{[](auto&& ref_win) -> qlonglong {
+                              if constexpr (requires(decltype(ref_win) win) { win->xcb_window; }) {
+                                  return ref_win->xcb_window;
+                              } else {
+                                  return XCB_WINDOW_NONE;
+                              }
+                          }},
+                          *window.ref_win);
     }
 
     QUuid internalId() const override
     {
-        return window.ref_win->meta.internal_id;
+        return std::visit(overload{[](auto&& ref_win) { return ref_win->meta.internal_id; }},
+                          *window.ref_win);
     }
 
     QRect decorationInnerRect() const override
@@ -537,7 +692,8 @@ public:
 
     KDecoration2::Decoration* decoration() const override
     {
-        return win::decoration(window.ref_win);
+        return std::visit(overload{[](auto&& ref_win) { return win::decoration(ref_win); }},
+                          *window.ref_win);
     }
 
     QByteArray readProperty(long atom, long type, int format) const override
@@ -545,7 +701,11 @@ public:
         if (!kwinApp()->x11Connection()) {
             return QByteArray();
         }
-        return x11::read_window_property(window.ref_win->xcb_window, atom, type, format);
+        return std::visit(overload{[&](auto&& ref_win) {
+                              return x11::read_window_property(
+                                  ref_win->xcb_window, atom, type, format);
+                          }},
+                          *window.ref_win);
     }
 
     void deleteProperty(long atom) const override
@@ -558,44 +718,54 @@ public:
         };
 
         if (kwinApp()->x11Connection()) {
-            deleteWindowProperty(window.ref_win->xcb_window, atom);
+            return std::visit(
+                overload{[&](auto&& ref_win) { deleteWindowProperty(ref_win->xcb_window, atom); }},
+                *window.ref_win);
         }
     }
 
     EffectWindow* findModal() override
     {
-        if (!window.ref_win->control) {
-            return nullptr;
-        }
+        return std::visit(overload{[](auto&& ref_win) -> EffectWindow* {
+                              if (!ref_win->control) {
+                                  return nullptr;
+                              }
 
-        auto modal = window.ref_win->findModal();
-        if (modal) {
-            return modal->render->effect.get();
-        }
-
-        return nullptr;
+                              auto modal = win::find_modal(*ref_win);
+                              if (!modal) {
+                                  return nullptr;
+                              }
+                              return modal->render->effect.get();
+                          }},
+                          *window.ref_win);
     }
 
     EffectWindow* transientFor() override
     {
-        if (!window.ref_win->control) {
-            return nullptr;
-        }
+        return std::visit(overload{[](auto&& ref_win) -> EffectWindow* {
+                              if (!ref_win->control) {
+                                  return nullptr;
+                              }
 
-        auto transientFor = window.ref_win->transient->lead();
-        if (transientFor) {
-            return transientFor->render->effect.get();
-        }
+                              auto transientFor = ref_win->transient->lead();
+                              if (transientFor) {
+                                  return transientFor->render->effect.get();
+                              }
 
-        return nullptr;
+                              return nullptr;
+                          }},
+                          *window.ref_win);
     }
 
     EffectWindowList mainWindows() const override
     {
-        if (window.ref_win->control || window.ref_win->remnant) {
-            return getMainWindows(window.ref_win);
-        }
-        return {};
+        return std::visit(overload{[](auto&& ref_win) -> EffectWindowList {
+                              if (ref_win->control || ref_win->remnant) {
+                                  return getMainWindows(ref_win);
+                              }
+                              return {};
+                          }},
+                          *window.ref_win);
     }
 
     WindowQuadList buildQuads(bool force = false) const override
@@ -605,23 +775,32 @@ public:
 
     void minimize() override
     {
-        if (window.ref_win->control) {
-            win::set_minimized(window.ref_win, true);
-        }
+        std::visit(overload{[](auto&& ref_win) {
+                       if (ref_win->control) {
+                           win::set_minimized(ref_win, true);
+                       }
+                   }},
+                   *window.ref_win);
     }
 
     void unminimize() override
     {
-        if (window.ref_win->control) {
-            win::set_minimized(window.ref_win, false);
-        }
+        std::visit(overload{[](auto&& ref_win) {
+                       if (ref_win->control) {
+                           win::set_minimized(ref_win, false);
+                       }
+                   }},
+                   *window.ref_win);
     }
 
     void closeWindow() override
     {
-        if (window.ref_win->control) {
-            window.ref_win->closeWindow();
-        }
+        std::visit(overload{[](auto&& ref_win) {
+                       if (ref_win->control) {
+                           ref_win->closeWindow();
+                       }
+                   }},
+                   *window.ref_win);
     }
 
     void referencePreviousWindowPixmap() override
@@ -636,11 +815,13 @@ public:
 
     QWindow* internalWindow() const override
     {
-        auto client = dynamic_cast<typename space_t::internal_window_t*>(window.ref_win);
-        if (!client) {
-            return nullptr;
+        if constexpr (requires { typename space_t::internal_window_t; }) {
+            using int_win = typename space_t::internal_window_t;
+            return std::visit(overload{[](int_win* ref_win) { return ref_win->internalWindow(); },
+                                       [](auto&& /*ref_win*/) -> QWindow* { return nullptr; }},
+                              *window.ref_win);
         }
-        return client->internalWindow();
+        return nullptr;
     }
 
     void elevate(bool elevate)
@@ -693,7 +874,7 @@ public:
 
 private:
     template<typename T>
-    EffectWindowList getMainWindows(T* c) const
+    static EffectWindowList getMainWindows(T* c)
     {
         const auto leads = c->transient->leads();
         EffectWindowList ret;
@@ -705,7 +886,8 @@ private:
         return ret;
     }
 
-    QRect expanded_geometry_recursion(typename Window::ref_t* window) const
+    template<typename Win>
+    static QRect expanded_geometry_recursion(Win* window)
     {
         QRect geo;
         for (auto child : window->transient->children) {
@@ -750,8 +932,8 @@ private:
     QHash<window_thumbnail_item*, QPointer<effects_window_impl>> m_thumbnails;
     QList<desktop_thumbnail_item*> m_desktopThumbnails;
     bool managed = false;
-    bool waylandClient;
-    bool x11Client;
+    bool waylandClient{false};
+    bool x11Client{false};
 };
 
 }

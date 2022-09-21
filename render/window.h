@@ -26,7 +26,7 @@ namespace KWin::render
 template<typename Win>
 struct window_win_integration {
     std::function<void(buffer<Win>&)> setup_buffer;
-    std::function<QRectF(typename Win::ref_t*, QRectF const&)> get_viewport;
+    std::function<QRectF(typename Win::ref_t, QRectF const&)> get_viewport;
 };
 
 template<typename RefWin, typename Compositor>
@@ -38,7 +38,7 @@ public:
     using effect_window_t = effects_window_impl<type>;
     using scene_t = typename Compositor::scene_t;
 
-    window(RefWin* ref_win, Compositor& compositor)
+    window(RefWin ref_win, Compositor& compositor)
         : ref_win{ref_win}
         , compositor{compositor}
         , filter(image_filter_type::fast)
@@ -96,25 +96,32 @@ public:
     void resetPaintingEnabled()
     {
         disable_painting = window_paint_disable_type::none;
-        if (ref_win->remnant) {
-            disable_painting |= window_paint_disable_type::by_delete;
-        }
-        if (compositor.effects->isDesktopRendering()) {
-            if (!win::on_desktop(ref_win, compositor.effects->currentRenderedDesktop())) {
-                disable_painting |= window_paint_disable_type::by_desktop;
-            }
-        } else {
-            if (!win::on_current_desktop(ref_win))
-                disable_painting |= window_paint_disable_type::by_desktop;
-        }
-        if (ref_win->control) {
-            if (ref_win->control->minimized) {
-                disable_painting |= window_paint_disable_type::by_minimize;
-            }
-            if (ref_win->isHiddenInternal()) {
-                disable_painting |= window_paint_disable_type::unspecified;
-            }
-        }
+
+        std::visit(
+            overload{[this](auto&& ref_win) {
+                if (ref_win->remnant) {
+                    disable_painting |= window_paint_disable_type::by_delete;
+                }
+
+                if (compositor.effects->isDesktopRendering()) {
+                    if (!win::on_desktop(ref_win, compositor.effects->currentRenderedDesktop())) {
+                        disable_painting |= window_paint_disable_type::by_desktop;
+                    }
+                } else {
+                    if (!win::on_current_desktop(ref_win))
+                        disable_painting |= window_paint_disable_type::by_desktop;
+                }
+
+                if (ref_win->control) {
+                    if (ref_win->control->minimized) {
+                        disable_painting |= window_paint_disable_type::by_minimize;
+                    }
+                    if (ref_win->isHiddenInternal()) {
+                        disable_painting |= window_paint_disable_type::unspecified;
+                    }
+                }
+            }},
+            *ref_win);
     }
 
     void enablePainting(window_paint_disable_type reason)
@@ -130,33 +137,49 @@ public:
     // is the window visible at all
     bool isVisible() const
     {
-        if (ref_win->remnant)
-            return false;
-        if (!win::on_current_desktop(ref_win))
-            return false;
-        if (ref_win->control) {
-            return ref_win->isShown();
-        }
-        return true; // Unmanaged is always visible
+        return std::visit(overload{[](auto&& ref_win) {
+                              if (ref_win->remnant) {
+                                  return false;
+                              }
+                              if (!win::on_current_desktop(ref_win)) {
+                                  return false;
+                              }
+                              if (!ref_win->control) {
+                                  // Unmanaged is always visible
+                                  return true;
+                              }
+                              return ref_win->isShown();
+                          }},
+                          *ref_win);
     }
 
     // is the window fully opaque
     bool isOpaque() const
     {
-        return ref_win->opacity() == 1.0 && !win::has_alpha(*ref_win);
+        return std::visit(overload{[](auto&& ref_win) {
+                              return ref_win->opacity() == 1.0 && !win::has_alpha(*ref_win);
+                          }},
+                          *ref_win);
     }
 
     QRegion decorationShape() const
     {
-        if (!win::decoration(ref_win)) {
-            return QRegion();
-        }
-        return QRegion(QRect({}, ref_win->geo.size())) - win::frame_relative_client_rect(ref_win);
+        return std::visit(overload{[](auto&& ref_win) {
+                              if (!win::decoration(ref_win)) {
+                                  return QRegion();
+                              }
+                              return QRegion(QRect({}, ref_win->geo.size()))
+                                  - win::frame_relative_client_rect(ref_win);
+                          }},
+                          *ref_win);
     }
 
     QPoint bufferOffset() const
     {
-        return win::render_geometry(ref_win).topLeft() - ref_win->geo.pos();
+        return std::visit(overload{[](auto&& ref_win) {
+                              return win::render_geometry(ref_win).topLeft() - ref_win->geo.pos();
+                          }},
+                          *ref_win);
     }
 
     // creates initial quad list for the window
@@ -168,24 +191,35 @@ public:
 
         auto ret = makeContentsQuads(id());
 
-        if (!win::frame_margins(ref_win).isNull()) {
-            qreal decorationScale = 1.0;
+        std::visit(
+            overload{[&, this](auto&& ref_win) {
+                if (!win::frame_margins(ref_win).isNull()) {
+                    qreal decorationScale = 1.0;
 
-            QRect rects[4];
+                    QRect rects[4];
 
-            if (ref_win->control) {
-                ref_win->layoutDecorationRects(rects[0], rects[1], rects[2], rects[3]);
-                decorationScale
-                    = ref_win->topo.central_output ? ref_win->topo.central_output->scale() : 1.;
-            }
+                    if (ref_win->control) {
+                        ref_win->layoutDecorationRects(rects[0], rects[1], rects[2], rects[3]);
+                        decorationScale = ref_win->topo.central_output
+                            ? ref_win->topo.central_output->scale()
+                            : 1.;
+                    }
 
-            auto const decoration_region = decorationShape();
-            ret += makeDecorationQuads(rects, decoration_region, decorationScale);
-        }
+                    auto const decoration_region = decorationShape();
+                    ret += makeDecorationQuads(rects, decoration_region, decorationScale);
+                }
 
-        if (m_shadow && ref_win->wantsShadowToBeRendered()) {
-            ret << m_shadow->shadowQuads();
-        }
+                if constexpr (requires(decltype(ref_win) win) { win->wantsShadowToBeRendered(); }) {
+                    if (!ref_win->wantsShadowToBeRendered()) {
+                        return;
+                    }
+                }
+
+                if (m_shadow) {
+                    ret << m_shadow->shadowQuads();
+                }
+            }},
+            *ref_win);
 
         compositor.effects->buildQuads(effect.get(), ret);
         cached_quad_list.reset(new WindowQuadList(ret));
@@ -194,7 +228,7 @@ public:
 
     void create_shadow()
     {
-        auto shadow = create_deco_shadow<render::shadow<type>>(*ref_win);
+        auto shadow = create_deco_shadow<render::shadow<type>>(*this);
 
         if (!shadow && shadow_windowing.create) {
             shadow = shadow_windowing.create(*this);
@@ -202,7 +236,8 @@ public:
 
         if (shadow) {
             updateShadow(std::move(shadow));
-            Q_EMIT ref_win->qobject->shadowChanged();
+            std::visit(overload{[](auto&& ref_win) { Q_EMIT ref_win->qobject->shadowChanged(); }},
+                       *ref_win);
         }
     }
 
@@ -245,7 +280,7 @@ public:
         cached_quad_list.reset();
     }
 
-    RefWin* ref_win;
+    std::optional<RefWin> ref_win;
 
     std::unique_ptr<effects_window_impl<type>> effect;
     window_win_integration<type> win_integration;
@@ -324,13 +359,21 @@ protected:
 
     WindowQuadList makeContentsQuads(int id, QPoint const& offset = QPoint()) const
     {
-        auto const contentsRegion = win::content_render_region(ref_win);
+        QRegion contentsRegion;
+        qreal textureScale{1.};
+        std::visit(overload{[&](auto&& ref_win) {
+                       contentsRegion = win::content_render_region(ref_win);
+                       if constexpr (requires(decltype(ref_win) win) { win->bufferScale(); }) {
+                           textureScale = ref_win->bufferScale();
+                       }
+                   }},
+                   *ref_win);
+
         if (contentsRegion.isEmpty()) {
             return WindowQuadList();
         }
 
         auto const geometryOffset = offset + bufferOffset();
-        const qreal textureScale = ref_win->bufferScale();
 
         WindowQuadList quads;
         quads.reserve(contentsRegion.rectCount());
@@ -362,7 +405,10 @@ protected:
             QRectF sourceRect(contentsRect.topLeft() * textureScale,
                               contentsRect.bottomRight() * textureScale);
             if (auto& vp_getter = win_integration.get_viewport) {
-                if (auto vp = vp_getter(ref_win, contentsRect); vp.isValid()) {
+                if (auto vp = std::visit(
+                        overload{[&](auto&& ref_win) { return vp_getter(ref_win, contentsRect); }},
+                        *ref_win);
+                    vp.isValid()) {
                     sourceRect = vp;
                 }
             }
@@ -375,28 +421,32 @@ protected:
             }
         }
 
-        for (auto child : ref_win->transient->children) {
-            if (!child->transient->annexed) {
-                continue;
-            }
-            if (child->remnant && !ref_win->remnant) {
-                // When the child is a remnant but the parent not there is no guarentee the ref_win
-                // will become one too what can cause artficats before the child cleanup timer
-                // fires.
-                continue;
-            }
-            auto& sw = child->render;
-            if (!sw) {
-                continue;
-            }
+        std::visit(overload{[&](auto&& ref_win) {
+                       for (auto child : ref_win->transient->children) {
+                           if (!child->transient->annexed) {
+                               return;
+                           }
+                           if (child->remnant && !ref_win->remnant) {
+                               // When the child is a remnant but the parent not there is no
+                               // guarentee the ref_win will become one too what can cause
+                               // artficats before the child cleanup timer fires.
+                               return;
+                           }
+                           auto& sw = child->render;
+                           if (!sw) {
+                               return;
+                           }
 
-            using buffer_t = buffer<type>;
-            if (auto const buf = sw->template get_buffer<buffer_t>(); !buf || !buf->isValid()) {
-                continue;
-            }
-            quads << sw->makeContentsQuads(sw->id(),
-                                           offset + child->geo.pos() - ref_win->geo.pos());
-        }
+                           using buffer_t = buffer<type>;
+                           if (auto const buf = sw->template get_buffer<buffer_t>();
+                               !buf || !buf->isValid()) {
+                               return;
+                           }
+                           quads << sw->makeContentsQuads(
+                               sw->id(), offset + child->geo.pos() - ref_win->geo.pos());
+                       }
+                   }},
+                   *ref_win);
 
         return quads;
     }

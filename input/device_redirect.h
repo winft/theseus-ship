@@ -9,9 +9,10 @@
 #pragma once
 
 #include "kwin_export.h"
-#include "win/deco/client_impl.h"
 
+#include <KDecoration2/Private/DecoratedClientPrivate>
 #include <QWindow>
+#include <optional>
 
 namespace KWin::input
 {
@@ -22,7 +23,7 @@ namespace KWin::input
  */
 template<typename Window>
 struct device_redirect_at {
-    Window* window{nullptr};
+    std::optional<Window> window;
     struct {
         QMetaObject::Connection surface;
         QMetaObject::Connection destroy;
@@ -35,9 +36,16 @@ struct device_redirect_at {
  */
 template<typename Window>
 struct device_redirect_focus {
-    Window* window{nullptr};
-    win::deco::client_impl<Window>* deco{nullptr};
+    std::optional<Window> window;
     QWindow* internal_window{nullptr};
+
+    struct {
+        KDecoration2::DecoratedClientPrivate* client{nullptr};
+
+        // TODO(romangg): Make this unnecessary. Reuse instead the normal focus window.
+        std::optional<Window> window;
+    } deco;
+
     struct {
         QMetaObject::Connection window_destroy;
         QMetaObject::Connection deco_destroy;

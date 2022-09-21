@@ -304,13 +304,13 @@ void TestScreens::testCurrentClient()
     Test::render(surface, QSize(100, 50), Qt::blue);
     Test::flush_wayland_connection();
     QVERIFY(clientAddedSpy.wait());
-    auto client = Test::app()->base.space->stacking.active;
+    auto client = Test::get_wayland_window(Test::app()->base.space->stacking.active);
     QVERIFY(client);
 
     win::move(client, QPoint(101, 0));
-    QCOMPARE(Test::app()->base.space->stacking.active, client);
+    QCOMPARE(Test::app()->base.space->stacking.active, Test::space::window_t(client));
     win::unset_active_window(*Test::app()->base.space);
-    QCOMPARE(Test::app()->base.space->stacking.active, nullptr);
+    QVERIFY(!Test::app()->base.space->stacking.active);
 
     QCOMPARE(win::get_current_output(*Test::app()->base.space),
              base::get_output(Test::app()->base.get_outputs(), 0));
@@ -326,10 +326,12 @@ void TestScreens::testCurrentClient()
     // making the client active should affect things
     win::set_active(client, true);
     win::set_active_window(*Test::app()->base.space, *client);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), client);
 
     // first of all current should be changed just by the fact that there is an active client
     output = base::get_output(Test::app()->base.get_outputs(), 1);
     QVERIFY(output);
+    QCOMPARE(client->topo.central_output, output);
     QCOMPARE(win::get_current_output(*Test::app()->base.space), output);
 
     // but also calling setCurrent should emit the changed signal

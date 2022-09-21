@@ -36,7 +36,9 @@ void disown_data_passed_to_remnant(Win& win)
 template<typename Space, typename Win>
 void remove_controlled_window_from_space(Space& space, Win* win)
 {
-    if (win == space.active_popup_client) {
+    using var_win = typename Space::window_t;
+
+    if (var_win(win) == space.active_popup_client) {
         close_active_popup(space);
     }
 
@@ -44,7 +46,7 @@ void remove_controlled_window_from_space(Space& space, Win* win)
         space.user_actions_menu->close();
     }
 
-    if (space.client_keys_client == win) {
+    if (space.client_keys_client == var_win(win)) {
         setup_window_shortcut_done(space, false);
     }
     if (!win->control->shortcut.isEmpty()) {
@@ -55,29 +57,29 @@ void remove_controlled_window_from_space(Space& space, Win* win)
         window_shortcut_updated(space, win);
     }
 
-    assert(contains(space.windows, win));
+    assert(contains(space.windows, var_win(win)));
 
     // TODO: if marked client is removed, notify the marked list
     remove_window_from_lists(space, win);
-    remove_all(space.stacking.attention_chain, win);
+    remove_all(space.stacking.attention_chain, var_win(win));
 
     auto group = find_group(space, win->xcb_window);
     if (group) {
         group->lostLeader();
     }
 
-    if (win == space.stacking.most_recently_raised) {
-        space.stacking.most_recently_raised = nullptr;
+    if (var_win(win) == space.stacking.most_recently_raised) {
+        space.stacking.most_recently_raised = {};
     }
 
-    remove_all(space.stacking.should_get_focus, win);
+    remove_all(space.stacking.should_get_focus, var_win(win));
 
-    assert(win != space.stacking.active);
+    assert(var_win(win) != space.stacking.active);
 
-    if (win == space.stacking.last_active) {
-        space.stacking.last_active = nullptr;
+    if (var_win(win) == space.stacking.last_active) {
+        space.stacking.last_active = {};
     }
-    if (win == space.stacking.delayfocus_window) {
+    if (var_win(win) == space.stacking.delayfocus_window) {
         cancel_delay_focus(space);
     }
 
@@ -109,8 +111,10 @@ void reset_have_resize_effect(Win& win)
 template<typename Win>
 void finish_unmanaged_removal(Win* win, Win* remnant)
 {
+    using var_win = typename Win::space_t::window_t;
+
     auto& space = win->space;
-    assert(contains(space.windows, win));
+    assert(contains(space.windows, var_win(win)));
 
     remove_window_from_lists(space, win);
     space.base.render->compositor->addRepaint(visible_rect(win));
@@ -122,7 +126,7 @@ void finish_unmanaged_removal(Win* win, Win* remnant)
         remnant->remnant->unref();
         delete win;
     } else {
-        delete_window_from_space(space, win);
+        delete_window_from_space(space, *win);
     }
 }
 
@@ -181,6 +185,8 @@ void destroy_unmanaged(Win* win)
 template<typename Win>
 void release_window(Win* win, bool on_shutdown)
 {
+    using var_win = typename Win::space_t::window_t;
+
     Q_ASSERT(!win->deleting);
     win->deleting = true;
 
@@ -192,7 +198,8 @@ void release_window(Win* win, bool on_shutdown)
 
 #if KWIN_BUILD_TABBOX
     auto& tabbox = win->space.tabbox;
-    if (tabbox->is_displayed() && tabbox->current_client() == win) {
+    if (tabbox->is_displayed() && tabbox->current_client()
+        && tabbox->current_client() == var_win(win)) {
         tabbox->next_prev(true);
     }
 #endif
@@ -294,7 +301,7 @@ void release_window(Win* win, bool on_shutdown)
         del->remnant->unref();
         delete win;
     } else {
-        delete_window_from_space(win->space, win);
+        delete_window_from_space(win->space, *win);
     }
 
     base::x11::ungrab_server();
@@ -306,6 +313,8 @@ void release_window(Win* win, bool on_shutdown)
 template<typename Win>
 void destroy_window(Win* win)
 {
+    using var_win = typename Win::space_t::window_t;
+
     assert(!win->deleting);
     win->deleting = true;
 
@@ -316,7 +325,7 @@ void destroy_window(Win* win)
 
 #if KWIN_BUILD_TABBOX
     auto& tabbox = win->space.tabbox;
-    if (tabbox && tabbox->is_displayed() && tabbox->current_client() == win) {
+    if (tabbox && tabbox->is_displayed() && tabbox->current_client() == var_win(win)) {
         tabbox->next_prev(true);
     }
 #endif
@@ -368,7 +377,7 @@ void destroy_window(Win* win)
         del->remnant->unref();
         delete win;
     } else {
-        delete_window_from_space(win->space, win);
+        delete_window_from_space(win->space, *win);
     }
 }
 
@@ -391,6 +400,7 @@ void cleanup_window(Win& win)
     assert(win.xcb_windows.outer == XCB_WINDOW_NONE);
 
     delete win.client_machine;
+    win.space.windows_map.erase(win.meta.signal_id);
 }
 
 /// Kills the window via XKill

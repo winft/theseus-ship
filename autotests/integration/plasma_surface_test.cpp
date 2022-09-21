@@ -124,7 +124,7 @@ void PlasmaSurfaceTest::testRoleOnAllDesktops()
     // now render to map the window
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->base.space->stacking.active, c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
 
     // currently the role is not yet set, so the window should not be on all desktops
     QCOMPARE(win::on_all_desktops(c), false);
@@ -394,8 +394,8 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
 
     auto stackingOrder = Test::app()->base.space->stacking.order.stack;
     QCOMPARE(stackingOrder.size(), 2);
-    QCOMPARE(stackingOrder.front(), panel);
-    QCOMPARE(stackingOrder.back(), c);
+    QCOMPARE(Test::get_wayland_window(stackingOrder.front()), panel);
+    QCOMPARE(Test::get_wayland_window(stackingOrder.back()), c);
 
     QSignalSpy stackingOrderChangedSpy(Test::app()->base.space->stacking.order.qobject.get(),
                                        &win::stacking_order_qobject::changed);
@@ -406,8 +406,8 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
     QCOMPARE(stackingOrderChangedSpy.count(), 1);
     stackingOrder = Test::app()->base.space->stacking.order.stack;
     QCOMPARE(stackingOrder.size(), 2);
-    QCOMPARE(stackingOrder.front(), c);
-    QCOMPARE(stackingOrder.back(), panel);
+    QCOMPARE(Test::get_wayland_window(stackingOrder.front()), c);
+    QCOMPARE(Test::get_wayland_window(stackingOrder.back()), panel);
 }
 
 void PlasmaSurfaceTest::testPanelActivate_data()

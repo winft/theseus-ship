@@ -8,6 +8,8 @@
 #include "desktop_get.h"
 #include "screen.h"
 
+#include <optional>
+
 namespace KWin::win
 {
 
@@ -24,47 +26,49 @@ namespace KWin::win
  * @return The window which could be activated or @c null if there is none.
  */
 template<typename Space>
-auto focus_chain_get_for_activation(Space& space, uint desktop, base::output const* output) ->
-    typename Space::window_t*
+auto focus_chain_get_for_activation(Space& space, uint desktop, base::output const* output)
+    -> std::optional<typename Space::window_t>
 {
     auto& manager = space.stacking.focus_chain;
 
     auto desk_it = manager.chains.desktops.find(desktop);
     if (desk_it == manager.chains.desktops.end()) {
-        return nullptr;
+        return {};
     }
 
     auto const& chain = desk_it->second;
 
     // TODO(romangg): reverse-range with C++20
     for (auto it = chain.rbegin(); it != chain.rend(); ++it) {
-        // TODO: move the check into Client
-        auto win = *it;
-        if (!win->isShown()) {
-            continue;
+        if (std::visit(overload{[&](auto&& win) {
+                           if (!win->isShown()) {
+                               return false;
+                           }
+                           if (manager.has_separate_screen_focus
+                               && win->topo.central_output != output) {
+                               return false;
+                           }
+                           return true;
+                       }},
+                       *it)) {
+            return *it;
         }
-        if (manager.has_separate_screen_focus && win->topo.central_output != output) {
-            continue;
-        }
-        return win;
     }
 
-    return nullptr;
+    return {};
 }
 
 template<typename Space>
-auto focus_chain_get_for_activation_on_current_output(Space& space, uint desktop) ->
-    typename Space::window_t*
+auto focus_chain_get_for_activation_on_current_output(Space& space, uint desktop)
+    -> std::optional<typename Space::window_t>
 {
     return focus_chain_get_for_activation(space, desktop, get_current_output(space));
 }
 
-template<typename Space, typename Output>
-bool focus_chain_is_usable_focus_candidate(Space& space,
-                                           typename Space::window_t* window,
-                                           Output const* output)
+template<typename Space, typename Win, typename Output>
+bool focus_chain_is_usable_focus_candidate(Space& space, Win& window, Output const* output)
 {
-    if (!window->isShown() || !on_current_desktop(window)) {
+    if (!window.isShown() || !on_current_desktop(&window)) {
         return false;
     }
 
@@ -72,7 +76,7 @@ bool focus_chain_is_usable_focus_candidate(Space& space,
         return true;
     }
 
-    return on_screen(window, output);
+    return on_screen(&window, output);
 }
 
 /**
@@ -88,30 +92,33 @@ bool focus_chain_is_usable_focus_candidate(Space& space,
  */
 template<typename Space, typename Output>
 auto focus_chain_next(Space& space,
-                      typename Space::window_t* reference,
+                      std::optional<typename Space::window_t> reference,
                       uint desktop,
-                      Output const* output) -> typename Space::window_t*
+                      Output const* output) -> std::optional<typename Space::window_t>
 {
     auto& manager = space.stacking.focus_chain;
 
     auto desk_it = manager.chains.desktops.find(desktop);
     if (desk_it == manager.chains.desktops.end()) {
-        return nullptr;
+        return {};
     }
 
     auto const& chain = desk_it->second;
 
     // TODO(romangg): reverse-range with C++20
     for (auto it = chain.rbegin(); it != chain.rend(); ++it) {
-        if (*it == reference) {
+        if (reference && *it == *reference) {
             continue;
         }
-        if (focus_chain_is_usable_focus_candidate(space, *it, output)) {
+        if (std::visit(overload{[&](auto&& win) {
+                           return focus_chain_is_usable_focus_candidate(space, *win, output);
+                       }},
+                       *it)) {
             return *it;
         }
     }
 
-    return nullptr;
+    return {};
 }
 
 }

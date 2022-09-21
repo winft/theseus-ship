@@ -38,6 +38,8 @@ template<typename Window>
 class control
 {
 public:
+    using var_win = typename Window::space_t::window_t;
+
     explicit control(Window* win)
         : m_win{win}
     {
@@ -52,7 +54,7 @@ public:
     {
         assert(!m_tabbox);
 #if KWIN_BUILD_TABBOX
-        m_tabbox = std::make_shared<win::tabbox_client_impl<Window>>(m_win);
+        m_tabbox = std::make_shared<win::tabbox_client_impl<var_win>>(m_win);
 #endif
     }
 
@@ -88,7 +90,7 @@ public:
         m_skip_taskbar = set;
     }
 
-    std::weak_ptr<win::tabbox_client_impl<Window>> tabbox() const
+    std::weak_ptr<win::tabbox_client_impl<var_win>> tabbox() const
     {
         return m_tabbox;
     }
@@ -145,7 +147,7 @@ public:
         delete m_auto_raise_timer;
         m_auto_raise_timer = new QTimer(m_win->qobject.get());
         QObject::connect(m_auto_raise_timer, &QTimer::timeout, m_win->qobject.get(), [this] {
-            auto_raise(m_win);
+            auto_raise(*m_win);
         });
         m_auto_raise_timer->setSingleShot(true);
         m_auto_raise_timer->start(kwinApp()->options->qobject->autoRaiseInterval());
@@ -219,7 +221,7 @@ public:
         rules.discardTemporary();
     }
 
-    using scripting_t = scripting::window_impl<Window>;
+    using scripting_t = scripting::window_impl<var_win>;
     std::unique_ptr<scripting_t> scripting;
     Wrapland::Server::PlasmaWindow* plasma_wayland_integration{nullptr};
 
@@ -247,7 +249,7 @@ public:
     bool fullscreen{false};
     bool minimized{false};
     win::move_resize_op move_resize;
-    win::deco_impl<Window> deco;
+    win::deco_impl<Window, var_win> deco;
     win::palette palette;
     rules::window rules;
 
@@ -259,7 +261,7 @@ private:
     bool m_skip_pager{false};
     bool m_skip_switcher{false};
 
-    std::shared_ptr<win::tabbox_client_impl<Window>> m_tabbox;
+    std::shared_ptr<win::tabbox_client_impl<var_win>> m_tabbox;
 
     QTimer* m_auto_raise_timer{nullptr};
 

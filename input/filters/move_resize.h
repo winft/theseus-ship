@@ -33,7 +33,7 @@ public:
             return false;
         }
         if (this->redirect.pointer->buttons() == Qt::NoButton) {
-            win::end_move_resize(window);
+            std::visit(overload{[&](auto&& win) { win::end_move_resize(win); }}, *window);
         }
         return true;
     }
@@ -44,26 +44,33 @@ public:
         if (!window) {
             return false;
         }
+
         auto pos = this->redirect.globalPointer();
-        win::update_move_resize(window, pos.toPoint());
+        std::visit(overload{[&](auto&& win) { win::update_move_resize(win, pos.toPoint()); }},
+                   *window);
+
         return true;
     }
 
     bool axis(axis_event const& /*event*/) override
     {
-        return this->redirect.space.move_resize_window != nullptr;
+        return this->redirect.space.move_resize_window.has_value();
     }
 
-    void process_key_press(typename Redirect::window_t* window, key_event const& event)
+    void process_key_press(typename Redirect::window_t window, key_event const& event)
     {
-        win::key_press_event(window,
-                             key_to_qt_key(event.keycode, event.base.dev->xkb.get())
-                                 | xkb::get_active_keyboard_modifiers(this->redirect.platform));
+        std::visit(overload{[&](auto&& win) {
+                       win::key_press_event(
+                           win,
+                           key_to_qt_key(event.keycode, event.base.dev->xkb.get())
+                               | xkb::get_active_keyboard_modifiers(this->redirect.platform));
 
-        if (win::is_move(window) || win::is_resize(window)) {
-            // Only update if mode didn't end.
-            win::update_move_resize(window, this->redirect.globalPointer());
-        }
+                       if (win::is_move(win) || win::is_resize(win)) {
+                           // Only update if mode didn't end.
+                           win::update_move_resize(win, this->redirect.globalPointer());
+                       }
+                   }},
+                   window);
     }
 
     bool key(key_event const& event) override
@@ -74,7 +81,7 @@ public:
         }
 
         if (event.state == key_state::pressed) {
-            process_key_press(window, event);
+            process_key_press(*window, event);
         }
         return true;
     }
@@ -86,7 +93,7 @@ public:
             return false;
         }
 
-        process_key_press(window, event);
+        process_key_press(*window, event);
         return true;
     }
 
@@ -111,7 +118,9 @@ public:
             m_set = true;
         }
         if (m_id == event.id) {
-            win::update_move_resize(c, event.pos.toPoint());
+            std::visit(
+                overload{[&](auto&& win) { win::update_move_resize(win, event.pos.toPoint()); }},
+                *c);
         }
         return true;
     }
@@ -123,7 +132,7 @@ public:
             return false;
         }
         if (m_id == event.id || !m_set) {
-            win::end_move_resize(c);
+            std::visit(overload{[](auto&& win) { win::end_move_resize(win); }}, *c);
             m_set = false;
             // pass through to update decoration filter later on
             return false;

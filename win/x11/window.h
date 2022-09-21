@@ -47,22 +47,28 @@ template<typename Space>
 class window : public Toplevel<Space>
 {
 public:
-    using abstract_type = Toplevel<Space>;
+    using type = window<Space>;
     using control_t = x11::control<window>;
+    using render_t
+        = render::window<typename Space::window_t, typename Space::base_t::render_t::compositor_t>;
     constexpr static bool is_toplevel{false};
 
     window(win::remnant remnant, Space& space)
         : Toplevel<Space>(std::move(remnant), space)
+        , transient{std::make_unique<win::transient<type>>(this)}
         , motif_hints{space.atoms->motif_wm_hints}
     {
+        this->space.windows_map.insert({this->meta.signal_id, this});
         Toplevel<Space>::qobject = std::make_unique<window_qobject>();
     }
 
     window(xcb_window_t xcb_win, Space& space)
-        : Toplevel<Space>(new x11::transient<window>(this), space)
+        : Toplevel<Space>(space)
+        , transient{std::make_unique<x11::transient<type>>(this)}
         , client_machine{new win::x11::client_machine}
         , motif_hints(space.atoms->motif_wm_hints)
     {
+        this->space.windows_map.insert({this->meta.signal_id, this});
         Toplevel<Space>::qobject = std::make_unique<window_qobject>();
         window_setup_geometry(*this);
 
@@ -74,53 +80,66 @@ public:
         cleanup_window(*this);
     }
 
-    bool isClient() const override
+    bool isClient() const
     {
         return static_cast<bool>(this->control);
     }
 
-    NET::WindowType get_window_type_direct() const override
+    pid_t pid() const
+    {
+        return this->info->pid();
+    }
+
+    NET::WindowType get_window_type_direct() const
     {
         return x11::get_window_type_direct(*this);
     }
 
-    NET::WindowType windowType() const override
+    NET::WindowType windowType() const
     {
         return get_window_type(*this);
     }
 
-    x11::client_machine* get_client_machine() const override
+    QByteArray windowRole() const
+    {
+        if (this->remnant) {
+            return this->remnant->data.window_role;
+        }
+        return this->info->windowRole();
+    }
+
+    x11::client_machine* get_client_machine() const
     {
         return client_machine;
     }
 
-    QByteArray wmClientMachine(bool use_localhost) const override
+    QByteArray wmClientMachine(bool use_localhost) const
     {
         return get_wm_client_machine(*this, use_localhost);
     }
 
-    bool isLocalhost() const override
+    bool isLocalhost() const
     {
         assert(client_machine);
         return client_machine->is_local();
     }
 
-    double opacity() const override
+    double opacity() const
     {
         return get_opacity(*this);
     }
 
-    void setOpacity(double new_opacity) override
+    void setOpacity(double new_opacity)
     {
         set_opacity(*this, new_opacity);
     }
 
-    xcb_window_t frameId() const override
+    xcb_window_t frameId() const
     {
         return get_frame_id(*this);
     }
 
-    QRegion render_region() const override
+    QRegion render_region() const
     {
         return get_render_region(*this);
     }
@@ -129,113 +148,131 @@ public:
      * Returns whether the window provides context help or not. If it does, you should show a help
      * menu item or a help button like '?' and call contextHelp() if this is invoked.
      */
-    bool providesContextHelp() const override
+    bool providesContextHelp() const
     {
         return this->info->supportsProtocol(NET::ContextHelpProtocol);
     }
 
-    void showContextHelp() override
+    void showContextHelp()
     {
         show_context_help(*this);
     }
 
-    void checkNoBorder() override
+    void checkNoBorder()
     {
         setNoBorder(app_no_border);
     }
 
-    bool wantsShadowToBeRendered() const override
+    bool wantsShadowToBeRendered() const
     {
         return wants_shadow_to_be_rendered(*this);
     }
 
-    QSize resizeIncrements() const override
+    QSize resizeIncrements() const
     {
         return geometry_hints.resize_increments();
     }
 
-    QRect iconGeometry() const override
+    QRect iconGeometry() const
     {
-        return get_icon_geometry(*this);
+        return x11::get_icon_geometry(*this);
     }
 
-    void setupCompositing() override
+    void setupCompositing()
     {
         x11::setup_compositing(*this);
     }
 
-    void finishCompositing() override
+    void finishCompositing()
     {
         x11::finish_compositing(*this);
     }
 
-    void setBlockingCompositing(bool block) override
+    void setBlockingCompositing(bool block)
     {
         x11::set_blocking_compositing(*this, block);
     }
 
-    void add_scene_window_addon() override
+    void add_scene_window_addon()
     {
         x11::add_scene_window_addon(*this);
     }
 
-    void applyWindowRules() override
+    bool has_pending_repaints() const
+    {
+        return !win::repaints(*this).isEmpty();
+    }
+
+    bool supportsWindowRules() const
+    {
+        return control != nullptr;
+    }
+
+    void applyWindowRules()
     {
         apply_window_rules(*this);
         setBlockingCompositing(this->info->isBlockingCompositing());
     }
 
-    void updateWindowRules(rules::type selection) override
+    void updateWindowRules(rules::type selection)
     {
         if (!this->control) {
             // not fully setup yet
             return;
         }
-        Toplevel<Space>::updateWindowRules(selection);
+        if (this->space.rule_book->areUpdatesDisabled()) {
+            return;
+        }
+        rules::update_window(control->rules, *this, static_cast<int>(selection));
     }
 
-    bool acceptsFocus() const override
+    bool acceptsFocus() const
     {
         return this->info->input();
     }
 
-    void updateCaption() override
+    void updateCaption()
     {
         set_caption(this, this->meta.caption.normal, true);
     }
 
-    bool isShown() const override
+    bool isShown() const
     {
         return is_shown(*this);
     }
 
-    bool isHiddenInternal() const override
+    bool isHiddenInternal() const
     {
         return hidden;
     }
 
-    QSize minSize() const override
+    QSize minSize() const
     {
         return this->control->rules.checkMinSize(geometry_hints.min_size());
     }
 
-    QSize maxSize() const override
+    QSize maxSize() const
     {
         return this->control->rules.checkMaxSize(geometry_hints.max_size());
     }
 
-    QSize basicUnit() const override
+    QSize basicUnit() const
     {
         return geometry_hints.resize_increments();
     }
 
+    win::layer layer_for_dock() const
+    {
+        return win::layer_for_dock(*this);
+    }
+
     // When another window is created, checks if this window is a child for it.
-    void checkTransient(abstract_type* window) override
+    void checkTransient(type* window)
     {
         check_transient(*this, *window);
     }
 
-    bool groupTransient() const override
+    bool groupTransient() const
     {
         // EWMH notes that a window with WM_TRANSIENT_FOR property sset to None should be treated
         // like a group transient [1], but internally we translate such setting early and only
@@ -247,225 +284,223 @@ public:
         return static_cast<x11::transient<window>*>(this->transient.get())->lead_id == rootWindow();
     }
 
-    abstract_type* findModal() override
+    type* findModal()
     {
         return transient_find_modal(*this);
     }
 
-    win::maximize_mode maximizeMode() const override
+    win::maximize_mode maximizeMode() const
     {
         return max_mode;
     }
 
-    void setFullScreen(bool full, bool user = true) override
+    void setFullScreen(bool full, bool user = true)
     {
         win::update_fullscreen(this, full, user);
     }
 
-    bool userCanSetFullScreen() const override
+    bool userCanSetFullScreen() const
     {
         return user_can_set_fullscreen(*this);
     }
 
-    void handle_update_fullscreen(bool full) override
+    void handle_update_fullscreen(bool full)
     {
         propagate_fullscreen_update(this, full);
     }
 
-    bool noBorder() const override
+    bool noBorder() const
     {
         return deco_has_no_border(*this);
     }
 
-    void setNoBorder(bool set) override
+    void setNoBorder(bool set)
     {
         deco_set_no_border(*this, set);
     }
 
-    void handle_update_no_border() override
+    void handle_update_no_border()
     {
         check_set_no_border(this);
     }
 
-    void layoutDecorationRects(QRect& left, QRect& top, QRect& right, QRect& bottom) const override
+    void layoutDecorationRects(QRect& left, QRect& top, QRect& right, QRect& bottom) const
     {
         x11::layout_decoration_rects(this, left, top, right, bottom);
     }
 
-    void updateDecoration(bool check_workspace_pos, bool force = false) override
+    void updateDecoration(bool check_workspace_pos, bool force = false)
     {
         update_decoration(this, check_workspace_pos, force);
     }
 
-    void handle_activated() override
+    void handle_activated()
     {
         update_user_time(this);
     }
 
-    void takeFocus() override
+    void takeFocus()
     {
         focus_take(*this);
     }
 
-    bool userCanSetNoBorder() const override
+    bool userCanSetNoBorder() const
     {
         return deco_user_can_set_no_border(*this);
     }
 
-    bool wantsInput() const override
+    bool wantsInput() const
     {
         return wants_input(*this);
     }
 
-    void setShortcutInternal() override
+    void setShortcutInternal()
     {
         shortcut_set_internal(*this);
     }
 
-    bool hasStrut() const override
+    bool hasStrut() const
     {
         return has_strut(*this);
     }
 
-    void showOnScreenEdge() override
+    void showOnScreenEdge()
     {
         show_on_screen_edge(*this);
     }
 
-    void closeWindow() override
+    void closeWindow()
     {
         close_window(*this);
     }
 
-    bool isCloseable() const override
+    bool isCloseable() const
     {
         return is_closeable(*this);
     }
 
-    bool isMaximizable() const override
+    bool isMaximizable() const
     {
         return geo_is_maximizable(*this);
     }
 
-    bool isMinimizable() const override
+    bool isMinimizable() const
     {
         return geo_is_minimizable(*this);
     }
 
-    bool isMovable() const override
+    bool isMovable() const
     {
         return is_movable(*this);
     }
 
-    bool isMovableAcrossScreens() const override
+    bool isMovableAcrossScreens() const
     {
         return is_movable_across_screens(*this);
     }
 
-    bool isResizable() const override
+    bool isResizable() const
     {
         return is_resizable(*this);
     }
 
-    void hideClient(bool hide) override
+    void hideClient(bool hide)
     {
         hide_window(*this, hide);
     }
 
-    void update_maximized(maximize_mode mode) override
+    void update_maximized(maximize_mode mode)
     {
         x11::update_maximized(*this, mode);
     }
 
-    bool doStartMoveResize() override
+    bool doStartMoveResize()
     {
         return do_start_move_resize(*this);
     }
 
-    void leaveMoveResize() override
+    void leaveMoveResize()
     {
         x11::leave_move_resize(*this);
     }
 
-    void doResizeSync() override
+    void doResizeSync()
     {
         do_resize_sync(*this);
     }
 
-    bool isWaitingForMoveResizeSync() const override
+    bool isWaitingForMoveResizeSync() const
     {
         return !pending_configures.empty();
     }
 
-    bool belongsToSameApplication(abstract_type const* other,
-                                  win::same_client_check checks) const override
+    bool belongsToSameApplication(type const* other, win::same_client_check checks) const
     {
-        auto c2 = dynamic_cast<const window*>(other);
-        if (!c2) {
-            return false;
-        }
-        return belong_to_same_application(this, c2, checks);
+        return belong_to_same_application(this, other, checks);
     }
 
-    bool belongsToDesktop() const override
+    bool belongsToDesktop() const
     {
         return belongs_to_desktop(*this);
     }
 
-    void doSetDesktop(int /*desktop*/, int /*was_desk*/) override
+    void doSetDesktop(int /*desktop*/, int /*was_desk*/)
     {
         update_visibility(this);
     }
 
-    bool isBlockingCompositing() override
+    bool isBlockingCompositing()
     {
         return blocks_compositing;
     }
 
-    xcb_timestamp_t userTime() const override
+    xcb_timestamp_t userTime() const
     {
         return get_user_time(*this);
     }
 
-    void doSetActive() override
+    void doSetActive()
     {
         do_set_active(*this);
     }
 
-    void doMinimize() override
+    void doMinimize()
     {
         do_minimize(*this);
     }
 
-    void setFrameGeometry(QRect const& rect) override
+    void setFrameGeometry(QRect const& rect)
     {
         set_frame_geometry(*this, rect);
     }
 
-    void apply_restore_geometry(QRect const& restore_geo) override
+    void apply_restore_geometry(QRect const& restore_geo)
     {
         setFrameGeometry(rectify_restore_geometry(this, restore_geo));
     }
 
-    void restore_geometry_from_fullscreen() override
+    void restore_geometry_from_fullscreen()
     {
         x11::restore_geometry_from_fullscreen(*this);
     }
 
-    void updateColorScheme() override
+    void updateColorScheme()
     {
     }
 
-    void killWindow() override
+    void killWindow()
     {
         handle_kill_window(*this);
     }
 
-    void debug(QDebug& stream) const override
+    void debug(QDebug& stream) const
     {
         print_window_debug_info(*this, stream);
     }
 
+    std::unique_ptr<win::transient<type>> transient;
+    std::unique_ptr<win::control<type>> control;
+    std::unique_ptr<render_t> render;
     QString iconic_caption;
 
     x11::xcb_windows xcb_windows;

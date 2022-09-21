@@ -37,21 +37,27 @@ void space_reconfigure(Space& space)
     x11::update_tool_windows_visibility(&space, true);
 
     space.rule_book->load();
-    for (auto window : space.windows) {
-        if (window->supportsWindowRules()) {
-            rules::evaluate_rules(window);
-            rules::discard_used_rules(*space.rule_book, *window, false);
-        }
+    for (auto win : space.windows) {
+        std::visit(overload{[&](auto&& win) {
+                       if (win->supportsWindowRules()) {
+                           rules::evaluate_rules(win);
+                           rules::discard_used_rules(*space.rule_book, *win, false);
+                       }
+                   }},
+                   win);
     }
 
     if (borderlessMaximizedWindows != kwinApp()->options->qobject->borderlessMaximizedWindows()
         && !kwinApp()->options->qobject->borderlessMaximizedWindows()) {
         // in case borderless maximized windows option changed and new option
         // is to have borders, we need to unset the borders for all maximized windows
-        for (auto window : space.windows) {
-            if (window->maximizeMode() == win::maximize_mode::full) {
-                window->checkNoBorder();
-            }
+        for (auto win : space.windows) {
+            std::visit(overload{[&](auto&& win) {
+                           if (win->maximizeMode() == maximize_mode::full) {
+                               win->checkNoBorder();
+                           }
+                       }},
+                       win);
         }
     }
 }

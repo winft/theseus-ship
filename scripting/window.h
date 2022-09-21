@@ -16,6 +16,8 @@
 #include "win/screen.h"
 #include "win/transient.h"
 
+#include <variant>
+
 namespace KWin::scripting
 {
 
@@ -105,9 +107,10 @@ template<typename RefWin>
 class window_impl : public window
 {
 public:
-    window_impl(RefWin* ref_win)
+    template<typename Win>
+    window_impl(Win* ref_win)
         : window(*ref_win->qobject)
-        , m_client{ref_win}
+        , ref_win{ref_win}
     {
         auto qtwin = get_window_qobject();
         QObject::connect(qtwin,
@@ -174,563 +177,617 @@ public:
             Q_EMIT clientFullScreenSet(this, ref_win->control->fullscreen, true);
         });
 
-        if (ref_win->isClient()) {
-            QObject::connect(qtwin,
-                             &win::window_qobject::blockingCompositingChanged,
-                             this,
-                             [this](auto /*block*/) {
-                                 // TODO(romangg): Should we emit null if block is false?
-                                 Q_EMIT blockingCompositingChanged(this);
-                             });
+        if constexpr (requires(RefWin win) { win.isClient(); }) {
+            if (ref_win->isClient()) {
+                QObject::connect(qtwin,
+                                 &win::window_qobject::blockingCompositingChanged,
+                                 this,
+                                 [this](auto /*block*/) {
+                                     // TODO(romangg): Should we emit null if block is false?
+                                     Q_EMIT blockingCompositingChanged(this);
+                                 });
+            }
         }
     }
 
     xcb_window_t frameId() const override
     {
-        return m_client->frameId();
+        return std::visit(overload{[](auto&& win) -> xcb_window_t {
+                              if constexpr (requires(decltype(win) win) { win->frameId(); }) {
+                                  return win->frameId();
+                              }
+                              return XCB_WINDOW_NONE;
+                          }},
+                          ref_win);
     }
 
     quint32 windowId() const override
     {
-        return m_client->xcb_window;
+        return std::visit(overload{[](auto&& win) -> quint32 {
+                              if constexpr (requires(decltype(win) win) { win->xcb_window; }) {
+                                  return win->xcb_window;
+                              }
+                              return XCB_WINDOW_NONE;
+                          }},
+                          ref_win);
     }
 
     QByteArray resourceName() const override
     {
-        return m_client->meta.wm_class.res_name;
+        return std::visit(overload{[](auto&& win) { return win->meta.wm_class.res_name; }},
+                          ref_win);
     }
 
     QByteArray resourceClass() const override
     {
-        return m_client->meta.wm_class.res_class;
+        return std::visit(overload{[](auto&& win) { return win->meta.wm_class.res_class; }},
+                          ref_win);
     }
 
     QString caption() const override
     {
-        return win::caption(m_client);
+        return std::visit(overload{[](auto&& win) { return win::caption(win); }}, ref_win);
     }
 
     QIcon icon() const override
     {
-        return m_client->control->icon;
+        return std::visit(overload{[](auto&& win) { return win->control->icon; }}, ref_win);
     }
 
     QRect iconGeometry() const override
     {
-        return m_client->iconGeometry();
+        return std::visit(overload{[](auto&& win) { return win::get_icon_geometry(*win); }},
+                          ref_win);
     }
 
     QUuid internalId() const override
     {
-        return m_client->meta.internal_id;
+        return std::visit(overload{[](auto&& win) { return win->meta.internal_id; }}, ref_win);
     }
 
     pid_t pid() const override
     {
-        return m_client->pid();
+        return std::visit(overload{[](auto&& win) { return win->pid(); }}, ref_win);
     }
 
     QRect bufferGeometry() const override
     {
-        return win::render_geometry(m_client);
+        return std::visit(overload{[](auto&& win) { return win::render_geometry(win); }}, ref_win);
     }
 
     QRect frameGeometry() const override
     {
-        return m_client->geo.frame;
+        return std::visit(overload{[](auto&& win) { return win->geo.frame; }}, ref_win);
     }
 
     void setFrameGeometry(QRect const& geo) override
     {
-        m_client->setFrameGeometry(geo);
+        std::visit(overload{[&](auto&& win) { win->setFrameGeometry(geo); }}, ref_win);
     }
 
     QPoint pos() const override
     {
-        return m_client->geo.pos();
+        return std::visit(overload{[](auto&& win) { return win->geo.pos(); }}, ref_win);
     }
 
     QRect rect() const override
     {
-        return QRect({}, m_client->geo.size());
+        return std::visit(overload{[](auto&& win) { return QRect({}, win->geo.size()); }}, ref_win);
     }
 
     QRect visibleRect() const override
     {
-        return win::visible_rect(m_client);
+        return std::visit(overload{[](auto&& win) { return win::visible_rect(win); }}, ref_win);
     }
 
     QSize size() const override
     {
-        return m_client->geo.size();
+        return std::visit(overload{[](auto&& win) { return win->geo.size(); }}, ref_win);
     }
 
     QSize minSize() const override
     {
-        return m_client->minSize();
+        return std::visit(overload{[](auto&& win) { return win->minSize(); }}, ref_win);
     }
 
     QSize maxSize() const override
     {
-        return m_client->maxSize();
+        return std::visit(overload{[](auto&& win) { return win->maxSize(); }}, ref_win);
     }
 
     QPoint clientPos() const override
     {
-        return win::frame_relative_client_rect(m_client).topLeft();
+        return std::visit(
+            overload{[](auto&& win) { return win::frame_relative_client_rect(win).topLeft(); }},
+            ref_win);
     }
 
     QSize clientSize() const override
     {
-        return win::frame_to_client_size(m_client, m_client->geo.size());
+        return std::visit(
+            overload{[](auto&& win) { return win::frame_to_client_size(win, win->geo.size()); }},
+            ref_win);
     }
 
     int x() const override
     {
-        return m_client->geo.pos().x();
+        return std::visit(overload{[](auto&& win) { return win->geo.pos().x(); }}, ref_win);
     }
 
     int y() const override
     {
-        return m_client->geo.pos().y();
+        return std::visit(overload{[](auto&& win) { return win->geo.pos().y(); }}, ref_win);
     }
 
     int width() const override
     {
-        return m_client->geo.size().width();
+        return std::visit(overload{[](auto&& win) { return win->geo.size().width(); }}, ref_win);
     }
 
     int height() const override
     {
-        return m_client->geo.size().height();
+        return std::visit(overload{[](auto&& win) { return win->geo.size().height(); }}, ref_win);
     }
 
     bool isMove() const override
     {
-        return win::is_move(m_client);
+        return std::visit(overload{[](auto&& win) { return win::is_move(win); }}, ref_win);
     }
 
     bool isResize() const override
     {
-        return win::is_resize(m_client);
+        return std::visit(overload{[](auto&& win) { return win::is_resize(win); }}, ref_win);
     }
 
     bool hasAlpha() const override
     {
-        return win::has_alpha(*m_client);
+        return std::visit(overload{[](auto&& win) { return win::has_alpha(*win); }}, ref_win);
     }
 
     qreal opacity() const override
     {
-        return m_client->opacity();
+        return std::visit(overload{[](auto&& win) { return win->opacity(); }}, ref_win);
     }
 
     void setOpacity(qreal opacity) override
     {
-        m_client->setOpacity(opacity);
+        std::visit(overload{[=](auto&& win) { win->setOpacity(opacity); }}, ref_win);
     }
 
     bool isFullScreen() const override
     {
-        return m_client->control->fullscreen;
+        return std::visit(overload{[](auto&& win) { return win->control->fullscreen; }}, ref_win);
     }
 
     void setFullScreen(bool set) override
     {
-        m_client->setFullScreen(set);
+        std::visit(overload{[=](auto&& win) { win->setFullScreen(set); }}, ref_win);
     }
 
     int screen() const override
     {
-        if (!m_client->topo.central_output) {
-            return 0;
-        }
-        return base::get_output_index(m_client->space.base.outputs, *m_client->topo.central_output);
+        return std::visit(overload{[](auto&& win) -> int {
+                              if (!win->topo.central_output) {
+                                  return 0;
+                              }
+                              return base::get_output_index(win->space.base.outputs,
+                                                            *win->topo.central_output);
+                          }},
+                          ref_win);
     }
 
     int desktop() const override
     {
-        return win::get_desktop(*m_client);
+        return std::visit(overload{[](auto&& win) { return win::get_desktop(*win); }}, ref_win);
     }
 
     void setDesktop(int desktop) override
     {
-        win::set_desktop(m_client, desktop);
+        std::visit(overload{[=](auto&& win) { win::set_desktop(win, desktop); }}, ref_win);
     }
 
     QVector<uint> x11DesktopIds() const override
     {
-        return win::x11_desktop_ids(m_client);
+        return std::visit(overload{[](auto&& win) { return win::x11_desktop_ids(win); }}, ref_win);
     }
 
     bool isOnAllDesktops() const override
     {
-        return win::on_all_desktops(m_client);
+        return std::visit(overload{[](auto&& win) { return win::on_all_desktops(win); }}, ref_win);
     }
 
     void setOnAllDesktops(bool set) override
     {
-        win::set_on_all_desktops(m_client, set);
+        std::visit(overload{[set](auto&& win) { win::set_on_all_desktops(win, set); }}, ref_win);
     }
 
     bool isOnDesktop(unsigned int desktop) const override
     {
-        return win::on_desktop(m_client, desktop);
+        return std::visit(overload{[desktop](auto&& win) { return win::on_desktop(win, desktop); }},
+                          ref_win);
     }
 
     bool isOnCurrentDesktop() const override
     {
-        return win::on_current_desktop(m_client);
+        return std::visit(overload{[](auto&& win) { return win::on_current_desktop(win); }},
+                          ref_win);
     }
 
     QByteArray windowRole() const override
     {
-        return m_client->windowRole();
+        return std::visit(overload{[](auto&& win) { return win->windowRole(); }}, ref_win);
     }
 
     NET::WindowType windowType() const override
     {
-        return m_client->windowType();
+        return std::visit(overload{[](auto&& win) { return win->windowType(); }}, ref_win);
     }
 
     bool isDesktop() const override
     {
-        return win::is_desktop(m_client);
+        return std::visit(overload{[](auto&& win) { return win::is_desktop(win); }}, ref_win);
     }
 
     bool isDock() const override
     {
-        return win::is_dock(m_client);
+        return std::visit(overload{[](auto&& win) { return win::is_dock(win); }}, ref_win);
     }
 
     bool isToolbar() const override
     {
-        return win::is_toolbar(m_client);
+        return std::visit(overload{[](auto&& win) { return win::is_toolbar(win); }}, ref_win);
     }
 
     bool isMenu() const override
     {
-        return win::is_menu(m_client);
+        return std::visit(overload{[](auto&& win) { return win::is_menu(win); }}, ref_win);
     }
 
     bool isNormalWindow() const override
     {
-        return win::is_normal(m_client);
+        return std::visit(overload{[](auto&& win) { return win::is_normal(win); }}, ref_win);
     }
 
     bool isDialog() const override
     {
-        return win::is_dialog(m_client);
+        return std::visit(overload{[](auto&& win) { return win::is_dialog(win); }}, ref_win);
     }
 
     bool isSplash() const override
     {
-        return win::is_splash(m_client);
+        return std::visit(overload{[](auto&& win) { return win::is_splash(win); }}, ref_win);
     }
 
     bool isUtility() const override
     {
-        return win::is_utility(m_client);
+        return std::visit(overload{[](auto&& win) { return win::is_utility(win); }}, ref_win);
     }
 
     bool isDropdownMenu() const override
     {
-        return win::is_dropdown_menu(m_client);
+        return std::visit(overload{[](auto&& win) { return win::is_dropdown_menu(win); }}, ref_win);
     }
 
     bool isPopupMenu() const override
     {
-        return win::is_popup_menu(m_client);
+        return std::visit(overload{[](auto&& win) { return win::is_popup_menu(win); }}, ref_win);
     }
 
     bool isTooltip() const override
     {
-        return win::is_tooltip(m_client);
+        return std::visit(overload{[](auto&& win) { return win::is_tooltip(win); }}, ref_win);
     }
 
     bool isNotification() const override
     {
-        return win::is_notification(m_client);
+        return std::visit(overload{[](auto&& win) { return win::is_notification(win); }}, ref_win);
     }
 
     bool isCriticalNotification() const override
     {
-        return win::is_critical_notification(m_client);
+        return std::visit(overload{[](auto&& win) { return win::is_critical_notification(win); }},
+                          ref_win);
     }
 
     bool isAppletPopup() const override
     {
-        return win::is_applet_popup(m_client);
+        return std::visit(overload{[](auto&& win) { return win::is_applet_popup(win); }}, ref_win);
     }
 
     bool isOnScreenDisplay() const override
     {
-        return win::is_on_screen_display(m_client);
+        return std::visit(overload{[](auto&& win) { return win::is_on_screen_display(win); }},
+                          ref_win);
     }
 
     bool isComboBox() const override
     {
-        return win::is_combo_box(m_client);
+        return std::visit(overload{[](auto&& win) { return win::is_combo_box(win); }}, ref_win);
     }
 
     bool isDNDIcon() const override
     {
-        return win::is_dnd_icon(m_client);
+        return std::visit(overload{[](auto&& win) { return win::is_dnd_icon(win); }}, ref_win);
     }
 
     bool isPopupWindow() const override
     {
-        return win::is_popup(m_client);
+        return std::visit(overload{[](auto&& win) { return win::is_popup(win); }}, ref_win);
     }
 
     bool isSpecialWindow() const override
     {
-        return win::is_special_window(m_client);
+        return std::visit(overload{[](auto&& win) { return win::is_special_window(win); }},
+                          ref_win);
     }
 
     bool isCloseable() const override
     {
-        return m_client->isCloseable();
+        return std::visit(overload{[](auto&& win) { return win->isCloseable(); }}, ref_win);
     }
 
     bool isMovable() const override
     {
-        return m_client->isMovable();
+        return std::visit(overload{[](auto&& win) { return win->isMovable(); }}, ref_win);
     }
 
     bool isMovableAcrossScreens() const override
     {
-        return m_client->isMovableAcrossScreens();
+        return std::visit(overload{[](auto&& win) { return win->isMovableAcrossScreens(); }},
+                          ref_win);
     }
 
     bool isResizable() const override
     {
-        return m_client->isResizable();
+        return std::visit(overload{[](auto&& win) { return win->isResizable(); }}, ref_win);
     }
 
     bool isMinimizable() const override
     {
-        return m_client->isMinimizable();
+        return std::visit(overload{[](auto&& win) { return win->isMinimizable(); }}, ref_win);
     }
 
     bool isMaximizable() const override
     {
-        return m_client->isMaximizable();
+        return std::visit(overload{[](auto&& win) { return win->isMaximizable(); }}, ref_win);
     }
 
     bool isFullScreenable() const override
     {
-        return m_client->control->can_fullscreen();
+        return std::visit(overload{[](auto&& win) { return win->control->can_fullscreen(); }},
+                          ref_win);
     }
 
     bool isOutline() const override
     {
-        return m_client->is_outline;
+        return std::visit(overload{[](auto&& win) { return win->is_outline; }}, ref_win);
     }
 
     bool isShape() const override
     {
-        return m_client->is_shape;
+        return std::visit(overload{[](auto&& win) { return win->is_shape; }}, ref_win);
     }
 
     bool keepAbove() const override
     {
-        return m_client->control->keep_above;
+        return std::visit(overload{[](auto&& win) { return win->control->keep_above; }}, ref_win);
     }
 
     void setKeepAbove(bool set) override
     {
-        win::set_keep_above(m_client, set);
+        std::visit(overload{[=](auto&& win) { win::set_keep_above(win, set); }}, ref_win);
     }
 
     bool keepBelow() const override
     {
-        return m_client->control->keep_below;
+        return std::visit(overload{[](auto&& win) { return win->control->keep_below; }}, ref_win);
     }
 
     void setKeepBelow(bool set) override
     {
-        win::set_keep_below(m_client, set);
+        std::visit(overload{[=](auto&& win) { win::set_keep_below(win, set); }}, ref_win);
     }
 
     bool isMinimized() const override
     {
-        return m_client->control->minimized;
+        return std::visit(overload{[](auto&& win) { return win->control->minimized; }}, ref_win);
     }
 
     void setMinimized(bool set) override
     {
-        win::set_minimized(m_client, set);
+        std::visit(overload{[=](auto&& win) { win::set_minimized(win, set); }}, ref_win);
     }
 
     bool skipTaskbar() const override
     {
-        return m_client->control->skip_taskbar();
+        return std::visit(overload{[](auto&& win) { return win->control->skip_taskbar(); }},
+                          ref_win);
     }
 
     void setSkipTaskbar(bool set) override
     {
-        win::set_skip_taskbar(m_client, set);
+        std::visit(overload{[=](auto&& win) { win::set_skip_taskbar(win, set); }}, ref_win);
     }
 
     bool skipPager() const override
     {
-        return m_client->control->skip_pager();
+        return std::visit(overload{[](auto&& win) { return win->control->skip_pager(); }}, ref_win);
     }
 
     void setSkipPager(bool set) override
     {
-        win::set_skip_pager(m_client, set);
+        std::visit(overload{[=](auto&& win) { win::set_skip_pager(win, set); }}, ref_win);
     }
 
     bool skipSwitcher() const override
     {
-        return m_client->control->skip_switcher();
+        return std::visit(overload{[](auto&& win) { return win->control->skip_switcher(); }},
+                          ref_win);
     }
 
     void setSkipSwitcher(bool set) override
     {
-        win::set_skip_switcher(m_client, set);
+        std::visit(overload{[=](auto&& win) { win::set_skip_switcher(win, set); }}, ref_win);
     }
 
     bool skipsCloseAnimation() const override
     {
-        return m_client->skip_close_animation;
+        return std::visit(overload{[](auto&& win) { return win->skip_close_animation; }}, ref_win);
     }
 
     void setSkipCloseAnimation(bool set) override
     {
-        win::set_skip_close_animation(*m_client, set);
+        std::visit(overload{[=](auto&& win) { win::set_skip_close_animation(*win, set); }},
+                   ref_win);
     }
 
     bool isActive() const override
     {
-        return m_client->control->active;
+        return std::visit(overload{[](auto&& win) { return win->control->active; }}, ref_win);
     }
 
     bool isDemandingAttention() const override
     {
-        return m_client->control->demands_attention;
+        return std::visit(overload{[](auto&& win) { return win->control->demands_attention; }},
+                          ref_win);
     }
 
     void demandAttention(bool set) override
     {
-        win::set_demands_attention(m_client, set);
+        std::visit(overload{[=](auto&& win) { win::set_demands_attention(win, set); }}, ref_win);
     }
 
     bool wantsInput() const override
     {
-        return m_client->wantsInput();
+        return std::visit(overload{[](auto&& win) { return win->wantsInput(); }}, ref_win);
     }
 
     bool applicationMenuActive() const override
     {
-        return m_client->control->appmenu.active;
+        return std::visit(overload{[](auto&& win) { return win->control->appmenu.active; }},
+                          ref_win);
     }
 
     bool unresponsive() const override
     {
-        return m_client->control->unresponsive;
+        return std::visit(overload{[](auto&& win) { return win->control->unresponsive; }}, ref_win);
     }
 
     bool isTransient() const override
     {
-        return m_client->transient->lead();
+        return std::visit(overload{[](auto&& win) -> bool { return win->transient->lead(); }},
+                          ref_win);
     }
 
     window* transientFor() const override
     {
-        auto parent = m_client->transient->lead();
-        if (!parent) {
-            return nullptr;
-        }
+        return std::visit(overload{[](auto&& win) -> window* {
+                              auto parent = win->transient->lead();
+                              if (!parent) {
+                                  return nullptr;
+                              }
 
-        assert(parent->control);
-        return parent->control->scripting.get();
+                              assert(parent->control);
+                              return parent->control->scripting.get();
+                          }},
+                          ref_win);
     }
 
     bool isModal() const override
     {
-        return m_client->transient->modal();
+        return std::visit(overload{[](auto&& win) { return win->transient->modal(); }}, ref_win);
     }
 
     bool decorationHasAlpha() const override
     {
-        return win::decoration_has_alpha(m_client);
+        return std::visit(overload{[](auto&& win) { return win::decoration_has_alpha(win); }},
+                          ref_win);
     }
 
     bool hasNoBorder() const override
     {
-        return m_client->noBorder();
+        return std::visit(overload{[](auto&& win) { return win->noBorder(); }}, ref_win);
     }
 
     void setNoBorder(bool set) override
     {
-        m_client->setNoBorder(set);
+        std::visit(overload{[=](auto&& win) { win->setNoBorder(set); }}, ref_win);
     }
 
     QString colorScheme() const override
     {
-        return m_client->control->palette.color_scheme;
+        return std::visit(overload{[](auto&& win) { return win->control->palette.color_scheme; }},
+                          ref_win);
     }
 
     QByteArray desktopFileName() const override
     {
-        return m_client->control->desktop_file_name;
+        return std::visit(overload{[](auto&& win) { return win->control->desktop_file_name; }},
+                          ref_win);
     }
 
     bool hasApplicationMenu() const override
     {
-        return m_client->control->has_application_menu();
+        return std::visit(overload{[](auto&& win) { return win->control->has_application_menu(); }},
+                          ref_win);
     }
 
     bool providesContextHelp() const override
     {
-        return m_client->providesContextHelp();
+        return std::visit(overload{[](auto&& win) { return win->providesContextHelp(); }}, ref_win);
     }
 
     bool isClient() const override
     {
-        return m_client->isClient();
+        using x11_window_t = typename std::remove_pointer_t<
+            std::variant_alternative_t<0, RefWin>>::space_t::x11_window;
+        return std::visit(overload{
+                              [](x11_window_t* win) { return static_cast<bool>(win->control); },
+                              [](auto&&) { return false; },
+                          },
+                          ref_win);
     }
 
     bool isDeleted() const override
     {
-        return static_cast<bool>(m_client->remnant);
+        return std::visit(overload{[](auto&& win) { return static_cast<bool>(win->remnant); }},
+                          ref_win);
     }
 
     quint32 surfaceId() const override
     {
-        return m_client->surface_id;
+        return std::visit(overload{[](auto&& win) { return win->surface_id; }}, ref_win);
     }
 
     Wrapland::Server::Surface* surface() const override
     {
-        return m_client->surface;
+        return std::visit(overload{[](auto&& win) { return win->surface; }}, ref_win);
     }
 
     QSize basicUnit() const override
     {
-        return m_client->basicUnit();
+        return std::visit(overload{[](auto&& win) { return win->basicUnit(); }}, ref_win);
     }
 
     bool isBlockingCompositing() override
     {
-        return m_client->isBlockingCompositing();
+        return std::visit(overload{[](auto&& win) { return win::is_blocking_compositing(*win); }},
+                          ref_win);
     }
 
     void setBlockingCompositing(bool block) override
     {
-        m_client->setBlockingCompositing(block);
+        std::visit(overload{[=](auto&& win) { win::set_blocking_compositing(*win, block); }},
+                   ref_win);
     }
 
-    RefWin* client() const
+    RefWin client() const
     {
-        return m_client;
+        return ref_win;
     }
 
 private:
-    RefWin* m_client;
+    RefWin ref_win;
 };
 
 }

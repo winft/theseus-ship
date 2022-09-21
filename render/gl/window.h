@@ -59,7 +59,7 @@ public:
     using window_t = typename Scene::window_t;
     using buffer_t = typename Scene::buffer_t;
 
-    window(RefWin* ref_win, Scene& scene)
+    window(RefWin ref_win, Scene& scene)
         : window_t(ref_win, *scene.platform.compositor)
         , scene{scene}
     {
@@ -157,7 +157,11 @@ public:
                     // coordinate in the Client's new content space and map it to the previous
                     // Client's content space.
                     WindowQuad newQuad(WindowQuadContents);
-                    auto const content_geo = win::frame_relative_client_rect(this->ref_win);
+                    auto const content_geo
+                        = std::visit(overload{[](auto&& ref_win) {
+                                         return win::frame_relative_client_rect(ref_win);
+                                     }},
+                                     *this->ref_win);
 
                     for (int i = 0; i < 4; ++i) {
                         auto const xFactor = (quad[i].textureX() - content_geo.x())
@@ -265,7 +269,8 @@ private:
     QMatrix4x4 transformation(paint_type mask, const WindowPaintData& data) const
     {
         QMatrix4x4 matrix;
-        auto const win_pos = this->ref_win->geo.pos();
+        auto const win_pos = std::visit(
+            overload{[&](auto&& ref_win) { return ref_win->geo.pos(); }}, *this->ref_win);
         matrix.translate(win_pos.x(), win_pos.y());
 
         if (!(mask & paint_type::window_transformed)) {
@@ -292,29 +297,33 @@ private:
 
     GLTexture* getDecorationTexture() const
     {
-        if (this->ref_win->control) {
-            if (this->ref_win->noBorder()) {
-                return nullptr;
-            }
+        return std::visit(
+            overload{[&](auto&& ref_win) -> GLTexture* {
+                if (ref_win->control) {
+                    if (ref_win->noBorder()) {
+                        return nullptr;
+                    }
 
-            if (!win::decoration(this->ref_win)) {
+                    if (!win::decoration(ref_win)) {
+                        return nullptr;
+                    }
+                    using deco_renderer_t = deco_renderer<Scene>;
+                    if (auto renderer = static_cast<deco_renderer_t*>(
+                            ref_win->control->deco.client->renderer()->injector.get())) {
+                        renderer->render();
+                        return renderer->texture();
+                    }
+                } else if (auto& remnant = ref_win->remnant) {
+                    if (!remnant->data.deco_render || remnant->data.no_border) {
+                        return nullptr;
+                    }
+                    if (auto& renderer = remnant->data.deco_render) {
+                        return static_cast<deco_render_data<Scene>&>(*renderer).texture.get();
+                    }
+                }
                 return nullptr;
-            }
-            using deco_renderer_t = deco_renderer<Scene>;
-            if (auto renderer = static_cast<deco_renderer_t*>(
-                    this->ref_win->control->deco.client->renderer()->injector.get())) {
-                renderer->render();
-                return renderer->texture();
-            }
-        } else if (auto& remnant = this->ref_win->remnant) {
-            if (!remnant->data.deco_render || remnant->data.no_border) {
-                return nullptr;
-            }
-            if (auto& renderer = remnant->data.deco_render) {
-                return static_cast<deco_render_data<Scene>&>(*renderer).texture.get();
-            }
-        }
-        return nullptr;
+            }},
+            *this->ref_win);
     }
 
     QMatrix4x4 modelViewProjectionMatrix(paint_type mask, const WindowPaintData& data) const
@@ -387,7 +396,9 @@ private:
             // TODO: ARGB crsoofading is atm. a hack, playing on opacities for two dumb SrcOver
             // operations Should be a shader
             if (data.crossFadeProgress() != 1.0
-                && (data.opacity() < 0.95 || win::has_alpha(*window->ref_win))) {
+                && (data.opacity() < 0.95
+                    || std::visit(overload{[&](auto&& win) { return win::has_alpha(*win); }},
+                                  *window->ref_win))) {
                 const float opacity = 1.0 - data.crossFadeProgress();
                 node.opacity = data.opacity() * (1 - pow(opacity, 1.0f + 2.0f * data.opacity()));
             } else {
@@ -438,7 +449,8 @@ private:
             WindowQuadList quads;
             quads.reserve(data.quads.count());
 
-            auto const win_pos = this->ref_win->geo.pos();
+            auto const win_pos
+                = std::visit(overload{[&](auto&& win) { return win->geo.pos(); }}, *this->ref_win);
             auto const filterRegion = region.translated(-win_pos.x(), -win_pos.y());
 
             // split all quads in bounding rect with the actual rects in the region
@@ -519,7 +531,9 @@ private:
             return buffer->texture.get();
         }
 
-        if (!this->ref_win->render_data.damage_region.isEmpty())
+        if (!std::visit(
+                overload{[&](auto&& win) { return win->render_data.damage_region.isEmpty(); }},
+                *this->ref_win))
             scene.insertWait();
 
         if (!buffer->bind()) {

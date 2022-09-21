@@ -73,8 +73,8 @@ void unset_move_resize_window(Space& space)
     --space.block_focus;
 }
 
-template<typename Space>
-void set_move_resize_window(Space& space, typename Space::window_t& window)
+template<typename Space, typename Win>
+void set_move_resize_window(Space& space, Win& window)
 {
     // Catch attempts to move a second window while still moving the first one.
     assert(!space.move_resize_window);
@@ -252,8 +252,11 @@ bool start_move_resize(Win* win)
         && (win->space.base.outputs.size() < 2 || !win->isMovableAcrossScreens())) {
         return false;
     }
-    if (!win->doStartMoveResize()) {
-        return false;
+
+    if constexpr (requires(Win win) { win.doStartMoveResize(); }) {
+        if (!win->doStartMoveResize()) {
+            return false;
+        }
     }
 
     win->control->deco.double_click.stop();
@@ -314,15 +317,19 @@ void perform_move_resize(Win* win)
         win->setFrameGeometry(geom);
     }
 
-    win->doPerformMoveResize();
+    if constexpr (requires(Win win) { win.doPerformMoveResize(); }) {
+        win->doPerformMoveResize();
+    }
     Q_EMIT win->qobject->clientStepUserMovedResized(geom);
 }
 
 template<typename Win>
 auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
 {
-    if (win->isWaitingForMoveResizeSync()) {
-        return;
+    if constexpr (requires(Win win) { win.isWaitingForMoveResizeSync(); }) {
+        if (win->isWaitingForMoveResizeSync()) {
+            return;
+        }
     }
 
     auto& mov_res = win->control->move_resize;
@@ -723,7 +730,12 @@ void finish_move_resize(Win* win, bool cancel)
 
     auto const wasResize = is_resize(win);
     mov_res.enabled = false;
-    win->leaveMoveResize();
+
+    if constexpr (requires(Win win) { win.leaveMoveResize(); }) {
+        win->leaveMoveResize();
+    } else {
+        leave_move_resize(*win);
+    }
 
     if (cancel) {
         win->setFrameGeometry(mov_res.initial_geometry);
@@ -923,11 +935,14 @@ void send_to_screen(Space const& space, Win* win, Output const& output)
         base::set_current_output(space.base, checked_output);
 
         // might impact the layer of a fullscreen window
-        for (auto cc : space.windows) {
-            if (cc->control && cc->control->fullscreen
-                && cc->topo.central_output == checked_output) {
-                update_layer(cc);
-            }
+        for (auto win : space.windows) {
+            std::visit(overload{[&](auto&& win) {
+                           if (win->control && win->control->fullscreen
+                               && win->topo.central_output == checked_output) {
+                               update_layer(win);
+                           }
+                       }},
+                       win);
         }
     }
 
@@ -1003,8 +1018,7 @@ void send_to_screen(Space const& space, Win* win, Output const& output)
         win->geo.restore.max = restore_geo;
     }
 
-    auto children = restacked_by_space_stacking_order(space, win->transient->children);
-    for (auto const& child : children) {
+    for (auto const& child : restacked_by_space_stacking_order(space, win->transient->children)) {
         if (child->control) {
             send_to_screen(space, child, *checked_output);
         }

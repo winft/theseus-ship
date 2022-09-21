@@ -135,7 +135,7 @@ void XwaylandSelectionsTest::testSync()
     m_copyProcess->start();
     QVERIFY(m_copyProcess->waitForStarted());
 
-    Test::space::window_t* copyClient = nullptr;
+    std::optional<Test::space::window_t> copyClient;
     if (copyPlatform == QLatin1String("xcb")) {
         QVERIFY(clientAddedSpy.wait());
         auto copy_client_id = clientAddedSpy.first().first().value<quint32>();
@@ -146,8 +146,10 @@ void XwaylandSelectionsTest::testSync()
         copyClient = Test::app()->base.space->windows_map.at(copy_client_id);
     }
     QVERIFY(copyClient);
-    if (Test::app()->base.space->stacking.active != copyClient) {
-        win::activate_window(*Test::app()->base.space, *copyClient);
+    if (Test::app()->base.space->stacking.active != *copyClient) {
+        std::visit(
+            overload{[](auto&& win) { win::activate_window(*Test::app()->base.space, *win); }},
+            *copyClient);
     }
     QCOMPARE(Test::app()->base.space->stacking.active, copyClient);
     if (copyPlatform == QLatin1String("xcb")) {
@@ -175,7 +177,7 @@ void XwaylandSelectionsTest::testSync()
     m_pasteProcess->start();
     QVERIFY(m_pasteProcess->waitForStarted());
 
-    Test::space::window_t* pasteClient = nullptr;
+    std::optional<Test::space::window_t> pasteClient;
     if (pastePlatform == QLatin1String("xcb")) {
         QVERIFY(clientAddedSpy.wait());
         auto paste_client_id = clientAddedSpy.last().first().value<quint32>();
@@ -193,7 +195,9 @@ void XwaylandSelectionsTest::testSync()
         QSignalSpy clientActivatedSpy(Test::app()->base.space->qobject.get(),
                                       &win::space::qobject_t::clientActivated);
         QVERIFY(clientActivatedSpy.isValid());
-        win::activate_window(*Test::app()->base.space, *pasteClient);
+        std::visit(
+            overload{[](auto&& win) { win::activate_window(*Test::app()->base.space, *win); }},
+            *pasteClient);
         QVERIFY(clientActivatedSpy.wait());
     }
     QTRY_COMPARE(Test::app()->base.space->stacking.active, pasteClient);

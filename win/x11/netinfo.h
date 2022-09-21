@@ -189,6 +189,8 @@ protected:
                             xcb_timestamp_t timestamp,
                             xcb_window_t active_window) override
     {
+        using var_win = typename Space::window_t;
+
         if (auto c = find_controlled_window<window_t>(space, predicate_match::window, w)) {
             if (timestamp == XCB_CURRENT_TIME)
                 timestamp = c->userTime();
@@ -197,7 +199,7 @@ protected:
 
             if (src == NET::FromTool) {
                 force_activate_window(space, *c);
-            } else if (c == most_recently_activated_window(space)) {
+            } else if (var_win(c) == most_recently_activated_window(space)) {
                 return; // WORKAROUND? With > 1 plasma activities, we cause this ourselves. bug
                         // #240673
             } else {    // NET::FromApplication

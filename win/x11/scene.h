@@ -220,7 +220,7 @@ void add_scene_window_addon(Win& win)
         auto win_integrate = std::make_unique<buffer_integration_t>(buffer);
         auto update_helper = [&buffer]() {
             auto& win_integrate = static_cast<buffer_integration_t&>(*buffer.win_integration);
-            create_window_buffer(buffer.window->ref_win, win_integrate);
+            create_window_buffer(std::get<Win*>(*buffer.window->ref_win), win_integrate);
         };
         win_integrate->update = update_helper;
         buffer.win_integration = std::move(win_integrate);

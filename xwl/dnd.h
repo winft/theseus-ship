@@ -84,7 +84,8 @@ public:
                          [this]() { end_drag(); });
     }
 
-    drag_event_reply drag_move_filter(typename Space::window_t* target, QPoint const& pos)
+    drag_event_reply drag_move_filter(std::optional<typename Space::window_t> target,
+                                      QPoint const& pos)
     {
         // This filter only is used when a drag is in process.
         if (wldrag) {

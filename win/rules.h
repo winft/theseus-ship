@@ -25,10 +25,13 @@ void init_rule_book(rules::book& book, Space& space)
 {
     QObject::connect(
         book.qobject.get(), &rules::book_qobject::updates_enabled, space.qobject.get(), [&] {
-            for (auto window : space.windows) {
-                if (window->control) {
-                    window->updateWindowRules(rules::type::all);
-                }
+            for (auto win : space.windows) {
+                std::visit(overload{[&](auto&& win) {
+                               if (win->control) {
+                                   win->updateWindowRules(rules::type::all);
+                               }
+                           }},
+                           win);
             }
         });
 
@@ -61,6 +64,8 @@ void finish_rules(Win* win)
 template<typename Win>
 void apply_window_rules(Win& win)
 {
+    using var_win = typename Win::space_t::window_t;
+
     // apply force rules
     // Placement - does need explicit update, just like some others below
     // Geometry : setGeometry() doesn't check rules
@@ -95,8 +100,9 @@ void apply_window_rules(Win& win)
     win.updateColorScheme();
 
     // FSP
-    // AcceptFocus :
-    if (most_recently_activated_window(win.space) == &win && !client_rules.checkAcceptFocus(true)) {
+    // AcceptFocus
+    if (auto most_recent = most_recently_activated_window(win.space);
+        most_recent && most_recent == var_win(&win) && !client_rules.checkAcceptFocus(true)) {
         activate_next_window(win.space);
     }
 

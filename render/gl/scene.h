@@ -323,7 +323,7 @@ public:
     }
 
     int64_t paint(QRegion damage,
-                  std::deque<typename window_t::ref_t*> const& toplevels,
+                  std::deque<typename window_t::ref_t> const& toplevels,
                   std::chrono::milliseconds presentTime) override
     {
         // Remove all subordinate transients. These are painted as part of their leads.
@@ -392,7 +392,7 @@ public:
 
     int64_t paint_output(output_t* output,
                          QRegion damage,
-                         std::deque<typename window_t::ref_t*> const& ref_wins,
+                         std::deque<typename window_t::ref_t> const& ref_wins,
                          std::chrono::milliseconds presentTime) override
     {
         this->createStackingOrder(get_leads(ref_wins));
@@ -584,9 +584,9 @@ protected:
         render::scene<Platform>::paintGenericScreen(mask, data);
     }
 
-    std::unique_ptr<window_t> createWindow(typename window_t::ref_t* t) override
+    std::unique_ptr<window_t> createWindow(typename window_t::ref_t ref_win) override
     {
-        return std::make_unique<gl_window_t>(t, *this);
+        return std::make_unique<gl_window_t>(ref_win, *this);
     }
 
     void finalDrawWindow(effect_window_t* eff_win,
@@ -594,9 +594,23 @@ protected:
                          QRegion region,
                          WindowPaintData& data) override
     {
-        if (kwinApp()->is_screen_locked() && !eff_win->window.ref_win->isLockScreen()
-            && !eff_win->window.ref_win->isInputMethod()) {
-            return;
+        if (kwinApp()->is_screen_locked()) {
+            if (std::visit(overload{[&](auto&& win) {
+                               if constexpr (requires(decltype(win) win) { win.isLockScreen(); }) {
+                                   if (win->isLockScreen()) {
+                                       return false;
+                                   }
+                               }
+                               if constexpr (requires(decltype(win) win) { win.isInputMethod(); }) {
+                                   if (win->isInputMethod()) {
+                                       return false;
+                                   }
+                               }
+                               return true;
+                           }},
+                           *eff_win->window.ref_win)) {
+                return;
+            }
         }
         performPaintWindow(eff_win, mask, region, data);
     }
@@ -872,33 +886,38 @@ private:
         return true;
     }
 
-    std::deque<typename window_t::ref_t*>
-    get_leads(std::deque<typename window_t::ref_t*> const& ref_wins)
+    std::deque<typename window_t::ref_t>
+    get_leads(std::deque<typename window_t::ref_t> const& ref_wins)
     {
-        std::deque<typename window_t::ref_t*> leads;
+        std::deque<typename window_t::ref_t> leads;
 
         for (auto const& ref_win : ref_wins) {
-            if (ref_win->transient->lead() && ref_win->transient->annexed) {
-                auto const damage = ref_win->render_data.damage_region;
-                if (damage.isEmpty()) {
-                    continue;
-                }
-                auto lead = win::lead_of_annexed_transient(ref_win);
-                auto const lead_render_geo = win::render_geometry(lead);
-                auto const lead_damage = damage.translated(win::render_geometry(ref_win).topLeft()
-                                                           - lead_render_geo.topLeft());
+            std::visit(overload{[&](auto&& ref_win) {
+                           if (!ref_win->transient->lead() || !ref_win->transient->annexed) {
+                               leads.push_back(ref_win);
+                               return;
+                           }
 
-                lead->render_data.repaints_region += lead_damage.translated(
-                    lead_render_geo.topLeft() - lead->geo.frame.topLeft());
-                lead->render_data.damage_region += lead_damage;
+                           auto const damage = ref_win->render_data.damage_region;
+                           if (damage.isEmpty()) {
+                               return;
+                           }
 
-                for (auto const& rect : lead_damage) {
-                    // Emit for thumbnail repaint.
-                    Q_EMIT lead->qobject->damaged(rect);
-                }
-            } else {
-                leads.push_back(ref_win);
-            }
+                           auto lead = win::lead_of_annexed_transient(ref_win);
+                           auto const lead_render_geo = win::render_geometry(lead);
+                           auto const lead_damage = damage.translated(
+                               win::render_geometry(ref_win).topLeft() - lead_render_geo.topLeft());
+
+                           lead->render_data.repaints_region += lead_damage.translated(
+                               lead_render_geo.topLeft() - lead->geo.frame.topLeft());
+                           lead->render_data.damage_region += lead_damage;
+
+                           for (auto const& rect : lead_damage) {
+                               // Emit for thumbnail repaint.
+                               Q_EMIT lead->qobject->damaged(rect);
+                           }
+                       }},
+                       ref_win);
         }
 
         return leads;

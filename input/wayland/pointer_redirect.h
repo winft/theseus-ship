@@ -91,18 +91,21 @@ public:
             });
 
         // connect the move resize of all window
-        auto setupMoveResizeConnection = [this](auto c) {
-            if (!c->control) {
-                return;
-            }
-            QObject::connect(c->qobject.get(),
-                             &win::window_qobject::clientStartUserMovedResized,
-                             qobject.get(),
-                             [this] { update_on_start_move_resize(); });
-            QObject::connect(c->qobject.get(),
-                             &win::window_qobject::clientFinishUserMovedResized,
-                             qobject.get(),
-                             [this] { device_redirect_update(this); });
+        auto setupMoveResizeConnection = [this](auto win) {
+            std::visit(overload{[&](auto&& win) {
+                           if (!win->control) {
+                               return;
+                           }
+                           QObject::connect(win->qobject.get(),
+                                            &win::window_qobject::clientStartUserMovedResized,
+                                            qobject.get(),
+                                            [this] { update_on_start_move_resize(); });
+                           QObject::connect(win->qobject.get(),
+                                            &win::window_qobject::clientFinishUserMovedResized,
+                                            qobject.get(),
+                                            [this] { device_redirect_update(this); });
+                       }},
+                       win);
         };
         auto setup_move_resize_notify_on_signal = [this, setupMoveResizeConnection](auto win_id) {
             auto c = redirect->space.windows_map.at(win_id);
@@ -314,27 +317,25 @@ public:
             return;
         }
 
-        const auto s = focus.window->surface;
-        if (!s) {
-            return;
-        }
-
         auto seat = waylandServer()->seat();
         if (!seat->hasPointer()) {
             return;
         }
 
-        if (s != seat->pointers().get_focus().surface) {
-            return;
-        }
+        std::visit(overload{[&](auto&& win) {
+                       if (!win->surface || win->surface != seat->pointers().get_focus().surface) {
+                           return;
+                       }
 
-        if (update_confinement(*focus.window)) {
-            // Pointer is confined. Don't lock.
-            // TODO(romangg): Should we disable the lock?
-            return;
-        }
+                       if (update_confinement(*win)) {
+                           // Pointer is confined. Don't lock.
+                           // TODO(romangg): Should we disable the lock?
+                           return;
+                       }
 
-        update_lock(*focus.window);
+                       update_lock(*win);
+                   }},
+                   *focus.window);
     }
 
     void setEnableConstraints(bool set)
@@ -554,7 +555,7 @@ public:
 
     void unset_deco()
     {
-        assert(focus.deco);
+        assert(focus.deco.client);
 
         QObject::disconnect(notifiers.decoration_geometry);
         notifiers.decoration_geometry = QMetaObject::Connection();
@@ -562,15 +563,16 @@ public:
 
         // send leave event to decoration
         QHoverEvent event(QEvent::HoverLeave, QPointF(), QPointF());
-        QCoreApplication::instance()->sendEvent(focus.deco->decoration(), &event);
+        QCoreApplication::instance()->sendEvent(focus.deco.client->decoration(), &event);
 
-        focus.deco = nullptr;
+        focus.deco = {};
         redirect->cursor->cursor_image->unset_deco();
     }
 
-    void set_deco(win::deco::client_impl<typename space_t::window_t>& now)
+    template<typename Deco>
+    void set_deco(Deco& now)
     {
-        assert(!focus.deco);
+        assert(!focus.deco.client);
 
         waylandServer()->seat()->pointers().set_focused_surface(nullptr);
 
@@ -590,53 +592,88 @@ public:
                     // Don't update while doing an interactive move or resize.
                     return;
                 }
+
                 // ensure maximize button gets the leave event when maximizing/restore a window, see
                 // BUG 385140
-                auto const old_deco = focus.deco;
+                auto const old_deco = focus.deco.client;
+                auto const old_win = focus.deco.window;
                 device_redirect_update(this);
-                auto deco = focus.deco;
-                if (old_deco && old_deco == deco && !win::is_move(deco->client())
-                    && !win::is_resize(deco->client()) && !areButtonsPressed()) {
-                    // position of window did not change, we need to send HoverMotion manually
-                    QPointF const p = m_pos - deco->client()->geo.pos();
-                    QHoverEvent event(QEvent::HoverMove, p, p);
-                    QCoreApplication::instance()->sendEvent(deco->decoration(), &event);
+                auto deco = focus.deco.client;
+
+                if (!old_deco || old_deco != deco) {
+                    return;
                 }
+
+                assert(old_win);
+                assert(old_win == focus.deco.window);
+                std::visit(overload{[&](auto&& win) {
+                               if (win::is_move(win) || win::is_resize(win)
+                                   || areButtonsPressed()) {
+                                   return;
+                               }
+                               // position of window did not change, we need to send
+                               // HoverMotion manually
+                               QPointF const p = m_pos - win->geo.pos();
+                               QHoverEvent event(QEvent::HoverMove, p, p);
+                               QCoreApplication::instance()->sendEvent(deco->decoration(), &event);
+                           }},
+                           *focus.deco.window);
             });
 
-        focus.deco = &now;
+        focus.deco.client = &now;
+        focus.deco.window = window;
         redirect->cursor->cursor_image->set_deco(now);
     }
 
-    void focusUpdate(typename space_t::window_t* focusOld, typename space_t::window_t* focusNow)
+    void focusUpdate(std::optional<window_t> focusOld, std::optional<window_t> focusNow)
     {
         if (focusOld) {
             // Need to check on control because of Xwayland unmanaged windows.
-            if (auto lead = win::lead_of_annexed_transient(focusOld); lead && lead->control) {
-                win::leave_event(lead);
-            }
-            break_pointer_constraints(focusOld->surface);
-            disconnect_pointer_constraints_connection();
+            std::visit(overload{[this](auto&& win) {
+                           if (auto lead = win::lead_of_annexed_transient(win);
+                               lead && lead->control) {
+                               win::leave_event(lead);
+                           }
+                           break_pointer_constraints(win->surface);
+                           disconnect_pointer_constraints_connection();
+                       }},
+                       *focusOld);
         }
+
         QObject::disconnect(notifiers.focus_geometry);
         notifiers.focus_geometry = QMetaObject::Connection();
 
+        Wrapland::Server::Surface* now_surface{nullptr};
+        win::window_qobject* now_qobject{nullptr};
+        QMatrix4x4 now_transform;
+
         if (focusNow) {
-            if (auto lead = win::lead_of_annexed_transient(focusNow)) {
-                win::enter_event(lead, m_pos.toPoint());
-            }
-            redirect->space.focusMousePos = m_pos.toPoint();
+            std::visit(overload{[&](auto&& win) {
+                           if (auto lead = win::lead_of_annexed_transient(win)) {
+                               win::enter_event(lead, m_pos.toPoint());
+                           }
+                           redirect->space.focusMousePos = m_pos.toPoint();
+                           now_surface = win->surface;
+                           if (now_surface) {
+                               now_qobject = win->qobject.get();
+                               now_transform = win::get_input_transform(*win);
+                           }
+                       }},
+                       *focusNow);
         }
 
-        if (auto focus_internal = focus.internal_window) {
+        if (focus.internal_window) {
             // enter internal window
-            auto const pos = at.window->geo.pos();
-            QEnterEvent enterEvent(pos, pos, m_pos);
-            QCoreApplication::sendEvent(focus_internal, &enterEvent);
+            std::visit(overload{[&](auto&& win) {
+                           auto const pos = win->geo.pos();
+                           QEnterEvent enterEvent(pos, pos, m_pos);
+                           QCoreApplication::sendEvent(focus.internal_window, &enterEvent);
+                       }},
+                       *at.window);
         }
 
         auto seat = waylandServer()->seat();
-        if (!focusNow || !focusNow->surface || focus.deco) {
+        if (!now_surface || focus.deco.client) {
             // Clean up focused pointer surface if there's no client to take focus,
             // or the pointer is on a client without surface or on a decoration.
             warp_xcb_on_surface_left(nullptr);
@@ -645,7 +682,7 @@ public:
         }
 
         // TODO: add convenient API to update global pos together with updating focused surface
-        warp_xcb_on_surface_left(focusNow->surface);
+        warp_xcb_on_surface_left(now_surface);
 
         // TODO: why? in order to reset the cursor icon?
         cursor_update_blocking = true;
@@ -653,14 +690,10 @@ public:
         cursor_update_blocking = false;
 
         seat->pointers().set_position(m_pos.toPoint());
-        seat->pointers().set_focused_surface(focusNow->surface,
-                                             win::get_input_transform(*focusNow));
+        seat->pointers().set_focused_surface(now_surface, now_transform);
 
         notifiers.focus_geometry = QObject::connect(
-            focusNow->qobject.get(),
-            &win::window_qobject::frame_geometry_changed,
-            qobject.get(),
-            [this] {
+            now_qobject, &win::window_qobject::frame_geometry_changed, qobject.get(), [this] {
                 if (!focus.window) {
                     // Might happen for Xwayland clients.
                     return;
@@ -671,16 +704,20 @@ public:
                     // don't update while moving
                     return;
                 }
-                auto seat = waylandServer()->seat();
-                if (focus.window->surface != seat->pointers().get_focus().surface) {
-                    return;
-                }
-                seat->pointers().set_focused_surface_transformation(
-                    win::get_input_transform(*focus.window));
+
+                std::visit(overload{[](auto&& win) {
+                               auto seat = waylandServer()->seat();
+                               if (win->surface != seat->pointers().get_focus().surface) {
+                                   return;
+                               }
+                               seat->pointers().set_focused_surface_transformation(
+                                   win::get_input_transform(*win));
+                           }},
+                           *focus.window);
             });
 
         notifiers.constraints
-            = QObject::connect(focusNow->surface,
+            = QObject::connect(now_surface,
                                &Wrapland::Server::Surface::pointerConstraintsChanged,
                                qobject.get(),
                                [this] { updatePointerConstraints(); });
@@ -717,7 +754,10 @@ private:
 
     void update_on_start_move_resize()
     {
-        break_pointer_constraints(focus.window ? focus.window->surface : nullptr);
+        break_pointer_constraints(
+            focus.window
+                ? std::visit(overload{[&](auto&& win) { return win->surface; }}, *focus.window)
+                : nullptr);
         disconnect_pointer_constraints_connection();
         device_redirect_unset_focus(this);
         waylandServer()->seat()->pointers().set_focused_surface(nullptr);
@@ -732,18 +772,21 @@ private:
             QCoreApplication::sendEvent(focus_internal, &event);
             device_redirect_set_internal_window(this, nullptr);
         }
-        if (focus.deco) {
+        if (focus.deco.client) {
             QHoverEvent event(QEvent::HoverLeave, QPointF(), QPointF());
-            QCoreApplication::instance()->sendEvent(focus.deco->decoration(), &event);
+            QCoreApplication::instance()->sendEvent(focus.deco.client->decoration(), &event);
             device_redirect_unset_deco(this);
         }
-        if (auto focus_window = focus.window) {
-            if (focus_window->control) {
-                win::leave_event(focus_window);
-            }
-            QObject::disconnect(notifiers.focus_geometry);
-            notifiers.focus_geometry = QMetaObject::Connection();
-            break_pointer_constraints(focus_window->surface);
+        if (focus.window) {
+            std::visit(overload{[&](auto&& win) {
+                           if (win->control) {
+                               win::leave_event(win);
+                           }
+                           QObject::disconnect(notifiers.focus_geometry);
+                           notifiers.focus_geometry = QMetaObject::Connection();
+                           break_pointer_constraints(win->surface);
+                       }},
+                       *focus.window);
             disconnect_pointer_constraints_connection();
             device_redirect_unset_focus(this);
         }
@@ -842,32 +885,35 @@ private:
             return;
         }
 
-        auto surface = focus.window->surface;
-        if (!surface) {
-            return;
-        }
+        std::visit(overload{[&](auto&& win) {
+                       auto surface = win->surface;
+                       if (!surface) {
+                           return;
+                       }
 
-        auto cf = surface->confinedPointer();
-        if (!cf || !cf->isConfined()) {
-            return;
-        }
+                       auto cf = surface->confinedPointer();
+                       if (!cf || !cf->isConfined()) {
+                           return;
+                       }
 
-        auto const region = getConstraintRegion(focus.window, cf.data());
-        if (region.contains(pos.toPoint())) {
-            return;
-        }
+                       auto const region = getConstraintRegion(win, cf.data());
+                       if (region.contains(pos.toPoint())) {
+                           return;
+                       }
 
-        // Allow either x or y to pass.
-        if (auto tmp = QPointF(m_pos.x(), pos.y()); region.contains(tmp.toPoint())) {
-            pos = tmp;
-            return;
-        }
-        if (auto tmp = QPointF(pos.x(), m_pos.y()); region.contains(tmp.toPoint())) {
-            pos = tmp;
-            return;
-        }
+                       // Allow either x or y to pass.
+                       if (auto tmp = QPointF(m_pos.x(), pos.y()); region.contains(tmp.toPoint())) {
+                           pos = tmp;
+                           return;
+                       }
+                       if (auto tmp = QPointF(pos.x(), m_pos.y()); region.contains(tmp.toPoint())) {
+                           pos = tmp;
+                           return;
+                       }
 
-        pos = m_pos;
+                       pos = m_pos;
+                   }},
+                   *focus.window);
     }
 
     void disconnect_confined_pointer_region_connection()

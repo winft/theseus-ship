@@ -127,18 +127,21 @@ void remove_window(Model* model,
 template<typename Model, typename Space>
 void model_setup_connections(Model& model, Space& space)
 {
-    using window_t = typename Space::window_t;
+    using x11_window_t = typename Space::x11_window;
 
-    for (auto const& window : space.windows) {
-        if (window->control) {
-            if (dynamic_cast<typename Space::x11_window*>(window)) {
-                model.m_x11Clients.emplace_back(std::make_unique<console_window<window_t>>(window));
-            }
-        }
+    for (auto const& win : space.windows) {
+        std::visit(overload{[&](x11_window_t* win) {
+                                if (win->control) {
+                                    model.m_x11Clients.emplace_back(
+                                        std::make_unique<console_window<x11_window_t>>(win));
+                                }
+                            },
+                            [](auto&&) {}},
+                   win);
     }
     QObject::connect(
         space.qobject.get(), &win::space_qobject::clientAdded, &model, [&](auto win_id) {
-            auto c = space.windows_map.at(win_id);
+            auto c = std::get<x11_window_t*>(space.windows_map.at(win_id));
             add_window(&model, model.s_x11ClientId - 1, model.m_x11Clients, c);
         });
     QObject::connect(
@@ -146,22 +149,26 @@ void model_setup_connections(Model& model, Space& space)
             // TODO(romangg): This function is also being called on Waylad windows for
             // some reason. It works with our containers but best would be to make this
             // symmetric with adding.
-            auto window = space.windows_map.at(win_id);
-            remove_window(&model, model.s_x11ClientId - 1, model.m_x11Clients, window);
+            auto& win = space.windows_map.at(win_id);
+            if (std::holds_alternative<x11_window_t*>(win)) {
+                auto x11_win = std::get<x11_window_t*>(win);
+                remove_window(&model, model.s_x11ClientId - 1, model.m_x11Clients, x11_win);
+            }
         });
 
     for (auto unmanaged : win::x11::get_unmanageds(space)) {
-        model.m_unmanageds.emplace_back(std::make_unique<console_window<window_t>>(unmanaged));
+        model.m_unmanageds.emplace_back(
+            std::make_unique<console_window<x11_window_t>>(std::get<x11_window_t*>(unmanaged)));
     }
 
     QObject::connect(
         space.qobject.get(), &win::space_qobject::unmanagedAdded, &model, [&](auto win_id) {
-            auto u = space.windows_map.at(win_id);
+            auto u = std::get<x11_window_t*>(space.windows_map.at(win_id));
             add_window(&model, model.s_x11UnmanagedId - 1, model.m_unmanageds, u);
         });
     QObject::connect(
         space.qobject.get(), &win::space_qobject::unmanagedRemoved, &model, [&](auto win_id) {
-            auto u = space.windows_map.at(win_id);
+            auto u = std::get<x11_window_t*>(space.windows_map.at(win_id));
             remove_window(&model, model.s_x11UnmanagedId - 1, model.m_unmanageds, u);
         });
 }

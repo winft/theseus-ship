@@ -240,15 +240,18 @@ void plasma_manage_update_stacking_order(Space& space)
     std::vector<std::string> uuids;
 
     for (auto win : space.stacking.order.stack) {
-        if (!win->control) {
-            continue;
-        }
-        auto manage = win->control->plasma_wayland_integration;
-        if (!manage) {
-            continue;
-        }
-        ids.push_back(manage->id());
-        uuids.push_back(manage->uuid());
+        std::visit(overload{[&](auto&& win) {
+                       if (!win->control) {
+                           return;
+                       }
+                       auto manage = win->control->plasma_wayland_integration;
+                       if (!manage) {
+                           return;
+                       }
+                       ids.push_back(manage->id());
+                       uuids.push_back(manage->uuid());
+                   }},
+                   win);
     }
 
     space.plasma_window_manager->set_stacking_order(ids);

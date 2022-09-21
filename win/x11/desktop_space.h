@@ -28,15 +28,15 @@ void popagate_desktop_change(Space& space, uint desktop)
 {
     using window_t = typename Space::x11_window;
 
-    for (auto const& toplevel : space.stacking.order.stack) {
-        auto client = dynamic_cast<window_t*>(toplevel);
-        if (!client || !client->control) {
-            continue;
-        }
-
-        if (!on_desktop(client, desktop) && client != space.move_resize_window) {
-            update_visibility(client);
-        }
+    for (auto const& var_win : space.stacking.order.stack) {
+        std::visit(overload{[&](window_t* win) {
+                                if (win->control && !on_desktop(win, desktop)
+                                    && var_win != space.move_resize_window) {
+                                    update_visibility(win);
+                                }
+                            },
+                            [](auto&&) {}},
+                   var_win);
     }
 
     // Now propagate the change, after hiding, before showing.
@@ -46,13 +46,13 @@ void popagate_desktop_change(Space& space, uint desktop)
 
     auto const& list = space.stacking.order.stack;
     for (int i = list.size() - 1; i >= 0; --i) {
-        auto client = dynamic_cast<window_t*>(list.at(i));
-        if (!client || !client->control) {
-            continue;
-        }
-        if (on_desktop(client, desktop)) {
-            update_visibility(client);
-        }
+        std::visit(overload{[&](window_t* win) {
+                                if (win->control && on_desktop(win, desktop)) {
+                                    update_visibility(win);
+                                }
+                            },
+                            [](auto&&) {}},
+                   list.at(i));
     }
 }
 

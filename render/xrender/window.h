@@ -32,17 +32,18 @@ public:
     using window_t = typename Scene::window_t;
     using buffer_t = typename Scene::buffer_t;
 
-    window(RefWin* c, Scene& scene)
-        : window_t(c, *scene.platform.compositor)
+    window(RefWin ref_win, Scene& scene)
+        : window_t(ref_win, *scene.platform.compositor)
         , scene{scene}
     {
-        using x11_window_t = typename std::decay_t<decltype(c->space)>::x11_window;
-        format = XRenderUtils::findPictFormat(static_cast<x11_window_t*>(c)->xcb_visual);
+        format = XRenderUtils::findPictFormat(
+            std::visit(overload{[&](auto&& win) { return win->xcb_visual; }}, ref_win));
     }
 
     void performPaint(paint_type mask, QRegion region, WindowPaintData data) override
     {
-        perform_paint(*this->ref_win, mask, region, data);
+        std::visit(overload{[&](auto&& win) { perform_paint(*win, mask, region, data); }},
+                   *this->ref_win);
     }
 
     QRegion transformedShape() const

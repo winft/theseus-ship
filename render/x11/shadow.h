@@ -100,7 +100,9 @@ QVector<uint32_t> read_shadow_property(Win const& win, base::x11::xcb::atom cons
 template<typename Shadow>
 bool read_and_update_shadow(Shadow& impl, base::x11::xcb::atom const& shadow_atom)
 {
-    auto data = read_shadow_property(*impl.window->ref_win, shadow_atom);
+    auto data = std::visit(
+        overload{[&](auto&& ref_win) { return read_shadow_property(*ref_win, shadow_atom); }},
+        *impl.window->ref_win);
     if (data.isEmpty()) {
         return false;
     }
@@ -110,17 +112,21 @@ bool read_and_update_shadow(Shadow& impl, base::x11::xcb::atom const& shadow_ato
 template<typename Shadow, typename Win>
 std::unique_ptr<Shadow> create_shadow(Win& win, base::x11::xcb::atom const& shadow_atom)
 {
-    auto data = read_shadow_property(*win.ref_win, shadow_atom);
-    if (data.isEmpty()) {
-        return {};
-    }
+    return std::visit(overload{[&](auto&& ref_win) -> std::unique_ptr<Shadow> {
+                          auto data = read_shadow_property(*ref_win, shadow_atom);
+                          if (data.isEmpty()) {
+                              return {};
+                          }
 
-    auto shadow = win.ref_win->space.base.render->compositor->scene->createShadow(&win);
-    if (!update_shadow(*shadow, data)) {
-        return {};
-    }
+                          auto shadow
+                              = ref_win->space.base.render->compositor->scene->createShadow(&win);
+                          if (!update_shadow(*shadow, data)) {
+                              return {};
+                          }
 
-    return shadow;
+                          return shadow;
+                      }},
+                      *win.ref_win);
 }
 
 }

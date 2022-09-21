@@ -106,12 +106,13 @@ bool update_server_geometry(Win* win, QRect const& frame_geo);
 template<typename Win>
 void create_decoration(Win* win)
 {
+    using var_win = typename Win::space_t::window_t;
+
     if (win->noBorder()) {
         return;
     }
 
-    using Space = std::remove_reference_t<decltype(win->space)>;
-    win->control->deco.window = new deco::window<typename Space::window_t>(win);
+    win->control->deco.window = new deco::window<var_win>(var_win(win));
     auto decoration = win->space.deco->createDecoration(win->control->deco.window);
 
     if (decoration) {

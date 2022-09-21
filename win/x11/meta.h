@@ -103,17 +103,15 @@ void set_caption(Win* win, QString const& _s, bool force = false)
     auto shortcut_suffix = win::shortcut_caption_suffix(win);
     win->meta.caption.suffix = machine_suffix + shortcut_suffix;
 
-    using window_t = typename std::remove_reference_t<decltype(win->space)>::window_t;
-
     if ((!win::is_special_window(win) || win::is_toolbar(win))
-        && win::find_client_with_same_caption(static_cast<window_t*>(win))) {
+        && find_client_with_same_caption(win)) {
         int i = 2;
 
         do {
             win->meta.caption.suffix = machine_suffix + QLatin1String(" <") + QString::number(i)
                 + QLatin1Char('>') + LRM;
             i++;
-        } while (win::find_client_with_same_caption(static_cast<window_t*>(win)));
+        } while (find_client_with_same_caption(win));
 
         win->info->setVisibleName(win::caption(win).toUtf8().constData());
         reset_name = false;
@@ -261,8 +259,8 @@ template<typename Win>
 bool same_app_window_role_match(Win const* c1, Win const* c2, bool active_hack)
 {
     if (c1->transient->lead()) {
-        while (auto t = dynamic_cast<Win const*>(c1->transient->lead())) {
-            c1 = t;
+        while (auto lead = c1->transient->lead()) {
+            c1 = lead;
         }
         if (c1->groupTransient()) {
             return c1->group == c2->group;
@@ -270,8 +268,8 @@ bool same_app_window_role_match(Win const* c1, Win const* c2, bool active_hack)
     }
 
     if (c2->transient->lead()) {
-        while (auto t = dynamic_cast<Win const*>(c2->transient->lead())) {
-            c2 = t;
+        while (auto lead = c2->transient->lead()) {
+            c2 = lead;
         }
         if (c2->groupTransient()) {
             return c1->group == c2->group;

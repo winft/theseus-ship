@@ -106,11 +106,13 @@ void TestWindowSelection::testSelectOnWindowPointer()
     QVERIFY(client);
     QVERIFY(keyboardEnteredSpy.wait());
     Test::cursor()->set_pos(client->geo.frame.center());
-    QCOMPARE(Test::app()->base.space->input->pointer->focus.window, client);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->input->pointer->focus.window),
+             client);
     QVERIFY(pointerEnteredSpy.wait());
 
-    Test::space::window_t* selectedWindow = nullptr;
-    auto callback = [&selectedWindow](Test::space::window_t* t) { selectedWindow = t; };
+    std::optional<Test::space::window_t> selectedWindow;
+    auto callback
+        = [&selectedWindow](std::optional<Test::space::window_t> t) { selectedWindow = t; };
 
     // start the interaction
     QCOMPARE(Test::app()->base.space->input->isSelectingWindow(), false);
@@ -148,8 +150,9 @@ void TestWindowSelection::testSelectOnWindowPointer()
     // now release
     Test::pointer_button_released(BTN_LEFT, timestamp++);
     QCOMPARE(Test::app()->base.space->input->isSelectingWindow(), false);
-    QCOMPARE(selectedWindow, client);
-    QCOMPARE(Test::app()->base.space->input->pointer->focus.window, client);
+    QCOMPARE(Test::get_wayland_window(selectedWindow), client);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->input->pointer->focus.window),
+             client);
     // should give back keyboard and pointer
     QVERIFY(pointerEnteredSpy.wait());
     if (keyboardEnteredSpy.count() != 2) {
@@ -191,8 +194,9 @@ void TestWindowSelection::testSelectOnWindowKeyboard()
     QVERIFY(keyboardEnteredSpy.wait());
     QVERIFY(!client->geo.frame.contains(Test::cursor()->pos()));
 
-    Test::space::window_t* selectedWindow = nullptr;
-    auto callback = [&selectedWindow](Test::space::window_t* t) { selectedWindow = t; };
+    std::optional<Test::space::window_t> selectedWindow;
+    auto callback
+        = [&selectedWindow](std::optional<Test::space::window_t> t) { selectedWindow = t; };
 
     // start the interaction
     QCOMPARE(Test::app()->base.space->input->isSelectingWindow(), false);
@@ -226,8 +230,10 @@ void TestWindowSelection::testSelectOnWindowKeyboard()
     QFETCH(qint32, key);
     Test::keyboard_key_pressed(key, timestamp++);
     QCOMPARE(Test::app()->base.space->input->isSelectingWindow(), false);
-    QCOMPARE(selectedWindow, client);
-    QCOMPARE(Test::app()->base.space->input->pointer->focus.window, client);
+    QVERIFY(selectedWindow);
+    QCOMPARE(*selectedWindow, Test::space::window_t(client));
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->input->pointer->focus.window),
+             client);
     // should give back keyboard and pointer
     QVERIFY(pointerEnteredSpy.wait());
     if (keyboardEnteredSpy.count() != 2) {
@@ -253,8 +259,9 @@ void TestWindowSelection::testSelectOnWindowTouch()
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
 
-    Test::space::window_t* selectedWindow = nullptr;
-    auto callback = [&selectedWindow](Test::space::window_t* t) { selectedWindow = t; };
+    std::optional<Test::space::window_t> selectedWindow;
+    auto callback
+        = [&selectedWindow](std::optional<Test::space::window_t> t) { selectedWindow = t; };
 
     // start the interaction
     QCOMPARE(Test::app()->base.space->input->isSelectingWindow(), false);
@@ -268,23 +275,25 @@ void TestWindowSelection::testSelectOnWindowTouch()
     QVERIFY(!selectedWindow);
     Test::touch_up(0, timestamp++);
     QCOMPARE(Test::app()->base.space->input->isSelectingWindow(), false);
-    QCOMPARE(selectedWindow, client);
+    QVERIFY(selectedWindow);
+    QCOMPARE(*selectedWindow, Test::space::window_t(client));
 
     // with movement
-    selectedWindow = nullptr;
+    selectedWindow = {};
     Test::app()->base.space->input->start_interactive_window_selection(callback);
     Test::touch_down(0, client->geo.frame.bottomRight() + QPoint(20, 20), timestamp++);
     QVERIFY(!selectedWindow);
     Test::touch_motion(0, client->geo.frame.bottomRight() - QPoint(1, 1), timestamp++);
     QVERIFY(!selectedWindow);
     Test::touch_up(0, timestamp++);
-    QCOMPARE(selectedWindow, client);
+    QVERIFY(selectedWindow);
+    QCOMPARE(Test::get_wayland_window(selectedWindow), client);
     QCOMPARE(Test::app()->base.space->input->isSelectingWindow(), false);
 
     // it cancels active touch sequence on the window
     Test::touch_down(0, client->geo.frame.center(), timestamp++);
     QVERIFY(touchStartedSpy.wait());
-    selectedWindow = nullptr;
+    selectedWindow = {};
     Test::app()->base.space->input->start_interactive_window_selection(callback);
     QCOMPARE(Test::app()->base.space->input->isSelectingWindow(), true);
     QVERIFY(touchCanceledSpy.wait());
@@ -294,7 +303,7 @@ void TestWindowSelection::testSelectOnWindowTouch()
     QVERIFY(!selectedWindow);
     Test::touch_down(0, client->geo.frame.center(), timestamp++);
     Test::touch_up(0, timestamp++);
-    QCOMPARE(selectedWindow, client);
+    QCOMPARE(Test::get_wayland_window(selectedWindow), client);
     QCOMPARE(Test::app()->base.space->input->isSelectingWindow(), false);
 
     QCOMPARE(touchStartedSpy.count(), 1);
@@ -321,11 +330,13 @@ void TestWindowSelection::testCancelOnWindowPointer()
     QVERIFY(client);
     QVERIFY(keyboardEnteredSpy.wait());
     Test::cursor()->set_pos(client->geo.frame.center());
-    QCOMPARE(Test::app()->base.space->input->pointer->focus.window, client);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->input->pointer->focus.window),
+             client);
     QVERIFY(pointerEnteredSpy.wait());
 
-    Test::space::window_t* selectedWindow = nullptr;
-    auto callback = [&selectedWindow](Test::space::window_t* t) { selectedWindow = t; };
+    std::optional<Test::space::window_t> selectedWindow;
+    auto callback
+        = [&selectedWindow](std::optional<Test::space::window_t> t) { selectedWindow = t; };
 
     // start the interaction
     QCOMPARE(Test::app()->base.space->input->isSelectingWindow(), false);
@@ -346,7 +357,8 @@ void TestWindowSelection::testCancelOnWindowPointer()
     Test::pointer_button_released(BTN_RIGHT, timestamp++);
     QCOMPARE(Test::app()->base.space->input->isSelectingWindow(), false);
     QVERIFY(!selectedWindow);
-    QCOMPARE(Test::app()->base.space->input->pointer->focus.window, client);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->input->pointer->focus.window),
+             client);
     // should give back keyboard and pointer
     QVERIFY(pointerEnteredSpy.wait());
     if (keyboardEnteredSpy.count() != 2) {
@@ -378,11 +390,13 @@ void TestWindowSelection::testCancelOnWindowKeyboard()
     QVERIFY(client);
     QVERIFY(keyboardEnteredSpy.wait());
     Test::cursor()->set_pos(client->geo.frame.center());
-    QCOMPARE(Test::app()->base.space->input->pointer->focus.window, client);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->input->pointer->focus.window),
+             client);
     QVERIFY(pointerEnteredSpy.wait());
 
-    Test::space::window_t* selectedWindow = nullptr;
-    auto callback = [&selectedWindow](Test::space::window_t* t) { selectedWindow = t; };
+    std::optional<Test::space::window_t> selectedWindow;
+    auto callback
+        = [&selectedWindow](std::optional<Test::space::window_t> t) { selectedWindow = t; };
 
     // start the interaction
     QCOMPARE(Test::app()->base.space->input->isSelectingWindow(), false);
@@ -402,7 +416,8 @@ void TestWindowSelection::testCancelOnWindowKeyboard()
     Test::keyboard_key_pressed(KEY_ESC, timestamp++);
     QCOMPARE(Test::app()->base.space->input->isSelectingWindow(), false);
     QVERIFY(!selectedWindow);
-    QCOMPARE(Test::app()->base.space->input->pointer->focus.window, client);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->input->pointer->focus.window),
+             client);
     // should give back keyboard and pointer
     QVERIFY(pointerEnteredSpy.wait());
     if (keyboardEnteredSpy.count() != 2) {
@@ -435,7 +450,8 @@ void TestWindowSelection::testSelectPointPointer()
     QVERIFY(client);
     QVERIFY(keyboardEnteredSpy.wait());
     Test::cursor()->set_pos(client->geo.frame.center());
-    QCOMPARE(Test::app()->base.space->input->pointer->focus.window, client);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->input->pointer->focus.window),
+             client);
     QVERIFY(pointerEnteredSpy.wait());
 
     QPoint point;
@@ -484,7 +500,8 @@ void TestWindowSelection::testSelectPointPointer()
     Test::pointer_button_released(BTN_LEFT, timestamp++);
     QCOMPARE(Test::app()->base.space->input->isSelectingWindow(), false);
     QCOMPARE(point, Test::app()->base.space->input->globalPointer().toPoint());
-    QCOMPARE(Test::app()->base.space->input->pointer->focus.window, client);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->input->pointer->focus.window),
+             client);
     // should give back keyboard and pointer
     QVERIFY(pointerEnteredSpy.wait());
     if (keyboardEnteredSpy.count() != 2) {

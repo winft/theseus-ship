@@ -44,11 +44,14 @@ Win* find_in_list(std::vector<Win*> const& list, std::function<bool(W const*)> f
 }
 
 template<typename Win1, typename Win2>
-bool belong_to_same_client(Win1 win1,
-                           Win2 win2,
+bool belong_to_same_client(Win1 const* win1,
+                           Win2 const* win2,
                            same_client_check checks = flags<same_client_check>())
 {
-    return win1->belongsToSameApplication(win2, checks);
+    if constexpr (std::is_same_v<Win1, Win2>) {
+        return win1->belongsToSameApplication(win2, checks);
+    }
+    return false;
 }
 
 }

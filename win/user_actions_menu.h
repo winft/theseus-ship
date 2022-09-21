@@ -119,9 +119,10 @@ public:
      * @param c The Client to compare
      * @returns Whether the Client is the one related to this Menu
      */
-    bool isMenuClient(typename Space::window_t const* window) const
+    template<typename Win>
+    bool isMenuClient(Win* window) const
     {
-        return window && window == m_client;
+        return m_client && typename Space::window_t(window) == *m_client;
     }
 
     /**
@@ -133,7 +134,7 @@ public:
             return;
         }
         m_menu->close();
-        m_client = nullptr;
+        m_client = {};
     }
 
     /**
@@ -142,10 +143,9 @@ public:
      * @param pos The position where the menu should be shown.
      * @param client The Client for which the Menu has to be shown.
      */
-    void show(const QRect& pos, typename Space::window_t* window)
+    template<typename Win>
+    void show(const QRect& pos, Win* window)
     {
-        assert(window);
-
         if (isShown()) { // recursion
             return;
         }
@@ -156,14 +156,16 @@ public:
             return;
         }
 
-        if (m_client) {
-            QObject::disconnect(m_client->qobject.get(), nullptr, qobject.get(), nullptr);
+        if (destroy_notifier) {
+            QObject::disconnect(destroy_notifier);
         }
+
         m_client = window;
-        QObject::connect(m_client->qobject.get(),
-                         &window_qobject::destroyed,
-                         qobject.get(),
-                         [this] { m_client = nullptr; });
+
+        destroy_notifier = QObject::connect(window->qobject.get(),
+                                            &window_qobject::destroyed,
+                                            qobject.get(),
+                                            [this] { m_client = {}; });
 
         init();
         if (kwinApp()->shouldUseWaylandForCompositing()) {
@@ -193,47 +195,58 @@ private:
             initDesktopPopup();
         }
 
-        if (space.base.outputs.size() == 1
-            || (!m_client->isMovable() && !m_client->isMovableAcrossScreens())) {
-            delete m_screenMenu;
-            m_screenMenu = nullptr;
-        } else {
-            initScreenPopup();
-        }
+        std::visit(overload{[this](auto&& win) {
+                       if (space.base.outputs.size() == 1
+                           || (!win->isMovable() && !win->isMovableAcrossScreens())) {
+                           delete m_screenMenu;
+                           m_screenMenu = nullptr;
+                       } else {
+                           initScreenPopup();
+                       }
 
-        m_menu->setPalette(m_client->control->palette.q_palette());
-        m_resizeOperation->setEnabled(m_client->isResizable());
-        m_moveOperation->setEnabled(m_client->isMovableAcrossScreens());
-        m_maximizeOperation->setEnabled(m_client->isMaximizable());
-        m_maximizeOperation->setChecked(m_client->maximizeMode() == win::maximize_mode::full);
-        m_keepAboveOperation->setChecked(m_client->control->keep_above);
-        m_keepBelowOperation->setChecked(m_client->control->keep_below);
-        m_fullScreenOperation->setEnabled(m_client->userCanSetFullScreen());
-        m_fullScreenOperation->setChecked(m_client->control->fullscreen);
-        m_noBorderOperation->setEnabled(m_client->userCanSetNoBorder());
-        m_noBorderOperation->setChecked(m_client->noBorder());
-        m_minimizeOperation->setEnabled(m_client->isMinimizable());
-        m_closeOperation->setEnabled(m_client->isCloseable());
-        m_shortcutOperation->setEnabled(m_client->control->rules.checkShortcut(QString()).isNull());
+                       m_menu->setPalette(win->control->palette.q_palette());
+                       m_resizeOperation->setEnabled(win->isResizable());
+                       m_moveOperation->setEnabled(win->isMovableAcrossScreens());
+                       m_maximizeOperation->setEnabled(win->isMaximizable());
+                       m_maximizeOperation->setChecked(win->maximizeMode() == maximize_mode::full);
+                       m_keepAboveOperation->setChecked(win->control->keep_above);
+                       m_keepBelowOperation->setChecked(win->control->keep_below);
+                       m_fullScreenOperation->setEnabled(win->userCanSetFullScreen());
+                       m_fullScreenOperation->setChecked(win->control->fullscreen);
+                       m_noBorderOperation->setEnabled(win->userCanSetNoBorder());
+                       m_noBorderOperation->setChecked(win->noBorder());
+                       m_minimizeOperation->setEnabled(win->isMinimizable());
+                       m_closeOperation->setEnabled(win->isCloseable());
+                       m_shortcutOperation->setEnabled(
+                           win->control->rules.checkShortcut(QString()).isNull());
 
-        // drop the existing scripts menu
-        delete m_scriptsMenu;
-        m_scriptsMenu = nullptr;
-        // ask scripts whether they want to add entries for the given Client
-        auto scriptActions = space.scripting->actionsForUserActionMenu(m_client, m_scriptsMenu);
-        if (!scriptActions.isEmpty()) {
-            m_scriptsMenu = new QMenu(m_menu);
-            m_scriptsMenu->setPalette(m_client->control->palette.q_palette());
-            m_scriptsMenu->addActions(scriptActions);
+                       // drop the existing scripts menu
+                       delete m_scriptsMenu;
+                       m_scriptsMenu = nullptr;
+                       // ask scripts whether they want to add entries for the given Client
+                       auto scriptActions
+                           = space.scripting->actionsForUserActionMenu(win, m_scriptsMenu);
+                       if (!scriptActions.isEmpty()) {
+                           m_scriptsMenu = new QMenu(m_menu);
+                           m_scriptsMenu->setPalette(win->control->palette.q_palette());
+                           m_scriptsMenu->addActions(scriptActions);
 
-            QAction* action = m_scriptsMenu->menuAction();
-            // set it as the first item after desktop
-            m_menu->insertAction(m_closeOperation, action);
-            action->setText(i18n("&Extensions"));
-        }
+                           QAction* action = m_scriptsMenu->menuAction();
+                           // set it as the first item after desktop
+                           m_menu->insertAction(m_closeOperation, action);
+                           action->setText(i18n("&Extensions"));
+                       }
 
-        m_rulesOperation->setEnabled(m_client->supportsWindowRules());
-        m_applicationRulesOperation->setEnabled(m_client->supportsWindowRules());
+                       auto has_rules{false};
+                       if constexpr (requires(decltype(win) win) { win->supportsWindowRules(); }) {
+                           has_rules = win->supportsWindowRules();
+                       } else {
+                           has_rules = static_cast<bool>(win->control);
+                       }
+                       m_rulesOperation->setEnabled(has_rules);
+                       m_applicationRulesOperation->setEnabled(has_rules);
+                   }},
+                   *m_client);
     }
 
     /**
@@ -247,8 +260,12 @@ private:
         auto const vds = space.virtual_desktop_manager.get();
 
         m_desktopMenu->clear();
+
         if (m_client) {
-            m_desktopMenu->setPalette(m_client->control->palette.q_palette());
+            std::visit(overload{[this](auto&& win) {
+                           m_desktopMenu->setPalette(win->control->palette.q_palette());
+                       }},
+                       *m_client);
         }
         QActionGroup* group = new QActionGroup(m_desktopMenu);
         QAction* action = m_desktopMenu->addAction(i18n("&All Desktops"));
@@ -256,7 +273,8 @@ private:
         action->setCheckable(true);
         group->addAction(action);
 
-        if (m_client && on_all_desktops(m_client)) {
+        if (m_client
+            && std::visit(overload{[](auto&& win) { return on_all_desktops(win); }}, *m_client)) {
             action->setChecked(true);
         }
         m_desktopMenu->addSeparator();
@@ -274,7 +292,11 @@ private:
             action->setCheckable(true);
             group->addAction(action);
 
-            if (m_client && !on_all_desktops(m_client) && on_desktop(m_client, i)) {
+            if (m_client
+                && std::visit(overload{[&](auto&& win) {
+                                  return !on_all_desktops(win) && on_desktop(win, i);
+                              }},
+                              *m_client)) {
                 action->setChecked(true);
             }
         }
@@ -301,13 +323,17 @@ private:
 
         m_multipleDesktopsMenu->clear();
         if (m_client) {
-            m_multipleDesktopsMenu->setPalette(m_client->control->palette.q_palette());
+            std::visit(overload{[this](auto&& win) {
+                           m_multipleDesktopsMenu->setPalette(win->control->palette.q_palette());
+                       }},
+                       *m_client);
         }
 
         QAction* action = m_multipleDesktopsMenu->addAction(i18n("&All Desktops"));
         action->setData(QVariant::fromValue(user_actions_menu_desktop_action_data{0, false}));
         action->setCheckable(true);
-        if (m_client && on_all_desktops(m_client)) {
+        if (m_client
+            && std::visit(overload{[](auto&& win) { return on_all_desktops(win); }}, *m_client)) {
             action->setChecked(true);
         }
 
@@ -325,7 +351,11 @@ private:
                 vds->name(i).replace(QLatin1Char('&'), QStringLiteral("&&"))));
             action->setData(QVariant::fromValue(user_actions_menu_desktop_action_data{i, false}));
             action->setCheckable(true);
-            if (m_client && !on_all_desktops(m_client) && on_desktop(m_client, i)) {
+            if (m_client
+                && std::visit(overload{[&](auto&& win) {
+                                  return !on_all_desktops(win) && on_desktop(win, i);
+                              }},
+                              *m_client)) {
                 action->setChecked(true);
             }
         }
@@ -371,25 +401,29 @@ private:
             return;
         }
 
-        m_screenMenu->setPalette(m_client->control->palette.q_palette());
-        QActionGroup* group = new QActionGroup(m_screenMenu);
-        auto const& outputs = space.base.outputs;
+        std::visit(
+            overload{[this](auto&& win) {
+                m_screenMenu->setPalette(win->control->palette.q_palette());
+                QActionGroup* group = new QActionGroup(m_screenMenu);
+                auto const& outputs = space.base.outputs;
 
-        for (size_t i = 0; i < outputs.size(); ++i) {
-            // assumption: there are not more than 9 screens attached.
-            QAction* action = m_screenMenu->addAction(
-                i18nc("@item:inmenu List of all Screens to send a window to. First argument is a "
-                      "number, second the output identifier. E.g. Screen 1 (HDMI1)",
-                      "Screen &%1 (%2)",
-                      (i + 1),
-                      outputs.at(i)->name()));
-            action->setData(static_cast<int>(i));
-            action->setCheckable(true);
-            if (m_client && outputs.at(i) == m_client->topo.central_output) {
-                action->setChecked(true);
-            }
-            group->addAction(action);
-        }
+                for (size_t i = 0; i < outputs.size(); ++i) {
+                    // assumption: there are not more than 9 screens attached.
+                    QAction* action = m_screenMenu->addAction(i18nc(
+                        "@item:inmenu List of all Screens to send a window to. First argument is a "
+                        "number, second the output identifier. E.g. Screen 1 (HDMI1)",
+                        "Screen &%1 (%2)",
+                        (i + 1),
+                        outputs.at(i)->name()));
+                    action->setData(static_cast<int>(i));
+                    action->setCheckable(true);
+                    if (win && outputs.at(i) == win->topo.central_output) {
+                        action->setChecked(true);
+                    }
+                    group->addAction(action);
+                }
+            }},
+            *m_client);
     }
 
     /**
@@ -408,18 +442,21 @@ private:
             return;
         }
 
-        auto& vds = space.virtual_desktop_manager;
-        if (desk == 0) {
-            // the 'on_all_desktops' menu entry
-            if (m_client) {
-                set_on_all_desktops(m_client, !on_all_desktops(m_client));
-            }
-            return;
-        } else if (desk > vds->count()) {
-            vds->setCount(desk);
-        }
+        std::visit(overload{[this, desk](auto&& win) {
+                       auto& vds = space.virtual_desktop_manager;
+                       if (desk == 0) {
+                           // the 'on_all_desktops' menu entry
+                           if (win) {
+                               set_on_all_desktops(win, !on_all_desktops(win));
+                           }
+                           return;
+                       } else if (desk > vds->count()) {
+                           vds->setCount(desk);
+                       }
 
-        send_window_to_desktop(space, m_client, desk, false);
+                       send_window_to_desktop(space, win, desk, false);
+                   }},
+                   *m_client);
     }
 
     /**
@@ -439,24 +476,28 @@ private:
         auto data = action->data().value<user_actions_menu_desktop_action_data>();
 
         auto vds = space.virtual_desktop_manager.get();
-        if (data.desktop == 0) {
-            // the 'on_all_desktops' menu entry
-            set_on_all_desktops(m_client, !on_all_desktops(m_client));
-            return;
-        } else if (data.desktop > vds->count()) {
-            vds->setCount(data.desktop);
-        }
 
-        if (data.move_to_single) {
-            win::set_desktop(m_client, data.desktop);
-        } else {
-            auto virtualDesktop = vds->desktopForX11Id(data.desktop);
-            if (m_client->topo.desktops.contains(virtualDesktop)) {
-                win::leave_desktop(m_client, virtualDesktop);
-            } else {
-                win::enter_desktop(m_client, virtualDesktop);
-            }
-        }
+        std::visit(overload{[&](auto&& win) {
+                       if (data.desktop == 0) {
+                           // the 'on_all_desktops' menu entry
+                           set_on_all_desktops(win, !on_all_desktops(win));
+                           return;
+                       } else if (data.desktop > vds->count()) {
+                           vds->setCount(data.desktop);
+                       }
+
+                       if (data.move_to_single) {
+                           set_desktop(win, data.desktop);
+                       } else {
+                           auto virtualDesktop = vds->desktopForX11Id(data.desktop);
+                           if (win->topo.desktops.contains(virtualDesktop)) {
+                               leave_desktop(win, virtualDesktop);
+                           } else {
+                               enter_desktop(win, virtualDesktop);
+                           }
+                       }
+                   }},
+                   *m_client);
     }
 
     /**
@@ -476,7 +517,8 @@ private:
             return;
         }
 
-        win::send_to_screen(space, m_client, *output);
+        std::visit(overload{[&, this](auto&& win) { win::send_to_screen(space, win, *output); }},
+                   *m_client);
     }
 
     /**
@@ -498,26 +540,31 @@ private:
             c = space.stacking.active;
         }
 
-        QString type;
-        switch (op) {
-        case base::options_qobject::FullScreenOp:
-            if (!c->control->fullscreen && c->userCanSetFullScreen())
-                type = QStringLiteral("fullscreenaltf3");
-            break;
-        case base::options_qobject::NoBorderOp:
-            if (!c->noBorder() && c->userCanSetNoBorder())
-                type = QStringLiteral("noborderaltf3");
-            break;
-        default:
-            break;
-        }
-        if (!type.isEmpty())
-            helperDialog(type, c);
-        // need to delay performing the window operation as we need to have the
-        // user actions menu closed before we destroy the decoration. Otherwise Qt crashes
-        qRegisterMetaType<base::options_qobject::WindowOperation>();
-        QMetaObject::invokeMethod(space.qobject.get(),
-                                  [c, op] { win::perform_window_operation(c, op); });
+        std::visit(overload{[&, this](auto&& win) {
+                       QString type;
+                       switch (op) {
+                       case base::options_qobject::FullScreenOp:
+                           if (!win->control->fullscreen && win->userCanSetFullScreen())
+                               type = QStringLiteral("fullscreenaltf3");
+                           break;
+                       case base::options_qobject::NoBorderOp:
+                           if (!win->noBorder() && win->userCanSetNoBorder())
+                               type = QStringLiteral("noborderaltf3");
+                           break;
+                       default:
+                           break;
+                       }
+                       if (!type.isEmpty())
+                           helperDialog(type, win);
+                       // need to delay performing the window operation as we need to have the
+                       // user actions menu closed before we destroy the decoration. Otherwise Qt
+                       // crashes
+                       qRegisterMetaType<base::options_qobject::WindowOperation>();
+                       QMetaObject::invokeMethod(space.qobject.get(), [win, op] {
+                           win::perform_window_operation(win, op);
+                       });
+                   }},
+                   *c);
     }
 
     /// Creates the menu if not already created.
@@ -556,7 +603,10 @@ private:
         QMenu* advancedMenu = new QMenu(m_menu);
         QObject::connect(advancedMenu, &QMenu::aboutToShow, qobject.get(), [this, advancedMenu]() {
             if (m_client) {
-                advancedMenu->setPalette(m_client->control->palette.q_palette());
+                std::visit(overload{[&](auto&& win) {
+                               advancedMenu->setPalette(win->control->palette.q_palette());
+                           }},
+                           *m_client);
             }
         });
 
@@ -749,7 +799,8 @@ private:
      * @param message The message type to be shown
      * @param c The Client for which the dialog should be shown.
      */
-    void helperDialog(const QString& message, typename Space::window_t* window)
+    template<typename Win>
+    void helperDialog(QString const& message, Win* window)
     {
         QStringList args;
         QString type;
@@ -824,7 +875,8 @@ private:
     QAction* m_shortcutOperation{nullptr};
 
     /// The Client for which the menu is shown.
-    typename Space::window_t* m_client{nullptr};
+    std::optional<typename Space::window_t> m_client;
+    QMetaObject::Connection destroy_notifier;
 
     QAction* m_rulesOperation{nullptr};
     QAction* m_applicationRulesOperation{nullptr};

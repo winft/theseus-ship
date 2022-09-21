@@ -192,7 +192,7 @@ public:
         waylandServer()->destroy_xwayland_connection();
     }
 
-    drag_event_reply drag_move_filter(window_t* target, QPoint const& pos)
+    drag_event_reply drag_move_filter(std::optional<window_t> target, QPoint const& pos)
     {
         if (!data_bridge) {
             return drag_event_reply::wayland;
@@ -274,8 +274,8 @@ private:
                                                                                  auto id) {
                 if (auto surface = space.compositor->getSurface(id, xwayland_connection)) {
                     auto win = space.windows_map.at(win_id);
-                    auto xwl_win = dynamic_cast<win::wayland::xwl_window<Space>*>(win);
-                    assert(xwl_win);
+                    assert(std::holds_alternative<win::wayland::xwl_window<Space>*>(win));
+                    auto xwl_win = std::get<win::wayland::xwl_window<Space>*>(win);
                     win::wayland::set_surface(xwl_win, surface);
                 }
             });

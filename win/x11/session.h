@@ -17,26 +17,32 @@ namespace KWin::win::x11
 template<typename Space, typename Window>
 void restore_session_stacking_order(Space* space, Window* c)
 {
+    using var_win = typename Space::window_t;
+
     if (c->sm_stacking_order < 0) {
         return;
     }
 
-    blocker block(space->stacking.order);
-    remove_all(space->stacking.order.pre_stack, c);
+    auto& pre_stack = space->stacking.order.pre_stack;
 
-    for (auto it = space->stacking.order.pre_stack.begin(); // from bottom
-         it != space->stacking.order.pre_stack.end();
-         ++it) {
-        auto current = dynamic_cast<Window*>(*it);
-        if (!current) {
-            continue;
-        }
-        if (current->sm_stacking_order > c->sm_stacking_order) {
-            space->stacking.order.pre_stack.insert(it, c);
+    blocker block(space->stacking.order);
+    remove_all(pre_stack, var_win(c));
+
+    // from bottom
+    for (auto it = pre_stack.begin(); it != pre_stack.end(); ++it) {
+        if (std::visit(overload{[&](Window* win) {
+                                    if (win->sm_stacking_order > c->sm_stacking_order) {
+                                        pre_stack.insert(it, c);
+                                        return true;
+                                    }
+                                    return false;
+                                },
+                                [](auto&&) { return false; }},
+                       *it)) {
             return;
         }
     }
-    space->stacking.order.pre_stack.push_back(c);
+    pre_stack.push_back(c);
 }
 
 template<typename Win>

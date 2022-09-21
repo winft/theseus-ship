@@ -74,7 +74,11 @@ bool is_popup(Win const* win)
     case NET::Tooltip:
         return true;
     default:
-        return win->is_popup_end();
+        if constexpr (requires(Win win) { win.is_popup_end(); }) {
+            return win->is_popup_end();
+        } else {
+            return win->remnant && win->remnant->data.was_popup_window;
+        }
     }
 }
 

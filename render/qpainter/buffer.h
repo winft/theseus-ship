@@ -39,17 +39,18 @@ public:
         auto& win_integrate = static_cast<render::wayland::buffer_win_integration<buffer_t>&>(
             *this->win_integration);
 
-        if (!this->window->ref_win->surface) {
-            // That's an internal client.
-            image = win_integrate.internal.image;
-            return;
-        }
+        std::visit(overload{[&, this](auto&& win) {
+                       if (!win->surface) {
+                           // That's an internal client.
+                           image = win_integrate.internal.image;
+                           return;
+                       }
 
-        // performing deep copy, this could probably be improved
-        image = win_integrate.external->shmImage()->createQImage().copy();
-        if (auto s = this->window->ref_win->surface) {
-            s->resetTrackedDamage();
-        }
+                       // performing deep copy, this could probably be improved
+                       image = win_integrate.external->shmImage()->createQImage().copy();
+                       win->surface->resetTrackedDamage();
+                   }},
+                   *this->window->ref_win);
     }
 
     bool isValid() const override
@@ -70,24 +71,25 @@ public:
         render::buffer<Window>::updateBuffer();
         auto b = win_integrate.external.get();
 
-        if (!this->window->ref_win->surface) {
-            // That's an internal client.
-            image = win_integrate.internal.image;
-            return;
-        }
-        if (!b) {
-            image = QImage();
-            return;
-        }
-        if (b == oldBuffer) {
-            return;
-        }
+        std::visit(overload{[&, this](auto&& win) {
+                       if (!win->surface) {
+                           // That's an internal client.
+                           image = win_integrate.internal.image;
+                           return;
+                       }
+                       if (!b) {
+                           image = QImage();
+                           return;
+                       }
+                       if (b == oldBuffer) {
+                           return;
+                       }
 
-        // perform deep copy
-        image = b->shmImage()->createQImage().copy();
-        if (auto surface = this->window->ref_win->surface) {
-            surface->resetTrackedDamage();
-        }
+                       // perform deep copy
+                       image = b->shmImage()->createQImage().copy();
+                       win->surface->resetTrackedDamage();
+                   }},
+                   *this->window->ref_win);
     }
 
     QImage image;

@@ -99,7 +99,7 @@ class scene : public QObject
 {
 public:
     using space_t = typename Platform::base_t::space_t;
-    using window_t = typename space_t::window_t::render_t;
+    using window_t = typename Platform::compositor_t::window_t;
     using effect_window_t = typename window_t::effect_window_t;
     using buffer_t = buffer<window_t>;
     using output_t = typename Platform::base_t::output_t;
@@ -126,7 +126,7 @@ public:
      * @return the elapsed time in ns
      */
     virtual int64_t paint(QRegion /*damage*/,
-                          std::deque<typename window_t::ref_t*> const& /*windows*/,
+                          std::deque<typename window_t::ref_t> const& /*windows*/,
                           std::chrono::milliseconds /*presentTime*/)
     {
         assert(false);
@@ -135,14 +135,14 @@ public:
 
     virtual int64_t paint_output(output_t* /*output*/,
                                  QRegion /*damage*/,
-                                 std::deque<typename window_t::ref_t*> const& /*ref_wins*/,
+                                 std::deque<typename window_t::ref_t> const& /*ref_wins*/,
                                  std::chrono::milliseconds /*presentTime*/)
     {
         assert(false);
         return 0;
     }
 
-    virtual std::unique_ptr<window_t> createWindow(typename window_t::ref_t* ref_win) = 0;
+    virtual std::unique_ptr<window_t> createWindow(typename window_t::ref_t ref_win) = 0;
 
     /**
      * @brief Creates the scene specific shadow subclass.
@@ -246,7 +246,8 @@ public:
     }
 
     // shape/size of a window changed
-    void windowGeometryShapeChanged(typename window_t::ref_t* ref_win)
+    template<typename RefWin>
+    void windowGeometryShapeChanged(RefWin* ref_win)
     {
         if (!ref_win->render) {
             // This is ok, shape is not valid by default.
@@ -263,12 +264,15 @@ public:
     QRect m_renderTargetRect;
     qreal m_renderTargetScale = 1;
 
-    void createStackingOrder(std::deque<typename window_t::ref_t*> const& ref_wins)
+    void createStackingOrder(std::deque<typename window_t::ref_t> const& ref_wins)
     {
         // TODO: cache the stacking_order in case it has not changed
         for (auto const& ref_win : ref_wins) {
-            assert(ref_win->render);
-            stacking_order.push_back(ref_win->render.get());
+            std::visit(overload{[this](auto&& ref_win) {
+                           assert(ref_win->render);
+                           stacking_order.push_back(ref_win->render.get());
+                       }},
+                       ref_win);
         }
     }
 
@@ -397,7 +401,8 @@ public:
             // Reset the repaint_region.
             // This has to be done here because many effects schedule a repaint for
             // the next frame within Effects::prePaintWindow.
-            win::reset_repaints(*win->ref_win, repaint_output);
+            std::visit(overload{[this](auto&& win) { win::reset_repaints(*win, repaint_output); }},
+                       *win->ref_win);
 
             WindowPrePaintData data;
             data.mask = static_cast<int>(
@@ -517,8 +522,12 @@ public:
 
         // Traverse the scene windows from bottom to top.
         for (auto&& win : stacking_order) {
-            prepare_simple_window_paint(
-                *win->ref_win, orig_mask, region, dirtyArea, opaqueFullscreen, phase2data);
+            std::visit(
+                overload{[&](auto&& ref_win) {
+                    prepare_simple_window_paint(
+                        *ref_win, orig_mask, region, dirtyArea, opaqueFullscreen, phase2data);
+                }},
+                *win->ref_win);
         }
 
         // Save the part of the repaint region that's exclusively rendered to
@@ -640,9 +649,21 @@ public:
                                  QRegion region,
                                  WindowPaintData& data)
     {
-        if (kwinApp()->is_screen_locked() && !eff_win->window.ref_win->isLockScreen()
-            && !eff_win->window.ref_win->isInputMethod()) {
-            return;
+        if (kwinApp()->is_screen_locked()) {
+            if (!std::visit(
+                    overload{[](auto&& win) {
+                        auto do_draw{false};
+                        if constexpr (requires(decltype(win) win) { win->isLockScreen(); }) {
+                            do_draw |= win->isLockScreen();
+                        }
+                        if constexpr (requires(decltype(win) win) { win->isInputMethod(); }) {
+                            do_draw |= win->isInputMethod();
+                        }
+                        return do_draw;
+                    }},
+                    *eff_win->window.ref_win)) {
+                return;
+            }
         }
         eff_win->window.performPaint(mask, region, data);
     }
@@ -717,7 +738,8 @@ private:
             }
 
             const QPointF point = item->mapToScene(QPointF(0, 0));
-            auto const win_pos = win->ref_win->geo.pos();
+            auto const win_pos
+                = std::visit(overload{[](auto&& win) { return win->geo.pos(); }}, *win->ref_win);
             qreal x = point.x() + win_pos.x() + (item->width() - size.width()) / 2;
             qreal y = point.y() + win_pos.y() + (item->height() - size.height()) / 2;
             x -= thumb->x();
@@ -768,7 +790,8 @@ private:
                               size.height() / double(space_size.height()));
 
             const QPointF point = item->mapToScene(item->position());
-            auto const win_pos = win->ref_win->geo.pos();
+            auto const win_pos
+                = std::visit(overload{[](auto&& win) { return win->geo.pos(); }}, *win->ref_win);
             const qreal x = point.x() + win_pos.x() + (item->width() - size.width()) / 2;
             const qreal y = point.y() + win_pos.y() + (item->height() - size.height()) / 2;
             const QRect region = QRect(x, y, item->width(), item->height());

@@ -59,10 +59,11 @@ class space : public win::space
 public:
     using base_t = Base;
     using type = space<base_t>;
-    using window_t = Toplevel<type>;
     using x11_window = xwl_window<type>;
     using wayland_window = wayland::window<type>;
     using internal_window_t = internal_window<type>;
+    using window_t = std::variant<wayland_window*, internal_window_t*, x11_window*>;
+
     using input_t = input::wayland::redirect<typename Base::input_t, type>;
 
     space(Base& base, base::wayland::server* server)
@@ -120,10 +121,14 @@ public:
                          qobject.get(),
                          [this] {
                              for (auto win : windows) {
-                                 if (auto iwin = dynamic_cast<internal_window_t*>(win);
-                                     iwin && iwin->isShown()) {
-                                     stacking.order.render_overlays.push_back(iwin);
-                                 }
+                                 std::visit(
+                                     overload{[&](internal_window_t* win) {
+                                                  if (win->isShown()) {
+                                                      stacking.order.render_overlays.push_back(win);
+                                                  }
+                                              },
+                                              [](auto&&) {}},
+                                     win);
                              }
                          });
 
@@ -200,7 +205,7 @@ public:
         QObject::connect(
             qobject.get(), &space::qobject_t::clientAdded, qobject.get(), [this](auto win_id) {
                 auto win = windows_map.at(win_id);
-                handle_x11_window_added(static_cast<x11_window*>(win));
+                handle_x11_window_added(std::get<x11_window*>(win));
             });
 
         QObject::connect(virtual_desktop_manager->qobject.get(),
@@ -215,11 +220,16 @@ public:
     {
         stacking.order.lock();
 
-        for (auto const& window : windows) {
-            if (auto win = dynamic_cast<wayland_window*>(window); win && !win->remnant) {
-                destroy_window(win);
-                remove_all(windows, win);
-            }
+        auto const windows_copy = windows;
+        for (auto const& win : windows_copy) {
+            std::visit(overload{[&](wayland_window* win) {
+                                    if (!win->remnant) {
+                                        destroy_window(win);
+                                        remove_all(windows, window_t(win));
+                                    }
+                                },
+                                [](auto&&) {}},
+                       win);
         }
 
         clear_space(*this);
@@ -238,25 +248,30 @@ public:
         x11::popagate_desktop_change(*this, desktop);
 
         for (auto win : windows) {
-            if (!win->control) {
-                continue;
-            }
-            if (auto wlwin = dynamic_cast<wayland_window*>(win)) {
-                idle_update(*wlwin);
-            }
+            std::visit(overload{[](wayland_window* win) {
+                                    if (win->control) {
+                                        idle_update(*win);
+                                    }
+                                },
+                                [](auto&&) {}},
+                       win);
         }
     }
 
     /// Internal window means a window created by KWin itself.
-    window_t* findInternal(QWindow* window) const
+    internal_window_t* findInternal(QWindow* window) const
     {
         if (!window) {
             return nullptr;
         }
 
         for (auto win : windows) {
-            if (auto internal = dynamic_cast<internal_window_t*>(win);
-                internal && internal->internalWindow() == window) {
+            if (!std::holds_alternative<internal_window_t*>(win)) {
+                continue;
+            }
+
+            auto internal = std::get<internal_window_t*>(win);
+            if (internal->internalWindow() == window) {
                 return internal;
             }
         }
@@ -270,7 +285,8 @@ public:
         return std::make_unique<screen_edge<edger_t>>(&edger);
     }
 
-    QRect get_icon_geometry(window_t const* win) const
+    template<typename Win>
+    QRect get_icon_geometry(Win const* win) const
     {
         auto management = win->control->plasma_wayland_integration;
         if (!management || !waylandServer()) {
@@ -279,7 +295,7 @@ public:
         }
 
         auto min_distance = INT_MAX;
-        window_t* candidate_panel{nullptr};
+        wayland_window* candidate_panel{nullptr};
         QRect candidate_geo;
 
         for (auto i = management->minimizedGeometries().constBegin(),
@@ -311,9 +327,11 @@ public:
         }
 
         auto it = std::find_if(windows.cbegin(), windows.cend(), [surface](auto win) {
-            return win->surface == surface;
+            return std::visit(overload{[&](wayland_window* win) { return win->surface == surface; },
+                                       [&](auto&& /*win*/) { return false; }},
+                              win);
         });
-        return it != windows.cend() ? dynamic_cast<wayland_window*>(*it) : nullptr;
+        return it != windows.cend() ? std::get<wayland_window*>(*it) : nullptr;
     }
 
     void handle_window_added(wayland_window* window)
@@ -345,7 +363,7 @@ public:
             }
         }
 
-        assert(!contains(stacking.order.pre_stack, window));
+        assert(!contains(stacking.order.pre_stack, window_t(window)));
         stacking.order.pre_stack.push_back(window);
         stacking.order.update_order();
 
@@ -386,19 +404,19 @@ public:
     }
     void handle_window_removed(wayland_window* window)
     {
-        remove_all(windows, window);
+        remove_all(windows, window_t(window));
 
         if (window->control) {
-            if (window == stacking.most_recently_raised) {
-                stacking.most_recently_raised = nullptr;
+            if (window_t(window) == stacking.most_recently_raised) {
+                stacking.most_recently_raised = {};
             }
-            if (window == stacking.delayfocus_window) {
+            if (window_t(window) == stacking.delayfocus_window) {
                 cancel_delay_focus(*this);
             }
-            if (window == stacking.last_active) {
-                stacking.last_active = nullptr;
+            if (window_t(window) == stacking.last_active) {
+                stacking.last_active = {};
             }
-            if (window == client_keys_client) {
+            if (window_t(window) == client_keys_client) {
                 setup_window_shortcut_done(*this, false);
             }
             if (!window->control->shortcut.isEmpty()) {
@@ -423,21 +441,25 @@ public:
                                         std::vector<QRect> const& screens_geos,
                                         space_areas& areas) override
     {
-        for (auto const& window : windows) {
-            if (!window->control) {
-                continue;
-            }
-            if (auto x11_win = dynamic_cast<x11_window*>(window)) {
-                x11::update_space_areas(x11_win, desktop_area, screens_geos, areas);
-            }
+        for (auto window : windows) {
+            std::visit(overload{[&](x11_window* win) {
+                                    if (win->control) {
+                                        x11::update_space_areas(
+                                            win, desktop_area, screens_geos, areas);
+                                    }
+                                },
+                                [&](auto&&) {}},
+                       window);
         }
 
         // TODO(romangg): Combine this and above loop.
         for (auto win : windows) {
-            // TODO(romangg): check on control like in the previous loop?
-            if (auto wl_win = dynamic_cast<wayland_window*>(win)) {
-                update_space_areas(wl_win, desktop_area, screens_geos, areas);
-            }
+            std::visit(overload{[&](wayland_window* win) {
+                                    // TODO(romangg): check on control like in the previous loop?
+                                    update_space_areas(win, desktop_area, screens_geos, areas);
+                                },
+                                [&](auto&&) {}},
+                       win);
         }
     }
 
@@ -491,15 +513,15 @@ public:
 
     QVector<Wrapland::Server::PlasmaShellSurface*> plasma_shell_surfaces;
 
-    std::vector<window_t*> windows;
-    std::unordered_map<uint32_t, window_t*> windows_map;
+    std::vector<window_t> windows;
+    std::unordered_map<uint32_t, window_t> windows_map;
     std::vector<win::x11::group<type>*> groups;
 
     stacking_state<window_t> stacking;
 
-    window_t* active_popup_client{nullptr};
-    window_t* client_keys_client{nullptr};
-    window_t* move_resize_window{nullptr};
+    std::optional<window_t> active_popup_client;
+    std::optional<window_t> client_keys_client;
+    std::optional<window_t> move_resize_window;
 
 private:
     void handle_x11_window_added(x11_window* window)
@@ -528,23 +550,23 @@ private:
 
     void handle_desktop_removed(virtual_desktop* desktop)
     {
-        for (auto const& client : windows) {
-            if (!client->control) {
-                continue;
-            }
-            if (!client->topo.desktops.contains(desktop)) {
-                continue;
-            }
+        for (auto const& win : windows) {
+            std::visit(overload{[this, desktop](auto&& win) {
+                           if (!win->control || !win->topo.desktops.contains(desktop)) {
+                               return;
+                           }
 
-            if (client->topo.desktops.count() > 1) {
-                leave_desktop(client, desktop);
-            } else {
-                send_window_to_desktop(
-                    *this,
-                    client,
-                    qMin(desktop->x11DesktopNumber(), virtual_desktop_manager->count()),
-                    true);
-            }
+                           if (win->topo.desktops.count() > 1) {
+                               leave_desktop(win, desktop);
+                               return;
+                           }
+                           send_window_to_desktop(
+                               *this,
+                               win,
+                               qMin(desktop->x11DesktopNumber(), virtual_desktop_manager->count()),
+                               true);
+                       }},
+                       win);
         }
     }
 };

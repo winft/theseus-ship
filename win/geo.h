@@ -25,8 +25,10 @@ static inline bool is_irrelevant(Win1 const* window, Win2 const* regarding, int 
     if (!window->control) {
         return true;
     }
-    if (window == regarding) {
-        return true;
+    if constexpr (std::is_same_v<Win1, Win2>) {
+        if (window == regarding) {
+            return true;
+        }
     }
     if (!window->isShown()) {
         return true;
@@ -179,6 +181,15 @@ QSize adjusted_frame_size(Win* win, QSize const& frame_size, size_mode mode)
 {
     assert(win->control);
     return win->control->adjusted_frame_size(frame_size, mode);
+}
+
+template<typename Win>
+QRect get_icon_geometry(Win& win)
+{
+    if constexpr (requires(Win win) { win.iconGeometry(); }) {
+        return win.iconGeometry();
+    }
+    return win.space.get_icon_geometry(&win);
 }
 
 }

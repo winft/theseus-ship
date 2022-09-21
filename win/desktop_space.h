@@ -15,11 +15,8 @@
 namespace KWin::win
 {
 
-template<typename Space>
-void send_window_to_desktop(Space& space,
-                            typename Space::window_t* window,
-                            int desk,
-                            bool dont_activate)
+template<typename Space, typename Win>
+void send_window_to_desktop(Space& space, Win* window, int desk, bool dont_activate)
 {
     if ((desk < 1 && desk != NET::OnAllDesktops)
         || desk > static_cast<int>(space.virtual_desktop_manager->count())) {
@@ -44,7 +41,7 @@ void send_window_to_desktop(Space& space,
             !dont_activate) {
             request_focus(space, *window);
         } else {
-            restack_client_under_active(space, window);
+            restack_client_under_active(space, *window);
         }
     } else {
         raise_window(space, window);
@@ -69,10 +66,13 @@ void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)
     // Restore the focus on this desktop afterwards.
     focus_blocker<Space> blocker(*space);
 
-    if (auto move_resize_client = space->move_resize_window) {
-        if (!on_desktop(move_resize_client, newDesktop)) {
-            win::set_desktop(move_resize_client, newDesktop);
-        }
+    if (auto& mov_res = space->move_resize_window) {
+        std::visit(overload{[&](auto&& win) {
+                       if (!on_desktop(win, newDesktop)) {
+                           win::set_desktop(win, newDesktop);
+                       }
+                   }},
+                   *mov_res);
     }
 
     space->handle_desktop_changed(newDesktop);

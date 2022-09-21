@@ -78,9 +78,11 @@ void setup_window_control_connections(Win* win)
             // No change.
             return;
         }
-        if (win->isInitialPositionSet()) {
-            // Position (geometry?) already set.
-            return;
+        if constexpr (requires(Win win) { win.isInitialPositionSet(); }) {
+            if (win->isInitialPositionSet()) {
+                // Position (geometry?) already set.
+                return;
+            }
         }
 
         geometry_updates_blocker blocker(win);

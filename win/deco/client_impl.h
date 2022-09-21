@@ -364,7 +364,9 @@ public:
 
     void requestContextHelp() override
     {
-        m_client->showContextHelp();
+        if constexpr (requires(Window win) { win.showContextHelp(); }) {
+            m_client->showContextHelp();
+        }
     }
 
     void requestToggleMaximization(Qt::MouseButtons buttons) override

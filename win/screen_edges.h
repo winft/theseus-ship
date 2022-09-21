@@ -67,7 +67,7 @@ public:
             [this] {
                 stopApproaching();
                 if (window) {
-                    window->showOnScreenEdge();
+                    std::visit(overload{[&](auto&& win) { win->showOnScreenEdge(); }}, *window);
                     unreserve();
                     return;
                 }
@@ -397,10 +397,17 @@ public:
     void checkBlocking()
     {
         auto window = edger->space.stacking.active;
-        auto const newValue = !edger->remainActiveOnFullscreen() && window
-            && window->control->fullscreen && window->geo.frame.contains(geometry.center())
+
+        auto newValue = !edger->remainActiveOnFullscreen() && window
             && !(edger->space.base.render->compositor->effects
                  && edger->space.base.render->compositor->effects->hasActiveFullScreenEffect());
+        if (newValue) {
+            newValue = std::visit(overload{[&](auto&& win) {
+                                      return win->control->fullscreen
+                                          && win->geo.frame.contains(geometry.center());
+                                  }},
+                                  *window);
+        }
 
         if (newValue == is_blocked) {
             return;
@@ -440,7 +447,8 @@ public:
         Q_EMIT qobject->approaching(border, 0.0, approach_geometry);
     }
 
-    void setClient(window_t* window)
+    template<typename Win>
+    void setClient(Win* window)
     {
         const bool wasTouch = activatesForTouchGesture();
         this->window = window;
@@ -449,7 +457,7 @@ public:
         }
     }
 
-    window_t* client() const
+    std::optional<window_t> client() const
     {
         return window;
     }
@@ -478,7 +486,7 @@ public:
         }
         if (edger->desktop_switching.when_moving_client) {
             auto c = edger->space.move_resize_window;
-            if (c && !win::is_resize(c)) {
+            if (c && std::visit(overload{[&](auto&& win) { return !win::is_resize(win); }}, *c)) {
                 return true;
             }
         }
@@ -620,10 +628,11 @@ private:
 
     void handle(QPoint const& cursorPos)
     {
-        auto movingClient = edger->space.move_resize_window;
+        auto& movingClient = edger->space.move_resize_window;
 
         if ((edger->desktop_switching.when_moving_client && movingClient
-             && !win::is_resize(movingClient))
+             && std::visit(overload{[&](auto&& win) { return !win::is_resize(win); }},
+                           *movingClient))
             || (edger->desktop_switching.always && isScreenEdge())) {
             // always switch desktops in case:
             // moving a Client and option for switch on client move is enabled
@@ -641,7 +650,7 @@ private:
 
         if (window) {
             pushCursorBack(cursorPos);
-            window->showOnScreenEdge();
+            std::visit(overload{[&](auto&& win) { win->showOnScreenEdge(); }}, *window);
             unreserve();
             return;
         }
@@ -752,12 +761,15 @@ private:
                 pos.setY(OFFSET);
         }
 
-        if (auto c = edger->space.move_resize_window) {
+        if (auto& mov_res = edger->space.move_resize_window) {
             QVector<virtual_desktop*> desktops{desktop};
-            if (c->control->rules.checkDesktops(*edger->space.virtual_desktop_manager, desktops)
+            if (std::visit(overload{[&](auto&& win) {
+                               return win->control->rules.checkDesktops(
+                                   *edger->space.virtual_desktop_manager, desktops);
+                           }},
+                           *mov_res)
                 != desktops) {
-                // user attempts to move a client to another desktop where it is ruleforced to not
-                // be
+                // User tries to move a client to another desktop where it is ruleforced to not be.
                 return;
             }
         }
@@ -818,7 +830,7 @@ private:
     int last_approaching_factor{0};
     bool push_back_is_blocked{false};
 
-    window_t* window{nullptr};
+    std::optional<window_t> window;
     std::unique_ptr<input::swipe_gesture> gesture;
 };
 
@@ -954,7 +966,7 @@ public:
             if (edge->approach_geometry.contains(pos)) {
                 edge->startApproaching();
             }
-            if (edge->client() != nullptr && activatedForClient) {
+            if (edge->client() && activatedForClient) {
                 edge->markAsTriggered(pos, now);
                 continue;
             }
@@ -1029,13 +1041,16 @@ public:
      * @param border The border which the client wants to use, only proper borders are supported (no
      * corners)
      */
-    void reserve(typename Space::window_t* window, ElectricBorder border)
+    template<typename Win>
+    void reserve(Win* window, ElectricBorder border)
     {
+        using var_win = typename Win::space_t::window_t;
+
         bool hadBorder = false;
         auto it = edges.begin();
 
         while (it != edges.end()) {
-            if ((*it)->client() == window) {
+            if (auto win = (*it)->client(); win && *win == var_win(window)) {
                 hadBorder = true;
                 it = edges.erase(it);
             } else {
@@ -1387,7 +1402,8 @@ public:
             for (auto& oldEdge : oldEdges) {
                 if (oldEdge->client()) {
                     // show the client again and don't recreate the edge
-                    oldEdge->client()->showOnScreenEdge();
+                    std::visit(overload{[&](auto&& win) { win->showOnScreenEdge(); }},
+                               *oldEdge->client());
                     continue;
                 }
                 if (oldEdge->border != edge->border) {
@@ -1681,7 +1697,8 @@ private:
         return ElectricActionNone;
     }
 
-    void createEdgeForClient(typename Space::window_t* window, ElectricBorder border)
+    template<typename Win>
+    void createEdgeForClient(Win* window, ElectricBorder border)
     {
         int y = 0;
         int x = 0;
@@ -1759,7 +1776,7 @@ private:
         }
     }
 
-    void deleteEdgeForClient(typename Space::window_t* window)
+    void deleteEdgeForClient(typename Space::window_t window)
     {
         auto it = edges.begin();
         while (it != edges.end()) {

@@ -207,7 +207,7 @@ void ScriptedEffectsTest::testEffectsHandler()
     shellSurface->setTitle("WindowA");
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->base.space->stacking.active, c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
 
     waitFor("windowAdded - WindowA");
     waitFor("stackingOrder - 1 WindowA");
@@ -287,7 +287,7 @@ void ScriptedEffectsTest::testAnimations()
     shellSurface->setTitle("Window 1");
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->base.space->stacking.active, c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
 
     {
         const auto state = effect->state();
@@ -397,7 +397,7 @@ void ScriptedEffectsTest::testFullScreenEffect()
     shellSurface->setTitle("Window 1");
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->base.space->stacking.active, c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
 
     QCOMPARE(effects->hasActiveFullScreenEffect(), false);
     QCOMPARE(effectMain->isActiveFullScreenEffect(), false);
@@ -460,7 +460,7 @@ void ScriptedEffectsTest::testKeepAlive()
     QVERIFY(shellSurface);
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->base.space->stacking.active, c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
 
     // no active animations at the beginning
     QCOMPARE(effect->state().count(), 0);
@@ -508,7 +508,7 @@ void ScriptedEffectsTest::testGrab()
     QVERIFY(shellSurface);
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->base.space->stacking.active, c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
 
     // the test effect should grab the test client successfully
     QCOMPARE(effectOutputSpy.count(), 1);
@@ -541,7 +541,7 @@ void ScriptedEffectsTest::testGrabAlreadyGrabbedWindow()
     QVERIFY(shellSurface);
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->base.space->stacking.active, c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
 
     // effect that initially held the grab should still hold the grab
     QCOMPARE(ownerOutputSpy.count(), 1);
@@ -578,7 +578,7 @@ void ScriptedEffectsTest::testGrabAlreadyGrabbedWindowForced()
     QVERIFY(shellSurface);
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->base.space->stacking.active, c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
 
     // verify that the owner in fact held the grab
     QCOMPARE(ownerOutputSpy.count(), 1);
@@ -609,7 +609,7 @@ void ScriptedEffectsTest::testUngrab()
     QVERIFY(shellSurface);
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->base.space->stacking.active, c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
 
     // the test effect should grab the test client successfully
     QCOMPARE(effectOutputSpy.count(), 1);
@@ -652,7 +652,7 @@ void ScriptedEffectsTest::testRedirect()
     QVERIFY(shellSurface);
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->base.space->stacking.active, c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
 
     auto around = [](std::chrono::milliseconds elapsed,
                      std::chrono::milliseconds pivot,
@@ -730,7 +730,7 @@ void ScriptedEffectsTest::testComplete()
     QVERIFY(shellSurface);
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->base.space->stacking.active, c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
 
     auto around = [](std::chrono::milliseconds elapsed,
                      std::chrono::milliseconds pivot,

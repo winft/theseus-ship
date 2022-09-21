@@ -129,7 +129,7 @@ public:
      * Returns the currently displayed client ( only works in TabBoxWindowsMode ).
      * Returns 0 if no client is displayed.
      */
-    window_t* current_client()
+    std::optional<window_t> current_client()
     {
         if (auto client = static_cast<tabbox_client_impl<window_t>*>(
                 m_tabbox->client(m_tabbox->current_index()))) {
@@ -139,7 +139,7 @@ public:
                 }
             }
         }
-        return nullptr;
+        return {};
     }
 
     /**
@@ -147,10 +147,10 @@ public:
      * TabBoxWindowsMode ).
      * Returns an empty list if no clients are available.
      */
-    QList<window_t*> current_client_list()
+    QList<window_t> current_client_list()
     {
         auto const list = m_tabbox->client_list();
-        QList<window_t*> ret;
+        QList<window_t> ret;
 
         for (auto& client_pointer : list) {
             auto client = client_pointer.lock();
@@ -189,9 +189,13 @@ public:
      *
      * @see setCurrentDesktop
      */
-    void set_current_client(window_t* window)
+    void set_current_client(window_t window)
     {
-        set_current_index(m_tabbox->index(window->control->tabbox().lock().get()));
+        auto client = std::visit(overload{[](auto&& win) -> tabbox_client* {
+                                     return win->control->tabbox().lock().get();
+                                 }},
+                                 window);
+        set_current_index(m_tabbox->index(client));
     }
 
     /**
@@ -250,7 +254,7 @@ public:
             m_tabbox->create_model(partial_reset);
             if (!partial_reset) {
                 if (space.stacking.active) {
-                    set_current_client(space.stacking.active);
+                    set_current_client(*space.stacking.active);
                 }
 
                 // it's possible that the active client is not part of the model
@@ -481,13 +485,13 @@ public:
     }
 
     /// Travers all clients according to static order. Useful for CDE-style Alt-tab feature.
-    window_t* next_client_static(window_t* c) const
+    std::optional<window_t> next_client_static(std::optional<window_t> c) const
     {
         auto const& list = get_windows_with_control(space.windows);
         if (!c || list.empty()) {
-            return nullptr;
+            return {};
         }
-        auto pos = index_of(list, c);
+        auto pos = index_of(list, *c);
         if (pos == -1) {
             return list.front();
         }
@@ -499,14 +503,14 @@ public:
     }
 
     /// Travers all clients according to static order. Useful for CDE-style Alt-tab feature.
-    window_t* previous_client_static(window_t* c) const
+    std::optional<window_t> previous_client_static(std::optional<window_t> c) const
     {
         auto const& list = get_windows_with_control(space.windows);
         if (!c || list.empty()) {
-            return nullptr;
+            return {};
         }
 
-        auto pos = index_of(list, c);
+        auto pos = index_of(list, *c);
         if (pos == -1) {
             return list.back();
         }
@@ -728,9 +732,13 @@ public:
         if (close_tabbox)
             close();
         if (c) {
-            activate_window(space, *c);
-            if (win::is_desktop(c))
-                set_showing_desktop(space, !space.showing_desktop);
+            std::visit(overload{[&](auto&& win) {
+                           activate_window(space, *win);
+                           if (win::is_desktop(win)) {
+                               set_showing_desktop(space, !space.showing_desktop);
+                           }
+                       }},
+                       *c);
         }
     }
 
@@ -973,13 +981,16 @@ private:
         }
     }
 
-    static std::vector<window_t*> get_windows_with_control(std::vector<window_t*>& windows)
+    static std::vector<window_t> get_windows_with_control(std::vector<window_t>& windows)
     {
-        std::vector<window_t*> with_control;
+        std::vector<window_t> with_control;
         for (auto win : windows) {
-            if (win->control) {
-                with_control.push_back(win);
-            }
+            std::visit(overload{[&](auto&& win) {
+                           if (win->control) {
+                               with_control.push_back(win);
+                           }
+                       }},
+                       win);
         }
         return with_control;
     }
@@ -1073,22 +1084,28 @@ private:
 
     void cde_walk_through_windows(bool forward)
     {
-        window_t* old_top_win = nullptr;
+        std::optional<window_t> old_top_win;
 
         // This function find the first suitable client for unreasonable focus policies - the
         // topmost one with exceptions (can't be keepabove/below, otherwise gets stuck on them).
         for (int i = space.stacking.order.stack.size() - 1; i >= 0; --i) {
-            auto win = space.stacking.order.stack.at(i);
-            if (win->control && on_current_desktop(win) && !win::is_special_window(win)
-                && win->isShown() && win::wants_tab_focus(win) && !win->control->keep_above
-                && !win->control->keep_below) {
-                old_top_win = win;
+            if (std::visit(overload{[&](auto&& win) {
+                               if (win->control && on_current_desktop(win)
+                                   && !win::is_special_window(win) && win->isShown()
+                                   && win::wants_tab_focus(win) && !win->control->keep_above
+                                   && !win->control->keep_below) {
+                                   old_top_win = win;
+                                   return true;
+                               }
+                               return false;
+                           }},
+                           space.stacking.order.stack.at(i))) {
                 break;
             }
         }
 
         auto candidate = old_top_win;
-        window_t* first_win = nullptr;
+        std::optional<window_t> first_win;
 
         bool options_traverse_all;
         {
@@ -1102,15 +1119,18 @@ private:
                 return true;
             }
 
-            if (win->control->minimized || !win::wants_tab_focus(win) || win->control->keep_above
-                || win->control->keep_below) {
-                return false;
-            }
-            if (!options_traverse_all && !on_desktop(win, current_desktop())) {
-                return false;
-            }
-
-            return true;
+            return std::visit(overload{[&](auto&& win) {
+                                  if (win->control->minimized || !win::wants_tab_focus(win)
+                                      || win->control->keep_above || win->control->keep_below) {
+                                      return false;
+                                  }
+                                  if (!options_traverse_all
+                                      && !on_desktop(win, current_desktop())) {
+                                      return false;
+                                  }
+                                  return true;
+                              }},
+                              *win);
         };
 
         do {
@@ -1123,7 +1143,7 @@ private:
 
             if (candidate == first_win) {
                 // No candidates found.
-                candidate = nullptr;
+                candidate = {};
             }
         } while (!accept(candidate));
 
@@ -1132,18 +1152,21 @@ private:
         }
 
         if (old_top_win && old_top_win != candidate) {
-            win::lower_window(space, old_top_win);
+            std::visit(overload{[&](auto&& win) { win::lower_window(space, win); }}, *old_top_win);
         }
 
-        if (kwinApp()->options->qobject->focusPolicyIsReasonable()) {
-            activate_window(space, *candidate);
-            return;
-        }
+        std::visit(overload{[&](auto&& win) {
+                       if (kwinApp()->options->qobject->focusPolicyIsReasonable()) {
+                           activate_window(space, *win);
+                           return;
+                       }
 
-        if (!on_desktop(candidate, current_desktop())) {
-            set_current_desktop(get_desktop(*candidate));
-        }
-        win::raise_window(space, candidate);
+                       if (!on_desktop(win, current_desktop())) {
+                           set_current_desktop(get_desktop(*win));
+                       }
+                       win::raise_window(space, win);
+                   }},
+                   *candidate);
     }
 
     void walk_through_desktops(bool forward)
@@ -1158,8 +1181,8 @@ private:
         set_mode(mode);
         reset();
         next_prev(forward);
-        if (auto c = current_client()) {
-            activate_window(space, *c);
+        if (auto win = current_client()) {
+            std::visit(overload{[&](auto&& win) { activate_window(space, *win); }}, *win);
         }
     }
 
@@ -1200,7 +1223,8 @@ private:
         Q_ASSERT(!m_forced_global_mouse_grab);
         m_forced_global_mouse_grab = true;
         if (space.stacking.active) {
-            space.stacking.active->control->update_mouse_grab();
+            std::visit(overload{[&](auto&& win) { win->control->update_mouse_grab(); }},
+                       *space.stacking.active);
         }
         m_x11_event_filter.reset(new tabbox_x11_filter<tabbox<Space>>(*this));
         return true;
@@ -1217,7 +1241,8 @@ private:
         Q_ASSERT(m_forced_global_mouse_grab);
         m_forced_global_mouse_grab = false;
         if (space.stacking.active) {
-            space.stacking.active->control->update_mouse_grab();
+            std::visit(overload{[](auto&& win) { win->control->update_mouse_grab(); }},
+                       *space.stacking.active);
         }
         m_x11_event_filter.reset();
     }

@@ -73,7 +73,7 @@ void xdg_activation_test::test_single_client()
     QCOMPARE(win::render_geometry(window1).size(), QSize(200, 100));
     QCOMPARE(window1->geo.frame.size(), QSize(200, 100));
     QVERIFY(window1->control->active);
-    QCOMPARE(Test::app()->base.space->stacking.active, window1);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), window1);
 
     std::unique_ptr<Clt::Surface> surface2(Test::create_surface());
     auto shell_surface2 = Test::create_xdg_shell_toplevel(surface2);
@@ -85,7 +85,7 @@ void xdg_activation_test::test_single_client()
     QCOMPARE(win::render_geometry(window2).size(), QSize(400, 200));
     QCOMPARE(window2->geo.frame.size(), QSize(400, 200));
     QVERIFY(window2->control->active);
-    QCOMPARE(Test::app()->base.space->stacking.active, window2);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), window2);
 
     auto activation = Test::get_client().interfaces.xdg_activation.get();
     QVERIFY(activation);
@@ -127,7 +127,7 @@ void xdg_activation_test::test_single_client()
     QCOMPARE(xdg_activate_spy.front().front().value<std::string>(), token_string);
     QCOMPARE(xdg_activate_spy.front().back().value<Wrapland::Server::Surface*>(), window1->surface);
     QVERIFY(window1->control->active);
-    QCOMPARE(Test::app()->base.space->stacking.active, window1);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), window1);
 }
 
 void xdg_activation_test::test_multi_client()
@@ -144,7 +144,7 @@ void xdg_activation_test::test_multi_client()
     QCOMPARE(win::render_geometry(window1).size(), QSize(200, 100));
     QCOMPARE(window1->geo.frame.size(), QSize(200, 100));
     QVERIFY(window1->control->active);
-    QCOMPARE(Test::app()->base.space->stacking.active, window1);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), window1);
 
     // Create a second client.
     Test::setup_wayland_connection(Test::global_selection::seat
@@ -161,7 +161,7 @@ void xdg_activation_test::test_multi_client()
     QCOMPARE(win::render_geometry(window2).size(), QSize(400, 200));
     QCOMPARE(window2->geo.frame.size(), QSize(400, 200));
     QVERIFY(window2->control->active);
-    QCOMPARE(Test::app()->base.space->stacking.active, window2);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), window2);
 
     auto activation2 = client2.interfaces.xdg_activation.get();
     QVERIFY(activation2);
@@ -204,7 +204,7 @@ void xdg_activation_test::test_multi_client()
     QCOMPARE(xdg_activate_spy.front().front().value<std::string>(), token_string);
     QCOMPARE(xdg_activate_spy.front().back().value<Wrapland::Server::Surface*>(), window1->surface);
     QVERIFY(window1->control->active);
-    QCOMPARE(Test::app()->base.space->stacking.active, window1);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), window1);
 }
 
 void xdg_activation_test::test_plasma_activation_feedback()
@@ -221,7 +221,7 @@ void xdg_activation_test::test_plasma_activation_feedback()
     QCOMPARE(win::render_geometry(window1).size(), QSize(200, 100));
     QCOMPARE(window1->geo.frame.size(), QSize(200, 100));
     QVERIFY(window1->control->active);
-    QCOMPARE(Test::app()->base.space->stacking.active, window1);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), window1);
 
     std::unique_ptr<Clt::Surface> surface2(Test::create_surface());
     auto shell_surface2 = Test::create_xdg_shell_toplevel(surface2);
@@ -233,7 +233,7 @@ void xdg_activation_test::test_plasma_activation_feedback()
     QCOMPARE(win::render_geometry(window2).size(), QSize(400, 200));
     QCOMPARE(window2->geo.frame.size(), QSize(400, 200));
     QVERIFY(window2->control->active);
-    QCOMPARE(Test::app()->base.space->stacking.active, window2);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), window2);
 
     QSignalSpy plasma_activation_spy(Test::get_client().interfaces.plasma_activation_feedback.get(),
                                      &Wrapland::Client::plasma_activation_feedback::activation);
@@ -288,7 +288,7 @@ void xdg_activation_test::test_plasma_activation_feedback()
     QVERIFY(plasma_activation_finished_spy.wait());
 
     QVERIFY(window1->control->active);
-    QCOMPARE(Test::app()->base.space->stacking.active, window1);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), window1);
 
     QVERIFY(plasma_activation->is_finished());
     delete plasma_activation;

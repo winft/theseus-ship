@@ -155,8 +155,7 @@ void X11DesktopWindowTest::testDesktopWindow()
     QVERIFY(windowCreatedSpy.wait());
 
     auto client_id = windowCreatedSpy.first().first().value<quint32>();
-    auto client = dynamic_cast<Test::space::x11_window*>(
-        Test::app()->base.space->windows_map.at(client_id));
+    auto client = Test::get_x11_window(Test::app()->base.space->windows_map.at(client_id));
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
     QVERIFY(!win::decoration(client));
