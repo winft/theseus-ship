@@ -9,6 +9,7 @@
 #include "kwinglobals.h"
 
 #include "render/compositor_qobject.h"
+#include "render/types.h"
 
 #include <QObject>
 #include <QtDBus>
@@ -142,7 +143,7 @@ public:
         : qobject{std::make_unique<compositing_qobject>()}
         , compositor{comp}
     {
-        qobject->integration.active = [this] { return compositor.isActive(); };
+        qobject->integration.active = [this] { return compositor.state == state::on; };
         qobject->integration.required
             = [this] { return compositor.platform.requiresCompositing(); };
         qobject->integration.possible

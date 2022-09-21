@@ -14,6 +14,7 @@
 #include "render/compositor_start.h"
 #include "render/cursor.h"
 #include "render/dbus/compositing.h"
+#include "render/effects.h"
 #include "render/gl/scene.h"
 #include "render/qpainter/scene.h"
 #include "wayland_logging.h"
@@ -26,21 +27,23 @@ namespace KWin::render::wayland
 {
 
 template<typename Platform>
-class compositor : public render::compositor<Platform>
+class compositor
 {
 public:
     using platform_t = Platform;
     using type = compositor<Platform>;
-    using abstract_type = render::compositor<Platform>;
-    using scene_t = typename abstract_type::scene_t;
+    using scene_t = render::scene<Platform>;
     using effects_t = effects_handler_impl<type>;
     using space_t = typename Platform::base_t::space_t;
 
     compositor(Platform& platform)
-        : render::compositor<Platform>(platform)
+        : qobject{std::make_unique<compositor_qobject>([this](auto /*te*/) { return false; })}
         , presentation{std::make_unique<wayland::presentation>(platform.base.get_clockid())}
+        , platform{platform}
         , dbus{std::make_unique<dbus::compositing<type>>(*this)}
     {
+        compositor_setup(*this);
+
         dbus->qobject->integration.get_types = [] { return QStringList{"egl"}; };
 
         QObject::connect(kwinApp(),
@@ -49,15 +52,15 @@ public:
                          [this] { compositor_destroy_selection(*this); });
     }
 
-    ~compositor() override
+    ~compositor()
     {
         Q_EMIT this->qobject->aboutToDestroy();
         compositor_stop(*this, true);
-        this->deleteUnusedSupportProperties();
+        delete_unused_support_properties(*this);
         compositor_destroy_selection(*this);
     }
 
-    void start(space_t& space) override
+    void start(space_t& space)
     {
         if (!this->space) {
             // On first start setup connections.
@@ -68,7 +71,7 @@ public:
             QObject::connect(space.stacking.order.qobject.get(),
                              &win::stacking_order_qobject::changed,
                              this->qobject.get(),
-                             [this] { this->addRepaintFull(); });
+                             [this] { full_repaint(*this); });
             QObject::connect(&this->platform.base,
                              &base::platform::output_removed,
                              this->qobject.get(),
@@ -106,13 +109,13 @@ public:
         reinitialize_compositor(*this);
     }
 
-    void configChanged() override
+    void configChanged()
     {
         reinitialize_compositor(*this);
-        this->addRepaintFull();
+        full_repaint(*this);
     }
 
-    void schedule_repaint(typename space_t::window_t* window) override
+    void schedule_repaint(typename space_t::window_t* window)
     {
         if (locked) {
             return;
@@ -125,7 +128,7 @@ public:
         }
     }
 
-    void schedule_frame_callback(typename space_t::window_t* window) override
+    void schedule_frame_callback(typename space_t::window_t* window)
     {
         if (locked) {
             return;
@@ -136,12 +139,12 @@ public:
         }
     }
 
-    void toggleCompositing() override
+    void toggleCompositing()
     {
         // For the shortcut. Not possible on Wayland because we always composite.
     }
 
-    void addRepaint(QRegion const& region) override
+    void addRepaint(QRegion const& region)
     {
         if (locked) {
             return;
@@ -181,9 +184,7 @@ public:
         }
     }
 
-    std::unique_ptr<wayland::presentation> presentation;
-
-    std::unique_ptr<scene_t> create_scene() override
+    std::unique_ptr<scene_t> create_scene()
     {
         if (this->platform.selected_compositor() == QPainterCompositing) {
             return qpainter::create_scene(this->platform);
@@ -191,18 +192,35 @@ public:
         return gl::create_scene(this->platform);
     }
 
-    void performCompositing() override
+    void performCompositing()
     {
         for (auto& output : this->platform.base.outputs) {
             output->render->run();
         }
     }
 
+    std::unique_ptr<compositor_qobject> qobject;
+
+    std::unique_ptr<scene_t> scene;
     std::unique_ptr<effects_t> effects;
-    std::unique_ptr<dbus::compositing<type>> dbus;
+    std::unique_ptr<wayland::presentation> presentation;
+
+    std::unique_ptr<cursor<Platform>> software_cursor;
+    compositor_x11_integration<typename space_t::window_t> x11_integration;
+
+    render::state state{state::off};
+    x11::compositor_selection_owner* m_selectionOwner{nullptr};
+
+    QList<xcb_atom_t> unused_support_properties;
+    QTimer unused_support_property_timer;
+
+    Platform& platform;
+    space_t* space{nullptr};
 
 private:
     int locked{0};
+
+    std::unique_ptr<dbus::compositing<type>> dbus;
 };
 
 }

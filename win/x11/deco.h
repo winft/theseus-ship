@@ -179,7 +179,7 @@ void create_decoration(Win* win)
     win->control->deco.decoration = decoration;
     win->geo.update.original.deco_margins = frame_margins(win);
 
-    if (win->space.base.render->compositor->isActive()) {
+    if (win->space.base.render->compositor->state == render::state::on) {
         discard_buffer(*win);
     }
 }

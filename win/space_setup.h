@@ -8,6 +8,7 @@
 #include <config-kwin.h>
 
 #include "dbus/virtual_desktop_manager.h"
+#include "render/compositor.h"
 #include "rules.h"
 #include "tabbox/tabbox.h"
 #include "x11/space_setup.h"
@@ -39,7 +40,7 @@ void init_space(Space& space)
     QObject::connect(space.qobject.get(),
                      &Space::qobject_t::currentDesktopChanged,
                      space.base.render->compositor->qobject.get(),
-                     [comp = space.base.render->compositor.get()] { comp->addRepaintFull(); });
+                     [comp = space.base.render->compositor.get()] { render::full_repaint(*comp); });
 
     space.deco->init();
     QObject::connect(space.qobject.get(),

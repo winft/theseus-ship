@@ -105,7 +105,7 @@ void SceneQPainterTest::init()
 void SceneQPainterTest::testStartFrame()
 {
     // this test verifies that the initial rendering is correct
-    Test::app()->base.render->compositor->addRepaintFull();
+    render::full_repaint(*Test::app()->base.render->compositor);
     auto scene = dynamic_cast<qpainter_scene_t*>(Test::app()->base.render->compositor->scene.get());
     QVERIFY(scene);
     QCOMPARE(Test::app()->base.render->selected_compositor(), QPainterCompositing);
@@ -320,7 +320,7 @@ void SceneQPainterTest::testCompositorRestart()
     QVERIFY(scene);
 
     // this should directly trigger a frame
-    Test::app()->base.render->compositor->addRepaintFull();
+    render::full_repaint(*Test::app()->base.render->compositor);
     QVERIFY(frameRenderedSpy.wait());
 
     // render reference image
@@ -441,7 +441,7 @@ void SceneQPainterTest::testX11Window()
     QVERIFY(scene);
 
     // this should directly trigger a frame
-    Test::app()->base.render->compositor->addRepaintFull();
+    render::full_repaint(*Test::app()->base.render->compositor);
     QVERIFY(frameRenderedSpy.wait());
 
     auto const startPos = win::frame_to_client_pos(client, client->geo.pos());

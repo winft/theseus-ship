@@ -7,6 +7,7 @@
 */
 #pragma once
 
+#include "compositor.h"
 #include "effect/screen_impl.h"
 #include "effect/window_impl.h"
 #include "effect_loader.h"
@@ -535,7 +536,7 @@ public:
 
     void addRepaintFull() override
     {
-        compositor.addRepaintFull();
+        full_repaint(compositor);
     }
 
     void addRepaint(const QRect& r) override

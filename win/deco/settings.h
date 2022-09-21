@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "main.h"
 #include "render/compositor_qobject.h"
+#include "render/types.h"
 #include "win/space_qobject.h"
 #include "win/virtual_desktops.h"
 
@@ -75,7 +76,7 @@ public:
 
     bool isAlphaChannelSupported() const override
     {
-        return space.base.render->compositor->isActive();
+        return space.base.render->compositor->state == render::state::on;
     }
 
     bool isOnAllDesktopsAvailable() const override

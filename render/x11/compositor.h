@@ -16,8 +16,10 @@
 #include "render/compositor_start.h"
 #include "render/dbus/compositing.h"
 #include "render/effect/window_impl.h"
+#include "render/effects.h"
 #include "render/gl/scene.h"
 #include "render/platform.h"
+#include "render/support_properties.h"
 #include "render/xrender/scene.h"
 #include "win/remnant.h"
 #include "win/space_window_release.h"
@@ -60,25 +62,29 @@ create_scene_impl(Compositor& compositor, Factory& factory, std::string const& p
 }
 
 template<typename Platform>
-class compositor : public render::compositor<Platform>
+class compositor
 {
 public:
     using platform_t = Platform;
     using type = compositor<Platform>;
-    using abstract_type = render::compositor<Platform>;
+    using scene_t = render::scene<Platform>;
     using effects_t = effects_handler_impl<type>;
     using overlay_window_t = x11::overlay_window<type>;
-    using space_t = typename abstract_type::space_t;
+    using space_t = typename Platform::base_t::space_t;
     using x11_ref_window_t = typename space_t::x11_window;
     using window_t = typename space_t::window_t::render_t;
     using effect_window_t = typename window_t::effect_window_t;
 
     compositor(Platform& platform)
-        : render::compositor<Platform>(platform)
+        : qobject{std::make_unique<compositor_qobject>(
+            [this](auto te) { return handle_timer_event(te); })}
         , m_suspended(kwinApp()->options->qobject->isUseCompositing() ? suspend_reason::none
                                                                       : suspend_reason::user)
+        , platform{platform}
         , dbus{std::make_unique<dbus::compositing<type>>(*this)}
     {
+        compositor_setup(*this);
+
         this->x11_integration.is_overlay_window
             = [this](auto win) { return checkForOverlayWindow(win); };
         this->x11_integration.update_blocking
@@ -102,15 +108,15 @@ public:
                          [this] { overlay_window = nullptr; });
     }
 
-    ~compositor() override
+    ~compositor()
     {
         Q_EMIT this->qobject->aboutToDestroy();
         compositor_stop(*this, true);
-        this->deleteUnusedSupportProperties();
+        delete_unused_support_properties(*this);
         compositor_destroy_selection(*this);
     }
 
-    void start(space_t& space) override
+    void start(space_t& space)
     {
         if (!this->space) {
             // On first start setup connections.
@@ -121,7 +127,7 @@ public:
             QObject::connect(space.stacking.order.qobject.get(),
                              &win::stacking_order_qobject::changed,
                              this->qobject.get(),
-                             [this] { this->addRepaintFull(); });
+                             [this] { full_repaint(*this); });
             this->space = &space;
         }
 
@@ -151,7 +157,7 @@ public:
             qCWarning(KWIN_CORE) << "Error: " << ex.what();
             qCWarning(KWIN_CORE) << "Compositing not possible. Continue without it.";
 
-            this->m_state = state::off;
+            state = state::off;
             xcb_composite_unredirect_subwindows(kwinApp()->x11Connection(),
                                                 kwinApp()->x11RootWindow(),
                                                 XCB_COMPOSITE_REDIRECT_MANUAL);
@@ -161,17 +167,75 @@ public:
 
     void schedule_repaint()
     {
-        if (this->isActive()) {
-            this->setCompositeTimer();
+        if (state == state::on) {
+            setCompositeTimer();
         }
     }
 
-    void schedule_repaint(typename space_t::window_t* /*window*/) override
+    void schedule_repaint(typename space_t::window_t* /*window*/)
     {
         schedule_repaint();
     }
 
-    void toggleCompositing() override
+    bool handle_timer_event(QTimerEvent* te)
+    {
+        if (te->timerId() != compositeTimer.timerId()) {
+            return false;
+        }
+        performCompositing();
+        return true;
+    }
+
+    /**
+     * Notifies the compositor that SwapBuffers() is about to be called.
+     * Rendering of the next frame will be deferred until bufferSwapComplete()
+     * is called.
+     */
+    void aboutToSwapBuffers()
+    {
+        assert(!this->m_bufferSwapPending);
+        this->m_bufferSwapPending = true;
+    }
+
+    /**
+     * Notifies the compositor that a pending buffer swap has completed.
+     */
+    void bufferSwapComplete(bool present = true)
+    {
+        Q_UNUSED(present)
+
+        if (!m_bufferSwapPending) {
+            qDebug()
+                << "KWin::Compositor::bufferSwapComplete() called but m_bufferSwapPending is false";
+            return;
+        }
+        m_bufferSwapPending = false;
+
+        // We delay the next paint shortly before next vblank. For that we assume that the swap
+        // event is close to the actual vblank (TODO: it would be better to take the actual flip
+        // time that for example DRM events provide). We take 10% of refresh cycle length.
+        // We also assume the paint duration is relatively constant over time. We take 3 times the
+        // previous paint duration.
+        //
+        // All temporary calculations are in nanoseconds but the final timer offset in the end in
+        // milliseconds. Atleast we take here one millisecond.
+        const qint64 refresh = refreshLength();
+        const qint64 vblankMargin = refresh / 10;
+
+        auto maxPaintDuration = [this]() {
+            if (m_lastPaintDurations[0] > m_lastPaintDurations[1]) {
+                return m_lastPaintDurations[0];
+            }
+            return m_lastPaintDurations[1];
+        };
+        auto const paintMargin = maxPaintDuration();
+        m_delay = qMax(refresh - vblankMargin - paintMargin, qint64(0));
+
+        compositeTimer.stop();
+        setCompositeTimer();
+    }
+
+    void toggleCompositing()
     {
         if (flags(m_suspended)) {
             // Direct user call; clear all bits.
@@ -185,12 +249,8 @@ public:
     /**
      * @brief Suspends the Compositor if it is currently active.
      *
-     * Note: it is possible that the Compositor is not able to suspend. Use isActive to check
+     * Note: it is possible that the Compositor is not able to suspend. Read state to check
      * whether the Compositor has been suspended.
-     *
-     * @return void
-     * @see resume
-     * @see isActive
      */
     void suspend(suspend_reason reason)
     {
@@ -219,16 +279,14 @@ public:
      * @brief Resumes the Compositor if it is currently suspended.
      *
      * Note: it is possible that the Compositor cannot be resumed, that is there might be Clients
-     * blocking the usage of Compositing or the Scene might be broken. Use isActive to check
+     * blocking the usage of Compositing or the Scene might be broken. Read state to check
      * whether the Compositor has been resumed. Also check isCompositingPossible and
      * isOpenGLBroken.
      *
      * Note: The starting of the Compositor can require some time and is partially done threaded.
      * After this method returns the setup may not have been completed.
      *
-     * @return void
      * @see suspend
-     * @see isActive
      * @see isCompositingPossible
      * @see isOpenGLBroken
      */
@@ -249,16 +307,16 @@ public:
         reinitialize_compositor(*this);
     }
 
-    void addRepaint(QRegion const& region) override
+    void addRepaint(QRegion const& region)
     {
-        if (!this->isActive()) {
+        if (state != state::on) {
             return;
         }
         this->repaints_region += region;
         schedule_repaint();
     }
 
-    void configChanged() override
+    void configChanged()
     {
         if (flags(m_suspended)) {
             // TODO(romangg): start the release selection timer?
@@ -266,7 +324,7 @@ public:
             return;
         }
         reinitialize();
-        this->addRepaintFull();
+        full_repaint(*this);
     }
 
     /**
@@ -318,7 +376,7 @@ public:
      */
     overlay_window_t* overlay_window{nullptr};
 
-    std::unique_ptr<render::scene<Platform>> create_scene() override
+    std::unique_ptr<render::scene<Platform>> create_scene()
     {
         using Factory = std::function<std::unique_ptr<render::scene<Platform>>(Platform&)>;
 
@@ -351,7 +409,7 @@ public:
         }
     }
 
-    void performCompositing() override
+    void performCompositing()
     {
         QRegion repaints;
         std::deque<typename space_t::window_t*> windows;
@@ -382,19 +440,61 @@ public:
         Perf::Ftrace::end(QStringLiteral("Paint"), s_msc);
     }
 
+    std::unique_ptr<compositor_qobject> qobject;
+
+    std::unique_ptr<scene_t> scene;
     std::unique_ptr<effects_t> effects;
 
+    // TODO(romangg): Only relevant for Wayland. Put in child class.
+    std::unique_ptr<cursor<Platform>> software_cursor;
+    compositor_x11_integration<typename space_t::window_t> x11_integration;
+
+    render::state state{state::off};
+    x11::compositor_selection_owner* m_selectionOwner{nullptr};
+    QRegion repaints_region;
+    QBasicTimer compositeTimer;
+    qint64 m_delay{0};
+    bool m_bufferSwapPending{false};
+
+    QList<xcb_atom_t> unused_support_properties;
+    QTimer unused_support_property_timer;
+
+    // Compositing delay (in ns).
+    qint64 m_lastPaintDurations[2]{0};
+    int m_paintPeriods{0};
+
+    Platform& platform;
+    space_t* space{nullptr};
+
 private:
+    int refreshRate() const
+    {
+        int max_refresh_rate = 60000;
+        for (auto output : platform.base.outputs) {
+            auto const rate = output->refresh_rate();
+            if (rate > max_refresh_rate) {
+                max_refresh_rate = rate;
+            }
+        }
+        return max_refresh_rate;
+    }
+
+    /// Refresh cycle length in nanoseconds.
+    qint64 refreshLength() const
+    {
+        return 1000 * 1000 / qint64(refreshRate());
+    }
+
     void releaseCompositorSelection()
     {
-        switch (this->m_state) {
+        switch (state) {
         case state::on:
             // We are compositing at the moment. Don't release.
             break;
         case state::off:
-            if (this->m_selectionOwner) {
+            if (m_selectionOwner) {
                 qCDebug(KWIN_CORE) << "Releasing compositor selection";
-                this->m_selectionOwner->disown();
+                m_selectionOwner->disown();
             }
             break;
         case state::starting:
@@ -514,6 +614,48 @@ private:
             if (--m_framesToTestForSafety == 0) {
                 this->platform.createOpenGLSafePoint(OpenGLSafePoint::PostLastGuardedFrame);
             }
+        }
+    }
+
+    void retard_next_composition()
+    {
+        if (scene->hasSwapEvent()) {
+            // We wait on an explicit callback from the backend to unlock next composition runs.
+            return;
+        }
+        m_delay = refreshLength();
+        setCompositeTimer();
+    }
+
+    void setCompositeTimer()
+    {
+        if (compositeTimer.isActive() || m_bufferSwapPending) {
+            // Abort since we will composite when the timer runs out or the timer will only get
+            // started at buffer swap.
+            return;
+        }
+
+        // In milliseconds.
+        const uint waitTime = m_delay / 1000 / 1000;
+        Perf::Ftrace::mark(QStringLiteral("timer ") + QString::number(waitTime));
+
+        // Force 4fps minimum:
+        compositeTimer.start(qMin(waitTime, 250u), qobject.get());
+    }
+
+    void update_paint_periods(int64_t duration)
+    {
+        if (duration > m_lastPaintDurations[1]) {
+            m_lastPaintDurations[1] = duration;
+        }
+
+        m_paintPeriods++;
+
+        // We take the maximum over the last 100 frames.
+        if (m_paintPeriods == 100) {
+            m_lastPaintDurations[0] = m_lastPaintDurations[1];
+            m_lastPaintDurations[1] = 0;
+            m_paintPeriods = 0;
         }
     }
 

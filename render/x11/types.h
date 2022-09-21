@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "render/types.h"
 #include "utils/flags.h"
 
 namespace KWin::render::x11
