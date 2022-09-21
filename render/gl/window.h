@@ -25,7 +25,7 @@ namespace KWin::render::gl
 {
 
 template<typename RefWin, typename Scene>
-class window final : public render::window<RefWin>
+class window final : public Scene::window_t
 {
 public:
     enum Leaf {
@@ -60,19 +60,20 @@ public:
     using buffer_t = typename Scene::buffer_t;
 
     window(RefWin* ref_win, Scene& scene)
-        : render::window<RefWin>(ref_win)
+        : window_t(ref_win, *scene.platform.compositor)
+        , scene{scene}
     {
         scene.windows.insert({this->id(), this});
     }
 
     ~window() override
     {
-        static_cast<Scene&>(this->scene).windows.erase(this->id());
+        scene.windows.erase(this->id());
     }
 
     render::buffer<window_t>* create_buffer() override
     {
-        return new buffer_t(this, static_cast<Scene&>(this->scene));
+        return new buffer_t(this, scene);
     }
 
     void performPaint(paint_type mask, QRegion region, WindowPaintData data) override
@@ -336,7 +337,7 @@ private:
             return this->scene.screenProjectionMatrix() * mvMatrix;
         }
 
-        return static_cast<Scene&>(this->scene).projectionMatrix() * mvMatrix;
+        return scene.projectionMatrix() * mvMatrix;
     }
 
     QVector4D modulate(float opacity, float brightness) const
@@ -408,7 +409,7 @@ private:
                 continue;
             }
 
-            auto& glscene = static_cast<Scene&>(this->scene);
+            auto& glscene = scene;
             auto it = glscene.windows.find(quad_list.front().id());
             if (it != glscene.windows.end()) {
                 setup_content(i, it->second, it->second->bindTexture());
@@ -519,7 +520,7 @@ private:
         }
 
         if (!this->ref_win->render_data.damage_region.isEmpty())
-            static_cast<Scene&>(this->scene).insertWait();
+            scene.insertWait();
 
         if (!buffer->bind()) {
             return nullptr;
@@ -529,6 +530,7 @@ private:
 
     bool m_hardwareClipping{false};
     bool m_blendingEnabled{false};
+    Scene& scene;
 };
 
 }

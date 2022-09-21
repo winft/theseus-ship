@@ -29,21 +29,21 @@ struct window_win_integration {
     std::function<QRectF(typename Win::ref_t*, QRectF const&)> get_viewport;
 };
 
-template<typename RefWin>
+template<typename RefWin, typename Compositor>
 class window
 {
 public:
     using ref_t = RefWin;
-    using type = window<ref_t>;
+    using type = window<ref_t, Compositor>;
     using effect_window_t = effects_window_impl<type>;
-    using scene_t = typename ref_t::space_t::base_t::render_t::compositor_t::scene_t;
+    using scene_t = typename Compositor::scene_t;
 
-    window(RefWin* ref_win)
+    window(RefWin* ref_win, Compositor& compositor)
         : ref_win{ref_win}
-        , scene{*ref_win->space.base.render->compositor->scene}
+        , compositor{compositor}
         , filter(image_filter_type::fast)
         , cached_quad_list(nullptr)
-        , m_id{scene.window_id++}
+        , m_id{compositor.scene->window_id++}
     {
     }
 
@@ -99,9 +99,8 @@ public:
         if (ref_win->remnant) {
             disable_painting |= window_paint_disable_type::by_delete;
         }
-        if (scene.platform.compositor->effects->isDesktopRendering()) {
-            if (!win::on_desktop(ref_win,
-                                 scene.platform.compositor->effects->currentRenderedDesktop())) {
+        if (compositor.effects->isDesktopRendering()) {
+            if (!win::on_desktop(ref_win, compositor.effects->currentRenderedDesktop())) {
                 disable_painting |= window_paint_disable_type::by_desktop;
             }
         } else {
@@ -188,7 +187,7 @@ public:
             ret << m_shadow->shadowQuads();
         }
 
-        scene.platform.compositor->effects->buildQuads(effect.get(), ret);
+        compositor.effects->buildQuads(effect.get(), ret);
         cached_quad_list.reset(new WindowQuadList(ret));
         return ret;
     }
@@ -251,7 +250,7 @@ public:
     std::unique_ptr<effects_window_impl<type>> effect;
     window_win_integration<type> win_integration;
     shadow_windowing_integration<type> shadow_windowing;
-    scene_t& scene;
+    Compositor& compositor;
 
 protected:
     WindowQuadList

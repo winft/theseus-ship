@@ -26,14 +26,15 @@ namespace KWin::render::xrender
 #define FIXED_TO_DOUBLE(f) ((double)((f) / 65536.0))
 
 template<typename RefWin, typename Scene>
-class window : public render::window<RefWin>
+class window : public Scene::window_t
 {
 public:
     using window_t = typename Scene::window_t;
     using buffer_t = typename Scene::buffer_t;
 
-    window(RefWin* c, Scene& /*scene*/)
-        : render::window<RefWin>(c)
+    window(RefWin* c, Scene& scene)
+        : window_t(c, *scene.platform.compositor)
+        , scene{scene}
     {
         using x11_window_t = typename std::decay_t<decltype(c->space)>::x11_window;
         format = XRenderUtils::findPictFormat(static_cast<x11_window_t*>(c)->xcb_visual);
@@ -41,9 +42,9 @@ public:
 
     void performPaint(paint_type mask, QRegion region, WindowPaintData data) override
     {
-        auto& temp_visibleRect = static_cast<Scene&>(this->scene).temp_visible_rect;
-        auto& s_tempPicture = static_cast<Scene&>(this->scene).temp_picture;
-        auto& s_fadeAlphaPicture = static_cast<Scene&>(this->scene).fade_alpha_picture;
+        auto& temp_visibleRect = scene.temp_visible_rect;
+        auto& s_tempPicture = scene.temp_picture;
+        auto& s_fadeAlphaPicture = scene.fade_alpha_picture;
 
         setTransformedShape(QRegion()); // maybe nothing will be painted
         // check if there is something to paint
@@ -128,7 +129,7 @@ public:
             yscale = data.yScale();
         }
         if (flags(mask & paint_type::screen_transformed)) {
-            auto& screen_paint = static_cast<Scene&>(this->scene).screen_paint;
+            auto& screen_paint = scene.screen_paint;
             xscale *= screen_paint.xScale();
             yscale *= screen_paint.yScale();
         }
@@ -170,7 +171,7 @@ public:
                 && (wantShadow || (client && !client->noBorder())
                     || (remnant && !remnant->data.no_border)));
 
-        auto renderTarget = static_cast<Scene&>(this->scene).xrenderBufferPicture();
+        auto renderTarget = scene.xrenderBufferPicture();
         if (blitInTempPixmap) {
             if (scene_xRenderOffscreenTarget()) {
                 temp_visibleRect
@@ -457,7 +458,7 @@ public:
                                      XCB_RENDER_PICT_OP_OVER,
                                      *s_tempPicture,
                                      XCB_RENDER_PICTURE_NONE,
-                                     static_cast<Scene&>(this->scene).xrenderBufferPicture(),
+                                     scene.xrenderBufferPicture(),
                                      0,
                                      0,
                                      0,
@@ -517,7 +518,7 @@ private:
 
         if (flags(mask & paint_type::screen_transformed)) {
             // Apply the screen transformation
-            auto& screen_paint = static_cast<Scene&>(this->scene).screen_paint;
+            auto& screen_paint = scene.screen_paint;
             r.moveTo(r.x() * screen_paint.xScale() + screen_paint.xTranslation(),
                      r.y() * screen_paint.yScale() + screen_paint.yTranslation());
             r.setWidth(r.width() * screen_paint.xScale());
@@ -543,7 +544,7 @@ private:
 
         if (flags(mask & paint_type::screen_transformed)) {
             // Apply the screen transformation
-            auto& screen_paint = static_cast<Scene&>(this->scene).screen_paint;
+            auto& screen_paint = scene.screen_paint;
             pt.rx() = pt.x() * screen_paint.xScale() + screen_paint.xTranslation();
             pt.ry() = pt.y() * screen_paint.yScale() + screen_paint.yTranslation();
         }
@@ -563,8 +564,8 @@ private:
 
     void prepareTempPixmap()
     {
-        auto& temp_visibleRect = static_cast<Scene&>(this->scene).temp_visible_rect;
-        auto& s_tempPicture = static_cast<Scene&>(this->scene).temp_picture;
+        auto& temp_visibleRect = scene.temp_visible_rect;
+        auto& s_tempPicture = scene.temp_picture;
 
         const QSize oldSize = temp_visibleRect.size();
         temp_visibleRect = win::visible_rect(this->ref_win).translated(-this->ref_win->geo.pos());
@@ -611,6 +612,7 @@ private:
 
     xcb_render_pictformat_t format;
     QRegion transformed_shape;
+    Scene& scene;
 };
 
 }

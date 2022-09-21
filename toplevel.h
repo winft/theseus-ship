@@ -48,7 +48,7 @@ public:
     using space_t = Space;
     using type = Toplevel<space_t>;
     using qobject_t = win::window_qobject;
-    using render_t = render::window<type>;
+    using render_t = render::window<type, typename Space::base_t::render_t::compositor_t>;
     using output_t = typename space_t::base_t::output_t;
 
     std::unique_ptr<qobject_t> qobject;

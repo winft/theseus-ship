@@ -32,7 +32,7 @@ template<typename Window>
 class effects_window_impl : public EffectWindow
 {
 public:
-    using space_t = typename Window::ref_t::space_t;
+    using space_t = typename Window::scene_t::space_t;
 
     explicit effects_window_impl(Window& window)
         : window{window}

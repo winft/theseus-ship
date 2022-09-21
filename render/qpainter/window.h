@@ -17,15 +17,16 @@ namespace KWin::render::qpainter
 {
 
 template<typename RefWin, typename Scene>
-class window : public render::window<RefWin>
+class window : public Scene::window_t
 {
 public:
     using window_t = typename Scene::window_t;
     using buffer_t = typename Scene::buffer_t;
     using space_t = typename window_t::ref_t::space_t;
 
-    window(RefWin* ref_win, Scene& /*scene*/)
-        : render::window<RefWin>(ref_win)
+    window(RefWin* ref_win, Scene& scene)
+        : window_t(ref_win, *scene.platform.compositor)
+        , scene{scene}
     {
     }
 
@@ -56,7 +57,7 @@ public:
             this->ref_win->render_data.damage_region = {};
         }
 
-        auto scenePainter = static_cast<Scene&>(this->scene).scenePainter();
+        auto scenePainter = scene.scenePainter();
         QPainter* painter = scenePainter;
         painter->save();
         painter->setClipRegion(region);
@@ -201,6 +202,8 @@ private:
         painter->drawImage(drr, deco_data->image(DecorationPart::Right));
         painter->drawImage(dbr, deco_data->image(DecorationPart::Bottom));
     }
+
+    Scene& scene;
 };
 
 }
