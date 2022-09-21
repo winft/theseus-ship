@@ -143,7 +143,7 @@ void handle_new_subsurface(Space* space, Wrapland::Server::Subsurface* subsurfac
     for (auto& win : space->windows) {
         if (win->surface == subsurface->parentSurface()) {
             win::wayland::set_subsurface_parent(window, win);
-            if (window->ready_for_painting) {
+            if (window->render_data.ready_for_painting) {
                 space->handle_window_added(window);
                 adopt_transient_children(space, window);
                 return;

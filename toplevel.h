@@ -22,6 +22,7 @@
 #include "win/window_geometry.h"
 #include "win/window_metadata.h"
 #include "win/window_qobject.h"
+#include "win/window_render_data.h"
 
 #include <NETWM>
 #include <QMatrix4x4>
@@ -54,6 +55,7 @@ public:
 
     win::window_metadata meta;
     win::window_geometry geo;
+    win::window_render_data<output_t> render_data;
 
     std::unique_ptr<render_t> render;
 
@@ -63,25 +65,10 @@ public:
         QMetaObject::Connection check_screen;
     } notifiers;
 
-    // Relative to client geometry.
-    QRegion damage_region;
-
-    // Relative to frame geometry.
-    QRegion repaints_region;
-    QRegion layer_repaints_region;
-    bool ready_for_painting{false};
-    bool is_damaged{false};
     bool is_shape{false};
-
-    /// Area to be opaque. Only provides valuable information if hasAlpha is @c true.
-    QRegion opaque_region;
 
     output_t const* central_output{nullptr};
 
-    /**
-     * Records all outputs that still need to be repainted for the current repaint regions.
-     */
-    std::vector<output_t*> repaint_outputs;
     Space& space;
 
     virtual ~Toplevel()
@@ -250,8 +237,6 @@ public:
     NETWinInfo* info{nullptr};
     Wrapland::Server::Surface* surface{nullptr};
     quint32 surface_id{0};
-
-    int bit_depth{24};
 
     base::x11::xcb::window xcb_window{};
 

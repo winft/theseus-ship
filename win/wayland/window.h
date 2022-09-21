@@ -1093,7 +1093,7 @@ public:
 
     bool has_pending_repaints() const override
     {
-        return this->ready_for_painting && Toplevel<Space>::has_pending_repaints();
+        return this->render_data.ready_for_painting && Toplevel<Space>::has_pending_repaints();
     }
 
     void updateColorScheme() override
@@ -1383,7 +1383,7 @@ private:
             update_screen_edge(this);
         }
 
-        if (this->ready_for_painting) {
+        if (this->render_data.ready_for_painting) {
             // Was already shown in the past once. Just repaint and emit shown again.
             add_full_repaint(*this);
             Q_EMIT this->qobject->windowShown();

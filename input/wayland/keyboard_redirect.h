@@ -146,7 +146,7 @@ public:
                     // a deleted window doesn't get mouse events
                     continue;
                 }
-                if (!t->ready_for_painting) {
+                if (!t->render_data.ready_for_painting) {
                     continue;
                 }
                 auto wlwin = dynamic_cast<typename space_t::wayland_window*>(t);

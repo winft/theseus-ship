@@ -330,11 +330,11 @@ private:
                 frame_windows.push_back(win);
             }
 
-            if (win->is_damaged) {
+            if (win->render_data.is_damaged) {
                 assert(win->render);
                 assert(win->render->effect);
 
-                win->is_damaged = false;
+                win->render_data.is_damaged = false;
 
                 // Discard the cached lanczos texture
                 if (win->transient->annexed) {
@@ -385,7 +385,7 @@ private:
             auto screen_lock_filtered
                 = kwinApp()->is_screen_locked() && !win->isLockScreen() && !win->isInputMethod();
 
-            return !win->ready_for_painting || screen_lock_filtered;
+            return !win->render_data.ready_for_painting || screen_lock_filtered;
         });
 
         // Submit pending output repaints and clear the pending field, so that post-pass can add new

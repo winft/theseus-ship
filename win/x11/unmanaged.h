@@ -73,7 +73,7 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
     win->geo.frame = geo.rect();
     check_screen(*win);
     win->xcb_visual = attr->visual;
-    win->bit_depth = geo->depth;
+    win->render_data.bit_depth = geo->depth;
     win->info = new NETWinInfo(connection(),
                                xcb_win,
                                rootWindow(),

@@ -41,7 +41,7 @@ public:
 
     void handle_surface_damage(QRegion const& damage)
     {
-        if (!this->ready_for_painting) {
+        if (!this->render_data.ready_for_painting) {
             // avoid "setReadyForPainting()" function calling overhead
             if (this->sync_request.counter == XCB_NONE) {
                 // cannot detect complete redraw, consider done now
@@ -88,7 +88,7 @@ public:
         assert(this->damage_handle == XCB_NONE);
 
         discard_shape(*this);
-        this->damage_region = QRect({}, this->geo.size());
+        this->render_data.damage_region = QRect({}, this->geo.size());
 
         add_scene_window(*this->space.base.render->compositor->scene, *this);
 

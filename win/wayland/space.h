@@ -519,7 +519,7 @@ private:
             plasma_manage_update_stacking_order(*this);
         };
 
-        if (window->ready_for_painting) {
+        if (window->render_data.ready_for_painting) {
             setup_plasma_management_for_x11();
         } else {
             QObject::connect(

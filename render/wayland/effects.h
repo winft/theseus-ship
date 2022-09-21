@@ -54,7 +54,7 @@ public:
             this,
             [this](auto win_id) {
                 auto win = this->compositor.platform.base.space->windows_map.at(win_id);
-                if (win->ready_for_painting) {
+                if (win->render_data.ready_for_painting) {
                     this->slotXdgShellClientShown(win);
                 } else {
                     QObject::connect(win->qobject.get(),
@@ -70,7 +70,7 @@ public:
             if (!wlwin) {
                 continue;
             }
-            if (wlwin->ready_for_painting) {
+            if (wlwin->render_data.ready_for_painting) {
                 this->setupAbstractClientConnections(wlwin);
             } else {
                 QObject::connect(wlwin->qobject.get(),

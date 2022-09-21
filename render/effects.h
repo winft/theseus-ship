@@ -322,7 +322,7 @@ public:
                 this,
                 [this, space = ws](auto win_id) {
                     auto c = space->windows_map.at(win_id);
-                    if (c->ready_for_painting) {
+                    if (c->render_data.ready_for_painting) {
                         slotClientShown(c);
                     } else {
                         QObject::connect(c->qobject.get(),

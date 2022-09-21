@@ -51,9 +51,9 @@ public:
         if (!buffer || !buffer->isValid()) {
             return;
         }
-        if (!this->ref_win->damage_region.isEmpty()) {
+        if (!this->ref_win->render_data.damage_region.isEmpty()) {
             buffer->updateBuffer();
-            this->ref_win->damage_region = {};
+            this->ref_win->render_data.damage_region = {};
         }
 
         auto scenePainter = static_cast<Scene&>(this->scene).scenePainter();

@@ -618,7 +618,7 @@ void handle_new_toplevel(Space* space, Wrapland::Server::XdgShellToplevel* tople
 
     space->windows.push_back(window);
 
-    if (window->ready_for_painting) {
+    if (window->render_data.ready_for_painting) {
         space->handle_window_added(window);
     }
 
@@ -640,7 +640,7 @@ void handle_new_popup(Space* space, Wrapland::Server::XdgShellPopup* popup)
     auto window = win::wayland::create_popup_window<Window>(space, popup);
     space->windows.push_back(window);
 
-    if (window->ready_for_painting) {
+    if (window->render_data.ready_for_painting) {
         space->handle_window_added(window);
     }
 }

@@ -62,7 +62,7 @@ auto find_controlled_window(Redirect const& redirect, QPoint const& pos) ->
         if (window->isHiddenInternal()) {
             continue;
         }
-        if (!window->ready_for_painting) {
+        if (!window->render_data.ready_for_painting) {
             continue;
         }
         if (isScreenLocked) {

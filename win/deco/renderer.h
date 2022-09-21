@@ -142,7 +142,7 @@ protected:
 
         // Guess the pixel format of the X pixmap into which the QImage will be copied.
         QImage::Format format;
-        const int depth = window->bit_depth;
+        const int depth = window->render_data.bit_depth;
         switch (depth) {
         case 30:
             format = QImage::Format_A2RGB30_Premultiplied;

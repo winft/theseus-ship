@@ -874,7 +874,7 @@ private:
 
         for (auto const& window : windows) {
             if (window->transient->lead() && window->transient->annexed) {
-                auto const damage = window->damage_region;
+                auto const damage = window->render_data.damage_region;
                 if (damage.isEmpty()) {
                     continue;
                 }
@@ -883,9 +883,9 @@ private:
                 auto const lead_damage = damage.translated(win::render_geometry(window).topLeft()
                                                            - lead_render_geo.topLeft());
 
-                lead->repaints_region += lead_damage.translated(lead_render_geo.topLeft()
-                                                                - lead->geo.frame.topLeft());
-                lead->damage_region += lead_damage;
+                lead->render_data.repaints_region += lead_damage.translated(
+                    lead_render_geo.topLeft() - lead->geo.frame.topLeft());
+                lead->render_data.damage_region += lead_damage;
 
                 for (auto const& rect : lead_damage) {
                     // Emit for thumbnail repaint.

@@ -107,7 +107,7 @@ protected:
                           geo.x(),
                           geo.y(),
                           0,
-                          window->bit_depth,
+                          window->render_data.bit_depth,
                           image.sizeInBytes(),
                           image.constBits());
         };

@@ -200,8 +200,8 @@ void layer_shell_test::test_create()
     QVERIFY(window);
     QVERIFY(window->isShown());
     QCOMPARE(window->isHiddenInternal(), false);
-    QCOMPARE(window->ready_for_painting, true);
-    QCOMPARE(window->bit_depth, 32);
+    QCOMPARE(window->render_data.ready_for_painting, true);
+    QCOMPARE(window->render_data.bit_depth, 32);
     QVERIFY(win::has_alpha(*window));
 
     // By default layer surfaces have keyboard interactivity set to none.
@@ -250,7 +250,7 @@ void layer_shell_test::test_create()
     QVERIFY(window2);
     QVERIFY(window2->isShown());
     QCOMPARE(window2->isHiddenInternal(), false);
-    QCOMPARE(window2->ready_for_painting, true);
+    QCOMPARE(window2->render_data.ready_for_painting, true);
     QCOMPARE(Test::app()->base.space->stacking.active, window2);
 
     // Surface is centered.

@@ -518,7 +518,7 @@ private:
             return buffer->texture.get();
         }
 
-        if (!this->ref_win->damage_region.isEmpty())
+        if (!this->ref_win->render_data.damage_region.isEmpty())
             static_cast<Scene&>(this->scene).insertWait();
 
         if (!buffer->bind()) {

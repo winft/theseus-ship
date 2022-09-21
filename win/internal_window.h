@@ -346,7 +346,7 @@ public:
 
     bool isShown() const override
     {
-        return this->ready_for_painting;
+        return this->render_data.ready_for_painting;
     }
 
     bool isHiddenInternal() const override
@@ -650,7 +650,7 @@ public:
 
     void markAsMapped()
     {
-        if (this->ready_for_painting) {
+        if (this->render_data.ready_for_painting) {
             return;
         }
 

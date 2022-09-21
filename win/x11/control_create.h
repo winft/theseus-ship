@@ -231,7 +231,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     embed_client(win, attr->visual, attr->colormap, windowGeometry->depth);
 
     win->xcb_visual = attr->visual;
-    win->bit_depth = windowGeometry->depth;
+    win->render_data.bit_depth = windowGeometry->depth;
 
     const NET::Properties properties = NET::WMDesktop | NET::WMState | NET::WMWindowType
         | NET::WMStrut | NET::WMName | NET::WMIconGeometry | NET::WMIcon | NET::WMPid
@@ -255,9 +255,9 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     win->info
         = new win_info<Win>(win, win->xcb_windows.client, rootWindow(), properties, properties2);
 
-    if (is_desktop(win) && win->bit_depth == 32) {
+    if (is_desktop(win) && win->render_data.bit_depth == 32) {
         // force desktop windows to be opaque. It's a desktop after all, there is no window below
-        win->bit_depth = 24;
+        win->render_data.bit_depth = 24;
     }
     win->colormap = attr->colormap;
 
@@ -575,7 +575,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
     if (!win->space.base.render->compositor->scene) {
         // set to true in case compositing is turned on later. bug #160393
-        win->ready_for_painting = true;
+        win->render_data.ready_for_painting = true;
     }
 
     if (win->isShown()) {

@@ -17,18 +17,18 @@ namespace KWin::win
 template<typename Win>
 bool has_alpha(Win& win)
 {
-    return win.bit_depth == 32;
+    return win.render_data.bit_depth == 32;
 }
 
 template<typename Win>
 void set_bit_depth(Win& win, int depth)
 {
-    if (win.bit_depth == depth) {
+    if (win.render_data.bit_depth == depth) {
         return;
     }
 
     auto const old_alpha = has_alpha(win);
-    win.bit_depth = depth;
+    win.render_data.bit_depth = depth;
 
     if (old_alpha != has_alpha(win)) {
         Q_EMIT win.qobject->hasAlphaChanged();
@@ -202,8 +202,8 @@ void finish_compositing(Win& win)
         win.render.reset();
     }
 
-    win.damage_region = {};
-    win.repaints_region = {};
+    win.render_data.damage_region = {};
+    win.render_data.repaints_region = {};
 }
 
 }

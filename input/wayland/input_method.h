@@ -202,7 +202,7 @@ private:
                              }
                          });
 
-        if (popup->ready_for_painting) {
+        if (popup->render_data.ready_for_painting) {
             redirect.space.handle_window_added(popup);
         }
 

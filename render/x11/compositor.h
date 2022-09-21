@@ -428,7 +428,7 @@ private:
 
         for (auto win : win::render_stack(this->space->stacking.order)) {
             // Skip windows that are not yet ready for being painted.
-            if (!win->ready_for_painting) {
+            if (!win->render_data.ready_for_painting) {
                 continue;
             }
 

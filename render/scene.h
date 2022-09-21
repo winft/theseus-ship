@@ -488,7 +488,7 @@ public:
             } else if (win::has_alpha(*toplevel) && toplevel->opacity() == 1.0) {
                 auto const clientShape = win::content_render_region(toplevel).translated(
                     win::frame_to_render_pos(toplevel, toplevel->geo.pos()));
-                auto const opaqueShape = toplevel->opaque_region.translated(
+                auto const opaqueShape = toplevel->render_data.opaque_region.translated(
                     win::frame_to_client_pos(toplevel, toplevel->geo.pos()) - toplevel->geo.pos());
                 data.clip = clientShape & opaqueShape;
                 if (clientShape == opaqueShape) {

@@ -741,7 +741,7 @@ void StackingOrderTest::testDeletedGroupTransient()
     QCOMPARE(Test::app()->base.space->stacking.order.stack,
              (std::deque<Test::space::window_t*>{leader, member1, member2, transient}));
 
-    if (!transient->ready_for_painting) {
+    if (!transient->render_data.ready_for_painting) {
         QSignalSpy window_shown_spy(transient->qobject.get(), &win::window_qobject::windowShown);
         QVERIFY(window_shown_spy.isValid());
         QVERIFY(window_shown_spy.wait());

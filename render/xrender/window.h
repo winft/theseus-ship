@@ -70,7 +70,7 @@ public:
         if (pic
             == XCB_RENDER_PICTURE_NONE) // The render format can be null for GL and/or Xv visuals
             return;
-        this->ref_win->damage_region = {};
+        this->ref_win->render_data.damage_region = {};
 
         // set picture filter
         this->filter = image_filter_type::fast;

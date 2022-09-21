@@ -67,7 +67,7 @@ void transfer_remnant_data(Win& source, Win& dest)
 {
     dest.meta.internal_id = source.meta.internal_id;
     dest.geo.frame = source.geo.frame;
-    dest.bit_depth = source.bit_depth;
+    dest.render_data.bit_depth = source.render_data.bit_depth;
 
     dest.window_type = source.windowType();
     dest.info = source.info;
@@ -76,17 +76,17 @@ void transfer_remnant_data(Win& source, Win& dest)
     }
 
     dest.xcb_window.reset(source.xcb_window, false);
-    dest.ready_for_painting = source.ready_for_painting;
-    dest.damage_region = source.damage_region;
-    dest.repaints_region = source.repaints_region;
-    dest.layer_repaints_region = source.layer_repaints_region;
+    dest.render_data.ready_for_painting = source.render_data.ready_for_painting;
+    dest.render_data.damage_region = source.render_data.damage_region;
+    dest.render_data.repaints_region = source.render_data.repaints_region;
+    dest.render_data.layer_repaints_region = source.render_data.layer_repaints_region;
     dest.is_shape = source.is_shape;
     dest.is_outline = source.is_outline;
 
     dest.render = std::move(source.render);
 
     dest.meta.wm_class = source.meta.wm_class;
-    dest.opaque_region = source.opaque_region;
+    dest.render_data.opaque_region = source.render_data.opaque_region;
     dest.central_output = source.central_output;
     dest.skip_close_animation = source.skip_close_animation;
     dest.desktops = source.desktops;
@@ -126,7 +126,7 @@ Win* create_remnant_window(Win& source)
         // Don't create effect remnants when we don't render.
         return nullptr;
     }
-    if (!source.ready_for_painting) {
+    if (!source.render_data.ready_for_painting) {
         // Don't create remnants for windows that have never been shown.
         return nullptr;
     }

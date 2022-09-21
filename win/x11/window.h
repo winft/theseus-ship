@@ -303,7 +303,7 @@ public:
             connection(), damage_handle, this->frameId(), XCB_DAMAGE_REPORT_LEVEL_NON_EMPTY);
 
         discard_shape(*this);
-        this->damage_region = QRect({}, this->geo.size());
+        this->render_data.damage_region = QRect({}, this->geo.size());
 
         add_scene_window(*this->space.base.render->compositor->scene, *this);
 
@@ -372,7 +372,7 @@ public:
 
     void damageNotifyEvent()
     {
-        this->is_damaged = true;
+        this->render_data.is_damaged = true;
 
         if (!this->control) {
             // Note: The region is supposed to specify the damage extents, but we don't know it at
@@ -385,7 +385,7 @@ public:
             return;
         }
 
-        if (!this->ready_for_painting) {
+        if (!this->render_data.ready_for_painting) {
             // avoid "setReadyForPainting()" function calling overhead
             if (sync_request.counter == XCB_NONE) {
                 // cannot detect complete redraw, consider done now
@@ -405,7 +405,7 @@ public:
      */
     bool resetAndFetchDamage()
     {
-        if (!this->is_damaged) {
+        if (!this->render_data.is_damaged) {
             return false;
         }
 
@@ -423,7 +423,7 @@ public:
         damage_region_cookie = xcb_xfixes_fetch_region_unchecked(conn, region);
         xcb_xfixes_destroy_region(conn, region);
 
-        this->is_damaged = false;
+        this->render_data.is_damaged = false;
         is_damage_reply_pending = true;
 
         return is_damage_reply_pending;
@@ -469,12 +469,12 @@ public:
 
         region.translate(
             -QPoint(this->geo.client_frame_extents.left(), this->geo.client_frame_extents.top()));
-        this->repaints_region |= region;
+        this->render_data.repaints_region |= region;
 
         if (this->geo.has_in_content_deco) {
             region.translate(-QPoint(left_border(this), top_border(this)));
         }
-        this->damage_region |= region;
+        this->render_data.damage_region |= region;
 
         free(reply);
     }
@@ -1358,7 +1358,7 @@ public:
             new_opaque_region += QRect(r.pos.x, r.pos.y, r.size.width, r.size.height);
         }
 
-        this->opaque_region = new_opaque_region;
+        this->render_data.opaque_region = new_opaque_region;
     }
 
     void fetch_and_set_skip_close_animation()
