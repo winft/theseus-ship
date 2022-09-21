@@ -8,17 +8,9 @@
 #pragma once
 
 #include <QRegion>
-#include <functional>
-#include <xcb/xcb.h>
 
 namespace KWin::render
 {
-
-template<typename Window>
-struct compositor_x11_integration {
-    std::function<bool(xcb_window_t)> is_overlay_window;
-    std::function<void(Window*)> update_blocking;
-};
 
 template<typename Compositor>
 void full_repaint(Compositor& comp)

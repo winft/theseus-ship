@@ -607,58 +607,62 @@ protected:
      */
     void paintCursor() override
     {
-        auto cursor = this->platform.compositor->software_cursor.get();
+        using compositor_t = typename Platform::compositor_t;
+        if constexpr (requires(compositor_t comp) { comp.software_cursor; }) {
+            auto cursor = this->platform.compositor->software_cursor.get();
 
-        // don't paint if we use hardware cursor or the cursor is hidden
-        if (!cursor->enabled || this->platform.base.space->input->cursor->is_hidden()
-            || cursor->image().isNull()) {
-            return;
-        }
-
-        // lazy init texture cursor only in case we need software rendering
-        if (sw_cursor.dirty) {
-            auto const img = this->platform.compositor->software_cursor->image();
-
-            // If there was no new image we are still dirty and try to update again next paint
-            // cycle.
-            sw_cursor.dirty = img.isNull();
-
-            // With an image we update the texture, or if one was never set before create a default
-            // one.
-            if (!img.isNull() || !sw_cursor.texture) {
-                sw_cursor.texture.reset(new GLTexture(img));
+            // don't paint if we use hardware cursor or the cursor is hidden
+            if (!cursor->enabled || this->platform.base.space->input->cursor->is_hidden()
+                || cursor->image().isNull()) {
+                return;
             }
 
-            // handle shape update on case cursor image changed
-            if (!sw_cursor.notifier) {
-                sw_cursor.notifier = QObject::connect(cursor->qobject.get(),
-                                                      &render::cursor_qobject::changed,
-                                                      this,
-                                                      [this] { sw_cursor.dirty = true; });
+            // lazy init texture cursor only in case we need software rendering
+            if (sw_cursor.dirty) {
+                auto const img = this->platform.compositor->software_cursor->image();
+
+                // If there was no new image we are still dirty and try to update again next paint
+                // cycle.
+                sw_cursor.dirty = img.isNull();
+
+                // With an image we update the texture, or if one was never set before create a
+                // default one.
+                if (!img.isNull() || !sw_cursor.texture) {
+                    sw_cursor.texture.reset(new GLTexture(img));
+                }
+
+                // handle shape update on case cursor image changed
+                if (!sw_cursor.notifier) {
+                    sw_cursor.notifier = QObject::connect(cursor->qobject.get(),
+                                                          &render::cursor_qobject::changed,
+                                                          this,
+                                                          [this] { sw_cursor.dirty = true; });
+                }
             }
+
+            // get cursor position in projection coordinates
+            auto const cursorPos
+                = this->platform.base.space->input->cursor->pos() - cursor->hotspot();
+            auto const cursorRect
+                = QRect(0, 0, sw_cursor.texture->width(), sw_cursor.texture->height());
+            QMatrix4x4 mvp = m_projectionMatrix;
+            mvp.translate(cursorPos.x(), cursorPos.y());
+
+            // handle transparence
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+            // paint texture in cursor offset
+            sw_cursor.texture->bind();
+            ShaderBinder binder(ShaderTrait::MapTexture);
+            binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
+            sw_cursor.texture->render(QRegion(cursorRect), cursorRect);
+            sw_cursor.texture->unbind();
+
+            cursor->mark_as_rendered();
+
+            glDisable(GL_BLEND);
         }
-
-        // get cursor position in projection coordinates
-        auto const cursorPos = this->platform.base.space->input->cursor->pos() - cursor->hotspot();
-        auto const cursorRect
-            = QRect(0, 0, sw_cursor.texture->width(), sw_cursor.texture->height());
-        QMatrix4x4 mvp = m_projectionMatrix;
-        mvp.translate(cursorPos.x(), cursorPos.y());
-
-        // handle transparence
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-        // paint texture in cursor offset
-        sw_cursor.texture->bind();
-        ShaderBinder binder(ShaderTrait::MapTexture);
-        binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
-        sw_cursor.texture->render(QRegion(cursorRect), cursorRect);
-        sw_cursor.texture->unbind();
-
-        cursor->mark_as_rendered();
-
-        glDisable(GL_BLEND);
     }
 
     void paintBackground(QRegion region) override

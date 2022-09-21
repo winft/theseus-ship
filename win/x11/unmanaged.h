@@ -32,9 +32,15 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
 {
     using Win = typename Space::x11_window;
 
-    if (auto& is_overlay = space.base.render->compositor->x11_integration.is_overlay_window;
-        is_overlay && is_overlay(xcb_win)) {
-        return nullptr;
+    using compositor_t = typename Space::base_t::render_t::compositor_t;
+    if constexpr (requires(compositor_t comp) {
+                      {
+                          comp.is_overlay_window(xcb_win)
+                          } -> std::same_as<bool>;
+                  }) {
+        if (space.base.render->compositor->is_overlay_window(xcb_win)) {
+            return nullptr;
+        }
     }
 
     // Window types that are supported as unmanaged (mainly for compositing).

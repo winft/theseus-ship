@@ -30,9 +30,9 @@ void delete_window_from_space(Space& space, Win* win)
     remove_window_from_stacking_order(space, win);
     remove_window_from_lists(space, win);
 
-    if (auto& update_block = space.base.render->compositor->x11_integration.update_blocking;
-        update_block) {
-        update_block(nullptr);
+    using compositor_t = typename Space::base_t::render_t::compositor_t;
+    if constexpr (requires(compositor_t comp) { comp.update_blocking(nullptr); }) {
+        space.base.render->compositor->update_blocking(nullptr);
     }
 
     Q_EMIT space.qobject->window_deleted(win->meta.signal_id);

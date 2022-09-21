@@ -165,13 +165,14 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
     setup_space_window_connections(&space, win);
 
-    if (auto comp = space.base.render->compositor.get(); comp->x11_integration.update_blocking) {
-        QObject::connect(win->qobject.get(),
-                         &Win::qobject_t::blockingCompositingChanged,
-                         comp->qobject.get(),
-                         [comp, win](auto blocks) {
-                             comp->x11_integration.update_blocking(blocks ? win : nullptr);
-                         });
+    using compositor_t = typename Space::base_t::render_t::compositor_t;
+    if constexpr (requires(compositor_t comp) { comp.update_blocking(win); }) {
+        auto comp = space.base.render->compositor.get();
+        QObject::connect(
+            win->qobject.get(),
+            &Win::qobject_t::blockingCompositingChanged,
+            comp->qobject.get(),
+            [comp, win](auto blocks) { comp->update_blocking(blocks ? win : nullptr); });
     }
 
     QObject::connect(win->qobject.get(),

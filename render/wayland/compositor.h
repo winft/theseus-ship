@@ -204,9 +204,7 @@ public:
     std::unique_ptr<scene_t> scene;
     std::unique_ptr<effects_t> effects;
     std::unique_ptr<wayland::presentation> presentation;
-
     std::unique_ptr<cursor<Platform>> software_cursor;
-    compositor_x11_integration<typename space_t::window_t> x11_integration;
 
     render::state state{state::off};
     x11::compositor_selection_owner* m_selectionOwner{nullptr};

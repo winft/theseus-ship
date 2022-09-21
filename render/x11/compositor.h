@@ -85,10 +85,6 @@ public:
     {
         compositor_setup(*this);
 
-        this->x11_integration.is_overlay_window
-            = [this](auto win) { return checkForOverlayWindow(win); };
-        this->x11_integration.update_blocking
-            = [this](auto win) { return updateClientCompositeBlocking(win); };
         this->dbus->qobject->integration.get_types = [] { return QStringList{"glx"}; };
         this->dbus->qobject->integration.resume = [this] { resume(suspend_reason::script); };
         this->dbus->qobject->integration.suspend = [this] { suspend(suspend_reason::script); };
@@ -330,7 +326,7 @@ public:
     /**
      * Checks whether @p w is the Scene's overlay window.
      */
-    bool checkForOverlayWindow(WId w) const
+    bool is_overlay_window(WId w) const
     {
         if (!overlay_window) {
             // No overlay window, it cannot be the overlay.
@@ -340,7 +336,7 @@ public:
         return w == overlay_window->window();
     }
 
-    void updateClientCompositeBlocking(typename space_t::window_t* window)
+    void update_blocking(typename space_t::window_t* window)
     {
         if (window) {
             if (window->isBlockingCompositing()) {
@@ -444,10 +440,6 @@ public:
 
     std::unique_ptr<scene_t> scene;
     std::unique_ptr<effects_t> effects;
-
-    // TODO(romangg): Only relevant for Wayland. Put in child class.
-    std::unique_ptr<cursor<Platform>> software_cursor;
-    compositor_x11_integration<typename space_t::window_t> x11_integration;
 
     render::state state{state::off};
     x11::compositor_selection_owner* m_selectionOwner{nullptr};
