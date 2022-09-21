@@ -190,8 +190,8 @@ void TestXdgShellClient::testMapUnmapMap()
     QVERIFY(client->render);
     QVERIFY(client->render->effect);
     QVERIFY(!client->render->effect->internalWindow());
-    QCOMPARE(client->internal_id.isNull(), false);
-    const auto uuid = client->internal_id;
+    QCOMPARE(client->meta.internal_id.isNull(), false);
+    auto const uuid = client->meta.internal_id;
     QUuid deletedUuid;
     QCOMPARE(deletedUuid.isNull(), true);
 
@@ -200,7 +200,7 @@ void TestXdgShellClient::testMapUnmapMap()
             client->qobject.get(),
             [&deletedUuid](auto win_id) {
                 auto remnant_win = Test::app()->base.space->windows_map.at(win_id);
-                deletedUuid = remnant_win->internal_id;
+                deletedUuid = remnant_win->meta.internal_id;
             });
 
     // now unmap
@@ -243,7 +243,7 @@ void TestXdgShellClient::testMapUnmapMap()
     QCOMPARE(hiddenSpy.count(), 2);
     QCOMPARE(client->ready_for_painting, true);
     QCOMPARE(client->isHiddenInternal(), true);
-    QCOMPARE(client->internal_id, uuid);
+    QCOMPARE(client->meta.internal_id, uuid);
     QVERIFY(windowClosedSpy.isEmpty());
     QCOMPARE(effectsWindowHiddenSpy.count(), 2);
     QCOMPARE(effectsWindowHiddenSpy.last().first().value<EffectWindow*>(),
@@ -288,7 +288,7 @@ void TestXdgShellClient::testDesktopPresenceChanged()
 
     // verify the arguments
     QCOMPARE(desktopPresenceChangedClientSpy.first().at(0).toInt(), 1);
-    QCOMPARE(desktopPresenceChangedWorkspaceSpy.first().at(0).value<quint32>(), c->signal_id);
+    QCOMPARE(desktopPresenceChangedWorkspaceSpy.first().at(0).value<quint32>(), c->meta.signal_id);
     QCOMPARE(desktopPresenceChangedWorkspaceSpy.first().at(1).toInt(), 1);
     QCOMPARE(desktopPresenceChangedEffectsSpy.first().at(0).value<EffectWindow*>(),
              c->render->effect.get());
@@ -849,8 +849,8 @@ void TestXdgShellClient::testDesktopFileName()
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(c->control->desktop_file_name, QByteArrayLiteral("org.kde.foo"));
-    QCOMPARE(c->wm_class.res_class, QByteArrayLiteral("org.kde.foo"));
-    QVERIFY(c->wm_class.res_name.startsWith("testXdgShellClient"));
+    QCOMPARE(c->meta.wm_class.res_class, QByteArrayLiteral("org.kde.foo"));
+    QVERIFY(c->meta.wm_class.res_name.startsWith("testXdgShellClient"));
     // the desktop file does not exist, so icon should be generic Wayland
     QCOMPARE(c->control->icon.name(), QStringLiteral("wayland"));
 
@@ -862,8 +862,8 @@ void TestXdgShellClient::testDesktopFileName()
     shellSurface->setAppId(QByteArrayLiteral("org.kde.bar"));
     QVERIFY(desktopFileNameChangedSpy.wait());
     QCOMPARE(c->control->desktop_file_name, QByteArrayLiteral("org.kde.bar"));
-    QCOMPARE(c->wm_class.res_class, QByteArrayLiteral("org.kde.bar"));
-    QVERIFY(c->wm_class.res_name.startsWith("testXdgShellClient"));
+    QCOMPARE(c->meta.wm_class.res_class, QByteArrayLiteral("org.kde.bar"));
+    QVERIFY(c->meta.wm_class.res_name.startsWith("testXdgShellClient"));
     // icon should still be wayland
     QCOMPARE(c->control->icon.name(), QStringLiteral("wayland"));
     QVERIFY(iconChangedSpy.isEmpty());
@@ -901,8 +901,8 @@ void TestXdgShellClient::testCaptionMultipleWindows()
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(win::caption(c), QStringLiteral("foo"));
-    QCOMPARE(c->caption.normal, QStringLiteral("foo"));
-    QCOMPARE(c->caption.suffix, QString());
+    QCOMPARE(c->meta.caption.normal, QStringLiteral("foo"));
+    QCOMPARE(c->meta.caption.suffix, QString());
 
     std::unique_ptr<Surface> surface2(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
@@ -910,8 +910,8 @@ void TestXdgShellClient::testCaptionMultipleWindows()
     auto c2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::blue);
     QVERIFY(c2);
     QCOMPARE(win::caption(c2), QStringLiteral("foo <2>"));
-    QCOMPARE(c2->caption.normal, QStringLiteral("foo"));
-    QCOMPARE(c2->caption.suffix, QStringLiteral(" <2>"));
+    QCOMPARE(c2->meta.caption.normal, QStringLiteral("foo"));
+    QCOMPARE(c2->meta.caption.suffix, QStringLiteral(" <2>"));
 
     std::unique_ptr<Surface> surface3(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3));
@@ -919,8 +919,8 @@ void TestXdgShellClient::testCaptionMultipleWindows()
     auto c3 = Test::render_and_wait_for_shown(surface3, QSize(100, 50), Qt::blue);
     QVERIFY(c3);
     QCOMPARE(win::caption(c3), QStringLiteral("foo <3>"));
-    QCOMPARE(c3->caption.normal, QStringLiteral("foo"));
-    QCOMPARE(c3->caption.suffix, QStringLiteral(" <3>"));
+    QCOMPARE(c3->meta.caption.normal, QStringLiteral("foo"));
+    QCOMPARE(c3->meta.caption.suffix, QStringLiteral(" <3>"));
 
     std::unique_ptr<Surface> surface4(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface4(Test::create_xdg_shell_toplevel(surface4));
@@ -928,16 +928,16 @@ void TestXdgShellClient::testCaptionMultipleWindows()
     auto c4 = Test::render_and_wait_for_shown(surface4, QSize(100, 50), Qt::blue);
     QVERIFY(c4);
     QCOMPARE(win::caption(c4), QStringLiteral("bar"));
-    QCOMPARE(c4->caption.normal, QStringLiteral("bar"));
-    QCOMPARE(c4->caption.suffix, QString());
+    QCOMPARE(c4->meta.caption.normal, QStringLiteral("bar"));
+    QCOMPARE(c4->meta.caption.suffix, QString());
     QSignalSpy captionChangedSpy(c4->qobject.get(), &win::window_qobject::captionChanged);
     QVERIFY(captionChangedSpy.isValid());
     shellSurface4->setTitle(QStringLiteral("foo"));
     QVERIFY(captionChangedSpy.wait());
     QCOMPARE(captionChangedSpy.count(), 1);
     QCOMPARE(win::caption(c4), QStringLiteral("foo <4>"));
-    QCOMPARE(c4->caption.normal, QStringLiteral("foo"));
-    QCOMPARE(c4->caption.suffix, QStringLiteral(" <4>"));
+    QCOMPARE(c4->meta.caption.normal, QStringLiteral("foo"));
+    QCOMPARE(c4->meta.caption.suffix, QStringLiteral(" <4>"));
 }
 
 void TestXdgShellClient::testUnresponsiveWindow_data()

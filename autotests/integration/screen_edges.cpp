@@ -886,7 +886,7 @@ void TestScreenEdges::testClientEdge()
     QCOMPARE(client->isHiddenInternal(), true);
 
     // now let's emulate the removal of a Client through base.space
-    Q_EMIT Test::app()->base.space->qobject->clientRemoved(client->signal_id);
+    Q_EMIT Test::app()->base.space->qobject->clientRemoved(client->meta.signal_id);
     for (auto& e : screenEdges->edges) {
         QVERIFY(!e->client());
     }

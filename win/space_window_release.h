@@ -35,7 +35,7 @@ void delete_window_from_space(Space& space, Win* win)
         update_block(nullptr);
     }
 
-    Q_EMIT space.qobject->window_deleted(win->signal_id);
+    Q_EMIT space.qobject->window_deleted(win->meta.signal_id);
     delete win;
 }
 
@@ -66,7 +66,7 @@ void space_add_remnant(Win& source, Win& remnant)
                      space.base.render->compositor->qobject.get(),
                      [&] { remnant.space.base.render->compositor->schedule_repaint(&remnant); });
 
-    Q_EMIT space.qobject->remnant_created(remnant.signal_id);
+    Q_EMIT space.qobject->remnant_created(remnant.meta.signal_id);
 }
 
 }

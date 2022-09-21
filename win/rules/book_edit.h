@@ -45,7 +45,7 @@ void edit_book(Book& book, RefWin& ref_win, bool whole_app)
     book.save();
 
     QStringList args;
-    args << QStringLiteral("--uuid") << ref_win.internal_id.toString();
+    args << QStringLiteral("--uuid") << ref_win.meta.internal_id.toString();
 
     if (whole_app) {
         args << QStringLiteral("--whole-app");

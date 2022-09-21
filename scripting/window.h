@@ -197,12 +197,12 @@ public:
 
     QByteArray resourceName() const override
     {
-        return m_client->wm_class.res_name;
+        return m_client->meta.wm_class.res_name;
     }
 
     QByteArray resourceClass() const override
     {
-        return m_client->wm_class.res_class;
+        return m_client->meta.wm_class.res_class;
     }
 
     QString caption() const override
@@ -222,7 +222,7 @@ public:
 
     QUuid internalId() const override
     {
-        return m_client->internal_id;
+        return m_client->meta.internal_id;
     }
 
     pid_t pid() const override

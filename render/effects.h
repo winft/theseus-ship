@@ -911,7 +911,7 @@ public:
     EffectWindow* find_window_by_uuid(const QUuid& id) const override
     {
         for (auto win : compositor.space->windows) {
-            if (!win->remnant && win->internal_id == id) {
+            if (!win->remnant && win->meta.internal_id == id) {
                 return win->render->effect.get();
             }
         }

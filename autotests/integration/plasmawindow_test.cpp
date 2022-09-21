@@ -349,7 +349,7 @@ void PlasmaWindowTest::testDestroyedButNotUnmapped()
 template<typename Win>
 std::string get_internal_id(Win& win)
 {
-    return win.server.window->internal_id.toString().toStdString();
+    return win.server.window->meta.internal_id.toString().toStdString();
 }
 
 struct wayland_test_window {
@@ -547,7 +547,8 @@ void PlasmaWindowTest::test_stacking_order()
         QCOMPARE(plasma_stack.size(), stack.size());
 
         for (size_t index = 0; index < windows.size(); ++index) {
-            QCOMPARE(plasma_stack.at(index), stack.at(index)->internal_id.toString().toStdString());
+            QCOMPARE(plasma_stack.at(index),
+                     stack.at(index)->meta.internal_id.toString().toStdString());
         }
     };
 

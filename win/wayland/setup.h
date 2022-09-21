@@ -28,8 +28,8 @@ void setup_plasma_management(Space* space, Win* win)
     if (!win->surface) {
         return;
     }
-    auto plasma_win
-        = space->plasma_window_manager->createWindow(win->internal_id.toString().toStdString());
+    auto plasma_win = space->plasma_window_manager->createWindow(
+        win->meta.internal_id.toString().toStdString());
     plasma_win->setTitle(win::caption(win));
     plasma_win->setActive(win->control->active);
     plasma_win->setFullscreen(win->control->fullscreen);
@@ -46,8 +46,9 @@ void setup_plasma_management(Space* space, Win* win)
     plasma_win->setIcon(win->control->icon);
     auto updateAppId = [win, plasma_win] {
         auto const name = win->control->desktop_file_name;
-        plasma_win->setAppId(QString::fromUtf8(name.isEmpty() ? win->wm_class.res_class : name));
-        plasma_win->set_resource_name(win->wm_class.res_name.toStdString());
+        plasma_win->setAppId(
+            QString::fromUtf8(name.isEmpty() ? win->meta.wm_class.res_class : name));
+        plasma_win->set_resource_name(win->meta.wm_class.res_name.toStdString());
     };
     updateAppId();
     plasma_win->setSkipTaskbar(win->control->skip_taskbar());

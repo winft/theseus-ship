@@ -20,7 +20,7 @@ void add_controlled_window_to_space(Space& space, Win* win)
     auto grp = find_group(space, win->xcb_window);
 
     space.windows.push_back(win);
-    Q_EMIT space.qobject->clientAdded(win->signal_id);
+    Q_EMIT space.qobject->clientAdded(win->meta.signal_id);
 
     if (grp) {
         grp->gotLeader(win);

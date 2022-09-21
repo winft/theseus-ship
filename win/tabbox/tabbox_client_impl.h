@@ -80,7 +80,7 @@ public:
 
     QUuid internal_id() const override
     {
-        return m_client->internal_id;
+        return m_client->meta.internal_id;
     }
 
     Window* client() const

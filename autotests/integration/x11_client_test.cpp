@@ -427,8 +427,8 @@ void X11ClientTest::testX11WindowId()
     QCOMPARE(client->xcb_window, w);
     QVERIFY(client->control->active);
     QCOMPARE(client->xcb_window, w);
-    QCOMPARE(client->internal_id.isNull(), false);
-    auto const uuid = client->internal_id;
+    QCOMPARE(client->meta.internal_id.isNull(), false);
+    auto const uuid = client->meta.internal_id;
     QUuid deletedUuid;
     QCOMPARE(deletedUuid.isNull(), true);
 
@@ -437,7 +437,7 @@ void X11ClientTest::testX11WindowId()
             this,
             [&deletedUuid](auto win_id) {
                 auto remnant_win = Test::app()->base.space->windows_map.at(win_id);
-                deletedUuid = remnant_win->internal_id;
+                deletedUuid = remnant_win->meta.internal_id;
             });
 
     NETRootInfo rootInfo(c.get(), NET::WMAllProperties);

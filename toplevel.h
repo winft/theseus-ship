@@ -20,11 +20,11 @@
 #include "win/shortcut_set.h"
 #include "win/virtual_desktops.h"
 #include "win/window_geometry.h"
+#include "win/window_metadata.h"
 #include "win/window_qobject.h"
 
 #include <NETWM>
 #include <QMatrix4x4>
-#include <QUuid>
 #include <cassert>
 #include <functional>
 #include <memory>
@@ -52,21 +52,10 @@ public:
 
     std::unique_ptr<qobject_t> qobject;
 
+    win::window_metadata meta;
     win::window_geometry geo;
 
     std::unique_ptr<render_t> render;
-
-    struct {
-        QString normal;
-        // suffix added to normal caption (e.g. shortcut, machine name, etc.).
-        QString suffix;
-    } caption;
-
-    struct {
-        // Always lowercase
-        QByteArray res_name;
-        QByteArray res_class;
-    } wm_class;
 
     struct {
         QMetaObject::Connection frame_update_outputs;
@@ -97,7 +86,7 @@ public:
 
     virtual ~Toplevel()
     {
-        space.windows_map.erase(signal_id);
+        space.windows_map.erase(meta.signal_id);
         delete info;
     }
 
@@ -264,8 +253,6 @@ public:
 
     int bit_depth{24};
 
-    // A UUID to uniquely identify this Toplevel independent of windowing system.
-    QUuid internal_id;
     base::x11::xcb::window xcb_window{};
 
     bool is_outline{false};
@@ -275,9 +262,6 @@ public:
     win::layer layer{win::layer::unknown};
     bool skip_close_animation{false};
     QVector<win::virtual_desktop*> desktops;
-
-    /// Being used internally when emitting signals. Access via the space windows_map.
-    uint32_t signal_id;
 
     explicit Toplevel(Space& space)
         : type(new win::transient<type>(this), space)
@@ -291,11 +275,10 @@ public:
     }
 
     Toplevel(win::transient<type>* transient, Space& space)
-        : space{space}
-        , internal_id{QUuid::createUuid()}
-        , signal_id{++space.window_id}
+        : meta{++space.window_id}
+        , space{space}
     {
-        space.windows_map.insert({signal_id, this});
+        space.windows_map.insert({meta.signal_id, this});
         this->transient.reset(transient);
     }
 

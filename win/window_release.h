@@ -65,7 +65,7 @@ win::remnant create_remnant(Win& source)
 template<typename Win>
 void transfer_remnant_data(Win& source, Win& dest)
 {
-    dest.internal_id = source.internal_id;
+    dest.meta.internal_id = source.meta.internal_id;
     dest.geo.frame = source.geo.frame;
     dest.bit_depth = source.bit_depth;
 
@@ -85,7 +85,7 @@ void transfer_remnant_data(Win& source, Win& dest)
 
     dest.render = std::move(source.render);
 
-    dest.wm_class = source.wm_class;
+    dest.meta.wm_class = source.meta.wm_class;
     dest.opaque_region = source.opaque_region;
     dest.central_output = source.central_output;
     dest.skip_close_animation = source.skip_close_animation;

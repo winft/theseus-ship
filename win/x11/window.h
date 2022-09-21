@@ -501,7 +501,7 @@ public:
 
     void updateCaption() override
     {
-        set_caption(this, this->caption.normal, true);
+        set_caption(this, this->meta.caption.normal, true);
     }
 
     bool isShown() const override
@@ -1471,13 +1471,13 @@ public:
         }
 
         this->surface_id = e->data.data32[0];
-        Q_EMIT this->space.qobject->surface_id_changed(this->signal_id, this->surface_id);
+        Q_EMIT this->space.qobject->surface_id_changed(this->meta.signal_id, this->surface_id);
         Q_EMIT this->qobject->surfaceIdChanged(this->surface_id);
     }
 
     static bool resourceMatch(window const* c1, window const* c2)
     {
-        return c1->wm_class.res_class == c2->wm_class.res_class;
+        return c1->meta.wm_class.res_class == c2->meta.wm_class.res_class;
     }
 
     void debug(QDebug& stream) const override
@@ -1497,8 +1497,9 @@ public:
         stream.nospace();
         stream << "\'x11::window"
                << "(" << QString::fromStdString(type) << "):" << this->xcb_window << ";"
-               << ";WMCLASS:" << this->wm_class.res_class << ":" << this->wm_class.res_name
-               << ";Caption:" << QString::fromStdString(caption) << "\'";
+               << ";WMCLASS:" << this->meta.wm_class.res_class << ":"
+               << this->meta.wm_class.res_name << ";Caption:" << QString::fromStdString(caption)
+               << "\'";
     }
 
     QString iconic_caption;

@@ -216,7 +216,7 @@ Win* create_toplevel_window(Space* space, Wrapland::Server::XdgShellToplevel* to
                      win->qobject.get(),
                      [win](auto serial) { handle_configure_ack(win, serial); });
 
-    win->caption.normal = QString::fromStdString(toplevel->title()).simplified();
+    win->meta.caption.normal = QString::fromStdString(toplevel->title()).simplified();
     QObject::connect(toplevel, &WS::XdgShellToplevel::titleChanged, win->qobject.get(), [win] {
         win->handle_title_changed();
     });

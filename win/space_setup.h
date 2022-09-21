@@ -199,7 +199,7 @@ void clear_space(Space& space)
     // At this point only remnants are remaining.
     for (auto it = space.windows.begin(); it != space.windows.end();) {
         assert((*it)->remnant);
-        Q_EMIT space.qobject->window_deleted((*it)->signal_id);
+        Q_EMIT space.qobject->window_deleted((*it)->meta.signal_id);
         it = space.windows.erase(it);
     }
 

@@ -160,8 +160,8 @@ void store_window(Space const& space, KConfigGroup& cg, int num, Win* c)
     cg.writeEntry(QLatin1String("sessionId") + n, c->sessionId().constData());
     cg.writeEntry(QLatin1String("windowRole") + n, c->windowRole().constData());
     cg.writeEntry(QLatin1String("wmCommand") + n, c->wmCommand().constData());
-    cg.writeEntry(QLatin1String("resourceName") + n, c->wm_class.res_name.constData());
-    cg.writeEntry(QLatin1String("resourceClass") + n, c->wm_class.res_class.constData());
+    cg.writeEntry(QLatin1String("resourceName") + n, c->meta.wm_class.res_name.constData());
+    cg.writeEntry(QLatin1String("resourceClass") + n, c->meta.wm_class.res_class.constData());
     cg.writeEntry(
         QLatin1String("geometry") + n,
         QRect(x11::calculate_gravitation(c, true), frame_to_client_size(c, c->geo.size())));
@@ -328,8 +328,8 @@ session_info* take_session_info(Space& space, Win* c)
     QByteArray sessionId = c->sessionId();
     QByteArray windowRole = c->windowRole();
     QByteArray wmCommand = c->wmCommand();
-    auto const& resourceName = c->wm_class.res_name;
-    auto const& resourceClass = c->wm_class.res_class;
+    auto const& resourceName = c->meta.wm_class.res_name;
+    auto const& resourceClass = c->meta.wm_class.res_class;
 
     // First search ``session''
     if (!sessionId.isEmpty()) {

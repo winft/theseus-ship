@@ -38,7 +38,7 @@ bool match_rule(Ruling& ruling, RefWin const& ref_win)
     if (!ruling.matchType(ref_win.get_window_type_direct())) {
         return false;
     }
-    if (!ruling.matchWMClass(ref_win.wm_class.res_class, ref_win.wm_class.res_name)) {
+    if (!ruling.matchWMClass(ref_win.meta.wm_class.res_class, ref_win.meta.wm_class.res_name)) {
         return false;
     }
     if (!ruling.matchRole(ref_win.windowRole().toLower())) {
@@ -63,7 +63,7 @@ bool match_rule(Ruling& ruling, RefWin const& ref_win)
             static_cast<Qt::ConnectionType>(Qt::QueuedConnection | Qt::UniqueConnection));
     }
 
-    return ruling.matchTitle(ref_win.caption.normal);
+    return ruling.matchTitle(ref_win.meta.caption.normal);
 }
 
 template<typename Book, typename RefWin>

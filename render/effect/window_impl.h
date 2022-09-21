@@ -475,8 +475,8 @@ public:
 
     QString windowClass() const override
     {
-        return window.ref_win->wm_class.res_name + QLatin1Char(' ')
-            + window.ref_win->wm_class.res_class;
+        return window.ref_win->meta.wm_class.res_name + QLatin1Char(' ')
+            + window.ref_win->meta.wm_class.res_class;
     }
 
     NET::WindowType windowType() const override
@@ -527,7 +527,7 @@ public:
 
     QUuid internalId() const override
     {
-        return window.ref_win->internal_id;
+        return window.ref_win->meta.internal_id;
     }
 
     QRect decorationInnerRect() const override

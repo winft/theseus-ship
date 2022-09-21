@@ -386,7 +386,7 @@ public:
         }
 
         adopt_transient_children(this, window);
-        Q_EMIT qobject->wayland_window_added(window->signal_id);
+        Q_EMIT qobject->wayland_window_added(window->meta.signal_id);
     }
     void handle_window_removed(wayland_window* window)
     {
@@ -410,7 +410,7 @@ public:
                 set_shortcut(window, QString());
             }
             process_window_hidden(*this, window);
-            Q_EMIT qobject->clientRemoved(window->signal_id);
+            Q_EMIT qobject->clientRemoved(window->meta.signal_id);
         }
 
         stacking.order.update_count();
@@ -420,7 +420,7 @@ public:
             update_tabbox(*this);
         }
 
-        Q_EMIT qobject->wayland_window_removed(window->signal_id);
+        Q_EMIT qobject->wayland_window_removed(window->meta.signal_id);
     }
 
     void update_space_area_from_windows(QRect const& desktop_area,

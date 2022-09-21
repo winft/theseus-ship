@@ -494,7 +494,7 @@ public:
         remove_window_from_lists(this->space, this);
         this->space.stacking.order.update_count();
         update_space_areas(this->space);
-        Q_EMIT this->space.qobject->internalClientRemoved(this->signal_id);
+        Q_EMIT this->space.qobject->internalClientRemoved(this->meta.signal_id);
 
         m_internalWindow = nullptr;
 
@@ -579,19 +579,19 @@ public:
 
     void updateCaption() override
     {
-        auto const oldSuffix = this->caption.suffix;
+        auto const oldSuffix = this->meta.caption.suffix;
         const auto shortcut = win::shortcut_caption_suffix(this);
-        this->caption.suffix = shortcut;
+        this->meta.caption.suffix = shortcut;
         if ((!win::is_special_window(this) || win::is_toolbar(this))
             && win::find_client_with_same_caption(static_cast<Toplevel<Space>*>(this))) {
             int i = 2;
             do {
-                this->caption.suffix
+                this->meta.caption.suffix
                     = shortcut + QLatin1String(" <") + QString::number(i) + QLatin1Char('>');
                 i++;
             } while (win::find_client_with_same_caption(static_cast<Toplevel<Space>*>(this)));
         }
-        if (this->caption.suffix != oldSuffix) {
+        if (this->meta.caption.suffix != oldSuffix) {
             Q_EMIT this->qobject->captionChanged();
         }
     }
@@ -634,16 +634,16 @@ public:
 
     void setCaption(QString const& cap)
     {
-        if (this->caption.normal == cap) {
+        if (this->meta.caption.normal == cap) {
             return;
         }
 
-        this->caption.normal = cap;
+        this->meta.caption.normal = cap;
 
-        auto const oldCaptionSuffix = this->caption.suffix;
+        auto const oldCaptionSuffix = this->meta.caption.suffix;
         updateCaption();
 
-        if (this->caption.suffix == oldCaptionSuffix) {
+        if (this->meta.caption.suffix == oldCaptionSuffix) {
             Q_EMIT this->qobject->captionChanged();
         }
     }
@@ -670,7 +670,7 @@ public:
         this->space.stacking.order.update_count();
         update_space_areas(this->space);
 
-        Q_EMIT this->space.qobject->internalClientAdded(this->signal_id);
+        Q_EMIT this->space.qobject->internalClientAdded(this->meta.signal_id);
     }
 
     void requestGeometry(const QRect& rect)

@@ -39,12 +39,12 @@ public:
 
     QByteArray resourceName() const override
     {
-        return ref_win->wm_class.res_name;
+        return ref_win->meta.wm_class.res_name;
     }
 
     QByteArray resourceClass() const override
     {
-        return ref_win->wm_class.res_class;
+        return ref_win->meta.wm_class.res_class;
     }
 
     QString caption() const override
@@ -73,7 +73,7 @@ public:
 
     QUuid internalId() const override
     {
-        return ref_win->internal_id;
+        return ref_win->meta.internal_id;
     }
 
     pid_t pid() const override

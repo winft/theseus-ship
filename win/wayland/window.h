@@ -1139,7 +1139,7 @@ public:
     void handle_class_changed()
     {
         auto const window_class = QByteArray(toplevel->appId().c_str());
-        set_wm_class(*this, this->wm_class.res_name, window_class);
+        set_wm_class(*this, this->meta.wm_class.res_name, window_class);
         if (initialized && supportsWindowRules()) {
             rules::setup_rules(this, true);
             this->applyWindowRules();
@@ -1149,12 +1149,12 @@ public:
 
     void handle_title_changed()
     {
-        auto const old_suffix = this->caption.suffix;
+        auto const old_suffix = this->meta.caption.suffix;
 
-        this->caption.normal = QString::fromStdString(toplevel->title()).simplified();
+        this->meta.caption.normal = QString::fromStdString(toplevel->title()).simplified();
         updateCaption();
 
-        if (this->caption.suffix == old_suffix) {
+        if (this->meta.caption.suffix == old_suffix) {
             // Don't emit caption change twice it already got emitted by the changing suffix.
             Q_EMIT this->qobject->captionChanged();
         }
@@ -1326,19 +1326,19 @@ public:
 
     void updateCaption() override
     {
-        auto const old_suffix = this->caption.suffix;
+        auto const old_suffix = this->meta.caption.suffix;
         auto const shortcut = shortcut_caption_suffix(this);
-        this->caption.suffix = shortcut;
+        this->meta.caption.suffix = shortcut;
         if ((!is_special_window(this) || is_toolbar(this))
             && find_client_with_same_caption(static_cast<Toplevel<Space>*>(this))) {
             int i = 2;
             do {
-                this->caption.suffix
+                this->meta.caption.suffix
                     = shortcut + QLatin1String(" <") + QString::number(i) + QLatin1Char('>');
                 i++;
             } while (find_client_with_same_caption(static_cast<Toplevel<Space>*>(this)));
         }
-        if (this->caption.suffix != old_suffix) {
+        if (this->meta.caption.suffix != old_suffix) {
             Q_EMIT this->qobject->captionChanged();
         }
     }

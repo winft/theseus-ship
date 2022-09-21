@@ -269,10 +269,10 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     // First only read the caption text, so that win::setup_rules(..) can use it for matching,
     // and only then really set the caption using setCaption(), which checks for duplicates etc.
     // and also relies on rules already existing
-    win->caption.normal = read_name(win);
+    win->meta.caption.normal = read_name(win);
 
     rules::setup_rules(win, false);
-    set_caption(win, win->caption.normal, true);
+    set_caption(win, win->meta.caption.normal, true);
 
     QObject::connect(win->qobject.get(),
                      &Win::qobject_t::windowClassChanged,

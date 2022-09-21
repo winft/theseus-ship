@@ -250,7 +250,7 @@ public:
             if (!win->control) {
                 continue;
             }
-            if (win->internal_id == id) {
+            if (win->meta.internal_id == id) {
                 return window_to_variant_map(win);
             }
         }
@@ -260,11 +260,11 @@ public:
 private:
     QVariantMap window_to_variant_map(typename Space::window_t const* win)
     {
-        return {{QStringLiteral("resourceClass"), win->wm_class.res_class},
-                {QStringLiteral("resourceName"), win->wm_class.res_name},
+        return {{QStringLiteral("resourceClass"), win->meta.wm_class.res_class},
+                {QStringLiteral("resourceName"), win->meta.wm_class.res_name},
                 {QStringLiteral("desktopFile"), win->control->desktop_file_name},
                 {QStringLiteral("role"), win->windowRole()},
-                {QStringLiteral("caption"), win->caption.normal},
+                {QStringLiteral("caption"), win->meta.caption.normal},
                 {QStringLiteral("clientMachine"), win->wmClientMachine(true)},
                 {QStringLiteral("localhost"), win->isLocalhost()},
                 {QStringLiteral("type"), win->windowType()},
