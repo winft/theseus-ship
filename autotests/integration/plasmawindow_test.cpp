@@ -170,7 +170,7 @@ void PlasmaWindowTest::testCreateDestroyX11PlasmaWindow()
     QCOMPARE(m_windowManagement->windows().count(), 1);
 
     auto pw = m_windowManagement->windows().constFirst();
-    QCOMPARE(pw->geometry(), client->frameGeometry());
+    QCOMPARE(pw->geometry(), client->geo.frame);
     QCOMPARE(pw->resource_name(), "org.kwinft.wm_class.name");
 
     QSignalSpy res_name_spy(pw, &Wrapland::Client::PlasmaWindow::resource_name_changed);

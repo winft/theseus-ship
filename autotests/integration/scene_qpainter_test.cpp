@@ -400,7 +400,7 @@ void SceneQPainterTest::testX11Window()
         Test::app()->base.space->windows_map.at(client_id));
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
-    QCOMPARE(win::frame_to_client_size(client, client->size()), QSize(100, 200));
+    QCOMPARE(win::frame_to_client_size(client, client->geo.size()), QSize(100, 200));
 
     if (!client->surface) {
         // wait for surface
@@ -417,14 +417,14 @@ void SceneQPainterTest::testX11Window()
     QTRY_VERIFY(client->surface->state().buffer);
 
     // Xwayland might send one more buffer after the first one with a size of 1x1.
-    if (client->surface->state().buffer->size() != client->size()) {
+    if (client->surface->state().buffer->size() != client->geo.size()) {
         QTRY_COMPARE(client->surface->state().buffer->size(), QSize(1, 1));
         QVERIFY(committed_spy.wait());
     }
 
-    QTRY_COMPARE(client->surface->state().buffer->size(), client->size());
+    QTRY_COMPARE(client->surface->state().buffer->size(), client->geo.size());
     QTRY_COMPARE(client->surface->state().buffer->shmImage()->createQImage().size(),
-                 client->size());
+                 client->geo.size());
     QImage compareImage(win::frame_relative_client_rect(client).size(), QImage::Format_RGB32);
     compareImage.fill(Qt::white);
     QCOMPARE(client->surface->state().buffer->shmImage()->createQImage().copy(
@@ -444,9 +444,9 @@ void SceneQPainterTest::testX11Window()
     Test::app()->base.render->compositor->addRepaintFull();
     QVERIFY(frameRenderedSpy.wait());
 
-    auto const startPos = win::frame_to_client_pos(client, client->pos());
+    auto const startPos = win::frame_to_client_pos(client, client->geo.pos());
     auto image = scene->backend()->bufferForScreen(Test::app()->base.outputs.at(0));
-    QCOMPARE(image->copy(QRect(startPos, win::frame_to_client_size(client, client->size()))),
+    QCOMPARE(image->copy(QRect(startPos, win::frame_to_client_size(client, client->geo.size()))),
              compareImage);
 
     // and destroy the window again

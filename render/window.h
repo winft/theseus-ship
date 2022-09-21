@@ -152,12 +152,12 @@ public:
         if (!win::decoration(ref_win)) {
             return QRegion();
         }
-        return QRegion(QRect(QPoint(), ref_win->size())) - win::frame_relative_client_rect(ref_win);
+        return QRegion(QRect({}, ref_win->geo.size())) - win::frame_relative_client_rect(ref_win);
     }
 
     QPoint bufferOffset() const
     {
-        return win::render_geometry(ref_win).topLeft() - ref_win->pos();
+        return win::render_geometry(ref_win).topLeft() - ref_win->geo.pos();
     }
 
     // creates initial quad list for the window
@@ -394,7 +394,8 @@ protected:
             if (auto const buf = sw->template get_buffer<buffer_t>(); !buf || !buf->isValid()) {
                 continue;
             }
-            quads << sw->makeContentsQuads(sw->id(), offset + child->pos() - ref_win->pos());
+            quads << sw->makeContentsQuads(sw->id(),
+                                           offset + child->geo.pos() - ref_win->geo.pos());
         }
 
         return quads;

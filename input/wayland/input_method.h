@@ -192,8 +192,7 @@ private:
                              }
 
                              auto const& old_visible_geo = win::visible_rect(popup, old_frame_geo);
-                             auto const& visible_geo
-                                 = win::visible_rect(popup, popup->frameGeometry());
+                             auto const& visible_geo = win::visible_rect(popup, popup->geo.frame);
 
                              win::add_layer_repaint(*win::lead_of_annexed_transient(popup),
                                                     old_visible_geo.united(visible_geo));

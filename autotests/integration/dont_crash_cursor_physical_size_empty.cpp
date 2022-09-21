@@ -103,7 +103,7 @@ void DontCrashCursorPhysicalSizeEmpty::testMoveCursorOverDeco()
     Q_EMIT Test::cursor()->theme_changed();
 
     Test::cursor()->set_pos(
-        QPoint(c->frameGeometry().center().x(), win::frame_to_client_pos(c, QPoint()).y() / 2));
+        QPoint(c->geo.frame.center().x(), win::frame_to_client_pos(c, QPoint()).y() / 2));
 }
 
 }

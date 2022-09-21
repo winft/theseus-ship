@@ -139,10 +139,10 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
     QVERIFY(!windowData.isEmpty());
     QCOMPARE(windowData.size(), 24);
     QCOMPARE(windowData.value(QStringLiteral("type")).toInt(), NET::Normal);
-    QCOMPARE(windowData.value(QStringLiteral("x")).toInt(), client->pos().x());
-    QCOMPARE(windowData.value(QStringLiteral("y")).toInt(), client->pos().y());
-    QCOMPARE(windowData.value(QStringLiteral("width")).toInt(), client->size().width());
-    QCOMPARE(windowData.value(QStringLiteral("height")).toInt(), client->size().height());
+    QCOMPARE(windowData.value(QStringLiteral("x")).toInt(), client->geo.pos().x());
+    QCOMPARE(windowData.value(QStringLiteral("y")).toInt(), client->geo.pos().y());
+    QCOMPARE(windowData.value(QStringLiteral("width")).toInt(), client->geo.size().width());
+    QCOMPARE(windowData.value(QStringLiteral("height")).toInt(), client->geo.size().height());
     QCOMPARE(windowData.value(QStringLiteral("x11DesktopNumber")).toInt(), 1);
     QCOMPARE(windowData.value(QStringLiteral("minimized")).toBool(), false);
     QCOMPARE(windowData.value(QStringLiteral("fullscreen")).toBool(), false);
@@ -214,8 +214,8 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
     win::move(client, QPoint(10, 20));
     reply = getWindowInfo(client->internal_id);
     reply.waitForFinished();
-    QCOMPARE(reply.value().value(QStringLiteral("x")).toInt(), client->pos().x());
-    QCOMPARE(reply.value().value(QStringLiteral("y")).toInt(), client->pos().y());
+    QCOMPARE(reply.value().value(QStringLiteral("x")).toInt(), client->geo.pos().x());
+    QCOMPARE(reply.value().value(QStringLiteral("y")).toInt(), client->geo.pos().y());
     // not testing width, height as that would require window geometry change
 
     // finally close window
@@ -286,7 +286,7 @@ void TestDbusInterface::testGetWindowInfoX11Client()
         Test::app()->base.space->windows_map.at(client_id));
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
-    QCOMPARE(win::frame_to_client_size(client, client->size()), windowGeometry.size());
+    QCOMPARE(win::frame_to_client_size(client, client->geo.size()), windowGeometry.size());
 
     // let's get the window info
     QDBusPendingReply<QVariantMap> reply{getWindowInfo(client->internal_id)};
@@ -297,10 +297,10 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     QVERIFY(!windowData.isEmpty());
     QCOMPARE(windowData.size(), 24);
     QCOMPARE(windowData.value(QStringLiteral("type")).toInt(), NET::Normal);
-    QCOMPARE(windowData.value(QStringLiteral("x")).toInt(), client->pos().x());
-    QCOMPARE(windowData.value(QStringLiteral("y")).toInt(), client->pos().y());
-    QCOMPARE(windowData.value(QStringLiteral("width")).toInt(), client->size().width());
-    QCOMPARE(windowData.value(QStringLiteral("height")).toInt(), client->size().height());
+    QCOMPARE(windowData.value(QStringLiteral("x")).toInt(), client->geo.pos().x());
+    QCOMPARE(windowData.value(QStringLiteral("y")).toInt(), client->geo.pos().y());
+    QCOMPARE(windowData.value(QStringLiteral("width")).toInt(), client->geo.size().width());
+    QCOMPARE(windowData.value(QStringLiteral("height")).toInt(), client->geo.size().height());
     QCOMPARE(windowData.value(QStringLiteral("x11DesktopNumber")).toInt(), 1);
     QCOMPARE(windowData.value(QStringLiteral("minimized")).toBool(), false);
     QCOMPARE(windowData.value(QStringLiteral("shaded")).toBool(), false);
@@ -369,12 +369,12 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     QVERIFY(!client->control->fullscreen);
     client->setFullScreen(true);
     QVERIFY(client->control->fullscreen);
-    QVERIFY(win::frame_to_client_size(client, client->size()) != windowGeometry.size());
+    QVERIFY(win::frame_to_client_size(client, client->geo.size()) != windowGeometry.size());
     QCOMPARE(verifyProperty(QStringLiteral("fullscreen")), true);
     reply = getWindowInfo(client->internal_id);
     reply.waitForFinished();
-    QCOMPARE(reply.value().value(QStringLiteral("width")).toInt(), client->size().width());
-    QCOMPARE(reply.value().value(QStringLiteral("height")).toInt(), client->size().height());
+    QCOMPARE(reply.value().value(QStringLiteral("width")).toInt(), client->geo.size().width());
+    QCOMPARE(reply.value().value(QStringLiteral("height")).toInt(), client->geo.size().height());
 
     client->setFullScreen(false);
     QVERIFY(!client->control->fullscreen);

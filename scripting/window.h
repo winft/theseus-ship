@@ -237,7 +237,7 @@ public:
 
     QRect frameGeometry() const override
     {
-        return m_client->frameGeometry();
+        return m_client->geo.frame;
     }
 
     void setFrameGeometry(QRect const& geo) override
@@ -247,12 +247,12 @@ public:
 
     QPoint pos() const override
     {
-        return m_client->pos();
+        return m_client->geo.pos();
     }
 
     QRect rect() const override
     {
-        return QRect(QPoint(0, 0), m_client->size());
+        return QRect({}, m_client->geo.size());
     }
 
     QRect visibleRect() const override
@@ -262,7 +262,7 @@ public:
 
     QSize size() const override
     {
-        return m_client->size();
+        return m_client->geo.size();
     }
 
     QSize minSize() const override
@@ -282,27 +282,27 @@ public:
 
     QSize clientSize() const override
     {
-        return win::frame_to_client_size(m_client, m_client->size());
+        return win::frame_to_client_size(m_client, m_client->geo.size());
     }
 
     int x() const override
     {
-        return m_client->pos().x();
+        return m_client->geo.pos().x();
     }
 
     int y() const override
     {
-        return m_client->pos().y();
+        return m_client->geo.pos().y();
     }
 
     int width() const override
     {
-        return m_client->size().width();
+        return m_client->geo.size().width();
     }
 
     int height() const override
     {
-        return m_client->size().height();
+        return m_client->geo.size().height();
     }
 
     bool isMove() const override

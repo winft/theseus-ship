@@ -27,7 +27,7 @@ void update_input_window(Win* win, QRect const& frame_geo)
 
     QRegion region;
 
-    auto const has_border = !win->user_no_border && !win->geometry_update.fullscreen;
+    auto const has_border = !win->user_no_border && !win->geo.update.fullscreen;
 
     if (has_border && win::decoration(win)) {
         auto const& borders = win::decoration(win)->resizeOnlyBorders();

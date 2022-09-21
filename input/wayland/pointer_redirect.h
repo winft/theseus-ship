@@ -45,7 +45,7 @@ static QRegion getConstraintRegion(Window* t, T* constraint)
         constraint_region = constraint_region.intersected(reg);
     }
 
-    return constraint_region.translated(win::frame_to_client_pos(t, t->pos()));
+    return constraint_region.translated(win::frame_to_client_pos(t, t->geo.pos()));
 }
 
 template<typename Redirect>
@@ -283,10 +283,10 @@ public:
                     disconnect_locked_pointer_destroyed_connection();
                     if (!(hint.x() < 0 || hint.y() < 0) && this->focus.window) {
                         // TODO(romangg): different client offset for Xwayland clients?
-                        processMotion(
-                            win::frame_to_client_pos(this->focus.window, this->focus.window->pos())
-                                + hint,
-                            seat->timestamp());
+                        processMotion(win::frame_to_client_pos(this->focus.window,
+                                                               this->focus.window->geo.pos())
+                                          + hint,
+                                      seat->timestamp());
                     }
                 }
                 return;
@@ -310,7 +310,7 @@ public:
                         }
                         // TODO(romangg): different client offset for Xwayland clients?
                         auto globalHint = win::frame_to_client_pos(this->focus.window,
-                                                                   this->focus.window->pos())
+                                                                   this->focus.window->geo.pos())
                             + hint;
                         processMotion(globalHint, waylandServer()->seat()->timestamp());
                     });
@@ -557,7 +557,7 @@ public:
 
         waylandServer()->seat()->pointers().set_focused_surface(nullptr);
 
-        auto pos = m_pos - now->client()->pos();
+        auto pos = m_pos - now->client()->geo.pos();
         QHoverEvent event(QEvent::HoverEnter, pos, pos);
         QCoreApplication::instance()->sendEvent(now->decoration(), &event);
         win::process_decoration_move(now->client(), pos.toPoint(), m_pos.toPoint());
@@ -581,7 +581,7 @@ public:
                 if (old_deco && old_deco == deco && !win::is_move(deco->client())
                     && !win::is_resize(deco->client()) && !areButtonsPressed()) {
                     // position of window did not change, we need to send HoverMotion manually
-                    QPointF const p = m_pos - deco->client()->pos();
+                    QPointF const p = m_pos - deco->client()->geo.pos();
                     QHoverEvent event(QEvent::HoverMove, p, p);
                     QCoreApplication::instance()->sendEvent(deco->decoration(), &event);
                 }
@@ -611,7 +611,7 @@ public:
 
         if (auto focus_internal = this->focus.internal_window) {
             // enter internal window
-            auto const pos = this->at.window->pos();
+            auto const pos = this->at.window->geo.pos();
             QEnterEvent enterEvent(pos, pos, m_pos);
             QCoreApplication::sendEvent(focus_internal, &enterEvent);
         }

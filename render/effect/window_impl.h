@@ -179,22 +179,22 @@ public:
 
     int x() const override
     {
-        return window.ref_win->pos().x();
+        return window.ref_win->geo.pos().x();
     }
 
     int y() const override
     {
-        return window.ref_win->pos().y();
+        return window.ref_win->geo.pos().y();
     }
 
     int width() const override
     {
-        return window.ref_win->size().width();
+        return window.ref_win->geo.size().width();
     }
 
     int height() const override
     {
-        return window.ref_win->size().height();
+        return window.ref_win->geo.size().height();
     }
 
     QSize basicUnit() const override
@@ -212,7 +212,7 @@ public:
 
     QRect frameGeometry() const override
     {
-        return window.ref_win->frameGeometry();
+        return window.ref_win->geo.frame;
     }
 
     QRect bufferGeometry() const override
@@ -222,7 +222,7 @@ public:
 
     QRect clientGeometry() const override
     {
-        return win::frame_to_client_rect(window.ref_win, window.ref_win->frameGeometry());
+        return win::frame_to_client_rect(window.ref_win, window.ref_win->geo.frame);
     }
 
     QString caption() const override
@@ -249,17 +249,17 @@ public:
 
     QPoint pos() const override
     {
-        return window.ref_win->pos();
+        return window.ref_win->geo.pos();
     }
 
     QSize size() const override
     {
-        return window.ref_win->size();
+        return window.ref_win->geo.size();
     }
 
     QRect rect() const override
     {
-        return QRect(QPoint(), window.ref_win->size());
+        return QRect({}, window.ref_win->geo.size());
     }
 
     bool isMovable() const override

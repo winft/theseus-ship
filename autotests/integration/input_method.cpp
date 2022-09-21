@@ -250,7 +250,7 @@ void input_method_test::test_early_popup_window()
              dynamic_cast<wayland_window*>(Test::app()->base.space->windows_map.at(signal_id)));
 
     QVERIFY(popup.window->isInputMethod());
-    QVERIFY(!popup.text_area.intersects(popup.window->frameGeometry()));
+    QVERIFY(!popup.text_area.intersects(popup.window->geo.frame));
 
     // Not yet synchronized.
     QVERIFY(!popup.client_popup_surface->text_input_rectangle().isValid());
@@ -318,7 +318,7 @@ void input_method_test::test_late_popup_window()
              dynamic_cast<wayland_window*>(Test::app()->base.space->windows_map.at(signal_id)));
 
     QVERIFY(popup.window->isInputMethod());
-    QVERIFY(!popup.text_area.intersects(popup.window->frameGeometry()));
+    QVERIFY(!popup.text_area.intersects(popup.window->geo.frame));
 
     disable_text_input();
     QVERIFY(!popup.hidden_spy->empty());

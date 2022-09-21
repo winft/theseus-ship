@@ -61,9 +61,9 @@ void set_subsurface_parent(Win* win, Lead* lead)
 
     QObject::connect(win->surface, &WS::Surface::committed, win->qobject.get(), [win] {
         if (win->surface->state().updates & Wrapland::Server::surface_change::size) {
-            auto const old_geo = win->frameGeometry();
+            auto const old_geo = win->geo.frame;
             // TODO(romangg): use setFrameGeometry?
-            win->set_frame_geometry(QRect(win->pos(), win->surface->size()));
+            win->geo.frame = QRect(win->geo.pos(), win->surface->size());
             Q_EMIT win->qobject->frame_geometry_changed(old_geo);
         }
         win->handle_commit();
@@ -89,12 +89,12 @@ void set_subsurface_parent(Win* win, Lead* lead)
         return win::render_geometry(lead).topLeft() + subsurface->position();
     };
     auto set_pos = [win, get_pos]() {
-        auto const old_frame_geo = win->frameGeometry();
+        auto const old_frame_geo = win->geo.frame;
         auto const frame_geo = QRect(get_pos(), win->surface->size());
 
         if (old_frame_geo != frame_geo) {
             // TODO(romangg): use setFrameGeometry?
-            win->set_frame_geometry(frame_geo);
+            win->geo.frame = frame_geo;
 
             // A top lead might not be available when the client has deleted one of the parent
             // surfaces in the tree before this subsurface.

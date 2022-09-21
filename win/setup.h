@@ -69,11 +69,11 @@ void setup_window_control_connections(Win* win)
             // Not an on-screen-display.
             return;
         }
-        if (win->frameGeometry().isEmpty()) {
+        if (win->geo.frame.isEmpty()) {
             // No current geometry to set.
             return;
         }
-        if (old.size() == win->frameGeometry().size()) {
+        if (old.size() == win->geo.frame.size()) {
             // No change.
             return;
         }

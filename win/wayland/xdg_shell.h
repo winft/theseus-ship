@@ -110,14 +110,14 @@ void finalize_shell_window_creation(Space& space, Win* win)
 
                 rules::setup_rules(win, false);
 
-                auto const original_geo = win->frameGeometry();
+                auto const original_geo = win->geo.frame;
                 auto const ruled_geo = ctrl->rules.checkGeometry(original_geo, true);
 
                 if (original_geo != ruled_geo) {
                     win->setFrameGeometry(ruled_geo);
                 }
 
-                maximize(win, ctrl->rules.checkMaximize(win->geometry_update.max_mode, true));
+                maximize(win, ctrl->rules.checkMaximize(win->geo.update.max_mode, true));
 
                 set_desktop(win, ctrl->rules.checkDesktop(win->desktop(), true));
                 set_desktop_file_name(
@@ -147,8 +147,7 @@ void finalize_shell_window_creation(Space& space, Win* win)
                 win->updateWindowRules(rules::type::all);
             }
 
-            if (win->geometry_update.max_mode != maximize_mode::restore
-                || win->geometry_update.fullscreen) {
+            if (win->geo.update.max_mode != maximize_mode::restore || win->geo.update.fullscreen) {
                 win->must_place = false;
             }
         }
@@ -157,7 +156,7 @@ void finalize_shell_window_creation(Space& space, Win* win)
 
         if (win->pending_configures.empty()) {
             // xdg-shell protocol stipulates a single configure event on first commit.
-            win->configure_geometry(QRect(win->pos(), QSize(0, 0)));
+            win->configure_geometry(QRect(win->geo.pos(), QSize(0, 0)));
         }
 
         win->initialized = true;
@@ -274,7 +273,7 @@ Win* create_toplevel_window(Space* space, Wrapland::Server::XdgShellToplevel* to
         if (win->closing) {
             return;
         }
-        if (win->geometry_update.block) {
+        if (win->geo.update.block) {
             return;
         }
         auto size = win->synced_geometry.window.size();
@@ -316,7 +315,7 @@ Win* create_popup_window(Space* space, Wrapland::Server::XdgShellPopup* popup)
                      win->qobject.get(),
                      [win](auto old_frame_geo) {
                          auto const old_visible_geo = visible_rect(win, old_frame_geo);
-                         auto const visible_geo = visible_rect(win, win->frameGeometry());
+                         auto const visible_geo = visible_rect(win, win->geo.frame);
 
                          add_layer_repaint(*lead_of_annexed_transient(win),
                                            old_visible_geo.united(visible_geo));
@@ -370,7 +369,7 @@ void update_screen_edge(Win* win)
 
     // We need an edge for the screen edge API, so figure out which edge the window borders.
     Qt::Edges edges;
-    auto const geometry = win->frameGeometry();
+    auto const geometry = win->geo.frame;
 
     for (auto output : win->space.base.outputs) {
         auto const screen_geo = output->geometry();
@@ -442,7 +441,7 @@ void install_plasma_shell_surface(Win* win, Wrapland::Server::PlasmaShellSurface
     });
 
     auto update_position = [win, surface] {
-        win->setFrameGeometry(QRect(surface->position(), win->geometry_update.frame.size()));
+        win->setFrameGeometry(QRect(surface->position(), win->geo.update.frame.size()));
     };
     auto update_role = [win, surface] {
         auto type = NET::Unknown;
@@ -689,21 +688,21 @@ QRect get_xdg_shell_popup_placement(Win const* win, QRect const& bounds)
     assert(transient_lead);
 
     auto get = get_popup_placement<std::remove_pointer_t<decltype(transient_lead)>>;
-    return get({transient_lead,
-                bounds,
-                win->popup->anchorRect(),
-                win->popup->anchorEdge(),
-                win->popup->gravity(),
-                win->geometry_update.frame.isValid() ? win->geometry_update.frame.size()
-                                                     : win->popup->initialSize(),
-                win->popup->anchorOffset(),
-                win->popup->constraintAdjustments()});
+    return get(
+        {transient_lead,
+         bounds,
+         win->popup->anchorRect(),
+         win->popup->anchorEdge(),
+         win->popup->gravity(),
+         win->geo.update.frame.isValid() ? win->geo.update.frame.size() : win->popup->initialSize(),
+         win->popup->anchorOffset(),
+         win->popup->constraintAdjustments()});
 }
 
 template<typename Win>
 bool needs_configure(Win* win)
 {
-    auto const& update = win->geometry_update;
+    auto const& update = win->geo.update;
 
     if (update.max_mode != win->synced_geometry.max_mode) {
         return true;
@@ -724,8 +723,8 @@ void move_annexed_children(Win* win, QPoint const& frame_pos_offset)
         if (!child->transient->annexed) {
             continue;
         }
-        auto pos = child->geometry_update.frame.topLeft() + frame_pos_offset;
-        auto size = child->geometry_update.frame.size();
+        auto pos = child->geo.update.frame.topLeft() + frame_pos_offset;
+        auto size = child->geo.update.frame.size();
         child->setFrameGeometry(QRect(pos, size));
     }
 }
@@ -835,11 +834,11 @@ void handle_resize_request(Win* win, Wrapland::Server::Seat* seat, quint32 seria
     // i.e. with the origin in the top-left corner of the frame geometry.
     // Note that this might have negative coordinates if we resize by grabbing the shadow area of
     // the left or top edge.
-    mov_res.offset = win->space.input->cursor->pos() - win->pos();
+    mov_res.offset = win->space.input->cursor->pos() - win->geo.pos();
 
     // The inverted offset describes the difference between bottom-right corner and offset.
     mov_res.inverted_offset
-        = QPoint(win->size().width() - 1, win->size().height() - 1) - mov_res.offset;
+        = QPoint(win->geo.size().width() - 1, win->geo.size().height() - 1) - mov_res.offset;
 
     auto to_position = [edges] {
         auto pos = position::center;
@@ -874,10 +873,10 @@ void handle_minimize_request(Win* win)
 template<typename Win>
 void handle_maximize_request(Win* win, bool maximized)
 {
-    auto const old_max_mode = win->geometry_update.max_mode;
+    auto const old_max_mode = win->geo.update.max_mode;
     maximize(win, maximized ? maximize_mode::full : maximize_mode::restore);
 
-    if (win->geometry_update.max_mode == old_max_mode) {
+    if (win->geo.update.max_mode == old_max_mode) {
         // No change, still send a configure event with current geometry.
         auto sync_geo = win->synced_geometry.window;
         if (sync_geo.isValid()) {
@@ -902,7 +901,8 @@ void handle_window_menu_request(Win* win,
                                 [[maybe_unused]] quint32 serial,
                                 QPoint const& surfacePos)
 {
-    win->performMouseCommand(base::options_qobject::MouseOperationsMenu, win->pos() + surfacePos);
+    win->performMouseCommand(base::options_qobject::MouseOperationsMenu,
+                             win->geo.pos() + surfacePos);
 }
 
 template<typename Win>

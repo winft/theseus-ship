@@ -78,7 +78,7 @@ public:
             if (annexed) {
                 assert(top_lead);
                 discard_shape(*top_lead);
-                add_layer_repaint(*top_lead, visible_rect(m_window, m_window->frameGeometry()));
+                add_layer_repaint(*top_lead, visible_rect(m_window, m_window->geo.frame));
             }
         }
         m_leads.clear();
@@ -87,7 +87,7 @@ public:
         for (auto const& child : children_copy) {
             if (annexed && top_lead) {
                 discard_shape(*top_lead);
-                add_layer_repaint(*top_lead, visible_rect(child, child->frameGeometry()));
+                add_layer_repaint(*top_lead, visible_rect(child, child->geo.frame));
             }
             remove_child(child);
         }
@@ -137,7 +137,7 @@ public:
             // Need to check that a top-lead exists since this might be called on destroy of a lead.
             if (auto top_lead = lead_of_annexed_transient(m_window)) {
                 discard_shape(*top_lead);
-                add_layer_repaint(*top_lead, visible_rect(window, window->frameGeometry()));
+                add_layer_repaint(*top_lead, visible_rect(window, window->geo.frame));
             }
         }
     }

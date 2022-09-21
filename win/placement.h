@@ -156,7 +156,7 @@ void place(Win* window, const QRect& area, placement policy, placement nextPlace
 
     if (kwinApp()->options->qobject->borderSnapZone()) {
         // snap to titlebar / snap to window borders on inner screen edges
-        auto const geo = window->geometry_update.frame;
+        auto const geo = window->geo.update.frame;
         QPoint corner = geo.topLeft();
         auto const frameMargins = frame_margins(window);
 
@@ -209,14 +209,14 @@ void place_at_random(Win* window, const QRect& area, placement /*next*/)
     }
     tx = px;
     ty = py;
-    if (tx + window->geometry_update.frame.size().width() > area.right()) {
-        tx = area.right() - window->geometry_update.frame.size().width();
+    if (tx + window->geo.update.frame.size().width() > area.right()) {
+        tx = area.right() - window->geo.update.frame.size().width();
         if (tx < 0)
             tx = 0;
         px = area.x();
     }
-    if (ty + window->geometry_update.frame.size().height() > area.bottom()) {
-        ty = area.bottom() - window->geometry_update.frame.size().height();
+    if (ty + window->geo.update.frame.size().height() > area.bottom()) {
+        ty = area.bottom() - window->geo.update.frame.size().height();
         if (ty < 0)
             ty = 0;
         py = area.y();
@@ -241,7 +241,7 @@ void place_smart(Win* window, const QRect& area, placement /*next*/)
      * with ideas from xfce.
      */
 
-    if (!window->geometry_update.frame.size().isValid()) {
+    if (!window->geo.update.frame.size().isValid()) {
         return;
     }
 
@@ -264,8 +264,8 @@ void place_smart(Win* window, const QRect& area, placement /*next*/)
     y_optimal = y;
 
     // client gabarit
-    int ch = window->geometry_update.frame.size().height() - 1;
-    int cw = window->geometry_update.frame.size().width() - 1;
+    int ch = window->geo.update.frame.size().height() - 1;
+    int cw = window->geo.update.frame.size().width() - 1;
 
     bool first_pass = true; // CT lame flag. Don't like it. What else would do?
 
@@ -287,10 +287,10 @@ void place_smart(Win* window, const QRect& area, placement /*next*/)
                 if (is_irrelevant(client, window, desktop)) {
                     continue;
                 }
-                xl = client->geometry_update.frame.topLeft().x();
-                yt = client->geometry_update.frame.topLeft().y();
-                xr = xl + client->geometry_update.frame.size().width();
-                yb = yt + client->geometry_update.frame.size().height();
+                xl = client->geo.update.frame.topLeft().x();
+                yt = client->geo.update.frame.topLeft().y();
+                xr = xl + client->geo.update.frame.size().width();
+                yb = yt + client->geo.update.frame.size().height();
 
                 // if windows overlap, calc the overall overlapping
                 if ((cxl < xr) && (cxr > xl) && (cyt < yb) && (cyb > yt)) {
@@ -341,10 +341,10 @@ void place_smart(Win* window, const QRect& area, placement /*next*/)
                     continue;
                 }
 
-                xl = client->geometry_update.frame.topLeft().x();
-                yt = client->geometry_update.frame.topLeft().y();
-                xr = xl + client->geometry_update.frame.size().width();
-                yb = yt + client->geometry_update.frame.size().height();
+                xl = client->geo.update.frame.topLeft().x();
+                yt = client->geo.update.frame.topLeft().y();
+                xr = xl + client->geo.update.frame.size().width();
+                yb = yt + client->geo.update.frame.size().height();
 
                 // if not enough room above or under the current tested client
                 // determine the first non-overlapped x position
@@ -375,10 +375,10 @@ void place_smart(Win* window, const QRect& area, placement /*next*/)
                     continue;
                 }
 
-                xl = client->geometry_update.frame.topLeft().x();
-                yt = client->geometry_update.frame.topLeft().y();
-                xr = xl + client->geometry_update.frame.size().width();
-                yb = yt + client->geometry_update.frame.size().height();
+                xl = client->geo.update.frame.topLeft().x();
+                yt = client->geo.update.frame.topLeft().y();
+                xr = xl + client->geo.update.frame.size().width();
+                yb = yt + client->geo.update.frame.size().height();
 
                 // if not enough room to the left or right of the current tested client
                 // determine the first non-overlapped y position
@@ -409,8 +409,8 @@ void place_centered(Win* window, const QRect& area, placement /*next*/)
 {
     Q_ASSERT(area.isValid());
 
-    const int xp = area.left() + (area.width() - window->geometry_update.frame.size().width()) / 2;
-    const int yp = area.top() + (area.height() - window->geometry_update.frame.size().height()) / 2;
+    const int xp = area.left() + (area.width() - window->geo.update.frame.size().width()) / 2;
+    const int yp = area.top() + (area.height() - window->geo.update.frame.size().height()) / 2;
 
     // place the window
     move(window, QPoint(xp, yp));
@@ -445,9 +445,8 @@ void place_on_screen_display(Win* window, const QRect& area)
     Q_ASSERT(area.isValid());
 
     // place at lower area of the screen
-    const int x = area.left() + (area.width() - window->geometry_update.frame.size().width()) / 2;
-    const int y
-        = area.top() + 2 * area.height() / 3 - window->geometry_update.frame.size().height() / 2;
+    const int x = area.left() + (area.width() - window->geo.update.frame.size().width()) / 2;
+    const int y = area.top() + 2 * area.height() / 3 - window->geo.update.frame.size().height() / 2;
 
     move(window, QPoint(x, y));
 }
@@ -463,7 +462,7 @@ void place_under_mouse(Win* window, const QRect& area, placement /*next*/)
 {
     Q_ASSERT(area.isValid());
 
-    auto geom = window->geometry_update.frame;
+    auto geom = window->geo.update.frame;
     geom.moveCenter(window->space.input->cursor->pos());
     move(window, geom.topLeft());
     keep_in_area(window, area, false); // make sure it's kept inside workarea
@@ -523,8 +522,8 @@ void place_on_main_window(Win* window, const QRect& area, placement nextPlacemen
         place(window, area, placement::centered);
         return;
     }
-    auto geom = window->geometry_update.frame;
-    geom.moveCenter(place_on->geometry_update.frame.center());
+    auto geom = window->geo.update.frame;
+    geom.moveCenter(place_on->geo.update.frame.center());
     move(window, geom.topLeft());
     // get area again, because the mainwindow may be on different xinerama screen
     const QRect placementArea = space_window_area(window->space, PlacementArea, window);

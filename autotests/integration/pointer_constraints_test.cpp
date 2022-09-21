@@ -135,14 +135,14 @@ void TestPointerConstraints::testConfinedPointer()
     // now map the window
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 100), Qt::blue);
     QVERIFY(c);
-    if (c->pos() == QPoint(0, 0)) {
+    if (c->geo.pos() == QPoint(0, 0)) {
         win::move(c, QPoint(1, 1));
     }
-    QVERIFY(!c->frameGeometry().contains(Test::cursor()->pos()));
+    QVERIFY(!c->geo.frame.contains(Test::cursor()->pos()));
 
     // now let's confine
     QCOMPARE(Test::app()->base.space->input->pointer->isConstrained(), false);
-    Test::cursor()->set_pos(c->frameGeometry().center());
+    Test::cursor()->set_pos(c->geo.frame.center());
     QCOMPARE(Test::app()->base.space->input->pointer->isConstrained(), true);
     QVERIFY(confinedSpy.wait());
 
@@ -152,11 +152,11 @@ void TestPointerConstraints::testConfinedPointer()
     QVERIFY(pointerPositionChangedSpy.isValid());
     Test::cursor()->set_pos(QPoint(1280, 512));
     QVERIFY(pointerPositionChangedSpy.isEmpty());
-    QCOMPARE(Test::cursor()->pos(), c->frameGeometry().center());
+    QCOMPARE(Test::cursor()->pos(), c->geo.frame.center());
 
     // TODO: test relative motion
     QFETCH(PointerFunc, positionFunction);
-    const QPoint position = positionFunction(c->frameGeometry());
+    const QPoint position = positionFunction(c->geo.frame);
     Test::cursor()->set_pos(position);
     QCOMPARE(pointerPositionChangedSpy.count(), 1);
     QCOMPARE(Test::cursor()->pos(), position);
@@ -309,19 +309,19 @@ void TestPointerConstraints::testLockedPointer()
     // now map the window
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 100), Qt::blue);
     QVERIFY(c);
-    QVERIFY(!c->frameGeometry().contains(Test::cursor()->pos()));
+    QVERIFY(!c->geo.frame.contains(Test::cursor()->pos()));
 
     // now let's lock
     QCOMPARE(Test::app()->base.space->input->pointer->isConstrained(), false);
-    Test::cursor()->set_pos(c->frameGeometry().center());
-    QCOMPARE(Test::cursor()->pos(), c->frameGeometry().center());
+    Test::cursor()->set_pos(c->geo.frame.center());
+    QCOMPARE(Test::cursor()->pos(), c->geo.frame.center());
     QCOMPARE(Test::app()->base.space->input->pointer->isConstrained(), true);
     QVERIFY(lockedSpy.wait());
 
     // try to move the pointer
     // TODO: add relative pointer
-    Test::cursor()->set_pos(c->frameGeometry().center() + QPoint(1, 1));
-    QCOMPARE(Test::cursor()->pos(), c->frameGeometry().center());
+    Test::cursor()->set_pos(c->geo.frame.center() + QPoint(1, 1));
+    QCOMPARE(Test::cursor()->pos(), c->geo.frame.center());
 
     // deactivate the client, this should unlock
     win::activate_window(*Test::app()->base.space, nullptr);
@@ -329,8 +329,8 @@ void TestPointerConstraints::testLockedPointer()
     QVERIFY(unlockedSpy.wait());
 
     // moving cursor should be allowed again
-    Test::cursor()->set_pos(c->frameGeometry().center() + QPoint(1, 1));
-    QCOMPARE(Test::cursor()->pos(), c->frameGeometry().center() + QPoint(1, 1));
+    Test::cursor()->set_pos(c->geo.frame.center() + QPoint(1, 1));
+    QCOMPARE(Test::cursor()->pos(), c->geo.frame.center() + QPoint(1, 1));
 
     lockedPointer.reset(Test::get_client().interfaces.pointer_constraints->lockPointer(
         surface.get(), pointer.get(), nullptr, PointerConstraints::LifeTime::Persistent));
@@ -345,8 +345,8 @@ void TestPointerConstraints::testLockedPointer()
 
     // try to move the pointer
     QCOMPARE(Test::app()->base.space->input->pointer->isConstrained(), true);
-    Test::cursor()->set_pos(c->frameGeometry().center());
-    QCOMPARE(Test::cursor()->pos(), c->frameGeometry().center() + QPoint(1, 1));
+    Test::cursor()->set_pos(c->geo.frame.center());
+    QCOMPARE(Test::cursor()->pos(), c->geo.frame.center() + QPoint(1, 1));
 
     // delete pointer lock
     lockedPointer.reset(nullptr);
@@ -359,8 +359,8 @@ void TestPointerConstraints::testLockedPointer()
 
     // moving cursor should be allowed again
     QCOMPARE(Test::app()->base.space->input->pointer->isConstrained(), false);
-    Test::cursor()->set_pos(c->frameGeometry().center());
-    QCOMPARE(Test::cursor()->pos(), c->frameGeometry().center());
+    Test::cursor()->set_pos(c->geo.frame.center());
+    QCOMPARE(Test::cursor()->pos(), c->geo.frame.center());
 }
 
 void TestPointerConstraints::testCloseWindowWithLockedPointer()
@@ -380,12 +380,12 @@ void TestPointerConstraints::testCloseWindowWithLockedPointer()
     // now map the window
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 100), Qt::blue);
     QVERIFY(c);
-    QVERIFY(!c->frameGeometry().contains(Test::cursor()->pos()));
+    QVERIFY(!c->geo.frame.contains(Test::cursor()->pos()));
 
     // now let's lock
     QCOMPARE(Test::app()->base.space->input->pointer->isConstrained(), false);
-    Test::cursor()->set_pos(c->frameGeometry().center());
-    QCOMPARE(Test::cursor()->pos(), c->frameGeometry().center());
+    Test::cursor()->set_pos(c->geo.frame.center());
+    QCOMPARE(Test::cursor()->pos(), c->geo.frame.center());
     QCOMPARE(Test::app()->base.space->input->pointer->isConstrained(), true);
     QVERIFY(lockedSpy.wait());
 

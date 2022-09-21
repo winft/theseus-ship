@@ -161,7 +161,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     auto win = new Win(xcb_win, space);
 
     // So that decorations don't start with size being (0,0).
-    win->set_frame_geometry(QRect(0, 0, 100, 100));
+    win->geo.frame = QRect(0, 0, 100, 100);
 
     setup_space_window_connections(&space, win);
 
@@ -183,7 +183,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     win->control = std::make_unique<typename Win::control_t>(win);
 
     win->supported_default_types = supported_managed_window_types_mask;
-    win->has_in_content_deco = true;
+    win->geo.has_in_content_deco = true;
 
     win->sync_request.timestamp = xTime();
 
@@ -330,7 +330,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
     // Make sure that the input window is created before we update the stacking order
     // TODO(romangg): Does it matter that the frame geometry is not set yet here?
-    update_input_window(win, win->frameGeometry());
+    update_input_window(win, win->geo.frame);
 
     update_layer(win);
 
@@ -420,8 +420,8 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
     propagate_on_all_desktops_to_children(*win);
 
-    win->client_frame_extents = gtk_frame_extents(win);
-    win->geometry_update.original.client_frame_extents = win->client_frame_extents;
+    win->geo.client_frame_extents = gtk_frame_extents(win);
+    win->geo.update.original.client_frame_extents = win->geo.client_frame_extents;
 
     prepare_decoration(win);
 
@@ -438,12 +438,12 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         }
 
         auto const frame_pos = client_geo.topLeft() - QPoint(left_border(win), top_border(win))
-            + QPoint(win->client_frame_extents.left(), win->client_frame_extents.top());
+            + QPoint(win->geo.client_frame_extents.left(), win->geo.client_frame_extents.top());
         auto const frame_size = size_for_client_size(win, client_geo.size(), size_mode::any, false);
         frame_geo = QRect(frame_pos, frame_size);
     }
 
-    win->set_frame_geometry(frame_geo);
+    win->geo.frame = frame_geo;
 
     auto const placement_area
         = place_on_taking_control(win, frame_geo, isMapped, session, asn_data);
@@ -495,14 +495,14 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
         if (static_cast<maximize_mode>(session->maximized) != maximize_mode::restore) {
             maximize(win, static_cast<maximize_mode>(session->maximized));
-            win->restore_geometries.maximize = session->restore;
+            win->geo.restore.max = session->restore;
         }
         if (session->fullscreen) {
             win->setFullScreen(true, false);
-            win->restore_geometries.maximize = session->fsrestore;
+            win->geo.restore.max = session->fsrestore;
         }
 
-        check_offscreen_position(win->restore_geometries.maximize, placement_area);
+        check_offscreen_position(win->geo.restore.max, placement_area);
 
     } else {
         // Window may want to be maximized

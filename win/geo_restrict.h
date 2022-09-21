@@ -8,6 +8,8 @@
 #include "deco.h"
 #include "desktop_get.h"
 #include "geo.h"
+#include "geo_block.h"
+#include "geo_move.h"
 #include "window_area.h"
 
 namespace KWin::win
@@ -49,7 +51,7 @@ void check_workspace_position(Win* win,
         return;
     }
 
-    if (win->geometry_update.fullscreen) {
+    if (win->geo.update.fullscreen) {
         auto area = space_window_area(win->space, FullScreenArea, win);
         win->setFrameGeometry(area);
         return;
@@ -58,7 +60,7 @@ void check_workspace_position(Win* win,
     if (win->maximizeMode() != maximize_mode::restore) {
         geometry_updates_blocker block(win);
 
-        win->update_maximized(win->geometry_update.max_mode);
+        win->update_maximized(win->geo.update.max_mode);
         auto const screenArea = space_window_area(win->space, ScreenArea, win);
 
         auto geo = pending_frame_geometry(win);
@@ -353,8 +355,8 @@ QPoint adjust_window_position(Space const& space,
 
     if (window.maximizeMode() != maximize_mode::restore) {
         maxRect = space_window_area(
-            space, MaximizeArea, pos + QRect(QPoint(), window.size()).center(), window.desktop());
-        QRect geo = window.frameGeometry();
+            space, MaximizeArea, pos + QRect({}, window.geo.size()).center(), window.desktop());
+        auto geo = window.geo.frame;
         if (flags(window.maximizeMode() & maximize_mode::horizontal)
             && (geo.x() == maxRect.left() || geo.right() == maxRect.right())) {
             guideMaximized |= maximize_mode::horizontal;
@@ -372,7 +374,7 @@ QPoint adjust_window_position(Space const& space,
         auto const& outputs = space.base.outputs;
         const bool sOWO = kwinApp()->options->qobject->isSnapOnlyWhenOverlapping();
         auto output
-            = base::get_nearest_output(outputs, pos + QRect(QPoint(), window.size()).center());
+            = base::get_nearest_output(outputs, pos + QRect({}, window.geo.size()).center());
 
         if (maxRect.isNull()) {
             maxRect = space_window_area(space, MovementArea, output, window.desktop());
@@ -385,8 +387,8 @@ QPoint adjust_window_position(Space const& space,
 
         const int cx(pos.x());
         const int cy(pos.y());
-        const int cw(window.size().width());
-        const int ch(window.size().height());
+        const int cw(window.geo.size().width());
+        const int ch(window.geo.size().height());
         const int rx(cx + cw);
         const int ry(cy + ch); // these don't change
 
@@ -400,7 +402,7 @@ QPoint adjust_window_position(Space const& space,
         const int snapX = borderSnapZone.width() * snapAdjust; // snap trigger
         const int snapY = borderSnapZone.height() * snapAdjust;
         if (snapX || snapY) {
-            auto geo = window.frameGeometry();
+            auto geo = window.geo.frame;
             auto frameMargins = frame_margins(&window);
 
             // snap to titlebar / snap to window borders on inner screen edges
@@ -481,10 +483,10 @@ QPoint adjust_window_position(Space const& space,
                     continue;
                 }
 
-                lx = win->pos().x();
-                ly = win->pos().y();
-                lrx = lx + win->size().width();
-                lry = ly + win->size().height();
+                lx = win->geo.pos().x();
+                ly = win->geo.pos().y();
+                lrx = lx + win->geo.size().width();
+                lry = ly + win->geo.size().height();
 
                 if (!flags(guideMaximized & maximize_mode::horizontal)
                     && (((cy <= lry) && (cy >= ly)) || ((ry >= ly) && (ry <= lry))
@@ -586,7 +588,7 @@ QRect adjust_window_size(Space const& space, Win const& window, QRect moveResize
         const bool sOWO = kwinApp()->options->qobject->isSnapOnlyWhenOverlapping();
 
         auto const maxRect = space_window_area(
-            space, MovementArea, QRect(QPoint(0, 0), window.size()).center(), window.desktop());
+            space, MovementArea, QRect(QPoint(0, 0), window.geo.size()).center(), window.desktop());
         const int xmin = maxRect.left();
         const int xmax = maxRect.right(); // desk size
         const int ymin = maxRect.top();
@@ -682,10 +684,10 @@ QRect adjust_window_size(Space const& space, Win const& window, QRect moveResize
             for (auto win : space.windows) {
                 if (win->control && on_desktop(win, space.virtual_desktop_manager->current())
                     && !win->control->minimized && win != &window) {
-                    lx = win->pos().x() - 1;
-                    ly = win->pos().y() - 1;
-                    lrx = win->pos().x() + win->size().width();
-                    lry = win->pos().y() + win->size().height();
+                    lx = win->geo.pos().x() - 1;
+                    ly = win->geo.pos().y() - 1;
+                    lrx = win->geo.pos().x() + win->geo.size().width();
+                    lry = win->geo.pos().y() + win->geo.size().height();
 
                     auto within_height = [&] {
                         return ((newcy <= lry) && (newcy >= ly))

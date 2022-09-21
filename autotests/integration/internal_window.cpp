@@ -230,7 +230,7 @@ void InternalWindowTest::testEnterLeave()
     QVERIFY(c->isInternal());
     QVERIFY(!win::decoration(c));
     QCOMPARE(Test::app()->base.space->findInternal(&win), c);
-    QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 100));
+    QCOMPARE(c->geo.frame, QRect(0, 0, 100, 100));
     QVERIFY(c->isShown());
     QVERIFY(contains(win::render_stack(Test::app()->base.space->stacking.order), c));
 
@@ -551,15 +551,15 @@ void InternalWindowTest::testMove()
     auto internalClient
         = get_internal_window_from_id(clientAddedSpy.first().first().value<quint32>());
     QVERIFY(internalClient);
-    QCOMPARE(internalClient->frameGeometry(), QRect(0, 0, 100, 100));
+    QCOMPARE(internalClient->geo.frame, QRect(0, 0, 100, 100));
 
     // normal move should be synced
     win::move(internalClient, QPoint(5, 10));
-    QCOMPARE(internalClient->frameGeometry(), QRect(5, 10, 100, 100));
+    QCOMPARE(internalClient->geo.frame, QRect(5, 10, 100, 100));
     QTRY_COMPARE(win.geometry(), QRect(5, 10, 100, 100));
     // another move should also be synced
     win::move(internalClient, QPoint(10, 20));
-    QCOMPARE(internalClient->frameGeometry(), QRect(10, 20, 100, 100));
+    QCOMPARE(internalClient->geo.frame, QRect(10, 20, 100, 100));
     QTRY_COMPARE(win.geometry(), QRect(10, 20, 100, 100));
 
     // now move with a Geometry update blocker
@@ -639,7 +639,7 @@ void InternalWindowTest::testModifierClickUnrestrictedMove()
              base::options_qobject::MouseUnrestrictedMove);
 
     // move cursor on window
-    Test::cursor()->set_pos(internalClient->frameGeometry().center());
+    Test::cursor()->set_pos(internalClient->geo.frame.center());
 
     // simulate modifier+click
     quint32 timestamp = 1;
@@ -677,7 +677,7 @@ void InternalWindowTest::testModifierScroll()
     win::space_reconfigure(*Test::app()->base.space);
 
     // move cursor on window
-    Test::cursor()->set_pos(internalClient->frameGeometry().center());
+    Test::cursor()->set_pos(internalClient->geo.frame.center());
 
     // set the opacity to 0.5
     internalClient->setOpacity(0.5);

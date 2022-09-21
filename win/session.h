@@ -162,10 +162,11 @@ void store_window(Space const& space, KConfigGroup& cg, int num, Win* c)
     cg.writeEntry(QLatin1String("wmCommand") + n, c->wmCommand().constData());
     cg.writeEntry(QLatin1String("resourceName") + n, c->wm_class.res_name.constData());
     cg.writeEntry(QLatin1String("resourceClass") + n, c->wm_class.res_class.constData());
-    cg.writeEntry(QLatin1String("geometry") + n,
-                  QRect(x11::calculate_gravitation(c, true), frame_to_client_size(c, c->size())));
-    cg.writeEntry(QLatin1String("restore") + n, c->restore_geometries.maximize);
-    cg.writeEntry(QLatin1String("fsrestore") + n, c->restore_geometries.maximize);
+    cg.writeEntry(
+        QLatin1String("geometry") + n,
+        QRect(x11::calculate_gravitation(c, true), frame_to_client_size(c, c->geo.size())));
+    cg.writeEntry(QLatin1String("restore") + n, c->geo.restore.max);
+    cg.writeEntry(QLatin1String("fsrestore") + n, c->geo.restore.max);
     cg.writeEntry(QLatin1String("maximize") + n, static_cast<int>(c->maximizeMode()));
     cg.writeEntry(QLatin1String("fullscreen") + n, static_cast<int>(c->control->fullscreen));
     cg.writeEntry(QLatin1String("desktop") + n, c->desktop());

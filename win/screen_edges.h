@@ -395,7 +395,7 @@ public:
     {
         auto window = edger->space.stacking.active;
         auto const newValue = !edger->remainActiveOnFullscreen() && window
-            && window->control->fullscreen && window->frameGeometry().contains(geometry.center())
+            && window->control->fullscreen && window->geo.frame.contains(geometry.center())
             && !(edger->space.base.render->compositor->effects
                  && edger->space.base.render->compositor->effects->hasActiveFullScreenEffect());
 
@@ -1684,7 +1684,7 @@ private:
         int height = 0;
 
         auto const& outputs = space.base.outputs;
-        QRect const geo = window->frameGeometry();
+        auto const geo = window->geo.frame;
         auto const fullArea = space_window_area(space, FullArea, 0, 1);
 
         for (auto output : outputs) {

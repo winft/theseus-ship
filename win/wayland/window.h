@@ -244,8 +244,8 @@ public:
         }
 
         synced_geometry.window = window_geo;
-        synced_geometry.max_mode = this->geometry_update.max_mode;
-        synced_geometry.fullscreen = this->geometry_update.fullscreen;
+        synced_geometry.max_mode = this->geo.update.max_mode;
+        synced_geometry.fullscreen = this->geo.update.fullscreen;
 
         uint64_t serial = 0;
 
@@ -262,7 +262,7 @@ public:
                                                       top_lead);
 
                 serial = popup->configure(
-                    get_xdg_shell_popup_placement(this, bounds).translated(-top_lead->pos()));
+                    get_xdg_shell_popup_placement(this, bounds).translated(-top_lead->geo.pos()));
             }
         }
         if (layer_surface) {
@@ -281,8 +281,8 @@ public:
     {
         assert(toplevel || popup || layer_surface);
 
-        auto frame_geo = this->frameGeometry();
-        auto position = this->pos();
+        auto frame_geo = this->geo.frame;
+        auto position = this->geo.pos();
         auto max_mode = this->max_mode;
         auto fullscreen = this->control ? this->control->fullscreen : false;
 
@@ -316,18 +316,18 @@ public:
         auto const ref_geo = shell_surface->window_geometry();
         frame_geo = QRect(position, ref_geo.size() + frame_size(this));
 
-        if (frame_geo == this->frameGeometry() && !serial_match
-            && this->client_frame_extents == shell_surface->window_margins()) {
+        if (frame_geo == this->geo.frame && !serial_match
+            && this->geo.client_frame_extents == shell_surface->window_margins()) {
             return;
         }
 
         if (!synced_geometry.window.isValid()) {
             // On first commit.
             synced_geometry.window = ref_geo;
-            this->geometry_update.frame = frame_geo;
+            this->geo.update.frame = frame_geo;
         }
 
-        this->client_frame_extents = shell_surface->window_margins();
+        this->geo.client_frame_extents = shell_surface->window_margins();
 
         if (popup) {
             auto const toplevel = lead_of_annexed_transient(this);
@@ -346,14 +346,14 @@ public:
 
             // Need to set that for get_xdg_shell_popup_placement(..) call.
             // TODO(romangg): make this less akward, i.e. if possible include it in the call.
-            if (this->geometry_update.pending == pending_geometry::none) {
-                this->geometry_update.frame = frame_geo;
+            if (this->geo.update.pending == pending_geometry::none) {
+                this->geo.update.frame = frame_geo;
             }
 
             auto const frame_geo = get_xdg_shell_popup_placement(this, screen_bounds);
 
-            if (this->geometry_update.pending == win::pending_geometry::none) {
-                this->geometry_update.frame = frame_geo;
+            if (this->geo.update.pending == win::pending_geometry::none) {
+                this->geo.update.frame = frame_geo;
             }
             do_set_geometry(frame_geo);
 
@@ -401,16 +401,16 @@ public:
 
     void do_set_geometry(QRect const& frame_geo)
     {
-        auto const old_frame_geo = this->frameGeometry();
+        auto const old_frame_geo = this->geo.frame;
 
         if (old_frame_geo == frame_geo) {
             return;
         }
 
-        this->set_frame_geometry(frame_geo);
+        this->geo.frame = frame_geo;
 
-        if (this->geometry_update.pending == win::pending_geometry::none) {
-            this->geometry_update.frame.setSize(frame_geo.size());
+        if (this->geo.update.pending == win::pending_geometry::none) {
+            this->geo.update.frame.setSize(frame_geo.size());
         }
 
         // TODO(romangg): When we have support for explicit/implicit popup repositioning combine.
@@ -563,8 +563,7 @@ public:
 
         if (xdg_deco
             && xdg_deco->requestedMode() != Wrapland::Server::XdgDecoration::Mode::ClientSide) {
-            return !this->space.deco->hasPlugin() || user_no_border
-                || this->geometry_update.fullscreen;
+            return !this->space.deco->hasPlugin() || user_no_border || this->geo.update.fullscreen;
         }
         return true;
     }
@@ -601,7 +600,7 @@ public:
 
     void handle_update_no_border() override
     {
-        auto no_border = this->geometry_update.max_mode == maximize_mode::full;
+        auto no_border = this->geo.update.max_mode == maximize_mode::full;
         setNoBorder(this->control->rules.checkNoBorder(no_border));
     }
 
@@ -613,7 +612,7 @@ public:
             }
         }
 
-        auto const old_geom = this->frameGeometry();
+        auto const old_geom = this->geo.frame;
         auto const old_content_geom = old_geom.adjusted(
             left_border(this), top_border(this), -right_border(this), -bottom_border(this));
 
@@ -640,7 +639,7 @@ public:
                                  this->qobject.get(),
                                  [this]() {
                                      geometry_updates_blocker geo_blocker(this);
-                                     auto const old_geom = this->frameGeometry();
+                                     auto const old_geom = this->geo.frame;
                                      check_workspace_position(this, old_geom);
                                      Q_EMIT this->qobject->frame_geometry_changed(old_geom);
                                  });
@@ -653,7 +652,7 @@ public:
             // TODO: ensure the new geometry still fits into the client area (e.g. maximized
             // windows)
             // TODO(romangg): use setFrameGeometry?
-            do_set_geometry(QRect(old_geom.topLeft(), this->size() + deco_size));
+            do_set_geometry(QRect(old_geom.topLeft(), this->geo.size() + deco_size));
             Q_EMIT this->qobject->frame_geometry_changed(old_geom);
         }
 
@@ -849,7 +848,7 @@ public:
         if (layer_surface) {
             return false;
         }
-        if (this->geometry_update.fullscreen) {
+        if (this->geo.update.fullscreen) {
             return false;
         }
         if (this->control->rules.checkPosition(geo::invalid_point) != geo::invalid_point) {
@@ -892,7 +891,7 @@ public:
         if (layer_surface) {
             return false;
         }
-        if (this->geometry_update.fullscreen) {
+        if (this->geo.update.fullscreen) {
             return false;
         }
         if (this->control->rules.checkSize(QSize()).isValid()) {
@@ -1002,28 +1001,28 @@ public:
     {
         auto const frame_geo = this->control ? this->control->rules.checkGeometry(rect) : rect;
 
-        this->geometry_update.frame = frame_geo;
+        this->geo.update.frame = frame_geo;
 
-        if (this->geometry_update.block) {
-            this->geometry_update.pending = win::pending_geometry::normal;
+        if (this->geo.update.block) {
+            this->geo.update.pending = win::pending_geometry::normal;
             return;
         }
 
-        this->geometry_update.pending = pending_geometry::none;
+        this->geo.update.pending = pending_geometry::none;
 
         if (needs_configure(this)) {
             if (plasma_shell_surface) {
                 if (!pending_configures.empty()) {
                     pending_configures.back().geometry.frame.moveTo(frame_geo.topLeft());
                 }
-                do_set_geometry(QRect(frame_geo.topLeft(), this->size()));
+                do_set_geometry(QRect(frame_geo.topLeft(), this->geo.size()));
             }
             configure_geometry(frame_geo);
             return;
         }
 
-        assert(synced_geometry.max_mode == this->geometry_update.max_mode);
-        assert(synced_geometry.fullscreen == this->geometry_update.fullscreen);
+        assert(synced_geometry.max_mode == this->geo.update.max_mode);
+        assert(synced_geometry.fullscreen == this->geo.update.fullscreen);
 
         if (!pending_configures.empty()) {
             // We might be here with a new position but a size not yet acked by the client.
@@ -1057,13 +1056,13 @@ public:
         // In case the restore geometry is invalid, use the placement from the rectify function.
         auto restore_geo = rectify_fullscreen_restore_geometry(this);
 
-        if (!this->restore_geometries.maximize.isValid()) {
+        if (!this->geo.restore.max.isValid()) {
             // We let the client decide on a size.
             restore_geo.setSize(QSize(0, 0));
         }
 
         setFrameGeometry(restore_geo);
-        this->restore_geometries.maximize = {};
+        this->geo.restore.max = {};
     }
 
     win::layer layer_for_dock() const override
@@ -1219,7 +1218,7 @@ public:
                                                         PlacementArea,
                                                         this->space.input->cursor->pos(),
                                                         this->desktop());
-                    auto size = this->size();
+                    auto size = this->geo.size();
                     auto pos = this->space.input->cursor->pos()
                         - QPoint(size.width(), size.height()) / 2;
                     win::move(this, pos);
@@ -1230,8 +1229,8 @@ public:
             handle_layer_surface_commit(this);
             apply_pending_geometry();
         } else if (auto cur_size = client_to_frame_size(this, this->surface->size());
-                   this->size() != cur_size) {
-            do_set_geometry(QRect(this->pos(), cur_size));
+                   this->geo.size() != cur_size) {
+            do_set_geometry(QRect(this->geo.pos(), cur_size));
         }
 
         auto bit_depth

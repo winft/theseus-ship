@@ -197,7 +197,7 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
         QObject::connect(
             &win->space.base, &base::platform::topology_changed, win->qobject.get(), [win] {
                 auto geo = layer_surface_recommended_geometry(win);
-                if (win->geometry_update.frame != geo) {
+                if (win->geo.update.frame != geo) {
                     win->setFrameGeometry(geo);
                 }
             });
@@ -346,8 +346,7 @@ void handle_layer_surface_commit(Win* win)
 {
     assert(win->layer_surface);
 
-    if (!win->layer_surface->change_pending()
-        && win->geometry_update.frame == win->frameGeometry()) {
+    if (!win->layer_surface->change_pending() && win->geo.update.frame == win->geo.frame) {
         return;
     }
 

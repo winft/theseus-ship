@@ -301,7 +301,7 @@ typename Space::window_t* window_under_mouse(Space const& space, base::output co
         if (!(window->isShown() && on_current_desktop(window) && on_screen(window, output)))
             continue;
 
-        if (window->frameGeometry().contains(space.input->cursor->pos())) {
+        if (window->geo.frame.contains(space.input->cursor->pos())) {
             return window;
         }
     }
@@ -625,7 +625,7 @@ typename Space::window_t* find_window_to_activate_on_desktop(Space& space, unsig
             if (!(window->isShown() && on_desktop(window, desktop) && on_active_screen(window)))
                 continue;
 
-            if (window->frameGeometry().contains(space.input->cursor->pos())) {
+            if (window->geo.frame.contains(space.input->cursor->pos())) {
                 if (!is_desktop(window)) {
                     return window;
                 }
@@ -692,8 +692,8 @@ bool activate_window_direction(Space& space,
         if (wants_tab_focus(client) && *i != c && on_desktop(client, d)
             && !client->control->minimized) {
             // Centre of the other window
-            const QPoint other(client->pos().x() + client->size().width() / 2,
-                               client->pos().y() + client->size().height() / 2);
+            const QPoint other(client->geo.pos().x() + client->geo.size().width() / 2,
+                               client->geo.pos().y() + client->geo.size().height() / 2);
 
             int distance;
             int offset;
@@ -751,7 +751,8 @@ void activate_window_direction(Space& space, win::direction direction)
         = on_all_desktops(c) ? space.virtual_desktop_manager->current() : c->desktop();
 
     // Centre of the active window
-    QPoint curPos(c->pos().x() + c->size().width() / 2, c->pos().y() + c->size().height() / 2);
+    QPoint curPos(c->geo.pos().x() + c->geo.size().width() / 2,
+                  c->geo.pos().y() + c->geo.size().height() / 2);
 
     if (!activate_window_direction(space, c, direction, curPos, desktopNumber)) {
         auto opposite = [&] {

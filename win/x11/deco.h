@@ -98,14 +98,14 @@ void set_frame_extents(Win* win)
 template<typename Win>
 void update_decoration(Win* win, bool check_workspace_pos, bool force = false)
 {
-    auto const has_no_border = win->user_no_border || win->geometry_update.fullscreen;
+    auto const has_no_border = win->user_no_border || win->geo.update.fullscreen;
 
     if (!force
         && ((!win::decoration(win) && has_no_border) || (win::decoration(win) && !has_no_border))) {
         return;
     }
 
-    auto old_frame_geo = win->geometry_update.frame;
+    auto old_frame_geo = win->geo.update.frame;
     auto old_client_geo = old_frame_geo.adjusted(win::left_border(win),
                                                  win::top_border(win),
                                                  -win::right_border(win),
@@ -128,7 +128,7 @@ void update_decoration(Win* win, bool check_workspace_pos, bool force = false)
         win::check_workspace_position(win, old_frame_geo, -2, old_client_geo);
     }
 
-    update_input_window(win, win->geometry_update.frame);
+    update_input_window(win, win->geo.update.frame);
     win::block_geometry_updates(win, false);
     set_frame_extents(win);
 }
@@ -154,14 +154,14 @@ void create_decoration(Win* win)
         QObject::connect(decoration,
                          &KDecoration2::Decoration::resizeOnlyBordersChanged,
                          win->qobject.get(),
-                         [win] { update_input_window(win, win->frameGeometry()); });
+                         [win] { update_input_window(win, win->geo.frame); });
 
         QObject::connect(
             decoration, &KDecoration2::Decoration::bordersChanged, win->qobject.get(), [win]() {
                 set_frame_extents(win);
 
-                update_server_geometry(win, win->frameGeometry());
-                win->geometry_update.original.deco_margins = frame_margins(win);
+                update_server_geometry(win, win->geo.frame);
+                win->geo.update.original.deco_margins = frame_margins(win);
 
                 win->control->deco.client->update_size();
             });
@@ -169,15 +169,15 @@ void create_decoration(Win* win)
         QObject::connect(win->control->deco.client->decoratedClient(),
                          &KDecoration2::DecoratedClient::widthChanged,
                          win->qobject.get(),
-                         [win] { update_input_window(win, win->frameGeometry()); });
+                         [win] { update_input_window(win, win->geo.frame); });
         QObject::connect(win->control->deco.client->decoratedClient(),
                          &KDecoration2::DecoratedClient::heightChanged,
                          win->qobject.get(),
-                         [win] { update_input_window(win, win->frameGeometry()); });
+                         [win] { update_input_window(win, win->geo.frame); });
     }
 
     win->control->deco.decoration = decoration;
-    win->geometry_update.original.deco_margins = frame_margins(win);
+    win->geo.update.original.deco_margins = frame_margins(win);
 
     if (win->space.base.render->compositor->isActive()) {
         discard_buffer(*win);

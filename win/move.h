@@ -261,18 +261,18 @@ bool start_move_resize(Win* win)
     auto const mode = mov_res.contact;
     auto const was_maxed_full = win->maximizeMode() == maximize_mode::full;
     auto const was_tiled = win->control->quicktiling != quicktiles::none;
-    auto const was_fullscreen = win->geometry_update.fullscreen;
+    auto const was_fullscreen = win->geo.update.fullscreen;
 
     if (mode == position::center) {
         // That's a move.
         // TODO(romangg): Shorten the following condition to just restore geometry being invalid?
         if (!was_maxed_full && !was_tiled && !was_fullscreen) {
             // Remember current geometry in case the window is later moved to an edge for tiling.
-            win->restore_geometries.maximize = win->frameGeometry();
+            win->geo.restore.max = win->geo.frame;
         }
     } else {
         // That's a resize.
-        win->restore_geometries.maximize = win->frameGeometry();
+        win->geo.restore.max = win->geo.frame;
         if (was_maxed_full) {
             set_maximize(win, false, false);
         }
@@ -280,7 +280,7 @@ bool start_move_resize(Win* win)
             // Exit quick tile mode when the user attempts to resize a tiled window.
             set_quicktile_mode(win, quicktiles::none, false);
         }
-        win->restore_geometries.maximize = QRect();
+        win->geo.restore.max = QRect();
     }
 
     mov_res.enabled = true;
@@ -661,8 +661,8 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
 template<typename Win>
 auto move_resize(Win* win, QPoint const& local, QPoint const& global)
 {
-    auto const old_geo = win->frameGeometry();
-    auto const restore_geo = win->restore_geometries.maximize;
+    auto const old_geo = win->geo.frame;
+    auto const restore_geo = win->geo.restore.max;
 
     // We call move_resize_impl once and afterwards check if quicktiling has been altered by it.
     move_resize_impl(win, local.x(), local.y(), global.x(), global.y());
@@ -681,7 +681,7 @@ auto move_resize(Win* win, QPoint const& local, QPoint const& global)
         return;
     }
 
-    if (old_geo == win->geometry_update.frame) {
+    if (old_geo == win->geo.update.frame) {
         // No update. Nothing more to do.
         // TODO(romangg): is this check really sensbile? Check against some other geometry instead?
         return;
@@ -691,7 +691,7 @@ auto move_resize(Win* win, QPoint const& local, QPoint const& global)
 
     // Reset previous quicktile mode and adapt geometry.
     set_quicktile_mode(win, quicktiles::none, false);
-    auto const old_restore_geo = restore_geo.isValid() ? restore_geo : win->frameGeometry();
+    auto const old_restore_geo = restore_geo.isValid() ? restore_geo : win->geo.frame;
 
     auto& mov_res = win->control->move_resize;
 
@@ -711,7 +711,7 @@ auto move_resize(Win* win, QPoint const& local, QPoint const& global)
 template<typename Win>
 void update_move_resize(Win* win, QPointF const& currentGlobalCursor)
 {
-    move_resize(win, win->pos(), currentGlobalCursor.toPoint());
+    move_resize(win, win->geo.pos(), currentGlobalCursor.toPoint());
 }
 
 template<typename Win>
@@ -730,7 +730,7 @@ void finish_move_resize(Win* win, bool cancel)
     } else {
         auto const& moveResizeGeom = mov_res.geometry;
         if (wasResize) {
-            auto mode = win->geometry_update.max_mode;
+            auto mode = win->geo.update.max_mode;
             if ((mode == maximize_mode::horizontal
                  && moveResizeGeom.width() != mov_res.initial_geometry.width())
                 || (mode == maximize_mode::vertical
@@ -754,7 +754,7 @@ void finish_move_resize(Win* win, bool cancel)
         if (win->central_output) {
             send_to_screen(win->space, win, *win->central_output);
         }
-        if (win->geometry_update.max_mode != maximize_mode::restore) {
+        if (win->geo.update.max_mode != maximize_mode::restore) {
             check_workspace_position(win);
         }
     }
@@ -764,9 +764,9 @@ void finish_move_resize(Win* win, bool cancel)
         set_electric_maximizing(win, false);
     }
 
-    if (win->geometry_update.max_mode == maximize_mode::restore
-        && win->control->quicktiling == quicktiles::none && !win->geometry_update.fullscreen) {
-        win->restore_geometries.maximize = QRect();
+    if (win->geo.update.max_mode == maximize_mode::restore
+        && win->control->quicktiling == quicktiles::none && !win->geo.update.fullscreen) {
+        win->geo.restore.max = QRect();
     }
 
     // FRAME    update();
@@ -808,7 +808,7 @@ void leave_move_resize(Win& win)
 template<typename Win>
 void move(Win* win, QPoint const& point)
 {
-    assert(win->geometry_update.pending == pending_geometry::none || win->geometry_update.block);
+    assert(win->geo.update.pending == pending_geometry::none || win->geo.update.block);
 
     auto old_frame_geo = pending_frame_geometry(win);
 
@@ -841,8 +841,8 @@ void keep_in_area(Win* win, QRect area, bool partial)
             win,
             QSize(std::min(area.width(), size.width()), std::min(area.height(), size.height())));
 
-        pos = win->geometry_update.frame.topLeft();
-        size = win->geometry_update.frame.size();
+        pos = win->geo.update.frame.topLeft();
+        size = win->geo.update.frame.size();
     }
 
     auto tx = pos.x();
@@ -938,11 +938,11 @@ void send_to_screen(Space const& space, Win* win, Output const& output)
 
     // operating on the maximized / quicktiled window would leave the old geom_restore behind,
     // so we clear the state first
-    auto const old_restore_geo = win->restore_geometries.maximize;
-    auto const old_frame_geo = win->geometry_update.frame;
+    auto const old_restore_geo = win->geo.restore.max;
+    auto const old_frame_geo = win->geo.update.frame;
     auto frame_geo = old_restore_geo.isValid() ? old_restore_geo : old_frame_geo;
 
-    auto max_mode = win->geometry_update.max_mode;
+    auto max_mode = win->geo.update.max_mode;
     auto qtMode = win->control->quicktiling;
     if (max_mode != maximize_mode::restore) {
         maximize(win, win::maximize_mode::restore);
@@ -984,7 +984,7 @@ void send_to_screen(Space const& space, Win* win, Output const& output)
     // The call to check_workspace_position(..) does change up the geometry-update again, making it
     // possibly the size of the whole screen. Therefore rememeber the current geometry for if
     // required setting later the restore geometry here.
-    auto const restore_geo = win->geometry_update.frame;
+    auto const restore_geo = win->geo.update.frame;
 
     check_workspace_position(win, old_frame_geo);
 
@@ -993,12 +993,12 @@ void send_to_screen(Space const& space, Win* win, Output const& output)
     // eg. setting quicktiles::none would break maximization
     if (max_mode != maximize_mode::restore) {
         maximize(win, max_mode);
-        win->restore_geometries.maximize = restore_geo;
+        win->geo.restore.max = restore_geo;
     }
 
     if (qtMode != quicktiles::none && qtMode != win->control->quicktiling) {
         set_quicktile_mode(win, qtMode, true);
-        win->restore_geometries.maximize = restore_geo;
+        win->geo.restore.max = restore_geo;
     }
 
     auto children = restacked_by_space_stacking_order(&space, win->transient->children);

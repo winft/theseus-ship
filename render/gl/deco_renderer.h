@@ -111,7 +111,7 @@ public:
         window->layoutDecorationRects(left, top, right, bottom);
 
         const QRect geometry
-            = dirty ? QRect(QPoint(0, 0), window->size()) : scheduled.boundingRect();
+            = dirty ? QRect(QPoint(0, 0), window->geo.size()) : scheduled.boundingRect();
 
         // We pad each part in the decoration atlas in order to avoid texture bleeding.
         const int padding = 1;

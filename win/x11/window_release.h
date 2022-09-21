@@ -197,7 +197,7 @@ void release_window(Win* win, bool on_shutdown)
     if (on_shutdown) {
         // Move the client window to maintain its position.
         auto const offset = QPoint(left_border(win), top_border(win));
-        win->setFrameGeometry(win->frameGeometry().translated(offset));
+        win->setFrameGeometry(win->geo.frame.translated(offset));
     } else {
         del = x11::create_remnant_window<Win>(*win);
     }
@@ -218,7 +218,7 @@ void release_window(Win* win, bool on_shutdown)
     }
 
     finish_rules(win);
-    win->geometry_update.block++;
+    win->geo.update.block++;
 
     if (on_current_desktop(win) && win->isShown()) {
         win->space.base.render->compositor->addRepaint(visible_rect(win));
@@ -258,7 +258,7 @@ void release_window(Win* win, bool on_shutdown)
     win->xcb_windows.client.delete_property(atoms->net_frame_extents);
     win->xcb_windows.client.delete_property(atoms->kde_net_wm_frame_strut);
 
-    auto const client_rect = frame_to_client_rect(win, win->frameGeometry());
+    auto const client_rect = frame_to_client_rect(win, win->geo.frame);
     win->xcb_windows.client.reparent(rootWindow(), client_rect.x(), client_rect.y());
 
     xcb_change_save_set(connection(), XCB_SET_MODE_DELETE, win->xcb_windows.client);
@@ -279,7 +279,7 @@ void release_window(Win* win, bool on_shutdown)
     win->xcb_windows.outer.reset();
 
     // Don't use GeometryUpdatesBlocker, it would now set the geometry
-    win->geometry_update.block--;
+    win->geo.update.block--;
 
     if (del) {
         disown_data_passed_to_remnant(*win);
@@ -333,7 +333,7 @@ void destroy_window(Win* win)
     }
 
     finish_rules(win);
-    win->geometry_update.block++;
+    win->geo.update.block++;
 
     if (on_current_desktop(win) && win->isShown()) {
         win->space.base.render->compositor->addRepaint(visible_rect(win));
@@ -353,7 +353,7 @@ void destroy_window(Win* win)
     win->xcb_windows.outer.reset();
 
     // Don't use GeometryUpdatesBlocker, it would now set the geometry
-    win->geometry_update.block--;
+    win->geo.update.block--;
 
     if (del) {
         disown_data_passed_to_remnant(*win);

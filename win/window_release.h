@@ -66,7 +66,7 @@ template<typename Win>
 void transfer_remnant_data(Win& source, Win& dest)
 {
     dest.internal_id = source.internal_id;
-    dest.m_frameGeometry = source.m_frameGeometry;
+    dest.geo.frame = source.geo.frame;
     dest.bit_depth = source.bit_depth;
 
     dest.window_type = source.windowType();
@@ -91,8 +91,8 @@ void transfer_remnant_data(Win& source, Win& dest)
     dest.skip_close_animation = source.skip_close_animation;
     dest.desktops = source.desktops;
     dest.layer = get_layer(source);
-    dest.has_in_content_deco = source.has_in_content_deco;
-    dest.client_frame_extents = source.client_frame_extents;
+    dest.geo.has_in_content_deco = source.geo.has_in_content_deco;
+    dest.geo.client_frame_extents = source.geo.client_frame_extents;
 
     dest.transient->annexed = source.transient->annexed;
     dest.transient->set_modal(source.transient->modal());

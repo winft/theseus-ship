@@ -143,8 +143,7 @@ void DontCrashAuroraeDestroyDecoTest::testBorderlessMaximizedWindows()
                                         &win::window_qobject::maximize_mode_changed);
     QVERIFY(maximizedStateChangedSpy.isValid());
     quint32 timestamp = 1;
-    Test::pointer_motion_absolute(client->frameGeometry().topLeft() + scenePoint.toPoint(),
-                                  timestamp++);
+    Test::pointer_motion_absolute(client->geo.frame.topLeft() + scenePoint.toPoint(), timestamp++);
     Test::pointer_button_pressed(BTN_LEFT, timestamp++);
     Test::pointer_button_released(BTN_LEFT, timestamp++);
     QVERIFY(maximizedStateChangedSpy.wait());

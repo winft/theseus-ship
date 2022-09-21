@@ -294,7 +294,7 @@ public:
             if (!client) {
                 continue;
             }
-            auto const distance = QPoint(client->pos() - win->pos()).manhattanLength();
+            auto const distance = QPoint(client->geo.pos() - win->geo.pos()).manhattanLength();
             if (distance < min_distance) {
                 min_distance = distance;
                 candidate_panel = client;
@@ -304,7 +304,7 @@ public:
         if (!candidate_panel) {
             return QRect();
         }
-        return candidate_geo.translated(candidate_panel->pos());
+        return candidate_geo.translated(candidate_panel->geo.pos());
     }
 
     wayland_window* find_window(Wrapland::Server::Surface* surface) const

@@ -21,7 +21,7 @@ bool on_screen(Win* win, base::output const* output)
     if (!output) {
         return false;
     }
-    return output->geometry().intersects(win->frameGeometry());
+    return output->geometry().intersects(win->geo.frame);
 }
 
 /**
@@ -75,7 +75,7 @@ template<typename Win>
 void check_screen(Win& win)
 {
     auto const& outputs = win.space.base.outputs;
-    auto output = base::get_nearest_output(outputs, win.frameGeometry().center());
+    auto output = base::get_nearest_output(outputs, win.geo.frame.center());
     auto old_output = win.central_output;
 
     if (old_output == output) {
@@ -115,7 +115,7 @@ void handle_output_removed(Win& win, Output* output)
         return;
     }
     auto const& outputs = win.space.base.outputs;
-    win.central_output = base::get_nearest_output(outputs, win.frameGeometry().center());
+    win.central_output = base::get_nearest_output(outputs, win.geo.frame.center());
     Q_EMIT win.qobject->central_output_changed(output, win.central_output);
 }
 

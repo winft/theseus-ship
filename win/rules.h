@@ -66,7 +66,7 @@ void apply_window_rules(Win& win)
     // Geometry : setGeometry() doesn't check rules
     auto client_rules = win.control->rules;
 
-    auto const orig_geom = win.frameGeometry();
+    auto const orig_geom = win.geo.frame;
     auto const geom = client_rules.checkGeometry(orig_geom);
 
     if (geom != orig_geom) {
@@ -102,7 +102,7 @@ void apply_window_rules(Win& win)
 
     // Closeable
     // TODO(romangg): This is always false because of the size comparison. Remove or fix?
-    if (auto s = win.size(); s != win.size() && s.isValid()) {
+    if (auto s = win.geo.size(); s != win.geo.size() && s.isValid()) {
         constrained_resize(&win, s);
     }
 

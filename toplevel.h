@@ -19,6 +19,7 @@
 #include "win/rules/update.h"
 #include "win/shortcut_set.h"
 #include "win/virtual_desktops.h"
+#include "win/window_geometry.h"
 #include "win/window_qobject.h"
 
 #include <NETWM>
@@ -50,6 +51,9 @@ public:
     using output_t = typename space_t::base_t::output_t;
 
     std::unique_ptr<qobject_t> qobject;
+
+    win::window_geometry geo;
+
     std::unique_ptr<render_t> render;
 
     struct {
@@ -65,33 +69,10 @@ public:
     } wm_class;
 
     struct {
-        int block{0};
-        win::pending_geometry pending{win::pending_geometry::none};
-
-        QRect frame;
-        win::maximize_mode max_mode{win::maximize_mode::restore};
-        bool fullscreen{false};
-
-        struct {
-            QMargins deco_margins;
-            QMargins client_frame_extents;
-        } original;
-    } geometry_update;
-
-    struct {
         QMetaObject::Connection frame_update_outputs;
         QMetaObject::Connection screens_update_outputs;
         QMetaObject::Connection check_screen;
     } notifiers;
-
-    /**
-     * Used to store and retrieve frame geometry values when certain geometry-transforming
-     * actions are triggered and later reversed again. For example when a window has been
-     * maximized and later again unmaximized.
-     */
-    struct {
-        QRect maximize;
-    } restore_geometries;
 
     // Relative to client geometry.
     QRegion damage_region;
@@ -136,30 +117,6 @@ public:
 
         auto const render_geo = win::render_geometry(this);
         return QRegion(0, 0, render_geo.width(), render_geo.height());
-    }
-
-    /**
-     * Returns the geometry of the Toplevel, excluding invisible portions, e.g.
-     * server-side and client-side drop shadows, etc.
-     */
-    QRect frameGeometry() const
-    {
-        return m_frameGeometry;
-    }
-
-    void set_frame_geometry(QRect const& rect)
-    {
-        m_frameGeometry = rect;
-    }
-
-    QSize size() const
-    {
-        return m_frameGeometry.size();
-    }
-
-    QPoint pos() const
-    {
-        return m_frameGeometry.topLeft();
     }
 
     /**
@@ -306,7 +263,6 @@ public:
     quint32 surface_id{0};
 
     int bit_depth{24};
-    QMargins client_frame_extents;
 
     // A UUID to uniquely identify this Toplevel independent of windowing system.
     QUuid internal_id;
@@ -314,10 +270,8 @@ public:
 
     bool is_outline{false};
 
-    bool has_in_content_deco{false};
     mutable bool is_render_shape_valid{false};
 
-    QRect m_frameGeometry;
     win::layer layer{win::layer::unknown};
     bool skip_close_animation{false};
     QVector<win::virtual_desktop*> desktops;

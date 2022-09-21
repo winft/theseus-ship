@@ -774,7 +774,7 @@ void TestScreenEdges::testFullScreenBlocking()
     // let's make the client fullscreen again, but with a geometry not intersecting the left edge
     QTest::qWait(351);
     client->setFullScreen(true);
-    client->setFrameGeometry(client->frameGeometry().translated(10, 0));
+    client->setFrameGeometry(client->geo.frame.translated(10, 0));
     Q_EMIT screenEdges->checkBlocking();
     spy.clear();
     Test::cursor()->set_pos(0, 50);

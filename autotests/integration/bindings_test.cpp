@@ -104,10 +104,10 @@ void BindingsTest::testSwitchWindow()
     win::move(c3, QPoint(200, 200));
     win::move(c4, QPoint(0, 200));
 
-    QCOMPARE(c1->pos(), QPoint(0, 0));
-    QCOMPARE(c2->pos(), QPoint(200, 0));
-    QCOMPARE(c3->pos(), QPoint(200, 200));
-    QCOMPARE(c4->pos(), QPoint(0, 200));
+    QCOMPARE(c1->geo.pos(), QPoint(0, 0));
+    QCOMPARE(c2->geo.pos(), QPoint(200, 0));
+    QCOMPARE(c3->geo.pos(), QPoint(200, 200));
+    QCOMPARE(c4->geo.pos(), QPoint(0, 200));
 
     // now let's trigger the shortcuts
 

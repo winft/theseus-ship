@@ -24,7 +24,7 @@ bool accepts_input(Win* win, QPoint const& pos)
     }
 
     auto const input_region = win->surface->state().input;
-    auto const local_point = pos - win::frame_to_client_pos(win, win->pos());
+    auto const local_point = pos - win::frame_to_client_pos(win, win->geo.pos());
 
     return input_region.contains(local_point);
 }

@@ -70,7 +70,7 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
     base::x11::xcb::select_input(xcb_win,
                                  attr->your_event_mask | XCB_EVENT_MASK_STRUCTURE_NOTIFY
                                      | XCB_EVENT_MASK_PROPERTY_CHANGE);
-    win->set_frame_geometry(geo.rect());
+    win->geo.frame = geo.rect();
     check_screen(*win);
     win->xcb_visual = attr->visual;
     win->bit_depth = geo->depth;
@@ -128,16 +128,16 @@ void unmanaged_configure_event(Win* win, xcb_configure_notify_event_t* event)
         effects->checkInputWindowStacking();
     }
     QRect newgeom(event->x, event->y, event->width, event->height);
-    if (newgeom != win->frameGeometry()) {
+    if (newgeom != win->geo.frame) {
         // Damage old area.
         win->space.base.render->compositor->addRepaint(visible_rect(win));
 
-        auto const old = win->frameGeometry();
-        win->set_frame_geometry(newgeom);
+        auto const old = win->geo.frame;
+        win->geo.frame = newgeom;
 
         add_full_repaint(*win);
 
-        if (old.size() != win->frameGeometry().size()) {
+        if (old.size() != win->geo.frame.size()) {
             discard_buffer(*win);
         }
         Q_EMIT win->qobject->frame_geometry_changed(old);
@@ -213,9 +213,9 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* event)
             add_full_repaint(*win);
 
             // In case shape change removes part of this window.
-            win->space.base.render->compositor->addRepaint(win->frameGeometry());
+            win->space.base.render->compositor->addRepaint(win->geo.frame);
 
-            Q_EMIT win->qobject->frame_geometry_changed(win->frameGeometry());
+            Q_EMIT win->qobject->frame_geometry_changed(win->geo.frame);
         }
         if (eventType == base::x11::xcb::extensions::self()->damage_notify_event()) {
             win->damageNotifyEvent();

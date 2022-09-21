@@ -20,7 +20,7 @@ void handle_surface_damage(Win& win, QRegion const& damage)
     assert(!damage.isEmpty());
 
     auto const render_region = render_geometry(&win);
-    win.repaints_region += damage.translated(render_region.topLeft() - win.pos());
+    win.repaints_region += damage.translated(render_region.topLeft() - win.geo.pos());
     acquire_repaint_outputs(win, render_region);
 
     win.is_damaged = true;
@@ -83,7 +83,7 @@ void setup_compositing(Win& win)
     assert(win.space.base.render->compositor->scene);
 
     discard_shape(win);
-    win.damage_region = QRect(QPoint(), win.size());
+    win.damage_region = QRect({}, win.geo.size());
 
     add_scene_window(*win.space.base.render->compositor->scene, win);
 }

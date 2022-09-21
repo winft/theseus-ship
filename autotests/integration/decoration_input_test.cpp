@@ -202,7 +202,7 @@ void DecorationInputTest::testAxis()
 
     quint32 timestamp = 1;
 
-    MOTION(QPoint(c->frameGeometry().center().x(), win::frame_to_client_pos(c, QPoint()).y() / 2));
+    MOTION(QPoint(c->geo.frame.center().x(), win::frame_to_client_pos(c, QPoint()).y() / 2));
 
     QVERIFY(Test::app()->base.space->input->pointer->focus.deco);
     QCOMPARE(Test::app()->base.space->input->pointer->focus.deco->decoration()->sectionUnderMouse(),
@@ -253,7 +253,7 @@ void KWin::DecorationInputTest::testDoubleClick()
     QVERIFY(!c->noBorder());
     QVERIFY(!win::on_all_desktops(c));
     quint32 timestamp = 1;
-    MOTION(QPoint(c->frameGeometry().center().x(), win::frame_to_client_pos(c, QPoint()).y() / 2));
+    MOTION(QPoint(c->geo.frame.center().x(), win::frame_to_client_pos(c, QPoint()).y() / 2));
 
     // double click
     PRESS;
@@ -304,8 +304,7 @@ void KWin::DecorationInputTest::testDoubleTap()
     QVERIFY(!c->noBorder());
     QVERIFY(!win::on_all_desktops(c));
     quint32 timestamp = 1;
-    const QPoint tapPoint(c->frameGeometry().center().x(),
-                          win::frame_to_client_pos(c, QPoint()).y() / 2);
+    const QPoint tapPoint(c->geo.frame.center().x(), win::frame_to_client_pos(c, QPoint()).y() / 2);
 
     // double tap
     Test::touch_down(0, tapPoint, timestamp++);
@@ -351,7 +350,7 @@ void DecorationInputTest::testHover()
     win::move(c, QPoint(20, 0));
 
     quint32 timestamp = 1;
-    MOTION(QPoint(c->frameGeometry().center().x(), win::frame_to_client_pos(c, QPoint()).y() / 2));
+    MOTION(QPoint(c->geo.frame.center().x(), win::frame_to_client_pos(c, QPoint()).y() / 2));
     QCOMPARE(c->control->move_resize.cursor, input::cursor_shape(Qt::ArrowCursor));
 
     // There is a mismatch of the cursor key positions between windows
@@ -364,33 +363,33 @@ void DecorationInputTest::testHover()
         = Test::app()->base.space->deco->settings()->borderSize() != KDecoration2::BorderSize::None;
     auto deviation = [hasBorders] { return hasBorders ? -1 : 0; };
 
-    MOTION(QPoint(c->frameGeometry().x(), 0));
+    MOTION(QPoint(c->geo.frame.x(), 0));
     QCOMPARE(c->control->move_resize.cursor,
              input::cursor_shape(input::extended_cursor::SizeNorthWest));
-    MOTION(QPoint(c->frameGeometry().x() + c->frameGeometry().width() / 2, 0));
+    MOTION(QPoint(c->geo.frame.x() + c->geo.frame.width() / 2, 0));
     QCOMPARE(c->control->move_resize.cursor,
              input::cursor_shape(input::extended_cursor::SizeNorth));
-    MOTION(QPoint(c->frameGeometry().x() + c->frameGeometry().width() - 1, 0));
+    MOTION(QPoint(c->geo.frame.x() + c->geo.frame.width() - 1, 0));
     QCOMPARE(c->control->move_resize.cursor,
              input::cursor_shape(input::extended_cursor::SizeNorthEast));
-    MOTION(QPoint(c->frameGeometry().x() + c->frameGeometry().width() + deviation(),
-                  c->size().height() / 2));
+    MOTION(
+        QPoint(c->geo.frame.x() + c->geo.frame.width() + deviation(), c->geo.size().height() / 2));
     QCOMPARE(c->control->move_resize.cursor, input::cursor_shape(input::extended_cursor::SizeEast));
-    MOTION(QPoint(c->frameGeometry().x() + c->frameGeometry().width() + deviation(),
-                  c->size().height() - 1));
+    MOTION(
+        QPoint(c->geo.frame.x() + c->geo.frame.width() + deviation(), c->geo.size().height() - 1));
     QCOMPARE(c->control->move_resize.cursor,
              input::cursor_shape(input::extended_cursor::SizeSouthEast));
-    MOTION(QPoint(c->frameGeometry().x() + c->frameGeometry().width() / 2,
-                  c->size().height() + deviation()));
+    MOTION(
+        QPoint(c->geo.frame.x() + c->geo.frame.width() / 2, c->geo.size().height() + deviation()));
     QCOMPARE(c->control->move_resize.cursor,
              input::cursor_shape(input::extended_cursor::SizeSouth));
-    MOTION(QPoint(c->frameGeometry().x(), c->size().height() + deviation()));
+    MOTION(QPoint(c->geo.frame.x(), c->geo.size().height() + deviation()));
     QCOMPARE(c->control->move_resize.cursor,
              input::cursor_shape(input::extended_cursor::SizeSouthWest));
-    MOTION(QPoint(c->frameGeometry().x() - 1, c->size().height() / 2));
+    MOTION(QPoint(c->geo.frame.x() - 1, c->geo.size().height() / 2));
     QCOMPARE(c->control->move_resize.cursor, input::cursor_shape(input::extended_cursor::SizeWest));
 
-    MOTION(c->frameGeometry().center());
+    MOTION(c->geo.frame.center());
     QEXPECT_FAIL("", "Cursor not set back on leave", Continue);
     QCOMPARE(c->control->move_resize.cursor, input::cursor_shape(Qt::ArrowCursor));
 }
@@ -415,7 +414,7 @@ void DecorationInputTest::testPressToMove()
     QVERIFY(!c->noBorder());
     win::move(c,
               Test::get_output(0)->geometry().center()
-                  - QPoint(c->size().width() / 2, c->size().height() / 2));
+                  - QPoint(c->geo.size().width() / 2, c->geo.size().height() / 2));
     QSignalSpy startMoveResizedSpy(c->qobject.get(),
                                    &win::window_qobject::clientStartUserMovedResized);
     QVERIFY(startMoveResizedSpy.isValid());
@@ -424,17 +423,17 @@ void DecorationInputTest::testPressToMove()
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
     quint32 timestamp = 1;
-    MOTION(QPoint(c->frameGeometry().center().x(),
-                  c->pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2));
+    MOTION(QPoint(c->geo.frame.center().x(),
+                  c->geo.pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2));
     QCOMPARE(c->control->move_resize.cursor, input::cursor_shape(Qt::ArrowCursor));
 
     PRESS;
     QVERIFY(!win::is_move(c));
     QFETCH(QPoint, offset);
-    MOTION(QPoint(c->frameGeometry().center().x(),
-                  c->pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2)
+    MOTION(QPoint(c->geo.frame.center().x(),
+                  c->geo.pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2)
            + offset);
-    const QPoint oldPos = c->pos();
+    auto const oldPos = c->geo.pos();
     QVERIFY(win::is_move(c));
     QCOMPARE(startMoveResizedSpy.count(), 1);
 
@@ -442,27 +441,27 @@ void DecorationInputTest::testPressToMove()
     QTRY_VERIFY(!win::is_move(c));
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
     QEXPECT_FAIL("", "Just trigger move doesn't move the window", Continue);
-    QCOMPARE(c->pos(), oldPos + offset);
+    QCOMPARE(c->geo.pos(), oldPos + offset);
 
     // again
     PRESS;
     QVERIFY(!win::is_move(c));
     QFETCH(QPoint, offset2);
-    MOTION(QPoint(c->frameGeometry().center().x(),
-                  c->pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2)
+    MOTION(QPoint(c->geo.frame.center().x(),
+                  c->geo.pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2)
            + offset2);
     QVERIFY(win::is_move(c));
     QCOMPARE(startMoveResizedSpy.count(), 2);
     QFETCH(QPoint, offset3);
-    MOTION(QPoint(c->frameGeometry().center().x(),
-                  c->pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2)
+    MOTION(QPoint(c->geo.frame.center().x(),
+                  c->geo.pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2)
            + offset3);
 
     RELEASE;
     QTRY_VERIFY(!win::is_move(c));
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 2);
     // TODO: the offset should also be included
-    QCOMPARE(c->pos(), oldPos + offset2 + offset3);
+    QCOMPARE(c->geo.pos(), oldPos + offset2 + offset3);
 }
 
 void DecorationInputTest::testTapToMove_data()
@@ -485,7 +484,7 @@ void DecorationInputTest::testTapToMove()
     QVERIFY(!c->noBorder());
     win::move(c,
               Test::get_output(0)->geometry().center()
-                  - QPoint(c->size().width() / 2, c->size().height() / 2));
+                  - QPoint(c->geo.size().width() / 2, c->geo.size().height() / 2));
     QSignalSpy startMoveResizedSpy(c->qobject.get(),
                                    &win::window_qobject::clientStartUserMovedResized);
     QVERIFY(startMoveResizedSpy.isValid());
@@ -494,15 +493,15 @@ void DecorationInputTest::testTapToMove()
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
     quint32 timestamp = 1;
-    QPoint p = QPoint(c->frameGeometry().center().x(),
-                      c->pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2);
+    QPoint p = QPoint(c->geo.frame.center().x(),
+                      c->geo.pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2);
 
     Test::touch_down(0, p, timestamp++);
     QVERIFY(!win::is_move(c));
     QFETCH(QPoint, offset);
     QCOMPARE(Test::app()->base.space->input->touch->decorationPressId(), 0);
     Test::touch_motion(0, p + offset, timestamp++);
-    const QPoint oldPos = c->pos();
+    const QPoint oldPos = c->geo.pos();
     QVERIFY(win::is_move(c));
     QCOMPARE(startMoveResizedSpy.count(), 1);
 
@@ -510,7 +509,7 @@ void DecorationInputTest::testTapToMove()
     QTRY_VERIFY(!win::is_move(c));
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
     QEXPECT_FAIL("", "Just trigger move doesn't move the window", Continue);
-    QCOMPARE(c->pos(), oldPos + offset);
+    QCOMPARE(c->geo.pos(), oldPos + offset);
 
     // again
     Test::touch_down(1, p + offset, timestamp++);
@@ -518,16 +517,16 @@ void DecorationInputTest::testTapToMove()
     QVERIFY(!win::is_move(c));
     QFETCH(QPoint, offset2);
     Test::touch_motion(1,
-                       QPoint(c->frameGeometry().center().x(),
-                              c->pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2)
+                       QPoint(c->geo.frame.center().x(),
+                              c->geo.pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2)
                            + offset2,
                        timestamp++);
     QVERIFY(win::is_move(c));
     QCOMPARE(startMoveResizedSpy.count(), 2);
     QFETCH(QPoint, offset3);
     Test::touch_motion(1,
-                       QPoint(c->frameGeometry().center().x(),
-                              c->pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2)
+                       QPoint(c->geo.frame.center().x(),
+                              c->geo.pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2)
                            + offset3,
                        timestamp++);
 
@@ -535,7 +534,7 @@ void DecorationInputTest::testTapToMove()
     QTRY_VERIFY(!win::is_move(c));
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 2);
     // TODO: the offset should also be included
-    QCOMPARE(c->pos(), oldPos + offset2 + offset3);
+    QCOMPARE(c->geo.pos(), oldPos + offset2 + offset3);
 }
 
 void DecorationInputTest::testResizeOutsideWindow_data()
@@ -567,9 +566,9 @@ void DecorationInputTest::testResizeOutsideWindow()
     QVERIFY(!c->noBorder());
     win::move(c,
               Test::get_output(0)->geometry().center()
-                  - QPoint(c->size().width() / 2, c->size().height() / 2));
-    QVERIFY(c->frameGeometry() != win::input_geometry(c));
-    QVERIFY(win::input_geometry(c).contains(c->frameGeometry()));
+                  - QPoint(c->geo.size().width() / 2, c->geo.size().height() / 2));
+    QVERIFY(c->geo.frame != win::input_geometry(c));
+    QVERIFY(win::input_geometry(c).contains(c->geo.frame));
     QSignalSpy startMoveResizedSpy(c->qobject.get(),
                                    &win::window_qobject::clientStartUserMovedResized);
     QVERIFY(startMoveResizedSpy.isValid());
@@ -579,20 +578,18 @@ void DecorationInputTest::testResizeOutsideWindow()
     QFETCH(Qt::Edge, edge);
     switch (edge) {
     case Qt::LeftEdge:
-        MOTION(QPoint(c->frameGeometry().x() - 1, c->frameGeometry().center().y()));
+        MOTION(QPoint(c->geo.frame.x() - 1, c->geo.frame.center().y()));
         break;
     case Qt::RightEdge:
-        MOTION(QPoint(c->frameGeometry().x() + c->frameGeometry().width() + 1,
-                      c->frameGeometry().center().y()));
+        MOTION(QPoint(c->geo.frame.x() + c->geo.frame.width() + 1, c->geo.frame.center().y()));
         break;
     case Qt::BottomEdge:
-        MOTION(QPoint(c->frameGeometry().center().x(),
-                      c->frameGeometry().y() + c->frameGeometry().height() + 1));
+        MOTION(QPoint(c->geo.frame.center().x(), c->geo.frame.y() + c->geo.frame.height() + 1));
         break;
     default:
         break;
     }
-    QVERIFY(!c->frameGeometry().contains(Test::cursor()->pos()));
+    QVERIFY(!c->geo.frame.contains(Test::cursor()->pos()));
 
     // pressing should trigger resize
     PRESS;
@@ -676,10 +673,11 @@ void DecorationInputTest::testModifierClickUnrestrictedMove()
     QVERIFY(!c->noBorder());
     win::move(c,
               Test::get_output(0)->geometry().center()
-                  - QPoint(c->size().width() / 2, c->size().height() / 2));
+                  - QPoint(c->geo.size().width() / 2, c->geo.size().height() / 2));
     // move cursor on window
-    Test::cursor()->set_pos(QPoint(c->frameGeometry().center().x(),
-                                   c->pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2));
+    Test::cursor()->set_pos(
+        QPoint(c->geo.frame.center().x(),
+               c->geo.pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2));
 
     // simulate modifier+click
     quint32 timestamp = 1;
@@ -741,10 +739,11 @@ void DecorationInputTest::testModifierScrollOpacity()
     QVERIFY(!c->noBorder());
     win::move(c,
               Test::get_output(0)->geometry().center()
-                  - QPoint(c->size().width() / 2, c->size().height() / 2));
+                  - QPoint(c->geo.size().width() / 2, c->geo.size().height() / 2));
     // move cursor on window
-    Test::cursor()->set_pos(QPoint(c->frameGeometry().center().x(),
-                                   c->pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2));
+    Test::cursor()->set_pos(
+        QPoint(c->geo.frame.center().x(),
+               c->geo.pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2));
     // set the opacity to 0.5
     c->setOpacity(0.5);
     QCOMPARE(c->opacity(), 0.5);
@@ -810,8 +809,7 @@ void DecorationInputTest::testTouchEvents()
     QVERIFY(hoverLeaveSpy.isValid());
 
     quint32 timestamp = 1;
-    const QPoint tapPoint(c->frameGeometry().center().x(),
-                          win::frame_to_client_pos(c, QPoint()).y() / 2);
+    const QPoint tapPoint(c->geo.frame.center().x(), win::frame_to_client_pos(c, QPoint()).y() / 2);
 
     QVERIFY(!Test::app()->base.space->input->touch->focus.deco);
     Test::touch_down(0, tapPoint, timestamp++);

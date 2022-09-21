@@ -151,7 +151,7 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowHideX11()
         Test::app()->base.space->windows_map.at(client_id));
     QVERIFY(client);
     QVERIFY(!win::decoration(client));
-    QCOMPARE(client->frameGeometry(), windowGeometry);
+    QCOMPARE(client->geo.frame, windowGeometry);
     QVERIFY(!client->hasStrut());
     QVERIFY(!client->isHiddenInternal());
 
@@ -272,7 +272,7 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowX11Touch()
         Test::app()->base.space->windows_map.at(client_id));
     QVERIFY(client);
     QVERIFY(!win::decoration(client));
-    QCOMPARE(client->frameGeometry(), windowGeometry);
+    QCOMPARE(client->geo.frame, windowGeometry);
     QVERIFY(!client->hasStrut());
     QVERIFY(!client->isHiddenInternal());
 

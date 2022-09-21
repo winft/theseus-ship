@@ -91,7 +91,7 @@ public:
 
     QRect frameGeometry() const override
     {
-        return ref_win->frameGeometry();
+        return ref_win->geo.frame;
     }
 
     void setFrameGeometry(QRect const& geo) override
@@ -103,12 +103,12 @@ public:
 
     QPoint pos() const override
     {
-        return ref_win->pos();
+        return ref_win->geo.pos();
     }
 
     QRect rect() const override
     {
-        return QRect(QPoint(0, 0), ref_win->size());
+        return QRect(QPoint(0, 0), ref_win->geo.size());
     }
 
     QRect visibleRect() const override
@@ -118,7 +118,7 @@ public:
 
     QSize size() const override
     {
-        return ref_win->size();
+        return ref_win->geo.size();
     }
 
     QSize minSize() const override
@@ -144,27 +144,27 @@ public:
 
     QSize clientSize() const override
     {
-        return win::frame_to_client_size(ref_win, ref_win->size());
+        return win::frame_to_client_size(ref_win, ref_win->geo.size());
     }
 
     int x() const override
     {
-        return ref_win->pos().x();
+        return ref_win->geo.pos().x();
     }
 
     int y() const override
     {
-        return ref_win->pos().y();
+        return ref_win->geo.pos().y();
     }
 
     int width() const override
     {
-        return ref_win->size().width();
+        return ref_win->geo.size().width();
     }
 
     int height() const override
     {
-        return ref_win->size().height();
+        return ref_win->geo.size().height();
     }
 
     bool isMove() const override

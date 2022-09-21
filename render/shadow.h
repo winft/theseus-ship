@@ -120,7 +120,7 @@ public:
 
     void updateShadowRegion()
     {
-        auto const size = window->ref_win->size();
+        auto const size = window->ref_win->geo.size();
         const QRect top(0, -m_topOffset, size.width(), m_topOffset);
         const QRect right(size.width(),
                           -m_topOffset,
@@ -140,7 +140,7 @@ public:
         // prepare window quads
         m_shadowQuads.clear();
 
-        auto const size = window->ref_win->size();
+        auto const size = window->ref_win->geo.size();
         const QSize top(m_shadowElements[enum_index(shadow_element::top)].size());
         const QSize topRight(m_shadowElements[enum_index(shadow_element::top_right)].size());
         const QSize right(m_shadowElements[enum_index(shadow_element::right)].size());
@@ -246,10 +246,10 @@ public:
 
     void geometryChanged()
     {
-        if (m_cachedSize == window->ref_win->size()) {
+        if (m_cachedSize == window->ref_win->geo.size()) {
             return;
         }
-        m_cachedSize = window->ref_win->size();
+        m_cachedSize = window->ref_win->geo.size();
         updateShadowRegion();
         buildQuads();
     }
@@ -271,7 +271,7 @@ public:
 protected:
     shadow(Window* window)
         : window{window}
-        , m_cachedSize(window->ref_win->size())
+        , m_cachedSize(window->ref_win->geo.size())
     {
         QObject::connect(window->ref_win->qobject.get(),
                          &win::window_qobject::frame_geometry_changed,

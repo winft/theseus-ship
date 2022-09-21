@@ -88,7 +88,7 @@ public:
         assert(this->damage_handle == XCB_NONE);
 
         discard_shape(*this);
-        this->damage_region = QRect({}, this->size());
+        this->damage_region = QRect({}, this->geo.size());
 
         add_scene_window(*this->space.base.render->compositor->scene, *this);
 

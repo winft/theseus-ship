@@ -229,7 +229,7 @@ void PlasmaSurfaceTest::testOSDPlacement()
     QVERIFY(c);
     QCOMPARE(c->windowType(), NET::OnScreenDisplay);
     QVERIFY(win::is_on_screen_display(c));
-    QCOMPARE(c->frameGeometry(), QRect(590, 657, 100, 50));
+    QCOMPARE(c->geo.frame, QRect(590, 657, 100, 50));
 
     // change the screen size
     QSignalSpy screensChangedSpy(&Test::app()->base, &base::platform::topology_changed);
@@ -240,7 +240,7 @@ void PlasmaSurfaceTest::testOSDPlacement()
 
     QCOMPARE(screensChangedSpy.count(), 1);
     Test::test_outputs_geometries(geometries);
-    QCOMPARE(c->frameGeometry(), QRect(590, 657, 100, 50));
+    QCOMPARE(c->geo.frame, QRect(590, 657, 100, 50));
 
     // change size of window
     QSignalSpy geometryChangedSpy(c->qobject.get(), &win::window_qobject::frame_geometry_changed);
@@ -248,7 +248,7 @@ void PlasmaSurfaceTest::testOSDPlacement()
 
     Test::render(surface, QSize(200, 100), Qt::red);
     QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(c->frameGeometry(), QRect(540, 632, 200, 100));
+    QCOMPARE(c->geo.frame, QRect(540, 632, 200, 100));
 }
 
 void PlasmaSurfaceTest::testOSDPlacementManualPosition()
@@ -271,7 +271,7 @@ void PlasmaSurfaceTest::testOSDPlacementManualPosition()
     QVERIFY(c->isInitialPositionSet());
     QCOMPARE(c->windowType(), NET::OnScreenDisplay);
     QVERIFY(win::is_on_screen_display(c));
-    QCOMPARE(c->frameGeometry(), QRect(50, 70, 100, 50));
+    QCOMPARE(c->geo.frame, QRect(50, 70, 100, 50));
 }
 
 void PlasmaSurfaceTest::testPanelTypeHasStrut_data()
@@ -311,7 +311,7 @@ void PlasmaSurfaceTest::testPanelTypeHasStrut()
     QVERIFY(c);
     QCOMPARE(c->windowType(), NET::Dock);
     QVERIFY(win::is_dock(c));
-    QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
+    QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
     QTEST(c->hasStrut(), "expectedStrut");
     QTEST(win::space_window_area(*Test::app()->base.space, MaximizeArea, 0, 0), "expectedMaxArea");
     QTEST(win::get_layer(*c), "expectedLayer");
@@ -370,7 +370,7 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
     QVERIFY(panel);
     QCOMPARE(panel->windowType(), NET::Dock);
     QVERIFY(win::is_dock(panel));
-    QCOMPARE(panel->frameGeometry(), panelGeometry);
+    QCOMPARE(panel->geo.frame, panelGeometry);
     QCOMPARE(panel->hasStrut(), false);
     QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeArea, 0, 0),
              QRect(0, 0, 1280, 1024));
@@ -390,7 +390,7 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
     QVERIFY(c->control->active);
     QCOMPARE(win::get_layer(*c), KWin::win::layer::normal);
     win::move(c, windowGeometry.topLeft());
-    QCOMPARE(c->frameGeometry(), windowGeometry);
+    QCOMPARE(c->geo.frame, windowGeometry);
 
     auto stackingOrder = Test::app()->base.space->stacking.order.stack;
     QCOMPARE(stackingOrder.size(), 2);
@@ -471,7 +471,7 @@ void PlasmaSurfaceTest::test_open_under_cursor()
     auto c = Test::render_and_wait_for_shown(surface, expected_place.size(), Qt::blue);
 
     QVERIFY(c);
-    QCOMPARE(c->frameGeometry(), expected_place);
+    QCOMPARE(c->geo.frame, expected_place);
 }
 
 }

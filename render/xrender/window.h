@@ -76,7 +76,7 @@ public:
         this->filter = image_filter_type::fast;
 
         // do required transformations
-        auto const win_size = this->ref_win->size();
+        auto const win_size = this->ref_win->geo.size();
         auto const wr = mapToScreen(mask, data, QRect(0, 0, win_size.width(), win_size.height()));
 
         // Content rect (in the buffer)
@@ -87,7 +87,7 @@ public:
 
         auto client = this->ref_win;
         auto& remnant = this->ref_win->remnant;
-        auto const decorationRect = QRect(QPoint(), this->ref_win->size());
+        auto const decorationRect = QRect(QPoint(), this->ref_win->geo.size());
         if ((client && client->control && !client->noBorder())
             || (remnant && !remnant->data.no_border)) {
             // decorated client
@@ -174,7 +174,7 @@ public:
         if (blitInTempPixmap) {
             if (scene_xRenderOffscreenTarget()) {
                 temp_visibleRect
-                    = win::visible_rect(this->ref_win).translated(-this->ref_win->pos());
+                    = win::visible_rect(this->ref_win).translated(-this->ref_win->geo.pos());
                 renderTarget = *scene_xRenderOffscreenTarget();
             } else {
                 prepareTempPixmap();
@@ -431,7 +431,7 @@ public:
                 if (blitInTempPixmap) {
                     rect.x = -temp_visibleRect.left();
                     rect.y = -temp_visibleRect.top();
-                    auto const size = this->ref_win->size();
+                    auto const size = this->ref_win->geo.size();
                     rect.width = size.width();
                     rect.height = size.height();
                 } else {
@@ -512,7 +512,7 @@ private:
         }
 
         // Move the rectangle to the screen position
-        auto const win_pos = this->ref_win->pos();
+        auto const win_pos = this->ref_win->geo.pos();
         r.translate(win_pos.x(), win_pos.y());
 
         if (flags(mask & paint_type::screen_transformed)) {
@@ -538,7 +538,7 @@ private:
         }
 
         // Move the point to the screen position
-        auto const win_pos = this->ref_win->pos();
+        auto const win_pos = this->ref_win->geo.pos();
         pt += QPoint(win_pos.x(), win_pos.y());
 
         if (flags(mask & paint_type::screen_transformed)) {
@@ -567,7 +567,7 @@ private:
         auto& s_tempPicture = static_cast<Scene&>(this->scene).temp_picture;
 
         const QSize oldSize = temp_visibleRect.size();
-        temp_visibleRect = win::visible_rect(this->ref_win).translated(-this->ref_win->pos());
+        temp_visibleRect = win::visible_rect(this->ref_win).translated(-this->ref_win->geo.pos());
         if (s_tempPicture
             && (oldSize.width() < temp_visibleRect.width()
                 || oldSize.height() < temp_visibleRect.height())) {

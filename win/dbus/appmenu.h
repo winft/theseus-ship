@@ -54,7 +54,7 @@ void show_appmenu(Win& win, int actionId)
         decoration->showApplicationMenu(actionId);
     } else if (win.control->has_application_menu()) {
         // No info where application menu button is, show it in the top left corner by default.
-        win.space.appmenu->showApplicationMenu(win.pos(), win.control->appmenu, actionId);
+        win.space.appmenu->showApplicationMenu(win.geo.pos(), win.control->appmenu, actionId);
     }
 }
 

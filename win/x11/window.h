@@ -303,7 +303,7 @@ public:
             connection(), damage_handle, this->frameId(), XCB_DAMAGE_REPORT_LEVEL_NON_EMPTY);
 
         discard_shape(*this);
-        this->damage_region = QRect({}, this->size());
+        this->damage_region = QRect({}, this->geo.size());
 
         add_scene_window(*this->space.base.render->compositor->scene, *this);
 
@@ -468,10 +468,10 @@ public:
         }
 
         region.translate(
-            -QPoint(this->client_frame_extents.left(), this->client_frame_extents.top()));
+            -QPoint(this->geo.client_frame_extents.left(), this->geo.client_frame_extents.top()));
         this->repaints_region |= region;
 
-        if (this->has_in_content_deco) {
+        if (this->geo.has_in_content_deco) {
             region.translate(-QPoint(left_border(this), top_border(this)));
         }
         this->damage_region |= region;
@@ -690,7 +690,7 @@ public:
     bool userCanSetNoBorder() const override
     {
         // CSD in general allow no change by user, also not possible when fullscreen.
-        return this->client_frame_extents.isNull() && !this->control->fullscreen;
+        return this->geo.client_frame_extents.isNull() && !this->control->fullscreen;
     }
 
     bool wantsInput() const override
@@ -851,7 +851,7 @@ public:
         if (!this->info->hasNETSupport() && !motif_hints.resize()) {
             return false;
         }
-        if (this->geometry_update.fullscreen) {
+        if (this->geo.update.fullscreen) {
             return false;
         }
         if (win::is_special_window(this) || win::is_splash(this) || win::is_toolbar(this)) {
@@ -944,7 +944,7 @@ public:
     {
         if (move_needs_server_update) {
             // Do the deferred move
-            auto const frame_geo = this->frameGeometry();
+            auto const frame_geo = this->geo.frame;
             auto const client_geo = frame_to_client_rect(this, frame_geo);
             auto const outer_pos = frame_to_render_rect(this, frame_geo).topLeft();
 
@@ -993,11 +993,8 @@ public:
 
         if (pending_configures.empty()) {
             assert(!syncless_resize_retarder->isActive());
-            pending_configures.push_back({0,
-                                          {frame_geo,
-                                           QRect(),
-                                           this->geometry_update.max_mode,
-                                           this->geometry_update.fullscreen}});
+            pending_configures.push_back(
+                {0, {frame_geo, QRect(), this->geo.update.max_mode, this->geo.update.fullscreen}});
             syncless_resize_retarder->start(16);
         } else {
             pending_configures.front().geometry.frame = frame_geo;
@@ -1074,14 +1071,14 @@ public:
     {
         auto frame_geo = this->control->rules.checkGeometry(rect);
 
-        this->geometry_update.frame = frame_geo;
+        this->geo.update.frame = frame_geo;
 
-        if (this->geometry_update.block) {
-            this->geometry_update.pending = win::pending_geometry::normal;
+        if (this->geo.update.block) {
+            this->geo.update.pending = win::pending_geometry::normal;
             return;
         }
 
-        this->geometry_update.pending = win::pending_geometry::none;
+        this->geo.update.pending = win::pending_geometry::none;
 
         auto const old_client_geo = synced_geometry.client;
         auto client_geo = frame_to_client_rect(this, frame_geo);
@@ -1124,8 +1121,8 @@ public:
             update_server_geometry(this, frame_geo);
             send_synthetic_configure_notify(this, client_geo);
             do_set_geometry(frame_geo);
-            do_set_fullscreen(this->geometry_update.fullscreen);
-            do_set_maximize_mode(this->geometry_update.max_mode);
+            do_set_fullscreen(this->geo.update.fullscreen);
+            do_set_maximize_mode(this->geo.update.max_mode);
             first_geo_synced = true;
             return;
         }
@@ -1158,8 +1155,8 @@ public:
         update_server_geometry(this, frame_geo);
 
         do_set_geometry(frame_geo);
-        do_set_fullscreen(this->geometry_update.fullscreen);
-        do_set_maximize_mode(this->geometry_update.max_mode);
+        do_set_fullscreen(this->geo.update.fullscreen);
+        do_set_maximize_mode(this->geo.update.max_mode);
 
         // Always recalculate client geometry in case borders changed on fullscreen/maximize
         // changes.
@@ -1182,20 +1179,20 @@ public:
     {
         assert(!has_special_geometry_mode_besides_fullscreen(this));
         setFrameGeometry(rectify_fullscreen_restore_geometry(this));
-        this->restore_geometries.maximize = {};
+        this->geo.restore.max = {};
     }
 
     void do_set_geometry(QRect const& frame_geo)
     {
         assert(this->control);
 
-        auto const old_frame_geo = this->frameGeometry();
+        auto const old_frame_geo = this->geo.frame;
 
         if (old_frame_geo == frame_geo && first_geo_synced) {
             return;
         }
 
-        this->set_frame_geometry(frame_geo);
+        this->geo.frame = frame_geo;
 
         if (frame_to_render_rect(this, old_frame_geo).size()
             != frame_to_render_rect(this, frame_geo).size()) {
@@ -1261,7 +1258,7 @@ public:
         }
 
         // Need to update the server geometry in case the decoration changed.
-        update_server_geometry(this, this->geometry_update.frame);
+        update_server_geometry(this, this->geo.update.frame);
 
         Q_EMIT this->qobject->maximize_mode_changed(mode);
     }
@@ -1291,7 +1288,7 @@ public:
             updateDecoration(false, false);
 
             // Need to update the server geometry in case the decoration changed.
-            update_server_geometry(this, this->geometry_update.frame);
+            update_server_geometry(this, this->geo.update.frame);
         }
 
         // Active fullscreens gets a different layer.

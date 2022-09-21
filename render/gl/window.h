@@ -264,7 +264,7 @@ private:
     QMatrix4x4 transformation(paint_type mask, const WindowPaintData& data) const
     {
         QMatrix4x4 matrix;
-        auto const win_pos = this->ref_win->pos();
+        auto const win_pos = this->ref_win->geo.pos();
         matrix.translate(win_pos.x(), win_pos.y());
 
         if (!(mask & paint_type::window_transformed)) {
@@ -437,7 +437,7 @@ private:
             WindowQuadList quads;
             quads.reserve(data.quads.count());
 
-            auto const win_pos = this->ref_win->pos();
+            auto const win_pos = this->ref_win->geo.pos();
             auto const filterRegion = region.translated(-win_pos.x(), -win_pos.y());
 
             // split all quads in bounding rect with the actual rects in the region

@@ -129,7 +129,7 @@ void MoveResizeWindowTest::testMove()
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(Test::app()->base.space->stacking.active, c);
-    QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
+    QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
 
     QSignalSpy geometryChangedSpy(c->qobject.get(), &win::window_qobject::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
@@ -165,7 +165,7 @@ void MoveResizeWindowTest::testMove()
     QCOMPARE(moveResizedChangedSpy.count(), 1);
     QCOMPARE(windowStartUserMovedResizedSpy.count(), 1);
     QCOMPARE(win::is_move(c), true);
-    QCOMPARE(c->restore_geometries.maximize, QRect(0, 0, 100, 50));
+    QCOMPARE(c->geo.restore.max, QRect(0, 0, 100, 50));
 
     // send some key events, not going through input redirection
     auto const cursorPos = Test::cursor()->pos();
@@ -187,7 +187,7 @@ void MoveResizeWindowTest::testMove()
     win::update_move_resize(c, Test::cursor()->pos());
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 2);
     QCOMPARE(windowStepUserMovedResizedSpy.count(), 2);
-    QCOMPARE(c->frameGeometry(), QRect(16, 32, 100, 50));
+    QCOMPARE(c->geo.frame, QRect(16, 32, 100, 50));
     QCOMPARE(Test::cursor()->pos(), cursorPos + QPoint(16, 32));
 
     // let's end
@@ -196,7 +196,7 @@ void MoveResizeWindowTest::testMove()
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
     QCOMPARE(moveResizedChangedSpy.count(), 2);
     QCOMPARE(windowFinishUserMovedResizedSpy.count(), 1);
-    QCOMPARE(c->frameGeometry(), QRect(16, 32, 100, 50));
+    QCOMPARE(c->geo.frame, QRect(16, 32, 100, 50));
     QCOMPARE(win::is_move(c), false);
     QVERIFY(Test::app()->base.space->move_resize_window == nullptr);
     surface.reset();
@@ -242,7 +242,7 @@ void MoveResizeWindowTest::testResize()
 
     QVERIFY(c);
     QCOMPARE(Test::app()->base.space->stacking.active, c);
-    QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
+    QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
     QSignalSpy geometryChangedSpy(c->qobject.get(), &win::window_qobject::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
     QSignalSpy startMoveResizedSpy(c->qobject.get(),
@@ -292,7 +292,7 @@ void MoveResizeWindowTest::testResize()
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
     Test::render(surface, QSize(108, 50), Qt::blue);
     QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(c->frameGeometry(), QRect(0, 0, 108, 50));
+    QCOMPARE(c->geo.frame, QRect(0, 0, 108, 50));
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
 
     // Go down.
@@ -313,7 +313,7 @@ void MoveResizeWindowTest::testResize()
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
     Test::render(surface, QSize(108, 58), Qt::blue);
     QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(c->frameGeometry(), QRect(0, 0, 108, 58));
+    QCOMPARE(c->geo.frame, QRect(0, 0, 108, 58));
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 2);
 
     // Let's finalize the resize operation.
@@ -375,17 +375,17 @@ void MoveResizeWindowTest::testPackTo()
 
     QVERIFY(c);
     QCOMPARE(Test::app()->base.space->stacking.active, c);
-    QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
+    QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
 
     // let's place it centered
     win::place_centered(c, QRect(0, 0, 1280, 1024));
-    QCOMPARE(c->frameGeometry(), QRect(590, 487, 100, 50));
+    QCOMPARE(c->geo.frame, QRect(590, 487, 100, 50));
 
     auto method_call = get_space_pack_method(QTest::currentDataTag());
     QVERIFY(method_call);
     method_call(*Test::app()->base.space.get());
 
-    QTEST(c->frameGeometry(), "expectedGeometry");
+    QTEST(c->geo.frame, "expectedGeometry");
     surface.reset();
     QVERIFY(Test::wait_for_destroyed(c));
 }
@@ -429,12 +429,12 @@ void MoveResizeWindowTest::testPackAgainstClient()
 
         QVERIFY(c);
         QCOMPARE(Test::app()->base.space->stacking.active, c);
-        QCOMPARE(c->frameGeometry().size(), QSize(10, 10));
+        QCOMPARE(c->geo.frame.size(), QSize(10, 10));
         // let's place it centered
         win::place_centered(c, QRect(0, 0, 1280, 1024));
-        QCOMPARE(c->frameGeometry(), QRect(635, 507, 10, 10));
+        QCOMPARE(c->geo.frame, QRect(635, 507, 10, 10));
         method_call(*Test::app()->base.space.get());
-        QCOMPARE(c->frameGeometry(), expectedGeometry);
+        QCOMPARE(c->geo.frame, expectedGeometry);
     };
     renderWindow(surface1, &win::active_window_pack_left<Test::space>, QRect(0, 507, 10, 10));
     renderWindow(surface2, &win::active_window_pack_up<Test::space>, QRect(635, 0, 10, 10));
@@ -451,12 +451,12 @@ void MoveResizeWindowTest::testPackAgainstClient()
     QCOMPARE(Test::app()->base.space->stacking.active, c);
     // let's place it centered
     win::place_centered(c, QRect(0, 0, 1280, 1024));
-    QCOMPARE(c->frameGeometry(), QRect(590, 487, 100, 50));
+    QCOMPARE(c->geo.frame, QRect(590, 487, 100, 50));
 
     auto method_call = get_space_pack_method(QTest::currentDataTag());
     QVERIFY(method_call);
     method_call(*Test::app()->base.space.get());
-    QTEST(c->frameGeometry(), "expectedGeometry");
+    QTEST(c->geo.frame, "expectedGeometry");
 }
 
 std::function<void(Test::space&)> get_space_grow_shrink_method(std::string const& method_name)
@@ -519,7 +519,7 @@ void MoveResizeWindowTest::testGrowShrink()
     QVERIFY(geometryChangedSpy.isValid());
 
     win::place_centered(c, QRect(0, 0, 1280, 1024));
-    QCOMPARE(c->frameGeometry(), QRect(590, 487, 100, 50));
+    QCOMPARE(c->geo.frame, QRect(590, 487, 100, 50));
 
     // Now according to test data grow/shrink vertically/horizontally.
     auto method_call = get_space_grow_shrink_method(QTest::currentDataTag());
@@ -534,7 +534,7 @@ void MoveResizeWindowTest::testGrowShrink()
     Test::render(surface, shellSurface->size(), Qt::red);
 
     QVERIFY(geometryChangedSpy.wait());
-    QTEST(c->frameGeometry(), "expectedGeometry");
+    QTEST(c->geo.frame, "expectedGeometry");
 }
 
 void MoveResizeWindowTest::testPointerMoveEnd_data()
@@ -613,7 +613,7 @@ void MoveResizeWindowTest::testClientSideMove()
     QVERIFY(c);
 
     // move pointer into center of geometry
-    const QRect startGeometry = c->frameGeometry();
+    const QRect startGeometry = c->geo.frame;
     Test::cursor()->set_pos(startGeometry.center());
     QVERIFY(pointerEnteredSpy.wait());
     QCOMPARE(pointerEnteredSpy.first().last().toPoint(), QPoint(49, 24));
@@ -644,7 +644,7 @@ void MoveResizeWindowTest::testClientSideMove()
     Test::pointer_button_released(BTN_LEFT, timestamp++);
     QVERIFY(pointerEnteredSpy.wait());
     QCOMPARE(win::is_move(c), false);
-    QCOMPARE(c->frameGeometry(),
+    QCOMPARE(c->geo.frame,
              startGeometry.translated(QPoint(dragDistance, dragDistance) + QPoint(6, 6)));
     QCOMPARE(pointerEnteredSpy.last().last().toPoint(), QPoint(49, 24));
 }
@@ -745,7 +745,7 @@ void MoveResizeWindowTest::testNetMove()
     auto client = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(client);
     QCOMPARE(client->xcb_window, w);
-    const QRect origGeo = client->frameGeometry();
+    const QRect origGeo = client->geo.frame;
 
     // let's move the cursor outside the window
     Test::cursor()->set_pos(Test::get_output(0)->geometry().center());
@@ -769,7 +769,7 @@ void MoveResizeWindowTest::testNetMove()
     QVERIFY(moveStartSpy.wait());
     QCOMPARE(Test::app()->base.space->move_resize_window, client);
     QVERIFY(win::is_move(client));
-    QCOMPARE(client->restore_geometries.maximize, origGeo);
+    QCOMPARE(client->geo.restore.max, origGeo);
     QCOMPARE(Test::cursor()->pos(), origGeo.center());
 
     // let's move a step
@@ -778,10 +778,8 @@ void MoveResizeWindowTest::testNetMove()
     QCOMPARE(moveStepSpy.first().last().toRect(), origGeo.translated(10, 10));
 
     // let's cancel the move resize again through the net API
-    root.moveResizeRequest(w,
-                           client->frameGeometry().center().x(),
-                           client->frameGeometry().center().y(),
-                           NET::MoveResizeCancel);
+    root.moveResizeRequest(
+        w, client->geo.frame.center().x(), client->geo.frame.center().y(), NET::MoveResizeCancel);
     xcb_flush(c.get());
     QVERIFY(moveEndSpy.wait());
 
@@ -853,7 +851,7 @@ void MoveResizeWindowTest::testAdjustClientGeometryOfAutohidingX11Panel()
     auto panel = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(panel);
     QCOMPARE(panel->xcb_window, w);
-    QCOMPARE(panel->frameGeometry(), panelGeometry);
+    QCOMPARE(panel->geo.frame, panelGeometry);
     QVERIFY(win::is_dock(panel));
 
     // let's create a window
@@ -949,7 +947,7 @@ void MoveResizeWindowTest::testAdjustClientGeometryOfAutohidingWaylandPanel()
     // let's render
     auto panel = Test::render_and_wait_for_shown(panelSurface, panelGeometry.size(), Qt::blue);
     QVERIFY(panel);
-    QCOMPARE(panel->frameGeometry(), panelGeometry);
+    QCOMPARE(panel->geo.frame, panelGeometry);
     QVERIFY(win::is_dock(panel));
 
     // let's create a window

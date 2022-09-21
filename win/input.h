@@ -32,7 +32,7 @@ QMatrix4x4 get_input_transform(Win& win)
 {
     QMatrix4x4 transform;
 
-    auto const render_pos = frame_to_render_pos(&win, win.pos());
+    auto const render_pos = frame_to_render_pos(&win, win.geo.pos());
     transform.translate(-render_pos.x(), -render_pos.y());
 
     return transform;
@@ -142,8 +142,8 @@ bool perform_mouse_command(Win& win,
                     // Can never raise above "it".
                     continue;
                 }
-                mustReplay = !(on_current_desktop(window)
-                               && window->frameGeometry().intersects(win.frameGeometry()));
+                mustReplay
+                    = !(on_current_desktop(window) && window->geo.frame.intersects(win.geo.frame));
             }
         }
 
@@ -242,10 +242,11 @@ bool perform_mouse_command(Win& win,
         mov_res.button_down = true;
 
         // map from global
-        mov_res.offset = QPoint(globalPos.x() - win.pos().x(), globalPos.y() - win.pos().y());
+        mov_res.offset
+            = QPoint(globalPos.x() - win.geo.pos().x(), globalPos.y() - win.geo.pos().y());
 
         mov_res.inverted_offset
-            = QPoint(win.size().width() - 1, win.size().height() - 1) - mov_res.offset;
+            = QPoint(win.geo.size().width() - 1, win.geo.size().height() - 1) - mov_res.offset;
         mov_res.unrestricted = (cmd == base::options_qobject::MouseActivateRaiseAndUnrestrictedMove
                                 || cmd == base::options_qobject::MouseUnrestrictedMove);
         if (!start_move_resize(&win)) {
@@ -267,15 +268,15 @@ bool perform_mouse_command(Win& win,
 
         // Map from global
         auto const moveOffset
-            = QPoint(globalPos.x() - win.pos().x(), globalPos.y() - win.pos().y());
+            = QPoint(globalPos.x() - win.geo.pos().x(), globalPos.y() - win.geo.pos().y());
         mov_res.offset = moveOffset;
 
         auto x = moveOffset.x();
         auto y = moveOffset.y();
-        auto left = x < win.size().width() / 3;
-        auto right = x >= 2 * win.size().width() / 3;
-        auto top = y < win.size().height() / 3;
-        auto bot = y >= 2 * win.size().height() / 3;
+        auto left = x < win.geo.size().width() / 3;
+        auto right = x >= 2 * win.geo.size().width() / 3;
+        auto top = y < win.geo.size().height() / 3;
+        auto bot = y >= 2 * win.geo.size().height() / 3;
 
         position mode;
         if (top) {
@@ -284,11 +285,11 @@ bool perform_mouse_command(Win& win,
             mode = left ? position::bottom_left
                         : (right ? position::bottom_right : position::bottom);
         } else {
-            mode = (x < win.size().width() / 2) ? position::left : position::right;
+            mode = (x < win.geo.size().width() / 2) ? position::left : position::right;
         }
         mov_res.contact = mode;
         mov_res.inverted_offset
-            = QPoint(win.size().width() - 1, win.size().height() - 1) - moveOffset;
+            = QPoint(win.geo.size().width() - 1, win.geo.size().height() - 1) - moveOffset;
         mov_res.unrestricted = cmd == base::options_qobject::MouseUnrestrictedResize;
         if (!start_move_resize(&win)) {
             mov_res.button_down = false;

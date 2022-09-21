@@ -25,7 +25,7 @@ void update_no_border(Win* win)
 template<typename Win>
 void set_restore_geometry(Win* win, QRect const& restore_geo)
 {
-    if (win->geometry_update.fullscreen) {
+    if (win->geo.update.fullscreen) {
         // We keep the restore geometry for later fullscreen restoration.
         return;
     }
@@ -38,7 +38,7 @@ void set_restore_geometry(Win* win, QRect const& restore_geo)
         return;
     }
 
-    win->restore_geometries.maximize = restore_geo;
+    win->geo.restore.max = restore_geo;
 }
 
 template<typename Win>
@@ -74,14 +74,14 @@ QRect rectify_restore_geometry(Win* win, QRect restore_geo)
     }
 
     geometry_updates_blocker blocker(win);
-    auto const old_frame_geo = win->geometry_update.frame;
+    auto const old_frame_geo = win->geo.update.frame;
 
     // We need to do a temporary placement to find the right coordinates.
     win->setFrameGeometry(QRect(QPoint(), frame_size));
     win::place_smart(win, area);
 
     // Get the geometry and reset back to original geometry.
-    restore_geo = win->geometry_update.frame;
+    restore_geo = win->geo.update.frame;
     win->setFrameGeometry(old_frame_geo);
 
     if (restore_geo.width() > 0) {
@@ -97,9 +97,9 @@ QRect rectify_restore_geometry(Win* win, QRect restore_geo)
 template<typename Win>
 void maximize_restore(Win* win)
 {
-    auto const old_mode = win->geometry_update.max_mode;
-    auto const restore_geo = win->restore_geometries.maximize;
-    auto final_restore_geo = win->geometry_update.frame;
+    auto const old_mode = win->geo.update.max_mode;
+    auto const restore_geo = win->geo.restore.max;
+    auto final_restore_geo = win->geo.update.frame;
 
     if (flags(old_mode & maximize_mode::vertical)) {
         final_restore_geo.setTop(restore_geo.top());
@@ -117,7 +117,7 @@ void maximize_restore(Win* win)
         // TODO(romangg): That is x11::window only. Put it in a template specialization?
         win->info->setState(NET::States(), NET::Max);
     }
-    win->geometry_update.max_mode = maximize_mode::restore;
+    win->geo.update.max_mode = maximize_mode::restore;
     update_no_border(win);
     set_restore_geometry(win, QRect());
 }
@@ -125,7 +125,7 @@ void maximize_restore(Win* win)
 template<typename Win>
 void maximize_vertically(Win* win)
 {
-    auto& geo_update = win->geometry_update;
+    auto& geo_update = win->geo.update;
     auto const old_frame_geo = geo_update.frame;
     auto const area = get_maximizing_area(win);
 
@@ -151,7 +151,7 @@ void maximize_vertically(Win* win)
 template<typename Win>
 void maximize_horizontally(Win* win)
 {
-    auto& geo_update = win->geometry_update;
+    auto& geo_update = win->geo.update;
     auto const old_frame_geo = geo_update.frame;
     auto const area = get_maximizing_area(win);
 
@@ -177,15 +177,15 @@ void maximize_horizontally(Win* win)
 template<typename Win>
 void update_maximized_impl(Win* win, maximize_mode mode)
 {
-    assert(win->geometry_update.max_mode != mode);
+    assert(win->geo.update.max_mode != mode);
 
     if (mode == maximize_mode::restore) {
         maximize_restore(win);
         return;
     }
 
-    auto const old_frame_geo = win->geometry_update.frame;
-    auto const old_mode = win->geometry_update.max_mode;
+    auto const old_frame_geo = win->geo.update.frame;
+    auto const old_mode = win->geo.update.max_mode;
 
     if (flags(mode & maximize_mode::vertical)) {
         if (flags(old_mode & maximize_mode::horizontal) && !(mode & maximize_mode::horizontal)) {
@@ -217,11 +217,11 @@ void update_maximized(Win* win, maximize_mode mode)
     mode = win->control->rules.checkMaximize(mode);
 
     geometry_updates_blocker blocker(win);
-    auto const old_mode = win->geometry_update.max_mode;
+    auto const old_mode = win->geo.update.max_mode;
 
     if (mode == old_mode) {
         // Just update the current size.
-        auto const restore_geo = win->restore_geometries.maximize;
+        auto const restore_geo = win->geo.restore.max;
         if (flags(mode & maximize_mode::vertical)) {
             maximize_vertically(win);
         }
@@ -235,9 +235,9 @@ void update_maximized(Win* win, maximize_mode mode)
     if (old_mode != maximize_mode::restore && mode != maximize_mode::restore) {
         // We switch between different (partial) maximization modes. First restore the previous one.
         // The call will reset the restore geometry. So undo this change.
-        auto const restore_geo = win->restore_geometries.maximize;
+        auto const restore_geo = win->geo.restore.max;
         update_maximized_impl(win, maximize_mode::restore);
-        win->restore_geometries.maximize = restore_geo;
+        win->geo.restore.max = restore_geo;
     }
 
     update_maximized_impl(win, mode);
@@ -252,7 +252,7 @@ void update_maximized(Win* win, maximize_mode mode)
     }
     if (old_quicktiling != win->control->quicktiling) {
         // Send changed signal but ensure we do not override our frame geometry.
-        auto const frame_geo = win->geometry_update.frame;
+        auto const frame_geo = win->geo.update.frame;
         Q_EMIT win->qobject->quicktiling_changed();
         win->setFrameGeometry(frame_geo);
     }

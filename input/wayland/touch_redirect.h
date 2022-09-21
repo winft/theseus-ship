@@ -239,7 +239,8 @@ public:
         // TODO(romangg): Add input transformation API to Wrapland::Server::Seat for touch input.
         seat->touches().set_focused_surface(
             focusNow->surface,
-            -1 * win::get_input_transform(*focusNow).map(focusNow->pos()) + focusNow->pos());
+            -1 * win::get_input_transform(*focusNow).map(focusNow->geo.pos())
+                + focusNow->geo.pos());
         focus_geometry_notifier = QObject::connect(
             focusNow->qobject.get(),
             &win::window_qobject::frame_geometry_changed,
@@ -254,8 +255,8 @@ public:
                     return;
                 }
                 seat->touches().set_focused_surface_position(
-                    -1 * win::get_input_transform(*focus_win).map(focus_win->pos())
-                    + focus_win->pos());
+                    -1 * win::get_input_transform(*focus_win).map(focus_win->geo.pos())
+                    + focus_win->geo.pos());
             });
     }
 

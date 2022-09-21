@@ -246,7 +246,7 @@ void TestXdgShellClientRules::testPositionDontAffect()
     // placement policy will put the client in the top-left corner of the screen.
     QVERIFY(client->isMovable());
     QVERIFY(client->isMovableAcrossScreens());
-    QCOMPARE(client->pos(), QPoint(0, 0));
+    QCOMPARE(client->geo.pos(), QPoint(0, 0));
 
     // Destroy the client.
     shellSurface.reset();
@@ -280,7 +280,7 @@ void TestXdgShellClientRules::testPositionApply()
     // The client should be moved to the position specified by the rule.
     QVERIFY(client->isMovable());
     QVERIFY(client->isMovableAcrossScreens());
-    QCOMPARE(client->pos(), QPoint(42, 42));
+    QCOMPARE(client->geo.pos(), QPoint(42, 42));
 
     // One should still be able to move the client around.
     QSignalSpy clientStartMoveResizedSpy(client->qobject.get(),
@@ -307,14 +307,14 @@ void TestXdgShellClientRules::testPositionApply()
     win::update_move_resize(client, Test::cursor()->pos());
     QCOMPARE(Test::cursor()->pos(), cursorPos + QPoint(8, 0));
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
-    QCOMPARE(client->pos(), QPoint(50, 42));
+    QCOMPARE(client->geo.pos(), QPoint(50, 42));
 
     win::key_press_event(client, Qt::Key_Enter);
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
     QCOMPARE(Test::app()->base.space->move_resize_window, nullptr);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
-    QCOMPARE(client->pos(), QPoint(50, 42));
+    QCOMPARE(client->geo.pos(), QPoint(50, 42));
 
     // The rule should be applied again if the client appears after it's been closed.
     shellSurface.reset();
@@ -325,7 +325,7 @@ void TestXdgShellClientRules::testPositionApply()
     QVERIFY(client->control->active);
     QVERIFY(client->isMovable());
     QVERIFY(client->isMovableAcrossScreens());
-    QCOMPARE(client->pos(), QPoint(42, 42));
+    QCOMPARE(client->geo.pos(), QPoint(42, 42));
 
     // Destroy the client.
     shellSurface.reset();
@@ -359,7 +359,7 @@ void TestXdgShellClientRules::testPositionRemember()
     // The client should be moved to the position specified by the rule.
     QVERIFY(client->isMovable());
     QVERIFY(client->isMovableAcrossScreens());
-    QCOMPARE(client->pos(), QPoint(42, 42));
+    QCOMPARE(client->geo.pos(), QPoint(42, 42));
 
     // One should still be able to move the client around.
     QSignalSpy clientStartMoveResizedSpy(client->qobject.get(),
@@ -386,14 +386,14 @@ void TestXdgShellClientRules::testPositionRemember()
     win::update_move_resize(client, Test::cursor()->pos());
     QCOMPARE(Test::cursor()->pos(), cursorPos + QPoint(8, 0));
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
-    QCOMPARE(client->pos(), QPoint(50, 42));
+    QCOMPARE(client->geo.pos(), QPoint(50, 42));
 
     win::key_press_event(client, Qt::Key_Enter);
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
     QCOMPARE(Test::app()->base.space->move_resize_window, nullptr);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
-    QCOMPARE(client->pos(), QPoint(50, 42));
+    QCOMPARE(client->geo.pos(), QPoint(50, 42));
 
     // The client should be placed at the last know position if we reopen it.
     shellSurface.reset();
@@ -404,7 +404,7 @@ void TestXdgShellClientRules::testPositionRemember()
     QVERIFY(client->control->active);
     QVERIFY(client->isMovable());
     QVERIFY(client->isMovableAcrossScreens());
-    QCOMPARE(client->pos(), QPoint(50, 42));
+    QCOMPARE(client->geo.pos(), QPoint(50, 42));
 
     // Destroy the client.
     shellSurface.reset();
@@ -438,7 +438,7 @@ void TestXdgShellClientRules::testPositionForce()
     // The client should be moved to the position specified by the rule.
     QVERIFY(!client->isMovable());
     QVERIFY(!client->isMovableAcrossScreens());
-    QCOMPARE(client->pos(), QPoint(42, 42));
+    QCOMPARE(client->geo.pos(), QPoint(42, 42));
 
     // User should not be able to move the client.
     QSignalSpy clientStartMoveResizedSpy(client->qobject.get(),
@@ -462,7 +462,7 @@ void TestXdgShellClientRules::testPositionForce()
     QVERIFY(client->control->active);
     QVERIFY(!client->isMovable());
     QVERIFY(!client->isMovableAcrossScreens());
-    QCOMPARE(client->pos(), QPoint(42, 42));
+    QCOMPARE(client->geo.pos(), QPoint(42, 42));
 
     // Destroy the client.
     shellSurface.reset();
@@ -484,7 +484,7 @@ void TestXdgShellClientRules::testPositionApplyNow()
     // policy will try to put the client in the top-left corner of the screen.
     QVERIFY(client->isMovable());
     QVERIFY(client->isMovableAcrossScreens());
-    QCOMPARE(client->pos(), QPoint(0, 0));
+    QCOMPARE(client->geo.pos(), QPoint(0, 0));
 
     // Initialize RuleBook with the test rule.
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
@@ -504,7 +504,7 @@ void TestXdgShellClientRules::testPositionApplyNow()
     QVERIFY(geometryChangedSpy.isValid());
     win::space_reconfigure(*Test::app()->base.space);
     QCOMPARE(geometryChangedSpy.count(), 1);
-    QCOMPARE(client->pos(), QPoint(42, 42));
+    QCOMPARE(client->geo.pos(), QPoint(42, 42));
 
     // We still have to be able to move the client around.
     QVERIFY(client->isMovable());
@@ -533,18 +533,18 @@ void TestXdgShellClientRules::testPositionApplyNow()
     win::update_move_resize(client, Test::cursor()->pos());
     QCOMPARE(Test::cursor()->pos(), cursorPos + QPoint(8, 0));
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
-    QCOMPARE(client->pos(), QPoint(50, 42));
+    QCOMPARE(client->geo.pos(), QPoint(50, 42));
 
     win::key_press_event(client, Qt::Key_Enter);
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
     QCOMPARE(Test::app()->base.space->move_resize_window, nullptr);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
-    QCOMPARE(client->pos(), QPoint(50, 42));
+    QCOMPARE(client->geo.pos(), QPoint(50, 42));
 
     // The rule should not be applied again.
     win::rules::evaluate_rules(client);
-    QCOMPARE(client->pos(), QPoint(50, 42));
+    QCOMPARE(client->geo.pos(), QPoint(50, 42));
 
     // Destroy the client.
     shellSurface.reset();
@@ -578,7 +578,7 @@ void TestXdgShellClientRules::testPositionForceTemporarily()
     // The client should be moved to the position specified by the rule.
     QVERIFY(!client->isMovable());
     QVERIFY(!client->isMovableAcrossScreens());
-    QCOMPARE(client->pos(), QPoint(42, 42));
+    QCOMPARE(client->geo.pos(), QPoint(42, 42));
 
     // User should not be able to move the client.
     QSignalSpy clientStartMoveResizedSpy(client->qobject.get(),
@@ -602,7 +602,7 @@ void TestXdgShellClientRules::testPositionForceTemporarily()
     QVERIFY(client->control->active);
     QVERIFY(client->isMovable());
     QVERIFY(client->isMovableAcrossScreens());
-    QCOMPARE(client->pos(), QPoint(0, 0));
+    QCOMPARE(client->geo.pos(), QPoint(0, 0));
 
     // Destroy the client.
     shellSurface.reset();
@@ -646,7 +646,7 @@ void TestXdgShellClientRules::testSizeDontAffect()
     QVERIFY(client);
     QVERIFY(client->control->active);
     QVERIFY(client->isResizable());
-    QCOMPARE(client->size(), QSize(100, 50));
+    QCOMPARE(client->geo.size(), QSize(100, 50));
 
     // We should receive a configure event when the client becomes active.
     QVERIFY(configureRequestedSpy->wait());
@@ -698,7 +698,7 @@ void TestXdgShellClientRules::testSizeApply()
     QVERIFY(client);
     QVERIFY(client->control->active);
     QVERIFY(client->isResizable());
-    QCOMPARE(client->size(), QSize(480, 640));
+    QCOMPARE(client->geo.size(), QSize(480, 640));
 
     // We should receive a configure event when the client becomes active.
     QVERIFY(configureRequestedSpy->wait());
@@ -753,7 +753,7 @@ void TestXdgShellClientRules::testSizeApply()
     shellSurface->ackConfigure(configureRequestedSpy->last().at(2).value<quint32>());
     Test::render(surface, QSize(488, 640), Qt::blue);
     QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(client->size(), QSize(488, 640));
+    QCOMPARE(client->geo.size(), QSize(488, 640));
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
 
     win::key_press_event(client, Qt::Key_Enter);
@@ -787,7 +787,7 @@ void TestXdgShellClientRules::testSizeApply()
     QVERIFY(client);
     QVERIFY(client->control->active);
     QVERIFY(client->isResizable());
-    QCOMPARE(client->size(), QSize(480, 640));
+    QCOMPARE(client->geo.size(), QSize(480, 640));
 
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 2);
@@ -837,7 +837,7 @@ void TestXdgShellClientRules::testSizeRemember()
     QVERIFY(client);
     QVERIFY(client->control->active);
     QVERIFY(client->isResizable());
-    QCOMPARE(client->size(), QSize(480, 640));
+    QCOMPARE(client->geo.size(), QSize(480, 640));
 
     // We should receive a configure event when the client becomes active.
     QVERIFY(configureRequestedSpy->wait());
@@ -892,7 +892,7 @@ void TestXdgShellClientRules::testSizeRemember()
     shellSurface->ackConfigure(configureRequestedSpy->last().at(2).value<quint32>());
     Test::render(surface, QSize(488, 640), Qt::blue);
     QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(client->size(), QSize(488, 640));
+    QCOMPARE(client->geo.size(), QSize(488, 640));
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
 
     win::key_press_event(client, Qt::Key_Enter);
@@ -926,7 +926,7 @@ void TestXdgShellClientRules::testSizeRemember()
     QVERIFY(client);
     QVERIFY(client->control->active);
     QVERIFY(client->isResizable());
-    QCOMPARE(client->size(), QSize(488, 640));
+    QCOMPARE(client->geo.size(), QSize(488, 640));
 
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 2);
@@ -972,7 +972,7 @@ void TestXdgShellClientRules::testSizeForce()
     QVERIFY(client);
     QVERIFY(client->control->active);
     QVERIFY(!client->isResizable());
-    QCOMPARE(client->size(), QSize(480, 640));
+    QCOMPARE(client->geo.size(), QSize(480, 640));
 
     // We should receive a configure event when the client becomes active.
     QVERIFY(configureRequestedSpy->wait());
@@ -1012,7 +1012,7 @@ void TestXdgShellClientRules::testSizeForce()
     QVERIFY(client);
     QVERIFY(client->control->active);
     QVERIFY(!client->isResizable());
-    QCOMPARE(client->size(), QSize(480, 640));
+    QCOMPARE(client->geo.size(), QSize(480, 640));
 
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 2);
@@ -1045,7 +1045,7 @@ void TestXdgShellClientRules::testSizeApplyNow()
     QVERIFY(client);
     QVERIFY(client->control->active);
     QVERIFY(client->isResizable());
-    QCOMPARE(client->size(), QSize(100, 50));
+    QCOMPARE(client->geo.size(), QSize(100, 50));
 
     // We should receive a configure event when the client becomes active.
     QVERIFY(configureRequestedSpy->wait());
@@ -1076,7 +1076,7 @@ void TestXdgShellClientRules::testSizeApplyNow()
     shellSurface->ackConfigure(configureRequestedSpy->last().at(2).value<quint32>());
     Test::render(surface, QSize(480, 640), Qt::blue);
     QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(client->size(), QSize(480, 640));
+    QCOMPARE(client->geo.size(), QSize(480, 640));
     QVERIFY(!configureRequestedSpy->wait(100));
 
     // The rule should not be applied again.
@@ -1124,7 +1124,7 @@ void TestXdgShellClientRules::testSizeForceTemporarily()
     QVERIFY(client);
     QVERIFY(client->control->active);
     QVERIFY(!client->isResizable());
-    QCOMPARE(client->size(), QSize(480, 640));
+    QCOMPARE(client->geo.size(), QSize(480, 640));
 
     // We should receive a configure event when the client becomes active.
     QVERIFY(configureRequestedSpy->wait());
@@ -1164,7 +1164,7 @@ void TestXdgShellClientRules::testSizeForceTemporarily()
     QVERIFY(client);
     QVERIFY(client->control->active);
     QVERIFY(client->isResizable());
-    QCOMPARE(client->size(), QSize(100, 50));
+    QCOMPARE(client->geo.size(), QSize(100, 50));
 
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 2);
@@ -1218,7 +1218,7 @@ void TestXdgShellClientRules::testMaximizeDontAffect()
     QVERIFY(client->isMaximizable());
     QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
     QCOMPARE(client->synced_geometry.max_mode, win::maximize_mode::restore);
-    QCOMPARE(client->size(), QSize(100, 50));
+    QCOMPARE(client->geo.size(), QSize(100, 50));
 
     // We should receive a configure event when the client becomes active.
     QVERIFY(configureRequestedSpy->wait());
@@ -1276,7 +1276,7 @@ void TestXdgShellClientRules::testMaximizeApply()
     QVERIFY(client->isMaximizable());
     QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
     QCOMPARE(client->synced_geometry.max_mode, win::maximize_mode::full);
-    QCOMPARE(client->size(), QSize(1280, 1024));
+    QCOMPARE(client->geo.size(), QSize(1280, 1024));
 
     // We should receive a configure event when the client becomes active.
     QVERIFY(configureRequestedSpy->wait());
@@ -1303,7 +1303,7 @@ void TestXdgShellClientRules::testMaximizeApply()
     shellSurface->ackConfigure(configureRequestedSpy->last().at(2).value<quint32>());
     Test::render(surface, QSize(100, 50), Qt::blue);
     QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(client->size(), QSize(100, 50));
+    QCOMPARE(client->geo.size(), QSize(100, 50));
     QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
     QCOMPARE(client->synced_geometry.max_mode, win::maximize_mode::restore);
 
@@ -1332,7 +1332,7 @@ void TestXdgShellClientRules::testMaximizeApply()
     QVERIFY(client->isMaximizable());
     QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
     QCOMPARE(client->synced_geometry.max_mode, win::maximize_mode::full);
-    QCOMPARE(client->size(), QSize(1280, 1024));
+    QCOMPARE(client->geo.size(), QSize(1280, 1024));
 
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 2);
@@ -1389,7 +1389,7 @@ void TestXdgShellClientRules::testMaximizeRemember()
     QVERIFY(client->isMaximizable());
     QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
     QCOMPARE(client->synced_geometry.max_mode, win::maximize_mode::full);
-    QCOMPARE(client->size(), QSize(1280, 1024));
+    QCOMPARE(client->geo.size(), QSize(1280, 1024));
 
     // We should receive a configure event when the client becomes active.
     QVERIFY(configureRequestedSpy->wait());
@@ -1416,7 +1416,7 @@ void TestXdgShellClientRules::testMaximizeRemember()
     shellSurface->ackConfigure(configureRequestedSpy->last().at(2).value<quint32>());
     Test::render(surface, QSize(100, 50), Qt::blue);
     QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(client->size(), QSize(100, 50));
+    QCOMPARE(client->geo.size(), QSize(100, 50));
     QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
     QCOMPARE(client->synced_geometry.max_mode, win::maximize_mode::restore);
 
@@ -1445,7 +1445,7 @@ void TestXdgShellClientRules::testMaximizeRemember()
     QVERIFY(client->isMaximizable());
     QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
     QCOMPARE(client->synced_geometry.max_mode, win::maximize_mode::restore);
-    QCOMPARE(client->size(), QSize(100, 50));
+    QCOMPARE(client->geo.size(), QSize(100, 50));
 
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 2);
@@ -1502,7 +1502,7 @@ void TestXdgShellClientRules::testMaximizeForce()
     QVERIFY(!client->isMaximizable());
     QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
     QCOMPARE(client->synced_geometry.max_mode, win::maximize_mode::full);
-    QCOMPARE(client->size(), QSize(1280, 1024));
+    QCOMPARE(client->geo.size(), QSize(1280, 1024));
 
     // We should receive a configure event when the client becomes active.
     QVERIFY(configureRequestedSpy->wait());
@@ -1512,12 +1512,12 @@ void TestXdgShellClientRules::testMaximizeForce()
     QVERIFY(states.testFlag(XdgShellToplevel::State::Maximized));
 
     // Any attempt to change the maximized state should not succeed.
-    const QRect oldGeometry = client->frameGeometry();
+    const QRect oldGeometry = client->geo.frame;
     win::active_window_maximize(*Test::app()->base.space);
     QVERIFY(!configureRequestedSpy->wait(100));
     QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
     QCOMPARE(client->synced_geometry.max_mode, win::maximize_mode::full);
-    QCOMPARE(client->frameGeometry(), oldGeometry);
+    QCOMPARE(client->geo.frame, oldGeometry);
 
     // If we create the client again, the maximized state should still be forced.
     shellSurface.reset();
@@ -1544,7 +1544,7 @@ void TestXdgShellClientRules::testMaximizeForce()
     QVERIFY(!client->isMaximizable());
     QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
     QCOMPARE(client->synced_geometry.max_mode, win::maximize_mode::full);
-    QCOMPARE(client->size(), QSize(1280, 1024));
+    QCOMPARE(client->geo.size(), QSize(1280, 1024));
 
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 2);
@@ -1586,7 +1586,7 @@ void TestXdgShellClientRules::testMaximizeApplyNow()
     QVERIFY(client->isMaximizable());
     QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
     QCOMPARE(client->synced_geometry.max_mode, win::maximize_mode::restore);
-    QCOMPARE(client->size(), QSize(100, 50));
+    QCOMPARE(client->geo.size(), QSize(100, 50));
 
     // We should receive a configure event when the client becomes active.
     QVERIFY(configureRequestedSpy->wait());
@@ -1625,7 +1625,7 @@ void TestXdgShellClientRules::testMaximizeApplyNow()
     shellSurface->ackConfigure(configureRequestedSpy->last().at(2).value<quint32>());
     Test::render(surface, QSize(1280, 1024), Qt::blue);
     QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(client->size(), QSize(1280, 1024));
+    QCOMPARE(client->geo.size(), QSize(1280, 1024));
     QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
     QCOMPARE(client->synced_geometry.max_mode, win::maximize_mode::full);
 
@@ -1644,17 +1644,17 @@ void TestXdgShellClientRules::testMaximizeApplyNow()
     shellSurface->ackConfigure(configureRequestedSpy->last().at(2).value<quint32>());
     Test::render(surface, QSize(100, 50), Qt::blue);
     QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(client->size(), QSize(100, 50));
+    QCOMPARE(client->geo.size(), QSize(100, 50));
     QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
     QCOMPARE(client->synced_geometry.max_mode, win::maximize_mode::restore);
 
     // The rule should be discarded after it's been applied.
-    const QRect oldGeometry = client->frameGeometry();
+    const QRect oldGeometry = client->geo.frame;
     win::rules::evaluate_rules(client);
     QVERIFY(!configureRequestedSpy->wait(100));
     QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
     QCOMPARE(client->synced_geometry.max_mode, win::maximize_mode::restore);
-    QCOMPARE(client->frameGeometry(), oldGeometry);
+    QCOMPARE(client->geo.frame, oldGeometry);
 
     // Destroy the client.
     shellSurface.reset();
@@ -1705,7 +1705,7 @@ void TestXdgShellClientRules::testMaximizeForceTemporarily()
     QVERIFY(!client->isMaximizable());
     QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
     QCOMPARE(client->synced_geometry.max_mode, win::maximize_mode::full);
-    QCOMPARE(client->size(), QSize(1280, 1024));
+    QCOMPARE(client->geo.size(), QSize(1280, 1024));
 
     // We should receive a configure event when the client becomes active.
     QVERIFY(configureRequestedSpy->wait());
@@ -1715,12 +1715,12 @@ void TestXdgShellClientRules::testMaximizeForceTemporarily()
     QVERIFY(states.testFlag(XdgShellToplevel::State::Maximized));
 
     // Any attempt to change the maximized state should not succeed.
-    const QRect oldGeometry = client->frameGeometry();
+    const QRect oldGeometry = client->geo.frame;
     win::active_window_maximize(*Test::app()->base.space);
     QVERIFY(!configureRequestedSpy->wait(100));
     QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
     QCOMPARE(client->synced_geometry.max_mode, win::maximize_mode::full);
-    QCOMPARE(client->frameGeometry(), oldGeometry);
+    QCOMPARE(client->geo.frame, oldGeometry);
 
     // The rule should be discarded if we close the client.
     shellSurface.reset();
@@ -1747,7 +1747,7 @@ void TestXdgShellClientRules::testMaximizeForceTemporarily()
     QVERIFY(client->isMaximizable());
     QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
     QCOMPARE(client->synced_geometry.max_mode, win::maximize_mode::restore);
-    QCOMPARE(client->size(), QSize(100, 50));
+    QCOMPARE(client->geo.size(), QSize(100, 50));
 
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 2);

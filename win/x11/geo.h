@@ -92,7 +92,7 @@ void apply_pending_geometry(Win* win, int64_t update_request_number)
         return;
     }
 
-    auto frame_geo = win->frameGeometry();
+    auto frame_geo = win->geo.frame;
     auto max_mode = win->max_mode;
     auto fullscreen = win->control->fullscreen;
 
@@ -166,7 +166,7 @@ bool needs_sync(Win* win)
         return false;
     }
 
-    auto const& update = win->geometry_update;
+    auto const& update = win->geo.update;
 
     if (update.max_mode != win->synced_geometry.max_mode) {
         return true;
@@ -219,10 +219,10 @@ void get_wm_normal_hints(Win* win)
     if (win->control) {
         // update to match restrictions
         // TODO(romangg): adjust to restrictions.
-        auto new_size = win->frameGeometry().size();
+        auto new_size = win->geo.frame.size();
 
-        if (new_size != win->size() && !win->control->fullscreen) {
-            auto const orig_client_geo = frame_to_client_rect(win, win->frameGeometry());
+        if (new_size != win->geo.size() && !win->control->fullscreen) {
+            auto const orig_client_geo = frame_to_client_rect(win, win->geo.frame);
 
             constrained_resize(win, new_size);
 
@@ -560,9 +560,9 @@ QPoint calculate_gravitation(Win* win, bool invert)
     auto const dy = adjustment.y() - win::top_border(win);
 
     if (invert) {
-        return QPoint(win->pos().x() - dx, win->pos().y() - dy);
+        return QPoint(win->geo.pos().x() - dx, win->geo.pos().y() - dy);
     }
-    return QPoint(win->pos().x() + dx, win->pos().y() + dy);
+    return QPoint(win->geo.pos().x() + dx, win->geo.pos().y() + dy);
 }
 
 template<typename Win>
@@ -696,7 +696,7 @@ void configure_only_size_from_request(Win* win,
                                       int gravity,
                                       bool from_tool)
 {
-    auto const orig_client_geo = frame_to_client_rect(win, win->geometry_update.frame);
+    auto const orig_client_geo = frame_to_client_rect(win, win->geo.update.frame);
     auto client_size = orig_client_geo.size();
 
     if (value_mask & XCB_CONFIG_WINDOW_WIDTH) {
@@ -787,20 +787,20 @@ void resize_with_gravity(Win* win, QSize const& size, xcb_gravity_t gravity)
         break;
     case XCB_GRAVITY_NORTH:
         // middle of top border doesn't move
-        pos_x = (pos_x + win->size().width() / 2) - (width / 2);
+        pos_x = (pos_x + win->geo.size().width() / 2) - (width / 2);
         break;
     case XCB_GRAVITY_NORTH_EAST:
         // top right corner doesn't move
-        pos_x = pos_x + win->size().width() - width;
+        pos_x = pos_x + win->geo.size().width() - width;
         break;
     case XCB_GRAVITY_WEST:
         // middle of left border doesn't move
-        pos_y = (pos_y + win->size().height() / 2) - (height / 2);
+        pos_y = (pos_y + win->geo.size().height() / 2) - (height / 2);
         break;
     case XCB_GRAVITY_CENTER:
         // middle point doesn't move
-        pos_x = (pos_x + win->size().width() / 2) - (width / 2);
-        pos_y = (pos_y + win->size().height() / 2) - (height / 2);
+        pos_x = (pos_x + win->geo.size().width() / 2) - (width / 2);
+        pos_y = (pos_y + win->geo.size().height() / 2) - (height / 2);
         break;
     case XCB_GRAVITY_STATIC:
         // top left corner of _client_ window doesn't move
@@ -808,22 +808,22 @@ void resize_with_gravity(Win* win, QSize const& size, xcb_gravity_t gravity)
         break;
     case XCB_GRAVITY_EAST:
         // middle of right border doesn't move
-        pos_x = pos_x + win->size().width() - width;
-        pos_y = (pos_y + win->size().height() / 2) - (height / 2);
+        pos_x = pos_x + win->geo.size().width() - width;
+        pos_y = (pos_y + win->geo.size().height() / 2) - (height / 2);
         break;
     case XCB_GRAVITY_SOUTH_WEST:
         // bottom left corner doesn't move
-        pos_y = pos_y + win->size().height() - height;
+        pos_y = pos_y + win->geo.size().height() - height;
         break;
     case XCB_GRAVITY_SOUTH:
         // middle of bottom border doesn't move
-        pos_x = (pos_x + win->size().width() / 2) - (width / 2);
-        pos_y = pos_y + win->size().height() - height;
+        pos_x = (pos_x + win->geo.size().width() / 2) - (width / 2);
+        pos_y = pos_y + win->geo.size().height() - height;
         break;
     case XCB_GRAVITY_SOUTH_EAST:
         // bottom right corner doesn't move
-        pos_x = pos_x + win->size().width() - width;
-        pos_y = pos_y + win->size().height() - height;
+        pos_x = pos_x + win->geo.size().width() - width;
+        pos_y = pos_y + win->geo.size().height() - height;
         break;
     }
 
@@ -870,15 +870,14 @@ bool update_server_geometry(Win* win, QRect const& frame_geo)
     auto const rel_wrapper_geo = abs_wrapper_geo.translated(-outer_geo.topLeft());
 
     // Adding the original client frame extents does the same as frame_to_render_rect.
-    auto const old_outer_geo
-        = win->synced_geometry.client + win->geometry_update.original.deco_margins;
+    auto const old_outer_geo = win->synced_geometry.client + win->geo.update.original.deco_margins;
 
-    auto const old_abs_wrapper_geo = old_outer_geo - win->geometry_update.original.deco_margins;
+    auto const old_abs_wrapper_geo = old_outer_geo - win->geo.update.original.deco_margins;
 
     auto const old_rel_wrapper_geo = old_abs_wrapper_geo.translated(-old_outer_geo.topLeft());
 
-    win->synced_geometry.max_mode = win->geometry_update.max_mode;
-    win->synced_geometry.fullscreen = win->geometry_update.fullscreen;
+    win->synced_geometry.max_mode = win->geo.update.max_mode;
+    win->synced_geometry.fullscreen = win->geo.update.fullscreen;
 
     if (old_outer_geo.size() != outer_geo.size() || old_rel_wrapper_geo != rel_wrapper_geo
         || !win->first_geo_synced) {
@@ -926,7 +925,7 @@ void sync_geometry(Win* win, QRect const& frame_geo)
     send_sync_request(win);
     win->pending_configures.push_back({
         win->sync_request.update_request_number,
-        {frame_geo, client_geo, win->geometry_update.max_mode, win->geometry_update.fullscreen},
+        {frame_geo, client_geo, win->geo.update.max_mode, win->geo.update.fullscreen},
     });
 }
 

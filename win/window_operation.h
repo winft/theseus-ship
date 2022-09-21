@@ -29,11 +29,11 @@ void perform_window_operation(Win* window, base::options_qobject::WindowOperatio
     auto& cursor = space.input->cursor;
 
     if (op == base::options_qobject::MoveOp || op == base::options_qobject::UnrestrictedMoveOp) {
-        cursor->set_pos(window->frameGeometry().center());
+        cursor->set_pos(window->geo.frame.center());
     }
     if (op == base::options_qobject::ResizeOp
         || op == base::options_qobject::UnrestrictedResizeOp) {
-        cursor->set_pos(window->frameGeometry().bottomRight());
+        cursor->set_pos(window->geo.frame.bottomRight());
     }
 
     switch (op) {

@@ -1074,10 +1074,8 @@ public:
         if (window->control) {
             return win::space_window_area(*space, opt, window);
         } else {
-            return win::space_window_area(*space,
-                                          opt,
-                                          window->frameGeometry().center(),
-                                          space->virtual_desktop_manager->current());
+            return win::space_window_area(
+                *space, opt, window->geo.frame.center(), space->virtual_desktop_manager->current());
         }
     }
 

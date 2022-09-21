@@ -52,7 +52,7 @@ public:
         : ApplicationMenuEnabledDecoratedClientPrivate(decoratedClient, decoration)
         , qobject{std::make_unique<client_impl_qobject>()}
         , m_client(window)
-        , m_clientSize(win::frame_to_client_size(window, window->size()))
+        , m_clientSize(win::frame_to_client_size(window, window->geo.size()))
     {
         createRenderer();
         window->control->deco.set_client(this);
@@ -389,7 +389,7 @@ public:
     void requestShowWindowMenu(QRect const& rect) override
     {
         // TODO: add rect to requestShowWindowMenu
-        auto const client_pos = m_client->pos();
+        auto const client_pos = m_client->geo.pos();
         m_client->space.user_actions_menu->show(
             QRect(client_pos + rect.topLeft(), client_pos + rect.bottomRight()), m_client);
     }
@@ -398,7 +398,7 @@ public:
     {
         if (m_client->control->has_application_menu()) {
             m_client->space.appmenu->showApplicationMenu(
-                m_client->pos() + rect.bottomLeft(), m_client->control->appmenu, actionId);
+                m_client->geo.pos() + rect.bottomLeft(), m_client->control->appmenu, actionId);
         }
     }
 
@@ -429,14 +429,14 @@ public:
 
     void update_size()
     {
-        if (win::frame_to_client_size(m_client, m_client->size()) == m_clientSize) {
+        if (win::frame_to_client_size(m_client, m_client->geo.size()) == m_clientSize) {
             return;
         }
 
         auto deco_client = decoratedClient();
 
         auto const old_size = m_clientSize;
-        m_clientSize = frame_to_client_size(m_client, m_client->size());
+        m_clientSize = frame_to_client_size(m_client, m_client->geo.size());
 
         if (old_size.width() != m_clientSize.width()) {
             Q_EMIT deco_client->widthChanged(m_clientSize.width());

@@ -24,14 +24,14 @@ int get_pack_position_left(Space const& space,
         // try another Xinerama screen
         newX = space_window_area(space,
                                  MaximizeArea,
-                                 QPoint(window->geometry_update.frame.left() - 1,
-                                        window->geometry_update.frame.center().y()),
+                                 QPoint(window->geo.update.frame.left() - 1,
+                                        window->geo.update.frame.center().y()),
                                  window->desktop())
                    .left();
     }
 
     auto const right = newX - win::frame_margins(window).left();
-    auto frameGeometry = window->geometry_update.frame;
+    auto frameGeometry = window->geo.update.frame;
     frameGeometry.moveRight(right);
     if (base::get_intersecting_outputs(space.base.outputs, frameGeometry).size() < 2) {
         newX = right;
@@ -48,11 +48,11 @@ int get_pack_position_left(Space const& space,
         if (is_irrelevant(win, window, desktop)) {
             continue;
         }
-        const int x = leftEdge ? win->geometry_update.frame.right() + 1
-                               : win->geometry_update.frame.left() - 1;
+        const int x
+            = leftEdge ? win->geo.update.frame.right() + 1 : win->geo.update.frame.left() - 1;
         if (x > newX && x < oldX
-            && !(window->geometry_update.frame.top() > win->geometry_update.frame.bottom()
-                 || window->geometry_update.frame.bottom() < win->geometry_update.frame.top())) {
+            && !(window->geo.update.frame.top() > win->geo.update.frame.bottom()
+                 || window->geo.update.frame.bottom() < win->geo.update.frame.top())) {
             newX = x;
         }
     }
@@ -71,14 +71,14 @@ int get_pack_position_right(Space const& space,
         // try another Xinerama screen
         newX = space_window_area(space,
                                  MaximizeArea,
-                                 QPoint(window->geometry_update.frame.right() + 1,
-                                        window->geometry_update.frame.center().y()),
+                                 QPoint(window->geo.update.frame.right() + 1,
+                                        window->geo.update.frame.center().y()),
                                  window->desktop())
                    .right();
     }
 
     auto const right = newX + win::frame_margins(window).right();
-    auto frameGeometry = window->geometry_update.frame;
+    auto frameGeometry = window->geo.update.frame;
     frameGeometry.moveRight(right);
     if (base::get_intersecting_outputs(space.base.outputs, frameGeometry).size() < 2) {
         newX = right;
@@ -95,11 +95,11 @@ int get_pack_position_right(Space const& space,
         if (is_irrelevant(win, window, desktop)) {
             continue;
         }
-        const int x = rightEdge ? win->geometry_update.frame.left() - 1
-                                : win->geometry_update.frame.right() + 1;
+        const int x
+            = rightEdge ? win->geo.update.frame.left() - 1 : win->geo.update.frame.right() + 1;
         if (x < newX && x > oldX
-            && !(window->geometry_update.frame.top() > win->geometry_update.frame.bottom()
-                 || window->geometry_update.frame.bottom() < win->geometry_update.frame.top())) {
+            && !(window->geo.update.frame.top() > win->geo.update.frame.bottom()
+                 || window->geo.update.frame.bottom() < win->geo.update.frame.top())) {
             newX = x;
         }
     }
@@ -117,8 +117,8 @@ int get_pack_position_up(Space const& space,
         // try another Xinerama screen
         newY = space_window_area(space,
                                  MaximizeArea,
-                                 QPoint(window->geometry_update.frame.center().x(),
-                                        window->geometry_update.frame.top() - 1),
+                                 QPoint(window->geo.update.frame.center().x(),
+                                        window->geo.update.frame.top() - 1),
                                  window->desktop())
                    .top();
     }
@@ -134,12 +134,12 @@ int get_pack_position_up(Space const& space,
         if (is_irrelevant(win, window, desktop)) {
             continue;
         }
-        const int y = topEdge ? win->geometry_update.frame.bottom() + 1
-                              : win->geometry_update.frame.top() - 1;
+        const int y
+            = topEdge ? win->geo.update.frame.bottom() + 1 : win->geo.update.frame.top() - 1;
         if (y > newY && y < oldY
-            && !(window->geometry_update.frame.left()
-                     > win->geometry_update.frame.right() // they overlap in X direction
-                 || window->geometry_update.frame.right() < win->geometry_update.frame.left())) {
+            && !(window->geo.update.frame.left()
+                     > win->geo.update.frame.right() // they overlap in X direction
+                 || window->geo.update.frame.right() < win->geo.update.frame.left())) {
             newY = y;
         }
     }
@@ -156,14 +156,14 @@ int get_pack_position_down(Space const& space,
     if (oldY >= newY) { // try another Xinerama screen
         newY = space_window_area(space,
                                  MaximizeArea,
-                                 QPoint(window->geometry_update.frame.center().x(),
-                                        window->geometry_update.frame.bottom() + 1),
+                                 QPoint(window->geo.update.frame.center().x(),
+                                        window->geo.update.frame.bottom() + 1),
                                  window->desktop())
                    .bottom();
     }
 
     auto const bottom = newY + win::frame_margins(window).bottom();
-    auto frameGeometry = window->geometry_update.frame;
+    auto frameGeometry = window->geo.update.frame;
     frameGeometry.moveBottom(bottom);
     if (base::get_intersecting_outputs(space.base.outputs, frameGeometry).size() < 2) {
         newY = bottom;
@@ -179,11 +179,11 @@ int get_pack_position_down(Space const& space,
         if (is_irrelevant(win, window, desktop)) {
             continue;
         }
-        const int y = bottomEdge ? win->geometry_update.frame.top() - 1
-                                 : win->geometry_update.frame.bottom() + 1;
+        const int y
+            = bottomEdge ? win->geo.update.frame.top() - 1 : win->geo.update.frame.bottom() + 1;
         if (y < newY && y > oldY
-            && !(window->geometry_update.frame.left() > win->geometry_update.frame.right()
-                 || window->geometry_update.frame.right() < win->geometry_update.frame.left())) {
+            && !(window->geo.update.frame.left() > win->geo.update.frame.right()
+                 || window->geo.update.frame.right() < win->geo.update.frame.left())) {
             newY = y;
         }
     }
@@ -209,7 +209,7 @@ template<typename Win>
 void constrained_resize(Win* win, QSize const& size)
 {
     win->setFrameGeometry(
-        QRect(win->geometry_update.frame.topLeft(), constrain_and_adjust_size(win, size)));
+        QRect(win->geo.update.frame.topLeft(), constrain_and_adjust_size(win, size)));
 }
 
 template<typename Win>
@@ -219,11 +219,11 @@ void grow_horizontal(Win* win)
         return;
     }
 
-    auto frame_geo = win->frameGeometry();
+    auto frame_geo = win->geo.frame;
     frame_geo.setRight(get_pack_position_right(win->space, win, frame_geo.right(), true));
     auto const adjsize = adjusted_frame_size(win, frame_geo.size(), size_mode::fixed_width);
 
-    if (win->frameGeometry().size() == adjsize && frame_geo.size() != adjsize
+    if (win->geo.size() == adjsize && frame_geo.size() != adjsize
         && win->resizeIncrements().width() > 1) {
         // Grow by increment.
         auto const grown_right = get_pack_position_right(
@@ -234,7 +234,7 @@ void grow_horizontal(Win* win)
         auto const area = space_window_area(
             win->space,
             MovementArea,
-            QPoint((win->pos().x() + grown_right) / 2, win->frameGeometry().center().y()),
+            QPoint((win->geo.pos().x() + grown_right) / 2, win->geo.frame.center().y()),
             win->desktop());
         if (area.right() >= grown_right) {
             frame_geo.setRight(grown_right);
@@ -256,7 +256,7 @@ void shrink_horizontal(Win* win)
         return;
     }
 
-    auto geom = win->frameGeometry();
+    auto geom = win->geo.frame;
     geom.setRight(get_pack_position_left(win->space, win, geom.right(), false));
 
     if (geom.width() <= 1) {
@@ -280,11 +280,11 @@ void grow_vertical(Win* win)
         return;
     }
 
-    auto frame_geo = win->frameGeometry();
+    auto frame_geo = win->geo.frame;
     frame_geo.setBottom(get_pack_position_down(win->space, win, frame_geo.bottom(), true));
     auto adjsize = adjusted_frame_size(win, frame_geo.size(), size_mode::fixed_height);
 
-    if (win->frameGeometry().size() == adjsize && frame_geo.size() != adjsize
+    if (win->geo.size() == adjsize && frame_geo.size() != adjsize
         && win->resizeIncrements().height() > 1) {
         // Grow by increment.
         auto const newbottom = get_pack_position_down(
@@ -294,7 +294,7 @@ void grow_vertical(Win* win)
         auto const area = space_window_area(
             win->space,
             MovementArea,
-            QPoint(win->frameGeometry().center().x(), (win->pos().y() + newbottom) / 2),
+            QPoint(win->geo.frame.center().x(), (win->geo.pos().y() + newbottom) / 2),
             win->desktop());
         if (area.bottom() >= newbottom) {
             frame_geo.setBottom(newbottom);
@@ -315,7 +315,7 @@ void shrink_vertical(Win* win)
         return;
     }
 
-    auto frame_geo = win->frameGeometry();
+    auto frame_geo = win->geo.frame;
     frame_geo.setBottom(get_pack_position_up(win->space, win, frame_geo.bottom(), false));
     if (frame_geo.height() <= 1) {
         return;

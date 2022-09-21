@@ -59,7 +59,7 @@ public:
             return;
         }
 
-        auto const client_geo = win::frame_to_client_rect(m_client, m_client->frameGeometry());
+        auto const client_geo = win::frame_to_client_rect(m_client, m_client->geo.frame);
         control_t::destroy_decoration();
         m_client->setFrameGeometry(client_geo);
     }
@@ -179,7 +179,7 @@ public:
         win::block_geometry_updates(this, true);
         updateDecoration(true);
         setFrameGeometry(win::client_to_frame_rect(this, m_internalWindow->geometry()));
-        this->restore_geometries.maximize = this->frameGeometry();
+        this->geo.restore.max = this->geo.frame;
         win::block_geometry_updates(this, false);
 
         m_internalWindow->installEventFilter(qwin.get());
@@ -360,14 +360,14 @@ public:
 
     void setFrameGeometry(QRect const& rect) override
     {
-        this->geometry_update.frame = rect;
+        this->geo.update.frame = rect;
 
-        if (this->geometry_update.block) {
-            this->geometry_update.pending = win::pending_geometry::normal;
+        if (this->geo.update.block) {
+            this->geo.update.pending = win::pending_geometry::normal;
             return;
         }
 
-        this->geometry_update.pending = win::pending_geometry::none;
+        this->geo.update.pending = win::pending_geometry::none;
 
         if (synced_geo != win::frame_to_client_rect(this, rect)) {
             requestGeometry(rect);
@@ -427,7 +427,7 @@ public:
 
     void handle_update_no_border() override
     {
-        setNoBorder(this->geometry_update.max_mode == maximize_mode::full);
+        setNoBorder(this->geo.update.max_mode == maximize_mode::full);
     }
 
     void updateDecoration(bool check_workspace_pos, bool force = false) override
@@ -436,7 +436,7 @@ public:
             return;
         }
 
-        const QRect oldFrameGeometry = this->frameGeometry();
+        const QRect oldFrameGeometry = this->geo.frame;
         const QRect oldClientGeometry = oldFrameGeometry - win::frame_margins(this);
 
         win::geometry_updates_blocker blocker(this);
@@ -512,7 +512,7 @@ public:
 
         const QSize bufferSize = fbo->size() / buffer_scale_internal();
 
-        this->setFrameGeometry(QRect(this->pos(), win::client_to_frame_size(this, bufferSize)));
+        this->setFrameGeometry(QRect(this->geo.pos(), win::client_to_frame_size(this, bufferSize)));
         markAsMapped();
 
         if (buffers.fbo != fbo) {
@@ -531,7 +531,7 @@ public:
 
         const QSize bufferSize = image.size() / buffer_scale_internal();
 
-        this->setFrameGeometry(QRect(this->pos(), win::client_to_frame_size(this, bufferSize)));
+        this->setFrameGeometry(QRect(this->geo.pos(), win::client_to_frame_size(this, bufferSize)));
         markAsMapped();
 
         if (buffers.image.size() != image.size()) {
@@ -620,7 +620,7 @@ public:
                              this->qobject.get(),
                              [this]() {
                                  win::geometry_updates_blocker blocker(this);
-                                 auto const old_geo = this->frameGeometry();
+                                 auto const old_geo = this->geo.frame;
                                  win::check_workspace_position(this, old_geo);
                                  discard_shape(*this);
                                  this->control->deco.client->update_size();
@@ -683,13 +683,13 @@ public:
 
     void do_set_geometry(QRect const& frame_geo)
     {
-        auto const old_frame_geo = this->frameGeometry();
+        auto const old_frame_geo = this->geo.frame;
 
         if (old_frame_geo == frame_geo) {
             return;
         }
 
-        this->set_frame_geometry(frame_geo);
+        this->geo.frame = frame_geo;
 
         if (win::is_resize(this)) {
             win::perform_move_resize(this);

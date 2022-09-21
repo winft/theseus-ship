@@ -53,7 +53,7 @@ QRect render_geometry(Win* win);
 template<typename Win>
 QRect visible_rect(Win* win, QRect const& frame_geo)
 {
-    auto geo = frame_geo + win->client_frame_extents;
+    auto geo = frame_geo + win->geo.client_frame_extents;
 
     if (shadow(win) && !shadow(win)->shadowRegion().isEmpty()) {
         geo += shadow(win)->margins();
@@ -65,7 +65,7 @@ QRect visible_rect(Win* win, QRect const& frame_geo)
 template<typename Win>
 QRect visible_rect(Win* win)
 {
-    return visible_rect(win, win->frameGeometry());
+    return visible_rect(win, win->geo.frame);
 }
 
 template<typename Win>
@@ -90,8 +90,8 @@ QRegion content_render_region(Win* win)
     auto const shape = win->render_region();
     auto clipping = QRect(QPoint(0, 0), render_geometry(win).size());
 
-    if (win->has_in_content_deco) {
-        clipping |= QRect(QPoint(0, 0), win->size());
+    if (win->geo.has_in_content_deco) {
+        clipping |= QRect(QPoint(0, 0), win->geo.size());
         auto const tl_offset = QPoint(left_border(win), top_border(win));
         auto const br_offset = -QPoint(right_border(win), bottom_border(win));
 
@@ -132,7 +132,7 @@ auto update_shadow(Win* win)
     }
 
     if (dirty_rect.isValid()) {
-        dirty_rect.translate(win->pos());
+        dirty_rect.translate(win->geo.pos());
         add_layer_repaint(*win, dirty_rect);
     }
 }

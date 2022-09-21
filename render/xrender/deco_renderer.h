@@ -85,7 +85,7 @@ public:
         if (this->areImageSizesDirty()) {
             resizePixmaps();
             this->resetImageSizesDirty();
-            scheduled = QRect(QPoint(), this->client()->client()->size());
+            scheduled = QRect(QPoint(), this->client()->client()->geo.size());
         }
 
         const QRect top(QPoint(0, 0), m_sizes[int(DecorationPart::Top)]);

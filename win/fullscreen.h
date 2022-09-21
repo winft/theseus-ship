@@ -16,15 +16,15 @@ namespace KWin::win
 template<typename Win>
 bool has_special_geometry_mode_besides_fullscreen(Win* win)
 {
-    return win->geometry_update.max_mode != maximize_mode::restore
+    return win->geo.update.max_mode != maximize_mode::restore
         || win->control->quicktiling != quicktiles::none || is_move(win);
 }
 
 template<typename Win>
 QRect rectify_fullscreen_restore_geometry(Win* win)
 {
-    if (win->restore_geometries.maximize.isValid()) {
-        return win->restore_geometries.maximize;
+    if (win->geo.restore.max.isValid()) {
+        return win->geo.restore.max;
     }
 
     auto const client_area = space_window_area(win->space, PlacementArea, win);
@@ -32,11 +32,11 @@ QRect rectify_fullscreen_restore_geometry(Win* win)
                                                               win::size_mode::fixed_height);
 
     // Placement requires changes to the current frame geometry.
-    auto const old_frame_geo = win->geometry_update.frame;
+    auto const old_frame_geo = win->geo.update.frame;
     win->setFrameGeometry(QRect(QPoint(), frame_size));
     win::place_smart(win, client_area);
 
-    auto const rectified_frame_geo = win->geometry_update.frame;
+    auto const rectified_frame_geo = win->geo.update.frame;
     win->setFrameGeometry(old_frame_geo);
 
     return rectified_frame_geo;
@@ -48,14 +48,14 @@ void fullscreen_restore_special_mode(Win* win)
     assert(has_special_geometry_mode_besides_fullscreen(win));
 
     // Window is still in some special geometry mode and we need to adapt the geometry for that.
-    if (win->geometry_update.max_mode != maximize_mode::restore) {
-        win->update_maximized(win->geometry_update.max_mode);
+    if (win->geo.update.max_mode != maximize_mode::restore) {
+        win->update_maximized(win->geo.update.max_mode);
     } else if (win->control->quicktiling != quicktiles::none) {
         auto const old_quicktiling = win->control->quicktiling;
-        auto const old_restore_geo = win->restore_geometries.maximize;
+        auto const old_restore_geo = win->geo.restore.max;
         set_quicktile_mode(win, quicktiles::none, false);
         set_quicktile_mode(win, old_quicktiling, false);
-        win->restore_geometries.maximize = old_restore_geo;
+        win->geo.restore.max = old_restore_geo;
     } else {
         assert(is_move(win));
         // TODO(romangg): Is this case relevant?
@@ -65,8 +65,8 @@ void fullscreen_restore_special_mode(Win* win)
 template<typename Win>
 void update_fullscreen_enable(Win* win)
 {
-    if (!win->restore_geometries.maximize.isValid()) {
-        win->restore_geometries.maximize = win->geometry_update.frame;
+    if (!win->geo.restore.max.isValid()) {
+        win->geo.restore.max = win->geo.update.frame;
     }
     win->setFrameGeometry(space_window_area(win->space, FullScreenArea, win));
 }
@@ -92,7 +92,7 @@ void update_fullscreen(Win* win, bool full, bool user)
 {
     full = win->control->rules.checkFullScreen(full);
 
-    auto const was_fullscreen = win->geometry_update.fullscreen;
+    auto const was_fullscreen = win->geo.update.fullscreen;
 
     if (was_fullscreen == full) {
         return;
@@ -106,7 +106,7 @@ void update_fullscreen(Win* win, bool full, bool user)
     }
 
     geometry_updates_blocker blocker(win);
-    win->geometry_update.fullscreen = full;
+    win->geo.update.fullscreen = full;
 
     end_move_resize(win);
     win->updateDecoration(false, false);

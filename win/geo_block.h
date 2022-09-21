@@ -14,13 +14,14 @@ template<typename Win>
 void block_geometry_updates(Win* win, bool block)
 {
     if (block) {
-        win->geometry_update.block++;
+        win->geo.update.block++;
         return;
     }
 
-    win->geometry_update.block--;
-    if (!win->geometry_update.block && win->geometry_update.pending != pending_geometry::none) {
-        win->setFrameGeometry(win->geometry_update.frame);
+    win->geo.update.block--;
+
+    if (!win->geo.update.block && win->geo.update.pending != pending_geometry::none) {
+        win->setFrameGeometry(win->geo.update.frame);
     }
 }
 

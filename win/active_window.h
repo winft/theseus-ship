@@ -306,7 +306,7 @@ void active_window_show_operations_popup(Space& space)
         return;
     }
 
-    auto pos = frame_to_client_pos(win, win->pos());
+    auto pos = frame_to_client_pos(win, win->geo.pos());
     space.user_actions_menu->show(QRect(pos, pos), win);
 }
 
@@ -317,7 +317,7 @@ void active_window_pack_left(Space& space)
     if (!can_move(win)) {
         return;
     }
-    auto const pos = win->geometry_update.frame.topLeft();
+    auto const pos = win->geo.update.frame.topLeft();
     pack_to(win, get_pack_position_left(space, win, pos.x(), true), pos.y());
 }
 
@@ -329,8 +329,8 @@ void active_window_pack_right(Space& space)
         return;
     }
 
-    auto const pos = win->geometry_update.frame.topLeft();
-    auto const width = win->geometry_update.frame.size().width();
+    auto const pos = win->geo.update.frame.topLeft();
+    auto const width = win->geo.update.frame.size().width();
     pack_to(win, get_pack_position_right(space, win, pos.x() + width, true) - width + 1, pos.y());
 }
 
@@ -342,7 +342,7 @@ void active_window_pack_up(Space& space)
         return;
     }
 
-    auto const pos = win->geometry_update.frame.topLeft();
+    auto const pos = win->geo.update.frame.topLeft();
     pack_to(win, pos.x(), get_pack_position_up(space, win, pos.y(), true));
 }
 
@@ -354,8 +354,8 @@ void active_window_pack_down(Space& space)
         return;
     }
 
-    auto const pos = win->geometry_update.frame.topLeft();
-    auto const height = win->geometry_update.frame.size().height();
+    auto const pos = win->geo.update.frame.topLeft();
+    auto const height = win->geo.update.frame.size().height();
     pack_to(win, pos.x(), get_pack_position_down(space, win, pos.y() + height, true) - height + 1);
 }
 

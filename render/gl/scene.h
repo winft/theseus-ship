@@ -884,7 +884,7 @@ private:
                                                            - lead_render_geo.topLeft());
 
                 lead->repaints_region += lead_damage.translated(lead_render_geo.topLeft()
-                                                                - lead->frameGeometry().topLeft());
+                                                                - lead->geo.frame.topLeft());
                 lead->damage_region += lead_damage;
 
                 for (auto const& rect : lead_damage) {
