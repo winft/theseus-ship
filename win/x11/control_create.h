@@ -161,7 +161,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     auto win = new Win(xcb_win, space);
 
     // So that decorations don't start with size being (0,0).
-    win->set_frame_geometry(QRect(0, 0, 100, 100));
+    win->geo.frame = QRect(0, 0, 100, 100);
 
     setup_space_window_connections(&space, win);
 
@@ -183,7 +183,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     win->control = std::make_unique<typename Win::control_t>(win);
 
     win->supported_default_types = supported_managed_window_types_mask;
-    win->has_in_content_deco = true;
+    win->geo.has_in_content_deco = true;
 
     win->sync_request.timestamp = xTime();
 
@@ -231,7 +231,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     embed_client(win, attr->visual, attr->colormap, windowGeometry->depth);
 
     win->xcb_visual = attr->visual;
-    win->bit_depth = windowGeometry->depth;
+    win->render_data.bit_depth = windowGeometry->depth;
 
     const NET::Properties properties = NET::WMDesktop | NET::WMState | NET::WMWindowType
         | NET::WMStrut | NET::WMName | NET::WMIconGeometry | NET::WMIcon | NET::WMPid
@@ -255,9 +255,9 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     win->info
         = new win_info<Win>(win, win->xcb_windows.client, rootWindow(), properties, properties2);
 
-    if (is_desktop(win) && win->bit_depth == 32) {
+    if (is_desktop(win) && win->render_data.bit_depth == 32) {
         // force desktop windows to be opaque. It's a desktop after all, there is no window below
-        win->bit_depth = 24;
+        win->render_data.bit_depth = 24;
     }
     win->colormap = attr->colormap;
 
@@ -269,10 +269,10 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     // First only read the caption text, so that win::setup_rules(..) can use it for matching,
     // and only then really set the caption using setCaption(), which checks for duplicates etc.
     // and also relies on rules already existing
-    win->caption.normal = read_name(win);
+    win->meta.caption.normal = read_name(win);
 
     rules::setup_rules(win, false);
-    set_caption(win, win->caption.normal, true);
+    set_caption(win, win->meta.caption.normal, true);
 
     QObject::connect(win->qobject.get(),
                      &Win::qobject_t::windowClassChanged,
@@ -292,7 +292,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
     update_allowed_actions(win);
 
-    win->transient()->set_modal((win->info->state() & NET::Modal) != 0);
+    win->transient->set_modal((win->info->state() & NET::Modal) != 0);
     read_transient_property(win, transientCookie);
 
     QByteArray desktopFileName{win->info->desktopFileName()};
@@ -310,7 +310,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     win->geometry_hints.read();
     get_motif_hints(win, true);
     win->getWmOpaqueRegion();
-    win->setSkipCloseAnimation(skipCloseAnimationCookie.to_bool());
+    set_skip_close_animation(*win, skipCloseAnimationCookie.to_bool());
 
     // TODO: Try to obey all state information from info->state()
 
@@ -330,7 +330,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
     // Make sure that the input window is created before we update the stacking order
     // TODO(romangg): Does it matter that the frame geometry is not set yet here?
-    update_input_window(win, win->frameGeometry());
+    update_input_window(win, win->geo.frame);
 
     update_layer(win);
 
@@ -360,8 +360,8 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         // If this window is transient, ensure that it is opened on the
         // same window as its parent.  this is necessary when an application
         // starts up on a different desktop than is currently displayed.
-        if (win->transient()->lead()) {
-            auto leads = win->transient()->leads();
+        if (win->transient->lead()) {
+            auto leads = win->transient->leads();
             bool on_current = false;
             bool on_all = false;
             typename Space::window_t* maincl = nullptr;
@@ -376,10 +376,10 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
                 }
 
                 maincl = lead;
-                if (lead->isOnCurrentDesktop()) {
+                if (on_current_desktop(lead)) {
                     on_current = true;
                 }
-                if (lead->isOnAllDesktops()) {
+                if (on_all_desktops(lead)) {
                     on_all = true;
                 }
             }
@@ -420,8 +420,8 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
     propagate_on_all_desktops_to_children(*win);
 
-    win->client_frame_extents = gtk_frame_extents(win);
-    win->geometry_update.original.client_frame_extents = win->client_frame_extents;
+    win->geo.client_frame_extents = gtk_frame_extents(win);
+    win->geo.update.original.client_frame_extents = win->geo.client_frame_extents;
 
     prepare_decoration(win);
 
@@ -438,12 +438,12 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         }
 
         auto const frame_pos = client_geo.topLeft() - QPoint(left_border(win), top_border(win))
-            + QPoint(win->client_frame_extents.left(), win->client_frame_extents.top());
+            + QPoint(win->geo.client_frame_extents.left(), win->geo.client_frame_extents.top());
         auto const frame_size = size_for_client_size(win, client_geo.size(), size_mode::any, false);
         frame_geo = QRect(frame_pos, frame_size);
     }
 
-    win->set_frame_geometry(frame_geo);
+    win->geo.frame = frame_geo;
 
     auto const placement_area
         = place_on_taking_control(win, frame_geo, isMapped, session, asn_data);
@@ -452,7 +452,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     // if client has initial state set to Iconic and is transient with a parent
     // window that is not Iconic, set init_state to Normal
     if (init_minimize) {
-        auto leads = win->transient()->leads();
+        auto leads = win->transient->leads();
         for (auto lead : leads) {
             if (lead->isShown()) {
                 // SELI TODO: Even e.g. for NET::Utility?
@@ -462,11 +462,11 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     }
 
     // If a dialog is shown for minimized window, minimize it too
-    if (!init_minimize && win->transient()->lead()
+    if (!init_minimize && win->transient->lead()
         && space.session_manager->state() != SessionState::Saving) {
         bool visible_parent = false;
 
-        for (auto const& lead : win->transient()->leads()) {
+        for (auto const& lead : win->transient->leads()) {
             if (lead->isShown()) {
                 visible_parent = true;
             }
@@ -495,14 +495,14 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
         if (static_cast<maximize_mode>(session->maximized) != maximize_mode::restore) {
             maximize(win, static_cast<maximize_mode>(session->maximized));
-            win->restore_geometries.maximize = session->restore;
+            win->geo.restore.max = session->restore;
         }
         if (session->fullscreen) {
             win->setFullScreen(true, false);
-            win->restore_geometries.maximize = session->fsrestore;
+            win->geo.restore.max = session->fsrestore;
         }
 
-        check_offscreen_position(win->restore_geometries.maximize, placement_area);
+        check_offscreen_position(win->geo.restore.max, placement_area);
 
     } else {
         // Window may want to be maximized
@@ -547,7 +547,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
             set_demands_attention(win, true);
         }
         if (win->info->state() & NET::Modal) {
-            win->transient()->set_modal(true);
+            win->transient->set_modal(true);
         }
 
         win->setFullScreen(
@@ -562,7 +562,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         win, asn_valid ? &asn_id : nullptr, asn_valid ? &asn_data : nullptr, session);
 
     // And do what Win::updateUserTime() does
-    win->group()->updateUserTime(win->user_time);
+    win->group->updateUserTime(win->user_time);
 
     // This should avoid flicker, because real restacking is done
     // only after manage() finishes because of blocking, but the window is shown sooner
@@ -575,7 +575,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
     if (!win->space.base.render->compositor->scene) {
         // set to true in case compositing is turned on later. bug #160393
-        win->ready_for_painting = true;
+        win->render_data.ready_for_painting = true;
     }
 
     if (win->isShown()) {
@@ -593,11 +593,11 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
         // If session saving, force showing new windows (i.e. "save file?" dialogs etc.)
         // also force if activation is allowed
-        if (!win->isOnCurrentDesktop() && !isMapped && !session && (allow || isSessionSaving)) {
+        if (!on_current_desktop(win) && !isMapped && !session && (allow || isSessionSaving)) {
             space.virtual_desktop_manager->setCurrent(win->desktop());
         }
 
-        if (win->isOnCurrentDesktop() && !isMapped && !allow
+        if (on_current_desktop(win) && !isMapped && !allow
             && (!session || session->stackingOrder < 0)) {
             restack_client_under_active(&win->space, win);
         }
@@ -605,7 +605,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         update_visibility(win);
 
         if (!isMapped) {
-            if (allow && win->isOnCurrentDesktop()) {
+            if (allow && on_current_desktop(win)) {
                 if (!is_special_window(win)) {
                     if (kwinApp()->options->qobject->focusPolicyIsReasonable()
                         && wants_tab_focus(win)) {
@@ -712,10 +712,10 @@ xcb_timestamp_t read_user_time_map_timestamp(Win* win,
                     && belong_to_same_application(
                            x11_client, win, same_client_check::relaxed_for_active);
             };
-            if (win->transient()->lead()) {
+            if (win->transient->lead()) {
                 auto clientMainClients = [win]() {
                     std::vector<Win*> ret;
-                    const auto mcs = win->transient()->leads();
+                    const auto mcs = win->transient->leads();
                     for (auto mc : mcs) {
                         if (auto c = dynamic_cast<Win*>(mc)) {
                             ret.push_back(c);
@@ -723,7 +723,7 @@ xcb_timestamp_t read_user_time_map_timestamp(Win* win,
                     }
                     return ret;
                 };
-                if (win->transient()->is_follower_of(act))
+                if (win->transient->is_follower_of(act))
                     ; // is transient for currently active window, even though it's not
                 // the same app (e.g. kcookiejar dialog) -> allow activation
                 else if (win->groupTransient()

@@ -7,6 +7,7 @@
 #pragma once
 
 #include "kwinglobals.h"
+#include "win/damage.h"
 #include "win/deco/renderer.h"
 
 #include <kwinxrender/utils.h>
@@ -62,10 +63,11 @@ public:
     {
         this->data = std::make_unique<deco_render_data>();
 
-        QObject::connect(this->qobject.get(),
-                         &win::deco::renderer_qobject::renderScheduled,
-                         client->client()->qobject.get(),
-                         [win = client->client()](auto const& region) { win->addRepaint(region); });
+        QObject::connect(
+            this->qobject.get(),
+            &win::deco::renderer_qobject::renderScheduled,
+            client->client()->qobject.get(),
+            [win = client->client()](auto const& region) { win::add_repaint(*win, region); });
 
         auto& data = get_data();
         for (int i = 0; i < int(DecorationPart::Count); ++i) {
@@ -83,7 +85,7 @@ public:
         if (this->areImageSizesDirty()) {
             resizePixmaps();
             this->resetImageSizesDirty();
-            scheduled = QRect(QPoint(), this->client()->client()->size());
+            scheduled = QRect(QPoint(), this->client()->client()->geo.size());
         }
 
         const QRect top(QPoint(0, 0), m_sizes[int(DecorationPart::Top)]);

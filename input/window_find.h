@@ -55,14 +55,14 @@ auto find_controlled_window(Redirect const& redirect, QPoint const& pos) ->
             continue;
         }
         if (window->control) {
-            if (!window->isOnCurrentDesktop() || window->control->minimized) {
+            if (!win::on_current_desktop(window) || window->control->minimized) {
                 continue;
             }
         }
         if (window->isHiddenInternal()) {
             continue;
         }
-        if (!window->ready_for_painting) {
+        if (!window->render_data.ready_for_painting) {
             continue;
         }
         if (isScreenLocked) {

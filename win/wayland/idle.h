@@ -3,6 +3,8 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
+#include "win/desktop_get.h"
+
 #include <QObject>
 #include <Wrapland/Server/surface.h>
 
@@ -13,7 +15,7 @@ namespace KWin::win::wayland
 template<typename Win>
 void idle_update(Win& window)
 {
-    auto const is_visible = window.isShown() && window.isOnCurrentDesktop();
+    auto const is_visible = window.isShown() && on_current_desktop(&window);
 
     if (is_visible && window.surface && window.surface->inhibitsIdle()) {
         if (!window.inhibit_idle) {

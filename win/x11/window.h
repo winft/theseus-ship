@@ -11,6 +11,7 @@
 #include "deco.h"
 #include "fullscreen.h"
 #include "geo.h"
+#include "group.h"
 #include "maximize.h"
 #include "transient.h"
 #include "types.h"
@@ -25,11 +26,14 @@
 #include "utils/geo.h"
 #include "win/fullscreen.h"
 #include "win/meta.h"
+#include "win/scene.h"
 #include "win/window_setup_base.h"
 
 #include <csignal>
 #include <memory>
 #include <vector>
+#include <xcb/damage.h>
+#include <xcb/xfixes.h>
 
 namespace KWin::win::x11
 {
@@ -51,13 +55,13 @@ public:
 
     window(xcb_window_t xcb_win, Space& space)
         : Toplevel<Space>(new x11::transient<window>(this), space)
+        , client_machine{new win::x11::client_machine}
         , motif_hints(space.atoms->motif_wm_hints)
     {
         Toplevel<Space>::qobject = std::make_unique<window_qobject>();
         window_setup_geometry(*this);
 
         this->xcb_window.reset(xcb_win, false);
-        this->client_machine = new win::x11::client_machine;
     }
 
     ~window()
@@ -76,11 +80,102 @@ public:
         assert(xcb_windows.client == XCB_WINDOW_NONE);
         assert(xcb_windows.wrapper == XCB_WINDOW_NONE);
         assert(xcb_windows.outer == XCB_WINDOW_NONE);
+
+        delete client_machine;
     }
 
     bool isClient() const override
     {
         return static_cast<bool>(this->control);
+    }
+
+    NET::WindowType get_window_type_direct() const override
+    {
+        if (this->remnant) {
+            return window_type;
+        }
+        return this->info->windowType(this->supported_default_types);
+    }
+
+    NET::WindowType windowType() const override
+    {
+        auto wt = get_window_type_direct();
+        if (!this->control) {
+            return wt;
+        }
+
+        assert(!this->remnant);
+
+        auto wt2 = this->control->rules.checkType(wt);
+        if (wt != wt2) {
+            wt = wt2;
+            // force hint change
+            this->info->setWindowType(wt);
+        }
+
+        // hacks here
+        if (wt == NET::Unknown) {
+            // this is more or less suggested in NETWM spec
+            wt = this->transient->lead() ? NET::Dialog : NET::Normal;
+        }
+        return wt;
+    }
+
+    x11::client_machine* get_client_machine() const override
+    {
+        return client_machine;
+    }
+
+    QByteArray wmClientMachine(bool use_localhost) const override
+    {
+        assert(client_machine);
+
+        if (use_localhost && client_machine->is_local()) {
+            // Special name for the local machine (localhost).
+            return client_machine::localhost();
+        }
+        return client_machine->hostname();
+    }
+
+    xcb_window_t wmClientLeader() const
+    {
+        if (m_wmClientLeader != XCB_WINDOW_NONE) {
+            return m_wmClientLeader;
+        }
+        return this->xcb_window;
+    }
+
+    bool isLocalhost() const override
+    {
+        assert(client_machine);
+        return client_machine->is_local();
+    }
+
+    double opacity() const override
+    {
+        if (this->remnant) {
+            return this->remnant->data.opacity;
+        }
+        if (this->info->opacity() == 0xffffffff) {
+            return 1.0;
+        }
+        return this->info->opacity() * 1.0 / 0xffffffff;
+    }
+
+    void setOpacity(double new_opacity) override
+    {
+        double old_opacity = opacity();
+        new_opacity = qBound(0.0, new_opacity, 1.0);
+        if (old_opacity == new_opacity) {
+            return;
+        }
+
+        this->info->setOpacity(static_cast<unsigned long>(new_opacity * 0xffffffff));
+
+        if (this->space.base.render->compositor->scene) {
+            add_full_repaint(*this);
+            Q_EMIT this->qobject->opacityChanged(old_opacity);
+        }
     }
 
     xcb_window_t frameId() const override
@@ -92,6 +187,51 @@ public:
             return Toplevel<Space>::frameId();
         }
         return xcb_windows.outer;
+    }
+
+    QRegion shape_render_region() const
+    {
+        assert(this->is_shape);
+
+        if (this->is_render_shape_valid) {
+            return render_shape;
+        }
+
+        this->is_render_shape_valid = true;
+        render_shape = {};
+
+        auto cookie
+            = xcb_shape_get_rectangles_unchecked(connection(), frameId(), XCB_SHAPE_SK_BOUNDING);
+        unique_cptr<xcb_shape_get_rectangles_reply_t> reply(
+            xcb_shape_get_rectangles_reply(connection(), cookie, nullptr));
+        if (!reply) {
+            return {};
+        }
+
+        auto const rects = xcb_shape_get_rectangles_rectangles(reply.get());
+        auto const rect_count = xcb_shape_get_rectangles_rectangles_length(reply.get());
+        for (int i = 0; i < rect_count; ++i) {
+            render_shape += QRegion(rects[i].x, rects[i].y, rects[i].width, rects[i].height);
+        }
+
+        // make sure the shape is sane (X is async, maybe even XShape is broken)
+        auto const render_geo = render_geometry(this);
+        render_shape &= QRegion(0, 0, render_geo.width(), render_geo.height());
+        return render_shape;
+    }
+
+    QRegion render_region() const override
+    {
+        if (this->remnant) {
+            return this->remnant->data.render_region;
+        }
+
+        if (this->is_shape) {
+            return shape_render_region();
+        }
+
+        auto const render_geo = win::render_geometry(this);
+        return QRegion(0, 0, render_geo.width(), render_geo.height());
     }
 
     /**
@@ -138,7 +278,7 @@ public:
         }
 
         // Check all mainwindows of this window (recursively)
-        for (auto mc : this->transient()->leads()) {
+        for (auto mc : this->transient->leads()) {
             geom = mc->iconGeometry();
             if (geom.isValid()) {
                 return geom;
@@ -149,14 +289,40 @@ public:
         return Toplevel<Space>::iconGeometry();
     }
 
-    bool setupCompositing() override
+    void setupCompositing() override
     {
-        return x11::setup_compositing(*this);
+        assert(!this->remnant);
+        assert(damage_handle == XCB_NONE);
+
+        if (!this->space.base.render->compositor->scene) {
+            return;
+        }
+
+        damage_handle = xcb_generate_id(connection());
+        xcb_damage_create(
+            connection(), damage_handle, this->frameId(), XCB_DAMAGE_REPORT_LEVEL_NON_EMPTY);
+
+        discard_shape(*this);
+        this->render_data.damage_region = QRect({}, this->geo.size());
+
+        add_scene_window(*this->space.base.render->compositor->scene, *this);
+
+        if (this->control) {
+            // for internalKeep()
+            update_visibility(this);
+        } else {
+            // With unmanaged windows there is a race condition between the client painting the
+            // window and us setting up damage tracking.  If the client wins we won't get a damage
+            // event even though the window has been painted.  To avoid this we mark the whole
+            // window as damaged and schedule a repaint immediately after creating the damage
+            // object.
+            add_full_damage(*this);
+        }
     }
 
     void finishCompositing() override
     {
-        Toplevel<Space>::finishCompositing();
+        finish_compositing(*this);
         destroy_damage_handle(*this);
 
         // For safety in case KWin is just resizing the window.
@@ -189,7 +355,7 @@ public:
             return render::x11::read_and_update_shadow<shadow_t>(shadow, atoms->kde_net_wm_shadow);
         };
 
-        auto setup_buffer = [this](auto& buffer) {
+        auto setup_buffer = [](auto& buffer) {
             using buffer_integration_t
                 = render::x11::buffer_win_integration<typename scene_t::buffer_t>;
 
@@ -204,45 +370,118 @@ public:
         this->render->win_integration.setup_buffer = setup_buffer;
     }
 
-    void damageNotifyEvent() override
+    void damageNotifyEvent()
     {
+        this->render_data.is_damaged = true;
+
         if (!this->control) {
-            Toplevel<Space>::damageNotifyEvent();
+            // Note: The region is supposed to specify the damage extents, but we don't know it at
+            //       this point. No one who connects to this signal uses the rect however.
+            Q_EMIT this->qobject->damaged({});
             return;
         }
 
         if (isWaitingForMoveResizeSync()) {
-            this->m_isDamaged = true;
             return;
         }
 
-        if (!this->ready_for_painting) {
+        if (!this->render_data.ready_for_painting) {
             // avoid "setReadyForPainting()" function calling overhead
             if (sync_request.counter == XCB_NONE) {
                 // cannot detect complete redraw, consider done now
-                this->setReadyForPainting();
+                set_ready_for_painting(*this);
             }
         }
 
-        Toplevel<Space>::damageNotifyEvent();
+        Q_EMIT this->qobject->damaged({});
     }
 
-    void addDamage(QRegion const& damage) override
+    /**
+     * Resets the damage state and sends a request for the damage region.
+     * A call to this function must be followed by a call to getDamageRegionReply(),
+     * or the reply will be leaked.
+     *
+     * Returns true if the window was damaged, and false otherwise.
+     */
+    bool resetAndFetchDamage()
     {
-        if (!this->ready_for_painting) {
-            // avoid "setReadyForPainting()" function calling overhead
-            if (sync_request.counter == XCB_NONE) {
-                // cannot detect complete redraw, consider done now
-                first_geo_synced = true;
-                this->setReadyForPainting();
-            }
+        if (!this->render_data.is_damaged) {
+            return false;
         }
-        Toplevel<Space>::addDamage(damage);
+
+        assert(damage_handle != XCB_NONE);
+
+        xcb_connection_t* conn = connection();
+
+        // Create a new region and copy the damage region to it,
+        // resetting the damaged state.
+        xcb_xfixes_region_t region = xcb_generate_id(conn);
+        xcb_xfixes_create_region(conn, region, 0, nullptr);
+        xcb_damage_subtract(conn, this->damage_handle, 0, region);
+
+        // Send a fetch-region request and destroy the region
+        damage_region_cookie = xcb_xfixes_fetch_region_unchecked(conn, region);
+        xcb_xfixes_destroy_region(conn, region);
+
+        this->render_data.is_damaged = false;
+        is_damage_reply_pending = true;
+
+        return is_damage_reply_pending;
+    }
+
+    /**
+     * Gets the reply from a previous call to resetAndFetchDamage().
+     * Calling this function is a no-op if there is no pending reply.
+     * Call damage() to return the fetched region.
+     */
+    void getDamageRegionReply()
+    {
+        if (!is_damage_reply_pending) {
+            return;
+        }
+
+        is_damage_reply_pending = false;
+
+        // Get the fetch-region reply
+        auto reply = xcb_xfixes_fetch_region_reply(connection(), damage_region_cookie, nullptr);
+        if (!reply) {
+            return;
+        }
+
+        // Convert the reply to a QRegion. The region is relative to the content geometry.
+        auto count = xcb_xfixes_fetch_region_rectangles_length(reply);
+        QRegion region;
+
+        if (count > 1 && count < 16) {
+            auto rects = xcb_xfixes_fetch_region_rectangles(reply);
+
+            QVector<QRect> qrects;
+            qrects.reserve(count);
+
+            for (int i = 0; i < count; i++) {
+                qrects << QRect(rects[i].x, rects[i].y, rects[i].width, rects[i].height);
+            }
+            region.setRects(qrects.constData(), count);
+        } else {
+            region += QRect(
+                reply->extents.x, reply->extents.y, reply->extents.width, reply->extents.height);
+        }
+
+        region.translate(
+            -QPoint(this->geo.client_frame_extents.left(), this->geo.client_frame_extents.top()));
+        this->render_data.repaints_region |= region;
+
+        if (this->geo.has_in_content_deco) {
+            region.translate(-QPoint(left_border(this), top_border(this)));
+        }
+        this->render_data.damage_region |= region;
+
+        free(reply);
     }
 
     void applyWindowRules() override
     {
-        Toplevel<Space>::applyWindowRules();
+        apply_window_rules(*this);
         setBlockingCompositing(this->info->isBlockingCompositing());
     }
 
@@ -262,7 +501,7 @@ public:
 
     void updateCaption() override
     {
-        set_caption(this, this->caption.normal, true);
+        set_caption(this, this->meta.caption.normal, true);
     }
 
     bool isShown() const override
@@ -293,17 +532,6 @@ public:
         return geometry_hints.resize_increments();
     }
 
-    // TODO: remove
-    x11::group<Space> const* group() const override
-    {
-        return in_group;
-    }
-
-    x11::group<Space>* group() override
-    {
-        return in_group;
-    }
-
     // When another window is created, checks if this window is a child for it.
     void checkTransient(abstract_type* window) override
     {
@@ -324,22 +552,22 @@ public:
         //
         // [1] https://specifications.freedesktop.org/wm-spec/wm-spec-latest.html#idm45623487728576
         //
-        return static_cast<x11::transient<window>*>(this->transient())->lead_id == rootWindow();
+        return static_cast<x11::transient<window>*>(this->transient.get())->lead_id == rootWindow();
     }
 
     abstract_type* find_modal_recursive(abstract_type* win)
     {
-        for (auto child : win->transient()->children) {
+        for (auto child : win->transient->children) {
             if (auto ret = find_modal_recursive(child)) {
                 return ret;
             }
         }
-        return win->transient()->modal() ? win : nullptr;
+        return win->transient->modal() ? win : nullptr;
     }
 
     abstract_type* findModal() override
     {
-        for (auto child : this->transient()->children) {
+        for (auto child : this->transient->children) {
             if (auto modal = find_modal_recursive(child)) {
                 return modal;
             }
@@ -446,7 +674,7 @@ public:
         auto breakShowingDesktop = !this->control->keep_above;
 
         if (breakShowingDesktop) {
-            for (auto const& c : group()->members) {
+            for (auto const& c : group->members) {
                 if (win::is_desktop(c)) {
                     breakShowingDesktop = false;
                     break;
@@ -462,7 +690,7 @@ public:
     bool userCanSetNoBorder() const override
     {
         // CSD in general allow no change by user, also not possible when fullscreen.
-        return this->client_frame_extents.isNull() && !this->control->fullscreen;
+        return this->geo.client_frame_extents.isNull() && !this->control->fullscreen;
     }
 
     bool wantsInput() const override
@@ -555,7 +783,7 @@ public:
 
     bool isMinimizable() const override
     {
-        if (win::is_special_window(this) && !this->transient()->lead()) {
+        if (win::is_special_window(this) && !this->transient->lead()) {
             return false;
         }
         if (win::is_applet_popup(this)) {
@@ -565,10 +793,10 @@ public:
             return false;
         }
 
-        if (this->transient()->lead()) {
+        if (this->transient->lead()) {
             // #66868 - Let other xmms windows be minimized when the mainwindow is minimized
             auto shown_main_window = false;
-            for (auto const& lead : this->transient()->leads())
+            for (auto const& lead : this->transient->leads())
                 if (lead->isShown()) {
                     shown_main_window = true;
                 }
@@ -623,7 +851,7 @@ public:
         if (!this->info->hasNETSupport() && !motif_hints.resize()) {
             return false;
         }
-        if (this->geometry_update.fullscreen) {
+        if (this->geo.update.fullscreen) {
             return false;
         }
         if (win::is_special_window(this) || win::is_splash(this) || win::is_toolbar(this)) {
@@ -716,7 +944,7 @@ public:
     {
         if (move_needs_server_update) {
             // Do the deferred move
-            auto const frame_geo = this->frameGeometry();
+            auto const frame_geo = this->geo.frame;
             auto const client_geo = frame_to_client_rect(this, frame_geo);
             auto const outer_pos = frame_to_render_rect(this, frame_geo).topLeft();
 
@@ -737,7 +965,7 @@ public:
         xcb_ungrab_pointer(connection(), xTime());
         xcb_windows.grab.reset();
 
-        Toplevel<Space>::leaveMoveResize();
+        leave_move_resize(*this);
     }
 
     void doResizeSync() override
@@ -765,11 +993,8 @@ public:
 
         if (pending_configures.empty()) {
             assert(!syncless_resize_retarder->isActive());
-            pending_configures.push_back({0,
-                                          {frame_geo,
-                                           QRect(),
-                                           this->geometry_update.max_mode,
-                                           this->geometry_update.fullscreen}});
+            pending_configures.push_back(
+                {0, {frame_geo, QRect(), this->geo.update.max_mode, this->geo.update.fullscreen}});
             syncless_resize_retarder->start(16);
         } else {
             pending_configures.front().geometry.frame = frame_geo;
@@ -793,7 +1018,7 @@ public:
 
     bool belongsToDesktop() const override
     {
-        for (auto const& member : group()->members) {
+        for (auto const& member : group->members) {
             if (win::is_desktop(member)) {
                 return true;
             }
@@ -819,11 +1044,11 @@ public:
             return 0;
         }
 
-        assert(group() != nullptr);
+        assert(group != nullptr);
 
         if (time == -1U
-            || (group()->user_time != -1U && NET::timestampCompare(group()->user_time, time) > 0)) {
-            time = group()->user_time;
+            || (group->user_time != -1U && NET::timestampCompare(group->user_time, time) > 0)) {
+            time = group->user_time;
         }
         return time;
     }
@@ -846,14 +1071,14 @@ public:
     {
         auto frame_geo = this->control->rules.checkGeometry(rect);
 
-        this->geometry_update.frame = frame_geo;
+        this->geo.update.frame = frame_geo;
 
-        if (this->geometry_update.block) {
-            this->geometry_update.pending = win::pending_geometry::normal;
+        if (this->geo.update.block) {
+            this->geo.update.pending = win::pending_geometry::normal;
             return;
         }
 
-        this->geometry_update.pending = win::pending_geometry::none;
+        this->geo.update.pending = win::pending_geometry::none;
 
         auto const old_client_geo = synced_geometry.client;
         auto client_geo = frame_to_client_rect(this, frame_geo);
@@ -887,7 +1112,7 @@ public:
 
                                      pending_configures.erase(pending_configures.begin());
 
-                                     this->setReadyForPainting();
+                                     set_ready_for_painting(*this);
                                  });
                 fallback_timer->setSingleShot(true);
                 fallback_timer->start(1000);
@@ -896,8 +1121,8 @@ public:
             update_server_geometry(this, frame_geo);
             send_synthetic_configure_notify(this, client_geo);
             do_set_geometry(frame_geo);
-            do_set_fullscreen(this->geometry_update.fullscreen);
-            do_set_maximize_mode(this->geometry_update.max_mode);
+            do_set_fullscreen(this->geo.update.fullscreen);
+            do_set_maximize_mode(this->geo.update.max_mode);
             first_geo_synced = true;
             return;
         }
@@ -930,8 +1155,8 @@ public:
         update_server_geometry(this, frame_geo);
 
         do_set_geometry(frame_geo);
-        do_set_fullscreen(this->geometry_update.fullscreen);
-        do_set_maximize_mode(this->geometry_update.max_mode);
+        do_set_fullscreen(this->geo.update.fullscreen);
+        do_set_maximize_mode(this->geo.update.max_mode);
 
         // Always recalculate client geometry in case borders changed on fullscreen/maximize
         // changes.
@@ -954,24 +1179,24 @@ public:
     {
         assert(!has_special_geometry_mode_besides_fullscreen(this));
         setFrameGeometry(rectify_fullscreen_restore_geometry(this));
-        this->restore_geometries.maximize = {};
+        this->geo.restore.max = {};
     }
 
     void do_set_geometry(QRect const& frame_geo)
     {
         assert(this->control);
 
-        auto const old_frame_geo = this->frameGeometry();
+        auto const old_frame_geo = this->geo.frame;
 
         if (old_frame_geo == frame_geo && first_geo_synced) {
             return;
         }
 
-        this->set_frame_geometry(frame_geo);
+        this->geo.frame = frame_geo;
 
         if (frame_to_render_rect(this, old_frame_geo).size()
             != frame_to_render_rect(this, frame_geo).size()) {
-            this->discard_buffer();
+            discard_buffer(*this);
         }
 
         // TODO(romangg): Remove?
@@ -984,8 +1209,8 @@ public:
             perform_move_resize(this);
         }
 
-        this->addLayerRepaint(visible_rect(this, old_frame_geo));
-        this->addLayerRepaint(visible_rect(this, frame_geo));
+        add_layer_repaint(*this, visible_rect(this, old_frame_geo));
+        add_layer_repaint(*this, visible_rect(this, frame_geo));
 
         Q_EMIT this->qobject->frame_geometry_changed(old_frame_geo);
 
@@ -1033,7 +1258,7 @@ public:
         }
 
         // Need to update the server geometry in case the decoration changed.
-        update_server_geometry(this, this->geometry_update.frame);
+        update_server_geometry(this, this->geo.update.frame);
 
         Q_EMIT this->qobject->maximize_mode_changed(mode);
     }
@@ -1063,7 +1288,7 @@ public:
             updateDecoration(false, false);
 
             // Need to update the server geometry in case the decoration changed.
-            update_server_geometry(this, this->geometry_update.frame);
+            update_server_geometry(this, this->geo.update.frame);
         }
 
         // Active fullscreens gets a different layer.
@@ -1090,8 +1315,9 @@ public:
 
     void getResourceClass()
     {
-        this->setResourceClass(QByteArray(this->info->windowClassName()).toLower(),
-                               QByteArray(this->info->windowClassClass()).toLower());
+        set_wm_class(*this,
+                     QByteArray(this->info->windowClassName()).toLower(),
+                     QByteArray(this->info->windowClassClass()).toLower());
     }
 
     void getWmClientMachine()
@@ -1132,12 +1358,12 @@ public:
             new_opaque_region += QRect(r.pos.x, r.pos.y, r.size.width, r.size.height);
         }
 
-        this->opaque_region = new_opaque_region;
+        this->render_data.opaque_region = new_opaque_region;
     }
 
-    void getSkipCloseAnimation()
+    void fetch_and_set_skip_close_animation()
     {
-        this->setSkipCloseAnimation(fetch_skip_close_animation(*this).to_bool());
+        set_skip_close_animation(*this, fetch_skip_close_animation(*this).to_bool());
     }
 
     void detectShape(xcb_window_t id)
@@ -1245,13 +1471,13 @@ public:
         }
 
         this->surface_id = e->data.data32[0];
-        Q_EMIT this->space.qobject->surface_id_changed(this->signal_id, this->surface_id);
+        Q_EMIT this->space.qobject->surface_id_changed(this->meta.signal_id, this->surface_id);
         Q_EMIT this->qobject->surfaceIdChanged(this->surface_id);
     }
 
     static bool resourceMatch(window const* c1, window const* c2)
     {
-        return c1->resource_class == c2->resource_class;
+        return c1->meta.wm_class.res_class == c2->meta.wm_class.res_class;
     }
 
     void debug(QDebug& stream) const override
@@ -1271,8 +1497,9 @@ public:
         stream.nospace();
         stream << "\'x11::window"
                << "(" << QString::fromStdString(type) << "):" << this->xcb_window << ";"
-               << ";WMCLASS:" << this->resource_class << ":" << this->resource_name
-               << ";Caption:" << QString::fromStdString(caption) << "\'";
+               << ";WMCLASS:" << this->meta.wm_class.res_class << ":"
+               << this->meta.wm_class.res_name << ";Caption:" << QString::fromStdString(caption)
+               << "\'";
     }
 
     QString iconic_caption;
@@ -1295,13 +1522,18 @@ public:
         base::x11::xcb::window grab{};
     } xcb_windows;
 
+    x11::client_machine* client_machine{nullptr};
+    xcb_window_t m_wmClientLeader{XCB_WINDOW_NONE};
+
     bool blocks_compositing{false};
     uint deleting{0};
+    bool has_scheduled_release{false};
 
     // True when X11 Server must be informed about the final location of a move on leaving the move.
     bool move_needs_server_update{false};
     bool move_resize_has_keyboard_grab{false};
 
+    NET::WindowTypes supported_default_types{};
     NET::Actions allowed_actions{};
 
     uint user_no_border{0};
@@ -1365,16 +1597,25 @@ public:
     base::x11::xcb::geometry_hints geometry_hints;
     base::x11::xcb::motif_hints motif_hints;
 
+    xcb_damage_damage_t damage_handle{XCB_NONE};
+    bool is_damage_reply_pending{false};
+    xcb_xfixes_fetch_region_cookie_t damage_region_cookie;
+
     QTimer* focus_out_timer{nullptr};
     QTimer* ping_timer{nullptr};
 
     QPoint input_offset;
+    mutable QRegion render_shape;
 
     int sm_stacking_order{-1};
 
-    x11::group<Space>* in_group{nullptr};
+    x11::group<Space>* group{nullptr};
 
+    xcb_visualid_t xcb_visual{XCB_NONE};
     xcb_colormap_t colormap{XCB_COLORMAP_NONE};
+
+    // Only used as a cache for window as a remnant.
+    NET::WindowType window_type{NET::Normal};
 };
 
 }

@@ -57,7 +57,7 @@ public:
         QObject::connect(source.get_source(),
                          &data_source_ext::accepted,
                          this->qobject.get(),
-                         [this](auto /*mime_type*/) {
+                         [](auto /*mime_type*/) {
                              // TODO(romangg): handle?
                          });
         QObject::connect(
@@ -217,7 +217,7 @@ private:
     {
         auto ac = visit->target;
         win::activate_window(*source.core.space, ac);
-        waylandServer()->seat()->drags().set_target(ac->surface, ac->input_transform());
+        waylandServer()->seat()->drags().set_target(ac->surface, win::get_input_transform(*ac));
     }
 
     bool check_for_finished()

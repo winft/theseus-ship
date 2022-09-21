@@ -67,7 +67,7 @@ public:
         auto& vds = m_tabbox->space.virtual_desktop_manager;
 
         if (auto c = get_client_impl(client)) {
-            if (!c->client()->isOnAllDesktops())
+            if (!on_all_desktops(c->client()))
                 return vds->name(c->client()->desktop());
         }
 
@@ -191,8 +191,8 @@ public:
     std::weak_ptr<tabbox_client> desktop_client() const override
     {
         for (auto const& window : m_tabbox->space.stacking.order.stack) {
-            if (window->control && win::is_desktop(window) && window->isOnCurrentDesktop()
-                && window->central_output == win::get_current_output(m_tabbox->space)) {
+            if (window->control && win::is_desktop(window) && on_current_desktop(window)
+                && window->topo.central_output == win::get_current_output(m_tabbox->space)) {
                 return window->control->tabbox();
             }
         }
@@ -242,9 +242,9 @@ private:
         case tabbox_config::AllDesktopsClients:
             return true;
         case tabbox_config::ExcludeCurrentDesktopClients:
-            return !current->isOnDesktop(desktop);
+            return !on_desktop(current, desktop);
         default: // TabBoxConfig::OnlyCurrentDesktopClients
-            return current->isOnDesktop(desktop);
+            return on_desktop(current, desktop);
         }
     }
 
@@ -308,9 +308,9 @@ private:
         case tabbox_config::IgnoreMultiScreen:
             return true;
         case tabbox_config::ExcludeCurrentScreenClients:
-            return current_window->central_output != current_output;
+            return current_window->topo.central_output != current_output;
         default: // tabbox_config::OnlyCurrentScreenClients
-            return current_window->central_output == current_output;
+            return current_window->topo.central_output == current_output;
         }
     }
 

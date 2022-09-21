@@ -87,7 +87,6 @@ private:
     Wrapland::Client::Compositor* m_compositor = nullptr;
     Wrapland::Client::Seat* m_seat = nullptr;
     Wrapland::Client::ShmPool* m_shm = nullptr;
-    Wrapland::Client::Shell* m_shell = nullptr;
 
     std::unique_ptr<Wrapland::Client::Surface> surface_holder;
     std::unique_ptr<Wrapland::Client::XdgShellToplevel> toplevel_holder;
@@ -249,7 +248,7 @@ void LockScreenTest::testStackingOrder()
     auto client = Test::app()->base.space->windows_map.at(window_id);
     QVERIFY(client);
     QVERIFY(client->isLockScreen());
-    QCOMPARE(client->layer(), win::layer::unmanaged);
+    QCOMPARE(win::get_layer(*client), win::layer::unmanaged);
 
     UNLOCK
 }
@@ -271,7 +270,7 @@ void LockScreenTest::testPointer()
 
     // First move cursor into the center of the window.
     quint32 timestamp = 1;
-    MOTION(c->frameGeometry().center());
+    MOTION(c->geo.frame.center());
     QVERIFY(enteredSpy.wait());
 
     LOCK
@@ -280,24 +279,24 @@ void LockScreenTest::testPointer()
     QCOMPARE(leftSpy.count(), 1);
 
     // Simulate moving out in and out again.
-    MOTION(c->frameGeometry().center());
-    MOTION(c->frameGeometry().bottomRight() + QPoint(100, 100));
-    MOTION(c->frameGeometry().bottomRight() + QPoint(100, 100));
+    MOTION(c->geo.frame.center());
+    MOTION(c->geo.frame.bottomRight() + QPoint(100, 100));
+    MOTION(c->geo.frame.bottomRight() + QPoint(100, 100));
     QVERIFY(!leftSpy.wait(500));
     QCOMPARE(leftSpy.count(), 1);
     QCOMPARE(enteredSpy.count(), 1);
 
     // Go back on the window.
-    MOTION(c->frameGeometry().center());
+    MOTION(c->geo.frame.center());
 
     // And unlock.
     UNLOCK
     QTRY_COMPARE(enteredSpy.count(), 2);
 
     // Move on the window.
-    MOTION(c->frameGeometry().center() + QPoint(100, 100));
+    MOTION(c->geo.frame.center() + QPoint(100, 100));
     QVERIFY(leftSpy.wait());
-    MOTION(c->frameGeometry().center());
+    MOTION(c->geo.frame.center());
     QVERIFY(enteredSpy.wait());
     QCOMPARE(enteredSpy.count(), 3);
 }
@@ -319,7 +318,7 @@ void LockScreenTest::testPointerButton()
 
     // First move cursor into the center of the window.
     quint32 timestamp = 1;
-    MOTION(c->frameGeometry().center());
+    MOTION(c->geo.frame.center());
     QVERIFY(enteredSpy.wait());
 
     // And simulate a click.
@@ -363,7 +362,7 @@ void LockScreenTest::testPointerAxis()
 
     // First move cursor into the center of the window.
     quint32 timestamp = 1;
-    MOTION(c->frameGeometry().center());
+    MOTION(c->geo.frame.center());
     QVERIFY(enteredSpy.wait());
 
     // And simulate axis.

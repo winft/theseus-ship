@@ -8,6 +8,7 @@
 #include "base/platform.h"
 #include "base/wayland/server.h"
 #include "main.h"
+#include "win/scene.h"
 
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/surface.h>
@@ -24,7 +25,7 @@ void update_surface_outputs(Win* win)
 
     auto const outputs = waylandServer()->display->outputs();
     for (auto output : outputs) {
-        if (win->frameGeometry().intersects(output->output()->geometry().toRect())) {
+        if (win->geo.frame.intersects(output->output()->geometry().toRect())) {
             surface_outputs.push_back(output->output());
         }
     }
@@ -35,6 +36,7 @@ void update_surface_outputs(Win* win)
 template<typename Win>
 void set_surface(Win* win, Wrapland::Server::Surface* surface)
 {
+    static_assert(!Win::is_toplevel);
     assert(surface);
 
     if (win->surface) {
@@ -59,32 +61,12 @@ void set_surface(Win* win, Wrapland::Server::Surface* surface)
 
     win->surface = surface;
 
-    if (surface->client() == waylandServer()->xwayland_connection()) {
-        QObject::connect(
-            win->surface, &Wrapland::Server::Surface::committed, win->qobject.get(), [win] {
-                if (!win->surface->state().damage.isEmpty()) {
-                    win->addDamage(win->surface->state().damage);
-                }
-            });
-        QObject::connect(
-            win->surface, &Wrapland::Server::Surface::committed, win->qobject.get(), [win] {
-                if (win->surface->state().updates & Wrapland::Server::surface_change::size) {
-                    win->discard_buffer();
-                    // Quads for Xwayland clients need for size emulation.
-                    // Also apparently needed for unmanaged Xwayland clients (compare Kate's
-                    // open-file dialog when type-forward list is changing size).
-                    // TODO(romangg): can this be put in a less hot path?
-                    win->discard_quads();
-                }
-            });
-    }
-
     QObject::connect(
         win->surface, &Wrapland::Server::Surface::subsurfaceTreeChanged, win->qobject.get(), [win] {
             // TODO improve to only update actual visual area
-            if (win->ready_for_painting) {
-                win->addDamageFull();
-                win->m_isDamaged = true;
+            if (win->render_data.ready_for_painting) {
+                add_full_damage(*win);
+                win->render_data.is_damaged = true;
             }
         });
     QObject::connect(

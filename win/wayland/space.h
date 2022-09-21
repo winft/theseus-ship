@@ -294,7 +294,7 @@ public:
             if (!client) {
                 continue;
             }
-            auto const distance = QPoint(client->pos() - win->pos()).manhattanLength();
+            auto const distance = QPoint(client->geo.pos() - win->geo.pos()).manhattanLength();
             if (distance < min_distance) {
                 min_distance = distance;
                 candidate_panel = client;
@@ -304,7 +304,7 @@ public:
         if (!candidate_panel) {
             return QRect();
         }
-        return candidate_geo.translated(candidate_panel->pos());
+        return candidate_geo.translated(candidate_panel->geo.pos());
     }
 
     wayland_window* find_window(Wrapland::Server::Surface* surface) const
@@ -386,7 +386,7 @@ public:
         }
 
         adopt_transient_children(this, window);
-        Q_EMIT qobject->wayland_window_added(window->signal_id);
+        Q_EMIT qobject->wayland_window_added(window->meta.signal_id);
     }
     void handle_window_removed(wayland_window* window)
     {
@@ -410,7 +410,7 @@ public:
                 set_shortcut(window, QString());
             }
             process_window_hidden(*this, window);
-            Q_EMIT qobject->clientRemoved(window->signal_id);
+            Q_EMIT qobject->clientRemoved(window->meta.signal_id);
         }
 
         stacking.order.update_count();
@@ -420,7 +420,7 @@ public:
             update_tabbox(*this);
         }
 
-        Q_EMIT qobject->wayland_window_removed(window->signal_id);
+        Q_EMIT qobject->wayland_window_removed(window->meta.signal_id);
     }
 
     void update_space_area_from_windows(QRect const& desktop_area,
@@ -519,7 +519,7 @@ private:
             plasma_manage_update_stacking_order(*this);
         };
 
-        if (window->ready_for_painting) {
+        if (window->render_data.ready_for_painting) {
             setup_plasma_management_for_x11();
         } else {
             QObject::connect(
@@ -536,11 +536,11 @@ private:
             if (!client->control) {
                 continue;
             }
-            if (!client->desktops().contains(desktop)) {
+            if (!client->topo.desktops.contains(desktop)) {
                 continue;
             }
 
-            if (client->desktops().count() > 1) {
+            if (client->topo.desktops.count() > 1) {
                 leave_desktop(client, desktop);
             } else {
                 send_window_to_desktop(

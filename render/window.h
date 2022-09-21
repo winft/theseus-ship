@@ -12,6 +12,7 @@
 #include "shadow.h"
 #include "types.h"
 
+#include "win/desktop_get.h"
 #include "win/geo.h"
 
 #include <kwineffects/paint_data.h>
@@ -99,12 +100,12 @@ public:
             disable_painting |= window_paint_disable_type::by_delete;
         }
         if (scene.platform.compositor->effects->isDesktopRendering()) {
-            if (!ref_win->isOnDesktop(
-                    scene.platform.compositor->effects->currentRenderedDesktop())) {
+            if (!win::on_desktop(ref_win,
+                                 scene.platform.compositor->effects->currentRenderedDesktop())) {
                 disable_painting |= window_paint_disable_type::by_desktop;
             }
         } else {
-            if (!ref_win->isOnCurrentDesktop())
+            if (!win::on_current_desktop(ref_win))
                 disable_painting |= window_paint_disable_type::by_desktop;
         }
         if (ref_win->control) {
@@ -132,7 +133,7 @@ public:
     {
         if (ref_win->remnant)
             return false;
-        if (!ref_win->isOnCurrentDesktop())
+        if (!win::on_current_desktop(ref_win))
             return false;
         if (ref_win->control) {
             return ref_win->isShown();
@@ -143,7 +144,7 @@ public:
     // is the window fully opaque
     bool isOpaque() const
     {
-        return ref_win->opacity() == 1.0 && !ref_win->hasAlpha();
+        return ref_win->opacity() == 1.0 && !win::has_alpha(*ref_win);
     }
 
     QRegion decorationShape() const
@@ -151,12 +152,12 @@ public:
         if (!win::decoration(ref_win)) {
             return QRegion();
         }
-        return QRegion(QRect(QPoint(), ref_win->size())) - win::frame_relative_client_rect(ref_win);
+        return QRegion(QRect({}, ref_win->geo.size())) - win::frame_relative_client_rect(ref_win);
     }
 
     QPoint bufferOffset() const
     {
-        return win::render_geometry(ref_win).topLeft() - ref_win->pos();
+        return win::render_geometry(ref_win).topLeft() - ref_win->geo.pos();
     }
 
     // creates initial quad list for the window
@@ -175,7 +176,8 @@ public:
 
             if (ref_win->control) {
                 ref_win->layoutDecorationRects(rects[0], rects[1], rects[2], rects[3]);
-                decorationScale = ref_win->central_output ? ref_win->central_output->scale() : 1.;
+                decorationScale
+                    = ref_win->topo.central_output ? ref_win->topo.central_output->scale() : 1.;
             }
 
             auto const decoration_region = decorationShape();
@@ -374,8 +376,8 @@ protected:
             }
         }
 
-        for (auto child : ref_win->transient()->children) {
-            if (!child->transient()->annexed) {
+        for (auto child : ref_win->transient->children) {
+            if (!child->transient->annexed) {
                 continue;
             }
             if (child->remnant && !ref_win->remnant) {
@@ -393,7 +395,8 @@ protected:
             if (auto const buf = sw->template get_buffer<buffer_t>(); !buf || !buf->isValid()) {
                 continue;
             }
-            quads << sw->makeContentsQuads(sw->id(), offset + child->pos() - ref_win->pos());
+            quads << sw->makeContentsQuads(sw->id(),
+                                           offset + child->geo.pos() - ref_win->geo.pos());
         }
 
         return quads;

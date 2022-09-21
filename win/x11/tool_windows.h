@@ -35,20 +35,21 @@ void update_tool_windows_visibility(Space* space, bool also_hide)
         return;
     }
 
+    using x11_window_t = typename Space::x11_window;
     x11::group<Space> const* active_group = nullptr;
-    auto active_window = space->stacking.active;
+    auto active_window = dynamic_cast<x11_window_t*>(space->stacking.active);
 
     // Go up in transiency hiearchy, if the top is found, only tool transients for the top
     // window will be shown; if a group transient is group, all tools in the group will be shown.
     while (active_window) {
-        if (!active_window->transient()->lead()) {
+        if (!active_window->transient->lead()) {
             break;
         }
         if (active_window->groupTransient()) {
-            active_group = active_window->group();
+            active_group = active_window->group;
             break;
         }
-        active_window = active_window->transient()->lead();
+        active_window = static_cast<x11_window_t*>(active_window->transient->lead());
     }
 
     // Use stacking order only to reduce flicker, it doesn't matter if block_stacking_updates == 0,
@@ -56,44 +57,49 @@ void update_tool_windows_visibility(Space* space, bool also_hide)
 
     // TODO(SELI): But maybe it should - what if a new window has been added that's not in stacking
     // order yet?
-    using window_t = typename Space::window_t;
-    std::vector<window_t*> to_show;
-    std::vector<window_t*> to_hide;
+    std::vector<x11_window_t*> to_show;
+    std::vector<x11_window_t*> to_hide;
 
-    for (auto const& window : space->stacking.order.stack) {
-        if (!window->control) {
+    for (auto const& win : space->stacking.order.stack) {
+        if (!win->control) {
             continue;
         }
 
-        if (!is_utility(window) && !is_menu(window) && !is_toolbar(window)) {
+        if (!is_utility(win) && !is_menu(win) && !is_toolbar(win)) {
+            continue;
+        }
+
+        auto x11_win = dynamic_cast<x11_window_t*>(win);
+        if (!x11_win) {
             continue;
         }
 
         auto show{true};
 
-        if (window->transient()->lead()) {
-            auto const in_active_group = active_group && window->group() == active_group;
+        if (x11_win->transient->lead()) {
+            auto const in_active_group = active_group && x11_win->group == active_group;
             auto const has_active_lead
-                = active_window && window->transient()->is_follower_of(active_window);
+                = active_window && x11_win->transient->is_follower_of(active_window);
             show = in_active_group || has_active_lead;
         } else {
-            auto const is_individual = !window->group() || window->group()->members.size() == 1;
-            auto const in_active_group = active_window && active_window->group() == window->group();
+            auto const is_individual = !x11_win->group || x11_win->group->members.size() == 1;
+            auto const in_active_group = active_window && active_window->group == x11_win->group;
             show = is_individual || in_active_group;
         }
 
         if (!show && also_hide) {
-            auto const& leads = window->transient()->leads();
+            auto const& leads = x11_win->transient->leads();
             // Don't hide utility windows which are standalone(?) or have e.g. kicker as lead.
             show = leads.empty()
-                || std::any_of(leads.cbegin(), leads.cend(), is_special_window<window_t>);
+                || std::any_of(
+                       leads.cbegin(), leads.cend(), is_special_window<typename Space::window_t>);
             if (!show) {
-                to_hide.push_back(window);
+                to_hide.push_back(x11_win);
             }
         }
 
         if (show) {
-            to_show.push_back(window);
+            to_show.push_back(x11_win);
         }
     }
 
@@ -107,8 +113,8 @@ void update_tool_windows_visibility(Space* space, bool also_hide)
 
     if (also_hide) {
         // Hide from bottom-most.
-        for (auto const& window : to_hide) {
-            window->hideClient(true);
+        for (auto const& win : to_hide) {
+            win->hideClient(true);
         }
         space->updateToolWindowsTimer.stop();
     } else {

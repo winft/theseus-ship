@@ -62,18 +62,18 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
     auto win = new Win(xcb_win, space);
 
     win->supported_default_types = supported_default_types;
-    win->set_layer(win::layer::unmanaged);
+    win->topo.layer = layer::unmanaged;
 
-    QTimer::singleShot(50, win->qobject.get(), [win] { win->setReadyForPainting(); });
+    QTimer::singleShot(50, win->qobject.get(), [win] { set_ready_for_painting(*win); });
 
     // The window is also the frame.
     base::x11::xcb::select_input(xcb_win,
                                  attr->your_event_mask | XCB_EVENT_MASK_STRUCTURE_NOTIFY
                                      | XCB_EVENT_MASK_PROPERTY_CHANGE);
-    win->set_frame_geometry(geo.rect());
-    win->checkScreen();
+    win->geo.frame = geo.rect();
+    check_screen(*win);
     win->xcb_visual = attr->visual;
-    win->bit_depth = geo->depth;
+    win->render_data.bit_depth = geo->depth;
     win->info = new NETWinInfo(connection(),
                                xcb_win,
                                rootWindow(),
@@ -88,7 +88,7 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
     }
     win->detectShape(xcb_win);
     win->getWmOpaqueRegion();
-    win->getSkipCloseAnimation();
+    win->fetch_and_set_skip_close_animation();
     win->setupCompositing();
 
     auto find_internal_window = [&win]() -> QWindow* {
@@ -115,7 +115,7 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
 
     space.windows.push_back(win);
     space.stacking.order.render_restack_required = true;
-    Q_EMIT space.qobject->unmanagedAdded(win->signal_id);
+    Q_EMIT space.qobject->unmanagedAdded(win->meta.signal_id);
 
     return win;
 }
@@ -128,17 +128,17 @@ void unmanaged_configure_event(Win* win, xcb_configure_notify_event_t* event)
         effects->checkInputWindowStacking();
     }
     QRect newgeom(event->x, event->y, event->width, event->height);
-    if (newgeom != win->frameGeometry()) {
+    if (newgeom != win->geo.frame) {
         // Damage old area.
         win->space.base.render->compositor->addRepaint(visible_rect(win));
 
-        auto const old = win->frameGeometry();
-        win->set_frame_geometry(newgeom);
+        auto const old = win->geo.frame;
+        win->geo.frame = newgeom;
 
-        win->addRepaintFull();
+        add_full_repaint(*win);
 
-        if (old.size() != win->frameGeometry().size()) {
-            win->discard_buffer();
+        if (old.size() != win->geo.frame.size()) {
+            discard_buffer(*win);
         }
         Q_EMIT win->qobject->frame_geometry_changed(old);
     }
@@ -156,7 +156,7 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* event)
 
     if (dirtyProperties2 & NET::WM2Opacity) {
         if (win->space.base.render->compositor->scene) {
-            win->addRepaintFull();
+            add_full_repaint(*win);
             Q_EMIT win->qobject->opacityChanged(old_opacity);
         }
     }
@@ -210,12 +210,12 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* event)
     default: {
         if (eventType == base::x11::xcb::extensions::self()->shape_notify_event()) {
             win->detectShape(win->xcb_window);
-            win->addRepaintFull();
+            add_full_repaint(*win);
 
             // In case shape change removes part of this window.
-            win->space.base.render->compositor->addRepaint(win->frameGeometry());
+            win->space.base.render->compositor->addRepaint(win->geo.frame);
 
-            Q_EMIT win->qobject->frame_geometry_changed(win->frameGeometry());
+            Q_EMIT win->qobject->frame_geometry_changed(win->geo.frame);
         }
         if (eventType == base::x11::xcb::extensions::self()->damage_notify_event()) {
             win->damageNotifyEvent();

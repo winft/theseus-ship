@@ -159,7 +159,7 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
     QVERIFY(win::decoration(client));
     QVERIFY(!client->hasStrut());
     QVERIFY(!client->isHiddenInternal());
-    QTRY_VERIFY(client->ready_for_painting);
+    QTRY_VERIFY(client->render_data.ready_for_painting);
     if (!client->surface) {
         QSignalSpy surfaceChangedSpy(client->qobject.get(), &win::window_qobject::surfaceChanged);
         QVERIFY(surfaceChangedSpy.isValid());
@@ -235,8 +235,8 @@ void WindowRuleTest::testWindowClassChange()
     QVERIFY(win::decoration(client));
     QVERIFY(!client->hasStrut());
     QVERIFY(!client->isHiddenInternal());
-    QVERIFY(!client->ready_for_painting);
-    QTRY_VERIFY(client->ready_for_painting);
+    QVERIFY(!client->render_data.ready_for_painting);
+    QTRY_VERIFY(client->render_data.ready_for_painting);
     if (!client->surface) {
         QSignalSpy surfaceChangedSpy(client->qobject.get(), &win::window_qobject::surfaceChanged);
         QVERIFY(surfaceChangedSpy.isValid());

@@ -51,9 +51,9 @@ public:
         if (!buffer || !buffer->isValid()) {
             return;
         }
-        if (!this->ref_win->damage_region.isEmpty()) {
+        if (!this->ref_win->render_data.damage_region.isEmpty()) {
             buffer->updateBuffer();
-            this->ref_win->resetDamage();
+            this->ref_win->render_data.damage_region = {};
         }
 
         auto scenePainter = static_cast<Scene&>(this->scene).scenePainter();
@@ -62,7 +62,7 @@ public:
         painter->setClipRegion(region);
         painter->setClipping(true);
 
-        auto const win_pos = this->ref_win->pos();
+        auto const win_pos = this->ref_win->geo.pos();
         painter->translate(win_pos.x(), win_pos.y());
         if (flags(mask & paint_type::window_transformed)) {
             painter->translate(data.xTranslation(), data.yTranslation());
@@ -79,7 +79,7 @@ public:
             tempImage.fill(Qt::transparent);
             tempPainter.begin(&tempImage);
             tempPainter.save();
-            tempPainter.translate(this->ref_win->frameGeometry().topLeft()
+            tempPainter.translate(this->ref_win->geo.frame.topLeft()
                                   - win::visible_rect(this->ref_win).topLeft());
             painter = &tempPainter;
         }
@@ -110,7 +110,7 @@ public:
             } else {
                 source = buffer->image.rect();
             }
-            target = win::render_geometry(this->ref_win).translated(-this->ref_win->pos());
+            target = win::render_geometry(this->ref_win).translated(-this->ref_win->geo.pos());
         }
         painter->drawImage(target, buffer->image, source);
 
@@ -124,7 +124,7 @@ public:
             tempPainter.end();
             painter = scenePainter;
             painter->drawImage(win::visible_rect(this->ref_win).topLeft()
-                                   - this->ref_win->frameGeometry().topLeft(),
+                                   - this->ref_win->geo.frame.topLeft(),
                                tempImage);
         }
 

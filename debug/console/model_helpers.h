@@ -110,7 +110,7 @@ void remove_window(Model* model,
                    Window* window)
 {
     auto it = std::find_if(windows.begin(), windows.end(), [window](auto& win) {
-        return win->internalId() == window->internal_id;
+        return win->internalId() == window->meta.internal_id;
     });
 
     if (it == windows.end()) {

@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "desktop_get.h"
 #include "net.h"
 #include "types.h"
 #include "util.h"
@@ -135,7 +136,7 @@ void focus_chain_update(Manager& manager, Win* window, focus_chain_change change
         return;
     }
 
-    if (window->isOnAllDesktops()) {
+    if (on_all_desktops(window)) {
         // Now on all desktops, add it to focus chains it is not already in.
         for (auto& [key, chain] : manager.chains.desktops) {
             // Making first/last works only on current desktop, don't affect all desktops
@@ -154,7 +155,7 @@ void focus_chain_update(Manager& manager, Win* window, focus_chain_change change
     } else {
         // Now only on desktop, remove it anywhere else
         for (auto& [key, chain] : manager.chains.desktops) {
-            if (window->isOnDesktop(key)) {
+            if (on_desktop(window, key)) {
                 focus_chain_update_window_in_chain(window, change, chain, manager.active_window);
             } else {
                 remove_all(chain, window);
@@ -258,7 +259,7 @@ void focus_chain_move_window_after(Manager& manager, Win* window, Win* reference
     }
 
     for (auto& [key, chain] : manager.chains.desktops) {
-        if (!window->isOnDesktop(key)) {
+        if (!on_desktop(window, key)) {
             continue;
         }
         focus_chain_move_window_after_in_chain(chain, window, reference);

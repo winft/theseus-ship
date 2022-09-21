@@ -191,7 +191,7 @@ void handle_xdg_activation_activate(Space* space,
     }
 
     while (!win->control) {
-        auto lead = win->transient()->lead();
+        auto lead = win->transient->lead();
         if (!lead) {
             qCDebug(KWIN_CORE) << "No window lead with control found to xdg-activate" << surface;
             return;

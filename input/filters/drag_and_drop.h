@@ -81,7 +81,7 @@ public:
                 if (window->control) {
                     win::activate_window(this->redirect.space, window);
                 }
-                seat->drags().set_target(window->surface, window->input_transform());
+                seat->drags().set_target(window->surface, win::get_input_transform(*window));
             }
         } else {
             // No window at that place, if we have a surface we need to reset.
@@ -140,7 +140,7 @@ public:
                 if (t->control) {
                     win::activate_window(this->redirect.space, t);
                 }
-                seat->drags().set_target(t->surface, event.pos, t->input_transform());
+                seat->drags().set_target(t->surface, event.pos, win::get_input_transform(*t));
             }
         } else {
             // no window at that place, if we have a surface we need to reset

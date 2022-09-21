@@ -15,7 +15,7 @@ void check_set_no_border(Win* win)
 {
     auto app_no_border = win->app_no_border;
     auto motif_no_border = win->motif_hints.has_decoration() && win->motif_hints.no_border();
-    auto max_fully = win->geometry_update.max_mode == maximize_mode::full;
+    auto max_fully = win->geo.update.max_mode == maximize_mode::full;
     auto no_border = app_no_border || motif_no_border || max_fully;
 
     win->setNoBorder(win->control->rules.checkNoBorder(no_border));
@@ -38,7 +38,7 @@ void respect_maximizing_aspect(Win* win, maximize_mode& mode)
     auto const min_aspect = win->geometry_hints.min_aspect();
     auto const max_aspect = win->geometry_hints.max_aspect();
 
-    auto const old_mode = win->geometry_update.max_mode;
+    auto const old_mode = win->geo.update.max_mode;
     auto const area = get_maximizing_area(win);
 
     if (mode == maximize_mode::vertical || flags(old_mode & maximize_mode::vertical)) {

@@ -204,7 +204,7 @@ void TestMaximized::testInitiallyMaximized()
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
-    QCOMPARE(client->frameGeometry(), QRect(0, 0, 100, 50));
+    QCOMPARE(client->geo.frame, QRect(0, 0, 100, 50));
     QEXPECT_FAIL("", "Should go out of maximzied", Continue);
     QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
 
@@ -257,7 +257,7 @@ void TestMaximized::testInitiallyMaximizedBorderless()
     QVERIFY(client->isMaximizable());
     QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
     QCOMPARE(client->synced_geometry.max_mode, win::maximize_mode::full);
-    QCOMPARE(client->frameGeometry(), QRect(0, 0, 1280, 1024));
+    QCOMPARE(client->geo.frame, QRect(0, 0, 1280, 1024));
 
     QTRY_VERIFY(decorationConfiguredSpy.count());
     QCOMPARE(decoration->mode(), XdgDecoration::Mode::ServerSide);
@@ -318,7 +318,7 @@ void TestMaximized::testBorderlessMaximizedWindow()
     QVERIFY(!states.testFlag(XdgShellToplevel::State::Maximized));
 
     // Maximize the client.
-    const QRect maximizeRestoreGeometry = client->frameGeometry();
+    const QRect maximizeRestoreGeometry = client->geo.frame;
     win::active_window_maximize(*Test::app()->base.space);
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
@@ -333,7 +333,7 @@ void TestMaximized::testBorderlessMaximizedWindow()
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
     Test::render(surface, QSize(1280, 1024), Qt::blue);
     QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(client->frameGeometry(), QRect(0, 0, 1280, 1024));
+    QCOMPARE(client->geo.frame, QRect(0, 0, 1280, 1024));
     QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
     QCOMPARE(client->synced_geometry.max_mode, win::maximize_mode::full);
     QVERIFY(!win::decoration(client));
@@ -350,7 +350,7 @@ void TestMaximized::testBorderlessMaximizedWindow()
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
     Test::render(surface, QSize(100, 50), Qt::red);
     QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(client->frameGeometry(), maximizeRestoreGeometry);
+    QCOMPARE(client->geo.frame, maximizeRestoreGeometry);
     QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
     QCOMPARE(client->synced_geometry.max_mode, win::maximize_mode::restore);
     QVERIFY(win::decoration(client));

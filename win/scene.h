@@ -5,16 +5,35 @@
 */
 #pragma once
 
+#include "damage.h"
 #include "deco.h"
 #include "window_qobject.h"
 
-#include "main.h"
-
 #include <cassert>
-#include <xcb/damage.h>
 
 namespace KWin::win
 {
+
+template<typename Win>
+bool has_alpha(Win& win)
+{
+    return win.render_data.bit_depth == 32;
+}
+
+template<typename Win>
+void set_bit_depth(Win& win, int depth)
+{
+    if (win.render_data.bit_depth == depth) {
+        return;
+    }
+
+    auto const old_alpha = has_alpha(win);
+    win.render_data.bit_depth = depth;
+
+    if (old_alpha != has_alpha(win)) {
+        Q_EMIT win.qobject->hasAlphaChanged();
+    }
+}
 
 /**
  * Returns the pointer to the window's shadow. A shadow is only available if Compositing is enabled
@@ -34,7 +53,7 @@ QRect render_geometry(Win* win);
 template<typename Win>
 QRect visible_rect(Win* win, QRect const& frame_geo)
 {
-    auto geo = frame_geo + win->client_frame_extents;
+    auto geo = frame_geo + win->geo.client_frame_extents;
 
     if (shadow(win) && !shadow(win)->shadowRegion().isEmpty()) {
         geo += shadow(win)->margins();
@@ -46,7 +65,23 @@ QRect visible_rect(Win* win, QRect const& frame_geo)
 template<typename Win>
 QRect visible_rect(Win* win)
 {
-    return visible_rect(win, win->frameGeometry());
+    return visible_rect(win, win->geo.frame);
+}
+
+template<typename Win>
+void discard_shape(Win& win)
+{
+    win.is_render_shape_valid = false;
+
+    if (win.render) {
+        win.render->invalidateQuadsCache();
+        add_full_repaint(win);
+    }
+    if (win.transient->annexed) {
+        for (auto lead : win.transient->leads()) {
+            discard_shape(*lead);
+        }
+    }
 }
 
 template<typename Win>
@@ -55,8 +90,8 @@ QRegion content_render_region(Win* win)
     auto const shape = win->render_region();
     auto clipping = QRect(QPoint(0, 0), render_geometry(win).size());
 
-    if (win->has_in_content_deco) {
-        clipping |= QRect(QPoint(0, 0), win->size());
+    if (win->geo.has_in_content_deco) {
+        clipping |= QRect(QPoint(0, 0), win->geo.size());
         auto const tl_offset = QPoint(left_border(win), top_border(win));
         auto const br_offset = -QPoint(right_border(win), bottom_border(win));
 
@@ -97,8 +132,8 @@ auto update_shadow(Win* win)
     }
 
     if (dirty_rect.isValid()) {
-        dirty_rect.translate(win->pos());
-        win->addLayerRepaint(dirty_rect);
+        dirty_rect.translate(win->geo.pos());
+        add_layer_repaint(*win, dirty_rect);
     }
 }
 
@@ -142,44 +177,6 @@ void add_scene_window(Scene& scene, Win& win)
     });
 }
 
-template<typename Win>
-bool setup_compositing(Win& win, bool add_full_damage)
-{
-    static_assert(!Win::is_toplevel);
-    assert(!win.remnant);
-
-    if (!win.space.base.render->compositor->scene) {
-        return false;
-    }
-
-    if (win.damage_handle != XCB_NONE) {
-        return false;
-    }
-
-    if (kwinApp()->operationMode() == Application::OperationModeX11) {
-        assert(!win.surface);
-        win.damage_handle = xcb_generate_id(connection());
-        xcb_damage_create(
-            connection(), win.damage_handle, win.frameId(), XCB_DAMAGE_REPORT_LEVEL_NON_EMPTY);
-    }
-
-    win.discard_shape();
-    win.damage_region = QRegion(QRect(QPoint(), win.size()));
-
-    add_scene_window(*win.space.base.render->compositor->scene, win);
-
-    if (add_full_damage) {
-        // With unmanaged windows there is a race condition between the client painting the window
-        // and us setting up damage tracking.  If the client wins we won't get a damage event even
-        // though the window has been painted.  To avoid this we mark the whole window as damaged
-        // and schedule a repaint immediately after creating the damage object.
-        // TODO: move this out of the class.
-        win.addDamageFull();
-    }
-
-    return true;
-}
-
 /**
  * Window will be temporarily painted as if being at the top of the stack.
  * Only available if Compositor is active, if not active, this method is a no-op.
@@ -193,6 +190,20 @@ void elevate(Win* win, bool elevate)
 
     win->render->effect->elevate(elevate);
     win->space.base.render->compositor->addRepaint(visible_rect(win));
+}
+
+template<typename Win>
+void finish_compositing(Win& win)
+{
+    assert(!win.remnant);
+
+    if (win.render) {
+        discard_buffer(win);
+        win.render.reset();
+    }
+
+    win.render_data.damage_region = {};
+    win.render_data.repaints_region = {};
 }
 
 }

@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "desktop_get.h"
 #include "screen.h"
 
 namespace KWin::win
@@ -42,7 +43,7 @@ auto focus_chain_get_for_activation(Space& space, uint desktop, base::output con
         if (!win->isShown()) {
             continue;
         }
-        if (manager.has_separate_screen_focus && win->central_output != output) {
+        if (manager.has_separate_screen_focus && win->topo.central_output != output) {
             continue;
         }
         return win;
@@ -66,7 +67,7 @@ bool focus_chain_is_usable_focus_candidate(Space& space,
     if (window == prev) {
         return false;
     }
-    if (!window->isShown() || !window->isOnCurrentDesktop()) {
+    if (!window->isShown() || !on_current_desktop(window)) {
         return false;
     }
 
@@ -74,7 +75,7 @@ bool focus_chain_is_usable_focus_candidate(Space& space,
         return true;
     }
 
-    return on_screen(window, prev ? prev->central_output : get_current_output(space));
+    return on_screen(window, prev ? prev->topo.central_output : get_current_output(space));
 }
 
 /**

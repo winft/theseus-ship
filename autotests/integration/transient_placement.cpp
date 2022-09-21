@@ -288,7 +288,7 @@ void TransientPlacementTest::testXdgPopup()
 
     QVERIFY(!win::decoration(parent));
     win::move(parent, parentPosition);
-    QCOMPARE(parent->frameGeometry(), QRect(parentPosition, parentSize));
+    QCOMPARE(parent->geo.frame, QRect(parentPosition, parentSize));
 
     // create popup
     QFETCH(XdgPositioner, positioner);
@@ -311,7 +311,7 @@ void TransientPlacementTest::testXdgPopup()
     QVERIFY(transient);
 
     QVERIFY(!win::decoration(transient));
-    QCOMPARE(transient->frameGeometry(), expectedGeometry);
+    QCOMPARE(transient->geo.frame, expectedGeometry);
 
     QCOMPARE(configureRequestedSpy.count(), 1); // check that we did not get reconfigured
 }
@@ -344,8 +344,7 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     QVERIFY(dock);
     QCOMPARE(dock->windowType(), NET::Dock);
     QVERIFY(win::is_dock(dock));
-    QCOMPARE(dock->frameGeometry(),
-             QRect(0, Test::get_output(0)->geometry().height() - 50, 1280, 50));
+    QCOMPARE(dock->geo.frame, QRect(0, Test::get_output(0)->geometry().height() - 50, 1280, 50));
     QCOMPARE(dock->hasStrut(), true);
     QVERIFY(win::space_window_area(*Test::app()->base.space, PlacementArea, 0, 1)
             != win::space_window_area(*Test::app()->base.space, FullScreenArea, 0, 1));
@@ -363,7 +362,7 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     win::move(parent, {0, Test::get_output(0)->geometry().height() - 300});
     win::keep_in_area(
         parent, win::space_window_area(*Test::app()->base.space, PlacementArea, parent), false);
-    QCOMPARE(parent->frameGeometry(),
+    QCOMPARE(parent->geo.frame,
              QRect(0, Test::get_output(0)->geometry().height() - 600 - 50, 800, 600));
 
     auto transientSurface = Test::create_surface();
@@ -379,7 +378,7 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     QVERIFY(transient);
 
     QVERIFY(!win::decoration(transient));
-    QCOMPARE(transient->frameGeometry(),
+    QCOMPARE(transient->geo.frame,
              QRect(50, Test::get_output(0)->geometry().height() - 200 - 50, 200, 200));
 
     transientShellSurface.reset();
@@ -397,7 +396,7 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     QVERIFY(geometryShapeChangedSpy.isValid());
     Test::render(parentSurface, fullscreenSpy.first().at(0).toSize(), Qt::red);
     QVERIFY(geometryShapeChangedSpy.wait());
-    QCOMPARE(parent->frameGeometry(), Test::get_output(0)->geometry());
+    QCOMPARE(parent->geo.frame, Test::get_output(0)->geometry());
     QVERIFY(parent->control->fullscreen);
 
     // another transient, with same hints as before from bottom of window
@@ -416,7 +415,7 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     QVERIFY(transient);
 
     QVERIFY(!win::decoration(transient));
-    QCOMPARE(transient->frameGeometry(),
+    QCOMPARE(transient->geo.frame,
              QRect(50, Test::get_output(0)->geometry().height() - 200, 200, 200));
 }
 

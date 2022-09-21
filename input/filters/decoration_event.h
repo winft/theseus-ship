@@ -47,7 +47,7 @@ public:
         }
 
         auto const global_pos = this->redirect.globalPointer();
-        auto const local_pos = global_pos - decoration->client()->pos();
+        auto const local_pos = global_pos - decoration->client()->geo.pos();
 
         auto qt_type = event.state == button_state::pressed ? QEvent::MouseButtonPress
                                                             : QEvent::MouseButtonRelease;
@@ -77,7 +77,7 @@ public:
         }
 
         auto const global_pos = this->redirect.globalPointer();
-        auto const local_pos = global_pos - decoration->client()->pos();
+        auto const local_pos = global_pos - decoration->client()->geo.pos();
 
         auto qt_event = QHoverEvent(QEvent::HoverMove, local_pos, local_pos);
         QCoreApplication::instance()->sendEvent(decoration->decoration(), &qt_event);
@@ -104,7 +104,7 @@ public:
         }
 
         auto qt_event = axis_to_qt_event(*this->redirect.pointer, event);
-        auto adapted_qt_event = QWheelEvent(qt_event.pos() - window->pos(),
+        auto adapted_qt_event = QWheelEvent(qt_event.pos() - window->geo.pos(),
                                             qt_event.pos(),
                                             QPoint(),
                                             qt_event.angleDelta(),
@@ -147,7 +147,7 @@ public:
 
         this->redirect.touch->setDecorationPressId(event.id);
         m_lastGlobalTouchPos = event.pos;
-        m_lastLocalTouchPos = event.pos - decoration->client()->pos();
+        m_lastLocalTouchPos = event.pos - decoration->client()->geo.pos();
 
         QHoverEvent hoverEvent(QEvent::HoverMove, m_lastLocalTouchPos, m_lastLocalTouchPos);
         QCoreApplication::sendEvent(decoration->decoration(), &hoverEvent);
@@ -181,7 +181,7 @@ public:
             return true;
         }
         m_lastGlobalTouchPos = event.pos;
-        m_lastLocalTouchPos = event.pos - decoration->client()->pos();
+        m_lastLocalTouchPos = event.pos - decoration->client()->geo.pos();
 
         QHoverEvent e(QEvent::HoverMove, m_lastLocalTouchPos, m_lastLocalTouchPos);
         QCoreApplication::instance()->sendEvent(decoration->decoration(), &e);

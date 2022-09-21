@@ -35,26 +35,26 @@ void delete_window_from_space(Space& space, Win* win)
         update_block(nullptr);
     }
 
-    Q_EMIT space.qobject->window_deleted(win->signal_id);
+    Q_EMIT space.qobject->window_deleted(win->meta.signal_id);
     delete win;
 }
 
-template<typename Win1, typename Win2>
-void add_remnant(Win1& orig, Win2& remnant)
+template<typename Win>
+void space_add_remnant(Win& source, Win& remnant)
 {
-    auto& space = orig.space;
+    auto& space = source.space;
     assert(!contains(space.windows, &remnant));
 
     space.windows.push_back(&remnant);
 
-    auto const unconstraintedIndex = index_of(space.stacking.order.pre_stack, &orig);
+    auto const unconstraintedIndex = index_of(space.stacking.order.pre_stack, &source);
     if (unconstraintedIndex != -1) {
         space.stacking.order.pre_stack.at(unconstraintedIndex) = &remnant;
     } else {
         space.stacking.order.pre_stack.push_back(&remnant);
     }
 
-    auto const index = index_of(space.stacking.order.stack, &orig);
+    auto const index = index_of(space.stacking.order.stack, &source);
     if (index != -1) {
         space.stacking.order.stack.at(index) = &remnant;
     } else {
@@ -65,6 +65,8 @@ void add_remnant(Win1& orig, Win2& remnant)
                      &decltype(remnant.qobject)::element_type::needsRepaint,
                      space.base.render->compositor->qobject.get(),
                      [&] { remnant.space.base.render->compositor->schedule_repaint(&remnant); });
+
+    Q_EMIT space.qobject->remnant_created(remnant.meta.signal_id);
 }
 
 }

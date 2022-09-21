@@ -6,6 +6,8 @@
 #pragma once
 
 #include "geo.h"
+#include "scene.h"
+#include "screen.h"
 
 #include "base/output.h"
 #include "base/output_helpers.h"
@@ -26,7 +28,7 @@ void window_setup_geometry(Win& win)
                              // Size unchanged. No need to update.
                              return;
                          }
-                         win.discard_shape();
+                         discard_shape(win);
                          Q_EMIT win.qobject->visible_geometry_changed();
                      });
 
@@ -37,16 +39,16 @@ void window_setup_geometry(Win& win)
 
     auto& base = kwinApp()->get_base();
     QObject::connect(
-        &base, &base::platform::topology_changed, win.qobject.get(), [&win] { win.checkScreen(); });
+        &base, &base::platform::topology_changed, win.qobject.get(), [&win] { check_screen(win); });
     QObject::connect(&base, &base::platform::output_added, win.qobject.get(), [&win](auto output) {
-        win.handle_output_added(static_cast<typename Win::output_t*>(output));
+        handle_output_added(win, static_cast<typename Win::output_t*>(output));
     });
     QObject::connect(
         &base, &base::platform::output_removed, win.qobject.get(), [&win](auto output) {
-            win.handle_output_removed(static_cast<typename Win::output_t*>(output));
+            handle_output_removed(win, static_cast<typename Win::output_t*>(output));
         });
 
-    win.setupCheckScreenConnection();
+    setup_check_screen(win);
 }
 
 }

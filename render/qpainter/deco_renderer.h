@@ -6,6 +6,7 @@
 */
 #pragma once
 
+#include "win/damage.h"
 #include "win/deco/renderer.h"
 
 #include <QImage>
@@ -42,10 +43,11 @@ public:
     {
         this->data = std::make_unique<deco_render_data>();
 
-        QObject::connect(this->qobject.get(),
-                         &win::deco::renderer_qobject::renderScheduled,
-                         client->client()->qobject.get(),
-                         [win = client->client()](auto const& region) { win->addRepaint(region); });
+        QObject::connect(
+            this->qobject.get(),
+            &win::deco::renderer_qobject::renderScheduled,
+            client->client()->qobject.get(),
+            [win = client->client()](auto const& region) { win::add_repaint(*win, region); });
     }
 
     void render() override
@@ -115,7 +117,7 @@ private:
         window->layoutDecorationRects(left, top, right, bottom);
 
         auto checkAndCreate = [this, window](int index, const QSize& size) {
-            auto dpr = window->central_output ? window->central_output->scale() : 1.;
+            auto dpr = window->topo.central_output ? window->topo.central_output->scale() : 1.;
             auto& images = get_data().images;
             if (images[index].size() != size * dpr || images[index].devicePixelRatio() != dpr) {
                 images[index] = QImage(size * dpr, QImage::Format_ARGB32_Premultiplied);

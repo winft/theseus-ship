@@ -160,12 +160,13 @@ void store_window(Space const& space, KConfigGroup& cg, int num, Win* c)
     cg.writeEntry(QLatin1String("sessionId") + n, c->sessionId().constData());
     cg.writeEntry(QLatin1String("windowRole") + n, c->windowRole().constData());
     cg.writeEntry(QLatin1String("wmCommand") + n, c->wmCommand().constData());
-    cg.writeEntry(QLatin1String("resourceName") + n, c->resource_name.constData());
-    cg.writeEntry(QLatin1String("resourceClass") + n, c->resource_class.constData());
-    cg.writeEntry(QLatin1String("geometry") + n,
-                  QRect(x11::calculate_gravitation(c, true), frame_to_client_size(c, c->size())));
-    cg.writeEntry(QLatin1String("restore") + n, c->restore_geometries.maximize);
-    cg.writeEntry(QLatin1String("fsrestore") + n, c->restore_geometries.maximize);
+    cg.writeEntry(QLatin1String("resourceName") + n, c->meta.wm_class.res_name.constData());
+    cg.writeEntry(QLatin1String("resourceClass") + n, c->meta.wm_class.res_class.constData());
+    cg.writeEntry(
+        QLatin1String("geometry") + n,
+        QRect(x11::calculate_gravitation(c, true), frame_to_client_size(c, c->geo.size())));
+    cg.writeEntry(QLatin1String("restore") + n, c->geo.restore.max);
+    cg.writeEntry(QLatin1String("fsrestore") + n, c->geo.restore.max);
     cg.writeEntry(QLatin1String("maximize") + n, static_cast<int>(c->maximizeMode()));
     cg.writeEntry(QLatin1String("fullscreen") + n, static_cast<int>(c->control->fullscreen));
     cg.writeEntry(QLatin1String("desktop") + n, c->desktop());
@@ -176,7 +177,7 @@ void store_window(Space const& space, KConfigGroup& cg, int num, Win* c)
     cg.writeEntry(QLatin1String("opacity") + n, c->opacity());
 
     // the config entry is called "sticky" for back. comp. reasons
-    cg.writeEntry(QLatin1String("sticky") + n, c->isOnAllDesktops());
+    cg.writeEntry(QLatin1String("sticky") + n, on_all_desktops(c));
 
     // the config entry is called "staysOnTop" for back. comp. reasons
     cg.writeEntry(QLatin1String("staysOnTop") + n, c->control->keep_above);
@@ -327,8 +328,8 @@ session_info* take_session_info(Space& space, Win* c)
     QByteArray sessionId = c->sessionId();
     QByteArray windowRole = c->windowRole();
     QByteArray wmCommand = c->wmCommand();
-    auto const& resourceName = c->resource_name;
-    auto const& resourceClass = c->resource_class;
+    auto const& resourceName = c->meta.wm_class.res_name;
+    auto const& resourceClass = c->meta.wm_class.res_class;
 
     // First search ``session''
     if (!sessionId.isEmpty()) {

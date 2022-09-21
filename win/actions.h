@@ -101,11 +101,11 @@ template<typename Win>
 void propagate_minimized_to_transients(Win& window)
 {
     if (window.control->minimized) {
-        for (auto win : window.transient()->children) {
+        for (auto win : window.transient->children) {
             if (!win->control) {
                 continue;
             }
-            if (win->transient()->modal()) {
+            if (win->transient->modal()) {
                 // There's no reason to hide modal dialogs with the main client...
                 continue;
             }
@@ -115,14 +115,14 @@ void propagate_minimized_to_transients(Win& window)
                 propagate_minimized_to_transients(*win);
             }
         }
-        if (window.transient()->modal()) {
+        if (window.transient->modal()) {
             // If a modal dialog is minimized, minimize its mainwindow too.
-            for (auto c2 : window.transient()->leads()) {
+            for (auto c2 : window.transient->leads()) {
                 set_minimized(c2, true);
             }
         }
     } else {
-        for (auto win : window.transient()->children) {
+        for (auto win : window.transient->children) {
             if (!win->control) {
                 continue;
             }
@@ -131,8 +131,8 @@ void propagate_minimized_to_transients(Win& window)
                 propagate_minimized_to_transients(*win);
             }
         }
-        if (window.transient()->modal()) {
-            for (auto c2 : window.transient()->leads()) {
+        if (window.transient->modal()) {
+            for (auto c2 : window.transient->leads()) {
                 set_minimized(c2, false);
             }
         }

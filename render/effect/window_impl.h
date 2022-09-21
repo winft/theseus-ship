@@ -10,6 +10,7 @@
 #include "render/types.h"
 #include "render/x11/effect.h"
 #include "win/actions.h"
+#include "win/damage.h"
 #include "win/desktop_get.h"
 #include "win/geo.h"
 #include "win/meta.h"
@@ -76,7 +77,7 @@ public:
 
     void addRepaint(const QRect& r) override
     {
-        window.ref_win->addRepaint(r);
+        win::add_repaint(*window.ref_win, r);
     }
 
     void addRepaint(int x, int y, int w, int h) override
@@ -86,12 +87,12 @@ public:
 
     void addRepaintFull() override
     {
-        window.ref_win->addRepaintFull();
+        win::add_full_repaint(*window.ref_win);
     }
 
     void addLayerRepaint(const QRect& r) override
     {
-        window.ref_win->addLayerRepaint(r);
+        win::add_layer_repaint(*window.ref_win, r);
     }
 
     void addLayerRepaint(int x, int y, int w, int h) override
@@ -101,7 +102,7 @@ public:
 
     void refWindow() override
     {
-        if (window.ref_win->transient()->annexed) {
+        if (window.ref_win->transient->annexed) {
             return;
         }
         if (auto& remnant = window.ref_win->remnant) {
@@ -112,7 +113,7 @@ public:
 
     void unrefWindow() override
     {
-        if (window.ref_win->transient()->annexed) {
+        if (window.ref_win->transient->annexed) {
             return;
         }
         if (auto& remnant = window.ref_win->remnant) {
@@ -124,8 +125,9 @@ public:
 
     const EffectWindowGroup* group() const override
     {
-        if (auto c = dynamic_cast<typename space_t::x11_window*>(window.ref_win); c && c->group()) {
-            return c->group()->effect_group;
+        if (auto x11_win = dynamic_cast<typename space_t::x11_window*>(window.ref_win);
+            x11_win && x11_win->group) {
+            return x11_win->group->effect_group;
         }
         return nullptr; // TODO
     }
@@ -153,7 +155,7 @@ public:
 
     bool hasAlpha() const override
     {
-        return window.ref_win->hasAlpha();
+        return win::has_alpha(*window.ref_win);
     }
 
     QStringList activities() const override
@@ -177,22 +179,22 @@ public:
 
     int x() const override
     {
-        return window.ref_win->pos().x();
+        return window.ref_win->geo.pos().x();
     }
 
     int y() const override
     {
-        return window.ref_win->pos().y();
+        return window.ref_win->geo.pos().y();
     }
 
     int width() const override
     {
-        return window.ref_win->size().width();
+        return window.ref_win->geo.size().width();
     }
 
     int height() const override
     {
-        return window.ref_win->size().height();
+        return window.ref_win->geo.size().height();
     }
 
     QSize basicUnit() const override
@@ -210,7 +212,7 @@ public:
 
     QRect frameGeometry() const override
     {
-        return window.ref_win->frameGeometry();
+        return window.ref_win->geo.frame;
     }
 
     QRect bufferGeometry() const override
@@ -220,7 +222,7 @@ public:
 
     QRect clientGeometry() const override
     {
-        return win::frame_to_client_rect(window.ref_win, window.ref_win->frameGeometry());
+        return win::frame_to_client_rect(window.ref_win, window.ref_win->geo.frame);
     }
 
     QString caption() const override
@@ -238,26 +240,26 @@ public:
 
     int screen() const override
     {
-        if (!window.ref_win->central_output) {
+        if (!window.ref_win->topo.central_output) {
             return 0;
         }
         return base::get_output_index(window.ref_win->space.base.outputs,
-                                      *window.ref_win->central_output);
+                                      *window.ref_win->topo.central_output);
     }
 
     QPoint pos() const override
     {
-        return window.ref_win->pos();
+        return window.ref_win->geo.pos();
     }
 
     QSize size() const override
     {
-        return window.ref_win->size();
+        return window.ref_win->geo.size();
     }
 
     QRect rect() const override
     {
-        return QRect(QPoint(), window.ref_win->size());
+        return QRect({}, window.ref_win->geo.size());
     }
 
     bool isMovable() const override
@@ -377,7 +379,7 @@ public:
 
     bool skipsCloseAnimation() const override
     {
-        return window.ref_win->skipsCloseAnimation();
+        return window.ref_win->skip_close_animation;
     }
 
     bool acceptsFocus() const override
@@ -409,7 +411,7 @@ public:
 
     bool isModal() const override
     {
-        return window.ref_win->transient()->modal();
+        return window.ref_win->transient->modal();
     }
 
     bool isPopupWindow() const override
@@ -419,7 +421,7 @@ public:
 
     bool isOutline() const override
     {
-        return window.ref_win->isOutline();
+        return window.ref_win->is_outline;
     }
 
     bool isLockScreen() const override
@@ -473,7 +475,8 @@ public:
 
     QString windowClass() const override
     {
-        return window.ref_win->resource_name + QLatin1Char(' ') + window.ref_win->resource_class;
+        return window.ref_win->meta.wm_class.res_name + QLatin1Char(' ')
+            + window.ref_win->meta.wm_class.res_class;
     }
 
     NET::WindowType windowType() const override
@@ -524,7 +527,7 @@ public:
 
     QUuid internalId() const override
     {
-        return window.ref_win->internal_id;
+        return window.ref_win->meta.internal_id;
     }
 
     QRect decorationInnerRect() const override
@@ -579,7 +582,7 @@ public:
             return nullptr;
         }
 
-        auto transientFor = window.ref_win->transient()->lead();
+        auto transientFor = window.ref_win->transient->lead();
         if (transientFor) {
             return transientFor->render->effect.get();
         }
@@ -692,7 +695,7 @@ private:
     template<typename T>
     EffectWindowList getMainWindows(T* c) const
     {
-        const auto leads = c->transient()->leads();
+        const auto leads = c->transient->leads();
         EffectWindowList ret;
         ret.reserve(leads.size());
         std::transform(std::cbegin(leads),
@@ -705,8 +708,8 @@ private:
     QRect expanded_geometry_recursion(typename Window::ref_t* window) const
     {
         QRect geo;
-        for (auto child : window->transient()->children) {
-            if (child->transient()->annexed) {
+        for (auto child : window->transient->children) {
+            if (child->transient->annexed) {
                 geo |= expanded_geometry_recursion(child);
             }
         }

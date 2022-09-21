@@ -34,7 +34,7 @@ void popagate_desktop_change(Space& space, uint desktop)
             continue;
         }
 
-        if (!client->isOnDesktop(desktop) && client != space.move_resize_window) {
+        if (!on_desktop(client, desktop) && client != space.move_resize_window) {
             update_visibility(client);
         }
     }
@@ -50,7 +50,7 @@ void popagate_desktop_change(Space& space, uint desktop)
         if (!client || !client->control) {
             continue;
         }
-        if (client->isOnDesktop(desktop)) {
+        if (on_desktop(client, desktop)) {
             update_visibility(client);
         }
     }

@@ -41,7 +41,7 @@ public:
         };
 
         if (!texture->isNull()) {
-            if (!this->window->ref_win->damage_region.isEmpty()) {
+            if (!this->window->ref_win->render_data.damage_region.isEmpty()) {
                 this->updateBuffer();
             }
             if (needs_buffer_update()) {
@@ -49,7 +49,7 @@ public:
                 // mipmaps need to be updated
                 texture->setDirty();
             }
-            this->window->ref_win->resetDamage();
+            this->window->ref_win->render_data.damage_region = {};
             return true;
         }
         if (!isValid()) {
@@ -59,7 +59,7 @@ public:
         bool success = texture->load(this);
 
         if (success) {
-            this->window->ref_win->resetDamage();
+            this->window->ref_win->render_data.damage_region = {};
         } else {
             qCDebug(KWIN_CORE) << "Failed to bind window";
         }

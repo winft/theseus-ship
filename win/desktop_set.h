@@ -11,8 +11,6 @@
 #include "transient.h"
 #include "virtual_desktops.h"
 
-#include "main.h"
-
 namespace KWin::win
 {
 
@@ -27,14 +25,14 @@ void set_desktops(Win* win, QVector<virtual_desktop*> desktops)
         desktops = QVector<virtual_desktop*>({desktops.last()});
     }
 
-    if (desktops == win->desktops()) {
+    if (desktops == win->topo.desktops) {
         return;
     }
 
     auto was_desk = win->desktop();
     auto const wasOnCurrentDesktop = on_current_desktop(win) && was_desk >= 0;
 
-    win->set_desktops(desktops);
+    win->topo.desktops = desktops;
     win->control->set_desktops(desktops);
 
     if ((was_desk == NET::OnAllDesktops) != (win->desktop() == NET::OnAllDesktops)) {
@@ -43,17 +41,17 @@ void set_desktops(Win* win, QVector<virtual_desktop*> desktops)
     }
 
     auto transients_stacking_order
-        = restacked_by_space_stacking_order(&win->space, win->transient()->children);
+        = restacked_by_space_stacking_order(&win->space, win->transient->children);
     for (auto const& child : transients_stacking_order) {
-        if (!child->transient()->annexed) {
+        if (!child->transient->annexed) {
             set_desktops(child, desktops);
         }
     }
 
-    if (win->transient()->modal()) {
+    if (win->transient->modal()) {
         // When a modal dialog is moved move the parent window with it as otherwise the just moved
         // modal dialog will return to the parent window with the next desktop change.
-        for (auto client : win->transient()->leads()) {
+        for (auto client : win->transient->leads()) {
             set_desktops(client, desktops);
         }
     }
@@ -107,10 +105,10 @@ void set_on_all_desktops(Win* win, bool set)
 template<typename Win>
 void enter_desktop(Win* win, virtual_desktop* virtualDesktop)
 {
-    if (win->desktops().contains(virtualDesktop)) {
+    if (win->topo.desktops.contains(virtualDesktop)) {
         return;
     }
-    auto desktops = win->desktops();
+    auto desktops = win->topo.desktops;
     desktops.append(virtualDesktop);
     set_desktops(win, desktops);
 }
@@ -119,10 +117,10 @@ template<typename Win>
 void leave_desktop(Win* win, virtual_desktop* virtualDesktop)
 {
     QVector<virtual_desktop*> currentDesktops;
-    if (win->desktops().isEmpty()) {
+    if (win->topo.desktops.isEmpty()) {
         currentDesktops = win->space.virtual_desktop_manager->desktops();
     } else {
-        currentDesktops = win->desktops();
+        currentDesktops = win->topo.desktops;
     }
 
     if (!currentDesktops.contains(virtualDesktop)) {
@@ -136,9 +134,11 @@ void leave_desktop(Win* win, virtual_desktop* virtualDesktop)
 template<typename Win>
 void propagate_on_all_desktops_to_children(Win& window)
 {
-    for (auto const& transient : window.transient()->children) {
-        if (transient->isOnAllDesktops() != window.isOnAllDesktops()) {
-            set_on_all_desktops(transient, window.isOnAllDesktops());
+    auto all_desk = on_all_desktops(&window);
+
+    for (auto const& child : window.transient->children) {
+        if (on_all_desktops(child) != all_desk) {
+            set_on_all_desktops(child, all_desk);
         }
     }
 }

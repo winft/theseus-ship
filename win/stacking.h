@@ -101,8 +101,8 @@ typename Space::window_t* top_client_on_desktop(Space* space,
         = unconstrained ? space->stacking.order.pre_stack : space->stacking.order.stack;
     for (auto it = std::crbegin(list); it != std::crend(list); it++) {
         auto c = *it;
-        if (c && c->isOnDesktop(desktop) && c->isShown()) {
-            if (output && c->central_output != output) {
+        if (c && on_desktop(c, desktop) && c->isShown()) {
+            if (output && c->topo.central_output != output) {
                 continue;
             }
             if (!only_normal) {
@@ -184,13 +184,14 @@ void lower_window(Space* space, Window* window)
 
     auto block = do_lower(window);
 
-    if (window->transient()->lead() && window->group()) {
+    if (auto x11_win = dynamic_cast<typename Space::x11_window*>(window);
+        x11_win && x11_win->transient->lead() && x11_win->group) {
         // Lower also all windows in the group, in reversed stacking order.
-        auto const wins = restacked_by_space_stacking_order(space, get_transient_family(window));
+        auto const wins = restacked_by_space_stacking_order(space, get_transient_family(x11_win));
 
         for (auto it = wins.crbegin(); it != wins.crend(); it++) {
             auto gwin = *it;
-            if (gwin == static_cast<typename Space::window_t*>(window)) {
+            if (gwin == x11_win) {
                 continue;
             }
 
@@ -228,16 +229,16 @@ void raise_window(Space* space, Window* window)
 
     auto block = prepare(window);
 
-    if (window->transient()->lead()) {
+    if (window->transient->lead()) {
         // Also raise all leads.
         std::vector<typename Space::window_t*> leads;
 
-        for (auto lead : window->transient()->leads()) {
+        for (auto lead : window->transient->leads()) {
             while (lead) {
                 if (!contains(leads, lead)) {
                     leads.push_back(lead);
                 }
-                lead = lead->transient()->lead();
+                lead = lead->transient->lead();
             }
         }
 
@@ -267,14 +268,13 @@ void raise_or_lower_client(Space* space, Window* window)
 
     if (space->stacking.most_recently_raised
         && contains(space->stacking.order.stack, space->stacking.most_recently_raised)
-        && space->stacking.most_recently_raised->isShown() && window->isOnCurrentDesktop()) {
+        && space->stacking.most_recently_raised->isShown() && on_current_desktop(window)) {
         topmost = space->stacking.most_recently_raised;
     } else {
         topmost = top_client_on_desktop(
             space,
-            window->isOnAllDesktops() ? space->virtual_desktop_manager->current()
-                                      : window->desktop(),
-            kwinApp()->options->qobject->isSeparateScreenFocus() ? window->central_output
+            on_all_desktops(window) ? space->virtual_desktop_manager->current() : window->desktop(),
+            kwinApp()->options->qobject->isSeparateScreenFocus() ? window->topo.central_output
                                                                  : nullptr);
     }
 
@@ -297,7 +297,7 @@ void restack(Space* space, Window* window, typename Space::window_t* under, bool
              it != space->stacking.order.pre_stack.crend();
              it++) {
             auto other = *it;
-            if (other->control && other->layer() == window->layer()
+            if (other->control && get_layer(*other) == get_layer(*window)
                 && belong_to_same_client(under, other)) {
                 // window doesn't belong to the same client as under, as we checked above, but other
                 // does, so window can't be other.
@@ -324,7 +324,7 @@ template<typename Space, typename Win>
 void restack_client_under_active(Space* space, Win* window)
 {
     if (!space->stacking.active || space->stacking.active == window
-        || space->stacking.active->layer() != window->layer()) {
+        || get_layer(*space->stacking.active) != get_layer(*window)) {
         raise_window(space, window);
         return;
     }
@@ -356,9 +356,9 @@ std::vector<typename Container::value_type> sort_windows_by_layer(Container cons
     std::map<key, layer> lead_layers;
 
     for (auto const& win : list) {
-        auto lay = win->layer();
+        auto lay = get_layer(*win);
         auto lead = get_top_lead(win);
-        auto search = lead_layers.find({win->central_output, lead});
+        auto search = lead_layers.find({win->topo.central_output, lead});
 
         if (search != lead_layers.end()) {
             // If a window is raised above some other window in the same window group
@@ -369,7 +369,7 @@ std::vector<typename Container::value_type> sort_windows_by_layer(Container cons
             }
             search->second = lay;
         } else {
-            lead_layers[{win->central_output, lead}] = lay;
+            lead_layers[{win->topo.central_output, lead}] = lay;
         }
 
         layers[enum_index(lay)].push_back(win);

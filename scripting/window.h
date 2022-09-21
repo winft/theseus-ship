@@ -197,12 +197,12 @@ public:
 
     QByteArray resourceName() const override
     {
-        return m_client->resource_name;
+        return m_client->meta.wm_class.res_name;
     }
 
     QByteArray resourceClass() const override
     {
-        return m_client->resource_class;
+        return m_client->meta.wm_class.res_class;
     }
 
     QString caption() const override
@@ -222,7 +222,7 @@ public:
 
     QUuid internalId() const override
     {
-        return m_client->internal_id;
+        return m_client->meta.internal_id;
     }
 
     pid_t pid() const override
@@ -237,7 +237,7 @@ public:
 
     QRect frameGeometry() const override
     {
-        return m_client->frameGeometry();
+        return m_client->geo.frame;
     }
 
     void setFrameGeometry(QRect const& geo) override
@@ -247,12 +247,12 @@ public:
 
     QPoint pos() const override
     {
-        return m_client->pos();
+        return m_client->geo.pos();
     }
 
     QRect rect() const override
     {
-        return QRect(QPoint(0, 0), m_client->size());
+        return QRect({}, m_client->geo.size());
     }
 
     QRect visibleRect() const override
@@ -262,7 +262,7 @@ public:
 
     QSize size() const override
     {
-        return m_client->size();
+        return m_client->geo.size();
     }
 
     QSize minSize() const override
@@ -282,27 +282,27 @@ public:
 
     QSize clientSize() const override
     {
-        return win::frame_to_client_size(m_client, m_client->size());
+        return win::frame_to_client_size(m_client, m_client->geo.size());
     }
 
     int x() const override
     {
-        return m_client->pos().x();
+        return m_client->geo.pos().x();
     }
 
     int y() const override
     {
-        return m_client->pos().y();
+        return m_client->geo.pos().y();
     }
 
     int width() const override
     {
-        return m_client->size().width();
+        return m_client->geo.size().width();
     }
 
     int height() const override
     {
-        return m_client->size().height();
+        return m_client->geo.size().height();
     }
 
     bool isMove() const override
@@ -317,7 +317,7 @@ public:
 
     bool hasAlpha() const override
     {
-        return m_client->hasAlpha();
+        return win::has_alpha(*m_client);
     }
 
     qreal opacity() const override
@@ -342,10 +342,10 @@ public:
 
     int screen() const override
     {
-        if (!m_client->central_output) {
+        if (!m_client->topo.central_output) {
             return 0;
         }
-        return base::get_output_index(m_client->space.base.outputs, *m_client->central_output);
+        return base::get_output_index(m_client->space.base.outputs, *m_client->topo.central_output);
     }
 
     int desktop() const override
@@ -365,7 +365,7 @@ public:
 
     bool isOnAllDesktops() const override
     {
-        return m_client->isOnAllDesktops();
+        return win::on_all_desktops(m_client);
     }
 
     void setOnAllDesktops(bool set) override
@@ -375,12 +375,12 @@ public:
 
     bool isOnDesktop(unsigned int desktop) const override
     {
-        return m_client->isOnDesktop(desktop);
+        return win::on_desktop(m_client, desktop);
     }
 
     bool isOnCurrentDesktop() const override
     {
-        return m_client->isOnCurrentDesktop();
+        return win::on_current_desktop(m_client);
     }
 
     QByteArray windowRole() const override
@@ -388,9 +388,9 @@ public:
         return m_client->windowRole();
     }
 
-    NET::WindowType windowType(bool direct, int supported_types) const override
+    NET::WindowType windowType() const override
     {
-        return m_client->windowType(direct, supported_types);
+        return m_client->windowType();
     }
 
     bool isDesktop() const override
@@ -525,7 +525,7 @@ public:
 
     bool isOutline() const override
     {
-        return m_client->isOutline();
+        return m_client->is_outline;
     }
 
     bool isShape() const override
@@ -595,12 +595,12 @@ public:
 
     bool skipsCloseAnimation() const override
     {
-        return m_client->skipsCloseAnimation();
+        return m_client->skip_close_animation;
     }
 
     void setSkipCloseAnimation(bool set) override
     {
-        m_client->setSkipCloseAnimation(set);
+        win::set_skip_close_animation(*m_client, set);
     }
 
     bool isActive() const override
@@ -635,12 +635,12 @@ public:
 
     bool isTransient() const override
     {
-        return m_client->transient()->lead();
+        return m_client->transient->lead();
     }
 
     window* transientFor() const override
     {
-        auto parent = m_client->transient()->lead();
+        auto parent = m_client->transient->lead();
         if (!parent) {
             return nullptr;
         }
@@ -651,7 +651,7 @@ public:
 
     bool isModal() const override
     {
-        return m_client->transient()->modal();
+        return m_client->transient->modal();
     }
 
     bool decorationHasAlpha() const override

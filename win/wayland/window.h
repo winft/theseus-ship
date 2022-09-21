@@ -74,7 +74,7 @@ public:
                          &Wrapland::Server::Surface::subsurfaceTreeChanged,
                          this->qobject.get(),
                          [this] {
-                             this->discard_shape();
+                             discard_shape(*this);
                              win::wayland::restack_subsurfaces(this);
                          });
         QObject::connect(surface,
@@ -99,9 +99,9 @@ public:
         return true;
     }
 
-    bool setupCompositing() override
+    void setupCompositing() override
     {
-        return win::setup_compositing(*this, false);
+        setup_compositing(*this);
     }
 
     void add_scene_window_addon() override
@@ -153,11 +153,8 @@ public:
         setup_scale_scene_notify(*this);
     }
 
-    NET::WindowType windowType(bool /*direct*/ = false, int /*supported_types*/ = 0) const override
+    NET::WindowType windowType() const override
     {
-        if (this->remnant) {
-            return this->remnant->data.window_type;
-        }
         return window_type;
     }
 
@@ -171,8 +168,8 @@ public:
         if (this->remnant) {
             return this->remnant->data.opacity;
         }
-        if (this->transient()->lead() && this->transient()->annexed) {
-            return this->transient()->lead()->opacity();
+        if (this->transient->lead() && this->transient->annexed) {
+            return this->transient->lead()->opacity();
         }
         return m_opacity;
     }
@@ -189,7 +186,7 @@ public:
         auto const old_opacity = m_opacity;
         m_opacity = opacity;
 
-        this->addRepaintFull();
+        add_full_repaint(*this);
         Q_EMIT this->qobject->opacityChanged(old_opacity);
     }
 
@@ -198,11 +195,11 @@ public:
         if (closing || hidden || this->remnant) {
             return false;
         }
-        if (!this->control && !this->transient()->lead()) {
+        if (!this->control && !this->transient->lead()) {
             return false;
         }
 
-        if (auto lead = this->transient()->lead()) {
+        if (auto lead = this->transient->lead()) {
             if (!lead->isShown()) {
                 return false;
             }
@@ -218,7 +215,7 @@ public:
         if (this->remnant) {
             return false;
         }
-        if (auto lead = this->transient()->lead()) {
+        if (auto lead = this->transient->lead()) {
             if (!lead->isHiddenInternal()) {
                 return false;
             }
@@ -247,8 +244,8 @@ public:
         }
 
         synced_geometry.window = window_geo;
-        synced_geometry.max_mode = this->geometry_update.max_mode;
-        synced_geometry.fullscreen = this->geometry_update.fullscreen;
+        synced_geometry.max_mode = this->geo.update.max_mode;
+        synced_geometry.fullscreen = this->geo.update.fullscreen;
 
         uint64_t serial = 0;
 
@@ -256,7 +253,7 @@ public:
             serial = toplevel->configure(xdg_surface_states(this), window_geo.size());
         }
         if (popup) {
-            auto parent = this->transient()->lead();
+            auto parent = this->transient->lead();
             if (parent) {
                 auto const top_lead = lead_of_annexed_transient(this);
                 auto const bounds = space_window_area(this->space,
@@ -265,7 +262,7 @@ public:
                                                       top_lead);
 
                 serial = popup->configure(
-                    get_xdg_shell_popup_placement(this, bounds).translated(-top_lead->pos()));
+                    get_xdg_shell_popup_placement(this, bounds).translated(-top_lead->geo.pos()));
             }
         }
         if (layer_surface) {
@@ -284,8 +281,8 @@ public:
     {
         assert(toplevel || popup || layer_surface);
 
-        auto frame_geo = this->frameGeometry();
-        auto position = this->pos();
+        auto frame_geo = this->geo.frame;
+        auto position = this->geo.pos();
         auto max_mode = this->max_mode;
         auto fullscreen = this->control ? this->control->fullscreen : false;
 
@@ -319,18 +316,18 @@ public:
         auto const ref_geo = shell_surface->window_geometry();
         frame_geo = QRect(position, ref_geo.size() + frame_size(this));
 
-        if (frame_geo == this->frameGeometry() && !serial_match
-            && this->client_frame_extents == shell_surface->window_margins()) {
+        if (frame_geo == this->geo.frame && !serial_match
+            && this->geo.client_frame_extents == shell_surface->window_margins()) {
             return;
         }
 
         if (!synced_geometry.window.isValid()) {
             // On first commit.
             synced_geometry.window = ref_geo;
-            this->geometry_update.frame = frame_geo;
+            this->geo.update.frame = frame_geo;
         }
 
-        this->client_frame_extents = shell_surface->window_margins();
+        this->geo.client_frame_extents = shell_surface->window_margins();
 
         if (popup) {
             auto const toplevel = lead_of_annexed_transient(this);
@@ -338,7 +335,7 @@ public:
             if (plasma_shell_surface && isInitialPositionSet()) {
                 // Sets position explicitly.
                 do_set_geometry(frame_geo);
-                toplevel->discard_quads();
+                discard_shape(*toplevel);
                 return;
             }
 
@@ -349,18 +346,18 @@ public:
 
             // Need to set that for get_xdg_shell_popup_placement(..) call.
             // TODO(romangg): make this less akward, i.e. if possible include it in the call.
-            if (this->geometry_update.pending == pending_geometry::none) {
-                this->geometry_update.frame = frame_geo;
+            if (this->geo.update.pending == pending_geometry::none) {
+                this->geo.update.frame = frame_geo;
             }
 
             auto const frame_geo = get_xdg_shell_popup_placement(this, screen_bounds);
 
-            if (this->geometry_update.pending == win::pending_geometry::none) {
-                this->geometry_update.frame = frame_geo;
+            if (this->geo.update.pending == win::pending_geometry::none) {
+                this->geo.update.frame = frame_geo;
             }
             do_set_geometry(frame_geo);
 
-            toplevel->discard_quads();
+            discard_shape(*toplevel);
             return;
         }
 
@@ -404,39 +401,39 @@ public:
 
     void do_set_geometry(QRect const& frame_geo)
     {
-        auto const old_frame_geo = this->frameGeometry();
+        auto const old_frame_geo = this->geo.frame;
 
         if (old_frame_geo == frame_geo) {
             return;
         }
 
-        this->set_frame_geometry(frame_geo);
+        this->geo.frame = frame_geo;
 
-        if (this->geometry_update.pending == win::pending_geometry::none) {
-            this->geometry_update.frame.setSize(frame_geo.size());
+        if (this->geo.update.pending == win::pending_geometry::none) {
+            this->geo.update.frame.setSize(frame_geo.size());
         }
 
         // TODO(romangg): When we have support for explicit/implicit popup repositioning combine.
         if (old_frame_geo.size() == frame_geo.size()) {
             move_annexed_children(this, frame_geo.topLeft() - old_frame_geo.topLeft());
-        } else if (!this->transient()->annexed) {
+        } else if (!this->transient->annexed) {
             reposition_annexed_children(this);
         }
 
         if (old_frame_geo.size() != frame_geo.size()) {
-            this->discard_quads();
+            discard_shape(*this);
         }
         if (plasma_shell_surface && popup) {
             // Plasma-shell surfaces can be xdg-shell popups at the same time. So their geometry
             // might change but they are also annexed. We have to discard the parent window's quads
             // here.
             auto lead = lead_of_annexed_transient(this);
-            lead->discard_quads();
+            discard_shape(*lead);
         }
 
         if (!this->control) {
-            this->addLayerRepaint(visible_rect(this, old_frame_geo));
-            this->addLayerRepaint(visible_rect(this, frame_geo));
+            add_layer_repaint(*this, visible_rect(this, old_frame_geo));
+            add_layer_repaint(*this, visible_rect(this, frame_geo));
             Q_EMIT this->qobject->frame_geometry_changed(old_frame_geo);
             return;
         }
@@ -447,8 +444,8 @@ public:
             perform_move_resize(this);
         }
 
-        this->addLayerRepaint(visible_rect(this, old_frame_geo));
-        this->addLayerRepaint(visible_rect(this, frame_geo));
+        add_layer_repaint(*this, visible_rect(this, old_frame_geo));
+        add_layer_repaint(*this, visible_rect(this, frame_geo));
 
         Q_EMIT this->qobject->frame_geometry_changed(old_frame_geo);
 
@@ -477,8 +474,8 @@ public:
 
         mapped = false;
 
-        if (this->transient()->annexed) {
-            this->discard_quads();
+        if (this->transient->annexed) {
+            discard_shape(*this);
         }
 
         if (this->control) {
@@ -511,7 +508,7 @@ public:
         if (this->remnant) {
             return;
         }
-        if (this->transient()->lead()) {
+        if (this->transient->lead()) {
             // This already has a parent set, we can only set one once.
             return;
         }
@@ -540,7 +537,7 @@ public:
         std::string type = "role unknown";
         if (this->control) {
             type = "toplevel";
-        } else if (this->transient()->lead()) {
+        } else if (this->transient->lead()) {
             type = popup ? "popup" : "subsurface";
         }
         if (input_method_popup) {
@@ -566,8 +563,7 @@ public:
 
         if (xdg_deco
             && xdg_deco->requestedMode() != Wrapland::Server::XdgDecoration::Mode::ClientSide) {
-            return !this->space.deco->hasPlugin() || user_no_border
-                || this->geometry_update.fullscreen;
+            return !this->space.deco->hasPlugin() || user_no_border || this->geo.update.fullscreen;
         }
         return true;
     }
@@ -604,7 +600,7 @@ public:
 
     void handle_update_no_border() override
     {
-        auto no_border = this->geometry_update.max_mode == maximize_mode::full;
+        auto no_border = this->geo.update.max_mode == maximize_mode::full;
         setNoBorder(this->control->rules.checkNoBorder(no_border));
     }
 
@@ -616,7 +612,7 @@ public:
             }
         }
 
-        auto const old_geom = this->frameGeometry();
+        auto const old_geom = this->geo.frame;
         auto const old_content_geom = old_geom.adjusted(
             left_border(this), top_border(this), -right_border(this), -bottom_border(this));
 
@@ -643,7 +639,7 @@ public:
                                  this->qobject.get(),
                                  [this]() {
                                      geometry_updates_blocker geo_blocker(this);
-                                     auto const old_geom = this->frameGeometry();
+                                     auto const old_geom = this->geo.frame;
                                      check_workspace_position(this, old_geom);
                                      Q_EMIT this->qobject->frame_geometry_changed(old_geom);
                                  });
@@ -656,7 +652,7 @@ public:
             // TODO: ensure the new geometry still fits into the client area (e.g. maximized
             // windows)
             // TODO(romangg): use setFrameGeometry?
-            do_set_geometry(QRect(old_geom.topLeft(), this->size() + deco_size));
+            do_set_geometry(QRect(old_geom.topLeft(), this->geo.size() + deco_size));
             Q_EMIT this->qobject->frame_geometry_changed(old_geom);
         }
 
@@ -765,11 +761,6 @@ public:
         return this->surface->client()->processId();
     }
 
-    bool isLocalhost() const override
-    {
-        return true;
-    }
-
     bool isLockScreen() const override
     {
         return !this->remnant
@@ -857,7 +848,7 @@ public:
         if (layer_surface) {
             return false;
         }
-        if (this->geometry_update.fullscreen) {
+        if (this->geo.update.fullscreen) {
             return false;
         }
         if (this->control->rules.checkPosition(geo::invalid_point) != geo::invalid_point) {
@@ -900,7 +891,7 @@ public:
         if (layer_surface) {
             return false;
         }
-        if (this->geometry_update.fullscreen) {
+        if (this->geo.update.fullscreen) {
             return false;
         }
         if (this->control->rules.checkSize(QSize()).isValid()) {
@@ -1010,28 +1001,28 @@ public:
     {
         auto const frame_geo = this->control ? this->control->rules.checkGeometry(rect) : rect;
 
-        this->geometry_update.frame = frame_geo;
+        this->geo.update.frame = frame_geo;
 
-        if (this->geometry_update.block) {
-            this->geometry_update.pending = win::pending_geometry::normal;
+        if (this->geo.update.block) {
+            this->geo.update.pending = win::pending_geometry::normal;
             return;
         }
 
-        this->geometry_update.pending = pending_geometry::none;
+        this->geo.update.pending = pending_geometry::none;
 
         if (needs_configure(this)) {
             if (plasma_shell_surface) {
                 if (!pending_configures.empty()) {
                     pending_configures.back().geometry.frame.moveTo(frame_geo.topLeft());
                 }
-                do_set_geometry(QRect(frame_geo.topLeft(), this->size()));
+                do_set_geometry(QRect(frame_geo.topLeft(), this->geo.size()));
             }
             configure_geometry(frame_geo);
             return;
         }
 
-        assert(synced_geometry.max_mode == this->geometry_update.max_mode);
-        assert(synced_geometry.fullscreen == this->geometry_update.fullscreen);
+        assert(synced_geometry.max_mode == this->geo.update.max_mode);
+        assert(synced_geometry.fullscreen == this->geo.update.fullscreen);
 
         if (!pending_configures.empty()) {
             // We might be here with a new position but a size not yet acked by the client.
@@ -1065,13 +1056,13 @@ public:
         // In case the restore geometry is invalid, use the placement from the rectify function.
         auto restore_geo = rectify_fullscreen_restore_geometry(this);
 
-        if (!this->restore_geometries.maximize.isValid()) {
+        if (!this->geo.restore.max.isValid()) {
             // We let the client decide on a size.
             restore_geo.setSize(QSize(0, 0));
         }
 
         setFrameGeometry(restore_geo);
-        this->restore_geometries.maximize = {};
+        this->geo.restore.max = {};
     }
 
     win::layer layer_for_dock() const override
@@ -1079,7 +1070,7 @@ public:
         assert(this->control);
 
         if (!plasma_shell_surface) {
-            return Toplevel<Space>::layer_for_dock();
+            return win::layer_for_dock(*this);
         }
 
         using PSS = Wrapland::Server::PlasmaShellSurface;
@@ -1102,7 +1093,7 @@ public:
 
     bool has_pending_repaints() const override
     {
-        return this->ready_for_painting && Toplevel<Space>::has_pending_repaints();
+        return this->render_data.ready_for_painting && Toplevel<Space>::has_pending_repaints();
     }
 
     void updateColorScheme() override
@@ -1148,7 +1139,7 @@ public:
     void handle_class_changed()
     {
         auto const window_class = QByteArray(toplevel->appId().c_str());
-        this->setResourceClass(this->resource_name, window_class);
+        set_wm_class(*this, this->meta.wm_class.res_name, window_class);
         if (initialized && supportsWindowRules()) {
             rules::setup_rules(this, true);
             this->applyWindowRules();
@@ -1158,12 +1149,12 @@ public:
 
     void handle_title_changed()
     {
-        auto const old_suffix = this->caption.suffix;
+        auto const old_suffix = this->meta.caption.suffix;
 
-        this->caption.normal = QString::fromStdString(toplevel->title()).simplified();
+        this->meta.caption.normal = QString::fromStdString(toplevel->title()).simplified();
         updateCaption();
 
-        if (this->caption.suffix == old_suffix) {
+        if (this->meta.caption.suffix == old_suffix) {
             // Don't emit caption change twice it already got emitted by the changing suffix.
             Q_EMIT this->qobject->captionChanged();
         }
@@ -1200,11 +1191,11 @@ public:
         }
 
         if (this->surface->state().updates & Wrapland::Server::surface_change::size) {
-            this->discard_buffer();
+            discard_buffer(*this);
         }
 
-        if (!this->surface->state().damage.isEmpty()) {
-            this->addDamage(this->surface->state().damage);
+        if (auto const& damage = this->surface->state().damage; !damage.isEmpty()) {
+            handle_surface_damage(*this, damage);
         } else if (this->surface->state().updates & Wrapland::Server::surface_change::frame) {
             this->space.base.render->compositor->schedule_frame_callback(this);
         }
@@ -1227,7 +1218,7 @@ public:
                                                         PlacementArea,
                                                         this->space.input->cursor->pos(),
                                                         this->desktop());
-                    auto size = this->size();
+                    auto size = this->geo.size();
                     auto pos = this->space.input->cursor->pos()
                         - QPoint(size.width(), size.height()) / 2;
                     win::move(this, pos);
@@ -1238,12 +1229,13 @@ public:
             handle_layer_surface_commit(this);
             apply_pending_geometry();
         } else if (auto cur_size = client_to_frame_size(this, this->surface->size());
-                   this->size() != cur_size) {
-            do_set_geometry(QRect(this->pos(), cur_size));
+                   this->geo.size() != cur_size) {
+            do_set_geometry(QRect(this->geo.pos(), cur_size));
         }
 
-        this->setDepth(
-            (this->surface->state().buffer->hasAlphaChannel() && !is_desktop(this)) ? 32 : 24);
+        auto bit_depth
+            = (this->surface->state().buffer->hasAlphaChannel() && !is_desktop(this)) ? 32 : 24;
+        set_bit_depth(*this, bit_depth);
         map();
     }
 
@@ -1334,19 +1326,19 @@ public:
 
     void updateCaption() override
     {
-        auto const old_suffix = this->caption.suffix;
+        auto const old_suffix = this->meta.caption.suffix;
         auto const shortcut = shortcut_caption_suffix(this);
-        this->caption.suffix = shortcut;
+        this->meta.caption.suffix = shortcut;
         if ((!is_special_window(this) || is_toolbar(this))
             && find_client_with_same_caption(static_cast<Toplevel<Space>*>(this))) {
             int i = 2;
             do {
-                this->caption.suffix
+                this->meta.caption.suffix
                     = shortcut + QLatin1String(" <") + QString::number(i) + QLatin1Char('>');
                 i++;
             } while (find_client_with_same_caption(static_cast<Toplevel<Space>*>(this)));
         }
-        if (this->caption.suffix != old_suffix) {
+        if (this->meta.caption.suffix != old_suffix) {
             Q_EMIT this->qobject->captionChanged();
         }
     }
@@ -1380,8 +1372,8 @@ private:
     {
         mapped = true;
 
-        if (this->transient()->annexed) {
-            this->discard_quads();
+        if (this->transient->annexed) {
+            discard_shape(*this);
         }
 
         if (this->control) {
@@ -1391,15 +1383,15 @@ private:
             update_screen_edge(this);
         }
 
-        if (this->ready_for_painting) {
+        if (this->render_data.ready_for_painting) {
             // Was already shown in the past once. Just repaint and emit shown again.
-            this->addRepaintFull();
+            add_full_repaint(*this);
             Q_EMIT this->qobject->windowShown();
             return;
         }
 
         // First time shown. Must be added to space.
-        this->setReadyForPainting();
+        set_ready_for_painting(*this);
         this->space.handle_window_added(this);
     }
 };

@@ -67,7 +67,7 @@ public:
             if (focus_window && win::decoration(focus_window)) {
                 // Test whether it is on the decoration.
                 auto const content_rect
-                    = focus_window->frameGeometry() - win::frame_margins(focus_window);
+                    = focus_window->geo.frame - win::frame_margins(focus_window);
                 if (!content_rect.contains(pos.toPoint())) {
                     cancelPopups();
                     return true;
@@ -111,7 +111,7 @@ private:
         if (contains(m_popups, window)) {
             return;
         }
-        if (window->transient()->input_grab) {
+        if (window->transient->input_grab) {
             // TODO: verify that the Toplevel is allowed as a popup
             connect(
                 window->qobject.get(),

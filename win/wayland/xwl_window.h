@@ -9,6 +9,7 @@
 
 #include "render/wayland/buffer.h"
 #include "scene.h"
+#include "surface.h"
 #include "win/x11/scene.h"
 #include "win/x11/window.h"
 
@@ -38,9 +39,22 @@ public:
         return this->surface ? this->surface->state().scale : 1;
     }
 
+    void handle_surface_damage(QRegion const& damage)
+    {
+        if (!this->render_data.ready_for_painting) {
+            // avoid "setReadyForPainting()" function calling overhead
+            if (this->sync_request.counter == XCB_NONE) {
+                // cannot detect complete redraw, consider done now
+                this->first_geo_synced = true;
+                set_ready_for_painting(*this);
+            }
+        }
+        wayland::handle_surface_damage(*this, damage);
+    }
+
     void add_scene_window_addon() override
     {
-        auto setup_buffer = [this](auto& buffer) {
+        auto setup_buffer = [](auto& buffer) {
             using scene_t = typename Space::base_t::render_t::compositor_t::scene_t;
             using buffer_integration_t
                 = render::wayland::buffer_win_integration<typename scene_t::buffer_t>;
@@ -64,6 +78,23 @@ public:
 
         if (this->surface) {
             setup_scale_scene_notify(*this);
+        }
+    }
+
+    void setupCompositing() override
+    {
+        assert(!this->remnant);
+        assert(this->space.base.render->compositor->scene);
+        assert(this->damage_handle == XCB_NONE);
+
+        discard_shape(*this);
+        this->render_data.damage_region = QRect({}, this->geo.size());
+
+        add_scene_window(*this->space.base.render->compositor->scene, *this);
+
+        if (this->control) {
+            // for internalKeep()
+            update_visibility(this);
         }
     }
 };

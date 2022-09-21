@@ -6,6 +6,7 @@
 #pragma once
 
 #include "deco.h"
+#include "desktop_get.h"
 #include "net.h"
 #include "types.h"
 
@@ -30,7 +31,7 @@ static inline bool is_irrelevant(Win1 const* window, Win2 const* regarding, int 
     if (!window->isShown()) {
         return true;
     }
-    if (!window->isOnDesktop(desktop)) {
+    if (!on_desktop(window, desktop)) {
         return true;
     }
     if (is_desktop(window)) {
@@ -68,7 +69,7 @@ QRect client_to_frame_rect(Win win, QRect const& content_rect)
     auto frame = content_rect;
 
     frame += frame_margins(win);
-    frame -= win->client_frame_extents;
+    frame -= win->geo.client_frame_extents;
 
     return frame;
 }
@@ -91,7 +92,7 @@ QRect frame_to_client_rect(Win win, QRect const& frame_rect)
     auto content = frame_rect;
 
     content -= frame_margins(win);
-    content += win->client_frame_extents;
+    content += win->geo.client_frame_extents;
 
     return content;
 }
@@ -111,7 +112,7 @@ QSize frame_to_client_size(Win win, QSize const& frame_size)
 template<typename Win>
 QRect frame_relative_client_rect(Win* win)
 {
-    auto const frame_geo = win->frameGeometry();
+    auto const frame_geo = win->geo.frame;
     auto const client_geo = frame_to_client_rect(win, frame_geo);
 
     return client_geo.translated(-frame_geo.topLeft());
@@ -122,11 +123,11 @@ QRect frame_to_render_rect(Win win, QRect const& frame_rect)
 {
     auto content = frame_rect;
 
-    if (!win->has_in_content_deco) {
+    if (!win->geo.has_in_content_deco) {
         content -= frame_margins(win);
     }
 
-    content += win->client_frame_extents;
+    content += win->geo.client_frame_extents;
 
     return content;
 }
@@ -140,7 +141,7 @@ QPoint frame_to_render_pos(Win win, QPoint const& frame_pos)
 template<typename Win>
 QRect render_geometry(Win* win)
 {
-    return frame_to_render_rect(win, win->frameGeometry());
+    return frame_to_render_rect(win, win->geo.frame);
 }
 
 template<typename Win>
@@ -157,17 +158,17 @@ template<typename Win>
 QRect input_geometry(Win* win)
 {
     if (auto deco = decoration(win)) {
-        return win->frameGeometry() + deco->resizeOnlyBorders();
+        return win->geo.frame + deco->resizeOnlyBorders();
     }
 
-    return frame_to_client_rect(win, win->frameGeometry());
+    return frame_to_client_rect(win, win->geo.frame);
 }
 
 template<typename Win>
 QRect pending_frame_geometry(Win* win)
 {
-    return win->geometry_update.pending == pending_geometry::none ? win->frameGeometry()
-                                                                  : win->geometry_update.frame;
+    return win->geo.update.pending == pending_geometry::none ? win->geo.frame
+                                                             : win->geo.update.frame;
 }
 
 /**

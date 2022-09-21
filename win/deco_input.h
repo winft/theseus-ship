@@ -66,7 +66,7 @@ bool process_decoration_button_press(Win* win, QMouseEvent* event, bool ignoreMe
 
         // TODO: use win's size instead.
         mov_res.inverted_offset
-            = QPoint(win->size().width() - 1, win->size().height() - 1) - mov_res.offset;
+            = QPoint(win->geo.size().width() - 1, win->geo.size().height() - 1) - mov_res.offset;
         mov_res.unrestricted = false;
         win::start_delayed_move_resize(win);
         win::update_cursor(win);

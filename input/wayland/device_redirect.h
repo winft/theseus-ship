@@ -138,7 +138,7 @@ bool device_redirect_update_decoration(Dev* dev)
     decltype(dev->focus.deco) new_deco{nullptr};
 
     if (auto win = dev->at.window; win && win->control && win->control->deco.client) {
-        auto const client_geo = win::frame_to_client_rect(win, win->frameGeometry());
+        auto const client_geo = win::frame_to_client_rect(win, win->geo.frame);
         if (!client_geo.contains(dev->position().toPoint())) {
             // input device above decoration
             new_deco = win->control->deco.client;
@@ -189,7 +189,7 @@ QWindow* device_redirect_find_internal_window(std::vector<Window*> const& window
         if (!w || !w->isVisible()) {
             continue;
         }
-        if (!internal->frameGeometry().contains(pos)) {
+        if (!internal->geo.frame.contains(pos)) {
             continue;
         }
         // check input mask

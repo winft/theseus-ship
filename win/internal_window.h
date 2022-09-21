@@ -24,6 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "geo_block.h"
 #include "singleton_interface.h"
 #include "space_areas_helpers.h"
+#include "wayland/scene.h"
+#include "wayland/surface.h"
 #include "window_release.h"
 
 #include "render/wayland/buffer.h"
@@ -57,7 +59,7 @@ public:
             return;
         }
 
-        auto const client_geo = win::frame_to_client_rect(m_client, m_client->frameGeometry());
+        auto const client_geo = win::frame_to_client_rect(m_client, m_client->geo.frame);
         control_t::destroy_decoration();
         m_client->setFrameGeometry(client_geo);
     }
@@ -83,12 +85,13 @@ protected:
         if (watched == window.m_internalWindow && event->type() == QEvent::DynamicPropertyChange) {
             auto pe = static_cast<QDynamicPropertyChangeEvent*>(event);
             if (pe->propertyName() == internal_skip_close_animation_name) {
-                window.setSkipCloseAnimation(
+                set_skip_close_animation(
+                    window,
                     window.m_internalWindow->property(internal_skip_close_animation_name).toBool());
             }
             if (pe->propertyName() == "kwin_windowType") {
-                window.m_windowType = window.m_internalWindow->property("kwin_windowType")
-                                          .template value<NET::WindowType>();
+                window.window_type = window.m_internalWindow->property("kwin_windowType")
+                                         .template value<NET::WindowType>();
                 update_space_areas(window.space);
             }
         }
@@ -153,12 +156,12 @@ public:
             m_internalWindow, &QWindow::destroyed, qwin.get(), [this] { destroyClient(); });
 
         QObject::connect(qwin.get(), &window_qobject::opacityChanged, qwin.get(), [this] {
-            this->addRepaintFull();
+            add_full_repaint(*this);
         });
 
         const QVariant windowType = m_internalWindow->property("kwin_windowType");
         if (!windowType.isNull()) {
-            m_windowType = windowType.value<NET::WindowType>();
+            window_type = windowType.value<NET::WindowType>();
         }
 
         setCaption(m_internalWindow->title());
@@ -166,8 +169,9 @@ public:
 
         set_on_all_desktops(this, true);
         setOpacity(m_internalWindow->opacity());
-        this->setSkipCloseAnimation(
-            m_internalWindow->property(internal_skip_close_animation_name).toBool());
+        set_skip_close_animation(
+            *this, m_internalWindow->property(internal_skip_close_animation_name).toBool());
+        this->is_outline = m_internalWindow->property("__kwin_outline").toBool();
 
         setupCompositing();
         updateColorScheme();
@@ -175,20 +179,20 @@ public:
         win::block_geometry_updates(this, true);
         updateDecoration(true);
         setFrameGeometry(win::client_to_frame_rect(this, m_internalWindow->geometry()));
-        this->restore_geometries.maximize = this->frameGeometry();
+        this->geo.restore.max = this->geo.frame;
         win::block_geometry_updates(this, false);
 
         m_internalWindow->installEventFilter(qwin.get());
     }
 
-    bool setupCompositing() override
+    void setupCompositing() override
     {
-        return win::setup_compositing(*this, false);
+        wayland::setup_compositing(*this);
     }
 
     void add_scene_window_addon() override
     {
-        auto setup_buffer = [this](auto& buffer) {
+        auto setup_buffer = [](auto& buffer) {
             using scene_t = typename Space::base_t::render_t::compositor_t::scene_t;
             using buffer_integration_t
                 = render::wayland::buffer_win_integration<typename scene_t::buffer_t>;
@@ -226,9 +230,9 @@ public:
         stream.nospace() << "\'internal_window:" << m_internalWindow << "\'";
     }
 
-    NET::WindowType windowType(bool /*direct*/ = false, int /*supported_types*/ = 0) const override
+    NET::WindowType windowType() const override
     {
-        return this->remnant ? this->remnant->data.window_type : m_windowType;
+        return window_type;
     }
 
     double opacity() const override
@@ -340,20 +344,9 @@ public:
         return false;
     }
 
-    bool isOutline() const override
-    {
-        if (this->remnant) {
-            return this->remnant->data.was_outline;
-        }
-        if (m_internalWindow) {
-            return m_internalWindow->property("__kwin_outline").toBool();
-        }
-        return false;
-    }
-
     bool isShown() const override
     {
-        return this->ready_for_painting;
+        return this->render_data.ready_for_painting;
     }
 
     bool isHiddenInternal() const override
@@ -367,14 +360,14 @@ public:
 
     void setFrameGeometry(QRect const& rect) override
     {
-        this->geometry_update.frame = rect;
+        this->geo.update.frame = rect;
 
-        if (this->geometry_update.block) {
-            this->geometry_update.pending = win::pending_geometry::normal;
+        if (this->geo.update.block) {
+            this->geo.update.pending = win::pending_geometry::normal;
             return;
         }
 
-        this->geometry_update.pending = win::pending_geometry::none;
+        this->geo.update.pending = win::pending_geometry::none;
 
         if (synced_geo != win::frame_to_client_rect(this, rect)) {
             requestGeometry(rect);
@@ -434,7 +427,7 @@ public:
 
     void handle_update_no_border() override
     {
-        setNoBorder(this->geometry_update.max_mode == maximize_mode::full);
+        setNoBorder(this->geo.update.max_mode == maximize_mode::full);
     }
 
     void updateDecoration(bool check_workspace_pos, bool force = false) override
@@ -443,7 +436,7 @@ public:
             return;
         }
 
-        const QRect oldFrameGeometry = this->frameGeometry();
+        const QRect oldFrameGeometry = this->geo.frame;
         const QRect oldClientGeometry = oldFrameGeometry - win::frame_margins(this);
 
         win::geometry_updates_blocker blocker(this);
@@ -489,7 +482,11 @@ public:
             this->leaveMoveResize();
         }
 
-        auto deleted = create_remnant_window<internal_window>(*this);
+        auto deleted = win::create_remnant_window<internal_window>(*this);
+        if (deleted) {
+            transfer_remnant_data(*this, *deleted);
+            space_add_remnant(*this, *deleted);
+        }
         Q_EMIT this->qobject->closed();
 
         this->control->destroy_decoration();
@@ -497,7 +494,7 @@ public:
         remove_window_from_lists(this->space, this);
         this->space.stacking.order.update_count();
         update_space_areas(this->space);
-        Q_EMIT this->space.qobject->internalClientRemoved(this->signal_id);
+        Q_EMIT this->space.qobject->internalClientRemoved(this->meta.signal_id);
 
         m_internalWindow = nullptr;
 
@@ -515,17 +512,17 @@ public:
 
         const QSize bufferSize = fbo->size() / buffer_scale_internal();
 
-        this->setFrameGeometry(QRect(this->pos(), win::client_to_frame_size(this, bufferSize)));
+        this->setFrameGeometry(QRect(this->geo.pos(), win::client_to_frame_size(this, bufferSize)));
         markAsMapped();
 
         if (buffers.fbo != fbo) {
-            this->discard_buffer();
+            discard_buffer(*this);
             buffers.fbo = fbo;
         }
 
-        this->setDepth(32);
-        this->addDamageFull();
-        this->addRepaintFull();
+        set_bit_depth(*this, 32);
+        add_full_damage(*this);
+        add_full_repaint(*this);
     }
 
     void present(const QImage& image, const QRegion& damage)
@@ -534,17 +531,17 @@ public:
 
         const QSize bufferSize = image.size() / buffer_scale_internal();
 
-        this->setFrameGeometry(QRect(this->pos(), win::client_to_frame_size(this, bufferSize)));
+        this->setFrameGeometry(QRect(this->geo.pos(), win::client_to_frame_size(this, bufferSize)));
         markAsMapped();
 
         if (buffers.image.size() != image.size()) {
-            this->discard_buffer();
+            discard_buffer(*this);
         }
 
         buffers.image = image;
 
-        this->setDepth(32);
-        this->addDamage(damage);
+        set_bit_depth(*this, 32);
+        wayland::handle_surface_damage(*this, damage);
     }
 
     QWindow* internalWindow() const
@@ -582,19 +579,19 @@ public:
 
     void updateCaption() override
     {
-        auto const oldSuffix = this->caption.suffix;
+        auto const oldSuffix = this->meta.caption.suffix;
         const auto shortcut = win::shortcut_caption_suffix(this);
-        this->caption.suffix = shortcut;
+        this->meta.caption.suffix = shortcut;
         if ((!win::is_special_window(this) || win::is_toolbar(this))
             && win::find_client_with_same_caption(static_cast<Toplevel<Space>*>(this))) {
             int i = 2;
             do {
-                this->caption.suffix
+                this->meta.caption.suffix
                     = shortcut + QLatin1String(" <") + QString::number(i) + QLatin1Char('>');
                 i++;
             } while (win::find_client_with_same_caption(static_cast<Toplevel<Space>*>(this)));
         }
-        if (this->caption.suffix != oldSuffix) {
+        if (this->meta.caption.suffix != oldSuffix) {
             Q_EMIT this->qobject->captionChanged();
         }
     }
@@ -623,41 +620,41 @@ public:
                              this->qobject.get(),
                              [this]() {
                                  win::geometry_updates_blocker blocker(this);
-                                 auto const old_geo = this->frameGeometry();
+                                 auto const old_geo = this->geo.frame;
                                  win::check_workspace_position(this, old_geo);
-                                 this->discard_quads();
+                                 discard_shape(*this);
                                  this->control->deco.client->update_size();
                              });
         }
 
         this->control->deco.decoration = decoration;
         this->setFrameGeometry(win::client_to_frame_rect(this, rect));
-        this->discard_quads();
+        discard_shape(*this);
     }
 
     void setCaption(QString const& cap)
     {
-        if (this->caption.normal == cap) {
+        if (this->meta.caption.normal == cap) {
             return;
         }
 
-        this->caption.normal = cap;
+        this->meta.caption.normal = cap;
 
-        auto const oldCaptionSuffix = this->caption.suffix;
+        auto const oldCaptionSuffix = this->meta.caption.suffix;
         updateCaption();
 
-        if (this->caption.suffix == oldCaptionSuffix) {
+        if (this->meta.caption.suffix == oldCaptionSuffix) {
             Q_EMIT this->qobject->captionChanged();
         }
     }
 
     void markAsMapped()
     {
-        if (this->ready_for_painting) {
+        if (this->render_data.ready_for_painting) {
             return;
         }
 
-        this->setReadyForPainting();
+        set_ready_for_painting(*this);
 
         this->space.windows.push_back(this);
 
@@ -673,7 +670,7 @@ public:
         this->space.stacking.order.update_count();
         update_space_areas(this->space);
 
-        Q_EMIT this->space.qobject->internalClientAdded(this->signal_id);
+        Q_EMIT this->space.qobject->internalClientAdded(this->meta.signal_id);
     }
 
     void requestGeometry(const QRect& rect)
@@ -686,13 +683,13 @@ public:
 
     void do_set_geometry(QRect const& frame_geo)
     {
-        auto const old_frame_geo = this->frameGeometry();
+        auto const old_frame_geo = this->geo.frame;
 
         if (old_frame_geo == frame_geo) {
             return;
         }
 
-        this->set_frame_geometry(frame_geo);
+        this->geo.frame = frame_geo;
 
         if (win::is_resize(this)) {
             win::perform_move_resize(this);
@@ -720,7 +717,7 @@ public:
     QWindow* m_internalWindow = nullptr;
     QRect synced_geo;
     double m_opacity = 1.0;
-    NET::WindowType m_windowType = NET::Normal;
+    NET::WindowType window_type{NET::Normal};
     Qt::WindowFlags m_internalWindowFlags = Qt::WindowFlags();
     bool m_userNoBorder = false;
 };

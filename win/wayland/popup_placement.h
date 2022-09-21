@@ -108,7 +108,7 @@ inline QPoint get_anchor(QRect const& rect, Qt::Edges edge, Qt::Edges gravity, Q
 template<typename Win>
 void adjust_by_flip_slide_resize(QRect& place, popup_placement_data<Win> const& data)
 {
-    auto const parent_pos = data.parent_window->pos()
+    auto const parent_pos = data.parent_window->geo.pos()
         + QPoint(win::left_border(data.parent_window), win::top_border(data.parent_window));
 
     auto in_bounds
@@ -209,7 +209,7 @@ void adjust_by_flip_slide_resize(QRect& place, popup_placement_data<Win> const& 
 template<typename Win>
 QRect get_popup_placement(popup_placement_data<Win> const& data)
 {
-    auto const parent_pos = data.parent_window->pos()
+    auto const parent_pos = data.parent_window->geo.pos()
         + QPoint(win::left_border(data.parent_window), win::top_border(data.parent_window));
 
     auto placement_pos = get_anchor(data.anchor_rect, data.anchor_edges, data.gravity, data.size)

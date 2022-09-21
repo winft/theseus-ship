@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "types.h"
 #include "win/deco/renderer.h"
 
+#include "win/damage.h"
 #include "win/geo.h"
 #include "win/space_qobject.h"
 
@@ -412,7 +413,7 @@ public:
             // Reset the repaint_region.
             // This has to be done here because many effects schedule a repaint for
             // the next frame within Effects::prePaintWindow.
-            topw->resetRepaints(repaint_output);
+            win::reset_repaints(*topw, repaint_output);
 
             WindowPrePaintData data;
             data.mask = static_cast<int>(
@@ -468,12 +469,12 @@ public:
                                                                : paint_type::window_translucent));
             window->resetPaintingEnabled();
             data.paint = region;
-            data.paint |= toplevel->repaints();
+            data.paint |= win::repaints(*toplevel);
 
             // Reset the repaint_region.
             // This has to be done here because many effects schedule a repaint for
             // the next frame within Effects::prePaintWindow.
-            toplevel->resetRepaints(repaint_output);
+            win::reset_repaints(*toplevel, repaint_output);
 
             opaqueFullscreen = false;
 
@@ -483,12 +484,12 @@ public:
                     opaqueFullscreen = toplevel->control->fullscreen;
                 }
                 data.clip |= win::content_render_region(toplevel).translated(
-                    toplevel->pos() + window->bufferOffset());
-            } else if (toplevel->hasAlpha() && toplevel->opacity() == 1.0) {
+                    toplevel->geo.pos() + window->bufferOffset());
+            } else if (win::has_alpha(*toplevel) && toplevel->opacity() == 1.0) {
                 auto const clientShape = win::content_render_region(toplevel).translated(
-                    win::frame_to_render_pos(toplevel, toplevel->pos()));
-                auto const opaqueShape = toplevel->opaque_region.translated(
-                    win::frame_to_client_pos(toplevel, toplevel->pos()) - toplevel->pos());
+                    win::frame_to_render_pos(toplevel, toplevel->geo.pos()));
+                auto const opaqueShape = toplevel->render_data.opaque_region.translated(
+                    win::frame_to_client_pos(toplevel, toplevel->geo.pos()) - toplevel->geo.pos());
                 data.clip = clientShape & opaqueShape;
                 if (clientShape == opaqueShape) {
                     data.mask = static_cast<int>(orig_mask | paint_type::window_opaque);
@@ -501,7 +502,7 @@ public:
             // The decoration is drawn in the second pass.
             if (toplevel->control && !win::decoration_has_alpha(toplevel)
                 && toplevel->opacity() == 1.0) {
-                data.clip = window->decorationShape().translated(toplevel->pos());
+                data.clip = window->decorationShape().translated(toplevel->geo.pos());
             }
 
             data.quads = window->buildQuads();
@@ -724,7 +725,7 @@ private:
             }
 
             const QPointF point = item->mapToScene(QPointF(0, 0));
-            auto const win_pos = w->ref_win->pos();
+            auto const win_pos = w->ref_win->geo.pos();
             qreal x = point.x() + win_pos.x() + (item->width() - size.width()) / 2;
             qreal y = point.y() + win_pos.y() + (item->height() - size.height()) / 2;
             x -= thumb->x();
@@ -774,7 +775,7 @@ private:
                               size.height() / double(space_size.height()));
 
             const QPointF point = item->mapToScene(item->position());
-            auto const win_pos = w->ref_win->pos();
+            auto const win_pos = w->ref_win->geo.pos();
             const qreal x = point.x() + win_pos.x() + (item->width() - size.width()) / 2;
             const qreal y = point.y() + win_pos.y() + (item->height() - size.height()) / 2;
             const QRect region = QRect(x, y, item->width(), item->height());

@@ -163,7 +163,7 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
             for (auto window : win->space.windows) {
                 if (auto wayland_window = dynamic_cast<Win*>(window);
                     wayland_window && wayland_window->popup == popup) {
-                    win->transient()->add_child(wayland_window);
+                    win->transient->add_child(wayland_window);
                     break;
                 }
             }
@@ -197,7 +197,7 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
         QObject::connect(
             &win->space.base, &base::platform::topology_changed, win->qobject.get(), [win] {
                 auto geo = layer_surface_recommended_geometry(win);
-                if (win->geometry_update.frame != geo) {
+                if (win->geo.update.frame != geo) {
                     win->setFrameGeometry(geo);
                 }
             });
@@ -230,7 +230,7 @@ void handle_new_layer_surface(Space* space, Wrapland::Server::LayerSurfaceV1* la
 
     win::wayland::assign_layer_surface_role(window, layer_surface);
 
-    if (window->ready_for_painting) {
+    if (window->render_data.ready_for_painting) {
         space->handle_window_added(window);
     }
 }
@@ -346,8 +346,7 @@ void handle_layer_surface_commit(Win* win)
 {
     assert(win->layer_surface);
 
-    if (!win->layer_surface->change_pending()
-        && win->geometry_update.frame == win->frameGeometry()) {
+    if (!win->layer_surface->change_pending() && win->geo.update.frame == win->geo.frame) {
         return;
     }
 

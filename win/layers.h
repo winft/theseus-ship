@@ -39,8 +39,26 @@ bool is_active_fullscreen(Win const* win)
     // According to NETWM spec implementation notes suggests "focused windows having state
     // _NET_WM_STATE_FULLSCREEN" to be on the highest layer. Also take the screen into account.
     return ac
-        && (ac == win || ac->central_output != win->central_output
-            || contains(ac->transient()->leads(), win));
+        && (ac == win || ac->topo.central_output != win->topo.central_output
+            || contains(ac->transient->leads(), win));
+}
+
+template<typename Win>
+layer layer_for_dock(Win const& win)
+{
+    assert(win.control);
+
+    // Slight hack for the 'allow window to cover panel' Kicker setting.
+    // Don't move keepbelow docks below normal window, but only to the same
+    // layer, so that both may be raised to cover the other.
+    if (win.control->keep_below) {
+        return win::layer::normal;
+    }
+    if (win.control->keep_above) {
+        // slight hack for the autohiding panels
+        return win::layer::above;
+    }
+    return win::layer::dock;
 }
 
 template<typename Win>
@@ -96,10 +114,24 @@ layer belong_to_layer(Win* win)
     return win::layer::normal;
 }
 
+// TODO(romangg): Setting the cache for the layer lazily here is a bit unusual. Maybe instead make
+//                this a simple getter and call belong_to_layer explicitly when appropriate.
+template<typename Win>
+layer get_layer(Win const& win)
+{
+    if (win.transient->lead() && win.transient->annexed) {
+        return get_layer(*win.transient->lead());
+    }
+    if (win.topo.layer == layer::unknown) {
+        const_cast<Win&>(win).topo.layer = belong_to_layer(&win);
+    }
+    return win.topo.layer;
+}
+
 template<typename Win>
 void invalidate_layer(Win* win)
 {
-    win->set_layer(win::layer::unknown);
+    win->topo.layer = layer::unknown;
 }
 
 template<typename Win>
@@ -108,7 +140,7 @@ void update_layer(Win* win)
     if (!win) {
         return;
     }
-    if (win->remnant || win->layer() == belong_to_layer(win)) {
+    if (win->remnant || get_layer(*win) == belong_to_layer(win)) {
         return;
     }
 
@@ -117,8 +149,8 @@ void update_layer(Win* win)
     // Invalidate, will be updated when doing restacking.
     invalidate_layer(win);
 
-    for (auto const& child : win->transient()->children) {
-        if (!child->transient()->annexed) {
+    for (auto const& child : win->transient->children) {
+        if (!child->transient->annexed) {
             update_layer(child);
         }
     }

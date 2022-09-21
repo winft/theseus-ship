@@ -264,7 +264,7 @@ private:
     QMatrix4x4 transformation(paint_type mask, const WindowPaintData& data) const
     {
         QMatrix4x4 matrix;
-        auto const win_pos = this->ref_win->pos();
+        auto const win_pos = this->ref_win->geo.pos();
         matrix.translate(win_pos.x(), win_pos.y());
 
         if (!(mask & paint_type::window_transformed)) {
@@ -386,7 +386,7 @@ private:
             // TODO: ARGB crsoofading is atm. a hack, playing on opacities for two dumb SrcOver
             // operations Should be a shader
             if (data.crossFadeProgress() != 1.0
-                && (data.opacity() < 0.95 || window->ref_win->hasAlpha())) {
+                && (data.opacity() < 0.95 || win::has_alpha(*window->ref_win))) {
                 const float opacity = 1.0 - data.crossFadeProgress();
                 node.opacity = data.opacity() * (1 - pow(opacity, 1.0f + 2.0f * data.opacity()));
             } else {
@@ -437,7 +437,7 @@ private:
             WindowQuadList quads;
             quads.reserve(data.quads.count());
 
-            auto const win_pos = this->ref_win->pos();
+            auto const win_pos = this->ref_win->geo.pos();
             auto const filterRegion = region.translated(-win_pos.x(), -win_pos.y());
 
             // split all quads in bounding rect with the actual rects in the region
@@ -518,7 +518,7 @@ private:
             return buffer->texture.get();
         }
 
-        if (!this->ref_win->damage_region.isEmpty())
+        if (!this->ref_win->render_data.damage_region.isEmpty())
             static_cast<Scene&>(this->scene).insertWait();
 
         if (!buffer->bind()) {

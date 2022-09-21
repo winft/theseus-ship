@@ -40,7 +40,8 @@ void update_space_areas(Window* win,
     }
 
     auto strut_region = win::x11::get_strut_rects(win);
-    auto const clientsScreenRect = win->central_output ? win->central_output->geometry() : QRect();
+    auto const clientsScreenRect
+        = win->topo.central_output ? win->topo.central_output->geometry() : QRect();
 
     for (auto strut = strut_region.begin(); strut != strut_region.end(); strut++) {
         *strut = strut_rect((*strut).intersected(clientsScreenRect), (*strut).area());
@@ -54,7 +55,7 @@ void update_space_areas(Window* win,
     // or having some content appear offscreen (Relatively rare compared to other).
     auto has_offscreen_xinerama_strut = win::x11::has_offscreen_xinerama_strut(win);
 
-    if (win->isOnAllDesktops()) {
+    if (on_all_desktops(win)) {
         for (int desktop = 1; desktop <= desktops_count; ++desktop) {
             if (!has_offscreen_xinerama_strut) {
                 areas.work[desktop] = areas.work[desktop].intersected(client_area);

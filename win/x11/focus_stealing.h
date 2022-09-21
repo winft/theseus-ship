@@ -8,6 +8,7 @@
 #include "base/options.h"
 #include "main.h"
 #include "utils/algorithm.h"
+#include "win/desktop_get.h"
 #include "win/layers.h"
 #include "win/util.h"
 
@@ -79,7 +80,7 @@ bool allow_window_activation(Space& space,
     }
 
     // Desktop switching is only allowed in the "no protection" case
-    if (!ignore_desktop && !window->isOnCurrentDesktop()) {
+    if (!ignore_desktop && !on_current_desktop(window)) {
         // allow only with level == 0
         return false;
     }
@@ -103,7 +104,7 @@ bool allow_window_activation(Space& space,
         return true;
     }
 
-    if (!window->isOnCurrentDesktop()) {
+    if (!on_current_desktop(window)) {
         // we allowed explicit self-activation across virtual desktops
         // inside a client or if no client was active, but not otherwise
         return false;

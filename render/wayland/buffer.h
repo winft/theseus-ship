@@ -39,7 +39,7 @@ public:
             return {};
         }
         if (internal.fbo || !internal.image.isNull()) {
-            return this->buffer.window->ref_win->damage_region;
+            return this->buffer.window->ref_win->render_data.damage_region;
         }
         return {};
     }

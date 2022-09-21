@@ -426,8 +426,7 @@ void TestScreenEdges::testCallback()
     });
     QVERIFY(it != edges.cend());
 
-    int time = 0;
-    auto setPos = [&time](const QPoint& pos) {
+    auto setPos = [](const QPoint& pos) {
         Test::pointer_motion_absolute(pos, QDateTime::currentMSecsSinceEpoch());
     };
 
@@ -775,7 +774,7 @@ void TestScreenEdges::testFullScreenBlocking()
     // let's make the client fullscreen again, but with a geometry not intersecting the left edge
     QTest::qWait(351);
     client->setFullScreen(true);
-    client->setFrameGeometry(client->frameGeometry().translated(10, 0));
+    client->setFrameGeometry(client->geo.frame.translated(10, 0));
     Q_EMIT screenEdges->checkBlocking();
     spy.clear();
     Test::cursor()->set_pos(0, 50);
@@ -887,7 +886,7 @@ void TestScreenEdges::testClientEdge()
     QCOMPARE(client->isHiddenInternal(), true);
 
     // now let's emulate the removal of a Client through base.space
-    Q_EMIT Test::app()->base.space->qobject->clientRemoved(client->signal_id);
+    Q_EMIT Test::app()->base.space->qobject->clientRemoved(client->meta.signal_id);
     for (auto& e : screenEdges->edges) {
         QVERIFY(!e->client());
     }

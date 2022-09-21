@@ -71,7 +71,7 @@ void xdg_activation_test::test_single_client()
     auto window1 = Test::render_and_wait_for_shown(surface1, QSize(200, 100), Qt::red);
     QVERIFY(window1);
     QCOMPARE(win::render_geometry(window1).size(), QSize(200, 100));
-    QCOMPARE(window1->frameGeometry().size(), QSize(200, 100));
+    QCOMPARE(window1->geo.frame.size(), QSize(200, 100));
     QVERIFY(window1->control->active);
     QCOMPARE(Test::app()->base.space->stacking.active, window1);
 
@@ -83,7 +83,7 @@ void xdg_activation_test::test_single_client()
     auto window2 = Test::render_and_wait_for_shown(surface2, QSize(400, 200), Qt::blue);
     QVERIFY(window2);
     QCOMPARE(win::render_geometry(window2).size(), QSize(400, 200));
-    QCOMPARE(window2->frameGeometry().size(), QSize(400, 200));
+    QCOMPARE(window2->geo.frame.size(), QSize(400, 200));
     QVERIFY(window2->control->active);
     QCOMPARE(Test::app()->base.space->stacking.active, window2);
 
@@ -142,7 +142,7 @@ void xdg_activation_test::test_multi_client()
     auto window1 = Test::render_and_wait_for_shown(surface1, QSize(200, 100), Qt::red);
     QVERIFY(window1);
     QCOMPARE(win::render_geometry(window1).size(), QSize(200, 100));
-    QCOMPARE(window1->frameGeometry().size(), QSize(200, 100));
+    QCOMPARE(window1->geo.frame.size(), QSize(200, 100));
     QVERIFY(window1->control->active);
     QCOMPARE(Test::app()->base.space->stacking.active, window1);
 
@@ -159,7 +159,7 @@ void xdg_activation_test::test_multi_client()
     auto window2 = Test::render_and_wait_for_shown(client2, surface2, QSize(400, 200), Qt::blue);
     QVERIFY(window2);
     QCOMPARE(win::render_geometry(window2).size(), QSize(400, 200));
-    QCOMPARE(window2->frameGeometry().size(), QSize(400, 200));
+    QCOMPARE(window2->geo.frame.size(), QSize(400, 200));
     QVERIFY(window2->control->active);
     QCOMPARE(Test::app()->base.space->stacking.active, window2);
 
@@ -219,7 +219,7 @@ void xdg_activation_test::test_plasma_activation_feedback()
     auto window1 = Test::render_and_wait_for_shown(surface1, QSize(200, 100), Qt::red);
     QVERIFY(window1);
     QCOMPARE(win::render_geometry(window1).size(), QSize(200, 100));
-    QCOMPARE(window1->frameGeometry().size(), QSize(200, 100));
+    QCOMPARE(window1->geo.frame.size(), QSize(200, 100));
     QVERIFY(window1->control->active);
     QCOMPARE(Test::app()->base.space->stacking.active, window1);
 
@@ -231,7 +231,7 @@ void xdg_activation_test::test_plasma_activation_feedback()
     auto window2 = Test::render_and_wait_for_shown(surface2, QSize(400, 200), Qt::blue);
     QVERIFY(window2);
     QCOMPARE(win::render_geometry(window2).size(), QSize(400, 200));
-    QCOMPARE(window2->frameGeometry().size(), QSize(400, 200));
+    QCOMPARE(window2->geo.frame.size(), QSize(400, 200));
     QVERIFY(window2->control->active);
     QCOMPARE(Test::app()->base.space->stacking.active, window2);
 

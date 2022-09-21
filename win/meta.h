@@ -6,9 +6,7 @@
 #pragma once
 
 #include "net.h"
-#include "remnant.h"
-
-#include "rules/ruling.h"
+#include "rules/types.h"
 
 #include <KDesktopFile>
 #include <klocalizedstring.h>
@@ -25,7 +23,7 @@ QString caption(Win* win)
     if (win->remnant) {
         return win->remnant->data.caption;
     }
-    QString cap = win->caption.normal + win->caption.suffix;
+    QString cap = win->meta.caption.normal + win->meta.caption.suffix;
     if (win->control && win->control->unresponsive) {
         cap += QLatin1String(" ");
         cap += i18nc("Application is not responding, appended to window title", "(Not Responding)");
@@ -105,13 +103,21 @@ Win* find_client_with_same_caption(Win const* win)
         if (is_special_window(candidate) && !is_toolbar(candidate)) {
             continue;
         }
-        if (candidate->caption.normal != win->caption.normal
-            || candidate->caption.suffix != win->caption.suffix) {
+        if (candidate->meta.caption.normal != win->meta.caption.normal
+            || candidate->meta.caption.suffix != win->meta.caption.suffix) {
             continue;
         }
         return candidate;
     }
     return nullptr;
+}
+
+template<typename Win>
+void set_wm_class(Win& win, QByteArray const& res_name, QByteArray const& res_class)
+{
+    win.meta.wm_class.res_name = res_name;
+    win.meta.wm_class.res_class = res_class;
+    Q_EMIT win.qobject->windowClassChanged();
 }
 
 }

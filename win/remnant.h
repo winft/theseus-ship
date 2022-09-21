@@ -92,7 +92,6 @@ public:
 
         std::unique_ptr<deco::render_data> deco_render;
         double opacity{1};
-        NET::WindowType window_type{NET::Unknown};
         QByteArray window_role;
         QString caption;
 
@@ -106,7 +105,6 @@ public:
 
         bool was_group_transient{false};
         bool was_popup_window{false};
-        bool was_outline{false};
         bool was_lock_screen{false};
 
         double buffer_scale{1};

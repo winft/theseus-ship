@@ -133,7 +133,7 @@ private:
     static bool needs_child_restack(Win const& lead, Win const& child)
     {
         // Tells if a transient child should be restacked directly above its lead.
-        if (lead.layer() < child.layer()) {
+        if (get_layer(lead) < get_layer(child)) {
             // Child will be in a layer above the lead and should not be pulled down from that.
             return false;
         }
@@ -146,7 +146,7 @@ private:
     template<typename Win>
     static void append_children(stacking_order& order, Win* window, std::deque<Win*>& list)
     {
-        auto const children = window->transient()->children;
+        auto const children = window->transient->children;
         if (!children.size()) {
             return;
         }
@@ -176,7 +176,7 @@ private:
         std::deque<Window*> stack;
 
         for (auto const& window : pre_order) {
-            if (auto const leads = window->transient()->leads();
+            if (auto const leads = window->transient->leads();
                 std::find_if(leads.cbegin(),
                              leads.cend(),
                              [window](auto lead) { return needs_child_restack(*lead, *window); })

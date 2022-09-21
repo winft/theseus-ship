@@ -74,7 +74,7 @@ public:
                              this->qobject.get(),
                              [this](auto output) {
                                  for (auto& win : this->space->windows) {
-                                     remove_all(win->repaint_outputs, output);
+                                     remove_all(win->render_data.repaint_outputs, output);
                                  }
                              });
             QObject::connect(

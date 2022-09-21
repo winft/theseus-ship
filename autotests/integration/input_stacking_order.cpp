@@ -131,8 +131,8 @@ void InputStackingOrderTest::testPointerFocusUpdatesOnStackingOrderChange()
     QVERIFY(window1 != window2);
 
     // now make windows overlap
-    win::move(window2, window1->pos());
-    QCOMPARE(window1->frameGeometry(), window2->frameGeometry());
+    win::move(window2, window1->geo.pos());
+    QCOMPARE(window1->geo.frame, window2->geo.frame);
 
     // enter
     Test::pointer_motion_absolute(QPointF(25, 25), 1);

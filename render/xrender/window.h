@@ -34,8 +34,9 @@ public:
 
     window(RefWin* c, Scene& /*scene*/)
         : render::window<RefWin>(c)
-        , format(XRenderUtils::findPictFormat(c->xcb_visual))
     {
+        using x11_window_t = typename std::decay_t<decltype(c->space)>::x11_window;
+        format = XRenderUtils::findPictFormat(static_cast<x11_window_t*>(c)->xcb_visual);
     }
 
     void performPaint(paint_type mask, QRegion region, WindowPaintData data) override
@@ -69,13 +70,13 @@ public:
         if (pic
             == XCB_RENDER_PICTURE_NONE) // The render format can be null for GL and/or Xv visuals
             return;
-        this->ref_win->resetDamage();
+        this->ref_win->render_data.damage_region = {};
 
         // set picture filter
         this->filter = image_filter_type::fast;
 
         // do required transformations
-        auto const win_size = this->ref_win->size();
+        auto const win_size = this->ref_win->geo.size();
         auto const wr = mapToScreen(mask, data, QRect(0, 0, win_size.width(), win_size.height()));
 
         // Content rect (in the buffer)
@@ -86,7 +87,7 @@ public:
 
         auto client = this->ref_win;
         auto& remnant = this->ref_win->remnant;
-        auto const decorationRect = QRect(QPoint(), this->ref_win->size());
+        auto const decorationRect = QRect(QPoint(), this->ref_win->geo.size());
         if ((client && client->control && !client->noBorder())
             || (remnant && !remnant->data.no_border)) {
             // decorated client
@@ -173,7 +174,7 @@ public:
         if (blitInTempPixmap) {
             if (scene_xRenderOffscreenTarget()) {
                 temp_visibleRect
-                    = win::visible_rect(this->ref_win).translated(-this->ref_win->pos());
+                    = win::visible_rect(this->ref_win).translated(-this->ref_win->geo.pos());
                 renderTarget = *scene_xRenderOffscreenTarget();
             } else {
                 prepareTempPixmap();
@@ -196,7 +197,7 @@ public:
             // transformation matrix, and doesn't have an alpha channel.
             // Since we only scale the picture, we can work around this by setting
             // the repeat mode to RepeatPad.
-            if (!this->ref_win->hasAlpha()) {
+            if (!win::has_alpha(*this->ref_win)) {
                 const uint32_t values[] = {XCB_RENDER_REPEAT_PAD};
                 xcb_render_change_picture(connection(), pic, XCB_RENDER_CP_REPEAT, values);
             }
@@ -430,7 +431,7 @@ public:
                 if (blitInTempPixmap) {
                     rect.x = -temp_visibleRect.left();
                     rect.y = -temp_visibleRect.top();
-                    auto const size = this->ref_win->size();
+                    auto const size = this->ref_win->geo.size();
                     rect.width = size.width();
                     rect.height = size.height();
                 } else {
@@ -472,7 +473,7 @@ public:
             xcb_render_set_picture_transform(connection(), pic, identity);
             if (this->filter == image_filter_type::good)
                 setPictureFilter(pic, image_filter_type::fast);
-            if (!this->ref_win->hasAlpha()) {
+            if (!win::has_alpha(*this->ref_win)) {
                 const uint32_t values[] = {XCB_RENDER_REPEAT_NONE};
                 xcb_render_change_picture(connection(), pic, XCB_RENDER_CP_REPEAT, values);
             }
@@ -511,7 +512,7 @@ private:
         }
 
         // Move the rectangle to the screen position
-        auto const win_pos = this->ref_win->pos();
+        auto const win_pos = this->ref_win->geo.pos();
         r.translate(win_pos.x(), win_pos.y());
 
         if (flags(mask & paint_type::screen_transformed)) {
@@ -537,7 +538,7 @@ private:
         }
 
         // Move the point to the screen position
-        auto const win_pos = this->ref_win->pos();
+        auto const win_pos = this->ref_win->geo.pos();
         pt += QPoint(win_pos.x(), win_pos.y());
 
         if (flags(mask & paint_type::screen_transformed)) {
@@ -566,7 +567,7 @@ private:
         auto& s_tempPicture = static_cast<Scene&>(this->scene).temp_picture;
 
         const QSize oldSize = temp_visibleRect.size();
-        temp_visibleRect = win::visible_rect(this->ref_win).translated(-this->ref_win->pos());
+        temp_visibleRect = win::visible_rect(this->ref_win).translated(-this->ref_win->geo.pos());
         if (s_tempPicture
             && (oldSize.width() < temp_visibleRect.width()
                 || oldSize.height() < temp_visibleRect.height())) {

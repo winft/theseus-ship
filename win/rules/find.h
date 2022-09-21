@@ -35,17 +35,17 @@ void evaluate_rules(Win* win)
 template<typename Ruling, typename RefWin>
 bool match_rule(Ruling& ruling, RefWin const& ref_win)
 {
-    if (!ruling.matchType(ref_win.windowType(true))) {
+    if (!ruling.matchType(ref_win.get_window_type_direct())) {
         return false;
     }
-    if (!ruling.matchWMClass(ref_win.resource_class, ref_win.resource_name)) {
+    if (!ruling.matchWMClass(ref_win.meta.wm_class.res_class, ref_win.meta.wm_class.res_name)) {
         return false;
     }
     if (!ruling.matchRole(ref_win.windowRole().toLower())) {
         return false;
     }
 
-    if (auto& cm = ref_win.client_machine;
+    if (auto cm = ref_win.get_client_machine();
         cm && !ruling.matchClientMachine(cm->hostname(), cm->is_local())) {
         return false;
     }
@@ -63,7 +63,7 @@ bool match_rule(Ruling& ruling, RefWin const& ref_win)
             static_cast<Qt::ConnectionType>(Qt::QueuedConnection | Qt::UniqueConnection));
     }
 
-    return ruling.matchTitle(ref_win.caption.normal);
+    return ruling.matchTitle(ref_win.meta.caption.normal);
 }
 
 template<typename Book, typename RefWin>

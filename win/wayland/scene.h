@@ -5,13 +5,28 @@
 */
 #pragma once
 
-#include "render/scene.h"
+#include "win/geo.h"
+#include "win/scene.h"
 
 #include <Wrapland/Server/surface.h>
 #include <cassert>
 
 namespace KWin::win::wayland
 {
+
+template<typename Win>
+void handle_surface_damage(Win& win, QRegion const& damage)
+{
+    assert(!damage.isEmpty());
+
+    auto const render_region = render_geometry(&win);
+    win.render_data.repaints_region += damage.translated(render_region.topLeft() - win.geo.pos());
+    acquire_repaint_outputs(win, render_region);
+
+    win.render_data.is_damaged = true;
+    win.render_data.damage_region += damage;
+    Q_EMIT win.qobject->damaged(damage);
+}
 
 template<typename Win>
 void update_buffer(Win& win, std::shared_ptr<Wrapland::Server::Buffer>& target)
@@ -58,6 +73,19 @@ void setup_scale_scene_notify(Win& win)
                 win.space.base.render->compositor->scene->windowGeometryShapeChanged(&win);
             }
         });
+}
+
+template<typename Win>
+void setup_compositing(Win& win)
+{
+    static_assert(!Win::is_toplevel);
+    assert(!win.remnant);
+    assert(win.space.base.render->compositor->scene);
+
+    discard_shape(win);
+    win.render_data.damage_region = QRect({}, win.geo.size());
+
+    add_scene_window(*win.space.base.render->compositor->scene, win);
 }
 
 }

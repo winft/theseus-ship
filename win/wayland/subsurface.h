@@ -22,14 +22,14 @@ void assign_subsurface_role(Win* win)
     assert(win->surface);
     assert(win->surface->subsurface());
 
-    win->transient()->annexed = true;
+    win->transient->annexed = true;
 }
 
 template<typename Win>
 void restack_subsurfaces(Win* window)
 {
     auto const& subsurfaces = window->surface->state().children;
-    auto& children = window->transient()->children;
+    auto& children = window->transient->children;
 
     for (auto const& subsurface : subsurfaces) {
         auto it = std::find_if(children.begin(), children.end(), [&subsurface](auto child) {
@@ -43,7 +43,7 @@ void restack_subsurfaces(Win* window)
     }
 
     // Optimize and do that only for the first window up the chain not being annexed.
-    if (!window->transient()->annexed) {
+    if (!window->transient->annexed) {
         window->space.stacking.order.update_order();
     }
 }
@@ -53,17 +53,17 @@ void set_subsurface_parent(Win* win, Lead* lead)
 {
     namespace WS = Wrapland::Server;
 
-    assert(!win->transient()->lead());
-    assert(!contains(lead->transient()->children, win));
+    assert(!win->transient->lead());
+    assert(!contains(lead->transient->children, win));
 
-    lead->transient()->add_child(win);
+    lead->transient->add_child(win);
     restack_subsurfaces(lead);
 
     QObject::connect(win->surface, &WS::Surface::committed, win->qobject.get(), [win] {
         if (win->surface->state().updates & Wrapland::Server::surface_change::size) {
-            auto const old_geo = win->frameGeometry();
+            auto const old_geo = win->geo.frame;
             // TODO(romangg): use setFrameGeometry?
-            win->set_frame_geometry(QRect(win->pos(), win->surface->size()));
+            win->geo.frame = QRect(win->geo.pos(), win->surface->size());
             Q_EMIT win->qobject->frame_geometry_changed(old_geo);
         }
         win->handle_commit();
@@ -89,12 +89,12 @@ void set_subsurface_parent(Win* win, Lead* lead)
         return win::render_geometry(lead).topLeft() + subsurface->position();
     };
     auto set_pos = [win, get_pos]() {
-        auto const old_frame_geo = win->frameGeometry();
+        auto const old_frame_geo = win->geo.frame;
         auto const frame_geo = QRect(get_pos(), win->surface->size());
 
         if (old_frame_geo != frame_geo) {
             // TODO(romangg): use setFrameGeometry?
-            win->set_frame_geometry(frame_geo);
+            win->geo.frame = frame_geo;
 
             // A top lead might not be available when the client has deleted one of the parent
             // surfaces in the tree before this subsurface.
@@ -103,8 +103,8 @@ void set_subsurface_parent(Win* win, Lead* lead)
             //                when destroying while iterating over windows.
             auto top_lead = lead_of_annexed_transient(win);
             if (top_lead) {
-                top_lead->addLayerRepaint(old_frame_geo.united(frame_geo));
-                top_lead->discard_quads();
+                add_layer_repaint(*top_lead, old_frame_geo.united(frame_geo));
+                discard_shape(*top_lead);
             }
 
             Q_EMIT win->qobject->frame_geometry_changed(old_frame_geo);
@@ -122,8 +122,7 @@ void set_subsurface_parent(Win* win, Lead* lead)
     QObject::connect(
         lead->qobject.get(), &Lead::qobject_t::frame_geometry_changed, win->qobject.get(), set_pos);
 
-    win->set_layer(win::layer::unmanaged);
-
+    win->topo.layer = layer::unmanaged;
     win->map();
 }
 
@@ -143,7 +142,7 @@ void handle_new_subsurface(Space* space, Wrapland::Server::Subsurface* subsurfac
     for (auto& win : space->windows) {
         if (win->surface == subsurface->parentSurface()) {
             win::wayland::set_subsurface_parent(window, win);
-            if (window->ready_for_painting) {
+            if (window->render_data.ready_for_painting) {
                 space->handle_window_added(window);
                 adopt_transient_children(space, window);
                 return;

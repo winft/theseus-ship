@@ -54,7 +54,8 @@ void active_window_to_next_output(Space& space)
     if (!has_usable_active_window(space)) {
         return;
     }
-    if (auto output = get_derivated_output(space.base, space.stacking.active->central_output, 1)) {
+    if (auto output
+        = get_derivated_output(space.base, space.stacking.active->topo.central_output, 1)) {
         send_to_screen(space, space.stacking.active, *output);
     }
 }
@@ -65,7 +66,8 @@ void active_window_to_prev_output(Space& space)
     if (!has_usable_active_window(space)) {
         return;
     }
-    if (auto output = get_derivated_output(space.base, space.stacking.active->central_output, -1)) {
+    if (auto output
+        = get_derivated_output(space.base, space.stacking.active->topo.central_output, -1)) {
         send_to_screen(space, space.stacking.active, *output);
     }
 }
@@ -124,7 +126,7 @@ void active_window_lower(Space& space)
     if (space.stacking.active->control->active
         && kwinApp()->options->qobject->focusPolicyIsReasonable()) {
         if (kwinApp()->options->qobject->isNextFocusPrefersMouse()) {
-            auto next = window_under_mouse(space, space.stacking.active->central_output);
+            auto next = window_under_mouse(space, space.stacking.active->topo.central_output);
             if (next && next != space.stacking.active)
                 request_focus(space, next);
         } else {
@@ -147,7 +149,7 @@ template<typename Space>
 void active_window_set_on_all_desktops(Space& space)
 {
     if (has_usable_active_window(space)) {
-        set_on_all_desktops(space.stacking.active, !space.stacking.active->isOnAllDesktops());
+        set_on_all_desktops(space.stacking.active, !on_all_desktops(space.stacking.active));
     }
 }
 
@@ -306,7 +308,7 @@ void active_window_show_operations_popup(Space& space)
         return;
     }
 
-    auto pos = frame_to_client_pos(win, win->pos());
+    auto pos = frame_to_client_pos(win, win->geo.pos());
     space.user_actions_menu->show(QRect(pos, pos), win);
 }
 
@@ -317,7 +319,7 @@ void active_window_pack_left(Space& space)
     if (!can_move(win)) {
         return;
     }
-    auto const pos = win->geometry_update.frame.topLeft();
+    auto const pos = win->geo.update.frame.topLeft();
     pack_to(win, get_pack_position_left(space, win, pos.x(), true), pos.y());
 }
 
@@ -329,8 +331,8 @@ void active_window_pack_right(Space& space)
         return;
     }
 
-    auto const pos = win->geometry_update.frame.topLeft();
-    auto const width = win->geometry_update.frame.size().width();
+    auto const pos = win->geo.update.frame.topLeft();
+    auto const width = win->geo.update.frame.size().width();
     pack_to(win, get_pack_position_right(space, win, pos.x() + width, true) - width + 1, pos.y());
 }
 
@@ -342,7 +344,7 @@ void active_window_pack_up(Space& space)
         return;
     }
 
-    auto const pos = win->geometry_update.frame.topLeft();
+    auto const pos = win->geo.update.frame.topLeft();
     pack_to(win, pos.x(), get_pack_position_up(space, win, pos.y(), true));
 }
 
@@ -354,8 +356,8 @@ void active_window_pack_down(Space& space)
         return;
     }
 
-    auto const pos = win->geometry_update.frame.topLeft();
-    auto const height = win->geometry_update.frame.size().height();
+    auto const pos = win->geo.update.frame.topLeft();
+    auto const height = win->geo.update.frame.size().height();
     pack_to(win, pos.x(), get_pack_position_down(space, win, pos.y() + height, true) - height + 1);
 }
 

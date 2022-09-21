@@ -158,7 +158,7 @@ void setup_window_shortcut(Space& space, Win* window)
     auto area = space_window_area(space, ScreenArea, window);
     auto size = space.client_keys_dialog->sizeHint();
 
-    auto pos = win::frame_to_client_pos(window, window->pos());
+    auto pos = win::frame_to_client_pos(window, window->geo.pos());
     if (pos.x() + size.width() >= area.right()) {
         pos.setX(area.right() - size.width());
     }

@@ -39,12 +39,12 @@ public:
 
     QByteArray resourceName() const override
     {
-        return ref_win->resource_name;
+        return ref_win->meta.wm_class.res_name;
     }
 
     QByteArray resourceClass() const override
     {
-        return ref_win->resource_class;
+        return ref_win->meta.wm_class.res_class;
     }
 
     QString caption() const override
@@ -73,7 +73,7 @@ public:
 
     QUuid internalId() const override
     {
-        return ref_win->internal_id;
+        return ref_win->meta.internal_id;
     }
 
     pid_t pid() const override
@@ -91,7 +91,7 @@ public:
 
     QRect frameGeometry() const override
     {
-        return ref_win->frameGeometry();
+        return ref_win->geo.frame;
     }
 
     void setFrameGeometry(QRect const& geo) override
@@ -103,12 +103,12 @@ public:
 
     QPoint pos() const override
     {
-        return ref_win->pos();
+        return ref_win->geo.pos();
     }
 
     QRect rect() const override
     {
-        return QRect(QPoint(0, 0), ref_win->size());
+        return QRect(QPoint(0, 0), ref_win->geo.size());
     }
 
     QRect visibleRect() const override
@@ -118,7 +118,7 @@ public:
 
     QSize size() const override
     {
-        return ref_win->size();
+        return ref_win->geo.size();
     }
 
     QSize minSize() const override
@@ -144,27 +144,27 @@ public:
 
     QSize clientSize() const override
     {
-        return win::frame_to_client_size(ref_win, ref_win->size());
+        return win::frame_to_client_size(ref_win, ref_win->geo.size());
     }
 
     int x() const override
     {
-        return ref_win->pos().x();
+        return ref_win->geo.pos().x();
     }
 
     int y() const override
     {
-        return ref_win->pos().y();
+        return ref_win->geo.pos().y();
     }
 
     int width() const override
     {
-        return ref_win->size().width();
+        return ref_win->geo.size().width();
     }
 
     int height() const override
     {
-        return ref_win->size().height();
+        return ref_win->geo.size().height();
     }
 
     bool isMove() const override
@@ -185,7 +185,7 @@ public:
 
     bool hasAlpha() const override
     {
-        return ref_win->hasAlpha();
+        return win::has_alpha(*ref_win);
     }
 
     qreal opacity() const override
@@ -217,10 +217,10 @@ public:
 
     int screen() const override
     {
-        if (!ref_win->central_output) {
+        if (!ref_win->topo.central_output) {
             return 0;
         }
-        return base::get_output_index(ref_win->space.base.outputs, *ref_win->central_output);
+        return base::get_output_index(ref_win->space.base.outputs, *ref_win->topo.central_output);
     }
 
     int desktop() const override
@@ -242,7 +242,7 @@ public:
 
     bool isOnAllDesktops() const override
     {
-        return ref_win->isOnAllDesktops();
+        return win::on_all_desktops(ref_win);
     }
 
     void setOnAllDesktops(bool set) override
@@ -257,9 +257,9 @@ public:
         return ref_win->windowRole();
     }
 
-    NET::WindowType windowType(bool direct = false, int supported_types = 0) const override
+    NET::WindowType windowType() const override
     {
-        return ref_win->windowType(direct, supported_types);
+        return ref_win->windowType();
     }
 
     bool isDesktop() const override
@@ -415,7 +415,7 @@ public:
 
     bool isOutline() const override
     {
-        return ref_win->isOutline();
+        return ref_win->is_outline;
     }
 
     bool isShape() const override
@@ -515,13 +515,13 @@ public:
 
     bool skipsCloseAnimation() const override
     {
-        return ref_win->skipsCloseAnimation();
+        return ref_win->skip_close_animation;
     }
 
     void setSkipCloseAnimation(bool set) override
     {
         if (ref_win->control) {
-            ref_win->setSkipCloseAnimation(set);
+            win::set_skip_close_animation(*ref_win, set);
         }
     }
 
@@ -574,7 +574,7 @@ public:
 
     bool isTransient() const override
     {
-        return ref_win->transient()->lead();
+        return ref_win->transient->lead();
     }
 
     console_window* transientFor() const override
@@ -585,7 +585,7 @@ public:
 
     bool isModal() const override
     {
-        return ref_win->transient()->modal();
+        return ref_win->transient->modal();
     }
 
     bool decorationHasAlpha() const override

@@ -267,7 +267,7 @@ private:
             return false;
         }
 
-        auto const repaints = win->repaints();
+        auto const repaints = win::repaints(*win);
         if (repaints.intersected(base.geometry()).isEmpty()) {
             // TODO(romangg): Remove win from windows list?
             return false;
@@ -309,7 +309,7 @@ private:
         while (window_it != windows.end()) {
             auto win = *window_it;
 
-            if (win->remnant && win->transient()->annexed) {
+            if (win->remnant && win->transient->annexed) {
                 if (auto lead = win::lead_of_annexed_transient(win); !lead || !lead->remnant) {
                     // TODO(romangg): Add repaint to compositor?
                     win->remnant->refcount = 0;
@@ -318,6 +318,7 @@ private:
                     continue;
                 }
             }
+
             window_it++;
 
             if (prepare_repaint(win)) {
@@ -328,13 +329,18 @@ private:
                        && max_coverage_output(win) == &base) {
                 frame_windows.push_back(win);
             }
-            if (win->resetAndFetchDamage()) {
-                // Discard the cached lanczos texture
-                if (win->transient()->annexed) {
-                    win = win::lead_of_annexed_transient(win);
-                }
+
+            if (win->render_data.is_damaged) {
                 assert(win->render);
                 assert(win->render->effect);
+
+                win->render_data.is_damaged = false;
+
+                // Discard the cached lanczos texture
+                if (win->transient->annexed) {
+                    win = win::lead_of_annexed_transient(win);
+                }
+
                 auto const texture = win->render->effect->data(LanczosCacheRole);
                 if (texture.isValid()) {
                     delete static_cast<GLTexture*>(texture.template value<void*>());
@@ -379,7 +385,7 @@ private:
             auto screen_lock_filtered
                 = kwinApp()->is_screen_locked() && !win->isLockScreen() && !win->isInputMethod();
 
-            return !win->ready_for_painting || screen_lock_filtered;
+            return !win->render_data.ready_for_painting || screen_lock_filtered;
         });
 
         // Submit pending output repaints and clear the pending field, so that post-pass can add new

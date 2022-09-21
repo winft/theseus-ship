@@ -29,11 +29,11 @@ void perform_window_operation(Win* window, base::options_qobject::WindowOperatio
     auto& cursor = space.input->cursor;
 
     if (op == base::options_qobject::MoveOp || op == base::options_qobject::UnrestrictedMoveOp) {
-        cursor->set_pos(window->frameGeometry().center());
+        cursor->set_pos(window->geo.frame.center());
     }
     if (op == base::options_qobject::ResizeOp
         || op == base::options_qobject::UnrestrictedResizeOp) {
-        cursor->set_pos(window->frameGeometry().bottomRight());
+        cursor->set_pos(window->geo.frame.bottomRight());
     }
 
     switch (op) {
@@ -71,7 +71,7 @@ void perform_window_operation(Win* window, base::options_qobject::WindowOperatio
         set_minimized(window, true);
         break;
     case base::options_qobject::OnAllDesktopsOp:
-        set_on_all_desktops(window, !window->isOnAllDesktops());
+        set_on_all_desktops(window, !on_all_desktops(window));
         break;
     case base::options_qobject::FullScreenOp:
         window->setFullScreen(!window->control->fullscreen, true);

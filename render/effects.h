@@ -274,7 +274,7 @@ public:
         : effects_handler_wrap(compositor.scene->compositingType())
         , compositor{compositor}
     {
-        singleton_interface::register_thumbnail = [this](auto& eff_win, auto& thumbnail) {
+        singleton_interface::register_thumbnail = [](auto& eff_win, auto& thumbnail) {
             auto& impl_win = static_cast<effect_window_t&>(eff_win);
             impl_win.registerThumbnail(&thumbnail);
         };
@@ -322,7 +322,7 @@ public:
                 this,
                 [this, space = ws](auto win_id) {
                     auto c = space->windows_map.at(win_id);
-                    if (c->ready_for_painting) {
+                    if (c->render_data.ready_for_painting) {
                         slotClientShown(c);
                     } else {
                         QObject::connect(c->qobject.get(),
@@ -911,7 +911,7 @@ public:
     EffectWindow* find_window_by_uuid(const QUuid& id) const override
     {
         for (auto win : compositor.space->windows) {
-            if (!win->remnant && win->internal_id == id) {
+            if (!win->remnant && win->meta.internal_id == id) {
                 return win->render->effect.get();
             }
         }
@@ -1074,10 +1074,8 @@ public:
         if (window->control) {
             return win::space_window_area(*space, opt, window);
         } else {
-            return win::space_window_area(*space,
-                                          opt,
-                                          window->frameGeometry().center(),
-                                          space->virtual_desktop_manager->current());
+            return win::space_window_area(
+                *space, opt, window->geo.frame.center(), space->virtual_desktop_manager->current());
         }
     }
 

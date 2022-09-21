@@ -45,22 +45,22 @@ public:
 
     int x() const override
     {
-        return m_client->pos().x();
+        return m_client->geo.pos().x();
     }
 
     int y() const override
     {
-        return m_client->pos().y();
+        return m_client->geo.pos().y();
     }
 
     int width() const override
     {
-        return m_client->size().width();
+        return m_client->geo.size().width();
     }
 
     int height() const override
     {
-        return m_client->size().height();
+        return m_client->geo.size().height();
     }
 
     bool is_closeable() const override
@@ -80,7 +80,7 @@ public:
 
     QUuid internal_id() const override
     {
-        return m_client->internal_id;
+        return m_client->meta.internal_id;
     }
 
     Window* client() const

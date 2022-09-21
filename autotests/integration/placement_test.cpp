@@ -164,7 +164,7 @@ PlaceWindowResult TestPlacement::createAndPlaceWindow(QSize const& defaultSize)
     Test::render(rc.surface, rc.initiallyConfiguredSize, Qt::red);
     configSpy.wait(100);
 
-    rc.finalGeometry = window->frameGeometry();
+    rc.finalGeometry = window->geo.frame;
     return rc;
 }
 
@@ -269,7 +269,7 @@ void TestPlacement::testPlaceMaximizedLeavesFullscreen()
 
         QVERIFY(initiallyConfiguredStates & XdgShellToplevel::State::Fullscreen);
         QCOMPARE(initiallyConfiguredSize, QSize(1280, 1024));
-        QCOMPARE(c->frameGeometry(), QRect(0, 0, 1280, 1024));
+        QCOMPARE(c->geo.frame, QRect(0, 0, 1280, 1024));
     }
 }
 
@@ -286,7 +286,7 @@ void TestPlacement::testPlaceCentered()
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::red);
     QVERIFY(client);
-    QCOMPARE(client->frameGeometry(), QRect(590, 487, 100, 50));
+    QCOMPARE(client->geo.frame, QRect(590, 487, 100, 50));
 
     shellSurface.reset();
     QVERIFY(Test::wait_for_destroyed(client));
@@ -308,7 +308,7 @@ void TestPlacement::testPlaceUnderMouse()
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::red);
     QVERIFY(client);
-    QCOMPARE(client->frameGeometry(), QRect(151, 276, 100, 50));
+    QCOMPARE(client->geo.frame, QRect(151, 276, 100, 50));
 
     shellSurface.reset();
     QVERIFY(Test::wait_for_destroyed(client));
@@ -327,22 +327,22 @@ void TestPlacement::testPlaceRandom()
     std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
     auto client1 = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::red);
     QVERIFY(client1);
-    QCOMPARE(client1->size(), QSize(100, 50));
+    QCOMPARE(client1->geo.size(), QSize(100, 50));
 
     std::unique_ptr<Surface> surface2(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
     auto client2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::blue);
     QVERIFY(client2);
-    QVERIFY(client2->pos() != client1->pos());
-    QCOMPARE(client2->size(), QSize(100, 50));
+    QVERIFY(client2->geo.pos() != client1->geo.pos());
+    QCOMPARE(client2->geo.size(), QSize(100, 50));
 
     std::unique_ptr<Surface> surface3(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3));
     auto client3 = Test::render_and_wait_for_shown(surface3, QSize(100, 50), Qt::green);
     QVERIFY(client3);
-    QVERIFY(client3->pos() != client1->pos());
-    QVERIFY(client3->pos() != client2->pos());
-    QCOMPARE(client3->size(), QSize(100, 50));
+    QVERIFY(client3->geo.pos() != client1->geo.pos());
+    QVERIFY(client3->geo.pos() != client2->geo.pos());
+    QCOMPARE(client3->geo.size(), QSize(100, 50));
 
     shellSurface3.reset();
     QVERIFY(Test::wait_for_destroyed(client3));

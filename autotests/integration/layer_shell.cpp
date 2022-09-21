@@ -18,7 +18,6 @@
 
 namespace Clt = Wrapland::Client;
 
-constexpr auto socket_name = "wayland_test_kwin_xdgshellclient-0";
 constexpr auto output_count = 2;
 
 Q_DECLARE_METATYPE(QMargins)
@@ -201,9 +200,9 @@ void layer_shell_test::test_create()
     QVERIFY(window);
     QVERIFY(window->isShown());
     QCOMPARE(window->isHiddenInternal(), false);
-    QCOMPARE(window->ready_for_painting, true);
-    QCOMPARE(window->bit_depth, 32);
-    QVERIFY(window->hasAlpha());
+    QCOMPARE(window->render_data.ready_for_painting, true);
+    QCOMPARE(window->render_data.bit_depth, 32);
+    QVERIFY(win::has_alpha(*window));
 
     // By default layer surfaces have keyboard interactivity set to none.
     QCOMPARE(Test::app()->base.space->stacking.active, nullptr);
@@ -218,7 +217,7 @@ void layer_shell_test::test_create()
     QVERIFY(!window->render->effect->internalWindow());
 
     // Surface is centered.
-    QCOMPARE(window->frameGeometry(),
+    QCOMPARE(window->geo.frame,
              target_geo(output1_geo, render_size, QMargins(), align::center, align::center));
 
     window_spy.clear();
@@ -251,11 +250,11 @@ void layer_shell_test::test_create()
     QVERIFY(window2);
     QVERIFY(window2->isShown());
     QCOMPARE(window2->isHiddenInternal(), false);
-    QCOMPARE(window2->ready_for_painting, true);
+    QCOMPARE(window2->render_data.ready_for_painting, true);
     QCOMPARE(Test::app()->base.space->stacking.active, window2);
 
     // Surface is centered.
-    QCOMPARE(window2->frameGeometry(),
+    QCOMPARE(window2->geo.frame,
              target_geo(output1_geo, render_size, QMargins(), align::center, align::center));
 }
 
@@ -368,7 +367,7 @@ void layer_shell_test::test_geo()
                           margin,
                           align_horizontal,
                           align_vertical);
-    QCOMPARE(window->frameGeometry(), geo);
+    QCOMPARE(window->geo.frame, geo);
 }
 
 void layer_shell_test::test_output_change()
@@ -417,7 +416,7 @@ void layer_shell_test::test_output_change()
     QVERIFY(window->isShown());
 
     // Surface is centered.
-    QCOMPARE(window->frameGeometry(),
+    QCOMPARE(window->geo.frame,
              target_geo(output_geo, render_size, QMargins(), align::center, align::center));
 
     QSignalSpy topology_spy(&Test::app()->base, &base::platform::topology_changed);
@@ -475,7 +474,7 @@ void layer_shell_test::test_popup()
     QVERIFY(window->isShown());
 
     // Surface is centered.
-    QCOMPARE(window->frameGeometry(),
+    QCOMPARE(window->geo.frame,
              target_geo(output1_geo, render_size, QMargins(), align::center, align::center));
 
     window_spy.clear();
@@ -493,8 +492,8 @@ void layer_shell_test::test_popup()
     auto server_popup
         = Test::render_and_wait_for_shown(popup_surface, positioner.initialSize(), Qt::blue);
     QVERIFY(server_popup);
-    QCOMPARE(server_popup->frameGeometry(),
-             QRect(window->frameGeometry().topLeft() + QPoint(5, 10), QSize(50, 40)));
+    QCOMPARE(server_popup->geo.frame,
+             QRect(window->geo.frame.topLeft() + QPoint(5, 10), QSize(50, 40)));
 }
 
 }

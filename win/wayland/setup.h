@@ -28,8 +28,8 @@ void setup_plasma_management(Space* space, Win* win)
     if (!win->surface) {
         return;
     }
-    auto plasma_win
-        = space->plasma_window_manager->createWindow(win->internal_id.toString().toStdString());
+    auto plasma_win = space->plasma_window_manager->createWindow(
+        win->meta.internal_id.toString().toStdString());
     plasma_win->setTitle(win::caption(win));
     plasma_win->setActive(win->control->active);
     plasma_win->setFullscreen(win->control->fullscreen);
@@ -37,7 +37,7 @@ void setup_plasma_management(Space* space, Win* win)
     plasma_win->setKeepBelow(win->control->keep_below);
     plasma_win->setMaximized(win->maximizeMode() == win::maximize_mode::full);
     plasma_win->setMinimized(win->control->minimized);
-    plasma_win->setOnAllDesktops(win->isOnAllDesktops());
+    plasma_win->setOnAllDesktops(on_all_desktops(win));
     plasma_win->setDemandsAttention(win->control->demands_attention);
     plasma_win->setCloseable(win->isCloseable());
     plasma_win->setMaximizeable(win->isMaximizable());
@@ -46,8 +46,9 @@ void setup_plasma_management(Space* space, Win* win)
     plasma_win->setIcon(win->control->icon);
     auto updateAppId = [win, plasma_win] {
         auto const name = win->control->desktop_file_name;
-        plasma_win->setAppId(QString::fromUtf8(name.isEmpty() ? win->resource_class : name));
-        plasma_win->set_resource_name(win->resource_name.toStdString());
+        plasma_win->setAppId(
+            QString::fromUtf8(name.isEmpty() ? win->meta.wm_class.res_class : name));
+        plasma_win->set_resource_name(win->meta.wm_class.res_name.toStdString());
     };
     updateAppId();
     plasma_win->setSkipTaskbar(win->control->skip_taskbar());
@@ -62,10 +63,10 @@ void setup_plasma_management(Space* space, Win* win)
     // FIXME Matches X11Client::actionSupported(), but both should be implemented.
     plasma_win->setVirtualDesktopChangeable(true);
 
-    auto transient_lead = win->transient()->lead();
+    auto transient_lead = win->transient->lead();
     plasma_win->setParentWindow(transient_lead ? transient_lead->control->plasma_wayland_integration
                                                : nullptr);
-    plasma_win->setGeometry(win->frameGeometry());
+    plasma_win->setGeometry(win->geo.frame);
 
     auto qtwin = win->qobject.get();
     QObject::connect(qtwin, &window_qobject::skipTaskbarChanged, plasma_win, [plasma_win, win] {
@@ -109,7 +110,7 @@ void setup_plasma_management(Space* space, Win* win)
     QObject::connect(qtwin, &window_qobject::windowClassChanged, plasma_win, updateAppId);
     QObject::connect(qtwin, &window_qobject::desktopFileNameChanged, plasma_win, updateAppId);
     QObject::connect(qtwin, &window_qobject::transientChanged, plasma_win, [plasma_win, win] {
-        auto lead = win->transient()->lead();
+        auto lead = win->transient->lead();
         if (lead && !lead->control) {
             // When lead becomes remnant.
             lead = nullptr;
@@ -122,19 +123,19 @@ void setup_plasma_management(Space* space, Win* win)
                                             QString::fromStdString(appmenu.address.path));
     });
     QObject::connect(qtwin, &window_qobject::frame_geometry_changed, plasma_win, [plasma_win, win] {
-        plasma_win->setGeometry(win->frameGeometry());
+        plasma_win->setGeometry(win->geo.frame);
     });
     QObject::connect(plasma_win, &Wrapland::Server::PlasmaWindow::closeRequested, qtwin, [win] {
         win->closeWindow();
     });
     QObject::connect(plasma_win, &Wrapland::Server::PlasmaWindow::moveRequested, qtwin, [win] {
         auto& cursor = win->space.input->cursor;
-        cursor->set_pos(win->frameGeometry().center());
+        cursor->set_pos(win->geo.frame.center());
         win->performMouseCommand(base::options_qobject::MouseMove, cursor->pos());
     });
     QObject::connect(plasma_win, &Wrapland::Server::PlasmaWindow::resizeRequested, qtwin, [win] {
         auto& cursor = win->space.input->cursor;
-        cursor->set_pos(win->frameGeometry().bottomRight());
+        cursor->set_pos(win->geo.frame.bottomRight());
         win->performMouseCommand(base::options_qobject::MouseResize, cursor->pos());
     });
     QObject::connect(plasma_win,
@@ -172,13 +173,13 @@ void setup_plasma_management(Space* space, Win* win)
             }
         });
 
-    for (auto const vd : win->desktops()) {
+    for (auto const vd : win->topo.desktops) {
         plasma_win->addPlasmaVirtualDesktop(vd->id().toStdString());
     }
 
     // Only for the legacy mechanism.
     QObject::connect(qtwin, &window_qobject::desktopChanged, plasma_win, [plasma_win, win] {
-        if (win->isOnAllDesktops()) {
+        if (on_all_desktops(win)) {
             plasma_win->setOnAllDesktops(true);
             return;
         }

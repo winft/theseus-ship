@@ -107,12 +107,12 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
     geometry_updates_blocker blocker(win);
 
     // Store current geometry if not already defined.
-    if (!win->restore_geometries.maximize.isValid()) {
-        win->restore_geometries.maximize = win->frameGeometry();
+    if (!win->geo.restore.max.isValid()) {
+        win->geo.restore.max = win->geo.frame;
     }
 
     // Later calls to set_maximize(..) would reset the restore geometry.
-    auto const old_restore_geo = win->restore_geometries.maximize;
+    auto const old_restore_geo = win->geo.restore.max;
 
     if (mode == quicktiles::maximize) {
         // Special case where we just maximize and return early.
@@ -132,7 +132,7 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
                 frame_geo.moveTop(clientArea.top());
                 win->setFrameGeometry(frame_geo);
             }
-            win->restore_geometries.maximize = old_restore_geo;
+            win->geo.restore.max = old_restore_geo;
         }
 
         if (old_quicktiling != win->control->quicktiling) {
@@ -152,7 +152,7 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
     // Used by electric_border_maximize_geometry(..).
     win->control->electric = mode;
 
-    if (win->geometry_update.max_mode != maximize_mode::restore) {
+    if (win->geo.update.max_mode != maximize_mode::restore) {
         // Restore from maximized so that it is possible to tile maximized windows with one hit or
         // by dragging.
         if (mode != quicktiles::none) {
@@ -167,7 +167,7 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
             win->setFrameGeometry(electric_border_maximize_geometry(win, ref_pos, win->desktop()));
             // Store the mode change
             win->control->quicktiling = mode;
-            win->restore_geometries.maximize = old_restore_geo;
+            win->geo.restore.max = old_restore_geo;
         } else {
             win->control->quicktiling = mode;
             set_maximize(win, false, false);
@@ -188,8 +188,9 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
             // TODO(romangg): Once we use size_t consistently for screens identification replace
             // these (currentyl implicit casted) types with auto.
             auto const& outputs = win->space.base.outputs;
-            auto const old_screen
-                = win->central_output ? base::get_output_index(outputs, *win->central_output) : 0;
+            auto const old_screen = win->topo.central_output
+                ? base::get_output_index(outputs, *win->topo.central_output)
+                : 0;
             auto screen = old_screen;
 
             std::vector<QRect> screens_geos(outputs.size());
@@ -234,7 +235,7 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
                 mode = quicktiles::none;
             } else {
                 // Move to other screen
-                win->setFrameGeometry(win->restore_geometries.maximize.translated(
+                win->setFrameGeometry(win->geo.restore.max.translated(
                     screens_geos[screen].topLeft() - screens_geos[old_screen].topLeft()));
                 target_screen = screens_geos[screen].center();
 
@@ -250,8 +251,8 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
         } else if (win->control->quicktiling == quicktiles::none) {
             // Not coming out of an existing tile, not shifting monitors, we're setting a brand new
             // tile. Store geometry first, so we can go out of this tile later.
-            if (!win->restore_geometries.maximize.isValid()) {
-                win->restore_geometries.maximize = win->frameGeometry();
+            if (!win->geo.restore.max.isValid()) {
+                win->geo.restore.max = win->geo.frame;
             }
         }
 
@@ -272,14 +273,14 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
 
     if (mode == quicktiles::none) {
         win->control->quicktiling = quicktiles::none;
-        win->setFrameGeometry(win->restore_geometries.maximize);
+        win->setFrameGeometry(win->geo.restore.max);
 
         // Just in case it's a different screen
         check_workspace_position(win);
 
         // If we're here we can unconditionally reset the restore geometry since we earlier excluded
         // the case of the window being maximized.
-        win->restore_geometries.maximize = QRect();
+        win->geo.restore.max = QRect();
     }
 
     Q_EMIT win->qobject->quicktiling_changed();

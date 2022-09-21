@@ -25,6 +25,8 @@
 #include "win/desktop_space.h"
 #include "win/meta.h"
 
+#include <xcb/damage.h>
+
 namespace KWin::win::x11
 {
 
@@ -136,7 +138,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
         }
         if (dirtyProperties2 & NET::WM2Opacity) {
             if (win->space.base.render->compositor->scene) {
-                win->addRepaintFull();
+                add_full_repaint(*win);
                 Q_EMIT win->qobject->opacityChanged(old_opacity);
             } else {
                 // forward to the frame if there's possibly another compositing manager running
@@ -176,19 +178,19 @@ bool window_event(Win* win, xcb_generic_event_t* e)
             win::set_desktop_file_name(win, QByteArray(win->info->desktopFileName()));
         }
         if (dirtyProperties2 & NET::WM2GTKFrameExtents) {
-            auto& orig_extents = win->geometry_update.original.client_frame_extents;
+            auto& orig_extents = win->geo.update.original.client_frame_extents;
 
-            orig_extents = win->client_frame_extents;
-            win->client_frame_extents = gtk_frame_extents(win);
+            orig_extents = win->geo.client_frame_extents;
+            win->geo.client_frame_extents = gtk_frame_extents(win);
 
             // Only do a size update when there is a change and no other geometry update is
             // pending at the moment, which would update it later on anyway.
-            if (orig_extents != win->client_frame_extents
-                && win->geometry_update.pending == pending_geometry::none) {
+            if (orig_extents != win->geo.client_frame_extents
+                && win->geo.update.pending == pending_geometry::none) {
                 // The frame geometry stays the same so we just update our server geometry and use
                 // the latest synced frame geometry.
                 update_server_geometry(win, win->synced_geometry.frame);
-                win->discard_buffer();
+                discard_buffer(*win);
             }
         }
     }
@@ -353,7 +355,7 @@ bool map_request_event(Win* win, xcb_map_request_event_t* e)
     if (win->control->minimized) {
         win::set_minimized(win, false);
     }
-    if (!win->isOnCurrentDesktop()) {
+    if (!on_current_desktop(win)) {
         if (allow_window_activation(win->space, win)) {
             activate_window(win->space, win);
         } else {
@@ -438,7 +440,7 @@ void configure_request_event(Win* win, xcb_configure_request_event_t* e)
 
     if (win->control->fullscreen || is_splash(win)) {
         // Refuse resizing of fullscreen windows and splashscreens.
-        send_synthetic_configure_notify(win, frame_to_client_rect(win, win->frameGeometry()));
+        send_synthetic_configure_notify(win, frame_to_client_rect(win, win->geo.frame));
         return;
     }
 
@@ -463,7 +465,7 @@ void configure_request_event(Win* win, xcb_configure_request_event_t* e)
     // the window later'. The client should not cause that many configure request,
     // so this should not have any significant impact. With user moving/resizing
     // the it should be optimized though (see also window::setGeometry()/plainResize()/move()).
-    send_synthetic_configure_notify(win, frame_to_client_rect(win, win->frameGeometry()));
+    send_synthetic_configure_notify(win, frame_to_client_rect(win, win->geo.frame));
 
     // SELI TODO accept configure requests for isDesktop windows (because kdesktop
     // may get XRANDR resize event before kwin), but check it's still at the bottom?
@@ -483,7 +485,7 @@ void property_notify_event_prepare(Win& win, xcb_property_notify_event_t* event)
     } else if (event->atom == atoms->kde_net_wm_shadow) {
         win::update_shadow(&win);
     } else if (event->atom == atoms->kde_skip_close_animation) {
-        win.getSkipCloseAnimation();
+        win.fetch_and_set_skip_close_animation();
     }
 }
 
@@ -575,7 +577,7 @@ void leave_notify_event(Win* win, xcb_leave_notify_event_t* e)
             mov_res.contact = win::position::center;
             win::update_cursor(win);
         }
-        auto lostMouse = !QRect(QPoint(), win->size()).contains(QPoint(e->event_x, e->event_y));
+        auto lostMouse = !QRect(QPoint(), win->geo.size()).contains(QPoint(e->event_x, e->event_y));
         // 'lostMouse' wouldn't work with e.g. B2 or Keramik, which have non-rectangular decorations
         // (i.e. the LeaveNotify event comes before leaving the rect and no LeaveNotify event
         // comes after leaving the rect) - so lets check if the pointer is really outside the window
@@ -703,8 +705,8 @@ bool button_press_event(Win* win,
         return true;
     }
     if (w == win->xcb_windows.input) {
-        x = x_root - win->frameGeometry().x();
-        y = y_root - win->frameGeometry().y();
+        x = x_root - win->geo.frame.x();
+        y = y_root - win->geo.frame.y();
         // New API processes core events FIRST and only passes unused ones to the decoration
         QMouseEvent ev(QMouseEvent::MouseButtonPress,
                        QPoint(x, y),
@@ -800,8 +802,8 @@ bool button_release_event(Win* win,
         win->space.user_actions_menu->grabInput();
     }
     // translate from grab window to local coords
-    x = win->pos().x();
-    y = win->pos().y();
+    x = win->geo.pos().x();
+    y = win->geo.pos().y();
 
     // Check whether other buttons are still left pressed
     int buttonMask = XCB_BUTTON_MASK_1 | XCB_BUTTON_MASK_2 | XCB_BUTTON_MASK_3;
@@ -833,8 +835,8 @@ bool motion_notify_event(Win* win, xcb_window_t w, int state, int x, int y, int 
 
     if (auto& mov_res = win->control->move_resize; !mov_res.button_down) {
         if (w == win->xcb_windows.input) {
-            int x = x_root - win->frameGeometry().x(); // + padding_left;
-            int y = y_root - win->frameGeometry().y(); // + padding_top;
+            int x = x_root - win->geo.frame.x(); // + padding_left;
+            int y = y_root - win->geo.frame.y(); // + padding_top;
 
             if (win::decoration(win)) {
                 QHoverEvent event(QEvent::HoverMove, QPointF(x, y), QPointF(x, y));
@@ -850,8 +852,8 @@ bool motion_notify_event(Win* win, xcb_window_t w, int state, int x, int y, int 
     }
     if (w == win->xcb_windows.grab) {
         // translate from grab window to local coords
-        x = win->pos().x();
-        y = win->pos().y();
+        x = win->geo.pos().x();
+        y = win->geo.pos().y();
     }
 
     win::move_resize(win, QPoint(x, y), QPoint(x_root, y_root));
@@ -870,7 +872,7 @@ void focus_in_event(Win* win, xcb_focus_in_event_t* e)
     if (e->detail == XCB_NOTIFY_DETAIL_POINTER) {
         return;
     }
-    if (!win->isShown() || !win->isOnCurrentDesktop()) {
+    if (!win->isShown() || !on_current_desktop(win)) {
         // we unmapped it, but it got focus meanwhile ->
         // activateNextClient() already transferred focus elsewhere
         return;
@@ -989,9 +991,9 @@ void net_move_resize(Win* win, int x_root, int y_root, NET::Direction direction)
         mov_res.button_down = true;
 
         // map from global
-        mov_res.offset = QPoint(x_root - win->pos().x(), y_root - win->pos().y());
+        mov_res.offset = QPoint(x_root - win->geo.pos().x(), y_root - win->geo.pos().y());
         mov_res.inverted_offset
-            = QPoint(win->size().width(), win->size().height()) - mov_res.offset;
+            = QPoint(win->geo.size().width(), win->geo.size().height()) - mov_res.offset;
         mov_res.unrestricted = false;
         mov_res.contact = convert[direction];
         if (!win::start_move_resize(win)) {
@@ -1001,15 +1003,15 @@ void net_move_resize(Win* win, int x_root, int y_root, NET::Direction direction)
     } else if (direction == NET::KeyboardMove) {
         // ignore mouse coordinates given in the message, mouse position is used by the moving
         // algorithm
-        cursor->set_pos(win->frameGeometry().center());
+        cursor->set_pos(win->geo.frame.center());
         win->performMouseCommand(base::options_qobject::MouseUnrestrictedMove,
-                                 win->frameGeometry().center());
+                                 win->geo.frame.center());
     } else if (direction == NET::KeyboardSize) {
         // ignore mouse coordinates given in the message, mouse position is used by the resizing
         // algorithm
-        cursor->set_pos(win->frameGeometry().bottomRight());
+        cursor->set_pos(win->geo.frame.bottomRight());
         win->performMouseCommand(base::options_qobject::MouseUnrestrictedResize,
-                                 win->frameGeometry().bottomRight());
+                                 win->geo.frame.bottomRight());
     }
 }
 

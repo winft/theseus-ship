@@ -72,10 +72,10 @@ bool update_rule(Ruling& ruling, RefWin const& ref_win, int selection)
 
             // Don't use the position in the direction which is maximized.
             if (!flags(ref_win.maximizeMode() & maximize_mode::horizontal)) {
-                new_pos.setX(ref_win.pos().x());
+                new_pos.setX(ref_win.geo.pos().x());
             }
             if (!flags(ref_win.maximizeMode() & maximize_mode::vertical)) {
-                new_pos.setY(ref_win.pos().y());
+                new_pos.setY(ref_win.geo.pos().y());
             }
             updated = updated || ruling.position.data != new_pos;
             ruling.position.data = new_pos;
@@ -83,8 +83,8 @@ bool update_rule(Ruling& ruling, RefWin const& ref_win, int selection)
     }
 
     if (remember(ruling.screen, type::screen)) {
-        int output_index = ref_win.central_output
-            ? base::get_output_index(ref_win.space.base.outputs, *ref_win.central_output)
+        int output_index = ref_win.topo.central_output
+            ? base::get_output_index(ref_win.space.base.outputs, *ref_win.topo.central_output)
             : 0;
         updated = updated || ruling.screen.data != output_index;
         ruling.screen.data = output_index;
@@ -94,10 +94,10 @@ bool update_rule(Ruling& ruling, RefWin const& ref_win, int selection)
             auto new_size = ruling.size.data;
             // don't use the position in the direction which is maximized
             if (!flags(ref_win.maximizeMode() & maximize_mode::horizontal)) {
-                new_size.setWidth(ref_win.size().width());
+                new_size.setWidth(ref_win.geo.size().width());
             }
             if (!flags(ref_win.maximizeMode() & maximize_mode::vertical)) {
-                new_size.setHeight(ref_win.size().height());
+                new_size.setHeight(ref_win.geo.size().height());
             }
             updated = updated || ruling.size.data != new_size;
             ruling.size.data = new_size;

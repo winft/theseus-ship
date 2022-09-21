@@ -27,7 +27,7 @@ void destroy_window(Win* win)
     blocker block(win->space.stacking.order);
     win->closing = true;
 
-    if (win->transient()->annexed && !lead_of_annexed_transient(win)) {
+    if (win->transient->annexed && !lead_of_annexed_transient(win)) {
         // With the lead gone there is no way - and no need - for remnant effects. Delete directly.
         Q_EMIT win->qobject->closed();
         win->space.handle_window_removed(win);
@@ -39,6 +39,10 @@ void destroy_window(Win* win)
     }
 
     auto remnant_window = create_remnant_window<Win>(*win);
+    if (remnant_window) {
+        transfer_remnant_data(*win, *remnant_window);
+        space_add_remnant(*win, *remnant_window);
+    }
     Q_EMIT win->qobject->closed();
 
     if (win->control) {

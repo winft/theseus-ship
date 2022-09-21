@@ -69,4 +69,14 @@ void set_original_skip_taskbar(Win* win, bool set)
     win::set_skip_taskbar(win, rules_checked);
 }
 
+template<typename Win>
+void set_skip_close_animation(Win& win, bool set)
+{
+    if (set == win.skip_close_animation) {
+        return;
+    }
+    win.skip_close_animation = set;
+    Q_EMIT win.qobject->skipCloseAnimationChanged();
+}
+
 }

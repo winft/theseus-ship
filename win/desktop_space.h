@@ -27,7 +27,7 @@ void send_window_to_desktop(Space& space,
     }
 
     auto old_desktop = window->desktop();
-    auto was_on_desktop = window->isOnDesktop(desk) || window->isOnAllDesktops();
+    auto was_on_desktop = on_desktop(window, desk) || on_all_desktops(window);
     set_desktop(window, desk);
 
     if (window->desktop() != desk) {
@@ -38,7 +38,7 @@ void send_window_to_desktop(Space& space,
     // window did range checking.
     desk = window->desktop();
 
-    if (window->isOnDesktop(space.virtual_desktop_manager->current())) {
+    if (on_desktop(window, space.virtual_desktop_manager->current())) {
         if (win::wants_tab_focus(window) && kwinApp()->options->qobject->focusPolicyIsReasonable()
             && !was_on_desktop && // for stickyness changes
             !dont_activate) {
@@ -53,7 +53,7 @@ void send_window_to_desktop(Space& space,
     check_workspace_position(window, QRect(), old_desktop);
 
     auto const transients_stacking_order
-        = restacked_by_space_stacking_order(&space, window->transient()->children);
+        = restacked_by_space_stacking_order(&space, window->transient->children);
     for (auto const& transient : transients_stacking_order) {
         if (transient->control) {
             send_window_to_desktop(space, transient, desk, dont_activate);
@@ -70,7 +70,7 @@ void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)
     focus_blocker<Space> blocker(*space);
 
     if (auto move_resize_client = space->move_resize_window) {
-        if (!move_resize_client->isOnDesktop(newDesktop)) {
+        if (!on_desktop(move_resize_client, newDesktop)) {
             win::set_desktop(move_resize_client, newDesktop);
         }
     }

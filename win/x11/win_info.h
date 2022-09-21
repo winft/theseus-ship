@@ -85,7 +85,7 @@ public:
             set_demands_attention(window, (state & NET::DemandsAttention) != 0);
         }
         if (mask & NET::Modal) {
-            window->transient()->set_modal((state & NET::Modal) != 0);
+            window->transient->set_modal((state & NET::Modal) != 0);
         }
         // Unsetting fullscreen first, setting it last (because e.g. maximize works only for
         // !isFullScreen()).

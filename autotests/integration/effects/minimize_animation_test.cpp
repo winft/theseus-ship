@@ -129,7 +129,7 @@ void MinimizeAnimationTest::testMinimizeUnminimize()
     auto panel = Test::render_and_wait_for_shown(panelSurface, panelRect.size(), Qt::blue);
     QVERIFY(panel);
     QVERIFY(win::is_dock(panel));
-    QCOMPARE(panel->frameGeometry(), panelRect);
+    QCOMPARE(panel->geo.frame, panelRect);
     QVERIFY(plasmaWindowCreatedSpy.wait());
     QCOMPARE(plasmaWindowCreatedSpy.count(), 1);
 
@@ -150,7 +150,7 @@ void MinimizeAnimationTest::testMinimizeUnminimize()
     const QRect iconRect = QRect(0, 0, 42, 36);
     window->setMinimizedGeometry(panelSurface.get(), iconRect);
     Test::flush_wayland_connection();
-    QTRY_COMPARE(client->iconGeometry(), iconRect.translated(panel->frameGeometry().topLeft()));
+    QTRY_COMPARE(client->iconGeometry(), iconRect.translated(panel->geo.frame.topLeft()));
 
     // Load effect that will be tested.
     QFETCH(QString, effectName);

@@ -25,7 +25,6 @@ win::remnant create_remnant(Win& source)
     remnant.data.desk = source.desktop();
     remnant.data.frame = source.frameId();
     remnant.data.opacity = source.opacity();
-    remnant.data.window_type = source.windowType();
     remnant.data.window_role = source.windowRole();
 
     if (source.control) {
@@ -49,8 +48,8 @@ win::remnant create_remnant(Win& source)
         remnant.data.was_active = source.control->active;
     }
 
-    if (source.transient()->annexed) {
-        remnant.refcount += source.transient()->leads().size();
+    if (source.transient->annexed) {
+        remnant.refcount += source.transient->leads().size();
     }
 
     remnant.data.was_group_transient = source.groupTransient();
@@ -58,87 +57,81 @@ win::remnant create_remnant(Win& source)
     remnant.data.was_wayland_client = source.is_wayland_window();
     remnant.data.was_x11_client = source.isClient();
     remnant.data.was_popup_window = win::is_popup(&source);
-    remnant.data.was_outline = source.isOutline();
     remnant.data.was_lock_screen = source.isLockScreen();
 
     return remnant;
 }
 
-template<typename RemnantWin, typename Win>
-RemnantWin* create_remnant_window(Win& source)
+template<typename Win>
+void transfer_remnant_data(Win& source, Win& dest)
+{
+    dest.meta.internal_id = source.meta.internal_id;
+    dest.geo.frame = source.geo.frame;
+    dest.render_data.bit_depth = source.render_data.bit_depth;
+
+    dest.window_type = source.windowType();
+    dest.info = source.info;
+    if (auto winfo = dynamic_cast<x11::win_info<Win>*>(dest.info)) {
+        winfo->disable();
+    }
+
+    dest.xcb_window.reset(source.xcb_window, false);
+    dest.render_data.ready_for_painting = source.render_data.ready_for_painting;
+    dest.render_data.damage_region = source.render_data.damage_region;
+    dest.render_data.repaints_region = source.render_data.repaints_region;
+    dest.render_data.layer_repaints_region = source.render_data.layer_repaints_region;
+    dest.is_shape = source.is_shape;
+    dest.is_outline = source.is_outline;
+
+    dest.render = std::move(source.render);
+
+    dest.meta.wm_class = source.meta.wm_class;
+    dest.render_data.opaque_region = source.render_data.opaque_region;
+    dest.topo.central_output = source.topo.central_output;
+    dest.skip_close_animation = source.skip_close_animation;
+    dest.topo.desktops = source.topo.desktops;
+    dest.topo.layer = get_layer(source);
+    dest.geo.has_in_content_deco = source.geo.has_in_content_deco;
+    dest.geo.client_frame_extents = source.geo.client_frame_extents;
+
+    dest.transient->annexed = source.transient->annexed;
+    dest.transient->set_modal(source.transient->modal());
+
+    auto const leads = source.transient->leads();
+    for (auto const& lead : leads) {
+        lead->transient->add_child(&dest);
+        lead->transient->remove_child(&source);
+    }
+
+    auto const children = source.transient->children;
+    for (auto const& child : children) {
+        dest.transient->add_child(child);
+        source.transient->remove_child(child);
+    }
+
+    auto const desktops = dest.topo.desktops;
+    for (auto vd : desktops) {
+        QObject::connect(vd, &QObject::destroyed, dest.qobject.get(), [vd, dest_ptr = &dest] {
+            auto desks = dest_ptr->topo.desktops;
+            desks.removeOne(vd);
+            dest_ptr->topo.desktops = desks;
+        });
+    }
+}
+
+template<typename Win>
+Win* create_remnant_window(Win& source)
 {
     if (!source.space.base.render->compositor->scene) {
         // Don't create effect remnants when we don't render.
         return nullptr;
     }
-    if (!source.ready_for_painting) {
+    if (!source.render_data.ready_for_painting) {
         // Don't create remnants for windows that have never been shown.
         return nullptr;
     }
 
-    auto win = new RemnantWin(create_remnant(source), source.space);
-
-    win->internal_id = source.internal_id;
-    win->m_frameGeometry = source.m_frameGeometry;
-    win->xcb_visual = source.xcb_visual;
-    win->bit_depth = source.bit_depth;
-
-    win->info = source.info;
-    if (auto winfo = dynamic_cast<win::x11::win_info<Win>*>(win->info)) {
-        winfo->disable();
-    }
-
-    win->xcb_window.reset(source.xcb_window, false);
-    win->ready_for_painting = source.ready_for_painting;
-    win->damage_handle = XCB_NONE;
-    win->damage_region = source.damage_region;
-    win->repaints_region = source.repaints_region;
-    win->layer_repaints_region = source.layer_repaints_region;
-    win->is_shape = source.is_shape;
-
-    win->render = std::move(source.render);
-
-    win->resource_name = source.resource_name;
-    win->resource_class = source.resource_class;
-
-    win->client_machine = source.client_machine;
-    win->m_wmClientLeader = source.wmClientLeader();
-
-    win->opaque_region = source.opaque_region;
-    win->central_output = source.central_output;
-    win->m_skipCloseAnimation = source.m_skipCloseAnimation;
-    win->m_desktops = source.desktops();
-    win->m_layer = source.layer();
-    win->has_in_content_deco = source.has_in_content_deco;
-    win->client_frame_extents = source.client_frame_extents;
-
-    win->transient()->annexed = source.transient()->annexed;
-    win->transient()->set_modal(source.transient()->modal());
-
-    auto const leads = source.transient()->leads();
-    for (auto const& lead : leads) {
-        lead->transient()->add_child(win);
-        lead->transient()->remove_child(&source);
-    }
-
-    auto const children = source.transient()->children;
-    for (auto const& child : children) {
-        win->transient()->add_child(child);
-        source.transient()->remove_child(child);
-    }
-
-    auto const desktops = win->desktops();
-    for (auto vd : desktops) {
-        QObject::connect(vd, &QObject::destroyed, win->qobject.get(), [=] {
-            auto desks = win->desktops();
-            desks.removeOne(vd);
-            win->set_desktops(desks);
-        });
-    }
-
-    win::add_remnant(source, *win);
-    Q_EMIT source.space.qobject->remnant_created(win->signal_id);
-    return win;
+    return new Win(create_remnant(source), source.space);
 }
 
 }

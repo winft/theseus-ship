@@ -299,13 +299,13 @@ void restack_window(Win* win,
         }
     } else if (detail == XCB_STACK_MODE_TOP_IF) {
         other = find_controlled_window<x11_window>(win->space, predicate_match::window, above);
-        if (other && other->frameGeometry().intersects(win->frameGeometry())) {
+        if (other && other->geo.frame.intersects(win->geo.frame)) {
             raise_client_request(&win->space, win, src, timestamp);
         }
         return;
     } else if (detail == XCB_STACK_MODE_BOTTOM_IF) {
         other = find_controlled_window<x11_window>(win->space, predicate_match::window, above);
-        if (other && other->frameGeometry().intersects(win->frameGeometry())) {
+        if (other && other->geo.frame.intersects(win->geo.frame)) {
             lower_client_request(&win->space, win, src, timestamp);
         }
         return;
@@ -329,8 +329,8 @@ void restack_window(Win* win,
             auto c = dynamic_cast<Win*>(*it);
 
             if (!c
-                || !(is_normal(*it) && c->isShown() && (*it)->isOnCurrentDesktop()
-                     && on_screen(*it, win->central_output))) {
+                || !(is_normal(*it) && c->isShown() && on_current_desktop(*it)
+                     && on_screen(*it, win->topo.central_output))) {
                 continue;
             }
 
@@ -354,7 +354,7 @@ void restack_window(Win* win,
     }
 
     if (send_event) {
-        send_synthetic_configure_notify(win, frame_to_client_rect(win, win->frameGeometry()));
+        send_synthetic_configure_notify(win, frame_to_client_rect(win, win->geo.frame));
     }
 }
 

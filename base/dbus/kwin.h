@@ -222,21 +222,21 @@ public:
         m_replyQueryWindowInfo = message();
         setDelayedReply(true);
 
-        space.input->start_interactive_window_selection([this](auto t) {
-            if (!t) {
+        space.input->start_interactive_window_selection([this](auto win) {
+            if (!win) {
                 QDBusConnection::sessionBus().send(m_replyQueryWindowInfo.createErrorReply(
                     QStringLiteral("org.kde.KWin.Error.UserCancel"),
                     QStringLiteral("User cancelled the query")));
                 return;
             }
-            if (!t->control) {
+            if (!win->control) {
                 QDBusConnection::sessionBus().send(m_replyQueryWindowInfo.createErrorReply(
                     QStringLiteral("org.kde.KWin.Error.InvalidWindow"),
                     QStringLiteral("Tried to query information about an unmanaged window")));
                 return;
             }
             QDBusConnection::sessionBus().send(
-                m_replyQueryWindowInfo.createReply(window_to_variant_map(t)));
+                m_replyQueryWindowInfo.createReply(window_to_variant_map(win)));
         });
 
         return QVariantMap{};
@@ -250,7 +250,7 @@ public:
             if (!win->control) {
                 continue;
             }
-            if (win->internal_id == id) {
+            if (win->meta.internal_id == id) {
                 return window_to_variant_map(win);
             }
         }
@@ -258,34 +258,34 @@ public:
     }
 
 private:
-    QVariantMap window_to_variant_map(typename Space::window_t const* c)
+    QVariantMap window_to_variant_map(typename Space::window_t const* win)
     {
-        return {{QStringLiteral("resourceClass"), c->resource_class},
-                {QStringLiteral("resourceName"), c->resource_name},
-                {QStringLiteral("desktopFile"), c->control->desktop_file_name},
-                {QStringLiteral("role"), c->windowRole()},
-                {QStringLiteral("caption"), c->caption.normal},
-                {QStringLiteral("clientMachine"), c->wmClientMachine(true)},
-                {QStringLiteral("localhost"), c->isLocalhost()},
-                {QStringLiteral("type"), c->windowType()},
-                {QStringLiteral("x"), c->pos().x()},
-                {QStringLiteral("y"), c->pos().y()},
-                {QStringLiteral("width"), c->size().width()},
-                {QStringLiteral("height"), c->size().height()},
-                {QStringLiteral("x11DesktopNumber"), c->desktop()},
-                {QStringLiteral("minimized"), c->control->minimized},
+        return {{QStringLiteral("resourceClass"), win->meta.wm_class.res_class},
+                {QStringLiteral("resourceName"), win->meta.wm_class.res_name},
+                {QStringLiteral("desktopFile"), win->control->desktop_file_name},
+                {QStringLiteral("role"), win->windowRole()},
+                {QStringLiteral("caption"), win->meta.caption.normal},
+                {QStringLiteral("clientMachine"), win->wmClientMachine(true)},
+                {QStringLiteral("localhost"), win->isLocalhost()},
+                {QStringLiteral("type"), win->windowType()},
+                {QStringLiteral("x"), win->geo.pos().x()},
+                {QStringLiteral("y"), win->geo.pos().y()},
+                {QStringLiteral("width"), win->geo.size().width()},
+                {QStringLiteral("height"), win->geo.size().height()},
+                {QStringLiteral("x11DesktopNumber"), win->desktop()},
+                {QStringLiteral("minimized"), win->control->minimized},
                 {QStringLiteral("shaded"), false},
-                {QStringLiteral("fullscreen"), c->control->fullscreen},
-                {QStringLiteral("keepAbove"), c->control->keep_above},
-                {QStringLiteral("keepBelow"), c->control->keep_below},
-                {QStringLiteral("noBorder"), c->noBorder()},
-                {QStringLiteral("skipTaskbar"), c->control->skip_taskbar()},
-                {QStringLiteral("skipPager"), c->control->skip_pager()},
-                {QStringLiteral("skipSwitcher"), c->control->skip_switcher()},
+                {QStringLiteral("fullscreen"), win->control->fullscreen},
+                {QStringLiteral("keepAbove"), win->control->keep_above},
+                {QStringLiteral("keepBelow"), win->control->keep_below},
+                {QStringLiteral("noBorder"), win->noBorder()},
+                {QStringLiteral("skipTaskbar"), win->control->skip_taskbar()},
+                {QStringLiteral("skipPager"), win->control->skip_pager()},
+                {QStringLiteral("skipSwitcher"), win->control->skip_switcher()},
                 {QStringLiteral("maximizeHorizontal"),
-                 static_cast<int>(c->maximizeMode() & win::maximize_mode::horizontal)},
+                 static_cast<int>(win->maximizeMode() & win::maximize_mode::horizontal)},
                 {QStringLiteral("maximizeVertical"),
-                 static_cast<int>(c->maximizeMode() & win::maximize_mode::vertical)}};
+                 static_cast<int>(win->maximizeMode() & win::maximize_mode::vertical)}};
     }
 
     QDBusMessage m_replyQueryWindowInfo;

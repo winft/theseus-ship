@@ -7,6 +7,7 @@
 */
 #pragma once
 
+#include "win/damage.h"
 #include "win/deco/renderer.h"
 
 // Must be included before.
@@ -81,10 +82,11 @@ public:
         , scene{scene}
     {
         this->data = std::make_unique<deco_render_data<Scene>>(scene);
-        QObject::connect(this->qobject.get(),
-                         &win::deco::renderer_qobject::renderScheduled,
-                         client->client()->qobject.get(),
-                         [win = client->client()](auto const& region) { win->addRepaint(region); });
+        QObject::connect(
+            this->qobject.get(),
+            &win::deco::renderer_qobject::renderScheduled,
+            client->client()->qobject.get(),
+            [win = client->client()](auto const& region) { win::add_repaint(*win, region); });
     }
 
     void render() override
@@ -109,7 +111,7 @@ public:
         window->layoutDecorationRects(left, top, right, bottom);
 
         const QRect geometry
-            = dirty ? QRect(QPoint(0, 0), window->size()) : scheduled.boundingRect();
+            = dirty ? QRect(QPoint(0, 0), window->geo.size()) : scheduled.boundingRect();
 
         // We pad each part in the decoration atlas in order to avoid texture bleeding.
         const int padding = 1;
@@ -143,7 +145,7 @@ public:
 
             QRect viewport = geo.translated(-rect.x(), -rect.y());
             auto const devicePixelRatio
-                = window->central_output ? window->central_output->scale() : 1.;
+                = window->topo.central_output ? window->topo.central_output->scale() : 1.;
 
             QImage image(rect.size() * devicePixelRatio, QImage::Format_ARGB32_Premultiplied);
             image.setDevicePixelRatio(devicePixelRatio);
@@ -273,7 +275,7 @@ private:
 
         size.rwidth() = align(size.width(), 128);
 
-        size *= window->central_output ? window->central_output->scale() : 1.;
+        size *= window->topo.central_output ? window->topo.central_output->scale() : 1.;
 
         auto& data = get_data();
 

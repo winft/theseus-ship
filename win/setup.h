@@ -28,11 +28,12 @@ void setup_space_window_connections(Space* space, Win* win)
                      &window_qobject::desktopPresenceChanged,
                      space->qobject.get(),
                      [space, win](auto desktop) {
-                         Q_EMIT space->qobject->desktopPresenceChanged(win->signal_id, desktop);
+                         Q_EMIT space->qobject->desktopPresenceChanged(win->meta.signal_id,
+                                                                       desktop);
                      });
     QObject::connect(
         win->qobject.get(), &window_qobject::minimizedChanged, space->qobject.get(), [space, win] {
-            Q_EMIT space->qobject->clientMinimizedChanged(win->signal_id);
+            Q_EMIT space->qobject->clientMinimizedChanged(win->meta.signal_id);
         });
 }
 
@@ -50,10 +51,10 @@ void setup_window_control_connections(Win* win)
                      qtwin,
                      &window_qobject::moveResizedChanged);
     QObject::connect(qtwin, &window_qobject::clientStartUserMovedResized, qtwin, [win] {
-        win->removeCheckScreenConnection();
+        QObject::disconnect(win->notifiers.check_screen);
     });
     QObject::connect(qtwin, &window_qobject::clientFinishUserMovedResized, qtwin, [win] {
-        win->setupCheckScreenConnection();
+        setup_check_screen(*win);
     });
 
     QObject::connect(
@@ -69,11 +70,11 @@ void setup_window_control_connections(Win* win)
             // Not an on-screen-display.
             return;
         }
-        if (win->frameGeometry().isEmpty()) {
+        if (win->geo.frame.isEmpty()) {
             // No current geometry to set.
             return;
         }
-        if (old.size() == win->frameGeometry().size()) {
+        if (old.size() == win->geo.frame.size()) {
             // No change.
             return;
         }

@@ -10,6 +10,7 @@
 #include "win/geo.h"
 #include "win/placement.h"
 #include "win/session_manager.h"
+#include "win/window_area.h"
 
 #include <KStartupInfo>
 
@@ -62,7 +63,7 @@ void resize_on_taking_control(Win* win, QRect& frame_geo, bool mapped)
     // TODO: Is CentralGravity right here, when resizing is done after gravitating?
     auto const adj_frame_size = adjusted_frame_size(win, frame_geo.size(), size_mode::any);
     auto const rule_checked_size = win->control->rules.checkSize(adj_frame_size, !mapped);
-    win->setFrameGeometry(QRect(win->pos(), rule_checked_size));
+    win->setFrameGeometry(QRect(win->geo.pos(), rule_checked_size));
     frame_geo = pending_frame_geometry(win);
 }
 
@@ -94,7 +95,7 @@ void place_max_fs(Win* win,
         frame_geo = keep_in_placement_area(win, area, partial_keep_in_area);
         return;
     }
-    if (win->size().width() < area.width() && win->size().height() < area.height()) {
+    if (win->geo.size().width() < area.width() && win->geo.size().height() < area.height()) {
         // Window smaller than the screen, do not maximize.
         frame_geo = keep_in_placement_area(win, area, partial_keep_in_area);
         return;
@@ -104,7 +105,7 @@ void place_max_fs(Win* win,
         = space_window_area(win->space, ScreenArea, area.center(), win->desktop()).size();
     auto const full_area
         = space_window_area(win->space, FullArea, frame_geo.center(), win->desktop());
-    auto const client_size = frame_to_client_size(win, win->size());
+    auto const client_size = frame_to_client_size(win, win->geo.size());
 
     auto pseudo_max{maximize_mode::restore};
 
@@ -115,10 +116,10 @@ void place_max_fs(Win* win,
         pseudo_max |= maximize_mode::horizontal;
     }
 
-    if (win->size().width() >= area.width()) {
+    if (win->geo.size().width() >= area.width()) {
         pseudo_max |= maximize_mode::horizontal;
     }
-    if (win->size().height() >= area.height()) {
+    if (win->geo.size().height() >= area.height()) {
         pseudo_max |= maximize_mode::vertical;
     }
 
@@ -128,12 +129,12 @@ void place_max_fs(Win* win,
     // (the window simply wants to be bigger).
     auto keep_in_fullscreen_area{false};
 
-    if (win->size().width() < full_area.width()
+    if (win->geo.size().width() < full_area.width()
         && (client_size.width() > screen_area.width() + 1)) {
         pseudo_max = pseudo_max & ~maximize_mode::horizontal;
         keep_in_fullscreen_area = true;
     }
-    if (win->size().height() < full_area.height()
+    if (win->geo.size().height() < full_area.height()
         && (client_size.height() > screen_area.height() + 1)) {
         pseudo_max = pseudo_max & ~maximize_mode::vertical;
         keep_in_fullscreen_area = true;
@@ -141,7 +142,7 @@ void place_max_fs(Win* win,
 
     if (pseudo_max != maximize_mode::restore) {
         maximize(win, pseudo_max);
-        assert(win->geometry_update.max_mode == pseudo_max);
+        assert(win->geo.update.max_mode == pseudo_max);
 
         // from now on, care about maxmode, since the maximization call will override mode
         // for fix aspects
@@ -149,22 +150,22 @@ void place_max_fs(Win* win,
 
         if (pseudo_max == maximize_mode::full) {
             // Unset restore geometry. On unmaximize we set to a default size and placement.
-            win->restore_geometries.maximize = QRect();
+            win->geo.restore.max = QRect();
         } else if (flags(pseudo_max & maximize_mode::vertical)) {
             // Only vertically maximized. Restore horizontal axis only and choose some default
             // restoration for the vertical axis.
             assert(!(pseudo_max & maximize_mode::horizontal));
             auto restore_height = screen_area.height() * 2 / 3.;
             auto restore_y = (screen_area.height() - restore_height) / 2;
-            win->restore_geometries.maximize.setY(restore_y);
-            win->restore_geometries.maximize.setHeight(restore_height);
+            win->geo.restore.max.setY(restore_y);
+            win->geo.restore.max.setHeight(restore_height);
         } else {
             // Horizontally maximized only.
             assert(flags(pseudo_max & maximize_mode::horizontal));
             auto restore_width = screen_area.width() * 2 / 3.;
             auto restore_x = (screen_area.width() - restore_width) / 2;
-            win->restore_geometries.maximize.setX(restore_x);
-            win->restore_geometries.maximize.setWidth(restore_width);
+            win->geo.restore.max.setX(restore_x);
+            win->geo.restore.max.setWidth(restore_width);
         }
     }
 
@@ -265,7 +266,7 @@ template<typename Win>
 bool ignore_position_default(Win* win)
 {
     // TODO(romangg): This function flow can surely be radically simplified.
-    if (win->transient()->lead()) {
+    if (win->transient->lead()) {
         if (!is_utility(win) && !is_dialog(win) && !is_splash(win)) {
             return false;
         }

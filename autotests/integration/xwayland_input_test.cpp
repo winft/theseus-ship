@@ -183,9 +183,10 @@ void XWaylandInputTest::testPointerEnterLeave()
     QVERIFY(win::decoration(client));
     QVERIFY(!client->hasStrut());
     QVERIFY(!client->isHiddenInternal());
-    QVERIFY(!client->ready_for_painting);
-    client->setReadyForPainting();
-    QVERIFY(client->ready_for_painting);
+    QVERIFY(!client->render_data.ready_for_painting);
+
+    win::set_ready_for_painting(*client);
+    QVERIFY(client->render_data.ready_for_painting);
     QVERIFY(!client->surface);
     QSignalSpy surfaceChangedSpy(client->qobject.get(), &win::window_qobject::surfaceChanged);
     QVERIFY(surfaceChangedSpy.isValid());
@@ -193,15 +194,15 @@ void XWaylandInputTest::testPointerEnterLeave()
     QVERIFY(client->surface);
 
     // move pointer into the window, should trigger an enter
-    QVERIFY(!client->frameGeometry().contains(Test::cursor()->pos()));
+    QVERIFY(!client->geo.frame.contains(Test::cursor()->pos()));
     QVERIFY(enteredSpy.isEmpty());
-    Test::cursor()->set_pos(client->frameGeometry().center());
+    Test::cursor()->set_pos(client->geo.frame.center());
     QCOMPARE(waylandServer()->seat()->pointers().get_focus().surface, client->surface);
     QVERIFY(!waylandServer()->seat()->pointers().get_focus().devices.empty());
     QVERIFY(enteredSpy.wait());
 
     // move out of window
-    Test::cursor()->set_pos(client->frameGeometry().bottomRight() + QPoint(10, 10));
+    Test::cursor()->set_pos(client->geo.frame.bottomRight() + QPoint(10, 10));
     QVERIFY(leftSpy.wait());
 
     // destroy window again

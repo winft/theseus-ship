@@ -41,7 +41,7 @@ void update_user_time(Win* win, xcb_timestamp_t time = XCB_TIME_CURRENT_TIME)
         win->user_time = time;
     }
 
-    win->group()->updateUserTime(win->user_time);
+    win->group->updateUserTime(win->user_time);
 }
 
 template<typename Win>
@@ -65,7 +65,7 @@ xcb_timestamp_t user_time(Win* win)
         return 0;
     }
 
-    auto group = win->group();
+    auto group = win->group;
     assert(group);
 
     if (time == -1U

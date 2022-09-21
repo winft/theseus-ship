@@ -18,6 +18,14 @@
 namespace KWin::win::x11
 {
 
+// before being deleted, remove references to everything that's now owner by the remnant
+template<typename Win>
+void disown_data_passed_to_remnant(Win& win)
+{
+    win.client_machine = nullptr;
+    win.info = nullptr;
+}
+
 template<typename Space, typename Win>
 void remove_controlled_window_from_space(Space& space, Win* win)
 {
@@ -66,7 +74,7 @@ void remove_controlled_window_from_space(Space& space, Win* win)
         cancel_delay_focus(space);
     }
 
-    Q_EMIT space.qobject->clientRemoved(win->signal_id);
+    Q_EMIT space.qobject->clientRemoved(win->meta.signal_id);
 
     space.stacking.order.update_count();
     update_space_areas(space);
@@ -100,10 +108,10 @@ void finish_unmanaged_removal(Win* win, Win* remnant)
     remove_window_from_lists(space, win);
     space.base.render->compositor->addRepaint(visible_rect(win));
 
-    Q_EMIT space.qobject->unmanagedRemoved(win->signal_id);
+    Q_EMIT space.qobject->unmanagedRemoved(win->meta.signal_id);
 
     if (remnant) {
-        win->disownDataPassedToDeleted();
+        disown_data_passed_to_remnant(*win);
         remnant->remnant->unref();
         delete win;
     } else {
@@ -112,11 +120,30 @@ void finish_unmanaged_removal(Win* win, Win* remnant)
 }
 
 template<typename Win>
+Win* create_remnant_window(Win& source)
+{
+    auto win = win::create_remnant_window(source);
+    if (!win) {
+        return {};
+    }
+
+    transfer_remnant_data(source, *win);
+
+    assert(win->damage_handle == XCB_NONE);
+    win->xcb_visual = source.xcb_visual;
+    win->client_machine = source.client_machine;
+    win->m_wmClientLeader = source.wmClientLeader();
+
+    space_add_remnant(source, *win);
+    return win;
+}
+
+template<typename Win>
 void release_unmanaged(Win* win, bool on_shutdown)
 {
     Win* del = nullptr;
     if (!on_shutdown) {
-        del = create_remnant_window<Win>(*win);
+        del = x11::create_remnant_window<Win>(*win);
     }
     Q_EMIT win->qobject->closed();
 
@@ -138,7 +165,7 @@ void release_unmanaged(Win* win, bool on_shutdown)
 template<typename Win>
 void destroy_unmanaged(Win* win)
 {
-    auto del = create_remnant_window<Win>(*win);
+    auto del = x11::create_remnant_window<Win>(*win);
     Q_EMIT win->qobject->closed();
     finish_unmanaged_removal(win, del);
 }
@@ -170,9 +197,9 @@ void release_window(Win* win, bool on_shutdown)
     if (on_shutdown) {
         // Move the client window to maintain its position.
         auto const offset = QPoint(left_border(win), top_border(win));
-        win->setFrameGeometry(win->frameGeometry().translated(offset));
+        win->setFrameGeometry(win->geo.frame.translated(offset));
     } else {
-        del = create_remnant_window<Win>(*win);
+        del = x11::create_remnant_window<Win>(*win);
     }
 
     if (win->control->move_resize.enabled) {
@@ -191,9 +218,9 @@ void release_window(Win* win, bool on_shutdown)
     }
 
     finish_rules(win);
-    win->geometry_update.block++;
+    win->geo.update.block++;
 
-    if (win->isOnCurrentDesktop() && win->isShown()) {
+    if (on_current_desktop(win) && win->isShown()) {
         win->space.base.render->compositor->addRepaint(visible_rect(win));
     }
 
@@ -231,7 +258,7 @@ void release_window(Win* win, bool on_shutdown)
     win->xcb_windows.client.delete_property(atoms->net_frame_extents);
     win->xcb_windows.client.delete_property(atoms->kde_net_wm_frame_strut);
 
-    auto const client_rect = frame_to_client_rect(win, win->frameGeometry());
+    auto const client_rect = frame_to_client_rect(win, win->geo.frame);
     win->xcb_windows.client.reparent(rootWindow(), client_rect.x(), client_rect.y());
 
     xcb_change_save_set(connection(), XCB_SET_MODE_DELETE, win->xcb_windows.client);
@@ -252,10 +279,10 @@ void release_window(Win* win, bool on_shutdown)
     win->xcb_windows.outer.reset();
 
     // Don't use GeometryUpdatesBlocker, it would now set the geometry
-    win->geometry_update.block--;
+    win->geo.update.block--;
 
     if (del) {
-        win->disownDataPassedToDeleted();
+        disown_data_passed_to_remnant(*win);
         del->remnant->unref();
         delete win;
     } else {
@@ -289,7 +316,7 @@ void destroy_window(Win* win)
     win->control->destroy_plasma_wayland_integration();
     reset_have_resize_effect(*win);
 
-    auto del = create_remnant_window<Win>(*win);
+    auto del = x11::create_remnant_window<Win>(*win);
 
     if (win->control->move_resize.enabled) {
         Q_EMIT win->qobject->clientFinishUserMovedResized();
@@ -306,9 +333,9 @@ void destroy_window(Win* win)
     }
 
     finish_rules(win);
-    win->geometry_update.block++;
+    win->geo.update.block++;
 
-    if (win->isOnCurrentDesktop() && win->isShown()) {
+    if (on_current_desktop(win) && win->isShown()) {
         win->space.base.render->compositor->addRepaint(visible_rect(win));
     }
 
@@ -326,10 +353,10 @@ void destroy_window(Win* win)
     win->xcb_windows.outer.reset();
 
     // Don't use GeometryUpdatesBlocker, it would now set the geometry
-    win->geometry_update.block--;
+    win->geo.update.block--;
 
     if (del) {
-        win->disownDataPassedToDeleted();
+        disown_data_passed_to_remnant(*win);
         del->remnant->unref();
         delete win;
     } else {

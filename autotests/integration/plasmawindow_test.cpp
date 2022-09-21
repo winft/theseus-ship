@@ -170,7 +170,7 @@ void PlasmaWindowTest::testCreateDestroyX11PlasmaWindow()
     QCOMPARE(m_windowManagement->windows().count(), 1);
 
     auto pw = m_windowManagement->windows().constFirst();
-    QCOMPARE(pw->geometry(), client->frameGeometry());
+    QCOMPARE(pw->geometry(), client->geo.frame);
     QCOMPARE(pw->resource_name(), "org.kwinft.wm_class.name");
 
     QSignalSpy res_name_spy(pw, &Wrapland::Client::PlasmaWindow::resource_name_changed);
@@ -349,7 +349,7 @@ void PlasmaWindowTest::testDestroyedButNotUnmapped()
 template<typename Win>
 std::string get_internal_id(Win& win)
 {
-    return win.server.window->internal_id.toString().toStdString();
+    return win.server.window->meta.internal_id.toString().toStdString();
 }
 
 struct wayland_test_window {
@@ -500,7 +500,7 @@ void PlasmaWindowTest::test_send_to_output()
     auto& outputs = Test::app()->base.outputs;
     QCOMPARE(outputs.size(), 2);
 
-    QCOMPARE(Test::get_output(0), test_window.server.window->central_output);
+    QCOMPARE(Test::get_output(0), test_window.server.window->topo.central_output);
 
     auto& client_outputs = Test::get_client().interfaces.outputs;
     QCOMPARE(client_outputs.size(), 2);
@@ -521,7 +521,7 @@ void PlasmaWindowTest::test_send_to_output()
 
     QCOMPARE(test_window.client.surface->outputs().size(), 1);
     QCOMPARE(target_client_output, test_window.client.surface->outputs().at(0));
-    QCOMPARE(Test::get_output(1), test_window.server.window->central_output);
+    QCOMPARE(Test::get_output(1), test_window.server.window->topo.central_output);
 }
 
 void PlasmaWindowTest::test_stacking_order()
@@ -547,7 +547,8 @@ void PlasmaWindowTest::test_stacking_order()
         QCOMPARE(plasma_stack.size(), stack.size());
 
         for (size_t index = 0; index < windows.size(); ++index) {
-            QCOMPARE(plasma_stack.at(index), stack.at(index)->internal_id.toString().toStdString());
+            QCOMPARE(plasma_stack.at(index),
+                     stack.at(index)->meta.internal_id.toString().toStdString());
         }
     };
 
