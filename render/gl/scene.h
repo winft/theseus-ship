@@ -63,11 +63,11 @@ public:
     {
         m_state = Ready;
 
-        xcb_connection_t* const c = connection();
+        auto const con = connection();
 
-        m_fence = xcb_generate_id(c);
-        xcb_sync_create_fence(c, rootWindow(), m_fence, false);
-        xcb_flush(c);
+        m_fence = xcb_generate_id(con);
+        xcb_sync_create_fence(con, rootWindow(), m_fence, false);
+        xcb_flush(con);
 
         m_sync = glImportSyncEXT(GL_SYNC_X11_FENCE_EXT, m_fence, 0);
         m_reset_cookie.sequence = 0;
@@ -392,10 +392,10 @@ public:
 
     int64_t paint_output(output_t* output,
                          QRegion damage,
-                         std::deque<typename window_t::ref_t*> const& windows,
+                         std::deque<typename window_t::ref_t*> const& ref_wins,
                          std::chrono::milliseconds presentTime) override
     {
-        this->createStackingOrder(get_leads(windows));
+        this->createStackingOrder(get_leads(ref_wins));
 
         // Trigger render timer start.
         m_backend->prepareRenderingFrame();
@@ -439,9 +439,9 @@ public:
         return m_backend->renderTime();
     }
 
-    std::unique_ptr<render::shadow<window_t>> createShadow(window_t* window) override
+    std::unique_ptr<render::shadow<window_t>> createShadow(window_t* win) override
     {
-        return std::make_unique<shadow<window_t, type>>(window, *this);
+        return std::make_unique<shadow<window_t, type>>(win, *this);
     }
 
     void handle_screen_geometry_change(QSize const& size) override
@@ -589,16 +589,16 @@ protected:
         return std::make_unique<gl_window_t>(t, *this);
     }
 
-    void finalDrawWindow(effect_window_t* w,
+    void finalDrawWindow(effect_window_t* eff_win,
                          paint_type mask,
                          QRegion region,
                          WindowPaintData& data) override
     {
-        if (kwinApp()->is_screen_locked() && !w->window.ref_win->isLockScreen()
-            && !w->window.ref_win->isInputMethod()) {
+        if (kwinApp()->is_screen_locked() && !eff_win->window.ref_win->isLockScreen()
+            && !eff_win->window.ref_win->isInputMethod()) {
             return;
         }
-        performPaintWindow(w, mask, region, data);
+        performPaintWindow(eff_win, mask, region, data);
     }
 
     /**
@@ -765,35 +765,36 @@ protected:
         glDisable(GL_SCISSOR_TEST);
     }
 
-    void paintEffectQuickView(EffectQuickView* w) override
+    void paintEffectQuickView(EffectQuickView* view) override
     {
-        GLTexture* t = w->bufferAsTexture();
-        if (!t) {
+        auto texture = view->bufferAsTexture();
+        if (!texture) {
             return;
         }
 
         ShaderTraits traits = ShaderTrait::MapTexture;
-        auto a = w->opacity();
-        if (a != 1.0) {
+        auto opacity = view->opacity();
+        if (opacity != 1.0) {
             traits |= ShaderTrait::Modulate;
         }
 
         auto shader = ShaderManager::instance()->pushShader(traits);
-        auto const rect = w->geometry();
+        auto const rect = view->geometry();
 
         QMatrix4x4 mvp(projectionMatrix());
         mvp.translate(rect.x(), rect.y());
         shader->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
 
-        if (a != 1.0) {
-            shader->setUniform(GLShader::ModulationConstant, QVector4D(a, a, a, a));
+        if (opacity != 1.0) {
+            shader->setUniform(GLShader::ModulationConstant,
+                               QVector4D(opacity, opacity, opacity, opacity));
         }
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-        t->bind();
-        t->render(w->geometry());
-        t->unbind();
+        texture->bind();
+        texture->render(view->geometry());
+        texture->unbind();
         glDisable(GL_BLEND);
 
         ShaderManager::instance()->popShader();
@@ -872,19 +873,19 @@ private:
     }
 
     std::deque<typename window_t::ref_t*>
-    get_leads(std::deque<typename window_t::ref_t*> const& windows)
+    get_leads(std::deque<typename window_t::ref_t*> const& ref_wins)
     {
         std::deque<typename window_t::ref_t*> leads;
 
-        for (auto const& window : windows) {
-            if (window->transient->lead() && window->transient->annexed) {
-                auto const damage = window->render_data.damage_region;
+        for (auto const& ref_win : ref_wins) {
+            if (ref_win->transient->lead() && ref_win->transient->annexed) {
+                auto const damage = ref_win->render_data.damage_region;
                 if (damage.isEmpty()) {
                     continue;
                 }
-                auto lead = win::lead_of_annexed_transient(window);
+                auto lead = win::lead_of_annexed_transient(ref_win);
                 auto const lead_render_geo = win::render_geometry(lead);
-                auto const lead_damage = damage.translated(win::render_geometry(window).topLeft()
+                auto const lead_damage = damage.translated(win::render_geometry(ref_win).topLeft()
                                                            - lead_render_geo.topLeft());
 
                 lead->render_data.repaints_region += lead_damage.translated(
@@ -896,23 +897,25 @@ private:
                     Q_EMIT lead->qobject->damaged(rect);
                 }
             } else {
-                leads.push_back(window);
+                leads.push_back(ref_win);
             }
         }
 
         return leads;
     }
 
-    void
-    performPaintWindow(effect_window_t* w, paint_type mask, QRegion region, WindowPaintData& data)
+    void performPaintWindow(effect_window_t* eff_win,
+                            paint_type mask,
+                            QRegion region,
+                            WindowPaintData& data)
     {
         if (flags(mask & paint_type::window_lanczos)) {
             if (!lanczos) {
                 lanczos = new lanczos_filter<scene>(this);
             }
-            lanczos->performPaint(w, mask, region, data);
+            lanczos->performPaint(eff_win, mask, region, data);
         } else
-            w->window.performPaint(mask, region, data);
+            eff_win->window.performPaint(mask, region, data);
     }
 
     QMatrix4x4 createProjectionMatrix() const

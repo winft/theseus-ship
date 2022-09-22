@@ -88,9 +88,9 @@ public:
         return renderTimer.nsecsElapsed();
     }
 
-    std::unique_ptr<render::shadow<window_t>> createShadow(window_t* window) override
+    std::unique_ptr<render::shadow<window_t>> createShadow(window_t* win) override
     {
-        return std::make_unique<xrender::shadow<window_t>>(window);
+        return std::make_unique<xrender::shadow<window_t>>(win);
     }
 
     void handle_screen_geometry_change(QSize const& size) override
@@ -157,9 +157,9 @@ protected:
     {
     }
 
-    void paintEffectQuickView(EffectQuickView* w) override
+    void paintEffectQuickView(EffectQuickView* view) override
     {
-        const QImage buffer = w->bufferAsImage();
+        auto const buffer = view->bufferAsImage();
         if (buffer.isNull()) {
             return;
         }
@@ -173,10 +173,10 @@ protected:
                              0,
                              0,
                              0,
-                             w->geometry().x(),
-                             w->geometry().y(),
-                             w->geometry().width(),
-                             w->geometry().height());
+                             view->geometry().x(),
+                             view->geometry().y(),
+                             view->geometry().width(),
+                             view->geometry().height());
     }
 
 private:

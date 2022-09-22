@@ -135,24 +135,22 @@ public:
 
     virtual int64_t paint_output(output_t* /*output*/,
                                  QRegion /*damage*/,
-                                 std::deque<typename window_t::ref_t*> const& /*windows*/,
+                                 std::deque<typename window_t::ref_t*> const& /*ref_wins*/,
                                  std::chrono::milliseconds /*presentTime*/)
     {
         assert(false);
         return 0;
     }
 
-    virtual std::unique_ptr<window_t> createWindow(typename window_t::ref_t* toplevel) = 0;
+    virtual std::unique_ptr<window_t> createWindow(typename window_t::ref_t* ref_win) = 0;
 
     /**
      * @brief Creates the scene specific shadow subclass.
      *
      * An implementing class has to create a proper instance. It is not allowed to
      * return @c null.
-     *
-     * @param toplevel The reference window for which the Shadow needs to be created.
      */
-    virtual std::unique_ptr<shadow<window_t>> createShadow(window_t* window) = 0;
+    virtual std::unique_ptr<shadow<window_t>> createShadow(window_t* win) = 0;
     /**
      * Method invoked when the screen geometry is changed.
      * Reimplementing classes should also invoke the parent method
@@ -249,13 +247,13 @@ public:
     }
 
     // shape/size of a window changed
-    void windowGeometryShapeChanged(typename window_t::ref_t* c)
+    void windowGeometryShapeChanged(typename window_t::ref_t* ref_win)
     {
-        if (!c->render) {
+        if (!ref_win->render) {
             // This is ok, shape is not valid by default.
             return;
         }
-        c->render->invalidateQuadsCache();
+        ref_win->render->invalidateQuadsCache();
     }
 
     Platform& platform;
@@ -266,12 +264,12 @@ public:
     QRect m_renderTargetRect;
     qreal m_renderTargetScale = 1;
 
-    void createStackingOrder(std::deque<typename window_t::ref_t*> const& toplevels)
+    void createStackingOrder(std::deque<typename window_t::ref_t*> const& ref_wins)
     {
         // TODO: cache the stacking_order in case it has not changed
-        for (auto const& c : toplevels) {
-            assert(c->render);
-            stacking_order.push_back(c->render.get());
+        for (auto const& ref_win : ref_wins) {
+            assert(ref_win->render);
+            stacking_order.push_back(ref_win->render.get());
         }
     }
 
@@ -385,41 +383,40 @@ public:
         }
         QVector<Phase2Data> phase2;
         phase2.reserve(stacking_order.size());
-        for (auto const& w : stacking_order) {
-            // bottom to top
-            auto topw = w->ref_win;
-
+        for (auto const& win : stacking_order) {
+            // Bottom to top.
+            //
             // Reset the repaint_region.
             // This has to be done here because many effects schedule a repaint for
             // the next frame within Effects::prePaintWindow.
-            win::reset_repaints(*topw, repaint_output);
+            win::reset_repaints(*win->ref_win, repaint_output);
 
             WindowPrePaintData data;
             data.mask = static_cast<int>(
                 orig_mask
-                | (w->isOpaque() ? paint_type::window_opaque : paint_type::window_translucent));
-            w->resetPaintingEnabled();
+                | (win->isOpaque() ? paint_type::window_opaque : paint_type::window_translucent));
+            win->resetPaintingEnabled();
             data.paint = infiniteRegion(); // no clipping, so doesn't really matter
             data.clip = QRegion();
-            data.quads = w->buildQuads();
+            data.quads = win->buildQuads();
 
             // preparation step
             platform.compositor->effects->prePaintWindow(
-                w->effect.get(), data, m_expectedPresentTimestamp);
+                win->effect.get(), data, m_expectedPresentTimestamp);
 #if !defined(QT_NO_DEBUG)
             if (data.quads.isTransformed()) {
                 qFatal("Pre-paint calls are not allowed to transform quads!");
             }
 #endif
-            if (!w->isPaintingEnabled()) {
+            if (!win->isPaintingEnabled()) {
                 continue;
             }
             phase2.append(
-                {w, infiniteRegion(), data.clip, static_cast<paint_type>(data.mask), data.quads});
+                {win, infiniteRegion(), data.clip, static_cast<paint_type>(data.mask), data.quads});
         }
 
-        for (auto const& d : phase2) {
-            paintWindow(d.window, d.mask, d.region, d.quads);
+        for (auto const& data : phase2) {
+            paintWindow(data.window, data.mask, data.region, data.quads);
         }
 
         auto const& space_size = platform.base.topology.size;
@@ -440,35 +437,35 @@ public:
         bool opaqueFullscreen = false;
 
         // Traverse the scene windows from bottom to top.
-        for (auto&& window : stacking_order) {
-            auto toplevel = window->ref_win;
+        for (auto&& win : stacking_order) {
+            auto ref_win = win->ref_win;
             WindowPrePaintData data;
-            data.mask = static_cast<int>(orig_mask
-                                         | (window->isOpaque() ? paint_type::window_opaque
-                                                               : paint_type::window_translucent));
-            window->resetPaintingEnabled();
+            data.mask = static_cast<int>(
+                orig_mask
+                | (win->isOpaque() ? paint_type::window_opaque : paint_type::window_translucent));
+            win->resetPaintingEnabled();
             data.paint = region;
-            data.paint |= win::repaints(*toplevel);
+            data.paint |= win::repaints(*ref_win);
 
             // Reset the repaint_region.
             // This has to be done here because many effects schedule a repaint for
             // the next frame within Effects::prePaintWindow.
-            win::reset_repaints(*toplevel, repaint_output);
+            win::reset_repaints(*ref_win, repaint_output);
 
             opaqueFullscreen = false;
 
             // TODO: do we care about unmanged windows here (maybe input windows?)
-            if (window->isOpaque()) {
-                if (toplevel->control) {
-                    opaqueFullscreen = toplevel->control->fullscreen;
+            if (win->isOpaque()) {
+                if (ref_win->control) {
+                    opaqueFullscreen = ref_win->control->fullscreen;
                 }
-                data.clip |= win::content_render_region(toplevel).translated(
-                    toplevel->geo.pos() + window->bufferOffset());
-            } else if (win::has_alpha(*toplevel) && toplevel->opacity() == 1.0) {
-                auto const clientShape = win::content_render_region(toplevel).translated(
-                    win::frame_to_render_pos(toplevel, toplevel->geo.pos()));
-                auto const opaqueShape = toplevel->render_data.opaque_region.translated(
-                    win::frame_to_client_pos(toplevel, toplevel->geo.pos()) - toplevel->geo.pos());
+                data.clip |= win::content_render_region(ref_win).translated(ref_win->geo.pos()
+                                                                            + win->bufferOffset());
+            } else if (win::has_alpha(*ref_win) && ref_win->opacity() == 1.0) {
+                auto const clientShape = win::content_render_region(ref_win).translated(
+                    win::frame_to_render_pos(ref_win, ref_win->geo.pos()));
+                auto const opaqueShape = ref_win->render_data.opaque_region.translated(
+                    win::frame_to_client_pos(ref_win, ref_win->geo.pos()) - ref_win->geo.pos());
                 data.clip = clientShape & opaqueShape;
                 if (clientShape == opaqueShape) {
                     data.mask = static_cast<int>(orig_mask | paint_type::window_opaque);
@@ -479,28 +476,28 @@ public:
 
             // Clip out decoration without alpha when window has not set additional opacity by us.
             // The decoration is drawn in the second pass.
-            if (toplevel->control && !win::decoration_has_alpha(toplevel)
-                && toplevel->opacity() == 1.0) {
-                data.clip = window->decorationShape().translated(toplevel->geo.pos());
+            if (ref_win->control && !win::decoration_has_alpha(ref_win)
+                && ref_win->opacity() == 1.0) {
+                data.clip = win->decorationShape().translated(ref_win->geo.pos());
             }
 
-            data.quads = window->buildQuads();
+            data.quads = win->buildQuads();
 
             // preparation step
             platform.compositor->effects->prePaintWindow(
-                window->effect.get(), data, m_expectedPresentTimestamp);
+                win->effect.get(), data, m_expectedPresentTimestamp);
 #if !defined(QT_NO_DEBUG)
             if (data.quads.isTransformed()) {
                 qFatal("Pre-paint calls are not allowed to transform quads!");
             }
 #endif
-            if (!window->isPaintingEnabled()) {
+            if (!win->isPaintingEnabled()) {
                 continue;
             }
             dirtyArea |= data.paint;
             // Schedule the window for painting
             phase2data.append(
-                {window, data.paint, data.clip, static_cast<paint_type>(data.mask), data.quads});
+                {win, data.paint, data.clip, static_cast<paint_type>(data.mask), data.quads});
         }
 
         // Save the part of the repaint region that's exclusively rendered to
@@ -594,37 +591,39 @@ public:
     }
 
     // shared implementation, starts painting the window
-    virtual void paintWindow(window_t* w, paint_type mask, QRegion region, WindowQuadList quads)
+    virtual void paintWindow(window_t* win, paint_type mask, QRegion region, WindowQuadList quads)
     {
         // no painting outside visible screen (and no transformations)
         region &= QRect({}, platform.base.topology.size);
         if (region.isEmpty()) // completely clipped
             return;
 
-        if (s_recursionCheck == w) {
+        if (s_recursionCheck == win) {
             return;
         }
 
-        WindowPaintData data(w->effect.get(), screenProjectionMatrix());
+        WindowPaintData data(win->effect.get(), screenProjectionMatrix());
         data.quads = quads;
         platform.compositor->effects->paintWindow(
-            w->effect.get(), static_cast<int>(mask), region, data);
+            win->effect.get(), static_cast<int>(mask), region, data);
 
         // paint thumbnails on top of window
-        paintWindowThumbnails(w, region, data.opacity(), data.brightness(), data.saturation());
+        paintWindowThumbnails(win, region, data.opacity(), data.brightness(), data.saturation());
         // and desktop thumbnails
-        paintDesktopThumbnails(w);
+        paintDesktopThumbnails(win);
     }
 
     // called after all effects had their drawWindow() called, eventually called from drawWindow()
-    virtual void
-    finalDrawWindow(effect_window_t* w, paint_type mask, QRegion region, WindowPaintData& data)
+    virtual void finalDrawWindow(effect_window_t* eff_win,
+                                 paint_type mask,
+                                 QRegion region,
+                                 WindowPaintData& data)
     {
-        if (kwinApp()->is_screen_locked() && !w->window.ref_win->isLockScreen()
-            && !w->window.ref_win->isInputMethod()) {
+        if (kwinApp()->is_screen_locked() && !eff_win->window.ref_win->isLockScreen()
+            && !eff_win->window.ref_win->isInputMethod()) {
             return;
         }
-        w->window.performPaint(mask, region, data);
+        eff_win->window.performPaint(mask, region, data);
     }
 
     // let the scene decide whether it's better to paint more of the screen, eg. in order to allow a
@@ -639,7 +638,7 @@ public:
         platform.compositor->effects->paintDesktop(desktop, static_cast<int>(mask), region, data);
     }
 
-    virtual void paintEffectQuickView(EffectQuickView* w) = 0;
+    virtual void paintEffectQuickView(EffectQuickView* view) = 0;
 
     // saved data for 2nd pass of optimized screen painting
     struct Phase2Data {
@@ -666,13 +665,13 @@ public:
     output_t* repaint_output{nullptr};
 
 private:
-    void paintWindowThumbnails(window_t* w,
+    void paintWindowThumbnails(window_t* win,
                                QRegion region,
                                qreal opacity,
                                qreal brightness,
                                qreal saturation)
     {
-        auto wImpl = static_cast<effect_window_t*>(w->effect.get());
+        auto wImpl = static_cast<effect_window_t*>(win->effect.get());
         for (auto it = wImpl->thumbnails().constBegin(); it != wImpl->thumbnails().constEnd();
              ++it) {
             if (it.value().isNull()) {
@@ -682,6 +681,7 @@ private:
             if (!item->isVisible()) {
                 continue;
             }
+
             auto thumb = it.value().data();
             WindowPaintData thumbData(thumb, screenProjectionMatrix());
             thumbData.setOpacity(opacity);
@@ -704,7 +704,7 @@ private:
             }
 
             const QPointF point = item->mapToScene(QPointF(0, 0));
-            auto const win_pos = w->ref_win->geo.pos();
+            auto const win_pos = win->ref_win->geo.pos();
             qreal x = point.x() + win_pos.x() + (item->width() - size.width()) / 2;
             qreal y = point.y() + win_pos.y() + (item->height() - size.height()) / 2;
             x -= thumb->x();
@@ -729,9 +729,9 @@ private:
         }
     }
 
-    void paintDesktopThumbnails(window_t* w)
+    void paintDesktopThumbnails(window_t* win)
     {
-        auto wImpl = static_cast<effect_window_t*>(w->effect.get());
+        auto wImpl = static_cast<effect_window_t*>(win->effect.get());
         for (QList<desktop_thumbnail_item*>::const_iterator it
              = wImpl->desktopThumbnails().constBegin();
              it != wImpl->desktopThumbnails().constEnd();
@@ -743,7 +743,8 @@ private:
             if (!item->window()) {
                 continue;
             }
-            s_recursionCheck = w;
+
+            s_recursionCheck = win;
 
             ScreenPaintData data;
             auto const& space_size = platform.base.topology.size;
@@ -754,7 +755,7 @@ private:
                               size.height() / double(space_size.height()));
 
             const QPointF point = item->mapToScene(item->position());
-            auto const win_pos = w->ref_win->geo.pos();
+            auto const win_pos = win->ref_win->geo.pos();
             const qreal x = point.x() + win_pos.x() + (item->width() - size.width()) / 2;
             const qreal y = point.y() + win_pos.y() + (item->height() - size.height()) / 2;
             const QRect region = QRect(x, y, item->width(), item->height());
