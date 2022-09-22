@@ -573,7 +573,8 @@ public:
     void activateWindow(EffectWindow* c) override
     {
         auto window = static_cast<effect_window_t*>(c)->window.ref_win;
-        if (window && window->control) {
+        assert(window);
+        if (window->control) {
             win::force_activate_window(*compositor.space, window);
         }
     }
@@ -740,7 +741,9 @@ public:
                     double snapAdjust = 1.0) override
     {
         auto window = static_cast<effect_window_t*>(w)->window.ref_win;
-        if (!window || !window->isMovable()) {
+        assert(window);
+
+        if (!window->isMovable()) {
             return;
         }
 
@@ -756,7 +759,9 @@ public:
     void windowToDesktop(EffectWindow* w, int desktop) override
     {
         auto window = static_cast<effect_window_t*>(w)->window.ref_win;
-        if (window && window->control && !win::is_desktop(window) && !win::is_dock(window)) {
+        assert(window);
+
+        if (window->control && !win::is_desktop(window) && !win::is_dock(window)) {
             win::send_window_to_desktop(*compositor.space, window, desktop, true);
         }
     }
@@ -764,7 +769,9 @@ public:
     void windowToDesktops(EffectWindow* w, const QVector<uint>& desktopIds) override
     {
         auto window = static_cast<effect_window_t*>(w)->window.ref_win;
-        if (!window || !window->control || win::is_desktop(window) || win::is_dock(window)) {
+        assert(window);
+
+        if (!window->control || win::is_desktop(window) || win::is_dock(window)) {
             return;
         }
         QVector<win::virtual_desktop*> desktops;
@@ -787,9 +794,9 @@ public:
     {
         auto output = base::get_output(compositor.platform.base.outputs, screen);
         auto window = static_cast<effect_window_t*>(w)->window.ref_win;
+        assert(window);
 
-        if (output && window && window->control && !win::is_desktop(window)
-            && !win::is_dock(window)) {
+        if (output && window->control && !win::is_desktop(window) && !win::is_dock(window)) {
             win::send_to_screen(*compositor.space, window, *output);
         }
     }
@@ -928,6 +935,7 @@ public:
     {
 #if KWIN_BUILD_TABBOX
         auto window = static_cast<effect_window_t*>(w)->window.ref_win;
+        assert(window);
         if (window->control) {
             compositor.space->tabbox->set_current_client(window);
         }
@@ -1063,13 +1071,15 @@ public:
     QRect clientArea(clientAreaOption opt, const EffectWindow* c) const override
     {
         auto window = static_cast<effect_window_t const*>(c)->window.ref_win;
-        auto space = compositor.space;
+        assert(window);
 
         if (window->control) {
-            return win::space_window_area(*space, opt, window);
+            return win::space_window_area(*compositor.space, opt, window);
         } else {
-            return win::space_window_area(
-                *space, opt, window->geo.frame.center(), space->virtual_desktop_manager->current());
+            return win::space_window_area(*compositor.space,
+                                          opt,
+                                          window->geo.frame.center(),
+                                          compositor.space->virtual_desktop_manager->current());
         }
     }
 
