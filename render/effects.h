@@ -322,14 +322,14 @@ public:
                 &win::space_qobject::clientAdded,
                 this,
                 [this, space = ws](auto win_id) {
-                    auto c = space->windows_map.at(win_id);
-                    if (c->render_data.ready_for_painting) {
-                        slotClientShown(c);
+                    auto win = space->windows_map.at(win_id);
+                    if (win->render_data.ready_for_painting) {
+                        slotClientShown(*win);
                     } else {
-                        QObject::connect(c->qobject.get(),
+                        QObject::connect(win->qobject.get(),
                                          &win::window_qobject::windowShown,
                                          this,
-                                         [this, c] { slotClientShown(c); });
+                                         [this, win] { slotClientShown(*win); });
                     }
                 });
         connect(ws->qobject.get(),
@@ -337,10 +337,11 @@ public:
                 this,
                 [this, space = ws](auto win_id) {
                     // it's never initially ready but has synthetic 50ms delay
-                    auto u = space->windows_map.at(win_id);
-                    connect(u->qobject.get(), &win::window_qobject::windowShown, this, [this, u] {
-                        slotUnmanagedShown(u);
-                    });
+                    auto win = space->windows_map.at(win_id);
+                    connect(win->qobject.get(),
+                            &win::window_qobject::windowShown,
+                            this,
+                            [this, win] { slotUnmanagedShown(*win); });
                 });
         connect(ws->qobject.get(),
                 &win::space_qobject::internalClientAdded,
@@ -349,7 +350,7 @@ public:
                     auto client = space->windows_map.at(win_id);
                     assert(client->render);
                     assert(client->render->effect);
-                    setupAbstractClientConnections(client);
+                    setupAbstractClientConnections(*client);
                     Q_EMIT windowAdded(client->render->effect.get());
                 });
         connect(ws->qobject.get(), &win::space_qobject::clientActivated, this, [this, space = ws] {
@@ -460,14 +461,14 @@ public:
             if (!x11_client) {
                 continue;
             }
-            setupClientConnections(x11_client);
+            setupClientConnections(*x11_client);
         }
         for (auto unmanaged : win::x11::get_unmanageds(*ws)) {
-            setupUnmanagedConnections(unmanaged);
+            setupUnmanagedConnections(*unmanaged);
         }
         for (auto window : ws->windows) {
             if (auto internal = dynamic_cast<typename space_t::internal_window_t*>(window)) {
-                setupAbstractClientConnections(internal);
+                setupAbstractClientConnections(*internal);
             }
         }
 
@@ -1199,155 +1200,158 @@ public:
     Compositor& compositor;
 
 protected:
-    void setupAbstractClientConnections(typename space_t::window_t* window)
+    void setupAbstractClientConnections(typename space_t::window_t& window)
     {
-        auto qtwin = window->qobject.get();
+        auto qtwin = window.qobject.get();
 
         QObject::connect(qtwin,
                          &win::window_qobject::maximize_mode_changed,
                          this,
-                         [this, window](auto mode) { slotClientMaximized(window, mode); });
+                         [this, &window](auto mode) { slotClientMaximized(window, mode); });
         QObject::connect(
-            qtwin, &win::window_qobject::clientStartUserMovedResized, this, [this, window] {
-                Q_EMIT windowStartUserMovedResized(window->render->effect.get());
+            qtwin, &win::window_qobject::clientStartUserMovedResized, this, [this, &window] {
+                Q_EMIT windowStartUserMovedResized(window.render->effect.get());
             });
         QObject::connect(qtwin,
                          &win::window_qobject::clientStepUserMovedResized,
                          this,
-                         [this, window](QRect const& geometry) {
-                             Q_EMIT windowStepUserMovedResized(window->render->effect.get(),
+                         [this, &window](QRect const& geometry) {
+                             Q_EMIT windowStepUserMovedResized(window.render->effect.get(),
                                                                geometry);
                          });
         QObject::connect(
-            qtwin, &win::window_qobject::clientFinishUserMovedResized, this, [this, window] {
-                Q_EMIT windowFinishUserMovedResized(window->render->effect.get());
+            qtwin, &win::window_qobject::clientFinishUserMovedResized, this, [this, &window] {
+                Q_EMIT windowFinishUserMovedResized(window.render->effect.get());
             });
         QObject::connect(qtwin,
                          &win::window_qobject::opacityChanged,
                          this,
-                         [this, window](auto old) { slotOpacityChanged(window, old); });
+                         [this, &window](auto old) { slotOpacityChanged(window, old); });
         QObject::connect(
-            qtwin, &win::window_qobject::clientMinimized, this, [this, window](auto animate) {
+            qtwin, &win::window_qobject::clientMinimized, this, [this, &window](auto animate) {
                 // TODO: notify effects even if it should not animate?
                 if (animate) {
-                    Q_EMIT windowMinimized(window->render->effect.get());
+                    Q_EMIT windowMinimized(window.render->effect.get());
                 }
             });
         QObject::connect(
-            qtwin, &win::window_qobject::clientUnminimized, this, [this, window](auto animate) {
+            qtwin, &win::window_qobject::clientUnminimized, this, [this, &window](auto animate) {
                 // TODO: notify effects even if it should not animate?
                 if (animate) {
-                    Q_EMIT windowUnminimized(window->render->effect.get());
+                    Q_EMIT windowUnminimized(window.render->effect.get());
                 }
             });
-        QObject::connect(qtwin, &win::window_qobject::modalChanged, this, [this, window] {
+        QObject::connect(qtwin, &win::window_qobject::modalChanged, this, [this, &window] {
             slotClientModalityChanged(window);
         });
         QObject::connect(
             qtwin,
             &win::window_qobject::frame_geometry_changed,
             this,
-            [this, window](auto const& rect) { slotGeometryShapeChanged(window, rect); });
+            [this, &window](auto const& rect) { slotGeometryShapeChanged(window, rect); });
         QObject::connect(
             qtwin,
             &win::window_qobject::frame_geometry_changed,
             this,
-            [this, window](auto const& rect) { slotFrameGeometryChanged(window, rect); });
+            [this, &window](auto const& rect) { slotFrameGeometryChanged(window, rect); });
         QObject::connect(qtwin,
                          &win::window_qobject::damaged,
                          this,
-                         [this, window](auto const& rect) { slotWindowDamaged(window, rect); });
+                         [this, &window](auto const& rect) { slotWindowDamaged(window, rect); });
         QObject::connect(qtwin,
                          &win::window_qobject::unresponsiveChanged,
                          this,
-                         [this, window](bool unresponsive) {
-                             Q_EMIT windowUnresponsiveChanged(window->render->effect.get(),
+                         [this, &window](bool unresponsive) {
+                             Q_EMIT windowUnresponsiveChanged(window.render->effect.get(),
                                                               unresponsive);
                          });
-        QObject::connect(qtwin, &win::window_qobject::windowShown, this, [this, window] {
-            Q_EMIT windowShown(window->render->effect.get());
+        QObject::connect(qtwin, &win::window_qobject::windowShown, this, [this, &window] {
+            Q_EMIT windowShown(window.render->effect.get());
         });
-        QObject::connect(qtwin, &win::window_qobject::windowHidden, this, [this, window] {
-            Q_EMIT windowHidden(window->render->effect.get());
+        QObject::connect(qtwin, &win::window_qobject::windowHidden, this, [this, &window] {
+            Q_EMIT windowHidden(window.render->effect.get());
         });
         QObject::connect(
-            qtwin, &win::window_qobject::keepAboveChanged, this, [this, window](bool above) {
+            qtwin, &win::window_qobject::keepAboveChanged, this, [this, &window](bool above) {
                 Q_UNUSED(above)
-                Q_EMIT windowKeepAboveChanged(window->render->effect.get());
+                Q_EMIT windowKeepAboveChanged(window.render->effect.get());
             });
         QObject::connect(
-            qtwin, &win::window_qobject::keepBelowChanged, this, [this, window](bool below) {
+            qtwin, &win::window_qobject::keepBelowChanged, this, [this, &window](bool below) {
                 Q_UNUSED(below)
-                Q_EMIT windowKeepBelowChanged(window->render->effect.get());
+                Q_EMIT windowKeepBelowChanged(window.render->effect.get());
             });
-        QObject::connect(qtwin, &win::window_qobject::fullScreenChanged, this, [this, window]() {
-            Q_EMIT windowFullScreenChanged(window->render->effect.get());
+        QObject::connect(qtwin, &win::window_qobject::fullScreenChanged, this, [this, &window]() {
+            Q_EMIT windowFullScreenChanged(window.render->effect.get());
         });
         QObject::connect(
-            qtwin, &win::window_qobject::visible_geometry_changed, this, [this, window]() {
-                Q_EMIT windowExpandedGeometryChanged(window->render->effect.get());
+            qtwin, &win::window_qobject::visible_geometry_changed, this, [this, &window]() {
+                Q_EMIT windowExpandedGeometryChanged(window.render->effect.get());
             });
     }
 
     // For X11 windows
-    void setupClientConnections(typename space_t::window_t* c)
+    void setupClientConnections(typename space_t::window_t& window)
     {
-        setupAbstractClientConnections(c);
-        connect(c->qobject.get(),
+        setupAbstractClientConnections(window);
+        connect(window.qobject.get(),
                 &win::window_qobject::paddingChanged,
                 this,
-                [this, c](auto const& old) { slotPaddingChanged(c, old); });
+                [this, &window](auto const& old) { slotPaddingChanged(window, old); });
     }
 
-    void setupUnmanagedConnections(typename space_t::window_t* u)
+    void setupUnmanagedConnections(typename space_t::window_t& window)
     {
-        connect(u->qobject.get(), &win::window_qobject::opacityChanged, this, [this, u](auto old) {
-            slotOpacityChanged(u, old);
-        });
-        connect(u->qobject.get(),
+        connect(window.qobject.get(),
+                &win::window_qobject::opacityChanged,
+                this,
+                [this, &window](auto old) { slotOpacityChanged(window, old); });
+        connect(window.qobject.get(),
                 &win::window_qobject::frame_geometry_changed,
                 this,
-                [this, u](auto const& old) { slotGeometryShapeChanged(u, old); });
-        connect(u->qobject.get(),
+                [this, &window](auto const& old) { slotGeometryShapeChanged(window, old); });
+        connect(window.qobject.get(),
                 &win::window_qobject::frame_geometry_changed,
                 this,
-                [this, u](auto const& old) { slotFrameGeometryChanged(u, old); });
-        connect(u->qobject.get(),
+                [this, &window](auto const& old) { slotFrameGeometryChanged(window, old); });
+        connect(window.qobject.get(),
                 &win::window_qobject::paddingChanged,
                 this,
-                [this, u](auto const& old) { slotPaddingChanged(u, old); });
-        connect(u->qobject.get(),
+                [this, &window](auto const& old) { slotPaddingChanged(window, old); });
+        connect(window.qobject.get(),
                 &win::window_qobject::damaged,
                 this,
-                [this, u](auto const& region) { slotWindowDamaged(u, region); });
-        connect(u->qobject.get(),
+                [this, &window](auto const& region) { slotWindowDamaged(window, region); });
+        connect(window.qobject.get(),
                 &win::window_qobject::visible_geometry_changed,
                 this,
-                [this, u]() { Q_EMIT windowExpandedGeometryChanged(u->render->effect.get()); });
+                [this, &window]() {
+                    Q_EMIT windowExpandedGeometryChanged(window.render->effect.get());
+                });
     }
 
-    void slotClientShown(typename space_t::window_t* t)
+    void slotClientShown(typename space_t::window_t& window)
     {
-        assert(dynamic_cast<typename space_t::x11_window*>(t));
-        disconnect(t->qobject.get(), &win::window_qobject::windowShown, this, nullptr);
-        setupClientConnections(t);
-        Q_EMIT windowAdded(t->render->effect.get());
+        assert(dynamic_cast<typename space_t::x11_window*>(&window));
+        disconnect(window.qobject.get(), &win::window_qobject::windowShown, this, nullptr);
+        setupClientConnections(window);
+        Q_EMIT windowAdded(window.render->effect.get());
     }
 
-    void slotXdgShellClientShown(typename space_t::window_t* t)
+    void slotXdgShellClientShown(typename space_t::window_t& window)
     {
-        setupAbstractClientConnections(t);
-        Q_EMIT windowAdded(t->render->effect.get());
+        setupAbstractClientConnections(window);
+        Q_EMIT windowAdded(window.render->effect.get());
     }
 
-    void slotUnmanagedShown(typename space_t::window_t* t)
+    void slotUnmanagedShown(typename space_t::window_t& window)
     { // regardless, unmanaged windows are -yet?- not synced anyway
-        assert(!t->control);
-        setupUnmanagedConnections(t);
-        Q_EMIT windowAdded(t->render->effect.get());
+        assert(!window.control);
+        setupUnmanagedConnections(window);
+        Q_EMIT windowAdded(window.render->effect.get());
     }
 
-    void slotClientMaximized(typename space_t::window_t* window, win::maximize_mode maxMode)
+    void slotClientMaximized(typename space_t::window_t& window, win::maximize_mode maxMode)
     {
         bool horizontal = false;
         bool vertical = false;
@@ -1368,62 +1372,60 @@ protected:
             break;
         }
 
-        auto ew = window->render->effect.get();
+        auto ew = window.render->effect.get();
         assert(ew);
         Q_EMIT windowMaximizedStateChanged(ew, horizontal, vertical);
     }
 
-    void slotOpacityChanged(typename space_t::window_t* t, qreal oldOpacity)
+    void slotOpacityChanged(typename space_t::window_t& window, qreal oldOpacity)
     {
-        assert(t->render->effect);
+        assert(window.render->effect);
 
-        if (t->opacity() == oldOpacity) {
+        if (window.opacity() == oldOpacity) {
             return;
         }
 
         Q_EMIT windowOpacityChanged(
-            t->render->effect.get(), oldOpacity, static_cast<qreal>(t->opacity()));
+            window.render->effect.get(), oldOpacity, static_cast<qreal>(window.opacity()));
     }
 
-    void slotClientModalityChanged(typename space_t::window_t* window)
+    void slotClientModalityChanged(typename space_t::window_t& window)
     {
-        Q_EMIT windowModalityChanged(window->render->effect.get());
+        Q_EMIT windowModalityChanged(window.render->effect.get());
     }
 
-    void slotGeometryShapeChanged(typename space_t::window_t* t, const QRect& old)
+    void slotGeometryShapeChanged(typename space_t::window_t& window, const QRect& old)
     {
-        assert(t);
-        assert(t->render);
-        assert(t->render->effect);
+        assert(window.render);
+        assert(window.render->effect);
 
-        if (t->control && (win::is_move(t) || win::is_resize(t))) {
+        if (window.control && (win::is_move(&window) || win::is_resize(&window))) {
             // For that we have windowStepUserMovedResized.
             return;
         }
 
-        Q_EMIT windowGeometryShapeChanged(t->render->effect.get(), old);
+        Q_EMIT windowGeometryShapeChanged(window.render->effect.get(), old);
     }
 
-    void slotFrameGeometryChanged(typename space_t::window_t* toplevel, const QRect& oldGeometry)
+    void slotFrameGeometryChanged(typename space_t::window_t& window, const QRect& oldGeometry)
     {
-        assert(toplevel->render);
-        assert(toplevel->render->effect);
-        Q_EMIT windowFrameGeometryChanged(toplevel->render->effect.get(), oldGeometry);
+        assert(window.render);
+        assert(window.render->effect);
+        Q_EMIT windowFrameGeometryChanged(window.render->effect.get(), oldGeometry);
     }
 
-    void slotPaddingChanged(typename space_t::window_t* t, const QRect& old)
+    void slotPaddingChanged(typename space_t::window_t& window, const QRect& old)
     {
-        assert(t);
-        assert(t->render);
-        assert(t->render->effect);
-        Q_EMIT windowPaddingChanged(t->render->effect.get(), old);
+        assert(window.render);
+        assert(window.render->effect);
+        Q_EMIT windowPaddingChanged(window.render->effect.get(), old);
     }
 
-    void slotWindowDamaged(typename space_t::window_t* t, const QRegion& r)
+    void slotWindowDamaged(typename space_t::window_t& window, const QRegion& r)
     {
-        assert(t->render);
-        assert(t->render->effect);
-        Q_EMIT windowDamaged(t->render->effect.get(), r);
+        assert(window.render);
+        assert(window.render->effect);
+        Q_EMIT windowDamaged(window.render->effect.get(), r);
     }
 
     void slotOutputEnabled(base::output* output)

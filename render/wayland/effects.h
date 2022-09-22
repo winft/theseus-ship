@@ -55,12 +55,12 @@ public:
             [this](auto win_id) {
                 auto win = this->compositor.platform.base.space->windows_map.at(win_id);
                 if (win->render_data.ready_for_painting) {
-                    this->slotXdgShellClientShown(win);
+                    this->slotXdgShellClientShown(*win);
                 } else {
                     QObject::connect(win->qobject.get(),
                                      &win::window_qobject::windowShown,
                                      this,
-                                     [this, win] { this->slotXdgShellClientShown(win); });
+                                     [this, win] { this->slotXdgShellClientShown(*win); });
                 }
             });
 
@@ -71,12 +71,12 @@ public:
                 continue;
             }
             if (wlwin->render_data.ready_for_painting) {
-                this->setupAbstractClientConnections(wlwin);
+                this->setupAbstractClientConnections(*wlwin);
             } else {
                 QObject::connect(wlwin->qobject.get(),
                                  &win::window_qobject::windowShown,
                                  this,
-                                 [this, wlwin] { this->slotXdgShellClientShown(wlwin); });
+                                 [this, wlwin] { this->slotXdgShellClientShown(*wlwin); });
             }
         }
     }
