@@ -206,4 +206,23 @@ void finish_compositing(Win& win)
     win.render_data.repaints_region = {};
 }
 
+template<typename Win>
+void scene_add_remnant(Win& win)
+{
+    assert(win.render);
+
+    win.render->ref_win = &win;
+
+    if (auto shadow = win.render->shadow()) {
+        QObject::connect(win.qobject.get(),
+                         &win::window_qobject::frame_geometry_changed,
+                         shadow,
+                         &std::remove_pointer_t<decltype(shadow)>::geometryChanged);
+    }
+
+    if (auto& effects = win.space.base.render->compositor->effects) {
+        Q_EMIT effects->windowClosed(win.render->effect.get());
+    }
+}
+
 }

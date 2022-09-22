@@ -109,14 +109,6 @@ public:
     {
         singleton_interface::supports_surfaceless_context
             = [this] { return supportsSurfacelessContext(); };
-
-        QObject::connect(platform.base.space->qobject.get(),
-                         &win::space_qobject::remnant_created,
-                         this,
-                         [this](auto win_id) {
-                             auto remnant = this->platform.base.space->windows_map.at(win_id);
-                             init_remnant(*remnant);
-                         });
     }
 
     ~scene() override
@@ -264,19 +256,6 @@ public:
             return;
         }
         c->render->invalidateQuadsCache();
-    }
-
-    void init_remnant(typename window_t::ref_t& remnant)
-    {
-        assert(remnant.render);
-        remnant.render->ref_win = &remnant;
-
-        if (auto shadow = remnant.render->shadow()) {
-            QObject::connect(remnant.qobject.get(),
-                             &win::window_qobject::frame_geometry_changed,
-                             shadow,
-                             &std::remove_pointer_t<decltype(shadow)>::geometryChanged);
-        }
     }
 
     Platform& platform;

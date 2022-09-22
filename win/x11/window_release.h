@@ -135,6 +135,7 @@ Win* create_remnant_window(Win& source)
     win->m_wmClientLeader = source.wmClientLeader();
 
     space_add_remnant(source, *win);
+    scene_add_remnant(*win);
     return win;
 }
 

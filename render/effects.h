@@ -360,14 +360,6 @@ public:
             Q_EMIT windowActivated(eff_win);
         });
 
-        QObject::connect(ws->qobject.get(),
-                         &win::space_qobject::remnant_created,
-                         this,
-                         [this, space = ws](auto win_id) {
-                             auto win = space->windows_map.at(win_id);
-                             add_remnant(win);
-                         });
-
         connect(ws->qobject.get(),
                 &win::space_qobject::window_deleted,
                 this,
@@ -1207,13 +1199,6 @@ public:
     Compositor& compositor;
 
 protected:
-    void add_remnant(typename space_t::window_t* remnant)
-    {
-        assert(remnant);
-        assert(remnant->render);
-        Q_EMIT windowClosed(remnant->render->effect.get());
-    }
-
     void setupAbstractClientConnections(typename space_t::window_t* window)
     {
         auto qtwin = window->qobject.get();

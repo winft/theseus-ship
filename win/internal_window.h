@@ -486,6 +486,7 @@ public:
         if (deleted) {
             transfer_remnant_data(*this, *deleted);
             space_add_remnant(*this, *deleted);
+            scene_add_remnant(*deleted);
         }
         Q_EMIT this->qobject->closed();
 
