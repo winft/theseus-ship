@@ -374,6 +374,15 @@ public:
         }
     }
 
+    // saved data for 2nd pass of optimized screen painting
+    struct Phase2Data {
+        window_t* window = nullptr;
+        QRegion region;
+        QRegion clip;
+        paint_type mask{paint_type::none};
+        WindowQuadList quads;
+    };
+
     // The generic (unoptimized) painting code that can handle even transformations. It simply
     // paints bottom-to-top.
     virtual void paintGenericScreen(paint_type orig_mask, ScreenPaintData /*data*/)
@@ -423,6 +432,77 @@ public:
         damaged_region = QRegion(0, 0, space_size.width(), space_size.height());
     }
 
+    template<typename RefWin>
+    void prepare_simple_window_paint(RefWin& ref_win,
+                                     paint_type const orig_mask,
+                                     QRegion const& region,
+                                     QRegion& dirtyArea,
+                                     bool& opaqueFullscreen,
+                                     QVector<Phase2Data>& phase2data)
+    {
+        auto win = ref_win.render.get();
+
+        WindowPrePaintData data;
+        data.mask = static_cast<int>(
+            orig_mask
+            | (win->isOpaque() ? paint_type::window_opaque : paint_type::window_translucent));
+        win->resetPaintingEnabled();
+        data.paint = region;
+        data.paint |= win::repaints(ref_win);
+
+        // Reset the repaint_region.
+        // This has to be done here because many effects schedule a repaint for
+        // the next frame within Effects::prePaintWindow.
+        win::reset_repaints(ref_win, repaint_output);
+
+        opaqueFullscreen = false;
+
+        // TODO: do we care about unmanged windows here (maybe input windows?)
+        if (win->isOpaque()) {
+            if (ref_win.control) {
+                opaqueFullscreen = ref_win.control->fullscreen;
+            }
+            data.clip |= win::content_render_region(&ref_win).translated(ref_win.geo.pos()
+                                                                         + win->bufferOffset());
+        } else if (win::has_alpha(ref_win) && ref_win.opacity() == 1.0) {
+            auto const clientShape = win::content_render_region(&ref_win).translated(
+                win::frame_to_render_pos(&ref_win, ref_win.geo.pos()));
+            auto const opaqueShape = ref_win.render_data.opaque_region.translated(
+                win::frame_to_client_pos(&ref_win, ref_win.geo.pos()) - ref_win.geo.pos());
+            data.clip = clientShape & opaqueShape;
+            if (clientShape == opaqueShape) {
+                data.mask = static_cast<int>(orig_mask | paint_type::window_opaque);
+            }
+        } else {
+            data.clip = QRegion();
+        }
+
+        // Clip out decoration without alpha when window has not set additional opacity by us.
+        // The decoration is drawn in the second pass.
+        if (ref_win.control && !win::decoration_has_alpha(&ref_win) && ref_win.opacity() == 1.0) {
+            data.clip = win->decorationShape().translated(ref_win.geo.pos());
+        }
+
+        data.quads = win->buildQuads();
+
+        // preparation step
+        platform.compositor->effects->prePaintWindow(
+            win->effect.get(), data, m_expectedPresentTimestamp);
+#if !defined(QT_NO_DEBUG)
+        if (data.quads.isTransformed()) {
+            qFatal("Pre-paint calls are not allowed to transform quads!");
+        }
+#endif
+        if (!win->isPaintingEnabled()) {
+            return;
+        }
+
+        dirtyArea |= data.paint;
+        // Schedule the window for painting
+        phase2data.append(
+            {win, data.paint, data.clip, static_cast<paint_type>(data.mask), data.quads});
+    }
+
     // The optimized case without any transformations at all. It can paint only the requested region
     // and can use clipping to reduce painting and improve performance.
     virtual void paintSimpleScreen(paint_type orig_mask, QRegion region)
@@ -438,66 +518,8 @@ public:
 
         // Traverse the scene windows from bottom to top.
         for (auto&& win : stacking_order) {
-            auto ref_win = win->ref_win;
-            WindowPrePaintData data;
-            data.mask = static_cast<int>(
-                orig_mask
-                | (win->isOpaque() ? paint_type::window_opaque : paint_type::window_translucent));
-            win->resetPaintingEnabled();
-            data.paint = region;
-            data.paint |= win::repaints(*ref_win);
-
-            // Reset the repaint_region.
-            // This has to be done here because many effects schedule a repaint for
-            // the next frame within Effects::prePaintWindow.
-            win::reset_repaints(*ref_win, repaint_output);
-
-            opaqueFullscreen = false;
-
-            // TODO: do we care about unmanged windows here (maybe input windows?)
-            if (win->isOpaque()) {
-                if (ref_win->control) {
-                    opaqueFullscreen = ref_win->control->fullscreen;
-                }
-                data.clip |= win::content_render_region(ref_win).translated(ref_win->geo.pos()
-                                                                            + win->bufferOffset());
-            } else if (win::has_alpha(*ref_win) && ref_win->opacity() == 1.0) {
-                auto const clientShape = win::content_render_region(ref_win).translated(
-                    win::frame_to_render_pos(ref_win, ref_win->geo.pos()));
-                auto const opaqueShape = ref_win->render_data.opaque_region.translated(
-                    win::frame_to_client_pos(ref_win, ref_win->geo.pos()) - ref_win->geo.pos());
-                data.clip = clientShape & opaqueShape;
-                if (clientShape == opaqueShape) {
-                    data.mask = static_cast<int>(orig_mask | paint_type::window_opaque);
-                }
-            } else {
-                data.clip = QRegion();
-            }
-
-            // Clip out decoration without alpha when window has not set additional opacity by us.
-            // The decoration is drawn in the second pass.
-            if (ref_win->control && !win::decoration_has_alpha(ref_win)
-                && ref_win->opacity() == 1.0) {
-                data.clip = win->decorationShape().translated(ref_win->geo.pos());
-            }
-
-            data.quads = win->buildQuads();
-
-            // preparation step
-            platform.compositor->effects->prePaintWindow(
-                win->effect.get(), data, m_expectedPresentTimestamp);
-#if !defined(QT_NO_DEBUG)
-            if (data.quads.isTransformed()) {
-                qFatal("Pre-paint calls are not allowed to transform quads!");
-            }
-#endif
-            if (!win->isPaintingEnabled()) {
-                continue;
-            }
-            dirtyArea |= data.paint;
-            // Schedule the window for painting
-            phase2data.append(
-                {win, data.paint, data.clip, static_cast<paint_type>(data.mask), data.quads});
+            prepare_simple_window_paint(
+                *win->ref_win, orig_mask, region, dirtyArea, opaqueFullscreen, phase2data);
         }
 
         // Save the part of the repaint region that's exclusively rendered to
@@ -640,14 +662,6 @@ public:
 
     virtual void paintEffectQuickView(EffectQuickView* view) = 0;
 
-    // saved data for 2nd pass of optimized screen painting
-    struct Phase2Data {
-        window_t* window = nullptr;
-        QRegion region;
-        QRegion clip;
-        paint_type mask{paint_type::none};
-        WindowQuadList quads;
-    };
     // The region which actually has been painted by paintScreen() and should be
     // copied from the buffer to the screen. I.e. the region returned from scene::paintScreen().
     // Since prePaintWindow() can extend areas to paint, these changes would have to propagate
