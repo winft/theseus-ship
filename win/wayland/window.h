@@ -1210,14 +1210,14 @@ public:
                     auto const area = space_window_area(this->space,
                                                         PlacementArea,
                                                         get_current_output(this->space),
-                                                        this->desktop());
+                                                        get_desktop(*this));
                     placeIn(area);
                 } else if (plasma_shell_surface && plasma_shell_surface->open_under_cursor()) {
                     must_place = false;
                     auto const area = space_window_area(this->space,
                                                         PlacementArea,
                                                         this->space.input->cursor->pos(),
-                                                        this->desktop());
+                                                        get_desktop(*this));
                     auto size = this->geo.size();
                     auto pos = this->space.input->cursor->pos()
                         - QPoint(size.width(), size.height()) / 2;

@@ -1791,7 +1791,7 @@ void TestXdgShellClientRules::testDesktopDontAffect()
     QVERIFY(client);
 
     // The client should appear on the current virtual desktop.
-    QCOMPARE(client->desktop(), 1);
+    QCOMPARE(win::get_desktop(*client), 1);
     QCOMPARE(vd_manager->current(), 1);
 
     // Destroy the client.
@@ -1830,12 +1830,12 @@ void TestXdgShellClientRules::testDesktopApply()
     QVERIFY(client);
 
     // The client should appear on the second virtual desktop.
-    QCOMPARE(client->desktop(), 2);
+    QCOMPARE(win::get_desktop(*client), 2);
     QCOMPARE(vd_manager->current(), 2);
 
     // We still should be able to move the client between desktops.
     win::send_window_to_desktop(*Test::app()->base.space, client, 1, true);
-    QCOMPARE(client->desktop(), 1);
+    QCOMPARE(win::get_desktop(*client), 1);
     QCOMPARE(vd_manager->current(), 2);
 
     // If we re-open the client, it should appear on the second virtual desktop again.
@@ -1846,7 +1846,7 @@ void TestXdgShellClientRules::testDesktopApply()
     QCOMPARE(vd_manager->current(), 1);
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
     QVERIFY(client);
-    QCOMPARE(client->desktop(), 2);
+    QCOMPARE(win::get_desktop(*client), 2);
     QCOMPARE(vd_manager->current(), 2);
 
     // Destroy the client.
@@ -1883,12 +1883,12 @@ void TestXdgShellClientRules::testDesktopRemember()
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
     QVERIFY(client);
-    QCOMPARE(client->desktop(), 2);
+    QCOMPARE(win::get_desktop(*client), 2);
     QCOMPARE(vd_manager->current(), 2);
 
     // Move the client to the first virtual desktop.
     win::send_window_to_desktop(*Test::app()->base.space, client, 1, true);
-    QCOMPARE(client->desktop(), 1);
+    QCOMPARE(win::get_desktop(*client), 1);
     QCOMPARE(vd_manager->current(), 2);
 
     // If we create the client again, it should appear on the first virtual desktop.
@@ -1897,7 +1897,7 @@ void TestXdgShellClientRules::testDesktopRemember()
     QVERIFY(Test::wait_for_destroyed(client));
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
     QVERIFY(client);
-    QCOMPARE(client->desktop(), 1);
+    QCOMPARE(win::get_desktop(*client), 1);
     QCOMPARE(vd_manager->current(), 1);
 
     // Destroy the client.
@@ -1936,12 +1936,12 @@ void TestXdgShellClientRules::testDesktopForce()
     QVERIFY(client);
 
     // The client should appear on the second virtual desktop.
-    QCOMPARE(client->desktop(), 2);
+    QCOMPARE(win::get_desktop(*client), 2);
     QCOMPARE(vd_manager->current(), 2);
 
     // Any attempt to move the client to another virtual desktop should fail.
     win::send_window_to_desktop(*Test::app()->base.space, client, 1, true);
-    QCOMPARE(client->desktop(), 2);
+    QCOMPARE(win::get_desktop(*client), 2);
     QCOMPARE(vd_manager->current(), 2);
 
     // If we re-open the client, it should appear on the second virtual desktop again.
@@ -1952,7 +1952,7 @@ void TestXdgShellClientRules::testDesktopForce()
     QCOMPARE(vd_manager->current(), 1);
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
     QVERIFY(client);
-    QCOMPARE(client->desktop(), 2);
+    QCOMPARE(win::get_desktop(*client), 2);
     QCOMPARE(vd_manager->current(), 2);
 
     // Destroy the client.
@@ -1976,7 +1976,7 @@ void TestXdgShellClientRules::testDesktopApplyNow()
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
     QVERIFY(client);
-    QCOMPARE(client->desktop(), 1);
+    QCOMPARE(win::get_desktop(*client), 1);
     QCOMPARE(vd_manager->current(), 1);
 
     // Initialize RuleBook with the test rule.
@@ -1993,17 +1993,17 @@ void TestXdgShellClientRules::testDesktopApplyNow()
     win::space_reconfigure(*Test::app()->base.space);
 
     // The client should have been moved to the second virtual desktop.
-    QCOMPARE(client->desktop(), 2);
+    QCOMPARE(win::get_desktop(*client), 2);
     QCOMPARE(vd_manager->current(), 1);
 
     // One should still be able to move the client between desktops.
     win::send_window_to_desktop(*Test::app()->base.space, client, 1, true);
-    QCOMPARE(client->desktop(), 1);
+    QCOMPARE(win::get_desktop(*client), 1);
     QCOMPARE(vd_manager->current(), 1);
 
     // The rule should not be applied again.
     win::rules::evaluate_rules(client);
-    QCOMPARE(client->desktop(), 1);
+    QCOMPARE(win::get_desktop(*client), 1);
     QCOMPARE(vd_manager->current(), 1);
 
     // Destroy the client.
@@ -2042,12 +2042,12 @@ void TestXdgShellClientRules::testDesktopForceTemporarily()
     QVERIFY(client);
 
     // The client should appear on the second virtual desktop.
-    QCOMPARE(client->desktop(), 2);
+    QCOMPARE(win::get_desktop(*client), 2);
     QCOMPARE(vd_manager->current(), 2);
 
     // Any attempt to move the client to another virtual desktop should fail.
     win::send_window_to_desktop(*Test::app()->base.space, client, 1, true);
-    QCOMPARE(client->desktop(), 2);
+    QCOMPARE(win::get_desktop(*client), 2);
     QCOMPARE(vd_manager->current(), 2);
 
     // The rule should be discarded when the client is withdrawn.
@@ -2058,15 +2058,15 @@ void TestXdgShellClientRules::testDesktopForceTemporarily()
     QCOMPARE(vd_manager->current(), 1);
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
     QVERIFY(client);
-    QCOMPARE(client->desktop(), 1);
+    QCOMPARE(win::get_desktop(*client), 1);
     QCOMPARE(vd_manager->current(), 1);
 
     // One should be able to move the client between desktops.
     win::send_window_to_desktop(*Test::app()->base.space, client, 2, true);
-    QCOMPARE(client->desktop(), 2);
+    QCOMPARE(win::get_desktop(*client), 2);
     QCOMPARE(vd_manager->current(), 1);
     win::send_window_to_desktop(*Test::app()->base.space, client, 1, true);
-    QCOMPARE(client->desktop(), 1);
+    QCOMPARE(win::get_desktop(*client), 1);
     QCOMPARE(vd_manager->current(), 1);
 
     // Destroy the client.

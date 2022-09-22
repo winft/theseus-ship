@@ -31,13 +31,13 @@ void set_desktops(Win* win, QVector<virtual_desktop*> desktops)
         return;
     }
 
-    auto was_desk = win->desktop();
+    auto was_desk = get_desktop(*win);
     auto const wasOnCurrentDesktop = on_current_desktop(win) && was_desk >= 0;
 
     win->topo.desktops = desktops;
     win->control->set_desktops(desktops);
 
-    if ((was_desk == NET::OnAllDesktops) != (win->desktop() == NET::OnAllDesktops)) {
+    if ((was_desk == NET::OnAllDesktops) != (get_desktop(*win) == NET::OnAllDesktops)) {
         // OnAllDesktops changed
         propagate_on_all_desktops_to_children(*win);
     }
@@ -58,7 +58,7 @@ void set_desktops(Win* win, QVector<virtual_desktop*> desktops)
         }
     }
 
-    win->doSetDesktop(win->desktop(), was_desk);
+    win->doSetDesktop(get_desktop(*win), was_desk);
     focus_chain_update(win->space.stacking.focus_chain, win, focus_chain_change::make_first);
     win->updateWindowRules(rules::type::desktops);
 

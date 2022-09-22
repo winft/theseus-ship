@@ -22,7 +22,7 @@ win::remnant create_remnant(Win& source)
     remnant.data.frame_margins = win::frame_margins(&source);
     remnant.data.render_region = source.render_region();
     remnant.data.buffer_scale = source.bufferScale();
-    remnant.data.desk = source.desktop();
+    remnant.data.desk = get_desktop(source);
     remnant.data.frame = source.frameId();
     remnant.data.opacity = source.opacity();
     remnant.data.window_role = source.windowRole();

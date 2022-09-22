@@ -12,6 +12,18 @@
 namespace KWin::win
 {
 
+// TODO(romangg): Is the recommendation to prefer on_desktop() still sensible?
+/**
+ * Returns the virtual desktop the window is located in, 0 if it isn't located on any special
+ * desktop (not mapped yet), or NET::OnAllDesktops. Don't use directly, use on_desktop() instead.
+ */
+template<typename Win>
+int get_desktop(Win const& win)
+{
+    return win.topo.desktops.isEmpty() ? static_cast<int>(NET::OnAllDesktops)
+                                       : win.topo.desktops.last()->x11DesktopNumber();
+}
+
 template<typename Win>
 bool on_all_desktops(Win* win)
 {
@@ -20,7 +32,7 @@ bool on_all_desktops(Win* win)
         // Wayland
         ? win->topo.desktops.isEmpty()
         // X11
-        : win->desktop() == NET::OnAllDesktops;
+        : get_desktop(*win) == NET::OnAllDesktops;
 }
 
 template<typename Win>
@@ -30,7 +42,7 @@ bool on_desktop(Win* win, int d)
                     || kwinApp()->operationMode() == Application::OperationModeXwayland
                 ? win->topo.desktops.contains(
                     win->space.virtual_desktop_manager->desktopForX11Id(d))
-                : win->desktop() == d)
+                : get_desktop(*win) == d)
         || on_all_desktops(win);
 }
 

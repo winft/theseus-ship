@@ -68,7 +68,7 @@ public:
 
         if (auto c = get_client_impl(client)) {
             if (!on_all_desktops(c->client()))
-                return vds->name(c->client()->desktop());
+                return vds->name(get_desktop(*c->client()));
         }
 
         return vds->name(vds->current());

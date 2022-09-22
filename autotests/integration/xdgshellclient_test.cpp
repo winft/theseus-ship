@@ -268,7 +268,7 @@ void TestXdgShellClient::testDesktopPresenceChanged()
 
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(c->desktop(), 1);
+    QCOMPARE(win::get_desktop(*c), 1);
     effects->setNumberOfDesktops(4);
     QSignalSpy desktopPresenceChangedClientSpy(c->qobject.get(),
                                                &win::window_qobject::desktopPresenceChanged);
@@ -281,7 +281,7 @@ void TestXdgShellClient::testDesktopPresenceChanged()
 
     // let's change the desktop
     win::send_window_to_desktop(*Test::app()->base.space, c, 2, false);
-    QCOMPARE(c->desktop(), 2);
+    QCOMPARE(win::get_desktop(*c), 2);
     QCOMPARE(desktopPresenceChangedClientSpy.count(), 1);
     QCOMPARE(desktopPresenceChangedWorkspaceSpy.count(), 1);
     QCOMPARE(desktopPresenceChangedEffectsSpy.count(), 1);
@@ -1104,14 +1104,14 @@ void TestXdgShellClient::testSendClientWithTransientToDesktop()
     QCOMPARE(transient->transient->lead(), c);
     QVERIFY(contains(c->transient->children, transient));
 
-    QCOMPARE(c->desktop(), 1);
+    QCOMPARE(win::get_desktop(*c), 1);
     QVERIFY(!win::on_all_desktops(c));
-    QCOMPARE(transient->desktop(), 1);
+    QCOMPARE(win::get_desktop(*transient), 1);
     QVERIFY(!win::on_all_desktops(transient));
     win::active_window_to_desktop(*Test::app()->base.space, 2);
 
-    QCOMPARE(c->desktop(), 1);
-    QCOMPARE(transient->desktop(), 2);
+    QCOMPARE(win::get_desktop(*c), 1);
+    QCOMPARE(win::get_desktop(*transient), 2);
 
     // activate c
     win::activate_window(*Test::app()->base.space, c);
@@ -1119,13 +1119,13 @@ void TestXdgShellClient::testSendClientWithTransientToDesktop()
     QVERIFY(c->control->active);
 
     // and send it to the desktop it's already on
-    QCOMPARE(c->desktop(), 1);
-    QCOMPARE(transient->desktop(), 2);
+    QCOMPARE(win::get_desktop(*c), 1);
+    QCOMPARE(win::get_desktop(*transient), 2);
     win::active_window_to_desktop(*Test::app()->base.space, 1);
 
     // which should move the transient back to the desktop
-    QCOMPARE(c->desktop(), 1);
-    QCOMPARE(transient->desktop(), 1);
+    QCOMPARE(win::get_desktop(*c), 1);
+    QCOMPARE(win::get_desktop(*transient), 1);
 }
 
 void TestXdgShellClient::testMinimizeWindowWithTransients()

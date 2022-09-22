@@ -26,7 +26,7 @@ int get_pack_position_left(Space const& space,
                                  MaximizeArea,
                                  QPoint(window->geo.update.frame.left() - 1,
                                         window->geo.update.frame.center().y()),
-                                 window->desktop())
+                                 get_desktop(*window))
                    .left();
     }
 
@@ -41,9 +41,9 @@ int get_pack_position_left(Space const& space,
         return oldX;
     }
 
-    const int desktop = window->desktop() == 0 || on_all_desktops(window)
+    const int desktop = get_desktop(*window) == 0 || on_all_desktops(window)
         ? space.virtual_desktop_manager->current()
-        : window->desktop();
+        : get_desktop(*window);
     for (auto win : space.windows) {
         if (is_irrelevant(win, window, desktop)) {
             continue;
@@ -73,7 +73,7 @@ int get_pack_position_right(Space const& space,
                                  MaximizeArea,
                                  QPoint(window->geo.update.frame.right() + 1,
                                         window->geo.update.frame.center().y()),
-                                 window->desktop())
+                                 get_desktop(*window))
                    .right();
     }
 
@@ -88,9 +88,9 @@ int get_pack_position_right(Space const& space,
         return oldX;
     }
 
-    int const desktop = window->desktop() == 0 || on_all_desktops(window)
+    int const desktop = get_desktop(*window) == 0 || on_all_desktops(window)
         ? space.virtual_desktop_manager->current()
-        : window->desktop();
+        : get_desktop(*window);
     for (auto win : space.windows) {
         if (is_irrelevant(win, window, desktop)) {
             continue;
@@ -119,7 +119,7 @@ int get_pack_position_up(Space const& space,
                                  MaximizeArea,
                                  QPoint(window->geo.update.frame.center().x(),
                                         window->geo.update.frame.top() - 1),
-                                 window->desktop())
+                                 get_desktop(*window))
                    .top();
     }
 
@@ -127,9 +127,9 @@ int get_pack_position_up(Space const& space,
         return oldY;
     }
 
-    int const desktop = window->desktop() == 0 || on_all_desktops(window)
+    int const desktop = get_desktop(*window) == 0 || on_all_desktops(window)
         ? space.virtual_desktop_manager->current()
-        : window->desktop();
+        : get_desktop(*window);
     for (auto win : space.windows) {
         if (is_irrelevant(win, window, desktop)) {
             continue;
@@ -158,7 +158,7 @@ int get_pack_position_down(Space const& space,
                                  MaximizeArea,
                                  QPoint(window->geo.update.frame.center().x(),
                                         window->geo.update.frame.bottom() + 1),
-                                 window->desktop())
+                                 get_desktop(*window))
                    .bottom();
     }
 
@@ -172,9 +172,9 @@ int get_pack_position_down(Space const& space,
     if (oldY >= newY) {
         return oldY;
     }
-    int const desktop = window->desktop() == 0 || on_all_desktops(window)
+    int const desktop = get_desktop(*window) == 0 || on_all_desktops(window)
         ? space.virtual_desktop_manager->current()
-        : window->desktop();
+        : get_desktop(*window);
     for (auto win : space.windows) {
         if (is_irrelevant(win, window, desktop)) {
             continue;
@@ -235,7 +235,7 @@ void grow_horizontal(Win* win)
             win->space,
             MovementArea,
             QPoint((win->geo.pos().x() + grown_right) / 2, win->geo.frame.center().y()),
-            win->desktop());
+            get_desktop(*win));
         if (area.right() >= grown_right) {
             frame_geo.setRight(grown_right);
         }
@@ -295,7 +295,7 @@ void grow_vertical(Win* win)
             win->space,
             MovementArea,
             QPoint(win->geo.frame.center().x(), (win->geo.pos().y() + newbottom) / 2),
-            win->desktop());
+            get_desktop(*win));
         if (area.bottom() >= newbottom) {
             frame_geo.setBottom(newbottom);
         }

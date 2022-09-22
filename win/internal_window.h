@@ -664,7 +664,7 @@ public:
 
         if (placeable()) {
             auto const area = space_window_area(
-                this->space, PlacementArea, get_current_output(this->space), this->desktop());
+                this->space, PlacementArea, get_current_output(this->space), get_desktop(*this));
             place(this, area);
         }
 

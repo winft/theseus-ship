@@ -328,7 +328,7 @@ public:
             update_layer(window);
 
             auto const area = space_window_area(
-                *this, PlacementArea, get_current_output(window->space), window->desktop());
+                *this, PlacementArea, get_current_output(window->space), get_desktop(*window));
             auto placementDone = false;
 
             if (window->isInitialPositionSet()) {

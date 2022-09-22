@@ -72,7 +72,7 @@ void check_workspace_position(Win* win,
 
     if (win->control->quicktiling != quicktiles::none) {
         win->setFrameGeometry(electric_border_maximize_geometry(
-            win, pending_frame_geometry(win).center(), win->desktop()));
+            win, pending_frame_geometry(win).center(), get_desktop(*win)));
         return;
     }
 
@@ -93,7 +93,7 @@ void check_workspace_position(Win* win,
         old_frame_geo = pending_frame_geometry(win);
     }
     if (oldDesktop == -2) {
-        oldDesktop = win->desktop();
+        oldDesktop = get_desktop(*win);
     }
     if (!old_client_geo.isValid()) {
         old_client_geo
@@ -137,7 +137,7 @@ void check_workspace_position(Win* win,
     auto old_left_max = old_screen_area.x();
 
     auto const screenArea = space_window_area(
-        win->space, ScreenArea, pending_frame_geometry(win).center(), win->desktop());
+        win->space, ScreenArea, pending_frame_geometry(win).center(), get_desktop(*win));
 
     auto top_max = screenArea.y();
     auto right_max = screenArea.x() + screenArea.width();
@@ -195,25 +195,25 @@ void check_workspace_position(Win* win,
     }
 
     // These 4 compute new bounds.
-    for (auto const& r : restricted_move_area(win->space, win->desktop(), strut_area::top)) {
+    for (auto const& r : restricted_move_area(win->space, get_desktop(*win), strut_area::top)) {
         auto rect = r & tall_frame_geo;
         if (!rect.isEmpty()) {
             top_max = std::max(top_max, rect.y() + rect.height());
         }
     }
-    for (auto const& r : restricted_move_area(win->space, win->desktop(), strut_area::right)) {
+    for (auto const& r : restricted_move_area(win->space, get_desktop(*win), strut_area::right)) {
         auto rect = r & wide_frame_geo;
         if (!rect.isEmpty()) {
             right_max = std::min(right_max, rect.x());
         }
     }
-    for (auto const& r : restricted_move_area(win->space, win->desktop(), strut_area::bottom)) {
+    for (auto const& r : restricted_move_area(win->space, get_desktop(*win), strut_area::bottom)) {
         auto rect = r & tall_frame_geo;
         if (!rect.isEmpty()) {
             bottom_max = std::min(bottom_max, rect.y());
         }
     }
-    for (auto const& r : restricted_move_area(win->space, win->desktop(), strut_area::left)) {
+    for (auto const& r : restricted_move_area(win->space, get_desktop(*win), strut_area::left)) {
         auto rect = r & wide_frame_geo;
         if (!rect.isEmpty()) {
             left_max = std::max(left_max, rect.x() + rect.width());
@@ -355,7 +355,7 @@ QPoint adjust_window_position(Space const& space,
 
     if (window.maximizeMode() != maximize_mode::restore) {
         maxRect = space_window_area(
-            space, MaximizeArea, pos + QRect({}, window.geo.size()).center(), window.desktop());
+            space, MaximizeArea, pos + QRect({}, window.geo.size()).center(), get_desktop(window));
         auto geo = window.geo.frame;
         if (flags(window.maximizeMode() & maximize_mode::horizontal)
             && (geo.x() == maxRect.left() || geo.right() == maxRect.right())) {
@@ -377,7 +377,7 @@ QPoint adjust_window_position(Space const& space,
             = base::get_nearest_output(outputs, pos + QRect({}, window.geo.size()).center());
 
         if (maxRect.isNull()) {
-            maxRect = space_window_area(space, MovementArea, output, window.desktop());
+            maxRect = space_window_area(space, MovementArea, output, get_desktop(window));
         }
 
         const int xmin = maxRect.left();
@@ -475,7 +475,8 @@ QPoint adjust_window_position(Space const& space,
                 if (!win->isShown()) {
                     continue;
                 }
-                if (!on_desktop(win, window.desktop()) && !on_desktop(&window, win->desktop())) {
+                if (!on_desktop(win, get_desktop(window))
+                    && !on_desktop(&window, get_desktop(*win))) {
                     // wrong virtual desktop
                     continue;
                 }
@@ -587,8 +588,10 @@ QRect adjust_window_size(Space const& space, Win const& window, QRect moveResize
                ->options->qobject->borderSnapZone()) { // || kwinApp()->options->centerSnapZone )
         const bool sOWO = kwinApp()->options->qobject->isSnapOnlyWhenOverlapping();
 
-        auto const maxRect = space_window_area(
-            space, MovementArea, QRect(QPoint(0, 0), window.geo.size()).center(), window.desktop());
+        auto const maxRect = space_window_area(space,
+                                               MovementArea,
+                                               QRect(QPoint(0, 0), window.geo.size()).center(),
+                                               get_desktop(window));
         const int xmin = maxRect.left();
         const int xmax = maxRect.right(); // desk size
         const int ymin = maxRect.top();

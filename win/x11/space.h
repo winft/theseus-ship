@@ -87,7 +87,7 @@ public:
                                  if (on_all_desktops(window)) {
                                      continue;
                                  }
-                                 if (window->desktop() <= desktop_count) {
+                                 if (get_desktop(*window) <= desktop_count) {
                                      continue;
                                  }
                                  send_window_to_desktop(*this, window, desktop_count, true);

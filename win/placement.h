@@ -249,9 +249,9 @@ void place_smart(Win* window, const QRect& area, placement /*next*/)
     long int overlap, min_overlap = 0;
     int x_optimal, y_optimal;
     int possible;
-    int desktop = window->desktop() == 0 || on_all_desktops(window)
+    int desktop = get_desktop(*window) == 0 || on_all_desktops(window)
         ? window->space.virtual_desktop_manager->current()
-        : window->desktop();
+        : get_desktop(*window);
 
     int cxl, cxr, cyt, cyb; // temp coords
     int xl, xr, yt, yb;     // temp coords

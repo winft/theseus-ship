@@ -31,7 +31,7 @@ public:
     void set_desktops(QVector<virtual_desktop*> /*desktops*/) override
     {
         assert(m_window->info);
-        m_window->info->setDesktop(m_window->desktop());
+        m_window->info->setDesktop(get_desktop(*m_window));
     }
 
     void set_skip_pager(bool set) override

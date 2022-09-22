@@ -273,7 +273,8 @@ void raise_or_lower_client(Space* space, Window* window)
     } else {
         topmost = top_client_on_desktop(
             space,
-            on_all_desktops(window) ? space->virtual_desktop_manager->current() : window->desktop(),
+            on_all_desktops(window) ? space->virtual_desktop_manager->current()
+                                    : get_desktop(*window),
             kwinApp()->options->qobject->isSeparateScreenFocus() ? window->topo.central_output
                                                                  : nullptr);
     }

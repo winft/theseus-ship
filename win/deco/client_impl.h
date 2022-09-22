@@ -178,7 +178,7 @@ public:
 
     int desktop() const override
     {
-        return m_client->desktop();
+        return get_desktop(*m_client);
     }
 
     int height() const override

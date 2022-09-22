@@ -788,7 +788,7 @@ void VirtualDesktopTest::testLastDesktopRemoved()
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(client);
-    QCOMPARE(client->desktop(), 2);
+    QCOMPARE(win::get_desktop(*client), 2);
     QSignalSpy desktopPresenceChangedSpy(client->qobject.get(),
                                          &win::window_qobject::desktopPresenceChanged);
     QVERIFY(desktopPresenceChangedSpy.isValid());
@@ -801,7 +801,7 @@ void VirtualDesktopTest::testLastDesktopRemoved()
     QCOMPARE(vd_manager->count(), 1u);
     // now the client should be moved as well
     QTRY_COMPARE(desktopPresenceChangedSpy.count(), 1);
-    QCOMPARE(client->desktop(), 1);
+    QCOMPARE(win::get_desktop(*client), 1);
 
     QCOMPARE(client->topo.desktops.count(), 1u);
     QCOMPARE(vd_manager->currentDesktop(), client->topo.desktops.constFirst());
@@ -828,7 +828,7 @@ void VirtualDesktopTest::testWindowOnMultipleDesktops()
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(client);
-    QCOMPARE(client->desktop(), 3u);
+    QCOMPARE(win::get_desktop(*client), 3u);
     QSignalSpy desktopPresenceChangedSpy(client->qobject.get(),
                                          &win::window_qobject::desktopPresenceChanged);
     QVERIFY(desktopPresenceChangedSpy.isValid());
@@ -912,7 +912,7 @@ void VirtualDesktopTest::testRemoveDesktopWithWindow()
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(client);
-    QCOMPARE(client->desktop(), 3u);
+    QCOMPARE(win::get_desktop(*client), 3u);
     QSignalSpy desktopPresenceChangedSpy(client->qobject.get(),
                                          &win::window_qobject::desktopPresenceChanged);
     QVERIFY(desktopPresenceChangedSpy.isValid());

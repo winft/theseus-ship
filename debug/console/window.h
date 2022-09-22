@@ -225,7 +225,7 @@ public:
 
     int desktop() const override
     {
-        return ref_win->desktop();
+        return win::get_desktop(*ref_win);
     }
 
     void setDesktop(int desktop) override

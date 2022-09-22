@@ -204,9 +204,9 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
     // not testing fullscreen, maximizeHorizontal, maximizeVertical and noBorder as those require
     // window geometry changes
 
-    QCOMPARE(client->desktop(), 1);
+    QCOMPARE(win::get_desktop(*client), 1);
     win::send_window_to_desktop(*Test::app()->base.space, client, 2, false);
-    QCOMPARE(client->desktop(), 2);
+    QCOMPARE(win::get_desktop(*client), 2);
     reply = getWindowInfo(client->meta.internal_id);
     reply.waitForFinished();
     QCOMPARE(reply.value().value(QStringLiteral("desktops")).toStringList(),

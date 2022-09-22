@@ -46,7 +46,7 @@ void set_electric_maximizing(Win* win, bool maximizing)
 
     if (maximizing) {
         auto max_geo = electric_border_maximize_geometry(
-            win, win->space.input->cursor->pos(), win->desktop());
+            win, win->space.input->cursor->pos(), get_desktop(*win));
         win->space.outline->show(max_geo, win->control->move_resize.geometry);
     } else {
         win->space.outline->hide();

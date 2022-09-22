@@ -169,7 +169,7 @@ void store_window(Space const& space, KConfigGroup& cg, int num, Win* c)
     cg.writeEntry(QLatin1String("fsrestore") + n, c->geo.restore.max);
     cg.writeEntry(QLatin1String("maximize") + n, static_cast<int>(c->maximizeMode()));
     cg.writeEntry(QLatin1String("fullscreen") + n, static_cast<int>(c->control->fullscreen));
-    cg.writeEntry(QLatin1String("desktop") + n, c->desktop());
+    cg.writeEntry(QLatin1String("desktop") + n, get_desktop(*c));
 
     // the config entry is called "iconified" for back. comp. reasons
     // (kconf_update script for updating session files would be too complicated)

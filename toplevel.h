@@ -132,19 +132,6 @@ public:
         return false;
     }
 
-    /**
-     * Returns the virtual desktop within the workspace() the client window
-     * is located in, 0 if it isn't located on any special desktop (not mapped yet),
-     * or NET::OnAllDesktops. Do not use desktop() directly, use
-     * isOnDesktop() instead.
-     */
-    virtual int desktop() const
-    {
-        // TODO: for remnant special case?
-        return topo.desktops.isEmpty() ? static_cast<int>(NET::OnAllDesktops)
-                                       : topo.desktops.last()->x11DesktopNumber();
-    }
-
     virtual QByteArray windowRole() const
     {
         if (remnant) {

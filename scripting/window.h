@@ -350,7 +350,7 @@ public:
 
     int desktop() const override
     {
-        return m_client->desktop();
+        return win::get_desktop(*m_client);
     }
 
     void setDesktop(int desktop) override

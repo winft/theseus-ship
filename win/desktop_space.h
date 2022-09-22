@@ -26,17 +26,17 @@ void send_window_to_desktop(Space& space,
         return;
     }
 
-    auto old_desktop = window->desktop();
+    auto old_desktop = get_desktop(*window);
     auto was_on_desktop = on_desktop(window, desk) || on_all_desktops(window);
     set_desktop(window, desk);
 
-    if (window->desktop() != desk) {
+    if (get_desktop(*window) != desk) {
         // No change or desktop forced
         return;
     }
 
     // window did range checking.
-    desk = window->desktop();
+    desk = get_desktop(*window);
 
     if (on_desktop(window, space.virtual_desktop_manager->current())) {
         if (win::wants_tab_focus(window) && kwinApp()->options->qobject->focusPolicyIsReasonable()

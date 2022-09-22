@@ -1117,7 +1117,7 @@ private:
                 activate_window(space, nc);
             } else {
                 if (!on_desktop(nc, current_desktop()))
-                    set_current_desktop(nc->desktop());
+                    set_current_desktop(get_desktop(*nc));
                 win::raise_window(&space, nc);
             }
         }

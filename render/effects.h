@@ -316,7 +316,8 @@ public:
                     assert(c);
                     assert(c->render);
                     assert(c->render->effect);
-                    Q_EMIT desktopPresenceChanged(c->render->effect.get(), old, c->desktop());
+                    Q_EMIT desktopPresenceChanged(
+                        c->render->effect.get(), old, win::get_desktop(*c));
                 });
         connect(ws->qobject.get(),
                 &win::space_qobject::clientAdded,

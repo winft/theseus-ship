@@ -226,8 +226,8 @@ void request_focus(Space& space,
     if (take_focus) {
         auto modal = window->findModal();
         if (modal && modal->control && modal != window) {
-            if (!on_desktop(modal, window->desktop())) {
-                set_desktop(modal, window->desktop());
+            if (!on_desktop(modal, get_desktop(*window))) {
+                set_desktop(modal, get_desktop(*window));
             }
             if (!modal->isShown() && !modal->control->minimized) {
                 // forced desktop or utility window
@@ -468,7 +468,7 @@ void activate_window_impl(Space& space, Win* window, bool force)
     raise_window(&space, window);
     if (!on_current_desktop(window)) {
         focus_blocker blocker(space);
-        space.virtual_desktop_manager->setCurrent(window->desktop());
+        space.virtual_desktop_manager->setCurrent(get_desktop(*window));
     }
     if (window->control->minimized) {
         set_minimized(window, false);
@@ -748,7 +748,7 @@ void activate_window_direction(Space& space, win::direction direction)
 
     auto c = space.stacking.active;
     int desktopNumber
-        = on_all_desktops(c) ? space.virtual_desktop_manager->current() : c->desktop();
+        = on_all_desktops(c) ? space.virtual_desktop_manager->current() : get_desktop(*c);
 
     // Centre of the active window
     QPoint curPos(c->geo.pos().x() + c->geo.size().width() / 2,

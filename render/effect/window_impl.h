@@ -166,7 +166,7 @@ public:
 
     int desktop() const override
     {
-        return window.ref_win->desktop();
+        return win::get_desktop(*window.ref_win);
     }
 
     QVector<uint> desktops() const override
