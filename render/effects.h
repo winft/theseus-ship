@@ -576,7 +576,7 @@ public:
         auto window = static_cast<effect_window_t*>(c)->window.ref_win;
         assert(window);
         if (window->control) {
-            win::force_activate_window(*compositor.space, window);
+            win::force_activate_window(*compositor.space, *window);
         }
     }
 

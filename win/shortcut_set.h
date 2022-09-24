@@ -187,7 +187,7 @@ void window_shortcut_updated(Space& space, typename Space::window_t* window)
             action->setObjectName(key);
             action->setText(i18n("Activate Window (%1)", win::caption(window)));
             QObject::connect(action, &QAction::triggered, window->qobject.get(), [&space, window] {
-                force_activate_window(space, window);
+                force_activate_window(space, *window);
             });
         }
 

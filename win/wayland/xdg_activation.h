@@ -176,7 +176,7 @@ void xdg_activation_activate(Space* space, Window* win, std::string const& token
     }
 
     space->xdg_activation->clear();
-    activate_window(*space, win);
+    activate_window(*space, *win);
 }
 
 template<typename Space>

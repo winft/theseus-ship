@@ -232,7 +232,7 @@ void request_focus(Space& space,
             if (!modal->isShown() && !modal->control->minimized) {
                 // forced desktop or utility window
                 // activating a minimized blocked window will unminimize its modal implicitly
-                activate_window(space, modal);
+                activate_window(space, *modal);
             }
             // if the click was inside the window (i.e. handled is set),
             // but it has a modal, there's no need to use handled mode, because
@@ -458,42 +458,44 @@ void set_active_window(Space& space, typename Space::window_t* window)
 }
 
 template<typename Space, typename Win>
-void activate_window_impl(Space& space, Win* window, bool force)
+void activate_window_impl(Space& space, Win& window, bool force)
 {
-    if (window == nullptr) {
-        focus_to_null(space);
-        set_active_window(space, nullptr);
-        return;
-    }
-    raise_window(&space, window);
-    if (!on_current_desktop(window)) {
+    raise_window(&space, &window);
+    if (!on_current_desktop(&window)) {
         focus_blocker blocker(space);
-        space.virtual_desktop_manager->setCurrent(get_desktop(*window));
+        space.virtual_desktop_manager->setCurrent(get_desktop(window));
     }
-    if (window->control->minimized) {
-        set_minimized(window, false);
+    if (window.control->minimized) {
+        set_minimized(&window, false);
     }
 
     // ensure the window is really visible - could eg. be a hidden utility window, see bug
     // #348083
-    window->hideClient(false);
+    window.hideClient(false);
 
     // TODO force should perhaps allow this only if the window already contains the mouse
     if (kwinApp()->options->qobject->focusPolicyIsReasonable() || force) {
-        request_focus(space, window, false, force);
+        request_focus(space, &window, false, force);
     }
 
-    window->handle_activated();
+    window.handle_activated();
 }
 
 template<typename Space>
-void activate_window(Space& space, typename Space::window_t* window)
+void deactivate_window(Space& space)
+{
+    focus_to_null(space);
+    set_active_window(space, nullptr);
+}
+
+template<typename Space>
+void activate_window(Space& space, typename Space::window_t& window)
 {
     activate_window_impl(space, window, false);
 }
 
 template<typename Space, typename Win>
-void force_activate_window(Space& space, Win* window)
+void force_activate_window(Space& space, Win& window)
 {
     activate_window_impl(space, window, true);
 }
@@ -502,7 +504,7 @@ template<typename Space>
 void activate_attention_window(Space& space)
 {
     if (!space.stacking.attention_chain.empty()) {
-        activate_window(space, space.stacking.attention_chain.front());
+        activate_window(space, *space.stacking.attention_chain.front());
     }
 }
 
@@ -730,7 +732,7 @@ bool activate_window_direction(Space& space,
     }
 
     if (next_window) {
-        activate_window(space, next_window);
+        activate_window(space, *next_window);
     }
 
     return next_window;
@@ -849,7 +851,7 @@ void set_showing_desktop(Space& space, bool showing)
         auto const window = focus_chain_get_for_activation_on_current_output(
             space, space.virtual_desktop_manager->current());
         if (window) {
-            activate_window(space, window);
+            activate_window(space, *window);
         }
     }
     if (changed) {

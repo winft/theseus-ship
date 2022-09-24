@@ -357,7 +357,7 @@ public:
             update_space_areas(*this);
 
             if (window->wantsInput() && !window->control->minimized) {
-                activate_window(*this, window);
+                activate_window(*this, *window);
             }
 
             update_tabbox(*this);
@@ -370,7 +370,7 @@ public:
                                  stacking.order.update_count();
                                  update_space_areas(*this);
                                  if (window->wantsInput()) {
-                                     activate_window(*this, window);
+                                     activate_window(*this, *window);
                                  }
                              });
             QObject::connect(window->qobject.get(),

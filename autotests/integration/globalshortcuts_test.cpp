@@ -388,7 +388,7 @@ void GlobalShortcutsTest::testX11ClientShortcut()
     // it's delayed
     QCoreApplication::processEvents();
 
-    win::activate_window(*Test::app()->base.space, nullptr);
+    win::deactivate_window(*Test::app()->base.space);
     QVERIFY(!Test::app()->base.space->stacking.active);
     QVERIFY(!client->control->active);
 
@@ -427,7 +427,7 @@ void GlobalShortcutsTest::testWaylandClientShortcut()
     QVERIFY(!win::shortcut_available(*Test::app()->base.space, seq, nullptr));
     QCOMPARE(win::caption(client), QStringLiteral(" {Meta+Shift+Y}"));
 
-    win::activate_window(*Test::app()->base.space, nullptr);
+    win::deactivate_window(*Test::app()->base.space);
     QVERIFY(!Test::app()->base.space->stacking.active);
     QVERIFY(!client->control->active);
 

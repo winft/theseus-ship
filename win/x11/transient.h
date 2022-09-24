@@ -350,7 +350,7 @@ void check_active_modal(Space& space)
             // postpone check until end of manage()
             return;
         }
-        activate_window(space, new_modal);
+        activate_window(space, *new_modal);
     }
 }
 

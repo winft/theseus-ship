@@ -650,7 +650,7 @@ public:
 
     void setActiveClient(window* win) override
     {
-        win::activate_window(*ref_space, static_cast<window_t*>(win)->client());
+        win::activate_window(*ref_space, *static_cast<window_t*>(win)->client());
     }
 
     QSize desktopGridSize() const override

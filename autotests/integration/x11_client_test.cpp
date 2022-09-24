@@ -237,20 +237,20 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
     QCOMPARE(win::get_layer(*client), win::layer::normal);
 
     // now activate fullscreen again
-    win::activate_window(*Test::app()->base.space, client);
+    win::activate_window(*Test::app()->base.space, *client);
     QTRY_VERIFY(client->control->active);
     QCOMPARE(win::get_layer(*client), win::layer::active);
     QCOMPARE(Test::app()->base.space->stacking.order.stack.back(), client);
     QCOMPARE(win::render_stack(Test::app()->base.space->stacking.order).back(), client);
 
     // activate wayland window again
-    win::activate_window(*Test::app()->base.space, waylandClient);
+    win::activate_window(*Test::app()->base.space, *waylandClient);
     QTRY_VERIFY(waylandClient->control->active);
     QCOMPARE(Test::app()->base.space->stacking.order.stack.back(), waylandClient);
     QCOMPARE(win::render_stack(Test::app()->base.space->stacking.order).back(), waylandClient);
 
     // back to x window
-    win::activate_window(*Test::app()->base.space, client);
+    win::activate_window(*Test::app()->base.space, *client);
     QTRY_VERIFY(client->control->active);
     // remove fullscreen
     QVERIFY(client->control->fullscreen);
@@ -263,13 +263,13 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
     QCOMPARE(win::render_stack(Test::app()->base.space->stacking.order).back(), client);
 
     // activate wayland window again
-    win::activate_window(*Test::app()->base.space, waylandClient);
+    win::activate_window(*Test::app()->base.space, *waylandClient);
     QTRY_VERIFY(waylandClient->control->active);
     QCOMPARE(Test::app()->base.space->stacking.order.stack.back(), waylandClient);
     QCOMPARE(win::render_stack(Test::app()->base.space->stacking.order).back(), waylandClient);
 
     // back to X11 window
-    win::activate_window(*Test::app()->base.space, client);
+    win::activate_window(*Test::app()->base.space, *client);
     QTRY_VERIFY(client->control->active);
 
     // remove fullscreen
@@ -298,7 +298,7 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
     QCOMPARE(win::render_stack(Test::app()->base.space->stacking.order).back(), client);
 
     // activate wayland window again
-    win::activate_window(*Test::app()->base.space, waylandClient);
+    win::activate_window(*Test::app()->base.space, *waylandClient);
     QTRY_VERIFY(waylandClient->control->active);
     QCOMPARE(Test::app()->base.space->stacking.order.stack.back(), waylandClient);
     QCOMPARE(win::render_stack(Test::app()->base.space->stacking.order).back(), waylandClient);
@@ -759,7 +759,7 @@ void X11ClientTest::testFullscreenWindowGroups()
     QCOMPARE(win::get_layer(*client), win::layer::normal);
 
     // activating the fullscreen window again, should move it to active layer
-    win::activate_window(*Test::app()->base.space, client);
+    win::activate_window(*Test::app()->base.space, *client);
     QTRY_COMPARE(win::get_layer(*client), win::layer::active);
 }
 

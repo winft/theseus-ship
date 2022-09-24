@@ -168,7 +168,7 @@ void setup_plasma_management(Space* space, Win* win)
     QObject::connect(
         plasma_win, &Wrapland::Server::PlasmaWindow::activeRequested, qtwin, [win](bool set) {
             if (set) {
-                force_activate_window(win->space, win);
+                force_activate_window(win->space, *win);
             }
         });
 

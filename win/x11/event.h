@@ -359,7 +359,7 @@ bool map_request_event(Win* win, xcb_map_request_event_t* e)
     }
     if (!on_current_desktop(win)) {
         if (allow_window_activation(win->space, win)) {
-            activate_window(win->space, win);
+            activate_window(win->space, *win);
         } else {
             win::set_demands_attention(win, true);
         }

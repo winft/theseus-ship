@@ -125,7 +125,7 @@ public:
             // Handled here and by X directly.
             if (target && target->surface && target->control) {
                 if (source.core.space->stacking.active != target) {
-                    win::activate_window(*source.core.space, target);
+                    win::activate_window(*source.core.space, *target);
                 }
             }
 
@@ -216,7 +216,7 @@ private:
     void set_drag_target()
     {
         auto ac = visit->target;
-        win::activate_window(*source.core.space, ac);
+        win::activate_window(*source.core.space, *ac);
         waylandServer()->seat()->drags().set_target(ac->surface, win::get_input_transform(*ac));
     }
 

@@ -184,8 +184,9 @@ void init_space(Space& space)
             new_active_client = win::find_desktop(&space, true, vds->current());
         }
     }
-    if (new_active_client != nullptr)
-        activate_window(space, new_active_client);
+    if (new_active_client) {
+        activate_window(space, *new_active_client);
+    }
 }
 
 template<typename Space>

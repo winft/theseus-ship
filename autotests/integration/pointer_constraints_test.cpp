@@ -208,7 +208,7 @@ void TestPointerConstraints::testConfinedPointer()
     Test::keyboard_key_released(KEY_LEFTALT, timestamp++);
 
     // deactivate the client, this should unconfine
-    win::activate_window(*Test::app()->base.space, nullptr);
+    win::deactivate_window(*Test::app()->base.space);
     QVERIFY(unconfinedSpy.wait());
     QCOMPARE(Test::app()->base.space->input->pointer->isConstrained(), false);
 
@@ -222,18 +222,18 @@ void TestPointerConstraints::testConfinedPointer()
 
     // activate it again, this confines again
     win::activate_window(*Test::app()->base.space,
-                         Test::app()->base.space->input->pointer->focus.window);
+                         *Test::app()->base.space->input->pointer->focus.window);
     QVERIFY(confinedSpy2.wait());
     QCOMPARE(Test::app()->base.space->input->pointer->isConstrained(), true);
 
     // deactivate the client one more time with the persistent life time constraint, this should
     // unconfine
-    win::activate_window(*Test::app()->base.space, nullptr);
+    win::deactivate_window(*Test::app()->base.space);
     QVERIFY(unconfinedSpy2.wait());
     QCOMPARE(Test::app()->base.space->input->pointer->isConstrained(), false);
     // activate it again, this confines again
     win::activate_window(*Test::app()->base.space,
-                         Test::app()->base.space->input->pointer->focus.window);
+                         *Test::app()->base.space->input->pointer->focus.window);
     QVERIFY(confinedSpy2.wait());
     QCOMPARE(Test::app()->base.space->input->pointer->isConstrained(), true);
 
@@ -324,7 +324,7 @@ void TestPointerConstraints::testLockedPointer()
     QCOMPARE(Test::cursor()->pos(), c->geo.frame.center());
 
     // deactivate the client, this should unlock
-    win::activate_window(*Test::app()->base.space, nullptr);
+    win::deactivate_window(*Test::app()->base.space);
     QCOMPARE(Test::app()->base.space->input->pointer->isConstrained(), false);
     QVERIFY(unlockedSpy.wait());
 
@@ -339,7 +339,7 @@ void TestPointerConstraints::testLockedPointer()
 
     // activate the client again, this should lock again
     win::activate_window(*Test::app()->base.space,
-                         Test::app()->base.space->input->pointer->focus.window);
+                         *Test::app()->base.space->input->pointer->focus.window);
     QVERIFY(lockedSpy2.wait());
     QCOMPARE(Test::app()->base.space->input->pointer->isConstrained(), true);
 

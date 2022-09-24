@@ -1114,7 +1114,7 @@ void TestXdgShellClient::testSendClientWithTransientToDesktop()
     QCOMPARE(win::get_desktop(*transient), 2);
 
     // activate c
-    win::activate_window(*Test::app()->base.space, c);
+    win::activate_window(*Test::app()->base.space, *c);
     QCOMPARE(Test::app()->base.space->stacking.active, c);
     QVERIFY(c->control->active);
 

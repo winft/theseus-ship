@@ -147,7 +147,7 @@ void XwaylandSelectionsTest::testSync()
     }
     QVERIFY(copyClient);
     if (Test::app()->base.space->stacking.active != copyClient) {
-        win::activate_window(*Test::app()->base.space, copyClient);
+        win::activate_window(*Test::app()->base.space, *copyClient);
     }
     QCOMPARE(Test::app()->base.space->stacking.active, copyClient);
     if (copyPlatform == QLatin1String("xcb")) {
@@ -193,7 +193,7 @@ void XwaylandSelectionsTest::testSync()
         QSignalSpy clientActivatedSpy(Test::app()->base.space->qobject.get(),
                                       &win::space::qobject_t::clientActivated);
         QVERIFY(clientActivatedSpy.isValid());
-        win::activate_window(*Test::app()->base.space, pasteClient);
+        win::activate_window(*Test::app()->base.space, *pasteClient);
         QVERIFY(clientActivatedSpy.wait());
     }
     QTRY_COMPARE(Test::app()->base.space->stacking.active, pasteClient);

@@ -52,9 +52,15 @@ void add_controlled_window_to_space(Space& space, Win* win)
     if (is_desktop(win)) {
         raise_window(&space, win);
         // If there's no active client, make this desktop the active one
-        if (!space.stacking.active && space.stacking.should_get_focus.empty())
-            activate_window(space,
-                            find_desktop(&space, true, space.virtual_desktop_manager->current()));
+        if (!space.stacking.active && space.stacking.should_get_focus.empty()) {
+            if (auto desktop
+                = find_desktop(&space, true, space.virtual_desktop_manager->current())) {
+                activate_window(space, *desktop);
+            } else {
+                // TODO(romangg): Can this happen or does desktop always exist?
+                deactivate_window(space);
+            }
+        }
     }
 
     check_active_modal<Win>(space);

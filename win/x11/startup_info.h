@@ -50,7 +50,7 @@ void startup_id_changed(Win* win)
             activate = false;
         }
         if (activate) {
-            activate_window(win->space, win);
+            activate_window(win->space, *win);
         } else {
             set_demands_attention(win, true);
         }

@@ -127,12 +127,14 @@ void active_window_lower(Space& space)
         && kwinApp()->options->qobject->focusPolicyIsReasonable()) {
         if (kwinApp()->options->qobject->isNextFocusPrefersMouse()) {
             auto next = window_under_mouse(space, space.stacking.active->topo.central_output);
-            if (next && next != space.stacking.active)
+            if (next && next != space.stacking.active) {
                 request_focus(space, next);
+            }
+        } else if (auto top = top_client_on_desktop(
+                       &space, space.virtual_desktop_manager->current(), nullptr)) {
+            activate_window(space, *top);
         } else {
-            activate_window(
-                space,
-                top_client_on_desktop(&space, space.virtual_desktop_manager->current(), nullptr));
+            deactivate_window(space);
         }
     }
 }

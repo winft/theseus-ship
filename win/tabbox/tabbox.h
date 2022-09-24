@@ -728,7 +728,7 @@ public:
         if (close_tabbox)
             close();
         if (c) {
-            activate_window(space, c);
+            activate_window(space, *c);
             if (win::is_desktop(c))
                 set_showing_desktop(space, !space.showing_desktop);
         }
@@ -1114,7 +1114,7 @@ private:
             if (c && c != nc)
                 win::lower_window(&space, c);
             if (kwinApp()->options->qobject->focusPolicyIsReasonable()) {
-                activate_window(space, nc);
+                activate_window(space, *nc);
             } else {
                 if (!on_desktop(nc, current_desktop()))
                     set_current_desktop(get_desktop(*nc));
@@ -1136,7 +1136,7 @@ private:
         reset();
         next_prev(forward);
         if (auto c = current_client()) {
-            activate_window(space, c);
+            activate_window(space, *c);
         }
     }
 

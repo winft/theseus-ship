@@ -72,7 +72,7 @@ public:
 
         // We have a new target.
 
-        win::activate_window(*source.core.space, target);
+        win::activate_window(*source.core.space, *target);
         seat->drags().set_target(target->surface, pos, win::get_input_transform(*target));
 
         visit.reset(new x11_visit(target, source, proxy_window));

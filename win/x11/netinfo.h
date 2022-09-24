@@ -196,14 +196,14 @@ protected:
                 src = NET::FromTool;
 
             if (src == NET::FromTool) {
-                force_activate_window(space, c);
+                force_activate_window(space, *c);
             } else if (c == most_recently_activated_window(space)) {
                 return; // WORKAROUND? With > 1 plasma activities, we cause this ourselves. bug
                         // #240673
             } else {    // NET::FromApplication
                 window_t* c2;
                 if (allow_window_activation(space, c, timestamp, false, true)) {
-                    activate_window(space, c);
+                    activate_window(space, *c);
                 }
 
                 // if activation of the requestor's window would be allowed, allow activation too
@@ -218,7 +218,7 @@ protected:
                                               c2->userTime() > 0 ? timestamp : c2->userTime()),
                              false,
                              true)) {
-                    activate_window(space, c);
+                    activate_window(space, *c);
                 } else
                     win::set_demands_attention(c, true);
             }

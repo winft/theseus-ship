@@ -174,7 +174,7 @@ void keyboard_keymap_test::test_focus()
     QCOMPARE(client2_keymap_spy.size(), 1);
 
     // We switch back and don't get a new keymap.
-    win::activate_window(*Test::app()->base.space, window1.window);
+    win::activate_window(*Test::app()->base.space, *window1.window);
     QCOMPARE(Test::app()->base.space->stacking.active, window1.window);
 
     QVERIFY(!client1_keymap_spy.wait(500));
