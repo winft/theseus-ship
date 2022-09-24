@@ -97,7 +97,7 @@ void apply_window_rules(Win& win)
     // FSP
     // AcceptFocus :
     if (most_recently_activated_window(win.space) == &win && !client_rules.checkAcceptFocus(true)) {
-        activate_next_window(win.space, &win);
+        activate_next_window(win.space);
     }
 
     // Closeable

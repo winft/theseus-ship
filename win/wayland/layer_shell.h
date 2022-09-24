@@ -241,9 +241,9 @@ void layer_surface_handle_keyboard_interactivity(Win* win)
     using inter = Wrapland::Server::LayerSurfaceV1::KeyboardInteractivity;
 
     auto interactivity = win->layer_surface->keyboard_interactivity();
-    if (interactivity != inter::OnDemand) {
+    if (interactivity != inter::OnDemand && most_recently_activated_window(win->space) == win) {
         // With interactivity None or Exclusive just reset control.
-        activate_next_window(win->space, win);
+        activate_next_window(win->space);
     }
     win->space.input->keyboard->update();
 }

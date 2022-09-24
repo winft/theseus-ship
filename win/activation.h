@@ -506,24 +506,20 @@ void activate_attention_window(Space& space)
     }
 }
 
-/// Deactivates 'window' and activates next one.
+/// Deactivates current active window and activates next one.
 template<typename Space>
-bool activate_next_window(Space& space, typename Space::window_t* window)
+bool activate_next_window(Space& space)
 {
-    auto& sgf = space.stacking.should_get_focus;
-
-    // If 'window' is not the active or the to-become active one, do nothing.
-    if (!(window == space.stacking.active || (sgf.size() > 0 && window == sgf.back()))) {
-        return false;
-    }
+    auto prev_window = most_recently_activated_window(space);
 
     close_active_popup(space);
 
-    if (window != nullptr) {
-        if (window == space.stacking.active) {
+    if (prev_window) {
+        if (prev_window == space.stacking.active) {
             set_active_window(space, nullptr);
         }
-        sgf.erase(std::remove(sgf.begin(), sgf.end(), window), sgf.end());
+        auto& sgf = space.stacking.should_get_focus;
+        sgf.erase(std::remove(sgf.begin(), sgf.end(), prev_window), sgf.end());
     }
 
     // if blocking focus, move focus to the desktop later if needed
@@ -536,31 +532,31 @@ bool activate_next_window(Space& space, typename Space::window_t* window)
     if (!kwinApp()->options->qobject->focusPolicyIsReasonable())
         return false;
 
-    decltype(window) get_focus = nullptr;
-
+    typename Space::window_t* get_focus = nullptr;
     int const desktop = space.virtual_desktop_manager->current();
 
-    if (!get_focus && space.showing_desktop) {
+    if (space.showing_desktop) {
         // to not break the state
         get_focus = find_desktop(&space, true, desktop);
     }
 
     if (!get_focus && kwinApp()->options->qobject->isNextFocusPrefersMouse()) {
         get_focus = window_under_mouse(
-            space, window ? window->topo.central_output : get_current_output(space));
-        if (get_focus && (get_focus == window || is_desktop(get_focus))) {
+            space, prev_window ? prev_window->topo.central_output : get_current_output(space));
+        if (get_focus && (get_focus == prev_window || is_desktop(get_focus))) {
             // should rather not happen, but it cannot get the focus. rest of usability is tested
             // above
             get_focus = nullptr;
         }
     }
 
-    if (!get_focus) { // no suitable window under the mouse -> find sth. else
+    if (!get_focus) {
+        // no suitable window under the mouse -> find sth. else
         // first try to pass the focus to the (former) active clients leader
-        if (window && window->transient->lead()) {
-            auto leaders = window->transient->leads();
+        if (prev_window && prev_window->transient->lead()) {
+            auto leaders = prev_window->transient->leads();
             if (leaders.size() == 1
-                && focus_chain_is_usable_focus_candidate(space, leaders.at(0), window)) {
+                && focus_chain_is_usable_focus_candidate(space, leaders.at(0), prev_window)) {
                 get_focus = leaders.at(0);
 
                 // also raise - we don't know where it came from
@@ -569,7 +565,7 @@ bool activate_next_window(Space& space, typename Space::window_t* window)
         }
         if (!get_focus) {
             // nope, ask the focus chain for the next candidate
-            get_focus = focus_chain_next_for_desktop(space, window, desktop);
+            get_focus = focus_chain_next_for_desktop(space, prev_window, desktop);
         }
     }
 
@@ -597,7 +593,9 @@ template<typename Space, typename Win>
 void process_window_hidden(Space& space, Win* window)
 {
     assert(!window->isShown() || !on_current_desktop(window));
-    activate_next_window(space, window);
+    if (most_recently_activated_window(space) == window) {
+        activate_next_window(space);
+    }
 }
 
 template<typename Space>
