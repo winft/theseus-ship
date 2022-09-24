@@ -139,7 +139,7 @@ void internal_hide(Win* win)
     }
 
     win->space.base.render->compositor->addRepaint(visible_rect(win));
-    process_window_hidden(win->space, win);
+    process_window_hidden(win->space, *win);
     Q_EMIT win->qobject->windowHidden();
 }
 
@@ -167,7 +167,7 @@ void internal_keep(Win* win)
 
     update_hidden_preview(win);
     win->space.base.render->compositor->addRepaint(visible_rect(win));
-    process_window_hidden(win->space, win);
+    process_window_hidden(win->space, *win);
 }
 
 template<typename Win>

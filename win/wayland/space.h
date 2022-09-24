@@ -409,7 +409,7 @@ public:
                 // Remove from client_keys.
                 set_shortcut(window, QString());
             }
-            process_window_hidden(*this, window);
+            process_window_hidden(*this, *window);
             Q_EMIT qobject->clientRemoved(window->meta.signal_id);
         }
 

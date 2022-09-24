@@ -488,7 +488,7 @@ public:
         this->space.base.render->compositor->addRepaint(visible_rect(this));
 
         if (this->control) {
-            process_window_hidden(this->space, this);
+            process_window_hidden(this->space, *this);
         }
 
         Q_EMIT this->qobject->windowHidden();
@@ -926,7 +926,7 @@ public:
 
         if (hide) {
             this->space.base.render->compositor->addRepaint(visible_rect(this));
-            process_window_hidden(this->space, this);
+            process_window_hidden(this->space, *this);
             Q_EMIT this->qobject->windowHidden();
         } else {
             handle_shown_and_mapped();
@@ -990,7 +990,7 @@ public:
     void doMinimize() override
     {
         if (this->control->minimized) {
-            process_window_hidden(this->space, this);
+            process_window_hidden(this->space, *this);
         } else {
             Q_EMIT this->qobject->windowShown();
         }

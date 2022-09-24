@@ -501,7 +501,7 @@ void force_activate_window(Space& space, Win* window)
 template<typename Space>
 void activate_attention_window(Space& space)
 {
-    if (space.stacking.attention_chain.size() > 0) {
+    if (!space.stacking.attention_chain.empty()) {
         activate_window(space, space.stacking.attention_chain.front());
     }
 }
@@ -590,10 +590,10 @@ bool activate_next_window(Space& space)
  * @note @p window may already be destroyed.
  */
 template<typename Space, typename Win>
-void process_window_hidden(Space& space, Win* window)
+void process_window_hidden(Space& space, Win& window)
 {
-    assert(!window->isShown() || !on_current_desktop(window));
-    if (most_recently_activated_window(space) == window) {
+    assert(!window.isShown() || !on_current_desktop(&window));
+    if (most_recently_activated_window(space) == &window) {
         activate_next_window(space);
     }
 }
@@ -672,66 +672,68 @@ void activate_window_on_new_desktop(Space& space, unsigned int desktop)
 
 template<typename Space>
 bool activate_window_direction(Space& space,
-                               typename Space::window_t* c,
+                               typename Space::window_t& window,
                                win::direction direction,
                                QPoint curPos,
-                               int d)
+                               int desktop)
 {
-    decltype(c) switchTo = nullptr;
+    typename Space::window_t* next_window = nullptr;
     int bestScore = 0;
-    auto clist = space.stacking.order.stack;
+    auto const& stack = space.stacking.order.stack;
 
-    for (auto i = clist.rbegin(); i != clist.rend(); ++i) {
-        auto client = *i;
-        if (!client->control) {
+    for (auto it = stack.rbegin(); it != stack.rend(); ++it) {
+        auto win = *it;
+
+        if (!win->control || !wants_tab_focus(win) || win == &window || !on_desktop(win, desktop)
+            || win->control->minimized) {
             continue;
         }
 
-        if (wants_tab_focus(client) && *i != c && on_desktop(client, d)
-            && !client->control->minimized) {
-            // Centre of the other window
-            const QPoint other(client->geo.pos().x() + client->geo.size().width() / 2,
-                               client->geo.pos().y() + client->geo.size().height() / 2);
+        // Centre of the other window
+        auto const other = QPoint(win->geo.pos().x() + win->geo.size().width() / 2,
+                                  win->geo.pos().y() + win->geo.size().height() / 2);
+        int distance;
+        int offset;
 
-            int distance;
-            int offset;
-            switch (direction) {
-            case direction::north:
-                distance = curPos.y() - other.y();
-                offset = qAbs(other.x() - curPos.x());
-                break;
-            case direction::east:
-                distance = other.x() - curPos.x();
-                offset = qAbs(other.y() - curPos.y());
-                break;
-            case direction::south:
-                distance = other.y() - curPos.y();
-                offset = qAbs(other.x() - curPos.x());
-                break;
-            case direction::west:
-                distance = curPos.x() - other.x();
-                offset = qAbs(other.y() - curPos.y());
-                break;
-            default:
-                distance = -1;
-                offset = -1;
-            }
+        switch (direction) {
+        case direction::north:
+            distance = curPos.y() - other.y();
+            offset = qAbs(other.x() - curPos.x());
+            break;
+        case direction::east:
+            distance = other.x() - curPos.x();
+            offset = qAbs(other.y() - curPos.y());
+            break;
+        case direction::south:
+            distance = other.y() - curPos.y();
+            offset = qAbs(other.x() - curPos.x());
+            break;
+        case direction::west:
+            distance = curPos.x() - other.x();
+            offset = qAbs(other.y() - curPos.y());
+            break;
+        default:
+            distance = -1;
+            offset = -1;
+        }
 
-            if (distance > 0) {
-                // Inverse score
-                int score = distance + offset + ((offset * offset) / distance);
-                if (score < bestScore || !switchTo) {
-                    switchTo = client;
-                    bestScore = score;
-                }
-            }
+        if (distance <= 0) {
+            continue;
+        }
+
+        // Inverse score
+        int score = distance + offset + ((offset * offset) / distance);
+        if (score < bestScore || !next_window) {
+            next_window = win;
+            bestScore = score;
         }
     }
-    if (switchTo) {
-        activate_window(space, switchTo);
+
+    if (next_window) {
+        activate_window(space, next_window);
     }
 
-    return switchTo;
+    return next_window;
 }
 
 /**
@@ -744,32 +746,34 @@ void activate_window_direction(Space& space, win::direction direction)
         return;
     }
 
-    auto c = space.stacking.active;
-    int desktopNumber
-        = on_all_desktops(c) ? space.virtual_desktop_manager->current() : get_desktop(*c);
+    auto& act_win = *space.stacking.active;
+    int desktopNumber = on_all_desktops(&act_win) ? space.virtual_desktop_manager->current()
+                                                  : get_desktop(act_win);
 
     // Centre of the active window
-    QPoint curPos(c->geo.pos().x() + c->geo.size().width() / 2,
-                  c->geo.pos().y() + c->geo.size().height() / 2);
+    auto curPos = QPoint(act_win.geo.pos().x() + act_win.geo.size().width() / 2,
+                         act_win.geo.pos().y() + act_win.geo.size().height() / 2);
 
-    if (!activate_window_direction(space, c, direction, curPos, desktopNumber)) {
-        auto opposite = [&] {
-            switch (direction) {
-            case direction::north:
-                return QPoint(curPos.x(), kwinApp()->get_base().topology.size.height());
-            case direction::south:
-                return QPoint(curPos.x(), 0);
-            case direction::east:
-                return QPoint(0, curPos.y());
-            case direction::west:
-                return QPoint(kwinApp()->get_base().topology.size.width(), curPos.y());
-            default:
-                Q_UNREACHABLE();
-            }
-        };
-
-        activate_window_direction(space, c, direction, opposite(), desktopNumber);
+    if (activate_window_direction(space, act_win, direction, curPos, desktopNumber)) {
+        return;
     }
+
+    auto opposite = [&] {
+        switch (direction) {
+        case direction::north:
+            return QPoint(curPos.x(), kwinApp()->get_base().topology.size.height());
+        case direction::south:
+            return QPoint(curPos.x(), 0);
+        case direction::east:
+            return QPoint(0, curPos.y());
+        case direction::west:
+            return QPoint(kwinApp()->get_base().topology.size.width(), curPos.y());
+        default:
+            Q_UNREACHABLE();
+        }
+    };
+
+    activate_window_direction(space, act_win, direction, opposite(), desktopNumber);
 }
 
 template<typename Space>
