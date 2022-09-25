@@ -639,30 +639,34 @@ void activate_window_on_new_desktop(Space& space, unsigned int desktop)
 {
     auto& stacking = space.stacking;
 
-    typename Space::window_t* c = nullptr;
+    auto do_activate = [&](auto& win) {
+        if (&win != stacking.active) {
+            set_active_window(space, nullptr);
+        }
+        request_focus(space, win);
+    };
 
     if (kwinApp()->options->qobject->focusPolicyIsReasonable()) {
-        c = find_window_to_activate_on_desktop(space, desktop);
+        if (auto win = find_window_to_activate_on_desktop(space, desktop)) {
+            do_activate(*win);
+            return;
+        }
     } else if (stacking.active && stacking.active->isShown()
                && on_current_desktop(stacking.active)) {
         // If "unreasonable focus policy" and stacking.active is on_all_desktops and
         // under mouse (Hence == stacking.last_active), conserve focus.
         // (Thanks to Volker Schatz <V.Schatz at thphys.uni-heidelberg.de>)
-        c = stacking.active;
+        do_activate(*stacking.active);
+        return;
     }
 
-    if (!c) {
-        c = find_desktop(&space, true, desktop);
+    if (auto win = find_desktop(&space, true, desktop)) {
+        do_activate(*win);
+        return;
     }
 
-    if (c != stacking.active) {
-        set_active_window(space, nullptr);
-    }
-
-    if (c) {
-        request_focus(space, *c);
-    } else if (auto desktop_client = find_desktop(&space, true, desktop)) {
-        request_focus(space, *desktop_client);
+    if (auto win = find_desktop(&space, true, desktop)) {
+        request_focus(space, *win);
     } else {
         focus_to_null(space);
     }
