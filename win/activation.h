@@ -526,57 +526,58 @@ bool activate_next_window(Space& space)
         return true;
     }
 
-    if (!kwinApp()->options->qobject->focusPolicyIsReasonable())
+    if (!kwinApp()->options->qobject->focusPolicyIsReasonable()) {
         return false;
+    }
 
-    typename Space::window_t* get_focus = nullptr;
     int const desktop = space.virtual_desktop_manager->current();
 
     if (space.showing_desktop) {
         // to not break the state
-        get_focus = find_desktop(&space, true, desktop);
-    }
-
-    if (!get_focus && kwinApp()->options->qobject->isNextFocusPrefersMouse()) {
-        get_focus = window_under_mouse(
-            space, prev_window ? prev_window->topo.central_output : get_current_output(space));
-        if (get_focus && (get_focus == prev_window || is_desktop(get_focus))) {
-            // should rather not happen, but it cannot get the focus. rest of usability is tested
-            // above
-            get_focus = nullptr;
+        if (auto desk_win = find_desktop(&space, true, desktop)) {
+            request_focus(space, *desk_win);
+            return true;
         }
     }
 
-    if (!get_focus) {
-        // no suitable window under the mouse -> find sth. else
-        // first try to pass the focus to the (former) active clients leader
-        if (prev_window && prev_window->transient->lead()) {
-            auto leaders = prev_window->transient->leads();
-            if (leaders.size() == 1
-                && focus_chain_is_usable_focus_candidate(space, leaders.at(0), prev_window)) {
-                get_focus = leaders.at(0);
-
-                // also raise - we don't know where it came from
-                win::raise_window(&space, get_focus);
-            }
-        }
-        if (!get_focus) {
-            // nope, ask the focus chain for the next candidate
-            get_focus = focus_chain_next_for_desktop(space, prev_window, desktop);
+    if (kwinApp()->options->qobject->isNextFocusPrefersMouse()) {
+        // Same as prev window and is_desktop should rather not happen.
+        if (auto win = window_under_mouse(
+                space, prev_window ? prev_window->topo.central_output : get_current_output(space));
+            win && win != prev_window && !is_desktop(win)) {
+            request_focus(space, *win);
+            return true;
         }
     }
 
-    if (!get_focus) {
-        // last chance: focus the desktop
-        get_focus = find_desktop(&space, true, desktop);
+    // No suitable window under the mouse -> find sth. else.
+    // First try to pass the focus to the (former) active clients leader.
+    if (prev_window && prev_window->transient->lead()) {
+        auto leaders = prev_window->transient->leads();
+        if (leaders.size() == 1
+            && focus_chain_is_usable_focus_candidate(space, leaders.at(0), prev_window)) {
+            auto win = leaders.at(0);
+
+            // Also raise - we don't know where it came from.
+            raise_window(&space, win);
+            request_focus(space, *win);
+            return true;
+        }
     }
 
-    if (get_focus) {
-        request_focus(space, *get_focus);
-    } else {
-        focus_to_null(space);
+    // Ask the focus chain for the next candidate.
+    if (auto win = focus_chain_next_for_desktop(space, prev_window, desktop)) {
+        request_focus(space, *win);
+        return true;
     }
 
+    // last chance: focus the desktop
+    if (auto win = find_desktop(&space, true, desktop)) {
+        request_focus(space, *win);
+        return true;
+    }
+
+    focus_to_null(space);
     return true;
 }
 
