@@ -212,22 +212,17 @@ void cancel_delay_focus(Space& space)
  */
 template<typename Space>
 void request_focus(Space& space,
-                   typename Space::window_t* window,
+                   typename Space::window_t& window,
                    bool raise = false,
                    bool force_focus = false)
 {
-    auto take_focus = is_focus_change_allowed(space) || window == space.stacking.active;
-
-    if (!window) {
-        focus_to_null(space);
-        return;
-    }
+    auto window_ptr = &window;
+    auto take_focus = is_focus_change_allowed(space) || window_ptr == space.stacking.active;
 
     if (take_focus) {
-        auto modal = window->findModal();
-        if (modal && modal->control && modal != window) {
-            if (!on_desktop(modal, get_desktop(*window))) {
-                set_desktop(modal, get_desktop(*window));
+        if (auto modal = window_ptr->findModal(); modal && modal->control && modal != window_ptr) {
+            if (auto desktop = get_desktop(*window_ptr); !on_desktop(modal, desktop)) {
+                set_desktop(modal, desktop);
             }
             if (!modal->isShown() && !modal->control->minimized) {
                 // forced desktop or utility window
@@ -239,36 +234,36 @@ void request_focus(Space& space,
             // the modal doesn't get the click anyway
             // raising of the original window needs to be still done
             if (raise) {
-                raise_window(&space, window);
+                raise_window(&space, window_ptr);
             }
-            window = modal;
+            window_ptr = modal;
         }
         cancel_delay_focus(space);
     }
 
-    if (!force_focus && (is_dock(window) || is_splash(window))) {
+    if (!force_focus && (is_dock(window_ptr) || is_splash(window_ptr))) {
         // toplevel menus and dock windows don't take focus if not forced
         // and don't have a flag that they take focus
-        if (!window->dockWantsInput()) {
+        if (!window_ptr->dockWantsInput()) {
             take_focus = false;
         }
     }
 
-    if (!window->isShown()) {
+    if (!window_ptr->isShown()) {
         // Shouldn't happen, call activate_window() if needed.
         qCWarning(KWIN_CORE) << "request_focus: not shown";
         return;
     }
 
     if (take_focus) {
-        window->takeFocus();
+        window_ptr->takeFocus();
     }
     if (raise) {
-        raise_window(&space, window);
+        raise_window(&space, window_ptr);
     }
 
-    if (!on_active_screen(window)) {
-        base::set_current_output(space.base, window->topo.central_output);
+    if (!on_active_screen(window_ptr)) {
+        base::set_current_output(space.base, window_ptr->topo.central_output);
     }
 }
 
@@ -475,7 +470,7 @@ void activate_window_impl(Space& space, Win& window, bool force)
 
     // TODO force should perhaps allow this only if the window already contains the mouse
     if (kwinApp()->options->qobject->focusPolicyIsReasonable() || force) {
-        request_focus(space, &window, false, force);
+        request_focus(space, window, false, force);
     }
 
     window.handle_activated();
@@ -577,7 +572,7 @@ bool activate_next_window(Space& space)
     }
 
     if (get_focus) {
-        request_focus(space, get_focus);
+        request_focus(space, *get_focus);
     } else {
         focus_to_null(space);
     }
@@ -664,9 +659,9 @@ void activate_window_on_new_desktop(Space& space, unsigned int desktop)
     }
 
     if (c) {
-        request_focus(space, c);
+        request_focus(space, *c);
     } else if (auto desktop_client = find_desktop(&space, true, desktop)) {
-        request_focus(space, desktop_client);
+        request_focus(space, *desktop_client);
     } else {
         focus_to_null(space);
     }
@@ -781,7 +776,11 @@ void activate_window_direction(Space& space, win::direction direction)
 template<typename Space>
 void delay_focus(Space& space)
 {
-    request_focus(space, space.stacking.delayfocus_window);
+    if (auto delay = space.stacking.delayfocus_window) {
+        request_focus(space, *delay);
+    } else {
+        focus_to_null(space);
+    }
     cancel_delay_focus(space);
 }
 
@@ -846,7 +845,7 @@ void set_showing_desktop(Space& space, bool showing)
     } // ~Blocker
 
     if (space.showing_desktop && topDesk) {
-        request_focus(space, topDesk);
+        request_focus(space, *topDesk);
     } else if (!space.showing_desktop && changed) {
         auto const window = focus_chain_get_for_activation_on_current_output(
             space, space.virtual_desktop_manager->current());

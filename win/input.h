@@ -113,7 +113,7 @@ bool perform_mouse_command(Win& win,
         if (win.control->active && kwinApp()->options->qobject->focusPolicyIsReasonable()) {
             auto next = window_under_mouse(space, win.topo.central_output);
             if (next && next != &win) {
-                request_focus(space, next);
+                request_focus(space, *next);
             }
         }
         break;
@@ -147,13 +147,13 @@ bool perform_mouse_command(Win& win,
             }
         }
 
-        request_focus(space, &win, true);
+        request_focus(space, win, true);
         base::set_current_output_by_position(base, globalPos);
         replay = replay || mustReplay;
         break;
     }
     case base::options_qobject::MouseActivateAndLower:
-        request_focus(space, &win);
+        request_focus(space, win);
         lower_window(&space, &win);
         base::set_current_output_by_position(base, globalPos);
         replay = replay || !win.control->rules.checkAcceptFocus(win.acceptsFocus());
@@ -161,17 +161,17 @@ bool perform_mouse_command(Win& win,
     case base::options_qobject::MouseActivate:
         // For clickraise mode.
         replay = win.control->active;
-        request_focus(space, &win);
+        request_focus(space, win);
         base::set_current_output_by_position(base, globalPos);
         replay = replay || !win.control->rules.checkAcceptFocus(win.acceptsFocus());
         break;
     case base::options_qobject::MouseActivateRaiseAndPassClick:
-        request_focus(space, &win, true);
+        request_focus(space, win, true);
         base::set_current_output_by_position(base, globalPos);
         replay = true;
         break;
     case base::options_qobject::MouseActivateAndPassClick:
-        request_focus(space, &win);
+        request_focus(space, win);
         base::set_current_output_by_position(base, globalPos);
         replay = true;
         break;
@@ -225,7 +225,7 @@ bool perform_mouse_command(Win& win,
     case base::options_qobject::MouseActivateRaiseAndMove:
     case base::options_qobject::MouseActivateRaiseAndUnrestrictedMove:
         raise_window(&space, &win);
-        request_focus(space, &win);
+        request_focus(space, win);
         base::set_current_output_by_position(base, globalPos);
         // Fallthrough
     case base::options_qobject::MouseMove:

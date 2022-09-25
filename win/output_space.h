@@ -53,7 +53,7 @@ void set_current_output(Space& space, base::output const& output)
     }
 
     if (get_focus != nullptr && get_focus != most_recently_activated_window(space)) {
-        request_focus(space, get_focus);
+        request_focus(space, *get_focus);
     }
 
     base::set_current_output(space.base, &output);

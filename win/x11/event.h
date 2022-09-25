@@ -909,10 +909,11 @@ void focus_in_event(Win* win, xcb_focus_in_event_t* e)
         // that was used by whoever caused the focus change, and therefore
         // the attempt to restore the focus would fail due to old timestamp
         kwinApp()->update_x11_time_from_clock();
-        if (!win->space.stacking.should_get_focus.empty()) {
-            request_focus(win->space, win->space.stacking.should_get_focus.back());
-        } else if (win->space.stacking.last_active) {
-            request_focus(win->space, win->space.stacking.last_active);
+
+        if (auto& sgf = win->space.stacking.should_get_focus; !sgf.empty()) {
+            request_focus(win->space, *sgf.back());
+        } else if (auto last = win->space.stacking.last_active) {
+            request_focus(win->space, *last);
         }
 
         win::set_demands_attention(win, true);

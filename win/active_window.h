@@ -128,7 +128,7 @@ void active_window_lower(Space& space)
         if (kwinApp()->options->qobject->isNextFocusPrefersMouse()) {
             auto next = window_under_mouse(space, space.stacking.active->topo.central_output);
             if (next && next != space.stacking.active) {
-                request_focus(space, next);
+                request_focus(space, *next);
             }
         } else if (auto top = top_client_on_desktop(
                        &space, space.virtual_desktop_manager->current(), nullptr)) {

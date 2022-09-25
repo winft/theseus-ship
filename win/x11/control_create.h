@@ -617,7 +617,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
                 if (!is_special_window(win)) {
                     if (kwinApp()->options->qobject->focusPolicyIsReasonable()
                         && wants_tab_focus(win)) {
-                        request_focus(space, win);
+                        request_focus(space, *win);
                     }
                 }
             } else if (!session && !is_special_window(win)) {

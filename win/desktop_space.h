@@ -42,7 +42,7 @@ void send_window_to_desktop(Space& space,
         if (win::wants_tab_focus(window) && kwinApp()->options->qobject->focusPolicyIsReasonable()
             && !was_on_desktop && // for stickyness changes
             !dont_activate) {
-            request_focus(space, window);
+            request_focus(space, *window);
         } else {
             restack_client_under_active(&space, window);
         }
