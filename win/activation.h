@@ -665,11 +665,7 @@ void activate_window_on_new_desktop(Space& space, unsigned int desktop)
         return;
     }
 
-    if (auto win = find_desktop(&space, true, desktop)) {
-        request_focus(space, *win);
-    } else {
-        focus_to_null(space);
-    }
+    focus_to_null(space);
 }
 
 template<typename Space>
