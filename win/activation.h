@@ -351,9 +351,10 @@ void set_active(Win* win, bool active)
         : win->control->rules.checkOpacityInactive(qRound(win->opacity() * 100.0));
     win->setOpacity(ruledOpacity / 100.0);
 
-    set_active_window(win->space, active ? win : nullptr);
-
-    if (!active) {
+    if (active) {
+        set_active_window(win->space, *win);
+    } else {
+        unset_active_window(win->space);
         win->control->cancel_auto_raise();
     }
 
@@ -378,6 +379,44 @@ void set_active(Win* win, bool active)
     win->control->update_mouse_grab();
 }
 
+template<typename Space>
+void unset_active_window(Space& space)
+{
+    auto& stacking = space.stacking;
+
+    if (!stacking.active) {
+        return;
+    }
+
+    if (space.active_popup && space.set_active_client_recursion == 0) {
+        close_active_popup(space);
+    }
+    if (space.user_actions_menu->hasClient() && space.set_active_client_recursion == 0) {
+        space.user_actions_menu->close();
+    }
+
+    blocker block(stacking.order);
+    ++space.set_active_client_recursion;
+    space.focusMousePos = space.input->cursor->pos();
+
+    // note that this may call setActiveClient( NULL ), therefore the recursion counter
+    set_active(stacking.active, false);
+    stacking.active = {};
+
+    x11::update_tool_windows_visibility(&space, false);
+    set_global_shortcuts_disabled(space, false);
+
+    // e.g. fullscreens have different layer when active/not-active
+    stacking.order.update_order();
+
+    if (space.root_info) {
+        x11::root_info_unset_active_window(*space.root_info);
+    }
+
+    Q_EMIT space.qobject->clientActivated();
+    --space.set_active_client_recursion;
+}
+
 /**
  * Informs the space:: about the active client, i.e. the client that
  * has the focus (or None if no client has the focus). This functions
@@ -387,19 +426,19 @@ void set_active(Win* win, bool active)
  * world.
  */
 template<typename Space>
-void set_active_window(Space& space, typename Space::window_t* window)
+void set_active_window(Space& space, typename Space::window_t& window)
 {
     auto& stacking = space.stacking;
 
-    if (stacking.active == window) {
+    if (stacking.active == &window) {
         return;
     }
 
-    if (space.active_popup && space.active_popup_client != window
+    if (space.active_popup && space.active_popup_client != &window
         && space.set_active_client_recursion == 0) {
         close_active_popup(space);
     }
-    if (space.user_actions_menu->hasClient() && !space.user_actions_menu->isMenuClient(window)
+    if (space.user_actions_menu->hasClient() && !space.user_actions_menu->isMenuClient(&window)
         && space.set_active_client_recursion == 0) {
         space.user_actions_menu->close();
     }
@@ -408,44 +447,37 @@ void set_active_window(Space& space, typename Space::window_t* window)
     ++space.set_active_client_recursion;
     space.focusMousePos = space.input->cursor->pos();
 
-    if (stacking.active != nullptr) {
+    if (stacking.active) {
         // note that this may call setActiveClient( NULL ), therefore the recursion counter
         set_active(stacking.active, false);
     }
 
-    stacking.active = window;
-    assert(!window || window->control->active);
+    assert(window.control->active);
+    stacking.active = &window;
+    stacking.last_active = &window;
 
-    if (stacking.active) {
-        stacking.last_active = stacking.active;
-        focus_chain_update(stacking.focus_chain, stacking.active, focus_chain_change::make_first);
-        set_demands_attention(stacking.active, false);
+    focus_chain_update(stacking.focus_chain, &window, focus_chain_change::make_first);
+    set_demands_attention(&window, false);
 
-        // activating a client can cause a non active fullscreen window to loose the ActiveLayer
-        // status on > 1 screens
-        if (space.base.outputs.size() > 1) {
-            for (auto win : space.windows) {
-                if (win->control && win != stacking.active && get_layer(*win) == win::layer::active
-                    && win->topo.central_output == stacking.active->topo.central_output) {
-                    update_layer(win);
-                }
+    // activating a client can cause a non active fullscreen window to loose the ActiveLayer
+    // status on > 1 screens
+    if (space.base.outputs.size() > 1) {
+        for (auto win : space.windows) {
+            if (win->control && win != &window && get_layer(*win) == win::layer::active
+                && win->topo.central_output == window.topo.central_output) {
+                update_layer(win);
             }
         }
     }
 
     x11::update_tool_windows_visibility(&space, false);
-    if (window) {
-        set_global_shortcuts_disabled(space,
-                                      window->control->rules.checkDisableGlobalShortcuts(false));
-    } else {
-        set_global_shortcuts_disabled(space, false);
-    }
+    set_global_shortcuts_disabled(space, window.control->rules.checkDisableGlobalShortcuts(false));
 
     // e.g. fullscreens have different layer when active/not-active
     stacking.order.update_order();
 
     if (space.root_info) {
-        x11::root_info_set_active_window(*space.root_info, stacking.active);
+        x11::root_info_set_active_window(*space.root_info, window);
     }
 
     Q_EMIT space.qobject->clientActivated();
@@ -480,7 +512,7 @@ template<typename Space>
 void deactivate_window(Space& space)
 {
     focus_to_null(space);
-    set_active_window(space, nullptr);
+    unset_active_window(space);
 }
 
 template<typename Space>
@@ -513,7 +545,7 @@ bool activate_next_window(Space& space)
 
     if (prev_window) {
         if (prev_window == space.stacking.active) {
-            set_active_window(space, nullptr);
+            unset_active_window(space);
         }
         auto& sgf = space.stacking.should_get_focus;
         sgf.erase(std::remove(sgf.begin(), sgf.end(), prev_window), sgf.end());
@@ -641,7 +673,7 @@ void activate_window_on_new_desktop(Space& space, unsigned int desktop)
 
     auto do_activate = [&](auto& win) {
         if (&win != stacking.active) {
-            set_active_window(space, nullptr);
+            unset_active_window(space);
         }
         request_focus(space, win);
     };

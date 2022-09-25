@@ -741,7 +741,7 @@ void TestScreenEdges::testFullScreenBlocking()
     client->setFrameGeometry(QRect({}, Test::app()->base.topology.size));
     win::set_active(client, true);
     client->setFullScreen(true);
-    win::set_active_window(*Test::app()->base.space, client);
+    win::set_active_window(*Test::app()->base.space, *client);
     Q_EMIT screenEdges->qobject->checkBlocking();
 
     // the signal doesn't trigger for corners, let's go over all windows just to be sure that it

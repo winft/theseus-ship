@@ -366,7 +366,7 @@ void X11ClientTest::testFocusInWithWaylandLastActiveWindow()
     QVERIFY(waylandClient->control->active);
 
     // activate no window
-    win::set_active_window(*Test::app()->base.space, nullptr);
+    win::unset_active_window(*Test::app()->base.space);
     QVERIFY(!waylandClient->control->active);
     QVERIFY(!Test::app()->base.space->stacking.active);
 

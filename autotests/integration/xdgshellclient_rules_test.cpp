@@ -4166,7 +4166,7 @@ void TestXdgShellClientRules::testInactiveOpacityDontAffect()
     QVERIFY(client->control->active);
 
     // Make the client inactive.
-    win::set_active_window(*Test::app()->base.space, nullptr);
+    win::unset_active_window(*Test::app()->base.space);
     QVERIFY(!client->control->active);
 
     // The opacity of the client should not be affected by the rule.
@@ -4203,7 +4203,7 @@ void TestXdgShellClientRules::testInactiveOpacityForce()
     QCOMPARE(client->opacity(), 1.0);
 
     // Make the client inactive.
-    win::set_active_window(*Test::app()->base.space, nullptr);
+    win::unset_active_window(*Test::app()->base.space);
     QVERIFY(!client->control->active);
 
     // The opacity should be forced by the rule.
@@ -4240,7 +4240,7 @@ void TestXdgShellClientRules::testInactiveOpacityForceTemporarily()
     QCOMPARE(client->opacity(), 1.0);
 
     // Make the client inactive.
-    win::set_active_window(*Test::app()->base.space, nullptr);
+    win::unset_active_window(*Test::app()->base.space);
     QVERIFY(!client->control->active);
 
     // The opacity should be forced by the rule.
@@ -4253,7 +4253,7 @@ void TestXdgShellClientRules::testInactiveOpacityForceTemporarily()
     QVERIFY(client);
     QVERIFY(client->control->active);
     QCOMPARE(client->opacity(), 1.0);
-    win::set_active_window(*Test::app()->base.space, nullptr);
+    win::unset_active_window(*Test::app()->base.space);
     QVERIFY(!client->control->active);
     QCOMPARE(client->opacity(), 1.0);
 

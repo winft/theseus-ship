@@ -10,16 +10,24 @@
 namespace KWin::win::x11
 {
 
-template<typename Info, typename Win>
-void root_info_set_active_window(Info& info, Win* window)
+template<typename Info>
+void root_info_unset_active_window(Info& info)
 {
-    auto const xcb_win
-        = window ? static_cast<xcb_window_t>(window->xcb_window) : xcb_window_t{XCB_WINDOW_NONE};
-    if (info.m_activeWindow == xcb_win) {
+    if (info.m_activeWindow == XCB_WINDOW_NONE) {
         return;
     }
-    info.m_activeWindow = xcb_win;
-    info.setActiveWindow(xcb_win);
+    info.m_activeWindow = XCB_WINDOW_NONE;
+    info.setActiveWindow(XCB_WINDOW_NONE);
+}
+
+template<typename Info, typename Win>
+void root_info_set_active_window(Info& info, Win& window)
+{
+    if (info.m_activeWindow == window.xcb_window) {
+        return;
+    }
+    info.m_activeWindow = window.xcb_window;
+    info.setActiveWindow(window.xcb_window);
 }
 
 }

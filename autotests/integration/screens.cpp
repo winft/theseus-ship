@@ -309,7 +309,7 @@ void TestScreens::testCurrentClient()
 
     win::move(client, QPoint(101, 0));
     QCOMPARE(Test::app()->base.space->stacking.active, client);
-    win::set_active_window(*Test::app()->base.space, nullptr);
+    win::unset_active_window(*Test::app()->base.space);
     QCOMPARE(Test::app()->base.space->stacking.active, nullptr);
 
     QCOMPARE(win::get_current_output(*Test::app()->base.space),
@@ -325,7 +325,7 @@ void TestScreens::testCurrentClient()
 
     // making the client active should affect things
     win::set_active(client, true);
-    win::set_active_window(*Test::app()->base.space, client);
+    win::set_active_window(*Test::app()->base.space, *client);
 
     // first of all current should be changed just by the fact that there is an active client
     output = base::get_output(Test::app()->base.get_outputs(), 1);
@@ -345,7 +345,7 @@ void TestScreens::testCurrentClient()
     QCOMPARE(changedSpy.count(), 1);
 
     // and it should even still be on screen 1 if we make the client non-current again
-    win::set_active_window(*Test::app()->base.space, nullptr);
+    win::unset_active_window(*Test::app()->base.space);
     win::set_active(client, false);
 
     output = base::get_output(Test::app()->base.get_outputs(), 1);
