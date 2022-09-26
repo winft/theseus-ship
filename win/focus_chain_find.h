@@ -59,14 +59,11 @@ auto focus_chain_get_for_activation_on_current_output(Space& space, uint desktop
     return focus_chain_get_for_activation(space, desktop, get_current_output(space));
 }
 
-template<typename Space>
+template<typename Space, typename Output>
 bool focus_chain_is_usable_focus_candidate(Space& space,
                                            typename Space::window_t* window,
-                                           typename Space::window_t* prev)
+                                           Output const* output)
 {
-    if (window == prev) {
-        return false;
-    }
     if (!window->isShown() || !on_current_desktop(window)) {
         return false;
     }
@@ -75,12 +72,12 @@ bool focus_chain_is_usable_focus_candidate(Space& space,
         return true;
     }
 
-    return on_screen(window, prev ? prev->topo.central_output : get_current_output(space));
+    return on_screen(window, output);
 }
 
 /**
- * @brief Queries the focus chain for @p desktop for the next window in relation to the given
- * @p reference.
+ * @brief Queries the focus chain for @p output and @p desktop for the next window in relation to
+ * the given @p reference.
  *
  * The method finds the first usable window which is not the @p reference Client. If no Client
  * can be found @c null is returned
@@ -89,9 +86,11 @@ bool focus_chain_is_usable_focus_candidate(Space& space,
  * @param desktop The virtual desktop whose focus chain should be used
  * @return *The next usable window or @c null if none can be found.
  */
-template<typename Space>
-auto focus_chain_next_for_desktop(Space& space, typename Space::window_t* reference, uint desktop)
-    -> typename Space::window_t*
+template<typename Space, typename Output>
+auto focus_chain_next(Space& space,
+                      typename Space::window_t* reference,
+                      uint desktop,
+                      Output const* output) -> typename Space::window_t*
 {
     auto& manager = space.stacking.focus_chain;
 
@@ -104,7 +103,10 @@ auto focus_chain_next_for_desktop(Space& space, typename Space::window_t* refere
 
     // TODO(romangg): reverse-range with C++20
     for (auto it = chain.rbegin(); it != chain.rend(); ++it) {
-        if (focus_chain_is_usable_focus_candidate(space, *it, reference)) {
+        if (*it == reference) {
+            continue;
+        }
+        if (focus_chain_is_usable_focus_candidate(space, *it, output)) {
             return *it;
         }
     }

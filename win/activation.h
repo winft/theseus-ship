@@ -572,10 +572,20 @@ bool activate_next_window(Space& space)
         }
     }
 
+    typename Space::base_t::output_t const* output{nullptr};
+    auto get_output = [&] {
+        if (output) {
+            return output;
+        }
+        if (prev_window) {
+            return prev_window->topo.central_output;
+        }
+        return get_current_output(space);
+    };
+
     if (kwinApp()->options->qobject->isNextFocusPrefersMouse()) {
         // Same as prev window and is_desktop should rather not happen.
-        if (auto win = window_under_mouse(
-                space, prev_window ? prev_window->topo.central_output : get_current_output(space));
+        if (auto win = window_under_mouse(space, get_output());
             win && win != prev_window && !is_desktop(win)) {
             request_focus(space, *win);
             return true;
@@ -587,8 +597,8 @@ bool activate_next_window(Space& space)
     if (prev_window && prev_window->transient->lead()) {
         auto leaders = prev_window->transient->leads();
         if (leaders.size() == 1
-            && focus_chain_is_usable_focus_candidate(space, leaders.at(0), prev_window)) {
-            auto win = leaders.at(0);
+            && focus_chain_is_usable_focus_candidate(space, leaders.at(0), get_output())) {
+            auto win = leaders.front();
 
             // Also raise - we don't know where it came from.
             raise_window(&space, win);
@@ -598,7 +608,7 @@ bool activate_next_window(Space& space)
     }
 
     // Ask the focus chain for the next candidate.
-    if (auto win = focus_chain_next_for_desktop(space, prev_window, desktop)) {
+    if (auto win = focus_chain_next(space, prev_window, desktop, get_output())) {
         request_focus(space, *win);
         return true;
     }
