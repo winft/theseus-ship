@@ -400,9 +400,10 @@ private:
         m_decorationCursor.image = QImage();
         m_decorationCursor.hotSpot = QPoint();
 
-        auto deco = redirect.pointer->focus.deco;
-        if (auto c = deco ? deco->client() : nullptr) {
-            loadThemeCursor(c->control->move_resize.cursor, &m_decorationCursor);
+        auto win = redirect.pointer->at.window;
+
+        if (redirect.pointer->focus.deco && win) {
+            loadThemeCursor(win->control->move_resize.cursor, &m_decorationCursor);
             if (m_currentSource == CursorSource::Decoration) {
                 Q_EMIT qobject->changed();
             }
