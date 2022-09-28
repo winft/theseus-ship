@@ -364,7 +364,7 @@ void TestScreenEdges::testCreatingInitialEdges()
     auto client = Test::app()->base.space->stacking.active;
     QVERIFY(client);
 
-    win::set_move_resize_window(*Test::app()->base.space, client);
+    win::set_move_resize_window(*Test::app()->base.space, *client);
     for (int i = 0; i < 8; ++i) {
         auto& e = screenEdges->edges.at(i);
         QVERIFY(e->reserved_count > 0);
@@ -382,7 +382,7 @@ void TestScreenEdges::testCreatingInitialEdges()
         QCOMPARE(e->activatesForTouchGesture(), false);
         QCOMPARE(e->approach_geometry, expectedGeometries.at(i * 2 + 1));
     }
-    win::set_move_resize_window(*Test::app()->base.space, nullptr);
+    win::unset_move_resize_window(*Test::app()->base.space);
 }
 
 void TestScreenEdges::testCallback()

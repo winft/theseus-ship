@@ -265,9 +265,10 @@ void active_window_to_desktop(Space& space)
         return;
     }
 
-    set_move_resize_window(space, space.stacking.active);
+    assert(space.stacking.active);
+    set_move_resize_window(space, *space.stacking.active);
     vds->setCurrent(d);
-    set_move_resize_window(space, nullptr);
+    unset_move_resize_window(space);
 }
 
 template<typename Space>

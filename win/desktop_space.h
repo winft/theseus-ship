@@ -95,9 +95,9 @@ void window_to_desktop(Win& window)
     auto const desktop = functor(nullptr, true);
 
     if (!is_desktop(&window) && !is_dock(&window)) {
-        set_move_resize_window(ws, &window);
+        set_move_resize_window(ws, window);
         vds->setCurrent(desktop);
-        set_move_resize_window(ws, nullptr);
+        unset_move_resize_window(ws);
     }
 }
 

@@ -67,19 +67,19 @@ position mouse_position(Win* win)
 }
 
 template<typename Space>
-void set_move_resize_window(Space& space, typename Space::window_t* window)
+void unset_move_resize_window(Space& space)
 {
-    // Catch attempts to move a second
-    assert(!window || !space.move_resize_window);
+    space.move_resize_window = {};
+    --space.block_focus;
+}
 
-    // window while still moving the first one.
-    space.move_resize_window = window;
-
-    if (space.move_resize_window) {
-        ++space.block_focus;
-    } else {
-        --space.block_focus;
-    }
+template<typename Space>
+void set_move_resize_window(Space& space, typename Space::window_t& window)
+{
+    // Catch attempts to move a second window while still moving the first one.
+    assert(!space.move_resize_window);
+    space.move_resize_window = &window;
+    ++space.block_focus;
 }
 
 template<typename Win>
@@ -284,7 +284,7 @@ bool start_move_resize(Win* win)
     }
 
     mov_res.enabled = true;
-    set_move_resize_window(win->space, win);
+    set_move_resize_window(win->space, *win);
 
     win->control->update_have_resize_effect();
 
@@ -794,8 +794,9 @@ void end_move_resize(Win* win)
 template<typename Win>
 void leave_move_resize(Win& win)
 {
-    set_move_resize_window(win.space, nullptr);
+    unset_move_resize_window(win.space);
     win.control->move_resize.enabled = false;
+
     if (win.space.edges->desktop_switching.when_moving_client) {
         win.space.edges->reserveDesktopSwitching(false, Qt::Vertical | Qt::Horizontal);
     }
