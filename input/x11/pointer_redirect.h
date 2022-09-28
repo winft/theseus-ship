@@ -5,8 +5,9 @@
 */
 #pragma once
 
-#include "input/device_redirect.h"
 #include "input/pointer_redirect.h"
+
+#include <QObject>
 
 namespace KWin::input::x11
 {
@@ -16,7 +17,7 @@ class pointer_redirect
 {
 public:
     explicit pointer_redirect(Redirect* redirect)
-        : qobject{std::make_unique<device_redirect_qobject>()}
+        : qobject{std::make_unique<QObject>()}
         , redirect{redirect}
     {
     }
@@ -43,7 +44,7 @@ public:
         pointer_redirect_process_button_spies(*this, event);
     }
 
-    std::unique_ptr<device_redirect_qobject> qobject;
+    std::unique_ptr<QObject> qobject;
     Redirect* redirect;
 };
 

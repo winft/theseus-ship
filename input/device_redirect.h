@@ -45,11 +45,4 @@ struct device_redirect_focus {
     } notifiers;
 };
 
-class KWIN_EXPORT device_redirect_qobject : public QObject
-{
-    Q_OBJECT
-Q_SIGNALS:
-    void decorationChanged();
-};
-
 }

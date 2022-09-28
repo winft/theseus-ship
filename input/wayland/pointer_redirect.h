@@ -16,6 +16,7 @@
 #include "utils/blocker.h"
 
 #include <KScreenLocker/KsldApp>
+#include <QObject>
 #include <Wrapland/Server/drag_pool.h>
 #include <Wrapland/Server/pointer_constraints_v1.h>
 #include <Wrapland/Server/pointer_pool.h>
@@ -56,7 +57,7 @@ public:
     using window_t = typename space_t::window_t;
 
     explicit pointer_redirect(Redirect* redirect)
-        : qobject{std::make_unique<device_redirect_qobject>()}
+        : qobject{std::make_unique<QObject>()}
         , redirect{redirect}
         , motions{*this}
     {
@@ -122,13 +123,6 @@ public:
         // warp the cursor to center of screen
         warp(QRect({}, kwinApp()->get_base().topology.size).center());
         updateAfterScreenChange();
-
-        auto wayland_cursor = redirect->cursor.get();
-        assert(wayland_cursor);
-        QObject::connect(qobject.get(),
-                         &device_redirect_qobject::decorationChanged,
-                         wayland_cursor->cursor_image->qobject.get(),
-                         [img = wayland_cursor->cursor_image.get()] { img->updateDecoration(); });
     }
 
     void updateAfterScreenChange()
@@ -548,6 +542,9 @@ public:
         // send leave event to decoration
         QHoverEvent event(QEvent::HoverLeave, QPointF(), QPointF());
         QCoreApplication::instance()->sendEvent(focus.deco->decoration(), &event);
+
+        focus.deco = nullptr;
+        redirect->cursor->cursor_image->updateDecoration();
     }
 
     void set_deco(win::deco::client_impl<typename space_t::window_t>& now)
@@ -585,6 +582,9 @@ public:
                     QCoreApplication::instance()->sendEvent(deco->decoration(), &event);
                 }
             });
+
+        focus.deco = &now;
+        redirect->cursor->cursor_image->updateDecoration();
     }
 
     void focusUpdate(typename space_t::window_t* focusOld, typename space_t::window_t* focusNow)
@@ -675,7 +675,7 @@ public:
         return m_pos.toPoint();
     }
 
-    std::unique_ptr<device_redirect_qobject> qobject;
+    std::unique_ptr<QObject> qobject;
     Redirect* redirect;
 
     device_redirect_at<window_t> at;
@@ -715,7 +715,6 @@ private:
             QHoverEvent event(QEvent::HoverLeave, QPointF(), QPointF());
             QCoreApplication::instance()->sendEvent(focus.deco->decoration(), &event);
             device_redirect_unset_deco(this);
-            Q_EMIT qobject->decorationChanged();
         }
         if (auto focus_window = focus.window) {
             if (focus_window->control) {

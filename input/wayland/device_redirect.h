@@ -140,7 +140,6 @@ bool device_redirect_update_decoration(Dev* dev)
         }
 
         device_redirect_unset_deco(dev);
-        Q_EMIT dev->qobject->decorationChanged();
         return true;
     }
 
@@ -170,7 +169,6 @@ bool device_redirect_update_decoration(Dev* dev)
     }
 
     dev->focus.deco = new_deco;
-    Q_EMIT dev->qobject->decorationChanged();
     return true;
 }
 

@@ -456,7 +456,6 @@ set(kwin_SRCS
 
     # These headers need to be compiled for the helper QObjects they contain.
     base/output.h
-    input/device_redirect.h
     render/cursor.h
     win/deco/bridge_qobject.h
     win/deco/client_impl_qobject.h

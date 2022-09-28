@@ -11,6 +11,7 @@
 #include "input/event_filter.h"
 #include "input/event_spy.h"
 
+#include <QObject>
 #include <QPointF>
 #include <QSet>
 
@@ -25,7 +26,7 @@ public:
     using window_t = typename space_t::window_t;
 
     explicit tablet_redirect(Redirect* redirect)
-        : qobject{std::make_unique<device_redirect_qobject>()}
+        : qobject{std::make_unique<QObject>()}
         , redirect{redirect}
     {
     }
@@ -175,7 +176,7 @@ public:
     {
     }
 
-    std::unique_ptr<device_redirect_qobject> qobject;
+    std::unique_ptr<QObject> qobject;
     Redirect* redirect;
 
     device_redirect_at<window_t> at;
