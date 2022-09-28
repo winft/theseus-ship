@@ -347,47 +347,12 @@ public:
 
     bool isMaximizable() const override
     {
-        if (!isResizable() || win::is_toolbar(this) || win::is_applet_popup(this)) {
-            // SELI isToolbar() ?
-            return false;
-        }
-        if (this->control->rules.checkMaximize(win::maximize_mode::restore)
-                == win::maximize_mode::restore
-            && this->control->rules.checkMaximize(win::maximize_mode::full)
-                != win::maximize_mode::restore) {
-            return true;
-        }
-        return false;
+        return geo_is_maximizable(*this);
     }
 
     bool isMinimizable() const override
     {
-        if (win::is_special_window(this) && !this->transient->lead()) {
-            return false;
-        }
-        if (win::is_applet_popup(this)) {
-            return false;
-        }
-        if (!this->control->rules.checkMinimize(true)) {
-            return false;
-        }
-
-        if (this->transient->lead()) {
-            // #66868 - Let other xmms windows be minimized when the mainwindow is minimized
-            auto shown_main_window = false;
-            for (auto const& lead : this->transient->leads())
-                if (lead->isShown()) {
-                    shown_main_window = true;
-                }
-            if (!shown_main_window) {
-                return true;
-            }
-        }
-
-        if (!win::wants_tab_focus(this)) {
-            return false;
-        }
-        return true;
+        return geo_is_minimizable(*this);
     }
 
     bool isMovable() const override
@@ -477,105 +442,7 @@ public:
 
     void setFrameGeometry(QRect const& rect) override
     {
-        auto frame_geo = this->control->rules.checkGeometry(rect);
-
-        this->geo.update.frame = frame_geo;
-
-        if (this->geo.update.block) {
-            this->geo.update.pending = win::pending_geometry::normal;
-            return;
-        }
-
-        this->geo.update.pending = win::pending_geometry::none;
-
-        auto const old_client_geo = synced_geometry.client;
-        auto client_geo = frame_to_client_rect(this, frame_geo);
-
-        if (!first_geo_synced) {
-            // Initial sync-up after taking control of an unmapped window.
-
-            if (sync_request.counter) {
-                // The first sync can not be suppressed.
-                assert(!sync_request.suppressed);
-                sync_geometry(this, frame_geo);
-
-                // Some Electron apps do not react to the first sync request and because of that
-                // never show. It seems to be only a problem with apps based on Electron 9. This was
-                // observed with Discord and balenaEtcher. For as long as there are common apps out
-                // there still based on Electron 9 we use the following fallback timer to cancel the
-                // wait after 1000 ms and instead set the window to directly show.
-                auto fallback_timer = new QTimer(this->qobject.get());
-                auto const serial = sync_request.update_request_number;
-                QObject::connect(fallback_timer,
-                                 &QTimer::timeout,
-                                 this->qobject.get(),
-                                 [this, fallback_timer, serial] {
-                                     delete fallback_timer;
-
-                                     if (pending_configures.empty()
-                                         || pending_configures.front().update_request_number
-                                             != serial) {
-                                         return;
-                                     }
-
-                                     pending_configures.erase(pending_configures.begin());
-
-                                     set_ready_for_painting(*this);
-                                 });
-                fallback_timer->setSingleShot(true);
-                fallback_timer->start(1000);
-            }
-
-            update_server_geometry(this, frame_geo);
-            send_synthetic_configure_notify(this, client_geo);
-            do_set_geometry(frame_geo);
-            do_set_fullscreen(this->geo.update.fullscreen);
-            do_set_maximize_mode(this->geo.update.max_mode);
-            first_geo_synced = true;
-            return;
-        }
-
-        if (sync_request.counter) {
-            if (sync_request.suppressed) {
-                // Adapt previous syncs so we don't update to an old geometry when client returns.
-                for (auto& configure : pending_configures) {
-                    configure.geometry.client = client_geo;
-                    configure.geometry.frame = frame_geo;
-                }
-            } else {
-                if (old_client_geo.size() != client_geo.size()) {
-                    // Size changed. Request a new one from the client and wait on it.
-                    sync_geometry(this, frame_geo);
-                    update_server_geometry(this, frame_geo);
-                    return;
-                }
-
-                // Move without size change.
-                for (auto& event : pending_configures) {
-                    // The positional infomation in pending syncs must be updated to the new
-                    // position.
-                    event.geometry.frame.moveTo(frame_geo.topLeft());
-                    event.geometry.client.moveTo(client_geo.topLeft());
-                }
-            }
-        }
-
-        update_server_geometry(this, frame_geo);
-
-        do_set_geometry(frame_geo);
-        do_set_fullscreen(this->geo.update.fullscreen);
-        do_set_maximize_mode(this->geo.update.max_mode);
-
-        // Always recalculate client geometry in case borders changed on fullscreen/maximize
-        // changes.
-        client_geo = frame_to_client_rect(this, frame_geo);
-
-        // Always send a synthetic configure notify in the end to enforce updates to update
-        // potential fullscreen/maximize changes. IntelliJ IDEA needed this to position its
-        // unmanageds correctly.
-        //
-        // TODO(romangg): Restrain making this call to only being issued when really necessary.
-        send_synthetic_configure_notify(this, client_geo);
+        set_frame_geometry(*this, rect);
     }
 
     void apply_restore_geometry(QRect const& restore_geo) override
@@ -586,121 +453,6 @@ public:
     void restore_geometry_from_fullscreen() override
     {
         x11::restore_geometry_from_fullscreen(*this);
-    }
-
-    void do_set_geometry(QRect const& frame_geo)
-    {
-        assert(this->control);
-
-        auto const old_frame_geo = this->geo.frame;
-
-        if (old_frame_geo == frame_geo && first_geo_synced) {
-            return;
-        }
-
-        this->geo.frame = frame_geo;
-
-        if (frame_to_render_rect(this, old_frame_geo).size()
-            != frame_to_render_rect(this, frame_geo).size()) {
-            discard_buffer(*this);
-        }
-
-        // TODO(romangg): Remove?
-        win::set_current_output_by_window(this->space.base, *this);
-        this->space.stacking.order.update_order();
-
-        updateWindowRules(rules::type::position | rules::type::size);
-
-        if (is_resize(this)) {
-            perform_move_resize(this);
-        }
-
-        add_layer_repaint(*this, visible_rect(this, old_frame_geo));
-        add_layer_repaint(*this, visible_rect(this, frame_geo));
-
-        Q_EMIT this->qobject->frame_geometry_changed(old_frame_geo);
-
-        // Must be done after signal is emitted so the screen margins are update.
-        if (hasStrut()) {
-            update_space_areas(this->space);
-        }
-    }
-
-    void do_set_maximize_mode(win::maximize_mode mode)
-    {
-        if (mode == max_mode) {
-            return;
-        }
-
-        auto old_mode = max_mode;
-        max_mode = mode;
-
-        update_allowed_actions(this);
-        updateWindowRules(rules::type::maximize_horiz | rules::type::maximize_vert
-                          | rules::type::position | rules::type::size);
-
-        // Update decoration borders.
-        if (auto deco = decoration(this); deco && deco->client()
-            && !(kwinApp()->options->qobject->borderlessMaximizedWindows()
-                 && mode == maximize_mode::full)) {
-            auto const deco_client = decoration(this)->client().toStrongRef().data();
-
-            if ((mode & maximize_mode::vertical) != (old_mode & maximize_mode::vertical)) {
-                Q_EMIT deco_client->maximizedVerticallyChanged(
-                    flags(mode & maximize_mode::vertical));
-            }
-            if ((mode & maximize_mode::horizontal) != (old_mode & maximize_mode::horizontal)) {
-                Q_EMIT deco_client->maximizedHorizontallyChanged(
-                    flags(mode & maximize_mode::horizontal));
-            }
-            if ((mode == maximize_mode::full) != (old_mode == maximize_mode::full)) {
-                Q_EMIT deco_client->maximizedChanged(flags(mode & maximize_mode::full));
-            }
-        }
-
-        // TODO(romangg): Can we do this also in update_maximized? What about deco update?
-        if (decoration(this)) {
-            this->control->deco.client->update_size();
-        }
-
-        // Need to update the server geometry in case the decoration changed.
-        update_server_geometry(this, this->geo.update.frame);
-
-        Q_EMIT this->qobject->maximize_mode_changed(mode);
-    }
-
-    void do_set_fullscreen(bool full)
-    {
-        full = this->control->rules.checkFullScreen(full);
-
-        auto const old_full = this->control->fullscreen;
-        if (old_full == full) {
-            return;
-        }
-
-        if (old_full) {
-            // May cause focus leave.
-            // TODO: Must always be done when fullscreening to other output allowed.
-            this->space.focusMousePos = this->space.input->cursor->pos();
-        }
-
-        this->control->fullscreen = full;
-
-        if (full) {
-            raise_window(&this->space, this);
-        } else {
-            // TODO(romangg): Can we do this also in setFullScreen? What about deco update?
-            this->info->setState(full ? NET::FullScreen : NET::States(), NET::FullScreen);
-            updateDecoration(false, false);
-
-            // Need to update the server geometry in case the decoration changed.
-            update_server_geometry(this, this->geo.update.frame);
-        }
-
-        // Active fullscreens gets a different layer.
-        update_layer(this);
-        updateWindowRules(rules::type::fullscreen | rules::type::position | rules::type::size);
-        Q_EMIT this->qobject->fullScreenChanged();
     }
 
     void updateColorScheme() override

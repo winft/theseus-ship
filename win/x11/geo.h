@@ -35,6 +35,51 @@ private:
 };
 
 template<typename Win>
+bool geo_is_maximizable(Win const& win)
+{
+    if (!win.isResizable() || win::is_toolbar(&win) || win::is_applet_popup(&win)) {
+        // SELI isToolbar() ?
+        return false;
+    }
+    if (win.control->rules.checkMaximize(maximize_mode::restore) == maximize_mode::restore
+        && win.control->rules.checkMaximize(maximize_mode::full) != maximize_mode::restore) {
+        return true;
+    }
+    return false;
+}
+
+template<typename Win>
+bool geo_is_minimizable(Win const& win)
+{
+    if (is_special_window(&win) && !win.transient->lead()) {
+        return false;
+    }
+    if (is_applet_popup(&win)) {
+        return false;
+    }
+    if (!win.control->rules.checkMinimize(true)) {
+        return false;
+    }
+
+    if (win.transient->lead()) {
+        // #66868 - Let other xmms windows be minimized when the mainwindow is minimized
+        auto shown_main_window{false};
+        for (auto const& lead : win.transient->leads())
+            if (lead->isShown()) {
+                shown_main_window = true;
+            }
+        if (!shown_main_window) {
+            return true;
+        }
+    }
+
+    if (!wants_tab_focus(&win)) {
+        return false;
+    }
+    return true;
+}
+
+template<typename Win>
 void update_shape(Win* win)
 {
     if (win->is_shape) {
@@ -149,9 +194,9 @@ void apply_pending_geometry(Win* win, int64_t update_request_number)
         }
     }
 
-    win->do_set_fullscreen(fullscreen);
-    win->do_set_geometry(frame_geo);
-    win->do_set_maximize_mode(max_mode);
+    do_set_fullscreen(*win, fullscreen);
+    do_set_geometry(*win, frame_geo);
+    do_set_maximize_mode(*win, max_mode);
 
     update_window_buffer(win);
 
@@ -1176,6 +1221,227 @@ QRect get_icon_geometry(Win& win)
 
     // No mainwindow (or their parents) with icon geometry was found
     return win.space.get_icon_geometry(&win);
+}
+
+template<typename Win>
+void do_set_geometry(Win& win, QRect const& frame_geo)
+{
+    assert(win.control);
+
+    auto const old_frame_geo = win.geo.frame;
+
+    if (old_frame_geo == frame_geo && win.first_geo_synced) {
+        return;
+    }
+
+    win.geo.frame = frame_geo;
+
+    if (frame_to_render_rect(&win, old_frame_geo).size()
+        != frame_to_render_rect(&win, frame_geo).size()) {
+        discard_buffer(win);
+    }
+
+    // TODO(romangg): Remove?
+    win::set_current_output_by_window(win.space.base, win);
+    win.space.stacking.order.update_order();
+
+    win.updateWindowRules(rules::type::position | rules::type::size);
+
+    if (is_resize(&win)) {
+        perform_move_resize(&win);
+    }
+
+    add_layer_repaint(win, visible_rect(&win, old_frame_geo));
+    add_layer_repaint(win, visible_rect(&win, frame_geo));
+
+    Q_EMIT win.qobject->frame_geometry_changed(old_frame_geo);
+
+    // Must be done after signal is emitted so the screen margins are update.
+    if (win.hasStrut()) {
+        update_space_areas(win.space);
+    }
+}
+
+template<typename Win>
+void do_set_maximize_mode(Win& win, win::maximize_mode mode)
+{
+    if (mode == win.max_mode) {
+        return;
+    }
+
+    auto old_mode = win.max_mode;
+    win.max_mode = mode;
+
+    update_allowed_actions(&win);
+    win.updateWindowRules(rules::type::maximize_horiz | rules::type::maximize_vert
+                          | rules::type::position | rules::type::size);
+
+    // Update decoration borders.
+    if (auto deco = decoration(&win); deco && deco->client()
+        && !(kwinApp()->options->qobject->borderlessMaximizedWindows()
+             && mode == maximize_mode::full)) {
+        auto const deco_client = decoration(&win)->client().toStrongRef().data();
+
+        if ((mode & maximize_mode::vertical) != (old_mode & maximize_mode::vertical)) {
+            Q_EMIT deco_client->maximizedVerticallyChanged(flags(mode & maximize_mode::vertical));
+        }
+        if ((mode & maximize_mode::horizontal) != (old_mode & maximize_mode::horizontal)) {
+            Q_EMIT deco_client->maximizedHorizontallyChanged(
+                flags(mode & maximize_mode::horizontal));
+        }
+        if ((mode == maximize_mode::full) != (old_mode == maximize_mode::full)) {
+            Q_EMIT deco_client->maximizedChanged(flags(mode & maximize_mode::full));
+        }
+    }
+
+    // TODO(romangg): Can we do this also in update_maximized? What about deco update?
+    if (decoration(&win)) {
+        win.control->deco.client->update_size();
+    }
+
+    // Need to update the server geometry in case the decoration changed.
+    update_server_geometry(&win, win.geo.update.frame);
+
+    Q_EMIT win.qobject->maximize_mode_changed(mode);
+}
+
+template<typename Win>
+void do_set_fullscreen(Win& win, bool full)
+{
+    full = win.control->rules.checkFullScreen(full);
+
+    auto const old_full = win.control->fullscreen;
+    if (old_full == full) {
+        return;
+    }
+
+    if (old_full) {
+        // May cause focus leave.
+        // TODO: Must always be done when fullscreening to other output allowed.
+        win.space.focusMousePos = win.space.input->cursor->pos();
+    }
+
+    win.control->fullscreen = full;
+
+    if (full) {
+        raise_window(&win.space, &win);
+    } else {
+        // TODO(romangg): Can we do this also in setFullScreen? What about deco update?
+        win.info->setState(full ? NET::FullScreen : NET::States(), NET::FullScreen);
+        win.updateDecoration(false, false);
+
+        // Need to update the server geometry in case the decoration changed.
+        update_server_geometry(&win, win.geo.update.frame);
+    }
+
+    // Active fullscreens gets a different layer.
+    update_layer(&win);
+    win.updateWindowRules(rules::type::fullscreen | rules::type::position | rules::type::size);
+    Q_EMIT win.qobject->fullScreenChanged();
+}
+
+template<typename Win>
+void set_frame_geometry(Win& win, QRect const& rect)
+{
+    auto frame_geo = win.control->rules.checkGeometry(rect);
+
+    win.geo.update.frame = frame_geo;
+
+    if (win.geo.update.block) {
+        win.geo.update.pending = win::pending_geometry::normal;
+        return;
+    }
+
+    win.geo.update.pending = win::pending_geometry::none;
+
+    auto const old_client_geo = win.synced_geometry.client;
+    auto client_geo = frame_to_client_rect(&win, frame_geo);
+
+    if (!win.first_geo_synced) {
+        // Initial sync-up after taking control of an unmapped window.
+
+        if (win.sync_request.counter) {
+            // The first sync can not be suppressed.
+            assert(!win.sync_request.suppressed);
+            sync_geometry(&win, frame_geo);
+
+            // Some Electron apps do not react to the first sync request and because of that
+            // never show. It seems to be only a problem with apps based on Electron 9. This was
+            // observed with Discord and balenaEtcher. For as long as there are common apps out
+            // there still based on Electron 9 we use the following fallback timer to cancel the
+            // wait after 1000 ms and instead set the window to directly show.
+            auto fallback_timer = new QTimer(win.qobject.get());
+            auto const serial = win.sync_request.update_request_number;
+            QObject::connect(fallback_timer,
+                             &QTimer::timeout,
+                             win.qobject.get(),
+                             [&win, fallback_timer, serial] {
+                                 delete fallback_timer;
+
+                                 if (win.pending_configures.empty()
+                                     || win.pending_configures.front().update_request_number
+                                         != serial) {
+                                     return;
+                                 }
+
+                                 win.pending_configures.erase(win.pending_configures.begin());
+
+                                 set_ready_for_painting(win);
+                             });
+            fallback_timer->setSingleShot(true);
+            fallback_timer->start(1000);
+        }
+
+        update_server_geometry(&win, frame_geo);
+        send_synthetic_configure_notify(&win, client_geo);
+        do_set_geometry(win, frame_geo);
+        do_set_fullscreen(win, win.geo.update.fullscreen);
+        do_set_maximize_mode(win, win.geo.update.max_mode);
+        win.first_geo_synced = true;
+        return;
+    }
+
+    if (win.sync_request.counter) {
+        if (win.sync_request.suppressed) {
+            // Adapt previous syncs so we don't update to an old geometry when client returns.
+            for (auto& configure : win.pending_configures) {
+                configure.geometry.client = client_geo;
+                configure.geometry.frame = frame_geo;
+            }
+        } else {
+            if (old_client_geo.size() != client_geo.size()) {
+                // Size changed. Request a new one from the client and wait on it.
+                sync_geometry(&win, frame_geo);
+                update_server_geometry(&win, frame_geo);
+                return;
+            }
+
+            // Move without size change.
+            for (auto& event : win.pending_configures) {
+                // The positional infomation in pending syncs must be updated to the new
+                // position.
+                event.geometry.frame.moveTo(frame_geo.topLeft());
+                event.geometry.client.moveTo(client_geo.topLeft());
+            }
+        }
+    }
+
+    update_server_geometry(&win, frame_geo);
+
+    do_set_geometry(win, frame_geo);
+    do_set_fullscreen(win, win.geo.update.fullscreen);
+    do_set_maximize_mode(win, win.geo.update.max_mode);
+
+    // Always recalculate client geometry in case borders changed on fullscreen/maximize
+    // changes.
+    client_geo = frame_to_client_rect(&win, frame_geo);
+
+    // Always send a synthetic configure notify in the end to enforce updates to update
+    // potential fullscreen/maximize changes. IntelliJ IDEA needed this to position its
+    // unmanageds correctly.
+    //
+    // TODO(romangg): Restrain making this call to only being issued when really necessary.
+    send_synthetic_configure_notify(&win, client_geo);
 }
 
 template<typename Win>
