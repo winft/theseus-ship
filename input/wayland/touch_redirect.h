@@ -44,7 +44,7 @@ public:
         if (waylandServer()->has_screen_locker_integration()) {
             QObject::connect(ScreenLocker::KSldApp::self(),
                              &ScreenLocker::KSldApp::lockStateChanged,
-                             this->qobject.get(),
+                             qobject.get(),
                              [this] {
                                  if (!waylandServer()->seat()->hasTouch()) {
                                      return;
@@ -82,9 +82,9 @@ public:
             device_redirect_update(this);
         }
         process_spies(
-            this->redirect->m_spies,
+            redirect->m_spies,
             std::bind(&event_spy<Redirect>::touch_down, std::placeholders::_1, event_abs));
-        process_filters(this->redirect->m_filters,
+        process_filters(redirect->m_filters,
                         std::bind(&input::event_filter<Redirect>::touch_down,
                                   std::placeholders::_1,
                                   event_abs));
@@ -95,10 +95,10 @@ public:
     {
         window_already_updated_this_cycle = false;
 
-        process_spies(this->redirect->m_spies,
+        process_spies(redirect->m_spies,
                       std::bind(&event_spy<Redirect>::touch_up, std::placeholders::_1, event));
         process_filters(
-            this->redirect->m_filters,
+            redirect->m_filters,
             std::bind(&input::event_filter<Redirect>::touch_up, std::placeholders::_1, event));
 
         window_already_updated_this_cycle = false;
@@ -119,9 +119,9 @@ public:
         window_already_updated_this_cycle = false;
 
         process_spies(
-            this->redirect->m_spies,
+            redirect->m_spies,
             std::bind(&event_spy<Redirect>::touch_motion, std::placeholders::_1, event_abs));
-        process_filters(this->redirect->m_filters,
+        process_filters(redirect->m_filters,
                         std::bind(&input::event_filter<Redirect>::touch_motion,
                                   std::placeholders::_1,
                                   event_abs));
@@ -225,11 +225,11 @@ public:
 
         if (focusNow && focusNow->control) {
             win::enter_event(focusNow, m_lastPosition.toPoint());
-            this->redirect->space.focusMousePos = m_lastPosition.toPoint();
+            redirect->space.focusMousePos = m_lastPosition.toPoint();
         }
 
         auto seat = waylandServer()->seat();
-        if (!focusNow || !focusNow->surface || this->focus.deco) {
+        if (!focusNow || !focusNow->surface || focus.deco) {
             // no new surface or internal window or on decoration -> cleanup
             seat->touches().set_focused_surface(nullptr);
             return;
@@ -245,9 +245,9 @@ public:
         focus_geometry_notifier = QObject::connect(
             focusNow->qobject.get(),
             &win::window_qobject::frame_geometry_changed,
-            this->qobject.get(),
+            qobject.get(),
             [this] {
-                auto focus_win = this->focus.window;
+                auto focus_win = focus.window;
                 if (!focus_win) {
                     return;
                 }
@@ -274,7 +274,7 @@ private:
         auto out = dev_impl->output;
 
         if (!out) {
-            auto const& outs = this->redirect->platform.base.outputs;
+            auto const& outs = redirect->platform.base.outputs;
             if (outs.empty()) {
                 return {};
             }

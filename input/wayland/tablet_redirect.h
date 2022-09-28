@@ -89,10 +89,10 @@ public:
                         button,
                         button);
 
-        process_spies(this->redirect->m_spies,
+        process_spies(redirect->m_spies,
                       std::bind(&event_spy<Redirect>::tabletToolEvent, std::placeholders::_1, &ev));
         process_filters(
-            this->redirect->m_filters,
+            redirect->m_filters,
             std::bind(&input::event_filter<Redirect>::tabletToolEvent, std::placeholders::_1, &ev));
 
         tip.down = tip_down;
@@ -107,11 +107,11 @@ public:
             pressed_buttons.tool.remove(button);
         }
 
-        process_spies(this->redirect->m_spies,
+        process_spies(redirect->m_spies,
                       std::bind(&event_spy<Redirect>::tabletToolButtonEvent,
                                 std::placeholders::_1,
                                 pressed_buttons.tool));
-        process_filters(this->redirect->m_filters,
+        process_filters(redirect->m_filters,
                         std::bind(&input::event_filter<Redirect>::tabletToolButtonEvent,
                                   std::placeholders::_1,
                                   pressed_buttons.tool));
@@ -125,11 +125,11 @@ public:
             pressed_buttons.pad.remove(button);
         }
 
-        process_spies(this->redirect->m_spies,
+        process_spies(redirect->m_spies,
                       std::bind(&event_spy<Redirect>::tabletPadButtonEvent,
                                 std::placeholders::_1,
                                 pressed_buttons.pad));
-        process_filters(this->redirect->m_filters,
+        process_filters(redirect->m_filters,
                         std::bind(&input::event_filter<Redirect>::tabletPadButtonEvent,
                                   std::placeholders::_1,
                                   pressed_buttons.pad));
@@ -137,13 +137,13 @@ public:
 
     void tabletPadStripEvent(int number, int position, bool is_finger)
     {
-        process_spies(this->redirect->m_spies,
+        process_spies(redirect->m_spies,
                       std::bind(&event_spy<Redirect>::tabletPadStripEvent,
                                 std::placeholders::_1,
                                 number,
                                 position,
                                 is_finger));
-        process_filters(this->redirect->m_filters,
+        process_filters(redirect->m_filters,
                         std::bind(&input::event_filter<Redirect>::tabletPadStripEvent,
                                   std::placeholders::_1,
                                   number,
@@ -153,13 +153,13 @@ public:
 
     void tabletPadRingEvent(int number, int position, bool is_finger)
     {
-        process_spies(this->redirect->m_spies,
+        process_spies(redirect->m_spies,
                       std::bind(&event_spy<Redirect>::tabletPadRingEvent,
                                 std::placeholders::_1,
                                 number,
                                 position,
                                 is_finger));
-        process_filters(this->redirect->m_filters,
+        process_filters(redirect->m_filters,
                         std::bind(&input::event_filter<Redirect>::tabletPadRingEvent,
                                   std::placeholders::_1,
                                   number,
