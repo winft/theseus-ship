@@ -78,23 +78,6 @@ void device_redirect_set_focus(Dev* dev, decltype(dev->focus.window) window)
 }
 
 template<typename Dev>
-void device_redirect_set_decoration(Dev* dev, decltype(dev->focus.deco) deco)
-{
-    QObject::disconnect(dev->focus.notifiers.deco_destroy);
-    auto old_deco = dev->focus.deco;
-    dev->focus.deco = deco;
-    if (deco) {
-        dev->focus.notifiers.deco_destroy
-            = QObject::connect(deco->qobject.get(),
-                               &win::deco::client_impl_qobject::destroyed,
-                               dev->qobject.get(),
-                               [dev] { dev->focus.deco = nullptr; });
-    }
-    dev->cleanupDecoration(old_deco, dev->focus.deco);
-    Q_EMIT dev->qobject->decorationChanged();
-}
-
-template<typename Dev>
 void device_redirect_set_internal_window(Dev* dev, QWindow* window)
 {
     QObject::disconnect(dev->focus.notifiers.internal_window_destroy);
@@ -132,12 +115,36 @@ void device_redirect_update_focus(Dev* dev)
 }
 
 template<typename Dev>
+void device_redirect_unset_deco(Dev* dev)
+{
+    QObject::disconnect(dev->focus.notifiers.deco_destroy);
+
+    if constexpr (requires(Dev dev) { dev.unset_deco(); }) {
+        if (dev->focus.deco) {
+            dev->unset_deco();
+        }
+    }
+
+    dev->focus.deco = nullptr;
+}
+
+template<typename Dev>
 bool device_redirect_update_decoration(Dev* dev)
 {
     auto const old_deco = dev->focus.deco;
     decltype(dev->focus.deco) new_deco{nullptr};
 
-    if (auto win = dev->at.window; win && win->control && win->control->deco.client) {
+    if (!dev->at.window) {
+        if (!old_deco) {
+            return false;
+        }
+
+        device_redirect_unset_deco(dev);
+        Q_EMIT dev->qobject->decorationChanged();
+        return true;
+    }
+
+    if (auto win = dev->at.window; win->control && win->control->deco.client) {
         auto const client_geo = win::frame_to_client_rect(win, win->geo.frame);
         if (!client_geo.contains(dev->position().toPoint())) {
             // input device above decoration
@@ -149,7 +156,21 @@ bool device_redirect_update_decoration(Dev* dev)
         return false;
     }
 
-    device_redirect_set_decoration(dev, new_deco);
+    device_redirect_unset_deco(dev);
+
+    if (new_deco) {
+        dev->focus.notifiers.deco_destroy
+            = QObject::connect(new_deco->qobject.get(),
+                               &win::deco::client_impl_qobject::destroyed,
+                               dev->qobject.get(),
+                               [dev] { dev->focus.deco = nullptr; });
+        if constexpr (requires(Dev dev) { dev.unset_deco(); }) {
+            dev->set_deco(*new_deco);
+        }
+    }
+
+    dev->focus.deco = new_deco;
+    Q_EMIT dev->qobject->decorationChanged();
     return true;
 }
 

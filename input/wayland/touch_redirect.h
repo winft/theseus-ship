@@ -206,12 +206,6 @@ public:
         // nothing to do
     }
 
-    void cleanupDecoration(win::deco::client_impl<typename space_t::window_t>* /*old*/,
-                           win::deco::client_impl<typename space_t::window_t>* /*now*/)
-    {
-        // nothing to do
-    }
-
     void focusUpdate(typename space_t::window_t* focusOld, typename space_t::window_t* focusNow)
     {
         // TODO: handle pointer grab aka popups

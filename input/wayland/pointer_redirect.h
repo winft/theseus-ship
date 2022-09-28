@@ -537,31 +537,31 @@ public:
         }
     }
 
-    void cleanupDecoration(win::deco::client_impl<typename space_t::window_t>* old,
-                           win::deco::client_impl<typename space_t::window_t>* now)
+    void unset_deco()
     {
+        assert(focus.deco);
+
         QObject::disconnect(notifiers.decoration_geometry);
         notifiers.decoration_geometry = QMetaObject::Connection();
         redirect->space.focusMousePos = position().toPoint();
 
-        if (old) {
-            // send leave event to old decoration
-            QHoverEvent event(QEvent::HoverLeave, QPointF(), QPointF());
-            QCoreApplication::instance()->sendEvent(old->decoration(), &event);
-        }
-        if (!now) {
-            // left decoration
-            return;
-        }
+        // send leave event to decoration
+        QHoverEvent event(QEvent::HoverLeave, QPointF(), QPointF());
+        QCoreApplication::instance()->sendEvent(focus.deco->decoration(), &event);
+    }
+
+    void set_deco(win::deco::client_impl<typename space_t::window_t>& now)
+    {
+        assert(!focus.deco);
 
         waylandServer()->seat()->pointers().set_focused_surface(nullptr);
 
-        auto pos = m_pos - now->client()->geo.pos();
+        auto pos = m_pos - now.client()->geo.pos();
         QHoverEvent event(QEvent::HoverEnter, pos, pos);
-        QCoreApplication::instance()->sendEvent(now->decoration(), &event);
-        win::process_decoration_move(now->client(), pos.toPoint(), m_pos.toPoint());
+        QCoreApplication::instance()->sendEvent(now.decoration(), &event);
+        win::process_decoration_move(now.client(), pos.toPoint(), m_pos.toPoint());
 
-        auto window = focus.deco->client();
+        auto window = now.client();
 
         notifiers.decoration_geometry = QObject::connect(
             window->qobject.get(),
@@ -711,10 +711,11 @@ private:
             QCoreApplication::sendEvent(focus_internal, &event);
             device_redirect_set_internal_window(this, nullptr);
         }
-        if (auto focus_deco = focus.deco) {
+        if (focus.deco) {
             QHoverEvent event(QEvent::HoverLeave, QPointF(), QPointF());
-            QCoreApplication::instance()->sendEvent(focus_deco->decoration(), &event);
-            device_redirect_set_decoration(this, nullptr);
+            QCoreApplication::instance()->sendEvent(focus.deco->decoration(), &event);
+            device_redirect_unset_deco(this);
+            Q_EMIT qobject->decorationChanged();
         }
         if (auto focus_window = focus.window) {
             if (focus_window->control) {

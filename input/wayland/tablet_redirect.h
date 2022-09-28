@@ -167,11 +167,6 @@ public:
                                   is_finger));
     }
 
-    void cleanupDecoration(win::deco::client_impl<typename space_t::window_t>* /*old*/,
-                           win::deco::client_impl<typename space_t::window_t>* /*now*/)
-    {
-    }
-
     void cleanupInternalWindow(QWindow* /*old*/, QWindow* /*now*/)
     {
     }
