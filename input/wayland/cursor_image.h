@@ -207,19 +207,23 @@ public:
         cursorSurface->frameRendered(m_surfaceRenderedTimer.elapsed());
     }
 
-    void updateDecoration()
+    void unset_deco()
     {
         QObject::disconnect(m_decorationConnection);
-        auto deco = redirect.pointer->focus.deco;
-        auto c = deco ? deco->client() : nullptr;
-        if (c) {
-            m_decorationConnection = QObject::connect(c->qobject.get(),
-                                                      &win::window_qobject::moveResizeCursorChanged,
-                                                      qobject.get(),
-                                                      [this] { updateDecorationCursor(); });
-        } else {
-            m_decorationConnection = QMetaObject::Connection();
-        }
+        m_decorationConnection = QMetaObject::Connection();
+        updateDecorationCursor();
+    }
+
+    template<typename Deco>
+    void set_deco(Deco& deco)
+    {
+        QObject::disconnect(m_decorationConnection);
+        auto win = deco.client();
+        assert(win);
+        m_decorationConnection = QObject::connect(win->qobject.get(),
+                                                  &win::window_qobject::moveResizeCursorChanged,
+                                                  qobject.get(),
+                                                  [this] { updateDecorationCursor(); });
         updateDecorationCursor();
     }
 

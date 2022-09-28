@@ -544,7 +544,7 @@ public:
         QCoreApplication::instance()->sendEvent(focus.deco->decoration(), &event);
 
         focus.deco = nullptr;
-        redirect->cursor->cursor_image->updateDecoration();
+        redirect->cursor->cursor_image->unset_deco();
     }
 
     void set_deco(win::deco::client_impl<typename space_t::window_t>& now)
@@ -584,7 +584,7 @@ public:
             });
 
         focus.deco = &now;
-        redirect->cursor->cursor_image->updateDecoration();
+        redirect->cursor->cursor_image->set_deco(now);
     }
 
     void focusUpdate(typename space_t::window_t* focusOld, typename space_t::window_t* focusNow)
