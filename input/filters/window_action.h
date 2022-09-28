@@ -10,7 +10,6 @@
 #include "base/wayland/server.h"
 #include "input/event_filter.h"
 #include "input/pointer_redirect.h"
-#include "input/touch_redirect.h"
 #include "main.h"
 #include "win/input.h"
 #include "win/transient.h"

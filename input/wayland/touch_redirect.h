@@ -8,9 +8,9 @@
 #include "device_redirect.h"
 
 #include "base/wayland/server.h"
+#include "input/device_redirect.h"
 #include "input/event_filter.h"
 #include "input/event_spy.h"
-#include "input/touch_redirect.h"
 #include "main.h"
 
 #include <KScreenLocker/KsldApp>
@@ -24,14 +24,16 @@ namespace KWin::input::wayland
 {
 
 template<typename Redirect>
-class touch_redirect : public input::touch_redirect<Redirect>
+class touch_redirect
 {
 public:
     using base_t = typename Redirect::platform_t::base_t;
     using space_t = typename base_t::space_t;
+    using window_t = typename space_t::window_t;
 
     explicit touch_redirect(Redirect* redirect)
-        : input::touch_redirect<Redirect>(redirect)
+        : qobject{std::make_unique<device_redirect_qobject>()}
+        , redirect{redirect}
     {
     }
 
@@ -54,12 +56,12 @@ public:
         }
     }
 
-    QPointF position() const override
+    QPointF position() const
     {
         return m_lastPosition;
     }
 
-    bool positionValid() const override
+    bool positionValid() const
     {
         assert(m_touches >= 0);
 
@@ -67,7 +69,7 @@ public:
         return m_touches;
     }
 
-    void process_down(touch_down_event const& event) override
+    void process_down(touch_down_event const& event)
     {
         auto const event_abs = touch_down_event({event.id,
                                                  get_abs_pos(event.pos, event.base.dev),
@@ -89,7 +91,7 @@ public:
         window_already_updated_this_cycle = false;
     }
 
-    void process_up(touch_up_event const& event) override
+    void process_up(touch_up_event const& event)
     {
         window_already_updated_this_cycle = false;
 
@@ -107,7 +109,7 @@ public:
         }
     }
 
-    void process_motion(touch_motion_event const& event) override
+    void process_motion(touch_motion_event const& event)
     {
         auto const event_abs = touch_motion_event({event.id,
                                                    get_abs_pos(event.pos, event.base.dev),
@@ -127,7 +129,7 @@ public:
         window_already_updated_this_cycle = false;
     }
 
-    bool focusUpdatesBlocked() override
+    bool focusUpdatesBlocked()
     {
         if (window_already_updated_this_cycle) {
             return true;
@@ -146,7 +148,7 @@ public:
         return false;
     }
 
-    void cancel() override
+    void cancel()
     {
         if (!waylandServer()->seat()->hasTouch()) {
             return;
@@ -155,22 +157,22 @@ public:
         m_idMapper.clear();
     }
 
-    void frame() override
+    void frame()
     {
         waylandServer()->seat()->touches().touch_frame();
     }
 
-    void insertId(qint32 internalId, qint32 wraplandId) override
+    void insertId(qint32 internalId, qint32 wraplandId)
     {
         m_idMapper.insert(internalId, wraplandId);
     }
 
-    void removeId(qint32 internalId) override
+    void removeId(qint32 internalId)
     {
         m_idMapper.remove(internalId);
     }
 
-    qint32 mappedId(qint32 internalId) override
+    qint32 mappedId(qint32 internalId)
     {
         auto it = m_idMapper.constFind(internalId);
         if (it != m_idMapper.constEnd()) {
@@ -179,39 +181,38 @@ public:
         return -1;
     }
 
-    void setDecorationPressId(qint32 id) override
+    void setDecorationPressId(qint32 id)
     {
         m_decorationId = id;
     }
 
-    qint32 decorationPressId() const override
+    qint32 decorationPressId() const
     {
         return m_decorationId;
     }
 
-    void setInternalPressId(qint32 id) override
+    void setInternalPressId(qint32 id)
     {
         m_internalId = id;
     }
 
-    qint32 internalPressId() const override
+    qint32 internalPressId() const
     {
         return m_internalId;
     }
 
-    void cleanupInternalWindow(QWindow* /*old*/, QWindow* /*now*/) override
+    void cleanupInternalWindow(QWindow* /*old*/, QWindow* /*now*/)
     {
         // nothing to do
     }
 
     void cleanupDecoration(win::deco::client_impl<typename space_t::window_t>* /*old*/,
-                           win::deco::client_impl<typename space_t::window_t>* /*now*/) override
+                           win::deco::client_impl<typename space_t::window_t>* /*now*/)
     {
         // nothing to do
     }
 
-    void focusUpdate(typename space_t::window_t* focusOld,
-                     typename space_t::window_t* focusNow) override
+    void focusUpdate(typename space_t::window_t* focusOld, typename space_t::window_t* focusNow)
     {
         // TODO: handle pointer grab aka popups
 
@@ -259,6 +260,12 @@ public:
                     + focus_win->geo.pos());
             });
     }
+
+    std::unique_ptr<device_redirect_qobject> qobject;
+    Redirect* redirect;
+
+    device_redirect_at<window_t> at;
+    device_redirect_focus<window_t> focus;
 
 private:
     QPointF get_abs_pos(QPointF const& pos, touch* dev)

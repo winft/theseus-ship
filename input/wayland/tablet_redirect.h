@@ -18,13 +18,15 @@ namespace KWin::input::wayland
 {
 
 template<typename Redirect>
-class tablet_redirect : public device_redirect<Redirect>
+class tablet_redirect
 {
 public:
     using space_t = typename Redirect::platform_t::base_t::space_t;
+    using window_t = typename space_t::window_t;
 
     explicit tablet_redirect(Redirect* redirect)
-        : device_redirect<Redirect>(redirect)
+        : qobject{std::make_unique<device_redirect_qobject>()}
+        , redirect{redirect}
     {
     }
 
@@ -33,12 +35,12 @@ public:
         device_redirect_init(this);
     }
 
-    QPointF position() const override
+    QPointF position() const
     {
         return last_position;
     }
 
-    bool positionValid() const override
+    bool positionValid() const
     {
         return !last_position.isNull();
     }
@@ -166,18 +168,23 @@ public:
     }
 
     void cleanupDecoration(win::deco::client_impl<typename space_t::window_t>* /*old*/,
-                           win::deco::client_impl<typename space_t::window_t>* /*now*/) override
+                           win::deco::client_impl<typename space_t::window_t>* /*now*/)
     {
     }
 
-    void cleanupInternalWindow(QWindow* /*old*/, QWindow* /*now*/) override
+    void cleanupInternalWindow(QWindow* /*old*/, QWindow* /*now*/)
     {
     }
 
-    void focusUpdate(typename space_t::window_t* /*old*/,
-                     typename space_t::window_t* /*now*/) override
+    void focusUpdate(typename space_t::window_t* /*old*/, typename space_t::window_t* /*now*/)
     {
     }
+
+    std::unique_ptr<device_redirect_qobject> qobject;
+    Redirect* redirect;
+
+    device_redirect_at<window_t> at;
+    device_redirect_focus<window_t> focus;
 
 private:
     struct {

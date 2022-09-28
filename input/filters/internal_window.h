@@ -13,7 +13,6 @@
 #include "input/keyboard_redirect.h"
 #include "input/pointer_redirect.h"
 #include "input/qt_event.h"
-#include "input/touch_redirect.h"
 #include "input/xkb/helpers.h"
 #include "win/deco.h"
 

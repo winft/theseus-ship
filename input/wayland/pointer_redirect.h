@@ -49,13 +49,15 @@ static QRegion getConstraintRegion(Window* t, T* constraint)
 }
 
 template<typename Redirect>
-class pointer_redirect : public device_redirect<Redirect>
+class pointer_redirect
 {
 public:
     using space_t = typename Redirect::platform_t::base_t::space_t;
+    using window_t = typename space_t::window_t;
 
     explicit pointer_redirect(Redirect* redirect)
-        : device_redirect<Redirect>(redirect)
+        : qobject{std::make_unique<device_redirect_qobject>()}
+        , redirect{redirect}
         , motions{*this}
     {
     }
@@ -337,7 +339,7 @@ public:
         return constraints.confined || constraints.locked;
     }
 
-    bool focusUpdatesBlocked() override
+    bool focusUpdatesBlocked()
     {
         if (waylandServer()->seat()->drags().is_pointer_drag()) {
             // ignore during drag and drop
@@ -515,7 +517,7 @@ public:
         waylandServer()->seat()->pointers().frame();
     }
 
-    void cleanupInternalWindow(QWindow* old, QWindow* now) override
+    void cleanupInternalWindow(QWindow* old, QWindow* now)
     {
         QObject::disconnect(notifiers.internal_window);
         notifiers.internal_window = QMetaObject::Connection();
@@ -539,7 +541,7 @@ public:
     }
 
     void cleanupDecoration(win::deco::client_impl<typename space_t::window_t>* old,
-                           win::deco::client_impl<typename space_t::window_t>* now) override
+                           win::deco::client_impl<typename space_t::window_t>* now)
     {
         QObject::disconnect(notifiers.decoration_geometry);
         notifiers.decoration_geometry = QMetaObject::Connection();
@@ -588,8 +590,7 @@ public:
             });
     }
 
-    void focusUpdate(typename space_t::window_t* focusOld,
-                     typename space_t::window_t* focusNow) override
+    void focusUpdate(typename space_t::window_t* focusOld, typename space_t::window_t* focusNow)
     {
         if (focusOld) {
             // Need to check on control because of Xwayland unmanaged windows.
@@ -672,10 +673,16 @@ public:
         updatePointerConstraints();
     }
 
-    QPointF position() const override
+    QPointF position() const
     {
         return m_pos.toPoint();
     }
+
+    std::unique_ptr<device_redirect_qobject> qobject;
+    Redirect* redirect;
+
+    device_redirect_at<window_t> at;
+    device_redirect_focus<window_t> focus;
 
     bool cursor_update_blocking{false};
 

@@ -214,7 +214,11 @@ void device_redirect_update(Dev* dev)
     typename space_t::window_t* toplevel = nullptr;
     QWindow* internal_window = nullptr;
 
-    if (dev->positionValid()) {
+    auto position_valid{true};
+    if constexpr (requires(Dev dev) { dev.positionValid(); }) {
+        position_valid = dev->positionValid();
+    }
+    if (position_valid) {
         auto const pos = dev->position().toPoint();
         auto& space = dev->redirect->space;
         internal_window = device_redirect_find_internal_window(space.windows, pos);
@@ -227,8 +231,10 @@ void device_redirect_update(Dev* dev)
     // Always set the toplevel at the position of the input device.
     device_redirect_set_at(dev, toplevel);
 
-    if (dev->focusUpdatesBlocked()) {
-        return;
+    if constexpr (requires(Dev dev) { dev.focusUpdatesBlocked(); }) {
+        if (dev->focusUpdatesBlocked()) {
+            return;
+        }
     }
 
     if (internal_window) {
