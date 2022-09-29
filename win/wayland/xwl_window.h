@@ -45,7 +45,7 @@ public:
             // avoid "setReadyForPainting()" function calling overhead
             if (this->sync_request.counter == XCB_NONE) {
                 // cannot detect complete redraw, consider done now
-                this->first_geo_synced = true;
+                this->synced_geometry.init = false;
                 set_ready_for_painting(*this);
             }
         }
@@ -85,7 +85,7 @@ public:
     {
         assert(!this->remnant);
         assert(this->space.base.render->compositor->scene);
-        assert(this->damage_handle == XCB_NONE);
+        assert(this->damage.handle == XCB_NONE);
 
         discard_shape(*this);
         this->render_data.damage_region = QRect({}, this->geo.size());

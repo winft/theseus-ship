@@ -926,7 +926,7 @@ bool update_server_geometry(Win* win, QRect const& frame_geo)
     win->synced_geometry.fullscreen = win->geo.update.fullscreen;
 
     if (old_outer_geo.size() != outer_geo.size() || old_rel_wrapper_geo != rel_wrapper_geo
-        || !win->first_geo_synced) {
+        || win->synced_geometry.init) {
         win->xcb_windows.outer.set_geometry(outer_geo);
         win->xcb_windows.wrapper.set_geometry(rel_wrapper_geo);
         win->xcb_windows.client.resize(rel_wrapper_geo.size());
@@ -966,7 +966,7 @@ void sync_geometry(Win* win, QRect const& frame_geo)
     auto const client_geo = frame_to_client_rect(win, frame_geo);
 
     assert(win->sync_request.counter != XCB_NONE);
-    assert(win->synced_geometry.client != client_geo || !win->first_geo_synced);
+    assert(win->synced_geometry.client != client_geo || win->synced_geometry.init);
 
     send_sync_request(win);
     win->pending_configures.push_back({
@@ -1230,7 +1230,7 @@ void do_set_geometry(Win& win, QRect const& frame_geo)
 
     auto const old_frame_geo = win.geo.frame;
 
-    if (old_frame_geo == frame_geo && win.first_geo_synced) {
+    if (old_frame_geo == frame_geo && !win.synced_geometry.init) {
         return;
     }
 
@@ -1357,7 +1357,7 @@ void set_frame_geometry(Win& win, QRect const& rect)
     auto const old_client_geo = win.synced_geometry.client;
     auto client_geo = frame_to_client_rect(&win, frame_geo);
 
-    if (!win.first_geo_synced) {
+    if (win.synced_geometry.init) {
         // Initial sync-up after taking control of an unmapped window.
 
         if (win.sync_request.counter) {
@@ -1397,7 +1397,7 @@ void set_frame_geometry(Win& win, QRect const& rect)
         do_set_geometry(win, frame_geo);
         do_set_fullscreen(win, win.geo.update.fullscreen);
         do_set_maximize_mode(win, win.geo.update.max_mode);
-        win.first_geo_synced = true;
+        win.synced_geometry.init = false;
         return;
     }
 

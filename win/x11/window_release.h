@@ -89,11 +89,11 @@ void remove_controlled_window_from_space(Space& space, Win* win)
 template<typename Win>
 void destroy_damage_handle(Win& win)
 {
-    if (win.damage_handle == XCB_NONE) {
+    if (win.damage.handle == XCB_NONE) {
         return;
     }
-    xcb_damage_destroy(connection(), win.damage_handle);
-    win.damage_handle = XCB_NONE;
+    xcb_damage_destroy(connection(), win.damage.handle);
+    win.damage.handle = XCB_NONE;
 }
 
 template<typename Win>
@@ -134,7 +134,7 @@ Win* create_remnant_window(Win& source)
 
     transfer_remnant_data(source, *win);
 
-    assert(win->damage_handle == XCB_NONE);
+    assert(win->damage.handle == XCB_NONE);
     win->xcb_visual = source.xcb_visual;
     win->client_machine = source.client_machine;
     win->m_wmClientLeader = get_wm_client_leader(source);

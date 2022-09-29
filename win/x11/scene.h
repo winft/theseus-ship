@@ -147,15 +147,15 @@ template<typename Win>
 void setup_compositing(Win& win)
 {
     assert(!win.remnant);
-    assert(win.damage_handle == XCB_NONE);
+    assert(win.damage.handle == XCB_NONE);
 
     if (!win.space.base.render->compositor->scene) {
         return;
     }
 
-    win.damage_handle = xcb_generate_id(connection());
+    win.damage.handle = xcb_generate_id(connection());
     xcb_damage_create(
-        connection(), win.damage_handle, win.frameId(), XCB_DAMAGE_REPORT_LEVEL_NON_EMPTY);
+        connection(), win.damage.handle, win.frameId(), XCB_DAMAGE_REPORT_LEVEL_NON_EMPTY);
 
     discard_shape(win);
     win.render_data.damage_region = QRect({}, win.geo.size());

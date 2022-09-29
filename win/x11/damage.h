@@ -13,6 +13,12 @@
 namespace KWin::win::x11
 {
 
+struct damage {
+    xcb_damage_damage_t handle{XCB_NONE};
+    bool is_reply_pending{false};
+    xcb_xfixes_fetch_region_cookie_t region_cookie;
+};
+
 template<typename Win>
 void damage_handle_notify_event(Win& win)
 {
@@ -54,7 +60,7 @@ bool damage_reset_and_fetch(Win& win)
         return false;
     }
 
-    assert(win.damage_handle != XCB_NONE);
+    assert(win.damage.handle != XCB_NONE);
 
     auto conn = connection();
 
@@ -62,16 +68,16 @@ bool damage_reset_and_fetch(Win& win)
     // resetting the damaged state.
     xcb_xfixes_region_t region = xcb_generate_id(conn);
     xcb_xfixes_create_region(conn, region, 0, nullptr);
-    xcb_damage_subtract(conn, win.damage_handle, 0, region);
+    xcb_damage_subtract(conn, win.damage.handle, 0, region);
 
     // Send a fetch-region request and destroy the region
-    win.damage_region_cookie = xcb_xfixes_fetch_region_unchecked(conn, region);
+    win.damage.region_cookie = xcb_xfixes_fetch_region_unchecked(conn, region);
     xcb_xfixes_destroy_region(conn, region);
 
     win.render_data.is_damaged = false;
-    win.is_damage_reply_pending = true;
+    win.damage.is_reply_pending = true;
 
-    return win.is_damage_reply_pending;
+    return win.damage.is_reply_pending;
 }
 
 /**
@@ -82,14 +88,14 @@ bool damage_reset_and_fetch(Win& win)
 template<typename Win>
 void damage_fetch_region_reply(Win& win)
 {
-    if (!win.is_damage_reply_pending) {
+    if (!win.damage.is_reply_pending) {
         return;
     }
 
-    win.is_damage_reply_pending = false;
+    win.damage.is_reply_pending = false;
 
     // Get the fetch-region reply
-    auto reply = xcb_xfixes_fetch_region_reply(connection(), win.damage_region_cookie, nullptr);
+    auto reply = xcb_xfixes_fetch_region_reply(connection(), win.damage.region_cookie, nullptr);
     if (!reply) {
         return;
     }

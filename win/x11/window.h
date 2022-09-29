@@ -9,6 +9,7 @@
 #include "client.h"
 #include "client_machine.h"
 #include "control.h"
+#include "damage.h"
 #include "deco.h"
 #include "desktop_space.h"
 #include "focus.h"
@@ -20,10 +21,12 @@
 #include "move.h"
 #include "scene.h"
 #include "shortcut.h"
+#include "sync.h"
 #include "transient.h"
 #include "types.h"
 #include "window_release.h"
 #include "xcb.h"
+#include "xcb_windows.h"
 
 #include "base/x11/xcb/geometry_hints.h"
 #include "base/x11/xcb/motif_hints.h"
@@ -471,23 +474,7 @@ public:
 
     QString iconic_caption;
 
-    struct {
-        // Most outer window that encompasses all other windows.
-        base::x11::xcb::window outer{};
-
-        // Window with the same dimensions as client.
-        // TODO(romangg): Why do we need this again?
-        base::x11::xcb::window wrapper{};
-
-        // The actual client window.
-        base::x11::xcb::window client{};
-
-        // Including decoration.
-        base::x11::xcb::window input{};
-
-        // For move-resize operations.
-        base::x11::xcb::window grab{};
-    } xcb_windows;
+    x11::xcb_windows xcb_windows;
 
     x11::client_machine* client_machine{nullptr};
     xcb_window_t m_wmClientLeader{XCB_WINDOW_NONE};
@@ -517,40 +504,12 @@ public:
 
     qint64 kill_helper_pid{0};
 
-    struct {
-        xcb_sync_counter_t counter{XCB_NONE};
-        xcb_sync_alarm_t alarm{XCB_NONE};
+    x11::sync_request sync_request;
 
-        // The update request number is the serial of our latest configure request.
-        int64_t update_request_number{0};
-        xcb_timestamp_t timestamp{XCB_NONE};
-
-        int suppressed{0};
-    } sync_request;
-
-    struct configure_event {
-        int64_t update_request_number{0};
-
-        // Geometry to apply after a resize operation has been completed.
-        struct {
-            QRect frame;
-            // TODO(romangg): instead of client geometry remember deco and extents margins?
-            QRect client;
-            maximize_mode max_mode{maximize_mode::restore};
-            bool fullscreen{false};
-        } geometry;
-    };
     std::vector<configure_event> pending_configures;
 
     // The geometry clients are configured with via the sync extension.
-    struct {
-        QRect frame;
-        QRect client;
-        maximize_mode max_mode{maximize_mode::restore};
-        bool fullscreen{false};
-    } synced_geometry;
-
-    bool first_geo_synced{false};
+    x11::synced_geometry synced_geometry;
 
     QTimer* syncless_resize_retarder{nullptr};
 
@@ -564,9 +523,7 @@ public:
     base::x11::xcb::geometry_hints geometry_hints;
     base::x11::xcb::motif_hints motif_hints;
 
-    xcb_damage_damage_t damage_handle{XCB_NONE};
-    bool is_damage_reply_pending{false};
-    xcb_xfixes_fetch_region_cookie_t damage_region_cookie;
+    x11::damage damage;
 
     QTimer* focus_out_timer{nullptr};
     QTimer* ping_timer{nullptr};
