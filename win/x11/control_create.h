@@ -11,6 +11,7 @@
 #include "client_machine.h"
 #include "deco.h"
 #include "focus_stealing.h"
+#include "meta.h"
 #include "placement.h"
 #include "session.h"
 #include "startup_info.h"
@@ -244,7 +245,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         | NET::WM2OpaqueRegion | NET::WM2DesktopFileName | NET::WM2GTKFrameExtents
         | NET::WM2GTKApplicationId;
 
-    auto wmClientLeaderCookie = win->fetchWmClientLeader();
+    auto wmClientLeaderCookie = fetch_wm_client_leader(*win);
     auto skipCloseAnimationCookie = fetch_skip_close_animation(*win);
     auto showOnScreenEdgeCookie = fetch_show_on_screen_edge(win);
     auto firstInTabBoxCookie = fetch_first_in_tabbox(win);
@@ -262,9 +263,9 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     }
     win->colormap = attr->colormap;
 
-    win->getResourceClass();
-    win->readWmClientLeader(wmClientLeaderCookie);
-    win->getWmClientMachine();
+    fetch_wm_class(*win);
+    read_wm_client_leader(*win, wmClientLeaderCookie);
+    fetch_wm_client_machine(*win);
     get_sync_counter(win);
 
     // First only read the caption text, so that win::setup_rules(..) can use it for matching,

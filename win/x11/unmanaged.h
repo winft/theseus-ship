@@ -6,7 +6,9 @@
 #pragma once
 
 #include "event.h"
+#include "meta.h"
 #include "window_release.h"
+#include "xcb.h"
 
 #include "base/x11/grabs.h"
 #include "base/x11/xcb/extensions.h"
@@ -86,9 +88,13 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
                                NET::WMWindowType | NET::WMPid,
                                NET::WM2Opacity | NET::WM2WindowRole | NET::WM2WindowClass
                                    | NET::WM2OpaqueRegion);
-    win->getResourceClass();
-    win->getWmClientLeader();
-    win->getWmClientMachine();
+    fetch_wm_class(*win);
+
+    // TODO(romangg): Can't chain these two calls, because the second only takes non-const refs.
+    auto client_leader_prop = fetch_wm_client_leader(*win);
+    read_wm_client_leader(*win, client_leader_prop);
+
+    fetch_wm_client_machine(*win);
     if (base::x11::xcb::extensions::self()->is_shape_available()) {
         xcb_shape_select_input(connection(), xcb_win, true);
     }
@@ -173,7 +179,7 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* event)
         Q_EMIT win->qobject->windowRoleChanged();
     }
     if (dirtyProperties2.testFlag(NET::WM2WindowClass)) {
-        win->getResourceClass();
+        fetch_wm_class(*win);
     }
 
     auto const eventType = event->response_type & ~0x80;

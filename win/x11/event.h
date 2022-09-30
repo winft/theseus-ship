@@ -16,6 +16,7 @@
 #include "transient.h"
 #include "user_time.h"
 #include "window_release.h"
+#include "xcb.h"
 
 #include "base/os/kkeyserver.h"
 #include "base/x11/xcb/extensions.h"
@@ -158,7 +159,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
             Q_EMIT win->qobject->windowRoleChanged();
         }
         if (dirtyProperties2.testFlag(NET::WM2WindowClass)) {
-            win->getResourceClass();
+            fetch_wm_class(*win);
         }
         if (dirtyProperties2.testFlag(NET::WM2BlockCompositing)) {
             win->setBlockingCompositing(win->info->isBlockingCompositing());
@@ -483,7 +484,8 @@ void property_notify_event_prepare(Win& win, xcb_property_notify_event_t* event)
 
     auto& atoms = win.space.atoms;
     if (event->atom == atoms->wm_client_leader) {
-        win.getWmClientLeader();
+        auto prop = fetch_wm_client_leader(win);
+        read_wm_client_leader(win, prop);
     } else if (event->atom == atoms->kde_net_wm_shadow) {
         win::update_shadow(&win);
     } else if (event->atom == atoms->kde_skip_close_animation) {

@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "meta.h"
 #include "tool_windows.h"
 #include "window_find.h"
 
@@ -436,7 +437,7 @@ auto find_client_leader_group(Win const* win) -> decltype(win->group)
             continue;
         }
 
-        if (other_casted->wmClientLeader() != win->wmClientLeader()) {
+        if (get_wm_client_leader(*other_casted) != get_wm_client_leader(*win)) {
             continue;
         }
 

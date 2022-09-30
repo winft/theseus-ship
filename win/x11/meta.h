@@ -311,9 +311,9 @@ bool belong_to_same_application(Win const* c1, Win const* c2, win::same_client_c
     } else if (c1->group == c2->group) {
         // same group
         same_app = true;
-    } else if (c1->wmClientLeader() == c2->wmClientLeader()
-               && c1->wmClientLeader() != c1->xcb_window
-               && c2->wmClientLeader() != c2->xcb_window) {
+    } else if (get_wm_client_leader(*c1) == get_wm_client_leader(*c2)
+               && get_wm_client_leader(*c1) != c1->xcb_window
+               && get_wm_client_leader(*c2) != c2->xcb_window) {
         // if WM_CLIENT_LEADER is not set, it returns xcb_window,
         // don't use in this test then same client leader
         same_app = true;
@@ -323,8 +323,9 @@ bool belong_to_same_application(Win const* c1, Win const* c2, win::same_client_c
                 && !flags(checks & win::same_client_check::allow_cross_process))
                || c1->wmClientMachine(false) != c2->wmClientMachine(false)) {
         // different processes
-    } else if (c1->wmClientLeader() != c2->wmClientLeader()
-               && c1->wmClientLeader() != c1->xcb_window && c2->wmClientLeader() != c2->xcb_window
+    } else if (get_wm_client_leader(*c1) != get_wm_client_leader(*c2)
+               && get_wm_client_leader(*c1) != c1->xcb_window
+               && get_wm_client_leader(*c2) != c2->xcb_window
                && !flags(checks & win::same_client_check::allow_cross_process)) {
         // if WM_CLIENT_LEADER is not set, it returns xcb_window,
         // don't use in this test then
@@ -378,6 +379,41 @@ NET::WindowType get_window_type(Win& win)
         wt = win.transient->lead() ? NET::Dialog : NET::Normal;
     }
     return wt;
+}
+
+template<typename Win>
+QByteArray get_wm_client_machine(Win& win, bool use_localhost)
+{
+    assert(win.client_machine);
+
+    if (use_localhost && win.client_machine->is_local()) {
+        // Special name for the local machine (localhost).
+        return client_machine::localhost();
+    }
+    return win.client_machine->hostname();
+}
+
+template<typename Win>
+xcb_window_t get_wm_client_leader(Win& win)
+{
+    if (win.m_wmClientLeader != XCB_WINDOW_NONE) {
+        return win.m_wmClientLeader;
+    }
+    return win.xcb_window;
+}
+
+template<typename Win>
+void fetch_wm_client_machine(Win& win)
+{
+    win.client_machine->resolve(win.xcb_window, get_wm_client_leader(win));
+}
+
+template<typename Win>
+void fetch_wm_class(Win& win)
+{
+    set_wm_class(win,
+                 QByteArray(win.info->windowClassName()).toLower(),
+                 QByteArray(win.info->windowClassClass()).toLower());
 }
 
 template<typename Win>

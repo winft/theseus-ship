@@ -6,10 +6,22 @@
 #pragma once
 
 #include "base/x11/xcb/property.h"
-#include "win/actions.h"
 
 namespace KWin::win::x11
 {
+
+template<typename Win>
+base::x11::xcb::property fetch_wm_client_leader(Win const& win)
+{
+    return base::x11::xcb::property(
+        false, win.xcb_window, win.space.atoms->wm_client_leader, XCB_ATOM_WINDOW, 0, 10000);
+}
+
+template<typename Win>
+void read_wm_client_leader(Win& win, base::x11::xcb::property& prop)
+{
+    win.m_wmClientLeader = prop.value<xcb_window_t>(win.xcb_window);
+}
 
 template<typename Win>
 base::x11::xcb::property fetch_skip_close_animation(Win&& win)

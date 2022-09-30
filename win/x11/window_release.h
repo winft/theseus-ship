@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include "meta.h"
+
 #include "base/x11/grabs.h"
 #include "base/x11/xcb/extensions.h"
 #include "utils/blocker.h"
@@ -132,7 +134,7 @@ Win* create_remnant_window(Win& source)
     assert(win->damage_handle == XCB_NONE);
     win->xcb_visual = source.xcb_visual;
     win->client_machine = source.client_machine;
-    win->m_wmClientLeader = source.wmClientLeader();
+    win->m_wmClientLeader = get_wm_client_leader(source);
 
     space_add_remnant(source, *win);
     scene_add_remnant(*win);

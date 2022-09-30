@@ -107,21 +107,7 @@ public:
 
     QByteArray wmClientMachine(bool use_localhost) const override
     {
-        assert(client_machine);
-
-        if (use_localhost && client_machine->is_local()) {
-            // Special name for the local machine (localhost).
-            return client_machine::localhost();
-        }
-        return client_machine->hostname();
-    }
-
-    xcb_window_t wmClientLeader() const
-    {
-        if (m_wmClientLeader != XCB_WINDOW_NONE) {
-            return m_wmClientLeader;
-        }
-        return this->xcb_window;
+        return get_wm_client_machine(*this, use_localhost);
     }
 
     bool isLocalhost() const override
@@ -1284,39 +1270,6 @@ public:
         xcb_windows.client.kill();
 
         x11::destroy_window(this);
-    }
-
-    void getResourceClass()
-    {
-        set_wm_class(*this,
-                     QByteArray(this->info->windowClassName()).toLower(),
-                     QByteArray(this->info->windowClassClass()).toLower());
-    }
-
-    void getWmClientMachine()
-    {
-        this->client_machine->resolve(this->xcb_window, this->wmClientLeader());
-    }
-
-    base::x11::xcb::property fetchWmClientLeader() const
-    {
-        return base::x11::xcb::property(false,
-                                        this->xcb_window,
-                                        this->space.atoms->wm_client_leader,
-                                        XCB_ATOM_WINDOW,
-                                        0,
-                                        10000);
-    }
-
-    void readWmClientLeader(base::x11::xcb::property& prop)
-    {
-        this->m_wmClientLeader = prop.value<xcb_window_t>(this->xcb_window);
-    }
-
-    void getWmClientLeader()
-    {
-        auto prop = fetchWmClientLeader();
-        readWmClientLeader(prop);
     }
 
     /**
