@@ -18,7 +18,7 @@ namespace KWin::win
 {
 
 template<typename Win>
-QString caption(Win* win)
+QString caption(Win const* win)
 {
     if (win->remnant) {
         return win->remnant->data.caption;
@@ -32,7 +32,7 @@ QString caption(Win* win)
 }
 
 template<typename Win>
-QString shortcut_caption_suffix(Win* win)
+QString shortcut_caption_suffix(Win const* win)
 {
     if (win->control->shortcut.isEmpty()) {
         return QString();
@@ -83,7 +83,7 @@ QString icon_from_desktop_file(Win* win)
  * user, can be closed, etc.
  */
 template<typename Win>
-bool is_special_window(Win* win)
+bool is_special_window(Win const* win)
 {
     return is_desktop(win) || is_dock(win) || is_splash(win) || is_toolbar(win)
         || is_notification(win) || is_critical_notification(win) || is_on_screen_display(win);
