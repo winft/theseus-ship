@@ -61,10 +61,6 @@ public:
     using type = space<base_t>;
     using window_t = Toplevel<type>;
     using x11_window = xwl_window<type>;
-
-    // TODO(romangg): Remove once we can rely on Space::x11_window always being the group window.
-    using x11_group_window = x11::window<type>;
-
     using wayland_window = wayland::window<type>;
     using internal_window_t = internal_window<type>;
     using input_t = input::wayland::redirect<typename Base::input_t, type>;

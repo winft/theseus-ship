@@ -487,7 +487,7 @@ struct x11_test_window {
     } client;
 
     struct {
-        win::x11::window<Test::space>* window{nullptr};
+        win::wayland::xwl_window<Test::space>* window{nullptr};
     } server;
 };
 

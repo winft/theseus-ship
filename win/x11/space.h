@@ -39,9 +39,6 @@ public:
     using type = space<Base>;
     using window_t = Toplevel<type>;
     using x11_window = window<type>;
-
-    // TODO(romangg): Remove once we can rely on Space::x11_window always being the group window.
-    using x11_group_window = x11_window;
     using input_t = input::x11::redirect<typename Base::input_t, type>;
 
     // Not used on X11.

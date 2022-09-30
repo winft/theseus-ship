@@ -40,7 +40,7 @@ class group
 {
 public:
     using group_t = group<Space>;
-    using x11_window_t = typename Space::x11_group_window;
+    using x11_window_t = typename Space::x11_window;
 
     group(xcb_window_t xcb_leader, Space& space)
         : xcb_leader{xcb_leader}
