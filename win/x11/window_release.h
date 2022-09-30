@@ -5,7 +5,9 @@
 */
 #pragma once
 
+#include "client.h"
 #include "meta.h"
+#include "transient.h"
 
 #include "base/x11/grabs.h"
 #include "base/x11/xcb/extensions.h"

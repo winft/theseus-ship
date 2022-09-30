@@ -9,10 +9,15 @@
 #include "meta.h"
 #include "remnant.h"
 #include "space_window_release.h"
-#include "x11/win_info.h"
 
 namespace KWin::win
 {
+
+namespace x11
+{
+template<typename Win>
+class win_info;
+}
 
 template<typename Win>
 win::remnant create_remnant(Win& source)

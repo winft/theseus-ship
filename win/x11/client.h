@@ -5,10 +5,9 @@
 */
 #pragma once
 
-#include "geo.h"
-#include "input.h"
-
 #include "base/logging.h"
+#include "base/x11/xcb/extensions.h"
+#include "utils/memory.h"
 #include "win/meta.h"
 #include "win/setup.h"
 
@@ -19,30 +18,6 @@
 
 namespace KWin::win::x11
 {
-
-/**
- * Sets the window's mapping state. Possible values are: WithdrawnState, IconicState, NormalState.
- */
-template<typename Win>
-void export_mapping_state(Win* win, int state)
-{
-    assert(win->xcb_windows.client != XCB_WINDOW_NONE);
-    assert(!win->deleting || state == XCB_ICCCM_WM_STATE_WITHDRAWN);
-
-    auto& atoms = win->space.atoms;
-
-    if (state == XCB_ICCCM_WM_STATE_WITHDRAWN) {
-        win->xcb_windows.client.delete_property(atoms->wm_state);
-        return;
-    }
-
-    assert(state == XCB_ICCCM_WM_STATE_NORMAL || state == XCB_ICCCM_WM_STATE_ICONIC);
-
-    int32_t data[2];
-    data[0] = state;
-    data[1] = XCB_NONE;
-    win->xcb_windows.client.change_property(atoms->wm_state, atoms->wm_state, 32, 2, data);
-}
 
 inline void send_client_message(xcb_window_t w,
                                 xcb_atom_t a,
@@ -70,6 +45,55 @@ inline void send_client_message(xcb_window_t w,
 
     xcb_send_event(connection(), false, w, eventMask, reinterpret_cast<const char*>(&ev));
     xcb_flush(connection());
+}
+
+template<typename Win>
+void kill_process(Win* win, bool ask, xcb_timestamp_t timestamp = XCB_TIME_CURRENT_TIME)
+{
+    if (win->kill_helper_pid && !::kill(win->kill_helper_pid, 0)) {
+        // means the process is alive
+        return;
+    }
+
+    assert(!ask || timestamp != XCB_TIME_CURRENT_TIME);
+
+    auto pid = win->info->pid();
+    if (pid <= 0 || win->client_machine->hostname().isEmpty()) {
+        // Needed properties missing
+        return;
+    }
+
+    qCDebug(KWIN_CORE) << "Kill process:" << pid << "(" << win->client_machine->hostname() << ")";
+
+    if (!ask) {
+        if (!win->client_machine->is_local()) {
+            QStringList lst;
+            lst << QString::fromUtf8(win->client_machine->hostname()) << QStringLiteral("kill")
+                << QString::number(pid);
+            QProcess::startDetached(QStringLiteral("xon"), lst);
+        } else {
+            ::kill(pid, SIGTERM);
+        }
+    } else {
+        auto hostname = win->client_machine->is_local()
+            ? QStringLiteral("localhost")
+            : QString::fromUtf8(win->client_machine->hostname());
+        // execute helper from build dir or the system installed one
+        QFileInfo const buildDirBinary{QDir{QCoreApplication::applicationDirPath()},
+                                       QStringLiteral("kwin_killer_helper")};
+        QProcess::startDetached(buildDirBinary.exists() ? buildDirBinary.absoluteFilePath()
+                                                        : QStringLiteral(KWIN_KILLER_BIN),
+                                QStringList()
+                                    << QStringLiteral("--pid") << QString::number(unsigned(pid))
+                                    << QStringLiteral("--hostname") << hostname
+                                    << QStringLiteral("--windowname") << win->meta.caption.normal
+                                    << QStringLiteral("--applicationname")
+                                    << QString::fromUtf8(win->meta.wm_class.res_class)
+                                    << QStringLiteral("--wid") << QString::number(win->xcb_window)
+                                    << QStringLiteral("--timestamp") << QString::number(timestamp),
+                                QString(),
+                                &win->kill_helper_pid);
+    }
 }
 
 /**
@@ -135,55 +159,6 @@ void pong(Win* win, xcb_timestamp_t timestamp)
     if (win->kill_helper_pid && !::kill(win->kill_helper_pid, 0)) { // means the process is alive
         ::kill(win->kill_helper_pid, SIGTERM);
         win->kill_helper_pid = 0;
-    }
-}
-
-template<typename Win>
-void kill_process(Win* win, bool ask, xcb_timestamp_t timestamp = XCB_TIME_CURRENT_TIME)
-{
-    if (win->kill_helper_pid && !::kill(win->kill_helper_pid, 0)) {
-        // means the process is alive
-        return;
-    }
-
-    assert(!ask || timestamp != XCB_TIME_CURRENT_TIME);
-
-    auto pid = win->info->pid();
-    if (pid <= 0 || win->client_machine->hostname().isEmpty()) {
-        // Needed properties missing
-        return;
-    }
-
-    qCDebug(KWIN_CORE) << "Kill process:" << pid << "(" << win->client_machine->hostname() << ")";
-
-    if (!ask) {
-        if (!win->client_machine->is_local()) {
-            QStringList lst;
-            lst << QString::fromUtf8(win->client_machine->hostname()) << QStringLiteral("kill")
-                << QString::number(pid);
-            QProcess::startDetached(QStringLiteral("xon"), lst);
-        } else {
-            ::kill(pid, SIGTERM);
-        }
-    } else {
-        auto hostname = win->client_machine->is_local()
-            ? QStringLiteral("localhost")
-            : QString::fromUtf8(win->client_machine->hostname());
-        // execute helper from build dir or the system installed one
-        QFileInfo const buildDirBinary{QDir{QCoreApplication::applicationDirPath()},
-                                       QStringLiteral("kwin_killer_helper")};
-        QProcess::startDetached(buildDirBinary.exists() ? buildDirBinary.absoluteFilePath()
-                                                        : QStringLiteral(KWIN_KILLER_BIN),
-                                QStringList()
-                                    << QStringLiteral("--pid") << QString::number(unsigned(pid))
-                                    << QStringLiteral("--hostname") << hostname
-                                    << QStringLiteral("--windowname") << win->meta.caption.normal
-                                    << QStringLiteral("--applicationname")
-                                    << QString::fromUtf8(win->meta.wm_class.res_class)
-                                    << QStringLiteral("--wid") << QString::number(win->xcb_window)
-                                    << QStringLiteral("--timestamp") << QString::number(timestamp),
-                                QString(),
-                                &win->kill_helper_pid);
     }
 }
 

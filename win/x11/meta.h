@@ -295,6 +295,21 @@ bool same_app_window_role_match(Win const* c1, Win const* c2, bool active_hack)
 }
 
 template<typename Win>
+xcb_window_t get_wm_client_leader(Win& win)
+{
+    if (win.m_wmClientLeader != XCB_WINDOW_NONE) {
+        return win.m_wmClientLeader;
+    }
+    return win.xcb_window;
+}
+
+template<typename Win>
+void fetch_wm_client_machine(Win& win)
+{
+    win.client_machine->resolve(win.xcb_window, get_wm_client_leader(win));
+}
+
+template<typename Win>
 bool belong_to_same_application(Win const* c1, Win const* c2, win::same_client_check checks)
 {
     bool same_app = false;
@@ -391,21 +406,6 @@ QByteArray get_wm_client_machine(Win& win, bool use_localhost)
         return client_machine::localhost();
     }
     return win.client_machine->hostname();
-}
-
-template<typename Win>
-xcb_window_t get_wm_client_leader(Win& win)
-{
-    if (win.m_wmClientLeader != XCB_WINDOW_NONE) {
-        return win.m_wmClientLeader;
-    }
-    return win.xcb_window;
-}
-
-template<typename Win>
-void fetch_wm_client_machine(Win& win)
-{
-    win.client_machine->resolve(win.xcb_window, get_wm_client_leader(win));
 }
 
 template<typename Win>

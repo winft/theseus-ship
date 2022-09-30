@@ -5,14 +5,14 @@
 */
 #pragma once
 
-#include "hide.h"
-
 #include "base/options.h"
 #include "base/x11/xcb/extensions.h"
 #include "base/x11/xcb/helpers.h"
+#include "hidden_preview.h"
 #include "win/deco.h"
 #include "win/x11/types.h"
 
+#include <QRect>
 #include <xcb/shape.h>
 
 namespace KWin::win::x11

@@ -105,63 +105,6 @@ base::x11::xcb::transient_for fetch_transient(Win* win)
     return base::x11::xcb::transient_for(win->xcb_window);
 }
 
-template<typename Win>
-void read_transient_property(Win* win, base::x11::xcb::transient_for& transientFor)
-{
-    xcb_window_t lead_id = XCB_WINDOW_NONE;
-
-    bool failed = false;
-    if (!transientFor.get_transient_for(&lead_id)) {
-        lead_id = XCB_WINDOW_NONE;
-        failed = true;
-    }
-
-    x11_transient(win)->original_lead_id = lead_id;
-    lead_id = verify_transient_for(win, lead_id, !failed);
-
-    set_transient_lead(win, lead_id);
-}
-
-template<typename Win>
-void set_transient_lead(Win* win, xcb_window_t lead_id)
-{
-    auto x11_tr = x11_transient(win);
-
-    if (lead_id == x11_tr->lead_id) {
-        return;
-    }
-
-    for (auto lead : win->transient->leads()) {
-        lead->transient->remove_child(win);
-    }
-
-    x11_tr->lead_id = lead_id;
-
-    if (lead_id != XCB_WINDOW_NONE && lead_id != rootWindow()) {
-        auto lead = find_controlled_window<Win>(win->space, predicate_match::window, lead_id);
-
-        if (contains(win->transient->children, lead)) {
-            // Ensure we do not add a loop.
-            // TODO(romangg): Is this already ensured with verify_transient_for?
-            win->transient->remove_child(lead);
-        }
-        lead->transient->add_child(win);
-    }
-
-    check_group(win, nullptr);
-    update_layer(win);
-    reset_update_tool_windows_timer(win->space);
-}
-
-template<typename Win>
-void clean_grouping(Win* win)
-{
-    x11_transient(win)->lead_id = XCB_WINDOW_NONE;
-    x11_transient(win)->original_lead_id = XCB_WINDOW_NONE;
-
-    update_group(win, false);
-}
-
 /**
  * Updates the group transient relations between group members when @arg win gets added or removed.
  */
@@ -239,6 +182,15 @@ void update_group(Win* win, bool add)
         win->group->deref();
         win->group = nullptr;
     }
+}
+
+template<typename Win>
+void clean_grouping(Win* win)
+{
+    x11_transient(win)->lead_id = XCB_WINDOW_NONE;
+    x11_transient(win)->original_lead_id = XCB_WINDOW_NONE;
+
+    update_group(win, false);
 }
 
 /**
@@ -356,47 +308,6 @@ void check_active_modal(Space& space)
 }
 
 template<typename Win>
-void check_group(Win* win, decltype(win->group) group)
-{
-    using group_t = std::remove_pointer_t<decltype(group)>;
-
-    // First get all information about the current group.
-    if (!group) {
-        auto lead = static_cast<Win*>(win->transient->lead());
-
-        if (lead) {
-            // Move the window to the right group (e.g. a dialog provided
-            // by this app, but transient for another, so make it part of that group).
-            group = lead->group;
-        } else if (win->info->groupLeader() != XCB_WINDOW_NONE) {
-            group = find_group(win->space, win->info->groupLeader());
-            if (!group) {
-                // doesn't exist yet
-                group = new group_t(win->info->groupLeader(), win->space);
-            }
-        } else {
-            group = find_client_leader_group(win);
-            if (!group) {
-                group = new group_t(XCB_WINDOW_NONE, win->space);
-            }
-        }
-    }
-
-    if (win->group && win->group != group) {
-        update_group(win, false);
-    }
-
-    win->group = group;
-
-    if (win->group) {
-        update_group(win, true);
-    }
-
-    check_active_modal<Win>(win->space);
-    update_layer(win);
-}
-
-template<typename Win>
 void change_client_leader_group(Win* win, decltype(win->group) group)
 {
     auto lead_id = x11_transient(win)->lead_id;
@@ -468,6 +379,78 @@ auto find_client_leader_group(Win const* win) -> decltype(win->group)
 }
 
 template<typename Win>
+void check_group(Win* win, decltype(win->group) group)
+{
+    using group_t = std::remove_pointer_t<decltype(group)>;
+
+    // First get all information about the current group.
+    if (!group) {
+        auto lead = static_cast<Win*>(win->transient->lead());
+
+        if (lead) {
+            // Move the window to the right group (e.g. a dialog provided
+            // by this app, but transient for another, so make it part of that group).
+            group = lead->group;
+        } else if (win->info->groupLeader() != XCB_WINDOW_NONE) {
+            group = find_group(win->space, win->info->groupLeader());
+            if (!group) {
+                // doesn't exist yet
+                group = new group_t(win->info->groupLeader(), win->space);
+            }
+        } else {
+            group = find_client_leader_group(win);
+            if (!group) {
+                group = new group_t(XCB_WINDOW_NONE, win->space);
+            }
+        }
+    }
+
+    if (win->group && win->group != group) {
+        update_group(win, false);
+    }
+
+    win->group = group;
+
+    if (win->group) {
+        update_group(win, true);
+    }
+
+    check_active_modal<Win>(win->space);
+    update_layer(win);
+}
+
+template<typename Win>
+void set_transient_lead(Win* win, xcb_window_t lead_id)
+{
+    auto x11_tr = x11_transient(win);
+
+    if (lead_id == x11_tr->lead_id) {
+        return;
+    }
+
+    for (auto lead : win->transient->leads()) {
+        lead->transient->remove_child(win);
+    }
+
+    x11_tr->lead_id = lead_id;
+
+    if (lead_id != XCB_WINDOW_NONE && lead_id != rootWindow()) {
+        auto lead = find_controlled_window<Win>(win->space, predicate_match::window, lead_id);
+
+        if (contains(win->transient->children, lead)) {
+            // Ensure we do not add a loop.
+            // TODO(romangg): Is this already ensured with verify_transient_for?
+            win->transient->remove_child(lead);
+        }
+        lead->transient->add_child(win);
+    }
+
+    check_group(win, nullptr);
+    update_layer(win);
+    reset_update_tool_windows_timer(win->space);
+}
+
+template<typename Win>
 Win* find_modal_recursive(Win& win)
 {
     for (auto child : win.transient->children) {
@@ -499,6 +482,23 @@ void check_transient(Win& win, CheckWin& check)
     }
     id = verify_transient_for(&win, id, true);
     set_transient_lead(&win, id);
+}
+
+template<typename Win>
+void read_transient_property(Win* win, base::x11::xcb::transient_for& transientFor)
+{
+    xcb_window_t lead_id = XCB_WINDOW_NONE;
+
+    bool failed = false;
+    if (!transientFor.get_transient_for(&lead_id)) {
+        lead_id = XCB_WINDOW_NONE;
+        failed = true;
+    }
+
+    x11_transient(win)->original_lead_id = lead_id;
+    lead_id = verify_transient_for(win, lead_id, !failed);
+
+    set_transient_lead(win, lead_id);
 }
 
 }

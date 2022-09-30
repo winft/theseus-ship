@@ -7,6 +7,7 @@
 
 #include "actions.h"
 #include "activation.h"
+#include "appmenu.h"
 #include "client.h"
 #include "damage.h"
 #include "focus_stealing.h"
@@ -98,236 +99,6 @@ static inline xcb_window_t find_event_window(xcb_generic_event_t* event)
         }
         return XCB_WINDOW_NONE;
     }
-}
-
-/**
- * General handler for XEvents concerning the client window
- */
-template<typename Win>
-bool window_event(Win* win, xcb_generic_event_t* e)
-{
-    if (find_event_window(e) == win->xcb_window) {
-        // avoid doing stuff on frame or wrapper
-        NET::Properties dirtyProperties;
-        NET::Properties2 dirtyProperties2;
-        auto old_opacity = win->opacity();
-
-        // pass through the NET stuff
-        win->info->event(e, &dirtyProperties, &dirtyProperties2);
-
-        if ((dirtyProperties & NET::WMName) != 0) {
-            fetch_name(win);
-        }
-        if ((dirtyProperties & NET::WMIconName) != 0) {
-            fetch_iconic_name(win);
-        }
-        if ((dirtyProperties & NET::WMStrut) != 0
-            || (dirtyProperties2 & NET::WM2ExtendedStrut) != 0) {
-            update_space_areas(win->space);
-        }
-        if ((dirtyProperties & NET::WMIcon) != 0) {
-            get_icons(win);
-        }
-
-        // Note there's a difference between userTime() and info->userTime()
-        // info->userTime() is the value of the property, userTime() also includes
-        // updates of the time done by KWin (ButtonPress on windowrapper etc.).
-        if ((dirtyProperties2 & NET::WM2UserTime) != 0) {
-            mark_as_user_interaction(win->space);
-            update_user_time(win, win->info->userTime());
-        }
-        if ((dirtyProperties2 & NET::WM2StartupId) != 0) {
-            startup_id_changed(win);
-        }
-        if (dirtyProperties2 & NET::WM2Opacity) {
-            if (win->space.base.render->compositor->scene) {
-                add_full_repaint(*win);
-                Q_EMIT win->qobject->opacityChanged(old_opacity);
-            } else {
-                // forward to the frame if there's possibly another compositing manager running
-                NETWinInfo i(connection(),
-                             win->frameId(),
-                             rootWindow(),
-                             NET::Properties(),
-                             NET::Properties2());
-                i.setOpacity(win->info->opacity());
-            }
-        }
-        if (dirtyProperties2 & NET::WM2FrameOverlap) {
-            // Property is deprecated.
-        }
-        if (dirtyProperties2.testFlag(NET::WM2WindowRole)) {
-            Q_EMIT win->qobject->windowRoleChanged();
-        }
-        if (dirtyProperties2.testFlag(NET::WM2WindowClass)) {
-            fetch_wm_class(*win);
-        }
-        if (dirtyProperties2.testFlag(NET::WM2BlockCompositing)) {
-            win->setBlockingCompositing(win->info->isBlockingCompositing());
-        }
-        if (dirtyProperties2.testFlag(NET::WM2GroupLeader)) {
-            check_group(win, nullptr);
-
-            // Group affects isMinimizable()
-            update_allowed_actions(win);
-        }
-        if (dirtyProperties2.testFlag(NET::WM2Urgency)) {
-            update_urgency(win);
-        }
-        if (dirtyProperties2 & NET::WM2OpaqueRegion) {
-            fetch_wm_opaque_region(*win);
-        }
-        if (dirtyProperties2 & NET::WM2DesktopFileName) {
-            win::set_desktop_file_name(win, QByteArray(win->info->desktopFileName()));
-        }
-        if (dirtyProperties2 & NET::WM2GTKFrameExtents) {
-            auto& orig_extents = win->geo.update.original.client_frame_extents;
-
-            orig_extents = win->geo.client_frame_extents;
-            win->geo.client_frame_extents = gtk_frame_extents(win);
-
-            // Only do a size update when there is a change and no other geometry update is
-            // pending at the moment, which would update it later on anyway.
-            if (orig_extents != win->geo.client_frame_extents
-                && win->geo.update.pending == pending_geometry::none) {
-                // The frame geometry stays the same so we just update our server geometry and use
-                // the latest synced frame geometry.
-                update_server_geometry(win, win->synced_geometry.frame);
-                discard_buffer(*win);
-            }
-        }
-    }
-
-    const uint8_t eventType = e->response_type & ~0x80;
-    switch (eventType) {
-    case XCB_UNMAP_NOTIFY:
-        unmap_notify_event(win, reinterpret_cast<xcb_unmap_notify_event_t*>(e));
-        break;
-    case XCB_DESTROY_NOTIFY:
-        destroy_notify_event(win, reinterpret_cast<xcb_destroy_notify_event_t*>(e));
-        break;
-    case XCB_MAP_REQUEST:
-        // this one may pass the event to workspace
-        return map_request_event(win, reinterpret_cast<xcb_map_request_event_t*>(e));
-    case XCB_CONFIGURE_REQUEST:
-        configure_request_event(win, reinterpret_cast<xcb_configure_request_event_t*>(e));
-        break;
-    case XCB_PROPERTY_NOTIFY:
-        property_notify_event(win, reinterpret_cast<xcb_property_notify_event_t*>(e));
-        break;
-    case XCB_KEY_PRESS:
-        update_user_time(win, reinterpret_cast<xcb_key_press_event_t*>(e)->time);
-        break;
-    case XCB_BUTTON_PRESS: {
-        const auto* event = reinterpret_cast<xcb_button_press_event_t*>(e);
-        update_user_time(win, event->time);
-        button_press_event(win,
-                           event->event,
-                           event->detail,
-                           event->state,
-                           event->event_x,
-                           event->event_y,
-                           event->root_x,
-                           event->root_y,
-                           event->time);
-        break;
-    }
-    case XCB_KEY_RELEASE:
-        // don't update user time on releases
-        // e.g. if the user presses Alt+F2, the Alt release
-        // would appear as user input to the currently active window
-        break;
-    case XCB_BUTTON_RELEASE: {
-        const auto* event = reinterpret_cast<xcb_button_release_event_t*>(e);
-        // don't update user time on releases
-        // e.g. if the user presses Alt+F2, the Alt release
-        // would appear as user input to the currently active window
-        button_release_event(win,
-                             event->event,
-                             event->detail,
-                             event->state,
-                             event->event_x,
-                             event->event_y,
-                             event->root_x,
-                             event->root_y);
-        break;
-    }
-    case XCB_MOTION_NOTIFY: {
-        const auto* event = reinterpret_cast<xcb_motion_notify_event_t*>(e);
-        motion_notify_event(win,
-                            event->event,
-                            event->state,
-                            event->event_x,
-                            event->event_y,
-                            event->root_x,
-                            event->root_y);
-        win->space.focusMousePos = QPoint(event->root_x, event->root_y);
-        break;
-    }
-    case XCB_ENTER_NOTIFY: {
-        auto* event = reinterpret_cast<xcb_enter_notify_event_t*>(e);
-        enter_notify_event(win, event);
-        // MotionNotify is guaranteed to be generated only if the mouse
-        // move start and ends in the window; for cases when it only
-        // starts or only ends there, Enter/LeaveNotify are generated.
-        // Fake a MotionEvent in such cases to make handle of mouse
-        // events simpler (Qt does that too).
-        motion_notify_event(win,
-                            event->event,
-                            event->state,
-                            event->event_x,
-                            event->event_y,
-                            event->root_x,
-                            event->root_y);
-        win->space.focusMousePos = QPoint(event->root_x, event->root_y);
-        break;
-    }
-    case XCB_LEAVE_NOTIFY: {
-        auto* event = reinterpret_cast<xcb_leave_notify_event_t*>(e);
-        motion_notify_event(win,
-                            event->event,
-                            event->state,
-                            event->event_x,
-                            event->event_y,
-                            event->root_x,
-                            event->root_y);
-        leave_notify_event(win, event);
-        break;
-    }
-    case XCB_FOCUS_IN:
-        focus_in_event(win, reinterpret_cast<xcb_focus_in_event_t*>(e));
-        break;
-    case XCB_FOCUS_OUT:
-        focus_out_event(win, reinterpret_cast<xcb_focus_out_event_t*>(e));
-        break;
-    case XCB_REPARENT_NOTIFY:
-        break;
-    case XCB_CLIENT_MESSAGE:
-        client_message_event(win, reinterpret_cast<xcb_client_message_event_t*>(e));
-        break;
-    case XCB_EXPOSE: {
-        auto event = reinterpret_cast<xcb_expose_event_t*>(e);
-        if (event->window == win->frameId()
-            && win->space.base.render->compositor->state != render::state::on) {
-            // TODO: only repaint required areas
-            win::trigger_decoration_repaint(win);
-        }
-        break;
-    }
-    default:
-        if (eventType == base::x11::xcb::extensions::self()->shape_notify_event()
-            && reinterpret_cast<xcb_shape_notify_event_t*>(e)->affected_window == win->xcb_window) {
-            // workaround for #19644
-            detect_shape(*win);
-            update_shape(win);
-        }
-        if (eventType == base::x11::xcb::extensions::self()->damage_notify_event()
-            && reinterpret_cast<xcb_damage_notify_event_t*>(e)->drawable == win->frameId()) {
-            damage_handle_notify_event(*win);
-        }
-        break;
-    }
-    return true; // eat all events
 }
 
 /**
@@ -1038,6 +809,236 @@ void key_press_event(Win* win, uint key_code, xcb_timestamp_t time)
 {
     update_user_time(win, time);
     win::key_press_event(win, key_code);
+}
+
+/**
+ * General handler for XEvents concerning the client window
+ */
+template<typename Win>
+bool window_event(Win* win, xcb_generic_event_t* e)
+{
+    if (find_event_window(e) == win->xcb_window) {
+        // avoid doing stuff on frame or wrapper
+        NET::Properties dirtyProperties;
+        NET::Properties2 dirtyProperties2;
+        auto old_opacity = win->opacity();
+
+        // pass through the NET stuff
+        win->info->event(e, &dirtyProperties, &dirtyProperties2);
+
+        if ((dirtyProperties & NET::WMName) != 0) {
+            fetch_name(win);
+        }
+        if ((dirtyProperties & NET::WMIconName) != 0) {
+            fetch_iconic_name(win);
+        }
+        if ((dirtyProperties & NET::WMStrut) != 0
+            || (dirtyProperties2 & NET::WM2ExtendedStrut) != 0) {
+            update_space_areas(win->space);
+        }
+        if ((dirtyProperties & NET::WMIcon) != 0) {
+            get_icons(win);
+        }
+
+        // Note there's a difference between userTime() and info->userTime()
+        // info->userTime() is the value of the property, userTime() also includes
+        // updates of the time done by KWin (ButtonPress on windowrapper etc.).
+        if ((dirtyProperties2 & NET::WM2UserTime) != 0) {
+            mark_as_user_interaction(win->space);
+            update_user_time(win, win->info->userTime());
+        }
+        if ((dirtyProperties2 & NET::WM2StartupId) != 0) {
+            startup_id_changed(win);
+        }
+        if (dirtyProperties2 & NET::WM2Opacity) {
+            if (win->space.base.render->compositor->scene) {
+                add_full_repaint(*win);
+                Q_EMIT win->qobject->opacityChanged(old_opacity);
+            } else {
+                // forward to the frame if there's possibly another compositing manager running
+                NETWinInfo i(connection(),
+                             win->frameId(),
+                             rootWindow(),
+                             NET::Properties(),
+                             NET::Properties2());
+                i.setOpacity(win->info->opacity());
+            }
+        }
+        if (dirtyProperties2 & NET::WM2FrameOverlap) {
+            // Property is deprecated.
+        }
+        if (dirtyProperties2.testFlag(NET::WM2WindowRole)) {
+            Q_EMIT win->qobject->windowRoleChanged();
+        }
+        if (dirtyProperties2.testFlag(NET::WM2WindowClass)) {
+            fetch_wm_class(*win);
+        }
+        if (dirtyProperties2.testFlag(NET::WM2BlockCompositing)) {
+            win->setBlockingCompositing(win->info->isBlockingCompositing());
+        }
+        if (dirtyProperties2.testFlag(NET::WM2GroupLeader)) {
+            check_group(win, nullptr);
+
+            // Group affects isMinimizable()
+            update_allowed_actions(win);
+        }
+        if (dirtyProperties2.testFlag(NET::WM2Urgency)) {
+            update_urgency(win);
+        }
+        if (dirtyProperties2 & NET::WM2OpaqueRegion) {
+            fetch_wm_opaque_region(*win);
+        }
+        if (dirtyProperties2 & NET::WM2DesktopFileName) {
+            win::set_desktop_file_name(win, QByteArray(win->info->desktopFileName()));
+        }
+        if (dirtyProperties2 & NET::WM2GTKFrameExtents) {
+            auto& orig_extents = win->geo.update.original.client_frame_extents;
+
+            orig_extents = win->geo.client_frame_extents;
+            win->geo.client_frame_extents = gtk_frame_extents(win);
+
+            // Only do a size update when there is a change and no other geometry update is
+            // pending at the moment, which would update it later on anyway.
+            if (orig_extents != win->geo.client_frame_extents
+                && win->geo.update.pending == pending_geometry::none) {
+                // The frame geometry stays the same so we just update our server geometry and use
+                // the latest synced frame geometry.
+                update_server_geometry(win, win->synced_geometry.frame);
+                discard_buffer(*win);
+            }
+        }
+    }
+
+    const uint8_t eventType = e->response_type & ~0x80;
+    switch (eventType) {
+    case XCB_UNMAP_NOTIFY:
+        unmap_notify_event(win, reinterpret_cast<xcb_unmap_notify_event_t*>(e));
+        break;
+    case XCB_DESTROY_NOTIFY:
+        destroy_notify_event(win, reinterpret_cast<xcb_destroy_notify_event_t*>(e));
+        break;
+    case XCB_MAP_REQUEST:
+        // this one may pass the event to workspace
+        return map_request_event(win, reinterpret_cast<xcb_map_request_event_t*>(e));
+    case XCB_CONFIGURE_REQUEST:
+        configure_request_event(win, reinterpret_cast<xcb_configure_request_event_t*>(e));
+        break;
+    case XCB_PROPERTY_NOTIFY:
+        property_notify_event(win, reinterpret_cast<xcb_property_notify_event_t*>(e));
+        break;
+    case XCB_KEY_PRESS:
+        update_user_time(win, reinterpret_cast<xcb_key_press_event_t*>(e)->time);
+        break;
+    case XCB_BUTTON_PRESS: {
+        const auto* event = reinterpret_cast<xcb_button_press_event_t*>(e);
+        update_user_time(win, event->time);
+        button_press_event(win,
+                           event->event,
+                           event->detail,
+                           event->state,
+                           event->event_x,
+                           event->event_y,
+                           event->root_x,
+                           event->root_y,
+                           event->time);
+        break;
+    }
+    case XCB_KEY_RELEASE:
+        // don't update user time on releases
+        // e.g. if the user presses Alt+F2, the Alt release
+        // would appear as user input to the currently active window
+        break;
+    case XCB_BUTTON_RELEASE: {
+        const auto* event = reinterpret_cast<xcb_button_release_event_t*>(e);
+        // don't update user time on releases
+        // e.g. if the user presses Alt+F2, the Alt release
+        // would appear as user input to the currently active window
+        button_release_event(win,
+                             event->event,
+                             event->detail,
+                             event->state,
+                             event->event_x,
+                             event->event_y,
+                             event->root_x,
+                             event->root_y);
+        break;
+    }
+    case XCB_MOTION_NOTIFY: {
+        const auto* event = reinterpret_cast<xcb_motion_notify_event_t*>(e);
+        motion_notify_event(win,
+                            event->event,
+                            event->state,
+                            event->event_x,
+                            event->event_y,
+                            event->root_x,
+                            event->root_y);
+        win->space.focusMousePos = QPoint(event->root_x, event->root_y);
+        break;
+    }
+    case XCB_ENTER_NOTIFY: {
+        auto* event = reinterpret_cast<xcb_enter_notify_event_t*>(e);
+        enter_notify_event(win, event);
+        // MotionNotify is guaranteed to be generated only if the mouse
+        // move start and ends in the window; for cases when it only
+        // starts or only ends there, Enter/LeaveNotify are generated.
+        // Fake a MotionEvent in such cases to make handle of mouse
+        // events simpler (Qt does that too).
+        motion_notify_event(win,
+                            event->event,
+                            event->state,
+                            event->event_x,
+                            event->event_y,
+                            event->root_x,
+                            event->root_y);
+        win->space.focusMousePos = QPoint(event->root_x, event->root_y);
+        break;
+    }
+    case XCB_LEAVE_NOTIFY: {
+        auto* event = reinterpret_cast<xcb_leave_notify_event_t*>(e);
+        motion_notify_event(win,
+                            event->event,
+                            event->state,
+                            event->event_x,
+                            event->event_y,
+                            event->root_x,
+                            event->root_y);
+        leave_notify_event(win, event);
+        break;
+    }
+    case XCB_FOCUS_IN:
+        focus_in_event(win, reinterpret_cast<xcb_focus_in_event_t*>(e));
+        break;
+    case XCB_FOCUS_OUT:
+        focus_out_event(win, reinterpret_cast<xcb_focus_out_event_t*>(e));
+        break;
+    case XCB_REPARENT_NOTIFY:
+        break;
+    case XCB_CLIENT_MESSAGE:
+        client_message_event(win, reinterpret_cast<xcb_client_message_event_t*>(e));
+        break;
+    case XCB_EXPOSE: {
+        auto event = reinterpret_cast<xcb_expose_event_t*>(e);
+        if (event->window == win->frameId()
+            && win->space.base.render->compositor->state != render::state::on) {
+            // TODO: only repaint required areas
+            win::trigger_decoration_repaint(win);
+        }
+        break;
+    }
+    default:
+        if (eventType == base::x11::xcb::extensions::self()->shape_notify_event()
+            && reinterpret_cast<xcb_shape_notify_event_t*>(e)->affected_window == win->xcb_window) {
+            // workaround for #19644
+            detect_shape(*win);
+            update_shape(win);
+        }
+        if (eventType == base::x11::xcb::extensions::self()->damage_notify_event()
+            && reinterpret_cast<xcb_damage_notify_event_t*>(e)->drawable == win->frameId()) {
+            damage_handle_notify_event(*win);
+        }
+        break;
+    }
+    return true; // eat all events
 }
 
 }

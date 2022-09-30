@@ -101,42 +101,7 @@ void set_frame_extents(Win* win)
 }
 
 template<typename Win>
-void update_decoration(Win* win, bool check_workspace_pos, bool force = false)
-{
-    auto const has_no_border = win->user_no_border || win->geo.update.fullscreen;
-
-    if (!force
-        && ((!win::decoration(win) && has_no_border) || (win::decoration(win) && !has_no_border))) {
-        return;
-    }
-
-    auto old_frame_geo = win->geo.update.frame;
-    auto old_client_geo = old_frame_geo.adjusted(win::left_border(win),
-                                                 win::top_border(win),
-                                                 -win::right_border(win),
-                                                 -win::bottom_border(win));
-    win::block_geometry_updates(win, true);
-
-    if (force) {
-        win->control->destroy_decoration();
-    }
-
-    if (has_no_border) {
-        win->control->destroy_decoration();
-    } else {
-        create_decoration(win);
-    }
-
-    win::update_shadow(win);
-
-    if (check_workspace_pos) {
-        win::check_workspace_position(win, old_frame_geo, -2, old_client_geo);
-    }
-
-    update_input_window(win, win->geo.update.frame);
-    win::block_geometry_updates(win, false);
-    set_frame_extents(win);
-}
+bool update_server_geometry(Win* win, QRect const& frame_geo);
 
 template<typename Win>
 void create_decoration(Win* win)
@@ -187,6 +152,44 @@ void create_decoration(Win* win)
     if (win->space.base.render->compositor->state == render::state::on) {
         discard_buffer(*win);
     }
+}
+
+template<typename Win>
+void update_decoration(Win* win, bool check_workspace_pos, bool force = false)
+{
+    auto const has_no_border = win->user_no_border || win->geo.update.fullscreen;
+
+    if (!force
+        && ((!win::decoration(win) && has_no_border) || (win::decoration(win) && !has_no_border))) {
+        return;
+    }
+
+    auto old_frame_geo = win->geo.update.frame;
+    auto old_client_geo = old_frame_geo.adjusted(win::left_border(win),
+                                                 win::top_border(win),
+                                                 -win::right_border(win),
+                                                 -win::bottom_border(win));
+    win::block_geometry_updates(win, true);
+
+    if (force) {
+        win->control->destroy_decoration();
+    }
+
+    if (has_no_border) {
+        win->control->destroy_decoration();
+    } else {
+        create_decoration(win);
+    }
+
+    win::update_shadow(win);
+
+    if (check_workspace_pos) {
+        win::check_workspace_position(win, old_frame_geo, -2, old_client_geo);
+    }
+
+    update_input_window(win, win->geo.update.frame);
+    win::block_geometry_updates(win, false);
+    set_frame_extents(win);
 }
 
 template<typename Win>

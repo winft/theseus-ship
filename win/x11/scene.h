@@ -6,6 +6,7 @@
 #pragma once
 
 #include "hide.h"
+#include "window_release.h"
 
 #include "base/x11/grabs.h"
 #include "base/x11/xcb/proto.h"
@@ -68,21 +69,6 @@ void create_window_buffer(Win* win, BufImpl& buf_impl)
 }
 
 template<typename Win>
-QRegion get_render_region(Win& win)
-{
-    if (win.remnant) {
-        return win.remnant->data.render_region;
-    }
-
-    if (win.is_shape) {
-        return get_shape_render_region(win);
-    }
-
-    auto const render_geo = win::render_geometry(&win);
-    return QRegion(0, 0, render_geo.width(), render_geo.height());
-}
-
-template<typename Win>
 QRegion get_shape_render_region(Win& win)
 {
     assert(win.is_shape);
@@ -112,6 +98,21 @@ QRegion get_shape_render_region(Win& win)
     auto const render_geo = render_geometry(&win);
     win.render_shape &= QRegion(0, 0, render_geo.width(), render_geo.height());
     return win.render_shape;
+}
+
+template<typename Win>
+QRegion get_render_region(Win& win)
+{
+    if (win.remnant) {
+        return win.remnant->data.render_region;
+    }
+
+    if (win.is_shape) {
+        return get_shape_render_region(win);
+    }
+
+    auto const render_geo = win::render_geometry(&win);
+    return QRegion(0, 0, render_geo.width(), render_geo.height());
 }
 
 template<typename Win>
