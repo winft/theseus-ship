@@ -30,7 +30,6 @@
 #include "win/scene.h"
 #include "win/window_setup_base.h"
 
-#include <csignal>
 #include <memory>
 #include <vector>
 #include <xcb/damage.h>
@@ -67,22 +66,7 @@ public:
 
     ~window()
     {
-        if (kill_helper_pid && !::kill(kill_helper_pid, 0)) {
-            // The process is still alive.
-            ::kill(kill_helper_pid, SIGTERM);
-            kill_helper_pid = 0;
-        }
-
-        if (sync_request.alarm != XCB_NONE) {
-            xcb_sync_destroy_alarm(connection(), sync_request.alarm);
-        }
-
-        assert(!this->control || !this->control->move_resize.enabled);
-        assert(xcb_windows.client == XCB_WINDOW_NONE);
-        assert(xcb_windows.wrapper == XCB_WINDOW_NONE);
-        assert(xcb_windows.outer == XCB_WINDOW_NONE);
-
-        delete client_machine;
+        cleanup_window(*this);
     }
 
     bool isClient() const override
@@ -700,29 +684,12 @@ public:
 
     void closeWindow() override
     {
-        if (!isCloseable()) {
-            return;
-        }
-
-        // Update user time, because the window may create a confirming dialog.
-        update_user_time(this);
-
-        if (this->info->supportsProtocol(NET::DeleteWindowProtocol)) {
-            send_client_message(this->xcb_window,
-                                this->space.atoms->wm_protocols,
-                                this->space.atoms->wm_delete_window);
-            ping(this);
-        } else {
-            // Client will not react on wm_delete_window. We have not choice
-            // but destroy his connection to the XServer.
-            killWindow();
-        }
+        close_window(*this);
     }
 
     bool isCloseable() const override
     {
-        return this->control->rules.checkCloseable(motif_hints.close()
-                                                   && !win::is_special_window(this));
+        return is_closeable(*this);
     }
 
     bool isMaximizable() const override
@@ -1260,16 +1227,9 @@ public:
     {
     }
 
-    /// Kills the window via XKill
     void killWindow() override
     {
-        qCDebug(KWIN_CORE) << "window::killWindow():" << win::caption(this);
-        kill_process(this, false);
-
-        // Always kill this client at the server
-        xcb_windows.client.kill();
-
-        x11::destroy_window(this);
+        handle_kill_window(*this);
     }
 
     /**

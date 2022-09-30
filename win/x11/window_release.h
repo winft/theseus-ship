@@ -17,6 +17,9 @@
 #include "win/tabbox.h"
 #include "win/window_release.h"
 
+#include <csignal>
+#include <xcb/xcb_icccm.h>
+
 namespace KWin::win::x11
 {
 
@@ -364,6 +367,67 @@ void destroy_window(Win* win)
         delete win;
     } else {
         delete_window_from_space(win->space, win);
+    }
+}
+
+template<typename Win>
+void cleanup_window(Win& win)
+{
+    if (win.kill_helper_pid && !::kill(win.kill_helper_pid, 0)) {
+        // The process is still alive.
+        ::kill(win.kill_helper_pid, SIGTERM);
+        win.kill_helper_pid = 0;
+    }
+
+    if (win.sync_request.alarm != XCB_NONE) {
+        xcb_sync_destroy_alarm(connection(), win.sync_request.alarm);
+    }
+
+    assert(!win.control || !win.control->move_resize.enabled);
+    assert(win.xcb_windows.client == XCB_WINDOW_NONE);
+    assert(win.xcb_windows.wrapper == XCB_WINDOW_NONE);
+    assert(win.xcb_windows.outer == XCB_WINDOW_NONE);
+
+    delete win.client_machine;
+}
+
+/// Kills the window via XKill
+template<typename Win>
+void handle_kill_window(Win& win)
+{
+    qCDebug(KWIN_CORE) << "x11::kill_window:" << caption(&win);
+    kill_process(&win, false);
+
+    // Always kill this client at the server
+    win.xcb_windows.client.kill();
+
+    x11::destroy_window(&win);
+}
+
+template<typename Win>
+bool is_closeable(Win const& win)
+{
+    return win.control->rules.checkCloseable(win.motif_hints.close() && !is_special_window(&win));
+}
+
+template<typename Win>
+void close_window(Win& win)
+{
+    if (!win.isCloseable()) {
+        return;
+    }
+
+    // Update user time, because the window may create a confirming dialog.
+    update_user_time(&win);
+
+    if (win.info->supportsProtocol(NET::DeleteWindowProtocol)) {
+        send_client_message(
+            win.xcb_window, win.space.atoms->wm_protocols, win.space.atoms->wm_delete_window);
+        ping(&win);
+    } else {
+        // Client will not react on wm_delete_window. We have not choice
+        // but destroy his connection to the XServer.
+        win.killWindow();
     }
 }
 
