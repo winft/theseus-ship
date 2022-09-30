@@ -247,12 +247,7 @@ public:
     // When another window is created, checks if this window is a child for it.
     void checkTransient(abstract_type* window) override
     {
-        auto id = static_cast<xcb_window_t>(window->xcb_window);
-        if (x11_transient(this)->original_lead_id != id) {
-            return;
-        }
-        id = verify_transient_for(this, id, true);
-        set_transient_lead(this, id);
+        check_transient(*this, *window);
     }
 
     bool groupTransient() const override
@@ -267,25 +262,9 @@ public:
         return static_cast<x11::transient<window>*>(this->transient.get())->lead_id == rootWindow();
     }
 
-    abstract_type* find_modal_recursive(abstract_type* win)
-    {
-        for (auto child : win->transient->children) {
-            if (auto ret = find_modal_recursive(child)) {
-                return ret;
-            }
-        }
-        return win->transient->modal() ? win : nullptr;
-    }
-
     abstract_type* findModal() override
     {
-        for (auto child : this->transient->children) {
-            if (auto modal = find_modal_recursive(child)) {
-                return modal;
-            }
-        }
-
-        return nullptr;
+        return transient_find_modal(*this);
     }
 
     win::maximize_mode maximizeMode() const override

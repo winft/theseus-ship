@@ -467,4 +467,38 @@ auto find_client_leader_group(Win const* win) -> decltype(win->group)
     return ret;
 }
 
+template<typename Win>
+Win* find_modal_recursive(Win& win)
+{
+    for (auto child : win.transient->children) {
+        if (auto ret = find_modal_recursive(*child)) {
+            return ret;
+        }
+    }
+    return win.transient->modal() ? &win : nullptr;
+}
+
+template<typename Win>
+typename Win::abstract_type* transient_find_modal(Win const& win)
+{
+    for (auto child : win.transient->children) {
+        if (auto modal = find_modal_recursive(*child)) {
+            return modal;
+        }
+    }
+
+    return nullptr;
+}
+
+template<typename Win, typename CheckWin>
+void check_transient(Win& win, CheckWin& check)
+{
+    auto id = static_cast<xcb_window_t>(check.xcb_window);
+    if (x11_transient(&win)->original_lead_id != id) {
+        return;
+    }
+    id = verify_transient_for(&win, id, true);
+    set_transient_lead(&win, id);
+}
+
 }
