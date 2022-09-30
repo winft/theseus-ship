@@ -174,7 +174,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
             update_urgency(win);
         }
         if (dirtyProperties2 & NET::WM2OpaqueRegion) {
-            win->getWmOpaqueRegion();
+            fetch_wm_opaque_region(*win);
         }
         if (dirtyProperties2 & NET::WM2DesktopFileName) {
             win::set_desktop_file_name(win, QByteArray(win->info->desktopFileName()));

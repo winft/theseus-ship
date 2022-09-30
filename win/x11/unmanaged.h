@@ -99,7 +99,7 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
         xcb_shape_select_input(connection(), xcb_win, true);
     }
     win->detectShape(xcb_win);
-    win->getWmOpaqueRegion();
+    fetch_wm_opaque_region(*win);
     win->fetch_and_set_skip_close_animation();
     win->setupCompositing();
 
@@ -173,7 +173,7 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* event)
         }
     }
     if (dirtyProperties2 & NET::WM2OpaqueRegion) {
-        win->getWmOpaqueRegion();
+        fetch_wm_opaque_region(*win);
     }
     if (dirtyProperties2.testFlag(NET::WM2WindowRole)) {
         Q_EMIT win->qobject->windowRoleChanged();

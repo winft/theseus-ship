@@ -21,6 +21,12 @@ bool has_alpha(Win& win)
 }
 
 template<typename Win>
+bool wants_shadow_to_be_rendered(Win const& win)
+{
+    return win.control && !win.control->fullscreen && win.maximizeMode() != maximize_mode::full;
+}
+
+template<typename Win>
 void set_bit_depth(Win& win, int depth)
 {
     if (win.render_data.bit_depth == depth) {

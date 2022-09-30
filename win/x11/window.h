@@ -14,6 +14,7 @@
 #include "group.h"
 #include "maximize.h"
 #include "meta.h"
+#include "scene.h"
 #include "transient.h"
 #include "types.h"
 #include "window_release.h"
@@ -21,8 +22,6 @@
 
 #include "base/x11/xcb/geometry_hints.h"
 #include "base/x11/xcb/motif_hints.h"
-#include "render/x11/buffer.h"
-#include "render/x11/shadow.h"
 #include "toplevel.h"
 #include "utils/geo.h"
 #include "win/fullscreen.h"
@@ -102,29 +101,12 @@ public:
 
     double opacity() const override
     {
-        if (this->remnant) {
-            return this->remnant->data.opacity;
-        }
-        if (this->info->opacity() == 0xffffffff) {
-            return 1.0;
-        }
-        return this->info->opacity() * 1.0 / 0xffffffff;
+        return get_opacity(*this);
     }
 
     void setOpacity(double new_opacity) override
     {
-        double old_opacity = opacity();
-        new_opacity = qBound(0.0, new_opacity, 1.0);
-        if (old_opacity == new_opacity) {
-            return;
-        }
-
-        this->info->setOpacity(static_cast<unsigned long>(new_opacity * 0xffffffff));
-
-        if (this->space.base.render->compositor->scene) {
-            add_full_repaint(*this);
-            Q_EMIT this->qobject->opacityChanged(old_opacity);
-        }
+        set_opacity(*this, new_opacity);
     }
 
     xcb_window_t frameId() const override
@@ -132,49 +114,9 @@ public:
         return get_frame_id(*this);
     }
 
-    QRegion shape_render_region() const
-    {
-        assert(this->is_shape);
-
-        if (this->is_render_shape_valid) {
-            return render_shape;
-        }
-
-        this->is_render_shape_valid = true;
-        render_shape = {};
-
-        auto cookie
-            = xcb_shape_get_rectangles_unchecked(connection(), frameId(), XCB_SHAPE_SK_BOUNDING);
-        unique_cptr<xcb_shape_get_rectangles_reply_t> reply(
-            xcb_shape_get_rectangles_reply(connection(), cookie, nullptr));
-        if (!reply) {
-            return {};
-        }
-
-        auto const rects = xcb_shape_get_rectangles_rectangles(reply.get());
-        auto const rect_count = xcb_shape_get_rectangles_rectangles_length(reply.get());
-        for (int i = 0; i < rect_count; ++i) {
-            render_shape += QRegion(rects[i].x, rects[i].y, rects[i].width, rects[i].height);
-        }
-
-        // make sure the shape is sane (X is async, maybe even XShape is broken)
-        auto const render_geo = render_geometry(this);
-        render_shape &= QRegion(0, 0, render_geo.width(), render_geo.height());
-        return render_shape;
-    }
-
     QRegion render_region() const override
     {
-        if (this->remnant) {
-            return this->remnant->data.render_region;
-        }
-
-        if (this->is_shape) {
-            return shape_render_region();
-        }
-
-        auto const render_geo = win::render_geometry(this);
-        return QRegion(0, 0, render_geo.width(), render_geo.height());
+        return get_render_region(*this);
     }
 
     /**
@@ -202,8 +144,7 @@ public:
 
     bool wantsShadowToBeRendered() const override
     {
-        return this->control && !this->control->fullscreen
-            && maximizeMode() != win::maximize_mode::full;
+        return wants_shadow_to_be_rendered(*this);
     }
 
     QSize resizeIncrements() const override
@@ -234,83 +175,22 @@ public:
 
     void setupCompositing() override
     {
-        assert(!this->remnant);
-        assert(damage_handle == XCB_NONE);
-
-        if (!this->space.base.render->compositor->scene) {
-            return;
-        }
-
-        damage_handle = xcb_generate_id(connection());
-        xcb_damage_create(
-            connection(), damage_handle, this->frameId(), XCB_DAMAGE_REPORT_LEVEL_NON_EMPTY);
-
-        discard_shape(*this);
-        this->render_data.damage_region = QRect({}, this->geo.size());
-
-        add_scene_window(*this->space.base.render->compositor->scene, *this);
-
-        if (this->control) {
-            // for internalKeep()
-            update_visibility(this);
-        } else {
-            // With unmanaged windows there is a race condition between the client painting the
-            // window and us setting up damage tracking.  If the client wins we won't get a damage
-            // event even though the window has been painted.  To avoid this we mark the whole
-            // window as damaged and schedule a repaint immediately after creating the damage
-            // object.
-            add_full_damage(*this);
-        }
+        x11::setup_compositing(*this);
     }
 
     void finishCompositing() override
     {
-        finish_compositing(*this);
-        destroy_damage_handle(*this);
-
-        // For safety in case KWin is just resizing the window.
-        // TODO(romangg): Is this really needed?
-        reset_have_resize_effect(*this);
+        x11::finish_compositing(*this);
     }
 
     void setBlockingCompositing(bool block) override
     {
-        auto const usedToBlock = blocks_compositing;
-        blocks_compositing = this->control->rules.checkBlockCompositing(
-            block && kwinApp()->options->qobject->windowsBlockCompositing());
-
-        if (usedToBlock != blocks_compositing) {
-            Q_EMIT this->qobject->blockingCompositingChanged(blocks_compositing);
-        }
+        x11::set_blocking_compositing(*this, block);
     }
 
     void add_scene_window_addon() override
     {
-        using scene_t = typename Space::base_t::render_t::compositor_t::scene_t;
-        using shadow_t = render::shadow<typename scene_t::window_t>;
-
-        auto& atoms = this->space.atoms;
-        this->render->shadow_windowing.create = [&](auto&& render_win) {
-            return render::x11::create_shadow<shadow_t, typename scene_t::window_t>(
-                render_win, atoms->kde_net_wm_shadow);
-        };
-        this->render->shadow_windowing.update = [&](auto&& shadow) {
-            return render::x11::read_and_update_shadow<shadow_t>(shadow, atoms->kde_net_wm_shadow);
-        };
-
-        auto setup_buffer = [](auto& buffer) {
-            using buffer_integration_t
-                = render::x11::buffer_win_integration<typename scene_t::buffer_t>;
-
-            auto win_integrate = std::make_unique<buffer_integration_t>(buffer);
-            auto update_helper = [&buffer]() {
-                auto& win_integrate = static_cast<buffer_integration_t&>(*buffer.win_integration);
-                create_window_buffer(buffer.window->ref_win, win_integrate);
-            };
-            win_integrate->update = update_helper;
-            buffer.win_integration = std::move(win_integrate);
-        };
-        this->render->win_integration.setup_buffer = setup_buffer;
+        x11::add_scene_window_addon(*this);
     }
 
     void damageNotifyEvent()
@@ -1230,21 +1110,6 @@ public:
     void killWindow() override
     {
         handle_kill_window(*this);
-    }
-
-    /**
-     * This function fetches the opaque region from this Toplevel.
-     * Will only be called on corresponding property changes and for initialization.
-     */
-    void getWmOpaqueRegion()
-    {
-        const auto rects = this->info->opaqueRegion();
-        QRegion new_opaque_region;
-        for (const auto& r : rects) {
-            new_opaque_region += QRect(r.pos.x, r.pos.y, r.size.width, r.size.height);
-        }
-
-        this->render_data.opaque_region = new_opaque_region;
     }
 
     void fetch_and_set_skip_close_animation()
