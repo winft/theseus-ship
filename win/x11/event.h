@@ -8,6 +8,7 @@
 #include "actions.h"
 #include "activation.h"
 #include "client.h"
+#include "damage.h"
 #include "focus_stealing.h"
 #include "geo.h"
 #include "meta.h"
@@ -322,7 +323,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
         }
         if (eventType == base::x11::xcb::extensions::self()->damage_notify_event()
             && reinterpret_cast<xcb_damage_notify_event_t*>(e)->drawable == win->frameId()) {
-            win->damageNotifyEvent();
+            damage_handle_notify_event(*win);
         }
         break;
     }

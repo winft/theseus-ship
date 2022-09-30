@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "damage.h"
 #include "event.h"
 #include "meta.h"
 #include "window_release.h"
@@ -230,7 +231,7 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* event)
             Q_EMIT win->qobject->frame_geometry_changed(win->geo.frame);
         }
         if (eventType == base::x11::xcb::extensions::self()->damage_notify_event()) {
-            win->damageNotifyEvent();
+            damage_handle_notify_event(*win);
         }
         break;
     }

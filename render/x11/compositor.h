@@ -528,7 +528,7 @@ private:
 
             // Create a list of damaged windows and reset the damage state of each window and fetch
             // the damage region without waiting for a reply
-            if (static_cast<x11_ref_window_t*>(win)->resetAndFetchDamage()) {
+            if (win::x11::damage_reset_and_fetch(static_cast<x11_ref_window_t&>(*win))) {
                 damaged_windows.push_back(win);
             }
 
@@ -569,7 +569,7 @@ private:
         // texture
         for (auto win : damaged_windows) {
             discard_lanczos_texture(win);
-            static_cast<x11_ref_window_t*>(win)->getDamageRegionReply();
+            win::x11::damage_fetch_region_reply(static_cast<x11_ref_window_t&>(*win));
             has_pending_repaints |= win->has_pending_repaints();
         }
 
