@@ -293,7 +293,8 @@ void PlasmaWindowTest::testLockScreenNoPlasmaWindow()
     // The lock screen creates one client per screen.
     auto outputs_count = Test::app()->base.get_outputs().size();
     QVERIFY(clientAddedSpy.count() == static_cast<int>(outputs_count) || clientAddedSpy.wait());
-    QTRY_COMPARE(clientAddedSpy.count(), outputs_count);
+    QVERIFY(clientAddedSpy.count() == static_cast<int>(outputs_count) || clientAddedSpy.wait());
+    QCOMPARE(clientAddedSpy.count(), outputs_count);
 
     QVERIFY(Test::app()
                 ->base.space->windows_map.at(clientAddedSpy.first().first().value<quint32>())
@@ -360,6 +361,7 @@ struct wayland_test_window {
 
         server.window = Test::render_and_wait_for_shown(client.surface, size, color);
         QVERIFY(server.window);
+        QVERIFY(server.window->control->active);
 
         QSignalSpy plasma_window_spy(test->m_windowManagement,
                                      &Wrapland::Client::PlasmaWindowManagement::windowCreated);
