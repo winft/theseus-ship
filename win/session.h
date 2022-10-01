@@ -7,6 +7,7 @@
 
 #include "session_manager.h"
 #include "x11/geo.h"
+#include "x11/session.h"
 
 #include "utils/algorithm.h"
 
@@ -111,8 +112,8 @@ void store_session(Space& space, QString const& sessionName, sm_save_phase phase
             continue;
         }
 
-        QByteArray sessionId = x11_client->sessionId();
-        QByteArray wmCommand = x11_client->wmCommand();
+        QByteArray sessionId = x11::get_session_id(*x11_client);
+        QByteArray wmCommand = x11::get_wm_command(*x11_client);
 
         if (sessionId.isEmpty()) {
             // remember also applications that are not XSMP capable
@@ -157,9 +158,9 @@ template<typename Space, typename Win>
 void store_window(Space const& space, KConfigGroup& cg, int num, Win* c)
 {
     QString n = QString::number(num);
-    cg.writeEntry(QLatin1String("sessionId") + n, c->sessionId().constData());
+    cg.writeEntry(QLatin1String("sessionId") + n, x11::get_session_id(*c).constData());
     cg.writeEntry(QLatin1String("windowRole") + n, c->windowRole().constData());
-    cg.writeEntry(QLatin1String("wmCommand") + n, c->wmCommand().constData());
+    cg.writeEntry(QLatin1String("wmCommand") + n, x11::get_wm_command(*c).constData());
     cg.writeEntry(QLatin1String("resourceName") + n, c->meta.wm_class.res_name.constData());
     cg.writeEntry(QLatin1String("resourceClass") + n, c->meta.wm_class.res_class.constData());
     cg.writeEntry(
@@ -216,7 +217,7 @@ void store_subsession(Space const& space, QString const& name, QSet<QByteArray> 
         }
 
         QByteArray sessionId = x11_client->sessionId();
-        QByteArray wmCommand = x11_client->wmCommand();
+        auto wmCommand = x11::get_wm_command(*x11_client);
         if (sessionId.isEmpty()) {
             // remember also applications that are not XSMP capable
             // and use the obsolete WM_COMMAND / WM_SAVE_YOURSELF
@@ -325,9 +326,9 @@ template<typename Space, typename Win>
 session_info* take_session_info(Space& space, Win* c)
 {
     win::session_info* realInfo = nullptr;
-    QByteArray sessionId = c->sessionId();
+    QByteArray sessionId = x11::get_session_id(*c);
     QByteArray windowRole = c->windowRole();
-    QByteArray wmCommand = c->wmCommand();
+    QByteArray wmCommand = x11::get_wm_command(*c);
     auto const& resourceName = c->meta.wm_class.res_name;
     auto const& resourceClass = c->meta.wm_class.res_class;
 

@@ -945,31 +945,6 @@ public:
         }
     }
 
-    /// Returns sessionId for this window, taken either from its window or from the leader.
-    QByteArray sessionId() const
-    {
-        QByteArray result
-            = base::x11::xcb::string_property(this->xcb_window, this->space.atoms->sm_client_id);
-        if (result.isEmpty() && this->m_wmClientLeader
-            && this->m_wmClientLeader != this->xcb_window) {
-            result = base::x11::xcb::string_property(this->m_wmClientLeader,
-                                                     this->space.atoms->sm_client_id);
-        }
-        return result;
-    }
-
-    /// Returns command property for this window, taken either from its window or from the leader.
-    QByteArray wmCommand()
-    {
-        QByteArray result = base::x11::xcb::string_property(this->xcb_window, XCB_ATOM_WM_COMMAND);
-        if (result.isEmpty() && this->m_wmClientLeader
-            && this->m_wmClientLeader != this->xcb_window) {
-            result = base::x11::xcb::string_property(this->m_wmClientLeader, XCB_ATOM_WM_COMMAND);
-        }
-        result.replace(0, ' ');
-        return result;
-    }
-
     // TODO(romangg): only required with Xwayland, move it to the child class.
     void clientMessageEvent(xcb_client_message_event_t* e)
     {
