@@ -128,11 +128,7 @@ public:
 
     void showContextHelp() override
     {
-        if (this->info->supportsProtocol(NET::ContextHelpProtocol)) {
-            send_client_message(this->xcb_window,
-                                this->space.atoms->wm_protocols,
-                                this->space.atoms->net_wm_context_help);
-        }
+        show_context_help(*this);
     }
 
     void checkNoBorder() override
@@ -292,30 +288,12 @@ public:
 
     bool noBorder() const override
     {
-        if (this->remnant) {
-            return this->remnant->data.no_border;
-        }
-        return user_no_border || this->control->fullscreen;
+        return deco_has_no_border(*this);
     }
 
     void setNoBorder(bool set) override
     {
-        if (!userCanSetNoBorder()) {
-            return;
-        }
-
-        set = this->control->rules.checkNoBorder(set);
-        if (user_no_border == set) {
-            return;
-        }
-
-        user_no_border = set;
-        updateDecoration(true, false);
-        updateWindowRules(rules::type::no_border);
-
-        if (decoration(this)) {
-            this->control->deco.client->update_size();
-        }
+        deco_set_no_border(*this, set);
     }
 
     void handle_update_no_border() override
@@ -325,9 +303,6 @@ public:
 
     void layoutDecorationRects(QRect& left, QRect& top, QRect& right, QRect& bottom) const override
     {
-        if (this->remnant) {
-            return this->remnant->data.layout_decoration_rects(left, top, right, bottom);
-        }
         x11::layout_decoration_rects(this, left, top, right, bottom);
     }
 
@@ -380,8 +355,7 @@ public:
 
     bool userCanSetNoBorder() const override
     {
-        // CSD in general allow no change by user, also not possible when fullscreen.
-        return this->geo.client_frame_extents.isNull() && !this->control->fullscreen;
+        return deco_user_can_set_no_border(*this);
     }
 
     bool wantsInput() const override

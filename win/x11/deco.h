@@ -21,6 +21,11 @@ namespace KWin::win::x11
 template<typename Win>
 void layout_decoration_rects(Win* win, QRect& left, QRect& top, QRect& right, QRect& bottom)
 {
+    if (win->remnant) {
+        win->remnant->data.layout_decoration_rects(left, top, right, bottom);
+        return;
+    }
+
     if (!win::decoration(win)) {
         return;
     }
@@ -239,6 +244,54 @@ void update_color_scheme(Win* win)
 {
     auto property = fetch_color_scheme(win);
     read_color_scheme(win, property);
+}
+
+template<typename Win>
+bool deco_has_no_border(Win const& win)
+{
+    if (win.remnant) {
+        return win.remnant->data.no_border;
+    }
+    return win.user_no_border || win.control->fullscreen;
+}
+
+template<typename Win>
+bool deco_user_can_set_no_border(Win const& win)
+{
+    // CSD in general allow no change by user, also not possible when fullscreen.
+    return win.geo.client_frame_extents.isNull() && !win.control->fullscreen;
+}
+
+template<typename Win>
+void deco_set_no_border(Win& win, bool set)
+{
+    if (!win.userCanSetNoBorder()) {
+        return;
+    }
+
+    set = win.control->rules.checkNoBorder(set);
+
+    if (win.user_no_border == set) {
+        return;
+    }
+
+    win.user_no_border = set;
+    win.updateDecoration(true, false);
+    win.updateWindowRules(rules::type::no_border);
+
+    if (decoration(&win)) {
+        win.control->deco.client->update_size();
+    }
+}
+
+template<typename Win>
+void show_context_help(Win& win)
+{
+    if (!win.info->supportsProtocol(NET::ContextHelpProtocol)) {
+        return;
+    }
+    send_client_message(
+        win.xcb_window, win.space.atoms->wm_protocols, win.space.atoms->net_wm_context_help);
 }
 
 }
