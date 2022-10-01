@@ -63,4 +63,14 @@ void respect_maximizing_aspect(Win* win, maximize_mode& mode)
     }
 }
 
+template<typename Win>
+void update_maximized(Win& win, maximize_mode mode)
+{
+    if (!win.isResizable() || is_toolbar(&win)) {
+        return;
+    }
+    respect_maximizing_aspect(&win, mode);
+    win::update_maximized(&win, mode);
+}
+
 }

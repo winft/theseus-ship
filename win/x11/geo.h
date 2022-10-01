@@ -7,6 +7,7 @@
 
 #include "scene.h"
 
+#include "base/x11/xcb/extensions.h"
 #include "win/setup.h"
 
 #include <xcb/sync.h>
@@ -1006,6 +1007,17 @@ NETExtendedStrut strut(Win const* win)
 }
 
 template<typename Win>
+bool has_strut(Win const& win)
+{
+    NETExtendedStrut ext = strut(&win);
+    if (ext.left_width == 0 && ext.right_width == 0 && ext.top_width == 0
+        && ext.bottom_width == 0) {
+        return false;
+    }
+    return true;
+}
+
+template<typename Win>
 QRect adjusted_client_area(Win const* win, QRect const& desktopArea, QRect const& area)
 {
     auto rect = area;
@@ -1142,6 +1154,38 @@ bool has_offscreen_xinerama_strut(Win const* win)
 
     // If there's anything left then we have an offscreen strut
     return !region.isEmpty();
+}
+
+template<typename Win>
+QRect get_icon_geometry(Win& win)
+{
+    auto rect = win.info->iconGeometry();
+
+    QRect geom(rect.pos.x, rect.pos.y, rect.size.width, rect.size.height);
+    if (geom.isValid()) {
+        return geom;
+    }
+
+    // Check all mainwindows of this window (recursively)
+    for (auto mc : win.transient->leads()) {
+        geom = mc->iconGeometry();
+        if (geom.isValid()) {
+            return geom;
+        }
+    }
+
+    // No mainwindow (or their parents) with icon geometry was found
+    return win.space.get_icon_geometry(&win);
+}
+
+template<typename Win>
+void detect_shape(Win& win)
+{
+    auto const was_shape = win.is_shape;
+    win.is_shape = base::x11::xcb::extensions::self()->has_shape(win.xcb_window);
+    if (was_shape != win.is_shape) {
+        Q_EMIT win.qobject->shapedChanged();
+    }
 }
 
 }

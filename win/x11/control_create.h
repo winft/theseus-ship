@@ -285,7 +285,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         xcb_shape_select_input(connection(), win->xcb_window, true);
     }
 
-    win->detectShape(win->xcb_window);
+    detect_shape(*win);
     detect_no_border(win);
     fetch_iconic_name(win);
 

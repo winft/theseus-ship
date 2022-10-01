@@ -99,9 +99,9 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
     if (base::x11::xcb::extensions::self()->is_shape_available()) {
         xcb_shape_select_input(connection(), xcb_win, true);
     }
-    win->detectShape(xcb_win);
+    detect_shape(*win);
     fetch_wm_opaque_region(*win);
-    win->fetch_and_set_skip_close_animation();
+    set_skip_close_animation(*win, fetch_skip_close_animation(*win).to_bool());
     win->setupCompositing();
 
     auto find_internal_window = [&win]() -> QWindow* {
@@ -222,7 +222,7 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* event)
         break;
     default: {
         if (eventType == base::x11::xcb::extensions::self()->shape_notify_event()) {
-            win->detectShape(win->xcb_window);
+            detect_shape(*win);
             add_full_repaint(*win);
 
             // In case shape change removes part of this window.

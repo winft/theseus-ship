@@ -152,23 +152,7 @@ public:
 
     QRect iconGeometry() const override
     {
-        auto rect = this->info->iconGeometry();
-
-        QRect geom(rect.pos.x, rect.pos.y, rect.size.width, rect.size.height);
-        if (geom.isValid()) {
-            return geom;
-        }
-
-        // Check all mainwindows of this window (recursively)
-        for (auto mc : this->transient->leads()) {
-            geom = mc->iconGeometry();
-            if (geom.isValid()) {
-                return geom;
-            }
-        }
-
-        // No mainwindow (or their parents) with icon geometry was found
-        return Toplevel<Space>::iconGeometry();
+        return get_icon_geometry(*this);
     }
 
     void setupCompositing() override
@@ -342,12 +326,7 @@ public:
 
     bool hasStrut() const override
     {
-        NETExtendedStrut ext = strut(this);
-        if (ext.left_width == 0 && ext.right_width == 0 && ext.top_width == 0
-            && ext.bottom_width == 0) {
-            return false;
-        }
-        return true;
+        return has_strut(*this);
     }
 
     void showOnScreenEdge() override
@@ -484,11 +463,7 @@ public:
 
     void update_maximized(maximize_mode mode) override
     {
-        if (!isResizable() || is_toolbar(this)) {
-            return;
-        }
-        respect_maximizing_aspect(this, mode);
-        win::update_maximized(this, mode);
+        x11::update_maximized(*this, mode);
     }
 
     bool doStartMoveResize() override
@@ -876,20 +851,6 @@ public:
     void killWindow() override
     {
         handle_kill_window(*this);
-    }
-
-    void fetch_and_set_skip_close_animation()
-    {
-        set_skip_close_animation(*this, fetch_skip_close_animation(*this).to_bool());
-    }
-
-    void detectShape(xcb_window_t id)
-    {
-        const bool wasShape = this->is_shape;
-        this->is_shape = base::x11::xcb::extensions::self()->has_shape(id);
-        if (wasShape != this->is_shape) {
-            Q_EMIT this->qobject->shapedChanged();
-        }
     }
 
     // TODO(romangg): only required with Xwayland, move it to the child class.

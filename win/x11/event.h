@@ -318,7 +318,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
         if (eventType == base::x11::xcb::extensions::self()->shape_notify_event()
             && reinterpret_cast<xcb_shape_notify_event_t*>(e)->affected_window == win->xcb_window) {
             // workaround for #19644
-            win->detectShape(win->xcb_window);
+            detect_shape(*win);
             update_shape(win);
         }
         if (eventType == base::x11::xcb::extensions::self()->damage_notify_event()
@@ -490,7 +490,7 @@ void property_notify_event_prepare(Win& win, xcb_property_notify_event_t* event)
     } else if (event->atom == atoms->kde_net_wm_shadow) {
         win::update_shadow(&win);
     } else if (event->atom == atoms->kde_skip_close_animation) {
-        win.fetch_and_set_skip_close_animation();
+        set_skip_close_animation(win, fetch_skip_close_animation(win).to_bool());
     }
 }
 
