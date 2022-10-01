@@ -48,13 +48,6 @@ public:
                          static_cast<void (QTimer::*)()>(&QTimer::start));
     }
 
-    std::unique_ptr<win::deco::render_data> reparent() override
-    {
-        // Never called. Only relevant for remnants that only are created when compositing.
-        assert(false);
-        return {};
-    }
-
 protected:
     void render() override
     {

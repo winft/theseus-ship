@@ -180,12 +180,6 @@ public:
         renderPart(bottom.intersected(geometry), bottom, bottomPosition);
     }
 
-    std::unique_ptr<win::deco::render_data> reparent() override
-    {
-        render();
-        return this->move_data();
-    }
-
     GLTexture* texture()
     {
         return get_data().texture.get();

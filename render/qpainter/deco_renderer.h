@@ -98,12 +98,6 @@ public:
         renderPart(bottom.intersected(geometry), bottom, int(DecorationPart::Bottom));
     }
 
-    std::unique_ptr<win::deco::render_data> reparent() override
-    {
-        render();
-        return this->move_data();
-    }
-
 private:
     deco_render_data& get_data()
     {

@@ -462,8 +462,7 @@ public:
         if (!m_renderer) {
             return {};
         }
-
-        return m_renderer->reparent();
+        return m_renderer->move_data();
     }
 
     KDecoration2::DecoratedClient* decoratedClient()
