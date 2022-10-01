@@ -179,9 +179,8 @@ private:
 
         if (ctrl && !this->ref_win->noBorder()) {
             if (win::decoration(this->ref_win)) {
-                if (auto r = static_cast<
-                        deco_renderer<win::deco::client_impl<typename space_t::window_t>>*>(
-                        ctrl->deco.client->renderer())) {
+                if (auto r
+                    = static_cast<deco_renderer*>(ctrl->deco.client->renderer()->injector.get())) {
                     r->render();
                     deco_data = static_cast<deco_render_data const*>(r->data.get());
                 }

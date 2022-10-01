@@ -221,9 +221,8 @@ public:
         deco_render_data const* deco_data = nullptr;
         if (client && client->control && !client->noBorder()) {
             if (win::decoration(client)) {
-                auto r = static_cast<deco_renderer<win::deco::client_impl<RefWin>>*>(
-                    client->control->deco.client->renderer());
-                if (r) {
+                if (auto r = static_cast<deco_renderer*>(
+                        client->control->deco.client->renderer()->injector.get())) {
                     r->render();
                     deco_data = static_cast<deco_render_data const*>(r->data.get());
                 }

@@ -33,12 +33,11 @@ public:
     QImage images[int(DecorationPart::Count)];
 };
 
-template<typename Client>
-class deco_renderer : public win::deco::renderer<Client>
+class deco_renderer : public win::deco::render_injector
 {
 public:
-    explicit deco_renderer(Client* client)
-        : win::deco::renderer<Client>(client)
+    explicit deco_renderer(win::deco::render_window window)
+        : win::deco::render_injector(std::move(window))
     {
         this->data = std::make_unique<deco_render_data>();
     }
@@ -49,9 +48,9 @@ public:
         if (scheduled.isEmpty()) {
             return;
         }
-        if (this->areImageSizesDirty()) {
+        if (this->image_size_dirty) {
             resizeImages();
-            this->resetImageSizesDirty();
+            this->image_size_dirty = false;
         }
 
         auto imageSize = [this](DecorationPart part) {
@@ -82,7 +81,7 @@ public:
             painter.setCompositionMode(QPainter::CompositionMode_Source);
             painter.fillRect(rect, Qt::transparent);
             painter.restore();
-            this->client()->decoration()->paint(&painter, rect);
+            this->window.deco->paint(&painter, rect);
         };
 
         renderPart(left.intersected(geometry), left, int(DecorationPart::Left));
@@ -100,11 +99,10 @@ private:
     void resizeImages()
     {
         QRect left, top, right, bottom;
-        auto window = this->client()->client();
-        window->layoutDecorationRects(left, top, right, bottom);
+        this->window.layout_rects(left, top, right, bottom);
 
-        auto checkAndCreate = [this, window](int index, const QSize& size) {
-            auto dpr = window->topo.central_output ? window->topo.central_output->scale() : 1.;
+        auto checkAndCreate = [this](int index, const QSize& size) {
+            auto dpr = this->window.scale();
             auto& images = get_data().images;
             if (images[index].size() != size * dpr || images[index].devicePixelRatio() != dpr) {
                 images[index] = QImage(size * dpr, QImage::Format_ARGB32_Premultiplied);

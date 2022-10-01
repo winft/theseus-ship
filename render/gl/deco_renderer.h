@@ -64,12 +64,12 @@ private:
     Scene& scene;
 };
 
-template<typename Client, typename Scene>
-class deco_renderer : public win::deco::renderer<Client>
+template<typename Scene>
+class deco_renderer : public win::deco::render_injector
 {
 public:
-    deco_renderer(Client* client, Scene& scene)
-        : win::deco::renderer<Client>(client)
+    deco_renderer(win::deco::render_window window, Scene& scene)
+        : win::deco::render_injector(std::move(window))
         , scene{scene}
     {
         this->data = std::make_unique<deco_render_data<Scene>>(scene);
@@ -78,13 +78,13 @@ public:
     void render() override
     {
         auto const scheduled = this->getScheduled();
-        const bool dirty = this->areImageSizesDirty();
+        auto const dirty = this->image_size_dirty;
         if (scheduled.isEmpty() && !dirty) {
             return;
         }
         if (dirty) {
             resizeTexture();
-            this->resetImageSizesDirty();
+            this->image_size_dirty = false;
         }
 
         if (!get_data().texture) {
@@ -93,11 +93,10 @@ public:
         }
 
         QRect left, top, right, bottom;
-        auto window = this->client()->client();
-        window->layoutDecorationRects(left, top, right, bottom);
+        this->window.layout_rects(left, top, right, bottom);
 
-        const QRect geometry
-            = dirty ? QRect(QPoint(0, 0), window->geo.size()) : scheduled.boundingRect();
+        auto const geometry
+            = dirty ? QRect({}, this->window.geo().size()) : scheduled.boundingRect();
 
         // We pad each part in the decoration atlas in order to avoid texture bleeding.
         const int padding = 1;
@@ -130,8 +129,7 @@ public:
             }
 
             QRect viewport = geo.translated(-rect.x(), -rect.y());
-            auto const devicePixelRatio
-                = window->topo.central_output ? window->topo.central_output->scale() : 1.;
+            auto const devicePixelRatio = this->window.scale();
 
             QImage image(rect.size() * devicePixelRatio, QImage::Format_ARGB32_Premultiplied);
             image.setDevicePixelRatio(devicePixelRatio);
@@ -240,8 +238,7 @@ private:
         auto align = [](int value, int align) { return (value + align - 1) & ~(align - 1); };
 
         QRect left, top, right, bottom;
-        auto window = this->client()->client();
-        window->layoutDecorationRects(left, top, right, bottom);
+        this->window.layout_rects(left, top, right, bottom);
         QSize size;
 
         size.rwidth()
@@ -255,7 +252,7 @@ private:
 
         size.rwidth() = align(size.width(), 128);
 
-        size *= window->topo.central_output ? window->topo.central_output->scale() : 1.;
+        size *= this->window.scale();
 
         auto& data = get_data();
 

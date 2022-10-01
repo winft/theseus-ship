@@ -192,8 +192,7 @@ public:
     {
     }
 
-    virtual win::deco::renderer<win::deco::client_impl<typename window_t::ref_t>>*
-    createDecorationRenderer(win::deco::client_impl<typename window_t::ref_t>*)
+    virtual std::unique_ptr<win::deco::render_injector> create_deco(win::deco::render_window window)
         = 0;
 
     /**

@@ -53,12 +53,11 @@ public:
     xcb_gcontext_t gc{XCB_NONE};
 };
 
-template<typename Client>
-class deco_renderer : public win::deco::renderer<Client>
+class deco_renderer : public win::deco::render_injector
 {
 public:
-    explicit deco_renderer(Client* client)
-        : win::deco::renderer<Client>(client)
+    explicit deco_renderer(win::deco::render_window window)
+        : win::deco::render_injector(std::move(window))
     {
         this->data = std::make_unique<deco_render_data>();
 
@@ -75,10 +74,10 @@ public:
         if (scheduled.isEmpty()) {
             return;
         }
-        if (this->areImageSizesDirty()) {
+        if (this->image_size_dirty) {
             resizePixmaps();
-            this->resetImageSizesDirty();
-            scheduled = QRect(QPoint(), this->client()->client()->geo.size());
+            this->image_size_dirty = false;
+            scheduled = QRect({}, this->window.geo().size());
         }
 
         const QRect top(QPoint(0, 0), m_sizes[int(DecorationPart::Top)]);
@@ -134,7 +133,7 @@ private:
     void resizePixmaps()
     {
         QRect left, top, right, bottom;
-        this->client()->client()->layoutDecorationRects(left, top, right, bottom);
+        this->window.layout_rects(left, top, right, bottom);
         xcb_connection_t* c = connection();
 
         auto checkAndCreate = [this, c](int border, const QRect& rect) {

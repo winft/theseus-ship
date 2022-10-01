@@ -37,15 +37,13 @@ public:
     virtual gl::backend<gl::scene<type>, type>* get_opengl_backend(compositor_t& compositor) = 0;
     virtual render::outline_visual* create_non_composited_outline(render::outline* outline) = 0;
 
-    win::deco::renderer<win::deco::client_impl<typename space_t::window_t>>*
-    createDecorationRenderer(win::deco::client_impl<typename space_t::window_t>* client)
+    std::unique_ptr<win::deco::render_injector> create_deco(win::deco::render_window window)
     {
         if (!compositor->scene) {
             // Non-composited fallback
-            return new backend::x11::deco_renderer<
-                win::deco::client_impl<typename space_t::window_t>>(client);
+            return std::make_unique<backend::x11::deco_renderer>(window);
         }
-        return compositor->scene->createDecorationRenderer(client);
+        return compositor->scene->create_deco(window);
     }
 
     bool requiresCompositing() const override

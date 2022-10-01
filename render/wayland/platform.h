@@ -64,15 +64,14 @@ public:
     virtual qpainter::backend<qpainter::scene<type>>* get_qpainter_backend(compositor_t& compositor)
         = 0;
 
-    win::deco::renderer<win::deco::client_impl<typename space_t::window_t>>*
-    createDecorationRenderer(win::deco::client_impl<typename space_t::window_t>* client)
+    std::unique_ptr<win::deco::render_injector> create_deco(win::deco::render_window window)
     {
         if (!compositor->scene) {
             // TODO(romangg): Make this check unnecessary. No deco renderer should be created when
             //                there is no scene (fires in some integration tests).
             return nullptr;
         }
-        return compositor->scene->createDecorationRenderer(client);
+        return compositor->scene->create_deco(window);
     }
 
     void invertScreen() override

@@ -300,9 +300,9 @@ private:
             if (!win::decoration(this->ref_win)) {
                 return nullptr;
             }
-            using deco_renderer_t = deco_renderer<win::deco::client_impl<RefWin>, Scene>;
-            if (auto renderer
-                = static_cast<deco_renderer_t*>(this->ref_win->control->deco.client->renderer())) {
+            using deco_renderer_t = deco_renderer<Scene>;
+            if (auto renderer = static_cast<deco_renderer_t*>(
+                    this->ref_win->control->deco.client->renderer()->injector.get())) {
                 renderer->render();
                 return renderer->texture();
             }

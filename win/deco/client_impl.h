@@ -475,7 +475,10 @@ public:
 private:
     void createRenderer()
     {
-        m_renderer.reset(m_client->space.base.render->createDecorationRenderer(this));
+        m_renderer = std::make_unique<renderer_t>(this);
+        if (!m_renderer->injector) {
+            m_renderer.reset();
+        }
     }
 
     Window* m_client;

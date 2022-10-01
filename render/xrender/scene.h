@@ -103,10 +103,10 @@ public:
         return m_backend->buffer();
     }
 
-    win::deco::renderer<win::deco::client_impl<typename space_t::window_t>>*
-    createDecorationRenderer(win::deco::client_impl<typename space_t::window_t>* client) override
+    std::unique_ptr<win::deco::render_injector>
+    create_deco(win::deco::render_window window) override
     {
-        return new deco_renderer(client);
+        return std::make_unique<deco_renderer>(std::move(window));
     }
 
     bool animationsSupported() const override

@@ -122,10 +122,10 @@ public:
         return std::make_unique<shadow<window_t>>(win);
     }
 
-    win::deco::renderer<win::deco::client_impl<typename window_t::ref_t>>*
-    createDecorationRenderer(win::deco::client_impl<typename window_t::ref_t>* impl) override
+    std::unique_ptr<win::deco::render_injector>
+    create_deco(win::deco::render_window window) override
     {
-        return new deco_renderer(impl);
+        return std::make_unique<deco_renderer>(std::move(window));
     }
 
     void handle_screen_geometry_change(QSize const& /*size*/) override
