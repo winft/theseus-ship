@@ -218,7 +218,7 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* event)
         property_notify_event_prepare(*win, reinterpret_cast<xcb_property_notify_event_t*>(event));
         break;
     case XCB_CLIENT_MESSAGE:
-        win->clientMessageEvent(reinterpret_cast<xcb_client_message_event_t*>(event));
+        handle_wl_surface_id_event(*win, reinterpret_cast<xcb_client_message_event_t*>(event));
         break;
     default: {
         if (eventType == base::x11::xcb::extensions::self()->shape_notify_event()) {

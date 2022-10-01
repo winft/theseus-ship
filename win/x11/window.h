@@ -853,18 +853,6 @@ public:
         handle_kill_window(*this);
     }
 
-    // TODO(romangg): only required with Xwayland, move it to the child class.
-    void clientMessageEvent(xcb_client_message_event_t* e)
-    {
-        if (e->type != this->space.atoms->wl_surface_id) {
-            return;
-        }
-
-        this->surface_id = e->data.data32[0];
-        Q_EMIT this->space.qobject->surface_id_changed(this->meta.signal_id, this->surface_id);
-        Q_EMIT this->qobject->surfaceIdChanged(this->surface_id);
-    }
-
     void debug(QDebug& stream) const override
     {
         print_window_debug_info(*this, stream);

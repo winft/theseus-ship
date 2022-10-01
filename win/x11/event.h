@@ -410,13 +410,25 @@ void destroy_notify_event(Win* win, xcb_destroy_notify_event_t* e)
     x11::destroy_window(win);
 }
 
+template<typename Win>
+void handle_wl_surface_id_event(Win& win, xcb_client_message_event_t* e)
+{
+    if (e->type != win.space.atoms->wl_surface_id) {
+        return;
+    }
+
+    win.surface_id = e->data.data32[0];
+    Q_EMIT win.space.qobject->surface_id_changed(win.meta.signal_id, win.surface_id);
+    Q_EMIT win.qobject->surfaceIdChanged(win.surface_id);
+}
+
 /**
  * Handles client messages for the client window
  */
 template<typename Win>
 void client_message_event(Win* win, xcb_client_message_event_t* e)
 {
-    win->clientMessageEvent(e);
+    handle_wl_surface_id_event(*win, e);
 
     if (e->window != win->xcb_window) {
         return; // ignore frame/wrapper
