@@ -35,7 +35,6 @@ public:
     using abstract_type = render::x11::platform<Base>;
     using scene_t = typename abstract_type::scene_t;
     using compositor_t = typename abstract_type::compositor_t;
-    using window_t = typename scene_t::window_t;
 
     platform(Base& base)
         : render::x11::platform<Base>(base)
@@ -223,16 +222,6 @@ public:
     outline_visual* create_non_composited_outline(render::outline* outline) override
     {
         return new non_composited_outline(outline);
-    }
-
-    win::deco::renderer<win::deco::client_impl<typename window_t::ref_t>>*
-    createDecorationRenderer(win::deco::client_impl<typename window_t::ref_t>* client) override
-    {
-        if (!this->compositor->scene) {
-            // Non-composited fallback
-            return new deco_renderer<win::deco::client_impl<typename window_t::ref_t>>(client);
-        }
-        return this->compositor->scene->createDecorationRenderer(client);
     }
 
     void invertScreen() override

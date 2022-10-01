@@ -8,6 +8,7 @@
 #include "compositor.h"
 #include "effects.h"
 
+#include "render/backend/x11/deco_renderer.h"
 #include "render/gl/backend.h"
 #include "render/platform.h"
 
@@ -26,6 +27,7 @@ public:
     using space_t = typename base_t::space_t;
     using compositor_t = typename x11::compositor<type>;
     using scene_t = typename compositor_t::scene_t;
+    using window_t = typename scene_t::window_t;
 
     platform(Base& base)
         : render::platform<Base>(base)
@@ -34,9 +36,17 @@ public:
 
     virtual gl::backend<gl::scene<type>, type>* get_opengl_backend(compositor_t& compositor) = 0;
     virtual render::outline_visual* create_non_composited_outline(render::outline* outline) = 0;
-    virtual win::deco::renderer<win::deco::client_impl<typename space_t::window_t>>*
+
+    win::deco::renderer<win::deco::client_impl<typename space_t::window_t>>*
     createDecorationRenderer(win::deco::client_impl<typename space_t::window_t>* client)
-        = 0;
+    {
+        if (!compositor->scene) {
+            // Non-composited fallback
+            return new backend::x11::deco_renderer<
+                win::deco::client_impl<typename space_t::window_t>>(client);
+        }
+        return compositor->scene->createDecorationRenderer(client);
+    }
 
     bool requiresCompositing() const override
     {
