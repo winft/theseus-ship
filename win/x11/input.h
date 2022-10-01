@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include "hide.h"
+
 #include "base/options.h"
 #include "base/x11/xcb/extensions.h"
 #include "base/x11/xcb/helpers.h"
@@ -15,6 +17,13 @@
 
 namespace KWin::win::x11
 {
+
+template<typename Win>
+bool wants_input(Win const& win)
+{
+    return win.control->rules.checkAcceptFocus(
+        win.acceptsFocus() || win.info->supportsProtocol(NET::TakeFocusProtocol));
+}
 
 template<typename Win>
 void update_input_window(Win* win, QRect const& frame_geo)
@@ -103,6 +112,70 @@ void mark_as_user_interaction(Space& space)
 
     // might be called from within the filter, so delay till we now the filter returned
     QTimer::singleShot(0, space.qobject.get(), [&] { space.m_wasUserInteractionFilter.reset(); });
+}
+
+template<typename Win>
+void update_input_shape(Win& win)
+{
+    if (hidden_preview(&win)) {
+        // Sets it to none, don't change.
+        return;
+    }
+
+    if (!base::x11::xcb::extensions::self()->is_shape_input_available()) {
+        return;
+    }
+    // There appears to be no way to find out if a window has input
+    // shape set or not, so always propagate the input shape
+    // (it's the same like the bounding shape by default).
+    // Also, build the shape using a helper window, not directly
+    // in the frame window, because the sequence set-shape-to-frame,
+    // remove-shape-of-client, add-input-shape-of-client has the problem
+    // that after the second step there's a hole in the input shape
+    // until the real shape of the client is added and that can make
+    // the window lose focus (which is a problem with mouse focus policies)
+    // TODO: It seems there is, after all - XShapeGetRectangles() - but maybe this is better
+    if (!win.space.shape_helper_window.is_valid()) {
+        win.space.shape_helper_window.create(QRect(0, 0, 1, 1));
+    }
+
+    win.space.shape_helper_window.resize(render_geometry(&win).size());
+    auto const deco_margin = QPoint(left_border(&win), top_border(&win));
+
+    auto con = connection();
+
+    xcb_shape_combine(con,
+                      XCB_SHAPE_SO_SET,
+                      XCB_SHAPE_SK_INPUT,
+                      XCB_SHAPE_SK_BOUNDING,
+                      win.space.shape_helper_window,
+                      0,
+                      0,
+                      win.frameId());
+    xcb_shape_combine(con,
+                      XCB_SHAPE_SO_SUBTRACT,
+                      XCB_SHAPE_SK_INPUT,
+                      XCB_SHAPE_SK_BOUNDING,
+                      win.space.shape_helper_window,
+                      deco_margin.x(),
+                      deco_margin.y(),
+                      win.xcb_window);
+    xcb_shape_combine(con,
+                      XCB_SHAPE_SO_UNION,
+                      XCB_SHAPE_SK_INPUT,
+                      XCB_SHAPE_SK_INPUT,
+                      win.space.shape_helper_window,
+                      deco_margin.x(),
+                      deco_margin.y(),
+                      win.xcb_window);
+    xcb_shape_combine(con,
+                      XCB_SHAPE_SO_SET,
+                      XCB_SHAPE_SK_INPUT,
+                      XCB_SHAPE_SK_INPUT,
+                      win.frameId(),
+                      0,
+                      0,
+                      win.space.shape_helper_window);
 }
 
 }

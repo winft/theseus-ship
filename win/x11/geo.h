@@ -72,7 +72,7 @@ void update_shape(Win* win)
 
     // Decoration mask (i.e. 'else' here) setting is done in setMask()
     // when the decoration calls it or when the decoration is created/destroyed
-    win->update_input_shape();
+    update_input_shape(*win);
 
     if (win->render) {
         add_full_repaint(*win);

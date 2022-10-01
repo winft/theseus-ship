@@ -15,6 +15,7 @@
 #include "maximize.h"
 #include "meta.h"
 #include "scene.h"
+#include "shortcut.h"
 #include "transient.h"
 #include "types.h"
 #include "window_release.h"
@@ -214,10 +215,7 @@ public:
 
     bool isShown() const override
     {
-        if (!this->control) {
-            return true;
-        }
-        return !this->control->minimized && !hidden;
+        return is_shown(*this);
     }
 
     bool isHiddenInternal() const override
@@ -360,8 +358,7 @@ public:
 
     bool wantsInput() const override
     {
-        return this->control->rules.checkAcceptFocus(
-            acceptsFocus() || this->info->supportsProtocol(NET::TakeFocusProtocol));
+        return wants_input(*this);
     }
 
     bool performMouseCommand(base::options_qobject::MouseCommand command,
@@ -372,16 +369,7 @@ public:
 
     void setShortcutInternal() override
     {
-        updateCaption();
-#if 0
-        window_shortcut_updated(space, this);
-#else
-        // Workaround for kwin<->kglobalaccel deadlock, when KWin has X grab and the kded
-        // kglobalaccel module tries to create the key grab. KWin should preferably grab
-        // they keys itself anyway :(.
-        QTimer::singleShot(
-            0, this->qobject.get(), [this] { window_shortcut_updated(this->space, this); });
-#endif
+        shortcut_set_internal(*this);
     }
 
     bool hasStrut() const override
@@ -396,12 +384,7 @@ public:
 
     void showOnScreenEdge() override
     {
-        QObject::disconnect(connections.edge_remove);
-
-        hideClient(false);
-        win::set_keep_below(this, false);
-        xcb_delete_property(
-            connection(), this->xcb_window, this->space.atoms->kde_screen_edge_show);
+        show_on_screen_edge(*this);
     }
 
     void closeWindow() override
@@ -528,11 +511,7 @@ public:
 
     void hideClient(bool hide) override
     {
-        if (hidden == hide) {
-            return;
-        }
-        hidden = hide;
-        update_visibility(this);
+        hide_window(*this, hide);
     }
 
     void update_maximized(maximize_mode mode) override
@@ -710,9 +689,7 @@ public:
 
     void doMinimize() override
     {
-        update_visibility(this);
-        update_allowed_actions(this);
-        propagate_minimized_to_transients(*this);
+        do_minimize(*this);
     }
 
     void setFrameGeometry(QRect const& rect) override
@@ -966,69 +943,6 @@ public:
         if (wasShape != this->is_shape) {
             Q_EMIT this->qobject->shapedChanged();
         }
-    }
-
-    void update_input_shape()
-    {
-        if (hidden_preview(this)) {
-            // Sets it to none, don't change.
-            return;
-        }
-
-        if (!base::x11::xcb::extensions::self()->is_shape_input_available()) {
-            return;
-        }
-        // There appears to be no way to find out if a window has input
-        // shape set or not, so always propagate the input shape
-        // (it's the same like the bounding shape by default).
-        // Also, build the shape using a helper window, not directly
-        // in the frame window, because the sequence set-shape-to-frame,
-        // remove-shape-of-client, add-input-shape-of-client has the problem
-        // that after the second step there's a hole in the input shape
-        // until the real shape of the client is added and that can make
-        // the window lose focus (which is a problem with mouse focus policies)
-        // TODO: It seems there is, after all - XShapeGetRectangles() - but maybe this is better
-        if (!this->space.shape_helper_window.is_valid()) {
-            this->space.shape_helper_window.create(QRect(0, 0, 1, 1));
-        }
-
-        this->space.shape_helper_window.resize(render_geometry(this).size());
-        auto const deco_margin = QPoint(left_border(this), top_border(this));
-
-        auto con = connection();
-
-        xcb_shape_combine(con,
-                          XCB_SHAPE_SO_SET,
-                          XCB_SHAPE_SK_INPUT,
-                          XCB_SHAPE_SK_BOUNDING,
-                          this->space.shape_helper_window,
-                          0,
-                          0,
-                          frameId());
-        xcb_shape_combine(con,
-                          XCB_SHAPE_SO_SUBTRACT,
-                          XCB_SHAPE_SK_INPUT,
-                          XCB_SHAPE_SK_BOUNDING,
-                          this->space.shape_helper_window,
-                          deco_margin.x(),
-                          deco_margin.y(),
-                          this->xcb_window);
-        xcb_shape_combine(con,
-                          XCB_SHAPE_SO_UNION,
-                          XCB_SHAPE_SK_INPUT,
-                          XCB_SHAPE_SK_INPUT,
-                          this->space.shape_helper_window,
-                          deco_margin.x(),
-                          deco_margin.y(),
-                          this->xcb_window);
-        xcb_shape_combine(con,
-                          XCB_SHAPE_SO_SET,
-                          XCB_SHAPE_SK_INPUT,
-                          XCB_SHAPE_SK_INPUT,
-                          frameId(),
-                          0,
-                          0,
-                          this->space.shape_helper_window);
     }
 
     /// Returns sessionId for this window, taken either from its window or from the leader.

@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "actions.h"
 #include "client.h"
 #include "input.h"
 #include "types.h"
@@ -20,6 +21,15 @@
 
 namespace KWin::win::x11
 {
+
+template<typename Win>
+bool is_shown(Win const& win)
+{
+    if (!win.control) {
+        return true;
+    }
+    return !win.control->minimized && !win.hidden;
+}
 
 template<typename Win>
 void map(Win* win)
@@ -95,7 +105,7 @@ void update_hidden_preview(Win* win)
         }
     } else {
         win->space.stacking.order.force_restacking();
-        win->update_input_shape();
+        update_input_shape(*win);
     }
 }
 
@@ -215,6 +225,34 @@ void update_visibility(Win* win)
         return;
     }
     internal_show(win);
+}
+
+template<typename Win>
+void show_on_screen_edge(Win& win)
+{
+    QObject::disconnect(win.connections.edge_remove);
+
+    win.hideClient(false);
+    win::set_keep_below(&win, false);
+    xcb_delete_property(connection(), win.xcb_window, win.space.atoms->kde_screen_edge_show);
+}
+
+template<typename Win>
+void do_minimize(Win& win)
+{
+    update_visibility(&win);
+    update_allowed_actions(&win);
+    propagate_minimized_to_transients(win);
+}
+
+template<typename Win>
+void hide_window(Win& win, bool hide)
+{
+    if (win.hidden == hide) {
+        return;
+    }
+    win.hidden = hide;
+    update_visibility(&win);
 }
 
 }
