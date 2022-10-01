@@ -50,15 +50,9 @@ public:
 
     std::unique_ptr<win::deco::render_data> reparent() override
     {
-        if (m_scheduleTimer->isActive()) {
-            m_scheduleTimer->stop();
-        }
-        QObject::disconnect(m_scheduleTimer, &QTimer::timeout, this->qobject.get(), nullptr);
-        QObject::disconnect(this->qobject.get(),
-                            &win::deco::renderer_qobject::renderScheduled,
-                            m_scheduleTimer,
-                            static_cast<void (QTimer::*)()>(&QTimer::start));
-        return this->move_data();
+        // Never called. Only relevant for remnants that only are created when compositing.
+        assert(false);
+        return {};
     }
 
 protected:
