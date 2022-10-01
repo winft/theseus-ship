@@ -26,4 +26,12 @@ void cancel_focus_out_timer(Win* win)
     }
 }
 
+template<typename Win>
+void do_set_active(Win& win)
+{
+    // Demand attention again if it's still urgent.
+    update_urgency(&win);
+    win.info->setState(win.control->active ? NET::Focused : NET::States(), NET::Focused);
+}
+
 }

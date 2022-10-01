@@ -56,4 +56,15 @@ void popagate_desktop_change(Space& space, uint desktop)
     }
 }
 
+template<typename Win>
+bool belongs_to_desktop(Win const& win)
+{
+    for (auto const& member : win.group->members) {
+        if (is_desktop(member)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 }

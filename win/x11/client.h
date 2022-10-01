@@ -369,4 +369,22 @@ void send_synthetic_configure_notify(Win* win, QRect const& client_geo)
     xcb_flush(connection());
 }
 
+template<typename Win>
+xcb_timestamp_t get_user_time(Win const& win)
+{
+    xcb_timestamp_t time = win.user_time;
+    if (time == 0) {
+        // Doesn't want focus after showing.
+        return 0;
+    }
+
+    assert(win.group != nullptr);
+
+    if (time == -1U
+        || (win.group->user_time != -1U && NET::timestampCompare(win.group->user_time, time) > 0)) {
+        time = win.group->user_time;
+    }
+    return time;
+}
+
 }

@@ -5,10 +5,13 @@
 */
 #pragma once
 
+#include "activation.h"
 #include "client.h"
 #include "client_machine.h"
 #include "control.h"
 #include "deco.h"
+#include "desktop_space.h"
+#include "focus.h"
 #include "fullscreen.h"
 #include "geo.h"
 #include "group.h"
@@ -273,10 +276,7 @@ public:
 
     bool userCanSetFullScreen() const override
     {
-        if (!this->control->can_fullscreen()) {
-            return false;
-        }
-        return win::is_normal(this) || win::is_dialog(this);
+        return user_can_set_fullscreen(*this);
     }
 
     void handle_update_fullscreen(bool full) override
@@ -316,39 +316,7 @@ public:
 
     void takeFocus() override
     {
-        if (this->control->rules.checkAcceptFocus(this->info->input())) {
-            xcb_windows.client.focus();
-        } else {
-            // window cannot take input, at least withdraw urgency
-            win::set_demands_attention(this, false);
-        }
-
-        if (this->info->supportsProtocol(NET::TakeFocusProtocol)) {
-            kwinApp()->update_x11_time_from_clock();
-            send_client_message(this->xcb_window,
-                                this->space.atoms->wm_protocols,
-                                this->space.atoms->wm_take_focus);
-        }
-
-        this->space.stacking.should_get_focus.push_back(this);
-
-        // E.g. fullscreens have different layer when active/not-active.
-        this->space.stacking.order.update_order();
-
-        auto breakShowingDesktop = !this->control->keep_above;
-
-        if (breakShowingDesktop) {
-            for (auto const& c : group->members) {
-                if (win::is_desktop(c)) {
-                    breakShowingDesktop = false;
-                    break;
-                }
-            }
-        }
-
-        if (breakShowingDesktop) {
-            set_showing_desktop(this->space, false);
-        }
+        focus_take(*this);
     }
 
     bool userCanSetNoBorder() const override
@@ -645,12 +613,7 @@ public:
 
     bool belongsToDesktop() const override
     {
-        for (auto const& member : group->members) {
-            if (win::is_desktop(member)) {
-                return true;
-            }
-        }
-        return false;
+        return belongs_to_desktop(*this);
     }
 
     void doSetDesktop(int /*desktop*/, int /*was_desk*/) override
@@ -665,26 +628,12 @@ public:
 
     xcb_timestamp_t userTime() const override
     {
-        xcb_timestamp_t time = user_time;
-        if (time == 0) {
-            // Doesn't want focus after showing.
-            return 0;
-        }
-
-        assert(group != nullptr);
-
-        if (time == -1U
-            || (group->user_time != -1U && NET::timestampCompare(group->user_time, time) > 0)) {
-            time = group->user_time;
-        }
-        return time;
+        return get_user_time(*this);
     }
 
     void doSetActive() override
     {
-        // Demand attention again if it's still urgent.
-        update_urgency(this);
-        this->info->setState(this->control->active ? NET::Focused : NET::States(), NET::Focused);
+        do_set_active(*this);
     }
 
     void doMinimize() override
@@ -802,9 +751,7 @@ public:
 
     void restore_geometry_from_fullscreen() override
     {
-        assert(!has_special_geometry_mode_besides_fullscreen(this));
-        setFrameGeometry(rectify_fullscreen_restore_geometry(this));
-        this->geo.restore.max = {};
+        x11::restore_geometry_from_fullscreen(*this);
     }
 
     void do_set_geometry(QRect const& frame_geo)

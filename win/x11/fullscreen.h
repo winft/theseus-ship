@@ -27,4 +27,21 @@ void propagate_fullscreen_update(Win* win, bool full)
     }
 }
 
+template<typename Win>
+bool user_can_set_fullscreen(Win const& win)
+{
+    if (!win.control->can_fullscreen()) {
+        return false;
+    }
+    return is_normal(&win) || is_dialog(&win);
+}
+
+template<typename Win>
+void restore_geometry_from_fullscreen(Win& win)
+{
+    assert(!has_special_geometry_mode_besides_fullscreen(&win));
+    win.setFrameGeometry(rectify_fullscreen_restore_geometry(&win));
+    win.geo.restore.max = {};
+}
+
 }
