@@ -17,6 +17,7 @@
 #include "group.h"
 #include "maximize.h"
 #include "meta.h"
+#include "move.h"
 #include "scene.h"
 #include "shortcut.h"
 #include "transient.h"
@@ -391,69 +392,17 @@ public:
 
     bool isMovable() const override
     {
-        if (!this->info->hasNETSupport() && !motif_hints.move()) {
-            return false;
-        }
-        if (this->control->fullscreen) {
-            return false;
-        }
-        if (win::is_special_window(this) && !win::is_splash(this) && !win::is_toolbar(this)) {
-            // allow moving of splashscreens :)
-            return false;
-        }
-        if (this->control->rules.checkPosition(geo::invalid_point) != geo::invalid_point) {
-            // forced position
-            return false;
-        }
-        return true;
+        return is_movable(*this);
     }
 
     bool isMovableAcrossScreens() const override
     {
-        if (!this->info->hasNETSupport() && !motif_hints.move()) {
-            return false;
-        }
-        if (win::is_special_window(this) && !win::is_splash(this) && !win::is_toolbar(this)) {
-            // allow moving of splashscreens :)
-            return false;
-        }
-        if (this->control->rules.checkPosition(geo::invalid_point) != geo::invalid_point) {
-            // forced position
-            return false;
-        }
-        return true;
+        return is_movable_across_screens(*this);
     }
 
     bool isResizable() const override
     {
-        if (!this->info->hasNETSupport() && !motif_hints.resize()) {
-            return false;
-        }
-        if (this->geo.update.fullscreen) {
-            return false;
-        }
-        if (win::is_special_window(this) || win::is_splash(this) || win::is_toolbar(this)) {
-            return false;
-        }
-        if (this->control->rules.checkSize(QSize()).isValid()) {
-            // forced size
-            return false;
-        }
-
-        auto const mode = this->control->move_resize.contact;
-
-        // TODO: we could just check with & on top and left.
-        if ((mode == win::position::top || mode == win::position::top_left
-             || mode == win::position::top_right || mode == win::position::left
-             || mode == win::position::bottom_left)
-            && this->control->rules.checkPosition(geo::invalid_point) != geo::invalid_point) {
-            return false;
-        }
-
-        auto min = minSize();
-        auto max = maxSize();
-
-        return min.width() < max.width() || min.height() < max.height();
+        return is_resizable(*this);
     }
 
     void hideClient(bool hide) override
@@ -468,107 +417,17 @@ public:
 
     bool doStartMoveResize() override
     {
-        bool has_grab = false;
-
-        // This reportedly improves smoothness of the moveresize operation,
-        // something with Enter/LeaveNotify events, looks like XFree performance problem or
-        // something *shrug* (https://lists.kde.org/?t=107302193400001&r=1&w=2)
-        auto r = space_window_area(this->space, FullArea, this);
-
-        xcb_windows.grab.create(r, XCB_WINDOW_CLASS_INPUT_ONLY, 0, nullptr, rootWindow());
-        xcb_windows.grab.map();
-        xcb_windows.grab.raise();
-
-        kwinApp()->update_x11_time_from_clock();
-        auto const cookie = xcb_grab_pointer_unchecked(
-            connection(),
-            false,
-            xcb_windows.grab,
-            XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE
-                | XCB_EVENT_MASK_POINTER_MOTION | XCB_EVENT_MASK_ENTER_WINDOW
-                | XCB_EVENT_MASK_LEAVE_WINDOW,
-            XCB_GRAB_MODE_ASYNC,
-            XCB_GRAB_MODE_ASYNC,
-            xcb_windows.grab,
-            this->space.input->cursor->x11_cursor(this->control->move_resize.cursor),
-            xTime());
-
-        unique_cptr<xcb_grab_pointer_reply_t> pointerGrab(
-            xcb_grab_pointer_reply(connection(), cookie, nullptr));
-        if (pointerGrab && pointerGrab->status == XCB_GRAB_STATUS_SUCCESS) {
-            has_grab = true;
-        }
-
-        if (!has_grab && base::x11::grab_keyboard(frameId()))
-            has_grab = move_resize_has_keyboard_grab = true;
-        if (!has_grab) {
-            // at least one grab is necessary in order to be able to finish move/resize
-            xcb_windows.grab.reset();
-            return false;
-        }
-
-        return true;
+        return do_start_move_resize(*this);
     }
 
     void leaveMoveResize() override
     {
-        if (move_needs_server_update) {
-            // Do the deferred move
-            auto const frame_geo = this->geo.frame;
-            auto const client_geo = frame_to_client_rect(this, frame_geo);
-            auto const outer_pos = frame_to_render_rect(this, frame_geo).topLeft();
-
-            xcb_windows.outer.move(outer_pos);
-            send_synthetic_configure_notify(this, client_geo);
-
-            synced_geometry.frame = frame_geo;
-            synced_geometry.client = client_geo;
-
-            move_needs_server_update = false;
-        }
-
-        if (move_resize_has_keyboard_grab) {
-            base::x11::ungrab_keyboard();
-        }
-
-        move_resize_has_keyboard_grab = false;
-        xcb_ungrab_pointer(connection(), xTime());
-        xcb_windows.grab.reset();
-
-        leave_move_resize(*this);
+        x11::leave_move_resize(*this);
     }
 
     void doResizeSync() override
     {
-        auto const frame_geo = this->control->move_resize.geometry;
-
-        if (sync_request.counter != XCB_NONE) {
-            sync_geometry(this, frame_geo);
-            update_server_geometry(this, frame_geo);
-            return;
-        }
-
-        // Resizes without sync extension support need to be retarded to not flood clients with
-        // geometry changes. Some clients can't handle this (for example Steam client).
-        if (!syncless_resize_retarder) {
-            syncless_resize_retarder = new QTimer(this->qobject.get());
-            QObject::connect(
-                syncless_resize_retarder, &QTimer::timeout, this->qobject.get(), [this] {
-                    assert(!pending_configures.empty());
-                    update_server_geometry(this, pending_configures.front().geometry.frame);
-                    apply_pending_geometry(this, 0);
-                });
-            syncless_resize_retarder->setSingleShot(true);
-        }
-
-        if (pending_configures.empty()) {
-            assert(!syncless_resize_retarder->isActive());
-            pending_configures.push_back(
-                {0, {frame_geo, QRect(), this->geo.update.max_mode, this->geo.update.fullscreen}});
-            syncless_resize_retarder->start(16);
-        } else {
-            pending_configures.front().geometry.frame = frame_geo;
-        }
+        do_resize_sync(*this);
     }
 
     bool isWaitingForMoveResizeSync() const override
