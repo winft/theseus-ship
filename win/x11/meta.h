@@ -329,7 +329,7 @@ bool belong_to_same_application(Win const* c1, Win const* c2, win::same_client_c
         // if WM_CLIENT_LEADER is not set, it returns xcb_window,
         // don't use in this test then
         // different client leader
-    } else if (!Win::resourceMatch(c1, c2)) {
+    } else if (c1->meta.wm_class.res_class != c2->meta.wm_class.res_class) {
         // different apps
     } else if (!same_app_window_role_match(
                    c1, c2, flags(checks & win::same_client_check::relaxed_for_active))
@@ -344,6 +344,74 @@ bool belong_to_same_application(Win const* c1, Win const* c2, win::same_client_c
     }
 
     return same_app;
+}
+
+template<typename Win>
+NET::WindowType get_window_type_direct(Win& win)
+{
+    if (win.remnant) {
+        return win.window_type;
+    }
+    return win.info->windowType(win.supported_default_types);
+}
+
+template<typename Win>
+NET::WindowType get_window_type(Win& win)
+{
+    auto wt = get_window_type_direct(win);
+    if (!win.control) {
+        return wt;
+    }
+
+    assert(!win.remnant);
+
+    auto wt2 = win.control->rules.checkType(wt);
+    if (wt != wt2) {
+        wt = wt2;
+        // force hint change
+        win.info->setWindowType(wt);
+    }
+
+    // hacks here
+    if (wt == NET::Unknown) {
+        // this is more or less suggested in NETWM spec
+        wt = win.transient->lead() ? NET::Dialog : NET::Normal;
+    }
+    return wt;
+}
+
+template<typename Win>
+xcb_window_t get_frame_id(Win& win)
+{
+    if (win.remnant) {
+        return win.remnant->data.frame;
+    }
+    if (!win.control) {
+        return win.xcb_window;
+    }
+    return win.xcb_windows.outer;
+}
+
+template<typename Win>
+void print_window_debug_info(Win& win, QDebug& stream)
+{
+    if (win.remnant) {
+        stream << "\'REMNANT:" << reinterpret_cast<void const*>(&win) << "\'";
+        return;
+    }
+
+    std::string type = "unmanaged";
+    std::string caption = "";
+    if (win.control) {
+        type = "managed";
+        caption = win::caption(&win).toStdString();
+    }
+
+    stream.nospace();
+    stream << "\'x11::window"
+           << "(" << QString::fromStdString(type) << "):" << win.xcb_window << ";"
+           << ";WMCLASS:" << win.meta.wm_class.res_class << ":" << win.meta.wm_class.res_name
+           << ";Caption:" << QString::fromStdString(caption) << "\'";
 }
 
 }

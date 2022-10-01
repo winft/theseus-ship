@@ -13,6 +13,7 @@
 #include "geo.h"
 #include "group.h"
 #include "maximize.h"
+#include "meta.h"
 #include "transient.h"
 #include "types.h"
 #include "window_release.h"
@@ -91,34 +92,12 @@ public:
 
     NET::WindowType get_window_type_direct() const override
     {
-        if (this->remnant) {
-            return window_type;
-        }
-        return this->info->windowType(this->supported_default_types);
+        return x11::get_window_type_direct(*this);
     }
 
     NET::WindowType windowType() const override
     {
-        auto wt = get_window_type_direct();
-        if (!this->control) {
-            return wt;
-        }
-
-        assert(!this->remnant);
-
-        auto wt2 = this->control->rules.checkType(wt);
-        if (wt != wt2) {
-            wt = wt2;
-            // force hint change
-            this->info->setWindowType(wt);
-        }
-
-        // hacks here
-        if (wt == NET::Unknown) {
-            // this is more or less suggested in NETWM spec
-            wt = this->transient->lead() ? NET::Dialog : NET::Normal;
-        }
-        return wt;
+        return get_window_type(*this);
     }
 
     x11::client_machine* get_client_machine() const override
@@ -180,13 +159,7 @@ public:
 
     xcb_window_t frameId() const override
     {
-        if (this->remnant) {
-            return this->remnant->data.frame;
-        }
-        if (!this->control) {
-            return Toplevel<Space>::frameId();
-        }
-        return xcb_windows.outer;
+        return get_frame_id(*this);
     }
 
     QRegion shape_render_region() const
@@ -1475,31 +1448,9 @@ public:
         Q_EMIT this->qobject->surfaceIdChanged(this->surface_id);
     }
 
-    static bool resourceMatch(window const* c1, window const* c2)
-    {
-        return c1->meta.wm_class.res_class == c2->meta.wm_class.res_class;
-    }
-
     void debug(QDebug& stream) const override
     {
-        if (this->remnant) {
-            stream << "\'REMNANT:" << reinterpret_cast<void const*>(this) << "\'";
-            return;
-        }
-
-        std::string type = "unmanaged";
-        std::string caption = "";
-        if (this->control) {
-            type = "managed";
-            caption = win::caption(this).toStdString();
-        }
-
-        stream.nospace();
-        stream << "\'x11::window"
-               << "(" << QString::fromStdString(type) << "):" << this->xcb_window << ";"
-               << ";WMCLASS:" << this->meta.wm_class.res_class << ":"
-               << this->meta.wm_class.res_name << ";Caption:" << QString::fromStdString(caption)
-               << "\'";
+        print_window_debug_info(*this, stream);
     }
 
     QString iconic_caption;
