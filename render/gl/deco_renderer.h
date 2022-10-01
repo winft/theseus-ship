@@ -69,14 +69,6 @@ template<typename Client, typename Scene>
 class deco_renderer : public win::deco::renderer<Client>
 {
 public:
-    enum class DecorationPart : int {
-        Left,
-        Top,
-        Right,
-        Bottom,
-        Count,
-    };
-
     deco_renderer(Client* client, Scene& scene)
         : win::deco::renderer<Client>(client)
         , scene{scene}
