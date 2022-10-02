@@ -164,22 +164,6 @@ void model_setup_connections(Model& model, Space& space)
             auto u = space.windows_map.at(win_id);
             remove_window(&model, model.s_x11UnmanagedId - 1, model.m_unmanageds, u);
         });
-    for (auto const& window : space.windows) {
-        if (dynamic_cast<typename Space::internal_window_t*>(window)) {
-            model.m_internalClients.emplace_back(
-                std::make_unique<console_window<window_t>>(window));
-        }
-    }
-    QObject::connect(
-        space.qobject.get(), &win::space_qobject::internalClientAdded, &model, [&](auto win_id) {
-            auto window = space.windows_map.at(win_id);
-            add_window(&model, model.s_workspaceInternalId - 1, model.m_internalClients, window);
-        });
-    QObject::connect(
-        space.qobject.get(), &win::space_qobject::internalClientRemoved, &model, [&](auto win_id) {
-            auto window = space.windows_map.at(win_id);
-            remove_window(&model, model.s_workspaceInternalId - 1, model.m_internalClients, window);
-        });
 }
 
 }

@@ -202,9 +202,6 @@ bool console_model::get_client_count(int parent_id, int& count) const
     case s_x11UnmanagedId:
         count = m_unmanageds.size();
         break;
-    case s_workspaceInternalId:
-        count = m_internalClients.size();
-        break;
     default:
         return false;
     }
@@ -221,10 +218,6 @@ bool console_model::get_property_count(QModelIndex const& parent, int& count) co
     }
     if (id < s_idDistance * (s_x11UnmanagedId + 1)) {
         count = window_property_count(this, parent, &console_model::unmanaged);
-        return true;
-    }
-    if (id < s_idDistance * (s_workspaceInternalId + 1)) {
-        count = window_property_count(this, parent, &console_model::internalClient);
         return true;
     }
     return false;
@@ -262,9 +255,6 @@ bool console_model::get_client_index(int row, int column, int parent_id, QModelI
     case s_x11UnmanagedId:
         index = index_for_window(this, row, column, m_unmanageds, s_x11UnmanagedId);
         break;
-    case s_workspaceInternalId:
-        index = index_for_window(this, row, column, m_internalClients, s_workspaceInternalId);
-        break;
     default:
         return false;
     }
@@ -284,10 +274,6 @@ bool console_model::get_property_index(int row,
     }
     if (parent.internalId() < s_idDistance * (s_x11UnmanagedId + 1)) {
         index = index_for_property(this, row, column, parent, &console_model::unmanaged);
-        return true;
-    }
-    if (parent.internalId() < s_idDistance * (s_workspaceInternalId + 1)) {
-        index = index_for_property(this, row, column, parent, &console_model::internalClient);
         return true;
     }
     return false;
@@ -438,9 +424,6 @@ QVariant console_model::propertyData(QObject* object, const QModelIndex& index, 
 
 QVariant console_model::get_client_property_data(QModelIndex const& index, int role) const
 {
-    if (auto c = internalClient(index)) {
-        return propertyData(c, index, role);
-    }
     if (auto c = x11Client(index)) {
         return propertyData(c, index, role);
     }
@@ -466,8 +449,6 @@ QVariant console_model::get_client_data(QModelIndex const& index, int role) cons
         }
         return QVariant();
     }
-    case s_workspaceInternalId:
-        return window_data(index, role, m_internalClients);
     default:
         return QVariant();
     }
@@ -510,11 +491,6 @@ QVariant console_model::data(const QModelIndex& index, int role) const
     }
 
     return get_client_data(index, role);
-}
-
-win::property_window* console_model::internalClient(QModelIndex const& index) const
-{
-    return window_for_index(index, m_internalClients, s_workspaceInternalId);
 }
 
 win::property_window* console_model::x11Client(QModelIndex const& index) const
