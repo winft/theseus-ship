@@ -103,10 +103,7 @@ public:
             = QObject::connect(m_client->space.base.render->compositor->qobject.get(),
                                &render::compositor_qobject::compositingToggled,
                                qobject.get(),
-                               [this, decoration]() {
-                                   createRenderer();
-                                   decoration->update();
-                               });
+                               [this](auto active) { handle_compositing_toggled(active); });
         QObject::connect(m_client->space.base.render->compositor->qobject.get(),
                          &render::compositor_qobject::aboutToDestroy,
                          qobject.get(),
@@ -473,12 +470,31 @@ public:
     std::unique_ptr<client_impl_qobject> qobject;
 
 private:
+    void handle_compositing_toggled(bool active)
+    {
+        using space_t = std::decay_t<decltype(m_client->space)>;
+        using render_t = typename space_t::base_t::render_t;
+
+        m_renderer.reset();
+        auto should_create_renderer = active;
+
+        if constexpr (requires(render_t * render, render_window window) {
+                          render->create_non_composited_deco(window);
+                      }) {
+            should_create_renderer = true;
+        }
+
+        if (should_create_renderer) {
+            createRenderer();
+        }
+
+        decoration()->update();
+    }
+
     void createRenderer()
     {
+        assert(!m_renderer);
         m_renderer = std::make_unique<renderer_t>(this);
-        if (!m_renderer->injector) {
-            m_renderer.reset();
-        }
     }
 
     Window* m_client;

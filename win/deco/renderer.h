@@ -148,10 +148,18 @@ public:
                             },
                             client->decoration(),
                             client->client()->frameId()};
-        injector = client->client()->space.base.render->create_deco(std::move(injector_window));
-        if (!injector) {
-            return;
+
+        auto render = client->client()->space.base.render.get();
+        if (auto& scene = render->compositor->scene) {
+            injector = scene->create_deco(std::move(injector_window));
+        } else {
+            if constexpr (requires(decltype(render) render, render_window window) {
+                              render->create_non_composited_deco(window);
+                          }) {
+                injector = render->create_non_composited_deco(std::move(injector_window));
+            }
         }
+        assert(injector);
 
         auto markImageSizesDirty = [this] { injector->image_size_dirty = true; };
         QObject::connect(client->decoration(),
