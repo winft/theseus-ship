@@ -7,7 +7,6 @@
 #pragma once
 
 #include "kwinglobals.h"
-#include "win/damage.h"
 #include "win/deco/renderer.h"
 
 #include <kwinxrender/utils.h>
@@ -62,12 +61,6 @@ public:
         : win::deco::renderer<Client>(client)
     {
         this->data = std::make_unique<deco_render_data>();
-
-        QObject::connect(
-            this->qobject.get(),
-            &win::deco::renderer_qobject::renderScheduled,
-            client->client()->qobject.get(),
-            [win = client->client()](auto const& region) { win::add_repaint(*win, region); });
 
         auto& data = get_data();
         for (int i = 0; i < int(DecorationPart::Count); ++i) {

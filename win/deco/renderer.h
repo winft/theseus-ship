@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorations_logging.h"
 
 #include "kwin_export.h"
+#include "win/damage.h"
 
 #include <KDecoration2/DecoratedClient>
 #include <KDecoration2/Decoration>
@@ -54,12 +55,6 @@ public:
 
     virtual ~renderer() = default;
 
-    void schedule(const QRegion& region)
-    {
-        m_scheduled = m_scheduled.united(region);
-        Q_EMIT qobject->renderScheduled(region);
-    }
-
     std::unique_ptr<win::deco::render_data> move_data()
     {
         render();
@@ -80,7 +75,14 @@ protected:
         QObject::connect(client->decoration(),
                          &KDecoration2::Decoration::damaged,
                          qobject.get(),
-                         [this](auto const& rect) { schedule(rect); });
+                         [this](auto const& rect) {
+                             if (!m_client) {
+                                 return;
+                             }
+                             m_scheduled = m_scheduled.united(rect);
+                             win::add_repaint(*m_client->client(), rect);
+                             Q_EMIT qobject->renderScheduled(rect);
+                         });
         QObject::connect(client->client()->qobject.get(),
                          &decltype(client->client()->qobject)::element_type::central_output_changed,
                          qobject.get(),
