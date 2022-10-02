@@ -85,7 +85,7 @@ public:
         bool wasAction = false;
         auto const command = win::get_mouse_command(focus_window, Qt::LeftButton, &wasAction);
         if (wasAction) {
-            return !focus_window->performMouseCommand(command, event.pos.toPoint());
+            return !win::perform_mouse_command(*focus_window, command, event.pos.toPoint());
         }
         return false;
     }

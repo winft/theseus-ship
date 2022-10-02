@@ -93,14 +93,6 @@ void update_input_window(Win* win, QRect const& frame_geo)
                          rects.constData());
 }
 
-template<typename Win>
-bool perform_mouse_command(Win* win,
-                           base::options_qobject::MouseCommand command,
-                           QPoint const& globalPos)
-{
-    return win->Win::type::performMouseCommand(command, globalPos);
-}
-
 template<typename Space>
 void mark_as_user_interaction(Space& space)
 {

@@ -121,7 +121,8 @@ public:
 
         if ((event.orientation == axis_orientation::vertical)
             && win::titlebar_positioned_under_mouse(window)) {
-            window->performMouseCommand(
+            win::perform_mouse_command(
+                *window,
                 kwinApp()->options->operationTitlebarMouseWheel(event.delta * -1),
                 this->redirect.pointer->pos().toPoint());
         }

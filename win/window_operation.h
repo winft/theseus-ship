@@ -38,16 +38,17 @@ void perform_window_operation(Win* window, base::options_qobject::WindowOperatio
 
     switch (op) {
     case base::options_qobject::MoveOp:
-        window->performMouseCommand(base::options_qobject::MouseMove, cursor->pos());
+        perform_mouse_command(*window, base::options_qobject::MouseMove, cursor->pos());
         break;
     case base::options_qobject::UnrestrictedMoveOp:
-        window->performMouseCommand(base::options_qobject::MouseUnrestrictedMove, cursor->pos());
+        perform_mouse_command(*window, base::options_qobject::MouseUnrestrictedMove, cursor->pos());
         break;
     case base::options_qobject::ResizeOp:
-        window->performMouseCommand(base::options_qobject::MouseResize, cursor->pos());
+        perform_mouse_command(*window, base::options_qobject::MouseResize, cursor->pos());
         break;
     case base::options_qobject::UnrestrictedResizeOp:
-        window->performMouseCommand(base::options_qobject::MouseUnrestrictedResize, cursor->pos());
+        perform_mouse_command(
+            *window, base::options_qobject::MouseUnrestrictedResize, cursor->pos());
         break;
     case base::options_qobject::CloseOp:
         QMetaObject::invokeMethod(

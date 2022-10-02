@@ -588,12 +588,6 @@ public:
 
     virtual void closeWindow() = 0;
 
-    virtual bool performMouseCommand(base::options_qobject::MouseCommand cmd,
-                                     const QPoint& globalPos)
-    {
-        return win::perform_mouse_command(*this, cmd, globalPos);
-    }
-
     virtual type* findModal()
     {
         return nullptr;

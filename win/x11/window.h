@@ -317,12 +317,6 @@ public:
         return wants_input(*this);
     }
 
-    bool performMouseCommand(base::options_qobject::MouseCommand command,
-                             QPoint const& globalPos) override
-    {
-        return x11::perform_mouse_command(this, command, globalPos);
-    }
-
     void setShortcutInternal() override
     {
         shortcut_set_internal(*this);
