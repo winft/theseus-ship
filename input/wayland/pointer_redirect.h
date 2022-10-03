@@ -86,7 +86,7 @@ public:
             waylandServer()->seat(), &Wrapland::Server::Seat::dragEnded, qobject.get(), [this] {
                 // need to force a focused pointer change
                 waylandServer()->seat()->pointers().set_focused_surface(nullptr);
-                device_redirect_set_focus(this, nullptr);
+                device_redirect_unset_focus(this);
                 device_redirect_update(this);
             });
 
@@ -698,7 +698,7 @@ private:
     {
         break_pointer_constraints(focus.window ? focus.window->surface : nullptr);
         disconnect_pointer_constraints_connection();
-        device_redirect_set_focus(this, nullptr);
+        device_redirect_unset_focus(this);
         waylandServer()->seat()->pointers().set_focused_surface(nullptr);
     }
 
@@ -724,7 +724,7 @@ private:
             notifiers.focus_geometry = QMetaObject::Connection();
             break_pointer_constraints(focus_window->surface);
             disconnect_pointer_constraints_connection();
-            device_redirect_set_focus(this, nullptr);
+            device_redirect_unset_focus(this);
         }
         waylandServer()->seat()->pointers().set_focused_surface(nullptr);
     }

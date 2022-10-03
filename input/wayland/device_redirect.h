@@ -63,17 +63,22 @@ bool device_redirect_set_at(Dev* dev, decltype(dev->at.window) window)
 }
 
 template<typename Dev>
-void device_redirect_set_focus(Dev* dev, decltype(dev->focus.window) window)
+void device_redirect_unset_focus(Dev* dev)
 {
     QObject::disconnect(dev->focus.notifiers.window_destroy);
-    dev->focus.window = window;
-    if (window) {
-        dev->focus.notifiers.window_destroy = QObject::connect(
-            window->qobject.get(), &win::window_qobject::destroyed, dev->qobject.get(), [dev] {
-                dev->focus.window = nullptr;
-            });
-    }
+    dev->focus.window = {};
+    // TODO: call focusUpdate?
+}
 
+template<typename Dev, typename Win>
+void device_redirect_set_focus(Dev* dev, Win& window)
+{
+    device_redirect_unset_focus(dev);
+    dev->focus.window = &window;
+    dev->focus.notifiers.window_destroy = QObject::connect(window.qobject.get(),
+                                                           &win::window_qobject::destroyed,
+                                                           dev->qobject.get(),
+                                                           [dev] { dev->focus.window = nullptr; });
     // TODO: call focusUpdate?
 }
 
@@ -97,20 +102,26 @@ void device_redirect_update_focus(Dev* dev)
 {
     auto oldFocus = dev->focus.window;
 
-    if (dev->at.window && !dev->at.window->surface) {
-        // The surface has not yet been created (special XWayland case).
-        // Therefore listen for its creation.
-        if (!dev->at.notifiers.surface) {
-            dev->at.notifiers.surface = QObject::connect(dev->at.window->qobject.get(),
-                                                         &win::window_qobject::surfaceChanged,
-                                                         dev->qobject.get(),
-                                                         [dev] { device_redirect_update(dev); });
+    if (dev->at.window) {
+        if (dev->at.window->surface) {
+            device_redirect_set_focus(dev, *dev->at.window);
+        } else {
+            // The surface has not yet been created (special XWayland case).
+            // Therefore listen for its creation.
+            if (!dev->at.notifiers.surface) {
+                dev->at.notifiers.surface
+                    = QObject::connect(dev->at.window->qobject.get(),
+                                       &win::window_qobject::surfaceChanged,
+                                       dev->qobject.get(),
+                                       [dev] { device_redirect_update(dev); });
+            }
+            device_redirect_unset_focus(dev);
         }
-        device_redirect_set_focus(dev, static_cast<decltype(dev->focus.window)>(nullptr));
     } else {
-        device_redirect_set_focus(dev, dev->at.window);
+        device_redirect_unset_focus(dev);
     }
 
+    // TODO(romangg): If the window is the same should we skip? Would simplify the code.
     dev->focusUpdate(oldFocus, dev->focus.window);
 }
 
