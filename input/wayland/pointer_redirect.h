@@ -198,6 +198,119 @@ public:
         redirect->cursor->cursor_image->removeWindowSelectionCursor();
     }
 
+    bool can_constrain() const
+    {
+        return constraints.enabled && focus.window == redirect->space.stacking.active;
+    }
+
+    template<typename Win>
+    bool update_confinement(Win& win)
+    {
+        auto const surface = win.surface;
+        assert(surface);
+
+        auto const cf = surface->confinedPointer();
+        if (!cf) {
+            constraints.confined = false;
+            disconnect_confined_pointer_region_connection();
+            return false;
+        }
+
+        if (cf->isConfined()) {
+            if (!can_constrain()) {
+                cf->setConfined(false);
+                constraints.confined = false;
+                disconnect_confined_pointer_region_connection();
+            }
+            return false;
+        }
+
+        if (!can_constrain() || !getConstraintRegion(&win, cf.data()).contains(m_pos.toPoint())) {
+            return false;
+        }
+
+        cf->setConfined(true);
+        constraints.confined = true;
+
+        notifiers.confined_pointer_region = QObject::connect(
+            cf.data(), &Wrapland::Server::ConfinedPointerV1::regionChanged, qobject.get(), [this] {
+                if (!focus.window) {
+                    return;
+                }
+                auto const surface = focus.window->surface;
+                if (!surface) {
+                    return;
+                }
+                auto const cf = surface->confinedPointer();
+                if (getConstraintRegion(focus.window, cf.data()).contains(m_pos.toPoint())) {
+                    if (!cf->isConfined()) {
+                        cf->setConfined(true);
+                        constraints.confined = true;
+                    }
+                    return;
+                }
+
+                // Pointer no longer in confined region, break the confinement.
+                cf->setConfined(false);
+                constraints.confined = false;
+            });
+        return true;
+    }
+
+    template<typename Win>
+    void update_lock(Win& win)
+    {
+        auto const surface = win.surface;
+        assert(surface);
+
+        auto const lock = surface->lockedPointer();
+        if (!lock) {
+            constraints.locked = false;
+            disconnect_locked_pointer_destroyed_connection();
+            return;
+        }
+
+        if (lock->isLocked()) {
+            if (!can_constrain()) {
+                auto const hint = lock->cursorPositionHint();
+                lock->setLocked(false);
+                constraints.locked = false;
+                disconnect_locked_pointer_destroyed_connection();
+                if (!(hint.x() < 0 || hint.y() < 0)) {
+                    // TODO(romangg): different client offset for Xwayland clients?
+                    processMotion(win::frame_to_client_pos(&win, win.geo.pos()) + hint,
+                                  waylandServer()->seat()->timestamp());
+                }
+            }
+            return;
+        }
+
+        if (can_constrain() && getConstraintRegion(&win, lock.data()).contains(m_pos.toPoint())) {
+            lock->setLocked(true);
+            constraints.locked = true;
+
+            // The client might cancel pointer locking from its side by unbinding the
+            // LockedPointerV1. In this case the cached cursor position hint must be fetched
+            // before the resource goes away
+            notifiers.locked_pointer_destroyed = QObject::connect(
+                lock.data(),
+                &Wrapland::Server::LockedPointerV1::resourceDestroyed,
+                qobject.get(),
+                [this, lock]() {
+                    auto const hint = lock->cursorPositionHint();
+                    if (hint.x() < 0 || hint.y() < 0 || !focus.window) {
+                        return;
+                    }
+                    // TODO(romangg): different client offset for Xwayland clients?
+                    auto globalHint
+                        = win::frame_to_client_pos(focus.window, focus.window->geo.pos()) + hint;
+                    processMotion(globalHint, waylandServer()->seat()->timestamp());
+                });
+            // TODO: connect to region change - is it needed at all? If the pointer is locked
+            // it's always in the region
+        }
+    }
+
     void updatePointerConstraints()
     {
         if (!focus.window) {
@@ -217,103 +330,14 @@ public:
         if (s != seat->pointers().get_focus().surface) {
             return;
         }
-        auto const canConstrain
-            = constraints.enabled && focus.window == redirect->space.stacking.active;
-        auto const cf = s->confinedPointer();
 
-        if (cf) {
-            if (cf->isConfined()) {
-                if (!canConstrain) {
-                    cf->setConfined(false);
-                    constraints.confined = false;
-                    disconnect_confined_pointer_region_connection();
-                }
-                return;
-            }
-            const QRegion r = getConstraintRegion(focus.window, cf.data());
-            if (canConstrain && r.contains(m_pos.toPoint())) {
-                cf->setConfined(true);
-                constraints.confined = true;
-                notifiers.confined_pointer_region
-                    = QObject::connect(cf.data(),
-                                       &Wrapland::Server::ConfinedPointerV1::regionChanged,
-                                       qobject.get(),
-                                       [this] {
-                                           if (!focus.window) {
-                                               return;
-                                           }
-                                           const auto s = focus.window->surface;
-                                           if (!s) {
-                                               return;
-                                           }
-                                           const auto cf = s->confinedPointer();
-                                           if (!getConstraintRegion(focus.window, cf.data())
-                                                    .contains(m_pos.toPoint())) {
-                                               // pointer no longer in confined region, break the
-                                               // confinement
-                                               cf->setConfined(false);
-                                               constraints.confined = false;
-                                           } else {
-                                               if (!cf->isConfined()) {
-                                                   cf->setConfined(true);
-                                                   constraints.confined = true;
-                                               }
-                                           }
-                                       });
-                return;
-            }
-        } else {
-            constraints.confined = false;
-            disconnect_confined_pointer_region_connection();
+        if (update_confinement(*focus.window)) {
+            // Pointer is confined. Don't lock.
+            // TODO(romangg): Should we disable the lock?
+            return;
         }
 
-        const auto lock = s->lockedPointer();
-        if (lock) {
-            if (lock->isLocked()) {
-                if (!canConstrain) {
-                    const auto hint = lock->cursorPositionHint();
-                    lock->setLocked(false);
-                    constraints.locked = false;
-                    disconnect_locked_pointer_destroyed_connection();
-                    if (!(hint.x() < 0 || hint.y() < 0) && focus.window) {
-                        // TODO(romangg): different client offset for Xwayland clients?
-                        processMotion(
-                            win::frame_to_client_pos(focus.window, focus.window->geo.pos()) + hint,
-                            seat->timestamp());
-                    }
-                }
-                return;
-            }
-            const QRegion r = getConstraintRegion(focus.window, lock.data());
-            if (canConstrain && r.contains(m_pos.toPoint())) {
-                lock->setLocked(true);
-                constraints.locked = true;
-
-                // The client might cancel pointer locking from its side by unbinding the
-                // LockedPointerV1. In this case the cached cursor position hint must be fetched
-                // before the resource goes away
-                notifiers.locked_pointer_destroyed = QObject::connect(
-                    lock.data(),
-                    &Wrapland::Server::LockedPointerV1::resourceDestroyed,
-                    qobject.get(),
-                    [this, lock]() {
-                        const auto hint = lock->cursorPositionHint();
-                        if (hint.x() < 0 || hint.y() < 0 || !focus.window) {
-                            return;
-                        }
-                        // TODO(romangg): different client offset for Xwayland clients?
-                        auto globalHint
-                            = win::frame_to_client_pos(focus.window, focus.window->geo.pos())
-                            + hint;
-                        processMotion(globalHint, waylandServer()->seat()->timestamp());
-                    });
-                // TODO: connect to region change - is it needed at all? If the pointer is locked
-                // it's always in the region
-            }
-        } else {
-            constraints.locked = false;
-            disconnect_locked_pointer_destroyed_connection();
-        }
+        update_lock(*focus.window);
     }
 
     void setEnableConstraints(bool set)
