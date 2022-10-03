@@ -233,16 +233,13 @@ public:
         constraints.confined = true;
 
         notifiers.confined_pointer_region = QObject::connect(
-            cf.data(), &Wrapland::Server::ConfinedPointerV1::regionChanged, qobject.get(), [this] {
-                if (!focus.window) {
-                    return;
-                }
-                auto const surface = focus.window->surface;
-                if (!surface) {
-                    return;
-                }
-                auto const cf = surface->confinedPointer();
-                if (getConstraintRegion(focus.window, cf.data()).contains(m_pos.toPoint())) {
+            cf.data(),
+            &Wrapland::Server::ConfinedPointerV1::regionChanged,
+            qobject.get(),
+            [&win, this] {
+                assert(win.surface);
+                auto const cf = win.surface->confinedPointer();
+                if (getConstraintRegion(&win, cf.data()).contains(m_pos.toPoint())) {
                     if (!cf->isConfined()) {
                         cf->setConfined(true);
                         constraints.confined = true;
@@ -296,14 +293,14 @@ public:
                 lock.data(),
                 &Wrapland::Server::LockedPointerV1::resourceDestroyed,
                 qobject.get(),
-                [this, lock]() {
+                [&win, lock, this]() {
+                    assert(win.surface);
                     auto const hint = lock->cursorPositionHint();
-                    if (hint.x() < 0 || hint.y() < 0 || !focus.window) {
+                    if (hint.x() < 0 || hint.y() < 0) {
                         return;
                     }
                     // TODO(romangg): different client offset for Xwayland clients?
-                    auto globalHint
-                        = win::frame_to_client_pos(focus.window, focus.window->geo.pos()) + hint;
+                    auto globalHint = win::frame_to_client_pos(&win, win.geo.pos()) + hint;
                     processMotion(globalHint, waylandServer()->seat()->timestamp());
                 });
             // TODO: connect to region change - is it needed at all? If the pointer is locked
