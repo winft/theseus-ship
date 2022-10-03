@@ -250,7 +250,6 @@ private:
     bool check_applications(tabbox_client* client) const
     {
         auto current = get_client_impl(client)->client();
-        client_impl* c;
 
         switch (config().client_applications_mode()) {
         case tabbox_config::OneWindowPerApplication:
@@ -260,7 +259,7 @@ private:
                 if (!client) {
                     continue;
                 }
-                if ((c = dynamic_cast<client_impl*>(client.get()))) {
+                if (auto c = dynamic_cast<client_impl*>(client.get())) {
                     if (win::belong_to_same_client(
                             c->client(), current, win::same_client_check::allow_cross_process)) {
                         return false;
@@ -273,7 +272,7 @@ private:
             if (!pointer) {
                 return false;
             }
-            if ((c = dynamic_cast<client_impl*>(pointer.get()))) {
+            if (auto c = dynamic_cast<client_impl*>(pointer.get())) {
                 if (win::belong_to_same_client(
                         c->client(), current, win::same_client_check::allow_cross_process)) {
                     return true;
