@@ -247,38 +247,51 @@ private:
         }
     }
 
+    template<typename Win>
+    bool check_one_window_per_application(Win& win) const
+    {
+        // check if the list already contains an entry of this application
+        for (const auto& client_weak : client_list()) {
+            auto client = client_weak.lock();
+            if (!client) {
+                continue;
+            }
+            if (auto c = dynamic_cast<client_impl*>(client.get())) {
+                if (win::belong_to_same_client(
+                        c->client(), &win, win::same_client_check::allow_cross_process)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    template<typename Win>
+    bool check_all_windows_current_application(Win& win) const
+    {
+        auto pointer = tabbox_handle->active_client().lock();
+        if (!pointer) {
+            return false;
+        }
+        if (auto c = dynamic_cast<client_impl*>(pointer.get())) {
+            if (win::belong_to_same_client(
+                    c->client(), &win, win::same_client_check::allow_cross_process)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     bool check_applications(tabbox_client* client) const
     {
         auto current = get_client_impl(client)->client();
 
         switch (config().client_applications_mode()) {
         case tabbox_config::OneWindowPerApplication:
-            // check if the list already contains an entry of this application
-            for (const auto& client_weak : client_list()) {
-                auto client = client_weak.lock();
-                if (!client) {
-                    continue;
-                }
-                if (auto c = dynamic_cast<client_impl*>(client.get())) {
-                    if (win::belong_to_same_client(
-                            c->client(), current, win::same_client_check::allow_cross_process)) {
-                        return false;
-                    }
-                }
-            }
-            return true;
+            return check_one_window_per_application(*current);
         case tabbox_config::AllWindowsCurrentApplication: {
-            auto pointer = tabbox_handle->active_client().lock();
-            if (!pointer) {
-                return false;
-            }
-            if (auto c = dynamic_cast<client_impl*>(pointer.get())) {
-                if (win::belong_to_same_client(
-                        c->client(), current, win::same_client_check::allow_cross_process)) {
-                    return true;
-                }
-            }
-            return false;
+            return check_all_windows_current_application(*current);
         }
         default: // tabbox_config::AllWindowsAllApplications
             return true;
