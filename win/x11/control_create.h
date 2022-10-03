@@ -140,6 +140,82 @@ void prepare_decoration(Win* win)
     win->updateDecoration(false);
 }
 
+template<typename Win, typename ActWin>
+bool created_window_may_activate(Win& win, ActWin& act_win)
+{
+    if (enum_index(win.control->rules.checkFSP(
+            kwinApp()->options->qobject->focusStealingPreventionLevel()))
+        <= 0) {
+        // Always allowed if focus stealing prevention is turned off.
+        return true;
+    }
+
+    if (belong_to_same_application(&act_win, &win, same_client_check::relaxed_for_active)) {
+        // New windows of the application currently with an active window may activate.
+        return true;
+    }
+
+    auto sameApplicationActiveHackPredicate = [&win](auto const* cl) {
+        // ignore already existing splashes, toolbars, utilities and menus,
+        // as the app may show those before the main window
+        auto x11_client = dynamic_cast<Win const*>(cl);
+        return x11_client && !is_splash(x11_client) && !is_toolbar(x11_client)
+            && !is_utility(x11_client) && !is_menu(x11_client) && x11_client != &win
+            && belong_to_same_application(x11_client, &win, same_client_check::relaxed_for_active);
+    };
+
+    if (win.transient->lead()) {
+        auto get_casted_leads = [&win]() {
+            std::vector<Win*> ret;
+            const auto mcs = win.transient->leads();
+            for (auto mc : mcs) {
+                if (auto c = dynamic_cast<Win*>(mc)) {
+                    ret.push_back(c);
+                }
+            }
+            return ret;
+        };
+
+        if (win.transient->is_follower_of(&act_win)) {
+            // Is transient for currently active window, even though it's not the same app (e.g.
+            // kcookiejar dialog).
+            return true;
+        }
+        if (win.groupTransient()
+            && !find_in_list<Win, Win>(get_casted_leads(), sameApplicationActiveHackPredicate)) {
+            // Standalone transient
+            return true;
+        }
+
+        // New child window may not activate.
+        return false;
+    }
+
+    for (auto other : win.space.windows) {
+        if (other->control && sameApplicationActiveHackPredicate(other)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+template<typename Win>
+xcb_timestamp_t query_timestamp(Win& win)
+{
+    // If it's the first window for its application (i.e. there's no other window from the same
+    // app), use the _KDE_NET_WM_USER_CREATION_TIME trick. Otherwise, refuse activation of a window
+    // from already running application if this application is not the active one (unless focus
+    // stealing prevention is turned off).
+    if (auto act = dynamic_cast<Win*>(most_recently_activated_window(win.space))) {
+        if (!created_window_may_activate(win, *act)) {
+            return 0;
+        }
+    }
+
+    return read_user_creation_time(win);
+}
+
 template<typename Win>
 xcb_timestamp_t read_user_time_map_timestamp(Win* win,
                                              const KStartupInfoId* asn_id,
@@ -148,87 +224,28 @@ xcb_timestamp_t read_user_time_map_timestamp(Win* win,
 {
     xcb_timestamp_t time = win->info->userTime();
 
-    // Newer ASN timestamp always replaces user timestamp, unless user timestamp is 0
-    // helps e.g. with konqy reusing.
+    // Newer ASN timestamp always replaces user timestamp, unless user timestamp is 0. Helps e.g.
+    // with konqy reusing.
     if (asn_data && time && asn_id->timestamp()) {
         if (time == -1U || NET::timestampCompare(asn_id->timestamp(), time) > 0) {
             time = asn_id->timestamp();
         }
     }
-    if (time == -1U) {
-        // The window doesn't have any timestamp.
-        // If it's the first window for its application
-        // (i.e. there's no other window from the same app),
-        // use the _KDE_NET_WM_USER_CREATION_TIME trick.
-        // Otherwise, refuse activation of a window
-        // from already running application if this application
-        // is not the active one (unless focus stealing prevention is turned off).
-        auto act = dynamic_cast<Win*>(most_recently_activated_window(win->space));
-        if (act != nullptr
-            && !belong_to_same_application(act, win, same_client_check::relaxed_for_active)) {
-            bool first_window = true;
-            auto sameApplicationActiveHackPredicate = [win](auto const* cl) {
-                // ignore already existing splashes, toolbars, utilities and menus,
-                // as the app may show those before the main window
-                auto x11_client = dynamic_cast<Win const*>(cl);
-                return x11_client && !is_splash(x11_client) && !is_toolbar(x11_client)
-                    && !is_utility(x11_client) && !is_menu(x11_client) && x11_client != win
-                    && belong_to_same_application(
-                           x11_client, win, same_client_check::relaxed_for_active);
-            };
-            if (win->transient->lead()) {
-                auto clientMainClients = [win]() {
-                    std::vector<Win*> ret;
-                    const auto mcs = win->transient->leads();
-                    for (auto mc : mcs) {
-                        if (auto c = dynamic_cast<Win*>(mc)) {
-                            ret.push_back(c);
-                        }
-                    }
-                    return ret;
-                };
-                if (win->transient->is_follower_of(act))
-                    ; // is transient for currently active window, even though it's not
-                // the same app (e.g. kcookiejar dialog) -> allow activation
-                else if (win->groupTransient()
-                         && find_in_list<Win, Win>(clientMainClients(),
-                                                   sameApplicationActiveHackPredicate)
-                             == nullptr)
-                    ; // standalone transient
-                else
-                    first_window = false;
-            } else {
-                for (auto win : win->space.windows) {
-                    if (win->control && sameApplicationActiveHackPredicate(win)) {
-                        first_window = false;
-                        break;
-                    }
-                }
-            }
-            // don't refuse if focus stealing prevention is turned off
-            if (!first_window
-                && enum_index(win->control->rules.checkFSP(
-                       kwinApp()->options->qobject->focusStealingPreventionLevel()))
-                    > 0) {
-                qCDebug(KWIN_CORE) << "User timestamp, already exists:" << 0;
-                return 0; // refuse activation
-            }
-        }
-        // Creation time would just mess things up during session startup,
-        // as possibly many apps are started up at the same time.
-        // If there's no active window yet, no timestamp will be needed,
-        // as plain allow_window_activation() will return true
-        // in such case. And if there's already active window,
-        // it's better not to activate the new one.
-        // Unless it was the active window at the time
-        // of session saving and there was no user interaction yet,
-        // this check will be done in manage().
-        if (session)
-            return -1U;
-        time = read_user_creation_time(win);
+
+    if (time != -1U) {
+        return time;
     }
-    qCDebug(KWIN_CORE) << "User timestamp, final:" << win << ":" << time;
-    return time;
+
+    // Creation time would just mess things up during session startup, as possibly many apps are
+    // started up at the same time. If there's no active window yet, no timestamp will be needed, as
+    // plain allow_window_activation() will return true in such case. And if there's already active
+    // window, it's better not to activate the new one. Unless it was the active window at the time
+    // of session saving and there was no user interaction yet, this check will be done in manage().
+    if (session) {
+        return -1U;
+    }
+
+    return query_timestamp(*win);
 }
 
 /**
