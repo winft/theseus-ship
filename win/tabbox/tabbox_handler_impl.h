@@ -160,32 +160,34 @@ public:
                                                        int desktop) const override
     {
         if (!client) {
-            return std::weak_ptr<tabbox_client>();
+            return {};
         }
-        typename Tabbox::window_t* ret = nullptr;
-        auto current = get_client_impl(client)->client();
 
-        bool add_client = check_desktop(client, desktop) && check_applications(client)
-            && check_minimized(client) && check_multi_screen(client);
-        add_client
-            = add_client && win::wants_tab_focus(current) && !current->control->skip_switcher();
-        if (add_client) {
-            // don't add windows that have modal dialogs
-            auto modal = current->findModal();
-            if (!modal || !modal->control || modal == current) {
-                ret = current;
-            } else {
-                auto const cl = client_list();
-                if (std::find_if(cl.cbegin(),
-                                 cl.cend(),
-                                 [modal_client = modal->control->tabbox().lock()](
-                                     auto const& client) { return client.lock() == modal_client; })
-                    == cl.cend()) {
-                    ret = modal;
-                }
+        if (!check_desktop(client, desktop) || !check_applications(client)
+            || !check_minimized(client) || !check_multi_screen(client)) {
+            return {};
+        }
+
+        auto win = get_client_impl(client)->client();
+
+        if (!win::wants_tab_focus(win) || win->control->skip_switcher()) {
+            return {};
+        }
+
+        if (auto modal = win->findModal(); modal && modal->control && modal != win) {
+            auto const cl = client_list();
+            if (std::find_if(cl.cbegin(),
+                             cl.cend(),
+                             [modal_client = modal->control->tabbox().lock()](auto const& client) {
+                                 return client.lock() == modal_client;
+                             })
+                == cl.cend()) {
+                // Add the modal dialog instead of the main window.
+                return modal->control->tabbox();
             }
         }
-        return ret ? ret->control->tabbox() : std::weak_ptr<tabbox_client>();
+
+        return win->control->tabbox();
     }
 
     std::weak_ptr<tabbox_client> desktop_client() const override
