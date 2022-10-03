@@ -828,10 +828,8 @@ void delay_focus(Space& space)
 }
 
 template<typename Space>
-void request_delay_focus(Space& space, typename Space::window_t* c)
+void reset_delay_focus_timer(Space& space)
 {
-    space.stacking.delayfocus_window = c;
-
     delete space.delayFocusTimer;
     space.delayFocusTimer = new QTimer(space.qobject.get());
 

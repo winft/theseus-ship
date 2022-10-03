@@ -335,7 +335,8 @@ void enter_event(Win* win, const QPoint& globalPos)
     // focus change came because of window changes (e.g. closing a window) - #92290
     if (kwinApp()->options->qobject->focusPolicy() != base::options_qobject::FocusFollowsMouse
         || globalPos != space->focusMousePos) {
-        request_delay_focus(*space, win);
+        space->stacking.delayfocus_window = win;
+        reset_delay_focus_timer(*space);
     }
 }
 

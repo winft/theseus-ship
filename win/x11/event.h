@@ -393,7 +393,8 @@ void leave_notify_event(Win* win, xcb_leave_notify_event_t* e)
         if (kwinApp()->options->qobject->focusPolicy()
                 == base::options_qobject::FocusStrictlyUnderMouse
             && win->control->active && lostMouse) {
-            request_delay_focus(win->space, nullptr);
+            win->space.stacking.delayfocus_window = {};
+            reset_delay_focus_timer(win->space);
         }
         return;
     }
