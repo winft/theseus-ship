@@ -776,7 +776,7 @@ private:
             }
         }
 
-        pos = apply_pointer_confinement(pos);
+        apply_pointer_confinement(pos);
         if (pos == m_pos) {
             // Didn't change due to confinement.
             return;
@@ -836,39 +836,38 @@ private:
             xcb_flush(c);
     }
 
-    QPointF apply_pointer_confinement(QPointF const& pos) const
+    void apply_pointer_confinement(QPointF& pos) const
     {
         if (!focus.window) {
-            return pos;
-        }
-        auto s = focus.window->surface;
-        if (!s) {
-            return pos;
-        }
-        auto cf = s->confinedPointer();
-        if (!cf) {
-            return pos;
-        }
-        if (!cf->isConfined()) {
-            return pos;
+            return;
         }
 
-        auto const confinementRegion = getConstraintRegion(focus.window, cf.data());
-        if (confinementRegion.contains(pos.toPoint())) {
-            return pos;
-        }
-        QPointF p = pos;
-        // allow either x or y to pass
-        p = QPointF(m_pos.x(), pos.y());
-        if (confinementRegion.contains(p.toPoint())) {
-            return p;
-        }
-        p = QPointF(pos.x(), m_pos.y());
-        if (confinementRegion.contains(p.toPoint())) {
-            return p;
+        auto surface = focus.window->surface;
+        if (!surface) {
+            return;
         }
 
-        return m_pos;
+        auto cf = surface->confinedPointer();
+        if (!cf || !cf->isConfined()) {
+            return;
+        }
+
+        auto const region = getConstraintRegion(focus.window, cf.data());
+        if (region.contains(pos.toPoint())) {
+            return;
+        }
+
+        // Allow either x or y to pass.
+        if (auto tmp = QPointF(m_pos.x(), pos.y()); region.contains(tmp.toPoint())) {
+            pos = tmp;
+            return;
+        }
+        if (auto tmp = QPointF(pos.x(), m_pos.y()); region.contains(tmp.toPoint())) {
+            pos = tmp;
+            return;
+        }
+
+        pos = m_pos;
     }
 
     void disconnect_confined_pointer_region_connection()
