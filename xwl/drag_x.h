@@ -119,25 +119,29 @@ public:
             }
         }
 
-        if (!target || !target->surface
-            || target->surface->client() == waylandServer()->xwayland_connection()) {
-            // Currently there is no target or target is an Xwayland window.
-            // Handled here and by X directly.
-            if (target && target->surface && target->control) {
-                if (source.core.space->stacking.active != target) {
-                    win::activate_window(*source.core.space, *target);
-                }
-            }
-
+        auto unset_target = [&] {
             if (had_visit) {
                 // Last received enter event is now void. Wait for the next one.
                 seat->drags().set_target(nullptr);
             }
             return drag_event_reply::ignore;
+        };
+
+        if (!target || !target->surface) {
+            // Currently there is no target or target is an internal window.
+            return unset_target();
         }
 
         auto wl_win = dynamic_cast<typename Space::wayland_window*>(target);
-        assert(wl_win);
+        if (!wl_win) {
+            // Target is an Xwayland window. Handled here and by X directly.
+            if (target->control) {
+                if (source.core.space->stacking.active != target) {
+                    win::activate_window(*source.core.space, *target);
+                }
+            }
+            return unset_target();
+        }
 
         // New Wl native target.
         visit.reset(new wl_visit(wl_win, source));
