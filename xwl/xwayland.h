@@ -200,7 +200,7 @@ public:
         return data_bridge->drag_move_filter(target, pos);
     }
 
-    std::unique_ptr<xwl::data_bridge<window_t>> data_bridge;
+    std::unique_ptr<xwl::data_bridge<Space>> data_bridge;
 
 private:
     void continue_startup_with_x11()
@@ -312,7 +312,7 @@ private:
         // Trigger possible errors, there's still a chance to abort
         base::x11::xcb::sync();
 
-        data_bridge = std::make_unique<xwl::data_bridge<window_t>>(core);
+        data_bridge = std::make_unique<xwl::data_bridge<Space>>(core);
     }
 
     int xcb_connection_fd{-1};
