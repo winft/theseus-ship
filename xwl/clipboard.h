@@ -37,17 +37,17 @@ namespace KWin::xwl
  * Represents the X clipboard, which is on Wayland side just called
  * @e selection.
  */
-template<typename Window>
+template<typename Space>
 class clipboard
 {
 public:
-    using window_t = Window;
+    using space_t = Space;
 
-    selection_data<Window, Wrapland::Server::data_source, data_source_ext> data;
+    selection_data<Space, Wrapland::Server::data_source, data_source_ext> data;
 
-    clipboard(runtime<typename Window::space_t> const& core)
+    clipboard(runtime<Space> const& core)
     {
-        data = create_selection_data<Window, Wrapland::Server::data_source, data_source_ext>(
+        data = create_selection_data<Space, Wrapland::Server::data_source, data_source_ext>(
             core.space->atoms->clipboard, core);
 
         register_x11_selection(this, QSize(10, 10));

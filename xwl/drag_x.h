@@ -38,11 +38,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::xwl
 {
 
-template<typename Window>
-class x11_drag : public drag<Window>
+template<typename Space>
+class x11_drag : public drag<Space>
 {
 public:
-    explicit x11_drag(x11_source<data_source_ext, Window>& source)
+    explicit x11_drag(x11_source<data_source_ext, Space>& source)
         : source{source}
     {
         QObject::connect(source.get_qobject(),
@@ -91,7 +91,7 @@ public:
             });
     }
 
-    drag_event_reply move_filter(Window* target, QPoint const& pos) override
+    drag_event_reply move_filter(typename Space::window_t* target, QPoint const& pos) override
     {
         Q_UNUSED(pos);
 
@@ -181,7 +181,7 @@ public:
     }
 
     std::unique_ptr<data_source_ext> data_source;
-    std::unique_ptr<wl_visit<Window>> visit;
+    std::unique_ptr<wl_visit<Space>> visit;
 
 private:
     void set_offers(mime_atoms const& offers)
@@ -247,11 +247,11 @@ private:
         return transfersFinished;
     }
 
-    x11_source<data_source_ext, Window>& source;
+    x11_source<data_source_ext, Space>& source;
     mime_atoms offers;
     std::vector<std::pair<xcb_timestamp_t, bool>> data_requests;
 
-    std::vector<std::unique_ptr<wl_visit<Window>>> old_visits;
+    std::vector<std::unique_ptr<wl_visit<Space>>> old_visits;
 };
 
 }

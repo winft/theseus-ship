@@ -57,7 +57,7 @@ void own_selection(Selection* sel, bool own)
 
 // sets the current provider of the selection
 template<typename Selection, typename server_source>
-void set_wl_source(Selection* sel, wl_source<server_source, typename Selection::window_t>* source)
+void set_wl_source(Selection* sel, wl_source<server_source, typename Selection::space_t>* source)
 {
     sel->data.wayland_source.reset();
     sel->data.x11_source.reset();
@@ -116,7 +116,7 @@ void handle_wl_selection_client_change(Selection* sel)
 {
     auto srv_src = sel->get_current_source();
 
-    if (!dynamic_cast<typename Selection::window_t::space_t::x11_window*>(
+    if (!dynamic_cast<typename Selection::space_t::x11_window*>(
             sel->data.core.space->stacking.active)) {
         // No active client or active client is Wayland native.
         if (sel->data.wayland_source) {
@@ -133,7 +133,7 @@ void handle_wl_selection_client_change(Selection* sel)
     }
 
     using server_source = std::remove_pointer_t<decltype(srv_src)>;
-    auto wls = new wl_source<server_source, typename Selection::window_t>(srv_src, sel->data.core);
+    auto wls = new wl_source<server_source, typename Selection::space_t>(srv_src, sel->data.core);
 
     set_wl_source(sel, wls);
     own_selection(sel, true);

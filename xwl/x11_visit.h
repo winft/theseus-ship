@@ -30,14 +30,15 @@ Q_SIGNALS:
     void finish();
 };
 
-template<typename Window>
+template<typename Space>
 class x11_visit
 {
 public:
     // TODO: handle ask action
+    using window_t = typename Space::window_t;
 
-    x11_visit(Window* target,
-              wl_source<Wrapland::Server::data_source, Window> const& source,
+    x11_visit(window_t* target,
+              wl_source<Wrapland::Server::data_source, Space> const& source,
               xcb_window_t drag_window)
         : qobject{std::make_unique<x11_visit_qobject>()}
         , target(target)
@@ -143,7 +144,7 @@ public:
 
     std::unique_ptr<x11_visit_qobject> qobject;
 
-    Window* target;
+    window_t* target;
 
     struct {
         bool entered{false};
@@ -406,7 +407,7 @@ private:
         notifiers.action = QMetaObject::Connection();
     }
 
-    wl_source<Wrapland::Server::data_source, Window> const& source;
+    wl_source<Wrapland::Server::data_source, Space> const& source;
     xcb_window_t drag_window;
     uint32_t version = 0;
 

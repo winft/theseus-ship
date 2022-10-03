@@ -41,17 +41,15 @@ template<typename Space>
 class data_bridge
 {
 public:
-    using window_t = typename Space::window_t;
-
     data_bridge(runtime<Space> const& core)
         : core{core}
     {
         xcb_prefetch_extension_data(core.x11.connection, &xcb_xfixes_id);
         xfixes = xcb_get_extension_data(core.x11.connection, &xcb_xfixes_id);
 
-        clipboard = std::make_unique<xwl::clipboard<window_t>>(core);
-        dnd = std::make_unique<xwl::drag_and_drop<window_t>>(core);
-        primary_selection = std::make_unique<xwl::primary_selection<window_t>>(core);
+        clipboard = std::make_unique<xwl::clipboard<Space>>(core);
+        dnd = std::make_unique<xwl::drag_and_drop<Space>>(core);
+        primary_selection = std::make_unique<xwl::primary_selection<Space>>(core);
     }
 
     bool filter_event(xcb_generic_event_t* event)
@@ -72,7 +70,7 @@ public:
         return false;
     }
 
-    drag_event_reply drag_move_filter(window_t* target, QPoint const& pos)
+    drag_event_reply drag_move_filter(typename Space::window_t* target, QPoint const& pos)
     {
         if (!dnd) {
             return drag_event_reply::wayland;
@@ -98,9 +96,9 @@ private:
     xcb_query_extension_reply_t const* xfixes{nullptr};
     runtime<Space> const& core;
 
-    std::unique_ptr<xwl::clipboard<window_t>> clipboard;
-    std::unique_ptr<drag_and_drop<window_t>> dnd;
-    std::unique_ptr<xwl::primary_selection<window_t>> primary_selection;
+    std::unique_ptr<xwl::clipboard<Space>> clipboard;
+    std::unique_ptr<drag_and_drop<Space>> dnd;
+    std::unique_ptr<xwl::primary_selection<Space>> primary_selection;
 };
 
 }

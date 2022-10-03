@@ -37,18 +37,18 @@ namespace KWin::xwl
 
 using dnd_actions = Wrapland::Server::dnd_actions;
 
-template<typename Window>
-class wl_drag : public drag<Window>
+template<typename Space>
+class wl_drag : public drag<Space>
 {
 public:
-    wl_drag(wl_source<Wrapland::Server::data_source, Window> const& source,
+    wl_drag(wl_source<Wrapland::Server::data_source, Space> const& source,
             xcb_window_t proxy_window)
         : source{source}
         , proxy_window{proxy_window}
     {
     }
 
-    drag_event_reply move_filter(Window* target, QPoint const& pos) override
+    drag_event_reply move_filter(typename Space::window_t* target, QPoint const& pos) override
     {
         auto seat = waylandServer()->seat();
 
@@ -64,7 +64,7 @@ public:
             visit.reset();
         }
 
-        if (!dynamic_cast<typename Window::space_t::x11_window*>(target)) {
+        if (!dynamic_cast<typename Space::x11_window*>(target)) {
             // no target or wayland native target,
             // handled by input code directly
             return drag_event_reply::wayland;
@@ -108,9 +108,9 @@ public:
     }
 
 private:
-    wl_source<Wrapland::Server::data_source, Window> const& source;
+    wl_source<Wrapland::Server::data_source, Space> const& source;
     xcb_window_t proxy_window;
-    std::unique_ptr<x11_visit<Window>> visit;
+    std::unique_ptr<x11_visit<Space>> visit;
 };
 
 }

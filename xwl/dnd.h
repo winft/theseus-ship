@@ -42,21 +42,21 @@ namespace KWin::xwl
  * Represents the drag and drop mechanism, on X side this is the XDND protocol.
  * For more information on XDND see: https://johnlindal.wixsite.com/xdnd
  */
-template<typename Window>
+template<typename Space>
 class drag_and_drop
 {
 public:
-    using window_t = Window;
+    using space_t = Space;
 
-    selection_data<Window, Wrapland::Server::data_source, data_source_ext> data;
+    selection_data<Space, Wrapland::Server::data_source, data_source_ext> data;
 
-    std::unique_ptr<wl_drag<Window>> wldrag;
-    std::unique_ptr<x11_drag<Window>> xdrag;
-    std::vector<std::unique_ptr<drag<Window>>> old_drags;
+    std::unique_ptr<wl_drag<Space>> wldrag;
+    std::unique_ptr<x11_drag<Space>> xdrag;
+    std::vector<std::unique_ptr<drag<Space>>> old_drags;
 
-    drag_and_drop(runtime<typename Window::space_t> const& core)
+    drag_and_drop(runtime<Space> const& core)
     {
-        data = create_selection_data<Window, Wrapland::Server::data_source, data_source_ext>(
+        data = create_selection_data<Space, Wrapland::Server::data_source, data_source_ext>(
             core.x11.atoms->xdnd_selection, core);
 
         // TODO(romangg): for window size get current screen size and connect to changes.
@@ -84,7 +84,7 @@ public:
                          [this]() { end_drag(); });
     }
 
-    drag_event_reply drag_move_filter(Window* target, QPoint const& pos)
+    drag_event_reply drag_move_filter(typename Space::window_t* target, QPoint const& pos)
     {
         // This filter only is used when a drag is in process.
         if (wldrag) {
@@ -164,7 +164,7 @@ public:
         data.source_int.reset(new data_source_ext);
         data.x11_source->set_source(data.source_int.get());
 
-        xdrag = std::make_unique<x11_drag<Window>>(*data.x11_source);
+        xdrag = std::make_unique<x11_drag<Space>>(*data.x11_source);
 
         QObject::connect(
             data.qobject.get(),
@@ -199,8 +199,8 @@ private:
         assert(!wldrag);
 
         // New Wl to X drag, init drag and Wl source.
-        auto source = new wl_source<Wrapland::Server::data_source, Window>(srv_src, data.core);
-        wldrag = std::make_unique<wl_drag<Window>>(*source, data.window);
+        auto source = new wl_source<Wrapland::Server::data_source, Space>(srv_src, data.core);
+        wldrag = std::make_unique<wl_drag<Space>>(*source, data.window);
         set_wl_source(this, source);
         own_selection(this, true);
     }
@@ -229,7 +229,7 @@ private:
         }
     }
 
-    void clear_old_drag(xwl::drag<Window>* drag)
+    void clear_old_drag(xwl::drag<Space>* drag)
     {
         remove_all_if(old_drags, [drag](auto&& old) { return old.get() == drag; });
     }
