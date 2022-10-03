@@ -750,7 +750,7 @@ private:
         waylandServer()->seat()->pointers().set_focused_surface(nullptr);
     }
 
-    void update_position(QPointF const& pos)
+    void update_position(QPointF pos)
     {
         auto confineToBoundingBox = [](QPointF const& pos, QRectF const& boundingBox) {
             return QPointF(qBound(boundingBox.left(), pos.x(), boundingBox.right() - 1.0),
@@ -761,30 +761,33 @@ private:
             // locked pointer should not move
             return;
         }
-        // verify that at least one screen contains the pointer position
-        QPointF p = pos;
-        if (!screenContainsPos(p)) {
-            auto const unitedScreensGeometry = QRectF({}, kwinApp()->get_base().topology.size);
-            p = confineToBoundingBox(p, unitedScreensGeometry);
 
-            if (!screenContainsPos(p)) {
+        // verify that at least one screen contains the pointer position
+        if (!screenContainsPos(pos)) {
+            auto const unitedScreensGeometry = QRectF({}, kwinApp()->get_base().topology.size);
+            pos = confineToBoundingBox(pos, unitedScreensGeometry);
+
+            if (!screenContainsPos(pos)) {
                 if (auto const& outputs = redirect->platform.base.outputs; !outputs.empty()) {
                     auto output = base::get_nearest_output(outputs, m_pos.toPoint());
                     QRectF const currentScreenGeometry = output->geometry();
-                    p = confineToBoundingBox(p, currentScreenGeometry);
+                    pos = confineToBoundingBox(pos, currentScreenGeometry);
                 }
             }
         }
-        p = apply_pointer_confinement(p);
-        if (p == m_pos) {
-            // didn't change due to confinement
+
+        pos = apply_pointer_confinement(pos);
+        if (pos == m_pos) {
+            // Didn't change due to confinement.
             return;
         }
+
         // verify screen confinement
-        if (!screenContainsPos(p)) {
+        if (!screenContainsPos(pos)) {
             return;
         }
-        m_pos = p;
+
+        m_pos = pos;
         Q_EMIT redirect->qobject->globalPointerChanged(m_pos);
     }
 
