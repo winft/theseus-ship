@@ -148,15 +148,13 @@ xcb_timestamp_t read_user_time_map_timestamp(Win* win,
 {
     xcb_timestamp_t time = win->info->userTime();
 
-    // newer ASN timestamp always replaces user timestamp, unless user timestamp is 0
-    // helps e.g. with konqy reusing
-    if (asn_data != nullptr && time != 0) {
-        if (asn_id->timestamp() != 0
-            && (time == -1U || NET::timestampCompare(asn_id->timestamp(), time) > 0)) {
+    // Newer ASN timestamp always replaces user timestamp, unless user timestamp is 0
+    // helps e.g. with konqy reusing.
+    if (asn_data && time && asn_id->timestamp()) {
+        if (time == -1U || NET::timestampCompare(asn_id->timestamp(), time) > 0) {
             time = asn_id->timestamp();
         }
     }
-    qCDebug(KWIN_CORE) << "User timestamp, ASN:" << time;
     if (time == -1U) {
         // The window doesn't have any timestamp.
         // If it's the first window for its application
