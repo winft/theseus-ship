@@ -175,13 +175,10 @@ public:
         }
 
         if (auto modal = win->findModal(); modal && modal->control && modal != win) {
-            auto const cl = client_list();
-            if (std::find_if(cl.cbegin(),
-                             cl.cend(),
+            if (!contains_if(client_list(),
                              [modal_client = modal->control->tabbox().lock()](auto const& client) {
                                  return client.lock() == modal_client;
-                             })
-                == cl.cend()) {
+                             })) {
                 // Add the modal dialog instead of the main window.
                 return modal->control->tabbox();
             }
