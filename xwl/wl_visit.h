@@ -29,7 +29,7 @@ template<typename Space>
 class wl_visit
 {
 public:
-    using window_t = typename Space::window_t;
+    using window_t = typename Space::wayland_window;
 
     wl_visit(window_t* target, x11_source<data_source_ext, Space>& source)
         : qobject{std::make_unique<wl_visit_qobject>()}

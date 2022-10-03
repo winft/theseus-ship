@@ -136,8 +136,11 @@ public:
             return drag_event_reply::ignore;
         }
 
+        auto wl_win = dynamic_cast<typename Space::wayland_window*>(target);
+        assert(wl_win);
+
         // New Wl native target.
-        visit.reset(new wl_visit(target, source));
+        visit.reset(new wl_visit(wl_win, source));
 
         QObject::connect(visit->qobject.get(),
                          &wl_visit_qobject::offers_received,

@@ -64,7 +64,8 @@ public:
             visit.reset();
         }
 
-        if (!dynamic_cast<typename Space::x11_window*>(target)) {
+        auto x11_win = dynamic_cast<typename Space::x11_window*>(target);
+        if (!x11_win) {
             // no target or wayland native target,
             // handled by input code directly
             return drag_event_reply::wayland;
@@ -72,10 +73,10 @@ public:
 
         // We have a new target.
 
-        win::activate_window(*source.core.space, *target);
-        seat->drags().set_target(target->surface, pos, win::get_input_transform(*target));
+        win::activate_window(*source.core.space, *x11_win);
+        seat->drags().set_target(x11_win->surface, pos, win::get_input_transform(*x11_win));
 
-        visit.reset(new x11_visit(target, source, proxy_window));
+        visit.reset(new x11_visit(x11_win, source, proxy_window));
         return drag_event_reply::take;
     }
 

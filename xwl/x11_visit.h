@@ -35,7 +35,7 @@ class x11_visit
 {
 public:
     // TODO: handle ask action
-    using window_t = typename Space::window_t;
+    using window_t = typename Space::x11_window;
 
     x11_visit(window_t* target,
               wl_source<Wrapland::Server::data_source, Space> const& source,
