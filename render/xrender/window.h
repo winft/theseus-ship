@@ -89,8 +89,7 @@ public:
         auto client = this->ref_win;
         auto& remnant = this->ref_win->remnant;
         auto const decorationRect = QRect(QPoint(), this->ref_win->geo.size());
-        if ((client && client->control && !client->noBorder())
-            || (remnant && !remnant->data.no_border)) {
+        if ((client->control && !client->noBorder()) || (remnant && !remnant->data.no_border)) {
             // decorated client
             transformed_shape = decorationRect;
             if (this->ref_win->is_shape) {
@@ -168,8 +167,7 @@ public:
         const bool blitInTempPixmap = xRenderOffscreen()
             || (data.crossFadeProgress() < 1.0 && !opaque)
             || (scaled
-                && (wantShadow || (client && !client->noBorder())
-                    || (remnant && !remnant->data.no_border)));
+                && (wantShadow || !client->noBorder() || (remnant && !remnant->data.no_border)));
 
         auto renderTarget = scene.xrenderBufferPicture();
         if (blitInTempPixmap) {
@@ -219,7 +217,7 @@ public:
         QRect dtr, dlr, drr, dbr;
 
         deco_render_data const* deco_data = nullptr;
-        if (client && client->control && !client->noBorder()) {
+        if (client->control && !client->noBorder()) {
             if (win::decoration(client)) {
                 if (auto r = static_cast<deco_renderer*>(
                         client->control->deco.client->renderer()->injector.get())) {
@@ -395,33 +393,31 @@ public:
             if (!opaque)
                 transformed_shape = QRegion();
 
-            if (client || remnant) {
-                if (!noBorder) {
-                    xcb_render_picture_t decorationAlpha = xRenderBlendPicture(data.opacity());
-                    auto renderDeco = [decorationAlpha, renderTarget](xcb_render_picture_t deco,
-                                                                      const QRect& rect) {
-                        if (deco == XCB_RENDER_PICTURE_NONE) {
-                            return;
-                        }
-                        xcb_render_composite(connection(),
-                                             XCB_RENDER_PICT_OP_OVER,
-                                             deco,
-                                             decorationAlpha,
-                                             renderTarget,
-                                             0,
-                                             0,
-                                             0,
-                                             0,
-                                             rect.x(),
-                                             rect.y(),
-                                             rect.width(),
-                                             rect.height());
-                    };
-                    renderDeco(top, dtr);
-                    renderDeco(left, dlr);
-                    renderDeco(right, drr);
-                    renderDeco(bottom, dbr);
-                }
+            if (!noBorder) {
+                xcb_render_picture_t decorationAlpha = xRenderBlendPicture(data.opacity());
+                auto renderDeco = [decorationAlpha, renderTarget](xcb_render_picture_t deco,
+                                                                  const QRect& rect) {
+                    if (deco == XCB_RENDER_PICTURE_NONE) {
+                        return;
+                    }
+                    xcb_render_composite(connection(),
+                                         XCB_RENDER_PICT_OP_OVER,
+                                         deco,
+                                         decorationAlpha,
+                                         renderTarget,
+                                         0,
+                                         0,
+                                         0,
+                                         0,
+                                         rect.x(),
+                                         rect.y(),
+                                         rect.width(),
+                                         rect.height());
+                };
+                renderDeco(top, dtr);
+                renderDeco(left, dlr);
+                renderDeco(right, drr);
+                renderDeco(bottom, dbr);
             }
 
             if (data.brightness() != 1.0) {
