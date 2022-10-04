@@ -1073,54 +1073,61 @@ private:
 
     void cde_walk_through_windows(bool forward)
     {
-        window_t* c = nullptr;
-        // this function find the first suitable client for unreasonable focus
-        // policies - the topmost one, with some exceptions (can't be keepabove/below,
-        // otherwise it gets stuck on them)
-        //     Q_ASSERT(space.block_stacking_updates == 0);
+        window_t* old_top_win = nullptr;
+
+        // This function find the first suitable client for unreasonable focus policies - the
+        // topmost one with exceptions (can't be keepabove/below, otherwise gets stuck on them).
         for (int i = space.stacking.order.stack.size() - 1; i >= 0; --i) {
-            auto window = space.stacking.order.stack.at(i);
-            if (window->control && on_current_desktop(window) && !win::is_special_window(window)
-                && window->isShown() && win::wants_tab_focus(window) && !window->control->keep_above
-                && !window->control->keep_below) {
-                c = window;
+            auto win = space.stacking.order.stack.at(i);
+            if (win->control && on_current_desktop(win) && !win::is_special_window(win)
+                && win->isShown() && win::wants_tab_focus(win) && !win->control->keep_above
+                && !win->control->keep_below) {
+                old_top_win = win;
                 break;
             }
         }
-        auto nc = c;
+
+        auto candidate = old_top_win;
+        window_t* first_win = nullptr;
+
         bool options_traverse_all;
         {
             KConfigGroup group(kwinApp()->config(), "TabBox");
             options_traverse_all = group.readEntry("TraverseAll", false);
         }
 
-        window_t* first_client = nullptr;
         do {
-            nc = forward ? next_client_static(nc) : previous_client_static(nc);
-            if (!first_client) {
-                // When we see our first client for the second time,
-                // it's time to stop.
-                first_client = nc;
-            } else if (nc == first_client) {
+            candidate = forward ? next_client_static(candidate) : previous_client_static(candidate);
+            if (!first_win) {
+                // When we see our first client for the second time, it's time to stop.
+                first_win = candidate;
+            } else if (candidate == first_win) {
                 // No candidates found.
-                nc = nullptr;
+                candidate = nullptr;
                 break;
             }
-        } while (nc && nc != c
-                 && ((!options_traverse_all && !on_desktop(nc, current_desktop()))
-                     || nc->control->minimized || !win::wants_tab_focus(nc)
-                     || nc->control->keep_above || nc->control->keep_below));
-        if (nc) {
-            if (c && c != nc)
-                win::lower_window(&space, c);
-            if (kwinApp()->options->qobject->focusPolicyIsReasonable()) {
-                activate_window(space, *nc);
-            } else {
-                if (!on_desktop(nc, current_desktop()))
-                    set_current_desktop(get_desktop(*nc));
-                win::raise_window(&space, nc);
-            }
+        } while (candidate && candidate != old_top_win
+                 && ((!options_traverse_all && !on_desktop(candidate, current_desktop()))
+                     || candidate->control->minimized || !win::wants_tab_focus(candidate)
+                     || candidate->control->keep_above || candidate->control->keep_below));
+
+        if (!candidate) {
+            return;
         }
+
+        if (old_top_win && old_top_win != candidate) {
+            win::lower_window(&space, old_top_win);
+        }
+
+        if (kwinApp()->options->qobject->focusPolicyIsReasonable()) {
+            activate_window(space, *candidate);
+            return;
+        }
+
+        if (!on_desktop(candidate, current_desktop())) {
+            set_current_desktop(get_desktop(*candidate));
+        }
+        win::raise_window(&space, candidate);
     }
 
     void walk_through_desktops(bool forward)
