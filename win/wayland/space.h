@@ -95,8 +95,6 @@ public:
         namespace WS = Wrapland::Server;
         using wayland_window = win::wayland::window<space<Base>>;
 
-        init_space(*this);
-
         singleton_interface::get_current_output_geometry = [this] {
             auto output = get_current_output(*this);
             return output ? output->geometry() : QRect();
@@ -209,6 +207,8 @@ public:
                          &virtual_desktop_manager_qobject::desktopRemoved,
                          qobject.get(),
                          [this](auto&& desktop) { handle_desktop_removed(desktop); });
+
+        init_space(*this);
     }
 
     ~space() override
