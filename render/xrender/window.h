@@ -42,13 +42,39 @@ public:
 
     void performPaint(paint_type mask, QRegion region, WindowPaintData data) override
     {
+        perform_paint(*this->ref_win, mask, region, data);
+    }
+
+    QRegion transformedShape() const
+    {
+        return transformed_shape;
+    }
+
+    void setTransformedShape(QRegion const& shape)
+    {
+        transformed_shape = shape;
+    }
+
+protected:
+    render::buffer<window_t>* create_buffer() override
+    {
+        return new buffer_t(this, format);
+    }
+
+private:
+    template<typename Win>
+    void perform_paint(Win& win, paint_type mask, QRegion region, WindowPaintData data)
+    {
         auto& temp_visibleRect = scene.temp_visible_rect;
         auto& s_tempPicture = scene.temp_picture;
         auto& s_fadeAlphaPicture = scene.fade_alpha_picture;
 
-        setTransformedShape(QRegion()); // maybe nothing will be painted
+        // maybe nothing will be painted
+        setTransformedShape(QRegion());
+
         // check if there is something to paint
-        bool opaque = this->isOpaque() && qFuzzyCompare(data.opacity(), 1.0);
+        auto opaque = this->isOpaque() && qFuzzyCompare(data.opacity(), 1.0);
+
         /* HACK: It seems this causes painting glitches, disable temporarily
         if (( mask & paint_type::window_opaque ) ^ ( mask & scene::PAINT_WINDOW_TRANSLUCENT ))
             { // We are only painting either opaque OR translucent windows, not both
@@ -57,50 +83,58 @@ public:
             if ( mask & scene::PAINT_WINDOW_TRANSLUCENT && opaque )
                 return; // Only painting translucent and window is opaque
             }*/
-        // Intersect the clip region with the rectangle the window occupies on the screen
-        if (!(mask & (paint_type::window_transformed | paint_type::screen_transformed)))
-            region &= win::visible_rect(this->ref_win);
 
-        if (region.isEmpty())
+        // Intersect the clip region with the rectangle the window occupies on the screen
+        if (!(mask & (paint_type::window_transformed | paint_type::screen_transformed))) {
+            region &= win::visible_rect(&win);
+        }
+
+        if (region.isEmpty()) {
             return;
+        }
+
         auto pixmap = this->template get_buffer<buffer_t>();
         if (!pixmap || !pixmap->isValid()) {
             return;
         }
+
         xcb_render_picture_t pic = pixmap->picture;
-        if (pic
-            == XCB_RENDER_PICTURE_NONE) // The render format can be null for GL and/or Xv visuals
+        if (pic == XCB_RENDER_PICTURE_NONE) {
+            // The render format can be null for GL and/or Xv visuals
             return;
-        this->ref_win->render_data.damage_region = {};
+        }
+
+        win.render_data.damage_region = {};
 
         // set picture filter
         this->filter = image_filter_type::fast;
 
         // do required transformations
-        auto const win_size = this->ref_win->geo.size();
-        auto const wr = mapToScreen(mask, data, QRect(0, 0, win_size.width(), win_size.height()));
+        auto const win_size = win.geo.size();
+        auto const wr
+            = mapToScreen(win, mask, data, QRect(0, 0, win_size.width(), win_size.height()));
 
         // Content rect (in the buffer)
-        auto cr = win::frame_relative_client_rect(this->ref_win);
+        auto cr = win::frame_relative_client_rect(&win);
         qreal xscale = 1;
         qreal yscale = 1;
         bool scaled = false;
 
-        auto client = this->ref_win;
-        auto& remnant = this->ref_win->remnant;
-        auto const decorationRect = QRect(QPoint(), this->ref_win->geo.size());
-        if ((client->control && !client->noBorder()) || (remnant && !remnant->data.no_border)) {
-            // decorated client
+        auto const decorationRect = QRect(QPoint(), win.geo.size());
+
+        if ((win.control && !win.noBorder()) || (win.remnant && !win.remnant->data.no_border)) {
+            // decorated window
             transformed_shape = decorationRect;
-            if (this->ref_win->is_shape) {
+            if (win.is_shape) {
                 // "xeyes" + decoration
                 transformed_shape -= bufferToWindowRect(cr);
-                transformed_shape += bufferToWindowRegion(this->ref_win->render_region());
+                transformed_shape += bufferToWindowRegion(win.render_region());
             }
         } else {
-            transformed_shape = bufferToWindowRegion(this->ref_win->render_region());
+            transformed_shape = bufferToWindowRegion(win.render_region());
         }
-        if (auto shadow = win::shadow(this->ref_win)) {
+
+        if (auto shadow = win::shadow(&win)) {
             transformed_shape |= shadow->shadowRegion();
         }
 
@@ -132,6 +166,7 @@ public:
             xscale *= screen_paint.xScale();
             yscale *= screen_paint.yScale();
         }
+
         if (!qFuzzyCompare(xscale, 1.0) || !qFuzzyCompare(yscale, 1.0)) {
             scaled = true;
             xform.matrix11 = DOUBLE_TO_FIXED(1.0 / xscale);
@@ -150,9 +185,13 @@ public:
             transformed_shape.setRects(rects.constData(), rects.count());
         }
 
-        transformed_shape.translate(mapToScreen(mask, data, QPoint(0, 0)));
-        PaintClipper pcreg(region);         // clip by the region to paint
-        PaintClipper pc(transformed_shape); // clip by window's shape
+        transformed_shape.translate(mapToScreen(win, mask, data, QPoint(0, 0)));
+
+        // clip by the region to paint
+        PaintClipper pcreg(region);
+
+        // clip by window's shape
+        PaintClipper pc(transformed_shape);
 
         const bool wantShadow = this->m_shadow && !this->m_shadow->shadowRegion().isEmpty();
 
@@ -164,19 +203,20 @@ public:
         // the window has border
         // This solves a number of glitches and on top of this
         // it optimizes painting quite a bit
-        const bool blitInTempPixmap = xRenderOffscreen()
+        auto const blitInTempPixmap = xRenderOffscreen()
             || (data.crossFadeProgress() < 1.0 && !opaque)
             || (scaled
-                && (wantShadow || !client->noBorder() || (remnant && !remnant->data.no_border)));
+                && (wantShadow || !win.noBorder()
+                    || (win.remnant && !win.remnant->data.no_border)));
 
         auto renderTarget = scene.xrenderBufferPicture();
+
         if (blitInTempPixmap) {
             if (scene_xRenderOffscreenTarget()) {
-                temp_visibleRect
-                    = win::visible_rect(this->ref_win).translated(-this->ref_win->geo.pos());
+                temp_visibleRect = win::visible_rect(&win).translated(-win.geo.pos());
                 renderTarget = *scene_xRenderOffscreenTarget();
             } else {
-                prepareTempPixmap();
+                prepare_temp_pixmap(win);
                 renderTarget = *s_tempPicture;
             }
         } else {
@@ -196,17 +236,18 @@ public:
             // transformation matrix, and doesn't have an alpha channel.
             // Since we only scale the picture, we can work around this by setting
             // the repeat mode to RepeatPad.
-            if (!win::has_alpha(*this->ref_win)) {
+            if (!win::has_alpha(win)) {
                 const uint32_t values[] = {XCB_RENDER_REPEAT_PAD};
                 xcb_render_change_picture(connection(), pic, XCB_RENDER_CP_REPEAT, values);
             }
             // END OF STUPID RADEON HACK
         }
+
 #define MAP_RECT_TO_TARGET(_RECT_)                                                                 \
     if (blitInTempPixmap)                                                                          \
         _RECT_.translate(-temp_visibleRect.topLeft());                                             \
     else                                                                                           \
-        _RECT_ = mapToScreen(mask, data, _RECT_)
+        _RECT_ = mapToScreen(win, mask, data, _RECT_)
 
         // BEGIN deco preparations
         bool noBorder = true;
@@ -217,22 +258,22 @@ public:
         QRect dtr, dlr, drr, dbr;
 
         deco_render_data const* deco_data = nullptr;
-        if (client->control && !client->noBorder()) {
-            if (win::decoration(client)) {
-                if (auto r = static_cast<deco_renderer*>(
-                        client->control->deco.client->renderer()->injector.get())) {
-                    r->render();
-                    deco_data = static_cast<deco_render_data const*>(r->data.get());
+        if (win.control && !win.noBorder()) {
+            if (win::decoration(&win)) {
+                if (auto deco_render = static_cast<deco_renderer*>(
+                        win.control->deco.client->renderer()->injector.get())) {
+                    deco_render->render();
+                    deco_data = static_cast<deco_render_data const*>(deco_render->data.get());
                 }
             }
-            noBorder = client->noBorder();
-            client->layoutDecorationRects(dlr, dtr, drr, dbr);
+            noBorder = win.noBorder();
+            win.layoutDecorationRects(dlr, dtr, drr, dbr);
         }
 
-        if (remnant && !remnant->data.no_border) {
-            deco_data = static_cast<deco_render_data const*>(remnant->data.deco_render.get());
-            noBorder = remnant->data.no_border;
-            remnant->data.layout_decoration_rects(dlr, dtr, drr, dbr);
+        if (win.remnant && !win.remnant->data.no_border) {
+            deco_data = static_cast<deco_render_data const*>(win.remnant->data.deco_render.get());
+            noBorder = win.remnant->data.no_border;
+            win.remnant->data.layout_decoration_rects(dlr, dtr, drr, dbr);
         }
         if (deco_data) {
             left = deco_data->picture(DecorationPart::Left);
@@ -270,7 +311,8 @@ public:
         if (blitInTempPixmap) {
             dr.translate(-temp_visibleRect.topLeft());
         } else {
-            dr = mapToScreen(mask, data, bufferToWindowRect(dr)); // Destination rect
+            // Destination rect
+            dr = mapToScreen(win, mask, data, bufferToWindowRect(dr));
             if (scaled) {
                 cr.moveLeft(cr.x() * xscale);
                 cr.moveTop(cr.y() * yscale);
@@ -319,9 +361,11 @@ public:
 
             // Paint the window contents
             xcb_render_picture_t clientAlpha = XCB_RENDER_PICTURE_NONE;
+
             if (!opaque) {
                 clientAlpha = xRenderBlendPicture(data.opacity());
             }
+
             xcb_render_composite(connection(),
                                  clientRenderOp,
                                  pic,
@@ -390,8 +434,10 @@ public:
                     }
                 }
             }
-            if (!opaque)
+
+            if (!opaque) {
                 transformed_shape = QRegion();
+            }
 
             if (!noBorder) {
                 xcb_render_picture_t decorationAlpha = xRenderBlendPicture(data.opacity());
@@ -427,7 +473,7 @@ public:
                 if (blitInTempPixmap) {
                     rect.x = -temp_visibleRect.left();
                     rect.y = -temp_visibleRect.top();
-                    auto const size = this->ref_win->geo.size();
+                    auto const size = win.geo.size();
                     rect.width = size.width();
                     rect.height = size.height();
                 } else {
@@ -446,7 +492,7 @@ public:
                                            &rect);
             }
             if (blitInTempPixmap) {
-                const QRect r = mapToScreen(mask, data, temp_visibleRect);
+                const QRect r = mapToScreen(win, mask, data, temp_visibleRect);
                 xcb_render_set_picture_transform(connection(), *s_tempPicture, xform);
                 setPictureFilter(*s_tempPicture, this->filter);
                 xcb_render_composite(connection(),
@@ -465,37 +511,27 @@ public:
                 xcb_render_set_picture_transform(connection(), *s_tempPicture, identity);
             }
         }
+
         if (scaled && !blitInTempPixmap) {
             xcb_render_set_picture_transform(connection(), pic, identity);
             if (this->filter == image_filter_type::good)
                 setPictureFilter(pic, image_filter_type::fast);
-            if (!win::has_alpha(*this->ref_win)) {
+            if (!win::has_alpha(win)) {
                 const uint32_t values[] = {XCB_RENDER_REPEAT_NONE};
                 xcb_render_change_picture(connection(), pic, XCB_RENDER_CP_REPEAT, values);
             }
         }
-        if (xRenderOffscreen())
+
+        if (xRenderOffscreen()) {
             scene_setXRenderOffscreenTarget(*s_tempPicture);
+        }
     }
 
-    QRegion transformedShape() const
-    {
-        return transformed_shape;
-    }
-
-    void setTransformedShape(QRegion const& shape)
-    {
-        transformed_shape = shape;
-    }
-
-protected:
-    render::buffer<window_t>* create_buffer() override
-    {
-        return new buffer_t(this, format);
-    }
-
-private:
-    QRect mapToScreen(paint_type mask, const WindowPaintData& data, const QRect& rect) const
+    template<typename Win>
+    QRect mapToScreen(Win const& win,
+                      paint_type mask,
+                      const WindowPaintData& data,
+                      const QRect& rect) const
     {
         QRect r = rect;
 
@@ -508,7 +544,7 @@ private:
         }
 
         // Move the rectangle to the screen position
-        auto const win_pos = this->ref_win->geo.pos();
+        auto const win_pos = win.geo.pos();
         r.translate(win_pos.x(), win_pos.y());
 
         if (flags(mask & paint_type::screen_transformed)) {
@@ -523,7 +559,11 @@ private:
         return r;
     }
 
-    QPoint mapToScreen(paint_type mask, const WindowPaintData& data, const QPoint& point) const
+    template<typename Win>
+    QPoint mapToScreen(Win const& win,
+                       paint_type mask,
+                       const WindowPaintData& data,
+                       const QPoint& point) const
     {
         QPoint pt = point;
 
@@ -534,7 +574,7 @@ private:
         }
 
         // Move the point to the screen position
-        auto const win_pos = this->ref_win->geo.pos();
+        auto const win_pos = win.geo.pos();
         pt += QPoint(win_pos.x(), win_pos.y());
 
         if (flags(mask & paint_type::screen_transformed)) {
@@ -557,21 +597,25 @@ private:
         return region.translated(this->bufferOffset());
     }
 
-    void prepareTempPixmap()
+    template<typename Win>
+    void prepare_temp_pixmap(Win const& win)
     {
         auto& temp_visibleRect = scene.temp_visible_rect;
         auto& s_tempPicture = scene.temp_picture;
 
-        const QSize oldSize = temp_visibleRect.size();
-        temp_visibleRect = win::visible_rect(this->ref_win).translated(-this->ref_win->geo.pos());
+        auto const oldSize = temp_visibleRect.size();
+        temp_visibleRect = win::visible_rect(&win).translated(-win.geo.pos());
+
         if (s_tempPicture
             && (oldSize.width() < temp_visibleRect.width()
                 || oldSize.height() < temp_visibleRect.height())) {
             delete s_tempPicture;
             s_tempPicture = nullptr;
-            scene_setXRenderOffscreenTarget(
-                0); // invalidate, better crash than cause weird results for developers
+
+            // invalidate, better crash than cause weird results for developers
+            scene_setXRenderOffscreenTarget(0);
         }
+
         if (!s_tempPicture) {
             xcb_pixmap_t pix = xcb_generate_id(connection());
             xcb_create_pixmap(connection(),
@@ -583,8 +627,9 @@ private:
             s_tempPicture = new XRenderPicture(pix, 32);
             xcb_free_pixmap(connection(), pix);
         }
-        const xcb_render_color_t transparent = {0, 0, 0, 0};
-        const xcb_rectangle_t rect
+
+        xcb_render_color_t const transparent = {0, 0, 0, 0};
+        xcb_rectangle_t const rect
             = {0, 0, uint16_t(temp_visibleRect.width()), uint16_t(temp_visibleRect.height())};
         xcb_render_fill_rectangles(
             connection(), XCB_RENDER_PICT_OP_SRC, *s_tempPicture, transparent, 1, &rect);
