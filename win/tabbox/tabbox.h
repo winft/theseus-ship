@@ -1096,20 +1096,36 @@ private:
             options_traverse_all = group.readEntry("TraverseAll", false);
         }
 
+        auto accept = [&, this](auto&& win) {
+            if (!win || win == old_top_win) {
+                // No candidate anymore, looped around. Abort looping.
+                return true;
+            }
+
+            if (win->control->minimized || !win::wants_tab_focus(win) || win->control->keep_above
+                || win->control->keep_below) {
+                return false;
+            }
+            if (!options_traverse_all && !on_desktop(win, current_desktop())) {
+                return false;
+            }
+
+            return true;
+        };
+
         do {
             candidate = forward ? next_client_static(candidate) : previous_client_static(candidate);
             if (!first_win) {
                 // When we see our first client for the second time, it's time to stop.
                 first_win = candidate;
-            } else if (candidate == first_win) {
+                continue;
+            }
+
+            if (candidate == first_win) {
                 // No candidates found.
                 candidate = nullptr;
-                break;
             }
-        } while (candidate && candidate != old_top_win
-                 && ((!options_traverse_all && !on_desktop(candidate, current_desktop()))
-                     || candidate->control->minimized || !win::wants_tab_focus(candidate)
-                     || candidate->control->keep_above || candidate->control->keep_below));
+        } while (!accept(candidate));
 
         if (!candidate) {
             return;
