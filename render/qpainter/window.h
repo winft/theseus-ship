@@ -32,104 +32,7 @@ public:
 
     void performPaint(paint_type mask, QRegion region, WindowPaintData data) override
     {
-        auto isXwaylandClient = [](auto toplevel) {
-            auto client = dynamic_cast<typename space_t::x11_window*>(toplevel);
-            if (client) {
-                return true;
-            }
-            if (auto& remnant = toplevel->remnant) {
-                return remnant->data.was_x11_client;
-            }
-            return false;
-        };
-
-        if (!(mask & (paint_type::window_transformed | paint_type::screen_transformed)))
-            region &= win::visible_rect(this->ref_win);
-
-        if (region.isEmpty())
-            return;
-        auto buffer = this->template get_buffer<buffer_t>();
-        if (!buffer || !buffer->isValid()) {
-            return;
-        }
-        if (!this->ref_win->render_data.damage_region.isEmpty()) {
-            buffer->updateBuffer();
-            this->ref_win->render_data.damage_region = {};
-        }
-
-        auto scenePainter = scene.scenePainter();
-        QPainter* painter = scenePainter;
-        painter->save();
-        painter->setClipRegion(region);
-        painter->setClipping(true);
-
-        auto const win_pos = this->ref_win->geo.pos();
-        painter->translate(win_pos.x(), win_pos.y());
-        if (flags(mask & paint_type::window_transformed)) {
-            painter->translate(data.xTranslation(), data.yTranslation());
-            painter->scale(data.xScale(), data.yScale());
-        }
-
-        const bool opaque = qFuzzyCompare(1.0, data.opacity());
-        QImage tempImage;
-        QPainter tempPainter;
-        if (!opaque) {
-            // need a temp render target which we later on blit to the screen
-            tempImage = QImage(win::visible_rect(this->ref_win).size(),
-                               QImage::Format_ARGB32_Premultiplied);
-            tempImage.fill(Qt::transparent);
-            tempPainter.begin(&tempImage);
-            tempPainter.save();
-            tempPainter.translate(this->ref_win->geo.frame.topLeft()
-                                  - win::visible_rect(this->ref_win).topLeft());
-            painter = &tempPainter;
-        }
-        renderShadow(painter);
-        renderWindowDecorations(painter);
-
-        // render content
-        QRectF source;
-        QRectF target;
-        QRectF viewportRectangle;
-        if (this->ref_win->surface) {
-            viewportRectangle = this->ref_win->surface->state().source_rectangle;
-        }
-        if (isXwaylandClient(this->ref_win)) {
-            // special case for XWayland windows
-            if (viewportRectangle.isValid()) {
-                source = viewportRectangle;
-                source.translate(win::frame_relative_client_rect(this->ref_win).topLeft());
-            } else {
-                source = win::frame_relative_client_rect(this->ref_win);
-            }
-            target = source;
-        } else {
-            if (viewportRectangle.isValid()) {
-                const qreal imageScale = this->ref_win->bufferScale();
-                source = QRectF(viewportRectangle.topLeft() * imageScale,
-                                viewportRectangle.bottomRight() * imageScale);
-            } else {
-                source = buffer->image.rect();
-            }
-            target = win::render_geometry(this->ref_win).translated(-this->ref_win->geo.pos());
-        }
-        painter->drawImage(target, buffer->image, source);
-
-        if (!opaque) {
-            tempPainter.restore();
-            tempPainter.setCompositionMode(QPainter::CompositionMode_DestinationIn);
-            QColor translucent(Qt::transparent);
-            translucent.setAlphaF(data.opacity());
-            tempPainter.fillRect(QRect(QPoint(0, 0), win::visible_rect(this->ref_win).size()),
-                                 translucent);
-            tempPainter.end();
-            painter = scenePainter;
-            painter->drawImage(win::visible_rect(this->ref_win).topLeft()
-                                   - this->ref_win->geo.frame.topLeft(),
-                               tempImage);
-        }
-
-        painter->restore();
+        perform_paint(*this->ref_win, mask, region, data);
     }
 
 protected:
@@ -139,12 +42,121 @@ protected:
     }
 
 private:
-    void renderShadow(QPainter* painter)
+    template<typename Win>
+    void perform_paint(Win& win, paint_type mask, QRegion region, WindowPaintData data)
     {
-        if (!win::shadow(this->ref_win)) {
+        auto isXwaylandClient = [](auto&& win) {
+            if (dynamic_cast<typename space_t::x11_window*>(&win)) {
+                return true;
+            }
+            if (auto& remnant = win.remnant) {
+                return remnant->data.was_x11_client;
+            }
+            return false;
+        };
+
+        if (!(mask & (paint_type::window_transformed | paint_type::screen_transformed))) {
+            region &= win::visible_rect(&win);
+        }
+
+        if (region.isEmpty()) {
             return;
         }
-        auto shadow = static_cast<qpainter::shadow<window_t>*>(win::shadow(this->ref_win));
+
+        auto buffer = this->template get_buffer<buffer_t>();
+        if (!buffer || !buffer->isValid()) {
+            return;
+        }
+
+        if (!win.render_data.damage_region.isEmpty()) {
+            buffer->updateBuffer();
+            win.render_data.damage_region = {};
+        }
+
+        auto scenePainter = scene.scenePainter();
+        auto painter = scenePainter;
+        painter->save();
+        painter->setClipRegion(region);
+        painter->setClipping(true);
+
+        auto const win_pos = win.geo.pos();
+        painter->translate(win_pos.x(), win_pos.y());
+
+        if (flags(mask & paint_type::window_transformed)) {
+            painter->translate(data.xTranslation(), data.yTranslation());
+            painter->scale(data.xScale(), data.yScale());
+        }
+
+        const bool opaque = qFuzzyCompare(1.0, data.opacity());
+        QImage tempImage;
+        QPainter tempPainter;
+
+        if (!opaque) {
+            // need a temp render target which we later on blit to the screen
+            tempImage = QImage(win::visible_rect(&win).size(), QImage::Format_ARGB32_Premultiplied);
+            tempImage.fill(Qt::transparent);
+            tempPainter.begin(&tempImage);
+            tempPainter.save();
+            tempPainter.translate(win.geo.frame.topLeft() - win::visible_rect(&win).topLeft());
+            painter = &tempPainter;
+        }
+
+        render_shadow(win, painter);
+        render_decorations(win, painter);
+
+        // render content
+        QRectF source;
+        QRectF target;
+        QRectF viewportRectangle;
+
+        if (win.surface) {
+            viewportRectangle = win.surface->state().source_rectangle;
+        }
+
+        if (isXwaylandClient(win)) {
+            // special case for XWayland windows
+            if (viewportRectangle.isValid()) {
+                source = viewportRectangle;
+                source.translate(win::frame_relative_client_rect(&win).topLeft());
+            } else {
+                source = win::frame_relative_client_rect(&win);
+            }
+            target = source;
+        } else {
+            if (viewportRectangle.isValid()) {
+                const qreal imageScale = win.bufferScale();
+                source = QRectF(viewportRectangle.topLeft() * imageScale,
+                                viewportRectangle.bottomRight() * imageScale);
+            } else {
+                source = buffer->image.rect();
+            }
+            target = win::render_geometry(&win).translated(-win.geo.pos());
+        }
+
+        painter->drawImage(target, buffer->image, source);
+
+        if (!opaque) {
+            tempPainter.restore();
+            tempPainter.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+            QColor translucent(Qt::transparent);
+            translucent.setAlphaF(data.opacity());
+            tempPainter.fillRect(QRect(QPoint(0, 0), win::visible_rect(&win).size()), translucent);
+            tempPainter.end();
+            painter = scenePainter;
+            painter->drawImage(win::visible_rect(&win).topLeft() - win.geo.frame.topLeft(),
+                               tempImage);
+        }
+
+        painter->restore();
+    }
+
+    template<typename Win>
+    void render_shadow(Win& win, QPainter* painter)
+    {
+        if (!win::shadow(&win)) {
+            return;
+        }
+        auto shadow = static_cast<qpainter::shadow<window_t>*>(win::shadow(&win));
 
         const QImage& shadowTexture = shadow->shadowTexture();
         const WindowQuadList& shadowQuads = shadow->shadowQuads();
@@ -164,11 +176,12 @@ private:
         }
     }
 
-    void renderWindowDecorations(QPainter* painter)
+    template<typename Win>
+    void render_decorations(Win& win, QPainter* painter)
     {
         // TODO: custom decoration opacity
-        auto const& ctrl = this->ref_win->control;
-        auto& remnant = this->ref_win->remnant;
+        auto const& ctrl = win.control;
+        auto& remnant = win.remnant;
         if (!ctrl && !remnant) {
             return;
         }
@@ -177,15 +190,15 @@ private:
         deco_render_data const* deco_data = nullptr;
         QRect dtr, dlr, drr, dbr;
 
-        if (ctrl && !this->ref_win->noBorder()) {
-            if (win::decoration(this->ref_win)) {
+        if (ctrl && !win.noBorder()) {
+            if (win::decoration(&win)) {
                 if (auto r
                     = static_cast<deco_renderer*>(ctrl->deco.client->renderer()->injector.get())) {
                     r->render();
                     deco_data = static_cast<deco_render_data const*>(r->data.get());
                 }
             }
-            this->ref_win->layoutDecorationRects(dlr, dtr, drr, dbr);
+            win.layoutDecorationRects(dlr, dtr, drr, dbr);
             noBorder = false;
         } else if (remnant && !remnant->data.no_border) {
             noBorder = false;
