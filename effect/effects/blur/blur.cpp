@@ -485,11 +485,6 @@ bool BlurEffect::shouldBlur(const EffectWindow* w, int mask, const WindowPaintDa
         && !w->data(WindowForceBlurRole).toBool())
         return false;
 
-    bool blurBehindDecos = effects->decorationsHaveAlpha() && decorationSupportsBlurBehind(w);
-
-    if (!w->hasAlpha() && w->opacity() >= 1.0 && !(blurBehindDecos && w->hasDecoration()))
-        return false;
-
     return true;
 }
 

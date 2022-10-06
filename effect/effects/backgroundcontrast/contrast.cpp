@@ -196,9 +196,6 @@ bool ContrastEffect::shouldContrast(const EffectWindow* w,
         && !w->data(WindowForceBackgroundContrastRole).toBool())
         return false;
 
-    if (!w->hasAlpha())
-        return false;
-
     return true;
 }
 

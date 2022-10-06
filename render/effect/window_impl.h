@@ -185,12 +185,6 @@ public:
                           *window.ref_win);
     }
 
-    bool hasAlpha() const override
-    {
-        return std::visit(overload{[](auto&& ref_win) { return win::has_alpha(*ref_win); }},
-                          *window.ref_win);
-    }
-
     QStringList activities() const override
     {
         // No support for Activities.
