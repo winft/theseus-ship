@@ -233,6 +233,7 @@ void clear_space(Space& space)
     // TODO: ungrabXServer();
 
     base::x11::xcb::extensions::destroy();
+    space.base.render->compositor->space = nullptr;
 }
 
 }
