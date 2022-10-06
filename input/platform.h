@@ -96,6 +96,7 @@ public:
 
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
+    virtual ~platform() = default;
 
     void registerPointerShortcut(Qt::KeyboardModifiers modifiers,
                                  Qt::MouseButton pointerButtons,
