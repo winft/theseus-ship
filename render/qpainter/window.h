@@ -100,8 +100,10 @@ private:
         QRectF target;
         QRectF viewportRectangle;
 
-        if (win.surface) {
-            viewportRectangle = win.surface->state().source_rectangle;
+        if constexpr (requires(Win win) { win.surface; }) {
+            if (win.surface) {
+                viewportRectangle = win.surface->state().source_rectangle;
+            }
         }
 
         if constexpr (std::is_same_v<Win, typename space_t::x11_window>) {

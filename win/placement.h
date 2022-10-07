@@ -121,9 +121,13 @@ void place(Win* window, const QRect& area)
         place_on_screen_display(window, area);
         return;
     }
-    if (window->transient->lead() && window->surface) {
-        place_dialog(window, area, kwinApp()->options->qobject->placement());
-        return;
+
+    // TODO(romangg): Remove this special case only there for Wayland/Xwayland windows.
+    if constexpr (requires(Win win) { win.surface; }) {
+        if (window->transient->lead() && window->surface) {
+            place_dialog(window, area, kwinApp()->options->qobject->placement());
+            return;
+        }
     }
 
     place(window, area, kwinApp()->options->qobject->placement());

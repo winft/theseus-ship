@@ -323,17 +323,20 @@ public:
         }
 
         std::visit(overload{[&](auto&& win) {
-                       if (!win->surface || win->surface != seat->pointers().get_focus().surface) {
-                           return;
-                       }
+                       if constexpr (requires(decltype(win) win) { win->surface; }) {
+                           if (!win->surface
+                               || win->surface != seat->pointers().get_focus().surface) {
+                               return;
+                           }
 
-                       if (update_confinement(*win)) {
-                           // Pointer is confined. Don't lock.
-                           // TODO(romangg): Should we disable the lock?
-                           return;
-                       }
+                           if (update_confinement(*win)) {
+                               // Pointer is confined. Don't lock.
+                               // TODO(romangg): Should we disable the lock?
+                               return;
+                           }
 
-                       update_lock(*win);
+                           update_lock(*win);
+                       }
                    }},
                    *focus.window);
     }
@@ -634,7 +637,11 @@ public:
                                lead && lead->control) {
                                win::leave_event(lead);
                            }
-                           break_pointer_constraints(win->surface);
+
+                           if constexpr (requires(decltype(win) win) { win->surface; }) {
+                               break_pointer_constraints(win->surface);
+                           }
+
                            disconnect_pointer_constraints_connection();
                        }},
                        *focusOld);
@@ -652,11 +659,15 @@ public:
                            if (auto lead = win::lead_of_annexed_transient(win)) {
                                win::enter_event(lead, m_pos.toPoint());
                            }
+
                            redirect->space.focusMousePos = m_pos.toPoint();
-                           now_surface = win->surface;
-                           if (now_surface) {
-                               now_qobject = win->qobject.get();
-                               now_transform = win::get_input_transform(*win);
+
+                           if constexpr (requires(decltype(win) win) { win->surface; }) {
+                               now_surface = win->surface;
+                               if (now_surface) {
+                                   now_qobject = win->qobject.get();
+                                   now_transform = win::get_input_transform(*win);
+                               }
                            }
                        }},
                        *focusNow);
@@ -751,10 +762,19 @@ private:
 
     void update_on_start_move_resize()
     {
-        break_pointer_constraints(
-            focus.window
-                ? std::visit(overload{[&](auto&& win) { return win->surface; }}, *focus.window)
-                : nullptr);
+        Wrapland::Server::Surface* surface{nullptr};
+        if (focus.window) {
+            // TODO(romangg): Using decltype on the return value crashes clang. Submit a bug report.
+            surface = std::visit(overload{[&](auto&& win) -> Wrapland::Server::Surface* {
+                                     if constexpr (requires(decltype(win) win) { win->surface; }) {
+                                         return win->surface;
+                                     }
+                                     return nullptr;
+                                 }},
+                                 *focus.window);
+        }
+
+        break_pointer_constraints(surface);
         disconnect_pointer_constraints_connection();
         device_redirect_unset_focus(this);
         waylandServer()->seat()->pointers().set_focused_surface(nullptr);
@@ -781,7 +801,9 @@ private:
                            }
                            QObject::disconnect(notifiers.focus_geometry);
                            notifiers.focus_geometry = QMetaObject::Connection();
-                           break_pointer_constraints(win->surface);
+                           if constexpr (requires(decltype(win) win) { win->surface; }) {
+                               break_pointer_constraints(win->surface);
+                           }
                        }},
                        *focus.window);
             disconnect_pointer_constraints_connection();
@@ -882,35 +904,37 @@ private:
             return;
         }
 
-        std::visit(overload{[&](auto&& win) {
-                       auto surface = win->surface;
-                       if (!surface) {
-                           return;
-                       }
+        std::visit(
+            overload{[&](auto&& win) {
+                if constexpr (requires(decltype(win) win) { win->surface; }) {
+                    if (!win->surface) {
+                        return;
+                    }
 
-                       auto cf = surface->confinedPointer();
-                       if (!cf || !cf->isConfined()) {
-                           return;
-                       }
+                    auto cf = win->surface->confinedPointer();
+                    if (!cf || !cf->isConfined()) {
+                        return;
+                    }
 
-                       auto const region = getConstraintRegion(win, cf.data());
-                       if (region.contains(pos.toPoint())) {
-                           return;
-                       }
+                    auto const region = getConstraintRegion(win, cf.data());
+                    if (region.contains(pos.toPoint())) {
+                        return;
+                    }
 
-                       // Allow either x or y to pass.
-                       if (auto tmp = QPointF(m_pos.x(), pos.y()); region.contains(tmp.toPoint())) {
-                           pos = tmp;
-                           return;
-                       }
-                       if (auto tmp = QPointF(pos.x(), m_pos.y()); region.contains(tmp.toPoint())) {
-                           pos = tmp;
-                           return;
-                       }
+                    // Allow either x or y to pass.
+                    if (auto tmp = QPointF(m_pos.x(), pos.y()); region.contains(tmp.toPoint())) {
+                        pos = tmp;
+                        return;
+                    }
+                    if (auto tmp = QPointF(pos.x(), m_pos.y()); region.contains(tmp.toPoint())) {
+                        pos = tmp;
+                        return;
+                    }
 
-                       pos = m_pos;
-                   }},
-                   *focus.window);
+                    pos = m_pos;
+                }
+            }},
+            *focus.window);
     }
 
     void disconnect_confined_pointer_region_connection()

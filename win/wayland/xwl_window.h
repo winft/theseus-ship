@@ -480,7 +480,7 @@ public:
 
     qreal bufferScale() const
     {
-        return this->surface ? this->surface->state().scale : 1;
+        return surface ? surface->state().scale : 1;
     }
 
     void handle_surface_damage(QRegion const& damage)
@@ -506,27 +506,23 @@ public:
             auto win_integrate = std::make_unique<buffer_integration_t>(buffer);
             auto update_helper = [&buffer]() {
                 auto& win_integrate = static_cast<buffer_integration_t&>(*buffer.win_integration);
-                std::visit(
-                    overload{[&](auto&& win) { update_buffer(*win, win_integrate.external); }},
-                    *buffer.window->ref_win);
+                auto win = std::get<type*>(*buffer.window->ref_win);
+                update_buffer(*win, win_integrate.external);
             };
             win_integrate->update = update_helper;
             buffer.win_integration = std::move(win_integrate);
         };
-        auto get_viewport = [](auto win, auto /*contentsRect*/) {
+        auto get_viewport = [](auto var_win, auto /*contentsRect*/) {
             // XWayland client's geometry must be taken from their content placement since the
             // buffer size is not in sync. So we only consider an explicitly set source rectangle.
-            return std::visit(overload{[&](auto&& win) {
-                                  return win->surface ? get_scaled_source_rectangle(*win)
-                                                      : QRectF();
-                              }},
-                              win);
+            auto win = std::get<type*>(var_win);
+            return win->surface ? get_scaled_source_rectangle(*win) : QRectF();
         };
 
         this->render->win_integration.setup_buffer = setup_buffer;
         this->render->win_integration.get_viewport = get_viewport;
 
-        if (this->surface) {
+        if (surface) {
             setup_scale_scene_notify(*this);
         }
     }
@@ -626,6 +622,9 @@ public:
 
     // Only used as a cache for window as a remnant.
     NET::WindowType window_type{NET::Normal};
+
+    Wrapland::Server::Surface* surface{nullptr};
+    quint32 surface_id{0};
 };
 
 }

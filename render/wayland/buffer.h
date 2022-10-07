@@ -34,10 +34,12 @@ public:
     {
         if (external) {
             return std::visit(overload{[&](auto&& win) -> QRegion {
-                                  if (!win->surface) {
-                                      return {};
+                                  if constexpr (requires(decltype(win) win) { win->surface; }) {
+                                      if (win->surface) {
+                                          return win->surface->trackedDamage();
+                                      }
                                   }
-                                  return win->surface->trackedDamage();
+                                  return {};
                               }},
                               *this->buffer.window->ref_win);
         }

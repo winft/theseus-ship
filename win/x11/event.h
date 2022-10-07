@@ -185,13 +185,15 @@ void destroy_notify_event(Win* win, xcb_destroy_notify_event_t* e)
 template<typename Win>
 void handle_wl_surface_id_event(Win& win, xcb_client_message_event_t* e)
 {
-    if (e->type != win.space.atoms->wl_surface_id) {
-        return;
-    }
+    if constexpr (requires(Win win) { win.surface_id; }) {
+        if (e->type != win.space.atoms->wl_surface_id) {
+            return;
+        }
 
-    win.surface_id = e->data.data32[0];
-    Q_EMIT win.space.qobject->surface_id_changed(win.meta.signal_id, win.surface_id);
-    Q_EMIT win.qobject->surfaceIdChanged(win.surface_id);
+        win.surface_id = e->data.data32[0];
+        Q_EMIT win.space.qobject->surface_id_changed(win.meta.signal_id, win.surface_id);
+        Q_EMIT win.qobject->surfaceIdChanged(win.surface_id);
+    }
 }
 
 /**

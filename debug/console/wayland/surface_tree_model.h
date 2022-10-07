@@ -37,25 +37,32 @@ public:
             endResetModel();
         };
 
+        // TODO(romangg): Remove since we already do this when iterating over all space windows?
         auto const unmangeds = win::x11::get_unmanageds(space);
         for (auto win : unmangeds) {
-            std::visit(overload{[&](auto&& win) {
-                           if (win->surface) {
-                               QObject::connect(win->surface,
-                                                &Wrapland::Server::Surface::subsurfaceTreeChanged,
-                                                this,
-                                                reset);
-                           }
-                       }},
+            std::visit(overload{[&](x11_window_t* win) {
+                                    if (!win->surface) {
+                                        return;
+                                    }
+                                    QObject::connect(
+                                        win->surface,
+                                        &Wrapland::Server::Surface::subsurfaceTreeChanged,
+                                        this,
+                                        reset);
+                                },
+                                [](auto&&) {}},
                        win);
         }
         for (auto win : space.windows) {
             std::visit(overload{[&](auto&& win) {
-                           if (win->control && win->surface) {
-                               QObject::connect(win->surface,
-                                                &Wrapland::Server::Surface::subsurfaceTreeChanged,
-                                                this,
-                                                reset);
+                           if constexpr (requires(decltype(win) win) { win->surface; }) {
+                               if (win->control && win->surface) {
+                                   QObject::connect(
+                                       win->surface,
+                                       &Wrapland::Server::Surface::subsurfaceTreeChanged,
+                                       this,
+                                       reset);
+                               }
                            }
                        }},
                        win);
@@ -151,17 +158,27 @@ public:
         auto const& allClients = get_windows_with_control(space.windows);
         if (row_u < allClients.size()) {
             // references a client
-            return std::visit(
-                overload{[&](auto&& win) { return createIndex(row_u, column, win->surface); }},
-                allClients.at(row_u));
+            return std::visit(overload{[&](auto&& win) {
+                                  if constexpr (requires(decltype(win) win) { win->surface; }) {
+                                      // TODO(romangg): Check on win->surface not null?
+                                      return createIndex(row_u, column, win->surface);
+                                  }
+                                  return QModelIndex();
+                              }},
+                              allClients.at(row_u));
         }
 
         int reference = allClients.size();
         const auto& unmanaged = win::x11::get_unmanageds(space);
         if (row_u < reference + unmanaged.size()) {
-            return std::visit(
-                overload{[&](auto&& win) { return createIndex(row_u, column, win->surface); }},
-                unmanaged.at(row_u - reference));
+            return std::visit(overload{[&](auto&& win) {
+                                  if constexpr (requires(decltype(win) win) { win->surface; }) {
+                                      // TODO(romangg): Check on win->surface not null?
+                                      return createIndex(row_u, column, win->surface);
+                                  }
+                                  return QModelIndex();
+                              }},
+                              unmanaged.at(row_u - reference));
         }
         reference += unmanaged.size();
 
@@ -216,13 +233,16 @@ public:
             size_t row = 0;
             const auto& allClients = get_windows_with_control(space.windows);
             for (; row < allClients.size(); row++) {
-                if (auto index = std::visit(overload{[&](auto&& win) {
-                                                if (win->surface != parent) {
-                                                    return QModelIndex();
-                                                }
-                                                return createIndex(row, 0, parent);
-                                            }},
-                                            allClients.at(row));
+                if (auto index
+                    = std::visit(overload{[&](auto&& win) {
+                                     if constexpr (requires(decltype(win) win) { win->surface; }) {
+                                         if (win->surface == parent) {
+                                             return createIndex(row, 0, parent);
+                                         }
+                                     }
+                                     return QModelIndex();
+                                 }},
+                                 allClients.at(row));
                     index.isValid()) {
                     return index;
                 }
@@ -230,13 +250,16 @@ public:
             row = allClients.size();
             const auto& unmanaged = win::x11::get_unmanageds(space);
             for (size_t i = 0; i < unmanaged.size(); i++) {
-                if (auto index = std::visit(overload{[&](auto&& win) {
-                                                if (win->surface != parent) {
-                                                    return QModelIndex();
-                                                }
-                                                return createIndex(row + i, 0, parent);
-                                            }},
-                                            unmanaged.at(i));
+                if (auto index
+                    = std::visit(overload{[&](auto&& win) {
+                                     if constexpr (requires(decltype(win) win) { win->surface; }) {
+                                         if (win->surface == parent) {
+                                             return createIndex(row + i, 0, parent);
+                                         }
+                                     }
+                                     return QModelIndex();
+                                 }},
+                                 unmanaged.at(i));
                     index.isValid()) {
                     return index;
                 }

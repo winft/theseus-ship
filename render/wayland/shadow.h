@@ -18,11 +18,10 @@
 namespace KWin::render::wayland
 {
 
-template<typename Shadow>
+template<typename Shadow, typename RefWin>
 bool update_shadow(Shadow& impl)
 {
-    auto surface = std::visit(overload{[&](auto&& ref_win) { return ref_win->surface; }},
-                              *impl.window->ref_win);
+    auto surface = std::get<RefWin*>(*impl.window->ref_win)->surface;
     if (!surface) {
         return false;
     }
@@ -72,24 +71,20 @@ bool update_shadow(Shadow& impl)
     return true;
 }
 
-template<typename Shadow, typename Win>
+template<typename Shadow, typename Win, typename RefWin>
 std::unique_ptr<Shadow> create_shadow(Win& win)
 {
-    return std::visit(overload{[&](auto&& ref_win) -> std::unique_ptr<Shadow> {
-                          auto surface = ref_win->surface;
-                          if (!surface || !surface->state().shadow) {
-                              return {};
-                          }
+    auto ref_win = std::get<RefWin*>(*win.ref_win);
+    auto surface = ref_win->surface;
+    if (!surface || !surface->state().shadow) {
+        return {};
+    }
 
-                          auto shadow
-                              = ref_win->space.base.render->compositor->scene->createShadow(&win);
-                          if (!update_shadow(*shadow)) {
-                              return {};
-                          }
-
-                          return shadow;
-                      }},
-                      *win.ref_win);
+    auto shadow = ref_win->space.base.render->compositor->scene->createShadow(&win);
+    if (!update_shadow<Shadow, RefWin>(*shadow)) {
+        return {};
+    }
+    return shadow;
 }
 
 }

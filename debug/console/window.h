@@ -647,12 +647,18 @@ public:
 
     quint32 surfaceId() const override
     {
-        return ref_win->surface_id;
+        if constexpr (requires(decltype(ref_win) win) { win->surface_id; }) {
+            return ref_win->surface_id;
+        }
+        return 0;
     }
 
     Wrapland::Server::Surface* surface() const override
     {
-        return ref_win->surface;
+        if constexpr (requires(decltype(ref_win) win) { win->surface; }) {
+            return ref_win->surface;
+        }
+        return nullptr;
     }
 
     QSize basicUnit() const override

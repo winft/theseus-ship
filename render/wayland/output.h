@@ -222,16 +222,18 @@ public:
 
         for (auto win : windows) {
             std::visit(overload{[&](auto&& win) {
-                           if (!win->surface
-                               || win->surface->client()
-                                   == waylandServer()->xwayland_connection()) {
-                               return;
+                           if constexpr (requires(decltype(win) win) { win->surface; }) {
+                               if (!win->surface
+                                   || win->surface->client()
+                                       == waylandServer()->xwayland_connection()) {
+                                   return;
+                               }
+                               if (!(win->surface->state().updates
+                                     & Wrapland::Server::surface_change::frame)) {
+                                   return;
+                               }
+                               frame_windows.push_back(win);
                            }
-                           if (!(win->surface->state().updates
-                                 & Wrapland::Server::surface_change::frame)) {
-                               return;
-                           }
-                           frame_windows.push_back(win);
                        }},
                        win);
         }
@@ -335,13 +337,17 @@ private:
 
                            if (prepare_repaint(win)) {
                                has_window_repaints = true;
-                           } else if (win->surface
-                                      && win->surface->client()
-                                          != waylandServer()->xwayland_connection()
-                                      && (win->surface->state().updates
-                                          & Wrapland::Server::surface_change::frame)
-                                      && max_coverage_output(win) == &base) {
-                               frame_windows.push_back(win);
+                           } else {
+                               if constexpr (requires(decltype(win) win) { win->surface; }) {
+                                   if (win->surface
+                                       && win->surface->client()
+                                           != waylandServer()->xwayland_connection()
+                                       && (win->surface->state().updates
+                                           & Wrapland::Server::surface_change::frame)
+                                       && max_coverage_output(win) == &base) {
+                                       frame_windows.push_back(win);
+                                   }
+                               }
                            }
 
                            if (win->render_data.is_damaged) {

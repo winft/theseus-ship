@@ -176,12 +176,16 @@ public:
         }
 
         std::visit(overload{[&](auto&& found) {
-                       if (!found->surface) {
+                       if constexpr (requires(decltype(found) win) { win->surface; }) {
+                           if (!found->surface) {
+                               seat->setFocusedKeyboardSurface(nullptr);
+                               return;
+                           }
+                           if (found->surface != seat->keyboards().get_focus().surface) {
+                               seat->setFocusedKeyboardSurface(found->surface);
+                           }
+                       } else {
                            seat->setFocusedKeyboardSurface(nullptr);
-                           return;
-                       }
-                       if (found->surface != seat->keyboards().get_focus().surface) {
-                           seat->setFocusedKeyboardSurface(found->surface);
                        }
                    }},
                    *found);

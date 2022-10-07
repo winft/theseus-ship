@@ -756,12 +756,24 @@ public:
 
     quint32 surfaceId() const override
     {
-        return std::visit(overload{[](auto&& win) { return win->surface_id; }}, ref_win);
+        return std::visit(overload{[](auto&& win) -> quint32 {
+                              if constexpr (requires(decltype(win) win) { win->surface_id; }) {
+                                  return win->surface_id;
+                              }
+                              return 0;
+                          }},
+                          ref_win);
     }
 
     Wrapland::Server::Surface* surface() const override
     {
-        return std::visit(overload{[](auto&& win) { return win->surface; }}, ref_win);
+        return std::visit(overload{[](auto&& win) -> Wrapland::Server::Surface* {
+                              if constexpr (requires(decltype(win) win) { win->surface; }) {
+                                  return win->surface;
+                              }
+                              return nullptr;
+                          }},
+                          ref_win);
     }
 
     QSize basicUnit() const override

@@ -102,7 +102,7 @@ public:
         if (this->remnant) {
             return this->remnant->data.buffer_scale;
         }
-        return this->surface->state().scale;
+        return surface->state().scale;
     }
 
     QSize resizeIncrements() const
@@ -122,7 +122,7 @@ public:
 
     void add_scene_window_addon()
     {
-        assert(this->surface);
+        assert(surface);
         using scene_t = typename Space::base_t::render_t::compositor_t::scene_t;
         using shadow_t = render::shadow<typename scene_t::window_t>;
 
@@ -164,8 +164,8 @@ public:
         this->render->win_integration.setup_buffer = setup_buffer;
         this->render->win_integration.get_viewport = get_viewport;
         this->render->shadow_windowing.create
-            = render::wayland::create_shadow<shadow_t, typename scene_t::window_t>;
-        this->render->shadow_windowing.update = render::wayland::update_shadow<shadow_t>;
+            = render::wayland::create_shadow<shadow_t, typename scene_t::window_t, type>;
+        this->render->shadow_windowing.update = render::wayland::update_shadow<shadow_t, type>;
 
         setup_scale_scene_notify(*this);
     }
@@ -245,7 +245,7 @@ public:
         if (this->control && this->control->minimized) {
             return false;
         }
-        return this->surface->state().buffer.get();
+        return surface->state().buffer.get();
     }
 
     bool isHiddenInternal() const
@@ -258,7 +258,7 @@ public:
                 return false;
             }
         }
-        return hidden || !this->surface->state().buffer;
+        return hidden || !surface->state().buffer;
     }
 
     QSize minSize() const
@@ -550,11 +550,11 @@ public:
             // This already has a parent set, we can only set one once.
             return;
         }
-        if (!this->surface->subsurface()) {
+        if (!surface->subsurface()) {
             // This is not a subsurface.
             return;
         }
-        if (this->surface->subsurface()->parentSurface() != window->surface) {
+        if (surface->subsurface()->parentSurface() != window->surface) {
             // This has a parent different to window.
             return;
         }
@@ -602,7 +602,7 @@ public:
 
         stream.nospace();
         stream << "\'wayland::window"
-               << "(" << QString::fromStdString(type) << "):" << this->surface << ";"
+               << "(" << QString::fromStdString(type) << "):" << surface << ";"
                << static_cast<void const*>(this) << "\'";
     }
 
@@ -824,16 +824,16 @@ public:
 
     pid_t pid() const
     {
-        if (this->remnant || !this->surface->client()) {
+        if (this->remnant || !surface->client()) {
             return 0;
         }
-        return this->surface->client()->processId();
+        return surface->client()->processId();
     }
 
     bool isLockScreen() const
     {
         return !this->remnant
-            && this->surface->client() == waylandServer()->screen_locker_client_connection;
+            && surface->client() == waylandServer()->screen_locker_client_connection;
     }
 
     bool isInitialPositionSet() const
@@ -1038,7 +1038,7 @@ public:
             }
         }
         if (auto s = other->surface) {
-            return s->client() == this->surface->client();
+            return s->client() == surface->client();
         }
         return false;
     }
@@ -1201,7 +1201,7 @@ public:
 
     void killWindow()
     {
-        auto client = this->surface->client();
+        auto client = surface->client();
         if (client->processId() == getpid() || client->processId() == 0) {
             client->destroy();
             return;
@@ -1267,18 +1267,18 @@ public:
 
     void handle_commit()
     {
-        if (!this->surface->state().buffer) {
+        if (!surface->state().buffer) {
             unmap();
             return;
         }
 
-        if (this->surface->state().updates & Wrapland::Server::surface_change::size) {
+        if (surface->state().updates & Wrapland::Server::surface_change::size) {
             discard_buffer(*this);
         }
 
-        if (auto const& damage = this->surface->state().damage; !damage.isEmpty()) {
+        if (auto const& damage = surface->state().damage; !damage.isEmpty()) {
             handle_surface_damage(*this, damage);
-        } else if (this->surface->state().updates & Wrapland::Server::surface_change::frame) {
+        } else if (surface->state().updates & Wrapland::Server::surface_change::frame) {
             this->space.base.render->compositor->schedule_frame_callback(this);
         }
 
@@ -1310,13 +1310,13 @@ public:
         } else if (layer_surface) {
             handle_layer_surface_commit(this);
             apply_pending_geometry();
-        } else if (auto cur_size = client_to_frame_size(this, this->surface->size());
+        } else if (auto cur_size = client_to_frame_size(this, surface->size());
                    this->geo.size() != cur_size) {
             do_set_geometry(QRect(this->geo.pos(), cur_size));
         }
 
         auto bit_depth
-            = (this->surface->state().buffer->hasAlphaChannel() && !is_desktop(this)) ? 32 : 24;
+            = (surface->state().buffer->hasAlphaChannel() && !is_desktop(this)) ? 32 : 24;
         set_bit_depth(*this, bit_depth);
         map();
     }
@@ -1435,6 +1435,9 @@ public:
         maximize_mode max_mode{maximize_mode::restore};
         bool fullscreen{false};
     } synced_geometry;
+
+    Wrapland::Server::Surface* surface{nullptr};
+    quint32 surface_id{0};
 
     Wrapland::Server::XdgShellSurface* shell_surface{nullptr};
     Wrapland::Server::XdgShellToplevel* toplevel{nullptr};

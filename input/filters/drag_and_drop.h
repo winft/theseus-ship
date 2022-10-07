@@ -82,11 +82,16 @@ public:
 
         std::visit(overload{[&](auto&& win) {
                        // TODO: consider decorations
-                       if (win->surface != seat->drags().get_target().surface) {
+                       if constexpr (requires(decltype(win) win) { win->surface; }) {
+                           if (win->surface == seat->drags().get_target().surface) {
+                               return;
+                           }
                            if (win->control) {
                                win::activate_window(this->redirect.space, *win);
                            }
                            seat->drags().set_target(win->surface, win::get_input_transform(*win));
+                       } else {
+                           seat->drags().set_target(nullptr, win::get_input_transform(*win));
                        }
                    }},
                    *window);
@@ -146,14 +151,17 @@ public:
 
         // TODO: consider decorations
         std::visit(overload{[&](auto&& win) {
-                       if (win->surface == seat->drags().get_target().surface) {
-                           return;
+                       if constexpr (requires(decltype(win) win) { win->surface; }) {
+                           if (win->surface == seat->drags().get_target().surface) {
+                               return;
+                           }
+                           if (win->control) {
+                               win::activate_window(this->redirect.space, *win);
+                           }
+                           seat->drags().set_target(win->surface, win::get_input_transform(*win));
+                       } else {
+                           seat->drags().set_target(nullptr, win::get_input_transform(*win));
                        }
-                       if (win->control) {
-                           win::activate_window(this->redirect.space, *win);
-                       }
-                       seat->drags().set_target(
-                           win->surface, event.pos, win::get_input_transform(*win));
                    }},
                    *win);
         return true;

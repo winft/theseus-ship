@@ -40,15 +40,21 @@ public:
             *this->win_integration);
 
         std::visit(overload{[&, this](auto&& win) {
-                       if (!win->surface) {
+                       // TODO(romangg): Using a second lambda instead for the internal window here
+                       // crashes clang. Submit a bug report.
+                       if constexpr (requires(decltype(win) win) { win->surface; }) {
+                           if (!win->surface) {
+                               // TODO(romangg): Can this really happen? Xwayland maybe.
+                               return;
+                           }
+
+                           // performing deep copy, this could probably be improved
+                           image = win_integrate.external->shmImage()->createQImage().copy();
+                           win->surface->resetTrackedDamage();
+                       } else {
                            // That's an internal client.
                            image = win_integrate.internal.image;
-                           return;
                        }
-
-                       // performing deep copy, this could probably be improved
-                       image = win_integrate.external->shmImage()->createQImage().copy();
-                       win->surface->resetTrackedDamage();
                    }},
                    *this->window->ref_win);
     }
@@ -71,24 +77,26 @@ public:
         render::buffer<Window>::updateBuffer();
         auto b = win_integrate.external.get();
 
-        std::visit(overload{[&, this](auto&& win) {
-                       if (!win->surface) {
-                           // That's an internal client.
-                           image = win_integrate.internal.image;
-                           return;
-                       }
-                       if (!b) {
-                           image = QImage();
-                           return;
-                       }
-                       if (b == oldBuffer) {
-                           return;
-                       }
+        std::visit(overload{[&, this](typename Window::scene_t::space_t::internal_window_t*) {
+                                image = win_integrate.internal.image;
+                            },
+                            [&, this](auto&& win) {
+                                if (!win->surface) {
+                                    // TODO(romangg): Can this really happen? Xwayland maybe.
+                                    return;
+                                }
+                                if (!b) {
+                                    image = QImage();
+                                    return;
+                                }
+                                if (b == oldBuffer) {
+                                    return;
+                                }
 
-                       // perform deep copy
-                       image = b->shmImage()->createQImage().copy();
-                       win->surface->resetTrackedDamage();
-                   }},
+                                // perform deep copy
+                                image = b->shmImage()->createQImage().copy();
+                                win->surface->resetTrackedDamage();
+                            }},
                    *this->window->ref_win);
     }
 

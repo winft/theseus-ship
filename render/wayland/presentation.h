@@ -64,12 +64,14 @@ public:
 
         for (auto& win : windows) {
             std::visit(overload{[&](auto&& win) {
-                           assert(win->surface);
-                           assert(max_coverage_output(win) == &output->base);
+                           if constexpr (requires(decltype(win) win) { win->surface; }) {
+                               assert(win->surface);
+                               assert(max_coverage_output(win) == &output->base);
 
-                           // TODO (romangg): Split this up to do on every subsurface (annexed
-                           // transient) separately.
-                           win->surface->frameRendered(now);
+                               // TODO (romangg): Split this up to do on every subsurface (annexed
+                               // transient) separately.
+                               win->surface->frameRendered(now);
+                           }
                        }},
                        win);
         }
@@ -85,32 +87,34 @@ public:
 
         for (auto& win : windows) {
             std::visit(overload{[&](auto&& win) {
-                           auto surface = win->surface;
-                           if (!surface) {
-                               return;
-                           }
+                           if constexpr (requires(decltype(win) win) { win->surface; }) {
+                               auto surface = win->surface;
+                               if (!surface) {
+                                   return;
+                               }
 
-                           // Check if this window should be locked to the output. We use maximum
-                           // coverage for that.
-                           auto max_out = max_coverage_output(win);
-                           if (max_out != &output->base) {
-                               // Window not mostly on this output. We lock it to max_out when it
-                               // presents.
-                               return;
-                           }
+                               // Check if this window should be locked to the output. We use
+                               // maximum coverage for that.
+                               auto max_out = max_coverage_output(win);
+                               if (max_out != &output->base) {
+                                   // Window not mostly on this output. We lock it to max_out when
+                                   // it presents.
+                                   return;
+                               }
 
-                           // TODO (romangg): Split this up to do on every subsurface (annexed
-                           // transient) separately.
-                           surface->frameRendered(now);
+                               // TODO (romangg): Split this up to do on every subsurface (annexed
+                               // transient) separately.
+                               surface->frameRendered(now);
 
-                           auto const id
-                               = surface->lockPresentation(output->base.wrapland_output());
-                           if (id != 0) {
-                               output->assigned_surfaces.emplace(id, surface);
-                               connect(surface,
-                                       &Wrapland::Server::Surface::resourceDestroyed,
-                                       output,
-                                       [output, id]() { output->assigned_surfaces.erase(id); });
+                               auto const id
+                                   = surface->lockPresentation(output->base.wrapland_output());
+                               if (id != 0) {
+                                   output->assigned_surfaces.emplace(id, surface);
+                                   connect(surface,
+                                           &Wrapland::Server::Surface::resourceDestroyed,
+                                           output,
+                                           [output, id]() { output->assigned_surfaces.erase(id); });
+                               }
                            }
                        }},
                        win);

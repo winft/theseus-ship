@@ -229,7 +229,9 @@ public:
 
         if (focusNow) {
             std::visit(overload{[&](auto&& win) {
-                           now_surface = win->surface;
+                           if constexpr (requires(decltype(win) win) { win->surface; }) {
+                               now_surface = win->surface;
+                           }
                            now_qobject = win->qobject.get();
                            if (win->control) {
                                win::enter_event(win, m_lastPosition.toPoint());

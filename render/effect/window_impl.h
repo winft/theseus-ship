@@ -553,7 +553,12 @@ public:
 
     Wrapland::Server::Surface* surface() const override
     {
-        return std::visit(overload{[](auto&& ref_win) { return ref_win->surface; }},
+        return std::visit(overload{[](auto&& win) -> Wrapland::Server::Surface* {
+                              if constexpr (requires(decltype(win) win) { win->surface; }) {
+                                  return win->surface;
+                              }
+                              return nullptr;
+                          }},
                           *window.ref_win);
     }
 
