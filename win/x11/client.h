@@ -57,7 +57,7 @@ void kill_process(Win* win, bool ask, xcb_timestamp_t timestamp = XCB_TIME_CURRE
 
     assert(!ask || timestamp != XCB_TIME_CURRENT_TIME);
 
-    auto pid = win->info->pid();
+    auto pid = win->net_info->pid();
     if (pid <= 0 || win->client_machine->hostname().isEmpty()) {
         // Needed properties missing
         return;
@@ -103,7 +103,7 @@ void kill_process(Win* win, bool ask, xcb_timestamp_t timestamp = XCB_TIME_CURRE
 template<typename Win>
 void ping(Win* win)
 {
-    if (!win->info->supportsProtocol(NET::PingProtocol)) {
+    if (!win->net_info->supportsProtocol(NET::PingProtocol)) {
         // Can't ping :(
         return;
     }

@@ -109,10 +109,10 @@ void place_max_fs(Win* win,
 
     auto pseudo_max{maximize_mode::restore};
 
-    if (win->info->state() & NET::MaxVert) {
+    if (win->net_info->state() & NET::MaxVert) {
         pseudo_max |= maximize_mode::vertical;
     }
-    if (win->info->state() & NET::MaxHoriz) {
+    if (win->net_info->state() & NET::MaxHoriz) {
         pseudo_max |= maximize_mode::horizontal;
     }
 
@@ -270,12 +270,12 @@ bool ignore_position_default(Win* win)
         if (!is_utility(win) && !is_dialog(win) && !is_splash(win)) {
             return false;
         }
-        if (!win->info->hasNETSupport()) {
+        if (!win->net_info->hasNETSupport()) {
             return false;
         }
         // TODO(romangg): Should we return false here?
     }
-    if (is_dialog(win) && win->info->hasNETSupport()) {
+    if (is_dialog(win) && win->net_info->hasNETSupport()) {
         return false;
     }
     if (is_on_screen_display(win)) {

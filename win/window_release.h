@@ -87,10 +87,6 @@ void transfer_remnant_data(Win& source, Win& dest)
     dest.render_data.bit_depth = source.render_data.bit_depth;
 
     dest.window_type = source.windowType();
-    dest.info = source.info;
-    if (auto winfo = dynamic_cast<x11::win_info<Win>*>(dest.info)) {
-        winfo->disable();
-    }
 
     dest.render_data.ready_for_painting = source.render_data.ready_for_painting;
     dest.render_data.damage_region = source.render_data.damage_region;

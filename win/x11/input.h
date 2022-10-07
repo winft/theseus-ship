@@ -22,7 +22,7 @@ template<typename Win>
 bool wants_input(Win const& win)
 {
     return win.control->rules.checkAcceptFocus(
-        win.acceptsFocus() || win.info->supportsProtocol(NET::TakeFocusProtocol));
+        win.acceptsFocus() || win.net_info->supportsProtocol(NET::TakeFocusProtocol));
 }
 
 template<typename Win>

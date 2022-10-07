@@ -83,7 +83,7 @@ void detect_no_border(Win* win)
     // NET::Override is some strange beast without clear definition, usually
     // just meaning "no_border", so let's treat it only as such flag, and ignore it as
     // a window type otherwise (SUPPORTED_WINDOW_TYPES_MASK doesn't include it)
-    if (win->info->windowType(NET::OverrideMask) == NET::Override) {
+    if (win->net_info->windowType(NET::OverrideMask) == NET::Override) {
         win->user_no_border = true;
         win->app_no_border = true;
     }
@@ -97,7 +97,7 @@ void set_frame_extents(Win* win)
     strut.right = win::right_border(win);
     strut.top = win::top_border(win);
     strut.bottom = win::bottom_border(win);
-    win->info->setFrameExtents(strut);
+    win->net_info->setFrameExtents(strut);
 }
 
 template<typename Win>
@@ -291,7 +291,7 @@ void deco_set_no_border(Win& win, bool set)
 template<typename Win>
 void show_context_help(Win& win)
 {
-    if (!win.info->supportsProtocol(NET::ContextHelpProtocol)) {
+    if (!win.net_info->supportsProtocol(NET::ContextHelpProtocol)) {
         return;
     }
     send_client_message(win.xcb_windows.client,

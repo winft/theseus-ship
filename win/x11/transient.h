@@ -319,7 +319,7 @@ void change_client_leader_group(Win* win, decltype(win->group) group)
         return;
     }
 
-    if (win->info->groupLeader()) {
+    if (win->net_info->groupLeader()) {
         // A leader is already set. Don't change it.
         return;
     }
@@ -392,11 +392,11 @@ void check_group(Win* win, decltype(win->group) group)
             // Move the window to the right group (e.g. a dialog provided
             // by this app, but transient for another, so make it part of that group).
             group = lead->group;
-        } else if (win->info->groupLeader() != XCB_WINDOW_NONE) {
-            group = find_group(win->space, win->info->groupLeader());
+        } else if (win->net_info->groupLeader() != XCB_WINDOW_NONE) {
+            group = find_group(win->space, win->net_info->groupLeader());
             if (!group) {
                 // doesn't exist yet
-                group = new group_t(win->info->groupLeader(), win->space);
+                group = new group_t(win->net_info->groupLeader(), win->space);
             }
         } else {
             group = find_client_leader_group(win);

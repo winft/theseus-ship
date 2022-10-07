@@ -69,10 +69,8 @@ public:
 
     virtual ~Toplevel()
     {
-        delete info;
     }
 
-    NETWinInfo* info{nullptr};
     Wrapland::Server::Surface* surface{nullptr};
     quint32 surface_id{0};
 

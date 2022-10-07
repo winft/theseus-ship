@@ -22,7 +22,7 @@ namespace KWin::win::x11
 template<typename Win>
 bool is_movable(Win const& win)
 {
-    if (!win.info->hasNETSupport() && !win.motif_hints.move()) {
+    if (!win.net_info->hasNETSupport() && !win.motif_hints.move()) {
         return false;
     }
     if (win.control->fullscreen) {
@@ -42,7 +42,7 @@ bool is_movable(Win const& win)
 template<typename Win>
 bool is_movable_across_screens(Win const& win)
 {
-    if (!win.info->hasNETSupport() && !win.motif_hints.move()) {
+    if (!win.net_info->hasNETSupport() && !win.motif_hints.move()) {
         return false;
     }
     if (is_special_window(&win) && !is_splash(&win) && !is_toolbar(&win)) {
@@ -59,7 +59,7 @@ bool is_movable_across_screens(Win const& win)
 template<typename Win>
 bool is_resizable(Win const& win)
 {
-    if (!win.info->hasNETSupport() && !win.motif_hints.resize()) {
+    if (!win.net_info->hasNETSupport() && !win.motif_hints.resize()) {
         return false;
     }
     if (win.geo.update.fullscreen) {

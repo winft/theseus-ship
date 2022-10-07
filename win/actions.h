@@ -24,15 +24,19 @@ void set_keep_above(Win* win, bool keep)
     }
     if (keep == win->control->keep_above) {
         // force hint change if different
-        if (win->info && bool(win->info->state() & NET::KeepAbove) != keep) {
-            win->info->setState(keep ? NET::KeepAbove : NET::States(), NET::KeepAbove);
+        if constexpr (requires(Win win) { win.net_info; }) {
+            if (static_cast<bool>(win->net_info->state() & NET::KeepAbove) != keep) {
+                win->net_info->setState(keep ? NET::KeepAbove : NET::States(), NET::KeepAbove);
+            }
         }
         return;
     }
     win->control->keep_above = keep;
-    if (win->info) {
-        win->info->setState(keep ? NET::KeepAbove : NET::States(), NET::KeepAbove);
+
+    if constexpr (requires(Win win) { win.net_info; }) {
+        win->net_info->setState(keep ? NET::KeepAbove : NET::States(), NET::KeepAbove);
     }
+
     update_layer(win);
     win->updateWindowRules(rules::type::above);
 
@@ -52,14 +56,20 @@ void set_keep_below(Win* win, bool keep)
     }
     if (keep == win->control->keep_below) {
         // force hint change if different
-        if (win->info && bool(win->info->state() & NET::KeepBelow) != keep)
-            win->info->setState(keep ? NET::KeepBelow : NET::States(), NET::KeepBelow);
+        if constexpr (requires(Win win) { win.net_info; }) {
+            if (static_cast<bool>(win->net_info->state() & NET::KeepBelow) != keep) {
+                win->net_info->setState(keep ? NET::KeepBelow : NET::States(), NET::KeepBelow);
+            }
+        }
+
         return;
     }
     win->control->keep_below = keep;
-    if (win->info) {
-        win->info->setState(keep ? NET::KeepBelow : NET::States(), NET::KeepBelow);
+
+    if constexpr (requires(Win win) { win.net_info; }) {
+        win->net_info->setState(keep ? NET::KeepBelow : NET::States(), NET::KeepBelow);
     }
+
     update_layer(win);
     win->updateWindowRules(rules::type::below);
 

@@ -17,7 +17,7 @@ namespace KWin::win::x11
 template<typename Win>
 bool has_user_time_support(Win* win)
 {
-    return win->info->userTime() != -1U;
+    return win->net_info->userTime() != -1U;
 }
 
 /**

@@ -15,14 +15,14 @@ namespace KWin::win::x11
 template<typename Win>
 void focus_take(Win& win)
 {
-    if (win.control->rules.checkAcceptFocus(win.info->input())) {
+    if (win.control->rules.checkAcceptFocus(win.net_info->input())) {
         win.xcb_windows.client.focus();
     } else {
         // window cannot take input, at least withdraw urgency
         set_demands_attention(&win, false);
     }
 
-    if (win.info->supportsProtocol(NET::TakeFocusProtocol)) {
+    if (win.net_info->supportsProtocol(NET::TakeFocusProtocol)) {
         kwinApp()->update_x11_time_from_clock();
         send_client_message(
             win.xcb_windows.client, win.space.atoms->wm_protocols, win.space.atoms->wm_take_focus);

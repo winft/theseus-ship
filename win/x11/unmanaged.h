@@ -92,12 +92,12 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
     check_screen(*win);
     win->xcb_visual = attr->visual;
     win->render_data.bit_depth = geo->depth;
-    win->info = new NETWinInfo(connection(),
-                               xcb_win,
-                               rootWindow(),
-                               NET::WMWindowType | NET::WMPid,
-                               NET::WM2Opacity | NET::WM2WindowRole | NET::WM2WindowClass
-                                   | NET::WM2OpaqueRegion);
+    win->net_info = new NETWinInfo(connection(),
+                                   xcb_win,
+                                   rootWindow(),
+                                   NET::WMWindowType | NET::WMPid,
+                                   NET::WM2Opacity | NET::WM2WindowRole | NET::WM2WindowClass
+                                       | NET::WM2OpaqueRegion);
     fetch_wm_class(*win);
 
     // TODO(romangg): Can't chain these two calls, because the second only takes non-const refs.
@@ -174,7 +174,7 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* event)
     NET::Properties2 dirtyProperties2;
 
     // Pass through the NET stuff.
-    win->info->event(event, &dirtyProperties, &dirtyProperties2);
+    win->net_info->event(event, &dirtyProperties, &dirtyProperties2);
 
     if (dirtyProperties2 & NET::WM2Opacity) {
         if (win->space.base.render->compositor->scene) {

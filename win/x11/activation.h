@@ -13,7 +13,7 @@ namespace KWin::win::x11
 template<typename Win>
 void update_urgency(Win* win)
 {
-    if (win->info->urgency()) {
+    if (win->net_info->urgency()) {
         set_demands_attention(win, true);
     }
 }
@@ -31,7 +31,7 @@ void do_set_active(Win& win)
 {
     // Demand attention again if it's still urgent.
     update_urgency(&win);
-    win.info->setState(win.control->active ? NET::Focused : NET::States(), NET::Focused);
+    win.net_info->setState(win.control->active ? NET::Focused : NET::States(), NET::Focused);
 }
 
 }

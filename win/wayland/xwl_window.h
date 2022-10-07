@@ -83,7 +83,7 @@ public:
 
     pid_t pid() const
     {
-        return this->info->pid();
+        return net_info->pid();
     }
 
     NET::WindowType get_window_type_direct() const
@@ -101,7 +101,7 @@ public:
         if (this->remnant) {
             return this->remnant->data.window_role;
         }
-        return this->info->windowRole();
+        return net_info->windowRole();
     }
 
     x11::client_machine* get_client_machine() const
@@ -151,7 +151,7 @@ public:
      */
     bool providesContextHelp() const
     {
-        return this->info->supportsProtocol(NET::ContextHelpProtocol);
+        return net_info->supportsProtocol(NET::ContextHelpProtocol);
     }
 
     void showContextHelp()
@@ -197,7 +197,7 @@ public:
     void applyWindowRules()
     {
         apply_window_rules(*this);
-        setBlockingCompositing(this->info->isBlockingCompositing());
+        setBlockingCompositing(net_info->isBlockingCompositing());
     }
 
     void updateWindowRules(rules::type selection)
@@ -214,7 +214,7 @@ public:
 
     bool acceptsFocus() const
     {
-        return this->info->input();
+        return net_info->input();
     }
 
     void updateCaption()
@@ -559,6 +559,7 @@ public:
 
     QString iconic_caption;
 
+    NETWinInfo* net_info{nullptr};
     x11::xcb_windows xcb_windows;
 
     x11::client_machine* client_machine{nullptr};

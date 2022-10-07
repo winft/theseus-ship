@@ -81,10 +81,10 @@ public:
 
     pid_t pid() const override
     {
-        if (!ref_win->info) {
-            return 0;
+        if constexpr (requires(decltype(ref_win) win) { win->net_info; }) {
+            return ref_win->pid();
         }
-        return ref_win->pid();
+        return 0;
     }
 
     QRect bufferGeometry() const override

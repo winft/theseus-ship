@@ -30,7 +30,7 @@ template<typename Win>
 void disown_data_passed_to_remnant(Win& win)
 {
     win.client_machine = nullptr;
-    win.info = nullptr;
+    win.net_info = nullptr;
 }
 
 template<typename Space, typename Win>
@@ -141,6 +141,13 @@ Win* create_remnant_window(Win& source)
     transfer_remnant_data(source, *win);
 
     assert(win->damage.handle == XCB_NONE);
+
+    win->net_info = source.net_info;
+
+    if (auto winfo = dynamic_cast<x11::win_info<Win>*>(win->net_info)) {
+        winfo->disable();
+    }
+
     win->xcb_windows.client.reset(source.xcb_windows.client, false);
     win->xcb_visual = source.xcb_visual;
     win->client_machine = source.client_machine;
@@ -263,10 +270,10 @@ void release_window(Win* win, bool on_shutdown)
         remove_controlled_window_from_space(win->space, win);
         // Only when the window is being unmapped, not when closing down KWin (NETWM
         // sections 5.5,5.7)
-        win->info->setDesktop(0);
+        win->net_info->setDesktop(0);
 
         // Reset all state flags
-        win->info->setState(NET::States(), win->info->state());
+        win->net_info->setState(NET::States(), win->net_info->state());
     }
 
     auto& atoms = win->space.atoms;
@@ -399,6 +406,7 @@ void cleanup_window(Win& win)
     assert(win.xcb_windows.outer == XCB_WINDOW_NONE);
 
     delete win.client_machine;
+    delete win.net_info;
     win.space.windows_map.erase(win.meta.signal_id);
 }
 
@@ -431,7 +439,7 @@ void close_window(Win& win)
     // Update user time, because the window may create a confirming dialog.
     update_user_time(&win);
 
-    if (win.info->supportsProtocol(NET::DeleteWindowProtocol)) {
+    if (win.net_info->supportsProtocol(NET::DeleteWindowProtocol)) {
         send_client_message(win.xcb_windows.client,
                             win.space.atoms->wm_protocols,
                             win.space.atoms->wm_delete_window);

@@ -829,7 +829,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
         auto old_opacity = win->opacity();
 
         // pass through the NET stuff
-        win->info->event(e, &dirtyProperties, &dirtyProperties2);
+        win->net_info->event(e, &dirtyProperties, &dirtyProperties2);
 
         if ((dirtyProperties & NET::WMName) != 0) {
             fetch_name(win);
@@ -845,12 +845,12 @@ bool window_event(Win* win, xcb_generic_event_t* e)
             get_icons(win);
         }
 
-        // Note there's a difference between userTime() and info->userTime()
-        // info->userTime() is the value of the property, userTime() also includes
+        // Note there's a difference between userTime() and net_info->userTime()
+        // net_info->userTime() is the value of the property, userTime() also includes
         // updates of the time done by KWin (ButtonPress on windowrapper etc.).
         if ((dirtyProperties2 & NET::WM2UserTime) != 0) {
             mark_as_user_interaction(win->space);
-            update_user_time(win, win->info->userTime());
+            update_user_time(win, win->net_info->userTime());
         }
         if ((dirtyProperties2 & NET::WM2StartupId) != 0) {
             startup_id_changed(win);
@@ -866,7 +866,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
                              rootWindow(),
                              NET::Properties(),
                              NET::Properties2());
-                i.setOpacity(win->info->opacity());
+                i.setOpacity(win->net_info->opacity());
             }
         }
         if (dirtyProperties2 & NET::WM2FrameOverlap) {
@@ -879,7 +879,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
             fetch_wm_class(*win);
         }
         if (dirtyProperties2.testFlag(NET::WM2BlockCompositing)) {
-            win->setBlockingCompositing(win->info->isBlockingCompositing());
+            win->setBlockingCompositing(win->net_info->isBlockingCompositing());
         }
         if (dirtyProperties2.testFlag(NET::WM2GroupLeader)) {
             check_group(win, nullptr);
@@ -894,7 +894,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
             fetch_wm_opaque_region(*win);
         }
         if (dirtyProperties2 & NET::WM2DesktopFileName) {
-            win::set_desktop_file_name(win, QByteArray(win->info->desktopFileName()));
+            win::set_desktop_file_name(win, QByteArray(win->net_info->desktopFileName()));
         }
         if (dirtyProperties2 & NET::WM2GTKFrameExtents) {
             auto& orig_extents = win->geo.update.original.client_frame_extents;

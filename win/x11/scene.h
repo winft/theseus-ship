@@ -121,10 +121,10 @@ double get_opacity(Win& win)
     if (win.remnant) {
         return win.remnant->data.opacity;
     }
-    if (win.info->opacity() == 0xffffffff) {
+    if (win.net_info->opacity() == 0xffffffff) {
         return 1.0;
     }
-    return win.info->opacity() * 1.0 / 0xffffffff;
+    return win.net_info->opacity() * 1.0 / 0xffffffff;
 }
 
 template<typename Win>
@@ -136,7 +136,7 @@ void set_opacity(Win& win, double new_opacity)
         return;
     }
 
-    win.info->setOpacity(static_cast<unsigned long>(new_opacity * 0xffffffff));
+    win.net_info->setOpacity(static_cast<unsigned long>(new_opacity * 0xffffffff));
 
     if (win.space.base.render->compositor->scene) {
         add_full_repaint(win);
@@ -231,7 +231,7 @@ void add_scene_window_addon(Win& win)
 template<typename Win>
 void fetch_wm_opaque_region(Win& win)
 {
-    auto const rects = win.info->opaqueRegion();
+    auto const rects = win.net_info->opaqueRegion();
     QRegion new_opaque_region;
     for (const auto& r : rects) {
         new_opaque_region += QRect(r.pos.x, r.pos.y, r.size.width, r.size.height);

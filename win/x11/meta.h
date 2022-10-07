@@ -40,8 +40,8 @@ QString read_name_property(Win& win, xcb_atom_t atom)
 template<typename Win>
 QString read_name(Win* win)
 {
-    if (win->info->name() && win->info->name()[0] != '\0') {
-        return QString::fromUtf8(win->info->name()).simplified();
+    if (win->net_info->name() && win->net_info->name()[0] != '\0') {
+        return QString::fromUtf8(win->net_info->name()).simplified();
     }
 
     return read_name_property(*win, XCB_ATOM_WM_NAME);
@@ -114,17 +114,17 @@ void set_caption(Win* win, QString const& _s, bool force = false)
             i++;
         } while (find_client_with_same_caption(win));
 
-        win->info->setVisibleName(win::caption(win).toUtf8().constData());
+        win->net_info->setVisibleName(win::caption(win).toUtf8().constData());
         reset_name = false;
     }
 
     if ((was_suffix && win->meta.caption.suffix.isEmpty()) || reset_name) {
         // If it was new window, it may have old value still set, if the window is reused
-        win->info->setVisibleName("");
-        win->info->setVisibleIconName("");
+        win->net_info->setVisibleName("");
+        win->net_info->setVisibleIconName("");
     } else if (!win->meta.caption.suffix.isEmpty() && !win->iconic_caption.isEmpty()) {
         // Keep the same suffix in iconic name if it's set
-        win->info->setVisibleIconName(
+        win->net_info->setVisibleIconName(
             QString(win->iconic_caption + win->meta.caption.suffix).toUtf8().constData());
     }
 
@@ -145,8 +145,8 @@ template<typename Win>
 void fetch_iconic_name(Win* win)
 {
     QString s;
-    if (win->info->iconName() && win->info->iconName()[0] != '\0') {
-        s = QString::fromUtf8(win->info->iconName());
+    if (win->net_info->iconName() && win->net_info->iconName()[0] != '\0') {
+        s = QString::fromUtf8(win->net_info->iconName());
     } else {
         s = read_name_property(*win, XCB_ATOM_WM_ICON_NAME);
     }
@@ -164,9 +164,10 @@ void fetch_iconic_name(Win* win)
 
     if (!win->iconic_caption.isEmpty()) {
         // Keep the same suffix in iconic name if it's set.
-        win->info->setVisibleIconName(QString(s + win->meta.caption.suffix).toUtf8().constData());
+        win->net_info->setVisibleIconName(
+            QString(s + win->meta.caption.suffix).toUtf8().constData());
     } else if (was_set) {
-        win->info->setVisibleIconName("");
+        win->net_info->setVisibleIconName("");
     }
 }
 
@@ -188,7 +189,7 @@ void get_icons(Win* win)
                                              size,
                                              scale,
                                              KWindowSystem::NETWM | KWindowSystem::WMHints,
-                                             win->info);
+                                             win->net_info);
         if (!pix.isNull()) {
             icon.addPixmap(pix);
         }
@@ -220,25 +221,25 @@ void get_icons(Win* win)
                                            32,
                                            true,
                                            KWindowSystem::ClassHint | KWindowSystem::XApp,
-                                           win->info));
+                                           win->net_info));
         icon.addPixmap(KWindowSystem::icon(win->xcb_windows.client,
                                            16,
                                            16,
                                            true,
                                            KWindowSystem::ClassHint | KWindowSystem::XApp,
-                                           win->info));
+                                           win->net_info));
         icon.addPixmap(KWindowSystem::icon(win->xcb_windows.client,
                                            64,
                                            64,
                                            false,
                                            KWindowSystem::ClassHint | KWindowSystem::XApp,
-                                           win->info));
+                                           win->net_info));
         icon.addPixmap(KWindowSystem::icon(win->xcb_windows.client,
                                            128,
                                            128,
                                            false,
                                            KWindowSystem::ClassHint | KWindowSystem::XApp,
-                                           win->info));
+                                           win->net_info));
     }
     win->control->icon = icon;
     Q_EMIT win->qobject->iconChanged();
@@ -367,7 +368,7 @@ NET::WindowType get_window_type_direct(Win& win)
     if (win.remnant) {
         return win.window_type;
     }
-    return win.info->windowType(win.supported_default_types);
+    return win.net_info->windowType(win.supported_default_types);
 }
 
 template<typename Win>
@@ -384,7 +385,7 @@ NET::WindowType get_window_type(Win& win)
     if (wt != wt2) {
         wt = wt2;
         // force hint change
-        win.info->setWindowType(wt);
+        win.net_info->setWindowType(wt);
     }
 
     // hacks here
@@ -411,8 +412,8 @@ template<typename Win>
 void fetch_wm_class(Win& win)
 {
     set_wm_class(win,
-                 QByteArray(win.info->windowClassName()).toLower(),
-                 QByteArray(win.info->windowClassClass()).toLower());
+                 QByteArray(win.net_info->windowClassName()).toLower(),
+                 QByteArray(win.net_info->windowClassClass()).toLower());
 }
 
 template<typename Win>

@@ -330,8 +330,9 @@ void set_demands_attention(Win* win, bool demand)
     }
     win->control->demands_attention = demand;
 
-    if (win->info) {
-        win->info->setState(demand ? NET::DemandsAttention : NET::States(), NET::DemandsAttention);
+    if constexpr (requires(Win win) { win.net_info; }) {
+        win->net_info->setState(demand ? NET::DemandsAttention : NET::States(),
+                                NET::DemandsAttention);
     }
 
     remove_all(win->space.stacking.attention_chain, var_win(win));

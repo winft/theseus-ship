@@ -237,7 +237,7 @@ void do_set_fullscreen(Win& win, bool full)
         raise_window(win.space, &win);
     } else {
         // TODO(romangg): Can we do this also in setFullScreen? What about deco update?
-        win.info->setState(full ? NET::FullScreen : NET::States(), NET::FullScreen);
+        win.net_info->setState(full ? NET::FullScreen : NET::States(), NET::FullScreen);
         win.updateDecoration(false, false);
 
         // Need to update the server geometry in case the decoration changed.
@@ -644,7 +644,7 @@ QSize size_for_client_size(Win const* win,
 template<typename Win>
 inline QMargins gtk_frame_extents(Win* win)
 {
-    auto const strut = win->info->gtkFrameExtents();
+    auto const strut = win->net_info->gtkFrameExtents();
     return QMargins(strut.left, strut.top, strut.right, strut.bottom);
 }
 
@@ -1131,7 +1131,7 @@ void update_fullscreen_monitors(Win* win, NETFullscreenMonitors topology)
         return;
     }
 
-    win->info->setFullscreenMonitors(topology);
+    win->net_info->setFullscreenMonitors(topology);
     if (win->control->fullscreen) {
         win->setFrameGeometry(fullscreen_monitors_area(win, topology));
     }
@@ -1140,8 +1140,8 @@ void update_fullscreen_monitors(Win* win, NETFullscreenMonitors topology)
 template<typename Win>
 NETExtendedStrut strut(Win const* win)
 {
-    NETExtendedStrut ext = win->info->extendedStrut();
-    NETStrut str = win->info->strut();
+    NETExtendedStrut ext = win->net_info->extendedStrut();
+    NETStrut str = win->net_info->strut();
     auto const displaySize = kwinApp()->get_base().topology.size;
 
     if (ext.left_width == 0 && ext.right_width == 0 && ext.top_width == 0 && ext.bottom_width == 0
@@ -1324,7 +1324,7 @@ bool has_offscreen_xinerama_strut(Win const* win)
 template<typename Win>
 QRect get_icon_geometry(Win& win)
 {
-    auto rect = win.info->iconGeometry();
+    auto rect = win.net_info->iconGeometry();
 
     QRect geom(rect.pos.x, rect.pos.y, rect.size.width, rect.size.height);
     if (geom.isValid()) {
