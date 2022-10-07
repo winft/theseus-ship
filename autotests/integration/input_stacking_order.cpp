@@ -145,10 +145,12 @@ void InputStackingOrderTest::testPointerFocusUpdatesOnStackingOrderChange()
 
     // raise window 1 above window 2
     QVERIFY(leftSpy.isEmpty());
-    win::raise_window(Test::app()->base.space.get(), window1);
+    win::raise_window(*Test::app()->base.space, window1);
+
     // should send leave to window2
     QVERIFY(leftSpy.wait());
     QCOMPARE(leftSpy.count(), 1);
+
     // and an enter to window1
     QCOMPARE(enteredSpy.count(), 2);
     QCOMPARE(pointer->enteredSurface(), surface1.get());

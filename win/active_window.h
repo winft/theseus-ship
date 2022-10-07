@@ -108,7 +108,7 @@ template<typename Space>
 void active_window_raise(Space& space)
 {
     if (has_usable_active_window(space)) {
-        raise_window(&space, space.stacking.active);
+        raise_window(space, space.stacking.active);
     }
 }
 
@@ -119,7 +119,7 @@ void active_window_lower(Space& space)
         return;
     }
 
-    lower_window(&space, space.stacking.active);
+    lower_window(space, space.stacking.active);
     // As this most likely makes the window no longer visible change the
     // keyboard focus to the next available window.
     // activateNextClient( c ); // Doesn't work when we lower a child window
@@ -131,7 +131,7 @@ void active_window_lower(Space& space)
                 request_focus(space, *next);
             }
         } else if (auto top = top_client_on_desktop(
-                       &space, space.virtual_desktop_manager->current(), nullptr)) {
+                       space, space.virtual_desktop_manager->current(), nullptr)) {
             activate_window(space, *top);
         } else {
             deactivate_window(space);
@@ -143,7 +143,7 @@ template<typename Space>
 void active_window_raise_or_lower(Space& space)
 {
     if (has_usable_active_window(space)) {
-        raise_or_lower_client(&space, space.stacking.active);
+        raise_or_lower_client(space, space.stacking.active);
     }
 }
 

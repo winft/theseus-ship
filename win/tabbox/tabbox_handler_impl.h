@@ -147,13 +147,13 @@ public:
 
     void raise_client(tabbox_client* client) const override
     {
-        win::raise_window(&m_tabbox->space, get_client_impl(client)->client());
+        win::raise_window(m_tabbox->space, get_client_impl(client)->client());
     }
 
     void restack(tabbox_client* c, tabbox_client* under) override
     {
         win::restack(
-            &m_tabbox->space, get_client_impl(c)->client(), get_client_impl(under)->client(), true);
+            m_tabbox->space, get_client_impl(c)->client(), get_client_impl(under)->client(), true);
     }
 
     std::weak_ptr<tabbox_client> client_to_add_to_list(KWin::win::tabbox_client* client,

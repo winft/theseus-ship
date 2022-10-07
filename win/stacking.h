@@ -90,15 +90,14 @@ namespace KWin::win
  */
 // TODO misleading name for this method, too many slightly different ways to use it
 template<typename Space>
-typename Space::window_t* top_client_on_desktop(Space* space,
+typename Space::window_t* top_client_on_desktop(Space& space,
                                                 int desktop,
                                                 base::output const* output,
                                                 bool unconstrained = false,
                                                 bool only_normal = true)
 {
     // TODO    Q_ASSERT( block_stacking_updates == 0 );
-    auto const& list
-        = unconstrained ? space->stacking.order.pre_stack : space->stacking.order.stack;
+    auto const& list = unconstrained ? space.stacking.order.pre_stack : space.stacking.order.stack;
     for (auto it = std::crbegin(list); it != std::crend(list); it++) {
         auto c = *it;
         if (c && on_desktop(c, desktop) && c->isShown()) {
@@ -154,31 +153,31 @@ std::deque<R*> ensure_stacking_order_in_list(Order const& order, std::vector<T*>
 }
 
 template<class Space, class Win>
-std::deque<Win*> restacked_by_space_stacking_order(Space* space, std::vector<Win*> const& list)
+std::deque<Win*> restacked_by_space_stacking_order(Space& space, std::vector<Win*> const& list)
 {
-    return ensure_stacking_order_in_list(space->stacking.order, list);
+    return ensure_stacking_order_in_list(space.stacking.order, list);
 }
 
 template<typename Space, typename Window>
-void lower_window(Space* space, Window* window)
+void lower_window(Space& space, Window* window)
 {
     assert(window->control);
 
-    auto do_lower = [space](auto win) {
+    auto do_lower = [&space](auto win) {
         win->control->cancel_auto_raise();
 
-        blocker block(space->stacking.order);
+        blocker block(space.stacking.order);
 
-        auto& pre_stack = space->stacking.order.pre_stack;
+        auto& pre_stack = space.stacking.order.pre_stack;
         if (!move_to_front(pre_stack, win)) {
             pre_stack.push_front(win);
         }
 
         return block;
     };
-    auto cleanup = [space](auto win) {
-        if (win == space->stacking.most_recently_raised) {
-            space->stacking.most_recently_raised = nullptr;
+    auto cleanup = [&space](auto win) {
+        if (win == space.stacking.most_recently_raised) {
+            space.stacking.most_recently_raised = nullptr;
         }
     };
 
@@ -205,25 +204,25 @@ void lower_window(Space* space, Window* window)
 }
 
 template<typename Space, typename Window>
-void raise_window(Space* space, Window* window)
+void raise_window(Space& space, Window* window)
 {
     if (!window) {
         return;
     }
 
-    auto prepare = [space](auto window) {
+    auto prepare = [&space](auto window) {
         assert(window->control);
         window->control->cancel_auto_raise();
-        return blocker(space->stacking.order);
+        return blocker(space.stacking.order);
     };
-    auto do_raise = [space](auto window) {
-        if (!move_to_back(space->stacking.order.pre_stack, window)) {
+    auto do_raise = [&space](auto window) {
+        if (!move_to_back(space.stacking.order.pre_stack, window)) {
             // Window not yet in pre-stack. Can happen on creation. It will be raised once shown.
             return;
         }
 
         if (!is_special_window(window)) {
-            space->stacking.most_recently_raised = window;
+            space.stacking.most_recently_raised = window;
         }
     };
 
@@ -258,7 +257,7 @@ void raise_window(Space* space, Window* window)
 }
 
 template<typename Space, typename Window>
-void raise_or_lower_client(Space* space, Window* window)
+void raise_or_lower_client(Space& space, Window* window)
 {
     if (!window) {
         return;
@@ -266,14 +265,14 @@ void raise_or_lower_client(Space* space, Window* window)
 
     typename Space::window_t* topmost{nullptr};
 
-    if (space->stacking.most_recently_raised
-        && contains(space->stacking.order.stack, space->stacking.most_recently_raised)
-        && space->stacking.most_recently_raised->isShown() && on_current_desktop(window)) {
-        topmost = space->stacking.most_recently_raised;
+    if (space.stacking.most_recently_raised
+        && contains(space.stacking.order.stack, space.stacking.most_recently_raised)
+        && space.stacking.most_recently_raised->isShown() && on_current_desktop(window)) {
+        topmost = space.stacking.most_recently_raised;
     } else {
         topmost = top_client_on_desktop(
             space,
-            on_all_desktops(window) ? space->virtual_desktop_manager->current()
+            on_all_desktops(window) ? space.virtual_desktop_manager->current()
                                     : get_desktop(*window),
             kwinApp()->options->qobject->isSeparateScreenFocus() ? window->topo.central_output
                                                                  : nullptr);
@@ -287,15 +286,15 @@ void raise_or_lower_client(Space* space, Window* window)
 }
 
 template<typename Space, typename Window>
-void restack(Space* space, Window* window, typename Space::window_t* under, bool force = false)
+void restack(Space& space, Window* window, typename Space::window_t* under, bool force = false)
 {
     assert(under);
-    assert(contains(space->stacking.order.pre_stack, under));
+    assert(contains(space.stacking.order.pre_stack, under));
 
     if (!force && !belong_to_same_client(under, window)) {
         // put in the stacking order below _all_ windows belonging to the active application
-        for (auto it = space->stacking.order.pre_stack.crbegin();
-             it != space->stacking.order.pre_stack.crend();
+        for (auto it = space.stacking.order.pre_stack.crbegin();
+             it != space.stacking.order.pre_stack.crend();
              it++) {
             auto other = *it;
             if (other->control && get_layer(*other) == get_layer(*window)
@@ -311,31 +310,31 @@ void restack(Space* space, Window* window, typename Space::window_t* under, bool
 
     assert(under);
 
-    remove_all(space->stacking.order.pre_stack, window);
-    auto it = find(space->stacking.order.pre_stack, under);
-    space->stacking.order.pre_stack.insert(it, window);
+    remove_all(space.stacking.order.pre_stack, window);
+    auto it = find(space.stacking.order.pre_stack, under);
+    space.stacking.order.pre_stack.insert(it, window);
 
-    assert(contains(space->stacking.order.pre_stack, window));
+    assert(contains(space.stacking.order.pre_stack, window));
     focus_chain_move_window_after<typename Space::window_t>(
-        space->stacking.focus_chain, window, under);
-    space->stacking.order.update_order();
+        space.stacking.focus_chain, window, under);
+    space.stacking.order.update_order();
 }
 
 template<typename Space, typename Win>
-void restack_client_under_active(Space* space, Win* window)
+void restack_client_under_active(Space& space, Win* window)
 {
-    if (!space->stacking.active || space->stacking.active == window
-        || get_layer(*space->stacking.active) != get_layer(*window)) {
+    if (!space.stacking.active || space.stacking.active == window
+        || get_layer(*space.stacking.active) != get_layer(*window)) {
         raise_window(space, window);
         return;
     }
-    restack(space, window, space->stacking.active);
+    restack(space, window, space.stacking.active);
 }
 
 template<typename Win>
 void auto_raise(Win* win)
 {
-    raise_window(&win->space, win);
+    raise_window(win->space, win);
     win->control->cancel_auto_raise();
 }
 

@@ -783,7 +783,7 @@ public:
         }
 
         hideClient(false);
-        raise_window(&this->space, this);
+        raise_window(this->space, this);
 
         if (plasma_shell_surface->panelBehavior()
             == Wrapland::Server::PlasmaShellSurface::PanelBehavior::AutoHide) {
@@ -1290,7 +1290,7 @@ public:
         this->control->fullscreen = full;
 
         if (full) {
-            raise_window(&this->space, this);
+            raise_window(this->space, this);
         }
 
         // Active fullscreens gets a different layer.

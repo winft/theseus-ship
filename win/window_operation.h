@@ -85,7 +85,7 @@ void perform_window_operation(Win* window, base::options_qobject::WindowOperatio
         bool was = window->control->keep_above;
         set_keep_above(window, !window->control->keep_above);
         if (was && !window->control->keep_above) {
-            raise_window(&space, window);
+            raise_window(space, window);
         }
         break;
     }
@@ -94,7 +94,7 @@ void perform_window_operation(Win* window, base::options_qobject::WindowOperatio
         bool was = window->control->keep_below;
         set_keep_below(window, !window->control->keep_below);
         if (was && !window->control->keep_below) {
-            lower_window(&space, window);
+            lower_window(space, window);
         }
         break;
     }
@@ -108,7 +108,7 @@ void perform_window_operation(Win* window, base::options_qobject::WindowOperatio
         setup_window_shortcut(space, window);
         break;
     case base::options_qobject::LowerOp:
-        lower_window(&space, window);
+        lower_window(space, window);
         break;
     case base::options_qobject::OperationsOp:
     case base::options_qobject::NoOp:

@@ -50,7 +50,7 @@ void add_controlled_window_to_space(Space& space, Win* win)
     update_layer(win);
 
     if (is_desktop(win)) {
-        raise_window(&space, win);
+        raise_window(space, win);
         // If there's no active client, make this desktop the active one
         if (!space.stacking.active && space.stacking.should_get_focus.empty()) {
             if (auto desktop

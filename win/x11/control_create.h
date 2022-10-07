@@ -716,7 +716,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
         if (on_current_desktop(win) && !isMapped && !allow
             && (!session || session->stackingOrder < 0)) {
-            restack_client_under_active(&win->space, win);
+            restack_client_under_active(win->space, win);
         }
 
         update_visibility(win);

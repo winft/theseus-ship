@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "client.h"
 #include "focus_stealing.h"
 #include "hide.h"
 #include "window_find.h"
@@ -171,7 +172,7 @@ void propagate_clients(Space& space, bool propagate_new_clients)
 }
 
 template<typename Space, typename Win>
-void lower_client_within_application(Space* space, Win* window)
+void lower_client_within_application(Space& space, Win* window)
 {
     if (!window) {
         return;
@@ -179,32 +180,32 @@ void lower_client_within_application(Space* space, Win* window)
 
     window->control->cancel_auto_raise();
 
-    blocker block(space->stacking.order);
+    blocker block(space.stacking.order);
 
-    remove_all(space->stacking.order.pre_stack, window);
+    remove_all(space.stacking.order.pre_stack, window);
 
     bool lowered = false;
     // first try to put it below the bottom-most window of the application
-    for (auto it = space->stacking.order.pre_stack.begin();
-         it != space->stacking.order.pre_stack.end();
+    for (auto it = space.stacking.order.pre_stack.begin();
+         it != space.stacking.order.pre_stack.end();
          ++it) {
         auto const& client = *it;
         if (!client) {
             continue;
         }
         if (win::belong_to_same_client(client, window)) {
-            space->stacking.order.pre_stack.insert(it, window);
+            space.stacking.order.pre_stack.insert(it, window);
             lowered = true;
             break;
         }
     }
     if (!lowered)
-        space->stacking.order.pre_stack.push_front(window);
+        space.stacking.order.pre_stack.push_front(window);
     // ignore mainwindows
 }
 
 template<typename Space, typename Win>
-void raise_client_within_application(Space* space, Win* window)
+void raise_client_within_application(Space& space, Win* window)
 {
     if (!window) {
         return;
@@ -212,12 +213,12 @@ void raise_client_within_application(Space* space, Win* window)
 
     window->control->cancel_auto_raise();
 
-    blocker block(space->stacking.order);
+    blocker block(space.stacking.order);
     // ignore mainwindows
 
     // first try to put it above the top-most window of the application
-    for (int i = space->stacking.order.pre_stack.size() - 1; i > -1; --i) {
-        auto other = space->stacking.order.pre_stack.at(i);
+    for (int i = space.stacking.order.pre_stack.size() - 1; i > -1; --i) {
+        auto other = space.stacking.order.pre_stack.at(i);
         if (!other) {
             continue;
         }
@@ -226,23 +227,23 @@ void raise_client_within_application(Space* space, Win* window)
             return;
         }
         if (belong_to_same_client(other, window)) {
-            remove_all(space->stacking.order.pre_stack, window);
-            auto it = find(space->stacking.order.pre_stack, other);
-            assert(it != space->stacking.order.pre_stack.end());
+            remove_all(space.stacking.order.pre_stack, window);
+            auto it = find(space.stacking.order.pre_stack, other);
+            assert(it != space.stacking.order.pre_stack.end());
             // Insert after the found one.
-            space->stacking.order.pre_stack.insert(it + 1, window);
+            space.stacking.order.pre_stack.insert(it + 1, window);
             break;
         }
     }
 }
 
 template<typename Space, typename Win>
-void raise_client_request(Space* space,
+void raise_client_request(Space& space,
                           Win* c,
                           NET::RequestSource src = NET::FromApplication,
                           xcb_timestamp_t timestamp = 0)
 {
-    if (src == NET::FromTool || allow_full_window_raising(*space, c, timestamp)) {
+    if (src == NET::FromTool || allow_full_window_raising(space, c, timestamp)) {
         raise_window(space, c);
     } else {
         raise_client_within_application(space, c);
@@ -251,7 +252,7 @@ void raise_client_request(Space* space,
 }
 
 template<typename Space, typename Win>
-void lower_client_request(Space* space,
+void lower_client_request(Space& space,
                           Win* c,
                           NET::RequestSource src,
                           [[maybe_unused]] xcb_timestamp_t /*timestamp*/)
@@ -281,7 +282,7 @@ void restack_window(Win* win,
     if (detail == XCB_STACK_MODE_OPPOSITE) {
         other = find_controlled_window<x11_window>(win->space, predicate_match::window, above);
         if (!other) {
-            raise_or_lower_client(&win->space, win);
+            raise_or_lower_client(win->space, win);
             return;
         }
 
@@ -301,13 +302,13 @@ void restack_window(Win* win,
     } else if (detail == XCB_STACK_MODE_TOP_IF) {
         other = find_controlled_window<x11_window>(win->space, predicate_match::window, above);
         if (other && other->geo.frame.intersects(win->geo.frame)) {
-            raise_client_request(&win->space, win, src, timestamp);
+            raise_client_request(win->space, win, src, timestamp);
         }
         return;
     } else if (detail == XCB_STACK_MODE_BOTTOM_IF) {
         other = find_controlled_window<x11_window>(win->space, predicate_match::window, above);
         if (other && other->geo.frame.intersects(win->geo.frame)) {
-            lower_client_request(&win->space, win, src, timestamp);
+            lower_client_request(win->space, win, src, timestamp);
         }
         return;
     }
@@ -347,11 +348,11 @@ void restack_window(Win* win,
     }
 
     if (other) {
-        restack(&win->space, win, other);
+        restack(win->space, win, other);
     } else if (detail == XCB_STACK_MODE_BELOW) {
-        lower_client_request(&win->space, win, src, timestamp);
+        lower_client_request(win->space, win, src, timestamp);
     } else if (detail == XCB_STACK_MODE_ABOVE) {
-        raise_client_request(&win->space, win, src, timestamp);
+        raise_client_request(win->space, win, src, timestamp);
     }
 
     if (send_event) {

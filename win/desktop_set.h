@@ -43,7 +43,7 @@ void set_desktops(Win* win, QVector<virtual_desktop*> desktops)
     }
 
     auto transients_stacking_order
-        = restacked_by_space_stacking_order(&win->space, win->transient->children);
+        = restacked_by_space_stacking_order(win->space, win->transient->children);
     for (auto const& child : transients_stacking_order) {
         if (!child->transient->annexed) {
             set_desktops(child, desktops);

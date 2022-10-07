@@ -1003,7 +1003,7 @@ void send_to_screen(Space const& space, Win* win, Output const& output)
         win->geo.restore.max = restore_geo;
     }
 
-    auto children = restacked_by_space_stacking_order(&space, win->transient->children);
+    auto children = restacked_by_space_stacking_order(space, win->transient->children);
     for (auto const& child : children) {
         if (child->control) {
             send_to_screen(space, child, *checked_output);

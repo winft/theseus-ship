@@ -234,7 +234,7 @@ void request_focus(Space& space,
             // the modal doesn't get the click anyway
             // raising of the original window needs to be still done
             if (raise) {
-                raise_window(&space, window_ptr);
+                raise_window(space, window_ptr);
             }
             window_ptr = modal;
         }
@@ -259,7 +259,7 @@ void request_focus(Space& space,
         window_ptr->takeFocus();
     }
     if (raise) {
-        raise_window(&space, window_ptr);
+        raise_window(space, window_ptr);
     }
 
     if (!on_active_screen(window_ptr)) {
@@ -487,7 +487,7 @@ void set_active_window(Space& space, typename Space::window_t& window)
 template<typename Space, typename Win>
 void activate_window_impl(Space& space, Win& window, bool force)
 {
-    raise_window(&space, &window);
+    raise_window(space, &window);
     if (!on_current_desktop(&window)) {
         focus_blocker blocker(space);
         space.virtual_desktop_manager->setCurrent(get_desktop(window));
@@ -601,7 +601,7 @@ bool activate_next_window(Space& space)
             auto win = leaders.front();
 
             // Also raise - we don't know where it came from.
-            raise_window(&space, win);
+            raise_window(space, win);
             request_focus(space, *win);
             return true;
         }
@@ -874,7 +874,7 @@ void set_showing_desktop(Space& space, bool showing)
                     update_layer(c);
                 } else if (is_desktop(c) && c->isShown()) {
                     update_layer(c);
-                    lower_window(&space, c);
+                    lower_window(space, c);
                     if (!topDesk)
                         topDesk = c;
                     for (auto cm : get_transient_family(c)) {

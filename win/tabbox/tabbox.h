@@ -1132,7 +1132,7 @@ private:
         }
 
         if (old_top_win && old_top_win != candidate) {
-            win::lower_window(&space, old_top_win);
+            win::lower_window(space, old_top_win);
         }
 
         if (kwinApp()->options->qobject->focusPolicyIsReasonable()) {
@@ -1143,7 +1143,7 @@ private:
         if (!on_desktop(candidate, current_desktop())) {
             set_current_desktop(get_desktop(*candidate));
         }
-        win::raise_window(&space, candidate);
+        win::raise_window(space, candidate);
     }
 
     void walk_through_desktops(bool forward)

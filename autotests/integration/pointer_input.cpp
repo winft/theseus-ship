@@ -800,7 +800,7 @@ void PointerInputTest::testFocusFollowsMouse()
     auto window2 = Test::app()->base.space->stacking.active;
     QVERIFY(window2);
     QVERIFY(window1 != window2);
-    QCOMPARE(win::top_client_on_desktop(Test::app()->base.space.get(), 1, nullptr), window2);
+    QCOMPARE(win::top_client_on_desktop(*Test::app()->base.space, 1, nullptr), window2);
     // geometry of the two windows should be overlapping
     QVERIFY(window1->geo.frame.intersects(window2->geo.frame));
 
@@ -821,18 +821,18 @@ void PointerInputTest::testFocusFollowsMouse()
     Test::cursor()->set_pos(10, 10);
     QVERIFY(stackingOrderChangedSpy.wait());
     QCOMPARE(stackingOrderChangedSpy.count(), 1);
-    QCOMPARE(win::top_client_on_desktop(Test::app()->base.space.get(), 1, nullptr), window1);
+    QCOMPARE(win::top_client_on_desktop(*Test::app()->base.space, 1, nullptr), window1);
     QTRY_VERIFY(window1->control->active);
 
     // move on second window, but move away before active window change delay hits
     Test::cursor()->set_pos(810, 810);
     QVERIFY(stackingOrderChangedSpy.wait());
     QCOMPARE(stackingOrderChangedSpy.count(), 2);
-    QCOMPARE(win::top_client_on_desktop(Test::app()->base.space.get(), 1, nullptr), window2);
+    QCOMPARE(win::top_client_on_desktop(*Test::app()->base.space, 1, nullptr), window2);
     Test::cursor()->set_pos(10, 10);
     QVERIFY(!activeWindowChangedSpy.wait(250));
     QVERIFY(window1->control->active);
-    QCOMPARE(win::top_client_on_desktop(Test::app()->base.space.get(), 1, nullptr), window1);
+    QCOMPARE(win::top_client_on_desktop(*Test::app()->base.space, 1, nullptr), window1);
     // as we moved back on window 1 that should been raised in the mean time
     QCOMPARE(stackingOrderChangedSpy.count(), 3);
 
@@ -893,7 +893,7 @@ void PointerInputTest::testMouseActionInactiveWindow()
     auto window2 = Test::app()->base.space->stacking.active;
     QVERIFY(window2);
     QVERIFY(window1 != window2);
-    QCOMPARE(win::top_client_on_desktop(Test::app()->base.space.get(), 1, nullptr), window2);
+    QCOMPARE(win::top_client_on_desktop(*Test::app()->base.space, 1, nullptr), window2);
 
     // Geometry of the two windows should be overlapping.
     QVERIFY(window1->geo.frame.intersects(window2->geo.frame));
@@ -928,7 +928,7 @@ void PointerInputTest::testMouseActionInactiveWindow()
     // Should raise window1 and activate it.
     QCOMPARE(stackingOrderChangedSpy.count(), 1);
     QVERIFY(!activeWindowChangedSpy.isEmpty());
-    QCOMPARE(win::top_client_on_desktop(Test::app()->base.space.get(), 1, nullptr), window1);
+    QCOMPARE(win::top_client_on_desktop(*Test::app()->base.space, 1, nullptr), window1);
     QVERIFY(window1->control->active);
     QVERIFY(!window2->control->active);
 
@@ -1000,14 +1000,14 @@ void PointerInputTest::testMouseActionActiveWindow()
 
     QSignalSpy window2DestroyedSpy(window2->qobject.get(), &QObject::destroyed);
     QVERIFY(window2DestroyedSpy.isValid());
-    QCOMPARE(win::top_client_on_desktop(Test::app()->base.space.get(), 1, nullptr), window2);
+    QCOMPARE(win::top_client_on_desktop(*Test::app()->base.space, 1, nullptr), window2);
 
     // Geometry of the two windows should be overlapping.
     QVERIFY(window1->geo.frame.intersects(window2->geo.frame));
 
     // lower the currently active window
-    win::lower_window(Test::app()->base.space.get(), window2);
-    QCOMPARE(win::top_client_on_desktop(Test::app()->base.space.get(), 1, nullptr), window1);
+    win::lower_window(*Test::app()->base.space, window2);
+    QCOMPARE(win::top_client_on_desktop(*Test::app()->base.space, 1, nullptr), window1);
 
     // Signal spy for stacking order spy.
     QSignalSpy stackingOrderChangedSpy(Test::app()->base.space->stacking.order.qobject.get(),
@@ -1028,11 +1028,11 @@ void PointerInputTest::testMouseActionActiveWindow()
     if (clickRaise) {
         QCOMPARE(stackingOrderChangedSpy.count(), 1);
         QTRY_COMPARE_WITH_TIMEOUT(
-            win::top_client_on_desktop(Test::app()->base.space.get(), 1, nullptr), window2, 200);
+            win::top_client_on_desktop(*Test::app()->base.space, 1, nullptr), window2, 200);
     } else {
         QCOMPARE(stackingOrderChangedSpy.count(), 0);
         QVERIFY(!stackingOrderChangedSpy.wait(100));
-        QCOMPARE(win::top_client_on_desktop(Test::app()->base.space.get(), 1, nullptr), window1);
+        QCOMPARE(win::top_client_on_desktop(*Test::app()->base.space, 1, nullptr), window1);
     }
 
     // Release again.

@@ -579,7 +579,7 @@ void PlasmaWindowTest::test_stacking_order()
     compare_stacks();
 
     // Now raise the Xwayland window.
-    win::raise_window(Test::app()->base.space.get(),
+    win::raise_window(*Test::app()->base.space,
                       std::get<x11_test_window>(windows.at(1)).server.window);
 
     QVERIFY(stacking_spy.wait());

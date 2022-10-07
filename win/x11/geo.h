@@ -234,7 +234,7 @@ void do_set_fullscreen(Win& win, bool full)
     win.control->fullscreen = full;
 
     if (full) {
-        raise_window(&win.space, &win);
+        raise_window(win.space, &win);
     } else {
         // TODO(romangg): Can we do this also in setFullScreen? What about deco update?
         win.info->setState(full ? NET::FullScreen : NET::States(), NET::FullScreen);

@@ -179,7 +179,7 @@ void init_space(Space& space)
     if (!new_active_client && !space.stacking.active && space.stacking.should_get_focus.empty()) {
         // No client activated in manage()
         if (new_active_client == nullptr)
-            new_active_client = win::top_client_on_desktop(&space, vds->current(), nullptr);
+            new_active_client = win::top_client_on_desktop(space, vds->current(), nullptr);
         if (new_active_client == nullptr) {
             new_active_client = win::find_desktop(&space, true, vds->current());
         }
