@@ -105,19 +105,28 @@ void place(Win* window, const QRect& area)
 
     if (is_utility(window)) {
         place_utility(window, area, kwinApp()->options->qobject->placement());
-    } else if (is_dialog(window)) {
-        place_dialog(window, area, kwinApp()->options->qobject->placement());
-    } else if (is_splash(window)) {
-        // on mainwindow, if any, otherwise centered
-        place_on_main_window(window, area);
-    } else if (is_on_screen_display(window) || is_notification(window)
-               || is_critical_notification(window)) {
-        place_on_screen_display(window, area);
-    } else if (window->transient->lead() && window->surface) {
-        place_dialog(window, area, kwinApp()->options->qobject->placement());
-    } else {
-        place(window, area, kwinApp()->options->qobject->placement());
+        return;
     }
+    if (is_dialog(window)) {
+        place_dialog(window, area, kwinApp()->options->qobject->placement());
+        return;
+    }
+    if (is_splash(window)) {
+        // Place on main window, if any exists, otherwise centered.
+        place_on_main_window(window, area);
+        return;
+    }
+    if (is_on_screen_display(window) || is_notification(window)
+        || is_critical_notification(window)) {
+        place_on_screen_display(window, area);
+        return;
+    }
+    if (window->transient->lead() && window->surface) {
+        place_dialog(window, area, kwinApp()->options->qobject->placement());
+        return;
+    }
+
+    place(window, area, kwinApp()->options->qobject->placement());
 }
 
 template<typename Win>
