@@ -183,7 +183,7 @@ void setup_window_shortcut(Space& space, Win* window)
 template<typename Space, typename Win>
 void window_shortcut_updated(Space& space, Win* window)
 {
-    QString key = QStringLiteral("_k_session:%1").arg(window->xcb_window);
+    QString key = QStringLiteral("_k_session:%1").arg(window->meta.internal_id.toString());
     auto action = space.qobject->template findChild<QAction*>(key);
 
     if (!window->control->shortcut.isEmpty()) {
