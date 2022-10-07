@@ -381,11 +381,6 @@ void DebugConsoleTest::testWaylandClient()
     surface->commit(Surface::CommitFlag::None);
     shellSurface.reset();
     Test::flush_wayland_connection();
-    qDebug() << rowsRemovedSpy.count();
-    QEXPECT_FAIL(
-        "wlShell",
-        "Deleting a ShellSurface does not result in the server removing the XdgShellClient",
-        Continue);
     QVERIFY(rowsRemovedSpy.wait(500));
     surface.reset();
 
