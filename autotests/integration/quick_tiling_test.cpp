@@ -681,7 +681,7 @@ void QuickTilingTest::testX11QuickTiling()
 
     auto client = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(client);
-    QCOMPARE(client->xcb_window, w);
+    QCOMPARE(client->xcb_windows.client, w);
 
     auto const origGeo = client->geo.frame;
 
@@ -778,7 +778,7 @@ void QuickTilingTest::testX11QuickTilingAfterVertMaximize()
 
     auto client = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(client);
-    QCOMPARE(client->xcb_window, w);
+    QCOMPARE(client->xcb_windows.client, w);
 
     const QRect origGeo = client->geo.frame;
     QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);

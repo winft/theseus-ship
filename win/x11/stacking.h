@@ -28,11 +28,12 @@ auto get_unmanageds(Space const& space) -> std::vector<typename Space::window_t>
     std::vector<var_win> ret;
 
     for (auto const& window : space.windows) {
-        std::visit(overload{[&](auto&& win) {
-                       if (win->xcb_window && !win->control && !win->remnant) {
-                           ret.push_back(var_win(win));
-                       }
-                   }},
+        std::visit(overload{[&](typename Space::x11_window* win) {
+                                if (!win->control && !win->remnant) {
+                                    ret.push_back(var_win(win));
+                                }
+                            },
+                            [](auto&&) {}},
                    window);
     }
 
@@ -61,7 +62,10 @@ void render_stack_unmanaged_windows(Space& space)
     for (auto const& win : windows) {
         auto unmanaged
             = std::find_if(unmanaged_list.cbegin(), unmanaged_list.cend(), [&win](auto u) {
-                  return std::visit(overload{[&](auto&& u) { return win.get() == u->xcb_window; }},
+                  return std::visit(overload{[&](typename Space::x11_window* u) {
+                                                 return win.get() == u->xcb_windows.client;
+                                             },
+                                             [](auto&&) { return false; }},
                                     u);
               });
 
@@ -149,9 +153,9 @@ void propagate_clients(Space& space, bool propagate_new_clients)
                                     }
 
                                     if (is_desktop(win)) {
-                                        clients.push_back(win->xcb_window);
+                                        clients.push_back(win->xcb_windows.client);
                                     } else {
-                                        non_desktops.push_back(win->xcb_window);
+                                        non_desktops.push_back(win->xcb_windows.client);
                                     }
                                 },
                                 [](auto&&) {}},
@@ -167,9 +171,10 @@ void propagate_clients(Space& space, bool propagate_new_clients)
     std::vector<xcb_window_t> stacked_clients;
 
     for (auto win : order.stack) {
-        std::visit(overload{[&](x11_window_t* win) { stacked_clients.push_back(win->xcb_window); },
-                            [](auto&&) {}},
-                   win);
+        std::visit(
+            overload{[&](x11_window_t* win) { stacked_clients.push_back(win->xcb_windows.client); },
+                     [](auto&&) {}},
+            win);
     }
 
     std::copy(order.manual_overlays.begin(),

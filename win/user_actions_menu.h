@@ -841,9 +841,14 @@ private:
                 return;
             args << QStringLiteral("--dontagain") << QLatin1String("kwin_dialogsrc:") + type;
         }
-        if (window) {
-            args << QStringLiteral("--embed") << QString::number(window->xcb_window);
+
+        // TODO(romangg): This is only relevant for X11 windows. Why do we need it at all?
+        if constexpr (requires(Win win) { win.xcb_windows; }) {
+            if (window) {
+                args << QStringLiteral("--embed") << QString::number(window->xcb_windows.client);
+            }
         }
+
         QtConcurrent::run([args]() { KProcess::startDetached(QStringLiteral("kdialog"), args); });
     }
 

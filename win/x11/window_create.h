@@ -19,7 +19,7 @@ void add_controlled_window_to_space(Space& space, Win* win)
 {
     using var_win = typename Space::window_t;
 
-    auto grp = find_group(space, win->xcb_window);
+    auto grp = find_group(space, win->xcb_windows.client);
 
     space.windows.push_back(win);
     Q_EMIT space.qobject->clientAdded(win->meta.signal_id);

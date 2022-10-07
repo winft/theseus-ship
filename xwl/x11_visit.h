@@ -49,7 +49,7 @@ public:
         auto xcb_con = source.core.x11.connection;
         auto cookie = xcb_get_property(xcb_con,
                                        0,
-                                       target->xcb_window,
+                                       target->xcb_windows.client,
                                        source.core.x11.atoms->xdnd_aware,
                                        XCB_GET_PROPERTY_TYPE_ANY,
                                        0,
@@ -123,7 +123,7 @@ public:
         data.data32[4] = client_action_to_atom(actions.proposed, *source.core.x11.atoms);
 
         send_client_message(source.core.x11.connection,
-                            target->xcb_window,
+                            target->xcb_windows.client,
                             source.core.x11.atoms->xdnd_position,
                             &data);
     }
@@ -156,7 +156,7 @@ private:
     bool handle_status(xcb_client_message_event_t* event)
     {
         auto data = &event->data;
-        if (data->data32[0] != target->xcb_window) {
+        if (data->data32[0] != target->xcb_windows.client) {
             // wrong target window
             return false;
         }
@@ -190,7 +190,7 @@ private:
     {
         auto data = &event->data;
 
-        if (data->data32[0] != target->xcb_window) {
+        if (data->data32[0] != target->xcb_windows.client) {
             // different target window
             return false;
         }
@@ -267,7 +267,7 @@ private:
         }
 
         send_client_message(source.core.x11.connection,
-                            target->xcb_window,
+                            target->xcb_windows.client,
                             source.core.x11.atoms->xdnd_enter,
                             &data);
     }
@@ -279,7 +279,7 @@ private:
         data.data32[2] = time;
 
         send_client_message(source.core.x11.connection,
-                            target->xcb_window,
+                            target->xcb_windows.client,
                             source.core.x11.atoms->xdnd_drop,
                             &data);
 
@@ -294,7 +294,7 @@ private:
         data.data32[0] = drag_window;
 
         send_client_message(source.core.x11.connection,
-                            target->xcb_window,
+                            target->xcb_windows.client,
                             source.core.x11.atoms->xdnd_leave,
                             &data);
     }

@@ -23,11 +23,11 @@ void root_info_unset_active_window(Info& info)
 template<typename Info, typename Win>
 void root_info_set_active_window(Info& info, Win& window)
 {
-    if (info.m_activeWindow == window.xcb_window) {
+    if (info.m_activeWindow == window.xcb_windows.client) {
         return;
     }
-    info.m_activeWindow = window.xcb_window;
-    info.setActiveWindow(window.xcb_window);
+    info.m_activeWindow = window.xcb_windows.client;
+    info.setActiveWindow(window.xcb_windows.client);
 }
 
 }

@@ -25,7 +25,7 @@ Win* find_unmanaged(Space&& space, xcb_window_t xcb_win)
     for (auto& var_win : space.windows) {
         if (auto win = std::visit(overload{[xcb_win](Win* win) -> Win* {
                                                if (win->remnant || win->control
-                                                   || win->xcb_window != xcb_win) {
+                                                   || win->xcb_windows.client != xcb_win) {
                                                    return nullptr;
                                                }
                                                return win;
@@ -116,7 +116,7 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
     auto find_internal_window = [&win]() -> QWindow* {
         auto const windows = kwinApp()->topLevelWindows();
         for (auto xcb_win : windows) {
-            if (xcb_win->winId() == win->xcb_window) {
+            if (xcb_win->winId() == win->xcb_windows.client) {
                 return xcb_win;
             }
         }

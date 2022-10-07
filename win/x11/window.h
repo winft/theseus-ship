@@ -68,11 +68,10 @@ public:
         , client_machine{new win::x11::client_machine}
         , motif_hints(space.atoms->motif_wm_hints)
     {
+        xcb_windows.client.reset(xcb_win, false);
         this->space.windows_map.insert({this->meta.signal_id, this});
         Toplevel<Space>::qobject = std::make_unique<window_qobject>();
         window_setup_geometry(*this);
-
-        this->xcb_window.reset(xcb_win, false);
     }
 
     ~window()

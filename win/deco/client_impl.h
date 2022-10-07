@@ -295,7 +295,10 @@ public:
 
     WId windowId() const override
     {
-        return m_client->xcb_window;
+        if constexpr (requires(decltype(m_client) win) { win->xcb_windows; }) {
+            return m_client->xcb_windows.client;
+        }
+        return XCB_WINDOW_NONE;
     }
 
     Qt::Edges adjacentScreenEdges() const override

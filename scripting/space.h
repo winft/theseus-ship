@@ -1008,13 +1008,16 @@ protected:
     window* get_client_impl(qulonglong windowId) override
     {
         for (auto& win : ref_space->windows) {
-            if (auto scr_win = std::visit(overload{[&](auto&& win) -> window* {
-                                              if (win->control && win->xcb_window == windowId) {
-                                                  return win->control->scripting.get();
-                                              }
-                                              return nullptr;
-                                          }},
-                                          win)) {
+            if (auto scr_win
+                = std::visit(overload{[&](auto&& win) -> window* {
+                                 if constexpr (requires(decltype(win) win) { win->xcb_windows; }) {
+                                     if (win->control && win->xcb_windows.client == windowId) {
+                                         return win->control->scripting.get();
+                                     }
+                                 }
+                                 return nullptr;
+                             }},
+                             win)) {
                 return scr_win;
             }
         }

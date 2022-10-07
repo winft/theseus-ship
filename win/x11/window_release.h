@@ -63,7 +63,7 @@ void remove_controlled_window_from_space(Space& space, Win* win)
     remove_window_from_lists(space, win);
     remove_all(space.stacking.attention_chain, var_win(win));
 
-    auto group = find_group(space, win->xcb_window);
+    auto group = find_group(space, win->xcb_windows.client);
     if (group) {
         group->lostLeader();
     }
@@ -141,6 +141,7 @@ Win* create_remnant_window(Win& source)
     transfer_remnant_data(source, *win);
 
     assert(win->damage.handle == XCB_NONE);
+    win->xcb_windows.client.reset(source.xcb_windows.client, false);
     win->xcb_visual = source.xcb_visual;
     win->client_machine = source.client_machine;
     win->m_wmClientLeader = get_wm_client_leader(source);
@@ -160,11 +161,11 @@ void release_unmanaged(Win* win, bool on_shutdown)
     Q_EMIT win->qobject->closed();
 
     // Don't affect our own windows.
-    if (!QWidget::find(win->xcb_window)) {
+    if (!QWidget::find(win->xcb_windows.client)) {
         if (base::x11::xcb::extensions::self()->is_shape_available()) {
-            xcb_shape_select_input(connection(), win->xcb_window, false);
+            xcb_shape_select_input(connection(), win->xcb_windows.client, false);
         }
-        base::x11::xcb::select_input(win->xcb_window, XCB_EVENT_MASK_NO_EVENT);
+        base::x11::xcb::select_input(win->xcb_windows.client, XCB_EVENT_MASK_NO_EVENT);
     }
 
     if (on_shutdown) {
@@ -289,7 +290,6 @@ void release_window(Win* win, bool on_shutdown)
         win->xcb_windows.client.unmap();
     }
 
-    win->xcb_windows.client.reset();
     win->xcb_windows.wrapper.reset();
     win->xcb_windows.outer.reset();
 
@@ -365,7 +365,6 @@ void destroy_window(Win* win)
     remove_controlled_window_from_space(win->space, win);
 
     // invalidate
-    win->xcb_windows.client.reset();
     win->xcb_windows.wrapper.reset();
     win->xcb_windows.outer.reset();
 
@@ -395,7 +394,7 @@ void cleanup_window(Win& win)
     }
 
     assert(!win.control || !win.control->move_resize.enabled);
-    assert(win.xcb_windows.client == XCB_WINDOW_NONE);
+    assert(win.xcb_windows.client != XCB_WINDOW_NONE);
     assert(win.xcb_windows.wrapper == XCB_WINDOW_NONE);
     assert(win.xcb_windows.outer == XCB_WINDOW_NONE);
 
@@ -433,8 +432,9 @@ void close_window(Win& win)
     update_user_time(&win);
 
     if (win.info->supportsProtocol(NET::DeleteWindowProtocol)) {
-        send_client_message(
-            win.xcb_window, win.space.atoms->wm_protocols, win.space.atoms->wm_delete_window);
+        send_client_message(win.xcb_windows.client,
+                            win.space.atoms->wm_protocols,
+                            win.space.atoms->wm_delete_window);
         ping(&win);
     } else {
         // Client will not react on wm_delete_window. We have not choice

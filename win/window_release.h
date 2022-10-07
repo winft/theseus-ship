@@ -92,7 +92,6 @@ void transfer_remnant_data(Win& source, Win& dest)
         winfo->disable();
     }
 
-    dest.xcb_window.reset(source.xcb_window, false);
     dest.render_data.ready_for_painting = source.render_data.ready_for_painting;
     dest.render_data.damage_region = source.render_data.damage_region;
     dest.render_data.repaints_region = source.render_data.repaints_region;

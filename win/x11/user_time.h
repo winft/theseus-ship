@@ -48,7 +48,7 @@ template<typename Win>
 xcb_timestamp_t read_user_creation_time(Win& win)
 {
     base::x11::xcb::property prop(false,
-                                  win.xcb_window,
+                                  win.xcb_windows.client,
                                   win.space.atoms->kde_net_wm_user_creation_time,
                                   XCB_ATOM_CARDINAL,
                                   0,

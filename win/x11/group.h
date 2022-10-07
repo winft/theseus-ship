@@ -113,7 +113,7 @@ public:
 
     void gotLeader(x11_window_t* leader)
     {
-        assert(leader->xcb_window == xcb_leader);
+        assert(leader->xcb_windows.client == xcb_leader);
         this->leader = leader;
     }
 

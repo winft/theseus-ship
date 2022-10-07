@@ -48,8 +48,8 @@ public:
                                    win->killWindow();
                                    return;
                                }
-                               if (win->xcb_window) {
-                                   xcb_kill_client(connection(), win->xcb_window);
+                               if constexpr (requires(decltype(win) win) { win->xcb_windows; }) {
+                                   xcb_kill_client(connection(), win->xcb_windows.client);
                                }
                            }},
                            *window);

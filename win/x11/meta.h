@@ -19,7 +19,8 @@ namespace KWin::win::x11
 template<typename Win>
 QString read_name_property(Win& win, xcb_atom_t atom)
 {
-    auto const cookie = xcb_icccm_get_text_property_unchecked(connection(), win.xcb_window, atom);
+    auto const cookie
+        = xcb_icccm_get_text_property_unchecked(connection(), win.xcb_windows.client, atom);
     xcb_icccm_get_text_property_reply_t reply;
 
     if (xcb_icccm_get_wm_name_reply(connection(), cookie, &reply, nullptr)) {
@@ -182,7 +183,7 @@ void get_icons(Win* win)
 
     QIcon icon;
     auto readIcon = [win, &icon](int size, bool scale = true) {
-        auto const pix = KWindowSystem::icon(win->xcb_window,
+        auto const pix = KWindowSystem::icon(win->xcb_windows.client,
                                              size,
                                              size,
                                              scale,
@@ -214,25 +215,25 @@ void get_icons(Win* win)
     }
     if (icon.isNull()) {
         // And if nothing else, load icon from classhint or xapp icon
-        icon.addPixmap(KWindowSystem::icon(win->xcb_window,
+        icon.addPixmap(KWindowSystem::icon(win->xcb_windows.client,
                                            32,
                                            32,
                                            true,
                                            KWindowSystem::ClassHint | KWindowSystem::XApp,
                                            win->info));
-        icon.addPixmap(KWindowSystem::icon(win->xcb_window,
+        icon.addPixmap(KWindowSystem::icon(win->xcb_windows.client,
                                            16,
                                            16,
                                            true,
                                            KWindowSystem::ClassHint | KWindowSystem::XApp,
                                            win->info));
-        icon.addPixmap(KWindowSystem::icon(win->xcb_window,
+        icon.addPixmap(KWindowSystem::icon(win->xcb_windows.client,
                                            64,
                                            64,
                                            false,
                                            KWindowSystem::ClassHint | KWindowSystem::XApp,
                                            win->info));
-        icon.addPixmap(KWindowSystem::icon(win->xcb_window,
+        icon.addPixmap(KWindowSystem::icon(win->xcb_windows.client,
                                            128,
                                            128,
                                            false,
@@ -298,13 +299,13 @@ xcb_window_t get_wm_client_leader(Win& win)
     if (win.m_wmClientLeader != XCB_WINDOW_NONE) {
         return win.m_wmClientLeader;
     }
-    return win.xcb_window;
+    return win.xcb_windows.client;
 }
 
 template<typename Win>
 void fetch_wm_client_machine(Win& win)
 {
-    win.client_machine->resolve(win.xcb_window, get_wm_client_leader(win));
+    win.client_machine->resolve(win.xcb_windows.client, get_wm_client_leader(win));
 }
 
 template<typename Win>
@@ -325,8 +326,8 @@ bool belong_to_same_application(Win const* c1, Win const* c2, win::same_client_c
         // same group
         same_app = true;
     } else if (get_wm_client_leader(*c1) == get_wm_client_leader(*c2)
-               && get_wm_client_leader(*c1) != c1->xcb_window
-               && get_wm_client_leader(*c2) != c2->xcb_window) {
+               && get_wm_client_leader(*c1) != c1->xcb_windows.client
+               && get_wm_client_leader(*c2) != c2->xcb_windows.client) {
         // if WM_CLIENT_LEADER is not set, it returns xcb_window,
         // don't use in this test then same client leader
         same_app = true;
@@ -337,8 +338,8 @@ bool belong_to_same_application(Win const* c1, Win const* c2, win::same_client_c
                || c1->wmClientMachine(false) != c2->wmClientMachine(false)) {
         // different processes
     } else if (get_wm_client_leader(*c1) != get_wm_client_leader(*c2)
-               && get_wm_client_leader(*c1) != c1->xcb_window
-               && get_wm_client_leader(*c2) != c2->xcb_window
+               && get_wm_client_leader(*c1) != c1->xcb_windows.client
+               && get_wm_client_leader(*c2) != c2->xcb_windows.client
                && !flags(checks & win::same_client_check::allow_cross_process)) {
         // if WM_CLIENT_LEADER is not set, it returns xcb_window,
         // don't use in this test then
@@ -421,7 +422,7 @@ xcb_window_t get_frame_id(Win& win)
         return win.remnant->data.frame;
     }
     if (!win.control) {
-        return win.xcb_window;
+        return win.xcb_windows.client;
     }
     return win.xcb_windows.outer;
 }
@@ -443,7 +444,7 @@ void print_window_debug_info(Win& win, QDebug& stream)
 
     stream.nospace();
     stream << "\'x11::window"
-           << "(" << QString::fromStdString(type) << "):" << win.xcb_window << ";"
+           << "(" << QString::fromStdString(type) << "):" << win.xcb_windows.client << ";"
            << ";WMCLASS:" << win.meta.wm_class.res_class << ":" << win.meta.wm_class.res_name
            << ";Caption:" << QString::fromStdString(caption) << "\'";
 }

@@ -34,14 +34,8 @@ namespace KWin::win::x11
 template<typename Win>
 void embed_client(Win* win, xcb_visualid_t visualid, xcb_colormap_t colormap, uint8_t depth)
 {
-    auto xcb_win = static_cast<xcb_window_t>(win->xcb_window);
-
-    assert(xcb_win != XCB_WINDOW_NONE);
-    assert(win->xcb_windows.client == XCB_WINDOW_NONE);
     assert(win->frameId() == XCB_WINDOW_NONE);
     assert(win->xcb_windows.wrapper == XCB_WINDOW_NONE);
-
-    win->xcb_windows.client.reset(xcb_win, false);
 
     uint32_t const zero_value = 0;
     auto conn = connection();
@@ -364,8 +358,8 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     auto firstInTabBoxCookie = fetch_first_in_tabbox(win);
     auto transientCookie = fetch_transient(win);
 
-    win->geometry_hints.init(win->xcb_window);
-    win->motif_hints.init(win->xcb_window);
+    win->geometry_hints.init(win->xcb_windows.client);
+    win->motif_hints.init(win->xcb_windows.client);
 
     win->info
         = new win_info<Win>(win, win->xcb_windows.client, rootWindow(), properties, properties2);
@@ -396,7 +390,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
                      [win] { rules::evaluate_rules(win); });
 
     if (base::x11::xcb::extensions::self()->is_shape_available()) {
-        xcb_shape_select_input(connection(), win->xcb_window, true);
+        xcb_shape_select_input(connection(), win->xcb_windows.client, true);
     }
 
     detect_shape(*win);
@@ -442,7 +436,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
     KStartupInfoId asn_id;
     KStartupInfoData asn_data;
-    auto asn_valid = check_startup_notification(space, win->xcb_window, asn_id, asn_data);
+    auto asn_valid = check_startup_notification(space, win->xcb_windows.client, asn_id, asn_data);
 
     // Make sure that the input window is created before we update the stacking order
     // TODO(romangg): Does it matter that the frame geometry is not set yet here?

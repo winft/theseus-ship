@@ -76,8 +76,6 @@ public:
     Wrapland::Server::Surface* surface{nullptr};
     quint32 surface_id{0};
 
-    base::x11::xcb::window xcb_window{};
-
     bool is_outline{false};
 
     mutable bool is_render_shape_valid{false};

@@ -294,8 +294,9 @@ void show_context_help(Win& win)
     if (!win.info->supportsProtocol(NET::ContextHelpProtocol)) {
         return;
     }
-    send_client_message(
-        win.xcb_window, win.space.atoms->wm_protocols, win.space.atoms->net_wm_context_help);
+    send_client_message(win.xcb_windows.client,
+                        win.space.atoms->wm_protocols,
+                        win.space.atoms->net_wm_context_help);
 }
 
 }

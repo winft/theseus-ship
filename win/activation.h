@@ -498,8 +498,10 @@ void set_active_window(Space& space, Win& window)
     // e.g. fullscreens have different layer when active/not-active
     stacking.order.update_order();
 
-    if (space.root_info) {
-        x11::root_info_set_active_window(*space.root_info, window);
+    if constexpr (requires(Win win) { win.xcb_windows; }) {
+        if (space.root_info) {
+            x11::root_info_set_active_window(*space.root_info, window);
+        }
     }
 
     Q_EMIT space.qobject->clientActivated();

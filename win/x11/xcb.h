@@ -13,21 +13,29 @@ namespace KWin::win::x11
 template<typename Win>
 base::x11::xcb::property fetch_wm_client_leader(Win const& win)
 {
-    return base::x11::xcb::property(
-        false, win.xcb_window, win.space.atoms->wm_client_leader, XCB_ATOM_WINDOW, 0, 10000);
+    return base::x11::xcb::property(false,
+                                    win.xcb_windows.client,
+                                    win.space.atoms->wm_client_leader,
+                                    XCB_ATOM_WINDOW,
+                                    0,
+                                    10000);
 }
 
 template<typename Win>
 void read_wm_client_leader(Win& win, base::x11::xcb::property& prop)
 {
-    win.m_wmClientLeader = prop.value<xcb_window_t>(win.xcb_window);
+    win.m_wmClientLeader = prop.value<xcb_window_t>(win.xcb_windows.client);
 }
 
 template<typename Win>
 base::x11::xcb::property fetch_skip_close_animation(Win&& win)
 {
-    return base::x11::xcb::property(
-        false, win.xcb_window, win.space.atoms->kde_skip_close_animation, XCB_ATOM_CARDINAL, 0, 1);
+    return base::x11::xcb::property(false,
+                                    win.xcb_windows.client,
+                                    win.space.atoms->kde_skip_close_animation,
+                                    XCB_ATOM_CARDINAL,
+                                    0,
+                                    1);
 }
 
 template<typename Win>
@@ -60,8 +68,12 @@ void update_first_in_tabbox(Win* win)
 template<typename Win>
 base::x11::xcb::property fetch_show_on_screen_edge(Win* win)
 {
-    return base::x11::xcb::property(
-        false, win->xcb_window, win->space.atoms->kde_screen_edge_show, XCB_ATOM_CARDINAL, 0, 1);
+    return base::x11::xcb::property(false,
+                                    win->xcb_windows.client,
+                                    win->space.atoms->kde_screen_edge_show,
+                                    XCB_ATOM_CARDINAL,
+                                    0,
+                                    1);
 }
 
 template<typename Win>
@@ -129,7 +141,8 @@ void read_show_on_screen_edge(Win* win, base::x11::xcb::property& property)
     } else if (!property.is_null() && property->type != XCB_ATOM_NONE) {
         // property value is incorrect, delete the property
         // so that the client knows that it is not hidden
-        xcb_delete_property(connection(), win->xcb_window, win->space.atoms->kde_screen_edge_show);
+        xcb_delete_property(
+            connection(), win->xcb_windows.client, win->space.atoms->kde_screen_edge_show);
     } else {
         // restore
         // TODO: add proper unreserve

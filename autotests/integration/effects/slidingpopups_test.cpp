@@ -239,7 +239,7 @@ void SlidingPopupsTest::testWithOtherEffect()
     auto client_id = windowCreatedSpy.first().first().value<quint32>();
     auto client = Test::get_x11_window(Test::app()->base.space->windows_map.at(client_id));
     QVERIFY(client);
-    QCOMPARE(client->xcb_window, w);
+    QCOMPARE(client->xcb_windows.client, w);
     QVERIFY(win::is_normal(client));
 
     // sliding popups should be active

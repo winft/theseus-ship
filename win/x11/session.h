@@ -49,8 +49,9 @@ template<typename Win>
 QByteArray get_session_id(Win const& win)
 {
     QByteArray result
-        = base::x11::xcb::string_property(win.xcb_window, win.space.atoms->sm_client_id);
-    if (result.isEmpty() && win.m_wmClientLeader && win.m_wmClientLeader != win.xcb_window) {
+        = base::x11::xcb::string_property(win.xcb_windows.client, win.space.atoms->sm_client_id);
+    if (result.isEmpty() && win.m_wmClientLeader
+        && win.m_wmClientLeader != win.xcb_windows.client) {
         result
             = base::x11::xcb::string_property(win.m_wmClientLeader, win.space.atoms->sm_client_id);
     }
@@ -61,8 +62,10 @@ QByteArray get_session_id(Win const& win)
 template<typename Win>
 QByteArray get_wm_command(Win const& win)
 {
-    QByteArray result = base::x11::xcb::string_property(win.xcb_window, XCB_ATOM_WM_COMMAND);
-    if (result.isEmpty() && win.m_wmClientLeader && win.m_wmClientLeader != win.xcb_window) {
+    QByteArray result
+        = base::x11::xcb::string_property(win.xcb_windows.client, XCB_ATOM_WM_COMMAND);
+    if (result.isEmpty() && win.m_wmClientLeader
+        && win.m_wmClientLeader != win.xcb_windows.client) {
         result = base::x11::xcb::string_property(win.m_wmClientLeader, XCB_ATOM_WM_COMMAND);
     }
     result.replace(0, ' ');

@@ -34,7 +34,10 @@ public:
 
     quint32 windowId() const override
     {
-        return ref_win->xcb_window;
+        if constexpr (requires(decltype(ref_win) win) { win->xcb_windows; }) {
+            return ref_win->xcb_windows.client;
+        }
+        return XCB_WINDOW_NONE;
     }
 
     QByteArray resourceName() const override

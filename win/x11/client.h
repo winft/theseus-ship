@@ -81,18 +81,18 @@ void kill_process(Win* win, bool ask, xcb_timestamp_t timestamp = XCB_TIME_CURRE
         // execute helper from build dir or the system installed one
         QFileInfo const buildDirBinary{QDir{QCoreApplication::applicationDirPath()},
                                        QStringLiteral("kwin_killer_helper")};
-        QProcess::startDetached(buildDirBinary.exists() ? buildDirBinary.absoluteFilePath()
-                                                        : QStringLiteral(KWIN_KILLER_BIN),
-                                QStringList()
-                                    << QStringLiteral("--pid") << QString::number(unsigned(pid))
-                                    << QStringLiteral("--hostname") << hostname
-                                    << QStringLiteral("--windowname") << win->meta.caption.normal
-                                    << QStringLiteral("--applicationname")
-                                    << QString::fromUtf8(win->meta.wm_class.res_class)
-                                    << QStringLiteral("--wid") << QString::number(win->xcb_window)
-                                    << QStringLiteral("--timestamp") << QString::number(timestamp),
-                                QString(),
-                                &win->kill_helper_pid);
+        QProcess::startDetached(
+            buildDirBinary.exists() ? buildDirBinary.absoluteFilePath()
+                                    : QStringLiteral(KWIN_KILLER_BIN),
+            QStringList() << QStringLiteral("--pid") << QString::number(unsigned(pid))
+                          << QStringLiteral("--hostname") << hostname
+                          << QStringLiteral("--windowname") << win->meta.caption.normal
+                          << QStringLiteral("--applicationname")
+                          << QString::fromUtf8(win->meta.wm_class.res_class)
+                          << QStringLiteral("--wid") << QString::number(win->xcb_windows.client)
+                          << QStringLiteral("--timestamp") << QString::number(timestamp),
+            QString(),
+            &win->kill_helper_pid);
     }
 }
 
@@ -140,7 +140,7 @@ void ping(Win* win)
     win->ping_timer->start(kwinApp()->options->qobject->killPingTimeout() / 2);
 
     win->ping_timestamp = xTime();
-    win->space.root_info->sendPing(win->xcb_window, win->ping_timestamp);
+    win->space.root_info->sendPing(win->xcb_windows.client, win->ping_timestamp);
 }
 
 template<typename Win>
@@ -187,7 +187,7 @@ void get_sync_counter(Win* win)
     }
 
     base::x11::xcb::property syncProp(false,
-                                      win->xcb_window,
+                                      win->xcb_windows.client,
                                       win->space.atoms->net_wm_sync_request_counter,
                                       XCB_ATOM_CARDINAL,
                                       0,
@@ -261,8 +261,11 @@ void send_sync_request(Win* win)
 
     // Send the message to client
     auto& atoms = win->space.atoms;
-    send_client_message(
-        win->xcb_window, atoms->wm_protocols, atoms->net_wm_sync_request, number_lo, number_hi);
+    send_client_message(win->xcb_windows.client,
+                        atoms->wm_protocols,
+                        atoms->net_wm_sync_request,
+                        number_lo,
+                        number_hi);
 
     win->sync_request.timestamp = xTime();
 }
@@ -278,8 +281,8 @@ void send_synthetic_configure_notify(Win* win, QRect const& client_geo)
     memset(&c, 0, sizeof(c));
 
     c.response_type = XCB_CONFIGURE_NOTIFY;
-    c.event = win->xcb_window;
-    c.window = win->xcb_window;
+    c.event = win->xcb_windows.client;
+    c.window = win->xcb_windows.client;
     c.x = client_geo.x();
     c.y = client_geo.y();
 
@@ -287,7 +290,7 @@ void send_synthetic_configure_notify(Win* win, QRect const& client_geo)
     c.height = client_geo.height();
     auto getEmulatedXWaylandSize = [win, &client_geo]() {
         auto property = base::x11::xcb::property(false,
-                                                 win->xcb_window,
+                                                 win->xcb_windows.client,
                                                  win->space.atoms->xwayland_randr_emu_monitor_rects,
                                                  XCB_ATOM_CARDINAL,
                                                  0,

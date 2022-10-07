@@ -68,7 +68,7 @@ public:
         Toplevel<Space>::qobject = std::make_unique<window_qobject>();
         window_setup_geometry(*this);
 
-        this->xcb_window.reset(xcb_win, false);
+        this->xcb_windows.client.reset(xcb_win, false);
     }
 
     ~xwl_window()

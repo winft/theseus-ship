@@ -637,7 +637,7 @@ void StrutsTest::testX11Struts()
 
     auto client = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(client);
-    QCOMPARE(client->xcb_window, w);
+    QCOMPARE(client->xcb_windows.client, w);
     QVERIFY(!win::decoration(client));
     QCOMPARE(client->windowType(), NET::Dock);
     QCOMPARE(client->geo.frame, windowGeometry);
@@ -788,7 +788,7 @@ void StrutsTest::test363804()
 
     auto client = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(client);
-    QCOMPARE(client->xcb_window, w);
+    QCOMPARE(client->xcb_windows.client, w);
     QVERIFY(!win::decoration(client));
     QCOMPARE(client->windowType(), NET::Dock);
     QCOMPARE(client->geo.frame, windowGeometry);
@@ -880,7 +880,7 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
 
     auto client = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(client);
-    QCOMPARE(client->xcb_window, w);
+    QCOMPARE(client->xcb_windows.client, w);
     QVERIFY(!win::decoration(client));
     QCOMPARE(client->windowType(), NET::Dock);
     QCOMPARE(client->geo.frame, windowGeometry);
@@ -1016,7 +1016,7 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
 
     auto client = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(client);
-    QCOMPARE(client->xcb_window, w);
+    QCOMPARE(client->xcb_windows.client, w);
     QVERIFY(!win::decoration(client));
     QCOMPARE(client->windowType(), NET::Dock);
     QCOMPARE(client->geo.frame, windowGeometry);

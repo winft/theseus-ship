@@ -151,7 +151,7 @@ void update_input_shape(Win& win)
                       win.space.shape_helper_window,
                       deco_margin.x(),
                       deco_margin.y(),
-                      win.xcb_window);
+                      win.xcb_windows.client);
     xcb_shape_combine(con,
                       XCB_SHAPE_SO_UNION,
                       XCB_SHAPE_SK_INPUT,
@@ -159,7 +159,7 @@ void update_input_shape(Win& win)
                       win.space.shape_helper_window,
                       deco_margin.x(),
                       deco_margin.y(),
-                      win.xcb_window);
+                      win.xcb_windows.client);
     xcb_shape_combine(con,
                       XCB_SHAPE_SO_SET,
                       XCB_SHAPE_SK_INPUT,

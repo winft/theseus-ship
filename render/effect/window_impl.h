@@ -670,8 +670,8 @@ public:
     qlonglong windowId() const override
     {
         return std::visit(overload{[](auto&& ref_win) -> qlonglong {
-                              if constexpr (requires(decltype(ref_win) win) { win->xcb_window; }) {
-                                  return ref_win->xcb_window;
+                              if constexpr (requires(decltype(ref_win) win) { win->xcb_windows; }) {
+                                  return ref_win->xcb_windows.client;
                               } else {
                                   return XCB_WINDOW_NONE;
                               }
@@ -701,9 +701,12 @@ public:
         if (!kwinApp()->x11Connection()) {
             return QByteArray();
         }
-        return std::visit(overload{[&](auto&& ref_win) {
-                              return x11::read_window_property(
-                                  ref_win->xcb_window, atom, type, format);
+        return std::visit(overload{[&](auto&& win) -> QByteArray {
+                              if constexpr (requires(decltype(win) win) { win->xcb_windows; }) {
+                                  return x11::read_window_property(
+                                      win->xcb_windows.client, atom, type, format);
+                              }
+                              return {};
                           }},
                           *window.ref_win);
     }
@@ -719,7 +722,11 @@ public:
 
         if (kwinApp()->x11Connection()) {
             return std::visit(
-                overload{[&](auto&& ref_win) { deleteWindowProperty(ref_win->xcb_window, atom); }},
+                overload{[&](auto&& ref_win) {
+                    if constexpr (requires(decltype(ref_win) win) { win->xcb_windows; }) {
+                        deleteWindowProperty(ref_win->xcb_windows.client, atom);
+                    }
+                }},
                 *window.ref_win);
         }
     }

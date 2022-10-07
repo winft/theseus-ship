@@ -149,7 +149,7 @@ void PlasmaWindowTest::testCreateDestroyX11PlasmaWindow()
     auto client_id = windowCreatedSpy.first().first().value<quint32>();
     auto client = Test::get_x11_window(Test::app()->base.space->windows_map.at(client_id));
     QVERIFY(client);
-    QCOMPARE(client->xcb_window, w);
+    QCOMPARE(client->xcb_windows.client, w);
     QVERIFY(win::decoration(client));
     QVERIFY(client->control->active);
     // verify that it gets the keyboard focus
@@ -426,7 +426,7 @@ struct x11_test_window {
         auto window_id = window_spy.first().first().value<quint32>();
         server.window = Test::get_x11_window(Test::app()->base.space->windows_map.at(window_id));
         QVERIFY(server.window);
-        QCOMPARE(server.window->xcb_window, client.window);
+        QCOMPARE(server.window->xcb_windows.client, client.window);
         QVERIFY(win::decoration(server.window));
         QVERIFY(server.window->control->active);
 

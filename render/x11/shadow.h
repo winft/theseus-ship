@@ -75,7 +75,7 @@ bool update_shadow(Shadow& impl, QVector<uint32_t> const& data)
 template<typename Win>
 QVector<uint32_t> read_shadow_property(Win const& win, base::x11::xcb::atom const& shadow_atom)
 {
-    auto const& id = win.xcb_window;
+    auto const& id = win.xcb_windows.client;
     if (id == XCB_WINDOW_NONE) {
         return {};
     }

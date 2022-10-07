@@ -33,7 +33,7 @@ Win* find_controlled_window(Space& space, predicate_match predicate, xcb_window_
 
     switch (predicate) {
     case predicate_match::window:
-        return find_window([w](auto win) { return win->xcb_window == w; });
+        return find_window([w](auto win) { return win->xcb_windows.client == w; });
     case predicate_match::wrapper_id:
         return find_window([w](auto win) { return win->xcb_windows.wrapper == w; });
     case predicate_match::frame_id:

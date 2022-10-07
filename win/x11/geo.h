@@ -102,7 +102,7 @@ void update_shape(Win* win)
                               win->frameId(),
                               client_pos.x(),
                               client_pos.y(),
-                              win->xcb_window);
+                              win->xcb_windows.client);
         }
     } else if (win->app_no_border) {
         xcb_shape_mask(connection(),
@@ -1451,7 +1451,7 @@ template<typename Win>
 void detect_shape(Win& win)
 {
     auto const was_shape = win.is_shape;
-    win.is_shape = base::x11::xcb::extensions::self()->has_shape(win.xcb_window);
+    win.is_shape = base::x11::xcb::extensions::self()->has_shape(win.xcb_windows.client);
     if (was_shape != win.is_shape) {
         Q_EMIT win.qobject->shapedChanged();
     }

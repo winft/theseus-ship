@@ -22,7 +22,8 @@ void startup_id_changed(Win* win)
 {
     KStartupInfoId asn_id;
     KStartupInfoData asn_data;
-    auto asn_valid = check_startup_notification(win->space, win->xcb_window, asn_id, asn_data);
+    auto asn_valid
+        = check_startup_notification(win->space, win->xcb_windows.client, asn_id, asn_data);
     if (!asn_valid) {
         return;
     }
