@@ -707,9 +707,6 @@ public:
 
                 std::visit(overload{[](auto&& win) {
                                auto seat = waylandServer()->seat();
-                               if (win->surface != seat->pointers().get_focus().surface) {
-                                   return;
-                               }
                                seat->pointers().set_focused_surface_transformation(
                                    win::get_input_transform(*win));
                            }},

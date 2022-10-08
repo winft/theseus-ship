@@ -264,9 +264,6 @@ public:
 
                 std::visit(overload{[&](auto&& win) {
                                auto seat = waylandServer()->seat();
-                               if (win->surface != seat->touches().get_focus().surface) {
-                                   return;
-                               }
                                seat->touches().set_focused_surface_position(
                                    -1 * win::get_input_transform(*win).map(win->geo.pos())
                                    + win->geo.pos());
