@@ -560,7 +560,13 @@ public:
 
     bool isOutline() const override
     {
-        return std::visit(overload{[](auto&& win) { return win->is_outline; }}, ref_win);
+        return std::visit(overload{[](auto&& win) {
+                              if constexpr (requires(decltype(win) win) { win->is_outline; }) {
+                                  return win->is_outline;
+                              }
+                              return false;
+                          }},
+                          ref_win);
     }
 
     bool isShape() const override

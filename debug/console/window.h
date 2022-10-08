@@ -418,7 +418,10 @@ public:
 
     bool isOutline() const override
     {
-        return ref_win->is_outline;
+        if constexpr (requires(decltype(ref_win) win) { win->is_outline; }) {
+            return ref_win->is_outline;
+        }
+        return false;
     }
 
     bool isShape() const override

@@ -838,6 +838,7 @@ public:
     NET::WindowType window_type{NET::Normal};
     Qt::WindowFlags m_internalWindowFlags = Qt::WindowFlags();
     bool m_userNoBorder = false;
+    bool is_outline{false};
 };
 
 }

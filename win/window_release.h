@@ -92,7 +92,10 @@ void transfer_remnant_data(Win& source, Win& dest)
     dest.render_data.damage_region = source.render_data.damage_region;
     dest.render_data.repaints_region = source.render_data.repaints_region;
     dest.render_data.layer_repaints_region = source.render_data.layer_repaints_region;
-    dest.is_outline = source.is_outline;
+
+    if constexpr (requires(Win win) { win.is_outline; }) {
+        dest.is_outline = source.is_outline;
+    }
 
     dest.render = std::move(source.render);
 

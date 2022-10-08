@@ -69,8 +69,6 @@ public:
     {
     }
 
-    bool is_outline{false};
-
     bool skip_close_animation{false};
 
     Toplevel(win::remnant remnant, Space& space)

@@ -534,7 +534,12 @@ public:
 
     bool isOutline() const override
     {
-        return std::visit(overload{[](auto&& ref_win) { return ref_win->is_outline; }},
+        return std::visit(overload{[](auto&& ref_win) {
+                              if constexpr (requires(decltype(ref_win) win) { win->is_outline; }) {
+                                  return ref_win->is_outline;
+                              }
+                              return false;
+                          }},
                           *window.ref_win);
     }
 
