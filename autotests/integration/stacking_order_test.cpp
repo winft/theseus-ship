@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/wayland/server.h"
 #include "base/x11/atoms.h"
 #include "main.h"
-#include "toplevel.h"
 #include "utils/blocker.h"
 #include "win/actions.h"
 #include "win/activation.h"

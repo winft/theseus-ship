@@ -53,7 +53,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/x11/xcb/window.h"
 #include "render/outline.h"
 #include "rules/book.h"
-#include "toplevel.h"
 
 #include <QTimer>
 

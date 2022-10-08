@@ -12,8 +12,12 @@
 #include "base/x11/xcb/motif_hints.h"
 #include "render/wayland/buffer.h"
 #include "scene.h"
-#include "toplevel.h"
+#include "win/window_geometry.h"
+#include "win/window_metadata.h"
+#include "win/window_qobject.h"
+#include "win/window_render_data.h"
 #include "win/window_setup_base.h"
+#include "win/window_topology.h"
 #include "win/x11/activation.h"
 #include "win/x11/client.h"
 #include "win/x11/damage.h"
@@ -40,32 +44,40 @@ namespace KWin::win::wayland
 {
 
 template<typename Space>
-class xwl_window : public Toplevel<Space>
+class xwl_window
 {
 public:
+    using space_t = Space;
     using type = xwl_window<Space>;
+    using qobject_t = win::window_qobject;
     using control_t = xwl_control<xwl_window>;
     using render_t
         = render::window<typename Space::window_t, typename Space::base_t::render_t::compositor_t>;
+    using output_t = typename Space::base_t::output_t;
+
     constexpr static bool is_toplevel{false};
 
     xwl_window(win::remnant remnant, Space& space)
-        : Toplevel<Space>(std::move(remnant), space)
+        : qobject{std::make_unique<window_qobject>()}
+        , meta{++space.window_id}
         , transient{std::make_unique<win::transient<type>>(this)}
+        , remnant{std::move(remnant)}
         , motif_hints{space.atoms->motif_wm_hints}
+        , space{space}
+
     {
         this->space.windows_map.insert({this->meta.signal_id, this});
-        Toplevel<Space>::qobject = std::make_unique<window_qobject>();
     }
 
     xwl_window(xcb_window_t xcb_win, Space& space)
-        : Toplevel<Space>(space)
+        : qobject{std::make_unique<window_qobject>()}
+        , meta{++space.window_id}
         , transient{std::make_unique<x11::transient<type>>(this)}
         , client_machine{new win::x11::client_machine}
         , motif_hints(space.atoms->motif_wm_hints)
+        , space{space}
     {
         this->space.windows_map.insert({this->meta.signal_id, this});
-        Toplevel<Space>::qobject = std::make_unique<window_qobject>();
         window_setup_geometry(*this);
 
         this->xcb_windows.client.reset(xcb_win, false);
@@ -549,9 +561,17 @@ public:
         }
     }
 
+    std::unique_ptr<qobject_t> qobject;
+
+    win::window_metadata meta;
+    win::window_geometry geo;
+    win::window_topology<output_t> topo;
+    win::window_render_data<output_t> render_data;
+
     std::unique_ptr<win::transient<type>> transient;
     std::unique_ptr<win::control<type>> control;
     std::unique_ptr<render_t> render;
+    std::optional<win::remnant> remnant;
 
     QString iconic_caption;
 
@@ -635,6 +655,8 @@ public:
 
     Wrapland::Server::Surface* surface{nullptr};
     quint32 surface_id{0};
+
+    Space& space;
 };
 
 }

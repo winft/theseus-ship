@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/cursor.h"
 #include "scripting/platform.h"
 #include "scripting/script.h"
-#include "toplevel.h"
 #include "win/deco/bridge.h"
 #include "win/deco/settings.h"
 #include "win/move.h"

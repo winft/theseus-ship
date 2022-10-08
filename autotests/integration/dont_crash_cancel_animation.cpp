@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/effect_loader.h"
 #include "render/effects.h"
 #include "scripting/effect.h"
-#include "toplevel.h"
 #include "win/space.h"
 #include "win/wayland/window.h"
 

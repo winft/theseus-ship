@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/cursor.h"
 #include "render/compositor.h"
 #include "render/scene.h"
-#include "toplevel.h"
 #include "win/active_window.h"
 #include "win/move.h"
 #include "win/screen.h"

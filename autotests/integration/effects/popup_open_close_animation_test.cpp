@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/wayland/server.h"
 #include "render/effect_loader.h"
 #include "render/effects.h"
-#include "toplevel.h"
 #include "win/deco.h"
 #include "win/deco/client_impl.h"
 #include "win/internal_window.h"

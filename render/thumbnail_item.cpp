@@ -26,10 +26,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/logging.h"
 #include "scripting/singleton_interface.h"
 #include "scripting/space.h"
-#include "toplevel.h"
 #include "win/control.h"
 #include "win/singleton_interface.h"
 #include "win/space.h"
+
+#include <kwineffects/effects_handler.h>
 
 #include <QPainter>
 #include <QQuickWindow>

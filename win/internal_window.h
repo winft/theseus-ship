@@ -1,35 +1,30 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2019 Martin Flöser <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2019 Vlad Zahorodnii <vlad.zahorodnii@kde.org>
+    SPDX-FileCopyrightText: 2022 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 2019 Martin Flöser <mgraesslin@kde.org>
-Copyright (C) 2019 Vlad Zahorodnii <vlad.zahorodnii@kde.org>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
 #pragma once
 
+#include "control.h"
 #include "desktop_set.h"
 #include "geo_block.h"
+#include "rules/update.h"
+#include "shortcut_set.h"
 #include "singleton_interface.h"
 #include "space_areas_helpers.h"
 #include "wayland/scene.h"
 #include "wayland/surface.h"
+#include "window_geometry.h"
+#include "window_metadata.h"
+#include "window_qobject.h"
 #include "window_release.h"
+#include "window_render_data.h"
+#include "window_topology.h"
 
 #include "render/wayland/buffer.h"
-#include "toplevel.h"
+#include "render/window.h"
 
 #include <NETWM>
 
@@ -103,37 +98,43 @@ private:
 };
 
 template<typename Space>
-class internal_window : public Toplevel<Space>
+class internal_window
 {
 public:
+    using space_t = Space;
     using type = internal_window<Space>;
+    using qobject_t = win::window_qobject;
     using render_t
         = render::window<typename Space::window_t, typename Space::base_t::render_t::compositor_t>;
+    using output_t = typename Space::base_t::output_t;
 
     constexpr static bool is_toplevel{false};
 
     internal_window(win::remnant remnant, Space& space)
-        : Toplevel<Space>(std::move(remnant), space)
+        : qobject{std::make_unique<window_qobject>()}
+        , meta{++space.window_id}
         , transient{std::make_unique<win::transient<type>>(this)}
+        , remnant{std::move(remnant)}
+        , space{space}
     {
         this->space.windows_map.insert({this->meta.signal_id, this});
-        this->qobject = std::make_unique<window_qobject>();
     }
 
     internal_window(QWindow* window, Space& space)
-        : Toplevel<Space>(space)
+        : qobject{std::make_unique<internal_window_qobject<type>>(*this)}
         , singleton{std::make_unique<internal_window_singleton>(
               [this] { destroyClient(); },
               [this](auto fbo) { present(fbo); },
               [this](auto const& image, auto const& damage) { present(image, damage); })}
+        , meta{++space.window_id}
         , transient{std::make_unique<win::transient<type>>(this)}
         , m_internalWindow(window)
         , synced_geo(window->geometry())
         , m_internalWindowFlags(window->flags())
+        , space{space}
     {
         this->space.windows_map.insert({this->meta.signal_id, this});
         auto& qwin = this->qobject;
-        qwin = std::make_unique<internal_window_qobject<type>>(*this);
 
         this->control = std::make_unique<internal_control<type>>(this);
 
@@ -828,9 +829,17 @@ public:
         do_set_geometry(win::client_to_frame_rect(this, m_internalWindow->geometry()));
     }
 
+    std::unique_ptr<qobject_t> qobject;
+
+    win::window_metadata meta;
+    win::window_geometry geo;
+    win::window_topology<output_t> topo;
+    win::window_render_data<output_t> render_data;
+
     std::unique_ptr<win::transient<type>> transient;
     std::unique_ptr<win::control<type>> control;
     std::unique_ptr<render_t> render;
+    std::optional<win::remnant> remnant;
 
     QWindow* m_internalWindow = nullptr;
     QRect synced_geo;
@@ -840,6 +849,8 @@ public:
     bool m_userNoBorder = false;
     bool is_outline{false};
     bool skip_close_animation{false};
+
+    Space& space;
 };
 
 }

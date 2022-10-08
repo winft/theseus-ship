@@ -15,7 +15,6 @@
 #include "render/platform.h"
 #include "render/wayland/buffer.h"
 #include "render/wayland/shadow.h"
-#include "toplevel.h"
 #include "utils/geo.h"
 #include "win/fullscreen.h"
 #include "win/geo_block.h"
@@ -23,8 +22,14 @@
 #include "win/maximize.h"
 #include "win/placement.h"
 #include "win/rules/find.h"
+#include "win/rules/update.h"
 #include "win/scene.h"
+#include "win/window_geometry.h"
+#include "win/window_metadata.h"
+#include "win/window_qobject.h"
+#include "win/window_render_data.h"
 #include "win/window_setup_base.h"
+#include "win/window_topology.h"
 
 #include <Wrapland/Server/buffer.h>
 #include <Wrapland/Server/client.h>
@@ -45,14 +50,18 @@ namespace KWin::win::wayland
 {
 
 template<typename Space>
-class window : public Toplevel<Space>
+class window
 {
 public:
+    using space_t = Space;
     using type = window<Space>;
+    using qobject_t = win::window_qobject;
     using xdg_shell_control_t = xdg_shell_control<window<Space>>;
     using layer_control_t = wayland::control<window<Space>>;
     using render_t
         = render::window<typename Space::window_t, typename Space::base_t::render_t::compositor_t>;
+    using output_t = typename Space::base_t::output_t;
+
     constexpr static bool is_toplevel{false};
 
     enum class ping_reason {
@@ -61,19 +70,22 @@ public:
     };
 
     window(win::remnant remnant, Space& space)
-        : Toplevel<Space>(std::move(remnant), space)
+        : qobject{std::make_unique<window_qobject>()}
+        , meta{++space.window_id}
         , transient{std::make_unique<win::transient<type>>(this)}
+        , remnant{std::move(remnant)}
+        , space{space}
     {
         this->space.windows_map.insert({this->meta.signal_id, this});
-        Toplevel<Space>::qobject = std::make_unique<window_qobject>();
     }
 
     window(Wrapland::Server::Surface* surface, Space& space)
-        : Toplevel<Space>(space)
+        : qobject{std::make_unique<window_qobject>()}
+        , meta{++space.window_id}
         , transient{std::make_unique<win::transient<type>>(this)}
+        , space{space}
     {
         this->space.windows_map.insert({this->meta.signal_id, this});
-        Toplevel<Space>::qobject = std::make_unique<window_qobject>();
         window_setup_geometry(*this);
 
         QObject::connect(surface,
@@ -1424,9 +1436,17 @@ public:
         }
     }
 
+    std::unique_ptr<qobject_t> qobject;
+
+    win::window_metadata meta;
+    win::window_geometry geo;
+    win::window_topology<output_t> topo;
+    win::window_render_data<output_t> render_data;
+
     std::unique_ptr<win::transient<type>> transient;
     std::unique_ptr<win::control<type>> control;
     std::unique_ptr<render_t> render;
+    std::optional<win::remnant> remnant;
 
     maximize_mode max_mode{maximize_mode::restore};
 
@@ -1461,6 +1481,8 @@ public:
 
     bool must_place{false};
     bool inhibit_idle{false};
+
+    Space& space;
 
 private:
     void handle_shown_and_mapped()

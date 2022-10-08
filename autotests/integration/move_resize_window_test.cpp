@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/x11/atoms.h"
 #include "input/cursor.h"
 #include "render/effects.h"
-#include "toplevel.h"
 #include "win/active_window.h"
 #include "win/input.h"
 #include "win/move.h"
