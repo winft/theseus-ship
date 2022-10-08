@@ -13,6 +13,7 @@
 
 #include "base/options.h"
 #include "win/types.h"
+#include "win/virtual_desktops.h"
 
 class QDebug;
 
@@ -57,7 +58,9 @@ public:
     bool applyOpacityActive(int& s) const;
     bool applyOpacityInactive(int& s) const;
     bool applyIgnoreGeometry(bool& ignore, bool init) const;
-    bool applyDesktop(int& desktop, bool init) const;
+    bool applyDesktops(virtual_desktop_manager const& manager,
+                       QVector<virtual_desktop*>& vds,
+                       bool init) const;
     bool applyScreen(int& screen, bool init) const;
     bool applyType(NET::WindowType& type) const;
     bool applyMaximizeVert(win::maximize_mode& mode, bool init) const;
@@ -141,7 +144,7 @@ public:
     set_ruler<bool> above;
     set_ruler<bool> below;
     set_ruler<bool> ignoregeometry;
-    set_ruler<int> desktop;
+    set_ruler<QStringList> desktops;
     set_ruler<QString> desktopfile;
     set_ruler<bool> fullscreen;
     set_ruler<bool> maximizehoriz;

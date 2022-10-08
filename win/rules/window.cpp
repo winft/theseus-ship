@@ -78,11 +78,6 @@ bool window::checkIgnoreGeometry(bool ignore, bool init) const
     return check_set(ignore, init, &ruling::applyIgnoreGeometry);
 }
 
-int window::checkDesktop(int desktop, bool init) const
-{
-    return check_set(desktop, init, &ruling::applyDesktop);
-}
-
 maximize_mode window::checkMaximizeVert(maximize_mode mode, bool init) const
 {
     return check_set(mode, init, &ruling::applyMaximizeVert);

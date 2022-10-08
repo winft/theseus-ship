@@ -15,7 +15,7 @@ namespace KWin::win::rules
 enum class type : uint32_t {
     position = 1 << 0,
     size = 1 << 1,
-    desktop = 1 << 2,
+    desktops = 1 << 2,
     maximize_vert = 1 << 3,
     maximize_horiz = 1 << 4,
     minimize = 1 << 5,

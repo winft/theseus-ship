@@ -119,7 +119,9 @@ void finalize_shell_window_creation(Space& space, Win* win)
 
                 maximize(win, ctrl->rules.checkMaximize(win->geo.update.max_mode, true));
 
-                set_desktop(win, ctrl->rules.checkDesktop(win->desktop(), true));
+                set_desktops(win,
+                             ctrl->rules.checkDesktops(
+                                 *space.virtual_desktop_manager, win->topo.desktops, true));
                 set_desktop_file_name(
                     win, ctrl->rules.checkDesktopFile(ctrl->desktop_file_name, true).toUtf8());
                 if (ctrl->rules.checkMinimize(ctrl->minimized, true)) {

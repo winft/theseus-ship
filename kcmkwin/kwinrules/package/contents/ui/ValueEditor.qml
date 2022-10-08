@@ -48,6 +48,7 @@ Loader {
             case RuleItem.Point: return coordinateEditor
             case RuleItem.Size: return coordinateEditor
             case RuleItem.Shortcut: return shortcutEditor
+            case RuleItem.OptionList: return optionListEditor
             default: return emptyEditor
         }
     }
@@ -127,6 +128,44 @@ Loader {
             selectionMask: ruleValue & model.allOptionsMask
             onActivated: {
                 valueEditor.valueEdited(selectionMask);
+            }
+        }
+    }
+
+    Component {
+        id: optionListEditor
+        OptionsComboBox {
+            id: optionListCombo
+            flat: true
+            model: ruleOptions
+            multipleChoice: true
+
+            onActivated: {
+                let selectionList = []
+                for (let i = 0; i < count; i++) {
+                    if (selectionMask & (1 << i)) {
+                        selectionList.push(model.data(model.index(i,0), Qt.UserRole))
+                    }
+                }
+                valueEditor.valueEdited(selectionList);
+            }
+
+            function updateSelectionMask() {
+                selectionMask = 0
+                for (let i = 0; i < count; i++) {
+                    if (ruleValue.includes(model.data(model.index(i,0), Qt.UserRole))) {
+                        selectionMask += 1 << i
+                    }
+                }
+            }
+
+            onModelChanged: updateSelectionMask()
+            Component.onCompleted: updateSelectionMask()
+            Connections {
+                target: valueEditor
+                function onRuleValueChanged() {
+                    optionListCombo.updateSelectionMask()
+                }
             }
         }
     }

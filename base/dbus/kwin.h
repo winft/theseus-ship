@@ -272,7 +272,7 @@ private:
                 {QStringLiteral("y"), win->geo.pos().y()},
                 {QStringLiteral("width"), win->geo.size().width()},
                 {QStringLiteral("height"), win->geo.size().height()},
-                {QStringLiteral("x11DesktopNumber"), win->desktop()},
+                {QStringLiteral("desktops"), win::desktop_ids(win)},
                 {QStringLiteral("minimized"), win->control->minimized},
                 {QStringLiteral("shaded"), false},
                 {QStringLiteral("fullscreen"), win->control->fullscreen},

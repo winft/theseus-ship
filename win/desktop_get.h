@@ -52,4 +52,17 @@ QVector<unsigned int> x11_desktop_ids(Win* win)
     return x11_ids;
 }
 
+template<typename Win>
+QStringList desktop_ids(Win* win)
+{
+    auto const& desks = win->topo.desktops;
+    QStringList ids;
+    ids.reserve(desks.count());
+    std::transform(desks.constBegin(),
+                   desks.constEnd(),
+                   std::back_inserter(ids),
+                   [](auto const* vd) { return vd->id(); });
+    return ids;
+}
+
 }

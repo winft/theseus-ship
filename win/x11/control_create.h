@@ -350,11 +350,14 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     win->setupCompositing();
 
     // Initial desktop placement
-    int desk = 0;
+    using desks = QVector<virtual_desktop*>;
+    std::optional<desks> initial_desktops;
     if (session) {
-        desk = session->desktop;
         if (session->onAllDesktops) {
-            desk = NET::OnAllDesktops;
+            initial_desktops = desks{};
+        } else if (auto desktop
+                   = space.virtual_desktop_manager->desktopForX11Id(session->desktop)) {
+            initial_desktops = desks{desktop};
         }
     } else {
         // If this window is transient, ensure that it is opened on the
@@ -385,38 +388,42 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
             }
 
             if (on_all) {
-                desk = NET::OnAllDesktops;
+                initial_desktops = desks{};
             } else if (on_current) {
-                desk = space.virtual_desktop_manager->current();
+                initial_desktops = desks{space.virtual_desktop_manager->currentDesktop()};
             } else if (maincl != nullptr) {
-                desk = maincl->desktop();
+                initial_desktops = maincl->topo.desktops;
             }
         } else {
             // A transient shall appear on its leader and not drag that around.
+            auto desktop_id = 0;
             if (win->info->desktop()) {
                 // Window had the initial desktop property, force it
-                desk = win->info->desktop();
+                desktop_id = win->info->desktop();
             }
-            if (win->desktop() == 0 && asn_valid && asn_data.desktop() != 0) {
-                desk = asn_data.desktop();
+            if (desktop_id == 0 && asn_valid && asn_data.desktop() != 0) {
+                desktop_id = asn_data.desktop();
+            }
+            if (desktop_id) {
+                if (desktop_id == NET::OnAllDesktops) {
+                    initial_desktops = desks{};
+                } else if (auto desktop
+                           = space.virtual_desktop_manager->desktopForX11Id(desktop_id)) {
+                    initial_desktops = desks{desktop};
+                }
             }
         }
     }
 
-    if (desk == 0) {
-        // Assume window wants to be visible on the current desktop
-        desk = is_desktop(win) ? static_cast<int>(NET::OnAllDesktops)
-                               : space.virtual_desktop_manager->current();
-    }
-    desk = win->control->rules.checkDesktop(desk, !isMapped);
-
-    if (desk != NET::OnAllDesktops) {
-        // Do range check
-        desk = qBound(1, desk, static_cast<int>(space.virtual_desktop_manager->count()));
+    if (!initial_desktops.has_value()) {
+        initial_desktops
+            = is_desktop(win) ? desks{} : desks{space.virtual_desktop_manager->currentDesktop()};
     }
 
-    set_desktop(win, desk);
-    win->info->setDesktop(desk);
+    set_desktops(win,
+                 win->control->rules.checkDesktops(
+                     *space.virtual_desktop_manager, *initial_desktops, !isMapped));
+    win->info->setDesktop(win->desktop());
 
     propagate_on_all_desktops_to_children(*win);
 

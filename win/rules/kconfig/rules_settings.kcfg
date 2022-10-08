@@ -146,12 +146,12 @@
       <default code="true">static_cast&lt;int&gt;(set_rule::unused)</default>
     </entry>
 
-    <entry name="desktop" type="Int">
-      <label>Desktop number</label>
-      <default>0</default>
+    <entry name="desktops" type="StringList">
+      <label>List of Desktop Ids number</label>
+      <default>{}</default>
     </entry>
-    <entry name="desktoprule" type="Int">
-      <label>Desktop number rule type</label>
+    <entry name="desktopsrule" type="Int">
+      <label>Desktop Ids rule type</label>
       <min code="true">static_cast&lt;int&gt;(set_rule::unused)</min>
       <max code="true">static_cast&lt;int&gt;(action::force_temporarily)</max>
       <default code="true">static_cast&lt;int&gt;(set_rule::unused)</default>

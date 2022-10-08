@@ -32,7 +32,7 @@ namespace KWin::win
 class KWIN_EXPORT virtual_desktop : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QByteArray id READ id CONSTANT)
+    Q_PROPERTY(QString id READ id CONSTANT)
     Q_PROPERTY(uint x11DesktopNumber READ x11DesktopNumber NOTIFY x11DesktopNumberChanged)
     Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
 
@@ -40,8 +40,8 @@ public:
     explicit virtual_desktop(QObject* parent = nullptr);
     ~virtual_desktop() override;
 
-    void setId(QByteArray const& id);
-    QByteArray id() const
+    void setId(QString const& id);
+    QString id() const
     {
         return m_id;
     }
@@ -67,7 +67,7 @@ Q_SIGNALS:
     void aboutToBeDestroyed();
 
 private:
-    QByteArray m_id;
+    QString m_id;
     QString m_name;
     int m_x11DesktopNumber = 0;
 };
@@ -323,7 +323,7 @@ public:
      * virtual_desktop
      * @c null is returned
      */
-    virtual_desktop* desktopForId(QByteArray const& id) const;
+    virtual_desktop* desktopForId(QString const& id) const;
 
     /**
      * Create a new virtual desktop at the requested position.
@@ -341,7 +341,7 @@ public:
      * not only the last one.
      * @param id the string id of the desktop to remove
      */
-    void removeVirtualDesktop(QByteArray const& id);
+    void removeVirtualDesktop(QString const& id);
     void removeVirtualDesktop(virtual_desktop* desktop);
 
     /**

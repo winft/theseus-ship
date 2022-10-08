@@ -134,7 +134,11 @@ public:
 protected:
     void doStartMouseInterception(Qt::CursorShape shape) override
     {
-        this->compositor.platform.base.space->input->pointer->setEffectsOverrideCursor(shape);
+        auto& space = this->compositor.platform.base.space;
+        space->input->pointer->setEffectsOverrideCursor(shape);
+        if (space->move_resize_window) {
+            win::end_move_resize(space->move_resize_window);
+        }
     }
 
     void doStopMouseInterception() override
