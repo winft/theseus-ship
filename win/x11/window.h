@@ -549,7 +549,8 @@ public:
     struct {
         QMetaObject::Connection edge_remove;
         QMetaObject::Connection edge_geometry;
-    } connections;
+        QMetaObject::Connection check_screen;
+    } notifiers;
 
     mapping_state mapping{mapping_state::withdrawn};
 

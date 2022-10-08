@@ -1449,6 +1449,13 @@ public:
     Wrapland::Server::PlasmaShellSurface* plasma_shell_surface{nullptr};
     Wrapland::Server::ServerSideDecorationPalette* palette{nullptr};
 
+    struct {
+        QMetaObject::Connection check_screen;
+
+        QMetaObject::Connection frame_update_outputs;
+        QMetaObject::Connection screens_update_outputs;
+    } notifiers;
+
     std::map<uint32_t, ping_reason> pings;
     uint32_t acked_configure{0};
 

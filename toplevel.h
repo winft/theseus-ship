@@ -57,12 +57,6 @@ public:
     win::window_topology<output_t> topo;
     win::window_render_data<output_t> render_data;
 
-    struct {
-        QMetaObject::Connection frame_update_outputs;
-        QMetaObject::Connection screens_update_outputs;
-        QMetaObject::Connection check_screen;
-    } notifiers;
-
     Space& space;
 
     virtual ~Toplevel()

@@ -602,7 +602,12 @@ public:
     struct {
         QMetaObject::Connection edge_remove;
         QMetaObject::Connection edge_geometry;
-    } connections;
+
+        QMetaObject::Connection check_screen;
+
+        QMetaObject::Connection frame_update_outputs;
+        QMetaObject::Connection screens_update_outputs;
+    } notifiers;
 
     x11::mapping_state mapping{x11::mapping_state::withdrawn};
 

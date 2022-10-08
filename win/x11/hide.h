@@ -215,7 +215,7 @@ void update_visibility(Win* win)
 template<typename Win>
 void show_on_screen_edge(Win& win)
 {
-    QObject::disconnect(win.connections.edge_remove);
+    QObject::disconnect(win.notifiers.edge_remove);
 
     win.hideClient(false);
     win::set_keep_below(&win, false);
