@@ -575,6 +575,7 @@ public:
     uint user_no_border{0};
     uint app_no_border{0};
     bool is_outline{false};
+    bool skip_close_animation{false};
 
     bool is_shape{false};
     mutable bool is_render_shape_valid{false};

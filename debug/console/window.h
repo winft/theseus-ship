@@ -524,13 +524,18 @@ public:
 
     bool skipsCloseAnimation() const override
     {
-        return ref_win->skip_close_animation;
+        if constexpr (requires(decltype(ref_win) win) { win->skip_close_animation; }) {
+            return ref_win->skip_close_animation;
+        }
+        return false;
     }
 
     void setSkipCloseAnimation(bool set) override
     {
-        if (ref_win->control) {
-            win::set_skip_close_animation(*ref_win, set);
+        if constexpr (requires(decltype(ref_win) win) { win->skip_close_animation; }) {
+            if (ref_win->control) {
+                win::set_skip_close_animation(*ref_win, set);
+            }
         }
     }
 

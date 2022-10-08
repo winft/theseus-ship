@@ -97,12 +97,15 @@ void transfer_remnant_data(Win& source, Win& dest)
         dest.is_outline = source.is_outline;
     }
 
+    if constexpr (requires(Win win) { win.skip_close_animation; }) {
+        dest.skip_close_animation = source.skip_close_animation;
+    }
+
     dest.render = std::move(source.render);
 
     dest.meta.wm_class = source.meta.wm_class;
     dest.render_data.opaque_region = source.render_data.opaque_region;
     dest.topo.central_output = source.topo.central_output;
-    dest.skip_close_animation = source.skip_close_animation;
     dest.topo.desktops = source.topo.desktops;
     dest.topo.layer = get_layer(source);
     dest.geo.has_in_content_deco = source.geo.has_in_content_deco;

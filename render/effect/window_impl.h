@@ -480,8 +480,15 @@ public:
 
     bool skipsCloseAnimation() const override
     {
-        return std::visit(overload{[](auto&& ref_win) { return ref_win->skip_close_animation; }},
-                          *window.ref_win);
+        return std::visit(
+            overload{[](auto&& ref_win) {
+                if constexpr (requires(decltype(ref_win) win) { win->skip_close_animation; }) {
+                    return ref_win->skip_close_animation;
+                }
+
+                return false;
+            }},
+            *window.ref_win);
     }
 
     bool acceptsFocus() const override

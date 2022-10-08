@@ -644,12 +644,23 @@ public:
 
     bool skipsCloseAnimation() const override
     {
-        return std::visit(overload{[](auto&& win) { return win->skip_close_animation; }}, ref_win);
+        return std::visit(
+            overload{[](auto&& win) {
+                if constexpr (requires(decltype(win) win) { win->skip_close_animation; }) {
+                    return win->skip_close_animation;
+                }
+                return false;
+            }},
+            ref_win);
     }
 
     void setSkipCloseAnimation(bool set) override
     {
-        std::visit(overload{[=](auto&& win) { win::set_skip_close_animation(*win, set); }},
+        std::visit(overload{[=](auto&& win) {
+                       if constexpr (requires(decltype(win) win) { win->skip_close_animation; }) {
+                           win::set_skip_close_animation(*win, set);
+                       }
+                   }},
                    ref_win);
     }
 

@@ -839,6 +839,7 @@ public:
     Qt::WindowFlags m_internalWindowFlags = Qt::WindowFlags();
     bool m_userNoBorder = false;
     bool is_outline{false};
+    bool skip_close_animation{false};
 };
 
 }

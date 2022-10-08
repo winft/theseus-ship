@@ -63,8 +63,6 @@ public:
     {
     }
 
-    bool skip_close_animation{false};
-
     Toplevel(win::remnant remnant, Space& space)
         : type(space)
     {
