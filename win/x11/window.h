@@ -522,6 +522,9 @@ public:
     uint user_no_border{0};
     uint app_no_border{0};
 
+    bool is_shape{false};
+    mutable bool is_render_shape_valid{false};
+
     win::maximize_mode max_mode{win::maximize_mode::restore};
     win::maximize_mode prev_max_mode{win::maximize_mode::restore};
 

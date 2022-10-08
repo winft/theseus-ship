@@ -77,7 +77,9 @@ QRect visible_rect(Win* win)
 template<typename Win>
 void discard_shape(Win& win)
 {
-    win.is_render_shape_valid = false;
+    if constexpr (requires(Win win) { win.is_render_shape_valid; }) {
+        win.is_render_shape_valid = false;
+    }
 
     if (win.render) {
         win.render->invalidateQuadsCache();

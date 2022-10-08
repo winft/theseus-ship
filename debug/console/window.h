@@ -423,7 +423,10 @@ public:
 
     bool isShape() const override
     {
-        return ref_win->is_shape;
+        if constexpr (requires(decltype(ref_win) win) { win->is_shape; }) {
+            return ref_win->is_shape;
+        }
+        return false;
     }
 
     bool keepAbove() const override

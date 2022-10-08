@@ -63,8 +63,6 @@ public:
         QMetaObject::Connection check_screen;
     } notifiers;
 
-    bool is_shape{false};
-
     Space& space;
 
     virtual ~Toplevel()
@@ -72,8 +70,6 @@ public:
     }
 
     bool is_outline{false};
-
-    mutable bool is_render_shape_valid{false};
 
     bool skip_close_animation{false};
 

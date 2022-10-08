@@ -150,6 +150,7 @@ Win* create_remnant_window(Win& source)
 
     win->xcb_windows.client.reset(source.xcb_windows.client, false);
     win->xcb_visual = source.xcb_visual;
+    win->is_shape = source.is_shape;
     win->client_machine = source.client_machine;
     win->m_wmClientLeader = get_wm_client_leader(source);
 

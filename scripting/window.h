@@ -565,7 +565,13 @@ public:
 
     bool isShape() const override
     {
-        return std::visit(overload{[](auto&& win) { return win->is_shape; }}, ref_win);
+        return std::visit(overload{[](auto&& win) {
+                              if constexpr (requires(decltype(win) win) { win->is_shape; }) {
+                                  return win->is_shape;
+                              }
+                              return false;
+                          }},
+                          ref_win);
     }
 
     bool keepAbove() const override
