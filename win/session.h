@@ -195,54 +195,6 @@ void store_window(Space const& space, KConfigGroup& cg, int num, Win* c)
                   static_cast<int>(index_of(space.stacking.order.pre_stack, c)));
 }
 
-template<typename Space>
-void store_subsession(Space const& space, QString const& name, QSet<QByteArray> sessionIds)
-{
-    // TODO clear it first
-    KConfigGroup cg(KSharedConfig::openConfig(), QLatin1String("SubSession: ") + name);
-    int count = 0;
-    int active_client = -1;
-
-    for (auto const& window : space.windows) {
-        if (!window->control) {
-            continue;
-        }
-
-        auto x11_client = dynamic_cast<typename Space::x11_window*>(window);
-        if (!x11_client) {
-            continue;
-        }
-        if (x11_client->windowType() > NET::Splash) {
-            continue;
-        }
-
-        QByteArray sessionId = x11_client->sessionId();
-        auto wmCommand = x11::get_wm_command(*x11_client);
-        if (sessionId.isEmpty()) {
-            // remember also applications that are not XSMP capable
-            // and use the obsolete WM_COMMAND / WM_SAVE_YOURSELF
-            if (wmCommand.isEmpty()) {
-                continue;
-            }
-        }
-        if (!sessionIds.contains(sessionId)) {
-            continue;
-        }
-
-        qCDebug(KWIN_CORE) << "storing" << sessionId;
-        count++;
-
-        if (x11_client->control->active) {
-            active_client = count;
-        }
-        store_window(space, cg, count, x11_client);
-    }
-
-    cg.writeEntry("count", count);
-    cg.writeEntry("active", active_client);
-    // cg.writeEntry( "desktop", currentDesktop());
-}
-
 /**
  * Loads the session information from the config file.
  *
