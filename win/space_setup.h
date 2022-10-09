@@ -8,6 +8,7 @@
 #include <config-kwin.h>
 
 #include "dbus/virtual_desktop_manager.h"
+#include "render/compositor.h"
 #include "rules.h"
 #include "tabbox/tabbox.h"
 #include "x11/space_setup.h"
@@ -39,7 +40,7 @@ void init_space(Space& space)
     QObject::connect(space.qobject.get(),
                      &Space::qobject_t::currentDesktopChanged,
                      space.base.render->compositor->qobject.get(),
-                     [comp = space.base.render->compositor.get()] { comp->addRepaintFull(); });
+                     [comp = space.base.render->compositor.get()] { render::full_repaint(*comp); });
 
     space.deco->init();
     QObject::connect(space.qobject.get(),
@@ -73,7 +74,10 @@ void init_space(Space& space)
                      space.qobject.get(),
                      [&](auto win_id) {
                          auto window = space.windows_map.at(win_id);
-                         focus_chain_remove(space.stacking.focus_chain, window);
+                         std::visit(overload{[&space](auto&& win) {
+                                        focus_chain_remove(space.stacking.focus_chain, win);
+                                    }},
+                                    window);
                      });
     QObject::connect(space.qobject.get(),
                      &Space::qobject_t::clientActivated,
@@ -163,14 +167,16 @@ void init_space(Space& space)
                                           space.qobject.get(),
                                           SLOT(reconfigure()));
 
-    space.stacking.active = nullptr;
+    space.stacking.active = {};
     QObject::connect(space.stacking.order.qobject.get(),
                      &stacking_order_qobject::changed,
                      space.qobject.get(),
                      [&](auto count_changed) {
                          x11::propagate_clients(space, count_changed);
                          if (space.stacking.active) {
-                             space.stacking.active->control->update_mouse_grab();
+                             std::visit(
+                                 overload{[](auto&& win) { win->control->update_mouse_grab(); }},
+                                 *space.stacking.active);
                          }
                      });
     QObject::connect(space.stacking.order.qobject.get(),
@@ -188,18 +194,28 @@ void clear_space(Space& space)
 
     x11::clear_space(space);
 
-    for (auto const& window : space.windows) {
-        if (auto internal = dynamic_cast<typename Space::internal_window_t*>(window);
-            internal && !internal->remnant) {
-            internal->destroyClient();
-            remove_all(space.windows, internal);
+    using var_win = typename Space::window_t;
+
+    if constexpr (requires { Space::internal_window_t; }) {
+        using int_win = typename Space::internal_window_t;
+        for (auto const& window : space.windows) {
+            std::visit(overload{[&](int_win* win) {
+                           if (!win->remnant) {
+                               win->destroyClient();
+                               remove_all(space.windows, var_win(win));
+                           }
+                       }},
+                       window);
         }
     }
 
     // At this point only remnants are remaining.
     for (auto it = space.windows.begin(); it != space.windows.end();) {
-        assert((*it)->remnant);
-        Q_EMIT space.qobject->window_deleted((*it)->meta.signal_id);
+        std::visit(overload{[&](auto&& win) {
+                       assert(win->remnant);
+                       Q_EMIT space.qobject->window_deleted(win->meta.signal_id);
+                   }},
+                   *it);
         it = space.windows.erase(it);
     }
 

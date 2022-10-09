@@ -207,19 +207,23 @@ public:
         cursorSurface->frameRendered(m_surfaceRenderedTimer.elapsed());
     }
 
-    void updateDecoration()
+    void unset_deco()
     {
         QObject::disconnect(m_decorationConnection);
-        auto deco = redirect.pointer->focus.deco;
-        auto c = deco ? deco->client() : nullptr;
-        if (c) {
-            m_decorationConnection = QObject::connect(c->qobject.get(),
-                                                      &win::window_qobject::moveResizeCursorChanged,
-                                                      qobject.get(),
-                                                      [this] { updateDecorationCursor(); });
-        } else {
-            m_decorationConnection = QMetaObject::Connection();
-        }
+        m_decorationConnection = QMetaObject::Connection();
+        updateDecorationCursor();
+    }
+
+    template<typename Deco>
+    void set_deco(Deco& deco)
+    {
+        QObject::disconnect(m_decorationConnection);
+        auto win = deco.client();
+        assert(win);
+        m_decorationConnection = QObject::connect(win->qobject.get(),
+                                                  &win::window_qobject::moveResizeCursorChanged,
+                                                  qobject.get(),
+                                                  [this] { updateDecorationCursor(); });
         updateDecorationCursor();
     }
 
@@ -232,8 +236,8 @@ private:
                          &win::space_qobject::wayland_window_added,
                          qobject.get(),
                          [this](auto win_id) {
-                             auto win = redirect.space.windows_map.at(win_id);
-                             setup_move_resize(win);
+                             std::visit(overload{[this](auto&& win) { setup_move_resize(win); }},
+                                        redirect.space.windows_map.at(win_id));
                          });
 
         // TODO(romangg): can we load the fallback cursor earlier in the ctor already?
@@ -253,20 +257,23 @@ private:
         }
 
         auto const clients = redirect.space.windows;
-        std::for_each(clients.begin(), clients.end(), [this](auto win) { setup_move_resize(win); });
+        std::for_each(clients.begin(), clients.end(), [this](auto win) {
+            std::visit(overload{[this](auto&& win) { setup_move_resize(win); }}, win);
+        });
 
         QObject::connect(redirect.space.qobject.get(),
                          &win::space_qobject::clientAdded,
                          qobject.get(),
                          [this](auto win_id) {
-                             auto win = redirect.space.windows_map.at(win_id);
-                             setup_move_resize(win);
+                             std::visit(overload{[this](auto&& win) { setup_move_resize(win); }},
+                                        redirect.space.windows_map.at(win_id));
                          });
 
         Q_EMIT qobject->changed();
     }
 
-    void setup_move_resize(window_t* window)
+    template<typename Win>
+    void setup_move_resize(Win* window)
     {
         if (!window->control) {
             return;
@@ -305,7 +312,7 @@ private:
             setSource(CursorSource::MoveResize);
             return;
         }
-        if (redirect.pointer->focus.deco) {
+        if (redirect.pointer->focus.deco.client) {
             setSource(CursorSource::Decoration);
             return;
         }
@@ -396,12 +403,17 @@ private:
         m_decorationCursor.image = QImage();
         m_decorationCursor.hotSpot = QPoint();
 
-        auto deco = redirect.pointer->focus.deco;
-        if (auto c = deco ? deco->client() : nullptr) {
-            loadThemeCursor(c->control->move_resize.cursor, &m_decorationCursor);
-            if (m_currentSource == CursorSource::Decoration) {
-                Q_EMIT qobject->changed();
-            }
+        if (auto win = redirect.pointer->at.window) {
+            std::visit(overload{[&](auto&& win) {
+                           if (!redirect.pointer->focus.deco.client) {
+                               return;
+                           }
+                           loadThemeCursor(win->control->move_resize.cursor, &m_decorationCursor);
+                           if (m_currentSource == CursorSource::Decoration) {
+                               Q_EMIT qobject->changed();
+                           }
+                       }},
+                       *win);
         }
         reevaluteSource();
     }
@@ -410,12 +422,16 @@ private:
     {
         m_moveResizeCursor.image = QImage();
         m_moveResizeCursor.hotSpot = QPoint();
-        if (auto window = redirect.space.move_resize_window) {
-            loadThemeCursor(window->control->move_resize.cursor, &m_moveResizeCursor);
+
+        if (auto& mov_res = redirect.space.move_resize_window) {
+            auto cursor = std::visit(
+                overload{[&](auto&& win) { return win->control->move_resize.cursor; }}, *mov_res);
+            loadThemeCursor(cursor, &m_moveResizeCursor);
             if (m_currentSource == CursorSource::MoveResize) {
                 Q_EMIT qobject->changed();
             }
         }
+
         reevaluteSource();
     }
 

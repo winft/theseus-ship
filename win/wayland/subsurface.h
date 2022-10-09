@@ -129,24 +129,31 @@ void set_subsurface_parent(Win* win, Lead* lead)
 template<typename Window, typename Space>
 void handle_new_subsurface(Space* space, Wrapland::Server::Subsurface* subsurface)
 {
+    using var_win = typename Space::window_t;
     auto window = new Window(subsurface->surface(), *space);
 
     space->windows.push_back(window);
     QObject::connect(subsurface,
                      &Wrapland::Server::Subsurface::resourceDestroyed,
                      space->qobject.get(),
-                     [space, window] { remove_all(space->windows, window); });
+                     [space, window] { remove_all(space->windows, var_win(window)); });
 
     assign_subsurface_role(window);
 
     for (auto& win : space->windows) {
-        if (win->surface == subsurface->parentSurface()) {
-            win::wayland::set_subsurface_parent(window, win);
-            if (window->render_data.ready_for_painting) {
-                space->handle_window_added(window);
-                adopt_transient_children(space, window);
-                return;
-            }
+        if (std::visit(overload{[&](Window* win) {
+                                    if (win->surface != subsurface->parentSurface()) {
+                                        return false;
+                                    }
+                                    win::wayland::set_subsurface_parent(window, win);
+                                    if (window->render_data.ready_for_painting) {
+                                        space->handle_window_added(window);
+                                        adopt_transient_children(space, window);
+                                    }
+                                    return true;
+                                },
+                                [](auto&&) { return false; }},
+                       win)) {
             break;
         }
     }
@@ -154,5 +161,4 @@ void handle_new_subsurface(Space* space, Wrapland::Server::Subsurface* subsurfac
     // No further processing of the subsurface in space. Must wait till a parent is mapped and
     // subsurface is ready for painting.
 }
-
 }

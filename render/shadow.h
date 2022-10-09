@@ -78,14 +78,14 @@ public:
         assert(window);
 
         if (m_decorationShadow) {
-            if (window->ref_win->control) {
-                if (auto deco = win::decoration(window->ref_win)) {
-                    if (update_deco_shadow(*this, deco)) {
-                        return true;
-                    }
-                }
-            }
-            return false;
+            return std::visit(overload{[&](auto&& win) -> bool {
+                                  if (!win->control) {
+                                      return false;
+                                  }
+                                  auto deco = win::decoration(win);
+                                  return deco && update_deco_shadow(*this, deco);
+                              }},
+                              *window->ref_win);
         }
 
         if (auto& win_update = window->shadow_windowing.update; win_update) {
@@ -120,7 +120,7 @@ public:
 
     void updateShadowRegion()
     {
-        auto const size = window->ref_win->geo.size();
+        auto const size = get_size(window);
         const QRect top(0, -m_topOffset, size.width(), m_topOffset);
         const QRect right(size.width(),
                           -m_topOffset,
@@ -140,7 +140,7 @@ public:
         // prepare window quads
         m_shadowQuads.clear();
 
-        auto const size = window->ref_win->geo.size();
+        auto const size = get_size(window);
         const QSize top(m_shadowElements[enum_index(shadow_element::top)].size());
         const QSize topRight(m_shadowElements[enum_index(shadow_element::top_right)].size());
         const QSize right(m_shadowElements[enum_index(shadow_element::right)].size());
@@ -246,10 +246,11 @@ public:
 
     void geometryChanged()
     {
-        if (m_cachedSize == window->ref_win->geo.size()) {
+        auto const size = get_size(window);
+        if (m_cachedSize == size) {
             return;
         }
-        m_cachedSize = window->ref_win->geo.size();
+        m_cachedSize = size;
         updateShadowRegion();
         buildQuads();
     }
@@ -271,12 +272,15 @@ public:
 protected:
     shadow(Window* window)
         : window{window}
-        , m_cachedSize(window->ref_win->geo.size())
+        , m_cachedSize{get_size(window)}
     {
-        QObject::connect(window->ref_win->qobject.get(),
-                         &win::window_qobject::frame_geometry_changed,
-                         this,
-                         &shadow::geometryChanged);
+        std::visit(overload{[this](auto&& win) {
+                       QObject::connect(win->qobject.get(),
+                                        &win::window_qobject::frame_geometry_changed,
+                                        this,
+                                        &shadow::geometryChanged);
+                   }},
+                   *window->ref_win);
     }
 
     inline const QPixmap& shadowPixmap(shadow_element element) const
@@ -345,6 +349,12 @@ protected:
     WindowQuadList m_shadowQuads;
 
 private:
+    template<typename RenderWin>
+    static QSize get_size(RenderWin* rend_win)
+    {
+        return std::visit(overload{[](auto&& win) { return win->geo.size(); }}, *rend_win->ref_win);
+    }
+
     // caches
     QRegion m_shadowRegion;
     QSize m_cachedSize;

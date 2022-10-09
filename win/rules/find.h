@@ -8,6 +8,7 @@
 #include "window.h"
 
 #include "base/logging.h"
+#include "win/rules.h"
 
 namespace KWin::win::rules
 {
@@ -29,7 +30,12 @@ template<typename Win>
 void evaluate_rules(Win* win)
 {
     setup_rules(win, true);
-    win->applyWindowRules();
+
+    if constexpr (requires(Win win) { win.applyWindowRules(); }) {
+        win->applyWindowRules();
+    } else {
+        apply_window_rules(*win);
+    }
 }
 
 template<typename Ruling, typename RefWin>
@@ -45,9 +51,11 @@ bool match_rule(Ruling& ruling, RefWin const& ref_win)
         return false;
     }
 
-    if (auto cm = ref_win.get_client_machine();
-        cm && !ruling.matchClientMachine(cm->hostname(), cm->is_local())) {
-        return false;
+    if constexpr (requires(RefWin win) { win.get_client_machine(); }) {
+        if (auto cm = ref_win.get_client_machine();
+            cm && !ruling.matchClientMachine(cm->hostname(), cm->is_local())) {
+            return false;
+        }
     }
 
     if (ruling.title.match != name_match::unimportant) {

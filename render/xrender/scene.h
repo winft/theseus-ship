@@ -43,7 +43,7 @@ public:
     using compositor_t = typename Platform::compositor_t;
 
     using window_t = typename abstract_type::window_t;
-    using xrender_window_t = xrender::window<typename abstract_type::space_t::window_t, type>;
+    using xrender_window_t = xrender::window<typename window_t::ref_t, type>;
     using buffer_t = buffer<window_t>;
 
     using space_t = typename abstract_type::space_t;
@@ -67,7 +67,7 @@ public:
         return XRenderCompositing;
     }
     int64_t paint(QRegion damage,
-                  std::deque<typename space_t::window_t*> const& windows,
+                  std::deque<typename space_t::window_t> const& windows,
                   std::chrono::milliseconds presentTime) override
     {
         QElapsedTimer renderTimer;
@@ -88,9 +88,9 @@ public:
         return renderTimer.nsecsElapsed();
     }
 
-    std::unique_ptr<render::shadow<window_t>> createShadow(window_t* window) override
+    std::unique_ptr<render::shadow<window_t>> createShadow(window_t* win) override
     {
-        return std::make_unique<xrender::shadow<window_t>>(window);
+        return std::make_unique<xrender::shadow<window_t>>(win);
     }
 
     void handle_screen_geometry_change(QSize const& size) override
@@ -103,10 +103,10 @@ public:
         return m_backend->buffer();
     }
 
-    win::deco::renderer<win::deco::client_impl<typename space_t::window_t>>*
-    createDecorationRenderer(win::deco::client_impl<typename space_t::window_t>* client) override
+    std::unique_ptr<win::deco::render_injector>
+    create_deco(win::deco::render_window window) override
     {
-        return new deco_renderer(client);
+        return std::make_unique<deco_renderer>(std::move(window));
     }
 
     bool animationsSupported() const override
@@ -120,7 +120,7 @@ public:
     XRenderPicture* fade_alpha_picture{nullptr};
 
 protected:
-    std::unique_ptr<window_t> createWindow(typename space_t::window_t* ref_win) override
+    std::unique_ptr<window_t> createWindow(typename space_t::window_t ref_win) override
     {
         return std::make_unique<xrender_window_t>(ref_win, *this);
     }
@@ -157,9 +157,9 @@ protected:
     {
     }
 
-    void paintEffectQuickView(EffectQuickView* w) override
+    void paintEffectQuickView(EffectQuickView* view) override
     {
-        const QImage buffer = w->bufferAsImage();
+        auto const buffer = view->bufferAsImage();
         if (buffer.isNull()) {
             return;
         }
@@ -173,10 +173,10 @@ protected:
                              0,
                              0,
                              0,
-                             w->geometry().x(),
-                             w->geometry().y(),
-                             w->geometry().width(),
-                             w->geometry().height());
+                             view->geometry().x(),
+                             view->geometry().y(),
+                             view->geometry().width(),
+                             view->geometry().height());
     }
 
 private:

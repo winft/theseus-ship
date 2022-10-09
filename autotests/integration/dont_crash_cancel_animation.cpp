@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/effect_loader.h"
 #include "render/effects.h"
 #include "scripting/effect.h"
-#include "toplevel.h"
 #include "win/space.h"
 #include "win/wayland/window.h"
 
@@ -102,7 +101,7 @@ void DontCrashCancelAnimationFromAnimationEndedTest::testScript()
     // let's render
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->base.space->stacking.active, c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
 
     // make sure we animate
     QTest::qWait(200);

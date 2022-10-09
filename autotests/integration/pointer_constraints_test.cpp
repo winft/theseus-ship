@@ -208,7 +208,7 @@ void TestPointerConstraints::testConfinedPointer()
     Test::keyboard_key_released(KEY_LEFTALT, timestamp++);
 
     // deactivate the client, this should unconfine
-    win::activate_window(*Test::app()->base.space, nullptr);
+    win::deactivate_window(*Test::app()->base.space);
     QVERIFY(unconfinedSpy.wait());
     QCOMPARE(Test::app()->base.space->input->pointer->isConstrained(), false);
 
@@ -221,19 +221,24 @@ void TestPointerConstraints::testConfinedPointer()
     QVERIFY(unconfinedSpy2.isValid());
 
     // activate it again, this confines again
-    win::activate_window(*Test::app()->base.space,
-                         Test::app()->base.space->input->pointer->focus.window);
+    auto pointer_focus_window
+        = Test::get_wayland_window(Test::app()->base.space->input->pointer->focus.window);
+    QVERIFY(pointer_focus_window);
+    win::activate_window(*Test::app()->base.space, *pointer_focus_window);
     QVERIFY(confinedSpy2.wait());
     QCOMPARE(Test::app()->base.space->input->pointer->isConstrained(), true);
 
     // deactivate the client one more time with the persistent life time constraint, this should
     // unconfine
-    win::activate_window(*Test::app()->base.space, nullptr);
+    win::deactivate_window(*Test::app()->base.space);
     QVERIFY(unconfinedSpy2.wait());
     QCOMPARE(Test::app()->base.space->input->pointer->isConstrained(), false);
+
     // activate it again, this confines again
-    win::activate_window(*Test::app()->base.space,
-                         Test::app()->base.space->input->pointer->focus.window);
+    pointer_focus_window
+        = Test::get_wayland_window(Test::app()->base.space->input->pointer->focus.window);
+    QVERIFY(pointer_focus_window);
+    win::activate_window(*Test::app()->base.space, *pointer_focus_window);
     QVERIFY(confinedSpy2.wait());
     QCOMPARE(Test::app()->base.space->input->pointer->isConstrained(), true);
 
@@ -264,7 +269,10 @@ void TestPointerConstraints::testConfinedPointer()
     confinedPointer.reset(nullptr);
     Test::flush_wayland_connection();
 
-    QSignalSpy constraintsChangedSpy(Test::app()->base.space->input->pointer->focus.window->surface,
+    pointer_focus_window
+        = Test::get_wayland_window(Test::app()->base.space->input->pointer->focus.window);
+    QVERIFY(pointer_focus_window);
+    QSignalSpy constraintsChangedSpy(pointer_focus_window->surface,
                                      &Wrapland::Server::Surface::pointerConstraintsChanged);
     QVERIFY(constraintsChangedSpy.isValid());
     QVERIFY(constraintsChangedSpy.wait());
@@ -324,7 +332,7 @@ void TestPointerConstraints::testLockedPointer()
     QCOMPARE(Test::cursor()->pos(), c->geo.frame.center());
 
     // deactivate the client, this should unlock
-    win::activate_window(*Test::app()->base.space, nullptr);
+    win::deactivate_window(*Test::app()->base.space);
     QCOMPARE(Test::app()->base.space->input->pointer->isConstrained(), false);
     QVERIFY(unlockedSpy.wait());
 
@@ -338,8 +346,10 @@ void TestPointerConstraints::testLockedPointer()
     QVERIFY(lockedSpy2.isValid());
 
     // activate the client again, this should lock again
-    win::activate_window(*Test::app()->base.space,
-                         Test::app()->base.space->input->pointer->focus.window);
+    auto pointer_focus_window
+        = Test::get_wayland_window(Test::app()->base.space->input->pointer->focus.window);
+    QVERIFY(pointer_focus_window);
+    win::activate_window(*Test::app()->base.space, *pointer_focus_window);
     QVERIFY(lockedSpy2.wait());
     QCOMPARE(Test::app()->base.space->input->pointer->isConstrained(), true);
 
@@ -352,7 +362,10 @@ void TestPointerConstraints::testLockedPointer()
     lockedPointer.reset(nullptr);
     Test::flush_wayland_connection();
 
-    QSignalSpy constraintsChangedSpy(Test::app()->base.space->input->pointer->focus.window->surface,
+    pointer_focus_window
+        = Test::get_wayland_window(Test::app()->base.space->input->pointer->focus.window);
+    QVERIFY(pointer_focus_window);
+    QSignalSpy constraintsChangedSpy(pointer_focus_window->surface,
                                      &Wrapland::Server::Surface::pointerConstraintsChanged);
     QVERIFY(constraintsChangedSpy.isValid());
     QVERIFY(constraintsChangedSpy.wait());

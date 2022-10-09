@@ -5,6 +5,10 @@
 */
 #pragma once
 
+#include "client.h"
+#include "meta.h"
+#include "transient.h"
+
 #include "base/x11/grabs.h"
 #include "base/x11/xcb/extensions.h"
 #include "utils/blocker.h"
@@ -15,6 +19,9 @@
 #include "win/tabbox.h"
 #include "win/window_release.h"
 
+#include <csignal>
+#include <xcb/xcb_icccm.h>
+
 namespace KWin::win::x11
 {
 
@@ -23,13 +30,15 @@ template<typename Win>
 void disown_data_passed_to_remnant(Win& win)
 {
     win.client_machine = nullptr;
-    win.info = nullptr;
+    win.net_info = nullptr;
 }
 
 template<typename Space, typename Win>
 void remove_controlled_window_from_space(Space& space, Win* win)
 {
-    if (win == space.active_popup_client) {
+    using var_win = typename Space::window_t;
+
+    if (var_win(win) == space.active_popup_client) {
         close_active_popup(space);
     }
 
@@ -37,7 +46,7 @@ void remove_controlled_window_from_space(Space& space, Win* win)
         space.user_actions_menu->close();
     }
 
-    if (space.client_keys_client == win) {
+    if (space.client_keys_client == var_win(win)) {
         setup_window_shortcut_done(space, false);
     }
     if (!win->control->shortcut.isEmpty()) {
@@ -48,29 +57,29 @@ void remove_controlled_window_from_space(Space& space, Win* win)
         window_shortcut_updated(space, win);
     }
 
-    assert(contains(space.windows, win));
+    assert(contains(space.windows, var_win(win)));
 
     // TODO: if marked client is removed, notify the marked list
     remove_window_from_lists(space, win);
-    remove_all(space.stacking.attention_chain, win);
+    remove_all(space.stacking.attention_chain, var_win(win));
 
-    auto group = find_group(space, win->xcb_window);
+    auto group = find_group(space, win->xcb_windows.client);
     if (group) {
         group->lostLeader();
     }
 
-    if (win == space.stacking.most_recently_raised) {
-        space.stacking.most_recently_raised = nullptr;
+    if (var_win(win) == space.stacking.most_recently_raised) {
+        space.stacking.most_recently_raised = {};
     }
 
-    remove_all(space.stacking.should_get_focus, win);
+    remove_all(space.stacking.should_get_focus, var_win(win));
 
-    assert(win != space.stacking.active);
+    assert(var_win(win) != space.stacking.active);
 
-    if (win == space.stacking.last_active) {
-        space.stacking.last_active = nullptr;
+    if (var_win(win) == space.stacking.last_active) {
+        space.stacking.last_active = {};
     }
-    if (win == space.stacking.delayfocus_window) {
+    if (var_win(win) == space.stacking.delayfocus_window) {
         cancel_delay_focus(space);
     }
 
@@ -84,11 +93,11 @@ void remove_controlled_window_from_space(Space& space, Win* win)
 template<typename Win>
 void destroy_damage_handle(Win& win)
 {
-    if (win.damage_handle == XCB_NONE) {
+    if (win.damage.handle == XCB_NONE) {
         return;
     }
-    xcb_damage_destroy(connection(), win.damage_handle);
-    win.damage_handle = XCB_NONE;
+    xcb_damage_destroy(connection(), win.damage.handle);
+    win.damage.handle = XCB_NONE;
 }
 
 template<typename Win>
@@ -102,8 +111,10 @@ void reset_have_resize_effect(Win& win)
 template<typename Win>
 void finish_unmanaged_removal(Win* win, Win* remnant)
 {
+    using var_win = typename Win::space_t::window_t;
+
     auto& space = win->space;
-    assert(contains(space.windows, win));
+    assert(contains(space.windows, var_win(win)));
 
     remove_window_from_lists(space, win);
     space.base.render->compositor->addRepaint(visible_rect(win));
@@ -115,7 +126,7 @@ void finish_unmanaged_removal(Win* win, Win* remnant)
         remnant->remnant->unref();
         delete win;
     } else {
-        delete_window_from_space(space, win);
+        delete_window_from_space(space, *win);
     }
 }
 
@@ -129,12 +140,22 @@ Win* create_remnant_window(Win& source)
 
     transfer_remnant_data(source, *win);
 
-    assert(win->damage_handle == XCB_NONE);
+    assert(win->damage.handle == XCB_NONE);
+
+    win->net_info = source.net_info;
+
+    if (auto winfo = dynamic_cast<x11::win_info<Win>*>(win->net_info)) {
+        winfo->disable();
+    }
+
+    win->xcb_windows.client.reset(source.xcb_windows.client, false);
     win->xcb_visual = source.xcb_visual;
+    win->is_shape = source.is_shape;
     win->client_machine = source.client_machine;
-    win->m_wmClientLeader = source.wmClientLeader();
+    win->m_wmClientLeader = get_wm_client_leader(source);
 
     space_add_remnant(source, *win);
+    scene_add_remnant(*win);
     return win;
 }
 
@@ -148,11 +169,11 @@ void release_unmanaged(Win* win, bool on_shutdown)
     Q_EMIT win->qobject->closed();
 
     // Don't affect our own windows.
-    if (!QWidget::find(win->xcb_window)) {
+    if (!QWidget::find(win->xcb_windows.client)) {
         if (base::x11::xcb::extensions::self()->is_shape_available()) {
-            xcb_shape_select_input(connection(), win->xcb_window, false);
+            xcb_shape_select_input(connection(), win->xcb_windows.client, false);
         }
-        base::x11::xcb::select_input(win->xcb_window, XCB_EVENT_MASK_NO_EVENT);
+        base::x11::xcb::select_input(win->xcb_windows.client, XCB_EVENT_MASK_NO_EVENT);
     }
 
     if (on_shutdown) {
@@ -173,6 +194,8 @@ void destroy_unmanaged(Win* win)
 template<typename Win>
 void release_window(Win* win, bool on_shutdown)
 {
+    using var_win = typename Win::space_t::window_t;
+
     Q_ASSERT(!win->deleting);
     win->deleting = true;
 
@@ -184,7 +207,8 @@ void release_window(Win* win, bool on_shutdown)
 
 #if KWIN_BUILD_TABBOX
     auto& tabbox = win->space.tabbox;
-    if (tabbox->is_displayed() && tabbox->current_client() == win) {
+    if (tabbox->is_displayed() && tabbox->current_client()
+        && tabbox->current_client() == var_win(win)) {
         tabbox->next_prev(true);
     }
 #endif
@@ -234,7 +258,7 @@ void release_window(Win* win, bool on_shutdown)
     win->hidden = true;
 
     if (!on_shutdown) {
-        process_window_hidden(win->space, win);
+        process_window_hidden(win->space, *win);
     }
 
     // Destroying decoration would cause ugly visual effect
@@ -247,10 +271,10 @@ void release_window(Win* win, bool on_shutdown)
         remove_controlled_window_from_space(win->space, win);
         // Only when the window is being unmapped, not when closing down KWin (NETWM
         // sections 5.5,5.7)
-        win->info->setDesktop(0);
+        win->net_info->setDesktop(0);
 
         // Reset all state flags
-        win->info->setState(NET::States(), win->info->state());
+        win->net_info->setState(NET::States(), win->net_info->state());
     }
 
     auto& atoms = win->space.atoms;
@@ -274,7 +298,6 @@ void release_window(Win* win, bool on_shutdown)
         win->xcb_windows.client.unmap();
     }
 
-    win->xcb_windows.client.reset();
     win->xcb_windows.wrapper.reset();
     win->xcb_windows.outer.reset();
 
@@ -286,7 +309,7 @@ void release_window(Win* win, bool on_shutdown)
         del->remnant->unref();
         delete win;
     } else {
-        delete_window_from_space(win->space, win);
+        delete_window_from_space(win->space, *win);
     }
 
     base::x11::ungrab_server();
@@ -298,6 +321,8 @@ void release_window(Win* win, bool on_shutdown)
 template<typename Win>
 void destroy_window(Win* win)
 {
+    using var_win = typename Win::space_t::window_t;
+
     assert(!win->deleting);
     win->deleting = true;
 
@@ -308,7 +333,7 @@ void destroy_window(Win* win)
 
 #if KWIN_BUILD_TABBOX
     auto& tabbox = win->space.tabbox;
-    if (tabbox && tabbox->is_displayed() && tabbox->current_client() == win) {
+    if (tabbox && tabbox->is_displayed() && tabbox->current_client() == var_win(win)) {
         tabbox->next_prev(true);
     }
 #endif
@@ -342,13 +367,12 @@ void destroy_window(Win* win)
     // So that it's not considered visible anymore
     win->hidden = true;
 
-    process_window_hidden(win->space, win);
+    process_window_hidden(win->space, *win);
     win->control->destroy_decoration();
     clean_grouping(win);
     remove_controlled_window_from_space(win->space, win);
 
     // invalidate
-    win->xcb_windows.client.reset();
     win->xcb_windows.wrapper.reset();
     win->xcb_windows.outer.reset();
 
@@ -360,7 +384,71 @@ void destroy_window(Win* win)
         del->remnant->unref();
         delete win;
     } else {
-        delete_window_from_space(win->space, win);
+        delete_window_from_space(win->space, *win);
+    }
+}
+
+template<typename Win>
+void cleanup_window(Win& win)
+{
+    if (win.kill_helper_pid && !::kill(win.kill_helper_pid, 0)) {
+        // The process is still alive.
+        ::kill(win.kill_helper_pid, SIGTERM);
+        win.kill_helper_pid = 0;
+    }
+
+    if (win.sync_request.alarm != XCB_NONE) {
+        xcb_sync_destroy_alarm(connection(), win.sync_request.alarm);
+    }
+
+    assert(!win.control || !win.control->move_resize.enabled);
+    assert(win.xcb_windows.client != XCB_WINDOW_NONE);
+    assert(win.xcb_windows.wrapper == XCB_WINDOW_NONE);
+    assert(win.xcb_windows.outer == XCB_WINDOW_NONE);
+
+    delete win.client_machine;
+    delete win.net_info;
+    win.space.windows_map.erase(win.meta.signal_id);
+}
+
+/// Kills the window via XKill
+template<typename Win>
+void handle_kill_window(Win& win)
+{
+    qCDebug(KWIN_CORE) << "x11::kill_window:" << caption(&win);
+    kill_process(&win, false);
+
+    // Always kill this client at the server
+    win.xcb_windows.client.kill();
+
+    x11::destroy_window(&win);
+}
+
+template<typename Win>
+bool is_closeable(Win const& win)
+{
+    return win.control->rules.checkCloseable(win.motif_hints.close() && !is_special_window(&win));
+}
+
+template<typename Win>
+void close_window(Win& win)
+{
+    if (!win.isCloseable()) {
+        return;
+    }
+
+    // Update user time, because the window may create a confirming dialog.
+    update_user_time(&win);
+
+    if (win.net_info->supportsProtocol(NET::DeleteWindowProtocol)) {
+        send_client_message(win.xcb_windows.client,
+                            win.space.atoms->wm_protocols,
+                            win.space.atoms->wm_delete_window);
+        ping(&win);
+    } else {
+        // Client will not react on wm_delete_window. We have not choice
+        // but destroy his connection to the XServer.
+        win.killWindow();
     }
 }
 

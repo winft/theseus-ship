@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/effect_loader.h"
 #include "render/effects.h"
 #include "render/scene.h"
-#include "toplevel.h"
 #include "win/actions.h"
 #include "win/net.h"
 #include "win/space.h"
@@ -150,7 +149,7 @@ void MinimizeAnimationTest::testMinimizeUnminimize()
     const QRect iconRect = QRect(0, 0, 42, 36);
     window->setMinimizedGeometry(panelSurface.get(), iconRect);
     Test::flush_wayland_connection();
-    QTRY_COMPARE(client->iconGeometry(), iconRect.translated(panel->geo.frame.topLeft()));
+    QTRY_COMPARE(win::get_icon_geometry(*client), iconRect.translated(panel->geo.frame.topLeft()));
 
     // Load effect that will be tested.
     QFETCH(QString, effectName);

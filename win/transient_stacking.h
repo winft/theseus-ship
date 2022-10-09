@@ -6,6 +6,7 @@
 #pragma once
 
 #include "net.h"
+#include "transient.h"
 
 namespace KWin::win
 {
@@ -28,7 +29,7 @@ bool keep_transient_above(Win1 const* mainwindow, Win2 const* child)
     // the mainwindow, but only if they're group transient (since only such dialogs
     // have taskbar entry in Kicker). A proper way of doing this (both kwin and kicker)
     // needs to be found.
-    if (win::is_dialog(child) && !child->transient->modal() && child->groupTransient()) {
+    if (win::is_dialog(child) && !child->transient->modal() && is_group_transient(*child)) {
         return false;
     }
 

@@ -8,17 +8,19 @@
 #include "net.h"
 #include "rules/types.h"
 
-#include <KDesktopFile>
-#include <klocalizedstring.h>
+#include "utils/algorithm.h"
 
+#include <KDesktopFile>
 #include <QDir>
 #include <QLatin1String>
+#include <klocalizedstring.h>
+#include <optional>
 
 namespace KWin::win
 {
 
 template<typename Win>
-QString caption(Win* win)
+QString caption(Win const* win)
 {
     if (win->remnant) {
         return win->remnant->data.caption;
@@ -32,7 +34,7 @@ QString caption(Win* win)
 }
 
 template<typename Win>
-QString shortcut_caption_suffix(Win* win)
+QString shortcut_caption_suffix(Win const* win)
 {
     if (win->control->shortcut.isEmpty()) {
         return QString();
@@ -83,7 +85,7 @@ QString icon_from_desktop_file(Win* win)
  * user, can be closed, etc.
  */
 template<typename Win>
-bool is_special_window(Win* win)
+bool is_special_window(Win const* win)
 {
     return is_desktop(win) || is_dock(win) || is_splash(win) || is_toolbar(win)
         || is_notification(win) || is_critical_notification(win) || is_on_screen_display(win);
@@ -94,22 +96,32 @@ bool is_special_window(Win* win)
  * If no such window exists @c nullptr is returned.
  */
 template<typename Win>
-Win* find_client_with_same_caption(Win const* win)
+std::optional<typename Win::space_t::window_t> find_client_with_same_caption(Win const* win)
 {
     for (auto candidate : win->space.windows) {
-        if (!candidate->control || candidate == win) {
-            continue;
+        if (std::visit(overload{[&](auto&& candidate) {
+                           if constexpr (std::is_same_v<std::decay_t<decltype(candidate)>, Win*>) {
+                               if (candidate == win) {
+                                   return false;
+                               }
+                           }
+                           if (!candidate->control) {
+                               return false;
+                           }
+                           if (is_special_window(candidate) && !is_toolbar(candidate)) {
+                               return false;
+                           }
+                           if (candidate->meta.caption.normal != win->meta.caption.normal
+                               || candidate->meta.caption.suffix != win->meta.caption.suffix) {
+                               return false;
+                           }
+                           return true;
+                       }},
+                       candidate)) {
+            return candidate;
         }
-        if (is_special_window(candidate) && !is_toolbar(candidate)) {
-            continue;
-        }
-        if (candidate->meta.caption.normal != win->meta.caption.normal
-            || candidate->meta.caption.suffix != win->meta.caption.suffix) {
-            continue;
-        }
-        return candidate;
     }
-    return nullptr;
+    return {};
 }
 
 template<typename Win>

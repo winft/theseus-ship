@@ -16,10 +16,8 @@ void adopt_transient_children(Space* space, Window* window)
     auto const& wins = space->windows;
     std::for_each(wins.cbegin(), wins.cend(), [&window](auto win) {
         // Children can only be of same window type.
-        // TODO(romangg): Make this cast unnecessary, i.e. check in the checkTransient functions.
-        if (auto casted_win = dynamic_cast<Window*>(win)) {
-            casted_win->checkTransient(window);
-        }
+        std::visit(overload{[window](Window* win) { win->checkTransient(window); }, [&](auto&&) {}},
+                   win);
     });
 }
 

@@ -5,11 +5,12 @@
 */
 #pragma once
 
-#include "client.h"
-#include "input.h"
+#include "actions.h"
+#include "hidden_preview.h"
 #include "types.h"
 
 #include "base/options.h"
+#include "base/x11/xcb/extensions.h"
 #include "win/activation.h"
 #include "win/controlling.h"
 #include "win/damage.h"
@@ -20,6 +21,39 @@
 
 namespace KWin::win::x11
 {
+
+template<typename Win>
+bool is_shown(Win const& win)
+{
+    if (!win.control) {
+        return true;
+    }
+    return !win.control->minimized && !win.hidden;
+}
+
+/**
+ * Sets the window's mapping state. Possible values are: WithdrawnState, IconicState, NormalState.
+ */
+template<typename Win>
+void export_mapping_state(Win* win, int state)
+{
+    assert(win->xcb_windows.client != XCB_WINDOW_NONE);
+    assert(!win->deleting || state == XCB_ICCCM_WM_STATE_WITHDRAWN);
+
+    auto& atoms = win->space.atoms;
+
+    if (state == XCB_ICCCM_WM_STATE_WITHDRAWN) {
+        win->xcb_windows.client.delete_property(atoms->wm_state);
+        return;
+    }
+
+    assert(state == XCB_ICCCM_WM_STATE_NORMAL || state == XCB_ICCCM_WM_STATE_ICONIC);
+
+    int32_t data[2];
+    data[0] = state;
+    data[1] = XCB_NONE;
+    win->xcb_windows.client.change_property(atoms->wm_state, atoms->wm_state, 32, 2, data);
+}
 
 template<typename Win>
 void map(Win* win)
@@ -58,45 +92,6 @@ void unmap(Win* win)
     win->xcb_windows.input.unmap();
     win->xcb_windows.wrapper.select_input(client_win_mask | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY);
     export_mapping_state(win, XCB_ICCCM_WM_STATE_ICONIC);
-}
-
-template<typename Win>
-bool hidden_preview(Win* win)
-{
-    return win->mapping == mapping_state::kept;
-}
-
-/**
- * XComposite doesn't keep window pixmaps of unmapped windows, which means
- * there wouldn't be any previews of windows that are minimized or on another
- * virtual desktop. Therefore rawHide() actually keeps such windows mapped.
- * However special care needs to be taken so that such windows don't interfere.
- * Therefore they're put very low in the stacking order and they have input shape
- * set to none, which hopefully is enough. If there's no input shape available,
- * then it's hoped that there will be some other desktop above it *shrug*.
- * Using normal shape would be better, but that'd affect other things, e.g. painting
- * of the actual preview.
- */
-template<typename Win>
-void update_hidden_preview(Win* win)
-{
-    if (hidden_preview(win)) {
-        win->space.stacking.order.force_restacking();
-        if (base::x11::xcb::extensions::self()->is_shape_input_available()) {
-            xcb_shape_rectangles(connection(),
-                                 XCB_SHAPE_SO_SET,
-                                 XCB_SHAPE_SK_INPUT,
-                                 XCB_CLIP_ORDERING_UNSORTED,
-                                 win->frameId(),
-                                 0,
-                                 0,
-                                 0,
-                                 nullptr);
-        }
-    } else {
-        win->space.stacking.order.force_restacking();
-        win->update_input_shape();
-    }
 }
 
 template<typename Win>
@@ -139,7 +134,7 @@ void internal_hide(Win* win)
     }
 
     win->space.base.render->compositor->addRepaint(visible_rect(win));
-    process_window_hidden(win->space, win);
+    process_window_hidden(win->space, *win);
     Q_EMIT win->qobject->windowHidden();
 }
 
@@ -167,7 +162,7 @@ void internal_keep(Win* win)
 
     update_hidden_preview(win);
     win->space.base.render->compositor->addRepaint(visible_rect(win));
-    process_window_hidden(win->space, win);
+    process_window_hidden(win->space, *win);
 }
 
 template<typename Win>
@@ -180,7 +175,7 @@ void update_visibility(Win* win)
     }
 
     if (win->hidden) {
-        win->info->setState(NET::Hidden, NET::Hidden);
+        win->net_info->setState(NET::Hidden, NET::Hidden);
         win::set_skip_taskbar(win, true);
         if (win->space.base.render->compositor->scene
             && kwinApp()->options->qobject->hiddenPreviews() == base::HiddenPreviewsAlways) {
@@ -194,7 +189,7 @@ void update_visibility(Win* win)
     win::set_skip_taskbar(win, win->control->original_skip_taskbar);
 
     if (win->control->minimized) {
-        win->info->setState(NET::Hidden, NET::Hidden);
+        win->net_info->setState(NET::Hidden, NET::Hidden);
         if (win->space.base.render->compositor->scene
             && kwinApp()->options->qobject->hiddenPreviews() == base::HiddenPreviewsAlways) {
             internal_keep(win);
@@ -204,7 +199,7 @@ void update_visibility(Win* win)
         return;
     }
 
-    win->info->setState(NET::States(), NET::Hidden);
+    win->net_info->setState(NET::States(), NET::Hidden);
     if (!on_current_desktop(win)) {
         if (win->space.base.render->compositor->scene
             && kwinApp()->options->qobject->hiddenPreviews() != base::HiddenPreviewsNever) {
@@ -215,6 +210,35 @@ void update_visibility(Win* win)
         return;
     }
     internal_show(win);
+}
+
+template<typename Win>
+void show_on_screen_edge(Win& win)
+{
+    QObject::disconnect(win.notifiers.edge_remove);
+
+    win.hideClient(false);
+    win::set_keep_below(&win, false);
+    xcb_delete_property(
+        connection(), win.xcb_windows.client, win.space.atoms->kde_screen_edge_show);
+}
+
+template<typename Win>
+void do_minimize(Win& win)
+{
+    update_visibility(&win);
+    update_allowed_actions(&win);
+    propagate_minimized_to_transients(win);
+}
+
+template<typename Win>
+void hide_window(Win& win, bool hide)
+{
+    if (win.hidden == hide) {
+        return;
+    }
+    win.hidden = hide;
+    update_visibility(&win);
 }
 
 }

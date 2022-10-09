@@ -7,6 +7,7 @@
 */
 #pragma once
 
+#include "compositor.h"
 #include "effect/screen_impl.h"
 #include "effect/window_impl.h"
 #include "effect_loader.h"
@@ -295,87 +296,101 @@ public:
                 &win::space_qobject::currentDesktopChanged,
                 this,
                 [this, space = ws](int old) {
-                    auto c = space->move_resize_window;
                     int const newDesktop
                         = this->compositor.space->virtual_desktop_manager->current();
-                    if (old != 0 && newDesktop != old) {
-                        assert(!c || c->render);
-                        assert(!c || c->render->effect);
-                        auto eff_win = c ? c->render->effect.get() : nullptr;
-                        Q_EMIT desktopChanged(old, newDesktop, eff_win);
-                        // TODO: remove in 4.10
-                        Q_EMIT desktopChanged(old, newDesktop);
+                    if (old == 0 || newDesktop == old) {
+                        return;
                     }
+                    EffectWindow* eff_win{nullptr};
+                    if (auto& mov_res = space->move_resize_window) {
+                        std::visit(overload{[&](auto&& win) {
+                                       assert(win->render);
+                                       assert(win->render->effect);
+                                       eff_win = win->render->effect.get();
+                                   }},
+                                   *mov_res);
+                    }
+                    Q_EMIT desktopChanged(old, newDesktop, eff_win);
+                    // TODO: remove in 4.10
+                    Q_EMIT desktopChanged(old, newDesktop);
                 });
         connect(ws->qobject.get(),
                 &win::space_qobject::desktopPresenceChanged,
                 this,
                 [this, space = ws](auto win_id, int old) {
-                    auto c = space->windows_map.at(win_id);
-                    assert(c);
-                    assert(c->render);
-                    assert(c->render->effect);
-                    Q_EMIT desktopPresenceChanged(c->render->effect.get(), old, c->desktop());
+                    std::visit(overload{[&, this](auto&& win) {
+                                   assert(win->render);
+                                   assert(win->render->effect);
+                                   Q_EMIT desktopPresenceChanged(
+                                       win->render->effect.get(), old, win::get_desktop(*win));
+                               }},
+                               space->windows_map.at(win_id));
                 });
         connect(ws->qobject.get(),
                 &win::space_qobject::clientAdded,
                 this,
                 [this, space = ws](auto win_id) {
-                    auto c = space->windows_map.at(win_id);
-                    if (c->render_data.ready_for_painting) {
-                        slotClientShown(c);
-                    } else {
-                        QObject::connect(c->qobject.get(),
-                                         &win::window_qobject::windowShown,
-                                         this,
-                                         [this, c] { slotClientShown(c); });
-                    }
+                    std::visit(overload{[this](auto&& win) {
+                                   if (win->render_data.ready_for_painting) {
+                                       slotClientShown(*win);
+                                   } else {
+                                       QObject::connect(win->qobject.get(),
+                                                        &win::window_qobject::windowShown,
+                                                        this,
+                                                        [this, win] { slotClientShown(*win); });
+                                   }
+                               }},
+                               space->windows_map.at(win_id));
                 });
         connect(ws->qobject.get(),
                 &win::space_qobject::unmanagedAdded,
                 this,
                 [this, space = ws](auto win_id) {
                     // it's never initially ready but has synthetic 50ms delay
-                    auto u = space->windows_map.at(win_id);
-                    connect(u->qobject.get(), &win::window_qobject::windowShown, this, [this, u] {
-                        slotUnmanagedShown(u);
-                    });
+                    std::visit(overload{[this](auto&& win) {
+                                   connect(win->qobject.get(),
+                                           &win::window_qobject::windowShown,
+                                           this,
+                                           [this, win] { slotUnmanagedShown(*win); });
+                               }},
+                               space->windows_map.at(win_id));
                 });
         connect(ws->qobject.get(),
                 &win::space_qobject::internalClientAdded,
                 this,
                 [this, space = ws](auto win_id) {
-                    auto client = space->windows_map.at(win_id);
-                    assert(client->render);
-                    assert(client->render->effect);
-                    setupAbstractClientConnections(client);
-                    Q_EMIT windowAdded(client->render->effect.get());
+                    std::visit(overload{[this](auto&& win) {
+                                   assert(win->render);
+                                   assert(win->render->effect);
+                                   setupAbstractClientConnections(*win);
+                                   Q_EMIT windowAdded(win->render->effect.get());
+                               }},
+                               space->windows_map.at(win_id));
                 });
         connect(ws->qobject.get(), &win::space_qobject::clientActivated, this, [this, space = ws] {
-            auto window = space->stacking.active;
-            assert(!window || window->render);
-            assert(!window || window->render->effect);
-            auto eff_win = window ? window->render->effect.get() : nullptr;
+            EffectWindow* eff_win{nullptr};
+            if (auto win = space->stacking.active) {
+                std::visit(overload{[&](auto&& win) {
+                               assert(win->render);
+                               assert(win->render->effect);
+                               eff_win = win->render->effect.get();
+                           }},
+                           *win);
+            }
             Q_EMIT windowActivated(eff_win);
         });
-
-        QObject::connect(ws->qobject.get(),
-                         &win::space_qobject::remnant_created,
-                         this,
-                         [this, space = ws](auto win_id) {
-                             auto win = space->windows_map.at(win_id);
-                             add_remnant(win);
-                         });
 
         connect(ws->qobject.get(),
                 &win::space_qobject::window_deleted,
                 this,
                 [this, space = ws](auto win_id) {
-                    auto d = space->windows_map.at(win_id);
-                    assert(d->render);
-                    assert(d->render->effect);
-                    Q_EMIT windowDeleted(d->render->effect.get());
-                    elevated_windows.removeAll(d->render->effect.get());
+                    std::visit(overload{[this](auto&& win) {
+                                   assert(win->render);
+                                   assert(win->render->effect);
+                                   Q_EMIT windowDeleted(win->render->effect.get());
+                                   elevated_windows.removeAll(win->render->effect.get());
+                               }},
+                               space->windows_map.at(win_id));
                 });
         connect(ws->session_manager.get(),
                 &win::session_manager::stateChanged,
@@ -458,23 +473,27 @@ public:
         }
 
         // connect all clients
-        for (auto& window : ws->windows) {
+        for (auto& win : ws->windows) {
             // TODO: Can we merge this with the one for Wayland XdgShellClients below?
-            if (!window->control) {
-                continue;
-            }
-            auto x11_client = dynamic_cast<typename space_t::x11_window*>(window);
-            if (!x11_client) {
-                continue;
-            }
-            setupClientConnections(x11_client);
+            std::visit(overload{[&](typename space_t::x11_window* win) {
+                                    if (win->control) {
+                                        setupClientConnections(*win);
+                                    }
+                                },
+                                [](auto&&) {}},
+                       win);
         }
-        for (auto unmanaged : win::x11::get_unmanageds(*ws)) {
-            setupUnmanagedConnections(unmanaged);
+        for (auto win : win::x11::get_unmanageds(*ws)) {
+            std::visit(overload{[&](auto&& win) { setupUnmanagedConnections(*win); }}, win);
         }
-        for (auto window : ws->windows) {
-            if (auto internal = dynamic_cast<typename space_t::internal_window_t*>(window)) {
-                setupAbstractClientConnections(internal);
+
+        if constexpr (requires { typename space_t::internal_window_t; }) {
+            for (auto& win : ws->windows) {
+                std::visit(overload{[this](typename space_t::internal_window_t* win) {
+                                        setupAbstractClientConnections(*win);
+                                    },
+                                    [](auto&&) {}},
+                           win);
             }
         }
 
@@ -535,7 +554,7 @@ public:
 
     void addRepaintFull() override
     {
-        compositor.addRepaintFull();
+        full_repaint(compositor);
     }
 
     void addRepaint(const QRect& r) override
@@ -579,15 +598,22 @@ public:
     void activateWindow(EffectWindow* c) override
     {
         auto window = static_cast<effect_window_t*>(c)->window.ref_win;
-        if (window && window->control) {
-            win::force_activate_window(*compositor.space, window);
-        }
+        assert(window.has_value());
+
+        std::visit(overload{[this](auto&& win) {
+                       if (win->control) {
+                           win::force_activate_window(*compositor.space, *win);
+                       }
+                   }},
+                   *window);
     }
 
     EffectWindow* activeWindow() const override
     {
-        auto ac = compositor.space->stacking.active;
-        return ac ? ac->render->effect.get() : nullptr;
+        if (auto win = compositor.space->stacking.active) {
+            return std::visit(overload{[](auto&& win) { return win->render->effect.get(); }}, *win);
+        }
+        return nullptr;
     }
 
     void desktopResized(const QSize& size)
@@ -692,14 +718,18 @@ public:
 
     void startInteractiveWindowSelection(std::function<void(KWin::EffectWindow*)> callback) override
     {
-        compositor.space->input->start_interactive_window_selection([callback](auto t) {
-            if (t) {
-                assert(t->render);
-                assert(t->render->effect);
-                callback(t->render->effect.get());
-            } else {
+        compositor.space->input->start_interactive_window_selection([callback](auto win) {
+            if (!win) {
                 callback(nullptr);
+                return;
             }
+
+            std::visit(overload{[&](auto&& win) {
+                           assert(win->render);
+                           assert(win->render->effect);
+                           callback(win->render->effect.get());
+                       }},
+                       *win);
         });
     }
 
@@ -745,59 +775,69 @@ public:
                     bool snap = false,
                     double snapAdjust = 1.0) override
     {
-        auto window = static_cast<effect_window_t*>(w)->window.ref_win;
-        if (!window || !window->isMovable()) {
-            return;
-        }
-
-        if (snap) {
-            win::move(
-                window,
-                win::adjust_window_position(*compositor.space, *window, pos, true, snapAdjust));
-        } else {
-            win::move(window, pos);
-        }
+        std::visit(overload{[&](auto&& win) {
+                       if (!win->isMovable()) {
+                           return;
+                       }
+                       if (!snap) {
+                           win::move(win, pos);
+                           return;
+                       }
+                       win::move(win,
+                                 win::adjust_window_position(
+                                     *compositor.space, *win, pos, true, snapAdjust));
+                   }},
+                   *static_cast<effect_window_t*>(w)->window.ref_win);
     }
 
     void windowToDesktop(EffectWindow* w, int desktop) override
     {
-        auto window = static_cast<effect_window_t*>(w)->window.ref_win;
-        if (window && window->control && !win::is_desktop(window) && !win::is_dock(window)) {
-            win::send_window_to_desktop(*compositor.space, window, desktop, true);
-        }
+        std::visit(overload{[&, this](auto&& win) {
+                       if (win->control && !win::is_desktop(win) && !win::is_dock(win)) {
+                           win::send_window_to_desktop(*compositor.space, win, desktop, true);
+                       }
+                   }},
+                   *static_cast<effect_window_t*>(w)->window.ref_win);
     }
 
     void windowToDesktops(EffectWindow* w, const QVector<uint>& desktopIds) override
     {
-        auto window = static_cast<effect_window_t*>(w)->window.ref_win;
-        if (!window || !window->control || win::is_desktop(window) || win::is_dock(window)) {
-            return;
-        }
-        QVector<win::virtual_desktop*> desktops;
-        desktops.reserve(desktopIds.count());
-        for (uint x11Id : desktopIds) {
-            if (x11Id > compositor.space->virtual_desktop_manager->count()) {
-                continue;
-            }
-            auto d = compositor.space->virtual_desktop_manager->desktopForX11Id(x11Id);
-            Q_ASSERT(d);
-            if (desktops.contains(d)) {
-                continue;
-            }
-            desktops << d;
-        }
-        win::set_desktops(window, desktops);
+        std::visit(overload{[&](auto&& win) {
+                       if (!win->control || win::is_desktop(win) || win::is_dock(win)) {
+                           return;
+                       }
+                       QVector<win::virtual_desktop*> desktops;
+                       desktops.reserve(desktopIds.count());
+                       for (uint x11Id : desktopIds) {
+                           if (x11Id > compositor.space->virtual_desktop_manager->count()) {
+                               continue;
+                           }
+                           auto d
+                               = compositor.space->virtual_desktop_manager->desktopForX11Id(x11Id);
+                           Q_ASSERT(d);
+                           if (desktops.contains(d)) {
+                               continue;
+                           }
+                           desktops << d;
+                       }
+                       win::set_desktops(win, desktops);
+                   }},
+                   *static_cast<effect_window_t*>(w)->window.ref_win);
     }
 
     void windowToScreen(EffectWindow* w, int screen) override
     {
         auto output = base::get_output(compositor.platform.base.outputs, screen);
-        auto window = static_cast<effect_window_t*>(w)->window.ref_win;
-
-        if (output && window && window->control && !win::is_desktop(window)
-            && !win::is_dock(window)) {
-            win::send_to_screen(*compositor.space, window, *output);
+        if (!output) {
+            return;
         }
+
+        std::visit(overload{[&, this](auto&& win) {
+                       if (win->control && !win::is_desktop(win) && !win::is_dock(win)) {
+                           win::send_to_screen(*compositor.space, win, *output);
+                       }
+                   }},
+                   *static_cast<effect_window_t*>(w)->window.ref_win);
     }
 
     void setShowingDesktop(bool showing) override
@@ -911,8 +951,14 @@ public:
     EffectWindow* find_window_by_uuid(const QUuid& id) const override
     {
         for (auto win : compositor.space->windows) {
-            if (!win->remnant && win->meta.internal_id == id) {
-                return win->render->effect.get();
+            if (auto eff_win = std::visit(overload{[&](auto&& win) -> EffectWindow* {
+                                              if (!win->remnant && win->meta.internal_id == id) {
+                                                  return win->render->effect.get();
+                                              }
+                                              return nullptr;
+                                          }},
+                                          win)) {
+                return eff_win;
             }
         }
         return nullptr;
@@ -920,12 +966,14 @@ public:
 
     EffectWindowList stackingOrder() const override
     {
-        auto list = win::render_stack(compositor.space->stacking.order);
         EffectWindowList ret;
-        for (auto t : list) {
-            if (auto eff_win = t->render->effect.get()) {
-                ret.append(eff_win);
-            }
+        for (auto win : win::render_stack(compositor.space->stacking.order)) {
+            std::visit(overload{[&](auto&& win) {
+                           if (auto eff_win = win->render->effect.get()) {
+                               ret.append(eff_win);
+                           }
+                       }},
+                       win);
         }
         return ret;
     }
@@ -933,10 +981,12 @@ public:
     void setTabBoxWindow([[maybe_unused]] EffectWindow* w) override
     {
 #if KWIN_BUILD_TABBOX
-        auto window = static_cast<effect_window_t*>(w)->window.ref_win;
-        if (window->control) {
-            compositor.space->tabbox->set_current_client(window);
-        }
+        std::visit(overload{[&, this](auto&& win) {
+                       if (win->control) {
+                           compositor.space->tabbox->set_current_client(win);
+                       }
+                   }},
+                   *static_cast<effect_window_t*>(w)->window.ref_win);
 #endif
     }
 
@@ -953,10 +1003,11 @@ public:
         const auto clients = compositor.space->tabbox->current_client_list();
         EffectWindowList ret;
         ret.reserve(clients.size());
-        std::transform(std::cbegin(clients),
-                       std::cend(clients),
-                       std::back_inserter(ret),
-                       [](auto client) { return client->render->effect.get(); });
+        std::transform(
+            std::cbegin(clients), std::cend(clients), std::back_inserter(ret), [](auto win) {
+                return std::visit(overload{[](auto&& win) { return win->render->effect.get(); }},
+                                  win);
+            });
         return ret;
 #else
         return EffectWindowList();
@@ -1005,8 +1056,9 @@ public:
     EffectWindow* currentTabBoxWindow() const override
     {
 #if KWIN_BUILD_TABBOX
-        if (auto c = compositor.space->tabbox->current_client())
-            return c->render->effect.get();
+        if (auto win = compositor.space->tabbox->current_client()) {
+            return std::visit(overload{[](auto&& win) { return win->render->effect.get(); }}, *win);
+        }
 #endif
         return nullptr;
     }
@@ -1066,17 +1118,20 @@ public:
         return win::space_window_area(*compositor.space, opt, output, desktop);
     }
 
-    QRect clientArea(clientAreaOption opt, const EffectWindow* c) const override
+    QRect clientArea(clientAreaOption opt, const EffectWindow* eff_win) const override
     {
-        auto window = static_cast<effect_window_t const*>(c)->window.ref_win;
-        auto space = compositor.space;
+        return std::visit(overload{[&, this](auto&& win) {
+                              if (win->control) {
+                                  return win::space_window_area(*compositor.space, opt, win);
+                              }
 
-        if (window->control) {
-            return win::space_window_area(*space, opt, window);
-        } else {
-            return win::space_window_area(
-                *space, opt, window->geo.frame.center(), space->virtual_desktop_manager->current());
-        }
+                              return win::space_window_area(
+                                  *compositor.space,
+                                  opt,
+                                  win->geo.frame.center(),
+                                  compositor.space->virtual_desktop_manager->current());
+                          }},
+                          *static_cast<effect_window_t const*>(eff_win)->window.ref_win);
     }
 
     QRect clientArea(clientAreaOption opt, const QPoint& p, int desktop) const override
@@ -1206,162 +1261,164 @@ public:
     Compositor& compositor;
 
 protected:
-    void add_remnant(typename space_t::window_t* remnant)
+    template<typename Win>
+    void setupAbstractClientConnections(Win& window)
     {
-        assert(remnant);
-        assert(remnant->render);
-        Q_EMIT windowClosed(remnant->render->effect.get());
-    }
-
-    void setupAbstractClientConnections(typename space_t::window_t* window)
-    {
-        auto qtwin = window->qobject.get();
+        auto qtwin = window.qobject.get();
 
         QObject::connect(qtwin,
                          &win::window_qobject::maximize_mode_changed,
                          this,
-                         [this, window](auto mode) { slotClientMaximized(window, mode); });
+                         [this, &window](auto mode) { slotClientMaximized(window, mode); });
         QObject::connect(
-            qtwin, &win::window_qobject::clientStartUserMovedResized, this, [this, window] {
-                Q_EMIT windowStartUserMovedResized(window->render->effect.get());
+            qtwin, &win::window_qobject::clientStartUserMovedResized, this, [this, &window] {
+                Q_EMIT windowStartUserMovedResized(window.render->effect.get());
             });
         QObject::connect(qtwin,
                          &win::window_qobject::clientStepUserMovedResized,
                          this,
-                         [this, window](QRect const& geometry) {
-                             Q_EMIT windowStepUserMovedResized(window->render->effect.get(),
+                         [this, &window](QRect const& geometry) {
+                             Q_EMIT windowStepUserMovedResized(window.render->effect.get(),
                                                                geometry);
                          });
         QObject::connect(
-            qtwin, &win::window_qobject::clientFinishUserMovedResized, this, [this, window] {
-                Q_EMIT windowFinishUserMovedResized(window->render->effect.get());
+            qtwin, &win::window_qobject::clientFinishUserMovedResized, this, [this, &window] {
+                Q_EMIT windowFinishUserMovedResized(window.render->effect.get());
             });
         QObject::connect(qtwin,
                          &win::window_qobject::opacityChanged,
                          this,
-                         [this, window](auto old) { slotOpacityChanged(window, old); });
+                         [this, &window](auto old) { slotOpacityChanged(window, old); });
         QObject::connect(
-            qtwin, &win::window_qobject::clientMinimized, this, [this, window](auto animate) {
+            qtwin, &win::window_qobject::clientMinimized, this, [this, &window](auto animate) {
                 // TODO: notify effects even if it should not animate?
                 if (animate) {
-                    Q_EMIT windowMinimized(window->render->effect.get());
+                    Q_EMIT windowMinimized(window.render->effect.get());
                 }
             });
         QObject::connect(
-            qtwin, &win::window_qobject::clientUnminimized, this, [this, window](auto animate) {
+            qtwin, &win::window_qobject::clientUnminimized, this, [this, &window](auto animate) {
                 // TODO: notify effects even if it should not animate?
                 if (animate) {
-                    Q_EMIT windowUnminimized(window->render->effect.get());
+                    Q_EMIT windowUnminimized(window.render->effect.get());
                 }
             });
-        QObject::connect(qtwin, &win::window_qobject::modalChanged, this, [this, window] {
+        QObject::connect(qtwin, &win::window_qobject::modalChanged, this, [this, &window] {
             slotClientModalityChanged(window);
         });
         QObject::connect(
             qtwin,
             &win::window_qobject::frame_geometry_changed,
             this,
-            [this, window](auto const& rect) { slotGeometryShapeChanged(window, rect); });
+            [this, &window](auto const& rect) { slotGeometryShapeChanged(window, rect); });
         QObject::connect(
             qtwin,
             &win::window_qobject::frame_geometry_changed,
             this,
-            [this, window](auto const& rect) { slotFrameGeometryChanged(window, rect); });
+            [this, &window](auto const& rect) { slotFrameGeometryChanged(window, rect); });
         QObject::connect(qtwin,
                          &win::window_qobject::damaged,
                          this,
-                         [this, window](auto const& rect) { slotWindowDamaged(window, rect); });
+                         [this, &window](auto const& rect) { slotWindowDamaged(window, rect); });
         QObject::connect(qtwin,
                          &win::window_qobject::unresponsiveChanged,
                          this,
-                         [this, window](bool unresponsive) {
-                             Q_EMIT windowUnresponsiveChanged(window->render->effect.get(),
+                         [this, &window](bool unresponsive) {
+                             Q_EMIT windowUnresponsiveChanged(window.render->effect.get(),
                                                               unresponsive);
                          });
-        QObject::connect(qtwin, &win::window_qobject::windowShown, this, [this, window] {
-            Q_EMIT windowShown(window->render->effect.get());
+        QObject::connect(qtwin, &win::window_qobject::windowShown, this, [this, &window] {
+            Q_EMIT windowShown(window.render->effect.get());
         });
-        QObject::connect(qtwin, &win::window_qobject::windowHidden, this, [this, window] {
-            Q_EMIT windowHidden(window->render->effect.get());
+        QObject::connect(qtwin, &win::window_qobject::windowHidden, this, [this, &window] {
+            Q_EMIT windowHidden(window.render->effect.get());
         });
         QObject::connect(
-            qtwin, &win::window_qobject::keepAboveChanged, this, [this, window](bool above) {
+            qtwin, &win::window_qobject::keepAboveChanged, this, [this, &window](bool above) {
                 Q_UNUSED(above)
-                Q_EMIT windowKeepAboveChanged(window->render->effect.get());
+                Q_EMIT windowKeepAboveChanged(window.render->effect.get());
             });
         QObject::connect(
-            qtwin, &win::window_qobject::keepBelowChanged, this, [this, window](bool below) {
+            qtwin, &win::window_qobject::keepBelowChanged, this, [this, &window](bool below) {
                 Q_UNUSED(below)
-                Q_EMIT windowKeepBelowChanged(window->render->effect.get());
+                Q_EMIT windowKeepBelowChanged(window.render->effect.get());
             });
-        QObject::connect(qtwin, &win::window_qobject::fullScreenChanged, this, [this, window]() {
-            Q_EMIT windowFullScreenChanged(window->render->effect.get());
+        QObject::connect(qtwin, &win::window_qobject::fullScreenChanged, this, [this, &window]() {
+            Q_EMIT windowFullScreenChanged(window.render->effect.get());
         });
         QObject::connect(
-            qtwin, &win::window_qobject::visible_geometry_changed, this, [this, window]() {
-                Q_EMIT windowExpandedGeometryChanged(window->render->effect.get());
+            qtwin, &win::window_qobject::visible_geometry_changed, this, [this, &window]() {
+                Q_EMIT windowExpandedGeometryChanged(window.render->effect.get());
             });
     }
 
     // For X11 windows
-    void setupClientConnections(typename space_t::window_t* c)
+    template<typename Win>
+    void setupClientConnections(Win& window)
     {
-        setupAbstractClientConnections(c);
-        connect(c->qobject.get(),
+        setupAbstractClientConnections(window);
+        connect(window.qobject.get(),
                 &win::window_qobject::paddingChanged,
                 this,
-                [this, c](auto const& old) { slotPaddingChanged(c, old); });
+                [this, &window](auto const& old) { slotPaddingChanged(window, old); });
     }
 
-    void setupUnmanagedConnections(typename space_t::window_t* u)
+    template<typename Win>
+    void setupUnmanagedConnections(Win& window)
     {
-        connect(u->qobject.get(), &win::window_qobject::opacityChanged, this, [this, u](auto old) {
-            slotOpacityChanged(u, old);
-        });
-        connect(u->qobject.get(),
+        connect(window.qobject.get(),
+                &win::window_qobject::opacityChanged,
+                this,
+                [this, &window](auto old) { slotOpacityChanged(window, old); });
+        connect(window.qobject.get(),
                 &win::window_qobject::frame_geometry_changed,
                 this,
-                [this, u](auto const& old) { slotGeometryShapeChanged(u, old); });
-        connect(u->qobject.get(),
+                [this, &window](auto const& old) { slotGeometryShapeChanged(window, old); });
+        connect(window.qobject.get(),
                 &win::window_qobject::frame_geometry_changed,
                 this,
-                [this, u](auto const& old) { slotFrameGeometryChanged(u, old); });
-        connect(u->qobject.get(),
+                [this, &window](auto const& old) { slotFrameGeometryChanged(window, old); });
+        connect(window.qobject.get(),
                 &win::window_qobject::paddingChanged,
                 this,
-                [this, u](auto const& old) { slotPaddingChanged(u, old); });
-        connect(u->qobject.get(),
+                [this, &window](auto const& old) { slotPaddingChanged(window, old); });
+        connect(window.qobject.get(),
                 &win::window_qobject::damaged,
                 this,
-                [this, u](auto const& region) { slotWindowDamaged(u, region); });
-        connect(u->qobject.get(),
+                [this, &window](auto const& region) { slotWindowDamaged(window, region); });
+        connect(window.qobject.get(),
                 &win::window_qobject::visible_geometry_changed,
                 this,
-                [this, u]() { Q_EMIT windowExpandedGeometryChanged(u->render->effect.get()); });
+                [this, &window]() {
+                    Q_EMIT windowExpandedGeometryChanged(window.render->effect.get());
+                });
     }
 
-    void slotClientShown(typename space_t::window_t* t)
+    template<typename Win>
+    void slotClientShown(Win& window)
     {
-        assert(dynamic_cast<typename space_t::x11_window*>(t));
-        disconnect(t->qobject.get(), &win::window_qobject::windowShown, this, nullptr);
-        setupClientConnections(t);
-        Q_EMIT windowAdded(t->render->effect.get());
+        disconnect(window.qobject.get(), &win::window_qobject::windowShown, this, nullptr);
+        setupClientConnections(window);
+        Q_EMIT windowAdded(window.render->effect.get());
     }
 
-    void slotXdgShellClientShown(typename space_t::window_t* t)
+    template<typename Win>
+    void slotXdgShellClientShown(Win& window)
     {
-        setupAbstractClientConnections(t);
-        Q_EMIT windowAdded(t->render->effect.get());
+        setupAbstractClientConnections(window);
+        Q_EMIT windowAdded(window.render->effect.get());
     }
 
-    void slotUnmanagedShown(typename space_t::window_t* t)
+    template<typename Win>
+    void slotUnmanagedShown(Win& window)
     { // regardless, unmanaged windows are -yet?- not synced anyway
-        assert(!t->control);
-        setupUnmanagedConnections(t);
-        Q_EMIT windowAdded(t->render->effect.get());
+        assert(!window.control);
+        setupUnmanagedConnections(window);
+        Q_EMIT windowAdded(window.render->effect.get());
     }
 
-    void slotClientMaximized(typename space_t::window_t* window, win::maximize_mode maxMode)
+    template<typename Win>
+    void slotClientMaximized(Win& window, win::maximize_mode maxMode)
     {
         bool horizontal = false;
         bool vertical = false;
@@ -1382,62 +1439,66 @@ protected:
             break;
         }
 
-        auto ew = window->render->effect.get();
+        auto ew = window.render->effect.get();
         assert(ew);
         Q_EMIT windowMaximizedStateChanged(ew, horizontal, vertical);
     }
 
-    void slotOpacityChanged(typename space_t::window_t* t, qreal oldOpacity)
+    template<typename Win>
+    void slotOpacityChanged(Win& window, qreal oldOpacity)
     {
-        assert(t->render->effect);
+        assert(window.render->effect);
 
-        if (t->opacity() == oldOpacity) {
+        if (window.opacity() == oldOpacity) {
             return;
         }
 
         Q_EMIT windowOpacityChanged(
-            t->render->effect.get(), oldOpacity, static_cast<qreal>(t->opacity()));
+            window.render->effect.get(), oldOpacity, static_cast<qreal>(window.opacity()));
     }
 
-    void slotClientModalityChanged(typename space_t::window_t* window)
+    template<typename Win>
+    void slotClientModalityChanged(Win& window)
     {
-        Q_EMIT windowModalityChanged(window->render->effect.get());
+        Q_EMIT windowModalityChanged(window.render->effect.get());
     }
 
-    void slotGeometryShapeChanged(typename space_t::window_t* t, const QRect& old)
+    template<typename Win>
+    void slotGeometryShapeChanged(Win& window, const QRect& old)
     {
-        assert(t);
-        assert(t->render);
-        assert(t->render->effect);
+        assert(window.render);
+        assert(window.render->effect);
 
-        if (t->control && (win::is_move(t) || win::is_resize(t))) {
+        if (window.control && (win::is_move(&window) || win::is_resize(&window))) {
             // For that we have windowStepUserMovedResized.
             return;
         }
 
-        Q_EMIT windowGeometryShapeChanged(t->render->effect.get(), old);
+        Q_EMIT windowGeometryShapeChanged(window.render->effect.get(), old);
     }
 
-    void slotFrameGeometryChanged(typename space_t::window_t* toplevel, const QRect& oldGeometry)
+    template<typename Win>
+    void slotFrameGeometryChanged(Win& window, const QRect& oldGeometry)
     {
-        assert(toplevel->render);
-        assert(toplevel->render->effect);
-        Q_EMIT windowFrameGeometryChanged(toplevel->render->effect.get(), oldGeometry);
+        assert(window.render);
+        assert(window.render->effect);
+        Q_EMIT windowFrameGeometryChanged(window.render->effect.get(), oldGeometry);
     }
 
-    void slotPaddingChanged(typename space_t::window_t* t, const QRect& old)
+    template<typename Win>
+    void slotPaddingChanged(Win& window, const QRect& old)
     {
-        assert(t);
-        assert(t->render);
-        assert(t->render->effect);
-        Q_EMIT windowPaddingChanged(t->render->effect.get(), old);
+        assert(window.render);
+        assert(window.render->effect);
+        Q_EMIT windowPaddingChanged(window.render->effect.get(), old);
     }
 
-    void slotWindowDamaged(typename space_t::window_t* t, const QRegion& r)
+    template<typename Win>
+    void slotWindowDamaged(Win& window, const QRegion& r)
     {
-        assert(t->render);
-        assert(t->render->effect);
-        Q_EMIT windowDamaged(t->render->effect.get(), r);
+        assert(window.render);
+        assert(window.render->effect);
+        Q_EMIT windowDamaged(window.render->effect.get(), r);
     }
 
     void slotOutputEnabled(base::output* output)
@@ -1467,5 +1528,4 @@ protected:
     std::unique_ptr<x11::property_notify_filter<effects_handler_wrap, space_t>> x11_property_notify;
     std::unordered_map<Effect*, std::unordered_map<ElectricBorder, uint32_t>> reserved_borders;
 };
-
 }

@@ -7,7 +7,10 @@
 
 #include "tabbox_client.h"
 
+#include "utils/algorithm.h"
 #include "win/meta.h"
+
+#include <variant>
 
 namespace KWin::win
 {
@@ -16,80 +19,88 @@ template<typename Window>
 class tabbox_client_impl : public tabbox_client
 {
 public:
-    explicit tabbox_client_impl(Window* window)
-        : m_client(window)
+    explicit tabbox_client_impl(Window window)
+        : window{window}
     {
     }
 
     QString caption() const override
     {
-        if (win::is_desktop(m_client)) {
-            return i18nc("Special entry in alt+tab list for minimizing all windows",
-                         "Show Desktop");
-        }
-        return win::caption(m_client);
+        return std::visit(overload{[](auto&& win) {
+                              if (win::is_desktop(win)) {
+                                  return i18nc(
+                                      "Special entry in alt+tab list for minimizing all windows",
+                                      "Show Desktop");
+                              }
+                              return win::caption(win);
+                          }},
+                          window);
     }
 
     QIcon icon() const override
     {
-        if (win::is_desktop(m_client)) {
-            return QIcon::fromTheme(QStringLiteral("user-desktop"));
-        }
-        return m_client->control->icon;
+        return std::visit(overload{[](auto&& win) {
+                              if (win::is_desktop(win)) {
+                                  return QIcon::fromTheme(QStringLiteral("user-desktop"));
+                              }
+                              return win->control->icon;
+                          }},
+                          window);
     }
 
     bool is_minimized() const override
     {
-        return m_client->control->minimized;
+        return std::visit(overload{[](auto&& win) { return win->control->minimized; }}, window);
     }
 
     int x() const override
     {
-        return m_client->geo.pos().x();
+        return std::visit(overload{[](auto&& win) { return win->geo.pos().x(); }}, window);
     }
 
     int y() const override
     {
-        return m_client->geo.pos().y();
+        return std::visit(overload{[](auto&& win) { return win->geo.pos().y(); }}, window);
     }
 
     int width() const override
     {
-        return m_client->geo.size().width();
+        return std::visit(overload{[](auto&& win) { return win->geo.size().width(); }}, window);
     }
 
     int height() const override
     {
-        return m_client->geo.size().height();
+        return std::visit(overload{[](auto&& win) { return win->geo.size().height(); }}, window);
     }
 
     bool is_closeable() const override
     {
-        return m_client->isCloseable();
+        return std::visit(overload{[](auto&& win) { return win->isCloseable(); }}, window);
     }
 
     void close() override
     {
-        m_client->closeWindow();
+        std::visit(overload{[](auto&& win) { win->closeWindow(); }}, window);
     }
 
     bool is_first_in_tabbox() const override
     {
-        return m_client->control->first_in_tabbox;
+        return std::visit(overload{[](auto&& win) { return win->control->first_in_tabbox; }},
+                          window);
     }
 
     QUuid internal_id() const override
     {
-        return m_client->meta.internal_id;
+        return std::visit(overload{[](auto&& win) { return win->meta.internal_id; }}, window);
     }
 
-    Window* client() const
+    Window client() const
     {
-        return m_client;
+        return window;
     }
 
 private:
-    Window* m_client;
+    Window window;
 };
 
 }

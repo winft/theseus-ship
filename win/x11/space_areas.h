@@ -78,20 +78,20 @@ void update_space_areas(Window* win,
         }
     } else {
         if (!has_offscreen_xinerama_strut) {
-            areas.work[win->desktop()] = areas.work[win->desktop()].intersected(client_area);
+            areas.work[get_desktop(*win)] = areas.work[get_desktop(*win)].intersected(client_area);
         }
 
-        auto& resmove = areas.restrictedmove[win->desktop()];
+        auto& resmove = areas.restrictedmove[get_desktop(*win)];
         resmove.insert(std::end(resmove), std::begin(strut_region), std::end(strut_region));
 
         for (size_t screen = 0; screen < outputs.size(); screen++) {
-            auto const screen_area = areas.screen[win->desktop()][screen];
+            auto const screen_area = areas.screen[get_desktop(*win)][screen];
             auto const geo = screen_area.intersected(
                 win::x11::adjusted_client_area(win, desktop_area, screens_geos[screen]));
 
             // Ignore the geometry if it results in the screen getting removed completely.
             if (!geo.isEmpty()) {
-                areas.screen[win->desktop()][screen] = geo;
+                areas.screen[get_desktop(*win)][screen] = geo;
             }
         }
     }

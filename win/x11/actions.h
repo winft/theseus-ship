@@ -49,7 +49,7 @@ void update_allowed_actions(Win* win, bool force = false)
     }
 
     // TODO: This could be delayed and compressed - It's only for pagers etc. anyway
-    win->info->setAllowedActions(win->allowed_actions);
+    win->net_info->setAllowedActions(win->allowed_actions);
 
     // ONLY if relevant features have changed (and the window didn't just get/loose moveresize for
     // maximization state changes)

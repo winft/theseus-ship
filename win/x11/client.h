@@ -5,10 +5,9 @@
 */
 #pragma once
 
-#include "geo.h"
-#include "input.h"
-
 #include "base/logging.h"
+#include "base/x11/xcb/extensions.h"
+#include "utils/memory.h"
 #include "win/meta.h"
 #include "win/setup.h"
 
@@ -19,30 +18,6 @@
 
 namespace KWin::win::x11
 {
-
-/**
- * Sets the window's mapping state. Possible values are: WithdrawnState, IconicState, NormalState.
- */
-template<typename Win>
-void export_mapping_state(Win* win, int state)
-{
-    assert(win->xcb_windows.client != XCB_WINDOW_NONE);
-    assert(!win->deleting || state == XCB_ICCCM_WM_STATE_WITHDRAWN);
-
-    auto& atoms = win->space.atoms;
-
-    if (state == XCB_ICCCM_WM_STATE_WITHDRAWN) {
-        win->xcb_windows.client.delete_property(atoms->wm_state);
-        return;
-    }
-
-    assert(state == XCB_ICCCM_WM_STATE_NORMAL || state == XCB_ICCCM_WM_STATE_ICONIC);
-
-    int32_t data[2];
-    data[0] = state;
-    data[1] = XCB_NONE;
-    win->xcb_windows.client.change_property(atoms->wm_state, atoms->wm_state, 32, 2, data);
-}
 
 inline void send_client_message(xcb_window_t w,
                                 xcb_atom_t a,
@@ -72,6 +47,55 @@ inline void send_client_message(xcb_window_t w,
     xcb_flush(connection());
 }
 
+template<typename Win>
+void kill_process(Win* win, bool ask, xcb_timestamp_t timestamp = XCB_TIME_CURRENT_TIME)
+{
+    if (win->kill_helper_pid && !::kill(win->kill_helper_pid, 0)) {
+        // means the process is alive
+        return;
+    }
+
+    assert(!ask || timestamp != XCB_TIME_CURRENT_TIME);
+
+    auto pid = win->net_info->pid();
+    if (pid <= 0 || win->client_machine->hostname().isEmpty()) {
+        // Needed properties missing
+        return;
+    }
+
+    qCDebug(KWIN_CORE) << "Kill process:" << pid << "(" << win->client_machine->hostname() << ")";
+
+    if (!ask) {
+        if (!win->client_machine->is_local()) {
+            QStringList lst;
+            lst << QString::fromUtf8(win->client_machine->hostname()) << QStringLiteral("kill")
+                << QString::number(pid);
+            QProcess::startDetached(QStringLiteral("xon"), lst);
+        } else {
+            ::kill(pid, SIGTERM);
+        }
+    } else {
+        auto hostname = win->client_machine->is_local()
+            ? QStringLiteral("localhost")
+            : QString::fromUtf8(win->client_machine->hostname());
+        // execute helper from build dir or the system installed one
+        QFileInfo const buildDirBinary{QDir{QCoreApplication::applicationDirPath()},
+                                       QStringLiteral("kwin_killer_helper")};
+        QProcess::startDetached(
+            buildDirBinary.exists() ? buildDirBinary.absoluteFilePath()
+                                    : QStringLiteral(KWIN_KILLER_BIN),
+            QStringList() << QStringLiteral("--pid") << QString::number(unsigned(pid))
+                          << QStringLiteral("--hostname") << hostname
+                          << QStringLiteral("--windowname") << win->meta.caption.normal
+                          << QStringLiteral("--applicationname")
+                          << QString::fromUtf8(win->meta.wm_class.res_class)
+                          << QStringLiteral("--wid") << QString::number(win->xcb_windows.client)
+                          << QStringLiteral("--timestamp") << QString::number(timestamp),
+            QString(),
+            &win->kill_helper_pid);
+    }
+}
+
 /**
  * Send a ping to the window using _NET_WM_PING if possible if it
  * doesn't respond within a reasonable time, it will be killed.
@@ -79,7 +103,7 @@ inline void send_client_message(xcb_window_t w,
 template<typename Win>
 void ping(Win* win)
 {
-    if (!win->info->supportsProtocol(NET::PingProtocol)) {
+    if (!win->net_info->supportsProtocol(NET::PingProtocol)) {
         // Can't ping :(
         return;
     }
@@ -116,7 +140,7 @@ void ping(Win* win)
     win->ping_timer->start(kwinApp()->options->qobject->killPingTimeout() / 2);
 
     win->ping_timestamp = xTime();
-    win->space.root_info->sendPing(win->xcb_window, win->ping_timestamp);
+    win->space.root_info->sendPing(win->xcb_windows.client, win->ping_timestamp);
 }
 
 template<typename Win>
@@ -135,55 +159,6 @@ void pong(Win* win, xcb_timestamp_t timestamp)
     if (win->kill_helper_pid && !::kill(win->kill_helper_pid, 0)) { // means the process is alive
         ::kill(win->kill_helper_pid, SIGTERM);
         win->kill_helper_pid = 0;
-    }
-}
-
-template<typename Win>
-void kill_process(Win* win, bool ask, xcb_timestamp_t timestamp = XCB_TIME_CURRENT_TIME)
-{
-    if (win->kill_helper_pid && !::kill(win->kill_helper_pid, 0)) {
-        // means the process is alive
-        return;
-    }
-
-    assert(!ask || timestamp != XCB_TIME_CURRENT_TIME);
-
-    auto pid = win->info->pid();
-    if (pid <= 0 || win->client_machine->hostname().isEmpty()) {
-        // Needed properties missing
-        return;
-    }
-
-    qCDebug(KWIN_CORE) << "Kill process:" << pid << "(" << win->client_machine->hostname() << ")";
-
-    if (!ask) {
-        if (!win->client_machine->is_local()) {
-            QStringList lst;
-            lst << QString::fromUtf8(win->client_machine->hostname()) << QStringLiteral("kill")
-                << QString::number(pid);
-            QProcess::startDetached(QStringLiteral("xon"), lst);
-        } else {
-            ::kill(pid, SIGTERM);
-        }
-    } else {
-        auto hostname = win->client_machine->is_local()
-            ? QStringLiteral("localhost")
-            : QString::fromUtf8(win->client_machine->hostname());
-        // execute helper from build dir or the system installed one
-        QFileInfo const buildDirBinary{QDir{QCoreApplication::applicationDirPath()},
-                                       QStringLiteral("kwin_killer_helper")};
-        QProcess::startDetached(buildDirBinary.exists() ? buildDirBinary.absoluteFilePath()
-                                                        : QStringLiteral(KWIN_KILLER_BIN),
-                                QStringList()
-                                    << QStringLiteral("--pid") << QString::number(unsigned(pid))
-                                    << QStringLiteral("--hostname") << hostname
-                                    << QStringLiteral("--windowname") << win->meta.caption.normal
-                                    << QStringLiteral("--applicationname")
-                                    << QString::fromUtf8(win->meta.wm_class.res_class)
-                                    << QStringLiteral("--wid") << QString::number(win->xcb_window)
-                                    << QStringLiteral("--timestamp") << QString::number(timestamp),
-                                QString(),
-                                &win->kill_helper_pid);
     }
 }
 
@@ -212,7 +187,7 @@ void get_sync_counter(Win* win)
     }
 
     base::x11::xcb::property syncProp(false,
-                                      win->xcb_window,
+                                      win->xcb_windows.client,
                                       win->space.atoms->net_wm_sync_request_counter,
                                       XCB_ATOM_CARDINAL,
                                       0,
@@ -286,8 +261,11 @@ void send_sync_request(Win* win)
 
     // Send the message to client
     auto& atoms = win->space.atoms;
-    send_client_message(
-        win->xcb_window, atoms->wm_protocols, atoms->net_wm_sync_request, number_lo, number_hi);
+    send_client_message(win->xcb_windows.client,
+                        atoms->wm_protocols,
+                        atoms->net_wm_sync_request,
+                        number_lo,
+                        number_hi);
 
     win->sync_request.timestamp = xTime();
 }
@@ -303,8 +281,8 @@ void send_synthetic_configure_notify(Win* win, QRect const& client_geo)
     memset(&c, 0, sizeof(c));
 
     c.response_type = XCB_CONFIGURE_NOTIFY;
-    c.event = win->xcb_window;
-    c.window = win->xcb_window;
+    c.event = win->xcb_windows.client;
+    c.window = win->xcb_windows.client;
     c.x = client_geo.x();
     c.y = client_geo.y();
 
@@ -312,7 +290,7 @@ void send_synthetic_configure_notify(Win* win, QRect const& client_geo)
     c.height = client_geo.height();
     auto getEmulatedXWaylandSize = [win, &client_geo]() {
         auto property = base::x11::xcb::property(false,
-                                                 win->xcb_window,
+                                                 win->xcb_windows.client,
                                                  win->space.atoms->xwayland_randr_emu_monitor_rects,
                                                  XCB_ATOM_CARDINAL,
                                                  0,
@@ -367,6 +345,24 @@ void send_synthetic_configure_notify(Win* win, QRect const& client_geo)
                    XCB_EVENT_MASK_STRUCTURE_NOTIFY,
                    reinterpret_cast<const char*>(&c));
     xcb_flush(connection());
+}
+
+template<typename Win>
+xcb_timestamp_t get_user_time(Win const& win)
+{
+    xcb_timestamp_t time = win.user_time;
+    if (time == 0) {
+        // Doesn't want focus after showing.
+        return 0;
+    }
+
+    assert(win.group != nullptr);
+
+    if (time == -1U
+        || (win.group->user_time != -1U && NET::timestampCompare(win.group->user_time, time) > 0)) {
+        time = win.group->user_time;
+    }
+    return time;
 }
 
 }

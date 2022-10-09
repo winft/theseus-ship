@@ -37,16 +37,9 @@ class space : public win::space
 public:
     using base_t = Base;
     using type = space<Base>;
-    using window_t = Toplevel<type>;
     using x11_window = window<type>;
-
-    // TODO(romangg): Remove once we can rely on Space::x11_window always being the group window.
-    using x11_group_window = x11_window;
+    using window_t = std::variant<x11_window*>;
     using input_t = input::x11::redirect<typename Base::input_t, type>;
-
-    // Not used on X11.
-    // TODO(romangg): Make our function templates independent of this type and remove it.
-    using internal_window_t = win::internal_window<type>;
 
     space(Base& base)
         : base{base}
@@ -74,25 +67,28 @@ public:
         edges = std::make_unique<edger_t>(*this);
         dbus = std::make_unique<base::dbus::kwin_impl<type>>(*this);
 
-        QObject::connect(virtual_desktop_manager->qobject.get(),
-                         &virtual_desktop_manager_qobject::desktopRemoved,
-                         qobject.get(),
-                         [this] {
-                             auto const desktop_count
-                                 = static_cast<int>(virtual_desktop_manager->count());
-                             for (auto const& window : windows) {
-                                 if (!window->control) {
-                                     continue;
-                                 }
-                                 if (on_all_desktops(window)) {
-                                     continue;
-                                 }
-                                 if (window->desktop() <= desktop_count) {
-                                     continue;
-                                 }
-                                 send_window_to_desktop(*this, window, desktop_count, true);
-                             }
-                         });
+        QObject::connect(
+            virtual_desktop_manager->qobject.get(),
+            &virtual_desktop_manager_qobject::desktopRemoved,
+            qobject.get(),
+            [this] {
+                auto const desktop_count = static_cast<int>(virtual_desktop_manager->count());
+                for (auto const& window : windows) {
+                    std::visit(overload{[&](auto&& win) {
+                                   if (!win->control) {
+                                       return;
+                                   }
+                                   if (on_all_desktops(win)) {
+                                       return;
+                                   }
+                                   if (get_desktop(*win) <= desktop_count) {
+                                       return;
+                                   }
+                                   send_window_to_desktop(*this, win, desktop_count, true);
+                               }},
+                               window);
+                }
+            });
 
         QObject::connect(&base, &base::platform::topology_changed, qobject.get(), [this] {
             auto& comp = this->base.render->compositor;
@@ -128,7 +124,7 @@ public:
     }
 
     /// On X11 an internal window is an unmanaged and mapped by the window id.
-    window_t* findInternal(QWindow* window) const
+    x11_window* findInternal(QWindow* window) const
     {
         if (!window) {
             return nullptr;
@@ -136,7 +132,8 @@ public:
         return find_unmanaged<x11_window>(*this, window->winId());
     }
 
-    QRect get_icon_geometry(window_t const* /*win*/) const
+    template<typename Win>
+    QRect get_icon_geometry(Win const* /*win*/) const
     {
         return {};
     }
@@ -154,13 +151,13 @@ public:
                                         std::vector<QRect> const& screens_geos,
                                         win::space_areas& areas) override
     {
-        for (auto const& window : windows) {
-            if (!window->control) {
-                continue;
-            }
-            if (auto x11_win = dynamic_cast<x11_window*>(window)) {
-                update_space_areas(x11_win, desktop_area, screens_geos, areas);
-            }
+        for (auto const& win : windows) {
+            std::visit(overload{[&](x11_window* win) {
+                           if (win->control) {
+                               update_space_areas(win, desktop_area, screens_geos, areas);
+                           }
+                       }},
+                       win);
         }
     }
 
@@ -188,15 +185,15 @@ public:
     std::unique_ptr<win::user_actions_menu<type>> user_actions_menu;
     std::unique_ptr<base::dbus::kwin_impl<type>> dbus;
 
-    std::vector<window_t*> windows;
-    std::unordered_map<uint32_t, window_t*> windows_map;
+    std::vector<window_t> windows;
+    std::unordered_map<uint32_t, window_t> windows_map;
     std::vector<win::x11::group<type>*> groups;
 
     stacking_state<window_t> stacking;
 
-    window_t* active_popup_client{nullptr};
-    window_t* client_keys_client{nullptr};
-    window_t* move_resize_window{nullptr};
+    std::optional<window_t> active_popup_client;
+    std::optional<window_t> client_keys_client;
+    std::optional<window_t> move_resize_window;
 
 private:
     std::unique_ptr<base::x11::event_filter> edges_filter;

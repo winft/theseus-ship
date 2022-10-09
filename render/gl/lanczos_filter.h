@@ -56,10 +56,10 @@ public:
                 init();
             }
 
-            auto const screenRect = win::space_window_area(*m_scene->platform.base.space,
-                                                           ScreenArea,
-                                                           w->window.ref_win->topo.central_output,
-                                                           w->desktop());
+            auto const output = std::visit(
+                overload{[](auto&& win) { return win->topo.central_output; }}, *w->window.ref_win);
+            auto const screenRect = win::space_window_area(
+                *m_scene->platform.base.space, ScreenArea, output, w->desktop());
 
             // window geometry may not be bigger than screen geometry to fit into the FBO
             QRect winGeo(w->expandedGeometry());
@@ -297,7 +297,9 @@ protected:
             m_offscreenTex = nullptr;
 
             for (auto win : m_scene->platform.base.space->windows) {
-                discardCacheTexture(win->render->effect.get());
+                std::visit(
+                    overload{[&](auto&& win) { discardCacheTexture(win->render->effect.get()); }},
+                    win);
             }
 
             m_scene->doneOpenGLContextCurrent();

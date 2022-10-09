@@ -6,16 +6,36 @@
 #pragma once
 
 #include "base/x11/xcb/property.h"
-#include "win/actions.h"
 
 namespace KWin::win::x11
 {
 
 template<typename Win>
+base::x11::xcb::property fetch_wm_client_leader(Win const& win)
+{
+    return base::x11::xcb::property(false,
+                                    win.xcb_windows.client,
+                                    win.space.atoms->wm_client_leader,
+                                    XCB_ATOM_WINDOW,
+                                    0,
+                                    10000);
+}
+
+template<typename Win>
+void read_wm_client_leader(Win& win, base::x11::xcb::property& prop)
+{
+    win.m_wmClientLeader = prop.value<xcb_window_t>(win.xcb_windows.client);
+}
+
+template<typename Win>
 base::x11::xcb::property fetch_skip_close_animation(Win&& win)
 {
-    return base::x11::xcb::property(
-        false, win.xcb_window, win.space.atoms->kde_skip_close_animation, XCB_ATOM_CARDINAL, 0, 1);
+    return base::x11::xcb::property(false,
+                                    win.xcb_windows.client,
+                                    win.space.atoms->kde_skip_close_animation,
+                                    XCB_ATOM_CARDINAL,
+                                    0,
+                                    1);
 }
 
 template<typename Win>
@@ -48,8 +68,12 @@ void update_first_in_tabbox(Win* win)
 template<typename Win>
 base::x11::xcb::property fetch_show_on_screen_edge(Win* win)
 {
-    return base::x11::xcb::property(
-        false, win->xcb_window, win->space.atoms->kde_screen_edge_show, XCB_ATOM_CARDINAL, 0, 1);
+    return base::x11::xcb::property(false,
+                                    win->xcb_windows.client,
+                                    win->space.atoms->kde_screen_edge_show,
+                                    XCB_ATOM_CARDINAL,
+                                    0,
+                                    1);
 }
 
 template<typename Win>
@@ -79,8 +103,8 @@ void read_show_on_screen_edge(Win* win, base::x11::xcb::property& property)
     }
 
     if (border != ElectricNone) {
-        QObject::disconnect(win->connections.edge_remove);
-        QObject::disconnect(win->connections.edge_geometry);
+        QObject::disconnect(win->notifiers.edge_remove);
+        QObject::disconnect(win->notifiers.edge_geometry);
         auto successfullyHidden = false;
 
         if (((value >> 8) & 0xFF) == 1) {
@@ -89,7 +113,7 @@ void read_show_on_screen_edge(Win* win, base::x11::xcb::property& property)
             // request could have failed due to user kwin rules
             successfullyHidden = win->control->keep_below;
 
-            win->connections.edge_remove = QObject::connect(
+            win->notifiers.edge_remove = QObject::connect(
                 win->qobject.get(), &Win::qobject_t::keepBelowChanged, win->qobject.get(), [win]() {
                     if (!win->control->keep_below) {
                         win->space.edges->reserve(win, ElectricNone);
@@ -99,7 +123,7 @@ void read_show_on_screen_edge(Win* win, base::x11::xcb::property& property)
             win->hideClient(true);
             successfullyHidden = win->isHiddenInternal();
 
-            win->connections.edge_geometry
+            win->notifiers.edge_geometry
                 = QObject::connect(win->qobject.get(),
                                    &Win::qobject_t::frame_geometry_changed,
                                    win->qobject.get(),
@@ -117,13 +141,14 @@ void read_show_on_screen_edge(Win* win, base::x11::xcb::property& property)
     } else if (!property.is_null() && property->type != XCB_ATOM_NONE) {
         // property value is incorrect, delete the property
         // so that the client knows that it is not hidden
-        xcb_delete_property(connection(), win->xcb_window, win->space.atoms->kde_screen_edge_show);
+        xcb_delete_property(
+            connection(), win->xcb_windows.client, win->space.atoms->kde_screen_edge_show);
     } else {
         // restore
         // TODO: add proper unreserve
 
         // this will call showOnScreenEdge to reset the state
-        QObject::disconnect(win->connections.edge_geometry);
+        QObject::disconnect(win->notifiers.edge_geometry);
         win->space.edges->reserve(win, ElectricNone);
     }
 }

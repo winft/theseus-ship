@@ -16,8 +16,8 @@
 namespace KWin::win
 {
 
-template<typename Space>
-bool shortcut_available(Space& space, const QKeySequence& cut, typename Space::window_t* ignore)
+template<typename Win, typename Space>
+bool shortcut_available(Space& space, const QKeySequence& cut, Win* ignore)
 {
     if (ignore && cut == ignore->control->shortcut) {
         return true;
@@ -35,7 +35,12 @@ bool shortcut_available(Space& space, const QKeySequence& cut, typename Space::w
 
     // Check now conflicts with activation shortcuts for current clients.
     for (auto const win : space.windows) {
-        if (win != ignore && win->control && win->control->shortcut == cut) {
+        if (std::visit(
+                overload{[&](Win* win) {
+                             return win != ignore && win->control && win->control->shortcut == cut;
+                         },
+                         [&](auto&& win) { return win->control && win->control->shortcut == cut; }},
+                win)) {
             return false;
         }
     }
@@ -124,17 +129,20 @@ void setup_window_shortcut_done(Space& space, bool ok)
     //    disable_shortcuts_keys->setEnabled( true );
     //    client_keys->setEnabled( true );
     if (ok) {
-        set_shortcut(space.client_keys_client, space.client_keys_dialog->shortcut().toString());
+        std::visit(overload{[&](auto&& win) {
+                       set_shortcut(win, space.client_keys_dialog->shortcut().toString());
+                   }},
+                   *space.client_keys_client);
     }
 
     close_active_popup(space);
 
     space.client_keys_dialog->deleteLater();
     space.client_keys_dialog = nullptr;
-    space.client_keys_client = nullptr;
+    space.client_keys_client = {};
 
-    if (space.stacking.active) {
-        space.stacking.active->takeFocus();
+    if (auto& act = space.stacking.active) {
+        std::visit(overload{[](auto&& win) { win->takeFocus(); }}, *act);
     }
 }
 
@@ -172,10 +180,10 @@ void setup_window_shortcut(Space& space, Win* window)
     space.active_popup_client = window;
 }
 
-template<typename Space>
-void window_shortcut_updated(Space& space, typename Space::window_t* window)
+template<typename Space, typename Win>
+void window_shortcut_updated(Space& space, Win* window)
 {
-    QString key = QStringLiteral("_k_session:%1").arg(window->xcb_window);
+    QString key = QStringLiteral("_k_session:%1").arg(window->meta.internal_id.toString());
     auto action = space.qobject->template findChild<QAction*>(key);
 
     if (!window->control->shortcut.isEmpty()) {
@@ -187,7 +195,7 @@ void window_shortcut_updated(Space& space, typename Space::window_t* window)
             action->setObjectName(key);
             action->setText(i18n("Activate Window (%1)", win::caption(window)));
             QObject::connect(action, &QAction::triggered, window->qobject.get(), [&space, window] {
-                force_activate_window(space, window);
+                force_activate_window(space, *window);
             });
         }
 

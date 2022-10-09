@@ -48,7 +48,7 @@ QRect get_maximizing_area(Win* win)
 
     if (win->control->electric_maximizing) {
         area = space_window_area(
-            win->space, MaximizeArea, win->space.input->cursor->pos(), win->desktop());
+            win->space, MaximizeArea, win->space.input->cursor->pos(), get_desktop(*win));
     } else {
         area = space_window_area(win->space, MaximizeArea, win);
     }
@@ -113,10 +113,10 @@ void maximize_restore(Win* win)
     geometry_updates_blocker blocker(win);
     win->apply_restore_geometry(final_restore_geo);
 
-    if (win->info) {
-        // TODO(romangg): That is x11::window only. Put it in a template specialization?
-        win->info->setState(NET::States(), NET::Max);
+    if constexpr (requires(Win win) { win.net_info; }) {
+        win->net_info->setState(NET::States(), NET::Max);
     }
+
     win->geo.update.max_mode = maximize_mode::restore;
     update_no_border(win);
     set_restore_geometry(win, QRect());
@@ -138,11 +138,12 @@ void maximize_vertically(Win* win)
     geometry_updates_blocker blocker(win);
     win->setFrameGeometry(QRect(pos, size));
 
-    if (win->info) {
+    if constexpr (requires(Win win) { win.net_info; }) {
         auto net_state
             = flags(geo_update.max_mode & maximize_mode::horizontal) ? NET::Max : NET::MaxVert;
-        win->info->setState(net_state, NET::Max);
+        win->net_info->setState(net_state, NET::Max);
     }
+
     geo_update.max_mode |= maximize_mode::vertical;
     update_no_border(win);
     set_restore_geometry(win, old_frame_geo);
@@ -164,11 +165,12 @@ void maximize_horizontally(Win* win)
     geometry_updates_blocker blocker(win);
     win->setFrameGeometry(QRect(pos, size));
 
-    if (win->info) {
+    if constexpr (requires(Win win) { win.net_info; }) {
         auto net_state
             = flags(geo_update.max_mode & maximize_mode::vertical) ? NET::Max : NET::MaxHoriz;
-        win->info->setState(net_state, NET::Max);
+        win->net_info->setState(net_state, NET::Max);
     }
+
     geo_update.max_mode |= maximize_mode::horizontal;
     update_no_border(win);
     set_restore_geometry(win, old_frame_geo);

@@ -119,6 +119,8 @@ std::string xdg_activation_set_token(Space& space, std::string const& appid)
 template<typename Space, typename TokenRequest>
 void xdg_activation_handle_token_request(Space& space, TokenRequest& token)
 {
+    using var_win = typename Space::window_t;
+
     auto check_allowance = [&] {
         if (!token.surface()) {
             qCDebug(KWIN_CORE) << "Token request has no surface set.";
@@ -141,7 +143,7 @@ void xdg_activation_handle_token_request(Space& space, TokenRequest& token)
             return false;
         }
 
-        if (win != space.stacking.active) {
+        if (!space.stacking.active || var_win(win) != *space.stacking.active) {
             qCDebug(KWIN_CORE) << "Requesting window" << win << "currently not active.";
             return false;
         }
@@ -176,7 +178,7 @@ void xdg_activation_activate(Space* space, Window* win, std::string const& token
     }
 
     space->xdg_activation->clear();
-    activate_window(*space, win);
+    activate_window(*space, *win);
 }
 
 template<typename Space>

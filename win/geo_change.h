@@ -13,11 +13,8 @@
 namespace KWin::win
 {
 
-template<typename Space>
-int get_pack_position_left(Space const& space,
-                           typename Space::window_t const* window,
-                           int oldX,
-                           bool leftEdge)
+template<typename Space, typename Win>
+int get_pack_position_left(Space const& space, Win const* window, int oldX, bool leftEdge)
 {
     int newX = space_window_area(space, MaximizeArea, window).left();
     if (oldX <= newX) {
@@ -26,7 +23,7 @@ int get_pack_position_left(Space const& space,
                                  MaximizeArea,
                                  QPoint(window->geo.update.frame.left() - 1,
                                         window->geo.update.frame.center().y()),
-                                 window->desktop())
+                                 get_desktop(*window))
                    .left();
     }
 
@@ -41,29 +38,31 @@ int get_pack_position_left(Space const& space,
         return oldX;
     }
 
-    const int desktop = window->desktop() == 0 || on_all_desktops(window)
+    const int desktop = get_desktop(*window) == 0 || on_all_desktops(window)
         ? space.virtual_desktop_manager->current()
-        : window->desktop();
+        : get_desktop(*window);
+
     for (auto win : space.windows) {
-        if (is_irrelevant(win, window, desktop)) {
-            continue;
-        }
-        const int x
-            = leftEdge ? win->geo.update.frame.right() + 1 : win->geo.update.frame.left() - 1;
-        if (x > newX && x < oldX
-            && !(window->geo.update.frame.top() > win->geo.update.frame.bottom()
-                 || window->geo.update.frame.bottom() < win->geo.update.frame.top())) {
-            newX = x;
-        }
+        std::visit(
+            overload{[&](auto&& win) {
+                if (is_irrelevant(win, window, desktop)) {
+                    return;
+                }
+                int const x = leftEdge ? win->geo.update.frame.right() + 1
+                                       : win->geo.update.frame.left() - 1;
+                if (x > newX && x < oldX
+                    && !(window->geo.update.frame.top() > win->geo.update.frame.bottom()
+                         || window->geo.update.frame.bottom() < win->geo.update.frame.top())) {
+                    newX = x;
+                }
+            }},
+            win);
     }
     return newX;
 }
 
-template<typename Space>
-int get_pack_position_right(Space const& space,
-                            typename Space::window_t const* window,
-                            int oldX,
-                            bool rightEdge)
+template<typename Space, typename Win>
+int get_pack_position_right(Space const& space, Win const* window, int oldX, bool rightEdge)
 {
     int newX = space_window_area(space, MaximizeArea, window).right();
 
@@ -73,7 +72,7 @@ int get_pack_position_right(Space const& space,
                                  MaximizeArea,
                                  QPoint(window->geo.update.frame.right() + 1,
                                         window->geo.update.frame.center().y()),
-                                 window->desktop())
+                                 get_desktop(*window))
                    .right();
     }
 
@@ -88,29 +87,31 @@ int get_pack_position_right(Space const& space,
         return oldX;
     }
 
-    int const desktop = window->desktop() == 0 || on_all_desktops(window)
+    int const desktop = get_desktop(*window) == 0 || on_all_desktops(window)
         ? space.virtual_desktop_manager->current()
-        : window->desktop();
+        : get_desktop(*window);
+
     for (auto win : space.windows) {
-        if (is_irrelevant(win, window, desktop)) {
-            continue;
-        }
-        const int x
-            = rightEdge ? win->geo.update.frame.left() - 1 : win->geo.update.frame.right() + 1;
-        if (x < newX && x > oldX
-            && !(window->geo.update.frame.top() > win->geo.update.frame.bottom()
-                 || window->geo.update.frame.bottom() < win->geo.update.frame.top())) {
-            newX = x;
-        }
+        std::visit(
+            overload{[&](auto&& win) {
+                if (is_irrelevant(win, window, desktop)) {
+                    return;
+                }
+                int const x = rightEdge ? win->geo.update.frame.left() - 1
+                                        : win->geo.update.frame.right() + 1;
+                if (x < newX && x > oldX
+                    && !(window->geo.update.frame.top() > win->geo.update.frame.bottom()
+                         || window->geo.update.frame.bottom() < win->geo.update.frame.top())) {
+                    newX = x;
+                }
+            }},
+            win);
     }
     return newX;
 }
 
-template<typename Space>
-int get_pack_position_up(Space const& space,
-                         typename Space::window_t const* window,
-                         int oldY,
-                         bool topEdge)
+template<typename Space, typename Win>
+int get_pack_position_up(Space const& space, Win const* window, int oldY, bool topEdge)
 {
     int newY = space_window_area(space, MaximizeArea, window).top();
     if (oldY <= newY) {
@@ -119,7 +120,7 @@ int get_pack_position_up(Space const& space,
                                  MaximizeArea,
                                  QPoint(window->geo.update.frame.center().x(),
                                         window->geo.update.frame.top() - 1),
-                                 window->desktop())
+                                 get_desktop(*window))
                    .top();
     }
 
@@ -127,30 +128,32 @@ int get_pack_position_up(Space const& space,
         return oldY;
     }
 
-    int const desktop = window->desktop() == 0 || on_all_desktops(window)
+    int const desktop = get_desktop(*window) == 0 || on_all_desktops(window)
         ? space.virtual_desktop_manager->current()
-        : window->desktop();
+        : get_desktop(*window);
+
     for (auto win : space.windows) {
-        if (is_irrelevant(win, window, desktop)) {
-            continue;
-        }
-        const int y
-            = topEdge ? win->geo.update.frame.bottom() + 1 : win->geo.update.frame.top() - 1;
-        if (y > newY && y < oldY
-            && !(window->geo.update.frame.left()
-                     > win->geo.update.frame.right() // they overlap in X direction
-                 || window->geo.update.frame.right() < win->geo.update.frame.left())) {
-            newY = y;
-        }
+        std::visit(
+            overload{[&](auto&& win) {
+                if (is_irrelevant(win, window, desktop)) {
+                    return;
+                }
+                int const y = topEdge ? win->geo.update.frame.bottom() + 1
+                                      : win->geo.update.frame.top() - 1;
+                if (y > newY && y < oldY
+                    && !(window->geo.update.frame.left()
+                             > win->geo.update.frame.right() // they overlap in X direction
+                         || window->geo.update.frame.right() < win->geo.update.frame.left())) {
+                    newY = y;
+                }
+            }},
+            win);
     }
     return newY;
 }
 
-template<typename Space>
-int get_pack_position_down(Space const& space,
-                           typename Space::window_t const* window,
-                           int oldY,
-                           bool bottomEdge)
+template<typename Space, typename Win>
+int get_pack_position_down(Space const& space, Win const* window, int oldY, bool bottomEdge)
 {
     int newY = space_window_area(space, MaximizeArea, window).bottom();
     if (oldY >= newY) { // try another Xinerama screen
@@ -158,7 +161,7 @@ int get_pack_position_down(Space const& space,
                                  MaximizeArea,
                                  QPoint(window->geo.update.frame.center().x(),
                                         window->geo.update.frame.bottom() + 1),
-                                 window->desktop())
+                                 get_desktop(*window))
                    .bottom();
     }
 
@@ -172,20 +175,26 @@ int get_pack_position_down(Space const& space,
     if (oldY >= newY) {
         return oldY;
     }
-    int const desktop = window->desktop() == 0 || on_all_desktops(window)
+
+    int const desktop = get_desktop(*window) == 0 || on_all_desktops(window)
         ? space.virtual_desktop_manager->current()
-        : window->desktop();
+        : get_desktop(*window);
+
     for (auto win : space.windows) {
-        if (is_irrelevant(win, window, desktop)) {
-            continue;
-        }
-        const int y
-            = bottomEdge ? win->geo.update.frame.top() - 1 : win->geo.update.frame.bottom() + 1;
-        if (y < newY && y > oldY
-            && !(window->geo.update.frame.left() > win->geo.update.frame.right()
-                 || window->geo.update.frame.right() < win->geo.update.frame.left())) {
-            newY = y;
-        }
+        std::visit(
+            overload{[&](auto&& win) {
+                if (is_irrelevant(win, window, desktop)) {
+                    return;
+                }
+                int const y = bottomEdge ? win->geo.update.frame.top() - 1
+                                         : win->geo.update.frame.bottom() + 1;
+                if (y < newY && y > oldY
+                    && !(window->geo.update.frame.left() > win->geo.update.frame.right()
+                         || window->geo.update.frame.right() < win->geo.update.frame.left())) {
+                    newY = y;
+                }
+            }},
+            win);
     }
     return newY;
 }
@@ -235,7 +244,7 @@ void grow_horizontal(Win* win)
             win->space,
             MovementArea,
             QPoint((win->geo.pos().x() + grown_right) / 2, win->geo.frame.center().y()),
-            win->desktop());
+            get_desktop(*win));
         if (area.right() >= grown_right) {
             frame_geo.setRight(grown_right);
         }
@@ -295,7 +304,7 @@ void grow_vertical(Win* win)
             win->space,
             MovementArea,
             QPoint(win->geo.frame.center().x(), (win->geo.pos().y() + newbottom) / 2),
-            win->desktop());
+            get_desktop(*win));
         if (area.bottom() >= newbottom) {
             frame_geo.setBottom(newbottom);
         }

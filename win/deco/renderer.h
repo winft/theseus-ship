@@ -22,12 +22,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorations_logging.h"
 
 #include "kwin_export.h"
+#include "win/damage.h"
 
 #include <KDecoration2/DecoratedClient>
 #include <KDecoration2/Decoration>
 #include <QObject>
 #include <QPainter>
 #include <QRegion>
+#include <functional>
 #include <memory>
 
 namespace KWin::win::deco
@@ -46,103 +48,52 @@ Q_SIGNALS:
     void renderScheduled(QRegion const& geo);
 };
 
-template<typename Client>
-class renderer
+struct render_window {
+    std::function<QRect()> geo;
+    std::function<double()> scale;
+    std::function<int()> bit_depth;
+    std::function<void(QRect&, QRect&, QRect&, QRect&)> layout_rects;
+
+    KDecoration2::Decoration* deco;
+    xcb_window_t frame_id{XCB_WINDOW_NONE};
+};
+
+class render_injector
 {
 public:
     using qobject_t = renderer_qobject;
 
-    virtual ~renderer() = default;
-
-    void schedule(const QRegion& region)
+    render_injector(render_window window)
+        : qobject{std::make_unique<renderer_qobject>()}
+        , window{std::move(window)}
     {
-        m_scheduled = m_scheduled.united(region);
-        Q_EMIT qobject->renderScheduled(region);
     }
 
-    /// After this call the renderer is no longer able to render anything, client() returns null.
-    virtual std::unique_ptr<render_data> reparent() = 0;
+    virtual ~render_injector() = default;
+
+    virtual void render() = 0;
 
     std::unique_ptr<renderer_qobject> qobject;
     std::unique_ptr<render_data> data;
 
+    QRegion scheduled;
+    bool image_size_dirty{true};
+
 protected:
-    explicit renderer(Client* client)
-        : qobject{std::make_unique<renderer_qobject>()}
-        , m_client(client)
-        , m_imageSizesDirty(true)
-    {
-        auto markImageSizesDirty = [this] { m_imageSizesDirty = true; };
-        QObject::connect(client->decoration(),
-                         &KDecoration2::Decoration::damaged,
-                         qobject.get(),
-                         [this](auto const& rect) { schedule(rect); });
-        QObject::connect(client->client()->qobject.get(),
-                         &decltype(client->client()->qobject)::element_type::central_output_changed,
-                         qobject.get(),
-                         [markImageSizesDirty](auto old_out, auto new_out) {
-                             if (!new_out) {
-                                 return;
-                             }
-                             if (old_out && old_out->scale() == new_out->scale()) {
-                                 return;
-                             }
-                             markImageSizesDirty();
-                         });
-        QObject::connect(client->decoration(),
-                         &KDecoration2::Decoration::bordersChanged,
-                         qobject.get(),
-                         markImageSizesDirty);
-        QObject::connect(client->decoratedClient(),
-                         &KDecoration2::DecoratedClient::widthChanged,
-                         qobject.get(),
-                         markImageSizesDirty);
-        QObject::connect(client->decoratedClient(),
-                         &KDecoration2::DecoratedClient::heightChanged,
-                         qobject.get(),
-                         markImageSizesDirty);
-    }
-
-    std::unique_ptr<win::deco::render_data> move_data()
-    {
-        m_client = nullptr;
-        return std::move(data);
-    }
-
-    /**
-     * @returns the scheduled paint region and resets
-     */
     QRegion getScheduled()
     {
-        QRegion region = m_scheduled;
-        m_scheduled = QRegion();
+        auto const region = scheduled;
+        scheduled = {};
         return region;
     }
 
-    virtual void render() = 0;
-
-    Client* client()
-    {
-        return m_client;
-    }
-
-    bool areImageSizesDirty() const
-    {
-        return m_imageSizesDirty;
-    }
-    void resetImageSizesDirty()
-    {
-        m_imageSizesDirty = false;
-    }
     QImage renderToImage(const QRect& geo)
     {
-        Q_ASSERT(m_client);
-        auto window = m_client->client();
-        auto dpr = window->topo.central_output ? window->topo.central_output->scale() : 1.;
+        auto dpr = window.scale();
 
         // Guess the pixel format of the X pixmap into which the QImage will be copied.
         QImage::Format format;
-        const int depth = window->render_data.bit_depth;
+        const int depth = window.bit_depth();
         switch (depth) {
         case 30:
             format = QImage::Format_A2RGB30_Premultiplied;
@@ -170,13 +121,94 @@ protected:
 
     void renderToPainter(QPainter* painter, const QRect& rect)
     {
-        m_client->decoration()->paint(painter, rect);
+        window.deco->paint(painter, rect);
     }
 
-private:
+    render_window window;
+};
+
+template<typename Client>
+class renderer
+{
+public:
+    explicit renderer(Client* client)
+        : m_client(client)
+    {
+        auto injector_window
+            = render_window{[client] { return client->client()->geo.frame; },
+                            [client] {
+                                if (auto out = client->client()->topo.central_output) {
+                                    return out->scale();
+                                }
+                                return 1.;
+                            },
+                            [client] { return client->client()->render_data.bit_depth; },
+                            [client](auto& left, auto& top, auto& right, auto& bottom) {
+                                client->client()->layoutDecorationRects(left, top, right, bottom);
+                            },
+                            client->decoration(),
+                            client->client()->frameId()};
+
+        auto render = client->client()->space.base.render.get();
+        if (auto& scene = render->compositor->scene) {
+            injector = scene->create_deco(std::move(injector_window));
+        } else {
+            if constexpr (requires(decltype(render) render, render_window window) {
+                              render->create_non_composited_deco(window);
+                          }) {
+                injector = render->create_non_composited_deco(std::move(injector_window));
+            }
+        }
+        assert(injector);
+
+        auto markImageSizesDirty = [this] { injector->image_size_dirty = true; };
+        QObject::connect(client->decoration(),
+                         &KDecoration2::Decoration::damaged,
+                         injector->qobject.get(),
+                         [this](auto const& rect) {
+                             if (!m_client) {
+                                 return;
+                             }
+                             injector->scheduled = injector->scheduled.united(rect);
+                             win::add_repaint(*m_client->client(), rect);
+                             Q_EMIT injector->qobject->renderScheduled(rect);
+                         });
+        QObject::connect(client->client()->qobject.get(),
+                         &decltype(client->client()->qobject)::element_type::central_output_changed,
+                         injector->qobject.get(),
+                         [markImageSizesDirty](auto old_out, auto new_out) {
+                             if (!new_out) {
+                                 return;
+                             }
+                             if (old_out && old_out->scale() == new_out->scale()) {
+                                 return;
+                             }
+                             markImageSizesDirty();
+                         });
+        QObject::connect(client->decoration(),
+                         &KDecoration2::Decoration::bordersChanged,
+                         injector->qobject.get(),
+                         markImageSizesDirty);
+        QObject::connect(client->decoratedClient(),
+                         &KDecoration2::DecoratedClient::widthChanged,
+                         injector->qobject.get(),
+                         markImageSizesDirty);
+        QObject::connect(client->decoratedClient(),
+                         &KDecoration2::DecoratedClient::heightChanged,
+                         injector->qobject.get(),
+                         markImageSizesDirty);
+    }
+
+    std::unique_ptr<win::deco::render_data> move_data()
+    {
+        injector->render();
+        m_client = nullptr;
+        injector->qobject.reset();
+        return std::move(injector->data);
+    }
+
     Client* m_client;
-    QRegion m_scheduled;
-    bool m_imageSizesDirty;
+    std::unique_ptr<render_injector> injector;
 };
 
 }

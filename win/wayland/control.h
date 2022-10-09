@@ -14,11 +14,11 @@ namespace KWin::win::wayland
 {
 
 template<typename Win>
-class control : public win::control<typename Win::abstract_type>
+class control : public win::control<Win>
 {
 public:
     control(Win& window)
-        : win::control<typename Win::abstract_type>(&window)
+        : win::control<Win>(&window)
         , window{window}
     {
     }

@@ -38,11 +38,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::xwl
 {
 
-template<typename Window>
-class x11_drag : public drag<Window>
+template<typename Space>
+class x11_drag : public drag<Space>
 {
 public:
-    explicit x11_drag(x11_source<data_source_ext, Window>& source)
+    explicit x11_drag(x11_source<data_source_ext, Space>& source)
         : source{source}
     {
         QObject::connect(source.get_qobject(),
@@ -91,13 +91,14 @@ public:
             });
     }
 
-    drag_event_reply move_filter(Window* target, QPoint const& pos) override
+    drag_event_reply move_filter(std::optional<typename Space::window_t> target,
+                                 QPoint const& pos) override
     {
         Q_UNUSED(pos);
 
         auto seat = waylandServer()->seat();
 
-        if (visit && visit->target == target) {
+        if (visit && typename Space::window_t(visit->target) == target) {
             // still same Wl target, wait for X events
             return drag_event_reply::ignore;
         }
@@ -119,30 +120,40 @@ public:
             }
         }
 
-        if (!target || !target->surface
-            || target->surface->client() == waylandServer()->xwayland_connection()) {
-            // Currently there is no target or target is an Xwayland window.
-            // Handled here and by X directly.
-            if (target && target->surface && target->control) {
-                if (source.core.space->stacking.active != target) {
-                    win::activate_window(*source.core.space, target);
-                }
-            }
-
+        auto unset_target = [&] {
             if (had_visit) {
                 // Last received enter event is now void. Wait for the next one.
                 seat->drags().set_target(nullptr);
             }
+        };
+
+        if (!target) {
+            unset_target();
             return drag_event_reply::ignore;
         }
 
-        // New Wl native target.
-        visit.reset(new wl_visit(target, source));
+        std::visit(overload{[&](typename Space::wayland_window* win) {
+                                // New Wl native target.
+                                visit.reset(new wl_visit(win, source));
 
-        QObject::connect(visit->qobject.get(),
-                         &wl_visit_qobject::offers_received,
-                         this->qobject.get(),
-                         [this](auto const& offers) { set_offers(offers); });
+                                QObject::connect(
+                                    visit->qobject.get(),
+                                    &wl_visit_qobject::offers_received,
+                                    this->qobject.get(),
+                                    [this](auto const& offers) { set_offers(offers); });
+                            },
+                            [&](typename Space::x11_window* win) {
+                                // Target is an Xwayland window. Handled here and by X directly.
+                                if (win->control) {
+                                    if (source.core.space->stacking.active != target) {
+                                        win::activate_window(*source.core.space, *win);
+                                    }
+                                }
+                                unset_target();
+                            },
+                            [&](typename Space::internal_window_t* /*win*/) { unset_target(); }},
+                   *target);
+
         return drag_event_reply::ignore;
     }
 
@@ -181,7 +192,7 @@ public:
     }
 
     std::unique_ptr<data_source_ext> data_source;
-    std::unique_ptr<wl_visit<Window>> visit;
+    std::unique_ptr<wl_visit<Space>> visit;
 
 private:
     void set_offers(mime_atoms const& offers)
@@ -216,7 +227,7 @@ private:
     void set_drag_target()
     {
         auto ac = visit->target;
-        win::activate_window(*source.core.space, ac);
+        win::activate_window(*source.core.space, *ac);
         waylandServer()->seat()->drags().set_target(ac->surface, win::get_input_transform(*ac));
     }
 
@@ -247,11 +258,11 @@ private:
         return transfersFinished;
     }
 
-    x11_source<data_source_ext, Window>& source;
+    x11_source<data_source_ext, Space>& source;
     mime_atoms offers;
     std::vector<std::pair<xcb_timestamp_t, bool>> data_requests;
 
-    std::vector<std::unique_ptr<wl_visit<Window>>> old_visits;
+    std::vector<std::unique_ptr<wl_visit<Space>>> old_visits;
 };
 
 }

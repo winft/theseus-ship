@@ -54,7 +54,7 @@ private Q_SLOTS:
 
 wayland_window* get_wayland_window_from_id(uint32_t id)
 {
-    return dynamic_cast<wayland_window*>(Test::app()->base.space->windows_map.at(id));
+    return Test::get_wayland_window(Test::app()->base.space->windows_map.at(id));
 }
 
 void layer_shell_test::initTestCase()
@@ -205,13 +205,12 @@ void layer_shell_test::test_create()
     QVERIFY(win::has_alpha(*window));
 
     // By default layer surfaces have keyboard interactivity set to none.
-    QCOMPARE(Test::app()->base.space->stacking.active, nullptr);
+    QVERIFY(!Test::app()->base.space->stacking.active);
 
     QVERIFY(!window->isMaximizable());
     QVERIFY(!window->isMovable());
     QVERIFY(!window->isMovableAcrossScreens());
     QVERIFY(!window->isResizable());
-    QVERIFY(!window->isInternal());
     QVERIFY(window->render);
     QVERIFY(window->render->effect);
     QVERIFY(!window->render->effect->internalWindow());
@@ -251,7 +250,7 @@ void layer_shell_test::test_create()
     QVERIFY(window2->isShown());
     QCOMPARE(window2->isHiddenInternal(), false);
     QCOMPARE(window2->render_data.ready_for_painting, true);
-    QCOMPARE(Test::app()->base.space->stacking.active, window2);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), window2);
 
     // Surface is centered.
     QCOMPARE(window2->geo.frame,

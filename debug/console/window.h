@@ -34,7 +34,10 @@ public:
 
     quint32 windowId() const override
     {
-        return ref_win->xcb_window;
+        if constexpr (requires(decltype(ref_win) win) { win->xcb_windows; }) {
+            return ref_win->xcb_windows.client;
+        }
+        return XCB_WINDOW_NONE;
     }
 
     QByteArray resourceName() const override
@@ -68,7 +71,7 @@ public:
         if (ref_win->control->icon.isNull()) {
             return QRect();
         }
-        return ref_win->iconGeometry();
+        return win::get_icon_geometry(*ref_win);
     }
 
     QUuid internalId() const override
@@ -78,10 +81,10 @@ public:
 
     pid_t pid() const override
     {
-        if (!ref_win->info) {
-            return 0;
+        if constexpr (requires(decltype(ref_win) win) { win->net_info; }) {
+            return ref_win->pid();
         }
-        return ref_win->pid();
+        return 0;
     }
 
     QRect bufferGeometry() const override
@@ -225,7 +228,7 @@ public:
 
     int desktop() const override
     {
-        return ref_win->desktop();
+        return win::get_desktop(*ref_win);
     }
 
     void setDesktop(int desktop) override
@@ -415,12 +418,18 @@ public:
 
     bool isOutline() const override
     {
-        return ref_win->is_outline;
+        if constexpr (requires(decltype(ref_win) win) { win->is_outline; }) {
+            return ref_win->is_outline;
+        }
+        return false;
     }
 
     bool isShape() const override
     {
-        return ref_win->is_shape;
+        if constexpr (requires(decltype(ref_win) win) { win->is_shape; }) {
+            return ref_win->is_shape;
+        }
+        return false;
     }
 
     bool keepAbove() const override
@@ -515,13 +524,18 @@ public:
 
     bool skipsCloseAnimation() const override
     {
-        return ref_win->skip_close_animation;
+        if constexpr (requires(decltype(ref_win) win) { win->skip_close_animation; }) {
+            return ref_win->skip_close_animation;
+        }
+        return false;
     }
 
     void setSkipCloseAnimation(bool set) override
     {
-        if (ref_win->control) {
-            win::set_skip_close_animation(*ref_win, set);
+        if constexpr (requires(decltype(ref_win) win) { win->skip_close_animation; }) {
+            if (ref_win->control) {
+                win::set_skip_close_animation(*ref_win, set);
+            }
         }
     }
 
@@ -644,12 +658,18 @@ public:
 
     quint32 surfaceId() const override
     {
-        return ref_win->surface_id;
+        if constexpr (requires(decltype(ref_win) win) { win->surface_id; }) {
+            return ref_win->surface_id;
+        }
+        return 0;
     }
 
     Wrapland::Server::Surface* surface() const override
     {
-        return ref_win->surface;
+        if constexpr (requires(decltype(ref_win) win) { win->surface; }) {
+            return ref_win->surface;
+        }
+        return nullptr;
     }
 
     QSize basicUnit() const override
@@ -659,13 +679,13 @@ public:
 
     bool isBlockingCompositing() override
     {
-        return ref_win->isBlockingCompositing();
+        return win::is_blocking_compositing(*ref_win);
     }
 
     void setBlockingCompositing(bool block) override
     {
         if (ref_win->control) {
-            ref_win->setBlockingCompositing(block);
+            win::set_blocking_compositing(*ref_win, block);
         }
     }
 

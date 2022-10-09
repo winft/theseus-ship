@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/x11/xcb/proto.h"
 #include "input/cursor.h"
 #include "input/gestures.h"
-#include "toplevel.h"
 #include "win/actions.h"
 #include "win/activation.h"
 #include "win/screen_edges.h"
@@ -361,10 +360,10 @@ void TestScreenEdges::testCreatingInitialEdges()
     Test::render(surface, QSize(100, 50), Qt::blue);
     Test::flush_wayland_connection();
     QVERIFY(clientAddedSpy.wait());
-    auto client = Test::app()->base.space->stacking.active;
+    auto client = Test::get_wayland_window(Test::app()->base.space->stacking.active);
     QVERIFY(client);
 
-    win::set_move_resize_window(*Test::app()->base.space, client);
+    win::set_move_resize_window(*Test::app()->base.space, *client);
     for (int i = 0; i < 8; ++i) {
         auto& e = screenEdges->edges.at(i);
         QVERIFY(e->reserved_count > 0);
@@ -382,7 +381,7 @@ void TestScreenEdges::testCreatingInitialEdges()
         QCOMPARE(e->activatesForTouchGesture(), false);
         QCOMPARE(e->approach_geometry, expectedGeometries.at(i * 2 + 1));
     }
-    win::set_move_resize_window(*Test::app()->base.space, nullptr);
+    win::unset_move_resize_window(*Test::app()->base.space);
 }
 
 void TestScreenEdges::testCallback()
@@ -708,7 +707,8 @@ void TestScreenEdges::testFullScreenBlocking()
     Test::render(surface, QSize(100, 50), Qt::blue);
     Test::flush_wayland_connection();
     QVERIFY(clientAddedSpy.wait());
-    auto client = Test::app()->base.space->stacking.active;
+
+    auto client = Test::get_window<Test::wayland_window>(Test::app()->base.space->stacking.active);
     QVERIFY(client);
 
     reset_edger(config);
@@ -741,7 +741,7 @@ void TestScreenEdges::testFullScreenBlocking()
     client->setFrameGeometry(QRect({}, Test::app()->base.topology.size));
     win::set_active(client, true);
     client->setFullScreen(true);
-    win::set_active_window(*Test::app()->base.space, client);
+    win::set_active_window(*Test::app()->base.space, *client);
     Q_EMIT screenEdges->qobject->checkBlocking();
 
     // the signal doesn't trigger for corners, let's go over all windows just to be sure that it
@@ -818,7 +818,8 @@ void TestScreenEdges::testClientEdge()
     Test::render(surface, QSize(100, 50), Qt::blue);
     Test::flush_wayland_connection();
     QVERIFY(clientAddedSpy.wait());
-    auto client = Test::app()->base.space->stacking.active;
+
+    auto client = Test::get_wayland_window(Test::app()->base.space->stacking.active);
     QVERIFY(client);
 
     client->setFrameGeometry(QRect(10, 50, 10, 50));

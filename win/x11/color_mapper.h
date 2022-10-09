@@ -27,10 +27,14 @@ public:
     void update()
     {
         auto cmap = m_default;
-        if (auto window = dynamic_cast<typename Space::x11_window*>(space.stacking.active)) {
-            if (window->colormap != XCB_COLORMAP_NONE) {
-                cmap = window->colormap;
-            }
+        if (auto& win = space.stacking.active) {
+            std::visit(overload{[&](typename Space::x11_window* win) {
+                                    if (win->colormap != XCB_COLORMAP_NONE) {
+                                        cmap = win->colormap;
+                                    }
+                                },
+                                [](auto&&) {}},
+                       *win);
         }
         if (cmap != m_installed) {
             xcb_install_colormap(connection(), cmap);

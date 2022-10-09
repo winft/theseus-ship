@@ -103,7 +103,8 @@ public:
         }
     }
 
-    KDecoration2::Decoration* createDecoration(deco::window<typename Space::window_t>* window)
+    template<typename Win>
+    KDecoration2::Decoration* createDecoration(deco::window<Win>* window)
     {
         if (m_noPlugin) {
             return nullptr;
@@ -127,8 +128,13 @@ public:
                  KDecoration2::Decoration* decoration) override
     {
         using window_t = typename Space::window_t;
-        return std::make_unique<client_impl<window_t>>(
-            static_cast<window<window_t>*>(decoration->parent())->win, client, decoration);
+
+        return std::visit(
+            overload{[&](auto win) -> std::unique_ptr<KDecoration2::DecoratedClientPrivate> {
+                using win_t = std::remove_pointer_t<decltype(win)>;
+                return std::make_unique<client_impl<win_t>>(win, client, decoration);
+            }},
+            static_cast<window<window_t>*>(decoration->parent())->win);
     }
 
     std::unique_ptr<KDecoration2::DecorationSettingsPrivate>
@@ -302,9 +308,12 @@ private:
     void recreateDecorations()
     {
         for (auto win : space.windows) {
-            if (win->control) {
-                win->updateDecoration(true, true);
-            }
+            std::visit(overload{[&](auto&& win) {
+                           if (win->control) {
+                               win->updateDecoration(true, true);
+                           }
+                       }},
+                       win);
         }
     }
 

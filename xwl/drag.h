@@ -93,7 +93,7 @@ Q_SIGNALS:
 /**
  * An ongoing drag operation.
  */
-template<typename Window>
+template<typename Space>
 class drag
 {
 public:
@@ -105,7 +105,9 @@ public:
     virtual ~drag() = default;
 
     virtual bool handle_client_message(xcb_client_message_event_t* event) = 0;
-    virtual drag_event_reply move_filter(Window* target, QPoint const& pos) = 0;
+    virtual drag_event_reply move_filter(std::optional<typename Space::window_t> target,
+                                         QPoint const& pos)
+        = 0;
 
     virtual bool end() = 0;
 

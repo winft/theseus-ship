@@ -55,13 +55,13 @@ public:
 
     int64_t paint_output(output_t* output,
                          QRegion damage,
-                         std::deque<typename window_t::ref_t*> const& windows,
+                         std::deque<typename window_t::ref_t> const& ref_wins,
                          std::chrono::milliseconds presentTime) override
     {
         QElapsedTimer renderTimer;
         renderTimer.start();
 
-        this->createStackingOrder(windows);
+        this->createStackingOrder(ref_wins);
 
         auto mask = paint_type::none;
         m_backend->begin_render(*output);
@@ -117,15 +117,15 @@ public:
         return QPainterCompositing;
     }
 
-    std::unique_ptr<render::shadow<window_t>> createShadow(window_t* window) override
+    std::unique_ptr<render::shadow<window_t>> createShadow(window_t* win) override
     {
-        return std::make_unique<shadow<window_t>>(window);
+        return std::make_unique<shadow<window_t>>(win);
     }
 
-    win::deco::renderer<win::deco::client_impl<typename window_t::ref_t>>*
-    createDecorationRenderer(win::deco::client_impl<typename window_t::ref_t>* impl) override
+    std::unique_ptr<win::deco::render_injector>
+    create_deco(win::deco::render_window window) override
     {
-        return new deco_renderer(impl);
+        return std::make_unique<deco_renderer>(std::move(window));
     }
 
     void handle_screen_geometry_change(QSize const& /*size*/) override
@@ -156,7 +156,7 @@ protected:
         }
     }
 
-    std::unique_ptr<window_t> createWindow(typename window_t::ref_t* ref_win) override
+    std::unique_ptr<window_t> createWindow(typename window_t::ref_t ref_win) override
     {
         return std::make_unique<qpainter_window_t>(ref_win, *this);
     }
@@ -177,16 +177,16 @@ protected:
         cursor->mark_as_rendered();
     }
 
-    void paintEffectQuickView(EffectQuickView* w) override
+    void paintEffectQuickView(EffectQuickView* view) override
     {
         auto painter = this->platform.compositor->effects->scenePainter();
-        const QImage buffer = w->bufferAsImage();
+        const QImage buffer = view->bufferAsImage();
         if (buffer.isNull()) {
             return;
         }
         painter->save();
-        painter->setOpacity(w->opacity());
-        painter->drawImage(w->geometry(), buffer);
+        painter->setOpacity(view->opacity());
+        painter->drawImage(view->geometry(), buffer);
         painter->restore();
     }
 

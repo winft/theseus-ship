@@ -11,6 +11,7 @@
 #include "client_machine.h"
 #include "deco.h"
 #include "focus_stealing.h"
+#include "meta.h"
 #include "placement.h"
 #include "session.h"
 #include "startup_info.h"
@@ -33,14 +34,8 @@ namespace KWin::win::x11
 template<typename Win>
 void embed_client(Win* win, xcb_visualid_t visualid, xcb_colormap_t colormap, uint8_t depth)
 {
-    auto xcb_win = static_cast<xcb_window_t>(win->xcb_window);
-
-    assert(xcb_win != XCB_WINDOW_NONE);
-    assert(win->xcb_windows.client == XCB_WINDOW_NONE);
     assert(win->frameId() == XCB_WINDOW_NONE);
     assert(win->xcb_windows.wrapper == XCB_WINDOW_NONE);
-
-    win->xcb_windows.client.reset(xcb_win, false);
 
     uint32_t const zero_value = 0;
     auto conn = connection();
@@ -139,6 +134,119 @@ void prepare_decoration(Win* win)
     win->updateDecoration(false);
 }
 
+template<typename Win>
+bool created_window_may_activate(Win& win, Win& act_win)
+{
+    if (enum_index(win.control->rules.checkFSP(
+            kwinApp()->options->qobject->focusStealingPreventionLevel()))
+        <= 0) {
+        // Always allowed if focus stealing prevention is turned off.
+        return true;
+    }
+
+    if (belong_to_same_application(&act_win, &win, same_client_check::relaxed_for_active)) {
+        // New windows of the application currently with an active window may activate.
+        return true;
+    }
+
+    auto sameApplicationActiveHackPredicate = [&win](Win const* other) {
+        // Ignore already existing splashes, toolbars, utilities and menus, as the app may show
+        // those before the main window.
+        return !is_splash(other) && !is_toolbar(other) && !is_utility(other) && !is_menu(other)
+            && other != &win
+            && belong_to_same_application(other, &win, same_client_check::relaxed_for_active);
+    };
+
+    if (win.transient->lead()) {
+        auto get_casted_leads = [&win]() {
+            std::vector<Win*> ret;
+            const auto mcs = win.transient->leads();
+            for (auto mc : mcs) {
+                ret.push_back(mc);
+            }
+            return ret;
+        };
+
+        if (win.transient->is_follower_of(&act_win)) {
+            // Is transient for currently active window, even though it's not the same app (e.g.
+            // kcookiejar dialog).
+            return true;
+        }
+        if (win.groupTransient()
+            && !find_in_list<Win, Win>(get_casted_leads(), sameApplicationActiveHackPredicate)) {
+            // Standalone transient
+            return true;
+        }
+
+        // New child window may not activate.
+        return false;
+    }
+
+    for (auto other : win.space.windows) {
+        if (std::visit(overload{[&](Win* other) {
+                                    return other->control
+                                        && sameApplicationActiveHackPredicate(other);
+                                },
+                                [](auto&&) { return false; }},
+                       other)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+template<typename Win>
+xcb_timestamp_t query_timestamp(Win& win)
+{
+    // If it's the first window for its application (i.e. there's no other window from the same
+    // app), use the _KDE_NET_WM_USER_CREATION_TIME trick. Otherwise, refuse activation of a
+    // window from already running application if this application is not the active one (unless
+    // focus stealing prevention is turned off).
+    if (auto act = most_recently_activated_window(win.space)) {
+        if (!std::visit(overload{[&](Win* act) { return created_window_may_activate(win, *act); },
+                                 [](auto&&) { return true; }},
+                        *act)) {
+            return 0;
+        }
+    }
+
+    return read_user_creation_time(win);
+}
+
+template<typename Win>
+xcb_timestamp_t read_user_time_map_timestamp(Win* win,
+                                             const KStartupInfoId* asn_id,
+                                             const KStartupInfoData* asn_data,
+                                             bool session)
+{
+    xcb_timestamp_t time = win->net_info->userTime();
+
+    // Newer ASN timestamp always replaces user timestamp, unless user timestamp is 0. Helps
+    // e.g. with konqy reusing.
+    if (asn_data && time && asn_id->timestamp()) {
+        if (time == -1U || NET::timestampCompare(asn_id->timestamp(), time) > 0) {
+            time = asn_id->timestamp();
+        }
+    }
+
+    if (time != -1U) {
+        return time;
+    }
+
+    // Creation time would just mess things up during session startup, as possibly many apps are
+    // started up at the same time. If there's no active window yet, no timestamp will be
+    // needed, as plain allow_window_activation() will return true in such case. And if there's
+    // already active window, it's better not to activate the new one. Unless it was the active
+    // window at the time of session saving and there was no user interaction yet, this check
+    // will be done in manage().
+    if (session) {
+        return -1U;
+    }
+
+    return query_timestamp(*win);
+}
+
 /**
  * Manages the clients. This means handling the very first maprequest:
  * reparenting, initial geometry, initial state, placement, etc.
@@ -165,13 +273,14 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
     setup_space_window_connections(&space, win);
 
-    if (auto comp = space.base.render->compositor.get(); comp->x11_integration.update_blocking) {
-        QObject::connect(win->qobject.get(),
-                         &Win::qobject_t::blockingCompositingChanged,
-                         comp->qobject.get(),
-                         [comp, win](auto blocks) {
-                             comp->x11_integration.update_blocking(blocks ? win : nullptr);
-                         });
+    using compositor_t = typename Space::base_t::render_t::compositor_t;
+    if constexpr (requires(compositor_t comp) { comp.update_blocking(win); }) {
+        auto comp = space.base.render->compositor.get();
+        QObject::connect(
+            win->qobject.get(),
+            &Win::qobject_t::blockingCompositingChanged,
+            comp->qobject.get(),
+            [comp, win](auto blocks) { comp->update_blocking(blocks ? win : nullptr); });
     }
 
     QObject::connect(win->qobject.get(),
@@ -214,8 +323,8 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
                              win->xcb_windows.input.define_cursor(nativeCursor);
                          }
                          if (win->control->move_resize.enabled) {
-                             // changing window attributes doesn't change cursor if there's pointer
-                             // grab active
+                             // changing window attributes doesn't change cursor if there's
+                             // pointer grab active
                              xcb_change_active_pointer_grab(
                                  connection(),
                                  nativeCursor,
@@ -243,27 +352,28 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         | NET::WM2OpaqueRegion | NET::WM2DesktopFileName | NET::WM2GTKFrameExtents
         | NET::WM2GTKApplicationId;
 
-    auto wmClientLeaderCookie = win->fetchWmClientLeader();
+    auto wmClientLeaderCookie = fetch_wm_client_leader(*win);
     auto skipCloseAnimationCookie = fetch_skip_close_animation(*win);
     auto showOnScreenEdgeCookie = fetch_show_on_screen_edge(win);
     auto firstInTabBoxCookie = fetch_first_in_tabbox(win);
     auto transientCookie = fetch_transient(win);
 
-    win->geometry_hints.init(win->xcb_window);
-    win->motif_hints.init(win->xcb_window);
+    win->geometry_hints.init(win->xcb_windows.client);
+    win->motif_hints.init(win->xcb_windows.client);
 
-    win->info
+    win->net_info
         = new win_info<Win>(win, win->xcb_windows.client, rootWindow(), properties, properties2);
 
     if (is_desktop(win) && win->render_data.bit_depth == 32) {
-        // force desktop windows to be opaque. It's a desktop after all, there is no window below
+        // force desktop windows to be opaque. It's a desktop after all, there is no window
+        // below
         win->render_data.bit_depth = 24;
     }
     win->colormap = attr->colormap;
 
-    win->getResourceClass();
-    win->readWmClientLeader(wmClientLeaderCookie);
-    win->getWmClientMachine();
+    fetch_wm_class(*win);
+    read_wm_client_leader(*win, wmClientLeaderCookie);
+    fetch_wm_client_machine(*win);
     get_sync_counter(win);
 
     // First only read the caption text, so that win::setup_rules(..) can use it for matching,
@@ -280,10 +390,10 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
                      [win] { rules::evaluate_rules(win); });
 
     if (base::x11::xcb::extensions::self()->is_shape_available()) {
-        xcb_shape_select_input(connection(), win->xcb_window, true);
+        xcb_shape_select_input(connection(), win->xcb_windows.client, true);
     }
 
-    win->detectShape(win->xcb_window);
+    detect_shape(*win);
     detect_no_border(win);
     fetch_iconic_name(win);
 
@@ -292,12 +402,12 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
     update_allowed_actions(win);
 
-    win->transient->set_modal((win->info->state() & NET::Modal) != 0);
+    win->transient->set_modal((win->net_info->state() & NET::Modal) != 0);
     read_transient_property(win, transientCookie);
 
-    QByteArray desktopFileName{win->info->desktopFileName()};
+    QByteArray desktopFileName{win->net_info->desktopFileName()};
     if (desktopFileName.isEmpty()) {
-        desktopFileName = win->info->gtkApplicationId();
+        desktopFileName = win->net_info->gtkApplicationId();
     }
     set_desktop_file_name(win,
                           win->control->rules.checkDesktopFile(desktopFileName, true).toUtf8());
@@ -309,24 +419,24 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
     win->geometry_hints.read();
     get_motif_hints(win, true);
-    win->getWmOpaqueRegion();
+    fetch_wm_opaque_region(*win);
     set_skip_close_animation(*win, skipCloseAnimationCookie.to_bool());
 
-    // TODO: Try to obey all state information from info->state()
+    // TODO: Try to obey all state information from net_info->state()
 
-    set_original_skip_taskbar(win, (win->info->state() & NET::SkipTaskbar) != 0);
-    set_skip_pager(win, (win->info->state() & NET::SkipPager) != 0);
-    set_skip_switcher(win, (win->info->state() & NET::SkipSwitcher) != 0);
+    set_original_skip_taskbar(win, (win->net_info->state() & NET::SkipTaskbar) != 0);
+    set_skip_pager(win, (win->net_info->state() & NET::SkipPager) != 0);
+    set_skip_switcher(win, (win->net_info->state() & NET::SkipSwitcher) != 0);
     read_first_in_tabbox(win, firstInTabBoxCookie);
 
-    auto init_minimize = !isMapped && (win->info->initialMappingState() == NET::Iconic);
-    if (win->info->state() & NET::Hidden) {
+    auto init_minimize = !isMapped && (win->net_info->initialMappingState() == NET::Iconic);
+    if (win->net_info->state() & NET::Hidden) {
         init_minimize = true;
     }
 
     KStartupInfoId asn_id;
     KStartupInfoData asn_data;
-    auto asn_valid = check_startup_notification(space, win->xcb_window, asn_id, asn_data);
+    auto asn_valid = check_startup_notification(space, win->xcb_windows.client, asn_id, asn_data);
 
     // Make sure that the input window is created before we update the stacking order
     // TODO(romangg): Does it matter that the frame geometry is not set yet here?
@@ -367,12 +477,12 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
             auto leads = win->transient->leads();
             bool on_current = false;
             bool on_all = false;
-            typename Space::window_t* maincl = nullptr;
+            Win* maincl = nullptr;
 
             // This is slightly duplicated from win::place_on_main_window()
             for (auto const& lead : leads) {
                 if (leads.size() > 1 && is_special_window(lead)
-                    && !(win->info->state() & NET::Modal)) {
+                    && !(win->net_info->state() & NET::Modal)) {
                     // Don't consider group-transients and toolbars etc when placing
                     // except when it's modal (blocks specials as well).
                     continue;
@@ -397,9 +507,9 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         } else {
             // A transient shall appear on its leader and not drag that around.
             auto desktop_id = 0;
-            if (win->info->desktop()) {
+            if (win->net_info->desktop()) {
                 // Window had the initial desktop property, force it
-                desktop_id = win->info->desktop();
+                desktop_id = win->net_info->desktop();
             }
             if (desktop_id == 0 && asn_valid && asn_data.desktop() != 0) {
                 desktop_id = asn_data.desktop();
@@ -423,7 +533,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     set_desktops(win,
                  win->control->rules.checkDesktops(
                      *space.virtual_desktop_manager, *initial_desktops, !isMapped));
-    win->info->setDesktop(win->desktop());
+    win->net_info->setDesktop(get_desktop(*win));
 
     propagate_on_all_desktops_to_children(*win);
 
@@ -518,10 +628,10 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         // isn't restored larger than the workarea
         auto maxmode{maximize_mode::restore};
 
-        if (win->info->state() & NET::MaxVert) {
+        if (win->net_info->state() & NET::MaxVert) {
             maxmode = maxmode | maximize_mode::vertical;
         }
-        if (win->info->state() & NET::MaxHoriz) {
+        if (win->net_info->state() & NET::MaxHoriz) {
             maxmode = maxmode | maximize_mode::horizontal;
         }
 
@@ -536,30 +646,30 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         // Read other initial states
         set_keep_above(
             win,
-            win->control->rules.checkKeepAbove(win->info->state() & NET::KeepAbove, !isMapped));
+            win->control->rules.checkKeepAbove(win->net_info->state() & NET::KeepAbove, !isMapped));
         set_keep_below(
             win,
-            win->control->rules.checkKeepBelow(win->info->state() & NET::KeepBelow, !isMapped));
-        set_original_skip_taskbar(
-            win,
-            win->control->rules.checkSkipTaskbar(win->info->state() & NET::SkipTaskbar, !isMapped));
+            win->control->rules.checkKeepBelow(win->net_info->state() & NET::KeepBelow, !isMapped));
+        set_original_skip_taskbar(win,
+                                  win->control->rules.checkSkipTaskbar(
+                                      win->net_info->state() & NET::SkipTaskbar, !isMapped));
         set_skip_pager(
             win,
-            win->control->rules.checkSkipPager(win->info->state() & NET::SkipPager, !isMapped));
+            win->control->rules.checkSkipPager(win->net_info->state() & NET::SkipPager, !isMapped));
         set_skip_switcher(win,
                           win->control->rules.checkSkipSwitcher(
-                              win->info->state() & NET::SkipSwitcher, !isMapped));
+                              win->net_info->state() & NET::SkipSwitcher, !isMapped));
 
-        if (win->info->state() & NET::DemandsAttention) {
+        if (win->net_info->state() & NET::DemandsAttention) {
             set_demands_attention(win, true);
         }
-        if (win->info->state() & NET::Modal) {
+        if (win->net_info->state() & NET::Modal) {
             win->transient->set_modal(true);
         }
 
-        win->setFullScreen(
-            win->control->rules.checkFullScreen(win->info->state() & NET::FullScreen, !isMapped),
-            false);
+        win->setFullScreen(win->control->rules.checkFullScreen(
+                               win->net_info->state() & NET::FullScreen, !isMapped),
+                           false);
     }
 
     update_allowed_actions(win, true);
@@ -590,7 +700,9 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         if (session) {
             if (session->active) {
                 allow = !space.was_user_interaction || !space.stacking.active
-                    || is_desktop(space.stacking.active);
+                    || (space.stacking.active
+                        && std::visit(overload{[&](auto&& win) { return is_desktop(win); }},
+                                      *space.stacking.active));
             }
         } else {
             allow = allow_window_activation(space, win, win->userTime(), false);
@@ -601,12 +713,12 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         // If session saving, force showing new windows (i.e. "save file?" dialogs etc.)
         // also force if activation is allowed
         if (!on_current_desktop(win) && !isMapped && !session && (allow || isSessionSaving)) {
-            space.virtual_desktop_manager->setCurrent(win->desktop());
+            space.virtual_desktop_manager->setCurrent(get_desktop(*win));
         }
 
         if (on_current_desktop(win) && !isMapped && !allow
             && (!session || session->stackingOrder < 0)) {
-            restack_client_under_active(&win->space, win);
+            restack_client_under_active(win->space, *win);
         }
 
         update_visibility(win);
@@ -616,7 +728,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
                 if (!is_special_window(win)) {
                     if (kwinApp()->options->qobject->focusPolicyIsReasonable()
                         && wants_tab_focus(win)) {
-                        request_focus(space, win);
+                        request_focus(space, *win);
                     }
                 }
             } else if (!session && !is_special_window(win)) {
@@ -657,7 +769,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     // Was blocked while !control.
     win->updateWindowRules(rules::type::all);
 
-    win->setBlockingCompositing(win->info->isBlockingCompositing());
+    win->setBlockingCompositing(win->net_info->isBlockingCompositing());
     read_show_on_screen_edge(win, showOnScreenEdgeCookie);
 
     // Forward all opacity values to the frame in case there'll be other CM running.
@@ -680,98 +792,4 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     add_controlled_window_to_space(space, win);
     return win;
 }
-
-template<typename Win>
-xcb_timestamp_t read_user_time_map_timestamp(Win* win,
-                                             const KStartupInfoId* asn_id,
-                                             const KStartupInfoData* asn_data,
-                                             bool session)
-{
-    xcb_timestamp_t time = win->info->userTime();
-
-    // newer ASN timestamp always replaces user timestamp, unless user timestamp is 0
-    // helps e.g. with konqy reusing
-    if (asn_data != nullptr && time != 0) {
-        if (asn_id->timestamp() != 0
-            && (time == -1U || NET::timestampCompare(asn_id->timestamp(), time) > 0)) {
-            time = asn_id->timestamp();
-        }
-    }
-    qCDebug(KWIN_CORE) << "User timestamp, ASN:" << time;
-    if (time == -1U) {
-        // The window doesn't have any timestamp.
-        // If it's the first window for its application
-        // (i.e. there's no other window from the same app),
-        // use the _KDE_NET_WM_USER_CREATION_TIME trick.
-        // Otherwise, refuse activation of a window
-        // from already running application if this application
-        // is not the active one (unless focus stealing prevention is turned off).
-        auto act = dynamic_cast<Win*>(most_recently_activated_window(win->space));
-        if (act != nullptr
-            && !belong_to_same_application(act, win, same_client_check::relaxed_for_active)) {
-            bool first_window = true;
-            auto sameApplicationActiveHackPredicate = [win](auto const* cl) {
-                // ignore already existing splashes, toolbars, utilities and menus,
-                // as the app may show those before the main window
-                auto x11_client = dynamic_cast<Win const*>(cl);
-                return x11_client && !is_splash(x11_client) && !is_toolbar(x11_client)
-                    && !is_utility(x11_client) && !is_menu(x11_client) && x11_client != win
-                    && belong_to_same_application(
-                           x11_client, win, same_client_check::relaxed_for_active);
-            };
-            if (win->transient->lead()) {
-                auto clientMainClients = [win]() {
-                    std::vector<Win*> ret;
-                    const auto mcs = win->transient->leads();
-                    for (auto mc : mcs) {
-                        if (auto c = dynamic_cast<Win*>(mc)) {
-                            ret.push_back(c);
-                        }
-                    }
-                    return ret;
-                };
-                if (win->transient->is_follower_of(act))
-                    ; // is transient for currently active window, even though it's not
-                // the same app (e.g. kcookiejar dialog) -> allow activation
-                else if (win->groupTransient()
-                         && find_in_list<Win, Win>(clientMainClients(),
-                                                   sameApplicationActiveHackPredicate)
-                             == nullptr)
-                    ; // standalone transient
-                else
-                    first_window = false;
-            } else {
-                for (auto win : win->space.windows) {
-                    if (win->control && sameApplicationActiveHackPredicate(win)) {
-                        first_window = false;
-                        break;
-                    }
-                }
-            }
-            // don't refuse if focus stealing prevention is turned off
-            if (!first_window
-                && enum_index(win->control->rules.checkFSP(
-                       kwinApp()->options->qobject->focusStealingPreventionLevel()))
-                    > 0) {
-                qCDebug(KWIN_CORE) << "User timestamp, already exists:" << 0;
-                return 0; // refuse activation
-            }
-        }
-        // Creation time would just mess things up during session startup,
-        // as possibly many apps are started up at the same time.
-        // If there's no active window yet, no timestamp will be needed,
-        // as plain allow_window_activation() will return true
-        // in such case. And if there's already active window,
-        // it's better not to activate the new one.
-        // Unless it was the active window at the time
-        // of session saving and there was no user interaction yet,
-        // this check will be done in manage().
-        if (session)
-            return -1U;
-        time = read_user_creation_time(win);
-    }
-    qCDebug(KWIN_CORE) << "User timestamp, final:" << win << ":" << time;
-    return time;
-}
-
 }

@@ -8,6 +8,8 @@
 #include "desktop_get.h"
 #include "screen.h"
 
+#include <optional>
+
 namespace KWin::win
 {
 
@@ -24,50 +26,49 @@ namespace KWin::win
  * @return The window which could be activated or @c null if there is none.
  */
 template<typename Space>
-auto focus_chain_get_for_activation(Space& space, uint desktop, base::output const* output) ->
-    typename Space::window_t*
+auto focus_chain_get_for_activation(Space& space, uint desktop, base::output const* output)
+    -> std::optional<typename Space::window_t>
 {
     auto& manager = space.stacking.focus_chain;
 
     auto desk_it = manager.chains.desktops.find(desktop);
     if (desk_it == manager.chains.desktops.end()) {
-        return nullptr;
+        return {};
     }
 
     auto const& chain = desk_it->second;
 
     // TODO(romangg): reverse-range with C++20
     for (auto it = chain.rbegin(); it != chain.rend(); ++it) {
-        // TODO: move the check into Client
-        auto win = *it;
-        if (!win->isShown()) {
-            continue;
+        if (std::visit(overload{[&](auto&& win) {
+                           if (!win->isShown()) {
+                               return false;
+                           }
+                           if (manager.has_separate_screen_focus
+                               && win->topo.central_output != output) {
+                               return false;
+                           }
+                           return true;
+                       }},
+                       *it)) {
+            return *it;
         }
-        if (manager.has_separate_screen_focus && win->topo.central_output != output) {
-            continue;
-        }
-        return win;
     }
 
-    return nullptr;
+    return {};
 }
 
 template<typename Space>
-auto focus_chain_get_for_activation_on_current_output(Space& space, uint desktop) ->
-    typename Space::window_t*
+auto focus_chain_get_for_activation_on_current_output(Space& space, uint desktop)
+    -> std::optional<typename Space::window_t>
 {
     return focus_chain_get_for_activation(space, desktop, get_current_output(space));
 }
 
-template<typename Space>
-bool focus_chain_is_usable_focus_candidate(Space& space,
-                                           typename Space::window_t* window,
-                                           typename Space::window_t* prev)
+template<typename Space, typename Win, typename Output>
+bool focus_chain_is_usable_focus_candidate(Space& space, Win& window, Output const* output)
 {
-    if (window == prev) {
-        return false;
-    }
-    if (!window->isShown() || !on_current_desktop(window)) {
+    if (!window.isShown() || !on_current_desktop(&window)) {
         return false;
     }
 
@@ -75,12 +76,12 @@ bool focus_chain_is_usable_focus_candidate(Space& space,
         return true;
     }
 
-    return on_screen(window, prev ? prev->topo.central_output : get_current_output(space));
+    return on_screen(&window, output);
 }
 
 /**
- * @brief Queries the focus chain for @p desktop for the next window in relation to the given
- * @p reference.
+ * @brief Queries the focus chain for @p output and @p desktop for the next window in relation to
+ * the given @p reference.
  *
  * The method finds the first usable window which is not the @p reference Client. If no Client
  * can be found @c null is returned
@@ -89,27 +90,35 @@ bool focus_chain_is_usable_focus_candidate(Space& space,
  * @param desktop The virtual desktop whose focus chain should be used
  * @return *The next usable window or @c null if none can be found.
  */
-template<typename Space>
-auto focus_chain_next_for_desktop(Space& space, typename Space::window_t* reference, uint desktop)
-    -> typename Space::window_t*
+template<typename Space, typename Output>
+auto focus_chain_next(Space& space,
+                      std::optional<typename Space::window_t> reference,
+                      uint desktop,
+                      Output const* output) -> std::optional<typename Space::window_t>
 {
     auto& manager = space.stacking.focus_chain;
 
     auto desk_it = manager.chains.desktops.find(desktop);
     if (desk_it == manager.chains.desktops.end()) {
-        return nullptr;
+        return {};
     }
 
     auto const& chain = desk_it->second;
 
     // TODO(romangg): reverse-range with C++20
     for (auto it = chain.rbegin(); it != chain.rend(); ++it) {
-        if (focus_chain_is_usable_focus_candidate(space, *it, reference)) {
+        if (reference && *it == *reference) {
+            continue;
+        }
+        if (std::visit(overload{[&](auto&& win) {
+                           return focus_chain_is_usable_focus_candidate(space, *win, output);
+                       }},
+                       *it)) {
             return *it;
         }
     }
 
-    return nullptr;
+    return {};
 }
 
 }

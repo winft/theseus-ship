@@ -78,14 +78,16 @@ void setup_window_control_connections(Win* win)
             // No change.
             return;
         }
-        if (win->isInitialPositionSet()) {
-            // Position (geometry?) already set.
-            return;
+        if constexpr (requires(Win win) { win.isInitialPositionSet(); }) {
+            if (win->isInitialPositionSet()) {
+                // Position (geometry?) already set.
+                return;
+            }
         }
 
         geometry_updates_blocker blocker(win);
         auto const area = space_window_area(
-            win->space, PlacementArea, get_current_output(win->space), win->desktop());
+            win->space, PlacementArea, get_current_output(win->space), get_desktop(*win));
         win::place(win, area);
     });
 

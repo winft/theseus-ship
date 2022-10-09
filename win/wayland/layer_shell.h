@@ -161,9 +161,15 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
     QObject::connect(
         layer_surface, &WS::LayerSurfaceV1::got_popup, win->qobject.get(), [win](auto popup) {
             for (auto window : win->space.windows) {
-                if (auto wayland_window = dynamic_cast<Win*>(window);
-                    wayland_window && wayland_window->popup == popup) {
-                    win->transient->add_child(wayland_window);
+                if (std::visit(overload{[&](Win* candidate) {
+                                            if (candidate->popup == popup) {
+                                                win->transient->add_child(candidate);
+                                                return true;
+                                            }
+                                            return false;
+                                        },
+                                        [](auto&&) { return false; }},
+                               window)) {
                     break;
                 }
             }
@@ -217,7 +223,9 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
 template<typename Window, typename Space>
 void handle_new_layer_surface(Space* space, Wrapland::Server::LayerSurfaceV1* layer_surface)
 {
+    using var_win = typename Space::window_t;
     auto window = new Window(layer_surface->surface(), *space);
+
     if (layer_surface->surface()->client() == space->server->screen_locker_client_connection) {
         ScreenLocker::KSldApp::self()->lockScreenShown();
     }
@@ -226,7 +234,7 @@ void handle_new_layer_surface(Space* space, Wrapland::Server::LayerSurfaceV1* la
     QObject::connect(layer_surface,
                      &Wrapland::Server::LayerSurfaceV1::resourceDestroyed,
                      space->qobject.get(),
-                     [space, window] { remove_all(space->windows, window); });
+                     [space, window] { remove_all(space->windows, var_win(window)); });
 
     win::wayland::assign_layer_surface_role(window, layer_surface);
 
@@ -238,12 +246,15 @@ void handle_new_layer_surface(Space* space, Wrapland::Server::LayerSurfaceV1* la
 template<typename Win>
 void layer_surface_handle_keyboard_interactivity(Win* win)
 {
+    using var_win = typename Win::space_t::window_t;
     using inter = Wrapland::Server::LayerSurfaceV1::KeyboardInteractivity;
 
     auto interactivity = win->layer_surface->keyboard_interactivity();
     if (interactivity != inter::OnDemand) {
-        // With interactivity None or Exclusive just reset control.
-        activate_next_window(win->space, win);
+        if (auto act = most_recently_activated_window(win->space); act && *act == var_win(win)) {
+            // With interactivity None or Exclusive just reset control.
+            activate_next_window(win->space);
+        }
     }
     win->space.input->keyboard->update();
 }

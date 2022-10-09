@@ -25,11 +25,13 @@ Q_SIGNALS:
     void finish();
 };
 
-template<typename Window>
+template<typename Space>
 class wl_visit
 {
 public:
-    wl_visit(Window* target, x11_source<data_source_ext, Window>& source)
+    using window_t = typename Space::wayland_window;
+
+    wl_visit(window_t* target, x11_source<data_source_ext, Space>& source)
         : qobject{std::make_unique<wl_visit_qobject>()}
         , target{target}
         , source{source}
@@ -120,7 +122,7 @@ public:
 
     std::unique_ptr<wl_visit_qobject> qobject;
 
-    Window* target;
+    window_t* target;
     xcb_window_t window;
 
     struct {
@@ -314,7 +316,7 @@ private:
     }
 
     xcb_window_t source_window = XCB_WINDOW_NONE;
-    x11_source<data_source_ext, Window>& source;
+    x11_source<data_source_ext, Space>& source;
 
     uint32_t m_version = 0;
 

@@ -48,36 +48,41 @@ public:
         // TODO(romangg): We do this for every window here, even for windows that are not an
         // xdg-shell
         //                type window. Restrict that?
-        QObject::connect(
-            space->qobject.get(),
-            &win::space_qobject::wayland_window_added,
-            this,
-            [this](auto win_id) {
-                auto win = this->compositor.platform.base.space->windows_map.at(win_id);
-                if (win->render_data.ready_for_painting) {
-                    this->slotXdgShellClientShown(win);
-                } else {
-                    QObject::connect(win->qobject.get(),
-                                     &win::window_qobject::windowShown,
-                                     this,
-                                     [this, win] { this->slotXdgShellClientShown(win); });
-                }
-            });
+        QObject::connect(space->qobject.get(),
+                         &win::space_qobject::wayland_window_added,
+                         this,
+                         [this](auto win_id) {
+                             std::visit(
+                                 overload{[&](auto&& win) {
+                                     if (win->render_data.ready_for_painting) {
+                                         this->slotXdgShellClientShown(*win);
+                                         return;
+                                     }
+
+                                     QObject::connect(
+                                         win->qobject.get(),
+                                         &win::window_qobject::windowShown,
+                                         this,
+                                         [this, win] { this->slotXdgShellClientShown(*win); });
+                                 }},
+                                 this->compositor.platform.base.space->windows_map.at(win_id));
+                         });
 
         // TODO(romangg): We do this here too for every window.
-        for (auto window : space->windows) {
-            auto wlwin = dynamic_cast<typename space_t::wayland_window*>(window);
-            if (!wlwin) {
-                continue;
-            }
-            if (wlwin->render_data.ready_for_painting) {
-                this->setupAbstractClientConnections(wlwin);
-            } else {
-                QObject::connect(wlwin->qobject.get(),
-                                 &win::window_qobject::windowShown,
-                                 this,
-                                 [this, wlwin] { this->slotXdgShellClientShown(wlwin); });
-            }
+        for (auto win : space->windows) {
+            std::visit(overload{[&](typename space_t::wayland_window* win) {
+                                    if (win->render_data.ready_for_painting) {
+                                        this->setupAbstractClientConnections(*win);
+                                    } else {
+                                        QObject::connect(
+                                            win->qobject.get(),
+                                            &win::window_qobject::windowShown,
+                                            this,
+                                            [this, win] { this->slotXdgShellClientShown(*win); });
+                                    }
+                                },
+                                [](auto&&) {}},
+                       win);
         }
     }
 
@@ -136,8 +141,8 @@ protected:
     {
         auto& space = this->compositor.platform.base.space;
         space->input->pointer->setEffectsOverrideCursor(shape);
-        if (space->move_resize_window) {
-            win::end_move_resize(space->move_resize_window);
+        if (auto& mov_res = space->move_resize_window) {
+            std::visit(overload{[&](auto&& win) { win::end_move_resize(win); }}, *mov_res);
         }
     }
 

@@ -35,7 +35,7 @@ void create_x11_source(Selection* sel, xcb_xfixes_selection_notify_event_t* even
 
     using internal_source = std::remove_pointer_t<decltype(sel->data.source_int.get())>;
     sel->data.x11_source.reset(
-        new x11_source<internal_source, typename Selection::window_t>(event, sel->data.core));
+        new x11_source<internal_source, typename Selection::space_t>(event, sel->data.core));
 
     // Not all selections handle X11 offer changes this way. Drags set the offers on the enter
     // events of their X11 helper window.

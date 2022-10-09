@@ -15,45 +15,42 @@
 namespace KWin::win
 {
 
-template<typename Space>
-void send_window_to_desktop(Space& space,
-                            typename Space::window_t* window,
-                            int desk,
-                            bool dont_activate)
+template<typename Space, typename Win>
+void send_window_to_desktop(Space& space, Win* window, int desk, bool dont_activate)
 {
     if ((desk < 1 && desk != NET::OnAllDesktops)
         || desk > static_cast<int>(space.virtual_desktop_manager->count())) {
         return;
     }
 
-    auto old_desktop = window->desktop();
+    auto old_desktop = get_desktop(*window);
     auto was_on_desktop = on_desktop(window, desk) || on_all_desktops(window);
     set_desktop(window, desk);
 
-    if (window->desktop() != desk) {
+    if (get_desktop(*window) != desk) {
         // No change or desktop forced
         return;
     }
 
     // window did range checking.
-    desk = window->desktop();
+    desk = get_desktop(*window);
 
     if (on_desktop(window, space.virtual_desktop_manager->current())) {
         if (win::wants_tab_focus(window) && kwinApp()->options->qobject->focusPolicyIsReasonable()
             && !was_on_desktop && // for stickyness changes
             !dont_activate) {
-            request_focus(space, window);
+            request_focus(space, *window);
         } else {
-            restack_client_under_active(&space, window);
+            restack_client_under_active(space, *window);
         }
     } else {
-        raise_window(&space, window);
+        raise_window(space, window);
     }
 
     check_workspace_position(window, QRect(), old_desktop);
 
     auto const transients_stacking_order
-        = restacked_by_space_stacking_order(&space, window->transient->children);
+        = restacked_by_space_stacking_order(space, window->transient->children);
     for (auto const& transient : transients_stacking_order) {
         if (transient->control) {
             send_window_to_desktop(space, transient, desk, dont_activate);
@@ -69,10 +66,13 @@ void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)
     // Restore the focus on this desktop afterwards.
     focus_blocker<Space> blocker(*space);
 
-    if (auto move_resize_client = space->move_resize_window) {
-        if (!on_desktop(move_resize_client, newDesktop)) {
-            win::set_desktop(move_resize_client, newDesktop);
-        }
+    if (auto& mov_res = space->move_resize_window) {
+        std::visit(overload{[&](auto&& win) {
+                       if (!on_desktop(win, newDesktop)) {
+                           win::set_desktop(win, newDesktop);
+                       }
+                   }},
+                   *mov_res);
     }
 
     space->handle_desktop_changed(newDesktop);
@@ -95,9 +95,9 @@ void window_to_desktop(Win& window)
     auto const desktop = functor(nullptr, true);
 
     if (!is_desktop(&window) && !is_dock(&window)) {
-        set_move_resize_window(ws, &window);
+        set_move_resize_window(ws, window);
         vds->setCurrent(desktop);
-        set_move_resize_window(ws, nullptr);
+        unset_move_resize_window(ws);
     }
 }
 

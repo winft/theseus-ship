@@ -32,15 +32,18 @@ public:
         auto alarmEvent = reinterpret_cast<xcb_sync_alarm_notify_event_t*>(event);
 
         for (auto win : space.windows) {
-            if (!win->control) {
-                continue;
-            }
-            auto x11_win = dynamic_cast<typename Space::x11_window*>(win);
-            if (!x11_win) {
-                continue;
-            }
-            if (alarmEvent->alarm == x11_win->sync_request.alarm) {
-                handle_sync(x11_win, alarmEvent->counter_value);
+            if (std::visit(overload{[&](typename Space::x11_window* win) {
+                                        if (!win->control) {
+                                            return false;
+                                        }
+                                        if (alarmEvent->alarm != win->sync_request.alarm) {
+                                            return false;
+                                        }
+                                        handle_sync(win, alarmEvent->counter_value);
+                                        return true;
+                                    },
+                                    [](auto&&) { return false; }},
+                           win)) {
                 break;
             }
         }

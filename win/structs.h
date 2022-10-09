@@ -48,11 +48,11 @@ struct move_resize_op {
     QTimer* delay_timer{nullptr};
 };
 
-template<typename RefWin>
+template<typename RefWin, typename VarWin>
 struct deco_impl {
     QMetaObject::Connection client_destroy;
 
-    deco::window<RefWin>* window{nullptr};
+    deco::window<VarWin>* window{nullptr};
     KDecoration2::Decoration* decoration{nullptr};
     deco::client_impl<RefWin>* client{nullptr};
 

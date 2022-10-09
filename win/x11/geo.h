@@ -5,8 +5,12 @@
 */
 #pragma once
 
+#include "client.h"
+#include "deco.h"
+#include "input.h"
 #include "scene.h"
 
+#include "base/x11/xcb/extensions.h"
 #include "win/setup.h"
 
 #include <xcb/sync.h>
@@ -34,6 +38,51 @@ private:
 };
 
 template<typename Win>
+bool geo_is_maximizable(Win const& win)
+{
+    if (!win.isResizable() || win::is_toolbar(&win) || win::is_applet_popup(&win)) {
+        // SELI isToolbar() ?
+        return false;
+    }
+    if (win.control->rules.checkMaximize(maximize_mode::restore) == maximize_mode::restore
+        && win.control->rules.checkMaximize(maximize_mode::full) != maximize_mode::restore) {
+        return true;
+    }
+    return false;
+}
+
+template<typename Win>
+bool geo_is_minimizable(Win const& win)
+{
+    if (is_special_window(&win) && !win.transient->lead()) {
+        return false;
+    }
+    if (is_applet_popup(&win)) {
+        return false;
+    }
+    if (!win.control->rules.checkMinimize(true)) {
+        return false;
+    }
+
+    if (win.transient->lead()) {
+        // #66868 - Let other xmms windows be minimized when the mainwindow is minimized
+        auto shown_main_window{false};
+        for (auto const& lead : win.transient->leads())
+            if (lead->isShown()) {
+                shown_main_window = true;
+            }
+        if (!shown_main_window) {
+            return true;
+        }
+    }
+
+    if (!wants_tab_focus(&win)) {
+        return false;
+    }
+    return true;
+}
+
+template<typename Win>
 void update_shape(Win* win)
 {
     if (win->is_shape) {
@@ -53,7 +102,7 @@ void update_shape(Win* win)
                               win->frameId(),
                               client_pos.x(),
                               client_pos.y(),
-                              win->xcb_window);
+                              win->xcb_windows.client);
         }
     } else if (win->app_no_border) {
         xcb_shape_mask(connection(),
@@ -72,7 +121,7 @@ void update_shape(Win* win)
 
     // Decoration mask (i.e. 'else' here) setting is done in setMask()
     // when the decoration calls it or when the decoration is created/destroyed
-    win->update_input_shape();
+    update_input_shape(*win);
 
     if (win->render) {
         add_full_repaint(*win);
@@ -82,6 +131,123 @@ void update_shape(Win* win)
     }
 
     discard_shape(*win);
+}
+
+template<typename Win>
+void do_set_geometry(Win& win, QRect const& frame_geo)
+{
+    assert(win.control);
+
+    auto const old_frame_geo = win.geo.frame;
+
+    if (old_frame_geo == frame_geo && !win.synced_geometry.init) {
+        return;
+    }
+
+    win.geo.frame = frame_geo;
+
+    if (frame_to_render_rect(&win, old_frame_geo).size()
+        != frame_to_render_rect(&win, frame_geo).size()) {
+        discard_buffer(win);
+    }
+
+    // TODO(romangg): Remove?
+    win::set_current_output_by_window(win.space.base, win);
+    win.space.stacking.order.update_order();
+
+    win.updateWindowRules(rules::type::position | rules::type::size);
+
+    if (is_resize(&win)) {
+        perform_move_resize(&win);
+    }
+
+    add_layer_repaint(win, visible_rect(&win, old_frame_geo));
+    add_layer_repaint(win, visible_rect(&win, frame_geo));
+
+    Q_EMIT win.qobject->frame_geometry_changed(old_frame_geo);
+
+    // Must be done after signal is emitted so the screen margins are update.
+    if (win.hasStrut()) {
+        update_space_areas(win.space);
+    }
+}
+
+template<typename Win>
+void do_set_maximize_mode(Win& win, win::maximize_mode mode)
+{
+    if (mode == win.max_mode) {
+        return;
+    }
+
+    auto old_mode = win.max_mode;
+    win.max_mode = mode;
+
+    update_allowed_actions(&win);
+    win.updateWindowRules(rules::type::maximize_horiz | rules::type::maximize_vert
+                          | rules::type::position | rules::type::size);
+
+    // Update decoration borders.
+    if (auto deco = decoration(&win); deco && deco->client()
+        && !(kwinApp()->options->qobject->borderlessMaximizedWindows()
+             && mode == maximize_mode::full)) {
+        auto const deco_client = decoration(&win)->client().toStrongRef().data();
+
+        if ((mode & maximize_mode::vertical) != (old_mode & maximize_mode::vertical)) {
+            Q_EMIT deco_client->maximizedVerticallyChanged(flags(mode & maximize_mode::vertical));
+        }
+        if ((mode & maximize_mode::horizontal) != (old_mode & maximize_mode::horizontal)) {
+            Q_EMIT deco_client->maximizedHorizontallyChanged(
+                flags(mode & maximize_mode::horizontal));
+        }
+        if ((mode == maximize_mode::full) != (old_mode == maximize_mode::full)) {
+            Q_EMIT deco_client->maximizedChanged(flags(mode & maximize_mode::full));
+        }
+    }
+
+    // TODO(romangg): Can we do this also in update_maximized? What about deco update?
+    if (decoration(&win)) {
+        win.control->deco.client->update_size();
+    }
+
+    // Need to update the server geometry in case the decoration changed.
+    update_server_geometry(&win, win.geo.update.frame);
+
+    Q_EMIT win.qobject->maximize_mode_changed(mode);
+}
+
+template<typename Win>
+void do_set_fullscreen(Win& win, bool full)
+{
+    full = win.control->rules.checkFullScreen(full);
+
+    auto const old_full = win.control->fullscreen;
+    if (old_full == full) {
+        return;
+    }
+
+    if (old_full) {
+        // May cause focus leave.
+        // TODO: Must always be done when fullscreening to other output allowed.
+        win.space.focusMousePos = win.space.input->cursor->pos();
+    }
+
+    win.control->fullscreen = full;
+
+    if (full) {
+        raise_window(win.space, &win);
+    } else {
+        // TODO(romangg): Can we do this also in setFullScreen? What about deco update?
+        win.net_info->setState(full ? NET::FullScreen : NET::States(), NET::FullScreen);
+        win.updateDecoration(false, false);
+
+        // Need to update the server geometry in case the decoration changed.
+        update_server_geometry(&win, win.geo.update.frame);
+    }
+
+    // Active fullscreens gets a different layer.
+    update_layer(&win);
+    win.updateWindowRules(rules::type::fullscreen | rules::type::position | rules::type::size);
+    Q_EMIT win.qobject->fullScreenChanged();
 }
 
 template<typename Win>
@@ -148,9 +314,9 @@ void apply_pending_geometry(Win* win, int64_t update_request_number)
         }
     }
 
-    win->do_set_fullscreen(fullscreen);
-    win->do_set_geometry(frame_geo);
-    win->do_set_maximize_mode(max_mode);
+    do_set_fullscreen(*win, fullscreen);
+    do_set_geometry(*win, frame_geo);
+    do_set_maximize_mode(*win, max_mode);
 
     update_window_buffer(win);
 
@@ -478,7 +644,7 @@ QSize size_for_client_size(Win const* win,
 template<typename Win>
 inline QMargins gtk_frame_extents(Win* win)
 {
-    auto const strut = win->info->gtkFrameExtents();
+    auto const strut = win->net_info->gtkFrameExtents();
     return QMargins(strut.left, strut.top, strut.right, strut.bottom);
 }
 
@@ -690,6 +856,70 @@ void configure_position_size_from_request(Win* win,
 }
 
 template<typename Win>
+void resize_with_gravity(Win* win, QSize const& size, xcb_gravity_t gravity)
+{
+    auto const tmp_size = constrain_and_adjust_size(win, size);
+    auto width = tmp_size.width();
+    auto height = tmp_size.height();
+
+    if (gravity == 0) {
+        gravity = win->geometry_hints.window_gravity();
+    }
+
+    auto pos_x = win->synced_geometry.frame.x();
+    auto pos_y = win->synced_geometry.frame.y();
+
+    switch (gravity) {
+    case XCB_GRAVITY_NORTH_WEST:
+        // top left corner doesn't move
+    default:
+        break;
+    case XCB_GRAVITY_NORTH:
+        // middle of top border doesn't move
+        pos_x = (pos_x + win->geo.size().width() / 2) - (width / 2);
+        break;
+    case XCB_GRAVITY_NORTH_EAST:
+        // top right corner doesn't move
+        pos_x = pos_x + win->geo.size().width() - width;
+        break;
+    case XCB_GRAVITY_WEST:
+        // middle of left border doesn't move
+        pos_y = (pos_y + win->geo.size().height() / 2) - (height / 2);
+        break;
+    case XCB_GRAVITY_CENTER:
+        // middle point doesn't move
+        pos_x = (pos_x + win->geo.size().width() / 2) - (width / 2);
+        pos_y = (pos_y + win->geo.size().height() / 2) - (height / 2);
+        break;
+    case XCB_GRAVITY_STATIC:
+        // top left corner of _client_ window doesn't move
+        // since decoration doesn't change, equal to NorthWestGravity
+        break;
+    case XCB_GRAVITY_EAST:
+        // middle of right border doesn't move
+        pos_x = pos_x + win->geo.size().width() - width;
+        pos_y = (pos_y + win->geo.size().height() / 2) - (height / 2);
+        break;
+    case XCB_GRAVITY_SOUTH_WEST:
+        // bottom left corner doesn't move
+        pos_y = pos_y + win->geo.size().height() - height;
+        break;
+    case XCB_GRAVITY_SOUTH:
+        // middle of bottom border doesn't move
+        pos_x = (pos_x + win->geo.size().width() / 2) - (width / 2);
+        pos_y = pos_y + win->geo.size().height() - height;
+        break;
+    case XCB_GRAVITY_SOUTH_EAST:
+        // bottom right corner doesn't move
+        pos_x = pos_x + win->geo.size().width() - width;
+        pos_y = pos_y + win->geo.size().height() - height;
+        break;
+    }
+
+    win->setFrameGeometry(QRect(pos_x, pos_y, width, height));
+}
+
+template<typename Win>
 void configure_only_size_from_request(Win* win,
                                       QRect const& requested_geo,
                                       int& value_mask,
@@ -766,70 +996,6 @@ void configure_request(Win* win,
     }
 }
 
-template<typename Win>
-void resize_with_gravity(Win* win, QSize const& size, xcb_gravity_t gravity)
-{
-    auto const tmp_size = constrain_and_adjust_size(win, size);
-    auto width = tmp_size.width();
-    auto height = tmp_size.height();
-
-    if (gravity == 0) {
-        gravity = win->geometry_hints.window_gravity();
-    }
-
-    auto pos_x = win->synced_geometry.frame.x();
-    auto pos_y = win->synced_geometry.frame.y();
-
-    switch (gravity) {
-    case XCB_GRAVITY_NORTH_WEST:
-        // top left corner doesn't move
-    default:
-        break;
-    case XCB_GRAVITY_NORTH:
-        // middle of top border doesn't move
-        pos_x = (pos_x + win->geo.size().width() / 2) - (width / 2);
-        break;
-    case XCB_GRAVITY_NORTH_EAST:
-        // top right corner doesn't move
-        pos_x = pos_x + win->geo.size().width() - width;
-        break;
-    case XCB_GRAVITY_WEST:
-        // middle of left border doesn't move
-        pos_y = (pos_y + win->geo.size().height() / 2) - (height / 2);
-        break;
-    case XCB_GRAVITY_CENTER:
-        // middle point doesn't move
-        pos_x = (pos_x + win->geo.size().width() / 2) - (width / 2);
-        pos_y = (pos_y + win->geo.size().height() / 2) - (height / 2);
-        break;
-    case XCB_GRAVITY_STATIC:
-        // top left corner of _client_ window doesn't move
-        // since decoration doesn't change, equal to NorthWestGravity
-        break;
-    case XCB_GRAVITY_EAST:
-        // middle of right border doesn't move
-        pos_x = pos_x + win->geo.size().width() - width;
-        pos_y = (pos_y + win->geo.size().height() / 2) - (height / 2);
-        break;
-    case XCB_GRAVITY_SOUTH_WEST:
-        // bottom left corner doesn't move
-        pos_y = pos_y + win->geo.size().height() - height;
-        break;
-    case XCB_GRAVITY_SOUTH:
-        // middle of bottom border doesn't move
-        pos_x = (pos_x + win->geo.size().width() / 2) - (width / 2);
-        pos_y = pos_y + win->geo.size().height() - height;
-        break;
-    case XCB_GRAVITY_SOUTH_EAST:
-        // bottom right corner doesn't move
-        pos_x = pos_x + win->geo.size().width() - width;
-        pos_y = pos_y + win->geo.size().height() - height;
-        break;
-    }
-
-    win->setFrameGeometry(QRect(pos_x, pos_y, width, height));
-}
-
 /**
  * Implements _NET_MOVERESIZE_WINDOW.
  */
@@ -880,7 +1046,7 @@ bool update_server_geometry(Win* win, QRect const& frame_geo)
     win->synced_geometry.fullscreen = win->geo.update.fullscreen;
 
     if (old_outer_geo.size() != outer_geo.size() || old_rel_wrapper_geo != rel_wrapper_geo
-        || !win->first_geo_synced) {
+        || win->synced_geometry.init) {
         win->xcb_windows.outer.set_geometry(outer_geo);
         win->xcb_windows.wrapper.set_geometry(rel_wrapper_geo);
         win->xcb_windows.client.resize(rel_wrapper_geo.size());
@@ -920,7 +1086,7 @@ void sync_geometry(Win* win, QRect const& frame_geo)
     auto const client_geo = frame_to_client_rect(win, frame_geo);
 
     assert(win->sync_request.counter != XCB_NONE);
-    assert(win->synced_geometry.client != client_geo || !win->first_geo_synced);
+    assert(win->synced_geometry.client != client_geo || win->synced_geometry.init);
 
     send_sync_request(win);
     win->pending_configures.push_back({
@@ -965,7 +1131,7 @@ void update_fullscreen_monitors(Win* win, NETFullscreenMonitors topology)
         return;
     }
 
-    win->info->setFullscreenMonitors(topology);
+    win->net_info->setFullscreenMonitors(topology);
     if (win->control->fullscreen) {
         win->setFrameGeometry(fullscreen_monitors_area(win, topology));
     }
@@ -974,8 +1140,8 @@ void update_fullscreen_monitors(Win* win, NETFullscreenMonitors topology)
 template<typename Win>
 NETExtendedStrut strut(Win const* win)
 {
-    NETExtendedStrut ext = win->info->extendedStrut();
-    NETStrut str = win->info->strut();
+    NETExtendedStrut ext = win->net_info->extendedStrut();
+    NETStrut str = win->net_info->strut();
     auto const displaySize = kwinApp()->get_base().topology.size;
 
     if (ext.left_width == 0 && ext.right_width == 0 && ext.top_width == 0 && ext.bottom_width == 0
@@ -1003,6 +1169,17 @@ NETExtendedStrut strut(Win const* win)
         }
     }
     return ext;
+}
+
+template<typename Win>
+bool has_strut(Win const& win)
+{
+    NETExtendedStrut ext = strut(&win);
+    if (ext.left_width == 0 && ext.right_width == 0 && ext.top_width == 0
+        && ext.bottom_width == 0) {
+        return false;
+    }
+    return true;
 }
 
 template<typename Win>
@@ -1142,6 +1319,142 @@ bool has_offscreen_xinerama_strut(Win const* win)
 
     // If there's anything left then we have an offscreen strut
     return !region.isEmpty();
+}
+
+template<typename Win>
+QRect get_icon_geometry(Win& win)
+{
+    auto rect = win.net_info->iconGeometry();
+
+    QRect geom(rect.pos.x, rect.pos.y, rect.size.width, rect.size.height);
+    if (geom.isValid()) {
+        return geom;
+    }
+
+    // Check all mainwindows of this window (recursively)
+    for (auto mc : win.transient->leads()) {
+        geom = mc->iconGeometry();
+        if (geom.isValid()) {
+            return geom;
+        }
+    }
+
+    // No mainwindow (or their parents) with icon geometry was found
+    return win.space.get_icon_geometry(&win);
+}
+
+template<typename Win>
+void set_frame_geometry(Win& win, QRect const& rect)
+{
+    auto frame_geo = win.control->rules.checkGeometry(rect);
+
+    win.geo.update.frame = frame_geo;
+
+    if (win.geo.update.block) {
+        win.geo.update.pending = win::pending_geometry::normal;
+        return;
+    }
+
+    win.geo.update.pending = win::pending_geometry::none;
+
+    auto const old_client_geo = win.synced_geometry.client;
+    auto client_geo = frame_to_client_rect(&win, frame_geo);
+
+    if (win.synced_geometry.init) {
+        // Initial sync-up after taking control of an unmapped window.
+
+        if (win.sync_request.counter) {
+            // The first sync can not be suppressed.
+            assert(!win.sync_request.suppressed);
+            sync_geometry(&win, frame_geo);
+
+            // Some Electron apps do not react to the first sync request and because of that
+            // never show. It seems to be only a problem with apps based on Electron 9. This was
+            // observed with Discord and balenaEtcher. For as long as there are common apps out
+            // there still based on Electron 9 we use the following fallback timer to cancel the
+            // wait after 1000 ms and instead set the window to directly show.
+            auto fallback_timer = new QTimer(win.qobject.get());
+            auto const serial = win.sync_request.update_request_number;
+            QObject::connect(fallback_timer,
+                             &QTimer::timeout,
+                             win.qobject.get(),
+                             [&win, fallback_timer, serial] {
+                                 delete fallback_timer;
+
+                                 if (win.pending_configures.empty()
+                                     || win.pending_configures.front().update_request_number
+                                         != serial) {
+                                     return;
+                                 }
+
+                                 win.pending_configures.erase(win.pending_configures.begin());
+
+                                 set_ready_for_painting(win);
+                             });
+            fallback_timer->setSingleShot(true);
+            fallback_timer->start(1000);
+        }
+
+        update_server_geometry(&win, frame_geo);
+        send_synthetic_configure_notify(&win, client_geo);
+        do_set_geometry(win, frame_geo);
+        do_set_fullscreen(win, win.geo.update.fullscreen);
+        do_set_maximize_mode(win, win.geo.update.max_mode);
+        win.synced_geometry.init = false;
+        return;
+    }
+
+    if (win.sync_request.counter) {
+        if (win.sync_request.suppressed) {
+            // Adapt previous syncs so we don't update to an old geometry when client returns.
+            for (auto& configure : win.pending_configures) {
+                configure.geometry.client = client_geo;
+                configure.geometry.frame = frame_geo;
+            }
+        } else {
+            if (old_client_geo.size() != client_geo.size()) {
+                // Size changed. Request a new one from the client and wait on it.
+                sync_geometry(&win, frame_geo);
+                update_server_geometry(&win, frame_geo);
+                return;
+            }
+
+            // Move without size change.
+            for (auto& event : win.pending_configures) {
+                // The positional infomation in pending syncs must be updated to the new
+                // position.
+                event.geometry.frame.moveTo(frame_geo.topLeft());
+                event.geometry.client.moveTo(client_geo.topLeft());
+            }
+        }
+    }
+
+    update_server_geometry(&win, frame_geo);
+
+    do_set_geometry(win, frame_geo);
+    do_set_fullscreen(win, win.geo.update.fullscreen);
+    do_set_maximize_mode(win, win.geo.update.max_mode);
+
+    // Always recalculate client geometry in case borders changed on fullscreen/maximize
+    // changes.
+    client_geo = frame_to_client_rect(&win, frame_geo);
+
+    // Always send a synthetic configure notify in the end to enforce updates to update
+    // potential fullscreen/maximize changes. IntelliJ IDEA needed this to position its
+    // unmanageds correctly.
+    //
+    // TODO(romangg): Restrain making this call to only being issued when really necessary.
+    send_synthetic_configure_notify(&win, client_geo);
+}
+
+template<typename Win>
+void detect_shape(Win& win)
+{
+    auto const was_shape = win.is_shape;
+    win.is_shape = base::x11::xcb::extensions::self()->has_shape(win.xcb_windows.client);
+    if (was_shape != win.is_shape) {
+        Q_EMIT win.qobject->shapedChanged();
+    }
 }
 
 }

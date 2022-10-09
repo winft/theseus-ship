@@ -27,17 +27,25 @@ template<typename Space>
 void update_tool_windows_visibility(Space* space, bool also_hide)
 {
     if (!kwinApp()->options->qobject->isHideUtilityWindowsForInactive()) {
-        for (auto const& window : space->windows) {
-            if (window->control) {
-                window->hideClient(false);
-            }
+        for (auto&& window : space->windows) {
+            std::visit(overload{[](auto&& window) {
+                           if (window->control) {
+                               window->hideClient(false);
+                           }
+                       }},
+                       window);
         }
         return;
     }
 
     using x11_window_t = typename Space::x11_window;
     x11::group<Space> const* active_group = nullptr;
-    auto active_window = dynamic_cast<x11_window_t*>(space->stacking.active);
+    x11_window_t* active_window{nullptr};
+
+    if (auto& active = space->stacking.active;
+        active.has_value() && std::holds_alternative<x11_window_t*>(*active)) {
+        active_window = std::get<x11_window_t*>(*active);
+    }
 
     // Go up in transiency hiearchy, if the top is found, only tool transients for the top
     // window will be shown; if a group transient is group, all tools in the group will be shown.
@@ -61,16 +69,15 @@ void update_tool_windows_visibility(Space* space, bool also_hide)
     std::vector<x11_window_t*> to_hide;
 
     for (auto const& win : space->stacking.order.stack) {
-        if (!win->control) {
+        if (!std::holds_alternative<x11_window_t*>(win)) {
+            continue;
+        }
+        auto x11_win = std::get<x11_window_t*>(win);
+        if (!x11_win->control) {
             continue;
         }
 
-        if (!is_utility(win) && !is_menu(win) && !is_toolbar(win)) {
-            continue;
-        }
-
-        auto x11_win = dynamic_cast<x11_window_t*>(win);
-        if (!x11_win) {
+        if (!is_utility(x11_win) && !is_menu(x11_win) && !is_toolbar(x11_win)) {
             continue;
         }
 
@@ -91,8 +98,7 @@ void update_tool_windows_visibility(Space* space, bool also_hide)
             auto const& leads = x11_win->transient->leads();
             // Don't hide utility windows which are standalone(?) or have e.g. kicker as lead.
             show = leads.empty()
-                || std::any_of(
-                       leads.cbegin(), leads.cend(), is_special_window<typename Space::window_t>);
+                || std::any_of(leads.cbegin(), leads.cend(), is_special_window<x11_window_t>);
             if (!show) {
                 to_hide.push_back(x11_win);
             }

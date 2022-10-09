@@ -188,7 +188,7 @@ public:
      * @param parent The parent menu to which to add created child menus and items
      * @return QList< QAction* > List of all actions aggregated from all scripts.
      */
-    QList<QAction*> actionsForUserActionMenu(typename Space::window_t* window, QMenu* parent)
+    QList<QAction*> actionsForUserActionMenu(typename Space::window_t window, QMenu* parent)
     {
         auto const w_wins = workspaceWrapper()->clientList();
         auto window_it = std::find_if(w_wins.cbegin(), w_wins.cend(), [window](auto win) {

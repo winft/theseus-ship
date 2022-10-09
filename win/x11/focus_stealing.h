@@ -27,6 +27,8 @@ bool allow_window_activation(Space& space,
                              bool focus_in = false,
                              bool ignore_desktop = false)
 {
+    using var_win = typename Space::window_t;
+
     // kwinApp()->options->focusStealingPreventionLevel :
     // 0 - none    - old KWin behaviour, new windows always get focus
     // 1 - low     - focus stealing prevention is applied normally, when unsure, activation is
@@ -50,10 +52,8 @@ bool allow_window_activation(Space& space,
 
     auto ac = most_recently_activated_window(space);
     if (focus_in) {
-        if (std::find(space.stacking.should_get_focus.cbegin(),
-                      space.stacking.should_get_focus.cend(),
-                      const_cast<Win*>(window))
-            != space.stacking.should_get_focus.cend()) {
+        auto& sgf = space.stacking.should_get_focus;
+        if (std::find(sgf.cbegin(), sgf.cend(), var_win(const_cast<Win*>(window))) != sgf.cend()) {
             // FocusIn was result of KWin's action
             return true;
         }
@@ -67,7 +67,11 @@ bool allow_window_activation(Space& space,
             return false;
     }
 
-    auto const protection = ac ? ac->control->rules.checkFPP(fsp_level::medium) : fsp_level::none;
+    auto const protection = ac
+        ? std::visit(
+            overload{[](auto&& win) { return win->control->rules.checkFPP(fsp_level::medium); }},
+            *ac)
+        : fsp_level::none;
 
     // stealing is unconditionally allowed (NETWM behavior)
     if (level == fsp_level::none || protection == fsp_level::none) {
@@ -88,7 +92,7 @@ bool allow_window_activation(Space& space,
     // No active client, it's ok to pass focus
     // NOTICE that extreme protection needs to be handled before to allow protection on unmanged
     // windows
-    if (!ac || is_desktop(ac)) {
+    if (!ac || std::visit(overload{[](auto&& win) { return is_desktop(win); }}, *ac)) {
         qCDebug(KWIN_CORE) << "Activation: No client active, allowing";
         // no active client -> always allow
         return true;
@@ -98,7 +102,11 @@ bool allow_window_activation(Space& space,
 
     // Unconditionally allow intra-client passing around for lower stealing protections
     // unless the active client has High interest
-    if (belong_to_same_client(window, ac, same_client_check::relaxed_for_active)
+    if (std::visit(overload{[&](auto&& win) {
+                       return belong_to_same_client(
+                           window, win, same_client_check::relaxed_for_active);
+                   }},
+                   *ac)
         && protection < fsp_level::high) {
         qCDebug(KWIN_CORE) << "Activation: Belongs to active application";
         return true;
@@ -129,7 +137,7 @@ bool allow_window_activation(Space& space,
     }
 
     // Low or medium FSP level, usertime comparism is possible
-    xcb_timestamp_t const user_time = ac->userTime();
+    auto const user_time = std::visit(overload{[](auto&& win) { return win->userTime(); }}, *ac);
     qCDebug(KWIN_CORE) << "Activation, compared:" << window << ":" << time << ":" << user_time
                        << ":" << (NET::timestampCompare(time, user_time) >= 0);
 
@@ -161,28 +169,37 @@ bool allow_full_window_raising(Space& space, Win const* window, xcb_timestamp_t 
         return false;
     }
 
-    if (!ac || is_desktop(ac)) {
+    if (!ac) {
         qCDebug(KWIN_CORE) << "Raising: No client active, allowing";
         // no active client -> always allow
         return true;
     }
 
-    // TODO window urgency  -> return true?
-    if (belong_to_same_client(window, ac, same_client_check::relaxed_for_active)) {
-        qCDebug(KWIN_CORE) << "Raising: Belongs to active application";
-        return true;
-    }
+    return std::visit(
+        overload{[&](auto&& ac) {
+            if (is_desktop(ac)) {
+                // no active client -> always allow
+                return true;
+            }
 
-    if (level == fsp_level::high) {
-        return false;
-    }
+            // TODO window urgency  -> return true?
+            if (belong_to_same_client(window, ac, same_client_check::relaxed_for_active)) {
+                qCDebug(KWIN_CORE) << "Raising: Belongs to active application";
+                return true;
+            }
 
-    xcb_timestamp_t user_time = ac->userTime();
-    qCDebug(KWIN_CORE) << "Raising, compared:" << time << ":" << user_time << ":"
-                       << (NET::timestampCompare(time, user_time) >= 0);
+            if (level == fsp_level::high) {
+                return false;
+            }
 
-    // time >= user_time
-    return NET::timestampCompare(time, user_time) >= 0;
+            auto const user_time = ac->userTime();
+            qCDebug(KWIN_CORE) << "Raising, compared:" << time << ":" << user_time << ":"
+                               << (NET::timestampCompare(time, user_time) >= 0);
+
+            // time >= user_time
+            return NET::timestampCompare(time, user_time) >= 0;
+        }},
+        *ac);
 }
 
 }

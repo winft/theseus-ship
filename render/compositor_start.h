@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include "compositor.h"
+#include "support_properties.h"
 #include "types.h"
 #include "x11/compositor_selection_owner.h"
 
@@ -20,6 +22,9 @@
 
 namespace KWin::render
 {
+
+// 2 sec which should be enough to restart the compositor.
+constexpr auto compositor_lost_message_delay = 2000;
 
 template<typename Compositor>
 void compositor_destroy_selection(Compositor& comp)
@@ -77,11 +82,11 @@ void compositor_start_scene(Compositor& comp)
         return;
     }
 
-    if (comp.m_state != state::off) {
+    if (comp.state != state::off) {
         return;
     }
 
-    comp.m_state = state::starting;
+    comp.state = state::starting;
     kwinApp()->options->reloadCompositingSettings(true);
     compositor_setup_x11_support(comp);
 
@@ -90,8 +95,8 @@ void compositor_start_scene(Compositor& comp)
     comp.scene = comp.create_scene();
     comp.space->stacking.order.render_restack_required = true;
 
-    for (auto& client : comp.space->windows) {
-        client->setupCompositing();
+    for (auto& win : comp.space->windows) {
+        std::visit(overload{[](auto&& win) { win->setupCompositing(); }}, win);
     }
 
     // Sets also the 'effects' pointer.
@@ -99,7 +104,7 @@ void compositor_start_scene(Compositor& comp)
     QObject::connect(comp.effects.get(),
                      &EffectsHandler::screenGeometryChanged,
                      comp.qobject.get(),
-                     [&comp] { comp.addRepaintFull(); });
+                     [&comp] { full_repaint(comp); });
     QObject::connect(comp.space->stacking.order.qobject.get(),
                      &win::stacking_order_qobject::unlocked,
                      comp.qobject.get(),
@@ -109,21 +114,21 @@ void compositor_start_scene(Compositor& comp)
                          }
                      });
 
-    comp.m_state = state::on;
+    comp.state = state::on;
     Q_EMIT comp.qobject->compositingToggled(true);
 
     // Render at least once.
-    comp.addRepaintFull();
+    full_repaint(comp);
     comp.performCompositing();
 }
 
 template<typename Compositor>
 void compositor_stop(Compositor& comp, bool on_shutdown)
 {
-    if (comp.m_state == state::off || comp.m_state == state::stopping) {
+    if (comp.state == state::off || comp.state == state::stopping) {
         return;
     }
-    comp.m_state = state::stopping;
+    comp.state = state::stopping;
     Q_EMIT comp.qobject->aboutToToggleCompositing();
 
     // Some effects might need access to effect windows when they are about to
@@ -132,11 +137,19 @@ void compositor_stop(Compositor& comp, bool on_shutdown)
     comp.effects.reset();
 
     if (comp.space) {
-        for (auto& c : comp.space->windows) {
-            if (c->remnant) {
-                continue;
-            }
-            c->finishCompositing();
+        for (auto& var_win : comp.space->windows) {
+            std::visit(
+                overload{[](auto&& win) {
+                    if (win->remnant) {
+                        return;
+                    }
+                    if constexpr (requires(decltype(win) win) { win->finishCompositing(); }) {
+                        win->finishCompositing();
+                    } else {
+                        finish_compositing(*win);
+                    }
+                }},
+                var_win);
         }
 
         if (auto con = kwinApp()->x11Connection()) {
@@ -145,8 +158,11 @@ void compositor_stop(Compositor& comp, bool on_shutdown)
         }
         while (!win::get_remnants(*comp.space).empty()) {
             auto win = win::get_remnants(*comp.space).front();
-            win->remnant->refcount = 0;
-            win::delete_window_from_space(*comp.space, win);
+            std::visit(overload{[&comp](auto&& win) {
+                           win->remnant->refcount = 0;
+                           win::delete_window_from_space(*comp.space, *win);
+                       }},
+                       win);
         }
     }
 
@@ -154,11 +170,13 @@ void compositor_stop(Compositor& comp, bool on_shutdown)
     comp.scene.reset();
     comp.platform.render_stop(on_shutdown);
 
-    comp.m_bufferSwapPending = false;
-    comp.compositeTimer.stop();
-    comp.repaints_region = QRegion();
+    if constexpr (requires(Compositor & comp) { comp.compositeTimer; }) {
+        comp.m_bufferSwapPending = false;
+        comp.compositeTimer.stop();
+        comp.repaints_region = {};
+    }
 
-    comp.m_state = state::off;
+    comp.state = state::off;
     Q_EMIT comp.qobject->compositingToggled(false);
 }
 
@@ -182,6 +200,26 @@ void reinitialize_compositor(Compositor& comp)
         // start() may fail
         comp.effects->reconfigure();
     }
+}
+
+template<typename Compositor>
+void compositor_setup(Compositor& comp)
+{
+    QObject::connect(kwinApp()->options->qobject.get(),
+                     &base::options_qobject::configChanged,
+                     comp.qobject.get(),
+                     [&] { comp.configChanged(); });
+    QObject::connect(kwinApp()->options->qobject.get(),
+                     &base::options_qobject::animationSpeedChanged,
+                     comp.qobject.get(),
+                     [&] { comp.configChanged(); });
+
+    comp.unused_support_property_timer.setInterval(compositor_lost_message_delay);
+    comp.unused_support_property_timer.setSingleShot(true);
+    QObject::connect(&comp.unused_support_property_timer,
+                     &QTimer::timeout,
+                     comp.qobject.get(),
+                     [&] { delete_unused_support_properties(comp); });
 }
 
 }

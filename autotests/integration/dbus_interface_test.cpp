@@ -127,7 +127,7 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
     QVERIFY(clientAddedSpy.wait());
 
     auto client_id = clientAddedSpy.first().first().value<quint32>();
-    auto client = dynamic_cast<wayland_window*>(Test::app()->base.space->windows_map.at(client_id));
+    auto client = Test::get_wayland_window(Test::app()->base.space->windows_map.at(client_id));
     QVERIFY(client);
 
     // let's get the window info
@@ -204,9 +204,9 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
     // not testing fullscreen, maximizeHorizontal, maximizeVertical and noBorder as those require
     // window geometry changes
 
-    QCOMPARE(client->desktop(), 1);
+    QCOMPARE(win::get_desktop(*client), 1);
     win::send_window_to_desktop(*Test::app()->base.space, client, 2, false);
-    QCOMPARE(client->desktop(), 2);
+    QCOMPARE(win::get_desktop(*client), 2);
     reply = getWindowInfo(client->meta.internal_id);
     reply.waitForFinished();
     QCOMPARE(reply.value().value(QStringLiteral("desktops")).toStringList(),
@@ -283,10 +283,9 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     QVERIFY(windowCreatedSpy.wait());
 
     auto client_id = windowCreatedSpy.first().first().value<quint32>();
-    auto client = dynamic_cast<Test::space::x11_window*>(
-        Test::app()->base.space->windows_map.at(client_id));
+    auto client = Test::get_x11_window(Test::app()->base.space->windows_map.at(client_id));
     QVERIFY(client);
-    QCOMPARE(client->xcb_window, w);
+    QCOMPARE(client->xcb_windows.client, w);
     QCOMPARE(win::frame_to_client_size(client, client->geo.size()), windowGeometry.size());
 
     // let's get the window info

@@ -5,18 +5,20 @@
 */
 #pragma once
 
-#include "input/device_redirect.h"
 #include "input/pointer_redirect.h"
+
+#include <QObject>
 
 namespace KWin::input::x11
 {
 
 template<typename Redirect>
-class pointer_redirect : public device_redirect<Redirect>
+class pointer_redirect
 {
 public:
     explicit pointer_redirect(Redirect* redirect)
-        : device_redirect<Redirect>(redirect)
+        : qobject{std::make_unique<QObject>()}
+        , redirect{redirect}
     {
     }
 
@@ -28,6 +30,7 @@ public:
     void setEffectsOverrideCursor(Qt::CursorShape /*shape*/)
     {
     }
+
     void removeEffectsOverrideCursor()
     {
     }
@@ -40,6 +43,9 @@ public:
     {
         pointer_redirect_process_button_spies(*this, event);
     }
+
+    std::unique_ptr<QObject> qobject;
+    Redirect* redirect;
 };
 
 }

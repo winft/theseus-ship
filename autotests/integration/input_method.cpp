@@ -247,7 +247,7 @@ void input_method_test::test_early_popup_window()
 
     auto signal_id = window_added_spy.back().front().value<quint32>();
     QCOMPARE(popup.window,
-             dynamic_cast<wayland_window*>(Test::app()->base.space->windows_map.at(signal_id)));
+             Test::get_wayland_window(Test::app()->base.space->windows_map.at(signal_id)));
 
     QVERIFY(popup.window->isInputMethod());
     QVERIFY(!popup.text_area.intersects(popup.window->geo.frame));
@@ -315,7 +315,7 @@ void input_method_test::test_late_popup_window()
 
     auto signal_id = window_added_spy.back().front().value<quint32>();
     QCOMPARE(popup.window,
-             dynamic_cast<wayland_window*>(Test::app()->base.space->windows_map.at(signal_id)));
+             Test::get_wayland_window(Test::app()->base.space->windows_map.at(signal_id)));
 
     QVERIFY(popup.window->isInputMethod());
     QVERIFY(!popup.text_area.intersects(popup.window->geo.frame));

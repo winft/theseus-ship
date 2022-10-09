@@ -538,31 +538,36 @@ public:
                          &space_qobject::currentDesktopChanged,
                          this,
                          [this](auto desktop) {
-                             auto window = get_window(this->ref_space->move_resize_window);
-                             Q_EMIT Space::currentDesktopChanged(desktop, window);
+                             window* win{nullptr};
+                             if (auto& mrw = this->ref_space->move_resize_window) {
+                                 win = get_window(*mrw);
+                             }
+                             Q_EMIT Space::currentDesktopChanged(desktop, win);
                          });
 
         QObject::connect(
             ref_space->qobject.get(), &space_qobject::clientAdded, this, [this](auto win_id) {
                 auto ref_win = this->ref_space->windows_map.at(win_id);
-                handle_client_added(ref_win);
+                std::visit(overload{[this](auto&& win) { handle_client_added(win); }}, ref_win);
             });
         QObject::connect(
             ref_space->qobject.get(), &space_qobject::clientRemoved, this, [this](auto win_id) {
                 auto ref_win = this->ref_space->windows_map.at(win_id);
-                this->handle_client_removed(ref_win);
+                std::visit(overload{[this](auto&& win) { handle_client_removed(win); }}, ref_win);
             });
         QObject::connect(ref_space->qobject.get(),
                          &space_qobject::wayland_window_added,
                          this,
                          [this](auto win_id) {
                              auto ref_win = this->ref_space->windows_map.at(win_id);
-                             handle_client_added(ref_win);
+                             std::visit(overload{[&](auto&& win) { handle_client_added(win); }},
+                                        ref_win);
                          });
 
         QObject::connect(ref_space->qobject.get(), &space_qobject::clientActivated, this, [this] {
-            auto window = get_window(this->ref_space->stacking.active);
-            Q_EMIT Space::clientActivated(window);
+            if (auto act = this->ref_space->stacking.active) {
+                Q_EMIT Space::clientActivated(get_window(*act));
+            }
         });
 
         QObject::connect(ref_space->qobject.get(),
@@ -601,10 +606,8 @@ public:
 
         connect_legacy_screen_resize(this);
 
-        for (auto window : ref_space->windows) {
-            if (window->control) {
-                handle_client_added(window);
-            }
+        for (auto win : ref_space->windows) {
+            std::visit(overload{[&](auto&& win) { handle_client_added(win); }}, win);
         }
     }
 
@@ -631,10 +634,13 @@ public:
     std::vector<window*> windows() const override
     {
         std::vector<window*> ret;
-        for (auto const& window : ref_space->windows) {
-            if (window->control && window->control->scripting) {
-                ret.push_back(window->control->scripting.get());
-            }
+        for (auto const& win : ref_space->windows) {
+            std::visit(overload{[&](auto&& win) {
+                           if (win->control && win->control->scripting) {
+                               ret.push_back(win->control->scripting.get());
+                           }
+                       }},
+                       win);
         }
         return ret;
     }
@@ -645,12 +651,13 @@ public:
         if (!active_client) {
             return nullptr;
         }
-        return get_window(active_client);
+        return get_window(*active_client);
     }
 
     void setActiveClient(window* win) override
     {
-        win::activate_window(*ref_space, static_cast<window_t*>(win)->client());
+        std::visit(overload{[this](auto&& ref_win) { win::activate_window(*ref_space, *ref_win); }},
+                   static_cast<window_t*>(win)->client());
     }
 
     QSize desktopGridSize() const override
@@ -667,13 +674,16 @@ public:
         return base::get_output_index(ref_space->base.outputs, *output);
     }
 
-    void sendClientToScreen(KWin::scripting::window* client, int screen) override
+    void sendClientToScreen(window* win, int screen) override
     {
         auto output = base::get_output(ref_space->base.outputs, screen);
         if (!output) {
             return;
         }
-        win::send_to_screen(*ref_space, static_cast<window_t*>(client)->client(), *output);
+        std::visit(overload{[output, this](auto&& ref_win) {
+                       win::send_to_screen(*ref_space, ref_win, *output);
+                   }},
+                   static_cast<window_t*>(win)->client());
     }
 
     void showOutline(QRect const& geometry) override
@@ -928,15 +938,20 @@ protected:
         return win::space_window_area(*ref_space, option, point, desktop);
     }
 
-    QRect client_area_impl(clientAreaOption option, scripting::window* window) const override
+    QRect client_area_impl(clientAreaOption option, window* win) const override
     {
-        return win::space_window_area(*ref_space, option, static_cast<window_t*>(window)->client());
+        return std::visit(overload{[&, this](auto&& ref_win) {
+                              return win::space_window_area(*ref_space, option, ref_win);
+                          }},
+                          static_cast<window_t*>(win)->client());
     }
 
-    QRect client_area_impl(clientAreaOption option, scripting::window const* window) const override
+    QRect client_area_impl(clientAreaOption option, window const* win) const override
     {
-        return win::space_window_area(
-            *ref_space, option, static_cast<window_t const*>(window)->client());
+        return std::visit(overload{[&, this](auto&& ref_win) {
+                              return win::space_window_area(*ref_space, option, ref_win);
+                          }},
+                          static_cast<window_t const*>(win)->client());
     }
 
     QString desktop_name_impl(int desktop) const override
@@ -993,41 +1008,57 @@ protected:
     window* get_client_impl(qulonglong windowId) override
     {
         for (auto& win : ref_space->windows) {
-            if (win->control && win->xcb_window == windowId) {
-                return win->control->scripting.get();
+            if (auto scr_win
+                = std::visit(overload{[&](auto&& win) -> window* {
+                                 if constexpr (requires(decltype(win) win) { win->xcb_windows; }) {
+                                     if (win->control && win->xcb_windows.client == windowId) {
+                                         return win->control->scripting.get();
+                                     }
+                                 }
+                                 return nullptr;
+                             }},
+                             win)) {
+                return scr_win;
             }
         }
         return nullptr;
     }
 
-    window* get_window(typename RefSpace::window_t* client) const
+    static window* get_window(typename RefSpace::window_t win)
     {
-        if (!client || !client->control) {
-            return nullptr;
-        }
-        return client->control->scripting.get();
+        return std::visit(overload{[](auto&& win) -> window* {
+                              if (!win->control) {
+                                  return nullptr;
+                              }
+                              return win->control->scripting.get();
+                          }},
+                          win);
     }
 
-    void handle_client_added(typename RefSpace::window_t* client)
+    template<typename RefWin>
+    void handle_client_added(RefWin* win)
     {
-        if (!client->control) {
+        if (!win->control) {
             // Only windows with control are made available to the scripting system.
             return;
         }
 
-        client->control->scripting = std::make_unique<window_t>(client);
-        auto scr_win = client->control->scripting.get();
+        win->control->scripting = std::make_unique<window_t>(win);
+        auto scr_win = win->control->scripting.get();
 
         Space::setupAbstractClientConnections(scr_win);
-        if (client->isClient()) {
-            Space::setupClientConnections(scr_win);
+        if constexpr (requires(RefWin win) { win.isClient(); }) {
+            if (win->isClient()) {
+                Space::setupClientConnections(scr_win);
+            }
         }
 
         Space::windows_count++;
         Q_EMIT Space::clientAdded(scr_win);
     }
 
-    void handle_client_removed(typename RefSpace::window_t* client)
+    template<typename RefWin>
+    void handle_client_removed(RefWin* client)
     {
         if (client->control) {
             Space::windows_count--;

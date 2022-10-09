@@ -105,19 +105,32 @@ void place(Win* window, const QRect& area)
 
     if (is_utility(window)) {
         place_utility(window, area, kwinApp()->options->qobject->placement());
-    } else if (is_dialog(window)) {
-        place_dialog(window, area, kwinApp()->options->qobject->placement());
-    } else if (is_splash(window)) {
-        // on mainwindow, if any, otherwise centered
-        place_on_main_window(window, area);
-    } else if (is_on_screen_display(window) || is_notification(window)
-               || is_critical_notification(window)) {
-        place_on_screen_display(window, area);
-    } else if (window->transient->lead() && window->surface) {
-        place_dialog(window, area, kwinApp()->options->qobject->placement());
-    } else {
-        place(window, area, kwinApp()->options->qobject->placement());
+        return;
     }
+    if (is_dialog(window)) {
+        place_dialog(window, area, kwinApp()->options->qobject->placement());
+        return;
+    }
+    if (is_splash(window)) {
+        // Place on main window, if any exists, otherwise centered.
+        place_on_main_window(window, area);
+        return;
+    }
+    if (is_on_screen_display(window) || is_notification(window)
+        || is_critical_notification(window)) {
+        place_on_screen_display(window, area);
+        return;
+    }
+
+    // TODO(romangg): Remove this special case only there for Wayland/Xwayland windows.
+    if constexpr (requires(Win win) { win.surface; }) {
+        if (window->transient->lead() && window->surface) {
+            place_dialog(window, area, kwinApp()->options->qobject->placement());
+            return;
+        }
+    }
+
+    place(window, area, kwinApp()->options->qobject->placement());
 }
 
 template<typename Win>
@@ -249,9 +262,9 @@ void place_smart(Win* window, const QRect& area, placement /*next*/)
     long int overlap, min_overlap = 0;
     int x_optimal, y_optimal;
     int possible;
-    int desktop = window->desktop() == 0 || on_all_desktops(window)
+    int desktop = get_desktop(*window) == 0 || on_all_desktops(window)
         ? window->space.virtual_desktop_manager->current()
-        : window->desktop();
+        : get_desktop(*window);
 
     int cxl, cxr, cyt, cyb; // temp coords
     int xl, xr, yt, yb;     // temp coords
@@ -283,30 +296,35 @@ void place_smart(Win* window, const QRect& area, placement /*next*/)
             cxr = x + cw;
             cyt = y;
             cyb = y + ch;
-            for (auto const& client : window->space.stacking.order.stack) {
-                if (is_irrelevant(client, window, desktop)) {
-                    continue;
-                }
-                xl = client->geo.update.frame.topLeft().x();
-                yt = client->geo.update.frame.topLeft().y();
-                xr = xl + client->geo.update.frame.size().width();
-                yb = yt + client->geo.update.frame.size().height();
+            for (auto const& var_win : window->space.stacking.order.stack) {
+                std::visit(overload{[&](auto&& win) {
+                               if (is_irrelevant(win, window, desktop)) {
+                                   return;
+                               }
+                               auto const& frame = win->geo.update.frame;
+                               xl = frame.topLeft().x();
+                               yt = frame.topLeft().y();
+                               xr = xl + frame.size().width();
+                               yb = yt + frame.size().height();
 
-                // if windows overlap, calc the overall overlapping
-                if ((cxl < xr) && (cxr > xl) && (cyt < yb) && (cyb > yt)) {
-                    xl = qMax(cxl, xl);
-                    xr = qMin(cxr, xr);
-                    yt = qMax(cyt, yt);
-                    yb = qMin(cyb, yb);
-                    if (client->control->keep_above) {
-                        overlap += 16 * (xr - xl) * (yb - yt);
-                    } else if (client->control->keep_below && !is_dock(client)) {
-                        // ignore KeepBelow windows
-                        overlap += 0; // for placement (see X11Client::belongsToLayer() for Dock)
-                    } else {
-                        overlap += (xr - xl) * (yb - yt);
-                    }
-                }
+                               // if windows overlap, calc the overall overlapping
+                               if ((cxl < xr) && (cxr > xl) && (cyt < yb) && (cyb > yt)) {
+                                   xl = qMax(cxl, xl);
+                                   xr = qMin(cxr, xr);
+                                   yt = qMax(cyt, yt);
+                                   yb = qMin(cyb, yb);
+                                   if (win->control->keep_above) {
+                                       overlap += 16 * (xr - xl) * (yb - yt);
+                                   } else if (win->control->keep_below && !is_dock(win)) {
+                                       // ignore KeepBelow windows
+                                       overlap += 0; // for placement (see
+                                                     // X11Client::belongsToLayer() for Dock)
+                                   } else {
+                                       overlap += (xr - xl) * (yb - yt);
+                                   }
+                               }
+                           }},
+                           var_win);
             }
         }
 
@@ -335,28 +353,33 @@ void place_smart(Win* window, const QRect& area, placement /*next*/)
             if (possible - cw > x)
                 possible -= cw;
 
-            // compare to the position of each client on the same desk
-            for (auto const& client : window->space.stacking.order.stack) {
-                if (is_irrelevant(client, window, desktop)) {
-                    continue;
-                }
+            // compare to the position of each window on the same desk
+            for (auto const& var_win : window->space.stacking.order.stack) {
+                std::visit(overload{[&](auto&& win) {
+                               if (is_irrelevant(win, window, desktop)) {
+                                   return;
+                               }
 
-                xl = client->geo.update.frame.topLeft().x();
-                yt = client->geo.update.frame.topLeft().y();
-                xr = xl + client->geo.update.frame.size().width();
-                yb = yt + client->geo.update.frame.size().height();
+                               auto const& frame = win->geo.update.frame;
+                               xl = frame.topLeft().x();
+                               yt = frame.topLeft().y();
+                               xr = xl + frame.size().width();
+                               yb = yt + frame.size().height();
 
-                // if not enough room above or under the current tested client
-                // determine the first non-overlapped x position
-                if ((y < yb) && (yt < ch + y)) {
+                               // if not enough room above or under the current tested window
+                               // determine the first non-overlapped x position
+                               if ((y < yb) && (yt < ch + y)) {
+                                   if ((xr > x) && (possible > xr)) {
+                                       possible = xr;
+                                   }
 
-                    if ((xr > x) && (possible > xr))
-                        possible = xr;
-
-                    basket = xl - cw;
-                    if ((basket > x) && (possible > basket))
-                        possible = basket;
-                }
+                                   basket = xl - cw;
+                                   if ((basket > x) && (possible > basket)) {
+                                       possible = basket;
+                                   }
+                               }
+                           }},
+                           var_win);
             }
             x = possible;
         }
@@ -370,24 +393,30 @@ void place_smart(Win* window, const QRect& area, placement /*next*/)
                 possible -= ch;
 
             // test the position of each window on the desk
-            for (auto const& client : window->space.stacking.order.stack) {
-                if (is_irrelevant(client, window, desktop)) {
-                    continue;
-                }
+            for (auto const& var_win : window->space.stacking.order.stack) {
+                std::visit(overload{[&](auto&& win) {
+                               if (is_irrelevant(win, window, desktop)) {
+                                   return;
+                               }
 
-                xl = client->geo.update.frame.topLeft().x();
-                yt = client->geo.update.frame.topLeft().y();
-                xr = xl + client->geo.update.frame.size().width();
-                yb = yt + client->geo.update.frame.size().height();
+                               auto const& frame = win->geo.update.frame;
+                               xl = frame.topLeft().x();
+                               yt = frame.topLeft().y();
+                               xr = xl + frame.size().width();
+                               yb = yt + frame.size().height();
 
-                // if not enough room to the left or right of the current tested client
-                // determine the first non-overlapped y position
-                if ((yb > y) && (possible > yb))
-                    possible = yb;
+                               // if not enough room to the left or right of the current tested
+                               // window determine the first non-overlapped y position
+                               if ((yb > y) && (possible > yb)) {
+                                   possible = yb;
+                               }
 
-                basket = yt - ch;
-                if ((basket > y) && (possible > basket))
-                    possible = basket;
+                               basket = yt - ch;
+                               if ((basket > y) && (possible > basket)) {
+                                   possible = basket;
+                               }
+                           }},
+                           var_win);
             }
             y = possible;
         }
@@ -478,9 +507,8 @@ void place_on_main_window(Win* window, const QRect& area, placement nextPlacemen
     if (nextPlacement == placement::maximizing) // maximize if needed
         place_maximizing(window, area, placement::no_placement);
 
-    using Space = std::remove_reference_t<decltype(window->space)>;
-    typename Space::window_t* place_on{nullptr};
-    typename Space::window_t* place_on2{nullptr};
+    Win* place_on{nullptr};
+    Win* place_on2{nullptr};
 
     int mains_count = 0;
     auto leads = window->transient->leads();
@@ -559,13 +587,15 @@ void unclutter_desktop(Space& space)
 {
     auto const& windows = space.windows;
     for (int i = windows.size() - 1; i >= 0; i--) {
-        auto client = windows.at(i);
-        if (!client->control || !on_current_desktop(client) || client->control->minimized
-            || on_all_desktops(client) || !client->isMovable()) {
-            continue;
-        }
-        auto const placementArea = space_window_area(space, PlacementArea, client);
-        place_smart(client, placementArea);
+        std::visit(overload{[&](auto&& win) {
+                       if (!win->control || !on_current_desktop(win) || win->control->minimized
+                           || on_all_desktops(win) || !win->isMovable()) {
+                           return;
+                       }
+                       auto const placementArea = space_window_area(space, PlacementArea, win);
+                       place_smart(win, placementArea);
+                   }},
+                   windows.at(i));
     }
 }
 

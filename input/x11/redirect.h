@@ -48,9 +48,8 @@ public:
         }
     }
 
-    void
-    start_interactive_window_selection(std::function<void(typename space_t::window_t*)> callback,
-                                       QByteArray const& cursorName = QByteArray())
+    void start_interactive_window_selection(std::function<void(std::optional<window_t>)> callback,
+                                            QByteArray const& cursorName = QByteArray())
     {
         if (!window_sel) {
             window_sel = std::make_unique<window_selector<type>>(*this);

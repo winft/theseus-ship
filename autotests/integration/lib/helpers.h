@@ -184,6 +184,33 @@ bool wait_for_destroyed(Window* window)
     return destroyedSpy.wait();
 }
 
+template<typename Window>
+Window* get_window(std::optional<space::window_t> window)
+{
+    if (!window) {
+        return nullptr;
+    }
+    if (!std::holds_alternative<Window*>(*window)) {
+        return nullptr;
+    }
+    return std::get<Window*>(*window);
+}
+
+inline wayland_window* get_wayland_window(std::optional<space::window_t> window)
+{
+    return get_window<wayland_window>(window);
+}
+
+inline space::x11_window* get_x11_window(std::optional<space::window_t> window)
+{
+    return get_window<space::x11_window>(window);
+}
+
+inline space::internal_window_t* get_internal_window(std::optional<space::window_t> window)
+{
+    return get_window<space::internal_window_t>(window);
+}
+
 /**
  * Locks the screen and waits till the screen is locked.
  * @returns @c true if the screen could be locked, @c false otherwise

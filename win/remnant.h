@@ -20,13 +20,16 @@ namespace KWin::win
 {
 
 template<typename Space>
-std::vector<typename Space::window_t*> get_remnants(Space const& space)
+std::vector<typename Space::window_t> get_remnants(Space const& space)
 {
-    std::vector<typename Space::window_t*> ret;
+    std::vector<typename Space::window_t> ret;
     for (auto const& window : space.windows) {
-        if (window->remnant) {
-            ret.push_back(window);
-        }
+        std::visit(overload{[&](auto&& win) {
+                       if (win->remnant) {
+                           ret.push_back(win);
+                       }
+                   }},
+                   window);
     }
     return ret;
 }

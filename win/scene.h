@@ -21,6 +21,12 @@ bool has_alpha(Win& win)
 }
 
 template<typename Win>
+bool wants_shadow_to_be_rendered(Win const& win)
+{
+    return win.control && !win.control->fullscreen && win.maximizeMode() != maximize_mode::full;
+}
+
+template<typename Win>
 void set_bit_depth(Win& win, int depth)
 {
     if (win.render_data.bit_depth == depth) {
@@ -71,7 +77,9 @@ QRect visible_rect(Win* win)
 template<typename Win>
 void discard_shape(Win& win)
 {
-    win.is_render_shape_valid = false;
+    if constexpr (requires(Win win) { win.is_render_shape_valid; }) {
+        win.is_render_shape_valid = false;
+    }
 
     if (win.render) {
         win.render->invalidateQuadsCache();
@@ -204,6 +212,42 @@ void finish_compositing(Win& win)
 
     win.render_data.damage_region = {};
     win.render_data.repaints_region = {};
+}
+
+template<typename Win>
+void scene_add_remnant(Win& win)
+{
+    assert(win.render);
+
+    win.render->ref_win = &win;
+
+    if (auto shadow = win.render->shadow()) {
+        QObject::connect(win.qobject.get(),
+                         &win::window_qobject::frame_geometry_changed,
+                         shadow,
+                         &std::remove_pointer_t<decltype(shadow)>::geometryChanged);
+    }
+
+    if (auto& effects = win.space.base.render->compositor->effects) {
+        Q_EMIT effects->windowClosed(win.render->effect.get());
+    }
+}
+
+template<typename Win>
+bool is_blocking_compositing(Win& win)
+{
+    if constexpr (requires(Win win) { win.isBlockingCompositing(); }) {
+        return win.isBlockingCompositing();
+    }
+    return false;
+}
+
+template<typename Win>
+void set_blocking_compositing(Win& win, bool block)
+{
+    if constexpr (requires(Win win) { win.setBlockingCompositing(); }) {
+        return win.setBlockingCompositing(block);
+    }
 }
 
 }

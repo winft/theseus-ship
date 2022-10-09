@@ -381,11 +381,6 @@ void DebugConsoleTest::testWaylandClient()
     surface->commit(Surface::CommitFlag::None);
     shellSurface.reset();
     Test::flush_wayland_connection();
-    qDebug() << rowsRemovedSpy.count();
-    QEXPECT_FAIL(
-        "wlShell",
-        "Deleting a ShellSurface does not result in the server removing the XdgShellClient",
-        Continue);
     QVERIFY(rowsRemovedSpy.wait(500));
     surface.reset();
 
@@ -521,8 +516,8 @@ void DebugConsoleTest::testClosingDebugConsole()
     QTRY_COMPARE(clientAddedSpy.count(), 1);
 
     auto win_id = clientAddedSpy.first().first().value<quint32>();
-    auto c = dynamic_cast<Test::space::internal_window_t*>(
-        Test::app()->base.space->windows_map.at(win_id));
+    auto c = Test::get_internal_window(Test::app()->base.space->windows_map.at(win_id));
+    QVERIFY(c);
     QVERIFY(c->isInternal());
     QCOMPARE(c->internalWindow(), console->windowHandle());
     QVERIFY(win::decoration(c));

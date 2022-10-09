@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/cursor.h"
 #include "render/compositor.h"
 #include "render/scene.h"
-#include "toplevel.h"
 #include "win/active_window.h"
 #include "win/move.h"
 #include "win/screen.h"
@@ -81,7 +80,7 @@ private Q_SLOTS:
 
 private:
     void unlock();
-    Test::space::window_t* showWindow();
+    Test::wayland_window* showWindow();
 
     Wrapland::Client::ConnectionThread* m_connection = nullptr;
     Wrapland::Client::Compositor* m_compositor = nullptr;
@@ -167,7 +166,7 @@ void LockScreenTest::unlock()
     Q_ASSERT("Did not find 'requestUnlock' method in KSldApp. This should not happen!" == 0);
 }
 
-Test::space::window_t* LockScreenTest::showWindow()
+Test::wayland_window* LockScreenTest::showWindow()
 {
     using namespace Wrapland::Client;
 
@@ -187,7 +186,7 @@ Test::space::window_t* LockScreenTest::showWindow()
     auto c = Test::render_and_wait_for_shown(surface_holder, QSize(100, 50), Qt::blue);
 
     VERIFY(c);
-    COMPARE(Test::app()->base.space->stacking.active, c);
+    COMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
 
 #undef VERIFY
 #undef COMPARE
@@ -245,7 +244,7 @@ void LockScreenTest::testStackingOrder()
     LOCK QVERIFY(clientAddedSpy.wait());
 
     auto window_id = clientAddedSpy.first().first().value<quint32>();
-    auto client = Test::app()->base.space->windows_map.at(window_id);
+    auto client = Test::get_wayland_window(Test::app()->base.space->windows_map.at(window_id));
     QVERIFY(client);
     QVERIFY(client->isLockScreen());
     QCOMPARE(win::get_layer(*client), win::layer::unmanaged);
@@ -607,7 +606,7 @@ void LockScreenTest::testMoveWindow()
     quint32 timestamp = 1;
 
     win::active_window_move(*Test::app()->base.space);
-    QCOMPARE(Test::app()->base.space->move_resize_window, c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->move_resize_window), c);
     QVERIFY(win::is_move(c));
 
     Test::keyboard_key_pressed(KEY_RIGHT, timestamp++);
@@ -621,14 +620,15 @@ void LockScreenTest::testMoveWindow()
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
 
     // While locking our window should continue to be in move resize.
-    LOCK QCOMPARE(Test::app()->base.space->move_resize_window, c);
+    LOCK;
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->move_resize_window), c);
     QVERIFY(win::is_move(c));
     Test::keyboard_key_pressed(KEY_RIGHT, timestamp++);
     Test::keyboard_key_released(KEY_RIGHT, timestamp++);
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
 
     UNLOCK
-    QCOMPARE(Test::app()->base.space->move_resize_window, c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->move_resize_window), c);
     QVERIFY(win::is_move(c));
 
     Test::keyboard_key_pressed(KEY_RIGHT, timestamp++);

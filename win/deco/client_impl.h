@@ -103,10 +103,7 @@ public:
             = QObject::connect(m_client->space.base.render->compositor->qobject.get(),
                                &render::compositor_qobject::compositingToggled,
                                qobject.get(),
-                               [this, decoration]() {
-                                   createRenderer();
-                                   decoration->update();
-                               });
+                               [this](auto active) { handle_compositing_toggled(active); });
         QObject::connect(m_client->space.base.render->compositor->qobject.get(),
                          &render::compositor_qobject::aboutToDestroy,
                          qobject.get(),
@@ -178,7 +175,7 @@ public:
 
     int desktop() const override
     {
-        return m_client->desktop();
+        return get_desktop(*m_client);
     }
 
     int height() const override
@@ -298,7 +295,10 @@ public:
 
     WId windowId() const override
     {
-        return m_client->xcb_window;
+        if constexpr (requires(decltype(m_client) win) { win->xcb_windows; }) {
+            return m_client->xcb_windows.client;
+        }
+        return XCB_WINDOW_NONE;
     }
 
     Qt::Edges adjacentScreenEdges() const override
@@ -367,7 +367,9 @@ public:
 
     void requestContextHelp() override
     {
-        m_client->showContextHelp();
+        if constexpr (requires(Window win) { win.showContextHelp(); }) {
+            m_client->showContextHelp();
+        }
     }
 
     void requestToggleMaximization(Qt::MouseButtons buttons) override
@@ -462,8 +464,7 @@ public:
         if (!m_renderer) {
             return {};
         }
-
-        return m_renderer->reparent();
+        return m_renderer->move_data();
     }
 
     KDecoration2::DecoratedClient* decoratedClient()
@@ -474,9 +475,31 @@ public:
     std::unique_ptr<client_impl_qobject> qobject;
 
 private:
+    void handle_compositing_toggled(bool active)
+    {
+        using space_t = std::decay_t<decltype(m_client->space)>;
+        using render_t = typename space_t::base_t::render_t;
+
+        m_renderer.reset();
+        auto should_create_renderer = active;
+
+        if constexpr (requires(render_t * render, render_window window) {
+                          render->create_non_composited_deco(window);
+                      }) {
+            should_create_renderer = true;
+        }
+
+        if (should_create_renderer) {
+            createRenderer();
+        }
+
+        decoration()->update();
+    }
+
     void createRenderer()
     {
-        m_renderer.reset(m_client->space.base.render->createDecorationRenderer(this));
+        assert(!m_renderer);
+        m_renderer = std::make_unique<renderer_t>(this);
     }
 
     Window* m_client;

@@ -119,49 +119,49 @@ public:
     std::unique_ptr<stacking_order_qobject> qobject;
 
     /// How windows are configured in z-direction. Topmost window at back.
-    std::deque<Window*> stack;
-    std::deque<Window*> pre_stack;
+    std::deque<Window> stack;
+    std::deque<Window> pre_stack;
 
     /// Windows on top of the the stack that shall be composited addtionally.
-    std::deque<Window*> render_overlays;
+    std::deque<Window> render_overlays;
     std::deque<xcb_window_t> manual_overlays;
 
     bool render_restack_required{false};
 
 private:
     template<typename Win>
-    static bool needs_child_restack(Win const& lead, Win const& child)
+    static bool needs_child_restack(Win const* lead, Win const* child)
     {
         // Tells if a transient child should be restacked directly above its lead.
-        if (get_layer(lead) < get_layer(child)) {
+        if (get_layer(*lead) < get_layer(*child)) {
             // Child will be in a layer above the lead and should not be pulled down from that.
             return false;
         }
-        if (child.remnant) {
-            return keep_deleted_transient_above(&lead, &child);
+        if (child->remnant) {
+            return keep_deleted_transient_above(lead, child);
         }
-        return keep_transient_above(&lead, &child);
+        return keep_transient_above(lead, child);
     }
 
-    template<typename Win>
-    static void append_children(stacking_order& order, Win* window, std::deque<Win*>& list)
+    template<typename Win, typename WinWrap>
+    static void append_children(stacking_order& order, Win* window, std::deque<WinWrap>& list)
     {
         auto const children = window->transient->children;
-        if (!children.size()) {
+        if (children.empty()) {
             return;
         }
 
         auto stacked_next = ensure_stacking_order_in_list(order, children);
-        std::deque<Win*> stacked;
+        std::deque<WinWrap> stacked;
 
         // Append children by one first-level child after the other but between them any
         // transient children of each first-level child (acts recursively).
         for (auto child : stacked_next) {
             // Transients to multiple leads are pushed to the very end.
-            if (!needs_child_restack(*window, *child)) {
+            if (!needs_child_restack(window, child)) {
                 continue;
             }
-            remove_all(list, child);
+            remove_all(list, WinWrap(child));
 
             stacked.push_back(child);
             append_children(order, child, stacked);
@@ -173,22 +173,26 @@ private:
     bool sort()
     {
         auto pre_order = sort_windows_by_layer(pre_stack);
-        std::deque<Window*> stack;
+        std::deque<Window> stack;
 
         for (auto const& window : pre_order) {
-            if (auto const leads = window->transient->leads();
-                std::find_if(leads.cbegin(),
-                             leads.cend(),
-                             [window](auto lead) { return needs_child_restack(*lead, *window); })
-                != leads.cend()) {
-                // Transient children that must be pushed above at least one of its leads are
-                // inserted with append_children.
-                continue;
-            }
+            std::visit(
+                overload{[this, &stack](auto&& win) {
+                    if (auto const leads = win->transient->leads();
+                        std::find_if(leads.cbegin(),
+                                     leads.cend(),
+                                     [win](auto lead) { return needs_child_restack(lead, win); })
+                        != leads.cend()) {
+                        // Transient children that must be pushed above at least one of its
+                        // leads are inserted with append_children.
+                        return;
+                    }
 
-            assert(!contains(stack, window));
-            stack.push_back(window);
-            append_children(*this, window, stack);
+                    assert(!contains(stack, Window(win)));
+                    stack.push_back(win);
+                    append_children(*this, win, stack);
+                }},
+                window);
         }
 
         auto order_changed = this->stack != stack;

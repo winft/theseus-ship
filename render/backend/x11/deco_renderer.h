@@ -27,12 +27,11 @@ public:
     xcb_gcontext_t gc{XCB_NONE};
 };
 
-template<typename Client>
-class deco_renderer : public win::deco::renderer<Client>
+class deco_renderer : public win::deco::render_injector
 {
 public:
-    explicit deco_renderer(Client* client)
-        : win::deco::renderer<Client>(client)
+    explicit deco_renderer(win::deco::render_window window)
+        : win::deco::render_injector(std::move(window))
         , m_scheduleTimer(new QTimer(this->qobject.get()))
     {
         this->data = std::make_unique<deco_render_data>();
@@ -48,41 +47,24 @@ public:
                          static_cast<void (QTimer::*)()>(&QTimer::start));
     }
 
-    std::unique_ptr<win::deco::render_data> reparent() override
-    {
-        if (m_scheduleTimer->isActive()) {
-            m_scheduleTimer->stop();
-        }
-        QObject::disconnect(m_scheduleTimer, &QTimer::timeout, this->qobject.get(), nullptr);
-        QObject::disconnect(this->qobject.get(),
-                            &win::deco::renderer_qobject::renderScheduled,
-                            m_scheduleTimer,
-                            static_cast<void (QTimer::*)()>(&QTimer::start));
-        return this->move_data();
-    }
-
 protected:
     void render() override
     {
-        if (!this->client()) {
-            return;
-        }
         auto const scheduled = this->getScheduled();
         if (scheduled.isEmpty()) {
             return;
         }
 
         auto c = connection();
-        auto window = this->client()->client();
         auto& data = static_cast<deco_render_data&>(*this->data);
 
         if (data.gc == XCB_NONE) {
             data.gc = xcb_generate_id(c);
-            xcb_create_gc(c, data.gc, window->frameId(), 0, nullptr);
+            xcb_create_gc(c, data.gc, this->window.frame_id, 0, nullptr);
         }
 
         QRect left, top, right, bottom;
-        window->layoutDecorationRects(left, top, right, bottom);
+        this->window.layout_rects(left, top, right, bottom);
 
         const QRect geometry = scheduled.boundingRect();
         left = left.intersected(geometry);
@@ -96,18 +78,16 @@ protected:
             }
 
             auto image = this->renderToImage(geo);
-            auto window = this->client()->client();
-
             xcb_put_image(c,
                           XCB_IMAGE_FORMAT_Z_PIXMAP,
-                          window->frameId(),
+                          this->window.frame_id,
                           data.gc,
                           image.width(),
                           image.height(),
                           geo.x(),
                           geo.y(),
                           0,
-                          window->render_data.bit_depth,
+                          this->window.bit_depth(),
                           image.sizeInBytes(),
                           image.constBits());
         };
@@ -118,7 +98,7 @@ protected:
         renderPart(bottom);
 
         xcb_flush(c);
-        this->resetImageSizesDirty();
+        this->image_size_dirty = false;
     }
 
 private:

@@ -52,16 +52,16 @@ public:
     {
     }
 
-    void start(std::function<void(window_t*)> callback, QByteArray const& cursorName)
+    void start(std::function<void(std::optional<window_t>)> callback, QByteArray const& cursorName)
     {
         if (m_active) {
-            callback(nullptr);
+            callback({});
             return;
         }
 
         m_active = activate(cursorName);
         if (!m_active) {
-            callback(nullptr);
+            callback({});
             return;
         }
         m_callback = callback;
@@ -152,7 +152,7 @@ private:
         xcb_ungrab_pointer(connection(), XCB_TIME_CURRENT_TIME);
         base::x11::ungrab_server();
         m_active = false;
-        m_callback = std::function<void(window_t*)>();
+        m_callback = {};
         m_pointSelectionFallback = std::function<void(const QPoint&)>();
     }
 
@@ -299,7 +299,7 @@ private:
     }
 
     bool m_active{false};
-    std::function<void(window_t*)> m_callback;
+    std::function<void(std::optional<window_t>)> m_callback;
     std::function<void(const QPoint&)> m_pointSelectionFallback;
     Redirect& redirect;
 };

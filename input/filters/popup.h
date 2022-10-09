@@ -41,8 +41,7 @@ public:
                          this,
                          [this](auto win_id) {
                              auto win = this->redirect.space.windows_map.at(win_id);
-                             handle_window_added(
-                                 static_cast<typename space_t::wayland_window*>(win));
+                             handle_window_added(std::get<typename space_t::wayland_window*>(win));
                          });
     }
 
@@ -58,20 +57,31 @@ public:
         case button_state::pressed:
             auto pos = this->redirect.globalPointer();
             auto focus_window = find_window(this->redirect, pos.toPoint());
-            if (!focus_window || !win::belong_to_same_client(focus_window, m_popups.back())) {
-                // a press on a window (or no window) not belonging to the popup window
+            if (!focus_window) {
                 cancelPopups();
-                // filter out this press
                 return true;
             }
-            if (focus_window && win::decoration(focus_window)) {
-                // Test whether it is on the decoration.
-                auto const content_rect
-                    = focus_window->geo.frame - win::frame_margins(focus_window);
-                if (!content_rect.contains(pos.toPoint())) {
-                    cancelPopups();
-                    return true;
-                }
+
+            if (std::visit(overload{[&](auto&& win) {
+                               if (!win::belong_to_same_client(win, m_popups.back())) {
+                                   //  Press on an app window not belonging to the popup, filter
+                                   //  out this press.
+                                   cancelPopups();
+                                   return true;
+                               }
+                               if (win::decoration(win)) {
+                                   // Test whether it is on the decoration.
+                                   auto const content_rect
+                                       = win->geo.frame - win::frame_margins(win);
+                                   if (!content_rect.contains(pos.toPoint())) {
+                                       cancelPopups();
+                                       return true;
+                                   }
+                               }
+                               return false;
+                           }},
+                           *focus_window)) {
+                return true;
             }
         }
 

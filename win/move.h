@@ -67,19 +67,19 @@ position mouse_position(Win* win)
 }
 
 template<typename Space>
-void set_move_resize_window(Space& space, typename Space::window_t* window)
+void unset_move_resize_window(Space& space)
 {
-    // Catch attempts to move a second
-    assert(!window || !space.move_resize_window);
+    space.move_resize_window = {};
+    --space.block_focus;
+}
 
-    // window while still moving the first one.
-    space.move_resize_window = window;
-
-    if (space.move_resize_window) {
-        ++space.block_focus;
-    } else {
-        --space.block_focus;
-    }
+template<typename Space, typename Win>
+void set_move_resize_window(Space& space, Win& window)
+{
+    // Catch attempts to move a second window while still moving the first one.
+    assert(!space.move_resize_window);
+    space.move_resize_window = &window;
+    ++space.block_focus;
 }
 
 template<typename Win>
@@ -154,7 +154,7 @@ void check_unrestricted_move_resize(Win* win)
     }
 
     auto desktopArea
-        = space_window_area(win->space, WorkArea, mov_res.geometry.center(), win->desktop());
+        = space_window_area(win->space, WorkArea, mov_res.geometry.center(), get_desktop(*win));
     int left_marge, right_marge, top_marge, bottom_marge, titlebar_marge;
 
     // restricted move/resize - keep at least part of the titlebar always visible
@@ -252,8 +252,11 @@ bool start_move_resize(Win* win)
         && (win->space.base.outputs.size() < 2 || !win->isMovableAcrossScreens())) {
         return false;
     }
-    if (!win->doStartMoveResize()) {
-        return false;
+
+    if constexpr (requires(Win win) { win.doStartMoveResize(); }) {
+        if (!win->doStartMoveResize()) {
+            return false;
+        }
     }
 
     win->control->deco.double_click.stop();
@@ -284,7 +287,7 @@ bool start_move_resize(Win* win)
     }
 
     mov_res.enabled = true;
-    set_move_resize_window(win->space, win);
+    set_move_resize_window(win->space, *win);
 
     win->control->update_have_resize_effect();
 
@@ -314,15 +317,19 @@ void perform_move_resize(Win* win)
         win->setFrameGeometry(geom);
     }
 
-    win->doPerformMoveResize();
+    if constexpr (requires(Win win) { win.doPerformMoveResize(); }) {
+        win->doPerformMoveResize();
+    }
     Q_EMIT win->qobject->clientStepUserMovedResized(geom);
 }
 
 template<typename Win>
 auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
 {
-    if (win->isWaitingForMoveResizeSync()) {
-        return;
+    if constexpr (requires(Win win) { win.isWaitingForMoveResizeSync(); }) {
+        if (win->isWaitingForMoveResizeSync()) {
+            return;
+        }
     }
 
     auto& mov_res = win->control->move_resize;
@@ -430,7 +437,7 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
             QRegion availableArea(space_window_area(win->space, FullArea, nullptr, 0));
 
             // Strut areas
-            availableArea -= restricted_move_area(win->space, win->desktop(), strut_area::all);
+            availableArea -= restricted_move_area(win->space, get_desktop(*win), strut_area::all);
 
             bool transposed = false;
             int requiredPixels;
@@ -567,7 +574,7 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
             if (!mov_res.unrestricted) {
                 // Strut areas
                 auto const strut
-                    = restricted_move_area(win->space, win->desktop(), strut_area::all);
+                    = restricted_move_area(win->space, get_desktop(*win), strut_area::all);
 
                 // On the screen
                 QRegion availableArea(space_window_area(win->space, FullArea, nullptr, 0));
@@ -723,7 +730,12 @@ void finish_move_resize(Win* win, bool cancel)
 
     auto const wasResize = is_resize(win);
     mov_res.enabled = false;
-    win->leaveMoveResize();
+
+    if constexpr (requires(Win win) { win.leaveMoveResize(); }) {
+        win->leaveMoveResize();
+    } else {
+        leave_move_resize(*win);
+    }
 
     if (cancel) {
         win->setFrameGeometry(mov_res.initial_geometry);
@@ -794,8 +806,9 @@ void end_move_resize(Win* win)
 template<typename Win>
 void leave_move_resize(Win& win)
 {
-    set_move_resize_window(win.space, nullptr);
+    unset_move_resize_window(win.space);
     win.control->move_resize.enabled = false;
+
     if (win.space.edges->desktop_switching.when_moving_client) {
         win.space.edges->reserveDesktopSwitching(false, Qt::Vertical | Qt::Horizontal);
     }
@@ -922,11 +935,14 @@ void send_to_screen(Space const& space, Win* win, Output const& output)
         base::set_current_output(space.base, checked_output);
 
         // might impact the layer of a fullscreen window
-        for (auto cc : space.windows) {
-            if (cc->control && cc->control->fullscreen
-                && cc->topo.central_output == checked_output) {
-                update_layer(cc);
-            }
+        for (auto win : space.windows) {
+            std::visit(overload{[&](auto&& win) {
+                           if (win->control && win->control->fullscreen
+                               && win->topo.central_output == checked_output) {
+                               update_layer(win);
+                           }
+                       }},
+                       win);
         }
     }
 
@@ -954,7 +970,7 @@ void send_to_screen(Space const& space, Win* win, Output const& output)
     }
 
     auto oldScreenArea = space_window_area(space, MaximizeArea, win);
-    auto screenArea = space_window_area(space, MaximizeArea, checked_output, win->desktop());
+    auto screenArea = space_window_area(space, MaximizeArea, checked_output, get_desktop(*win));
 
     // the window can have its center so that the position correction moves the new center onto
     // the old screen, what will tile it where it is. Ie. the screen is not changed
@@ -1002,8 +1018,7 @@ void send_to_screen(Space const& space, Win* win, Output const& output)
         win->geo.restore.max = restore_geo;
     }
 
-    auto children = restacked_by_space_stacking_order(&space, win->transient->children);
-    for (auto const& child : children) {
+    for (auto const& child : restacked_by_space_stacking_order(space, win->transient->children)) {
         if (child->control) {
             send_to_screen(space, child, *checked_output);
         }

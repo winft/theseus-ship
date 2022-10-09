@@ -24,6 +24,8 @@ namespace KWin::win::wayland
 template<typename Win>
 void destroy_window(Win* win)
 {
+    using var_win = typename Win::space_t::window_t;
+
     blocker block(win->space.stacking.order);
     win->closing = true;
 
@@ -31,9 +33,9 @@ void destroy_window(Win* win)
         // With the lead gone there is no way - and no need - for remnant effects. Delete directly.
         Q_EMIT win->qobject->closed();
         win->space.handle_window_removed(win);
-        remove_all(win->space.windows, win);
-        remove_all(win->space.stacking.order.pre_stack, win);
-        remove_all(win->space.stacking.order.stack, win);
+        remove_all(win->space.windows, var_win(win));
+        remove_all(win->space.stacking.order.pre_stack, var_win(win));
+        remove_all(win->space.stacking.order.stack, var_win(win));
         delete win;
         return;
     }
@@ -42,18 +44,21 @@ void destroy_window(Win* win)
     if (remnant_window) {
         transfer_remnant_data(*win, *remnant_window);
         space_add_remnant(*win, *remnant_window);
+        scene_add_remnant(*remnant_window);
     }
     Q_EMIT win->qobject->closed();
 
     if (win->control) {
 #if KWIN_BUILD_TABBOX
         auto& tabbox = win->space.tabbox;
-        if (tabbox->is_displayed() && tabbox->current_client() == win) {
+        if (tabbox->is_displayed() && tabbox->current_client()
+            && *tabbox->current_client() == var_win(win)) {
             tabbox->next_prev(true);
         }
 #endif
         if (win->control->move_resize.enabled) {
-            win->leaveMoveResize();
+            static_assert(!requires(Win win) { win.leaveMoveResize(); });
+            win::leave_move_resize(*win);
         }
 
         rules::discard_used_rules(*win->space.rule_book, *win, true);
@@ -68,7 +73,7 @@ void destroy_window(Win* win)
         remnant_window->remnant->unref();
         delete win;
     } else {
-        delete_window_from_space(win->space, win);
+        delete_window_from_space(win->space, *win);
     }
 }
 

@@ -28,6 +28,8 @@ Q_SIGNALS:
 
     // X11 window
     void clientAdded(quint32);
+
+    // TODO(romangg): This is right now also emitted for Wayland windows with control.
     void clientRemoved(quint32);
 
     void wayland_window_added(quint32);

@@ -19,6 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
+#include "types.h"
+
 #include "kwin_export.h"
 #include "kwinglobals.h"
 
@@ -204,7 +206,7 @@ inline const outline* outline_visual::get_outline() const
 template<typename Compositor, typename Outline>
 std::unique_ptr<outline_visual> create_outline_visual(Compositor& compositor, Outline& outline)
 {
-    if (compositor.isActive()) {
+    if (compositor.state == state::on) {
         return std::make_unique<composited_outline_visual>(
             &outline, *compositor.space->scripting->qml_engine);
     } else {

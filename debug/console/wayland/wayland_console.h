@@ -45,8 +45,10 @@ public:
 
     int topLevelRowCount() const override;
     win::property_window* shellClient(QModelIndex const& index) const;
+    win::property_window* internal_window(QModelIndex const& index) const;
 
     std::vector<std::unique_ptr<win::property_window>> m_shellClients;
+    std::vector<std::unique_ptr<win::property_window>> internal_windows;
 
 private:
     explicit wayland_console_model(QObject* parent = nullptr);

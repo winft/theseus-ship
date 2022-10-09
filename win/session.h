@@ -7,6 +7,7 @@
 
 #include "session_manager.h"
 #include "x11/geo.h"
+#include "x11/session.h"
 
 #include "utils/algorithm.h"
 
@@ -96,40 +97,40 @@ void store_session(Space& space, QString const& sessionName, sm_save_phase phase
     int active_client = -1;
 
     for (auto const& window : space.windows) {
-        if (!window->control) {
-            continue;
-        }
-        auto x11_client = dynamic_cast<typename Space::x11_window*>(window);
-        if (!x11_client) {
-            continue;
-        }
+        std::visit(overload{[&](typename Space::x11_window* win) {
+                                if (!win->control) {
+                                    return;
+                                }
 
-        if (x11_client->windowType() > NET::Splash) {
-            // window types outside this are not tooltips/menus/OSDs
-            // typically these will be unmanaged and not in this list anyway, but that is not
-            // enforced
-            continue;
-        }
+                                if (win->windowType() > NET::Splash) {
+                                    // window types outside this are not tooltips/menus/OSDs
+                                    // typically these will be unmanaged and not in this list
+                                    // anyway, but that is not enforced
+                                    return;
+                                }
 
-        QByteArray sessionId = x11_client->sessionId();
-        QByteArray wmCommand = x11_client->wmCommand();
+                                QByteArray sessionId = x11::get_session_id(*win);
+                                QByteArray wmCommand = x11::get_wm_command(*win);
 
-        if (sessionId.isEmpty()) {
-            // remember also applications that are not XSMP capable
-            // and use the obsolete WM_COMMAND / WM_SAVE_YOURSELF
-            if (wmCommand.isEmpty()) {
-                continue;
-            }
-        }
+                                if (sessionId.isEmpty()) {
+                                    // remember also applications that are not XSMP capable
+                                    // and use the obsolete WM_COMMAND / WM_SAVE_YOURSELF
+                                    if (wmCommand.isEmpty()) {
+                                        return;
+                                    }
+                                }
 
-        count++;
-        if (x11_client->control->active) {
-            active_client = count;
-        }
+                                count++;
+                                if (win->control->active) {
+                                    active_client = count;
+                                }
 
-        if (phase == sm_save_phase2 || phase == sm_save_phase2_full) {
-            store_window(space, cg, count, x11_client);
-        }
+                                if (phase == sm_save_phase2 || phase == sm_save_phase2_full) {
+                                    store_window(space, cg, count, win);
+                                }
+                            },
+                            [](auto&&) {}},
+                   window);
     }
 
     if (phase == sm_save_phase0) {
@@ -156,10 +157,11 @@ void store_session(Space& space, QString const& sessionName, sm_save_phase phase
 template<typename Space, typename Win>
 void store_window(Space const& space, KConfigGroup& cg, int num, Win* c)
 {
+    using var_win = typename Space::window_t;
     QString n = QString::number(num);
-    cg.writeEntry(QLatin1String("sessionId") + n, c->sessionId().constData());
+    cg.writeEntry(QLatin1String("sessionId") + n, x11::get_session_id(*c).constData());
     cg.writeEntry(QLatin1String("windowRole") + n, c->windowRole().constData());
-    cg.writeEntry(QLatin1String("wmCommand") + n, c->wmCommand().constData());
+    cg.writeEntry(QLatin1String("wmCommand") + n, x11::get_wm_command(*c).constData());
     cg.writeEntry(QLatin1String("resourceName") + n, c->meta.wm_class.res_name.constData());
     cg.writeEntry(QLatin1String("resourceClass") + n, c->meta.wm_class.res_class.constData());
     cg.writeEntry(
@@ -169,7 +171,7 @@ void store_window(Space const& space, KConfigGroup& cg, int num, Win* c)
     cg.writeEntry(QLatin1String("fsrestore") + n, c->geo.restore.max);
     cg.writeEntry(QLatin1String("maximize") + n, static_cast<int>(c->maximizeMode()));
     cg.writeEntry(QLatin1String("fullscreen") + n, static_cast<int>(c->control->fullscreen));
-    cg.writeEntry(QLatin1String("desktop") + n, c->desktop());
+    cg.writeEntry(QLatin1String("desktop") + n, get_desktop(*c));
 
     // the config entry is called "iconified" for back. comp. reasons
     // (kconf_update script for updating session files would be too complicated)
@@ -191,55 +193,7 @@ void store_window(Space const& space, KConfigGroup& cg, int num, Win* c)
     cg.writeEntry(QLatin1String("windowType") + n, window_type_to_txt(c->windowType()));
     cg.writeEntry(QLatin1String("shortcut") + n, c->control->shortcut.toString());
     cg.writeEntry(QLatin1String("stackingOrder") + n,
-                  static_cast<int>(index_of(space.stacking.order.pre_stack, c)));
-}
-
-template<typename Space>
-void store_subsession(Space const& space, QString const& name, QSet<QByteArray> sessionIds)
-{
-    // TODO clear it first
-    KConfigGroup cg(KSharedConfig::openConfig(), QLatin1String("SubSession: ") + name);
-    int count = 0;
-    int active_client = -1;
-
-    for (auto const& window : space.windows) {
-        if (!window->control) {
-            continue;
-        }
-
-        auto x11_client = dynamic_cast<typename Space::x11_window*>(window);
-        if (!x11_client) {
-            continue;
-        }
-        if (x11_client->windowType() > NET::Splash) {
-            continue;
-        }
-
-        QByteArray sessionId = x11_client->sessionId();
-        QByteArray wmCommand = x11_client->wmCommand();
-        if (sessionId.isEmpty()) {
-            // remember also applications that are not XSMP capable
-            // and use the obsolete WM_COMMAND / WM_SAVE_YOURSELF
-            if (wmCommand.isEmpty()) {
-                continue;
-            }
-        }
-        if (!sessionIds.contains(sessionId)) {
-            continue;
-        }
-
-        qCDebug(KWIN_CORE) << "storing" << sessionId;
-        count++;
-
-        if (x11_client->control->active) {
-            active_client = count;
-        }
-        store_window(space, cg, count, x11_client);
-    }
-
-    cg.writeEntry("count", count);
-    cg.writeEntry("active", active_client);
-    // cg.writeEntry( "desktop", currentDesktop());
+                  static_cast<int>(index_of(space.stacking.order.pre_stack, var_win(c))));
 }
 
 /**
@@ -325,9 +279,9 @@ template<typename Space, typename Win>
 session_info* take_session_info(Space& space, Win* c)
 {
     win::session_info* realInfo = nullptr;
-    QByteArray sessionId = c->sessionId();
+    QByteArray sessionId = x11::get_session_id(*c);
     QByteArray windowRole = c->windowRole();
-    QByteArray wmCommand = c->wmCommand();
+    QByteArray wmCommand = x11::get_wm_command(*c);
     auto const& resourceName = c->meta.wm_class.res_name;
     auto const& resourceClass = c->meta.wm_class.res_class;
 

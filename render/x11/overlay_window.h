@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/x11/xcb/helpers.h"
 #include "base/x11/xcb/proto.h"
 #include "main.h"
+#include "render/compositor.h"
 
 #include <QRegion>
 #include <QTimer>
@@ -193,9 +194,9 @@ public:
                 visible = (visibility->state != XCB_VISIBILITY_FULLY_OBSCURED);
                 if (!was_visible && visible) {
                     // hack for #154825
-                    compositor.addRepaintFull();
+                    full_repaint(compositor);
                     QTimer::singleShot(2000, compositor.qobject.get(), [comp = &compositor] {
-                        comp->addRepaintFull();
+                        full_repaint(*comp);
                     });
                 }
                 compositor.schedule_repaint();

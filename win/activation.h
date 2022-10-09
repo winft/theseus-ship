@@ -210,65 +210,67 @@ void cancel_delay_focus(Space& space)
  *
  * @see activate_window
  */
-template<typename Space>
-void request_focus(Space& space,
-                   typename Space::window_t* window,
-                   bool raise = false,
-                   bool force_focus = false)
+template<typename Space, typename Win>
+void request_focus(Space& space, Win& window, bool raise = false, bool force_focus = false)
 {
-    auto take_focus = is_focus_change_allowed(space) || window == space.stacking.active;
+    using var_win = typename Space::window_t;
 
-    if (!window) {
-        focus_to_null(space);
-        return;
-    }
+    auto window_ptr = &window;
+    auto take_focus
+        = is_focus_change_allowed(space) || var_win(window_ptr) == space.stacking.active;
 
     if (take_focus) {
-        auto modal = window->findModal();
-        if (modal && modal->control && modal != window) {
-            if (!on_desktop(modal, window->desktop())) {
-                set_desktop(modal, window->desktop());
+        if constexpr (requires(Win win) { win.findModal(); }) {
+            if (auto modal = window_ptr->findModal();
+                modal && modal->control && modal != window_ptr) {
+                if (auto desktop = get_desktop(*window_ptr); !on_desktop(modal, desktop)) {
+                    set_desktop(modal, desktop);
+                }
+                if (!modal->isShown() && !modal->control->minimized) {
+                    // forced desktop or utility window
+                    // activating a minimized blocked window will unminimize its modal implicitly
+                    activate_window(space, *modal);
+                }
+                // if the click was inside the window (i.e. handled is set),
+                // but it has a modal, there's no need to use handled mode, because
+                // the modal doesn't get the click anyway
+                // raising of the original window needs to be still done
+                if (raise) {
+                    raise_window(space, window_ptr);
+                }
+                window_ptr = modal;
             }
-            if (!modal->isShown() && !modal->control->minimized) {
-                // forced desktop or utility window
-                // activating a minimized blocked window will unminimize its modal implicitly
-                activate_window(space, modal);
-            }
-            // if the click was inside the window (i.e. handled is set),
-            // but it has a modal, there's no need to use handled mode, because
-            // the modal doesn't get the click anyway
-            // raising of the original window needs to be still done
-            if (raise) {
-                raise_window(&space, window);
-            }
-            window = modal;
         }
         cancel_delay_focus(space);
     }
 
-    if (!force_focus && (is_dock(window) || is_splash(window))) {
+    if (!force_focus && (is_dock(window_ptr) || is_splash(window_ptr))) {
         // toplevel menus and dock windows don't take focus if not forced
         // and don't have a flag that they take focus
-        if (!window->dockWantsInput()) {
+        if constexpr (requires(Win win) { win.dockWantsInput(); }) {
+            if (!window_ptr->dockWantsInput()) {
+                take_focus = false;
+            }
+        } else {
             take_focus = false;
         }
     }
 
-    if (!window->isShown()) {
+    if (!window_ptr->isShown()) {
         // Shouldn't happen, call activate_window() if needed.
         qCWarning(KWIN_CORE) << "request_focus: not shown";
         return;
     }
 
     if (take_focus) {
-        window->takeFocus();
+        window_ptr->takeFocus();
     }
     if (raise) {
-        raise_window(&space, window);
+        raise_window(space, window_ptr);
     }
 
-    if (!on_active_screen(window)) {
-        base::set_current_output(space.base, window->topo.central_output);
+    if (!on_active_screen(window_ptr)) {
+        base::set_current_output(space.base, window_ptr->topo.central_output);
     }
 }
 
@@ -285,33 +287,41 @@ void focus_to_null(Space& space)
 }
 
 template<typename Space>
-typename Space::window_t* window_under_mouse(Space const& space, base::output const* output)
+std::optional<typename Space::window_t> window_under_mouse(Space const& space,
+                                                           base::output const* output)
 {
     auto it = space.stacking.order.stack.cend();
 
     while (it != space.stacking.order.stack.cbegin()) {
-        auto window = *(--it);
-        if (!window->control) {
-            continue;
-        }
+        auto window_var = *(--it);
+        if (std::visit(overload{[&](auto&& window) {
+                           if (!window->control) {
+                               return false;
+                           }
 
-        // Rule out windows which are not really visible.
-        // The screen test is rather superfluous for xrandr & twinview since the geometry would
-        // differ. -> TODO: might be dropped
-        if (!(window->isShown() && on_current_desktop(window) && on_screen(window, output)))
-            continue;
+                           // Rule out windows which are not really visible.
+                           // The screen test is rather superfluous for xrandr & twinview since the
+                           // geometry would differ. -> TODO: might be dropped
+                           if (!window->isShown() || !on_current_desktop(window)
+                               || !on_screen(window, output)) {
+                               return false;
+                           }
 
-        if (window->geo.frame.contains(space.input->cursor->pos())) {
-            return window;
+                           return window->geo.frame.contains(space.input->cursor->pos());
+                       }},
+                       window_var)) {
+            return window_var;
         }
     }
 
-    return nullptr;
+    return {};
 }
 
 template<typename Win>
 void set_demands_attention(Win* win, bool demand)
 {
+    using var_win = typename Win::space_t::window_t;
+
     if (win->control->active) {
         demand = false;
     }
@@ -320,11 +330,12 @@ void set_demands_attention(Win* win, bool demand)
     }
     win->control->demands_attention = demand;
 
-    if (win->info) {
-        win->info->setState(demand ? NET::DemandsAttention : NET::States(), NET::DemandsAttention);
+    if constexpr (requires(Win win) { win.net_info; }) {
+        win->net_info->setState(demand ? NET::DemandsAttention : NET::States(),
+                                NET::DemandsAttention);
     }
 
-    remove_all(win->space.stacking.attention_chain, win);
+    remove_all(win->space.stacking.attention_chain, var_win(win));
     if (demand) {
         win->space.stacking.attention_chain.push_front(win);
     }
@@ -349,6 +360,7 @@ void set_active(Win* win, bool active)
     if (win->control->active == active) {
         return;
     }
+
     win->control->active = active;
 
     auto const ruledOpacity = active
@@ -356,9 +368,10 @@ void set_active(Win* win, bool active)
         : win->control->rules.checkOpacityInactive(qRound(win->opacity() * 100.0));
     win->setOpacity(ruledOpacity / 100.0);
 
-    set_active_window(win->space, active ? win : nullptr);
-
-    if (!active) {
+    if (active) {
+        set_active_window(win->space, *win);
+    } else {
+        unset_active_window(win->space);
         win->control->cancel_auto_raise();
     }
 
@@ -378,9 +391,49 @@ void set_active(Win* win, bool active)
         }
     }
 
-    win->doSetActive();
+    if constexpr (requires(Win win) { win.doSetActive(); }) {
+        win->doSetActive();
+    }
     Q_EMIT win->qobject->activeChanged();
     win->control->update_mouse_grab();
+}
+
+template<typename Space>
+void unset_active_window(Space& space)
+{
+    auto& stacking = space.stacking;
+
+    if (!stacking.active) {
+        return;
+    }
+
+    if (space.active_popup && space.set_active_client_recursion == 0) {
+        close_active_popup(space);
+    }
+    if (space.user_actions_menu->hasClient() && space.set_active_client_recursion == 0) {
+        space.user_actions_menu->close();
+    }
+
+    blocker block(stacking.order);
+    ++space.set_active_client_recursion;
+    space.focusMousePos = space.input->cursor->pos();
+
+    // note that this may call setActiveClient( NULL ), therefore the recursion counter
+    std::visit(overload{[](auto&& win) { set_active(win, false); }}, *stacking.active);
+    stacking.active = {};
+
+    x11::update_tool_windows_visibility(&space, false);
+    set_global_shortcuts_disabled(space, false);
+
+    // e.g. fullscreens have different layer when active/not-active
+    stacking.order.update_order();
+
+    if (space.root_info) {
+        x11::root_info_unset_active_window(*space.root_info);
+    }
+
+    Q_EMIT space.qobject->clientActivated();
+    --space.set_active_client_recursion;
 }
 
 /**
@@ -391,20 +444,21 @@ void set_active(Win* win, bool active)
  * activeClient(). And of course, to propagate the active client to the
  * world.
  */
-template<typename Space>
-void set_active_window(Space& space, typename Space::window_t* window)
+template<typename Space, typename Win>
+void set_active_window(Space& space, Win& window)
 {
+    using var_win = typename Space::window_t;
     auto& stacking = space.stacking;
 
-    if (stacking.active == window) {
+    if (stacking.active == var_win(&window)) {
         return;
     }
 
-    if (space.active_popup && space.active_popup_client != window
+    if (space.active_popup && space.active_popup_client != var_win(&window)
         && space.set_active_client_recursion == 0) {
         close_active_popup(space);
     }
-    if (space.user_actions_menu->hasClient() && !space.user_actions_menu->isMenuClient(window)
+    if (space.user_actions_menu->hasClient() && !space.user_actions_menu->isMenuClient(&window)
         && space.set_active_client_recursion == 0) {
         space.user_actions_menu->close();
     }
@@ -413,44 +467,42 @@ void set_active_window(Space& space, typename Space::window_t* window)
     ++space.set_active_client_recursion;
     space.focusMousePos = space.input->cursor->pos();
 
-    if (stacking.active != nullptr) {
+    if (stacking.active) {
         // note that this may call setActiveClient( NULL ), therefore the recursion counter
-        set_active(stacking.active, false);
+        std::visit(overload{[](auto&& win) { set_active(win, false); }}, *stacking.active);
     }
 
-    stacking.active = window;
-    assert(!window || window->control->active);
+    assert(window.control->active);
+    stacking.active = &window;
+    stacking.last_active = &window;
 
-    if (stacking.active) {
-        stacking.last_active = stacking.active;
-        focus_chain_update(stacking.focus_chain, stacking.active, focus_chain_change::make_first);
-        set_demands_attention(stacking.active, false);
+    focus_chain_update(stacking.focus_chain, &window, focus_chain_change::make_first);
+    set_demands_attention(&window, false);
 
-        // activating a client can cause a non active fullscreen window to loose the ActiveLayer
-        // status on > 1 screens
-        if (space.base.outputs.size() > 1) {
-            for (auto win : space.windows) {
-                if (win->control && win != stacking.active && get_layer(*win) == win::layer::active
-                    && win->topo.central_output == stacking.active->topo.central_output) {
-                    update_layer(win);
-                }
-            }
+    // activating a client can cause a non active fullscreen window to loose the ActiveLayer
+    // status on > 1 screens
+    if (space.base.outputs.size() > 1) {
+        for (auto win : space.windows) {
+            std::visit(overload{[&](auto&& win) { update_layer(win); },
+                                [&](Win* win) {
+                                    if (win != &window) {
+                                        update_layer(win);
+                                    }
+                                }},
+                       win);
         }
     }
 
     x11::update_tool_windows_visibility(&space, false);
-    if (window) {
-        set_global_shortcuts_disabled(space,
-                                      window->control->rules.checkDisableGlobalShortcuts(false));
-    } else {
-        set_global_shortcuts_disabled(space, false);
-    }
+    set_global_shortcuts_disabled(space, window.control->rules.checkDisableGlobalShortcuts(false));
 
     // e.g. fullscreens have different layer when active/not-active
     stacking.order.update_order();
 
-    if (space.root_info) {
-        x11::root_info_set_active_window(*space.root_info, stacking.active);
+    if constexpr (requires(Win win) { win.xcb_windows; }) {
+        if (space.root_info) {
+            x11::root_info_set_active_window(*space.root_info, window);
+        }
     }
 
     Q_EMIT space.qobject->clientActivated();
@@ -458,42 +510,46 @@ void set_active_window(Space& space, typename Space::window_t* window)
 }
 
 template<typename Space, typename Win>
-void activate_window_impl(Space& space, Win* window, bool force)
+void activate_window_impl(Space& space, Win& window, bool force)
 {
-    if (window == nullptr) {
-        focus_to_null(space);
-        set_active_window(space, nullptr);
-        return;
-    }
-    raise_window(&space, window);
-    if (!on_current_desktop(window)) {
+    raise_window(space, &window);
+    if (!on_current_desktop(&window)) {
         focus_blocker blocker(space);
-        space.virtual_desktop_manager->setCurrent(window->desktop());
+        space.virtual_desktop_manager->setCurrent(get_desktop(window));
     }
-    if (window->control->minimized) {
-        set_minimized(window, false);
+    if (window.control->minimized) {
+        set_minimized(&window, false);
     }
 
     // ensure the window is really visible - could eg. be a hidden utility window, see bug
     // #348083
-    window->hideClient(false);
+    window.hideClient(false);
 
     // TODO force should perhaps allow this only if the window already contains the mouse
     if (kwinApp()->options->qobject->focusPolicyIsReasonable() || force) {
         request_focus(space, window, false, force);
     }
 
-    window->handle_activated();
+    if constexpr (requires(Win win) { win.handle_activated(); }) {
+        window.handle_activated();
+    }
 }
 
 template<typename Space>
-void activate_window(Space& space, typename Space::window_t* window)
+void deactivate_window(Space& space)
+{
+    focus_to_null(space);
+    unset_active_window(space);
+}
+
+template<typename Space, typename Win>
+void activate_window(Space& space, Win& window)
 {
     activate_window_impl(space, window, false);
 }
 
 template<typename Space, typename Win>
-void force_activate_window(Space& space, Win* window)
+void force_activate_window(Space& space, Win& window)
 {
     activate_window_impl(space, window, true);
 }
@@ -501,29 +557,25 @@ void force_activate_window(Space& space, Win* window)
 template<typename Space>
 void activate_attention_window(Space& space)
 {
-    if (space.stacking.attention_chain.size() > 0) {
-        activate_window(space, space.stacking.attention_chain.front());
+    if (!space.stacking.attention_chain.empty()) {
+        std::visit(overload{[&](auto&& win) { activate_window(space, *win); }},
+                   space.stacking.attention_chain.front());
     }
 }
 
-/// Deactivates 'window' and activates next one.
+/// Deactivates current active window and activates next one.
 template<typename Space>
-bool activate_next_window(Space& space, typename Space::window_t* window)
+bool activate_next_window(Space& space)
 {
-    auto& sgf = space.stacking.should_get_focus;
-
-    // If 'window' is not the active or the to-become active one, do nothing.
-    if (!(window == space.stacking.active || (sgf.size() > 0 && window == sgf.back()))) {
-        return false;
-    }
-
+    auto prev_window = most_recently_activated_window(space);
     close_active_popup(space);
 
-    if (window != nullptr) {
-        if (window == space.stacking.active) {
-            set_active_window(space, nullptr);
+    if (prev_window) {
+        if (prev_window == space.stacking.active) {
+            unset_active_window(space);
         }
-        sgf.erase(std::remove(sgf.begin(), sgf.end(), window), sgf.end());
+        auto& sgf = space.stacking.should_get_focus;
+        sgf.erase(std::remove(sgf.begin(), sgf.end(), prev_window), sgf.end());
     }
 
     // if blocking focus, move focus to the desktop later if needed
@@ -533,57 +585,85 @@ bool activate_next_window(Space& space, typename Space::window_t* window)
         return true;
     }
 
-    if (!kwinApp()->options->qobject->focusPolicyIsReasonable())
+    if (!kwinApp()->options->qobject->focusPolicyIsReasonable()) {
         return false;
-
-    decltype(window) get_focus = nullptr;
+    }
 
     int const desktop = space.virtual_desktop_manager->current();
 
-    if (!get_focus && space.showing_desktop) {
+    if (space.showing_desktop) {
         // to not break the state
-        get_focus = find_desktop(&space, true, desktop);
-    }
-
-    if (!get_focus && kwinApp()->options->qobject->isNextFocusPrefersMouse()) {
-        get_focus = window_under_mouse(
-            space, window ? window->topo.central_output : get_current_output(space));
-        if (get_focus && (get_focus == window || is_desktop(get_focus))) {
-            // should rather not happen, but it cannot get the focus. rest of usability is tested
-            // above
-            get_focus = nullptr;
+        if (auto desk_win = find_desktop(&space, true, desktop)) {
+            std::visit(overload{[&](auto&& win) { request_focus(space, *win); }}, *desk_win);
+            return true;
         }
     }
 
-    if (!get_focus) { // no suitable window under the mouse -> find sth. else
-        // first try to pass the focus to the (former) active clients leader
-        if (window && window->transient->lead()) {
-            auto leaders = window->transient->leads();
-            if (leaders.size() == 1
-                && focus_chain_is_usable_focus_candidate(space, leaders.at(0), window)) {
-                get_focus = leaders.at(0);
+    typename Space::base_t::output_t const* output{nullptr};
+    auto get_output = [&] {
+        if (output) {
+            return output;
+        }
+        if (prev_window) {
+            return std::visit(overload{[](auto&& win) { return win->topo.central_output; }},
+                              *prev_window);
+        }
+        return get_current_output(space);
+    };
 
-                // also raise - we don't know where it came from
-                win::raise_window(&space, get_focus);
+    if (kwinApp()->options->qobject->isNextFocusPrefersMouse()) {
+        // Same as prev window and is_desktop should rather not happen.
+        if (auto win = window_under_mouse(space, get_output());
+            win && (!prev_window || *win != *prev_window)) {
+            if (std::visit(overload{[&](auto&& win) {
+                               if (is_desktop(win)) {
+                                   return false;
+                               }
+                               request_focus(space, *win);
+                               return true;
+                           }},
+                           *win)) {
+                return true;
             }
-        }
-        if (!get_focus) {
-            // nope, ask the focus chain for the next candidate
-            get_focus = focus_chain_next_for_desktop(space, window, desktop);
+            return true;
         }
     }
 
-    if (!get_focus) {
-        // last chance: focus the desktop
-        get_focus = find_desktop(&space, true, desktop);
+    // No suitable window under the mouse -> find sth. else.
+    // First try to pass the focus to the (former) active clients leader.
+    if (prev_window) {
+        if (std::visit(overload{[&](auto&& prev_window) {
+                           auto leaders = prev_window->transient->leads();
+                           if (leaders.size() == 1
+                               && focus_chain_is_usable_focus_candidate(
+                                   space, *leaders.at(0), get_output())) {
+                               auto win = leaders.front();
+
+                               // Also raise - we don't know where it came from.
+                               raise_window(space, win);
+                               request_focus(space, *win);
+                               return true;
+                           }
+                           return false;
+                       }},
+                       *prev_window)) {
+            return true;
+        }
     }
 
-    if (get_focus) {
-        request_focus(space, get_focus);
-    } else {
-        focus_to_null(space);
+    // Ask the focus chain for the next candidate.
+    if (auto win = focus_chain_next(space, prev_window, desktop, get_output())) {
+        std::visit(overload{[&](auto&& win) { request_focus(space, *win); }}, *win);
+        return true;
     }
 
+    // last chance: focus the desktop
+    if (auto win = find_desktop(&space, true, desktop)) {
+        std::visit(overload{[&](auto&& win) { request_focus(space, *win); }}, *win);
+        return true;
+    }
+
+    focus_to_null(space);
     return true;
 }
 
@@ -594,21 +674,27 @@ bool activate_next_window(Space& space, typename Space::window_t* window)
  * @note @p window may already be destroyed.
  */
 template<typename Space, typename Win>
-void process_window_hidden(Space& space, Win* window)
+void process_window_hidden(Space& space, Win& window)
 {
-    assert(!window->isShown() || !on_current_desktop(window));
-    activate_next_window(space, window);
+    using var_win = typename Space::window_t;
+    assert(!window.isShown() || !on_current_desktop(&window));
+    if (most_recently_activated_window(space) == var_win(&window)) {
+        activate_next_window(space);
+    }
 }
 
 template<typename Space>
-typename Space::window_t* find_window_to_activate_on_desktop(Space& space, unsigned int desktop)
+std::optional<typename Space::window_t> find_window_to_activate_on_desktop(Space& space,
+                                                                           unsigned int desktop)
 
 {
     auto& stacking = space.stacking;
 
     if (space.move_resize_window && stacking.active == space.move_resize_window
-        && focus_chain_at_desktop_contains(stacking.focus_chain, stacking.active, desktop)
-        && stacking.active->isShown() && on_current_desktop(stacking.active)) {
+        && focus_chain_at_desktop_contains(stacking.focus_chain, *stacking.active, desktop)
+        && std::visit(
+            overload{[&](auto&& win) { return win->isShown() && on_current_desktop(win); }},
+            *stacking.active)) {
         // A requestFocus call will fail, as the client is already active
         return stacking.active;
     }
@@ -617,20 +703,26 @@ typename Space::window_t* find_window_to_activate_on_desktop(Space& space, unsig
     if (kwinApp()->options->qobject->isNextFocusPrefersMouse()) {
         auto it = stacking.order.stack.cend();
         while (it != stacking.order.stack.cbegin()) {
-            auto window = *(--it);
-            if (!window->control) {
-                continue;
-            }
+            if (auto win = std::visit(
+                    overload{[&](auto&& win) -> std::optional<typename Space::window_t> {
+                        if (!win->control) {
+                            return {};
+                        }
 
-            if (!(window->isShown() && on_desktop(window, desktop) && on_active_screen(window)))
-                continue;
+                        if (!(win->isShown() && on_desktop(win, desktop) && on_active_screen(win)))
+                            return {};
 
-            if (window->geo.frame.contains(space.input->cursor->pos())) {
-                if (!is_desktop(window)) {
-                    return window;
-                }
-                // Unconditional break, we don't pass focus to some window below an unusable one.
-                break;
+                        if (win->geo.frame.contains(space.input->cursor->pos())) {
+                            if (!is_desktop(win)) {
+                                return win;
+                            }
+                            // Stop. We don't pass focus to some window below an unusable one.
+                            it = stacking.order.stack.cbegin();
+                        }
+                        return {};
+                    }},
+                    *(--it))) {
+                return win;
             }
         }
     }
@@ -641,99 +733,116 @@ typename Space::window_t* find_window_to_activate_on_desktop(Space& space, unsig
 template<typename Space>
 void activate_window_on_new_desktop(Space& space, unsigned int desktop)
 {
+    using var_win = typename Space::window_t;
     auto& stacking = space.stacking;
 
-    typename Space::window_t* c = nullptr;
+    auto do_activate = [&](auto& win) {
+        std::visit(overload{[&](auto&& win) {
+                       if (var_win(win) != stacking.active) {
+                           unset_active_window(space);
+                       }
+                       request_focus(space, *win);
+                   }},
+                   win);
+    };
 
     if (kwinApp()->options->qobject->focusPolicyIsReasonable()) {
-        c = find_window_to_activate_on_desktop(space, desktop);
-    } else if (stacking.active && stacking.active->isShown()
-               && on_current_desktop(stacking.active)) {
+        if (auto win = find_window_to_activate_on_desktop(space, desktop)) {
+            do_activate(*win);
+            return;
+        }
+    } else if (stacking.active
+               && std::visit(
+                   overload{[&](auto&& win) { return win->isShown() && on_current_desktop(win); }},
+                   *stacking.active)) {
         // If "unreasonable focus policy" and stacking.active is on_all_desktops and
         // under mouse (Hence == stacking.last_active), conserve focus.
         // (Thanks to Volker Schatz <V.Schatz at thphys.uni-heidelberg.de>)
-        c = stacking.active;
+        do_activate(*stacking.active);
+        return;
     }
 
-    if (!c) {
-        c = find_desktop(&space, true, desktop);
+    if (auto win = find_desktop(&space, true, desktop)) {
+        do_activate(*win);
+        return;
     }
 
-    if (c != stacking.active) {
-        set_active_window(space, nullptr);
-    }
-
-    if (c) {
-        request_focus(space, c);
-    } else if (auto desktop_client = find_desktop(&space, true, desktop)) {
-        request_focus(space, desktop_client);
-    } else {
-        focus_to_null(space);
-    }
+    focus_to_null(space);
 }
 
-template<typename Space>
+template<typename Space, typename Win>
 bool activate_window_direction(Space& space,
-                               typename Space::window_t* c,
+                               Win& window,
                                win::direction direction,
                                QPoint curPos,
-                               int d)
+                               int desktop)
 {
-    decltype(c) switchTo = nullptr;
+    using var_win = typename Space::window_t;
+
+    std::optional<var_win> next_window;
     int bestScore = 0;
-    auto clist = space.stacking.order.stack;
+    auto const& stack = space.stacking.order.stack;
 
-    for (auto i = clist.rbegin(); i != clist.rend(); ++i) {
-        auto client = *i;
-        if (!client->control) {
-            continue;
-        }
+    for (auto it = stack.rbegin(); it != stack.rend(); ++it) {
+        std::visit(overload{[&](auto&& win) {
+                       if constexpr (std::is_same_v<std::decay_t<decltype(win)>, Win>) {
+                           if (win == &window) {
+                               return;
+                           }
+                       }
+                       if (!win->control || !wants_tab_focus(win) || !on_desktop(win, desktop)
+                           || win->control->minimized) {
+                           return;
+                       }
 
-        if (wants_tab_focus(client) && *i != c && on_desktop(client, d)
-            && !client->control->minimized) {
-            // Centre of the other window
-            const QPoint other(client->geo.pos().x() + client->geo.size().width() / 2,
-                               client->geo.pos().y() + client->geo.size().height() / 2);
+                       // Centre of the other window
+                       auto const other = QPoint(win->geo.pos().x() + win->geo.size().width() / 2,
+                                                 win->geo.pos().y() + win->geo.size().height() / 2);
+                       int distance;
+                       int offset;
 
-            int distance;
-            int offset;
-            switch (direction) {
-            case direction::north:
-                distance = curPos.y() - other.y();
-                offset = qAbs(other.x() - curPos.x());
-                break;
-            case direction::east:
-                distance = other.x() - curPos.x();
-                offset = qAbs(other.y() - curPos.y());
-                break;
-            case direction::south:
-                distance = other.y() - curPos.y();
-                offset = qAbs(other.x() - curPos.x());
-                break;
-            case direction::west:
-                distance = curPos.x() - other.x();
-                offset = qAbs(other.y() - curPos.y());
-                break;
-            default:
-                distance = -1;
-                offset = -1;
-            }
+                       switch (direction) {
+                       case direction::north:
+                           distance = curPos.y() - other.y();
+                           offset = qAbs(other.x() - curPos.x());
+                           break;
+                       case direction::east:
+                           distance = other.x() - curPos.x();
+                           offset = qAbs(other.y() - curPos.y());
+                           break;
+                       case direction::south:
+                           distance = other.y() - curPos.y();
+                           offset = qAbs(other.x() - curPos.x());
+                           break;
+                       case direction::west:
+                           distance = curPos.x() - other.x();
+                           offset = qAbs(other.y() - curPos.y());
+                           break;
+                       default:
+                           distance = -1;
+                           offset = -1;
+                       }
 
-            if (distance > 0) {
-                // Inverse score
-                int score = distance + offset + ((offset * offset) / distance);
-                if (score < bestScore || !switchTo) {
-                    switchTo = client;
-                    bestScore = score;
-                }
-            }
-        }
+                       if (distance <= 0) {
+                           return;
+                       }
+
+                       // Inverse score
+                       int score = distance + offset + ((offset * offset) / distance);
+                       if (score < bestScore || !next_window) {
+                           next_window = win;
+                           bestScore = score;
+                       }
+                   }},
+                   *it);
     }
-    if (switchTo) {
-        activate_window(space, switchTo);
+
+    if (!next_window) {
+        return false;
     }
 
-    return switchTo;
+    std::visit(overload{[&](auto&& win) { activate_window(space, *win); }}, *next_window);
+    return true;
 }
 
 /**
@@ -746,46 +855,53 @@ void activate_window_direction(Space& space, win::direction direction)
         return;
     }
 
-    auto c = space.stacking.active;
-    int desktopNumber
-        = on_all_desktops(c) ? space.virtual_desktop_manager->current() : c->desktop();
+    std::visit(
+        overload{[&](auto&& act_win) {
+            int desktopNumber = on_all_desktops(act_win) ? space.virtual_desktop_manager->current()
+                                                         : get_desktop(*act_win);
 
-    // Centre of the active window
-    QPoint curPos(c->geo.pos().x() + c->geo.size().width() / 2,
-                  c->geo.pos().y() + c->geo.size().height() / 2);
+            // Centre of the active window
+            auto curPos = QPoint(act_win->geo.pos().x() + act_win->geo.size().width() / 2,
+                                 act_win->geo.pos().y() + act_win->geo.size().height() / 2);
 
-    if (!activate_window_direction(space, c, direction, curPos, desktopNumber)) {
-        auto opposite = [&] {
-            switch (direction) {
-            case direction::north:
-                return QPoint(curPos.x(), kwinApp()->get_base().topology.size.height());
-            case direction::south:
-                return QPoint(curPos.x(), 0);
-            case direction::east:
-                return QPoint(0, curPos.y());
-            case direction::west:
-                return QPoint(kwinApp()->get_base().topology.size.width(), curPos.y());
-            default:
-                Q_UNREACHABLE();
+            if (activate_window_direction(space, *act_win, direction, curPos, desktopNumber)) {
+                return;
             }
-        };
 
-        activate_window_direction(space, c, direction, opposite(), desktopNumber);
-    }
+            auto opposite = [&] {
+                switch (direction) {
+                case direction::north:
+                    return QPoint(curPos.x(), kwinApp()->get_base().topology.size.height());
+                case direction::south:
+                    return QPoint(curPos.x(), 0);
+                case direction::east:
+                    return QPoint(0, curPos.y());
+                case direction::west:
+                    return QPoint(kwinApp()->get_base().topology.size.width(), curPos.y());
+                default:
+                    Q_UNREACHABLE();
+                }
+            };
+
+            activate_window_direction(space, *act_win, direction, opposite(), desktopNumber);
+        }},
+        *space.stacking.active);
 }
 
 template<typename Space>
 void delay_focus(Space& space)
 {
-    request_focus(space, space.stacking.delayfocus_window);
+    if (auto delay = space.stacking.delayfocus_window) {
+        std::visit(overload{[&](auto&& delay) { request_focus(space, *delay); }}, *delay);
+    } else {
+        focus_to_null(space);
+    }
     cancel_delay_focus(space);
 }
 
 template<typename Space>
-void request_delay_focus(Space& space, typename Space::window_t* c)
+void reset_delay_focus_timer(Space& space)
 {
-    space.stacking.delayfocus_window = c;
-
     delete space.delayFocusTimer;
     space.delayFocusTimer = new QTimer(space.qobject.get());
 
@@ -802,7 +918,7 @@ void close_active_popup(Space& space)
     if (space.active_popup) {
         space.active_popup->close();
         space.active_popup = nullptr;
-        space.active_popup_client = nullptr;
+        space.active_popup_client = {};
     }
 
     space.user_actions_menu->close();
@@ -818,36 +934,46 @@ void set_showing_desktop(Space& space, bool showing)
 
     space.showing_desktop = showing;
 
-    typename Space::window_t* topDesk = nullptr;
+    std::optional<typename Space::window_t> topDesk;
 
     // For the blocker RAII, updateLayer & lowerClient would invalidate stacking.order.
     {
         blocker block(space.stacking.order);
         for (int i = static_cast<int>(space.stacking.order.stack.size()) - 1; i > -1; --i) {
-            auto c = space.stacking.order.stack.at(i);
-            if (on_current_desktop(c)) {
-                if (is_dock(c)) {
-                    update_layer(c);
-                } else if (is_desktop(c) && c->isShown()) {
-                    update_layer(c);
-                    lower_window(&space, c);
-                    if (!topDesk)
-                        topDesk = c;
-                    for (auto cm : get_transient_family(c)) {
-                        update_layer(cm);
-                    }
-                }
-            }
+            std::visit(overload{[&](auto&& win) {
+                           if (!on_current_desktop(win)) {
+                               return;
+                           }
+                           if (is_dock(win)) {
+                               update_layer(win);
+                               return;
+                           }
+
+                           if (!is_desktop(win) || !win->isShown()) {
+                               return;
+                           }
+
+                           update_layer(win);
+                           lower_window(space, win);
+
+                           if (!topDesk) {
+                               topDesk = win;
+                           }
+
+                           for (auto relative : get_transient_family(win)) {
+                               update_layer(relative);
+                           }
+                       }},
+                       space.stacking.order.stack.at(i));
         }
     } // ~Blocker
 
     if (space.showing_desktop && topDesk) {
-        request_focus(space, topDesk);
+        std::visit(overload{[&](auto&& win) { request_focus(space, *win); }}, *topDesk);
     } else if (!space.showing_desktop && changed) {
-        auto const window = focus_chain_get_for_activation_on_current_output(
-            space, space.virtual_desktop_manager->current());
-        if (window) {
-            activate_window(space, window);
+        if (auto const window = focus_chain_get_for_activation_on_current_output(
+                space, space.virtual_desktop_manager->current())) {
+            std::visit(overload{[&](auto&& win) { activate_window(space, *win); }}, *window);
         }
     }
     if (changed) {
@@ -860,5 +986,4 @@ void toggle_show_desktop(Space& space)
 {
     set_showing_desktop(space, !space.showing_desktop);
 }
-
 }

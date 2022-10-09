@@ -47,7 +47,7 @@ Q_SIGNALS:
  * This class can be specialized to support the core Wayland protocol
  * (clipboard and dnd) as well as primary selection.
  */
-template<typename Window, typename server_source, typename internal_source>
+template<typename Space, typename server_source, typename internal_source>
 struct selection_data {
     std::unique_ptr<q_selection> qobject;
 
@@ -60,12 +60,12 @@ struct selection_data {
 
     // Active source, if any. Only one of them at max can exist
     // at the same time.
-    std::unique_ptr<wl_source<server_source, Window>> wayland_source;
-    std::unique_ptr<xwl::x11_source<internal_source, Window>> x11_source;
+    std::unique_ptr<wl_source<server_source, Space>> wayland_source;
+    std::unique_ptr<xwl::x11_source<internal_source, Space>> x11_source;
 
     std::unique_ptr<internal_source> source_int;
 
-    runtime<typename Window::space_t> core;
+    runtime<Space> core;
     QMetaObject::Connection active_window_notifier;
 
     // active transfers
@@ -83,10 +83,10 @@ struct selection_data {
     ~selection_data() = default;
 };
 
-template<typename Window, typename server_source, typename internal_source>
-auto create_selection_data(xcb_atom_t atom, runtime<typename Window::space_t> const& core)
+template<typename Space, typename server_source, typename internal_source>
+auto create_selection_data(xcb_atom_t atom, runtime<Space> const& core)
 {
-    selection_data<Window, server_source, internal_source> sel;
+    selection_data<Space, server_source, internal_source> sel;
 
     sel.qobject.reset(new q_selection());
     sel.atom = atom;

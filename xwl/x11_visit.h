@@ -30,14 +30,15 @@ Q_SIGNALS:
     void finish();
 };
 
-template<typename Window>
+template<typename Space>
 class x11_visit
 {
 public:
     // TODO: handle ask action
+    using window_t = typename Space::x11_window;
 
-    x11_visit(Window* target,
-              wl_source<Wrapland::Server::data_source, Window> const& source,
+    x11_visit(window_t* target,
+              wl_source<Wrapland::Server::data_source, Space> const& source,
               xcb_window_t drag_window)
         : qobject{std::make_unique<x11_visit_qobject>()}
         , target(target)
@@ -48,7 +49,7 @@ public:
         auto xcb_con = source.core.x11.connection;
         auto cookie = xcb_get_property(xcb_con,
                                        0,
-                                       target->xcb_window,
+                                       target->xcb_windows.client,
                                        source.core.x11.atoms->xdnd_aware,
                                        XCB_GET_PROPERTY_TYPE_ANY,
                                        0,
@@ -122,7 +123,7 @@ public:
         data.data32[4] = client_action_to_atom(actions.proposed, *source.core.x11.atoms);
 
         send_client_message(source.core.x11.connection,
-                            target->xcb_window,
+                            target->xcb_windows.client,
                             source.core.x11.atoms->xdnd_position,
                             &data);
     }
@@ -143,7 +144,7 @@ public:
 
     std::unique_ptr<x11_visit_qobject> qobject;
 
-    Window* target;
+    window_t* target;
 
     struct {
         bool entered{false};
@@ -155,7 +156,7 @@ private:
     bool handle_status(xcb_client_message_event_t* event)
     {
         auto data = &event->data;
-        if (data->data32[0] != target->xcb_window) {
+        if (data->data32[0] != target->xcb_windows.client) {
             // wrong target window
             return false;
         }
@@ -189,7 +190,7 @@ private:
     {
         auto data = &event->data;
 
-        if (data->data32[0] != target->xcb_window) {
+        if (data->data32[0] != target->xcb_windows.client) {
             // different target window
             return false;
         }
@@ -266,7 +267,7 @@ private:
         }
 
         send_client_message(source.core.x11.connection,
-                            target->xcb_window,
+                            target->xcb_windows.client,
                             source.core.x11.atoms->xdnd_enter,
                             &data);
     }
@@ -278,7 +279,7 @@ private:
         data.data32[2] = time;
 
         send_client_message(source.core.x11.connection,
-                            target->xcb_window,
+                            target->xcb_windows.client,
                             source.core.x11.atoms->xdnd_drop,
                             &data);
 
@@ -293,7 +294,7 @@ private:
         data.data32[0] = drag_window;
 
         send_client_message(source.core.x11.connection,
-                            target->xcb_window,
+                            target->xcb_windows.client,
                             source.core.x11.atoms->xdnd_leave,
                             &data);
     }
@@ -406,7 +407,7 @@ private:
         notifiers.action = QMetaObject::Connection();
     }
 
-    wl_source<Wrapland::Server::data_source, Window> const& source;
+    wl_source<Wrapland::Server::data_source, Space> const& source;
     xcb_window_t drag_window;
     uint32_t version = 0;
 

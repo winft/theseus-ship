@@ -9,10 +9,16 @@
 #include "meta.h"
 #include "remnant.h"
 #include "space_window_release.h"
-#include "x11/win_info.h"
+#include "transient.h"
 
 namespace KWin::win
 {
+
+namespace x11
+{
+template<typename Win>
+class win_info;
+}
 
 template<typename Win>
 win::remnant create_remnant(Win& source)
@@ -21,8 +27,12 @@ win::remnant create_remnant(Win& source)
 
     remnant.data.frame_margins = win::frame_margins(&source);
     remnant.data.render_region = source.render_region();
-    remnant.data.buffer_scale = source.bufferScale();
-    remnant.data.desk = source.desktop();
+
+    if constexpr (requires(Win win) { win.bufferScale(); }) {
+        remnant.data.buffer_scale = source.bufferScale();
+    }
+
+    remnant.data.desk = get_desktop(source);
     remnant.data.frame = source.frameId();
     remnant.data.opacity = source.opacity();
     remnant.data.window_role = source.windowRole();
@@ -52,12 +62,19 @@ win::remnant create_remnant(Win& source)
         remnant.refcount += source.transient->leads().size();
     }
 
-    remnant.data.was_group_transient = source.groupTransient();
+    remnant.data.was_group_transient = is_group_transient(source);
 
-    remnant.data.was_wayland_client = source.is_wayland_window();
-    remnant.data.was_x11_client = source.isClient();
+    if constexpr (requires(Win win) { win.is_wayland_window(); }) {
+        remnant.data.was_wayland_client = source.is_wayland_window();
+    }
+    if constexpr (requires(Win win) { win.isClient(); }) {
+        remnant.data.was_x11_client = source.isClient();
+    }
+    if constexpr (requires(Win win) { win.isLockScreen(); }) {
+        remnant.data.was_lock_screen = source.isLockScreen();
+    }
+
     remnant.data.was_popup_window = win::is_popup(&source);
-    remnant.data.was_lock_screen = source.isLockScreen();
 
     return remnant;
 }
@@ -70,25 +87,25 @@ void transfer_remnant_data(Win& source, Win& dest)
     dest.render_data.bit_depth = source.render_data.bit_depth;
 
     dest.window_type = source.windowType();
-    dest.info = source.info;
-    if (auto winfo = dynamic_cast<x11::win_info<Win>*>(dest.info)) {
-        winfo->disable();
-    }
 
-    dest.xcb_window.reset(source.xcb_window, false);
     dest.render_data.ready_for_painting = source.render_data.ready_for_painting;
     dest.render_data.damage_region = source.render_data.damage_region;
     dest.render_data.repaints_region = source.render_data.repaints_region;
     dest.render_data.layer_repaints_region = source.render_data.layer_repaints_region;
-    dest.is_shape = source.is_shape;
-    dest.is_outline = source.is_outline;
+
+    if constexpr (requires(Win win) { win.is_outline; }) {
+        dest.is_outline = source.is_outline;
+    }
+
+    if constexpr (requires(Win win) { win.skip_close_animation; }) {
+        dest.skip_close_animation = source.skip_close_animation;
+    }
 
     dest.render = std::move(source.render);
 
     dest.meta.wm_class = source.meta.wm_class;
     dest.render_data.opaque_region = source.render_data.opaque_region;
     dest.topo.central_output = source.topo.central_output;
-    dest.skip_close_animation = source.skip_close_animation;
     dest.topo.desktops = source.topo.desktops;
     dest.topo.layer = get_layer(source);
     dest.geo.has_in_content_deco = source.geo.has_in_content_deco;

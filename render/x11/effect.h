@@ -7,6 +7,7 @@
 
 #include "base/x11/xcb/property.h"
 #include "main.h"
+#include "render/support_properties.h"
 #include "utils/memory.h"
 
 #include <kwineffects/effect.h>
@@ -90,7 +91,7 @@ xcb_atom_t add_support_property(Effects& effects, QByteArray const& name)
         return atom;
     }
 
-    effects.compositor.keepSupportProperty(atom);
+    keep_support_property(effects.compositor, atom);
     effects.m_managedProperties.insert(name, atom);
     register_property_type(effects, atom, true);
 
@@ -142,7 +143,7 @@ void remove_support_property(Effects& effects, Effect* effect, QByteArray const&
     effects.m_propertiesForEffects.remove(name);
 
     // Delayed removal.
-    effects.compositor.removeSupportProperty(atom);
+    remove_support_property(effects.compositor, atom);
 }
 
 }

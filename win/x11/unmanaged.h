@@ -5,8 +5,11 @@
 */
 #pragma once
 
+#include "damage.h"
 #include "event.h"
+#include "meta.h"
 #include "window_release.h"
+#include "xcb.h"
 
 #include "base/x11/grabs.h"
 #include "base/x11/xcb/extensions.h"
@@ -19,11 +22,20 @@ namespace KWin::win::x11
 template<typename Win, typename Space>
 Win* find_unmanaged(Space&& space, xcb_window_t xcb_win)
 {
-    for (auto win : space.windows) {
-        if (!win->remnant && !win->control && win->xcb_window == xcb_win) {
-            return static_cast<Win*>(win);
+    for (auto& var_win : space.windows) {
+        if (auto win = std::visit(overload{[xcb_win](Win* win) -> Win* {
+                                               if (win->remnant || win->control
+                                                   || win->xcb_windows.client != xcb_win) {
+                                                   return nullptr;
+                                               }
+                                               return win;
+                                           },
+                                           [](auto&& /*win*/) -> Win* { return nullptr; }},
+                                  var_win)) {
+            return win;
         }
     }
+
     return nullptr;
 }
 
@@ -32,9 +44,15 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
 {
     using Win = typename Space::x11_window;
 
-    if (auto& is_overlay = space.base.render->compositor->x11_integration.is_overlay_window;
-        is_overlay && is_overlay(xcb_win)) {
-        return nullptr;
+    using compositor_t = typename Space::base_t::render_t::compositor_t;
+    if constexpr (requires(compositor_t comp) {
+                      {
+                          comp.is_overlay_window(xcb_win)
+                          } -> std::same_as<bool>;
+                  }) {
+        if (space.base.render->compositor->is_overlay_window(xcb_win)) {
+            return nullptr;
+        }
     }
 
     // Window types that are supported as unmanaged (mainly for compositing).
@@ -74,27 +92,31 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
     check_screen(*win);
     win->xcb_visual = attr->visual;
     win->render_data.bit_depth = geo->depth;
-    win->info = new NETWinInfo(connection(),
-                               xcb_win,
-                               rootWindow(),
-                               NET::WMWindowType | NET::WMPid,
-                               NET::WM2Opacity | NET::WM2WindowRole | NET::WM2WindowClass
-                                   | NET::WM2OpaqueRegion);
-    win->getResourceClass();
-    win->getWmClientLeader();
-    win->getWmClientMachine();
+    win->net_info = new NETWinInfo(connection(),
+                                   xcb_win,
+                                   rootWindow(),
+                                   NET::WMWindowType | NET::WMPid,
+                                   NET::WM2Opacity | NET::WM2WindowRole | NET::WM2WindowClass
+                                       | NET::WM2OpaqueRegion);
+    fetch_wm_class(*win);
+
+    // TODO(romangg): Can't chain these two calls, because the second only takes non-const refs.
+    auto client_leader_prop = fetch_wm_client_leader(*win);
+    read_wm_client_leader(*win, client_leader_prop);
+
+    fetch_wm_client_machine(*win);
     if (base::x11::xcb::extensions::self()->is_shape_available()) {
         xcb_shape_select_input(connection(), xcb_win, true);
     }
-    win->detectShape(xcb_win);
-    win->getWmOpaqueRegion();
-    win->fetch_and_set_skip_close_animation();
+    detect_shape(*win);
+    fetch_wm_opaque_region(*win);
+    set_skip_close_animation(*win, fetch_skip_close_animation(*win).to_bool());
     win->setupCompositing();
 
     auto find_internal_window = [&win]() -> QWindow* {
         auto const windows = kwinApp()->topLevelWindows();
         for (auto xcb_win : windows) {
-            if (xcb_win->winId() == win->xcb_window) {
+            if (xcb_win->winId() == win->xcb_windows.client) {
                 return xcb_win;
             }
         }
@@ -152,7 +174,7 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* event)
     NET::Properties2 dirtyProperties2;
 
     // Pass through the NET stuff.
-    win->info->event(event, &dirtyProperties, &dirtyProperties2);
+    win->net_info->event(event, &dirtyProperties, &dirtyProperties2);
 
     if (dirtyProperties2 & NET::WM2Opacity) {
         if (win->space.base.render->compositor->scene) {
@@ -161,13 +183,13 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* event)
         }
     }
     if (dirtyProperties2 & NET::WM2OpaqueRegion) {
-        win->getWmOpaqueRegion();
+        fetch_wm_opaque_region(*win);
     }
     if (dirtyProperties2.testFlag(NET::WM2WindowRole)) {
         Q_EMIT win->qobject->windowRoleChanged();
     }
     if (dirtyProperties2.testFlag(NET::WM2WindowClass)) {
-        win->getResourceClass();
+        fetch_wm_class(*win);
     }
 
     auto const eventType = event->response_type & ~0x80;
@@ -205,11 +227,11 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* event)
         property_notify_event_prepare(*win, reinterpret_cast<xcb_property_notify_event_t*>(event));
         break;
     case XCB_CLIENT_MESSAGE:
-        win->clientMessageEvent(reinterpret_cast<xcb_client_message_event_t*>(event));
+        handle_wl_surface_id_event(*win, reinterpret_cast<xcb_client_message_event_t*>(event));
         break;
     default: {
         if (eventType == base::x11::xcb::extensions::self()->shape_notify_event()) {
-            win->detectShape(win->xcb_window);
+            detect_shape(*win);
             add_full_repaint(*win);
 
             // In case shape change removes part of this window.
@@ -218,7 +240,7 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* event)
             Q_EMIT win->qobject->frame_geometry_changed(win->geo.frame);
         }
         if (eventType == base::x11::xcb::extensions::self()->damage_notify_event()) {
-            win->damageNotifyEvent();
+            damage_handle_notify_event(*win);
         }
         break;
     }

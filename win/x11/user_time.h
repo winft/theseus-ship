@@ -17,7 +17,7 @@ namespace KWin::win::x11
 template<typename Win>
 bool has_user_time_support(Win* win)
 {
-    return win->info->userTime() != -1U;
+    return win->net_info->userTime() != -1U;
 }
 
 /**
@@ -45,11 +45,11 @@ void update_user_time(Win* win, xcb_timestamp_t time = XCB_TIME_CURRENT_TIME)
 }
 
 template<typename Win>
-xcb_timestamp_t read_user_creation_time(Win* win)
+xcb_timestamp_t read_user_creation_time(Win& win)
 {
     base::x11::xcb::property prop(false,
-                                  win->xcb_window,
-                                  win->space.atoms->kde_net_wm_user_creation_time,
+                                  win.xcb_windows.client,
+                                  win.space.atoms->kde_net_wm_user_creation_time,
                                   XCB_ATOM_CARDINAL,
                                   0,
                                   1);

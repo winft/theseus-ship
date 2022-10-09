@@ -81,7 +81,6 @@ public:
 
     QVariant propertyData(QObject* object, const QModelIndex& index, int role) const;
 
-    win::property_window* internalClient(QModelIndex const& index) const;
     win::property_window* x11Client(QModelIndex const& index) const;
     win::property_window* unmanaged(QModelIndex const& index) const;
     virtual int topLevelRowCount() const;
@@ -91,7 +90,6 @@ public:
     static constexpr int s_waylandClientId{3};
     static constexpr int s_workspaceInternalId{4};
 
-    std::vector<std::unique_ptr<win::property_window>> m_internalClients;
     std::vector<std::unique_ptr<win::property_window>> m_x11Clients;
     std::vector<std::unique_ptr<win::property_window>> m_unmanageds;
 

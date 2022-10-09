@@ -211,9 +211,12 @@ wayland_window* get_toplevel_window(QSignalSpy const& spy)
 {
     auto xdg_toplevel = spy.last().at(0).value<Wrapland::Server::XdgShellToplevel*>();
     for (auto win : Test::app()->base.space->windows) {
-        if (auto wl_win = dynamic_cast<wayland_window*>(win);
-            wl_win && wl_win->toplevel == xdg_toplevel) {
-            return wl_win;
+        if (!std::holds_alternative<wayland_window*>(win)) {
+            continue;
+        }
+        auto wlwin = std::get<wayland_window*>(win);
+        if (wlwin->toplevel == xdg_toplevel) {
+            return wlwin;
         }
     }
     return nullptr;
@@ -293,11 +296,11 @@ void TestXdgShellClientRules::testPositionApply()
                                                &win::window_qobject::clientFinishUserMovedResized);
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
-    QCOMPARE(Test::app()->base.space->move_resize_window, nullptr);
+    QVERIFY(!Test::app()->base.space->move_resize_window);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
     win::active_window_move(*Test::app()->base.space);
-    QCOMPARE(Test::app()->base.space->move_resize_window, client);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->move_resize_window), client);
     QCOMPARE(clientStartMoveResizedSpy.count(), 1);
     QVERIFY(win::is_move(client));
     QVERIFY(!win::is_resize(client));
@@ -311,7 +314,7 @@ void TestXdgShellClientRules::testPositionApply()
 
     win::key_press_event(client, Qt::Key_Enter);
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
-    QCOMPARE(Test::app()->base.space->move_resize_window, nullptr);
+    QVERIFY(!Test::app()->base.space->move_resize_window);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
     QCOMPARE(client->geo.pos(), QPoint(50, 42));
@@ -372,11 +375,11 @@ void TestXdgShellClientRules::testPositionRemember()
                                                &win::window_qobject::clientFinishUserMovedResized);
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
-    QCOMPARE(Test::app()->base.space->move_resize_window, nullptr);
+    QVERIFY(!Test::app()->base.space->move_resize_window);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
     win::active_window_move(*Test::app()->base.space);
-    QCOMPARE(Test::app()->base.space->move_resize_window, client);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->move_resize_window), client);
     QCOMPARE(clientStartMoveResizedSpy.count(), 1);
     QVERIFY(win::is_move(client));
     QVERIFY(!win::is_resize(client));
@@ -390,7 +393,7 @@ void TestXdgShellClientRules::testPositionRemember()
 
     win::key_press_event(client, Qt::Key_Enter);
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
-    QCOMPARE(Test::app()->base.space->move_resize_window, nullptr);
+    QVERIFY(!Test::app()->base.space->move_resize_window);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
     QCOMPARE(client->geo.pos(), QPoint(50, 42));
@@ -444,11 +447,11 @@ void TestXdgShellClientRules::testPositionForce()
     QSignalSpy clientStartMoveResizedSpy(client->qobject.get(),
                                          &win::window_qobject::clientStartUserMovedResized);
     QVERIFY(clientStartMoveResizedSpy.isValid());
-    QCOMPARE(Test::app()->base.space->move_resize_window, nullptr);
+    QVERIFY(!Test::app()->base.space->move_resize_window);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
     win::active_window_move(*Test::app()->base.space);
-    QCOMPARE(Test::app()->base.space->move_resize_window, nullptr);
+    QVERIFY(!Test::app()->base.space->move_resize_window);
     QCOMPARE(clientStartMoveResizedSpy.count(), 0);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
@@ -519,11 +522,11 @@ void TestXdgShellClientRules::testPositionApplyNow()
                                                &win::window_qobject::clientFinishUserMovedResized);
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
-    QCOMPARE(Test::app()->base.space->move_resize_window, nullptr);
+    QVERIFY(!Test::app()->base.space->move_resize_window);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
     win::active_window_move(*Test::app()->base.space);
-    QCOMPARE(Test::app()->base.space->move_resize_window, client);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->move_resize_window), client);
     QCOMPARE(clientStartMoveResizedSpy.count(), 1);
     QVERIFY(win::is_move(client));
     QVERIFY(!win::is_resize(client));
@@ -537,7 +540,7 @@ void TestXdgShellClientRules::testPositionApplyNow()
 
     win::key_press_event(client, Qt::Key_Enter);
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
-    QCOMPARE(Test::app()->base.space->move_resize_window, nullptr);
+    QVERIFY(!Test::app()->base.space->move_resize_window);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
     QCOMPARE(client->geo.pos(), QPoint(50, 42));
@@ -584,11 +587,12 @@ void TestXdgShellClientRules::testPositionForceTemporarily()
     QSignalSpy clientStartMoveResizedSpy(client->qobject.get(),
                                          &win::window_qobject::clientStartUserMovedResized);
     QVERIFY(clientStartMoveResizedSpy.isValid());
-    QCOMPARE(Test::app()->base.space->move_resize_window, nullptr);
+    QVERIFY(!Test::app()->base.space->move_resize_window);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
+
     win::active_window_move(*Test::app()->base.space);
-    QCOMPARE(Test::app()->base.space->move_resize_window, nullptr);
+    QVERIFY(!Test::app()->base.space->move_resize_window);
     QCOMPARE(clientStartMoveResizedSpy.count(), 0);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
@@ -723,11 +727,11 @@ void TestXdgShellClientRules::testSizeApply()
     QSignalSpy surfaceSizeChangedSpy(shellSurface.get(), &XdgShellToplevel::sizeChanged);
     QVERIFY(surfaceSizeChangedSpy.isValid());
 
-    QCOMPARE(Test::app()->base.space->move_resize_window, nullptr);
+    QVERIFY(!Test::app()->base.space->move_resize_window);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
     win::active_window_resize(*Test::app()->base.space);
-    QCOMPARE(Test::app()->base.space->move_resize_window, client);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->move_resize_window), client);
     QCOMPARE(clientStartMoveResizedSpy.count(), 1);
     QVERIFY(!win::is_move(client));
     QVERIFY(win::is_resize(client));
@@ -758,7 +762,7 @@ void TestXdgShellClientRules::testSizeApply()
 
     win::key_press_event(client, Qt::Key_Enter);
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
-    QCOMPARE(Test::app()->base.space->move_resize_window, nullptr);
+    QVERIFY(!Test::app()->base.space->move_resize_window);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
 
@@ -862,11 +866,11 @@ void TestXdgShellClientRules::testSizeRemember()
     QSignalSpy surfaceSizeChangedSpy(shellSurface.get(), &XdgShellToplevel::sizeChanged);
     QVERIFY(surfaceSizeChangedSpy.isValid());
 
-    QCOMPARE(Test::app()->base.space->move_resize_window, nullptr);
+    QVERIFY(!Test::app()->base.space->move_resize_window);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
     win::active_window_resize(*Test::app()->base.space);
-    QCOMPARE(Test::app()->base.space->move_resize_window, client);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->move_resize_window), client);
     QCOMPARE(clientStartMoveResizedSpy.count(), 1);
     QVERIFY(!win::is_move(client));
     QVERIFY(win::is_resize(client));
@@ -897,7 +901,7 @@ void TestXdgShellClientRules::testSizeRemember()
 
     win::key_press_event(client, Qt::Key_Enter);
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
-    QCOMPARE(Test::app()->base.space->move_resize_window, nullptr);
+    QVERIFY(!Test::app()->base.space->move_resize_window);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
 
@@ -982,11 +986,11 @@ void TestXdgShellClientRules::testSizeForce()
     QSignalSpy clientStartMoveResizedSpy(client->qobject.get(),
                                          &win::window_qobject::clientStartUserMovedResized);
     QVERIFY(clientStartMoveResizedSpy.isValid());
-    QCOMPARE(Test::app()->base.space->move_resize_window, nullptr);
+    QVERIFY(!Test::app()->base.space->move_resize_window);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
     win::active_window_resize(*Test::app()->base.space);
-    QCOMPARE(Test::app()->base.space->move_resize_window, nullptr);
+    QVERIFY(!Test::app()->base.space->move_resize_window);
     QCOMPARE(clientStartMoveResizedSpy.count(), 0);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
@@ -1134,11 +1138,11 @@ void TestXdgShellClientRules::testSizeForceTemporarily()
     QSignalSpy clientStartMoveResizedSpy(client->qobject.get(),
                                          &win::window_qobject::clientStartUserMovedResized);
     QVERIFY(clientStartMoveResizedSpy.isValid());
-    QCOMPARE(Test::app()->base.space->move_resize_window, nullptr);
+    QVERIFY(!Test::app()->base.space->move_resize_window);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
     win::active_window_resize(*Test::app()->base.space);
-    QCOMPARE(Test::app()->base.space->move_resize_window, nullptr);
+    QVERIFY(!Test::app()->base.space->move_resize_window);
     QCOMPARE(clientStartMoveResizedSpy.count(), 0);
     QVERIFY(!win::is_move(client));
     QVERIFY(!win::is_resize(client));
@@ -1791,7 +1795,7 @@ void TestXdgShellClientRules::testDesktopDontAffect()
     QVERIFY(client);
 
     // The client should appear on the current virtual desktop.
-    QCOMPARE(client->desktop(), 1);
+    QCOMPARE(win::get_desktop(*client), 1);
     QCOMPARE(vd_manager->current(), 1);
 
     // Destroy the client.
@@ -1830,12 +1834,12 @@ void TestXdgShellClientRules::testDesktopApply()
     QVERIFY(client);
 
     // The client should appear on the second virtual desktop.
-    QCOMPARE(client->desktop(), 2);
+    QCOMPARE(win::get_desktop(*client), 2);
     QCOMPARE(vd_manager->current(), 2);
 
     // We still should be able to move the client between desktops.
     win::send_window_to_desktop(*Test::app()->base.space, client, 1, true);
-    QCOMPARE(client->desktop(), 1);
+    QCOMPARE(win::get_desktop(*client), 1);
     QCOMPARE(vd_manager->current(), 2);
 
     // If we re-open the client, it should appear on the second virtual desktop again.
@@ -1846,7 +1850,7 @@ void TestXdgShellClientRules::testDesktopApply()
     QCOMPARE(vd_manager->current(), 1);
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
     QVERIFY(client);
-    QCOMPARE(client->desktop(), 2);
+    QCOMPARE(win::get_desktop(*client), 2);
     QCOMPARE(vd_manager->current(), 2);
 
     // Destroy the client.
@@ -1883,12 +1887,12 @@ void TestXdgShellClientRules::testDesktopRemember()
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
     QVERIFY(client);
-    QCOMPARE(client->desktop(), 2);
+    QCOMPARE(win::get_desktop(*client), 2);
     QCOMPARE(vd_manager->current(), 2);
 
     // Move the client to the first virtual desktop.
     win::send_window_to_desktop(*Test::app()->base.space, client, 1, true);
-    QCOMPARE(client->desktop(), 1);
+    QCOMPARE(win::get_desktop(*client), 1);
     QCOMPARE(vd_manager->current(), 2);
 
     // If we create the client again, it should appear on the first virtual desktop.
@@ -1897,7 +1901,7 @@ void TestXdgShellClientRules::testDesktopRemember()
     QVERIFY(Test::wait_for_destroyed(client));
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
     QVERIFY(client);
-    QCOMPARE(client->desktop(), 1);
+    QCOMPARE(win::get_desktop(*client), 1);
     QCOMPARE(vd_manager->current(), 1);
 
     // Destroy the client.
@@ -1936,12 +1940,12 @@ void TestXdgShellClientRules::testDesktopForce()
     QVERIFY(client);
 
     // The client should appear on the second virtual desktop.
-    QCOMPARE(client->desktop(), 2);
+    QCOMPARE(win::get_desktop(*client), 2);
     QCOMPARE(vd_manager->current(), 2);
 
     // Any attempt to move the client to another virtual desktop should fail.
     win::send_window_to_desktop(*Test::app()->base.space, client, 1, true);
-    QCOMPARE(client->desktop(), 2);
+    QCOMPARE(win::get_desktop(*client), 2);
     QCOMPARE(vd_manager->current(), 2);
 
     // If we re-open the client, it should appear on the second virtual desktop again.
@@ -1952,7 +1956,7 @@ void TestXdgShellClientRules::testDesktopForce()
     QCOMPARE(vd_manager->current(), 1);
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
     QVERIFY(client);
-    QCOMPARE(client->desktop(), 2);
+    QCOMPARE(win::get_desktop(*client), 2);
     QCOMPARE(vd_manager->current(), 2);
 
     // Destroy the client.
@@ -1976,7 +1980,7 @@ void TestXdgShellClientRules::testDesktopApplyNow()
     std::unique_ptr<XdgShellToplevel> shellSurface;
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
     QVERIFY(client);
-    QCOMPARE(client->desktop(), 1);
+    QCOMPARE(win::get_desktop(*client), 1);
     QCOMPARE(vd_manager->current(), 1);
 
     // Initialize RuleBook with the test rule.
@@ -1993,17 +1997,17 @@ void TestXdgShellClientRules::testDesktopApplyNow()
     win::space_reconfigure(*Test::app()->base.space);
 
     // The client should have been moved to the second virtual desktop.
-    QCOMPARE(client->desktop(), 2);
+    QCOMPARE(win::get_desktop(*client), 2);
     QCOMPARE(vd_manager->current(), 1);
 
     // One should still be able to move the client between desktops.
     win::send_window_to_desktop(*Test::app()->base.space, client, 1, true);
-    QCOMPARE(client->desktop(), 1);
+    QCOMPARE(win::get_desktop(*client), 1);
     QCOMPARE(vd_manager->current(), 1);
 
     // The rule should not be applied again.
     win::rules::evaluate_rules(client);
-    QCOMPARE(client->desktop(), 1);
+    QCOMPARE(win::get_desktop(*client), 1);
     QCOMPARE(vd_manager->current(), 1);
 
     // Destroy the client.
@@ -2042,12 +2046,12 @@ void TestXdgShellClientRules::testDesktopForceTemporarily()
     QVERIFY(client);
 
     // The client should appear on the second virtual desktop.
-    QCOMPARE(client->desktop(), 2);
+    QCOMPARE(win::get_desktop(*client), 2);
     QCOMPARE(vd_manager->current(), 2);
 
     // Any attempt to move the client to another virtual desktop should fail.
     win::send_window_to_desktop(*Test::app()->base.space, client, 1, true);
-    QCOMPARE(client->desktop(), 2);
+    QCOMPARE(win::get_desktop(*client), 2);
     QCOMPARE(vd_manager->current(), 2);
 
     // The rule should be discarded when the client is withdrawn.
@@ -2058,15 +2062,15 @@ void TestXdgShellClientRules::testDesktopForceTemporarily()
     QCOMPARE(vd_manager->current(), 1);
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
     QVERIFY(client);
-    QCOMPARE(client->desktop(), 1);
+    QCOMPARE(win::get_desktop(*client), 1);
     QCOMPARE(vd_manager->current(), 1);
 
     // One should be able to move the client between desktops.
     win::send_window_to_desktop(*Test::app()->base.space, client, 2, true);
-    QCOMPARE(client->desktop(), 2);
+    QCOMPARE(win::get_desktop(*client), 2);
     QCOMPARE(vd_manager->current(), 1);
     win::send_window_to_desktop(*Test::app()->base.space, client, 1, true);
-    QCOMPARE(client->desktop(), 1);
+    QCOMPARE(win::get_desktop(*client), 1);
     QCOMPARE(vd_manager->current(), 1);
 
     // Destroy the client.
@@ -4166,7 +4170,7 @@ void TestXdgShellClientRules::testInactiveOpacityDontAffect()
     QVERIFY(client->control->active);
 
     // Make the client inactive.
-    win::set_active_window(*Test::app()->base.space, nullptr);
+    win::unset_active_window(*Test::app()->base.space);
     QVERIFY(!client->control->active);
 
     // The opacity of the client should not be affected by the rule.
@@ -4203,7 +4207,7 @@ void TestXdgShellClientRules::testInactiveOpacityForce()
     QCOMPARE(client->opacity(), 1.0);
 
     // Make the client inactive.
-    win::set_active_window(*Test::app()->base.space, nullptr);
+    win::unset_active_window(*Test::app()->base.space);
     QVERIFY(!client->control->active);
 
     // The opacity should be forced by the rule.
@@ -4240,7 +4244,7 @@ void TestXdgShellClientRules::testInactiveOpacityForceTemporarily()
     QCOMPARE(client->opacity(), 1.0);
 
     // Make the client inactive.
-    win::set_active_window(*Test::app()->base.space, nullptr);
+    win::unset_active_window(*Test::app()->base.space);
     QVERIFY(!client->control->active);
 
     // The opacity should be forced by the rule.
@@ -4253,7 +4257,7 @@ void TestXdgShellClientRules::testInactiveOpacityForceTemporarily()
     QVERIFY(client);
     QVERIFY(client->control->active);
     QCOMPARE(client->opacity(), 1.0);
-    win::set_active_window(*Test::app()->base.space, nullptr);
+    win::unset_active_window(*Test::app()->base.space);
     QVERIFY(!client->control->active);
     QCOMPARE(client->opacity(), 1.0);
 

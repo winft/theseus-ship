@@ -69,8 +69,8 @@ std::pair<bool, bool> do_perform_mouse_action(Redirect& redirect,
                                               base::options_qobject::MouseCommand command,
                                               Window* window)
 {
-    return std::make_pair(true,
-                          !window->performMouseCommand(command, redirect.pointer->pos().toPoint()));
+    return std::make_pair(
+        true, !win::perform_mouse_command(*window, command, redirect.pointer->pos().toPoint()));
 }
 
 template<typename Redirect, typename Window>

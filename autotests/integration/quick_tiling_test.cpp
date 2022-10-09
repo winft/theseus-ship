@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/cursor.h"
 #include "scripting/platform.h"
 #include "scripting/script.h"
-#include "toplevel.h"
 #include "win/deco/bridge.h"
 #include "win/deco/settings.h"
 #include "win/move.h"
@@ -92,7 +91,7 @@ private:
 
 Test::space::x11_window* get_x11_window_from_id(uint32_t id)
 {
-    return dynamic_cast<Test::space::x11_window*>(Test::app()->base.space->windows_map.at(id));
+    return Test::get_x11_window(Test::app()->base.space->windows_map.at(id));
 }
 
 void QuickTilingTest::initTestCase()
@@ -216,7 +215,7 @@ void QuickTilingTest::testQuickTiling()
     // Map the client.
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->base.space->stacking.active, c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
     QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
     QCOMPARE(c->control->quicktiling, win::quicktiles::none);
 
@@ -295,7 +294,7 @@ void QuickTilingTest::testQuickMaximizing()
     // Map the client.
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->base.space->stacking.active, c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
     QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
     QCOMPARE(c->control->quicktiling, win::quicktiles::none);
     QCOMPARE(c->maximizeMode(), win::maximize_mode::restore);
@@ -407,7 +406,7 @@ void QuickTilingTest::testQuickTilingKeyboardMove()
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(c);
-    QCOMPARE(Test::app()->base.space->stacking.active, c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
     QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
     QCOMPARE(c->control->quicktiling, win::quicktiles::none);
     QCOMPARE(c->maximizeMode(), win::maximize_mode::restore);
@@ -416,7 +415,7 @@ void QuickTilingTest::testQuickTilingKeyboardMove()
     QVERIFY(quickTileChangedSpy.isValid());
 
     win::perform_window_operation(c, base::options_qobject::UnrestrictedMoveOp);
-    QCOMPARE(c, Test::app()->base.space->move_resize_window);
+    QCOMPARE(c, Test::get_wayland_window(Test::app()->base.space->move_resize_window));
     QCOMPARE(Test::cursor()->pos(), QPoint(49, 24));
 
     QFETCH(QPoint, targetPos);
@@ -486,7 +485,7 @@ void QuickTilingTest::testQuickTilingPointerMove()
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(c);
-    QCOMPARE(Test::app()->base.space->stacking.active, c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
     QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
     QCOMPARE(c->control->quicktiling, win::quicktiles::none);
     QCOMPARE(c->maximizeMode(), win::maximize_mode::restore);
@@ -499,7 +498,7 @@ void QuickTilingTest::testQuickTilingPointerMove()
     QVERIFY(quickTileChangedSpy.isValid());
 
     win::perform_window_operation(c, base::options_qobject::UnrestrictedMoveOp);
-    QCOMPARE(c, Test::app()->base.space->move_resize_window);
+    QCOMPARE(c, Test::get_wayland_window(Test::app()->base.space->move_resize_window));
     QCOMPARE(Test::cursor()->pos(), QPoint(49, 24));
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
@@ -570,7 +569,7 @@ void QuickTilingTest::testQuickTilingTouchMove()
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     auto const decoration = win::decoration(c);
-    QCOMPARE(Test::app()->base.space->stacking.active, c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
     QCOMPARE(c->geo.frame,
              QRect(-decoration->borderLeft(),
                    0,
@@ -592,7 +591,7 @@ void QuickTilingTest::testQuickTilingTouchMove()
         QPointF(c->geo.frame.center().x(), c->geo.frame.y() + decoration->borderTop() / 2),
         timestamp++);
     QVERIFY(configureRequestedSpy.wait());
-    QCOMPARE(c, Test::app()->base.space->move_resize_window);
+    QCOMPARE(c, Test::get_wayland_window(Test::app()->base.space->move_resize_window));
     QCOMPARE(configureRequestedSpy.count(), 3);
 
     QFETCH(QPoint, targetPos);
@@ -681,7 +680,7 @@ void QuickTilingTest::testX11QuickTiling()
 
     auto client = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(client);
-    QCOMPARE(client->xcb_window, w);
+    QCOMPARE(client->xcb_windows.client, w);
 
     auto const origGeo = client->geo.frame;
 
@@ -778,7 +777,7 @@ void QuickTilingTest::testX11QuickTilingAfterVertMaximize()
 
     auto client = get_x11_window_from_id(windowCreatedSpy.first().first().value<quint32>());
     QVERIFY(client);
-    QCOMPARE(client->xcb_window, w);
+    QCOMPARE(client->xcb_windows.client, w);
 
     const QRect origGeo = client->geo.frame;
     QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
@@ -869,7 +868,7 @@ void QuickTilingTest::testShortcut()
     // Map the client.
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->base.space->stacking.active, c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
     QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
     QCOMPARE(c->control->quicktiling, win::quicktiles::none);
 
@@ -962,7 +961,7 @@ void QuickTilingTest::testScript()
     // Map the client.
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::app()->base.space->stacking.active, c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
     QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
     QCOMPARE(c->control->quicktiling, win::quicktiles::none);
 

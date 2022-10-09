@@ -89,14 +89,15 @@ void update_space_areas(Window* win,
             resmove.insert(std::end(resmove), std::begin(strut_region), std::end(strut_region));
         }
     } else {
-        areas.work[win->desktop()] = areas.work[win->desktop()].intersected(rect);
+        auto desktop = get_desktop(*win);
+        areas.work[desktop] = areas.work[desktop].intersected(rect);
 
         for (size_t screen = 0; screen < screens_count; screen++) {
-            areas.screen[win->desktop()][screen] = areas.screen[win->desktop()][screen].intersected(
+            areas.screen[desktop][screen] = areas.screen[desktop][screen].intersected(
                 screens_geos[screen] - margins(screens_geos[screen]));
         }
 
-        auto& resmove = areas.restrictedmove[win->desktop()];
+        auto& resmove = areas.restrictedmove[desktop];
         resmove.insert(std::end(resmove), std::begin(strut_region), std::end(strut_region));
     }
 }

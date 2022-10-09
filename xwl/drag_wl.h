@@ -37,22 +37,24 @@ namespace KWin::xwl
 
 using dnd_actions = Wrapland::Server::dnd_actions;
 
-template<typename Window>
-class wl_drag : public drag<Window>
+template<typename Space>
+class wl_drag : public drag<Space>
 {
 public:
-    wl_drag(wl_source<Wrapland::Server::data_source, Window> const& source,
+    wl_drag(wl_source<Wrapland::Server::data_source, Space> const& source,
             xcb_window_t proxy_window)
         : source{source}
         , proxy_window{proxy_window}
     {
     }
 
-    drag_event_reply move_filter(Window* target, QPoint const& pos) override
+    drag_event_reply move_filter(std::optional<typename Space::window_t> target,
+                                 QPoint const& pos) override
     {
+        using var_win = typename Space::window_t;
         auto seat = waylandServer()->seat();
 
-        if (visit && visit->target == target) {
+        if (visit && var_win(visit->target) == target) {
             // no target change
             return drag_event_reply::take;
         }
@@ -64,19 +66,21 @@ public:
             visit.reset();
         }
 
-        if (!dynamic_cast<typename Window::space_t::x11_window*>(target)) {
-            // no target or wayland native target,
-            // handled by input code directly
+        if (!target) {
             return drag_event_reply::wayland;
         }
 
-        // We have a new target.
+        return std::visit(overload{[&](typename Space::x11_window* win) {
+                                       // We have a new target.
+                                       win::activate_window(*source.core.space, *win);
+                                       seat->drags().set_target(
+                                           win->surface, pos, win::get_input_transform(*win));
 
-        win::activate_window(*source.core.space, target);
-        seat->drags().set_target(target->surface, pos, win::get_input_transform(*target));
-
-        visit.reset(new x11_visit(target, source, proxy_window));
-        return drag_event_reply::take;
+                                       visit.reset(new x11_visit(win, source, proxy_window));
+                                       return drag_event_reply::take;
+                                   },
+                                   [](auto&&) { return drag_event_reply::wayland; }},
+                          *target);
     }
 
     bool handle_client_message(xcb_client_message_event_t* event) override
@@ -108,9 +112,9 @@ public:
     }
 
 private:
-    wl_source<Wrapland::Server::data_source, Window> const& source;
+    wl_source<Wrapland::Server::data_source, Space> const& source;
     xcb_window_t proxy_window;
-    std::unique_ptr<x11_visit<Window>> visit;
+    std::unique_ptr<x11_visit<Space>> visit;
 };
 
 }

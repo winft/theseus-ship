@@ -41,10 +41,12 @@ QMatrix4x4 get_input_transform(Win& win)
 template<typename Win>
 bool is_most_recently_raised(Win* win)
 {
+    using var_win = typename Win::space_t::window_t;
+
     // The last toplevel in the unconstrained stacking order is the most recently raised one.
     auto last = top_client_on_desktop(
-        &win->space, win->space.virtual_desktop_manager->current(), nullptr, true, false);
-    return last == win;
+        win->space, win->space.virtual_desktop_manager->current(), nullptr, true, false);
+    return last == var_win(win);
 }
 
 template<typename Win>
@@ -98,34 +100,36 @@ bool perform_mouse_command(Win& win,
                            base::options_qobject::MouseCommand cmd,
                            QPoint const& globalPos)
 {
+    using var_win = typename Win::space_t::window_t;
     bool replay = false;
     auto& space = win.space;
     auto& base = space.base;
 
     switch (cmd) {
     case base::options_qobject::MouseRaise:
-        raise_window(&space, &win);
+        raise_window(space, &win);
         break;
     case base::options_qobject::MouseLower: {
-        lower_window(&space, &win);
+        lower_window(space, &win);
         // Used to be activateNextClient(win), then topClientOnDesktop
-        // since win is a mouseOp it's however safe to use the client under the mouse  instead.
+        // since win is a mouseOp it's however safe to use the client under the mouse
+        // instead.
         if (win.control->active && kwinApp()->options->qobject->focusPolicyIsReasonable()) {
             auto next = window_under_mouse(space, win.topo.central_output);
-            if (next && next != &win) {
-                request_focus(space, next);
+            if (next && *next != var_win(&win)) {
+                std::visit(overload{[&](auto&& next) { request_focus(space, *next); }}, *next);
             }
         }
         break;
     }
     case base::options_qobject::MouseOperationsMenu:
         if (win.control->active && kwinApp()->options->qobject->isClickRaise()) {
-            auto_raise(&win);
+            auto_raise(win);
         }
         space.user_actions_menu->show(QRect(globalPos, globalPos), &win);
         break;
     case base::options_qobject::MouseToggleRaiseAndLower:
-        raise_or_lower_client(&space, &win);
+        raise_or_lower_client(space, &win);
         break;
     case base::options_qobject::MouseActivateAndRaise: {
         // For clickraise mode.
@@ -135,43 +139,46 @@ bool perform_mouse_command(Win& win,
         if (mustReplay) {
             auto it = space.stacking.order.stack.cend();
             auto begin = space.stacking.order.stack.cbegin();
-            while (mustReplay && --it != begin && *it != &win) {
-                auto window = *it;
-                if (!window->control || (window->control->keep_above && !win.control->keep_above)
-                    || (win.control->keep_below && !window->control->keep_below)) {
-                    // Can never raise above "it".
-                    continue;
-                }
-                mustReplay
-                    = !(on_current_desktop(window) && window->geo.frame.intersects(win.geo.frame));
+            while (mustReplay && --it != begin && *it != var_win(&win)) {
+                std::visit(overload{[&](auto&& cmp_win) {
+                               if (!cmp_win->control
+                                   || (cmp_win->control->keep_above && !win.control->keep_above)
+                                   || (win.control->keep_below && !cmp_win->control->keep_below)) {
+                                   // Can never raise above "it".
+                                   return;
+                               }
+                               mustReplay = !(on_current_desktop(cmp_win)
+                                              && cmp_win->geo.frame.intersects(win.geo.frame));
+                           }},
+                           *it);
             }
         }
 
-        request_focus(space, &win, true);
+        request_focus(space, win, true);
         base::set_current_output_by_position(base, globalPos);
         replay = replay || mustReplay;
         break;
     }
     case base::options_qobject::MouseActivateAndLower:
-        request_focus(space, &win);
-        lower_window(&space, &win);
+        request_focus(space, win);
+        lower_window(space, &win);
         base::set_current_output_by_position(base, globalPos);
         replay = replay || !win.control->rules.checkAcceptFocus(win.acceptsFocus());
         break;
     case base::options_qobject::MouseActivate:
         // For clickraise mode.
         replay = win.control->active;
-        request_focus(space, &win);
+        request_focus(space, win);
         base::set_current_output_by_position(base, globalPos);
         replay = replay || !win.control->rules.checkAcceptFocus(win.acceptsFocus());
         break;
     case base::options_qobject::MouseActivateRaiseAndPassClick:
-        request_focus(space, &win, true);
+        request_focus(space, win, true);
         base::set_current_output_by_position(base, globalPos);
         replay = true;
         break;
     case base::options_qobject::MouseActivateAndPassClick:
-        request_focus(space, &win);
+        request_focus(space, win);
         base::set_current_output_by_position(base, globalPos);
         replay = true;
         break;
@@ -224,8 +231,8 @@ bool perform_mouse_command(Win& win,
         break;
     case base::options_qobject::MouseActivateRaiseAndMove:
     case base::options_qobject::MouseActivateRaiseAndUnrestrictedMove:
-        raise_window(&space, &win);
-        request_focus(space, &win);
+        raise_window(space, &win);
+        request_focus(space, win);
         base::set_current_output_by_position(base, globalPos);
         // Fallthrough
     case base::options_qobject::MouseMove:
@@ -309,22 +316,24 @@ bool perform_mouse_command(Win& win,
 template<typename Win>
 void enter_event(Win* win, const QPoint& globalPos)
 {
-    auto space = &win->space;
+    using var_win = typename Win::space_t::window_t;
+    auto& space = win->space;
 
     if (kwinApp()->options->qobject->focusPolicy() == base::options_qobject::ClickToFocus
-        || space->user_actions_menu->isShown()) {
+        || space.user_actions_menu->isShown()) {
         return;
     }
 
     if (kwinApp()->options->qobject->isAutoRaise() && !win::is_desktop(win) && !win::is_dock(win)
-        && is_focus_change_allowed(*space) && globalPos != space->focusMousePos
-        && top_client_on_desktop(space,
-                                 win->space.virtual_desktop_manager->current(),
-                                 kwinApp()->options->qobject->isSeparateScreenFocus()
-                                     ? win->topo.central_output
-                                     : nullptr)
-            != win) {
-        win->control->start_auto_raise();
+        && is_focus_change_allowed(space) && globalPos != space.focusMousePos) {
+        auto top = top_client_on_desktop(space,
+                                         space.virtual_desktop_manager->current(),
+                                         kwinApp()->options->qobject->isSeparateScreenFocus()
+                                             ? win->topo.central_output
+                                             : nullptr);
+        if (top != var_win(win)) {
+            win->control->start_auto_raise();
+        }
     }
 
     if (win::is_desktop(win) || win::is_dock(win)) {
@@ -334,8 +343,9 @@ void enter_event(Win* win, const QPoint& globalPos)
     // For FocusFollowsMouse, change focus only if the mouse has actually been moved, not if the
     // focus change came because of window changes (e.g. closing a window) - #92290
     if (kwinApp()->options->qobject->focusPolicy() != base::options_qobject::FocusFollowsMouse
-        || globalPos != space->focusMousePos) {
-        request_delay_focus(*space, win);
+        || globalPos != space.focusMousePos) {
+        space.stacking.delayfocus_window = win;
+        reset_delay_focus_timer(space);
     }
 }
 
@@ -469,10 +479,13 @@ void set_global_shortcuts_disabled(Space& space, bool disable)
     space.global_shortcuts_disabled = disable;
 
     // Update also Meta+LMB actions etc.
-    for (auto window : space.windows) {
-        if (auto& ctrl = window->control) {
-            ctrl->update_mouse_grab();
-        }
+    for (auto&& window : space.windows) {
+        std::visit(overload{[](auto&& window) {
+                       if (auto& ctrl = window->control) {
+                           ctrl->update_mouse_grab();
+                       }
+                   }},
+                   window);
     }
 }
 

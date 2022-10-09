@@ -147,10 +147,9 @@ void PlasmaWindowTest::testCreateDestroyX11PlasmaWindow()
     QVERIFY(windowCreatedSpy.wait());
 
     auto client_id = windowCreatedSpy.first().first().value<quint32>();
-    auto client = dynamic_cast<Test::space::x11_window*>(
-        Test::app()->base.space->windows_map.at(client_id));
+    auto client = Test::get_x11_window(Test::app()->base.space->windows_map.at(client_id));
     QVERIFY(client);
-    QCOMPARE(client->xcb_window, w);
+    QCOMPARE(client->xcb_windows.client, w);
     QVERIFY(win::decoration(client));
     QVERIFY(client->control->active);
     // verify that it gets the keyboard focus
@@ -293,10 +292,11 @@ void PlasmaWindowTest::testLockScreenNoPlasmaWindow()
     // The lock screen creates one client per screen.
     auto outputs_count = Test::app()->base.get_outputs().size();
     QVERIFY(clientAddedSpy.count() == static_cast<int>(outputs_count) || clientAddedSpy.wait());
-    QTRY_COMPARE(clientAddedSpy.count(), outputs_count);
+    QVERIFY(clientAddedSpy.count() == static_cast<int>(outputs_count) || clientAddedSpy.wait());
+    QCOMPARE(clientAddedSpy.count(), outputs_count);
 
-    QVERIFY(Test::app()
-                ->base.space->windows_map.at(clientAddedSpy.first().first().value<quint32>())
+    QVERIFY(Test::get_wayland_window(Test::app()->base.space->windows_map.at(
+                                         clientAddedSpy.first().first().value<quint32>()))
                 ->isLockScreen());
 
     // should not be sent to the client
@@ -360,6 +360,7 @@ struct wayland_test_window {
 
         server.window = Test::render_and_wait_for_shown(client.surface, size, color);
         QVERIFY(server.window);
+        QVERIFY(server.window->control->active);
 
         QSignalSpy plasma_window_spy(test->m_windowManagement,
                                      &Wrapland::Client::PlasmaWindowManagement::windowCreated);
@@ -423,10 +424,9 @@ struct x11_test_window {
         QVERIFY(window_spy.wait());
 
         auto window_id = window_spy.first().first().value<quint32>();
-        server.window = dynamic_cast<Test::space::x11_window*>(
-            Test::app()->base.space->windows_map.at(window_id));
+        server.window = Test::get_x11_window(Test::app()->base.space->windows_map.at(window_id));
         QVERIFY(server.window);
-        QCOMPARE(server.window->xcb_window, client.window);
+        QCOMPARE(server.window->xcb_windows.client, client.window);
         QVERIFY(win::decoration(server.window));
         QVERIFY(server.window->control->active);
 
@@ -487,7 +487,7 @@ struct x11_test_window {
     } client;
 
     struct {
-        win::x11::window<Test::space>* window{nullptr};
+        win::wayland::xwl_window<Test::space>* window{nullptr};
     } server;
 };
 
@@ -543,12 +543,18 @@ void PlasmaWindowTest::test_stacking_order()
         std::copy_if(unfiltered_stack.begin(),
                      unfiltered_stack.end(),
                      std::back_inserter(stack),
-                     [](auto win) { return !win->remnant; });
+                     [](auto win) {
+                         return std::visit(overload{[&](auto&& win) { return !win->remnant; }},
+                                           win);
+                     });
         QCOMPARE(plasma_stack.size(), stack.size());
 
         for (size_t index = 0; index < windows.size(); ++index) {
             QCOMPARE(plasma_stack.at(index),
-                     stack.at(index)->meta.internal_id.toString().toStdString());
+                     std::visit(overload{[&](auto&& win) {
+                                    return win->meta.internal_id.toString().toStdString();
+                                }},
+                                stack.at(index)));
         }
     };
 
@@ -577,7 +583,7 @@ void PlasmaWindowTest::test_stacking_order()
     compare_stacks();
 
     // Now raise the Xwayland window.
-    win::raise_window(Test::app()->base.space.get(),
+    win::raise_window(*Test::app()->base.space,
                       std::get<x11_test_window>(windows.at(1)).server.window);
 
     QVERIFY(stacking_spy.wait());

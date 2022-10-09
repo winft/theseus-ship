@@ -19,7 +19,8 @@ namespace KWin::win::x11
 template<typename Win>
 QString read_name_property(Win& win, xcb_atom_t atom)
 {
-    auto const cookie = xcb_icccm_get_text_property_unchecked(connection(), win.xcb_window, atom);
+    auto const cookie
+        = xcb_icccm_get_text_property_unchecked(connection(), win.xcb_windows.client, atom);
     xcb_icccm_get_text_property_reply_t reply;
 
     if (xcb_icccm_get_wm_name_reply(connection(), cookie, &reply, nullptr)) {
@@ -39,8 +40,8 @@ QString read_name_property(Win& win, xcb_atom_t atom)
 template<typename Win>
 QString read_name(Win* win)
 {
-    if (win->info->name() && win->info->name()[0] != '\0') {
-        return QString::fromUtf8(win->info->name()).simplified();
+    if (win->net_info->name() && win->net_info->name()[0] != '\0') {
+        return QString::fromUtf8(win->net_info->name()).simplified();
     }
 
     return read_name_property(*win, XCB_ATOM_WM_NAME);
@@ -103,29 +104,27 @@ void set_caption(Win* win, QString const& _s, bool force = false)
     auto shortcut_suffix = win::shortcut_caption_suffix(win);
     win->meta.caption.suffix = machine_suffix + shortcut_suffix;
 
-    using window_t = typename std::remove_reference_t<decltype(win->space)>::window_t;
-
     if ((!win::is_special_window(win) || win::is_toolbar(win))
-        && win::find_client_with_same_caption(static_cast<window_t*>(win))) {
+        && find_client_with_same_caption(win)) {
         int i = 2;
 
         do {
             win->meta.caption.suffix = machine_suffix + QLatin1String(" <") + QString::number(i)
                 + QLatin1Char('>') + LRM;
             i++;
-        } while (win::find_client_with_same_caption(static_cast<window_t*>(win)));
+        } while (find_client_with_same_caption(win));
 
-        win->info->setVisibleName(win::caption(win).toUtf8().constData());
+        win->net_info->setVisibleName(win::caption(win).toUtf8().constData());
         reset_name = false;
     }
 
     if ((was_suffix && win->meta.caption.suffix.isEmpty()) || reset_name) {
         // If it was new window, it may have old value still set, if the window is reused
-        win->info->setVisibleName("");
-        win->info->setVisibleIconName("");
+        win->net_info->setVisibleName("");
+        win->net_info->setVisibleIconName("");
     } else if (!win->meta.caption.suffix.isEmpty() && !win->iconic_caption.isEmpty()) {
         // Keep the same suffix in iconic name if it's set
-        win->info->setVisibleIconName(
+        win->net_info->setVisibleIconName(
             QString(win->iconic_caption + win->meta.caption.suffix).toUtf8().constData());
     }
 
@@ -146,8 +145,8 @@ template<typename Win>
 void fetch_iconic_name(Win* win)
 {
     QString s;
-    if (win->info->iconName() && win->info->iconName()[0] != '\0') {
-        s = QString::fromUtf8(win->info->iconName());
+    if (win->net_info->iconName() && win->net_info->iconName()[0] != '\0') {
+        s = QString::fromUtf8(win->net_info->iconName());
     } else {
         s = read_name_property(*win, XCB_ATOM_WM_ICON_NAME);
     }
@@ -165,9 +164,10 @@ void fetch_iconic_name(Win* win)
 
     if (!win->iconic_caption.isEmpty()) {
         // Keep the same suffix in iconic name if it's set.
-        win->info->setVisibleIconName(QString(s + win->meta.caption.suffix).toUtf8().constData());
+        win->net_info->setVisibleIconName(
+            QString(s + win->meta.caption.suffix).toUtf8().constData());
     } else if (was_set) {
-        win->info->setVisibleIconName("");
+        win->net_info->setVisibleIconName("");
     }
 }
 
@@ -184,12 +184,12 @@ void get_icons(Win* win)
 
     QIcon icon;
     auto readIcon = [win, &icon](int size, bool scale = true) {
-        auto const pix = KWindowSystem::icon(win->xcb_window,
+        auto const pix = KWindowSystem::icon(win->xcb_windows.client,
                                              size,
                                              size,
                                              scale,
                                              KWindowSystem::NETWM | KWindowSystem::WMHints,
-                                             win->info);
+                                             win->net_info);
         if (!pix.isNull()) {
             icon.addPixmap(pix);
         }
@@ -216,30 +216,30 @@ void get_icons(Win* win)
     }
     if (icon.isNull()) {
         // And if nothing else, load icon from classhint or xapp icon
-        icon.addPixmap(KWindowSystem::icon(win->xcb_window,
+        icon.addPixmap(KWindowSystem::icon(win->xcb_windows.client,
                                            32,
                                            32,
                                            true,
                                            KWindowSystem::ClassHint | KWindowSystem::XApp,
-                                           win->info));
-        icon.addPixmap(KWindowSystem::icon(win->xcb_window,
+                                           win->net_info));
+        icon.addPixmap(KWindowSystem::icon(win->xcb_windows.client,
                                            16,
                                            16,
                                            true,
                                            KWindowSystem::ClassHint | KWindowSystem::XApp,
-                                           win->info));
-        icon.addPixmap(KWindowSystem::icon(win->xcb_window,
+                                           win->net_info));
+        icon.addPixmap(KWindowSystem::icon(win->xcb_windows.client,
                                            64,
                                            64,
                                            false,
                                            KWindowSystem::ClassHint | KWindowSystem::XApp,
-                                           win->info));
-        icon.addPixmap(KWindowSystem::icon(win->xcb_window,
+                                           win->net_info));
+        icon.addPixmap(KWindowSystem::icon(win->xcb_windows.client,
                                            128,
                                            128,
                                            false,
                                            KWindowSystem::ClassHint | KWindowSystem::XApp,
-                                           win->info));
+                                           win->net_info));
     }
     win->control->icon = icon;
     Q_EMIT win->qobject->iconChanged();
@@ -261,8 +261,8 @@ template<typename Win>
 bool same_app_window_role_match(Win const* c1, Win const* c2, bool active_hack)
 {
     if (c1->transient->lead()) {
-        while (auto t = dynamic_cast<Win const*>(c1->transient->lead())) {
-            c1 = t;
+        while (auto lead = c1->transient->lead()) {
+            c1 = lead;
         }
         if (c1->groupTransient()) {
             return c1->group == c2->group;
@@ -270,8 +270,8 @@ bool same_app_window_role_match(Win const* c1, Win const* c2, bool active_hack)
     }
 
     if (c2->transient->lead()) {
-        while (auto t = dynamic_cast<Win const*>(c2->transient->lead())) {
-            c2 = t;
+        while (auto lead = c2->transient->lead()) {
+            c2 = lead;
         }
         if (c2->groupTransient()) {
             return c1->group == c2->group;
@@ -295,6 +295,21 @@ bool same_app_window_role_match(Win const* c1, Win const* c2, bool active_hack)
 }
 
 template<typename Win>
+xcb_window_t get_wm_client_leader(Win& win)
+{
+    if (win.m_wmClientLeader != XCB_WINDOW_NONE) {
+        return win.m_wmClientLeader;
+    }
+    return win.xcb_windows.client;
+}
+
+template<typename Win>
+void fetch_wm_client_machine(Win& win)
+{
+    win.client_machine->resolve(win.xcb_windows.client, get_wm_client_leader(win));
+}
+
+template<typename Win>
 bool belong_to_same_application(Win const* c1, Win const* c2, win::same_client_check checks)
 {
     bool same_app = false;
@@ -311,9 +326,9 @@ bool belong_to_same_application(Win const* c1, Win const* c2, win::same_client_c
     } else if (c1->group == c2->group) {
         // same group
         same_app = true;
-    } else if (c1->wmClientLeader() == c2->wmClientLeader()
-               && c1->wmClientLeader() != c1->xcb_window
-               && c2->wmClientLeader() != c2->xcb_window) {
+    } else if (get_wm_client_leader(*c1) == get_wm_client_leader(*c2)
+               && get_wm_client_leader(*c1) != c1->xcb_windows.client
+               && get_wm_client_leader(*c2) != c2->xcb_windows.client) {
         // if WM_CLIENT_LEADER is not set, it returns xcb_window,
         // don't use in this test then same client leader
         same_app = true;
@@ -323,13 +338,14 @@ bool belong_to_same_application(Win const* c1, Win const* c2, win::same_client_c
                 && !flags(checks & win::same_client_check::allow_cross_process))
                || c1->wmClientMachine(false) != c2->wmClientMachine(false)) {
         // different processes
-    } else if (c1->wmClientLeader() != c2->wmClientLeader()
-               && c1->wmClientLeader() != c1->xcb_window && c2->wmClientLeader() != c2->xcb_window
+    } else if (get_wm_client_leader(*c1) != get_wm_client_leader(*c2)
+               && get_wm_client_leader(*c1) != c1->xcb_windows.client
+               && get_wm_client_leader(*c2) != c2->xcb_windows.client
                && !flags(checks & win::same_client_check::allow_cross_process)) {
         // if WM_CLIENT_LEADER is not set, it returns xcb_window,
         // don't use in this test then
         // different client leader
-    } else if (!Win::resourceMatch(c1, c2)) {
+    } else if (c1->meta.wm_class.res_class != c2->meta.wm_class.res_class) {
         // different apps
     } else if (!same_app_window_role_match(
                    c1, c2, flags(checks & win::same_client_check::relaxed_for_active))
@@ -344,6 +360,94 @@ bool belong_to_same_application(Win const* c1, Win const* c2, win::same_client_c
     }
 
     return same_app;
+}
+
+template<typename Win>
+NET::WindowType get_window_type_direct(Win& win)
+{
+    if (win.remnant) {
+        return win.window_type;
+    }
+    return win.net_info->windowType(win.supported_default_types);
+}
+
+template<typename Win>
+NET::WindowType get_window_type(Win& win)
+{
+    auto wt = get_window_type_direct(win);
+    if (!win.control) {
+        return wt;
+    }
+
+    assert(!win.remnant);
+
+    auto wt2 = win.control->rules.checkType(wt);
+    if (wt != wt2) {
+        wt = wt2;
+        // force hint change
+        win.net_info->setWindowType(wt);
+    }
+
+    // hacks here
+    if (wt == NET::Unknown) {
+        // this is more or less suggested in NETWM spec
+        wt = win.transient->lead() ? NET::Dialog : NET::Normal;
+    }
+    return wt;
+}
+
+template<typename Win>
+QByteArray get_wm_client_machine(Win& win, bool use_localhost)
+{
+    assert(win.client_machine);
+
+    if (use_localhost && win.client_machine->is_local()) {
+        // Special name for the local machine (localhost).
+        return client_machine::localhost();
+    }
+    return win.client_machine->hostname();
+}
+
+template<typename Win>
+void fetch_wm_class(Win& win)
+{
+    set_wm_class(win,
+                 QByteArray(win.net_info->windowClassName()).toLower(),
+                 QByteArray(win.net_info->windowClassClass()).toLower());
+}
+
+template<typename Win>
+xcb_window_t get_frame_id(Win& win)
+{
+    if (win.remnant) {
+        return win.remnant->data.frame;
+    }
+    if (!win.control) {
+        return win.xcb_windows.client;
+    }
+    return win.xcb_windows.outer;
+}
+
+template<typename Win>
+void print_window_debug_info(Win& win, QDebug& stream)
+{
+    if (win.remnant) {
+        stream << "\'REMNANT:" << reinterpret_cast<void const*>(&win) << "\'";
+        return;
+    }
+
+    std::string type = "unmanaged";
+    std::string caption = "";
+    if (win.control) {
+        type = "managed";
+        caption = win::caption(&win).toStdString();
+    }
+
+    stream.nospace();
+    stream << "\'x11::window"
+           << "(" << QString::fromStdString(type) << "):" << win.xcb_windows.client << ";"
+           << ";WMCLASS:" << win.meta.wm_class.res_class << ":" << win.meta.wm_class.res_name
+           << ";Caption:" << QString::fromStdString(caption) << "\'";
 }
 
 }

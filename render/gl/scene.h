@@ -63,11 +63,11 @@ public:
     {
         m_state = Ready;
 
-        xcb_connection_t* const c = connection();
+        auto const con = connection();
 
-        m_fence = xcb_generate_id(c);
-        xcb_sync_create_fence(c, rootWindow(), m_fence, false);
-        xcb_flush(c);
+        m_fence = xcb_generate_id(con);
+        xcb_sync_create_fence(con, rootWindow(), m_fence, false);
+        xcb_flush(con);
 
         m_sync = glImportSyncEXT(GL_SYNC_X11_FENCE_EXT, m_fence, 0);
         m_reset_cookie.sequence = 0;
@@ -323,7 +323,7 @@ public:
     }
 
     int64_t paint(QRegion damage,
-                  std::deque<typename window_t::ref_t*> const& toplevels,
+                  std::deque<typename window_t::ref_t> const& toplevels,
                   std::chrono::milliseconds presentTime) override
     {
         // Remove all subordinate transients. These are painted as part of their leads.
@@ -392,10 +392,10 @@ public:
 
     int64_t paint_output(output_t* output,
                          QRegion damage,
-                         std::deque<typename window_t::ref_t*> const& windows,
+                         std::deque<typename window_t::ref_t> const& ref_wins,
                          std::chrono::milliseconds presentTime) override
     {
-        this->createStackingOrder(get_leads(windows));
+        this->createStackingOrder(get_leads(ref_wins));
 
         // Trigger render timer start.
         m_backend->prepareRenderingFrame();
@@ -439,9 +439,9 @@ public:
         return m_backend->renderTime();
     }
 
-    std::unique_ptr<render::shadow<window_t>> createShadow(window_t* window) override
+    std::unique_ptr<render::shadow<window_t>> createShadow(window_t* win) override
     {
-        return std::make_unique<shadow<window_t, type>>(window, *this);
+        return std::make_unique<shadow<window_t, type>>(win, *this);
     }
 
     void handle_screen_geometry_change(QSize const& size) override
@@ -478,10 +478,10 @@ public:
         return m_backend->supportsSurfacelessContext();
     }
 
-    win::deco::renderer<win::deco::client_impl<typename window_t::ref_t>>*
-    createDecorationRenderer(win::deco::client_impl<typename window_t::ref_t>* impl) override
+    std::unique_ptr<win::deco::render_injector>
+    create_deco(win::deco::render_window window) override
     {
-        return new deco_renderer(impl, *this);
+        return std::make_unique<deco_renderer<type>>(std::move(window), *this);
     }
 
     void triggerFence() override
@@ -584,21 +584,35 @@ protected:
         render::scene<Platform>::paintGenericScreen(mask, data);
     }
 
-    std::unique_ptr<window_t> createWindow(typename window_t::ref_t* t) override
+    std::unique_ptr<window_t> createWindow(typename window_t::ref_t ref_win) override
     {
-        return std::make_unique<gl_window_t>(t, *this);
+        return std::make_unique<gl_window_t>(ref_win, *this);
     }
 
-    void finalDrawWindow(effect_window_t* w,
+    void finalDrawWindow(effect_window_t* eff_win,
                          paint_type mask,
                          QRegion region,
                          WindowPaintData& data) override
     {
-        if (kwinApp()->is_screen_locked() && !w->window.ref_win->isLockScreen()
-            && !w->window.ref_win->isInputMethod()) {
-            return;
+        if (kwinApp()->is_screen_locked()) {
+            if (std::visit(overload{[&](auto&& win) {
+                               if constexpr (requires(decltype(win) win) { win.isLockScreen(); }) {
+                                   if (win->isLockScreen()) {
+                                       return false;
+                                   }
+                               }
+                               if constexpr (requires(decltype(win) win) { win.isInputMethod(); }) {
+                                   if (win->isInputMethod()) {
+                                       return false;
+                                   }
+                               }
+                               return true;
+                           }},
+                           *eff_win->window.ref_win)) {
+                return;
+            }
         }
-        performPaintWindow(w, mask, region, data);
+        performPaintWindow(eff_win, mask, region, data);
     }
 
     /**
@@ -607,58 +621,62 @@ protected:
      */
     void paintCursor() override
     {
-        auto cursor = this->platform.compositor->software_cursor.get();
+        using compositor_t = typename Platform::compositor_t;
+        if constexpr (requires(compositor_t comp) { comp.software_cursor; }) {
+            auto cursor = this->platform.compositor->software_cursor.get();
 
-        // don't paint if we use hardware cursor or the cursor is hidden
-        if (!cursor->enabled || this->platform.base.space->input->cursor->is_hidden()
-            || cursor->image().isNull()) {
-            return;
-        }
-
-        // lazy init texture cursor only in case we need software rendering
-        if (sw_cursor.dirty) {
-            auto const img = this->platform.compositor->software_cursor->image();
-
-            // If there was no new image we are still dirty and try to update again next paint
-            // cycle.
-            sw_cursor.dirty = img.isNull();
-
-            // With an image we update the texture, or if one was never set before create a default
-            // one.
-            if (!img.isNull() || !sw_cursor.texture) {
-                sw_cursor.texture.reset(new GLTexture(img));
+            // don't paint if we use hardware cursor or the cursor is hidden
+            if (!cursor->enabled || this->platform.base.space->input->cursor->is_hidden()
+                || cursor->image().isNull()) {
+                return;
             }
 
-            // handle shape update on case cursor image changed
-            if (!sw_cursor.notifier) {
-                sw_cursor.notifier = QObject::connect(cursor->qobject.get(),
-                                                      &render::cursor_qobject::changed,
-                                                      this,
-                                                      [this] { sw_cursor.dirty = true; });
+            // lazy init texture cursor only in case we need software rendering
+            if (sw_cursor.dirty) {
+                auto const img = this->platform.compositor->software_cursor->image();
+
+                // If there was no new image we are still dirty and try to update again next paint
+                // cycle.
+                sw_cursor.dirty = img.isNull();
+
+                // With an image we update the texture, or if one was never set before create a
+                // default one.
+                if (!img.isNull() || !sw_cursor.texture) {
+                    sw_cursor.texture.reset(new GLTexture(img));
+                }
+
+                // handle shape update on case cursor image changed
+                if (!sw_cursor.notifier) {
+                    sw_cursor.notifier = QObject::connect(cursor->qobject.get(),
+                                                          &render::cursor_qobject::changed,
+                                                          this,
+                                                          [this] { sw_cursor.dirty = true; });
+                }
             }
+
+            // get cursor position in projection coordinates
+            auto const cursorPos
+                = this->platform.base.space->input->cursor->pos() - cursor->hotspot();
+            auto const cursorRect
+                = QRect(0, 0, sw_cursor.texture->width(), sw_cursor.texture->height());
+            QMatrix4x4 mvp = m_projectionMatrix;
+            mvp.translate(cursorPos.x(), cursorPos.y());
+
+            // handle transparence
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+            // paint texture in cursor offset
+            sw_cursor.texture->bind();
+            ShaderBinder binder(ShaderTrait::MapTexture);
+            binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
+            sw_cursor.texture->render(QRegion(cursorRect), cursorRect);
+            sw_cursor.texture->unbind();
+
+            cursor->mark_as_rendered();
+
+            glDisable(GL_BLEND);
         }
-
-        // get cursor position in projection coordinates
-        auto const cursorPos = this->platform.base.space->input->cursor->pos() - cursor->hotspot();
-        auto const cursorRect
-            = QRect(0, 0, sw_cursor.texture->width(), sw_cursor.texture->height());
-        QMatrix4x4 mvp = m_projectionMatrix;
-        mvp.translate(cursorPos.x(), cursorPos.y());
-
-        // handle transparence
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-        // paint texture in cursor offset
-        sw_cursor.texture->bind();
-        ShaderBinder binder(ShaderTrait::MapTexture);
-        binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
-        sw_cursor.texture->render(QRegion(cursorRect), cursorRect);
-        sw_cursor.texture->unbind();
-
-        cursor->mark_as_rendered();
-
-        glDisable(GL_BLEND);
     }
 
     void paintBackground(QRegion region) override
@@ -761,35 +779,36 @@ protected:
         glDisable(GL_SCISSOR_TEST);
     }
 
-    void paintEffectQuickView(EffectQuickView* w) override
+    void paintEffectQuickView(EffectQuickView* view) override
     {
-        GLTexture* t = w->bufferAsTexture();
-        if (!t) {
+        auto texture = view->bufferAsTexture();
+        if (!texture) {
             return;
         }
 
         ShaderTraits traits = ShaderTrait::MapTexture;
-        auto a = w->opacity();
-        if (a != 1.0) {
+        auto opacity = view->opacity();
+        if (opacity != 1.0) {
             traits |= ShaderTrait::Modulate;
         }
 
         auto shader = ShaderManager::instance()->pushShader(traits);
-        auto const rect = w->geometry();
+        auto const rect = view->geometry();
 
         QMatrix4x4 mvp(projectionMatrix());
         mvp.translate(rect.x(), rect.y());
         shader->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
 
-        if (a != 1.0) {
-            shader->setUniform(GLShader::ModulationConstant, QVector4D(a, a, a, a));
+        if (opacity != 1.0) {
+            shader->setUniform(GLShader::ModulationConstant,
+                               QVector4D(opacity, opacity, opacity, opacity));
         }
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-        t->bind();
-        t->render(w->geometry());
-        t->unbind();
+        texture->bind();
+        texture->render(view->geometry());
+        texture->unbind();
         glDisable(GL_BLEND);
 
         ShaderManager::instance()->popShader();
@@ -867,48 +886,55 @@ private:
         return true;
     }
 
-    std::deque<typename window_t::ref_t*>
-    get_leads(std::deque<typename window_t::ref_t*> const& windows)
+    std::deque<typename window_t::ref_t>
+    get_leads(std::deque<typename window_t::ref_t> const& ref_wins)
     {
-        std::deque<typename window_t::ref_t*> leads;
+        std::deque<typename window_t::ref_t> leads;
 
-        for (auto const& window : windows) {
-            if (window->transient->lead() && window->transient->annexed) {
-                auto const damage = window->render_data.damage_region;
-                if (damage.isEmpty()) {
-                    continue;
-                }
-                auto lead = win::lead_of_annexed_transient(window);
-                auto const lead_render_geo = win::render_geometry(lead);
-                auto const lead_damage = damage.translated(win::render_geometry(window).topLeft()
-                                                           - lead_render_geo.topLeft());
+        for (auto const& ref_win : ref_wins) {
+            std::visit(overload{[&](auto&& ref_win) {
+                           if (!ref_win->transient->lead() || !ref_win->transient->annexed) {
+                               leads.push_back(ref_win);
+                               return;
+                           }
 
-                lead->render_data.repaints_region += lead_damage.translated(
-                    lead_render_geo.topLeft() - lead->geo.frame.topLeft());
-                lead->render_data.damage_region += lead_damage;
+                           auto const damage = ref_win->render_data.damage_region;
+                           if (damage.isEmpty()) {
+                               return;
+                           }
 
-                for (auto const& rect : lead_damage) {
-                    // Emit for thumbnail repaint.
-                    Q_EMIT lead->qobject->damaged(rect);
-                }
-            } else {
-                leads.push_back(window);
-            }
+                           auto lead = win::lead_of_annexed_transient(ref_win);
+                           auto const lead_render_geo = win::render_geometry(lead);
+                           auto const lead_damage = damage.translated(
+                               win::render_geometry(ref_win).topLeft() - lead_render_geo.topLeft());
+
+                           lead->render_data.repaints_region += lead_damage.translated(
+                               lead_render_geo.topLeft() - lead->geo.frame.topLeft());
+                           lead->render_data.damage_region += lead_damage;
+
+                           for (auto const& rect : lead_damage) {
+                               // Emit for thumbnail repaint.
+                               Q_EMIT lead->qobject->damaged(rect);
+                           }
+                       }},
+                       ref_win);
         }
 
         return leads;
     }
 
-    void
-    performPaintWindow(effect_window_t* w, paint_type mask, QRegion region, WindowPaintData& data)
+    void performPaintWindow(effect_window_t* eff_win,
+                            paint_type mask,
+                            QRegion region,
+                            WindowPaintData& data)
     {
         if (flags(mask & paint_type::window_lanczos)) {
             if (!lanczos) {
                 lanczos = new lanczos_filter<scene>(this);
             }
-            lanczos->performPaint(w, mask, region, data);
+            lanczos->performPaint(eff_win, mask, region, data);
         } else
-            w->window.performPaint(mask, region, data);
+            eff_win->window.performPaint(mask, region, data);
     }
 
     QMatrix4x4 createProjectionMatrix() const

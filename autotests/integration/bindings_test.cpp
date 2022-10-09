@@ -121,22 +121,22 @@ void BindingsTest::testSwitchWindow()
         QDBusConnection::sessionBus().asyncCall(msg);
     };
     invokeShortcut(QStringLiteral("Switch Window Up"));
-    QTRY_COMPARE(Test::app()->base.space->stacking.active, c1);
+    QTRY_COMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c1);
     invokeShortcut(QStringLiteral("Switch Window Right"));
-    QTRY_COMPARE(Test::app()->base.space->stacking.active, c2);
+    QTRY_COMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c2);
     invokeShortcut(QStringLiteral("Switch Window Down"));
-    QTRY_COMPARE(Test::app()->base.space->stacking.active, c3);
+    QTRY_COMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c3);
     invokeShortcut(QStringLiteral("Switch Window Left"));
-    QTRY_COMPARE(Test::app()->base.space->stacking.active, c4);
+    QTRY_COMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c4);
     // test opposite direction
     invokeShortcut(QStringLiteral("Switch Window Left"));
-    QTRY_COMPARE(Test::app()->base.space->stacking.active, c3);
+    QTRY_COMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c3);
     invokeShortcut(QStringLiteral("Switch Window Down"));
-    QTRY_COMPARE(Test::app()->base.space->stacking.active, c2);
+    QTRY_COMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c2);
     invokeShortcut(QStringLiteral("Switch Window Right"));
-    QTRY_COMPARE(Test::app()->base.space->stacking.active, c1);
+    QTRY_COMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c1);
     invokeShortcut(QStringLiteral("Switch Window Up"));
-    QTRY_COMPARE(Test::app()->base.space->stacking.active, c4);
+    QTRY_COMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c4);
 }
 
 void BindingsTest::testSwitchWindowScript()
@@ -187,13 +187,13 @@ void BindingsTest::testSwitchWindowScript()
     };
 
     runScript(QStringLiteral("slotSwitchWindowUp"));
-    QTRY_COMPARE(Test::app()->base.space->stacking.active, c1);
+    QTRY_COMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c1);
     runScript(QStringLiteral("slotSwitchWindowRight"));
-    QTRY_COMPARE(Test::app()->base.space->stacking.active, c2);
+    QTRY_COMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c2);
     runScript(QStringLiteral("slotSwitchWindowDown"));
-    QTRY_COMPARE(Test::app()->base.space->stacking.active, c3);
+    QTRY_COMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c3);
     runScript(QStringLiteral("slotSwitchWindowLeft"));
-    QTRY_COMPARE(Test::app()->base.space->stacking.active, c4);
+    QTRY_COMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c4);
 }
 
 void BindingsTest::testWindowToDesktop_data()
@@ -233,7 +233,7 @@ void BindingsTest::testWindowToDesktop()
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QSignalSpy desktopChangedSpy(c->qobject.get(), &win::window_qobject::desktopChanged);
     QVERIFY(desktopChangedSpy.isValid());
-    QCOMPARE(Test::app()->base.space->stacking.active, c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
 
     QFETCH(int, desktop);
     vd_manager->setCount(desktop);
@@ -249,11 +249,11 @@ void BindingsTest::testWindowToDesktop()
     };
     invokeShortcut(desktop);
     QVERIFY(desktopChangedSpy.wait());
-    QCOMPARE(c->desktop(), desktop);
+    QCOMPARE(win::get_desktop(*c), desktop);
     // back to desktop 1
     invokeShortcut(1);
     QVERIFY(desktopChangedSpy.wait());
-    QCOMPARE(c->desktop(), 1);
+    QCOMPARE(win::get_desktop(*c), 1);
     // invoke with one desktop too many
     invokeShortcut(desktop + 1);
     // that should fail

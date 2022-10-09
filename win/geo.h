@@ -25,8 +25,10 @@ static inline bool is_irrelevant(Win1 const* window, Win2 const* regarding, int 
     if (!window->control) {
         return true;
     }
-    if (window == regarding) {
-        return true;
+    if constexpr (std::is_same_v<Win1, Win2>) {
+        if (window == regarding) {
+            return true;
+        }
     }
     if (!window->isShown()) {
         return true;
@@ -64,7 +66,7 @@ QMargins frame_margins(Win* win)
 }
 
 template<typename Win>
-QRect client_to_frame_rect(Win win, QRect const& content_rect)
+QRect client_to_frame_rect(Win* win, QRect const& content_rect)
 {
     auto frame = content_rect;
 
@@ -75,19 +77,19 @@ QRect client_to_frame_rect(Win win, QRect const& content_rect)
 }
 
 template<typename Win>
-QPoint client_to_frame_pos(Win win, QPoint const& content_pos)
+QPoint client_to_frame_pos(Win* win, QPoint const& content_pos)
 {
     return client_to_frame_rect(win, QRect(content_pos, QSize())).topLeft();
 }
 
 template<typename Win>
-QSize client_to_frame_size(Win win, QSize const& content_size)
+QSize client_to_frame_size(Win* win, QSize const& content_size)
 {
     return client_to_frame_rect(win, QRect(QPoint(), content_size)).size();
 }
 
 template<typename Win>
-QRect frame_to_client_rect(Win win, QRect const& frame_rect)
+QRect frame_to_client_rect(Win* win, QRect const& frame_rect)
 {
     auto content = frame_rect;
 
@@ -98,13 +100,13 @@ QRect frame_to_client_rect(Win win, QRect const& frame_rect)
 }
 
 template<typename Win>
-QPoint frame_to_client_pos(Win win, QPoint const& frame_pos)
+QPoint frame_to_client_pos(Win* win, QPoint const& frame_pos)
 {
     return frame_to_client_rect(win, QRect(frame_pos, QSize())).topLeft();
 }
 
 template<typename Win>
-QSize frame_to_client_size(Win win, QSize const& frame_size)
+QSize frame_to_client_size(Win* win, QSize const& frame_size)
 {
     return frame_to_client_rect(win, QRect(QPoint(), frame_size)).size();
 }
@@ -119,7 +121,7 @@ QRect frame_relative_client_rect(Win* win)
 }
 
 template<typename Win>
-QRect frame_to_render_rect(Win win, QRect const& frame_rect)
+QRect frame_to_render_rect(Win* win, QRect const& frame_rect)
 {
     auto content = frame_rect;
 
@@ -133,7 +135,7 @@ QRect frame_to_render_rect(Win win, QRect const& frame_rect)
 }
 
 template<typename Win>
-QPoint frame_to_render_pos(Win win, QPoint const& frame_pos)
+QPoint frame_to_render_pos(Win* win, QPoint const& frame_pos)
 {
     return frame_to_render_rect(win, QRect(frame_pos, QSize())).topLeft();
 }
@@ -179,6 +181,15 @@ QSize adjusted_frame_size(Win* win, QSize const& frame_size, size_mode mode)
 {
     assert(win->control);
     return win->control->adjusted_frame_size(frame_size, mode);
+}
+
+template<typename Win>
+QRect get_icon_geometry(Win& win)
+{
+    if constexpr (requires(Win win) { win.iconGeometry(); }) {
+        return win.iconGeometry();
+    }
+    return win.space.get_icon_geometry(&win);
 }
 
 }

@@ -33,7 +33,7 @@ class input_method : public QObject
 {
 public:
     using space_t = typename Redirect::space_t;
-    using window_t = typename space_t::window_t;
+    using window_t = typename space_t::wayland_window;
     using im_keyboard_grab_v2
         = keyboard_grab<Redirect, Wrapland::Server::input_method_keyboard_grab_v2>;
 
@@ -68,8 +68,12 @@ private:
         auto input_surface = text_input->entered_surface();
 
         for (auto win : redirect.space.windows) {
-            if (win->control && win->surface == input_surface) {
-                return win;
+            if (std::visit(overload{[&](window_t* win) {
+                                        return win->control && win->surface == input_surface;
+                                    },
+                                    [](auto&&) { return false; }},
+                           win)) {
+                return std::get<window_t*>(win);
             }
         }
 
@@ -156,8 +160,7 @@ private:
     void
     handle_popup_surface_created(Wrapland::Server::input_method_popup_surface_v2* popup_surface)
     {
-        auto popup = popups.emplace_back(
-            new typename space_t::wayland_window(popup_surface->surface(), redirect.space));
+        auto popup = popups.emplace_back(new window_t(popup_surface->surface(), redirect.space));
         popup->input_method_popup = popup_surface;
         popup->transient->annexed = true;
         popup->hidden = true;
@@ -260,7 +263,7 @@ private:
         QMetaObject::Connection keyboard_grabbed;
     } notifiers;
 
-    std::vector<typename space_t::wayland_window*> popups;
+    std::vector<window_t*> popups;
     std::vector<std::unique_ptr<im_keyboard_grab_v2>> filters;
 
     std::unique_ptr<Wrapland::Server::text_input_manager_v3> text_input_manager_v3;

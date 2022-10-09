@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/wayland/server.h"
 #include "render/effect_loader.h"
 #include "render/effects.h"
-#include "toplevel.h"
 #include "win/deco.h"
 #include "win/deco/client_impl.h"
 #include "win/internal_window.h"
@@ -244,8 +243,8 @@ void PopupOpenCloseAnimationTest::testAnimateDecorationTooltips()
     QVERIFY(tooltipAddedSpy.wait());
 
     auto tooltip_id = tooltipAddedSpy.first().first().value<quint32>();
-    auto tooltip = dynamic_cast<Test::space::internal_window_t*>(
-        Test::app()->base.space->windows_map.at(tooltip_id));
+    auto tooltip = Test::get_internal_window(Test::app()->base.space->windows_map.at(tooltip_id));
+    QVERIFY(tooltip);
     QVERIFY(tooltip->isInternal());
     QVERIFY(win::is_popup(tooltip));
     QVERIFY(tooltip->internalWindow()->flags().testFlag(Qt::ToolTip));

@@ -13,7 +13,6 @@
 #include "input/keyboard_redirect.h"
 #include "input/pointer_redirect.h"
 #include "input/qt_event.h"
-#include "input/touch_redirect.h"
 #include "input/xkb/helpers.h"
 #include "win/deco.h"
 
@@ -118,7 +117,7 @@ public:
         return adapted_qt_event.isAccepted();
     }
 
-    QWindow* get_internal_window(std::vector<typename Redirect::window_t*> const& windows)
+    QWindow* get_internal_window(std::vector<typename Redirect::window_t> const& windows)
     {
         if (windows.empty()) {
             return nullptr;
@@ -130,11 +129,12 @@ public:
 
         do {
             it--;
-            auto internal = dynamic_cast<internal_window_t*>(*it);
-            if (!internal) {
+
+            if (!std::holds_alternative<internal_window_t*>(*it)) {
                 continue;
             }
-            auto w = internal->internalWindow();
+
+            auto w = std::get<internal_window_t*>(*it)->internalWindow();
             if (!w) {
                 continue;
             }

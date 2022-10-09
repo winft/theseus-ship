@@ -25,7 +25,7 @@ namespace KWin::render::gl
 {
 
 template<typename RefWin, typename Scene>
-class window final : public render::window<RefWin>
+class window final : public Scene::window_t
 {
 public:
     enum Leaf {
@@ -59,20 +59,21 @@ public:
     using window_t = typename Scene::window_t;
     using buffer_t = typename Scene::buffer_t;
 
-    window(RefWin* ref_win, Scene& scene)
-        : render::window<RefWin>(ref_win)
+    window(RefWin ref_win, Scene& scene)
+        : window_t(ref_win, *scene.platform.compositor)
+        , scene{scene}
     {
         scene.windows.insert({this->id(), this});
     }
 
     ~window() override
     {
-        static_cast<Scene&>(this->scene).windows.erase(this->id());
+        scene.windows.erase(this->id());
     }
 
     render::buffer<window_t>* create_buffer() override
     {
-        return new buffer_t(this, static_cast<Scene&>(this->scene));
+        return new buffer_t(this, scene);
     }
 
     void performPaint(paint_type mask, QRegion region, WindowPaintData data) override
@@ -156,7 +157,11 @@ public:
                     // coordinate in the Client's new content space and map it to the previous
                     // Client's content space.
                     WindowQuad newQuad(WindowQuadContents);
-                    auto const content_geo = win::frame_relative_client_rect(this->ref_win);
+                    auto const content_geo
+                        = std::visit(overload{[](auto&& ref_win) {
+                                         return win::frame_relative_client_rect(ref_win);
+                                     }},
+                                     *this->ref_win);
 
                     for (int i = 0; i < 4; ++i) {
                         auto const xFactor = (quad[i].textureX() - content_geo.x())
@@ -264,7 +269,8 @@ private:
     QMatrix4x4 transformation(paint_type mask, const WindowPaintData& data) const
     {
         QMatrix4x4 matrix;
-        auto const win_pos = this->ref_win->geo.pos();
+        auto const win_pos = std::visit(
+            overload{[&](auto&& ref_win) { return ref_win->geo.pos(); }}, *this->ref_win);
         matrix.translate(win_pos.x(), win_pos.y());
 
         if (!(mask & paint_type::window_transformed)) {
@@ -291,29 +297,33 @@ private:
 
     GLTexture* getDecorationTexture() const
     {
-        if (this->ref_win->control) {
-            if (this->ref_win->noBorder()) {
-                return nullptr;
-            }
+        return std::visit(
+            overload{[&](auto&& ref_win) -> GLTexture* {
+                if (ref_win->control) {
+                    if (ref_win->noBorder()) {
+                        return nullptr;
+                    }
 
-            if (!win::decoration(this->ref_win)) {
+                    if (!win::decoration(ref_win)) {
+                        return nullptr;
+                    }
+                    using deco_renderer_t = deco_renderer<Scene>;
+                    if (auto renderer = static_cast<deco_renderer_t*>(
+                            ref_win->control->deco.client->renderer()->injector.get())) {
+                        renderer->render();
+                        return renderer->texture();
+                    }
+                } else if (auto& remnant = ref_win->remnant) {
+                    if (!remnant->data.deco_render || remnant->data.no_border) {
+                        return nullptr;
+                    }
+                    if (auto& renderer = remnant->data.deco_render) {
+                        return static_cast<deco_render_data<Scene>&>(*renderer).texture.get();
+                    }
+                }
                 return nullptr;
-            }
-            using deco_renderer_t = deco_renderer<win::deco::client_impl<RefWin>, Scene>;
-            if (auto renderer
-                = static_cast<deco_renderer_t*>(this->ref_win->control->deco.client->renderer())) {
-                renderer->render();
-                return renderer->texture();
-            }
-        } else if (auto& remnant = this->ref_win->remnant) {
-            if (!remnant->data.deco_render || remnant->data.no_border) {
-                return nullptr;
-            }
-            if (auto& renderer = remnant->data.deco_render) {
-                return static_cast<deco_render_data<Scene>&>(*renderer).texture.get();
-            }
-        }
-        return nullptr;
+            }},
+            *this->ref_win);
     }
 
     QMatrix4x4 modelViewProjectionMatrix(paint_type mask, const WindowPaintData& data) const
@@ -336,7 +346,7 @@ private:
             return this->scene.screenProjectionMatrix() * mvMatrix;
         }
 
-        return static_cast<Scene&>(this->scene).projectionMatrix() * mvMatrix;
+        return scene.projectionMatrix() * mvMatrix;
     }
 
     QVector4D modulate(float opacity, float brightness) const
@@ -386,7 +396,9 @@ private:
             // TODO: ARGB crsoofading is atm. a hack, playing on opacities for two dumb SrcOver
             // operations Should be a shader
             if (data.crossFadeProgress() != 1.0
-                && (data.opacity() < 0.95 || win::has_alpha(*window->ref_win))) {
+                && (data.opacity() < 0.95
+                    || std::visit(overload{[&](auto&& win) { return win::has_alpha(*win); }},
+                                  *window->ref_win))) {
                 const float opacity = 1.0 - data.crossFadeProgress();
                 node.opacity = data.opacity() * (1 - pow(opacity, 1.0f + 2.0f * data.opacity()));
             } else {
@@ -408,7 +420,7 @@ private:
                 continue;
             }
 
-            auto& glscene = static_cast<Scene&>(this->scene);
+            auto& glscene = scene;
             auto it = glscene.windows.find(quad_list.front().id());
             if (it != glscene.windows.end()) {
                 setup_content(i, it->second, it->second->bindTexture());
@@ -437,7 +449,8 @@ private:
             WindowQuadList quads;
             quads.reserve(data.quads.count());
 
-            auto const win_pos = this->ref_win->geo.pos();
+            auto const win_pos
+                = std::visit(overload{[&](auto&& win) { return win->geo.pos(); }}, *this->ref_win);
             auto const filterRegion = region.translated(-win_pos.x(), -win_pos.y());
 
             // split all quads in bounding rect with the actual rects in the region
@@ -518,8 +531,10 @@ private:
             return buffer->texture.get();
         }
 
-        if (!this->ref_win->render_data.damage_region.isEmpty())
-            static_cast<Scene&>(this->scene).insertWait();
+        if (!std::visit(
+                overload{[&](auto&& win) { return win->render_data.damage_region.isEmpty(); }},
+                *this->ref_win))
+            scene.insertWait();
 
         if (!buffer->bind()) {
             return nullptr;
@@ -529,6 +544,7 @@ private:
 
     bool m_hardwareClipping{false};
     bool m_blendingEnabled{false};
+    Scene& scene;
 };
 
 }

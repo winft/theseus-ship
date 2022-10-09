@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/wayland/server.h"
 #include "input/cursor.h"
-#include "toplevel.h"
 #include "win/deco.h"
 #include "win/move.h"
 #include "win/space.h"
@@ -50,7 +49,7 @@ private Q_SLOTS:
     void testTouchMouseAction();
 
 private:
-    Test::space::window_t* showWindow(bool decorated = false);
+    Test::wayland_window* showWindow(bool decorated = false);
 
     std::unique_ptr<Wrapland::Client::Touch> touch;
 
@@ -94,7 +93,7 @@ void TouchInputTest::cleanup()
     Test::destroy_wayland_connection();
 }
 
-Test::space::window_t* TouchInputTest::showWindow(bool decorated)
+Test::wayland_window* TouchInputTest::showWindow(bool decorated)
 {
     using namespace Wrapland::Client;
 #define VERIFY(statement)                                                                          \
@@ -126,7 +125,7 @@ Test::space::window_t* TouchInputTest::showWindow(bool decorated)
     auto c = Test::render_and_wait_for_shown(client.surface, QSize(100, 50), Qt::blue);
 
     VERIFY(c);
-    COMPARE(Test::app()->base.space->stacking.active, c);
+    COMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
 
 #undef VERIFY
 #undef COMPARE

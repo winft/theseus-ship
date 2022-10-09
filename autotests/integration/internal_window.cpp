@@ -78,8 +78,7 @@ private Q_SLOTS:
 
 Test::space::internal_window_t* get_internal_window_from_id(uint32_t id)
 {
-    return dynamic_cast<Test::space::internal_window_t*>(
-        Test::app()->base.space->windows_map.at(id));
+    return Test::get_internal_window(Test::app()->base.space->windows_map.at(id));
 }
 
 class HelperWindow : public QRasterWindow
@@ -232,7 +231,8 @@ void InternalWindowTest::testEnterLeave()
     QCOMPARE(Test::app()->base.space->findInternal(&win), c);
     QCOMPARE(c->geo.frame, QRect(0, 0, 100, 100));
     QVERIFY(c->isShown());
-    QVERIFY(contains(win::render_stack(Test::app()->base.space->stacking.order), c));
+    QVERIFY(contains(win::render_stack(Test::app()->base.space->stacking.order),
+                     Test::space::window_t(c)));
 
     QSignalSpy enterSpy(&win, &HelperWindow::entered);
     QVERIFY(enterSpy.isValid());
@@ -399,7 +399,6 @@ void InternalWindowTest::testKeyboardTriggersLeave()
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QVERIFY(c->control->active);
-    QVERIFY(!c->isInternal());
 
     if (enteredSpy.isEmpty()) {
         QVERIFY(enteredSpy.wait());

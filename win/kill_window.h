@@ -43,14 +43,16 @@ public:
                     return;
                 }
 
-                if (window->control) {
-                    window->killWindow();
-                    return;
-                }
-
-                if (window->xcb_window) {
-                    xcb_kill_client(connection(), window->xcb_window);
-                }
+                std::visit(overload{[&](auto&& win) {
+                               if (win->control) {
+                                   win->killWindow();
+                                   return;
+                               }
+                               if constexpr (requires(decltype(win) win) { win->xcb_windows; }) {
+                                   xcb_kill_client(connection(), win->xcb_windows.client);
+                               }
+                           }},
+                           *window);
             },
             QByteArrayLiteral("pirate"));
     }

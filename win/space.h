@@ -53,7 +53,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/x11/xcb/window.h"
 #include "render/outline.h"
 #include "rules/book.h"
-#include "toplevel.h"
 
 #include <QTimer>
 
@@ -74,14 +73,14 @@ struct stacking_state {
     win::focus_chain<Window> focus_chain;
 
     // Last is most recent.
-    std::deque<Window*> should_get_focus;
-    std::deque<Window*> attention_chain;
+    std::deque<Window> should_get_focus;
+    std::deque<Window> attention_chain;
 
-    Window* active{nullptr};
-    Window* last_active{nullptr};
-    Window* most_recently_raised{nullptr};
+    std::optional<Window> active;
+    std::optional<Window> last_active;
+    std::optional<Window> most_recently_raised;
 
-    Window* delayfocus_window{nullptr};
+    std::optional<Window> delayfocus_window;
 };
 
 class space

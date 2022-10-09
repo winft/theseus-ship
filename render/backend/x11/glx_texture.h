@@ -65,10 +65,13 @@ public:
         }
 
         auto ref_win = buffer->window->ref_win;
-        using x11_window_t = typename std::decay_t<decltype(ref_win->space)>::x11_window;
+        using var_win = std::decay_t<decltype(*ref_win)>;
+        using x11_window_t = typename std::remove_pointer_t<
+            std::variant_alternative_t<0, var_win>>::space_t::x11_window;
 
-        auto const size = win::render_geometry(ref_win).size();
-        auto const visual = static_cast<x11_window_t*>(ref_win)->xcb_visual;
+        auto x11_ref_win = std::get<x11_window_t*>(*ref_win);
+        auto const size = win::render_geometry(x11_ref_win).size();
+        auto const visual = x11_ref_win->xcb_visual;
 
         auto const& win_integrate
             = static_cast<render::x11::buffer_win_integration<typename buffer_t::abstract_type>&>(

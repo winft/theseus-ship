@@ -17,10 +17,10 @@ namespace KWin::win::x11
 {
 
 template<typename Win>
-class control : public win::control<typename Win::abstract_type>
+class control : public win::control<Win>
 {
 public:
-    using control_t = typename win::control<typename Win::abstract_type>;
+    using control_t = typename win::control<Win>;
 
     control(Win* window)
         : control_t(window)
@@ -30,29 +30,28 @@ public:
 
     void set_desktops(QVector<virtual_desktop*> /*desktops*/) override
     {
-        assert(m_window->info);
-        m_window->info->setDesktop(m_window->desktop());
+        m_window->net_info->setDesktop(get_desktop(*m_window));
     }
 
     void set_skip_pager(bool set) override
     {
         control_t::set_skip_pager(set);
-        m_window->info->setState(this->skip_pager() ? NET::SkipPager : NET::States(),
-                                 NET::SkipPager);
+        m_window->net_info->setState(this->skip_pager() ? NET::SkipPager : NET::States(),
+                                     NET::SkipPager);
     }
 
     void set_skip_switcher(bool set) override
     {
         control_t::set_skip_switcher(set);
-        m_window->info->setState(this->skip_switcher() ? NET::SkipSwitcher : NET::States(),
-                                 NET::SkipSwitcher);
+        m_window->net_info->setState(this->skip_switcher() ? NET::SkipSwitcher : NET::States(),
+                                     NET::SkipSwitcher);
     }
 
     void set_skip_taskbar(bool set) override
     {
         control_t::set_skip_taskbar(set);
-        m_window->info->setState(this->skip_taskbar() ? NET::SkipTaskbar : NET::States(),
-                                 NET::SkipTaskbar);
+        m_window->net_info->setState(this->skip_taskbar() ? NET::SkipTaskbar : NET::States(),
+                                     NET::SkipTaskbar);
     }
 
     void update_mouse_grab() override

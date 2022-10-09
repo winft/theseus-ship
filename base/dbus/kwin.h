@@ -229,16 +229,20 @@ public:
                     QStringLiteral("User cancelled the query")));
                 return;
             }
-            if (!win->control) {
-                QDBusConnection::sessionBus().send(m_replyQueryWindowInfo.createErrorReply(
-                    QStringLiteral("org.kde.KWin.Error.InvalidWindow"),
-                    QStringLiteral("Tried to query information about an unmanaged window")));
-                return;
-            }
-            QDBusConnection::sessionBus().send(
-                m_replyQueryWindowInfo.createReply(window_to_variant_map(win)));
+            std::visit(
+                overload{[&](auto&& win) {
+                    if (!win->control) {
+                        QDBusConnection::sessionBus().send(m_replyQueryWindowInfo.createErrorReply(
+                            QStringLiteral("org.kde.KWin.Error.InvalidWindow"),
+                            QStringLiteral(
+                                "Tried to query information about an unmanaged window")));
+                        return;
+                    }
+                    QDBusConnection::sessionBus().send(
+                        m_replyQueryWindowInfo.createReply(window_to_variant_map(win)));
+                }},
+                *win);
         });
-
         return QVariantMap{};
     }
 
@@ -247,26 +251,51 @@ public:
         auto const id = QUuid::fromString(uuid);
 
         for (auto win : space.windows) {
-            if (!win->control) {
-                continue;
-            }
-            if (win->meta.internal_id == id) {
-                return window_to_variant_map(win);
+            if (auto map = std::visit(overload{[&](auto&& win) -> QVariantMap {
+                                          if (win->meta.internal_id != id) {
+                                              return {};
+                                          }
+                                          if (!win->control) {
+                                              return {};
+                                          }
+                                          return window_to_variant_map(win);
+                                      }},
+                                      win);
+                !map.isEmpty()) {
+                return map;
             }
         }
         return {};
     }
 
 private:
-    QVariantMap window_to_variant_map(typename Space::window_t const* win)
+    template<typename Win>
+    QByteArray get_client_machine(Win const& win)
+    {
+        if constexpr (requires(Win win, bool local) { win.wmClientMachine(local); }) {
+            return win.wmClientMachine(true);
+        }
+        return {};
+    }
+    template<typename Win>
+    bool is_local_host(Win const& win)
+    {
+        if constexpr (requires(Win win) { win.isLocalhost(); }) {
+            return win.isLocalhost();
+        }
+        return true;
+    }
+
+    template<typename Win>
+    QVariantMap window_to_variant_map(Win const* win)
     {
         return {{QStringLiteral("resourceClass"), win->meta.wm_class.res_class},
                 {QStringLiteral("resourceName"), win->meta.wm_class.res_name},
                 {QStringLiteral("desktopFile"), win->control->desktop_file_name},
                 {QStringLiteral("role"), win->windowRole()},
                 {QStringLiteral("caption"), win->meta.caption.normal},
-                {QStringLiteral("clientMachine"), win->wmClientMachine(true)},
-                {QStringLiteral("localhost"), win->isLocalhost()},
+                {QStringLiteral("clientMachine"), get_client_machine(*win)},
+                {QStringLiteral("localhost"), is_local_host(*win)},
                 {QStringLiteral("type"), win->windowType()},
                 {QStringLiteral("x"), win->geo.pos().x()},
                 {QStringLiteral("y"), win->geo.pos().y()},

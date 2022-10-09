@@ -156,7 +156,7 @@ public:
         return m_active;
     }
 
-    void start(std::function<void(typename Redirect::window_t*)> callback)
+    void start(std::function<void(std::optional<typename Redirect::window_t>)> callback)
     {
         Q_ASSERT(!m_active);
         m_active = true;
@@ -178,7 +178,7 @@ private:
     void deactivate()
     {
         m_active = false;
-        m_callback = std::function<void(typename Redirect::window_t*)>();
+        m_callback = {};
         m_pointSelectionFallback = std::function<void(const QPoint&)>();
         this->redirect.pointer->removeWindowSelectionCursor();
         this->redirect.keyboard->update();
@@ -188,7 +188,7 @@ private:
     void cancel()
     {
         if (m_callback) {
-            m_callback(nullptr);
+            m_callback({});
         }
         if (m_pointSelectionFallback) {
             m_pointSelectionFallback(QPoint(-1, -1));
@@ -214,7 +214,7 @@ private:
     }
 
     bool m_active = false;
-    std::function<void(typename Redirect::window_t*)> m_callback;
+    std::function<void(std::optional<typename Redirect::window_t>)> m_callback;
     std::function<void(const QPoint&)> m_pointSelectionFallback;
     QMap<quint32, QPointF> m_touchPoints;
 };

@@ -22,8 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/wayland/server.h"
 #include "input/cursor.h"
 #include "input/pointer_redirect.h"
-#include "input/touch_redirect.h"
-#include "toplevel.h"
 #include "win/deco.h"
 #include "win/deco/bridge.h"
 #include "win/deco/client_impl.h"
@@ -82,7 +80,7 @@ private Q_SLOTS:
     void testTooltipDoesntEatKeyEvents();
 
 private:
-    Test::space::window_t* showWindow();
+    Test::space::wayland_window* showWindow();
 
     struct {
         std::unique_ptr<Wrapland::Client::XdgShellToplevel> toplevel;
@@ -96,7 +94,7 @@ private:
 
 #define RELEASE Test::pointer_button_released(BTN_LEFT, timestamp++)
 
-Test::space::window_t* DecorationInputTest::showWindow()
+Test::space::wayland_window* DecorationInputTest::showWindow()
 {
     using namespace Wrapland::Client;
 #define VERIFY(statement)                                                                          \
@@ -132,7 +130,7 @@ Test::space::window_t* DecorationInputTest::showWindow()
     // let's render
     auto c = Test::render_and_wait_for_shown(client.surface, QSize(500, 50), Qt::blue);
     VERIFY(c);
-    COMPARE(Test::app()->base.space->stacking.active, c);
+    COMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
     COMPARE(c->userCanSetNoBorder(), true);
     COMPARE(win::decoration(c) != nullptr, true);
 
@@ -204,8 +202,10 @@ void DecorationInputTest::testAxis()
 
     MOTION(QPoint(c->geo.frame.center().x(), win::frame_to_client_pos(c, QPoint()).y() / 2));
 
-    QVERIFY(Test::app()->base.space->input->pointer->focus.deco);
-    QCOMPARE(Test::app()->base.space->input->pointer->focus.deco->decoration()->sectionUnderMouse(),
+    QVERIFY(Test::app()->base.space->input->pointer->focus.deco.client);
+    QCOMPARE(Test::app()
+                 ->base.space->input->pointer->focus.deco.client->decoration()
+                 ->sectionUnderMouse(),
              Qt::TitleBarArea);
 
     // TODO: mouse wheel direction looks wrong to me
@@ -224,9 +224,12 @@ void DecorationInputTest::testAxis()
     win::move(c, QPoint(0, 0));
     QFETCH(QPoint, decoPoint);
     MOTION(decoPoint);
-    QVERIFY(Test::app()->base.space->input->pointer->focus.deco);
-    QCOMPARE(Test::app()->base.space->input->pointer->focus.deco->client(), c);
-    QTEST(Test::app()->base.space->input->pointer->focus.deco->decoration()->sectionUnderMouse(),
+    QVERIFY(Test::app()->base.space->input->pointer->focus.deco.client);
+    QVERIFY(Test::app()->base.space->input->pointer->focus.deco.window);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->input->pointer->focus.window), c);
+    QTEST(Test::app()
+              ->base.space->input->pointer->focus.deco.client->decoration()
+              ->sectionUnderMouse(),
           "expectedSection");
     Test::pointer_axis_vertical(5.0, timestamp++, 0);
     QVERIFY(!c->control->keep_below);
@@ -273,9 +276,12 @@ void KWin::DecorationInputTest::testDoubleClick()
     win::move(c, QPoint(0, 0));
     QFETCH(QPoint, decoPoint);
     MOTION(decoPoint);
-    QVERIFY(Test::app()->base.space->input->pointer->focus.deco);
-    QCOMPARE(Test::app()->base.space->input->pointer->focus.deco->client(), c);
-    QTEST(Test::app()->base.space->input->pointer->focus.deco->decoration()->sectionUnderMouse(),
+    QVERIFY(Test::app()->base.space->input->pointer->focus.deco.client);
+    QVERIFY(Test::app()->base.space->input->pointer->focus.deco.window);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->input->pointer->focus.window), c);
+    QTEST(Test::app()
+              ->base.space->input->pointer->focus.deco.client->decoration()
+              ->sectionUnderMouse(),
           "expectedSection");
     // double click
     PRESS;
@@ -326,12 +332,15 @@ void KWin::DecorationInputTest::testDoubleTap()
     // event before DecorationEventFilter.
     win::move(c, QPoint(10, 10));
     QFETCH(QPoint, decoPoint);
+
     // double click
     Test::touch_down(0, decoPoint, timestamp++);
-    QVERIFY(Test::app()->base.space->input->touch->focus.deco);
-    QCOMPARE(Test::app()->base.space->input->touch->focus.deco->client(), c);
-    QTEST(Test::app()->base.space->input->touch->focus.deco->decoration()->sectionUnderMouse(),
-          "expectedSection");
+    QVERIFY(Test::app()->base.space->input->touch->focus.deco.client);
+    QVERIFY(Test::app()->base.space->input->touch->focus.deco.window);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->input->touch->focus.window), c);
+    QTEST(
+        Test::app()->base.space->input->touch->focus.deco.client->decoration()->sectionUnderMouse(),
+        "expectedSection");
     Test::touch_up(0, timestamp++);
     QVERIFY(!win::on_all_desktops(c));
     Test::touch_down(0, decoPoint, timestamp++);
@@ -811,10 +820,11 @@ void DecorationInputTest::testTouchEvents()
     quint32 timestamp = 1;
     const QPoint tapPoint(c->geo.frame.center().x(), win::frame_to_client_pos(c, QPoint()).y() / 2);
 
-    QVERIFY(!Test::app()->base.space->input->touch->focus.deco);
+    QVERIFY(!Test::app()->base.space->input->touch->focus.deco.client);
     Test::touch_down(0, tapPoint, timestamp++);
-    QVERIFY(Test::app()->base.space->input->touch->focus.deco);
-    QCOMPARE(Test::app()->base.space->input->touch->focus.deco->decoration(), win::decoration(c));
+    QVERIFY(Test::app()->base.space->input->touch->focus.deco.client);
+    QCOMPARE(Test::app()->base.space->input->touch->focus.deco.client->decoration(),
+             win::decoration(c));
     QCOMPARE(hoverMoveSpy.count(), 1);
     QCOMPARE(hoverLeaveSpy.count(), 0);
     Test::touch_up(0, timestamp++);
@@ -863,8 +873,7 @@ void DecorationInputTest::testTooltipDoesntEatKeyEvents()
 
     QVERIFY(clientAddedSpy.wait());
     auto win_id = clientAddedSpy.first().first().value<quint32>();
-    auto internal = dynamic_cast<Test::space::internal_window_t*>(
-        Test::app()->base.space->windows_map.at(win_id));
+    auto internal = Test::get_internal_window(Test::app()->base.space->windows_map.at(win_id));
     QVERIFY(internal);
     QVERIFY(internal->isInternal());
     QVERIFY(internal->internalWindow()->flags().testFlag(Qt::ToolTip));

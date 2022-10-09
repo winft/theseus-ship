@@ -154,7 +154,7 @@ PlaceWindowResult TestPlacement::createAndPlaceWindow(QSize const& defaultSize)
     configSpy.wait();
 
     auto window_id = window_spy.first().first().value<quint32>();
-    auto window = dynamic_cast<wayland_window*>(Test::app()->base.space->windows_map.at(window_id));
+    auto window = Test::get_wayland_window(Test::app()->base.space->windows_map.at(window_id));
 
     rc.initiallyConfiguredSize = configSpy[0][0].toSize();
     rc.initiallyConfiguredStates

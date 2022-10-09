@@ -111,7 +111,8 @@ public:
 protected:
     void buildQuads() override
     {
-        auto const& window_size = this->window->ref_win->geo.size();
+        auto const& window_size = std::visit(overload{[](auto&& win) { return win->geo.size(); }},
+                                             *this->window->ref_win);
 
         // Do not draw shadows if window width or window height is less than
         // 5 px. 5 is an arbitrary choice.

@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "lib/app.h"
 
 #include "base/wayland/server.h"
-#include "toplevel.h"
 #include "win/deco.h"
 #include "win/space.h"
 #include "win/x11/window.h"
@@ -65,7 +64,8 @@ void DontCrashGlxgearsTest::testGlxgears()
     QCOMPARE(clientAddedSpy.count(), 1);
     QCOMPARE(Test::app()->base.space->windows.size(), 1);
 
-    auto glxgearsClient = Test::app()->base.space->windows.front();
+    auto glxgearsClient = Test::get_x11_window(Test::app()->base.space->windows.front());
+    QVERIFY(glxgearsClient);
     QVERIFY(win::decoration(glxgearsClient));
     QSignalSpy closedSpy(glxgearsClient->qobject.get(), &win::window_qobject::closed);
     QVERIFY(closedSpy.isValid());

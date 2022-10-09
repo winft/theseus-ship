@@ -25,7 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/wayland/cursor.h"
 #include "input/wayland/cursor_theme.h"
 #include "render/effects.h"
-#include "toplevel.h"
 #include "win/move.h"
 #include "win/screen_edges.h"
 #include "win/space.h"
@@ -146,7 +145,7 @@ private:
 
 wayland_window* get_wayland_window_from_id(uint32_t id)
 {
-    return dynamic_cast<wayland_window*>(Test::app()->base.space->windows_map.at(id));
+    return Test::get_window<Test::wayland_window>(Test::app()->base.space->windows_map.at(id));
 }
 
 void PointerInputTest::initTestCase()
@@ -228,7 +227,8 @@ void PointerInputTest::testWarpingUpdatesFocus()
     QVERIFY(shellSurface);
     render(surface);
     QVERIFY(clientAddedSpy.wait());
-    auto window = Test::app()->base.space->stacking.active;
+
+    auto window = Test::get_wayland_window(Test::app()->base.space->stacking.active);
     QVERIFY(window);
 
     // currently there should not be a focused pointer surface
@@ -247,9 +247,9 @@ void PointerInputTest::testWarpingUpdatesFocus()
 
     // and out again
     Test::cursor()->set_pos(QPoint(250, 250));
-    ;
     QVERIFY(leftSpy.wait());
     QCOMPARE(leftSpy.count(), 1);
+
     // there should not be a focused pointer surface anymore
     QVERIFY(!waylandServer()->seat()->pointers().get_focus().surface);
     QVERIFY(!pointer->enteredSurface());
@@ -278,7 +278,7 @@ void PointerInputTest::testWarpingGeneratesPointerMotion()
     QVERIFY(shellSurface);
     render(surface);
     QVERIFY(clientAddedSpy.wait());
-    auto window = Test::app()->base.space->stacking.active;
+    auto window = Test::get_wayland_window(Test::app()->base.space->stacking.active);
     QVERIFY(window);
 
     // enter
@@ -319,7 +319,7 @@ void PointerInputTest::testWarpingDuringFilter()
     QVERIFY(shellSurface);
     render(surface);
     QVERIFY(clientAddedSpy.wait());
-    auto window = Test::app()->base.space->stacking.active;
+    auto window = Test::get_wayland_window(Test::app()->base.space->stacking.active);
     QVERIFY(window);
 
     QCOMPARE(window->geo.pos(), QPoint(0, 0));
@@ -368,7 +368,7 @@ void PointerInputTest::testUpdateFocusAfterScreenChange()
     render(surface, QSize(1280, 1024));
     QVERIFY(clientAddedSpy.wait());
 
-    auto window = Test::app()->base.space->stacking.active;
+    auto window = Test::get_wayland_window(Test::app()->base.space->stacking.active);
     QVERIFY(window);
     QVERIFY(!window->geo.frame.contains(Test::cursor()->pos()));
 
@@ -472,7 +472,7 @@ void PointerInputTest::testModifierClickUnrestrictedMove()
     QVERIFY(shellSurface);
     render(surface);
     QVERIFY(clientAddedSpy.wait());
-    auto window = Test::app()->base.space->stacking.active;
+    auto window = Test::get_wayland_window(Test::app()->base.space->stacking.active);
     QVERIFY(window);
 
     // move cursor on window
@@ -543,7 +543,7 @@ void PointerInputTest::testModifierClickUnrestrictedMoveGlobalShortcutsDisabled(
     QVERIFY(shellSurface);
     render(surface);
     QVERIFY(clientAddedSpy.wait());
-    auto window = Test::app()->base.space->stacking.active;
+    auto window = Test::get_wayland_window(Test::app()->base.space->stacking.active);
     QVERIFY(window);
 
     // disable global shortcuts
@@ -617,7 +617,7 @@ void PointerInputTest::testModifierScrollOpacity()
     QVERIFY(shellSurface);
     render(surface);
     QVERIFY(clientAddedSpy.wait());
-    auto window = Test::app()->base.space->stacking.active;
+    auto window = Test::get_wayland_window(Test::app()->base.space->stacking.active);
     QVERIFY(window);
     // set the opacity to 0.5
     window->setOpacity(0.5);
@@ -677,7 +677,8 @@ void PointerInputTest::testModifierScrollOpacityGlobalShortcutsDisabled()
     QVERIFY(shellSurface);
     render(surface);
     QVERIFY(clientAddedSpy.wait());
-    auto window = Test::app()->base.space->stacking.active;
+
+    auto window = Test::get_wayland_window(Test::app()->base.space->stacking.active);
     QVERIFY(window);
     // set the opacity to 0.5
     window->setOpacity(0.5);
@@ -728,7 +729,8 @@ void PointerInputTest::testScrollAction()
     QVERIFY(shellSurface1);
     render(surface1);
     QVERIFY(clientAddedSpy.wait());
-    auto window1 = Test::app()->base.space->stacking.active;
+
+    auto window1 = Test::get_wayland_window(Test::app()->base.space->stacking.active);
     QVERIFY(window1);
     auto surface2 = Test::create_surface();
     QVERIFY(surface2);
@@ -736,7 +738,8 @@ void PointerInputTest::testScrollAction()
     QVERIFY(shellSurface2);
     render(surface2);
     QVERIFY(clientAddedSpy.wait());
-    auto window2 = Test::app()->base.space->stacking.active;
+
+    auto window2 = Test::get_wayland_window(Test::app()->base.space->stacking.active);
     QVERIFY(window2);
     QVERIFY(window1 != window2);
 
@@ -789,7 +792,8 @@ void PointerInputTest::testFocusFollowsMouse()
     QVERIFY(shellSurface1);
     render(surface1, QSize(800, 800));
     QVERIFY(clientAddedSpy.wait());
-    auto window1 = Test::app()->base.space->stacking.active;
+
+    auto window1 = Test::get_wayland_window(Test::app()->base.space->stacking.active);
     QVERIFY(window1);
     auto surface2 = Test::create_surface();
     QVERIFY(surface2);
@@ -797,10 +801,13 @@ void PointerInputTest::testFocusFollowsMouse()
     QVERIFY(shellSurface2);
     render(surface2, QSize(800, 800));
     QVERIFY(clientAddedSpy.wait());
-    auto window2 = Test::app()->base.space->stacking.active;
+
+    auto window2 = Test::get_wayland_window(Test::app()->base.space->stacking.active);
     QVERIFY(window2);
     QVERIFY(window1 != window2);
-    QCOMPARE(win::top_client_on_desktop(Test::app()->base.space.get(), 1, nullptr), window2);
+    QCOMPARE(
+        Test::get_wayland_window(win::top_client_on_desktop(*Test::app()->base.space, 1, nullptr)),
+        window2);
     // geometry of the two windows should be overlapping
     QVERIFY(window1->geo.frame.intersects(window2->geo.frame));
 
@@ -821,18 +828,25 @@ void PointerInputTest::testFocusFollowsMouse()
     Test::cursor()->set_pos(10, 10);
     QVERIFY(stackingOrderChangedSpy.wait());
     QCOMPARE(stackingOrderChangedSpy.count(), 1);
-    QCOMPARE(win::top_client_on_desktop(Test::app()->base.space.get(), 1, nullptr), window1);
+    QCOMPARE(
+        Test::get_wayland_window(win::top_client_on_desktop(*Test::app()->base.space, 1, nullptr)),
+        window1);
     QTRY_VERIFY(window1->control->active);
 
     // move on second window, but move away before active window change delay hits
     Test::cursor()->set_pos(810, 810);
     QVERIFY(stackingOrderChangedSpy.wait());
     QCOMPARE(stackingOrderChangedSpy.count(), 2);
-    QCOMPARE(win::top_client_on_desktop(Test::app()->base.space.get(), 1, nullptr), window2);
+    QCOMPARE(
+        Test::get_wayland_window(win::top_client_on_desktop(*Test::app()->base.space, 1, nullptr)),
+        window2);
     Test::cursor()->set_pos(10, 10);
     QVERIFY(!activeWindowChangedSpy.wait(250));
     QVERIFY(window1->control->active);
-    QCOMPARE(win::top_client_on_desktop(Test::app()->base.space.get(), 1, nullptr), window1);
+    QCOMPARE(
+        Test::get_wayland_window(win::top_client_on_desktop(*Test::app()->base.space, 1, nullptr)),
+        window1);
+
     // as we moved back on window 1 that should been raised in the mean time
     QCOMPARE(stackingOrderChangedSpy.count(), 3);
 
@@ -880,7 +894,8 @@ void PointerInputTest::testMouseActionInactiveWindow()
 
     render(surface1, QSize(800, 800));
     QVERIFY(clientAddedSpy.wait());
-    auto window1 = Test::app()->base.space->stacking.active;
+
+    auto window1 = Test::get_wayland_window(Test::app()->base.space->stacking.active);
     QVERIFY(window1);
 
     auto surface2 = Test::create_surface();
@@ -890,10 +905,13 @@ void PointerInputTest::testMouseActionInactiveWindow()
 
     render(surface2, QSize(800, 800));
     QVERIFY(clientAddedSpy.wait());
-    auto window2 = Test::app()->base.space->stacking.active;
+
+    auto window2 = Test::get_wayland_window(Test::app()->base.space->stacking.active);
     QVERIFY(window2);
     QVERIFY(window1 != window2);
-    QCOMPARE(win::top_client_on_desktop(Test::app()->base.space.get(), 1, nullptr), window2);
+    QCOMPARE(
+        Test::get_wayland_window(win::top_client_on_desktop(*Test::app()->base.space, 1, nullptr)),
+        window2);
 
     // Geometry of the two windows should be overlapping.
     QVERIFY(window1->geo.frame.intersects(window2->geo.frame));
@@ -928,7 +946,9 @@ void PointerInputTest::testMouseActionInactiveWindow()
     // Should raise window1 and activate it.
     QCOMPARE(stackingOrderChangedSpy.count(), 1);
     QVERIFY(!activeWindowChangedSpy.isEmpty());
-    QCOMPARE(win::top_client_on_desktop(Test::app()->base.space.get(), 1, nullptr), window1);
+    QCOMPARE(
+        Test::get_wayland_window(win::top_client_on_desktop(*Test::app()->base.space, 1, nullptr)),
+        window1);
     QVERIFY(window1->control->active);
     QVERIFY(!window2->control->active);
 
@@ -982,7 +1002,7 @@ void PointerInputTest::testMouseActionActiveWindow()
     render(surface1, QSize(800, 800));
     QVERIFY(clientAddedSpy.wait());
 
-    auto window1 = Test::app()->base.space->stacking.active;
+    auto window1 = Test::get_wayland_window(Test::app()->base.space->stacking.active);
     QVERIFY(window1);
     QSignalSpy window1DestroyedSpy(window1->qobject.get(), &QObject::destroyed);
     QVERIFY(window1DestroyedSpy.isValid());
@@ -994,20 +1014,24 @@ void PointerInputTest::testMouseActionActiveWindow()
     render(surface2, QSize(800, 800));
     QVERIFY(clientAddedSpy.wait());
 
-    auto window2 = Test::app()->base.space->stacking.active;
+    auto window2 = Test::get_wayland_window(Test::app()->base.space->stacking.active);
     QVERIFY(window2);
     QVERIFY(window1 != window2);
 
     QSignalSpy window2DestroyedSpy(window2->qobject.get(), &QObject::destroyed);
     QVERIFY(window2DestroyedSpy.isValid());
-    QCOMPARE(win::top_client_on_desktop(Test::app()->base.space.get(), 1, nullptr), window2);
+    QCOMPARE(
+        Test::get_wayland_window(win::top_client_on_desktop(*Test::app()->base.space, 1, nullptr)),
+        window2);
 
     // Geometry of the two windows should be overlapping.
     QVERIFY(window1->geo.frame.intersects(window2->geo.frame));
 
     // lower the currently active window
-    win::lower_window(Test::app()->base.space.get(), window2);
-    QCOMPARE(win::top_client_on_desktop(Test::app()->base.space.get(), 1, nullptr), window1);
+    win::lower_window(*Test::app()->base.space, window2);
+    QCOMPARE(
+        Test::get_wayland_window(win::top_client_on_desktop(*Test::app()->base.space, 1, nullptr)),
+        window1);
 
     // Signal spy for stacking order spy.
     QSignalSpy stackingOrderChangedSpy(Test::app()->base.space->stacking.order.qobject.get(),
@@ -1027,12 +1051,16 @@ void PointerInputTest::testMouseActionActiveWindow()
 
     if (clickRaise) {
         QCOMPARE(stackingOrderChangedSpy.count(), 1);
-        QTRY_COMPARE_WITH_TIMEOUT(
-            win::top_client_on_desktop(Test::app()->base.space.get(), 1, nullptr), window2, 200);
+        QTRY_COMPARE_WITH_TIMEOUT(Test::get_wayland_window(win::top_client_on_desktop(
+                                      *Test::app()->base.space, 1, nullptr)),
+                                  window2,
+                                  200);
     } else {
         QCOMPARE(stackingOrderChangedSpy.count(), 0);
         QVERIFY(!stackingOrderChangedSpy.wait(100));
-        QCOMPARE(win::top_client_on_desktop(Test::app()->base.space.get(), 1, nullptr), window1);
+        QCOMPARE(Test::get_wayland_window(
+                     win::top_client_on_desktop(*Test::app()->base.space, 1, nullptr)),
+                 window1);
     }
 
     // Release again.
@@ -1079,13 +1107,13 @@ void PointerInputTest::testCursorImage()
     render(surface);
     QVERIFY(clientAddedSpy.wait());
 
-    auto window = Test::app()->base.space->stacking.active;
+    auto window = Test::get_wayland_window(Test::app()->base.space->stacking.active);
     QVERIFY(window);
 
     // Move the cursor to center of window. This should first set a null pointer. So we still show
     // the old cursor.
     Test::cursor()->set_pos(window->geo.frame.center());
-    QCOMPARE(p->focus.window, window);
+    QCOMPARE(Test::get_wayland_window(p->focus.window), window);
     QCOMPARE(Test::cursor()->image(), fallback_cursor);
     QVERIFY(enteredSpy.wait());
 
@@ -1201,7 +1229,7 @@ void PointerInputTest::testEffectOverrideCursorImage()
 
     render(surface);
     QVERIFY(clientAddedSpy.wait());
-    auto window = Test::app()->base.space->stacking.active;
+    auto window = Test::get_wayland_window(Test::app()->base.space->stacking.active);
     QVERIFY(window);
 
     // And move cursor to the window.
@@ -1282,7 +1310,8 @@ void PointerInputTest::testPopup()
     QVERIFY(shellSurface);
     render(surface);
     QVERIFY(clientAddedSpy.wait());
-    auto window = Test::app()->base.space->stacking.active;
+
+    auto window = Test::get_wayland_window(Test::app()->base.space->stacking.active);
     QVERIFY(window);
     QCOMPARE(window->transient->input_grab, false);
     // move pointer into window
@@ -1320,10 +1349,11 @@ void PointerInputTest::testPopup()
     popupShellSurface->requestGrab(m_seat, 0); // FIXME: Serial.
     render(popupSurface, positioner.initialSize());
     QVERIFY(clientAddedSpy.wait());
+
     auto popupClient = get_wayland_window_from_id(clientAddedSpy.last().first().value<quint32>());
     QVERIFY(popupClient);
     QVERIFY(popupClient != window);
-    QCOMPARE(window, Test::app()->base.space->stacking.active);
+    QCOMPARE(window, Test::get_wayland_window(Test::app()->base.space->stacking.active));
     QCOMPARE(popupClient->transient->lead(), window);
     QCOMPARE(popupClient->geo.pos(), window->geo.pos() + QPoint(80, 20));
     QCOMPARE(popupClient->transient->input_grab, true);
@@ -1409,7 +1439,8 @@ void PointerInputTest::testDecoCancelsPopup()
 
     render(surface);
     QVERIFY(clientAddedSpy.wait());
-    auto window = Test::app()->base.space->stacking.active;
+
+    auto window = Test::get_wayland_window(Test::app()->base.space->stacking.active);
     QVERIFY(window);
     QCOMPARE(window->transient->input_grab, false);
     QVERIFY(win::decoration(window));
@@ -1437,10 +1468,11 @@ void PointerInputTest::testDecoCancelsPopup()
     popupShellSurface->requestGrab(m_seat, 0); // FIXME: Serial.
     render(popupSurface, positioner.initialSize());
     QVERIFY(clientAddedSpy.wait());
+
     auto popupClient = get_wayland_window_from_id(clientAddedSpy.last().first().value<quint32>());
     QVERIFY(popupClient);
     QVERIFY(popupClient != window);
-    QCOMPARE(window, Test::app()->base.space->stacking.active);
+    QCOMPARE(window, Test::get_wayland_window(Test::app()->base.space->stacking.active));
     QCOMPARE(popupClient->transient->lead(), window);
     QCOMPARE(popupClient->geo.pos(),
              win::frame_to_client_pos(window, window->geo.pos()) + QPoint(80, 20));
@@ -1484,7 +1516,8 @@ void PointerInputTest::testWindowUnderCursorWhileButtonPressed()
     QVERIFY(shellSurface);
     render(surface);
     QVERIFY(clientAddedSpy.wait());
-    auto window = Test::app()->base.space->stacking.active;
+
+    auto window = Test::get_wayland_window(Test::app()->base.space->stacking.active);
     QVERIFY(window);
 
     // move cursor over window

@@ -13,6 +13,7 @@
 #include "win/space_qobject.h"
 #include "win/util.h"
 #include "win/virtual_desktops.h"
+#include "win/window_qobject.h"
 
 #include <KConfigGroup>
 #include <QObject>
@@ -269,12 +270,15 @@ public:
                                  return;
                              }
 
-                             // Ignore some special types.
-                             if (win::is_desktop(window) || win::is_dock(window)) {
-                                 return;
-                             }
+                             std::visit(overload{[&](auto&& win) {
+                                            // Ignore some special types.
+                                            if (win::is_desktop(win) || win::is_dock(win)) {
+                                                return;
+                                            }
 
-                             this->set_layout(get_layout(layouts, window));
+                                            this->set_layout(get_layout(layouts, window_t(win)));
+                                        }},
+                                        *window);
                          });
     }
 
@@ -296,26 +300,28 @@ protected:
             return;
         }
 
-        // Ignore some special types.
-        if (win::is_desktop(window) || win::is_dock(window)) {
-            return;
-        }
+        std::visit(overload{[this, index](auto&& win) {
+                       // Ignore some special types.
+                       if (win::is_desktop(win) || win::is_dock(win)) {
+                           return;
+                       }
 
-        auto it = layouts.find(window);
+                       if (auto it = layouts.find(window_t(win)); it != layouts.end()) {
+                           it->second = index;
+                           return;
+                       }
 
-        if (it == layouts.end()) {
-            layouts.insert({window, index});
-            QObject::connect(window->qobject.get(),
-                             &window_t::qobject_t::closed,
-                             this->qobject.get(),
-                             [this, window] { layouts.erase(window); });
-        } else {
-            it->second = index;
-        }
+                       layouts.insert({window_t(win), index});
+                       QObject::connect(win->qobject.get(),
+                                        &win::window_qobject::closed,
+                                        this->qobject.get(),
+                                        [this, win] { layouts.erase(window_t(win)); });
+                   }},
+                   *window);
     }
 
 private:
-    std::unordered_map<window_t*, uint32_t> layouts;
+    std::unordered_map<window_t, uint32_t> layouts;
 };
 
 template<typename Manager>
@@ -331,7 +337,13 @@ public:
         QObject::connect(space.qobject.get(),
                          &win::space_qobject::clientActivated,
                          this->qobject.get(),
-                         [this, &space] { handle_client_activated(space.stacking.active); });
+                         [this, &space] {
+                             if (auto act = space.stacking.active) {
+                                 std::visit(
+                                     overload{[this](auto&& act) { handle_client_activated(act); }},
+                                     *act);
+                             }
+                         });
 
         auto session_manager = space.session_manager.get();
         QObject::connect(
@@ -345,7 +357,10 @@ public:
                     if (!layout) {
                         continue;
                     }
-                    if (auto const name = win->control->desktop_file_name; !name.isEmpty()) {
+
+                    auto name = std::visit(
+                        overload{[](auto&& win) { return win->control->desktop_file_name; }}, win);
+                    if (!name.isEmpty()) {
                         this->config.writeEntry(
                             this->default_layout_entry_key() % QLatin1String(name), layout);
                     }
@@ -385,41 +400,44 @@ protected:
             return;
         }
 
-        // Ignore some special types.
-        if (win::is_desktop(window) || win::is_dock(window)) {
-            return;
-        }
+        std::visit(overload{[this, index](auto&& window) {
+                       // Ignore some special types.
+                       if (win::is_desktop(window) || win::is_dock(window)) {
+                           return;
+                       }
 
-        auto it = layouts.find(window);
+                       auto it = layouts.find(window_t(window));
 
-        if (it == layouts.end()) {
-            layouts.insert({window, index});
-            QObject::connect(window->qobject.get(),
-                             &window_t::qobject_t::closed,
-                             this->qobject.get(),
-                             [this, window] { layouts.erase(window); });
-        } else {
-            if (it->second == index) {
-                return;
-            }
-            it->second = index;
-        }
+                       if (it == layouts.end()) {
+                           layouts.insert({window_t(window), index});
+                           QObject::connect(window->qobject.get(),
+                                            &win::window_qobject::closed,
+                                            this->qobject.get(),
+                                            [this, window] { layouts.erase(window_t(window)); });
+                       } else {
+                           if (it->second == index) {
+                               return;
+                           }
+                           it->second = index;
+                       }
 
-        // Update all layouts for the application.
-        for (auto& [win, layout] : layouts) {
-            if (win::belong_to_same_client(win, window)) {
-                layout = index;
-            }
-        }
+                       // Update all layouts for the application.
+                       for (auto& [win, layout] : layouts) {
+                           if (std::visit(overload{[&](auto&& win) {
+                                              return win::belong_to_same_client(win, window);
+                                          }},
+                                          win)) {
+                               layout = index;
+                           }
+                       }
+                   }},
+                   *window);
     }
 
 private:
-    void handle_client_activated(window_t* window)
+    template<typename Win>
+    void handle_client_activated(Win* window)
     {
-        if (!window) {
-            return;
-        }
-
         // Ignore some special types.
         if (win::is_desktop(window) || win::is_dock(window)) {
             return;
@@ -432,7 +450,9 @@ private:
         }
 
         for (auto const& [win, layout] : layouts) {
-            if (win::belong_to_same_client(window, win)) {
+            if (std::visit(
+                    overload{[&](auto&& win) { return win::belong_to_same_client(window, win); }},
+                    win)) {
                 this->set_layout(layout);
                 handle_layout_change(layout);
                 return;
@@ -454,7 +474,7 @@ private:
         }
     }
 
-    std::unordered_map<window_t*, uint32_t> layouts;
+    std::unordered_map<window_t, uint32_t> layouts;
     std::unordered_map<QByteArray, uint32_t> restored_layouts;
 };
 
