@@ -447,6 +447,8 @@ public:
     void slotDown();
 
 private:
+    /// Returns new desktops.
+    QList<virtual_desktop*> update_count(uint count);
     /**
      * Generate a desktop layout from EWMH _NET_DESKTOP_LAYOUT property parameters.
      */
