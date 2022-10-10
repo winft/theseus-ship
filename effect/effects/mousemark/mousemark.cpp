@@ -322,4 +322,9 @@ bool MouseMarkEffect::isActive() const
     return (!marks.isEmpty() || !drawing.isEmpty()) && !effects->isScreenLocked();
 }
 
-} // namespace
+int MouseMarkEffect::requestedEffectChainPosition() const
+{
+    return 10;
+}
+
+}

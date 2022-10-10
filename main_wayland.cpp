@@ -45,6 +45,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KLocalizedString>
 #include <KPluginMetaData>
 #include <KShell>
+#include <KSignalHandler>
 #include <UpdateLaunchEnvironmentJob>
 
 // Qt
@@ -101,11 +102,6 @@ static void restoreNofileLimit()
         std::cerr << "Failed to restore RLIMIT_NOFILE limit, legacy apps might be broken"
                   << std::endl;
     }
-}
-
-static void sighandler(int)
-{
-    QApplication::exit();
 }
 
 void disableDrKonqi()
@@ -373,12 +369,6 @@ int main(int argc, char * argv[])
     KWin::Application::setupLocalizedString();
     KWin::gainRealTime();
 
-    if (signal(SIGTERM, KWin::sighandler) == SIG_IGN)
-        signal(SIGTERM, SIG_IGN);
-    if (signal(SIGINT, KWin::sighandler) == SIG_IGN)
-        signal(SIGINT, SIG_IGN);
-    if (signal(SIGHUP, KWin::sighandler) == SIG_IGN)
-        signal(SIGHUP, SIG_IGN);
     signal(SIGPIPE, SIG_IGN);
 
     // ensure that no thread takes SIGUSR
@@ -409,6 +399,12 @@ int main(int argc, char * argv[])
     // Reset QT_QPA_PLATFORM so we don't propagate it to our children (e.g. apps launched from the
     // overview effect).
     qunsetenv("QT_QPA_PLATFORM");
+
+    KSignalHandler::self()->watchSignal(SIGTERM);
+    KSignalHandler::self()->watchSignal(SIGINT);
+    KSignalHandler::self()->watchSignal(SIGHUP);
+    QObject::connect(KSignalHandler::self(), &KSignalHandler::signalReceived,
+                     &a, &QCoreApplication::exit);
 
     KWin::Application::createAboutData();
     QCommandLineOption xwaylandOption(QStringLiteral("xwayland"),

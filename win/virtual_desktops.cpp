@@ -123,6 +123,7 @@ void virtual_desktop_manager::setVirtualDesktopManagement(
 void virtual_desktop::setId(QString const& id)
 {
     Q_ASSERT(m_id.isEmpty());
+    assert(!id.isEmpty());
     m_id = id;
 }
 
@@ -614,17 +615,8 @@ bool virtual_desktop_manager::setCurrent(virtual_desktop* newDesktop)
     return true;
 }
 
-void virtual_desktop_manager::setCount(uint count)
+QList<virtual_desktop*> virtual_desktop_manager::update_count(uint count)
 {
-    count = qBound<uint>(1, count, virtual_desktop_manager::maximum());
-    if (count == uint(m_desktops.count())) {
-        // nothing to change
-        return;
-    }
-
-    QList<virtual_desktop*> newDesktops;
-    uint const oldCount = m_desktops.count();
-
     // this explicit check makes it more readable
     if (static_cast<uint>(m_desktops.count()) > count) {
         auto const desktopsToRemove = m_desktops.mid(count);
@@ -641,27 +633,46 @@ void virtual_desktop_manager::setCount(uint count)
             Q_EMIT qobject->desktopRemoved(desktop);
             desktop->deleteLater();
         }
-    } else {
-        while (uint(m_desktops.count()) < count) {
-            auto vd = new virtual_desktop(qobject.get());
-            const int x11Number = m_desktops.count() + 1;
-            vd->setX11DesktopNumber(x11Number);
-            vd->setName(defaultName(x11Number));
-            if (!s_loadingDesktopSettings) {
-                vd->setId(generateDesktopId());
-            }
-            m_desktops << vd;
-            newDesktops << vd;
-            QObject::connect(vd, &virtual_desktop::nameChanged, qobject.get(), [this, vd] {
-                if (m_rootInfo) {
-                    m_rootInfo->setDesktopName(vd->x11DesktopNumber(), vd->name().toUtf8().data());
-                }
-            });
+
+        return {};
+    }
+
+    QList<virtual_desktop*> newDesktops;
+
+    while (uint(m_desktops.count()) < count) {
+        auto vd = new virtual_desktop(qobject.get());
+        const int x11Number = m_desktops.count() + 1;
+        vd->setX11DesktopNumber(x11Number);
+        vd->setName(defaultName(x11Number));
+        if (!s_loadingDesktopSettings) {
+            vd->setId(generateDesktopId());
+        }
+        m_desktops << vd;
+        newDesktops << vd;
+        QObject::connect(vd, &virtual_desktop::nameChanged, qobject.get(), [this, vd] {
             if (m_rootInfo) {
                 m_rootInfo->setDesktopName(vd->x11DesktopNumber(), vd->name().toUtf8().data());
             }
+        });
+        if (m_rootInfo) {
+            m_rootInfo->setDesktopName(vd->x11DesktopNumber(), vd->name().toUtf8().data());
         }
     }
+
+    return newDesktops;
+}
+
+void virtual_desktop_manager::setCount(uint count)
+{
+    count = qBound<uint>(1, count, virtual_desktop_manager::maximum());
+    if (count == uint(m_desktops.count())) {
+        // nothing to change
+        return;
+    }
+
+    uint const oldCount = m_desktops.count();
+
+    auto newDesktops = update_count(count);
 
     updateRootInfo();
 
@@ -755,15 +766,17 @@ void virtual_desktop_manager::updateLayout()
 
 void virtual_desktop_manager::load()
 {
-    s_loadingDesktopSettings = true;
-
     if (!m_config) {
         return;
     }
 
+    s_loadingDesktopSettings = true;
+
     KConfigGroup group(m_config, QStringLiteral("Desktops"));
     const int n = group.readEntry("Number", 1);
-    setCount(n);
+
+    uint const oldCount = m_desktops.count();
+    auto new_desktops = update_count(n);
 
     for (int i = 1; i <= n; i++) {
         QString s = group.readEntry(QStringLiteral("Name_%1").arg(i), i18n("Desktop %1", i));
@@ -783,6 +796,14 @@ void virtual_desktop_manager::load()
         // TODO: update desktop focus chain, why?
         //         m_desktopFocusChain.value()[i-1] = i;
     }
+
+    updateRootInfo();
+
+    for (auto vd : qAsConst(new_desktops)) {
+        Q_EMIT qobject->desktopCreated(vd);
+    }
+
+    Q_EMIT qobject->countChanged(oldCount, m_desktops.count());
 
     int rows = group.readEntry<int>("Rows", 2);
     m_rows = qBound(1, rows, n);

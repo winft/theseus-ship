@@ -65,11 +65,10 @@ ZoomEffect::ZoomEffect()
     initConfig<ZoomConfig>();
     QAction* a = nullptr;
     a = KStandardAction::zoomIn(this, SLOT(zoomIn()), this);
-    KGlobalAccel::self()->setDefaultShortcut(
-        a, QList<QKeySequence>() << static_cast<Qt::Key>(Qt::META) + Qt::Key_Equal);
+    KGlobalAccel::self()->setDefaultShortcut(a, QList<QKeySequence>() << (Qt::META | Qt::Key_Plus));
     KGlobalAccel::self()->setShortcut(
-        a, QList<QKeySequence>() << static_cast<Qt::Key>(Qt::META) + Qt::Key_Equal);
-    effects->registerGlobalShortcut(static_cast<Qt::Key>(Qt::META) + Qt::Key_Equal, a);
+        a, QList<QKeySequence>() << (Qt::META | Qt::Key_Plus) << (Qt::META | Qt::Key_Equal));
+    effects->registerGlobalShortcut(Qt::META | Qt::Key_Equal, a);
     effects->registerAxisShortcut(Qt::ControlModifier | Qt::MetaModifier, PointerAxisDown, a);
 
     a = KStandardAction::zoomOut(this, SLOT(zoomOut()), this);
