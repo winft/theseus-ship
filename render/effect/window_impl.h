@@ -147,9 +147,13 @@ public:
     {
         using x11_win = typename space_t::x11_window;
         return std::visit(
-            overload{
-                [](x11_win* ref_win) -> EffectWindowGroup* { return ref_win->group->effect_group; },
-                [](auto&& /*ref_win*/) -> EffectWindowGroup* { return nullptr; }},
+            overload{[](x11_win* ref_win) -> EffectWindowGroup* {
+                         if (!ref_win->group) {
+                             return nullptr;
+                         }
+                         return ref_win->group->effect_group;
+                     },
+                     [](auto&& /*ref_win*/) -> EffectWindowGroup* { return nullptr; }},
             *window.ref_win);
     }
 
