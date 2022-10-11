@@ -66,7 +66,7 @@ public:
     window(win::remnant remnant, Space& space)
         : qobject{std::make_unique<window_qobject>()}
         , meta{++space.window_id}
-        , transient{std::make_unique<win::transient<type>>(this)}
+        , transient{std::make_unique<x11::transient<type>>(this)}
         , remnant{std::move(remnant)}
         , motif_hints{space.atoms->motif_wm_hints}
         , space{space}
@@ -293,7 +293,7 @@ public:
         //
         // [1] https://specifications.freedesktop.org/wm-spec/wm-spec-latest.html#idm45623487728576
         //
-        return static_cast<x11::transient<window>*>(this->transient.get())->lead_id == rootWindow();
+        return transient->lead_id == rootWindow();
     }
 
     type* findModal()
@@ -517,7 +517,7 @@ public:
     win::window_topology<output_t> topo;
     win::window_render_data<output_t> render_data;
 
-    std::unique_ptr<win::transient<type>> transient;
+    std::unique_ptr<x11::transient<type>> transient;
     std::unique_ptr<win::control<type>> control;
     std::unique_ptr<render_t> render;
     std::optional<win::remnant> remnant;
