@@ -83,6 +83,48 @@ bool geo_is_minimizable(Win const& win)
 }
 
 template<typename Win>
+void detect_no_border(Win* win)
+{
+    if (win->is_shape) {
+        win->user_no_border = true;
+        win->app_no_border = true;
+        return;
+    }
+
+    switch (win->windowType()) {
+    case NET::Desktop:
+    case NET::Dock:
+    case NET::TopMenu:
+    case NET::Splash:
+    case NET::Notification:
+    case NET::OnScreenDisplay:
+    case NET::CriticalNotification:
+    case NET::AppletPopup:
+        win->user_no_border = true;
+        win->app_no_border = true;
+        break;
+    case NET::Unknown:
+    case NET::Normal:
+    case NET::Toolbar:
+    case NET::Menu:
+    case NET::Dialog:
+    case NET::Utility:
+        win->user_no_border = false;
+        break;
+    default:
+        abort();
+    }
+
+    // NET::Override is some strange beast without clear definition, usually
+    // just meaning "no_border", so let's treat it only as such flag, and ignore it as
+    // a window type otherwise (SUPPORTED_WINDOW_TYPES_MASK doesn't include it)
+    if (win->net_info->windowType(NET::OverrideMask) == NET::Override) {
+        win->user_no_border = true;
+        win->app_no_border = true;
+    }
+}
+
+template<typename Win>
 void update_shape(Win* win)
 {
     if (win->is_shape) {
@@ -170,6 +212,65 @@ void do_set_geometry(Win& win, QRect const& frame_geo)
     if (win.hasStrut()) {
         update_space_areas(win.space);
     }
+}
+
+template<typename Win>
+bool update_server_geometry(Win* win, QRect const& frame_geo)
+{
+    // The render geometry defines the outer bounds of the window (that is with SSD or GTK CSD).
+    auto const outer_geo = frame_to_render_rect(win, frame_geo);
+
+    // Our wrapper geometry is in global coordinates the outer geometry excluding SSD.
+    // That equals the the client geometry.
+    auto const abs_wrapper_geo = outer_geo - frame_margins(win);
+    assert(abs_wrapper_geo == frame_to_client_rect(win, frame_geo));
+
+    // The wrapper is relatively positioned to the outer geometry.
+    auto const rel_wrapper_geo = abs_wrapper_geo.translated(-outer_geo.topLeft());
+
+    // Adding the original client frame extents does the same as frame_to_render_rect.
+    auto const old_outer_geo = win->synced_geometry.client + win->geo.update.original.deco_margins;
+
+    auto const old_abs_wrapper_geo = old_outer_geo - win->geo.update.original.deco_margins;
+
+    auto const old_rel_wrapper_geo = old_abs_wrapper_geo.translated(-old_outer_geo.topLeft());
+
+    win->synced_geometry.max_mode = win->geo.update.max_mode;
+    win->synced_geometry.fullscreen = win->geo.update.fullscreen;
+
+    if (old_outer_geo.size() != outer_geo.size() || old_rel_wrapper_geo != rel_wrapper_geo
+        || win->synced_geometry.init) {
+        win->xcb_windows.outer.set_geometry(outer_geo);
+        win->xcb_windows.wrapper.set_geometry(rel_wrapper_geo);
+        win->xcb_windows.client.resize(rel_wrapper_geo.size());
+
+        update_shape(win);
+        update_input_window(win, frame_geo);
+
+        win->synced_geometry.frame = frame_geo;
+        win->synced_geometry.client = abs_wrapper_geo;
+
+        return true;
+    }
+
+    if (win->control->move_resize.enabled) {
+        if (win->space.base.render->compositor->scene) {
+            // Defer the X server update until we leave this mode.
+            win->move_needs_server_update = true;
+        } else {
+            // sendSyntheticConfigureNotify() on finish shall be sufficient
+            win->xcb_windows.outer.move(outer_geo.topLeft());
+            win->synced_geometry.frame = frame_geo;
+            win->synced_geometry.client = abs_wrapper_geo;
+        }
+    } else {
+        win->xcb_windows.outer.move(outer_geo.topLeft());
+        win->synced_geometry.frame = frame_geo;
+        win->synced_geometry.client = abs_wrapper_geo;
+    }
+
+    win->xcb_windows.input.move(outer_geo.topLeft() + win->input_offset);
+    return false;
 }
 
 template<typename Win>
@@ -1019,65 +1120,6 @@ void net_move_resize_window(Win* win, int flags, int x, int y, int width, int he
     }
 
     configure_request(win, value_mask, x, y, width, height, gravity, true);
-}
-
-template<typename Win>
-bool update_server_geometry(Win* win, QRect const& frame_geo)
-{
-    // The render geometry defines the outer bounds of the window (that is with SSD or GTK CSD).
-    auto const outer_geo = frame_to_render_rect(win, frame_geo);
-
-    // Our wrapper geometry is in global coordinates the outer geometry excluding SSD.
-    // That equals the the client geometry.
-    auto const abs_wrapper_geo = outer_geo - frame_margins(win);
-    assert(abs_wrapper_geo == frame_to_client_rect(win, frame_geo));
-
-    // The wrapper is relatively positioned to the outer geometry.
-    auto const rel_wrapper_geo = abs_wrapper_geo.translated(-outer_geo.topLeft());
-
-    // Adding the original client frame extents does the same as frame_to_render_rect.
-    auto const old_outer_geo = win->synced_geometry.client + win->geo.update.original.deco_margins;
-
-    auto const old_abs_wrapper_geo = old_outer_geo - win->geo.update.original.deco_margins;
-
-    auto const old_rel_wrapper_geo = old_abs_wrapper_geo.translated(-old_outer_geo.topLeft());
-
-    win->synced_geometry.max_mode = win->geo.update.max_mode;
-    win->synced_geometry.fullscreen = win->geo.update.fullscreen;
-
-    if (old_outer_geo.size() != outer_geo.size() || old_rel_wrapper_geo != rel_wrapper_geo
-        || win->synced_geometry.init) {
-        win->xcb_windows.outer.set_geometry(outer_geo);
-        win->xcb_windows.wrapper.set_geometry(rel_wrapper_geo);
-        win->xcb_windows.client.resize(rel_wrapper_geo.size());
-
-        update_shape(win);
-        update_input_window(win, frame_geo);
-
-        win->synced_geometry.frame = frame_geo;
-        win->synced_geometry.client = abs_wrapper_geo;
-
-        return true;
-    }
-
-    if (win->control->move_resize.enabled) {
-        if (win->space.base.render->compositor->scene) {
-            // Defer the X server update until we leave this mode.
-            win->move_needs_server_update = true;
-        } else {
-            // sendSyntheticConfigureNotify() on finish shall be sufficient
-            win->xcb_windows.outer.move(outer_geo.topLeft());
-            win->synced_geometry.frame = frame_geo;
-            win->synced_geometry.client = abs_wrapper_geo;
-        }
-    } else {
-        win->xcb_windows.outer.move(outer_geo.topLeft());
-        win->synced_geometry.frame = frame_geo;
-        win->synced_geometry.client = abs_wrapper_geo;
-    }
-
-    win->xcb_windows.input.move(outer_geo.topLeft() + win->input_offset);
-    return false;
 }
 
 template<typename Win>
