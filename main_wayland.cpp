@@ -210,6 +210,7 @@ void ApplicationWayland::start(OperationMode mode,
     session->take_control();
 
     base->input = std::make_unique<input::backend::wlroots::platform>(*base);
+    input::wayland::add_dbus(base->input.get());
     base->input->install_shortcuts();
 
     try {
@@ -227,7 +228,6 @@ void ApplicationWayland::start(OperationMode mode,
     }
 
     base->space = std::make_unique<base_t::space_t>(*base, base->server.get());
-    input::wayland::add_dbus(base->input.get());
     win::init_shortcuts(*base->space);
     base->space->scripting = std::make_unique<scripting::platform<base_t::space_t>>(*base->space);
 
