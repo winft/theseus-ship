@@ -21,7 +21,6 @@ import QtQuick 2.0;
 import QtQuick.Window 2.0;
 import org.kde.plasma.core 2.0 as PlasmaCore;
 import org.kde.plasma.extras 2.0 as PlasmaExtras
-import org.kde.kquickcontrolsaddons 2.0 as KQuickControlsAddons;
 import org.kde.kwin 2.0;
 
 PlasmaCore.Dialog {
@@ -126,14 +125,14 @@ PlasmaCore.Dialog {
                     Item {
                         id: arrowsContainer
                         anchors.fill: parent
-                        KQuickControlsAddons.QIconItem {
+                        PlasmaCore.IconItem {
                             anchors.fill: parent
-                            icon: "go-up"
+                            source: "go-up"
                             visible: false
                         }
-                        KQuickControlsAddons.QIconItem {
+                        PlasmaCore.IconItem {
                             anchors.fill: parent
-                            icon: "go-down"
+                            source: "go-down"
                             visible: {
                                 if (dialogItem.currentDesktop <= index) {
                                     // don't show for target desktop
@@ -157,9 +156,9 @@ PlasmaCore.Dialog {
                                 return false;
                             }
                         }
-                        KQuickControlsAddons.QIconItem {
+                        PlasmaCore.IconItem {
                             anchors.fill: parent
-                            icon: "go-up"
+                            source: "go-up"
                             visible: {
                                 if (dialogItem.currentDesktop >= index) {
                                     // don't show for target desktop
@@ -183,9 +182,9 @@ PlasmaCore.Dialog {
                                 return false;
                             }
                         }
-                        KQuickControlsAddons.QIconItem {
+                        PlasmaCore.IconItem {
                             anchors.fill: parent
-                            icon: "go-next"
+                            source: "go-next"
                             visible: {
                                 if (dialogItem.currentDesktop <= index) {
                                     // we don't show for desktops not on the path
@@ -217,9 +216,9 @@ PlasmaCore.Dialog {
                                 return false;
                             }
                         }
-                        KQuickControlsAddons.QIconItem {
+                        PlasmaCore.IconItem {
                             anchors.fill: parent
-                            icon: "go-previous"
+                            source: "go-previous"
                             visible: {
                                 if (dialogItem.currentDesktop >= index) {
                                     // we don't show for desktops not on the path
