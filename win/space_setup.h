@@ -198,7 +198,8 @@ void clear_space(Space& space)
 
     if constexpr (requires { Space::internal_window_t; }) {
         using int_win = typename Space::internal_window_t;
-        for (auto const& window : space.windows) {
+        auto const windows_copy = space.windows;
+        for (auto const& window : windows_copy) {
             std::visit(overload{[&](int_win* win) {
                            if (!win->remnant) {
                                win->destroyClient();
