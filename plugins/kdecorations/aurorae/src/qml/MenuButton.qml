@@ -15,16 +15,17 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 import QtQuick 2.0
-import org.kde.kquickcontrolsaddons 2.0 as KQuickControlsAddons
 import org.kde.kwin.decoration 0.1
+import org.kde.plasma.core 2.0 as PlasmaCore
 
 DecorationButton {
     property bool closeOnDoubleClick: decorationSettings.closeOnDoubleClickOnMenu
     id: menuButton
     buttonType: DecorationOptions.DecorationButtonMenu
-    KQuickControlsAddons.QIconItem {
-        icon: decoration.client.icon
+    PlasmaCore.IconItem {
         anchors.fill: parent
+        usesPlasmaTheme: false
+        source: decoration.client.icon
     }
     DecorationOptions {
         id: options
