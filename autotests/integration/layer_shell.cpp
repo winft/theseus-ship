@@ -478,18 +478,19 @@ void layer_shell_test::test_popup()
 
     window_spy.clear();
 
-    Clt::XdgPositioner positioner(QSize(50, 40), QRect(0, 0, 5, 10));
-    positioner.setAnchorEdge(Qt::BottomEdge | Qt::RightEdge);
-    positioner.setGravity(Qt::BottomEdge | Qt::RightEdge);
+    Wrapland::Client::xdg_shell_positioner_data pos_data;
+    pos_data.size = QSize(50, 40);
+    pos_data.anchor.rect = QRect(0, 0, 5, 10);
+    pos_data.anchor.edge = Qt::BottomEdge | Qt::RightEdge;
+    pos_data.gravity = pos_data.anchor.edge;
 
     auto popup_surface = Test::create_surface();
     auto popup = Test::create_xdg_shell_popup(
-        popup_surface, nullptr, positioner, Test::CreationSetup::CreateOnly);
+        popup_surface, nullptr, pos_data, Test::CreationSetup::CreateOnly);
     layer_surface->get_popup(popup.get());
     Test::init_xdg_shell_popup(popup_surface, popup);
 
-    auto server_popup
-        = Test::render_and_wait_for_shown(popup_surface, positioner.initialSize(), Qt::blue);
+    auto server_popup = Test::render_and_wait_for_shown(popup_surface, pos_data.size, Qt::blue);
     QVERIFY(server_popup);
     QCOMPARE(server_popup->geo.frame,
              QRect(window->geo.frame.topLeft() + QPoint(5, 10), QSize(50, 40)));

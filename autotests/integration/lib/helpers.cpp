@@ -272,18 +272,18 @@ create_xdg_shell_toplevel(client const& clt,
 std::unique_ptr<Clt::XdgShellPopup>
 create_xdg_shell_popup(std::unique_ptr<Clt::Surface> const& surface,
                        std::unique_ptr<Clt::XdgShellToplevel> const& parent_toplevel,
-                       Clt::XdgPositioner const& positioner,
+                       Clt::xdg_shell_positioner_data positioner_data,
                        CreationSetup creationSetup)
 {
     return create_xdg_shell_popup(
-        get_client(), surface, parent_toplevel, positioner, creationSetup);
+        get_client(), surface, parent_toplevel, std::move(positioner_data), creationSetup);
 }
 
 std::unique_ptr<Clt::XdgShellPopup>
 create_xdg_shell_popup(client const& clt,
                        std::unique_ptr<Clt::Surface> const& surface,
                        std::unique_ptr<Clt::XdgShellToplevel> const& parent_toplevel,
-                       Clt::XdgPositioner const& positioner,
+                       Clt::xdg_shell_positioner_data positioner_data,
                        CreationSetup creationSetup)
 {
     if (!clt.interfaces.xdg_shell) {
@@ -293,9 +293,9 @@ create_xdg_shell_popup(client const& clt,
     std::unique_ptr<Clt::XdgShellPopup> popup;
     if (parent_toplevel) {
         popup.reset(clt.interfaces.xdg_shell->create_popup(
-            surface.get(), parent_toplevel.get(), positioner));
+            surface.get(), parent_toplevel.get(), positioner_data));
     } else {
-        popup.reset(clt.interfaces.xdg_shell->create_popup(surface.get(), positioner));
+        popup.reset(clt.interfaces.xdg_shell->create_popup(surface.get(), positioner_data));
     }
 
     if (!popup->isValid()) {

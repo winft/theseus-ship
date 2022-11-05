@@ -256,14 +256,16 @@ void PlasmaWindowTest::testPopupWindowNoPlasmaWindow()
     QCOMPARE(plasmaWindowCreatedSpy.count(), 1);
 
     // now let's create a popup window for it
-    XdgPositioner positioner(QSize(10, 10), QRect(0, 0, 10, 10));
-    positioner.setAnchorEdge(Qt::BottomEdge | Qt::RightEdge);
-    positioner.setGravity(Qt::BottomEdge | Qt::RightEdge);
+    Wrapland::Client::xdg_shell_positioner_data pos_data;
+    pos_data.size = QSize(10, 10);
+    pos_data.anchor.rect = QRect(0, 0, 10, 10);
+    pos_data.anchor.edge = Qt::BottomEdge | Qt::RightEdge;
+    pos_data.gravity = pos_data.anchor.edge;
+
     std::unique_ptr<Surface> popupSurface(Test::create_surface());
     std::unique_ptr<XdgShellPopup> popupShellSurface(
-        Test::create_xdg_shell_popup(popupSurface, parentShellSurface, positioner));
-    auto popupClient
-        = Test::render_and_wait_for_shown(popupSurface, positioner.initialSize(), Qt::blue);
+        Test::create_xdg_shell_popup(popupSurface, parentShellSurface, pos_data));
+    auto popupClient = Test::render_and_wait_for_shown(popupSurface, pos_data.size, Qt::blue);
     QVERIFY(popupClient);
     QVERIFY(!plasmaWindowCreatedSpy.wait(100));
     QCOMPARE(plasmaWindowCreatedSpy.count(), 1);

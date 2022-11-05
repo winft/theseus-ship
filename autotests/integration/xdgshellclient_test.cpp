@@ -306,17 +306,19 @@ void TestXdgShellClient::testTransientPositionAfterRemap()
     QVERIFY(c);
 
     // create the Transient window
-    XdgPositioner positioner(QSize(50, 40), QRect(0, 0, 5, 10));
-    positioner.setAnchorEdge(Qt::BottomEdge | Qt::RightEdge);
-    positioner.setGravity(Qt::BottomEdge | Qt::RightEdge);
+    Wrapland::Client::xdg_shell_positioner_data pos_data;
+    pos_data.size = QSize(50, 40);
+    pos_data.anchor.rect = QRect(0, 0, 5, 10);
+    pos_data.anchor.edge = Qt::BottomEdge | Qt::RightEdge;
+    pos_data.gravity = pos_data.anchor.edge;
+
     std::unique_ptr<Surface> transientSurface(Test::create_surface());
     std::unique_ptr<XdgShellPopup> transientShellSurface(
-        Test::create_xdg_shell_popup(transientSurface, shellSurface, positioner));
+        Test::create_xdg_shell_popup(transientSurface, shellSurface, pos_data));
     QVERIFY(transientSurface);
     QVERIFY(transientShellSurface);
 
-    auto transient
-        = Test::render_and_wait_for_shown(transientSurface, positioner.initialSize(), Qt::blue);
+    auto transient = Test::render_and_wait_for_shown(transientSurface, pos_data.size, Qt::blue);
     QVERIFY(transient);
     QCOMPARE(transient->geo.frame, QRect(c->geo.frame.topLeft() + QPoint(5, 10), QSize(50, 40)));
 
@@ -1448,17 +1450,19 @@ void TestXdgShellClient::testSendToScreen()
     QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), window);
     QCOMPARE(window->geo.frame.size(), QSize(200, 100));
 
-    XdgPositioner positioner(QSize(50, 40), QRect(0, 0, 5, 10));
-    positioner.setAnchorEdge(Qt::BottomEdge | Qt::RightEdge);
-    positioner.setGravity(Qt::BottomEdge | Qt::RightEdge);
+    Wrapland::Client::xdg_shell_positioner_data pos_data;
+    pos_data.size = QSize(50, 40);
+    pos_data.anchor.rect = QRect(0, 0, 5, 10);
+    pos_data.anchor.edge = Qt::BottomEdge | Qt::RightEdge;
+    pos_data.gravity = pos_data.anchor.edge;
 
     std::unique_ptr<Surface> popup_surface(Test::create_surface());
     std::unique_ptr<XdgShellPopup> popup_shell_surface(
-        Test::create_xdg_shell_popup(popup_surface, shell_surface, positioner));
+        Test::create_xdg_shell_popup(popup_surface, shell_surface, pos_data));
     QVERIFY(popup_surface);
     QVERIFY(popup_shell_surface);
 
-    auto popup = Test::render_and_wait_for_shown(popup_surface, positioner.initialSize(), Qt::blue);
+    auto popup = Test::render_and_wait_for_shown(popup_surface, pos_data.size, Qt::blue);
     QVERIFY(popup);
     QCOMPARE(popup->geo.frame, QRect(window->geo.frame.topLeft() + QPoint(5, 10), QSize(50, 40)));
 
