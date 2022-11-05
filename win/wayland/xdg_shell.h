@@ -689,16 +689,16 @@ QRect get_xdg_shell_popup_placement(Win const* win, QRect const& bounds)
     auto transient_lead = win->transient->lead();
     assert(transient_lead);
 
-    auto get = get_popup_placement<std::remove_pointer_t<decltype(transient_lead)>>;
-    return get(
-        {transient_lead,
-         bounds,
-         win->popup->anchorRect(),
-         win->popup->anchorEdge(),
-         win->popup->gravity(),
-         win->geo.update.frame.isValid() ? win->geo.update.frame.size() : win->popup->initialSize(),
-         win->popup->anchorOffset(),
-         win->popup->constraintAdjustments()});
+    auto getter = get_popup_placement<std::remove_pointer_t<decltype(transient_lead)>>;
+    auto const positioner = win->popup->get_positioner();
+    return getter({transient_lead,
+                   bounds,
+                   positioner.anchor.rect,
+                   positioner.anchor.edge,
+                   positioner.gravity,
+                   win->geo.update.frame.isValid() ? win->geo.update.frame.size() : positioner.size,
+                   positioner.anchor.offset,
+                   positioner.constraint_adjustments});
 }
 
 template<typename Win>
