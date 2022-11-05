@@ -30,6 +30,7 @@ public:
         : input::platform<Base>(base)
         , xkb{xkb::manager<type>(this)}
         , kde_idle{base.server->display->create_kde_idle()}
+        , idle_notifier{base.server->display->create_idle_notifier_v1()}
     {
         this->config = kwinApp()->inputConfig();
 
@@ -39,6 +40,10 @@ public:
                          &Wrapland::Server::kde_idle::timeout_created,
                          this->qobject.get(),
                          [this](auto timeout) { idle_setup_kde_device(idle, timeout); });
+        QObject::connect(idle_notifier.get(),
+                         &Wrapland::Server::idle_notifier_v1::notification_created,
+                         this->qobject.get(),
+                         [this](auto notif) { idle_setup_notification(idle, notif); });
     }
 
     platform(platform const&) = delete;
@@ -132,6 +137,7 @@ public:
     std::unique_ptr<dbus::device_manager<type>> dbus;
     input::idle idle;
     std::unique_ptr<Wrapland::Server::kde_idle> kde_idle;
+    std::unique_ptr<Wrapland::Server::idle_notifier_v1> idle_notifier;
 
 private:
     void setup_touchpad_shortcuts()

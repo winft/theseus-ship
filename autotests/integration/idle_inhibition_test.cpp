@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/space.h"
 #include "win/wayland/window.h"
 
-#include <Wrapland/Client/idle.h>
+#include <Wrapland/Client/idle_notify_v1.h>
 #include <Wrapland/Client/idleinhibit.h>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdg_shell.h>
@@ -88,14 +88,14 @@ void TestIdleInhibition::testInhibit()
     std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
 
-    auto timeout = std::unique_ptr<Wrapland::Client::IdleTimeout>(
-        Test::get_client().interfaces.idle->getTimeout(0,
-                                                       Test::get_client().interfaces.seat.get()));
-    QVERIFY(timeout->isValid());
+    auto notification = std::unique_ptr<Wrapland::Client::idle_notification_v1>(
+        Test::get_client().interfaces.idle_notifier->get_notification(
+            0, Test::get_client().interfaces.seat.get()));
+    QVERIFY(notification->isValid());
 
-    QSignalSpy idle_spy(timeout.get(), &Wrapland::Client::IdleTimeout::idle);
+    QSignalSpy idle_spy(notification.get(), &Wrapland::Client::idle_notification_v1::idled);
     QVERIFY(idle_spy.isValid());
-    QSignalSpy resume_spy(timeout.get(), &Wrapland::Client::IdleTimeout::resumeFromIdle);
+    QSignalSpy resume_spy(notification.get(), &Wrapland::Client::idle_notification_v1::resumed);
     QVERIFY(resume_spy.isValid());
 
     // With timeout 0 is idle immediately.

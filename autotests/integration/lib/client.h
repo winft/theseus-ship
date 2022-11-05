@@ -12,7 +12,7 @@
 #include <Wrapland/Client/appmenu.h>
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/event_queue.h>
-#include <Wrapland/Client/idle.h>
+#include <Wrapland/Client/idle_notify_v1.h>
 #include <Wrapland/Client/idleinhibit.h>
 #include <Wrapland/Client/input_method_v2.h>
 #include <Wrapland/Client/layer_shell_v1.h>
@@ -59,7 +59,7 @@ public:
         std::unique_ptr<Wrapland::Client::PlasmaWindowManagement> window_management;
         std::unique_ptr<Wrapland::Client::PointerConstraints> pointer_constraints;
         std::vector<std::unique_ptr<Wrapland::Client::Output>> outputs;
-        std::unique_ptr<Wrapland::Client::Idle> idle;
+        std::unique_ptr<Wrapland::Client::idle_notifier_v1> idle_notifier;
         std::unique_ptr<Wrapland::Client::IdleInhibitManager> idle_inhibit;
         std::unique_ptr<Wrapland::Client::AppMenuManager> app_menu;
         std::unique_ptr<Wrapland::Client::XdgActivationV1> xdg_activation;
