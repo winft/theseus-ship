@@ -449,6 +449,17 @@ public:
         do_set_maximize_mode(max_mode);
     }
 
+    void reposition_children(QRect const& old_frame_geo)
+    {
+        for (auto child : transient->children) {
+            if (child->popup) {
+                xdg_shell_popup_reposition(*child, old_frame_geo, geo.frame);
+            } else if (child->surface && child->surface->subsurface()) {
+                subsurface_set_pos(*child);
+            }
+        }
+    }
+
     void do_set_geometry(QRect const& frame_geo)
     {
         auto const old_frame_geo = this->geo.frame;
@@ -463,12 +474,7 @@ public:
             this->geo.update.frame.setSize(frame_geo.size());
         }
 
-        // TODO(romangg): When we have support for explicit/implicit popup repositioning combine.
-        if (old_frame_geo.size() == frame_geo.size()) {
-            move_annexed_children(this, frame_geo.topLeft() - old_frame_geo.topLeft());
-        } else if (!this->transient->annexed) {
-            reposition_annexed_children(this);
-        }
+        reposition_children(old_frame_geo);
 
         if (old_frame_geo.size() != frame_geo.size()) {
             discard_shape(*this);

@@ -120,15 +120,12 @@ void set_subsurface_parent(Win* win, Lead* lead)
                      win->space.base.render->compositor->qobject.get(),
                      [win] { win->space.base.render->compositor->schedule_repaint(win); });
 
-    auto set_pos = [win]() { subsurface_set_pos(*win); };
-    set_pos();
+    subsurface_set_pos(*win);
 
     QObject::connect(win->surface->subsurface(),
                      &Wrapland::Server::Subsurface::positionChanged,
                      win->qobject.get(),
-                     set_pos);
-    QObject::connect(
-        lead->qobject.get(), &Lead::qobject_t::frame_geometry_changed, win->qobject.get(), set_pos);
+                     [win] { subsurface_set_pos(*win); });
 
     QObject::connect(win->surface->subsurface(),
                      &Wrapland::Server::Subsurface::resourceDestroyed,
