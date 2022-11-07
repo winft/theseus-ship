@@ -121,6 +121,10 @@ private Q_SLOTS:
     void testXdgWindowGeometryFullScreen();
     void testXdgWindowGeometryMaximize();
     void test_multi_maximize();
+
+    void test_popup_reposition();
+    void test_popup_reactive_data();
+    void test_popup_reactive();
 };
 
 void TestXdgShellClient::initTestCase()
@@ -1866,6 +1870,168 @@ void TestXdgShellClient::test_multi_maximize()
                  "We change the synced geometry on commit. Use other geometry or don't do that.",
                  Continue);
     QVERIFY(size.isEmpty());
+}
+
+/// Checks that xdg-popups are positioned and repositioned correctly.
+void TestXdgShellClient::test_popup_reposition()
+{
+    std::unique_ptr<Surface> surface(Test::create_surface());
+    std::unique_ptr<XdgShellToplevel> shell_surface(Test::create_xdg_shell_toplevel(surface));
+
+    auto window = Test::render_and_wait_for_shown(surface, QSize(200, 100), Qt::red);
+    QVERIFY(window);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), window);
+    QCOMPARE(window->geo.frame.size(), QSize(200, 100));
+
+    Wrapland::Client::xdg_shell_positioner_data pos_data;
+    pos_data.size = QSize(50, 40);
+    pos_data.anchor.rect = QRect(0, 0, 5, 10);
+    pos_data.anchor.edge = Qt::BottomEdge | Qt::RightEdge;
+    pos_data.gravity = pos_data.anchor.edge;
+
+    std::unique_ptr<Surface> popup_surface(Test::create_surface());
+    std::unique_ptr<XdgShellPopup> popup_shell_surface(
+        Test::create_xdg_shell_popup(popup_surface, shell_surface, pos_data));
+    QVERIFY(popup_surface);
+    QVERIFY(popup_shell_surface);
+
+    QSignalSpy repositioned_spy(popup_shell_surface.get(), &XdgShellPopup::repositioned);
+    QSignalSpy configure_spy(popup_shell_surface.get(), &XdgShellPopup::configureRequested);
+    QVERIFY(repositioned_spy.isValid());
+    QVERIFY(configure_spy.isValid());
+
+    auto popup = Test::render_and_wait_for_shown(popup_surface, pos_data.size, Qt::blue);
+    QVERIFY(popup);
+    QCOMPARE(popup->geo.frame, QRect(window->geo.frame.topLeft() + QPoint(5, 10), QSize(50, 40)));
+
+    QSignalSpy popup_geo_spy(popup->qobject.get(), &win::window_qobject::frame_geometry_changed);
+    QVERIFY(popup_geo_spy.isValid());
+
+    // Reposition the popup
+    pos_data.anchor.rect = QRect(0, 0, 15, 20);
+    auto positioner = Test::get_client().interfaces.xdg_shell->create_positioner(pos_data);
+    uint32_t token = 1234;
+    popup_shell_surface->reposition(positioner, token);
+    delete positioner;
+
+    QVERIFY(configure_spy.wait());
+    QCOMPARE(configure_spy.size(), 1);
+    QCOMPARE(repositioned_spy.size(), 1);
+    QCOMPARE(repositioned_spy.front().front().value<quint32>(), token);
+
+    popup_shell_surface->ackConfigure(configure_spy.front().back().value<quint32>());
+    popup_surface->commit();
+
+    QVERIFY(popup_geo_spy.wait());
+    QCOMPARE(popup_geo_spy.size(), 1);
+    QCOMPARE(popup->geo.frame, QRect(window->geo.frame.topLeft() + QPoint(15, 20), QSize(50, 40)));
+}
+
+void TestXdgShellClient::test_popup_reactive_data()
+{
+    QTest::addColumn<QRect>("parent_change_rect");
+
+    QRect move_rect(10, 15, 0, 0);
+    QRect resize_rect(0, 0, 50, 100);
+
+    QTest::newRow("move") << move_rect;
+    QTest::newRow("resize") << resize_rect;
+    QTest::newRow("move-resize") << QRect{move_rect.topLeft(), resize_rect.size()};
+}
+
+/// Checks that xdg-popups are repositioned correctly when positioner is reactive.
+void TestXdgShellClient::test_popup_reactive()
+{
+    std::unique_ptr<Surface> parent_surface(Test::create_surface());
+    std::unique_ptr<XdgShellToplevel> parent_shell_surface(
+        Test::create_xdg_shell_toplevel(parent_surface));
+    QSignalSpy parent_configure_spy(parent_shell_surface.get(),
+                                    &XdgShellToplevel::configureRequested);
+    QVERIFY(parent_configure_spy.isValid());
+
+    QSize parent_size(200, 100);
+    auto window = Test::render_and_wait_for_shown(parent_surface, parent_size, Qt::red);
+    QVERIFY(window);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), window);
+    QCOMPARE(window->geo.frame.size(), parent_size);
+
+    QSignalSpy parent_geo_spy(window->qobject.get(), &win::window_qobject::frame_geometry_changed);
+    QVERIFY(parent_geo_spy.isValid());
+
+    Wrapland::Client::xdg_shell_positioner_data pos_data;
+    pos_data.size = QSize(50, 40);
+    pos_data.anchor.rect = QRect(0, 0, 5, 10);
+    pos_data.anchor.edge = Qt::BottomEdge | Qt::RightEdge;
+    pos_data.gravity = pos_data.anchor.edge;
+
+    std::unique_ptr<Surface> popup_surface(Test::create_surface());
+    std::unique_ptr<XdgShellPopup> popup_shell_surface(
+        Test::create_xdg_shell_popup(popup_surface, parent_shell_surface, pos_data));
+    QVERIFY(popup_surface);
+    QVERIFY(popup_shell_surface);
+
+    QSignalSpy popup_done_spy(popup_shell_surface.get(), &XdgShellPopup::popupDone);
+    QSignalSpy configure_spy(popup_shell_surface.get(), &XdgShellPopup::configureRequested);
+    QVERIFY(popup_done_spy.isValid());
+    QVERIFY(configure_spy.isValid());
+
+    auto popup = Test::render_and_wait_for_shown(popup_surface, pos_data.size, Qt::blue);
+    QVERIFY(popup);
+    QCOMPARE(popup->geo.frame, QRect(window->geo.frame.topLeft() + QPoint(5, 10), QSize(50, 40)));
+
+    // Resize the parent surface
+    QFETCH(QRect, parent_change_rect);
+    QRect const frame_geo{window->geo.frame.topLeft() + parent_change_rect.topLeft(),
+                          window->geo.frame.size() + parent_change_rect.size()};
+
+    auto const orig_frame_geo = window->geo.frame;
+
+    auto parent_set_and_ack_geo = [&](auto const& geo) {
+        window->setFrameGeometry(geo);
+
+        if (window->geo.frame.size() == geo.size()) {
+            return;
+        }
+        QVERIFY(parent_configure_spy.wait());
+        parent_shell_surface->ackConfigure(parent_configure_spy.back().back().value<quint32>());
+        Test::render(Test::get_client(), parent_surface, geo.size(), Qt::red);
+        QVERIFY(parent_geo_spy.wait());
+    };
+
+    parent_set_and_ack_geo(frame_geo);
+
+    // By default popups are not reactive. So marks the popup as done.
+    QEXPECT_FAIL("move", "Without size change we have a hack to still move the popup.", Continue);
+    QVERIFY(popup_done_spy.wait());
+    QVERIFY(configure_spy.empty());
+
+    parent_set_and_ack_geo(orig_frame_geo);
+
+    // Now create a new popup, which is reactive.
+    pos_data.is_reactive = true;
+    popup_surface = Test::create_surface();
+    popup_shell_surface
+        = Test::create_xdg_shell_popup(popup_surface, parent_shell_surface, pos_data);
+    QVERIFY(popup_surface);
+    QVERIFY(popup_shell_surface);
+
+    QSignalSpy popup_done_spy2(popup_shell_surface.get(), &XdgShellPopup::popupDone);
+    QSignalSpy configure_spy2(popup_shell_surface.get(), &XdgShellPopup::configureRequested);
+    QVERIFY(popup_done_spy2.isValid());
+    QVERIFY(configure_spy2.isValid());
+
+    popup = Test::render_and_wait_for_shown(popup_surface, pos_data.size, Qt::blue);
+    QVERIFY(popup);
+    QCOMPARE(popup->geo.frame, QRect(window->geo.frame.topLeft() + QPoint(5, 10), QSize(50, 40)));
+    QVERIFY(configure_spy2.empty());
+
+    // Resize the parent surface
+    parent_set_and_ack_geo(frame_geo);
+
+    // Popup is reactive. So configure is requested.
+    QVERIFY(configure_spy2.wait());
+    QCOMPARE(configure_spy2.size(), 1);
+    QVERIFY(popup_done_spy2.empty());
 }
 
 }
