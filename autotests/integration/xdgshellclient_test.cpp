@@ -311,6 +311,7 @@ void TestXdgShellClient::testTransientPositionAfterRemap()
 
     // create the Transient window
     Wrapland::Client::xdg_shell_positioner_data pos_data;
+    pos_data.is_reactive = true;
     pos_data.size = QSize(50, 40);
     pos_data.anchor.rect = QRect(0, 0, 5, 10);
     pos_data.anchor.edge = Qt::BottomEdge | Qt::RightEdge;
@@ -321,6 +322,10 @@ void TestXdgShellClient::testTransientPositionAfterRemap()
         Test::create_xdg_shell_popup(transientSurface, shellSurface, pos_data));
     QVERIFY(transientSurface);
     QVERIFY(transientShellSurface);
+
+    QSignalSpy transient_configure_spy(transientShellSurface.get(),
+                                       &XdgShellPopup::configureRequested);
+    QVERIFY(transient_configure_spy.isValid());
 
     auto transient = Test::render_and_wait_for_shown(transientSurface, pos_data.size, Qt::blue);
     QVERIFY(transient);
@@ -339,6 +344,8 @@ void TestXdgShellClient::testTransientPositionAfterRemap()
     // now map the transient again
     QSignalSpy windowShownSpy(transient->qobject.get(), &win::window_qobject::windowShown);
     QVERIFY(windowShownSpy.isValid());
+    QVERIFY(transient_configure_spy.wait());
+    transientShellSurface->ackConfigure(transient_configure_spy.back().back().value<quint32>());
     Test::render(transientSurface, QSize(50, 40), Qt::blue);
     QVERIFY(windowShownSpy.wait());
 
@@ -1455,6 +1462,7 @@ void TestXdgShellClient::testSendToScreen()
     QCOMPARE(window->geo.frame.size(), QSize(200, 100));
 
     Wrapland::Client::xdg_shell_positioner_data pos_data;
+    pos_data.is_reactive = true;
     pos_data.size = QSize(50, 40);
     pos_data.anchor.rect = QRect(0, 0, 5, 10);
     pos_data.anchor.edge = Qt::BottomEdge | Qt::RightEdge;
@@ -1466,13 +1474,15 @@ void TestXdgShellClient::testSendToScreen()
     QVERIFY(popup_surface);
     QVERIFY(popup_shell_surface);
 
+    QSignalSpy popup_configure_spy(popup_shell_surface.get(), &XdgShellPopup::configureRequested);
+    QVERIFY(popup_configure_spy.isValid());
+
     auto popup = Test::render_and_wait_for_shown(popup_surface, pos_data.size, Qt::blue);
     QVERIFY(popup);
     QCOMPARE(popup->geo.frame, QRect(window->geo.frame.topLeft() + QPoint(5, 10), QSize(50, 40)));
 
-    QSignalSpy geometryChangedSpy(window->qobject.get(),
-                                  &win::window_qobject::frame_geometry_changed);
-    QVERIFY(geometryChangedSpy.isValid());
+    QSignalSpy popup_geo_spy(popup->qobject.get(), &win::window_qobject::frame_geometry_changed);
+    QVERIFY(popup_geo_spy.isValid());
 
     auto const& outputs = Test::app()->base.outputs;
     QCOMPARE(window->topo.central_output, outputs.at(0));
@@ -1482,9 +1492,15 @@ void TestXdgShellClient::testSendToScreen()
     QVERIFY(output);
     win::send_to_screen(*Test::app()->base.space, window, *output);
     QCOMPARE(window->topo.central_output, outputs.at(1));
-    QCOMPARE(popup->topo.central_output, outputs.at(1));
+    QCOMPARE(popup->topo.central_output, outputs.at(0));
 
+    QVERIFY(popup_configure_spy.wait());
+    popup_shell_surface->ackConfigure(popup_configure_spy.back().back().value<quint32>());
+    popup_surface->commit();
+
+    QVERIFY(popup_geo_spy.wait());
     QCOMPARE(popup->geo.frame, QRect(window->geo.frame.topLeft() + QPoint(5, 10), QSize(50, 40)));
+    QCOMPARE(popup->topo.central_output, outputs.at(1));
 }
 
 void TestXdgShellClient::testXdgWindowGeometryAttachSubSurface()
@@ -2001,7 +2017,6 @@ void TestXdgShellClient::test_popup_reactive()
     parent_set_and_ack_geo(frame_geo);
 
     // By default popups are not reactive. So marks the popup as done.
-    QEXPECT_FAIL("move", "Without size change we have a hack to still move the popup.", Continue);
     QVERIFY(popup_done_spy.wait());
     QVERIFY(configure_spy.empty());
 

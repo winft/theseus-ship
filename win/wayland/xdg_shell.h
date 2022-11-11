@@ -723,23 +723,13 @@ bool needs_configure(Win* win)
 }
 
 template<typename Win>
-void xdg_shell_popup_reposition(Win& win, QRect const& old_parent_geo, QRect const& parent_geo)
+void xdg_shell_popup_reposition(Win& win)
 {
     if (win.popup->get_positioner().is_reactive) {
         win.configure_geometry({});
-        return;
+    } else {
+        win.popup->popupDone();
     }
-
-    if (old_parent_geo.size() == parent_geo.size()) {
-        // TODO(romangg): remove this hack and always close popups without reactive or v3 support?
-        auto frame_pos_offset = parent_geo.topLeft() - old_parent_geo.topLeft();
-        auto pos = win.geo.update.frame.topLeft() + frame_pos_offset;
-        auto size = win.geo.update.frame.size();
-        win.setFrameGeometry({pos, size});
-        return;
-    }
-
-    win.popup->popupDone();
 }
 
 template<typename Win>

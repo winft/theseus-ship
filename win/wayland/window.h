@@ -449,11 +449,11 @@ public:
         do_set_maximize_mode(max_mode);
     }
 
-    void reposition_children(QRect const& old_frame_geo)
+    void reposition_children()
     {
         for (auto child : transient->children) {
             if (child->popup) {
-                xdg_shell_popup_reposition(*child, old_frame_geo, geo.frame);
+                xdg_shell_popup_reposition(*child);
             } else if (child->surface && child->surface->subsurface()) {
                 subsurface_set_pos(*child);
             }
@@ -474,7 +474,7 @@ public:
             this->geo.update.frame.setSize(frame_geo.size());
         }
 
-        reposition_children(old_frame_geo);
+        reposition_children();
 
         if (old_frame_geo.size() != frame_geo.size()) {
             discard_shape(*this);
