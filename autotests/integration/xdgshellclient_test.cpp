@@ -471,6 +471,7 @@ void TestXdgShellClient::testFullscreen()
 
     auto cfgdata = shellSurface->get_configure_data();
     QCOMPARE(cfgdata.size, QSize(100, 50));
+    QCOMPARE(cfgdata.bounds, Test::get_output(0)->geometry().size());
 
     QSignalSpy fullscreenChangedSpy(c->qobject.get(), &win::window_qobject::fullScreenChanged);
     QVERIFY(fullscreenChangedSpy.isValid());
@@ -1235,6 +1236,7 @@ void TestXdgShellClient::testXdgInitialState()
     std::unique_ptr<XdgShellToplevel> shellSurface(
         Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly));
     QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configured);
+    QVERIFY(configureRequestedSpy.isValid());
     surface->commit(Surface::CommitFlag::None);
 
     configureRequestedSpy.wait();
@@ -1245,6 +1247,7 @@ void TestXdgShellClient::testXdgInitialState()
 
     // client should chose it's preferred size
     QCOMPARE(cfgdata.size, QSize(0, 0));
+    QCOMPARE(cfgdata.bounds, Test::get_output(0)->geometry().size());
 
     shellSurface->ackConfigure(configureRequestedSpy.front().front().toUInt());
 

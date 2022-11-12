@@ -300,6 +300,9 @@ public:
         uint64_t serial = 0;
 
         if (toplevel) {
+            auto const bounds = space_window_area(
+                this->space, control->fullscreen ? FullScreenArea : PlacementArea, this);
+            toplevel->configure_bounds(bounds.size());
             serial = toplevel->configure(xdg_surface_states(this), window_geo.size());
         }
         if (popup) {
