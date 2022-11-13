@@ -688,13 +688,13 @@ void TestXdgShellClientRules::testSizeApply()
     surface->commit(Surface::CommitFlag::None);
 
     // The initial configure event should contain size hint set by the rule.
-    XdgShellToplevel::States states;
+    xdg_shell_states states;
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 1);
     QCOMPARE(configureRequestedSpy->last().at(0).toSize(), QSize(480, 640));
-    states = configureRequestedSpy->last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Resizing));
+    states = configureRequestedSpy->last().at(1).value<xdg_shell_states>();
+    QVERIFY(!states.testFlag(xdg_shell_state::activated));
+    QVERIFY(!states.testFlag(xdg_shell_state::resizing));
 
     // Map the client.
     shellSurface->ackConfigure(configureRequestedSpy->last().at(2).value<quint32>());
@@ -707,9 +707,9 @@ void TestXdgShellClientRules::testSizeApply()
     // We should receive a configure event when the client becomes active.
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 2);
-    states = configureRequestedSpy->last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Resizing));
+    states = configureRequestedSpy->last().at(1).value<xdg_shell_states>();
+    QVERIFY(states.testFlag(xdg_shell_state::activated));
+    QVERIFY(!states.testFlag(xdg_shell_state::resizing));
 
     // One still should be able to resize the client.
     QSignalSpy geometryChangedSpy(client->qobject.get(),
@@ -737,9 +737,9 @@ void TestXdgShellClientRules::testSizeApply()
     QVERIFY(win::is_resize(client));
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 3);
-    states = configureRequestedSpy->last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Resizing));
+    states = configureRequestedSpy->last().at(1).value<xdg_shell_states>();
+    QVERIFY(states.testFlag(xdg_shell_state::activated));
+    QVERIFY(states.testFlag(xdg_shell_state::resizing));
     shellSurface->ackConfigure(configureRequestedSpy->last().at(2).value<quint32>());
 
     auto const cursorPos = Test::cursor()->pos();
@@ -748,9 +748,9 @@ void TestXdgShellClientRules::testSizeApply()
     QCOMPARE(Test::cursor()->pos(), cursorPos + QPoint(8, 0));
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 4);
-    states = configureRequestedSpy->last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Resizing));
+    states = configureRequestedSpy->last().at(1).value<xdg_shell_states>();
+    QVERIFY(states.testFlag(xdg_shell_state::activated));
+    QVERIFY(states.testFlag(xdg_shell_state::resizing));
     QCOMPARE(surfaceSizeChangedSpy.count(), 1);
     QCOMPARE(surfaceSizeChangedSpy.last().first().toSize(), QSize(488, 640));
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 0);
@@ -827,13 +827,13 @@ void TestXdgShellClientRules::testSizeRemember()
     surface->commit(Surface::CommitFlag::None);
 
     // The initial configure event should contain size hint set by the rule.
-    XdgShellToplevel::States states;
+    xdg_shell_states states;
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 1);
     QCOMPARE(configureRequestedSpy->last().first().toSize(), QSize(480, 640));
-    states = configureRequestedSpy->last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Resizing));
+    states = configureRequestedSpy->last().at(1).value<xdg_shell_states>();
+    QVERIFY(!states.testFlag(xdg_shell_state::activated));
+    QVERIFY(!states.testFlag(xdg_shell_state::resizing));
 
     // Map the client.
     shellSurface->ackConfigure(configureRequestedSpy->last().at(2).value<quint32>());
@@ -846,9 +846,9 @@ void TestXdgShellClientRules::testSizeRemember()
     // We should receive a configure event when the client becomes active.
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 2);
-    states = configureRequestedSpy->last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Resizing));
+    states = configureRequestedSpy->last().at(1).value<xdg_shell_states>();
+    QVERIFY(states.testFlag(xdg_shell_state::activated));
+    QVERIFY(!states.testFlag(xdg_shell_state::resizing));
 
     // One should still be able to resize the client.
     QSignalSpy geometryChangedSpy(client->qobject.get(),
@@ -876,9 +876,9 @@ void TestXdgShellClientRules::testSizeRemember()
     QVERIFY(win::is_resize(client));
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 3);
-    states = configureRequestedSpy->last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Resizing));
+    states = configureRequestedSpy->last().at(1).value<xdg_shell_states>();
+    QVERIFY(states.testFlag(xdg_shell_state::activated));
+    QVERIFY(states.testFlag(xdg_shell_state::resizing));
     shellSurface->ackConfigure(configureRequestedSpy->last().at(2).value<quint32>());
 
     auto const cursorPos = Test::cursor()->pos();
@@ -887,9 +887,9 @@ void TestXdgShellClientRules::testSizeRemember()
     QCOMPARE(Test::cursor()->pos(), cursorPos + QPoint(8, 0));
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 4);
-    states = configureRequestedSpy->last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Resizing));
+    states = configureRequestedSpy->last().at(1).value<xdg_shell_states>();
+    QVERIFY(states.testFlag(xdg_shell_state::activated));
+    QVERIFY(states.testFlag(xdg_shell_state::resizing));
     QCOMPARE(surfaceSizeChangedSpy.count(), 1);
     QCOMPARE(surfaceSizeChangedSpy.last().first().toSize(), QSize(488, 640));
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 0);
@@ -1206,13 +1206,13 @@ void TestXdgShellClientRules::testMaximizeDontAffect()
     surface->commit(Surface::CommitFlag::None);
 
     // Wait for the initial configure event.
-    XdgShellToplevel::States states;
+    xdg_shell_states states;
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 1);
     QCOMPARE(configureRequestedSpy->last().at(0).toSize(), QSize(0, 0));
-    states = configureRequestedSpy->last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Maximized));
+    states = configureRequestedSpy->last().at(1).value<xdg_shell_states>();
+    QVERIFY(!states.testFlag(xdg_shell_state::activated));
+    QVERIFY(!states.testFlag(xdg_shell_state::maximized));
 
     // Map the client.
     shellSurface->ackConfigure(configureRequestedSpy->last().at(2).value<quint32>());
@@ -1227,9 +1227,9 @@ void TestXdgShellClientRules::testMaximizeDontAffect()
     // We should receive a configure event when the client becomes active.
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 2);
-    states = configureRequestedSpy->last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Maximized));
+    states = configureRequestedSpy->last().at(1).value<xdg_shell_states>();
+    QVERIFY(states.testFlag(xdg_shell_state::activated));
+    QVERIFY(!states.testFlag(xdg_shell_state::maximized));
 
     // Destroy the client.
     shellSurface.reset();
@@ -1264,13 +1264,13 @@ void TestXdgShellClientRules::testMaximizeApply()
     surface->commit(Surface::CommitFlag::None);
 
     // Wait for the initial configure event.
-    XdgShellToplevel::States states;
+    xdg_shell_states states;
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 1);
     QCOMPARE(configureRequestedSpy->last().at(0).toSize(), QSize(1280, 1024));
-    states = configureRequestedSpy->last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Maximized));
+    states = configureRequestedSpy->last().at(1).value<xdg_shell_states>();
+    QVERIFY(!states.testFlag(xdg_shell_state::activated));
+    QVERIFY(states.testFlag(xdg_shell_state::maximized));
 
     // Map the client.
     shellSurface->ackConfigure(configureRequestedSpy->last().at(2).value<quint32>());
@@ -1285,9 +1285,9 @@ void TestXdgShellClientRules::testMaximizeApply()
     // We should receive a configure event when the client becomes active.
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 2);
-    states = configureRequestedSpy->last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Maximized));
+    states = configureRequestedSpy->last().at(1).value<xdg_shell_states>();
+    QVERIFY(states.testFlag(xdg_shell_state::activated));
+    QVERIFY(states.testFlag(xdg_shell_state::maximized));
 
     // One should still be able to change the maximized state of the client.
     win::active_window_maximize(*Test::app()->base.space);
@@ -1297,9 +1297,9 @@ void TestXdgShellClientRules::testMaximizeApply()
     // The size is empty since we did not have a restore size before.
     QVERIFY(configureRequestedSpy->last().at(0).toSize().isEmpty());
 
-    states = configureRequestedSpy->last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Maximized));
+    states = configureRequestedSpy->last().at(1).value<xdg_shell_states>();
+    QVERIFY(states.testFlag(xdg_shell_state::activated));
+    QVERIFY(!states.testFlag(xdg_shell_state::maximized));
 
     QSignalSpy geometryChangedSpy(client->qobject.get(),
                                   &win::window_qobject::frame_geometry_changed);
@@ -1325,9 +1325,9 @@ void TestXdgShellClientRules::testMaximizeApply()
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 1);
     QCOMPARE(configureRequestedSpy->last().at(0).toSize(), QSize(1280, 1024));
-    states = configureRequestedSpy->last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Maximized));
+    states = configureRequestedSpy->last().at(1).value<xdg_shell_states>();
+    QVERIFY(!states.testFlag(xdg_shell_state::activated));
+    QVERIFY(states.testFlag(xdg_shell_state::maximized));
 
     shellSurface->ackConfigure(configureRequestedSpy->last().at(2).value<quint32>());
     client = Test::render_and_wait_for_shown(surface, QSize(1280, 1024), Qt::blue);
@@ -1340,9 +1340,9 @@ void TestXdgShellClientRules::testMaximizeApply()
 
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 2);
-    states = configureRequestedSpy->last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Maximized));
+    states = configureRequestedSpy->last().at(1).value<xdg_shell_states>();
+    QVERIFY(states.testFlag(xdg_shell_state::activated));
+    QVERIFY(states.testFlag(xdg_shell_state::maximized));
 
     // Destroy the client.
     shellSurface.reset();
@@ -1377,13 +1377,13 @@ void TestXdgShellClientRules::testMaximizeRemember()
     surface->commit(Surface::CommitFlag::None);
 
     // Wait for the initial configure event.
-    XdgShellToplevel::States states;
+    xdg_shell_states states;
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 1);
     QCOMPARE(configureRequestedSpy->last().at(0).toSize(), QSize(1280, 1024));
-    states = configureRequestedSpy->last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Maximized));
+    states = configureRequestedSpy->last().at(1).value<xdg_shell_states>();
+    QVERIFY(!states.testFlag(xdg_shell_state::activated));
+    QVERIFY(states.testFlag(xdg_shell_state::maximized));
 
     // Map the client.
     shellSurface->ackConfigure(configureRequestedSpy->last().at(2).value<quint32>());
@@ -1398,9 +1398,9 @@ void TestXdgShellClientRules::testMaximizeRemember()
     // We should receive a configure event when the client becomes active.
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 2);
-    states = configureRequestedSpy->last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Maximized));
+    states = configureRequestedSpy->last().at(1).value<xdg_shell_states>();
+    QVERIFY(states.testFlag(xdg_shell_state::activated));
+    QVERIFY(states.testFlag(xdg_shell_state::maximized));
 
     // One should still be able to change the maximized state of the client.
     win::active_window_maximize(*Test::app()->base.space);
@@ -1410,9 +1410,9 @@ void TestXdgShellClientRules::testMaximizeRemember()
     // The size is empty since we did not have a restore size before.
     QVERIFY(configureRequestedSpy->last().at(0).toSize().isEmpty());
 
-    states = configureRequestedSpy->last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Maximized));
+    states = configureRequestedSpy->last().at(1).value<xdg_shell_states>();
+    QVERIFY(states.testFlag(xdg_shell_state::activated));
+    QVERIFY(!states.testFlag(xdg_shell_state::maximized));
 
     QSignalSpy geometryChangedSpy(client->qobject.get(),
                                   &win::window_qobject::frame_geometry_changed);
@@ -1438,9 +1438,9 @@ void TestXdgShellClientRules::testMaximizeRemember()
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 1);
     QCOMPARE(configureRequestedSpy->last().at(0).toSize(), QSize(0, 0));
-    states = configureRequestedSpy->last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Maximized));
+    states = configureRequestedSpy->last().at(1).value<xdg_shell_states>();
+    QVERIFY(!states.testFlag(xdg_shell_state::activated));
+    QVERIFY(!states.testFlag(xdg_shell_state::maximized));
 
     shellSurface->ackConfigure(configureRequestedSpy->last().at(2).value<quint32>());
     client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
@@ -1453,9 +1453,9 @@ void TestXdgShellClientRules::testMaximizeRemember()
 
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 2);
-    states = configureRequestedSpy->last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Maximized));
+    states = configureRequestedSpy->last().at(1).value<xdg_shell_states>();
+    QVERIFY(states.testFlag(xdg_shell_state::activated));
+    QVERIFY(!states.testFlag(xdg_shell_state::maximized));
 
     // Destroy the client.
     shellSurface.reset();
@@ -1490,13 +1490,13 @@ void TestXdgShellClientRules::testMaximizeForce()
     surface->commit(Surface::CommitFlag::None);
 
     // Wait for the initial configure event.
-    XdgShellToplevel::States states;
+    xdg_shell_states states;
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 1);
     QCOMPARE(configureRequestedSpy->last().at(0).toSize(), QSize(1280, 1024));
-    states = configureRequestedSpy->last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Maximized));
+    states = configureRequestedSpy->last().at(1).value<xdg_shell_states>();
+    QVERIFY(!states.testFlag(xdg_shell_state::activated));
+    QVERIFY(states.testFlag(xdg_shell_state::maximized));
 
     // Map the client.
     shellSurface->ackConfigure(configureRequestedSpy->last().at(2).value<quint32>());
@@ -1511,9 +1511,9 @@ void TestXdgShellClientRules::testMaximizeForce()
     // We should receive a configure event when the client becomes active.
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 2);
-    states = configureRequestedSpy->last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Maximized));
+    states = configureRequestedSpy->last().at(1).value<xdg_shell_states>();
+    QVERIFY(states.testFlag(xdg_shell_state::activated));
+    QVERIFY(states.testFlag(xdg_shell_state::maximized));
 
     // Any attempt to change the maximized state should not succeed.
     const QRect oldGeometry = client->geo.frame;
@@ -1537,9 +1537,9 @@ void TestXdgShellClientRules::testMaximizeForce()
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 1);
     QCOMPARE(configureRequestedSpy->last().at(0).toSize(), QSize(1280, 1024));
-    states = configureRequestedSpy->last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Maximized));
+    states = configureRequestedSpy->last().at(1).value<xdg_shell_states>();
+    QVERIFY(!states.testFlag(xdg_shell_state::activated));
+    QVERIFY(states.testFlag(xdg_shell_state::maximized));
 
     shellSurface->ackConfigure(configureRequestedSpy->last().at(2).value<quint32>());
     client = Test::render_and_wait_for_shown(surface, QSize(1280, 1024), Qt::blue);
@@ -1552,9 +1552,9 @@ void TestXdgShellClientRules::testMaximizeForce()
 
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 2);
-    states = configureRequestedSpy->last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Maximized));
+    states = configureRequestedSpy->last().at(1).value<xdg_shell_states>();
+    QVERIFY(states.testFlag(xdg_shell_state::activated));
+    QVERIFY(states.testFlag(xdg_shell_state::maximized));
 
     // Destroy the client.
     shellSurface.reset();
@@ -1574,13 +1574,13 @@ void TestXdgShellClientRules::testMaximizeApplyNow()
     surface->commit(Surface::CommitFlag::None);
 
     // Wait for the initial configure event.
-    XdgShellToplevel::States states;
+    xdg_shell_states states;
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 1);
     QCOMPARE(configureRequestedSpy->last().at(0).toSize(), QSize(0, 0));
-    states = configureRequestedSpy->last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Maximized));
+    states = configureRequestedSpy->last().at(1).value<xdg_shell_states>();
+    QVERIFY(!states.testFlag(xdg_shell_state::activated));
+    QVERIFY(!states.testFlag(xdg_shell_state::maximized));
 
     // Map the client.
     shellSurface->ackConfigure(configureRequestedSpy->last().at(2).value<quint32>());
@@ -1595,9 +1595,9 @@ void TestXdgShellClientRules::testMaximizeApplyNow()
     // We should receive a configure event when the client becomes active.
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 2);
-    states = configureRequestedSpy->last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Maximized));
+    states = configureRequestedSpy->last().at(1).value<xdg_shell_states>();
+    QVERIFY(states.testFlag(xdg_shell_state::activated));
+    QVERIFY(!states.testFlag(xdg_shell_state::maximized));
 
     // Initialize RuleBook with the test rule.
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
@@ -1618,9 +1618,9 @@ void TestXdgShellClientRules::testMaximizeApplyNow()
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 3);
     QCOMPARE(configureRequestedSpy->last().at(0).toSize(), QSize(1280, 1024));
-    states = configureRequestedSpy->last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Maximized));
+    states = configureRequestedSpy->last().at(1).value<xdg_shell_states>();
+    QVERIFY(states.testFlag(xdg_shell_state::activated));
+    QVERIFY(states.testFlag(xdg_shell_state::maximized));
 
     // Draw contents of the maximized client.
     QSignalSpy geometryChangedSpy(client->qobject.get(),
@@ -1641,9 +1641,9 @@ void TestXdgShellClientRules::testMaximizeApplyNow()
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 4);
     QCOMPARE(configureRequestedSpy->last().at(0).toSize(), QSize(100, 50));
-    states = configureRequestedSpy->last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Maximized));
+    states = configureRequestedSpy->last().at(1).value<xdg_shell_states>();
+    QVERIFY(states.testFlag(xdg_shell_state::activated));
+    QVERIFY(!states.testFlag(xdg_shell_state::maximized));
 
     shellSurface->ackConfigure(configureRequestedSpy->last().at(2).value<quint32>());
     Test::render(surface, QSize(100, 50), Qt::blue);
@@ -1693,13 +1693,13 @@ void TestXdgShellClientRules::testMaximizeForceTemporarily()
     surface->commit(Surface::CommitFlag::None);
 
     // Wait for the initial configure event.
-    XdgShellToplevel::States states;
+    xdg_shell_states states;
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 1);
     QCOMPARE(configureRequestedSpy->last().at(0).toSize(), QSize(1280, 1024));
-    states = configureRequestedSpy->last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Maximized));
+    states = configureRequestedSpy->last().at(1).value<xdg_shell_states>();
+    QVERIFY(!states.testFlag(xdg_shell_state::activated));
+    QVERIFY(states.testFlag(xdg_shell_state::maximized));
 
     // Map the client.
     shellSurface->ackConfigure(configureRequestedSpy->last().at(2).value<quint32>());
@@ -1714,9 +1714,9 @@ void TestXdgShellClientRules::testMaximizeForceTemporarily()
     // We should receive a configure event when the client becomes active.
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 2);
-    states = configureRequestedSpy->last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Maximized));
+    states = configureRequestedSpy->last().at(1).value<xdg_shell_states>();
+    QVERIFY(states.testFlag(xdg_shell_state::activated));
+    QVERIFY(states.testFlag(xdg_shell_state::maximized));
 
     // Any attempt to change the maximized state should not succeed.
     const QRect oldGeometry = client->geo.frame;
@@ -1740,9 +1740,9 @@ void TestXdgShellClientRules::testMaximizeForceTemporarily()
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 1);
     QCOMPARE(configureRequestedSpy->last().at(0).toSize(), QSize(0, 0));
-    states = configureRequestedSpy->last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Maximized));
+    states = configureRequestedSpy->last().at(1).value<xdg_shell_states>();
+    QVERIFY(!states.testFlag(xdg_shell_state::activated));
+    QVERIFY(!states.testFlag(xdg_shell_state::maximized));
 
     shellSurface->ackConfigure(configureRequestedSpy->last().at(2).value<quint32>());
     client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
@@ -1755,9 +1755,9 @@ void TestXdgShellClientRules::testMaximizeForceTemporarily()
 
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 2);
-    states = configureRequestedSpy->last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Maximized));
+    states = configureRequestedSpy->last().at(1).value<xdg_shell_states>();
+    QVERIFY(states.testFlag(xdg_shell_state::activated));
+    QVERIFY(!states.testFlag(xdg_shell_state::maximized));
 
     // Destroy the client.
     shellSurface.reset();

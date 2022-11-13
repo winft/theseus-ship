@@ -144,13 +144,12 @@ xcb_connection_ptr create_xcb_connection()
     return xcb_connection_ptr(xcb_connect(nullptr, nullptr), xcb_connection_deleter);
 }
 
-Wrapland::Client::XdgShellToplevel::States get_client_tiles(win::quicktiles tiles)
+Wrapland::Client::xdg_shell_states get_client_tiles(win::quicktiles tiles)
 {
-    using ClientToplevel = Wrapland::Client::XdgShellToplevel;
-    ClientToplevel::States states;
+    Wrapland::Client::xdg_shell_states states;
     auto maximized{true};
 
-    auto check_tile = [&](win::quicktiles tile, ClientToplevel::State state) {
+    auto check_tile = [&](win::quicktiles tile, Wrapland::Client::xdg_shell_state state) {
         if (flags(tiles & tile)) {
             states |= state;
         } else {
@@ -159,13 +158,13 @@ Wrapland::Client::XdgShellToplevel::States get_client_tiles(win::quicktiles tile
         }
     };
 
-    check_tile(win::quicktiles::left, ClientToplevel::State::TiledLeft);
-    check_tile(win::quicktiles::right, ClientToplevel::State::TiledRight);
-    check_tile(win::quicktiles::top, ClientToplevel::State::TiledTop);
-    check_tile(win::quicktiles::bottom, ClientToplevel::State::TiledBottom);
+    check_tile(win::quicktiles::left, Wrapland::Client::xdg_shell_state::tiled_left);
+    check_tile(win::quicktiles::right, Wrapland::Client::xdg_shell_state::tiled_right);
+    check_tile(win::quicktiles::top, Wrapland::Client::xdg_shell_state::tiled_top);
+    check_tile(win::quicktiles::bottom, Wrapland::Client::xdg_shell_state::tiled_bottom);
 
     if (maximized) {
-        states |= ClientToplevel::State::Maximized;
+        states |= Wrapland::Client::xdg_shell_state::maximized;
     }
     return states;
 }
@@ -246,8 +245,8 @@ void QuickTilingTest::testQuickTiling()
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 2);
     QCOMPARE(configureRequestedSpy.last().at(0).toSize(), expectedGeometry.size());
-    QCOMPARE(configureRequestedSpy.last().at(1).value<XdgShellToplevel::States>(),
-             get_client_tiles(mode) | XdgShellToplevel::State::Activated);
+    QCOMPARE(configureRequestedSpy.last().at(1).value<xdg_shell_states>(),
+             get_client_tiles(mode) | xdg_shell_state::activated);
 
     // attach a new image
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
@@ -304,8 +303,8 @@ void QuickTilingTest::testQuickMaximizing()
     QVERIFY(configureRequestedSpy.isValid());
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 1);
-    QCOMPARE(configureRequestedSpy.last().at(1).value<XdgShellToplevel::States>(),
-             XdgShellToplevel::State::Activated);
+    QCOMPARE(configureRequestedSpy.last().at(1).value<xdg_shell_states>(),
+             xdg_shell_state::activated);
 
     QSignalSpy quickTileChangedSpy(c->qobject.get(), &win::window_qobject::quicktiling_changed);
     QVERIFY(quickTileChangedSpy.isValid());
@@ -328,8 +327,8 @@ void QuickTilingTest::testQuickMaximizing()
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 2);
     QCOMPARE(configureRequestedSpy.last().at(0).toSize(), QSize(1280, 1024));
-    QCOMPARE(configureRequestedSpy.last().at(1).value<XdgShellToplevel::States>(),
-             get_client_tiles(win::quicktiles::maximize) | XdgShellToplevel::State::Activated);
+    QCOMPARE(configureRequestedSpy.last().at(1).value<xdg_shell_states>(),
+             get_client_tiles(win::quicktiles::maximize) | xdg_shell_state::activated);
 
     // Attach a new image.
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
@@ -360,8 +359,8 @@ void QuickTilingTest::testQuickMaximizing()
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
     QCOMPARE(configureRequestedSpy.last().at(0).toSize(), QSize(100, 50));
-    QCOMPARE(configureRequestedSpy.last().at(1).value<XdgShellToplevel::States>(),
-             XdgShellToplevel::State::Activated);
+    QCOMPARE(configureRequestedSpy.last().at(1).value<xdg_shell_states>(),
+             xdg_shell_state::activated);
 
     // render again
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());

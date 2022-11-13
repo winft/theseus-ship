@@ -45,7 +45,7 @@ using wayland_window = win::wayland::window<wayland_space>;
 
 struct PlaceWindowResult {
     QSize initiallyConfiguredSize;
-    Wrapland::Client::XdgShellToplevel::States initiallyConfiguredStates;
+    Wrapland::Client::xdg_shell_states initiallyConfiguredStates;
     QRect finalGeometry;
     std::unique_ptr<Wrapland::Client::XdgShellToplevel> toplevel;
     std::unique_ptr<Wrapland::Client::Surface> surface;
@@ -157,8 +157,7 @@ PlaceWindowResult TestPlacement::createAndPlaceWindow(QSize const& defaultSize)
     auto window = Test::get_wayland_window(Test::app()->base.space->windows_map.at(window_id));
 
     rc.initiallyConfiguredSize = configSpy[0][0].toSize();
-    rc.initiallyConfiguredStates
-        = configSpy[0][1].value<Wrapland::Client::XdgShellToplevel::States>();
+    rc.initiallyConfiguredStates = configSpy[0][1].value<Wrapland::Client::xdg_shell_states>();
     rc.toplevel->ackConfigure(configSpy[0][2].toUInt());
 
     Test::render(rc.surface, rc.initiallyConfiguredSize, Qt::red);
@@ -228,7 +227,7 @@ void TestPlacement::testPlaceMaximized()
     for (int i = 0; i < 4; i++) {
         placements.push_back(createAndPlaceWindow(QSize(600, 500)));
         auto const& placement = placements.back();
-        QVERIFY(placement.initiallyConfiguredStates & XdgShellToplevel::State::Maximized);
+        QVERIFY(placement.initiallyConfiguredStates & xdg_shell_state::maximized);
         QCOMPARE(placement.initiallyConfiguredSize, QSize(1280, 1024 - 20));
         QCOMPARE(placement.finalGeometry, QRect(0, 20, 1280, 1024 - 20)); // under the panel
     }
@@ -262,12 +261,12 @@ void TestPlacement::testPlaceMaximizedLeavesFullscreen()
 
         auto initiallyConfiguredSize = configSpy[0][0].toSize();
         auto initiallyConfiguredStates
-            = configSpy[0][1].value<Wrapland::Client::XdgShellToplevel::States>();
+            = configSpy[0][1].value<Wrapland::Client::xdg_shell_states>();
         shellSurface->ackConfigure(configSpy[0][2].toUInt());
 
         auto c = Test::render_and_wait_for_shown(surface, initiallyConfiguredSize, Qt::red);
 
-        QVERIFY(initiallyConfiguredStates & XdgShellToplevel::State::Fullscreen);
+        QVERIFY(initiallyConfiguredStates & xdg_shell_state::fullscreen);
         QCOMPARE(initiallyConfiguredSize, QSize(1280, 1024));
         QCOMPARE(c->geo.frame, QRect(0, 0, 1280, 1024));
     }

@@ -215,15 +215,15 @@ void MoveResizeWindowTest::testResize()
     QVERIFY(shellSurface);
 
     // Wait for the initial configure event.
-    XdgShellToplevel::States states;
+    xdg_shell_states states;
     QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configureRequested);
     QVERIFY(configureRequestedSpy.isValid());
     surface->commit(Surface::CommitFlag::None);
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 1);
-    states = configureRequestedSpy.last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Resizing));
+    states = configureRequestedSpy.last().at(1).value<xdg_shell_states>();
+    QVERIFY(!states.testFlag(xdg_shell_state::activated));
+    QVERIFY(!states.testFlag(xdg_shell_state::resizing));
 
     // Let's render.
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
@@ -234,9 +234,9 @@ void MoveResizeWindowTest::testResize()
     // We have to receive a configure event when the client becomes active.
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 2);
-    states = configureRequestedSpy.last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Resizing));
+    states = configureRequestedSpy.last().at(1).value<xdg_shell_states>();
+    QVERIFY(states.testFlag(xdg_shell_state::activated));
+    QVERIFY(!states.testFlag(xdg_shell_state::resizing));
     QCOMPARE(surfaceSizeChangedSpy.count(), 1);
 
     QVERIFY(c);
@@ -267,9 +267,9 @@ void MoveResizeWindowTest::testResize()
     QCOMPARE(win::is_resize(c), true);
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
-    states = configureRequestedSpy.last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Resizing));
+    states = configureRequestedSpy.last().at(1).value<xdg_shell_states>();
+    QVERIFY(states.testFlag(xdg_shell_state::activated));
+    QVERIFY(states.testFlag(xdg_shell_state::resizing));
 
     // Trigger a change.
     auto const cursorPos = Test::cursor()->pos();
@@ -280,9 +280,9 @@ void MoveResizeWindowTest::testResize()
     // The client should receive a configure event with the new size.
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 4);
-    states = configureRequestedSpy.last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Resizing));
+    states = configureRequestedSpy.last().at(1).value<xdg_shell_states>();
+    QVERIFY(states.testFlag(xdg_shell_state::activated));
+    QVERIFY(states.testFlag(xdg_shell_state::resizing));
     QCOMPARE(surfaceSizeChangedSpy.count(), 2);
     QCOMPARE(surfaceSizeChangedSpy.last().first().toSize(), QSize(108, 50));
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 0);
@@ -302,9 +302,9 @@ void MoveResizeWindowTest::testResize()
     // The client should receive another configure event.
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 5);
-    states = configureRequestedSpy.last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Resizing));
+    states = configureRequestedSpy.last().at(1).value<xdg_shell_states>();
+    QVERIFY(states.testFlag(xdg_shell_state::activated));
+    QVERIFY(states.testFlag(xdg_shell_state::resizing));
     QCOMPARE(surfaceSizeChangedSpy.count(), 3);
     QCOMPARE(surfaceSizeChangedSpy.last().first().toSize(), QSize(108, 58));
 
@@ -325,9 +325,9 @@ void MoveResizeWindowTest::testResize()
     QEXPECT_FAIL("", "XdgShellClient currently doesn't send final configure event", Abort);
     QVERIFY(configureRequestedSpy.wait(500));
     QCOMPARE(configureRequestedSpy.count(), 6);
-    states = configureRequestedSpy.last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Resizing));
+    states = configureRequestedSpy.last().at(1).value<xdg_shell_states>();
+    QVERIFY(states.testFlag(xdg_shell_state::activated));
+    QVERIFY(!states.testFlag(xdg_shell_state::resizing));
 
     // Destroy the client.
     surface.reset();
@@ -1194,9 +1194,9 @@ void MoveResizeWindowTest::testSetFullScreenWhenMoving()
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 2);
 
-    auto states = configureRequestedSpy.last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Fullscreen));
+    auto states = configureRequestedSpy.last().at(1).value<xdg_shell_states>();
+    QVERIFY(states.testFlag(xdg_shell_state::activated));
+    QVERIFY(!states.testFlag(xdg_shell_state::fullscreen));
 
     QCOMPARE(configureRequestedSpy.last().first().toSize(), QSize(500, 800));
 
@@ -1207,8 +1207,8 @@ void MoveResizeWindowTest::testSetFullScreenWhenMoving()
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
 
-    states = configureRequestedSpy.last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Fullscreen));
+    states = configureRequestedSpy.last().at(1).value<xdg_shell_states>();
+    QVERIFY(states.testFlag(xdg_shell_state::fullscreen));
 
     QCOMPARE(configureRequestedSpy.last().first().toSize(), Test::get_output(0)->geometry().size());
 
