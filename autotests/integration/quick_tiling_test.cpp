@@ -218,7 +218,7 @@ void QuickTilingTest::testQuickTiling()
     QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
     QCOMPARE(c->control->quicktiling, win::quicktiles::none);
 
-    QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configureRequested);
+    QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configured);
     QVERIFY(configureRequestedSpy.isValid());
     QSignalSpy quickTileChangedSpy(c->qobject.get(), &win::window_qobject::quicktiling_changed);
     QVERIFY(quickTileChangedSpy.isValid());
@@ -244,12 +244,13 @@ void QuickTilingTest::testQuickTiling()
     // but we got requested a new geometry
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 2);
-    QCOMPARE(configureRequestedSpy.last().at(0).toSize(), expectedGeometry.size());
-    QCOMPARE(configureRequestedSpy.last().at(1).value<xdg_shell_states>(),
-             get_client_tiles(mode) | xdg_shell_state::activated);
+
+    auto cfgdata = shellSurface->get_configure_data();
+    QCOMPARE(cfgdata.size, expectedGeometry.size());
+    QCOMPARE(cfgdata.states, get_client_tiles(mode) | xdg_shell_state::activated);
 
     // attach a new image
-    shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
+    shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());
     Test::render(surface, expectedGeometry.size(), Qt::red);
 
     QVERIFY(geometryChangedSpy.wait());
@@ -299,12 +300,13 @@ void QuickTilingTest::testQuickMaximizing()
     QCOMPARE(c->maximizeMode(), win::maximize_mode::restore);
 
     // We have to receive a configure event upon becoming active.
-    QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configureRequested);
+    QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configured);
     QVERIFY(configureRequestedSpy.isValid());
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 1);
-    QCOMPARE(configureRequestedSpy.last().at(1).value<xdg_shell_states>(),
-             xdg_shell_state::activated);
+
+    auto cfgdata = shellSurface->get_configure_data();
+    QCOMPARE(cfgdata.states, xdg_shell_state::activated);
 
     QSignalSpy quickTileChangedSpy(c->qobject.get(), &win::window_qobject::quicktiling_changed);
     QVERIFY(quickTileChangedSpy.isValid());
@@ -326,13 +328,15 @@ void QuickTilingTest::testQuickMaximizing()
     // But we got requested a new geometry.
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 2);
-    QCOMPARE(configureRequestedSpy.last().at(0).toSize(), QSize(1280, 1024));
-    QCOMPARE(configureRequestedSpy.last().at(1).value<xdg_shell_states>(),
+
+    cfgdata = shellSurface->get_configure_data();
+    QCOMPARE(cfgdata.size, QSize(1280, 1024));
+    QCOMPARE(cfgdata.states,
              get_client_tiles(win::quicktiles::maximize) | xdg_shell_state::activated);
 
     // Attach a new image.
-    shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
-    Test::render(surface, configureRequestedSpy.last().at(0).toSize(), Qt::red);
+    shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());
+    Test::render(surface, cfgdata.size, Qt::red);
 
     QVERIFY(geometryChangedSpy.wait());
     QCOMPARE(geometryChangedSpy.count(), 1);
@@ -358,12 +362,13 @@ void QuickTilingTest::testQuickMaximizing()
     // we got requested a new geometry
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
-    QCOMPARE(configureRequestedSpy.last().at(0).toSize(), QSize(100, 50));
-    QCOMPARE(configureRequestedSpy.last().at(1).value<xdg_shell_states>(),
-             xdg_shell_state::activated);
+
+    cfgdata = shellSurface->get_configure_data();
+    QCOMPARE(cfgdata.size, QSize(100, 50));
+    QCOMPARE(cfgdata.states, xdg_shell_state::activated);
 
     // render again
-    shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
+    shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());
     Test::render(surface, QSize(100, 50), Qt::yellow);
 
     QVERIFY(geometryChangedSpy.wait());
@@ -399,8 +404,7 @@ void QuickTilingTest::testQuickTilingKeyboardMove()
 
     auto shellSurface = Test::create_xdg_shell_toplevel(surface);
     QVERIFY(shellSurface);
-    QSignalSpy sizeChangeSpy(shellSurface.get(), &XdgShellToplevel::sizeChanged);
-    QVERIFY(sizeChangeSpy.isValid());
+
     // let's render
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
@@ -473,14 +477,14 @@ void QuickTilingTest::testQuickTilingPointerMove()
     QVERIFY(shellSurface);
 
     // wait for the initial configure event
-    QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configureRequested);
+    QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configured);
     QVERIFY(configureRequestedSpy.isValid());
     surface->commit(Surface::CommitFlag::None);
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 1);
 
     // let's render
-    shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
+    shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(c);
@@ -514,7 +518,7 @@ void QuickTilingTest::testQuickTilingPointerMove()
     QTEST(c->control->quicktiling, "expectedMode");
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 4);
-    QCOMPARE(false, configureRequestedSpy.last().first().toSize().isEmpty());
+    QVERIFY(!shellSurface->get_configure_data().size.isEmpty());
 }
 
 void QuickTilingTest::testQuickTilingTouchMove_data()
@@ -553,7 +557,7 @@ void QuickTilingTest::testQuickTilingTouchMove()
     deco->setMode(XdgDecoration::Mode::ServerSide);
     QCOMPARE(deco->mode(), XdgDecoration::Mode::ClientSide);
 
-    QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configureRequested);
+    QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configured);
     QVERIFY(configureRequestedSpy.isValid());
 
     Test::init_xdg_shell_toplevel(surface, shellSurface);
@@ -562,7 +566,7 @@ void QuickTilingTest::testQuickTilingTouchMove()
     QVERIFY(configureRequestedSpy.last().first().toSize().isEmpty());
 
     // let's render
-    shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
+    shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());
     auto c = Test::render_and_wait_for_shown(surface, QSize(1000, 50), Qt::blue);
 
     QVERIFY(c);
@@ -607,7 +611,8 @@ void QuickTilingTest::testQuickTilingTouchMove()
     QTEST(c->control->quicktiling, "expectedMode");
     QVERIFY(configureRequestedSpy.wait());
     QTRY_COMPARE(configureRequestedSpy.count(), hasBorders ? 5 : 4);
-    QCOMPARE(false, configureRequestedSpy.last().first().toSize().isEmpty());
+
+    QVERIFY(!shellSurface->get_configure_data().size.isEmpty());
 }
 
 void QuickTilingTest::testX11QuickTiling_data()
@@ -872,7 +877,7 @@ void QuickTilingTest::testShortcut()
     QCOMPARE(c->control->quicktiling, win::quicktiles::none);
 
     // We have to receive a configure event when the client becomes active.
-    QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configureRequested);
+    QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configured);
     QVERIFY(configureRequestedSpy.isValid());
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 1);
@@ -906,12 +911,14 @@ void QuickTilingTest::testShortcut()
 
     // but we got requested a new geometry
     QTRY_COMPARE(configureRequestedSpy.count(), numberOfQuickTileActions + 1);
-    QCOMPARE(configureRequestedSpy.last().at(0).toSize(), expectedGeometry.size());
+
+    auto cfgdata = shellSurface->get_configure_data();
+    QCOMPARE(cfgdata.size, expectedGeometry.size());
 
     // attach a new image
     QSignalSpy geometryChangedSpy(c->qobject.get(), &win::window_qobject::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
-    shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
+    shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());
     Test::render(surface, expectedGeometry.size(), Qt::red);
 
     QVERIFY(geometryChangedSpy.wait());
@@ -965,7 +972,7 @@ void QuickTilingTest::testScript()
     QCOMPARE(c->control->quicktiling, win::quicktiles::none);
 
     // We have to receive a configure event upon the client becoming active.
-    QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configureRequested);
+    QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configured);
     QVERIFY(configureRequestedSpy.isValid());
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 1);
@@ -1010,10 +1017,12 @@ void QuickTilingTest::testScript()
     // but we got requested a new geometry
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 2);
-    QCOMPARE(configureRequestedSpy.last().at(0).toSize(), expectedGeometry.size());
+
+    auto cfgdata = shellSurface->get_configure_data();
+    QCOMPARE(cfgdata.size, expectedGeometry.size());
 
     // attach a new image
-    shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
+    shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());
     Test::render(surface, expectedGeometry.size(), Qt::red);
 
     QVERIFY(geometryChangedSpy.wait());

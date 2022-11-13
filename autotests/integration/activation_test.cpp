@@ -367,15 +367,22 @@ void ActivationTest::testSwitchToWindowMaximized()
     auto client1 = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
     QVERIFY(client1);
     QVERIFY(client1->control->active);
-    QSignalSpy configureRequestedSpy1(shellSurface1.get(), &XdgShellToplevel::configureRequested);
+
+    QSignalSpy configureRequestedSpy1(shellSurface1.get(), &XdgShellToplevel::configured);
+    QVERIFY(configureRequestedSpy1.isValid());
+
     QVERIFY(configureRequestedSpy1.wait());
     win::active_window_maximize(*Test::app()->base.space);
+
     QVERIFY(configureRequestedSpy1.wait());
+
     QSignalSpy geometryChangedSpy1(client1->qobject.get(),
                                    &win::window_qobject::frame_geometry_changed);
     QVERIFY(geometryChangedSpy1.isValid());
-    shellSurface1->ackConfigure(configureRequestedSpy1.last().at(2).value<quint32>());
-    Test::render(surface1, configureRequestedSpy1.last().at(0).toSize(), Qt::red);
+
+    shellSurface1->ackConfigure(configureRequestedSpy1.last().front().value<quint32>());
+    Test::render(surface1, shellSurface1->get_configure_data().size, Qt::red);
+
     QVERIFY(geometryChangedSpy1.wait());
     QCOMPARE(client1->maximizeMode(), win::maximize_mode::full);
 
@@ -384,15 +391,22 @@ void ActivationTest::testSwitchToWindowMaximized()
     auto client2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::blue);
     QVERIFY(client2);
     QVERIFY(client2->control->active);
-    QSignalSpy configureRequestedSpy2(shellSurface2.get(), &XdgShellToplevel::configureRequested);
+
+    QSignalSpy configureRequestedSpy2(shellSurface2.get(), &XdgShellToplevel::configured);
+    QVERIFY(configureRequestedSpy2.isValid());
+
     QVERIFY(configureRequestedSpy2.wait());
     win::active_window_maximize(*Test::app()->base.space);
+
     QVERIFY(configureRequestedSpy2.wait());
+
     QSignalSpy geometryChangedSpy2(client2->qobject.get(),
                                    &win::window_qobject::frame_geometry_changed);
     QVERIFY(geometryChangedSpy2.isValid());
-    shellSurface2->ackConfigure(configureRequestedSpy2.last().at(2).value<quint32>());
-    Test::render(surface2, configureRequestedSpy2.last().at(0).toSize(), Qt::red);
+
+    shellSurface2->ackConfigure(configureRequestedSpy2.last().front().value<quint32>());
+    Test::render(surface2, shellSurface2->get_configure_data().size, Qt::red);
+
     QVERIFY(geometryChangedSpy2.wait());
 
     auto const stackingOrder = Test::app()->base.space->stacking.order.stack;
@@ -456,15 +470,21 @@ void ActivationTest::testSwitchToWindowFullScreen()
     auto client1 = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
     QVERIFY(client1);
     QVERIFY(client1->control->active);
-    QSignalSpy configureRequestedSpy1(shellSurface1.get(), &XdgShellToplevel::configureRequested);
+
+    QSignalSpy configureRequestedSpy1(shellSurface1.get(), &XdgShellToplevel::configured);
+    QVERIFY(configureRequestedSpy1.isValid());
+
     QVERIFY(configureRequestedSpy1.wait());
     win::active_window_set_fullscreen(*Test::app()->base.space);
+
     QVERIFY(configureRequestedSpy1.wait());
+
     QSignalSpy geometryChangedSpy1(client1->qobject.get(),
                                    &win::window_qobject::frame_geometry_changed);
     QVERIFY(geometryChangedSpy1.isValid());
-    shellSurface1->ackConfigure(configureRequestedSpy1.last().at(2).value<quint32>());
-    Test::render(surface1, configureRequestedSpy1.last().at(0).toSize(), Qt::red);
+
+    shellSurface1->ackConfigure(configureRequestedSpy1.last().front().value<quint32>());
+    Test::render(surface1, shellSurface1->get_configure_data().size, Qt::red);
     QVERIFY(geometryChangedSpy1.wait());
 
     std::unique_ptr<Surface> surface2(Test::create_surface());
@@ -472,15 +492,22 @@ void ActivationTest::testSwitchToWindowFullScreen()
     auto client2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::blue);
     QVERIFY(client2);
     QVERIFY(client2->control->active);
-    QSignalSpy configureRequestedSpy2(shellSurface2.get(), &XdgShellToplevel::configureRequested);
+
+    QSignalSpy configureRequestedSpy2(shellSurface2.get(), &XdgShellToplevel::configured);
+    QVERIFY(configureRequestedSpy2.isValid());
+
     QVERIFY(configureRequestedSpy2.wait());
     win::active_window_set_fullscreen(*Test::app()->base.space);
+
     QVERIFY(configureRequestedSpy2.wait());
+
     QSignalSpy geometryChangedSpy2(client2->qobject.get(),
                                    &win::window_qobject::frame_geometry_changed);
     QVERIFY(geometryChangedSpy2.isValid());
-    shellSurface2->ackConfigure(configureRequestedSpy2.last().at(2).value<quint32>());
-    Test::render(surface2, configureRequestedSpy2.last().at(0).toSize(), Qt::red);
+
+    shellSurface2->ackConfigure(configureRequestedSpy2.last().front().value<quint32>());
+    Test::render(surface2, shellSurface2->get_configure_data().size, Qt::red);
+
     QVERIFY(geometryChangedSpy2.wait());
 
     auto const stackingOrder = Test::app()->base.space->stacking.order.stack;

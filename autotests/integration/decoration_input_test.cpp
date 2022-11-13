@@ -110,7 +110,7 @@ Test::space::wayland_window* DecorationInputTest::showWindow()
         = Test::create_xdg_shell_toplevel(client.surface, Test::CreationSetup::CreateOnly);
     VERIFY(client.toplevel.get());
 
-    QSignalSpy configureRequestedSpy(client.toplevel.get(), &XdgShellToplevel::configureRequested);
+    QSignalSpy configureRequestedSpy(client.toplevel.get(), &XdgShellToplevel::configured);
 
     auto deco = Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(
         client.toplevel.get(), client.toplevel.get());
@@ -125,7 +125,7 @@ Test::space::wayland_window* DecorationInputTest::showWindow()
     VERIFY(configureRequestedSpy.count() > 0 || configureRequestedSpy.wait());
     COMPARE(configureRequestedSpy.count(), 1);
 
-    client.toplevel->ackConfigure(configureRequestedSpy.last()[2].toInt());
+    client.toplevel->ackConfigure(configureRequestedSpy.back().front().toInt());
 
     // let's render
     auto c = Test::render_and_wait_for_shown(client.surface, QSize(500, 50), Qt::blue);

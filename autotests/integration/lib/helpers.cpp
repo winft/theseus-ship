@@ -311,12 +311,11 @@ void init_xdg_shell_toplevel(std::unique_ptr<Clt::Surface> const& surface,
                              std::unique_ptr<Clt::XdgShellToplevel> const& shell_toplevel)
 {
     // wait for configure
-    QSignalSpy configureRequestedSpy(shell_toplevel.get(),
-                                     &Clt::XdgShellToplevel::configureRequested);
+    QSignalSpy configureRequestedSpy(shell_toplevel.get(), &Clt::XdgShellToplevel::configured);
     QVERIFY(configureRequestedSpy.isValid());
     surface->commit(Clt::Surface::CommitFlag::None);
     QVERIFY(configureRequestedSpy.wait());
-    shell_toplevel->ackConfigure(configureRequestedSpy.last()[2].toInt());
+    shell_toplevel->ackConfigure(configureRequestedSpy.back().front().toInt());
 }
 
 void init_xdg_shell_popup(std::unique_ptr<Clt::Surface> const& surface,
