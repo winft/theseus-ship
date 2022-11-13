@@ -70,7 +70,6 @@ public:
              const QIcon &icon = QIcon::fromTheme("window"),
              const QString &description = QString("")
             );
-    ~RuleItem();
 
     QString key() const;
     QString name() const;
@@ -119,8 +118,8 @@ private:
     QVariant m_value;
     QVariant m_suggestedValue;
 
-    RulePolicy *m_policy;
-    OptionsModel *m_options;
+    std::unique_ptr<RulePolicy> m_policy;
+    std::unique_ptr<OptionsModel> m_options;
 };
 
 }   //namespace
