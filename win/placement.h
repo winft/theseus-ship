@@ -56,14 +56,15 @@ bool can_move(Win const* window)
  * Place the client \a c according to a simply "random" placement algorithm.
  */
 template<typename Win>
-void place_at_random(Win* window, const QRect& area)
+void place_at_random(Win* window, QRect const& area)
 {
-    Q_ASSERT(area.isValid());
+    assert(area.isValid());
 
-    const int step = 24;
+    int const step = 24;
     static int px = step;
     static int py = 2 * step;
-    int tx, ty;
+    int tx;
+    int ty;
 
     if (px < area.x()) {
         px = area.x();
@@ -102,9 +103,9 @@ void place_at_random(Win* window, const QRect& area)
  * Place the client \a c according to a really smart placement algorithm :-)
  */
 template<typename Win>
-void place_smart(Win* window, const QRect& area)
+void place_smart(Win* window, QRect const& area)
 {
-    Q_ASSERT(area.isValid());
+    assert(area.isValid());
 
     /*
      * SmartPlacement by Cristian Tibirna (tibirna@kde.org)
@@ -119,17 +120,34 @@ void place_smart(Win* window, const QRect& area)
         return;
     }
 
-    const int none = 0, h_wrong = -1, w_wrong = -2; // overlap types
-    long int overlap, min_overlap = 0;
-    int x_optimal, y_optimal;
+    // overlap types
+    int const none = 0;
+    int const h_wrong = -1;
+    int const w_wrong = -2;
+
+    long int overlap = 0;
+    long int min_overlap = 0;
+
+    int x_optimal;
+    int y_optimal;
+
     int possible;
     int desktop = get_desktop(*window) == 0 || on_all_desktops(window)
         ? window->space.virtual_desktop_manager->current()
         : get_desktop(*window);
 
-    int cxl, cxr, cyt, cyb; // temp coords
-    int xl, xr, yt, yb;     // temp coords
-    int basket;             // temp holder
+    // temp coords
+    int cxl;
+    int cxr;
+    int cyt;
+    int cyb;
+    int xl;
+    int xr;
+    int yt;
+    int yb;
+
+    // temp holder
+    int basket;
 
     // get the maximum allowed windows space
     int x = area.left();
@@ -141,17 +159,20 @@ void place_smart(Win* window, const QRect& area)
     int ch = window->geo.update.frame.size().height() - 1;
     int cw = window->geo.update.frame.size().width() - 1;
 
-    bool first_pass = true; // CT lame flag. Don't like it. What else would do?
+    // CT lame flag. Don't like it. What else would do?
+    bool first_pass = true;
 
     // loop over possible positions
     do {
         // test if enough room in x and y directions
         if (y + ch > area.bottom() && ch < area.height()) {
-            overlap = h_wrong; // this throws the algorithm to an exit
+            // this throws the algorithm to an exit
+            overlap = h_wrong;
         } else if (x + cw > area.right()) {
             overlap = w_wrong;
         } else {
-            overlap = none; // initialize
+            // initialize
+            overlap = none;
 
             cxl = x;
             cxr = x + cw;
@@ -178,8 +199,8 @@ void place_smart(Win* window, const QRect& area)
                                        overlap += 16 * (xr - xl) * (yb - yt);
                                    } else if (win->control->keep_below && !is_dock(win)) {
                                        // ignore KeepBelow windows
-                                       overlap += 0; // for placement (see
-                                                     // X11Client::belongsToLayer() for Dock)
+                                       // for placement (see X11Client::belongsToLayer() for Dock)
+                                       overlap += 0;
                                    } else {
                                        overlap += (xr - xl) * (yb - yt);
                                    }
@@ -199,9 +220,8 @@ void place_smart(Win* window, const QRect& area)
         if (first_pass) {
             first_pass = false;
             min_overlap = overlap;
-        }
-        // CT save the best position and the minimum overlap up to now
-        else if (overlap >= none && overlap < min_overlap) {
+        } else if (overlap >= none && overlap < min_overlap) {
+            // CT save the best position and the minimum overlap up to now
             min_overlap = overlap;
             x_optimal = x;
             y_optimal = y;
@@ -209,10 +229,11 @@ void place_smart(Win* window, const QRect& area)
 
         // really need to loop? test if there's any overlap
         if (overlap > none) {
-
             possible = area.right();
-            if (possible - cw > x)
+
+            if (possible - cw > x) {
                 possible -= cw;
+            }
 
             // compare to the position of each window on the same desk
             for (auto const& var_win : window->space.stacking.order.stack) {
@@ -243,15 +264,14 @@ void place_smart(Win* window, const QRect& area)
                            var_win);
             }
             x = possible;
-        }
-
-        // ... else ==> not enough x dimension (overlap was wrong on horizontal)
-        else if (overlap == w_wrong) {
+        } else if (overlap == w_wrong) {
+            // Not enough x dimension (overlap was wrong on horizontal)
             x = area.left();
             possible = area.bottom();
 
-            if (possible - ch > y)
+            if (possible - ch > y) {
                 possible -= ch;
+            }
 
             // test the position of each window on the desk
             for (auto const& var_win : window->space.stacking.order.stack) {
@@ -279,6 +299,7 @@ void place_smart(Win* window, const QRect& area)
                            }},
                            var_win);
             }
+
             y = possible;
         }
     } while ((overlap != none) && (overlap != h_wrong) && (y < area.bottom()));
@@ -295,12 +316,12 @@ void place_smart(Win* window, const QRect& area)
  * Place windows centered, on top of all others
  */
 template<typename Win>
-void place_centered(Win* window, const QRect& area)
+void place_centered(Win* window, QRect const& area)
 {
-    Q_ASSERT(area.isValid());
+    assert(area.isValid());
 
-    const int xp = area.left() + (area.width() - window->geo.update.frame.size().width()) / 2;
-    const int yp = area.top() + (area.height() - window->geo.update.frame.size().height()) / 2;
+    int const xp = area.left() + (area.width() - window->geo.update.frame.size().width()) / 2;
+    int const yp = area.top() + (area.height() - window->geo.update.frame.size().height()) / 2;
 
     // place the window
     move(window, QPoint(xp, yp));
@@ -310,80 +331,83 @@ void place_centered(Win* window, const QRect& area)
  * Place windows in the (0,0) corner, on top of all others
  */
 template<typename Win>
-void place_zero_cornered(Win* window, const QRect& area)
+void place_zero_cornered(Win* window, QRect const& area)
 {
-    Q_ASSERT(area.isValid());
+    assert(area.isValid());
 
     // get the maximum allowed windows space and desk's origin
     move(window, area.topLeft());
 }
 
 template<typename Win>
-void place_utility(Win* window, const QRect& area)
+void place_utility(Win* window, QRect const& area)
 {
-    // TODO kwin should try to place utility windows next to their mainwindow,
-    // preferably at the right edge, and going down if there are more of them
-    // if there's not enough place outside the mainwindow, it should prefer
-    // top-right corner
-    // use the default placement for now
+    // TODO kwin should try to place utility windows next to their mainwindow, preferably at the
+    // right edge, and going down if there are more of them if there's not enough place outside the
+    // mainwindow, it should prefer top-right corner. use the default placement for now.
     place(window, area, placement::global_default);
 }
 
 template<typename Win>
-void place_on_screen_display(Win* window, const QRect& area)
+void place_on_screen_display(Win* window, QRect const& area)
 {
-    Q_ASSERT(area.isValid());
+    assert(area.isValid());
 
     // place at lower area of the screen
-    const int x = area.left() + (area.width() - window->geo.update.frame.size().width()) / 2;
-    const int y = area.top() + 2 * area.height() / 3 - window->geo.update.frame.size().height() / 2;
+    int const x = area.left() + (area.width() - window->geo.update.frame.size().width()) / 2;
+    int const y = area.top() + 2 * area.height() / 3 - window->geo.update.frame.size().height() / 2;
 
     move(window, QPoint(x, y));
 }
 
 template<typename Win>
-void place_under_mouse(Win* window, const QRect& area)
+void place_under_mouse(Win* window, QRect const& area)
 {
-    Q_ASSERT(area.isValid());
+    assert(area.isValid());
 
-    auto geom = window->geo.update.frame;
-    geom.moveCenter(window->space.input->cursor->pos());
-    move(window, geom.topLeft());
-    keep_in_area(window, area, false); // make sure it's kept inside workarea
+    auto geo = window->geo.update.frame;
+    geo.moveCenter(window->space.input->cursor->pos());
+
+    move(window, geo.topLeft());
+    keep_in_area(window, area, false);
 }
 
 template<typename Win>
-void place_maximizing(Win* window, const QRect& area, placement nextPlacement = placement::unknown)
+void place_maximizing(Win* window, QRect const& area, placement next_placement = placement::unknown)
 {
-    Q_ASSERT(area.isValid());
+    assert(area.isValid());
 
-    if (nextPlacement == placement::unknown)
-        nextPlacement = placement::smart;
+    if (next_placement == placement::unknown) {
+        next_placement = placement::smart;
+    }
+
     if (window->isMaximizable() && window->maxSize().width() >= area.width()
         && window->maxSize().height() >= area.height()) {
-        if (space_window_area(window->space, MaximizeArea, window) == area)
+        if (space_window_area(window->space, MaximizeArea, window) == area) {
             maximize(window, maximize_mode::full);
-        else { // if the geometry doesn't match default maximize area (xinerama case?),
-            // it's probably better to use the given area
+        } else {
+            // If the geometry doesn't match default maximize area (xinerama case?), it's probably
+            // better to use the given area
             window->setFrameGeometry(area);
         }
     } else {
         constrained_resize(window, window->maxSize().boundedTo(area.size()));
-        place(window, area, nextPlacement);
+        place(window, area, next_placement);
     }
 }
 
 template<typename Win>
 void place_on_main_window(Win* window,
-                          const QRect& area,
-                          placement nextPlacement = placement::unknown)
+                          QRect const& area,
+                          placement next_placement = placement::unknown)
 {
-    Q_ASSERT(area.isValid());
+    assert(area.isValid());
 
-    if (nextPlacement == placement::unknown)
-        nextPlacement = placement::centered;
-    if (nextPlacement == placement::maximizing) // maximize if needed
+    if (next_placement == placement::unknown) {
+        next_placement = placement::centered;
+    } else if (next_placement == placement::maximizing) {
         place_maximizing(window, area, placement::no_placement);
+    }
 
     Win* place_on{nullptr};
     Win* place_on2{nullptr};
@@ -408,7 +432,7 @@ void place_on_main_window(Win* window,
                 // That's the default at least. However, with maximizing placement
                 // policy as the default, the dialog should be either maximized or
                 // made as large as its maximum size and then placed centered.
-                // So the nextPlacement argument allows chaining. In this case, nextPlacement
+                // So the next_placement argument allows chaining. In this case, next_placement
                 // is maximizing and it will call place_centered().
                 place(window, area, placement::centered);
                 return;
@@ -416,37 +440,42 @@ void place_on_main_window(Win* window,
         }
     }
 
-    if (place_on == nullptr) {
+    if (!place_on) {
         // 'mains_count' is used because it doesn't include ignored mainwindows
         if (mains_count != 1) {
             place(window, area, placement::centered);
             return;
         }
-        place_on = place_on2; // use the only window filtered together with 'mains_count'
+
+        // use the only window filtered together with 'mains_count'
+        place_on = place_on2;
     }
+
     if (is_desktop(place_on)) {
         place(window, area, placement::centered);
         return;
     }
-    auto geom = window->geo.update.frame;
-    geom.moveCenter(place_on->geo.update.frame.center());
-    move(window, geom.topLeft());
+
+    auto geo = window->geo.update.frame;
+    geo.moveCenter(place_on->geo.update.frame.center());
+    move(window, geo.topLeft());
+
     // get area again, because the mainwindow may be on different xinerama screen
-    const QRect placementArea = space_window_area(window->space, PlacementArea, window);
-    keep_in_area(window, placementArea, false); // make sure it's kept inside workarea
+    auto const placementArea = space_window_area(window->space, PlacementArea, window);
+    keep_in_area(window, placementArea, false);
 }
 
 template<typename Win>
-void place_dialog(Win* window, const QRect& area, placement nextPlacement = placement::unknown)
+void place_dialog(Win* window, QRect const& area, placement next_placement = placement::unknown)
 {
-    place_on_main_window(window, area, nextPlacement);
+    place_on_main_window(window, area, next_placement);
 }
 
 template<typename Win>
 void place(Win* window,
-           const QRect& area,
+           QRect const& area,
            placement policy,
-           placement nextPlacement = placement::unknown)
+           placement next_placement = placement::unknown)
 {
     switch (policy) {
     case placement::unknown:
@@ -470,10 +499,10 @@ void place(Win* window,
         place_under_mouse(window, area);
         break;
     case placement::on_main_window:
-        place_on_main_window(window, area, nextPlacement);
+        place_on_main_window(window, area, next_placement);
         break;
     case placement::maximizing:
-        place_maximizing(window, area, nextPlacement);
+        place_maximizing(window, area, next_placement);
         break;
     default:
         place_smart(window, area);
@@ -482,23 +511,25 @@ void place(Win* window,
     if (kwinApp()->options->qobject->borderSnapZone()) {
         // snap to titlebar / snap to window borders on inner screen edges
         auto const geo = window->geo.update.frame;
-        QPoint corner = geo.topLeft();
-        auto const frameMargins = frame_margins(window);
+        auto corner = geo.topLeft();
+        auto const margins = frame_margins(window);
+        auto const win_area = space_window_area(window->space, FullArea, window);
 
-        const QRect fullRect = space_window_area(window->space, FullArea, window);
         if (!(window->maximizeMode() & maximize_mode::horizontal)) {
-            if (geo.right() == fullRect.right()) {
-                corner.rx() += frameMargins.right();
+            if (geo.right() == win_area.right()) {
+                corner.rx() += margins.right();
             }
-            if (geo.left() == fullRect.left()) {
-                corner.rx() -= frameMargins.left();
+            if (geo.left() == win_area.left()) {
+                corner.rx() -= margins.left();
             }
         }
+
         if (!(window->maximizeMode() & maximize_mode::vertical)) {
-            if (geo.bottom() == fullRect.bottom()) {
-                corner.ry() += frameMargins.bottom();
+            if (geo.bottom() == win_area.bottom()) {
+                corner.ry() += margins.bottom();
             }
         }
+
         move(window, corner);
     }
 }
@@ -507,9 +538,10 @@ void place(Win* window,
  * Places the client \a c according to the workspace's layout policy
  */
 template<typename Win>
-void place(Win* window, const QRect& area)
+void place(Win* window, QRect const& area)
 {
     auto policy = window->control->rules.checkPlacement(placement::global_default);
+
     if (policy != placement::global_default) {
         place(window, area, policy);
         return;
