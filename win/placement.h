@@ -44,45 +44,6 @@ namespace KWin::win
 {
 
 template<typename Win>
-static inline bool can_move(Win const* window);
-
-template<typename Win>
-void place(Win* window, const QRect& area);
-template<typename Win>
-void place(Win* window,
-           const QRect& area,
-           placement policy,
-           placement nextPlacement = placement::unknown);
-
-template<typename Win>
-void place_at_random(Win* window, const QRect& area, placement next = placement::unknown);
-template<typename Win>
-void place_smart(Win* window, const QRect& area, placement next = placement::unknown);
-template<typename Win>
-void place_centered(Win* window, const QRect& area, placement next = placement::unknown);
-template<typename Win>
-void place_zero_cornered(Win* window, const QRect& area, placement next = placement::unknown);
-template<typename Win>
-void place_under_mouse(Win* window, const QRect& area, placement next = placement::unknown);
-template<typename Win>
-void place_on_main_window(Win* window, const QRect& area, placement next = placement::unknown);
-template<typename Win>
-void place_maximizing(Win* window, const QRect& area, placement next = placement::unknown);
-
-template<typename Win>
-void place_on_screen_display(Win* window, const QRect& area);
-template<typename Win>
-void place_dialog(Win* window, const QRect& area, placement next = placement::unknown);
-template<typename Win>
-void place_utility(Win* window, const QRect& area, placement next = placement::unknown);
-
-void unclutter_desktop();
-
-// ********************
-// definitions
-// ********************
-
-template<typename Win>
 bool can_move(Win const* window)
 {
     if (!window) {
@@ -92,110 +53,10 @@ bool can_move(Win const* window)
 }
 
 /**
- * Places the client \a c according to the workspace's layout policy
- */
-template<typename Win>
-void place(Win* window, const QRect& area)
-{
-    auto policy = window->control->rules.checkPlacement(placement::global_default);
-    if (policy != placement::global_default) {
-        place(window, area, policy);
-        return;
-    }
-
-    if (is_utility(window)) {
-        place_utility(window, area, kwinApp()->options->qobject->placement());
-        return;
-    }
-    if (is_dialog(window)) {
-        place_dialog(window, area, kwinApp()->options->qobject->placement());
-        return;
-    }
-    if (is_splash(window)) {
-        // Place on main window, if any exists, otherwise centered.
-        place_on_main_window(window, area);
-        return;
-    }
-    if (is_on_screen_display(window) || is_notification(window)
-        || is_critical_notification(window)) {
-        place_on_screen_display(window, area);
-        return;
-    }
-
-    // TODO(romangg): Remove this special case only there for Wayland/Xwayland windows.
-    if constexpr (requires(Win win) { win.surface; }) {
-        if (window->transient->lead() && window->surface) {
-            place_dialog(window, area, kwinApp()->options->qobject->placement());
-            return;
-        }
-    }
-
-    place(window, area, kwinApp()->options->qobject->placement());
-}
-
-template<typename Win>
-void place(Win* window, const QRect& area, placement policy, placement nextPlacement)
-{
-    switch (policy) {
-    case placement::unknown:
-        policy = kwinApp()->options->qobject->placement();
-        [[fallthrough]];
-    case placement::global_default:
-        policy = kwinApp()->options->qobject->placement();
-        [[fallthrough]];
-    case placement::no_placement:
-        return;
-    case placement::random:
-        place_at_random(window, area, nextPlacement);
-        break;
-    case placement::centered:
-        place_centered(window, area, nextPlacement);
-        break;
-    case placement::zero_cornered:
-        place_zero_cornered(window, area, nextPlacement);
-        break;
-    case placement::under_mouse:
-        place_under_mouse(window, area, nextPlacement);
-        break;
-    case placement::on_main_window:
-        place_on_main_window(window, area, nextPlacement);
-        break;
-    case placement::maximizing:
-        place_maximizing(window, area, nextPlacement);
-        break;
-    default:
-        place_smart(window, area, nextPlacement);
-    }
-
-    if (kwinApp()->options->qobject->borderSnapZone()) {
-        // snap to titlebar / snap to window borders on inner screen edges
-        auto const geo = window->geo.update.frame;
-        QPoint corner = geo.topLeft();
-        auto const frameMargins = frame_margins(window);
-
-        const QRect fullRect = space_window_area(window->space, FullArea, window);
-        if (!(window->maximizeMode() & maximize_mode::horizontal)) {
-            if (geo.right() == fullRect.right()) {
-                corner.rx() += frameMargins.right();
-            }
-            if (geo.left() == fullRect.left()) {
-                corner.rx() -= frameMargins.left();
-            }
-        }
-        if (!(window->maximizeMode() & maximize_mode::vertical)) {
-            if (geo.bottom() == fullRect.bottom()) {
-                corner.ry() += frameMargins.bottom();
-            }
-        }
-        move(window, corner);
-    }
-}
-
-/**
  * Place the client \a c according to a simply "random" placement algorithm.
  */
 template<typename Win>
-void place_at_random(Win* window, const QRect& area, placement /*next*/)
+void place_at_random(Win* window, const QRect& area, placement /*next*/ = placement::unknown)
 {
     Q_ASSERT(area.isValid());
 
@@ -241,7 +102,7 @@ void place_at_random(Win* window, const QRect& area, placement /*next*/)
  * Place the client \a c according to a really smart placement algorithm :-)
  */
 template<typename Win>
-void place_smart(Win* window, const QRect& area, placement /*next*/)
+void place_smart(Win* window, const QRect& area, placement /*next*/ = placement::unknown)
 {
     Q_ASSERT(area.isValid());
 
@@ -434,7 +295,7 @@ void place_smart(Win* window, const QRect& area, placement /*next*/)
  * Place windows centered, on top of all others
  */
 template<typename Win>
-void place_centered(Win* window, const QRect& area, placement /*next*/)
+void place_centered(Win* window, const QRect& area, placement /*next*/ = placement::unknown)
 {
     Q_ASSERT(area.isValid());
 
@@ -449,7 +310,7 @@ void place_centered(Win* window, const QRect& area, placement /*next*/)
  * Place windows in the (0,0) corner, on top of all others
  */
 template<typename Win>
-void place_zero_cornered(Win* window, const QRect& area, placement /*next*/)
+void place_zero_cornered(Win* window, const QRect& area, placement /*next*/ = placement::unknown)
 {
     Q_ASSERT(area.isValid());
 
@@ -458,7 +319,7 @@ void place_zero_cornered(Win* window, const QRect& area, placement /*next*/)
 }
 
 template<typename Win>
-void place_utility(Win* window, const QRect& area, placement /*next*/)
+void place_utility(Win* window, const QRect& area, placement /*next*/ = placement::unknown)
 {
     // TODO kwin should try to place utility windows next to their mainwindow,
     // preferably at the right edge, and going down if there are more of them
@@ -481,13 +342,7 @@ void place_on_screen_display(Win* window, const QRect& area)
 }
 
 template<typename Win>
-void place_dialog(Win* window, const QRect& area, placement nextPlacement)
-{
-    place_on_main_window(window, area, nextPlacement);
-}
-
-template<typename Win>
-void place_under_mouse(Win* window, const QRect& area, placement /*next*/)
+void place_under_mouse(Win* window, const QRect& area, placement /*next*/ = placement::unknown)
 {
     Q_ASSERT(area.isValid());
 
@@ -498,7 +353,30 @@ void place_under_mouse(Win* window, const QRect& area, placement /*next*/)
 }
 
 template<typename Win>
-void place_on_main_window(Win* window, const QRect& area, placement nextPlacement)
+void place_maximizing(Win* window, const QRect& area, placement nextPlacement = placement::unknown)
+{
+    Q_ASSERT(area.isValid());
+
+    if (nextPlacement == placement::unknown)
+        nextPlacement = placement::smart;
+    if (window->isMaximizable() && window->maxSize().width() >= area.width()
+        && window->maxSize().height() >= area.height()) {
+        if (space_window_area(window->space, MaximizeArea, window) == area)
+            maximize(window, maximize_mode::full);
+        else { // if the geometry doesn't match default maximize area (xinerama case?),
+            // it's probably better to use the given area
+            window->setFrameGeometry(area);
+        }
+    } else {
+        constrained_resize(window, window->maxSize().boundedTo(area.size()));
+        place(window, area, nextPlacement);
+    }
+}
+
+template<typename Win>
+void place_on_main_window(Win* window,
+                          const QRect& area,
+                          placement nextPlacement = placement::unknown)
 {
     Q_ASSERT(area.isValid());
 
@@ -559,24 +437,112 @@ void place_on_main_window(Win* window, const QRect& area, placement nextPlacemen
 }
 
 template<typename Win>
-void place_maximizing(Win* window, const QRect& area, placement nextPlacement)
+void place_dialog(Win* window, const QRect& area, placement nextPlacement = placement::unknown)
 {
-    Q_ASSERT(area.isValid());
+    place_on_main_window(window, area, nextPlacement);
+}
 
-    if (nextPlacement == placement::unknown)
-        nextPlacement = placement::smart;
-    if (window->isMaximizable() && window->maxSize().width() >= area.width()
-        && window->maxSize().height() >= area.height()) {
-        if (space_window_area(window->space, MaximizeArea, window) == area)
-            maximize(window, maximize_mode::full);
-        else { // if the geometry doesn't match default maximize area (xinerama case?),
-            // it's probably better to use the given area
-            window->setFrameGeometry(area);
-        }
-    } else {
-        constrained_resize(window, window->maxSize().boundedTo(area.size()));
-        place(window, area, nextPlacement);
+template<typename Win>
+void place(Win* window,
+           const QRect& area,
+           placement policy,
+           placement nextPlacement = placement::unknown)
+{
+    switch (policy) {
+    case placement::unknown:
+        policy = kwinApp()->options->qobject->placement();
+        [[fallthrough]];
+    case placement::global_default:
+        policy = kwinApp()->options->qobject->placement();
+        [[fallthrough]];
+    case placement::no_placement:
+        return;
+    case placement::random:
+        place_at_random(window, area, nextPlacement);
+        break;
+    case placement::centered:
+        place_centered(window, area, nextPlacement);
+        break;
+    case placement::zero_cornered:
+        place_zero_cornered(window, area, nextPlacement);
+        break;
+    case placement::under_mouse:
+        place_under_mouse(window, area, nextPlacement);
+        break;
+    case placement::on_main_window:
+        place_on_main_window(window, area, nextPlacement);
+        break;
+    case placement::maximizing:
+        place_maximizing(window, area, nextPlacement);
+        break;
+    default:
+        place_smart(window, area, nextPlacement);
     }
+
+    if (kwinApp()->options->qobject->borderSnapZone()) {
+        // snap to titlebar / snap to window borders on inner screen edges
+        auto const geo = window->geo.update.frame;
+        QPoint corner = geo.topLeft();
+        auto const frameMargins = frame_margins(window);
+
+        const QRect fullRect = space_window_area(window->space, FullArea, window);
+        if (!(window->maximizeMode() & maximize_mode::horizontal)) {
+            if (geo.right() == fullRect.right()) {
+                corner.rx() += frameMargins.right();
+            }
+            if (geo.left() == fullRect.left()) {
+                corner.rx() -= frameMargins.left();
+            }
+        }
+        if (!(window->maximizeMode() & maximize_mode::vertical)) {
+            if (geo.bottom() == fullRect.bottom()) {
+                corner.ry() += frameMargins.bottom();
+            }
+        }
+        move(window, corner);
+    }
+}
+
+/**
+ * Places the client \a c according to the workspace's layout policy
+ */
+template<typename Win>
+void place(Win* window, const QRect& area)
+{
+    auto policy = window->control->rules.checkPlacement(placement::global_default);
+    if (policy != placement::global_default) {
+        place(window, area, policy);
+        return;
+    }
+
+    if (is_utility(window)) {
+        place_utility(window, area, kwinApp()->options->qobject->placement());
+        return;
+    }
+    if (is_dialog(window)) {
+        place_dialog(window, area, kwinApp()->options->qobject->placement());
+        return;
+    }
+    if (is_splash(window)) {
+        // Place on main window, if any exists, otherwise centered.
+        place_on_main_window(window, area);
+        return;
+    }
+    if (is_on_screen_display(window) || is_notification(window)
+        || is_critical_notification(window)) {
+        place_on_screen_display(window, area);
+        return;
+    }
+
+    // TODO(romangg): Remove this special case only there for Wayland/Xwayland windows.
+    if constexpr (requires(Win win) { win.surface; }) {
+        if (window->transient->lead() && window->surface) {
+            place_dialog(window, area, kwinApp()->options->qobject->placement());
+            return;
+        }
+    }
+
+    place(window, area, kwinApp()->options->qobject->placement());
 }
 
 /**
