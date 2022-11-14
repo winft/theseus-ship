@@ -477,15 +477,18 @@ void place(Win* window,
            placement policy,
            placement next_placement = placement::unknown)
 {
-    switch (policy) {
-    case placement::unknown:
+    if (policy == placement::unknown) {
+        policy = placement::global_default;
+    }
+    if (policy == placement::global_default) {
         policy = kwinApp()->options->qobject->placement();
-        [[fallthrough]];
-    case placement::global_default:
-        policy = kwinApp()->options->qobject->placement();
-        [[fallthrough]];
-    case placement::no_placement:
+    }
+
+    if (policy == placement::no_placement) {
         return;
+    }
+
+    switch (policy) {
     case placement::random:
         place_at_random(window, area);
         break;
