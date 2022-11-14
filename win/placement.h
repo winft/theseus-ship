@@ -66,12 +66,8 @@ void place_at_random(Win* window, QRect const& area)
     int tx;
     int ty;
 
-    if (px < area.x()) {
-        px = area.x();
-    }
-    if (py < area.y()) {
-        py = area.y();
-    }
+    px = std::max(px, area.x());
+    py = std::max(py, area.y());
 
     px += step;
     py += 2 * step;
@@ -82,20 +78,19 @@ void place_at_random(Win* window, QRect const& area)
     if (py > area.height() / 2) {
         py = area.y() + step;
     }
+
     tx = px;
     ty = py;
+
     if (tx + window->geo.update.frame.size().width() > area.right()) {
-        tx = area.right() - window->geo.update.frame.size().width();
-        if (tx < 0)
-            tx = 0;
+        tx = std::max(area.right() - window->geo.update.frame.size().width(), 0);
         px = area.x();
     }
     if (ty + window->geo.update.frame.size().height() > area.bottom()) {
-        ty = area.bottom() - window->geo.update.frame.size().height();
-        if (ty < 0)
-            ty = 0;
+        ty = std::max(area.bottom() - window->geo.update.frame.size().height(), 0);
         py = area.y();
     }
+
     move(window, QPoint(tx, ty));
 }
 
