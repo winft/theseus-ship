@@ -56,7 +56,7 @@ bool can_move(Win const* window)
  * Place the client \a c according to a simply "random" placement algorithm.
  */
 template<typename Win>
-void place_at_random(Win* window, const QRect& area, placement /*next*/ = placement::unknown)
+void place_at_random(Win* window, const QRect& area)
 {
     Q_ASSERT(area.isValid());
 
@@ -102,7 +102,7 @@ void place_at_random(Win* window, const QRect& area, placement /*next*/ = placem
  * Place the client \a c according to a really smart placement algorithm :-)
  */
 template<typename Win>
-void place_smart(Win* window, const QRect& area, placement /*next*/ = placement::unknown)
+void place_smart(Win* window, const QRect& area)
 {
     Q_ASSERT(area.isValid());
 
@@ -295,7 +295,7 @@ void place_smart(Win* window, const QRect& area, placement /*next*/ = placement:
  * Place windows centered, on top of all others
  */
 template<typename Win>
-void place_centered(Win* window, const QRect& area, placement /*next*/ = placement::unknown)
+void place_centered(Win* window, const QRect& area)
 {
     Q_ASSERT(area.isValid());
 
@@ -310,7 +310,7 @@ void place_centered(Win* window, const QRect& area, placement /*next*/ = placeme
  * Place windows in the (0,0) corner, on top of all others
  */
 template<typename Win>
-void place_zero_cornered(Win* window, const QRect& area, placement /*next*/ = placement::unknown)
+void place_zero_cornered(Win* window, const QRect& area)
 {
     Q_ASSERT(area.isValid());
 
@@ -319,7 +319,7 @@ void place_zero_cornered(Win* window, const QRect& area, placement /*next*/ = pl
 }
 
 template<typename Win>
-void place_utility(Win* window, const QRect& area, placement /*next*/ = placement::unknown)
+void place_utility(Win* window, const QRect& area)
 {
     // TODO kwin should try to place utility windows next to their mainwindow,
     // preferably at the right edge, and going down if there are more of them
@@ -342,7 +342,7 @@ void place_on_screen_display(Win* window, const QRect& area)
 }
 
 template<typename Win>
-void place_under_mouse(Win* window, const QRect& area, placement /*next*/ = placement::unknown)
+void place_under_mouse(Win* window, const QRect& area)
 {
     Q_ASSERT(area.isValid());
 
@@ -458,16 +458,16 @@ void place(Win* window,
     case placement::no_placement:
         return;
     case placement::random:
-        place_at_random(window, area, nextPlacement);
+        place_at_random(window, area);
         break;
     case placement::centered:
-        place_centered(window, area, nextPlacement);
+        place_centered(window, area);
         break;
     case placement::zero_cornered:
-        place_zero_cornered(window, area, nextPlacement);
+        place_zero_cornered(window, area);
         break;
     case placement::under_mouse:
-        place_under_mouse(window, area, nextPlacement);
+        place_under_mouse(window, area);
         break;
     case placement::on_main_window:
         place_on_main_window(window, area, nextPlacement);
@@ -476,7 +476,7 @@ void place(Win* window,
         place_maximizing(window, area, nextPlacement);
         break;
     default:
-        place_smart(window, area, nextPlacement);
+        place_smart(window, area);
     }
 
     if (kwinApp()->options->qobject->borderSnapZone()) {
@@ -516,7 +516,7 @@ void place(Win* window, const QRect& area)
     }
 
     if (is_utility(window)) {
-        place_utility(window, area, kwinApp()->options->qobject->placement());
+        place_utility(window, area);
         return;
     }
     if (is_dialog(window)) {
