@@ -121,6 +121,7 @@ private Q_SLOTS:
     void testXdgWindowGeometryFullScreen();
     void testXdgWindowGeometryMaximize();
     void test_multi_maximize();
+    void test_wm_capabilities();
 
     void test_popup_reposition();
     void test_popup_reactive_data();
@@ -1897,6 +1898,27 @@ void TestXdgShellClient::test_multi_maximize()
                  "We change the synced geometry on commit. Use other geometry or don't do that.",
                  Continue);
     QVERIFY(cfgdata.size.isEmpty());
+}
+
+/// Checks that capabilities are initially sent correctly
+void TestXdgShellClient::test_wm_capabilities()
+{
+    std::unique_ptr<Surface> surface(Test::create_surface());
+    std::unique_ptr<XdgShellToplevel> shellSurface(
+        Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly));
+    QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configured);
+    QVERIFY(configureRequestedSpy.isValid());
+
+    surface->commit(Surface::CommitFlag::None);
+
+    configureRequestedSpy.wait();
+    QCOMPARE(configureRequestedSpy.count(), 1);
+
+    auto cfgdata = shellSurface->get_configure_data();
+    QVERIFY(cfgdata.wm_capabilities.contains(xdg_shell_wm_capability::fullscreen));
+    QVERIFY(cfgdata.wm_capabilities.contains(xdg_shell_wm_capability::minimize));
+    QVERIFY(cfgdata.wm_capabilities.contains(xdg_shell_wm_capability::maximize));
+    QVERIFY(cfgdata.wm_capabilities.contains(xdg_shell_wm_capability::window_menu));
 }
 
 /// Checks that xdg-popups are positioned and repositioned correctly.

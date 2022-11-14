@@ -158,6 +158,12 @@ void finalize_shell_window_creation(Space& space, Win* win)
 
         if (win->pending_configures.empty()) {
             // xdg-shell protocol stipulates a single configure event on first commit.
+            if (win->toplevel) {
+                // TODO(romangg): Check rules for caps. But then must also be changable later.
+                using cap = WS::xdg_shell_wm_capability;
+                win->toplevel->set_capabilities(
+                    {cap::window_menu, cap::maximize, cap::fullscreen, cap::minimize});
+            }
             win->configure_geometry(QRect(win->geo.pos(), QSize(0, 0)));
         }
 
