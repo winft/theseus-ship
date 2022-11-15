@@ -43,15 +43,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::win
 {
 
-template<typename Win>
-bool can_move(Win const* window)
-{
-    if (!window) {
-        return false;
-    }
-    return window->isMovable();
-}
-
 /**
  * Place the client \a c according to a simply "random" placement algorithm.
  */
