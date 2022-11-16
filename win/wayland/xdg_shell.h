@@ -80,98 +80,100 @@ void handle_maximize_request(Win* win, bool maximized);
 template<typename Win>
 Wrapland::Server::XdgShellSurface::States xdg_surface_states(Win* win);
 
-template<typename Space, typename Win>
-void finalize_shell_window_creation(Space& space, Win* win)
+template<typename Win>
+void xdg_shell_setup_control(Win* win)
+{
+    if (!win->control) {
+        return;
+    }
+
+    auto& space = win->space;
+    win->must_place = !win->isInitialPositionSet();
+
+    if (win->supportsWindowRules()) {
+        auto const& ctrl = win->control;
+
+        rules::setup_rules(win, false);
+
+        auto const original_geo = win->geo.frame;
+        auto const ruled_geo = ctrl->rules.checkGeometry(original_geo, true);
+
+        if (original_geo != ruled_geo) {
+            win->setFrameGeometry(ruled_geo);
+        }
+
+        maximize(win, ctrl->rules.checkMaximize(win->geo.update.max_mode, true));
+
+        set_desktops(
+            win,
+            ctrl->rules.checkDesktops(*space.virtual_desktop_manager, win->topo.desktops, true));
+        set_desktop_file_name(win,
+                              ctrl->rules.checkDesktopFile(ctrl->desktop_file_name, true).toUtf8());
+        if (ctrl->rules.checkMinimize(ctrl->minimized, true)) {
+            // No animation.
+            set_minimized(win, true, true);
+        }
+        set_skip_taskbar(win, ctrl->rules.checkSkipTaskbar(ctrl->skip_taskbar(), true));
+        set_skip_pager(win, ctrl->rules.checkSkipPager(ctrl->skip_pager(), true));
+        set_skip_switcher(win, ctrl->rules.checkSkipSwitcher(ctrl->skip_switcher(), true));
+        set_keep_above(win, ctrl->rules.checkKeepAbove(ctrl->keep_above, true));
+        set_keep_below(win, ctrl->rules.checkKeepBelow(ctrl->keep_below, true));
+        set_shortcut(win, ctrl->rules.checkShortcut(ctrl->shortcut.toString(), true));
+        win->updateColorScheme();
+
+        // Don't place the client if its position is set by a rule.
+        if (ctrl->rules.checkPosition(geo::invalid_point, true) != geo::invalid_point) {
+            win->must_place = false;
+        }
+
+        ctrl->discard_temporary_rules();
+
+        // Remove Apply Now rules.
+        rules::discard_used_rules(*win->space.rule_book, *win, false);
+
+        win->updateWindowRules(rules::type::all);
+    }
+
+    if (win->geo.update.max_mode != maximize_mode::restore || win->geo.update.fullscreen) {
+        win->must_place = false;
+    }
+}
+
+template<typename Win>
+void xdg_shell_handle_first_commit(Win* win)
 {
     namespace WS = Wrapland::Server;
+    auto& space = win->space;
 
-    auto handle_first_commit = [&space, win] {
-        QObject::disconnect(win->surface, &WS::Surface::committed, win->qobject.get(), nullptr);
-        QObject::connect(win->surface, &WS::Surface::committed, win->qobject.get(), [win] {
-            win->handle_commit();
+    QObject::disconnect(win->surface, &WS::Surface::committed, win->qobject.get(), nullptr);
+    QObject::connect(
+        win->surface, &WS::Surface::committed, win->qobject.get(), [win] { win->handle_commit(); });
+
+    update_shadow(win);
+    QObject::connect(
+        win->surface, &Wrapland::Server::Surface::committed, win->qobject.get(), [win] {
+            if (win->surface->state().updates & Wrapland::Server::surface_change::shadow) {
+                update_shadow(win);
+            }
         });
 
-        update_shadow(win);
-        QObject::connect(
-            win->surface, &Wrapland::Server::Surface::committed, win->qobject.get(), [win] {
-                if (win->surface->state().updates & Wrapland::Server::surface_change::shadow) {
-                    update_shadow(win);
-                }
-            });
+    xdg_shell_setup_parent(space, *win);
+    xdg_shell_setup_control(win);
 
-        xdg_shell_setup_parent(space, *win);
+    block_geometry_updates(win, false);
 
-        if (win->control) {
-            // Window is an xdg-shell toplevel.
-            win->must_place = !win->isInitialPositionSet();
-
-            if (win->supportsWindowRules()) {
-                auto const& ctrl = win->control;
-
-                rules::setup_rules(win, false);
-
-                auto const original_geo = win->geo.frame;
-                auto const ruled_geo = ctrl->rules.checkGeometry(original_geo, true);
-
-                if (original_geo != ruled_geo) {
-                    win->setFrameGeometry(ruled_geo);
-                }
-
-                maximize(win, ctrl->rules.checkMaximize(win->geo.update.max_mode, true));
-
-                set_desktops(win,
-                             ctrl->rules.checkDesktops(
-                                 *space.virtual_desktop_manager, win->topo.desktops, true));
-                set_desktop_file_name(
-                    win, ctrl->rules.checkDesktopFile(ctrl->desktop_file_name, true).toUtf8());
-                if (ctrl->rules.checkMinimize(ctrl->minimized, true)) {
-                    // No animation.
-                    set_minimized(win, true, true);
-                }
-                set_skip_taskbar(win, ctrl->rules.checkSkipTaskbar(ctrl->skip_taskbar(), true));
-                set_skip_pager(win, ctrl->rules.checkSkipPager(ctrl->skip_pager(), true));
-                set_skip_switcher(win, ctrl->rules.checkSkipSwitcher(ctrl->skip_switcher(), true));
-                set_keep_above(win, ctrl->rules.checkKeepAbove(ctrl->keep_above, true));
-                set_keep_below(win, ctrl->rules.checkKeepBelow(ctrl->keep_below, true));
-                set_shortcut(win, ctrl->rules.checkShortcut(ctrl->shortcut.toString(), true));
-                win->updateColorScheme();
-
-                // Don't place the client if its position is set by a rule.
-                if (ctrl->rules.checkPosition(geo::invalid_point, true) != geo::invalid_point) {
-                    win->must_place = false;
-                }
-
-                ctrl->discard_temporary_rules();
-
-                // Remove Apply Now rules.
-                rules::discard_used_rules(*win->space.rule_book, *win, false);
-
-                win->updateWindowRules(rules::type::all);
-            }
-
-            if (win->geo.update.max_mode != maximize_mode::restore || win->geo.update.fullscreen) {
-                win->must_place = false;
-            }
+    if (win->pending_configures.empty()) {
+        // xdg-shell protocol stipulates a single configure event on first commit.
+        if (win->toplevel) {
+            // TODO(romangg): Check rules for caps. But then must also be changable later.
+            using cap = WS::xdg_shell_wm_capability;
+            win->toplevel->set_capabilities(
+                {cap::window_menu, cap::maximize, cap::fullscreen, cap::minimize});
         }
+        win->configure_geometry(QRect(win->geo.pos(), QSize(0, 0)));
+    }
 
-        block_geometry_updates(win, false);
-
-        if (win->pending_configures.empty()) {
-            // xdg-shell protocol stipulates a single configure event on first commit.
-            if (win->toplevel) {
-                // TODO(romangg): Check rules for caps. But then must also be changable later.
-                using cap = WS::xdg_shell_wm_capability;
-                win->toplevel->set_capabilities(
-                    {cap::window_menu, cap::maximize, cap::fullscreen, cap::minimize});
-            }
-            win->configure_geometry(QRect(win->geo.pos(), QSize(0, 0)));
-        }
-
-        win->initialized = true;
-    };
-
-    QObject::connect(
-        win->surface, &WS::Surface::committed, win->qobject.get(), handle_first_commit);
+    win->initialized = true;
 }
 
 template<typename Win>
@@ -301,7 +303,10 @@ Win* create_toplevel_window(Space* space, Wrapland::Server::XdgShellToplevel* to
     set_desktop(win, win->space.virtual_desktop_manager->current());
     set_color_scheme(win, QString());
 
-    finalize_shell_window_creation(*space, win);
+    QObject::connect(win->surface,
+                     &Wrapland::Server::Surface::committed,
+                     win->qobject.get(),
+                     [win] { xdg_shell_handle_first_commit(win); });
     return win;
 }
 
@@ -348,7 +353,10 @@ Win* create_popup_window(Space* space, Wrapland::Server::XdgShellPopup* popup)
         destroy_window(win);
     });
 
-    finalize_shell_window_creation(*space, win);
+    QObject::connect(win->surface,
+                     &Wrapland::Server::Surface::committed,
+                     win->qobject.get(),
+                     [win] { xdg_shell_handle_first_commit(win); });
     return win;
 }
 
