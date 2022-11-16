@@ -48,6 +48,43 @@ void restack_subsurfaces(Win* window)
     }
 }
 
+template<typename Win>
+void subsurface_set_pos(Win& win)
+{
+    auto subsurface = win.surface->subsurface();
+    auto lead = win.transient->lead();
+
+    assert(subsurface);
+    assert(lead);
+
+    auto get_pos = [lead, subsurface] {
+        return win::render_geometry(lead).topLeft() + subsurface->position();
+    };
+
+    auto const old_frame_geo = win.geo.frame;
+    auto const frame_geo = QRect(get_pos(), win.surface->size());
+
+    if (old_frame_geo == frame_geo) {
+        return;
+    }
+
+    // TODO(romangg): use setFrameGeometry?
+    win.geo.frame = frame_geo;
+
+    // A top lead might not be available when the client has deleted one of the parent
+    // surfaces in the tree before this subsurface.
+    // TODO(romangg): Instead of checking here on it we could ensure annexed children are
+    //                destroyed when the parent window is. This could be complicated though
+    //                when destroying while iterating over windows.
+    auto top_lead = lead_of_annexed_transient(&win);
+    if (top_lead) {
+        add_layer_repaint(*top_lead, old_frame_geo.united(frame_geo));
+        discard_shape(*top_lead);
+    }
+
+    Q_EMIT win.qobject->frame_geometry_changed(old_frame_geo);
+}
+
 template<typename Win, typename Lead>
 void set_subsurface_parent(Win* win, Lead* lead)
 {
@@ -83,44 +120,17 @@ void set_subsurface_parent(Win* win, Lead* lead)
                      win->space.base.render->compositor->qobject.get(),
                      [win] { win->space.base.render->compositor->schedule_repaint(win); });
 
-    auto subsurface = win->surface->subsurface();
+    subsurface_set_pos(*win);
 
-    auto get_pos = [lead, subsurface] {
-        return win::render_geometry(lead).topLeft() + subsurface->position();
-    };
-    auto set_pos = [win, get_pos]() {
-        auto const old_frame_geo = win->geo.frame;
-        auto const frame_geo = QRect(get_pos(), win->surface->size());
+    QObject::connect(win->surface->subsurface(),
+                     &Wrapland::Server::Subsurface::positionChanged,
+                     win->qobject.get(),
+                     [win] { subsurface_set_pos(*win); });
 
-        if (old_frame_geo != frame_geo) {
-            // TODO(romangg): use setFrameGeometry?
-            win->geo.frame = frame_geo;
-
-            // A top lead might not be available when the client has deleted one of the parent
-            // surfaces in the tree before this subsurface.
-            // TODO(romangg): Instead of checking here on it we could ensure annexed children are
-            //                destroyed when the parent window is. This could be complicated though
-            //                when destroying while iterating over windows.
-            auto top_lead = lead_of_annexed_transient(win);
-            if (top_lead) {
-                add_layer_repaint(*top_lead, old_frame_geo.united(frame_geo));
-                discard_shape(*top_lead);
-            }
-
-            Q_EMIT win->qobject->frame_geometry_changed(old_frame_geo);
-        }
-    };
-
-    set_pos();
-
-    QObject::connect(subsurface,
+    QObject::connect(win->surface->subsurface(),
                      &Wrapland::Server::Subsurface::resourceDestroyed,
                      win->qobject.get(),
                      [win] { destroy_window(win); });
-    QObject::connect(
-        subsurface, &Wrapland::Server::Subsurface::positionChanged, win->qobject.get(), set_pos);
-    QObject::connect(
-        lead->qobject.get(), &Lead::qobject_t::frame_geometry_changed, win->qobject.get(), set_pos);
 
     win->topo.layer = layer::unmanaged;
     win->map();

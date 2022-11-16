@@ -300,6 +300,9 @@ public:
         uint64_t serial = 0;
 
         if (toplevel) {
+            auto const bounds = space_window_area(
+                this->space, control->fullscreen ? FullScreenArea : PlacementArea, this);
+            toplevel->configure_bounds(bounds.size());
             serial = toplevel->configure(xdg_surface_states(this), window_geo.size());
         }
         if (popup) {
@@ -449,6 +452,17 @@ public:
         do_set_maximize_mode(max_mode);
     }
 
+    void reposition_children()
+    {
+        for (auto child : transient->children) {
+            if (child->popup) {
+                xdg_shell_popup_reposition(*child);
+            } else if (child->surface && child->surface->subsurface()) {
+                subsurface_set_pos(*child);
+            }
+        }
+    }
+
     void do_set_geometry(QRect const& frame_geo)
     {
         auto const old_frame_geo = this->geo.frame;
@@ -463,12 +477,7 @@ public:
             this->geo.update.frame.setSize(frame_geo.size());
         }
 
-        // TODO(romangg): When we have support for explicit/implicit popup repositioning combine.
-        if (old_frame_geo.size() == frame_geo.size()) {
-            move_annexed_children(this, frame_geo.topLeft() - old_frame_geo.topLeft());
-        } else if (!this->transient->annexed) {
-            reposition_annexed_children(this);
-        }
+        reposition_children();
 
         if (old_frame_geo.size() != frame_geo.size()) {
             discard_shape(*this);

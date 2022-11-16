@@ -158,6 +158,12 @@ void finalize_shell_window_creation(Space& space, Win* win)
 
         if (win->pending_configures.empty()) {
             // xdg-shell protocol stipulates a single configure event on first commit.
+            if (win->toplevel) {
+                // TODO(romangg): Check rules for caps. But then must also be changable later.
+                using cap = WS::xdg_shell_wm_capability;
+                win->toplevel->set_capabilities(
+                    {cap::window_menu, cap::maximize, cap::fullscreen, cap::minimize});
+            }
             win->configure_geometry(QRect(win->geo.pos(), QSize(0, 0)));
         }
 
@@ -334,6 +340,10 @@ Win* create_popup_window(Space* space, Wrapland::Server::XdgShellPopup* popup)
                      &WS::XdgShellPopup::grabRequested,
                      win->qobject.get(),
                      [win](auto seat, auto serial) { handle_grab_request(win, seat, serial); });
+    QObject::connect(popup, &WS::XdgShellPopup::reposition, win->qobject.get(), [win](auto token) {
+        win->popup->repositioned(token);
+        win->configure_geometry(win->geo.frame);
+    });
     QObject::connect(popup, &WS::XdgShellPopup::resourceDestroyed, win->qobject.get(), [win] {
         destroy_window(win);
     });
@@ -689,16 +699,16 @@ QRect get_xdg_shell_popup_placement(Win const* win, QRect const& bounds)
     auto transient_lead = win->transient->lead();
     assert(transient_lead);
 
-    auto get = get_popup_placement<std::remove_pointer_t<decltype(transient_lead)>>;
-    return get(
-        {transient_lead,
-         bounds,
-         win->popup->anchorRect(),
-         win->popup->anchorEdge(),
-         win->popup->gravity(),
-         win->geo.update.frame.isValid() ? win->geo.update.frame.size() : win->popup->initialSize(),
-         win->popup->anchorOffset(),
-         win->popup->constraintAdjustments()});
+    auto getter = get_popup_placement<std::remove_pointer_t<decltype(transient_lead)>>;
+    auto const positioner = win->popup->get_positioner();
+    return getter({transient_lead,
+                   bounds,
+                   positioner.anchor.rect,
+                   positioner.anchor.edge,
+                   positioner.gravity,
+                   win->geo.update.frame.isValid() ? win->geo.update.frame.size() : positioner.size,
+                   positioner.anchor.offset,
+                   positioner.constraint_adjustments});
 }
 
 template<typename Win>
@@ -719,36 +729,13 @@ bool needs_configure(Win* win)
 }
 
 template<typename Win>
-void move_annexed_children(Win* win, QPoint const& frame_pos_offset)
+void xdg_shell_popup_reposition(Win& win)
 {
-    for (auto child : win->transient->children) {
-        if (!child->transient->annexed) {
-            continue;
-        }
-        auto pos = child->geo.update.frame.topLeft() + frame_pos_offset;
-        auto size = child->geo.update.frame.size();
-        child->setFrameGeometry(QRect(pos, size));
+    if (win.popup->get_positioner().is_reactive) {
+        win.configure_geometry({});
+    } else {
+        win.popup->popupDone();
     }
-}
-
-template<typename Win>
-void reposition_annexed_children(Win* win)
-{
-    // TODO(romangg): We currently don't yet have support for implicit or explicit popup
-    //                repositioning introduced with xdg-shell v3.
-
-    for (auto child : win->transient->children) {
-        if (!child->transient->annexed) {
-            continue;
-        }
-        auto wl_child = static_cast<Win*>(child);
-        if (wl_child->popup) {
-            reposition_annexed_children(wl_child);
-        }
-    }
-
-    // TODO(romangg): The popups should just be cancelled when there is no support for xdg-shell v3.
-    //                But cancel_popup() is for some reason failing in Wrapland at the moment.
 }
 
 template<typename Win>

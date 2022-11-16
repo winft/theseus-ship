@@ -1337,17 +1337,20 @@ void PointerInputTest::testPopup()
     //         |                   |
     //         ---------------------
     //
-    XdgPositioner positioner(QSize(100, 50), QRect(0, 0, 80, 20));
-    positioner.setAnchorEdge(Qt::BottomEdge | Qt::RightEdge);
-    positioner.setGravity(Qt::BottomEdge | Qt::RightEdge);
+    Wrapland::Client::xdg_shell_positioner_data pos_data;
+    pos_data.size = QSize(100, 50);
+    pos_data.anchor.rect = QRect(0, 0, 80, 20);
+    pos_data.anchor.edge = Qt::BottomEdge | Qt::RightEdge;
+    pos_data.gravity = pos_data.anchor.edge;
+
     auto popupSurface = Test::create_surface();
     QVERIFY(popupSurface);
-    auto popupShellSurface = Test::create_xdg_shell_popup(popupSurface, shellSurface, positioner);
+    auto popupShellSurface = Test::create_xdg_shell_popup(popupSurface, shellSurface, pos_data);
     QVERIFY(popupShellSurface);
     QSignalSpy popupDoneSpy(popupShellSurface.get(), &XdgShellPopup::popupDone);
     QVERIFY(popupDoneSpy.isValid());
     popupShellSurface->requestGrab(m_seat, 0); // FIXME: Serial.
-    render(popupSurface, positioner.initialSize());
+    render(popupSurface, pos_data.size);
     QVERIFY(clientAddedSpy.wait());
 
     auto popupClient = get_wayland_window_from_id(clientAddedSpy.last().first().value<quint32>());
@@ -1456,17 +1459,20 @@ void PointerInputTest::testDecoCancelsPopup()
     QVERIFY(buttonStateChangedSpy.wait());
 
     // now create the popup surface
-    XdgPositioner positioner(QSize(100, 50), QRect(0, 0, 80, 20));
-    positioner.setAnchorEdge(Qt::BottomEdge | Qt::RightEdge);
-    positioner.setGravity(Qt::BottomEdge | Qt::RightEdge);
+    Wrapland::Client::xdg_shell_positioner_data pos_data;
+    pos_data.size = QSize(100, 50);
+    pos_data.anchor.rect = QRect(0, 0, 80, 20);
+    pos_data.anchor.edge = Qt::BottomEdge | Qt::RightEdge;
+    pos_data.gravity = pos_data.anchor.edge;
+
     auto popupSurface = Test::create_surface();
     QVERIFY(popupSurface);
-    auto popupShellSurface = Test::create_xdg_shell_popup(popupSurface, shellSurface, positioner);
+    auto popupShellSurface = Test::create_xdg_shell_popup(popupSurface, shellSurface, pos_data);
     QVERIFY(popupShellSurface);
     QSignalSpy popupDoneSpy(popupShellSurface.get(), &XdgShellPopup::popupDone);
     QVERIFY(popupDoneSpy.isValid());
     popupShellSurface->requestGrab(m_seat, 0); // FIXME: Serial.
-    render(popupSurface, positioner.initialSize());
+    render(popupSurface, pos_data.size);
     QVERIFY(clientAddedSpy.wait());
 
     auto popupClient = get_wayland_window_from_id(clientAddedSpy.last().first().value<quint32>());
@@ -1529,14 +1535,17 @@ void PointerInputTest::testWindowUnderCursorWhileButtonPressed()
     Test::pointer_button_pressed(BTN_LEFT, timestamp++);
 
     // now create a second window as transient
-    XdgPositioner positioner(QSize(99, 49), QRect(0, 0, 1, 1));
-    positioner.setAnchorEdge(Qt::BottomEdge | Qt::RightEdge);
-    positioner.setGravity(Qt::BottomEdge | Qt::RightEdge);
+    Wrapland::Client::xdg_shell_positioner_data pos_data;
+    pos_data.size = QSize(99, 49);
+    pos_data.anchor.rect = QRect(0, 0, 1, 1);
+    pos_data.anchor.edge = Qt::BottomEdge | Qt::RightEdge;
+    pos_data.gravity = pos_data.anchor.edge;
+
     auto popupSurface = Test::create_surface();
     QVERIFY(popupSurface);
-    auto popupShellSurface = Test::create_xdg_shell_popup(popupSurface, shellSurface, positioner);
+    auto popupShellSurface = Test::create_xdg_shell_popup(popupSurface, shellSurface, pos_data);
     QVERIFY(popupShellSurface);
-    render(popupSurface, positioner.initialSize());
+    render(popupSurface, pos_data.size);
     QVERIFY(clientAddedSpy.wait());
     auto popupClient = get_wayland_window_from_id(clientAddedSpy.last().first().value<quint32>());
     QVERIFY(popupClient);

@@ -120,13 +120,17 @@ void PopupOpenCloseAnimationTest::testAnimatePopups()
     // Create a popup, it should be animated.
     std::unique_ptr<Surface> popupSurface(Test::create_surface());
     QVERIFY(popupSurface);
-    XdgPositioner positioner(QSize(20, 20), QRect(0, 0, 10, 10));
-    positioner.setGravity(Qt::BottomEdge | Qt::RightEdge);
-    positioner.setAnchorEdge(Qt::BottomEdge | Qt::LeftEdge);
+
+    xdg_shell_positioner_data pos_data;
+    pos_data.size = QSize(20, 20);
+    pos_data.anchor.rect = QRect(0, 0, 10, 10);
+    pos_data.anchor.edge = Qt::BottomEdge | Qt::LeftEdge;
+    pos_data.gravity = Qt::BottomEdge | Qt::RightEdge;
+
     auto popupShellSurface
-        = Test::create_xdg_shell_popup(popupSurface, mainWindowShellSurface, positioner);
+        = Test::create_xdg_shell_popup(popupSurface, mainWindowShellSurface, pos_data);
     QVERIFY(popupShellSurface);
-    auto popup = Test::render_and_wait_for_shown(popupSurface, positioner.initialSize(), Qt::red);
+    auto popup = Test::render_and_wait_for_shown(popupSurface, pos_data.size, Qt::red);
     QVERIFY(popup);
     QVERIFY(win::is_popup(popup));
     QCOMPARE(popup->transient->lead(), mainWindow);

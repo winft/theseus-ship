@@ -592,9 +592,6 @@ void SceneQPainterShadowTest::testShadowTileOverlaps()
 
     auto client = Test::render_and_wait_for_shown(surface, windowSize, Qt::blue);
 
-    QSignalSpy sizeChangedSpy(shellSurface.get(), &XdgShellToplevel::sizeChanged);
-    QVERIFY(sizeChangedSpy.isValid());
-
     // Check the client is decorated.
     QVERIFY(client);
     QVERIFY(win::decoration(client));

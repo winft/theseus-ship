@@ -110,13 +110,13 @@ create_xdg_shell_toplevel(client const& clt,
 KWIN_EXPORT std::unique_ptr<Wrapland::Client::XdgShellPopup>
 create_xdg_shell_popup(std::unique_ptr<Wrapland::Client::Surface> const& surface,
                        std::unique_ptr<Wrapland::Client::XdgShellToplevel> const& parent_toplevel,
-                       Wrapland::Client::XdgPositioner const& positioner,
+                       Wrapland::Client::xdg_shell_positioner_data positioner_data,
                        CreationSetup = CreationSetup::CreateAndConfigure);
 KWIN_EXPORT std::unique_ptr<Wrapland::Client::XdgShellPopup>
 create_xdg_shell_popup(client const& clt,
                        std::unique_ptr<Wrapland::Client::Surface> const& surface,
                        std::unique_ptr<Wrapland::Client::XdgShellToplevel> const& parent_toplevel,
-                       Wrapland::Client::XdgPositioner const& positioner,
+                       Wrapland::Client::xdg_shell_positioner_data positioner_data,
                        CreationSetup = CreationSetup::CreateAndConfigure);
 
 /**

@@ -575,12 +575,8 @@ void SceneOpenGLShadowTest::testShadowTileOverlaps()
     Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.get(),
                                                                         shellSurface.get());
 
-    auto* client = Test::render_and_wait_for_shown(surface, windowSize, Qt::blue);
-
-    QSignalSpy sizeChangedSpy(shellSurface.get(), &XdgShellToplevel::sizeChanged);
-    QVERIFY(sizeChangedSpy.isValid());
-
     // Check the client is decorated.
+    auto* client = Test::render_and_wait_for_shown(surface, windowSize, Qt::blue);
     QVERIFY(client);
     QVERIFY(win::decoration(client));
     auto decoration = win::decoration(client);

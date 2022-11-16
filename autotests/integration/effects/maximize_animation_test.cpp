@@ -98,21 +98,21 @@ void MaximizeAnimationTest::testMaximizeRestore()
         create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly));
 
     // Wait for the initial configure event.
-    XdgShellToplevel::States states;
-    QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configureRequested);
+    QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configured);
 
     surface->commit(Surface::CommitFlag::None);
 
     QVERIFY(configureRequestedSpy.isValid());
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 1);
-    QCOMPARE(configureRequestedSpy.last().at(0).value<QSize>(), QSize(0, 0));
-    states = configureRequestedSpy.last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Maximized));
+
+    auto cfgdata = shellSurface->get_configure_data();
+    QCOMPARE(cfgdata.size, QSize(0, 0));
+    QVERIFY(!cfgdata.states.testFlag(xdg_shell_state::activated));
+    QVERIFY(!cfgdata.states.testFlag(xdg_shell_state::maximized));
 
     // Draw contents of the surface.
-    shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
+    shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
     QVERIFY(client->control->active);
@@ -121,9 +121,10 @@ void MaximizeAnimationTest::testMaximizeRestore()
     // We should receive a configure event when the client becomes active.
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 2);
-    states = configureRequestedSpy.last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Maximized));
+
+    cfgdata = shellSurface->get_configure_data();
+    QVERIFY(cfgdata.states.testFlag(xdg_shell_state::activated));
+    QVERIFY(!cfgdata.states.testFlag(xdg_shell_state::maximized));
 
     // Load effect that will be tested.
     const QString effectName = QStringLiteral("kwin4_effect_maximize");
@@ -147,13 +148,14 @@ void MaximizeAnimationTest::testMaximizeRestore()
     win::active_window_maximize(*Test::app()->base.space);
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
-    QCOMPARE(configureRequestedSpy.last().at(0).value<QSize>(), QSize(1280, 1024));
-    states = configureRequestedSpy.last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Maximized));
+
+    cfgdata = shellSurface->get_configure_data();
+    QCOMPARE(cfgdata.size, QSize(1280, 1024));
+    QVERIFY(cfgdata.states.testFlag(xdg_shell_state::activated));
+    QVERIFY(cfgdata.states.testFlag(xdg_shell_state::maximized));
 
     // Draw contents of the maximized client.
-    shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
+    shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());
     Test::render(surface, QSize(1280, 1024), Qt::red);
     QVERIFY(geometryChangedSpy.wait());
     QCOMPARE(geometryChangedSpy.count(), 1);
@@ -168,13 +170,14 @@ void MaximizeAnimationTest::testMaximizeRestore()
     win::active_window_maximize(*Test::app()->base.space);
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 4);
-    QCOMPARE(configureRequestedSpy.last().at(0).value<QSize>(), QSize(100, 50));
-    states = configureRequestedSpy.last().at(1).value<XdgShellToplevel::States>();
-    QVERIFY(states.testFlag(XdgShellToplevel::State::Activated));
-    QVERIFY(!states.testFlag(XdgShellToplevel::State::Maximized));
+
+    cfgdata = shellSurface->get_configure_data();
+    QCOMPARE(cfgdata.size, QSize(100, 50));
+    QVERIFY(cfgdata.states.testFlag(xdg_shell_state::activated));
+    QVERIFY(!cfgdata.states.testFlag(xdg_shell_state::maximized));
 
     // Draw contents of the restored client.
-    shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
+    shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());
     Test::render(surface, QSize(100, 50), Qt::blue);
     QVERIFY(geometryChangedSpy.wait());
     QCOMPARE(geometryChangedSpy.count(), 2);
