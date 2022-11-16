@@ -146,19 +146,19 @@ PlaceWindowResult TestPlacement::createAndPlaceWindow(QSize const& defaultSize)
     configSpy.wait();
 
     auto cfgdata = rc.toplevel->get_configure_data();
+    auto first_size = cfgdata.size;
 
-    // First configure is always sent with empty size.
-    assert(cfgdata.size.isEmpty());
     rc.toplevel->ackConfigure(configSpy.front().front().toUInt());
     configSpy.clear();
 
-    Test::render(rc.surface, defaultSize, Qt::red);
+    Test::render(rc.surface, first_size.isEmpty() ? defaultSize : first_size, Qt::red);
     configSpy.wait();
     cfgdata = rc.toplevel->get_configure_data();
 
     auto window_id = window_spy.first().first().value<quint32>();
     auto window = Test::get_wayland_window(Test::app()->base.space->windows_map.at(window_id));
 
+    assert(first_size.isEmpty() || first_size == cfgdata.size);
     rc.initiallyConfiguredSize = cfgdata.size;
     rc.initiallyConfiguredStates = cfgdata.states;
     rc.toplevel->ackConfigure(configSpy.front().front().toUInt());
@@ -231,9 +231,6 @@ void TestPlacement::testPlaceMaximized()
         placements.push_back(createAndPlaceWindow(QSize(600, 500)));
         auto const& placement = placements.back();
         QVERIFY(placement.initiallyConfiguredStates & xdg_shell_state::maximized);
-
-        QEXPECT_FAIL(
-            "", "Multiple configure events sent, leading us to pick the wrong size", Abort);
         QCOMPARE(placement.initiallyConfiguredSize, QSize(1280, 1024 - 20));
         QCOMPARE(placement.finalGeometry, QRect(0, 20, 1280, 1024 - 20)); // under the panel
     }

@@ -508,6 +508,17 @@ void place_with_policy(Win* window, QRect const& area, placement policy)
     }
 }
 
+template<typename Win>
+placement get_placement_policy(Win const& window)
+{
+    if (auto policy = window.control->rules.checkPlacement(placement::global_default);
+        policy != placement::global_default) {
+        // Placement overriden by rule.
+        return policy;
+    }
+    return kwinApp()->options->qobject->placement();
+}
+
 /**
  * Places the client \a c according to the workspace's layout policy
  */

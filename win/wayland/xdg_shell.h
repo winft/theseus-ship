@@ -167,7 +167,15 @@ void xdg_shell_handle_first_commit(Win& win)
             win.toplevel->set_capabilities(
                 {cap::window_menu, cap::maximize, cap::fullscreen, cap::minimize});
         }
-        win.configure_geometry(QRect(win.geo.pos(), QSize(0, 0)));
+
+        QSize config_size(0, 0);
+        if (win.must_place && get_placement_policy(win) == placement::maximizing) {
+            config_size
+                = space_window_area(
+                      win.space, PlacementArea, get_current_output(win.space), get_desktop(win))
+                      .size();
+        }
+        win.configure_geometry(QRect(win.geo.pos(), config_size));
     }
 
     win.initialized = true;
