@@ -78,9 +78,9 @@ public:
     compositor(Platform& platform)
         : qobject{std::make_unique<compositor_qobject>(
             [this](auto te) { return handle_timer_event(te); })}
+        , platform{platform}
         , m_suspended(kwinApp()->options->qobject->isUseCompositing() ? suspend_reason::none
                                                                       : suspend_reason::user)
-        , platform{platform}
         , dbus{std::make_unique<dbus::compositing<type>>(*this)}
     {
         compositor_setup(*this);

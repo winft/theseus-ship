@@ -671,13 +671,6 @@ public:
         return this->isShown() && !repaints(*this).isEmpty();
     }
 
-    struct {
-        std::shared_ptr<QOpenGLFramebufferObject> fbo;
-        QImage image;
-    } buffers;
-
-    std::unique_ptr<internal_window_singleton> singleton;
-
     bool acceptsFocus() const
     {
         return false;
@@ -831,6 +824,7 @@ public:
     }
 
     std::unique_ptr<qobject_t> qobject;
+    std::unique_ptr<internal_window_singleton> singleton;
 
     win::window_metadata meta;
     win::window_geometry geo;
@@ -841,6 +835,11 @@ public:
     std::unique_ptr<win::control<type>> control;
     std::unique_ptr<render_t> render;
     std::optional<win::remnant> remnant;
+
+    struct {
+        std::shared_ptr<QOpenGLFramebufferObject> fbo;
+        QImage image;
+    } buffers;
 
     QWindow* m_internalWindow = nullptr;
     QRect synced_geo;
