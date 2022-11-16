@@ -359,13 +359,9 @@ void place_under_mouse(Win* window, QRect const& area)
 }
 
 template<typename Win>
-void place_maximizing(Win* window, QRect const& area, placement next_placement = placement::unknown)
+void place_maximizing(Win* window, QRect const& area)
 {
     assert(area.isValid());
-
-    if (next_placement == placement::unknown) {
-        next_placement = placement::smart;
-    }
 
     if (window->isMaximizable() && window->maxSize().width() >= area.width()
         && window->maxSize().height() >= area.height()) {
@@ -378,22 +374,14 @@ void place_maximizing(Win* window, QRect const& area, placement next_placement =
         }
     } else {
         constrained_resize(window, window->maxSize().boundedTo(area.size()));
-        place_with_policy(window, area, next_placement);
+        place_with_policy(window, area, placement::smart);
     }
 }
 
 template<typename Win>
-void place_on_main_window(Win* window,
-                          QRect const& area,
-                          placement next_placement = placement::unknown)
+void place_on_main_window(Win* window, QRect const& area)
 {
     assert(area.isValid());
-
-    if (next_placement == placement::unknown) {
-        next_placement = placement::centered;
-    } else if (next_placement == placement::maximizing) {
-        place_maximizing(window, area, placement::no_placement);
-    }
 
     Win* place_on{nullptr};
     Win* place_on2{nullptr};
@@ -414,12 +402,7 @@ void place_on_main_window(Win* window,
             if (place_on == nullptr) {
                 place_on = lead;
             } else {
-                // two or more on current desktop -> center
-                // That's the default at least. However, with maximizing placement
-                // policy as the default, the dialog should be either maximized or
-                // made as large as its maximum size and then placed centered.
-                // So the next_placement argument allows chaining. In this case, next_placement
-                // is maximizing and it will call place_centered().
+                // Two or more on current desktop -> center. That's the default at least.
                 place_with_policy(window, area, placement::centered);
                 return;
             }
@@ -452,16 +435,18 @@ void place_on_main_window(Win* window,
 }
 
 template<typename Win>
-void place_dialog(Win* window, QRect const& area, placement next_placement = placement::unknown)
+void place_dialog(Win* window, QRect const& area)
 {
-    place_on_main_window(window, area, next_placement);
+    if (kwinApp()->options->qobject->placement() == placement::maximizing) {
+        // With maximizing placement policy as the default, the dialog should be either maximized or
+        // made as large as its maximum size and then placed on the main window (centered).
+        place_maximizing(window, area);
+    }
+    place_on_main_window(window, area);
 }
 
 template<typename Win>
-void place_with_policy(Win* window,
-                       QRect const& area,
-                       placement policy,
-                       placement next_placement = placement::unknown)
+void place_with_policy(Win* window, QRect const& area, placement policy)
 {
     if (policy == placement::unknown) {
         policy = placement::global_default;
@@ -488,10 +473,10 @@ void place_with_policy(Win* window,
         place_under_mouse(window, area);
         break;
     case placement::on_main_window:
-        place_on_main_window(window, area, next_placement);
+        place_on_main_window(window, area);
         break;
     case placement::maximizing:
-        place_maximizing(window, area, next_placement);
+        place_maximizing(window, area);
         break;
     default:
         place_smart(window, area);
@@ -541,7 +526,7 @@ void place_in_area(Win* window, QRect const& area)
         return;
     }
     if (is_dialog(window)) {
-        place_dialog(window, area, kwinApp()->options->qobject->placement());
+        place_dialog(window, area);
         return;
     }
     if (is_splash(window)) {
@@ -558,7 +543,7 @@ void place_in_area(Win* window, QRect const& area)
     // TODO(romangg): Remove this special case only there for Wayland/Xwayland windows.
     if constexpr (requires(Win win) { win.surface; }) {
         if (window->transient->lead() && window->surface) {
-            place_dialog(window, area, kwinApp()->options->qobject->placement());
+            place_dialog(window, area);
             return;
         }
     }
