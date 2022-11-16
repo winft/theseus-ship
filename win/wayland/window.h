@@ -1025,7 +1025,7 @@ public:
 
     void placeIn(const QRect& area)
     {
-        win::place(this, area);
+        place_in_area(this, area);
     }
 
     void update_maximized(maximize_mode mode)

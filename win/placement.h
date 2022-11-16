@@ -527,7 +527,7 @@ void place_with_policy(Win* window,
  * Places the client \a c according to the workspace's layout policy
  */
 template<typename Win>
-void place(Win* window, QRect const& area)
+void place_in_area(Win* window, QRect const& area)
 {
     auto policy = window->control->rules.checkPlacement(placement::global_default);
 

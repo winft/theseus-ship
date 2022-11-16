@@ -10,6 +10,7 @@
 #include "control.h"
 #include "desktop_set.h"
 #include "geo_block.h"
+#include "placement.h"
 #include "rules/update.h"
 #include "shortcut_set.h"
 #include "singleton_interface.h"
@@ -779,7 +780,7 @@ public:
         if (placeable()) {
             auto const area = space_window_area(
                 this->space, PlacementArea, get_current_output(this->space), get_desktop(*this));
-            place(this, area);
+            place_in_area(this, area);
         }
 
         this->space.stacking.order.update_count();

@@ -88,7 +88,7 @@ void setup_window_control_connections(Win* win)
         geometry_updates_blocker blocker(win);
         auto const area = space_window_area(
             win->space, PlacementArea, get_current_output(win->space), get_desktop(*win));
-        win::place(win, area);
+        place_in_area(win, area);
     });
 
     QObject::connect(
