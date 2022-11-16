@@ -14,7 +14,7 @@ template<typename Space>
 void handle_new_xdg_deco(Space* space, Wrapland::Server::XdgDecoration* deco)
 {
     if (auto win = space->find_window(deco->toplevel()->surface()->surface())) {
-        install_deco(win, deco);
+        install_deco(*win, deco);
     }
 }
 
@@ -23,7 +23,7 @@ void handle_new_palette(Space* space, Wrapland::Server::ServerSideDecorationPale
 {
     if (auto win = space->find_window(palette->surface())) {
         if (win->control) {
-            install_palette(win, palette);
+            install_palette(*win, palette);
         }
     }
 }
