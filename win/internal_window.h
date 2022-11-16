@@ -45,11 +45,11 @@ public:
     {
     }
 
-    void set_desktops(QVector<virtual_desktop*> /*desktops*/)
+    void set_desktops(QVector<virtual_desktop*> /*desktops*/) override
     {
     }
 
-    void destroy_decoration()
+    void destroy_decoration() override
     {
         if (!win::decoration(m_client)) {
             return;
@@ -76,7 +76,7 @@ public:
     }
 
 protected:
-    bool eventFilter(QObject* watched, QEvent* event)
+    bool eventFilter(QObject* watched, QEvent* event) override
     {
         if (watched == window.m_internalWindow && event->type() == QEvent::DynamicPropertyChange) {
             auto pe = static_cast<QDynamicPropertyChangeEvent*>(event);
