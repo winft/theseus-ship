@@ -1023,11 +1023,6 @@ public:
         }
     }
 
-    void placeIn(const QRect& area)
-    {
-        place_in_area(this, area);
-    }
-
     void update_maximized(maximize_mode mode)
     {
         // TODO(romangg): If this window is fullscreen it should still be possible to set it
@@ -1314,7 +1309,7 @@ public:
                                                         PlacementArea,
                                                         get_current_output(this->space),
                                                         get_desktop(*this));
-                    placeIn(area);
+                    place_in_area(this, area);
                 } else if (plasma_shell_surface && plasma_shell_surface->open_under_cursor()) {
                     must_place = false;
                     auto const area = space_window_area(this->space,

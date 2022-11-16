@@ -29,6 +29,7 @@
 #include "scripting/platform.h"
 #include "win/input.h"
 #include "win/internal_window.h"
+#include "win/placement.h"
 #include "win/screen.h"
 #include "win/setup.h"
 #include "win/space.h"
@@ -359,7 +360,7 @@ public:
                 placementDone = true;
             }
             if (!placementDone) {
-                window->placeIn(area);
+                place_in_area(window, area);
             }
         }
 
