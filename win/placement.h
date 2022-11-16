@@ -331,7 +331,7 @@ void place_utility(Win* window, QRect const& area)
     // TODO kwin should try to place utility windows next to their mainwindow, preferably at the
     // right edge, and going down if there are more of them if there's not enough place outside the
     // mainwindow, it should prefer top-right corner. use the default placement for now.
-    place(window, area, placement::global_default);
+    place_with_policy(window, area, placement::global_default);
 }
 
 template<typename Win>
@@ -378,7 +378,7 @@ void place_maximizing(Win* window, QRect const& area, placement next_placement =
         }
     } else {
         constrained_resize(window, window->maxSize().boundedTo(area.size()));
-        place(window, area, next_placement);
+        place_with_policy(window, area, next_placement);
     }
 }
 
@@ -420,7 +420,7 @@ void place_on_main_window(Win* window,
                 // made as large as its maximum size and then placed centered.
                 // So the next_placement argument allows chaining. In this case, next_placement
                 // is maximizing and it will call place_centered().
-                place(window, area, placement::centered);
+                place_with_policy(window, area, placement::centered);
                 return;
             }
         }
@@ -429,7 +429,7 @@ void place_on_main_window(Win* window,
     if (!place_on) {
         // 'mains_count' is used because it doesn't include ignored mainwindows
         if (mains_count != 1) {
-            place(window, area, placement::centered);
+            place_with_policy(window, area, placement::centered);
             return;
         }
 
@@ -438,7 +438,7 @@ void place_on_main_window(Win* window,
     }
 
     if (is_desktop(place_on)) {
-        place(window, area, placement::centered);
+        place_with_policy(window, area, placement::centered);
         return;
     }
 
@@ -458,10 +458,10 @@ void place_dialog(Win* window, QRect const& area, placement next_placement = pla
 }
 
 template<typename Win>
-void place(Win* window,
-           QRect const& area,
-           placement policy,
-           placement next_placement = placement::unknown)
+void place_with_policy(Win* window,
+                       QRect const& area,
+                       placement policy,
+                       placement next_placement = placement::unknown)
 {
     if (policy == placement::unknown) {
         policy = placement::global_default;
@@ -532,7 +532,7 @@ void place(Win* window, QRect const& area)
     auto policy = window->control->rules.checkPlacement(placement::global_default);
 
     if (policy != placement::global_default) {
-        place(window, area, policy);
+        place_with_policy(window, area, policy);
         return;
     }
 
@@ -563,7 +563,7 @@ void place(Win* window, QRect const& area)
         }
     }
 
-    place(window, area, kwinApp()->options->qobject->placement());
+    place_with_policy(window, area, kwinApp()->options->qobject->placement());
 }
 
 /**
