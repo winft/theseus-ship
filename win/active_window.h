@@ -397,7 +397,7 @@ void active_window_pack_left(Space& space)
     }
 
     std::visit(overload{[&](auto&& win) {
-                   if (!can_move(win)) {
+                   if (!win->isMovable()) {
                        return;
                    }
                    auto const pos = win->geo.update.frame.topLeft();
@@ -415,7 +415,7 @@ void active_window_pack_right(Space& space)
     }
 
     std::visit(overload{[&](auto&& win) {
-                   if (!can_move(win)) {
+                   if (!win->isMovable()) {
                        return;
                    }
 
@@ -437,7 +437,7 @@ void active_window_pack_up(Space& space)
     }
 
     std::visit(overload{[&](auto&& win) {
-                   if (!can_move(win)) {
+                   if (!win->isMovable()) {
                        return;
                    }
 
@@ -456,7 +456,7 @@ void active_window_pack_down(Space& space)
     }
 
     std::visit(overload{[&](auto&& win) {
-                   if (!can_move(win)) {
+                   if (!win->isMovable()) {
                        return;
                    }
 

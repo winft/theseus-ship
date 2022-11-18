@@ -213,7 +213,7 @@ QRect place_mapped(Win* win, QRect& frame_geo)
         return area;
     }
 
-    win::place(win, area);
+    place_in_area(win, area);
     frame_geo = pending_frame_geometry(win);
 
     // The client may have been moved to another screen, update placement area.
@@ -253,7 +253,7 @@ QRect place_session(Win* win, QRect& frame_geo)
         return area;
     }
 
-    win::place(win, area);
+    place_in_area(win, area);
     frame_geo = pending_frame_geometry(win);
 
     // The client may have been moved to another screen, update placement area.
@@ -322,7 +322,7 @@ QRect place_unmapped(Win* win, QRect& frame_geo, KStartupInfoData const& asn_dat
     }
 
     if (must_place) {
-        win::place(win, area);
+        place_in_area(win, area);
         frame_geo = pending_frame_geometry(win);
 
         // The client may have been moved to another screen, update placement area.

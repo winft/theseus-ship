@@ -17,7 +17,7 @@ void handle_new_appmenu(Space* space, Wrapland::Server::Appmenu* appmenu)
         if (win->control) {
             // Need to check that as plasma-integration creates them blindly even for
             // xdg-shell popups.
-            install_appmenu(win, appmenu);
+            install_appmenu(*win, appmenu);
         }
     }
 }

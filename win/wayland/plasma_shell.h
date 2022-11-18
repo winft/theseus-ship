@@ -15,7 +15,7 @@ void handle_new_plasma_shell_surface(Space* space, Wrapland::Server::PlasmaShell
 {
     if (auto win = space->find_window(surface->surface())) {
         assert(win->toplevel || win->popup || win->layer_surface);
-        install_plasma_shell_surface(win, surface);
+        install_plasma_shell_surface(*win, surface);
     } else {
         space->plasma_shell_surfaces << surface;
         QObject::connect(surface, &QObject::destroyed, space->qobject.get(), [space, surface] {

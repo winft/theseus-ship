@@ -10,6 +10,7 @@
 #include "control.h"
 #include "desktop_set.h"
 #include "geo_block.h"
+#include "placement.h"
 #include "rules/update.h"
 #include "shortcut_set.h"
 #include "singleton_interface.h"
@@ -44,11 +45,11 @@ public:
     {
     }
 
-    void set_desktops(QVector<virtual_desktop*> /*desktops*/)
+    void set_desktops(QVector<virtual_desktop*> /*desktops*/) override
     {
     }
 
-    void destroy_decoration()
+    void destroy_decoration() override
     {
         if (!win::decoration(m_client)) {
             return;
@@ -75,7 +76,7 @@ public:
     }
 
 protected:
-    bool eventFilter(QObject* watched, QEvent* event)
+    bool eventFilter(QObject* watched, QEvent* event) override
     {
         if (watched == window.m_internalWindow && event->type() == QEvent::DynamicPropertyChange) {
             auto pe = static_cast<QDynamicPropertyChangeEvent*>(event);
@@ -670,13 +671,6 @@ public:
         return this->isShown() && !repaints(*this).isEmpty();
     }
 
-    struct {
-        std::shared_ptr<QOpenGLFramebufferObject> fbo;
-        QImage image;
-    } buffers;
-
-    std::unique_ptr<internal_window_singleton> singleton;
-
     bool acceptsFocus() const
     {
         return false;
@@ -779,7 +773,7 @@ public:
         if (placeable()) {
             auto const area = space_window_area(
                 this->space, PlacementArea, get_current_output(this->space), get_desktop(*this));
-            place(this, area);
+            place_in_area(this, area);
         }
 
         this->space.stacking.order.update_count();
@@ -830,6 +824,7 @@ public:
     }
 
     std::unique_ptr<qobject_t> qobject;
+    std::unique_ptr<internal_window_singleton> singleton;
 
     win::window_metadata meta;
     win::window_geometry geo;
@@ -840,6 +835,11 @@ public:
     std::unique_ptr<win::control<type>> control;
     std::unique_ptr<render_t> render;
     std::optional<win::remnant> remnant;
+
+    struct {
+        std::shared_ptr<QOpenGLFramebufferObject> fbo;
+        QImage image;
+    } buffers;
 
     QWindow* m_internalWindow = nullptr;
     QRect synced_geo;

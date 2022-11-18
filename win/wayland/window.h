@@ -303,7 +303,7 @@ public:
             auto const bounds = space_window_area(
                 this->space, control->fullscreen ? FullScreenArea : PlacementArea, this);
             toplevel->configure_bounds(bounds.size());
-            serial = toplevel->configure(xdg_surface_states(this), window_geo.size());
+            serial = toplevel->configure(xdg_surface_states(*this), window_geo.size());
         }
         if (popup) {
             auto parent = this->transient->lead();
@@ -315,7 +315,7 @@ public:
                                                       top_lead);
 
                 serial = popup->configure(
-                    get_xdg_shell_popup_placement(this, bounds).translated(-top_lead->geo.pos()));
+                    xdg_shell_get_popup_placement(*this, bounds).translated(-top_lead->geo.pos()));
             }
         }
         if (layer_surface) {
@@ -403,7 +403,7 @@ public:
                 this->geo.update.frame = frame_geo;
             }
 
-            auto const frame_geo = get_xdg_shell_popup_placement(this, screen_bounds);
+            auto const frame_geo = xdg_shell_get_popup_placement(*this, screen_bounds);
 
             if (this->geo.update.pending == win::pending_geometry::none) {
                 this->geo.update.frame = frame_geo;
@@ -1023,11 +1023,6 @@ public:
         }
     }
 
-    void placeIn(const QRect& area)
-    {
-        win::place(this, area);
-    }
-
     void update_maximized(maximize_mode mode)
     {
         // TODO(romangg): If this window is fullscreen it should still be possible to set it
@@ -1113,7 +1108,7 @@ public:
 
         this->geo.update.pending = pending_geometry::none;
 
-        if (needs_configure(this)) {
+        if (needs_configure(*this)) {
             if (plasma_shell_surface) {
                 if (!pending_configures.empty()) {
                     pending_configures.back().geometry.frame.moveTo(frame_geo.topLeft());
@@ -1314,7 +1309,7 @@ public:
                                                         PlacementArea,
                                                         get_current_output(this->space),
                                                         get_desktop(*this));
-                    placeIn(area);
+                    place_in_area(this, area);
                 } else if (plasma_shell_surface && plasma_shell_surface->open_under_cursor()) {
                     must_place = false;
                     auto const area = space_window_area(this->space,
@@ -1506,7 +1501,7 @@ private:
             if (!isLockScreen()) {
                 setup_plasma_management(&this->space, this);
             }
-            update_screen_edge(this);
+            update_screen_edge(*this);
         }
 
         if (this->render_data.ready_for_painting) {
