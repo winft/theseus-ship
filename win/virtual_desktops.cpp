@@ -238,7 +238,8 @@ virtual_desktop_manager::virtual_desktop_manager()
     , singleton{qobject.get(),
                 [this] { return desktops(); },
                 [this](auto pos, auto const& name) { return createVirtualDesktop(pos, name); },
-                [this](auto id) { return removeVirtualDesktop(id); }}
+                [this](auto id) { return removeVirtualDesktop(id); },
+                [this] { return currentDesktop(); }}
 {
     singleton_interface::virtual_desktops = &singleton;
 }

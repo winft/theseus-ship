@@ -43,6 +43,7 @@ struct virtual_desktops_singleton {
     std::function<QVector<virtual_desktop*>()> get;
     std::function<void(unsigned int, QString)> create;
     std::function<void(QString const&)> remove;
+    std::function<virtual_desktop*()> current;
 };
 
 class internal_window_singleton : public QObject
