@@ -52,6 +52,7 @@ public:
     explicit window(win::window_qobject& qtwin);
 
     virtual bool isOnDesktop(unsigned int desktop) const = 0;
+    virtual bool isOnDesktop(win::virtual_desktop* desktop) const = 0;
     virtual bool isOnCurrentDesktop() const = 0;
 
     QStringList activities() const;
@@ -402,6 +403,12 @@ public:
     }
 
     bool isOnDesktop(unsigned int desktop) const override
+    {
+        return std::visit(overload{[desktop](auto&& win) { return win::on_desktop(win, desktop); }},
+                          ref_win);
+    }
+
+    bool isOnDesktop(win::virtual_desktop* desktop) const override
     {
         return std::visit(overload{[desktop](auto&& win) { return win::on_desktop(win, desktop); }},
                           ref_win);
