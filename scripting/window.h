@@ -54,6 +54,7 @@ public:
     virtual bool isOnDesktop(unsigned int desktop) const = 0;
     virtual bool isOnDesktop(win::virtual_desktop* desktop) const = 0;
     virtual bool isOnCurrentDesktop() const = 0;
+    virtual bool isOnOutput(base::output* output) const = 0;
 
     QStringList activities() const;
     bool isShadeable() const;
@@ -417,6 +418,12 @@ public:
     bool isOnCurrentDesktop() const override
     {
         return std::visit(overload{[](auto&& win) { return win::on_current_desktop(win); }},
+                          ref_win);
+    }
+
+    bool isOnOutput(base::output* output) const override
+    {
+        return std::visit(overload{[output](auto&& win) { return win::on_screen(win, output); }},
                           ref_win);
     }
 
