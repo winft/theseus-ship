@@ -1858,11 +1858,9 @@ GLvoid* GLVertexBufferPrivate::getIdleRange(size_t size)
             fence.nextEnd -= bufferSize;
 
         // Emit a fence now
-        BufferFence fence;
-        fence.sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-        Q_ASSERT(fence.sync);
-        fence.nextEnd = bufferSize;
-        fences.emplace_back(fence);
+        if (auto sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0)) {
+            fences.push_back(BufferFence{.sync = sync, .nextEnd = intptr_t(bufferSize)});
+        }
     }
 
     if (unlikely(nextOffset + intptr_t(size) > bufferEnd)) {
@@ -2157,12 +2155,10 @@ void GLVertexBuffer::endOfFrame()
             d->nextOffset = 0;
             d->map = nullptr;
         } else {
-            BufferFence fence;
-            fence.sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-            Q_ASSERT(fence.sync);
-            fence.nextEnd = d->nextOffset + d->bufferSize;
-
-            d->fences.emplace_back(fence);
+            if (auto sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0)) {
+                d->fences.push_back(
+                    BufferFence{.sync = sync, .nextEnd = intptr_t(d->nextOffset + d->bufferSize)});
+            }
         }
     }
 }
