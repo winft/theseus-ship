@@ -24,7 +24,7 @@ class KWIN_EXPORT session : public seat::session
 {
     Q_OBJECT
 public:
-    explicit session(wlr_backend* backend);
+    session(wlr_session* native, wlr_backend* backend);
     ~session() override;
 
     bool isConnected() const override;

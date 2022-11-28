@@ -11,6 +11,7 @@
 #include "base/utils.h"
 #include "base/wayland/platform.h"
 #include "kwin_export.h"
+#include "utils/flags.h"
 
 #include <functional>
 #include <memory>
@@ -65,6 +66,11 @@ inline wlr_backend* get_headless_backend(wlr_backend* backend)
     return get_backend(backend, wlr_backend_is_headless);
 }
 
+enum class start_options {
+    none = 0x0,
+    headless = 0x1,
+};
+
 class KWIN_EXPORT platform : public base::wayland::platform
 {
 public:
@@ -74,7 +80,7 @@ public:
     platform() = default;
     platform(std::string const& socket_name,
              base::wayland::start_options flags,
-             std::function<wlr_backend*(wl_display*)> backend_factory);
+             start_options options);
 
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
@@ -82,12 +88,13 @@ public:
     platform& operator=(platform&& other) noexcept;
     ~platform() override;
 
-    wlr_session* session() const;
     clockid_t get_clockid() const override;
 
     std::vector<std::unique_ptr<drm_lease>> leases;
     std::vector<non_desktop_output*> non_desktop_outputs;
+
     wlr_backend* backend{nullptr};
+    wlr_session* session{nullptr};
 
 private:
     void init();
@@ -98,3 +105,5 @@ private:
 };
 
 }
+
+ENUM_FLAGS(KWin::base::backend::wlroots::start_options)

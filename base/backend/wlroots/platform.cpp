@@ -8,6 +8,7 @@
 #include "non_desktop_output.h"
 #include "output.h"
 
+#include "config-kwin.h"
 #include "render/backend/wlroots/output.h"
 #include "render/backend/wlroots/platform.h"
 #include "wayland_logging.h"
@@ -87,9 +88,8 @@ void handle_new_output(struct wl_listener* listener, void* data)
 
 platform::platform(std::string const& socket_name,
                    base::wayland::start_options flags,
-                   std::function<wlr_backend*(wl_display*)> backend_factory)
+                   start_options options)
     : wayland::platform(socket_name, flags)
-    , backend{backend_factory(server->display->native())}
     , destroyed{std::make_unique<event_receiver<platform>>()}
     , new_output{std::make_unique<event_receiver<platform>>()}
 
@@ -99,6 +99,17 @@ platform::platform(std::string const& socket_name,
 
     // TODO(romangg): Make this dependent on KWIN_WL debug verbosity.
     wlr_log_init(WLR_DEBUG, nullptr);
+
+    if (::flags(options & start_options::headless)) {
+        backend = wlr_headless_backend_create(server->display->native());
+    } else {
+#if HAVE_WLR_SESSION_ON_AUTOCREATE
+        backend = wlr_backend_autocreate(server->display->native(), &session);
+#else
+        backend = wlr_backend_autocreate(server->display->native());
+        session = wlr_backend_get_session(backend);
+#endif
+    }
 
     destroyed->receiver = this;
     destroyed->event.notify = handle_destroy;
@@ -156,11 +167,6 @@ platform::~platform()
     if (singleton_interface::platform == this) {
         singleton_interface::platform = nullptr;
     }
-}
-
-wlr_session* platform::session() const
-{
-    return wlr_backend_get_session(backend);
 }
 
 clockid_t platform::get_clockid() const

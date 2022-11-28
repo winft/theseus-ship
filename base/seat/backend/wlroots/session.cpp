@@ -21,9 +21,9 @@ extern "C" {
 namespace KWin::base::seat::backend::wlroots
 {
 
-session::session(wlr_backend* backend)
+session::session(wlr_session* native, wlr_backend* backend)
     : seat::session()
-    , native{wlr_backend_get_session(backend)}
+    , native{native}
     , is_dummy{static_cast<bool>(base::backend::wlroots::get_headless_backend(backend))}
 {
 }
