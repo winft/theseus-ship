@@ -42,6 +42,7 @@ class KWIN_EXPORT device : public QObject
     Q_PROPERTY(quint32 vendor READ vendor CONSTANT)
     Q_PROPERTY(bool supportsDisableEvents READ supportsDisableEvents CONSTANT)
     Q_PROPERTY(bool enabled READ isEnabled WRITE setEnabled NOTIFY enabledChanged)
+    Q_PROPERTY(bool enabledByDefault READ isEnabledByDefault CONSTANT)
 
     //
     // Advanced
@@ -264,6 +265,7 @@ public:
 
     bool isEnabled() const;
     void setEnabled(bool enabled);
+    bool isEnabledByDefault() const;
 
     bool isSwitch() const;
 
