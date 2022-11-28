@@ -47,7 +47,7 @@ keymap::keymap(int fd, uint32_t size, xkb_context* context)
 
 keymap::~keymap()
 {
-    delete cache;
+    free(cache);
     if (raw) {
         xkb_keymap_unref(raw);
     }

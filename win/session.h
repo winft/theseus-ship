@@ -288,7 +288,8 @@ session_info* take_session_info(Space& space, Win* c)
     // First search ``session''
     if (!sessionId.isEmpty()) {
         // look for a real session managed client (algorithm suggested by ICCCM)
-        for (auto const& info : space.session) {
+        auto const session_copy = space.session;
+        for (auto const& info : session_copy) {
             if (realInfo) {
                 break;
             }
@@ -309,7 +310,8 @@ session_info* take_session_info(Space& space, Win* c)
         }
     } else {
         // look for a sessioninfo with matching features.
-        for (auto const& info : space.session) {
+        auto const session_copy = space.session;
+        for (auto const& info : session_copy) {
             if (realInfo) {
                 break;
             }

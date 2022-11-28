@@ -60,7 +60,7 @@ public:
     xwl_window(win::remnant remnant, Space& space)
         : qobject{std::make_unique<window_qobject>()}
         , meta{++space.window_id}
-        , transient{std::make_unique<win::transient<type>>(this)}
+        , transient{std::make_unique<x11::transient<type>>(this)}
         , remnant{std::move(remnant)}
         , motif_hints{space.atoms->motif_wm_hints}
         , space{space}
@@ -267,8 +267,7 @@ public:
 
     bool groupTransient() const
     {
-        return static_cast<x11::transient<xwl_window>*>(this->transient.get())->lead_id
-            == rootWindow();
+        return this->transient->lead_id == rootWindow();
     }
 
     type* findModal()
@@ -568,7 +567,7 @@ public:
     win::window_topology<output_t> topo;
     win::window_render_data<output_t> render_data;
 
-    std::unique_ptr<win::transient<type>> transient;
+    std::unique_ptr<x11::transient<type>> transient;
     std::unique_ptr<win::control<type>> control;
     std::unique_ptr<render_t> render;
     std::optional<win::remnant> remnant;

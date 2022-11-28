@@ -124,7 +124,7 @@ public:
                              for (auto win : windows) {
                                  std::visit(
                                      overload{[&](internal_window_t* win) {
-                                                  if (win->isShown()) {
+                                                  if (win->isShown() && !win->remnant) {
                                                       stacking.order.render_overlays.push_back(win);
                                                   }
                                               },

@@ -1204,8 +1204,8 @@ public:
             return;
         }
 
-        // Might be at shutdown with edges object already gone.
-        if (compositor.space->edges) {
+        // Might be at shutdown with space already gone.
+        if (compositor.space && compositor.space->edges) {
             for (auto& [key, id] : it->second) {
                 compositor.space->edges->unreserve(key, id);
             }

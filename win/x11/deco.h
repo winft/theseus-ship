@@ -48,48 +48,6 @@ void layout_decoration_rects(Win* win, QRect& left, QRect& top, QRect& right, QR
 }
 
 template<typename Win>
-void detect_no_border(Win* win)
-{
-    if (win->is_shape) {
-        win->user_no_border = true;
-        win->app_no_border = true;
-        return;
-    }
-
-    switch (win->windowType()) {
-    case NET::Desktop:
-    case NET::Dock:
-    case NET::TopMenu:
-    case NET::Splash:
-    case NET::Notification:
-    case NET::OnScreenDisplay:
-    case NET::CriticalNotification:
-    case NET::AppletPopup:
-        win->user_no_border = true;
-        win->app_no_border = true;
-        break;
-    case NET::Unknown:
-    case NET::Normal:
-    case NET::Toolbar:
-    case NET::Menu:
-    case NET::Dialog:
-    case NET::Utility:
-        win->user_no_border = false;
-        break;
-    default:
-        abort();
-    }
-
-    // NET::Override is some strange beast without clear definition, usually
-    // just meaning "no_border", so let's treat it only as such flag, and ignore it as
-    // a window type otherwise (SUPPORTED_WINDOW_TYPES_MASK doesn't include it)
-    if (win->net_info->windowType(NET::OverrideMask) == NET::Override) {
-        win->user_no_border = true;
-        win->app_no_border = true;
-    }
-}
-
-template<typename Win>
 void set_frame_extents(Win* win)
 {
     NETStrut strut;

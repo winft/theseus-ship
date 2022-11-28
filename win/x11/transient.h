@@ -94,12 +94,6 @@ public:
 */
 
 template<typename Win>
-transient<Win>* x11_transient(Win* win)
-{
-    return static_cast<x11::transient<Win>*>(win->transient.get());
-}
-
-template<typename Win>
 base::x11::xcb::transient_for fetch_transient(Win* win)
 {
     return base::x11::xcb::transient_for(win->xcb_windows.client);
@@ -149,7 +143,7 @@ void update_group(Win* win, bool add)
         win->group->removeMember(win);
 
         for (auto member : win->group->members) {
-            if (x11_transient(win)->lead_id == member->xcb_windows.client) {
+            if (win->transient->lead_id == member->xcb_windows.client) {
                 if (!contains(member->transient->children, win)) {
                     member->transient->add_child(win);
                 }
@@ -187,8 +181,8 @@ void update_group(Win* win, bool add)
 template<typename Win>
 void clean_grouping(Win* win)
 {
-    x11_transient(win)->lead_id = XCB_WINDOW_NONE;
-    x11_transient(win)->original_lead_id = XCB_WINDOW_NONE;
+    win->transient->lead_id = XCB_WINDOW_NONE;
+    win->transient->original_lead_id = XCB_WINDOW_NONE;
 
     update_group(win, false);
 }
@@ -265,7 +259,7 @@ xcb_window_t verify_transient_for(Win* win, xcb_window_t new_transient_for, bool
             break;
         }
 
-        loop_pos = x11_transient(pos)->lead_id;
+        loop_pos = pos->transient->lead_id;
 
         if (--count == 0 || pos == win) {
             qCWarning(KWIN_CORE) << "Client " << win << " caused WM_TRANSIENT_FOR loop.";
@@ -280,7 +274,7 @@ xcb_window_t verify_transient_for(Win* win, xcb_window_t new_transient_for, bool
         new_transient_for = rootWindow();
     }
 
-    if (new_property_value != x11_transient(win)->original_lead_id) {
+    if (new_property_value != win->transient->original_lead_id) {
         base::x11::xcb::set_transient_for(win->xcb_windows.client, new_property_value);
     }
 
@@ -313,7 +307,7 @@ void check_active_modal(Space& space)
 template<typename Win>
 void change_client_leader_group(Win* win, decltype(win->group) group)
 {
-    auto lead_id = x11_transient(win)->lead_id;
+    auto lead_id = win->transient->lead_id;
     if (lead_id != XCB_WINDOW_NONE && lead_id != rootWindow()) {
         // Transients are in the group of their lead.
         return;
@@ -423,9 +417,7 @@ void check_group(Win* win, decltype(win->group) group)
 template<typename Win>
 void set_transient_lead(Win* win, xcb_window_t lead_id)
 {
-    auto x11_tr = x11_transient(win);
-
-    if (lead_id == x11_tr->lead_id) {
+    if (lead_id == win->transient->lead_id) {
         return;
     }
 
@@ -433,7 +425,7 @@ void set_transient_lead(Win* win, xcb_window_t lead_id)
         lead->transient->remove_child(win);
     }
 
-    x11_tr->lead_id = lead_id;
+    win->transient->lead_id = lead_id;
 
     if (lead_id != XCB_WINDOW_NONE && lead_id != rootWindow()) {
         auto lead = find_controlled_window<Win>(win->space, predicate_match::window, lead_id);
@@ -478,7 +470,7 @@ template<typename Win, typename CheckWin>
 void check_transient(Win& win, CheckWin& check)
 {
     auto id = static_cast<xcb_window_t>(check.xcb_windows.client);
-    if (x11_transient(&win)->original_lead_id != id) {
+    if (win.transient->original_lead_id != id) {
         return;
     }
     id = verify_transient_for(&win, id, true);
@@ -496,7 +488,7 @@ void read_transient_property(Win* win, base::x11::xcb::transient_for& transientF
         failed = true;
     }
 
-    x11_transient(win)->original_lead_id = lead_id;
+    win->transient->original_lead_id = lead_id;
     lead_id = verify_transient_for(win, lead_id, !failed);
 
     set_transient_lead(win, lead_id);

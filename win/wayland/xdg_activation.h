@@ -12,10 +12,15 @@
 #include "win/stacking.h"
 
 #include <Wrapland/Server/xdg_activation_v1.h>
+#include <fcntl.h>
 #include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#define _POSIX_C_SOURCE 200809L
 
 namespace KWin::win::wayland
 {
@@ -31,8 +36,14 @@ inline bool generate_token(char out[token_strlen])
     uint64_t data[2];
 
     if (!urandom) {
-        if (!(urandom = fopen("/dev/urandom", "r"))) {
+        int fd = open("/dev/urandom", O_RDONLY | O_CLOEXEC);
+        if (fd < 0) {
             qCWarning(KWIN_CORE) << "Failed to open random device.";
+            return false;
+        }
+        if (!(urandom = fdopen(fd, "r"))) {
+            qCWarning(KWIN_CORE) << "Failed to fdopen.";
+            close(fd);
             return false;
         }
     }

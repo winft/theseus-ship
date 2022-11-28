@@ -114,6 +114,8 @@ void load_config(Dev* device)
 class device_config
 {
 public:
+    virtual ~device_config() = default;
+
     KConfigGroup group;
     bool writable{true};
 
