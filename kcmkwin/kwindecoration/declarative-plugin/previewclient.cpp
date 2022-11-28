@@ -251,6 +251,11 @@ WId PreviewClient::windowId() const
     return 0;
 }
 
+QString PreviewClient::windowClass() const
+{
+    return {};
+}
+
 QPalette PreviewClient::palette() const
 {
     return m_palette.get_qt_palette();

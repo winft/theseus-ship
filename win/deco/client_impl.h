@@ -301,6 +301,12 @@ public:
         return XCB_WINDOW_NONE;
     }
 
+    QString windowClass() const override
+    {
+        auto const& wm_class = m_client->meta.wm_class;
+        return wm_class.res_name + QLatin1Char(' ') + wm_class.res_class;
+    }
+
     Qt::Edges adjacentScreenEdges() const override
     {
         Qt::Edges edges;
