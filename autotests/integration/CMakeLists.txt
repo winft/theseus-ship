@@ -31,7 +31,7 @@ function(integrationTest)
   target_link_libraries(${ARGS_NAME} KWinIntegrationTestFramework ${ARGS_LIBS})
   add_test(
     NAME kwin-${ARGS_NAME}
-    COMMAND dbus-run-session ${CMAKE_BINARY_DIR}/bin/${ARGS_NAME}
+    COMMAND ${CMAKE_BINARY_DIR}/bin/${ARGS_NAME}
   )
 
   if (${ARGS_WAYLAND_ONLY})
@@ -40,7 +40,7 @@ function(integrationTest)
     target_link_libraries(${ARGS_NAME}_waylandonly KWinIntegrationTestFramework ${ARGS_LIBS})
     add_test(
       NAME kwin-${ARGS_NAME}-waylandonly
-      COMMAND dbus-run-session ${CMAKE_BINARY_DIR}/bin/${ARGS_NAME}_waylandonly
+      COMMAND ${CMAKE_BINARY_DIR}/bin/${ARGS_NAME}_waylandonly
     )
   endif()
 endfunction()
