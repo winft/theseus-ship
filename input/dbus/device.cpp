@@ -618,6 +618,13 @@ void device::setEnabled(bool enabled)
     dev->set_enabled(enabled);
 }
 
+bool device::isEnabledByDefault() const
+{
+    // We don't support "global default values" [1] yet, so always return true.
+    // [1] https://invent.kde.org/plasma/kwin/-/merge_requests/1806
+    return true;
+}
+
 bool device::isSwitch() const
 {
     return switch_ctrl;

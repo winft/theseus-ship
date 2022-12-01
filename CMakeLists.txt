@@ -194,6 +194,9 @@ if (${wlroots_VERSION} VERSION_GREATER_EQUAL 0.16)
   set(HAVE_WLR_PRIVATE_EGL_STRUCT 1)
 endif()
 
+if (${wlroots_VERSION} VERSION_GREATER_EQUAL 0.17)
+  set(HAVE_WLR_SESSION_ON_AUTOCREATE 1)
+endif()
 
 find_package(X11)
 set_package_properties(X11 PROPERTIES

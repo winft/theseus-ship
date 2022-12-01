@@ -96,7 +96,8 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode,
     removeLibraryPath(ownPath);
     addLibraryPath(ownPath);
 
-    base = base::backend::wlroots::platform(socket_name, flags, wlr_headless_backend_create);
+    base = base::backend::wlroots::platform(
+        socket_name, flags, base::backend::wlroots::start_options::headless);
     base.render = std::make_unique<render::backend::wlroots::platform<decltype(base)>>(base);
 
     auto environment = QProcessEnvironment::systemEnvironment();
@@ -159,7 +160,8 @@ void WaylandTestApplication::start()
 
     createOptions();
 
-    session = std::make_unique<base::seat::backend::wlroots::session>(headless_backend);
+    session
+        = std::make_unique<base::seat::backend::wlroots::session>(base.session, headless_backend);
     base.input = std::make_unique<input::backend::wlroots::platform>(base);
     base.input->install_shortcuts();
 

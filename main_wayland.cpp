@@ -198,14 +198,15 @@ void ApplicationWayland::start(OperationMode mode,
     prepare_start();
 
     using base_t = base::backend::wlroots::platform;
-    base = std::make_unique<base_t>(socket_name, flags, wlr_backend_autocreate);
+    base
+        = std::make_unique<base_t>(socket_name, flags, base::backend::wlroots::start_options::none);
 
     using render_t = render::backend::wlroots::platform<base_t>;
     base->render = std::make_unique<render_t>(*base);
 
     createOptions();
 
-    auto session = new base::seat::backend::wlroots::session(base->backend);
+    auto session = new base::seat::backend::wlroots::session(base->session, base->backend);
     this->session.reset(session);
     session->take_control();
 
