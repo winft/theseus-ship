@@ -149,8 +149,9 @@ ScrollViewKCM {
             overlayModel.onlySuggestions = true;
             propertySheet.sheetOpen = true;
         }
-        function onShowErrorMessage(message) {
-            errorLabel.text = message
+        function onShowErrorMessage(title, message) {
+            errorSheet.title = title
+            errorSheet.message = message
             errorSheet.open()
         }
     }
@@ -158,7 +159,7 @@ ScrollViewKCM {
     Kirigami.OverlaySheet {
         id: errorSheet
 
-        title: i18n("Error")
+        property alias message: errorLabel.text
 
         Kirigami.Heading {
             id: errorLabel
