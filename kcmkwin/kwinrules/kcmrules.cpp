@@ -440,7 +440,9 @@ void KCMKWinRules::fillSettingsFromProperties(win::rules::settings* settings,
     settings->setDefaults();
 
     if (wholeApp) {
-        settings->setDescription(i18n("Application settings for %1", QString::fromLatin1(wmclass_class)));
+        if (!wmclass_class.isEmpty()) {
+            settings->setDescription(i18n("Application settings for %1", QString::fromLatin1(wmclass_class)));
+        }
         // TODO maybe exclude some types? If yes, then also exclude them when searching.
         settings->setTypes(NET::AllTypesMask);
         settings->setTitlematch(enum_index(win::rules::name_match::unimportant));
@@ -460,7 +462,9 @@ void KCMKWinRules::fillSettingsFromProperties(win::rules::settings* settings,
         return;
     }
 
-    settings->setDescription(i18n("Window settings for %1", QString::fromLatin1(wmclass_class)));
+    if (!wmclass_class.isEmpty()) {
+        settings->setDescription(i18n("Window settings for %1", QString::fromLatin1(wmclass_class)));
+    }
     if (type == NET::Unknown) {
         settings->setTypes(NET::NormalMask);
     } else {
