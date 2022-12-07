@@ -483,9 +483,17 @@ void set_active_window(Space& space, Win& window)
     // status on > 1 screens
     if (space.base.outputs.size() > 1) {
         for (auto win : space.windows) {
-            std::visit(overload{[&](auto&& win) { update_layer(win); },
+            auto check_win = [&window](auto candidate) {
+                return candidate->control && get_layer(*candidate) == win::layer::active
+                    && candidate->topo.central_output == window.topo.central_output;
+            };
+            std::visit(overload{[&](auto&& win) {
+                                    if (check_win(win)) {
+                                        update_layer(win);
+                                    }
+                                },
                                 [&](Win* win) {
-                                    if (win != &window) {
+                                    if (win != &window && check_win(win)) {
                                         update_layer(win);
                                     }
                                 }},
