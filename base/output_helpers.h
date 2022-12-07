@@ -97,7 +97,7 @@ void set_current_output(Base& base, Output* output)
     }
     auto old_topo = base.topology;
     base.topology.current = output;
-    Q_EMIT base.topology_changed(old_topo, base.topology);
+    Q_EMIT base.current_output_changed(old_topo.current, output);
 }
 
 template<typename Base>
