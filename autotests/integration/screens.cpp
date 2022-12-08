@@ -271,7 +271,7 @@ void TestScreens::testCurrent()
     Test::app()->set_outputs(2);
     QCOMPARE(base.get_outputs().size(), 2);
 
-    QSignalSpy current_changed_spy(&base, &base::platform::topology_changed);
+    QSignalSpy current_changed_spy(&base, &base::platform::current_output_changed);
     QVERIFY(current_changed_spy.isValid());
 
     QFETCH(int, current);
@@ -286,6 +286,8 @@ void TestScreens::testCurrentClient()
 {
     QSignalSpy changedSpy(&Test::app()->base, &base::platform::topology_changed);
     QVERIFY(changedSpy.isValid());
+    QSignalSpy current_output_spy(&Test::app()->base, &base::platform::current_output_changed);
+    QVERIFY(current_output_spy.isValid());
 
     QList<QRect> geometries{{QRect{0, 0, 100, 100}, QRect{100, 0, 100, 100}}};
     Test::app()->set_outputs(to_vector(geometries));
@@ -318,6 +320,7 @@ void TestScreens::testCurrentClient()
     // it's not the active client, so changing won't work
     win::set_current_output_by_window(Test::app()->base, *client);
     QVERIFY(changedSpy.isEmpty());
+    QVERIFY(current_output_spy.isEmpty());
 
     auto output = base::get_output(Test::app()->base.get_outputs(), 0);
     QVERIFY(output);
@@ -336,7 +339,8 @@ void TestScreens::testCurrentClient()
 
     // but also calling setCurrent should emit the changed signal
     win::set_current_output_by_window(Test::app()->base, *client);
-    QCOMPARE(changedSpy.count(), 1);
+    QCOMPARE(changedSpy.count(), 0);
+    QCOMPARE(current_output_spy.count(), 1);
 
     output = base::get_output(Test::app()->base.get_outputs(), 1);
     QVERIFY(output);
@@ -344,7 +348,8 @@ void TestScreens::testCurrentClient()
 
     // setting current with the same client again should not change, though
     win::set_current_output_by_window(Test::app()->base, *client);
-    QCOMPARE(changedSpy.count(), 1);
+    QCOMPARE(changedSpy.count(), 0);
+    QCOMPARE(current_output_spy.count(), 1);
 
     // and it should even still be on screen 1 if we make the client non-current again
     win::unset_active_window(*Test::app()->base.space);
