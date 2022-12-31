@@ -331,10 +331,6 @@ public:
             qCDebug(KWIN_TABBOX) << "Tab box was not properly closed by an effect";
         }
         m_tabbox->hide(abort);
-
-        if (auto con = space.base.x11_data.connection) {
-            base::x11::xcb::sync(con);
-        }
     }
 
     /**
