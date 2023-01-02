@@ -339,7 +339,8 @@ void script::callDBus(const QString& service,
                 self->deleteLater();
 
                 if (self->isError()) {
-                    qCDebug(KWIN_SCRIPTING) << "Received D-Bus message is error";
+                    qCWarning(KWIN_SCRIPTING)
+                        << "Received D-Bus message is error:" << self->error().message();
                     return;
                 }
 
