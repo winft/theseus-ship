@@ -54,8 +54,8 @@ inline bool checkLocation(double lat, double lng)
 inline void night_color_display_inhibit_message(bool inhibit)
 {
     // TODO: Maybe use different icons?
-    auto const icon = inhibit ? QStringLiteral("preferences-desktop-display-nightcolor-off")
-                              : QStringLiteral("preferences-desktop-display-nightcolor-on");
+    auto const icon
+        = inhibit ? QStringLiteral("redshift-status-off") : QStringLiteral("redshift-status-on");
 
     auto const text = inhibit ? i18nc("Night Color was disabled", "Night Color Off")
                               : i18nc("Night Color was enabled", "Night Color On");
