@@ -123,6 +123,12 @@ void generic_scripted_config::createUi()
         return;
     }
 
+    QString const localePath = packageRoot + QLatin1String("/contents/locale");
+    if (QFileInfo::exists(localePath)) {
+        KLocalizedString::addDomainLocaleDir(
+            metaData.value("X-KWin-Config-TranslationDomain").toUtf8(), localePath);
+    }
+
     QFile xmlFile(kconfigXTFile);
     KConfigGroup cg = configGroup();
     KConfigLoader* configLoader = new KConfigLoader(cg, &xmlFile, this);
