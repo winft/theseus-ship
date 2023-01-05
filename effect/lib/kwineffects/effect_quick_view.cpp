@@ -132,6 +132,12 @@ EffectQuickView::EffectQuickView(QObject* parent, QWindow* renderWindow, ExportM
     const bool usingGl
         = d->m_view->rendererInterface()->graphicsApi() == QSGRendererInterface::OpenGL;
 
+    // Compositor renderer is not the same as QtQuick renderer
+    if (effects->compositingType() != OpenGLCompositing) {
+        qCDebug(LIBKWINEFFECTS) << "Compositing is not OpenGL";
+        d->m_useBlit = true;
+    }
+
     if (!usingGl) {
         qCDebug(LIBKWINEFFECTS) << "QtQuick Software rendering mode detected";
         d->m_useBlit = true;
