@@ -450,13 +450,14 @@ void X11ClientTest::testX11WindowId()
     QUuid deletedUuid;
     QCOMPARE(deletedUuid.isNull(), true);
 
-    connect(client->space.qobject.get(),
-            &win::space::qobject_t::remnant_created,
-            this,
-            [&deletedUuid](auto win_id) {
-                std::visit(overload{[&](auto&& win) { deletedUuid = win->meta.internal_id; }},
-                           Test::app()->base.space->windows_map.at(win_id));
-            });
+    const auto& uuidConnection
+        = connect(client->space.qobject.get(),
+                  &win::space::qobject_t::remnant_created,
+                  this,
+                  [&deletedUuid](auto win_id) {
+                      std::visit(overload{[&](auto&& win) { deletedUuid = win->meta.internal_id; }},
+                                 Test::app()->base.space->windows_map.at(win_id));
+                  });
 
     NETRootInfo rootInfo(c.get(), NET::WMAllProperties);
     QCOMPARE(rootInfo.activeWindow(), client->xcb_windows.client);
@@ -491,6 +492,8 @@ void X11ClientTest::testX11WindowId()
 
     QCOMPARE(deletedUuid.isNull(), false);
     QCOMPARE(deletedUuid, uuid);
+
+    disconnect(uuidConnection);
 }
 
 void X11ClientTest::testCaptionChanges()
