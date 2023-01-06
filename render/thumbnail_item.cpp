@@ -313,10 +313,12 @@ void window_thumbnail_item::setWId(const QUuid& wId)
     m_wId = wId;
     if (!m_wId.isNull()) {
         setClient(find_controlled_window(m_wId));
-    } else if (m_client) {
-        m_client = nullptr;
-        updateImplicitSize();
-        Q_EMIT clientChanged();
+    } else {
+        if (m_client) {
+            m_client = nullptr;
+            updateImplicitSize();
+            Q_EMIT clientChanged();
+        }
     }
     Q_EMIT wIdChanged();
 }
