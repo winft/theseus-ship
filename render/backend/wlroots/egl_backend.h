@@ -46,13 +46,8 @@ public:
     {
         native = wlr_gles2_renderer_get_egl(platform.renderer);
 
-#if HAVE_WLR_PRIVATE_EGL_STRUCT
         data.base.display = wlr_egl_get_display(native);
         data.base.context = wlr_egl_get_context(native);
-#else
-        data.base.display = native->display;
-        data.base.context = native->context;
-#endif
 
         load_egl_proc(&data.base.create_image_khr, "eglCreateImageKHR");
         load_egl_proc(&data.base.destroy_image_khr, "eglDestroyImageKHR");
