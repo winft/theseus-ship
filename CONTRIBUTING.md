@@ -383,6 +383,7 @@ and the session started directly from the drop-down menu inside SDDM. For that r
 KWinFT comes with over 100 integration tests
 which check the expected behavior of different parts of the application.
 
+#### Local Build
 To run all relevant tests go to the build directory of KWinFT and issue:
 ```
 dbus-run-session ctest -E 'testLockScreen|testModifierOnlyShortcut'
@@ -406,6 +407,46 @@ For example to run the
 in the pointer input test run:
 ```
 dbus-run-session bin/testPointerInput testPopup
+```
+
+#### Docker Build
+In case you don't have all dependencies installed locally
+or you want to replicate the exact conditions of the CI pipeline
+you can also use the Docker images of KWinFT's CI pipeline.
+
+For that you still need a source checkout.
+Then from this directory launch a container based either on the master or the stable image,
+depending on what version you want to test. This is the command for the master image:
+
+```
+docker run --rm -it --entrypoint /bin/bash -v $PWD:/kwinft registry.gitlab.com/kwinft/ci-images/archlinux/kwinft-base-master
+```
+
+Now similar to how it's done in the CI
+[build the project](https://gitlab.com/kwinft/kwinft/-/blob/5d15e2de6/.gitlab-ci.yml#L79-L85) and
+[run the test suite](https://gitlab.com/kwinft/tooling/-/blob/a8a50bae36/analysis/gitlab-ci/tests.yml#L21-25)
+from within the container:
+
+```
+Xvfb :1 -ac -screen 0 1920x1080x24 > /dev/null 2>&1 &
+export DISPLAY=:1
+export WAYLAND_DEBUG=1 MESA_DEBUG=1 LIBGL_DEBUG=verbose
+export QT_LOGGING_RULES="*=true"
+
+cmake -S /kwinft -B /kwinft/build -Wno-dev \
+    -GNinja \
+    -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON \
+    -DCMAKE_CXX_COMPILER=clang++ \
+    -DCMAKE_BUILD_TYPE=Debug \
+    -DBUILD_TESTING=ON
+
+cmake --build /kwinft/build
+
+dbus-run-session ctest --test-dir /kwinft/build -T Test --output-on-failure --no-compress-output \
+-E 'testLockScreen|testModifierOnlyShortcut|testDontCrashEmptyDeco|testDontCrashNoBorder|
+|testSceneOpenGL|testSceneOpenGLShadow|testDontCrashReinitializeCompositor|testBufferSizeChange|
+|testDontCrashAuroraeDestroyDeco|testSlidingPopups|testScriptedEffects|testToplevelOpenCloseAnimation|
+|testDesktopSwitchingAnimation|testMinimizeAnimation'
 ```
 
 ### Learning Material
