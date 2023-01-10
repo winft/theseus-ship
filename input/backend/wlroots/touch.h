@@ -41,11 +41,7 @@ void handle_down(struct wl_listener* listener, void* data)
     base::event_receiver<touch<Platform>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto touch = event_receiver_struct->receiver;
-#if HAVE_WLR_BASE_INPUT_DEVICES
     auto wlr_event = reinterpret_cast<wlr_touch_down_event*>(data);
-#else
-    auto wlr_event = reinterpret_cast<wlr_event_touch_down*>(data);
-#endif
 
     auto event = touch_down_event{
         wlr_event->touch_id,
@@ -65,11 +61,7 @@ void handle_up(struct wl_listener* listener, void* data)
     base::event_receiver<touch<Platform>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto touch = event_receiver_struct->receiver;
-#if HAVE_WLR_BASE_INPUT_DEVICES
     auto wlr_event = reinterpret_cast<wlr_touch_up_event*>(data);
-#else
-    auto wlr_event = reinterpret_cast<wlr_event_touch_up*>(data);
-#endif
 
     auto event = touch_up_event{
         wlr_event->touch_id,
@@ -88,11 +80,7 @@ void touch_handle_motion(struct wl_listener* listener, void* data)
     base::event_receiver<touch<Platform>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto touch = event_receiver_struct->receiver;
-#if HAVE_WLR_BASE_INPUT_DEVICES
     auto wlr_event = reinterpret_cast<wlr_touch_motion_event*>(data);
-#else
-    auto wlr_event = reinterpret_cast<wlr_event_touch_motion*>(data);
-#endif
 
     auto event = touch_motion_event{
         wlr_event->touch_id,
@@ -112,11 +100,7 @@ void handle_cancel(struct wl_listener* listener, void* data)
     base::event_receiver<touch<Platform>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto touch = event_receiver_struct->receiver;
-#if HAVE_WLR_BASE_INPUT_DEVICES
     auto wlr_event = reinterpret_cast<wlr_touch_cancel_event*>(data);
-#else
-    auto wlr_event = reinterpret_cast<wlr_event_touch_cancel*>(data);
-#endif
 
     auto event = touch_cancel_event{
         wlr_event->touch_id,
@@ -149,11 +133,7 @@ public:
         : touch_impl<typename Platform::base_t>(platform->base)
         , platform{platform}
     {
-#if HAVE_WLR_BASE_INPUT_DEVICES
         auto backend = wlr_touch_from_input_device(dev);
-#else
-        auto backend = dev->touch;
-#endif
 
         if (auto libinput = get_libinput_device(dev)) {
             this->control = std::make_unique<touch_control>(libinput, platform->config);

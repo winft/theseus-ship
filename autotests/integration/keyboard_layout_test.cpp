@@ -30,11 +30,7 @@
 #include <linux/input.h>
 
 extern "C" {
-#if HAVE_WLR_BASE_INPUT_DEVICES
 #include <wlr/interfaces/wlr_keyboard.h>
-#else
-#include <wlr/interfaces/wlr_input_device.h>
-#endif
 }
 
 namespace KWin
@@ -113,11 +109,7 @@ private:
     void reset_layouts();
     auto change_layout(uint index);
     void call_session(QString const& method);
-#if HAVE_WLR_BASE_INPUT_DEVICES
     wlr_keyboard* create_keyboard();
-#else
-    wlr_input_device* create_keyboard();
-#endif
 
     KConfigGroup layout_group;
     std::unique_ptr<test_spies> spies;
@@ -125,7 +117,6 @@ private:
     uint32_t keyboards_index{0};
 };
 
-#if HAVE_WLR_BASE_INPUT_DEVICES
 wlr_keyboard* keyboard_layout_test::create_keyboard()
 {
     keyboards_index++;
@@ -140,18 +131,6 @@ void remove_input_device(wlr_keyboard* device)
 {
     wlr_keyboard_finish(device);
 }
-#else
-wlr_input_device* keyboard_layout_test::create_keyboard()
-{
-    keyboards_index++;
-    return wlr_headless_add_input_device(Test::app()->base.backend, WLR_INPUT_DEVICE_KEYBOARD);
-}
-
-void remove_input_device(wlr_input_device* device)
-{
-    wlr_input_device_destroy(device);
-}
-#endif
 
 void keyboard_layout_test::reconfigure_layouts()
 {

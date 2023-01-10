@@ -190,7 +190,6 @@ set_package_properties(wlroots PROPERTIES
 )
 
 if (${wlroots_VERSION} VERSION_GREATER_EQUAL 0.16)
-  set(HAVE_WLR_BASE_INPUT_DEVICES 1)
   set(HAVE_WLR_PRIVATE_EGL_STRUCT 1)
 endif()
 
