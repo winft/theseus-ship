@@ -684,6 +684,12 @@ public:
         }
 
         auto seat = waylandServer()->seat();
+        if (!seat->hasPointer()) {
+            // May happen when no pointer device is connected or has been removed.
+            // TODO(romangg): We should instead never reach this point when there is no pointer.
+            return;
+        }
+
         if (!now_surface || focus.deco.client) {
             // Clean up focused pointer surface if there's no client to take focus,
             // or the pointer is on a client without surface or on a decoration.
