@@ -342,15 +342,13 @@ void enter_notify_event(Win* win, xcb_enter_notify_event_t* e)
         return;
     }
 
-#define MOUSE_DRIVEN_FOCUS                                                                         \
-    (!win->space.base.options->qobject->focusPolicyIsReasonable()                                  \
-     || (win->space.base.options->qobject->focusPolicy()                                           \
-             == base::options_qobject::FocusFollowsMouse                                           \
-         && win->space.base.options->qobject->isNextFocusPrefersMouse()))
-    if (e->mode == XCB_NOTIFY_MODE_NORMAL
-        || (e->mode == XCB_NOTIFY_MODE_UNGRAB && MOUSE_DRIVEN_FOCUS)) {
-#undef MOUSE_DRIVEN_FOCUS
+    auto is_mouse_driven_focus = !win->space.base.options->qobject->focusPolicyIsReasonable()
+        || (win->space.base.options->qobject->focusPolicy()
+                == base::options_qobject::FocusFollowsMouse
+            && win->space.base.options->qobject->isNextFocusPrefersMouse());
 
+    if (e->mode == XCB_NOTIFY_MODE_NORMAL
+        || (e->mode == XCB_NOTIFY_MODE_UNGRAB && is_mouse_driven_focus)) {
         win::enter_event(win, QPoint(e->root_x, e->root_y));
         return;
     }
