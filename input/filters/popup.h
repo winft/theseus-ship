@@ -102,7 +102,7 @@ public:
         }
 
         seat->setFocusedKeyboardSurface(last->surface);
-        pass_to_wayland_server(event);
+        pass_to_wayland_server(this->redirect, event);
         return true;
     }
 

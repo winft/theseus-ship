@@ -70,7 +70,7 @@ public:
         }
 
         waylandServer()->seat()->setFocusedKeyboardSurface(nullptr);
-        pass_to_wayland_server(event);
+        pass_to_wayland_server(this->redirect, event);
 
         if (event.state == key_state::pressed) {
             auto const qt_key = key_to_qt_key(event.keycode, event.base.dev->xkb.get());

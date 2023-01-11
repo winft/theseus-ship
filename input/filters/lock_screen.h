@@ -112,7 +112,7 @@ public:
             return true;
         }
 
-        pass_to_wayland_server(event);
+        pass_to_wayland_server(this->redirect, event);
         return true;
     }
 

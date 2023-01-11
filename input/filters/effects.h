@@ -59,7 +59,7 @@ public:
             return false;
         }
         waylandServer()->seat()->setFocusedKeyboardSurface(nullptr);
-        pass_to_wayland_server(event);
+        pass_to_wayland_server(this->redirect, event);
         auto qt_event = key_to_qt_event(event);
         get_effects()->grabbedKeyboardEvent(&qt_event);
         return true;

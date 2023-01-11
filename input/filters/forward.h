@@ -39,7 +39,7 @@ public:
         auto seat = waylandServer()->seat();
         this->redirect.keyboard->update();
         seat->setTimestamp(event.base.time_msec);
-        pass_to_wayland_server(event);
+        pass_to_wayland_server(this->redirect, event);
         return true;
     }
 

@@ -190,7 +190,7 @@ public:
         auto internal_event = get_internal_key_event(event);
         if (QCoreApplication::sendEvent(window, &internal_event)) {
             waylandServer()->seat()->setFocusedKeyboardSurface(nullptr);
-            pass_to_wayland_server(event);
+            pass_to_wayland_server(this->redirect, event);
             return true;
         }
         return false;
