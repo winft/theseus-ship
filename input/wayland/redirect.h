@@ -294,7 +294,7 @@ private:
         QObject::connect(
             platform.qobject.get(), &platform_qobject::pointer_removed, qobject.get(), [this]() {
                 if (platform.pointers.empty()) {
-                    auto seat = find_seat();
+                    auto seat = platform.base.server->seat();
                     unset_focus(pointer.get());
                     seat->setHasPointer(false);
                 }
@@ -310,7 +310,7 @@ private:
         QObject::connect(
             platform.qobject.get(), &platform_qobject::keyboard_removed, qobject.get(), [this]() {
                 if (platform.keyboards.empty()) {
-                    auto seat = find_seat();
+                    auto seat = platform.base.server->seat();
                     seat->setFocusedKeyboardSurface(nullptr);
                     seat->setHasKeyboard(false);
                 }
@@ -326,7 +326,7 @@ private:
         QObject::connect(
             platform.qobject.get(), &platform_qobject::touch_removed, qobject.get(), [this]() {
                 if (platform.touchs.empty()) {
-                    auto seat = find_seat();
+                    auto seat = platform.base.server->seat();
                     unset_focus(touch.get());
                     seat->setHasTouch(false);
                 }
@@ -462,7 +462,7 @@ private:
             pointer_red->process_frame();
         });
 
-        auto seat = find_seat();
+        auto seat = platform.base.server->seat();
         if (!seat->hasPointer()) {
             seat->setHasPointer(true);
             device_redirect_update_focus(this->pointer.get());
@@ -472,6 +472,7 @@ private:
     void handle_keyboard_added(input::keyboard* keyboard)
     {
         auto keyboard_red = this->keyboard.get();
+        auto seat = platform.base.server->seat();
 
         QObject::connect(keyboard,
                          &keyboard::key_changed,
@@ -482,8 +483,6 @@ private:
             &keyboard::modifiers_changed,
             keyboard_red->qobject.get(),
             [keyboard_red](auto const& event) { keyboard_red->process_modifiers(event); });
-
-        auto seat = find_seat();
 
         if (!seat->hasKeyboard()) {
             seat->setHasKeyboard(true);
@@ -536,7 +535,7 @@ private:
                          touch_red->qobject.get(),
                          [touch_red] { touch_red->frame(); });
 
-        auto seat = find_seat();
+        auto seat = platform.base.server->seat();
         if (!seat->hasTouch()) {
             seat->setHasTouch(true);
             device_redirect_update_focus(this->touch.get());
@@ -614,11 +613,6 @@ private:
 
         virtual_keyboards.insert({virtual_keyboard, std::move(keyboard)});
         platform_add_keyboard(keyboard_ptr, platform);
-    }
-
-    static Wrapland::Server::Seat* find_seat()
-    {
-        return waylandServer()->seat();
     }
 
     KConfigWatcher::Ptr config_watcher;
