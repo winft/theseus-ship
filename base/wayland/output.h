@@ -41,6 +41,11 @@ template<typename Platform>
 class output : public base::output
 {
 public:
+    output(Platform& platform)
+        : platform{platform}
+    {
+    }
+
     QString name() const override
     {
         return QString::fromStdString(m_output->name());
@@ -227,6 +232,7 @@ public:
     std::unique_ptr<render_t> render;
     std::unique_ptr<Wrapland::Server::Output> m_output;
     base::dpms_mode m_dpms{base::dpms_mode::on};
+    Platform& platform;
 
 protected:
     void init_interfaces(std::string const& name,
@@ -254,7 +260,7 @@ protected:
         };
 
         assert(!m_output);
-        m_output = std::make_unique<Wrapland::Server::Output>(waylandServer()->display.get());
+        m_output = std::make_unique<Wrapland::Server::Output>(platform.server->display.get());
 
         m_output->set_name(name);
         m_output->set_make(make);
