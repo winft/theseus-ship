@@ -39,7 +39,9 @@ public:
 
     compositor(Platform& platform)
         : qobject{std::make_unique<compositor_qobject>([this](auto /*te*/) { return false; })}
-        , presentation{std::make_unique<wayland::presentation>(platform.base.get_clockid())}
+        , presentation{std::make_unique<wayland::presentation>(
+              platform.base.get_clockid(),
+              [&] { return platform.base.server->display->createPresentationManager(); })}
         , platform{platform}
         , dbus{std::make_unique<dbus::compositing<type>>(*this)}
     {
