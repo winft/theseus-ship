@@ -208,7 +208,7 @@ void ApplicationWayland::start(OperationMode mode,
 
     auto session = new base::seat::backend::wlroots::session(base->session, base->backend);
     this->session.reset(session);
-    session->take_control();
+    session->take_control(base->server->display->native());
 
     base->input = std::make_unique<input::backend::wlroots::platform>(*base);
     input::wayland::add_dbus(base->input.get());
