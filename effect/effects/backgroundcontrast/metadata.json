@@ -5,7 +5,7 @@
         "EnabledByDefault": true,
         "Id": "contrast",
         "License": "GPL",
-        "Name": "Background contrast"
+        "Name": "Background Contrast"
     },
     "org.kde.kwin.effect": {
         "enabledByDefaultMethod": true
