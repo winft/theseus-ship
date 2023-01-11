@@ -238,11 +238,6 @@ bool Application::is_screen_locked() const
     return false;
 }
 
-base::wayland::server* Application::get_wayland_server()
-{
-    return nullptr;
-}
-
 void Application::createOptions()
 {
     options = std::make_unique<base::options>();

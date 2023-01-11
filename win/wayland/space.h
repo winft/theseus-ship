@@ -290,7 +290,7 @@ public:
     QRect get_icon_geometry(Win const* win) const
     {
         auto management = win->control->plasma_wayland_integration;
-        if (!management || !waylandServer()) {
+        if (!management || !base.server) {
             // window management interface is only available if the surface is mapped
             return QRect();
         }

@@ -71,24 +71,28 @@ public:
                          &base::platform::topology_changed,
                          qobject.get(),
                          [this] { updateAfterScreenChange(); });
-        if (waylandServer()->has_screen_locker_integration()) {
-            QObject::connect(ScreenLocker::KSldApp::self(),
-                             &ScreenLocker::KSldApp::lockStateChanged,
-                             qobject.get(),
-                             [this] {
-                                 waylandServer()->seat()->pointers().cancel_pinch_gesture();
-                                 waylandServer()->seat()->pointers().cancel_swipe_gesture();
-                                 device_redirect_update(this);
-                             });
+        if (redirect->platform.base.server->has_screen_locker_integration()) {
+            QObject::connect(
+                ScreenLocker::KSldApp::self(),
+                &ScreenLocker::KSldApp::lockStateChanged,
+                qobject.get(),
+                [this] {
+                    redirect->platform.base.server->seat()->pointers().cancel_pinch_gesture();
+                    redirect->platform.base.server->seat()->pointers().cancel_swipe_gesture();
+                    device_redirect_update(this);
+                });
         }
 
-        QObject::connect(
-            waylandServer()->seat(), &Wrapland::Server::Seat::dragEnded, qobject.get(), [this] {
-                // need to force a focused pointer change
-                waylandServer()->seat()->pointers().set_focused_surface(nullptr);
-                device_redirect_unset_focus(this);
-                device_redirect_update(this);
-            });
+        QObject::connect(redirect->platform.base.server->seat(),
+                         &Wrapland::Server::Seat::dragEnded,
+                         qobject.get(),
+                         [this] {
+                             // need to force a focused pointer change
+                             redirect->platform.base.server->seat()->pointers().set_focused_surface(
+                                 nullptr);
+                             device_redirect_unset_focus(this);
+                             device_redirect_update(this);
+                         });
 
         // connect the move resize of all window
         auto setupMoveResizeConnection = [this](auto win) {
@@ -145,12 +149,12 @@ public:
         QPointF const pos = output->geometry().center();
 
         // TODO: better way to get timestamps
-        processMotion(pos, waylandServer()->seat()->timestamp());
+        processMotion(pos, redirect->platform.base.server->seat()->timestamp());
     }
 
     void warp(QPointF const& pos)
     {
-        processMotion(pos, waylandServer()->seat()->timestamp());
+        processMotion(pos, redirect->platform.base.server->seat()->timestamp());
     }
 
     QPointF pos() const
@@ -279,7 +283,7 @@ public:
                 if (!(hint.x() < 0 || hint.y() < 0)) {
                     // TODO(romangg): different client offset for Xwayland clients?
                     processMotion(win::frame_to_client_pos(&win, win.geo.pos()) + hint,
-                                  waylandServer()->seat()->timestamp());
+                                  redirect->platform.base.server->seat()->timestamp());
                 }
             }
             return;
@@ -304,7 +308,7 @@ public:
                     }
                     // TODO(romangg): different client offset for Xwayland clients?
                     auto globalHint = win::frame_to_client_pos(&win, win.geo.pos()) + hint;
-                    processMotion(globalHint, waylandServer()->seat()->timestamp());
+                    processMotion(globalHint, redirect->platform.base.server->seat()->timestamp());
                 });
             // TODO: connect to region change - is it needed at all? If the pointer is locked
             // it's always in the region
@@ -317,7 +321,7 @@ public:
             return;
         }
 
-        auto seat = waylandServer()->seat();
+        auto seat = redirect->platform.base.server->seat();
         if (!seat->hasPointer()) {
             return;
         }
@@ -357,12 +361,12 @@ public:
 
     bool focusUpdatesBlocked()
     {
-        if (waylandServer()->seat()->drags().is_pointer_drag()) {
+        if (redirect->platform.base.server->seat()->drags().is_pointer_drag()) {
             // ignore during drag and drop
             return true;
         }
-        if (waylandServer()->seat()->hasTouch()
-            && waylandServer()->seat()->touches().is_in_progress()) {
+        if (redirect->platform.base.server->seat()->hasTouch()
+            && redirect->platform.base.server->seat()->touches().is_in_progress()) {
             // ignore during touch operations
             return true;
         }
@@ -530,7 +534,7 @@ public:
 
     void process_frame()
     {
-        waylandServer()->seat()->pointers().frame();
+        redirect->platform.base.server->seat()->pointers().frame();
     }
 
     void cleanupInternalWindow(QWindow* old, QWindow* now)
@@ -577,7 +581,7 @@ public:
     {
         assert(!focus.deco.client);
 
-        waylandServer()->seat()->pointers().set_focused_surface(nullptr);
+        redirect->platform.base.server->seat()->pointers().set_focused_surface(nullptr);
 
         auto pos = m_pos - now.client()->geo.pos();
         QHoverEvent event(QEvent::HoverEnter, pos, pos);
@@ -683,7 +687,7 @@ public:
                        *at.window);
         }
 
-        auto seat = waylandServer()->seat();
+        auto seat = redirect->platform.base.server->seat();
         if (!seat->hasPointer()) {
             // May happen when no pointer device is connected or has been removed.
             // TODO(romangg): We should instead never reach this point when there is no pointer.
@@ -722,8 +726,8 @@ public:
                     return;
                 }
 
-                std::visit(overload{[](auto&& win) {
-                               auto seat = waylandServer()->seat();
+                std::visit(overload{[this](auto&& win) {
+                               auto seat = redirect->platform.base.server->seat();
                                seat->pointers().set_focused_surface_transformation(
                                    win::get_input_transform(*win));
                            }},
@@ -783,7 +787,7 @@ private:
         break_pointer_constraints(surface);
         disconnect_pointer_constraints_connection();
         device_redirect_unset_focus(this);
-        waylandServer()->seat()->pointers().set_focused_surface(nullptr);
+        redirect->platform.base.server->seat()->pointers().set_focused_surface(nullptr);
     }
 
     void update_to_reset()
@@ -815,7 +819,7 @@ private:
             disconnect_pointer_constraints_connection();
             device_redirect_unset_focus(this);
         }
-        waylandServer()->seat()->pointers().set_focused_surface(nullptr);
+        redirect->platform.base.server->seat()->pointers().set_focused_surface(nullptr);
     }
 
     void update_position(QPointF pos)
@@ -877,7 +881,7 @@ private:
 
     void warp_xcb_on_surface_left(Wrapland::Server::Surface* newSurface)
     {
-        auto xc = waylandServer()->xwayland_connection();
+        auto xc = redirect->platform.base.server->xwayland_connection();
         if (!xc) {
             // No XWayland, no point in warping the x cursor
             return;
@@ -894,7 +898,7 @@ private:
             // new window is an X window
             return;
         }
-        auto s = waylandServer()->seat()->pointers().get_focus().surface;
+        auto s = redirect->platform.base.server->seat()->pointers().get_focus().surface;
         if (!s || s->client() != xc) {
             // pointer was not on an X window
             return;

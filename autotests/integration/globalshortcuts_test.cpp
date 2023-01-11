@@ -213,7 +213,7 @@ void GlobalShortcutsTest::testRepeatedTrigger()
     Test::app()->base.input->registerShortcut(Qt::Key_Percent, action.get());
 
     // we need to configure the key repeat first. It is only enabled on libinput
-    waylandServer()->seat()->keyboards().set_repeat_info(25, 300);
+    Test::app()->base.server->seat()->keyboards().set_repeat_info(25, 300);
 
     // press shift+5
     quint32 timestamp = 0;

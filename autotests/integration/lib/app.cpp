@@ -122,7 +122,7 @@ WaylandTestApplication::~WaylandTestApplication()
 
     // Kill Xwayland before terminating its connection.
     base.xwayland.reset();
-    waylandServer()->terminateClientConnections();
+    base.server->terminateClientConnections();
 
     // Block compositor to prevent further compositing from crashing with a null workspace.
     // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
@@ -140,11 +140,6 @@ bool WaylandTestApplication::is_screen_locked() const
 base::platform& WaylandTestApplication::get_base()
 {
     return base;
-}
-
-base::wayland::server* WaylandTestApplication::get_wayland_server()
-{
-    return base.server.get();
 }
 
 void WaylandTestApplication::start()
@@ -202,7 +197,7 @@ void WaylandTestApplication::start()
 
     base.render->compositor->start(*base.space);
 
-    waylandServer()->create_addons([this] { handle_server_addons_created(); });
+    base.server->create_addons([this] { handle_server_addons_created(); });
     kwinApp()->screen_locker_watcher->initialize();
 }
 

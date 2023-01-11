@@ -122,7 +122,7 @@ private:
         popups.clear();
         filters.clear();
 
-        if (auto device = waylandServer()->seat()->get_input_method_v2()) {
+        if (auto device = redirect.platform.base.server->seat()->get_input_method_v2()) {
             notifiers.popup_created
                 = QObject::connect(device,
                                    &Wrapland::Server::input_method_v2::popup_surface_created,
@@ -151,7 +151,7 @@ private:
                                            [filter](auto&& f) { return f.get() == filter; });
                          });
 
-        if (auto ti3 = waylandServer()->seat()->text_inputs().v3.text_input;
+        if (auto ti3 = redirect.platform.base.server->seat()->text_inputs().v3.text_input;
             ti3 && ti3->state().enabled) {
             redirect.append_filter(filter);
         }
@@ -209,7 +209,7 @@ private:
             redirect.space.handle_window_added(popup);
         }
 
-        if (auto text_input = waylandServer()->seat()->text_inputs().v3.text_input) {
+        if (auto text_input = redirect.platform.base.server->seat()->text_inputs().v3.text_input) {
             if (text_input->state().enabled) {
                 auto parent_window = get_window(text_input);
                 auto const& placement = get_input_popup_placement(
@@ -235,7 +235,7 @@ private:
             return;
         }
 
-        auto text_input = waylandServer()->seat()->text_inputs().v3.text_input;
+        auto text_input = redirect.platform.base.server->seat()->text_inputs().v3.text_input;
         auto parent_window = get_window(text_input);
         auto const placement
             = get_input_popup_placement(parent_window, text_input->state().cursor_rectangle);

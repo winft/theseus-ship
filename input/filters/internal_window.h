@@ -189,7 +189,7 @@ public:
 
         auto internal_event = get_internal_key_event(event);
         if (QCoreApplication::sendEvent(window, &internal_event)) {
-            waylandServer()->seat()->setFocusedKeyboardSurface(nullptr);
+            this->redirect.platform.base.server->seat()->setFocusedKeyboardSurface(nullptr);
             pass_to_wayland_server(this->redirect, event);
             return true;
         }
@@ -209,7 +209,7 @@ public:
 
     bool touch_down(touch_down_event const& event) override
     {
-        auto seat = waylandServer()->seat();
+        auto seat = this->redirect.platform.base.server->seat();
         if (seat->touches().is_in_progress()) {
             // something else is getting the events
             return false;
@@ -255,7 +255,7 @@ public:
         if (touch->internalPressId() == -1) {
             return false;
         }
-        waylandServer()->seat()->setTimestamp(event.base.time_msec);
+        this->redirect.platform.base.server->seat()->setTimestamp(event.base.time_msec);
         if (touch->internalPressId() != qint32(event.id) || m_pressedIds.contains(event.id)) {
             // ignore, but filter out
             return true;
@@ -284,7 +284,7 @@ public:
         if (touch->internalPressId() == -1) {
             return removed;
         }
-        waylandServer()->seat()->setTimestamp(event.base.time_msec);
+        this->redirect.platform.base.server->seat()->setTimestamp(event.base.time_msec);
         if (touch->internalPressId() != qint32(event.id)) {
             // ignore, but filter out
             return true;

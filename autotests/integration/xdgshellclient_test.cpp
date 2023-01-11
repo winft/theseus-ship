@@ -988,7 +988,7 @@ void TestXdgShellClient::testUnresponsiveWindow()
     if (socketMode) {
         int sx[2];
         QVERIFY(socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, sx) >= 0);
-        waylandServer()->display->createClient(sx[0]);
+        Test::app()->base.server->display->createClient(sx[0]);
         int socket = dup(sx[1]);
         QVERIFY(socket != -1);
         env.insert(QStringLiteral("WAYLAND_SOCKET"), QByteArray::number(socket));

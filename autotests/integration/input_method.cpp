@@ -102,11 +102,11 @@ void input_method_test::init()
     QVERIFY(text_input.get());
     QVERIFY(input_method.get());
 
-    QSignalSpy input_method_spy(waylandServer()->seat(),
+    QSignalSpy input_method_spy(Test::app()->base.server->seat(),
                                 &Wrapland::Server::Seat::input_method_v2_changed);
     QVERIFY(input_method_spy.isValid());
     QVERIFY(input_method_spy.wait());
-    QVERIFY(waylandServer()->seat()->get_input_method_v2());
+    QVERIFY(Test::app()->base.server->seat()->get_input_method_v2());
 }
 
 void input_method_test::cleanup()
@@ -145,7 +145,8 @@ void input_method_test::make_toplevel()
 
 void input_method_test::enable_text_input()
 {
-    QSignalSpy spy(waylandServer()->seat(), &Wrapland::Server::Seat::text_input_v3_enabled_changed);
+    QSignalSpy spy(Test::app()->base.server->seat(),
+                   &Wrapland::Server::Seat::text_input_v3_enabled_changed);
     QVERIFY(spy.isValid());
 
     popup.text_area = QRect(100, 100, 60, 30);
@@ -159,7 +160,8 @@ void input_method_test::enable_text_input()
 
 void input_method_test::disable_text_input()
 {
-    QSignalSpy spy(waylandServer()->seat(), &Wrapland::Server::Seat::text_input_v3_enabled_changed);
+    QSignalSpy spy(Test::app()->base.server->seat(),
+                   &Wrapland::Server::Seat::text_input_v3_enabled_changed);
     QVERIFY(spy.isValid());
 
     text_input->disable();
@@ -172,7 +174,7 @@ void input_method_test::disable_text_input()
 /// Create popup surface, check popup window is created, init spies.
 void input_method_test::create_popup()
 {
-    QSignalSpy popup_spy(waylandServer()->seat()->get_input_method_v2(),
+    QSignalSpy popup_spy(Test::app()->base.server->seat()->get_input_method_v2(),
                          &Wrapland::Server::input_method_v2::popup_surface_created);
     QVERIFY(popup_spy.isValid());
 
@@ -335,12 +337,12 @@ void input_method_test::test_late_popup_window()
  */
 void input_method_test::test_keyboard_filter()
 {
-    QSignalSpy enabled_spy(waylandServer()->seat(),
+    QSignalSpy enabled_spy(Test::app()->base.server->seat(),
                            &Wrapland::Server::Seat::text_input_v3_enabled_changed);
 
     make_toplevel();
 
-    QSignalSpy keyboard_grab_spy(waylandServer()->seat()->get_input_method_v2(),
+    QSignalSpy keyboard_grab_spy(Test::app()->base.server->seat()->get_input_method_v2(),
                                  &Wrapland::Server::input_method_v2::keyboard_grabbed);
     QVERIFY(keyboard_grab_spy.isValid());
 

@@ -36,7 +36,7 @@ public:
 
     bool key(key_event const& event) override
     {
-        auto seat = waylandServer()->seat();
+        auto seat = this->redirect.platform.base.server->seat();
         this->redirect.keyboard->update();
         seat->setTimestamp(event.base.time_msec);
         pass_to_wayland_server(this->redirect, event);
@@ -45,7 +45,7 @@ public:
 
     bool button(button_event const& event) override
     {
-        auto seat = waylandServer()->seat();
+        auto seat = this->redirect.platform.base.server->seat();
         seat->setTimestamp(event.base.time_msec);
 
         switch (event.state) {
@@ -62,7 +62,7 @@ public:
 
     bool motion(motion_event const& event) override
     {
-        auto seat = waylandServer()->seat();
+        auto seat = this->redirect.platform.base.server->seat();
         seat->setTimestamp(event.base.time_msec);
 
         seat->pointers().set_position(this->redirect.pointer->pos());
@@ -78,7 +78,7 @@ public:
 
     bool touch_down(touch_down_event const& event) override
     {
-        auto seat = waylandServer()->seat();
+        auto seat = this->redirect.platform.base.server->seat();
         seat->setTimestamp(event.base.time_msec);
         this->redirect.touch->insertId(event.id, seat->touches().touch_down(event.pos));
         return true;
@@ -86,7 +86,7 @@ public:
 
     bool touch_motion(touch_motion_event const& event) override
     {
-        auto seat = waylandServer()->seat();
+        auto seat = this->redirect.platform.base.server->seat();
         seat->setTimestamp(event.base.time_msec);
         const qint32 wraplandId = this->redirect.touch->mappedId(event.id);
         if (wraplandId != -1) {
@@ -97,7 +97,7 @@ public:
 
     bool touch_up(touch_up_event const& event) override
     {
-        auto seat = waylandServer()->seat();
+        auto seat = this->redirect.platform.base.server->seat();
         seat->setTimestamp(event.base.time_msec);
         const qint32 wraplandId = this->redirect.touch->mappedId(event.id);
         if (wraplandId != -1) {
@@ -109,7 +109,7 @@ public:
 
     bool axis(axis_event const& event) override
     {
-        auto seat = waylandServer()->seat();
+        auto seat = this->redirect.platform.base.server->seat();
         seat->setTimestamp(event.base.time_msec);
 
         using wrap_source = Wrapland::Server::PointerAxisSource;
@@ -144,7 +144,7 @@ public:
 
     bool pinch_begin(pinch_begin_event const& event) override
     {
-        auto seat = waylandServer()->seat();
+        auto seat = this->redirect.platform.base.server->seat();
         seat->setTimestamp(event.base.time_msec);
         seat->pointers().start_pinch_gesture(event.fingers);
 
@@ -153,7 +153,7 @@ public:
 
     bool pinch_update(pinch_update_event const& event) override
     {
-        auto seat = waylandServer()->seat();
+        auto seat = this->redirect.platform.base.server->seat();
         seat->setTimestamp(event.base.time_msec);
         seat->pointers().update_pinch_gesture(
             QSize(event.delta.x(), event.delta.y()), event.scale, event.rotation);
@@ -163,7 +163,7 @@ public:
 
     bool pinch_end(pinch_end_event const& event) override
     {
-        auto seat = waylandServer()->seat();
+        auto seat = this->redirect.platform.base.server->seat();
         seat->setTimestamp(event.base.time_msec);
 
         if (event.cancelled) {
@@ -177,7 +177,7 @@ public:
 
     bool swipe_begin(swipe_begin_event const& event) override
     {
-        auto seat = waylandServer()->seat();
+        auto seat = this->redirect.platform.base.server->seat();
         seat->setTimestamp(event.base.time_msec);
         seat->pointers().start_swipe_gesture(event.fingers);
 
@@ -186,7 +186,7 @@ public:
 
     bool swipe_update(swipe_update_event const& event) override
     {
-        auto seat = waylandServer()->seat();
+        auto seat = this->redirect.platform.base.server->seat();
         seat->setTimestamp(event.base.time_msec);
         seat->pointers().update_swipe_gesture(QSize(event.delta.x(), event.delta.y()));
 
@@ -195,7 +195,7 @@ public:
 
     bool swipe_end(swipe_end_event const& event) override
     {
-        auto seat = waylandServer()->seat();
+        auto seat = this->redirect.platform.base.server->seat();
         seat->setTimestamp(event.base.time_msec);
 
         if (event.cancelled) {

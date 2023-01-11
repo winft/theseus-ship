@@ -37,9 +37,9 @@ public:
 
     effects_handler_impl(Compositor& compositor)
         : render::effects_handler_impl<Compositor>(compositor)
-        , blur{*this, *waylandServer()->display}
-        , contrast{*this, *waylandServer()->display}
-        , slide{*this, *waylandServer()->display}
+        , blur{*this, *compositor.platform.base.server->display}
+        , contrast{*this, *compositor.platform.base.server->display}
+        , slide{*this, *compositor.platform.base.server->display}
     {
         this->reconfigure();
 
@@ -109,7 +109,7 @@ public:
 
     Wrapland::Server::Display* waylandDisplay() const override
     {
-        return waylandServer()->display.get();
+        return this->compositor.platform.base.server->display.get();
     }
 
     effect::region_integration& get_blur_integration() override

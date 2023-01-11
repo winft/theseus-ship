@@ -52,7 +52,7 @@ public:
                                  QPoint const& pos) override
     {
         using var_win = typename Space::window_t;
-        auto seat = waylandServer()->seat();
+        auto seat = source.core.space->base.server->seat();
 
         if (visit && var_win(visit->target) == target) {
             // no target change

@@ -101,7 +101,7 @@ public:
                                     "Failed to dup socket to open XCB connection");
         }
 
-        auto const waylandSocket = waylandServer()->create_xwayland_connection();
+        auto const waylandSocket = space.base.server->create_xwayland_connection();
         if (waylandSocket == -1) {
             close(fd);
             throw std::runtime_error("Failed to open socket for Xwayland");
@@ -189,7 +189,7 @@ public:
         delete xwayland_process;
         xwayland_process = nullptr;
 
-        waylandServer()->destroy_xwayland_connection();
+        space.base.server->destroy_xwayland_connection();
     }
 
     drag_event_reply drag_move_filter(std::optional<window_t> target, QPoint const& pos)
@@ -270,8 +270,8 @@ private:
             space.qobject.get(),
             &win::space::qobject_t::surface_id_changed,
             this,
-            [this, xwayland_connection = waylandServer()->xwayland_connection()](auto win_id,
-                                                                                 auto id) {
+            [this, xwayland_connection = space.base.server->xwayland_connection()](auto win_id,
+                                                                                   auto id) {
                 if (auto surface = space.compositor->getSurface(id, xwayland_connection)) {
                     auto win = space.windows_map.at(win_id);
                     assert(std::holds_alternative<win::wayland::xwl_window<Space>*>(win));

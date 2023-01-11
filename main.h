@@ -221,8 +221,6 @@ public:
 
     virtual bool is_screen_locked() const;
 
-    virtual base::wayland::server* get_wayland_server();
-
     std::unique_ptr<base::options> options;
     std::unique_ptr<base::seat::session> session;
     std::unique_ptr<base::x11::event_filter_manager> x11_event_filters;
@@ -264,11 +262,6 @@ private:
 inline static Application *kwinApp()
 {
     return static_cast<Application*>(QCoreApplication::instance());
-}
-
-inline base::wayland::server* waylandServer()
-{
-    return kwinApp()->get_wayland_server();
 }
 
 }

@@ -5,6 +5,8 @@
 */
 #include "client.h"
 
+#include "app.h"
+
 #include "base/wayland/server.h"
 #include "main.h"
 
@@ -26,7 +28,7 @@ client::client(global_selection globals)
     int sx[2];
     QVERIFY(socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, sx) >= 0);
 
-    KWin::waylandServer()->display->createClient(sx[0]);
+    app()->base.server->display->createClient(sx[0]);
 
     // Setup connection.
     connection = new Clt::ConnectionThread;

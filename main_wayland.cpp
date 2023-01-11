@@ -182,11 +182,6 @@ base::platform& ApplicationWayland::get_base()
     return *base;
 }
 
-base::wayland::server* ApplicationWayland::get_wayland_server()
-{
-    return base->server.get();
-}
-
 void ApplicationWayland::start(OperationMode mode,
                                std::string const& socket_name,
                                base::wayland::start_options flags,

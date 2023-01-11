@@ -29,6 +29,7 @@ public:
         data;
 
     primary_selection(runtime<Space> const& core)
+        : space{*core.space}
     {
         data = create_selection_data<Space,
                                      Wrapland::Server::primary_selection_source,
@@ -37,7 +38,7 @@ public:
 
         register_x11_selection(this, QSize(10, 10));
 
-        QObject::connect(waylandServer()->seat(),
+        QObject::connect(space.base.server->seat(),
                          &Wrapland::Server::Seat::primarySelectionChanged,
                          data.qobject.get(),
                          [this] { handle_wl_selection_change(this); });
@@ -45,12 +46,12 @@ public:
 
     Wrapland::Server::primary_selection_source* get_current_source() const
     {
-        return waylandServer()->seat()->primarySelection();
+        return space.base.server->seat()->primarySelection();
     }
 
     void set_selection(Wrapland::Server::primary_selection_source* source) const
     {
-        waylandServer()->seat()->setPrimarySelection(source);
+        space.base.server->seat()->setPrimarySelection(source);
     }
 
     void handle_x11_offer_change(std::vector<std::string> const& added,
@@ -58,6 +59,8 @@ public:
     {
         xwl::handle_x11_offer_change(this, added, removed);
     }
+
+    Space& space;
 };
 
 }

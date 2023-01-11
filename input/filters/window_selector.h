@@ -69,7 +69,7 @@ public:
             return false;
         }
 
-        waylandServer()->seat()->setFocusedKeyboardSurface(nullptr);
+        this->redirect.platform.base.server->seat()->setFocusedKeyboardSurface(nullptr);
         pass_to_wayland_server(this->redirect, event);
 
         if (event.state == key_state::pressed) {

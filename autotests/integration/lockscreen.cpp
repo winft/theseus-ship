@@ -562,7 +562,7 @@ void LockScreenTest::testEffectsKeyboardAutorepeat()
     effects->grabKeyboard(effect.get());
 
     // We need to configure the key repeat first. It is only enabled on libinput.
-    waylandServer()->seat()->keyboards().set_repeat_info(25, 300);
+    Test::app()->base.server->seat()->keyboards().set_repeat_info(25, 300);
 
     quint32 timestamp = 1;
 

@@ -62,13 +62,13 @@ using wayland_window = win::wayland::window<wayland_space>;
 template<typename T>
 PlatformCursorImage loadReferenceThemeCursor(const T& shape)
 {
-    if (!waylandServer()->internal_connection.shm) {
+    if (!Test::app()->base.server->internal_connection.shm) {
         return PlatformCursorImage();
     }
 
     using cursor_t = std::remove_pointer_t<decltype(Test::cursor())>;
     auto cursorTheme = std::make_unique<input::wayland::cursor_theme<cursor_t>>(
-        *Test::cursor(), waylandServer()->internal_connection.shm);
+        *Test::cursor(), Test::app()->base.server->internal_connection.shm);
 
     wl_cursor_image* cursor = cursorTheme->get(shape);
     if (!cursor) {
@@ -80,12 +80,13 @@ PlatformCursorImage loadReferenceThemeCursor(const T& shape)
         return PlatformCursorImage();
     }
 
-    waylandServer()->internal_connection.client->flush();
-    waylandServer()->dispatch();
+    Test::app()->base.server->internal_connection.client->flush();
+    Test::app()->base.server->dispatch();
 
     auto bufferId = Wrapland::Client::Buffer::getId(b);
-    auto wlResource = waylandServer()->internal_connection.server->getResource(bufferId);
-    auto buffer = Wrapland::Server::Buffer::get(waylandServer()->display.get(), wlResource);
+    auto wlResource = Test::app()->base.server->internal_connection.server->getResource(bufferId);
+    auto buffer
+        = Wrapland::Server::Buffer::get(Test::app()->base.server->display.get(), wlResource);
     if (!buffer) {
         return PlatformCursorImage{};
     }
@@ -232,7 +233,7 @@ void PointerInputTest::testWarpingUpdatesFocus()
     QVERIFY(window);
 
     // currently there should not be a focused pointer surface
-    QVERIFY(!waylandServer()->seat()->pointers().get_focus().surface);
+    QVERIFY(!Test::app()->base.server->seat()->pointers().get_focus().surface);
     QVERIFY(!pointer->enteredSurface());
 
     // enter
@@ -243,7 +244,7 @@ void PointerInputTest::testWarpingUpdatesFocus()
     // window should have focus
     QCOMPARE(pointer->enteredSurface(), surface.get());
     // also on the server
-    QCOMPARE(waylandServer()->seat()->pointers().get_focus().surface, window->surface);
+    QCOMPARE(Test::app()->base.server->seat()->pointers().get_focus().surface, window->surface);
 
     // and out again
     Test::cursor()->set_pos(QPoint(250, 250));
@@ -251,7 +252,7 @@ void PointerInputTest::testWarpingUpdatesFocus()
     QCOMPARE(leftSpy.count(), 1);
 
     // there should not be a focused pointer surface anymore
-    QVERIFY(!waylandServer()->seat()->pointers().get_focus().surface);
+    QVERIFY(!Test::app()->base.server->seat()->pointers().get_focus().surface);
     QVERIFY(!pointer->enteredSurface());
 }
 

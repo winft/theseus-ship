@@ -88,7 +88,7 @@ public:
 
     bool touch_down(touch_down_event const& event) override
     {
-        auto seat = waylandServer()->seat();
+        auto seat = this->redirect.platform.base.server->seat();
         if (seat->touches().is_in_progress()) {
             return false;
         }

@@ -112,10 +112,11 @@ void XwaylandSelectionsTest::testSync()
 
     QSignalSpy clipboardChangedSpy = [clipboardMode]() {
         if (clipboardMode == "Clipboard") {
-            return QSignalSpy(waylandServer()->seat(), &Wrapland::Server::Seat::selectionChanged);
+            return QSignalSpy(Test::app()->base.server->seat(),
+                              &Wrapland::Server::Seat::selectionChanged);
         }
         if (clipboardMode == "Selection") {
-            return QSignalSpy(waylandServer()->seat(),
+            return QSignalSpy(Test::app()->base.server->seat(),
                               &Wrapland::Server::Seat::primarySelectionChanged);
         }
         std::terminate();

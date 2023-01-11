@@ -39,7 +39,8 @@ public:
     bool touch_down(touch_down_event const& event) override
     {
         // TODO: better check whether a touch sequence is in progress
-        if (m_touchInProgress || waylandServer()->seat()->touches().is_in_progress()) {
+        if (m_touchInProgress
+            || this->redirect.platform.base.server->seat()->touches().is_in_progress()) {
             // cancel existing touch
             this->redirect.space.edges->gesture_recognizer->cancelSwipeGesture();
             m_touchInProgress = false;

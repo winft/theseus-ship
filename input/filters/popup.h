@@ -94,7 +94,7 @@ public:
             return false;
         }
 
-        auto seat = waylandServer()->seat();
+        auto seat = this->redirect.platform.base.server->seat();
 
         auto last = m_popups.back();
         if (!last->surface) {

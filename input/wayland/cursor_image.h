@@ -52,21 +52,23 @@ public:
         : qobject{std::make_unique<cursor_image_qobject>()}
         , redirect{redirect}
     {
-        QObject::connect(waylandServer()->seat(),
+        QObject::connect(redirect.platform.base.server->seat(),
                          &Wrapland::Server::Seat::focusedPointerChanged,
                          qobject.get(),
                          [this] { update(); });
-        QObject::connect(waylandServer()->seat(),
+        QObject::connect(redirect.platform.base.server->seat(),
                          &Wrapland::Server::Seat::dragStarted,
                          qobject.get(),
                          [this] { updateDrag(); });
-        QObject::connect(
-            waylandServer()->seat(), &Wrapland::Server::Seat::dragEnded, qobject.get(), [this] {
-                QObject::disconnect(m_drag.connection);
-                reevaluteSource();
-            });
+        QObject::connect(redirect.platform.base.server->seat(),
+                         &Wrapland::Server::Seat::dragEnded,
+                         qobject.get(),
+                         [this] {
+                             QObject::disconnect(m_drag.connection);
+                             reevaluteSource();
+                         });
 
-        if (waylandServer()->has_screen_locker_integration()) {
+        if (redirect.platform.base.server->has_screen_locker_integration()) {
             QObject::connect(ScreenLocker::KSldApp::self(),
                              &ScreenLocker::KSldApp::lockStateChanged,
                              qobject.get(),
@@ -164,7 +166,7 @@ public:
 
     void markAsRendered()
     {
-        auto seat = waylandServer()->seat();
+        auto seat = redirect.platform.base.server->seat();
 
         if (m_currentSource == CursorSource::DragAndDrop) {
             auto p = seat->drags().get_source().pointer;
@@ -290,7 +292,7 @@ private:
 
     void reevaluteSource()
     {
-        if (waylandServer()->seat()->drags().is_pointer_drag()) {
+        if (redirect.platform.base.server->seat()->drags().is_pointer_drag()) {
             // TODO: touch drag?
             setSource(CursorSource::DragAndDrop);
             return;
@@ -317,7 +319,7 @@ private:
             return;
         }
         if (redirect.pointer->focus.window
-            && !waylandServer()->seat()->pointers().get_focus().devices.empty()) {
+            && !redirect.platform.base.server->seat()->pointers().get_focus().devices.empty()) {
             setSource(CursorSource::PointerSurface);
             return;
         }
@@ -332,7 +334,7 @@ private:
         using namespace Wrapland::Server;
         QObject::disconnect(m_serverCursor.connection);
 
-        auto const pointer_focus = waylandServer()->seat()->pointers().get_focus();
+        auto const pointer_focus = redirect.platform.base.server->seat()->pointers().get_focus();
         if (pointer_focus.devices.empty()) {
             m_serverCursor.connection = QMetaObject::Connection();
             reevaluteSource();
@@ -353,7 +355,7 @@ private:
         const bool needsEmit = m_currentSource == CursorSource::LockScreen
             || m_currentSource == CursorSource::PointerSurface;
 
-        auto seat = waylandServer()->seat();
+        auto seat = redirect.platform.base.server->seat();
         if (!seat->hasPointer()) {
             if (needsEmit) {
                 Q_EMIT qobject->changed();
@@ -442,7 +444,7 @@ private:
         m_drag.cursor.image = QImage();
         m_drag.cursor.hotSpot = QPoint();
         reevaluteSource();
-        if (auto p = waylandServer()->seat()->drags().get_source().pointer) {
+        if (auto p = redirect.platform.base.server->seat()->drags().get_source().pointer) {
             m_drag.connection = QObject::connect(
                 p, &Pointer::cursorChanged, qobject.get(), [this] { updateDragCursor(); });
         } else {
@@ -457,14 +459,15 @@ private:
         m_drag.cursor.hotSpot = QPoint();
         const bool needsEmit = m_currentSource == CursorSource::DragAndDrop;
         QImage additionalIcon;
-        if (auto drag_icon = waylandServer()->seat()->drags().get_source().surfaces.icon) {
+        if (auto drag_icon
+            = redirect.platform.base.server->seat()->drags().get_source().surfaces.icon) {
             if (auto buffer = drag_icon->state().buffer) {
                 // TODO: Check std::optional?
                 additionalIcon = buffer->shmImage()->createQImage().copy();
                 additionalIcon.setOffset(drag_icon->state().offset);
             }
         }
-        auto p = waylandServer()->seat()->drags().get_source().pointer;
+        auto p = redirect.platform.base.server->seat()->drags().get_source().pointer;
         if (!p) {
             if (needsEmit) {
                 Q_EMIT qobject->changed();
@@ -535,10 +538,11 @@ private:
         }
 
         // check whether we can create it
-        if (waylandServer()->internal_connection.shm) {
+        if (redirect.platform.base.server->internal_connection.shm) {
             m_cursorTheme = std::make_unique<cursor_theme<Cursor>>(
-                static_cast<Cursor&>(*redirect.cursor), waylandServer()->internal_connection.shm);
-            QObject::connect(waylandServer(),
+                static_cast<Cursor&>(*redirect.cursor),
+                redirect.platform.base.server->internal_connection.shm);
+            QObject::connect(redirect.platform.base.server.get(),
                              &base::wayland::server::terminating_internal_client_connection,
                              qobject.get(),
                              [this] { m_cursorTheme.reset(); });
@@ -581,11 +585,11 @@ private:
             if (!b) {
                 return;
             }
-            waylandServer()->internal_connection.client->flush();
-            waylandServer()->dispatch();
+            redirect.platform.base.server->internal_connection.client->flush();
+            redirect.platform.base.server->dispatch();
             auto buffer = Wrapland::Server::Buffer::get(
-                waylandServer()->display.get(),
-                waylandServer()->internal_connection.server->getResource(
+                redirect.platform.base.server->display.get(),
+                redirect.platform.base.server->internal_connection.server->getResource(
                     Wrapland::Client::Buffer::getId(b)));
             if (!buffer) {
                 return;

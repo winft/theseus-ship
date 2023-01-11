@@ -60,7 +60,7 @@ public:
             return false;
         }
 
-        auto seat = waylandServer()->seat();
+        auto seat = this->redirect.platform.base.server->seat();
         seat->setFocusedKeyboardSurface(nullptr);
         this->redirect.pointer->setEnableConstraints(false);
 
