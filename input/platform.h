@@ -85,10 +85,11 @@ class platform
 public:
     using base_t = Base;
 
-    platform(Base& base)
+    platform(Base& base, KSharedConfigPtr config)
         : qobject{std::make_unique<platform_qobject>(
             [this](auto accel) { registerGlobalAccel(accel); })}
         , base{base}
+        , config{config}
     {
         qRegisterMetaType<button_state>();
         qRegisterMetaType<key_state>();

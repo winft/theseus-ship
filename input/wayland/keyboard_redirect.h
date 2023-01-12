@@ -83,7 +83,7 @@ public:
     {
         auto& xkb = redirect->platform.xkb;
         auto const config = kwinApp()->kxkbConfig();
-        xkb.numlock_config = kwinApp()->inputConfig();
+        xkb.numlock_config = redirect->platform.config;
         xkb.setConfig(config);
 
         redirect->m_spies.push_back(new key_state_changed_spy(*redirect));

@@ -205,7 +205,8 @@ void ApplicationWayland::start(OperationMode mode,
     this->session.reset(session);
     session->take_control(base->server->display->native());
 
-    base->input = std::make_unique<input::backend::wlroots::platform>(*base);
+    base->input = std::make_unique<input::backend::wlroots::platform>(
+        *base, KSharedConfig::openConfig(QStringLiteral("kcminputrc"), KConfig::NoGlobals));
     input::wayland::add_dbus(base->input.get());
     base->input->install_shortcuts();
 

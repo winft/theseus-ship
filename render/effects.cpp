@@ -712,11 +712,6 @@ KSharedConfigPtr effects_handler_wrap::config() const
     return kwinApp()->config();
 }
 
-KSharedConfigPtr effects_handler_wrap::inputConfig() const
-{
-    return kwinApp()->inputConfig();
-}
-
 Effect* effects_handler_wrap::findEffect(const QString& name) const
 {
     auto it = std::find_if(loaded_effects.constBegin(),

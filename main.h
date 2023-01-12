@@ -76,7 +76,6 @@ class KWIN_EXPORT Application : public  QApplication
     Q_PROPERTY(int x11ScreenNumber READ x11ScreenNumber CONSTANT)
     Q_PROPERTY(KSharedConfigPtr config READ config WRITE setConfig)
     Q_PROPERTY(KSharedConfigPtr kxkbConfig READ kxkbConfig WRITE setKxkbConfig)
-    Q_PROPERTY(KSharedConfigPtr inputConfig READ inputConfig WRITE setInputConfig)
 public:
     /**
      * @brief This enum provides the various operation modes of KWin depending on the available
@@ -117,13 +116,6 @@ public:
     }
     void setKxkbConfig(KSharedConfigPtr config) {
         m_kxkbConfig = std::move(config);
-    }
-
-    KSharedConfigPtr inputConfig() const {
-        return m_inputConfig;
-    }
-    void setInputConfig(KSharedConfigPtr config) {
-        m_inputConfig = std::move(config);
     }
 
     /**
@@ -250,7 +242,6 @@ private:
     bool m_configLock;
     KSharedConfigPtr m_config;
     KSharedConfigPtr m_kxkbConfig;
-    KSharedConfigPtr m_inputConfig;
     OperationMode m_operationMode;
     int x11_screen_number{-1};
     xcb_timestamp_t m_x11Time = XCB_TIME_CURRENT_TIME;

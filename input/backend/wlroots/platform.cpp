@@ -48,8 +48,8 @@ void handle_device(struct wl_listener* listener, [[maybe_unused]] void* data)
     }
 }
 
-platform::platform(base::wayland::platform& base)
-    : wayland::platform<base::wayland::platform>(base)
+platform::platform(base::wayland::platform& base, KSharedConfigPtr config)
+    : wayland::platform<base::wayland::platform>(base, config)
     , base{static_cast<base::backend::wlroots::platform&>(base)}
 {
     add_device.receiver = this;

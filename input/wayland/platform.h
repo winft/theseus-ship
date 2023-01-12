@@ -26,14 +26,12 @@ public:
     using type = platform<Base>;
     using space_t = typename Base::space_t;
 
-    platform(Base& base)
-        : input::platform<Base>(base)
+    platform(Base& base, KSharedConfigPtr config)
+        : input::platform<Base>(base, config)
         , xkb{xkb::manager<type>(this)}
         , kde_idle{base.server->display->create_kde_idle()}
         , idle_notifier{base.server->display->create_idle_notifier_v1()}
     {
-        this->config = kwinApp()->inputConfig();
-
         virtual_keyboard = base.server->display->create_virtual_keyboard_manager_v1();
 
         QObject::connect(kde_idle.get(),

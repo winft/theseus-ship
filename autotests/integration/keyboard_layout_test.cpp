@@ -252,7 +252,6 @@ void keyboard_layout_test::initTestCase()
 
     kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
     kwinApp()->setKxkbConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
-    kwinApp()->setInputConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
 
     layout_group = kwinApp()->kxkbConfig()->group("Layout");
     layout_group.deleteGroup();
@@ -834,7 +833,7 @@ void keyboard_layout_test::test_num_lock()
     QVERIFY(!(xkb->leds & input::keyboard_leds::num_lock));
 
     // Let's reconfigure to enable through config.
-    auto group = kwinApp()->inputConfig()->group("Keyboard");
+    auto group = Test::app()->base.input->config->group("Keyboard");
     group.writeEntry("NumLock", 0);
     group.sync();
 

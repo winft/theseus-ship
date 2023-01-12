@@ -162,7 +162,6 @@ public:
     Wrapland::Server::Display* waylandDisplay() const override;
 
     KSharedConfigPtr config() const override;
-    KSharedConfigPtr inputConfig() const override;
 
     bool touchDown(qint32 id, const QPointF& pos, quint32 time);
     bool touchMotion(qint32 id, const QPointF& pos, quint32 time);
@@ -1256,6 +1255,11 @@ public:
     void removeSupportProperty(const QByteArray& propertyName, Effect* effect) override
     {
         x11::remove_support_property(*this, effect, propertyName);
+    }
+
+    KSharedConfigPtr inputConfig() const override
+    {
+        return compositor.platform.base.input->config;
     }
 
     Compositor& compositor;
