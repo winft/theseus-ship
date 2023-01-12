@@ -710,7 +710,6 @@ set(kwin_WAYLAND_SRCS
    input/switch.cpp
    input/xkb/layout_manager.cpp
    input/xkb/layout_policies.cpp
-   render/gl/egl_dmabuf.cpp
 
    # These headers need to be compiled for the helper QObjects they contain.
    input/touch.h

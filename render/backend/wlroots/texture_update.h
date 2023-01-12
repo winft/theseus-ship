@@ -5,7 +5,11 @@
 */
 #pragma once
 
-#include "render/gl/egl_dmabuf.h"
+#include "platform.h"
+#include "wlr_helpers.h"
+#include "wlr_includes.h"
+#include "wlr_non_owning_data_buffer.h"
+
 #include "render/gl/kwin_eglext.h"
 #include "render/gl/window.h"
 #include "render/wayland/buffer.h"
@@ -17,6 +21,7 @@
 #include <Wrapland/Server/buffer.h>
 #include <Wrapland/Server/surface.h>
 #include <cassert>
+#include <drm_fourcc.h>
 #include <epoxy/gl.h>
 
 namespace KWin::render::backend::wlroots
@@ -72,65 +77,6 @@ void attach_buffer_to_khr_image(Texture& texture, Wrapland::Server::Buffer* buff
 }
 
 template<typename Texture>
-bool load_texture_from_image(Texture& texture, QImage const& image)
-{
-    if (image.isNull()) {
-        return false;
-    }
-
-    glGenTextures(1, &texture.m_texture);
-    texture.q->setFilter(GL_LINEAR);
-    texture.q->setWrapMode(GL_CLAMP_TO_EDGE);
-
-    auto const& size = image.size();
-    texture.q->bind();
-
-    GLenum format{0};
-    switch (image.format()) {
-    case QImage::Format_ARGB32:
-    case QImage::Format_ARGB32_Premultiplied:
-        format = GL_RGBA8;
-        break;
-    case QImage::Format_RGB32:
-        format = GL_RGB8;
-        break;
-    default:
-        return false;
-    }
-
-    if (Texture::s_supportsARGB32 && format == GL_RGBA8) {
-        auto const im = image.convertToFormat(QImage::Format_ARGB32_Premultiplied);
-        glTexImage2D(texture.m_target,
-                     0,
-                     GL_BGRA_EXT,
-                     im.width(),
-                     im.height(),
-                     0,
-                     GL_BGRA_EXT,
-                     GL_UNSIGNED_BYTE,
-                     im.bits());
-    } else {
-        auto const im = image.convertToFormat(QImage::Format_RGBA8888_Premultiplied);
-        glTexImage2D(texture.m_target,
-                     0,
-                     GL_RGBA,
-                     im.width(),
-                     im.height(),
-                     0,
-                     GL_RGBA,
-                     GL_UNSIGNED_BYTE,
-                     im.bits());
-    }
-
-    texture.q->unbind();
-    texture.q->setYInverted(true);
-    texture.m_size = size;
-    texture.updateMatrix();
-
-    return true;
-}
-
-template<typename Texture>
 bool update_texture_from_fbo(Texture& texture, std::shared_ptr<QOpenGLFramebufferObject> const& fbo)
 {
     if (!fbo) {
@@ -157,13 +103,46 @@ bool update_texture_from_internal_image_object(Texture& texture, WinBuffer const
         return false;
     }
 
-    if (texture.m_size != image.size()) {
-        glDeleteTextures(1, &texture.m_texture);
-        return load_texture_from_image(texture, image);
+    uint32_t format;
+
+    // TODO(romangg): The Qt pixel formats depend on the endianness while DRM is always LE. So on BE
+    //                machines QImage::Format_RGBA8888_Premultiplied would instead correspond to
+    //                DRM_FORMAT_RGBX8888, see [1]. But at the same time Format_ARGB32_Premultiplied
+    //                does not seem to be influenced. Need to test this on an actual BE machine to
+    //                be sure.
+    // [1] https://gitlab.freedesktop.org/wlroots/wlroots/-/merge_requests/3464#note_1277281
+    switch (image.format()) {
+    case QImage::Format_ARGB32:
+    case QImage::Format_ARGB32_Premultiplied:
+        format = DRM_FORMAT_ARGB8888;
+        break;
+    case QImage::Format_RGB32:
+        format = DRM_FORMAT_XBGR8888;
+        break;
+    default:
+        return false;
     }
 
-    texture_subimage_from_qimage(texture, image.devicePixelRatio(), image, buffer.damage());
-    return true;
+    QImage conv_image;
+    if (Texture::s_supportsARGB32 && format == DRM_FORMAT_ARGB8888) {
+        conv_image = image.convertToFormat(QImage::Format_ARGB32_Premultiplied);
+    } else {
+        conv_image = image.convertToFormat(QImage::Format_RGBA8888_Premultiplied);
+    }
+
+    // We know it's an internal image so access the damage without the virtual buffer damage call.
+    // TODO(romangg): Wrap this into a helper function in render::wayland namespace.
+    auto const& damage = std::visit(
+        overload{[&](auto&& win) -> QRegion { return win->render_data.damage_region; }},
+        *buffer.buffer.window->ref_win);
+
+    return update_texture_from_data(texture,
+                                    format,
+                                    image.bytesPerLine(),
+                                    image.size(),
+                                    damage,
+                                    image.devicePixelRatio(),
+                                    conv_image.bits());
 }
 
 template<typename Texture>
@@ -194,147 +173,101 @@ bool update_texture_from_egl(Texture& texture, Wrapland::Server::Buffer* buffer)
     return true;
 }
 
-template<typename Texture>
-void texture_subimage(Texture& texture,
-                      int scale,
-                      Wrapland::Server::ShmImage const& img,
-                      QRegion const& damage)
-{
-    auto prepareSubImage = [&](auto const& img, auto const& rect) {
-        texture.q->bind();
-        glPixelStorei(GL_UNPACK_ROW_LENGTH_EXT, img.stride() / (img.bpp() / 8));
-        glPixelStorei(GL_UNPACK_SKIP_PIXELS_EXT, rect.x());
-        glPixelStorei(GL_UNPACK_SKIP_ROWS_EXT, rect.y());
-    };
-    auto finalizseSubImage = [&]() {
-        glPixelStorei(GL_UNPACK_ROW_LENGTH_EXT, 0);
-        glPixelStorei(GL_UNPACK_SKIP_PIXELS_EXT, 0);
-        glPixelStorei(GL_UNPACK_SKIP_ROWS_EXT, 0);
-        texture.q->unbind();
-    };
-    auto getScaledRect = [scale](auto const& rect) {
-        return QRect(
-            rect.x() * scale, rect.y() * scale, rect.width() * scale, rect.height() * scale);
-    };
-
-    // Currently Wrapland only supports argb8888 and xrgb8888 formats, which both have the same Gl
-    // counter-part. If more formats are added in the future this needs to be checked.
-    auto const glFormat = GL_BGRA;
-
-    if (Texture::s_supportsARGB32
-        && (img.format() == Wrapland::Server::ShmImage::Format::argb8888)) {
-        for (auto const& rect : damage) {
-            auto const scaledRect = getScaledRect(rect);
-            prepareSubImage(img, scaledRect);
-            glTexSubImage2D(texture.m_target,
-                            0,
-                            scaledRect.x(),
-                            scaledRect.y(),
-                            scaledRect.width(),
-                            scaledRect.height(),
-                            glFormat,
-                            GL_UNSIGNED_BYTE,
-                            img.data());
-            finalizseSubImage();
-        }
-    } else {
-        for (auto const& rect : damage) {
-            auto scaledRect = getScaledRect(rect);
-            prepareSubImage(img, scaledRect);
-            glTexSubImage2D(texture.m_target,
-                            0,
-                            scaledRect.x(),
-                            scaledRect.y(),
-                            scaledRect.width(),
-                            scaledRect.height(),
-                            glFormat,
-                            GL_UNSIGNED_BYTE,
-                            img.data());
-            finalizseSubImage();
-        }
-    }
-}
-
-template<typename Texture>
-void texture_subimage_from_qimage(Texture& texture,
-                                  int scale,
-                                  QImage const& image,
-                                  QRegion const& damage)
-{
-    texture.q->bind();
-
-    if (Texture::s_supportsARGB32
-        && (image.format() == QImage::Format_ARGB32
-            || image.format() == QImage::Format_ARGB32_Premultiplied)) {
-        auto const im = image.convertToFormat(QImage::Format_ARGB32_Premultiplied);
-        for (auto const& rect : damage) {
-            auto scaledRect = QRect(
-                rect.x() * scale, rect.y() * scale, rect.width() * scale, rect.height() * scale);
-            glTexSubImage2D(texture.m_target,
-                            0,
-                            scaledRect.x(),
-                            scaledRect.y(),
-                            scaledRect.width(),
-                            scaledRect.height(),
-                            GL_BGRA_EXT,
-                            GL_UNSIGNED_BYTE,
-                            im.copy(scaledRect).constBits());
-        }
-    } else {
-        auto const im = image.convertToFormat(QImage::Format_RGBA8888_Premultiplied);
-        for (auto const& rect : damage) {
-            auto scaledRect = QRect(
-                rect.x() * scale, rect.y() * scale, rect.width() * scale, rect.height() * scale);
-            glTexSubImage2D(texture.m_target,
-                            0,
-                            scaledRect.x(),
-                            scaledRect.y(),
-                            scaledRect.width(),
-                            scaledRect.height(),
-                            GL_RGBA,
-                            GL_UNSIGNED_BYTE,
-                            im.copy(scaledRect).constBits());
-        }
-    }
-
-    texture.q->unbind();
-}
-
-template<typename Texture>
-bool update_texture_from_dmabuf(Texture& texture, gl::egl_dmabuf_buffer* dmabuf)
+template<typename Texture, typename Dmabuf>
+bool update_texture_from_dmabuf(Texture& texture, Dmabuf* dmabuf)
 {
     assert(dmabuf);
     assert(texture.m_image == EGL_NO_IMAGE_KHR);
 
-    if (dmabuf->images().empty() || dmabuf->images().at(0) == EGL_NO_IMAGE_KHR) {
-        qCritical(KWIN_CORE) << "Invalid dmabuf-based wl_buffer";
-        texture.q->discard();
-        return false;
-    }
+    if (texture.m_size != dmabuf->size) {
+        // First time update or size has changed.
+        // TODO(romangg): Should we also recreate the texture on other param changes?
+        wlr_dmabuf_attributes dmabuf_attribs;
+        auto const& planes = dmabuf->planes;
+        dmabuf_attribs.width = dmabuf->size.width();
+        dmabuf_attribs.height = dmabuf->size.height();
+        dmabuf_attribs.format = dmabuf->format;
+        dmabuf_attribs.modifier = dmabuf->modifier;
+        dmabuf_attribs.n_planes = planes.size();
 
-    texture.q->bind();
+        auto planes_count = std::min(planes.size(), static_cast<size_t>(WLR_DMABUF_MAX_PLANES));
+        for (size_t i = 0; i < planes_count; i++) {
+            auto plane = planes.at(i);
+            dmabuf_attribs.offset[i] = plane.offset;
+            dmabuf_attribs.stride[i] = plane.stride;
+            dmabuf_attribs.fd[i] = plane.fd;
+        }
 
-    if (!texture.m_texture) {
-        // Recreate the texture.
-        glGenTextures(1, &texture.m_texture);
+        wlr_texture_destroy(texture.native);
+        texture.native
+            = wlr_texture_from_dmabuf(texture.m_backend->platform.renderer, &dmabuf_attribs);
+        if (!texture.native) {
+            return false;
+        }
 
+        wlr_gles2_texture_attribs tex_attribs;
+        wlr_gles2_texture_get_attribs(texture.native, &tex_attribs);
+
+        texture.m_texture = tex_attribs.tex;
         texture.q->setWrapMode(GL_CLAMP_TO_EDGE);
         texture.q->setFilter(GL_NEAREST);
-    }
-
-    // TODO
-    glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, (GLeglImageOES)dmabuf->images().at(0));
-    texture.q->unbind();
-
-    if (texture.m_size != dmabuf->size) {
         texture.m_size = dmabuf->size;
         texture.updateMatrix();
     }
+
+    assert(texture.native);
 
     // The origin in a dmabuf-buffer is at the upper-left corner, so the meaning
     // of Y-inverted is the inverse of OpenGL.
     texture.q->setYInverted(!(dmabuf->flags & Wrapland::Server::linux_dmabuf_flag_v1::y_inverted));
 
+    return true;
+}
+
+template<typename Texture>
+bool update_texture_from_data(Texture& texture,
+                              uint32_t format,
+                              uint32_t stride,
+                              QSize const& size,
+                              QRegion const& damage,
+                              int32_t scale,
+                              void* data)
+{
+    if (size != texture.m_size) {
+        // First time update or size has changed.
+        wlr_texture_destroy(texture.native);
+        texture.native = wlr_texture_from_pixels(texture.m_backend->platform.renderer,
+                                                 format,
+                                                 stride,
+                                                 size.width(),
+                                                 size.height(),
+                                                 data);
+        if (!texture.native) {
+            return false;
+        }
+
+        wlr_gles2_texture_attribs tex_attribs;
+        wlr_gles2_texture_get_attribs(texture.native, &tex_attribs);
+
+        texture.m_texture = tex_attribs.tex;
+        texture.q->unbind();
+        texture.q->setYInverted(true);
+        texture.m_size = size;
+        texture.updateMatrix();
+
+        return true;
+    }
+
+    assert(size == texture.m_size);
+
+    auto buffer
+        = wlr_non_owning_data_buffer_create(size.width(), size.height(), format, stride, data);
+    auto pixman_damage = create_scaled_pixman_region(damage, scale);
+
+    wlr_texture_update_from_buffer(texture.native, &buffer->base, &pixman_damage);
+
+    pixman_region32_fini(&pixman_damage);
+    wlr_buffer_drop(&buffer->base);
     return true;
 }
 
@@ -350,22 +283,15 @@ bool update_texture_from_shm(Texture& texture, WinBuffer const& buffer)
         return false;
     }
 
-    if (extbuf->size() != texture.m_size) {
-        // First time update or buffer size has changed.
-        return load_texture_from_image(texture, image->createQImage());
-    }
-
-    assert(extbuf->size() == texture.m_size);
-    auto const& damage = surface->trackedDamage();
-
-    if (texture.m_hasSubImageUnpack) {
-        texture_subimage(texture, surface->state().scale, image.value(), damage);
-    } else {
-        texture_subimage_from_qimage(
-            texture, surface->state().scale, image->createQImage(), damage);
-    }
-
-    return true;
+    return update_texture_from_data(texture,
+                                    image->format() == Wrapland::Server::ShmImage::Format::argb8888
+                                        ? DRM_FORMAT_ARGB8888
+                                        : DRM_FORMAT_XRGB8888,
+                                    image->stride(),
+                                    extbuf->size(),
+                                    surface->trackedDamage(),
+                                    surface->state().scale,
+                                    image->data());
 }
 
 template<typename Texture, typename WinBuffer>
@@ -376,7 +302,7 @@ bool update_texture_from_external(Texture& texture, WinBuffer const& buffer)
     assert(extbuf);
 
     if (auto dmabuf = extbuf->linuxDmabufBuffer()) {
-        ret = update_texture_from_dmabuf(texture, static_cast<gl::egl_dmabuf_buffer*>(dmabuf));
+        ret = update_texture_from_dmabuf(texture, dmabuf);
     } else if (auto shm = extbuf->shmBuffer()) {
         ret = update_texture_from_shm(texture, buffer);
     } else {

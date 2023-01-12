@@ -22,6 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWINEGLEXT_H
 #define KWINEGLEXT_H
 
+// Must be included before the EGL header.
+#include <epoxy/egl.h>
+
 #include <EGL/eglext.h>
 
 #ifndef EGL_WL_bind_wayland_display
