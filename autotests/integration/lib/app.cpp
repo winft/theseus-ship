@@ -51,11 +51,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 extern "C" {
 #include <wlr/backend/headless.h>
-#if HAVE_WLR_BASE_INPUT_DEVICES
 #include <wlr/interfaces/wlr_keyboard.h>
 #include <wlr/interfaces/wlr_pointer.h>
 #include <wlr/interfaces/wlr_touch.h>
-#endif
 }
 
 Q_IMPORT_PLUGIN(KWinIntegrationPlugin)
@@ -107,14 +105,12 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode,
 
 WaylandTestApplication::~WaylandTestApplication()
 {
-#if HAVE_WLR_BASE_INPUT_DEVICES
     assert(keyboard);
     assert(pointer);
     assert(touch);
     wlr_keyboard_finish(keyboard);
     wlr_pointer_finish(pointer);
     wlr_touch_finish(touch);
-#endif
 
     setTerminating();
 
@@ -165,15 +161,9 @@ void WaylandTestApplication::start()
     base.input = std::make_unique<input::backend::wlroots::platform>(base);
     base.input->install_shortcuts();
 
-#if HAVE_WLR_BASE_INPUT_DEVICES
     keyboard = static_cast<wlr_keyboard*>(calloc(1, sizeof(wlr_keyboard)));
     pointer = static_cast<wlr_pointer*>(calloc(1, sizeof(wlr_pointer)));
     touch = static_cast<wlr_touch*>(calloc(1, sizeof(wlr_touch)));
-#else
-    keyboard = wlr_headless_add_input_device(headless_backend, WLR_INPUT_DEVICE_KEYBOARD);
-    pointer = wlr_headless_add_input_device(headless_backend, WLR_INPUT_DEVICE_POINTER);
-    touch = wlr_headless_add_input_device(headless_backend, WLR_INPUT_DEVICE_TOUCH);
-#endif
     assert(keyboard);
     assert(pointer);
     assert(touch);
@@ -185,7 +175,6 @@ void WaylandTestApplication::start()
         ::exit(1);
     }
 
-#if HAVE_WLR_BASE_INPUT_DEVICES
     wlr_keyboard_init(keyboard, nullptr, "headless-keyboard");
     wlr_pointer_init(pointer, nullptr, "headless-pointer");
     wlr_touch_init(touch, nullptr, "headless-touch");
@@ -193,7 +182,6 @@ void WaylandTestApplication::start()
     Test::wlr_signal_emit_safe(&base.backend->events.new_input, keyboard);
     Test::wlr_signal_emit_safe(&base.backend->events.new_input, pointer);
     Test::wlr_signal_emit_safe(&base.backend->events.new_input, touch);
-#endif
 
     // Must set physical size for calculation of screen edges corner offset.
     // TODO(romangg): Make the corner offset calculation not depend on that.

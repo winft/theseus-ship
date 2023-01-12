@@ -183,16 +183,11 @@ set_package_properties(Pixman PROPERTIES
     TYPE REQUIRED
     PURPOSE "Required for building wlroots backend."
 )
-find_package(wlroots 0.15.0)
+find_package(wlroots 0.16.0)
 set_package_properties(wlroots PROPERTIES
     TYPE REQUIRED
     PURPOSE "Required for building wlroots backend."
 )
-
-if (${wlroots_VERSION} VERSION_GREATER_EQUAL 0.16)
-  set(HAVE_WLR_BASE_INPUT_DEVICES 1)
-  set(HAVE_WLR_PRIVATE_EGL_STRUCT 1)
-endif()
 
 if (${wlroots_VERSION} VERSION_GREATER_EQUAL 0.17)
   set(HAVE_WLR_SESSION_ON_AUTOCREATE 1)

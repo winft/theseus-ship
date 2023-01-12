@@ -20,12 +20,9 @@
 #include <vector>
 
 struct wlr_input_device;
-
-#if HAVE_WLR_BASE_INPUT_DEVICES
 struct wlr_pointer;
 struct wlr_keyboard;
 struct wlr_touch;
-#endif
 
 namespace KWin
 {
@@ -39,15 +36,9 @@ public:
     using base_t = base::backend::wlroots::platform;
     base_t base;
 
-#if HAVE_WLR_BASE_INPUT_DEVICES
     wlr_pointer* pointer{nullptr};
     wlr_keyboard* keyboard{nullptr};
     wlr_touch* touch{nullptr};
-#else
-    wlr_input_device* pointer{nullptr};
-    wlr_input_device* keyboard{nullptr};
-    wlr_input_device* touch{nullptr};
-#endif
 
     std::vector<Test::client> clients;
 

@@ -43,11 +43,7 @@ void handle_key(struct wl_listener* listener, void* data)
     base::event_receiver<keyboard<Platform>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto keyboard = event_receiver_struct->receiver;
-#if HAVE_WLR_BASE_INPUT_DEVICES
     auto wlr_event = reinterpret_cast<wlr_keyboard_key_event*>(data);
-#else
-    auto wlr_event = reinterpret_cast<wlr_event_keyboard_key*>(data);
-#endif
 
     auto event = key_event{
         wlr_event->keycode,
@@ -91,11 +87,7 @@ public:
         : input::keyboard(platform->xkb.context, platform->xkb.compose_table)
         , platform{platform}
     {
-#if HAVE_WLR_BASE_INPUT_DEVICES
         backend = wlr_keyboard_from_input_device(dev);
-#else
-        backend = dev->keyboard;
-#endif
 
         if (auto libinput = get_libinput_device(dev)) {
             control = std::make_unique<keyboard_control>(libinput, platform->config);
@@ -108,11 +100,7 @@ public:
         destroyed.receiver = this;
         destroyed.event.notify = keyboard_handle_destroy<Platform>;
 
-#if HAVE_WLR_BASE_INPUT_DEVICES
         wl_signal_add(&backend->base.events.destroy, &destroyed.event);
-#else
-        wl_signal_add(&backend->events.destroy, &destroyed.event);
-#endif
 
         key_rec.receiver = this;
         key_rec.event.notify = handle_key<Platform>;

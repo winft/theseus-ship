@@ -38,11 +38,7 @@ void handle_motion(struct wl_listener* listener, void* data)
     base::event_receiver<pointer<Platform>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto pointer = event_receiver_struct->receiver;
-#if HAVE_WLR_BASE_INPUT_DEVICES
     auto wlr_event = reinterpret_cast<wlr_pointer_motion_event*>(data);
-#else
-    auto wlr_event = reinterpret_cast<wlr_event_pointer_motion*>(data);
-#endif
 
     auto event = motion_event{
         QPointF(wlr_event->delta_x, wlr_event->delta_y),
@@ -62,11 +58,7 @@ void handle_motion_absolute(struct wl_listener* listener, void* data)
     base::event_receiver<pointer<Platform>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto pointer = event_receiver_struct->receiver;
-#if HAVE_WLR_BASE_INPUT_DEVICES
     auto wlr_event = reinterpret_cast<wlr_pointer_motion_absolute_event*>(data);
-#else
-    auto wlr_event = reinterpret_cast<wlr_event_pointer_motion_absolute*>(data);
-#endif
 
     auto event = motion_absolute_event{
         QPointF(wlr_event->x, wlr_event->y),
@@ -85,11 +77,7 @@ void handle_button(struct wl_listener* listener, void* data)
     base::event_receiver<pointer<Platform>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto pointer = event_receiver_struct->receiver;
-#if HAVE_WLR_BASE_INPUT_DEVICES
     auto wlr_event = reinterpret_cast<wlr_pointer_button_event*>(data);
-#else
-    auto wlr_event = reinterpret_cast<wlr_event_pointer_button*>(data);
-#endif
 
     auto event = button_event{
         wlr_event->button,
@@ -109,11 +97,7 @@ void handle_axis(struct wl_listener* listener, void* data)
     base::event_receiver<pointer<Platform>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto pointer = event_receiver_struct->receiver;
-#if HAVE_WLR_BASE_INPUT_DEVICES
     auto wlr_event = reinterpret_cast<wlr_pointer_axis_event*>(data);
-#else
-    auto wlr_event = reinterpret_cast<wlr_event_pointer_axis*>(data);
-#endif
 
     auto get_source = [](auto wlr_source) {
         switch (wlr_source) {
@@ -150,11 +134,7 @@ void handle_swipe_begin(struct wl_listener* listener, void* data)
     base::event_receiver<pointer<Platform>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto pointer = event_receiver_struct->receiver;
-#if HAVE_WLR_BASE_INPUT_DEVICES
     auto wlr_event = reinterpret_cast<wlr_pointer_swipe_begin_event*>(data);
-#else
-    auto wlr_event = reinterpret_cast<wlr_event_pointer_swipe_begin*>(data);
-#endif
 
     auto event = swipe_begin_event{
         wlr_event->fingers,
@@ -173,11 +153,7 @@ void handle_swipe_update(struct wl_listener* listener, void* data)
     base::event_receiver<pointer<Platform>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto pointer = event_receiver_struct->receiver;
-#if HAVE_WLR_BASE_INPUT_DEVICES
     auto wlr_event = reinterpret_cast<wlr_pointer_swipe_update_event*>(data);
-#else
-    auto wlr_event = reinterpret_cast<wlr_event_pointer_swipe_update*>(data);
-#endif
 
     auto event = swipe_update_event{
         wlr_event->fingers,
@@ -197,11 +173,7 @@ void handle_swipe_end(struct wl_listener* listener, void* data)
     base::event_receiver<pointer<Platform>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto pointer = event_receiver_struct->receiver;
-#if HAVE_WLR_BASE_INPUT_DEVICES
     auto wlr_event = reinterpret_cast<wlr_pointer_swipe_end_event*>(data);
-#else
-    auto wlr_event = reinterpret_cast<wlr_event_pointer_swipe_end*>(data);
-#endif
 
     auto event = swipe_end_event{
         wlr_event->cancelled,
@@ -220,11 +192,7 @@ void handle_pinch_begin(struct wl_listener* listener, void* data)
     base::event_receiver<pointer<Platform>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto pointer = event_receiver_struct->receiver;
-#if HAVE_WLR_BASE_INPUT_DEVICES
     auto wlr_event = reinterpret_cast<wlr_pointer_pinch_begin_event*>(data);
-#else
-    auto wlr_event = reinterpret_cast<wlr_event_pointer_pinch_begin*>(data);
-#endif
 
     auto event = pinch_begin_event{
         wlr_event->fingers,
@@ -243,11 +211,7 @@ void handle_pinch_update(struct wl_listener* listener, void* data)
     base::event_receiver<pointer<Platform>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto pointer = event_receiver_struct->receiver;
-#if HAVE_WLR_BASE_INPUT_DEVICES
     auto wlr_event = reinterpret_cast<wlr_pointer_pinch_update_event*>(data);
-#else
-    auto wlr_event = reinterpret_cast<wlr_event_pointer_pinch_update*>(data);
-#endif
 
     auto event = pinch_update_event{
         wlr_event->fingers,
@@ -269,11 +233,7 @@ void handle_pinch_end(struct wl_listener* listener, void* data)
     base::event_receiver<pointer<Platform>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto pointer = event_receiver_struct->receiver;
-#if HAVE_WLR_BASE_INPUT_DEVICES
     auto wlr_event = reinterpret_cast<wlr_pointer_pinch_end_event*>(data);
-#else
-    auto wlr_event = reinterpret_cast<wlr_event_pointer_pinch_end*>(data);
-#endif
 
     auto event = pinch_end_event{
         wlr_event->cancelled,
@@ -305,11 +265,7 @@ public:
     pointer(wlr_input_device* dev, Platform* platform)
         : platform{platform}
     {
-#if HAVE_WLR_BASE_INPUT_DEVICES
         auto backend = wlr_pointer_from_input_device(dev);
-#else
-        auto backend = dev->pointer;
-#endif
 
         if (auto libinput = get_libinput_device(dev)) {
             control = std::make_unique<pointer_control>(libinput, platform->config);

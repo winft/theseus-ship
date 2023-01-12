@@ -40,11 +40,7 @@ void handle_toggle(struct wl_listener* listener, void* data)
     base::event_receiver<switch_device<Platform>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto switch_device = event_receiver_struct->receiver;
-#if HAVE_WLR_BASE_INPUT_DEVICES
     auto wlr_event = reinterpret_cast<wlr_switch_toggle_event*>(data);
-#else
-    auto wlr_event = reinterpret_cast<wlr_event_switch_toggle*>(data);
-#endif
 
     auto event = switch_toggle_event{
         static_cast<switch_type>(wlr_event->switch_type),
@@ -65,11 +61,7 @@ public:
     switch_device(wlr_input_device* dev, Platform* platform)
         : platform{platform}
     {
-#if HAVE_WLR_BASE_INPUT_DEVICES
         auto backend = wlr_switch_from_input_device(dev);
-#else
-        auto backend = dev->switch_device;
-#endif
 
         if (auto libinput = get_libinput_device(dev)) {
             control = std::make_unique<switch_control>(libinput, platform->config);
