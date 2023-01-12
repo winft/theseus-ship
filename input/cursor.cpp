@@ -20,11 +20,11 @@
 namespace KWin::input
 {
 
-cursor::cursor()
-    : QObject()
-    , m_cursorTrackingCounter(0)
+cursor::cursor(KSharedConfigPtr config)
+    : m_cursorTrackingCounter(0)
     , m_themeName("default")
     , m_themeSize(24)
+    , config{config}
 {
     singleton_interface::cursor = this;
     load_theme_settings();
@@ -60,7 +60,7 @@ void cursor::load_theme_settings()
 
 void cursor::load_theme_from_kconfig()
 {
-    KConfigGroup mousecfg(kwinApp()->inputConfig(), "Mouse");
+    KConfigGroup mousecfg(config, "Mouse");
 
     auto const themeName = mousecfg.readEntry("cursorTheme", "default");
     uint const themeSize = mousecfg.readEntry("cursorSize", 24);
@@ -81,7 +81,7 @@ void cursor::kglobal_settings_notify_change(int type, int arg)
 {
     Q_UNUSED(arg)
     if (type == 5 /*CursorChanged*/) {
-        kwinApp()->inputConfig()->reparseConfiguration();
+        config->reparseConfiguration();
         load_theme_from_kconfig();
 
         // sync to environment

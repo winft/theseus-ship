@@ -10,6 +10,7 @@
 
 #include "kwinglobals.h"
 
+#include <KSharedConfig>
 #include <QObject>
 #include <QPoint>
 #include <xcb/xcb.h>
@@ -38,7 +39,7 @@ class KWIN_EXPORT cursor : public QObject
 {
     Q_OBJECT
 public:
-    cursor();
+    cursor(KSharedConfigPtr config);
     ~cursor() override;
 
     /**
@@ -190,6 +191,8 @@ private:
     QString m_themeName;
     int m_themeSize;
     int hide_count{0};
+
+    KSharedConfigPtr config;
 };
 
 }

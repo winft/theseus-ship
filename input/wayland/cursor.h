@@ -27,7 +27,8 @@ public:
     using cursor_image_t = wayland::cursor_image<type, Redirect>;
 
     cursor(Redirect& redirect)
-        : cursor_image{std::make_unique<cursor_image_t>(redirect)}
+        : input::cursor(kwinApp()->inputConfig())
+        , cursor_image{std::make_unique<cursor_image_t>(redirect)}
         , redirect{redirect}
     {
         QObject::connect(redirect.qobject.get(),

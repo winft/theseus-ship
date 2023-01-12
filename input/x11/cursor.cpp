@@ -18,8 +18,8 @@
 namespace KWin::input::x11
 {
 
-cursor::cursor()
-    : input::cursor()
+cursor::cursor(KSharedConfigPtr config)
+    : input::cursor(config)
     , m_timeStamp(XCB_TIME_CURRENT_TIME)
     , m_buttonMask(0)
     , m_resetTimeStampTimer(new QTimer(this))
