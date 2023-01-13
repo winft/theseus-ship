@@ -316,6 +316,7 @@ private:
              static_cast<int>(win->maximizeMode() & win::maximize_mode::horizontal)},
             {QStringLiteral("maximizeVertical"),
              static_cast<int>(win->maximizeMode() & win::maximize_mode::vertical)},
+            {QStringLiteral("uuid"), win->meta.internal_id.toString()},
         };
     }
 
