@@ -64,7 +64,8 @@ public:
         , platform{platform}
         , space{space}
         , config_watcher{KConfigWatcher::create(kwinApp()->inputConfig())}
-        , input_method{std::make_unique<wayland::input_method<type>>(*this, waylandServer())}
+        , input_method{std::make_unique<wayland::input_method<type>>(*this,
+                                                                     platform.base.server.get())}
         , tablet_mode_manager{std::make_unique<dbus::tablet_mode_manager<type>>(*this)}
     {
         setup_workspace();
@@ -259,7 +260,7 @@ private:
 
         setup_devices();
 
-        fake_input = waylandServer()->display->createFakeInput();
+        fake_input = platform.base.server->display->createFakeInput();
         QObject::connect(fake_input.get(),
                          &Wrapland::Server::FakeInput::deviceCreated,
                          qobject.get(),
@@ -294,7 +295,7 @@ private:
         QObject::connect(
             platform.qobject.get(), &platform_qobject::pointer_removed, qobject.get(), [this]() {
                 if (platform.pointers.empty()) {
-                    auto seat = find_seat();
+                    auto seat = platform.base.server->seat();
                     unset_focus(pointer.get());
                     seat->setHasPointer(false);
                 }
@@ -310,7 +311,7 @@ private:
         QObject::connect(
             platform.qobject.get(), &platform_qobject::keyboard_removed, qobject.get(), [this]() {
                 if (platform.keyboards.empty()) {
-                    auto seat = find_seat();
+                    auto seat = platform.base.server->seat();
                     seat->setFocusedKeyboardSurface(nullptr);
                     seat->setHasKeyboard(false);
                 }
@@ -326,7 +327,7 @@ private:
         QObject::connect(
             platform.qobject.get(), &platform_qobject::touch_removed, qobject.get(), [this]() {
                 if (platform.touchs.empty()) {
-                    auto seat = find_seat();
+                    auto seat = platform.base.server->seat();
                     unset_focus(touch.get());
                     seat->setHasTouch(false);
                 }
@@ -343,7 +344,7 @@ private:
 
     void setup_filters()
     {
-        auto const has_global_shortcuts = waylandServer()->has_global_shortcut_support();
+        auto const has_global_shortcuts = platform.base.server->has_global_shortcut_support();
 
         if (kwinApp()->session->hasSessionControl() && has_global_shortcuts) {
             m_filters.emplace_back(new virtual_terminal_filter<type>(*this));
@@ -397,8 +398,8 @@ private:
         // character selection, we want to tell the clients that we are indeed repeating keys.
         auto enabled = repeat == QLatin1String("accent") || repeat == QLatin1String("repeat");
 
-        if (waylandServer()->seat()->hasKeyboard()) {
-            waylandServer()->seat()->keyboards().set_repeat_info(enabled ? rate : 0, delay);
+        if (auto seat = platform.base.server->seat(); seat->hasKeyboard()) {
+            seat->keyboards().set_repeat_info(enabled ? rate : 0, delay);
         }
     }
 
@@ -462,7 +463,7 @@ private:
             pointer_red->process_frame();
         });
 
-        auto seat = find_seat();
+        auto seat = platform.base.server->seat();
         if (!seat->hasPointer()) {
             seat->setHasPointer(true);
             device_redirect_update_focus(this->pointer.get());
@@ -472,6 +473,7 @@ private:
     void handle_keyboard_added(input::keyboard* keyboard)
     {
         auto keyboard_red = this->keyboard.get();
+        auto seat = platform.base.server->seat();
 
         QObject::connect(keyboard,
                          &keyboard::key_changed,
@@ -482,8 +484,6 @@ private:
             &keyboard::modifiers_changed,
             keyboard_red->qobject.get(),
             [keyboard_red](auto const& event) { keyboard_red->process_modifiers(event); });
-
-        auto seat = find_seat();
 
         if (!seat->hasKeyboard()) {
             seat->setHasKeyboard(true);
@@ -499,11 +499,11 @@ private:
         xkb::keyboard_update_from_default(platform.xkb, *keyboard->xkb);
 
         platform.update_keyboard_leds(keyboard->xkb->leds);
-        waylandServer()->update_key_state(keyboard->xkb->leds);
+        platform.base.server->update_key_state(keyboard->xkb->leds);
 
         QObject::connect(keyboard->xkb->qobject.get(),
                          &xkb::keyboard_qobject::leds_changed,
-                         waylandServer(),
+                         platform.base.server.get(),
                          &base::wayland::server::update_key_state);
         QObject::connect(keyboard->xkb->qobject.get(),
                          &xkb::keyboard_qobject::leds_changed,
@@ -536,7 +536,7 @@ private:
                          touch_red->qobject.get(),
                          [touch_red] { touch_red->frame(); });
 
-        auto seat = find_seat();
+        auto seat = platform.base.server->seat();
         if (!seat->hasTouch()) {
             seat->setHasTouch(true);
             device_redirect_update_focus(this->touch.get());
@@ -614,11 +614,6 @@ private:
 
         virtual_keyboards.insert({virtual_keyboard, std::move(keyboard)});
         platform_add_keyboard(keyboard_ptr, platform);
-    }
-
-    static Wrapland::Server::Seat* find_seat()
-    {
-        return waylandServer()->seat();
     }
 
     KConfigWatcher::Ptr config_watcher;

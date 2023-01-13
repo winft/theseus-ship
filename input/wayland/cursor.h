@@ -69,7 +69,7 @@ public:
 protected:
     void do_set_pos() override
     {
-        redirect.warp_pointer(current_pos(), waylandServer()->seat()->timestamp());
+        redirect.warp_pointer(current_pos(), redirect.platform.base.server->seat()->timestamp());
         slot_pos_changed(redirect.globalPointer());
         Q_EMIT pos_changed(current_pos());
     }

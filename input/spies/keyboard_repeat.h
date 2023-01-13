@@ -57,7 +57,8 @@ public:
         switch (event.state) {
         case key_state::pressed: {
             // TODO: don't get these values from WaylandServer
-            auto const delay = waylandServer()->seat()->keyboards().get_repeat_info().delay;
+            auto const delay
+                = this->redirect.platform.base.server->seat()->keyboards().get_repeat_info().delay;
             if (event.base.dev->xkb->should_key_repeat(event.keycode) && delay != 0) {
                 m_timer->setInterval(delay);
                 m_key = event.keycode;
@@ -82,7 +83,8 @@ private:
     void handleKeyRepeat()
     {
         // TODO: don't depend on WaylandServer
-        auto const rate = waylandServer()->seat()->keyboards().get_repeat_info().rate;
+        auto const rate
+            = this->redirect.platform.base.server->seat()->keyboards().get_repeat_info().rate;
         if (rate != 0) {
             m_timer->setInterval(1000 / rate);
         }

@@ -854,7 +854,7 @@ public:
     bool isLockScreen() const
     {
         return !this->remnant
-            && surface->client() == waylandServer()->screen_locker_client_connection;
+            && surface->client() == space.base.server->screen_locker_client_connection;
     }
 
     bool isInitialPositionSet() const

@@ -46,8 +46,10 @@ struct presentation_data {
 class presentation : public QObject
 {
 public:
-    presentation(clockid_t clockid)
-        : presentation_manager{waylandServer()->display->createPresentationManager()}
+    presentation(
+        clockid_t clockid,
+        std::function<std::unique_ptr<Wrapland::Server::PresentationManager>()> manager_factory)
+        : presentation_manager{manager_factory()}
     {
         struct timespec ts;
         if (auto ret = clock_gettime(clockid, &ts); ret != 0) {

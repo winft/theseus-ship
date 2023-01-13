@@ -60,14 +60,14 @@ public:
             return false;
         }
 
-        auto seat = waylandServer()->seat();
+        auto seat = this->redirect.platform.base.server->seat();
         seat->setFocusedKeyboardSurface(nullptr);
         this->redirect.pointer->setEnableConstraints(false);
 
         // pass the key event to the seat, so that it has a proper model of the currently hold keys
         // this is important for combinations like alt+shift to ensure that shift is not considered
         // pressed
-        pass_to_wayland_server(event);
+        pass_to_wayland_server(this->redirect, event);
 
         if (event.state == key_state::pressed) {
             auto mods = xkb::get_active_keyboard_modifiers(this->redirect.platform);

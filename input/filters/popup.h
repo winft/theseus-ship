@@ -94,7 +94,7 @@ public:
             return false;
         }
 
-        auto seat = waylandServer()->seat();
+        auto seat = this->redirect.platform.base.server->seat();
 
         auto last = m_popups.back();
         if (!last->surface) {
@@ -102,7 +102,7 @@ public:
         }
 
         seat->setFocusedKeyboardSurface(last->surface);
-        pass_to_wayland_server(event);
+        pass_to_wayland_server(this->redirect, event);
         return true;
     }
 

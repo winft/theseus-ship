@@ -196,8 +196,8 @@ void XWaylandInputTest::testPointerEnterLeave()
     QVERIFY(!client->geo.frame.contains(Test::cursor()->pos()));
     QVERIFY(enteredSpy.isEmpty());
     Test::cursor()->set_pos(client->geo.frame.center());
-    QCOMPARE(waylandServer()->seat()->pointers().get_focus().surface, client->surface);
-    QVERIFY(!waylandServer()->seat()->pointers().get_focus().devices.empty());
+    QCOMPARE(Test::app()->base.server->seat()->pointers().get_focus().surface, client->surface);
+    QVERIFY(!Test::app()->base.server->seat()->pointers().get_focus().devices.empty());
     QVERIFY(enteredSpy.wait());
 
     // move out of window

@@ -225,7 +225,7 @@ public:
                            if constexpr (requires(decltype(win) win) { win->surface; }) {
                                if (!win->surface
                                    || win->surface->client()
-                                       == waylandServer()->xwayland_connection()) {
+                                       == platform.base.server->xwayland_connection()) {
                                    return;
                                }
                                if (!(win->surface->state().updates
@@ -341,7 +341,7 @@ private:
                                if constexpr (requires(decltype(win) win) { win->surface; }) {
                                    if (win->surface
                                        && win->surface->client()
-                                           != waylandServer()->xwayland_connection()
+                                           != platform.base.server->xwayland_connection()
                                        && (win->surface->state().updates
                                            & Wrapland::Server::surface_change::frame)
                                        && max_coverage_output(win) == &base) {

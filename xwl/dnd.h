@@ -55,6 +55,7 @@ public:
     std::vector<std::unique_ptr<drag<Space>>> old_drags;
 
     drag_and_drop(runtime<Space> const& core)
+        : space{*core.space}
     {
         data = create_selection_data<Space, Wrapland::Server::data_source, data_source_ext>(
             core.x11.atoms->xdnd_selection, core);
@@ -74,11 +75,11 @@ public:
                             &drag_and_drop_version);
         xcb_flush(xcb_con);
 
-        QObject::connect(waylandServer()->seat(),
+        QObject::connect(space.base.server->seat(),
                          &Wrapland::Server::Seat::dragStarted,
                          data.qobject.get(),
                          [this]() { start_drag(); });
-        QObject::connect(waylandServer()->seat(),
+        QObject::connect(space.base.server->seat(),
                          &Wrapland::Server::Seat::dragEnded,
                          data.qobject.get(),
                          [this]() { end_drag(); });
@@ -139,13 +140,13 @@ public:
 
         data.x11_source.reset();
 
-        auto const seat = waylandServer()->seat();
+        auto const seat = space.base.server->seat();
         auto originSurface = seat->pointers().get_focus().surface;
         if (!originSurface) {
             return;
         }
 
-        if (originSurface->client() != waylandServer()->xwayland_connection()) {
+        if (originSurface->client() != space.base.server->xwayland_connection()) {
             // focused surface client is not Xwayland - do not allow drag to start
             // TODO: can we make this stronger (window id comparison)?
             return;
@@ -189,7 +190,7 @@ private:
     // start and end Wl native client drags (Wl -> Xwl)
     void start_drag()
     {
-        auto srv_src = waylandServer()->seat()->drags().get_source().src;
+        auto srv_src = space.base.server->seat()->drags().get_source().src;
 
         if (xdrag) {
             // X to Wl drag, started by us, is in progress.
@@ -234,6 +235,8 @@ private:
     {
         remove_all_if(old_drags, [drag](auto&& old) { return old.get() == drag; });
     }
+
+    Space& space;
 };
 
 }

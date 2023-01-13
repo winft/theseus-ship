@@ -14,6 +14,7 @@
 struct wlr_backend;
 struct wlr_device;
 struct wlr_session;
+struct wl_display;
 
 namespace KWin::base::seat::backend::wlroots
 {
@@ -38,7 +39,7 @@ public:
 
     const QString seat() const override;
 
-    void take_control();
+    void take_control(wl_display* display);
 
     wlr_session* native;
 

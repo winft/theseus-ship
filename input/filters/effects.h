@@ -58,8 +58,8 @@ public:
         if (!get_effects() || !get_effects()->hasKeyboardGrab()) {
             return false;
         }
-        waylandServer()->seat()->setFocusedKeyboardSurface(nullptr);
-        pass_to_wayland_server(event);
+        this->redirect.platform.base.server->seat()->setFocusedKeyboardSurface(nullptr);
+        pass_to_wayland_server(this->redirect, event);
         auto qt_event = key_to_qt_event(event);
         get_effects()->grabbedKeyboardEvent(&qt_event);
         return true;

@@ -52,7 +52,6 @@ public:
     bool is_screen_locked() const override;
 
     base::platform& get_base() override;
-    base::wayland::server* get_wayland_server() override;
 
     void start();
 

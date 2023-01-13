@@ -92,7 +92,7 @@ public:
 
         layout_manager = std::make_unique<layout_manager_t>(*redirect, config);
 
-        if (waylandServer()->has_global_shortcut_support()) {
+        if (redirect->platform.base.server->has_global_shortcut_support()) {
             redirect->m_spies.push_back(new modifier_only_shortcuts_spy(*redirect));
         }
 
@@ -123,7 +123,7 @@ public:
                              }
                              update();
                          });
-        if (waylandServer()->has_screen_locker_integration()) {
+        if (redirect->platform.base.server->has_screen_locker_integration()) {
             QObject::connect(ScreenLocker::KSldApp::self(),
                              &ScreenLocker::KSldApp::lockStateChanged,
                              qobject.get(),
@@ -133,7 +133,7 @@ public:
 
     void update()
     {
-        auto seat = waylandServer()->seat();
+        auto seat = redirect->platform.base.server->seat();
         if (!seat->hasKeyboard()) {
             return;
         }

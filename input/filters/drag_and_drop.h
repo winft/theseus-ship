@@ -31,7 +31,7 @@ public:
 
     bool button(button_event const& event) override
     {
-        auto seat = waylandServer()->seat();
+        auto seat = this->redirect.platform.base.server->seat();
         if (!seat->drags().is_pointer_drag()) {
             return false;
         }
@@ -51,7 +51,7 @@ public:
 
     bool motion(motion_event const& event) override
     {
-        auto seat = waylandServer()->seat();
+        auto seat = this->redirect.platform.base.server->seat();
         if (!seat->drags().is_pointer_drag()) {
             return false;
         }
@@ -101,7 +101,7 @@ public:
 
     bool touch_down(touch_down_event const& event) override
     {
-        auto seat = waylandServer()->seat();
+        auto seat = this->redirect.platform.base.server->seat();
         if (seat->drags().is_pointer_drag()) {
             return true;
         }
@@ -118,7 +118,7 @@ public:
 
     bool touch_motion(touch_motion_event const& event) override
     {
-        auto seat = waylandServer()->seat();
+        auto seat = this->redirect.platform.base.server->seat();
         if (seat->drags().is_pointer_drag()) {
             return true;
         }
@@ -169,7 +169,7 @@ public:
 
     bool touch_up(touch_up_event const& event) override
     {
-        auto seat = waylandServer()->seat();
+        auto seat = this->redirect.platform.base.server->seat();
         if (!seat->drags().is_touch_drag()) {
             return false;
         }

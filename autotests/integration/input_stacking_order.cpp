@@ -140,7 +140,7 @@ void InputStackingOrderTest::testPointerFocusUpdatesOnStackingOrderChange()
     // window 2 should have focus
     QCOMPARE(pointer->enteredSurface(), surface2.get());
     // also on the server
-    QCOMPARE(waylandServer()->seat()->pointers().get_focus().surface, window2->surface);
+    QCOMPARE(Test::app()->base.server->seat()->pointers().get_focus().surface, window2->surface);
 
     // raise window 1 above window 2
     QVERIFY(leftSpy.isEmpty());
@@ -153,7 +153,7 @@ void InputStackingOrderTest::testPointerFocusUpdatesOnStackingOrderChange()
     // and an enter to window1
     QCOMPARE(enteredSpy.count(), 2);
     QCOMPARE(pointer->enteredSurface(), surface1.get());
-    QCOMPARE(waylandServer()->seat()->pointers().get_focus().surface, window1->surface);
+    QCOMPARE(Test::app()->base.server->seat()->pointers().get_focus().surface, window1->surface);
 
     // let's destroy window1, that should pass focus to window2 again
     QSignalSpy windowClosedSpy(window1->qobject.get(), &win::window_qobject::closed);
@@ -163,7 +163,7 @@ void InputStackingOrderTest::testPointerFocusUpdatesOnStackingOrderChange()
     QVERIFY(enteredSpy.wait());
     QCOMPARE(enteredSpy.count(), 3);
     QCOMPARE(pointer->enteredSurface(), surface2.get());
-    QCOMPARE(waylandServer()->seat()->pointers().get_focus().surface, window2->surface);
+    QCOMPARE(Test::app()->base.server->seat()->pointers().get_focus().surface, window2->surface);
 }
 
 }

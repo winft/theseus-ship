@@ -80,11 +80,11 @@ void handle_destroy(struct wl_listener* listener, [[maybe_unused]] void* data)
     session->native = nullptr;
 }
 
-void session::take_control()
+void session::take_control(wl_display* display)
 {
     // TODO(romangg): assert instead?
     if (!native) {
-        native = wlr_session_create(waylandServer()->display->native());
+        native = wlr_session_create(display);
         if (!native) {
             // TODO(romangg): error handling?
             qCCritical(KWIN_WL) << "Could not take control.";

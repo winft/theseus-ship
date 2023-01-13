@@ -46,13 +46,14 @@ public:
     selection_data<Space, Wrapland::Server::data_source, data_source_ext> data;
 
     clipboard(runtime<Space> const& core)
+        : space{*core.space}
     {
         data = create_selection_data<Space, Wrapland::Server::data_source, data_source_ext>(
             core.space->atoms->clipboard, core);
 
         register_x11_selection(this, QSize(10, 10));
 
-        QObject::connect(waylandServer()->seat(),
+        QObject::connect(space.base.server->seat(),
                          &Wrapland::Server::Seat::selectionChanged,
                          data.qobject.get(),
                          [this] { handle_wl_selection_change(this); });
@@ -60,12 +61,12 @@ public:
 
     Wrapland::Server::data_source* get_current_source() const
     {
-        return waylandServer()->seat()->selection();
+        return space.base.server->seat()->selection();
     }
 
     void set_selection(Wrapland::Server::data_source* source) const
     {
-        waylandServer()->seat()->setSelection(source);
+        space.base.server->seat()->setSelection(source);
     }
 
     void handle_x11_offer_change(std::vector<std::string> const& added,
@@ -73,6 +74,8 @@ public:
     {
         xwl::handle_x11_offer_change(this, added, removed);
     }
+
+    Space& space;
 };
 
 }

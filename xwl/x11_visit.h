@@ -80,7 +80,7 @@ public:
         // proxy drop
         receive_offer();
 
-        notifiers.drop = QObject::connect(waylandServer()->seat(),
+        notifiers.drop = QObject::connect(source.core.space->base.server->seat(),
                                           &Wrapland::Server::Seat::dragEnded,
                                           qobject.get(),
                                           [this](auto success) {
@@ -315,7 +315,7 @@ private:
                                qobject.get(),
                                [this] { update_actions(); });
 
-        send_position(waylandServer()->seat()->pointers().get_position());
+        send_position(source.core.space->base.server->seat()->pointers().get_position());
     }
 
     void enter()
@@ -326,7 +326,7 @@ private:
         send_enter();
 
         // Proxy future pointer position changes.
-        notifiers.motion = QObject::connect(waylandServer()->seat(),
+        notifiers.motion = QObject::connect(source.core.space->base.server->seat(),
                                             &Wrapland::Server::Seat::pointerPosChanged,
                                             qobject.get(),
                                             [this](auto const& pos) { send_position(pos); });
@@ -347,7 +347,7 @@ private:
 
         // Send updated action to X target.
         if (old_proposed != actions.proposed) {
-            send_position(waylandServer()->seat()->pointers().get_position());
+            send_position(source.core.space->base.server->seat()->pointers().get_position());
         }
 
         auto const pref
@@ -355,7 +355,7 @@ private:
 
         // We assume the X client supports Move, but this might be wrong - then the drag just
         // cancels, if the user tries to force it.
-        waylandServer()->seat()->drags().target_actions_update(
+        source.core.space->base.server->seat()->drags().target_actions_update(
             QFlags({dnd_action::copy, dnd_action::move}), pref);
     }
 

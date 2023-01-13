@@ -149,9 +149,10 @@ perform_wheel_and_window_action(Redirect& redirect, axis_event const& event, Win
                       : std::make_pair(false, false);
 }
 
-inline void pass_to_wayland_server(key_event const& event)
+template<typename Redirect>
+void pass_to_wayland_server(Redirect& redirect, key_event const& event)
 {
-    auto seat = waylandServer()->seat();
+    auto seat = redirect.platform.base.server->seat();
     seat->keyboards().set_keymap(event.base.dev->xkb->keymap->cache);
     seat->keyboards().key(event.keycode,
                           event.state == key_state::pressed

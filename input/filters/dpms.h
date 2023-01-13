@@ -82,7 +82,7 @@ public:
         m_touchPoints.removeAll(event.id);
         if (m_touchPoints.isEmpty() && m_doubleTapTimer.isValid() && m_secondTap) {
             if (m_doubleTapTimer.elapsed() < qApp->doubleClickInterval()) {
-                waylandServer()->seat()->setTimestamp(event.base.time_msec);
+                redirect.platform.base.server->seat()->setTimestamp(event.base.time_msec);
                 notify();
             }
             m_doubleTapTimer.invalidate();

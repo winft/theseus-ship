@@ -96,7 +96,7 @@ public:
     {
         Q_UNUSED(pos);
 
-        auto seat = waylandServer()->seat();
+        auto seat = source.core.space->base.server->seat();
 
         if (visit && typename Space::window_t(visit->target) == target) {
             // still same Wl target, wait for X events
@@ -228,7 +228,8 @@ private:
     {
         auto ac = visit->target;
         win::activate_window(*source.core.space, *ac);
-        waylandServer()->seat()->drags().set_target(ac->surface, win::get_input_transform(*ac));
+        source.core.space->base.server->seat()->drags().set_target(ac->surface,
+                                                                   win::get_input_transform(*ac));
     }
 
     bool check_for_finished()

@@ -34,7 +34,7 @@ public:
     {
         this->config = kwinApp()->inputConfig();
 
-        virtual_keyboard = waylandServer()->display->create_virtual_keyboard_manager_v1();
+        virtual_keyboard = base.server->display->create_virtual_keyboard_manager_v1();
 
         QObject::connect(kde_idle.get(),
                          &Wrapland::Server::kde_idle::timeout_created,

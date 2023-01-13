@@ -77,7 +77,7 @@ public:
             auto const formats_map = get_drm_formats<Wrapland::Server::drm_format>(formats_set);
 
             dmabuf = std::make_unique<Wrapland::Server::linux_dmabuf_v1>(
-                waylandServer()->display.get(),
+                platform.base.server->display.get(),
                 [this](
                     auto const& planes, auto format, auto modifier, auto const& size, auto flags) {
                     return std::make_unique<Wrapland::Server::linux_dmabuf_buffer_v1>(

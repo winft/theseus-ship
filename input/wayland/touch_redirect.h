@@ -42,12 +42,12 @@ public:
     {
         device_redirect_init(this);
 
-        if (waylandServer()->has_screen_locker_integration()) {
+        if (redirect->platform.base.server->has_screen_locker_integration()) {
             QObject::connect(ScreenLocker::KSldApp::self(),
                              &ScreenLocker::KSldApp::lockStateChanged,
                              qobject.get(),
                              [this] {
-                                 if (!waylandServer()->seat()->hasTouch()) {
+                                 if (!redirect->platform.base.server->seat()->hasTouch()) {
                                      return;
                                  }
                                  cancel();
@@ -138,7 +138,7 @@ public:
 
         window_already_updated_this_cycle = true;
 
-        if (waylandServer()->seat()->drags().is_touch_drag()) {
+        if (redirect->platform.base.server->seat()->drags().is_touch_drag()) {
             return true;
         }
         if (m_touches > 1) {
@@ -151,16 +151,16 @@ public:
 
     void cancel()
     {
-        if (!waylandServer()->seat()->hasTouch()) {
+        if (!redirect->platform.base.server->seat()->hasTouch()) {
             return;
         }
-        waylandServer()->seat()->touches().cancel_sequence();
+        redirect->platform.base.server->seat()->touches().cancel_sequence();
         m_idMapper.clear();
     }
 
     void frame()
     {
-        waylandServer()->seat()->touches().touch_frame();
+        redirect->platform.base.server->seat()->touches().touch_frame();
     }
 
     void insertId(qint32 internalId, qint32 wraplandId)
@@ -211,7 +211,7 @@ public:
     {
         // TODO: handle pointer grab aka popups
 
-        auto seat = waylandServer()->seat();
+        auto seat = redirect->platform.base.server->seat();
         Wrapland::Server::Surface* now_surface{nullptr};
         win::window_qobject* now_qobject{nullptr};
 
@@ -264,8 +264,8 @@ public:
                     return;
                 }
 
-                std::visit(overload{[&](auto&& win) {
-                               auto seat = waylandServer()->seat();
+                std::visit(overload{[&, this](auto&& win) {
+                               auto seat = redirect->platform.base.server->seat();
                                seat->touches().set_focused_surface_position(
                                    -1 * win::get_input_transform(*win).map(win->geo.pos())
                                    + win->geo.pos());

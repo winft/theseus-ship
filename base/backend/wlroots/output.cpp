@@ -42,7 +42,8 @@ static void handle_destroy(wl_listener* listener, void* /*data*/)
 }
 
 output::output(wlr_output* wlr_out, wlroots::platform* platform)
-    : native{wlr_out}
+    : abstract_output_t(*platform)
+    , native{wlr_out}
     , platform{platform}
 {
     wlr_out->data = this;

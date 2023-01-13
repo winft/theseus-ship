@@ -37,7 +37,7 @@ public:
             return false;
         }
 
-        auto seat = waylandServer()->seat();
+        auto seat = this->redirect.platform.base.server->seat();
         seat->setTimestamp(event.base.time_msec);
 
         if (pointerSurfaceAllowed()) {
@@ -56,7 +56,7 @@ public:
             return false;
         }
 
-        auto seat = waylandServer()->seat();
+        auto seat = this->redirect.platform.base.server->seat();
         seat->setTimestamp(event.base.time_msec);
 
         if (pointerSurfaceAllowed()) {
@@ -74,7 +74,7 @@ public:
             return false;
         }
 
-        auto seat = waylandServer()->seat();
+        auto seat = this->redirect.platform.base.server->seat();
         if (pointerSurfaceAllowed()) {
             seat->setTimestamp(event.base.time_msec);
 
@@ -104,7 +104,7 @@ public:
         // continue normal processing
         this->redirect.keyboard->update();
 
-        auto seat = waylandServer()->seat();
+        auto seat = this->redirect.platform.base.server->seat();
         seat->setTimestamp(event.base.time_msec);
 
         if (!keyboardSurfaceAllowed()) {
@@ -112,7 +112,7 @@ public:
             return true;
         }
 
-        pass_to_wayland_server(event);
+        pass_to_wayland_server(this->redirect, event);
         return true;
     }
 
@@ -127,7 +127,7 @@ public:
         if (!kwinApp()->is_screen_locked()) {
             return false;
         }
-        auto seat = waylandServer()->seat();
+        auto seat = this->redirect.platform.base.server->seat();
         seat->setTimestamp(event.base.time_msec);
         if (touchSurfaceAllowed()) {
             this->redirect.touch->insertId(event.id, seat->touches().touch_down(event.pos));
@@ -140,7 +140,7 @@ public:
         if (!kwinApp()->is_screen_locked()) {
             return false;
         }
-        auto seat = waylandServer()->seat();
+        auto seat = this->redirect.platform.base.server->seat();
         seat->setTimestamp(event.base.time_msec);
         if (touchSurfaceAllowed()) {
             const qint32 wraplandId = this->redirect.touch->mappedId(event.id);
@@ -156,7 +156,7 @@ public:
         if (!kwinApp()->is_screen_locked()) {
             return false;
         }
-        auto seat = waylandServer()->seat();
+        auto seat = this->redirect.platform.base.server->seat();
         seat->setTimestamp(event.base.time_msec);
         if (touchSurfaceAllowed()) {
             const qint32 wraplandId = this->redirect.touch->mappedId(event.id);
@@ -219,17 +219,17 @@ private:
 
     bool pointerSurfaceAllowed() const
     {
-        return is_surface_allowed(waylandServer()->seat()->pointers());
+        return is_surface_allowed(this->redirect.platform.base.server->seat()->pointers());
     }
 
     bool keyboardSurfaceAllowed() const
     {
-        return is_surface_allowed(waylandServer()->seat()->keyboards());
+        return is_surface_allowed(this->redirect.platform.base.server->seat()->keyboards());
     }
 
     bool touchSurfaceAllowed() const
     {
-        return is_surface_allowed(waylandServer()->seat()->touches());
+        return is_surface_allowed(this->redirect.platform.base.server->seat()->touches());
     }
 };
 

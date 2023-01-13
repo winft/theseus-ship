@@ -182,11 +182,6 @@ base::platform& ApplicationWayland::get_base()
     return *base;
 }
 
-base::wayland::server* ApplicationWayland::get_wayland_server()
-{
-    return base->server.get();
-}
-
 void ApplicationWayland::start(OperationMode mode,
                                std::string const& socket_name,
                                base::wayland::start_options flags,
@@ -208,7 +203,7 @@ void ApplicationWayland::start(OperationMode mode,
 
     auto session = new base::seat::backend::wlroots::session(base->session, base->backend);
     this->session.reset(session);
-    session->take_control();
+    session->take_control(base->server->display->native());
 
     base->input = std::make_unique<input::backend::wlroots::platform>(*base);
     input::wayland::add_dbus(base->input.get());

@@ -155,13 +155,13 @@ void PlasmaWindowTest::testCreateDestroyX11PlasmaWindow()
     // verify that it gets the keyboard focus
     if (!client->surface) {
         // we don't have a surface yet, so focused keyboard surface if set is not ours
-        QVERIFY(!waylandServer()->seat()->keyboards().get_focus().surface);
+        QVERIFY(!Test::app()->base.server->seat()->keyboards().get_focus().surface);
         QSignalSpy surfaceChangedSpy(client->qobject.get(), &win::window_qobject::surfaceChanged);
         QVERIFY(surfaceChangedSpy.isValid());
         QVERIFY(surfaceChangedSpy.wait());
     }
     QVERIFY(client->surface);
-    QCOMPARE(waylandServer()->seat()->keyboards().get_focus().surface, client->surface);
+    QCOMPARE(Test::app()->base.server->seat()->keyboards().get_focus().surface, client->surface);
 
     // now that should also give it to us on client side
     QVERIFY(plasmaWindowCreatedSpy.wait());
@@ -433,7 +433,7 @@ struct x11_test_window {
         QVERIFY(server.window->control->active);
 
         if (!server.window->surface) {
-            QVERIFY(!waylandServer()->seat()->keyboards().get_focus().surface);
+            QVERIFY(!Test::app()->base.server->seat()->keyboards().get_focus().surface);
             QSignalSpy surface_spy(server.window->qobject.get(),
                                    &win::window_qobject::surfaceChanged);
             QVERIFY(surface_spy.isValid());
