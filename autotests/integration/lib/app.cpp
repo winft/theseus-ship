@@ -154,7 +154,7 @@ void WaylandTestApplication::start()
     session
         = std::make_unique<base::seat::backend::wlroots::session>(base.session, headless_backend);
     base.input = std::make_unique<input::backend::wlroots::platform>(
-        base, KSharedConfig::openConfig("kcminputrc", KConfig::SimpleConfig));
+        base, input::config(KConfig::SimpleConfig));
     base.input->install_shortcuts();
 
     keyboard = static_cast<wlr_keyboard*>(calloc(1, sizeof(wlr_keyboard)));

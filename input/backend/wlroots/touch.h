@@ -136,7 +136,7 @@ public:
         auto backend = wlr_touch_from_input_device(dev);
 
         if (auto libinput = get_libinput_device(dev)) {
-            this->control = std::make_unique<touch_control>(libinput, platform->config);
+            this->control = std::make_unique<touch_control>(libinput, platform->config.main);
         }
         this->output = this->get_output();
 

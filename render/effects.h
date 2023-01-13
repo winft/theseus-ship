@@ -1259,7 +1259,7 @@ public:
 
     KSharedConfigPtr inputConfig() const override
     {
-        return compositor.platform.base.input->config;
+        return compositor.platform.base.input->config.main;
     }
 
     Compositor& compositor;

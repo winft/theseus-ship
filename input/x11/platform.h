@@ -23,9 +23,7 @@ public:
     using space_t = typename Base::space_t;
 
     platform(Base& base)
-        : input::platform<Base>(
-            base,
-            KSharedConfig::openConfig(QStringLiteral("kcminputrc"), KConfig::NoGlobals))
+        : input::platform<Base>(base, input::config(KConfig::NoGlobals))
         , xkb{xkb::manager<type>(this)}
     {
     }

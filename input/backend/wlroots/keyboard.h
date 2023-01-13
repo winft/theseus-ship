@@ -90,7 +90,7 @@ public:
         backend = wlr_keyboard_from_input_device(dev);
 
         if (auto libinput = get_libinput_device(dev)) {
-            control = std::make_unique<keyboard_control>(libinput, platform->config);
+            control = std::make_unique<keyboard_control>(libinput, platform->config.main);
         } else if (base::backend::wlroots::get_headless_backend(platform->base.backend)) {
             auto headless_control = std::make_unique<headless::keyboard_control>();
             headless_control->data.is_alpha_numeric_keyboard = true;

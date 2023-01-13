@@ -268,7 +268,7 @@ public:
         auto backend = wlr_pointer_from_input_device(dev);
 
         if (auto libinput = get_libinput_device(dev)) {
-            control = std::make_unique<pointer_control>(libinput, platform->config);
+            control = std::make_unique<pointer_control>(libinput, platform->config.main);
         }
 
         destroyed.receiver = this;

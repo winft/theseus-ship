@@ -26,8 +26,8 @@ public:
     using type = platform<Base>;
     using space_t = typename Base::space_t;
 
-    platform(Base& base, KSharedConfigPtr config)
-        : input::platform<Base>(base, config)
+    platform(Base& base, input::config config)
+        : input::platform<Base>(base, std::move(config))
         , xkb{xkb::manager<type>(this)}
         , kde_idle{base.server->display->create_kde_idle()}
         , idle_notifier{base.server->display->create_idle_notifier_v1()}

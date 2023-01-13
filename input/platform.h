@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "config.h"
 #include "dbus/device_manager.h"
 #include "global_shortcuts_manager.h"
 #include "keyboard.h"
@@ -14,7 +15,6 @@
 
 #include "utils/algorithm.h"
 
-#include <KSharedConfig>
 #include <QAction>
 #include <QObject>
 #include <memory>
@@ -85,11 +85,11 @@ class platform
 public:
     using base_t = Base;
 
-    platform(Base& base, KSharedConfigPtr config)
+    platform(Base& base, input::config config)
         : qobject{std::make_unique<platform_qobject>(
             [this](auto accel) { registerGlobalAccel(accel); })}
         , base{base}
-        , config{config}
+        , config{std::move(config)}
     {
         qRegisterMetaType<button_state>();
         qRegisterMetaType<key_state>();
@@ -132,8 +132,7 @@ public:
     std::vector<touch*> touchs;
 
     std::unique_ptr<global_shortcuts_manager> shortcuts;
-
-    KSharedConfigPtr config;
+    input::config config;
 };
 
 }

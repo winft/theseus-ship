@@ -833,7 +833,7 @@ void keyboard_layout_test::test_num_lock()
     QVERIFY(!(xkb->leds & input::keyboard_leds::num_lock));
 
     // Let's reconfigure to enable through config.
-    auto group = Test::app()->base.input->config->group("Keyboard");
+    auto group = Test::app()->base.input->config.main->group("Keyboard");
     group.writeEntry("NumLock", 0);
     group.sync();
 
