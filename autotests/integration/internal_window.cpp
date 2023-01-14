@@ -190,7 +190,6 @@ void InternalWindowTest::initTestCase()
 {
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
-    kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
 
     Test::app()->start();
     Test::app()->set_outputs(2);
@@ -622,7 +621,7 @@ void InternalWindowTest::testModifierClickUnrestrictedMove()
     QVERIFY(internalClient);
     QVERIFY(win::decoration(internalClient));
 
-    KConfigGroup group = kwinApp()->config()->group("MouseBindings");
+    auto group = Test::app()->base.config.main->group("MouseBindings");
     group.writeEntry("CommandAllKey", "Meta");
     group.writeEntry("CommandAll1", "Move");
     group.writeEntry("CommandAll2", "Move");
@@ -669,7 +668,7 @@ void InternalWindowTest::testModifierScroll()
     QVERIFY(internalClient);
     QVERIFY(win::decoration(internalClient));
 
-    KConfigGroup group = kwinApp()->config()->group("MouseBindings");
+    auto group = Test::app()->base.config.main->group("MouseBindings");
     group.writeEntry("CommandAllKey", "Meta");
     group.writeEntry("CommandAllWheel", "change opacity");
     group.sync();

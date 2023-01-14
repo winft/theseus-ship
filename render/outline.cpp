@@ -124,12 +124,15 @@ outline_visual::~outline_visual()
 {
 }
 
-composited_outline_visual::composited_outline_visual(render::outline* outline, QQmlEngine& engine)
+composited_outline_visual::composited_outline_visual(render::outline* outline,
+                                                     QQmlEngine& engine,
+                                                     base::config& config)
     : outline_visual(outline)
     , m_qmlContext()
     , m_qmlComponent()
     , m_mainItem()
     , engine{engine}
+    , config{config}
 {
 }
 
@@ -155,9 +158,7 @@ void composited_outline_visual::show()
         m_qmlComponent.reset(new QQmlComponent(&engine));
         const QString fileName = QStandardPaths::locate(
             QStandardPaths::GenericDataLocation,
-            kwinApp()
-                ->config()
-                ->group(QStringLiteral("Outline"))
+            config.main->group(QStringLiteral("Outline"))
                 .readEntry("QmlPath", QStringLiteral(KWIN_NAME "/outline/plasma/outline.qml")));
         if (fileName.isEmpty()) {
             qCDebug(KWIN_CORE) << "Could not locate outline.qml";

@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "config.h"
 #include "options.h"
 #include "output.h"
 #include "output_topology.h"
@@ -23,7 +24,7 @@ class KWIN_EXPORT platform : public QObject
 {
     Q_OBJECT
 public:
-    platform();
+    platform(base::config config);
     ~platform() override;
 
     virtual clockid_t get_clockid() const;
@@ -32,6 +33,7 @@ public:
     virtual std::vector<output*> get_outputs() const = 0;
 
     output_topology topology;
+    base::config config;
 
     std::unique_ptr<base::options> options;
     std::unique_ptr<base::seat::session> session;

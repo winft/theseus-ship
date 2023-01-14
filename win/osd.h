@@ -34,7 +34,7 @@ static void create_osd(Space& space)
     assert(!space.osd);
     space.osd = std::make_unique<osd_notification<typename Space::input_t>>(*space.input);
 
-    space.osd->m_config = kwinApp()->config();
+    space.osd->m_config = space.base.config.main;
     space.osd->m_qmlEngine = space.scripting->qml_engine;
 }
 

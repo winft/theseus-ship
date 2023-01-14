@@ -149,7 +149,20 @@ private Q_SLOTS:
     void testInactiveOpacityForceTemporarily();
 
     void testMatchAfterNameChange();
+
+private:
+    std::tuple<KSharedConfigPtr, KConfigGroup> get_config() const;
 };
+
+std::tuple<KSharedConfigPtr, KConfigGroup> TestXdgShellClientRules::get_config() const
+{
+    auto config = Test::app()->base.config.main;
+
+    auto group = config->group("1");
+    group.deleteGroup();
+    config->group("General").writeEntry("count", 1);
+    return {config, group};
+}
 
 void TestXdgShellClientRules::initTestCase()
 {
@@ -225,9 +238,7 @@ wayland_window* get_toplevel_window(QSignalSpy const& spy)
 void TestXdgShellClientRules::testPositionDontAffect()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("position", QPoint(42, 42));
     group.writeEntry("positionrule", enum_index(win::rules::action::dont_affect));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -260,9 +271,7 @@ void TestXdgShellClientRules::testPositionDontAffect()
 void TestXdgShellClientRules::testPositionApply()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("position", QPoint(42, 42));
     group.writeEntry("positionrule", enum_index(win::rules::action::apply));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -339,9 +348,7 @@ void TestXdgShellClientRules::testPositionApply()
 void TestXdgShellClientRules::testPositionRemember()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("position", QPoint(42, 42));
     group.writeEntry("positionrule", enum_index(win::rules::action::remember));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -418,9 +425,7 @@ void TestXdgShellClientRules::testPositionRemember()
 void TestXdgShellClientRules::testPositionForce()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("position", QPoint(42, 42));
     group.writeEntry("positionrule", enum_index(win::rules::action::force));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -490,9 +495,7 @@ void TestXdgShellClientRules::testPositionApplyNow()
     QCOMPARE(client->geo.pos(), QPoint(0, 0));
 
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("position", QPoint(42, 42));
     group.writeEntry("positionrule", enum_index(win::rules::action::apply_now));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -558,9 +561,7 @@ void TestXdgShellClientRules::testPositionApplyNow()
 void TestXdgShellClientRules::testPositionForceTemporarily()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("position", QPoint(42, 42));
     group.writeEntry("positionrule", enum_index(win::rules::action::force_temporarily));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -617,9 +618,7 @@ void TestXdgShellClientRules::testPositionForceTemporarily()
 void TestXdgShellClientRules::testSizeDontAffect()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("size", QSize(480, 640));
     group.writeEntry("sizerule", enum_index(win::rules::action::dont_affect));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -668,9 +667,7 @@ void TestXdgShellClientRules::testSizeDontAffect()
 void TestXdgShellClientRules::testSizeApply()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("size", QSize(480, 640));
     group.writeEntry("sizerule", enum_index(win::rules::action::apply));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -810,9 +807,7 @@ void TestXdgShellClientRules::testSizeApply()
 void TestXdgShellClientRules::testSizeRemember()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("size", QSize(480, 640));
     group.writeEntry("sizerule", enum_index(win::rules::action::remember));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -950,9 +945,7 @@ void TestXdgShellClientRules::testSizeRemember()
 void TestXdgShellClientRules::testSizeForce()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("size", QSize(480, 640));
     group.writeEntry("sizerule", enum_index(win::rules::action::force));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -1067,9 +1060,7 @@ void TestXdgShellClientRules::testSizeApplyNow()
     cfgdata = shellSurface->get_configure_data();
 
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("size", QSize(480, 640));
     group.writeEntry("sizerule", enum_index(win::rules::action::apply_now));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -1109,9 +1100,7 @@ void TestXdgShellClientRules::testSizeApplyNow()
 void TestXdgShellClientRules::testSizeForceTemporarily()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("size", QSize(480, 640));
     group.writeEntry("sizerule", enum_index(win::rules::action::force_temporarily));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -1199,9 +1188,7 @@ void TestXdgShellClientRules::testSizeForceTemporarily()
 void TestXdgShellClientRules::testMaximizeDontAffect()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("maximizehoriz", true);
     group.writeEntry("maximizehorizrule", enum_index(win::rules::action::dont_affect));
     group.writeEntry("maximizevert", true);
@@ -1258,9 +1245,7 @@ void TestXdgShellClientRules::testMaximizeDontAffect()
 void TestXdgShellClientRules::testMaximizeApply()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("maximizehoriz", true);
     group.writeEntry("maximizehorizrule", enum_index(win::rules::action::apply));
     group.writeEntry("maximizevert", true);
@@ -1373,9 +1358,7 @@ void TestXdgShellClientRules::testMaximizeApply()
 void TestXdgShellClientRules::testMaximizeRemember()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("maximizehoriz", true);
     group.writeEntry("maximizehorizrule", enum_index(win::rules::action::remember));
     group.writeEntry("maximizevert", true);
@@ -1487,9 +1470,7 @@ void TestXdgShellClientRules::testMaximizeRemember()
 void TestXdgShellClientRules::testMaximizeForce()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("maximizehoriz", true);
     group.writeEntry("maximizehorizrule", enum_index(win::rules::action::force));
     group.writeEntry("maximizevert", true);
@@ -1622,9 +1603,7 @@ void TestXdgShellClientRules::testMaximizeApplyNow()
     QVERIFY(!cfgdata.states.testFlag(xdg_shell_state::maximized));
 
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("maximizehoriz", true);
     group.writeEntry("maximizehorizrule", enum_index(win::rules::action::apply_now));
     group.writeEntry("maximizevert", true);
@@ -1693,9 +1672,7 @@ void TestXdgShellClientRules::testMaximizeApplyNow()
 void TestXdgShellClientRules::testMaximizeForceTemporarily()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("maximizehoriz", true);
     group.writeEntry("maximizehorizrule", enum_index(win::rules::action::force_temporarily));
     group.writeEntry("maximizevert", true);
@@ -1800,9 +1777,7 @@ void TestXdgShellClientRules::testDesktopDontAffect()
     QCOMPARE(vd_manager->current(), 1);
 
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("desktops", QStringList{vd_manager->desktopForX11Id(2)->id()});
     group.writeEntry("desktopsrule", enum_index(win::rules::action::dont_affect));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -1839,9 +1814,7 @@ void TestXdgShellClientRules::testDesktopApply()
     QCOMPARE(vd_manager->current(), 1);
 
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("desktops", QStringList{vd_manager->desktopForX11Id(2)->id()});
     group.writeEntry("desktopsrule", enum_index(win::rules::action::apply));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -1894,9 +1867,7 @@ void TestXdgShellClientRules::testDesktopRemember()
     QCOMPARE(vd_manager->current(), 1);
 
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("desktops", QStringList{vd_manager->desktopForX11Id(2)->id()});
     group.writeEntry("desktopsrule", enum_index(win::rules::action::remember));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -1945,9 +1916,7 @@ void TestXdgShellClientRules::testDesktopForce()
     QCOMPARE(vd_manager->current(), 1);
 
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("desktops", QStringList{vd_manager->desktopForX11Id(2)->id()});
     group.writeEntry("desktopsrule", enum_index(win::rules::action::force));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -2009,9 +1978,7 @@ void TestXdgShellClientRules::testDesktopApplyNow()
     QCOMPARE(vd_manager->current(), 1);
 
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("desktops", QStringList{vd_manager->desktopForX11Id(2)->id()});
     group.writeEntry("desktopsrule", enum_index(win::rules::action::apply_now));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -2051,9 +2018,7 @@ void TestXdgShellClientRules::testDesktopForceTemporarily()
     QCOMPARE(vd_manager->current(), 1);
 
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("desktops", QStringList{vd_manager->desktopForX11Id(2)->id()});
     group.writeEntry("desktopsrule", enum_index(win::rules::action::force_temporarily));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -2107,9 +2072,7 @@ void TestXdgShellClientRules::testDesktopForceTemporarily()
 void TestXdgShellClientRules::testMinimizeDontAffect()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("minimize", true);
     group.writeEntry("minimizerule", enum_index(win::rules::action::dont_affect));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -2139,9 +2102,7 @@ void TestXdgShellClientRules::testMinimizeDontAffect()
 void TestXdgShellClientRules::testMinimizeApply()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("minimize", true);
     group.writeEntry("minimizerule", enum_index(win::rules::action::apply));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -2195,9 +2156,7 @@ void TestXdgShellClientRules::testMinimizeApply()
 void TestXdgShellClientRules::testMinimizeRemember()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("minimize", false);
     group.writeEntry("minimizerule", enum_index(win::rules::action::remember));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -2246,9 +2205,7 @@ void TestXdgShellClientRules::testMinimizeRemember()
 void TestXdgShellClientRules::testMinimizeForce()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("minimize", false);
     group.writeEntry("minimizerule", enum_index(win::rules::action::force));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -2300,9 +2257,7 @@ void TestXdgShellClientRules::testMinimizeApplyNow()
     QVERIFY(!client->control->minimized);
 
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("minimize", true);
     group.writeEntry("minimizerule", enum_index(win::rules::action::apply_now));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -2334,9 +2289,7 @@ void TestXdgShellClientRules::testMinimizeApplyNow()
 void TestXdgShellClientRules::testMinimizeForceTemporarily()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("minimize", false);
     group.writeEntry("minimizerule", enum_index(win::rules::action::force_temporarily));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -2379,9 +2332,7 @@ void TestXdgShellClientRules::testMinimizeForceTemporarily()
 void TestXdgShellClientRules::testSkipTaskbarDontAffect()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("skiptaskbar", true);
     group.writeEntry("skiptaskbarrule", enum_index(win::rules::action::dont_affect));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -2410,9 +2361,7 @@ void TestXdgShellClientRules::testSkipTaskbarDontAffect()
 void TestXdgShellClientRules::testSkipTaskbarApply()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("skiptaskbar", true);
     group.writeEntry("skiptaskbarrule", enum_index(win::rules::action::apply));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -2453,9 +2402,7 @@ void TestXdgShellClientRules::testSkipTaskbarApply()
 void TestXdgShellClientRules::testSkipTaskbarRemember()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("skiptaskbar", true);
     group.writeEntry("skiptaskbarrule", enum_index(win::rules::action::remember));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -2498,9 +2445,7 @@ void TestXdgShellClientRules::testSkipTaskbarRemember()
 void TestXdgShellClientRules::testSkipTaskbarForce()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("skiptaskbar", true);
     group.writeEntry("skiptaskbarrule", enum_index(win::rules::action::force));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -2551,9 +2496,7 @@ void TestXdgShellClientRules::testSkipTaskbarApplyNow()
     QVERIFY(!client->control->skip_taskbar());
 
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("skiptaskbar", true);
     group.writeEntry("skiptaskbarrule", enum_index(win::rules::action::apply_now));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -2583,9 +2526,7 @@ void TestXdgShellClientRules::testSkipTaskbarApplyNow()
 void TestXdgShellClientRules::testSkipTaskbarForceTemporarily()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("skiptaskbar", true);
     group.writeEntry("skiptaskbarrule", enum_index(win::rules::action::force_temporarily));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -2630,9 +2571,7 @@ void TestXdgShellClientRules::testSkipTaskbarForceTemporarily()
 void TestXdgShellClientRules::testSkipPagerDontAffect()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("skippager", true);
     group.writeEntry("skippagerrule", enum_index(win::rules::action::dont_affect));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -2661,9 +2600,7 @@ void TestXdgShellClientRules::testSkipPagerDontAffect()
 void TestXdgShellClientRules::testSkipPagerApply()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("skippager", true);
     group.writeEntry("skippagerrule", enum_index(win::rules::action::apply));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -2704,9 +2641,7 @@ void TestXdgShellClientRules::testSkipPagerApply()
 void TestXdgShellClientRules::testSkipPagerRemember()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("skippager", true);
     group.writeEntry("skippagerrule", enum_index(win::rules::action::remember));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -2749,9 +2684,7 @@ void TestXdgShellClientRules::testSkipPagerRemember()
 void TestXdgShellClientRules::testSkipPagerForce()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("skippager", true);
     group.writeEntry("skippagerrule", enum_index(win::rules::action::force));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -2802,9 +2735,7 @@ void TestXdgShellClientRules::testSkipPagerApplyNow()
     QVERIFY(!client->control->skip_pager());
 
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("skippager", true);
     group.writeEntry("skippagerrule", enum_index(win::rules::action::apply_now));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -2834,9 +2765,7 @@ void TestXdgShellClientRules::testSkipPagerApplyNow()
 void TestXdgShellClientRules::testSkipPagerForceTemporarily()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("skippager", true);
     group.writeEntry("skippagerrule", enum_index(win::rules::action::force_temporarily));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -2881,9 +2810,7 @@ void TestXdgShellClientRules::testSkipPagerForceTemporarily()
 void TestXdgShellClientRules::testSkipSwitcherDontAffect()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("skipswitcher", true);
     group.writeEntry("skipswitcherrule", enum_index(win::rules::action::dont_affect));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -2912,9 +2839,7 @@ void TestXdgShellClientRules::testSkipSwitcherDontAffect()
 void TestXdgShellClientRules::testSkipSwitcherApply()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("skipswitcher", true);
     group.writeEntry("skipswitcherrule", enum_index(win::rules::action::apply));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -2955,9 +2880,7 @@ void TestXdgShellClientRules::testSkipSwitcherApply()
 void TestXdgShellClientRules::testSkipSwitcherRemember()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("skipswitcher", true);
     group.writeEntry("skipswitcherrule", enum_index(win::rules::action::remember));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -3000,9 +2923,7 @@ void TestXdgShellClientRules::testSkipSwitcherRemember()
 void TestXdgShellClientRules::testSkipSwitcherForce()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("skipswitcher", true);
     group.writeEntry("skipswitcherrule", enum_index(win::rules::action::force));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -3053,9 +2974,7 @@ void TestXdgShellClientRules::testSkipSwitcherApplyNow()
     QVERIFY(!client->control->skip_switcher());
 
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("skipswitcher", true);
     group.writeEntry("skipswitcherrule", enum_index(win::rules::action::apply_now));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -3085,9 +3004,7 @@ void TestXdgShellClientRules::testSkipSwitcherApplyNow()
 void TestXdgShellClientRules::testSkipSwitcherForceTemporarily()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("skipswitcher", true);
     group.writeEntry("skipswitcherrule", enum_index(win::rules::action::force_temporarily));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -3132,9 +3049,7 @@ void TestXdgShellClientRules::testSkipSwitcherForceTemporarily()
 void TestXdgShellClientRules::testKeepAboveDontAffect()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("above", true);
     group.writeEntry("aboverule", enum_index(win::rules::action::dont_affect));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -3163,9 +3078,7 @@ void TestXdgShellClientRules::testKeepAboveDontAffect()
 void TestXdgShellClientRules::testKeepAboveApply()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("above", true);
     group.writeEntry("aboverule", enum_index(win::rules::action::apply));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -3206,9 +3119,7 @@ void TestXdgShellClientRules::testKeepAboveApply()
 void TestXdgShellClientRules::testKeepAboveRemember()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("above", true);
     group.writeEntry("aboverule", enum_index(win::rules::action::remember));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -3249,9 +3160,7 @@ void TestXdgShellClientRules::testKeepAboveRemember()
 void TestXdgShellClientRules::testKeepAboveForce()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("above", true);
     group.writeEntry("aboverule", enum_index(win::rules::action::force));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -3300,9 +3209,7 @@ void TestXdgShellClientRules::testKeepAboveApplyNow()
     QVERIFY(!client->control->keep_above);
 
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("above", true);
     group.writeEntry("aboverule", enum_index(win::rules::action::apply_now));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -3332,9 +3239,7 @@ void TestXdgShellClientRules::testKeepAboveApplyNow()
 void TestXdgShellClientRules::testKeepAboveForceTemporarily()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("above", true);
     group.writeEntry("aboverule", enum_index(win::rules::action::force_temporarily));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -3381,9 +3286,7 @@ void TestXdgShellClientRules::testKeepAboveForceTemporarily()
 void TestXdgShellClientRules::testKeepBelowDontAffect()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("below", true);
     group.writeEntry("belowrule", enum_index(win::rules::action::dont_affect));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -3412,9 +3315,7 @@ void TestXdgShellClientRules::testKeepBelowDontAffect()
 void TestXdgShellClientRules::testKeepBelowApply()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("below", true);
     group.writeEntry("belowrule", enum_index(win::rules::action::apply));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -3455,9 +3356,7 @@ void TestXdgShellClientRules::testKeepBelowApply()
 void TestXdgShellClientRules::testKeepBelowRemember()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("below", true);
     group.writeEntry("belowrule", enum_index(win::rules::action::remember));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -3498,9 +3397,7 @@ void TestXdgShellClientRules::testKeepBelowRemember()
 void TestXdgShellClientRules::testKeepBelowForce()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("below", true);
     group.writeEntry("belowrule", enum_index(win::rules::action::force));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -3549,9 +3446,7 @@ void TestXdgShellClientRules::testKeepBelowApplyNow()
     QVERIFY(!client->control->keep_below);
 
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("below", true);
     group.writeEntry("belowrule", enum_index(win::rules::action::apply_now));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -3581,9 +3476,7 @@ void TestXdgShellClientRules::testKeepBelowApplyNow()
 void TestXdgShellClientRules::testKeepBelowForceTemporarily()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("below", true);
     group.writeEntry("belowrule", enum_index(win::rules::action::force_temporarily));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -3630,9 +3523,7 @@ void TestXdgShellClientRules::testKeepBelowForceTemporarily()
 void TestXdgShellClientRules::testShortcutDontAffect()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("shortcut", "Ctrl+Alt+1");
     group.writeEntry("shortcutrule", enum_index(win::rules::action::dont_affect));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -3674,9 +3565,7 @@ void TestXdgShellClientRules::testShortcutDontAffect()
 void TestXdgShellClientRules::testShortcutApply()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("shortcut", "Ctrl+Alt+1");
     group.writeEntry("shortcutrule", enum_index(win::rules::action::apply));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -3756,9 +3645,7 @@ void TestXdgShellClientRules::testShortcutRemember()
     QSKIP("KWin core doesn't try to save the last used window shortcut");
 
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("shortcut", "Ctrl+Alt+1");
     group.writeEntry("shortcutrule", enum_index(win::rules::action::remember));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -3826,9 +3713,7 @@ void TestXdgShellClientRules::testShortcutForce()
     QSKIP("KWin core can't release forced window shortcuts");
 
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("shortcut", "Ctrl+Alt+1");
     group.writeEntry("shortcutrule", enum_index(win::rules::action::force));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -3902,9 +3787,7 @@ void TestXdgShellClientRules::testShortcutApplyNow()
     QVERIFY(client->control->shortcut.isEmpty());
 
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("shortcut", "Ctrl+Alt+1");
     group.writeEntry("shortcutrule", enum_index(win::rules::action::apply_now));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -3959,9 +3842,7 @@ void TestXdgShellClientRules::testShortcutForceTemporarily()
     QSKIP("KWin core can't release forced window shortcuts");
 
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("shortcut", "Ctrl+Alt+1");
     group.writeEntry("shortcutrule", enum_index(win::rules::action::force_temporarily));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -4073,9 +3954,7 @@ void TestXdgShellClientRules::testDesktopFileForceTemporarily()
 void TestXdgShellClientRules::testActiveOpacityDontAffect()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("opacityactive", 90);
     group.writeEntry("opacityactiverule", enum_index(win::rules::action::dont_affect));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -4105,9 +3984,7 @@ void TestXdgShellClientRules::testActiveOpacityDontAffect()
 void TestXdgShellClientRules::testActiveOpacityForce()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("opacityactive", 90);
     group.writeEntry("opacityactiverule", enum_index(win::rules::action::force));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -4135,9 +4012,7 @@ void TestXdgShellClientRules::testActiveOpacityForce()
 void TestXdgShellClientRules::testActiveOpacityForceTemporarily()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("opacityactive", 90);
     group.writeEntry("opacityactiverule", enum_index(win::rules::action::force_temporarily));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -4174,9 +4049,7 @@ void TestXdgShellClientRules::testActiveOpacityForceTemporarily()
 void TestXdgShellClientRules::testInactiveOpacityDontAffect()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("opacityinactive", 80);
     group.writeEntry("opacityinactiverule", enum_index(win::rules::action::dont_affect));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -4210,9 +4083,7 @@ void TestXdgShellClientRules::testInactiveOpacityDontAffect()
 void TestXdgShellClientRules::testInactiveOpacityForce()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("opacityinactive", 80);
     group.writeEntry("opacityinactiverule", enum_index(win::rules::action::force));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -4247,9 +4118,7 @@ void TestXdgShellClientRules::testInactiveOpacityForce()
 void TestXdgShellClientRules::testInactiveOpacityForceTemporarily()
 {
     // Initialize RuleBook with the test rule.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("opacityinactive", 80);
     group.writeEntry("opacityinactiverule", enum_index(win::rules::action::force_temporarily));
     group.writeEntry("wmclass", "org.kde.foo");
@@ -4294,10 +4163,7 @@ void TestXdgShellClientRules::testInactiveOpacityForceTemporarily()
 
 void TestXdgShellClientRules::testMatchAfterNameChange()
 {
-    KSharedConfig::Ptr config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
-
-    KConfigGroup group = config->group("1");
+    auto [config, group] = get_config();
     group.writeEntry("above", true);
     group.writeEntry("aboverule", enum_index(win::rules::action::force));
     group.writeEntry("wmclass", "org.kde.foo");

@@ -51,7 +51,7 @@ public:
     bool openGLCompositingIsBroken() const override
     {
         const QString unsafeKey = QLatin1String("OpenGLIsUnsafe");
-        return KConfigGroup(kwinApp()->config(), "Compositing").readEntry(unsafeKey, false);
+        return KConfigGroup(this->base.config.main, "Compositing").readEntry(unsafeKey, false);
     }
 
     std::unique_ptr<render::effects_handler_impl<compositor_t>> createEffectsHandler()

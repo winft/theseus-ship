@@ -74,7 +74,6 @@ void GlobalShortcutsTest::initTestCase()
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
 
-    kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
     qputenv("KWIN_XKB_DEFAULT_KEYMAP", "1");
     qputenv("XKB_DEFAULT_RULES", "evdev");
     qputenv("XKB_DEFAULT_LAYOUT", "us,ru");

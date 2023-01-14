@@ -28,7 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "settings.h"
 #include "window.h"
 
-#include "main.h"
 #include "render/scene.h"
 #include "win/deco.h"
 
@@ -233,22 +232,23 @@ public:
 private:
     QString readPlugin()
     {
-        return kwinApp()->config()->group(s_pluginName).readEntry("library", s_defaultPlugin);
+        return space.base.config.main->group(s_pluginName).readEntry("library", s_defaultPlugin);
     }
 
-    static bool readNoPlugin()
+    bool readNoPlugin()
     {
-        return kwinApp()->config()->group(s_pluginName).readEntry("NoPlugin", false);
+        return space.base.config.main->group(s_pluginName).readEntry("NoPlugin", false);
     }
 
     QString readTheme() const
     {
-        return kwinApp()->config()->group(s_pluginName).readEntry("theme", m_defaultTheme);
+        return space.base.config.main->group(s_pluginName).readEntry("theme", m_defaultTheme);
     }
 
     void readDecorationOptions()
     {
-        m_showToolTips = kwinApp()->config()->group(s_pluginName).readEntry("ShowToolTips", true);
+        m_showToolTips
+            = space.base.config.main->group(s_pluginName).readEntry("ShowToolTips", true);
     }
 
     void loadMetaData(const QJsonObject& object)

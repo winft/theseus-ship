@@ -250,8 +250,6 @@ void keyboard_layout_test::initTestCase()
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
 
-    kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
-
     Test::app()->start();
     QVERIFY(startup_spy.size() || startup_spy.wait());
 

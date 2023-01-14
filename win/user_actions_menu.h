@@ -668,7 +668,7 @@ private:
         action->setIcon(QIcon::fromTheme(QStringLiteral("preferences-system-windows-actions")));
         action->setData(base::options_qobject::ApplicationRulesOp);
         m_applicationRulesOperation = action;
-        if (!kwinApp()->config()->isImmutable()
+        if (!space.base.config.main->isImmutable()
             && !KAuthorized::authorizeControlModules(configModules(true)).isEmpty()) {
             advancedMenu->addSeparator();
             action

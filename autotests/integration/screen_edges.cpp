@@ -116,7 +116,7 @@ void reset_edger()
 
 void reset_edger(KSharedConfig::Ptr config)
 {
-    kwinApp()->setConfig(config);
+    Test::app()->base.config.main = config;
     reset_edger();
 }
 

@@ -132,7 +132,7 @@ void init_space(Space& space)
                      vds->qobject.get(),
                      [&vds](auto enabled) { vds->setNavigationWrappingAround(enabled); });
 
-    auto config = kwinApp()->config();
+    auto config = space.base.config.main;
     vds->setConfig(config);
 
     // positioning object needs to be created before the virtual desktops are loaded.
@@ -223,7 +223,7 @@ void clear_space(Space& space)
     assert(space.windows.empty());
 
     space.rule_book.reset();
-    kwinApp()->config()->sync();
+    space.base.config.main->sync();
 
     space.root_info.reset();
     delete space.startup;

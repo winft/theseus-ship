@@ -77,8 +77,9 @@ public:
     using abstract_type = base::wayland::platform;
     using output_t = wlroots::output;
 
-    platform() = default;
-    platform(std::string const& socket_name,
+    platform(base::config config);
+    platform(base::config config,
+             std::string const& socket_name,
              base::wayland::start_options flags,
              start_options options);
 

@@ -55,10 +55,9 @@ void DontCrashAuroraeDestroyDecoTest::initTestCase()
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
 
-    KSharedConfig::Ptr config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
+    auto config = Test::app()->base.config.main;
     config->group("org.kde.kdecoration2").writeEntry("library", "org.kde.kwin.aurorae");
     config->sync();
-    kwinApp()->setConfig(config);
 
     // this test needs to enforce OpenGL compositing to get into the crashy condition
     qputenv("KWIN_COMPOSE", QByteArrayLiteral("O2"));
@@ -86,9 +85,10 @@ void DontCrashAuroraeDestroyDecoTest::testBorderlessMaximizedWindows()
     // see BUG 362772
 
     // first adjust the config
-    KConfigGroup group = kwinApp()->config()->group("Windows");
+    auto group = Test::app()->base.config.main->group("Windows");
     group.writeEntry("BorderlessMaximizedWindows", true);
     group.sync();
+
     win::space_reconfigure(*Test::app()->base.space);
     QCOMPARE(Test::app()->base.options->qobject->borderlessMaximizedWindows(), true);
 

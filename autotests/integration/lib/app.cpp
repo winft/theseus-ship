@@ -76,6 +76,7 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode,
                                                int& argc,
                                                char** argv)
     : Application(mode, argc, argv)
+    , base{base::config(KConfig::OpenFlag::SimpleConfig)}
 {
     auto rm_config = [](auto name) {
         auto const path = QStandardPaths::locate(QStandardPaths::ConfigLocation, name);
@@ -100,8 +101,10 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode,
     removeLibraryPath(ownPath);
     addLibraryPath(ownPath);
 
-    base = base::backend::wlroots::platform(
-        socket_name, flags, base::backend::wlroots::start_options::headless);
+    base = base::backend::wlroots::platform(base::config(KConfig::OpenFlag::SimpleConfig),
+                                            socket_name,
+                                            flags,
+                                            base::backend::wlroots::start_options::headless);
     base.render = std::make_unique<render::backend::wlroots::platform<decltype(base)>>(base);
 
     auto environment = QProcessEnvironment::systemEnvironment();
@@ -155,7 +158,7 @@ void WaylandTestApplication::start()
     auto headless_backend = base::backend::wlroots::get_headless_backend(base.backend);
     wlr_headless_add_output(headless_backend, 1280, 1024);
 
-    base.options = base::create_options(config());
+    base.options = base::create_options(base.config.main);
 
     base.session = std::make_unique<base::seat::backend::wlroots::session>(base.wlroots_session,
                                                                            headless_backend);

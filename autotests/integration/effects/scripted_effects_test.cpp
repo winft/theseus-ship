@@ -117,7 +117,7 @@ bool ScriptedEffectWithDebugSpy::load(const QString& name)
     const QString path = QFINDTESTDATA("./scripts/" + name + ".js");
     engine()->globalObject().setProperty("sendTestResponse",
                                          selfContext.property("sendTestResponse"));
-    if (!init(name, path)) {
+    if (!init(name, path, Test::app()->base.config.main)) {
         return false;
     }
 
@@ -145,7 +145,7 @@ void ScriptedEffectsTest::initTestCase()
     QVERIFY(startup_spy.isValid());
 
     // disable all effects - we don't want to have it interact with the rendering
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
+    auto config = Test::app()->base.config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
 
     auto const builtinNames = render::effect_loader(*effects, *Test::app()->base.render->compositor)
@@ -155,7 +155,6 @@ void ScriptedEffectsTest::initTestCase()
     }
 
     config->sync();
-    kwinApp()->setConfig(config);
 
     qputenv("KWIN_COMPOSE", QByteArrayLiteral("O2"));
     qputenv("KWIN_EFFECTS_FORCE_ANIMATIONS", "1");

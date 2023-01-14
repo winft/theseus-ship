@@ -24,11 +24,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "night_color_data.h"
 #include "suncalc.h"
 
+#include "base/logging.h"
 #include "base/os/clock/skew_notifier.h"
 #include "base/output.h"
 #include "base/platform.h"
 #include "base/seat/session.h"
-#include "main.h"
 #include "utils/gamma_ramp.h"
 
 #include <KConfigWatcher>
@@ -99,9 +99,9 @@ public:
         , clock_skew_notifier{std::make_unique<base::os::clock::skew_notifier>()}
         , base{base}
     {
-        Settings::instance(kwinApp()->config());
+        Settings::instance(base.config.main);
 
-        config_watcher = KConfigWatcher::create(kwinApp()->config());
+        config_watcher = KConfigWatcher::create(base.config.main);
         QObject::connect(config_watcher.data(),
                          &KConfigWatcher::configChanged,
                          qobject.get(),

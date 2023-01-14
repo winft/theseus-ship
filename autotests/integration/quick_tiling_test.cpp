@@ -102,12 +102,9 @@ void QuickTilingTest::initTestCase()
     QVERIFY(startup_spy.isValid());
 
     // set custom config which disables the Outline
-    KSharedConfig::Ptr config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    KConfigGroup group = config->group("Outline");
+    auto group = Test::app()->base.config.main->group("Outline");
     group.writeEntry(QStringLiteral("QmlPath"), QString("/does/not/exist.qml"));
     group.sync();
-
-    kwinApp()->setConfig(config);
 
     qputenv("XKB_DEFAULT_RULES", "evdev");
 

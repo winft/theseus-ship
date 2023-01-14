@@ -95,7 +95,7 @@ public:
     {
         // first off, check whether we figured that we'll crash on detection because of a buggy
         // driver
-        KConfigGroup gl_workaround_group(kwinApp()->config(), "Compositing");
+        KConfigGroup gl_workaround_group(this->base.config.main, "Compositing");
         const QString unsafeKey = QLatin1String("OpenGLIsUnsafe");
         if (gl_workaround_group.readEntry("Backend", "OpenGL") == QLatin1String("OpenGL")
             && gl_workaround_group.readEntry(unsafeKey, false))
@@ -130,7 +130,7 @@ public:
     {
         // first off, check whether we figured that we'll crash on detection because of a buggy
         // driver
-        KConfigGroup gl_workaround_group(kwinApp()->config(), "Compositing");
+        KConfigGroup gl_workaround_group(this->base.config.main, "Compositing");
         const QString unsafeKey = QLatin1String("OpenGLIsUnsafe");
         if (gl_workaround_group.readEntry("Backend", "OpenGL") == QLatin1String("OpenGL")
             && gl_workaround_group.readEntry(unsafeKey, false))
@@ -163,7 +163,7 @@ public:
     void createOpenGLSafePoint(OpenGLSafePoint safePoint) override
     {
         const QString unsafeKey = QLatin1String("OpenGLIsUnsafe");
-        auto group = KConfigGroup(kwinApp()->config(), "Compositing");
+        auto group = KConfigGroup(this->base.config.main, "Compositing");
         switch (safePoint) {
         case OpenGLSafePoint::PreInit:
             group.writeEntry(unsafeKey, true);
@@ -180,7 +180,7 @@ public:
                 m_openGLFreezeProtection->setInterval(15000);
                 m_openGLFreezeProtection->setSingleShot(true);
                 m_openGLFreezeProtection->start();
-                const QString configName = kwinApp()->config()->name();
+                const QString configName = this->base.config.main->name();
                 m_openGLFreezeProtection->moveToThread(m_openGLFreezeProtectionThread.get());
                 QObject::connect(
                     m_openGLFreezeProtection,

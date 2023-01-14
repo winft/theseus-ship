@@ -79,12 +79,9 @@ void StrutsTest::initTestCase()
     QVERIFY(startup_spy.isValid());
 
     // set custom config which disables the Outline
-    KSharedConfig::Ptr config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    KConfigGroup group = config->group("Outline");
+    auto group = Test::app()->base.config.main->group("Outline");
     group.writeEntry(QStringLiteral("QmlPath"), QString("/does/not/exist.qml"));
     group.sync();
-
-    kwinApp()->setConfig(config);
 
     Test::app()->start();
     Test::app()->set_outputs(2);
@@ -367,7 +364,7 @@ void StrutsTest::testWaylandMobilePanel()
     using namespace Wrapland::Client;
 
     // First enable maxmizing policy
-    KConfigGroup group = kwinApp()->config()->group("Windows");
+    auto group = Test::app()->base.config.main->group("Windows");
     group.writeEntry("Placement", "maximizing");
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);

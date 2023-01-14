@@ -16,6 +16,11 @@
 namespace KWin::base::backend::x11
 {
 
+platform::platform(base::config config)
+    : base::x11::platform(std::move(config))
+{
+}
+
 void platform::update_outputs()
 {
     if (!randr_filter) {

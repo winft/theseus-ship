@@ -52,10 +52,9 @@ void DontCrashNoBorder::initTestCase()
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
 
-    KSharedConfig::Ptr config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
+    auto config = Test::app()->base.config.main;
     config->group("org.kde.kdecoration2").writeEntry("NoPlugin", true);
     config->sync();
-    kwinApp()->setConfig(config);
 
     // this test needs to enforce OpenGL compositing to get into the crashy condition
     qputenv("KWIN_COMPOSE", QByteArrayLiteral("O2"));

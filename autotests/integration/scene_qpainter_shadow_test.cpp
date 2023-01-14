@@ -120,16 +120,16 @@ void SceneQPainterShadowTest::initTestCase()
     QVERIFY(startup_spy.isValid());
 
     // disable all effects - we don't want to have it interact with the rendering
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
+    auto config = Test::app()->base.config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
     auto const builtinNames = render::effect_loader(*effects, *Test::app()->base.render->compositor)
                                   .listOfKnownEffects();
+
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
 
     config->sync();
-    kwinApp()->setConfig(config);
 
     if (!QStandardPaths::locateAll(QStandardPaths::GenericDataLocation,
                                    QStringLiteral("icons/DMZ-White/index.theme"))
@@ -151,7 +151,7 @@ void SceneQPainterShadowTest::initTestCase()
         QDir(QCoreApplication::applicationDirPath()).absoluteFilePath("fakes"));
 
     // Change decoration theme.
-    KConfigGroup group = kwinApp()->config()->group("org.kde.kdecoration2");
+    auto group = Test::app()->base.config.main->group("org.kde.kdecoration2");
     group.writeEntry("library", "org.kde.test.fakedecowithshadows");
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);

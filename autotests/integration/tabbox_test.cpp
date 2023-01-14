@@ -56,10 +56,9 @@ void TabBoxTest::initTestCase()
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
 
-    KSharedConfigPtr c = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
+    auto c = Test::app()->base.config.main;
     c->group("TabBox").writeEntry("ShowTabBox", false);
     c->sync();
-    kwinApp()->setConfig(c);
     qputenv("KWIN_XKB_DEFAULT_KEYMAP", "1");
 
     Test::app()->start();

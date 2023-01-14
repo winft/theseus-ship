@@ -25,6 +25,11 @@ public:
     using input_t = input::x11::platform<platform>;
     using space_t = win::x11::space<platform>;
 
+    platform(base::config config)
+        : base::platform(std::move(config))
+    {
+    }
+
     ~platform() override
     {
         for (auto out : outputs) {

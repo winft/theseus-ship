@@ -66,7 +66,6 @@ void TestMaximized::initTestCase()
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
 
-    kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
     Test::app()->start();
     Test::app()->set_outputs(2);
 
@@ -87,7 +86,7 @@ void TestMaximized::cleanup()
     Test::destroy_wayland_connection();
 
     // adjust config
-    auto group = kwinApp()->config()->group("Windows");
+    auto group = Test::app()->base.config.main->group("Windows");
     group.writeEntry("BorderlessMaximizedWindows", false);
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);
@@ -227,7 +226,7 @@ void TestMaximized::testInitiallyMaximizedBorderless()
     // with BorderlessMaximizedWindows
 
     // adjust config
-    auto group = kwinApp()->config()->group("Windows");
+    auto group = Test::app()->base.config.main->group("Windows");
     group.writeEntry("BorderlessMaximizedWindows", true);
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);
@@ -284,7 +283,7 @@ void TestMaximized::testBorderlessMaximizedWindow()
     // decoration when the borderless maximized option is on.
 
     // Enable the borderless maximized windows option.
-    auto group = kwinApp()->config()->group("Windows");
+    auto group = Test::app()->base.config.main->group("Windows");
     group.writeEntry("BorderlessMaximizedWindows", true);
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);
@@ -385,7 +384,7 @@ void TestMaximized::testBorderlessMaximizedWindowNoClientSideDecoration()
     // clients to render client-side decorations instead (BUG 405385)
 
     // adjust config
-    auto group = kwinApp()->config()->group("Windows");
+    auto group = Test::app()->base.config.main->group("Windows");
     group.writeEntry("BorderlessMaximizedWindows", true);
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);

@@ -79,7 +79,6 @@ int Application::x11ScreenNumber()
 Application::Application(Application::OperationMode mode, int &argc, char **argv)
     : QApplication(argc, argv)
     , x11_event_filters{new base::x11::event_filter_manager}
-    , m_config()
     , m_operationMode(mode)
 {
     qDebug("Starting KWinFT %s", KWIN_VERSION_STRING);
@@ -91,15 +90,10 @@ Application::Application(Application::OperationMode mode, int &argc, char **argv
     qRegisterMetaType<base::options_qobject::WindowOperation>("base::options::WindowOperation");
     qRegisterMetaType<KWin::EffectWindow*>();
     qRegisterMetaType<Wrapland::Server::Surface*>("Wrapland::Server::Surface*");
-    qRegisterMetaType<KSharedConfigPtr>();
 
     // We want all QQuickWindows with an alpha buffer, do here as a later Workspace might create
     // QQuickWindows.
     QQuickWindow::setDefaultAlphaBuffer(true);
-
-    if (!m_config) {
-        m_config = KSharedConfig::openConfig();
-    }
 }
 
 Application::OperationMode Application::operationMode() const

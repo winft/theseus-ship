@@ -55,6 +55,7 @@ public:
 
 X11TestApplication::X11TestApplication(int& argc, char** argv)
     : Application(OperationModeX11, argc, argv)
+    , base{base::config(KConfig::OpenFlag::SimpleConfig)}
 {
     setX11Connection(QX11Info::connection());
     setX11RootWindow(QX11Info::appRootWindow());

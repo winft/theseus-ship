@@ -154,7 +154,7 @@ void DecorationInputTest::initTestCase()
     config->group(QStringLiteral("Desktops")).writeEntry("Number", 2);
     config->sync();
 
-    kwinApp()->setConfig(config);
+    Test::app()->base.config.main = config;
 
     Test::app()->start();
     Test::app()->set_outputs(2);
@@ -561,11 +561,10 @@ void DecorationInputTest::testResizeOutsideWindow()
     // this test verifies that one can resize the window outside the decoration with NoSideBorder
 
     // first adjust config
-    kwinApp()
-        ->config()
-        ->group("org.kde.kdecoration2")
+    Test::app()
+        ->base.config.main->group("org.kde.kdecoration2")
         .writeEntry("BorderSize", QStringLiteral("None"));
-    kwinApp()->config()->sync();
+    Test::app()->base.config.main->sync();
     win::space_reconfigure(*Test::app()->base.space);
 
     // now create window
@@ -659,7 +658,7 @@ void DecorationInputTest::testModifierClickUnrestrictedMove()
 
     // first modify the config for this run
     QFETCH(QString, modKey);
-    KConfigGroup group = kwinApp()->config()->group("MouseBindings");
+    auto group = Test::app()->base.config.main->group("MouseBindings");
     group.writeEntry("CommandAllKey", modKey);
     group.writeEntry("CommandAll1", "Move");
     group.writeEntry("CommandAll2", "Move");
@@ -736,7 +735,7 @@ void DecorationInputTest::testModifierScrollOpacity()
 
     // first modify the config for this run
     QFETCH(QString, modKey);
-    KConfigGroup group = kwinApp()->config()->group("MouseBindings");
+    auto group = Test::app()->base.config.main->group("MouseBindings");
     group.writeEntry("CommandAllKey", modKey);
     group.writeEntry("CommandAllWheel", "change opacity");
     group.sync();

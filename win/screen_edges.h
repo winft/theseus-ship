@@ -911,7 +911,7 @@ public:
                                  .height();
         corner_offset = 4 * gridUnit;
 
-        config = kwinApp()->config();
+        config = space.base.config.main;
 
         reconfigure();
         updateLayout();

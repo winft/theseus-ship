@@ -155,7 +155,6 @@ void PointerInputTest::initTestCase()
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
-    kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
 
     auto hasTheme = [](const QString& name) {
         const auto path = "icons/" + name + "/index.theme";
@@ -447,7 +446,7 @@ void PointerInputTest::testModifierClickUnrestrictedMove()
 
     // first modify the config for this run
     QFETCH(QString, modKey);
-    KConfigGroup group = kwinApp()->config()->group("MouseBindings");
+    auto group = Test::app()->base.config.main->group("MouseBindings");
     group.writeEntry("CommandAllKey", modKey);
     group.writeEntry("CommandAll1", "Move");
     group.writeEntry("CommandAll2", "Move");
@@ -519,7 +518,7 @@ void PointerInputTest::testModifierClickUnrestrictedMoveGlobalShortcutsDisabled(
     QVERIFY(buttonSpy.isValid());
 
     // first modify the config for this run
-    KConfigGroup group = kwinApp()->config()->group("MouseBindings");
+    auto group = Test::app()->base.config.main->group("MouseBindings");
     group.writeEntry("CommandAllKey", "Meta");
     group.writeEntry("CommandAll1", "Move");
     group.writeEntry("CommandAll2", "Move");
@@ -602,7 +601,7 @@ void PointerInputTest::testModifierScrollOpacity()
 
     // first modify the config for this run
     QFETCH(QString, modKey);
-    KConfigGroup group = kwinApp()->config()->group("MouseBindings");
+    auto group = Test::app()->base.config.main->group("MouseBindings");
     group.writeEntry("CommandAllKey", modKey);
     group.writeEntry("CommandAllWheel", "change opacity");
     group.sync();
@@ -662,7 +661,7 @@ void PointerInputTest::testModifierScrollOpacityGlobalShortcutsDisabled()
     QVERIFY(axisSpy.isValid());
 
     // first modify the config for this run
-    KConfigGroup group = kwinApp()->config()->group("MouseBindings");
+    auto group = Test::app()->base.config.main->group("MouseBindings");
     group.writeEntry("CommandAllKey", "Meta");
     group.writeEntry("CommandAllWheel", "change opacity");
     group.sync();
@@ -716,7 +715,7 @@ void PointerInputTest::testScrollAction()
     QVERIFY(axisSpy.isValid());
 
     // first modify the config for this run
-    KConfigGroup group = kwinApp()->config()->group("MouseBindings");
+    auto group = Test::app()->base.config.main->group("MouseBindings");
     group.writeEntry("CommandWindowWheel", "activate and scroll");
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);
@@ -770,7 +769,7 @@ void PointerInputTest::testFocusFollowsMouse()
     Test::cursor()->set_pos(900, 900);
 
     // first modify the config for this run
-    KConfigGroup group = kwinApp()->config()->group("Windows");
+    auto group = Test::app()->base.config.main->group("Windows");
     group.writeEntry("AutoRaise", true);
     group.writeEntry("AutoRaiseInterval", 20);
     group.writeEntry("DelayFocusInterval", 200);
@@ -874,10 +873,10 @@ void PointerInputTest::testMouseActionInactiveWindow()
     using namespace Wrapland::Client;
 
     // First modify the config for this run - disable FocusFollowsMouse.
-    KConfigGroup group = kwinApp()->config()->group("Windows");
+    auto group = Test::app()->base.config.main->group("Windows");
     group.writeEntry("FocusPolicy", "ClickToFocus");
     group.sync();
-    group = kwinApp()->config()->group("MouseBindings");
+    group = Test::app()->base.config.main->group("MouseBindings");
     group.writeEntry("CommandWindow1", "Activate, raise and pass click");
     group.writeEntry("CommandWindow2", "Activate, raise and pass click");
     group.writeEntry("CommandWindow3", "Activate, raise and pass click");
@@ -986,7 +985,7 @@ void PointerInputTest::testMouseActionActiveWindow()
 
     // Adjust config for this run.
     QFETCH(bool, clickRaise);
-    KConfigGroup group = kwinApp()->config()->group("Windows");
+    auto group = Test::app()->base.config.main->group("Windows");
     group.writeEntry("ClickRaise", clickRaise);
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);
@@ -1703,7 +1702,7 @@ void PointerInputTest::testResizeCursor()
     // this test verifies that the cursor has correct shape during resize operation
 
     // first modify the config for this run
-    KConfigGroup group = kwinApp()->config()->group("MouseBindings");
+    auto group = Test::app()->base.config.main->group("MouseBindings");
     group.writeEntry("CommandAllKey", "Meta");
     group.writeEntry("CommandAll3", "Resize");
     group.sync();
@@ -1774,7 +1773,7 @@ void PointerInputTest::testMoveCursor()
     // this test verifies that the cursor has correct shape during move operation
 
     // first modify the config for this run
-    KConfigGroup group = kwinApp()->config()->group("MouseBindings");
+    auto group = Test::app()->base.config.main->group("MouseBindings");
     group.writeEntry("CommandAllKey", "Meta");
     group.writeEntry("CommandAll1", "Move");
     group.sync();

@@ -60,15 +60,16 @@ void PopupOpenCloseAnimationTest::initTestCase()
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
 
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
+    auto config = Test::app()->base.config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
     auto const builtinNames = render::effect_loader(*effects, *Test::app()->base.render->compositor)
                                   .listOfKnownEffects();
+
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
+
     config->sync();
-    kwinApp()->setConfig(config);
 
     qputenv("KWIN_EFFECTS_FORCE_ANIMATIONS", QByteArrayLiteral("1"));
 

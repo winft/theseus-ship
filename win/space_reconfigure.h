@@ -27,7 +27,7 @@ void space_reconfigure(Space& space)
 
     bool borderlessMaximizedWindows = space.base.options->qobject->borderlessMaximizedWindows();
 
-    kwinApp()->config()->reparseConfiguration();
+    space.base.config.main->reparseConfiguration();
     space.base.options->updateSettings();
     space.scripting->start();
 

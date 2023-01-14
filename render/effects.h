@@ -81,7 +81,7 @@ public:
                     loaded_effects << EffectPair(name, effect);
                     effectsChanged();
                 });
-        m_effectLoader->setConfig(kwinApp()->config());
+        m_effectLoader->setConfig(compositor.platform.base.config.main);
 
         create_adaptor();
         QDBusConnection dbus = QDBusConnection::sessionBus();
@@ -190,8 +190,6 @@ public:
 
     Wrapland::Server::Display* waylandDisplay() const override;
 
-    KSharedConfigPtr config() const override;
-
     bool touchDown(qint32 id, const QPointF& pos, quint32 time);
     bool touchMotion(qint32 id, const QPointF& pos, quint32 time);
     bool touchUp(qint32 id, quint32 time);
@@ -217,7 +215,10 @@ public:
 
 public Q_SLOTS:
     // slots for D-Bus interface
-    Q_SCRIPTABLE void reconfigureEffect(const QString& name);
+    Q_SCRIPTABLE void reconfigureEffect(const QString& name)
+    {
+        reconfigure_effect_impl(name);
+    }
     Q_SCRIPTABLE bool loadEffect(const QString& name);
     Q_SCRIPTABLE void toggleEffect(const QString& name);
     Q_SCRIPTABLE void unloadEffect(const QString& name);
@@ -266,6 +267,7 @@ protected:
     virtual void doCheckInputWindowStacking();
 
     virtual void handle_effect_destroy(Effect& effect) = 0;
+    virtual void reconfigure_effect_impl(QString const& name) = 0;
 
     Effect* keyboard_grab_effect{nullptr};
     Effect* fullscreen_effect{nullptr};
@@ -1291,9 +1293,25 @@ public:
         x11::remove_support_property(*this, effect, propertyName);
     }
 
+    KSharedConfigPtr config() const override
+    {
+        return compositor.platform.base.config.main;
+    }
+
     KSharedConfigPtr inputConfig() const override
     {
         return compositor.platform.base.input->config.main;
+    }
+
+    void reconfigure_effect_impl(QString const& name) override
+    {
+        for (auto it = loaded_effects.constBegin(); it != loaded_effects.constEnd(); ++it)
+            if ((*it).first == name) {
+                compositor.platform.base.config.main->reparseConfiguration();
+                makeOpenGLContextCurrent();
+                (*it).second->reconfigure(Effect::ReconfigureAll);
+                return;
+            }
     }
 
     Compositor& compositor;

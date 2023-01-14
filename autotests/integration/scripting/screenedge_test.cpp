@@ -63,7 +63,7 @@ void ScreenEdgeTest::initTestCase()
     QVERIFY(startup_spy.isValid());
 
     // empty config to have defaults
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
+    auto config = Test::app()->base.config.main;
 
     // disable all effects to prevent them grabbing edges
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
@@ -76,9 +76,7 @@ void ScreenEdgeTest::initTestCase()
     // disable electric border pushback
     config->group("Windows").writeEntry("ElectricBorderPushbackPixels", 0);
     config->group("TabBox").writeEntry("TouchBorderActivate", int(ElectricNone));
-
     config->sync();
-    kwinApp()->setConfig(config);
 
     Test::app()->start();
     QVERIFY(startup_spy.wait());
@@ -137,7 +135,7 @@ void ScreenEdgeTest::testEdge()
     QVERIFY(!scriptToLoad.isEmpty());
 
     // mock the config
-    auto config = kwinApp()->config();
+    auto config = Test::app()->base.config.main;
     QFETCH(KWin::ElectricBorder, edge);
     config->group(QLatin1String("Script-") + scriptToLoad).writeEntry("Edge", int(edge));
     config->sync();
@@ -188,7 +186,7 @@ void ScreenEdgeTest::testTouchEdge()
     QVERIFY(!scriptToLoad.isEmpty());
 
     // mock the config
-    auto config = kwinApp()->config();
+    auto config = Test::app()->base.config.main;
     QFETCH(KWin::ElectricBorder, edge);
     config->group(QLatin1String("Script-") + scriptToLoad).writeEntry("Edge", int(edge));
     config->sync();

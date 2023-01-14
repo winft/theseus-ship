@@ -8,7 +8,8 @@
 namespace KWin::base
 {
 
-platform::platform()
+platform::platform(base::config config)
+    : config{std::move(config)}
 {
     QObject::connect(this, &platform::output_added, this, [this](auto output) {
         if (!topology.current) {

@@ -88,7 +88,7 @@ public:
             = [&compositor]() -> base::options& { return *compositor.platform.base.options; };
         auto get_screen_size = [&compositor] { return compositor.platform.base.topology.size; };
         auto effect = new scripting::effect(effects, get_options, get_screen_size);
-        if (!effect->init(effectName, pathToScript)) {
+        if (!effect->init(effectName, pathToScript, compositor.platform.base.config.main)) {
             delete effect;
             return nullptr;
         }
@@ -236,7 +236,7 @@ protected:
            std::function<QSize()> get_screen_size);
 
     QJSEngine* engine() const;
-    bool init(const QString& effectName, const QString& pathToScript);
+    bool init(QString const& effectName, QString const& pathToScript, KSharedConfigPtr config);
     void animationEnded(KWin::EffectWindow* w, Attribute a, uint meta) override;
 
     EffectsHandler& effects;

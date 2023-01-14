@@ -101,20 +101,19 @@ void TestScreens::testReconfigure_data()
 
 void TestScreens::testReconfigure()
 {
+    auto original_config = Test::app()->base.config.main;
     auto& options = Test::app()->base.options;
-    options->loadConfig();
 
     QCOMPARE(options->get_current_output_follows_mouse(), false);
-
     QFETCH(QString, focusPolicy);
 
-    KSharedConfig::Ptr config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
+    auto config = KSharedConfig::openConfig("testScreens_testReconfigure", KConfig::SimpleConfig);
     config->group("Windows").writeEntry("FocusPolicy", focusPolicy);
+    config->group("Windows").deleteEntry("ActiveMouseScreen");
     config->group("Windows").sync();
     config->sync();
 
-    auto original_config = Test::app()->config();
-    Test::app()->setConfig(config);
+    Test::app()->base.config.main = config;
     options = std::make_unique<base::options>(config);
     options->loadConfig();
 
@@ -126,7 +125,7 @@ void TestScreens::testReconfigure()
     options->updateSettings();
     QCOMPARE(options->get_current_output_follows_mouse(), !expectedDefault);
 
-    Test::app()->setConfig(original_config);
+    Test::app()->base.config.main = original_config;
     options = std::make_unique<base::options>(original_config);
     options->loadConfig();
     QCOMPARE(options->get_current_output_follows_mouse(), false);
@@ -383,7 +382,7 @@ void TestScreens::testCurrentWithFollowsMouse()
     QSignalSpy changedSpy(&Test::app()->base, &base::platform::topology_changed);
     QVERIFY(changedSpy.isValid());
 
-    auto group = kwinApp()->config()->group("Windows");
+    auto group = Test::app()->base.config.main->group("Windows");
     group.writeEntry("ActiveMouseScreen", true);
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);
@@ -430,7 +429,7 @@ void TestScreens::testCurrentPoint()
     QSignalSpy changedSpy(&Test::app()->base, &base::platform::topology_changed);
     QVERIFY(changedSpy.isValid());
 
-    auto group = kwinApp()->config()->group("Windows");
+    auto group = Test::app()->base.config.main->group("Windows");
     group.writeEntry("ActiveMouseScreen", false);
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);

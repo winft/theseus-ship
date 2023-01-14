@@ -188,7 +188,7 @@ template<typename Compositor>
 void reinitialize_compositor(Compositor& comp)
 {
     // Reparse config. Config options will be reloaded by start()
-    kwinApp()->config()->reparseConfiguration();
+    comp.platform.base.config.main->reparseConfiguration();
 
     // Restart compositing
     compositor_stop(comp, false);

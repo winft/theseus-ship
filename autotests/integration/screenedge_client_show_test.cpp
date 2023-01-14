@@ -53,12 +53,9 @@ void ScreenEdgeClientShowTest::initTestCase()
     QVERIFY(startup_spy.isValid());
 
     // set custom config which disable touch edge
-    KSharedConfig::Ptr config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    KConfigGroup group = config->group("TabBox");
+    KConfigGroup group = Test::app()->base.config.main->group("TabBox");
     group.writeEntry(QStringLiteral("TouchBorderActivate"), "9");
     group.sync();
-
-    kwinApp()->setConfig(config);
 
     Test::app()->start();
     Test::app()->set_outputs(2);

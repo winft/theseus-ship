@@ -522,17 +522,6 @@ void effects_handler_wrap::destroyEffect(Effect* effect)
     delete effect;
 }
 
-void effects_handler_wrap::reconfigureEffect(const QString& name)
-{
-    for (auto it = loaded_effects.constBegin(); it != loaded_effects.constEnd(); ++it)
-        if ((*it).first == name) {
-            kwinApp()->config()->reparseConfiguration();
-            makeOpenGLContextCurrent();
-            (*it).second->reconfigure(Effect::ReconfigureAll);
-            return;
-        }
-}
-
 bool effects_handler_wrap::isEffectLoaded(const QString& name) const
 {
     auto it = std::find_if(loaded_effects.constBegin(),
@@ -683,11 +672,6 @@ void effects_handler_wrap::highlightWindows(const QVector<EffectWindow*>& window
         return;
     }
     e->perform(Effect::HighlightWindows, QVariantList{QVariant::fromValue(windows)});
-}
-
-KSharedConfigPtr effects_handler_wrap::config() const
-{
-    return kwinApp()->config();
 }
 
 Effect* effects_handler_wrap::findEffect(const QString& name) const

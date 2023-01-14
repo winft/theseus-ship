@@ -31,10 +31,16 @@ public:
     using input_t = input::wayland::platform<platform>;
     using space_t = win::wayland::space<platform>;
 
-    platform() = default;
+    platform(base::config config)
+        : base::platform(std::move(config))
+    {
+    }
 
-    platform(std::string const& socket_name, base::wayland::start_options flags)
-        : server{std::make_unique<base::wayland::server>(socket_name, flags)}
+    platform(base::config config,
+             std::string const& socket_name,
+             base::wayland::start_options flags)
+        : base::platform(std::move(config))
+        , server{std::make_unique<base::wayland::server>(socket_name, flags)}
     {
     }
 
@@ -42,6 +48,7 @@ public:
     platform& operator=(platform const&) = delete;
 
     platform(platform&& other) noexcept
+        : base::platform(std::move(other.config))
     {
         *this = std::move(other);
     }

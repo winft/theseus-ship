@@ -178,7 +178,7 @@ effect::~effect()
 {
 }
 
-bool effect::init(const QString& effectName, const QString& pathToScript)
+bool effect::init(QString const& effectName, QString const& pathToScript, KSharedConfigPtr config)
 {
     qRegisterMetaType<QJSValueList>();
     qRegisterMetaType<EffectWindowList>();
@@ -197,9 +197,7 @@ bool effect::init(const QString& effectName, const QString& pathToScript)
                                  QLatin1String(KWIN_NAME "/effects/") + m_effectName
                                      + QLatin1String("/contents/config/main.xml"));
     if (!kconfigXTFile.isNull()) {
-        KConfigGroup cg
-            = QCoreApplication::instance()->property("config").value<KSharedConfigPtr>()->group(
-                QStringLiteral("Effect-%1").arg(m_effectName));
+        auto cg = config->group(QStringLiteral("Effect-%1").arg(m_effectName));
         QFile xmlFile(kconfigXTFile);
         m_config = new KConfigLoader(cg, &xmlFile, this);
         m_config->load();

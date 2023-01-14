@@ -64,20 +64,19 @@ void SlidingPopupsTest::initTestCase()
     QVERIFY(startup_spy.isValid());
 
     // disable all effects - we don't want to have it interact with the rendering
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
+    auto config = Test::app()->base.config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
     auto const builtinNames = render::effect_loader(*effects, *Test::app()->base.render->compositor)
                                   .listOfKnownEffects();
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
+
     KConfigGroup wobblyGroup = config->group("Effect-Wobbly");
     wobblyGroup.writeEntry(QStringLiteral("Settings"), QStringLiteral("Custom"));
     wobblyGroup.writeEntry(QStringLiteral("OpenEffect"), true);
     wobblyGroup.writeEntry(QStringLiteral("CloseEffect"), true);
-
     config->sync();
-    kwinApp()->setConfig(config);
 
     qputenv("KWIN_COMPOSE", QByteArrayLiteral("O2"));
     qputenv("KWIN_EFFECTS_FORCE_ANIMATIONS", "1");

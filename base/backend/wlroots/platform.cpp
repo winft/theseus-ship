@@ -86,10 +86,16 @@ void handle_new_output(struct wl_listener* listener, void* data)
     }
 }
 
-platform::platform(std::string const& socket_name,
+platform::platform(base::config config)
+    : wayland::platform(std::move(config))
+{
+}
+
+platform::platform(base::config config,
+                   std::string const& socket_name,
                    base::wayland::start_options flags,
                    start_options options)
-    : wayland::platform(socket_name, flags)
+    : wayland::platform(std::move(config), socket_name, flags)
     , destroyed{std::make_unique<event_receiver<platform>>()}
     , new_output{std::make_unique<event_receiver<platform>>()}
 
@@ -125,6 +131,7 @@ platform::platform(std::string const& socket_name,
 }
 
 platform::platform(platform&& other) noexcept
+    : wayland::platform(std::move(other.config))
 {
     *this = std::move(other);
 }

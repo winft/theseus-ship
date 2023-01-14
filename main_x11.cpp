@@ -166,6 +166,7 @@ xcb_atom_t KWinSelectionOwner::xa_version = XCB_ATOM_NONE;
 
 ApplicationX11::ApplicationX11(int &argc, char **argv)
     : Application(OperationModeX11, argc, argv)
+    , base{base::config(KConfig::OpenFlag::FullConfig)}
     , owner()
     , m_replace(false)
 {
@@ -221,7 +222,7 @@ void ApplicationX11::start()
     });
     connect(owner.data(), &KSelectionOwner::lostOwnership, this, &ApplicationX11::lostSelection);
     connect(owner.data(), &KSelectionOwner::claimedOwnership, [this]{
-        base.options = base::create_options(config());
+        base.options = base::create_options(base.config.main);
 
         // Check  whether another windowmanager is running
         const uint32_t maskValues[] = {XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT};

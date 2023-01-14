@@ -61,7 +61,7 @@ void TranslucencyTest::initTestCase()
     QVERIFY(startup_spy.isValid());
 
     // disable all effects - we don't want to have it interact with the rendering
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
+    auto config = Test::app()->base.config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
     auto const builtinNames = render::effect_loader(*effects, *Test::app()->base.render->compositor)
                                   .listOfKnownEffects();
@@ -70,9 +70,7 @@ void TranslucencyTest::initTestCase()
     }
     config->group("Outline").writeEntry(QStringLiteral("QmlPath"), QString("/does/not/exist.qml"));
     config->group("Effect-kwin4_effect_translucency").writeEntry(QStringLiteral("Dialogs"), 90);
-
     config->sync();
-    kwinApp()->setConfig(config);
 
     qputenv("KWIN_EFFECTS_FORCE_ANIMATIONS", "1");
 

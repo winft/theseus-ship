@@ -27,8 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwinglobals.h>
 #include <config-kwin.h>
 
-#include <KSharedConfig>
-
 #include <QApplication>
 #include <QProcessEnvironment>
 
@@ -68,7 +66,6 @@ class KWIN_EXPORT Application : public  QApplication
     Q_PROPERTY(quint32 x11RootWindow READ x11RootWindow CONSTANT)
     Q_PROPERTY(void *x11Connection READ x11Connection NOTIFY x11ConnectionChanged)
     Q_PROPERTY(int x11ScreenNumber READ x11ScreenNumber CONSTANT)
-    Q_PROPERTY(KSharedConfigPtr config READ config WRITE setConfig)
 public:
     /**
      * @brief This enum provides the various operation modes of KWin depending on the available
@@ -94,13 +91,6 @@ public:
     ~Application() override;
 
     virtual base::platform& get_base() = 0;
-
-    KSharedConfigPtr config() const {
-        return m_config;
-    }
-    void setConfig(KSharedConfigPtr config) {
-        m_config = std::move(config);
-    }
 
     /**
      * @brief The operation mode used by KWin.
@@ -219,7 +209,6 @@ protected:
     static int crashes;
 
 private:
-    KSharedConfigPtr m_config;
     OperationMode m_operationMode;
     int x11_screen_number{-1};
     xcb_timestamp_t m_x11Time = XCB_TIME_CURRENT_TIME;

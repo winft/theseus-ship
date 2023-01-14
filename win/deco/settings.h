@@ -167,7 +167,7 @@ private:
 
     void readSettings()
     {
-        KConfigGroup config = kwinApp()->config()->group(QStringLiteral("org.kde.kdecoration2"));
+        KConfigGroup config = space.base.config.main->group(QStringLiteral("org.kde.kdecoration2"));
         const auto& left
             = readDecorationButtons(config,
                                     "ButtonsOnLeft",

@@ -1109,7 +1109,7 @@ private:
 
         bool options_traverse_all;
         {
-            KConfigGroup group(kwinApp()->config(), "TabBox");
+            KConfigGroup group(space.base.config.main, "TabBox");
             options_traverse_all = group.readEntry("TraverseAll", false);
         }
 
@@ -1284,7 +1284,7 @@ private:
 
     void reconfigure()
     {
-        KSharedConfigPtr c = kwinApp()->config();
+        KSharedConfigPtr c = space.base.config.main;
         KConfigGroup config = c->group("TabBox");
 
         load_config(c->group("TabBox"), m_default_config);

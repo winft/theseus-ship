@@ -111,7 +111,6 @@ void TestPlacement::initTestCase()
 {
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
-    kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
 
     Test::app()->start();
     Test::app()->set_outputs(2);
@@ -122,7 +121,7 @@ void TestPlacement::initTestCase()
 
 void TestPlacement::setPlacementPolicy(win::placement policy)
 {
-    auto group = kwinApp()->config()->group("Windows");
+    auto group = Test::app()->base.config.main->group("Windows");
     group.writeEntry("Placement", policy_to_string(policy));
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);
@@ -280,7 +279,7 @@ void TestPlacement::testPlaceCentered()
 {
     // This test verifies that Centered placement policy works.
 
-    KConfigGroup group = kwinApp()->config()->group("Windows");
+    auto group = Test::app()->base.config.main->group("Windows");
     group.writeEntry("Placement", policy_to_string(win::placement::centered));
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);
@@ -299,7 +298,7 @@ void TestPlacement::testPlaceUnderMouse()
 {
     // This test verifies that Under Mouse placement policy works.
 
-    KConfigGroup group = kwinApp()->config()->group("Windows");
+    auto group = Test::app()->base.config.main->group("Windows");
     group.writeEntry("Placement", policy_to_string(win::placement::under_mouse));
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);
@@ -321,7 +320,7 @@ void TestPlacement::testPlaceRandom()
 {
     // This test verifies that Random placement policy works.
 
-    KConfigGroup group = kwinApp()->config()->group("Windows");
+    auto group = Test::app()->base.config.main->group("Windows");
     group.writeEntry("Placement", policy_to_string(win::placement::random));
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);

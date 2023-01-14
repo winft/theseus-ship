@@ -81,12 +81,12 @@ void ColorCorrectNightColorTest::testConfigRead()
     const bool activeDefault = true;
     const int modeDefault = 0;
 
-    KConfigGroup cfgGroup = kwinApp()->config()->group("NightColor");
+    auto cfgGroup = Test::app()->base.config.main->group("NightColor");
 
     cfgGroup.writeEntry("Active", activeDefault);
     cfgGroup.writeEntry("Mode", modeDefault);
 
-    kwinApp()->config()->sync();
+    cfgGroup.sync();
     auto& manager = Test::app()->base.render->night_color;
     manager->reconfigure();
 
@@ -95,7 +95,7 @@ void ColorCorrectNightColorTest::testConfigRead()
 
     cfgGroup.writeEntry("Active", active);
     cfgGroup.writeEntry("Mode", mode);
-    kwinApp()->config()->sync();
+    cfgGroup.sync();
 
     manager->reconfigure();
 
