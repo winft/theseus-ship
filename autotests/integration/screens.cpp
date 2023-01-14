@@ -115,7 +115,7 @@ void TestScreens::testReconfigure()
 
     auto original_config = Test::app()->config();
     Test::app()->setConfig(config);
-    options = std::make_unique<base::options>();
+    options = std::make_unique<base::options>(config);
     options->loadConfig();
 
     QFETCH(bool, expectedDefault);
@@ -127,7 +127,7 @@ void TestScreens::testReconfigure()
     QCOMPARE(options->get_current_output_follows_mouse(), !expectedDefault);
 
     Test::app()->setConfig(original_config);
-    options = std::make_unique<base::options>();
+    options = std::make_unique<base::options>(original_config);
     options->loadConfig();
     QCOMPARE(options->get_current_output_follows_mouse(), false);
 }

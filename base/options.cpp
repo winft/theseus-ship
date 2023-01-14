@@ -883,9 +883,9 @@ bool options_qobject::isUseCompositing() const
     return m_useCompositing || kwinApp()->shouldUseWaylandForCompositing();
 }
 
-options::options()
+options::options(KSharedConfigPtr config)
     : qobject{std::make_unique<options_qobject>()}
-    , m_settings(new Settings(kwinApp()->config()))
+    , m_settings(new Settings(config))
 {
     m_settings->setDefaults();
     syncFromKcfgc();

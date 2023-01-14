@@ -217,7 +217,7 @@ bool Application::is_screen_locked() const
 
 void Application::createOptions()
 {
-    options = std::make_unique<base::options>();
+    options = std::make_unique<base::options>(m_config);
     options->loadConfig();
     options->loadCompositingConfig(false);
 }

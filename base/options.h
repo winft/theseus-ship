@@ -925,7 +925,7 @@ private:
 class KWIN_EXPORT options
 {
 public:
-    options();
+    options(KSharedConfigPtr config);
     ~options();
 
     void updateSettings();
