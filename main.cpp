@@ -80,7 +80,6 @@ int Application::x11ScreenNumber()
 Application::Application(Application::OperationMode mode, int &argc, char **argv)
     : QApplication(argc, argv)
     , x11_event_filters{new base::x11::event_filter_manager}
-    , m_configLock(false)
     , m_config()
     , m_operationMode(mode)
 {
@@ -98,11 +97,6 @@ Application::Application(Application::OperationMode mode, int &argc, char **argv
     // We want all QQuickWindows with an alpha buffer, do here as a later Workspace might create
     // QQuickWindows.
     QQuickWindow::setDefaultAlphaBuffer(true);
-}
-
-void Application::setConfigLock(bool lock)
-{
-    m_configLock = lock;
 }
 
 Application::OperationMode Application::operationMode() const
@@ -126,11 +120,6 @@ void Application::prepare_start()
 
     if (!m_config) {
         m_config = KSharedConfig::openConfig();
-    }
-    if (!m_config->isImmutable() && m_configLock) {
-        // TODO: This shouldn't be necessary
-        //config->setReadOnly( true );
-        m_config->reparseConfiguration();
     }
 
     screen_locker_watcher = std::make_unique<desktop::screen_locker_watcher>();
@@ -176,16 +165,13 @@ void Application::createAboutData()
     KAboutData::setApplicationData(aboutData);
 }
 
-static const QString s_lockOption = QStringLiteral("lock");
 static const QString s_crashesOption = QStringLiteral("crashes");
 
 void Application::setupCommandLine(QCommandLineParser *parser)
 {
-    QCommandLineOption lockOption(s_lockOption, i18n("Disable configuration options"));
     QCommandLineOption crashesOption(s_crashesOption, i18n("Indicate that KWin has recently crashed n times"), QStringLiteral("n"));
 
     parser->setApplicationDescription(i18n("KDE window manager"));
-    parser->addOption(lockOption);
     parser->addOption(crashesOption);
     KAboutData::applicationData().setupCommandLine(parser);
 }
@@ -194,7 +180,6 @@ void Application::processCommandLine(QCommandLineParser *parser)
 {
     KAboutData aboutData = KAboutData::applicationData();
     aboutData.processCommandLine(parser);
-    setConfigLock(parser->isSet(s_lockOption));
     Application::setCrashCount(parser->value(s_crashesOption).toInt());
 }
 

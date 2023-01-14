@@ -101,8 +101,6 @@ public:
 
     virtual base::platform& get_base() = 0;
 
-    void setConfigLock(bool lock);
-
     KSharedConfigPtr config() const {
         return m_config;
     }
@@ -231,7 +229,6 @@ protected:
     static int crashes;
 
 private:
-    bool m_configLock;
     KSharedConfigPtr m_config;
     OperationMode m_operationMode;
     int x11_screen_number{-1};
