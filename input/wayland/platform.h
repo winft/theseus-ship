@@ -30,10 +30,10 @@ public:
     platform(Base& base, input::config config)
         : qobject{std::make_unique<platform_qobject>(
             [this](auto accel) { platform_register_global_accel(*this, accel); })}
+        , config{std::move(config)}
         , xkb{xkb::manager<type>(this)}
         , kde_idle{base.server->display->create_kde_idle()}
         , idle_notifier{base.server->display->create_idle_notifier_v1()}
-        , config{std::move(config)}
         , base{base}
     {
         qRegisterMetaType<button_state>();
@@ -138,6 +138,7 @@ public:
     }
 
     std::unique_ptr<platform_qobject> qobject;
+    input::config config;
 
     std::vector<keyboard*> keyboards;
     std::vector<pointer*> pointers;
@@ -153,7 +154,6 @@ public:
     std::unique_ptr<Wrapland::Server::kde_idle> kde_idle;
     std::unique_ptr<Wrapland::Server::idle_notifier_v1> idle_notifier;
 
-    input::config config;
     Base& base;
 
 private:

@@ -81,16 +81,14 @@ public:
 
     void init()
     {
-        auto& xkb = redirect->platform.xkb;
-        auto const config = kwinApp()->kxkbConfig();
-        xkb.numlock_config = redirect->platform.config.main;
-        xkb.setConfig(config);
+        redirect->platform.xkb.numlock_config = redirect->platform.config.main;
 
         redirect->m_spies.push_back(new key_state_changed_spy(*redirect));
         modifiers_spy = new modifiers_changed_spy(*redirect);
         redirect->m_spies.push_back(modifiers_spy);
 
-        layout_manager = std::make_unique<layout_manager_t>(*redirect, config);
+        layout_manager
+            = std::make_unique<layout_manager_t>(*redirect, redirect->platform.config.xkb);
 
         if (redirect->platform.base.server->has_global_shortcut_support()) {
             redirect->m_spies.push_back(new modifier_only_shortcuts_spy(*redirect));

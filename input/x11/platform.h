@@ -26,8 +26,8 @@ public:
     platform(Base& base)
         : qobject{std::make_unique<platform_qobject>(
             [this](auto accel) { platform_register_global_accel(*this, accel); })}
-        , xkb{xkb::manager<type>(this)}
         , config{input::config(KConfig::NoGlobals)}
+        , xkb{xkb::manager<type>(this)}
         , base{base}
     {
         qRegisterMetaType<button_state>();
@@ -93,6 +93,7 @@ public:
     }
 
     std::unique_ptr<platform_qobject> qobject;
+    input::config config;
 
     std::vector<keyboard*> keyboards;
     std::vector<pointer*> pointers;
@@ -101,7 +102,6 @@ public:
     std::unique_ptr<global_shortcuts_manager> shortcuts;
     std::unique_ptr<dbus::device_manager<type>> dbus;
 
-    input::config config;
     Base& base;
 };
 

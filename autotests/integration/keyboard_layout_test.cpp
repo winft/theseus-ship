@@ -251,13 +251,13 @@ void keyboard_layout_test::initTestCase()
     QVERIFY(startup_spy.isValid());
 
     kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
-    kwinApp()->setKxkbConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
-
-    layout_group = kwinApp()->kxkbConfig()->group("Layout");
-    layout_group.deleteGroup();
 
     Test::app()->start();
     QVERIFY(startup_spy.size() || startup_spy.wait());
+
+    layout_group = Test::app()->base.input->config.xkb->group("Layout");
+    layout_group.deleteGroup();
+    layout_group.sync();
 }
 
 void keyboard_layout_test::init()
@@ -293,7 +293,7 @@ void keyboard_layout_test::test_reconfigure()
     QCOMPARE(xkb->layout_name_from_index(0), "English (US)");
 
     // Create a new keymap.
-    auto lay_group = kwinApp()->kxkbConfig()->group("Layout");
+    auto lay_group = Test::app()->base.input->config.xkb->group("Layout");
     lay_group.writeEntry("LayoutList", QStringLiteral("de,us"));
     lay_group.sync();
 
@@ -315,7 +315,7 @@ void keyboard_layout_test::test_multiple_keyboards()
 
     // Currently no way to destroy a headless input device. Enable this check once we can destroy
     // the second keyboard before going into the next test function.
-    layout_group = kwinApp()->kxkbConfig()->group("Layout");
+    layout_group = Test::app()->base.input->config.xkb->group("Layout");
     layout_group.writeEntry("LayoutList", QStringLiteral("de,us"));
     layout_group.sync();
     reconfigure_layouts();

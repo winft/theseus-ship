@@ -94,6 +94,7 @@ public:
             context, locale.constData(), XKB_COMPOSE_COMPILE_NO_FLAGS);
 
         default_keyboard = std::make_unique<keyboard>(context, compose_table);
+        m_configGroup = platform->config.xkb->group("Layout");
     }
 
     ~manager()
@@ -143,6 +144,7 @@ public:
     Platform* platform;
 
     KSharedConfigPtr numlock_config;
+    KConfigGroup m_configGroup;
 
 private:
     /**
@@ -214,8 +216,6 @@ private:
 
         return xkb_keymap_new_from_names(context, &ruleNames, XKB_KEYMAP_COMPILE_NO_FLAGS);
     }
-
-    KConfigGroup m_configGroup;
 };
 
 }

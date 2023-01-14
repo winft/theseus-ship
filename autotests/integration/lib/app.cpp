@@ -77,10 +77,16 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode,
                                                char** argv)
     : Application(mode, argc, argv)
 {
-    // TODO: add a test move to kglobalaccel instead?
-    QFile{QStandardPaths::locate(QStandardPaths::ConfigLocation,
-                                 QStringLiteral("kglobalshortcutsrc"))}
-        .remove();
+    auto rm_config = [](auto name) {
+        auto const path = QStandardPaths::locate(QStandardPaths::ConfigLocation, name);
+        if (!path.isEmpty()) {
+            QFile{path}.remove();
+        }
+    };
+
+    rm_config("kcminputrc");
+    rm_config("kxkbrc");
+    rm_config("kglobalshortcutsrc");
 
     QIcon::setThemeName(QStringLiteral("breeze"));
 

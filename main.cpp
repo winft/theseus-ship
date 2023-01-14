@@ -82,7 +82,6 @@ Application::Application(Application::OperationMode mode, int &argc, char **argv
     , x11_event_filters{new base::x11::event_filter_manager}
     , m_configLock(false)
     , m_config()
-    , m_kxkbConfig()
     , m_operationMode(mode)
 {
     qDebug("Starting KWinFT %s", KWIN_VERSION_STRING);
@@ -132,9 +131,6 @@ void Application::prepare_start()
         // TODO: This shouldn't be necessary
         //config->setReadOnly( true );
         m_config->reparseConfiguration();
-    }
-    if (!m_kxkbConfig) {
-        m_kxkbConfig = KSharedConfig::openConfig(QStringLiteral("kxkbrc"), KConfig::NoGlobals);
     }
 
     screen_locker_watcher = std::make_unique<desktop::screen_locker_watcher>();
