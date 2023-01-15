@@ -392,7 +392,6 @@ set(kwin_SRCS
     debug/perf/ftrace.cpp
     input/keyboard.cpp
     input/keyboard_redirect.cpp
-    input/platform.cpp
     input/platform_qobject.cpp
     input/redirect_qobject.cpp
     input/singleton_interface.cpp
