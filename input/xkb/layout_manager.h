@@ -106,16 +106,15 @@ public:
 private:
     void reconfigure()
     {
+        redirect.platform.xkb.reconfigure();
+
         if (m_configGroup.isValid()) {
             m_configGroup.config()->reparseConfiguration();
             const QString policyKey
                 = m_configGroup.readEntry("SwitchMode", QStringLiteral("Global"));
-            redirect.platform.xkb.reconfigure();
             if (!m_policy || m_policy->name() != policyKey) {
                 m_policy = create_layout_policy(this, m_configGroup, policyKey);
             }
-        } else {
-            redirect.platform.xkb.reconfigure();
         }
 
         load_shortcuts();
