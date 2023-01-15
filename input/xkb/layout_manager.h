@@ -118,34 +118,25 @@ private:
         }
 
         load_shortcuts();
-        reconfigure_dbus_interface_v1();
+
+        if (requires_dbus_interface_v1()) {
+            init_dbus_interface_v1();
+        } else if (dbus_interface_v1) {
+            // Emit change before reset for backwards compatibility (was done so in the past).
+            Q_EMIT dbus_interface_v1->layoutListChanged();
+            dbus_interface_v1.reset();
+        }
 
         Q_EMIT qobject->layoutsReconfigured();
     }
 
-    void reconfigure_dbus_interface_v1()
+    void init_dbus_interface_v1()
     {
-        auto xkb = get_keyboard();
-
-        if (xkb->layouts_count() <= 1) {
-            if (dbus_interface_v1) {
-                // Emit change before reset for backwards compatibility (was done so in the past).
-                Q_EMIT dbus_interface_v1->layoutListChanged();
-                dbus_interface_v1.reset();
-            }
-            return;
-        }
+        assert(requires_dbus_interface_v1());
 
         if (dbus_interface_v1) {
             return;
         }
-
-        init_dbus_interface_v1();
-    }
-
-    void init_dbus_interface_v1()
-    {
-        assert(!dbus_interface_v1);
 
         dbus_interface_v1 = std::make_unique<dbus::keyboard_layout>(
             m_configGroup, [this] { return get_primary_xkb_keyboard(this->redirect.platform); });
@@ -236,6 +227,12 @@ private:
     auto get_keyboard()
     {
         return get_primary_xkb_keyboard(redirect.platform);
+    }
+
+    // The interface is advertised iff there are more than one layouts.
+    bool requires_dbus_interface_v1()
+    {
+        return get_keyboard()->layouts_count() > 1;
     }
 
     KConfigGroup m_configGroup;
