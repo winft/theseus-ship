@@ -118,15 +118,13 @@ private:
             redirect.platform.xkb.reconfigure();
         }
 
-        auto xkb = get_keyboard();
+        load_shortcuts();
+        init_dbus_interface_v1();
 
-        load_shortcuts(xkb);
-
-        initDBusInterface();
         Q_EMIT qobject->layoutsReconfigured();
     }
 
-    void initDBusInterface()
+    void init_dbus_interface_v1()
     {
         auto xkb = get_keyboard();
 
@@ -201,11 +199,12 @@ private:
         get_keyboard()->switch_to_layout(index);
     }
 
-    void load_shortcuts(xkb::keyboard* xkb)
+    void load_shortcuts()
     {
         qDeleteAll(m_layoutShortcuts);
         m_layoutShortcuts.clear();
 
+        auto xkb = get_keyboard();
         const QString componentName = QStringLiteral("KDE Keyboard Layout Switcher");
         auto const count = xkb->layouts_count();
 
