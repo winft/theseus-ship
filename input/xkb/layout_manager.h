@@ -78,6 +78,7 @@ public:
         });
 
         reconfigure();
+        init_dbus_interface_v2();
 
         for (auto keyboard : redirect.platform.keyboards) {
             add_keyboard(keyboard);
@@ -87,8 +88,6 @@ public:
                          &platform_qobject::keyboard_added,
                          qobject.get(),
                          [this](auto keys) { add_keyboard(keys); });
-
-        init_dbus_interface_v2();
     }
 
     void switchToNextLayout()
