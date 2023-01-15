@@ -17,6 +17,7 @@
 #include "x11/property_notify_filter.h"
 
 #include "desktop/screen_locker_watcher.h"
+#include "input/platform.h"
 #include "win/activation.h"
 #include "win/osd.h"
 #include "win/screen_edges.h"
@@ -630,19 +631,22 @@ public:
                                  Qt::MouseButton pointerButtons,
                                  QAction* action) override
     {
-        compositor.platform.base.input->registerPointerShortcut(modifiers, pointerButtons, action);
+        input::platform_register_pointer_shortcut(
+            *compositor.platform.base.input, modifiers, pointerButtons, action);
     }
 
     void registerAxisShortcut(Qt::KeyboardModifiers modifiers,
                               PointerAxisDirection axis,
                               QAction* action) override
     {
-        compositor.platform.base.input->registerAxisShortcut(modifiers, axis, action);
+        input::platform_register_axis_shortcut(
+            *compositor.platform.base.input, modifiers, axis, action);
     }
 
     void registerTouchpadSwipeShortcut(SwipeDirection direction, QAction* action) override
     {
-        compositor.platform.base.input->registerTouchpadSwipeShortcut(direction, action);
+        input::platform_register_touchpad_swipe_shortcut(
+            *compositor.platform.base.input, direction, action);
     }
 
     void startMousePolling() override

@@ -262,8 +262,8 @@ void NoGlobalShortcutsTest::testPointerShortcut()
     std::unique_ptr<QAction> action(new QAction(nullptr));
     QSignalSpy actionSpy(action.get(), &QAction::triggered);
     QVERIFY(actionSpy.isValid());
-    Test::app()->base.input->registerPointerShortcut(
-        Qt::MetaModifier, Qt::LeftButton, action.get());
+    input::platform_register_pointer_shortcut(
+        *Test::app()->base.input, Qt::MetaModifier, Qt::LeftButton, action.get());
 
     // try to trigger the shortcut
     quint32 timestamp = 1;
@@ -302,7 +302,8 @@ void NoGlobalShortcutsTest::testAxisShortcut()
     } else {
         axisDirection = sign > 0 ? PointerAxisLeft : PointerAxisRight;
     }
-    Test::app()->base.input->registerAxisShortcut(Qt::MetaModifier, axisDirection, action.get());
+    input::platform_register_axis_shortcut(
+        *Test::app()->base.input, Qt::MetaModifier, axisDirection, action.get());
 
     // try to trigger the shortcut
     quint32 timestamp = 1;
