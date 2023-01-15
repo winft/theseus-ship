@@ -16,20 +16,27 @@ namespace KWin::input::x11
 {
 
 template<typename Base>
-class platform : public input::platform<Base>
+class platform
 {
 public:
+    using base_t = Base;
     using type = platform<Base>;
     using space_t = typename Base::space_t;
 
     platform(Base& base)
-        : input::platform<Base>(base, input::config(KConfig::NoGlobals))
+        : qobject{std::make_unique<platform_qobject>(
+            [this](auto accel) { platform_register_global_accel(*this, accel); })}
         , xkb{xkb::manager<type>(this)}
+        , config{input::config(KConfig::NoGlobals)}
+        , base{base}
     {
+        qRegisterMetaType<button_state>();
+        qRegisterMetaType<key_state>();
     }
 
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
+    virtual ~platform() = default;
 
     /**
      * Platform specific preparation for an @p action which is used for KGlobalAccel.
@@ -85,8 +92,17 @@ public:
         QObject::connect(action, &QAction::triggered, receiver, slot);
     }
 
+    std::unique_ptr<platform_qobject> qobject;
+
+    std::vector<keyboard*> keyboards;
+    std::vector<pointer*> pointers;
+
     input::xkb::manager<type> xkb;
+    std::unique_ptr<global_shortcuts_manager> shortcuts;
     std::unique_ptr<dbus::device_manager<type>> dbus;
+
+    input::config config;
+    Base& base;
 };
 
 }

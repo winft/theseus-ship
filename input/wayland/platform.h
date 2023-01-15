@@ -20,18 +20,25 @@ namespace KWin::input::wayland
 {
 
 template<typename Base>
-class platform : public input::platform<Base>
+class platform
 {
 public:
+    using base_t = Base;
     using type = platform<Base>;
     using space_t = typename Base::space_t;
 
     platform(Base& base, input::config config)
-        : input::platform<Base>(base, std::move(config))
+        : qobject{std::make_unique<platform_qobject>(
+            [this](auto accel) { platform_register_global_accel(*this, accel); })}
         , xkb{xkb::manager<type>(this)}
         , kde_idle{base.server->display->create_kde_idle()}
         , idle_notifier{base.server->display->create_idle_notifier_v1()}
+        , config{std::move(config)}
+        , base{base}
     {
+        qRegisterMetaType<button_state>();
+        qRegisterMetaType<key_state>();
+
         virtual_keyboard = base.server->display->create_virtual_keyboard_manager_v1();
 
         QObject::connect(kde_idle.get(),
@@ -46,6 +53,7 @@ public:
 
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
+    virtual ~platform() = default;
 
     void setup_action_for_global_accel(QAction* /*action*/)
     {
@@ -129,13 +137,24 @@ public:
         toggle_touchpads();
     }
 
+    std::unique_ptr<platform_qobject> qobject;
+
+    std::vector<keyboard*> keyboards;
+    std::vector<pointer*> pointers;
+    std::vector<switch_device*> switches;
+    std::vector<touch*> touchs;
+
     std::unique_ptr<Wrapland::Server::virtual_keyboard_manager_v1> virtual_keyboard;
 
     input::xkb::manager<type> xkb;
+    std::unique_ptr<global_shortcuts_manager> shortcuts;
     std::unique_ptr<dbus::device_manager<type>> dbus;
     input::idle idle;
     std::unique_ptr<Wrapland::Server::kde_idle> kde_idle;
     std::unique_ptr<Wrapland::Server::idle_notifier_v1> idle_notifier;
+
+    input::config config;
+    Base& base;
 
 private:
     void setup_touchpad_shortcuts()

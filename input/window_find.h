@@ -14,33 +14,6 @@ namespace KWin::input
 {
 
 template<typename Redirect>
-auto find_window(Redirect const& redirect, QPoint const& pos)
-    -> std::optional<typename Redirect::window_t>
-{
-    // TODO: check whether the unmanaged wants input events at all
-    if (!kwinApp()->is_screen_locked()) {
-        // if an effect overrides the cursor we don't have a window to focus
-        if (redirect.platform.base.render->compositor->effects
-            && redirect.platform.base.render->compositor->effects->isMouseInterception()) {
-            return {};
-        }
-
-        auto const& unmanaged = win::x11::get_unmanageds(redirect.space);
-        for (auto const& win : unmanaged) {
-            if (std::visit(overload{[&](auto&& win) {
-                               return win::input_geometry(win).contains(pos)
-                                   && win::wayland::accepts_input(win, pos);
-                           }},
-                           win)) {
-                return win;
-            }
-        }
-    }
-
-    return find_controlled_window(redirect, pos);
-}
-
-template<typename Redirect>
 auto find_controlled_window(Redirect const& redirect, QPoint const& pos)
     -> std::optional<typename Redirect::window_t>
 {
@@ -95,4 +68,32 @@ auto find_controlled_window(Redirect const& redirect, QPoint const& pos)
 
     return {};
 }
+
+template<typename Redirect>
+auto find_window(Redirect const& redirect, QPoint const& pos)
+    -> std::optional<typename Redirect::window_t>
+{
+    // TODO: check whether the unmanaged wants input events at all
+    if (!kwinApp()->is_screen_locked()) {
+        // if an effect overrides the cursor we don't have a window to focus
+        if (redirect.platform.base.render->compositor->effects
+            && redirect.platform.base.render->compositor->effects->isMouseInterception()) {
+            return {};
+        }
+
+        auto const& unmanaged = win::x11::get_unmanageds(redirect.space);
+        for (auto const& win : unmanaged) {
+            if (std::visit(overload{[&](auto&& win) {
+                               return win::input_geometry(win).contains(pos)
+                                   && win::wayland::accepts_input(win, pos);
+                           }},
+                           win)) {
+                return win;
+            }
+        }
+    }
+
+    return find_controlled_window(redirect, pos);
+}
+
 }

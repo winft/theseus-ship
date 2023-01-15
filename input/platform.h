@@ -111,36 +111,4 @@ void platform_register_global_accel(Platform& platform, KGlobalAccelInterface* i
     platform.shortcuts->setKGlobalAccelInterface(interface);
 }
 
-template<typename Base>
-class platform
-{
-public:
-    using base_t = Base;
-
-    platform(Base& base, input::config config)
-        : qobject{std::make_unique<platform_qobject>(
-            [this](auto accel) { platform_register_global_accel(*this, accel); })}
-        , base{base}
-        , config{std::move(config)}
-    {
-        qRegisterMetaType<button_state>();
-        qRegisterMetaType<key_state>();
-    }
-
-    platform(platform const&) = delete;
-    platform& operator=(platform const&) = delete;
-    virtual ~platform() = default;
-
-    std::unique_ptr<platform_qobject> qobject;
-    Base& base;
-
-    std::vector<keyboard*> keyboards;
-    std::vector<pointer*> pointers;
-    std::vector<switch_device*> switches;
-    std::vector<touch*> touchs;
-
-    std::unique_ptr<global_shortcuts_manager> shortcuts;
-    input::config config;
-};
-
 }
