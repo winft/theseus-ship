@@ -119,12 +119,12 @@ private:
         }
 
         load_shortcuts();
-        init_dbus_interface_v1();
+        reconfigure_dbus_interface_v1();
 
         Q_EMIT qobject->layoutsReconfigured();
     }
 
-    void init_dbus_interface_v1()
+    void reconfigure_dbus_interface_v1()
     {
         auto xkb = get_keyboard();
 
@@ -140,6 +140,13 @@ private:
         if (dbus_interface_v1) {
             return;
         }
+
+        init_dbus_interface_v1();
+    }
+
+    void init_dbus_interface_v1()
+    {
+        assert(!dbus_interface_v1);
 
         dbus_interface_v1 = std::make_unique<dbus::keyboard_layout>(
             m_configGroup, [this] { return get_primary_xkb_keyboard(this->redirect.platform); });
