@@ -23,12 +23,28 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QObject>
 #include <QtDBus>
+#include <functional>
 
 namespace KWin::render::post
 {
 
 struct night_color_data;
 class night_color_manager;
+
+struct color_correct_dbus_integration {
+    color_correct_dbus_integration(std::function<void(bool)> inhibit,
+                                   std::function<void(double, double)> loc_update,
+                                   night_color_data const& data)
+        : inhibit{inhibit}
+        , loc_update{loc_update}
+        , data{data}
+    {
+    }
+
+    std::function<void(bool)> inhibit;
+    std::function<void(double, double)> loc_update;
+    night_color_data const& data;
+};
 
 class color_correct_dbus_interface : public QObject, public QDBusContext
 {
@@ -47,8 +63,7 @@ class color_correct_dbus_interface : public QObject, public QDBusContext
     Q_PROPERTY(quint32 scheduledTransitionDuration READ scheduledTransitionDuration)
 
 public:
-    explicit color_correct_dbus_interface(night_color_manager* manager,
-                                          night_color_data const& data);
+    explicit color_correct_dbus_interface(color_correct_dbus_integration integration);
     ~color_correct_dbus_interface() override = default;
 
     bool isInhibited() const;
@@ -96,8 +111,7 @@ private Q_SLOTS:
 private:
     void uninhibit(const QString& serviceName, uint cookie);
 
-    night_color_manager* m_manager;
-    night_color_data const& data;
+    color_correct_dbus_integration integration;
     QDBusServiceWatcher* m_inhibitorWatcher;
     QMultiHash<QString, uint> m_inhibitors;
     uint m_lastInhibitionCookie = 0;

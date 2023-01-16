@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "color_correct_dbus_interface.h"
 
 #include "colorcorrectadaptor.h"
-#include "night_color_manager.h"
+#include "night_color_data.h"
 
 #include <QDBusMessage>
 
@@ -42,10 +42,9 @@ static void send_changed_properties(QVariantMap const& props)
     QDBusConnection::sessionBus().send(message);
 }
 
-color_correct_dbus_interface::color_correct_dbus_interface(night_color_manager* manager,
-                                                           night_color_data const& data)
-    : m_manager(manager)
-    , data{data}
+color_correct_dbus_interface::color_correct_dbus_interface(
+    color_correct_dbus_integration integration)
+    : integration{std::move(integration)}
     , m_inhibitorWatcher(new QDBusServiceWatcher(this))
 {
     m_inhibitorWatcher->setConnection(QDBusConnection::sessionBus());
@@ -61,42 +60,42 @@ color_correct_dbus_interface::color_correct_dbus_interface(night_color_manager* 
 
 bool color_correct_dbus_interface::isInhibited() const
 {
-    return data.inhibit_reference_count;
+    return integration.data.inhibit_reference_count;
 }
 
 bool color_correct_dbus_interface::isEnabled() const
 {
-    return data.enabled;
+    return integration.data.enabled;
 }
 
 bool color_correct_dbus_interface::isRunning() const
 {
-    return data.running;
+    return integration.data.running;
 }
 
 bool color_correct_dbus_interface::isAvailable() const
 {
-    return data.available;
+    return integration.data.available;
 }
 
 int color_correct_dbus_interface::currentTemperature() const
 {
-    return data.temperature.current;
+    return integration.data.temperature.current;
 }
 
 int color_correct_dbus_interface::targetTemperature() const
 {
-    return data.temperature.target;
+    return integration.data.temperature.target;
 }
 
 int color_correct_dbus_interface::mode() const
 {
-    return data.mode;
+    return integration.data.mode;
 }
 
 quint64 color_correct_dbus_interface::previousTransitionDateTime() const
 {
-    auto const dateTime = data.transition.prev.first;
+    auto const dateTime = integration.data.transition.prev.first;
     if (dateTime.isValid()) {
         return quint64(dateTime.toSecsSinceEpoch());
     }
@@ -105,12 +104,12 @@ quint64 color_correct_dbus_interface::previousTransitionDateTime() const
 
 quint32 color_correct_dbus_interface::previousTransitionDuration() const
 {
-    return quint32(data.previous_transition_duration());
+    return quint32(integration.data.previous_transition_duration());
 }
 
 quint64 color_correct_dbus_interface::scheduledTransitionDateTime() const
 {
-    auto const dateTime = data.transition.next.first;
+    auto const dateTime = integration.data.transition.next.first;
     if (dateTime.isValid()) {
         return quint64(dateTime.toSecsSinceEpoch());
     }
@@ -119,7 +118,7 @@ quint64 color_correct_dbus_interface::scheduledTransitionDateTime() const
 
 quint32 color_correct_dbus_interface::scheduledTransitionDuration() const
 {
-    return quint32(data.scheduled_transition_duration());
+    return quint32(integration.data.scheduled_transition_duration());
 }
 
 void color_correct_dbus_interface::send_inhibited(bool inhibited) const
@@ -178,7 +177,7 @@ void color_correct_dbus_interface::send_transition_timings() const
 
 void color_correct_dbus_interface::nightColorAutoLocationUpdate(double latitude, double longitude)
 {
-    m_manager->auto_location_update(latitude, longitude);
+    integration.loc_update(latitude, longitude);
 }
 
 uint color_correct_dbus_interface::inhibit()
@@ -191,7 +190,7 @@ uint color_correct_dbus_interface::inhibit()
 
     m_inhibitors.insert(serviceName, ++m_lastInhibitionCookie);
 
-    m_manager->inhibit();
+    integration.inhibit(true);
 
     return m_lastInhibitionCookie;
 }
@@ -214,7 +213,7 @@ void color_correct_dbus_interface::uninhibit(const QString& serviceName, uint co
         m_inhibitorWatcher->removeWatchedService(serviceName);
     }
 
-    m_manager->uninhibit();
+    integration.inhibit(false);
 }
 
 void color_correct_dbus_interface::removeInhibitorService(const QString& serviceName)

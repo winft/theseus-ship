@@ -68,8 +68,6 @@ public:
     night_color_manager();
     ~night_color_manager();
 
-    void auto_location_update(double latitude, double longitude);
-
     /**
      * Toggles the active state of the filter.
      *
@@ -88,19 +86,6 @@ public:
      */
     void toggle();
 
-    /**
-     * Temporarily blocks the night color manager.
-     *
-     * After calling this method, the screen color temperature will be reverted
-     * back to 6500C. When you're done, call uninhibit() method.
-     */
-    void inhibit();
-
-    /**
-     * Attempts to unblock the night color manager.
-     */
-    void uninhibit();
-
     // for auto tests
     void reconfigure();
 
@@ -108,6 +93,17 @@ public:
     night_color_data data;
 
 private:
+    void auto_location_update(double latitude, double longitude);
+
+    /**
+     * Temporarily blocks the night color manager.
+     *
+     * After calling this method, the screen color temperature will be reverted
+     * back to 6500C. When you're done, call uninhibit() method.
+     */
+    void inhibit();
+    void uninhibit();
+
     void read_config();
     void hard_reset();
 

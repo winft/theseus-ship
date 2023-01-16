@@ -49,7 +49,10 @@ static bool checkLocation(double lat, double lng)
 
 night_color_manager::night_color_manager()
     : qobject{std::make_unique<QObject>()}
-    , dbus{std::make_unique<color_correct_dbus_interface>(this, data)}
+    , dbus{std::make_unique<color_correct_dbus_interface>(color_correct_dbus_integration(
+          [this](bool block) { block ? inhibit() : uninhibit(); },
+          [this](double lat, double lng) { auto_location_update(lat, lng); },
+          data))}
     , clock_skew_notifier{std::make_unique<base::os::clock::skew_notifier>()}
 {
     Settings::instance(kwinApp()->config());
