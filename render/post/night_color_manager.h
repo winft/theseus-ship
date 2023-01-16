@@ -23,6 +23,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwin_export.h"
 
 #include <KConfigWatcher>
+#include <KLocalizedString>
+#include <QDBusConnection>
+#include <QDBusMessage>
+#include <QDBusPendingCall>
 #include <QDateTime>
 #include <QObject>
 #include <QPair>
@@ -321,6 +325,24 @@ private:
 
     KConfigWatcher::Ptr config_watcher;
 };
+
+inline void night_color_display_inhibit_message(bool inhibit)
+{
+    // TODO: Maybe use different icons?
+    auto const icon = inhibit ? QStringLiteral("preferences-desktop-display-nightcolor-off")
+                              : QStringLiteral("preferences-desktop-display-nightcolor-on");
+
+    auto const text = inhibit ? i18nc("Night Color was disabled", "Night Color Off")
+                              : i18nc("Night Color was enabled", "Night Color On");
+
+    auto message = QDBusMessage::createMethodCall(QStringLiteral("org.kde.plasmashell"),
+                                                  QStringLiteral("/org/kde/osdService"),
+                                                  QStringLiteral("org.kde.osdService"),
+                                                  QStringLiteral("showText"));
+    message.setArguments({icon, text});
+
+    QDBusConnection::sessionBus().asyncCall(message);
+}
 
 }
 }

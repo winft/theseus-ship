@@ -34,7 +34,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "color_correct_settings.h"
 
-#include <QDBusConnection>
 #include <QTimer>
 
 namespace KWin::render::post
@@ -53,25 +52,6 @@ night_color_manager::night_color_manager()
     , clock_skew_notifier{std::make_unique<base::os::clock::skew_notifier>()}
 {
     connect(kwinApp(), &Application::startup_finished, this, &night_color_manager::init);
-
-    // Display a message when Night Color is (un)inhibited.
-    connect(this, &night_color_manager::inhibited_changed, this, [this] {
-        // TODO: Maybe use different icons?
-        const QString iconName = is_inhibited()
-            ? QStringLiteral("preferences-desktop-display-nightcolor-off")
-            : QStringLiteral("preferences-desktop-display-nightcolor-on");
-
-        const QString text = is_inhibited() ? i18nc("Night Color was disabled", "Night Color Off")
-                                            : i18nc("Night Color was enabled", "Night Color On");
-
-        QDBusMessage message = QDBusMessage::createMethodCall(QStringLiteral("org.kde.plasmashell"),
-                                                              QStringLiteral("/org/kde/osdService"),
-                                                              QStringLiteral("org.kde.osdService"),
-                                                              QStringLiteral("showText"));
-        message.setArguments({iconName, text});
-
-        QDBusConnection::sessionBus().asyncCall(message);
-    });
 }
 
 night_color_manager::~night_color_manager() = default;
@@ -182,6 +162,7 @@ void night_color_manager::inhibit()
 
     if (inhibit_reference_count == 1) {
         reset_all_timers();
+        night_color_display_inhibit_message(true);
         Q_EMIT inhibited_changed();
     }
 }
@@ -192,6 +173,7 @@ void night_color_manager::uninhibit()
 
     if (!inhibit_reference_count) {
         reset_all_timers();
+        night_color_display_inhibit_message(false);
         Q_EMIT inhibited_changed();
     }
 }
