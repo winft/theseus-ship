@@ -48,7 +48,7 @@ class KWIN_EXPORT platform_wrap : public QObject
     Q_CLASSINFO("D-Bus Interface", "org.kde.kwin.Scripting")
 
 public:
-    platform_wrap();
+    platform_wrap(base::options& options);
     ~platform_wrap() override;
 
     Q_SCRIPTABLE Q_INVOKABLE int loadScript(const QString& filePath,
@@ -92,6 +92,7 @@ private:
 
     QStringList scriptList;
     bool is_running{false};
+    base::options& options;
 };
 
 template<typename Space>
@@ -99,7 +100,8 @@ class platform : public platform_wrap
 {
 public:
     platform(Space& space)
-        : space{space}
+        : platform_wrap(*kwinApp()->options)
+        , space{space}
     {
         qmlRegisterType<render::desktop_thumbnail_item>(
             "org.kde.kwin", 2, 0, "DesktopThumbnailItem");

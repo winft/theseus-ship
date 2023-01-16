@@ -90,10 +90,12 @@ script::script(int id,
                QString scriptName,
                QString pluginName,
                scripting::platform_wrap& platform,
+               base::options& options,
                QObject* parent)
     : abstract_script(id, scriptName, pluginName, parent)
     , m_engine(new QJSEngine(this))
     , platform{platform}
+    , options{options}
 {
     // TODO: Remove in kwin 6. We have these converters only for compatibility reasons.
     if (!QMetaType::hasRegisteredConverterFunction<QJSValue, QRect>()) {
@@ -177,8 +179,8 @@ void script::slotScriptLoadedFromFile()
         QStringLiteral("KWin"), m_engine->newQMetaObject(&qt_script_space::staticMetaObject));
 
     // Make the options object visible to QJSEngine.
-    QJSValue optionsObject = m_engine->newQObject(kwinApp()->options->qobject.get());
-    QQmlEngine::setObjectOwnership(kwinApp()->options->qobject.get(), QQmlEngine::CppOwnership);
+    QJSValue optionsObject = m_engine->newQObject(options.qobject.get());
+    QQmlEngine::setObjectOwnership(options.qobject.get(), QQmlEngine::CppOwnership);
     m_engine->globalObject().setProperty(QStringLiteral("options"), optionsObject);
 
     // Make the workspace visible to QJSEngine.

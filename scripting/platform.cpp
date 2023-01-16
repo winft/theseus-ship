@@ -22,10 +22,11 @@
 namespace KWin::scripting
 {
 
-platform_wrap::platform_wrap()
+platform_wrap::platform_wrap(base::options& options)
     : qml_engine(new QQmlEngine(this))
     , declarative_script_shared_context(new QQmlContext(qml_engine, this))
     , m_scriptsLock(new QRecursiveMutex)
+    , options{options}
 
 {
     qRegisterMetaType<KWin::SessionState>();
@@ -187,7 +188,7 @@ int platform_wrap::loadScript(const QString& filePath, const QString& pluginName
         return -1;
     }
     const int id = scripts.size();
-    auto script = new scripting::script(id, filePath, pluginName, *this, this);
+    auto script = new scripting::script(id, filePath, pluginName, *this, options, this);
     connect(script, &QObject::destroyed, this, &platform_wrap::scriptDestroyed);
     scripts.append(script);
     return id;

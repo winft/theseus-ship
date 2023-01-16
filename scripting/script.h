@@ -22,7 +22,15 @@ class QAction;
 class QMenu;
 class KConfigGroup;
 
-namespace KWin::scripting
+namespace KWin
+{
+
+namespace base
+{
+class options;
+}
+
+namespace scripting
 {
 
 class platform_wrap;
@@ -86,6 +94,7 @@ public:
            QString scriptName,
            QString pluginName,
            scripting::platform_wrap& platform,
+           base::options& options,
            QObject* parent = nullptr);
     virtual ~script();
 
@@ -236,6 +245,7 @@ private:
     QHash<int, QAction*> m_touchScreenEdgeCallbacks;
     QJSValueList m_userActionsMenuCallbacks;
     scripting::platform_wrap& platform;
+    base::options& options;
 };
 
 class declarative_script : public abstract_script
@@ -260,4 +270,5 @@ private:
     QQmlComponent* m_component;
 };
 
+}
 }
