@@ -48,16 +48,16 @@ static bool checkLocation(double lat, double lng)
 }
 
 night_color_manager::night_color_manager()
-    : dbus{std::make_unique<color_correct_dbus_interface>(this, data)}
+    : qobject{std::make_unique<QObject>()}
+    , dbus{std::make_unique<color_correct_dbus_interface>(this, data)}
     , clock_skew_notifier{std::make_unique<base::os::clock::skew_notifier>()}
 {
     Settings::instance(kwinApp()->config());
 
     config_watcher = KConfigWatcher::create(kwinApp()->config());
-    QObject::connect(config_watcher.data(),
-                     &KConfigWatcher::configChanged,
-                     this,
-                     &night_color_manager::reconfigure);
+    QObject::connect(config_watcher.data(), &KConfigWatcher::configChanged, qobject.get(), [this] {
+        reconfigure();
+    });
 
     // we may always read in the current config
     read_config();
@@ -66,18 +66,17 @@ night_color_manager::night_color_manager()
         return;
     }
 
-    QObject::connect(&kwinApp()->get_base(),
-                     &base::platform::output_added,
-                     this,
-                     &night_color_manager::hard_reset);
+    QObject::connect(&kwinApp()->get_base(), &base::platform::output_added, qobject.get(), [this] {
+        hard_reset();
+    });
     QObject::connect(&kwinApp()->get_base(),
                      &base::platform::output_removed,
-                     this,
-                     &night_color_manager::hard_reset);
+                     qobject.get(),
+                     [this] { hard_reset(); });
 
     QObject::connect(kwinApp()->session.get(),
                      &base::seat::session::sessionActiveChanged,
-                     this,
+                     qobject.get(),
                      [this](bool active) {
                          if (active) {
                              hard_reset();
@@ -86,33 +85,40 @@ night_color_manager::night_color_manager()
                          }
                      });
 
-    connect(clock_skew_notifier.get(), &base::os::clock::skew_notifier::skewed, this, [this]() {
-        // check if we're resuming from suspend - in this case do a hard reset
-        // Note: We're using the time clock to detect a suspend phase instead of connecting to the
-        //       provided logind dbus signal, because this signal would be received way too late.
-        QDBusMessage message = QDBusMessage::createMethodCall("org.freedesktop.login1",
+    QObject::connect(clock_skew_notifier.get(),
+                     &base::os::clock::skew_notifier::skewed,
+                     qobject.get(),
+                     [this]() {
+                         // check if we're resuming from suspend - in this case do a hard reset
+                         // Note: We're using the time clock to detect a suspend phase instead of
+                         // connecting to the
+                         //       provided logind dbus signal, because this signal would be received
+                         //       way too late.
+                         QDBusMessage message
+                             = QDBusMessage::createMethodCall("org.freedesktop.login1",
                                                               "/org/freedesktop/login1",
                                                               "org.freedesktop.DBus.Properties",
                                                               QStringLiteral("Get"));
-        message.setArguments(
-            QVariantList({"org.freedesktop.login1.Manager", QStringLiteral("PreparingForSleep")}));
-        QDBusReply<QVariant> reply = QDBusConnection::systemBus().call(message);
-        bool comingFromSuspend;
-        if (reply.isValid()) {
-            comingFromSuspend = reply.value().toBool();
-        } else {
-            qCDebug(KWIN_CORE) << "Failed to get PreparingForSleep Property of logind session:"
-                               << reply.error().message();
-            // Always do a hard reset in case we have no further information.
-            comingFromSuspend = true;
-        }
+                         message.setArguments(QVariantList({"org.freedesktop.login1.Manager",
+                                                            QStringLiteral("PreparingForSleep")}));
+                         QDBusReply<QVariant> reply = QDBusConnection::systemBus().call(message);
+                         bool comingFromSuspend;
+                         if (reply.isValid()) {
+                             comingFromSuspend = reply.value().toBool();
+                         } else {
+                             qCDebug(KWIN_CORE)
+                                 << "Failed to get PreparingForSleep Property of logind session:"
+                                 << reply.error().message();
+                             // Always do a hard reset in case we have no further information.
+                             comingFromSuspend = true;
+                         }
 
-        if (comingFromSuspend) {
-            hard_reset();
-        } else {
-            reset_all_timers();
-        }
-    });
+                         if (comingFromSuspend) {
+                             hard_reset();
+                         } else {
+                             reset_all_timers();
+                         }
+                     });
 
     hard_reset();
 }
@@ -267,9 +273,10 @@ void night_color_manager::reset_quick_adjust_timer()
     // allow tolerance of one TEMPERATURE_STEP to compensate if a slow update is coincidental
     if (tempDiff > TEMPERATURE_STEP) {
         cancel_all_timers();
-        quick_adjust_timer = new QTimer(this);
+        quick_adjust_timer = new QTimer(qobject.get());
         quick_adjust_timer->setSingleShot(false);
-        connect(quick_adjust_timer, &QTimer::timeout, this, &night_color_manager::quick_adjust);
+        QObject::connect(
+            quick_adjust_timer, &QTimer::timeout, qobject.get(), [this] { quick_adjust(); });
 
         int interval = QUICK_ADJUST_DURATION / (tempDiff / TEMPERATURE_STEP);
         if (interval == 0) {
@@ -322,12 +329,11 @@ void night_color_manager::reset_slow_update_start_timer()
     }
 
     // set up the next slow update
-    slow_update_start_timer = new QTimer(this);
+    slow_update_start_timer = new QTimer(qobject.get());
     slow_update_start_timer->setSingleShot(true);
-    connect(slow_update_start_timer,
-            &QTimer::timeout,
-            this,
-            &night_color_manager::reset_slow_update_start_timer);
+    QObject::connect(slow_update_start_timer, &QTimer::timeout, qobject.get(), [this] {
+        reset_slow_update_start_timer();
+    });
 
     update_transition_timings(false);
     update_target_temperature();
@@ -361,14 +367,14 @@ void night_color_manager::reset_slow_update_timer()
 
     if (data.transition.prev.first <= now && now <= data.transition.prev.second) {
         int availTime = now.msecsTo(data.transition.prev.second);
-        slow_update_timer = new QTimer(this);
+        slow_update_timer = new QTimer(qobject.get());
         slow_update_timer->setSingleShot(false);
         if (isDay) {
-            connect(slow_update_timer, &QTimer::timeout, this, [this]() {
+            QObject::connect(slow_update_timer, &QTimer::timeout, qobject.get(), [this] {
                 slow_update(data.temperature.day_target);
             });
         } else {
-            connect(slow_update_timer, &QTimer::timeout, this, [this]() {
+            QObject::connect(slow_update_timer, &QTimer::timeout, qobject.get(), [this] {
                 slow_update(data.temperature.night_target);
             });
         }

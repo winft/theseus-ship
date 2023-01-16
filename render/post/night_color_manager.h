@@ -62,7 +62,7 @@ class color_correct_dbus_interface;
  *
  * With the Constant mode, screen color temperature is always constant.
  */
-class KWIN_EXPORT night_color_manager : public QObject
+class KWIN_EXPORT night_color_manager
 {
 public:
     night_color_manager();
@@ -104,6 +104,7 @@ public:
     // for auto tests
     void reconfigure();
 
+    std::unique_ptr<QObject> qobject;
     night_color_data data;
 
 private:
