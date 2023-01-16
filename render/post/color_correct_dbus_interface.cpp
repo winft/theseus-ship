@@ -164,16 +164,14 @@ void color_correct_dbus_interface::send_mode(night_color_mode mode) const
 
 void color_correct_dbus_interface::send_transition_timings() const
 {
-    QVariantMap pprops;
-    pprops.insert(QStringLiteral("previousTransitionDateTime"), previousTransitionDateTime());
-    pprops.insert(QStringLiteral("previousTransitionDuration"), previousTransitionDuration());
+    QVariantMap props;
+    props.insert(QStringLiteral("previousTransitionDateTime"), previousTransitionDateTime());
+    props.insert(QStringLiteral("previousTransitionDuration"), previousTransitionDuration());
 
-    QVariantMap sprops;
-    sprops.insert(QStringLiteral("scheduledTransitionDateTime"), scheduledTransitionDateTime());
-    sprops.insert(QStringLiteral("scheduledTransitionDuration"), scheduledTransitionDuration());
+    props.insert(QStringLiteral("scheduledTransitionDateTime"), scheduledTransitionDateTime());
+    props.insert(QStringLiteral("scheduledTransitionDuration"), scheduledTransitionDuration());
 
-    send_changed_properties(pprops);
-    send_changed_properties(sprops);
+    send_changed_properties(props);
 }
 
 void color_correct_dbus_interface::nightColorAutoLocationUpdate(double latitude, double longitude)
