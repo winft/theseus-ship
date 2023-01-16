@@ -155,7 +155,7 @@ void WaylandTestApplication::start()
     auto headless_backend = base::backend::wlroots::get_headless_backend(base.backend);
     wlr_headless_add_output(headless_backend, 1280, 1024);
 
-    createOptions();
+    base.options = base::create_options(config());
 
     session
         = std::make_unique<base::seat::backend::wlroots::session>(base.session, headless_backend);

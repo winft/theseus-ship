@@ -118,7 +118,7 @@ QString get_support_info(Space const& space)
     support.append(QStringLiteral("Options\n"));
     support.append(QStringLiteral("=======\n"));
 
-    auto const metaOptions = kwinApp()->options->qobject->metaObject();
+    auto const metaOptions = space.base.options->qobject->metaObject();
     auto printProperty = [](const QVariant& variant) {
         if (variant.type() == QVariant::Size) {
             const QSize& s = variant.toSize();
@@ -141,7 +141,7 @@ QString get_support_info(Space const& space)
         support.append(
             QStringLiteral("%1: %2\n")
                 .arg(property.name())
-                .arg(printProperty(kwinApp()->options->qobject->property(property.name()))));
+                .arg(printProperty(space.base.options->qobject->property(property.name()))));
     }
 
     support.append(QStringLiteral("\nScreen Edges\n"));
@@ -166,7 +166,7 @@ QString get_support_info(Space const& space)
     support.append(QStringLiteral("Multi-Head: "));
     support.append(QStringLiteral("not supported anymore\n"));
     support.append(QStringLiteral("Active screen follows mouse: "));
-    support.append(kwinApp()->options->get_current_output_follows_mouse() ? yes : no);
+    support.append(space.base.options->get_current_output_follows_mouse() ? yes : no);
 
     auto const& outputs = kwinApp()->get_base().get_outputs();
     support.append(QStringLiteral("Number of Screens: %1\n\n").arg(outputs.size()));

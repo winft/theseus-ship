@@ -12,9 +12,10 @@
 namespace KWin::win::x11
 {
 
-static inline uint16_t x11CommandAllModifier()
+template<typename Win>
+static inline uint16_t x11CommandAllModifier(Win& win)
 {
-    switch (kwinApp()->options->qobject->commandAllModifier()) {
+    switch (win.space.base.options->qobject->commandAllModifier()) {
     case Qt::MetaModifier:
         return KKeyServer::modXMeta();
     case Qt::AltModifier:
@@ -38,7 +39,7 @@ void establish_command_window_grab(Win* win, uint8_t button)
     win->xcb_windows.wrapper.grab_button(
         XCB_GRAB_MODE_SYNC, XCB_GRAB_MODE_ASYNC, XCB_MOD_MASK_ANY, button);
 
-    auto x11Modifier = x11CommandAllModifier();
+    auto x11Modifier = x11CommandAllModifier(*win);
 
     unsigned int mods[8] = {
         0, XCapL, XNumL, XNumL | XCapL, XScrL, XScrL | XCapL, XScrL | XNumL, XScrL | XNumL | XCapL};
@@ -49,7 +50,7 @@ void establish_command_window_grab(Win* win, uint8_t button)
 template<typename Win>
 void establish_command_all_grab(Win* win, uint8_t button)
 {
-    uint16_t x11Modifier = x11CommandAllModifier();
+    uint16_t x11Modifier = x11CommandAllModifier(*win);
 
     unsigned int mods[8] = {
         0, XCapL, XNumL, XNumL | XCapL, XScrL, XScrL | XCapL, XScrL | XNumL, XScrL | XNumL | XCapL};

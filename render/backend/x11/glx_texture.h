@@ -41,7 +41,7 @@ public:
     ~GlxTexture() override
     {
         if (m_glxpixmap != None) {
-            if (!kwinApp()->options->qobject->isGlStrictBinding()) {
+            if (!m_backend->platform.base.options->qobject->isGlStrictBinding()) {
                 glXReleaseTexImageEXT(display(), m_glxpixmap, GLX_FRONT_LEFT_EXT);
             }
             glXDestroyPixmap(display(), m_glxpixmap);
@@ -51,7 +51,7 @@ public:
 
     void onDamage() override
     {
-        if (kwinApp()->options->qobject->isGlStrictBinding() && m_glxpixmap) {
+        if (m_backend->platform.base.options->qobject->isGlStrictBinding() && m_glxpixmap) {
             glXReleaseTexImageEXT(display(), m_glxpixmap, GLX_FRONT_LEFT_EXT);
             glXBindTexImageEXT(display(), m_glxpixmap, GLX_FRONT_LEFT_EXT, nullptr);
         }

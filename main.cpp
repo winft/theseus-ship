@@ -215,13 +215,6 @@ bool Application::is_screen_locked() const
     return false;
 }
 
-void Application::createOptions()
-{
-    options = std::make_unique<base::options>(m_config);
-    options->loadConfig();
-    options->loadCompositingConfig(false);
-}
-
 static uint32_t get_monotonic_time()
 {
     timespec ts;

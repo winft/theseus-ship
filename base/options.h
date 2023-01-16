@@ -977,6 +977,14 @@ private:
     QHash<Qt::KeyboardModifier, QStringList> m_modifierOnlyShortcuts;
 };
 
+inline std::unique_ptr<options> create_options(KSharedConfigPtr config)
+{
+    auto opts = std::make_unique<base::options>(config);
+    opts->loadConfig();
+    opts->loadCompositingConfig(false);
+    return opts;
+}
+
 }
 
 Q_DECLARE_METATYPE(KWin::base::options_qobject::WindowOperation)

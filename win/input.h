@@ -114,7 +114,7 @@ bool perform_mouse_command(Win& win,
         // Used to be activateNextClient(win), then topClientOnDesktop
         // since win is a mouseOp it's however safe to use the client under the mouse
         // instead.
-        if (win.control->active && kwinApp()->options->qobject->focusPolicyIsReasonable()) {
+        if (win.control->active && win.space.base.options->qobject->focusPolicyIsReasonable()) {
             auto next = window_under_mouse(space, win.topo.central_output);
             if (next && *next != var_win(&win)) {
                 std::visit(overload{[&](auto&& next) { request_focus(space, *next); }}, *next);
@@ -123,7 +123,7 @@ bool perform_mouse_command(Win& win,
         break;
     }
     case base::options_qobject::MouseOperationsMenu:
-        if (win.control->active && kwinApp()->options->qobject->isClickRaise()) {
+        if (win.control->active && win.space.base.options->qobject->isClickRaise()) {
             auto_raise(win);
         }
         space.user_actions_menu->show(QRect(globalPos, globalPos), &win);
@@ -319,16 +319,17 @@ void enter_event(Win* win, const QPoint& globalPos)
     using var_win = typename Win::space_t::window_t;
     auto& space = win->space;
 
-    if (kwinApp()->options->qobject->focusPolicy() == base::options_qobject::ClickToFocus
+    if (win->space.base.options->qobject->focusPolicy() == base::options_qobject::ClickToFocus
         || space.user_actions_menu->isShown()) {
         return;
     }
 
-    if (kwinApp()->options->qobject->isAutoRaise() && !win::is_desktop(win) && !win::is_dock(win)
-        && is_focus_change_allowed(space) && globalPos != space.focusMousePos) {
+    if (win->space.base.options->qobject->isAutoRaise() && !win::is_desktop(win)
+        && !win::is_dock(win) && is_focus_change_allowed(space)
+        && globalPos != space.focusMousePos) {
         auto top = top_client_on_desktop(space,
                                          space.virtual_desktop_manager->current(),
-                                         kwinApp()->options->qobject->isSeparateScreenFocus()
+                                         win->space.base.options->qobject->isSeparateScreenFocus()
                                              ? win->topo.central_output
                                              : nullptr);
         if (top != var_win(win)) {
@@ -342,7 +343,7 @@ void enter_event(Win* win, const QPoint& globalPos)
 
     // For FocusFollowsMouse, change focus only if the mouse has actually been moved, not if the
     // focus change came because of window changes (e.g. closing a window) - #92290
-    if (kwinApp()->options->qobject->focusPolicy() != base::options_qobject::FocusFollowsMouse
+    if (win->space.base.options->qobject->focusPolicy() != base::options_qobject::FocusFollowsMouse
         || globalPos != space.focusMousePos) {
         space.stacking.delayfocus_window = win;
         reset_delay_focus_timer(space);
@@ -426,7 +427,7 @@ get_mouse_command(Win* win, Qt::MouseButton button, bool* handled)
         return base::options_qobject::MouseNothing;
     }
     if (win->control->active) {
-        if (kwinApp()->options->qobject->isClickRaise() && !is_most_recently_raised(win)) {
+        if (win->space.base.options->qobject->isClickRaise() && !is_most_recently_raised(win)) {
             *handled = true;
             return base::options_qobject::MouseActivateRaiseAndPassClick;
         }
@@ -434,11 +435,11 @@ get_mouse_command(Win* win, Qt::MouseButton button, bool* handled)
         *handled = true;
         switch (button) {
         case Qt::LeftButton:
-            return kwinApp()->options->qobject->commandWindow1();
+            return win->space.base.options->qobject->commandWindow1();
         case Qt::MiddleButton:
-            return kwinApp()->options->qobject->commandWindow2();
+            return win->space.base.options->qobject->commandWindow2();
         case Qt::RightButton:
-            return kwinApp()->options->qobject->commandWindow3();
+            return win->space.base.options->qobject->commandWindow3();
         default:
             // all other buttons pass Activate & Pass Client
             return base::options_qobject::MouseActivateAndPassClick;
@@ -457,7 +458,7 @@ get_wheel_command(Win* win, Qt::Orientation orientation, bool* handled)
     }
     if (!win->control->active) {
         *handled = true;
-        return kwinApp()->options->qobject->commandWindowWheel();
+        return win->space.base.options->qobject->commandWindowWheel();
     }
     return base::options_qobject::MouseNothing;
 }

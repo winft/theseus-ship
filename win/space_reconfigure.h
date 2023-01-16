@@ -25,10 +25,10 @@ void space_reconfigure(Space& space)
 {
     space.reconfigureTimer.stop();
 
-    bool borderlessMaximizedWindows = kwinApp()->options->qobject->borderlessMaximizedWindows();
+    bool borderlessMaximizedWindows = space.base.options->qobject->borderlessMaximizedWindows();
 
     kwinApp()->config()->reparseConfiguration();
-    kwinApp()->options->updateSettings();
+    space.base.options->updateSettings();
     space.scripting->start();
 
     Q_EMIT space.qobject->configChanged();
@@ -47,8 +47,8 @@ void space_reconfigure(Space& space)
                    win);
     }
 
-    if (borderlessMaximizedWindows != kwinApp()->options->qobject->borderlessMaximizedWindows()
-        && !kwinApp()->options->qobject->borderlessMaximizedWindows()) {
+    if (borderlessMaximizedWindows != space.base.options->qobject->borderlessMaximizedWindows()
+        && !space.base.options->qobject->borderlessMaximizedWindows()) {
         // in case borderless maximized windows option changed and new option
         // is to have borders, we need to unset the borders for all maximized windows
         for (auto win : space.windows) {

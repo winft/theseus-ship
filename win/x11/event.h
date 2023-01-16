@@ -343,9 +343,10 @@ void enter_notify_event(Win* win, xcb_enter_notify_event_t* e)
     }
 
 #define MOUSE_DRIVEN_FOCUS                                                                         \
-    (!kwinApp()->options->qobject->focusPolicyIsReasonable()                                       \
-     || (kwinApp()->options->qobject->focusPolicy() == base::options_qobject::FocusFollowsMouse    \
-         && kwinApp()->options->qobject->isNextFocusPrefersMouse()))
+    (!win->space.base.options->qobject->focusPolicyIsReasonable()                                  \
+     || (win->space.base.options->qobject->focusPolicy()                                           \
+             == base::options_qobject::FocusFollowsMouse                                           \
+         && win->space.base.options->qobject->isNextFocusPrefersMouse()))
     if (e->mode == XCB_NOTIFY_MODE_NORMAL
         || (e->mode == XCB_NOTIFY_MODE_UNGRAB && MOUSE_DRIVEN_FOCUS)) {
 #undef MOUSE_DRIVEN_FOCUS
@@ -394,7 +395,7 @@ void leave_notify_event(Win* win, xcb_leave_notify_event_t* e)
                 QCoreApplication::sendEvent(deco, &leaveEvent);
             }
         }
-        if (kwinApp()->options->qobject->focusPolicy()
+        if (win->space.base.options->qobject->focusPolicy()
                 == base::options_qobject::FocusStrictlyUnderMouse
             && win->control->active && lostMouse) {
             win->space.stacking.delayfocus_window = {};
@@ -404,9 +405,10 @@ void leave_notify_event(Win* win, xcb_leave_notify_event_t* e)
     }
 }
 
-static inline bool modKeyDown(int state)
+template<typename Win>
+static inline bool modKeyDown(Win& win, int state)
 {
-    uint const keyModX = (kwinApp()->options->qobject->keyCmdAllModKey() == Qt::Key_Meta)
+    uint const keyModX = (win.space.base.options->qobject->keyCmdAllModKey() == Qt::Key_Meta)
         ? KKeyServer::modXMeta()
         : KKeyServer::modXAlt();
     return keyModX && (state & KKeyServer::accelModMaskX()) == keyModX;
@@ -434,7 +436,7 @@ bool button_press_event(Win* win,
     if (w == win->xcb_windows.wrapper || w == win->frameId() || w == win->xcb_windows.input) {
         // FRAME neco s tohohle by se melo zpracovat, nez to dostane dekorace
         update_user_time(win, time);
-        const bool bModKeyHeld = modKeyDown(state);
+        const bool bModKeyHeld = modKeyDown(*win, state);
 
         if (win::is_splash(win) && button == XCB_BUTTON_INDEX_1 && !bModKeyHeld) {
             // hide splashwindow if the user clicks on it
@@ -451,17 +453,17 @@ bool button_press_event(Win* win,
             was_action = true;
             switch (button) {
             case XCB_BUTTON_INDEX_1:
-                com = kwinApp()->options->qobject->commandAll1();
+                com = win->space.base.options->qobject->commandAll1();
                 break;
             case XCB_BUTTON_INDEX_2:
-                com = kwinApp()->options->qobject->commandAll2();
+                com = win->space.base.options->qobject->commandAll2();
                 break;
             case XCB_BUTTON_INDEX_3:
-                com = kwinApp()->options->qobject->commandAll3();
+                com = win->space.base.options->qobject->commandAll3();
                 break;
             case XCB_BUTTON_INDEX_4:
             case XCB_BUTTON_INDEX_5:
-                com = kwinApp()->options->operationWindowMouseWheel(
+                com = win->space.base.options->operationWindowMouseWheel(
                     button == XCB_BUTTON_INDEX_4 ? 120 : -120);
                 break;
             }
@@ -530,9 +532,10 @@ bool button_press_event(Win* win,
             QCoreApplication::sendEvent(win::decoration(win), &event);
             if (!event.isAccepted() && !hor) {
                 if (win::titlebar_positioned_under_mouse(win)) {
-                    perform_mouse_command(*win,
-                                          kwinApp()->options->operationTitlebarMouseWheel(delta),
-                                          {x_root, y_root});
+                    perform_mouse_command(
+                        *win,
+                        win->space.base.options->operationTitlebarMouseWheel(delta),
+                        {x_root, y_root});
                 }
             }
         } else {
@@ -637,7 +640,7 @@ bool motion_notify_event(Win* win, xcb_window_t w, int state, int x, int y, int 
                 QCoreApplication::instance()->sendEvent(win::decoration(win), &event);
             }
         }
-        auto newmode = modKeyDown(state) ? win::position::center : win::mouse_position(win);
+        auto newmode = modKeyDown(*win, state) ? win::position::center : win::mouse_position(win);
         if (newmode != mov_res.contact) {
             mov_res.contact = newmode;
             win::update_cursor(win);

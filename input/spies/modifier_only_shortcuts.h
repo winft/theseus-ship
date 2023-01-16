@@ -80,7 +80,9 @@ public:
             if (m_pressedKeys.isEmpty() && mods == Qt::NoModifier
                 && !this->redirect.space.global_shortcuts_disabled) {
                 if (m_modifier != Qt::NoModifier) {
-                    const auto list = kwinApp()->options->modifierOnlyDBusShortcut(m_modifier);
+                    auto const list
+                        = this->redirect.platform.base.options->modifierOnlyDBusShortcut(
+                            m_modifier);
                     if (list.size() >= 4) {
                         auto call = QDBusMessage::createMethodCall(
                             list.at(0), list.at(1), list.at(2), list.at(3));

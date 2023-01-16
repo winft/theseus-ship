@@ -270,8 +270,8 @@ public:
         auto glPlatform = GLPlatform::instance();
 
         // set strict binding
-        if (kwinApp()->options->qobject->isGlStrictBindingFollowsDriver()) {
-            kwinApp()->options->qobject->setGlStrictBinding(!glPlatform->supports(LooseBinding));
+        if (platform.base.options->qobject->isGlStrictBindingFollowsDriver()) {
+            platform.base.options->qobject->setGlStrictBinding(!glPlatform->supports(LooseBinding));
         }
 
         bool haveSyncObjects = glPlatform->isGLES()

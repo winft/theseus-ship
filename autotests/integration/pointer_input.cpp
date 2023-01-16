@@ -454,13 +454,13 @@ void PointerInputTest::testModifierClickUnrestrictedMove()
     group.writeEntry("CommandAll3", "Move");
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);
-    QCOMPARE(kwinApp()->options->qobject->commandAllModifier(),
+    QCOMPARE(Test::app()->base.options->qobject->commandAllModifier(),
              modKey == QStringLiteral("Alt") ? Qt::AltModifier : Qt::MetaModifier);
-    QCOMPARE(kwinApp()->options->qobject->commandAll1(),
+    QCOMPARE(Test::app()->base.options->qobject->commandAll1(),
              base::options_qobject::MouseUnrestrictedMove);
-    QCOMPARE(kwinApp()->options->qobject->commandAll2(),
+    QCOMPARE(Test::app()->base.options->qobject->commandAll2(),
              base::options_qobject::MouseUnrestrictedMove);
-    QCOMPARE(kwinApp()->options->qobject->commandAll3(),
+    QCOMPARE(Test::app()->base.options->qobject->commandAll3(),
              base::options_qobject::MouseUnrestrictedMove);
 
     // create a window
@@ -526,12 +526,12 @@ void PointerInputTest::testModifierClickUnrestrictedMoveGlobalShortcutsDisabled(
     group.writeEntry("CommandAll3", "Move");
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);
-    QCOMPARE(kwinApp()->options->qobject->commandAllModifier(), Qt::MetaModifier);
-    QCOMPARE(kwinApp()->options->qobject->commandAll1(),
+    QCOMPARE(Test::app()->base.options->qobject->commandAllModifier(), Qt::MetaModifier);
+    QCOMPARE(Test::app()->base.options->qobject->commandAll1(),
              base::options_qobject::MouseUnrestrictedMove);
-    QCOMPARE(kwinApp()->options->qobject->commandAll2(),
+    QCOMPARE(Test::app()->base.options->qobject->commandAll2(),
              base::options_qobject::MouseUnrestrictedMove);
-    QCOMPARE(kwinApp()->options->qobject->commandAll3(),
+    QCOMPARE(Test::app()->base.options->qobject->commandAll3(),
              base::options_qobject::MouseUnrestrictedMove);
 
     // create a window
@@ -778,10 +778,11 @@ void PointerInputTest::testFocusFollowsMouse()
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);
     // verify the settings
-    QCOMPARE(kwinApp()->options->qobject->focusPolicy(), base::options_qobject::FocusFollowsMouse);
-    QVERIFY(kwinApp()->options->qobject->isAutoRaise());
-    QCOMPARE(kwinApp()->options->qobject->autoRaiseInterval(), 20);
-    QCOMPARE(kwinApp()->options->qobject->delayFocusInterval(), 200);
+    QCOMPARE(Test::app()->base.options->qobject->focusPolicy(),
+             base::options_qobject::FocusFollowsMouse);
+    QVERIFY(Test::app()->base.options->qobject->isAutoRaise());
+    QCOMPARE(Test::app()->base.options->qobject->autoRaiseInterval(), 20);
+    QCOMPARE(Test::app()->base.options->qobject->delayFocusInterval(), 200);
 
     // create two windows
     QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
@@ -989,7 +990,7 @@ void PointerInputTest::testMouseActionActiveWindow()
     group.writeEntry("ClickRaise", clickRaise);
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);
-    QCOMPARE(kwinApp()->options->qobject->isClickRaise(), clickRaise);
+    QCOMPARE(Test::app()->base.options->qobject->isClickRaise(), clickRaise);
 
     // Create two windows.
     QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
@@ -1707,8 +1708,8 @@ void PointerInputTest::testResizeCursor()
     group.writeEntry("CommandAll3", "Resize");
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);
-    QCOMPARE(kwinApp()->options->qobject->commandAllModifier(), Qt::MetaModifier);
-    QCOMPARE(kwinApp()->options->qobject->commandAll3(),
+    QCOMPARE(Test::app()->base.options->qobject->commandAllModifier(), Qt::MetaModifier);
+    QCOMPARE(Test::app()->base.options->qobject->commandAll3(),
              base::options_qobject::MouseUnrestrictedResize);
 
     // create a test client
@@ -1778,8 +1779,8 @@ void PointerInputTest::testMoveCursor()
     group.writeEntry("CommandAll1", "Move");
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);
-    QCOMPARE(kwinApp()->options->qobject->commandAllModifier(), Qt::MetaModifier);
-    QCOMPARE(kwinApp()->options->qobject->commandAll1(),
+    QCOMPARE(Test::app()->base.options->qobject->commandAllModifier(), Qt::MetaModifier);
+    QCOMPARE(Test::app()->base.options->qobject->commandAll1(),
              base::options_qobject::MouseUnrestrictedMove);
 
     // create a test client

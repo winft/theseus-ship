@@ -105,7 +105,7 @@ QList<QAction*> ScriptedEffectWithDebugSpy::actions()
 ScriptedEffectWithDebugSpy::ScriptedEffectWithDebugSpy()
     : scripting::effect(
         *KWin::effects,
-        []() -> base::options& { return *Test::app()->options; },
+        []() -> base::options& { return *Test::app()->base.options; },
         [] { return Test::app()->base.topology.size; })
 {
 }

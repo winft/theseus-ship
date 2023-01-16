@@ -107,7 +107,7 @@ void ping(Win* win)
         // Can't ping :(
         return;
     }
-    if (kwinApp()->options->qobject->killPingTimeout() == 0) {
+    if (win->space.base.options->qobject->killPingTimeout() == 0) {
         // Turned off
         return;
     }
@@ -137,7 +137,7 @@ void ping(Win* win)
 
     // We'll run the timer twice, at first we'll desaturate the window
     // and the second time we'll show the "do you want to kill" prompt.
-    win->ping_timer->start(kwinApp()->options->qobject->killPingTimeout() / 2);
+    win->ping_timer->start(win->space.base.options->qobject->killPingTimeout() / 2);
 
     win->ping_timestamp = xTime();
     win->space.root_info->sendPing(win->xcb_windows.client, win->ping_timestamp);

@@ -10,6 +10,7 @@
 
 #include <config-kwin.h>
 
+#include "base/options.h"
 #include "base/seat/backend/logind/session.h"
 #include "base/x11/xcb/helpers.h"
 #include "base/x11/xcb_event_filter.h"
@@ -220,7 +221,7 @@ void ApplicationX11::start()
     });
     connect(owner.data(), &KSelectionOwner::lostOwnership, this, &ApplicationX11::lostSelection);
     connect(owner.data(), &KSelectionOwner::claimedOwnership, [this]{
-        createOptions();
+        base.options = base::create_options(config());
 
         // Check  whether another windowmanager is running
         const uint32_t maskValues[] = {XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT};

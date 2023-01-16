@@ -39,7 +39,7 @@ public:
     {
         // TODO(romangg): Has to be here because in the integration tests base.backend is not yet
         //                available in the ctor. Can we change that?
-        if (kwinApp()->options->qobject->compositingMode() == QPainterCompositing) {
+        if (base.options->qobject->compositingMode() == QPainterCompositing) {
             qpainter = create_render_backend<qpainter_backend<platform>>(*this, "pixman");
         } else {
             egl = create_render_backend<egl_backend<platform>>(*this, "gles2");

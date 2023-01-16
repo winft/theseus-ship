@@ -101,7 +101,7 @@ void TestScreens::testReconfigure_data()
 
 void TestScreens::testReconfigure()
 {
-    auto& options = Test::app()->options;
+    auto& options = Test::app()->base.options;
     options->loadConfig();
 
     QCOMPARE(options->get_current_output_follows_mouse(), false);

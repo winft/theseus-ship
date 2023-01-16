@@ -917,7 +917,7 @@ public:
         updateLayout();
         recreateEdges();
 
-        QObject::connect(kwinApp()->options->qobject.get(),
+        QObject::connect(space.base.options->qobject.get(),
                          &base::options_qobject::configChanged,
                          qobject.get(),
                          [this] { reconfigure(); });

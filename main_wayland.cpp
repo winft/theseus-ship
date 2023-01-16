@@ -199,7 +199,7 @@ void ApplicationWayland::start(OperationMode mode,
     using render_t = render::backend::wlroots::platform<base_t>;
     base->render = std::make_unique<render_t>(*base);
 
-    createOptions();
+    base->options = base::create_options(config());
 
     auto session = new base::seat::backend::wlroots::session(base->session, base->backend);
     this->session.reset(session);

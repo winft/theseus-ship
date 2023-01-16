@@ -389,12 +389,12 @@ int effects_handler_wrap::workspaceHeight() const
 
 bool effects_handler_wrap::optionRollOverDesktops() const
 {
-    return kwinApp()->options->qobject->isRollOverDesktops();
+    return options.qobject->isRollOverDesktops();
 }
 
 double effects_handler_wrap::animationTimeFactor() const
 {
-    return kwinApp()->options->animationTimeFactor();
+    return options.animationTimeFactor();
 }
 
 WindowQuadType effects_handler_wrap::newWindowQuadType()

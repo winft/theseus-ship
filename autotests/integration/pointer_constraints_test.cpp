@@ -181,12 +181,12 @@ void TestPointerConstraints::testConfinedPointer()
     group.writeEntry("CommandAllWheel", "change opacity");
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);
-    QCOMPARE(kwinApp()->options->qobject->commandAllModifier(), Qt::MetaModifier);
-    QCOMPARE(kwinApp()->options->qobject->commandAll1(),
+    QCOMPARE(Test::app()->base.options->qobject->commandAllModifier(), Qt::MetaModifier);
+    QCOMPARE(Test::app()->base.options->qobject->commandAll1(),
              base::options_qobject::MouseUnrestrictedMove);
-    QCOMPARE(kwinApp()->options->qobject->commandAll2(),
+    QCOMPARE(Test::app()->base.options->qobject->commandAll2(),
              base::options_qobject::MouseUnrestrictedMove);
-    QCOMPARE(kwinApp()->options->qobject->commandAll3(),
+    QCOMPARE(Test::app()->base.options->qobject->commandAll3(),
              base::options_qobject::MouseUnrestrictedMove);
 
     quint32 timestamp = 1;

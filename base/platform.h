@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "options.h"
 #include "output.h"
 #include "output_topology.h"
 
@@ -30,6 +31,8 @@ public:
     virtual std::vector<output*> get_outputs() const = 0;
 
     output_topology topology;
+
+    std::unique_ptr<base::options> options;
 
 private:
     Q_DISABLE_COPY(platform)

@@ -191,7 +191,7 @@ void set_blocking_compositing(Win& win, bool block)
 {
     auto const usedToBlock = win.blocks_compositing;
     win.blocks_compositing = win.control->rules.checkBlockCompositing(
-        block && kwinApp()->options->qobject->windowsBlockCompositing());
+        block && win.space.base.options->qobject->windowsBlockCompositing());
 
     if (usedToBlock != win.blocks_compositing) {
         Q_EMIT win.qobject->blockingCompositingChanged(win.blocks_compositing);

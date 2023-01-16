@@ -9,7 +9,7 @@
 */
 #pragma once
 
-#include "main.h"
+#include "base/options.h"
 #include "scripting_logging.h"
 
 #include <config-kwin.h>
@@ -84,7 +84,8 @@ public:
                           EffectsHandler& effects,
                           Compositor& compositor)
     {
-        auto get_options = []() -> base::options& { return *kwinApp()->options; };
+        auto get_options
+            = [&compositor]() -> base::options& { return *compositor.platform.base.options; };
         auto get_screen_size = [&compositor] { return compositor.platform.base.topology.size; };
         auto effect = new scripting::effect(effects, get_options, get_screen_size);
         if (!effect->init(effectName, pathToScript)) {

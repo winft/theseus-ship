@@ -87,7 +87,7 @@ void compositor_start_scene(Compositor& comp)
     }
 
     comp.state = state::starting;
-    kwinApp()->options->reloadCompositingSettings(true);
+    comp.platform.base.options->reloadCompositingSettings(true);
     compositor_setup_x11_support(comp);
 
     Q_EMIT comp.qobject->aboutToToggleCompositing();
@@ -205,11 +205,11 @@ void reinitialize_compositor(Compositor& comp)
 template<typename Compositor>
 void compositor_setup(Compositor& comp)
 {
-    QObject::connect(kwinApp()->options->qobject.get(),
+    QObject::connect(comp.platform.base.options->qobject.get(),
                      &base::options_qobject::configChanged,
                      comp.qobject.get(),
                      [&] { comp.configChanged(); });
-    QObject::connect(kwinApp()->options->qobject.get(),
+    QObject::connect(comp.platform.base.options->qobject.get(),
                      &base::options_qobject::animationSpeedChanged,
                      comp.qobject.get(),
                      [&] { comp.configChanged(); });

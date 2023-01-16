@@ -57,7 +57,6 @@ namespace x11
 class event_filter_manager;
 }
 
-class options;
 class platform;
 
 }
@@ -203,7 +202,6 @@ public:
 
     virtual bool is_screen_locked() const;
 
-    std::unique_ptr<base::options> options;
     std::unique_ptr<base::seat::session> session;
     std::unique_ptr<base::x11::event_filter_manager> x11_event_filters;
     std::unique_ptr<desktop::screen_locker_watcher> screen_locker_watcher;
@@ -218,8 +216,6 @@ protected:
     Application(OperationMode mode, int &argc, char **argv);
 
     void prepare_start();
-
-    void createOptions();
 
     void setTerminating() {
         m_terminating = true;

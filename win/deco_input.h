@@ -23,6 +23,8 @@ bool process_decoration_button_press(Win* win, QMouseEvent* event, bool ignoreMe
         active = true;
     }
 
+    auto const& qopts = win->space.base.options->qobject;
+
     // check whether it is a double click
     if (event->button() == Qt::LeftButton && titlebar_positioned_under_mouse(win)) {
         auto& deco = win->control->deco;
@@ -32,8 +34,7 @@ bool process_decoration_button_press(Win* win, QMouseEvent* event, bool ignoreMe
                 // expired -> new first click and pot. init
                 deco.double_click.start();
             } else {
-                perform_window_operation(win,
-                                         kwinApp()->options->qobject->operationTitlebarDblClick());
+                perform_window_operation(win, qopts->operationTitlebarDblClick());
                 end_move_resize(win);
                 return false;
             }
@@ -44,14 +45,11 @@ bool process_decoration_button_press(Win* win, QMouseEvent* event, bool ignoreMe
     }
 
     if (event->button() == Qt::LeftButton) {
-        com = active ? kwinApp()->options->qobject->commandActiveTitlebar1()
-                     : kwinApp()->options->qobject->commandInactiveTitlebar1();
+        com = active ? qopts->commandActiveTitlebar1() : qopts->commandInactiveTitlebar1();
     } else if (event->button() == Qt::MiddleButton) {
-        com = active ? kwinApp()->options->qobject->commandActiveTitlebar2()
-                     : kwinApp()->options->qobject->commandInactiveTitlebar2();
+        com = active ? qopts->commandActiveTitlebar2() : qopts->commandInactiveTitlebar2();
     } else if (event->button() == Qt::RightButton) {
-        com = active ? kwinApp()->options->qobject->commandActiveTitlebar3()
-                     : kwinApp()->options->qobject->commandInactiveTitlebar3();
+        com = active ? qopts->commandActiveTitlebar3() : qopts->commandInactiveTitlebar3();
     }
 
     // Operations menu is for actions where it's not possible to get the matching and

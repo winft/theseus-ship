@@ -666,13 +666,13 @@ void DecorationInputTest::testModifierClickUnrestrictedMove()
     group.writeEntry("CommandAll3", "Move");
     group.sync();
     win::space_reconfigure(*Test::app()->base.space);
-    QCOMPARE(kwinApp()->options->qobject->commandAllModifier(),
+    QCOMPARE(Test::app()->base.options->qobject->commandAllModifier(),
              modKey == QStringLiteral("Alt") ? Qt::AltModifier : Qt::MetaModifier);
-    QCOMPARE(kwinApp()->options->qobject->commandAll1(),
+    QCOMPARE(Test::app()->base.options->qobject->commandAll1(),
              base::options_qobject::MouseUnrestrictedMove);
-    QCOMPARE(kwinApp()->options->qobject->commandAll2(),
+    QCOMPARE(Test::app()->base.options->qobject->commandAll2(),
              base::options_qobject::MouseUnrestrictedMove);
-    QCOMPARE(kwinApp()->options->qobject->commandAll3(),
+    QCOMPARE(Test::app()->base.options->qobject->commandAll3(),
              base::options_qobject::MouseUnrestrictedMove);
 
     // create a window
