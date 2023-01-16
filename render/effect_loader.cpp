@@ -19,9 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "effect_loader.h"
 
-#include "base/logging.h"
 #include "render/compositor.h"
-#include "scripting/effect.h"
 
 #include "config-kwin.h"
 #include "kwineffects/effect_plugin_factory.h"
@@ -29,7 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <KConfigGroup>
 #include <KPackage/Package>
-#include <KPackage/PackageLoader>
 #include <QFutureWatcher>
 #include <QMap>
 #include <QStringList>
@@ -71,118 +68,6 @@ load_effect_flags basic_effect_loader::readConfig(const QString& effectName,
         return load_effect_flags::load | load_effect_flags::check_default_function;
     }
     return load_effect_flags();
-}
-
-static const QString s_nameProperty = QStringLiteral("X-KDE-PluginInfo-Name");
-static const QString s_jsConstraint = QStringLiteral("[X-Plasma-API] == 'javascript'");
-static const QString s_serviceType = QStringLiteral("KWin/Effect");
-
-scripted_effect_loader::scripted_effect_loader(EffectsHandler& effects, QObject* parent)
-    : basic_effect_loader(parent)
-    , effects{effects}
-{
-}
-
-scripted_effect_loader::~scripted_effect_loader()
-{
-}
-
-bool scripted_effect_loader::hasEffect(const QString& name) const
-{
-    return findEffect(name).isValid();
-}
-
-bool scripted_effect_loader::isEffectSupported(const QString& name) const
-{
-    // scripted effects are in general supported
-    if (!scripting::effect::supported(effects)) {
-        return false;
-    }
-    return hasEffect(name);
-}
-
-QStringList scripted_effect_loader::listOfKnownEffects() const
-{
-    const auto effects = findAllEffects();
-    QStringList result;
-    for (const auto& service : effects) {
-        result << service.pluginId();
-    }
-    return result;
-}
-
-bool scripted_effect_loader::loadEffect(const QString& name)
-{
-    auto effect = findEffect(name);
-    if (!effect.isValid()) {
-        return false;
-    }
-    return loadEffect(effect, load_effect_flags::load);
-}
-
-bool scripted_effect_loader::loadEffect(const KPluginMetaData& effect, load_effect_flags flags)
-{
-    const QString name = effect.pluginId();
-    if (!(flags & load_effect_flags::load)) {
-        qCDebug(KWIN_CORE) << "Loading flags disable effect: " << name;
-        return false;
-    }
-    if (m_loadedEffects.contains(name)) {
-        qCDebug(KWIN_CORE) << name << "already loaded";
-        return false;
-    }
-
-    if (!scripting::effect::supported(effects)) {
-        qCDebug(KWIN_CORE) << "Effect is not supported: " << name;
-        return false;
-    }
-
-    auto e = scripting::effect::create(effect, effects);
-    if (!e) {
-        qCDebug(KWIN_CORE) << "Could not initialize scripted effect: " << name;
-        return false;
-    }
-    connect(e, &scripting::effect::destroyed, this, [this, name]() {
-        m_loadedEffects.removeAll(name);
-    });
-
-    qCDebug(KWIN_CORE) << "Successfully loaded scripted effect: " << name;
-    Q_EMIT effectLoaded(e, name);
-    m_loadedEffects << name;
-    return true;
-}
-
-void scripted_effect_loader::queryAndLoadAll()
-{
-    auto const effects = findAllEffects();
-    for (auto const& effect : effects) {
-        auto const load_flags = readConfig(effect.pluginId(), effect.isEnabledByDefault());
-        if (flags(load_flags & load_effect_flags::load)) {
-            loadEffect(effect, load_flags);
-        }
-    }
-}
-
-QList<KPluginMetaData> scripted_effect_loader::findAllEffects() const
-{
-    return KPackage::PackageLoader::self()->listPackages(s_serviceType,
-                                                         QStringLiteral("kwin/effects"));
-}
-
-KPluginMetaData scripted_effect_loader::findEffect(const QString& name) const
-{
-    const auto plugins = KPackage::PackageLoader::self()->findPackages(
-        s_serviceType, QStringLiteral("kwin/effects"), [name](const KPluginMetaData& metadata) {
-            return metadata.pluginId().compare(name, Qt::CaseInsensitive) == 0;
-        });
-    if (!plugins.isEmpty()) {
-        return plugins.first();
-    }
-    return KPluginMetaData();
-}
-
-void scripted_effect_loader::clear()
-{
 }
 
 plugin_effect_loader::plugin_effect_loader(QObject* parent)
@@ -339,15 +224,6 @@ void plugin_effect_loader::setPluginSubDirectory(const QString& directory)
 
 void plugin_effect_loader::clear()
 {
-}
-
-effect_loader::effect_loader(EffectsHandler& effects, QObject* parent)
-    : basic_effect_loader(parent)
-{
-    m_loaders << new scripted_effect_loader(effects, this) << new plugin_effect_loader(this);
-    for (auto it = m_loaders.constBegin(); it != m_loaders.constEnd(); ++it) {
-        connect(*it, &basic_effect_loader::effectLoaded, this, &basic_effect_loader::effectLoaded);
-    }
 }
 
 effect_loader::~effect_loader()

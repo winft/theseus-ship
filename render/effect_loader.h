@@ -19,9 +19,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
+#include "base/logging.h"
 #include "kwin_export.h"
+#include "scripting/effect.h"
 #include "utils/flags.h"
 
+#include <KPackage/PackageLoader>
 #include <KPluginMetaData>
 #include <KSharedConfig>
 #include <QFlags>
@@ -30,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QPair>
 #include <QQueue>
 #include <QStaticPlugin>
+#include <string_view>
 
 namespace KWin
 {
@@ -55,6 +59,14 @@ enum class load_effect_flags {
     ///< The Check Default Function needs to be invoked if the Effect provides it
     check_default_function = 1 << 2,
 };
+
+}
+}
+
+ENUM_FLAGS(KWin::render::load_effect_flags)
+
+namespace KWin::render
+{
 
 /**
  * @brief Interface to describe how an effect loader has to function.
@@ -286,29 +298,130 @@ private:
 /**
  * @brief Can load scripted Effects
  */
-class KWIN_EXPORT scripted_effect_loader : public basic_effect_loader
+template<typename Compositor>
+class scripted_effect_loader : public basic_effect_loader
 {
 public:
-    explicit scripted_effect_loader(EffectsHandler& effects, QObject* parent = nullptr);
-    ~scripted_effect_loader() override;
+    scripted_effect_loader(EffectsHandler& effects,
+                           Compositor& compositor,
+                           QObject* parent = nullptr)
+        : basic_effect_loader(parent)
+        , effects{effects}
+        , compositor{compositor}
+    {
+    }
 
-    bool hasEffect(const QString& name) const override;
-    bool isEffectSupported(const QString& name) const override;
-    QStringList listOfKnownEffects() const override;
+    ~scripted_effect_loader() override = default;
 
-    void clear() override;
-    void queryAndLoadAll() override;
-    bool loadEffect(const QString& name) override;
-    bool loadEffect(const KPluginMetaData& effect, load_effect_flags flags);
+    bool hasEffect(const QString& name) const override
+    {
+        return findEffect(name).isValid();
+    }
+
+    bool isEffectSupported(const QString& name) const override
+    {
+        // scripted effects are in general supported
+        if (!scripting::effect::supported(effects)) {
+            return false;
+        }
+        return hasEffect(name);
+    }
+
+    QStringList listOfKnownEffects() const override
+    {
+        const auto effects = findAllEffects();
+        QStringList result;
+        for (const auto& service : effects) {
+            result << service.pluginId();
+        }
+        return result;
+    }
+
+    void clear() override
+    {
+    }
+
+    void queryAndLoadAll() override
+    {
+        auto const effects = findAllEffects();
+        for (auto const& effect : effects) {
+            auto const load_flags = readConfig(effect.pluginId(), effect.isEnabledByDefault());
+            if (flags(load_flags & load_effect_flags::load)) {
+                loadEffect(effect, load_flags);
+            }
+        }
+    }
+
+    bool loadEffect(const QString& name) override
+    {
+        auto effect = findEffect(name);
+        if (!effect.isValid()) {
+            return false;
+        }
+        return loadEffect(effect, load_effect_flags::load);
+    }
+
+    bool loadEffect(const KPluginMetaData& effect, load_effect_flags flags)
+    {
+        const QString name = effect.pluginId();
+        if (!(flags & load_effect_flags::load)) {
+            qCDebug(KWIN_CORE) << "Loading flags disable effect: " << name;
+            return false;
+        }
+        if (m_loadedEffects.contains(name)) {
+            qCDebug(KWIN_CORE) << name << "already loaded";
+            return false;
+        }
+
+        if (!scripting::effect::supported(effects)) {
+            qCDebug(KWIN_CORE) << "Effect is not supported: " << name;
+            return false;
+        }
+
+        auto e = scripting::effect::create(effect, effects, compositor);
+        if (!e) {
+            qCDebug(KWIN_CORE) << "Could not initialize scripted effect: " << name;
+            return false;
+        }
+        connect(e, &scripting::effect::destroyed, this, [this, name]() {
+            m_loadedEffects.removeAll(name);
+        });
+
+        qCDebug(KWIN_CORE) << "Successfully loaded scripted effect: " << name;
+        Q_EMIT effectLoaded(e, name);
+        m_loadedEffects << name;
+        return true;
+    }
 
 private:
-    QList<KPluginMetaData> findAllEffects() const;
-    KPluginMetaData findEffect(const QString& name) const;
+    static constexpr std::string_view s_serviceType{"KWin/Effect"};
+
+    QList<KPluginMetaData> findAllEffects() const
+    {
+        return KPackage::PackageLoader::self()->listPackages(
+            QString::fromStdString(std::string(s_serviceType)), QStringLiteral("kwin/effects"));
+    }
+
+    KPluginMetaData findEffect(const QString& name) const
+    {
+        auto const plugins = KPackage::PackageLoader::self()->findPackages(
+            QString::fromStdString(std::string(s_serviceType)),
+            QStringLiteral("kwin/effects"),
+            [name](const KPluginMetaData& metadata) {
+                return metadata.pluginId().compare(name, Qt::CaseInsensitive) == 0;
+            });
+        if (!plugins.isEmpty()) {
+            return plugins.first();
+        }
+        return KPluginMetaData();
+    }
+
     QStringList m_loadedEffects;
     EffectsHandler& effects;
+    Compositor& compositor;
 };
 
-class plugin_effect_loader : public basic_effect_loader
+class KWIN_EXPORT plugin_effect_loader : public basic_effect_loader
 {
 public:
     explicit plugin_effect_loader(QObject* parent = nullptr);
@@ -336,7 +449,20 @@ private:
 class KWIN_EXPORT effect_loader : public basic_effect_loader
 {
 public:
-    explicit effect_loader(EffectsHandler& effects, QObject* parent = nullptr);
+    template<typename Compositor>
+    explicit effect_loader(EffectsHandler& effects,
+                           Compositor& compositor,
+                           QObject* parent = nullptr)
+        : basic_effect_loader(parent)
+    {
+        m_loaders << new scripted_effect_loader(effects, compositor, this)
+                  << new plugin_effect_loader(this);
+        for (auto it = m_loaders.constBegin(); it != m_loaders.constEnd(); ++it) {
+            connect(
+                *it, &basic_effect_loader::effectLoaded, this, &basic_effect_loader::effectLoaded);
+        }
+    }
+
     ~effect_loader() override;
     bool hasEffect(const QString& name) const override;
     bool isEffectSupported(const QString& name) const override;
@@ -351,6 +477,3 @@ private:
 };
 
 }
-}
-
-ENUM_FLAGS(KWin::render::load_effect_flags)

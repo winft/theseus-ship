@@ -103,7 +103,10 @@ QList<QAction*> ScriptedEffectWithDebugSpy::actions()
 }
 
 ScriptedEffectWithDebugSpy::ScriptedEffectWithDebugSpy()
-    : scripting::effect(*KWin::effects)
+    : scripting::effect(
+        *KWin::effects,
+        []() -> base::options& { return *Test::app()->options; },
+        [] { return Test::app()->base.topology.size; })
 {
 }
 
@@ -145,7 +148,8 @@ void ScriptedEffectsTest::initTestCase()
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
 
-    const auto builtinNames = render::effect_loader(*effects).listOfKnownEffects();
+    auto const builtinNames = render::effect_loader(*effects, *Test::app()->base.render->compositor)
+                                  .listOfKnownEffects();
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }

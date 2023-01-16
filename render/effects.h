@@ -63,7 +63,34 @@ class KWIN_EXPORT effects_handler_wrap : public EffectsHandler
     Q_PROPERTY(QStringList loadedEffects READ loadedEffects)
     Q_PROPERTY(QStringList listOfEffects READ listOfEffects)
 public:
-    effects_handler_wrap(CompositingType type);
+    template<typename Compositor>
+    effects_handler_wrap(Compositor& compositor)
+        : EffectsHandler(compositor.scene->compositingType())
+        , m_effectLoader(new effect_loader(*this, compositor, this))
+    {
+        qRegisterMetaType<QVector<KWin::EffectWindow*>>();
+
+        singleton_interface::effects = this;
+        connect(m_effectLoader,
+                &basic_effect_loader::effectLoaded,
+                this,
+                [this](Effect* effect, const QString& name) {
+                    effect_order.insert(effect->requestedEffectChainPosition(),
+                                        EffectPair(name, effect));
+                    loaded_effects << EffectPair(name, effect);
+                    effectsChanged();
+                });
+        m_effectLoader->setConfig(kwinApp()->config());
+
+        create_adaptor();
+        QDBusConnection dbus = QDBusConnection::sessionBus();
+        dbus.registerObject(QStringLiteral("/Effects"), this);
+
+        // init is important, otherwise causes crashes when quads are build before the first
+        // painting pass start
+        m_currentBuildQuadsIterator = m_activeEffects.constEnd();
+    }
+
     ~effects_handler_wrap() override;
 
     void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
@@ -246,6 +273,7 @@ protected:
     int next_window_quad_type{EFFECT_QUAD_TYPE_START};
 
 private:
+    void create_adaptor();
     void destroyEffect(Effect* effect);
 
     typedef QVector<Effect*> EffectsList;
@@ -272,7 +300,7 @@ public:
     using effect_window_t = typename scene_t::effect_window_t;
 
     effects_handler_impl(Compositor& compositor)
-        : effects_handler_wrap(compositor.scene->compositingType())
+        : effects_handler_wrap(compositor)
         , compositor{compositor}
     {
         singleton_interface::register_thumbnail = [](auto& eff_win, auto& thumbnail) {

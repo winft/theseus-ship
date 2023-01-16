@@ -51,33 +51,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::render
 {
 
-effects_handler_wrap::effects_handler_wrap(CompositingType type)
-    : EffectsHandler(type)
-    , m_effectLoader(new effect_loader(*this, this))
-{
-    qRegisterMetaType<QVector<KWin::EffectWindow*>>();
-
-    singleton_interface::effects = this;
-    connect(m_effectLoader,
-            &basic_effect_loader::effectLoaded,
-            this,
-            [this](Effect* effect, const QString& name) {
-                effect_order.insert(effect->requestedEffectChainPosition(),
-                                    EffectPair(name, effect));
-                loaded_effects << EffectPair(name, effect);
-                effectsChanged();
-            });
-    m_effectLoader->setConfig(kwinApp()->config());
-
-    new EffectsAdaptor(this);
-    QDBusConnection dbus = QDBusConnection::sessionBus();
-    dbus.registerObject(QStringLiteral("/Effects"), this);
-
-    // init is important, otherwise causes crashes when quads are build before the first painting
-    // pass start
-    m_currentBuildQuadsIterator = m_activeEffects.constEnd();
-}
-
 effects_handler_wrap::~effects_handler_wrap()
 {
     singleton_interface::effects = nullptr;
@@ -518,6 +491,11 @@ void effects_handler_wrap::unloadEffect(const QString& name)
     effectsChanged();
 
     addRepaintFull();
+}
+
+void effects_handler_wrap::create_adaptor()
+{
+    new EffectsAdaptor(this);
 }
 
 void effects_handler_wrap::destroyEffect(Effect* effect)

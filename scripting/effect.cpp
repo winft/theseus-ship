@@ -9,7 +9,6 @@
 */
 #include "effect.h"
 
-#include "scripting_logging.h"
 #include "space.h"
 
 #include "base/options.h"
@@ -20,7 +19,6 @@
 
 #include <KConfigGroup>
 #include <KGlobalAccel>
-#include <KPluginMetaData>
 #include <kconfigloader.h>
 
 #include <QAction>
@@ -54,7 +52,8 @@ struct AnimationSettings {
     bool keepAlive;
 };
 
-AnimationSettings animationSettingsFromObject(const QJSValue& object)
+AnimationSettings animationSettingsFromObject(const QJSValue& object,
+                                              base::options_qobject::AnimationCurve anim_curve)
 {
     AnimationSettings settings;
     settings.set = 0;
@@ -98,7 +97,7 @@ AnimationSettings animationSettingsFromObject(const QJSValue& object)
                 return QEasingCurve::Linear;
             }
         };
-        settings.curve = get_qt_curve(kwinApp()->options->qobject->animationCurve());
+        settings.curve = get_qt_curve(anim_curve);
     }
 
     const QJSValue type = object.property(QStringLiteral("type"));
@@ -148,49 +147,20 @@ static KWin::FPx2 fpx2FromScriptValue(const QJSValue& value)
     return FPx2();
 }
 
-effect* effect::create(const KPluginMetaData& effect, EffectsHandler& effects)
-{
-    const QString name = effect.pluginId();
-    const QString scriptName = effect.value(QStringLiteral("X-Plasma-MainScript"));
-    if (scriptName.isEmpty()) {
-        qCDebug(KWIN_SCRIPTING) << "X-Plasma-MainScript not set";
-        return nullptr;
-    }
-    const QString scriptFile = QStandardPaths::locate(
-        QStandardPaths::GenericDataLocation,
-        QLatin1String(KWIN_NAME "/effects/") + name + QLatin1String("/contents/") + scriptName);
-    if (scriptFile.isNull()) {
-        qCDebug(KWIN_SCRIPTING) << "Could not locate the effect script";
-        return nullptr;
-    }
-    return effect::create(
-        name, scriptFile, effect.value(QStringLiteral("X-KDE-Ordering")).toInt(), effects);
-}
-
-effect* effect::create(const QString& effectName,
-                       const QString& pathToScript,
-                       int chainPosition,
-                       EffectsHandler& effects)
-{
-    auto effect = new scripting::effect(effects);
-    if (!effect->init(effectName, pathToScript)) {
-        delete effect;
-        return nullptr;
-    }
-    effect->m_chainPosition = chainPosition;
-    return effect;
-}
-
 bool effect::supported(EffectsHandler& effects)
 {
     return effects.animationsSupported();
 }
 
-effect::effect(EffectsHandler& effects)
+effect::effect(EffectsHandler& effects,
+               std::function<base::options&()> get_options,
+               std::function<QSize()> get_screen_size)
     : AnimationEffect()
     , effects{effects}
     , m_engine(new QJSEngine(this))
     , m_scriptFile(QString())
+    , get_options{get_options}
+    , get_screen_size{get_screen_size}
 {
     connect(&effects, &EffectsHandler::activeFullScreenEffectChanged, this, [this]() {
         auto fullScreenEffect = this->effects.activeFullScreenEffect();
@@ -330,7 +300,9 @@ QJSValue effect::animate_helper(const QJSValue& object, AnimationType animationT
         return QJSValue();
     }
 
-    QVector<AnimationSettings> settings{animationSettingsFromObject(object)}; // global
+    // global
+    QVector<AnimationSettings> settings{
+        animationSettingsFromObject(object, get_options().qobject->animationCurve())};
 
     QJSValue animations = object.property(QStringLiteral("animations")); // array
     if (!animations.isUndefined()) {
@@ -343,7 +315,8 @@ QJSValue effect::animate_helper(const QJSValue& object, AnimationType animationT
         for (int i = 0; i < length; ++i) {
             QJSValue value = animations.property(QString::number(i));
             if (value.isObject()) {
-                AnimationSettings s = animationSettingsFromObject(value);
+                AnimationSettings s
+                    = animationSettingsFromObject(value, get_options().qobject->animationCurve());
                 const uint set = s.set | settings.at(0).set;
                 // Catch show stoppers (incompletable animation)
                 if (!(set & AnimationSettings::Type)) {
@@ -667,12 +640,12 @@ QJSValue effect::readConfig(const QString& key, const QJSValue& defaultValue)
 
 int effect::displayWidth() const
 {
-    return kwinApp()->get_base().topology.size.width();
+    return get_screen_size().width();
 }
 
 int effect::displayHeight() const
 {
-    return kwinApp()->get_base().topology.size.height();
+    return get_screen_size().height();
 }
 
 int effect::animationTime(int defaultTime) const
