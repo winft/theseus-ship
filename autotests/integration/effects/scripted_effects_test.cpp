@@ -123,7 +123,7 @@ bool ScriptedEffectWithDebugSpy::load(const QString& name)
     // used to find the internal effectloader and register ourselves
     auto c = effects.children();
     for (auto it = c.begin(); it != c.end(); ++it) {
-        if (qstrcmp((*it)->metaObject()->className(), "KWin::render::effect_loader") != 0) {
+        if (qstrcmp((*it)->metaObject()->className(), "KWin::render::basic_effect_loader") != 0) {
             continue;
         }
         QMetaObject::invokeMethod(

@@ -79,7 +79,7 @@ void DontCrashCancelAnimationFromAnimationEndedTest::testScript()
 
     const auto children = effects->children();
     for (auto it = children.begin(); it != children.end(); ++it) {
-        if (qstrcmp((*it)->metaObject()->className(), "KWin::render::effect_loader") != 0) {
+        if (qstrcmp((*it)->metaObject()->className(), "KWin::render::basic_effect_loader") != 0) {
             continue;
         }
         QVERIFY(QMetaObject::invokeMethod(*it,

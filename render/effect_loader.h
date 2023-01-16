@@ -225,13 +225,13 @@ private:
  */
 class basic_effect_load_queue : public QObject
 {
-    Q_OBJECT
 public:
     explicit basic_effect_load_queue(QObject* parent = nullptr)
         : QObject(parent)
     {
     }
-protected Q_SLOTS:
+
+protected:
     virtual void dequeue() = 0;
 };
 
@@ -275,7 +275,8 @@ private:
             return;
         }
         m_dequeueScheduled = true;
-        QMetaObject::invokeMethod(this, "dequeue", Qt::QueuedConnection);
+        QMetaObject::invokeMethod(
+            this, [this] { dequeue(); }, Qt::QueuedConnection);
     }
     Loader* m_effectLoader;
     bool m_dequeueScheduled;
@@ -287,7 +288,6 @@ private:
  */
 class KWIN_EXPORT scripted_effect_loader : public basic_effect_loader
 {
-    Q_OBJECT
 public:
     explicit scripted_effect_loader(EffectsHandler& effects, QObject* parent = nullptr);
     ~scripted_effect_loader() override;
@@ -310,7 +310,6 @@ private:
 
 class plugin_effect_loader : public basic_effect_loader
 {
-    Q_OBJECT
 public:
     explicit plugin_effect_loader(QObject* parent = nullptr);
     ~plugin_effect_loader() override;
@@ -336,7 +335,6 @@ private:
 
 class KWIN_EXPORT effect_loader : public basic_effect_loader
 {
-    Q_OBJECT
 public:
     explicit effect_loader(EffectsHandler& effects, QObject* parent = nullptr);
     ~effect_loader() override;
