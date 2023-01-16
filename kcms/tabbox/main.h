@@ -1,6 +1,7 @@
 /*
 SPDX-FileCopyrightText: 2009 Martin Gräßlin <mgraesslin@kde.org>
 SPDX-FileCopyrightText: 2020 Cyril Rossi <cyril.rossi@enioka.com>
+SPDX-FileCopyrightText: 2023 Ismael Asensio <isma.af@gmail.com>
 
 SPDX-License-Identifier: GPL-2.0-or-later
 */
@@ -37,19 +38,11 @@ public Q_SLOTS:
 
 private Q_SLOTS:
     void updateUnmanagedState();
-    void updateDefaultIndicator();
     void configureEffectClicked();
 
 private:
-    void updateUiFromConfig(KWinTabBoxConfigForm *form, const win::TabBoxSettings *config);
-    void updateConfigFromUi(const KWinTabBoxConfigForm *form, win::TabBoxSettings *config);
-    void updateUiFromDefaultConfig(KWinTabBoxConfigForm *form, const win::TabBoxSettings *config);
     void initLayoutLists();
-    void setEnabledUi(KWinTabBoxConfigForm *form, const win::TabBoxSettings *config);
     void createConnections(KWinTabBoxConfigForm *form);
-    bool updateUnmanagedIsNeedSave(const KWinTabBoxConfigForm *form, const win::TabBoxSettings *config);
-    bool updateUnmanagedIsDefault(KWinTabBoxConfigForm *form, const win::TabBoxSettings *config);
-    void updateUiDefaultIndicator(bool visible, KWinTabBoxConfigForm *form, const win::TabBoxSettings *config);
 
 private:
     KWinTabBoxConfigForm *m_primaryTabBoxUi = nullptr;
