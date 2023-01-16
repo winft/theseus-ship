@@ -43,7 +43,7 @@ template<typename Output>
 bool output_waiting_for_event(Output const& out)
 {
     return out.delay_timer.isActive() || out.swap_pending || !out.base.is_dpms_on()
-        || !kwinApp()->session->isActiveSession();
+        || !out.platform.base.session->isActiveSession();
 }
 
 template<typename Base, typename Platform>

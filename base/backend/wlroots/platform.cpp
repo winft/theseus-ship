@@ -104,10 +104,10 @@ platform::platform(std::string const& socket_name,
         backend = wlr_headless_backend_create(server->display->native());
     } else {
 #if HAVE_WLR_SESSION_ON_AUTOCREATE
-        backend = wlr_backend_autocreate(server->display->native(), &session);
+        backend = wlr_backend_autocreate(server->display->native(), &wlroots_session);
 #else
         backend = wlr_backend_autocreate(server->display->native());
-        session = wlr_backend_get_session(backend);
+        wlroots_session = wlr_backend_get_session(backend);
 #endif
     }
 

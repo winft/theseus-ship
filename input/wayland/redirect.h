@@ -346,7 +346,7 @@ private:
     {
         auto const has_global_shortcuts = platform.base.server->has_global_shortcut_support();
 
-        if (kwinApp()->session->hasSessionControl() && has_global_shortcuts) {
+        if (platform.base.session->hasSessionControl() && has_global_shortcuts) {
             m_filters.emplace_back(new virtual_terminal_filter<type>(*this));
         }
 

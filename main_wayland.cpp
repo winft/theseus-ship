@@ -201,8 +201,8 @@ void ApplicationWayland::start(OperationMode mode,
 
     base->options = base::create_options(config());
 
-    auto session = new base::seat::backend::wlroots::session(base->session, base->backend);
-    this->session.reset(session);
+    auto session = new base::seat::backend::wlroots::session(base->wlroots_session, base->backend);
+    base->session.reset(session);
     session->take_control(base->server->display->native());
 
     base->input = std::make_unique<input::backend::wlroots::platform>(

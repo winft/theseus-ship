@@ -235,7 +235,7 @@ void ApplicationX11::start()
                 ::exit(1);
         }
 
-        session.reset(new base::seat::backend::logind::session());
+        base.session = std::make_unique<base::seat::backend::logind::session>();
 
         base.input = std::make_unique<input::x11::platform<base_t>>(base);
         base.input->shortcuts = std::make_unique<input::global_shortcuts_manager>();

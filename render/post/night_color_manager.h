@@ -117,7 +117,7 @@ public:
         QObject::connect(&base, &Base::output_added, qobject.get(), [this] { hard_reset(); });
         QObject::connect(&base, &Base::output_removed, qobject.get(), [this] { hard_reset(); });
 
-        QObject::connect(kwinApp()->session.get(),
+        QObject::connect(base.session.get(),
                          &base::seat::session::sessionActiveChanged,
                          qobject.get(),
                          [this](bool active) {

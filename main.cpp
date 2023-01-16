@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/logging.h"
 #include "base/options.h"
-#include "base/seat/session.h"
 #include "base/x11/event_filter_manager.h"
 #include "base/x11/xcb/extensions.h"
 #include "debug/perf/ftrace.h"

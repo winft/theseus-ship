@@ -8,6 +8,7 @@
 #include "options.h"
 #include "output.h"
 #include "output_topology.h"
+#include "seat/session.h"
 
 #include "kwin_export.h"
 
@@ -33,6 +34,7 @@ public:
     output_topology topology;
 
     std::unique_ptr<base::options> options;
+    std::unique_ptr<base::seat::session> session;
 
 private:
     Q_DISABLE_COPY(platform)

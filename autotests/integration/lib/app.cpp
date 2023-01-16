@@ -157,8 +157,8 @@ void WaylandTestApplication::start()
 
     base.options = base::create_options(config());
 
-    session
-        = std::make_unique<base::seat::backend::wlroots::session>(base.session, headless_backend);
+    base.session = std::make_unique<base::seat::backend::wlroots::session>(base.wlroots_session,
+                                                                           headless_backend);
     base.input = std::make_unique<input::backend::wlroots::platform>(
         base, input::config(KConfig::SimpleConfig));
     base.input->install_shortcuts();

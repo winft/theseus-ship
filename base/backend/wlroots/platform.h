@@ -94,7 +94,7 @@ public:
     std::vector<non_desktop_output*> non_desktop_outputs;
 
     wlr_backend* backend{nullptr};
-    wlr_session* session{nullptr};
+    wlr_session* wlroots_session{nullptr};
 
 private:
     void init();
