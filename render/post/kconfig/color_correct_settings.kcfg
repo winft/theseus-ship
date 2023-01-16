@@ -15,7 +15,7 @@
             <default>true</default>
         </entry>
         <entry name="Mode" type="Enum">
-            <choices name="KWin::render::post::night_color_mode">
+            <choices name="KWin::render::night_color_mode">
                 <choice name="Automatic"/>
                 <choice name="Location"/>
                 <choice name="Times"/>

@@ -163,7 +163,7 @@ void night_color_manager::inhibit()
     if (inhibit_reference_count == 1) {
         reset_all_timers();
         night_color_display_inhibit_message(true);
-        Q_EMIT inhibited_changed();
+        dbus->send_inhibited(true);
     }
 }
 
@@ -174,7 +174,7 @@ void night_color_manager::uninhibit()
     if (!inhibit_reference_count) {
         reset_all_timers();
         night_color_display_inhibit_message(false);
-        Q_EMIT inhibited_changed();
+        dbus->send_inhibited(false);
     }
 }
 
@@ -470,8 +470,7 @@ void night_color_manager::update_target_temperature()
     }
 
     target_temp = targetTemperature;
-
-    Q_EMIT target_temperature_changed();
+    dbus->send_target_temperature(targetTemperature);
 }
 
 void night_color_manager::update_transition_timings(bool force)
@@ -479,8 +478,7 @@ void night_color_manager::update_transition_timings(bool force)
     if (m_mode == night_color_mode::constant) {
         next_transition = DateTimes();
         prev_transition = DateTimes();
-        Q_EMIT previous_transition_timings_changed();
-        Q_EMIT scheduled_transition_timings_changed();
+        dbus->send_transition_timings();
         return;
     }
 
@@ -503,8 +501,7 @@ void night_color_manager::update_transition_timings(bool force)
             next_transition = DateTimes(nextMorB, nextMorE);
             prev_transition = DateTimes(nextEveB.addDays(-1), nextEveE.addDays(-1));
         }
-        Q_EMIT previous_transition_timings_changed();
-        Q_EMIT scheduled_transition_timings_changed();
+        dbus->send_transition_timings();
         return;
     }
 
@@ -553,8 +550,7 @@ void night_color_manager::update_transition_timings(bool force)
         }
     }
 
-    Q_EMIT previous_transition_timings_changed();
-    Q_EMIT scheduled_transition_timings_changed();
+    dbus->send_transition_timings();
 }
 
 DateTimes night_color_manager::get_sun_timings(const QDateTime& dateTime,
@@ -729,7 +725,7 @@ void night_color_manager::set_enabled(bool enable)
     }
     enabled = enable;
     clock_skew_notifier->set_active(enabled);
-    Q_EMIT enabled_changed();
+    dbus->send_enabled(enable);
 }
 
 void night_color_manager::set_running(bool running)
@@ -738,7 +734,7 @@ void night_color_manager::set_running(bool running)
         return;
     }
     m_running = running;
-    Q_EMIT runningChanged();
+    dbus->send_running(running);
 }
 
 void night_color_manager::set_current_temperature(int temperature)
@@ -747,7 +743,7 @@ void night_color_manager::set_current_temperature(int temperature)
         return;
     }
     current_temp = temperature;
-    Q_EMIT current_temperature_changed();
+    dbus->send_current_temperature(temperature);
 }
 
 void night_color_manager::set_mode(night_color_mode mode)
@@ -756,7 +752,7 @@ void night_color_manager::set_mode(night_color_mode mode)
         return;
     }
     m_mode = mode;
-    Q_EMIT mode_changed();
+    dbus->send_mode(mode);
 }
 
 }

@@ -53,62 +53,6 @@ color_correct_dbus_interface::color_correct_dbus_interface(night_color_manager* 
             this,
             &color_correct_dbus_interface::removeInhibitorService);
 
-    connect(m_manager, &night_color_manager::inhibited_changed, this, [this] {
-        QVariantMap changedProperties;
-        changedProperties.insert(QStringLiteral("inhibited"), m_manager->is_inhibited());
-        send_changed_properties(changedProperties);
-    });
-
-    connect(m_manager, &night_color_manager::enabled_changed, this, [this] {
-        QVariantMap changedProperties;
-        changedProperties.insert(QStringLiteral("enabled"), m_manager->is_enabled());
-        send_changed_properties(changedProperties);
-    });
-
-    connect(m_manager, &night_color_manager::runningChanged, this, [this] {
-        QVariantMap changedProperties;
-        changedProperties.insert(QStringLiteral("running"), m_manager->is_running());
-        send_changed_properties(changedProperties);
-    });
-
-    connect(m_manager, &night_color_manager::current_temperature_changed, this, [this] {
-        QVariantMap changedProperties;
-        changedProperties.insert(QStringLiteral("currentTemperature"),
-                                 m_manager->current_temperature());
-        send_changed_properties(changedProperties);
-    });
-
-    connect(m_manager, &night_color_manager::target_temperature_changed, this, [this] {
-        QVariantMap changedProperties;
-        changedProperties.insert(QStringLiteral("targetTemperature"),
-                                 m_manager->get_target_temperature());
-        send_changed_properties(changedProperties);
-    });
-
-    connect(m_manager, &night_color_manager::mode_changed, this, [this] {
-        QVariantMap changedProperties;
-        changedProperties.insert(QStringLiteral("mode"), uint(m_manager->mode()));
-        send_changed_properties(changedProperties);
-    });
-
-    connect(m_manager, &night_color_manager::previous_transition_timings_changed, this, [this] {
-        QVariantMap changedProperties;
-        changedProperties.insert(QStringLiteral("previousTransitionDateTime"),
-                                 previousTransitionDateTime());
-        changedProperties.insert(QStringLiteral("previousTransitionDuration"),
-                                 previousTransitionDuration());
-        send_changed_properties(changedProperties);
-    });
-
-    connect(m_manager, &night_color_manager::scheduled_transition_timings_changed, this, [this] {
-        QVariantMap changedProperties;
-        changedProperties.insert(QStringLiteral("scheduledTransitionDateTime"),
-                                 scheduledTransitionDateTime());
-        changedProperties.insert(QStringLiteral("scheduledTransitionDuration"),
-                                 scheduledTransitionDuration());
-        send_changed_properties(changedProperties);
-    });
-
     new ColorCorrectAdaptor(this);
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/ColorCorrect"), this);
 }
@@ -174,6 +118,62 @@ quint64 color_correct_dbus_interface::scheduledTransitionDateTime() const
 quint32 color_correct_dbus_interface::scheduledTransitionDuration() const
 {
     return quint32(m_manager->scheduled_transition_duration());
+}
+
+void color_correct_dbus_interface::send_inhibited(bool inhibited) const
+{
+    QVariantMap props;
+    props.insert(QStringLiteral("inhibited"), inhibited);
+    send_changed_properties(props);
+}
+
+void color_correct_dbus_interface::send_enabled(bool enabled) const
+{
+    QVariantMap props;
+    props.insert(QStringLiteral("enabled"), enabled);
+    send_changed_properties(props);
+}
+
+void color_correct_dbus_interface::send_running(bool running) const
+{
+    QVariantMap props;
+    props.insert(QStringLiteral("running"), running);
+    send_changed_properties(props);
+}
+
+void color_correct_dbus_interface::send_current_temperature(int temp) const
+{
+    QVariantMap props;
+    props.insert(QStringLiteral("currentTemperature"), temp);
+    send_changed_properties(props);
+}
+
+void color_correct_dbus_interface::send_target_temperature(int temp) const
+{
+    QVariantMap props;
+    props.insert(QStringLiteral("targetTemperature"), temp);
+    send_changed_properties(props);
+}
+
+void color_correct_dbus_interface::send_mode(night_color_mode mode) const
+{
+    QVariantMap props;
+    props.insert(QStringLiteral("mode"), static_cast<uint>(mode));
+    send_changed_properties(props);
+}
+
+void color_correct_dbus_interface::send_transition_timings() const
+{
+    QVariantMap pprops;
+    pprops.insert(QStringLiteral("previousTransitionDateTime"), previousTransitionDateTime());
+    pprops.insert(QStringLiteral("previousTransitionDuration"), previousTransitionDuration());
+
+    QVariantMap sprops;
+    sprops.insert(QStringLiteral("scheduledTransitionDateTime"), scheduledTransitionDateTime());
+    sprops.insert(QStringLiteral("scheduledTransitionDuration"), scheduledTransitionDuration());
+
+    send_changed_properties(pprops);
+    send_changed_properties(sprops);
 }
 
 void color_correct_dbus_interface::nightColorAutoLocationUpdate(double latitude, double longitude)

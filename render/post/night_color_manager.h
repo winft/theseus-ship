@@ -20,7 +20,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include "constants.h"
+
 #include "kwin_export.h"
+#include "render/types.h"
 
 #include <KConfigWatcher>
 #include <KLocalizedString>
@@ -49,34 +51,6 @@ typedef QPair<QDateTime, QDateTime> DateTimes;
 typedef QPair<QTime, QTime> Times;
 
 class color_correct_dbus_interface;
-
-/**
- * This enum type is used to specify operation mode of the night color manager.
- */
-enum night_color_mode {
-    /**
-     * Color temperature is computed based on the current position of the Sun.
-     *
-     * Location of the user is provided by Plasma.
-     */
-    automatic,
-    /**
-     * Color temperature is computed based on the current position of the Sun.
-     *
-     * Location of the user is provided by themselves.
-     */
-    location,
-    /**
-     * Color temperature is computed based on the current time.
-     *
-     * Sunrise and sunset times have to be specified by the user.
-     */
-    timings,
-    /**
-     * Color temperature is constant thoughout the day.
-     */
-    constant,
-};
 
 /**
  * The night color manager is a blue light filter similar to Redshift.
@@ -202,47 +176,6 @@ public:
 public Q_SLOTS:
     void reset_slow_update_start_timer();
     void quick_adjust();
-
-Q_SIGNALS:
-    /**
-     * Emitted whenever the night color manager is blocked or unblocked.
-     */
-    void inhibited_changed();
-
-    /**
-     * Emitted whenever the night color manager is enabled or disabled.
-     */
-    void enabled_changed();
-
-    /**
-     * Emitted whenever the night color manager starts or stops running.
-     */
-    void runningChanged();
-
-    /**
-     * Emitted whenever the current screen color temperature has changed.
-     */
-    void current_temperature_changed();
-
-    /**
-     * Emitted whenever the target screen color temperature has changed.
-     */
-    void target_temperature_changed();
-
-    /**
-     * Emitted whenver the operation mode has changed.
-     */
-    void mode_changed();
-
-    /**
-     * Emitted whenever the timings of the previous color temperature transition have changed.
-     */
-    void previous_transition_timings_changed();
-
-    /**
-     * Emitted whenever the timings of the next color temperature transition have changed.
-     */
-    void scheduled_transition_timings_changed();
 
 private:
     void read_config();

@@ -86,6 +86,17 @@ enum class state {
     stopping,
 };
 
+enum night_color_mode {
+    /// Color temperature based on current sun position. Location computed by external means.
+    automatic,
+    /// Color temperature based on current sun position. Location manually set by user.
+    location,
+    /// Color temperature based on current time. Sunrise/-set times manually set by user.
+    timings,
+    /// Color temperature is constant thoughout the day.
+    constant,
+};
+
 }
 
 ENUM_FLAGS(KWin::render::paint_type)

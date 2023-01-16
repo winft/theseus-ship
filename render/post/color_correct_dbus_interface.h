@@ -19,6 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
+#include "render/types.h"
+
 #include <QObject>
 #include <QtDBus>
 
@@ -58,6 +60,14 @@ public:
     quint32 previousTransitionDuration() const;
     quint64 scheduledTransitionDateTime() const;
     quint32 scheduledTransitionDuration() const;
+
+    void send_inhibited(bool inhibited) const;
+    void send_enabled(bool enabled) const;
+    void send_running(bool running) const;
+    void send_current_temperature(int temp) const;
+    void send_target_temperature(int temp) const;
+    void send_mode(night_color_mode mode) const;
+    void send_transition_timings() const;
 
 public Q_SLOTS:
     /**
