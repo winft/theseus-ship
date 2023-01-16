@@ -47,14 +47,14 @@ public:
 
     virtual CompositingType selected_compositor() const = 0;
 
-    std::unique_ptr<render::post::night_color_manager> night_color;
+    std::unique_ptr<render::post::night_color_manager<Base>> night_color;
     Base& base;
 
     gl::egl_data* egl_data{nullptr};
 
 protected:
     platform(Base& base)
-        : night_color{std::make_unique<render::post::night_color_manager>()}
+        : night_color{std::make_unique<render::post::night_color_manager<Base>>(base)}
         , base{base}
     {
         singleton_interface::get_egl_data = [this] { return egl_data; };

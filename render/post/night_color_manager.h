@@ -85,16 +85,19 @@ inline void night_color_display_inhibit_message(bool inhibit)
  *
  * With the Constant mode, screen color temperature is always constant.
  */
+
+template<typename Base>
 class night_color_manager
 {
 public:
-    night_color_manager()
+    night_color_manager(Base& base)
         : qobject{std::make_unique<QObject>()}
         , dbus{std::make_unique<color_correct_dbus_interface>(color_correct_dbus_integration(
               [this](bool block) { block ? inhibit() : uninhibit(); },
               [this](double lat, double lng) { auto_location_update(lat, lng); },
               data))}
         , clock_skew_notifier{std::make_unique<base::os::clock::skew_notifier>()}
+        , base{base}
     {
         Settings::instance(kwinApp()->config());
 
@@ -111,14 +114,8 @@ public:
             return;
         }
 
-        QObject::connect(&kwinApp()->get_base(),
-                         &base::platform::output_added,
-                         qobject.get(),
-                         [this] { hard_reset(); });
-        QObject::connect(&kwinApp()->get_base(),
-                         &base::platform::output_removed,
-                         qobject.get(),
-                         [this] { hard_reset(); });
+        QObject::connect(&base, &Base::output_added, qobject.get(), [this] { hard_reset(); });
+        QObject::connect(&base, &Base::output_removed, qobject.get(), [this] { hard_reset(); });
 
         QObject::connect(kwinApp()->session.get(),
                          &base::seat::session::sessionActiveChanged,
@@ -686,7 +683,7 @@ private:
 
     void commit_gamma_ramps(int temperature)
     {
-        for (auto output : kwinApp()->get_base().get_outputs()) {
+        for (auto output : base.get_outputs()) {
             auto rampsize = output->gamma_ramp_size();
             if (!rampsize) {
                 continue;
@@ -795,6 +792,8 @@ private:
     QTimer* slow_update_start_timer{nullptr};
     QTimer* slow_update_timer{nullptr};
     QTimer* quick_adjust_timer{nullptr};
+
+    Base& base;
 };
 
 }

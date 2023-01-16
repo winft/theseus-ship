@@ -30,7 +30,6 @@ namespace KWin::render::post
 {
 
 struct night_color_data;
-class night_color_manager;
 
 struct color_correct_dbus_integration {
     color_correct_dbus_integration(std::function<void(bool)> inhibit,
