@@ -70,8 +70,6 @@ class color_correct_dbus_interface;
  */
 class KWIN_EXPORT night_color_manager : public QObject
 {
-    Q_OBJECT
-
 public:
     night_color_manager();
     ~night_color_manager();
@@ -173,17 +171,17 @@ public:
     // for auto tests
     void reconfigure();
 
-public Q_SLOTS:
-    void reset_slow_update_start_timer();
-    void quick_adjust();
-
 private:
     void read_config();
     void hard_reset();
+
     void slow_update(int targetTemp);
+    void quick_adjust();
+
+    void reset_slow_update_start_timer();
     void reset_all_timers();
-    int current_target_temp() const;
     void cancel_all_timers();
+
     /**
      * Quick shift on manual change to current target Temperature
      */
@@ -193,6 +191,7 @@ private:
      */
     void reset_slow_update_timer();
 
+    int current_target_temp() const;
     void update_target_temperature();
     void update_transition_timings(bool force);
     DateTimes get_sun_timings(const QDateTime& dateTime,
