@@ -90,8 +90,8 @@ void ColorCorrectNightColorTest::testConfigRead()
     auto& manager = Test::app()->base.render->night_color;
     manager->reconfigure();
 
-    QCOMPARE(manager->is_enabled(), activeDefault);
-    QCOMPARE(manager->mode(), modeDefault);
+    QCOMPARE(manager->data.enabled, activeDefault);
+    QCOMPARE(manager->data.mode, modeDefault);
 
     cfgGroup.writeEntry("Active", active);
     cfgGroup.writeEntry("Mode", mode);
@@ -99,11 +99,11 @@ void ColorCorrectNightColorTest::testConfigRead()
 
     manager->reconfigure();
 
-    QCOMPARE(manager->is_enabled(), active);
+    QCOMPARE(manager->data.enabled, active);
     if (mode > 3 || mode < 0) {
-        QCOMPARE(manager->mode(), 0);
+        QCOMPARE(manager->data.mode, 0);
     } else {
-        QCOMPARE(manager->mode(), mode);
+        QCOMPARE(manager->data.mode, mode);
     }
 }
 

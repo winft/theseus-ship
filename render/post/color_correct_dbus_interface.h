@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::render::post
 {
 
+struct night_color_data;
 class night_color_manager;
 
 class color_correct_dbus_interface : public QObject, public QDBusContext
@@ -46,7 +47,8 @@ class color_correct_dbus_interface : public QObject, public QDBusContext
     Q_PROPERTY(quint32 scheduledTransitionDuration READ scheduledTransitionDuration)
 
 public:
-    explicit color_correct_dbus_interface(night_color_manager* manager);
+    explicit color_correct_dbus_interface(night_color_manager* manager,
+                                          night_color_data const& data);
     ~color_correct_dbus_interface() override = default;
 
     bool isInhibited() const;
@@ -95,6 +97,7 @@ private:
     void uninhibit(const QString& serviceName, uint cookie);
 
     night_color_manager* m_manager;
+    night_color_data const& data;
     QDBusServiceWatcher* m_inhibitorWatcher;
     QMultiHash<QString, uint> m_inhibitors;
     uint m_lastInhibitionCookie = 0;

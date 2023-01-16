@@ -19,19 +19,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
-#include "constants.h"
+#include "night_color_data.h"
 
 #include "kwin_export.h"
-#include "render/types.h"
 
 #include <KConfigWatcher>
 #include <KLocalizedString>
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDBusPendingCall>
-#include <QDateTime>
 #include <QObject>
-#include <QPair>
 #include <memory>
 
 class QTimer;
@@ -46,9 +43,6 @@ class skew_notifier;
 
 namespace render::post
 {
-
-typedef QPair<QDateTime, QDateTime> DateTimes;
-typedef QPair<QTime, QTime> Times;
 
 class color_correct_dbus_interface;
 
@@ -95,11 +89,6 @@ public:
     void toggle();
 
     /**
-     * Returns @c true if the night color manager is blocked; otherwise @c false.
-     */
-    bool is_inhibited() const;
-
-    /**
      * Temporarily blocks the night color manager.
      *
      * After calling this method, the screen color temperature will be reverted
@@ -112,62 +101,10 @@ public:
      */
     void uninhibit();
 
-    /**
-     * Returns @c true if Night Color is enabled; otherwise @c false.
-     */
-    bool is_enabled() const;
-
-    /**
-     * Returns @c true if Night Color is currently running; otherwise @c false.
-     */
-    bool is_running() const;
-
-    /**
-     * Returns @c true if Night Color is supported by platform; otherwise @c false.
-     */
-    bool is_available() const;
-
-    /**
-     * Returns the current screen color temperature.
-     */
-    int current_temperature() const;
-
-    /**
-     * Returns the target screen color temperature.
-     */
-    int get_target_temperature() const;
-
-    /**
-     * Returns the mode in which Night Color is operating.
-     */
-    night_color_mode mode() const;
-
-    /**
-     * Returns the datetime that specifies when the previous screen color temperature transition
-     * had started. Notice that when Night Color operates in the Constant mode, the returned date
-     * time object is not valid.
-     */
-    QDateTime previous_transition_date_time() const;
-
-    /**
-     * Returns the duration of the previous screen color temperature transition, in milliseconds.
-     */
-    qint64 previous_transition_duration() const;
-
-    /**
-     * Returns the datetime that specifies when the next screen color temperature transition will
-     * start. Notice that when Night Color operates in the Constant mode, the returned date time
-     * object is not valid.
-     */
-    QDateTime scheduled_transition_date_time() const;
-
-    /**
-     * Returns the duration of the next screen color temperature transition, in milliseconds.
-     */
-    qint64 scheduled_transition_duration() const;
-
     // for auto tests
     void reconfigure();
+
+    night_color_data data;
 
 private:
     void read_config();
@@ -205,55 +142,14 @@ private:
     void set_current_temperature(int temperature);
     void set_mode(night_color_mode mode);
 
+    KConfigWatcher::Ptr config_watcher;
+
     std::unique_ptr<color_correct_dbus_interface> dbus;
     std::unique_ptr<base::os::clock::skew_notifier> clock_skew_notifier;
-
-    // Specifies whether Night Color is enabled.
-    bool enabled = false;
-
-    // Specifies whether Night Color is currently running.
-    bool m_running = false;
-
-    // Specifies whether Night Color is inhibited globally.
-    bool is_globally_inhibited = false;
-
-    night_color_mode m_mode{night_color_mode::automatic};
-
-    // the previous and next sunrise/sunset intervals - in UTC time
-    DateTimes prev_transition = DateTimes();
-    DateTimes next_transition = DateTimes();
-
-    // whether it is currently day or night
-    bool daylight{true};
-
-    // manual times from config
-    QTime morning_time{QTime(6, 0)};
-    QTime evening_time{QTime(18, 0)};
-
-    // saved in minutes > 1
-    int transition_time{30};
-
-    // auto location provided by work space
-    double lat_auto;
-    double lng_auto;
-
-    // manual location from config
-    double lat_fixed;
-    double lng_fixed;
 
     QTimer* slow_update_start_timer{nullptr};
     QTimer* slow_update_timer{nullptr};
     QTimer* quick_adjust_timer{nullptr};
-
-    int current_temp{DEFAULT_DAY_TEMPERATURE};
-    int target_temp{DEFAULT_DAY_TEMPERATURE};
-    int day_target_temp{DEFAULT_DAY_TEMPERATURE};
-    int night_target_temp{DEFAULT_NIGHT_TEMPERATURE};
-
-    int failed_commit_attempts{0};
-    int inhibit_reference_count{0};
-
-    KConfigWatcher::Ptr config_watcher;
 };
 
 inline void night_color_display_inhibit_message(bool inhibit)

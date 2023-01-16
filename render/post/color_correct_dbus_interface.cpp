@@ -42,8 +42,10 @@ static void send_changed_properties(QVariantMap const& props)
     QDBusConnection::sessionBus().send(message);
 }
 
-color_correct_dbus_interface::color_correct_dbus_interface(night_color_manager* manager)
+color_correct_dbus_interface::color_correct_dbus_interface(night_color_manager* manager,
+                                                           night_color_data const& data)
     : m_manager(manager)
+    , data{data}
     , m_inhibitorWatcher(new QDBusServiceWatcher(this))
 {
     m_inhibitorWatcher->setConnection(QDBusConnection::sessionBus());
@@ -59,42 +61,42 @@ color_correct_dbus_interface::color_correct_dbus_interface(night_color_manager* 
 
 bool color_correct_dbus_interface::isInhibited() const
 {
-    return m_manager->is_inhibited();
+    return data.inhibit_reference_count;
 }
 
 bool color_correct_dbus_interface::isEnabled() const
 {
-    return m_manager->is_enabled();
+    return data.enabled;
 }
 
 bool color_correct_dbus_interface::isRunning() const
 {
-    return m_manager->is_running();
+    return data.running;
 }
 
 bool color_correct_dbus_interface::isAvailable() const
 {
-    return m_manager->is_available();
+    return data.available;
 }
 
 int color_correct_dbus_interface::currentTemperature() const
 {
-    return m_manager->current_temperature();
+    return data.temperature.current;
 }
 
 int color_correct_dbus_interface::targetTemperature() const
 {
-    return m_manager->get_target_temperature();
+    return data.temperature.target;
 }
 
 int color_correct_dbus_interface::mode() const
 {
-    return m_manager->mode();
+    return data.mode;
 }
 
 quint64 color_correct_dbus_interface::previousTransitionDateTime() const
 {
-    auto const dateTime = m_manager->previous_transition_date_time();
+    auto const dateTime = data.transition.prev.first;
     if (dateTime.isValid()) {
         return quint64(dateTime.toSecsSinceEpoch());
     }
@@ -103,12 +105,12 @@ quint64 color_correct_dbus_interface::previousTransitionDateTime() const
 
 quint32 color_correct_dbus_interface::previousTransitionDuration() const
 {
-    return quint32(m_manager->previous_transition_duration());
+    return quint32(data.previous_transition_duration());
 }
 
 quint64 color_correct_dbus_interface::scheduledTransitionDateTime() const
 {
-    const QDateTime dateTime = m_manager->scheduled_transition_date_time();
+    auto const dateTime = data.transition.next.first;
     if (dateTime.isValid()) {
         return quint64(dateTime.toSecsSinceEpoch());
     }
@@ -117,7 +119,7 @@ quint64 color_correct_dbus_interface::scheduledTransitionDateTime() const
 
 quint32 color_correct_dbus_interface::scheduledTransitionDuration() const
 {
-    return quint32(m_manager->scheduled_transition_duration());
+    return quint32(data.scheduled_transition_duration());
 }
 
 void color_correct_dbus_interface::send_inhibited(bool inhibited) const
