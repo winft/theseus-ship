@@ -232,13 +232,13 @@ qint64 night_color_manager::scheduled_transition_duration() const
 
 void night_color_manager::read_config()
 {
-    Settings* s = Settings::self();
-    s->load();
+    auto settings = Settings::self();
+    settings->load();
 
-    set_enabled(s->active());
+    set_enabled(settings->active());
 
-    auto const mode = s->mode();
-    switch (s->mode()) {
+    auto const mode = settings->mode();
+    switch (settings->mode()) {
     case night_color_mode::automatic:
     case night_color_mode::location:
     case night_color_mode::timings:
@@ -251,8 +251,9 @@ void night_color_manager::read_config()
         break;
     }
 
-    day_target_temp = qBound(MIN_TEMPERATURE, s->dayTemperature(), DEFAULT_DAY_TEMPERATURE);
-    night_target_temp = qBound(MIN_TEMPERATURE, s->nightTemperature(), DEFAULT_DAY_TEMPERATURE);
+    day_target_temp = qBound(MIN_TEMPERATURE, settings->dayTemperature(), DEFAULT_DAY_TEMPERATURE);
+    night_target_temp
+        = qBound(MIN_TEMPERATURE, settings->nightTemperature(), DEFAULT_DAY_TEMPERATURE);
 
     double lat, lng;
     auto correctReadin = [&lat, &lng]() {
@@ -263,26 +264,26 @@ void night_color_manager::read_config()
         }
     };
     // automatic
-    lat = s->latitudeAuto();
-    lng = s->longitudeAuto();
+    lat = settings->latitudeAuto();
+    lng = settings->longitudeAuto();
     correctReadin();
     lat_auto = lat;
     lng_auto = lng;
     // fixed location
-    lat = s->latitudeFixed();
-    lng = s->longitudeFixed();
+    lat = settings->latitudeFixed();
+    lng = settings->longitudeFixed();
     correctReadin();
     lat_fixed = lat;
     lng_fixed = lng;
 
     // fixed timings
-    QTime mrB = QTime::fromString(s->morningBeginFixed(), "hhmm");
-    QTime evB = QTime::fromString(s->eveningBeginFixed(), "hhmm");
+    auto mrB = QTime::fromString(settings->morningBeginFixed(), "hhmm");
+    auto evB = QTime::fromString(settings->eveningBeginFixed(), "hhmm");
 
     int diffME = evB > mrB ? mrB.msecsTo(evB) : evB.msecsTo(mrB);
     int diffMin = qMin(diffME, MSC_DAY - diffME);
 
-    int trTime = s->transitionTime() * 1000 * 60;
+    int trTime = settings->transitionTime() * 1000 * 60;
     if (trTime < 0 || diffMin <= trTime) {
         // transition time too long - use defaults
         mrB = QTime(6, 0);
@@ -628,10 +629,8 @@ int night_color_manager::current_target_temp() const
 
 void night_color_manager::commit_gamma_ramps(int temperature)
 {
-    const auto outs = kwinApp()->get_base().get_outputs();
-
-    for (auto* o : outs) {
-        auto rampsize = o->gamma_ramp_size();
+    for (auto output : kwinApp()->get_base().get_outputs()) {
+        auto rampsize = output->gamma_ramp_size();
         if (!rampsize) {
             continue;
         }
@@ -671,14 +670,14 @@ void night_color_manager::commit_gamma_ramps(int temperature)
             blue[i] = qreal(blue[i]) / (UINT16_MAX + 1) * whitePoint[2] * (UINT16_MAX + 1);
         }
 
-        if (o->set_gamma_ramp(ramp)) {
+        if (output->set_gamma_ramp(ramp)) {
             set_current_temperature(temperature);
             failed_commit_attempts = 0;
         } else {
             failed_commit_attempts++;
             if (failed_commit_attempts < 10) {
                 qCWarning(KWIN_CORE).nospace()
-                    << "Committing Gamma Ramp failed for output " << o->name() << ". Trying "
+                    << "Committing Gamma Ramp failed for output " << output->name() << ". Trying "
                     << (10 - failed_commit_attempts) << " times more.";
             } else {
                 // TODO: On multi monitor setups we could try to rollback earlier changes for
@@ -710,10 +709,10 @@ void night_color_manager::auto_location_update(double latitude, double longitude
     lat_auto = latitude;
     lng_auto = longitude;
 
-    Settings* s = Settings::self();
-    s->setLatitudeAuto(latitude);
-    s->setLongitudeAuto(longitude);
-    s->save();
+    auto settings = Settings::self();
+    settings->setLatitudeAuto(latitude);
+    settings->setLongitudeAuto(longitude);
+    settings->save();
 
     reset_all_timers();
 }
