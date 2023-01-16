@@ -74,8 +74,6 @@ public:
     night_color_manager();
     ~night_color_manager();
 
-    void init();
-
     void auto_location_update(double latitude, double longitude);
 
     /**

@@ -51,13 +51,6 @@ night_color_manager::night_color_manager()
     : dbus{std::make_unique<color_correct_dbus_interface>(this)}
     , clock_skew_notifier{std::make_unique<base::os::clock::skew_notifier>()}
 {
-    connect(kwinApp(), &Application::startup_finished, this, &night_color_manager::init);
-}
-
-night_color_manager::~night_color_manager() = default;
-
-void night_color_manager::init()
-{
     Settings::instance(kwinApp()->config());
 
     config_watcher = KConfigWatcher::create(kwinApp()->config());
@@ -123,6 +116,8 @@ void night_color_manager::init()
 
     hard_reset();
 }
+
+night_color_manager::~night_color_manager() = default;
 
 void night_color_manager::hard_reset()
 {

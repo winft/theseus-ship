@@ -46,8 +46,6 @@ void ColorCorrectNightColorTest::initTestCase()
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
 
-    kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
-
     Test::app()->start();
     Test::app()->set_outputs(2);
     QVERIFY(startup_spy.size() || startup_spy.wait());

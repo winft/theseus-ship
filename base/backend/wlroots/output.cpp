@@ -213,7 +213,11 @@ bool output::set_gamma_ramp(gamma_ramp const& gamma)
     wlr_output_set_gamma(native, gamma.size(), gamma.red(), gamma.green(), gamma.blue());
 
     if (wlr_output_test(native)) {
-        get_render(render)->reset();
+        // Might come early before compositor is created.
+        // TODO(romangg): Remove the check once the compositor is guaranteed to exist at this point.
+        if (platform->render->compositor) {
+            get_render(render)->reset();
+        }
         return true;
     } else {
         qCWarning(KWIN_WL) << "Failed test commit on set gamma ramp call.";

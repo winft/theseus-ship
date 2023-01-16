@@ -97,6 +97,10 @@ Application::Application(Application::OperationMode mode, int &argc, char **argv
     // We want all QQuickWindows with an alpha buffer, do here as a later Workspace might create
     // QQuickWindows.
     QQuickWindow::setDefaultAlphaBuffer(true);
+
+    if (!m_config) {
+        m_config = KSharedConfig::openConfig();
+    }
 }
 
 Application::OperationMode Application::operationMode() const
@@ -117,10 +121,6 @@ bool Application::shouldUseWaylandForCompositing() const
 void Application::prepare_start()
 {
     setQuitOnLastWindowClosed(false);
-
-    if (!m_config) {
-        m_config = KSharedConfig::openConfig();
-    }
 
     screen_locker_watcher = std::make_unique<desktop::screen_locker_watcher>();
 }
