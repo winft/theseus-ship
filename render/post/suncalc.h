@@ -19,6 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
+#include "kwin_export.h"
+
 #include <QDate>
 #include <QPair>
 #include <QTime>
@@ -34,9 +36,9 @@ namespace KWin::render::post
  * @since 5.12
  */
 
-QPair<QDateTime, QDateTime> calculate_sun_timings(const QDateTime& dateTime,
-                                                  double latitude,
-                                                  double longitude,
-                                                  bool at_morning);
+KWIN_EXPORT QPair<QDateTime, QDateTime> calculate_sun_timings(const QDateTime& dateTime,
+                                                              double latitude,
+                                                              double longitude,
+                                                              bool at_morning);
 
 }

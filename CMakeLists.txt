@@ -386,7 +386,6 @@ set(kwin_SRCS
     base/platform.cpp
     desktop/screen_locker_watcher.cpp
     render/post/color_correct_dbus_interface.cpp
-    render/post/night_color_manager.cpp
     render/post/suncalc.cpp
     debug/console/console.cpp
     debug/perf/ftrace.cpp

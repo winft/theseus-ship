@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
+#include "kwin_export.h"
 #include "render/types.h"
 
 #include <QObject>
@@ -46,7 +47,7 @@ struct color_correct_dbus_integration {
     night_color_data const& data;
 };
 
-class color_correct_dbus_interface : public QObject, public QDBusContext
+class KWIN_EXPORT color_correct_dbus_interface : public QObject, public QDBusContext
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "org.kde.kwin.ColorCorrect")

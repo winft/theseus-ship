@@ -4,5 +4,6 @@ ClassName=Settings
 Singleton=true
 Mutators=true
 # needed for night_color_mode
-IncludeFiles=render/types.h
+IncludeFiles=render/types.h,kwin_export.h
 UseEnumTypes=true
+Visibility=KWIN_EXPORT
