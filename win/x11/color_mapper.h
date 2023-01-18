@@ -38,7 +38,7 @@ public:
                        *win);
         }
         if (cmap != m_installed) {
-            xcb_install_colormap(connection(), cmap);
+            xcb_install_colormap(space.base.x11_data.connection, cmap);
             m_installed = cmap;
         }
     }

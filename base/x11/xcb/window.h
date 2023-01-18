@@ -241,6 +241,7 @@ inline void window::create(xcb_connection_t* con,
                            uint32_t mask,
                            const uint32_t* values)
 {
+    assert(con);
     destroy();
     m_window = do_create(con, parent, geometry, windowClass, mask, values);
 }

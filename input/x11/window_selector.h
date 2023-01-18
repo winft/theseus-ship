@@ -125,7 +125,7 @@ private:
                 return kill_cursor;
             }
             // fallback on font
-            xcb_connection_t* c = connection();
+            auto c = redirect.platform.base.x11_data.connection;
             xcb_font_t const cursorFont = xcb_generate_id(c);
             xcb_open_font(c, cursorFont, strlen("cursor"), "cursor");
             cursor = xcb_generate_id(c);
@@ -150,7 +150,7 @@ private:
     {
         auto con = redirect.platform.base.x11_data.connection;
         base::x11::ungrab_keyboard(con);
-        xcb_ungrab_pointer(connection(), XCB_TIME_CURRENT_TIME);
+        xcb_ungrab_pointer(con, XCB_TIME_CURRENT_TIME);
         base::x11::ungrab_server(con);
         m_active = false;
         m_callback = {};
@@ -168,7 +168,7 @@ private:
 
     void handleKeyPress(xcb_keycode_t keycode, uint16_t state)
     {
-        xcb_key_symbols_t* symbols = xcb_key_symbols_alloc(connection());
+        auto symbols = xcb_key_symbols_alloc(redirect.platform.base.x11_data.connection);
         xcb_keysym_t kc = xcb_key_symbols_get_keysym(symbols, keycode, 0);
         int mx = 0;
         int my = 0;
@@ -262,7 +262,7 @@ private:
     bool activate(const QByteArray& cursorName = QByteArray())
     {
         xcb_cursor_t cursor = createCursor(cursorName);
-        xcb_connection_t* c = connection();
+        auto c = redirect.platform.base.x11_data.connection;
 
         auto cookie = xcb_grab_pointer_unchecked(
             c,
@@ -286,7 +286,7 @@ private:
         if (grabbed) {
             base::x11::grab_server(redirect.platform.base.x11_data.connection);
         } else {
-            xcb_ungrab_pointer(connection(), XCB_TIME_CURRENT_TIME);
+            xcb_ungrab_pointer(redirect.platform.base.x11_data.connection, XCB_TIME_CURRENT_TIME);
         }
         return grabbed;
     }

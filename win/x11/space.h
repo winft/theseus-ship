@@ -63,7 +63,7 @@ public:
             this->input = std::make_unique<input_t>(*base.input, *this);
         }
 
-        atoms = std::make_unique<base::x11::atoms>(connection());
+        atoms = std::make_unique<base::x11::atoms>(base.x11_data.connection);
         edges = std::make_unique<edger_t>(*this);
         dbus = std::make_unique<base::dbus::kwin_impl<type>>(*this);
 

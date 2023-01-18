@@ -222,7 +222,7 @@ void DebugConsoleTest::testX11Unmanaged()
 
     // let's create an override redirect window
     const uint32_t values[] = {true};
-    base::x11::xcb::window window(connection(),
+    base::x11::xcb::window window(Test::app()->base.x11_data.connection,
                                   Test::app()->base.x11_data.root_window,
                                   QRect(0, 0, 10, 10),
                                   XCB_CW_OVERRIDE_REDIRECT,

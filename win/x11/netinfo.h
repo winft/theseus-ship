@@ -37,9 +37,10 @@ public:
 
     static std::unique_ptr<root_info> create(Space& space)
     {
-        xcb_window_t supportWindow = xcb_generate_id(connection());
+        auto con = space.base.x11_data.connection;
+        xcb_window_t supportWindow = xcb_generate_id(con);
         const uint32_t values[] = {true};
-        xcb_create_window(connection(),
+        xcb_create_window(con,
                           XCB_COPY_FROM_PARENT,
                           supportWindow,
                           space.base.x11_data.root_window,
@@ -54,10 +55,10 @@ public:
                           values);
         const uint32_t lowerValues[] = {XCB_STACK_MODE_BELOW}; // See usage in layers.cpp
         // we need to do the lower window with a roundtrip, otherwise NETRootInfo is not functioning
-        unique_cptr<xcb_generic_error_t> error(xcb_request_check(
-            connection(),
-            xcb_configure_window_checked(
-                connection(), supportWindow, XCB_CONFIG_WINDOW_STACK_MODE, lowerValues)));
+        unique_cptr<xcb_generic_error_t> error(
+            xcb_request_check(con,
+                              xcb_configure_window_checked(
+                                  con, supportWindow, XCB_CONFIG_WINDOW_STACK_MODE, lowerValues)));
         if (error) {
             qCDebug(KWIN_CORE) << "Error occurred while lowering support window: "
                                << error->error_code;
@@ -158,7 +159,15 @@ public:
               NET::Properties2 properties2,
               NET::Actions actions,
               int scr = -1)
-        : NETRootInfo(connection(), w, name, properties, types, states, properties2, actions, scr)
+        : NETRootInfo(space.base.x11_data.connection,
+                      w,
+                      name,
+                      properties,
+                      types,
+                      states,
+                      properties2,
+                      actions,
+                      scr)
         , space{space}
         , m_activeWindow(activeWindow())
         , m_eventFilter(std::make_unique<root_info_filter<root_info<Space>>>(this))
@@ -167,7 +176,7 @@ public:
 
     ~root_info() override
     {
-        xcb_destroy_window(connection(), supportWindow());
+        xcb_destroy_window(space.base.x11_data.connection, supportWindow());
     }
 
     Space& space;

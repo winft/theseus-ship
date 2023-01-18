@@ -67,6 +67,9 @@ void TestClientMachine::setClientMachineProperty(xcb_window_t window, const QByt
 
 void TestClientMachine::initTestCase()
 {
+    connection = QX11Info::connection();
+    root_window = QX11Info::appRootWindow();
+
 #ifdef HOST_NAME_MAX
     char hostnamebuf[HOST_NAME_MAX];
 #else

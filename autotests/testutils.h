@@ -41,9 +41,9 @@ namespace KWin
 #ifndef NO_NONE_WINDOW
 static xcb_window_t createWindow()
 {
-    xcb_window_t w = xcb_generate_id(connection());
+    xcb_window_t w = xcb_generate_id(QX11Info::connection());
     const uint32_t values[] = {true};
-    xcb_create_window(connection(),
+    xcb_create_window(QX11Info::connection(),
                       0,
                       w,
                       QX11Info::appRootWindow(),

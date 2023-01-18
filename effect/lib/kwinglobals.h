@@ -127,16 +127,6 @@ enum class SwipeDirection { Invalid, Down, Left, Up, Right };
 enum class SessionState { Normal, Saving, Quitting };
 Q_ENUM_NS(SessionState)
 
-inline KWIN_EXPORT xcb_connection_t* connection()
-{
-    static xcb_connection_t* s_con = nullptr;
-    if (!s_con) {
-        s_con = reinterpret_cast<xcb_connection_t*>(qApp->property("x11Connection").value<void*>());
-    }
-    Q_ASSERT(qApp);
-    return s_con;
-}
-
 /**
  * Short wrapper for a cursor image provided by the Platform.
  * @since 5.9

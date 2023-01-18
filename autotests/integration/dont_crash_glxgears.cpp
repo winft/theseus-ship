@@ -95,7 +95,7 @@ void DontCrashGlxgearsTest::testGlxgears()
 
     QVERIFY(closedSpy.wait());
     QCOMPARE(closedSpy.count(), 1);
-    xcb_flush(connection());
+    xcb_flush(Test::app()->base.x11_data.connection);
 
     if (glxgears.state() == QProcess::Running) {
         QVERIFY(glxgears.waitForFinished());

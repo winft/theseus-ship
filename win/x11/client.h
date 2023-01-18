@@ -44,8 +44,8 @@ inline void send_client_message(base::x11::data const& data,
         eventMask = XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT;
     }
 
-    xcb_send_event(connection(), false, w, eventMask, reinterpret_cast<const char*>(&ev));
-    xcb_flush(connection());
+    xcb_send_event(data.connection, false, w, eventMask, reinterpret_cast<const char*>(&ev));
+    xcb_flush(data.connection);
 }
 
 template<typename Win>
@@ -163,7 +163,7 @@ void pong(Win* win, xcb_timestamp_t timestamp)
     }
 }
 
-inline bool wants_sync_counter()
+inline bool wants_sync_counter(base::x11::data const& data)
 {
     if (kwinApp()->operationMode() == Application::OperationModeX11) {
         return true;
@@ -173,7 +173,7 @@ inline bool wants_sync_counter()
     // With the addition of multiple window buffers in Xwayland 1.21, X11 clients
     // are no longer able to destroy the buffer after it's been committed and not
     // released by the compositor yet.
-    static auto const xwayland_version = xcb_get_setup(connection())->release_number;
+    static auto const xwayland_version = xcb_get_setup(data.connection)->release_number;
     return xwayland_version > 12099000;
 }
 
@@ -183,7 +183,7 @@ void get_sync_counter(Win* win)
     if (!base::x11::xcb::extensions::self()->is_sync_available()) {
         return;
     }
-    if (!wants_sync_counter()) {
+    if (!wants_sync_counter(win->space.base.x11_data)) {
         return;
     }
 
@@ -201,7 +201,7 @@ void get_sync_counter(Win* win)
         return;
     }
 
-    auto con = connection();
+    auto con = win->space.base.x11_data.connection;
     xcb_sync_set_counter(con, counter, {0, 0});
     win->sync_request.counter = counter;
 
@@ -328,8 +328,8 @@ void send_synthetic_configure_notify(Win* win, QRect const& client_geo)
 
             uint32_t const values[] = {c.width, c.height};
             unique_cptr<xcb_generic_error_t> error(xcb_request_check(
-                connection(),
-                xcb_configure_window_checked(connection(),
+                win->space.base.x11_data.connection,
+                xcb_configure_window_checked(win->space.base.x11_data.connection,
                                              c.window,
                                              XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT,
                                              values)));
@@ -343,12 +343,12 @@ void send_synthetic_configure_notify(Win* win, QRect const& client_geo)
     c.above_sibling = XCB_WINDOW_NONE;
     c.override_redirect = 0;
 
-    xcb_send_event(connection(),
+    xcb_send_event(win->space.base.x11_data.connection,
                    true,
                    c.event,
                    XCB_EVENT_MASK_STRUCTURE_NOTIFY,
                    reinterpret_cast<const char*>(&c));
-    xcb_flush(connection());
+    xcb_flush(win->space.base.x11_data.connection);
 }
 
 template<typename Win>

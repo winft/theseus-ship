@@ -94,7 +94,7 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
     check_screen(*win);
     win->xcb_visual = attr->visual;
     win->render_data.bit_depth = geo->depth;
-    win->net_info = new NETWinInfo(connection(),
+    win->net_info = new NETWinInfo(con,
                                    xcb_win,
                                    win->space.base.x11_data.root_window,
                                    NET::WMWindowType | NET::WMPid,
@@ -108,7 +108,7 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
 
     fetch_wm_client_machine(*win);
     if (base::x11::xcb::extensions::self()->is_shape_available()) {
-        xcb_shape_select_input(connection(), xcb_win, true);
+        xcb_shape_select_input(con, xcb_win, true);
     }
     detect_shape(*win);
     fetch_wm_opaque_region(*win);

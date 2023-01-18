@@ -97,7 +97,7 @@ void destroy_damage_handle(Win& win)
     if (win.damage.handle == XCB_NONE) {
         return;
     }
-    xcb_damage_destroy(connection(), win.damage.handle);
+    xcb_damage_destroy(win.space.base.x11_data.connection, win.damage.handle);
     win.damage.handle = XCB_NONE;
 }
 
@@ -149,7 +149,8 @@ Win* create_remnant_window(Win& source)
         winfo->disable();
     }
 
-    win->xcb_windows.client.reset(connection(), source.xcb_windows.client, false);
+    win->xcb_windows.client.reset(
+        source.space.base.x11_data.connection, source.xcb_windows.client, false);
     win->xcb_visual = source.xcb_visual;
     win->is_shape = source.is_shape;
     win->client_machine = source.client_machine;
@@ -172,7 +173,8 @@ void release_unmanaged(Win* win, bool on_shutdown)
     // Don't affect our own windows.
     if (!QWidget::find(win->xcb_windows.client)) {
         if (base::x11::xcb::extensions::self()->is_shape_available()) {
-            xcb_shape_select_input(connection(), win->xcb_windows.client, false);
+            xcb_shape_select_input(
+                win->space.base.x11_data.connection, win->xcb_windows.client, false);
         }
         base::x11::xcb::select_input(
             win->space.base.x11_data.connection, win->xcb_windows.client, XCB_EVENT_MASK_NO_EVENT);
@@ -288,7 +290,8 @@ void release_window(Win* win, bool on_shutdown)
     win->xcb_windows.client.reparent(
         win->space.base.x11_data.root_window, client_rect.x(), client_rect.y());
 
-    xcb_change_save_set(connection(), XCB_SET_MODE_DELETE, win->xcb_windows.client);
+    xcb_change_save_set(
+        win->space.base.x11_data.connection, XCB_SET_MODE_DELETE, win->xcb_windows.client);
     win->xcb_windows.client.select_input(XCB_EVENT_MASK_NO_EVENT);
 
     if (on_shutdown) {
@@ -401,7 +404,7 @@ void cleanup_window(Win& win)
     }
 
     if (win.sync_request.alarm != XCB_NONE) {
-        xcb_sync_destroy_alarm(connection(), win.sync_request.alarm);
+        xcb_sync_destroy_alarm(win.space.base.x11_data.connection, win.sync_request.alarm);
     }
 
     assert(!win.control || !win.control->move_resize.enabled);

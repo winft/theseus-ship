@@ -49,7 +49,7 @@ public:
         if (xcb_leader != XCB_WINDOW_NONE) {
             leader
                 = find_controlled_window<x11_window_t>(space, predicate_match::window, xcb_leader);
-            leader_info = new NETWinInfo(connection(),
+            leader_info = new NETWinInfo(space.base.x11_data.connection,
                                          xcb_leader,
                                          space.base.x11_data.root_window,
                                          NET::Properties(),
@@ -72,7 +72,7 @@ public:
             return leader->control->icon;
         } else if (xcb_leader != XCB_WINDOW_NONE) {
             QIcon ic;
-            NETWinInfo info(connection(),
+            NETWinInfo info(space.base.x11_data.connection,
                             xcb_leader,
                             space.base.x11_data.root_window,
                             NET::WMIcon,

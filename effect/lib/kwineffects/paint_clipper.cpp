@@ -95,7 +95,7 @@ PaintClipper::Iterator::Iterator()
     if (clip() && effects->compositingType() == XRenderCompositing) {
         XFixesRegion region(paintArea());
         xcb_xfixes_set_picture_clip_region(
-            connection(), effects->xrenderBufferPicture(), region, 0, 0);
+            effects->xcbConnection(), effects->xrenderBufferPicture(), region, 0, 0);
     }
 #endif
 }
@@ -104,8 +104,11 @@ PaintClipper::Iterator::~Iterator()
 {
 #ifdef KWIN_HAVE_XRENDER_COMPOSITING
     if (clip() && effects->compositingType() == XRenderCompositing)
-        xcb_xfixes_set_picture_clip_region(
-            connection(), effects->xrenderBufferPicture(), XCB_XFIXES_REGION_NONE, 0, 0);
+        xcb_xfixes_set_picture_clip_region(effects->xcbConnection(),
+                                           effects->xrenderBufferPicture(),
+                                           XCB_XFIXES_REGION_NONE,
+                                           0,
+                                           0);
 #endif
     delete data;
 }

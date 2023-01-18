@@ -38,7 +38,7 @@ void embed_client(Win* win, xcb_visualid_t visualid, xcb_colormap_t colormap, ui
     assert(win->xcb_windows.wrapper == XCB_WINDOW_NONE);
 
     uint32_t const zero_value = 0;
-    auto conn = connection();
+    auto conn = win->space.base.x11_data.connection;
 
     // We don't want the window to be destroyed when we quit
     xcb_change_save_set(conn, XCB_SET_MODE_INSERT, win->xcb_windows.client);
@@ -326,7 +326,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
                              // changing window attributes doesn't change cursor if there's
                              // pointer grab active
                              xcb_change_active_pointer_grab(
-                                 connection(),
+                                 win->space.base.x11_data.connection,
                                  nativeCursor,
                                  win->space.base.x11_data.time,
                                  XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE
@@ -393,7 +393,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
                      [win] { rules::evaluate_rules(win); });
 
     if (base::x11::xcb::extensions::self()->is_shape_available()) {
-        xcb_shape_select_input(connection(), win->xcb_windows.client, true);
+        xcb_shape_select_input(space.base.x11_data.connection, win->xcb_windows.client, true);
     }
 
     detect_shape(*win);
@@ -786,7 +786,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
                          if (win->opacity() == 1.0) {
                              return;
                          }
-                         NETWinInfo info(connection(),
+                         NETWinInfo info(win->space.base.x11_data.connection,
                                          win->frameId(),
                                          win->space.base.x11_data.root_window,
                                          NET::Properties(),

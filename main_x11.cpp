@@ -235,9 +235,11 @@ void ApplicationX11::start()
         // Check  whether another windowmanager is running
         const uint32_t maskValues[] = {XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT};
         unique_cptr<xcb_generic_error_t> redirectCheck(
-            xcb_request_check(connection(),
-                              xcb_change_window_attributes_checked(
-                                  connection(), base.x11_data.root_window, XCB_CW_EVENT_MASK, maskValues)));
+            xcb_request_check(base.x11_data.connection,
+                              xcb_change_window_attributes_checked(base.x11_data.connection,
+                                                                   base.x11_data.root_window,
+                                                                   XCB_CW_EVENT_MASK,
+                                                                   maskValues)));
         if (redirectCheck) {
             fputs(i18n("kwin: another window manager is running (try using --replace)\n").toLocal8Bit().constData(), stderr);
             if (!wasCrash()) // if this is a crash-restart, DrKonqi may have stopped the process w/o killing the connection

@@ -179,6 +179,7 @@ public:
             space.atoms.reset();
             core.x11.atoms = nullptr;
             Q_EMIT app->x11ConnectionAboutToBeDestroyed();
+
             space.base.x11_data.connection = nullptr;
             Q_EMIT app->x11ConnectionChanged();
             xcb_disconnect(app->x11Connection());
@@ -287,10 +288,12 @@ private:
 
         // Check  whether another windowmanager is running
         uint32_t const maskValues[] = {XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT};
-        unique_cptr<xcb_generic_error_t> redirectCheck(xcb_request_check(
-            connection(),
-            xcb_change_window_attributes_checked(
-                connection(), space.base.x11_data.root_window, XCB_CW_EVENT_MASK, maskValues)));
+        unique_cptr<xcb_generic_error_t> redirectCheck(
+            xcb_request_check(space.base.x11_data.connection,
+                              xcb_change_window_attributes_checked(space.base.x11_data.connection,
+                                                                   space.base.x11_data.root_window,
+                                                                   XCB_CW_EVENT_MASK,
+                                                                   maskValues)));
 
         if (redirectCheck) {
             fputs(i18n("kwin_wayland: an X11 window manager is running on the X11 Display.\n")

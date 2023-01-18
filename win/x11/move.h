@@ -98,7 +98,7 @@ bool do_start_move_resize(Win& win)
     // something *shrug* (https://lists.kde.org/?t=107302193400001&r=1&w=2)
     auto r = space_window_area(win.space, FullArea, &win);
 
-    win.xcb_windows.grab.create(connection(),
+    win.xcb_windows.grab.create(win.space.base.x11_data.connection,
                                 win.space.base.x11_data.root_window,
                                 r,
                                 XCB_WINDOW_CLASS_INPUT_ONLY,
@@ -109,7 +109,7 @@ bool do_start_move_resize(Win& win)
 
     kwinApp()->update_x11_time_from_clock();
     auto const cookie = xcb_grab_pointer_unchecked(
-        connection(),
+        win.space.base.x11_data.connection,
         false,
         win.xcb_windows.grab,
         XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE | XCB_EVENT_MASK_POINTER_MOTION
@@ -121,7 +121,7 @@ bool do_start_move_resize(Win& win)
         win.space.base.x11_data.time);
 
     unique_cptr<xcb_grab_pointer_reply_t> pointerGrab(
-        xcb_grab_pointer_reply(connection(), cookie, nullptr));
+        xcb_grab_pointer_reply(win.space.base.x11_data.connection, cookie, nullptr));
     if (pointerGrab && pointerGrab->status == XCB_GRAB_STATUS_SUCCESS) {
         has_grab = true;
     }
@@ -160,7 +160,7 @@ void leave_move_resize(Win& win)
     }
 
     win.move_resize_has_keyboard_grab = false;
-    xcb_ungrab_pointer(connection(), win.space.base.x11_data.time);
+    xcb_ungrab_pointer(win.space.base.x11_data.connection, win.space.base.x11_data.time);
     win.xcb_windows.grab.reset();
 
     win::leave_move_resize(win);

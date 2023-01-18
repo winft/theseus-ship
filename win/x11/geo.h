@@ -137,7 +137,7 @@ void update_shape(Win* win)
         }
         if (win->noBorder()) {
             auto const client_pos = QPoint(left_border(win), top_border(win));
-            xcb_shape_combine(connection(),
+            xcb_shape_combine(win->space.base.x11_data.connection,
                               XCB_SHAPE_SO_SET,
                               XCB_SHAPE_SK_BOUNDING,
                               XCB_SHAPE_SK_BOUNDING,
@@ -147,7 +147,7 @@ void update_shape(Win* win)
                               win->xcb_windows.client);
         }
     } else if (win->app_no_border) {
-        xcb_shape_mask(connection(),
+        xcb_shape_mask(win->space.base.x11_data.connection,
                        XCB_SHAPE_SO_SET,
                        XCB_SHAPE_SK_BOUNDING,
                        win->frameId(),

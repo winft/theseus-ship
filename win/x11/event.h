@@ -426,10 +426,10 @@ bool button_press_event(Win* win,
                         int y_root,
                         xcb_timestamp_t time)
 {
+    auto con = win->space.base.x11_data.connection;
     if (win->control->move_resize.button_down) {
         if (w == win->xcb_windows.wrapper)
-            xcb_allow_events(
-                connection(), XCB_ALLOW_SYNC_POINTER, XCB_TIME_CURRENT_TIME); // xTime());
+            xcb_allow_events(con, XCB_ALLOW_SYNC_POINTER, XCB_TIME_CURRENT_TIME);
         return true;
     }
 
@@ -442,8 +442,7 @@ bool button_press_event(Win* win,
             // hide splashwindow if the user clicks on it
             win->hideClient(true);
             if (w == win->xcb_windows.wrapper)
-                xcb_allow_events(
-                    connection(), XCB_ALLOW_SYNC_POINTER, XCB_TIME_CURRENT_TIME); // xTime());
+                xcb_allow_events(con, XCB_ALLOW_SYNC_POINTER, XCB_TIME_CURRENT_TIME);
             return true;
         }
 
@@ -486,17 +485,16 @@ bool button_press_event(Win* win,
 
             if (w == win->xcb_windows.wrapper) {
                 // these can come only from a grab
-                xcb_allow_events(connection(),
+                xcb_allow_events(con,
                                  replay ? XCB_ALLOW_REPLAY_POINTER : XCB_ALLOW_SYNC_POINTER,
-                                 XCB_TIME_CURRENT_TIME); // xTime());
+                                 XCB_TIME_CURRENT_TIME);
             }
             return true;
         }
     }
 
     if (w == win->xcb_windows.wrapper) { // these can come only from a grab
-        xcb_allow_events(
-            connection(), XCB_ALLOW_REPLAY_POINTER, XCB_TIME_CURRENT_TIME); // xTime());
+        xcb_allow_events(con, XCB_ALLOW_REPLAY_POINTER, XCB_TIME_CURRENT_TIME);
         return true;
     }
     if (w == win->xcb_windows.input) {
@@ -588,7 +586,8 @@ bool button_release_event(Win* win,
         }
     }
     if (w == win->xcb_windows.wrapper) {
-        xcb_allow_events(connection(), XCB_ALLOW_SYNC_POINTER, XCB_TIME_CURRENT_TIME); // xTime());
+        xcb_allow_events(
+            win->space.base.x11_data.connection, XCB_ALLOW_SYNC_POINTER, XCB_TIME_CURRENT_TIME);
         return true;
     }
     if (w != win->frameId() && w != win->xcb_windows.input && w != win->xcb_windows.grab) {
@@ -866,7 +865,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
                 Q_EMIT win->qobject->opacityChanged(old_opacity);
             } else {
                 // forward to the frame if there's possibly another compositing manager running
-                NETWinInfo i(connection(),
+                NETWinInfo i(win->space.base.x11_data.connection,
                              win->frameId(),
                              win->space.base.x11_data.root_window,
                              NET::Properties(),

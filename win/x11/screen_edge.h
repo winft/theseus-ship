@@ -123,7 +123,7 @@ private:
         m_window.map();
         // Set XdndAware on the windows, so that DND enter events are received (#86998)
         xcb_atom_t version = 4; // XDND version
-        xcb_change_property(connection(),
+        xcb_change_property(x11_data.connection,
                             XCB_PROP_MODE_REPLACE,
                             m_window,
                             atoms.xdnd_aware,

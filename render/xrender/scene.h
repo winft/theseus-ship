@@ -129,7 +129,7 @@ protected:
     {
         xcb_render_color_t col = {0, 0, 0, 0xffff}; // black
         const QVector<xcb_rectangle_t>& rects = base::x11::xcb::qt_region_to_rects(region);
-        xcb_render_fill_rectangles(connection(),
+        xcb_render_fill_rectangles(this->platform.base.x11_data.connection,
                                    XCB_RENDER_PICT_OP_SRC,
                                    xrenderBufferPicture(),
                                    col,
@@ -164,7 +164,7 @@ protected:
             return;
         }
         XRenderPicture picture(buffer);
-        xcb_render_composite(connection(),
+        xcb_render_composite(this->platform.base.x11_data.connection,
                              XCB_RENDER_PICT_OP_OVER,
                              picture,
                              XCB_RENDER_PICTURE_NONE,

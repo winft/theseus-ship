@@ -19,11 +19,11 @@ namespace KWin::win::x11
 template<typename Win>
 QString read_name_property(Win& win, xcb_atom_t atom)
 {
-    auto const cookie
-        = xcb_icccm_get_text_property_unchecked(connection(), win.xcb_windows.client, atom);
+    auto const cookie = xcb_icccm_get_text_property_unchecked(
+        win.space.base.x11_data.connection, win.xcb_windows.client, atom);
     xcb_icccm_get_text_property_reply_t reply;
 
-    if (xcb_icccm_get_wm_name_reply(connection(), cookie, &reply, nullptr)) {
+    if (xcb_icccm_get_wm_name_reply(win.space.base.x11_data.connection, cookie, &reply, nullptr)) {
         QString retVal;
         if (reply.encoding == win.space.atoms->utf8_string) {
             retVal = QString::fromUtf8(QByteArray(reply.name, reply.name_len));

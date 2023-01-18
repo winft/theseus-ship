@@ -219,8 +219,9 @@ void show_on_screen_edge(Win& win)
 
     win.hideClient(false);
     win::set_keep_below(&win, false);
-    xcb_delete_property(
-        connection(), win.xcb_windows.client, win.space.atoms->kde_screen_edge_show);
+    xcb_delete_property(win.space.base.x11_data.connection,
+                        win.xcb_windows.client,
+                        win.space.atoms->kde_screen_edge_show);
 }
 
 template<typename Win>

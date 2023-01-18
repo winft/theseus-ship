@@ -145,8 +145,9 @@ void read_show_on_screen_edge(Win* win, base::x11::xcb::property& property)
     } else if (!property.is_null() && property->type != XCB_ATOM_NONE) {
         // property value is incorrect, delete the property
         // so that the client knows that it is not hidden
-        xcb_delete_property(
-            connection(), win->xcb_windows.client, win->space.atoms->kde_screen_edge_show);
+        xcb_delete_property(win->space.base.x11_data.connection,
+                            win->xcb_windows.client,
+                            win->space.atoms->kde_screen_edge_show);
     } else {
         // restore
         // TODO: add proper unreserve

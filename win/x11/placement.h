@@ -363,8 +363,11 @@ void fix_position_after_crash(Space& space,
                               xcb_window_t w,
                               const xcb_get_geometry_reply_t* geometry)
 {
-    NETWinInfo i(
-        connection(), w, space.base.x11_data.root_window, NET::WMFrameExtents, NET::Properties2());
+    NETWinInfo i(space.base.x11_data.connection,
+                 w,
+                 space.base.x11_data.root_window,
+                 NET::WMFrameExtents,
+                 NET::Properties2());
     NETStrut frame = i.frameExtents();
 
     if (frame.left != 0 || frame.top != 0) {
@@ -372,7 +375,8 @@ void fix_position_after_crash(Space& space,
         const uint32_t left = frame.left;
         const uint32_t top = frame.top;
         const uint32_t values[] = {geometry->x - left, geometry->y - top};
-        xcb_configure_window(connection(), w, XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y, values);
+        xcb_configure_window(
+            space.base.x11_data.connection, w, XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y, values);
     }
 }
 

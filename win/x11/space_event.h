@@ -174,7 +174,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
             // see comments for allowClientActivation()
             kwinApp()->update_x11_time_from_clock();
             auto const t = space.base.x11_data.time;
-            xcb_change_property(connection(),
+            xcb_change_property(space.base.x11_data.connection,
                                 XCB_PROP_MODE_REPLACE,
                                 create_event->window,
                                 space.atoms->kde_net_wm_user_creation_time,
@@ -218,10 +218,12 @@ bool space_event(Space& space, xcb_generic_event_t* event)
             // NOTICE: The save-set support in X11Client::mapRequestEvent() actually requires that
             // this code doesn't check the parent to be root.
             if (!create_controlled_window(map_req_event->window, false, space)) {
-                xcb_map_window(connection(), map_req_event->window);
+                xcb_map_window(space.base.x11_data.connection, map_req_event->window);
                 const uint32_t values[] = {XCB_STACK_MODE_ABOVE};
-                xcb_configure_window(
-                    connection(), map_req_event->window, XCB_CONFIG_WINDOW_STACK_MODE, values);
+                xcb_configure_window(space.base.x11_data.connection,
+                                     map_req_event->window,
+                                     XCB_CONFIG_WINDOW_STACK_MODE,
+                                     values);
             }
         }
 
@@ -279,7 +281,8 @@ bool space_event(Space& space, xcb_generic_event_t* event)
             if (value_mask & XCB_CONFIG_WINDOW_BORDER_WIDTH) {
                 values[i++] = cfg_req_event->border_width;
             }
-            xcb_configure_window(connection(), cfg_req_event->window, value_mask, values);
+            xcb_configure_window(
+                space.base.x11_data.connection, cfg_req_event->window, value_mask, values);
             return true;
         }
 

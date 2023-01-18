@@ -56,8 +56,10 @@ public:
 
     void update_mouse_grab() override
     {
-        xcb_ungrab_button(
-            connection(), XCB_BUTTON_INDEX_ANY, m_window->xcb_windows.wrapper, XCB_MOD_MASK_ANY);
+        xcb_ungrab_button(m_window->space.base.x11_data.connection,
+                          XCB_BUTTON_INDEX_ANY,
+                          m_window->xcb_windows.wrapper,
+                          XCB_MOD_MASK_ANY);
 
         if (m_window->space.tabbox->forced_global_mouse_grab()) {
             // see TabBox::establishTabBoxGrab()

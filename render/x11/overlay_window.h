@@ -59,7 +59,7 @@ public:
             return false;
         }
 
-        base::x11::xcb::overlay_window overlay(connection(),
+        base::x11::xcb::overlay_window overlay(compositor.platform.base.x11_data.connection,
                                                compositor.platform.base.x11_data.root_window);
         if (overlay.is_null()) {
             return false;
@@ -86,7 +86,8 @@ public:
             setupInputShape(window);
         }
         const uint32_t eventMask = XCB_EVENT_MASK_VISIBILITY_CHANGE;
-        xcb_change_window_attributes(connection(), m_window, XCB_CW_EVENT_MASK, &eventMask);
+        xcb_change_window_attributes(
+            compositor.platform.base.x11_data.connection, m_window, XCB_CW_EVENT_MASK, &eventMask);
     }
 
     void show()
@@ -94,8 +95,8 @@ public:
         Q_ASSERT(m_window != XCB_WINDOW_NONE);
         if (m_shown)
             return;
-        xcb_map_subwindows(connection(), m_window);
-        xcb_map_window(connection(), m_window);
+        xcb_map_subwindows(compositor.platform.base.x11_data.connection, m_window);
+        xcb_map_window(compositor.platform.base.x11_data.connection, m_window);
         m_shown = true;
     }
 
@@ -103,7 +104,7 @@ public:
     void hide()
     {
         Q_ASSERT(m_window != XCB_WINDOW_NONE);
-        xcb_unmap_window(connection(), m_window);
+        xcb_unmap_window(compositor.platform.base.x11_data.connection, m_window);
         m_shown = false;
         setShape(QRect({}, kwinApp()->get_base().topology.size));
     }
@@ -115,7 +116,7 @@ public:
         if (reg == m_shape)
             return;
         auto const xrects = base::x11::xcb::qt_region_to_rects(reg);
-        xcb_shape_rectangles(connection(),
+        xcb_shape_rectangles(compositor.platform.base.x11_data.connection,
                              XCB_SHAPE_SO_SET,
                              XCB_SHAPE_SK_BOUNDING,
                              XCB_CLIP_ORDERING_UNSORTED,
@@ -133,8 +134,10 @@ public:
         Q_ASSERT(m_window != XCB_WINDOW_NONE);
         const uint32_t geometry[2]
             = {static_cast<uint32_t>(size.width()), static_cast<uint32_t>(size.height())};
-        xcb_configure_window(
-            connection(), m_window, XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT, geometry);
+        xcb_configure_window(compositor.platform.base.x11_data.connection,
+                             m_window,
+                             XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT,
+                             geometry);
         setShape(QRegion(0, 0, size.width(), size.height()));
     }
 
@@ -149,7 +152,7 @@ public:
                                0,
                                static_cast<uint16_t>(space_size.width()),
                                static_cast<uint16_t>(space_size.height())};
-        xcb_shape_rectangles(connection(),
+        xcb_shape_rectangles(compositor.platform.base.x11_data.connection,
                              XCB_SHAPE_SO_SET,
                              XCB_SHAPE_SK_BOUNDING,
                              XCB_CLIP_ORDERING_UNSORTED,
@@ -158,7 +161,7 @@ public:
                              0,
                              1,
                              &rec);
-        xcb_shape_rectangles(connection(),
+        xcb_shape_rectangles(compositor.platform.base.x11_data.connection,
                              XCB_SHAPE_SO_SET,
                              XCB_SHAPE_SK_INPUT,
                              XCB_CLIP_ORDERING_UNSORTED,
@@ -167,7 +170,8 @@ public:
                              0,
                              1,
                              &rec);
-        xcb_composite_release_overlay_window(connection(), m_window);
+        xcb_composite_release_overlay_window(compositor.platform.base.x11_data.connection,
+                                             m_window);
 
         m_window = XCB_WINDOW_NONE;
         m_shown = false;
@@ -213,12 +217,13 @@ private:
     void setNoneBackgroundPixmap(xcb_window_t window)
     {
         const uint32_t mask = XCB_BACK_PIXMAP_NONE;
-        xcb_change_window_attributes(connection(), window, XCB_CW_BACK_PIXMAP, &mask);
+        xcb_change_window_attributes(
+            compositor.platform.base.x11_data.connection, window, XCB_CW_BACK_PIXMAP, &mask);
     }
 
     void setupInputShape(xcb_window_t window)
     {
-        xcb_shape_rectangles(connection(),
+        xcb_shape_rectangles(compositor.platform.base.x11_data.connection,
                              XCB_SHAPE_SO_SET,
                              XCB_SHAPE_SK_INPUT,
                              XCB_CLIP_ORDERING_UNSORTED,

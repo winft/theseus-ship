@@ -190,8 +190,10 @@ bool init_glx_buffer(Backend& backend)
         return false;
     }
 
+    auto const& x11_data = backend.platform.base.x11_data;
+
     if (backend.overlay_window->create()) {
-        auto c = connection();
+        auto c = x11_data.connection;
 
         // Try to create double-buffered window in the overlay
         xcb_visualid_t visual;
@@ -204,7 +206,7 @@ bool init_glx_buffer(Backend& backend)
         }
 
         xcb_colormap_t colormap = xcb_generate_id(c);
-        xcb_create_colormap(c, false, colormap, backend.platform.base.x11_data.root_window, visual);
+        xcb_create_colormap(c, false, colormap, x11_data.root_window, visual);
 
         auto const& space_size = backend.platform.base.topology.size;
         backend.window = xcb_generate_id(c);
@@ -234,9 +236,9 @@ bool init_glx_buffer(Backend& backend)
 }
 
 template<typename Container>
-void populate_visual_depth_hash_table(Container& container)
+void populate_visual_depth_hash_table(base::x11::data const& x11_data, Container& container)
 {
-    auto setup = xcb_get_setup(connection());
+    auto setup = xcb_get_setup(x11_data.connection);
 
     for (auto screen = xcb_setup_roots_iterator(setup); screen.rem; xcb_screen_next(&screen)) {
         for (auto depth = xcb_screen_allowed_depths_iterator(screen.data); depth.rem;
@@ -380,7 +382,7 @@ void start_glx_backend(Display* display, Compositor& compositor, Backend& backen
             getProcAddress("glXSwapIntervalMESA"));
     }
 
-    populate_visual_depth_hash_table(backend.visual_depth_hash);
+    populate_visual_depth_hash_table(backend.platform.base.x11_data, backend.visual_depth_hash);
 
     if (!init_glx_buffer(backend)) {
         throw std::runtime_error("Could not initialize the buffer");

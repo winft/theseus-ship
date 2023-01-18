@@ -49,8 +49,6 @@ private:
 
 void TestXcbWindow::initTestCase()
 {
-    qApp->setProperty("x11RootWindow", QVariant::fromValue<quint32>(QX11Info::appRootWindow()));
-    qApp->setProperty("x11Connection", QVariant::fromValue<void*>(QX11Info::connection()));
     connection = QX11Info::connection();
     root_window = QX11Info::appRootWindow();
 }

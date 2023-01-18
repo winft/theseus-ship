@@ -262,7 +262,8 @@ public:
                     invert(green);
                     invert(blue);
                 }
-                xcb_randr_set_crtc_gamma(connection(), crtc, gamma->size, red, green, blue);
+                xcb_randr_set_crtc_gamma(
+                    this->base.x11_data.connection, crtc, gamma->size, red, green, blue);
             }
         }
     }

@@ -28,13 +28,13 @@ namespace KWin::win::x11
 inline static void select_wm_input_event_mask(base::x11::data const& data)
 {
     uint32_t presentMask = 0;
-    base::x11::xcb::window_attributes attr(connection(), data.root_window);
+    base::x11::xcb::window_attributes attr(data.connection, data.root_window);
     if (!attr.is_null()) {
         presentMask = attr->your_event_mask;
     }
 
     base::x11::xcb::select_input(
-        connection(),
+        data.connection,
         data.root_window,
         presentMask | XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_PROPERTY_CHANGE
             | XCB_EVENT_MASK_COLOR_MAP_CHANGE | XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT
@@ -95,7 +95,7 @@ void init_space(Space& space)
 
     // TODO: only in X11 mode
     // Extra NETRootInfo instance in Client mode is needed to get the values of the properties
-    NETRootInfo client_info(connection(), NET::ActiveWindow | NET::CurrentDesktop);
+    NETRootInfo client_info(x11_data.connection, NET::ActiveWindow | NET::CurrentDesktop);
     if (!qApp->isSessionRestored()) {
         space.m_initialDesktop = client_info.currentDesktop();
         vds->setCurrent(space.m_initialDesktop);
@@ -240,6 +240,7 @@ void clear_space(Space& space)
         remove_all(space.stacking.order.pre_stack, unmanaged);
     }
 
+    space.root_info.reset();
     space.shape_helper_window.reset();
     space.stacking.order.unlock();
 }

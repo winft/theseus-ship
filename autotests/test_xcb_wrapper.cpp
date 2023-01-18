@@ -69,8 +69,6 @@ private:
 
 void TestXcbWrapper::initTestCase()
 {
-    qApp->setProperty("x11RootWindow", QVariant::fromValue<quint32>(QX11Info::appRootWindow()));
-    qApp->setProperty("x11Connection", QVariant::fromValue<void*>(QX11Info::connection()));
     connection = QX11Info::connection();
     root_window = QX11Info::appRootWindow();
 }
@@ -433,7 +431,7 @@ void TestXcbWrapper::testPropertyBool()
     QVERIFY(!ok);
 
     info.setBlockingCompositing(true);
-    xcb_flush(QX11Info::connection());
+    xcb_flush(connection);
     prop = base::x11::xcb::property(
         connection, false, testWindow, blockCompositing, XCB_ATOM_CARDINAL, 0, 100000);
     QVERIFY(prop.to_bool());

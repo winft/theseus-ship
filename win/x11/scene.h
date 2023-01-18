@@ -33,23 +33,24 @@ void create_window_buffer(Win* win, BufImpl& buf_impl)
 {
     auto con = win->space.base.x11_data.connection;
     base::x11::server_grabber grabber(con);
-    xcb_pixmap_t pix = xcb_generate_id(connection());
+    xcb_pixmap_t pix = xcb_generate_id(con);
     xcb_void_cookie_t name_cookie
-        = xcb_composite_name_window_pixmap_checked(connection(), win->frameId(), pix);
+        = xcb_composite_name_window_pixmap_checked(con, win->frameId(), pix);
     base::x11::xcb::window_attributes windowAttributes(con, win->frameId());
 
     auto xcb_frame_geometry = base::x11::xcb::geometry(con, win->frameId());
 
-    if (xcb_generic_error_t* error = xcb_request_check(connection(), name_cookie)) {
+    if (xcb_generic_error_t* error = xcb_request_check(con, name_cookie)) {
         qCDebug(KWIN_CORE) << "Creating buffer failed: " << error->error_code;
         free(error);
         return;
     }
+
     // check that the received pixmap is valid and actually matches what we
     // know about the window (i.e. size)
     if (!windowAttributes || windowAttributes->map_state != XCB_MAP_STATE_VIEWABLE) {
         qCDebug(KWIN_CORE) << "Creating buffer failed by mapping state: " << win;
-        xcb_free_pixmap(connection(), pix);
+        xcb_free_pixmap(con, pix);
         return;
     }
 
@@ -57,7 +58,7 @@ void create_window_buffer(Win* win, BufImpl& buf_impl)
     if (xcb_frame_geometry.size() != render_geo.size()) {
         qCDebug(KWIN_CORE) << "Creating buffer failed by size: " << win << " : "
                            << xcb_frame_geometry.rect() << " | " << render_geo;
-        xcb_free_pixmap(connection(), pix);
+        xcb_free_pixmap(con, pix);
         return;
     }
 
@@ -81,10 +82,10 @@ QRegion get_shape_render_region(Win& win)
     win.is_render_shape_valid = true;
     win.render_shape = {};
 
-    auto cookie
-        = xcb_shape_get_rectangles_unchecked(connection(), win.frameId(), XCB_SHAPE_SK_BOUNDING);
+    auto con = win.space.base.x11_data.connection;
+    auto cookie = xcb_shape_get_rectangles_unchecked(con, win.frameId(), XCB_SHAPE_SK_BOUNDING);
     unique_cptr<xcb_shape_get_rectangles_reply_t> reply(
-        xcb_shape_get_rectangles_reply(connection(), cookie, nullptr));
+        xcb_shape_get_rectangles_reply(con, cookie, nullptr));
     if (!reply) {
         return {};
     }
@@ -155,9 +156,9 @@ void setup_compositing(Win& win)
         return;
     }
 
-    win.damage.handle = xcb_generate_id(connection());
-    xcb_damage_create(
-        connection(), win.damage.handle, win.frameId(), XCB_DAMAGE_REPORT_LEVEL_NON_EMPTY);
+    auto con = win.space.base.x11_data.connection;
+    win.damage.handle = xcb_generate_id(con);
+    xcb_damage_create(con, win.damage.handle, win.frameId(), XCB_DAMAGE_REPORT_LEVEL_NON_EMPTY);
 
     discard_shape(win);
     win.render_data.damage_region = QRect({}, win.geo.size());
