@@ -176,7 +176,8 @@ public:
             space.atoms.reset();
             core.x11.atoms = nullptr;
             Q_EMIT app->x11ConnectionAboutToBeDestroyed();
-            app->setX11Connection(nullptr);
+            space.base.x11_data.connection = nullptr;
+            Q_EMIT app->x11ConnectionChanged();
             xcb_disconnect(app->x11Connection());
         }
 
@@ -223,11 +224,11 @@ private:
         core.x11.screen = iter.data;
         assert(core.x11.screen);
 
-        app->setX11Connection(core.x11.connection, false);
+        space.base.x11_data.connection = core.x11.connection;
 
         // we don't support X11 multi-head in Wayland
-        app->setX11ScreenNumber(screenNumber);
-        app->setX11RootWindow(defaultScreen()->root);
+        space.base.x11_data.screen_number = screenNumber;
+        space.base.x11_data.root_window = defaultScreen()->root;
 
         xcb_read_notifier.reset(new QSocketNotifier(xcb_get_file_descriptor(core.x11.connection),
                                                     QSocketNotifier::Read));

@@ -57,7 +57,7 @@ public:
         QObject::connect(KGlobalAccel::self(),
                          &KGlobalAccel::globalShortcutActiveChanged,
                          kwinApp(),
-                         [action](QAction* triggeredAction, bool /*active*/) {
+                         [this, action](QAction* triggeredAction, bool /*active*/) {
                              if (triggeredAction != action) {
                                  return;
                              }
@@ -67,7 +67,7 @@ public:
                              bool ok = false;
                              const quint32 t = timestamp.toULongLong(&ok);
                              if (ok) {
-                                 kwinApp()->setX11Time(t);
+                                 base::x11::advance_time(base.x11_data, t);
                              }
                          });
     }

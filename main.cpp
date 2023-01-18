@@ -66,16 +66,6 @@ namespace KWin
 
 int Application::crashes = 0;
 
-void Application::setX11ScreenNumber(int screenNumber)
-{
-    x11_data.screen_number = screenNumber;
-}
-
-int Application::x11ScreenNumber()
-{
-    return x11_data.screen_number;
-}
-
 Application::Application(Application::OperationMode mode, int &argc, char **argv)
     : QApplication(argc, argv)
     , x11_event_filters{new base::x11::event_filter_manager}
@@ -223,11 +213,11 @@ void Application::update_x11_time_from_clock()
 {
     switch (m_operationMode) {
     case Application::OperationModeX11:
-        setX11Time(QX11Info::getTimestamp(), Application::TimestampUpdate::Always);
+        base::x11::set_time(get_base().x11_data, QX11Info::getTimestamp());
         break;
 
     case Application::OperationModeXwayland:
-        setX11Time(get_monotonic_time(), Application::TimestampUpdate::Always);
+        base::x11::set_time(get_base().x11_data, get_monotonic_time());
         break;
 
     default:
@@ -307,7 +297,7 @@ void Application::update_x11_time_from_event(xcb_generic_event_t *event)
         }
         break;
     }
-    setX11Time(time);
+    base::x11::advance_time(get_base().x11_data, time);
 }
 
 QProcessEnvironment Application::processStartupEnvironment() const

@@ -170,8 +170,8 @@ ApplicationX11::ApplicationX11(int &argc, char **argv)
     , owner()
     , m_replace(false)
 {
-    setX11Connection(QX11Info::connection());
-    setX11RootWindow(QX11Info::appRootWindow());
+    base.x11_data.connection = QX11Info::connection();
+    base.x11_data.root_window = QX11Info::appRootWindow();
 }
 
 ApplicationX11::~ApplicationX11()
@@ -213,7 +213,7 @@ void ApplicationX11::start()
     base.render = std::make_unique<render::backend::x11::platform<base_t>>(base);
 
     crashChecking();
-    Application::setX11ScreenNumber(QX11Info::appScreen());
+    base.x11_data.screen_number = QX11Info::appScreen();
 
     owner.reset(new KWinSelectionOwner(Application::x11ScreenNumber()));
     connect(owner.data(), &KSelectionOwner::failedToClaimOwnership, []{

@@ -57,8 +57,8 @@ X11TestApplication::X11TestApplication(int& argc, char** argv)
     : Application(OperationModeX11, argc, argv)
     , base{base::config(KConfig::OpenFlag::SimpleConfig)}
 {
-    setX11Connection(QX11Info::connection());
-    setX11RootWindow(QX11Info::appRootWindow());
+    base.x11_data.connection = QX11Info::connection();
+    base.x11_data.root_window = QX11Info::appRootWindow();
 
     // move directory containing executable to front, so that KPluginMetaData::findPluginById
     // prefers the plugins in the build dir over system installed ones
@@ -106,7 +106,8 @@ void X11TimestampUpdateTest::testGrabAfterServerTime()
     KWin::base::x11::ungrab_keyboard();
 
     // now let's change the timestamp
-    KWin::kwinApp()->setX11Time(KWin::xTime() + 5 * 60 * 1000);
+    KWin::base::x11::advance_time(KWin::kwinApp()->get_base().x11_data,
+                                  KWin::xTime() + 5 * 60 * 1000);
 
     // now grab keyboard should fail
     QCOMPARE(KWin::base::x11::grab_keyboard(), false);
@@ -130,8 +131,7 @@ void X11TimestampUpdateTest::testBeforeLastGrabTime()
 
     // now go to past
     const auto timestamp = KWin::xTime();
-    KWin::kwinApp()->setX11Time(KWin::xTime() - 5 * 60 * 1000,
-                                KWin::Application::TimestampUpdate::Always);
+    KWin::base::x11::set_time(KWin::kwinApp()->get_base().x11_data, KWin::xTime() - 5 * 60 * 1000);
     QCOMPARE(KWin::xTime(), timestamp - 5 * 60 * 1000);
 
     // now grab keyboard should fail

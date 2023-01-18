@@ -17,4 +17,18 @@ struct data {
     xcb_connection_t* connection{nullptr};
 };
 
+inline void advance_time(x11::data& data, xcb_timestamp_t time)
+{
+    if (time > data.time) {
+        data.time = time;
+    }
+}
+
+inline void set_time(x11::data& data, xcb_timestamp_t time)
+{
+    if (time != 0) {
+        data.time = time;
+    }
+}
+
 }

@@ -10,6 +10,7 @@
 #include "output.h"
 #include "output_topology.h"
 #include "seat/session.h"
+#include "x11/data.h"
 
 #include "kwin_export.h"
 
@@ -34,6 +35,7 @@ public:
 
     output_topology topology;
     base::config config;
+    base::x11::data x11_data;
 
     std::unique_ptr<base::options> options;
     std::unique_ptr<base::seat::session> session;

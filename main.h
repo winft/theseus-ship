@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef MAIN_H
 #define MAIN_H
 
-#include "base/x11/data.h"
+#include "base/platform.h"
 #include "input/platform.h"
 
 #include <kwinglobals.h>
@@ -51,8 +51,6 @@ namespace x11
 class event_filter_manager;
 }
 
-class platform;
-
 }
 
 namespace desktop
@@ -63,7 +61,7 @@ class screen_locker_watcher;
 class KWIN_EXPORT Application : public  QApplication
 {
     Q_OBJECT
-    Q_PROPERTY(quint32 x11Time READ x11Time WRITE setX11Time)
+    Q_PROPERTY(quint32 x11Time READ x11Time CONSTANT)
     Q_PROPERTY(quint32 x11RootWindow READ x11RootWindow CONSTANT)
     Q_PROPERTY(void *x11Connection READ x11Connection NOTIFY x11ConnectionChanged)
     Q_PROPERTY(int x11ScreenNumber READ x11ScreenNumber CONSTANT)
@@ -108,16 +106,7 @@ public:
     void processCommandLine(QCommandLineParser *parser);
 
     xcb_timestamp_t x11Time() const {
-        return x11_data.time;
-    }
-    enum class TimestampUpdate {
-        OnlyIfLarger,
-        Always
-    };
-    void setX11Time(xcb_timestamp_t timestamp, TimestampUpdate force = TimestampUpdate::OnlyIfLarger) {
-        if ((timestamp > x11_data.time || force == TimestampUpdate::Always) && timestamp != 0) {
-            x11_data.time = timestamp;
-        }
+        return const_cast<Application*>(this)->get_base().x11_data.time;
     }
 
     void update_x11_time_from_clock();
@@ -136,43 +125,23 @@ public:
     /**
      * @returns the X11 Screen number. If not applicable it's set to @c -1.
      */
-    int x11ScreenNumber();
-    /**
-     * Sets the X11 screen number of this KWin instance to @p screenNumber.
-     */
-    void setX11ScreenNumber(int screenNumber);
+    int x11ScreenNumber()
+    {
+        return get_base().x11_data.screen_number;
+    }
 
     /**
      * @returns the X11 root window.
      */
     xcb_window_t x11RootWindow() const {
-        return x11_data.root_window;
-    }
-
-    /**
-     * Inheriting classes should use this method to set the X11 root window
-     * before accessing any X11 specific code pathes.
-     */
-    void setX11RootWindow(xcb_window_t root) {
-        x11_data.root_window = root;
+        return const_cast<Application*>(this)->get_base().x11_data.root_window;
     }
 
     /**
      * @returns the X11 xcb connection
      */
     xcb_connection_t *x11Connection() const {
-        return x11_data.connection;
-    }
-
-    /**
-     * Inheriting classes should use this method to set the xcb connection
-     * before accessing any X11 specific code pathes.
-     */
-    void setX11Connection(xcb_connection_t *c, bool emit_change = true) {
-        x11_data.connection = c;
-        if (emit_change) {
-            Q_EMIT x11ConnectionChanged();
-        }
+        return const_cast<Application*>(this)->get_base().x11_data.connection;
     }
 
     virtual QProcessEnvironment processStartupEnvironment() const;
@@ -211,7 +180,6 @@ protected:
 
 private:
     OperationMode m_operationMode;
-    base::x11::data x11_data;
     bool m_terminating = false;
 };
 
