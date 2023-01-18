@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef MAIN_H
 #define MAIN_H
 
+#include "base/x11/data.h"
 #include "input/platform.h"
 
 #include <kwinglobals.h>
@@ -107,15 +108,15 @@ public:
     void processCommandLine(QCommandLineParser *parser);
 
     xcb_timestamp_t x11Time() const {
-        return m_x11Time;
+        return x11_data.time;
     }
     enum class TimestampUpdate {
         OnlyIfLarger,
         Always
     };
     void setX11Time(xcb_timestamp_t timestamp, TimestampUpdate force = TimestampUpdate::OnlyIfLarger) {
-        if ((timestamp > m_x11Time || force == TimestampUpdate::Always) && timestamp != 0) {
-            m_x11Time = timestamp;
+        if ((timestamp > x11_data.time || force == TimestampUpdate::Always) && timestamp != 0) {
+            x11_data.time = timestamp;
         }
     }
 
@@ -145,7 +146,7 @@ public:
      * @returns the X11 root window.
      */
     xcb_window_t x11RootWindow() const {
-        return m_rootWindow;
+        return x11_data.root_window;
     }
 
     /**
@@ -153,14 +154,14 @@ public:
      * before accessing any X11 specific code pathes.
      */
     void setX11RootWindow(xcb_window_t root) {
-        m_rootWindow = root;
+        x11_data.root_window = root;
     }
 
     /**
      * @returns the X11 xcb connection
      */
     xcb_connection_t *x11Connection() const {
-        return m_connection;
+        return x11_data.connection;
     }
 
     /**
@@ -168,7 +169,7 @@ public:
      * before accessing any X11 specific code pathes.
      */
     void setX11Connection(xcb_connection_t *c, bool emit_change = true) {
-        m_connection = c;
+        x11_data.connection = c;
         if (emit_change) {
             Q_EMIT x11ConnectionChanged();
         }
@@ -210,10 +211,7 @@ protected:
 
 private:
     OperationMode m_operationMode;
-    int x11_screen_number{-1};
-    xcb_timestamp_t m_x11Time = XCB_TIME_CURRENT_TIME;
-    xcb_window_t m_rootWindow = XCB_WINDOW_NONE;
-    xcb_connection_t *m_connection = nullptr;
+    base::x11::data x11_data;
     bool m_terminating = false;
 };
 
