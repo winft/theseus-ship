@@ -251,7 +251,7 @@ void release_window(Win* win, bool on_shutdown)
     // Grab X during the release to make removing of properties, setting to withdrawn state
     // and repareting to root an atomic operation
     // (https://lists.kde.org/?l=kde-devel&m=116448102901184&w=2)
-    base::x11::grab_server();
+    base::x11::grab_server(win->space.base.x11_data.connection);
     export_mapping_state(win, XCB_ICCCM_WM_STATE_WITHDRAWN);
 
     // So that it's not considered visible anymore (can't use hideClient(), it would set flags)
@@ -312,7 +312,7 @@ void release_window(Win* win, bool on_shutdown)
         delete_window_from_space(win->space, *win);
     }
 
-    base::x11::ungrab_server();
+    base::x11::ungrab_server(win->space.base.x11_data.connection);
 }
 
 /**

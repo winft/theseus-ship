@@ -1214,7 +1214,7 @@ private:
             return true;
         }
         kwinApp()->update_x11_time_from_clock();
-        if (!base::x11::grab_keyboard())
+        if (!base::x11::grab_keyboard(space.base.x11_data))
             return false;
         // Don't try to establish a global mouse grab using XGrabPointer, as that would prevent
         // using Alt+Tab while DND (#44972). However force passive grabs on all windows
@@ -1238,7 +1238,7 @@ private:
             return;
         }
         kwinApp()->update_x11_time_from_clock();
-        base::x11::ungrab_keyboard();
+        base::x11::ungrab_keyboard(space.base.x11_data.connection);
         Q_ASSERT(m_forced_global_mouse_grab);
         m_forced_global_mouse_grab = false;
         if (space.stacking.active) {

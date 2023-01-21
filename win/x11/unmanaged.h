@@ -64,7 +64,7 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
         | NET::CriticalNotificationMask;
 
     auto con = space.base.x11_data.connection;
-    base::x11::server_grabber xserverGrabber;
+    base::x11::server_grabber xserverGrabber(con);
     base::x11::xcb::window_attributes attr(con, xcb_win);
     base::x11::xcb::geometry geo(con, xcb_win);
 

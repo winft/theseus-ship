@@ -88,6 +88,8 @@ void X11TestApplication::start()
 
 }
 
+static KWin::X11TestApplication* s_app{nullptr};
+
 class X11TimestampUpdateTest : public QObject
 {
     Q_OBJECT
@@ -102,20 +104,20 @@ void X11TimestampUpdateTest::testGrabAfterServerTime()
     // that should fail, but after updating the X11 timestamp, it should
     // work again
     KWin::kwinApp()->update_x11_time_from_clock();
-    QCOMPARE(KWin::base::x11::grab_keyboard(), true);
-    KWin::base::x11::ungrab_keyboard();
+    QCOMPARE(KWin::base::x11::grab_keyboard(s_app->base.x11_data), true);
+    KWin::base::x11::ungrab_keyboard(s_app->base.x11_data.connection);
 
     // now let's change the timestamp
     KWin::base::x11::advance_time(KWin::kwinApp()->get_base().x11_data,
                                   KWin::xTime() + 5 * 60 * 1000);
 
     // now grab keyboard should fail
-    QCOMPARE(KWin::base::x11::grab_keyboard(), false);
+    QCOMPARE(KWin::base::x11::grab_keyboard(s_app->base.x11_data), false);
 
     // let's update timestamp, now it should work again
     KWin::kwinApp()->update_x11_time_from_clock();
-    QCOMPARE(KWin::base::x11::grab_keyboard(), true);
-    KWin::base::x11::ungrab_keyboard();
+    QCOMPARE(KWin::base::x11::grab_keyboard(s_app->base.x11_data), true);
+    KWin::base::x11::ungrab_keyboard(s_app->base.x11_data.connection);
 }
 
 void X11TimestampUpdateTest::testBeforeLastGrabTime()
@@ -126,8 +128,8 @@ void X11TimestampUpdateTest::testBeforeLastGrabTime()
 
     // first set the grab timestamp
     KWin::kwinApp()->update_x11_time_from_clock();
-    QCOMPARE(KWin::base::x11::grab_keyboard(), true);
-    KWin::base::x11::ungrab_keyboard();
+    QCOMPARE(KWin::base::x11::grab_keyboard(s_app->base.x11_data), true);
+    KWin::base::x11::ungrab_keyboard(s_app->base.x11_data.connection);
 
     // now go to past
     const auto timestamp = KWin::xTime();
@@ -135,19 +137,20 @@ void X11TimestampUpdateTest::testBeforeLastGrabTime()
     QCOMPARE(KWin::xTime(), timestamp - 5 * 60 * 1000);
 
     // now grab keyboard should fail
-    QCOMPARE(KWin::base::x11::grab_keyboard(), false);
+    QCOMPARE(KWin::base::x11::grab_keyboard(s_app->base.x11_data), false);
 
     // let's update timestamp, now it should work again
     KWin::kwinApp()->update_x11_time_from_clock();
     QVERIFY(KWin::xTime() >= timestamp);
-    QCOMPARE(KWin::base::x11::grab_keyboard(), true);
-    KWin::base::x11::ungrab_keyboard();
+    QCOMPARE(KWin::base::x11::grab_keyboard(s_app->base.x11_data), true);
+    KWin::base::x11::ungrab_keyboard(s_app->base.x11_data.connection);
 }
 
 int main(int argc, char* argv[])
 {
     setenv("QT_QPA_PLATFORM", "xcb", true);
     KWin::X11TestApplication app(argc, argv);
+    s_app = &app;
     app.setAttribute(Qt::AA_Use96Dpi, true);
     X11TimestampUpdateTest tc;
     return QTest::qExec(&tc, argc, argv);

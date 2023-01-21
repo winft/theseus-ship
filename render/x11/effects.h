@@ -118,7 +118,7 @@ public:
 protected:
     bool doGrabKeyboard() override
     {
-        bool ret = base::x11::grab_keyboard();
+        bool ret = base::x11::grab_keyboard(this->compositor.platform.base.x11_data);
         if (!ret)
             return false;
         // Workaround for Qt 5.9 regression introduced with 2b34aefcf02f09253473b096eb4faffd3e62b5f4
@@ -132,7 +132,7 @@ protected:
 
     void doUngrabKeyboard() override
     {
-        base::x11::ungrab_keyboard();
+        base::x11::ungrab_keyboard(this->compositor.platform.base.x11_data.connection);
     }
 
     void doStartMouseInterception(Qt::CursorShape shape) override
