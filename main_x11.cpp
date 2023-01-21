@@ -104,8 +104,9 @@ class KWinSelectionOwner : public KSelectionOwner
 {
     Q_OBJECT
 public:
-    explicit KWinSelectionOwner(int screen)
-        : KSelectionOwner(make_selection_atom(screen), screen)
+    KWinSelectionOwner(xcb_connection_t* con, int screen)
+        : KSelectionOwner(make_selection_atom(con, screen), screen)
+        , con{con}
     {
     }
 
@@ -113,7 +114,7 @@ private:
     bool genericReply(xcb_atom_t target_P, xcb_atom_t property_P, xcb_window_t requestor_P) override {
         if (target_P == xa_version) {
             int32_t version[] = { 2, 0 };
-            xcb_change_property(connection(), XCB_PROP_MODE_REPLACE, requestor_P,
+            xcb_change_property(con, XCB_PROP_MODE_REPLACE, requestor_P,
                                 property_P, XCB_ATOM_INTEGER, 32, 2, version);
         } else
             return KSelectionOwner::genericReply(target_P, property_P, requestor_P);
@@ -124,7 +125,7 @@ private:
         KSelectionOwner::replyTargets(property_P, requestor_P);
         xcb_atom_t atoms[ 1 ] = { xa_version };
         // PropModeAppend !
-        xcb_change_property(connection(), XCB_PROP_MODE_APPEND, requestor_P,
+        xcb_change_property(con, XCB_PROP_MODE_APPEND, requestor_P,
                             property_P, XCB_ATOM_ATOM, 32, 1, atoms);
     }
 
@@ -133,8 +134,8 @@ private:
         if (xa_version == XCB_ATOM_NONE) {
             const QByteArray name(QByteArrayLiteral("VERSION"));
             unique_cptr<xcb_intern_atom_reply_t> atom(xcb_intern_atom_reply(
-                connection(),
-                xcb_intern_atom_unchecked(connection(), false, name.length(), name.constData()),
+                con,
+                xcb_intern_atom_unchecked(con, false, name.length(), name.constData()),
                 nullptr));
             if (atom) {
                 xa_version = atom->atom;
@@ -142,14 +143,14 @@ private:
         }
     }
 
-    xcb_atom_t make_selection_atom(int screen_P) {
+    xcb_atom_t make_selection_atom(xcb_connection_t* con, int screen_P) {
         if (screen_P < 0)
             screen_P = QX11Info::appScreen();
         QByteArray screen(QByteArrayLiteral("WM_S"));
         screen.append(QByteArray::number(screen_P));
         unique_cptr<xcb_intern_atom_reply_t> atom(xcb_intern_atom_reply(
-            connection(),
-            xcb_intern_atom_unchecked(connection(), false, screen.length(), screen.constData()),
+            con,
+            xcb_intern_atom_unchecked(con, false, screen.length(), screen.constData()),
             nullptr));
         if (!atom) {
             return XCB_ATOM_NONE;
@@ -157,6 +158,7 @@ private:
         return atom->atom;
     }
     static xcb_atom_t xa_version;
+    xcb_connection_t* con;
 };
 xcb_atom_t KWinSelectionOwner::xa_version = XCB_ATOM_NONE;
 
@@ -221,7 +223,7 @@ void ApplicationX11::start()
     base.x11_data.screen_number = QX11Info::appScreen();
     base::x11::xcb::extensions::create(base.x11_data);
 
-    owner.reset(new KWinSelectionOwner(Application::x11ScreenNumber()));
+    owner.reset(new KWinSelectionOwner(base.x11_data.connection, base.x11_data.screen_number));
     connect(owner.data(), &KSelectionOwner::failedToClaimOwnership, []{
         fputs(i18n("kwin: unable to claim manager selection, another wm running? (try using --replace)\n").toLocal8Bit().constData(), stderr);
         ::exit(1);
