@@ -47,7 +47,8 @@ void update_user_time(Win* win, xcb_timestamp_t time = XCB_TIME_CURRENT_TIME)
 template<typename Win>
 xcb_timestamp_t read_user_creation_time(Win& win)
 {
-    base::x11::xcb::property prop(false,
+    base::x11::xcb::property prop(win.space.base.x11_data.connection,
+                                  false,
                                   win.xcb_windows.client,
                                   win.space.atoms->kde_net_wm_user_creation_time,
                                   XCB_ATOM_CARDINAL,

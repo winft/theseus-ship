@@ -59,7 +59,7 @@ public:
             return false;
         }
 
-        base::x11::xcb::overlay_window overlay(rootWindow());
+        base::x11::xcb::overlay_window overlay(connection(), rootWindow());
         if (overlay.is_null()) {
             return false;
         }

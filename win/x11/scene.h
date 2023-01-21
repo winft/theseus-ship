@@ -31,13 +31,14 @@ void update_window_buffer(Win* win)
 template<typename Win, typename BufImpl>
 void create_window_buffer(Win* win, BufImpl& buf_impl)
 {
+    auto con = win->space.base.x11_data.connection;
     base::x11::server_grabber grabber;
     xcb_pixmap_t pix = xcb_generate_id(connection());
     xcb_void_cookie_t name_cookie
         = xcb_composite_name_window_pixmap_checked(connection(), win->frameId(), pix);
-    base::x11::xcb::window_attributes windowAttributes(win->frameId());
+    base::x11::xcb::window_attributes windowAttributes(con, win->frameId());
 
-    auto xcb_frame_geometry = base::x11::xcb::geometry(win->frameId());
+    auto xcb_frame_geometry = base::x11::xcb::geometry(con, win->frameId());
 
     if (xcb_generic_error_t* error = xcb_request_check(connection(), name_cookie)) {
         qCDebug(KWIN_CORE) << "Creating buffer failed: " << error->error_code;

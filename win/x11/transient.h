@@ -96,7 +96,8 @@ public:
 template<typename Win>
 base::x11::xcb::transient_for fetch_transient(Win* win)
 {
-    return base::x11::xcb::transient_for(win->xcb_windows.client);
+    return base::x11::xcb::transient_for(win->space.base.x11_data.connection,
+                                         win->xcb_windows.client);
 }
 
 /**
@@ -224,7 +225,7 @@ xcb_window_t verify_transient_for(Win* win, xcb_window_t new_transient_for, bool
     while (
         new_transient_for != XCB_WINDOW_NONE && new_transient_for != rootWindow()
         && !find_controlled_window<Win>(win->space, predicate_match::window, new_transient_for)) {
-        base::x11::xcb::tree tree(new_transient_for);
+        base::x11::xcb::tree tree(win->space.base.x11_data.connection, new_transient_for);
         if (tree.is_null()) {
             break;
         }

@@ -62,7 +62,8 @@ public:
         , meta{++space.window_id}
         , transient{std::make_unique<x11::transient<type>>(this)}
         , remnant{std::move(remnant)}
-        , motif_hints{space.atoms->motif_wm_hints}
+        , geometry_hints{space.base.x11_data.connection}
+        , motif_hints{space.base.x11_data.connection, space.atoms->motif_wm_hints}
         , space{space}
 
     {
@@ -74,7 +75,8 @@ public:
         , meta{++space.window_id}
         , transient{std::make_unique<x11::transient<type>>(this)}
         , client_machine{new win::x11::client_machine}
-        , motif_hints(space.atoms->motif_wm_hints)
+        , geometry_hints{space.base.x11_data.connection}
+        , motif_hints{space.base.x11_data.connection, space.atoms->motif_wm_hints}
         , space{space}
     {
         this->space.windows_map.insert({this->meta.signal_id, this});

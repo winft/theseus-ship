@@ -865,7 +865,8 @@ private:
     /**
      * Handles alt-tab / control-tab
      */
-    static bool areKeySymXsDepressed(const uint keySyms[], int nKeySyms)
+    static bool
+    areKeySymXsDepressed(base::x11::data const& x11_data, const uint keySyms[], int nKeySyms)
     {
         struct KeySymbolsDeleter {
             static inline void cleanup(xcb_key_symbols_t* symbols)
@@ -874,7 +875,7 @@ private:
             }
         };
 
-        base::x11::xcb::query_keymap keys;
+        base::x11::xcb::query_keymap keys(x11_data.connection);
 
         QScopedPointer<xcb_key_symbols_t, KeySymbolsDeleter> symbols(
             xcb_key_symbols_alloc(connection()));
@@ -917,7 +918,7 @@ private:
         return depressed;
     }
 
-    static bool areModKeysDepressedX11(const QKeySequence& seq)
+    static bool areModKeysDepressedX11(base::x11::data const& x11_data, const QKeySequence& seq)
     {
         uint rgKeySyms[10];
         int nKeySyms = 0;
@@ -945,7 +946,7 @@ private:
             rgKeySyms[nKeySyms++] = XK_Meta_R;
         }
 
-        return areKeySymXsDepressed(rgKeySyms, nKeySyms);
+        return areKeySymXsDepressed(x11_data, rgKeySyms, nKeySyms);
     }
 
     template<typename Input>
@@ -970,14 +971,14 @@ private:
     }
 
     template<typename Input>
-    static bool areModKeysDepressed(Input const& input, const QKeySequence& seq)
+    bool areModKeysDepressed(Input const& input, const QKeySequence& seq)
     {
         if (seq.isEmpty())
             return false;
         if (kwinApp()->shouldUseWaylandForCompositing()) {
             return areModKeysDepressedWayland(input, seq);
         } else {
-            return areModKeysDepressedX11(seq);
+            return areModKeysDepressedX11(space.base.x11_data, seq);
         }
     }
 

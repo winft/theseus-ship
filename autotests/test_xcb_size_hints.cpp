@@ -229,7 +229,7 @@ void TestXcbSizeHints::testSizeHints()
     xcb_icccm_set_wm_normal_hints(QX11Info::connection(), m_testWindow, &hints);
     xcb_flush(QX11Info::connection());
 
-    base::x11::xcb::geometry_hints geoHints;
+    base::x11::xcb::geometry_hints geoHints(connection);
     geoHints.init(m_testWindow);
     geoHints.read();
     QCOMPARE(geoHints.has_aspect(), minAspect.isValid() && maxAspect.isValid());
@@ -298,7 +298,7 @@ void TestXcbSizeHints::testSizeHintsEmpty()
     xcb_icccm_set_wm_normal_hints(QX11Info::connection(), m_testWindow, &xcbHints);
     xcb_flush(QX11Info::connection());
 
-    base::x11::xcb::geometry_hints hints;
+    base::x11::xcb::geometry_hints hints(connection);
     hints.init(m_testWindow);
     hints.read();
     QVERIFY(!hints.has_aspect());
@@ -342,7 +342,7 @@ void TestXcbSizeHints::testSizeHintsEmpty()
 
 void TestXcbSizeHints::testSizeHintsNotSet()
 {
-    base::x11::xcb::geometry_hints hints;
+    base::x11::xcb::geometry_hints hints(connection);
     hints.init(m_testWindow);
     hints.read();
     QVERIFY(!hints.m_sizeHints);
@@ -366,7 +366,7 @@ void TestXcbSizeHints::testSizeHintsNotSet()
 
 void TestXcbSizeHints::geometryHintsBeforeInit()
 {
-    base::x11::xcb::geometry_hints hints;
+    base::x11::xcb::geometry_hints hints(connection);
     QVERIFY(!hints.has_aspect());
     QVERIFY(!hints.has_base_size());
     QVERIFY(!hints.has_max_size());
@@ -393,7 +393,7 @@ void TestXcbSizeHints::geometryHintsBeforeRead()
     xcb_icccm_set_wm_normal_hints(QX11Info::connection(), m_testWindow, &xcbHints);
     xcb_flush(QX11Info::connection());
 
-    base::x11::xcb::geometry_hints hints;
+    base::x11::xcb::geometry_hints hints(connection);
     hints.init(m_testWindow);
     QVERIFY(!hints.has_aspect());
     QVERIFY(!hints.has_base_size());

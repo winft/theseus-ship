@@ -214,6 +214,7 @@ public:
             m_cookie = other.m_cookie;
             m_window = other.m_window;
             m_reply = other.m_reply;
+            con = other.con;
             // take over the responsibility for the reply pointer
             take_from_other(const_cast<abstract_wrapper&>(other));
         }
@@ -278,18 +279,20 @@ public:
     }
 
 protected:
-    abstract_wrapper()
+    explicit abstract_wrapper(xcb_connection_t* con)
         : m_retrieved(false)
         , m_window(XCB_WINDOW_NONE)
         , m_reply(nullptr)
+        , con{con}
     {
         m_cookie.sequence = 0;
     }
-    explicit abstract_wrapper(xcb_window_t window, Cookie cookie)
+    abstract_wrapper(xcb_connection_t* con, xcb_window_t window, Cookie cookie)
         : m_retrieved(false)
         , m_cookie(cookie)
         , m_window(window)
         , m_reply(nullptr)
+        , con{con}
     {
     }
     explicit abstract_wrapper(const abstract_wrapper& other)
@@ -297,6 +300,7 @@ protected:
         , m_cookie(other.m_cookie)
         , m_window(other.m_window)
         , m_reply(nullptr)
+        , con{other.con}
     {
         take_from_other(const_cast<abstract_wrapper&>(other));
     }
@@ -305,7 +309,7 @@ protected:
         if (m_retrieved || !m_cookie.sequence) {
             return;
         }
-        m_reply = Data::replyFunc(connection(), m_cookie, nullptr);
+        m_reply = Data::replyFunc(con, m_cookie, nullptr);
         m_retrieved = true;
     }
 
@@ -313,7 +317,7 @@ private:
     inline void cleanup()
     {
         if (!m_retrieved && m_cookie.sequence) {
-            xcb_discard_reply(connection(), m_cookie.sequence);
+            xcb_discard_reply(con, m_cookie.sequence);
         } else if (m_reply) {
             free(m_reply);
         }
@@ -333,6 +337,7 @@ private:
     Cookie m_cookie;
     xcb_window_t m_window;
     Reply* m_reply;
+    xcb_connection_t* con{nullptr};
 };
 
 /**
@@ -386,13 +391,17 @@ public:
                                sizeof...(Args) - 1>::value,
                   "Argument miss-match between Wrapper and wrapper_data");
 
-    wrapper() = default;
-    explicit wrapper(Args... args)
-        : abstract_wrapper<Data>(XCB_WINDOW_NONE, Data::requestFunc(connection(), args...))
+    explicit wrapper(xcb_connection_t* con)
+        : abstract_wrapper<Data>(con)
     {
     }
-    explicit wrapper(xcb_window_t w, Args... args)
-        : abstract_wrapper<Data>(w, Data::requestFunc(connection(), args...))
+
+    explicit wrapper(xcb_connection_t* con, Args... args)
+        : abstract_wrapper<Data>(con, XCB_WINDOW_NONE, Data::requestFunc(con, args...))
+    {
+    }
+    wrapper(xcb_connection_t* con, xcb_window_t w, Args... args)
+        : abstract_wrapper<Data>(con, w, Data::requestFunc(con, args...))
     {
     }
 };
@@ -423,9 +432,12 @@ public:
                                sizeof...(Args)>::value,
                   "Argument miss-match between wrapper and wrapper_data");
 
-    wrapper() = default;
-    explicit wrapper(xcb_window_t w, Args... args)
-        : abstract_wrapper<Data>(w, Data::requestFunc(connection(), w, args...))
+    explicit wrapper(xcb_connection_t* con)
+        : abstract_wrapper<Data>(con)
+    {
+    }
+    wrapper(xcb_connection_t* con, xcb_window_t w, Args... args)
+        : abstract_wrapper<Data>(con, w, Data::requestFunc(con, w, args...))
     {
     }
 };
@@ -450,8 +462,8 @@ public:
     static_assert(Data::argumentCount == 0,
                   "wrapper for no arguments constructed with wrapper_data with arguments");
 
-    explicit wrapper()
-        : abstract_wrapper<Data>(XCB_WINDOW_NONE, Data::requestFunc(connection()))
+    explicit wrapper(xcb_connection_t* con)
+        : abstract_wrapper<Data>(con, XCB_WINDOW_NONE, Data::requestFunc(con))
     {
     }
 };

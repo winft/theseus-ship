@@ -191,7 +191,8 @@ void get_motif_hints(Win* win, bool initial = false)
 template<typename Win>
 base::x11::xcb::string_property fetch_color_scheme(Win* win)
 {
-    return base::x11::xcb::string_property(win->xcb_windows.client,
+    return base::x11::xcb::string_property(win->space.base.x11_data.connection,
+                                           win->xcb_windows.client,
                                            win->space.atoms->kde_color_sheme);
 }
 

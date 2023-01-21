@@ -87,8 +87,13 @@ void VirtualDesktopTest::initTestCase()
         // verify the current desktop x11 property on startup, see BUG: 391034
         base::x11::xcb::atom currentDesktopAtom("_NET_CURRENT_DESKTOP", connection());
         QVERIFY(currentDesktopAtom.is_valid());
-        base::x11::xcb::property currentDesktop(
-            0, kwinApp()->x11RootWindow(), currentDesktopAtom, XCB_ATOM_CARDINAL, 0, 1);
+        base::x11::xcb::property currentDesktop(Test::app()->base.x11_data.connection,
+                                                0,
+                                                Test::app()->base.x11_data.root_window,
+                                                currentDesktopAtom,
+                                                XCB_ATOM_CARDINAL,
+                                                0,
+                                                1);
         bool ok = true;
         QCOMPARE(currentDesktop.value(0, &ok), 0);
         QVERIFY(ok);
@@ -731,37 +736,62 @@ void VirtualDesktopTest::testNetCurrentDesktop()
 
     base::x11::xcb::atom currentDesktopAtom("_NET_CURRENT_DESKTOP", connection());
     QVERIFY(currentDesktopAtom.is_valid());
-    base::x11::xcb::property currentDesktop(
-        0, kwinApp()->x11RootWindow(), currentDesktopAtom, XCB_ATOM_CARDINAL, 0, 1);
+    base::x11::xcb::property currentDesktop(Test::app()->base.x11_data.connection,
+                                            0,
+                                            Test::app()->base.x11_data.root_window,
+                                            currentDesktopAtom,
+                                            XCB_ATOM_CARDINAL,
+                                            0,
+                                            1);
     bool ok = true;
     QCOMPARE(currentDesktop.value(0, &ok), 0);
     QVERIFY(ok);
 
     // go to desktop 2
     vd_manager->setCurrent(2);
-    currentDesktop = base::x11::xcb::property(
-        0, kwinApp()->x11RootWindow(), currentDesktopAtom, XCB_ATOM_CARDINAL, 0, 1);
+    currentDesktop = base::x11::xcb::property(Test::app()->base.x11_data.connection,
+                                              0,
+                                              Test::app()->base.x11_data.root_window,
+                                              currentDesktopAtom,
+                                              XCB_ATOM_CARDINAL,
+                                              0,
+                                              1);
     QCOMPARE(currentDesktop.value(0, &ok), 1);
     QVERIFY(ok);
 
     // go to desktop 3
     vd_manager->setCurrent(3);
-    currentDesktop = base::x11::xcb::property(
-        0, kwinApp()->x11RootWindow(), currentDesktopAtom, XCB_ATOM_CARDINAL, 0, 1);
+    currentDesktop = base::x11::xcb::property(Test::app()->base.x11_data.connection,
+                                              0,
+                                              Test::app()->base.x11_data.root_window,
+                                              currentDesktopAtom,
+                                              XCB_ATOM_CARDINAL,
+                                              0,
+                                              1);
     QCOMPARE(currentDesktop.value(0, &ok), 2);
     QVERIFY(ok);
 
     // go to desktop 4
     vd_manager->setCurrent(4);
-    currentDesktop = base::x11::xcb::property(
-        0, kwinApp()->x11RootWindow(), currentDesktopAtom, XCB_ATOM_CARDINAL, 0, 1);
+    currentDesktop = base::x11::xcb::property(Test::app()->base.x11_data.connection,
+                                              0,
+                                              Test::app()->base.x11_data.root_window,
+                                              currentDesktopAtom,
+                                              XCB_ATOM_CARDINAL,
+                                              0,
+                                              1);
     QCOMPARE(currentDesktop.value(0, &ok), 3);
     QVERIFY(ok);
 
     // and back to first
     vd_manager->setCurrent(1);
-    currentDesktop = base::x11::xcb::property(
-        0, kwinApp()->x11RootWindow(), currentDesktopAtom, XCB_ATOM_CARDINAL, 0, 1);
+    currentDesktop = base::x11::xcb::property(Test::app()->base.x11_data.connection,
+                                              0,
+                                              Test::app()->base.x11_data.root_window,
+                                              currentDesktopAtom,
+                                              XCB_ATOM_CARDINAL,
+                                              0,
+                                              1);
     QCOMPARE(currentDesktop.value(0, &ok), 0);
     QVERIFY(ok);
 }

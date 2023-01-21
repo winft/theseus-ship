@@ -158,7 +158,8 @@ private:
 
     void selectWindowUnderPointer()
     {
-        base::x11::xcb::pointer pointer(rootWindow());
+        auto const& x11_data = redirect.platform.base.x11_data;
+        base::x11::xcb::pointer pointer(x11_data.connection, x11_data.root_window);
         if (!pointer.is_null() && pointer->child != XCB_WINDOW_NONE) {
             selectWindowId(pointer->child);
         }
@@ -243,7 +244,7 @@ private:
             if (client) {
                 break; // Found the client
             }
-            base::x11::xcb::tree tree(window);
+            base::x11::xcb::tree tree(redirect.platform.base.x11_data.connection, window);
             if (window == tree->root) {
                 // We didn't find the client, probably an override-redirect window
                 break;

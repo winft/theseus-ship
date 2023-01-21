@@ -43,11 +43,13 @@ auto get_unmanageds(Space const& space) -> std::vector<typename Space::window_t>
 template<typename Space>
 void render_stack_unmanaged_windows(Space& space)
 {
-    if (!kwinApp()->x11Connection()) {
+    auto const& x11_data = space.base.x11_data;
+    if (!x11_data.connection) {
         return;
     }
 
-    auto xcbtree = std::make_unique<base::x11::xcb::tree>(kwinApp()->x11RootWindow());
+    auto xcbtree
+        = std::make_unique<base::x11::xcb::tree>(x11_data.connection, x11_data.root_window);
     if (xcbtree->is_null()) {
         return;
     }

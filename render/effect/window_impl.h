@@ -725,7 +725,11 @@ public:
         return std::visit(overload{[&](auto&& win) -> QByteArray {
                               if constexpr (requires(decltype(win) win) { win->xcb_windows; }) {
                                   return x11::read_window_property(
-                                      win->xcb_windows.client, atom, type, format);
+                                      win->space.base.x11_data.connection,
+                                      win->xcb_windows.client,
+                                      atom,
+                                      type,
+                                      format);
                               }
                               return {};
                           }},

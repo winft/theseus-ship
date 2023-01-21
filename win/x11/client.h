@@ -186,7 +186,8 @@ void get_sync_counter(Win* win)
         return;
     }
 
-    base::x11::xcb::property syncProp(false,
+    base::x11::xcb::property syncProp(win->space.base.x11_data.connection,
+                                      false,
                                       win->xcb_windows.client,
                                       win->space.atoms->net_wm_sync_request_counter,
                                       XCB_ATOM_CARDINAL,
@@ -289,7 +290,8 @@ void send_synthetic_configure_notify(Win* win, QRect const& client_geo)
     c.width = client_geo.width();
     c.height = client_geo.height();
     auto getEmulatedXWaylandSize = [win, &client_geo]() {
-        auto property = base::x11::xcb::property(false,
+        auto property = base::x11::xcb::property(win->space.base.x11_data.connection,
+                                                 false,
                                                  win->xcb_windows.client,
                                                  win->space.atoms->xwayland_randr_emu_monitor_rects,
                                                  XCB_ATOM_CARDINAL,

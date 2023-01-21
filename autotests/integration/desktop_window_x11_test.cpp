@@ -145,7 +145,7 @@ void X11DesktopWindowTest::testDesktopWindow()
     xcb_flush(c.get());
 
     // verify through a geometry request that it's depth 32
-    base::x11::xcb::geometry geo(w);
+    base::x11::xcb::geometry geo(Test::app()->base.x11_data.connection, w);
     QCOMPARE(geo->depth, uint8_t(32));
 
     // we should get a client for it

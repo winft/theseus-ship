@@ -161,7 +161,7 @@ void unmap_notify_event(Win* win, xcb_unmap_notify_event_t* e)
     // check whether this is result of an XReparentWindow - client then won't be parented by wrapper
     // in this case do not release the client (causes reparent to root, removal from saveSet and
     // what not) but just destroy the client
-    base::x11::xcb::tree tree(win->xcb_windows.client);
+    base::x11::xcb::tree tree(win->space.base.x11_data.connection, win->xcb_windows.client);
     xcb_window_t daddy = tree.parent();
 
     if (daddy == win->xcb_windows.wrapper) {
@@ -379,7 +379,7 @@ void leave_notify_event(Win* win, xcb_leave_notify_event_t* e)
         // if this window is another client, but not if it's a popup ... maybe after KDE3.1 :(
         // (repeat after me 'AARGHL!')
         if (!lostMouse && e->detail != XCB_NOTIFY_DETAIL_INFERIOR) {
-            base::x11::xcb::pointer pointer(win->frameId());
+            base::x11::xcb::pointer pointer(win->space.base.x11_data.connection, win->frameId());
             if (!pointer || !pointer->same_screen || pointer->child == XCB_WINDOW_NONE) {
                 // really lost the mouse
                 lostMouse = true;

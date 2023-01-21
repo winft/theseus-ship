@@ -235,14 +235,15 @@ public:
             return;
         }
 
-        base::x11::xcb::randr::screen_resources res(rootWindow());
+        base::x11::xcb::randr::screen_resources res(this->base.x11_data.connection,
+                                                    this->base.x11_data.root_window);
         if (res.is_null()) {
             return;
         }
 
         for (int j = 0; j < res->num_crtcs; ++j) {
             auto crtc = res.crtcs()[j];
-            base::x11::xcb::randr::crtc_gamma gamma(crtc);
+            base::x11::xcb::randr::crtc_gamma gamma(this->base.x11_data.connection, crtc);
             if (gamma.is_null()) {
                 continue;
             }

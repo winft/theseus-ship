@@ -20,12 +20,12 @@ bool update_shadow(Shadow& impl, QVector<uint32_t> const& data)
 {
     constexpr auto element_count = enum_index(shadow_element::count);
 
-    QVector<base::x11::xcb::geometry> pixmapGeometries(element_count);
-    QVector<xcb_get_image_cookie_t> getImageCookies(element_count);
+    std::vector<base::x11::xcb::geometry> pixmapGeometries;
+    std::vector<xcb_get_image_cookie_t> getImageCookies(element_count);
     auto c = connection();
 
     for (size_t i = 0; i < element_count; ++i) {
-        pixmapGeometries[i] = base::x11::xcb::geometry(data[i]);
+        pixmapGeometries.push_back(base::x11::xcb::geometry(connection(), data[i]));
     }
 
     auto discardReplies = [&getImageCookies](int start) {
@@ -80,7 +80,8 @@ QVector<uint32_t> read_shadow_property(Win const& win, base::x11::xcb::atom cons
         return {};
     }
 
-    base::x11::xcb::property property(false, id, shadow_atom, XCB_ATOM_CARDINAL, 0, 12);
+    base::x11::xcb::property property(
+        win.space.base.x11_data.connection, false, id, shadow_atom, XCB_ATOM_CARDINAL, 0, 12);
     auto shadow = property.value<uint32_t*>();
 
     if (!shadow) {

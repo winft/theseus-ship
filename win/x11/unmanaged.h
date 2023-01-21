@@ -63,9 +63,10 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
         | NET::NotificationMask | NET::ComboBoxMask | NET::DNDIconMask | NET::OnScreenDisplayMask
         | NET::CriticalNotificationMask;
 
+    auto con = space.base.x11_data.connection;
     base::x11::server_grabber xserverGrabber;
-    base::x11::xcb::window_attributes attr(xcb_win);
-    base::x11::xcb::geometry geo(xcb_win);
+    base::x11::xcb::window_attributes attr(con, xcb_win);
+    base::x11::xcb::geometry geo(con, xcb_win);
 
     if (attr.is_null() || attr->map_state != XCB_MAP_STATE_VIEWABLE) {
         return nullptr;

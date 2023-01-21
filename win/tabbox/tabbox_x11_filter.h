@@ -141,7 +141,7 @@ private:
         if (mod_index == -1)
             release = true;
         else {
-            base::x11::xcb::modifier_mapping xmk;
+            base::x11::xcb::modifier_mapping xmk(tabbox.space.base.x11_data.connection);
             if (xmk) {
                 xcb_keycode_t* keycodes = xmk.keycodes();
                 const int max_index = xmk.size();

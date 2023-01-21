@@ -78,7 +78,7 @@ void cursor::do_get_pos()
         return;
     }
     m_timeStamp = xTime();
-    base::x11::xcb::pointer pointer(rootWindow());
+    base::x11::xcb::pointer pointer(connection(), rootWindow());
     if (pointer.is_null()) {
         return;
     }

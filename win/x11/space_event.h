@@ -291,7 +291,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
             && (focus_event->detail == XCB_NOTIFY_DETAIL_NONE
                 || focus_event->detail == XCB_NOTIFY_DETAIL_POINTER_ROOT
                 || focus_event->detail == XCB_NOTIFY_DETAIL_INFERIOR)) {
-            base::x11::xcb::input_focus currentInput;
+            base::x11::xcb::input_focus currentInput(space.base.x11_data.connection);
 
             // focusToNull() uses xTime(), which is old now (FocusIn has no timestamp)
             kwinApp()->update_x11_time_from_clock();

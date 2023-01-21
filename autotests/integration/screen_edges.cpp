@@ -268,7 +268,7 @@ void TestScreenEdges::testCreatingInitialEdges()
     QCOMPARE(edgeWindows.size(), 12);
 
     auto testWindowGeometry = [&](int index) {
-        base::x11::xcb::geometry geo(edgeWindows[index]);
+        base::x11::xcb::geometry geo(Test::app()->base.x11_data.connection, edgeWindows[index]);
         return geo.rect();
     };
     QRect sg = QRect({}, Test::app()->base.topology.size);

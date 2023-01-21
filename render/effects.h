@@ -1277,10 +1277,12 @@ public:
 
     QByteArray readRootProperty(long atom, long type, int format) const override
     {
+        auto const& data = compositor.platform.base.x11_data;
         if (!kwinApp()->x11Connection()) {
             return QByteArray();
         }
-        return render::x11::read_window_property(kwinApp()->x11RootWindow(), atom, type, format);
+        return render::x11::read_window_property(
+            data.connection, data.root_window, atom, type, format);
     }
 
     xcb_atom_t announceSupportProperty(const QByteArray& propertyName, Effect* effect) override

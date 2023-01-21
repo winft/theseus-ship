@@ -35,7 +35,8 @@ void platform::update_outputs()
 template<typename Resources>
 void platform::update_outputs_impl()
 {
-    auto res_outs = get_outputs_from_resources(*this, Resources(rootWindow()));
+    auto res_outs
+        = get_outputs_from_resources(*this, Resources(x11_data.connection, x11_data.root_window));
 
     qCDebug(KWIN_X11) << "Update outputs:" << this->outputs.size() << "-->" << res_outs.size();
 

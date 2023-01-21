@@ -17,8 +17,11 @@
 namespace KWin::render::x11
 {
 
-inline QByteArray
-read_window_property(xcb_window_t win, xcb_atom_t atom, xcb_atom_t type, int format)
+inline QByteArray read_window_property(xcb_connection_t* con,
+                                       xcb_window_t win,
+                                       xcb_atom_t atom,
+                                       xcb_atom_t type,
+                                       int format)
 {
     if (win == XCB_WINDOW_NONE) {
         return QByteArray();
@@ -27,7 +30,7 @@ read_window_property(xcb_window_t win, xcb_atom_t atom, xcb_atom_t type, int for
     uint32_t len = 32768;
 
     for (;;) {
-        base::x11::xcb::property prop(false, win, atom, XCB_ATOM_ANY, 0, len);
+        base::x11::xcb::property prop(con, false, win, atom, XCB_ATOM_ANY, 0, len);
         if (prop.is_null()) {
             // get property failed
             return QByteArray();

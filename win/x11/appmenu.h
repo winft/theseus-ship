@@ -13,7 +13,8 @@ namespace KWin::win::x11
 template<typename Win>
 base::x11::xcb::string_property fetch_application_menu_service_name(Win* win)
 {
-    return base::x11::xcb::string_property(win->xcb_windows.client,
+    return base::x11::xcb::string_property(win->space.base.x11_data.connection,
+                                           win->xcb_windows.client,
                                            win->space.atoms->kde_net_wm_appmenu_service_name);
 }
 
@@ -35,7 +36,8 @@ void check_application_menu_service_name(Win* win)
 template<typename Win>
 base::x11::xcb::string_property fetch_application_menu_object_path(Win* win)
 {
-    return base::x11::xcb::string_property(win->xcb_windows.client,
+    return base::x11::xcb::string_property(win->space.base.x11_data.connection,
+                                           win->xcb_windows.client,
                                            win->space.atoms->kde_net_wm_appmenu_object_path);
 }
 

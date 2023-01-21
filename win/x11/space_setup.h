@@ -28,7 +28,7 @@ namespace KWin::win::x11
 inline static void select_wm_input_event_mask()
 {
     uint32_t presentMask = 0;
-    base::x11::xcb::window_attributes attr(rootWindow());
+    base::x11::xcb::window_attributes attr(connection(), rootWindow());
     if (!attr.is_null()) {
         presentMask = attr->your_event_mask;
     }
@@ -60,6 +60,8 @@ void init_space(Space& space)
     space.startup
         = new KStartupInfo(KStartupInfo::DisableKWinModule | KStartupInfo::AnnounceSilenceChanges,
                            space.qobject.get());
+
+    auto const& x11_data = space.base.x11_data;
 
     // Select windowmanager privileges
     select_wm_input_event_mask();
@@ -109,16 +111,17 @@ void init_space(Space& space)
         // Begin updates blocker block
         blocker block(space.stacking.order);
 
-        base::x11::xcb::tree tree(rootWindow());
+        base::x11::xcb::tree tree(x11_data.connection, x11_data.root_window);
         xcb_window_t* wins = xcb_query_tree_children(tree.data());
 
-        QVector<base::x11::xcb::window_attributes> windowAttributes(tree->children_len);
-        QVector<base::x11::xcb::geometry> windowGeometries(tree->children_len);
+        std::vector<base::x11::xcb::window_attributes> windowAttributes;
+        std::vector<base::x11::xcb::geometry> windowGeometries;
 
         // Request the attributes and geometries of all toplevel windows
         for (int i = 0; i < tree->children_len; i++) {
-            windowAttributes[i] = base::x11::xcb::window_attributes(wins[i]);
-            windowGeometries[i] = base::x11::xcb::geometry(wins[i]);
+            windowAttributes.push_back(
+                base::x11::xcb::window_attributes(x11_data.connection, wins[i]));
+            windowGeometries.push_back(base::x11::xcb::geometry(x11_data.connection, wins[i]));
         }
 
         // Get the replies
