@@ -214,6 +214,7 @@ void ApplicationX11::start()
 
     crashChecking();
     base.x11_data.screen_number = QX11Info::appScreen();
+    base::x11::xcb::extensions::create(base.x11_data);
 
     owner.reset(new KWinSelectionOwner(Application::x11ScreenNumber()));
     connect(owner.data(), &KSelectionOwner::failedToClaimOwnership, []{

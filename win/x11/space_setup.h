@@ -49,9 +49,6 @@ void init_space(Space& space)
 
     space.atoms->retrieveHelpers();
 
-    // first initialize the extensions
-    base::x11::xcb::extensions::self();
-
     using color_mapper_t = color_mapper<Space>;
     space.color_mapper = std::make_unique<color_mapper_t>(space);
     QObject::connect(space.qobject.get(),
