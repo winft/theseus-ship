@@ -34,6 +34,7 @@ inline static void select_wm_input_event_mask()
     }
 
     base::x11::xcb::select_input(
+        connection(),
         rootWindow(),
         presentMask | XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_PROPERTY_CHANGE
             | XCB_EVENT_MASK_COLOR_MAP_CHANGE | XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT

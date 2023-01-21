@@ -219,7 +219,7 @@ void stack_screen_edges_under_override_redirect(Space* space)
     auto const edges_wins = space->edges->windows();
     windows.insert(windows.end(), edges_wins.begin(), edges_wins.end());
 
-    base::x11::xcb::restack_windows(windows);
+    base::x11::xcb::restack_windows(space->base.x11_data.connection, windows);
 }
 
 }

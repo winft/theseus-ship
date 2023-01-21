@@ -137,7 +137,7 @@ void propagate_clients(Space& space, bool propagate_new_clients)
     // TODO isn't it too inefficient to restack always all clients?
     // TODO don't restack not visible windows?
     Q_ASSERT(stack.at(0) == space.root_info->supportWindow());
-    base::x11::xcb::restack_windows(stack);
+    base::x11::xcb::restack_windows(space.base.x11_data.connection, stack);
 
     if (propagate_new_clients) {
         // TODO this is still not completely in the map order

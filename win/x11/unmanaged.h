@@ -86,7 +86,8 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
     QTimer::singleShot(50, win->qobject.get(), [win] { set_ready_for_painting(*win); });
 
     // The window is also the frame.
-    base::x11::xcb::select_input(xcb_win,
+    base::x11::xcb::select_input(space.base.x11_data.connection,
+                                 xcb_win,
                                  attr->your_event_mask | XCB_EVENT_MASK_STRUCTURE_NOTIFY
                                      | XCB_EVENT_MASK_PROPERTY_CHANGE);
     win->geo.frame = geo.rect();

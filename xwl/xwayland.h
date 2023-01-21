@@ -172,7 +172,10 @@ public:
         win::x11::clear_space(space);
 
         if (app->x11Connection()) {
-            base::x11::xcb::set_input_focus(XCB_INPUT_FOCUS_POINTER_ROOT);
+            xcb_set_input_focus(space.base.x11_data.connection,
+                                XCB_INPUT_FOCUS_POINTER_ROOT,
+                                XCB_INPUT_FOCUS_POINTER_ROOT,
+                                space.base.x11_data.time);
             space.atoms.reset();
             core.x11.atoms = nullptr;
             Q_EMIT app->x11ConnectionAboutToBeDestroyed();
@@ -299,7 +302,8 @@ private:
         }
 
         if (auto& cursor = space.input->cursor) {
-            base::x11::xcb::define_cursor(app->x11RootWindow(),
+            base::x11::xcb::define_cursor(space.base.x11_data.connection,
+                                          space.base.x11_data.root_window,
                                           cursor->x11_cursor(Qt::ArrowCursor));
         }
 
@@ -312,7 +316,7 @@ private:
         Q_EMIT app->x11ConnectionChanged();
 
         // Trigger possible errors, there's still a chance to abort
-        base::x11::xcb::sync();
+        base::x11::xcb::sync(space.base.x11_data.connection);
 
         data_bridge = std::make_unique<xwl::data_bridge<Space>>(core);
     }

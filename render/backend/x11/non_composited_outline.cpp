@@ -38,7 +38,8 @@ void non_composited_outline::show()
         m_initialized = true;
     }
 
-    int const defaultDepth = base::x11::xcb::default_depth(kwinApp()->x11ScreenNumber());
+    int const defaultDepth
+        = base::x11::xcb::default_depth(connection(), kwinApp()->x11ScreenNumber());
 
     const QRect& outlineGeometry = get_outline()->geometry();
     // left/right parts are between top/bottom, they don't reach as far as the corners

@@ -1131,7 +1131,7 @@ public:
      */
     void ensureOnTop()
     {
-        base::x11::xcb::restack_windows_with_raise(windows());
+        base::x11::xcb::restack_windows_with_raise(space.base.x11_data.connection, windows());
     }
 
     bool isEntered(QMouseEvent* event)

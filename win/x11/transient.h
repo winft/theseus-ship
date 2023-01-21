@@ -276,7 +276,8 @@ xcb_window_t verify_transient_for(Win* win, xcb_window_t new_transient_for, bool
     }
 
     if (new_property_value != win->transient->original_lead_id) {
-        base::x11::xcb::set_transient_for(win->xcb_windows.client, new_property_value);
+        base::x11::xcb::set_transient_for(
+            win->space.base.x11_data.connection, win->xcb_windows.client, new_property_value);
     }
 
     return new_transient_for;

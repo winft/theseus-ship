@@ -204,7 +204,7 @@ private:
         xcb_pixmap_t pixmap = xcb_generate_id(connection());
         auto const& space_size = kwinApp()->get_base().topology.size;
         xcb_create_pixmap(connection(),
-                          base::x11::xcb::default_depth(kwinApp()->x11ScreenNumber()),
+                          base::x11::xcb::default_depth(connection(), kwinApp()->x11ScreenNumber()),
                           pixmap,
                           rootWindow(),
                           space_size.width(),

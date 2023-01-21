@@ -323,7 +323,7 @@ inline void window::move(uint32_t x, uint32_t y)
     if (!is_valid()) {
         return;
     }
-    move_window(m_window, x, y);
+    move_window(con, m_window, x, y);
 }
 
 inline void window::resize(const QSize& size)
@@ -350,7 +350,7 @@ inline void window::raise()
 
 inline void window::lower()
 {
-    lower_window(m_window);
+    lower_window(con, m_window);
 }
 
 inline void window::map()
@@ -457,17 +457,17 @@ inline void window::set_background_pixmap(xcb_pixmap_t pixmap)
 
 inline void window::define_cursor(xcb_cursor_t cursor)
 {
-    xcb::define_cursor(m_window, cursor);
+    xcb::define_cursor(con, m_window, cursor);
 }
 
 inline void window::focus(uint8_t revertTo, xcb_timestamp_t time)
 {
-    set_input_focus(m_window, revertTo, time);
+    xcb_set_input_focus(con, revertTo, m_window, time);
 }
 
 inline void window::select_input(uint32_t events)
 {
-    xcb::select_input(m_window, events);
+    xcb::select_input(con, m_window, events);
 }
 
 inline void window::kill()

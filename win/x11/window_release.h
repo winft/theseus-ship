@@ -11,6 +11,7 @@
 
 #include "base/x11/grabs.h"
 #include "base/x11/xcb/extensions.h"
+#include "base/x11/xcb/helpers.h"
 #include "utils/blocker.h"
 #include "win/input.h"
 #include "win/rules.h"
@@ -173,7 +174,8 @@ void release_unmanaged(Win* win, bool on_shutdown)
         if (base::x11::xcb::extensions::self()->is_shape_available()) {
             xcb_shape_select_input(connection(), win->xcb_windows.client, false);
         }
-        base::x11::xcb::select_input(win->xcb_windows.client, XCB_EVENT_MASK_NO_EVENT);
+        base::x11::xcb::select_input(
+            win->space.base.x11_data.connection, win->xcb_windows.client, XCB_EVENT_MASK_NO_EVENT);
     }
 
     if (on_shutdown) {

@@ -148,7 +148,8 @@ protected:
             const uint32_t values[] = {true,
                                        XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE
                                            | XCB_EVENT_MASK_POINTER_MOTION};
-            auto xcb_win = base::x11::xcb::create_input_window(geo, mask, values);
+            auto xcb_win = base::x11::xcb::create_input_window(
+                x11_data.connection, x11_data.root_window, geo, mask, values);
             mouse_intercept.window.reset(x11_data.connection, xcb_win);
             defineCursor(shape);
         } else {

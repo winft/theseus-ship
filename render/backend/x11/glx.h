@@ -106,7 +106,8 @@ GLXFBConfig create_glx_fb_config(Backend const& backend)
 
     // Only request sRGB configurations with default depth 24 as it can cause problems with other
     // default depths. See bugs #408594 and #423014.
-    if (base::x11::xcb::default_depth(kwinApp()->x11ScreenNumber()) == 24) {
+    auto const& x11_data = backend.platform.base.x11_data;
+    if (base::x11::xcb::default_depth(x11_data.connection, x11_data.screen_number) == 24) {
         configs = glXChooseFBConfig(display, DefaultScreen(display), attribs_srgb, &count);
     }
 
