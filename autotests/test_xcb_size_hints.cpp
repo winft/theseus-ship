@@ -48,19 +48,27 @@ private Q_SLOTS:
 
 private:
     base::x11::xcb::window m_testWindow;
+    xcb_connection_t* connection{nullptr};
+    xcb_window_t root_window{XCB_WINDOW_NONE};
 };
 
 void TestXcbSizeHints::initTestCase()
 {
     qApp->setProperty("x11RootWindow", QVariant::fromValue<quint32>(QX11Info::appRootWindow()));
     qApp->setProperty("x11Connection", QVariant::fromValue<void*>(QX11Info::connection()));
+    connection = QX11Info::connection();
+    root_window = QX11Info::appRootWindow();
 }
 
 void TestXcbSizeHints::init()
 {
     const uint32_t values[] = {true};
-    m_testWindow.create(
-        QRect(0, 0, 10, 10), XCB_WINDOW_CLASS_INPUT_ONLY, XCB_CW_OVERRIDE_REDIRECT, values);
+    m_testWindow.create(connection,
+                        root_window,
+                        QRect(0, 0, 10, 10),
+                        XCB_WINDOW_CLASS_INPUT_ONLY,
+                        XCB_CW_OVERRIDE_REDIRECT,
+                        values);
     QVERIFY(m_testWindow.is_valid());
 }
 

@@ -87,7 +87,7 @@ void embed_client(Win* win, xcb_visualid_t visualid, xcb_colormap_t colormap, ui
                       visualid,
                       cw_mask,
                       cw_values);
-    win->xcb_windows.outer.reset(frame);
+    win->xcb_windows.outer.reset(win->space.base.x11_data.connection, frame);
 
     // Create the wrapper window
     auto wrapperId = xcb_generate_id(conn);
@@ -105,7 +105,7 @@ void embed_client(Win* win, xcb_visualid_t visualid, xcb_colormap_t colormap, ui
                       cw_mask,
                       cw_values);
 
-    win->xcb_windows.wrapper.reset(wrapperId);
+    win->xcb_windows.wrapper.reset(win->space.base.x11_data.connection, wrapperId);
     win->xcb_windows.client.reparent(win->xcb_windows.wrapper);
 
     // We could specify the event masks when we create the windows, but the original

@@ -112,7 +112,8 @@ private:
         const uint32_t values[] = {true,
                                    XCB_EVENT_MASK_ENTER_WINDOW | XCB_EVENT_MASK_LEAVE_WINDOW
                                        | XCB_EVENT_MASK_POINTER_MOTION};
-        m_window.create(this->geometry, XCB_WINDOW_CLASS_INPUT_ONLY, mask, values);
+        m_window.create(
+            connection(), rootWindow(), this->geometry, XCB_WINDOW_CLASS_INPUT_ONLY, mask, values);
         m_window.map();
         // Set XdndAware on the windows, so that DND enter events are received (#86998)
         xcb_atom_t version = 4; // XDND version
@@ -141,12 +142,17 @@ private:
         const uint32_t values[] = {true,
                                    XCB_EVENT_MASK_ENTER_WINDOW | XCB_EVENT_MASK_LEAVE_WINDOW
                                        | XCB_EVENT_MASK_POINTER_MOTION};
-        m_approachWindow.create(this->approach_geometry, XCB_WINDOW_CLASS_INPUT_ONLY, mask, values);
+        m_approachWindow.create(connection(),
+                                rootWindow(),
+                                this->approach_geometry,
+                                XCB_WINDOW_CLASS_INPUT_ONLY,
+                                mask,
+                                values);
         m_approachWindow.map();
     }
 
-    base::x11::xcb::window m_window{XCB_WINDOW_NONE};
-    base::x11::xcb::window m_approachWindow{XCB_WINDOW_NONE};
+    base::x11::xcb::window m_window;
+    base::x11::xcb::window m_approachWindow;
     QMetaObject::Connection m_cursorPollingConnection;
     base::x11::atoms& atoms;
 };

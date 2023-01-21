@@ -63,19 +63,27 @@ private:
     void testEmpty(base::x11::xcb::geometry& geometry);
     void testGeometry(base::x11::xcb::geometry& geometry, const QRect& rect);
     base::x11::xcb::window m_testWindow;
+    xcb_connection_t* connection{nullptr};
+    xcb_window_t root_window{XCB_WINDOW_NONE};
 };
 
 void TestXcbWrapper::initTestCase()
 {
     qApp->setProperty("x11RootWindow", QVariant::fromValue<quint32>(QX11Info::appRootWindow()));
     qApp->setProperty("x11Connection", QVariant::fromValue<void*>(QX11Info::connection()));
+    connection = QX11Info::connection();
+    root_window = QX11Info::appRootWindow();
 }
 
 void TestXcbWrapper::init()
 {
     const uint32_t values[] = {true};
-    m_testWindow.create(
-        QRect(0, 0, 10, 10), XCB_WINDOW_CLASS_INPUT_ONLY, XCB_CW_OVERRIDE_REDIRECT, values);
+    m_testWindow.create(connection,
+                        root_window,
+                        QRect(0, 0, 10, 10),
+                        XCB_WINDOW_CLASS_INPUT_ONLY,
+                        XCB_CW_OVERRIDE_REDIRECT,
+                        values);
     QVERIFY(m_testWindow.is_valid());
 }
 
@@ -315,7 +323,7 @@ void TestXcbWrapper::testTransientFor()
     QVERIFY(!ok);
 
     // Create a Window with a transient for hint
-    base::x11::xcb::window transientWindow(createWindow());
+    base::x11::xcb::window transientWindow(connection, createWindow());
     xcb_window_t testWindowId = m_testWindow;
     transientWindow.change_property(
         XCB_ATOM_WM_TRANSIENT_FOR, XCB_ATOM_WINDOW, 32, 1, &testWindowId);
@@ -344,7 +352,7 @@ void TestXcbWrapper::testTransientFor()
 
 void TestXcbWrapper::testPropertyByteArray()
 {
-    base::x11::xcb::window testWindow(createWindow());
+    base::x11::xcb::window testWindow(connection, createWindow());
     base::x11::xcb::property prop(false, testWindow, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 0, 100000);
     QCOMPARE(prop.to_byte_array(), QByteArray());
     bool ok = true;
@@ -389,7 +397,7 @@ void TestXcbWrapper::testPropertyByteArray()
              QByteArray());
 
     // verify non existing property
-    base::x11::xcb::atom invalid(QByteArrayLiteral("INVALID_ATOM"), connection());
+    base::x11::xcb::atom invalid(QByteArrayLiteral("INVALID_ATOM"), connection);
     prop = base::x11::xcb::property(false, testWindow, invalid, XCB_ATOM_STRING, 0, 100000);
     QCOMPARE(prop.to_byte_array(), QByteArray());
     QCOMPARE(prop.to_byte_array(&ok), QByteArray());
@@ -406,9 +414,9 @@ void TestXcbWrapper::testPropertyByteArray()
 
 void TestXcbWrapper::testPropertyBool()
 {
-    base::x11::xcb::window testWindow(createWindow());
+    base::x11::xcb::window testWindow(connection, createWindow());
     base::x11::xcb::atom blockCompositing(QByteArrayLiteral("_KDE_NET_WM_BLOCK_COMPOSITING"),
-                                          connection());
+                                          connection);
     QVERIFY(blockCompositing != XCB_ATOM_NONE);
     NETWinInfo info(QX11Info::connection(),
                     testWindow,
@@ -450,7 +458,7 @@ void TestXcbWrapper::testPropertyBool()
 
 void TestXcbWrapper::testAtom()
 {
-    base::x11::xcb::atom atom(QByteArrayLiteral("WM_CLIENT_MACHINE"), connection());
+    base::x11::xcb::atom atom(QByteArrayLiteral("WM_CLIENT_MACHINE"), connection);
     QCOMPARE(atom.name(), QByteArrayLiteral("WM_CLIENT_MACHINE"));
     QVERIFY(atom == XCB_ATOM_WM_CLIENT_MACHINE);
     QVERIFY(atom.is_valid());
@@ -462,13 +470,13 @@ void TestXcbWrapper::testAtom()
     QCOMPARE(atom2.name(), QByteArrayLiteral("WM_CLIENT_MACHINE"));
 
     // destroy before retrieved
-    base::x11::xcb::atom atom3(QByteArrayLiteral("WM_CLIENT_MACHINE"), connection());
+    base::x11::xcb::atom atom3(QByteArrayLiteral("WM_CLIENT_MACHINE"), connection);
     QCOMPARE(atom3.name(), QByteArrayLiteral("WM_CLIENT_MACHINE"));
 }
 
 void TestXcbWrapper::testMotifEmpty()
 {
-    base::x11::xcb::atom atom(QByteArrayLiteral("_MOTIF_WM_HINTS"), connection());
+    base::x11::xcb::atom atom(QByteArrayLiteral("_MOTIF_WM_HINTS"), connection);
     base::x11::xcb::motif_hints hints(atom);
 
     // pre init
@@ -553,7 +561,7 @@ void TestXcbWrapper::testMotif_data()
 
 void TestXcbWrapper::testMotif()
 {
-    base::x11::xcb::atom atom(QByteArrayLiteral("_MOTIF_WM_HINTS"), connection());
+    base::x11::xcb::atom atom(QByteArrayLiteral("_MOTIF_WM_HINTS"), connection);
     QFETCH(quint32, flags);
     QFETCH(quint32, functions);
     QFETCH(quint32, decorations);

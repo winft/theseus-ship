@@ -82,7 +82,7 @@ public:
         , motif_hints(space.atoms->motif_wm_hints)
         , space{space}
     {
-        xcb_windows.client.reset(xcb_win, false);
+        xcb_windows.client.reset(space.base.x11_data.connection, xcb_win, false);
         this->space.windows_map.insert({this->meta.signal_id, this});
         window_setup_geometry(*this);
     }

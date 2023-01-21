@@ -148,7 +148,7 @@ Win* create_remnant_window(Win& source)
         winfo->disable();
     }
 
-    win->xcb_windows.client.reset(source.xcb_windows.client, false);
+    win->xcb_windows.client.reset(connection(), source.xcb_windows.client, false);
     win->xcb_visual = source.xcb_visual;
     win->is_shape = source.is_shape;
     win->client_machine = source.client_machine;

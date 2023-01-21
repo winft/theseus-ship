@@ -80,7 +80,7 @@ public:
         this->space.windows_map.insert({this->meta.signal_id, this});
         window_setup_geometry(*this);
 
-        this->xcb_windows.client.reset(xcb_win, false);
+        this->xcb_windows.client.reset(space.base.x11_data.connection, xcb_win, false);
     }
 
     ~xwl_window()

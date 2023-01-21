@@ -80,7 +80,9 @@ void init_space(Space& space)
     kwinApp()->update_x11_time_from_clock();
 
     const uint32_t nullFocusValues[] = {true};
-    space.m_nullFocus.reset(new base::x11::xcb::window(QRect(-1, -1, 1, 1),
+    space.m_nullFocus.reset(new base::x11::xcb::window(space.base.x11_data.connection,
+                                                       space.base.x11_data.root_window,
+                                                       QRect(-1, -1, 1, 1),
                                                        XCB_WINDOW_CLASS_INPUT_ONLY,
                                                        XCB_CW_OVERRIDE_REDIRECT,
                                                        nullFocusValues));

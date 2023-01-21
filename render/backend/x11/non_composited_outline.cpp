@@ -31,10 +31,10 @@ void non_composited_outline::show()
         const QRect geo(0, 0, 1, 1);
         const uint32_t values[] = {true};
         // TODO: use template variant
-        m_leftOutline.create(geo, XCB_CW_OVERRIDE_REDIRECT, values);
-        m_rightOutline.create(geo, XCB_CW_OVERRIDE_REDIRECT, values);
-        m_topOutline.create(geo, XCB_CW_OVERRIDE_REDIRECT, values);
-        m_bottomOutline.create(geo, XCB_CW_OVERRIDE_REDIRECT, values);
+        m_leftOutline.create(connection(), rootWindow(), geo, XCB_CW_OVERRIDE_REDIRECT, values);
+        m_rightOutline.create(connection(), rootWindow(), geo, XCB_CW_OVERRIDE_REDIRECT, values);
+        m_topOutline.create(connection(), rootWindow(), geo, XCB_CW_OVERRIDE_REDIRECT, values);
+        m_bottomOutline.create(connection(), rootWindow(), geo, XCB_CW_OVERRIDE_REDIRECT, values);
         m_initialized = true;
     }
 
