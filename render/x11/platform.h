@@ -40,7 +40,7 @@ public:
     std::unique_ptr<win::deco::render_injector>
     create_non_composited_deco(win::deco::render_window window)
     {
-        return std::make_unique<backend::x11::deco_renderer>(window);
+        return std::make_unique<backend::x11::deco_renderer>(this->base.x11_data, window);
     }
 
     bool requiresCompositing() const override

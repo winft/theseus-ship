@@ -106,7 +106,7 @@ public:
     std::unique_ptr<win::deco::render_injector>
     create_deco(win::deco::render_window window) override
     {
-        return std::make_unique<deco_renderer>(std::move(window));
+        return std::make_unique<deco_renderer>(this->platform.base.x11_data, std::move(window));
     }
 
     bool animationsSupported() const override

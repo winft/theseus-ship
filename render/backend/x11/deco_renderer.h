@@ -17,24 +17,30 @@ namespace KWin::render::backend::x11
 class deco_render_data : public win::deco::render_data
 {
 public:
+    deco_render_data(base::x11::data const& x11_data)
+        : x11{x11_data}
+    {
+    }
+
     ~deco_render_data() override
     {
         if (gc != XCB_NONE) {
-            xcb_free_gc(connection(), gc);
+            xcb_free_gc(x11.connection, gc);
         }
     }
 
     xcb_gcontext_t gc{XCB_NONE};
+    base::x11::data const& x11;
 };
 
 class deco_renderer : public win::deco::render_injector
 {
 public:
-    explicit deco_renderer(win::deco::render_window window)
+    explicit deco_renderer(base::x11::data const& x11_data, win::deco::render_window window)
         : win::deco::render_injector(std::move(window))
         , m_scheduleTimer(new QTimer(this->qobject.get()))
     {
-        this->data = std::make_unique<deco_render_data>();
+        this->data = std::make_unique<deco_render_data>(x11_data);
 
         // delay any rendering to end of event cycle to catch multiple updates per cycle
         m_scheduleTimer->setSingleShot(true);
@@ -55,8 +61,8 @@ protected:
             return;
         }
 
-        auto c = connection();
         auto& data = static_cast<deco_render_data&>(*this->data);
+        auto c = data.x11.connection;
 
         if (data.gc == XCB_NONE) {
             data.gc = xcb_generate_id(c);
