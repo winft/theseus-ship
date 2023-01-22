@@ -19,7 +19,8 @@
 namespace KWin::win::x11
 {
 
-inline void send_client_message(xcb_window_t w,
+inline void send_client_message(base::x11::data const& data,
+                                xcb_window_t w,
                                 xcb_atom_t a,
                                 xcb_atom_t protocol,
                                 uint32_t data1 = 0,
@@ -33,7 +34,7 @@ inline void send_client_message(xcb_window_t w,
     ev.type = a;
     ev.format = 32;
     ev.data.data32[0] = protocol;
-    ev.data.data32[1] = xTime();
+    ev.data.data32[1] = data.time;
     ev.data.data32[2] = data1;
     ev.data.data32[3] = data2;
     ev.data.data32[4] = data3;
@@ -139,7 +140,7 @@ void ping(Win* win)
     // and the second time we'll show the "do you want to kill" prompt.
     win->ping_timer->start(win->space.base.options->qobject->killPingTimeout() / 2);
 
-    win->ping_timestamp = xTime();
+    win->ping_timestamp = win->space.base.x11_data.time;
     win->space.root_info->sendPing(win->xcb_windows.client, win->ping_timestamp);
 }
 
@@ -253,7 +254,7 @@ void send_sync_request(Win* win)
         win->sync_request.update_request_number++;
     }
 
-    if (win->sync_request.timestamp >= xTime()) {
+    if (win->sync_request.timestamp >= win->space.base.x11_data.time) {
         kwinApp()->update_x11_time_from_clock();
     }
 
@@ -262,13 +263,14 @@ void send_sync_request(Win* win)
 
     // Send the message to client
     auto& atoms = win->space.atoms;
-    send_client_message(win->xcb_windows.client,
+    send_client_message(win->space.base.x11_data,
+                        win->xcb_windows.client,
                         atoms->wm_protocols,
                         atoms->net_wm_sync_request,
                         number_lo,
                         number_hi);
 
-    win->sync_request.timestamp = xTime();
+    win->sync_request.timestamp = win->space.base.x11_data.time;
 }
 
 /**

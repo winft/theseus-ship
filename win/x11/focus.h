@@ -24,8 +24,10 @@ void focus_take(Win& win)
 
     if (win.net_info->supportsProtocol(NET::TakeFocusProtocol)) {
         kwinApp()->update_x11_time_from_clock();
-        send_client_message(
-            win.xcb_windows.client, win.space.atoms->wm_protocols, win.space.atoms->wm_take_focus);
+        send_client_message(win.space.base.x11_data,
+                            win.xcb_windows.client,
+                            win.space.atoms->wm_protocols,
+                            win.space.atoms->wm_take_focus);
     }
 
     win.space.stacking.should_get_focus.push_back(&win);

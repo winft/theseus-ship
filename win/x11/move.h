@@ -114,7 +114,7 @@ bool do_start_move_resize(Win& win)
         XCB_GRAB_MODE_ASYNC,
         win.xcb_windows.grab,
         win.space.input->cursor->x11_cursor(win.control->move_resize.cursor),
-        xTime());
+        win.space.base.x11_data.time);
 
     unique_cptr<xcb_grab_pointer_reply_t> pointerGrab(
         xcb_grab_pointer_reply(connection(), cookie, nullptr));
@@ -156,7 +156,7 @@ void leave_move_resize(Win& win)
     }
 
     win.move_resize_has_keyboard_grab = false;
-    xcb_ungrab_pointer(connection(), xTime());
+    xcb_ungrab_pointer(connection(), win.space.base.x11_data.time);
     win.xcb_windows.grab.reset();
 
     win::leave_move_resize(win);

@@ -146,11 +146,6 @@ inline KWIN_EXPORT xcb_window_t rootWindow()
     return s_rootWindow;
 }
 
-inline KWIN_EXPORT xcb_timestamp_t xTime()
-{
-    return qApp->property("x11Time").value<xcb_timestamp_t>();
-}
-
 /**
  * Short wrapper for a cursor image provided by the Platform.
  * @since 5.9

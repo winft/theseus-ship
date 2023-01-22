@@ -172,7 +172,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
             && !create_event->override_redirect) {
             // see comments for allowClientActivation()
             kwinApp()->update_x11_time_from_clock();
-            const xcb_timestamp_t t = xTime();
+            auto const t = space.base.x11_data.time;
             xcb_change_property(connection(),
                                 XCB_PROP_MODE_REPLACE,
                                 create_event->window,

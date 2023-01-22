@@ -32,7 +32,7 @@ void update_user_time(Win* win, xcb_timestamp_t time = XCB_TIME_CURRENT_TIME)
     // copied in Group::updateUserTime
     if (time == XCB_TIME_CURRENT_TIME) {
         kwinApp()->update_x11_time_from_clock();
-        time = xTime();
+        time = win->space.base.x11_data.time;
     }
     if (time != -1U
         && (win->user_time == XCB_TIME_CURRENT_TIME

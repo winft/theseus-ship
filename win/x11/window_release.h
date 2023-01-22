@@ -443,7 +443,8 @@ void close_window(Win& win)
     update_user_time(&win);
 
     if (win.net_info->supportsProtocol(NET::DeleteWindowProtocol)) {
-        send_client_message(win.xcb_windows.client,
+        send_client_message(win.space.base.x11_data,
+                            win.xcb_windows.client,
                             win.space.atoms->wm_protocols,
                             win.space.atoms->wm_delete_window);
         ping(&win);

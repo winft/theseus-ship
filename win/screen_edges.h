@@ -1217,7 +1217,8 @@ public:
             }
             if (edge->reserved_count > 0 && edge->window_id() == window) {
                 kwinApp()->update_x11_time_from_clock();
-                edge->check(point, QDateTime::fromMSecsSinceEpoch(xTime(), Qt::UTC), true);
+                edge->check(
+                    point, QDateTime::fromMSecsSinceEpoch(space.base.x11_data.time, Qt::UTC), true);
                 return true;
             }
         }

@@ -35,7 +35,10 @@ public:
             const auto mouseEvent = reinterpret_cast<xcb_motion_notify_event_t*>(event);
             const QPoint rootPos(mouseEvent->root_x, mouseEvent->root_y);
             if (QWidget::mouseGrabber()) {
-                space.edges->check(rootPos, QDateTime::fromMSecsSinceEpoch(xTime(), Qt::UTC), true);
+                space.edges->check(
+                    rootPos,
+                    QDateTime::fromMSecsSinceEpoch(space.base.x11_data.time, Qt::UTC),
+                    true);
             } else {
                 space.edges->check(rootPos,
                                    QDateTime::fromMSecsSinceEpoch(mouseEvent->time, Qt::UTC));

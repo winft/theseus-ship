@@ -294,7 +294,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     win->supported_default_types = supported_managed_window_types_mask;
     win->geo.has_in_content_deco = true;
 
-    win->sync_request.timestamp = xTime();
+    win->sync_request.timestamp = space.base.x11_data.time;
 
     setup_window_control_connections(win);
     win->control->setup_tabbox();
@@ -328,7 +328,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
                              xcb_change_active_pointer_grab(
                                  connection(),
                                  nativeCursor,
-                                 xTime(),
+                                 win->space.base.x11_data.time,
                                  XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE
                                      | XCB_EVENT_MASK_POINTER_MOTION | XCB_EVENT_MASK_ENTER_WINDOW
                                      | XCB_EVENT_MASK_LEAVE_WINDOW);
@@ -751,11 +751,11 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
     if (win->user_time == XCB_TIME_CURRENT_TIME || win->user_time == -1U) {
         // No known user time, set something old
-        win->user_time = xTime() - 1000000;
+        win->user_time = win->space.base.x11_data.time - 1000000;
 
         // Let's be paranoid.
         if (win->user_time == XCB_TIME_CURRENT_TIME || win->user_time == -1U) {
-            win->user_time = xTime() - 1000000 + 10;
+            win->user_time = win->space.base.x11_data.time - 1000000 + 10;
         }
     }
 
