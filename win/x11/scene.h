@@ -215,11 +215,11 @@ void add_scene_window_addon(Win& win)
             shadow, win.space.base.x11_data.connection, atoms->kde_net_wm_shadow);
     };
 
-    auto setup_buffer = [](auto& buffer) {
+    auto setup_buffer = [con = win.space.base.x11_data.connection](auto& buffer) {
         using buffer_integration_t
             = render::x11::buffer_win_integration<typename scene_t::buffer_t>;
 
-        auto win_integrate = std::make_unique<buffer_integration_t>(buffer);
+        auto win_integrate = std::make_unique<buffer_integration_t>(buffer, con);
         auto update_helper = [&buffer]() {
             auto& win_integrate = static_cast<buffer_integration_t&>(*buffer.win_integration);
             create_window_buffer(std::get<Win*>(*buffer.window->ref_win), win_integrate);

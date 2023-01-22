@@ -27,7 +27,10 @@ public:
     ~buffer() override
     {
         if (picture != XCB_RENDER_PICTURE_NONE) {
-            xcb_render_free_picture(connection(), picture);
+            auto const& win_integrate
+                = static_cast<render::x11::buffer_win_integration<render::buffer<Window>>&>(
+                    *this->win_integration);
+            xcb_render_free_picture(win_integrate.connection, picture);
         }
     }
 
@@ -41,11 +44,12 @@ public:
             return;
         }
 
-        picture = xcb_generate_id(connection());
         auto const& win_integrate
             = static_cast<render::x11::buffer_win_integration<render::buffer<Window>>&>(
                 *this->win_integration);
-        xcb_render_create_picture(connection(), picture, win_integrate.pixmap, format, 0, nullptr);
+        picture = xcb_generate_id(win_integrate.connection);
+        xcb_render_create_picture(
+            win_integrate.connection, picture, win_integrate.pixmap, format, 0, nullptr);
     }
 
     xcb_render_picture_t picture;

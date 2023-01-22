@@ -17,14 +17,16 @@ namespace KWin::render::x11
 template<typename Buffer>
 struct buffer_win_integration : public render::buffer_win_integration<Buffer> {
 public:
-    buffer_win_integration(Buffer const& buffer)
+    buffer_win_integration(Buffer const& buffer, xcb_connection_t* con)
         : render::buffer_win_integration<Buffer>(buffer)
+        , connection{con}
     {
     }
     ~buffer_win_integration() override
     {
         if (pixmap != XCB_WINDOW_NONE) {
-            xcb_free_pixmap(connection(), pixmap);
+            assert(connection);
+            xcb_free_pixmap(connection, pixmap);
         }
     }
 
@@ -51,6 +53,7 @@ public:
     xcb_pixmap_t pixmap{XCB_PIXMAP_NONE};
     QSize size;
     QRect contents_rect;
+    xcb_connection_t* connection;
 };
 
 }
