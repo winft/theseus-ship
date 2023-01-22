@@ -362,9 +362,12 @@ void tabbox_handler_private::show()
  * TabBoxHandler
  ***********************************************/
 
-tabbox_handler::tabbox_handler(std::function<QQmlEngine*(void)> qml_engine, QObject* parent)
+tabbox_handler::tabbox_handler(std::function<QQmlEngine*(void)> qml_engine,
+                               xcb_connection_t* x11_con,
+                               QObject* parent)
     : QObject(parent)
     , qml_engine{qml_engine}
+    , x11_con{x11_con}
 {
     KWin::win::tabbox_handle = this;
     d = new tabbox_handler_private(this);
@@ -395,8 +398,8 @@ void tabbox_handler::show()
         d->show();
     }
     if (d->config.is_highlight_windows()) {
-        if (kwinApp()->x11Connection()) {
-            base::x11::xcb::sync(connection());
+        if (x11_con) {
+            base::x11::xcb::sync(x11_con);
         }
         // TODO this should be
         // QMetaObject::invokeMethod(this, "init_highlight_windows", Qt::QueuedConnection);

@@ -52,7 +52,8 @@ public:
         case XCB_BUTTON_PRESS:
         case XCB_BUTTON_RELEASE: {
             auto e = reinterpret_cast<xcb_button_press_event_t*>(event);
-            xcb_allow_events(connection(), XCB_ALLOW_ASYNC_POINTER, XCB_CURRENT_TIME);
+            xcb_allow_events(
+                tabbox.space.base.x11_data.connection, XCB_ALLOW_ASYNC_POINTER, XCB_CURRENT_TIME);
             if (!tabbox.is_shown() && tabbox.is_displayed()) {
                 if (auto& effects = tabbox.space.base.render->compositor->effects;
                     effects && effects->isMouseInterception()) {
@@ -108,8 +109,12 @@ private:
         auto* mouse_event = reinterpret_cast<xcb_motion_notify_event_t*>(event);
         const QPoint rootPos(mouse_event->root_x, mouse_event->root_y);
         // TODO: this should be in ScreenEdges directly
-        tabbox.space.edges->check(rootPos, QDateTime::fromMSecsSinceEpoch(xTime(), Qt::UTC), true);
-        xcb_allow_events(connection(), XCB_ALLOW_ASYNC_POINTER, XCB_CURRENT_TIME);
+        tabbox.space.edges->check(
+            rootPos,
+            QDateTime::fromMSecsSinceEpoch(tabbox.space.base.x11_data.time, Qt::UTC),
+            true);
+        xcb_allow_events(
+            tabbox.space.base.x11_data.connection, XCB_ALLOW_ASYNC_POINTER, XCB_CURRENT_TIME);
     }
 
     void key_press(xcb_generic_event_t* event)

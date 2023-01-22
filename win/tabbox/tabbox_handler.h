@@ -31,6 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <functional>
 #include <memory>
 #include <vector>
+#include <xcb/xcb.h>
 
 /**
  * @file
@@ -102,7 +103,9 @@ class KWIN_EXPORT tabbox_handler : public QObject
 {
     Q_OBJECT
 public:
-    tabbox_handler(std::function<QQmlEngine*(void)> qml_engine, QObject* parent);
+    tabbox_handler(std::function<QQmlEngine*(void)> qml_engine,
+                   xcb_connection_t* x11_con,
+                   QObject* parent);
     ~tabbox_handler() override;
 
     /**
@@ -359,6 +362,7 @@ private:
     friend class tabbox_handler_private;
     tabbox_handler_private* d;
     std::function<QQmlEngine*(void)> qml_engine;
+    xcb_connection_t* x11_con;
 };
 
 /**
