@@ -167,18 +167,6 @@ inline KWIN_EXPORT xcb_screen_t* defaultScreen()
     return s_screen;
 }
 
-inline KWIN_DEPRECATED_EXPORT int displayWidth()
-{
-    xcb_screen_t* screen = defaultScreen();
-    return screen ? screen->width_in_pixels : 0;
-}
-
-inline KWIN_DEPRECATED_EXPORT int displayHeight()
-{
-    xcb_screen_t* screen = defaultScreen();
-    return screen ? screen->height_in_pixels : 0;
-}
-
 /**
  * Short wrapper for a cursor image provided by the Platform.
  * @since 5.9
