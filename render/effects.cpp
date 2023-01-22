@@ -655,16 +655,6 @@ QString effects_handler_wrap::debug(const QString& name, const QString& paramete
     return QString();
 }
 
-xcb_connection_t* effects_handler_wrap::xcbConnection() const
-{
-    return connection();
-}
-
-xcb_window_t effects_handler_wrap::x11RootWindow() const
-{
-    return rootWindow();
-}
-
 void effects_handler_wrap::highlightWindows(const QVector<EffectWindow*>& windows)
 {
     Effect* e = provides(Effect::HighlightWindows);

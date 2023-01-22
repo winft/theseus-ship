@@ -156,9 +156,6 @@ public:
 
     bool isScreenLocked() const override;
 
-    xcb_connection_t* xcbConnection() const override;
-    xcb_window_t x11RootWindow() const override;
-
     // internal (used by kwin core or compositing code)
     void startPaint();
     void grabbedKeyboardEvent(QKeyEvent* e);
@@ -552,6 +549,16 @@ public:
     scene_t* scene() const
     {
         return compositor.scene.get();
+    }
+
+    xcb_connection_t* xcbConnection() const override
+    {
+        return compositor.platform.base.x11_data.connection;
+    }
+
+    xcb_window_t x11RootWindow() const override
+    {
+        return compositor.platform.base.x11_data.root_window;
     }
 
     unsigned long xrenderBufferPicture() const override
@@ -1278,7 +1285,7 @@ public:
     QByteArray readRootProperty(long atom, long type, int format) const override
     {
         auto const& data = compositor.platform.base.x11_data;
-        if (!kwinApp()->x11Connection()) {
+        if (!data.connection) {
             return QByteArray();
         }
         return render::x11::read_window_property(
