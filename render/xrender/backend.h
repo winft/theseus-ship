@@ -31,8 +31,9 @@ public:
     using compositor_t = typename Scene::compositor_t;
 
     explicit backend(Scene& scene)
-        : overlay_window{
-            std::make_unique<typename compositor_t::overlay_window_t>(*scene.platform.compositor)}
+        : overlay_window{std::make_unique<typename compositor_t::overlay_window_t>(
+            *scene.platform.compositor)}
+        , x11_data{scene.platform.base.x11_data}
     {
         if (!base::x11::xcb::extensions::self()->is_render_available()) {
             throw std::runtime_error("No XRender extension available");
@@ -48,13 +49,13 @@ public:
     ~backend()
     {
         if (m_front) {
-            xcb_render_free_picture(connection(), m_front);
+            xcb_render_free_picture(x11_data.connection, m_front);
         }
 
         overlay_window->destroy();
 
         if (m_buffer) {
-            xcb_render_free_picture(connection(), m_buffer);
+            xcb_render_free_picture(x11_data.connection, m_buffer);
         }
         overlay_window.reset();
     }
@@ -66,11 +67,11 @@ public:
         if (flags(mask & paint_type::screen_region)) {
             // Use the damage region as the clip region for the root window
             XFixesRegion frontRegion(damage);
-            xcb_xfixes_set_picture_clip_region(connection(), m_front, frontRegion, 0, 0);
+            xcb_xfixes_set_picture_clip_region(x11_data.connection, m_front, frontRegion, 0, 0);
             // copy composed buffer to the root window
             xcb_xfixes_set_picture_clip_region(
-                connection(), buffer(), XCB_XFIXES_REGION_NONE, 0, 0);
-            xcb_render_composite(connection(),
+                x11_data.connection, buffer(), XCB_XFIXES_REGION_NONE, 0, 0);
+            xcb_render_composite(x11_data.connection,
                                  XCB_RENDER_PICT_OP_SRC,
                                  buffer(),
                                  XCB_RENDER_PICTURE_NONE,
@@ -83,11 +84,12 @@ public:
                                  0,
                                  space_size.width(),
                                  space_size.height());
-            xcb_xfixes_set_picture_clip_region(connection(), m_front, XCB_XFIXES_REGION_NONE, 0, 0);
-            xcb_flush(connection());
+            xcb_xfixes_set_picture_clip_region(
+                x11_data.connection, m_front, XCB_XFIXES_REGION_NONE, 0, 0);
+            xcb_flush(x11_data.connection);
         } else {
             // copy composed buffer to the root window
-            xcb_render_composite(connection(),
+            xcb_render_composite(x11_data.connection,
                                  XCB_RENDER_PICT_OP_SRC,
                                  buffer(),
                                  XCB_RENDER_PICTURE_NONE,
@@ -100,7 +102,7 @@ public:
                                  0,
                                  space_size.width(),
                                  space_size.height());
-            xcb_flush(connection());
+            xcb_flush(x11_data.connection);
         }
     }
 
@@ -154,7 +156,7 @@ private:
     void setBuffer(xcb_render_picture_t buffer)
     {
         if (m_buffer != XCB_RENDER_PICTURE_NONE) {
-            xcb_render_free_picture(connection(), m_buffer);
+            xcb_render_free_picture(x11_data.connection, m_buffer);
         }
         m_buffer = buffer;
     }
@@ -162,14 +164,14 @@ private:
     void init(bool createOverlay)
     {
         if (m_front != XCB_RENDER_PICTURE_NONE)
-            xcb_render_free_picture(connection(), m_front);
+            xcb_render_free_picture(x11_data.connection, m_front);
         bool haveOverlay = createOverlay ? overlay_window->create()
                                          : (overlay_window->window() != XCB_WINDOW_NONE);
         if (haveOverlay) {
             overlay_window->setup(XCB_WINDOW_NONE);
             unique_cptr<xcb_get_window_attributes_reply_t> attribs(xcb_get_window_attributes_reply(
-                connection(),
-                xcb_get_window_attributes_unchecked(connection(), overlay_window->window()),
+                x11_data.connection,
+                xcb_get_window_attributes_unchecked(x11_data.connection, overlay_window->window()),
                 nullptr));
             if (!attribs) {
                 throw std::runtime_error("Failed getting window attributes for overlay window");
@@ -178,20 +180,20 @@ private:
             if (m_format == 0) {
                 throw std::runtime_error("Failed to find XRender format for overlay window");
             }
-            m_front = xcb_generate_id(connection());
+            m_front = xcb_generate_id(x11_data.connection);
             xcb_render_create_picture(
-                connection(), m_front, overlay_window->window(), m_format, 0, nullptr);
+                x11_data.connection, m_front, overlay_window->window(), m_format, 0, nullptr);
         } else {
             // create XRender picture for the root window
             m_format = XRenderUtils::findPictFormat(defaultScreen()->root_visual);
             if (m_format == 0) {
                 throw std::runtime_error("Failed to find XRender format for root window");
             }
-            m_front = xcb_generate_id(connection());
+            m_front = xcb_generate_id(x11_data.connection);
             const uint32_t values[] = {XCB_SUBWINDOW_MODE_INCLUDE_INFERIORS};
-            xcb_render_create_picture(connection(),
+            xcb_render_create_picture(x11_data.connection,
                                       m_front,
-                                      rootWindow(),
+                                      x11_data.root_window,
                                       m_format,
                                       XCB_RENDER_CP_SUBWINDOW_MODE,
                                       values);
@@ -201,17 +203,20 @@ private:
 
     void createBuffer()
     {
-        xcb_pixmap_t pixmap = xcb_generate_id(connection());
+        xcb_pixmap_t pixmap = xcb_generate_id(x11_data.connection);
         auto const& space_size = kwinApp()->get_base().topology.size;
-        xcb_create_pixmap(connection(),
-                          base::x11::xcb::default_depth(connection(), kwinApp()->x11ScreenNumber()),
-                          pixmap,
-                          rootWindow(),
-                          space_size.width(),
-                          space_size.height());
-        xcb_render_picture_t b = xcb_generate_id(connection());
-        xcb_render_create_picture(connection(), b, pixmap, m_format, 0, nullptr);
-        xcb_free_pixmap(connection(), pixmap); // The picture owns the pixmap now
+        xcb_create_pixmap(
+            x11_data.connection,
+            base::x11::xcb::default_depth(x11_data.connection, x11_data.screen_number),
+            pixmap,
+            x11_data.root_window,
+            space_size.width(),
+            space_size.height());
+        xcb_render_picture_t b = xcb_generate_id(x11_data.connection);
+        xcb_render_create_picture(x11_data.connection, b, pixmap, m_format, 0, nullptr);
+
+        // The picture owns the pixmap now
+        xcb_free_pixmap(x11_data.connection, pixmap);
         setBuffer(b);
     }
 
@@ -221,6 +226,7 @@ private:
 
     xcb_render_picture_t m_front{XCB_RENDER_PICTURE_NONE};
     xcb_render_pictformat_t m_format{0};
+    base::x11::data& x11_data;
 };
 
 }
