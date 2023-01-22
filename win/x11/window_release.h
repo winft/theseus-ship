@@ -285,7 +285,8 @@ void release_window(Win* win, bool on_shutdown)
     win->xcb_windows.client.delete_property(atoms->kde_net_wm_frame_strut);
 
     auto const client_rect = frame_to_client_rect(win, win->geo.frame);
-    win->xcb_windows.client.reparent(rootWindow(), client_rect.x(), client_rect.y());
+    win->xcb_windows.client.reparent(
+        win->space.base.x11_data.root_window, client_rect.x(), client_rect.y());
 
     xcb_change_save_set(connection(), XCB_SET_MODE_DELETE, win->xcb_windows.client);
     win->xcb_windows.client.select_input(XCB_EVENT_MASK_NO_EVENT);

@@ -25,17 +25,17 @@
 namespace KWin::win::x11
 {
 
-inline static void select_wm_input_event_mask()
+inline static void select_wm_input_event_mask(base::x11::data const& data)
 {
     uint32_t presentMask = 0;
-    base::x11::xcb::window_attributes attr(connection(), rootWindow());
+    base::x11::xcb::window_attributes attr(connection(), data.root_window);
     if (!attr.is_null()) {
         presentMask = attr->your_event_mask;
     }
 
     base::x11::xcb::select_input(
         connection(),
-        rootWindow(),
+        data.root_window,
         presentMask | XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_PROPERTY_CHANGE
             | XCB_EVENT_MASK_COLOR_MAP_CHANGE | XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT
             | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY | XCB_EVENT_MASK_FOCUS_CHANGE
@@ -65,7 +65,7 @@ void init_space(Space& space)
     auto const& x11_data = space.base.x11_data;
 
     // Select windowmanager privileges
-    select_wm_input_event_mask();
+    select_wm_input_event_mask(x11_data);
 
     if (kwinApp()->operationMode() == Application::OperationModeX11) {
         space.m_wasUserInteractionFilter.reset(
@@ -80,12 +80,12 @@ void init_space(Space& space)
     kwinApp()->update_x11_time_from_clock();
 
     const uint32_t nullFocusValues[] = {true};
-    space.m_nullFocus.reset(new base::x11::xcb::window(space.base.x11_data.connection,
-                                                       space.base.x11_data.root_window,
-                                                       QRect(-1, -1, 1, 1),
-                                                       XCB_WINDOW_CLASS_INPUT_ONLY,
-                                                       XCB_CW_OVERRIDE_REDIRECT,
-                                                       nullFocusValues));
+    space.m_nullFocus = std::make_unique<base::x11::xcb::window>(x11_data.connection,
+                                                                 x11_data.root_window,
+                                                                 QRect(-1, -1, 1, 1),
+                                                                 XCB_WINDOW_CLASS_INPUT_ONLY,
+                                                                 XCB_CW_OVERRIDE_REDIRECT,
+                                                                 nullFocusValues);
     space.m_nullFocus->map();
 
     space.root_info = x11::root_info<Space>::create(space);

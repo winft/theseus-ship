@@ -96,7 +96,7 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
     win->render_data.bit_depth = geo->depth;
     win->net_info = new NETWinInfo(connection(),
                                    xcb_win,
-                                   rootWindow(),
+                                   win->space.base.x11_data.root_window,
                                    NET::WMWindowType | NET::WMPid,
                                    NET::WM2Opacity | NET::WM2WindowRole | NET::WM2WindowClass
                                        | NET::WM2OpaqueRegion);

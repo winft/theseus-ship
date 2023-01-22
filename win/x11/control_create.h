@@ -77,7 +77,7 @@ void embed_client(Win* win, xcb_visualid_t visualid, xcb_colormap_t colormap, ui
     xcb_create_window(conn,
                       depth,
                       frame,
-                      rootWindow(),
+                      win->space.base.x11_data.root_window,
                       0,
                       0,
                       1,
@@ -361,8 +361,11 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     win->geometry_hints.init(win->xcb_windows.client);
     win->motif_hints.init(win->xcb_windows.client);
 
-    win->net_info
-        = new win_info<Win>(win, win->xcb_windows.client, rootWindow(), properties, properties2);
+    win->net_info = new win_info<Win>(win,
+                                      win->xcb_windows.client,
+                                      win->space.base.x11_data.root_window,
+                                      properties,
+                                      properties2);
 
     if (is_desktop(win) && win->render_data.bit_depth == 32) {
         // force desktop windows to be opaque. It's a desktop after all, there is no window
@@ -773,21 +776,23 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     read_show_on_screen_edge(win, showOnScreenEdgeCookie);
 
     // Forward all opacity values to the frame in case there'll be other CM running.
-    QObject::connect(
-        win->space.base.render->compositor->qobject.get(),
-        &render::compositor_qobject::compositingToggled,
-        win->qobject.get(),
-        [win](bool active) {
-            if (active) {
-                return;
-            }
-            if (win->opacity() == 1.0) {
-                return;
-            }
-            NETWinInfo info(
-                connection(), win->frameId(), rootWindow(), NET::Properties(), NET::Properties2());
-            info.setOpacity(static_cast<unsigned long>(win->opacity() * 0xffffffff));
-        });
+    QObject::connect(win->space.base.render->compositor->qobject.get(),
+                     &render::compositor_qobject::compositingToggled,
+                     win->qobject.get(),
+                     [win](bool active) {
+                         if (active) {
+                             return;
+                         }
+                         if (win->opacity() == 1.0) {
+                             return;
+                         }
+                         NETWinInfo info(connection(),
+                                         win->frameId(),
+                                         win->space.base.x11_data.root_window,
+                                         NET::Properties(),
+                                         NET::Properties2());
+                         info.setOpacity(static_cast<unsigned long>(win->opacity() * 0xffffffff));
+                     });
 
     add_controlled_window_to_space(space, win);
     return win;

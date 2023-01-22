@@ -199,13 +199,13 @@ xcb_window_t verify_transient_for(Win* win, xcb_window_t new_transient_for, bool
     // make sure splashscreens are shown above all their app's windows, even though
     // they're in Normal layer
     if (win::is_splash(win) && new_transient_for == XCB_WINDOW_NONE) {
-        new_transient_for = rootWindow();
+        new_transient_for = win->space.base.x11_data.root_window;
     }
 
     if (new_transient_for == XCB_WINDOW_NONE) {
         if (set) {
             // sometimes WM_TRANSIENT_FOR is set to None, instead of root window
-            new_property_value = new_transient_for = rootWindow();
+            new_property_value = new_transient_for = win->space.base.x11_data.root_window;
         } else {
             return XCB_WINDOW_NONE;
         }
@@ -214,7 +214,7 @@ xcb_window_t verify_transient_for(Win* win, xcb_window_t new_transient_for, bool
         // pointing to self
         // also fix the property itself
         qCWarning(KWIN_CORE) << "Client " << win << " has WM_TRANSIENT_FOR poiting to itself.";
-        new_property_value = new_transient_for = rootWindow();
+        new_property_value = new_transient_for = win->space.base.x11_data.root_window;
     }
 
     //  The transient_for window may be embedded in another application,
@@ -223,7 +223,8 @@ xcb_window_t verify_transient_for(Win* win, xcb_window_t new_transient_for, bool
     auto before_search = new_transient_for;
 
     while (
-        new_transient_for != XCB_WINDOW_NONE && new_transient_for != rootWindow()
+        new_transient_for != XCB_WINDOW_NONE
+        && new_transient_for != win->space.base.x11_data.root_window
         && !find_controlled_window<Win>(win->space, predicate_match::window, new_transient_for)) {
         base::x11::xcb::tree tree(win->space.base.x11_data.connection, new_transient_for);
         if (tree.is_null()) {
@@ -254,7 +255,7 @@ xcb_window_t verify_transient_for(Win* win, xcb_window_t new_transient_for, bool
     int count = 20;
     auto loop_pos = new_transient_for;
 
-    while (loop_pos != XCB_WINDOW_NONE && loop_pos != rootWindow()) {
+    while (loop_pos != XCB_WINDOW_NONE && loop_pos != win->space.base.x11_data.root_window) {
         auto pos = find_controlled_window<Win>(win->space, predicate_match::window, loop_pos);
         if (pos == nullptr) {
             break;
@@ -264,15 +265,15 @@ xcb_window_t verify_transient_for(Win* win, xcb_window_t new_transient_for, bool
 
         if (--count == 0 || pos == win) {
             qCWarning(KWIN_CORE) << "Client " << win << " caused WM_TRANSIENT_FOR loop.";
-            new_transient_for = rootWindow();
+            new_transient_for = win->space.base.x11_data.root_window;
         }
     }
 
-    if (new_transient_for != rootWindow()
+    if (new_transient_for != win->space.base.x11_data.root_window
         && find_controlled_window<Win>(win->space, predicate_match::window, new_transient_for)
             == nullptr) {
         // it's transient for a specific window, but that window is not mapped
-        new_transient_for = rootWindow();
+        new_transient_for = win->space.base.x11_data.root_window;
     }
 
     if (new_property_value != win->transient->original_lead_id) {
@@ -310,7 +311,7 @@ template<typename Win>
 void change_client_leader_group(Win* win, decltype(win->group) group)
 {
     auto lead_id = win->transient->lead_id;
-    if (lead_id != XCB_WINDOW_NONE && lead_id != rootWindow()) {
+    if (lead_id != XCB_WINDOW_NONE && lead_id != win->space.base.x11_data.root_window) {
         // Transients are in the group of their lead.
         return;
     }
@@ -429,7 +430,7 @@ void set_transient_lead(Win* win, xcb_window_t lead_id)
 
     win->transient->lead_id = lead_id;
 
-    if (lead_id != XCB_WINDOW_NONE && lead_id != rootWindow()) {
+    if (lead_id != XCB_WINDOW_NONE && lead_id != win->space.base.x11_data.root_window) {
         auto lead = find_controlled_window<Win>(win->space, predicate_match::window, lead_id);
 
         if (contains(win->transient->children, lead)) {

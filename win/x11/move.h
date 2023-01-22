@@ -98,8 +98,12 @@ bool do_start_move_resize(Win& win)
     // something *shrug* (https://lists.kde.org/?t=107302193400001&r=1&w=2)
     auto r = space_window_area(win.space, FullArea, &win);
 
-    win.xcb_windows.grab.create(
-        connection(), rootWindow(), r, XCB_WINDOW_CLASS_INPUT_ONLY, 0, nullptr);
+    win.xcb_windows.grab.create(connection(),
+                                win.space.base.x11_data.root_window,
+                                r,
+                                XCB_WINDOW_CLASS_INPUT_ONLY,
+                                0,
+                                nullptr);
     win.xcb_windows.grab.map();
     win.xcb_windows.grab.raise();
 

@@ -254,7 +254,7 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     xcb_create_window(c.get(),
                       XCB_COPY_FROM_PARENT,
                       w,
-                      rootWindow(),
+                      Test::app()->base.x11_data.root_window,
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -270,7 +270,8 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
     xcb_icccm_set_wm_class(c.get(), w, 7, "foo\0bar");
-    NETWinInfo winInfo(c.get(), w, rootWindow(), NET::Properties(), NET::Properties2());
+    NETWinInfo winInfo(
+        c.get(), w, Test::app()->base.x11_data.root_window, NET::Properties(), NET::Properties2());
     winInfo.setName("Some caption");
     winInfo.setDesktopFileName("org.kde.foo");
     xcb_map_window(c.get(), w);

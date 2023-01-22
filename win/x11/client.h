@@ -40,7 +40,7 @@ inline void send_client_message(base::x11::data const& data,
     ev.data.data32[4] = data3;
     uint32_t eventMask = 0;
 
-    if (w == rootWindow()) {
+    if (w == data.root_window) {
         eventMask = XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT;
     }
 

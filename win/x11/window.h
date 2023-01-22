@@ -295,7 +295,7 @@ public:
         //
         // [1] https://specifications.freedesktop.org/wm-spec/wm-spec-latest.html#idm45623487728576
         //
-        return transient->lead_id == rootWindow();
+        return transient->lead_id == space.base.x11_data.root_window;
     }
 
     type* findModal()

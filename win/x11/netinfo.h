@@ -42,7 +42,7 @@ public:
         xcb_create_window(connection(),
                           XCB_COPY_FROM_PARENT,
                           supportWindow,
-                          KWin::rootWindow(),
+                          space.base.x11_data.root_window,
                           0,
                           0,
                           1,

@@ -359,11 +359,12 @@ QRect place_on_taking_control(Win* win,
 // and will remain offset by the size of the decoration. So when restarting, fix this
 // (the property with the size of the frame remains on the window after the crash).
 template<typename Space>
-void fix_position_after_crash(Space& /*space*/,
+void fix_position_after_crash(Space& space,
                               xcb_window_t w,
                               const xcb_get_geometry_reply_t* geometry)
 {
-    NETWinInfo i(connection(), w, rootWindow(), NET::WMFrameExtents, NET::Properties2());
+    NETWinInfo i(
+        connection(), w, space.base.x11_data.root_window, NET::WMFrameExtents, NET::Properties2());
     NETStrut frame = i.frameExtents();
 
     if (frame.left != 0 || frame.top != 0) {

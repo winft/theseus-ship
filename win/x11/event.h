@@ -152,7 +152,7 @@ void unmap_notify_event(Win* win, xcb_unmap_notify_event_t* e)
     if (e->event != win->xcb_windows.wrapper) {
         // most probably event from root window when initially reparenting
         bool ignore = true;
-        if (e->event == rootWindow() && (e->response_type & 0x80))
+        if (e->event == win->space.base.x11_data.root_window && (e->response_type & 0x80))
             ignore = false; // XWithdrawWindow()
         if (ignore)
             return;
@@ -868,7 +868,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
                 // forward to the frame if there's possibly another compositing manager running
                 NETWinInfo i(connection(),
                              win->frameId(),
-                             rootWindow(),
+                             win->space.base.x11_data.root_window,
                              NET::Properties(),
                              NET::Properties2());
                 i.setOpacity(win->net_info->opacity());

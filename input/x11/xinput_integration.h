@@ -293,7 +293,7 @@ public:
         evmasks[0].deviceid = XIAllMasterDevices;
         evmasks[0].mask_len = sizeof(mask1);
         evmasks[0].mask = mask1;
-        XISelectEvents(display, rootWindow(), evmasks, 1);
+        XISelectEvents(display, redirect.platform.base.x11_data.root_window, evmasks, 1);
 
         setup_fake_devices();
 

@@ -59,7 +59,8 @@ public:
             return false;
         }
 
-        base::x11::xcb::overlay_window overlay(connection(), rootWindow());
+        base::x11::xcb::overlay_window overlay(connection(),
+                                               compositor.platform.base.x11_data.root_window);
         if (overlay.is_null()) {
             return false;
         }
@@ -182,9 +183,10 @@ public:
         const uint8_t eventType = event->response_type & ~0x80;
         if (eventType == XCB_EXPOSE) {
             const auto* expose = reinterpret_cast<xcb_expose_event_t*>(event);
-            if (expose->window == rootWindow() // root window needs repainting
-                || (m_window != XCB_WINDOW_NONE
-                    && expose->window == m_window)) { // overlay needs repainting
+
+            // root window needs repainting or overlay needs repainting
+            if (expose->window == compositor.platform.base.x11_data.root_window
+                || (m_window != XCB_WINDOW_NONE && expose->window == m_window)) {
                 compositor.addRepaint(QRegion(expose->x, expose->y, expose->width, expose->height));
             }
         } else if (eventType == XCB_VISIBILITY_NOTIFY) {

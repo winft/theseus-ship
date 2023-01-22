@@ -100,7 +100,7 @@ void DontCrashAuroraeDestroyDecoTest::testBorderlessMaximizedWindows()
     xcb_create_window(c,
                       XCB_COPY_FROM_PARENT,
                       w,
-                      rootWindow(),
+                      Test::app()->base.x11_data.root_window,
                       0,
                       0,
                       100,

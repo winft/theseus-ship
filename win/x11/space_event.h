@@ -128,7 +128,8 @@ bool space_event(Space& space, xcb_generic_event_t* event)
     // events that should be handled before Clients can get them
     switch (event_type) {
     case XCB_CONFIGURE_NOTIFY:
-        if (reinterpret_cast<xcb_configure_notify_event_t*>(event)->event == rootWindow()) {
+        if (reinterpret_cast<xcb_configure_notify_event_t*>(event)->event
+            == space.base.x11_data.root_window) {
             space.stacking.order.render_restack_required = true;
         }
         break;
@@ -168,8 +169,8 @@ bool space_event(Space& space, xcb_generic_event_t* event)
     switch (event_type) {
     case XCB_CREATE_NOTIFY: {
         auto create_event = reinterpret_cast<xcb_create_notify_event_t*>(event);
-        if (create_event->parent == rootWindow() && !QWidget::find(create_event->window)
-            && !create_event->override_redirect) {
+        if (create_event->parent == space.base.x11_data.root_window
+            && !QWidget::find(create_event->window) && !create_event->override_redirect) {
             // see comments for allowClientActivation()
             kwinApp()->update_x11_time_from_clock();
             auto const t = space.base.x11_data.time;
@@ -257,7 +258,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
     case XCB_CONFIGURE_REQUEST: {
         auto cfg_req_event = reinterpret_cast<xcb_configure_request_event_t*>(event);
 
-        if (cfg_req_event->parent == rootWindow()) {
+        if (cfg_req_event->parent == space.base.x11_data.root_window) {
             uint32_t values[5] = {0, 0, 0, 0, 0};
             const uint32_t value_mask = cfg_req_event->value_mask
                 & (XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_WIDTH
@@ -287,7 +288,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
 
     case XCB_FOCUS_IN: {
         auto focus_event = reinterpret_cast<xcb_focus_in_event_t*>(event);
-        if (focus_event->event == rootWindow()
+        if (focus_event->event == space.base.x11_data.root_window
             && (focus_event->detail == XCB_NOTIFY_DETAIL_NONE
                 || focus_event->detail == XCB_NOTIFY_DETAIL_POINTER_ROOT
                 || focus_event->detail == XCB_NOTIFY_DETAIL_INFERIOR)) {
@@ -299,7 +300,8 @@ bool space_event(Space& space, xcb_generic_event_t* event)
             // it seems we can "loose" focus reversions when the closing client hold a grab
             // => catch the typical pattern (though we don't want the focus on the root anyway)
             // #348935
-            const bool lostFocusPointerToRoot = currentInput->focus == rootWindow()
+            const bool lostFocusPointerToRoot
+                = currentInput->focus == space.base.x11_data.root_window
                 && focus_event->detail == XCB_NOTIFY_DETAIL_INFERIOR;
             if (!currentInput.is_null()
                 && (currentInput->focus == XCB_WINDOW_NONE

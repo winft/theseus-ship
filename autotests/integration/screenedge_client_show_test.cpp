@@ -118,7 +118,7 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowHideX11()
     xcb_create_window(c.get(),
                       XCB_COPY_FROM_PARENT,
                       w,
-                      rootWindow(),
+                      Test::app()->base.x11_data.root_window,
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -133,7 +133,11 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowHideX11()
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
-    NETWinInfo info(c.get(), w, rootWindow(), NET::WMAllProperties, NET::WM2AllProperties);
+    NETWinInfo info(c.get(),
+                    w,
+                    Test::app()->base.x11_data.root_window,
+                    NET::WMAllProperties,
+                    NET::WM2AllProperties);
     info.setWindowType(NET::Dock);
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
@@ -238,7 +242,7 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowX11Touch()
     xcb_create_window(c.get(),
                       XCB_COPY_FROM_PARENT,
                       w,
-                      rootWindow(),
+                      Test::app()->base.x11_data.root_window,
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -253,7 +257,11 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowX11Touch()
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
-    NETWinInfo info(c.get(), w, rootWindow(), NET::WMAllProperties, NET::WM2AllProperties);
+    NETWinInfo info(c.get(),
+                    w,
+                    Test::app()->base.x11_data.root_window,
+                    NET::WMAllProperties,
+                    NET::WM2AllProperties);
     info.setWindowType(NET::Dock);
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());

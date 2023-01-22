@@ -119,19 +119,19 @@ static xcb_window_t createGroupWindow(xcb_connection_t* conn,
                                       xcb_window_t leaderWid = XCB_WINDOW_NONE)
 {
     xcb_window_t wid = xcb_generate_id(conn);
-    xcb_create_window(conn,                          // c
-                      XCB_COPY_FROM_PARENT,          // depth
-                      wid,                           // wid
-                      rootWindow(),                  // parent
-                      geometry.x(),                  // x
-                      geometry.y(),                  // y
-                      geometry.width(),              // width
-                      geometry.height(),             // height
-                      0,                             // border_width
-                      XCB_WINDOW_CLASS_INPUT_OUTPUT, // _class
-                      XCB_COPY_FROM_PARENT,          // visual
-                      0,                             // value_mask
-                      nullptr                        // value_list
+    xcb_create_window(conn,                                   // c
+                      XCB_COPY_FROM_PARENT,                   // depth
+                      wid,                                    // wid
+                      Test::app()->base.x11_data.root_window, // parent
+                      geometry.x(),                           // x
+                      geometry.y(),                           // y
+                      geometry.width(),                       // width
+                      geometry.height(),                      // height
+                      0,                                      // border_width
+                      XCB_WINDOW_CLASS_INPUT_OUTPUT,          // _class
+                      XCB_COPY_FROM_PARENT,                   // visual
+                      0,                                      // value_mask
+                      nullptr                                 // value_list
     );
 
     xcb_size_hints_t sizeHints = {};
@@ -430,7 +430,8 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
     // Create a group transient.
     windowCreatedSpy.clear();
     xcb_window_t transientWid = createGroupWindow(conn.get(), geometry, leaderWid);
-    xcb_icccm_set_wm_transient_for(conn.get(), transientWid, rootWindow());
+    xcb_icccm_set_wm_transient_for(
+        conn.get(), transientWid, Test::app()->base.x11_data.root_window);
 
     // Currently, we have some weird bug workaround: if a group transient
     // is a non-modal dialog, then it won't be kept above its window group.
@@ -555,7 +556,8 @@ void StackingOrderTest::testRaiseGroupTransient()
     // Create a group transient.
     windowCreatedSpy.clear();
     xcb_window_t transientWid = createGroupWindow(conn.get(), geometry, leaderWid);
-    xcb_icccm_set_wm_transient_for(conn.get(), transientWid, rootWindow());
+    xcb_icccm_set_wm_transient_for(
+        conn.get(), transientWid, Test::app()->base.x11_data.root_window);
 
     // Currently, we have some weird bug workaround: if a group transient
     // is a non-modal dialog, then it won't be kept above its window group.
@@ -702,7 +704,8 @@ void StackingOrderTest::testDeletedGroupTransient()
     // Create a group transient.
     windowCreatedSpy.clear();
     xcb_window_t transientWid = createGroupWindow(conn.get(), geometry, leaderWid);
-    xcb_icccm_set_wm_transient_for(conn.get(), transientWid, rootWindow());
+    xcb_icccm_set_wm_transient_for(
+        conn.get(), transientWid, Test::app()->base.x11_data.root_window);
 
     // Currently, we have some weird bug workaround: if a group transient
     // is a non-modal dialog, then it won't be kept above its window group.
@@ -835,7 +838,8 @@ void StackingOrderTest::testDontKeepAboveNonModalDialogGroupTransients()
     // Create a group transient.
     windowCreatedSpy.clear();
     xcb_window_t transientWid = createGroupWindow(conn.get(), geometry, leaderWid);
-    xcb_icccm_set_wm_transient_for(conn.get(), transientWid, rootWindow());
+    xcb_icccm_set_wm_transient_for(
+        conn.get(), transientWid, Test::app()->base.x11_data.root_window);
     xcb_map_window(conn.get(), transientWid);
     xcb_flush(conn.get());
 

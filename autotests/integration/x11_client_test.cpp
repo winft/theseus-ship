@@ -130,7 +130,7 @@ void X11ClientTest::testTrimCaption()
     xcb_create_window(c.get(),
                       XCB_COPY_FROM_PARENT,
                       w,
-                      rootWindow(),
+                      Test::app()->base.x11_data.root_window,
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -145,7 +145,8 @@ void X11ClientTest::testTrimCaption()
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
-    NETWinInfo winInfo(c.get(), w, rootWindow(), NET::Properties(), NET::Properties2());
+    NETWinInfo winInfo(
+        c.get(), w, Test::app()->base.x11_data.root_window, NET::Properties(), NET::Properties2());
     QFETCH(QByteArray, originalTitle);
     winInfo.setName(originalTitle);
     xcb_map_window(c.get(), w);
@@ -188,7 +189,7 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
     xcb_create_window(c.get(),
                       XCB_COPY_FROM_PARENT,
                       w,
-                      rootWindow(),
+                      Test::app()->base.x11_data.root_window,
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -346,7 +347,7 @@ void X11ClientTest::testFocusInWithWaylandLastActiveWindow()
     xcb_create_window(c.get(),
                       XCB_COPY_FROM_PARENT,
                       w,
-                      rootWindow(),
+                      Test::app()->base.x11_data.root_window,
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -415,7 +416,7 @@ void X11ClientTest::testX11WindowId()
     xcb_create_window(c.get(),
                       XCB_COPY_FROM_PARENT,
                       w,
-                      rootWindow(),
+                      Test::app()->base.x11_data.root_window,
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -506,7 +507,7 @@ void X11ClientTest::testCaptionChanges()
     xcb_create_window(c.get(),
                       XCB_COPY_FROM_PARENT,
                       w,
-                      rootWindow(),
+                      Test::app()->base.x11_data.root_window,
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -591,7 +592,7 @@ void X11ClientTest::testCaptionMultipleWindows()
     xcb_create_window(c.get(),
                       XCB_COPY_FROM_PARENT,
                       w,
-                      rootWindow(),
+                      Test::app()->base.x11_data.root_window,
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -626,7 +627,7 @@ void X11ClientTest::testCaptionMultipleWindows()
     xcb_create_window(c.get(),
                       XCB_COPY_FROM_PARENT,
                       w2,
-                      rootWindow(),
+                      Test::app()->base.x11_data.root_window,
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -693,7 +694,7 @@ void X11ClientTest::testFullscreenWindowGroups()
     xcb_create_window(c.get(),
                       XCB_COPY_FROM_PARENT,
                       w,
-                      rootWindow(),
+                      Test::app()->base.x11_data.root_window,
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -741,7 +742,7 @@ void X11ClientTest::testFullscreenWindowGroups()
     xcb_create_window(c.get(),
                       XCB_COPY_FROM_PARENT,
                       w2,
-                      rootWindow(),
+                      Test::app()->base.x11_data.root_window,
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -811,7 +812,7 @@ void X11ClientTest::testActivateFocusedWindow()
     xcb_create_window(connection.get(),
                       XCB_COPY_FROM_PARENT,
                       window1,
-                      rootWindow(),
+                      Test::app()->base.x11_data.root_window,
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -844,7 +845,7 @@ void X11ClientTest::testActivateFocusedWindow()
     xcb_create_window(connection.get(),
                       XCB_COPY_FROM_PARENT,
                       window2,
-                      rootWindow(),
+                      Test::app()->base.x11_data.root_window,
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),

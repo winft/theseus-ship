@@ -19,9 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #ifndef TESTUTILS_H
 #define TESTUTILS_H
-// KWin
 #include <kwinglobals.h>
-// XCB
+
+#include <QX11Info>
 #include <xcb/xcb.h>
 
 namespace
@@ -46,7 +46,7 @@ static xcb_window_t createWindow()
     xcb_create_window(connection(),
                       0,
                       w,
-                      rootWindow(),
+                      QX11Info::appRootWindow(),
                       0,
                       0,
                       10,

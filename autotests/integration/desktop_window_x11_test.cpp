@@ -114,8 +114,11 @@ void X11DesktopWindowTest::testDesktopWindow()
     };
     auto visualId = findDepth();
     auto colormapId = xcb_generate_id(c.get());
-    auto cmCookie = xcb_create_colormap_checked(
-        c.get(), XCB_COLORMAP_ALLOC_NONE, colormapId, rootWindow(), visualId);
+    auto cmCookie = xcb_create_colormap_checked(c.get(),
+                                                XCB_COLORMAP_ALLOC_NONE,
+                                                colormapId,
+                                                Test::app()->base.x11_data.root_window,
+                                                visualId);
     QVERIFY(!xcb_request_check(c.get(), cmCookie));
 
     const uint32_t values[]
@@ -126,7 +129,7 @@ void X11DesktopWindowTest::testDesktopWindow()
         = xcb_create_window_checked(c.get(),
                                     32,
                                     w,
-                                    rootWindow(),
+                                    Test::app()->base.x11_data.root_window,
                                     windowGeometry.x(),
                                     windowGeometry.y(),
                                     windowGeometry.width(),
@@ -142,7 +145,11 @@ void X11DesktopWindowTest::testDesktopWindow()
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
-    NETWinInfo info(c.get(), w, rootWindow(), NET::WMAllProperties, NET::WM2AllProperties);
+    NETWinInfo info(c.get(),
+                    w,
+                    Test::app()->base.x11_data.root_window,
+                    NET::WMAllProperties,
+                    NET::WM2AllProperties);
     info.setWindowType(NET::Desktop);
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());

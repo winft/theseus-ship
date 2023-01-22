@@ -204,7 +204,7 @@ bool init_glx_buffer(Backend& backend)
         }
 
         xcb_colormap_t colormap = xcb_generate_id(c);
-        xcb_create_colormap(c, false, colormap, rootWindow(), visual);
+        xcb_create_colormap(c, false, colormap, backend.platform.base.x11_data.root_window, visual);
 
         auto const& space_size = backend.platform.base.topology.size;
         backend.window = xcb_generate_id(c);

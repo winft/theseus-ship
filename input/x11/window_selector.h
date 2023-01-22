@@ -267,7 +267,7 @@ private:
         auto cookie = xcb_grab_pointer_unchecked(
             c,
             false,
-            rootWindow(),
+            redirect.platform.base.x11_data.root_window,
             XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE
                 | XCB_EVENT_MASK_POINTER_MOTION | XCB_EVENT_MASK_ENTER_WINDOW
                 | XCB_EVENT_MASK_LEAVE_WINDOW,

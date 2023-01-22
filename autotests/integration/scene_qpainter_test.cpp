@@ -372,7 +372,7 @@ void SceneQPainterTest::testX11Window()
     xcb_create_window(c.data(),
                       XCB_COPY_FROM_PARENT,
                       w,
-                      rootWindow(),
+                      Test::app()->base.x11_data.root_window,
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),

@@ -622,7 +622,7 @@ private:
             xcb_create_pixmap(connection(),
                               32,
                               pix,
-                              rootWindow(),
+                              win.space.base.x11_data.root_window,
                               temp_visibleRect.width(),
                               temp_visibleRect.height());
             s_tempPicture = new XRenderPicture(pix, 32);

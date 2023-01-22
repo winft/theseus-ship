@@ -269,7 +269,7 @@ public:
 
     bool groupTransient() const
     {
-        return this->transient->lead_id == rootWindow();
+        return this->transient->lead_id == space.base.x11_data.root_window;
     }
 
     type* findModal()

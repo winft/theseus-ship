@@ -137,15 +137,6 @@ inline KWIN_EXPORT xcb_connection_t* connection()
     return s_con;
 }
 
-inline KWIN_EXPORT xcb_window_t rootWindow()
-{
-    static xcb_window_t s_rootWindow = XCB_WINDOW_NONE;
-    if (s_rootWindow == XCB_WINDOW_NONE) {
-        s_rootWindow = qApp->property("x11RootWindow").value<quint32>();
-    }
-    return s_rootWindow;
-}
-
 /**
  * Short wrapper for a cursor image provided by the Platform.
  * @since 5.9

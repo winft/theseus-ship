@@ -237,7 +237,7 @@ void ApplicationX11::start()
         unique_cptr<xcb_generic_error_t> redirectCheck(
             xcb_request_check(connection(),
                               xcb_change_window_attributes_checked(
-                                  connection(), rootWindow(), XCB_CW_EVENT_MASK, maskValues)));
+                                  connection(), base.x11_data.root_window, XCB_CW_EVENT_MASK, maskValues)));
         if (redirectCheck) {
             fputs(i18n("kwin: another window manager is running (try using --replace)\n").toLocal8Bit().constData(), stderr);
             if (!wasCrash()) // if this is a crash-restart, DrKonqi may have stopped the process w/o killing the connection

@@ -712,7 +712,7 @@ void MoveResizeWindowTest::testNetMove()
     xcb_create_window(c.get(),
                       XCB_COPY_FROM_PARENT,
                       w,
-                      rootWindow(),
+                      Test::app()->base.x11_data.root_window,
                       0,
                       0,
                       100,
@@ -728,7 +728,8 @@ void MoveResizeWindowTest::testNetMove()
     xcb_icccm_size_hints_set_size(&hints, 1, 100, 100);
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
     // let's set a no-border
-    NETWinInfo winInfo(c.get(), w, rootWindow(), NET::WMWindowType, NET::Properties2());
+    NETWinInfo winInfo(
+        c.get(), w, Test::app()->base.x11_data.root_window, NET::WMWindowType, NET::Properties2());
     winInfo.setWindowType(NET::Override);
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
@@ -819,7 +820,7 @@ void MoveResizeWindowTest::testAdjustClientGeometryOfAutohidingX11Panel()
     xcb_create_window(c.get(),
                       XCB_COPY_FROM_PARENT,
                       w,
-                      rootWindow(),
+                      Test::app()->base.x11_data.root_window,
                       panelGeometry.x(),
                       panelGeometry.y(),
                       panelGeometry.width(),
@@ -834,7 +835,8 @@ void MoveResizeWindowTest::testAdjustClientGeometryOfAutohidingX11Panel()
     xcb_icccm_size_hints_set_position(&hints, 1, panelGeometry.x(), panelGeometry.y());
     xcb_icccm_size_hints_set_size(&hints, 1, panelGeometry.width(), panelGeometry.height());
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
-    NETWinInfo winInfo(c.get(), w, rootWindow(), NET::WMWindowType, NET::Properties2());
+    NETWinInfo winInfo(
+        c.get(), w, Test::app()->base.x11_data.root_window, NET::WMWindowType, NET::Properties2());
     winInfo.setWindowType(NET::Dock);
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());

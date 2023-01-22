@@ -49,8 +49,11 @@ public:
         if (xcb_leader != XCB_WINDOW_NONE) {
             leader
                 = find_controlled_window<x11_window_t>(space, predicate_match::window, xcb_leader);
-            leader_info = new NETWinInfo(
-                connection(), xcb_leader, rootWindow(), NET::Properties(), NET::WM2StartupId);
+            leader_info = new NETWinInfo(connection(),
+                                         xcb_leader,
+                                         space.base.x11_data.root_window,
+                                         NET::Properties(),
+                                         NET::WM2StartupId);
         }
         effect_group = new render::effect_window_group_impl<group_t>(this);
         space.groups.push_back(this);
@@ -69,8 +72,11 @@ public:
             return leader->control->icon;
         } else if (xcb_leader != XCB_WINDOW_NONE) {
             QIcon ic;
-            NETWinInfo info(
-                connection(), xcb_leader, rootWindow(), NET::WMIcon, NET::WM2IconPixmap);
+            NETWinInfo info(connection(),
+                            xcb_leader,
+                            space.base.x11_data.root_window,
+                            NET::WMIcon,
+                            NET::WM2IconPixmap);
             auto readIcon = [&ic, &info, this](int size, bool scale = true) {
                 const QPixmap pix
                     = KWindowSystem::icon(xcb_leader,

@@ -117,7 +117,7 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
     xcb_create_window(c.get(),
                       XCB_COPY_FROM_PARENT,
                       w,
-                      rootWindow(),
+                      Test::app()->base.x11_data.root_window,
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -144,7 +144,11 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
                         role.length(),
                         role.constData());
 
-    NETWinInfo info(c.get(), w, rootWindow(), NET::WMAllProperties, NET::WM2AllProperties);
+    NETWinInfo info(c.get(),
+                    w,
+                    Test::app()->base.x11_data.root_window,
+                    NET::WMAllProperties,
+                    NET::WM2AllProperties);
     info.setWindowType(NET::Normal);
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
@@ -203,7 +207,7 @@ void WindowRuleTest::testWindowClassChange()
     xcb_create_window(c.get(),
                       XCB_COPY_FROM_PARENT,
                       w,
-                      rootWindow(),
+                      Test::app()->base.x11_data.root_window,
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -220,7 +224,11 @@ void WindowRuleTest::testWindowClassChange()
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
     xcb_icccm_set_wm_class(c.get(), w, 23, "org.kde.bar\0org.kde.bar");
 
-    NETWinInfo info(c.get(), w, rootWindow(), NET::WMAllProperties, NET::WM2AllProperties);
+    NETWinInfo info(c.get(),
+                    w,
+                    Test::app()->base.x11_data.root_window,
+                    NET::WMAllProperties,
+                    NET::WM2AllProperties);
     info.setWindowType(NET::Normal);
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());

@@ -108,12 +108,18 @@ private:
         if (m_window.is_valid()) {
             return;
         }
+
+        auto const& x11_data = this->edger->space.base.x11_data;
         const uint32_t mask = XCB_CW_OVERRIDE_REDIRECT | XCB_CW_EVENT_MASK;
         const uint32_t values[] = {true,
                                    XCB_EVENT_MASK_ENTER_WINDOW | XCB_EVENT_MASK_LEAVE_WINDOW
                                        | XCB_EVENT_MASK_POINTER_MOTION};
-        m_window.create(
-            connection(), rootWindow(), this->geometry, XCB_WINDOW_CLASS_INPUT_ONLY, mask, values);
+        m_window.create(x11_data.connection,
+                        x11_data.root_window,
+                        this->geometry,
+                        XCB_WINDOW_CLASS_INPUT_ONLY,
+                        mask,
+                        values);
         m_window.map();
         // Set XdndAware on the windows, so that DND enter events are received (#86998)
         xcb_atom_t version = 4; // XDND version
@@ -138,12 +144,14 @@ private:
         if (!this->approach_geometry.isValid()) {
             return;
         }
+
+        auto const& x11_data = this->edger->space.base.x11_data;
         const uint32_t mask = XCB_CW_OVERRIDE_REDIRECT | XCB_CW_EVENT_MASK;
         const uint32_t values[] = {true,
                                    XCB_EVENT_MASK_ENTER_WINDOW | XCB_EVENT_MASK_LEAVE_WINDOW
                                        | XCB_EVENT_MASK_POINTER_MOTION};
-        m_approachWindow.create(connection(),
-                                rootWindow(),
+        m_approachWindow.create(x11_data.connection,
+                                x11_data.root_window,
                                 this->approach_geometry,
                                 XCB_WINDOW_CLASS_INPUT_ONLY,
                                 mask,
