@@ -10,6 +10,7 @@
 #include "moving_window_filter.h"
 #include "netinfo.h"
 #include "placement.h"
+#include "rules.h"
 #include "space_event.h"
 #include "sync_alarm_filter.h"
 
@@ -92,6 +93,12 @@ void init_space(Space& space)
     auto& vds = space.virtual_desktop_manager;
     vds->setRootInfo(space.root_info.get());
     space.root_info->activate();
+
+    rules_setup_book(*space.rule_book, x11_data);
+    QObject::connect(kwinApp(),
+                     &Application::x11ConnectionChanged,
+                     space.rule_book->qobject.get(),
+                     [&space] { rules_setup_book(*space.rule_book, space.base.x11_data); });
 
     // TODO: only in X11 mode
     // Extra NETRootInfo instance in Client mode is needed to get the values of the properties

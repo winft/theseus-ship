@@ -27,9 +27,6 @@ book::book()
     , m_updatesDisabled(false)
     , m_temporaryRulesMessages()
 {
-    initWithX11();
-    QObject::connect(
-        kwinApp(), &Application::x11ConnectionChanged, qobject.get(), [this] { initWithX11(); });
     QObject::connect(m_updateTimer, &QTimer::timeout, qobject.get(), [this] { save(); });
     m_updateTimer->setInterval(1000);
     m_updateTimer->setSingleShot(true);
@@ -39,21 +36,6 @@ book::~book()
 {
     save();
     deleteAll();
-}
-
-void book::initWithX11()
-{
-    auto c = kwinApp()->x11Connection();
-    if (!c) {
-        m_temporaryRulesMessages.reset();
-        return;
-    }
-    m_temporaryRulesMessages = std::make_unique<KXMessages>(
-        c, kwinApp()->x11RootWindow(), "_KDE_NET_WM_TEMPORARY_RULES", nullptr);
-    QObject::connect(m_temporaryRulesMessages.get(),
-                     &KXMessages::gotMessage,
-                     qobject.get(),
-                     [this](auto const& message) { temporaryRulesMessage(message); });
 }
 
 void book::deleteAll()
