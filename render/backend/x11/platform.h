@@ -221,7 +221,7 @@ public:
 
     outline_visual* create_non_composited_outline(render::outline* outline) override
     {
-        return new non_composited_outline(outline);
+        return new non_composited_outline(this->base.x11_data, outline);
     }
 
     void invertScreen() override
