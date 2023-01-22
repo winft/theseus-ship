@@ -18,8 +18,8 @@
 namespace KWin::input::x11
 {
 
-cursor::cursor(KSharedConfigPtr config)
-    : input::cursor(config)
+cursor::cursor(base::x11::data const& x11_data, KSharedConfigPtr config)
+    : input::cursor(x11_data, config)
     , m_timeStamp(XCB_TIME_CURRENT_TIME)
     , m_buttonMask(0)
     , m_resetTimeStampTimer(new QTimer(this))
@@ -66,19 +66,20 @@ cursor::~cursor()
 void cursor::do_set_pos()
 {
     auto const& pos = current_pos();
-    xcb_warp_pointer(connection(), XCB_WINDOW_NONE, rootWindow(), 0, 0, 0, 0, pos.x(), pos.y());
+    xcb_warp_pointer(
+        x11_data.connection, XCB_WINDOW_NONE, x11_data.root_window, 0, 0, 0, 0, pos.x(), pos.y());
     // call default implementation to emit signal
     input::cursor::do_set_pos();
 }
 
 void cursor::do_get_pos()
 {
-    if (m_timeStamp != XCB_TIME_CURRENT_TIME && m_timeStamp == xTime()) {
+    if (m_timeStamp != XCB_TIME_CURRENT_TIME && m_timeStamp == x11_data.time) {
         // time stamps did not change, no need to query again
         return;
     }
-    m_timeStamp = xTime();
-    base::x11::xcb::pointer pointer(connection(), rootWindow());
+    m_timeStamp = x11_data.time;
+    base::x11::xcb::pointer pointer(x11_data.connection, x11_data.root_window);
     if (pointer.is_null()) {
         return;
     }
@@ -103,12 +104,12 @@ void cursor::about_to_block()
 void cursor::do_start_image_tracking()
 {
     xcb_xfixes_select_cursor_input(
-        connection(), rootWindow(), XCB_XFIXES_CURSOR_NOTIFY_MASK_DISPLAY_CURSOR);
+        x11_data.connection, x11_data.root_window, XCB_XFIXES_CURSOR_NOTIFY_MASK_DISPLAY_CURSOR);
 }
 
 void cursor::do_stop_image_tracking()
 {
-    xcb_xfixes_select_cursor_input(connection(), rootWindow(), 0);
+    xcb_xfixes_select_cursor_input(x11_data.connection, x11_data.root_window, 0);
 }
 
 void cursor::do_show()

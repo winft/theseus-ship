@@ -20,10 +20,11 @@
 namespace KWin::input
 {
 
-cursor::cursor(KSharedConfigPtr config)
+cursor::cursor(base::x11::data const& x11_data, KSharedConfigPtr config)
     : m_cursorTrackingCounter(0)
     , m_themeName("default")
     , m_themeSize(24)
+    , x11_data{x11_data}
     , config{config}
 {
     singleton_interface::cursor = this;
@@ -176,7 +177,7 @@ xcb_cursor_t cursor::x11_cursor(cursor_shape shape)
 
 xcb_cursor_t cursor::x11_cursor(QByteArray const& name)
 {
-    Q_ASSERT(kwinApp()->x11Connection());
+    assert(x11_data.connection);
     auto it = m_cursors.constFind(name);
     if (it != m_cursors.constEnd()) {
         return it.value();
@@ -187,7 +188,7 @@ xcb_cursor_t cursor::x11_cursor(QByteArray const& name)
     }
 
     xcb_cursor_context_t* ctx;
-    if (xcb_cursor_context_new(kwinApp()->x11Connection(), defaultScreen(), &ctx) < 0) {
+    if (xcb_cursor_context_new(x11_data.connection, defaultScreen(), &ctx) < 0) {
         return XCB_CURSOR_NONE;
     }
 

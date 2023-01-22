@@ -18,7 +18,7 @@ class KWIN_EXPORT cursor : public input::cursor
 {
     Q_OBJECT
 public:
-    cursor(KSharedConfigPtr config);
+    cursor(base::x11::data const& x11_data, KSharedConfigPtr config);
     ~cursor() override;
 
     PlatformCursorImage platform_image() const override;

@@ -6,6 +6,7 @@
 */
 #pragma once
 
+#include "base/x11/data.h"
 #include "cursor_shape.h"
 
 #include "kwinglobals.h"
@@ -39,7 +40,7 @@ class KWIN_EXPORT cursor : public QObject
 {
     Q_OBJECT
 public:
-    cursor(KSharedConfigPtr config);
+    cursor(base::x11::data const& x11_data, KSharedConfigPtr config);
     ~cursor() override;
 
     /**
@@ -176,6 +177,8 @@ protected:
      */
     void update_pos(QPoint const& pos);
     void update_pos(int x, int y);
+
+    base::x11::data const& x11_data;
 
 private Q_SLOTS:
     void kglobal_settings_notify_change(int type, int arg);
