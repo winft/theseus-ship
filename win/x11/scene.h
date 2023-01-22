@@ -211,7 +211,8 @@ void add_scene_window_addon(Win& win)
             render_win, atoms->kde_net_wm_shadow);
     };
     win.render->shadow_windowing.update = [&](auto&& shadow) {
-        return render::x11::read_and_update_shadow<shadow_t>(shadow, atoms->kde_net_wm_shadow);
+        return render::x11::read_and_update_shadow<shadow_t>(
+            shadow, win.space.base.x11_data.connection, atoms->kde_net_wm_shadow);
     };
 
     auto setup_buffer = [](auto& buffer) {

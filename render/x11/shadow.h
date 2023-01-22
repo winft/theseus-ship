@@ -16,21 +16,20 @@ namespace KWin::render::x11
 {
 
 template<typename Shadow>
-bool update_shadow(Shadow& impl, QVector<uint32_t> const& data)
+bool update_shadow(Shadow& impl, xcb_connection_t* con, QVector<uint32_t> const& data)
 {
     constexpr auto element_count = enum_index(shadow_element::count);
 
     std::vector<base::x11::xcb::geometry> pixmapGeometries;
     std::vector<xcb_get_image_cookie_t> getImageCookies(element_count);
-    auto c = connection();
 
     for (size_t i = 0; i < element_count; ++i) {
-        pixmapGeometries.push_back(base::x11::xcb::geometry(connection(), data[i]));
+        pixmapGeometries.push_back(base::x11::xcb::geometry(con, data[i]));
     }
 
-    auto discardReplies = [&getImageCookies](int start) {
-        for (int i = start; i < getImageCookies.size(); ++i) {
-            xcb_discard_reply(connection(), getImageCookies.at(i).sequence);
+    auto discardReplies = [con, &getImageCookies](int start) {
+        for (size_t i = start; i < getImageCookies.size(); ++i) {
+            xcb_discard_reply(con, getImageCookies.at(i).sequence);
         }
     };
 
@@ -42,11 +41,11 @@ bool update_shadow(Shadow& impl, QVector<uint32_t> const& data)
         }
 
         getImageCookies[i] = xcb_get_image_unchecked(
-            c, XCB_IMAGE_FORMAT_Z_PIXMAP, data[i], 0, 0, geo->width, geo->height, ~0);
+            con, XCB_IMAGE_FORMAT_Z_PIXMAP, data[i], 0, 0, geo->width, geo->height, ~0);
     }
 
     for (size_t i = 0; i < element_count; ++i) {
-        auto reply = xcb_get_image_reply(c, getImageCookies.at(i), nullptr);
+        auto reply = xcb_get_image_reply(con, getImageCookies.at(i), nullptr);
         if (!reply) {
             discardReplies(i + 1);
             return false;
@@ -99,7 +98,9 @@ QVector<uint32_t> read_shadow_property(Win const& win, base::x11::xcb::atom cons
 }
 
 template<typename Shadow>
-bool read_and_update_shadow(Shadow& impl, base::x11::xcb::atom const& shadow_atom)
+bool read_and_update_shadow(Shadow& impl,
+                            xcb_connection_t* con,
+                            base::x11::xcb::atom const& shadow_atom)
 {
     auto data = std::visit(
         overload{[&](auto&& ref_win) { return read_shadow_property(*ref_win, shadow_atom); }},
@@ -107,27 +108,27 @@ bool read_and_update_shadow(Shadow& impl, base::x11::xcb::atom const& shadow_ato
     if (data.isEmpty()) {
         return false;
     }
-    return update_shadow(impl, data);
+    return update_shadow(impl, con, data);
 }
 
 template<typename Shadow, typename Win>
 std::unique_ptr<Shadow> create_shadow(Win& win, base::x11::xcb::atom const& shadow_atom)
 {
-    return std::visit(overload{[&](auto&& ref_win) -> std::unique_ptr<Shadow> {
-                          auto data = read_shadow_property(*ref_win, shadow_atom);
-                          if (data.isEmpty()) {
-                              return {};
-                          }
+    return std::visit(
+        overload{[&](auto&& ref_win) -> std::unique_ptr<Shadow> {
+            auto data = read_shadow_property(*ref_win, shadow_atom);
+            if (data.isEmpty()) {
+                return {};
+            }
 
-                          auto shadow
-                              = ref_win->space.base.render->compositor->scene->createShadow(&win);
-                          if (!update_shadow(*shadow, data)) {
-                              return {};
-                          }
+            auto shadow = ref_win->space.base.render->compositor->scene->createShadow(&win);
+            if (!update_shadow(*shadow, ref_win->space.base.x11_data.connection, data)) {
+                return {};
+            }
 
-                          return shadow;
-                      }},
-                      *win.ref_win);
+            return shadow;
+        }},
+        *win.ref_win);
 }
 
 }
