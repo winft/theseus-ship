@@ -185,7 +185,8 @@ private:
                 x11_data.connection, m_front, overlay_window->window(), m_format, 0, nullptr);
         } else {
             // create XRender picture for the root window
-            m_format = XRenderUtils::findPictFormat(defaultScreen()->root_visual);
+            m_format = XRenderUtils::findPictFormat(
+                base::x11::get_default_screen(x11_data)->root_visual);
             if (m_format == 0) {
                 throw std::runtime_error("Failed to find XRender format for root window");
             }

@@ -188,7 +188,8 @@ xcb_cursor_t cursor::x11_cursor(QByteArray const& name)
     }
 
     xcb_cursor_context_t* ctx;
-    if (xcb_cursor_context_new(x11_data.connection, defaultScreen(), &ctx) < 0) {
+    if (xcb_cursor_context_new(x11_data.connection, base::x11::get_default_screen(x11_data), &ctx)
+        < 0) {
         return XCB_CURSOR_NONE;
     }
 

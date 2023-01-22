@@ -151,22 +151,6 @@ inline KWIN_EXPORT xcb_timestamp_t xTime()
     return qApp->property("x11Time").value<xcb_timestamp_t>();
 }
 
-inline KWIN_EXPORT xcb_screen_t* defaultScreen()
-{
-    static xcb_screen_t* s_screen = nullptr;
-    if (s_screen) {
-        return s_screen;
-    }
-    int screen = qApp->property("x11ScreenNumber").toInt();
-    for (xcb_screen_iterator_t it = xcb_setup_roots_iterator(xcb_get_setup(connection())); it.rem;
-         --screen, xcb_screen_next(&it)) {
-        if (screen == 0) {
-            s_screen = it.data;
-        }
-    }
-    return s_screen;
-}
-
 /**
  * Short wrapper for a cursor image provided by the Platform.
  * @since 5.9

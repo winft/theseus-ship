@@ -231,7 +231,7 @@ private:
 
         // we don't support X11 multi-head in Wayland
         space.base.x11_data.screen_number = screenNumber;
-        space.base.x11_data.root_window = defaultScreen()->root;
+        space.base.x11_data.root_window = base::x11::get_default_screen(space.base.x11_data)->root;
         base::x11::xcb::extensions::create(space.base.x11_data);
 
         xcb_read_notifier.reset(new QSocketNotifier(xcb_get_file_descriptor(core.x11.connection),

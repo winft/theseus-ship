@@ -118,7 +118,10 @@ void X11DesktopWindowTest::testDesktopWindow()
         c.get(), XCB_COLORMAP_ALLOC_NONE, colormapId, rootWindow(), visualId);
     QVERIFY(!xcb_request_check(c.get(), cmCookie));
 
-    const uint32_t values[] = {XCB_PIXMAP_NONE, defaultScreen()->black_pixel, colormapId};
+    const uint32_t values[]
+        = {XCB_PIXMAP_NONE,
+           base::x11::get_default_screen(Test::app()->base.x11_data)->black_pixel,
+           colormapId};
     auto cookie
         = xcb_create_window_checked(c.get(),
                                     32,
