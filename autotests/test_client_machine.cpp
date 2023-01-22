@@ -137,7 +137,11 @@ void TestClientMachine::hostName()
 
     win::x11::client_machine clientMachine;
     QSignalSpy spy(&clientMachine, &win::x11::client_machine::localhostChanged);
-    clientMachine.resolve(window, XCB_WINDOW_NONE);
+
+    base::x11::data data;
+    data.connection = connection;
+    data.root_window = root_window;
+    clientMachine.resolve(data, window, XCB_WINDOW_NONE);
     QTEST(clientMachine.hostname(), "expectedHost");
 
     int i = 0;
@@ -162,7 +166,11 @@ void TestClientMachine::emptyHostName()
                                   values);
     win::x11::client_machine clientMachine;
     QSignalSpy spy(&clientMachine, &win::x11::client_machine::localhostChanged);
-    clientMachine.resolve(window, XCB_WINDOW_NONE);
+
+    base::x11::data data;
+    data.connection = connection;
+    data.root_window = root_window;
+    clientMachine.resolve(data, window, XCB_WINDOW_NONE);
     QCOMPARE(clientMachine.hostname(), win::x11::client_machine::localhost());
     QVERIFY(clientMachine.is_local());
     // should be local

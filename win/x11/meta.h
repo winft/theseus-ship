@@ -306,7 +306,8 @@ xcb_window_t get_wm_client_leader(Win& win)
 template<typename Win>
 void fetch_wm_client_machine(Win& win)
 {
-    win.client_machine->resolve(win.xcb_windows.client, get_wm_client_leader(win));
+    win.client_machine->resolve(
+        win.space.base.x11_data, win.xcb_windows.client, get_wm_client_leader(win));
 }
 
 template<typename Win>
