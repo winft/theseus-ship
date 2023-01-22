@@ -41,7 +41,10 @@ void compositor_claim_selection(Compositor& comp)
     if (!comp.m_selectionOwner) {
         char selection_name[100];
         sprintf(selection_name, "_NET_WM_CM_S%d", kwinApp()->x11ScreenNumber());
-        comp.m_selectionOwner = new CompositorSelectionOwner(selection_name);
+        comp.m_selectionOwner
+            = new CompositorSelectionOwner(selection_name,
+                                           comp.platform.base.x11_data.connection,
+                                           comp.platform.base.x11_data.root_window);
         QObject::connect(comp.m_selectionOwner,
                          &CompositorSelectionOwner::lostOwnership,
                          comp.qobject.get(),

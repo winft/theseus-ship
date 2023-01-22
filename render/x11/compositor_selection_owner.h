@@ -17,7 +17,9 @@ class KWIN_EXPORT compositor_selection_owner : public KSelectionOwner
 {
     Q_OBJECT
 public:
-    explicit compositor_selection_owner(char const* selection);
+    compositor_selection_owner(char const* selection,
+                               xcb_connection_t* con,
+                               xcb_window_t root_window);
 
     bool is_owning() const;
     void own();
