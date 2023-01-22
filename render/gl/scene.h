@@ -59,14 +59,15 @@ public:
         Resetting,
     };
 
-    SyncObject()
+    SyncObject() = default;
+
+    SyncObject(xcb_connection_t* con, xcb_window_t root_window)
+        : con{con}
     {
         m_state = Ready;
 
-        auto const con = connection();
-
         m_fence = xcb_generate_id(con);
-        xcb_sync_create_fence(con, rootWindow(), m_fence, false);
+        xcb_sync_create_fence(con, root_window, m_fence, false);
         xcb_flush(con);
 
         m_sync = glImportSyncEXT(GL_SYNC_X11_FENCE_EXT, m_fence, 0);
@@ -84,13 +85,13 @@ public:
             trigger();
             // The flush is necessary!
             // The trigger command needs to be sent to the X server.
-            xcb_flush(connection());
+            xcb_flush(con);
         }
-        xcb_sync_destroy_fence(connection(), m_fence);
+        xcb_sync_destroy_fence(con, m_fence);
         glDeleteSync(m_sync);
 
         if (m_state == Resetting)
-            xcb_discard_reply(connection(), m_reset_cookie.sequence);
+            xcb_discard_reply(con, m_reset_cookie.sequence);
     }
 
     State state() const
@@ -106,7 +107,7 @@ public:
         if (m_state == Resetting)
             finishResetting();
 
-        xcb_sync_trigger_fence(connection(), m_fence);
+        xcb_sync_trigger_fence(con, m_fence);
         m_state = TriggerSent;
     }
 
@@ -158,16 +159,14 @@ public:
     {
         Q_ASSERT(m_state == Done);
 
-        xcb_connection_t* const c = connection();
-
         // Send the reset request along with a sync request.
         // We use the cookie to ensure that the server has processed the reset
         // request before we trigger the fence and call glWaitSync().
         // Otherwise there is a race condition between the reset finishing and
         // the glWaitSync() call.
-        xcb_sync_reset_fence(c, m_fence);
-        m_reset_cookie = xcb_get_input_focus(c);
-        xcb_flush(c);
+        xcb_sync_reset_fence(con, m_fence);
+        m_reset_cookie = xcb_get_input_focus(con);
+        xcb_flush(con);
 
         m_state = Resetting;
     }
@@ -175,7 +174,7 @@ public:
     void finishResetting()
     {
         Q_ASSERT(m_state == Resetting);
-        free(xcb_get_input_focus_reply(connection(), m_reset_cookie, nullptr));
+        free(xcb_get_input_focus_reply(con, m_reset_cookie, nullptr));
         m_state = Ready;
     }
 
@@ -184,6 +183,7 @@ private:
     GLsync m_sync;
     xcb_sync_fence_t m_fence;
     xcb_get_input_focus_cookie_t m_reset_cookie;
+    xcb_connection_t* con;
 };
 
 /**
@@ -194,6 +194,11 @@ class SyncManager
 {
 public:
     enum { MaxFences = 4 };
+
+    SyncManager(base::x11::data const& data)
+    {
+        m_fences.fill(SyncObject(data.connection, data.root_window));
+    }
 
     SyncObject* nextFence()
     {
@@ -285,7 +290,7 @@ public:
             if (useExplicitSync != "0") {
                 qCDebug(KWIN_CORE)
                     << "Initializing fences for synchronization with the X command stream";
-                m_syncManager = new SyncManager;
+                m_syncManager = new SyncManager(platform.base.x11_data);
             } else {
                 qCDebug(KWIN_CORE) << "Explicit synchronization with the X command stream disabled "
                                       "by environment variable";
