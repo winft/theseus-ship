@@ -26,17 +26,16 @@ cursor::cursor(base::x11::data const& x11_data, KSharedConfigPtr config)
     , m_needsPoll(false)
 {
     m_resetTimeStampTimer->setSingleShot(true);
-    QObject::connect(m_resetTimeStampTimer, &QTimer::timeout, this, &cursor::reset_time_stamp);
 
+    if (base::x11::xcb::extensions::self()->is_fixes_available()) {
+        m_xfixesFilter = std::make_unique<xfixes_cursor_event_filter>(this);
+    }
+
+    QObject::connect(m_resetTimeStampTimer, &QTimer::timeout, this, &cursor::reset_time_stamp);
     QObject::connect(qApp->eventDispatcher(),
                      &QAbstractEventDispatcher::aboutToBlock,
                      this,
                      &cursor::about_to_block);
-    QObject::connect(kwinApp(), &Application::startup_finished, this, [this] {
-        if (base::x11::xcb::extensions::self()->is_fixes_available()) {
-            m_xfixesFilter = std::make_unique<xfixes_cursor_event_filter>(this);
-        }
-    });
 }
 
 PlatformCursorImage cursor::platform_image() const
