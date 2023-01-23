@@ -83,7 +83,7 @@ void VirtualDesktopTest::initTestCase()
     Test::app()->start();
     QVERIFY(startup_spy.size() || startup_spy.wait());
 
-    if (kwinApp()->x11Connection()) {
+    if (Test::app()->base.x11_data.connection) {
         // verify the current desktop x11 property on startup, see BUG: 391034
         base::x11::xcb::atom currentDesktopAtom("_NET_CURRENT_DESKTOP",
                                                 Test::app()->base.x11_data.connection);
@@ -727,7 +727,7 @@ void VirtualDesktopTest::test_save()
 
 void VirtualDesktopTest::testNetCurrentDesktop()
 {
-    if (!kwinApp()->x11Connection()) {
+    if (!Test::app()->base.x11_data.connection) {
         QSKIP("Skipped on Wayland only");
     }
     auto& vd_manager = Test::app()->base.space->virtual_desktop_manager;

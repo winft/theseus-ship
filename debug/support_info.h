@@ -87,7 +87,7 @@ QString get_support_info(Space const& space)
     support.append(HAVE_EPOXY_GLX ? yes : no);
     support.append(QStringLiteral("\n"));
 
-    if (auto c = kwinApp()->x11Connection()) {
+    if (auto c = space.base.x11_data.connection) {
         support.append(QStringLiteral("X11\n"));
         support.append(QStringLiteral("===\n"));
         auto x11setup = xcb_get_setup(c);

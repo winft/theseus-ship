@@ -96,7 +96,6 @@ int main(int argc, char** argv)
 {
     qputenv("QT_QPA_PLATFORM", "xcb");
     QApplication app(argc, argv);
-    app.setProperty("x11Connection", QVariant::fromValue<void*>(QX11Info::connection()));
 
     QCommandLineParser parser;
     parser.addPositionalArgument(QStringLiteral("windowId"),

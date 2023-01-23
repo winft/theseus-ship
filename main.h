@@ -61,7 +61,6 @@ class screen_locker_watcher;
 class KWIN_EXPORT Application : public  QApplication
 {
     Q_OBJECT
-    Q_PROPERTY(void *x11Connection READ x11Connection NOTIFY x11ConnectionChanged)
 public:
     /**
      * @brief This enum provides the various operation modes of KWin depending on the available
@@ -114,13 +113,6 @@ public:
      * KAboutData::setApplicationData.
      */
     static void createAboutData();
-
-    /**
-     * @returns the X11 xcb connection
-     */
-    xcb_connection_t *x11Connection() const {
-        return const_cast<Application*>(this)->get_base().x11_data.connection;
-    }
 
     virtual QProcessEnvironment processStartupEnvironment() const;
     virtual void setProcessStartupEnvironment(QProcessEnvironment const& environment);

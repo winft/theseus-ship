@@ -29,7 +29,6 @@ class TestTabBoxHandler : public QObject
 {
     Q_OBJECT
 private Q_SLOTS:
-    void initTestCase();
     /**
      * Test to verify that update outline does not crash
      * if the ModelIndex for which the outline should be
@@ -39,11 +38,6 @@ private Q_SLOTS:
      */
     void testDontCrashUpdateOutlineNullClient();
 };
-
-void TestTabBoxHandler::initTestCase()
-{
-    qApp->setProperty("x11Connection", QVariant::fromValue<void*>(QX11Info::connection()));
-}
 
 void TestTabBoxHandler::testDontCrashUpdateOutlineNullClient()
 {

@@ -469,7 +469,7 @@ void X11ClientTest::testX11WindowId()
     auto waylandClient = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(waylandClient);
     QVERIFY(waylandClient->control->active);
-    xcb_flush(kwinApp()->x11Connection());
+    xcb_flush(Test::app()->base.x11_data.connection);
 
     NETRootInfo rootInfo2(c.get(), NET::WMAllProperties);
     QCOMPARE(rootInfo2.activeWindow(), 0u);
@@ -655,7 +655,7 @@ void X11ClientTest::testCaptionMultipleWindows()
     QVERIFY(client2);
     QCOMPARE(client2->xcb_windows.client, w2);
     QCOMPARE(win::caption(client2), QStringLiteral("foo <2>\u200E"));
-    NETWinInfo info3(kwinApp()->x11Connection(),
+    NETWinInfo info3(Test::app()->base.x11_data.connection,
                      w2,
                      Test::app()->base.x11_data.root_window,
                      NET::WMVisibleName | NET::WMVisibleIconName,
@@ -675,7 +675,7 @@ void X11ClientTest::testCaptionMultipleWindows()
 
     QVERIFY(captionChangedSpy.wait());
     QCOMPARE(win::caption(client2), QStringLiteral("foobar"));
-    NETWinInfo info5(kwinApp()->x11Connection(),
+    NETWinInfo info5(Test::app()->base.x11_data.connection,
                      w2,
                      Test::app()->base.x11_data.root_window,
                      NET::WMVisibleName | NET::WMVisibleIconName,

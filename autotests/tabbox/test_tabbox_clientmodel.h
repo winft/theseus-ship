@@ -25,7 +25,6 @@ class TestTabBoxClientModel : public QObject
 {
     Q_OBJECT
 private Q_SLOTS:
-    void initTestCase();
     /**
      * Tests that calculating the longest caption does not
      * crash in case the internal m_clientList contains a weak
