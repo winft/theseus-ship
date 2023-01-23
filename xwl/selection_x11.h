@@ -185,7 +185,8 @@ void selection_x11_handle_targets(Source&& source, xcb_window_t const requestor)
             continue;
         }
 
-        auto const mimeStrings = atom_to_mime_types(value[i], *source->core.x11.atoms);
+        auto const mimeStrings
+            = atom_to_mime_types(source->core.x11.connection, value[i], *source->core.x11.atoms);
         if (mimeStrings.empty()) {
             // TODO: this should never happen? assert?
             continue;

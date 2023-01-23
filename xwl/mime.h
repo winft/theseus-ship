@@ -7,7 +7,6 @@
 #pragma once
 
 #include "base/x11/atoms.h"
-#include "main.h"
 
 #include <string>
 #include <xcb/xcb.h>
@@ -15,12 +14,14 @@
 namespace KWin::xwl
 {
 
-inline xcb_atom_t mime_type_to_atom_literal(std::string const& mime_type)
+inline xcb_atom_t mime_type_to_atom_literal(xcb_connection_t* xcb_con, std::string const& mime_type)
 {
-    return base::x11::xcb::atom(mime_type.c_str(), false, kwinApp()->x11Connection());
+    return base::x11::xcb::atom(mime_type.c_str(), false, xcb_con);
 }
 
-inline xcb_atom_t mime_type_to_atom(std::string const& mime_type, base::x11::atoms const& atoms)
+inline xcb_atom_t mime_type_to_atom(xcb_connection_t* xcb_con,
+                                    std::string const& mime_type,
+                                    base::x11::atoms const& atoms)
 {
     if (mime_type == "text/plain;charset=utf-8") {
         return atoms.utf8_string;
@@ -31,12 +32,11 @@ inline xcb_atom_t mime_type_to_atom(std::string const& mime_type, base::x11::ato
     if (mime_type == "text/x-uri") {
         return atoms.uri_list;
     }
-    return mime_type_to_atom_literal(mime_type);
+    return mime_type_to_atom_literal(xcb_con, mime_type);
 }
 
-inline std::string atom_name(xcb_atom_t atom)
+inline std::string atom_name(xcb_connection_t* xcb_con, xcb_atom_t atom)
 {
-    auto xcb_con = kwinApp()->x11Connection();
     auto name_cookie = xcb_get_atom_name(xcb_con, atom);
     auto name_reply = xcb_get_atom_name_reply(xcb_con, name_cookie, nullptr);
     if (!name_reply) {
@@ -50,7 +50,8 @@ inline std::string atom_name(xcb_atom_t atom)
     return name;
 }
 
-inline std::vector<std::string> atom_to_mime_types(xcb_atom_t atom, base::x11::atoms const& atoms)
+inline std::vector<std::string>
+atom_to_mime_types(xcb_connection_t* xcb_con, xcb_atom_t atom, base::x11::atoms const& atoms)
 {
     std::vector<std::string> mime_types;
 
@@ -64,7 +65,7 @@ inline std::vector<std::string> atom_to_mime_types(xcb_atom_t atom, base::x11::a
         mime_types.emplace_back("text/uri-list");
         mime_types.emplace_back("text/x-uri");
     } else {
-        mime_types.emplace_back(atom_name(atom));
+        mime_types.emplace_back(atom_name(xcb_con, atom));
     }
     return mime_types;
 }
