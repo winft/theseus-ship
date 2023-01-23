@@ -75,7 +75,7 @@ template<typename Selection>
 void start_transfer_to_x11(Selection* sel, xcb_selection_request_event_t* event, qint32 fd)
 {
     auto transfer = new wl_to_x11_transfer(
-        sel->data.atom, event, fd, *sel->data.core.x11.atoms, sel->data.qobject.get());
+        sel->data.atom, event, fd, sel->data.core.x11, sel->data.qobject.get());
 
     QObject::connect(transfer,
                      &wl_to_x11_transfer::selection_notify,
