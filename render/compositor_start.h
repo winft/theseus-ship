@@ -40,7 +40,7 @@ void compositor_claim_selection(Compositor& comp)
 
     if (!comp.m_selectionOwner) {
         char selection_name[100];
-        sprintf(selection_name, "_NET_WM_CM_S%d", kwinApp()->x11ScreenNumber());
+        sprintf(selection_name, "_NET_WM_CM_S%d", comp.platform.base.x11_data.screen_number);
         comp.m_selectionOwner
             = new CompositorSelectionOwner(selection_name,
                                            comp.platform.base.x11_data.connection,

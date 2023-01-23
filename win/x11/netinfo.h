@@ -147,7 +147,7 @@ public:
                                                   states,
                                                   properties2,
                                                   actions,
-                                                  kwinApp()->x11ScreenNumber());
+                                                  space.base.x11_data.screen_number);
     }
 
     root_info(Space& space,

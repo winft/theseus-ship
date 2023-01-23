@@ -64,7 +64,6 @@ class KWIN_EXPORT Application : public  QApplication
     Q_PROPERTY(quint32 x11Time READ x11Time CONSTANT)
     Q_PROPERTY(quint32 x11RootWindow READ x11RootWindow CONSTANT)
     Q_PROPERTY(void *x11Connection READ x11Connection NOTIFY x11ConnectionChanged)
-    Q_PROPERTY(int x11ScreenNumber READ x11ScreenNumber CONSTANT)
 public:
     /**
      * @brief This enum provides the various operation modes of KWin depending on the available
@@ -121,14 +120,6 @@ public:
      * KAboutData::setApplicationData.
      */
     static void createAboutData();
-
-    /**
-     * @returns the X11 Screen number. If not applicable it's set to @c -1.
-     */
-    int x11ScreenNumber()
-    {
-        return get_base().x11_data.screen_number;
-    }
 
     /**
      * @returns the X11 root window.
