@@ -58,7 +58,7 @@ public:
             throw std::exception();
         }
 
-        XRenderUtils::init(kwinApp()->x11Connection(), kwinApp()->x11RootWindow());
+        XRenderUtils::init(kwinApp()->x11Connection(), this->base.x11_data.root_window);
     }
 
     gl::backend<gl::scene<abstract_type>, abstract_type>*

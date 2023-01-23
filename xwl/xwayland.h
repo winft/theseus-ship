@@ -264,7 +264,7 @@ private:
                          processXcbEvents);
 
         // create selection owner for WM_S0 - magic X display number expected by XWayland
-        KSelectionOwner owner("WM_S0", core.x11.connection, app->x11RootWindow());
+        KSelectionOwner owner("WM_S0", core.x11.connection, space.base.x11_data.root_window);
         owner.claim(true);
 
         space.atoms = std::make_unique<base::x11::atoms>(core.x11.connection);

@@ -42,7 +42,7 @@ void delete_unused_support_properties(Compositor& comp)
 
     for (auto const& atom : qAsConst(comp.unused_support_properties)) {
         // remove property from root window
-        xcb_delete_property(con, kwinApp()->x11RootWindow(), atom);
+        xcb_delete_property(con, comp.platform.base.x11_data.root_window, atom);
     }
     comp.unused_support_properties.clear();
 }

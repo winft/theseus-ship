@@ -61,7 +61,6 @@ class screen_locker_watcher;
 class KWIN_EXPORT Application : public  QApplication
 {
     Q_OBJECT
-    Q_PROPERTY(quint32 x11RootWindow READ x11RootWindow CONSTANT)
     Q_PROPERTY(void *x11Connection READ x11Connection NOTIFY x11ConnectionChanged)
 public:
     /**
@@ -115,13 +114,6 @@ public:
      * KAboutData::setApplicationData.
      */
     static void createAboutData();
-
-    /**
-     * @returns the X11 root window.
-     */
-    xcb_window_t x11RootWindow() const {
-        return const_cast<Application*>(this)->get_base().x11_data.root_window;
-    }
 
     /**
      * @returns the X11 xcb connection

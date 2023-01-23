@@ -70,7 +70,7 @@ void compositor_setup_x11_support(Compositor& comp)
     }
     compositor_claim_selection(comp);
     xcb_composite_redirect_subwindows(
-        con, kwinApp()->x11RootWindow(), XCB_COMPOSITE_REDIRECT_MANUAL);
+        con, comp.platform.base.x11_data.root_window, XCB_COMPOSITE_REDIRECT_MANUAL);
 }
 
 template<typename Compositor>
@@ -157,7 +157,7 @@ void compositor_stop(Compositor& comp, bool on_shutdown)
 
         if (auto con = kwinApp()->x11Connection()) {
             xcb_composite_unredirect_subwindows(
-                con, kwinApp()->x11RootWindow(), XCB_COMPOSITE_REDIRECT_MANUAL);
+                con, comp.platform.base.x11_data.root_window, XCB_COMPOSITE_REDIRECT_MANUAL);
         }
         while (!win::get_remnants(*comp.space).empty()) {
             auto win = win::get_remnants(*comp.space).front();

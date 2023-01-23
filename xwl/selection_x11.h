@@ -139,7 +139,7 @@ void register_x11_selection(Selection* sel, QSize const& window_size)
     xcb_create_window(xcb_con,
                       XCB_COPY_FROM_PARENT,
                       sel->data.window,
-                      kwinApp()->x11RootWindow(),
+                      sel->data.core.space->base.x11_data.root_window,
                       0,
                       0,
                       window_size.width(),

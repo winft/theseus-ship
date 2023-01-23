@@ -904,7 +904,8 @@ private:
             return;
         }
         // warp pointer to 0/0 to trigger leave events on previously focused X window
-        xcb_warp_pointer(c, XCB_WINDOW_NONE, kwinApp()->x11RootWindow(), 0, 0, 0, 0, 0, 0),
+        xcb_warp_pointer(
+            c, XCB_WINDOW_NONE, redirect->platform.base.x11_data.root_window, 0, 0, 0, 0, 0, 0),
             xcb_flush(c);
     }
 

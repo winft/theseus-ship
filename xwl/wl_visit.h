@@ -45,7 +45,7 @@ public:
         xcb_create_window(xcb_con,
                           XCB_COPY_FROM_PARENT,
                           window,
-                          kwinApp()->x11RootWindow(),
+                          source.core.space->base.x11_data.root_window,
                           0,
                           0,
                           8192,

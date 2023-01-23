@@ -114,12 +114,12 @@ void cursor::do_stop_image_tracking()
 
 void cursor::do_show()
 {
-    xcb_xfixes_show_cursor(kwinApp()->x11Connection(), kwinApp()->x11RootWindow());
+    xcb_xfixes_show_cursor(kwinApp()->x11Connection(), x11_data.root_window);
 }
 
 void cursor::do_hide()
 {
-    xcb_xfixes_hide_cursor(kwinApp()->x11Connection(), kwinApp()->x11RootWindow());
+    xcb_xfixes_hide_cursor(kwinApp()->x11Connection(), x11_data.root_window);
 }
 
 void cursor::mouse_polled()

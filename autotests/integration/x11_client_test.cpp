@@ -295,7 +295,8 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
     QTest::qWait(200);
 
     // and fullscreen through X API
-    NETWinInfo info(c.get(), w, kwinApp()->x11RootWindow(), NET::Properties(), NET::Properties2());
+    NETWinInfo info(
+        c.get(), w, Test::app()->base.x11_data.root_window, NET::Properties(), NET::Properties2());
     info.setState(NET::FullScreen, NET::FullScreen);
     NETRootInfo rootInfo(c.get(), NET::Properties());
     rootInfo.setActiveWindow(w, NET::FromApplication, XCB_CURRENT_TIME, XCB_WINDOW_NONE);
@@ -522,7 +523,8 @@ void X11ClientTest::testCaptionChanges()
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
-    NETWinInfo info(c.get(), w, kwinApp()->x11RootWindow(), NET::Properties(), NET::Properties2());
+    NETWinInfo info(
+        c.get(), w, Test::app()->base.x11_data.root_window, NET::Properties(), NET::Properties2());
     info.setName("foo");
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
@@ -607,7 +609,8 @@ void X11ClientTest::testCaptionMultipleWindows()
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
-    NETWinInfo info(c.get(), w, kwinApp()->x11RootWindow(), NET::Properties(), NET::Properties2());
+    NETWinInfo info(
+        c.get(), w, Test::app()->base.x11_data.root_window, NET::Properties(), NET::Properties2());
     info.setName("foo");
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
@@ -639,7 +642,7 @@ void X11ClientTest::testCaptionMultipleWindows()
                       nullptr);
     xcb_icccm_set_wm_normal_hints(c.get(), w2, &hints);
     NETWinInfo info2(
-        c.get(), w2, kwinApp()->x11RootWindow(), NET::Properties(), NET::Properties2());
+        c.get(), w2, Test::app()->base.x11_data.root_window, NET::Properties(), NET::Properties2());
     info2.setName("foo");
     info2.setIconName("foo");
     xcb_map_window(c.get(), w2);
@@ -654,7 +657,7 @@ void X11ClientTest::testCaptionMultipleWindows()
     QCOMPARE(win::caption(client2), QStringLiteral("foo <2>\u200E"));
     NETWinInfo info3(kwinApp()->x11Connection(),
                      w2,
-                     kwinApp()->x11RootWindow(),
+                     Test::app()->base.x11_data.root_window,
                      NET::WMVisibleName | NET::WMVisibleIconName,
                      NET::Properties2());
     QCOMPARE(QByteArray(info3.visibleName()), QByteArrayLiteral("foo <2>\u200E"));
@@ -664,7 +667,7 @@ void X11ClientTest::testCaptionMultipleWindows()
     QVERIFY(captionChangedSpy.isValid());
 
     NETWinInfo info4(
-        c.get(), w2, kwinApp()->x11RootWindow(), NET::Properties(), NET::Properties2());
+        c.get(), w2, Test::app()->base.x11_data.root_window, NET::Properties(), NET::Properties2());
     info4.setName("foobar");
     info4.setIconName("foobar");
     xcb_map_window(c.get(), w2);
@@ -674,7 +677,7 @@ void X11ClientTest::testCaptionMultipleWindows()
     QCOMPARE(win::caption(client2), QStringLiteral("foobar"));
     NETWinInfo info5(kwinApp()->x11Connection(),
                      w2,
-                     kwinApp()->x11RootWindow(),
+                     Test::app()->base.x11_data.root_window,
                      NET::WMVisibleName | NET::WMVisibleIconName,
                      NET::Properties2());
     QCOMPARE(QByteArray(info5.visibleName()), QByteArray());

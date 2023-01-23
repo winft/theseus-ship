@@ -45,9 +45,10 @@ inline QByteArray read_window_property(xcb_connection_t* con,
     }
 }
 
-inline static xcb_atom_t register_support_property(QByteArray const& name)
+inline static xcb_atom_t register_support_property(base::x11::data const& data,
+                                                   QByteArray const& name)
 {
-    auto c = kwinApp()->x11Connection();
+    auto c = data.connection;
     if (!c) {
         return XCB_ATOM_NONE;
     }
@@ -61,14 +62,8 @@ inline static xcb_atom_t register_support_property(QByteArray const& name)
 
     // announce property on root window
     unsigned char dummy = 0;
-    xcb_change_property(c,
-                        XCB_PROP_MODE_REPLACE,
-                        kwinApp()->x11RootWindow(),
-                        atomReply->atom,
-                        atomReply->atom,
-                        8,
-                        1,
-                        &dummy);
+    xcb_change_property(
+        c, XCB_PROP_MODE_REPLACE, data.root_window, atomReply->atom, atomReply->atom, 8, 1, &dummy);
 
     // TODO: add to _NET_SUPPORTED
     return atomReply->atom;
@@ -89,7 +84,7 @@ void register_property_type(Effects& effects, long atom, bool reg)
 template<typename Effects>
 xcb_atom_t add_support_property(Effects& effects, QByteArray const& name)
 {
-    auto atom = register_support_property(name);
+    auto atom = register_support_property(effects.compositor.platform.base.x11_data, name);
     if (atom == XCB_ATOM_NONE) {
         return atom;
     }

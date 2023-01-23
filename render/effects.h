@@ -479,8 +479,10 @@ public:
 
         auto make_property_filter = [this] {
             using filter = x11::property_notify_filter<effects_handler_wrap, space_t>;
-            x11_property_notify = std::make_unique<filter>(
-                *this, *this->compositor.space, kwinApp()->x11RootWindow());
+            x11_property_notify
+                = std::make_unique<filter>(*this,
+                                           *this->compositor.space,
+                                           this->compositor.platform.base.x11_data.root_window);
         };
 
         connect(kwinApp(), &Application::x11ConnectionChanged, this, [this, make_property_filter] {

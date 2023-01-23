@@ -155,7 +155,7 @@ public:
 
             state = state::off;
             xcb_composite_unredirect_subwindows(kwinApp()->x11Connection(),
-                                                kwinApp()->x11RootWindow(),
+                                                space.base.x11_data.root_window,
                                                 XCB_COMPOSITE_REDIRECT_MANUAL);
             compositor_destroy_selection(*this);
         }
