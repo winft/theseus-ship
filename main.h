@@ -61,7 +61,6 @@ class screen_locker_watcher;
 class KWIN_EXPORT Application : public  QApplication
 {
     Q_OBJECT
-    Q_PROPERTY(quint32 x11Time READ x11Time CONSTANT)
     Q_PROPERTY(quint32 x11RootWindow READ x11RootWindow CONSTANT)
     Q_PROPERTY(void *x11Connection READ x11Connection NOTIFY x11ConnectionChanged)
 public:
@@ -103,10 +102,6 @@ public:
     void setupTranslator();
     void setupCommandLine(QCommandLineParser *parser);
     void processCommandLine(QCommandLineParser *parser);
-
-    xcb_timestamp_t x11Time() const {
-        return const_cast<Application*>(this)->get_base().x11_data.time;
-    }
 
     void update_x11_time_from_clock();
     void update_x11_time_from_event(xcb_generic_event_t *event);
