@@ -333,8 +333,8 @@ public:
         }
         m_tabbox->hide(abort);
 
-        if (kwinApp()->x11Connection()) {
-            base::x11::xcb::sync(space.base.x11_data.connection);
+        if (auto con = space.base.x11_data.connection) {
+            base::x11::xcb::sync(con);
         }
     }
 

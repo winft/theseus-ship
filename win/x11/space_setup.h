@@ -47,7 +47,7 @@ inline static void select_wm_input_event_mask(base::x11::data const& data)
 template<typename Space>
 void init_space(Space& space)
 {
-    assert(kwinApp()->x11Connection());
+    assert(space.base.x11_data.connection);
 
     space.atoms->retrieveHelpers();
 
