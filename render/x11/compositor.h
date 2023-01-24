@@ -154,7 +154,7 @@ public:
             qCWarning(KWIN_CORE) << "Compositing not possible. Continue without it.";
 
             state = state::off;
-            xcb_composite_unredirect_subwindows(kwinApp()->x11Connection(),
+            xcb_composite_unredirect_subwindows(space.base.x11_data.connection,
                                                 space.base.x11_data.root_window,
                                                 XCB_COMPOSITE_REDIRECT_MANUAL);
             compositor_destroy_selection(*this);
@@ -554,7 +554,7 @@ private:
         // by kwin before the rendering that triggered the damage events have finished on the GPU.
         if (damaged_windows.size() > 0) {
             this->scene->triggerFence();
-            if (auto c = kwinApp()->x11Connection()) {
+            if (auto c = platform.base.x11_data.connection) {
                 xcb_flush(c);
             }
         }

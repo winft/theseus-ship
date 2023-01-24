@@ -62,7 +62,7 @@ void compositor_claim_selection(Compositor& comp)
 template<typename Compositor>
 void compositor_setup_x11_support(Compositor& comp)
 {
-    auto con = kwinApp()->x11Connection();
+    auto con = comp.platform.base.x11_data.connection;
     if (!con) {
         delete comp.m_selectionOwner;
         comp.m_selectionOwner = nullptr;
@@ -155,7 +155,7 @@ void compositor_stop(Compositor& comp, bool on_shutdown)
                 var_win);
         }
 
-        if (auto con = kwinApp()->x11Connection()) {
+        if (auto con = comp.platform.base.x11_data.connection) {
             xcb_composite_unredirect_subwindows(
                 con, comp.platform.base.x11_data.root_window, XCB_COMPOSITE_REDIRECT_MANUAL);
         }

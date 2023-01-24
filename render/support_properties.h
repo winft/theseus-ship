@@ -35,7 +35,7 @@ void delete_unused_support_properties(Compositor& comp)
         return;
     }
 
-    auto con = kwinApp()->x11Connection();
+    auto con = comp.platform.base.x11_data.connection;
     if (!con) {
         return;
     }

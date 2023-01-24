@@ -491,7 +491,7 @@ public:
                  it++) {
                 x11::add_support_property(*this, *it);
             }
-            if (kwinApp()->x11Connection()) {
+            if (this->compositor.platform.base.x11_data.connection) {
                 make_property_filter();
             } else {
                 x11_property_notify.reset();
@@ -499,7 +499,7 @@ public:
             Q_EMIT xcbConnectionChanged();
         });
 
-        if (kwinApp()->x11Connection()) {
+        if (compositor.platform.base.x11_data.connection) {
             make_property_filter();
         }
 
