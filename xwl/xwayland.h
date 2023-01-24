@@ -171,7 +171,7 @@ public:
 
         win::x11::clear_space(space);
 
-        if (app->x11Connection()) {
+        if (space.base.x11_data.connection) {
             xcb_set_input_focus(space.base.x11_data.connection,
                                 XCB_INPUT_FOCUS_POINTER_ROOT,
                                 XCB_INPUT_FOCUS_POINTER_ROOT,
@@ -182,7 +182,6 @@ public:
 
             space.base.x11_data.connection = nullptr;
             Q_EMIT app->x11ConnectionChanged();
-            xcb_disconnect(app->x11Connection());
         }
 
         if (xwayland_process->state() != QProcess::NotRunning) {

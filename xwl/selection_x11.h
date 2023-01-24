@@ -119,14 +119,13 @@ void handle_x11_offer_change(Selection* sel,
 template<typename Selection>
 void register_xfixes(Selection* sel)
 {
-    auto xcb_con = kwinApp()->x11Connection();
+    auto xcb_con = sel->data.core.x11.connection;
 
     uint32_t const mask = XCB_XFIXES_SELECTION_EVENT_MASK_SET_SELECTION_OWNER
         | XCB_XFIXES_SELECTION_EVENT_MASK_SELECTION_WINDOW_DESTROY
         | XCB_XFIXES_SELECTION_EVENT_MASK_SELECTION_CLIENT_CLOSE;
 
-    xcb_xfixes_select_selection_input(
-        kwinApp()->x11Connection(), sel->data.window, sel->data.atom, mask);
+    xcb_xfixes_select_selection_input(xcb_con, sel->data.window, sel->data.atom, mask);
     xcb_flush(xcb_con);
 }
 
