@@ -886,7 +886,7 @@ private:
             // No XWayland, no point in warping the x cursor
             return;
         }
-        const auto c = kwinApp()->x11Connection();
+        auto const c = redirect->platform.base.x11_data.connection;
         if (!c) {
             return;
         }

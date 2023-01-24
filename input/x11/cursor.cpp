@@ -41,7 +41,7 @@ cursor::cursor(base::x11::data const& x11_data, KSharedConfigPtr config)
 
 PlatformCursorImage cursor::platform_image() const
 {
-    auto c = kwinApp()->x11Connection();
+    auto c = x11_data.connection;
 
     QScopedPointer<xcb_xfixes_get_cursor_image_reply_t, QScopedPointerPodDeleter> cursor(
         xcb_xfixes_get_cursor_image_reply(c, xcb_xfixes_get_cursor_image_unchecked(c), nullptr));
@@ -114,12 +114,12 @@ void cursor::do_stop_image_tracking()
 
 void cursor::do_show()
 {
-    xcb_xfixes_show_cursor(kwinApp()->x11Connection(), x11_data.root_window);
+    xcb_xfixes_show_cursor(x11_data.connection, x11_data.root_window);
 }
 
 void cursor::do_hide()
 {
-    xcb_xfixes_hide_cursor(kwinApp()->x11Connection(), x11_data.root_window);
+    xcb_xfixes_hide_cursor(x11_data.connection, x11_data.root_window);
 }
 
 void cursor::mouse_polled()
