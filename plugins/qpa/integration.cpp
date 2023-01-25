@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "integration.h"
 
+#include "base/app_singleton.h"
 #include "base/platform.h"
 #include "base/singleton_interface.h"
 #include "backingstore.h"
@@ -91,16 +92,19 @@ bool Integration::hasCapability(Capability cap) const
 
 void Integration::initialize()
 {
-    // We can only update the Screens later on when the Platform has been created. For now just
-    // connect to the startup_finished signal. At this point everything has been created.
-    connect(kwinApp(), &Application::startup_finished, this, [this] {
-        QObject::connect(base::singleton_interface::platform,
-                         &base::platform::topology_changed,
-                         this,
-                         &Integration::initScreens);
-            initScreens();
-        }
-    );
+    assert(base::singleton_interface::app_singleton);
+    connect(base::singleton_interface::app_singleton,
+            &base::app_singleton::platform_created,
+            this,
+            [this] {
+                assert(base::singleton_interface::platform);
+                QObject::connect(base::singleton_interface::platform,
+                                 &base::platform::topology_changed,
+                                 this,
+                                 &Integration::initScreens);
+                initScreens();
+            });
+
     QPlatformIntegration::initialize();
     auto dummyScreen = new Screen(nullptr, this);
     QWindowSystemInterface::handleScreenAdded(dummyScreen);

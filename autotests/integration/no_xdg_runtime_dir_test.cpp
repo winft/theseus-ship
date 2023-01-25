@@ -62,6 +62,7 @@ int main(int argc, char* argv[])
         auto mode = KWin::Application::OperationModeXwayland;
 
 #endif
+        KWin::base::app_singleton app_singleton;
         auto app = WaylandTestApplication(mode,
                                           Test::create_socket_name("KWin::NoXdgRuntimeDirTest"),
                                           base::wayland::start_options::none,

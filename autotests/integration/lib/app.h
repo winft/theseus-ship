@@ -9,6 +9,7 @@
 #include "client.h"
 #include "helpers.h"
 
+#include "base/app_singleton.h"
 #include "base/backend/wlroots/platform.h"
 #include "base/platform.h"
 #include "base/wayland/server.h"
@@ -83,6 +84,7 @@ int create_test(std::string const& test_name,
 #else
         auto mode = KWin::Application::OperationModeXwayland;
 #endif
+        KWin::base::app_singleton app_singleton;
         auto way_app = WaylandTestApplication(mode, sock_name, flags, argc, argv);
         prepare_sys_env(sock_name);
         Test test;

@@ -8,6 +8,7 @@
 #include "non_desktop_output.h"
 #include "output.h"
 
+#include "base/app_singleton.h"
 #include "config-kwin.h"
 #include "render/backend/wlroots/output.h"
 #include "render/backend/wlroots/platform.h"
@@ -101,6 +102,8 @@ platform::platform(base::config config,
 
 {
     singleton_interface::platform = this;
+    Q_EMIT singleton_interface::app_singleton->platform_created();
+
     align_horizontal = qgetenv("KWIN_WLR_OUTPUT_ALIGN_HORIZONTAL") == QByteArrayLiteral("1");
 
     // TODO(romangg): Make this dependent on KWIN_WL debug verbosity.
@@ -151,6 +154,8 @@ platform& platform::operator=(platform&& other) noexcept
     non_desktop_outputs = std::move(other.non_desktop_outputs);
 
     singleton_interface::platform = this;
+    Q_EMIT singleton_interface::app_singleton->platform_created();
+
     wayland::platform::operator=(std::move(other));
 
     return *this;

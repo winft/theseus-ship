@@ -685,6 +685,7 @@ set(kwin_WAYLAND_SRCS
    base/seat/backend/wlroots/session.cpp
    base/wayland/filtered_display.cpp
    base/wayland/server.cpp
+   base/app_singleton.cpp
    debug/console/wayland/input_device_model.cpp
    debug/console/wayland/wayland_console.cpp
    input/backend/wlroots/platform.cpp

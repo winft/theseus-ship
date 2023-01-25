@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "config-kwin.h"
 
+#include "base/app_singleton.h"
 #include "base/backend/wlroots/platform.h"
 #include "base/seat/backend/wlroots/session.h"
 #include "base/wayland/server.h"
@@ -392,6 +393,8 @@ int main(int argc, char * argv[])
     qunsetenv("QT_DEVICE_PIXEL_RATIO");
     qputenv("QSG_RENDER_LOOP", "basic");
     QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
+
+    KWin::base::app_singleton app_singleton;
     KWin::ApplicationWayland a(argc, argv);
     a.setupTranslator();
 

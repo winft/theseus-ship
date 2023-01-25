@@ -8,6 +8,7 @@
 namespace KWin::base
 {
 
+base::app_singleton* singleton_interface::app_singleton{nullptr};
 base::platform* singleton_interface::platform{nullptr};
 
 }
