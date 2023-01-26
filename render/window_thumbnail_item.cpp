@@ -256,41 +256,6 @@ QSGNode* window_thumbnail_item::updatePaintNode(QSGNode* oldNode, QQuickItem::Up
     return node;
 }
 
-qreal window_thumbnail_item::saturation() const
-{
-    return 1;
-}
-
-void window_thumbnail_item::setSaturation(qreal saturation)
-{
-    Q_UNUSED(saturation)
-    qCWarning(KWIN_SCRIPTING)
-        << "ThumbnailItem.saturation is removed. Use a shader effect to change saturation";
-}
-
-qreal window_thumbnail_item::brightness() const
-{
-    return 1;
-}
-
-void window_thumbnail_item::setBrightness(qreal brightness)
-{
-    Q_UNUSED(brightness)
-    qCWarning(KWIN_SCRIPTING)
-        << "ThumbnailItem.brightness is removed. Use a shader effect to change brightness";
-}
-
-QQuickItem* window_thumbnail_item::clipTo() const
-{
-    return nullptr;
-}
-
-void window_thumbnail_item::setClipTo(QQuickItem* clip)
-{
-    Q_UNUSED(clip)
-    qCWarning(KWIN_SCRIPTING) << "ThumbnailItem.clipTo is removed and it has no replacements";
-}
-
 QUuid window_thumbnail_item::wId() const
 {
     return m_wId;

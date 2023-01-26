@@ -17,9 +17,6 @@ WindowThumbnailItem::WindowThumbnailItem(QQuickItem* parent)
     : QQuickItem(parent)
     , m_wId(0)
     , m_image()
-    , m_clipToItem(nullptr)
-    , m_brightness(1.0)
-    , m_saturation(1.0)
     , m_sourceSize(QSize())
 {
     setFlag(ItemHasContents);
@@ -34,12 +31,6 @@ void WindowThumbnailItem::setWId(qulonglong wId)
     m_wId = wId;
     Q_EMIT wIdChanged(wId);
     findImage();
-}
-
-void WindowThumbnailItem::setClipTo(QQuickItem *clip)
-{
-    Q_UNUSED(clip)
-    qWarning() << "ThumbnailItem.clipTo is removed and it has no replacements";
 }
 
 void WindowThumbnailItem::findImage()
@@ -98,31 +89,9 @@ QSGNode *WindowThumbnailItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeD
     return node;
 }
 
-qreal WindowThumbnailItem::brightness() const
-{
-    return m_brightness;
-}
-
-qreal WindowThumbnailItem::saturation() const
-{
-    return m_saturation;
-}
-
 QSize WindowThumbnailItem::sourceSize() const
 {
     return m_sourceSize;
-}
-
-void WindowThumbnailItem::setBrightness(qreal brightness)
-{
-    Q_UNUSED(brightness)
-    qWarning() << "ThumbnailItem.brightness is removed. Use a shader effect to change brightness";
-}
-
-void WindowThumbnailItem::setSaturation(qreal saturation)
-{
-    Q_UNUSED(saturation)
-    qWarning() << "ThumbnailItem.saturation is removed. Use a shader effect to change saturation";
 }
 
 void WindowThumbnailItem::setSourceSize(const QSize &size)

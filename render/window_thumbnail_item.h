@@ -33,11 +33,8 @@ class KWIN_EXPORT window_thumbnail_item : public QQuickItem
     Q_OBJECT
     Q_PROPERTY(QUuid wId READ wId WRITE setWId NOTIFY wIdChanged)
     Q_PROPERTY(KWin::scripting::window* client READ client WRITE setClient NOTIFY clientChanged)
-
     Q_PROPERTY(QSize sourceSize READ sourceSize WRITE setSourceSize NOTIFY sourceSizeChanged)
-    Q_PROPERTY(qreal brightness READ brightness WRITE setBrightness NOTIFY brightnessChanged)
-    Q_PROPERTY(qreal saturation READ saturation WRITE setSaturation NOTIFY saturationChanged)
-    Q_PROPERTY(QQuickItem* clipTo READ clipTo WRITE setClipTo NOTIFY clipToChanged)
+
 public:
     explicit window_thumbnail_item(QQuickItem* parent = nullptr);
     ~window_thumbnail_item() override;
@@ -47,15 +44,6 @@ public:
 
     scripting::window* client() const;
     void setClient(scripting::window* window);
-
-    qreal brightness() const;
-    void setBrightness(qreal brightness);
-
-    qreal saturation() const;
-    void setSaturation(qreal saturation);
-
-    QQuickItem* clipTo() const;
-    void setClipTo(QQuickItem* clip);
 
     QSize sourceSize() const;
     void setSourceSize(const QSize& sourceSize);
@@ -70,9 +58,6 @@ protected:
 Q_SIGNALS:
     void wIdChanged();
     void clientChanged();
-    void brightnessChanged();
-    void saturationChanged();
-    void clipToChanged();
     void sourceSizeChanged();
 
 private:
