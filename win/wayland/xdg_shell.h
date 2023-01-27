@@ -616,7 +616,7 @@ void install_deco(Win& win, Wrapland::Server::XdgDecoration* deco)
 template<typename Window, typename Space>
 void handle_new_toplevel(Space* space, Wrapland::Server::XdgShellToplevel* toplevel)
 {
-    if (toplevel->client() == space->server->screen_locker_client_connection) {
+    if (toplevel->client() == space->base.server->screen_locker_client_connection) {
         ScreenLocker::KSldApp::self()->lockScreenShown();
     }
     auto& win = win::wayland::create_toplevel_window<Window>(space, toplevel);

@@ -222,7 +222,7 @@ void ApplicationWayland::start(base::operation_mode mode,
         exit(exc.code().value());
     }
 
-    base->space = std::make_unique<base_t::space_t>(*base, base->server.get());
+    base->space = std::make_unique<base_t::space_t>(*base);
     win::init_shortcuts(*base->space);
     base->space->scripting = std::make_unique<scripting::platform<base_t::space_t>>(*base->space);
 

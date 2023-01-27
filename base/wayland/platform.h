@@ -40,7 +40,7 @@ public:
              std::string const& socket_name,
              base::wayland::start_options flags)
         : base::platform(std::move(config))
-        , server{std::make_unique<base::wayland::server>(socket_name, flags)}
+        , server{std::make_unique<wayland::server<platform>>(*this, socket_name, flags)}
     {
     }
 
@@ -72,7 +72,7 @@ public:
         return vec;
     }
 
-    std::unique_ptr<base::wayland::server> server;
+    std::unique_ptr<wayland::server<platform>> server;
     std::unique_ptr<Wrapland::Server::drm_lease_device_v1> drm_lease_device;
 
     // All outputs, including disabled ones.

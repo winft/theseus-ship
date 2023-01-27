@@ -39,7 +39,7 @@ void set_surface(Win& win, Wrapland::Server::Surface* surface)
 template<typename Space>
 void handle_new_surface(Space* space, Wrapland::Server::Surface* surface)
 {
-    if (surface->client() != space->server->xwayland_connection()) {
+    if (surface->client() != space->base.server->xwayland_connection()) {
         // setting surface is only relevat for Xwayland clients
         return;
     }

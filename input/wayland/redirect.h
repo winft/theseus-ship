@@ -64,8 +64,7 @@ public:
         , platform{platform}
         , space{space}
         , config_watcher{KConfigWatcher::create(platform.config.main)}
-        , input_method{std::make_unique<wayland::input_method<type>>(*this,
-                                                                     platform.base.server.get())}
+        , input_method{std::make_unique<wayland::input_method<type>>(*this)}
         , tablet_mode_manager{std::make_unique<dbus::tablet_mode_manager<type>>(*this)}
     {
         setup_workspace();

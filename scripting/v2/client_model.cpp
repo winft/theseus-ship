@@ -10,7 +10,6 @@
 #include "scripting/space.h"
 #include "scripting/window.h"
 
-#include "base/wayland/server.h"
 #include "config-kwin.h"
 #include "win/singleton_interface.h"
 #include "win/space.h"

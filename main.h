@@ -41,11 +41,6 @@ namespace KWin
 namespace base
 {
 
-namespace wayland
-{
-class server;
-}
-
 namespace x11
 {
 class event_filter_manager;

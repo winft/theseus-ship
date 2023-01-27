@@ -34,7 +34,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Server/kde_idle.h>
 
 using namespace Wrapland::Client;
-using Wrapland::Server::KdeIdle;
 
 namespace KWin
 {
