@@ -63,15 +63,22 @@ enum class start_options {
     no_global_shortcuts = 0x4,
 };
 
-class KWIN_EXPORT server : public QObject
+class KWIN_EXPORT server_qobject : public QObject
 {
     Q_OBJECT
-public:
-    static server* self();
 
+Q_SIGNALS:
+    void internal_client_available();
+    void terminating_internal_client_connection();
+    void screenlocker_initialized();
+};
+
+class KWIN_EXPORT server
+{
+public:
     server(std::string const& socket, start_options flags);
     server(int socket_fd, start_options flags);
-    ~server() override;
+    ~server();
 
     void terminateClientConnections();
 
@@ -130,6 +137,7 @@ public:
 
     void update_key_state(input::keyboard_leds leds);
 
+    std::unique_ptr<server_qobject> qobject;
     std::unique_ptr<Wrapland::Server::Display> display;
     std::unique_ptr<Wrapland::Server::globals> globals;
 
@@ -146,11 +154,6 @@ public:
     } internal_connection;
 
     Wrapland::Server::Client* screen_locker_client_connection{nullptr};
-
-Q_SIGNALS:
-    void internal_client_available();
-    void terminating_internal_client_connection();
-    void screenlocker_initialized();
 
 private:
     explicit server(start_options flags);

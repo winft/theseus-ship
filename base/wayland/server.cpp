@@ -36,7 +36,8 @@ namespace KWin::base::wayland
 {
 
 server::server(start_options flags)
-    : display(std::make_unique<filtered_display>())
+    : qobject{std::make_unique<server_qobject>()}
+    , display(std::make_unique<filtered_display>())
     , globals{std::make_unique<Wrapland::Server::globals>()}
     , m_initFlags{flags}
 
@@ -68,7 +69,7 @@ server::~server()
 
 void server::destroy_internal_connection()
 {
-    Q_EMIT terminating_internal_client_connection();
+    Q_EMIT qobject->terminating_internal_client_connection();
     if (internal_connection.client) {
         // delete all connections hold by plugins like e.g. widget style
         const auto connections = Wrapland::Client::ConnectionThread::connections();
@@ -124,13 +125,13 @@ void server::create_globals()
     globals->dpms_manager = display->createDpmsManager();
 
     globals->output_management_v1 = display->createOutputManagementV1();
-    connect(globals->output_management_v1.get(),
-            &Wrapland::Server::OutputManagementV1::configurationChangeRequested,
-            this,
-            [](Wrapland::Server::OutputConfigurationV1* config) {
-                auto& base = static_cast<base::wayland::platform&>(kwinApp()->get_base());
-                base::wayland::request_outputs_change(base, config);
-            });
+    QObject::connect(globals->output_management_v1.get(),
+                     &Wrapland::Server::OutputManagementV1::configurationChangeRequested,
+                     qobject.get(),
+                     [](Wrapland::Server::OutputConfigurationV1* config) {
+                         auto& base = static_cast<base::wayland::platform&>(kwinApp()->get_base());
+                         base::wayland::request_outputs_change(base, config);
+                     });
 
     globals->key_state = display->createKeyState();
     globals->viewporter = display->createViewporter();
@@ -177,52 +178,52 @@ void server::init_screen_locker()
     ScreenLocker::KSldApp::self()->setGreeterEnvironment(kwinApp()->processStartupEnvironment());
     ScreenLocker::KSldApp::self()->initialize();
 
-    connect(ScreenLocker::KSldApp::self(),
-            &ScreenLocker::KSldApp::aboutToLock,
-            this,
-            [this, screenLockerApp]() {
-                if (screen_locker_client_connection) {
-                    // Already sent data to KScreenLocker.
-                    return;
-                }
-                int clientFd = create_screen_locker_connection();
-                if (clientFd < 0) {
-                    return;
-                }
-                ScreenLocker::KSldApp::self()->setWaylandFd(clientFd);
+    QObject::connect(ScreenLocker::KSldApp::self(),
+                     &ScreenLocker::KSldApp::aboutToLock,
+                     qobject.get(),
+                     [this, screenLockerApp]() {
+                         if (screen_locker_client_connection) {
+                             // Already sent data to KScreenLocker.
+                             return;
+                         }
+                         int clientFd = create_screen_locker_connection();
+                         if (clientFd < 0) {
+                             return;
+                         }
+                         ScreenLocker::KSldApp::self()->setWaylandFd(clientFd);
 
-                for (auto* seat : display->seats()) {
-                    connect(seat,
-                            &Wrapland::Server::Seat::timestampChanged,
-                            screenLockerApp,
-                            &ScreenLocker::KSldApp::userActivity);
-                }
-            });
+                         for (auto* seat : display->seats()) {
+                             QObject::connect(seat,
+                                              &Wrapland::Server::Seat::timestampChanged,
+                                              screenLockerApp,
+                                              &ScreenLocker::KSldApp::userActivity);
+                         }
+                     });
 
-    connect(ScreenLocker::KSldApp::self(),
-            &ScreenLocker::KSldApp::unlocked,
-            this,
-            [this, screenLockerApp]() {
-                if (screen_locker_client_connection) {
-                    screen_locker_client_connection->destroy();
-                    delete screen_locker_client_connection;
-                    screen_locker_client_connection = nullptr;
-                }
+    QObject::connect(ScreenLocker::KSldApp::self(),
+                     &ScreenLocker::KSldApp::unlocked,
+                     qobject.get(),
+                     [this, screenLockerApp]() {
+                         if (screen_locker_client_connection) {
+                             screen_locker_client_connection->destroy();
+                             delete screen_locker_client_connection;
+                             screen_locker_client_connection = nullptr;
+                         }
 
-                for (auto* seat : display->seats()) {
-                    disconnect(seat,
-                               &Wrapland::Server::Seat::timestampChanged,
-                               screenLockerApp,
-                               &ScreenLocker::KSldApp::userActivity);
-                }
-                ScreenLocker::KSldApp::self()->setWaylandFd(-1);
-            });
+                         for (auto* seat : display->seats()) {
+                             QObject::disconnect(seat,
+                                                 &Wrapland::Server::Seat::timestampChanged,
+                                                 screenLockerApp,
+                                                 &ScreenLocker::KSldApp::userActivity);
+                         }
+                         ScreenLocker::KSldApp::self()->setWaylandFd(-1);
+                     });
 
     if (flags(m_initFlags & start_options::lock_screen)) {
         ScreenLocker::KSldApp::self()->lock(ScreenLocker::EstablishLock::Immediate);
     }
 
-    Q_EMIT screenlocker_initialized();
+    Q_EMIT qobject->screenlocker_initialized();
 }
 
 server::socket_pair_connection server::create_connection()
@@ -245,9 +246,10 @@ int server::create_screen_locker_connection()
         return -1;
     }
     screen_locker_client_connection = socket.connection;
-    connect(screen_locker_client_connection, &Wrapland::Server::Client::disconnected, this, [this] {
-        screen_locker_client_connection = nullptr;
-    });
+    QObject::connect(screen_locker_client_connection,
+                     &Wrapland::Server::Client::disconnected,
+                     qobject.get(),
+                     [this] { screen_locker_client_connection = nullptr; });
     return socket.fd;
 }
 
@@ -258,10 +260,10 @@ int server::create_xwayland_connection()
         return -1;
     }
     m_xwayland.client = socket.connection;
-    m_xwayland.destroyConnection
-        = connect(m_xwayland.client, &Wrapland::Server::Client::disconnected, this, [] {
-              qFatal("Xwayland Connection died");
-          });
+    m_xwayland.destroyConnection = QObject::connect(m_xwayland.client,
+                                                    &Wrapland::Server::Client::disconnected,
+                                                    qobject.get(),
+                                                    [] { qFatal("Xwayland Connection died"); });
     return socket.fd;
 }
 
@@ -270,7 +272,7 @@ void server::destroy_xwayland_connection()
     if (!m_xwayland.client) {
         return;
     }
-    disconnect(m_xwayland.destroyConnection);
+    QObject::disconnect(m_xwayland.destroyConnection);
     m_xwayland.client->destroy();
     m_xwayland.client = nullptr;
 }
@@ -301,46 +303,47 @@ void server::create_internal_connection(std::function<void(bool)> callback)
     internal_connection.client->moveToThread(internal_connection.clientThread);
     internal_connection.clientThread->start();
 
-    connect(internal_connection.client,
-            &ConnectionThread::establishedChanged,
-            this,
-            [this, callback](bool established) {
-                if (!established) {
-                    return;
-                }
-                auto registry = new Registry;
-                auto eventQueue = new EventQueue;
-                eventQueue->setup(internal_connection.client);
-                registry->setEventQueue(eventQueue);
-                registry->create(internal_connection.client);
-                internal_connection.registry = registry;
-                internal_connection.queue = eventQueue;
+    QObject::connect(
+        internal_connection.client,
+        &ConnectionThread::establishedChanged,
+        qobject.get(),
+        [this, callback](bool established) {
+            if (!established) {
+                return;
+            }
+            auto registry = new Registry;
+            auto eventQueue = new EventQueue;
+            eventQueue->setup(internal_connection.client);
+            registry->setEventQueue(eventQueue);
+            registry->create(internal_connection.client);
+            internal_connection.registry = registry;
+            internal_connection.queue = eventQueue;
 
-                connect(
-                    registry,
-                    &Registry::interfacesAnnounced,
-                    this,
-                    [this, callback, registry] {
-                        auto create_interface
-                            = [registry](Registry::Interface iface_code, auto creator) {
-                                  auto iface = registry->interface(iface_code);
-                                  assert(iface.name != 0);
-                                  return (registry->*creator)(iface.name, iface.version, nullptr);
-                              };
+            QObject::connect(
+                registry,
+                &Registry::interfacesAnnounced,
+                qobject.get(),
+                [this, callback, registry] {
+                    auto create_interface
+                        = [registry](Registry::Interface iface_code, auto creator) {
+                              auto iface = registry->interface(iface_code);
+                              assert(iface.name != 0);
+                              return (registry->*creator)(iface.name, iface.version, nullptr);
+                          };
 
-                        internal_connection.shm
-                            = create_interface(Registry::Interface::Shm, &Registry::createShmPool);
-                        internal_connection.compositor = create_interface(
-                            Registry::Interface::Compositor, &Registry::createCompositor);
-                        internal_connection.seat
-                            = create_interface(Registry::Interface::Seat, &Registry::createSeat);
-                        callback(true);
-                        Q_EMIT internal_client_available();
-                    },
-                    Qt::QueuedConnection);
+                    internal_connection.shm
+                        = create_interface(Registry::Interface::Shm, &Registry::createShmPool);
+                    internal_connection.compositor = create_interface(
+                        Registry::Interface::Compositor, &Registry::createCompositor);
+                    internal_connection.seat
+                        = create_interface(Registry::Interface::Seat, &Registry::createSeat);
+                    callback(true);
+                    Q_EMIT qobject->internal_client_available();
+                },
+                Qt::QueuedConnection);
 
-                registry->setup();
-            });
+            registry->setup();
+        });
     internal_connection.client->establishConnection();
 }
 

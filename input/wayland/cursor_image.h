@@ -80,8 +80,8 @@ public:
 
         // Loading the theme is delayed because we depend on the client connection.
         // TODO(romangg): Instead load the theme without client connection and setup directly.
-        QObject::connect(redirect.platform.base.server.get(),
-                         &base::wayland::server::internal_client_available,
+        QObject::connect(redirect.platform.base.server->qobject.get(),
+                         &base::wayland::server_qobject::internal_client_available,
                          qobject.get(),
                          [this] { setup_theme(); });
     }
@@ -544,8 +544,8 @@ private:
             m_cursorTheme = std::make_unique<cursor_theme<Cursor>>(
                 static_cast<Cursor&>(*redirect.cursor),
                 redirect.platform.base.server->internal_connection.shm);
-            QObject::connect(redirect.platform.base.server.get(),
-                             &base::wayland::server::terminating_internal_client_connection,
+            QObject::connect(redirect.platform.base.server->qobject.get(),
+                             &base::wayland::server_qobject::terminating_internal_client_connection,
                              qobject.get(),
                              [this] { m_cursorTheme.reset(); });
         }

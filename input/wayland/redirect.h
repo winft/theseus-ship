@@ -501,10 +501,11 @@ private:
         platform.update_keyboard_leds(keyboard->xkb->leds);
         platform.base.server->update_key_state(keyboard->xkb->leds);
 
-        QObject::connect(keyboard->xkb->qobject.get(),
-                         &xkb::keyboard_qobject::leds_changed,
-                         platform.base.server.get(),
-                         &base::wayland::server::update_key_state);
+        QObject::connect(
+            keyboard->xkb->qobject.get(),
+            &xkb::keyboard_qobject::leds_changed,
+            platform.base.server->qobject.get(),
+            [&server = platform.base.server](auto&& leds) { server->update_key_state(leds); });
         QObject::connect(keyboard->xkb->qobject.get(),
                          &xkb::keyboard_qobject::leds_changed,
                          platform.qobject.get(),
