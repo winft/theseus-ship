@@ -146,8 +146,10 @@ void init_space(Space& space)
                     // ### This will request the attributes again
                     create_unmanaged_window(wins[i], space);
             } else if (attr->map_state != XCB_MAP_STATE_UNMAPPED) {
-                if (Application::wasCrash()) {
-                    fix_position_after_crash(space, wins[i], windowGeometries.at(i).data());
+                if constexpr (requires(decltype(space.base) base) { base.is_crash_restart; }) {
+                    if (space.base.is_crash_restart) {
+                        fix_position_after_crash(space, wins[i], windowGeometries.at(i).data());
+                    }
                 }
 
                 // ### This will request the attributes again

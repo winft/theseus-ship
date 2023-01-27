@@ -50,6 +50,8 @@ public:
     std::unique_ptr<render_t> render;
     std::unique_ptr<input_t> input;
     std::unique_ptr<space_t> space;
+
+    bool is_crash_restart{false};
 };
 
 }

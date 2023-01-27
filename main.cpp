@@ -94,21 +94,6 @@ void Application::prepare_start()
 
 Application::~Application() = default;
 
-void Application::resetCrashesCount()
-{
-    crashes = 0;
-}
-
-void Application::setCrashCount(int count)
-{
-    crashes = count;
-}
-
-bool Application::wasCrash()
-{
-    return crashes > 0;
-}
-
 void Application::createAboutData()
 {
     KAboutData aboutData(QStringLiteral(KWIN_NAME),          // The program name used internally
@@ -147,7 +132,7 @@ void Application::processCommandLine(QCommandLineParser *parser)
 {
     KAboutData aboutData = KAboutData::applicationData();
     aboutData.processCommandLine(parser);
-    Application::setCrashCount(parser->value(s_crashesOption).toInt());
+    crashes = parser->value(s_crashesOption).toInt();
 }
 
 void Application::setupTranslator()

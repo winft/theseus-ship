@@ -217,6 +217,7 @@ void ApplicationX11::start()
     kwinApp()->screen_locker_watcher->initialize();
 
     using base_t = base::x11::platform;
+    base.is_crash_restart = crashes > 0;
     base.render = std::make_unique<render::backend::x11::platform<base_t>>(base);
 
     crashChecking();
@@ -242,8 +243,10 @@ void ApplicationX11::start()
                                                                    maskValues)));
         if (redirectCheck) {
             fputs(i18n("kwin: another window manager is running (try using --replace)\n").toLocal8Bit().constData(), stderr);
-            if (!wasCrash()) // if this is a crash-restart, DrKonqi may have stopped the process w/o killing the connection
+            // If this is a crash-restart, DrKonqi may have stopped the process w/o killing the connection.
+            if (crashes == 0) {
                 ::exit(1);
+            }
         }
 
         base.session = std::make_unique<base::seat::backend::logind::session>();
@@ -286,7 +289,7 @@ void ApplicationX11::start()
 
     // we need to do an XSync here, otherwise the QPA might crash us later on
     base::x11::xcb::sync(base.x11_data.connection);
-    owner->claim(m_replace || wasCrash(), true);
+    owner->claim(m_replace || crashes > 0, true);
 }
 
 bool ApplicationX11::notify(QObject* o, QEvent* e)
@@ -330,7 +333,7 @@ void ApplicationX11::crashChecking()
         compgroup.writeEntry("Enabled", false);
     }
     // Reset crashes count if we stay up for more that 15 seconds
-    QTimer::singleShot(15 * 1000, this, &Application::resetCrashesCount);
+    QTimer::singleShot(15 * 1000, this, [this] { crashes = 0; });
 }
 
 void ApplicationX11::notifyKSplash()
