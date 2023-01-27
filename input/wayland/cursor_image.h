@@ -77,11 +77,12 @@ public:
 
         m_surfaceRenderedTimer.start();
 
-        // Loading the theme is delayed to end of startup because we depend on the client
-        // connection.
+        // Loading the theme is delayed because we depend on the client connection.
         // TODO(romangg): Instead load the theme without client connection and setup directly.
-        QObject::connect(
-            kwinApp(), &Application::startup_finished, qobject.get(), [this] { setup_theme(); });
+        QObject::connect(redirect.platform.base.server.get(),
+                         &base::wayland::server::internal_client_available,
+                         qobject.get(),
+                         [this] { setup_theme(); });
     }
 
     void setEffectsOverrideCursor(Qt::CursorShape shape)

@@ -335,6 +335,7 @@ void server::create_internal_connection(std::function<void(bool)> callback)
                         internal_connection.seat
                             = create_interface(Registry::Interface::Seat, &Registry::createSeat);
                         callback(true);
+                        Q_EMIT internal_client_available();
                     },
                     Qt::QueuedConnection);
 

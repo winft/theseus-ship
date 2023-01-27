@@ -148,6 +148,7 @@ public:
     Wrapland::Server::Client* screen_locker_client_connection{nullptr};
 
 Q_SIGNALS:
+    void internal_client_available();
     void terminating_internal_client_connection();
     void screenlocker_initialized();
 
