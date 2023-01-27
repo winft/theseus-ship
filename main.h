@@ -71,8 +71,6 @@ public:
     void setupCommandLine(QCommandLineParser *parser);
     void processCommandLine(QCommandLineParser *parser);
 
-    void update_x11_time_from_event(xcb_generic_event_t *event);
-
     static void setCrashCount(int count);
     static bool wasCrash();
     void resetCrashesCount();

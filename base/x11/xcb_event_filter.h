@@ -30,7 +30,7 @@ public:
         }
 
         auto event = static_cast<xcb_generic_event_t*>(message);
-        kwinApp()->update_x11_time_from_event(event);
+        win::x11::update_time_from_event(space.base, event);
 
         return win::x11::space_event(space, event);
     }
