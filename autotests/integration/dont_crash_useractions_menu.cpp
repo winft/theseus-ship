@@ -55,7 +55,7 @@ private Q_SLOTS:
 
 void TestDontCrashUseractionsMenu::initTestCase()
 {
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
     // force style to breeze as that's the one which triggered the crash

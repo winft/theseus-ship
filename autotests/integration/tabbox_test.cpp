@@ -53,7 +53,7 @@ private Q_SLOTS:
 
 void TabBoxTest::initTestCase()
 {
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
     auto c = Test::app()->base.config.main;

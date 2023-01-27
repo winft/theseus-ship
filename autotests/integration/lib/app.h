@@ -61,6 +61,9 @@ public:
     void set_outputs(std::vector<QRect> const& geometries);
     void set_outputs(std::vector<Test::output> const& outputs);
 
+Q_SIGNALS:
+    void startup_finished();
+
 private:
     void handle_server_addons_created();
     void create_xwayland();

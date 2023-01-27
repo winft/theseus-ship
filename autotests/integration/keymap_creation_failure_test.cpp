@@ -56,7 +56,7 @@ void KeymapCreationFailureTest::initTestCase()
     qputenv("XKB_DEFAULT_VARIANT", "no");
     qputenv("XKB_DEFAULT_OPTIONS", "no");
 
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
     Test::app()->start();

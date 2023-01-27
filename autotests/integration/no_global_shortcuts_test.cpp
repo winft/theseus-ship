@@ -103,7 +103,7 @@ void NoGlobalShortcutsTest::initTestCase()
 {
     qRegisterMetaType<KWin::ElectricBorder>("ElectricBorder");
 
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
     qputenv("KWIN_XKB_DEFAULT_KEYMAP", "1");

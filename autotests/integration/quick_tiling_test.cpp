@@ -98,7 +98,7 @@ void QuickTilingTest::initTestCase()
 {
     qRegisterMetaType<KWin::win::maximize_mode>();
 
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
     // set custom config which disables the Outline

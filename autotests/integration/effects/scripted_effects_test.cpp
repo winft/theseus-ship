@@ -141,7 +141,7 @@ void ScriptedEffectsTest::initTestCase()
 {
     qRegisterMetaType<KWin::Effect*>();
 
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
     // disable all effects - we don't want to have it interact with the rendering

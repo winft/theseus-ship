@@ -132,7 +132,7 @@ void TestXdgShellClient::initTestCase()
 {
     qRegisterMetaType<Wrapland::Client::Output*>();
 
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
     Test::app()->start();

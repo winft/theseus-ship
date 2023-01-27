@@ -344,8 +344,6 @@ void ApplicationWayland::startSession()
     QObject::connect(env_sync_job, &UpdateLaunchEnvironmentJob::finished, this, []() {
         QDBusConnection::sessionBus().registerService(QStringLiteral("org.kde.KWinWrapper"));
     });
-
-    Q_EMIT startup_finished();
 }
 
 } // namespace

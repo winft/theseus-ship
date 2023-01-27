@@ -276,10 +276,7 @@ void ApplicationX11::start()
         installNativeEventFilter(event_filter.get());
 
         base.space->scripting = std::make_unique<scripting::platform<base_t::space_t>>(*base.space);
-
         render->compositor->start(*base.space);
-
-        Q_EMIT startup_finished();
 
         // Trigger possible errors, there's still a chance to abort.
         base::x11::xcb::sync(base.x11_data.connection);

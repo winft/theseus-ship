@@ -67,7 +67,7 @@ void SceneQPainterTest::cleanup()
 
 void SceneQPainterTest::initTestCase()
 {
-    QSignalSpy startup_spy(Test::app(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
     // disable all effects - we don't want to have it interact with the rendering

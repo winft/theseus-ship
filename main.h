@@ -133,7 +133,6 @@ public:
 Q_SIGNALS:
     void x11ConnectionChanged();
     void x11ConnectionAboutToBeDestroyed();
-    void startup_finished();
     void virtualTerminalCreated();
 
 protected:

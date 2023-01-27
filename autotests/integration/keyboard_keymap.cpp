@@ -64,7 +64,7 @@ void keyboard_keymap_test::initTestCase()
     qRegisterMetaType<Wrapland::Client::Output*>();
     qRegisterMetaType<Wrapland::Client::Keyboard::KeyState>();
 
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
     Test::app()->start();

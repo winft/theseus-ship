@@ -153,7 +153,7 @@ void PointerInputTest::initTestCase()
 {
     qRegisterMetaType<Wrapland::Client::XdgDecoration::Mode>();
 
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
     auto hasTheme = [](const QString& name) {

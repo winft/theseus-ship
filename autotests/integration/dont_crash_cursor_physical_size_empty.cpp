@@ -64,7 +64,7 @@ void DontCrashCursorPhysicalSizeEmpty::cleanup()
 
 void DontCrashCursorPhysicalSizeEmpty::initTestCase()
 {
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
     if (!QStandardPaths::locateAll(QStandardPaths::GenericDataLocation,

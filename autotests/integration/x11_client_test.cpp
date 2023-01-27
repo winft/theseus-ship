@@ -69,7 +69,7 @@ Test::space::x11_window* get_x11_window_from_id(uint32_t id)
 
 void X11ClientTest::initTestCase()
 {
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
     Test::app()->start();
