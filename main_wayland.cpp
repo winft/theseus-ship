@@ -232,8 +232,7 @@ void ApplicationWayland::start(base::operation_mode mode,
         environment.insert(QStringLiteral("WAYLAND_DISPLAY"), name.c_str());
     }
 
-    setProcessStartupEnvironment(environment);
-
+    base->process_environment = environment;
     base->server->create_addons([this] { handle_server_addons_created(); });
     kwinApp()->screen_locker_watcher->initialize();
 }
@@ -272,7 +271,7 @@ void ApplicationWayland::create_xwayland()
 
 void ApplicationWayland::startSession()
 {
-    auto process_environment = processStartupEnvironment();
+    auto process_environment = base->process_environment;
 
     // Enforce Wayland platform for started Qt apps. They otherwise for some reason prefer X11.
     process_environment.insert(QStringLiteral("QT_QPA_PLATFORM"), QStringLiteral("wayland"));

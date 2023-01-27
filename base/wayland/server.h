@@ -12,7 +12,6 @@
 #include "base/logging.h"
 #include "input/types.h"
 #include "kwinglobals.h"
-#include "main.h"
 #include "utils/flags.h"
 
 #include <KScreenLocker/KsldApp>
@@ -411,8 +410,7 @@ private:
 
         auto* screenLockerApp = ScreenLocker::KSldApp::self();
 
-        ScreenLocker::KSldApp::self()->setGreeterEnvironment(
-            kwinApp()->processStartupEnvironment());
+        ScreenLocker::KSldApp::self()->setGreeterEnvironment(base.process_environment);
         ScreenLocker::KSldApp::self()->initialize();
 
         QObject::connect(ScreenLocker::KSldApp::self(),

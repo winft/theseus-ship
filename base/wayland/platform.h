@@ -15,6 +15,7 @@
 #include "win/wayland/space.h"
 #include "xwl/xwayland.h"
 
+#include <QProcessEnvironment>
 #include <Wrapland/Server/drm_lease_v1.h>
 #include <cassert>
 #include <memory>
@@ -71,6 +72,8 @@ public:
         }
         return vec;
     }
+
+    QProcessEnvironment process_environment;
 
     std::unique_ptr<wayland::server<platform>> server;
     std::unique_ptr<Wrapland::Server::drm_lease_device_v1> drm_lease_device;

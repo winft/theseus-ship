@@ -108,9 +108,7 @@ WaylandTestApplication::WaylandTestApplication(base::operation_mode mode,
     base->operation_mode = mode;
     base->render = std::make_unique<render::backend::wlroots::platform<base_t>>(*base);
 
-    auto environment = QProcessEnvironment::systemEnvironment();
-    environment.insert(QStringLiteral("WAYLAND_DISPLAY"), socket_name.c_str());
-    setProcessStartupEnvironment(environment);
+    base->process_environment.insert(QStringLiteral("WAYLAND_DISPLAY"), socket_name.c_str());
 }
 
 WaylandTestApplication::~WaylandTestApplication()

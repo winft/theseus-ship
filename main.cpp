@@ -162,14 +162,5 @@ void Application::setupLocalizedString()
     KLocalizedString::setApplicationDomain("kwin");
 }
 
-QProcessEnvironment Application::processStartupEnvironment() const
-{
-    return QProcessEnvironment::systemEnvironment();
-}
-
-void Application::setProcessStartupEnvironment(QProcessEnvironment const& /*environment*/)
-{
-}
-
 } // namespace
 

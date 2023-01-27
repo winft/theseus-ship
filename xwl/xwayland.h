@@ -119,7 +119,7 @@ public:
         xwayland_process->setProcessChannelMode(QProcess::ForwardedErrorChannel);
         xwayland_process->setProgram(QStringLiteral("Xwayland"));
 
-        QProcessEnvironment env = app->processStartupEnvironment();
+        auto env = space.base.process_environment;
         env.insert("WAYLAND_SOCKET", QByteArray::number(wlfd));
 
         if (qEnvironmentVariableIsSet("KWIN_XWAYLAND_DEBUG")) {
@@ -309,9 +309,8 @@ private:
                                           cursor->x11_cursor(Qt::ArrowCursor));
         }
 
-        auto env = app->processStartupEnvironment();
-        env.insert(QStringLiteral("DISPLAY"), QString::fromUtf8(qgetenv("DISPLAY")));
-        app->setProcessStartupEnvironment(env);
+        space.base.process_environment.insert(QStringLiteral("DISPLAY"),
+                                              QString::fromUtf8(qgetenv("DISPLAY")));
 
         status_callback(0);
         win::x11::init_space(space);

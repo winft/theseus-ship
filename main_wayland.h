@@ -49,15 +49,8 @@ public:
     void setApplicationsToStart(const QStringList &applications) {
         m_applicationsToStart = applications;
     }
-    void setProcessStartupEnvironment(const QProcessEnvironment &environment) override {
-        m_environment = environment;
-    }
     void setSessionArgument(const QString &session) {
         m_sessionArgument = session;
-    }
-
-    QProcessEnvironment processStartupEnvironment() const override {
-        return m_environment;
     }
 
 private:
@@ -66,7 +59,6 @@ private:
     void startSession();
 
     QStringList m_applicationsToStart;
-    QProcessEnvironment m_environment;
     QString m_sessionArgument;
 
     std::unique_ptr<base::backend::wlroots::platform> base;

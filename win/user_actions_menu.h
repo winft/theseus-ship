@@ -15,7 +15,6 @@
 #include "window_operation.h"
 
 #include "base/logging.h"
-#include "main.h"
 
 #if KWIN_BUILD_TABBOX
 #include "tabbox/tabbox.h"
@@ -689,7 +688,11 @@ private:
                 args << configModules(false);
                 auto p = new QProcess(qobject.get());
                 p->setArguments(args);
-                p->setProcessEnvironment(kwinApp()->processStartupEnvironment());
+
+                if constexpr (requires(decltype(space.base) base) { base.process_environment; }) {
+                    p->setProcessEnvironment(space.base.process_environment);
+                }
+
                 p->setProgram(QStringLiteral("kcmshell5"));
                 QObject::connect(
                     p,

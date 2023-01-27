@@ -29,7 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <config-kwin.h>
 
 #include <QApplication>
-#include <QProcessEnvironment>
 
 #include <memory>
 
@@ -71,9 +70,6 @@ public:
      * KAboutData::setApplicationData.
      */
     static void createAboutData();
-
-    virtual QProcessEnvironment processStartupEnvironment() const;
-    virtual void setProcessStartupEnvironment(QProcessEnvironment const& environment);
 
     bool isTerminating() const {
         return m_terminating;

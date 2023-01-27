@@ -53,7 +53,10 @@ void edit_book(Book& book, RefWin& ref_win, bool whole_app)
 
     auto p = new QProcess(book.qobject.get());
     p->setArguments(args);
-    p->setProcessEnvironment(kwinApp()->processStartupEnvironment());
+
+    if constexpr (requires(decltype(ref_win.space.base) base) { base.process_environment; }) {
+        p->setProcessEnvironment(ref_win.space.base.process_environment);
+    }
 
     QFileInfo const buildDirBinary{QDir{QCoreApplication::applicationDirPath()},
                                    QStringLiteral("kwin_rules_dialog")};
