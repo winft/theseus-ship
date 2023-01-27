@@ -117,13 +117,13 @@ Q_SIGNALS:
 };
 
 #define LOCK                                                                                       \
-    QVERIFY(!kwinApp()->is_screen_locked());                                                       \
+    QVERIFY(!base::wayland::is_screen_locked(Test::app()->base));                                  \
     QSignalSpy lockStateChangedSpy(ScreenLocker::KSldApp::self(),                                  \
                                    &ScreenLocker::KSldApp::lockStateChanged);                      \
     QVERIFY(lockStateChangedSpy.isValid());                                                        \
     ScreenLocker::KSldApp::self()->lock(ScreenLocker::EstablishLock::Immediate);                   \
     QCOMPARE(lockStateChangedSpy.count(), 1);                                                      \
-    QVERIFY(kwinApp()->is_screen_locked());
+    QVERIFY(base::wayland::is_screen_locked(Test::app()->base));
 
 // We use a while loop to check the spy condition repeatedly. We do not wait directly with a spy
 // timer because this can be problematic with the screenlocker process acting simultaneously.
@@ -139,7 +139,7 @@ Q_SIGNALS:
         QTest::qWait(100);                                                                         \
     }                                                                                              \
     QCOMPARE(lockStateChangedSpy.count(), expectedLockCount + 1);                                  \
-    QVERIFY(!kwinApp()->is_screen_locked());
+    QVERIFY(!base::wayland::is_screen_locked(Test::app()->base));
 
 #define MOTION(target) Test::pointer_motion_absolute(target, timestamp++)
 

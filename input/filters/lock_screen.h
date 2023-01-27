@@ -7,6 +7,7 @@
 
 #include "helpers.h"
 
+#include "base/wayland/screen_lock.h"
 #include "base/wayland/server.h"
 #include "input/event_filter.h"
 #include "input/keyboard_redirect.h"
@@ -33,7 +34,7 @@ public:
 
     bool button(button_event const& event) override
     {
-        if (!kwinApp()->is_screen_locked()) {
+        if (!base::wayland::is_screen_locked(this->redirect.platform.base)) {
             return false;
         }
 
@@ -52,7 +53,7 @@ public:
 
     bool motion(motion_event const& event) override
     {
-        if (!kwinApp()->is_screen_locked()) {
+        if (!base::wayland::is_screen_locked(this->redirect.platform.base)) {
             return false;
         }
 
@@ -70,7 +71,7 @@ public:
 
     bool axis(axis_event const& event) override
     {
-        if (!kwinApp()->is_screen_locked()) {
+        if (!base::wayland::is_screen_locked(this->redirect.platform.base)) {
             return false;
         }
 
@@ -87,7 +88,7 @@ public:
 
     bool key(key_event const& event) override
     {
-        if (!kwinApp()->is_screen_locked()) {
+        if (!base::wayland::is_screen_locked(this->redirect.platform.base)) {
             return false;
         }
 
@@ -119,12 +120,12 @@ public:
     bool key_repeat(key_event const& /*event*/) override
     {
         // If screen is locked Wayland client takes care of it.
-        return kwinApp()->is_screen_locked();
+        return base::wayland::is_screen_locked(this->redirect.platform.base);
     }
 
     bool touch_down(touch_down_event const& event) override
     {
-        if (!kwinApp()->is_screen_locked()) {
+        if (!base::wayland::is_screen_locked(this->redirect.platform.base)) {
             return false;
         }
         auto seat = this->redirect.platform.base.server->seat();
@@ -137,7 +138,7 @@ public:
 
     bool touch_motion(touch_motion_event const& event) override
     {
-        if (!kwinApp()->is_screen_locked()) {
+        if (!base::wayland::is_screen_locked(this->redirect.platform.base)) {
             return false;
         }
         auto seat = this->redirect.platform.base.server->seat();
@@ -153,7 +154,7 @@ public:
 
     bool touch_up(touch_up_event const& event) override
     {
-        if (!kwinApp()->is_screen_locked()) {
+        if (!base::wayland::is_screen_locked(this->redirect.platform.base)) {
             return false;
         }
         auto seat = this->redirect.platform.base.server->seat();
@@ -171,37 +172,37 @@ public:
     bool pinch_begin(pinch_begin_event const& /*event*/) override
     {
         // no touchpad multi-finger gestures on lock screen
-        return kwinApp()->is_screen_locked();
+        return base::wayland::is_screen_locked(this->redirect.platform.base);
     }
 
     bool pinch_update(pinch_update_event const& /*event*/) override
     {
         // no touchpad multi-finger gestures on lock screen
-        return kwinApp()->is_screen_locked();
+        return base::wayland::is_screen_locked(this->redirect.platform.base);
     }
 
     bool pinch_end(pinch_end_event const& /*event*/) override
     {
         // no touchpad multi-finger gestures on lock screen
-        return kwinApp()->is_screen_locked();
+        return base::wayland::is_screen_locked(this->redirect.platform.base);
     }
 
     bool swipe_begin(swipe_begin_event const& /*event*/) override
     {
         // no touchpad multi-finger gestures on lock screen
-        return kwinApp()->is_screen_locked();
+        return base::wayland::is_screen_locked(this->redirect.platform.base);
     }
 
     bool swipe_update(swipe_update_event const& /*event*/) override
     {
         // no touchpad multi-finger gestures on lock screen
-        return kwinApp()->is_screen_locked();
+        return base::wayland::is_screen_locked(this->redirect.platform.base);
     }
 
     bool swipe_end(swipe_end_event const& /*event*/) override
     {
         // no touchpad multi-finger gestures on lock screen
-        return kwinApp()->is_screen_locked();
+        return base::wayland::is_screen_locked(this->redirect.platform.base);
     }
 
 private:

@@ -221,7 +221,7 @@ QWindow* device_redirect_find_internal_window(Space& space, QPoint const& pos)
     if (space.windows.empty()) {
         return nullptr;
     }
-    if (kwinApp()->is_screen_locked()) {
+    if (base::wayland::is_screen_locked(space.base)) {
         return nullptr;
     }
 

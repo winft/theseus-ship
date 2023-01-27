@@ -10,6 +10,7 @@
 
 #include "cursor_theme.h"
 
+#include "base/wayland/screen_lock.h"
 #include "base/wayland/server.h"
 #include "kwin_export.h"
 #include "main.h"
@@ -298,7 +299,7 @@ private:
             setSource(CursorSource::DragAndDrop);
             return;
         }
-        if (kwinApp()->is_screen_locked()) {
+        if (base::wayland::is_screen_locked(redirect.platform.base)) {
             setSource(CursorSource::LockScreen);
             return;
         }

@@ -177,11 +177,6 @@ void Application::setupLocalizedString()
     KLocalizedString::setApplicationDomain("kwin");
 }
 
-bool Application::is_screen_locked() const
-{
-    return false;
-}
-
 QProcessEnvironment Application::processStartupEnvironment() const
 {
     return QProcessEnvironment::systemEnvironment();

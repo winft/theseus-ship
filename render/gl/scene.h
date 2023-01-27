@@ -599,7 +599,7 @@ protected:
                          QRegion region,
                          WindowPaintData& data) override
     {
-        if (kwinApp()->is_screen_locked()) {
+        if (base::wayland::is_screen_locked(this->platform.base)) {
             if (std::visit(overload{[&](auto&& win) {
                                if constexpr (requires(decltype(win) win) { win.isLockScreen(); }) {
                                    if (win->isLockScreen()) {

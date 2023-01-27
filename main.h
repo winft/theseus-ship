@@ -92,8 +92,6 @@ public:
     static void setupLocalizedString();
     virtual void notifyKSplash() {}
 
-    virtual bool is_screen_locked() const;
-
     std::unique_ptr<base::x11::event_filter_manager> x11_event_filters;
     std::unique_ptr<desktop::screen_locker_watcher> screen_locker_watcher;
 

@@ -50,8 +50,6 @@ public:
                            char** argv);
     ~WaylandTestApplication() override;
 
-    bool is_screen_locked() const override;
-
     base::platform& get_base() override;
 
     void start();

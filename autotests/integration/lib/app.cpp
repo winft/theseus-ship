@@ -143,11 +143,6 @@ WaylandTestApplication::~WaylandTestApplication()
     base.render->compositor.reset();
 }
 
-bool WaylandTestApplication::is_screen_locked() const
-{
-    return base.server && base.server->is_screen_locked();
-}
-
 base::platform& WaylandTestApplication::get_base()
 {
     return base;

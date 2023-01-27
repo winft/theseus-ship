@@ -39,8 +39,6 @@ public:
     ApplicationWayland(int &argc, char **argv);
     ~ApplicationWayland() override;
 
-    bool is_screen_locked() const override;
-
     base::platform& get_base() override;
 
     void start(base::operation_mode mode,

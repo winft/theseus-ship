@@ -17,7 +17,7 @@ template<typename Redirect>
 auto find_controlled_window(Redirect const& redirect, QPoint const& pos)
     -> std::optional<typename Redirect::window_t>
 {
-    auto const isScreenLocked = kwinApp()->is_screen_locked();
+    auto const isScreenLocked = base::wayland::is_screen_locked(redirect.platform.base);
     auto const& stacking = redirect.space.stacking.order.stack;
     if (stacking.empty()) {
         return {};
@@ -74,7 +74,7 @@ auto find_window(Redirect const& redirect, QPoint const& pos)
     -> std::optional<typename Redirect::window_t>
 {
     // TODO: check whether the unmanaged wants input events at all
-    if (!kwinApp()->is_screen_locked()) {
+    if (!base::wayland::is_screen_locked(redirect.platform.base)) {
         // if an effect overrides the cursor we don't have a window to focus
         if (redirect.platform.base.render->compositor->effects
             && redirect.platform.base.render->compositor->effects->isMouseInterception()) {

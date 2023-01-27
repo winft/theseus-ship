@@ -331,7 +331,7 @@ void init_xdg_shell_popup(std::unique_ptr<Clt::Surface> const& surface,
 
 void lock_screen()
 {
-    QVERIFY(!kwinApp()->is_screen_locked());
+    QVERIFY(!base::wayland::is_screen_locked(Test::app()->base));
 
     QSignalSpy lockStateChangedSpy(ScreenLocker::KSldApp::self(),
                                    &ScreenLocker::KSldApp::lockStateChanged);
@@ -343,7 +343,7 @@ void lock_screen()
     ScreenLocker::KSldApp::self()->lock(ScreenLocker::EstablishLock::Immediate);
     QCOMPARE(lockStateChangedSpy.count(), 1);
 
-    QVERIFY(kwinApp()->is_screen_locked());
+    QVERIFY(base::wayland::is_screen_locked(Test::app()->base));
     QVERIFY(lockWatcherSpy.wait());
     QCOMPARE(lockWatcherSpy.count(), 1);
     QCOMPARE(lockStateChangedSpy.count(), 2);
@@ -387,7 +387,7 @@ void unlock_screen()
     QCOMPARE(lockWatcherSpy.count(), 1);
     QCOMPARE(lockStateChangedSpy.count(), 1);
 
-    QVERIFY(!kwinApp()->is_screen_locked());
+    QVERIFY(!base::wayland::is_screen_locked(Test::app()->base));
 
     QVERIFY(!kwinApp()->screen_locker_watcher->is_locked());
 }

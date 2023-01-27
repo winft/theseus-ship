@@ -173,11 +173,6 @@ ApplicationWayland::~ApplicationWayland()
     base->render->compositor.reset();
 }
 
-bool ApplicationWayland::is_screen_locked() const
-{
-    return base->server && base->server->is_screen_locked();
-}
-
 base::platform& ApplicationWayland::get_base()
 {
     return *base;
