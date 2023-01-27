@@ -19,8 +19,9 @@
 namespace KWin::input
 {
 
-global_shortcuts_manager::global_shortcuts_manager()
+global_shortcuts_manager::global_shortcuts_manager(base::operation_mode mode)
     : m_gestureRecognizer{std::make_unique<gesture_recognizer>()}
+    , windowing_mode{mode}
 {
 }
 
@@ -28,7 +29,7 @@ global_shortcuts_manager::~global_shortcuts_manager() = default;
 
 void global_shortcuts_manager::init()
 {
-    if (kwinApp()->shouldUseWaylandForCompositing()) {
+    if (base::should_use_wayland_for_compositing(windowing_mode)) {
         qputenv("KGLOBALACCELD_PLATFORM", QByteArrayLiteral("org.kde.kwin"));
         m_kglobalAccel = std::make_unique<KGlobalAccelD>();
         if (!m_kglobalAccel->init()) {

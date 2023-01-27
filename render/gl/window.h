@@ -490,7 +490,7 @@ private:
         }
 
         // Update the texture filter
-        if (kwinApp()->operationMode() == Application::OperationModeX11) {
+        if (scene.platform.base.operation_mode == base::operation_mode::x11) {
             if (flags(mask & (paint_type::window_transformed | paint_type::screen_transformed))) {
                 this->filter = image_filter_type::good;
             } else {

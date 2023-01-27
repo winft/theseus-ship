@@ -8,6 +8,8 @@
 */
 #pragma once
 
+#include "types.h"
+
 #include "kwin_export.h"
 #include "kwinglobals.h"
 #include "win/types.h"
@@ -31,7 +33,7 @@ enum HiddenPreviews {
     HiddenPreviewsAlways
 };
 
-KWIN_EXPORT OpenGLPlatformInterface defaultGlPlatformInterface();
+KWIN_EXPORT OpenGLPlatformInterface defaultGlPlatformInterface(operation_mode mode);
 
 class Settings;
 
@@ -209,6 +211,8 @@ class KWIN_EXPORT options_qobject : public QObject
     Q_PROPERTY(bool windowsBlockCompositing READ windowsBlockCompositing WRITE
                    setWindowsBlockCompositing NOTIFY windowsBlockCompositingChanged)
 public:
+    options_qobject(base::operation_mode mode);
+
     /**
      * This enum type is used to specify the focus policy.
      *
@@ -611,7 +615,7 @@ public:
     /// Deprecated
     OpenGLPlatformInterface glPlatformInterface() const
     {
-        return defaultGlPlatformInterface();
+        return defaultGlPlatformInterface(windowing_mode);
     }
 
     bool windowsBlockCompositing() const
@@ -798,7 +802,8 @@ public:
         return true;
     }
 
-    //----------------------
+    base::operation_mode windowing_mode;
+
 Q_SIGNALS:
     // for properties
     void focusPolicyChanged();
@@ -925,7 +930,7 @@ private:
 class KWIN_EXPORT options
 {
 public:
-    options(KSharedConfigPtr config);
+    options(base::operation_mode mode, KSharedConfigPtr config);
     ~options();
 
     void updateSettings();
@@ -977,9 +982,9 @@ private:
     QHash<Qt::KeyboardModifier, QStringList> m_modifierOnlyShortcuts;
 };
 
-inline std::unique_ptr<options> create_options(KSharedConfigPtr config)
+inline std::unique_ptr<options> create_options(operation_mode mode, KSharedConfigPtr config)
 {
-    auto opts = std::make_unique<base::options>(config);
+    auto opts = std::make_unique<base::options>(mode, config);
     opts->loadConfig();
     opts->loadCompositingConfig(false);
     return opts;

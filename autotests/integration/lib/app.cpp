@@ -70,14 +70,16 @@ void disable_dr_konqi()
 }
 Q_CONSTRUCTOR_FUNCTION(disable_dr_konqi)
 
-WaylandTestApplication::WaylandTestApplication(OperationMode mode,
+WaylandTestApplication::WaylandTestApplication(base::operation_mode mode,
                                                std::string const& socket_name,
                                                base::wayland::start_options flags,
                                                int& argc,
                                                char** argv)
-    : Application(mode, argc, argv)
+    : Application(argc, argv)
     , base{base::config(KConfig::OpenFlag::SimpleConfig)}
 {
+    base.operation_mode = mode;
+
     auto rm_config = [](auto name) {
         auto const path = QStandardPaths::locate(QStandardPaths::ConfigLocation, name);
         if (!path.isEmpty()) {
@@ -158,13 +160,13 @@ void WaylandTestApplication::start()
     auto headless_backend = base::backend::wlroots::get_headless_backend(base.backend);
     wlr_headless_add_output(headless_backend, 1280, 1024);
 
-    base.options = base::create_options(base.config.main);
+    base.options = base::create_options(base.operation_mode, base.config.main);
 
     base.session = std::make_unique<base::seat::backend::wlroots::session>(base.wlroots_session,
                                                                            headless_backend);
     base.input = std::make_unique<input::backend::wlroots::platform>(
         base, input::config(KConfig::SimpleConfig));
-    base.input->install_shortcuts();
+    base.input->install_shortcuts(base.operation_mode);
 
     keyboard = static_cast<wlr_keyboard*>(calloc(1, sizeof(wlr_keyboard)));
     pointer = static_cast<wlr_pointer*>(calloc(1, sizeof(wlr_pointer)));
@@ -255,7 +257,7 @@ void WaylandTestApplication::set_outputs(std::vector<Test::output> const& output
 
 void WaylandTestApplication::handle_server_addons_created()
 {
-    if (operationMode() == OperationModeXwayland) {
+    if (base.operation_mode == base::operation_mode::xwayland) {
         create_xwayland();
         return;
     }

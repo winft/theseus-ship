@@ -19,6 +19,7 @@ namespace KWin::base::backend::x11
 platform::platform(base::config config)
     : base::x11::platform(std::move(config))
 {
+    operation_mode = operation_mode::x11;
 }
 
 void platform::update_outputs()

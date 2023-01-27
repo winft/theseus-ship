@@ -974,7 +974,7 @@ private:
     {
         if (seq.isEmpty())
             return false;
-        if (kwinApp()->shouldUseWaylandForCompositing()) {
+        if (base::should_use_wayland_for_compositing(input.base)) {
             return areModKeysDepressedWayland(input, seq);
         } else {
             return areModKeysDepressedX11(seq);
@@ -1208,11 +1208,11 @@ private:
 
     bool establish_tabbox_grab()
     {
-        if (kwinApp()->shouldUseWaylandForCompositing()) {
+        if (base::should_use_wayland_for_compositing(space.base)) {
             m_forced_global_mouse_grab = true;
             return true;
         }
-        kwinApp()->update_x11_time_from_clock();
+        base::x11::update_time_from_clock(space.base);
         if (!base::x11::grab_keyboard(space.base.x11_data))
             return false;
         // Don't try to establish a global mouse grab using XGrabPointer, as that would prevent
@@ -1232,11 +1232,11 @@ private:
 
     void remove_tabbox_grab()
     {
-        if (kwinApp()->shouldUseWaylandForCompositing()) {
+        if (base::should_use_wayland_for_compositing(space.base)) {
             m_forced_global_mouse_grab = false;
             return;
         }
-        kwinApp()->update_x11_time_from_clock();
+        base::x11::update_time_from_clock(space.base);
         base::x11::ungrab_keyboard(space.base.x11_data.connection);
         Q_ASSERT(m_forced_global_mouse_grab);
         m_forced_global_mouse_grab = false;

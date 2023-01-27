@@ -21,7 +21,7 @@ template<typename Win>
 void set_desktops(Win* win, QVector<virtual_desktop*> desktops)
 {
     // On x11 we can have only one desktop at a time.
-    if (kwinApp()->operationMode() == Application::OperationModeX11 && desktops.size() > 1) {
+    if (win->space.base.operation_mode == base::operation_mode::x11 && desktops.size() > 1) {
         desktops = QVector<virtual_desktop*>({desktops.last()});
     }
 

@@ -59,14 +59,14 @@ QString get_support_info(Space const& space)
     support.append(
         QStringLiteral("XCB compile version: %1\n\n").arg(QStringLiteral(XCB_VERSION_STRING)));
     support.append(QStringLiteral("Operation Mode: "));
-    switch (kwinApp()->operationMode()) {
-    case Application::OperationModeX11:
+    switch (space.base.operation_mode) {
+    case base::operation_mode::x11:
         support.append(QStringLiteral("X11 only"));
         break;
-    case Application::OperationModeWaylandOnly:
+    case base::operation_mode::wayland:
         support.append(QStringLiteral("Wayland Only"));
         break;
-    case Application::OperationModeXwayland:
+    case base::operation_mode::xwayland:
         support.append(QStringLiteral("Xwayland"));
         break;
     }

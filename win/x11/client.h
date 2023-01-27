@@ -163,9 +163,9 @@ void pong(Win* win, xcb_timestamp_t timestamp)
     }
 }
 
-inline bool wants_sync_counter(base::x11::data const& data)
+inline bool wants_sync_counter(base::operation_mode mode, base::x11::data const& data)
 {
-    if (kwinApp()->operationMode() == Application::OperationModeX11) {
+    if (mode == base::operation_mode::x11) {
         return true;
     }
     // When the frame window is resized, the attached buffer will be destroyed by
@@ -183,7 +183,7 @@ void get_sync_counter(Win* win)
     if (!base::x11::xcb::extensions::self()->is_sync_available()) {
         return;
     }
-    if (!wants_sync_counter(win->space.base.x11_data)) {
+    if (!wants_sync_counter(win->space.base.operation_mode, win->space.base.x11_data)) {
         return;
     }
 
@@ -255,7 +255,7 @@ void send_sync_request(Win* win)
     }
 
     if (win->sync_request.timestamp >= win->space.base.x11_data.time) {
-        kwinApp()->update_x11_time_from_clock();
+        base::x11::update_time_from_clock(win->space.base);
     }
 
     auto const number_lo = (win->sync_request.update_request_number << 32) >> 32;

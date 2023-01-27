@@ -5,6 +5,12 @@
 */
 #pragma once
 
+#include "base/logging.h"
+#include "base/types.h"
+
+#include <QX11Info>
+#include <cerrno>
+#include <unistd.h>
 #include <xcb/xcb.h>
 
 namespace KWin::base::x11
@@ -47,6 +53,34 @@ inline xcb_screen_t* get_default_screen(x11::data const& data)
         }
     }
     return data.screen;
+}
+
+template<typename Base>
+void update_time_from_clock(Base& base)
+{
+    auto get_monotonic_time = [] -> uint32_t {
+        timespec ts;
+
+        if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0) {
+            qCWarning(KWIN_CORE, "Failed to query monotonic time: %s", strerror(errno));
+        }
+
+        return ts.tv_sec * 1000 + ts.tv_nsec / 1000000L;
+    };
+
+    switch (base.operation_mode) {
+    case operation_mode::x11:
+        set_time(base.x11_data, QX11Info::getTimestamp());
+        break;
+
+    case operation_mode::xwayland:
+        set_time(base.x11_data, get_monotonic_time());
+        break;
+
+    default:
+        // Do not update the current X11 time stamp if it's the Wayland only session.
+        break;
+    }
 }
 
 }

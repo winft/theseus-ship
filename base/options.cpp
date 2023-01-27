@@ -26,10 +26,14 @@
 namespace KWin::base
 {
 
-OpenGLPlatformInterface defaultGlPlatformInterface()
+OpenGLPlatformInterface defaultGlPlatformInterface(operation_mode mode)
 {
-    return kwinApp()->shouldUseWaylandForCompositing() ? EglPlatformInterface
-                                                       : GlxPlatformInterface;
+    return should_use_wayland_for_compositing(mode) ? EglPlatformInterface : GlxPlatformInterface;
+}
+
+options_qobject::options_qobject(operation_mode mode)
+    : windowing_mode{mode}
+{
 }
 
 void options_qobject::setFocusPolicy(FocusPolicy focusPolicy)
@@ -691,7 +695,9 @@ bool options::loadCompositingConfig(bool force)
     }
     qobject->setCompositingMode(compositingMode);
 
-    auto const platformSupportsNoCompositing = !kwinApp()->shouldUseWaylandForCompositing();
+    auto const platformSupportsNoCompositing
+        = !should_use_wayland_for_compositing(qobject->windowing_mode);
+
     if (qobject->m_compositingMode == NoCompositing && platformSupportsNoCompositing) {
         qobject->setUseCompositing(false);
         return false; // do not even detect compositing preferences if explicitly disabled
@@ -880,11 +886,11 @@ QStringList options::modifierOnlyDBusShortcut(Qt::KeyboardModifier mod) const
 
 bool options_qobject::isUseCompositing() const
 {
-    return m_useCompositing || kwinApp()->shouldUseWaylandForCompositing();
+    return m_useCompositing || should_use_wayland_for_compositing(windowing_mode);
 }
 
-options::options(KSharedConfigPtr config)
-    : qobject{std::make_unique<options_qobject>()}
+options::options(operation_mode mode, KSharedConfigPtr config)
+    : qobject{std::make_unique<options_qobject>(mode)}
     , m_settings(new Settings(config))
 {
     m_settings->setDefaults();

@@ -107,7 +107,7 @@ bool do_start_move_resize(Win& win)
     win.xcb_windows.grab.map();
     win.xcb_windows.grab.raise();
 
-    kwinApp()->update_x11_time_from_clock();
+    base::x11::update_time_from_clock(win.space.base);
     auto const cookie = xcb_grab_pointer_unchecked(
         win.space.base.x11_data.connection,
         false,

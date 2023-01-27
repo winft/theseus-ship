@@ -78,9 +78,9 @@ public:
         QObject::connect(action, &QAction::triggered, receiver, slot);
     }
 
-    void install_shortcuts()
+    void install_shortcuts(base::operation_mode mode)
     {
-        this->shortcuts = std::make_unique<input::global_shortcuts_manager>();
+        this->shortcuts = std::make_unique<input::global_shortcuts_manager>(mode);
         this->shortcuts->init();
         setup_touchpad_shortcuts();
     }

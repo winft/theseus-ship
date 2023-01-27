@@ -43,7 +43,7 @@ public:
 
     std::vector<Test::client> clients;
 
-    WaylandTestApplication(OperationMode mode,
+    WaylandTestApplication(base::operation_mode mode,
                            std::string const& socket_name,
                            base::wayland::start_options flags,
                            int& argc,
@@ -83,9 +83,9 @@ int create_test(std::string const& test_name,
     try {
         prepare_app_env(argv[0]);
 #ifdef NO_XWAYLAND
-        auto mode = KWin::Application::OperationModeWaylandOnly;
+        auto mode = KWin::base::operation_mode::wayland;
 #else
-        auto mode = KWin::Application::OperationModeXwayland;
+        auto mode = KWin::base::operation_mode::xwayland;
 #endif
         KWin::base::app_singleton app_singleton;
         auto way_app = WaylandTestApplication(mode, sock_name, flags, argc, argv);

@@ -10,6 +10,7 @@
 #include "output.h"
 #include "output_topology.h"
 #include "seat/session.h"
+#include "types.h"
 #include "x11/data.h"
 
 #include "kwin_export.h"
@@ -33,6 +34,7 @@ public:
     /// Makes a copy of all outputs. Only for external use. Prefer subclass objects instead.
     virtual std::vector<output*> get_outputs() const = 0;
 
+    base::operation_mode operation_mode;
     output_topology topology;
     base::config config;
     base::x11::data x11_data;

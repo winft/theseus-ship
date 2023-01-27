@@ -168,7 +168,7 @@ public:
                                             [this] { m_client = {}; });
 
         init();
-        if (kwinApp()->shouldUseWaylandForCompositing()) {
+        if (base::should_use_wayland_for_compositing(window->space.base)) {
             m_menu->popup(pos.bottomLeft());
         } else {
             m_menu->exec(pos.bottomLeft());
@@ -730,8 +730,7 @@ private:
     /// Creates the Move to Desktop sub-menu.
     void initDesktopPopup()
     {
-        if (kwinApp()->operationMode() == Application::OperationModeWaylandOnly
-            || kwinApp()->operationMode() == Application::OperationModeXwayland) {
+        if (base::should_use_wayland_for_compositing(space.base)) {
             if (m_multipleDesktopsMenu) {
                 return;
             }

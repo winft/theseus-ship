@@ -66,10 +66,9 @@ namespace KWin
 
 int Application::crashes = 0;
 
-Application::Application(Application::OperationMode mode, int &argc, char **argv)
+Application::Application(int &argc, char **argv)
     : QApplication(argc, argv)
     , x11_event_filters{new base::x11::event_filter_manager}
-    , m_operationMode(mode)
 {
     qDebug("Starting KWinFT %s", KWIN_VERSION_STRING);
 
@@ -84,21 +83,6 @@ Application::Application(Application::OperationMode mode, int &argc, char **argv
     // We want all QQuickWindows with an alpha buffer, do here as a later Workspace might create
     // QQuickWindows.
     QQuickWindow::setDefaultAlphaBuffer(true);
-}
-
-Application::OperationMode Application::operationMode() const
-{
-    return m_operationMode;
-}
-
-void Application::setOperationMode(OperationMode mode)
-{
-    m_operationMode = mode;
-}
-
-bool Application::shouldUseWaylandForCompositing() const
-{
-    return m_operationMode == OperationModeWaylandOnly || m_operationMode == OperationModeXwayland;
 }
 
 void Application::prepare_start()
@@ -196,34 +180,6 @@ void Application::setupLocalizedString()
 bool Application::is_screen_locked() const
 {
     return false;
-}
-
-static uint32_t get_monotonic_time()
-{
-    timespec ts;
-
-    const int result = clock_gettime(CLOCK_MONOTONIC, &ts);
-    if (result)
-        qCWarning(KWIN_CORE, "Failed to query monotonic time: %s", strerror(errno));
-
-    return ts.tv_sec * 1000 + ts.tv_nsec / 1000000L;
-}
-
-void Application::update_x11_time_from_clock()
-{
-    switch (m_operationMode) {
-    case Application::OperationModeX11:
-        base::x11::set_time(get_base().x11_data, QX11Info::getTimestamp());
-        break;
-
-    case Application::OperationModeXwayland:
-        base::x11::set_time(get_base().x11_data, get_monotonic_time());
-        break;
-
-    default:
-        // Do not update the current X11 time stamp if it's the Wayland only session.
-        break;
-    }
 }
 
 void Application::update_x11_time_from_event(xcb_generic_event_t *event)

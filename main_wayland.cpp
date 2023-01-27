@@ -136,7 +136,7 @@ void gainRealTime()
 //************************************
 
 ApplicationWayland::ApplicationWayland(int &argc, char **argv)
-    : Application(OperationModeWaylandOnly, argc, argv)
+    : Application(argc, argv)
 {
 }
 
@@ -183,13 +183,12 @@ base::platform& ApplicationWayland::get_base()
     return *base;
 }
 
-void ApplicationWayland::start(OperationMode mode,
+void ApplicationWayland::start(base::operation_mode mode,
                                std::string const& socket_name,
                                base::wayland::start_options flags,
                                QProcessEnvironment environment)
 {
-    assert(mode != OperationModeX11);
-    setOperationMode(mode);
+    assert(mode != base::operation_mode::x11);
 
     prepare_start();
 
@@ -198,11 +197,12 @@ void ApplicationWayland::start(OperationMode mode,
                                     socket_name,
                                     flags,
                                     base::backend::wlroots::start_options::none);
+    base->operation_mode = mode;
 
     using render_t = render::backend::wlroots::platform<base_t>;
     base->render = std::make_unique<render_t>(*base);
 
-    base->options = base::create_options(base->config.main);
+    base->options = base::create_options(mode, base->config.main);
 
     auto session = new base::seat::backend::wlroots::session(base->wlroots_session, base->backend);
     base->session.reset(session);
@@ -211,7 +211,7 @@ void ApplicationWayland::start(OperationMode mode,
     base->input = std::make_unique<input::backend::wlroots::platform>(
         *base, input::config(KConfig::NoGlobals));
     input::wayland::add_dbus(base->input.get());
-    base->input->install_shortcuts();
+    base->input->install_shortcuts(mode);
 
     try {
         static_cast<render_t&>(*base->render).init();
@@ -245,7 +245,7 @@ void ApplicationWayland::start(OperationMode mode,
 
 void ApplicationWayland::handle_server_addons_created()
 {
-    if (operationMode() == OperationModeXwayland) {
+    if (base->operation_mode == base::operation_mode::xwayland) {
         create_xwayland();
     } else {
         startSession();
@@ -461,8 +461,8 @@ int main(int argc, char * argv[])
         flags |= KWin::base::wayland::start_options::no_global_shortcuts;
     }
 
-    auto op_mode = parser.isSet(xwaylandOption) ? KWin::Application::OperationModeXwayland
-                                                : KWin::Application::OperationModeWaylandOnly;
+    auto op_mode = parser.isSet(xwaylandOption) ? KWin::base::operation_mode::xwayland
+                                                : KWin::base::operation_mode::wayland;
 
     a.setApplicationsToStart(parser.positionalArguments());
     a.start(op_mode, parser.value(waylandSocketOption).toStdString(), flags, environment);

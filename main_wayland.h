@@ -43,7 +43,7 @@ public:
 
     base::platform& get_base() override;
 
-    void start(OperationMode mode,
+    void start(base::operation_mode mode,
                std::string const& socket_name,
                base::wayland::start_options flags,
                QProcessEnvironment environment);

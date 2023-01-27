@@ -172,7 +172,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
         if (create_event->parent == space.base.x11_data.root_window
             && !QWidget::find(create_event->window) && !create_event->override_redirect) {
             // see comments for allowClientActivation()
-            kwinApp()->update_x11_time_from_clock();
+            base::x11::update_time_from_clock(space.base);
             auto const t = space.base.x11_data.time;
             xcb_change_property(space.base.x11_data.connection,
                                 XCB_PROP_MODE_REPLACE,
@@ -200,7 +200,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
     }
 
     case XCB_MAP_REQUEST: {
-        kwinApp()->update_x11_time_from_clock();
+        base::x11::update_time_from_clock(space.base);
         auto map_req_event = reinterpret_cast<xcb_map_request_event_t*>(event);
 
         if (auto c = find_controlled_window<x11_window>(
@@ -298,7 +298,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
             base::x11::xcb::input_focus currentInput(space.base.x11_data.connection);
 
             // focusToNull() uses xTime(), which is old now (FocusIn has no timestamp)
-            kwinApp()->update_x11_time_from_clock();
+            base::x11::update_time_from_clock(space.base);
 
             // it seems we can "loose" focus reversions when the closing client hold a grab
             // => catch the typical pattern (though we don't want the focus on the root anyway)

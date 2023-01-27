@@ -210,7 +210,8 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* event)
         // To not run into these errors we try to wait for the destroy notify. For this we
         // generate a round trip to the X server and wait a very short time span before
         // handling the release.
-        kwinApp()->update_x11_time_from_clock();
+        base::x11::update_time_from_clock(win->space.base);
+
         // using 1 msec to not just move it at the end of the event loop but add an very short
         // timespan to cover cases like unmap() followed by destroy(). The only other way to
         // ensure that the window is not destroyed when we do the release handling is to grab

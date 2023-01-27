@@ -62,46 +62,15 @@ class KWIN_EXPORT Application : public  QApplication
 {
     Q_OBJECT
 public:
-    /**
-     * @brief This enum provides the various operation modes of KWin depending on the available
-     * Windowing Systems at startup. For example whether KWin only talks to X11 or also to a Wayland
-     * Compositor.
-     *
-     */
-    enum OperationMode {
-        /**
-         * @brief KWin uses only X11 for managing windows and compositing
-         */
-        OperationModeX11,
-        /**
-         * @brief KWin uses only Wayland
-         */
-        OperationModeWaylandOnly,
-        /**
-         * @brief KWin uses Wayland and controls a nested Xwayland server.
-         */
-        OperationModeXwayland
-    };
-
     ~Application() override;
 
     virtual base::platform& get_base() = 0;
-
-    /**
-     * @brief The operation mode used by KWin.
-     *
-     * @return OperationMode
-     */
-    OperationMode operationMode() const;
-    void setOperationMode(OperationMode mode);
-    bool shouldUseWaylandForCompositing() const;
 
     void setupEventFilters();
     void setupTranslator();
     void setupCommandLine(QCommandLineParser *parser);
     void processCommandLine(QCommandLineParser *parser);
 
-    void update_x11_time_from_clock();
     void update_x11_time_from_event(xcb_generic_event_t *event);
 
     static void setCrashCount(int count);
@@ -136,7 +105,7 @@ Q_SIGNALS:
     void virtualTerminalCreated();
 
 protected:
-    Application(OperationMode mode, int &argc, char **argv);
+    Application(int &argc, char **argv);
 
     void prepare_start();
 
@@ -148,7 +117,6 @@ protected:
     static int crashes;
 
 private:
-    OperationMode m_operationMode;
     bool m_terminating = false;
 };
 

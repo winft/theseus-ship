@@ -284,7 +284,7 @@ public:
             : hasGLVersion(3, 2) || hasGLExtension("GL_ARB_sync");
 
         if (hasGLExtension("GL_EXT_x11_sync_object") && haveSyncObjects
-            && kwinApp()->operationMode() == Application::OperationModeX11) {
+            && this->platform.base.operation_mode == base::operation_mode::x11) {
             const QByteArray useExplicitSync = qgetenv("KWIN_EXPLICIT_SYNC");
 
             if (useExplicitSync != "0") {
@@ -712,7 +712,7 @@ protected:
         if (m_backend->supportsBufferAge())
             return;
 
-        if (kwinApp()->operationMode() == Application::OperationModeX11
+        if (this->platform.base.operation_mode == base::operation_mode::x11
             && GLPlatform::instance()->driver() == Driver_NVidia) {
             // Nvidia's X11 driver supports fast full buffer copies. So no need to extend damage.
             // TODO: Do we really need to check this here? Could we just run it anyway or does maybe

@@ -23,7 +23,7 @@ void focus_take(Win& win)
     }
 
     if (win.net_info->supportsProtocol(NET::TakeFocusProtocol)) {
-        kwinApp()->update_x11_time_from_clock();
+        base::x11::update_time_from_clock(win.space.base);
         send_client_message(win.space.base.x11_data,
                             win.xcb_windows.client,
                             win.space.atoms->wm_protocols,

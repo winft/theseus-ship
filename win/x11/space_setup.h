@@ -68,7 +68,7 @@ void init_space(Space& space)
     // Select windowmanager privileges
     select_wm_input_event_mask(x11_data);
 
-    if (kwinApp()->operationMode() == Application::OperationModeX11) {
+    if (space.base.operation_mode == base::operation_mode::x11) {
         space.m_wasUserInteractionFilter.reset(
             new base::x11::user_interaction_filter([&space] { mark_as_user_interaction(space); }));
         space.m_movingClientFilter.reset(new moving_window_filter(space));
@@ -78,7 +78,7 @@ void init_space(Space& space)
     }
 
     // Needed for proper initialization of user_time in Client ctor
-    kwinApp()->update_x11_time_from_clock();
+    base::x11::update_time_from_clock(space.base);
 
     const uint32_t nullFocusValues[] = {true};
     space.m_nullFocus = std::make_unique<base::x11::xcb::window>(x11_data.connection,
@@ -218,7 +218,7 @@ void clear_space(Space& space)
     space.stacking.order.stack.clear();
 
     // Only release windows on X11.
-    auto is_x11 = kwinApp()->operationMode() == Application::OperationModeX11;
+    auto const is_x11 = space.base.operation_mode == base::operation_mode::x11;
 
     for (auto it = stack.cbegin(), end = stack.cend(); it != end; ++it) {
         std::visit(overload{[&](typename Space::x11_window* win) {

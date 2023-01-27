@@ -41,7 +41,7 @@ static void create_osd(Space& space)
 template<typename Space>
 void osd_show(Space& space, QString const& message, QString const& iconName, int timeout)
 {
-    if (!kwinApp()->shouldUseWaylandForCompositing()) {
+    if (!base::should_use_wayland_for_compositing(space.base)) {
         // FIXME: only supported on Wayland
         return;
     }
@@ -77,7 +77,7 @@ void osd_show(Space& space, QString const& message, int timeout)
 template<typename Space>
 void osd_hide(Space& space, osd_hide_flags hide_flags = osd_hide_flags::none)
 {
-    if (!kwinApp()->shouldUseWaylandForCompositing()) {
+    if (!base::should_use_wayland_for_compositing(space.base)) {
         // FIXME: only supported on Wayland
         return;
     }

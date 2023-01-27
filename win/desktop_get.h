@@ -27,19 +27,15 @@ int get_desktop(Win const& win)
 template<typename Win>
 bool on_all_desktops(Win* win)
 {
-    return kwinApp()->operationMode() == Application::OperationModeWaylandOnly
-            || kwinApp()->operationMode() == Application::OperationModeXwayland
-        // Wayland
+    return base::should_use_wayland_for_compositing(win->space.base.operation_mode)
         ? win->topo.desktops.isEmpty()
-        // X11
         : get_desktop(*win) == NET::OnAllDesktops;
 }
 
 template<typename Win>
 bool on_desktop(Win* win, int d)
 {
-    return (kwinApp()->operationMode() == Application::OperationModeWaylandOnly
-                    || kwinApp()->operationMode() == Application::OperationModeXwayland
+    return (base::should_use_wayland_for_compositing(win->space.base.operation_mode)
                 ? win->topo.desktops.contains(
                     win->space.virtual_desktop_manager->desktopForX11Id(d))
                 : get_desktop(*win) == d)

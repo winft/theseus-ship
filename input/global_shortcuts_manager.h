@@ -6,6 +6,7 @@
 */
 #pragma once
 
+#include "base/types.h"
 #include "kwinglobals.h"
 
 #include <memory>
@@ -32,7 +33,7 @@ class KWIN_EXPORT global_shortcuts_manager : public QObject
 {
     Q_OBJECT
 public:
-    global_shortcuts_manager();
+    global_shortcuts_manager(base::operation_mode mode);
     ~global_shortcuts_manager() override;
     void init();
 
@@ -105,6 +106,7 @@ private:
     std::unique_ptr<KGlobalAccelD> m_kglobalAccel;
     KGlobalAccelInterface* m_kglobalAccelInterface = nullptr;
     std::unique_ptr<gesture_recognizer> m_gestureRecognizer;
+    base::operation_mode windowing_mode;
 };
 
 }

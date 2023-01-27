@@ -702,7 +702,7 @@ void focus_in_event(Win* win, xcb_focus_in_event_t* e)
         // a timestamp *sigh*, kwin's timestamp would be older than the timestamp
         // that was used by whoever caused the focus change, and therefore
         // the attempt to restore the focus would fail due to old timestamp
-        kwinApp()->update_x11_time_from_clock();
+        base::x11::update_time_from_clock(win->space.base);
 
         if (auto& sgf = win->space.stacking.should_get_focus; !sgf.empty()) {
             std::visit(overload{[](auto&& fc) { request_focus(fc->space, *fc); }}, sgf.back());

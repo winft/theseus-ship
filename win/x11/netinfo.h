@@ -247,7 +247,7 @@ protected:
     {
         if (auto win = find_controlled_window<window_t>(space, predicate_match::window, w)) {
             // otherwise grabbing may have old timestamp - this message should include timestamp
-            kwinApp()->update_x11_time_from_clock();
+            base::x11::update_time_from_clock(space.base);
             x11::net_move_resize(win, x_root, y_root, static_cast<Direction>(direction));
         }
     }

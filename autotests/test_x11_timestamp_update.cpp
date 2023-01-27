@@ -54,7 +54,7 @@ public:
 };
 
 X11TestApplication::X11TestApplication(int& argc, char** argv)
-    : Application(OperationModeX11, argc, argv)
+    : Application(argc, argv)
     , base{base::config(KConfig::OpenFlag::SimpleConfig)}
 {
     base.x11_data.connection = QX11Info::connection();
@@ -103,7 +103,7 @@ void X11TimestampUpdateTest::testGrabAfterServerTime()
     // this test tries to grab the X keyboard with a timestamp in future
     // that should fail, but after updating the X11 timestamp, it should
     // work again
-    KWin::kwinApp()->update_x11_time_from_clock();
+    KWin::base::x11::update_time_from_clock(s_app->base);
     QCOMPARE(KWin::base::x11::grab_keyboard(s_app->base.x11_data), true);
     KWin::base::x11::ungrab_keyboard(s_app->base.x11_data.connection);
 
@@ -115,7 +115,7 @@ void X11TimestampUpdateTest::testGrabAfterServerTime()
     QCOMPARE(KWin::base::x11::grab_keyboard(s_app->base.x11_data), false);
 
     // let's update timestamp, now it should work again
-    KWin::kwinApp()->update_x11_time_from_clock();
+    KWin::base::x11::update_time_from_clock(s_app->base);
     QCOMPARE(KWin::base::x11::grab_keyboard(s_app->base.x11_data), true);
     KWin::base::x11::ungrab_keyboard(s_app->base.x11_data.connection);
 }
@@ -127,7 +127,7 @@ void X11TimestampUpdateTest::testBeforeLastGrabTime()
     // timestamp it should work again
 
     // first set the grab timestamp
-    KWin::kwinApp()->update_x11_time_from_clock();
+    KWin::base::x11::update_time_from_clock(s_app->base);
     QCOMPARE(KWin::base::x11::grab_keyboard(s_app->base.x11_data), true);
     KWin::base::x11::ungrab_keyboard(s_app->base.x11_data.connection);
 
@@ -141,7 +141,7 @@ void X11TimestampUpdateTest::testBeforeLastGrabTime()
     QCOMPARE(KWin::base::x11::grab_keyboard(s_app->base.x11_data), false);
 
     // let's update timestamp, now it should work again
-    KWin::kwinApp()->update_x11_time_from_clock();
+    KWin::base::x11::update_time_from_clock(s_app->base);
     QVERIFY(s_app->base.x11_data.time >= timestamp);
     QCOMPARE(KWin::base::x11::grab_keyboard(s_app->base.x11_data), true);
     KWin::base::x11::ungrab_keyboard(s_app->base.x11_data.connection);

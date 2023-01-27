@@ -136,7 +136,7 @@ public:
     {
         // copy of win::x11::update_user_time in control.h
         if (time == XCB_CURRENT_TIME) {
-            kwinApp()->update_x11_time_from_clock();
+            base::x11::update_time_from_clock(space.base);
             time = space.base.x11_data.time;
         }
         if (time != -1U

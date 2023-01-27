@@ -167,7 +167,7 @@ xcb_atom_t KWinSelectionOwner::xa_version = XCB_ATOM_NONE;
 //************************************
 
 ApplicationX11::ApplicationX11(int &argc, char **argv)
-    : Application(OperationModeX11, argc, argv)
+    : Application(argc, argv)
     , base{base::config(KConfig::OpenFlag::FullConfig)}
     , owner()
     , m_replace(false)
@@ -230,7 +230,7 @@ void ApplicationX11::start()
     });
     connect(owner.data(), &KSelectionOwner::lostOwnership, this, &ApplicationX11::lostSelection);
     connect(owner.data(), &KSelectionOwner::claimedOwnership, [this]{
-        base.options = base::create_options(base.config.main);
+        base.options = base::create_options(base::operation_mode::x11, base.config.main);
 
         // Check  whether another windowmanager is running
         const uint32_t maskValues[] = {XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT};
@@ -249,7 +249,8 @@ void ApplicationX11::start()
         base.session = std::make_unique<base::seat::backend::logind::session>();
 
         base.input = std::make_unique<input::x11::platform<base_t>>(base);
-        base.input->shortcuts = std::make_unique<input::global_shortcuts_manager>();
+        base.input->shortcuts
+            = std::make_unique<input::global_shortcuts_manager>(base::operation_mode::x11);
         base.input->shortcuts->init();
 
         base.update_outputs();
