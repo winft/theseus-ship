@@ -10,6 +10,7 @@ namespace KWin::base
 
 platform::platform(base::config config)
     : config{std::move(config)}
+    , x11_event_filters{std::make_unique<base::x11::event_filter_manager>()}
 {
     QObject::connect(this, &platform::output_added, this, [this](auto output) {
         if (!topology.current) {

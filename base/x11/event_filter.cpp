@@ -12,29 +12,37 @@
 namespace KWin::base::x11
 {
 
-event_filter::event_filter(const QVector<int>& eventTypes)
+event_filter::event_filter(event_filter_manager& manager, QVector<int> const& eventTypes)
     : m_eventTypes(eventTypes)
     , m_extension(0)
+    , manager{manager}
 {
-    kwinApp()->x11_event_filters->register_filter(this);
+    manager.register_filter(this);
 }
 
-event_filter::event_filter(int eventType, int opcode, int genericEventType)
-    : event_filter(eventType, opcode, QVector<int>{genericEventType})
+event_filter::event_filter(event_filter_manager& manager,
+                           int eventType,
+                           int opcode,
+                           int genericEventType)
+    : event_filter(manager, eventType, opcode, QVector<int>{genericEventType})
 {
 }
 
-event_filter::event_filter(int eventType, int opcode, const QVector<int>& genericEventTypes)
+event_filter::event_filter(event_filter_manager& manager,
+                           int eventType,
+                           int opcode,
+                           QVector<int> const& genericEventTypes)
     : m_eventTypes(QVector<int>{eventType})
     , m_extension(opcode)
     , m_genericEventTypes(genericEventTypes)
+    , manager{manager}
 {
-    kwinApp()->x11_event_filters->register_filter(this);
+    manager.register_filter(this);
 }
 
 event_filter::~event_filter()
 {
-    kwinApp()->x11_event_filters->unregister_filter(this);
+    manager.unregister_filter(this);
 }
 
 bool event_filter::isGenericEvent() const

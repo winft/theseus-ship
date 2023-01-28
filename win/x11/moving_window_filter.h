@@ -22,6 +22,7 @@ class moving_window_filter : public base::x11::event_filter
 public:
     moving_window_filter(Space& space)
         : base::x11::event_filter(
+            *space.base.x11_event_filters,
             QVector<int>{XCB_KEY_PRESS, XCB_MOTION_NOTIFY, XCB_BUTTON_PRESS, XCB_BUTTON_RELEASE})
         , space{space}
     {

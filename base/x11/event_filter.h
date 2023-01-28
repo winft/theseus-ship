@@ -14,15 +14,23 @@
 namespace KWin::base::x11
 {
 
+class event_filter_manager;
+
 class KWIN_EXPORT event_filter
 {
 public:
     /**
      * Creates an event filter for the given event type.
      */
-    event_filter(int eventType, int opcode = 0, int genericEventType = 0);
-    event_filter(int eventType, int opcode, const QVector<int>& genericEventTypes);
-    event_filter(const QVector<int>& eventTypes);
+    event_filter(event_filter_manager& manager,
+                 int eventType,
+                 int opcode = 0,
+                 int genericEventType = 0);
+    event_filter(event_filter_manager& manager,
+                 int eventType,
+                 int opcode,
+                 QVector<int> const& genericEventTypes);
+    event_filter(event_filter_manager& manager, QVector<int> const& eventTypes);
 
     /**
      * Destroys the event filter.
@@ -73,6 +81,7 @@ private:
     QVector<int> m_eventTypes;
     int m_extension;
     QVector<int> m_genericEventTypes;
+    event_filter_manager& manager;
 };
 
 }

@@ -22,6 +22,7 @@ class screen_edges_filter : public base::x11::event_filter
 public:
     explicit screen_edges_filter(Space& space)
         : base::x11::event_filter(
+            *space.base.x11_event_filters,
             QVector<int>{XCB_MOTION_NOTIFY, XCB_ENTER_NOTIFY, XCB_CLIENT_MESSAGE})
         , space{space}
     {

@@ -69,8 +69,8 @@ void init_space(Space& space)
     select_wm_input_event_mask(x11_data);
 
     if (space.base.operation_mode == base::operation_mode::x11) {
-        space.m_wasUserInteractionFilter.reset(
-            new base::x11::user_interaction_filter([&space] { mark_as_user_interaction(space); }));
+        space.m_wasUserInteractionFilter.reset(new base::x11::user_interaction_filter(
+            *space.base.x11_event_filters, [&space] { mark_as_user_interaction(space); }));
         space.m_movingClientFilter.reset(new moving_window_filter(space));
     }
     if (base::x11::xcb::extensions::self()->is_sync_available()) {

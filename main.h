@@ -37,16 +37,6 @@ class QCommandLineParser;
 namespace KWin
 {
 
-namespace base
-{
-
-namespace x11
-{
-class event_filter_manager;
-}
-
-}
-
 namespace desktop
 {
 class screen_locker_watcher;
@@ -75,7 +65,6 @@ public:
     static void setupLocalizedString();
     virtual void notifyKSplash() {}
 
-    std::unique_ptr<base::x11::event_filter_manager> x11_event_filters;
     std::unique_ptr<desktop::screen_locker_watcher> screen_locker_watcher;
 
 protected:

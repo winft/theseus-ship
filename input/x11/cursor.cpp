@@ -18,7 +18,9 @@
 namespace KWin::input::x11
 {
 
-cursor::cursor(base::x11::data const& x11_data, KSharedConfigPtr config)
+cursor::cursor(base::x11::data const& x11_data,
+               base::x11::event_filter_manager& x11_event_manager,
+               KSharedConfigPtr config)
     : input::cursor(x11_data, config)
     , m_timeStamp(XCB_TIME_CURRENT_TIME)
     , m_buttonMask(0)
@@ -28,7 +30,7 @@ cursor::cursor(base::x11::data const& x11_data, KSharedConfigPtr config)
     m_resetTimeStampTimer->setSingleShot(true);
 
     if (base::x11::xcb::extensions::self()->is_fixes_available()) {
-        m_xfixesFilter = std::make_unique<xfixes_cursor_event_filter>(this);
+        m_xfixesFilter = std::make_unique<xfixes_cursor_event_filter>(x11_event_manager, this);
     }
 
     QObject::connect(m_resetTimeStampTimer, &QTimer::timeout, this, &cursor::reset_time_stamp);

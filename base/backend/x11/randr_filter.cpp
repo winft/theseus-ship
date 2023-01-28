@@ -17,7 +17,8 @@ namespace KWin::base::backend::x11
 {
 
 RandrFilter::RandrFilter(x11::platform* platform)
-    : base::x11::event_filter(base::x11::xcb::extensions::self()->randr_notify_event())
+    : base::x11::event_filter(*platform->x11_event_filters,
+                              base::x11::xcb::extensions::self()->randr_notify_event())
     , platform(platform)
     , changed_timer(std::make_unique<QTimer>())
 {

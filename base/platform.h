@@ -12,6 +12,7 @@
 #include "seat/session.h"
 #include "types.h"
 #include "x11/data.h"
+#include "x11/event_filter_manager.h"
 
 #include "kwin_export.h"
 
@@ -41,6 +42,7 @@ public:
 
     std::unique_ptr<base::options> options;
     std::unique_ptr<base::seat::session> session;
+    std::unique_ptr<x11::event_filter_manager> x11_event_filters;
 
 private:
     Q_DISABLE_COPY(platform)

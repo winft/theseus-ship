@@ -15,7 +15,7 @@ class cursor;
 class xfixes_cursor_event_filter : public base::x11::event_filter
 {
 public:
-    explicit xfixes_cursor_event_filter(cursor* cursor);
+    explicit xfixes_cursor_event_filter(base::x11::event_filter_manager& manager, cursor* cursor);
 
     bool event(xcb_generic_event_t* event) override;
 

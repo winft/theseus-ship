@@ -35,7 +35,8 @@ class xinput_event_filter : public base::x11::event_filter
 {
 public:
     xinput_event_filter(int xi_opcode, Xinput& xinput)
-        : base::x11::event_filter(XCB_GE_GENERIC,
+        : base::x11::event_filter(*xinput.redirect.platform.base.x11_event_filters,
+                                  XCB_GE_GENERIC,
                                   xi_opcode,
                                   QVector<int>{XI_RawMotion,
                                                XI_RawButtonPress,
@@ -188,7 +189,7 @@ class xinput_key_filter : public base::x11::event_filter
 {
 public:
     xinput_key_filter(uint32_t type, Xinput& xinput)
-        : base::x11::event_filter(type)
+        : base::x11::event_filter(*xinput.redirect.platform.base.x11_event_filters, type)
         , xinput{xinput}
     {
     }

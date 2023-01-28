@@ -33,7 +33,8 @@ class tabbox_x11_filter : public base::x11::event_filter
 {
 public:
     explicit tabbox_x11_filter(Tabbox& tabbox)
-        : base::x11::event_filter(QVector<int>{XCB_KEY_PRESS,
+        : base::x11::event_filter(*tabbox.space.base.x11_event_filters,
+                                  QVector<int>{XCB_KEY_PRESS,
                                                XCB_KEY_RELEASE,
                                                XCB_MOTION_NOTIFY,
                                                XCB_BUTTON_PRESS,

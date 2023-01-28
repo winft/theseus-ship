@@ -17,7 +17,8 @@ class root_info_filter : public base::x11::event_filter
 {
 public:
     explicit root_info_filter(Info* info)
-        : base::x11::event_filter(QVector<int>{XCB_PROPERTY_NOTIFY, XCB_CLIENT_MESSAGE})
+        : base::x11::event_filter(*info->space.base.x11_event_filters,
+                                  QVector<int>{XCB_PROPERTY_NOTIFY, XCB_CLIENT_MESSAGE})
         , info{info}
     {
     }

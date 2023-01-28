@@ -91,7 +91,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
 
         // We need to make a shadow copy of the event filter list because an activated event
         // filter may mutate it by removing or installing another event filter.
-        auto const event_filters = kwinApp()->x11_event_filters->generic_filters;
+        auto const event_filters = space.base.x11_event_filters->generic_filters;
 
         for (auto container : event_filters) {
             if (!container) {
@@ -107,7 +107,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
     } else {
         // We need to make a shadow copy of the event filter list because an activated event
         // filter may mutate it by removing or installing another event filter.
-        auto const event_filters = kwinApp()->x11_event_filters->filters;
+        auto const event_filters = space.base.x11_event_filters->filters;
 
         for (auto container : event_filters) {
             if (!container) {

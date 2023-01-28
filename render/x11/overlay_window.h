@@ -39,7 +39,8 @@ class overlay_window : public base::x11::event_filter
 {
 public:
     explicit overlay_window(Compositor& compositor)
-        : base::x11::event_filter(QVector<int>{XCB_EXPOSE, XCB_VISIBILITY_NOTIFY})
+        : base::x11::event_filter(*compositor.platform.base.x11_event_filters,
+                                  QVector<int>{XCB_EXPOSE, XCB_VISIBILITY_NOTIFY})
         , m_shown(false)
         , m_window(XCB_WINDOW_NONE)
         , compositor{compositor}

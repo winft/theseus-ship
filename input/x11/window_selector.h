@@ -39,7 +39,8 @@ public:
     using x11_window_t = typename Redirect::space_t::x11_window;
 
     window_selector(Redirect& redirect)
-        : base::x11::event_filter(QVector<int>{XCB_BUTTON_PRESS,
+        : base::x11::event_filter(*redirect.platform.base.x11_event_filters,
+                                  QVector<int>{XCB_BUTTON_PRESS,
                                                XCB_BUTTON_RELEASE,
                                                XCB_MOTION_NOTIFY,
                                                XCB_ENTER_NOTIFY,

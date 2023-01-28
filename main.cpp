@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/logging.h"
 #include "base/options.h"
-#include "base/x11/event_filter_manager.h"
 #include "base/x11/xcb/extensions.h"
 #include "debug/perf/ftrace.h"
 #include "desktop/screen_locker_watcher.h"
@@ -68,7 +67,6 @@ int Application::crashes = 0;
 
 Application::Application(int &argc, char **argv)
     : QApplication(argc, argv)
-    , x11_event_filters{new base::x11::event_filter_manager}
 {
     qDebug("Starting KWinFT %s", KWIN_VERSION_STRING);
 
