@@ -485,19 +485,23 @@ public:
                                            this->compositor.platform.base.x11_data.root_window);
         };
 
-        connect(kwinApp(), &Application::x11ConnectionChanged, this, [this, make_property_filter] {
-            registered_atoms.clear();
-            for (auto it = m_propertiesForEffects.keyBegin(); it != m_propertiesForEffects.keyEnd();
-                 it++) {
-                x11::add_support_property(*this, *it);
-            }
-            if (this->compositor.platform.base.x11_data.connection) {
-                make_property_filter();
-            } else {
-                x11_property_notify.reset();
-            }
-            Q_EMIT xcbConnectionChanged();
-        });
+        connect(&compositor.platform.base,
+                &base::platform::x11_reset,
+                this,
+                [this, make_property_filter] {
+                    registered_atoms.clear();
+                    for (auto it = m_propertiesForEffects.keyBegin();
+                         it != m_propertiesForEffects.keyEnd();
+                         it++) {
+                        x11::add_support_property(*this, *it);
+                    }
+                    if (this->compositor.platform.base.x11_data.connection) {
+                        make_property_filter();
+                    } else {
+                        x11_property_notify.reset();
+                    }
+                    Q_EMIT xcbConnectionChanged();
+                });
 
         if (compositor.platform.base.x11_data.connection) {
             make_property_filter();

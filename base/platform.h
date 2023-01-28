@@ -54,6 +54,10 @@ Q_SIGNALS:
     //                the API. The current output is part of the output topology, but it shouldn't
     //                reuse the topology_changed signal, as this implies too much of a change.
     void current_output_changed(KWin::base::output const* old, KWin::base::output const* current);
+
+    // Only relevant on Wayland with Xwayland being (re-)started later.
+    // TODO(romangg): Move to Wayland platform?
+    void x11_reset();
 };
 
 }

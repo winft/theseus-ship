@@ -95,8 +95,8 @@ void init_space(Space& space)
     space.root_info->activate();
 
     rules_setup_book(*space.rule_book, x11_data);
-    QObject::connect(kwinApp(),
-                     &Application::x11ConnectionChanged,
+    QObject::connect(&space.base,
+                     &base::platform::x11_reset,
                      space.rule_book->qobject.get(),
                      [&space] { rules_setup_book(*space.rule_book, space.base.x11_data); });
 

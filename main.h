@@ -78,10 +78,6 @@ public:
     std::unique_ptr<base::x11::event_filter_manager> x11_event_filters;
     std::unique_ptr<desktop::screen_locker_watcher> screen_locker_watcher;
 
-Q_SIGNALS:
-    void x11ConnectionChanged();
-    void virtualTerminalCreated();
-
 protected:
     Application(int &argc, char **argv);
 

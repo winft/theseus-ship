@@ -182,7 +182,7 @@ public:
 
             render::compositor_destroy_selection(*space.base.render->compositor);
             space.base.x11_data.connection = nullptr;
-            Q_EMIT app->x11ConnectionChanged();
+            Q_EMIT space.base.x11_reset();
         }
 
         if (xwayland_process->state() != QProcess::NotRunning) {
@@ -315,7 +315,7 @@ private:
 
         status_callback(0);
         win::x11::init_space(space);
-        Q_EMIT app->x11ConnectionChanged();
+        Q_EMIT space.base.x11_reset();
 
         // Trigger possible errors, there's still a chance to abort
         base::x11::xcb::sync(space.base.x11_data.connection);
