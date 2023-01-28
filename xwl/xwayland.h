@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/x11/xcb_event_filter.h"
 #include "input/cursor.h"
 #include "main.h"
+#include "render/compositor_start.h"
 #include "win/wayland/surface.h"
 #include "win/wayland/xwl_window.h"
 #include "win/x11/space_setup.h"
@@ -178,8 +179,8 @@ public:
                                 space.base.x11_data.time);
             space.atoms.reset();
             core.x11.atoms = nullptr;
-            Q_EMIT app->x11ConnectionAboutToBeDestroyed();
 
+            render::compositor_destroy_selection(*space.base.render->compositor);
             space.base.x11_data.connection = nullptr;
             Q_EMIT app->x11ConnectionChanged();
         }

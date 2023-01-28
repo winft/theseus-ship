@@ -80,7 +80,6 @@ public:
 
 Q_SIGNALS:
     void x11ConnectionChanged();
-    void x11ConnectionAboutToBeDestroyed();
     void virtualTerminalCreated();
 
 protected:

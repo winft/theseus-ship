@@ -48,11 +48,6 @@ public:
         compositor_setup(*this);
 
         dbus->qobject->integration.get_types = [] { return QStringList{"egl"}; };
-
-        QObject::connect(kwinApp(),
-                         &Application::x11ConnectionAboutToBeDestroyed,
-                         this->qobject.get(),
-                         [this] { compositor_destroy_selection(*this); });
     }
 
     ~compositor()
