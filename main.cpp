@@ -26,7 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/options.h"
 #include "base/x11/xcb/extensions.h"
 #include "debug/perf/ftrace.h"
-#include "desktop/screen_locker_watcher.h"
 #include "win/space.h"
 
 #include <kwineffects/effect_window.h>
@@ -86,8 +85,6 @@ Application::Application(int &argc, char **argv)
 void Application::prepare_start()
 {
     setQuitOnLastWindowClosed(false);
-
-    screen_locker_watcher = std::make_unique<desktop::screen_locker_watcher>();
 }
 
 Application::~Application() = default;

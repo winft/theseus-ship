@@ -10,6 +10,7 @@ namespace KWin::base
 
 platform::platform(base::config config)
     : config{std::move(config)}
+    , screen_locker_watcher{std::make_unique<desktop::screen_locker_watcher>()}
     , x11_event_filters{std::make_unique<base::x11::event_filter_manager>()}
 {
     QObject::connect(this, &platform::output_added, this, [this](auto output) {

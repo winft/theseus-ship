@@ -154,8 +154,6 @@ public:
                              const QPoint& position,
                              Qt::Alignment alignment) const override;
 
-    bool isScreenLocked() const override;
-
     // internal (used by kwin core or compositing code)
     void startPaint();
     void grabbedKeyboardEvent(QKeyEvent* e);
@@ -468,11 +466,11 @@ public:
                 &win::screen_edger_qobject::approaching,
                 this,
                 &EffectsHandler::screenEdgeApproaching);
-        connect(kwinApp()->screen_locker_watcher.get(),
+        connect(ws->base.screen_locker_watcher.get(),
                 &desktop::screen_locker_watcher::locked,
                 this,
                 &EffectsHandler::screenLockingChanged);
-        connect(kwinApp()->screen_locker_watcher.get(),
+        connect(ws->base.screen_locker_watcher.get(),
                 &desktop::screen_locker_watcher::about_to_lock,
                 this,
                 &EffectsHandler::screenAboutToLock);
@@ -555,6 +553,11 @@ public:
     scene_t* scene() const
     {
         return compositor.scene.get();
+    }
+
+    bool isScreenLocked() const override
+    {
+        return compositor.platform.base.screen_locker_watcher->is_locked();
     }
 
     xcb_connection_t* xcbConnection() const override

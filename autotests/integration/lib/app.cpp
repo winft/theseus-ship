@@ -200,7 +200,7 @@ void WaylandTestApplication::start()
     base->render->compositor->start(*base->space);
 
     base->server->create_addons([this] { handle_server_addons_created(); });
-    kwinApp()->screen_locker_watcher->initialize();
+    base->screen_locker_watcher->initialize();
 }
 
 void WaylandTestApplication::set_outputs(size_t count)

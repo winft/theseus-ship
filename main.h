@@ -37,11 +37,6 @@ class QCommandLineParser;
 namespace KWin
 {
 
-namespace desktop
-{
-class screen_locker_watcher;
-}
-
 class KWIN_EXPORT Application : public  QApplication
 {
     Q_OBJECT
@@ -64,8 +59,6 @@ public:
     static void setupMalloc();
     static void setupLocalizedString();
     virtual void notifyKSplash() {}
-
-    std::unique_ptr<desktop::screen_locker_watcher> screen_locker_watcher;
 
 protected:
     Application(int &argc, char **argv);

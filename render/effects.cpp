@@ -638,11 +638,6 @@ QString effects_handler_wrap::supportInformation(const QString& name) const
     return support;
 }
 
-bool effects_handler_wrap::isScreenLocked() const
-{
-    return kwinApp()->screen_locker_watcher->is_locked();
-}
-
 QString effects_handler_wrap::debug(const QString& name, const QString& parameter) const
 {
     QString internalName = name.toLower();

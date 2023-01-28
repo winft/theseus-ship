@@ -336,7 +336,7 @@ void lock_screen()
     QSignalSpy lockStateChangedSpy(ScreenLocker::KSldApp::self(),
                                    &ScreenLocker::KSldApp::lockStateChanged);
     QVERIFY(lockStateChangedSpy.isValid());
-    QSignalSpy lockWatcherSpy(kwinApp()->screen_locker_watcher.get(),
+    QSignalSpy lockWatcherSpy(Test::app()->base->screen_locker_watcher.get(),
                               &desktop::screen_locker_watcher::locked);
     QVERIFY(lockWatcherSpy.isValid());
 
@@ -348,7 +348,7 @@ void lock_screen()
     QCOMPARE(lockWatcherSpy.count(), 1);
     QCOMPARE(lockStateChangedSpy.count(), 2);
 
-    QVERIFY(kwinApp()->screen_locker_watcher->is_locked());
+    QVERIFY(Test::app()->base->screen_locker_watcher->is_locked());
 }
 
 void unlock_screen()
@@ -356,7 +356,7 @@ void unlock_screen()
     QSignalSpy lockStateChangedSpy(ScreenLocker::KSldApp::self(),
                                    &ScreenLocker::KSldApp::lockStateChanged);
     QVERIFY(lockStateChangedSpy.isValid());
-    QSignalSpy lockWatcherSpy(kwinApp()->screen_locker_watcher.get(),
+    QSignalSpy lockWatcherSpy(Test::app()->base->screen_locker_watcher.get(),
                               &desktop::screen_locker_watcher::locked);
     QVERIFY(lockWatcherSpy.isValid());
 
@@ -389,7 +389,7 @@ void unlock_screen()
 
     QVERIFY(!base::wayland::is_screen_locked(Test::app()->base));
 
-    QVERIFY(!kwinApp()->screen_locker_watcher->is_locked());
+    QVERIFY(!Test::app()->base->screen_locker_watcher->is_locked());
 }
 
 void prepare_app_env(std::string const& qpa_plugin_path)
