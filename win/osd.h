@@ -8,7 +8,6 @@
 
 #include "osd_notification.h"
 
-#include "main.h"
 #include "utils/flags.h"
 
 #include <QString>

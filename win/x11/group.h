@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "startup_notify.h"
 #include "window_find.h"
 
-#include "main.h"
 #include "render/effect/window_group_impl.h"
 
 #include <KStartupInfo>

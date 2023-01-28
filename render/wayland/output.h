@@ -11,7 +11,6 @@
 #include "base/logging.h"
 #include "base/seat/session.h"
 #include "debug/perf/ftrace.h"
-#include "main.h"
 #include "render/gl/scene.h"
 #include "render/gl/timer_query.h"
 #include "win/remnant.h"

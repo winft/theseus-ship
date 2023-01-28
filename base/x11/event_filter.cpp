@@ -7,7 +7,6 @@
 #include "event_filter.h"
 
 #include "event_filter_manager.h"
-#include "main.h"
 
 namespace KWin::base::x11
 {

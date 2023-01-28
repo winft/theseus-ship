@@ -9,7 +9,6 @@
 #include "space_areas.h"
 
 #include "base/platform.h"
-#include "main.h"
 
 namespace KWin::win
 {

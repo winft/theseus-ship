@@ -11,7 +11,6 @@
 #include "input/device_redirect.h"
 #include "input/event_filter.h"
 #include "input/event_spy.h"
-#include "main.h"
 
 #include <KScreenLocker/KsldApp>
 #include <QHash>

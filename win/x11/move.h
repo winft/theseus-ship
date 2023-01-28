@@ -7,7 +7,6 @@
 
 #include "client.h"
 
-#include "main.h"
 #include "utils/geo.h"
 #include "utils/memory.h"
 #include "win/meta.h"

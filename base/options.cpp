@@ -14,7 +14,6 @@
 #include "config-kwin.h"
 #include "render/platform.h"
 
-#include "main.h"
 #include "options_settings.h"
 #include "utils/algorithm.h"
 

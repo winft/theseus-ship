@@ -10,6 +10,8 @@
 #include "shortcut_dialog.h"
 #include "shortcut_set.h"
 
+#include "config-kwin.h"
+
 #include <KGlobalAccel>
 #include <QRegularExpression>
 

@@ -13,7 +13,6 @@
 #include "base/wayland/screen_lock.h"
 #include "base/wayland/server.h"
 #include "kwin_export.h"
-#include "main.h"
 #include "win/space_qobject.h"
 #include "win/window_qobject.h"
 

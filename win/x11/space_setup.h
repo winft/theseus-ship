@@ -16,7 +16,6 @@
 
 #include "base/x11/user_interaction_filter.h"
 #include "base/x11/xcb/window.h"
-#include "main.h"
 #include "utils/blocker.h"
 #include "win/desktop_space.h"
 #include "win/space_areas_helpers.h"

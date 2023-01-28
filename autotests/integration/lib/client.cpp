@@ -7,9 +7,6 @@
 
 #include "app.h"
 
-#include "base/wayland/server.h"
-#include "main.h"
-
 #include <QThread>
 #include <QtTest>
 #include <Wrapland/Client/connection_thread.h>

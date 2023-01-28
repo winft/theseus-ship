@@ -22,6 +22,7 @@
 #include "input/cursor.h"
 #include "render/outline.h"
 
+#include <QApplication>
 #include <QWidget>
 
 namespace KWin::win

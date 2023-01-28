@@ -9,7 +9,6 @@
 #include "input/logging.h"
 #include "input/pointer_redirect.h"
 #include "input/qt_event.h"
-#include "main.h"
 
 namespace KWin::input
 {

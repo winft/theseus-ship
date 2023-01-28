@@ -7,8 +7,6 @@
 
 #include "types.h"
 
-#include "main.h"
-
 namespace KWin::render
 {
 

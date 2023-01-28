@@ -9,7 +9,6 @@
 #include "platform.h"
 
 #include "base/wayland/server.h"
-#include "main.h"
 
 namespace KWin::base::backend::wlroots
 {

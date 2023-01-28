@@ -7,7 +7,6 @@
 
 #include "base/options.h"
 #include "base/os/kkeyserver.h"
-#include "main.h"
 
 namespace KWin::win::x11
 {

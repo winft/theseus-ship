@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "outline.h"
 
 #include "base/logging.h"
-#include "main.h"
+#include "config-kwin.h"
 
 #include <KConfigGroup>
 #include <QQmlComponent>

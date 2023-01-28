@@ -33,7 +33,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/xkb/helpers.h"
 #include "kwin_export.h"
 #include "kwinglobals.h"
-#include "main.h"
 #include "win/activation.h"
 
 #include <KGlobalAccel>

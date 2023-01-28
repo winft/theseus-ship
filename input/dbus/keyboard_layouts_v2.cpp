@@ -10,7 +10,6 @@
 #include "input/xkb/helpers.h"
 #include "input/xkb/layout_manager.h"
 #include "input/xkb/layout_policies.h"
-#include "main.h"
 
 #include <KGlobalAccel>
 #include <KLocalizedString>

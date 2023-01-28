@@ -7,7 +7,6 @@
 
 #include "base/platform.h"
 #include "base/x11/xcb/helpers.h"
-#include "main.h"
 #include "render/gl/gl.h"
 #include "render/x11/compositor.h"
 #include "win/space.h"

@@ -6,6 +6,7 @@
 #pragma once
 
 #include "base/logging.h"
+#include "config-kwin.h"
 
 #include <QFileInfo>
 #include <QProcess>

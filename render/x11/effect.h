@@ -5,8 +5,8 @@
 */
 #pragma once
 
+#include "base/x11/data.h"
 #include "base/x11/xcb/property.h"
-#include "main.h"
 #include "render/support_properties.h"
 #include "utils/memory.h"
 

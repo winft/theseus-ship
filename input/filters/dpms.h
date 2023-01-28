@@ -14,6 +14,7 @@
 
 #include <Wrapland/Server/seat.h>
 
+#include <QApplication>
 #include <QElapsedTimer>
 #include <QTimer>
 

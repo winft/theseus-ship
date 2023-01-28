@@ -9,7 +9,6 @@
 #include "base/x11/xcb/extensions.h"
 #include "base/x11/xcb/proto.h"
 #include "base/x11/xcb/qt_types.h"
-#include "main.h"
 #include "xfixes_cursor_event_filter.h"
 
 #include <QAbstractEventDispatcher>

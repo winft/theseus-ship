@@ -6,7 +6,6 @@
 #pragma once
 
 #include "base/options.h"
-#include "main.h"
 #include "render/gl/backend.h"
 #include "render/gl/texture.h"
 #include "render/window.h"

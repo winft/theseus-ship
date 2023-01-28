@@ -7,7 +7,6 @@
 
 #include "command.h"
 
-#include "main.h"
 #include "win/control.h"
 #include "win/input.h"
 #include "win/meta.h"

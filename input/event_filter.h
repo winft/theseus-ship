@@ -8,8 +8,6 @@
 
 #include "event.h"
 
-#include "main.h"
-
 #include <QSet>
 #include <QTabletEvent>
 

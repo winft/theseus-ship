@@ -9,8 +9,6 @@
 #include "x11/hide.h"
 #include "x11/tool_windows.h"
 
-#include "main.h"
-
 namespace KWin::win
 {
 

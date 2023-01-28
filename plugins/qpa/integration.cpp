@@ -29,7 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screen.h"
 #include "sharingplatformcontext.h"
 #include "window.h"
-#include "../../main.h"
 
 #include <QCoreApplication>
 #include <QtConcurrentRun>

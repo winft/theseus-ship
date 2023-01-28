@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "client_machine.h"
 
 #include "base/logging.h"
-#include "main.h"
 
 #include <NETWM>
 

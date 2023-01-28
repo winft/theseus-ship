@@ -9,7 +9,6 @@
 #include "presentation.h"
 #include "utils.h"
 
-#include "main.h"
 #include "render/compositor.h"
 #include "render/compositor_start.h"
 #include "render/cursor.h"

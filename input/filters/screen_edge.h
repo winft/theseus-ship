@@ -9,7 +9,6 @@
 #include "input/event_filter.h"
 #include "input/gestures.h"
 #include "input/qt_event.h"
-#include "main.h"
 #include "win/screen_edges.h"
 
 #include <Wrapland/Server/seat.h>

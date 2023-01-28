@@ -14,7 +14,6 @@
 #include "types.h"
 #include "virtual_desktops.h"
 
-#include "main.h"
 #include "rules/window.h"
 #include "scripting/window.h"
 

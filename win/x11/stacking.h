@@ -12,7 +12,6 @@
 
 #include "base/output_helpers.h"
 #include "base/x11/xcb/helpers.h"
-#include "main.h"
 #include "win/activation.h"
 
 #include <deque>

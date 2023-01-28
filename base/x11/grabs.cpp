@@ -8,9 +8,9 @@
 #include "grabs.h"
 
 #include "base/logging.h"
-#include "main.h"
 #include "utils/memory.h"
 
+#include <QApplication>
 #include <QWidget>
 #include <cassert>
 

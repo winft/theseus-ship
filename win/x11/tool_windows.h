@@ -8,7 +8,6 @@
 #include "group.h"
 
 #include "base/options.h"
-#include "main.h"
 #include "win/meta.h"
 
 namespace KWin::win::x11

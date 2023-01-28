@@ -10,7 +10,6 @@
 #include "kill_window.h"
 #include "types.h"
 
-#include "main.h"
 #include "render/platform.h"
 #include "render/post/night_color_manager.h"
 #include "render/post/night_color_setup.h"

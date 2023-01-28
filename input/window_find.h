@@ -5,7 +5,6 @@
 */
 #pragma once
 
-#include "main.h"
 #include "win/geo.h"
 #include "win/wayland/input.h"
 #include "win/x11/stacking.h"

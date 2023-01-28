@@ -10,8 +10,6 @@
 #include "global_shortcut.h"
 #include "logging.h"
 
-#include "main.h"
-
 #include <KGlobalAccel/private/kglobalaccel_interface.h>
 #include <KGlobalAccel/private/kglobalacceld.h>
 #include <QAction>

@@ -11,7 +11,6 @@
 #include "osd.h"
 
 #include "input/platform.h"
-#include "main.h"
 
 #include <KLocalizedString>
 

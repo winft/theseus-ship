@@ -15,7 +15,6 @@
 
 #include "base/output_helpers.h"
 #include "base/platform.h"
-#include "main.h"
 #include "utils/algorithm.h"
 #include "utils/blocker.h"
 

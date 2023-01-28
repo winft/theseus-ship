@@ -7,7 +7,6 @@
 
 #include "base/x11/xcb/extensions.h"
 #include "base/x11/xcb/randr.h"
-#include "main.h"
 #include "platform.h"
 
 #include <QTimer>

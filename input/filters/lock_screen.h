@@ -12,7 +12,6 @@
 #include "input/event_filter.h"
 #include "input/keyboard_redirect.h"
 #include "input/qt_event.h"
-#include "main.h"
 
 #include <KScreenLocker/KsldApp>
 #include <Wrapland/Server/keyboard_pool.h>

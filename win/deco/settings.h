@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "bridge_qobject.h"
 
-#include "main.h"
 #include "render/compositor_qobject.h"
 #include "render/types.h"
 #include "win/space_qobject.h"

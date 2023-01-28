@@ -6,7 +6,6 @@
 #pragma once
 
 #include "base/options.h"
-#include "main.h"
 #include "utils/algorithm.h"
 #include "win/desktop_get.h"
 #include "win/layers.h"

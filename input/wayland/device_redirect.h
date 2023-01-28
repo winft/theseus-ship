@@ -9,7 +9,6 @@
 #pragma once
 
 #include "input/window_find.h"
-#include "main.h"
 #include "win/geo.h"
 #include "win/space_qobject.h"
 #include "win/stacking_order.h"

@@ -8,7 +8,6 @@
 #include "input/event.h"
 #include "input/keyboard.h"
 #include "input/pointer.h"
-#include "main.h"
 
 namespace KWin::input::x11
 {

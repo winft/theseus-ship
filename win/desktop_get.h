@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "main.h"
+#include "base/types.h"
 
 #include <NETWM>
 

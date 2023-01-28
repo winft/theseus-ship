@@ -12,7 +12,6 @@
 #include "input/pointer_redirect.h"
 #include "input/qt_event.h"
 #include "input/xkb/helpers.h"
-#include "main.h"
 #include "win/input.h"
 
 #include <Wrapland/Server/keyboard_pool.h>

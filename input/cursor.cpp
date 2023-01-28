@@ -6,7 +6,6 @@
 */
 #include "cursor.h"
 
-#include "main.h"
 #include "platform.h"
 #include "pointer_redirect.h"
 #include "singleton_interface.h"

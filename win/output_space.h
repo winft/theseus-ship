@@ -11,7 +11,6 @@
 
 #include "base/output.h"
 #include "base/output_helpers.h"
-#include "main.h"
 
 #include <KProcess>
 

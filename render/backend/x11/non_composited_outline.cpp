@@ -6,8 +6,6 @@
 */
 #include "non_composited_outline.h"
 
-#include "main.h"
-
 #include <kwinxrender/utils.h>
 
 #include <xcb/render.h>
